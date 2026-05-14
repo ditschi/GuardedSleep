@@ -1,0 +1,42 @@
+---
+description: Ensures agents present options as structured checklists with recommendations, enabling clear decision tracking
+alwaysApply: true
+---
+
+# Decision Workflow
+
+When suggesting multiple options or approaches to the user, follow this protocol:
+
+## Presenting Options
+
+- ALWAYS present options using the AskQuestion tool when available (preferred for interactive selection)
+- If AskQuestion is not available, present as a markdown checklist:
+
+```markdown
+### Options for [Topic]
+
+- [ ] **Option A: [Name]**
+  Pros: ...
+  Cons: ...
+
+- [ ] **Option B: [Name]**
+  Pros: ...
+  Cons: ...
+
+**Recommendation:** Option [X] because [reasoning].
+```
+
+- Every option set MUST include a **Recommendation** section with clear reasoning for the preferred choice
+- Include Pros/Cons for each option -- be honest about trade-offs, don't oversell
+
+## Documenting Outcomes
+
+When the user selects or rejects options:
+- Selected options: update the relevant document, mark as `STATUS: DECIDED` with the rationale
+- Rejected options: move to the "Discarded Alternatives" section of the relevant document with the reason for rejection
+- NEVER delete rejected options -- they provide valuable context for future decisions
+
+## When NOT to Present Options
+
+- If there is clearly only one reasonable approach, just state it and proceed
+- For trivial implementation details that don't affect architecture or user experience

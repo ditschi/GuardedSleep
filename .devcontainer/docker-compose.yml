@@ -1,0 +1,46 @@
+name: guardedsleep
+
+# Used by: VS Code/Cursor Dev Containers (see devcontainer.json) and CLI users.
+# Repo root is mounted at /workspace so edits and node_modules stay on the host.
+#
+# CLI examples (from repository root — prefer ./scripts/devcontainer-run.sh so rootless
+# Docker gets DEV_UID/DEV_GID=0 automatically and Compose always uses this folder as
+# the project directory for `.devcontainer/.env`):
+#   docker compose --project-directory .devcontainer -f .devcontainer/docker-compose.yml build
+#   ./scripts/devcontainer-run.sh pnpm install
+#   ./scripts/devcontainer-run.sh bash -lc './.devcontainer/post-create.sh && pnpm run lint'
+#
+# Long-running shell (same mount as IDE dev container):
+#   ./scripts/devcontainer-run.sh bash
+#   # or explicitly:
+#   docker compose --project-directory .devcontainer -f .devcontainer/docker-compose.yml run --rm -it dev bash
+#
+# Dev shell with host ports 5173 + 8787 (no pnpm on host): ./scripts/dev-shell.sh
+#
+# Rootless Docker (`docker info` shows `rootless: true`): the bind-mounted /workspace
+# is owned by a uid that `node` (1000) cannot write. Export DEV_UID=0 DEV_GID=0 (or via
+# `.devcontainer/.env` — see .env.example) so the container user maps back to the host user.
+# `./scripts/devcontainer-run.sh` sets this automatically when the daemon is rootless.
+
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: guardedsleep-dev:local
+    volumes:
+      # Compose file lives in .devcontainer/ → parent directory is the repo root
+      - ..:/workspace:cached
+      - ~/.gitconfig:/home/node/.gitconfig:ro
+    ports:
+      # For CLI dev (scripts/dev-shell.sh): publish with `docker compose run --service-ports`.
+      # Dev Containers / Cursor usually auto-forward; mapping avoids extra config.
+      - "5173:5173"
+      - "8787:8787"
+    working_dir: /workspace
+    # Default = container's `node` (uid 1000, gid 1000) — correct for rootful Docker.
+    # Rootless Docker: set DEV_UID=0 DEV_GID=0 so container-root maps to the host user.
+    user: "${DEV_UID:-1000}:${DEV_GID:-1000}"
+    init: true
+    # Dev Containers attaches to this; CLI `run ... cmd` overrides the command.
+    command: sleep infinity

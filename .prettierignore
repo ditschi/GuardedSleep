@@ -1,0 +1,6 @@
+node_modules
+apps/mobile/android
+pnpm-lock.yaml
+package-lock.json
+.git
+*.code-workspace

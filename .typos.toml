@@ -1,0 +1,52 @@
+# https://github.com/crate-ci/typos
+# Run: typos
+
+[default.extend-words]
+# Technical / project terms
+DTLS = "DTLS"
+SRTP = "SRTP"
+WebRTC = "WebRTC"
+STUN = "STUN"
+TURN = "TURN"
+WSS = "WSS"
+PSK = "PSK"
+HKDF = "HKDF"
+DTX = "DTX"
+Opus = "Opus"
+mDNS = "mDNS"
+coturn = "coturn"
+Headscale = "Headscale"
+Tailscale = "Tailscale"
+Capacitor = "Capacitor"
+SvelteKit = "SvelteKit"
+shadcn = "shadcn"
+TFLite = "TFLite"
+YAMNet = "YAMNet"
+MFCC = "MFCC"
+ASO = "ASO"
+DSFA = "DSFA"
+GDPR = "GDPR"
+COPPA = "COPPA"
+FCM = "FCM"
+APNs = "APNs"
+OEM = "OEM"
+MIUI = "MIUI"
+EMUI = "EMUI"
+OneUI = "OneUI"
+ColorOS = "ColorOS"
+TEE = "TEE"
+DND = "DND"
+i18n = "i18n"
+fdroid = "fdroid"
+gradle = "gradle"
+Avent = "Avent"
+
+[files]
+# typos only supports English locales. de/fr/es message JSON uses CSpell (cspell-i18n-*.json).
+extend-exclude = [
+  ".git/**",
+  "pnpm-lock.yaml",
+  "apps/mobile/src/lib/i18n/messages/de.json",
+  "apps/mobile/src/lib/i18n/messages/fr.json",
+  "apps/mobile/src/lib/i18n/messages/es.json",
+]

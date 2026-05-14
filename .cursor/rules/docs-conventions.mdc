@@ -1,0 +1,67 @@
+---
+description: Documentation conventions for status tracking, templates, and discarded ideas
+globs: docs/**/*.md
+alwaysApply: false
+---
+
+# Documentation Conventions
+
+## Language
+
+- **Authoring language: English.** Concept notes, feature specs, ADRs, reviews, and contributing guides must be written in English (see `AGENTS.md` §5.2a).
+- **Product localization** is not documentation: translated UI strings live only in `apps/mobile/src/lib/i18n/messages/*.json`.
+
+## Status Tags
+
+Every requirement, feature item, or proposal MUST carry a status tag:
+
+- `STATUS: IDEA` -- Captured but not yet evaluated
+- `STATUS: UNDER DISCUSSION` -- Being actively analyzed
+- `STATUS: DECIDED` -- Consensus reached, rationale documented
+- `STATUS: DEFERRED` -- Postponed to a later phase (include reason and target phase)
+- `STATUS: REJECTED` -- Considered and explicitly rejected (include reason)
+
+## User Feature Suggestions
+
+When the user suggests a new feature or idea:
+1. ALWAYS write it to the appropriate feature document (or `docs/concept/initial-ideas.md` if no feature doc fits)
+2. Tag it as `STATUS: IDEA` -- do NOT assign a phase unless the user explicitly decides on one
+3. Phase assignment happens later when the user reviews and prioritizes ideas
+4. If the idea relates to an existing feature, add it as a sub-item in that feature's document
+5. If the idea is entirely new, create a new feature document or add it to the feature README's ideas list
+
+## Discarded Items
+
+NEVER delete rejected or discarded items. Move them to the "Discarded Alternatives" section of the relevant document with:
+- What was proposed
+- Why it was rejected
+- Who/what triggered the rejection (role review, user decision, technical infeasibility)
+
+## Feature File Template
+
+Feature files in `docs/features/` follow this structure:
+
+```
+# Feature: [Name]
+## Overview
+## Requirements (each with STATUS tag)
+## Sub-Features
+## Dependencies
+## Open Questions
+## Discarded Alternatives
+```
+
+## ADR Format
+
+Architecture Decision Records in `docs/decisions/` follow this structure:
+
+```
+# ADR-NNN: [Title]
+- Status: PROPOSED | DECIDED | SUPERSEDED
+- Date: YYYY-MM-DD
+- Deciders: [who]
+## Context
+## Options Considered (with Pros/Cons for each)
+## Decision
+## Consequences
+```

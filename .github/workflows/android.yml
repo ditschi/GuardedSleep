@@ -1,0 +1,87 @@
+# Debug APK build (Capacitor + Gradle). Uploads `app-debug.apk` as a workflow artifact.
+# Triggers: PR, push to main/master/develop (path-filtered), tag mobile-v* (Release Please), manual.
+#
+# Why debug only: release APKs/AABs need a private signing key. CI must not embed keystores or
+# signing passwords; a debug build is still a normal installable APK (debug keystore) and is
+# enough to verify Gradle + Capacitor integration. For store-ready builds see
+# docs/contributing/android-apk-build.md ("Debug vs release", "Release build").
+#
+# Does not publish to Play Store or attach to GitHub Releases.
+name: android
+
+on:
+  push:
+    branches: [main, master, develop]
+    tags:
+      - "mobile-v*"
+    paths:
+      - "apps/mobile/**"
+      - "packages/protocol/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/android.yml"
+  pull_request:
+    paths:
+      - "apps/mobile/**"
+      - "packages/protocol/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  debug-apk:
+    name: debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Web bundle + Capacitor sync
+        run: |
+          pnpm --filter @guardedsleep/mobile build
+          pnpm --filter @guardedsleep/mobile exec cap sync
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: tools platform-tools platforms;android-35 build-tools;35.0.0
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-provider: basic
+
+      - name: Assemble debug APK
+        working-directory: apps/mobile/android
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: guardedsleep-android-debug-${{ github.run_id }}
+          path: apps/mobile/android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

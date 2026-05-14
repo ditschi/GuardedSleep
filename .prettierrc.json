@@ -1,0 +1,13 @@
+{
+  "printWidth": 100,
+  "proseWrap": "preserve",
+  "plugins": ["prettier-plugin-svelte"],
+  "overrides": [
+    {
+      "files": "*.md",
+      "options": {
+        "proseWrap": "preserve"
+      }
+    }
+  ]
+}

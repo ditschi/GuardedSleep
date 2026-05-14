@@ -1,0 +1,13 @@
+---
+description: English-only source tree; non-English only in i18n message JSON
+globs: "**/*.{ts,svelte,md,mdc,mjs,yml,yaml}"
+alwaysApply: true
+---
+
+# English source, i18n for locales
+
+- Write **documentation** (`docs/**`), **comments**, **identifiers**, and **embedded UI strings in app source** in **English**.
+- Put **non-English user-visible copy** only in locale bundles (e.g. `apps/mobile/src/lib/i18n/messages/de.json`). Use `t()` / `tWithEnFallback()` with keys; `en.json` is the parity master. **Spellcheck:** English = `typos`; `de`/`fr`/`es` JSON = CSpell (`pnpm run lint:cspell-i18n`).
+- When editing specs or ADRs, replace leftover non-English prose with English (keep short quoted examples only when analyzing a specific artifact).
+
+See root `AGENTS.md` §5.2a for the full rule and rationale.

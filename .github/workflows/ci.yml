@@ -1,0 +1,154 @@
+# Quality gates: same checks as local pre-commit (+ optional PR title for squash)
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pre-commit:
+    name: pre-commit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install pnpm dependencies (commitlint config resolution)
+        run: pnpm install --frozen-lockfile
+
+      - name: pre-commit
+        uses: pre-commit/action@v3.0.1
+
+  test-and-build:
+    name: test + build (monorepo)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: pnpm audit (high or above)
+        run: pnpm audit --audit-level=high
+
+      - name: Prettier (repo-wide)
+        run: pnpm run format:check
+
+      - name: Unit & integration tests
+        run: pnpm test
+
+      - name: Build mobile (SvelteKit static)
+        run: pnpm --filter @guardedsleep/mobile build
+
+      - name: Build signaling-server (TypeScript)
+        run: pnpm --filter @guardedsleep/signaling-server build
+
+      - name: Signaling smoke (WebSocket relay)
+        run: pnpm --filter @guardedsleep/signaling-server smoke
+
+  e2e-browser:
+    name: browser E2E (Playwright)
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium (system deps)
+        run: pnpm --filter @guardedsleep/e2e exec playwright install --with-deps chromium
+
+      - name: Browser E2E tests
+        run: pnpm --filter @guardedsleep/e2e test
+
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-e2e-artifacts
+          path: |
+            apps/e2e/test-results/
+            apps/e2e/playwright-report/
+
+  commitlint-pr-title:
+    name: commitlint (PR title)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Validate PR title (Conventional Commits)
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: printf '%s\n' "$PR_TITLE" | pnpm exec commitlint
+
+  # Validate every commit in the PR head against the base branch. Husky's commit-msg
+  # hook covers locally created commits, but rebases / amends / GitHub web UI edits
+  # can introduce non-conforming subjects. Release Please depends on conventional
+  # subjects for changelog generation, so this is a pre-condition check (ADR-006).
+  commitlint-pr-commits:
+    name: commitlint (PR commits)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Validate PR commits (Conventional Commits)
+        run: pnpm exec commitlint --from "origin/${{ github.event.pull_request.base.ref }}" --to "HEAD" --verbose

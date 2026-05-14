@@ -1,0 +1,119 @@
+# Signaling-server container image — see ADR-008.
+#
+# Triggers:
+#   - push to main, paths under signaling/protocol → publishes :dev + :sha-<short>
+#   - push of tag `signaling-server-v*` (Release Please) → publishes :latest, :vX.Y.Z, :vX.Y (+ :vX post-1.0)
+#   - pull_request → builds only (no push), validates Dockerfile + cross-arch
+#   - workflow_dispatch → manual one-off (publishes :dev unless a tag was pushed too)
+#
+# Tag semantics, registry, and multi-arch decisions are recorded in ADR-008.
+name: docker-signaling
+
+on:
+  push:
+    branches: [main, master]
+    tags:
+      - "signaling-server-v*"
+    paths:
+      - "docker/signaling-server/**"
+      - "apps/signaling-server/**"
+      - "packages/protocol/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/docker-signaling.yml"
+  pull_request:
+    paths:
+      - "docker/signaling-server/**"
+      - "apps/signaling-server/**"
+      - "packages/protocol/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/docker-signaling.yml"
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: guardedsleep-signaling
+  # Component prefix Release Please uses for this package's tags (see release-please-config.json).
+  TAG_PREFIX: signaling-server-v
+
+concurrency:
+  group: docker-signaling-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-push:
+    name: build + push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Compute lowercased owner (GHCR requires lowercase)
+        id: owner
+        run: |
+          o="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          echo "value=$o" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Generates tags per ADR-008:
+      #   - :latest                      ← only on a `signaling-server-v*` tag push
+      #   - :vMAJOR.MINOR.PATCH          ← only on a `signaling-server-v*` tag push
+      #   - :vMAJOR.MINOR                ← only on a `signaling-server-v*` tag push
+      #   - :vMAJOR                      ← only on a `signaling-server-v*` tag push, post-1.0
+      #   - :dev (alias :edge)           ← on every push to main
+      #   - :sha-<short>                 ← every push (incl. PRs, used only for build cache key in PR runs)
+      - name: Docker metadata (tags + OCI labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ steps.owner.outputs.value }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=match,pattern=${{ env.TAG_PREFIX }}(.*),group=1,value=latest,priority=900,enable=${{ startsWith(github.ref, format('refs/tags/{0}', env.TAG_PREFIX)) }}
+            type=match,pattern=${{ env.TAG_PREFIX }}(\d+\.\d+\.\d+),group=1,prefix=v
+            type=match,pattern=${{ env.TAG_PREFIX }}(\d+\.\d+)\.\d+,group=1,prefix=v
+            type=match,pattern=${{ env.TAG_PREFIX }}(\d+)\.\d+\.\d+,group=1,prefix=v,enable=${{ !startsWith(github.ref, format('refs/tags/{0}0.', env.TAG_PREFIX)) }}
+            type=raw,value=dev,enable={{is_default_branch}}
+            type=raw,value=edge,enable={{is_default_branch}}
+            type=sha,prefix=sha-,format=short
+          labels: |
+            org.opencontainers.image.title=GuardedSleep Signaling Server
+            org.opencontainers.image.description=WebSocket signaling relay for GuardedSleep – Privacy Baby Monitor.
+            org.opencontainers.image.vendor=GuardedSleep
+            org.opencontainers.image.licenses=NOASSERTION
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/signaling-server/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Guardrail: on a tag push, fail loudly if no SemVer tag was produced
+      # (regex mismatch would silently publish only :dev, which would be wrong).
+      - name: Sanity check tag output
+        if: startsWith(github.ref, format('refs/tags/{0}', env.TAG_PREFIX))
+        run: |
+          echo "Produced tags:"
+          printf '  %s\n' ${{ steps.meta.outputs.tags }}
+          echo '${{ steps.meta.outputs.tags }}' | grep -q ':latest' \
+            || (echo "::error::Tag push did not produce :latest — check TAG_PREFIX vs Release Please config"; exit 1)

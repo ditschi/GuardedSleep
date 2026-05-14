@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+set -e
+cd "$(dirname "$0")/.." || exit 1
+# Do not use `pnpm exec` here: GUI git / minimal PATH often has no pnpm. The shim only needs `node`.
+exec ./node_modules/.bin/commitlint --edit "$1"

@@ -1,0 +1,19 @@
+# Local: build the image from the repo and run the signaling server.
+# From repository root:
+#   docker compose -f docker/signaling-server/compose.build.yaml up --build
+name: guardedsleep-signaling
+
+services:
+  signaling:
+    build:
+      context: ../..
+      dockerfile: docker/signaling-server/Dockerfile
+    image: guardedsleep-signaling:local
+    ports:
+      - "${SIGNALING_PORT:-8787}:${SIGNALING_INTERNAL_PORT:-8787}"
+    environment:
+      PORT: "${SIGNALING_INTERNAL_PORT:-8787}"
+      SIGNALING_ALLOWED_ORIGINS: "${SIGNALING_ALLOWED_ORIGINS:-http://127.0.0.1,http://localhost}"
+      SIGNALING_MAX_PARENTS: "${SIGNALING_MAX_PARENTS:-}"
+      SIGNALING_HELLO_TIMEOUT_MS: "${SIGNALING_HELLO_TIMEOUT_MS:-}"
+    restart: unless-stopped

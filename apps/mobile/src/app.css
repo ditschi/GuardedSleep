@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-zinc-950 text-zinc-100 antialiased;
+}
+
+/* Baby unit: secondary “still alone” cue after prolonged disconnect (ADR-013 / failure-model F-1). */
+@keyframes guardedsleep-slow-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgb(248 113 113 / 0.35);
+  }
+  50% {
+    opacity: 0.72;
+    box-shadow: 0 0 0 6px rgb(248 113 113 / 0);
+  }
+}
+
+.guardedsleep-slow-pulse {
+  animation: guardedsleep-slow-pulse 2.8s ease-in-out infinite;
+}

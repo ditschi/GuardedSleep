@@ -1,0 +1,8 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "version": "0.2",
+  "import": ["./cspell-i18n-terms.json", "@cspell/dict-es-es/cspell-ext.json"],
+  "language": "es,en",
+  "files": ["apps/mobile/src/lib/i18n/messages/es.json"],
+  "ignoreRegExpList": ["/{{[^}]+}}/g"]
+}

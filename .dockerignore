@@ -1,0 +1,16 @@
+# Smaller build context for signaling-server image (context = repo root)
+node_modules
+**/node_modules
+.git
+.cursor
+.idea
+**/.svelte-kit
+**/build
+**/dist
+**/coverage
+docs
+.devcontainer
+*.md
+!README.md
+.env
+.env.*

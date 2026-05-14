@@ -1,0 +1,64 @@
+# GuardedSleep full stack — pulls pre-built images from GHCR.
+# See ADR-008 for the tag strategy and docs/contributing/mobile-web-docker.md for end-to-end docs.
+#
+# Minimum usage (no clone of the repo required):
+#   1. Download this file and `.env.ghcr.example` to an empty directory.
+#   2. `cp .env.ghcr.example .env`, edit at least GUARDEDSLEEP_OWNER + SIGNALING_ALLOWED_ORIGINS.
+#   3. `docker compose -f compose.ghcr.yaml --env-file .env pull`
+#   4. `docker compose -f compose.ghcr.yaml --env-file .env up -d`
+#
+# Tags you will typically pin:
+#   - SIGNALING_TAG / WEB_TAG = latest   → most recent stable release (Release Please tag)
+#                              dev       → most recent commit on `main` (may be broken)
+#                              v0.1.0    → reproducible deploy of a specific release
+#
+# Note: until the project has cut its first release, `:latest` does not exist yet.
+# Use `:dev` in the meantime (see ADR-008).
+name: guardedsleep
+
+services:
+  signaling:
+    image: ghcr.io/${GUARDEDSLEEP_OWNER:?Set GUARDEDSLEEP_OWNER to the GitHub owner/org that publishes the images}/guardedsleep-signaling:${SIGNALING_TAG:-latest}
+    pull_policy: ${PULL_POLICY:-always}
+    ports:
+      - "${SIGNALING_PORT:-8787}:8787"
+    environment:
+      PORT: "8787"
+      # Required in production. List every browser Origin the PWA will be loaded from.
+      # Native Capacitor clients (no Origin header) remain accepted when the allowlist is set.
+      SIGNALING_ALLOWED_ORIGINS: "${SIGNALING_ALLOWED_ORIGINS:?Set SIGNALING_ALLOWED_ORIGINS to your PWA origins, e.g. https://app.example.com}"
+      SIGNALING_MAX_PARENTS: "${SIGNALING_MAX_PARENTS:-}"
+      SIGNALING_HELLO_TIMEOUT_MS: "${SIGNALING_HELLO_TIMEOUT_MS:-}"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:'+(process.env.PORT||8787)).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  web:
+    image: ghcr.io/${GUARDEDSLEEP_OWNER:?Set GUARDEDSLEEP_OWNER}/guardedsleep-web:${WEB_TAG:-latest}
+    pull_policy: ${PULL_POLICY:-always}
+    ports:
+      - "${WEB_PORT:-8080}:80"
+      - "${WEB_HTTPS_PORT:-8443}:443"
+    depends_on:
+      signaling:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+# Reverse proxy / TLS:
+#   The published web image generates a self-signed TLS cert at build time covering
+#   localhost + 127.0.0.1 only. For real domains use Traefik or another reverse proxy
+#   in front of this stack — see compose.web-and-signaling.traefik.example.yaml for a
+#   labelled example (adapted from local-build to image: references is trivial).

@@ -1,0 +1,41 @@
+{
+  "name": "guardedsleep",
+  "private": true,
+  "description": "GuardedSleep – Privacy Baby Monitor (monorepo root; app packages under apps/ later)",
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "pre-commit run --all-files",
+    "lint:cspell-i18n": "bash scripts/cspell-i18n.sh",
+    "prepare": "husky",
+    "build": "pnpm -r build",
+    "test": "pnpm --filter @guardedsleep/protocol build && pnpm -r test",
+    "check": "pnpm -r check --if-present",
+    "audit": "pnpm audit --audit-level=high",
+    "dev:local": "pnpm --filter @guardedsleep/protocol build && concurrently -n signaling,mobile -c blue,green \"pnpm --filter @guardedsleep/signaling-server dev\" \"pnpm --filter @guardedsleep/mobile dev\"",
+    "e2e": "pnpm --filter @guardedsleep/e2e test",
+    "release:lint": "commitlint --from=${RELEASE_LINT_FROM:-origin/main} --to=HEAD --verbose",
+    "release:preview": "npx --yes release-please release-pr --token=$GH_TOKEN --repo-url=$GITHUB_REPOSITORY --config-file=release-please-config.json --manifest-file=.release-please-manifest.json --dry-run --debug"
+  },
+  "pnpm": {
+    "overrides": {
+      "cookie": ">=0.7.0"
+    }
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.6.0",
+    "@commitlint/config-conventional": "^19.6.0",
+    "@cspell/dict-de-de": "^4.1.2",
+    "@cspell/dict-es-es": "^3.0.8",
+    "@cspell/dict-fr-fr": "^2.3.2",
+    "concurrently": "^9.2.1",
+    "cspell": "^10.0.0",
+    "husky": "^9.1.7",
+    "prettier": "^3.4.2",
+    "prettier-plugin-svelte": "^3.5.1"
+  }
+}
