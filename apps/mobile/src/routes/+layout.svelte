@@ -14,11 +14,7 @@
     resolveThemeDark,
     THEME_CHANGE_EVENT,
   } from "$lib/app-preferences.js";
-  import {
-    ensureAndroidBackButtonRegistered,
-    resolveBackFallback,
-    shouldShowAppBack,
-  } from "$lib/ui/app-navigation.js";
+  import { resolveBackFallback, shouldShowAppBack } from "$lib/ui/app-navigation.js";
   import { rawBundles } from "$lib/i18n/bundles";
   import { MASTER_LOCALE, STORAGE_KEY, type SupportedLocale } from "$lib/i18n/config";
   import { setI18nContext } from "$lib/i18n/context";
@@ -107,10 +103,6 @@
       window.removeEventListener(THEME_CHANGE_EVENT, onThemeChange);
       window.removeEventListener("storage", onStorage);
     };
-  });
-
-  $effect(() => {
-    if (browser) ensureAndroidBackButtonRegistered();
   });
 </script>
 

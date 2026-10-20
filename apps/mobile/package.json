@@ -19,24 +19,15 @@
     "pretest": "pnpm run i18n:gen && pnpm run core:ensure",
     "test": "vitest run",
     "test:watch": "vitest",
-    "cap:sync": "cap sync",
-    "cap:open:android": "cap open android",
     "core:ensure": "test -f ../../packages/core-wasm/pkg/guardedsleep_core_bg.wasm -a -f ../../packages/core-wasm/pkg-node/guardedsleep_core.js || pnpm --filter @guardedsleep/core-wasm build"
   },
   "dependencies": {
-    "@capacitor/app": "^7.0.1",
-    "@capacitor/core": "^7.4.4",
-    "@capacitor/local-notifications": "^7.0.0",
-    "@capacitor/network": "7.0.4",
-    "@capawesome-team/capacitor-android-foreground-service": "^7.0.1",
     "@guardedsleep/core-wasm": "workspace:*",
     "@guardedsleep/protocol": "workspace:*",
     "@zxing/browser": "^0.1.5",
     "qrcode": "^1.5.4"
   },
   "devDependencies": {
-    "@capacitor/android": "^7.4.4",
-    "@capacitor/cli": "^7.4.4",
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.57.0",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",

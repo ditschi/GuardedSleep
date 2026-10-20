@@ -48,7 +48,7 @@ export function detectLanIpv4OrThrow(): string {
   return ip;
 }
 
-/** Prefer explicit override (hybrid / CI), else auto-detect. */
+/** Prefer explicit override (CI), else auto-detect. */
 export function resolveLanIpv4(): string | null {
   const override = process.env.GUARDEDSLEEP_LAN_IP?.trim();
   if (override && isUsableLanIpv4(override)) return override;

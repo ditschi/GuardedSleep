@@ -1,7 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
-  import { GuardedSleepNative, isNativeAndroid } from "$lib/android/guarded-sleep-native.js";
   import { readBabyUnitPreferences } from "$lib/audio/baby-unit-preferences.js";
   import {
     HEARTBEAT_INTERVAL_CHOICES,
@@ -198,7 +197,7 @@
           {i18n?.t("settings.sectionBaby") ?? ""}
         </h3>
         <BabySoundDetectionSettings
-          showKiosk={isNativeAndroid()}
+          showKiosk={false}
           bind:threshold={babyThreshold}
           bind:holdMs={babyHoldMs}
           bind:kioskImmersive={babyKiosk}
@@ -216,17 +215,7 @@
           {i18n?.t("settings.sectionBattery") ?? ""}
         </h3>
         <p class="text-sm text-zinc-500">{i18n?.t("settings.batteryIntro") ?? ""}</p>
-        {#if isNativeAndroid()}
-          <button
-            type="button"
-            class="rounded-lg border border-zinc-600 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-900"
-            onclick={() => GuardedSleepNative.openBatterySettings()}
-          >
-            {i18n?.t("settings.batteryOpen") ?? ""}
-          </button>
-        {:else}
-          <p class="text-xs text-zinc-600">{i18n?.t("settings.batteryWebHint") ?? ""}</p>
-        {/if}
+        <p class="text-xs text-zinc-600">{i18n?.t("settings.batteryWebHint") ?? ""}</p>
       </section>
     </div>
   {:else}

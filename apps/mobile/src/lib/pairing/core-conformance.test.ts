@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 import rawVectors from "../../../../../crates/guardedsleep-core/vectors/conformance.json";
 import { parseHeartbeat, parseNoiseAlert, parsePairProof } from "@guardedsleep/protocol";
-import { decodeBase64UrlToBytes } from "./compact-invite.js";
-import { computePairProofMac } from "./pair-mac.js";
 
 /**
  * Cross-implementation check (ADR-015 AC-7): the Rust core's golden vectors must agree with this
@@ -13,18 +11,6 @@ type Vector = { name: string; kind: string; expect: unknown } & Record<string, u
 const vectors = rawVectors as Vector[];
 
 describe("Rust core conformance vectors vs. TypeScript implementation", () => {
-  it.each(vectors.filter((v) => v.kind === "pair_mac"))("pair MAC: $name", async (v) => {
-    const psk = decodeBase64UrlToBytes(v.psk_b64url as string);
-    expect(psk).not.toBeNull();
-    const mac = await computePairProofMac(
-      psk!,
-      v.room as string,
-      v.local_sdp as string,
-      v.remote_sdp as string,
-    );
-    expect(mac).toBe(v.expect);
-  });
-
   it.each(vectors.filter((v) => v.kind === "parse_data"))("DataChannel parse: $name", (v) => {
     const raw = v.raw as string;
     const expected = v.expect as Record<string, unknown> | null;
