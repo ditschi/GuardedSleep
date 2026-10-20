@@ -1,33 +1,24 @@
 name: Setup Rust toolchain
 description: >
-  rustup toolchain pinned like docker/android-native-build/Dockerfile, plus optional targets and
-  wasm-bindgen-cli pinned to the version in Cargo.lock (what scripts/core-build.sh expects).
+  Installs the toolchain, components and targets pinned in rust-toolchain.toml, restores the cargo
+  cache (saved only outside pull requests) and optionally wasm-bindgen-cli at the Cargo.lock version
+  (what scripts/core-build.sh expects).
 inputs:
-  version:
-    description: Rust toolchain version
-    default: "1.99.1"
-  targets:
-    description: Space-separated extra rustup targets
-    default: ""
   wasm-bindgen:
     description: Install wasm-bindgen-cli at the Cargo.lock version ("true" / "false")
     default: "false"
 runs:
   using: composite
   steps:
-    - name: rustup toolchain
+    - name: rustup toolchain (from rust-toolchain.toml)
       shell: bash
-      env:
-        RUST_VERSION: ${{ inputs.version }}
-        RUST_TARGETS: ${{ inputs.targets }}
       run: |
-        rustup toolchain install "$RUST_VERSION" --profile minimal --component clippy,rustfmt
-        rustup default "$RUST_VERSION"
-        if [[ -n "$RUST_TARGETS" ]]; then
-          # shellcheck disable=SC2086
-          rustup target add $RUST_TARGETS
-        fi
-        echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+        rustup toolchain install
+        rustup show
+    - name: Cargo cache
+      uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      with:
+        save-if: ${{ github.event_name != 'pull_request' }}
     - name: wasm-bindgen-cli version (from Cargo.lock)
       if: inputs.wasm-bindgen == 'true'
       id: wb
@@ -35,14 +26,23 @@ runs:
       run: |
         v="$(awk '/^name = "wasm-bindgen"$/{getline; gsub(/version = |"/,""); print; exit}' Cargo.lock)"
         echo "version=$v" >> "$GITHUB_OUTPUT"
-    - name: Cache wasm-bindgen-cli
+        echo "rust=$(rustc --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+    - name: Restore wasm-bindgen-cli
       if: inputs.wasm-bindgen == 'true'
       id: wb-cache
-      uses: actions/cache@v4
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ~/.cargo/bin/wasm-bindgen
-        key: wasm-bindgen-cli-${{ steps.wb.outputs.version }}-rust-${{ inputs.version }}
+        key: wasm-bindgen-cli-${{ steps.wb.outputs.version }}-rust-${{ steps.wb.outputs.rust }}
     - name: Install wasm-bindgen-cli
       if: inputs.wasm-bindgen == 'true' && steps.wb-cache.outputs.cache-hit != 'true'
       shell: bash
-      run: cargo install --locked wasm-bindgen-cli --version "${{ steps.wb.outputs.version }}"
+      env:
+        WB_VERSION: ${{ steps.wb.outputs.version }}
+      run: cargo install --locked wasm-bindgen-cli --version "$WB_VERSION"
+    - name: Save wasm-bindgen-cli
+      if: inputs.wasm-bindgen == 'true' && steps.wb-cache.outputs.cache-hit != 'true' && github.event_name != 'pull_request'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.cargo/bin/wasm-bindgen
+        key: wasm-bindgen-cli-${{ steps.wb.outputs.version }}-rust-${{ steps.wb.outputs.rust }}

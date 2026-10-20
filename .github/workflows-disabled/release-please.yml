@@ -1,3 +1,5 @@
+# DISABLED: release-please returns at beta (ADR-020 §10). Alpha releases are manual tags.
+# Move back to .github/workflows/ when re-enabling, and re-check the permissions and SHA pins.
 # Release automation — see ADR-006 and docs/contributing/release-and-changelog.md.
 # Reads Conventional Commits since the last tag, maintains a "release PR" that
 # bumps versions, updates CHANGELOG.md, and (on merge) creates git tags + GitHub Releases.
@@ -35,7 +37,7 @@ jobs:
     steps:
       - name: Run release-please
         id: rp
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           target-branch: ${{ inputs.target-branch || 'main' }}

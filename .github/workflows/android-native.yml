@@ -1,20 +1,27 @@
-# ADR-015/019 native stack: Rust core + native Android alpha app.
-#   core     - fmt, clippy, unit/property tests, golden vectors, host simulation (Rust) + WASM build and
-#              vectors (AC-5)
+# ADR-015/019/020 native stack: Rust core + native Android alpha app.
 #   android  - cargo-ndk libs, Kotlin bindings, :core and :app JVM tests, Roborazzi screenshot
 #              verification, debug + release APKs, core size (AC-6), release APK free of test hooks
-#              (ADR-016)
-#   gate     - scripts/poc/local-gate.sh: two emulators, forced Doze, alerts (AC-1 ... AC-4); manual or
-#              nightly only
+#              (ADR-016). Rust-only checks (fmt, clippy, vectors, simulation, WASM) run in ci.yml.
+#   gate     - `just gate` (scripts/poc/local-gate.sh): two emulators, forced Doze, alerts
+#              (AC-1 ... AC-4 [+AC-10]). Runs on PRs touching Android or the core, nightly and on
+#              dispatch; required on release builds (ADR-020 §9).
+#
+# Flake quarantine (ADR-020 §9): a test that flakes twice in seven days is quarantined with a
+# tracking issue. Jobs are never retried as a whole, so do not add retry wrappers here.
+#
+# Path-filtered workflows cannot be required checks, so this workflow is not part of `ci-ok`.
 name: android-native
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
     paths:
       - "crates/**"
       - "Cargo.toml"
       - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "mise.toml"
+      - "justfile"
       - "apps/android/**"
       - "locales/**"
       - "scripts/core-build.sh"
@@ -29,6 +36,9 @@ on:
       - "crates/**"
       - "Cargo.toml"
       - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "mise.toml"
+      - "justfile"
       - "apps/android/**"
       - "locales/**"
       - "scripts/core-build.sh"
@@ -46,6 +56,8 @@ on:
         description: "Forced Doze duration for AC-2"
         default: "30"
 
+permissions: {}
+
 concurrency:
   group: android-native-${{ github.ref }}
   cancel-in-progress: true
@@ -55,46 +67,30 @@ defaults:
     shell: bash
 
 env:
+  GS_STRICT: "1"
   CORE_BUILD_NATIVE: "1"
   CARGO_HOME_OVERRIDE: /home/runner/.cargo
 
 jobs:
-  core:
-    name: rust core + wasm
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-rust
-        with:
-          targets: wasm32-unknown-unknown
-          wasm-bindgen: "true"
-      - name: Test core (fmt, clippy, tests, golden vectors)
-        run: scripts/core-build.sh test
-      - name: Host simulation (AC-9/AC-10)
-        run: cargo test -p guardedsleep-sim
-      - name: Build WASM
-        run: scripts/core-build.sh wasm
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: WASM conformance (AC-5)
-        run: node --test crates/guardedsleep-core/js/*.test.mjs
-
   android:
     name: android core + alpha app
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
+        with:
+          cache_save: ${{ github.event_name != 'pull_request' }}
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: "21"
-      - uses: android-actions/setup-android@v4
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
       - uses: ./.github/actions/setup-rust
-        with:
-          targets: aarch64-linux-android x86_64-linux-android
       - name: cargo-ndk + Android SDK/NDK
         run: |
           cargo install --locked cargo-ndk@4.1.2
@@ -102,8 +98,10 @@ jobs:
           sdkmanager --install "ndk;30.0.16248370" "platforms;android-37.0" "build-tools;36.0.0" >/dev/null
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/30.0.16248370" >> "$GITHUB_ENV"
       - name: Build core for Android + Kotlin bindings
-        run: scripts/core-build.sh android
-      - uses: gradle/actions/setup-gradle@v4
+        run: just build-android
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
       - name: Unit tests (AC-5), screenshots, debug + release APKs
         working-directory: apps/android
         run: >-
@@ -113,7 +111,7 @@ jobs:
         run: scripts/poc/size-check.sh
       - name: No test-only surfaces in release APK (ADR-016)
         run: scripts/poc/release-check.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: guardedsleep-alpha-debug-apk
           path: apps/android/app/build/outputs/apk/debug/app-debug.apk
@@ -121,16 +119,23 @@ jobs:
 
   gate:
     name: emulator gate (AC-1 ... AC-4)
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     needs: android
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
+    permissions:
+      contents: read
     env:
-      DOZE_MINUTES: ${{ github.event.inputs.doze_minutes || '30' }}
+      DOZE_MINUTES: ${{ github.event.inputs.doze_minutes || (github.event_name == 'pull_request' && '2' || '30') }}
       APK: ${{ github.workspace }}/target/apk/app-debug.apk
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
+        with:
+          install_args: just
+          cache_save: ${{ github.event_name != 'pull_request' }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: guardedsleep-alpha-debug-apk
           path: target/apk
@@ -140,10 +145,10 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
       - name: Gate (emulators, signaling and TURN in containers)
-        run: scripts/poc/local-gate.sh
+        run: just gate
       - name: Upload gate results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: poc-gate-results
           path: target/poc-gate

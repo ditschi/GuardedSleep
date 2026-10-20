@@ -1,0 +1,45 @@
+# Daily advisory scan. Advisories appear without any change to the repo, so a push-triggered run
+# would miss them (ADR-020 §11). Failures notify the owner through the normal Actions mail.
+name: audit
+
+on:
+  schedule:
+    - cron: "41 4 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: audit
+  cancel-in-progress: false
+
+jobs:
+  rust:
+    name: cargo-deny advisories
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
+        with:
+          install_args: cargo-deny
+      - run: cargo deny check advisories
+
+  npm:
+    name: pnpm audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
+        with:
+          install_args: node pnpm
+      - run: pnpm audit --audit-level=high
