@@ -22,27 +22,3 @@ export function hasLeafPath(obj: unknown, path: string): boolean {
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
-
-/** Dot paths to string leaves (skips non-plain nested values). */
-export function flattenMessagePaths(obj: unknown, prefix = ""): string[] {
-  if (!isPlainObject(obj)) return [];
-  const keys: string[] = [];
-  for (const [k, v] of Object.entries(obj)) {
-    const path = prefix ? `${prefix}.${k}` : k;
-    if (typeof v === "string") {
-      keys.push(path);
-    } else if (isPlainObject(v)) {
-      keys.push(...flattenMessagePaths(v, path));
-    }
-  }
-  return keys;
-}
-
-const PLACEHOLDER = /\{\{(\w+)\}\}/g;
-
-export function interpolate(template: string, params?: Record<string, string | number>): string {
-  if (!params) return template;
-  return template.replace(PLACEHOLDER, (_, name: string) =>
-    params[name] !== undefined ? String(params[name]) : `{{${name}}}`,
-  );
-}

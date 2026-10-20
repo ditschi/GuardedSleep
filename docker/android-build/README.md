@@ -24,7 +24,7 @@ docker compose -f docker/android-build/compose.yaml run --rm apk
 
 Debug APK path:
 
-`apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk`
+`apps/mobile/android/app/build/outputs/apk/debug/guardedsleep-debug-v*.apk`
 
 **Release build:** the default service runs `assembleDebug` only. After [signing](https://developer.android.com/studio/publish/app-signing) is configured in the Gradle project, run e.g.:
 

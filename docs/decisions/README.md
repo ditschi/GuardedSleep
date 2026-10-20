@@ -84,6 +84,12 @@ Example: `ADR-001-app-platform-choice.md`
 | [ADR-011](ADR-011-audio-routing-parent-side.md)                     | Parent-side alert audio routing + call interruption                                         | PROPOSED | 2026-05-13 |
 | [ADR-012](ADR-012-connection-model-offline-lan-and-handoff.md)      | Connection model: offline-LAN signaling, path selection, network handoff (precises ADR-003) | PROPOSED | 2026-05-13 |
 | [ADR-013](ADR-013-connection-status-observability-and-copy.md)      | Connection-status ambient bar, escalation timing, symmetric copy on both devices            | PROPOSED | 2026-05-13 |
+| [ADR-014](ADR-014-open-source-license-agpl-and-trademark.md)        | Open-source license: AGPL-3.0-or-later + trademark policy                                   | DECIDED  | 2026-07-07 |
+| [ADR-015](ADR-015-native-clients-with-shared-rust-core.md)          | Native clients (Compose / SwiftUI / Svelte) with shared Rust core; PoC gate incl. Maestro   | PROPOSED | 2026-10-19 |
+| [ADR-016](ADR-016-test-strategy-local-virtual-physical.md)          | Test strategy: local → virtual → physical, device-agnostic runner, optional cloud farm      | PROPOSED | 2026-10-19 |
+| [ADR-017](ADR-017-link-recovery-and-connection-supervision.md)      | Link recovery: core `Link` supervisor, new attempt per recovery, server liveness            | DECIDED  | 2026-10-20 |
+| [ADR-018](ADR-018-alpha-milestone-scope-and-trust-features.md)      | Alpha milestone scope, trust features, child-side silence (DND) guarantee                   | DECIDED  | 2026-10-20 |
+| [ADR-019](ADR-019-language-repository-and-client-policy.md)         | Language by layer, Rust protocol source, polyglot monorepo, permanent full web client       | DECIDED  | 2026-10-20 |
 
 ## Discarded Options Tracking
 

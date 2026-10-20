@@ -4,6 +4,7 @@
   "words": [
     "GuardedSleep",
     "WebRTC",
+    "webrtc",
     "WebSocket",
     "ws",
     "wss",
@@ -76,6 +77,12 @@
     "Deutsch",
     "appariage",
     "babyphone",
-    "inmersivo"
+    "inmersivo",
+    "desconexión",
+    "conéctala",
+    "desactívela",
+    "Reconectando",
+    "empárelas",
+    "enchúfela"
   ]
 }

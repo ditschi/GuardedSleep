@@ -1,0 +1,59 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "acknowledge-then-down",
+  "description": "The parent acknowledges the alarm; the sound level holds at 2 for 5 min, then jumps straight to level 3.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "kill_process",
+      "peer": "baby"
+    },
+    {
+      "at": 95000,
+      "do": "acknowledge",
+      "peer": "parent"
+    },
+    {
+      "at": 400000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "event": "link_lost",
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "event": "alarm_acknowledged",
+      "count": 1,
+      "within_ms": [95000, 95500]
+    },
+    {
+      "peer": "parent",
+      "max_level": 2,
+      "within_ms": [95000, 394000]
+    },
+    {
+      "peer": "parent",
+      "reaches_level": 3,
+      "within_ms": [394000, 400000]
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "stale-parent-socket-rejoin",
+  "description": "Same for the parent: PARENT_CAP is retryable until the stale parent socket is evicted.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "network_down",
+      "peer": "parent"
+    },
+    {
+      "at": 22000,
+      "do": "restart_process",
+      "peer": "parent"
+    },
+    {
+      "at": 26000,
+      "do": "network_up",
+      "peer": "parent"
+    },
+    {
+      "at": 100000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 100000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 100000
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    }
+  ]
+}

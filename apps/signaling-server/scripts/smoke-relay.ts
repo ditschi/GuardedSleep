@@ -15,11 +15,35 @@ import WebSocket from "ws";
 
 const ROOM = "smoke-room";
 
+type Waiter = { resolve: (m: string) => void; reject: (e: unknown) => void };
+const inboxes = new WeakMap<
+  InstanceType<typeof WebSocket>,
+  { queued: string[]; waiters: Waiter[] }
+>();
+
+/**
+ * Resolves with the next unread message. Concurrent calls get consecutive messages; a bare
+ * `ws.once("message")` per call would hand the same first message to every pending reader.
+ */
 function readOne(ws: InstanceType<typeof WebSocket>): Promise<string> {
-  return new Promise((resolve, reject) => {
-    ws.once("message", (d) => resolve(String(d)));
-    ws.once("error", reject);
-  });
+  let inbox = inboxes.get(ws);
+  if (!inbox) {
+    const box = { queued: [] as string[], waiters: [] as Waiter[] };
+    ws.on("message", (d) => {
+      const w = box.waiters.shift();
+      if (w) w.resolve(String(d));
+      else box.queued.push(String(d));
+    });
+    ws.on("error", (e) => {
+      for (const w of box.waiters.splice(0)) w.reject(e);
+    });
+    inboxes.set(ws, box);
+    inbox = box;
+  }
+  const next = inbox.queued.shift();
+  if (next !== undefined) return Promise.resolve(next);
+  const box = inbox;
+  return new Promise((resolve, reject) => box.waiters.push({ resolve, reject }));
 }
 
 function pickFreePort(): Promise<number> {
@@ -127,6 +151,24 @@ async function main(): Promise<void> {
 
     a.close();
     b.close();
+
+    const v3Room = "smokeSmokeSmokeSmoke22";
+    const c = new WebSocket(base);
+    await once(c, "open");
+    const cWelcome = readOne(c);
+    c.send(JSON.stringify({ type: "hello", role: "baby", roomId: v3Room, protocolVersion: 3 }));
+    const wc = JSON.parse(await cWelcome) as { type: string };
+    if (wc.type !== "welcome") throw new Error(`v3 welcome: ${JSON.stringify(wc)}`);
+    const d = new WebSocket(base);
+    await once(d, "open");
+    const dErr = readOne(d);
+    d.send(JSON.stringify({ type: "hello", role: "parent", roomId: v3Room, protocolVersion: 2 }));
+    const ed = JSON.parse(await dErr) as { type: string; code?: string };
+    if (ed.type !== "error" || ed.code !== "UNSUPPORTED_PROTOCOL") {
+      throw new Error(`v2 in v3 room: ${JSON.stringify(ed)}`);
+    }
+    c.close();
+    d.close();
   } finally {
     child.kill("SIGTERM");
     await once(child, "close").catch(() => {});

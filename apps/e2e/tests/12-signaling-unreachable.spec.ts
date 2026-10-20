@@ -1,25 +1,22 @@
 import { expect, test } from "@playwright/test";
-import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { fixturesDir, launchDualContexts } from "./utils/dual-context";
-import { babyDeepLink, parentDeepLink, startSession } from "./utils/pairing";
-import { waitForEitherFailed } from "./utils/probes";
+import { pairDual } from "./utils/pairing";
+import { readBar, waitForCause, waitForLevel } from "./utils/probes";
 
-test("signaling: unreachable WebSocket URL yields failure", async () => {
-  const room = `e2e-${randomUUID().slice(0, 8)}`;
-  const badSignal = "ws://127.0.0.1:19999";
+test("signaling: an unreachable server escalates and names the cause, never gives up", async () => {
+  test.setTimeout(150_000);
   const dual = await launchDualContexts({
     babyFakeWav: join(fixturesDir, "silence-30s.wav"),
     parentFakeWav: join(fixturesDir, "silence-30s.wav"),
+    signalUrl: "ws://127.0.0.1:19999",
   });
   try {
-    await dual.babyPage.goto(babyDeepLink(room, badSignal));
-    await dual.parentPage.goto(parentDeepLink(room, badSignal));
-
-    await startSession(dual.babyPage);
-    await startSession(dual.parentPage);
-
-    await waitForEitherFailed(dual.babyPage, dual.parentPage, 35_000);
+    await pairDual(dual);
+    await waitForLevel(dual.parentPage, 1, 40_000);
+    await waitForCause(dual.parentPage, "server_unreachable", 100_000);
+    expect((await readBar(dual.parentPage)).level).toBeGreaterThanOrEqual(2);
+    await expect(dual.parentPage.getByTestId("link_try_now")).toBeVisible();
   } finally {
     await dual.dispose();
   }

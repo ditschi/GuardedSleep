@@ -1,5 +1,6 @@
-# Debug APK build (Capacitor + Gradle). Uploads `app-debug.apk` as a workflow artifact.
-# Triggers: PR, push to main/master/develop (path-filtered), tag mobile-v* (Release Please), manual.
+# legacy Capacitor build (ADR-019); do not extend
+# Debug APK build (Capacitor + Gradle). Uploads `guardedsleep-debug-v*.apk` as a workflow artifact.
+# Triggers: PR or push to main/master/develop touching apps/mobile/android/**, manual.
 #
 # Why debug only: release APKs/AABs need a private signing key. CI must not embed keystores or
 # signing passwords; a debug build is still a normal installable APK (debug keystore) and is
@@ -12,19 +13,11 @@ name: android
 on:
   push:
     branches: [main, master, develop]
-    tags:
-      - "mobile-v*"
     paths:
-      - "apps/mobile/**"
-      - "packages/protocol/**"
-      - "pnpm-lock.yaml"
-      - ".github/workflows/android.yml"
+      - "apps/mobile/android/**"
   pull_request:
     paths:
-      - "apps/mobile/**"
-      - "packages/protocol/**"
-      - "pnpm-lock.yaml"
-      - ".github/workflows/android.yml"
+      - "apps/mobile/android/**"
   workflow_dispatch:
 
 concurrency:

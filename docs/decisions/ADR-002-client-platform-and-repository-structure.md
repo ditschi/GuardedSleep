@@ -1,6 +1,6 @@
 # ADR-002: Client Platform, UI Stack, and Repository Structure
 
-- Status: DECIDED
+- Status: DECIDED — partly SUPERSEDED: language, repository-layout and settings-storage rows by [ADR-019](ADR-019-language-repository-and-client-policy.md) (2026-10-20); client platform under supersession by [ADR-015](ADR-015-native-clients-with-shared-rust-core.md) (PROPOSED). Do not extend the Capacitor path.
 - Date: 2026-04-15
 - Deciders: Technical direction + user acceptance of stack
 

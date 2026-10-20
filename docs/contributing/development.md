@@ -22,6 +22,19 @@ The dev image includes **Eclipse Temurin JDK 21** (copied into `/opt/java/openjd
 - **Shell `PATH`:** the Node dev image loads **nvm** in login shells; the Dockerfile appends `JAVA_HOME` / `ANDROID_HOME` entries to `/etc/profile.d` and `~/.bashrc` so `java` and `./gradlew` work in integrated terminals.
 - **Optional:** [docker/android-build](../../docker/android-build/README.md) remains useful for **CI** or host-only Gradle without the full dev image.
 
+### Native and core development
+
+The Dev Container also carries the native toolchain (ADR-015, ADR-019), mirroring `docker/android-native-build/Dockerfile`: Rust 1.99.1 (`wasm32-unknown-unknown`, `aarch64-linux-android`, `x86_64-linux-android`, clippy, rustfmt), `cargo-ndk` 4.1.2, Android NDK `30.0.16248370`, platform `android-37.0` with build-tools 36.0.0, and [`just`](https://github.com/casey/just). `CORE_BUILD_NATIVE=1` is preset, so `scripts/core-build.sh` and `scripts/gradle.sh` run in place instead of starting the build image (there is no nested Docker).
+
+```bash
+just test    # cargo workspace, WASM + node conformance, pnpm tests, Android :core/:app unit tests
+just lint    # pre-commit, cargo fmt + clippy, UI-literal lint, i18n check
+just build   # web build, Android debug + release APKs, release/size checks
+just gate    # emulator gate (needs KVM and Docker, so run it on the host)
+```
+
+On a host without the Dev Container only Docker and Node/corepack are needed: `scripts/cargo.sh`, `scripts/core-build.sh` and `scripts/gradle.sh` fall back to the `guardedsleep-android-native-build:local` image (built on first use) when `cargo` or `CORE_BUILD_NATIVE=1` is missing. Install `just` from your package manager or `cargo install --locked just`. `scripts/gradle.sh` serialises Gradle runs with `flock target/.gradle.lock`.
+
 ### Docker Compose without opening the IDE in Dev Container mode
 
 If you have **Docker** and **Docker Compose** but do not want to attach the editor (or you want a one-off build/lint in the same environment as CI/Dev Container):
@@ -164,6 +177,7 @@ Do **not** run `pre-commit install`. File checks are triggered by **Husky** (`.h
 | `pnpm run audit`        | Reports known dependency issues (`--audit-level=high`; CI runs the same).                                                                             |
 | `pnpm test`             | Builds `@guardedsleep/protocol` to `dist/`, then runs Vitest in all workspace packages (`packages/protocol`, `apps/signaling-server`, `apps/mobile`). |
 | `pnpm run e2e`          | Playwright browser E2E (`apps/e2e`); starts `dev:local` via Playwright `webServer` (see `apps/e2e/README.md`).                                        |
+| `pnpm run e2e:hybrid`   | Optional Android emulator baby + browser parent smoke (`GUARDEDSLEEP_HYBRID_E2E=1`; see `apps/e2e/README.md`).                                        |
 | `pnpm run build`        | Runs each package `build` script (protocol `tsc`, mobile static site, signaling-server `tsc`).                                                        |
 
 From the repo root, targeted builds:
@@ -209,10 +223,28 @@ pnpm --filter @guardedsleep/mobile preview
 **Docker (no Node on host):** build and run the **production-like** static stack (nginx + signaling) from the current revision — see [docker/stack/README.md](../../docker/stack/README.md) and [mobile-web-docker.md](mobile-web-docker.md):
 
 ```bash
+# Phone/tablet on same Wi-Fi: auto LAN IP + stack (recommended until community signaling exists)
+pnpm run stack:lan
+
+# Single-machine / localhost only:
 docker compose -f docker/stack/compose.yaml up --build
 ```
 
-(Optional: `docker/stack/.env` + `--env-file docker/stack/.env` for LAN or non-default ports — see [docker/stack/README.md](../../docker/stack/README.md).)
+For manual LAN IP: `pnpm run stack:lan:env` writes `docker/stack/.env`; then `pnpm run stack:up`.
+
+### Android debug APK: self-signed WSS (Docker `wss://…:8443`)
+
+The **browser** WebSocket API rejects self-signed TLS in the native Capacitor WebView. **Debug APKs** (`assembleDebug`) route `wss://` signaling through an **OkHttp** client that trusts self-signed certificates on **private LAN hosts only** (`10.x`, `172.16–31.x`, `192.168.x`, loopback). **Release APKs** do not enable this (`ALLOW_DEV_WSS_TRUST=false`).
+
+Build with dev hints baked in (Docker `stack:lan` sets this automatically):
+
+```bash
+VITE_DEV_CONNECT_HINTS=true pnpm --filter @guardedsleep/mobile build
+pnpm --filter @guardedsleep/mobile exec cap sync android
+cd apps/mobile/android && ./gradlew assembleDebug
+```
+
+Then set signaling to `wss://<LAN-IP>:8443/signaling` in app Settings (or use the value from `pnpm run stack:lan:env`). Plain `ws://<LAN-IP>:8787` remains a valid alternative without TLS.
 
 ### Signaling server smoke test
 

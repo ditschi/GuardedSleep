@@ -1,0 +1,74 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "ac4-baby-killed",
+  "description": "AC-4: the baby process dies; the parent raises the connection-lost alarm within alarm_after + 2 s of the last sign of life.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "kill_process",
+      "peer": "baby"
+    },
+    {
+      "at": 130000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 15000
+    },
+    {
+      "peer": "parent",
+      "event": "link_lost",
+      "count": 1,
+      "since_last_contact_ms": [60000, 62000]
+    },
+    {
+      "peer": "parent",
+      "state": "reconnecting",
+      "at_ms": 125000
+    },
+    {
+      "peer": "parent",
+      "reaches_level": 2,
+      "within_ms": [60000, 130000]
+    },
+    {
+      "peer": "parent",
+      "max_level": 1,
+      "within_ms": [0, 60000]
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    }
+  ],
+  "export_traces": [
+    {
+      "peer": "parent",
+      "id": "sim-ac4-baby-killed-parent"
+    }
+  ]
+}

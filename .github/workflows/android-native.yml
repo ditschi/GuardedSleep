@@ -1,0 +1,150 @@
+# ADR-015/019 native stack: Rust core + native Android alpha app.
+#   core     - fmt, clippy, unit/property tests, golden vectors, host simulation (Rust) + WASM build and
+#              vectors (AC-5)
+#   android  - cargo-ndk libs, Kotlin bindings, :core and :app JVM tests, Roborazzi screenshot
+#              verification, debug + release APKs, core size (AC-6), release APK free of test hooks
+#              (ADR-016)
+#   gate     - scripts/poc/local-gate.sh: two emulators, forced Doze, alerts (AC-1 ... AC-4); manual or
+#              nightly only
+name: android-native
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "apps/android/**"
+      - "locales/**"
+      - "scripts/core-build.sh"
+      - "scripts/gradle.sh"
+      - "scripts/poc/**"
+      - "docker/android-native-build/**"
+      - "docker/android-emulator/**"
+      - ".github/actions/setup-rust/**"
+      - ".github/workflows/android-native.yml"
+  pull_request:
+    paths:
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "apps/android/**"
+      - "locales/**"
+      - "scripts/core-build.sh"
+      - "scripts/gradle.sh"
+      - "scripts/poc/**"
+      - "docker/android-native-build/**"
+      - "docker/android-emulator/**"
+      - ".github/actions/setup-rust/**"
+      - ".github/workflows/android-native.yml"
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+    inputs:
+      doze_minutes:
+        description: "Forced Doze duration for AC-2"
+        default: "30"
+
+concurrency:
+  group: android-native-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CORE_BUILD_NATIVE: "1"
+  CARGO_HOME_OVERRIDE: /home/runner/.cargo
+
+jobs:
+  core:
+    name: rust core + wasm
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-rust
+        with:
+          targets: wasm32-unknown-unknown
+          wasm-bindgen: "true"
+      - name: Test core (fmt, clippy, tests, golden vectors)
+        run: scripts/core-build.sh test
+      - name: Host simulation (AC-9/AC-10)
+        run: cargo test -p guardedsleep-sim
+      - name: Build WASM
+        run: scripts/core-build.sh wasm
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: WASM conformance (AC-5)
+        run: node --test crates/guardedsleep-core/js/*.test.mjs
+
+  android:
+    name: android core + alpha app
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v4
+      - uses: ./.github/actions/setup-rust
+        with:
+          targets: aarch64-linux-android x86_64-linux-android
+      - name: cargo-ndk + Android SDK/NDK
+        run: |
+          cargo install --locked cargo-ndk@4.1.2
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager --install "ndk;30.0.16248370" "platforms;android-37.0" "build-tools;36.0.0" >/dev/null
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/30.0.16248370" >> "$GITHUB_ENV"
+      - name: Build core for Android + Kotlin bindings
+        run: scripts/core-build.sh android
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Unit tests (AC-5), screenshots, debug + release APKs
+        working-directory: apps/android
+        run: >-
+          ./gradlew --no-daemon :core:testDebugUnitTest :app:testDebugUnitTest
+          :app:verifyRoborazziDebug :app:assembleDebug :app:assembleRelease
+      - name: Core size (AC-6)
+        run: scripts/poc/size-check.sh
+      - name: No test-only surfaces in release APK (ADR-016)
+        run: scripts/poc/release-check.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: guardedsleep-alpha-debug-apk
+          path: apps/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+
+  gate:
+    name: emulator gate (AC-1 ... AC-4)
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    needs: android
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      DOZE_MINUTES: ${{ github.event.inputs.doze_minutes || '30' }}
+      APK: ${{ github.workspace }}/target/apk/app-debug.apk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: guardedsleep-alpha-debug-apk
+          path: target/apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Gate (emulators, signaling and TURN in containers)
+        run: scripts/poc/local-gate.sh
+      - name: Upload gate results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: poc-gate-results
+          path: target/poc-gate
+          retention-days: 14

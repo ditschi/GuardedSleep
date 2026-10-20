@@ -39,4 +39,4 @@ If you want to contribute ideas or review proposals, start with the [Vision](doc
 
 ## License
 
-TBD -- will be decided before any code is written.
+**GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later).** See [`LICENSE`](LICENSE). Product name and branding: [`docs/legal/trademark.md`](docs/legal/trademark.md). Decision: [ADR-014](docs/decisions/ADR-014-open-source-license-agpl-and-trademark.md).

@@ -1,3 +1,4 @@
+# DEPRECATED: use compose.traefik.yaml + traefik.env.example (configurable via .env, no editing).
 # Example only: Traefik labels for TLS + domain on the signaling service.
 # Replace signal.example.com, network name, cert resolver, and entrypoint names to match your Traefik.
 # See: docs/contributing/signaling-traefik.md
@@ -17,11 +18,11 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.ocsignal.rule=Host(`signal.example.com`)"
-      - "traefik.http.routers.ocsignal.entrypoints=websecure"
-      - "traefik.http.routers.ocsignal.tls=true"
-      - "traefik.http.routers.ocsignal.tls.certresolver=letsencrypt"
-      - "traefik.http.services.ocsignal.loadbalancer.server.port=8787"
+      - "traefik.http.routers.guardedsleep-signaling.rule=Host(`signal.example.com`)"
+      - "traefik.http.routers.guardedsleep-signaling.entrypoints=websecure"
+      - "traefik.http.routers.guardedsleep-signaling.tls=true"
+      - "traefik.http.routers.guardedsleep-signaling.tls.certresolver=letsencrypt"
+      - "traefik.http.services.guardedsleep-signaling.loadbalancer.server.port=8787"
 
 networks:
   proxy:

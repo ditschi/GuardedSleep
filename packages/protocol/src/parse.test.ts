@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PROTOCOL_VERSION } from "./messages.js";
+import { PROTOCOL_VERSION, SUPPORTED_PROTOCOL_VERSIONS } from "./messages.js";
 import {
   assertCompatibleProtocol,
   parseClientMessage,
@@ -11,10 +11,12 @@ import {
   encodeNoiseAlert,
   encodeOpenSettings,
   encodePairProof,
+  encodeProbeTest,
   parseListenCommand,
   parseNoiseAlert,
   parseOpenSettings,
   parsePairProof,
+  parseProbeTest,
 } from "./datachannel.js";
 import { encodeHeartbeat, parseHeartbeat } from "./heartbeat.js";
 
@@ -125,6 +127,16 @@ describe("datachannel", () => {
     expect(parseNoiseAlert(raw)).toEqual({ rms: 0.06, t: 999 });
   });
 
+  it("noise_alert probe flag roundtrips", () => {
+    const raw = encodeNoiseAlert(0.4, 100, { probe: true });
+    expect(parseNoiseAlert(raw)).toEqual({ rms: 0.4, t: 100, probe: true });
+  });
+
+  it("probe_test roundtrips", () => {
+    const raw = encodeProbeTest(42);
+    expect(parseProbeTest(raw)).toEqual({ t: 42 });
+  });
+
   it("pair_proof roundtrips", () => {
     const mac = "Ab".repeat(32);
     expect(parsePairProof(encodePairProof(mac))).toBe(mac.toLowerCase());
@@ -133,5 +145,32 @@ describe("datachannel", () => {
   it("open_settings parses", () => {
     expect(parseOpenSettings(encodeOpenSettings())).toBe(true);
     expect(parseOpenSettings("{}")).toBe(false);
+  });
+});
+
+describe("protocol versions and RATE_LIMITED", () => {
+  it("exports supported versions including the current one", () => {
+    expect(SUPPORTED_PROTOCOL_VERSIONS).toEqual([2, 3]);
+    expect(SUPPORTED_PROTOCOL_VERSIONS).toContain(PROTOCOL_VERSION);
+  });
+
+  it("parses RATE_LIMITED errors and v3 hello/signal unchanged", () => {
+    expect(
+      parseServerMessage(JSON.stringify({ type: "error", code: "RATE_LIMITED", message: "x" })),
+    ).toEqual({ type: "error", code: "RATE_LIMITED", message: "x" });
+    expect(
+      parseClientMessage(
+        JSON.stringify({
+          type: "hello",
+          role: "baby",
+          roomId: "AAAAAAAAAAAAAAAAAAAAAA",
+          protocolVersion: 3,
+        }),
+      ),
+    ).toMatchObject({ protocolVersion: 3 });
+    const payload = { kind: "sdp", aid: "x", sdp: "v=0" };
+    expect(
+      parseClientMessage(JSON.stringify({ type: "signal", roomId: "r", to: "t", payload })),
+    ).toMatchObject({ payload });
   });
 });

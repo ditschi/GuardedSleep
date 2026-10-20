@@ -3,6 +3,7 @@ import {
   clearStoredSignalingUrl,
   getEffectiveSignalingUrl,
   getStoredSignalingUrl,
+  inferSignalingUrlFromPageOrigin,
   isLoopbackSignalingHost,
   resolveSignalingUrlForSession,
   SIGNALING_URL_STORAGE_KEY,
@@ -66,5 +67,42 @@ describe("signaling-url", () => {
     vi.stubEnv("VITE_SIGNALING_URL", "ws://default:1");
     expect(resolveSignalingUrlForSession("https://bad")).toBe("ws://default:1");
     expect(resolveSignalingUrlForSession(null)).toBe("ws://default:1");
+  });
+
+  it("inferSignalingUrlFromPageOrigin uses LAN HTTPS host", () => {
+    expect(
+      inferSignalingUrlFromPageOrigin({
+        protocol: "https:",
+        hostname: "192.168.1.42",
+        port: "8443",
+      }),
+    ).toBe("wss://192.168.1.42:8443/signaling");
+  });
+
+  it("inferSignalingUrlFromPageOrigin skips loopback", () => {
+    expect(
+      inferSignalingUrlFromPageOrigin({
+        protocol: "https:",
+        hostname: "127.0.0.1",
+        port: "8443",
+      }),
+    ).toBeNull();
+  });
+
+  it("infers LAN signaling when no override", () => {
+    vi.stubEnv("VITE_SIGNALING_URL", "wss://127.0.0.1:8443/signaling");
+    vi.stubGlobal("window", {
+      location: { protocol: "https:", hostname: "192.168.1.42", port: "8443" },
+    });
+    expect(getEffectiveSignalingUrl()).toBe("wss://192.168.1.42:8443/signaling");
+  });
+
+  it("stored URL wins over page origin inference", () => {
+    vi.stubEnv("VITE_SIGNALING_URL", "wss://127.0.0.1:8443/signaling");
+    vi.stubGlobal("window", {
+      location: { protocol: "https:", hostname: "192.168.1.42", port: "8443" },
+    });
+    setStoredSignalingUrl("wss://custom.example/ws");
+    expect(getEffectiveSignalingUrl()).toBe("wss://custom.example/ws");
   });
 });

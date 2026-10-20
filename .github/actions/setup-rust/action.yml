@@ -1,0 +1,48 @@
+name: Setup Rust toolchain
+description: >
+  rustup toolchain pinned like docker/android-native-build/Dockerfile, plus optional targets and
+  wasm-bindgen-cli pinned to the version in Cargo.lock (what scripts/core-build.sh expects).
+inputs:
+  version:
+    description: Rust toolchain version
+    default: "1.99.1"
+  targets:
+    description: Space-separated extra rustup targets
+    default: ""
+  wasm-bindgen:
+    description: Install wasm-bindgen-cli at the Cargo.lock version ("true" / "false")
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - name: rustup toolchain
+      shell: bash
+      env:
+        RUST_VERSION: ${{ inputs.version }}
+        RUST_TARGETS: ${{ inputs.targets }}
+      run: |
+        rustup toolchain install "$RUST_VERSION" --profile minimal --component clippy,rustfmt
+        rustup default "$RUST_VERSION"
+        if [[ -n "$RUST_TARGETS" ]]; then
+          # shellcheck disable=SC2086
+          rustup target add $RUST_TARGETS
+        fi
+        echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+    - name: wasm-bindgen-cli version (from Cargo.lock)
+      if: inputs.wasm-bindgen == 'true'
+      id: wb
+      shell: bash
+      run: |
+        v="$(awk '/^name = "wasm-bindgen"$/{getline; gsub(/version = |"/,""); print; exit}' Cargo.lock)"
+        echo "version=$v" >> "$GITHUB_OUTPUT"
+    - name: Cache wasm-bindgen-cli
+      if: inputs.wasm-bindgen == 'true'
+      id: wb-cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/bin/wasm-bindgen
+        key: wasm-bindgen-cli-${{ steps.wb.outputs.version }}-rust-${{ inputs.version }}
+    - name: Install wasm-bindgen-cli
+      if: inputs.wasm-bindgen == 'true' && steps.wb-cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: cargo install --locked wasm-bindgen-cli --version "${{ steps.wb.outputs.version }}"

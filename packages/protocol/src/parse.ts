@@ -15,6 +15,7 @@ const ERROR_CODES: ReadonlySet<ErrorCode> = new Set([
   "BABY_TAKEN",
   "PARENT_CAP",
   "SIGNAL_TARGET_REQUIRED",
+  "RATE_LIMITED",
 ]);
 
 export function safeJsonParse(raw: string): unknown {

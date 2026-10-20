@@ -1,71 +1,111 @@
-# Signaling server behind Traefik (TLS, domain, WebSocket)
+# Signaling server behind a reverse proxy (Traefik, Caddy, nginx)
 
-This complements [signaling-server-docker.md](signaling-server-docker.md). Use it when you run **Traefik** as a reverse proxy in front of the signaling container so clients use **`wss://`** on your own domain.
+This complements [signaling-server-docker.md](signaling-server-docker.md). Use it when you already run a **reverse proxy on port 443** and want clients to reach signaling via **`wss://` on your own domain**.
 
-## What you need to decide
+## How it works
 
-1. **DNS** — an `A` or `AAAA` record pointing your hostname (e.g. `signal.example.com`) to the host that runs Traefik (or its load balancer).
-2. **TLS** — Traefik terminates TLS (e.g. Let’s Encrypt via an ACME `certificatesResolver`). The signaling container stays **HTTP-only** on port `8787`; Traefik speaks **HTTPS/WSS** on 443.
-3. **App URL** — the mobile app must be configured with the **public WebSocket URL**, e.g. `wss://signal.example.com` (path `/` unless you add a path prefix; default server has no path).
-4. **`SIGNALING_ALLOWED_ORIGINS`** — if you set this env var on the signaling server, it must list the **Origin** values your clients send on the WebSocket handshake:
-   - **Capacitor / WebView** often sends no `Origin` or a custom scheme — those are still **allowed** when the allowlist is set (same as our default policy).
-   - **Browser-based** testing might send `Origin: https://app.example.com` — add that exact origin string.
-5. **Long-lived connections** — WebSockets are long-lived. If Traefik or an upstream proxy closes idle connections too aggressively, raise idle/read timeouts for the signaling route (Traefik v2/v3: transport responding timeouts, or service-specific settings).
-6. **Health checks** — Docker/Kubernetes health checks should hit `http://127.0.0.1:8787/` **inside** the container (plain HTTP), not through Traefik, unless you probe the public URL intentionally.
+- The signaling container speaks **plain HTTP on port `8787`** (internal only). A WebSocket is an HTTP request with an `Upgrade` header, so any reverse proxy that forwards upgrades can route it by **hostname and/or path** — no extra public port, no extra Traefik entrypoint.
+- The server accepts WebSocket upgrades on **any path**. Routing `/signaling` (or any prefix) to it needs **no prefix stripping**.
+- `GET /healthz` (also `<prefix>/healthz`) returns `200 ok` for health checks.
+- TLS terminates at the proxy. The container never needs a certificate.
 
-## Compose: Traefik labels (example)
+## Option 1: Traefik, ready-to-use Compose files (recommended)
 
-Traefik discovers services via **labels** on the same Docker network as Traefik. Names (`certresolver`, `entrypoints`, network name) must match **your** Traefik static/dynamic config.
+No YAML editing: download a compose file plus its env template, fill in `.env`, start.
 
-Example labels for a `signaling` service (adjust domain, network, resolver, entrypoint):
+| File                                                                                                 | Routes                                                                                        |
+| ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [`docker/stack/compose.traefik.yaml`](../../docker/stack/compose.traefik.yaml)                       | **One domain:** `https://<APP_DOMAIN>/` → web app, `wss://<APP_DOMAIN>/signaling` → signaling |
+| [`docker/signaling-server/compose.traefik.yaml`](../../docker/signaling-server/compose.traefik.yaml) | Signaling only: `wss://<SIGNALING_DOMAIN><SIGNALING_PATH_PREFIX>`                             |
 
-```yaml
-services:
-  signaling:
-    image: guardedsleep-signaling:local # or GHCR image
-    environment:
-      PORT: "8787"
-      # Optional: lock browser Origins (exact strings). Native clients without Origin still work.
-      # SIGNALING_ALLOWED_ORIGINS: "https://parent.example.com"
-    networks:
-      - proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=proxy"
-      - "traefik.http.routers.guardedsleep-signaling.rule=Host(`signal.example.com`)"
-      - "traefik.http.routers.guardedsleep-signaling.entrypoints=websecure"
-      - "traefik.http.routers.guardedsleep-signaling.tls=true"
-      - "traefik.http.routers.guardedsleep-signaling.tls.certresolver=letsencrypt"
-      - "traefik.http.services.guardedsleep-signaling.loadbalancer.server.port=8787"
-
-networks:
-  proxy:
-    external: true # or attach to the network your Traefik container uses
+```bash
+cp traefik.env.example .env   # then set APP_DOMAIN (or SIGNALING_DOMAIN) and GUARDEDSLEEP_OWNER
+docker compose -f compose.traefik.yaml up -d
 ```
 
-Notes:
+Variables (see `traefik.env.example` next to each file):
 
-- Replace `signal.example.com` with your domain (backticks in `Host(\`...\`)` are required by Traefik’s rule syntax).
-- Replace `websecure` / `letsencrypt` / `proxy` with your entrypoint, certificate resolver, and network names.
-- **WebSocket**: Traefik forwards the upgrade automatically for HTTP/1.1; no extra label is required for a plain upgrade to the same backend port.
-- If you use a **path prefix** (e.g. `/signaling`), you need matching router rules **and** the app must use `wss://signal.example.com/signaling` — the stock server is mounted at `/`, so path prefixes are an advanced setup.
+| Variable                    | Default                | Purpose                                                               |
+| --------------------------- | ---------------------- | --------------------------------------------------------------------- |
+| `APP_DOMAIN`                | —                      | Web app hostname (stack); also derives the Origin allowlist           |
+| `SIGNALING_DOMAIN`          | —                      | Signaling hostname (signaling-only file)                              |
+| `SIGNALING_PATH_PREFIX`     | `/`                    | Optional path, e.g. `/signaling` (signaling-only file)                |
+| `TRAEFIK_NETWORK`           | `proxy`                | External Docker network shared with Traefik                           |
+| `TRAEFIK_ENTRYPOINT`        | `websecure`            | HTTPS entrypoint name from your Traefik static config                 |
+| `TRAEFIK_CERTRESOLVER`      | `letsencrypt`          | ACME resolver name                                                    |
+| `TRAEFIK_ROUTER_PREFIX`     | `guardedsleep`         | Router/service name prefix (Traefik names are global across stacks)   |
+| `SIGNALING_ALLOWED_ORIGINS` | `https://<APP_DOMAIN>` | Browser Origin allowlist; native clients without `Origin` always pass |
 
-## Merging with this repo’s Compose files
+**Why one domain is the easy path:** one DNS record, one certificate, and the browser Origin equals the app origin. The PWA infers `wss://<its-own-host>/signaling` from its page origin, so neither a rebuild with `VITE_SIGNALING_URL` nor a manual URL setting is needed. The signaling router's rule (`Host(...) && PathPrefix(/signaling)`) is longer than the web router's, so Traefik gives it priority.
 
-You can:
+## Option 2: Caddy
 
-- **Copy** the `signaling` service (and env) from [compose.build.yaml](../../docker/signaling-server/compose.build.yaml) into your stack file and **add** the Traefik labels and `networks:`; or
-- Use **Compose `extends`** / multiple compose files (`docker compose -f traefik.yml -f docker/signaling-server/compose.build.yaml`) — order and overrides are your responsibility.
+Caddy forwards WebSocket upgrades automatically and obtains certificates on its own.
 
-A minimal **label-only** example lives at [compose.traefik.example.yaml](../../docker/signaling-server/compose.traefik.example.yaml).
+```caddyfile
+baby.example.com {
+	reverse_proxy /signaling* signaling:8787
+	reverse_proxy web:80
+}
+```
 
-## Full stack: static PWA + signaling
+Signaling on its own hostname instead:
 
-To expose both the **browser app** (HTTPS) and **signaling** (`wss://`) on separate hostnames, see [compose.web-and-signaling.traefik.example.yaml](../../docker/stack/compose.web-and-signaling.traefik.example.yaml) and [mobile-web-docker.md](mobile-web-docker.md). Build the **`guardedsleep-web:local`** image with `--build-arg VITE_SIGNALING_URL=wss://<your-signal-host>` so the default client points at your public signaling URL; users can still override the URL in the app UI.
+```caddyfile
+signal.example.com {
+	reverse_proxy signaling:8787
+}
+```
+
+## Option 3: nginx
+
+nginx needs the `Upgrade` / `Connection` headers and a long read timeout (WebSockets are long-lived):
+
+```nginx
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+server {
+    listen 443 ssl;
+    server_name baby.example.com;
+    # ssl_certificate / ssl_certificate_key …
+
+    location /signaling {
+        proxy_pass http://signaling:8787;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_set_header Host $host;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+    }
+
+    location / {
+        proxy_pass http://web:80;
+    }
+}
+```
+
+The `guardedsleep-web` image ships the same `/signaling` proxy internally ([nginx.default.conf](../../docker/mobile-web/nginx.default.conf)), which is how the LAN stack works without an external proxy.
+
+## Notes for all proxies
+
+- **Long-lived connections:** if your proxy closes idle connections aggressively, raise idle/read timeouts for the signaling route (Traefik: `respondingTimeouts` on the entrypoint; nginx: `proxy_read_timeout`).
+- **Idle WebSockets and ping/pong:** the server sends a WebSocket ping every 10 s and clients send an application `ping` every 15 s, but a quiet room can still be idle for more than 35 s at the application level. Proxies must keep idle WebSocket connections open for **more than 35 s** and forward WebSocket ping/pong frames (Traefik and nginx defaults are fine; with nginx keep `proxy_read_timeout` at 60 s or more, the example above uses 3600 s).
+- **Per-IP rate limits:** the server limits hello attempts and new rooms per client IP. Behind a proxy set `SIGNALING_TRUST_PROXY=1` so the client IP is taken from `X-Forwarded-For`; otherwise all clients share the proxy's IP. Traefik appends the peer address as the **last** hop, and the server uses the rightmost hop (or the n-th from the right with `SIGNALING_TRUSTED_PROXY_HOPS=n` when n proxies are chained, e.g. Traefik behind a CDN). Client-supplied leading entries are ignored. Only enable it when every connection really passes through the trusted proxies.
+- **Health checks** should hit `http://127.0.0.1:8787/healthz` **inside** the container (the image's `HEALTHCHECK` does this), not through the proxy.
+- **Access logs:** the proxy logs connection metadata (IP, time) for the signaling host. That is expected; avoid shipping these logs to third parties (privacy guardrail 6).
+- **Origins:** browser clients send `Origin: https://<app-domain>`; it must be in `SIGNALING_ALLOWED_ORIGINS`. Native apps send no Origin and are accepted.
+
+## TURN is different (optional)
+
+A self-hosted TURN server (coturn, see ADR-003) relays media and **cannot** go through an HTTP reverse proxy. It needs UDP `3478` plus a UDP relay port range opened in your firewall. Alternative: TURN over TLS can share port 443 with a **Traefik TCP router** (`HostSNI(\`turn.example.com\`)` with TLS passthrough). Signaling alone never needs more than 443.
 
 ## Checklist before going live
 
-- [ ] `wss://` URL reachable from a client on the internet (firewall, DNS, TLS).
-- [ ] App configured to that `wss://` URL (QR / settings).
-- [ ] If using `SIGNALING_ALLOWED_ORIGINS`, tested with real client Origins (browser + native).
-- [ ] Monitoring: Traefik access logs will show connection metadata to the signaling host (expected).
+- [ ] DNS for the app/signaling hostname points at your proxy.
+- [ ] `https://<domain>/signaling/healthz` (or `https://<signal-domain>/healthz`) returns `ok` through the proxy.
+- [ ] App connects via `wss://` (browser + native).
+- [ ] `SIGNALING_ALLOWED_ORIGINS` matches the browser origin(s) you actually use.

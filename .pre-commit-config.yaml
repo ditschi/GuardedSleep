@@ -31,7 +31,26 @@ repos:
         entry: scripts/cspell-i18n.sh
         pass_filenames: false
         always_run: true
-        files: ^(scripts/cspell-i18n\\.sh|cspell-i18n-(de|fr|es|terms)\\.json|apps/mobile/src/lib/i18n/messages/(de|fr|es)\\.json)$
+        files: ^(scripts/cspell-i18n\\.sh|cspell-i18n-(de|fr|es|terms)\\.json|locales/(de|fr|es)\\.json)$
+      # Fast Rust / Android / i18n gates (ADR-019); clippy stays in CI (scripts/core-build.sh test).
+      - id: cargo-fmt
+        name: cargo fmt --check
+        entry: scripts/cargo.sh fmt --all -- --check
+        language: system
+        files: \.rs$
+        pass_filenames: false
+      - id: lint-ui-literals
+        name: UI string literals (Compose)
+        entry: scripts/lint-ui-literals.sh
+        language: system
+        files: ^apps/android/.*\.kt$
+        pass_filenames: false
+      - id: i18n-check
+        name: i18n catalogue check
+        entry: pnpm run i18n:check
+        language: system
+        files: ^(locales/.*\.json|crates/i18n-gen/.*)$
+        pass_filenames: false
       # Prettier from package.json (mirrors-prettier tags lag behind npm; avoids version skew).
       - id: prettier
         name: prettier

@@ -1,26 +1,35 @@
 {
   "name": "@guardedsleep/mobile",
   "private": true,
+  "license": "AGPL-3.0-or-later",
   "version": "0.0.1",
   "type": "module",
   "scripts": {
+    "i18n:gen": "bash ../../scripts/cargo.sh run -q -p i18n-gen -- web --out apps/mobile/src/lib/i18n/generated",
+    "predev": "pnpm run i18n:gen && pnpm run core:ensure",
     "dev": "vite dev --host 0.0.0.0",
+    "prebuild": "pnpm run i18n:gen && pnpm run core:ensure",
     "build": "pnpm --filter @guardedsleep/protocol build && vite build",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
+    "precheck": "pnpm run i18n:gen && pnpm run core:ensure",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && npm run check:i18n",
-    "check:i18n": "vitest run src/lib/i18n/parity.test.ts",
+    "check:i18n": "vitest run src/lib/i18n/catalogue.test.ts",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "pretest": "pnpm run i18n:gen && pnpm run core:ensure",
     "test": "vitest run",
     "test:watch": "vitest",
     "cap:sync": "cap sync",
-    "cap:open:android": "cap open android"
+    "cap:open:android": "cap open android",
+    "core:ensure": "test -f ../../packages/core-wasm/pkg/guardedsleep_core_bg.wasm -a -f ../../packages/core-wasm/pkg-node/guardedsleep_core.js || pnpm --filter @guardedsleep/core-wasm build"
   },
   "dependencies": {
+    "@capacitor/app": "^7.0.1",
     "@capacitor/core": "^7.4.4",
     "@capacitor/local-notifications": "^7.0.0",
     "@capacitor/network": "7.0.4",
     "@capawesome-team/capacitor-android-foreground-service": "^7.0.1",
+    "@guardedsleep/core-wasm": "workspace:*",
     "@guardedsleep/protocol": "workspace:*",
     "@zxing/browser": "^0.1.5",
     "qrcode": "^1.5.4"

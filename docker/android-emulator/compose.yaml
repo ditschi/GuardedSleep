@@ -1,0 +1,33 @@
+# Headless Android emulator for hybrid E2E (dev-only).
+#
+# Prereqs: Linux host with /dev/kvm (modprobe kvm; user in kvm group or privileged).
+# From repository root:
+#   pnpm run emulator:up
+#   pnpm run emulator:wait
+#
+# Hybrid tests route adb through the container:
+#   GUARDEDSLEEP_ADB=docker/android-emulator/adb.sh
+# GUARDEDSLEEP_ADB_REPO_ROOT only overrides the repo mount path inside the container
+# (default /mnt/workspace); set it before `emulator:up`, adb.sh picks it up automatically.
+name: guardedsleep-android-emulator
+
+services:
+  emulator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: guardedsleep-android-emulator:local
+    privileged: true
+    devices:
+      - /dev/kvm:/dev/kvm
+    ports:
+      - "${EMULATOR_ADB_PORT:-5555}:5555"
+    environment:
+      EMULATOR_AVD: "${EMULATOR_AVD:-guardedsleep_e2e}"
+      GUARDEDSLEEP_REPO_MOUNT: "${GUARDEDSLEEP_ADB_REPO_ROOT:-/mnt/workspace}"
+    volumes:
+      # compose file is docker/android-emulator/ -> repo root is ../..; lets `adb install` read the host-built APK
+      - ../../:${GUARDEDSLEEP_ADB_REPO_ROOT:-/mnt/workspace}:ro
+    shm_size: "2gb"
+    mem_limit: 4g
+    restart: unless-stopped

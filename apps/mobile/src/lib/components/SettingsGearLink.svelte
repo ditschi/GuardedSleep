@@ -1,6 +1,15 @@
 <script lang="ts">
-  let { href = "/settings", ariaLabel = "Settings" }: { href?: string; ariaLabel?: string } =
-    $props();
+  import { page } from "$app/state";
+  import { buildSettingsHref } from "$lib/settings/settings-href.js";
+
+  let { ariaLabel = "Settings" }: { ariaLabel?: string } = $props();
+
+  const href = $derived(
+    buildSettingsHref({
+      pathname: page.url.pathname,
+      searchParams: page.url.searchParams,
+    }),
+  );
 </script>
 
 <a

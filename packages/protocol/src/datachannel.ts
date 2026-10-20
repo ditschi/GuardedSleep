@@ -12,6 +12,15 @@ export type DataChannelNoiseAlert = {
   v: typeof PROTOCOL_VERSION;
   rms: number;
   t: number;
+  /** Parent probe test — same alert chain as real noise without waiting for a cry. */
+  probe?: boolean;
+};
+
+/** Parent asks baby unit to run one synthetic alert burst (probe / pre-flight test). */
+export type DataChannelProbeTest = {
+  type: "probe_test";
+  v: typeof PROTOCOL_VERSION;
+  t: number;
 };
 
 /** Mutual proof both peers share the QR PSK and the same DTLS-SRTP session (sorted SDP fingerprints). */
@@ -33,8 +42,23 @@ export function encodeListen(enabled: boolean): string {
   return JSON.stringify(msg);
 }
 
-export function encodeNoiseAlert(rms: number, t: number = Date.now()): string {
-  const msg: DataChannelNoiseAlert = { type: "noise_alert", v: PROTOCOL_VERSION, rms, t };
+export function encodeNoiseAlert(
+  rms: number,
+  t: number = Date.now(),
+  opts?: { probe?: boolean },
+): string {
+  const msg: DataChannelNoiseAlert = {
+    type: "noise_alert",
+    v: PROTOCOL_VERSION,
+    rms,
+    t,
+    ...(opts?.probe ? { probe: true } : {}),
+  };
+  return JSON.stringify(msg);
+}
+
+export function encodeProbeTest(t: number = Date.now()): string {
+  const msg: DataChannelProbeTest = { type: "probe_test", v: PROTOCOL_VERSION, t };
   return JSON.stringify(msg);
 }
 
@@ -89,7 +113,9 @@ export function parseOpenSettings(raw: string): boolean {
   }
 }
 
-export function parseNoiseAlert(raw: string): { rms: number; t: number } | undefined {
+export function parseNoiseAlert(
+  raw: string,
+): { rms: number; t: number; probe?: boolean } | undefined {
   try {
     const v = JSON.parse(raw) as unknown;
     if (!v || typeof v !== "object") return undefined;
@@ -97,7 +123,25 @@ export function parseNoiseAlert(raw: string): { rms: number; t: number } | undef
     if (o.type !== "noise_alert") return undefined;
     if (o.v !== PROTOCOL_VERSION) return undefined;
     if (typeof o.rms !== "number" || typeof o.t !== "number") return undefined;
-    return { rms: o.rms, t: o.t };
+    return {
+      rms: o.rms,
+      t: o.t,
+      ...(o.probe === true ? { probe: true } : {}),
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+export function parseProbeTest(raw: string): { t: number } | undefined {
+  try {
+    const v = JSON.parse(raw) as unknown;
+    if (!v || typeof v !== "object") return undefined;
+    const o = v as Record<string, unknown>;
+    if (o.type !== "probe_test") return undefined;
+    if (o.v !== PROTOCOL_VERSION) return undefined;
+    if (typeof o.t !== "number") return undefined;
+    return { t: o.t };
   } catch {
     return undefined;
   }

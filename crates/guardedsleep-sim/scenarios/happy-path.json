@@ -1,0 +1,27 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "happy-path",
+  "description": "Baby and parent pair, verify and keep exchanging heartbeats.",
+  "seed": 1,
+  "peers": [
+    { "id": "baby", "role": "baby" },
+    { "id": "parent", "role": "parent" }
+  ],
+  "timeline": [
+    { "at": 0, "do": "start" },
+    { "at": 40000, "do": "end" }
+  ],
+  "assert": [
+    { "peer": "baby", "state": "connected", "at_ms": 15000 },
+    { "peer": "parent", "state": "connected", "at_ms": 15000 },
+    { "peer": "parent", "event": "peer_heartbeat", "within_ms": [1000, 40000], "count_min": 3 },
+    { "peer": "parent", "never": "link_lost" },
+    { "peer": "baby", "never": "link_lost" },
+    { "peer": "parent", "max_level": 0 },
+    { "peer": "baby", "max_level": 0 }
+  ],
+  "export_traces": [
+    { "peer": "parent", "id": "sim-happy-path-parent" },
+    { "peer": "baby", "id": "sim-happy-path-baby" }
+  ]
+}

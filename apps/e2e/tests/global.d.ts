@@ -13,7 +13,7 @@ declare global {
           }
         | undefined;
       getInviteJson?: () => string;
-      setNoiseGate?: (threshold: number, holdMs: number) => void;
+      injectAudioLevel?: (rms: number, durationMs: number) => void;
       waitNextNoiseAlert?: (timeoutMs?: number) => Promise<number>;
       getNoiseAlertCount?: () => number;
       resetNoiseAlertCount?: () => void;

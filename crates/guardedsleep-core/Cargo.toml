@@ -1,0 +1,28 @@
+[package]
+name = "guardedsleep-core"
+version = "0.0.1"
+description = "Sans-IO protocol, pairing and session core for GuardedSleep (ADR-015 PoC)"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["lib", "cdylib"]
+
+[features]
+default = []
+uniffi = ["dep:uniffi"]
+wasm = ["dep:wasm-bindgen"]
+
+[dependencies]
+base64 = "0.23"
+hkdf = "0.13"
+hmac = "0.13"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+sha2 = "0.11"
+uniffi = { version = "0.32", optional = true }
+wasm-bindgen = { version = "0.2", optional = true }
+
+[dev-dependencies]
+proptest = "1"

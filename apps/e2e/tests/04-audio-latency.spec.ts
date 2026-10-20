@@ -1,8 +1,7 @@
 import { test } from "@playwright/test";
-import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { fixturesDir, launchDualContexts } from "./utils/dual-context";
-import { babyDeepLink, parentDeepLink, startSession } from "./utils/pairing";
+import { pairDual } from "./utils/pairing";
 import {
   logRtcRoundTripSamples,
   parentSendListen,
@@ -11,16 +10,12 @@ import {
 } from "./utils/probes";
 
 test("audio latency metrics (log only, no hard SLA)", async () => {
-  const room = `e2e-${randomUUID().slice(0, 8)}`;
   const dual = await launchDualContexts({
     babyFakeWav: join(fixturesDir, "pulses-30s.wav"),
     parentFakeWav: join(fixturesDir, "silence-30s.wav"),
   });
   try {
-    await dual.babyPage.goto(babyDeepLink(room));
-    await dual.parentPage.goto(parentDeepLink(room));
-    await startSession(dual.babyPage);
-    await startSession(dual.parentPage);
+    await pairDual(dual);
     await waitForConnected(dual.babyPage);
     await waitForConnected(dual.parentPage);
     await parentSendListen(dual.parentPage, true);

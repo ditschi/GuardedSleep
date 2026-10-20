@@ -1,13 +1,23 @@
 import { randomUUID } from "node:crypto";
+import type { IncomingMessage } from "node:http";
 import type { RawData } from "ws";
 import { WebSocketServer } from "ws";
 import {
-  PROTOCOL_VERSION,
+  SUPPORTED_PROTOCOL_VERSIONS,
   parseClientMessage,
   stringifyServerMessage,
   type ServerToClientMessage,
 } from "@guardedsleep/protocol";
-import { getHelloTimeoutMs, getMaxParentsPerRoom } from "./config.js";
+import {
+  getHelloRatePerMin,
+  getHelloTimeoutMs,
+  getMaxParentsPerRoom,
+  getNewRoomRatePerMin,
+  getPingIntervalMs,
+  getTrustProxy,
+  getTrustedProxyHops,
+} from "./config.js";
+import { RateLimiter } from "./rate-limit.js";
 import { RoomRegistry, type RoomPeer, type SignalingRoom } from "./room.js";
 
 function send(ws: import("ws").WebSocket, msg: ServerToClientMessage): void {
@@ -33,11 +43,70 @@ function rawToString(data: RawData): string {
   return Buffer.from(v.buffer, v.byteOffset, v.byteLength).toString("utf8");
 }
 
+/** Room ids of v3 rooms are 128-bit HKDF output, base64url without padding (ADR-004 amendment). */
+const V3_ROOM_ID = /^[A-Za-z0-9_-]{22}$/;
+
+/**
+ * Proxies append the address they saw to X-Forwarded-For, so only the rightmost `hops` entries are
+ * trustworthy; leading entries are whatever the client sent.
+ */
+function clientAddress(req: IncomingMessage, trustProxy: boolean, hops: number): string {
+  if (trustProxy) {
+    const xff = req.headers["x-forwarded-for"];
+    const entries = (Array.isArray(xff) ? xff.join(",") : (xff ?? ""))
+      .split(",")
+      .map((e) => e.trim())
+      .filter(Boolean);
+    const hop = entries[entries.length - hops];
+    if (hop) return hop;
+  }
+  return req.socket.remoteAddress ?? "unknown";
+}
+
+export type SignalingServerOptions = {
+  pingIntervalMs?: number;
+  helloRatePerMin?: number;
+  newRoomRatePerMin?: number;
+  trustProxy?: boolean;
+  trustedProxyHops?: number;
+};
+
 export function attachSignalingServer(
   wss: WebSocketServer,
   registry = new RoomRegistry(getMaxParentsPerRoom()),
+  options: SignalingServerOptions = {},
 ): RoomRegistry {
-  wss.on("connection", (ws) => {
+  const trustProxy = options.trustProxy ?? getTrustProxy();
+  const trustedProxyHops = options.trustedProxyHops ?? getTrustedProxyHops();
+  const helloLimiter = new RateLimiter(options.helloRatePerMin ?? getHelloRatePerMin());
+  const roomLimiter = new RateLimiter(options.newRoomRatePerMin ?? getNewRoomRatePerMin());
+
+  // A socket that did not answer the previous ping is dead (half-open TCP, NAT drop); terminating
+  // it runs the normal close -> cleanup -> members broadcast path.
+  const alive = new WeakMap<object, boolean>();
+  const livenessTimer = setInterval(() => {
+    for (const client of wss.clients) {
+      if (alive.get(client) === false) {
+        client.terminate();
+        continue;
+      }
+      alive.set(client, false);
+      try {
+        client.ping();
+      } catch {
+        client.terminate();
+      }
+    }
+    helloLimiter.prune();
+    roomLimiter.prune();
+  }, options.pingIntervalMs ?? getPingIntervalMs());
+  livenessTimer.unref();
+  wss.on("close", () => clearInterval(livenessTimer));
+
+  wss.on("connection", (ws, req) => {
+    const address = clientAddress(req, trustProxy, trustedProxyHops);
+    alive.set(ws, true);
+    ws.on("pong", () => alive.set(ws, true));
     let joined: { roomId: string; clientId: string } | undefined;
     let cleanedUp = false;
 
@@ -83,12 +152,35 @@ export function attachSignalingServer(
           send(ws, { type: "error", code: "INVALID_MESSAGE", message: "already joined" });
           return;
         }
-        if (msg.protocolVersion !== PROTOCOL_VERSION) {
+        if (!helloLimiter.take(address)) {
+          send(ws, { type: "error", code: "RATE_LIMITED", message: "too many attempts" });
+          ws.close(1008, "rate limited");
+          return;
+        }
+        if (!SUPPORTED_PROTOCOL_VERSIONS.includes(msg.protocolVersion)) {
           send(ws, { type: "error", code: "UNSUPPORTED_PROTOCOL", message: "version mismatch" });
           ws.close(1008, "version mismatch");
           return;
         }
+        if (msg.protocolVersion >= 3 && !V3_ROOM_ID.test(msg.roomId)) {
+          send(ws, { type: "error", code: "INVALID_MESSAGE", message: "invalid room id" });
+          ws.close(1008, "invalid room id");
+          return;
+        }
+        const existing = registry.peek(msg.roomId);
+        if (existing && existing.size > 0) {
+          if (existing.protocolVersion !== msg.protocolVersion) {
+            send(ws, { type: "error", code: "UNSUPPORTED_PROTOCOL", message: "version mismatch" });
+            ws.close(1008, "version mismatch");
+            return;
+          }
+        } else if (!roomLimiter.take(address)) {
+          send(ws, { type: "error", code: "RATE_LIMITED", message: "too many rooms" });
+          ws.close(1008, "rate limited");
+          return;
+        }
         const room = registry.getOrCreate(msg.roomId);
+        const firstMember = room.size === 0;
         const clientId = randomUUID();
         const peer: RoomPeer = { id: clientId, role: msg.role, socket: ws };
         const status = room.add(peer);
@@ -99,13 +191,16 @@ export function attachSignalingServer(
             message: "room already has a baby unit",
           });
           ws.close(1008, "baby taken");
+          registry.deleteIfEmpty(msg.roomId);
           return;
         }
         if (status === "parent_cap") {
           send(ws, { type: "error", code: "PARENT_CAP", message: "too many parent units" });
           ws.close(1008, "parent cap");
+          registry.deleteIfEmpty(msg.roomId);
           return;
         }
+        if (firstMember) room.protocolVersion = msg.protocolVersion;
         joined = { roomId: msg.roomId, clientId };
         clearHelloTimer();
         send(ws, { type: "welcome", clientId, roomId: msg.roomId });

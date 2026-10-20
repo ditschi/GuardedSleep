@@ -1,0 +1,93 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "wrong-psk-first-pairing",
+  "description": "AC-1: two links with different PSKs share a room through the relay alias; both end terminal after two consecutive mismatches.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby",
+      "psk": "A"
+    },
+    {
+      "id": "parent",
+      "role": "parent",
+      "psk": "B"
+    }
+  ],
+  "relay": {
+    "alias_rooms": true
+  },
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 60000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "failed_needs_user",
+      "at_ms": 40000,
+      "key": "pairing_key_mismatch"
+    },
+    {
+      "peer": "parent",
+      "state": "failed_needs_user",
+      "at_ms": 40000,
+      "key": "pairing_key_mismatch"
+    },
+    {
+      "peer": "baby",
+      "event": "failed",
+      "where": {
+        "reason": "pair_proof_mismatch"
+      },
+      "count": 2
+    },
+    {
+      "peer": "parent",
+      "event": "failed",
+      "where": {
+        "reason": "pair_proof_mismatch"
+      },
+      "count": 2
+    },
+    {
+      "peer": "baby",
+      "never": "security_warning"
+    },
+    {
+      "peer": "parent",
+      "never": "security_warning"
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "connected"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "connected"
+        }
+      }
+    }
+  ],
+  "export_traces": [
+    {
+      "peer": "parent",
+      "id": "sim-wrong-psk-first-pairing-parent"
+    }
+  ]
+}

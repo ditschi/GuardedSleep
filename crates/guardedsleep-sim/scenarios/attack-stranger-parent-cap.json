@@ -1,0 +1,77 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "attack-stranger-parent-cap",
+  "description": "With the default parent cap of 1 a stranger cannot join a room that already has a parent; nothing changes for the pair.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "stranger_join",
+      "mode": "forged_offer",
+      "id": "stranger"
+    },
+    {
+      "at": 20000,
+      "do": "stranger_join",
+      "mode": "forged_offer",
+      "role": "baby",
+      "id": "stranger2"
+    },
+    {
+      "at": 80000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 80000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 80000
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "within_ms": [16000, 80000]
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "within_ms": [16000, 80000]
+    },
+    {
+      "peer": "baby",
+      "never": "failed"
+    },
+    {
+      "peer": "parent",
+      "never": "failed"
+    },
+    {
+      "peer": "stranger",
+      "joined": false
+    },
+    {
+      "peer": "stranger2",
+      "joined": false
+    }
+  ]
+}

@@ -27,19 +27,74 @@ HEADLESS=0 pnpm --filter @guardedsleep/e2e test
 
 ## Coverage (high level)
 
-- **01–04:** Signaling + WebRTC connect, paste-invite / `pair_proof`, inbound audio after Listen, latency stats (log only).
-- **05:** Sustained loud input → parent receives `noise_alert`.
-- **06:** Silence + moderate gate (`0.05` / `800 ms`) → **no** `noise_alert` for 9 s.
-- **07:** `blip-50ms.wav` (50 ms full-scale spike) + `holdMs` 500 ms → **no** alert (hold not satisfied).
-- **08:** After **Listen** off, baby **outgoing audio track is disabled** (`getE2eBabyLocalAudioTrackEnabled`); inbound RTP counters are not asserted (browser may still report buffered packets).
-- **09:** `(re)start session` on both sides → **connected** + open DataChannel again.
-- **10:** Noise alert → parent `<audio>` has **`srcObject`** with an audio track (playback wiring).
-- **11:** Pasted invite with **corrupted PSK** → **failed** on baby or parent (`pair_proof` mismatch).
-- **12:** Deep link with **unreachable** signaling URL → **failed**.
+All specs pair through the v3 flow (`utils/pairing.ts` `pairDual`): the baby page shows a code, the parent pastes it on `/pair`. The pairing key lives in page memory only, so tests navigate client-side after pairing and never reload.
+
+- **01–04:** Connect, v3 paste-code pairing, inbound audio after Listen, latency stats (log only).
+- **05:** Noise alert reaches the parent (synthetic level via `injectAudioLevel`, microphone levels ignored with `?e2e_synthetic_levels=1`).
+- **06 / 07:** Silence and a short blip never alert.
+- **08:** After **Listen** off, the baby's outgoing track is disabled.
+- **09:** A dropped DataChannel is recovered by the core (new peer connection, no user action).
+- **10 / 14 / 15:** Parent audio wiring and inbound RMS for Listen and noise alerts.
+- **11:** Wrong PSK = different room: never pairs, parent shows the `peer_absent` cause hint (level 2, about 60 s).
+- **12:** Unreachable signaling server: escalation and `server_unreachable` hint.
+- **13:** Pairing code with a dead first signaling URL: the driver uses the next one.
+- **16:** LAN IP connect. **17:** Standard pairing UX, PSK not in web storage.
+- **18:** Recovery: parent offline for 20 s (no level 2) and 90 s (level 2, then restored), each also with the parent page hidden.
+
+The signaling server runs with `SIGNALING_HELLO_RATE_PER_MIN=0` and `SIGNALING_NEW_ROOM_RATE_PER_MIN=0` (see `playwright.config.ts`); it caps rooms at one baby and one parent.
+
+## Hybrid Android smoke (optional)
+
+`tests/hybrid/` runs **Android emulator (baby) + Chromium (parent)** when `GUARDEDSLEEP_HYBRID_E2E=1`. The emulator loads the Vite dev server via `adb reverse` and `CAPACITOR_DEV_SERVER=http://localhost:5173`. Baby uses dev-only query flags `e2e_synthetic_audio=1` (oscillator mic) and `e2e_force_noise_alert=1`.
+
+**LAN mode (emulator or phone, no adb reverse):** set `GUARDEDSLEEP_HYBRID_LAN=1`. The emulator uses host alias **`10.0.2.2`**; a physical phone uses the host **LAN IPv4**. Override with `GUARDEDSLEEP_HYBRID_HOST`.
+
+| Test                  | Signaling                     | Stack required                                                              |
+| --------------------- | ----------------------------- | --------------------------------------------------------------------------- |
+| `03-hybrid-lan-ws-…`  | `ws://<host>:18787`           | Playwright `dev:local` (auto-started) or `pnpm run dev:local` on 5173/18787 |
+| `04-hybrid-lan-wss-…` | `wss://<host>:8443/signaling` | `pnpm run stack:lan` (Docker HTTPS) + debug APK with native WSS trust       |
+
+**Prereqs:** running AVD or USB-debugged phone (`adb devices` shows `device`), `adb` on `PATH`, Android SDK + JDK 21 for `assembleDebug` (Dev Container or `docker/android-build`).
+
+```bash
+# Emulator + adb reverse (localhost):
+pnpm run e2e:hybrid
+
+# LAN ws — emulator baby + browser parent (connect + DataChannel):
+pnpm run e2e:hybrid:lan-ws
+
+# LAN wss — start Docker stack first, then:
+pnpm run stack:lan   # separate terminal, keep running
+pnpm run e2e:hybrid:lan-wss
+
+# Both LAN ws + wss (wss skips if stack not up):
+pnpm run e2e:hybrid:lan
+
+# Physical phone on Wi-Fi (noise-alert RMS, ws only):
+GUARDEDSLEEP_HYBRID_E2E=1 GUARDEDSLEEP_HYBRID_LAN=1 pnpm run e2e:hybrid
+
+# LAN-only browser smoke (no Android):
+pnpm run e2e:lan
+
+# Reachability checklist:
+pnpm run diagnose:lan
+
+# One-command local automation (Docker-first, host-independent browser path):
+pnpm run e2e:local:auto
+
+# Host-independent (recommended): Linux + Docker only:
+pnpm run e2e:docker
+pnpm run e2e:docker:browser
+pnpm run check:kvm
+```
+
+See [docker/e2e-local](../../docker/e2e-local/README.md) and [docker/android-emulator](../../docker/android-emulator/README.md) for KVM prerequisites and troubleshooting.
+
+Not run in default CI (slow; requires emulator). Use before releases — see [manual release testing](../../docs/contributing/manual-release-testing.md).
 
 ## Dev-only hooks
 
-The mobile app exposes `window.__guardedsleep_test` **only** when `import.meta.env.DEV` is true (Vite dev server). Production static builds must not contain this surface — see [ADR-007](../../docs/decisions/ADR-007-browser-e2e-test-strategy.md). On the **parent** route, counts of `noise_alert` handler invocations are available for E2E (`getNoiseAlertCount` / `resetNoiseAlertCount`).
+The mobile app exposes `window.__guardedsleep_test` **only** when `import.meta.env.DEV` is true (Vite dev server). Production static builds must not contain this surface — see [ADR-007](../../docs/decisions/ADR-007-browser-e2e-test-strategy.md). On the **parent** route: `getNoiseAlertCount` / `resetNoiseAlertCount`, and `sampleRemoteAudioRms()` for inbound WebRTC RMS sampling. On the **baby** route: `getInviteJson()` (the pairing code) and `injectAudioLevel()`.
 
 ## Privacy
 

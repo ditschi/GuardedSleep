@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 060a59a642a6931e5e650d10c3f5e8a8e82ae3bf58beddb8b82761d55bb57e96 # shrinks to to_parent = [], to_baby = ["{\"type\":\"error\",\"code\":\"UNSUPPORTED_PROTOCOL\",\"message\":\"x\"}"]

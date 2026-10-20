@@ -1,0 +1,88 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "time-jump-with-peer-loss",
+  "description": "ADR-017 section 12: the clock jumps 10 min and nothing arrived; both sides alarm on the first tick and recover.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 30000,
+      "do": "time_jump",
+      "ms": 600000
+    },
+    {
+      "at": 700000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 20000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 20000
+    },
+    {
+      "peer": "parent",
+      "event": "link_lost",
+      "count": 1,
+      "within_ms": [630000, 640000]
+    },
+    {
+      "peer": "parent",
+      "event": "link_restored",
+      "count": 1,
+      "within_ms": [630000, 700000]
+    },
+    {
+      "peer": "parent",
+      "reaches_level": 3,
+      "within_ms": [630000, 640000]
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 700000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 700000
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    }
+  ]
+}

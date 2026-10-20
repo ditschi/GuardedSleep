@@ -1,0 +1,8 @@
+# AC-1 parent: the ambient bar is shown once the pairing verified (scripts/poc/gate.sh launches via DebugLaunchActivity).
+# Stable IDs only, never copy (ADR-016); ids from docs/technical/alpha-ux-flows.md §4.
+appId: org.guardedsleep.app.alpha
+---
+- extendedWaitUntil:
+    visible:
+      id: "parent_ambient_bar"
+    timeout: 15000

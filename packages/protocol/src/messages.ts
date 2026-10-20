@@ -1,6 +1,9 @@
 /** Wire format version for signaling + DataChannel JSON payloads. */
 export const PROTOCOL_VERSION = 2 as const;
 
+/** Versions the signaling server accepts; a room is pinned to its first member's version (ADR-017). */
+export const SUPPORTED_PROTOCOL_VERSIONS: readonly number[] = [2, 3];
+
 export type UnitRole = "baby" | "parent";
 
 export type ClientToServerMessage =
@@ -43,4 +46,5 @@ export type ErrorCode =
   | "NOT_JOINED"
   | "BABY_TAKEN"
   | "PARENT_CAP"
-  | "SIGNAL_TARGET_REQUIRED";
+  | "SIGNAL_TARGET_REQUIRED"
+  | "RATE_LIMITED";

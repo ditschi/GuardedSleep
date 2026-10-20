@@ -40,3 +40,18 @@ Audio and control data must be protected in transit; pairing must resist casual 
 
 - Noise Protocol as replacement for DTLS-SRTP -- rejected for media path.
 - Plain localStorage for PSK -- rejected.
+
+## Amendment 2026-10-19: direction-bound pairing proof and PSK-derived room id
+
+- Status: PROPOSED (with [ADR-017](ADR-017-link-recovery-and-connection-supervision.md) §1)
+
+The fingerprint-binding MAC as implemented (`HMAC(PSK, room|sorted fingerprints|version)`) is **symmetric**: both peers send the value they expect, so a peer that only knows the room id can reflect the other side's proof and pass verification (security review 2026-10-19, CRITICAL). Protocol v3 replaces it:
+
+- `mac_role = HMAC-SHA256(PSK, "gs-pair-proof/3|" + role + "|" + room + "|" + fp_sender + "|" + fp_receiver)`; each side sends its own MAC and verifies the peer's with roles and fingerprints swapped. Comparison is constant-time.
+- The room id is derived from the PSK (`HKDF-SHA256`, info `gs-room/3`, 128 bit, base64url) and is no longer a separate, guessable value.
+- PSK, derived room id and TURN credentials are stored encrypted with an AES-GCM key in the Android Keystore (StrongBox when available); never in Intents, Bundles or logs. Web clients keep the PSK in memory only.
+
+### Amendment addendum 2026-10-20: fingerprint source and DTLS cross-check (code review)
+
+- The fingerprint used in the proof is parsed only from SDP lines that **start with** `a=fingerprint:`; exactly one distinct, well-formed SHA-256 value is accepted, otherwise the attempt fails (`fingerprint_invalid`). The earlier substring search let a relay hide the genuine fingerprint in another line while DTLS ran against its own certificate (security review 2026-10-20, CRITICAL).
+- Defence in depth: platforms report the remote certificate fingerprint from WebRTC stats (`RTCCertificateStats`) after DTLS connects (`attempt_dtls_fingerprint`); the core verifies an attempt only if it equals the SDP fingerprint bound by the proof (`require_dtls_fingerprint`, default on).

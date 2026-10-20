@@ -45,7 +45,7 @@ importers:
   apps/e2e:
     devDependencies:
       '@playwright/test':
-        specifier: ^1.50.1
+        specifier: 1.60.0
         version: 1.60.0
       '@types/node':
         specifier: ^22.10.0
@@ -59,6 +59,9 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@capacitor/app':
+        specifier: ^7.0.1
+        version: 7.1.2(@capacitor/core@7.6.1)
       '@capacitor/core':
         specifier: ^7.4.4
         version: 7.6.1
@@ -71,6 +74,9 @@ importers:
       '@capawesome-team/capacitor-android-foreground-service':
         specifier: ^7.0.1
         version: 7.0.1(@capacitor/core@7.6.1)
+      '@guardedsleep/core-wasm':
+        specifier: workspace:*
+        version: link:../../packages/core-wasm
       '@guardedsleep/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
@@ -151,6 +157,18 @@ importers:
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
+      typescript:
+        specifier: ^6.0.2
+        version: 6.0.2
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/node@22.19.17)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.9.0)
+
+  packages/core-wasm:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.17
       typescript:
         specifier: ^6.0.2
         version: 6.0.2
@@ -689,6 +707,11 @@ packages:
     resolution: {integrity: sha512-zRIn10uTPbOQaFVRqkTGKwrrDypmn3L3I/x4XZSVLiCYt3zs8MUCPoqrMudNvOD+s6nQ5m0cX4GW8JRpMxKOkQ==}
     peerDependencies:
       '@capacitor/core': ^7.6.0
+
+  '@capacitor/app@7.1.2':
+    resolution: {integrity: sha512-d4I/oF/PRu4megL7/IGKYfe5j7yzSON1FRFgq6kH+m5kH6g7V+wyjHRLauCzGNjdRx4S+nWOumINds0qcRBtKg==}
+    peerDependencies:
+      '@capacitor/core': '>=7.0.0'
 
   '@capacitor/cli@7.6.2':
     resolution: {integrity: sha512-uPm+GDVhdWrM/DBWZ/L6c8uBVaEcge4MAXhqrIJWSkwad/9vNoVfUjtHaVgXxPE1g399PhlGm4kU8U7Qdfmwow==}
@@ -4675,6 +4698,10 @@ snapshots:
       '@babel/helper-validator-identifier': 7.28.5
 
   '@capacitor/android@7.6.2(@capacitor/core@7.6.1)':
+    dependencies:
+      '@capacitor/core': 7.6.1
+
+  '@capacitor/app@7.1.2(@capacitor/core@7.6.1)':
     dependencies:
       '@capacitor/core': 7.6.1
 

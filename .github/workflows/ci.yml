@@ -10,6 +10,11 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # scripts/core-build.sh and scripts/gradle.sh run natively on the runner (no Docker image).
+  CORE_BUILD_NATIVE: "1"
+  CARGO_HOME_OVERRIDE: /home/runner/.cargo
+
 jobs:
   pre-commit:
     name: pre-commit
@@ -33,6 +38,8 @@ jobs:
       - name: Install pnpm dependencies (commitlint config resolution)
         run: pnpm install --frozen-lockfile
 
+      - uses: ./.github/actions/setup-rust
+
       - name: pre-commit
         uses: pre-commit/action@v3.0.1
 
@@ -41,6 +48,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-rust
+        with:
+          targets: wasm32-unknown-unknown
+          wasm-bindgen: "true"
 
       - uses: pnpm/action-setup@v4
         with:
@@ -58,6 +70,27 @@ jobs:
 
       - name: Prettier (repo-wide)
         run: pnpm run format:check
+
+      - name: Localization catalogue (parity, plurals, UI literals)
+        run: pnpm run i18n:check
+
+      - name: Localization generator tests
+        run: pnpm run i18n:test
+
+      - name: Rust tests (core + golden vectors, host simulation)
+        run: cargo test -p guardedsleep-sim -p guardedsleep-core
+
+      - name: Build core WASM
+        run: scripts/core-build.sh wasm
+
+      - name: WASM conformance (AC-5)
+        run: node --test crates/guardedsleep-core/js/*.test.mjs
+
+      - name: Localization generation is reproducible
+        run: |
+          cargo run -q -p i18n-gen -- all --web-out "$RUNNER_TEMP/i18n-a/web" --android-out "$RUNNER_TEMP/i18n-a/res"
+          cargo run -q -p i18n-gen -- all --web-out "$RUNNER_TEMP/i18n-b/web" --android-out "$RUNNER_TEMP/i18n-b/res"
+          diff -r "$RUNNER_TEMP/i18n-a" "$RUNNER_TEMP/i18n-b"
 
       - name: Unit & integration tests
         run: pnpm test
@@ -77,6 +110,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-rust
+        with:
+          targets: wasm32-unknown-unknown
+          wasm-bindgen: "true"
 
       - uses: pnpm/action-setup@v4
         with:

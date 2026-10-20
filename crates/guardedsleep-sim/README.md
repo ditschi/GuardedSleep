@@ -1,0 +1,53 @@
+# guardedsleep-sim
+
+Deterministic host-side system simulation of the GuardedSleep link (ADR-015 AC-9/AC-10, ADR-016
+Stage 1). Two `Link`s (baby, parent) run in virtual time against a simulated relay that mirrors
+`apps/signaling-server` (welcome/members/peer, `to` routing, BABY_TAKEN, parent cap, WebSocket
+liveness eviction within 20 s, v3 room-id format) and a fake media layer (synthetic SDPs with
+`a=fingerprint` and `sendonly`/`recvonly` lines, so the pairing proof and baby SDP check run for
+real). A seed fully determines latencies, jitter and fault timing. Ticks come every 250 ms after
+activity and every 500 ms otherwise (the ADR-017 contract), and a stopped or dead link is not
+ticked, so a simulated hour runs in a fraction of a second.
+
+```bash
+# in the build image (see scripts/core-build.sh); cargo is not on the host
+cargo test -p guardedsleep-sim                         # all scenarios x 20 seeds, lint, determinism
+cargo run -p guardedsleep-sim --bin gs-sim -- list
+cargo run -p guardedsleep-sim --bin gs-sim -- run wifi-baby-90s --seed 3 --events
+cargo run -p guardedsleep-sim --bin gs-sim -- run happy-path --trace-out /tmp/traces
+cargo run -p guardedsleep-sim --bin gs-sim -- check --seeds 50
+cargo run -p guardedsleep-sim --bin gs-sim -- bless-traces      # rewrite the curated traces
+cargo run -p guardedsleep-sim --bin gs-sim -- lint-trace crates/guardedsleep-core/vectors/traces
+```
+
+## Scenarios (`scenarios/*.json`, `gs-scenario/1`)
+
+Verbs (`at` in simulated ms): `start`, `stop`, `end`, `acknowledge`, `input` (any `LinkInput`),
+`network_down` / `network_up` (per `peer`; the platform emits `network_available` on up),
+`path_switch` (new address: old socket and media path stay dead), `signaling_down` /
+`signaling_up` (server restart), `kill_process`, `restart_process` (fresh `Link`,
+`paired_before: true`), `drop_data`, `delay`, `duplicate`, `reorder` (`from`, `p`, `ms`,
+`for_ms`, `via: data|signaling`), `clear_faults`, `time_jump` (global Doze gap; `peer_traffic:
+kept` delivers one heartbeat per link at wake-up), `stranger_join` (`mode`: `wrong_psk`,
+`reflect`, `forged_offer`; `spoof_from` models a relay that forges `from`), `stranger_leave`,
+`ghost_join` (silent socket holding a slot until the liveness sweep), `replay_stop` (`peer`: the relay re-delivers the last recorded signaling `stop_notice`), `reject_hello` (`for_ms`, default forever: every `hello` is answered with `UNSUPPORTED_PROTOCOL`). Relay options: `reuse_client_ids` (same client id per role on every connection),
+`alias_rooms` (test-only, lets peers with different PSKs share a room), `parent_cap` and
+`sdp_rewrite: "fingerprint_confusion"` (a relay that moves each SDP's real `a=fingerprint` into an
+`s=` line and substitutes its own certificate; it forwards the DataChannel both ways, so only the
+core's fingerprint parsing and DTLS binding keep the link from verifying). The fake media layer
+reports the remote DTLS fingerprint (`attempt_dtls_fingerprint`) like the platforms do.
+
+Assertions per `peer`: `event` (+`where` subset match, `within_ms`, `count`/`count_min`/
+`count_max`, `since_last_contact_ms`), `never`, `state` + `at_ms` (+`key`, `level`), `max_level`,
+`reaches_level`, `sent_signal`, `joined`. `expected_fail: "<reason>"` marks a known core problem;
+the suite fails if such a scenario starts passing.
+
+## Traces
+
+`--trace-out` and `bless-traces` write `gs-trace/1` documents (`class: simulated`,
+`privacy: shareable`, synthetic PSK `GS-SYNTHETIC-PSK...`, synthetic `SYNT...` fingerprints, no
+wall-clock times) per `Link` instance. The curated set is declared by `export_traces` in the
+scenario files and lives in `crates/guardedsleep-core/vectors/traces/`; Rust
+(`tests/traces.rs`), WASM (`js/conformance.test.mjs`) and Kotlin (`ConformanceTest`) replay it.
+After an intentional core change run `bless-traces` and review the diff. `lint-trace` implements
+test-schemas section 1.4.

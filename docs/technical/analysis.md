@@ -588,18 +588,18 @@ This requires:
 
 ### Explicitly NOT in Phase 1
 
-| Feature                             | Phase | Reason                                                                      |
-| ----------------------------------- | ----- | --------------------------------------------------------------------------- |
-| iOS support                         | 2     | Unvalidated background audio, needs custom native plugin, no Apple hardware |
-| LAN <-> Internet automatic handoff  | TBD   | Both modes work in Phase 1, but switching is manual                         |
-| Talk-back                           | 2     | Adds complexity, not essential for monitoring                               |
-| Application E2E layer (Layer 3)     | 2     | DTLS + fingerprint binding is sufficient for Phase 1                        |
-| Key rotation                        | 2     | Pairing key valid until manual re-pair                                      |
-| Multi-parent (max 4 parents / baby) | 2     | MVP is 1:1 only; Phase 2 adds parents with same QR add-device flow          |
-| Remote pairing (invite code)        | 2     | Physical QR pairing only in Phase 1                                         |
-| Video monitoring                    | 3+    | Future feature                                                              |
-| Sound categorization (ML)           | 3+    | Future feature                                                              |
-| Multi-language (i18n)               | 2     | English only for Phase 1                                                    |
+| Feature                             | Phase | Reason                                                                          |
+| ----------------------------------- | ----- | ------------------------------------------------------------------------------- |
+| iOS support                         | 2     | Unvalidated background audio, needs custom native plugin, no Apple hardware     |
+| LAN <-> Internet automatic handoff  | TBD   | Both modes work in Phase 1, but switching is manual                             |
+| Talk-back                           | 2     | Adds complexity, not essential for monitoring                                   |
+| Application E2E layer (Layer 3)     | 2     | DTLS + fingerprint binding is sufficient for Phase 1                            |
+| Key rotation                        | 2     | Pairing key valid until manual re-pair                                          |
+| Multi-parent (max 4 parents / baby) | 2     | MVP is 1:1 only; Phase 2 adds parents with same QR add-device flow              |
+| Remote pairing (invite code)        | 2     | Physical QR pairing only in Phase 1                                             |
+| Video monitoring                    | 3+    | Future feature                                                                  |
+| Sound categorization (ML)           | 3+    | Future feature                                                                  |
+| Multi-language (i18n)               | 1     | en/de/fr/es from Phase 1 (owner decision 2026-10-19; supersedes "English only") |
 
 ---
 

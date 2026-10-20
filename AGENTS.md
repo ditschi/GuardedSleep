@@ -16,42 +16,53 @@
 ## 1. Project snapshot
 
 - **Product:** GuardedSleep – Privacy Baby Monitor. Open-source, privacy-first, **fully local-capable** (no cloud dependency for media).
-- **Repository / engineering name:** GuardedSleep. **npm scope `@guardedsleep/*`**, **Android app id `org.guardedsleep.app`**, **Docker images `guardedsleep-*`**.
-- **Phase:** **Concept Phase with scaffolded code.** Documentation and developer tooling are complete; an MVP feature implementation has **not** started. A **Proof-of-Concept gate** ([ADR-001](docs/decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md)) must pass before broad MVP build-out.
-- **Primary platform (MVP):** Android via Capacitor. iOS, desktop, and video are **explicitly deferred or ideas only** (see §7).
-- **License:** TBD before any first-party code release.
+- **Repository / engineering name:** GuardedSleep. **npm scope `@guardedsleep/*`**, **Android app id `org.guardedsleep.app`** (alpha builds `org.guardedsleep.app.alpha`), **Docker images `guardedsleep-*`**.
+- **Phase:** **Alpha build-out** ([ADR-018](docs/decisions/ADR-018-alpha-milestone-scope-and-trust-features.md)). The native PoC passed the emulator gate AC-1…AC-4 (2026-10-20); AC-10 (link recovery, [ADR-017](docs/decisions/ADR-017-link-recovery-and-connection-supervision.md)) is next.
+- **Platforms:** native Android (Kotlin + Compose) on a shared Rust core ([ADR-015](docs/decisions/ADR-015-native-clients-with-shared-rust-core.md), PROPOSED until its gate passes) and the web client on the same core via WASM — a permanent full client for both roles ([ADR-019](docs/decisions/ADR-019-language-repository-and-client-policy.md)). The Capacitor shell is **legacy**: do not extend it. iOS, desktop apps and video are deferred or ideas only (§9).
+- **License:** **AGPL-3.0-or-later** ([`LICENSE`](LICENSE)); trademark policy [`docs/legal/trademark.md`](docs/legal/trademark.md) — [ADR-014](docs/decisions/ADR-014-open-source-license-agpl-and-trademark.md).
 
-## 2. Tech stack (DECIDED, see [ADR-002](docs/decisions/ADR-002-client-platform-and-repository-structure.md))
+## 2. Tech stack (DECIDED, see [ADR-019](docs/decisions/ADR-019-language-repository-and-client-policy.md), [ADR-015](docs/decisions/ADR-015-native-clients-with-shared-rust-core.md))
 
-| Area             | Choice                                              | Notes                                                                                                                                                                            |
-| ---------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Language         | **TypeScript everywhere**                           | No JavaScript files in new code.                                                                                                                                                 |
-| Repo layout      | **pnpm workspaces monorepo**                        | See `pnpm-workspace.yaml`.                                                                                                                                                       |
-| Web framework    | **Svelte 5 + SvelteKit (SPA / static adapter)**     | SSR features are not used (Capacitor target).                                                                                                                                    |
-| UI               | **Tailwind CSS + shadcn-svelte (planned)**          | Currently Tailwind v4 via `@tailwindcss/vite`; shadcn-svelte components are added on demand.                                                                                     |
-| Mobile shell     | **Capacitor 7 (Android)**                           | iOS is Phase 2; do **not** add iOS code without an ADR update.                                                                                                                   |
-| Signaling server | **Node.js 22 + `ws` + TypeScript**                  | WSS in production, plain WS only for local dev.                                                                                                                                  |
-| Build tool       | **Vite (via SvelteKit) / `tsc` for libraries**      | `packages/protocol` emits to `dist/`.                                                                                                                                            |
-| Package manager  | **pnpm 9.15.4** (pinned via `packageManager`)       | Use `corepack` to activate.                                                                                                                                                      |
-| Lint / format    | **Prettier + `prettier-plugin-svelte` + `typos`**   | No ESLint yet; Prettier + `svelte-check` cover style. Adding ESLint requires an ADR or `docs` note.                                                                              |
-| Tests            | **Vitest** + **Playwright** (`apps/e2e`, Chromium)  | Vitest in every workspace; Playwright for two-role WebRTC smoke ([ADR-007](docs/decisions/ADR-007-browser-e2e-test-strategy.md)). `@testing-library/svelte` for component tests. |
-| Crypto / media   | **WebRTC DTLS-SRTP + DataChannel** (browser-native) | No custom crypto for transport. PSK / fingerprint binding planned per [ADR-004](docs/decisions/ADR-004-encryption-transport-and-key-storage.md).                                 |
+Language follows the layer; no new plain JavaScript in app code.
+
+| Area             | Choice                                                                                                       | Notes                                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| Shared core      | **Rust**, sans-IO (`crates/guardedsleep-core`)                                                               | Protocol v3, pairing, `Link`/`Attempt` state machines; UniFFI → Kotlin/Swift, wasm-bindgen → web     |
+| Android          | **Kotlin + Jetpack Compose** (`apps/android`), AGP 9, libwebrtc (`stream-webrtc`)                            | Latest stable toolchain and libraries (owner rule)                                                   |
+| Web client       | **Svelte 5 + SvelteKit** (SPA) on the WASM core (`apps/mobile`, to be renamed `apps/web`)                    | Full client for baby and parent roles                                                                |
+| iOS              | Swift + SwiftUI — deferred until its own gate                                                                |                                                                                                      |
+| Signaling server | **Node.js 22 + `ws`** today; Rust (`axum`) after the alpha                                                   | One HTTP port, TLS at the reverse proxy                                                              |
+| Protocol types   | **Rust core is the source of truth**; TypeScript types generated                                             | `@guardedsleep/protocol` becomes generated                                                           |
+| Tooling          | Rust where it shares protocol logic (`crates/i18n-gen`), else shell/TypeScript                               | i18n catalogue `locales/*.json` → Android resources + web JSON                                       |
+| Repo / builds    | Polyglot monorepo: pnpm workspaces + Cargo workspace + Gradle                                                | Cargo is not required on the host: `scripts/cargo.sh` / `scripts/core-build.sh` use the Docker image |
+| Tests            | `cargo test` + simulation + vectors; JUnit/Robolectric/Roborazzi; Vitest; Playwright; Maestro; emulator gate | See [ADR-016](docs/decisions/ADR-016-test-strategy-local-virtual-physical.md)                        |
+| Crypto / media   | WebRTC DTLS-SRTP + DataChannel; direction-bound pairing proof (ADR-004 amendment)                            | No custom transport crypto                                                                           |
 
 ## 3. Repository map
 
 ```
 .
+├── crates/
+│   ├── guardedsleep-core/   # Rust sans-IO core (protocol v3, pairing, Link/Attempt), vectors + traces
+│   ├── guardedsleep-sim/    # Host simulation (gs-scenario) and trace recording (AC-9/AC-10)
+│   ├── i18n-gen/            # locales/*.json → Android resources + web JSON
+│   └── uniffi-bindgen/      # Kotlin/Swift binding generator
+├── locales/                 # Single UI copy catalogue (en master; de, fr, es)
 ├── apps/
-│   ├── mobile/              # SvelteKit + Capacitor (Android tracked under apps/mobile/android)
+│   ├── android/             # Native Android client (Kotlin + Compose); :core = UniFFI bindings + JNI libs
+│   ├── mobile/              # SvelteKit web client (WASM core); Capacitor shell under android/ is legacy
 │   ├── e2e/                 # Playwright browser E2E (baby + parent, local dev stack)
 │   └── signaling-server/    # Node + ws WebSocket relay
 ├── packages/
-│   └── protocol/            # Shared TS types & helpers (DataChannel msgs, heartbeat, parse)
+│   ├── core-wasm/           # WASM build of the core for the web client
+│   └── protocol/            # TS protocol types (to be generated from the Rust core)
 ├── docker/
 │   ├── signaling-server/    # Multi-stage image + Compose (local build + GHCR + Traefik example)
 │   ├── mobile-web/          # nginx serving the static PWA build
 │   ├── stack/               # Combined PWA + signaling local stack (TLS via self-signed)
-│   └── android-build/       # CI / host-only Gradle image (alt. to dev image)
+│   ├── android-build/       # Legacy Capacitor Gradle image
+│   ├── android-native-build/ # JDK + Android SDK/NDK + Rust image for core and native builds
+│   └── android-emulator/    # Headless KVM emulator image (local emulator gate)
 ├── .devcontainer/           # Dev Container (Node 22 + JDK 21 + Android SDK 35)
 ├── .github/workflows/       # CI: pre-commit, test+build, browser E2E, optional docker-signaling
 ├── .husky/                  # Git hooks (pre-commit, commit-msg)
@@ -65,7 +76,7 @@
 │   ├── reviews/             # Rolling review checklists
 │   ├── contributing/        # Dev setup, Docker, releases
 │   └── legal/               # Privacy policy
-├── scripts/                 # devcontainer-run.sh, dev-shell.sh
+├── scripts/                 # core-build.sh, cargo.sh, poc/ (emulator gate), lint-ui-literals.sh, …
 ├── CHANGELOG.md             # Keep a Changelog, manual until Release Please
 ├── CONTRIBUTING.md
 └── README.md
@@ -92,51 +103,63 @@ pnpm run prepare   # do NOT run `pre-commit install` (conflicts with Husky)
 
 > **Rootless Docker on Linux:** if `docker info` shows `rootless: true`, use `./scripts/devcontainer-run.sh …` (auto `DEV_UID`/`DEV_GID`) or copy `.devcontainer/.env.example` → `.devcontainer/.env` with `DEV_UID=0` / `DEV_GID=0`. Raw `docker compose -f .devcontainer/…` must also pass `--project-directory .devcontainer` so that `.env` is loaded; otherwise `node` (uid 1000) hits `EACCES` on `pnpm install`. Details: [docs/contributing/development.md](docs/contributing/development.md#rootless-docker--eacces-on-workspace_tmp_).
 
-| Task                            | Command                                                                                                                                                                                                  |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Run all CI-equivalent checks    | `pnpm run lint` (= `pre-commit run --all-files`; includes **typos** for English + **cspell** for `de`/`fr`/`es` message JSON)                                                                            |
-| Spellcheck locale message JSON  | `pnpm run lint:cspell-i18n` (same checks as the `cspell-i18n-messages` pre-commit hook)                                                                                                                  |
-| Format the repo                 | `pnpm run format`                                                                                                                                                                                        |
-| Format check only               | `pnpm run format:check`                                                                                                                                                                                  |
-| Type check Svelte               | `pnpm --filter @guardedsleep/mobile check`                                                                                                                                                               |
-| Unit + integration tests        | `pnpm test` (builds `@guardedsleep/protocol` first, then runs Vitest in all)                                                                                                                             |
-| Build all packages              | `pnpm run build`                                                                                                                                                                                         |
-| Build mobile (static SvelteKit) | `pnpm --filter @guardedsleep/mobile build`                                                                                                                                                               |
-| Build signaling-server          | `pnpm --filter @guardedsleep/signaling-server build`                                                                                                                                                     |
-| Signaling smoke (WS relay)      | `pnpm --filter @guardedsleep/signaling-server smoke`                                                                                                                                                     |
-| Local dev (PWA + signaling)     | `pnpm run dev:local` (Vite on `5173`, signaling on `8787`)                                                                                                                                               |
-| Browser E2E (Chromium)          | `pnpm run e2e` (Playwright; starts `dev:local` via `webServer` — see `apps/e2e/README.md`)                                                                                                               |
-| Dependency audit                | `pnpm run audit` (`--audit-level=high`)                                                                                                                                                                  |
-| Capacitor sync (Android)        | `pnpm --filter @guardedsleep/mobile run cap:sync`                                                                                                                                                        |
-| Open Android Studio project     | `pnpm --filter @guardedsleep/mobile run cap:open:android`                                                                                                                                                |
-| Android debug APK (CI)          | Workflow [`.github/workflows/android.yml`](.github/workflows/android.yml); artifact on PR / `main` / `mobile-v*` tags — [android-apk-build.md](docs/contributing/android-apk-build.md#ci-github-actions) |
-| One-shot full stack (Docker)    | `docker compose -f docker/stack/compose.yaml up --build`                                                                                                                                                 |
-| Validate branch commits         | `pnpm run release:lint` (Release Please pre-check)                                                                                                                                                       |
-| Preview Release Please output   | `GH_TOKEN=… GITHUB_REPOSITORY=…/… pnpm run release:preview` (maintainer)                                                                                                                                 |
+| Task                              | Command                                                                                                                                                                                                                                                                              |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| All checks (single entry point)   | `just test` (Rust, WASM, pnpm, Android unit tests) / `just lint` (pre-commit, fmt + clippy, UI literals, i18n) · `just build` · `just gate` · `just e2e` — needs Docker + Node/corepack; cargo optional ([ADR-019](docs/decisions/ADR-019-language-repository-and-client-policy.md)) |
+| Run all CI-equivalent checks      | `pnpm run lint` (= `pre-commit run --all-files`; includes **typos** for English + **cspell** for `de`/`fr`/`es` message JSON)                                                                                                                                                        |
+| Spellcheck locale message JSON    | `pnpm run lint:cspell-i18n` (same checks as the `cspell-i18n-messages` pre-commit hook)                                                                                                                                                                                              |
+| Format the repo                   | `pnpm run format`                                                                                                                                                                                                                                                                    |
+| Format check only                 | `pnpm run format:check`                                                                                                                                                                                                                                                              |
+| Type check Svelte                 | `pnpm --filter @guardedsleep/mobile check`                                                                                                                                                                                                                                           |
+| Unit + integration tests          | `pnpm test` (builds `@guardedsleep/protocol` first, then runs Vitest in all)                                                                                                                                                                                                         |
+| Build all packages                | `pnpm run build`                                                                                                                                                                                                                                                                     |
+| Build mobile (static SvelteKit)   | `pnpm --filter @guardedsleep/mobile build`                                                                                                                                                                                                                                           |
+| Build signaling-server            | `pnpm --filter @guardedsleep/signaling-server build`                                                                                                                                                                                                                                 |
+| Signaling smoke (WS relay)        | `pnpm --filter @guardedsleep/signaling-server smoke`                                                                                                                                                                                                                                 |
+| Rust core: fmt, clippy, tests     | `scripts/core-build.sh test` (Docker image; cargo not needed on the host)                                                                                                                                                                                                            |
+| Core for Android / web            | `scripts/core-build.sh android` (JNI libs + Kotlin bindings) · `scripts/core-build.sh wasm`                                                                                                                                                                                          |
+| Host simulation (AC-9/AC-10)      | `scripts/cargo.sh test -p guardedsleep-sim`                                                                                                                                                                                                                                          |
+| Native Android build + tests      | in `apps/android`, via the build image: `./gradlew :core:testDebugUnitTest :app:testDebugUnitTest :app:assembleDebug` (wrap concurrent runs in `flock target/.gradle.lock`)                                                                                                          |
+| Emulator gate (needs KVM)         | `scripts/poc/local-gate.sh` (AC-1…AC-4 [+AC-10]; `DOZE_MINUTES=2` for a quick run)                                                                                                                                                                                                   |
+| Release APK inspection            | `scripts/poc/release-check.sh` · core size `scripts/poc/size-check.sh`                                                                                                                                                                                                               |
+| i18n catalogue                    | `pnpm run i18n:check` · `pnpm run i18n:gen` (`locales/*.json`)                                                                                                                                                                                                                       |
+| Local dev (PWA + signaling)       | `pnpm run dev:local` (Vite on `5173`, signaling on `8787`)                                                                                                                                                                                                                           |
+| Docker stack (LAN phone test)     | `pnpm run stack:lan` (writes `docker/stack/.env` with host LAN IP, then `compose up --build`; see [docker/stack/README.md](docker/stack/README.md))                                                                                                                                  |
+| Browser E2E (Chromium)            | `pnpm run e2e` (Playwright; starts `dev:local` via `webServer` — see `apps/e2e/README.md`)                                                                                                                                                                                           |
+| Dependency audit                  | `pnpm run audit` (`--audit-level=high`)                                                                                                                                                                                                                                              |
+| Capacitor sync (legacy)           | `pnpm --filter @guardedsleep/mobile run cap:sync`                                                                                                                                                                                                                                    |
+| Capacitor Studio project (legacy) | `pnpm --filter @guardedsleep/mobile run cap:open:android`                                                                                                                                                                                                                            |
+| Android debug APK (CI)            | Workflow [`.github/workflows/android.yml`](.github/workflows/android.yml); artifact on PR / `main` / `mobile-v*` tags — [android-apk-build.md](docs/contributing/android-apk-build.md#ci-github-actions)                                                                             |
+| One-shot full stack (Docker)      | `docker compose -f docker/stack/compose.yaml up --build`                                                                                                                                                                                                                             |
+| Validate branch commits           | `pnpm run release:lint` (Release Please pre-check)                                                                                                                                                                                                                                   |
+| Preview Release Please output     | `GH_TOKEN=… GITHUB_REPOSITORY=…/… pnpm run release:preview` (maintainer)                                                                                                                                                                                                             |
 
 **Before every commit** the Husky `pre-commit` hook runs `pre-commit run` (trailing whitespace, EOF, YAML/JSON, typos, CSpell on locale message JSON, Prettier) and `commit-msg` runs `commitlint`. Agents that bypass hooks must re-run `pnpm run lint` manually before declaring "done".
 
 ## 5. Coding conventions
 
-### 5.1 Source layout & layers (DECIDED, see [`sw-architecture.md`](docs/technical/sw-architecture.md))
+### 5.1 Source layout & layers (DECIDED, see [ADR-015](docs/decisions/ADR-015-native-clients-with-shared-rust-core.md), [ADR-019](docs/decisions/ADR-019-language-repository-and-client-policy.md))
 
-The mobile app uses a **strict layered architecture**. Agents adding code MUST keep imports flowing **only downward**:
+Repository-wide layering — imports flow **only downward**:
 
 ```
-UI (routes/, components/)
+UI            Compose (apps/android …/ui) · Svelte routes/components (apps/mobile)
   ↓
-State (Svelte stores)
+State         StateFlow models (UiContract.kt) · Svelte stores of the same shape
   ↓
-Platform (Capacitor ↔ browser abstraction in lib/platform/*)
+Platform      Kotlin service/media/signaling/silence · browser link driver (lib/link) — all I/O lives here
   ↓
-Core  (pure TypeScript, framework-free) — lib/core/{webrtc,audio,crypto,protocol,discovery}
+Bindings      UniFFI (Kotlin/Swift) · wasm-bindgen (web)
+  ↓
+Core          Rust, sans-IO (crates/guardedsleep-core): no I/O, threads or clocks; emits message keys, never prose
 ```
 
 Hard rules:
 
-- **`lib/core/` is framework-free.** No `import` of Svelte, SvelteKit, Capacitor, DOM-only APIs that have no test shim, or any UI library. Core code must run under plain Vitest (jsdom only when truly DOM-dependent).
-- **`lib/platform/` is the only place that touches Capacitor plugins.** It exposes a stable interface so the same UI/core works in browser (PWA fallback) and on Android.
-- **Signaling protocol types live in `@guardedsleep/protocol`** and are imported by both mobile and signaling-server. Never duplicate the message schema; extend the shared package.
+- **Safety logic lives once, in the Rust core** (pairing, link supervision, escalation, noise gate, protocol validation). Platforms do not re-implement it; a platform-side reconnect loop or timer-based alarm is a bug.
+- **Protocol shapes come from the Rust core** (ADR-019); the TypeScript package follows it. Never hand-edit a second schema.
+- **UI renders contract models only** (`apps/android/app/src/main/kotlin/org/guardedsleep/app/ui/model/UiContract.kt`; the web stores mirror it). UI code never imports UniFFI/WASM types.
+- **Web client:** `lib/core/` stays framework-free; Capacitor only in `lib/platform/` (legacy — do not extend).
 - New cross-cutting modules → propose in `docs/technical/sw-architecture.md` or open an ADR first.
 
 ### 5.2 Style
@@ -150,20 +173,21 @@ Hard rules:
 ### 5.2a Human language (English source, i18n for locales)
 
 - **Repository default language: English.** All material under `docs/` (concept, features, ADRs, reviews, contributing), code comments, identifiers, and **hard-coded UI strings in source** must be written in English so reviews, CI (`typos`), and cross-team work stay consistent.
-- **Localized end-user copy** lives **only** in locale bundles (today: `apps/mobile/src/lib/i18n/messages/*.json`). Add or change strings there; `en.json` is the parity master (`MASTER_LOCALE`). Do not paste German/French/etc. prose into `.svelte`/`.ts` for production UI—use `t()` / `tWithEnFallback()` with keys. **Spellcheck:** `typos` (English) covers the repo including `en.json`; **CSpell** with native dictionaries covers `de.json` / `fr.json` / `es.json` (`pnpm run lint:cspell-i18n`, configs `cspell-i18n-*.json`).
+- **Localized end-user copy** lives **only** in locale bundles (today: `locales/*.json`, generated into web and Android resources by `crates/i18n-gen`). Add or change strings there; `en.json` is the parity master. Do not paste German/French/etc. prose into `.svelte`/`.ts` for production UI—use `t()` / `tWithEnFallback()` with keys. **Spellcheck:** `typos` (English) covers the repo including `en.json`; **CSpell** with native dictionaries covers `de.json` / `fr.json` / `es.json` (`pnpm run lint:cspell-i18n`, configs `cspell-i18n-*.json`).
 - **Quoted non-English** is allowed sparingly in docs when it is the product artifact being analyzed (e.g. a persona quote); prefer an English gloss in the same sentence.
 
-### 5.3 TypeScript
+### 5.3 Language rules
 
-- Strict mode is assumed across packages. Do not silence with `// @ts-ignore`; use `// @ts-expect-error <reason>` if absolutely required.
-- Public functions/classes get JSDoc only when intent is non-obvious — the type system carries the rest.
-- No `any` in production code; in tests prefer minimal local mock types.
+- **Rust:** `cargo fmt`, `clippy -D warnings`; no `unsafe` outside generated FFI glue; no `unwrap`/`expect` on untrusted input; every core module has unit tests, behaviour changes update conformance vectors/traces (bless, then review the diff by hand).
+- **Kotlin:** official style; no `!!` in production code; all I/O off the main thread; stable `testTag` ids (snake_case, shared with the web).
+- **TypeScript:** strict mode; no `// @ts-ignore` (use `// @ts-expect-error <reason>` if unavoidable); no `any` in production code.
+- Public APIs get doc comments only when intent is non-obvious.
 
 ### 5.4 Tests
 
-- Place tests next to the file (`foo.ts` → `foo.test.ts`) for unit tests; integration tests live under `src/test/` (mobile) or `src/*.test.ts` (server) per the existing pattern.
-- Every new pure-TS module in `lib/core/` **must** ship a Vitest file. UI components should at minimum have a render-smoke test.
-- Use `@testing-library/svelte` for components; do not introduce a second component test framework.
+- Tests sit next to the code in the area's framework: `cargo test` (+ proptest, simulation scenarios in `crates/guardedsleep-sim`), JUnit/Robolectric and Roborazzi screenshots (`apps/android`), Vitest + `@testing-library/svelte` (web), Playwright (`apps/e2e`).
+- Device behaviour (Doze, FGS, alerts, recovery) is proven by the emulator gate (`scripts/poc/local-gate.sh`, needs KVM) before hardware tests.
+- Maestro and Playwright select by stable ids, never by copy text.
 
 ## 6. Documentation & decision conventions
 
@@ -222,13 +246,13 @@ For non-trivial work, act as **Coordinator** and consult the project roles defin
 These are absolute lines. Code that crosses them must be rejected or rolled back, even if it compiles and tests pass.
 
 1. **No third-party services in the media or alert path.** Audio, video, and per-event notifications never traverse cloud servers we don't operate. Signaling and STUN may transit our infrastructure but carry **only connection metadata**, never media.
-2. **No cleartext PSKs or sensitive pairing material on disk.** Use Capacitor Secure Storage (Android Keystore / TEE). Plain `localStorage` is only for non-secret settings (UI prefs, signaling URL).
-3. **No custom transport crypto.** Stick to WebRTC DTLS-SRTP + DTLS (DataChannel) plus the planned application-level HKDF layer in Phase 2. No homegrown ciphers, no XOR "obfuscation".
+2. **No cleartext PSKs or sensitive pairing material on disk.** Native: encrypt with a hardware-backed key (Android Keystore/StrongBox, iOS Keychain). Web: keep the PSK in memory only — never `localStorage`, `sessionStorage` or IndexedDB. Never put pairing material in Intents, Bundles, URLs or logs. Plain preferences only for non-secret settings.
+3. **No custom transport crypto.** WebRTC DTLS-SRTP + DTLS (DataChannel); HMAC/HKDF only for the pairing proof and room derivation (ADR-004 amendment). No homegrown ciphers, no XOR "obfuscation".
 4. **Validate all signaling payloads** before use (the WebRTC client already does — keep it that way). The server treats every message as untrusted.
 5. **No telemetry, crash reporting, or analytics** without an ADR and an opt-in UX. Default = silent, local only.
 6. **No raw PII in logs** (no IPs, device names, fingerprints in production builds). Dev logs may be more verbose behind a debug flag.
 7. **No new `*.key`, `*.pem`, `.env`, `credentials.json`** committed. `.gitignore` already blocks these — do not add exceptions.
-8. **Adding dependencies:** justify the addition in the PR description; prefer well-maintained, low-transitive-dependency packages. CI gate is `pnpm audit --audit-level=high`. Do not silence audit findings; bump or override (`pnpm.overrides` is the documented escape hatch).
+8. **Adding dependencies:** justify the addition in the PR description; prefer well-maintained, low-transitive-dependency packages. CI gates: `pnpm audit --audit-level=high` (npm); Rust and Gradle dependency audits are a follow-up (ADR-019). Do not silence audit findings; bump or override.
 
 ## 8. Git, commits, pull requests, and releases
 
@@ -259,24 +283,24 @@ These are absolute lines. Code that crosses them must be rejected or rolled back
 
 The repo's documentation already commits to a feature roadmap. Agents must respect **what is not yet implemented** and must not speculate code into being. Treat the following as **off-limits unless the task explicitly references the matching ADR / feature file and updates `STATUS`**:
 
-| Feature                                     | Doc status                                                                                         | Agent rule                                                                    |
-| ------------------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| In-app App-Lock (PIN / biometrics)          | `DEFERRED` to Phase 2 ([ADR-001](docs/decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md)) | MVP relies on OS screen lock. Do not add biometric plugins or PIN flows.      |
-| iOS build                                   | `DEFERRED` Phase 2                                                                                 | Do not generate Xcode/iOS code. Capacitor `ios` folder is ignored on purpose. |
-| Talk-back (parent → baby audio)             | `DEFERRED` Phase 2                                                                                 | Track stays muted in MVP; no UI for talk-back.                                |
-| Multi-parent (>1 parent device)             | `DEFERRED` Phase 2 (max 4)                                                                         | Hard-cap MVP at 1 baby + 1 parent. Same QR add-flow planned for Phase 2.      |
-| Application-level E2E layer (Layer 3, HKDF) | `DEFERRED` Phase 2 ([ADR-004](docs/decisions/ADR-004-encryption-transport-and-key-storage.md))     | DTLS + fingerprint binding is the MVP baseline.                               |
-| Key rotation                                | `DEFERRED` Phase 2                                                                                 | Pairing key valid until manual re-pair.                                       |
-| LAN ↔ Internet automatic handoff            | `IDEA`                                                                                             | Both modes exist in MVP; switching is manual.                                 |
-| Remote pairing (invite code)                | `DEFERRED` Phase 2                                                                                 | MVP requires physical QR scan; invite link UX is meeting-style only.          |
-| i18n (multi-language)                       | `DEFERRED` Phase 2                                                                                 | English only in Phase 1. The `lib/i18n/` parity test is groundwork.           |
-| Video monitoring                            | `IDEA` Phase 3+                                                                                    | Do not add camera capture or video pipeline.                                  |
-| On-device AI / sound categorization         | `IDEA` Phase 3+                                                                                    | No TFLite / YAMNet / MFCC code yet.                                           |
-| Desktop installable client (Tauri/Electron) | `IDEA`                                                                                             | PWA + browser fallback is the current desktop story.                          |
-| Audio sensitivity calibration / sleep log   | `DEFERRED` Phase 2                                                                                 | Out of MVP.                                                                   |
-| White noise / lullaby playback              | `REJECTED`                                                                                         | Permanently out of scope.                                                     |
-| Signaling rate limits                       | `IDEA`                                                                                             | Design first (`docs/features/connectivity-pairing.md`) before code.           |
-| Telemetry / crash reporting                 | not in docs                                                                                        | Requires explicit ADR + opt-in UX. Default = none.                            |
+| Feature                                     | Doc status                                                                                         | Agent rule                                                                                                                                                                                              |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| In-app App-Lock (PIN / biometrics)          | `DEFERRED` to Phase 2 ([ADR-001](docs/decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md)) | MVP relies on OS screen lock. Do not add biometric plugins or PIN flows.                                                                                                                                |
+| iOS build                                   | `DEFERRED` Phase 2                                                                                 | No Swift/Xcode code until the iOS gate (ADR-015); the Capacitor `ios` folder stays ignored.                                                                                                             |
+| Talk-back (parent → baby audio)             | `DEFERRED` Phase 2                                                                                 | Track stays muted in MVP; no UI for talk-back.                                                                                                                                                          |
+| Multi-parent (>1 parent device)             | `DEFERRED` Phase 2 (max 4)                                                                         | Hard-cap MVP at 1 baby + 1 parent. Same QR add-flow planned for Phase 2.                                                                                                                                |
+| Application-level E2E layer (Layer 3, HKDF) | `DEFERRED` Phase 2 ([ADR-004](docs/decisions/ADR-004-encryption-transport-and-key-storage.md))     | DTLS + fingerprint binding is the MVP baseline.                                                                                                                                                         |
+| Key rotation                                | `DEFERRED` Phase 2                                                                                 | Pairing key valid until manual re-pair.                                                                                                                                                                 |
+| LAN ↔ Internet automatic handoff            | `IDEA`                                                                                             | Both modes exist in MVP; switching is manual.                                                                                                                                                           |
+| Remote pairing (invite code)                | `DEFERRED` Phase 2                                                                                 | MVP requires physical QR scan; invite link UX is meeting-style only.                                                                                                                                    |
+| i18n (multi-language)                       | `DECIDED` Phase 1: **en, de, fr, es officially supported** (owner, 2026-10-19)                     | New UI copy **must** go through `locales/*.json` (en master; generated by `crates/i18n-gen` into Android resources and web JSON), never literals. Do not add further locales or another i18n mechanism. |
+| Video monitoring                            | `IDEA` Phase 3+                                                                                    | Do not add camera capture or video pipeline.                                                                                                                                                            |
+| On-device AI / sound categorization         | `IDEA` Phase 3+                                                                                    | No TFLite / YAMNet / MFCC code yet.                                                                                                                                                                     |
+| Desktop installable client (Tauri/Electron) | `IDEA`                                                                                             | PWA + browser fallback is the current desktop story.                                                                                                                                                    |
+| Audio sensitivity calibration / sleep log   | `DEFERRED` Phase 2                                                                                 | Out of MVP.                                                                                                                                                                                             |
+| White noise / lullaby playback              | `REJECTED`                                                                                         | Permanently out of scope.                                                                                                                                                                               |
+| Signaling rate limits                       | `IDEA`                                                                                             | Design first (`docs/features/connectivity-pairing.md`) before code.                                                                                                                                     |
+| Telemetry / crash reporting                 | not in docs                                                                                        | Requires explicit ADR + opt-in UX. Default = none.                                                                                                                                                      |
 
 **When in doubt:** open the matching feature file in `docs/features/`, follow the `STATUS` tag, and surface a question instead of inventing implementation.
 
@@ -285,7 +309,7 @@ The repo's documentation already commits to a feature roadmap. Agents must respe
 - **Read before you write.** Open the relevant ADR, feature doc, and existing module before generating new code. The codebase deliberately separates concerns; matching the layer is more important than matching surface syntax.
 - **Prefer extending the shared protocol package** over inlining types. Drift between mobile and signaling-server is the most likely source of nasty bugs.
 - **Run the smoke test** (`pnpm --filter @guardedsleep/signaling-server smoke`) when you touch signaling logic; it builds and exercises the WS relay end-to-end.
-- **Capacitor sync is destructive** to `apps/mobile/android/app/src/main/assets/public`. Do not commit transient `cap sync` artifacts; CI / Docker workflows recreate them.
+- **(Legacy Capacitor shell)** Capacitor sync is destructive to `apps/mobile/android/app/src/main/assets/public`. Do not commit transient `cap sync` artifacts; CI / Docker workflows recreate them.
 - **For multi-step tasks** maintain a short to-do list; do not declare success until lint, type-check, and tests pass.
 - **Never invent versions** for new dependencies — query the registry / lockfile, or add via `pnpm add` so the lockfile updates correctly.
 - **Model routing (plan strong, implement cheap):** the session model (strong, e.g. Opus) does planning, architecture, ADR/role reviews, and final verification. **Implementation work is delegated** to a sub-agent on a smaller, token-efficient model — in Claude Code the `implementer` agent ([`.claude/agents/implementer.md`](.claude/agents/implementer.md), Sonnet). This repo rule counts as the user's standing request to spawn sub-agents for implementation. Hand over a self-contained brief (goal, files, layer rules from §5, acceptance checks); the planner reviews the diff and runs lint/tests before declaring done. Exceptions: trivial one-line edits and docs/ADR wording stay with the planner. Tools without sub-agents: plan first, then switch to a cheaper model manually for the implementation step.

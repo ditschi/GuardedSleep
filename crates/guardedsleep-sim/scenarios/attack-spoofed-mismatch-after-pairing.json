@@ -1,0 +1,92 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "attack-spoofed-mismatch-after-pairing",
+  "description": "After a successful pairing a stranger with the wrong key takes the parent slot: the baby warns and slows retries but is never terminal; the real parent returns afterwards.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 15000,
+      "do": "stop",
+      "peer": "parent"
+    },
+    {
+      "at": 17000,
+      "do": "stranger_join",
+      "mode": "wrong_psk",
+      "id": "stranger"
+    },
+    {
+      "at": 140000,
+      "do": "stranger_leave",
+      "peer": "stranger"
+    },
+    {
+      "at": 141000,
+      "do": "start",
+      "peer": "parent"
+    },
+    {
+      "at": 220000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "event": "security_warning",
+      "where": {
+        "key": "wrong_key_attempt"
+      },
+      "within_ms": [17000, 140000],
+      "count_min": 3
+    },
+    {
+      "peer": "baby",
+      "event": "failed",
+      "where": {
+        "reason": "pair_proof_mismatch"
+      },
+      "within_ms": [17000, 140000],
+      "count_max": 10
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 220000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 220000
+    }
+  ],
+  "export_traces": [
+    {
+      "peer": "baby",
+      "id": "sim-attack-wrong-psk-after-pairing-baby"
+    }
+  ]
+}

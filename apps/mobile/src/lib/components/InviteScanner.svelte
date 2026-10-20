@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onDestroy, tick } from "svelte";
   import { decodeQrFromImageFile } from "$lib/pairing/decode-qr-image.js";
-  import { isCompleteInvite, parseInviteFromString, type ParsedInvite } from "$lib/invite-url.js";
   import { isRuntimeSecureContext } from "$lib/runtime/capabilities.js";
   import { tWithEnFallback } from "$lib/i18n/fallback-t.js";
 
@@ -9,7 +8,11 @@
     detect: (source: HTMLVideoElement | ImageBitmap) => Promise<{ rawValue?: string }[]>;
   };
 
-  let { onInvite }: { onInvite: (invite: ParsedInvite) => void } = $props();
+  /** `onText` gets every decoded QR text; returning true means "accepted, stop scanning". */
+  let {
+    onText,
+    onCameraDenied,
+  }: { onText: (text: string) => boolean; onCameraDenied?: () => void } = $props();
 
   let mode = $state<"idle" | "camera" | "error">("idle");
   let message = $state<string | null>(null);
@@ -50,6 +53,7 @@
   function liveCameraErrorMessage(err: unknown): string {
     const name = err instanceof DOMException ? err.name : "";
     if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+      onCameraDenied?.();
       return tWithEnFallback("pair.scanner.cameraDenied");
     }
     if (name === "NotFoundError" || name === "OverconstrainedError") {
@@ -74,10 +78,8 @@
       for (const c of codes) {
         const raw = c.rawValue?.trim();
         if (!raw) continue;
-        const part = parseInviteFromString(raw);
-        if (isCompleteInvite(part)) {
+        if (onText(raw)) {
           stopCamera();
-          onInvite(part);
           return;
         }
       }
@@ -122,13 +124,11 @@
         if (!result) return;
         const raw = result.getText()?.trim();
         if (!raw) return;
-        const part = parseInviteFromString(raw);
-        if (!isCompleteInvite(part)) return;
+        if (!onText(raw)) return;
         ctrls.stop();
         zxingControls = null;
         stream = null;
         mode = "idle";
-        onInvite(part);
       });
     } catch (e) {
       mode = "error";
@@ -152,12 +152,7 @@
         message = tWithEnFallback("pair.scanner.noQrInImage");
         return;
       }
-      const part = parseInviteFromString(raw);
-      if (isCompleteInvite(part)) {
-        onInvite(part);
-        return;
-      }
-      message = tWithEnFallback("pair.scanner.qrInvalidInvite");
+      onText(raw);
     } catch {
       message = tWithEnFallback("pair.scanner.qrUnreadable");
     }
@@ -192,26 +187,13 @@
       </button>
       <label
         class="cursor-pointer rounded-lg border border-zinc-600 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
-        title={tWithEnFallback("pair.scanner.snapPhotoTitle")}
-      >
-        {tWithEnFallback("pair.scanner.snapPhoto")}
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment"
-          class="sr-only"
-          onchange={(e) => void onFilePick(e)}
-        />
-      </label>
-      <label
-        class="cursor-pointer rounded-lg border border-zinc-600 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
       >
         {tWithEnFallback("pair.scanner.galleryOrFiles")}
         <input type="file" accept="image/*" class="sr-only" onchange={(e) => void onFilePick(e)} />
       </label>
     </div>
     <p class="text-[11px] text-zinc-600">
-      {tWithEnFallback("pair.scanner.snapPhotoHelp")}
+      {tWithEnFallback("pair.scanner.galleryHelp")}
     </p>
   {/if}
   {#if message}

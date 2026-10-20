@@ -28,6 +28,9 @@ export default defineConfig({
     stderr: "pipe",
     env: {
       PORT: e2eSignalPort,
+      // Many pairings per minute from one IP, and the server caps parents at 1 per room.
+      SIGNALING_HELLO_RATE_PER_MIN: "0",
+      SIGNALING_NEW_ROOM_RATE_PER_MIN: "0",
     },
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],

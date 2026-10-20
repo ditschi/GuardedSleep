@@ -1,0 +1,882 @@
+{
+  "schema": "gs-trace/1",
+  "id": "sim-signaling-restart-connected-baby",
+  "class": "simulated",
+  "privacy": "shareable",
+  "origin": {
+    "core_version": "0.0.1",
+    "harness": "sim/1",
+    "scenario": "signaling-restart-connected"
+  },
+  "seed": 1,
+  "config": {
+    "role": "baby",
+    "psk_b64url": "R1MtU1lOVEhFVElDLVBTS6GhoaGhoaGhoaGhoaGhoaE",
+    "paired_before": false,
+    "heartbeat_interval_ms": 10000,
+    "alarm_after_ms": 60000,
+    "noise_threshold": 0.12,
+    "noise_hold_ms": 800,
+    "require_dtls_fingerprint": true
+  },
+  "steps": [
+    { "n": 0, "now": 0, "input": { "type": "start", "entropy": 2939126732 } },
+    { "n": 1, "now": 27, "input": { "type": "signaling_opened" } },
+    {
+      "n": 2,
+      "now": 81,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"welcome\",\"clientId\":\"c2\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\"}"
+      }
+    },
+    {
+      "n": 3,
+      "now": 101,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c1\",\"role\":\"parent\"},{\"clientId\":\"c2\",\"role\":\"baby\"}]}"
+      }
+    },
+    {
+      "n": 4,
+      "now": 101,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"peer\",\"peerId\":\"c1\"}" }
+    },
+    {
+      "n": 5,
+      "now": 124,
+      "input": {
+        "type": "attempt_local_description",
+        "attempt": 1,
+        "sdp_type": "offer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:01\r\n"
+      }
+    },
+    {
+      "n": 6,
+      "now": 149,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"signal\",\"from\":\"c1\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"fd4a1da5c9ffed2c30fe44a2082df0b6\"}}"
+      }
+    },
+    {
+      "n": 7,
+      "now": 175,
+      "input": {
+        "type": "attempt_local_description",
+        "attempt": 2,
+        "sdp_type": "offer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:02\r\n"
+      }
+    },
+    {
+      "n": 8,
+      "now": 238,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"signal\",\"from\":\"c1\",\"payload\":{\"type\":\"sdp\",\"aid\":\"31b1484d24e856bad605e9f1d22c0748\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:03\\r\\n\"}}}"
+      }
+    },
+    { "n": 9, "now": 250, "input": { "type": "tick" } },
+    {
+      "n": 10,
+      "now": 259,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"signal\",\"from\":\"c1\",\"payload\":{\"type\":\"sdp\",\"aid\":\"fd4a1da5c9ffed2c30fe44a2082df0b6\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:04\\r\\n\"}}}"
+      }
+    },
+    { "n": 11, "now": 500, "input": { "type": "tick" } },
+    {
+      "n": 12,
+      "now": 618,
+      "input": { "type": "attempt_pc_state", "attempt": 2, "state": "connected" }
+    },
+    { "n": 13, "now": 618, "input": { "type": "attempt_data_open", "attempt": 2 } },
+    {
+      "n": 14,
+      "now": 618,
+      "input": {
+        "type": "attempt_dtls_fingerprint",
+        "attempt": 2,
+        "fingerprint": "53594e5400000000000000000000000000000000000000000000000000000004"
+      }
+    },
+    {
+      "n": 15,
+      "now": 651,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 2,
+        "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"24418bf74274b009354486f2f6ab9dd056c8dfd9a39023b16f51105d5ec77956\"}"
+      }
+    },
+    {
+      "n": 16,
+      "now": 651,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 2,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":638,\"seq\":1}"
+      }
+    },
+    { "n": 17, "now": 750, "input": { "type": "tick" } },
+    { "n": 18, "now": 1000, "input": { "type": "tick" } },
+    { "n": 19, "now": 1250, "input": { "type": "tick" } },
+    { "n": 20, "now": 1500, "input": { "type": "tick" } },
+    { "n": 21, "now": 1750, "input": { "type": "tick" } },
+    { "n": 22, "now": 2000, "input": { "type": "tick" } },
+    { "n": 23, "now": 2250, "input": { "type": "tick" } },
+    { "n": 24, "now": 2500, "input": { "type": "tick" } },
+    { "n": 25, "now": 2750, "input": { "type": "tick" } },
+    { "n": 26, "now": 3250, "input": { "type": "tick" } },
+    { "n": 27, "now": 3750, "input": { "type": "tick" } },
+    { "n": 28, "now": 4250, "input": { "type": "tick" } },
+    { "n": 29, "now": 4750, "input": { "type": "tick" } },
+    { "n": 30, "now": 5250, "input": { "type": "tick" } },
+    { "n": 31, "now": 5750, "input": { "type": "tick" } },
+    { "n": 32, "now": 6250, "input": { "type": "tick" } },
+    { "n": 33, "now": 6750, "input": { "type": "tick" } },
+    { "n": 34, "now": 7250, "input": { "type": "tick" } },
+    { "n": 35, "now": 7750, "input": { "type": "tick" } },
+    { "n": 36, "now": 8250, "input": { "type": "tick" } },
+    { "n": 37, "now": 8750, "input": { "type": "tick" } },
+    { "n": 38, "now": 9250, "input": { "type": "tick" } },
+    { "n": 39, "now": 9750, "input": { "type": "tick" } },
+    { "n": 40, "now": 10250, "input": { "type": "tick" } },
+    { "n": 41, "now": 10750, "input": { "type": "tick" } },
+    {
+      "n": 42,
+      "now": 10806,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 2,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":10750,\"seq\":2}"
+      }
+    },
+    { "n": 43, "now": 11250, "input": { "type": "tick" } },
+    { "n": 44, "now": 11500, "input": { "type": "tick" } },
+    { "n": 45, "now": 11750, "input": { "type": "tick" } },
+    { "n": 46, "now": 12000, "input": { "type": "tick" } },
+    { "n": 47, "now": 12250, "input": { "type": "tick" } },
+    { "n": 48, "now": 12500, "input": { "type": "tick" } },
+    { "n": 49, "now": 12750, "input": { "type": "tick" } },
+    { "n": 50, "now": 13000, "input": { "type": "tick" } },
+    { "n": 51, "now": 13500, "input": { "type": "tick" } },
+    { "n": 52, "now": 14000, "input": { "type": "tick" } },
+    { "n": 53, "now": 14500, "input": { "type": "tick" } },
+    { "n": 54, "now": 15000, "input": { "type": "tick" } },
+    { "n": 55, "now": 15500, "input": { "type": "tick" } },
+    {
+      "n": 56,
+      "now": 15524,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+    },
+    { "n": 57, "now": 16000, "input": { "type": "tick" } },
+    { "n": 58, "now": 16250, "input": { "type": "tick" } },
+    { "n": 59, "now": 16500, "input": { "type": "tick" } },
+    { "n": 60, "now": 16750, "input": { "type": "tick" } },
+    { "n": 61, "now": 17000, "input": { "type": "tick" } },
+    { "n": 62, "now": 17250, "input": { "type": "tick" } },
+    { "n": 63, "now": 17500, "input": { "type": "tick" } },
+    { "n": 64, "now": 17750, "input": { "type": "tick" } },
+    { "n": 65, "now": 18250, "input": { "type": "tick" } },
+    { "n": 66, "now": 18750, "input": { "type": "tick" } },
+    { "n": 67, "now": 19250, "input": { "type": "tick" } },
+    { "n": 68, "now": 19750, "input": { "type": "tick" } },
+    { "n": 69, "now": 20015, "input": { "type": "signaling_closed" } },
+    { "n": 70, "now": 20091, "input": { "type": "signaling_closed" } },
+    { "n": 71, "now": 20250, "input": { "type": "tick" } },
+    { "n": 72, "now": 20500, "input": { "type": "tick" } },
+    { "n": 73, "now": 20750, "input": { "type": "tick" } },
+    {
+      "n": 74,
+      "now": 20810,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 2,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":20750,\"seq\":3}"
+      }
+    },
+    { "n": 75, "now": 21000, "input": { "type": "tick" } },
+    { "n": 76, "now": 21250, "input": { "type": "tick" } },
+    { "n": 77, "now": 21322, "input": { "type": "signaling_closed" } },
+    { "n": 78, "now": 21500, "input": { "type": "tick" } },
+    { "n": 79, "now": 21750, "input": { "type": "tick" } },
+    { "n": 80, "now": 22000, "input": { "type": "tick" } },
+    { "n": 81, "now": 22250, "input": { "type": "tick" } },
+    { "n": 82, "now": 22500, "input": { "type": "tick" } },
+    { "n": 83, "now": 22750, "input": { "type": "tick" } },
+    { "n": 84, "now": 23000, "input": { "type": "tick" } },
+    { "n": 85, "now": 23250, "input": { "type": "tick" } },
+    { "n": 86, "now": 23500, "input": { "type": "tick" } },
+    { "n": 87, "now": 23557, "input": { "type": "signaling_closed" } },
+    { "n": 88, "now": 24000, "input": { "type": "tick" } },
+    { "n": 89, "now": 24250, "input": { "type": "tick" } },
+    { "n": 90, "now": 24500, "input": { "type": "tick" } },
+    { "n": 91, "now": 24750, "input": { "type": "tick" } },
+    { "n": 92, "now": 25000, "input": { "type": "tick" } },
+    { "n": 93, "now": 25250, "input": { "type": "tick" } },
+    { "n": 94, "now": 25500, "input": { "type": "tick" } },
+    { "n": 95, "now": 25750, "input": { "type": "tick" } },
+    { "n": 96, "now": 26250, "input": { "type": "tick" } },
+    { "n": 97, "now": 26750, "input": { "type": "tick" } },
+    { "n": 98, "now": 27250, "input": { "type": "tick" } },
+    { "n": 99, "now": 27750, "input": { "type": "tick" } },
+    { "n": 100, "now": 27800, "input": { "type": "signaling_closed" } },
+    { "n": 101, "now": 28250, "input": { "type": "tick" } },
+    { "n": 102, "now": 28500, "input": { "type": "tick" } },
+    { "n": 103, "now": 28750, "input": { "type": "tick" } },
+    { "n": 104, "now": 29000, "input": { "type": "tick" } },
+    { "n": 105, "now": 29250, "input": { "type": "tick" } },
+    { "n": 106, "now": 29500, "input": { "type": "tick" } },
+    { "n": 107, "now": 29750, "input": { "type": "tick" } },
+    { "n": 108, "now": 30000, "input": { "type": "tick" } },
+    { "n": 109, "now": 30500, "input": { "type": "tick" } },
+    { "n": 110, "now": 31000, "input": { "type": "tick" } },
+    {
+      "n": 111,
+      "now": 31040,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 2,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":31000,\"seq\":4}"
+      }
+    },
+    { "n": 112, "now": 31500, "input": { "type": "tick" } },
+    { "n": 113, "now": 31750, "input": { "type": "tick" } },
+    { "n": 114, "now": 32000, "input": { "type": "tick" } },
+    { "n": 115, "now": 32250, "input": { "type": "tick" } },
+    { "n": 116, "now": 32500, "input": { "type": "tick" } },
+    { "n": 117, "now": 32750, "input": { "type": "tick" } },
+    { "n": 118, "now": 33000, "input": { "type": "tick" } },
+    { "n": 119, "now": 33250, "input": { "type": "tick" } },
+    { "n": 120, "now": 33750, "input": { "type": "tick" } },
+    { "n": 121, "now": 34250, "input": { "type": "tick" } },
+    { "n": 122, "now": 34750, "input": { "type": "tick" } },
+    { "n": 123, "now": 35250, "input": { "type": "tick" } },
+    { "n": 124, "now": 35750, "input": { "type": "tick" } },
+    { "n": 125, "now": 36250, "input": { "type": "tick" } },
+    { "n": 126, "now": 36297, "input": { "type": "signaling_opened" } },
+    {
+      "n": 127,
+      "now": 36334,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"welcome\",\"clientId\":\"c4\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\"}"
+      }
+    },
+    {
+      "n": 128,
+      "now": 36350,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c3\",\"role\":\"parent\"},{\"clientId\":\"c4\",\"role\":\"baby\"}]}"
+      }
+    },
+    {
+      "n": 129,
+      "now": 36350,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"peer\",\"peerId\":\"c3\"}" }
+    },
+    { "n": 130, "now": 36750, "input": { "type": "tick" } },
+    { "n": 131, "now": 37000, "input": { "type": "tick" } },
+    { "n": 132, "now": 37250, "input": { "type": "tick" } },
+    { "n": 133, "now": 37500, "input": { "type": "tick" } },
+    { "n": 134, "now": 37750, "input": { "type": "tick" } },
+    { "n": 135, "now": 38000, "input": { "type": "tick" } },
+    { "n": 136, "now": 38250, "input": { "type": "tick" } },
+    { "n": 137, "now": 38500, "input": { "type": "tick" } },
+    { "n": 138, "now": 39000, "input": { "type": "tick" } },
+    { "n": 139, "now": 39500, "input": { "type": "tick" } },
+    { "n": 140, "now": 40000, "input": { "type": "tick" } },
+    { "n": 141, "now": 40500, "input": { "type": "tick" } },
+    { "n": 142, "now": 41000, "input": { "type": "tick" } },
+    {
+      "n": 143,
+      "now": 41054,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 2,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":41000,\"seq\":5}"
+      }
+    },
+    { "n": 144, "now": 41500, "input": { "type": "tick" } },
+    { "n": 145, "now": 41750, "input": { "type": "tick" } },
+    { "n": 146, "now": 42000, "input": { "type": "tick" } },
+    { "n": 147, "now": 42250, "input": { "type": "tick" } },
+    { "n": 148, "now": 42500, "input": { "type": "tick" } },
+    { "n": 149, "now": 42750, "input": { "type": "tick" } },
+    { "n": 150, "now": 43000, "input": { "type": "tick" } },
+    { "n": 151, "now": 43250, "input": { "type": "tick" } },
+    { "n": 152, "now": 43750, "input": { "type": "tick" } },
+    { "n": 153, "now": 44250, "input": { "type": "tick" } },
+    { "n": 154, "now": 44750, "input": { "type": "tick" } },
+    { "n": 155, "now": 45250, "input": { "type": "tick" } },
+    { "n": 156, "now": 45750, "input": { "type": "tick" } },
+    { "n": 157, "now": 46250, "input": { "type": "tick" } },
+    { "n": 158, "now": 46750, "input": { "type": "tick" } },
+    { "n": 159, "now": 47250, "input": { "type": "tick" } },
+    { "n": 160, "now": 47750, "input": { "type": "tick" } },
+    { "n": 161, "now": 48250, "input": { "type": "tick" } },
+    { "n": 162, "now": 48750, "input": { "type": "tick" } },
+    { "n": 163, "now": 49250, "input": { "type": "tick" } },
+    { "n": 164, "now": 49750, "input": { "type": "tick" } },
+    { "n": 165, "now": 50250, "input": { "type": "tick" } },
+    { "n": 166, "now": 50750, "input": { "type": "tick" } },
+    { "n": 167, "now": 51250, "input": { "type": "tick" } },
+    {
+      "n": 168,
+      "now": 51296,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 2,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":51250,\"seq\":6}"
+      }
+    },
+    { "n": 169, "now": 51750, "input": { "type": "tick" } },
+    {
+      "n": 170,
+      "now": 51792,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+    },
+    { "n": 171, "now": 52000, "input": { "type": "tick" } },
+    { "n": 172, "now": 52250, "input": { "type": "tick" } },
+    { "n": 173, "now": 52500, "input": { "type": "tick" } },
+    { "n": 174, "now": 52750, "input": { "type": "tick" } },
+    { "n": 175, "now": 53000, "input": { "type": "tick" } },
+    { "n": 176, "now": 53250, "input": { "type": "tick" } },
+    { "n": 177, "now": 53500, "input": { "type": "tick" } },
+    { "n": 178, "now": 53750, "input": { "type": "tick" } },
+    { "n": 179, "now": 54000, "input": { "type": "tick" } },
+    { "n": 180, "now": 54500, "input": { "type": "tick" } },
+    { "n": 181, "now": 55000, "input": { "type": "tick" } },
+    { "n": 182, "now": 55500, "input": { "type": "tick" } },
+    { "n": 183, "now": 56000, "input": { "type": "tick" } },
+    { "n": 184, "now": 56500, "input": { "type": "tick" } },
+    { "n": 185, "now": 57000, "input": { "type": "tick" } },
+    { "n": 186, "now": 57500, "input": { "type": "tick" } },
+    { "n": 187, "now": 58000, "input": { "type": "tick" } },
+    { "n": 188, "now": 58500, "input": { "type": "tick" } },
+    { "n": 189, "now": 59000, "input": { "type": "tick" } },
+    { "n": 190, "now": 59500, "input": { "type": "tick" } },
+    { "n": 191, "now": 60000, "input": { "type": "tick" } },
+    { "n": 192, "now": 60500, "input": { "type": "tick" } },
+    { "n": 193, "now": 61000, "input": { "type": "tick" } },
+    { "n": 194, "now": 61500, "input": { "type": "tick" } },
+    {
+      "n": 195,
+      "now": 61560,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 2,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":61500,\"seq\":7}"
+      }
+    },
+    { "n": 196, "now": 62000, "input": { "type": "tick" } },
+    { "n": 197, "now": 62250, "input": { "type": "tick" } },
+    { "n": 198, "now": 62500, "input": { "type": "tick" } },
+    { "n": 199, "now": 62750, "input": { "type": "tick" } },
+    { "n": 200, "now": 63000, "input": { "type": "tick" } },
+    { "n": 201, "now": 63250, "input": { "type": "tick" } },
+    { "n": 202, "now": 63500, "input": { "type": "tick" } },
+    { "n": 203, "now": 63750, "input": { "type": "tick" } },
+    { "n": 204, "now": 64250, "input": { "type": "tick" } },
+    { "n": 205, "now": 64750, "input": { "type": "tick" } },
+    { "n": 206, "now": 65250, "input": { "type": "tick" } },
+    { "n": 207, "now": 65750, "input": { "type": "tick" } },
+    { "n": 208, "now": 66250, "input": { "type": "tick" } },
+    { "n": 209, "now": 66750, "input": { "type": "tick" } },
+    {
+      "n": 210,
+      "now": 66806,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+    },
+    { "n": 211, "now": 67250, "input": { "type": "tick" } },
+    { "n": 212, "now": 67500, "input": { "type": "tick" } },
+    { "n": 213, "now": 67750, "input": { "type": "tick" } },
+    { "n": 214, "now": 68000, "input": { "type": "tick" } },
+    { "n": 215, "now": 68250, "input": { "type": "tick" } },
+    { "n": 216, "now": 68500, "input": { "type": "tick" } },
+    { "n": 217, "now": 68750, "input": { "type": "tick" } },
+    { "n": 218, "now": 69000, "input": { "type": "tick" } },
+    { "n": 219, "now": 69500, "input": { "type": "tick" } },
+    { "n": 220, "now": 70000, "input": { "type": "tick" } },
+    { "n": 221, "now": 70500, "input": { "type": "tick" } },
+    { "n": 222, "now": 71000, "input": { "type": "tick" } },
+    { "n": 223, "now": 71500, "input": { "type": "tick" } },
+    {
+      "n": 224,
+      "now": 71554,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 2,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":71500,\"seq\":8}"
+      }
+    },
+    { "n": 225, "now": 72000, "input": { "type": "tick" } },
+    { "n": 226, "now": 72250, "input": { "type": "tick" } },
+    { "n": 227, "now": 72500, "input": { "type": "tick" } },
+    { "n": 228, "now": 72750, "input": { "type": "tick" } },
+    { "n": 229, "now": 73000, "input": { "type": "tick" } },
+    { "n": 230, "now": 73250, "input": { "type": "tick" } },
+    { "n": 231, "now": 73500, "input": { "type": "tick" } },
+    { "n": 232, "now": 73750, "input": { "type": "tick" } },
+    { "n": 233, "now": 74250, "input": { "type": "tick" } },
+    { "n": 234, "now": 74750, "input": { "type": "tick" } },
+    { "n": 235, "now": 75250, "input": { "type": "tick" } },
+    { "n": 236, "now": 75750, "input": { "type": "tick" } },
+    { "n": 237, "now": 76250, "input": { "type": "tick" } },
+    { "n": 238, "now": 76750, "input": { "type": "tick" } },
+    { "n": 239, "now": 77250, "input": { "type": "tick" } },
+    { "n": 240, "now": 77750, "input": { "type": "tick" } },
+    { "n": 241, "now": 78250, "input": { "type": "tick" } },
+    { "n": 242, "now": 78750, "input": { "type": "tick" } },
+    { "n": 243, "now": 79250, "input": { "type": "tick" } },
+    { "n": 244, "now": 79750, "input": { "type": "tick" } },
+    { "n": 245, "now": 80250, "input": { "type": "tick" } },
+    { "n": 246, "now": 80750, "input": { "type": "tick" } },
+    { "n": 247, "now": 81250, "input": { "type": "tick" } },
+    { "n": 248, "now": 81750, "input": { "type": "tick" } },
+    {
+      "n": 249,
+      "now": 81801,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 2,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":81750,\"seq\":9}"
+      }
+    },
+    {
+      "n": 250,
+      "now": 81801,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+    },
+    { "n": 251, "now": 82250, "input": { "type": "tick" } },
+    { "n": 252, "now": 82500, "input": { "type": "tick" } },
+    { "n": 253, "now": 82750, "input": { "type": "tick" } },
+    { "n": 254, "now": 83000, "input": { "type": "tick" } },
+    { "n": 255, "now": 83250, "input": { "type": "tick" } },
+    { "n": 256, "now": 83500, "input": { "type": "tick" } },
+    { "n": 257, "now": 83750, "input": { "type": "tick" } },
+    { "n": 258, "now": 84000, "input": { "type": "tick" } },
+    { "n": 259, "now": 84500, "input": { "type": "tick" } },
+    { "n": 260, "now": 85000, "input": { "type": "tick" } },
+    { "n": 261, "now": 85500, "input": { "type": "tick" } },
+    { "n": 262, "now": 86000, "input": { "type": "tick" } },
+    { "n": 263, "now": 86500, "input": { "type": "tick" } },
+    { "n": 264, "now": 87000, "input": { "type": "tick" } },
+    { "n": 265, "now": 87500, "input": { "type": "tick" } },
+    { "n": 266, "now": 88000, "input": { "type": "tick" } },
+    { "n": 267, "now": 88500, "input": { "type": "tick" } },
+    { "n": 268, "now": 89000, "input": { "type": "tick" } },
+    { "n": 269, "now": 89500, "input": { "type": "tick" } },
+    { "n": 270, "now": 90000, "input": { "type": "tick" } }
+  ],
+  "expect": [
+    [
+      { "type": "open_signaling" },
+      {
+        "type": "emit",
+        "event": {
+          "type": "status",
+          "status": {
+            "state": "connecting",
+            "level": 0,
+            "key": null,
+            "cause": null,
+            "acknowledged_until": null,
+            "last_alive_ms": null
+          }
+        }
+      }
+    ],
+    [
+      {
+        "type": "send_signaling",
+        "text": "{\"type\":\"hello\",\"role\":\"baby\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"protocolVersion\":3}"
+      }
+    ],
+    [],
+    [
+      { "type": "create_attempt", "attempt": 1, "offerer": true },
+      { "type": "create_offer", "attempt": 1 }
+    ],
+    [],
+    [
+      {
+        "type": "send_signaling",
+        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c1\",\"payload\":{\"type\":\"sdp\",\"aid\":\"c7c161defb0102c24c9ca28e05ae6865\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:01\\r\\n\"}}}"
+      }
+    ],
+    [
+      { "type": "close_attempt", "attempt": 1 },
+      { "type": "create_attempt", "attempt": 2, "offerer": true },
+      { "type": "create_offer", "attempt": 2 }
+    ],
+    [
+      {
+        "type": "send_signaling",
+        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c1\",\"payload\":{\"type\":\"sdp\",\"aid\":\"ca6b8ce6c8b1daa12a485d338353f23e\",\"re\":\"fd4a1da5c9ffed2c30fe44a2082df0b6\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:02\\r\\n\"}}}"
+      }
+    ],
+    [],
+    [],
+    [
+      {
+        "type": "set_remote_description",
+        "attempt": 2,
+        "sdp_type": "answer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:04\r\n"
+      }
+    ],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 2,
+        "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"4666e35bf2e76978fb8436a68011bb47efbdefe9211e431e43413d608ef7c6dc\"}"
+      }
+    ],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 2,
+        "text": "{\"type\":\"device_status\",\"v\":3,\"noise_threshold\":0.12}"
+      },
+      {
+        "type": "send_data",
+        "attempt": 2,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":651,\"seq\":1,\"rms\":0}"
+      },
+      {
+        "type": "emit",
+        "event": {
+          "type": "status",
+          "status": {
+            "state": "connected",
+            "level": 0,
+            "key": null,
+            "cause": null,
+            "acknowledged_until": null,
+            "last_alive_ms": null
+          }
+        }
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 2,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":10750,\"seq\":2,\"rms\":0}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [{ "type": "open_signaling" }],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 2,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":20750,\"seq\":3,\"rms\":0}"
+      }
+    ],
+    [],
+    [],
+    [{ "type": "open_signaling" }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [{ "type": "open_signaling" }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [{ "type": "open_signaling" }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 2,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":31000,\"seq\":4,\"rms\":0}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [{ "type": "open_signaling" }],
+    [
+      {
+        "type": "send_signaling",
+        "text": "{\"type\":\"hello\",\"role\":\"baby\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"protocolVersion\":3}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 2,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":41000,\"seq\":5,\"rms\":0}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 2,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":51250,\"seq\":6,\"rms\":0}"
+      }
+    ],
+    [],
+    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 2,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":61500,\"seq\":7,\"rms\":0}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 2,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":71500,\"seq\":8,\"rms\":0}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      { "type": "send_signaling", "text": "{\"type\":\"ping\"}" },
+      {
+        "type": "send_data",
+        "attempt": 2,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":81750,\"seq\":9,\"rms\":0}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+  ],
+  "final": { "state": "connected" }
+}

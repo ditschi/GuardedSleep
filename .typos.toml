@@ -1,6 +1,10 @@
 # https://github.com/crate-ci/typos
 # Run: typos
 
+[default]
+# Colon-separated hex (DTLS fingerprints in test fixtures) is not prose.
+extend-ignore-re = ["(?:[0-9A-F]{2}:){7,}[0-9A-F]{2}"]
+
 [default.extend-words]
 # Technical / project terms
 DTLS = "DTLS"
@@ -46,7 +50,7 @@ Avent = "Avent"
 extend-exclude = [
   ".git/**",
   "pnpm-lock.yaml",
-  "apps/mobile/src/lib/i18n/messages/de.json",
-  "apps/mobile/src/lib/i18n/messages/fr.json",
-  "apps/mobile/src/lib/i18n/messages/es.json",
+  "locales/de.json",
+  "locales/fr.json",
+  "locales/es.json",
 ]

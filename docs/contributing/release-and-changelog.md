@@ -138,6 +138,12 @@ GH_TOKEN=<token> GITHUB_REPOSITORY=<owner>/<repo> pnpm run release:preview
    natural Critical Review Gate per role-coordination)
               │
               ▼
+   Manual release testing on real Android hardware
+   (checklist: manual-release-testing.md) — required
+   for user-facing mobile releases; optional for
+   protocol/signaling-only bumps
+              │
+              ▼
    Maintainer merges release PR
               │
               ▼
@@ -221,13 +227,13 @@ This applies **once**, when Release Please is first turned on (which is part of 
 
 Each project phase has different release expectations.
 
-| Phase                                                                              | Versioning posture                                                                                                                              |
-| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Concept (current)**                                                              | Release Please is wired but inactive — no `Release-As` and no commits since bootstrap. Manual `## [Unreleased]` bullets allowed.                |
-| **PoC** ([ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md)) | Optionally cut a `0.0.x` for each package as the PoC runs; useful for tagging known-good states.                                                |
-| **MVP (Phase 1)**                                                                  | First real release: `0.1.0` across packages (use `Release-As: 0.1.0`). After that, normal Conventional Commit driven bumps.                     |
-| **Phase 2 (iOS, multi-parent, talk-back)**                                         | Likely `0.2.x → 0.9.x` series; first deliberate `1.0.0` candidate when the feature set is stable AND the [license](../../README.md) is decided. |
-| **Phase 3+ (video, on-device AI)**                                                 | `1.x` series, normal SemVer. Breaking protocol changes go through ADRs first.                                                                   |
+| Phase                                                                              | Versioning posture                                                                                                               |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Concept (current)**                                                              | Release Please is wired but inactive — no `Release-As` and no commits since bootstrap. Manual `## [Unreleased]` bullets allowed. |
+| **PoC** ([ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md)) | Optionally cut a `0.0.x` for each package as the PoC runs; useful for tagging known-good states.                                 |
+| **MVP (Phase 1)**                                                                  | First real release: `0.1.0` across packages (use `Release-As: 0.1.0`). After that, normal Conventional Commit driven bumps.      |
+| **Phase 2 (iOS, multi-parent, talk-back)**                                         | Likely `0.2.x → 0.9.x` series; first deliberate `1.0.0` candidate when the feature set is stable.                                |
+| **Phase 3+ (video, on-device AI)**                                                 | `1.x` series, normal SemVer. Breaking protocol changes go through ADRs first.                                                    |
 
 ## 12. Mobile `versionCode` (Android Play Store)
 
@@ -355,7 +361,7 @@ Package triplet:
 
 Scope: matches MVP definition in docs/features/README.md and ADR-001.
 PoC gate: PASSED on YYYY-MM-DD.
-License: <decided>.
+License: AGPL-3.0-or-later (see LICENSE).
 "
 
 git push origin mvp-v0.1.0

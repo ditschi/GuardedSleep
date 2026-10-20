@@ -1,0 +1,1579 @@
+{
+  "schema": "gs-trace/1",
+  "id": "sim-attack-reflection-baby",
+  "class": "simulated",
+  "privacy": "shareable",
+  "origin": { "core_version": "0.0.1", "harness": "sim/1", "scenario": "attack-reflection" },
+  "seed": 1,
+  "config": {
+    "role": "baby",
+    "psk_b64url": "R1MtU1lOVEhFVElDLVBTS6GhoaGhoaGhoaGhoaGhoaE",
+    "paired_before": true,
+    "heartbeat_interval_ms": 10000,
+    "alarm_after_ms": 60000,
+    "noise_threshold": 0.12,
+    "noise_hold_ms": 800,
+    "require_dtls_fingerprint": true
+  },
+  "steps": [
+    { "n": 0, "now": 0, "input": { "type": "start", "entropy": 2939126732 } },
+    { "n": 1, "now": 40, "input": { "type": "signaling_opened" } },
+    {
+      "n": 2,
+      "now": 73,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"welcome\",\"clientId\":\"c1\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\"}"
+      }
+    },
+    {
+      "n": 3,
+      "now": 85,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c1\",\"role\":\"baby\"}]}"
+      }
+    },
+    {
+      "n": 4,
+      "now": 106,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"peer\",\"peerId\":null}" }
+    },
+    { "n": 5, "now": 250, "input": { "type": "tick" } },
+    { "n": 6, "now": 500, "input": { "type": "tick" } },
+    { "n": 7, "now": 750, "input": { "type": "tick" } },
+    { "n": 8, "now": 1000, "input": { "type": "tick" } },
+    {
+      "n": 9,
+      "now": 1086,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c1\",\"role\":\"baby\"},{\"clientId\":\"c2\",\"role\":\"parent\"}]}"
+      }
+    },
+    {
+      "n": 10,
+      "now": 1106,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"peer\",\"peerId\":\"c2\"}" }
+    },
+    {
+      "n": 11,
+      "now": 1111,
+      "input": {
+        "type": "attempt_local_description",
+        "attempt": 1,
+        "sdp_type": "offer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:01\r\n"
+      }
+    },
+    {
+      "n": 12,
+      "now": 1150,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"signal\",\"from\":\"c2\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"de8eb179368826349964c36146d3a7dc\"}}"
+      }
+    },
+    {
+      "n": 13,
+      "now": 1174,
+      "input": {
+        "type": "attempt_local_description",
+        "attempt": 2,
+        "sdp_type": "offer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:02\r\n"
+      }
+    },
+    {
+      "n": 14,
+      "now": 1224,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"signal\",\"from\":\"c2\",\"payload\":{\"type\":\"sdp\",\"aid\":\"88b6c67bd6297d7518350736c07334ab\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:03\\r\\n\"}}}"
+      }
+    },
+    { "n": 15, "now": 1250, "input": { "type": "tick" } },
+    {
+      "n": 16,
+      "now": 1264,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"signal\",\"from\":\"c2\",\"payload\":{\"type\":\"sdp\",\"aid\":\"de8eb179368826349964c36146d3a7dc\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:04\\r\\n\"}}}"
+      }
+    },
+    { "n": 17, "now": 1500, "input": { "type": "tick" } },
+    { "n": 18, "now": 1750, "input": { "type": "tick" } },
+    { "n": 19, "now": 2000, "input": { "type": "tick" } },
+    { "n": 20, "now": 2250, "input": { "type": "tick" } },
+    {
+      "n": 21,
+      "now": 2427,
+      "input": { "type": "attempt_pc_state", "attempt": 2, "state": "connected" }
+    },
+    { "n": 22, "now": 2427, "input": { "type": "attempt_data_open", "attempt": 2 } },
+    {
+      "n": 23,
+      "now": 2427,
+      "input": {
+        "type": "attempt_dtls_fingerprint",
+        "attempt": 2,
+        "fingerprint": "53594e5400000000000000000000000000000000000000000000000000000004"
+      }
+    },
+    {
+      "n": 24,
+      "now": 2472,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 2,
+        "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"4666e35bf2e76978fb8436a68011bb47efbdefe9211e431e43413d608ef7c6dc\"}"
+      }
+    },
+    { "n": 25, "now": 2500, "input": { "type": "tick" } },
+    { "n": 26, "now": 2750, "input": { "type": "tick" } },
+    { "n": 27, "now": 3000, "input": { "type": "tick" } },
+    { "n": 28, "now": 3250, "input": { "type": "tick" } },
+    { "n": 29, "now": 3500, "input": { "type": "tick" } },
+    { "n": 30, "now": 3750, "input": { "type": "tick" } },
+    { "n": 31, "now": 4000, "input": { "type": "tick" } },
+    { "n": 32, "now": 4250, "input": { "type": "tick" } },
+    { "n": 33, "now": 4500, "input": { "type": "tick" } },
+    { "n": 34, "now": 5000, "input": { "type": "tick" } },
+    { "n": 35, "now": 5500, "input": { "type": "tick" } },
+    { "n": 36, "now": 6000, "input": { "type": "tick" } },
+    { "n": 37, "now": 6500, "input": { "type": "tick" } },
+    { "n": 38, "now": 7000, "input": { "type": "tick" } },
+    { "n": 39, "now": 7500, "input": { "type": "tick" } },
+    { "n": 40, "now": 8000, "input": { "type": "tick" } },
+    { "n": 41, "now": 8500, "input": { "type": "tick" } },
+    { "n": 42, "now": 9000, "input": { "type": "tick" } },
+    { "n": 43, "now": 9500, "input": { "type": "tick" } },
+    { "n": 44, "now": 10000, "input": { "type": "tick" } },
+    { "n": 45, "now": 10500, "input": { "type": "tick" } },
+    { "n": 46, "now": 11000, "input": { "type": "tick" } },
+    { "n": 47, "now": 11500, "input": { "type": "tick" } },
+    { "n": 48, "now": 12000, "input": { "type": "tick" } },
+    { "n": 49, "now": 12500, "input": { "type": "tick" } },
+    { "n": 50, "now": 13000, "input": { "type": "tick" } },
+    { "n": 51, "now": 13500, "input": { "type": "tick" } },
+    { "n": 52, "now": 14000, "input": { "type": "tick" } },
+    { "n": 53, "now": 14500, "input": { "type": "tick" } },
+    { "n": 54, "now": 15000, "input": { "type": "tick" } },
+    { "n": 55, "now": 15500, "input": { "type": "tick" } },
+    {
+      "n": 56,
+      "now": 15520,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+    },
+    { "n": 57, "now": 16000, "input": { "type": "tick" } },
+    { "n": 58, "now": 16250, "input": { "type": "tick" } },
+    { "n": 59, "now": 16500, "input": { "type": "tick" } },
+    { "n": 60, "now": 16750, "input": { "type": "tick" } },
+    { "n": 61, "now": 17000, "input": { "type": "tick" } },
+    { "n": 62, "now": 17250, "input": { "type": "tick" } },
+    { "n": 63, "now": 17500, "input": { "type": "tick" } },
+    {
+      "n": 64,
+      "now": 17506,
+      "input": {
+        "type": "attempt_local_description",
+        "attempt": 3,
+        "sdp_type": "offer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:05\r\n"
+      }
+    },
+    {
+      "n": 65,
+      "now": 17592,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"signal\",\"from\":\"c2\",\"payload\":{\"type\":\"sdp\",\"aid\":\"a2c5f3c6ea635612f4dc9233e82c6d3e\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:06\\r\\n\"}}}"
+      }
+    },
+    { "n": 66, "now": 17750, "input": { "type": "tick" } },
+    { "n": 67, "now": 18000, "input": { "type": "tick" } },
+    { "n": 68, "now": 18250, "input": { "type": "tick" } },
+    {
+      "n": 69,
+      "now": 18394,
+      "input": { "type": "attempt_pc_state", "attempt": 3, "state": "connected" }
+    },
+    { "n": 70, "now": 18394, "input": { "type": "attempt_data_open", "attempt": 3 } },
+    {
+      "n": 71,
+      "now": 18394,
+      "input": {
+        "type": "attempt_dtls_fingerprint",
+        "attempt": 3,
+        "fingerprint": "53594e5400000000000000000000000000000000000000000000000000000006"
+      }
+    },
+    {
+      "n": 72,
+      "now": 18465,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 3,
+        "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"cd7377dd8e883ed4ddb3074001c8d4c386eb60aed41c8bbe1241519498fe3526\"}"
+      }
+    },
+    { "n": 73, "now": 18500, "input": { "type": "tick" } },
+    { "n": 74, "now": 18750, "input": { "type": "tick" } },
+    { "n": 75, "now": 19000, "input": { "type": "tick" } },
+    { "n": 76, "now": 19250, "input": { "type": "tick" } },
+    { "n": 77, "now": 19500, "input": { "type": "tick" } },
+    { "n": 78, "now": 19750, "input": { "type": "tick" } },
+    { "n": 79, "now": 20000, "input": { "type": "tick" } },
+    { "n": 80, "now": 20250, "input": { "type": "tick" } },
+    { "n": 81, "now": 20500, "input": { "type": "tick" } },
+    { "n": 82, "now": 21000, "input": { "type": "tick" } },
+    { "n": 83, "now": 21500, "input": { "type": "tick" } },
+    { "n": 84, "now": 22000, "input": { "type": "tick" } },
+    { "n": 85, "now": 22500, "input": { "type": "tick" } },
+    { "n": 86, "now": 23000, "input": { "type": "tick" } },
+    { "n": 87, "now": 23500, "input": { "type": "tick" } },
+    { "n": 88, "now": 24000, "input": { "type": "tick" } },
+    { "n": 89, "now": 24500, "input": { "type": "tick" } },
+    { "n": 90, "now": 25000, "input": { "type": "tick" } },
+    { "n": 91, "now": 25500, "input": { "type": "tick" } },
+    { "n": 92, "now": 26000, "input": { "type": "tick" } },
+    { "n": 93, "now": 26500, "input": { "type": "tick" } },
+    { "n": 94, "now": 27000, "input": { "type": "tick" } },
+    { "n": 95, "now": 27500, "input": { "type": "tick" } },
+    { "n": 96, "now": 28000, "input": { "type": "tick" } },
+    { "n": 97, "now": 28500, "input": { "type": "tick" } },
+    { "n": 98, "now": 29000, "input": { "type": "tick" } },
+    { "n": 99, "now": 29500, "input": { "type": "tick" } },
+    { "n": 100, "now": 30000, "input": { "type": "tick" } },
+    { "n": 101, "now": 30500, "input": { "type": "tick" } },
+    {
+      "n": 102,
+      "now": 30565,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+    },
+    { "n": 103, "now": 31000, "input": { "type": "tick" } },
+    { "n": 104, "now": 31250, "input": { "type": "tick" } },
+    { "n": 105, "now": 31500, "input": { "type": "tick" } },
+    { "n": 106, "now": 31750, "input": { "type": "tick" } },
+    { "n": 107, "now": 32000, "input": { "type": "tick" } },
+    { "n": 108, "now": 32250, "input": { "type": "tick" } },
+    { "n": 109, "now": 32500, "input": { "type": "tick" } },
+    { "n": 110, "now": 32750, "input": { "type": "tick" } },
+    { "n": 111, "now": 33250, "input": { "type": "tick" } },
+    { "n": 112, "now": 33750, "input": { "type": "tick" } },
+    {
+      "n": 113,
+      "now": 33769,
+      "input": {
+        "type": "attempt_local_description",
+        "attempt": 4,
+        "sdp_type": "offer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:07\r\n"
+      }
+    },
+    {
+      "n": 114,
+      "now": 33868,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"signal\",\"from\":\"c2\",\"payload\":{\"type\":\"sdp\",\"aid\":\"617afb2e3b3881e834b79835244ced06\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:08\\r\\n\"}}}"
+      }
+    },
+    { "n": 115, "now": 34250, "input": { "type": "tick" } },
+    { "n": 116, "now": 34500, "input": { "type": "tick" } },
+    { "n": 117, "now": 34750, "input": { "type": "tick" } },
+    {
+      "n": 118,
+      "now": 34892,
+      "input": { "type": "attempt_pc_state", "attempt": 4, "state": "connected" }
+    },
+    { "n": 119, "now": 34892, "input": { "type": "attempt_data_open", "attempt": 4 } },
+    {
+      "n": 120,
+      "now": 34892,
+      "input": {
+        "type": "attempt_dtls_fingerprint",
+        "attempt": 4,
+        "fingerprint": "53594e5400000000000000000000000000000000000000000000000000000008"
+      }
+    },
+    {
+      "n": 121,
+      "now": 34950,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 4,
+        "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"1ff7c54706540ca761d2b1882485ad799ec576b7e183b14b37737b12eb026a26\"}"
+      }
+    },
+    { "n": 122, "now": 35000, "input": { "type": "tick" } },
+    { "n": 123, "now": 35250, "input": { "type": "tick" } },
+    { "n": 124, "now": 35500, "input": { "type": "tick" } },
+    { "n": 125, "now": 35750, "input": { "type": "tick" } },
+    { "n": 126, "now": 36000, "input": { "type": "tick" } },
+    { "n": 127, "now": 36250, "input": { "type": "tick" } },
+    { "n": 128, "now": 36500, "input": { "type": "tick" } },
+    { "n": 129, "now": 36750, "input": { "type": "tick" } },
+    { "n": 130, "now": 37000, "input": { "type": "tick" } },
+    { "n": 131, "now": 37500, "input": { "type": "tick" } },
+    { "n": 132, "now": 38000, "input": { "type": "tick" } },
+    { "n": 133, "now": 38500, "input": { "type": "tick" } },
+    { "n": 134, "now": 39000, "input": { "type": "tick" } },
+    { "n": 135, "now": 39500, "input": { "type": "tick" } },
+    { "n": 136, "now": 40000, "input": { "type": "tick" } },
+    { "n": 137, "now": 40500, "input": { "type": "tick" } },
+    { "n": 138, "now": 41000, "input": { "type": "tick" } },
+    { "n": 139, "now": 41500, "input": { "type": "tick" } },
+    { "n": 140, "now": 42000, "input": { "type": "tick" } },
+    { "n": 141, "now": 42500, "input": { "type": "tick" } },
+    { "n": 142, "now": 43000, "input": { "type": "tick" } },
+    { "n": 143, "now": 43500, "input": { "type": "tick" } },
+    { "n": 144, "now": 44000, "input": { "type": "tick" } },
+    { "n": 145, "now": 44500, "input": { "type": "tick" } },
+    { "n": 146, "now": 45000, "input": { "type": "tick" } },
+    { "n": 147, "now": 45500, "input": { "type": "tick" } },
+    {
+      "n": 148,
+      "now": 45530,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+    },
+    { "n": 149, "now": 46000, "input": { "type": "tick" } },
+    { "n": 150, "now": 46250, "input": { "type": "tick" } },
+    { "n": 151, "now": 46500, "input": { "type": "tick" } },
+    { "n": 152, "now": 46750, "input": { "type": "tick" } },
+    { "n": 153, "now": 47000, "input": { "type": "tick" } },
+    { "n": 154, "now": 47250, "input": { "type": "tick" } },
+    { "n": 155, "now": 47500, "input": { "type": "tick" } },
+    { "n": 156, "now": 47750, "input": { "type": "tick" } },
+    { "n": 157, "now": 48250, "input": { "type": "tick" } },
+    { "n": 158, "now": 48750, "input": { "type": "tick" } },
+    { "n": 159, "now": 49250, "input": { "type": "tick" } },
+    { "n": 160, "now": 49750, "input": { "type": "tick" } },
+    { "n": 161, "now": 50250, "input": { "type": "tick" } },
+    {
+      "n": 162,
+      "now": 50264,
+      "input": {
+        "type": "attempt_local_description",
+        "attempt": 5,
+        "sdp_type": "offer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:09\r\n"
+      }
+    },
+    {
+      "n": 163,
+      "now": 50335,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"signal\",\"from\":\"c2\",\"payload\":{\"type\":\"sdp\",\"aid\":\"ad7647fc60682267d46af5f146998cdd\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0A\\r\\n\"}}}"
+      }
+    },
+    { "n": 164, "now": 50750, "input": { "type": "tick" } },
+    {
+      "n": 165,
+      "now": 50887,
+      "input": { "type": "attempt_pc_state", "attempt": 5, "state": "connected" }
+    },
+    { "n": 166, "now": 50887, "input": { "type": "attempt_data_open", "attempt": 5 } },
+    {
+      "n": 167,
+      "now": 50887,
+      "input": {
+        "type": "attempt_dtls_fingerprint",
+        "attempt": 5,
+        "fingerprint": "53594e540000000000000000000000000000000000000000000000000000000a"
+      }
+    },
+    {
+      "n": 168,
+      "now": 50957,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 5,
+        "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"feabb9048d653dbd01f92c4b6b96155d52201dbc4aea10c1e9b525510d758b2a\"}"
+      }
+    },
+    { "n": 169, "now": 51000, "input": { "type": "tick" } },
+    { "n": 170, "now": 51250, "input": { "type": "tick" } },
+    { "n": 171, "now": 51500, "input": { "type": "tick" } },
+    { "n": 172, "now": 51750, "input": { "type": "tick" } },
+    { "n": 173, "now": 52000, "input": { "type": "tick" } },
+    { "n": 174, "now": 52250, "input": { "type": "tick" } },
+    { "n": 175, "now": 52500, "input": { "type": "tick" } },
+    { "n": 176, "now": 52750, "input": { "type": "tick" } },
+    { "n": 177, "now": 53000, "input": { "type": "tick" } },
+    { "n": 178, "now": 53500, "input": { "type": "tick" } },
+    { "n": 179, "now": 54000, "input": { "type": "tick" } },
+    { "n": 180, "now": 54500, "input": { "type": "tick" } },
+    { "n": 181, "now": 55000, "input": { "type": "tick" } },
+    { "n": 182, "now": 55500, "input": { "type": "tick" } },
+    { "n": 183, "now": 56000, "input": { "type": "tick" } },
+    { "n": 184, "now": 56500, "input": { "type": "tick" } },
+    { "n": 185, "now": 57000, "input": { "type": "tick" } },
+    { "n": 186, "now": 57500, "input": { "type": "tick" } },
+    { "n": 187, "now": 58000, "input": { "type": "tick" } },
+    { "n": 188, "now": 58500, "input": { "type": "tick" } },
+    { "n": 189, "now": 59000, "input": { "type": "tick" } },
+    { "n": 190, "now": 59500, "input": { "type": "tick" } },
+    { "n": 191, "now": 60000, "input": { "type": "tick" } },
+    {
+      "n": 192,
+      "now": 60049,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c1\",\"role\":\"baby\"}]}"
+      }
+    },
+    { "n": 193, "now": 60500, "input": { "type": "tick" } },
+    {
+      "n": 194,
+      "now": 60532,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+    },
+    { "n": 195, "now": 60750, "input": { "type": "tick" } },
+    { "n": 196, "now": 61000, "input": { "type": "tick" } },
+    {
+      "n": 197,
+      "now": 61074,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c1\",\"role\":\"baby\"},{\"clientId\":\"c3\",\"role\":\"parent\"}]}"
+      }
+    },
+    {
+      "n": 198,
+      "now": 61099,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"peer\",\"peerId\":\"c3\"}" }
+    },
+    {
+      "n": 199,
+      "now": 61150,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"def1181e64eff76e740b691aea6bea3e\"}}"
+      }
+    },
+    { "n": 200, "now": 61250, "input": { "type": "tick" } },
+    { "n": 201, "now": 61500, "input": { "type": "tick" } },
+    { "n": 202, "now": 61750, "input": { "type": "tick" } },
+    { "n": 203, "now": 62000, "input": { "type": "tick" } },
+    { "n": 204, "now": 62250, "input": { "type": "tick" } },
+    { "n": 205, "now": 62500, "input": { "type": "tick" } },
+    { "n": 206, "now": 62750, "input": { "type": "tick" } },
+    { "n": 207, "now": 63000, "input": { "type": "tick" } },
+    { "n": 208, "now": 63250, "input": { "type": "tick" } },
+    { "n": 209, "now": 63750, "input": { "type": "tick" } },
+    { "n": 210, "now": 64250, "input": { "type": "tick" } },
+    { "n": 211, "now": 64750, "input": { "type": "tick" } },
+    { "n": 212, "now": 65250, "input": { "type": "tick" } },
+    { "n": 213, "now": 65750, "input": { "type": "tick" } },
+    { "n": 214, "now": 66250, "input": { "type": "tick" } },
+    {
+      "n": 215,
+      "now": 66280,
+      "input": {
+        "type": "attempt_local_description",
+        "attempt": 6,
+        "sdp_type": "offer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0B\r\n"
+      }
+    },
+    {
+      "n": 216,
+      "now": 66411,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"def1181e64eff76e740b691aea6bea3e\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0C\\r\\n\"}}}"
+      }
+    },
+    { "n": 217, "now": 66750, "input": { "type": "tick" } },
+    { "n": 218, "now": 67000, "input": { "type": "tick" } },
+    { "n": 219, "now": 67250, "input": { "type": "tick" } },
+    {
+      "n": 220,
+      "now": 67397,
+      "input": { "type": "attempt_pc_state", "attempt": 6, "state": "connected" }
+    },
+    { "n": 221, "now": 67397, "input": { "type": "attempt_data_open", "attempt": 6 } },
+    {
+      "n": 222,
+      "now": 67397,
+      "input": {
+        "type": "attempt_dtls_fingerprint",
+        "attempt": 6,
+        "fingerprint": "53594e540000000000000000000000000000000000000000000000000000000c"
+      }
+    },
+    {
+      "n": 223,
+      "now": 67439,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 6,
+        "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"e3ba78fe21ec50ff25eac9541d7f89f950ca93abbb51035c1f378845106b2179\"}"
+      }
+    },
+    {
+      "n": 224,
+      "now": 67475,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 6,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":67434,\"seq\":1}"
+      }
+    },
+    { "n": 225, "now": 67500, "input": { "type": "tick" } },
+    { "n": 226, "now": 67750, "input": { "type": "tick" } },
+    { "n": 227, "now": 68000, "input": { "type": "tick" } },
+    { "n": 228, "now": 68250, "input": { "type": "tick" } },
+    { "n": 229, "now": 68500, "input": { "type": "tick" } },
+    { "n": 230, "now": 68750, "input": { "type": "tick" } },
+    { "n": 231, "now": 69000, "input": { "type": "tick" } },
+    { "n": 232, "now": 69250, "input": { "type": "tick" } },
+    { "n": 233, "now": 69500, "input": { "type": "tick" } },
+    { "n": 234, "now": 70000, "input": { "type": "tick" } },
+    { "n": 235, "now": 70500, "input": { "type": "tick" } },
+    { "n": 236, "now": 71000, "input": { "type": "tick" } },
+    { "n": 237, "now": 71500, "input": { "type": "tick" } },
+    { "n": 238, "now": 72000, "input": { "type": "tick" } },
+    { "n": 239, "now": 72500, "input": { "type": "tick" } },
+    { "n": 240, "now": 73000, "input": { "type": "tick" } },
+    { "n": 241, "now": 73500, "input": { "type": "tick" } },
+    { "n": 242, "now": 74000, "input": { "type": "tick" } },
+    { "n": 243, "now": 74500, "input": { "type": "tick" } },
+    { "n": 244, "now": 75000, "input": { "type": "tick" } },
+    { "n": 245, "now": 75500, "input": { "type": "tick" } },
+    {
+      "n": 246,
+      "now": 75568,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+    },
+    { "n": 247, "now": 76000, "input": { "type": "tick" } },
+    { "n": 248, "now": 76250, "input": { "type": "tick" } },
+    { "n": 249, "now": 76500, "input": { "type": "tick" } },
+    { "n": 250, "now": 76750, "input": { "type": "tick" } },
+    { "n": 251, "now": 77000, "input": { "type": "tick" } },
+    { "n": 252, "now": 77250, "input": { "type": "tick" } },
+    { "n": 253, "now": 77500, "input": { "type": "tick" } },
+    {
+      "n": 254,
+      "now": 77529,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 6,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":77500,\"seq\":2}"
+      }
+    },
+    { "n": 255, "now": 77750, "input": { "type": "tick" } },
+    { "n": 256, "now": 78000, "input": { "type": "tick" } },
+    { "n": 257, "now": 78250, "input": { "type": "tick" } },
+    { "n": 258, "now": 78500, "input": { "type": "tick" } },
+    { "n": 259, "now": 78750, "input": { "type": "tick" } },
+    { "n": 260, "now": 79000, "input": { "type": "tick" } },
+    { "n": 261, "now": 79250, "input": { "type": "tick" } },
+    { "n": 262, "now": 79500, "input": { "type": "tick" } },
+    { "n": 263, "now": 79750, "input": { "type": "tick" } },
+    { "n": 264, "now": 80250, "input": { "type": "tick" } },
+    { "n": 265, "now": 80750, "input": { "type": "tick" } },
+    { "n": 266, "now": 81250, "input": { "type": "tick" } },
+    { "n": 267, "now": 81750, "input": { "type": "tick" } },
+    { "n": 268, "now": 82250, "input": { "type": "tick" } },
+    { "n": 269, "now": 82750, "input": { "type": "tick" } },
+    { "n": 270, "now": 83250, "input": { "type": "tick" } },
+    { "n": 271, "now": 83750, "input": { "type": "tick" } },
+    { "n": 272, "now": 84250, "input": { "type": "tick" } },
+    { "n": 273, "now": 84750, "input": { "type": "tick" } },
+    { "n": 274, "now": 85250, "input": { "type": "tick" } },
+    { "n": 275, "now": 85750, "input": { "type": "tick" } },
+    { "n": 276, "now": 86250, "input": { "type": "tick" } },
+    { "n": 277, "now": 86750, "input": { "type": "tick" } },
+    { "n": 278, "now": 87250, "input": { "type": "tick" } },
+    { "n": 279, "now": 87750, "input": { "type": "tick" } },
+    {
+      "n": 280,
+      "now": 87764,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 6,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":87750,\"seq\":3}"
+      }
+    },
+    { "n": 281, "now": 88250, "input": { "type": "tick" } },
+    { "n": 282, "now": 88500, "input": { "type": "tick" } },
+    { "n": 283, "now": 88750, "input": { "type": "tick" } },
+    { "n": 284, "now": 89000, "input": { "type": "tick" } },
+    { "n": 285, "now": 89250, "input": { "type": "tick" } },
+    { "n": 286, "now": 89500, "input": { "type": "tick" } },
+    { "n": 287, "now": 89750, "input": { "type": "tick" } },
+    { "n": 288, "now": 90000, "input": { "type": "tick" } },
+    { "n": 289, "now": 90500, "input": { "type": "tick" } },
+    {
+      "n": 290,
+      "now": 90538,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+    },
+    { "n": 291, "now": 91000, "input": { "type": "tick" } },
+    { "n": 292, "now": 91250, "input": { "type": "tick" } },
+    { "n": 293, "now": 91500, "input": { "type": "tick" } },
+    { "n": 294, "now": 91750, "input": { "type": "tick" } },
+    { "n": 295, "now": 92000, "input": { "type": "tick" } },
+    { "n": 296, "now": 92250, "input": { "type": "tick" } },
+    { "n": 297, "now": 92500, "input": { "type": "tick" } },
+    { "n": 298, "now": 92750, "input": { "type": "tick" } },
+    { "n": 299, "now": 93250, "input": { "type": "tick" } },
+    { "n": 300, "now": 93750, "input": { "type": "tick" } },
+    { "n": 301, "now": 94250, "input": { "type": "tick" } },
+    { "n": 302, "now": 94750, "input": { "type": "tick" } },
+    { "n": 303, "now": 95250, "input": { "type": "tick" } },
+    { "n": 304, "now": 95750, "input": { "type": "tick" } },
+    { "n": 305, "now": 96250, "input": { "type": "tick" } },
+    { "n": 306, "now": 96750, "input": { "type": "tick" } },
+    { "n": 307, "now": 97250, "input": { "type": "tick" } },
+    { "n": 308, "now": 97750, "input": { "type": "tick" } },
+    {
+      "n": 309,
+      "now": 97809,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 6,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":97750,\"seq\":4}"
+      }
+    },
+    { "n": 310, "now": 98250, "input": { "type": "tick" } },
+    { "n": 311, "now": 98500, "input": { "type": "tick" } },
+    { "n": 312, "now": 98750, "input": { "type": "tick" } },
+    { "n": 313, "now": 99000, "input": { "type": "tick" } },
+    { "n": 314, "now": 99250, "input": { "type": "tick" } },
+    { "n": 315, "now": 99500, "input": { "type": "tick" } },
+    { "n": 316, "now": 99750, "input": { "type": "tick" } },
+    { "n": 317, "now": 100000, "input": { "type": "tick" } },
+    { "n": 318, "now": 100500, "input": { "type": "tick" } },
+    { "n": 319, "now": 101000, "input": { "type": "tick" } },
+    { "n": 320, "now": 101500, "input": { "type": "tick" } },
+    { "n": 321, "now": 102000, "input": { "type": "tick" } },
+    { "n": 322, "now": 102500, "input": { "type": "tick" } },
+    { "n": 323, "now": 103000, "input": { "type": "tick" } },
+    { "n": 324, "now": 103500, "input": { "type": "tick" } },
+    { "n": 325, "now": 104000, "input": { "type": "tick" } },
+    { "n": 326, "now": 104500, "input": { "type": "tick" } },
+    { "n": 327, "now": 105000, "input": { "type": "tick" } },
+    { "n": 328, "now": 105500, "input": { "type": "tick" } },
+    {
+      "n": 329,
+      "now": 105541,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+    },
+    { "n": 330, "now": 106000, "input": { "type": "tick" } },
+    { "n": 331, "now": 106250, "input": { "type": "tick" } },
+    { "n": 332, "now": 106500, "input": { "type": "tick" } },
+    { "n": 333, "now": 106750, "input": { "type": "tick" } },
+    { "n": 334, "now": 107000, "input": { "type": "tick" } },
+    { "n": 335, "now": 107250, "input": { "type": "tick" } },
+    { "n": 336, "now": 107500, "input": { "type": "tick" } },
+    { "n": 337, "now": 107750, "input": { "type": "tick" } },
+    {
+      "n": 338,
+      "now": 107800,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 6,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":107750,\"seq\":5}"
+      }
+    },
+    { "n": 339, "now": 108250, "input": { "type": "tick" } },
+    { "n": 340, "now": 108500, "input": { "type": "tick" } },
+    { "n": 341, "now": 108750, "input": { "type": "tick" } },
+    { "n": 342, "now": 109000, "input": { "type": "tick" } },
+    { "n": 343, "now": 109250, "input": { "type": "tick" } },
+    { "n": 344, "now": 109500, "input": { "type": "tick" } },
+    { "n": 345, "now": 109750, "input": { "type": "tick" } },
+    { "n": 346, "now": 110000, "input": { "type": "tick" } },
+    { "n": 347, "now": 110500, "input": { "type": "tick" } },
+    { "n": 348, "now": 111000, "input": { "type": "tick" } },
+    { "n": 349, "now": 111500, "input": { "type": "tick" } },
+    { "n": 350, "now": 112000, "input": { "type": "tick" } },
+    { "n": 351, "now": 112500, "input": { "type": "tick" } },
+    { "n": 352, "now": 113000, "input": { "type": "tick" } },
+    { "n": 353, "now": 113500, "input": { "type": "tick" } },
+    { "n": 354, "now": 114000, "input": { "type": "tick" } },
+    { "n": 355, "now": 114500, "input": { "type": "tick" } },
+    { "n": 356, "now": 115000, "input": { "type": "tick" } },
+    { "n": 357, "now": 115500, "input": { "type": "tick" } },
+    { "n": 358, "now": 116000, "input": { "type": "tick" } },
+    { "n": 359, "now": 116500, "input": { "type": "tick" } },
+    { "n": 360, "now": 117000, "input": { "type": "tick" } },
+    { "n": 361, "now": 117500, "input": { "type": "tick" } },
+    { "n": 362, "now": 118000, "input": { "type": "tick" } },
+    {
+      "n": 363,
+      "now": 118052,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 6,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":118000,\"seq\":6}"
+      }
+    },
+    { "n": 364, "now": 118500, "input": { "type": "tick" } },
+    { "n": 365, "now": 118750, "input": { "type": "tick" } },
+    { "n": 366, "now": 119000, "input": { "type": "tick" } },
+    { "n": 367, "now": 119250, "input": { "type": "tick" } },
+    { "n": 368, "now": 119500, "input": { "type": "tick" } },
+    { "n": 369, "now": 119750, "input": { "type": "tick" } },
+    { "n": 370, "now": 120000, "input": { "type": "tick" } },
+    { "n": 371, "now": 120250, "input": { "type": "tick" } },
+    { "n": 372, "now": 120750, "input": { "type": "tick" } },
+    {
+      "n": 373,
+      "now": 120815,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+    },
+    { "n": 374, "now": 121250, "input": { "type": "tick" } },
+    { "n": 375, "now": 121500, "input": { "type": "tick" } },
+    { "n": 376, "now": 121750, "input": { "type": "tick" } },
+    { "n": 377, "now": 122000, "input": { "type": "tick" } },
+    { "n": 378, "now": 122250, "input": { "type": "tick" } },
+    { "n": 379, "now": 122500, "input": { "type": "tick" } },
+    { "n": 380, "now": 122750, "input": { "type": "tick" } },
+    { "n": 381, "now": 123000, "input": { "type": "tick" } },
+    { "n": 382, "now": 123500, "input": { "type": "tick" } },
+    { "n": 383, "now": 124000, "input": { "type": "tick" } },
+    { "n": 384, "now": 124500, "input": { "type": "tick" } },
+    { "n": 385, "now": 125000, "input": { "type": "tick" } },
+    { "n": 386, "now": 125500, "input": { "type": "tick" } },
+    { "n": 387, "now": 126000, "input": { "type": "tick" } },
+    { "n": 388, "now": 126500, "input": { "type": "tick" } },
+    { "n": 389, "now": 127000, "input": { "type": "tick" } },
+    { "n": 390, "now": 127500, "input": { "type": "tick" } },
+    { "n": 391, "now": 128000, "input": { "type": "tick" } },
+    {
+      "n": 392,
+      "now": 128029,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 6,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":128000,\"seq\":7}"
+      }
+    },
+    { "n": 393, "now": 128500, "input": { "type": "tick" } },
+    { "n": 394, "now": 128750, "input": { "type": "tick" } },
+    { "n": 395, "now": 129000, "input": { "type": "tick" } },
+    { "n": 396, "now": 129250, "input": { "type": "tick" } },
+    { "n": 397, "now": 129500, "input": { "type": "tick" } },
+    { "n": 398, "now": 129750, "input": { "type": "tick" } },
+    { "n": 399, "now": 130000, "input": { "type": "tick" } },
+    { "n": 400, "now": 130250, "input": { "type": "tick" } },
+    { "n": 401, "now": 130750, "input": { "type": "tick" } },
+    { "n": 402, "now": 131250, "input": { "type": "tick" } },
+    { "n": 403, "now": 131750, "input": { "type": "tick" } },
+    { "n": 404, "now": 132250, "input": { "type": "tick" } },
+    { "n": 405, "now": 132750, "input": { "type": "tick" } },
+    { "n": 406, "now": 133250, "input": { "type": "tick" } },
+    { "n": 407, "now": 133750, "input": { "type": "tick" } },
+    { "n": 408, "now": 134250, "input": { "type": "tick" } },
+    { "n": 409, "now": 134750, "input": { "type": "tick" } },
+    { "n": 410, "now": 135250, "input": { "type": "tick" } },
+    { "n": 411, "now": 135750, "input": { "type": "tick" } },
+    {
+      "n": 412,
+      "now": 135797,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+    },
+    { "n": 413, "now": 136250, "input": { "type": "tick" } },
+    { "n": 414, "now": 136500, "input": { "type": "tick" } },
+    { "n": 415, "now": 136750, "input": { "type": "tick" } },
+    { "n": 416, "now": 137000, "input": { "type": "tick" } },
+    { "n": 417, "now": 137250, "input": { "type": "tick" } },
+    { "n": 418, "now": 137500, "input": { "type": "tick" } },
+    { "n": 419, "now": 137750, "input": { "type": "tick" } },
+    { "n": 420, "now": 138000, "input": { "type": "tick" } },
+    {
+      "n": 421,
+      "now": 138052,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 6,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":138000,\"seq\":8}"
+      }
+    },
+    { "n": 422, "now": 138500, "input": { "type": "tick" } },
+    { "n": 423, "now": 138750, "input": { "type": "tick" } },
+    { "n": 424, "now": 139000, "input": { "type": "tick" } },
+    { "n": 425, "now": 139250, "input": { "type": "tick" } },
+    { "n": 426, "now": 139500, "input": { "type": "tick" } },
+    { "n": 427, "now": 139750, "input": { "type": "tick" } },
+    { "n": 428, "now": 140000, "input": { "type": "tick" } },
+    { "n": 429, "now": 140250, "input": { "type": "tick" } },
+    { "n": 430, "now": 140750, "input": { "type": "tick" } },
+    { "n": 431, "now": 141250, "input": { "type": "tick" } },
+    { "n": 432, "now": 141750, "input": { "type": "tick" } },
+    { "n": 433, "now": 142250, "input": { "type": "tick" } },
+    { "n": 434, "now": 142750, "input": { "type": "tick" } },
+    { "n": 435, "now": 143250, "input": { "type": "tick" } },
+    { "n": 436, "now": 143750, "input": { "type": "tick" } },
+    { "n": 437, "now": 144250, "input": { "type": "tick" } },
+    { "n": 438, "now": 144750, "input": { "type": "tick" } },
+    { "n": 439, "now": 145250, "input": { "type": "tick" } },
+    { "n": 440, "now": 145750, "input": { "type": "tick" } },
+    { "n": 441, "now": 146250, "input": { "type": "tick" } },
+    { "n": 442, "now": 146750, "input": { "type": "tick" } },
+    { "n": 443, "now": 147250, "input": { "type": "tick" } },
+    { "n": 444, "now": 147750, "input": { "type": "tick" } },
+    { "n": 445, "now": 148250, "input": { "type": "tick" } },
+    {
+      "n": 446,
+      "now": 148264,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 6,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":148250,\"seq\":9}"
+      }
+    },
+    { "n": 447, "now": 148750, "input": { "type": "tick" } },
+    { "n": 448, "now": 149000, "input": { "type": "tick" } },
+    { "n": 449, "now": 149250, "input": { "type": "tick" } },
+    { "n": 450, "now": 149500, "input": { "type": "tick" } },
+    { "n": 451, "now": 149750, "input": { "type": "tick" } },
+    { "n": 452, "now": 150000, "input": { "type": "tick" } }
+  ],
+  "expect": [
+    [
+      { "type": "open_signaling" },
+      {
+        "type": "emit",
+        "event": {
+          "type": "status",
+          "status": {
+            "state": "connecting",
+            "level": 0,
+            "key": null,
+            "cause": null,
+            "acknowledged_until": null,
+            "last_alive_ms": null
+          }
+        }
+      }
+    ],
+    [
+      {
+        "type": "send_signaling",
+        "text": "{\"type\":\"hello\",\"role\":\"baby\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"protocolVersion\":3}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      { "type": "create_attempt", "attempt": 1, "offerer": true },
+      { "type": "create_offer", "attempt": 1 }
+    ],
+    [],
+    [
+      {
+        "type": "send_signaling",
+        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c2\",\"payload\":{\"type\":\"sdp\",\"aid\":\"c7c161defb0102c24c9ca28e05ae6865\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:01\\r\\n\"}}}"
+      }
+    ],
+    [
+      { "type": "close_attempt", "attempt": 1 },
+      { "type": "create_attempt", "attempt": 2, "offerer": true },
+      { "type": "create_offer", "attempt": 2 }
+    ],
+    [
+      {
+        "type": "send_signaling",
+        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c2\",\"payload\":{\"type\":\"sdp\",\"aid\":\"ca6b8ce6c8b1daa12a485d338353f23e\",\"re\":\"de8eb179368826349964c36146d3a7dc\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:02\\r\\n\"}}}"
+      }
+    ],
+    [],
+    [],
+    [
+      {
+        "type": "set_remote_description",
+        "attempt": 2,
+        "sdp_type": "answer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:04\r\n"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 2,
+        "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"4666e35bf2e76978fb8436a68011bb47efbdefe9211e431e43413d608ef7c6dc\"}"
+      }
+    ],
+    [],
+    [
+      { "type": "close_attempt", "attempt": 2 },
+      { "type": "emit", "event": { "type": "failed", "reason": "pair_proof_mismatch" } },
+      { "type": "emit", "event": { "type": "security_warning", "key": "wrong_key_attempt" } }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      { "type": "create_attempt", "attempt": 3, "offerer": true },
+      { "type": "create_offer", "attempt": 3 }
+    ],
+    [
+      {
+        "type": "send_signaling",
+        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c2\",\"payload\":{\"type\":\"sdp\",\"aid\":\"0f655e0dff080f610c0de08cf59fb0cd\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:05\\r\\n\"}}}"
+      }
+    ],
+    [
+      {
+        "type": "set_remote_description",
+        "attempt": 3,
+        "sdp_type": "answer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:06\r\n"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 3,
+        "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"cd7377dd8e883ed4ddb3074001c8d4c386eb60aed41c8bbe1241519498fe3526\"}"
+      }
+    ],
+    [],
+    [
+      { "type": "close_attempt", "attempt": 3 },
+      { "type": "emit", "event": { "type": "failed", "reason": "pair_proof_mismatch" } },
+      { "type": "emit", "event": { "type": "security_warning", "key": "wrong_key_attempt" } }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "emit",
+        "event": {
+          "type": "status",
+          "status": {
+            "state": "connecting",
+            "level": 1,
+            "key": null,
+            "cause": null,
+            "acknowledged_until": null,
+            "last_alive_ms": null
+          }
+        }
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      { "type": "create_attempt", "attempt": 4, "offerer": true },
+      { "type": "create_offer", "attempt": 4 }
+    ],
+    [
+      {
+        "type": "send_signaling",
+        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c2\",\"payload\":{\"type\":\"sdp\",\"aid\":\"79a8ac9f33dae15b9a04e2db1e1e8a0f\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:07\\r\\n\"}}}"
+      }
+    ],
+    [
+      {
+        "type": "set_remote_description",
+        "attempt": 4,
+        "sdp_type": "answer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:08\r\n"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 4,
+        "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"1ff7c54706540ca761d2b1882485ad799ec576b7e183b14b37737b12eb026a26\"}"
+      }
+    ],
+    [],
+    [
+      { "type": "close_attempt", "attempt": 4 },
+      { "type": "emit", "event": { "type": "failed", "reason": "pair_proof_mismatch" } },
+      { "type": "emit", "event": { "type": "security_warning", "key": "wrong_key_attempt" } }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      { "type": "create_attempt", "attempt": 5, "offerer": true },
+      { "type": "create_offer", "attempt": 5 }
+    ],
+    [
+      {
+        "type": "send_signaling",
+        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c2\",\"payload\":{\"type\":\"sdp\",\"aid\":\"8922336bb4abeabb7b1fa010caa64e72\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:09\\r\\n\"}}}"
+      }
+    ],
+    [
+      {
+        "type": "set_remote_description",
+        "attempt": 5,
+        "sdp_type": "answer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0A\r\n"
+      }
+    ],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 5,
+        "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"feabb9048d653dbd01f92c4b6b96155d52201dbc4aea10c1e9b525510d758b2a\"}"
+      }
+    ],
+    [],
+    [
+      { "type": "close_attempt", "attempt": 5 },
+      { "type": "emit", "event": { "type": "failed", "reason": "pair_proof_mismatch" } },
+      { "type": "emit", "event": { "type": "security_warning", "key": "wrong_key_attempt" } }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      { "type": "emit", "event": { "type": "link_lost", "down_ms": 60000 } },
+      {
+        "type": "emit",
+        "event": {
+          "type": "status",
+          "status": {
+            "state": "connecting",
+            "level": 2,
+            "key": null,
+            "cause": null,
+            "acknowledged_until": null,
+            "last_alive_ms": null
+          }
+        }
+      }
+    ],
+    [
+      {
+        "type": "emit",
+        "event": {
+          "type": "status",
+          "status": {
+            "state": "connecting",
+            "level": 2,
+            "key": null,
+            "cause": "peer_absent",
+            "acknowledged_until": null,
+            "last_alive_ms": null
+          }
+        }
+      }
+    ],
+    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "emit",
+        "event": {
+          "type": "status",
+          "status": {
+            "state": "connecting",
+            "level": 2,
+            "key": null,
+            "cause": null,
+            "acknowledged_until": null,
+            "last_alive_ms": null
+          }
+        }
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      { "type": "create_attempt", "attempt": 6, "offerer": true },
+      { "type": "create_offer", "attempt": 6 }
+    ],
+    [
+      {
+        "type": "send_signaling",
+        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"6ef692058a817f78e7d2b82b8347f717\",\"re\":\"def1181e64eff76e740b691aea6bea3e\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0B\\r\\n\"}}}"
+      }
+    ],
+    [
+      {
+        "type": "set_remote_description",
+        "attempt": 6,
+        "sdp_type": "answer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0C\r\n"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 6,
+        "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"f852c76cb5796777cc1566d43e9b247fa3c3ea350ec2fe9f16c754033549416d\"}"
+      }
+    ],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 6,
+        "text": "{\"type\":\"device_status\",\"v\":3,\"noise_threshold\":0.12}"
+      },
+      {
+        "type": "send_data",
+        "attempt": 6,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":67439,\"seq\":1,\"rms\":0}"
+      },
+      {
+        "type": "emit",
+        "event": {
+          "type": "status",
+          "status": {
+            "state": "connected",
+            "level": 0,
+            "key": null,
+            "cause": null,
+            "acknowledged_until": null,
+            "last_alive_ms": null
+          }
+        }
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 6,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":77500,\"seq\":2,\"rms\":0}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 6,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":87750,\"seq\":3,\"rms\":0}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 6,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":97750,\"seq\":4,\"rms\":0}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 6,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":107750,\"seq\":5,\"rms\":0}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 6,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":118000,\"seq\":6,\"rms\":0}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 6,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":128000,\"seq\":7,\"rms\":0}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 6,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":138000,\"seq\":8,\"rms\":0}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 6,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":148250,\"seq\":9,\"rms\":0}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+  ],
+  "final": { "state": "connected" }
+}

@@ -1,0 +1,89 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "attack-replayed-stop-after-reconnect",
+  "description": "A relay that recycles client ids records the baby's signaling stop from a normal Stop, lets the pair restart and verify again, and replays the recording to the parent during a later outage (after a signaling reconnect with the same client id). The stop is bound to the link epoch of the earlier monitoring period, so it is ignored: link_lost is still raised and the parent never goes peer_stopped again.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "relay": {
+    "reuse_client_ids": true
+  },
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "stop",
+      "peer": "baby"
+    },
+    {
+      "at": 25000,
+      "do": "start",
+      "peer": "baby"
+    },
+    {
+      "at": 50000,
+      "do": "signaling_down"
+    },
+    {
+      "at": 55000,
+      "do": "signaling_up"
+    },
+    {
+      "at": 70000,
+      "do": "drop_data",
+      "from": "baby"
+    },
+    {
+      "at": 110000,
+      "do": "replay_stop",
+      "peer": "parent"
+    },
+    {
+      "at": 200000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 45000
+    },
+    {
+      "peer": "parent",
+      "event": "peer_stopped",
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "event": "link_lost",
+      "count": 1,
+      "since_last_contact_ms": [60000, 62000]
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "peer_stopped"
+        }
+      },
+      "within_ms": [40000, 200000]
+    },
+    {
+      "peer": "parent",
+      "reaches_level": 2
+    }
+  ]
+}

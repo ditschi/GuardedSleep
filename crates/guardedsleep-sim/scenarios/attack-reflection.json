@@ -1,0 +1,100 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "attack-reflection",
+  "description": "A room member reflects the baby's own proof; the baby (already paired) never verifies it, warns, and the real parent connects afterwards.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby",
+      "paired_before": true
+    },
+    {
+      "id": "parent",
+      "role": "parent",
+      "paired_before": true
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start",
+      "peer": "baby"
+    },
+    {
+      "at": 1000,
+      "do": "stranger_join",
+      "mode": "reflect",
+      "id": "stranger"
+    },
+    {
+      "at": 60000,
+      "do": "stranger_leave",
+      "peer": "stranger"
+    },
+    {
+      "at": 61000,
+      "do": "start",
+      "peer": "parent"
+    },
+    {
+      "at": 150000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "connected"
+        }
+      },
+      "within_ms": [0, 60000]
+    },
+    {
+      "peer": "baby",
+      "event": "failed",
+      "where": {
+        "reason": "pair_proof_mismatch"
+      },
+      "within_ms": [0, 60000],
+      "count_min": 2
+    },
+    {
+      "peer": "baby",
+      "event": "security_warning",
+      "where": {
+        "key": "wrong_key_attempt"
+      },
+      "within_ms": [0, 60000],
+      "count_min": 2
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 150000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 150000
+    }
+  ],
+  "export_traces": [
+    {
+      "peer": "baby",
+      "id": "sim-attack-reflection-baby"
+    }
+  ]
+}

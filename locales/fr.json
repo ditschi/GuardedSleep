@@ -1,0 +1,873 @@
+{
+  "meta": {
+    "appTitle": "GuardedSleep"
+  },
+  "layout": {
+    "settingsAria": "Paramètres",
+    "languageSelectAria": "Langue",
+    "backAria": "Retour à l'écran précédent"
+  },
+  "languages": {
+    "en": "English",
+    "de": "Deutsch",
+    "fr": "Français",
+    "es": "Español"
+  },
+  "rolePicker": {
+    "subtitle": "Babyphone respectueux de la vie privée — choisissez le rôle de cet appareil",
+    "instructionEmphasis": "D'abord",
+    "instructionRest": "configurez l'unité bébé, puis connectez l'unité parent avec le code affiché sur l'écran de l'unité bébé.",
+    "babyTitle": "Unité bébé",
+    "babyHint": "À placer près de l'enfant ; écoute et diffusion audio.",
+    "parentTitle": "Unité parent",
+    "parentHint": "Reste avec vous ; alertes et contrôles d'écoute."
+  },
+  "capabilities": {
+    "secureContextBabyMicHint": "Ouvrez ce site en HTTPS (ou localhost) pour utiliser le micro et WebRTC sure l'unité bébé. L'appariage et les réglages fonctionnent encore sure cette connexion.",
+    "webVersusNativeHint": "Vous utilisez l'application web. Pour la surveillance en arrière-plan, les alarmes système et le mode kiosque, utilisez la version Android GuardedSleep. La version navigateur convient à l'appariage et aux sessions live en HTTPS."
+  },
+  "runtime": {
+    "bannerDismissAria": "Fermer l'indication"
+  },
+  "signaling": {
+    "editorLabel": "Serveur de signalisation (WebSocket)",
+    "save": "Enregistrer",
+    "useDefault": "Valeur par défaut",
+    "useDefaultTitle": "Effacer l'URL enregistrée et utiliser la valeur de build",
+    "activePrefix": "Actif :",
+    "validationEmpty": "L'URL ne doit pas être vide",
+    "validationProtocol": "Seuls ws:// ou wss:// sont autorisés",
+    "validationInvalid": "URL invalid"
+  },
+  "settings": {
+    "title": "Réglages",
+    "tablistAria": "Sections des réglages",
+    "tabGeneral": "Général",
+    "tabChild": "Enfant",
+    "tabParent": "Parent",
+    "generalIntro": "Valeurs par défaut si vous ouvrez l'app sans lien d'invitation complete. Les QR d'appariement contiennent toujours leurs propres détails de connexion.",
+    "signalingHeading": "Serveur de signalisation",
+    "signalingHelp": "Avancé : WebSocket par défaut pour la découverte. Les invitations QR utilisent toujours le serveur intégré à l'invitation.",
+    "activeDefault": "Valeur active par défaut :",
+    "childTitle": "Unité bébé (enfant)",
+    "childIntro1": "Ces valeurs s'appliquent sure cet apparel lorsqu'il sert d'unité bébé. Elles sont stockées localement et prises en compte au démarrage de la surveillance.",
+    "childIntro2": "Depuis un parent connecté, utilisez « Ouvrir les réglages sure l'apparel bébé » pour ouvrir cette page ici (même niveau de confiance que l'écoute).",
+    "childPairingLink": "Appariement et configuration bébé",
+    "parentTitle": "Unité parent",
+    "parentIntro": "Écoute, snooze, qualité de lien et notifications se trouvent sure l'écran parent pendant une session.",
+    "parentPairingLink": "Appariement et configuration parent",
+    "sectionNotifications": "Notifications",
+    "notificationsIntro": "Comment les alertes sonnent sur cet appareil parent. Faites un test d'alerte après l'appariement lorsque les deux unités sont connectées.",
+    "alertOutputLabel": "Sortie audio des alertes",
+    "alertOutputDefault": "Par défaut du système",
+    "alertOutputSpeaker": "Haut-parleur uniquement",
+    "alertOutputSpeakerDefault": "Haut-parleur + défaut",
+    "alertGainLabel": "Gain de lecture des alertes ({value}×)",
+    "alertMinGainLabel": "Gain minimum pendant l'alerte",
+    "sectionDisplay": "Affichage",
+    "displayNightLabel": "Apparence",
+    "displayNightDark": "Toujours sombre",
+    "displayNightLight": "Clair",
+    "displayNightSystem": "Suivre le système",
+    "wakeLockListenLabel": "Garder l'écran allumé en mode écoute",
+    "showConnectionDetailsLabel": "Toujours afficher la bannière de détails de connexion",
+    "sectionBaby": "Unité bébé",
+    "sectionBattery": "Batterie et arrière-plan",
+    "batteryIntro": "Exemptez GuardedSleep de l'optimisation agressive de la batterie pour une surveillance fiable en arrière-plan.",
+    "batteryOpen": "Ouvrir les réglages batterie",
+    "batteryWebHint": "L'exemption batterie se configure dans les réglages système Android de l'appareil.",
+    "sectionAbout": "À propos / aide",
+    "aboutIntro": "GuardedSleep est un babyphone logiciel — il ne peut pas alerter si votre unité parent est éteinte ou déchargée.",
+    "replayOnboarding": "Revoir l'introduction",
+    "showAdvanced": "Afficher les réglages avancés",
+    "hideAdvanced": "Masquer les réglages avancés",
+    "advancedWarning": "Les réglages avancés peuvent perturber la surveillance. Les valeurs par défaut conviennent à la plupart des usages.",
+    "heartbeatLabel": "Intervalle de heartbeat (apparel bébé)",
+    "heartbeatOption": "{seconds} secondes",
+    "diagnosticsPlaceholder": "Export de diagnostic et empreinte de sécurité — dans une version ultérieure."
+  },
+  "listenButton": {
+    "idle": "Écouter",
+    "holding": "Écoute…",
+    "locked": "Appuyer pour arrêter",
+    "hint": "Maintenir pour écouter, glisser vers le haut pour verrouiller"
+  },
+  "onboarding": {
+    "kicker": "Première configuration",
+    "title": "Bienvenue sur GuardedSleep",
+    "welcomeLead": "Quelques étapes rapides pour savoir quand la surveillance est active — et quand elle ne l'est pas.",
+    "failureModelTitle": "Gardez l'unité parent chargée",
+    "failureModelBody": "Comme tout babyphone, GuardedSleep ne peut pas alerter si votre unité parent est éteinte. Gardez-la chargée pendant la surveillance.",
+    "continue": "Continuer",
+    "trainingIntro": "Observez la barre passer de connecté à non surveillé. Quand l'indicateur vert disparaît, vous ne recevez plus de mises à jour.",
+    "trainingConnectedCopy": "Connecté — vous surveillez cette pièce.",
+    "trainingDisconnectedCopy": "Non surveillé — vous ne recevriez pas d'alertes sonores maintenant.",
+    "trainingDone": "Compris",
+    "batteryTitle": "Arrière-plan et batterie",
+    "batteryBody": "Sur Android, autorisez GuardedSleep en arrière-plan et désactivez les restrictions batterie pour une surveillance fiable.",
+    "batteryOpen": "Ouvrir les réglages batterie",
+    "batteryOpenFailed": "Impossible d'ouvrir les réglages batterie. Réessayez ou ouvrez-les manuellement dans les réglages système Android.",
+    "back": "Retour",
+    "doneLead": "Vous pouvez maintenant apparier l'unité bébé et l'unité parent.",
+    "probeHint": "Après l'appariement, touchez Tester l'alerte sur l'écran parent avant de quitter la portée auditive.",
+    "finish": "Aller à l'accueil",
+    "skip": "Passer pour l'instant"
+  },
+  "kiosk": {
+    "monitoringActive": "Surveillance active",
+    "holdSlideHint": "Maintenir et glisser vers le haut pour déverrouiller",
+    "unlockZone": "Glisser ici vers le haut pour déverrouiller"
+  },
+  "babySound": {
+    "kioskLabel": "Kiosque (immersif, moins de sorties accidentelles) — Android",
+    "sectionTitle": "Détection sonore (apparel bébé)",
+    "sensitivityLabel": "Sensibilité — seuil de bruit ({value})",
+    "holdTitle": "Durée minimale de bruit fort",
+    "holdHelp": "Ignore les sons brefs. Des attentes plus longues réduisent les alertes mais ralentissent la réaction.",
+    "customSummary": "Durée personnalisée",
+    "selected": "Sélection : {label}",
+    "customRange": "{min}–{max} s"
+  },
+  "pair": {
+    "scanner": {
+      "cameraDenied": "Accès caméra refusé. Autorisez-le dans les réglages du navigateur ou choisissez une image QR dans la galerie.",
+      "cameraNotFound": "Aucune caméra adaptée. Utilisez la galerie ou le champ texte.",
+      "cameraNotSupported": "Caméra en direct non prise en charge ici. Utilisez HTTPS (ou localhost) ou une image QR depuis la galerie.",
+      "cameraUnavailable": "Caméra en direct indisponible. Utilisez la galerie ou le champ ci-dessus.",
+      "liveCameraUnsupported": "Caméra en direct non prise en charge pour cette page. Essayez la galerie ou HTTPS (p. ex. port 8443).",
+      "secureContextTip": " Astuce : sans HTTPS certains appareils bloquent la caméra en direct — essayez https://… ou une image QR depuis la galerie.",
+      "noQrInImage": "Aucun code QR trouvé dans cette image.",
+      "qrUnreadable": "Impossible de lire le QR sur l'image. Essayez une photo plus nette ou un autre mode.",
+      "previewNotReady": "Aperçu caméra pas prêt. Réessayez.",
+      "scanCancel": "Annuler le scan",
+      "scanWithCamera": "Scanner le QR avec la caméra",
+      "galleryOrFiles": "Depuis la galerie ou les fichiers",
+      "galleryHelp": "Si le scan en direct échoue sur cet appareil, choisissez une photo du QR dans la galerie. HTTPS (p. ex. port 8443) peut aussi aider."
+    }
+  },
+  "native": {
+    "appName": "GuardedSleep Alpha",
+    "roleBaby": "Unité bébé",
+    "roleParent": "Unité parent",
+    "signalUrl": "Adresse du serveur",
+    "inviteJson": "Invitation (JSON de l'unité bébé)",
+    "startBaby": "Démarrer l'unité bébé",
+    "startParent": "Démarrer l'unité parent",
+    "stop": "Arrêter",
+    "listen": "Écouter",
+    "probe": "Alerte de test",
+    "dismiss": "Fermer",
+    "statusState": "État : {state}",
+    "statusVerified": "Appairage vérifié",
+    "statusFailed": "Échec : {reason}",
+    "statusMic": "Micro en cours de diffusion : {enabled}",
+    "statusPackets": "Paquets audio reçus : {count}",
+    "statusHeartbeat": "Dernier signe de vie : n° {seq}",
+    "statusLastAlert": "Dernière alerte : {alert}",
+    "inviteHint": "Invitation pour l'unité parent (à coller dans l'application ou le client web) :",
+    "ongoingBaby": "L'unité bébé écoute",
+    "ongoingParent": "L'unité parent est connectée",
+    "channelMonitor": "Surveillance",
+    "channelAlarm": "Alertes",
+    "alertNoiseTitle": "Le bébé pleure",
+    "alertNoiseText": "L'unité bébé a détecté un bruit au-dessus de votre seuil.",
+    "alertLinkLostTitle": "Connexion perdue",
+    "alertLinkLostText": "L'unité bébé est injoignable. Vérifiez-la maintenant.",
+    "notif": {
+      "appTitle": "GuardedSleep",
+      "silenceRuleName": "GuardedSleep",
+      "channelNoise": "Alertes de bruit",
+      "channelNoiseDesc": "Alertes sonores quand l'unité bébé entend un bruit.",
+      "channelLink": "Alarmes de connexion",
+      "channelLinkDesc": "Alarmes quand la connexion avec l'unité bébé est perdue.",
+      "channelStatus": "État de la surveillance",
+      "channelStatusDesc": "Indique que la surveillance est active.",
+      "channelNotice": "Avertissements",
+      "channelNoticeDesc": "Avertissements de batterie et de sécurité.",
+      "channelInfo": "Informations",
+      "channelInfoDesc": "Notes discrètes, par exemple au retour de la connexion.",
+      "channelBaby": "Surveillance",
+      "channelBabyDesc": "Note silencieuse indiquant que cette unité surveille.",
+      "babyMonitoring": "GuardedSleep surveille",
+      "babyResume": "Touchez pour reprendre la surveillance",
+      "statusConnected": "Connecté à l'unité bébé",
+      "statusConnecting": "Connexion à l'unité bébé…",
+      "statusReconnecting": "Reconnexion à l'unité bébé…",
+      "statusTrouble": "Unité bébé injoignable — nouvelle tentative",
+      "statusAlarm": "Aucune connexion avec l'unité bébé",
+      "statusPeerStopped": "L'unité bébé a arrêté la surveillance",
+      "statusFailed": "Ces unités ne sont plus associées",
+      "noiseTitle": "Bruit détecté",
+      "noiseText": "L'unité bébé entend un bruit.",
+      "noiseTestTitle": "Alerte de test",
+      "noiseTestText": "Ceci est un test. L'unité bébé reste silencieuse.",
+      "actionStopSound": "Arrêter le son",
+      "actionSnooze10": "Répéter dans 10 min",
+      "actionChecking": "Je vérifie",
+      "linkLostTitle": "Connexion perdue",
+      "linkLostText": "Aucune connexion avec l'unité bébé. Allez voir votre bébé maintenant.",
+      "peerStoppedTitle": "L'unité bébé a arrêté la surveillance",
+      "peerStoppedText": "La surveillance a été arrêtée sur l'unité bébé. Vous n'entendrez rien tant qu'elle n'est pas relancée.",
+      "restoredTitle": "Connexion rétablie",
+      "restoredText": "Non surveillé pendant {duration}.",
+      "missedTitle": "Pendant la coupure",
+      "missedCount": "Bruits pendant la coupure : {count} (non surveillé pendant {duration}).",
+      "missedNone": "Aucun bruit pendant la coupure (non surveillé pendant {duration}).",
+      "missedUnknown": "Nous ne savons pas ce qui s'est passé pendant la coupure (non surveillé pendant {duration}).",
+      "batteryLowTitle": "Batterie de l'unité bébé faible",
+      "batteryLowText": "Batterie de l'unité bébé : {percent} % — branchez-la.",
+      "batteryCriticalTitle": "Batterie de l'unité bébé presque vide",
+      "batteryCriticalText": "Batterie de l'unité bébé : {percent} % — branchez-la maintenant.",
+      "chargerTitle": "L'unité bébé ne charge plus",
+      "chargerText": "Branchez l'unité bébé pour qu'elle tienne toute la nuit.",
+      "securityTitle": "Mauvaise clé",
+      "securityText": "Quelqu'un a tenté de se connecter avec une mauvaise clé. La surveillance continue.",
+      "publicTitle": "Alarme GuardedSleep",
+      "fgsMissingTitle": "Pas de surveillance en arrière-plan",
+      "fgsMissingText": "Ouvrez GuardedSleep pour réactiver la surveillance en arrière-plan."
+    },
+    "ui": {
+      "common": {
+        "appName": "GuardedSleep",
+        "allow": "Autoriser",
+        "continue": "Continuer",
+        "later": "Plus tard",
+        "ok": "OK",
+        "cancel": "Annuler",
+        "more": "Plus",
+        "moreCount": "+{count}",
+        "settings": "Réglages",
+        "tryAgain": "Réessayer",
+        "yes": "Oui",
+        "no": "Non",
+        "add": "Ajouter",
+        "remove": "Supprimer",
+        "save": "Enregistrer",
+        "change": "Modifier",
+        "durationSec": "{seconds} s",
+        "durationMin": "{minutes} min",
+        "durationHour": "{hours} h",
+        "durationHourMin": "{hours} h {minutes} min",
+        "secondsShort": "{seconds} s",
+        "state": {
+          "done": "Terminé",
+          "todo": "À faire",
+          "blocked": "Bloqué",
+          "checking": "Vérification"
+        },
+        "babyUnitDefault": "Unité bébé",
+        "parentUnitDefault": "Unité parent"
+      },
+      "role": {
+        "title": "Quelle unité est-ce ?",
+        "baby": {
+          "title": "Unité bébé",
+          "hint": "Reste près de votre enfant et écoute."
+        },
+        "parent": {
+          "title": "Unité parent",
+          "hint": "Reste avec vous et vous alerte."
+        },
+        "orderHint": "Configurez d'abord l'unité bébé."
+      },
+      "setup": {
+        "title": "Préparer cette unité",
+        "mic": {
+          "title": "Microphone",
+          "why": "Nécessaire pour entendre votre enfant.",
+          "required": "Autorisez le microphone pour continuer."
+        },
+        "background": {
+          "title": "Continuer en arrière-plan",
+          "why": "Sinon cet appareil peut arrêter la surveillance pour économiser la batterie."
+        },
+        "silence": {
+          "title": "Mettre cette unité en silence pendant la surveillance",
+          "why": "Les appels et messages ne sonneront pas et n'allumeront pas l'écran près de votre enfant. Les réveils fonctionnent toujours."
+        },
+        "safety": {
+          "body": "Gardez cette unité sur son chargeur, sur une surface stable, hors de portée de votre enfant. N'utilisez pas un appareil dont la batterie est gonflée ou abîmée."
+        },
+        "chargingTip": "Astuce : si cet appareil a l'option « allumer l'écran au branchement », désactivez-la pour que l'écran reste sombre.",
+        "deviceCheck": {
+          "checking": "Vérification de cette unité…",
+          "ok": "Cette unité convient bien comme unité bébé.",
+          "limited": "Cette unité peut perdre la connexion de temps en temps. Elle fonctionne quand même.",
+          "notRecommended": "Cette unité risque de ne pas surveiller de façon fiable. Utilisez un autre appareil si possible."
+        },
+        "notifications": {
+          "title": "Alertes",
+          "why": "Nécessaire pour être prévenu quand votre enfant fait du bruit.",
+          "required": "Sans cela, GuardedSleep ne peut pas vous alerter."
+        },
+        "lockScreen": {
+          "title": "Alertes sur l'écran de verrouillage",
+          "why": "Pour que les alertes s'affichent même écran verrouillé."
+        },
+        "dndBypass": {
+          "title": "Alertes en mode Ne pas déranger",
+          "why": "Pour que les alertes passent même quand Ne pas déranger est activé."
+        },
+        "limits": {
+          "body": "GuardedSleep ne peut vous alerter que si cette unité est allumée et chargée. Laissez-la branchée la nuit. Si les deux unités s'éteignent, personne n'est alerté."
+        },
+        "skipped": "Ignoré pour l'instant"
+      },
+      "pair": {
+        "baby": {
+          "title": "Connecter l'unité parent",
+          "qrAlt": "Code d'appairage",
+          "instruction": "Sur l'autre appareil, ouvrez GuardedSleep, choisissez Unité parent et scannez ce code.",
+          "validFor": "Code valable encore {duration}",
+          "expired": "Ce code a expiré.",
+          "newCode": "Afficher un nouveau code",
+          "copy": "Copier le code",
+          "copied": "Copié",
+          "brighter": "Rendre le code plus lumineux",
+          "waiting": "En attente de l'unité parent…",
+          "privacy": "Toute personne ayant ce code peut écouter. Ne le montrez qu'à des personnes de confiance.",
+          "parentFound": "Unité parent trouvée. Connexion…",
+          "failed": "L'appairage a échoué. Affichez un nouveau code et réessayez.",
+          "showText": "Afficher le code en texte",
+          "hideText": "Masquer le texte"
+        },
+        "parent": {
+          "title": "Scannez le code sur l'unité bébé",
+          "cameraWhy": "GuardedSleep n'utilise la caméra que pour lire le code.",
+          "pasteLabel": "Ou collez le code",
+          "pasteSubmit": "Connecter",
+          "connecting": "Connexion à l'unité bébé…"
+        },
+        "error": {
+          "cameraDenied": "Caméra non autorisée.",
+          "allowCamera": "Autoriser la caméra",
+          "pasteInstead": "Coller le code à la place",
+          "notOurs": "Ce n'est pas un code GuardedSleep. Scannez le code sur l'unité bébé.",
+          "expired": "Ce code a expiré. Touchez Afficher un nouveau code sur l'unité bébé, puis scannez à nouveau.",
+          "mismatch": "Le code ne correspond pas. Scannez le code actuellement affiché sur l'unité bébé.",
+          "alreadyPaired": "Cette unité bébé est déjà appairée avec une autre unité.",
+          "unreachable": "Impossible de trouver l'unité bébé pour l'instant. Vérifiez que les deux unités sont en ligne.",
+          "incomplete": "Ce code est incomplet. Copiez le code en entier depuis l'unité bébé."
+        }
+      },
+      "home": {
+        "parent": {
+          "cardTitle": "Se connecter à {name}",
+          "cardTitleDefault": "Se connecter à l'unité bébé"
+        },
+        "baby": {
+          "cardTitle": "Démarrer la surveillance"
+        },
+        "lastUsed": "Dernière utilisation à {time}",
+        "newPairing": "Configurer de nouvelles unités",
+        "empty": "Aucune unité appairée pour l'instant."
+      },
+      "baby": {
+        "status": {
+          "connected": "Connecté à l'unité parent",
+          "waiting": "En attente de l'unité parent…",
+          "reconnecting": "Reconnexion à l'unité parent…",
+          "notResponding": "L'unité parent ne répond pas — nouvelle tentative en cours",
+          "parentStopped": "L'unité parent a arrêté la surveillance"
+        },
+        "forDuration": "depuis {duration}",
+        "monitoring": "Surveillance en cours",
+        "parentListening": "Un parent écoute",
+        "battery": "Cette unité : batterie {percent} %",
+        "batteryCharging": "Cette unité : en charge · {percent} %",
+        "silence": {
+          "on": "Cette unité est en silence",
+          "off": "Cette unité peut sonner",
+          "everydayPhone": "Les appels et messages sur cette unité restent silencieux jusqu'à l'arrêt de la surveillance.",
+          "restored": "Cette unité était restée en silence. Les sons sont rétablis.",
+          "noAccess": "L'accès au mode silence est désactivé. Activez-le dans les réglages pour que les appels et messages restent silencieux."
+        },
+        "lock": "Verrouiller l'écran",
+        "autolockHint": "L'écran s'assombrit dans {seconds} s",
+        "stop": "Arrêter la surveillance",
+        "micLevel": "Niveau sonore ici",
+        "micSilent": "Le microphone ne capte aucun son. Redémarrez la surveillance ou vérifiez le microphone."
+      },
+      "kiosk": {
+        "a11yLabel": "Surveillance en cours. Écran verrouillé.",
+        "unlockHint": "Maintenez et glissez vers le haut pour déverrouiller",
+        "unlockZone": "Glissez ici",
+        "unlockAction": "Déverrouiller"
+      },
+      "link": {
+        "connected": "Connecté à {name}",
+        "connecting": "Connexion à {name}…",
+        "reconnecting": "Reconnexion…",
+        "cantReach": "Impossible de joindre {name} — nouvelle tentative en cours",
+        "lostFor": "Pas de connexion depuis {duration}",
+        "babyStopped": "{name} a arrêté la surveillance",
+        "needsPairing": "Ces unités ne sont plus appairées. Appairez-les à nouveau pour continuer la surveillance.",
+        "updateRequired": "L'une des unités doit mettre à jour GuardedSleep pour continuer la surveillance.",
+        "idle": "Pas de surveillance",
+        "weak": "Connexion faible — le son peut être haché",
+        "restoredAfter": "Reconnecté après {duration}. Vous entendez de nouveau votre enfant.",
+        "tryNow": "Réessayer maintenant",
+        "pairAgain": "Appairer à nouveau",
+        "connectedDefault": "Connecté à l'unité bébé",
+        "connectingDefault": "Connexion à l'unité bébé…",
+        "cantReachDefault": "Impossible de joindre l'unité bébé — nouvelle tentative en cours",
+        "babyStoppedDefault": "L'unité bébé a arrêté la surveillance",
+        "stalePairingHint": "Si vous avez de nouveau associé l'unité bébé, scannez son nouveau code."
+      },
+      "linkAlarm": {
+        "lost": {
+          "title": "Pas de connexion avec {name}",
+          "titleUrgent": "Pas de connexion avec {name} !",
+          "body": "Vous n'entendrez pas votre enfant tant que les unités ne sont pas reconnectées.",
+          "titleDefault": "Pas de connexion avec l'unité bébé",
+          "titleUrgentDefault": "Pas de connexion avec l'unité bébé !"
+        },
+        "stopped": {
+          "title": "{name} a arrêté la surveillance",
+          "body": "Quelqu'un a arrêté la surveillance sur l'unité bébé. Vous ne recevrez plus d'alertes.",
+          "titleDefault": "L'unité bébé a arrêté la surveillance"
+        },
+        "battery": {
+          "title": "Batterie de l'unité bébé presque vide",
+          "body": "Branchez l'unité bébé maintenant, sinon la surveillance s'arrêtera."
+        },
+        "needsPairing": {
+          "title": "Unités plus appairées"
+        },
+        "restored": {
+          "title": "De nouveau connecté"
+        },
+        "ack": "Je vérifie",
+        "ackNote": "Son coupé pendant {time}. Nous vous alerterons à nouveau si la connexion n'est toujours pas rétablie.",
+        "cause": {
+          "server": "Cette unité ne joint pas le serveur de connexion. Vérifiez sa connexion Internet.",
+          "peer": "L'unité bébé ne répond pas. Vérifiez qu'elle est allumée et affiche GuardedSleep.",
+          "media": "Les unités se sont trouvées, mais le son ne passe pas. Essayez le même Wi-Fi sur les deux."
+        },
+        "soundNote": "Un son d'alarme discret se répète jusqu'à ce que vous vérifiiez.",
+        "soundNoteUrgent": "L'alarme retentit jusqu'à ce que vous vérifiiez."
+      },
+      "parent": {
+        "allQuietSince": "Tout est calme depuis {time}",
+        "soundSince": "Son détecté · depuis {time}",
+        "soundAt": "Son à {time} · a duré {duration}",
+        "soundSnoozed": "Son à {time} · alertes en pause",
+        "lastHeard": "Dernier contact à {time}",
+        "noContactYet": "Pas encore de contact",
+        "monitoringNow": "Surveillance en cours",
+        "meterA11y": "Niveau sonore : {level}",
+        "level": {
+          "quiet": "calme",
+          "some": "un peu de bruit",
+          "loud": "fort"
+        },
+        "stop": "Arrêter la surveillance",
+        "securityTitle": "Alerte de sécurité",
+        "securityBody": "La connexion n'a pas pu être vérifiée. Si vous n'avez pas à l'instant appairé les unités à nouveau, faites-le maintenant.",
+        "staleSuffix": "· à {time}",
+        "unitWarning": {
+          "pageHidden": "L'unité bébé peut se mettre en pause — sa page est masquée",
+          "wakeLockOff": "L'unité bébé peut s'endormir — son écran n'est pas maintenu allumé",
+          "resumedFromSleep": "L'unité bébé sort de veille — des sons ont pu être manqués",
+          "notCharging": "L'unité bébé n'est plus en charge",
+          "micPermissionLost": "L'unité bébé a perdu l'accès au microphone"
+        }
+      },
+      "battery": {
+        "baby": "Unité bébé {percent} %",
+        "babyLow": "Batterie de l'unité bébé {percent} % — branchez-la",
+        "parentLow": "Cette unité est à {percent} % — branchez-la pour continuer la surveillance",
+        "parentLowGeneric": "La batterie de cette unité est faible — branchez-la pour continuer la surveillance"
+      },
+      "listen": {
+        "idle": "Maintenir pour écouter",
+        "holding": "Écoute en cours…",
+        "locked": "Écoute · touchez pour arrêter",
+        "lockHint": "Glissez vers le haut pour continuer à écouter",
+        "disabled": "Écouter une fois connecté",
+        "a11yLocked": "Écoute en cours. Touchez deux fois pour arrêter."
+      },
+      "snooze": {
+        "button": "Mettre en pause",
+        "title": "Mettre en pause les alertes de bruit",
+        "help": "Vous serez quand même alerté si la connexion est perdue ou si une batterie est faible.",
+        "minutes": "Pause {minutes} min",
+        "end": "Terminer la pause",
+        "active": "En pause · encore {minutes} min"
+      },
+      "probe": {
+        "button": "Alerte test",
+        "title": "Testez vos alertes",
+        "body": "Un son de test sera joué sur cette unité. L'unité bébé reste silencieuse.",
+        "output": "Les alertes sont lues sur : {output}",
+        "run": "Lancer le test",
+        "running": "Test en cours…",
+        "question": "L'avez-vous entendu et senti ?",
+        "localOnly": "Seule cette unité a été testée — l'unité bébé n'est pas connectée."
+      },
+      "readiness": {
+        "title": "Les alertes peuvent-elles vous atteindre ?",
+        "notificationsOff": "Les alertes sont désactivées pour GuardedSleep",
+        "alarmVolumeZero": "Le volume des alarmes est coupé — vous n'entendrez pas les alertes",
+        "lockScreen": "Les alertes ne peuvent pas s'afficher sur l'écran de verrouillage",
+        "dnd": "Ne pas déranger peut couper les alertes",
+        "battery": "Cet appareil peut arrêter GuardedSleep en arrière-plan",
+        "headphones": "Les alertes seront lues dans vos écouteurs",
+        "neverTested": "Testez vos alertes",
+        "ok": "Tout est prêt — les alertes peuvent vous atteindre",
+        "fix": {
+          "notifications": "Activer les alertes",
+          "dnd": "Autoriser les alertes en mode Ne pas déranger",
+          "battery": "Autoriser l'activité en arrière-plan"
+        }
+      },
+      "silence": {
+        "silent": "L'unité bébé est en silence",
+        "alarmsStillRing": "Les réveils dessus peuvent quand même sonner.",
+        "screenMayLight": "L'unité bébé est en silence, mais son écran peut s'allumer",
+        "mayVibrate": "L'unité bébé peut vibrer",
+        "mayRing": "L'unité bébé peut sonner",
+        "unknown": "Impossible de vérifier si l'unité bébé est en silence",
+        "manual": "Sur l'unité bébé, activez Ne pas déranger et baissez la luminosité.",
+        "noAccess": "Pour la mettre en silence d'ici, ouvrez les réglages de l'unité bébé et activez « Mettre cette unité en silence pendant la surveillance ».",
+        "apply": "Mettre l'unité bébé en silence",
+        "applyFull": "Le mettre totalement en silence",
+        "pending": "Mise en silence…",
+        "failed": "Impossible de mettre l'unité bébé en silence.",
+        "webUnknown": "Inconnu — mettez l'unité bébé en silence vous-même",
+        "webHint": "Si l'unité bébé est un ordinateur portable, laissez-le branché, couvercle ouvert et écran allumé."
+      },
+      "help": {
+        "reconnect": {
+          "open": "Que faire ?",
+          "title": "Se reconnecter",
+          "step1": "L'unité bébé est-elle allumée et affiche-t-elle GuardedSleep ?",
+          "step2": "Les deux unités sont-elles sur le même Wi-Fi, ou toutes deux en données mobiles ?",
+          "step3": "Toujours bloqué ? Fermez puis rouvrez GuardedSleep sur l'unité bébé."
+        }
+      },
+      "stop": {
+        "title": "Arrêter la surveillance ?",
+        "parentBody": "Vous ne recevrez plus d'alertes de {name}.",
+        "babyBody": "L'unité parent ne recevra plus d'alertes.",
+        "confirm": "Arrêter",
+        "cancel": "Continuer la surveillance",
+        "parentBodyDefault": "Vous ne recevrez plus d'alertes de l'unité bébé."
+      },
+      "forget": {
+        "title": "Oublier {name} ?",
+        "body": "La surveillance s'arrête et vous devrez scanner un nouveau code pour vous reconnecter.",
+        "confirm": "Oublier",
+        "titleBabyDefault": "Oublier l'unité bébé ?",
+        "titleParentDefault": "Oublier l'unité parent ?"
+      },
+      "missed": {
+        "some": "Pendant la déconnexion : {count, plural, one {1 son} many {# de sons} other {# sons}} entre {start} et {end}. Le plus fort : {level}.",
+        "none": "Aucun son pendant la déconnexion.",
+        "unknown": "Nous ne savons pas ce qui s'est passé entre {start} et {end}."
+      },
+      "coach": {
+        "bar": "Vert signifie que vous surveillez. S'il devient rouge ou disparaît, ce n'est plus le cas.",
+        "listen": "Maintenez pour écouter. Glissez vers le haut pour continuer à écouter.",
+        "test": "Lancez une alerte test pour savoir à quoi ressemble une alerte.",
+        "runTest": "Lancer l'alerte test maintenant"
+      },
+      "alert": {
+        "title": "Son détecté",
+        "since": "Depuis {time}",
+        "ended": "Le son s'est arrêté.",
+        "testBadge": "TEST",
+        "stopSound": "Couper le son",
+        "soundStopped": "Son coupé",
+        "openApp": "Ouvrir GuardedSleep"
+      },
+      "settings": {
+        "group": {
+          "soundDetection": "Détection du son",
+          "silence": "Silence",
+          "alerts": "Alertes",
+          "screen": "Écran",
+          "paired": "Unité appairée",
+          "thisPhone": "Cette unité",
+          "language": "Langue",
+          "about": "À propos et limites",
+          "advanced": "Avancé"
+        },
+        "sensitivity": "Sensibilité",
+        "moreSensitive": "Plus sensible",
+        "lessSensitive": "Moins sensible",
+        "holdLabel": "Le bruit doit durer au moins",
+        "silenceAccessOk": "L'accès au mode silence est activé.",
+        "outputLabel": "Le son d'alerte est lu sur",
+        "output": {
+          "default": "Écouteurs s'ils sont connectés, sinon haut-parleur",
+          "speaker": "Haut-parleur uniquement"
+        },
+        "gain": "Alarmes extra fortes : {percent} %",
+        "lastTest": "Dernier test : {time}",
+        "neverTested": "Pas encore testé",
+        "theme": {
+          "dark": "Sombre (par défaut)",
+          "light": "Clair",
+          "system": "Comme le système"
+        },
+        "forgetParent": "Oublier cette unité parent",
+        "forgetBaby": "Oublier cette unité bébé",
+        "checkPhone": "Vérifier la configuration de cette unité",
+        "lang": {
+          "system": "Comme le système",
+          "en": "English",
+          "de": "Deutsch",
+          "fr": "Français",
+          "es": "Español"
+        },
+        "advanced": {
+          "toggle": "Afficher les réglages avancés",
+          "warning": {
+            "title": "Modifier les réglages avancés ?",
+            "body": "De mauvaises valeurs peuvent empêcher les unités de se connecter. Ne les modifiez que si vous savez ce que vous faites."
+          },
+          "confirm": "Afficher les réglages avancés",
+          "cancel": "Pas maintenant"
+        },
+        "urlsLabel": "Adresses des serveurs de connexion (essayées dans l'ordre)",
+        "url": {
+          "new": "Nouvelle adresse (wss://…)",
+          "invalid": "L'adresse doit commencer par wss:// ou ws://."
+        },
+        "turn": {
+          "label": "Serveur relais (TURN), facultatif",
+          "invalid": "L'adresse du relais doit commencer par turn: ou turns:."
+        },
+        "heartbeat": "Vérification de la connexion toutes les {seconds} s"
+      },
+      "fgsMissing": {
+        "bar": "Pas de surveillance en arrière-plan — ouvrez l'application",
+        "body": "Android a arrêté le service d'arrière-plan de GuardedSleep. Les alertes risquent de ne pas vous parvenir lorsque l'écran est éteint.",
+        "fix": "Réactiver la surveillance en arrière-plan"
+      }
+    }
+  },
+  "web": {
+    "alert": {
+      "since": "Depuis {time}",
+      "stopSound": "Arrêter le son",
+      "testBadge": "TEST",
+      "title": "Bruit détecté"
+    },
+    "baby": {
+      "lock": "Verrouiller l'écran",
+      "micLevel": "Niveau sonore ici",
+      "micSilent": "Le microphone ne capte que du silence. Vérifiez qu'il n'est pas coupé.",
+      "monitoring": "Surveillance en cours",
+      "silenceManual": "Ce navigateur ne peut pas mettre l'appareil en silence. Activez « Ne pas déranger » et baissez la luminosité sur cette unité.",
+      "title": "Unité bébé"
+    },
+    "background": {
+      "warning": "Cette page était en arrière-plan : des alertes ont pu être manquées. Gardez-la visible."
+    },
+    "bar": {
+      "baby": {
+        "cantReach": "L'unité parent ne répond pas — nouvelle tentative en cours",
+        "connected": "Connecté à l'unité parent",
+        "connecting": "En attente de l'unité parent…",
+        "peerStopped": "L'unité parent a arrêté la surveillance",
+        "reconnecting": "Reconnexion à l'unité parent…"
+      },
+      "browserUnsupported": "Ce navigateur ne peut pas vérifier la connexion sécurisée. Veuillez utiliser Chrome, Edge ou l'application GuardedSleep.",
+      "checking": "Je vérifie",
+      "checkingNote": "Son coupé pendant 5 min. Nous vous alerterons de nouveau si la connexion n'est toujours pas rétablie.",
+      "idle": "Aucune surveillance en cours",
+      "lostFor": "Pas de connexion depuis {duration}",
+      "lostTitle": "Connexion perdue",
+      "needsPairing": "Ces unités ne sont plus associées. Associez-les de nouveau pour continuer la surveillance.",
+      "notReachableFor": "Injoignable depuis {time}",
+      "parent": {
+        "cantReach": "Impossible de joindre l'unité bébé — nouvelle tentative en cours",
+        "connected": "Connecté à l'unité bébé",
+        "connecting": "Connexion à l'unité bébé…",
+        "peerStopped": "L'unité bébé a arrêté la surveillance",
+        "reconnecting": "Reconnexion…"
+      },
+      "restoredAfter": "Reconnecté après {duration}. Vous entendez de nouveau votre enfant.",
+      "tryNow": "Réessayer maintenant",
+      "updateRequired": "Les deux unités utilisent des versions incompatibles. Rechargez cette page et mettez à jour l'autre unité."
+    },
+    "battery": {
+      "baby": "Unité bébé {percent} %",
+      "babyLow": "Batterie de l'unité bébé à {percent} % — branchez-la",
+      "babyNotCharging": "L'unité bébé ne charge plus"
+    },
+    "cause": {
+      "mediaBlocked": "Les unités se sont trouvées, mais le son ne passe pas. Essayez de mettre les deux unités sur le même Wi-Fi.",
+      "peerAbsent": "L'unité bébé ne répond pas. Si c'est un navigateur, elle a peut-être besoin d'un nouveau code.",
+      "peerAbsentBaby": "L'unité parent ne répond pas. Vérifiez qu'elle est allumée et affiche GuardedSleep.",
+      "serverUnreachable": "Impossible de joindre le serveur de connexion. Vérifiez la connexion Internet de cette unité."
+    },
+    "common": {
+      "atTime": "· à {time}",
+      "cancel": "Annuler",
+      "close": "Fermer",
+      "no": "Non",
+      "ok": "OK",
+      "tryAgain": "Réessayer",
+      "yes": "Oui"
+    },
+    "headline": {
+      "allQuietSince": "Calme depuis {time}",
+      "lastContact": "Dernier contact à {time}",
+      "soundSince": "Bruit détecté · depuis {time}",
+      "soundSnoozed": "Bruit à {time} · alertes en pause"
+    },
+    "help": {
+      "step1": "L'autre unité est-elle allumée et affiche-t-elle GuardedSleep ?",
+      "step2": "Les deux unités sont-elles en ligne, sur le même Wi-Fi ou toutes deux en données mobiles ?",
+      "step3": "Toujours bloqué ? Rechargez la page sur les deux unités et associez-les de nouveau."
+    },
+    "keepOpen": {
+      "noWakeLock": "Ce navigateur ne peut pas garder l'écran allumé. Réglez l'économie d'énergie de cet appareil pour qu'il ne se mette pas en veille.",
+      "parent": "Les alertes ne fonctionnent que tant que cette page est ouverte et que l'écran est allumé.",
+      "wakeLockOff": "L'écran peut s'éteindre. Gardez cette page au premier plan pour qu'il reste allumé."
+    },
+    "kiosk": {
+      "a11yLabel": "Surveillance en cours. Écran verrouillé."
+    },
+    "linkAlarm": {
+      "lost": {
+        "body": "Vous n'entendrez pas votre enfant tant que les unités ne sont pas reconnectées.",
+        "soundNote": "L'alarme continue de sonner tant que vous n'avez pas vérifié.",
+        "title": "Pas de connexion à l'unité bébé",
+        "titleUrgent": "Pas de connexion à l'unité bébé !"
+      },
+      "stopped": {
+        "body": "Quelqu'un a arrêté la surveillance sur l'unité bébé. Vous ne recevrez pas d'alertes.",
+        "title": "L'unité bébé a arrêté la surveillance"
+      }
+    },
+    "loadError": "Le moteur de surveillance n'a pas pu être chargé. Rechargez la page.",
+    "meter": {
+      "a11y": "Niveau sonore : {level}",
+      "loud": "fort",
+      "quiet": "faible",
+      "some": "un peu de bruit"
+    },
+    "missed": {
+      "none": "Aucun bruit pendant la déconnexion.",
+      "some": "Pendant la déconnexion ({duration}) : {count, plural, one {1 bruit} many {# bruits} other {# bruits}}.",
+      "unknown": "Nous ne savons pas ce qui s'est passé pendant les {duration} sans connexion."
+    },
+    "pair": {
+      "baby": {
+        "brighter": "Rendre le code plus lumineux",
+        "copied": "Copié",
+        "copy": "Copier le code",
+        "expired": "Ce code a expiré.",
+        "hideText": "Masquer le texte du code",
+        "instruction": "Sur l'unité parent, ouvrez GuardedSleep, choisissez Unité parent et scannez ce code — ou copiez le code et collez-le là-bas.",
+        "newCode": "Afficher un nouveau code",
+        "pairAnother": "Associer de nouveau avec un nouveau code",
+        "pairAnotherConfirm": "L'unité parent sera déconnectée jusqu'à ce qu'elle scanne le nouveau code.",
+        "privacy": "Toute personne ayant ce code peut écouter. Ne le montrez qu'à des personnes de confiance.",
+        "qrAlt": "Code d'association",
+        "showText": "Afficher le code sous forme de texte",
+        "title": "Connecter l'unité parent",
+        "validFor": "Code valable {duration}",
+        "waiting": "En attente de l'unité parent…"
+      },
+      "error": {
+        "alreadyPaired": "Cette unité bébé est déjà associée à une autre unité.",
+        "cameraDenied": "Caméra non autorisée.",
+        "expired": "Ce code a expiré. Touchez Afficher un nouveau code sur l'unité bébé, puis scannez de nouveau.",
+        "incomplete": "Ce code est incomplet. Copiez le code entier depuis l'unité bébé.",
+        "mismatch": "Le code ne correspond pas. Scannez le code actuellement affiché sur l'unité bébé.",
+        "notOurs": "Ce n'est pas un code GuardedSleep. Scannez le code sur l'unité bébé.",
+        "pasteInstead": "Coller le code à la place",
+        "unreachable": "L'unité bébé reste introuvable. Vérifiez que les deux unités sont en ligne."
+      },
+      "memoryNote": "Dans un navigateur, le code reste uniquement en mémoire. Si vous rechargez cette page, il faudra associer de nouveau.",
+      "parent": {
+        "cameraWhy": "GuardedSleep n'utilise la caméra que pour lire le code.",
+        "connecting": "Connexion à l'unité bébé…",
+        "pasteLabel": "Ou collez le code",
+        "pasteSubmit": "Connecter",
+        "title": "Scannez le code sur l'unité bébé"
+      }
+    },
+    "parent": {
+      "soundGate": "Touchez pour activer le son des alertes",
+      "soundGateHint": "Votre navigateur ne joue les sons d'alerte qu'après un toucher. La surveillance démarre avec.",
+      "title": "Unité parent"
+    },
+    "probe": {
+      "body": "Cela joue un son de test sur cette unité. L'unité bébé reste silencieuse.",
+      "button": "Alerte de test",
+      "fixes": "Vérifiez le volume de cet appareil, que la page n'est pas coupée dans le navigateur et que « Ne pas déranger » est désactivé.",
+      "ok": "Test réussi. Vos alertes vous parviennent.",
+      "question": "L'avez-vous entendu ?",
+      "run": "Lancer le test",
+      "title": "Testez vos alertes"
+    },
+    "quality": {
+      "weak": "Connexion faible — le son peut être haché"
+    },
+    "reload": {
+      "action": "Associer de nouveau",
+      "body": "Un navigateur ne conserve jamais le code d'association. Après un rechargement ou la fermeture de cette page, scannez de nouveau le code sur l'unité bébé.",
+      "title": "Cette page a oublié l'association"
+    },
+    "security": {
+      "warning": "Quelqu'un a essayé de se connecter avec une mauvaise clé. La surveillance continue."
+    },
+    "setup": {
+      "lid": "Ordinateur portable : laissez le capot ouvert et désactivez la mise en veille et les redémarrages automatiques pour la nuit.",
+      "mic": "Microphone autorisé",
+      "micAllow": "Autoriser le microphone",
+      "micInsecure": "L'accès au microphone nécessite HTTPS ou localhost.",
+      "power": "Branché sur secteur",
+      "powerOnBattery": "Fonctionne sur batterie. Branchez cette unité, sinon la surveillance peut s'arrêter pendant la nuit.",
+      "powerUnknown": "Ce navigateur ne peut pas le savoir. Assurez-vous que l'unité est branchée.",
+      "reloadNote": "Si cette page est rechargée, vous devrez scanner un nouveau code.",
+      "sleep": "J'ai désactivé la mise en veille et les redémarrages automatiques.",
+      "start": "Démarrer la surveillance",
+      "title": "Préparez cette unité",
+      "visible": "Gardez cet onglet visible et au premier plan. Un onglet masqué peut être mis en pause par le navigateur."
+    },
+    "silence": {
+      "mayRing": "L'unité bébé peut sonner",
+      "mayVibrate": "L'unité bébé peut vibrer",
+      "silent": "L'unité bébé est en silence",
+      "unknownManual": "Impossible de vérifier si l'unité bébé est en silence — mettez-la en silence manuellement"
+    },
+    "snooze": {
+      "active": "En pause · encore {minutes} min",
+      "button": "Mettre en pause",
+      "end": "Terminer la pause",
+      "help": "Vous recevez toujours des alertes si la connexion tombe ou si une batterie est faible.",
+      "minutes": "Pause de {minutes} min",
+      "title": "Mettre les alertes sonores en pause"
+    },
+    "stop": {
+      "babyBody": "L'unité parent ne recevra plus d'alertes.",
+      "button": "Arrêter la surveillance",
+      "cancel": "Continuer la surveillance",
+      "confirm": "Arrêter",
+      "parentBody": "Vous ne recevrez plus d'alertes de l'unité bébé.",
+      "title": "Arrêter la surveillance ?"
+    },
+    "suspend": {
+      "warningBaby": "Cette unité semble avoir été en veille ou figée un moment. Les parents ont pu manquer des alertes.",
+      "warningParent": "Cette unité semble avoir été en veille ou figée un moment : des alertes ont pu être manquées."
+    },
+    "unitWarning": {
+      "micPermissionLost": "L'unité bébé a perdu l'accès au microphone — elle n'entend plus",
+      "notCharging": "L'unité bébé ne charge pas",
+      "pageHidden": "L'unité bébé peut se mettre en pause — sa page est masquée",
+      "resumedFromSleep": "L'unité bébé sort de veille — des bruits ont pu passer inaperçus",
+      "wakeLockOff": "L'écran de l'unité bébé peut s'éteindre"
+    },
+    "warn": {
+      "hidden": "Cet onglet est masqué. Le navigateur peut le mettre en pause — ramenez-le au premier plan.",
+      "notCharging": "Ne charge pas. Branchez cette unité, sinon la batterie peut se vider pendant la nuit."
+    }
+  }
+}

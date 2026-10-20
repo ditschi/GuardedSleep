@@ -3,4 +3,4 @@
 Documentation:
 
 - [Signaling server (Docker / Compose)](../../docs/contributing/signaling-server-docker.md)
-- [Traefik (TLS, domain, labels)](../../docs/contributing/signaling-traefik.md)
+- [Reverse proxy: Traefik, Caddy, nginx](../../docs/contributing/signaling-traefik.md)

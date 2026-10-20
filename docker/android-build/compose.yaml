@@ -8,7 +8,7 @@
 # 2) Build APK inside this compose service (from repository root):
 #    docker compose -f docker/android-build/compose.yaml run --rm apk
 #
-# APK output: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk (on the mounted repo)
+# APK output: apps/mobile/android/app/build/outputs/apk/debug/guardedsleep-debug-v*.apk (on the mounted repo)
 name: guardedsleep-android-apk
 
 services:
@@ -21,6 +21,8 @@ services:
       # compose file is docker/android-build/ → repo root is ../..
       - ../../:/workspace:cached
       - gradle-home:/root/.gradle
+      # Keeps debug.keystore stable across `run --rm`, so `adb install -r` can update the app.
+      - android-home:/root/.android
     working_dir: /workspace/apps/mobile/android
     environment:
       ANDROID_HOME: /opt/android-sdk
@@ -30,3 +32,4 @@ services:
 
 volumes:
   gradle-home:
+  android-home:

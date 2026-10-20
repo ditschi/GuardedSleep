@@ -1,0 +1,84 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "signaling-restart-during-outage",
+  "description": "The server restarts in the middle of a baby Wi-Fi outage; the pair recovers after the network returns.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "network_down",
+      "peer": "baby"
+    },
+    {
+      "at": 30000,
+      "do": "signaling_down"
+    },
+    {
+      "at": 40000,
+      "do": "signaling_up"
+    },
+    {
+      "at": 50000,
+      "do": "network_up",
+      "peer": "baby"
+    },
+    {
+      "at": 110000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 15000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 15000
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 110000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 110000
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    }
+  ]
+}

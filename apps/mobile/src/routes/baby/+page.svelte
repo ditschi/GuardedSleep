@@ -1,332 +1,233 @@
 <script lang="ts">
-  import { afterNavigate, goto } from "$app/navigation";
   import { browser } from "$app/environment";
-  import { onDestroy, untrack } from "svelte";
-  import { page } from "$app/state";
-  import {
-    startBabyMonitoringForeground,
-    stopBabyMonitoringForeground,
-  } from "$lib/android/foreground-monitoring.js";
-  import { GuardedSleepNative, isNativeAndroid } from "$lib/android/guarded-sleep-native.js";
-  import { subscribeNetworkHandoff } from "$lib/android/network-handoff.js";
+  import { goto } from "$app/navigation";
+  import { onDestroy, onMount } from "svelte";
   import { readBabyUnitPreferences } from "$lib/audio/baby-unit-preferences.js";
-  import { NoiseMonitor } from "$lib/audio/noise-monitor.js";
-  import ConnectionStatusBar from "$lib/components/ConnectionStatusBar.svelte";
-  import { listConnections, upsertConnection } from "$lib/connection-store.js";
+  import {
+    babyMicrophoneBlockReason,
+    formatBabyMicrophoneError,
+    requestBabyMicrophone,
+    takePrewarmedBabyMicrophone,
+  } from "$lib/audio/baby-microphone.js";
+  import { createDevSyntheticMicStream } from "$lib/audio/dev-synthetic-mic.js";
+  import AmbientBar from "$lib/components/AmbientBar.svelte";
+  import KioskLockOverlay from "$lib/components/KioskLockOverlay.svelte";
+  import PairingQr from "$lib/components/PairingQr.svelte";
   import type { GuardedsleepDevTestApi } from "$lib/dev-e2e-bridge.js";
-  import { buildCompactInviteJson } from "$lib/pairing/compact-invite.js";
-  import {
-    getStoredPairingPskB64ForRoom,
-    takePairingPskForRoom,
-  } from "$lib/pairing/session-material.js";
-  import { resolveSignalingUrlForSession, validateSignalingUrl } from "$lib/signaling-url.js";
-  import {
-    SESSION_AUTO_RECONNECT_MAX_ATTEMPTS,
-    sessionReconnectDelayMs,
-  } from "$lib/webrtc/session-auto-reconnect.js";
-  import { PeerSession } from "$lib/webrtc/peer-session.js";
   import { getI18n } from "$lib/i18n/context.js";
-  import { connectionStatusPillI18nKey } from "$lib/i18n/session-state-pill.js";
+  import { BabyMonitor } from "$lib/link/baby-monitor.js";
+  import { getCore } from "$lib/link/core-loader.js";
+  import { formatDuration } from "$lib/link/format.js";
+  import { buildLinkConfig } from "$lib/link/link-config.js";
+  import { initialBabyState, type BabyMonitorState } from "$lib/link/ui-contract.js";
+  import { createWakeLock, trackVisibility, watchCharging } from "$lib/link/web-readiness.js";
+  import {
+    clearActivePairing,
+    getActivePairing,
+    markPairedBefore,
+    setActivePairing,
+  } from "$lib/pairing/pairing-memory.js";
+  import { generatePairingCode } from "$lib/pairing/pairing-v3.js";
+  import { getEffectiveSignalingUrl } from "$lib/signaling-url.js";
 
   const i18n = getI18n();
+  const t = (key: string, params?: Record<string, string | number>): string =>
+    i18n?.t(key, params) ?? key;
 
-  let status = $state<"idle" | "connecting" | "connected" | "failed">("idle");
-  let session: PeerSession | undefined;
-  let noiseMonitor = $state<NoiseMonitor | undefined>(undefined);
-  let kioskImmersive = $state(true);
+  let monitor: BabyMonitor | undefined = $state();
+  let st: BabyMonitorState = $state(initialBabyState());
+  let micStream: MediaStream | null = $state(null);
+  let micError: string | null = $state(null);
+  let running = $state(false);
+  let nowElapsed = $state(0);
+  let startedElapsed = $state(0);
+  let nowWall = $state(Date.now());
+  let paired = $state(getActivePairing()?.pairedBefore ?? false);
+  let codePayload = $state(getActivePairing()?.codePayload ?? "");
+  let codeExpiresAt = $state(getActivePairing()?.codeExpiresAtWallMs ?? 0);
+  let bright = $state(false);
+  let copied = $state(false);
+  let textShown = $state(false);
+  let confirmPairAnother = $state(false);
+  let hiddenNow = $state(false);
+  let suspendWarning = $state(false);
+  let confirmed = $state({ lid: false, sleep: false });
+  let showStop = $state(false);
+  let locked = $state(false);
 
-  let threshold = $state(readBabyUnitPreferences().threshold);
-  let holdMs = $state(readBabyUnitPreferences().holdMs);
-  let sessionReconnectAttempt = $state(0);
-  let captureError = $state<string | undefined>(undefined);
-  let prefsLoaded = $state(false);
-  let reconnectEtaMs = $state(0);
-  let reconnectTick = $state(0);
-  let localRmsDisplay = $state(0);
-  let prolongedWaitingForParent = $state(false);
-  let startGeneration = 0;
+  const wake = createWakeLock();
+  const wakeActive = wake.active;
+  const charging = browser ? watchCharging() : null;
+  const visibility = browser ? trackVisibility() : null;
+  const unsubs: (() => void)[] = [];
 
-  const room = $derived(page.url.searchParams.get("room") ?? "");
-  const signalQ = $derived(page.url.searchParams.get("signal"));
-  const signalingUrl = $derived(resolveSignalingUrlForSession(signalQ));
+  const expired = $derived(codeExpiresAt > 0 && nowWall >= codeExpiresAt);
+  const remainingMs = $derived(Math.max(0, codeExpiresAt - nowWall));
+  const showCode = $derived(running && !paired && codePayload !== "");
+  const notCharging = $derived(charging ? $charging === false : false);
+  const kioskState = $derived(
+    st.link.phase === "connected" ? "connected" : st.link.level >= 2 ? "failed" : "connecting",
+  );
 
-  const reconnectCountdownSec = $derived.by(() => {
-    reconnectTick;
-    if (reconnectEtaMs <= 0) return 0;
-    return Math.max(0, Math.ceil((reconnectEtaMs - Date.now()) / 1000));
-  });
-
-  function applyPrefsFromStorage(): void {
-    const p = readBabyUnitPreferences();
-    threshold = p.threshold;
-    holdMs = p.holdMs;
-    kioskImmersive = p.kioskImmersive;
-  }
-
-  $effect(() => {
-    if (!browser || prefsLoaded) return;
-    applyPrefsFromStorage();
-    prefsLoaded = true;
-  });
-
-  $effect(() => {
-    if (!browser || !prefsLoaded || !room) return;
-    const u = signalingUrl;
-    if (validateSignalingUrl(u) !== null) return;
-    const t = window.setTimeout(() => start(), 0);
-    return () => clearTimeout(t);
-  });
-
-  $effect(() => {
-    const t = threshold;
-    const h = holdMs;
-    noiseMonitor?.setGate(t, h);
-  });
-
-  $effect(() => {
-    if (!browser) return;
-    const onVis = (): void => {
-      if (document.visibilityState === "visible") noiseMonitor?.resumeAudioContext();
-    };
-    document.addEventListener("visibilitychange", onVis);
-    return () => document.removeEventListener("visibilitychange", onVis);
-  });
-
-  $effect(() => {
-    if (!browser || !isNativeAndroid() || !room) return;
-    const on = kioskImmersive;
-    void GuardedSleepNative.setImmersiveMode({ enabled: on });
-  });
-
-  $effect(() => {
-    if (!browser) return;
-    const r = room;
-    const st = status;
-    if (!r) return;
-    if (st === "connected") {
-      sessionReconnectAttempt = 0;
-      reconnectEtaMs = 0;
-      return;
-    }
-    if (st !== "failed") return;
-    const prev = untrack(() => sessionReconnectAttempt);
-    if (prev >= SESSION_AUTO_RECONNECT_MAX_ATTEMPTS) {
-      reconnectEtaMs = 0;
-      return;
-    }
-    const next = prev + 1;
-    sessionReconnectAttempt = next;
-    const ms = sessionReconnectDelayMs(next);
-    reconnectEtaMs = Date.now() + ms;
-    const t = window.setTimeout(() => start(), ms);
-    return () => clearTimeout(t);
-  });
-
-  $effect(() => {
-    if (!browser || status !== "failed" || reconnectEtaMs <= 0) return;
-    const id = window.setInterval(() => {
-      reconnectTick += 1;
-    }, 400);
-    return () => clearInterval(id);
-  });
-
-  $effect(() => {
-    if (!browser || !noiseMonitor) return;
-    const id = window.setInterval(() => {
-      localRmsDisplay = noiseMonitor?.getLastRms() ?? 0;
-    }, 150);
-    return () => clearInterval(id);
-  });
-
-  $effect(() => {
-    if (!browser || !room) {
-      prolongedWaitingForParent = false;
-      return;
-    }
-    if (status === "connecting" || status === "connected") {
-      prolongedWaitingForParent = false;
-      return;
-    }
-    const id = window.setTimeout(() => {
-      prolongedWaitingForParent = true;
-    }, 60_000);
-    return () => clearTimeout(id);
-  });
-
-  $effect(() => {
-    if (!browser || !isNativeAndroid()) return;
-    return subscribeNetworkHandoff(() => start({ resetBackoff: true }));
-  });
-
-  let batteryLevel = $state<number | undefined>(undefined);
-
-  $effect(() => {
-    let cancelled = false;
-    type Bat = {
-      readonly level: number;
-      addEventListener(type: "levelchange", fn: () => void): void;
-      removeEventListener(type: "levelchange", fn: () => void): void;
-    };
-    let bat: Bat | undefined;
-    const onLvl = (): void => {
-      if (bat) batteryLevel = bat.level;
-    };
-    void (async () => {
-      try {
-        const gb = (navigator as Navigator & { getBattery?: () => Promise<Bat> }).getBattery;
-        const b = await gb?.();
-        if (!b || cancelled) return;
-        bat = b;
-        batteryLevel = b.level;
-        b.addEventListener("levelchange", onLvl);
-      } catch {
-        /* no Battery API */
-      }
-    })();
+  onMount(() => {
+    const clock = setInterval(() => {
+      nowWall = Date.now();
+      if (monitor) nowElapsed = monitor.link.now();
+    }, 1000);
+    const offVis = visibility?.state.subscribe((v) => (hiddenNow = v.hidden));
+    void ensureMic();
     return () => {
-      cancelled = true;
-      bat?.removeEventListener("levelchange", onLvl);
+      clearInterval(clock);
+      offVis?.();
     };
   });
 
-  function start(opts?: { resetBackoff?: boolean }): void {
-    void startAsync(opts);
+  async function ensureMic(): Promise<void> {
+    if (micStream) return;
+    const params = new URLSearchParams(location.search);
+    try {
+      if (import.meta.env.DEV && params.get("e2e_synthetic_audio") === "1") {
+        micStream = await createDevSyntheticMicStream();
+      } else {
+        micStream = takePrewarmedBabyMicrophone() ?? (await requestBabyMicrophone());
+      }
+      micError = null;
+    } catch (e) {
+      micError = formatBabyMicrophoneError(e);
+    }
   }
 
-  async function startAsync(opts?: { resetBackoff?: boolean }): Promise<void> {
-    const gen = ++startGeneration;
-    if (opts?.resetBackoff) {
-      sessionReconnectAttempt = 0;
-      reconnectEtaMs = 0;
-    }
-    captureError = undefined;
-    noiseMonitor?.stop();
-    session?.close();
-    applyPrefsFromStorage();
-    const psk = takePairingPskForRoom(room);
-    const pairing = psk != null && psk.length >= 16 ? { roomId: room, pskKey: psk } : undefined;
+  function freshPairing(): void {
+    const urls = [getEffectiveSignalingUrl()];
+    const code = generatePairingCode(urls, Date.now());
+    setActivePairing({
+      ...code.material,
+      pairedBefore: false,
+      codePayload: code.payload,
+      codeExpiresAtWallMs: code.expiresAtWallMs,
+    });
+    codePayload = code.payload;
+    codeExpiresAt = code.expiresAtWallMs;
+    paired = false;
+  }
 
-    let prependSignalingUrls: string[] | undefined;
-    if (browser && isNativeAndroid() && room) {
-      try {
-        await GuardedSleepNative.stopLanSignalingServer();
-      } catch {
-        /* ignore */
-      }
-      try {
-        const { port } = await GuardedSleepNative.startLanSignalingServer({ roomId: room });
-        if (gen !== startGeneration) return;
-        const discoveryToken = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
-        await GuardedSleepNative.startNsdAdvertise({ port, discoveryToken });
-        if (gen !== startGeneration) return;
-        prependSignalingUrls = [`ws://127.0.0.1:${port}`];
-      } catch {
-        prependSignalingUrls = undefined;
-      }
-      void GuardedSleepNative.setKeepAwake({ enabled: true });
-      void GuardedSleepNative.setImmersiveMode({ enabled: kioskImmersive });
-    }
-    if (gen !== startGeneration) return;
-
-    void startBabyMonitoringForeground();
-
-    const savedFallbacks = listConnections().find(
-      (c) => c.roomId === room && c.signalingUrl === signalingUrl,
-    )?.fallbackSignalingUrls;
-
-    const s = new PeerSession(
-      "baby",
-      room,
-      signalingUrl,
-      {
-        onState: (st) => {
-          status = st;
-          if (st === "connected") {
-            upsertConnection({ roomId: room, signalingUrl, label: "Baby" });
-          }
-        },
-        onLocalMediaError: (msg) => {
-          captureError = msg;
-        },
-        onLocalCapture: (stream) => {
-          noiseMonitor?.stop();
-          noiseMonitor = new NoiseMonitor(stream, {
-            threshold,
-            holdMs,
-            onLoud: (rms) => {
-              s.setNoiseAlertStreaming(true);
-              s.sendNoiseAlert(rms);
-            },
-            onQuiet: () => {
-              s.setNoiseAlertStreaming(false);
-            },
-          });
-          noiseMonitor.start();
-        },
-        onOpenSettingsRequest: () => {
-          if (!browser || !room) return;
-          const q = new URLSearchParams({ returnTo: "baby", room });
-          if (signalQ) q.set("signal", signalQ);
-          void goto(`/settings?${q}`);
-        },
+  async function startRun(): Promise<void> {
+    if (running) return;
+    await ensureMic();
+    if (!micStream) return;
+    if (!getActivePairing()) freshPairing();
+    const pairing = getActivePairing()!;
+    const core = await getCore();
+    const unit = readBabyUnitPreferences();
+    const m = new BabyMonitor({
+      core,
+      config: buildLinkConfig("baby", pairing.pskB64Url, pairing.pairedBefore, {
+        threshold: unit.threshold,
+        holdMs: unit.holdMs,
+      }),
+      signalingUrls: pairing.signalingUrls,
+      stream: micStream,
+      onVerified: () => {
+        markPairedBefore();
+        paired = true;
       },
-      {
-        pairing,
-        getHeartbeatExtras: () => ({
-          battery: batteryLevel,
-          rms: noiseMonitor?.getLastRms(),
-        }),
-        ...(prependSignalingUrls && prependSignalingUrls.length > 0
-          ? { prependSignalingUrls }
-          : {}),
-        ...(savedFallbacks && savedFallbacks.length > 0
-          ? { fallbackSignalingUrls: savedFallbacks }
-          : {}),
-      },
+    });
+    micStream = null;
+    if (
+      import.meta.env.DEV &&
+      new URLSearchParams(location.search).get("e2e_synthetic_levels") === "1"
+    ) {
+      m.babyAudio.syntheticOnly = true;
+    }
+    unsubs.push(m.state.subscribe((s) => (st = s)));
+    unsubs.push(
+      m.suspendGap.subscribe((g) => {
+        if (g) suspendWarning = true;
+      }),
     );
-    if (gen !== startGeneration) {
-      s.close();
-      return;
+    monitor = m;
+    startedElapsed = m.link.now();
+    nowElapsed = startedElapsed;
+    m.start();
+    running = true;
+    wake.start();
+  }
+
+  function endRun(): void {
+    for (const u of unsubs.splice(0)) u();
+    monitor?.stop();
+    monitor = undefined;
+    running = false;
+    wake.stop();
+  }
+
+  async function newCode(): Promise<void> {
+    confirmPairAnother = false;
+    textShown = false;
+    endRun();
+    freshPairing();
+    await startRun();
+  }
+
+  async function stopMonitoring(): Promise<void> {
+    endRun();
+    clearActivePairing();
+    showStop = false;
+    await goto("/");
+  }
+
+  async function copyCode(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(codePayload);
+      copied = true;
+    } catch {
+      copied = false;
     }
-    session = s;
-    s.start();
   }
 
-  async function openBatterySettings(): Promise<void> {
-    if (!browser) return;
-    if (isNativeAndroid()) {
-      await GuardedSleepNative.openBatterySettings();
-      return;
+  async function lockScreen(): Promise<void> {
+    locked = true;
+    monitor?.setKioskLocked(true);
+    try {
+      await document.documentElement.requestFullscreen?.();
+    } catch {
+      /* fullscreen is optional */
     }
-    window.alert(i18n?.t("baby.batteryAlertWeb") ?? "");
   }
 
-  function openPairingQr(): void {
-    if (!browser || !room) return;
-    const q = new URLSearchParams({ role: "baby", room, pairHost: "1" });
-    if (signalQ) q.set("signal", signalQ);
-    void goto(`/pair?${q}`);
+  async function unlockScreen(): Promise<void> {
+    locked = false;
+    monitor?.setKioskLocked(false);
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+    } catch {
+      /* ignore */
+    }
   }
 
-  afterNavigate(() => {
-    if (page.url.pathname !== "/baby") return;
-    applyPrefsFromStorage();
+  $effect(() => {
+    monitor?.setPageSignals({ hidden: hiddenNow, wakeLockHeld: $wakeActive });
   });
 
   $effect(() => {
     if (!import.meta.env.DEV || !browser) return;
     const api: GuardedsleepDevTestApi = {
       role: "baby",
-      getSession: () => session,
-      getInviteJson: () => {
-        const k = getStoredPairingPskB64ForRoom(room) ?? "";
-        if (!room || !signalingUrl || !k) return "";
-        return buildCompactInviteJson(room, signalingUrl, k);
-      },
-      setNoiseGate: (t, h) => {
-        threshold = t;
-        holdMs = h;
-      },
+      getSession: () =>
+        monitor
+          ? {
+              getE2ePeerConnection: () => monitor!.link.currentPeer()?.pc ?? null,
+              getE2eDataChannel: () => monitor!.link.currentPeer()?.dataChannel() ?? null,
+              getE2ePairingVerified: () => monitor!.link.status?.state === "connected",
+              getE2eBabyLocalAudioTrackEnabled: () => monitor!.babyAudio.outgoingEnabled(),
+              sendListen: () => {},
+            }
+          : undefined,
+      getInviteJson: () => getActivePairing()?.codePayload ?? "",
+      injectAudioLevel: (rms, durationMs) => monitor?.babyAudio.inject(rms, durationMs),
+      setKioskLocked: (v) => (v ? void lockScreen() : void unlockScreen()),
+      isKioskLocked: () => locked,
+      getLinkSnapshot: () => ({ state: st, nowElapsed: monitor?.link.now() ?? 0 }),
     };
     window.__guardedsleep_test = api;
     return () => {
@@ -335,169 +236,319 @@
   });
 
   onDestroy(() => {
-    noiseMonitor?.stop();
-    session?.close();
-    void stopBabyMonitoringForeground();
-    if (browser && isNativeAndroid()) {
-      void GuardedSleepNative.stopLanSignalingServer();
-      void GuardedSleepNative.stopNsdAdvertise();
-      void GuardedSleepNative.setKeepAwake({ enabled: false });
-      void GuardedSleepNative.setImmersiveMode({ enabled: false });
-    }
+    endRun();
+    visibility?.destroy();
   });
 </script>
 
-<div class="flex min-h-[100dvh] flex-col gap-4 bg-black px-4 py-6 text-zinc-100">
-  <ConnectionStatusBar
-    role="baby"
-    {status}
-    {reconnectCountdownSec}
-    reconnectAttempt={sessionReconnectAttempt}
-    maxAttempts={SESSION_AUTO_RECONNECT_MAX_ATTEMPTS}
-  />
-  <header class="flex flex-wrap items-center justify-between gap-2">
-    <h1 class="text-lg font-semibold text-emerald-400">{i18n?.t("baby.title") ?? ""}</h1>
-    <div class="flex flex-wrap items-center gap-2">
-      {#if status === "connected"}
-        <span
-          class="rounded-full bg-emerald-950/80 px-2.5 py-1 text-xs font-medium text-emerald-200 ring-1 ring-emerald-700/50"
-          data-testid="parent-link-pill"
-          title={i18n?.t("baby.parentConnectedTitle") ?? ""}
-        >
-          {i18n?.t("baby.parentConnected") ?? ""}
-        </span>
-      {:else}
-        <span
-          class={`rounded-full bg-zinc-900 px-2.5 py-1 text-xs font-medium ring-1 ${prolongedWaitingForParent ? "guardedsleep-slow-pulse ring-red-500/60 text-red-100" : "text-amber-200/90 ring-zinc-700"}`}
-          data-testid="parent-link-pill"
-          title={i18n?.t("baby.waitingParentTitle") ?? ""}
-        >
-          {i18n?.t("baby.waitingParent") ?? ""}
-        </span>
-      {/if}
-      <span
-        class="rounded-full bg-zinc-900 px-2 py-1 text-xs text-zinc-400"
-        data-testid="connection-status"
-        data-session-state={status}>{i18n?.t(connectionStatusPillI18nKey(status)) ?? status}</span
-      >
-    </div>
-  </header>
-  <p class="text-sm text-zinc-500">
-    {i18n?.t("baby.roomLabel") ?? ""} <span class="font-mono text-zinc-300">{room || "—"}</span>
-  </p>
-  {#if room}
-    <p class="text-xs leading-relaxed text-zinc-500">
-      {#if status === "connected"}
-        {i18n?.t("baby.blurbConnected") ?? ""}
-      {:else if status === "connecting"}
-        {i18n?.t("baby.blurbConnecting") ?? ""}
-      {:else if status === "failed"}
-        {i18n?.t("baby.blurbFailed") ?? ""}
-      {:else}
-        {i18n?.t("baby.blurbIdle") ?? ""}
-      {/if}
-    </p>
-  {/if}
-  {#if !room}
-    <p class="text-amber-300">
-      {i18n?.t("baby.missingRoom") ?? ""}
-      <a class="text-emerald-400 underline" href="/pair?role=baby"
-        >{i18n?.t("baby.configurePairing") ?? ""}</a
-      >
-    </p>
-  {:else}
-    {#if captureError}
-      <p
-        class="rounded-lg border border-amber-800/80 bg-amber-950/30 px-3 py-2 text-sm text-amber-100/95"
-        role="alert"
-      >
-        {captureError}
-      </p>
-    {/if}
+<div class="min-h-[100dvh] bg-black px-4 py-6 text-zinc-400">
+  <div class="mx-auto flex max-w-md flex-col gap-4">
+    <h1 class="text-lg font-medium text-zinc-400">{t("web.baby.title")}</h1>
 
-    {#if status === "failed"}
-      <div
-        class="rounded-lg border border-amber-800/80 bg-amber-950/25 px-3 py-3 text-sm text-amber-100/95"
-        role="status"
-      >
-        <p class="font-medium text-amber-100">{i18n?.t("baby.failedTitle") ?? ""}</p>
-        <p class="mt-1 text-xs text-amber-200/80">
-          {i18n?.t("baby.failedHint") ?? ""}
+    {#if !running}
+      <section class="rounded-xl border border-zinc-900 p-4" data-testid="baby_setup">
+        <h2 class="font-medium text-zinc-300" data-testid="setup_title">{t("web.setup.title")}</h2>
+        <ul class="mt-3 space-y-3 text-sm">
+          <li
+            data-testid="setup_row_mic"
+            data-state={micStream ? "done" : micError ? "blocked" : "checking"}
+          >
+            <span aria-hidden="true">{micStream ? "✓" : micError ? "✕" : "…"}</span>
+            {t("web.setup.mic")}
+            {#if micError}
+              <span class="block text-xs text-red-300">{micError}</span>
+              {#if babyMicrophoneBlockReason() === "insecure"}
+                <span class="block text-xs">{t("web.setup.micInsecure")}</span>
+              {/if}
+              <button
+                type="button"
+                class="mt-2 min-h-12 rounded-lg border border-zinc-700 px-4 text-zinc-300"
+                data-testid="setup_mic_allow"
+                onclick={() => void ensureMic()}>{t("web.setup.micAllow")}</button
+              >
+            {/if}
+          </li>
+          <li data-testid="setup_row_power" data-state={$charging === true ? "done" : "todo"}>
+            <span aria-hidden="true">{$charging === true ? "✓" : "!"}</span>
+            {t("web.setup.power")}
+            {#if $charging == null}
+              <span class="block text-xs">{t("web.setup.powerUnknown")}</span>
+            {:else if $charging === false}
+              <span class="block text-xs text-amber-400">{t("web.setup.powerOnBattery")}</span>
+            {/if}
+          </li>
+          <li>
+            <label class="flex items-start gap-2">
+              <input
+                type="checkbox"
+                bind:checked={confirmed.lid}
+                class="mt-1 h-5 w-5"
+                data-testid="setup_row_lid"
+              />
+              <span>{t("web.setup.lid")}</span>
+            </label>
+          </li>
+          <li>
+            <label class="flex items-start gap-2">
+              <input
+                type="checkbox"
+                bind:checked={confirmed.sleep}
+                class="mt-1 h-5 w-5"
+                data-testid="setup_row_sleep"
+              />
+              <span>{t("web.setup.sleep")}</span>
+            </label>
+          </li>
+          <li data-testid="setup_row_visible">
+            <span aria-hidden="true">i</span>
+            {t("web.setup.visible")}
+          </li>
+          <li data-testid="setup_row_reload">
+            <span aria-hidden="true">i</span>
+            {t("web.setup.reloadNote")}
+          </li>
+          {#if !wake.supported}
+            <li class="text-amber-400">{t("web.keepOpen.noWakeLock")}</li>
+          {/if}
+        </ul>
+        <button
+          type="button"
+          class="mt-4 min-h-14 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 font-medium text-zinc-300 disabled:opacity-40"
+          data-testid="session-start"
+          disabled={!micStream}
+          onclick={() => void startRun()}
+        >
+          {t("web.setup.start")}
+        </button>
+      </section>
+    {:else}
+      {#if notCharging}
+        <p
+          class="rounded-lg border border-amber-950 p-3 text-sm text-amber-600"
+          role="alert"
+          data-testid="baby_warning_battery"
+        >
+          {t("web.warn.notCharging")}
         </p>
-        {#if sessionReconnectAttempt > 0 && sessionReconnectAttempt <= SESSION_AUTO_RECONNECT_MAX_ATTEMPTS}
-          <p class="mt-2 text-xs text-amber-200/90">
-            {i18n?.t("baby.retryLine", {
-              seconds: reconnectCountdownSec,
-              attempt: sessionReconnectAttempt,
-              max: SESSION_AUTO_RECONNECT_MAX_ATTEMPTS,
-            }) ?? ""}
-          </p>
-        {:else if sessionReconnectAttempt > SESSION_AUTO_RECONNECT_MAX_ATTEMPTS}
-          <p class="mt-2 text-xs text-amber-200/90">
-            {i18n?.t("baby.retriesStopped") ?? ""}
-          </p>
+      {/if}
+      {#if hiddenNow}
+        <p
+          class="rounded-lg border border-amber-950 p-3 text-sm text-amber-600"
+          role="alert"
+          data-testid="baby_warning_hidden"
+        >
+          {t("web.warn.hidden")}
+        </p>
+      {/if}
+      {#if suspendWarning}
+        <div
+          class="rounded-lg border border-amber-950 p-3 text-sm text-amber-600"
+          role="alert"
+          data-testid="baby_warning_suspend"
+        >
+          <p>{t("web.suspend.warningBaby")}</p>
+          <button
+            type="button"
+            class="mt-2 min-h-12 rounded-lg border border-zinc-800 px-4"
+            onclick={() => (suspendWarning = false)}>{t("web.common.ok")}</button
+          >
+        </div>
+      {/if}
+      {#if !$wakeActive}
+        <p class="text-xs text-amber-500" data-testid="baby_warning_wakelock">
+          {wake.supported ? t("web.keepOpen.wakeLockOff") : t("web.keepOpen.noWakeLock")}
+        </p>
+      {/if}
+
+      <AmbientBar
+        link={st.link}
+        role="baby"
+        testid="baby_status"
+        dim
+        nowElapsedMs={nowElapsed}
+        startedElapsedMs={startedElapsed}
+        onTryNow={() => monitor?.tryNow()}
+      />
+
+      <ul class="space-y-1 text-xs" data-testid="baby_reminders">
+        {#if $charging === true}
+          <li data-testid="baby_reminder_power">
+            <span aria-hidden="true">✓</span>
+            {t("web.setup.power")}
+          </li>
+        {:else if $charging == null}
+          <li data-testid="baby_reminder_power">
+            <span aria-hidden="true">!</span>
+            {t("web.setup.powerUnknown")}
+          </li>
         {/if}
+        <li data-testid="baby_reminder_visible">
+          <span aria-hidden="true">i</span>
+          {t("web.setup.visible")}
+        </li>
+      </ul>
+
+      {#if showCode}
+        <section class="rounded-xl border border-zinc-900 p-4 text-center" data-testid="baby_pair">
+          <h2 class="font-medium text-zinc-300" data-testid="baby_pair_title">
+            {t("web.pair.baby.title")}
+          </h2>
+          <p class="mt-1 text-xs" data-testid="baby_pair_instruction">
+            {t("web.pair.baby.instruction")}
+          </p>
+          <div class="mt-3">
+            <PairingQr payload={codePayload} alt={t("web.pair.baby.qrAlt")} {expired} {bright} />
+          </div>
+          {#if expired}
+            <p class="mt-2 text-sm text-amber-600" data-testid="baby_pair_expired">
+              {t("web.pair.baby.expired")}
+            </p>
+            <button
+              type="button"
+              class="mt-2 min-h-12 rounded-lg border border-zinc-700 px-4 text-zinc-300"
+              data-testid="baby_pair_new_code"
+              onclick={() => void newCode()}>{t("web.pair.baby.newCode")}</button
+            >
+          {:else}
+            <p class="mt-2 text-xs" data-testid="baby_pair_countdown">
+              {t("web.pair.baby.validFor", { duration: formatDuration(remainingMs) })}
+            </p>
+            <p class="mt-1 text-xs" data-testid="baby_pair_waiting">{t("web.pair.baby.waiting")}</p>
+            <div class="mt-3 flex flex-wrap justify-center gap-2">
+              <button
+                type="button"
+                class="min-h-12 rounded-lg border border-zinc-700 px-3 text-zinc-300"
+                data-testid="baby_pair_copy"
+                onclick={() => void copyCode()}
+                >{copied ? t("web.pair.baby.copied") : t("web.pair.baby.copy")}</button
+              >
+              <button
+                type="button"
+                class="min-h-12 rounded-lg border border-zinc-700 px-3 text-zinc-300"
+                data-testid="baby_pair_brighter"
+                onclick={() => (bright = !bright)}>{t("web.pair.baby.brighter")}</button
+              >
+              <button
+                type="button"
+                class="min-h-12 rounded-lg border border-zinc-700 px-3 text-zinc-300"
+                data-testid="baby_pair_show_text"
+                aria-expanded={textShown}
+                onclick={() => (textShown = !textShown)}
+                >{textShown ? t("web.pair.baby.hideText") : t("web.pair.baby.showText")}</button
+              >
+            </div>
+            {#if textShown}
+              <textarea
+                readonly
+                class="mt-3 h-20 w-full rounded border border-zinc-700 bg-black p-2 text-[10px] text-zinc-300"
+                data-testid="baby_pair_code_text"
+                value={codePayload}
+              ></textarea>
+            {/if}
+          {/if}
+          <p class="mt-2 text-xs text-zinc-400" data-testid="baby_pair_privacy">
+            {t("web.pair.baby.privacy")}
+          </p>
+        </section>
+      {:else}
+        <section class="rounded-xl border border-zinc-900 p-4 text-sm">
+          <p data-testid="baby_monitoring_line">{t("web.baby.monitoring")}</p>
+          <div
+            class="mt-3 h-1.5 overflow-hidden rounded bg-zinc-900"
+            data-testid="baby_mic_level"
+            role="img"
+            aria-label={t("web.baby.micLevel")}
+          >
+            <div class="h-full bg-zinc-700" style:width="{Math.min(100, st.micLevel * 400)}%"></div>
+          </div>
+          {#if st.micSilent}
+            <p class="mt-2 text-xs text-amber-500">{t("web.baby.micSilent")}</p>
+          {/if}
+          <p class="mt-3 text-xs" data-testid="baby_silence">{t("web.baby.silenceManual")}</p>
+          {#if paired && !confirmPairAnother}
+            <button
+              type="button"
+              class="mt-3 min-h-12 rounded-lg border border-zinc-700 px-3 text-zinc-300"
+              data-testid="baby_pair_another"
+              onclick={() => (confirmPairAnother = true)}>{t("web.pair.baby.pairAnother")}</button
+            >
+          {:else if paired}
+            <div
+              class="mt-3 rounded-lg border border-amber-900 p-3"
+              role="alertdialog"
+              data-testid="baby_pair_another_confirm_box"
+            >
+              <p class="text-amber-400">{t("web.pair.baby.pairAnotherConfirm")}</p>
+              <div class="mt-2 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  class="min-h-12 rounded-lg border border-zinc-700 px-3 text-zinc-300"
+                  data-testid="baby_pair_another_confirm"
+                  onclick={() => void newCode()}>{t("web.pair.baby.pairAnother")}</button
+                >
+                <button
+                  type="button"
+                  class="min-h-12 rounded-lg border border-zinc-700 px-3 text-zinc-300"
+                  data-testid="baby_pair_another_cancel"
+                  onclick={() => (confirmPairAnother = false)}>{t("web.common.cancel")}</button
+                >
+              </div>
+            </div>
+          {/if}
+        </section>
+      {/if}
+
+      <div class="grid grid-cols-2 gap-2">
         <button
           type="button"
-          class="mt-3 w-full rounded-lg bg-amber-600 px-3 py-2 text-sm font-medium text-amber-950 hover:bg-amber-500"
-          onclick={() => start({ resetBackoff: true })}
+          class="min-h-14 rounded-xl border border-zinc-800 px-4 text-zinc-300"
+          data-testid="baby_lock"
+          onclick={() => void lockScreen()}>{t("web.baby.lock")}</button
         >
-          {i18n?.t("baby.tryNow") ?? ""}
-        </button>
+        <button
+          type="button"
+          class="min-h-14 rounded-xl border border-zinc-800 px-4 text-zinc-400"
+          data-testid="baby_stop"
+          onclick={() => (showStop = true)}>{t("web.stop.button")}</button
+        >
       </div>
     {/if}
+  </div>
+</div>
 
-    <div class="rounded-lg border border-zinc-800 bg-zinc-950/80 p-3">
-      <p class="mb-1 text-xs uppercase tracking-wide text-zinc-500">
-        {i18n?.t("baby.micLevelTitle") ?? ""}
-      </p>
-      <div class="h-3 overflow-hidden rounded-full bg-zinc-800">
-        <div
-          class="h-full bg-emerald-500 transition-[width]"
-          style:width="{Math.min(100, localRmsDisplay * 400)}%"
-        ></div>
-      </div>
-      <p class="mt-1 text-[11px] text-zinc-600">
-        {i18n?.t("baby.micLevelHelp") ?? ""}
-      </p>
-    </div>
-
-    <div class="flex flex-wrap gap-2">
-      <button
-        type="button"
-        class="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600"
-        data-testid="session-start"
-        onclick={() => start({ resetBackoff: true })}
-      >
-        {i18n?.t("baby.restartMonitoring") ?? ""}
-      </button>
-      <button
-        type="button"
-        class="rounded-lg border border-zinc-600 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-900"
-        onclick={openPairingQr}
-      >
-        {i18n?.t("baby.showPairingQr") ?? ""}
-      </button>
-      {#if isNativeAndroid()}
+{#if showStop}
+  <div
+    class="fixed inset-0 z-40 flex items-end justify-center bg-black/90 p-4"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div class="w-full max-w-md rounded-2xl border border-zinc-800 bg-black p-5 text-zinc-400">
+      <h2 class="font-medium text-zinc-300">{t("web.stop.title")}</h2>
+      <p class="mt-1 text-sm">{t("web.stop.babyBody")}</p>
+      <div class="mt-3 grid grid-cols-2 gap-2">
         <button
           type="button"
-          class="rounded-lg border border-zinc-600 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-900"
-          onclick={openBatterySettings}
+          class="min-h-12 rounded-lg border border-red-950 text-red-400"
+          data-testid="dialog_stop_confirm"
+          onclick={() => void stopMonitoring()}>{t("web.stop.confirm")}</button
         >
-          {i18n?.t("baby.batterySettings") ?? ""}
-        </button>
-      {/if}
-      <a
-        class="inline-flex items-center rounded-lg border border-zinc-600 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-900"
-        href={signalQ
-          ? `/settings?returnTo=baby&room=${encodeURIComponent(room)}&signal=${encodeURIComponent(signalQ)}`
-          : `/settings?returnTo=baby&room=${encodeURIComponent(room)}`}
-      >
-        {i18n?.t("baby.soundKioskSettings") ?? ""}
-      </a>
+        <button
+          type="button"
+          class="min-h-12 rounded-lg border border-zinc-800"
+          data-testid="dialog_stop_cancel"
+          onclick={() => (showStop = false)}>{t("web.stop.cancel")}</button
+        >
+      </div>
     </div>
-    <p class="text-xs leading-relaxed text-zinc-600">
-      {i18n?.t("baby.footer") ?? ""}
-    </p>
-  {/if}
-</div>
+  </div>
+{/if}
+
+{#if locked}
+  <div
+    class="fixed inset-0 z-50 bg-black"
+    data-testid="baby_kiosk"
+    aria-label={t("web.kiosk.a11yLabel")}
+  >
+    <KioskLockOverlay connectionStatus={kioskState} onUnlock={() => void unlockScreen()} />
+  </div>
+{/if}

@@ -18,6 +18,12 @@ export type GuardedSleepNativePlugin = {
     body: string;
     notificationId: number;
   }): Promise<void>;
+  /** ADR-011: alarm focus + speaker routing before alert WebRTC playback. */
+  applyAlertAudioRouting(options: {
+    mode: "default" | "speaker" | "speaker_default";
+    gain: number;
+  }): Promise<{ speakerphone: boolean }>;
+  releaseAlertAudioRouting(): Promise<void>;
   openBatterySettings(): Promise<void>;
   setKeepAwake(options: { enabled: boolean }): Promise<void>;
   setImmersiveMode(options: { enabled: boolean }): Promise<void>;
@@ -40,6 +46,18 @@ export type GuardedSleepNativePlugin = {
     eventName: "lanPeerResolved",
     listenerFunc: (event: LanPeerResolved) => void,
   ): Promise<{ remove: () => Promise<void> }>;
+  /** Debug APK: OkHttp WSS with self-signed trust on private LAN hosts. */
+  nativeSignalingConnect(options: { url: string }): Promise<void>;
+  nativeSignalingSend(options: { text: string }): Promise<void>;
+  nativeSignalingClose(): Promise<void>;
+  addListener(
+    eventName: "nativeSignalingMessage",
+    listenerFunc: (event: { text: string }) => void,
+  ): Promise<{ remove: () => Promise<void> }>;
+  addListener(
+    eventName: "nativeSignalingClose",
+    listenerFunc: () => void,
+  ): Promise<{ remove: () => Promise<void> }>;
 };
 
 export const GuardedSleepNative = registerPlugin<GuardedSleepNativePlugin>("GuardedSleepNative", {
@@ -48,6 +66,12 @@ export const GuardedSleepNative = registerPlugin<GuardedSleepNativePlugin>("Guar
       void 0;
     },
     async showAlarmStyleNotification() {
+      void 0;
+    },
+    async applyAlertAudioRouting() {
+      return { speakerphone: false };
+    },
+    async releaseAlertAudioRouting() {
       void 0;
     },
     async openBatterySettings() {
@@ -79,6 +103,15 @@ export const GuardedSleepNative = registerPlugin<GuardedSleepNativePlugin>("Guar
     },
     async addListener() {
       return { remove: async () => {} };
+    },
+    async nativeSignalingConnect() {
+      void 0;
+    },
+    async nativeSignalingSend() {
+      void 0;
+    },
+    async nativeSignalingClose() {
+      void 0;
     },
   }),
 });

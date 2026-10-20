@@ -45,13 +45,9 @@ Then open `http://127.0.0.1:8080/` (or your host LAN IP on port `8080`).
 
 ## Compose: PWA + signaling behind Traefik
 
-Example with TLS routers for **`app.example.com`** (static site) and **`signal.example.com`** (WebSocket):
+Ready-to-use file, configured via `.env` only: [docker/stack/compose.traefik.yaml](../../docker/stack/compose.traefik.yaml) + [traefik.env.example](../../docker/stack/traefik.env.example). It serves the app at `https://<APP_DOMAIN>/` and signaling at `wss://<APP_DOMAIN>/signaling` (inferred by the PWA from its origin, so no `VITE_SIGNALING_URL` rebuild is needed).
 
-- [docker/stack/compose.web-and-signaling.traefik.example.yaml](../../docker/stack/compose.web-and-signaling.traefik.example.yaml)
-
-Build **`guardedsleep-signaling:local`** and **`guardedsleep-web:local`** first (see comments at the top of that file), replace hostnames and Traefik resolver/entrypoint names, create an external **`proxy`** network attached to Traefik, and set **`SIGNALING_ALLOWED_ORIGINS`** to your PWA origin (e.g. `https://app.example.com`).
-
-See also the signaling-only Traefik notes in [signaling-traefik.md](signaling-traefik.md).
+Details, variables, and Caddy / nginx equivalents: [signaling-traefik.md](signaling-traefik.md).
 
 ## CI: publish to GHCR
 

@@ -1,6 +1,7 @@
 import { chromium, type BrowserContext, type Page } from "@playwright/test";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { E2E_APP_PREFERENCES_JSON } from "./e2e-bootstrap.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -14,6 +15,10 @@ const baseAudioArgs = [
 
 const ciChromeArgs = ["--disable-dev-shm-usage", "--no-sandbox"] as const;
 
+function useContainerChromeArgs(): boolean {
+  return process.env.CI === "true" || process.env.GUARDEDSLEEP_E2E_IN_DOCKER === "1";
+}
+
 export type DualContexts = {
   baby: BrowserContext;
   parent: BrowserContext;
@@ -26,9 +31,15 @@ export async function launchDualContexts(opts: {
   babyFakeWav: string;
   parentFakeWav?: string;
   baseUrl?: string;
+  /** Signaling URL seeded into both browsers (default: the e2e server). */
+  signalUrl?: string;
 }): Promise<DualContexts> {
   const baseUrl = opts.baseUrl ?? "http://127.0.0.1:5173";
-  const extra = process.env.CI === "true" ? [...ciChromeArgs] : [];
+  // A LAN IP over plain http is not a secure context; treat it as one so getUserMedia works.
+  const insecureOrigin = /^http:\/\/(127\.0\.0\.1|localhost)[:/]/.test(baseUrl)
+    ? []
+    : [`--unsafely-treat-insecure-origin-as-secure=${baseUrl}`];
+  const extra = [...(useContainerChromeArgs() ? ciChromeArgs : []), ...insecureOrigin];
   const babyArgs = [
     ...baseAudioArgs,
     ...extra,
@@ -61,16 +72,27 @@ export async function launchDualContexts(opts: {
     permissions: ["microphone"],
   });
 
+  const signalWs = opts.signalUrl ?? process.env.E2E_SIGNALING_URL ?? "ws://127.0.0.1:18787";
+  const seedStorage = (signalingUrl: string, prefsJson: string) => {
+    localStorage.setItem("guardedsleep:signaling-url", signalingUrl);
+    localStorage.setItem("guardedsleep:app-preferences", prefsJson);
+  };
+  await baby.addInitScript(seedStorage, signalWs, E2E_APP_PREFERENCES_JSON);
+  await parent.addInitScript(seedStorage, signalWs, E2E_APP_PREFERENCES_JSON);
+
+  // The Vite dev client reloads the page after its socket was cut and restored (as
+  // `context.setOffline()` does), which would forget the in-memory pairing key. E2E needs no
+  // full reloads: keep the client (it injects CSS) but neutralize `location.reload()`.
+  for (const ctx of [baby, parent]) {
+    await ctx.route("**/@vite/client", async (route) => {
+      const res = await route.fetch();
+      const body = (await res.text()).replaceAll("location.reload()", "void 0");
+      await route.fulfill({ response: res, body });
+    });
+  }
+
   const babyPage = await baby.newPage();
   const parentPage = await parent.newPage();
-
-  const signalWs = process.env.E2E_SIGNALING_URL ?? "ws://127.0.0.1:18787";
-  await babyPage.addInitScript((url: string) => {
-    localStorage.setItem("guardedsleep:signaling-url", url);
-  }, signalWs);
-  await parentPage.addInitScript((url: string) => {
-    localStorage.setItem("guardedsleep:signaling-url", url);
-  }, signalWs);
 
   return {
     baby,

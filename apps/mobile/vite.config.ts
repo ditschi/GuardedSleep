@@ -21,8 +21,8 @@ export default defineConfig({
         name: "GuardedSleep",
         short_name: "GuardedSleep",
         description: "GuardedSleep — privacy-focused baby monitor",
-        theme_color: "#09090b",
-        background_color: "#09090b",
+        theme_color: "#000000",
+        background_color: "#000000",
         display: "standalone",
         start_url: "/",
         icons: [

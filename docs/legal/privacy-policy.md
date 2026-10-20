@@ -90,7 +90,7 @@ Since all data is stored locally on your device:
 
 ## 8. Open Source
 
-The complete source code is available at [GitHub URL]. You can verify all privacy claims by reviewing the code.
+The complete source code is available under the **GNU Affero General Public License v3.0 or later** ([`LICENSE`](../../LICENSE)). You can verify privacy claims by reviewing the code. Third-party forks must comply with AGPL and must not imply they are the official **GuardedSleep** product — see [`trademark.md`](trademark.md).
 
 ## 9. Changes
 

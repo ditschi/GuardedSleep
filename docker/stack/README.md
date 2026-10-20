@@ -2,17 +2,31 @@
 
 Two ways to run the full GuardedSleep stack: **build from source** (this repo) or **pull pre-built images from GHCR** (no clone needed).
 
-| Mode                                 | Compose file                                                                                       | When to use                                                                                                                                                                                |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **A. Build from source** (this repo) | [`compose.yaml`](compose.yaml) (+ optional [`.env.example`](.env.example))                         | Development, customising `VITE_SIGNALING_URL` at build time, testing local code changes.                                                                                                   |
-| **B. Pre-built images (GHCR)**       | [`compose.ghcr.yaml`](compose.ghcr.yaml) (+ [`.env.ghcr.example`](.env.ghcr.example))              | Deployments / self-hosting. **No repo clone required** — download just the two files. Tag strategy: see [ADR-008](../../docs/decisions/ADR-008-container-image-build-and-distribution.md). |
-| **C. Pre-built images + Traefik**    | [`compose.web-and-signaling.traefik.example.yaml`](compose.web-and-signaling.traefik.example.yaml) | Production-style TLS via Traefik. Example file uses local images today; flip `image:` entries to `ghcr.io/...` to use published images.                                                    |
+| Mode                                 | Compose file                                                                                    | When to use                                                                                                                                                                                 |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A. Build from source** (this repo) | [`compose.yaml`](compose.yaml) (+ optional [`.env.example`](.env.example))                      | Development, customising `VITE_SIGNALING_URL` at build time, testing local code changes.                                                                                                    |
+| **B. Pre-built images (GHCR)**       | [`compose.ghcr.yaml`](compose.ghcr.yaml) (+ [`.env.ghcr.example`](.env.ghcr.example))           | Deployments / self-hosting. **No repo clone required** — download just the two files. Tag strategy: see [ADR-008](../../docs/decisions/ADR-008-container-image-build-and-distribution.md).  |
+| **C. Pre-built images + Traefik**    | [`compose.traefik.yaml`](compose.traefik.yaml) (+ [`traefik.env.example`](traefik.env.example)) | Behind an existing Traefik on 443. One domain: app at `/`, signaling at `/signaling`. Configure via `.env` only — see [signaling-traefik.md](../../docs/contributing/signaling-traefik.md). |
 
 ## Requirements
 
 - Docker with Compose v2
 
 For **Mode A** also run commands from the **repository root** (so build contexts resolve correctly).
+
+### Phone / tablet on the same Wi‑Fi (recommended)
+
+`127.0.0.1` in the default URL is the **phone itself**, not your PC — WebSocket signaling fails from a second device. Until a public EU community signaling server is configured, use the **local Docker stack with your host’s LAN IP**:
+
+```bash
+pnpm run stack:lan
+```
+
+This runs [`scripts/stack-lan-env.sh`](../../scripts/stack-lan-env.sh) (detects LAN IPv4, writes `docker/stack/.env`) and starts `docker compose … up --build`. The PWA and Android `cap sync` build use `VITE_SIGNALING_URL=wss://<your-LAN-IP>:8443/signaling`.
+
+On the phone (same Wi‑Fi): open **`https://<LAN-IP>:8443`** (accept the self-signed certificate warning).
+
+Regenerate `.env` only: `pnpm run stack:lan:env` · Start stack with existing `.env`: `pnpm run stack:up`
 
 ## Mode A — build from source (current repo)
 
@@ -93,8 +107,11 @@ If you **cannot load the UI at all** from the phone, check: same Wi‑Fi, use **
 | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
 | [compose.yaml](compose.yaml)                                                                     | **Mode A** — build both images from this repo (local development)   |
 | [.env.example](.env.example)                                                                     | Mode A defaults — ports, origins, `VITE_SIGNALING_URL`              |
+| [`scripts/stack-lan-env.sh`](../../scripts/stack-lan-env.sh)                                     | Auto-write `.env` with host LAN IP (`pnpm run stack:lan:env`)       |
 | [compose.ghcr.yaml](compose.ghcr.yaml)                                                           | **Mode B** — pull pre-built images from GHCR (no repo clone needed) |
 | [.env.ghcr.example](.env.ghcr.example)                                                           | Mode B defaults — owner, tags, origins                              |
-| [compose.web-and-signaling.traefik.example.yaml](compose.web-and-signaling.traefik.example.yaml) | **Mode C** — Traefik / TLS lab layout (adapt `image:` for GHCR)     |
+| [compose.traefik.yaml](compose.traefik.yaml)                                                     | **Mode C** — GHCR images behind an existing Traefik (one domain)    |
+| [traefik.env.example](traefik.env.example)                                                       | Mode C defaults — domain, Traefik network/entrypoint/resolver       |
+| [compose.web-and-signaling.traefik.example.yaml](compose.web-and-signaling.traefik.example.yaml) | Deprecated — superseded by `compose.traefik.yaml`                   |
 
 More detail: [docs/contributing/mobile-web-docker.md](../../docs/contributing/mobile-web-docker.md). Tag strategy: [ADR-008](../../docs/decisions/ADR-008-container-image-build-and-distribution.md).

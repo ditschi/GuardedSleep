@@ -1,0 +1,3279 @@
+[
+  {
+    "name": "server: welcome",
+    "kind": "parse_server",
+    "raw": "{\"type\":\"welcome\",\"clientId\":\"c1\",\"roomId\":\"r1\"}",
+    "expect": {
+      "type": "welcome",
+      "client_id": "c1",
+      "room_id": "r1"
+    }
+  },
+  {
+    "name": "server: peer null",
+    "kind": "parse_server",
+    "raw": "{\"type\":\"peer\",\"peerId\":null}",
+    "expect": {
+      "type": "peer",
+      "peer_id": null
+    }
+  },
+  {
+    "name": "server: peer wrong type",
+    "kind": "parse_server",
+    "raw": "{\"type\":\"peer\",\"peerId\":7}",
+    "expect": null
+  },
+  {
+    "name": "server: members",
+    "kind": "parse_server",
+    "raw": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"a\",\"role\":\"baby\"},{\"clientId\":\"b\",\"role\":\"parent\"}]}",
+    "expect": {
+      "type": "members",
+      "peers": [
+        {
+          "client_id": "a",
+          "role": "baby"
+        },
+        {
+          "client_id": "b",
+          "role": "parent"
+        }
+      ]
+    }
+  },
+  {
+    "name": "server: members bad role",
+    "kind": "parse_server",
+    "raw": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"a\",\"role\":\"admin\"}]}",
+    "expect": null
+  },
+  {
+    "name": "server: unknown error code rejected",
+    "kind": "parse_server",
+    "raw": "{\"type\":\"error\",\"code\":\"PWNED\",\"message\":\"x\"}",
+    "expect": null
+  },
+  {
+    "name": "server: known error code",
+    "kind": "parse_server",
+    "raw": "{\"type\":\"error\",\"code\":\"ROOM_FULL\",\"message\":\"full\"}",
+    "expect": {
+      "type": "error",
+      "code": "ROOM_FULL",
+      "message": "full"
+    }
+  },
+  {
+    "name": "server: not json",
+    "kind": "parse_server",
+    "raw": "{type:welcome",
+    "expect": null
+  },
+  {
+    "name": "server: array",
+    "kind": "parse_server",
+    "raw": "[1,2]",
+    "expect": null
+  },
+  {
+    "name": "data: heartbeat with rms",
+    "kind": "parse_data",
+    "raw": "{\"type\":\"heartbeat\",\"v\":2,\"t\":1700000000000,\"seq\":4,\"rms\":0.25}",
+    "expect": {
+      "type": "heartbeat",
+      "t": 1700000000000.0,
+      "seq": 4,
+      "battery": null,
+      "rms": 0.25
+    }
+  },
+  {
+    "name": "data: heartbeat rms out of range",
+    "kind": "parse_data",
+    "raw": "{\"type\":\"heartbeat\",\"v\":2,\"t\":1,\"seq\":1,\"rms\":1.5}",
+    "expect": null
+  },
+  {
+    "name": "data: wrong protocol version",
+    "kind": "parse_data",
+    "raw": "{\"type\":\"listen\",\"v\":1,\"enabled\":true}",
+    "expect": null
+  },
+  {
+    "name": "data: noise alert probe",
+    "kind": "parse_data",
+    "raw": "{\"type\":\"noise_alert\",\"v\":2,\"rms\":0.4,\"t\":12,\"probe\":true}",
+    "expect": {
+      "type": "noise_alert",
+      "rms": 0.4,
+      "t": 12.0,
+      "probe": true
+    }
+  },
+  {
+    "name": "data: pair proof uppercase normalized",
+    "kind": "parse_data",
+    "raw": "{\"type\":\"pair_proof\",\"v\":2,\"mac\":\"ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789\"}",
+    "expect": {
+      "type": "pair_proof",
+      "mac": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+    }
+  },
+  {
+    "name": "data: pair proof too short",
+    "kind": "parse_data",
+    "raw": "{\"type\":\"pair_proof\",\"v\":2,\"mac\":\"abc\"}",
+    "expect": null
+  },
+  {
+    "name": "pair mac: chrome-style SDPs",
+    "kind": "pair_mac",
+    "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+    "room": "sunny-otter-42",
+    "local_sdp": "v=0\r\no=- 46117317 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\na=group:BUNDLE 0 1\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=fingerprint:sha-256 4F:2A:9B:11:C3:7D:E0:55:6A:8B:9C:0D:1E:2F:30:41:52:63:74:85:96:A7:B8:C9:DA:EB:FC:0D:1E:2F:30:41\r\na=setup:actpass\r\n",
+    "remote_sdp": "v=0\r\no=- 99 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=fingerprint:sha-256 0A:1B:2C:3D:4E:5F:60:71:82:93:A4:B5:C6:D7:E8:F9:0A:1B:2C:3D:4E:5F:60:71:82:93:A4:B5:C6:D7:E8:F9\r\na=setup:active\r\n",
+    "expect": "ff3a7779008db885dcac40f039490175c9708aaf51f872772b821bd3f2e27e19"
+  },
+  {
+    "name": "pair mac: swapped SDPs give same MAC",
+    "kind": "pair_mac",
+    "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+    "room": "sunny-otter-42",
+    "local_sdp": "v=0\r\no=- 99 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=fingerprint:sha-256 0A:1B:2C:3D:4E:5F:60:71:82:93:A4:B5:C6:D7:E8:F9:0A:1B:2C:3D:4E:5F:60:71:82:93:A4:B5:C6:D7:E8:F9\r\na=setup:active\r\n",
+    "remote_sdp": "v=0\r\no=- 46117317 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\na=group:BUNDLE 0 1\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=fingerprint:sha-256 4F:2A:9B:11:C3:7D:E0:55:6A:8B:9C:0D:1E:2F:30:41:52:63:74:85:96:A7:B8:C9:DA:EB:FC:0D:1E:2F:30:41\r\na=setup:actpass\r\n",
+    "expect": "ff3a7779008db885dcac40f039490175c9708aaf51f872772b821bd3f2e27e19"
+  },
+  {
+    "name": "pair mac: different PSK",
+    "kind": "pair_mac",
+    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "room": "sunny-otter-42",
+    "local_sdp": "v=0\r\na=fingerprint:sha-256 4F:2A:9B:11:C3:7D:E0:55:6A:8B:9C:0D:1E:2F:30:41:52:63:74:85:96:A7:B8:C9:DA:EB:FC:0D:1E:2F:30:41\r\n",
+    "remote_sdp": "v=0\r\na=fingerprint:sha-256 0A:1B:2C:3D:4E:5F:60:71:82:93:A4:B5:C6:D7:E8:F9:0A:1B:2C:3D:4E:5F:60:71:82:93:A4:B5:C6:D7:E8:F9\r\n",
+    "expect": "cd5773a4ed76e7a67dbe63c8f100c1053d9ec98027e918eac1ae02df81784685"
+  },
+  {
+    "name": "pair mac: missing fingerprint",
+    "kind": "pair_mac",
+    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "room": "r",
+    "local_sdp": "v=0\r\n",
+    "remote_sdp": "v=0\r\na=fingerprint:sha-256 0A:1B\r\n",
+    "expect": null
+  },
+  {
+    "name": "session: baby join, offer, pairing mismatch (v3)",
+    "kind": "session",
+    "config": {
+      "role": "baby",
+      "room_id": "sunny-otter-42",
+      "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "heartbeat_interval_ms": 5000,
+      "heartbeat_stale_ms": 15000,
+      "pairing_timeout_ms": 15000,
+      "noise_threshold": 0.2,
+      "noise_hold_ms": 300
+    },
+    "steps": [
+      {
+        "now": 1000,
+        "input": {
+          "type": "signaling_open"
+        }
+      },
+      {
+        "now": 1001,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"welcome\",\"clientId\":\"b\",\"roomId\":\"sunny-otter-42\"}"
+        }
+      },
+      {
+        "now": 1002,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"peer\",\"peerId\":\"p\"}"
+        }
+      },
+      {
+        "now": 1003,
+        "input": {
+          "type": "local_description",
+          "sdp_type": "offer",
+          "sdp": "v=0\r\na=fingerprint:sha-256 FE:11:34:A3:1A:C2:81:13:E1:06:B2:E2:E3:54:EC:66:4E:05:D9:B1:AF:5E:40:EB:1E:E3:7E:B9:31:FB:A7:FC\r\n"
+        }
+      },
+      {
+        "now": 1004,
+        "input": {
+          "type": "local_ice_candidate",
+          "candidate": {
+            "candidate": "candidate:1 1 udp 2122260223 10.0.2.15 40000 typ host",
+            "sdp_mid": "0",
+            "sdp_m_line_index": 0
+          }
+        }
+      },
+      {
+        "now": 1005,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"p\",\"payload\":{\"type\":\"sdp\",\"aid\":\"0123456789abcdef0123456789abcdef\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\na=fingerprint:sha-256 B1:FF:B6:A9:D1:85:47:E2:55:A5:47:CC:62:6D:09:B4:6E:B4:D2:91:FF:C7:D2:E7:18:DF:DD:CD:32:A8:CF:51\\r\\n\"}}}"
+        }
+      },
+      {
+        "now": 1006,
+        "input": {
+          "type": "data_channel_open"
+        }
+      },
+      {
+        "now": 1007,
+        "input": {
+          "type": "data_channel_message",
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"0000000000000000000000000000000000000000000000000000000000000000\"}"
+        }
+      }
+    ],
+    "expect": [
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"hello\",\"role\":\"baby\",\"roomId\":\"sunny-otter-42\",\"protocolVersion\":3}"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "state_changed",
+            "state": "connecting"
+          }
+        }
+      ],
+      [
+        {
+          "type": "emit",
+          "event": {
+            "type": "state_changed",
+            "state": "joined"
+          }
+        }
+      ],
+      [
+        {
+          "type": "create_offer"
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"sunny-otter-42\",\"to\":\"p\",\"payload\":{\"type\":\"sdp\",\"aid\":\"dea13fbee221568ec5c27e6233d52227\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\na=fingerprint:sha-256 FE:11:34:A3:1A:C2:81:13:E1:06:B2:E2:E3:54:EC:66:4E:05:D9:B1:AF:5E:40:EB:1E:E3:7E:B9:31:FB:A7:FC\\r\\n\"}}}"
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"sunny-otter-42\",\"to\":\"p\",\"payload\":{\"type\":\"ice\",\"aid\":\"dea13fbee221568ec5c27e6233d52227\",\"candidate\":{\"candidate\":\"candidate:1 1 udp 2122260223 10.0.2.15 40000 typ host\",\"sdpMid\":\"0\",\"sdpMLineIndex\":0}}}"
+        }
+      ],
+      [
+        {
+          "type": "set_remote_description",
+          "sdp_type": "answer",
+          "sdp": "v=0\r\na=fingerprint:sha-256 B1:FF:B6:A9:D1:85:47:E2:55:A5:47:CC:62:6D:09:B4:6E:B4:D2:91:FF:C7:D2:E7:18:DF:DD:CD:32:A8:CF:51\r\n"
+        }
+      ],
+      [
+        {
+          "type": "send_data",
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"f45fd78da8a967b3d482d04b8c8fe4083b06efb0de6158d4273b59ae4b9e067d\"}"
+        }
+      ],
+      [
+        {
+          "type": "emit",
+          "event": {
+            "type": "failed",
+            "reason": "pair_proof_mismatch"
+          }
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "state_changed",
+            "state": "failed"
+          }
+        },
+        {
+          "type": "close_transport"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "session: parent liveness loss and noise alert (v3, dev bypass)",
+    "kind": "session",
+    "config": {
+      "role": "parent",
+      "room_id": "r",
+      "psk_b64url": null,
+      "heartbeat_interval_ms": 5000,
+      "heartbeat_stale_ms": 15000,
+      "pairing_timeout_ms": 15000,
+      "noise_threshold": 0.2,
+      "noise_hold_ms": 300
+    },
+    "steps": [
+      {
+        "now": 0,
+        "input": {
+          "type": "signaling_open"
+        }
+      },
+      {
+        "now": 1,
+        "input": {
+          "type": "data_channel_open"
+        }
+      },
+      {
+        "now": 2,
+        "input": {
+          "type": "set_listen",
+          "enabled": true
+        }
+      },
+      {
+        "now": 3,
+        "input": {
+          "type": "data_channel_message",
+          "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":3,\"seq\":1,\"rms\":0.01}"
+        }
+      },
+      {
+        "now": 4,
+        "input": {
+          "type": "data_channel_message",
+          "text": "{\"type\":\"noise_alert\",\"v\":3,\"rms\":0.6,\"t\":4}"
+        }
+      },
+      {
+        "now": 15003,
+        "input": {
+          "type": "tick"
+        }
+      },
+      {
+        "now": 15004,
+        "input": {
+          "type": "tick"
+        }
+      },
+      {
+        "now": 16000,
+        "input": {
+          "type": "tick"
+        }
+      }
+    ],
+    "expect": [
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"hello\",\"role\":\"parent\",\"roomId\":\"r\",\"protocolVersion\":3}"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "state_changed",
+            "state": "connecting"
+          }
+        }
+      ],
+      [
+        {
+          "type": "emit",
+          "event": {
+            "type": "pairing_verified"
+          }
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "state_changed",
+            "state": "verified"
+          }
+        },
+        {
+          "type": "send_data",
+          "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":1,\"seq\":1}"
+        }
+      ],
+      [
+        {
+          "type": "send_data",
+          "text": "{\"type\":\"listen\",\"v\":3,\"enabled\":true}"
+        }
+      ],
+      [
+        {
+          "type": "emit",
+          "event": {
+            "type": "heartbeat",
+            "seq": 1,
+            "rms": 0.01,
+            "battery": null
+          }
+        }
+      ],
+      [
+        {
+          "type": "emit",
+          "event": {
+            "type": "noise_alert",
+            "rms": 0.6,
+            "probe": false
+          }
+        }
+      ],
+      [
+        {
+          "type": "send_data",
+          "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":15003,\"seq\":2}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "emit",
+          "event": {
+            "type": "link_lost",
+            "reason": "heartbeat_stale"
+          }
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "failed",
+            "reason": "heartbeat_stale"
+          }
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "state_changed",
+            "state": "failed"
+          }
+        },
+        {
+          "type": "close_transport"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "link: reflected proof never verifies; two mismatches at first pairing are terminal",
+    "kind": "link",
+    "config": {
+      "role": "baby",
+      "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "paired_before": false,
+      "heartbeat_interval_ms": 10000,
+      "alarm_after_ms": 60000,
+      "noise_threshold": 0.2,
+      "noise_hold_ms": 300
+    },
+    "steps": [
+      {
+        "now": 0,
+        "input": {
+          "type": "start",
+          "entropy": 7
+        }
+      },
+      {
+        "now": 1,
+        "input": {
+          "type": "signaling_opened"
+        }
+      },
+      {
+        "now": 2,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"welcome\",\"clientId\":\"b\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\"}"
+        }
+      },
+      {
+        "now": 3,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"b\",\"role\":\"baby\"},{\"clientId\":\"p\",\"role\":\"parent\"}]}"
+        }
+      },
+      {
+        "now": 10,
+        "input": {
+          "type": "attempt_local_description",
+          "attempt": 1,
+          "sdp_type": "offer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\r\n"
+        }
+      },
+      {
+        "now": 11,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"p\",\"payload\":{\"type\":\"sdp\",\"aid\":\"f0e1d2c3b4a5968778695a4b3c2d1e0f\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\\r\\n\"}}}"
+        }
+      },
+      {
+        "now": 12,
+        "input": {
+          "type": "attempt_data_open",
+          "attempt": 1
+        }
+      },
+      {
+        "now": 12,
+        "input": {
+          "type": "attempt_dtls_fingerprint",
+          "attempt": 1,
+          "fingerprint": "A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE"
+        }
+      },
+      {
+        "now": 13,
+        "input": {
+          "type": "attempt_data_message",
+          "attempt": 1,
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"7a2ab526d755f39f9f250a2330424aa2325be31fc5ef0b783744573ab31cf54b\"}"
+        }
+      },
+      {
+        "now": 20,
+        "input": {
+          "type": "attempt_local_description",
+          "attempt": 2,
+          "sdp_type": "offer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\r\n"
+        }
+      },
+      {
+        "now": 21,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"p\",\"payload\":{\"type\":\"sdp\",\"aid\":\"f0e1d2c3b4a5968778695a4b3c2d1e0f\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\\r\\n\"}}}"
+        }
+      },
+      {
+        "now": 22,
+        "input": {
+          "type": "attempt_data_open",
+          "attempt": 2
+        }
+      },
+      {
+        "now": 22,
+        "input": {
+          "type": "attempt_dtls_fingerprint",
+          "attempt": 2,
+          "fingerprint": "A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE"
+        }
+      },
+      {
+        "now": 23,
+        "input": {
+          "type": "attempt_data_message",
+          "attempt": 2,
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"7a2ab526d755f39f9f250a2330424aa2325be31fc5ef0b783744573ab31cf54b\"}"
+        }
+      }
+    ],
+    "expect": [
+      [
+        {
+          "type": "open_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"hello\",\"role\":\"baby\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"protocolVersion\":3}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "create_attempt",
+          "attempt": 1,
+          "offerer": true
+        },
+        {
+          "type": "create_offer",
+          "attempt": 1
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"p\",\"payload\":{\"type\":\"sdp\",\"aid\":\"63cbe1e459320dd7044c3cd7f43c661c\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\\r\\n\"}}}"
+        }
+      ],
+      [
+        {
+          "type": "set_remote_description",
+          "attempt": 1,
+          "sdp_type": "answer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\r\n"
+        }
+      ],
+      [
+        {
+          "type": "send_data",
+          "attempt": 1,
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"7a2ab526d755f39f9f250a2330424aa2325be31fc5ef0b783744573ab31cf54b\"}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "close_attempt",
+          "attempt": 1
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "failed",
+            "reason": "pair_proof_mismatch"
+          }
+        },
+        {
+          "type": "create_attempt",
+          "attempt": 2,
+          "offerer": true
+        },
+        {
+          "type": "create_offer",
+          "attempt": 2
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"p\",\"payload\":{\"type\":\"sdp\",\"aid\":\"e6984080bab12a02953aeb70673e29cb\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\\r\\n\"}}}"
+        }
+      ],
+      [
+        {
+          "type": "set_remote_description",
+          "attempt": 2,
+          "sdp_type": "answer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\r\n"
+        }
+      ],
+      [
+        {
+          "type": "send_data",
+          "attempt": 2,
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"7a2ab526d755f39f9f250a2330424aa2325be31fc5ef0b783744573ab31cf54b\"}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "close_attempt",
+          "attempt": 2
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "failed",
+            "reason": "pair_proof_mismatch"
+          }
+        },
+        {
+          "type": "close_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "failed_needs_user",
+              "level": 0,
+              "key": "pairing_key_mismatch",
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "link: parent request_offer, verification, liveness loss, escalation to level 2",
+    "kind": "link",
+    "config": {
+      "role": "parent",
+      "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "paired_before": false,
+      "heartbeat_interval_ms": 10000,
+      "alarm_after_ms": 60000,
+      "noise_threshold": 0.2,
+      "noise_hold_ms": 300
+    },
+    "steps": [
+      {
+        "now": 0,
+        "input": {
+          "type": "start",
+          "entropy": 11
+        }
+      },
+      {
+        "now": 1,
+        "input": {
+          "type": "signaling_opened"
+        }
+      },
+      {
+        "now": 2,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"welcome\",\"clientId\":\"p\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\"}"
+        }
+      },
+      {
+        "now": 3,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"b\",\"role\":\"baby\"},{\"clientId\":\"p\",\"role\":\"parent\"}]}"
+        }
+      },
+      {
+        "now": 4,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"1f2e3d4c5b6a79880918273645546372\",\"re\":\"50f5647d2380309d432a5cd27a6b13a1\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\\r\\n\"}}}"
+        }
+      },
+      {
+        "now": 5,
+        "input": {
+          "type": "attempt_local_description",
+          "attempt": 1,
+          "sdp_type": "answer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\r\n"
+        }
+      },
+      {
+        "now": 6,
+        "input": {
+          "type": "attempt_data_open",
+          "attempt": 1
+        }
+      },
+      {
+        "now": 6,
+        "input": {
+          "type": "attempt_dtls_fingerprint",
+          "attempt": 1,
+          "fingerprint": "D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94"
+        }
+      },
+      {
+        "now": 7,
+        "input": {
+          "type": "attempt_data_message",
+          "attempt": 1,
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"7a2ab526d755f39f9f250a2330424aa2325be31fc5ef0b783744573ab31cf54b\"}"
+        }
+      },
+      {
+        "now": 8,
+        "input": {
+          "type": "attempt_data_message",
+          "attempt": 1,
+          "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":8,\"seq\":1,\"rms\":0.01}"
+        }
+      },
+      {
+        "now": 9000,
+        "input": {
+          "type": "tick"
+        }
+      },
+      {
+        "now": 25007,
+        "input": {
+          "type": "tick"
+        }
+      },
+      {
+        "now": 25008,
+        "input": {
+          "type": "tick"
+        }
+      },
+      {
+        "now": 28000,
+        "input": {
+          "type": "tick"
+        }
+      },
+      {
+        "now": 68008,
+        "input": {
+          "type": "tick"
+        }
+      }
+    ],
+    "expect": [
+      [
+        {
+          "type": "open_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"hello\",\"role\":\"parent\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"protocolVersion\":3}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\"}}"
+        }
+      ],
+      [
+        {
+          "type": "create_attempt",
+          "attempt": 1,
+          "offerer": false
+        },
+        {
+          "type": "set_remote_description",
+          "attempt": 1,
+          "sdp_type": "offer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\r\n"
+        },
+        {
+          "type": "create_answer",
+          "attempt": 1
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\\r\\n\"}}}"
+        }
+      ],
+      [
+        {
+          "type": "send_data",
+          "attempt": 1,
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"060a67582a28e4197a9a6df4c68aea8db06d905dbce60ba2386e2df0c44fa931\"}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "send_data",
+          "attempt": 1,
+          "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":7,\"seq\":1}"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connected",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "emit",
+          "event": {
+            "type": "peer_heartbeat",
+            "seq": 1,
+            "rms": 0.01
+          }
+        }
+      ],
+      [],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"ping\"}"
+        },
+        {
+          "type": "send_data",
+          "attempt": 1,
+          "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":25007,\"seq\":2}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "close_attempt",
+          "attempt": 1
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "failed",
+            "reason": "liveness_lost"
+          }
+        },
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"a356be306e9b126d812e6299272e6df0\"}}"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "reconnecting",
+              "level": 1,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": 8
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "close_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "link_lost",
+            "down_ms": 68000
+          }
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "reconnecting",
+              "level": 2,
+              "key": null,
+              "cause": "server_unreachable",
+              "acknowledged_until": null,
+              "last_alive_ms": 8
+            }
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "link: forged new-aid offer does not close a verified attempt",
+    "kind": "link",
+    "config": {
+      "role": "parent",
+      "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "paired_before": false,
+      "heartbeat_interval_ms": 10000,
+      "alarm_after_ms": 60000,
+      "noise_threshold": 0.2,
+      "noise_hold_ms": 300
+    },
+    "steps": [
+      {
+        "now": 0,
+        "input": {
+          "type": "start",
+          "entropy": 11
+        }
+      },
+      {
+        "now": 1,
+        "input": {
+          "type": "signaling_opened"
+        }
+      },
+      {
+        "now": 2,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"welcome\",\"clientId\":\"p\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\"}"
+        }
+      },
+      {
+        "now": 3,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"b\",\"role\":\"baby\"},{\"clientId\":\"p\",\"role\":\"parent\"}]}"
+        }
+      },
+      {
+        "now": 4,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"1f2e3d4c5b6a79880918273645546372\",\"re\":\"50f5647d2380309d432a5cd27a6b13a1\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\\r\\n\"}}}"
+        }
+      },
+      {
+        "now": 5,
+        "input": {
+          "type": "attempt_local_description",
+          "attempt": 1,
+          "sdp_type": "answer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\r\n"
+        }
+      },
+      {
+        "now": 6,
+        "input": {
+          "type": "attempt_data_open",
+          "attempt": 1
+        }
+      },
+      {
+        "now": 6,
+        "input": {
+          "type": "attempt_dtls_fingerprint",
+          "attempt": 1,
+          "fingerprint": "D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94"
+        }
+      },
+      {
+        "now": 7,
+        "input": {
+          "type": "attempt_data_message",
+          "attempt": 1,
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"7a2ab526d755f39f9f250a2330424aa2325be31fc5ef0b783744573ab31cf54b\"}"
+        }
+      },
+      {
+        "now": 8,
+        "input": {
+          "type": "attempt_data_message",
+          "attempt": 1,
+          "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":8,\"seq\":1,\"rms\":0.01}"
+        }
+      },
+      {
+        "now": 500,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"abababababababababababababababab\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\\r\\n\"}}}"
+        }
+      },
+      {
+        "now": 501,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"x\",\"payload\":{\"type\":\"sdp\",\"aid\":\"cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\\r\\n\"}}}"
+        }
+      }
+    ],
+    "expect": [
+      [
+        {
+          "type": "open_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"hello\",\"role\":\"parent\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"protocolVersion\":3}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\"}}"
+        }
+      ],
+      [
+        {
+          "type": "create_attempt",
+          "attempt": 1,
+          "offerer": false
+        },
+        {
+          "type": "set_remote_description",
+          "attempt": 1,
+          "sdp_type": "offer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\r\n"
+        },
+        {
+          "type": "create_answer",
+          "attempt": 1
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\\r\\n\"}}}"
+        }
+      ],
+      [
+        {
+          "type": "send_data",
+          "attempt": 1,
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"060a67582a28e4197a9a6df4c68aea8db06d905dbce60ba2386e2df0c44fa931\"}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "send_data",
+          "attempt": 1,
+          "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":7,\"seq\":1}"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connected",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "emit",
+          "event": {
+            "type": "peer_heartbeat",
+            "seq": 1,
+            "rms": 0.01
+          }
+        }
+      ],
+      [],
+      []
+    ]
+  },
+  {
+    "name": "link: stop_notice on a verified attempt gives peer_stopped, never an outage",
+    "kind": "link",
+    "config": {
+      "role": "parent",
+      "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "paired_before": false,
+      "heartbeat_interval_ms": 10000,
+      "alarm_after_ms": 60000,
+      "noise_threshold": 0.2,
+      "noise_hold_ms": 300
+    },
+    "steps": [
+      {
+        "now": 0,
+        "input": {
+          "type": "start",
+          "entropy": 11
+        }
+      },
+      {
+        "now": 1,
+        "input": {
+          "type": "signaling_opened"
+        }
+      },
+      {
+        "now": 2,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"welcome\",\"clientId\":\"p\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\"}"
+        }
+      },
+      {
+        "now": 3,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"b\",\"role\":\"baby\"},{\"clientId\":\"p\",\"role\":\"parent\"}]}"
+        }
+      },
+      {
+        "now": 4,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"1f2e3d4c5b6a79880918273645546372\",\"re\":\"50f5647d2380309d432a5cd27a6b13a1\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\\r\\n\"}}}"
+        }
+      },
+      {
+        "now": 5,
+        "input": {
+          "type": "attempt_local_description",
+          "attempt": 1,
+          "sdp_type": "answer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\r\n"
+        }
+      },
+      {
+        "now": 6,
+        "input": {
+          "type": "attempt_data_open",
+          "attempt": 1
+        }
+      },
+      {
+        "now": 6,
+        "input": {
+          "type": "attempt_dtls_fingerprint",
+          "attempt": 1,
+          "fingerprint": "D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94"
+        }
+      },
+      {
+        "now": 7,
+        "input": {
+          "type": "attempt_data_message",
+          "attempt": 1,
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"7a2ab526d755f39f9f250a2330424aa2325be31fc5ef0b783744573ab31cf54b\"}"
+        }
+      },
+      {
+        "now": 8,
+        "input": {
+          "type": "attempt_data_message",
+          "attempt": 1,
+          "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":8,\"seq\":1,\"rms\":0.01}"
+        }
+      },
+      {
+        "now": 600,
+        "input": {
+          "type": "attempt_data_message",
+          "attempt": 1,
+          "text": "{\"type\":\"stop_notice\",\"v\":3}"
+        }
+      },
+      {
+        "now": 700,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"p\",\"role\":\"parent\"}]}"
+        }
+      },
+      {
+        "now": 800,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"b2\",\"role\":\"baby\"},{\"clientId\":\"p\",\"role\":\"parent\"}]}"
+        }
+      },
+      {
+        "now": 30600,
+        "input": {
+          "type": "tick"
+        }
+      }
+    ],
+    "expect": [
+      [
+        {
+          "type": "open_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"hello\",\"role\":\"parent\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"protocolVersion\":3}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\"}}"
+        }
+      ],
+      [
+        {
+          "type": "create_attempt",
+          "attempt": 1,
+          "offerer": false
+        },
+        {
+          "type": "set_remote_description",
+          "attempt": 1,
+          "sdp_type": "offer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\r\n"
+        },
+        {
+          "type": "create_answer",
+          "attempt": 1
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\\r\\n\"}}}"
+        }
+      ],
+      [
+        {
+          "type": "send_data",
+          "attempt": 1,
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"060a67582a28e4197a9a6df4c68aea8db06d905dbce60ba2386e2df0c44fa931\"}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "send_data",
+          "attempt": 1,
+          "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":7,\"seq\":1}"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connected",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "emit",
+          "event": {
+            "type": "peer_heartbeat",
+            "seq": 1,
+            "rms": 0.01
+          }
+        }
+      ],
+      [
+        {
+          "type": "close_attempt",
+          "attempt": 1
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "peer_stopped"
+          }
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "peer_stopped",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": 600
+            }
+          }
+        }
+      ],
+      [],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b2\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"a356be306e9b126d812e6299272e6df0\"}}"
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"ping\"}"
+        },
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b2\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"2a4a0f1a750459c48d4bc9e17ab0580e\"}}"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "data v3: heartbeat from either role",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"heartbeat\",\"v\":3,\"t\":1,\"seq\":2}",
+    "expect": {
+      "type": "heartbeat",
+      "t": 1.0,
+      "seq": 2,
+      "battery": null,
+      "rms": null
+    }
+  },
+  {
+    "name": "data v3: v2 messages are rejected",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"listen\",\"v\":2,\"enabled\":true}",
+    "expect": null
+  },
+  {
+    "name": "data v3: device_status full",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"device_status\",\"v\":3,\"battery_pct\":85,\"charging\":true,\"ringer\":\"silent\",\"dnd\":\"alarms_only\",\"alarms_allowed\":true,\"dnd_access\":false,\"quiet_active\":true,\"next_alarm_min\":420,\"mic_silent\":false}",
+    "expect": {
+      "type": "device_status",
+      "battery_pct": 85,
+      "charging": true,
+      "ringer": "silent",
+      "dnd": "alarms_only",
+      "alarms_allowed": true,
+      "dnd_access": false,
+      "quiet_active": true,
+      "next_alarm_min": 420,
+      "mic_silent": false
+    }
+  },
+  {
+    "name": "data v3: device_status all unknown",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"device_status\",\"v\":3}",
+    "expect": {
+      "type": "device_status"
+    }
+  },
+  {
+    "name": "data v3: device_status bad ringer",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"device_status\",\"v\":3,\"ringer\":\"loud\"}",
+    "expect": null
+  },
+  {
+    "name": "data v3: device_status with noise_threshold",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"device_status\",\"v\":3,\"noise_threshold\":0.25}",
+    "expect": {
+      "type": "device_status",
+      "noise_threshold": 0.25
+    }
+  },
+  {
+    "name": "data v3: device_status unit_warnings sorted and deduplicated",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"device_status\",\"v\":3,\"unit_warnings\":[\"not_charging\",\"page_hidden\",\"not_charging\"]}",
+    "expect": {
+      "type": "device_status",
+      "unit_warnings": ["page_hidden", "not_charging"]
+    }
+  },
+  {
+    "name": "data v3: device_status unknown unit_warning rejected",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"device_status\",\"v\":3,\"unit_warnings\":[\"page_hidden\",\"bogus\"]}",
+    "expect": null
+  },
+  {
+    "name": "data v3: device_status noise_threshold out of range",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"device_status\",\"v\":3,\"noise_threshold\":2}",
+    "expect": null
+  },
+  {
+    "name": "link: set_noise_gate ignores invalid values and applies valid ones once",
+    "kind": "link",
+    "config": {
+      "role": "baby",
+      "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "paired_before": false,
+      "heartbeat_interval_ms": 10000,
+      "alarm_after_ms": 60000,
+      "noise_threshold": 0.2,
+      "noise_hold_ms": 300
+    },
+    "steps": [
+      {
+        "now": 0,
+        "input": {
+          "type": "start",
+          "entropy": 7
+        }
+      },
+      {
+        "now": 1000,
+        "input": {
+          "type": "set_noise_gate",
+          "threshold": 0.005,
+          "hold_ms": 2000
+        }
+      },
+      {
+        "now": 1001,
+        "input": {
+          "type": "set_noise_gate",
+          "threshold": 0.3,
+          "hold_ms": 500
+        }
+      },
+      {
+        "now": 1002,
+        "input": {
+          "type": "set_noise_gate",
+          "threshold": 1.5,
+          "hold_ms": 2000
+        }
+      },
+      {
+        "now": 1003,
+        "input": {
+          "type": "set_noise_gate",
+          "threshold": 0.3,
+          "hold_ms": 2000
+        }
+      },
+      {
+        "now": 1004,
+        "input": {
+          "type": "set_noise_gate",
+          "threshold": 0.3,
+          "hold_ms": 2000
+        }
+      }
+    ],
+    "expect": [
+      [
+        {
+          "type": "open_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [],
+      [],
+      [],
+      [
+        {
+          "type": "emit",
+          "event": {
+            "type": "noise_gate_changed",
+            "threshold": 0.3,
+            "hold_ms": 2000
+          }
+        }
+      ],
+      []
+    ]
+  },
+  {
+    "name": "data v3: device_status alarm horizon capped",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"device_status\",\"v\":3,\"next_alarm_min\":1441}",
+    "expect": null
+  },
+  {
+    "name": "data v3: missed_events",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"missed_events\",\"v\":3,\"count\":3,\"max_rms\":0.5,\"complete\":true,\"down_ms\":42000}",
+    "expect": {
+      "type": "missed_events",
+      "count": 3,
+      "max_rms": 0.5,
+      "complete": true,
+      "down_ms": 42000
+    }
+  },
+  {
+    "name": "data v3: missed_events negative count",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"missed_events\",\"v\":3,\"count\":-1,\"max_rms\":0.5,\"complete\":true,\"down_ms\":1}",
+    "expect": null
+  },
+  {
+    "name": "data v3: quiet_request",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"quiet_request\",\"v\":3}",
+    "expect": {
+      "type": "quiet_request"
+    }
+  },
+  {
+    "name": "data v3: stop_notice",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"stop_notice\",\"v\":3}",
+    "expect": {
+      "type": "stop_notice"
+    }
+  },
+  {
+    "name": "data v3: stop_notice with v2 envelope",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"stop_notice\",\"v\":2}",
+    "expect": null
+  },
+  {
+    "name": "derive room: 32-byte test PSK",
+    "kind": "derive_room",
+    "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+    "expect": "J8uOkdP8JbRE_-Q9zX1rxA"
+  },
+  {
+    "name": "derive room: sequential PSK",
+    "kind": "derive_room",
+    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "expect": "FrcBBWi_uGBOkaphqPhl_w"
+  },
+  {
+    "name": "pair mac v3: baby proof",
+    "kind": "pair_mac_v3",
+    "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+    "sender_role": "baby",
+    "room": "J8uOkdP8JbRE_-Q9zX1rxA",
+    "fp_sender": "aabbccdd11223344",
+    "fp_receiver": "5566778899aabbcc",
+    "expect": "55efa253527df9009115cb8ef3e90e4f5548eeea91ce65f4c8ec4f2ee8a7d027"
+  },
+  {
+    "name": "pair mac v3: parent proof for the same fingerprints differs (reflection attack)",
+    "kind": "pair_mac_v3",
+    "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+    "sender_role": "parent",
+    "room": "J8uOkdP8JbRE_-Q9zX1rxA",
+    "fp_sender": "aabbccdd11223344",
+    "fp_receiver": "5566778899aabbcc",
+    "expect": "87d3a8e77fafdc2516683a80a688d0a9b12bb90f682ccfed27531932e14da078"
+  },
+  {
+    "name": "pair mac v3: parent proof with swapped fingerprint roles",
+    "kind": "pair_mac_v3",
+    "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+    "sender_role": "parent",
+    "room": "J8uOkdP8JbRE_-Q9zX1rxA",
+    "fp_sender": "5566778899aabbcc",
+    "fp_receiver": "aabbccdd11223344",
+    "expect": "d6ba6c36cf2560953dab93344eac074e16f6c0a9a2a453841563e66f56058afe"
+  },
+  {
+    "name": "link: a fingerprint hidden in s= is no fingerprint: the attempt fails as fingerprint_invalid",
+    "kind": "link",
+    "config": {
+      "role": "parent",
+      "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "paired_before": false,
+      "heartbeat_interval_ms": 10000,
+      "alarm_after_ms": 60000,
+      "noise_threshold": 0.2,
+      "noise_hold_ms": 300
+    },
+    "steps": [
+      {
+        "now": 0,
+        "input": {
+          "type": "start",
+          "entropy": 11
+        }
+      },
+      {
+        "now": 1,
+        "input": {
+          "type": "signaling_opened"
+        }
+      },
+      {
+        "now": 2,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"welcome\",\"clientId\":\"p\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\"}"
+        }
+      },
+      {
+        "now": 3,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"b\",\"role\":\"baby\"},{\"clientId\":\"p\",\"role\":\"parent\"}]}"
+        }
+      },
+      {
+        "now": 4,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"1f2e3d4c5b6a79880918273645546372\",\"re\":\"50f5647d2380309d432a5cd27a6b13a1\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\ns=a=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\n\"}}}"
+        }
+      },
+      {
+        "now": 5,
+        "input": {
+          "type": "attempt_local_description",
+          "attempt": 1,
+          "sdp_type": "answer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\r\n"
+        }
+      },
+      {
+        "now": 6,
+        "input": {
+          "type": "attempt_data_open",
+          "attempt": 1
+        }
+      }
+    ],
+    "expect": [
+      [
+        {
+          "type": "open_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"hello\",\"role\":\"parent\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"protocolVersion\":3}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\"}}"
+        }
+      ],
+      [
+        {
+          "type": "create_attempt",
+          "attempt": 1,
+          "offerer": false
+        },
+        {
+          "type": "set_remote_description",
+          "attempt": 1,
+          "sdp_type": "offer",
+          "sdp": "v=0\r\ns=a=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\n"
+        },
+        {
+          "type": "create_answer",
+          "attempt": 1
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\\r\\n\"}}}"
+        }
+      ],
+      [
+        {
+          "type": "close_attempt",
+          "attempt": 1
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "failed",
+            "reason": "fingerprint_invalid"
+          }
+        },
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"a356be306e9b126d812e6299272e6df0\"}}"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "link: two different a=fingerprint lines fail the attempt as fingerprint_invalid",
+    "kind": "link",
+    "config": {
+      "role": "parent",
+      "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "paired_before": false,
+      "heartbeat_interval_ms": 10000,
+      "alarm_after_ms": 60000,
+      "noise_threshold": 0.2,
+      "noise_hold_ms": 300
+    },
+    "steps": [
+      {
+        "now": 0,
+        "input": {
+          "type": "start",
+          "entropy": 11
+        }
+      },
+      {
+        "now": 1,
+        "input": {
+          "type": "signaling_opened"
+        }
+      },
+      {
+        "now": 2,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"welcome\",\"clientId\":\"p\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\"}"
+        }
+      },
+      {
+        "now": 3,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"b\",\"role\":\"baby\"},{\"clientId\":\"p\",\"role\":\"parent\"}]}"
+        }
+      },
+      {
+        "now": 4,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"1f2e3d4c5b6a79880918273645546372\",\"re\":\"50f5647d2380309d432a5cd27a6b13a1\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\\r\\na=fingerprint:sha-256 00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00\\r\\n\"}}}"
+        }
+      },
+      {
+        "now": 5,
+        "input": {
+          "type": "attempt_local_description",
+          "attempt": 1,
+          "sdp_type": "answer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\r\n"
+        }
+      },
+      {
+        "now": 6,
+        "input": {
+          "type": "attempt_data_open",
+          "attempt": 1
+        }
+      }
+    ],
+    "expect": [
+      [
+        {
+          "type": "open_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"hello\",\"role\":\"parent\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"protocolVersion\":3}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\"}}"
+        }
+      ],
+      [
+        {
+          "type": "create_attempt",
+          "attempt": 1,
+          "offerer": false
+        },
+        {
+          "type": "set_remote_description",
+          "attempt": 1,
+          "sdp_type": "offer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\r\na=fingerprint:sha-256 00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00\r\n"
+        },
+        {
+          "type": "create_answer",
+          "attempt": 1
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\\r\\n\"}}}"
+        }
+      ],
+      [
+        {
+          "type": "close_attempt",
+          "attempt": 1
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "failed",
+            "reason": "fingerprint_invalid"
+          }
+        },
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"a356be306e9b126d812e6299272e6df0\"}}"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "link: a valid proof with a DTLS fingerprint that differs from the SDP never verifies",
+    "kind": "link",
+    "config": {
+      "role": "parent",
+      "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "paired_before": false,
+      "heartbeat_interval_ms": 10000,
+      "alarm_after_ms": 60000,
+      "noise_threshold": 0.2,
+      "noise_hold_ms": 300
+    },
+    "steps": [
+      {
+        "now": 0,
+        "input": {
+          "type": "start",
+          "entropy": 11
+        }
+      },
+      {
+        "now": 1,
+        "input": {
+          "type": "signaling_opened"
+        }
+      },
+      {
+        "now": 2,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"welcome\",\"clientId\":\"p\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\"}"
+        }
+      },
+      {
+        "now": 3,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"b\",\"role\":\"baby\"},{\"clientId\":\"p\",\"role\":\"parent\"}]}"
+        }
+      },
+      {
+        "now": 4,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"1f2e3d4c5b6a79880918273645546372\",\"re\":\"50f5647d2380309d432a5cd27a6b13a1\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\\r\\n\"}}}"
+        }
+      },
+      {
+        "now": 5,
+        "input": {
+          "type": "attempt_local_description",
+          "attempt": 1,
+          "sdp_type": "answer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\r\n"
+        }
+      },
+      {
+        "now": 6,
+        "input": {
+          "type": "attempt_data_open",
+          "attempt": 1
+        }
+      },
+      {
+        "now": 6,
+        "input": {
+          "type": "attempt_dtls_fingerprint",
+          "attempt": 1,
+          "fingerprint": "EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE:EE"
+        }
+      },
+      {
+        "now": 7,
+        "input": {
+          "type": "attempt_data_message",
+          "attempt": 1,
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"7a2ab526d755f39f9f250a2330424aa2325be31fc5ef0b783744573ab31cf54b\"}"
+        }
+      },
+      {
+        "now": 9,
+        "input": {
+          "type": "attempt_data_message",
+          "attempt": 1,
+          "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":9,\"seq\":1,\"rms\":0.01}"
+        }
+      }
+    ],
+    "expect": [
+      [
+        {
+          "type": "open_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"hello\",\"role\":\"parent\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"protocolVersion\":3}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\"}}"
+        }
+      ],
+      [
+        {
+          "type": "create_attempt",
+          "attempt": 1,
+          "offerer": false
+        },
+        {
+          "type": "set_remote_description",
+          "attempt": 1,
+          "sdp_type": "offer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\r\n"
+        },
+        {
+          "type": "create_answer",
+          "attempt": 1
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\\r\\n\"}}}"
+        }
+      ],
+      [
+        {
+          "type": "send_data",
+          "attempt": 1,
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"060a67582a28e4197a9a6df4c68aea8db06d905dbce60ba2386e2df0c44fa931\"}"
+        }
+      ],
+      [
+        {
+          "type": "close_attempt",
+          "attempt": 1
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "failed",
+            "reason": "dtls_fingerprint_mismatch"
+          }
+        },
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"a356be306e9b126d812e6299272e6df0\"}}"
+        }
+      ],
+      [],
+      []
+    ]
+  },
+  {
+    "name": "link: DTLS fingerprint reported first, proof second, verifies",
+    "kind": "link",
+    "config": {
+      "role": "parent",
+      "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "paired_before": false,
+      "heartbeat_interval_ms": 10000,
+      "alarm_after_ms": 60000,
+      "noise_threshold": 0.2,
+      "noise_hold_ms": 300
+    },
+    "steps": [
+      {
+        "now": 0,
+        "input": {
+          "type": "start",
+          "entropy": 11
+        }
+      },
+      {
+        "now": 1,
+        "input": {
+          "type": "signaling_opened"
+        }
+      },
+      {
+        "now": 2,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"welcome\",\"clientId\":\"p\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\"}"
+        }
+      },
+      {
+        "now": 3,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"b\",\"role\":\"baby\"},{\"clientId\":\"p\",\"role\":\"parent\"}]}"
+        }
+      },
+      {
+        "now": 4,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"1f2e3d4c5b6a79880918273645546372\",\"re\":\"50f5647d2380309d432a5cd27a6b13a1\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\\r\\n\"}}}"
+        }
+      },
+      {
+        "now": 5,
+        "input": {
+          "type": "attempt_local_description",
+          "attempt": 1,
+          "sdp_type": "answer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\r\n"
+        }
+      },
+      {
+        "now": 6,
+        "input": {
+          "type": "attempt_data_open",
+          "attempt": 1
+        }
+      },
+      {
+        "now": 6,
+        "input": {
+          "type": "attempt_dtls_fingerprint",
+          "attempt": 1,
+          "fingerprint": "D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94"
+        }
+      },
+      {
+        "now": 7,
+        "input": {
+          "type": "attempt_data_message",
+          "attempt": 1,
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"7a2ab526d755f39f9f250a2330424aa2325be31fc5ef0b783744573ab31cf54b\"}"
+        }
+      }
+    ],
+    "expect": [
+      [
+        {
+          "type": "open_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"hello\",\"role\":\"parent\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"protocolVersion\":3}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\"}}"
+        }
+      ],
+      [
+        {
+          "type": "create_attempt",
+          "attempt": 1,
+          "offerer": false
+        },
+        {
+          "type": "set_remote_description",
+          "attempt": 1,
+          "sdp_type": "offer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\r\n"
+        },
+        {
+          "type": "create_answer",
+          "attempt": 1
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\\r\\n\"}}}"
+        }
+      ],
+      [
+        {
+          "type": "send_data",
+          "attempt": 1,
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"060a67582a28e4197a9a6df4c68aea8db06d905dbce60ba2386e2df0c44fa931\"}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "send_data",
+          "attempt": 1,
+          "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":7,\"seq\":1}"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connected",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "link: a valid proof without a DTLS fingerprint report does not verify and the attempt times out",
+    "kind": "link",
+    "config": {
+      "role": "parent",
+      "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "paired_before": false,
+      "heartbeat_interval_ms": 10000,
+      "alarm_after_ms": 60000,
+      "noise_threshold": 0.2,
+      "noise_hold_ms": 300
+    },
+    "steps": [
+      {
+        "now": 0,
+        "input": {
+          "type": "start",
+          "entropy": 11
+        }
+      },
+      {
+        "now": 1,
+        "input": {
+          "type": "signaling_opened"
+        }
+      },
+      {
+        "now": 2,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"welcome\",\"clientId\":\"p\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\"}"
+        }
+      },
+      {
+        "now": 3,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"b\",\"role\":\"baby\"},{\"clientId\":\"p\",\"role\":\"parent\"}]}"
+        }
+      },
+      {
+        "now": 4,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"1f2e3d4c5b6a79880918273645546372\",\"re\":\"50f5647d2380309d432a5cd27a6b13a1\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\\r\\n\"}}}"
+        }
+      },
+      {
+        "now": 5,
+        "input": {
+          "type": "attempt_local_description",
+          "attempt": 1,
+          "sdp_type": "answer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\r\n"
+        }
+      },
+      {
+        "now": 6,
+        "input": {
+          "type": "attempt_data_open",
+          "attempt": 1
+        }
+      },
+      {
+        "now": 7,
+        "input": {
+          "type": "attempt_data_message",
+          "attempt": 1,
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"7a2ab526d755f39f9f250a2330424aa2325be31fc5ef0b783744573ab31cf54b\"}"
+        }
+      },
+      {
+        "now": 25000,
+        "input": {
+          "type": "tick"
+        }
+      }
+    ],
+    "expect": [
+      [
+        {
+          "type": "open_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"hello\",\"role\":\"parent\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"protocolVersion\":3}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\"}}"
+        }
+      ],
+      [
+        {
+          "type": "create_attempt",
+          "attempt": 1,
+          "offerer": false
+        },
+        {
+          "type": "set_remote_description",
+          "attempt": 1,
+          "sdp_type": "offer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\r\n"
+        },
+        {
+          "type": "create_answer",
+          "attempt": 1
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\\r\\n\"}}}"
+        }
+      ],
+      [
+        {
+          "type": "send_data",
+          "attempt": 1,
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"060a67582a28e4197a9a6df4c68aea8db06d905dbce60ba2386e2df0c44fa931\"}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"ping\"}"
+        },
+        {
+          "type": "close_attempt",
+          "attempt": 1
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "failed",
+            "reason": "attempt_timeout"
+          }
+        },
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"a356be306e9b126d812e6299272e6df0\"}}"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 1,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "link: require_dtls_fingerprint=false verifies on the proof alone (legacy platforms)",
+    "kind": "link",
+    "config": {
+      "role": "parent",
+      "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "paired_before": false,
+      "heartbeat_interval_ms": 10000,
+      "alarm_after_ms": 60000,
+      "noise_threshold": 0.2,
+      "noise_hold_ms": 300,
+      "require_dtls_fingerprint": false
+    },
+    "steps": [
+      {
+        "now": 0,
+        "input": {
+          "type": "start",
+          "entropy": 11
+        }
+      },
+      {
+        "now": 1,
+        "input": {
+          "type": "signaling_opened"
+        }
+      },
+      {
+        "now": 2,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"welcome\",\"clientId\":\"p\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\"}"
+        }
+      },
+      {
+        "now": 3,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"b\",\"role\":\"baby\"},{\"clientId\":\"p\",\"role\":\"parent\"}]}"
+        }
+      },
+      {
+        "now": 4,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"1f2e3d4c5b6a79880918273645546372\",\"re\":\"50f5647d2380309d432a5cd27a6b13a1\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\\r\\n\"}}}"
+        }
+      },
+      {
+        "now": 5,
+        "input": {
+          "type": "attempt_local_description",
+          "attempt": 1,
+          "sdp_type": "answer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\r\n"
+        }
+      },
+      {
+        "now": 6,
+        "input": {
+          "type": "attempt_data_open",
+          "attempt": 1
+        }
+      },
+      {
+        "now": 7,
+        "input": {
+          "type": "attempt_data_message",
+          "attempt": 1,
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"7a2ab526d755f39f9f250a2330424aa2325be31fc5ef0b783744573ab31cf54b\"}"
+        }
+      }
+    ],
+    "expect": [
+      [
+        {
+          "type": "open_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"hello\",\"role\":\"parent\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"protocolVersion\":3}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\"}}"
+        }
+      ],
+      [
+        {
+          "type": "create_attempt",
+          "attempt": 1,
+          "offerer": false
+        },
+        {
+          "type": "set_remote_description",
+          "attempt": 1,
+          "sdp_type": "offer",
+          "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 D5:A6:11:C5:08:EC:7C:E2:10:41:DF:9F:CF:35:D1:85:CE:93:A9:6F:1D:4F:68:45:20:C5:65:FD:5A:7A:7E:94\r\n"
+        },
+        {
+          "type": "create_answer",
+          "attempt": 1
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"sdp\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 A2:D2:A3:A9:D7:10:71:53:33:21:26:7D:5D:71:A8:9D:F6:1D:8A:8E:9D:17:BC:1B:9D:56:E3:BB:61:74:72:CE\\r\\n\"}}}"
+        }
+      ],
+      [
+        {
+          "type": "send_data",
+          "attempt": 1,
+          "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"060a67582a28e4197a9a6df4c68aea8db06d905dbce60ba2386e2df0c44fa931\"}"
+        }
+      ],
+      [
+        {
+          "type": "send_data",
+          "attempt": 1,
+          "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":7,\"seq\":1}"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connected",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "link: UNSUPPORTED_PROTOCOL after welcome is ignored",
+    "kind": "link",
+    "config": {
+      "role": "baby",
+      "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "paired_before": false,
+      "heartbeat_interval_ms": 10000,
+      "alarm_after_ms": 60000,
+      "noise_threshold": 0.2,
+      "noise_hold_ms": 300
+    },
+    "steps": [
+      {
+        "now": 0,
+        "input": {
+          "type": "start",
+          "entropy": 3
+        }
+      },
+      {
+        "now": 1,
+        "input": {
+          "type": "signaling_opened"
+        }
+      },
+      {
+        "now": 2,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"welcome\",\"clientId\":\"b\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\"}"
+        }
+      },
+      {
+        "now": 3,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"error\",\"code\":\"UNSUPPORTED_PROTOCOL\",\"message\":\"x\"}"
+        }
+      },
+      {
+        "now": 4,
+        "input": {
+          "type": "tick"
+        }
+      }
+    ],
+    "expect": [
+      [
+        {
+          "type": "open_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"hello\",\"role\":\"baby\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"protocolVersion\":3}"
+        }
+      ],
+      [],
+      [],
+      []
+    ]
+  },
+  {
+    "name": "link: UNSUPPORTED_PROTOCOL as the reply to hello is terminal",
+    "kind": "link",
+    "config": {
+      "role": "baby",
+      "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "paired_before": false,
+      "heartbeat_interval_ms": 10000,
+      "alarm_after_ms": 60000,
+      "noise_threshold": 0.2,
+      "noise_hold_ms": 300
+    },
+    "steps": [
+      {
+        "now": 0,
+        "input": {
+          "type": "start",
+          "entropy": 3
+        }
+      },
+      {
+        "now": 1,
+        "input": {
+          "type": "signaling_opened"
+        }
+      },
+      {
+        "now": 2,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"error\",\"code\":\"UNSUPPORTED_PROTOCOL\",\"message\":\"x\"}"
+        }
+      }
+    ],
+    "expect": [
+      [
+        {
+          "type": "open_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"hello\",\"role\":\"baby\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"protocolVersion\":3}"
+        }
+      ],
+      [
+        {
+          "type": "close_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "failed_needs_user",
+              "level": 0,
+              "key": "update_required",
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "link: UNSUPPORTED_PROTOCOL as the reply to hello is never terminal once paired; the alarm still rises",
+    "kind": "link",
+    "config": {
+      "role": "baby",
+      "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "paired_before": true,
+      "heartbeat_interval_ms": 10000,
+      "alarm_after_ms": 60000,
+      "noise_threshold": 0.2,
+      "noise_hold_ms": 300
+    },
+    "steps": [
+      {
+        "now": 0,
+        "input": {
+          "type": "start",
+          "entropy": 3
+        }
+      },
+      {
+        "now": 1,
+        "input": {
+          "type": "signaling_opened"
+        }
+      },
+      {
+        "now": 2,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"error\",\"code\":\"UNSUPPORTED_PROTOCOL\",\"message\":\"x\"}"
+        }
+      },
+      {
+        "now": 70000,
+        "input": {
+          "type": "tick"
+        }
+      },
+      {
+        "now": 100000,
+        "input": {
+          "type": "tick"
+        }
+      }
+    ],
+    "expect": [
+      [
+        {
+          "type": "open_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"hello\",\"role\":\"baby\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"protocolVersion\":3}"
+        }
+      ],
+      [
+        {
+          "type": "close_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 0,
+              "key": null,
+              "cause": "update_required",
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "open_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "link_lost",
+            "down_ms": 70000
+          }
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 2,
+              "key": null,
+              "cause": "update_required",
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "close_signaling"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "link: signaling stop_notice is ignored before any verification in this run",
+    "kind": "link",
+    "config": {
+      "role": "parent",
+      "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "paired_before": false,
+      "heartbeat_interval_ms": 10000,
+      "alarm_after_ms": 60000,
+      "noise_threshold": 0.2,
+      "noise_hold_ms": 300
+    },
+    "steps": [
+      {
+        "now": 0,
+        "input": {
+          "type": "start",
+          "entropy": 11
+        }
+      },
+      {
+        "now": 1,
+        "input": {
+          "type": "signaling_opened"
+        }
+      },
+      {
+        "now": 2,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"welcome\",\"clientId\":\"p\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\"}"
+        }
+      },
+      {
+        "now": 3,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"b\",\"role\":\"baby\"},{\"clientId\":\"p\",\"role\":\"parent\"}]}"
+        }
+      },
+      {
+        "now": 10,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"b\",\"payload\":{\"type\":\"stop_notice\"}}"
+        }
+      },
+      {
+        "now": 11,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"b\",\"payload\":{\"type\":\"stop_notice\",\"aid\":\"5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a\",\"mac\":\"0000000000000000000000000000000000000000000000000000000000000000\"}}"
+        }
+      },
+      {
+        "now": 12,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"b\",\"payload\":{\"type\":\"stop_notice\",\"aid\":\"5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a\",\"mac\":\"8da8833bf71567420bc30efcc2bbcf6283a0695e4d431d3258a09f488871ca13\"}}"
+        }
+      },
+      {
+        "now": 13,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"b\",\"payload\":{\"type\":\"stop_notice\",\"aid\":\"5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a\",\"mac\":\"473bd088c5a388a39d5bd13a0b071914b47eb2266fb67527d4fdfa366be56bc2\"}}"
+        }
+      },
+      {
+        "now": 14,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"b\",\"payload\":{\"type\":\"stop_notice\",\"aid\":\"5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a\",\"mac\":\"473bd088c5a388a39d5bd13a0b071914b47eb2266fb67527d4fdfa366be56bc2\"}}"
+        }
+      },
+      {
+        "now": 70000,
+        "input": {
+          "type": "tick"
+        }
+      }
+    ],
+    "expect": [
+      [
+        {
+          "type": "open_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"hello\",\"role\":\"parent\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"protocolVersion\":3}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\"}}"
+        }
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [
+        {
+          "type": "close_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "link_lost",
+            "down_ms": 70000
+          }
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 2,
+              "key": null,
+              "cause": "server_unreachable",
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "link: an unauthenticated signaling stop_notice does not mute escalation",
+    "kind": "link",
+    "config": {
+      "role": "parent",
+      "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "paired_before": false,
+      "heartbeat_interval_ms": 10000,
+      "alarm_after_ms": 60000,
+      "noise_threshold": 0.2,
+      "noise_hold_ms": 300
+    },
+    "steps": [
+      {
+        "now": 0,
+        "input": {
+          "type": "start",
+          "entropy": 11
+        }
+      },
+      {
+        "now": 1,
+        "input": {
+          "type": "signaling_opened"
+        }
+      },
+      {
+        "now": 2,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"welcome\",\"clientId\":\"p\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\"}"
+        }
+      },
+      {
+        "now": 3,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"b\",\"role\":\"baby\"},{\"clientId\":\"p\",\"role\":\"parent\"}]}"
+        }
+      },
+      {
+        "now": 10,
+        "input": {
+          "type": "signaling_message",
+          "text": "{\"type\":\"signal\",\"from\":\"b\",\"payload\":{\"type\":\"stop_notice\"}}"
+        }
+      },
+      {
+        "now": 70000,
+        "input": {
+          "type": "tick"
+        }
+      }
+    ],
+    "expect": [
+      [
+        {
+          "type": "open_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 0,
+              "key": null,
+              "cause": null,
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"hello\",\"role\":\"parent\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"protocolVersion\":3}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "send_signaling",
+          "text": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"b\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"50f5647d2380309d432a5cd27a6b13a1\"}}"
+        }
+      ],
+      [],
+      [
+        {
+          "type": "close_signaling"
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "link_lost",
+            "down_ms": 70000
+          }
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "status",
+            "status": {
+              "state": "connecting",
+              "level": 2,
+              "key": null,
+              "cause": "server_unreachable",
+              "acknowledged_until": null,
+              "last_alive_ms": null
+            }
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "stop_mac: baby to p",
+    "kind": "stop_mac",
+    "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+    "sender_role": "baby",
+    "room": "J8uOkdP8JbRE_-Q9zX1rxA",
+    "epoch": "1111111111111111aaaaaaaaaaaaaaaa.2222222222222222bbbbbbbbbbbbbbbb",
+    "receiver_client_id": "p",
+    "sender_aid": "5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a",
+    "expect": "fe8e32bdc4ee8ed4575937d87702fef78fe4474dd6fdc75db3dfb65b75bbda8f"
+  },
+  {
+    "name": "stop_mac: parent to c2",
+    "kind": "stop_mac",
+    "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+    "sender_role": "parent",
+    "room": "J8uOkdP8JbRE_-Q9zX1rxA",
+    "epoch": "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f.f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0",
+    "receiver_client_id": "c2",
+    "sender_aid": "0123456789abcdef0123456789abcdef",
+    "expect": "7b3a2302f7959ef19c0174afad3510fff2e2f3b4d77e21f4f2d453809ebec3e5"
+  },
+  {
+    "name": "data v3: noise_alert rms above 1 is clamped",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"noise_alert\",\"v\":3,\"rms\":7.5,\"t\":4}",
+    "expect": {
+      "type": "noise_alert",
+      "rms": 1.0,
+      "t": 4.0,
+      "probe": false
+    }
+  },
+  {
+    "name": "data v3: device_status next_alarm_min is rounded to 15 minutes",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"device_status\",\"v\":3,\"next_alarm_min\":37}",
+    "expect": {
+      "type": "device_status",
+      "next_alarm_min": 30
+    }
+  }
+]

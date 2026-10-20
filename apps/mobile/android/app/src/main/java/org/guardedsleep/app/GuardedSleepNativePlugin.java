@@ -1,5 +1,8 @@
 package org.guardedsleep.app;
 
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -40,8 +43,61 @@ public class GuardedSleepNativePlugin extends Plugin {
   private boolean immersiveModeWanted = false;
 
   private LanSignalingWebSocketServer lanSignalingServer;
+  private NativeSignalingWebSocket nativeSignalingWebSocket;
   private WifiManager.WifiLock wifiLock;
   private WifiManager.MulticastLock multicastLock;
+  private AudioFocusRequest alertAudioFocusRequest;
+  private AudioManager.OnAudioFocusChangeListener alertAudioFocusListener;
+
+  @PluginMethod
+  public void nativeSignalingConnect(PluginCall call) {
+    String url = call.getString("url");
+    if (url == null || url.trim().isEmpty()) {
+      call.reject("url required");
+      return;
+    }
+    stopNativeSignalingInternal();
+    nativeSignalingWebSocket = new NativeSignalingWebSocket(this, url.trim(), call);
+  }
+
+  @PluginMethod
+  public void nativeSignalingSend(PluginCall call) {
+    String text = call.getString("text");
+    if (text == null) {
+      call.reject("text required");
+      return;
+    }
+    if (nativeSignalingWebSocket == null) {
+      call.reject("no native signaling connection");
+      return;
+    }
+    nativeSignalingWebSocket.send(text);
+    call.resolve();
+  }
+
+  @PluginMethod
+  public void nativeSignalingClose(PluginCall call) {
+    stopNativeSignalingInternal();
+    call.resolve();
+  }
+
+  private void stopNativeSignalingInternal() {
+    if (nativeSignalingWebSocket != null) {
+      nativeSignalingWebSocket.closeQuietly();
+      nativeSignalingWebSocket = null;
+    }
+  }
+
+  /** Package-visible bridge: Capacitor {@code notifyListeners} is protected. */
+  void emitNativeSignalingMessage(String text) {
+    JSObject payload = new JSObject();
+    payload.put("text", text);
+    notifyListeners("nativeSignalingMessage", payload);
+  }
+
+  void emitNativeSignalingClosed() {
+    notifyListeners("nativeSignalingClose", new JSObject());
+  }
 
   @PluginMethod
   public void bringToForeground(PluginCall call) {
@@ -140,6 +196,74 @@ public class GuardedSleepNativePlugin extends Plugin {
     call.resolve();
   }
 
+  /**
+   * ADR-011: route alert / probe playback — alarm audio focus + optional speakerphone for WebRTC
+   * output in the WebView.
+   */
+  @PluginMethod
+  public void applyAlertAudioRouting(PluginCall call) {
+    Context ctx = getContext();
+    if (ctx == null) {
+      call.reject("No context");
+      return;
+    }
+    String mode = call.getString("mode", "default");
+    AudioManager am = (AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
+    if (am == null) {
+      call.reject("No AudioManager");
+      return;
+    }
+
+    releaseAlertAudioFocusInternal(am);
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      AudioAttributes attrs =
+          new AudioAttributes.Builder()
+              .setUsage(AudioAttributes.USAGE_ALARM)
+              .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+              .build();
+      alertAudioFocusListener = focusChange -> {};
+      alertAudioFocusRequest =
+          new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+              .setAudioAttributes(attrs)
+              .setOnAudioFocusChangeListener(alertAudioFocusListener)
+              .build();
+      am.requestAudioFocus(alertAudioFocusRequest);
+    } else {
+      am.requestAudioFocus(
+          null, AudioManager.STREAM_ALARM, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+    }
+
+    boolean speaker = "speaker".equals(mode) || "speaker_default".equals(mode);
+    am.setMode(AudioManager.MODE_NORMAL);
+    am.setSpeakerphoneOn(speaker);
+
+    JSObject ret = new JSObject();
+    ret.put("speakerphone", speaker);
+    call.resolve(ret);
+  }
+
+  @PluginMethod
+  public void releaseAlertAudioRouting(PluginCall call) {
+    Context ctx = getContext();
+    if (ctx != null) {
+      AudioManager am = (AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
+      if (am != null) {
+        releaseAlertAudioFocusInternal(am);
+        am.setSpeakerphoneOn(false);
+      }
+    }
+    call.resolve();
+  }
+
+  private void releaseAlertAudioFocusInternal(AudioManager am) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && alertAudioFocusRequest != null) {
+      am.abandonAudioFocusRequest(alertAudioFocusRequest);
+      alertAudioFocusRequest = null;
+      alertAudioFocusListener = null;
+    }
+  }
+
   @PluginMethod
   public void openBatterySettings(PluginCall call) {
     Activity activity = getActivity();
@@ -149,19 +273,43 @@ public class GuardedSleepNativePlugin extends Plugin {
       return;
     }
     String pkg = activity != null ? activity.getPackageName() : ctx.getPackageName();
-    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-    intent.setData(android.net.Uri.parse("package:" + pkg));
-    try {
-      if (activity != null) {
-        activity.startActivity(intent);
-      } else {
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        ctx.startActivity(intent);
-      }
-      call.resolve();
-    } catch (Exception e) {
-      Log.e(TAG, "openBatterySettings", e);
-      call.reject("Could not open app settings", e);
+    android.net.Uri pkgUri = android.net.Uri.parse("package:" + pkg);
+
+    Runnable launch =
+        () -> {
+          Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+          intent.setData(pkgUri);
+          try {
+            if (activity != null) {
+              activity.startActivity(intent);
+            } else {
+              intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+              ctx.startActivity(intent);
+            }
+            call.resolve();
+          } catch (Exception e) {
+            Log.w(TAG, "battery optimization intent failed, falling back to app details", e);
+            Intent fallback = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            fallback.setData(pkgUri);
+            try {
+              if (activity != null) {
+                activity.startActivity(fallback);
+              } else {
+                fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                ctx.startActivity(fallback);
+              }
+              call.resolve();
+            } catch (Exception fallbackError) {
+              Log.e(TAG, "openBatterySettings", fallbackError);
+              call.reject("Could not open battery settings", fallbackError);
+            }
+          }
+        };
+
+    if (activity != null) {
+      activity.runOnUiThread(launch);
+    } else {
+      launch.run();
     }
   }
 
@@ -526,7 +674,15 @@ public class GuardedSleepNativePlugin extends Plugin {
   @Override
   protected void handleOnDestroy() {
     immersiveModeWanted = false;
+    Context ctx = getContext();
+    if (ctx != null) {
+      AudioManager am = (AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
+      if (am != null) {
+        releaseAlertAudioFocusInternal(am);
+      }
+    }
     stopLanSignalingServerInternal();
+    stopNativeSignalingInternal();
     stopNsdAdvertiseInternal();
     stopNsdDiscoveryInternal();
     super.handleOnDestroy();

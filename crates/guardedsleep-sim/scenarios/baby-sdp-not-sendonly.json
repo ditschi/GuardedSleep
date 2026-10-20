@@ -1,0 +1,51 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "baby-sdp-not-sendonly",
+  "description": "A baby whose offer is not sendonly never lets an offer leave the device (child-side silence).",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby",
+      "sdp_direction": "sendrecv"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 40000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "event": "failed",
+      "where": {
+        "reason": "baby_sdp_not_sendonly"
+      },
+      "count_min": 1
+    },
+    {
+      "peer": "baby",
+      "sent_signal": "sdp",
+      "count_max": 0
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "connected"
+        }
+      }
+    }
+  ]
+}

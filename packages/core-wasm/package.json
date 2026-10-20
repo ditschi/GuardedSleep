@@ -1,0 +1,24 @@
+{
+  "name": "@guardedsleep/core-wasm",
+  "version": "0.0.1",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./web": "./src/web.ts",
+    "./node": "./src/node.ts",
+    "./pkg/*": "./pkg/*"
+  },
+  "scripts": {
+    "build": "bash ../../scripts/core-build.sh wasm && node scripts/copy-pkg.mjs",
+    "check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^6.0.2",
+    "vitest": "^3.2.4"
+  }
+}

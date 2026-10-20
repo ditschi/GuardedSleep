@@ -58,7 +58,7 @@ From the **repository root** (with `pnpm` and dependencies installed):
    ./gradlew assembleDebug
    ```
 
-   Output (typical): `apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk`
+   Output: `apps/mobile/android/app/build/outputs/apk/debug/guardedsleep-debug-v<version>.apk` (e.g. `guardedsleep-debug-v1.0.apk`)
 
 3. **Release APK / AAB** (after you configure signing)
 
@@ -119,7 +119,7 @@ The workflow [`.github/workflows/android.yml`](../../.github/workflows/android.y
 - **`main` / `master` / `develop`** — same path filters on push.
 - **Tags** `mobile-v*` — Release Please tags for the `mobile` component; use these runs to download an APK that matches a published app version.
 
-Steps mirror local builds: `pnpm install`, `pnpm --filter @guardedsleep/mobile build`, `cap sync`, then `./gradlew assembleDebug` with **Temurin JDK 21** and **Android SDK 35** (`android-actions/setup-android@v4`). The artifact is the standard Capacitor output: `app-debug.apk` under `app/build/outputs/apk/debug/`.
+Steps mirror local builds: `pnpm install`, `pnpm --filter @guardedsleep/mobile build`, `cap sync`, then `./gradlew assembleDebug` with **Temurin JDK 21** and **Android SDK 35** (`android-actions/setup-android@v4`). The artifact is the Capacitor output: `guardedsleep-debug-v*.apk` under `app/build/outputs/apk/debug/`.
 
 **Not covered in CI:** signed **release** / Play **AAB** builds (keystore secrets and Gradle wiring). The root `ci.yml` job still builds the static web bundle only; the Android workflow is additive.
 

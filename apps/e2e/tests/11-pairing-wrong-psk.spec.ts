@@ -1,48 +1,34 @@
 import { expect, test } from "@playwright/test";
 import { join } from "node:path";
 import { fixturesDir, launchDualContexts } from "./utils/dual-context";
-import { startSession } from "./utils/pairing";
-import { waitForEitherFailed } from "./utils/probes";
+import { readInvite, pasteInvite, startSession } from "./utils/pairing";
+import { readBar, waitForCause } from "./utils/probes";
 
+/** Changes a character in the middle of the PSK so the decoded key really differs. */
 function corruptInvitePsk(inviteJson: string): string {
   const o = JSON.parse(inviteJson) as { k: string };
-  const k = o.k;
-  const last = k.slice(-1);
-  const flip = last === "a" ? "b" : "a";
-  o.k = `${k.slice(0, -1)}${flip}`;
+  const i = 10;
+  o.k = `${o.k.slice(0, i)}${o.k[i] === "A" ? "B" : "A"}${o.k.slice(i + 1)}`;
   return JSON.stringify(o);
 }
 
-test("pairing: wrong PSK in pasted invite leads to failure (pair_proof)", async () => {
+test("pairing: a wrong PSK is a different room, so the phones never pair and the parent shows why", async () => {
+  test.setTimeout(150_000);
   const dual = await launchDualContexts({
     babyFakeWav: join(fixturesDir, "silence-30s.wav"),
     parentFakeWav: join(fixturesDir, "silence-30s.wav"),
   });
   try {
-    await dual.babyPage.goto("/");
-    await dual.babyPage.getByTestId("role-baby").click();
-    await dual.babyPage.waitForURL(/\/pair\?role=baby/);
-    await dual.babyPage.getByTestId("pair-start").click();
-    await dual.babyPage.waitForURL(/\/baby\?/);
-
-    const invite = await dual.babyPage.evaluate(
-      () => window.__guardedsleep_test?.getInviteJson?.() ?? "",
-    );
-    expect(invite.length).toBeGreaterThan(20);
-    const badInvite = corruptInvitePsk(invite);
-
+    await dual.babyPage.goto("/baby");
     await startSession(dual.babyPage);
+    const invite = await readInvite(dual.babyPage);
+    await pasteInvite(dual.parentPage, corruptInvitePsk(invite));
 
-    await dual.parentPage.goto("/");
-    await dual.parentPage.getByTestId("role-parent").click();
-    await dual.parentPage.waitForURL(/\/pair\?role=parent/);
-    await dual.parentPage.getByTestId("parent-join-field").fill(badInvite);
-    await dual.parentPage.keyboard.press("Enter");
-    await dual.parentPage.waitForURL(/\/parent\?/);
-
-    await startSession(dual.parentPage);
-
-    await waitForEitherFailed(dual.babyPage, dual.parentPage, 40_000);
+    // Level 2 (60 s without contact) brings the troubleshooter with the cause hint.
+    await waitForCause(dual.parentPage, "peer_absent", 100_000);
+    expect((await readBar(dual.parentPage)).state).not.toBe("connected");
+    expect((await readBar(dual.babyPage)).state).not.toBe("connected");
+    await expect(dual.parentPage.getByTestId("link_help")).toBeVisible();
   } finally {
     await dual.dispose();
   }

@@ -1,0 +1,72 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "time-jump-no-peer-loss",
+  "description": "ADR-017 section 12: the clock jumps 10 min (Doze) but traffic was kept; the verified attempts survive and nothing alarms.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 30000,
+      "do": "time_jump",
+      "ms": 600000,
+      "peer_traffic": "kept"
+    },
+    {
+      "at": 700000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 20000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 20000
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 700000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 700000
+    },
+    {
+      "peer": "baby",
+      "never": "link_lost"
+    },
+    {
+      "peer": "parent",
+      "never": "link_lost"
+    },
+    {
+      "peer": "baby",
+      "never": "failed",
+      "within_ms": [30000, 700000]
+    },
+    {
+      "peer": "parent",
+      "never": "failed",
+      "within_ms": [30000, 700000]
+    }
+  ]
+}

@@ -11,6 +11,8 @@ export type AddPeerResult = "ok" | "baby_taken" | "parent_cap";
 
 export class SignalingRoom {
   readonly roomId: string;
+  /** Protocol version of the first member; reset when the room empties. */
+  protocolVersion: number | undefined;
   private readonly peers = new Map<string, RoomPeer>();
   private readonly maxParents: number;
 
@@ -37,6 +39,7 @@ export class SignalingRoom {
 
   remove(clientId: string): void {
     this.peers.delete(clientId);
+    if (this.peers.size === 0) this.protocolVersion = undefined;
   }
 
   /** Other peer when exactly one counterpart exists (legacy 1:1 hint). */
@@ -74,6 +77,10 @@ export class RoomRegistry {
 
   constructor(maxParents: number) {
     this.maxParents = maxParents;
+  }
+
+  peek(roomId: string): SignalingRoom | undefined {
+    return this.rooms.get(roomId);
   }
 
   getOrCreate(roomId: string): SignalingRoom {

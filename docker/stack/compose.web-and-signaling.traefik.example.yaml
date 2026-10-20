@@ -1,3 +1,4 @@
+# DEPRECATED: use compose.traefik.yaml + traefik.env.example (one domain, configurable via .env).
 # Example: Traefik TLS for both the static PWA and the signaling WebSocket.
 # Prerequisites: external Docker network `proxy` attached to your Traefik container; DNS for app.example.com and signal.example.com.
 #
@@ -25,16 +26,21 @@ services:
       SIGNALING_ALLOWED_ORIGINS: "${SIGNALING_ALLOWED_ORIGINS:-https://app.example.com}"
       SIGNALING_HELLO_TIMEOUT_MS: "${SIGNALING_HELLO_TIMEOUT_MS:-}"
       SIGNALING_MAX_PARENTS: "${SIGNALING_MAX_PARENTS:-}"
+      SIGNALING_PING_INTERVAL_MS: "${SIGNALING_PING_INTERVAL_MS:-}"
+      SIGNALING_HELLO_RATE_PER_MIN: "${SIGNALING_HELLO_RATE_PER_MIN:-}"
+      SIGNALING_NEW_ROOM_RATE_PER_MIN: "${SIGNALING_NEW_ROOM_RATE_PER_MIN:-}"
+      SIGNALING_TRUST_PROXY: "${SIGNALING_TRUST_PROXY:-}"
+      SIGNALING_TRUSTED_PROXY_HOPS: "${SIGNALING_TRUSTED_PROXY_HOPS:-}"
     networks:
       - proxy
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.ocsignal.rule=Host(`signal.example.com`)"
-      - "traefik.http.routers.ocsignal.entrypoints=websecure"
-      - "traefik.http.routers.ocsignal.tls=true"
-      - "traefik.http.routers.ocsignal.tls.certresolver=letsencrypt"
-      - "traefik.http.services.ocsignal.loadbalancer.server.port=8787"
+      - "traefik.http.routers.guardedsleep-signaling.rule=Host(`signal.example.com`)"
+      - "traefik.http.routers.guardedsleep-signaling.entrypoints=websecure"
+      - "traefik.http.routers.guardedsleep-signaling.tls=true"
+      - "traefik.http.routers.guardedsleep-signaling.tls.certresolver=letsencrypt"
+      - "traefik.http.services.guardedsleep-signaling.loadbalancer.server.port=8787"
 
   web:
     image: guardedsleep-web:local
@@ -43,11 +49,11 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.ocweb.rule=Host(`app.example.com`)"
-      - "traefik.http.routers.ocweb.entrypoints=websecure"
-      - "traefik.http.routers.ocweb.tls=true"
-      - "traefik.http.routers.ocweb.tls.certresolver=letsencrypt"
-      - "traefik.http.services.ocweb.loadbalancer.server.port=80"
+      - "traefik.http.routers.guardedsleep-web.rule=Host(`app.example.com`)"
+      - "traefik.http.routers.guardedsleep-web.entrypoints=websecure"
+      - "traefik.http.routers.guardedsleep-web.tls=true"
+      - "traefik.http.routers.guardedsleep-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.guardedsleep-web.loadbalancer.server.port=80"
 
 networks:
   proxy:

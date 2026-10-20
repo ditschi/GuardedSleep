@@ -1,0 +1,54 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "drop-data-baby",
+  "description": "test-schemas example: the baby's DataChannel traffic stops; the parent loses liveness (25 s) and raises link_lost 60 s after the last message.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 30000,
+      "do": "drop_data",
+      "from": "baby"
+    },
+    {
+      "at": 140000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 25000
+    },
+    {
+      "peer": "parent",
+      "event": "link_lost",
+      "count": 1,
+      "since_last_contact_ms": [60000, 62000],
+      "within_ms": [60000, 100000]
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    }
+  ]
+}

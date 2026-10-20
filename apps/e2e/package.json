@@ -1,15 +1,21 @@
 {
   "name": "@guardedsleep/e2e",
   "private": true,
+  "license": "AGPL-3.0-or-later",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "generate-fixtures": "node ./scripts/generate-fixtures.mjs",
     "test": "pnpm --filter @guardedsleep/signaling-server build && pnpm run generate-fixtures && playwright test",
+    "test:lan": "pnpm --filter @guardedsleep/signaling-server build && pnpm run generate-fixtures && playwright test tests/16-lan-ip-connect.spec.ts",
+    "test:hybrid": "GUARDEDSLEEP_HYBRID_E2E=1 pnpm --filter @guardedsleep/signaling-server build && pnpm run generate-fixtures && GUARDEDSLEEP_HYBRID_E2E=1 playwright test tests/hybrid",
+    "test:hybrid:lan": "GUARDEDSLEEP_HYBRID_E2E=1 GUARDEDSLEEP_HYBRID_LAN=1 pnpm --filter @guardedsleep/signaling-server build && pnpm run generate-fixtures && GUARDEDSLEEP_HYBRID_E2E=1 GUARDEDSLEEP_HYBRID_LAN=1 playwright test tests/hybrid/03-hybrid-lan-ws-emulator-browser-connect.spec.ts tests/hybrid/04-hybrid-lan-wss-emulator-browser-connect.spec.ts",
+    "test:hybrid:lan-ws": "GUARDEDSLEEP_HYBRID_E2E=1 GUARDEDSLEEP_HYBRID_LAN=1 pnpm --filter @guardedsleep/signaling-server build && pnpm run generate-fixtures && GUARDEDSLEEP_HYBRID_E2E=1 GUARDEDSLEEP_HYBRID_LAN=1 playwright test tests/hybrid/03-hybrid-lan-ws-emulator-browser-connect.spec.ts",
+    "test:hybrid:lan-wss": "GUARDEDSLEEP_HYBRID_E2E=1 GUARDEDSLEEP_HYBRID_LAN=1 pnpm --filter @guardedsleep/signaling-server build && pnpm run generate-fixtures && GUARDEDSLEEP_HYBRID_E2E=1 GUARDEDSLEEP_HYBRID_LAN=1 playwright test tests/hybrid/04-hybrid-lan-wss-emulator-browser-connect.spec.ts",
     "test:ui": "pnpm --filter @guardedsleep/signaling-server build && pnpm run generate-fixtures && playwright test --ui"
   },
   "devDependencies": {
-    "@playwright/test": "^1.50.1",
+    "@playwright/test": "1.60.0",
     "@types/node": "^22.10.0",
     "@types/ws": "^8.18.1",
     "ws": "^8.18.3"

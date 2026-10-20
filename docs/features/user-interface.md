@@ -15,7 +15,7 @@ The user interface must be simple, reliable, and usable under stress (tired pare
 - `[STATUS: DECIDED]` Connection quality indicator (good/medium/poor from WebRTC stats) -- **MVP**
 - `[STATUS: DECIDED]` Baby battery level display on parent device -- **MVP**
 - `[STATUS: DECIDED]` Screen wake lock option in listen mode (for party/event scenarios) -- **MVP**
-- `[STATUS: IDEA]` Multi-language support (i18n): important for community adoption
+- `[STATUS: DECIDED]` Multi-language support: **English, German, French and Spanish are officially supported from Phase 1** (owner decision 2026-10-19); further languages by community contribution (`[STATUS: IDEA]`) -- **MVP**
 - `[STATUS: IDEA]` Temperature / humidity display: show sensor data if the device supports it
 - `[STATUS: DECIDED]` **MVP:** **Ambient connection affordance** on parent monitoring screen (e.g. thin top-edge glow / bar: green connected, yellow reconnecting, red disconnected) so "monitoring off" is noticeable at a glance ([failure-model.md](../concept/failure-model.md), [ui-design.md](../technical/ui-design.md)).
 - `[STATUS: DECIDED]` **MVP:** **Indicator training** during onboarding -- show "connected" vs "disconnected" visuals once; copy explains that missing green indicator means you are not monitoring.
@@ -93,9 +93,11 @@ Rule: **all defaults must work in both quiet home nights and loud social venues*
 
 ### Multi-Language Support (i18n)
 
-- English as the default language
-- Architecture supports easy addition of new languages
-- Community can contribute translations
+> STATUS: DECIDED -- en, de, fr, es supported in Phase 1 (owner decision 2026-10-19). Mechanism: [ADR-015](../decisions/ADR-015-native-clients-with-shared-rust-core.md) "Localization" (PROPOSED).
+
+- English is the source and fallback language; German, French and Spanish are first-class supported locales (alert and connection-loss copy must be understandable in each, see [ADR-013](../decisions/ADR-013-connection-status-observability-and-copy.md))
+- Translations are maintained once in a shared catalogue and reused by every client (Android, iOS, web, later desktop)
+- Architecture supports easy addition of new languages; community can contribute translations
 - UI text externalized from code from the start
 
 ### Temperature / Humidity Display
@@ -116,8 +118,8 @@ Rule: **all defaults must work in both quiet home nights and loud social venues*
 ## Open Questions
 
 - ~~Should night mode be automatic or manual toggle?~~ **RESOLVED**: Default dark, manual toggle + optional auto-switch in settings
-- Which i18n framework to use? (depends on platform decision)
-- How many languages for the initial release? (English + German?)
+- ~~Which i18n framework to use?~~ **RESOLVED (proposed)**: single platform-neutral catalogue with generated per-platform resources ([ADR-015](../decisions/ADR-015-native-clients-with-shared-rust-core.md))
+- ~~How many languages for the initial release?~~ **RESOLVED**: English, German, French, Spanish (owner decision 2026-10-19)
 - Which devices actually have accessible temperature/humidity sensors?
 - Phone vs. tablet layout: responsive design approach? Breakpoints?
 

@@ -17,9 +17,31 @@ android {
         }
     }
     buildTypes {
-        release {
+        debug {
+            buildConfigField "boolean", "ALLOW_DEV_WSS_TRUST", "true"
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        release {
+            buildConfigField "boolean", "ALLOW_DEV_WSS_TRUST", "false"
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    buildFeatures {
+        buildConfig true
+    }
+}
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        variant.outputs.forEach { output ->
+            def vn = output.versionName.orNull ?: "0"
+            if (variant.buildType == "debug") {
+                output.outputFileName.set("guardedsleep-debug-v${vn}.apk")
+            } else if (variant.buildType == "release") {
+                output.outputFileName.set("guardedsleep-release-v${vn}.apk")
+            }
         }
     }
 }
@@ -34,6 +56,8 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     /** Minimal WebSocket server for offline-LAN signaling (ADR-012 Phase 2). */
     implementation "org.java-websocket:Java-WebSocket:1.5.7"
+    /** Native WSS client for debug self-signed LAN signaling (OkHttp WebSocket). */
+    implementation "com.squareup.okhttp3:okhttp:4.12.0"
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"

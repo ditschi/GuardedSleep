@@ -1,0 +1,343 @@
+{
+  "schema": "gs-trace/1",
+  "id": "sim-attack-sdp-fp-confusion-parent",
+  "class": "simulated",
+  "privacy": "shareable",
+  "origin": {
+    "core_version": "0.0.1",
+    "harness": "sim/1",
+    "scenario": "attack-sdp-fingerprint-confusion"
+  },
+  "seed": 1,
+  "config": {
+    "role": "parent",
+    "psk_b64url": "R1MtU1lOVEhFVElDLVBTS6GhoaGhoaGhoaGhoaGhoaE",
+    "paired_before": false,
+    "heartbeat_interval_ms": 10000,
+    "alarm_after_ms": 60000,
+    "noise_threshold": 0.12,
+    "noise_hold_ms": 800,
+    "require_dtls_fingerprint": true
+  },
+  "steps": [
+    { "n": 0, "now": 0, "input": { "type": "start", "entropy": 569173874 } },
+    { "n": 1, "now": 45, "input": { "type": "signaling_opened" } },
+    {
+      "n": 2,
+      "now": 93,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"welcome\",\"clientId\":\"c1\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\"}"
+      }
+    },
+    {
+      "n": 3,
+      "now": 93,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c1\",\"role\":\"parent\"}]}"
+      }
+    },
+    {
+      "n": 4,
+      "now": 93,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"peer\",\"peerId\":null}" }
+    },
+    {
+      "n": 5,
+      "now": 93,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c1\",\"role\":\"parent\"},{\"clientId\":\"c2\",\"role\":\"baby\"}]}"
+      }
+    },
+    {
+      "n": 6,
+      "now": 93,
+      "input": { "type": "signaling_message", "text": "{\"type\":\"peer\",\"peerId\":\"c2\"}" }
+    },
+    {
+      "n": 7,
+      "now": 164,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"signal\",\"from\":\"c2\",\"payload\":{\"type\":\"sdp\",\"aid\":\"c7c161defb0102c24c9ca28e05ae6865\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\ns=a=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:01\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:03\\r\\n\"}}}"
+      }
+    },
+    {
+      "n": 8,
+      "now": 186,
+      "input": {
+        "type": "attempt_local_description",
+        "attempt": 1,
+        "sdp_type": "answer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:05\r\n"
+      }
+    },
+    {
+      "n": 9,
+      "now": 225,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"signal\",\"from\":\"c2\",\"payload\":{\"type\":\"sdp\",\"aid\":\"ca6b8ce6c8b1daa12a485d338353f23e\",\"re\":\"fd4a1da5c9ffed2c30fe44a2082df0b6\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\ns=a=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:04\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:06\\r\\n\"}}}"
+      }
+    },
+    {
+      "n": 10,
+      "now": 236,
+      "input": {
+        "type": "attempt_local_description",
+        "attempt": 2,
+        "sdp_type": "answer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:08\r\n"
+      }
+    },
+    { "n": 11, "now": 250, "input": { "type": "tick" } },
+    { "n": 12, "now": 500, "input": { "type": "tick" } },
+    {
+      "n": 13,
+      "now": 618,
+      "input": { "type": "attempt_pc_state", "attempt": 2, "state": "connected" }
+    },
+    { "n": 14, "now": 618, "input": { "type": "attempt_data_open", "attempt": 2 } },
+    {
+      "n": 15,
+      "now": 618,
+      "input": {
+        "type": "attempt_dtls_fingerprint",
+        "attempt": 2,
+        "fingerprint": "53594e5400000000000000000000000000000000000000000000000000000006"
+      }
+    },
+    {
+      "n": 16,
+      "now": 638,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 2,
+        "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"77450e36ddb5deb5be2a762e5a19c14d07e36ca9d883de153aa572fb7954de45\"}"
+      }
+    },
+    {
+      "n": 17,
+      "now": 677,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"signal\",\"from\":\"c2\",\"payload\":{\"type\":\"sdp\",\"aid\":\"0f655e0dff080f610c0de08cf59fb0cd\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\ns=a=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0A\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0B\\r\\n\"}}}"
+      }
+    },
+    {
+      "n": 18,
+      "now": 704,
+      "input": {
+        "type": "attempt_local_description",
+        "attempt": 3,
+        "sdp_type": "answer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0D\r\n"
+      }
+    },
+    { "n": 19, "now": 750, "input": { "type": "tick" } },
+    {
+      "n": 20,
+      "now": 773,
+      "input": {
+        "type": "signaling_message",
+        "text": "{\"type\":\"signal\",\"from\":\"c2\",\"payload\":{\"type\":\"sdp\",\"aid\":\"79a8ac9f33dae15b9a04e2db1e1e8a0f\",\"re\":\"ab63050adf8174c529ac3027fbf91148\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\ns=a=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0E\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:10\\r\\n\"}}}"
+      }
+    },
+    {
+      "n": 21,
+      "now": 786,
+      "input": {
+        "type": "attempt_local_description",
+        "attempt": 4,
+        "sdp_type": "answer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:11\r\n"
+      }
+    },
+    { "n": 22, "now": 1000, "input": { "type": "tick" } },
+    { "n": 23, "now": 1250, "input": { "type": "tick" } },
+    { "n": 24, "now": 1500, "input": { "type": "tick" } },
+    { "n": 25, "now": 1750, "input": { "type": "tick" } },
+    {
+      "n": 26,
+      "now": 1758,
+      "input": { "type": "attempt_pc_state", "attempt": 4, "state": "connected" }
+    },
+    { "n": 27, "now": 1758, "input": { "type": "attempt_data_open", "attempt": 4 } },
+    {
+      "n": 28,
+      "now": 1758,
+      "input": {
+        "type": "attempt_dtls_fingerprint",
+        "attempt": 4,
+        "fingerprint": "53594e5400000000000000000000000000000000000000000000000000000010"
+      }
+    },
+    {
+      "n": 29,
+      "now": 1807,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 4,
+        "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"3c53cc877d728ec9e1bb47e1e64394445b2b17f28a9e9b292e47b1b81b546d54\"}"
+      }
+    },
+    { "n": 30, "now": 2000, "input": { "type": "tick" } }
+  ],
+  "expect": [
+    [
+      { "type": "open_signaling" },
+      {
+        "type": "emit",
+        "event": {
+          "type": "status",
+          "status": {
+            "state": "connecting",
+            "level": 0,
+            "key": null,
+            "cause": null,
+            "acknowledged_until": null,
+            "last_alive_ms": null
+          }
+        }
+      }
+    ],
+    [
+      {
+        "type": "send_signaling",
+        "text": "{\"type\":\"hello\",\"role\":\"parent\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"protocolVersion\":3}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_signaling",
+        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c2\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"fd4a1da5c9ffed2c30fe44a2082df0b6\"}}"
+      }
+    ],
+    [],
+    [
+      { "type": "create_attempt", "attempt": 1, "offerer": false },
+      {
+        "type": "set_remote_description",
+        "attempt": 1,
+        "sdp_type": "offer",
+        "sdp": "v=0\r\ns=a=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:01\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:03\r\n"
+      },
+      { "type": "create_answer", "attempt": 1 }
+    ],
+    [
+      {
+        "type": "send_signaling",
+        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c2\",\"payload\":{\"type\":\"sdp\",\"aid\":\"31b1484d24e856bad605e9f1d22c0748\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:05\\r\\n\"}}}"
+      }
+    ],
+    [
+      { "type": "close_attempt", "attempt": 1 },
+      { "type": "create_attempt", "attempt": 2, "offerer": false },
+      {
+        "type": "set_remote_description",
+        "attempt": 2,
+        "sdp_type": "offer",
+        "sdp": "v=0\r\ns=a=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:04\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:06\r\n"
+      },
+      { "type": "create_answer", "attempt": 2 }
+    ],
+    [
+      {
+        "type": "send_signaling",
+        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c2\",\"payload\":{\"type\":\"sdp\",\"aid\":\"fd4a1da5c9ffed2c30fe44a2082df0b6\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:08\\r\\n\"}}}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 2,
+        "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"940d9b1fc71b0ae9f4881b31fe626e0a39dd132be704908cfb2e36fa1de3b952\"}"
+      }
+    ],
+    [],
+    [
+      { "type": "close_attempt", "attempt": 2 },
+      { "type": "emit", "event": { "type": "failed", "reason": "pair_proof_mismatch" } },
+      {
+        "type": "send_signaling",
+        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c2\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"ab63050adf8174c529ac3027fbf91148\"}}"
+      }
+    ],
+    [
+      { "type": "create_attempt", "attempt": 3, "offerer": false },
+      {
+        "type": "set_remote_description",
+        "attempt": 3,
+        "sdp_type": "offer",
+        "sdp": "v=0\r\ns=a=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0A\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0B\r\n"
+      },
+      { "type": "create_answer", "attempt": 3 }
+    ],
+    [
+      {
+        "type": "send_signaling",
+        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c2\",\"payload\":{\"type\":\"sdp\",\"aid\":\"07f61255a8ce3b73412e1b5713c43e9f\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0D\\r\\n\"}}}"
+      }
+    ],
+    [],
+    [
+      { "type": "close_attempt", "attempt": 3 },
+      { "type": "create_attempt", "attempt": 4, "offerer": false },
+      {
+        "type": "set_remote_description",
+        "attempt": 4,
+        "sdp_type": "offer",
+        "sdp": "v=0\r\ns=a=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0E\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:10\r\n"
+      },
+      { "type": "create_answer", "attempt": 4 }
+    ],
+    [
+      {
+        "type": "send_signaling",
+        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c2\",\"payload\":{\"type\":\"sdp\",\"aid\":\"ab63050adf8174c529ac3027fbf91148\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:11\\r\\n\"}}}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 4,
+        "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"16f4bb1acc9c20d0d712054da4bd8478755e00f9b3ea89bd00732428e0e29f45\"}"
+      }
+    ],
+    [],
+    [
+      { "type": "close_attempt", "attempt": 4 },
+      { "type": "emit", "event": { "type": "failed", "reason": "pair_proof_mismatch" } },
+      { "type": "close_signaling" },
+      {
+        "type": "emit",
+        "event": {
+          "type": "status",
+          "status": {
+            "state": "failed_needs_user",
+            "level": 0,
+            "key": "pairing_key_mismatch",
+            "cause": null,
+            "acknowledged_until": null,
+            "last_alive_ms": null
+          }
+        }
+      }
+    ],
+    []
+  ],
+  "final": { "state": "failed_needs_user" }
+}

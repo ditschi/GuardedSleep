@@ -1,25 +1,16 @@
 import { expect, test } from "@playwright/test";
-import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { fixturesDir, launchDualContexts } from "./utils/dual-context";
-import { babyDeepLink, parentDeepLink, startSession } from "./utils/pairing";
+import { pairDual } from "./utils/pairing";
 import { waitForConnected } from "./utils/probes";
 
 test("noise: silence with moderate gate does not alert parent", async () => {
-  const room = `e2e-${randomUUID().slice(0, 8)}`;
   const dual = await launchDualContexts({
     babyFakeWav: join(fixturesDir, "silence-30s.wav"),
     parentFakeWav: join(fixturesDir, "silence-30s.wav"),
   });
   try {
-    await dual.babyPage.goto(babyDeepLink(room));
-    await dual.babyPage.evaluate(() => {
-      window.__guardedsleep_test?.setNoiseGate?.(0.05, 800);
-    });
-    await dual.parentPage.goto(parentDeepLink(room));
-
-    await startSession(dual.babyPage);
-    await startSession(dual.parentPage);
+    await pairDual(dual);
 
     await waitForConnected(dual.babyPage);
     await waitForConnected(dual.parentPage);

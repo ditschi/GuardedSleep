@@ -1,31 +1,26 @@
 import { expect, test } from "@playwright/test";
-import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { fixturesDir, launchDualContexts } from "./utils/dual-context";
-import { babyDeepLink, parentDeepLink, startSession } from "./utils/pairing";
+import { pairDual } from "./utils/pairing";
 import { waitDataChannelOpen, waitForConnected } from "./utils/probes";
 
-test("deeplink: baby and parent reach connected with open DataChannel", async () => {
-  const room = `e2e-${randomUUID().slice(0, 8)}`;
+test("pairing code: baby and parent reach connected with open DataChannel", async () => {
   const dual = await launchDualContexts({
     babyFakeWav: join(fixturesDir, "silence-30s.wav"),
     parentFakeWav: join(fixturesDir, "silence-30s.wav"),
   });
   try {
-    await dual.babyPage.goto(babyDeepLink(room));
-    await dual.parentPage.goto(parentDeepLink(room));
-    await startSession(dual.babyPage);
-    await startSession(dual.parentPage);
+    await pairDual(dual);
     await waitForConnected(dual.babyPage);
     await waitForConnected(dual.parentPage);
     await waitDataChannelOpen(dual.babyPage);
     await waitDataChannelOpen(dual.parentPage);
-    await expect(dual.babyPage.getByTestId("connection-status")).toHaveAttribute(
-      "data-session-state",
+    await expect(dual.babyPage.getByTestId("baby_status")).toHaveAttribute(
+      "data-state",
       "connected",
     );
-    await expect(dual.parentPage.getByTestId("connection-status")).toHaveAttribute(
-      "data-session-state",
+    await expect(dual.parentPage.getByTestId("parent_ambient_bar")).toHaveAttribute(
+      "data-state",
       "connected",
     );
   } finally {

@@ -15,6 +15,7 @@ import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -77,11 +78,19 @@ public final class LanSignalingWebSocketServer extends WebSocketServer {
       JSONArray arr = new JSONArray();
       for (Map.Entry<String, String> e : roles.entrySet()) {
         JSONObject m = new JSONObject();
-        m.put("clientId", e.getKey());
-        m.put("role", e.getValue());
+        put(m, "clientId", e.getKey());
+        put(m, "role", e.getValue());
         arr.put(m);
       }
       return arr;
+    }
+  }
+
+  private static JSONObject put(JSONObject target, String key, Object value) {
+    try {
+      return target.put(key, value);
+    } catch (JSONException ex) {
+      throw new RuntimeException(ex);
     }
   }
 
@@ -143,7 +152,7 @@ public final class LanSignalingWebSocketServer extends WebSocketServer {
     String type = msg.optString("type", "");
 
     if ("ping".equals(type)) {
-      sendJson(conn, new JSONObject().put("type", "pong"));
+      sendJson(conn, put(new JSONObject(), "type", "pong"));
       return;
     }
 
@@ -194,22 +203,24 @@ public final class LanSignalingWebSocketServer extends WebSocketServer {
         st.helloTimer = null;
       }
 
-      sendJson(conn, new JSONObject().put("type", "welcome").put("clientId", clientId).put("roomId", roomId));
+      sendJson(
+          conn,
+          put(put(put(new JSONObject(), "type", "welcome"), "clientId", clientId), "roomId", roomId));
       broadcastMembers();
 
       for (WebSocket w : listOpenSockets()) {
         ClientState o = states.get(w);
         if (o != null && o.clientId != null && !o.clientId.equals(clientId)) {
-          sendJson(w, new JSONObject().put("type", "peer").put("peerId", clientId));
+          sendJson(w, put(put(new JSONObject(), "type", "peer"), "peerId", clientId));
         }
       }
       WebSocket other = room.getOther(clientId);
       String otherId = other != null ? idForSocket(other) : null;
-      JSONObject peerMsg = new JSONObject().put("type", "peer");
+      JSONObject peerMsg = put(new JSONObject(), "type", "peer");
       if (otherId == null) {
-        peerMsg.put("peerId", JSONObject.NULL);
+        put(peerMsg, "peerId", JSONObject.NULL);
       } else {
-        peerMsg.put("peerId", otherId);
+        put(peerMsg, "peerId", otherId);
       }
       sendJson(conn, peerMsg);
       return;
@@ -247,9 +258,16 @@ public final class LanSignalingWebSocketServer extends WebSocketServer {
         return;
       }
       if (target == null) return;
+      Object payload;
+      try {
+        payload = msg.get("payload");
+      } catch (JSONException ex) {
+        sendJson(conn, err("INVALID_MESSAGE", "invalid payload"));
+        return;
+      }
       sendJson(
           target,
-          new JSONObject().put("type", "signal").put("from", st.clientId).put("payload", msg.get("payload")));
+          put(put(put(new JSONObject(), "type", "signal"), "from", st.clientId), "payload", payload));
     }
   }
 
@@ -269,7 +287,7 @@ public final class LanSignalingWebSocketServer extends WebSocketServer {
   }
 
   private void broadcastMembers() {
-    JSONObject m = new JSONObject().put("type", "members").put("peers", room.listMembers());
+    JSONObject m = put(put(new JSONObject(), "type", "members"), "peers", room.listMembers());
     String raw = m.toString();
     for (WebSocket w : listOpenSockets()) {
       ClientState o = states.get(w);
@@ -278,7 +296,7 @@ public final class LanSignalingWebSocketServer extends WebSocketServer {
   }
 
   private static JSONObject err(String code, String message) {
-    return new JSONObject().put("type", "error").put("code", code).put("message", message);
+    return put(put(put(new JSONObject(), "type", "error"), "code", code), "message", message);
   }
 
   private static void sendJson(WebSocket w, JSONObject o) {

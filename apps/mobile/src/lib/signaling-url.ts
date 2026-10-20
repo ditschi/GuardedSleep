@@ -17,9 +17,14 @@ export function getStoredSignalingUrl(): string | null {
   return raw.trim();
 }
 
-/** Stored URL wins, then Vite env at build time, then local dev default. */
+/** Stored URL wins, then page origin on LAN HTTPS, then Vite env at build time, then local dev default. */
 export function getEffectiveSignalingUrl(): string {
-  return getStoredSignalingUrl() ?? viteSignalingDefault() ?? DEFAULT_FALLBACK;
+  return (
+    getStoredSignalingUrl() ??
+    inferSignalingUrlFromPageOrigin() ??
+    viteSignalingDefault() ??
+    DEFAULT_FALLBACK
+  );
 }
 
 export function setStoredSignalingUrl(url: string): void {
@@ -33,7 +38,37 @@ export function clearStoredSignalingUrl(): void {
 }
 
 export function signalingUrlDraftInitial(): string {
-  return getStoredSignalingUrl() ?? viteSignalingDefault() ?? DEFAULT_FALLBACK;
+  return (
+    getStoredSignalingUrl() ??
+    inferSignalingUrlFromPageOrigin() ??
+    viteSignalingDefault() ??
+    DEFAULT_FALLBACK
+  );
+}
+
+/**
+ * When the PWA is opened at e.g. https://192.168.1.42:8443/ (Docker stack on LAN), use the same
+ * host for WSS without requiring a rebuild with VITE_SIGNALING_URL.
+ */
+export function inferSignalingUrlFromPageOrigin(
+  loc?: Pick<Location, "protocol" | "hostname" | "port">,
+): string | null {
+  const protocol = loc?.protocol ?? (typeof window !== "undefined" ? window.location.protocol : "");
+  const hostname = loc?.hostname ?? (typeof window !== "undefined" ? window.location.hostname : "");
+  const port = loc?.port ?? (typeof window !== "undefined" ? window.location.port : "");
+  if (!protocol || !hostname) return null;
+
+  const host = hostname.toLowerCase();
+  if (host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "[::1]") {
+    return null;
+  }
+
+  if (protocol === "https:") {
+    const p = port || "443";
+    return `wss://${hostname}:${p}/signaling`;
+  }
+
+  return null;
 }
 
 export function validateSignalingUrl(url: string): string | null {
