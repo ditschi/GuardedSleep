@@ -3,12 +3,13 @@
 
 use guardedsleep_core::pairing::{extract_sha256_fingerprint, pair_proof_mac_v3};
 use guardedsleep_core::protocol::{
-    encode_data_message, encode_hello, encode_signal, parse_data_message, parse_server_message,
-    parse_signal_payload, signal_payload_json, DataMessage, Role, ServerMessage, SignalPayload,
+    DataMessage, Role, ServerMessage, SignalPayload, encode_data_message, encode_hello,
+    encode_signal, parse_data_message, parse_server_message, parse_signal_payload,
+    signal_payload_json,
 };
 
 use crate::scenario::Step;
-use crate::world::{colon_upper, synthetic_psk, Time, ToClient, World};
+use crate::world::{Time, ToClient, World, colon_upper, synthetic_psk};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RawMode {

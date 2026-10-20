@@ -8,8 +8,10 @@ if command -v cargo >/dev/null 2>&1; then
 	exec cargo "$@"
 fi
 IMAGE="${CORE_BUILD_IMAGE:-guardedsleep-android-native-build:local}"
-if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
-	docker build -t "$IMAGE" "$ROOT/docker/android-native-build"
+TOOLCHAIN_HASH="$(sha256sum "$ROOT/rust-toolchain.toml" | cut -c1-16)"
+# (Re)builds the image when it is missing or was built from a different rust-toolchain.toml.
+if [[ "$(docker image inspect -f '{{ index .Config.Labels "gs.toolchain" }}' "$IMAGE" 2>/dev/null)" != "$TOOLCHAIN_HASH" ]]; then
+	docker build --build-context repo="$ROOT" --label "gs.toolchain=$TOOLCHAIN_HASH" -t "$IMAGE" "$ROOT/docker/android-native-build"
 fi
 exec docker run --rm \
 	-e CARGO_HOME=/workspace/target/.cargo-home \

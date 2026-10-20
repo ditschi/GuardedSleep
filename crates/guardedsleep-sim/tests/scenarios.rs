@@ -2,7 +2,7 @@
 //! still fail, lints the committed traces and checks determinism.
 
 use guardedsleep_sim::lint::lint_trace;
-use guardedsleep_sim::{load_scenarios, run_scenario, traces_dir, Verdict};
+use guardedsleep_sim::{Verdict, load_scenarios, run_scenario, traces_dir};
 
 const SEEDS: u64 = 20;
 

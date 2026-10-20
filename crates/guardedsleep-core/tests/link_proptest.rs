@@ -4,7 +4,7 @@ mod common;
 
 use std::collections::HashSet;
 
-use common::{World, BABY, PARENT, PSK_A};
+use common::{BABY, PARENT, PSK_A, World};
 use guardedsleep_core::link::{Link, LinkAction, LinkConfig, LinkInput, LinkState};
 use guardedsleep_core::pairing::{
     derive_room_id, encode_psk, extract_sha256_fingerprint, normalize_dtls_fingerprint,

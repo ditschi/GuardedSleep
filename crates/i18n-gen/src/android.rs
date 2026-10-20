@@ -1,5 +1,5 @@
-use crate::catalogue::{parse_all, Catalogue, ANDROID_GROUPS, LOCALES, MASTER};
-use crate::icu::{collect_args, has_select, plural_nodes, ArgKind, Case, Node};
+use crate::catalogue::{ANDROID_GROUPS, Catalogue, LOCALES, MASTER, parse_all};
+use crate::icu::{ArgKind, Case, Node, collect_args, has_select, plural_nodes};
 
 const QUANTITIES: [&str; 6] = ["zero", "one", "two", "few", "many", "other"];
 
@@ -323,12 +323,16 @@ mod tests {
             ],
             "values/strings.xml",
         );
-        assert!(issues
-            .iter()
-            .any(|i| i.contains("\"native.s\": select is not supported")));
-        assert!(issues
-            .iter()
-            .any(|i| i.contains("\"native.e\"") && i.contains("=0")));
+        assert!(
+            issues
+                .iter()
+                .any(|i| i.contains("\"native.s\": select is not supported"))
+        );
+        assert!(
+            issues
+                .iter()
+                .any(|i| i.contains("\"native.e\"") && i.contains("=0"))
+        );
         assert!(!issues.iter().any(|i| i.contains("web.s")));
     }
 

@@ -1,4 +1,4 @@
-use crate::icu::{collect_args, parse, plural_nodes, Node};
+use crate::icu::{Node, collect_args, parse, plural_nodes};
 use serde_json::Value;
 use std::path::Path;
 
@@ -149,14 +149,14 @@ pub fn validate(cat: &Catalogue) -> Vec<String> {
             }
         };
         for (key, nodes) in msgs {
-            if l != MASTER {
-                if let Some((_, m)) = master_ast.iter().find(|(k, _)| k == key) {
-                    let (a, b) = (sig(m), sig(nodes));
-                    if a != b {
-                        issues.push(format!(
+            if l != MASTER
+                && let Some((_, m)) = master_ast.iter().find(|(k, _)| k == key)
+            {
+                let (a, b) = (sig(m), sig(nodes));
+                if a != b {
+                    issues.push(format!(
                             "{l}: \"{key}\": arguments differ from {MASTER} ({MASTER}: [{a}], {l}: [{b}])"
                         ));
-                    }
                 }
             }
             for pl in plural_nodes(nodes) {
@@ -273,9 +273,11 @@ pub mod tests {
             &[("a.hello", "Hallo {name}"), ("a.extra", "x")],
         )]));
         assert!(issues.contains(&"de: missing key \"a.items\"".to_string()));
-        assert!(issues
-            .iter()
-            .any(|i| i.starts_with("de: extra key \"a.extra\"")));
+        assert!(
+            issues
+                .iter()
+                .any(|i| i.starts_with("de: extra key \"a.extra\""))
+        );
     }
 
     #[test]
@@ -285,16 +287,19 @@ pub mod tests {
             "de",
             &[("a.hello", "Hallo {nombre}"), ("a.items", items)],
         )]));
-        assert!(renamed
-            .iter()
-            .any(|i| i.contains("de: \"a.hello\": arguments differ")));
+        assert!(
+            renamed
+                .iter()
+                .any(|i| i.contains("de: \"a.hello\": arguments differ"))
+        );
         let kind = validate(&cat(&[(
             "de",
             &[("a.hello", "Hallo {name}"), ("a.items", "{count} Dinge")],
         )]));
-        assert!(kind
-            .iter()
-            .any(|i| i.contains("de: \"a.items\": arguments differ")));
+        assert!(
+            kind.iter()
+                .any(|i| i.contains("de: \"a.items\": arguments differ"))
+        );
     }
 
     #[test]
@@ -306,9 +311,11 @@ pub mod tests {
                 ("a.items", "{count, plural, one {x} other {y}}"),
             ],
         )]));
-        assert!(issues
-            .iter()
-            .any(|i| i.contains("de: \"a.hello\": parse error")));
+        assert!(
+            issues
+                .iter()
+                .any(|i| i.contains("de: \"a.hello\": parse error"))
+        );
     }
 
     #[test]

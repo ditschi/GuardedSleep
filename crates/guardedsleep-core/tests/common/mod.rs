@@ -9,7 +9,7 @@ use guardedsleep_core::link::{
 };
 use guardedsleep_core::pairing::encode_psk;
 use guardedsleep_core::protocol::{DeviceStatus, Role};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// `AB:CD:...` upper-case colon form of a plain hex fingerprint, as SDPs and WebRTC stats show it.
 pub fn colon_fp(fp: &str) -> String {
@@ -311,10 +311,10 @@ impl World {
 
     /// Process death and restart: sockets die, peers are not told, state is gone.
     pub fn restart(&mut self, n: usize, entropy: u64) {
-        if let Some(s) = self.nodes[n].sock.take() {
-            if self.nodes[n].net_up {
-                self.remove_conn(s);
-            }
+        if let Some(s) = self.nodes[n].sock.take()
+            && self.nodes[n].net_up
+        {
+            self.remove_conn(s);
         }
         let mut cfg = self.nodes[n].cfg.clone();
         cfg.paired_before = true;
@@ -332,11 +332,12 @@ impl World {
         for s in socks {
             let n = self.conns[s].as_ref().map(|c| c.node);
             self.conns[s] = None;
-            if let Some(n) = n.filter(|n| *n < self.nodes.len()) {
-                if self.nodes[n].sock == Some(s) && self.nodes[n].net_up {
-                    self.queue
-                        .push_back(Item::Sig(n, s, LinkInput::SignalingClosed));
-                }
+            if let Some(n) = n.filter(|n| *n < self.nodes.len())
+                && self.nodes[n].sock == Some(s)
+                && self.nodes[n].net_up
+            {
+                self.queue
+                    .push_back(Item::Sig(n, s, LinkInput::SignalingClosed));
             }
         }
         self.drain();
@@ -478,13 +479,13 @@ impl World {
     }
 
     fn close_signaling(&mut self, n: usize) {
-        if let Some(s) = self.nodes[n].sock.take() {
-            if self.conns.get(s).is_some_and(Option::is_some) {
-                if self.nodes[n].net_up {
-                    self.remove_conn(s);
-                } else {
-                    self.kill_timers.push((self.now + self.dead_after_ms, n, s));
-                }
+        if let Some(s) = self.nodes[n].sock.take()
+            && self.conns.get(s).is_some_and(Option::is_some)
+        {
+            if self.nodes[n].net_up {
+                self.remove_conn(s);
+            } else {
+                self.kill_timers.push((self.now + self.dead_after_ms, n, s));
             }
         }
     }
@@ -773,19 +774,19 @@ impl World {
                         state: "failed".into(),
                     },
                 ));
-                if let Some((m, hp)) = peer {
-                    if let Some(p) = self.nodes[m].pcs.get_mut(&hp) {
-                        if !p.failed && !p.closed {
-                            p.failed = true;
-                            self.queue.push_back(Item::Input(
-                                m,
-                                LinkInput::AttemptPcState {
-                                    attempt: hp,
-                                    state: "failed".into(),
-                                },
-                            ));
-                        }
-                    }
+                if let Some((m, hp)) = peer
+                    && let Some(p) = self.nodes[m].pcs.get_mut(&hp)
+                    && !p.failed
+                    && !p.closed
+                {
+                    p.failed = true;
+                    self.queue.push_back(Item::Input(
+                        m,
+                        LinkInput::AttemptPcState {
+                            attempt: hp,
+                            state: "failed".into(),
+                        },
+                    ));
                 }
             }
         }

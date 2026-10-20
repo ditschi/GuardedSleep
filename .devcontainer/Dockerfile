@@ -1,7 +1,8 @@
 # Dev: Node 22 + Temurin JDK 21 + Android SDK/NDK + Rust (core, WASM, Android) + just in one image.
 # JDK 21 matches Capacitor/Android `source release 21`. Bookworm often has no OpenJDK 21 in default APT,
 # so we copy Temurin from the official image (same family as docker/android-build).
-# Build context: .devcontainer/
+# Build context: .devcontainer/ plus the named context "repo" (repo root, for rust-toolchain.toml):
+#   docker-compose.yml needs build.additional_contexts: { repo: .. }
 FROM eclipse-temurin:21-jdk-jammy AS temurin21
 
 FROM mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm
@@ -14,7 +15,6 @@ ENV JAVA_HOME=/opt/java/openjdk
 ENV ANDROID_HOME=/opt/android-sdk
 ARG ANDROID_CLI_TOOLS_URL=https://dl.google.com/android/repository/commandlinetools-linux-16111833_latest.zip
 ARG ANDROID_NDK_VERSION=30.0.16248370
-ARG RUST_VERSION=1.99.1
 ENV ANDROID_NDK_HOME=/opt/android-sdk/ndk/${ANDROID_NDK_VERSION}
 ENV RUSTUP_HOME=/opt/rustup CARGO_HOME=/opt/cargo
 # scripts/core-build.sh and scripts/gradle.sh run natively here (no nested Docker).
@@ -53,9 +53,10 @@ RUN python3 -m pip install --no-cache-dir --break-system-packages pre-commit 2>/
 # Rust (ADR-015/019): core, WASM and Android targets, cargo-ndk, `just`; mirrors docker/android-native-build.
 # Installed system-wide so the `node` user (and the rootless uid-0 mapping) can both use it.
 ENV PATH="/opt/cargo/bin:${PATH}"
-RUN curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain "${RUST_VERSION}" \
-	&& rustup target add wasm32-unknown-unknown aarch64-linux-android x86_64-linux-android \
-	&& rustup component add clippy rustfmt \
+COPY --from=repo rust-toolchain.toml /tmp/rust-toolchain/rust-toolchain.toml
+RUN curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain none \
+	&& (cd /tmp/rust-toolchain && rustup toolchain install \
+		&& rustup default "$(sed -n 's/^channel *= *"\(.*\)"/\1/p' rust-toolchain.toml)") \
 	&& cargo install --locked cargo-ndk@4.1.2 \
 	&& curl -sSf https://just.systems/install.sh | bash -s -- --to /usr/local/bin \
 	&& chmod -R a+rwX /opt/cargo /opt/rustup \

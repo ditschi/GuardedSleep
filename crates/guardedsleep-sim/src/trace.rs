@@ -2,7 +2,7 @@
 //! and the actions it returned.
 
 use guardedsleep_core::link::{LinkAction, LinkConfig, LinkInput, LinkState};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 pub const TRACE_SCHEMA: &str = "gs-trace/1";
 

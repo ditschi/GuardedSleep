@@ -1,8 +1,25 @@
 //! Wire format shared with `@guardedsleep/protocol` (TypeScript). Parsers mirror the TS validators
 //! so both implementations accept and reject the same inputs (see `vectors/conformance.json`).
 
+// Untrusted input is parsed here: return errors instead of panicking (AGENTS.md §5.3).
+#![deny(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::indexing_slicing
+)]
+#![cfg_attr(
+    test,
+    allow(
+        clippy::unwrap_used,
+        clippy::expect_used,
+        clippy::panic,
+        clippy::indexing_slicing
+    )
+)]
+
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value, json};
 
 /// Wire protocol version (ADR-017 §1). v2 and v3 peers never mix.
 pub const PROTOCOL_VERSION: u32 = 3;

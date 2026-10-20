@@ -223,9 +223,11 @@ mod tests {
     #[test]
     fn rejects_unknown_fields_and_real_psks() {
         let t = trace("x").replace("\"id\":\"t\"", "\"id\":\"t\",\"device\":\"pixel\"");
-        assert!(lint_trace(&t)
-            .iter()
-            .any(|e| e.contains("unknown top-level")));
+        assert!(
+            lint_trace(&t)
+                .iter()
+                .any(|e| e.contains("unknown top-level"))
+        );
         let t = trace("x").replace(
             &guardedsleep_core::pairing::encode_psk(&synthetic_psk("A")),
             "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",

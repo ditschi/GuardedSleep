@@ -1,13 +1,30 @@
 //! QR pairing material, the PSK-derived room id and the direction-bound `pair_proof` MAC that
 //! binds the PSK to both DTLS certificates (ADR-004 amendment, ADR-017 §1).
 
-use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+// Untrusted input is parsed here: return errors instead of panicking (AGENTS.md §5.3).
+#![deny(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::indexing_slicing
+)]
+#![cfg_attr(
+    test,
+    allow(
+        clippy::unwrap_used,
+        clippy::expect_used,
+        clippy::panic,
+        clippy::indexing_slicing
+    )
+)]
+
 use base64::Engine;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use hkdf::Hkdf;
 use hmac::{Hmac, KeyInit, Mac};
 use sha2::Sha256;
 
-use crate::protocol::{Role, LEGACY_PROTOCOL_VERSION};
+use crate::protocol::{LEGACY_PROTOCOL_VERSION, Role};
 
 const ROOM_INFO: &[u8] = b"gs-room/3";
 const PROOF_PREFIX: &str = "gs-pair-proof/3|";
@@ -107,6 +124,8 @@ pub fn encode_psk(bytes: &[u8]) -> String {
 pub fn derive_room_id(psk: &[u8]) -> String {
     let hk = Hkdf::<Sha256>::new(None, psk);
     let mut okm = [0u8; 16];
+    // Infallible: HKDF-SHA256 only rejects outputs longer than 255 * 32 bytes.
+    #[allow(clippy::expect_used)]
     hk.expand(ROOM_INFO, &mut okm)
         .expect("16 bytes is a valid HKDF-SHA256 output length");
     URL_SAFE_NO_PAD.encode(okm)

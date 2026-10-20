@@ -20,9 +20,9 @@ use crate::attempt::{Attempt, AttemptConfig, AttemptEvent, DEFAULT_ATTEMPT_TIMEO
 use crate::noise::{GateChange, NoiseGate};
 use crate::pairing::{decode_psk, derive_room_id, link_epoch, macs_equal, stop_notice_mac};
 use crate::protocol::{
+    DataMessage, DeviceStatus, IceCandidate, Member, Role, ServerMessage, SignalPayload,
     encode_data_message, encode_hello, encode_ping, encode_signal, parse_server_message,
-    parse_signal_payload, signal_payload_json, DataMessage, DeviceStatus, IceCandidate, Member,
-    Role, ServerMessage, SignalPayload,
+    parse_signal_payload, signal_payload_json,
 };
 use crate::session::ConfigError;
 
@@ -1142,10 +1142,11 @@ impl Link {
             if !from_baby || self.live_verified() {
                 return;
             }
-            if let Some(l) = self.live.as_ref() {
-                if l.peer_id == from && l.attempt.remote_aid() == Some(aid) {
-                    return;
-                }
+            if let Some(l) = self.live.as_ref()
+                && l.peer_id == from
+                && l.attempt.remote_aid() == Some(aid)
+            {
+                return;
             }
             if self.outstanding.as_ref().is_some_and(|(_, own)| own == aid) {
                 return;
@@ -1306,10 +1307,10 @@ impl Link {
 
     fn on_verified(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         let first = !self.verified_in_run;
-        if let Some(l) = self.live.as_ref() {
-            if let Some(remote) = l.attempt.remote_aid() {
-                self.epoch = Some(link_epoch(l.attempt.own_aid(), remote));
-            }
+        if let Some(l) = self.live.as_ref()
+            && let Some(remote) = l.attempt.remote_aid()
+        {
+            self.epoch = Some(link_epoch(l.attempt.own_aid(), remote));
         }
         self.ever_verified = true;
         self.verified_in_run = true;
@@ -1570,10 +1571,10 @@ impl Link {
     }
 
     fn log_alert(&mut self, now: u64, rms: f64) {
-        if self.alert_log.len() >= ALERT_LOG_CAP {
-            if let Some((t, _)) = self.alert_log.pop_front() {
-                self.alert_log_dropped_t = Some(self.alert_log_dropped_t.map_or(t, |d| d.max(t)));
-            }
+        if self.alert_log.len() >= ALERT_LOG_CAP
+            && let Some((t, _)) = self.alert_log.pop_front()
+        {
+            self.alert_log_dropped_t = Some(self.alert_log_dropped_t.map_or(t, |d| d.max(t)));
         }
         self.alert_log.push_back((now, rms));
     }
@@ -1607,13 +1608,13 @@ impl Link {
     }
 
     fn send_app(&self, msg: &DataMessage, out: &mut Vec<LinkAction>) {
-        if let Some(l) = self.live.as_ref() {
-            if l.attempt.encode_app_message(msg).is_some() {
-                out.push(LinkAction::SendData {
-                    attempt: l.attempt.handle(),
-                    text: encode_data_message(msg),
-                });
-            }
+        if let Some(l) = self.live.as_ref()
+            && l.attempt.encode_app_message(msg).is_some()
+        {
+            out.push(LinkAction::SendData {
+                attempt: l.attempt.handle(),
+                text: encode_data_message(msg),
+            });
         }
     }
 
@@ -2223,9 +2224,10 @@ mod tests {
         l.handle(1, LinkInput::SignalingOpened);
         for junk in ["", "{}", "[]", "null", "{\"type\":\"members\"}", "\u{0}"] {
             let a = l.handle(2, LinkInput::SignalingMessage { text: junk.into() });
-            assert!(a
-                .iter()
-                .all(|x| !matches!(x, LinkAction::CreateAttempt { .. })));
+            assert!(
+                a.iter()
+                    .all(|x| !matches!(x, LinkAction::CreateAttempt { .. }))
+            );
         }
         assert_eq!(l.sig, Sig::Open);
     }

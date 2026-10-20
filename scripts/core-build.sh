@@ -12,8 +12,10 @@ IMAGE="${CORE_BUILD_IMAGE:-guardedsleep-android-native-build:local}"
 WASM_BINDGEN_VERSION="$(awk '/^name = "wasm-bindgen"$/{getline; gsub(/version = |"/,""); print; exit}' "$ROOT/Cargo.lock")"
 
 if [[ "${CORE_BUILD_NATIVE:-0}" != "1" ]]; then
-	if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
-		docker build -t "$IMAGE" "$ROOT/docker/android-native-build"
+	TOOLCHAIN_HASH="$(sha256sum "$ROOT/rust-toolchain.toml" | cut -c1-16)"
+	# (Re)builds the image when it is missing or was built from a different rust-toolchain.toml.
+	if [[ "$(docker image inspect -f '{{ index .Config.Labels "gs.toolchain" }}' "$IMAGE" 2>/dev/null)" != "$TOOLCHAIN_HASH" ]]; then
+		docker build --build-context repo="$ROOT" --label "gs.toolchain=$TOOLCHAIN_HASH" -t "$IMAGE" "$ROOT/docker/android-native-build"
 	fi
 	exec docker run --rm \
 		-e CORE_BUILD_NATIVE=1 \
@@ -30,7 +32,7 @@ mkdir -p "$CARGO_HOME"
 
 run_test() {
 	cargo fmt --all -- --check
-	cargo clippy -p guardedsleep-core --all-targets --features uniffi -- -D warnings
+	cargo clippy --workspace --all-targets --features guardedsleep-core/uniffi -- -D warnings
 	cargo test -p guardedsleep-core
 }
 

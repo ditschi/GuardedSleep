@@ -7,7 +7,7 @@ use guardedsleep_core::link::Link;
 use guardedsleep_core::link::{LinkAction, LinkEvent, LinkInput, LinkState};
 use guardedsleep_core::pairing::{encode_psk, stop_notice_mac};
 use guardedsleep_core::protocol::{DeviceStatus, Dnd, Ringer, Role, UnitWarning};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 fn hb(seq: u64) -> String {
     json!({"type":"heartbeat","v":3,"t":1,"seq":seq}).to_string()
@@ -227,9 +227,11 @@ fn stranger_ice_and_answers_are_ignored() {
     let actions = w.nodes[BABY]
         .link
         .handle(w.now, LinkInput::SignalingMessage { text });
-    assert!(!actions
-        .iter()
-        .any(|a| matches!(a, LinkAction::AddIceCandidate { .. })));
+    assert!(
+        !actions
+            .iter()
+            .any(|a| matches!(a, LinkAction::AddIceCandidate { .. }))
+    );
     assert_eq!(w.nodes[BABY].link.live_attempt(), Some(handle));
 }
 
@@ -281,9 +283,11 @@ fn reflected_proof_never_verifies_and_baby_stays_unverified() {
         .iter()
         .any(|a| matches!(a, LinkAction::Emit { event: LinkEvent::Failed { reason } } if reason == "pair_proof_mismatch")));
     assert_ne!(w.state(BABY), LinkState::Connected);
-    assert!(!acts
-        .iter()
-        .any(|a| matches!(a, LinkAction::SendData { text, .. } if text.contains("heartbeat"))));
+    assert!(
+        !acts
+            .iter()
+            .any(|a| matches!(a, LinkAction::SendData { text, .. } if text.contains("heartbeat")))
+    );
 }
 
 #[test]
@@ -782,10 +786,12 @@ fn request_offer_after_parent_restart() {
     let t0 = w.now;
     w.restart(PARENT, 99);
     // The restarted parent asks for an offer right away.
-    assert!(w.nodes[PARENT]
-        .sent_signal_types
-        .iter()
-        .any(|t| t == "request_offer"));
+    assert!(
+        w.nodes[PARENT]
+            .sent_signal_types
+            .iter()
+            .any(|t| t == "request_offer")
+    );
     w.advance(40_000);
     assert_eq!(w.state(PARENT), LinkState::Connected);
     assert_eq!(w.state(BABY), LinkState::Connected);
@@ -1460,11 +1466,13 @@ fn unauthenticated_or_wrongly_authenticated_stop_during_an_outage_is_ignored() {
     let mut w = parent_without_attempt();
     let good = stop_payload(&w, Role::Baby, PARENT, &PSK_A, STOP_AID);
     let mut flipped = good.clone();
-    flipped["mac"] = json!(good["mac"]
-        .as_str()
-        .unwrap()
-        .replace('a', "b")
-        .replace('0', "1"));
+    flipped["mac"] = json!(
+        good["mac"]
+            .as_str()
+            .unwrap()
+            .replace('a', "b")
+            .replace('0', "1")
+    );
     let forged = [
         // The old shape: no proof at all.
         json!({"type":"stop_notice"}),
@@ -1570,10 +1578,12 @@ fn a_signaling_stop_is_ignored_before_any_verification_in_this_run() {
     // A baby without a verified epoch does not send a signaling stop at all.
     w.stop(BABY);
     w.advance(500);
-    assert!(!w.nodes[BABY]
-        .sent_signal_types
-        .iter()
-        .any(|t| t == "stop_notice"));
+    assert!(
+        !w.nodes[BABY]
+            .sent_signal_types
+            .iter()
+            .any(|t| t == "stop_notice")
+    );
     assert_ne!(w.state(PARENT), LinkState::PeerStopped);
 }
 
@@ -1811,9 +1821,10 @@ fn a_matching_proof_with_a_dtls_fingerprint_that_differs_from_the_sdp_does_not_v
         failed_reason(&acts).as_deref(),
         Some("dtls_fingerprint_mismatch")
     );
-    assert!(acts
-        .iter()
-        .any(|a| matches!(a, LinkAction::CloseAttempt { .. })));
+    assert!(
+        acts.iter()
+            .any(|a| matches!(a, LinkAction::CloseAttempt { .. }))
+    );
     assert_ne!(link.status().unwrap().state, LinkState::Connected);
 }
 
@@ -1857,10 +1868,12 @@ fn acknowledge_mutes_for_five_minutes_then_jumps_to_level_3() {
     w.advance(10_000);
     // Below level 2 the acknowledgement is ignored.
     w.input(PARENT, LinkInput::AcknowledgeAlarm);
-    assert!(!w.nodes[PARENT]
-        .events
-        .iter()
-        .any(|e| matches!(e, LinkEvent::AlarmAcknowledged { .. })));
+    assert!(
+        !w.nodes[PARENT]
+            .events
+            .iter()
+            .any(|e| matches!(e, LinkEvent::AlarmAcknowledged { .. }))
+    );
     w.advance(70_000);
     let s = w.status(PARENT);
     assert_eq!(s.level, 2);
@@ -1992,9 +2005,11 @@ fn late_callbacks_for_a_closed_attempt_are_dropped() {
             text: hb(9),
         },
     );
-    assert!(!acts
-        .iter()
-        .any(|a| matches!(a, LinkAction::SendData { attempt, .. } if *attempt == old)));
+    assert!(
+        !acts
+            .iter()
+            .any(|a| matches!(a, LinkAction::SendData { attempt, .. } if *attempt == old))
+    );
     let acts = w.nodes[BABY].link.handle(
         w.now,
         LinkInput::AttemptPcState {
@@ -2059,10 +2074,12 @@ fn invalid_noise_gate_settings_are_ignored() {
     }
     w.advance(1_000);
     assert_eq!(peer_threshold(&w), Some(0.2));
-    assert!(!w.nodes[BABY]
-        .events
-        .iter()
-        .any(|e| matches!(e, LinkEvent::NoiseGateChanged { .. })));
+    assert!(
+        !w.nodes[BABY]
+            .events
+            .iter()
+            .any(|e| matches!(e, LinkEvent::NoiseGateChanged { .. }))
+    );
 }
 
 #[test]
