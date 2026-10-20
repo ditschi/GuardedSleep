@@ -21,8 +21,11 @@ hmac = "0.13"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 sha2 = "0.11"
-uniffi = { version = "0.32", optional = true }
-wasm-bindgen = { version = "0.2", optional = true }
+uniffi = { version = "=0.32.2", optional = true }
+wasm-bindgen = { version = "=0.2.129", optional = true }
 
 [dev-dependencies]
 proptest = "1"
+
+[lints]
+workspace = true

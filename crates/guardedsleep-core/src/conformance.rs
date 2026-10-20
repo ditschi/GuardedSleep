@@ -2,14 +2,14 @@
 //! WASM) runs `vectors/conformance.json` through this entry point and compares against `expect`,
 //! so all platforms provably share one behaviour.
 
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use crate::link::{Link, LinkConfig, LinkInput};
 use crate::pairing::{
     decode_psk, derive_room_id, pair_proof_mac_v2_legacy, pair_proof_mac_v3, stop_notice_mac,
 };
 use crate::protocol::{
-    parse_data_message, parse_data_message_v2_legacy, parse_server_message, Role,
+    Role, parse_data_message, parse_data_message_v2_legacy, parse_server_message,
 };
 use crate::session::{Input, Session, SessionConfig};
 

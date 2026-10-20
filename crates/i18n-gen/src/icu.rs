@@ -183,7 +183,7 @@ impl Parser {
             _ => {
                 return Err(self.fail(&format!(
                     "unsupported argument type \"{kind}\" (only plural and select)"
-                )))
+                )));
             }
         };
         self.ws();
@@ -382,9 +382,11 @@ mod tests {
     #[test]
     fn select_needs_other() {
         assert!(parse("{kind, select, baby {Baby} other {Parent}}").is_ok());
-        assert!(parse("{kind, select, baby {Baby}}")
-            .unwrap_err()
-            .contains("other"));
+        assert!(
+            parse("{kind, select, baby {Baby}}")
+                .unwrap_err()
+                .contains("other")
+        );
     }
 
     #[test]

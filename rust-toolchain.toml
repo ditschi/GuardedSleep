@@ -1,0 +1,13 @@
+# Single source of truth for the Rust toolchain (ADR-020 §1). The build images, devcontainer and CI
+# read this file. Docs: https://rust-lang.github.io/rustup/overrides.html#the-toolchain-file
+[toolchain]
+channel = "1.99.1"
+profile = "minimal"
+components = ["rustfmt", "clippy"]
+# aarch64-apple-ios is only for `cargo check` (no iOS code ships before the iOS gate).
+targets = [
+  "aarch64-linux-android",
+  "x86_64-linux-android",
+  "wasm32-unknown-unknown",
+  "aarch64-apple-ios",
+]

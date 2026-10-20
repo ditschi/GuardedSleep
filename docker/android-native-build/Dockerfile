@@ -1,5 +1,5 @@
 # JDK 21 + Android SDK/NDK + Rust (Android + WASM targets) for the ADR-015 native PoC.
-# Build: docker build -t guardedsleep-android-native-build:local docker/android-native-build
+# Build: scripts/core-build.sh (rebuilds the image when rust-toolchain.toml changes)
 # Use:   scripts/core-build.sh (mounts the repo at /workspace)
 FROM eclipse-temurin:21-jdk-jammy
 
@@ -27,10 +27,13 @@ RUN yes | sdkmanager --licenses >/dev/null \
 		"build-tools;36.0.0" \
 		"ndk;${ANDROID_NDK_VERSION}"
 
-ARG RUST_VERSION=1.99.1
-RUN curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain "${RUST_VERSION}" \
-	&& rustup target add aarch64-linux-android x86_64-linux-android wasm32-unknown-unknown \
-	&& rustup component add clippy rustfmt \
+# The toolchain comes from the repo's rust-toolchain.toml (named build context "repo", scripts/core-build.sh
+# passes --build-context repo=<repo root>).
+COPY --from=repo rust-toolchain.toml /tmp/rust-toolchain/rust-toolchain.toml
+RUN curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain none \
+	&& cd /tmp/rust-toolchain \
+	&& rustup toolchain install \
+	&& rustup default "$(sed -n 's/^channel *= *"\(.*\)"/\1/p' rust-toolchain.toml)" \
 	&& cargo install --locked cargo-ndk@4.1.2 \
 	&& chmod -R a+rwX /opt/cargo /opt/rustup
 

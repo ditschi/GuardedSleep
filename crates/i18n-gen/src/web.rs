@@ -1,5 +1,5 @@
 use crate::catalogue::{Catalogue, Flat, LOCALES, MASTER};
-use crate::icu::{parse, serialize, Case, Node};
+use crate::icu::{Case, Node, parse, serialize};
 use serde_json::{Map, Value};
 
 fn accent(c: char) -> char {

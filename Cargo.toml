@@ -1,5 +1,5 @@
 [workspace]
-resolver = "2"
+resolver = "3"
 members = [
   "crates/guardedsleep-core",
   "crates/guardedsleep-sim",
@@ -8,7 +8,7 @@ members = [
 ]
 
 [workspace.package]
-edition = "2021"
+edition = "2024"
 license = "AGPL-3.0-or-later"
 publish = false
 
@@ -18,3 +18,14 @@ lto = true
 codegen-units = 1
 strip = true
 panic = "abort"
+
+# unsafe_code is set per crate (`#![forbid]` in guardedsleep-core/-sim): a workspace-level forbid
+# could not be relaxed for the generated UniFFI/wasm glue in core (until the wave-2 facade crates).
+# Docs: https://doc.rust-lang.org/cargo/reference/workspaces.html#the-lints-table
+[workspace.lints.rust]
+unused_must_use = "deny"
+
+[workspace.lints.clippy]
+dbg_macro = "deny"
+todo = "deny"
+unimplemented = "deny"

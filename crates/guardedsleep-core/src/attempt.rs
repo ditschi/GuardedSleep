@@ -6,7 +6,7 @@ use crate::pairing::{
     extract_sha256_fingerprint, macs_equal, normalize_dtls_fingerprint, pair_proof_mac_v3,
 };
 use crate::protocol::{
-    encode_data_message, parse_data_message, DataMessage, IceCandidate, Role, SignalPayload,
+    DataMessage, IceCandidate, Role, SignalPayload, encode_data_message, parse_data_message,
 };
 
 /// An attempt that is not verified within this time is abandoned (ADR-017 §6).
@@ -524,7 +524,9 @@ mod tests {
     }
 
     fn sdp(fp: &str) -> String {
-        format!("v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 {fp}\r\n")
+        format!(
+            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 {fp}\r\n"
+        )
     }
 
     fn cfg(role: Role, psk: &[u8]) -> AttemptConfig {
@@ -673,10 +675,12 @@ mod tests {
             [AttemptEvent::Message(DataMessage::Heartbeat { .. })]
         ));
         assert_eq!(parent.last_alive(), 10_000);
-        assert!(parent
-            .tick(24_000)
-            .iter()
-            .all(|e| *e != AttemptEvent::LivenessLost));
+        assert!(
+            parent
+                .tick(24_000)
+                .iter()
+                .all(|e| *e != AttemptEvent::LivenessLost)
+        );
         assert_eq!(parent.tick(25_001), vec![AttemptEvent::LivenessLost]);
         assert!(parent.is_finished() && parent.is_verified());
     }
@@ -730,18 +734,26 @@ mod tests {
     fn remote_description_filters_type_aid_and_duplicates() {
         let mut parent = Attempt::new(cfg(Role::Parent, &PSK), 0);
         let s = sdp(&fpc(0xaa));
-        assert!(parent
-            .on_remote_description(0, BABY_AID, "answer", &s)
-            .is_none());
-        assert!(parent
-            .on_remote_description(0, PARENT_AID, "offer", &s)
-            .is_none());
-        assert!(parent
-            .on_remote_description(0, BABY_AID, "offer", &s)
-            .is_some());
-        assert!(parent
-            .on_remote_description(0, BABY_AID, "offer", &s)
-            .is_none());
+        assert!(
+            parent
+                .on_remote_description(0, BABY_AID, "answer", &s)
+                .is_none()
+        );
+        assert!(
+            parent
+                .on_remote_description(0, PARENT_AID, "offer", &s)
+                .is_none()
+        );
+        assert!(
+            parent
+                .on_remote_description(0, BABY_AID, "offer", &s)
+                .is_some()
+        );
+        assert!(
+            parent
+                .on_remote_description(0, BABY_AID, "offer", &s)
+                .is_none()
+        );
         assert_eq!(parent.remote_aid(), Some(BABY_AID));
 
         let mut c = cfg(Role::Baby, &PSK);
@@ -749,9 +761,10 @@ mod tests {
         let mut baby = Attempt::new(c, 0);
         let other = "cccccccccccccccccccccccccccccccc";
         assert!(baby.on_remote_description(0, other, "answer", &s).is_none());
-        assert!(baby
-            .on_remote_description(0, PARENT_AID, "answer", &s)
-            .is_some());
+        assert!(
+            baby.on_remote_description(0, PARENT_AID, "answer", &s)
+                .is_some()
+        );
     }
 
     #[test]
@@ -784,9 +797,10 @@ mod tests {
             ev.as_slice(),
             [AttemptEvent::Signal(SignalPayload::Sdp { aid, .. })] if aid == BABY_AID
         ));
-        assert!(baby
-            .on_local_description(0, "offer", &sdp(&fpc(0xaa)))
-            .is_empty());
+        assert!(
+            baby.on_local_description(0, "offer", &sdp(&fpc(0xaa)))
+                .is_empty()
+        );
         let ice = baby.on_local_ice(IceCandidate {
             candidate: "c".into(),
             sdp_mid: None,
@@ -802,7 +816,9 @@ mod tests {
     fn baby_refuses_local_sdp_that_is_not_sendonly() {
         let fp = fpc(0xaa);
         for body in [
-            format!("v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendrecv\r\na=fingerprint:sha-256 {fp}\r\n"),
+            format!(
+                "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendrecv\r\na=fingerprint:sha-256 {fp}\r\n"
+            ),
             format!("v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=fingerprint:sha-256 {fp}\r\n"),
             format!("v=0\r\na=fingerprint:sha-256 {fp}\r\n"),
         ] {
@@ -958,12 +974,15 @@ mod tests {
         let (mut baby, mut parent, bp, pp) = open_dtls_pair();
         assert!(parent.on_dtls_fingerprint(6, &fpc(0xaa)).is_empty());
         assert!(baby.on_dtls_fingerprint(6, &fpc(0xcc)).is_empty());
-        assert!(parent
-            .on_data_message(7, &bp)
-            .contains(&AttemptEvent::Verified));
-        assert!(baby
-            .on_data_message(7, &pp)
-            .contains(&AttemptEvent::Verified));
+        assert!(
+            parent
+                .on_data_message(7, &bp)
+                .contains(&AttemptEvent::Verified)
+        );
+        assert!(
+            baby.on_data_message(7, &pp)
+                .contains(&AttemptEvent::Verified)
+        );
     }
 
     #[test]
@@ -976,9 +995,10 @@ mod tests {
         baby.on_remote_description(4, PARENT_AID, "answer", &ps)
             .unwrap();
         let good = pair_proof_mac_v3(&PSK, Role::Parent, "room", &fph(0xcc), &fph(0xaa)).unwrap();
-        assert!(baby
-            .on_data_message(5, &proof_text(&good))
-            .contains(&AttemptEvent::Verified));
+        assert!(
+            baby.on_data_message(5, &proof_text(&good))
+                .contains(&AttemptEvent::Verified)
+        );
 
         // A kept report that is wrong fails the attempt as soon as the remote SDP is known.
         let mut baby = Attempt::new(dtls_cfg(Role::Baby), 0);

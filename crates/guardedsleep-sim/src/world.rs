@@ -13,7 +13,7 @@ use guardedsleep_core::pairing::{
     derive_room_id, encode_psk, extract_sha256_fingerprint, extract_sha256_fingerprint_v2_legacy,
 };
 use guardedsleep_core::protocol::Role;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use crate::raw::RawState;
 use crate::rng::Rng;
@@ -114,7 +114,7 @@ enum Ev {
         sock: usize,
     },
     Sweep {
-        gen: u32,
+        r#gen: u32,
     },
     LocalDesc {
         actor: usize,
@@ -351,7 +351,7 @@ impl World {
             w.push(st.at, 1, Ev::Timeline(i));
         }
         w.push(1_000, 4, Ev::Watch);
-        w.push(SWEEP_MS, 3, Ev::Sweep { gen: 0 });
+        w.push(SWEEP_MS, 3, Ev::Sweep { r#gen: 0 });
         Ok(w)
     }
 
@@ -439,13 +439,13 @@ impl World {
             Ev::SigToServer { sock, text, spoof } => self.on_server_rx(sock, &text, spoof),
             Ev::SigToClient { actor, sock, msg } => self.on_client_rx(actor, sock, msg),
             Ev::Pong { sock } => {
-                if let Some(c) = self.server.conns.get(&sock) {
-                    if self.responsive(c) {
-                        self.server.conns.get_mut(&sock).expect("exists").alive = true;
-                    }
+                if let Some(c) = self.server.conns.get(&sock)
+                    && self.responsive(c)
+                {
+                    self.server.conns.get_mut(&sock).expect("exists").alive = true;
                 }
             }
-            Ev::Sweep { gen } => self.on_sweep(gen),
+            Ev::Sweep { r#gen } => self.on_sweep(r#gen),
             Ev::LocalDesc {
                 actor,
                 handle,
@@ -580,8 +580,8 @@ impl World {
             "signaling_up" => {
                 self.server.up = true;
                 self.server.sweep_gen += 1;
-                let gen = self.server.sweep_gen;
-                self.push(self.now + SWEEP_MS, 3, Ev::Sweep { gen });
+                let r#gen = self.server.sweep_gen;
+                self.push(self.now + SWEEP_MS, 3, Ev::Sweep { r#gen });
             }
             "kill_process" => {
                 if let Some(a) = self.peer_ix(&st) {
@@ -801,11 +801,11 @@ impl World {
             ac.net_up
         };
         let sock = self.actors[a].sock.take();
-        if let Some(s) = sock {
-            if reachable {
-                let t = self.fifo_time(1, s, 0, self.now + 20, false);
-                self.push(t, 2, Ev::ServerClose { sock: s });
-            }
+        if let Some(s) = sock
+            && reachable
+        {
+            let t = self.fifo_time(1, s, 0, self.now + 20, false);
+            self.push(t, 2, Ev::ServerClose { sock: s });
         }
         let ac = &mut self.actors[a];
         ac.alive = false;
@@ -1084,15 +1084,14 @@ impl World {
             }
             return;
         }
-        if let ToClient::Text(t) = &msg {
-            if serde_json::from_str::<Value>(t)
+        if let ToClient::Text(t) = &msg
+            && serde_json::from_str::<Value>(t)
                 .ok()
                 .and_then(|v| v["type"].as_str().map(|s| s == "welcome"))
                 == Some(true)
-            {
-                let now = self.now;
-                self.actors[a].welcomes.push(now);
-            }
+        {
+            let now = self.now;
+            self.actors[a].welcomes.push(now);
         }
         if matches!(msg, ToClient::Closed) {
             self.actors[a].sock = None;
@@ -1125,20 +1124,20 @@ impl World {
         let Some(c) = self.server.conns.remove(&sock) else {
             return;
         };
-        if let Some(a) = c.actor {
-            if self.reach(a, c.epoch) {
-                let lat = self.rng.range(5, 40);
-                let t = self.fifo_time(0, sock, 0, self.now + lat, false);
-                self.push(
-                    t,
-                    2,
-                    Ev::SigToClient {
-                        actor: a,
-                        sock,
-                        msg: ToClient::Closed,
-                    },
-                );
-            }
+        if let Some(a) = c.actor
+            && self.reach(a, c.epoch)
+        {
+            let lat = self.rng.range(5, 40);
+            let t = self.fifo_time(0, sock, 0, self.now + lat, false);
+            self.push(
+                t,
+                2,
+                Ev::SigToClient {
+                    actor: a,
+                    sock,
+                    msg: ToClient::Closed,
+                },
+            );
         }
     }
 
@@ -1256,20 +1255,21 @@ impl World {
         if c.joined {
             self.broadcast_members(&c.key);
         }
-        if let Some(a) = c.actor {
-            if self.reach(a, c.epoch) && self.actors[a].sock == Some(sock) {
-                let lat = self.rng.range(5, 40);
-                let t = self.fifo_time(0, sock, 0, self.now + lat, false);
-                self.push(
-                    t,
-                    2,
-                    Ev::SigToClient {
-                        actor: a,
-                        sock,
-                        msg: ToClient::Closed,
-                    },
-                );
-            }
+        if let Some(a) = c.actor
+            && self.reach(a, c.epoch)
+            && self.actors[a].sock == Some(sock)
+        {
+            let lat = self.rng.range(5, 40);
+            let t = self.fifo_time(0, sock, 0, self.now + lat, false);
+            self.push(
+                t,
+                2,
+                Ev::SigToClient {
+                    actor: a,
+                    sock,
+                    msg: ToClient::Closed,
+                },
+            );
         }
     }
 
@@ -1279,19 +1279,20 @@ impl World {
         }
         if !self.server.conns.contains_key(&sock) {
             // TCP reset: the server has no such connection (evicted or restarted).
-            if let Some(&(a, epoch)) = self.socks.get(&sock) {
-                if self.reach(a, epoch) && self.actors[a].sock == Some(sock) {
-                    let lat = self.rng.range(5, 40);
-                    self.push(
-                        self.now + lat,
-                        2,
-                        Ev::SigToClient {
-                            actor: a,
-                            sock,
-                            msg: ToClient::Closed,
-                        },
-                    );
-                }
+            if let Some(&(a, epoch)) = self.socks.get(&sock)
+                && self.reach(a, epoch)
+                && self.actors[a].sock == Some(sock)
+            {
+                let lat = self.rng.range(5, 40);
+                self.push(
+                    self.now + lat,
+                    2,
+                    Ev::SigToClient {
+                        actor: a,
+                        sock,
+                        msg: ToClient::Closed,
+                    },
+                );
             }
             return;
         }
@@ -1445,8 +1446,8 @@ impl World {
         );
     }
 
-    fn on_sweep(&mut self, gen: u32) {
-        if gen != self.server.sweep_gen || !self.server.up {
+    fn on_sweep(&mut self, r#gen: u32) {
+        if r#gen != self.server.sweep_gen || !self.server.up {
             return;
         }
         let socks: Vec<usize> = self.server.conns.keys().copied().collect();
@@ -1465,7 +1466,7 @@ impl World {
                 self.push(self.now + rtt, 2, Ev::Pong { sock: s });
             }
         }
-        self.push(self.now + SWEEP_MS, 3, Ev::Sweep { gen });
+        self.push(self.now + SWEEP_MS, 3, Ev::Sweep { r#gen });
     }
 
     /// A hostile relay re-delivers the last recorded `stop_notice` to `peer`, as the original

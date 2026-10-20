@@ -1,12 +1,14 @@
 //! `gs-sim`: run `gs-scenario/1` files against the core, record `gs-trace/1` documents and lint
 //! them. See README.md.
 
+#![forbid(unsafe_code)]
+
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use guardedsleep_sim::lint::lint_trace;
 use guardedsleep_sim::scenario::Scenario;
-use guardedsleep_sim::{load_scenarios, run_scenario, scenarios_dir, traces_dir, Verdict};
+use guardedsleep_sim::{Verdict, load_scenarios, run_scenario, scenarios_dir, traces_dir};
 
 const USAGE: &str = "usage:
   gs-sim list

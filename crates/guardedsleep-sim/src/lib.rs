@@ -2,6 +2,8 @@
 //! ADR-016 Stage 1): two `Link`s, a relay that mirrors the Node signaling server, a fake media
 //! layer and a seeded fault injector, driven by `gs-scenario/1` files.
 
+#![forbid(unsafe_code)]
+
 pub mod check;
 pub mod lint;
 pub mod raw;
