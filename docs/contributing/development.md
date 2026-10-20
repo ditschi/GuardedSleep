@@ -17,12 +17,11 @@ After creation you should have:
 - `pre-commit` on `PATH` (`~/.local/bin`)
 - Husky hooks under `.husky/` (`core.hooksPath` set via `pnpm run prepare`)
 
-The dev image includes **Eclipse Temurin JDK 21** (copied into `/opt/java/openjdk`) and a minimal **Android SDK** (platform 35, build-tools 35.0.0) so you can run **`pnpm … build`**, **`cap sync`**, and **`./gradlew assembleDebug`** in the **same** container — no second Compose stack required.
+The dev image includes **Eclipse Temurin JDK 21** (copied into `/opt/java/openjdk`) and a minimal **Android SDK** (platform 35, build-tools 35.0.0) so you can run **`pnpm … build`** and **`./gradlew assembleDebug`** in the **same** container — no second Compose stack required.
 
 - **Trade-off:** the image is larger and the first `docker compose … build` for `.devcontainer/` takes longer (SDK download).
 - **ARM64:** the Temurin stage is amd64-oriented; on Apple Silicon, use **Docker Rosetta** / amd64 platform for this image, or maintain an arm64 JDK variant if needed.
 - **Shell `PATH`:** the Node dev image loads **nvm** in login shells; the Dockerfile appends `JAVA_HOME` / `ANDROID_HOME` entries to `/etc/profile.d` and `~/.bashrc` so `java` and `./gradlew` work in integrated terminals.
-- **Optional:** [docker/android-build](../../docker/android-build/README.md) remains useful for **CI** or host-only Gradle without the full dev image.
 
 ### Native and core development
 
@@ -183,7 +182,6 @@ Do **not** run `pre-commit install`. File checks are triggered by **Husky** (`.h
 | `pnpm run audit`        | Reports known dependency issues (`--audit-level=high`; CI runs the same).                                                                             |
 | `pnpm test`             | Builds `@guardedsleep/protocol` to `dist/`, then runs Vitest in all workspace packages (`packages/protocol`, `apps/signaling-server`, `apps/mobile`). |
 | `pnpm run e2e`          | Playwright browser E2E (`apps/e2e`); starts `dev:local` via Playwright `webServer` (see `apps/e2e/README.md`).                                        |
-| `pnpm run e2e:hybrid`   | Optional Android emulator baby + browser parent smoke (`GUARDEDSLEEP_HYBRID_E2E=1`; see `apps/e2e/README.md`).                                        |
 | `pnpm run build`        | Runs each package `build` script (protocol `tsc`, mobile static site, signaling-server `tsc`).                                                        |
 
 From the repo root, targeted builds:
@@ -193,19 +191,9 @@ pnpm --filter @guardedsleep/mobile build
 pnpm --filter @guardedsleep/signaling-server build
 ```
 
-> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §5 and ADR-015:** Capacitor sync/open scripts; the shell is legacy and removed. Replaced in toolchain realignment wave 1; this procedure stays valid until then.
-
 ### Capacitor (Android)
 
-After `pnpm --filter @guardedsleep/mobile build`, sync native projects and open Android Studio:
-
-```bash
-cd apps/mobile
-pnpm run cap:sync
-pnpm run cap:open:android
-```
-
-The `android/` directory is tracked in git (run `pnpm install` at the repo root so `@capacitor/android` is available).
+Removed in wave 1 (ADR-020).
 
 > **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §6:** the Node signaling server image; replaced by the Rust axum server. Replaced in toolchain realignment wave 2; this procedure stays valid until then.
 
@@ -242,21 +230,9 @@ docker compose -f docker/stack/compose.yaml up --build
 
 For manual LAN IP: `pnpm run stack:lan:env` writes `docker/stack/.env`; then `pnpm run stack:up`.
 
-> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §5 and ADR-015:** the Capacitor WebView self-signed WSS workaround; native Android clients do not use the WebView. Replaced in toolchain realignment wave 1; this procedure stays valid until then.
-
 ### Android debug APK: self-signed WSS (Docker `wss://…:8443`)
 
-The **browser** WebSocket API rejects self-signed TLS in the native Capacitor WebView. **Debug APKs** (`assembleDebug`) route `wss://` signaling through an **OkHttp** client that trusts self-signed certificates on **private LAN hosts only** (`10.x`, `172.16–31.x`, `192.168.x`, loopback). **Release APKs** do not enable this (`ALLOW_DEV_WSS_TRUST=false`).
-
-Build with dev hints baked in (Docker `stack:lan` sets this automatically):
-
-```bash
-VITE_DEV_CONNECT_HINTS=true pnpm --filter @guardedsleep/mobile build
-pnpm --filter @guardedsleep/mobile exec cap sync android
-cd apps/mobile/android && ./gradlew assembleDebug
-```
-
-Then set signaling to `wss://<LAN-IP>:8443/signaling` in app Settings (or use the value from `pnpm run stack:lan:env`). Plain `ws://<LAN-IP>:8787` remains a valid alternative without TLS.
+Removed in wave 1 (ADR-020).
 
 > **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §6:** the Node signaling smoke test; replaced by Rust server tests and the simulation. Replaced in toolchain realignment wave 2; this procedure stays valid until then.
 

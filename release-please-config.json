@@ -37,13 +37,7 @@
     },
     "apps/mobile": {
       "package-name": "@guardedsleep/mobile",
-      "component": "mobile",
-      "extra-files": [
-        {
-          "type": "generic",
-          "path": "android/app/build.gradle"
-        }
-      ]
+      "component": "mobile"
     }
   }
 }

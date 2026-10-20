@@ -1,7 +1,5 @@
 import { goto } from "$app/navigation";
 import { browser } from "$app/environment";
-import { App } from "@capacitor/app";
-import { Capacitor } from "@capacitor/core";
 
 export type BackInterceptor = () => boolean;
 
@@ -60,43 +58,7 @@ export async function navigateAppBack(fallbackHref = "/"): Promise<void> {
     return;
   }
 
-  if (fallbackHref === "/" && window.location.pathname === "/") {
-    if (Capacitor.isNativePlatform()) {
-      await App.exitApp();
-    }
-    return;
-  }
+  if (fallbackHref === "/" && window.location.pathname === "/") return;
 
   await goto(fallbackHref);
-}
-
-let androidBackListener: { remove: () => Promise<void> } | undefined;
-let androidBackRegistration: Promise<() => void> | undefined;
-
-/** Register the Capacitor Android back listener as early as possible (idempotent). */
-export function ensureAndroidBackButtonRegistered(): void {
-  if (!browser || !Capacitor.isNativePlatform()) return;
-  if (!androidBackRegistration) {
-    androidBackRegistration = registerAndroidBackButton();
-  }
-}
-
-export async function registerAndroidBackButton(): Promise<() => void> {
-  if (!browser || !Capacitor.isNativePlatform()) return () => {};
-
-  if (androidBackListener) {
-    await androidBackListener.remove();
-    androidBackListener = undefined;
-  }
-
-  androidBackListener = await App.addListener("backButton", () => {
-    const path = window.location.pathname;
-    const params = new URLSearchParams(window.location.search);
-    void navigateAppBack(resolveBackFallback(path, params));
-  });
-
-  return () => {
-    void androidBackListener?.remove();
-    androidBackListener = undefined;
-  };
 }

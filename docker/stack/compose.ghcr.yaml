@@ -25,7 +25,7 @@ services:
     environment:
       PORT: "8787"
       # Required in production. List every browser Origin the PWA will be loaded from.
-      # Native Capacitor clients (no Origin header) remain accepted when the allowlist is set.
+      # Native clients (no Origin header) remain accepted when the allowlist is set.
       SIGNALING_ALLOWED_ORIGINS: "${SIGNALING_ALLOWED_ORIGINS:?Set SIGNALING_ALLOWED_ORIGINS to your PWA origins, e.g. https://app.example.com}"
       SIGNALING_MAX_PARENTS: "${SIGNALING_MAX_PARENTS:-}"
       SIGNALING_PING_INTERVAL_MS: "${SIGNALING_PING_INTERVAL_MS:-}"

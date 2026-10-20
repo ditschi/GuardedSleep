@@ -56,9 +56,7 @@ export async function pairDual(
 const defaultSignalUrl = (): string => process.env.E2E_SIGNALING_URL ?? "ws://127.0.0.1:18787";
 
 /**
- * Legacy v2 deep links, used only by the Android hybrid specs (`tests/hybrid/`, opt-in via
- * GUARDEDSLEEP_HYBRID_E2E) which still target the Capacitor shell. The web client ignores them:
- * v3 pairing needs a code, see `pairDual`.
+ * Legacy v2 deep links. The web client ignores them: v3 pairing needs a code, see `pairDual`.
  */
 export function babyDeepLink(
   room: string,

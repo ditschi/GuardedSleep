@@ -2,20 +2,18 @@
   import { browser } from "$app/environment";
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
-  import { GuardedSleepNative, isNativeAndroid } from "$lib/android/guarded-sleep-native.js";
   import { persistAppPreferences } from "$lib/app-preferences.js";
   import IndicatorTrainingDemo from "$lib/components/IndicatorTrainingDemo.svelte";
   import { getI18n } from "$lib/i18n/context.js";
   import { pushBackInterceptor } from "$lib/ui/app-navigation.js";
 
-  type Step = "welcome" | "training" | "battery" | "done";
+  type Step = "welcome" | "training" | "done";
 
   const i18n = getI18n();
 
   let step = $state<Step>("welcome");
   let trainingPhase = $state<"connected" | "disconnected">("connected");
   let trainingTimer: number | undefined;
-  let batteryError = $state<string | undefined>(undefined);
 
   function finish(): void {
     persistAppPreferences({ onboardingCompleted: true });
@@ -40,16 +38,11 @@
 
   function nextFromTraining(): void {
     stopTrainingTimer();
-    step = isNativeAndroid() ? "battery" : "done";
+    step = "done";
   }
 
   function goBackStep(): void {
-    batteryError = undefined;
     if (step === "done") {
-      step = isNativeAndroid() ? "battery" : "training";
-      return;
-    }
-    if (step === "battery") {
       step = "training";
       trainingPhase = "connected";
       return;
@@ -57,16 +50,6 @@
     if (step === "training") {
       stopTrainingTimer();
       step = "welcome";
-    }
-  }
-
-  async function openBatterySettings(): Promise<void> {
-    batteryError = undefined;
-    if (!isNativeAndroid()) return;
-    try {
-      await GuardedSleepNative.openBatterySettings();
-    } catch {
-      batteryError = i18n?.t("onboarding.batteryOpenFailed") ?? "";
     }
   }
 
@@ -145,33 +128,6 @@
       onclick={nextFromTraining}
     >
       {i18n?.t("onboarding.trainingDone") ?? ""}
-    </button>
-  {:else if step === "battery"}
-    <section
-      class="space-y-3 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 text-sm text-zinc-300"
-    >
-      <p class="font-medium text-zinc-100">{i18n?.t("onboarding.batteryTitle") ?? ""}</p>
-      <p class="text-zinc-400">{i18n?.t("onboarding.batteryBody") ?? ""}</p>
-      <button
-        type="button"
-        class="w-full rounded-lg border border-zinc-600 px-4 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
-        data-testid="onboard-battery-open"
-        onclick={() => void openBatterySettings()}
-      >
-        {i18n?.t("onboarding.batteryOpen") ?? ""}
-      </button>
-      {#if batteryError}
-        <p class="text-xs text-rose-400" role="alert">{batteryError}</p>
-      {/if}
-    </section>
-    <button
-      type="button"
-      class="rounded-lg bg-emerald-600 px-4 py-3 font-medium text-emerald-950 hover:bg-emerald-500"
-      onclick={() => {
-        step = "done";
-      }}
-    >
-      {i18n?.t("onboarding.continue") ?? ""}
     </button>
   {:else}
     <section

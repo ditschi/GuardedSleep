@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { browser } from "$app/environment";
   import { getI18n } from "$lib/i18n/context.js";
-  import { isRuntimeSecureContext, isWebPlatformNotNative } from "$lib/runtime/capabilities.js";
+  import { isRuntimeSecureContext } from "$lib/runtime/capabilities.js";
 
   const LS_INSECURE = "guardedsleep:banner-dismiss:insecure-context";
   const LS_WEB = "guardedsleep:banner-dismiss:web-vs-native";
@@ -10,7 +10,7 @@
   const i18n = getI18n();
 
   const insecure = $derived(browser && !isRuntimeSecureContext());
-  const webOnly = $derived(browser && isWebPlatformNotNative() && isRuntimeSecureContext());
+  const webOnly = $derived(browser && isRuntimeSecureContext());
 
   let dismissedInsecure = $state(false);
   let dismissedWeb = $state(false);

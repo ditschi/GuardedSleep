@@ -43,37 +43,12 @@ All specs pair through the v3 flow (`utils/pairing.ts` `pairDual`): the baby pag
 
 The signaling server runs with `SIGNALING_HELLO_RATE_PER_MIN=0` and `SIGNALING_NEW_ROOM_RATE_PER_MIN=0` (see `playwright.config.ts`); it caps rooms at one baby and one parent.
 
-## Hybrid Android smoke (optional)
+## Commands
 
-`tests/hybrid/` runs **Android emulator (baby) + Chromium (parent)** when `GUARDEDSLEEP_HYBRID_E2E=1`. The emulator loads the Vite dev server via `adb reverse` and `CAPACITOR_DEV_SERVER=http://localhost:5173`. Baby uses dev-only query flags `e2e_synthetic_audio=1` (oscillator mic) and `e2e_force_noise_alert=1`.
-
-**LAN mode (emulator or phone, no adb reverse):** set `GUARDEDSLEEP_HYBRID_LAN=1`. The emulator uses host alias **`10.0.2.2`**; a physical phone uses the host **LAN IPv4**. Override with `GUARDEDSLEEP_HYBRID_HOST`.
-
-| Test                  | Signaling                     | Stack required                                                              |
-| --------------------- | ----------------------------- | --------------------------------------------------------------------------- |
-| `03-hybrid-lan-ws-…`  | `ws://<host>:18787`           | Playwright `dev:local` (auto-started) or `pnpm run dev:local` on 5173/18787 |
-| `04-hybrid-lan-wss-…` | `wss://<host>:8443/signaling` | `pnpm run stack:lan` (Docker HTTPS) + debug APK with native WSS trust       |
-
-**Prereqs:** running AVD or USB-debugged phone (`adb devices` shows `device`), `adb` on `PATH`, Android SDK + JDK 21 for `assembleDebug` (Dev Container or `docker/android-build`).
+The hybrid Android + browser E2E was removed in wave 1 (ADR-020); the native app is covered by the emulator gate (`scripts/poc/local-gate.sh`).
 
 ```bash
-# Emulator + adb reverse (localhost):
-pnpm run e2e:hybrid
-
-# LAN ws — emulator baby + browser parent (connect + DataChannel):
-pnpm run e2e:hybrid:lan-ws
-
-# LAN wss — start Docker stack first, then:
-pnpm run stack:lan   # separate terminal, keep running
-pnpm run e2e:hybrid:lan-wss
-
-# Both LAN ws + wss (wss skips if stack not up):
-pnpm run e2e:hybrid:lan
-
-# Physical phone on Wi-Fi (noise-alert RMS, ws only):
-GUARDEDSLEEP_HYBRID_E2E=1 GUARDEDSLEEP_HYBRID_LAN=1 pnpm run e2e:hybrid
-
-# LAN-only browser smoke (no Android):
+# LAN-only browser smoke:
 pnpm run e2e:lan
 
 # Reachability checklist:
@@ -89,8 +64,6 @@ pnpm run check:kvm
 ```
 
 See [docker/e2e-local](../../docker/e2e-local/README.md) and [docker/android-emulator](../../docker/android-emulator/README.md) for KVM prerequisites and troubleshooting.
-
-Not run in default CI (slow; requires emulator). Use before releases — see [manual release testing](../../docs/contributing/manual-release-testing.md).
 
 ## Dev-only hooks
 

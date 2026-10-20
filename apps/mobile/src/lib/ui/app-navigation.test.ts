@@ -4,17 +4,6 @@ vi.mock("$app/navigation", () => ({
   goto: vi.fn(),
 }));
 
-vi.mock("@capacitor/core", () => ({
-  Capacitor: { isNativePlatform: () => false, getPlatform: () => "web" },
-}));
-
-vi.mock("@capacitor/app", () => ({
-  App: {
-    addListener: vi.fn(async () => ({ remove: vi.fn() })),
-    exitApp: vi.fn(),
-  },
-}));
-
 import { goto } from "$app/navigation";
 import {
   canNavigateBack,

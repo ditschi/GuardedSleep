@@ -4,7 +4,7 @@
 
 `STATUS: DECIDED`
 
-Automated tests (Vitest, Playwright browser E2E, optional hybrid Android smoke) cover WebRTC wiring, pairing, noise alerts, and non-silent inbound audio in **Chromium** and **partially on Android**. They do **not** replace validation on real hardware before a user-facing release.
+Automated tests (Vitest, Playwright browser E2E) cover WebRTC wiring, pairing, noise alerts, and non-silent inbound audio in **Chromium** and **partially on Android**. They do **not** replace validation on real hardware before a user-facing release.
 
 Use this checklist when merging a **Release Please** release PR or tagging a milestone (`mobile-v*`, `mvp-v*`, …). Record the outcome in the release PR description or maintainer notes (pass/fail, devices used, date).
 
@@ -14,7 +14,6 @@ Use this checklist when merging a **Release Please** release PR or tagging a mil
 | ------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------- |
 | Unit / integration        | `pnpm test`                                          | Protocol, signaling, mobile parsers                                     |
 | Browser E2E (2× Chromium) | `pnpm run e2e`                                       | Pairing, WebRTC, Listen, noise alert, **RMS non-silence** (tests 14–15) |
-| Hybrid smoke (optional)   | `pnpm run e2e:hybrid`                                | Android emulator baby + browser parent (requires running AVD + `adb`)   |
 | Signaling smoke           | `pnpm --filter @guardedsleep/signaling-server smoke` | WebSocket relay                                                         |
 
 ---
@@ -106,11 +105,6 @@ Browser E2E (`apps/e2e`) already asserts:
 - **Parent inbound stream RMS above silence floor** after Listen and after noise alert (tests 14–15)
 - Reconnect, wrong PSK, unreachable signaling, simulated LAN path ranking
 
-Hybrid smoke (`pnpm run e2e:hybrid`, optional) asserts:
-
-- Capacitor Android baby (dev server + synthetic tone) pairs with browser parent
-- Noise alert + **non-silent RMS** on browser parent
-
 ---
 
 ## 9. Release sign-off
@@ -123,7 +117,6 @@ Hybrid smoke (`pnpm run e2e:hybrid`, optional) asserts:
 | Devices (baby / parent)        | Model, Android version, OEM        |
 | Signaling environment          | local / Docker / GHCR / custom WSS |
 | Automated E2E                  | pass / fail (CI link)              |
-| Hybrid smoke (if run)          | pass / fail / skipped              |
 | §3 Listen                      | pass / fail                        |
 | §4 Noise alert + audible audio | pass / fail                        |
 | §5 Background / 30 min baby    | pass / fail / deferred             |
