@@ -4,6 +4,8 @@
 - Date: 2026-05-13
 - Deciders: Technical Architect, Security/Privacy Architect, Critical Reviewer (synchronous review in implementation PR)
 
+> **Partially superseded (2026-10-20):** the hybrid (Capacitor) part → [ADR-020](ADR-020-toolchain-and-development-setup.md) (hybrid E2E removed in wave 1); browser E2E scope narrowed per [ADR-016](ADR-016-test-strategy-local-virtual-physical.md). In the web rebuild Playwright adds fake media devices, `@axe-core/playwright` and an overflow check ([ADR-020](ADR-020-toolchain-and-development-setup.md) §5).
+
 ## Context
 
 GuardedSleep needs automated confidence that two browser clients can pair (with or without session PSK), establish WebRTC (signaling + DTLS-SRTP + DataChannel), exchange control messages (`listen`, heartbeats, `noise_alert`), and move audio baby → parent. Vitest covers parsing and small units; it does not exercise real browsers, `getUserMedia`, or ICE.
@@ -63,7 +65,7 @@ Expert response: **Accepted** all mitigations above. Critical reviewer: **second
 ### Risks
 
 - **Flake**: WebRTC timing — mitigate with retries only where justified, stable selectors (`data-testid`), and log stats on failure.
-- **False confidence**: Browser E2E does **not** replace Android/Capacitor plugin tests — document scope in `apps/e2e/README.md`.
+- **False confidence**: Browser E2E does **not** replace Android/Capacitor plugin tests (superseded, see ADR-016/ADR-020: native emulator gate replaces them) — document scope in `apps/e2e/README.md`.
 
 ## Discarded alternatives
 

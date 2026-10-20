@@ -29,9 +29,9 @@ Pick at most `3 − (open sweep PRs)` findings. Drop any finding that, after you
 
 For each picked finding with slug `<slug>`:
 
-1. `BR=refactor/sweep-$SWEEP-<slug>`; `WT=$REPO/../.gs-sweep-$SWEEP-<slug>`; `git -C $REPO worktree add -b $BR $WT origin/main`; `pnpm --dir $WT install --frozen-lockfile`.
+1. `BR=refactor/sweep-$SWEEP-<slug>`; `WT=$REPO/../.gs-sweep-$SWEEP-<slug>`; `git -C $REPO worktree add -b $BR $WT origin/main`; `just setup` in `$WT` (until wave 1 lands: `pnpm --dir $WT install --frozen-lockfile`).
 2. Spawn `implementer` (foreground) with: the absolute path `$WT` (it must work only there), the finding's Brief, Files, and Acceptance, and "do not commit".
-3. Verify yourself in `$WT`: read `git diff`, confirm it matches the brief and is behavior-preserving; run `pnpm run lint`, `pnpm test`, and the finding's acceptance commands.
+3. Verify yourself in `$WT`: read `git diff`, confirm it matches the brief and is behavior-preserving; run `just lint` and `just test` (until wave 1 lands: `pnpm run lint`, `pnpm test`; Rust via `scripts/core-build.sh test`) and the finding's acceptance commands; a SKIPPED task is not a pass.
 4. On failure: give the implementer **one** follow-up with the failing output. If it still fails, discard (`git -C $REPO worktree remove --force $WT && git -C $REPO branch -D $BR`) and record it in the report.
 5. On success: commit in `$WT` with the finding's Conventional Commit title (hooks must pass; never `--no-verify`), body with the "Why", and the commit attribution trailer. Push `git -C $WT push -u origin $BR`. Open a draft PR: `gh pr create --draft --base main --head $BR --label refactor-sweep --title "<title>" --body ...` following `.github/pull_request_template.md`, including Why, Files, checks run, "Roles applied: Technical Architect (planner), Critical Reviewer (diff review)", and the PR attribution line.
 6. Remove the worktree (`git -C $REPO worktree remove $WT`); the branch stays on the remote.

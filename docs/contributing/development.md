@@ -2,6 +2,8 @@
 
 This repo uses **Node.js** (see `package.json` `engines`), **pnpm**, **Python** (for [pre-commit](https://pre-commit.com)), and optional **GitHub CLI** in the Dev Container.
 
+> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §1, §2, §5, §8:** the Husky + Python pre-commit hooks, Node 22 + pnpm 9.15.4 via corepack and the Dev Container as primary environment. Target: mise + rustup on the host, one digest-pinned build image, lefthook hooks, pnpm 11 without corepack, Dev Container generated from the image. Replaced in toolchain realignment wave 1; this procedure stays valid until then.
+
 ## Dev Container (recommended)
 
 The environment is defined by **Docker Compose** (`.devcontainer/docker-compose.yml`) and **Dockerfile** (`.devcontainer/Dockerfile`). The workspace is mounted at **`/workspace`** — the same layout is used in the IDE and on the CLI.
@@ -149,6 +151,8 @@ Open e.g. `http://localhost:5173/`. The mobile dev server binds `0.0.0.0` so por
 
 **Cursor / VS Code:** You can instead use **Reopen in Container**; `post-create` already sets up pnpm. Port **5173** and **8787** are declared in Compose for CLI users; the IDE may also auto-forward when you start dev servers.
 
+> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §1, §5, §8:** pnpm 9.x via corepack, Python pre-commit and Husky wiring (`pnpm run prepare`). Target: `just setup` with tools pinned in `mise.toml`. Replaced in toolchain realignment wave 1; this procedure stays valid until then.
+
 ## Local setup (without Dev Container or Docker)
 
 Requirements:
@@ -166,6 +170,8 @@ pnpm run prepare    # Husky: wire Git to .husky/
 ```
 
 Do **not** run `pre-commit install`. File checks are triggered by **Husky** (`.husky/pre-commit` runs `pre-commit run`). Running `pre-commit install` alongside Husky can break hook wiring.
+
+> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §1:** `pnpm run lint` (= `pre-commit run --all-files`) and the pnpm-based task table. Target: the fixed `just` vocabulary (`setup fmt lint test gen build e2e gate ci`); `just ci` gives the CI verdict. Replaced in toolchain realignment wave 1; this procedure stays valid until then.
 
 ## Checks (same as CI)
 
@@ -187,6 +193,8 @@ pnpm --filter @guardedsleep/mobile build
 pnpm --filter @guardedsleep/signaling-server build
 ```
 
+> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §5 and ADR-015:** Capacitor sync/open scripts; the shell is legacy and removed. Replaced in toolchain realignment wave 1; this procedure stays valid until then.
+
 ### Capacitor (Android)
 
 After `pnpm --filter @guardedsleep/mobile build`, sync native projects and open Android Studio:
@@ -198,6 +206,8 @@ pnpm run cap:open:android
 ```
 
 The `android/` directory is tracked in git (run `pnpm install` at the repo root so `@capacitor/android` is available).
+
+> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §6:** the Node signaling server image; replaced by the Rust axum server. Replaced in toolchain realignment wave 2; this procedure stays valid until then.
 
 ### Signaling server (Docker)
 
@@ -232,6 +242,8 @@ docker compose -f docker/stack/compose.yaml up --build
 
 For manual LAN IP: `pnpm run stack:lan:env` writes `docker/stack/.env`; then `pnpm run stack:up`.
 
+> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §5 and ADR-015:** the Capacitor WebView self-signed WSS workaround; native Android clients do not use the WebView. Replaced in toolchain realignment wave 1; this procedure stays valid until then.
+
 ### Android debug APK: self-signed WSS (Docker `wss://…:8443`)
 
 The **browser** WebSocket API rejects self-signed TLS in the native Capacitor WebView. **Debug APKs** (`assembleDebug`) route `wss://` signaling through an **OkHttp** client that trusts self-signed certificates on **private LAN hosts only** (`10.x`, `172.16–31.x`, `192.168.x`, loopback). **Release APKs** do not enable this (`ALLOW_DEV_WSS_TRUST=false`).
@@ -246,6 +258,8 @@ cd apps/mobile/android && ./gradlew assembleDebug
 
 Then set signaling to `wss://<LAN-IP>:8443/signaling` in app Settings (or use the value from `pnpm run stack:lan:env`). Plain `ws://<LAN-IP>:8787` remains a valid alternative without TLS.
 
+> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §6:** the Node signaling smoke test; replaced by Rust server tests and the simulation. Replaced in toolchain realignment wave 2; this procedure stays valid until then.
+
 ### Signaling server smoke test
 
 End-to-end WebSocket hello + relay (builds the server, then starts `dist/index.js` in a child process; child stdio is discarded so `console.log` in the server cannot block on a full pipe):
@@ -254,11 +268,15 @@ End-to-end WebSocket hello + relay (builds the server, then starts `dist/index.j
 pnpm --filter @guardedsleep/signaling-server smoke
 ```
 
+> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §8:** commitlint and the `commit-msg` hook; Conventional Commits are checked on the PR title only, in CI. Replaced in toolchain realignment wave 1; this procedure stays valid until then.
+
 Commit messages are validated by **commitlint** (`.husky/commit-msg`). The hook runs `./node_modules/.bin/commitlint` from the repo root — it needs **`node` on `PATH`** and a completed **`pnpm install`**; it does **not** invoke `pnpm` (so GUI Git clients with a minimal `PATH` still work if `node` is available, e.g. under `/usr/bin`).
 
 Example:
 
 `feat(docs): describe pairing flow in connectivity doc`
+
+> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §8:** Python pre-commit; lefthook replaces it. Replaced in toolchain realignment wave 1; this procedure stays valid until then.
 
 ## Python path
 

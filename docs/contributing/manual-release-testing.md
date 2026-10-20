@@ -1,5 +1,7 @@
 # Manual release testing checklist
 
+> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §9 and §10:** the Capacitor baby setup and `mobile-v*` tags in this checklist, and the `pre-commit` CI job name, are legacy; CI is a single `ci-ok` aggregator and releases start from manual `android-v*` tags. Replaced in toolchain realignment waves 1 to 3; this procedure stays valid until then.
+
 `STATUS: DECIDED`
 
 Automated tests (Vitest, Playwright browser E2E, optional hybrid Android smoke) cover WebRTC wiring, pairing, noise alerts, and non-silent inbound audio in **Chromium** and **partially on Android**. They do **not** replace validation on real hardware before a user-facing release.

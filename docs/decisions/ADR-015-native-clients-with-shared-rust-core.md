@@ -5,7 +5,9 @@
 - Deciders: Project owner (pending), Technical Architect, Security/Privacy Architect, UX, Product Owner, Critical Reviewer (perspectives applied by agent)
 - Supersedes: ADR-002 (client platform and signaling server stack) — **only once this ADR is DECIDED** and the PoC gate below passes
 - Related: [ADR-016](ADR-016-test-strategy-local-virtual-physical.md) (test strategy; owns all test details, this ADR keeps the PoC gate). **ADR-015 and ADR-016 are decided together.**
-- Owner decisions 2026-10-19: English, German, French and Spanish are officially supported from Phase 1 (see Localization); link recovery is designed first and then **gated in the PoC as AC-10** (automatic reconnect after Wi-Fi loss/network change, on both roles; see Link recovery)
+- Owner decisions 2026-10-19: English, German, French and Spanish are officially supported from Phase 1 (see Localization; superseded, see ADR-021 §2: about 20 AI-translated locales); link recovery is designed first and then **gated in the PoC as AC-10** (automatic reconnect after Wi-Fi loss/network change, on both roles; see Link recovery)
+
+> **Partially superseded (2026-10-20):** the web row (SvelteKit → Vite + Svelte 5), the signaling row (Node stays until parity → Rust axum now), the WebRTC vendor (`stream-webrtc-android` → `io.github.webrtc-sdk:android` behind a `MediaEngine`) and the four-locale owner decision → [ADR-020](ADR-020-toolchain-and-development-setup.md) §4–§6 and [ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md) §2. Status stays PROPOSED until its gate passes.
 
 ## Context
 
@@ -57,18 +59,18 @@ Rationale: the UI is small (~7 screens) and highly platform-specific, so native 
 
 ### Target stack
 
-| Area                | Choice                                                                                                                                                                     |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Core                | Rust, **sans-IO** (no internal networking or async runtime; platform feeds events in, core returns actions)                                                                |
-| Core scope          | Protocol types (serde), pairing / PSK / fingerprint binding, session state machine, heartbeat/watchdog, alert thresholds, LAN signaling logic                              |
-| Bindings            | UniFFI → Kotlin + Swift; `wasm-bindgen` + `tsify` → TypeScript                                                                                                             |
-| Media               | Platform libwebrtc (Android: maintained prebuilt such as `stream-webrtc-android` or LiveKit builds; iOS: WebRTC.xcframework; web: browser). **Not** `webrtc-rs` for media. |
-| Android             | Kotlin + Jetpack Compose; foreground service type `microphone`; `NsdManager`; Android Keystore                                                                             |
-| iOS (after Android) | Swift + SwiftUI; `AVAudioSession` background `audio`; Network.framework / Bonjour; Keychain / Secure Enclave                                                               |
-| Web                 | SvelteKit (existing UI becomes the web client) + core via WASM + browser WebRTC                                                                                            |
-| Signaling server    | Rust (`axum` + `tokio-tungstenite`), sharing the protocol crate. Node implementation stays until parity is proven.                                                         |
-| Localization        | One platform-neutral catalogue (`locales/`), generated into native resources per target; the core emits message keys, never prose (see "Localization" below)               |
-| Tests               | Local → virtual → physical, device-agnostic physical runner; see [ADR-016](ADR-016-test-strategy-local-virtual-physical.md)                                                |
+| Area                | Choice                                                                                                                                                                                                                                 |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Core                | Rust, **sans-IO** (no internal networking or async runtime; platform feeds events in, core returns actions)                                                                                                                            |
+| Core scope          | Protocol types (serde), pairing / PSK / fingerprint binding, session state machine, heartbeat/watchdog, alert thresholds, LAN signaling logic                                                                                          |
+| Bindings            | UniFFI → Kotlin + Swift; `wasm-bindgen` + `tsify` → TypeScript                                                                                                                                                                         |
+| Media               | Platform libwebrtc (Android: maintained prebuilt such as `stream-webrtc-android` or LiveKit builds; superseded, see ADR-020 §4: `io.github.webrtc-sdk:android`; iOS: WebRTC.xcframework; web: browser). **Not** `webrtc-rs` for media. |
+| Android             | Kotlin + Jetpack Compose; foreground service type `microphone`; `NsdManager`; Android Keystore                                                                                                                                         |
+| iOS (after Android) | Swift + SwiftUI; `AVAudioSession` background `audio`; Network.framework / Bonjour; Keychain / Secure Enclave                                                                                                                           |
+| Web                 | SvelteKit (superseded, see ADR-020 §5: Vite + Svelte 5) (existing UI becomes the web client) + core via WASM + browser WebRTC                                                                                                          |
+| Signaling server    | Rust (`axum` + `tokio-tungstenite`), sharing the protocol crate. Node implementation stays until parity is proven (superseded, see ADR-020 §6: Rust server now, Node deleted).                                                         |
+| Localization        | One platform-neutral catalogue (`locales/`), generated into native resources per target; the core emits message keys, never prose (see "Localization" below)                                                                           |
+| Tests               | Local → virtual → physical, device-agnostic physical runner; see [ADR-016](ADR-016-test-strategy-local-virtual-physical.md)                                                                                                            |
 
 ### Invariant: signaling server deployment
 
@@ -76,7 +78,7 @@ Regardless of implementation language, the signaling server keeps its current de
 
 ### Localization: one source of truth
 
-**Supported languages (owner decision 2026-10-19): English (source and fallback), German, French, Spanish — officially supported from Phase 1**, in every client and for all alert, connection-loss and notification copy. Today the app has these four locales in `apps/mobile/src/lib/i18n/messages/*.json` (`en` is the master, `{{name}}` placeholders) with a key-presence parity test (there is **no** plural handling yet). With three UIs (Compose, SwiftUI, Svelte) and possible later desktop targets (macOS, Windows, Ubuntu), per-platform copies would drift exactly as duplicated protocol logic would. Translations are therefore managed **once** and reused in every deployment.
+**Supported languages (owner decision 2026-10-19; superseded by ADR-021 §2, about 20 AI-translated locales): English (source and fallback), German, French, Spanish — officially supported from Phase 1**, in every client and for all alert, connection-loss and notification copy. Today the app has these four locales in `apps/mobile/src/lib/i18n/messages/*.json` (`en` is the master, `{{name}}` placeholders) with a key-presence parity test (there is **no** plural handling yet). With three UIs (Compose, SwiftUI, Svelte) and possible later desktop targets (macOS, Windows, Ubuntu), per-platform copies would drift exactly as duplicated protocol logic would. Translations are therefore managed **once** and reused in every deployment.
 
 - **Single catalogue:** `locales/<tag>.json` at the repository root, `en` as master. It is platform- and framework-neutral and is the only place where end-user copy is written or translated. Moving it out of `apps/mobile` is part of the migration.
 - **Message syntax:** named arguments plus plural and select forms (ICU MessageFormat subset). The subset is fixed in the PoC under one constraint: every message must map losslessly to Android `strings.xml` (incl. `<plurals>`), Apple String Catalogs (`.xcstrings`) and the web runtime. Rules that keep the mapping lossless: no HTML or markup in messages (the generator escapes XML/Apple special characters, `%`, `'`, `@` and literals like `<PC-LAN-IP>`); `select` (gender) is **not** in the subset — use separate keys; the generator reorders arguments into Android's positional form (`%1$s`) per locale and sorts them by name. The PoC publishes a table of ICU feature → Android / Apple / web mapping with a golden-file test. Existing `{{name}}` messages are converted mechanically; messages that need plurals (e.g. retry counters with a count) are listed and converted explicitly.

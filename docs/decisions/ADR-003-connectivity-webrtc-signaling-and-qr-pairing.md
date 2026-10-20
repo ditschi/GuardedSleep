@@ -4,6 +4,8 @@
 - Date: 2026-04-15
 - Deciders: Architecture + security review inputs
 
+> **Context note (2026-10-20):** the "Local: no server" path is realised through the offline LAN topologies in [ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md) §1 (see also [ADR-012](ADR-012-connection-model-offline-lan-and-handoff.md)). No decision here is changed.
+
 ## Context
 
 Devices must connect over LAN, over the internet (without forcing users to install Tailscale), and optionally over VPN; pairing must be simple and secure.

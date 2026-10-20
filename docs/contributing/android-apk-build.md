@@ -1,5 +1,7 @@
 # Android APK (Capacitor)
 
+> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §5 and ADR-015:** the Capacitor shell and the Capacitor Gradle image are legacy and removed. Replaced in toolchain realignment wave 1 (native builds use the digest-pinned build image, `just build`); this procedure stays valid until then.
+
 The same web app in `apps/mobile` is wrapped with **Capacitor** for Android. Distribution for end users is an **APK** or **AAB** (Play Store), built with the Android Gradle project under `apps/mobile/android/`.
 
 ## Debug vs release (what is a “real” APK?)

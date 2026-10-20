@@ -4,6 +4,8 @@
 - Date: 2026-04-15
 - Deciders: UX + user
 
+> **Partially superseded (2026-10-20):** the Distribution line (F-Droid) → [ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md) §3: Play and GitHub APK at alpha, IzzyOnDroid at beta, F-Droid main repository `DEFERRED`.
+
 ## Context
 
 Parents must notice noise events reliably; branding and store discoverability must reflect privacy positioning.
@@ -35,7 +37,7 @@ Escalating notifications per feature spec (timings implemented as agreed in noti
 
 ### Distribution
 
-- **Google Play** + **F-Droid** + direct APK; build flavors `playStore` vs `foss` as documented.
+- **Google Play** + **F-Droid** (superseded, see ADR-021 §3: IzzyOnDroid at beta, F-Droid main deferred) + direct APK; build flavors `playStore` vs `foss` as documented.
 
 ## Consequences
 

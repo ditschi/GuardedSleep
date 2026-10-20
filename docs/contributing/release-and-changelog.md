@@ -1,5 +1,7 @@
 # Releases and Changelog
 
+> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §8 and §10:** the Release Please node setup (components `protocol`, `signaling-server`, `mobile`), the Husky/commitlint commit check and the `release:lint` flow. Alpha uses manual `android-v*` tags; Release Please returns at beta with components `app`, `server`, `core`; Conventional Commits are checked on the PR title only. Replaced in toolchain realignment wave 1 (hooks, PR-title lint) and T1 (Release Please); this procedure stays valid until then.
+
 > **Tooling decision:** [ADR-006](../decisions/ADR-006-release-and-changelog-automation.md) — Release Please in monorepo manifest mode.
 >
 > **External references** (read once, then come back here):

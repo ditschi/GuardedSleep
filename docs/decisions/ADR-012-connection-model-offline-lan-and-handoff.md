@@ -5,6 +5,8 @@
 - Deciders: Product owner (user), coordinated design (Tech Architect, Security/Privacy, UX, Critical Reviewer 2026-05)
 - Supersedes parts of: [ADR-003](ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md) "Local: no server" -- this ADR **precises** that statement; see §"Relationship to ADR-003".
 
+> **Partially superseded (2026-10-20):** the offline-LAN platform matrix row "no internet, same LAN" for web clients and the Capacitor implementation of the embedded listener (§3, Phase split, matrix) → [ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md) §1: Android ↔ Android (embedded Kotlin listener on the Rust `relay` crate) and local PC mode, both DECIDED for beta; HTTPS web ↔ phone listener is REJECTED. `@capacitor/network` handoff is legacy; the Rust core owns link supervision ([ADR-017](ADR-017-link-recovery-and-connection-supervision.md)).
+
 ## Context
 
 Today `apps/mobile/src/lib/webrtc/peer-session.ts` always opens a WebSocket to a single signaling URL via `connectSignaling(...)`. If that URL is unreachable (no internet, captive portal, hotel WiFi blocking WSS), the session goes to `failed` -- even when the two devices are sitting on the **same LAN** and could trivially exchange SDP/ICE locally. The current Android plugin already advertises and discovers peers via NSD (`_guardedsleep._tcp.`, `lanPeerResolved` event), but the discovered host is **only shown in a diagnostics box** -- it never feeds into the actual signaling.
@@ -27,7 +29,7 @@ GuardedSleep must work, with the **same install and the same monitoring session*
 
 ## Decision
 
-**Adopt a unified connection-orchestrator with explicit path ranking, opaque LAN discovery, and hysteresis-based handoff.** Implemented in stages: path-selector + `PeerSession` shipped first; Phase 2 adds the embedded baby-side LAN relay, opaque NSD, `@capacitor/network` handoff, and baby-side prolonged-disconnect pulse (see Phase split table).
+**Adopt a unified connection-orchestrator with explicit path ranking, opaque LAN discovery, and hysteresis-based handoff.** Implemented in stages: path-selector + `PeerSession` shipped first; Phase 2 adds the embedded baby-side LAN relay, opaque NSD, `@capacitor/network` handoff (superseded, see ADR-021 §1 and ADR-017), and baby-side prolonged-disconnect pulse (see Phase split table).
 
 ### 1. Connection state machine
 
@@ -81,11 +83,11 @@ The baby side, in the absence of an embedded local listener (Phase 2), simply us
 
 **Approach (Tech Architect Option A, Security: APPROVED WITH CONCERNS):**
 
-- **Android Baby unit** opens an **embedded WebSocket listener** on the LAN IP, on a **stable per-install random port** (persisted; falls back to ephemeral on conflict). Speaks the **same** `@guardedsleep/protocol` messages as the public signaling-server (`hello`, `welcome`, `peer`, `signal`, ...). Implemented in a Capacitor plugin extension to `GuardedSleepNativePlugin`, started/stopped **only with the monitoring foreground service** and holding a **`WifiManager.WifiLock`** (and **`MulticastLock`** for NSD) for the duration.
+- **Android Baby unit** opens an **embedded WebSocket listener** on the LAN IP, on a **stable per-install random port** (persisted; falls back to ephemeral on conflict). Speaks the **same** `@guardedsleep/protocol` messages as the public signaling-server (`hello`, `welcome`, `peer`, `signal`, ...). Implemented in a Capacitor plugin extension to `GuardedSleepNativePlugin` (superseded, see ADR-021 §1: Kotlin listener on the Rust `relay` crate), started/stopped **only with the monitoring foreground service** and holding a **`WifiManager.WifiLock`** (and **`MulticastLock`** for NSD) for the duration.
 - **Advertised via existing NSD** (`_guardedsleep._tcp.`) -- the **port from `WifiLock`-protected listener replaces the placeholder `9`** currently in `GuardedSleepNativePlugin.java`.
 - **Discovery name is OPAQUE:** the service name is changed from `gssleep-<roomId>` to a per-session **random discovery token** (no semantic link to room id; ~64 bits entropy, regenerated per session). The room id is **only** revealed after the WebSocket open and `pair_proof` (PSK + DTLS fingerprint) succeeds. Migration: the old `gssleep-<roomId>` name is dropped; backwards compatibility is **not** required because no users yet rely on offline-LAN (the feature is new). This addresses the Security IMPORTANT finding.
 - **Parent (Android)** resolves the NSD service, builds `ws://<lan-ip>:<port>` (no TLS on LAN listener -- relying on **DTLS-SRTP + `pair_proof`** for E2E security; the LAN signaling is treated as **untrusted relay** per `AGENTS.md` §7).
-- **PWA / iOS scope (non-goal in MVP):** PWA browsers cannot host an incoming socket and Capacitor iOS is not in MVP scope; for those targets, **internet signaling is required**. Users who want fully-offline LAN on those platforms can run the public-image `guardedsleep-signaling` Docker on a NAS/router (see option D in §Options Considered and [ADR-008](ADR-008-container-image-build-and-distribution.md)). Stated explicitly in the platform matrix below.
+- **PWA / iOS scope (non-goal in MVP; superseded for PCs, see ADR-021 §1: local PC mode):** PWA browsers cannot host an incoming socket and Capacitor iOS is not in MVP scope; for those targets, **internet signaling is required**. Users who want fully-offline LAN on those platforms can run the public-image `guardedsleep-signaling` Docker on a NAS/router (see option D in §Options Considered and [ADR-008](ADR-008-container-image-build-and-distribution.md)). Stated explicitly in the platform matrix below.
 
 **Android lifecycle (binding):**
 
@@ -174,13 +176,13 @@ UI/UX (ambient bar, escalation timing, plain-language copy) is delegated to [ADR
 
 ## Platform matrix
 
-| Scenario                        | Android↔Android                                               | Android↔PWA                                                          | PWA↔PWA / iOS  |
-| ------------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------- | -------------- |
-| Internet, different networks    | yes                                                           | yes                                                                  | yes            |
-| Internet, same LAN              | yes                                                           | yes                                                                  | yes            |
-| **No internet, same LAN**       | **yes** (baby embedded WS + NSD; `pair_proof` on DataChannel) | **no** (PWA cannot host listener -- needs user-run Docker, Option D) | **no** for MVP |
-| Live Wi-Fi ↔ cellular handoff   | **yes** (`@capacitor/network` debounced reconnect)            | partial (`online`/`offline` events only)                             | partial        |
-| Transient outage auto-reconnect | yes (already today, backoff)                                  | yes                                                                  | yes            |
+| Scenario                        | Android↔Android                                                             | Android↔PWA                                                                                                     | PWA↔PWA / iOS                                          |
+| ------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Internet, different networks    | yes                                                                         | yes                                                                                                             | yes                                                    |
+| Internet, same LAN              | yes                                                                         | yes                                                                                                             | yes                                                    |
+| **No internet, same LAN**       | **yes** (baby embedded WS + NSD; `pair_proof` on DataChannel)               | **no** (PWA cannot host listener -- needs user-run Docker, Option D; superseded: local PC mode, see ADR-021 §1) | **no** for MVP (superseded: local PC mode, ADR-021 §1) |
+| Live Wi-Fi ↔ cellular handoff   | **yes** (`@capacitor/network` debounced reconnect; superseded, see ADR-017) | partial (`online`/`offline` events only)                                                                        | partial                                                |
+| Transient outage auto-reconnect | yes (already today, backoff)                                                | yes                                                                                                             | yes                                                    |
 
 ## Non-Goals
 

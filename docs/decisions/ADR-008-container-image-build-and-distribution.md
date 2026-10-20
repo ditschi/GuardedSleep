@@ -5,9 +5,11 @@
 - Deciders: User decision after option analysis (Technical Architect + Critical Reviewer perspectives synthesized)
 - Related: [ADR-002](ADR-002-client-platform-and-repository-structure.md) (signaling stack), [ADR-005](ADR-005-parent-alerts-product-naming-and-distribution.md) (distribution), [ADR-006](ADR-006-release-and-changelog-automation.md) (release automation)
 
+> **Partially superseded (2026-10-20):** the QEMU-emulated arm64 build → native amd64 and arm64 runners merged into one manifest, no QEMU ([ADR-020](ADR-020-toolchain-and-development-setup.md) §6); the signaling image is the distroless Rust axum image that can also serve the static web UI; the `apps/mobile` nginx web image is replaced by the `apps/web` static build. Tag scheme and `:latest`/`:dev` semantics stand, but `:latest` depends on the T1 Release Please setup ([ADR-020](ADR-020-toolchain-and-development-setup.md) §10).
+
 ## Context
 
-GuardedSleep ships two server-side container images: the **WebSocket signaling server** (`apps/signaling-server`) and the **static PWA host** (nginx serving `apps/mobile` build output). Self-hosters — especially privacy-minded users with home labs — need:
+GuardedSleep ships two server-side container images: the **WebSocket signaling server** (`apps/signaling-server`, superseded by the Rust server, see ADR-020 §6) and the **static PWA host** (nginx serving `apps/mobile` build output, superseded by `apps/web`, see ADR-020 §5). Self-hosters — especially privacy-minded users with home labs — need:
 
 1. A predictable place to **pull** these images (no requirement to clone the repo).
 2. A predictable **tag scheme** that supports both "give me the latest stable" and "give me bleeding edge".
@@ -76,14 +78,14 @@ The repo today only builds and pushes the signaling image with a misused `:lates
 
 ### Negative
 
-- **CI runtime increases** ~2-3 minutes per push (ARM emulation under QEMU). Mitigated by `cache-from/to=type=gha`.
+- **CI runtime increases** ~2-3 minutes per push (ARM emulation under QEMU; superseded, see ADR-020 §6: native runners). Mitigated by `cache-from/to=type=gha`.
 - **`:latest` does not exist until the first release.** During the concept/PoC phase, users must use `:dev` if they want pre-built images. Documented prominently in [docs/contributing/](../contributing/signaling-server-docker.md).
 - **Removing the "every push → `:latest`" behaviour is a breaking change for any existing consumer.** Mitigated by communicating in CHANGELOG and by the fact that **no GuardedSleep release has shipped yet**, so the user base affected is minimal.
 
 ### Risks
 
 - **GHCR outage** → users can't pull. **Mitigation:** the `docker/stack/compose.yaml` local-build path is always available as a fallback.
-- **ARM build flakes under QEMU** → workflow may sporadically fail. **Mitigation:** retry job, monitor flake rate; if it becomes routine, drop to amd64-only or switch to ARM-native runners (available on GitHub Actions when budget allows).
+- **ARM build flakes under QEMU** (superseded, see ADR-020 §6) → workflow may sporadically fail. **Mitigation:** retry job, monitor flake rate; if it becomes routine, drop to amd64-only or switch to ARM-native runners (available on GitHub Actions when budget allows).
 - **Image-tag-Release-Please drift** → if `metadata-action`'s regex for `signaling-server-v*` / `mobile-v*` fails to capture the version, no SemVer tags are produced. **Mitigation:** explicit smoke check in the workflow that prints the tag list and fails if empty on a tag push.
 
 ## Discarded alternatives

@@ -140,7 +140,7 @@ Each use case is described by:
    - QR pairing then proceeds normally.
 3. **Range warning**: hotspot range is typically 10-30 m. Parents must remain within reach.
 
-**Expected connectivity path**: Hotspot (Path 1 with one device as AP).
+**Expected connectivity path**: Hotspot (Path 1 with one device as AP). (Offline topologies target beta, ADR-021 §1.)
 
 **Data volume**: zero -- no internet involved.
 

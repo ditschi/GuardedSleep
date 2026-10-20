@@ -79,7 +79,7 @@ The app uses a **dedicated Notification Channel** with alarm-level priority. Thr
 - App does NOT change the device's ringer mode -- it only plays on the alarm stream
 - Google Play policy compliant: user grants permission explicitly
 
-**Capacitor implementation:**
+**Capacitor implementation (superseded, see [ADR-015](../decisions/ADR-015-native-clients-with-shared-rust-core.md): native Kotlin foreground service):**
 
 - Requires a custom Capacitor plugin (or native Android code in the Capacitor project)
 - The plugin creates the NotificationChannel with `setBypassDnd(true)` and plays **alert / probe** child-audio via `MediaPlayer` (or `AudioTrack`) with `USAGE_ALARM` and the user's **output mode** + **in-app gain** from settings

@@ -9,7 +9,7 @@ alwaysApply: false
 ## Language
 
 - **Authoring language: English.** Concept notes, feature specs, ADRs, reviews, and contributing guides must be written in English (see `AGENTS.md` §5.2a).
-- **Product localization** is not documentation: translated UI strings live only in `apps/mobile/src/lib/i18n/messages/*.json`.
+- **Product localization** is not documentation: translated UI strings live only in `locales/*.json` (ADR-021).
 
 ## Status Tags
 

@@ -4,6 +4,8 @@
 - Date: 2026-04-15
 - Deciders: Product owner (user), coordinated design
 
+> **Partially superseded (2026-10-20):** the Capacitor/WebView PoC mechanism → the native PoC gate in [ADR-015](ADR-015-native-clients-with-shared-rust-core.md) and [ADR-020](ADR-020-toolchain-and-development-setup.md) (Capacitor shell removed in wave 1). Scope, App-Lock and authentication decisions stand.
+
 ## Context
 
 Before implementation we must fix: (1) how much to build before validating risky assumptions, (2) whether to split MVP into smaller releases, (3) whether an in-app lock (PIN/biometrics) is required for MVP.
@@ -22,7 +24,7 @@ Before implementation we must fix: (1) how much to build before validating risky
 
 ### Validation strategy
 
-- **Option A -- Proof of Concept (PoC) before full MVP** (minimal app to validate WebRTC in Capacitor WebView, background audio, OEM battery behavior).
+- **Option A -- Proof of Concept (PoC) before full MVP** (minimal app to validate WebRTC in Capacitor WebView (superseded, see ADR-015/ADR-020: native PoC), background audio, OEM battery behavior).
 - **Option B -- Start full MVP implementation and test in place** (no separate PoC).
 
 ## Decision
@@ -33,12 +35,12 @@ Before implementation we must fix: (1) how much to build before validating risky
 
 3. **PoC gate:** Run a **focused Proof of Concept** **before** investing in the full application structure. **Do not** skip PoC unless the team explicitly accepts the risk that WebRTC + background audio may fail on target devices.
 
-**PoC -- purpose:** De-risk: Android WebView + Capacitor + WebRTC (DataChannel + pre-negotiated audio), Foreground Service + continuous capture, rough battery read after long run, reconnection after WiFi drop, **optional** Opus DTX / silence bitrate measurement.
+**PoC -- purpose:** De-risk: Android WebView + Capacitor + WebRTC (superseded, see ADR-015/ADR-020) (DataChannel + pre-negotiated audio), Foreground Service + continuous capture, rough battery read after long run, reconnection after WiFi drop, **optional** Opus DTX / silence bitrate measurement.
 
 **PoC -- minimal deliverable (suggested):**
 
 - Two Android devices (or emulator + device where applicable).
-- Capacitor shell + minimal UI (no full GuardedSleep UX).
+- Capacitor shell + minimal UI (superseded, see ADR-020: shell removed) (no full GuardedSleep UX).
 - Pairing: QR or pasted JSON acceptable for PoC if faster.
 - One WebRTC session: DataChannel heartbeat + one muted-then-unmuted audio track.
 - Foreground Service with ongoing notification on baby side.

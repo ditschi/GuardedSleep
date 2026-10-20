@@ -39,14 +39,14 @@ The application must work on Android and iOS phones and tablets. Desktop support
 **Product / marketing name:** **GuardedSleep – Privacy Baby Monitor**
 
 - **Repository / technical identifiers:** The product is **GuardedSleep**. Workspace npm scope **`@guardedsleep`**, Docker images **`guardedsleep-*`**, and Android application ID **`org.guardedsleep.app`** align with that name. The git repository folder may still be named historically on some checkouts.
-- **In-app and store-facing branding:** GuardedSleep, with subtitle/tagline _Privacy Baby Monitor_ where space allows (splash screen, Play/F-Droid listing, about screen).
+- **In-app and store-facing branding:** GuardedSleep, with subtitle/tagline _Privacy Baby Monitor_ where space allows (splash screen, store listings, about screen).
 
 **Store listing:** The full string helps ASO (contains "Privacy", "Baby", "Monitor"). **Note:** Google Play app title length is often limited (~30 characters in many locales). If the full title does not fit, use a shortened **title** (e.g. `GuardedSleep Baby Monitor`) and put _Privacy-first, encrypted…_ in the **short description**, while keeping **GuardedSleep – Privacy Baby Monitor** as the canonical product name in the long description and on the website.
 
 **Will users find the app when searching "baby monitor"?**
 
 - Listing text should still repeat _baby monitor_, _encrypted_, _open source_ in the first lines of the description for search relevance.
-- **F-Droid:** Summary line should include "baby monitor" and "privacy".
+- **F-Droid clients (via IzzyOnDroid at beta):** Summary line should include "baby monitor" and "privacy". The F-Droid main repository is `STATUS: DEFERRED` until a from-source build of libwebrtc and JNA is sized; make no public promise of F-Droid main ([ADR-021](../decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §3). Wording: "F-Droid clients via IzzyOnDroid; F-Droid main repository later".
 
 ## Non-Goals
 

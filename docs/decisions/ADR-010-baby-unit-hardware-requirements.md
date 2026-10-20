@@ -4,6 +4,8 @@
 - Date: 2026-05-13
 - Deciders: Product owner (user), coordinated design (Critical Review 2026-05)
 
+> **Context note (2026-10-20):** the WebView assumptions apply to the legacy Capacitor shell only; the native Android baby unit has no WebView dependency ([ADR-015](ADR-015-native-clients-with-shared-rust-core.md), [ADR-019](ADR-019-language-repository-and-client-policy.md)). Paths under `apps/mobile` are historical; the web client is rebuilt as `apps/web` ([ADR-020](ADR-020-toolchain-and-development-setup.md) §5).
+
 ## Context
 
 Marketing and architecture text encourage **repurposing old phones** as the baby unit. Without constraints, users may deploy devices with:

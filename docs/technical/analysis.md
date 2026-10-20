@@ -2,6 +2,8 @@
 
 This document records the technical analysis that informed the architecture. **Authoritative MVP decisions:** [Architecture Decision Records](../decisions/README.md). If this document and an ADR disagree, **the ADR wins**.
 
+> **Partially superseded (2026-10-20):** the platform analysis recommended the Hybrid Web App + Capacitor; that was replaced by native clients on a shared Rust core ([ADR-015](../decisions/ADR-015-native-clients-with-shared-rust-core.md), [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md)). Distribution wording on F-Droid is superseded by [ADR-021](../decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §3 (Play and GitHub APK at alpha, IzzyOnDroid at beta, F-Droid main repository `DEFERRED`). The Capacitor sections stay as decision history.
+
 ## Analysis Topics
 
 | #   | Topic                            | Status                   | ADR                                                                              |
@@ -67,7 +69,7 @@ This document records the technical analysis that informed the architecture. **A
   - Clean architecture: Core logic (pure JS/TS) -> Platform layer (Web APIs / Capacitor plugins) -> UI layer
   - **Technical Architect verdict: RECOMMENDED** -- only approach meeting all constraints
 
-**Recommendation**: Hybrid Web App + Capacitor. It is the only approach that simultaneously provides cross-platform support, solves the iOS background audio blocker, allows a browser fallback for desktop, works in local/hotspot scenarios without an HTTPS certificate, and is maintainable by a single developer.
+**Recommendation (superseded, see ADR-015/ADR-020)**: Hybrid Web App + Capacitor. It is the only approach that simultaneously provides cross-platform support, solves the iOS background audio blocker, allows a browser fallback for desktop, works in local/hotspot scenarios without an HTTPS certificate, and is maintainable by a single developer.
 
 ### Discarded Alternatives
 
@@ -389,7 +391,7 @@ Microphone → Audio Capture (Web Audio API / native plugin)
 
 - [ ] **App store distribution (Android)**
   - Google Play for mainstream users
-  - F-Droid for privacy-conscious users
+  - F-Droid for privacy-conscious users (superseded, see ADR-021 §3: IzzyOnDroid at beta, F-Droid main deferred)
   - APK direct download as alternative
   - No Apple hardware = no iOS App Store initially (community can assist)
 
@@ -406,7 +408,7 @@ Microphone → Audio Capture (Web Audio API / native plugin)
   - Server sees no content, only connection metadata
 
 - [x] **Hybrid: multiple deployment options (RECOMMENDED)**
-  - App: Google Play + F-Droid + APK download (Android); iOS via community/TestFlight initially
+  - App: Google Play + F-Droid (superseded, see ADR-021 §3) + APK download (Android); iOS via community/TestFlight initially
   - Local mode: no server needed, install app + QR pair
   - Internet mode: self-host signaling (Docker) or use community server
   - Desktop: PWA export accessible via browser
@@ -465,11 +467,11 @@ Everything else happens automatically: network detection, DTLS binding, permissi
 
 ### Platform Tiers
 
-| Tier | Platform              | Support Level                                      |
-| ---- | --------------------- | -------------------------------------------------- |
-| 1    | Android (Capacitor)   | Fully supported by core developer                  |
-| 2    | iOS (Capacitor)       | Community-maintained, CI builds via GitHub Actions |
-| 3    | Desktop/Browser (PWA) | Best-effort, browser fallback                      |
+| Tier | Platform                                 | Support Level                                      |
+| ---- | ---------------------------------------- | -------------------------------------------------- |
+| 1    | Android (Capacitor; superseded, ADR-015) | Fully supported by core developer                  |
+| 2    | iOS (Capacitor; superseded, ADR-015)     | Community-maintained, CI builds via GitHub Actions |
+| 3    | Desktop/Browser (PWA)                    | Best-effort, browser fallback                      |
 
 ---
 
@@ -648,12 +650,12 @@ Capacitor wraps our web app into **real native apps** (.apk/.aab for Android, .i
 
 ### Distribution Strategy
 
-| Channel                 | Target Audience                         | Version                                                     |
-| ----------------------- | --------------------------------------- | ----------------------------------------------------------- |
-| **F-Droid**             | Privacy-conscious users, FOSS community | Full version, free, with direct donation links              |
-| **Google Play**         | Mainstream Android users                | Full version, free, with optional "Support" in-app purchase |
-| **Direct APK** (GitHub) | Developers, early adopters              | Full version, free                                          |
-| **Apple App Store**     | iOS users (Phase 2)                     | Full version, free, with optional "Support" in-app purchase |
+| Channel                                      | Target Audience                         | Version                                                     |
+| -------------------------------------------- | --------------------------------------- | ----------------------------------------------------------- |
+| **F-Droid** (main repo deferred, ADR-021 §3) | Privacy-conscious users, FOSS community | Full version, free, with direct donation links              |
+| **Google Play**                              | Mainstream Android users                | Full version, free, with optional "Support" in-app purchase |
+| **Direct APK** (GitHub)                      | Developers, early adopters              | Full version, free                                          |
+| **Apple App Store**                          | iOS users (Phase 2)                     | Full version, free, with optional "Support" in-app purchase |
 
 ### Monetization: "Support Me" Model
 
@@ -746,16 +748,16 @@ Google Play prohibits apps from linking to external payment/donation platforms. 
 
 ## Next Steps
 
-| Priority    | Action                                                           | Blocks               |
-| ----------- | ---------------------------------------------------------------- | -------------------- |
-| **BLOCKER** | Build PoC: Capacitor + WebRTC + Background Audio on Android      | Everything           |
-| **BLOCKER** | PoC: Multi-IP QR code + parallel connection + signaling server   | Internet mode        |
-| **HIGH**    | Formalize MVP scope as ADR-001                                   | Implementation start |
-| **HIGH**    | Build minimal signaling server (~300-400 LOC, Docker)            | Internet mode        |
-| **HIGH**    | Design Local Discovery mechanism for reconnection                | Implementation       |
-| **HIGH**    | Verify Opus DTX silence frame data usage in PoC                  | Audio optimization   |
-| **MEDIUM**  | Choose web framework (Svelte/React/Vue)                          | Implementation       |
-| **MEDIUM**  | Design UX wireframes for 3-step setup flow                       | Implementation       |
-| **MEDIUM**  | Set up app store distribution (Google Play + F-Droid)            | Distribution         |
-| **LOW**     | Write Tailscale/Headscale setup guide (optional power-user mode) | Documentation        |
-| **LOW**     | Plan iOS PoC (after Android validated)                           | Phase 2              |
+| Priority    | Action                                                                                   | Blocks               |
+| ----------- | ---------------------------------------------------------------------------------------- | -------------------- |
+| **BLOCKER** | Build PoC: Capacitor + WebRTC + Background Audio on Android                              | Everything           |
+| **BLOCKER** | PoC: Multi-IP QR code + parallel connection + signaling server                           | Internet mode        |
+| **HIGH**    | Formalize MVP scope as ADR-001                                                           | Implementation start |
+| **HIGH**    | Build minimal signaling server (~300-400 LOC, Docker)                                    | Internet mode        |
+| **HIGH**    | Design Local Discovery mechanism for reconnection                                        | Implementation       |
+| **HIGH**    | Verify Opus DTX silence frame data usage in PoC                                          | Audio optimization   |
+| **MEDIUM**  | Choose web framework (Svelte/React/Vue)                                                  | Implementation       |
+| **MEDIUM**  | Design UX wireframes for 3-step setup flow                                               | Implementation       |
+| **MEDIUM**  | Set up app store distribution (Google Play + F-Droid; F-Droid main deferred, ADR-021 §3) | Distribution         |
+| **LOW**     | Write Tailscale/Headscale setup guide (optional power-user mode)                         | Documentation        |
+| **LOW**     | Plan iOS PoC (after Android validated)                                                   | Phase 2              |

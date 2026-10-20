@@ -1,20 +1,22 @@
 # Software Architecture
 
+> **Partially superseded (2026-10-20):** this document describes the single-app SvelteKit + Capacitor + Node setup. The current architecture is the Rust core with native clients ([ADR-015](../decisions/ADR-015-native-clients-with-shared-rust-core.md)) and the polyglot toolchain of [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md). Superseded points are marked inline "(superseded, see ADR-0xx)"; the sections below stay as decision history and are not rewritten. Target state: web client `apps/web` on Vite 8 + Svelte 5 + vite-plugin-pwa (no SvelteKit); Rust axum signaling server on the `relay` crate; protocol types generated from the Rust core (`packages/protocol` deleted); `just` as the only entry point with tools pinned by mise; pnpm 11 without corepack; lefthook instead of Husky/pre-commit; native amd64/arm64 image builds (no QEMU).
+
 ## Technology Stack
 
 > STATUS: **DECIDED** -- Accepted by user.
 
-| Area                  | Recommendation                                    | Priority   | Alternatives                |
-| --------------------- | ------------------------------------------------- | ---------- | --------------------------- |
-| **Web Framework**     | Svelte 5 + SvelteKit                              | IMPORTANT  | React, Vue 3, Solid.js      |
-| **UI Framework**      | Tailwind CSS + shadcn-svelte                      | IMPORTANT  | Skeleton UI, DaisyUI, Ionic |
-| **Project Structure** | Monorepo (pnpm workspaces)                        | CRITICAL   | Single package              |
-| **Settings Storage**  | Capacitor Preferences + Secure Storage (Keystore) | CRITICAL   | localStorage, SQLite        |
-| **Signaling Server**  | Node.js + ws + TypeScript                         | SUGGESTION | Go, Deno, Bun               |
-| **Package Manager**   | pnpm                                              | SUGGESTION | npm, yarn                   |
-| **Build Tool**        | Vite (via SvelteKit)                              | implicit   | --                          |
-| **Language**          | TypeScript (everywhere)                           | CRITICAL   | --                          |
-| **Linting**           | ESLint + Prettier + svelte-check                  | SUGGESTION | Biome                       |
+| Area                  | Recommendation                                                                  | Priority   | Alternatives                |
+| --------------------- | ------------------------------------------------------------------------------- | ---------- | --------------------------- |
+| **Web Framework**     | Svelte 5 + SvelteKit (superseded, ADR-020 §5: Vite 8 + Svelte 5)                | IMPORTANT  | React, Vue 3, Solid.js      |
+| **UI Framework**      | Tailwind CSS + shadcn-svelte                                                    | IMPORTANT  | Skeleton UI, DaisyUI, Ionic |
+| **Project Structure** | Monorepo (pnpm workspaces) (refined, ADR-020 §1: Cargo + Gradle + pnpm, `just`) | CRITICAL   | Single package              |
+| **Settings Storage**  | Capacitor Preferences + Secure Storage (Keystore) (superseded, ADR-019 §8)      | CRITICAL   | localStorage, SQLite        |
+| **Signaling Server**  | Node.js + ws + TypeScript (superseded, ADR-020 §6: Rust axum)                   | SUGGESTION | Go, Deno, Bun               |
+| **Package Manager**   | pnpm (pnpm 11 via mise, no corepack, ADR-020 §5)                                | SUGGESTION | npm, yarn                   |
+| **Build Tool**        | Vite (via SvelteKit) (superseded: plain Vite 8, ADR-020 §5)                     | implicit   | --                          |
+| **Language**          | TypeScript (everywhere) (superseded, ADR-019 §1)                                | CRITICAL   | --                          |
+| **Linting**           | ESLint + Prettier + svelte-check (superseded, ADR-020 §5: no ESLint)            | SUGGESTION | Biome                       |
 
 ## 1. Web Framework
 
@@ -158,9 +160,9 @@ guardedsleep/
 ### Design Decisions
 
 - **`lib/core/` is framework-agnostic.** WebRTC, audio analysis, crypto, and protocol have zero Svelte imports. Enables: unit tests without UI framework, potential framework switch, clear separation of concerns.
-- **`lib/platform/` abstracts Capacitor vs. browser.** Same interface, different implementations. PWA falls back to Web APIs.
+- **`lib/platform/` abstracts Capacitor vs. browser (Capacitor part superseded, see ADR-015/ADR-020).** Same interface, different implementations. PWA falls back to Web APIs.
 - **`lib/stores/` bridges core to Svelte.** The only connection between framework-agnostic core and UI. Thin and replaceable.
-- **Monorepo with pnpm workspaces.** App and signaling server share TypeScript types for the signaling protocol. Unified tooling (ESLint, Prettier).
+- **Monorepo with pnpm workspaces.** App and signaling server share TypeScript types for the signaling protocol. Unified tooling (ESLint, Prettier). (Superseded, see ADR-020 §1 and §5: native workspaces per ecosystem, protocol types generated from Rust, Prettier + svelte-check, no ESLint.)
 - **Build flavors** in `android/app/build.gradle` (`playStore` / `foss`). Web code uses `import.meta.env.VITE_FLAVOR` for conditional features.
 
 ## 5. Settings Storage
@@ -184,7 +186,7 @@ Abstraction layer in `lib/platform/storage.ts` hides the two-layer split from th
 
 > STATUS: **DECIDED**
 
-**Recommendation: Node.js + ws + TypeScript**
+**Recommendation: Node.js + ws + TypeScript** (superseded, see ADR-020 §6: Rust axum on the sans-IO `relay` crate, now; the "Go/Rust advantages are irrelevant" reasoning below no longer holds because the validator would duplicate core logic)
 
 Key reasons:
 

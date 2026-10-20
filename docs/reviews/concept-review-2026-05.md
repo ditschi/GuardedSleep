@@ -4,7 +4,7 @@
 > **Date**: 2026-05-13
 > **Scope**: Review of the foundational GuardedSleep concept (vision, features, ADRs) against three real-world user groups: event-only ("Festtags-Eltern"), daily home use, and hardware-recyclers.
 > **Trigger**: user-requested critical review focused on non-technical users, hardware reuse, and settings complexity.
-> **Verdict**: NEEDS REWORK at the concept level. Technical foundation (WebRTC + DTLS pinning + Capacitor) is solid; the gap is persona coverage, failure model, and settings stratification.
+> **Verdict**: NEEDS REWORK at the concept level. Technical foundation (WebRTC + DTLS pinning + Capacitor; superseded, see ADR-015/ADR-020) is solid; the gap is persona coverage, failure model, and settings stratification.
 
 This document is the durable record of the review. The implementation of its findings is tracked through three new ADRs (**ADR-009** Personas + Failure Model, **ADR-010** Baby-Unit hardware, **ADR-011** Parent-side audio routing) and updates to all five feature documents.
 
@@ -187,7 +187,7 @@ If the safety model relies on the parent noticing a missing indicator, the paren
 
 **NEW-2 -- Communicate the failure model before installation.**
 
-Play Store / F-Droid listings and the first onboarding slide must explicitly state: "Like every baby monitor, GuardedSleep cannot alert if your receiver phone dies. Keep it charged." Added as a Non-Goal in [vision.md](../concept/vision.md). Onboarding slide added to [user-interface.md](../features/user-interface.md).
+Play Store / F-Droid listings (F-Droid main deferred, ADR-021 §3) and the first onboarding slide must explicitly state: "Like every baby monitor, GuardedSleep cannot alert if your receiver phone dies. Keep it charged." Added as a Non-Goal in [vision.md](../concept/vision.md). Onboarding slide added to [user-interface.md](../features/user-interface.md).
 
 ---
 

@@ -5,6 +5,8 @@
 - Deciders: Project owner (decided 2026-10-20, §6); reviewed by Product Owner (APPROVED WITH CONCERNS), UX/Usability (APPROVED WITH CONCERNS), Security/Privacy Architect (NEEDS REWORK → addressed), Technical Architect (APPROVED WITH CONCERNS), Critical Reviewer (NEEDS REWORK → addressed)
 - Related: [ADR-001](ADR-001-mvp-scope-poc-gate-and-authentication.md), [ADR-004](ADR-004-encryption-transport-and-key-storage.md) (amendment), [ADR-009](ADR-009-personas-and-failure-model.md), [ADR-010](ADR-010-baby-unit-hardware-requirements.md), [ADR-011](ADR-011-audio-routing-parent-side.md), [ADR-013](ADR-013-connection-status-observability-and-copy.md), [ADR-015](ADR-015-native-clients-with-shared-rust-core.md), [ADR-016](ADR-016-test-strategy-local-virtual-physical.md), [ADR-017](ADR-017-link-recovery-and-connection-supervision.md); flows and copy: [alpha-ux-flows.md](../technical/alpha-ux-flows.md)
 
+> **Context note (2026-10-20):** the "SvelteKit web client" is rebuilt as `apps/web` on Vite 8 + Svelte 5 ([ADR-020](ADR-020-toolchain-and-development-setup.md) §5); the alpha uses internet signaling for all pairs, offline LAN modes are beta exit criteria ([ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md) §1); distribution at alpha is Google Play (`org.guardedsleep.app.alpha`) plus GitHub Releases APK ([ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md) §3). Alpha scope changes only where inline marks say "superseded".
+
 ## Context
 
 The owner asked (2026-10-19, paraphrased from German) to move from the PoC to a **first alpha** suitable for hardware tests — automated and manual, native app plus browser — with every feature needed for a usable app, everything virtually testable tested, a good user experience, and above all **trust**: parents are reliably informed, the parent side clearly signals any problem, and the app never wakes the child (no audio on the baby device except an explicit talk-back; the parent can check and, where possible, set remotely that the baby phone is silent; alarms may stay).
@@ -15,10 +17,10 @@ An alpha is a milestone towards the full MVP (ADR-001 unchanged), not an end-use
 
 ### 1. What the alpha is
 
-- **Clients:** native Android (Kotlin + Compose + Rust core) as baby and parent; the SvelteKit web client on the same core via WASM as baby or parent, at reduced parity (§2). ADR-015 stays PROPOSED until its gate passes; alpha builds are the vehicle.
+- **Clients:** native Android (Kotlin + Compose + Rust core) as baby and parent; the SvelteKit web client (superseded, see ADR-020 §5: Vite + Svelte 5) on the same core via WASM as baby or parent, at reduced parity (§2). ADR-015 stays PROPOSED until its gate passes; alpha builds are the vehicle.
 - **Server:** signaling server with ADR-017 §10 changes. Tester setup: a LAN or self-hosted signaling server as primary, a public one as fallback (fallback URL list in Advanced settings, ADR-012); TURN configured.
-- **Identity:** `applicationId org.guardedsleep.app.alpha`, namespace `org.guardedsleep.app`, version `0.1.0-alpha.N`, debug-signed CI artifacts. Release builds disable cleartext traffic; test hooks (autostart/config extras, audio injection, `GS_POC` logs) exist only in debug and are checked absent by the release-APK inspection.
-- **Languages:** en and de complete; fr and es may fall back to en per key without blocking hardware tests; the catalogue mechanism (AC-8) is required.
+- **Identity:** `applicationId org.guardedsleep.app.alpha`, namespace `org.guardedsleep.app`, version `0.1.0-alpha.N`, debug-signed CI artifacts (CI artifacts only; Play and GitHub releases are signed with the release key, ADR-020 §10). Release builds disable cleartext traffic (alpha only; from beta the LAN listener path follows ADR-021 §1, which partly supersedes this); test hooks (autostart/config extras, audio injection, `GS_POC` logs) exist only in debug and are checked absent by the release-APK inspection.
+- **Languages:** en and de complete; fr and es may fall back to en per key without blocking hardware tests (superseded, see ADR-021 §2: a locale ships only with all `critical` keys; non-critical keys may fall back); the catalogue mechanism (AC-8) is required.
 
 ### 2. Scope
 
@@ -48,7 +50,7 @@ An alpha is a milestone towards the full MVP (ADR-001 unchanged), not an end-use
 
 **Not in the alpha:**
 
-- Offline LAN signaling without any server (embedded listener + NSD) — `DEFERRED` to alpha 2; UC-4 (hotspot without internet) is unsupported in the alpha and the docs say so.
+- Offline LAN signaling without any server (embedded listener + NSD) — `DEFERRED` to alpha 2 (superseded, see ADR-021 §1: target beta); UC-4 (hotspot without internet) is unsupported in the alpha and the docs say so.
 - Baby auto-start after reboot — `DEFERRED` (Android 14+ microphone foreground-service restriction, ADR-017 §9); the parent escalates. Recorded in device-management.md and failure-model.md; "baby phone reboots overnight" is a must-pass hardware scenario (parent reaches level 2).
 - Dual audio routing (ADR-011 "Both"), talk-back, multi-parent, app lock, video.
 

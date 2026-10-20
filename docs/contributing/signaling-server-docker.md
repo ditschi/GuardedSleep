@@ -1,5 +1,7 @@
 # Signaling server (Docker / Compose)
 
+> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §6:** the Node `ws` signaling image (`apps/signaling-server`) is replaced by the distroless Rust axum image, built natively on amd64 and arm64 (no QEMU), with built-in STUN and optional static web UI serving. Replaced in toolchain realignment wave 2; this procedure stays valid until then.
+
 The WebSocket signaling server (`apps/signaling-server`) can be run as a container built from this repository or from a **pre-built image on GitHub Container Registry (GHCR)**.
 
 ## Requirements

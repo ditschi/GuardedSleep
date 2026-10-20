@@ -1,5 +1,7 @@
 # Static web app (PWA) and full stack with Docker
 
+> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §5, §6 and §10:** the `apps/mobile` SvelteKit/nginx web image and `mobile-v*` tags are replaced by the `apps/web` (Vite 8 + Svelte 5) static build and the product tag scheme; the Rust server binary can also serve the web UI (local PC mode). Replaced in toolchain realignment wave 3; this procedure stays valid until then.
+
 The SvelteKit mobile client (`apps/mobile`) builds to a **static site** (`adapter-static`) with a **service worker** and **web app manifest** (via `@vite-pwa/sveltekit`). You can serve it with any static file host; this repository includes an **nginx** image recipe and **Compose** examples that run **PWA + signaling** together.
 
 ## Signaling URL: build-time vs runtime

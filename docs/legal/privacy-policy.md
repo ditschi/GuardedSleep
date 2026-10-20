@@ -1,6 +1,6 @@
 # Privacy Policy
 
-> STATUS: DRAFT -- Must be finalized before Google Play / F-Droid submission.
+> STATUS: DRAFT -- Must be finalized before Google Play / IzzyOnDroid submission (F-Droid main repository is deferred, see [ADR-021](../decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §3).
 > Language: English (German translation needed for EU compliance).
 
 ## 1. Overview

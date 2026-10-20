@@ -5,6 +5,8 @@
 - Deciders: Product owner (user), coordinated design (UX/Usability, Critical Reviewer 2026-05)
 - Companion ADR: [ADR-012](ADR-012-connection-model-offline-lan-and-handoff.md) (defines the **states** this ADR renders).
 
+> **Context note (2026-10-20):** file references under `apps/mobile` (Capacitor-era TypeScript) are historical. Link states come from the Rust core ([ADR-017](ADR-017-link-recovery-and-connection-supervision.md)); UIs render them from the catalogue. The web client is rebuilt as `apps/web` ([ADR-020](ADR-020-toolchain-and-development-setup.md) §5).
+
 ## Context
 
 The user requirement, verbatim: _"the connection status is clearly visible, especially if there is an issue we need to see on both devices that the other device is not connected. This is critical information and must catch the user's attention."_
