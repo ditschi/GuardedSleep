@@ -76,8 +76,9 @@ targetRules = ["guardedsleep-pair-uri-psk"]
 paths = ['''^apps/android/app/src/test/kotlin/org/guardedsleep/app/ui/OtherShots\.kt$''']
 
 [[allowlists]]
-description = "Conformance vectors, golden traces and tests with throw-away counting-byte PSKs (00 01 02 ...)"
+description = "Conformance vectors, golden traces and tests with throw-away counting-byte PSKs (00 01 02 ...) and the admission keys and MACs derived from them"
 targetRules = [
+  "generic-api-key",
   "guardedsleep-psk-json-field",
   "guardedsleep-psk-assignment-base64url",
   "guardedsleep-qr-payload-psk",
