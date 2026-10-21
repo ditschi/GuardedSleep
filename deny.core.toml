@@ -1,0 +1,24 @@
+# Sans-IO layering bans (ADR-020 §3, AGENTS.md "Rust core: sans-IO").
+# `core` and `relay` must not pull in an async runtime, OS randomness or socket crates, not even
+# transitively. cargo-deny bans apply to the whole graph it is given, and the workspace graph
+# legitimately contains such crates later (server, sim). So these bans run per crate, on that crate's
+# own graph, via `--manifest-path`:
+#   cargo deny --manifest-path crates/guardedsleep-core/Cargo.toml --config deny.core.toml check bans
+# `just deny` (scripts/lib/deny.sh) runs this for guardedsleep-core and, once it exists, guardedsleep-relay.
+# Ban syntax: https://embarkstudios.github.io/cargo-deny/checks/bans/cfg.html
+
+[graph]
+# Dev-dependencies (test harnesses, proptest) may use the OS; only the shipped graph is checked.
+exclude-dev = true
+
+[bans]
+multiple-versions = "allow"
+
+deny = [
+  { crate = "tokio", reason = "sans-IO: no async runtime in core/relay" },
+  { crate = "mio", reason = "sans-IO: no OS event loop in core/relay" },
+  { crate = "getrandom", reason = "sans-IO: randomness is injected by the caller, never read from the OS" },
+  { crate = "socket2", reason = "sans-IO: no sockets in core/relay" },
+  { crate = "async-std", reason = "sans-IO: no async runtime in core/relay" },
+  { crate = "smol", reason = "sans-IO: no async runtime in core/relay" },
+]
