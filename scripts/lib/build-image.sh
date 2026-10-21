@@ -6,6 +6,10 @@
 # The image carries a label "gs.toolchain" with a hash of rust-toolchain.toml and the Dockerfile, so it
 # is rebuilt whenever either changes. The repo root is passed as the named build context "repo"
 # (the Dockerfile copies rust-toolchain.toml from it).
+# It also sets GS_DOCKER_USER_ARGS, the array to pass to `docker run`: rootful Docker runs as the caller's
+# uid so files written to target/ stay owned by the caller (host cargo shares that directory); rootless
+# Docker already maps container root to the caller, so nothing is added there. HOME points at a
+# writable directory under target/ because the uid has no passwd entry in the image.
 # Named build contexts: https://docs.docker.com/reference/cli/docker/buildx/build/#build-context
 
 gs_ensure_build_image() {
@@ -16,5 +20,10 @@ gs_ensure_build_image() {
   if [[ "$(docker image inspect -f '{{ index .Config.Labels "gs.toolchain" }}' "$GS_BUILD_IMAGE" 2>/dev/null)" != "$hash" ]]; then
     docker build --build-context repo="$root" --label "gs.toolchain=$hash" -t "$GS_BUILD_IMAGE" \
       "$root/docker/android-native-build" >&2
+  fi
+  GS_DOCKER_USER_ARGS=()
+  if ! docker info -f '{{.SecurityOptions}}' 2>/dev/null | grep -q rootless; then
+    mkdir -p "$root/target/.home"
+    GS_DOCKER_USER_ARGS=(--user "$(id -u):$(id -g)" -e HOME=/workspace/target/.home)
   fi
 }
