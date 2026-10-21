@@ -1,8 +1,6 @@
 # Signaling server (Docker / Compose)
 
-> **Superseded by [ADR-020](../../openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md) §6:** the Node `ws` signaling image (`apps/signaling-server`) is replaced by the distroless Rust axum image, built natively on amd64 and arm64 (no QEMU), with built-in STUN and optional static web UI serving. Replaced in toolchain realignment wave 2; this procedure stays valid until then.
-
-The WebSocket signaling server (`apps/signaling-server`) can be run as a container built from this repository or from a **pre-built image on GitHub Container Registry (GHCR)**.
+The signaling server is the Rust `guardedsleep-server` ([ADR-020](../../openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md) §6; `crates/guardedsleep-server` on the sans-IO `crates/guardedsleep-relay`). It replaced the Node `ws` server with the same environment variables, the same WebSocket protocol and the same `/healthz`. It can be run as a container built from this repository or from a **pre-built image on GitHub Container Registry (GHCR)**.
 
 ## Requirements
 
@@ -12,11 +10,20 @@ The WebSocket signaling server (`apps/signaling-server`) can be run as a contain
 ## Image layout
 
 - **Dockerfile:** `docker/signaling-server/Dockerfile` (build context = **repository root**)
-- **Production artifact:** `pnpm deploy` copies `@guardedsleep/signaling-server` with production dependencies into a small runtime layer.
+- **Build:** cargo-chef caches the dependency layer; the Rust channel comes from `rust-toolchain.toml`. Each platform (amd64, arm64) compiles natively.
+- **Runtime:** `gcr.io/distroless/cc-debian13:nonroot` (about 30 MB, no shell), user `nonroot` (65532). It writes nothing, so the Compose files run it with `read_only: true`, `cap_drop: [ALL]` and `no-new-privileges`.
+- **Ports:** `8787/tcp` (WebSocket signaling and `/healthz`) and `3478/udp` (STUN).
+- **Health check:** the image has no `curl`, so `HEALTHCHECK` runs `guardedsleep-server --healthcheck`, which probes `GET /healthz` on loopback.
 
 ## Security (signaling)
 
-The server applies baseline HTTP headers on the health endpoint (`nosniff`, `DENY` framing, `no-store`). WebSockets use a **64 KiB max frame size**, **no `perMessageDeflate`** (reduces compression-based abuse), a **`SIGNALING_ALLOWED_ORIGINS`** allowlist for browser `Origin` headers (connections **without** `Origin` stay allowed for native clients and tooling), and a **`SIGNALING_HELLO_TIMEOUT_MS`** window so connections cannot stay open indefinitely without completing `hello`. A second `hello` on the same socket is rejected. Liveness and abuse limits: the server pings every WebSocket every `SIGNALING_PING_INTERVAL_MS` (default `10000`, min `2000`) and terminates sockets that missed the previous ping, so ghost baby/parent sockets disappear within about two intervals. Per client IP, `SIGNALING_HELLO_RATE_PER_MIN` (default `20`) and `SIGNALING_NEW_ROOM_RATE_PER_MIN` (default `10`) cap hello attempts and room creation (`RATE_LIMITED`; `0` disables); `SIGNALING_TRUST_PROXY=1` takes the client IP from the **rightmost** `X-Forwarded-For` hop (the one your proxy appended; set `SIGNALING_TRUSTED_PROXY_HOPS=n` for n proxies, taking the n-th from the right; default 1). Leading hops are client-controlled and ignored. IPs and room ids are never logged.
+The server applies baseline HTTP headers on the health endpoint (`nosniff`, `DENY` framing, `no-store`). WebSockets use a **64 KiB max message size**, **no per-message compression** (reduces compression-based abuse), a **`SIGNALING_ALLOWED_ORIGINS`** allowlist for browser `Origin` headers (connections **without** `Origin` stay allowed for native clients and tooling), and a **`SIGNALING_HELLO_TIMEOUT_MS`** window so connections cannot stay open indefinitely without completing `hello`. A second `hello` on the same socket is rejected. Liveness and abuse limits: the server pings every WebSocket every `SIGNALING_PING_INTERVAL_MS` (default `10000`, min `2000`) and terminates sockets that missed the previous ping, so ghost baby/parent sockets disappear within about two intervals. Per client IP, `SIGNALING_HELLO_RATE_PER_MIN` (default `20`) and `SIGNALING_NEW_ROOM_RATE_PER_MIN` (default `10`) cap hello attempts and room creation (`RATE_LIMITED`; `0` disables); `SIGNALING_TRUST_PROXY=1` takes the client IP from the **rightmost** `X-Forwarded-For` hop (the one your proxy appended; set `SIGNALING_TRUSTED_PROXY_HOPS=n` for n proxies, taking the n-th from the right; default 1). Leading hops are client-controlled and ignored. IPs and room ids are never logged.
+
+**Built-in STUN** (UDP, default `3478`): the server answers STUN Binding requests only (RFC 5389) with the sender's address and ignores everything else. The response is never larger than the request, so a bare 20-byte Binding request (which browsers send) gets no answer unless you set `STUN_ALLOW_SHORT_REQUESTS=1` (the response is then 32 bytes for IPv4 and 44 for IPv6, at most 2.2 times the request). Each source address gets `STUN_RATE_PER_MIN` answers per minute (default `60`). `STUN_PORT` moves the port, `STUN_DISABLED=1` turns the responder off. Senders are never logged.
+
+**Static web UI:** `--serve-web <dir>` (or `GS_SERVE_WEB`) serves a built web UI from the same port, with `/index.html` as the fallback for client routes. `/healthz` and WebSocket upgrades keep working.
+
+**Local mode (`--local`, [ADR-021](../decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §1):** for a PC that hosts the relay on a LAN without internet. The UI and the registration endpoint bind to `127.0.0.1` and `::1` only (`--ui-port`, default `8080`); every request there must carry a loopback `Host` with that port, and a present `Origin` must be a loopback page. Only the signaling port (`PORT`, bound to `GS_BIND`, default `0.0.0.0`) is on the LAN, and it serves nothing but signaling and `/healthz`. The relay requires admission: each joiner receives a nonce in a `challenge` message and answers with `admit` and `HMAC(admission key, nonce | role | room id)`; a role slot is taken only after a valid answer, and sockets that do not authenticate within 5 seconds are closed. The local UI registers the room's admission key (`HKDF(PSK, "guardedsleep relay admission v1")`, 43 base64url characters) over loopback: `PUT /admission/<room id>` with the key as the body (`204`; the same key again is accepted, a different key for a known room gets `409` until `DELETE /admission/<room id>`). The relay never sees the PSK. The public server runs without admission (`hello`): it cannot know any PSK, and the end-to-end pairing proof plus DTLS protect the call as before.
 
 When **`NODE_ENV=production`**, **`SIGNALING_ALLOWED_ORIGINS` must be non-empty** or the process exits at startup. The Docker image and Compose files set a localhost-only default so local runs work; **you must override this** with your real app origins (e.g. `https://app.example`) for any internet-facing deployment.
 
@@ -52,6 +59,7 @@ Optional file `docker/signaling-server/.env` (see `docker/signaling-server/.env.
 
 - `SIGNALING_PORT` — port on your machine (default `8787`)
 - `SIGNALING_INTERNAL_PORT` — port inside the container (default `8787`; must stay in sync with the port mapping)
+- `STUN_PORT` — host UDP port published for STUN (default `3478`); `STUN_DISABLED=1` turns the responder off
 
 ## Option B — run a pre-built image from GHCR
 
@@ -84,8 +92,10 @@ From the **repository root**:
 
 ```bash
 docker build -f docker/signaling-server/Dockerfile -t guardedsleep-signaling:local .
-docker run --rm -p 8787:8787 guardedsleep-signaling:local
+docker run --rm --read-only --cap-drop ALL -p 8787:8787 -p 3478:3478/udp guardedsleep-signaling:local
 ```
+
+For a development binary without Docker: `just dev` (server and Vite) or `scripts/cargo.sh run -p guardedsleep-server` on a host with cargo. `just smoke` runs the end-to-end smoke test against the built binary.
 
 ## CI: publish to GHCR
 
