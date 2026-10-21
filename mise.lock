@@ -396,6 +396,12 @@ url = "https://nodejs.org/dist/v22.23.3/node-v22.23.3-darwin-x64.tar.gz"
 checksum = "sha256:2b0ff57b049cda1bbcea2240eec20467018713c1efe1f7360c2681859b90ed71"
 url = "https://nodejs.org/dist/v22.23.3/node-v22.23.3-win-x64.zip"
 
+[[tools."npm:@fission-ai/openspec"]]
+version = "1.14.3"
+aube = { path = ".mise/locks/npm-fission-ai-openspec/1.14.3", digest = "sha256:a4eac77dfd175043aeda9d4d678c5b166fab4902a55945cc74f1eb8d056b8ea9" }
+backend = "npm:@fission-ai/openspec"
+specifiers = ["1.14.3"]
+
 [[tools."pipx:reuse"]]
 version = "6.2.0"
 backend = "pipx:reuse"

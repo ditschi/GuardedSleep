@@ -39,10 +39,21 @@ betterleaks = "1.9.0"
 "aqua:nextest-rs/nextest/cargo-nextest" = "0.9.148"
 taplo = "0.10.0"
 
+# Spec-driven change workflow (openspec/), replaces the ADR folder. Needs Node >= 20.19.
+# https://github.com/Fission-AI/OpenSpec and https://mise.jdx.dev/dev-tools/backends/npm.html
+"npm:@fission-ai/openspec" = "1.14.3"
+
 # ktfmt is a jar, not a binary: the http backend only downloads it, and scripts/lib/ktfmt.sh runs it with
 # `java -jar`. https://mise.jdx.dev/dev-tools/backends/http.html
 # Maven Central: https://repo1.maven.org/maven2/com/facebook/ktfmt/
 "http:ktfmt" = { version = "0.64", url = "https://repo1.maven.org/maven2/com/facebook/ktfmt/{{version}}/ktfmt-{{version}}-with-dependencies.jar" }
+
+[env]
+# OpenSpec sends anonymous usage stats and checks npm for updates by default; both are off here
+# (AGENTS.md §7.5: no telemetry). Opt-outs: dist/telemetry/index.js and dist/core/version-check.js
+# of @fission-ai/openspec 1.14.3, https://github.com/Fission-AI/OpenSpec#telemetry
+OPENSPEC_TELEMETRY = "0"
+OPENSPEC_NO_UPDATE_CHECK = "1"
 
 [settings]
 # Write mise.lock with checksums. https://mise.jdx.dev/dev-tools/mise-lock.html

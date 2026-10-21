@@ -1,0 +1,43 @@
+# OpenSpec project config. Reference: https://github.com/Fission-AI/OpenSpec (schema `spec-driven`,
+# OpenSpec 1.14.3; the version is pinned in mise.toml).
+# Only constraints an agent cannot infer from the code belong here; AGENTS.md holds the full rules.
+schema: spec-driven
+
+context: |
+  GuardedSleep is an open-source (AGPL-3.0-or-later), privacy-first baby monitor that runs fully
+  locally. Phase: alpha. Clients: native Android (Kotlin + Compose) and a web client (Vite + Svelte 5,
+  no SvelteKit), both on one Rust sans-IO core via UniFFI / wasm-bindgen. AGENTS.md is binding.
+
+  Layers flow downward only: UI -> State (contract models) -> Platform (all I/O) -> Bindings -> Core.
+  Safety logic (pairing, link supervision, escalation, noise gate, validation) lives once, in the
+  Rust core. Protocol shapes come only from the core.
+
+  Non-negotiable privacy and security rules (AGENTS.md section 7): no third-party service in the
+  media or alert path; no telemetry; no custom transport crypto (DTLS-SRTP, HMAC/HKDF only for the
+  pairing proof, room derivation and relay admission); no cleartext pairing material on disk, in
+  logs, Intents or URLs; every signaling payload is untrusted and validated.
+
+  Users: sleep-deprived parents at 3 AM. A missed alarm is the worst failure; a false alarm is the
+  second worst. User-visible copy lives only in locales/*.json (en master); alerts are critical keys.
+
+  Tiers: T0 = alpha, T1 = beta, T2 = 1.0+. Do not plan work for a later tier. Features marked
+  DEFERRED, IDEA or REJECTED in AGENTS.md section 9 are off-limits unless the change says so.
+
+  Transition: docs/decisions/ (ADR-001..021) stays binding until each ADR is migrated into
+  openspec/changes/archive/ and its outcome into openspec/specs/. Where they disagree, the ADR wins.
+
+rules:
+  proposal:
+    - Name the tier (T0/T1/T2) the change belongs to and what is explicitly out of scope.
+    - Changes to architecture, scope, the security model or a core concept say so in Why, so the
+      Critical Reviewer role is applied (AGENTS.md section 6).
+  design:
+    - Present options as Pros / Cons / Recommendation. Never drop a rejected option; keep it under
+      a "Discarded alternatives" heading with the reason (this replaces the ADR rule).
+    - State the effect on the privacy guardrails and the layer each part lives in.
+  specs:
+    - Requirements use SHALL and name observable behaviour, not implementation.
+    - Safety requirements (alarms, link loss, pairing) carry at least one failure scenario.
+  tasks:
+    - Implementation tasks are written as briefs for the implementer sub-agent (goal, files, layer
+      rules, acceptance checks); end with `just lint` and `just test`.
