@@ -9,7 +9,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-WASM_BINDGEN_VERSION="$(awk '/^name = "wasm-bindgen"$/{getline; gsub(/version = |"/,""); print; exit}' "$ROOT/Cargo.lock")"
+WASM_BINDGEN_VERSION="$("$ROOT/scripts/lib/wasm-bindgen-version.sh")"
 
 if [[ "${CORE_BUILD_NATIVE:-0}" != "1" ]]; then
 	# shellcheck source=lib/build-image.sh
