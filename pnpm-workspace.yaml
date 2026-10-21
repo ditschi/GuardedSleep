@@ -1,3 +1,25 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# pnpm 11 settings live here, not in package.json or .npmrc (ADR-020 §5).
+# Reference: https://pnpm.io/settings
+
+# Install-script allow-list. Everything not listed fails the install (strictDepBuilds defaults to
+# true), so a new dependency with a postinstall script is a deliberate review step.
+# https://pnpm.io/settings/build#allowbuilds
+allowBuilds:
+  esbuild: true
+
+# Do not install versions younger than 3 days (value in minutes; the pnpm 11 default is 1 day).
+# https://pnpm.io/settings/dependency-resolution#minimumreleaseage
+minimumReleaseAge: 4320
+
+# Only direct dependencies may come from git or tarball URLs.
+# https://pnpm.io/settings/dependency-resolution#blockexoticsubdeps
+blockExoticSubdeps: true
+
+# Security floor for a transitive dependency.
+# https://pnpm.io/settings/dependency-resolution#overrides
+overrides:
+  cookie: ">=0.7.0"

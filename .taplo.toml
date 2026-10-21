@@ -1,0 +1,8 @@
+# taplo (TOML formatter) configuration. Reference: https://taplo.tamasfe.dev/configuration/
+# Only repository TOML is formatted, never build output or vendored crate sources under target/.
+include = ["*.toml", "crates/**/*.toml", "docker/**/*.toml", "apps/**/*.toml"]
+exclude = ["target/**", "**/node_modules/**", "mise.lock"]
+
+[formatting]
+column_width = 100
+indent_string = "  "

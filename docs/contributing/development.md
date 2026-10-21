@@ -1,8 +1,31 @@
 # Development environment
 
-This repo uses **Node.js** (see `package.json` `engines`), **pnpm**, **Python** (for [pre-commit](https://pre-commit.com)), and optional **GitHub CLI** in the Dev Container.
+Setup follows [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §1, §2, §5 and §8: **mise** pins every tool except Rust, **rustup** reads `rust-toolchain.toml`, **just** is the single entry point, **lefthook** runs the hooks and **pnpm 11** (from mise, no corepack) manages JavaScript. Host prerequisites: the version control client, [mise](https://mise.jdx.dev/getting-started.html) and, for host cargo, [rustup](https://rustup.rs). Docker is needed for the build image and the emulator gate, KVM for the gate.
 
-> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §1, §2, §5, §8:** the Husky + Python pre-commit hooks, Node 22 + pnpm 9.15.4 via corepack and the Dev Container as primary environment. Target: mise + rustup on the host, one digest-pinned build image, lefthook hooks, pnpm 11 without corepack, Dev Container generated from the image. Replaced in toolchain realignment wave 1; this procedure stays valid until then.
+## Quick start
+
+```bash
+mise install     # node 22, pnpm 11, just, lefthook, typos, actionlint, zizmor, reuse, cargo-deny, nextest, taplo, ktfmt, betterleaks (versions in mise.toml, checksums in mise.lock)
+just setup       # mise install, rustup toolchain, pnpm install --frozen-lockfile, lefthook install
+just --list      # setup fmt fmt-check lint test gen build build-android e2e gate ci (+ helpers)
+just ci          # lint + test + build: the same verdict as CI
+```
+
+Activate mise in your shell (`eval "$(mise activate bash)"`, see the [mise docs](https://mise.jdx.dev/getting-started.html#activate-mise)) so the hooks and your editor see the pinned tools. Recipes use the pinned tools through `mise exec`; without mise they fall back to the tools on `PATH` and print a hint.
+
+### SKIPPED and `GS_STRICT`
+
+A task that needs Docker, KVM or the Android SDK and does not find it prints `SKIPPED: <task> needs <x>` and exits 0 (`scripts/lib/require.sh`). **A SKIPPED is not a pass**: say so in reports. With `GS_STRICT=1` the same case prints `FAILED: ...` and exits 1. CI sets `GS_STRICT=1`, so nothing is silently skipped there.
+
+### Hooks
+
+`lefthook.yml` runs on staged files only (target: under 5 s): Prettier, `cargo fmt` (when `.rs` files are staged and a host cargo exists), typos, whitespace/JSON hygiene and a Betterleaks secret scan. There is no commit-msg hook: Conventional Commits are checked on the PR title in CI. Hooks are a convenience; `just lint` and CI re-run everything. `lefthook run pre-commit --all-files` runs them on the whole tree.
+
+### Supply-chain and licence checks
+
+`just deny` runs cargo-deny (`deny.toml`, plus `deny.core.toml` for the sans-IO bans on `guardedsleep-core` and later `guardedsleep-relay`) and the dependency-count guard (`.core-dep-count`; `scripts/lib/core-dep-count.sh --bless` after a reviewed change). `reuse lint` checks licence annotations (`REUSE.toml`). `just secrets` scans the full history with Betterleaks (`.betterleaks.toml`, live validation off).
+
+> The Dev Container and Docker sections below predate ADR-020 and stay valid until the build image and Dev Container are regenerated (wave 2). Where they mention Husky, `pre-commit`, corepack or pnpm 9.15.4, use the procedure above.
 
 ## Dev Container (recommended)
 

@@ -1,57 +1,178 @@
-# Single entry point for tests, lint, builds and gates (ADR-019). Install: https://github.com/casey/just
-# Host needs Docker + Node/corepack (pnpm); cargo is optional (scripts/cargo.sh falls back to the
-# guardedsleep-android-native-build image). `just` itself is in the Dev Container.
+# The single entry point for tasks (ADR-020 §1). Fixed vocabulary:
+#   setup fmt lint test gen build e2e gate ci   (+ sub-recipes such as fmt-check, build-android)
+# Install: `mise install` (pins in mise.toml). Recipes run with the mise-pinned tools and fall back to
+# plain bash with a hint when mise is missing (scripts/lib/shell.sh).
+#
+# Tasks that need Docker, KVM or the Android SDK print "SKIPPED: <task> needs <x>" and exit 0.
+# CI sets GS_STRICT=1, which turns every skip into a failure (scripts/lib/require.sh).
+# just manual: https://just.systems/man/en/
 
-set shell := ["bash", "-euo", "pipefail", "-c"]
+set shell := ["./scripts/lib/shell.sh", "-c"]
 
 default:
     @just --list
 
-# Install workspace dependencies (idempotent).
-install:
-    corepack enable 2>/dev/null || true
-    pnpm install --frozen-lockfile
+# One-time setup: pinned tools, JS dependencies, git hooks.
+[script("bash")]
+setup:
+    set -euo pipefail
+    if ! command -v mise >/dev/null 2>&1; then
+      echo "mise is required: https://mise.jdx.dev/getting-started.html" >&2; exit 1
+    fi
+    mise install
+    # rustup reads rust-toolchain.toml and installs the pinned toolchain, components and targets.
+    if command -v rustup >/dev/null 2>&1; then rustup show >/dev/null; else echo "hint: install rustup (https://rustup.rs) for host cargo; Docker is the fallback."; fi
+    mise exec -- pnpm install --frozen-lockfile
+    mise exec -- lefthook install
 
-# Everything that must stay green: Rust, WASM, web/node, Android JVM unit tests.
-test: test-rust test-wasm test-web test-android
+# Format everything that is formatted automatically (Kotlin: see fmt-kotlin).
+fmt:
+    pnpm exec prettier --write .
+    scripts/cargo.sh fmt --all
+    taplo fmt
 
-# Cargo workspace tests (core incl. golden vectors, sim, i18n-gen, uniffi-bindgen).
+# Same checks without writing; also the whitespace/JSON hygiene the old pre-commit config had.
+fmt-check:
+    pnpm exec prettier --check .
+    scripts/cargo.sh fmt --all -- --check
+    taplo fmt --check
+    scripts/lib/hygiene.sh
+
+# ktfmt over apps/android. Not part of fmt/fmt-check yet: 72 files differ today (fold in during wave 2).
+fmt-kotlin *args:
+    scripts/lib/ktfmt.sh {{ args }}
+
+# Everything static: format, spelling, clippy, supply chain, REUSE, i18n, UI literals, types, workflows, secrets.
+lint: _js-deps _js-gen fmt-check
+    typos --force-exclude
+    scripts/cspell-i18n.sh
+    scripts/cargo.sh clippy --workspace --all-targets -- -D warnings
+    just deny
+    reuse lint
+    pnpm run i18n:check
+    scripts/lint-ui-literals.sh
+    pnpm -r --if-present run check
+    actionlint
+    zizmor --offline .github
+    scripts/lib/secrets.sh
+
+# cargo-deny (advisories, licences, sources, sans-IO bans) plus the core dependency-count guard.
+deny:
+    scripts/lib/deny.sh
+
+# Secret scan of the full history (Betterleaks, validation off).
+secrets:
+    scripts/lib/secrets.sh
+
+# Host Rust, WASM + node conformance, pnpm tests, Android JVM tests. Builds no Android ABI.
+test: _js-deps _js-gen test-rust test-wasm test-web test-android
+
+# Cargo workspace tests; nextest when installed, doctests through cargo test.
 test-rust:
-    scripts/cargo.sh test --workspace
+    if command -v cargo-nextest >/dev/null 2>&1 && command -v cargo >/dev/null 2>&1; then cargo nextest run --workspace && cargo test --workspace --doc; else scripts/cargo.sh test --workspace; fi
 
-# WASM build + node conformance against the golden vectors (AC-5).
 test-wasm:
     scripts/core-build.sh wasm
     node --test crates/guardedsleep-core/js/*.test.mjs
 
-# pnpm workspaces: protocol, core-wasm, signaling server, web client.
-test-web: install
+test-web:
     pnpm test
 
-# Android :core and :app JVM unit tests in the build image (JNI libs + bindings first).
+# Android JVM unit tests in the build image.
+[script("bash")]
 test-android:
+    set -euo pipefail
+    # TODO(wave 2): the JNI libs and Kotlin bindings still come from `scripts/core-build.sh android`,
+    # which cross-compiles ABIs. Replace this step with the host-built core library once the
+    # :core-bindings module exists (ADR-020 §1/§4).
+    source scripts/lib/require.sh
+    require test-android android-sdk
     scripts/core-build.sh android
     scripts/gradle.sh :core:testDebugUnitTest :app:testDebugUnitTest
 
-# Fast, repo-wide static checks plus fmt/clippy and the i18n/UI-literal gates.
-lint: install
-    pre-commit run --all-files
-    scripts/core-build.sh test
-    scripts/lint-ui-literals.sh
-    pnpm run i18n:check
+# Generate the i18n output (Android resources, web JSON). Nothing generated is committed.
+gen:
+    pnpm run i18n:gen
 
-# Web build, Android debug + release APKs, release-surface and core-size checks.
-build: install
-    pnpm --filter @guardedsleep/mobile build
+# Everything: web, Android debug + release APKs, release-surface and core-size checks.
+build: _js-deps build-web build-android
+
+build-web:
+    pnpm run build
+
+# Core for Android (cross-compiled ABIs), debug APK, release APK and its checks.
+[script("bash")]
+build-android:
+    set -euo pipefail
+    source scripts/lib/require.sh
+    require build-android android-sdk
     scripts/core-build.sh android
     scripts/gradle.sh :app:assembleDebug :app:assembleRelease
     scripts/poc/release-check.sh
     scripts/poc/size-check.sh
 
-# Emulator gate AC-1..AC-4 (needs KVM; DOZE_MINUTES=2 just gate for a quick run). Needs `just build` first.
+# Browser E2E (Playwright, local dev stack).
+e2e: _js-deps
+    pnpm run e2e
+
+# Emulator gate AC-1..AC-4 (needs KVM; DOZE_MINUTES=2 just gate for a quick run). Run build-android first.
+[script("bash")]
 gate:
+    set -euo pipefail
+    source scripts/lib/require.sh
+    require gate kvm docker
     scripts/poc/local-gate.sh
 
-# Browser E2E (Playwright, local dev stack).
-e2e: install
-    pnpm run e2e
+# The same verdict as CI.
+ci: lint test build
+
+# Signaling server (legacy Node) plus the web client, for local development.
+[script("bash")]
+dev:
+    set -euo pipefail
+    mise exec -- pnpm --filter @guardedsleep/protocol build
+    trap 'kill 0' EXIT
+    mise exec -- pnpm --filter @guardedsleep/signaling-server dev &
+    mise exec -- pnpm --filter @guardedsleep/mobile dev &
+    wait
+
+# Docker stack with the host LAN IP, for phone tests.
+[script("bash")]
+stack-lan:
+    set -euo pipefail
+    source scripts/lib/require.sh
+    require stack-lan docker
+    bash scripts/stack-lan-env.sh
+    docker compose -f docker/stack/compose.yaml --env-file docker/stack/.env up --build
+
+stack-up:
+    docker compose -f docker/stack/compose.yaml --env-file docker/stack/.env up --build
+
+diagnose-lan:
+    bash scripts/diagnose-lan-connect.sh
+
+check-kvm:
+    bash scripts/check-kvm.sh
+
+e2e-lan: _js-deps
+    pnpm run e2e:lan
+
+e2e-docker *args:
+    bash scripts/e2e-docker-run.sh {{ args }}
+
+audit:
+    pnpm run audit
+
+# Preview the Release Please output (maintainer; needs GH_TOKEN and GITHUB_REPOSITORY).
+release-preview:
+    npx --yes release-please release-pr --token=$GH_TOKEN --repo-url=$GITHUB_REPOSITORY --config-file=release-please-config.json --manifest-file=.release-please-manifest.json --dry-run --debug
+
+# Generated, uncommitted packages that svelte-check and Vitest import (WASM core, protocol types).
+[private]
+_js-gen:
+    pnpm --filter @guardedsleep/protocol build
+    pnpm --filter @guardedsleep/core-wasm build
+
+[private]
+_js-deps:
+    pnpm install --frozen-lockfile
