@@ -22,6 +22,8 @@ typos = "1.51.1"
 # Workflow linters. https://github.com/rhysd/actionlint and https://docs.zizmor.sh/
 actionlint = "1.7.12"
 zizmor = "1.31.1"
+# Shell script linter (aqua backend). https://www.shellcheck.net/ and https://mise.jdx.dev/dev-tools/backends/aqua.html
+"aqua:koalaman/shellcheck" = "0.11.0"
 # SPDX/REUSE licence compliance (Python tool, installed with the host uvx/pipx). uv is deliberately not
 # pinned: reuse 6.2.0 publishes only an sdist, and mise's locked uv install refuses source builds
 # (--no-build). Pin uv here once reuse ships a wheel.

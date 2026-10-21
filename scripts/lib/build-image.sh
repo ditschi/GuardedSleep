@@ -11,6 +11,7 @@
 # Docker already maps container root to the caller, so nothing is added there. HOME points at a
 # writable directory under target/ because the uid has no passwd entry in the image.
 # Named build contexts: https://docs.docker.com/reference/cli/docker/buildx/build/#build-context
+# shellcheck disable=SC2034 # GS_BUILD_IMAGE and GS_DOCKER_USER_ARGS are read by the scripts that source this file
 
 gs_ensure_build_image() {
   local root hash

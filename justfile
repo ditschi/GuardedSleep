@@ -46,6 +46,7 @@ fmt-check:
     taplo fmt --check
     scripts/lib/hygiene.sh
     scripts/lib/workspace-lints.sh
+    git ls-files -z 'scripts/*.sh' | xargs -0 shellcheck -x -P SCRIPTDIR
 
 # ktfmt over apps/android. Not part of fmt/fmt-check yet: 72 files differ today (fold in during wave 2).
 fmt-kotlin *args:

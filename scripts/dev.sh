@@ -20,6 +20,7 @@ pnpm --filter @guardedsleep/protocol build
 # Everything stays in this script's process group on purpose: Playwright stops its webServer by killing
 # the whole group (SIGKILL, so no trap runs), and `kill 0` below does the same on a normal exit.
 # The trap keeps the real exit status (no always-143) and ignores TERM while it tears the group down.
+# shellcheck disable=SC2154 # rc is assigned inside the trap string itself
 trap 'rc=$?; trap "" TERM; trap - EXIT INT; kill 0 2>/dev/null; exit "$rc"' EXIT INT TERM
 
 pnpm --filter @guardedsleep/signaling-server dev &
