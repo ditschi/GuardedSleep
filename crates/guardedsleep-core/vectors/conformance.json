@@ -3275,5 +3275,144 @@
       "type": "device_status",
       "next_alarm_min": 30
     }
+  },
+  {
+    "name": "admission: key derivation",
+    "kind": "admission_key",
+    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "expect": "DxgADcG8JWdV4GIpRh4ZWwQXIqC59BbWzTLjGYZzGHE"
+  },
+  {
+    "name": "admission: parent mac",
+    "kind": "admission_mac",
+    "key_b64url": "DxgADcG8JWdV4GIpRh4ZWwQXIqC59BbWzTLjGYZzGHE",
+    "nonce": "AAAAAAAAAAAAAAAAAAAAAA",
+    "role": "parent",
+    "room": "FrcBBWi_uGBOkaphqPhl_w",
+    "expect": "91d47d644e836816600afdb1c4928a7bdb9419608fdd01720b3dc193469b85ca"
+  },
+  {
+    "name": "admission: valid answer verifies",
+    "kind": "admission_verify",
+    "key_b64url": "DxgADcG8JWdV4GIpRh4ZWwQXIqC59BbWzTLjGYZzGHE",
+    "nonce": "AAAAAAAAAAAAAAAAAAAAAA",
+    "role": "parent",
+    "room": "FrcBBWi_uGBOkaphqPhl_w",
+    "mac": "91d47d644e836816600afdb1c4928a7bdb9419608fdd01720b3dc193469b85ca",
+    "expect": true
+  },
+  {
+    "name": "admission: replayed answer on a new nonce fails",
+    "kind": "admission_verify",
+    "key_b64url": "DxgADcG8JWdV4GIpRh4ZWwQXIqC59BbWzTLjGYZzGHE",
+    "nonce": "BBBBBBBBBBBBBBBBBBBBBB",
+    "role": "parent",
+    "room": "FrcBBWi_uGBOkaphqPhl_w",
+    "mac": "91d47d644e836816600afdb1c4928a7bdb9419608fdd01720b3dc193469b85ca",
+    "expect": false
+  },
+  {
+    "name": "admission: answer for the other direction fails",
+    "kind": "admission_verify",
+    "key_b64url": "DxgADcG8JWdV4GIpRh4ZWwQXIqC59BbWzTLjGYZzGHE",
+    "nonce": "AAAAAAAAAAAAAAAAAAAAAA",
+    "role": "baby",
+    "room": "FrcBBWi_uGBOkaphqPhl_w",
+    "mac": "91d47d644e836816600afdb1c4928a7bdb9419608fdd01720b3dc193469b85ca",
+    "expect": false
+  },
+  {
+    "name": "admission: answer for another room fails",
+    "kind": "admission_verify",
+    "key_b64url": "DxgADcG8JWdV4GIpRh4ZWwQXIqC59BbWzTLjGYZzGHE",
+    "nonce": "AAAAAAAAAAAAAAAAAAAAAA",
+    "role": "parent",
+    "room": "other",
+    "mac": "91d47d644e836816600afdb1c4928a7bdb9419608fdd01720b3dc193469b85ca",
+    "expect": false
+  },
+  {
+    "name": "admission: challenge",
+    "kind": "parse_challenge",
+    "raw": "{\"type\":\"challenge\",\"nonce\":\"AAAAAAAAAAAAAAAAAAAAAA\"}",
+    "expect": "AAAAAAAAAAAAAAAAAAAAAA"
+  },
+  {
+    "name": "admission: challenge with short nonce",
+    "kind": "parse_challenge",
+    "raw": "{\"type\":\"challenge\",\"nonce\":\"abc\"}",
+    "expect": null
+  },
+  {
+    "name": "server: admission error codes",
+    "kind": "parse_server",
+    "raw": "{\"type\":\"error\",\"code\":\"ADMISSION_FAILED\",\"message\":\"x\"}",
+    "expect": {
+      "type": "error",
+      "code": "ADMISSION_FAILED",
+      "message": "x"
+    }
+  },
+  {
+    "name": "client: hello",
+    "kind": "parse_client",
+    "raw": "{\"type\":\"hello\",\"role\":\"baby\",\"roomId\":\"r1\",\"protocolVersion\":3}",
+    "expect": {
+      "type": "hello",
+      "role": "baby",
+      "room_id": "r1",
+      "protocol_version": 3
+    }
+  },
+  {
+    "name": "client: hello bad role",
+    "kind": "parse_client",
+    "raw": "{\"type\":\"hello\",\"role\":\"admin\",\"roomId\":\"r1\",\"protocolVersion\":3}",
+    "expect": null
+  },
+  {
+    "name": "client: admit",
+    "kind": "parse_client",
+    "raw": "{\"type\":\"admit\",\"role\":\"parent\",\"roomId\":\"FrcBBWi_uGBOkaphqPhl_w\",\"protocolVersion\":3,\"mac\":\"91d47d644e836816600afdb1c4928a7bdb9419608fdd01720b3dc193469b85ca\"}",
+    "expect": {
+      "type": "admit",
+      "role": "parent",
+      "room_id": "FrcBBWi_uGBOkaphqPhl_w",
+      "protocol_version": 3,
+      "mac": "91d47d644e836816600afdb1c4928a7bdb9419608fdd01720b3dc193469b85ca"
+    }
+  },
+  {
+    "name": "client: admit with uppercase mac",
+    "kind": "parse_client",
+    "raw": "{\"type\":\"admit\",\"role\":\"parent\",\"roomId\":\"FrcBBWi_uGBOkaphqPhl_w\",\"protocolVersion\":3,\"mac\":\"91D47D644E836816600AFDB1C4928A7BDB9419608FDD01720B3DC193469B85CA\"}",
+    "expect": null
+  },
+  {
+    "name": "client: signal with target",
+    "kind": "parse_client",
+    "raw": "{\"type\":\"signal\",\"roomId\":\"r1\",\"to\":\"c2\",\"payload\":{\"n\":1}}",
+    "expect": {
+      "type": "signal",
+      "room_id": "r1",
+      "to": "c2",
+      "payload": {
+        "n": 1
+      }
+    }
+  },
+  {
+    "name": "client: signal without payload",
+    "kind": "parse_client",
+    "raw": "{\"type\":\"signal\",\"roomId\":\"r1\"}",
+    "expect": null
+  },
+  {
+    "name": "client: ping",
+    "kind": "parse_client",
+    "raw": "{\"type\":\"ping\"}",
+    "expect": {
+      "type": "ping"
+    }
   }
 ]

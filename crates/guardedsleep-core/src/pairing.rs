@@ -29,6 +29,8 @@ use crate::protocol::{LEGACY_PROTOCOL_VERSION, Role};
 const ROOM_INFO: &[u8] = b"gs-room/3";
 const PROOF_PREFIX: &str = "gs-pair-proof/3|";
 const STOP_PREFIX: &str = "gs-stop/3|";
+const ADMISSION_INFO: &[u8] = b"guardedsleep relay admission v1";
+const ADMISSION_PREFIX: &str = "gs-relay-admit/1|";
 
 /// The DTLS fingerprint an SDP commits to, lowercase hex without separators (64 characters).
 ///
@@ -211,6 +213,65 @@ pub fn macs_equal(a: &str, b: &str) -> bool {
         .zip(b.bytes())
         .fold(0u8, |acc, (x, y)| acc | (x ^ y))
         == 0
+}
+
+/// Key a relay uses to admit joiners (ADR-021 section 1): HKDF-SHA256(psk, empty salt,
+/// info `guardedsleep relay admission v1`), 32 bytes. It cannot be turned back into the PSK, so a
+/// relay that holds it never learns the pairing secret. `Debug` never prints the key.
+#[derive(Clone, PartialEq, Eq)]
+pub struct AdmissionKey([u8; 32]);
+
+impl std::fmt::Debug for AdmissionKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("AdmissionKey(..)")
+    }
+}
+
+impl AdmissionKey {
+    pub fn from_bytes(bytes: [u8; 32]) -> Self {
+        Self(bytes)
+    }
+
+    /// base64url without padding (43 characters), the form handed to a relay over loopback.
+    pub fn to_b64url(&self) -> String {
+        URL_SAFE_NO_PAD.encode(self.0)
+    }
+
+    pub fn from_b64url(s: &str) -> Option<Self> {
+        let bytes = URL_SAFE_NO_PAD.decode(s.trim()).ok()?;
+        Some(Self(bytes.try_into().ok()?))
+    }
+}
+
+pub fn derive_admission_key(psk: &[u8]) -> AdmissionKey {
+    let hk = Hkdf::<Sha256>::new(None, psk);
+    let mut okm = [0u8; 32];
+    // Infallible: HKDF-SHA256 only rejects outputs longer than 255 * 32 bytes.
+    #[allow(clippy::expect_used)]
+    hk.expand(ADMISSION_INFO, &mut okm)
+        .expect("32 bytes is a valid HKDF-SHA256 output length");
+    AdmissionKey(okm)
+}
+
+/// Joiner's answer to a relay `challenge`:
+/// HMAC-SHA256(key, "gs-relay-admit/1|nonce|role|room") as lowercase hex. The nonce is fresh per
+/// connection and the role (direction) and room are bound in, so a recorded answer is useless on
+/// any other connection, role or room.
+pub fn admission_mac(key: &AdmissionKey, nonce: &str, role: Role, room_id: &str) -> Option<String> {
+    let canonical = format!("{ADMISSION_PREFIX}{nonce}|{}|{room_id}", role.as_str());
+    let mut mac = Hmac::<Sha256>::new_from_slice(&key.0).ok()?;
+    mac.update(canonical.as_bytes());
+    Some(hex(&mac.finalize().into_bytes()))
+}
+
+pub fn verify_admission(
+    key: &AdmissionKey,
+    nonce: &str,
+    role: Role,
+    room_id: &str,
+    presented_mac: &str,
+) -> bool {
+    admission_mac(key, nonce, role, room_id).is_some_and(|m| macs_equal(&m, presented_mac))
 }
 
 fn hex(bytes: &[u8]) -> String {
@@ -488,5 +549,47 @@ mod tests {
             let parent = pair_proof_mac_v3(&psk, Role::Parent, &room, &fa, &fb).unwrap();
             prop_assert_ne!(baby, parent);
         }
+    }
+
+    #[test]
+    fn admission_key_is_stable_and_not_the_psk() {
+        let psk = [7u8; 32];
+        let key = derive_admission_key(&psk);
+        assert_eq!(key, derive_admission_key(&psk));
+        assert_ne!(key.to_b64url(), encode_psk(&psk));
+        assert_ne!(key, derive_admission_key(&[8u8; 32]));
+        assert_eq!(
+            AdmissionKey::from_b64url(&key.to_b64url()),
+            Some(key.clone())
+        );
+        assert_eq!(AdmissionKey::from_b64url("short"), None);
+        assert_eq!(format!("{key:?}"), "AdmissionKey(..)");
+    }
+
+    #[test]
+    fn admission_mac_binds_nonce_role_and_room() {
+        let key = derive_admission_key(&[1u8; 32]);
+        let n1 = "AAAAAAAAAAAAAAAAAAAAAA";
+        let n2 = "BBBBBBBBBBBBBBBBBBBBBB";
+        let mac = admission_mac(&key, n1, Role::Parent, "room").unwrap();
+        assert_eq!(mac.len(), 64);
+        assert!(verify_admission(&key, n1, Role::Parent, "room", &mac));
+        assert!(
+            !verify_admission(&key, n2, Role::Parent, "room", &mac),
+            "replayed nonce"
+        );
+        assert!(
+            !verify_admission(&key, n1, Role::Baby, "room", &mac),
+            "other direction"
+        );
+        assert!(
+            !verify_admission(&key, n1, Role::Parent, "other", &mac),
+            "other room"
+        );
+        let other = derive_admission_key(&[2u8; 32]);
+        assert!(
+            !verify_admission(&other, n1, Role::Parent, "room", &mac),
+            "other key"
+        );
     }
 }
