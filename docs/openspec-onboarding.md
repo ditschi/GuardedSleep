@@ -1,6 +1,6 @@
 # OpenSpec onboarding: GuardedSleep
 
-STATUS: UNDER DISCUSSION (temporary onboarding note, 2026-10-21; delete once `openspec/` is set up).
+STATUS: UNDER DISCUSSION (temporary onboarding note, 2026-10-21; delete once the ADR migration in section 6 is finished).
 
 Purpose: everything OpenSpec needs for the initial setup (`openspec init` → `openspec/project.md`, baseline specs, open changes), plus the decisions and reasoning from the toolchain-review session of 2026-10-20/21.
 
@@ -239,3 +239,61 @@ Branches: `docs/toolchain-realignment` → `chore/toolchain-wave-1` (→ `-wave-
   - a "translation feedback" link
   - `examples/` folder for PoC reproductions
 - **Choose how OpenSpec and ADRs coexist.** Suggestion: ADRs stay the record of decisions with their alternatives; OpenSpec specs hold the requirements; changes reference the ADR they implement.
+
+---
+
+## 6. ADR → OpenSpec migration (in progress)
+
+Goal: one system. `docs/decisions/` disappears; every ADR ends up as an archived change, and its outcome lives in `openspec/specs/`. Work locally, **one capability per commit**, after wave 1 is merged.
+
+### Procedure per capability (one commit)
+
+1. Write `openspec/specs/<capability>/spec.md` from the ADR sections and the `DECIDED` feature-doc items listed below. Resolve contradictions in favour of the newest ADR, check numbers against the code, and note what changed in the commit message.
+2. Add a `Migrated to OpenSpec` note under the header of each source ADR, naming the sections it now covers. Those sections become normative in the spec; the rest of the ADR stays binding.
+3. In the feature doc, replace the migrated `DECIDED` text with a link to the spec. `IDEA`, `DEFERRED` and `REJECTED` items stay where they are for now.
+4. When **every** section of an ADR is migrated (or the ADR is archive-only), archive it in the same commit:
+   - `git mv` the ADR to `openspec/changes/archive/<decided-date>-adr-NNN-<slug>/design.md` (verbatim, so options, discarded alternatives and the `§` numbers cited in code comments stay valid);
+   - add `proposal.md` (Why = the ADR's Context in two or three sentences; What Changes = the decision; Capabilities = the specs it fed);
+   - update `docs/decisions/README.md`.
+5. Run `just lint-text` (includes `openspec validate --all --strict`) and `openspec validate --archived`.
+
+Finish: once the tracker is empty, delete `docs/decisions/`, rewrite the precedence list in `AGENTS.md`, `.cursor/rules/decision-workflow.mdc` and `docs-conventions.mdc`, and delete this note.
+
+### Tracker
+
+Mapping is a proposal; adjust it while migrating. "Archive-only" means the outcome is a project rule already held in `AGENTS.md` or `openspec/config.yaml`, not a behaviour spec.
+
+| ADR                                    | Status   | Goes to                                                                                       | Migrated                        |
+| -------------------------------------- | -------- | --------------------------------------------------------------------------------------------- | ------------------------------- |
+| 001 MVP scope, PoC gate, auth          | DECIDED  | `pairing` (auth); scope archive-only (ADR-018)                                                |                                 |
+| 002 client platform, repo structure    | partly S | archive-only (superseded by 015/019/020)                                                      |                                 |
+| 003 WebRTC, signaling, QR pairing      | DECIDED  | `pairing`, `signaling-relay`                                                                  |                                 |
+| 004 encryption, key storage            | DECIDED  | `pairing`                                                                                     |                                 |
+| 005 parent alerts, naming              | DECIDED  | `parent-alerts`; naming/ASO archive-only; distribution → `distribution`                       |                                 |
+| 006 release, changelog                 | DECIDED  | `distribution`                                                                                |                                 |
+| 007 browser E2E strategy               | DECIDED  | `dev-toolchain`                                                                               |                                 |
+| 008 container images                   | DECIDED  | `distribution`                                                                                |                                 |
+| 009 personas, failure model            | PROPOSED | archive-only (personas → `config.yaml` context)                                               |                                 |
+| 010 baby-unit hardware                 | PROPOSED | `audio-monitoring` (device minimums)                                                          |                                 |
+| 011 parent audio routing               | PROPOSED | `audio-monitoring`                                                                            |                                 |
+| 012 connection model, LAN, handoff     | PROPOSED | `offline-lan`; §1 retries superseded by `link-supervision`                                    |                                 |
+| 013 connection-status copy             | PROPOSED | `connection-status`                                                                           |                                 |
+| 014 AGPL, trademark                    | DECIDED  | archive-only                                                                                  |                                 |
+| 015 native clients, shared Rust core   | PROPOSED | archive-only (layer rules in `AGENTS.md` §5.1)                                                |                                 |
+| 016 test strategy                      | PROPOSED | `dev-toolchain`                                                                               |                                 |
+| 017 link recovery, supervision         | DECIDED  | `link-supervision` (§2–§9, §11), `pairing` (§1), `signaling-relay` (§10), §12 into scenarios  | §2–§9, §11 → `link-supervision` |
+| 018 alpha scope, trust features        | DECIDED  | `parent-alerts`, `audio-monitoring`, `connection-status`; scope archive-only                  |                                 |
+| 019 language, repo, client policy      | DECIDED  | `web-client`; rest archive-only                                                               |                                 |
+| 020 toolchain                          | DECIDED  | `dev-toolchain`; §5 → `web-client`, §6 → `signaling-relay`, §7 → `i18n`, §10 → `distribution` |                                 |
+| 021 offline LAN, locales, distribution | DECIDED  | `offline-lan` (§1), `i18n` (§2), `distribution` (§3)                                          |                                 |
+
+Suggested order (closes ADRs early): `pairing` + `signaling-relay` (closes 003, 004, 017), `parent-alerts`, `connection-status`, `audio-monitoring`, `offline-lan`, `i18n`, `distribution`, `web-client`, `dev-toolchain`, then the archive-only ADRs.
+
+### Findings from the `link-supervision` pilot
+
+- **ADRs drift from the code.** ADR-017 §11 lists the sans-IO surface, but the core gained `attempt_dtls_fingerprint`, `set_noise_gate` and `send_probe_tone`. The spec points at `LinkInput`/`LinkAction` instead of repeating the list.
+- **Feature docs contradicted the ADR.** `connectivity-pairing.md` still said "heartbeat 5–30 s, loss after 2 missed beats"; ADR-017 says 5–15 s and `2 × interval + 5 s`. Migrating forces these out.
+- **`--strict` caps a requirement at 500 characters**, which forces one behaviour per requirement. ADR-017 §2–§11 became 25 requirements with 31 scenarios; the §12 simulation cases became scenarios.
+- **Most ADRs feed several capabilities**, so an ADR is archived only when its last capability is migrated. The section-level `Migrated to OpenSpec` note keeps precedence unambiguous meanwhile.
+- **Archive format works:** an entry with only `proposal.md` and `design.md` passes `openspec validate --archived`, and `--all` ignores the archive.
+- **Open decision: seven ADRs are still `PROPOSED`** although they are in force (015 is the architecture). Either mark them `DECIDED` before migrating, or treat each as an open change and decide it there.

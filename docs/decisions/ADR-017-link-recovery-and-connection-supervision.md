@@ -6,6 +6,8 @@
 - Related: [ADR-004](ADR-004-encryption-transport-and-key-storage.md) (amended: direction-bound `pair_proof`), [ADR-015](ADR-015-native-clients-with-shared-rust-core.md) (open item C1, gate AC-4/AC-10), [ADR-012](ADR-012-connection-model-offline-lan-and-handoff.md), [ADR-013](ADR-013-connection-status-observability-and-copy.md), [failure-model.md](../concept/failure-model.md), [ADR-016](ADR-016-test-strategy-local-virtual-physical.md)
 - Supersedes (once DECIDED): ADR-012 §1 "retries exhausted → failed_needs_user"; failure-model "Reconnect timeout 15 s → troubleshooter"; `heartbeat_stale_ms` default 50 s; the DECIDED heartbeat range "5–30 s" (now 5–15 s, §5)
 
+> **Migrated to OpenSpec (2026-10-21):** §2–§9 and §11 are now normative in [`openspec/specs/link-supervision/spec.md`](../../openspec/specs/link-supervision/spec.md); change them there. This file keeps the rationale and options, and stays binding for §1 (→ `pairing`), §10 (→ `signaling-relay`) and §12 until those capabilities are migrated.
+
 > **Context note (2026-10-20):** references to the Capacitor app and the Node server are historical; the Rust `relay` crate and server ([ADR-020](ADR-020-toolchain-and-development-setup.md) §3, §6) implement the server-side liveness and room pinning described here. No decision in this ADR is changed.
 
 ## Context

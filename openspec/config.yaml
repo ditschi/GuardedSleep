@@ -24,7 +24,8 @@ context: |
   DEFERRED, IDEA or REJECTED in AGENTS.md section 9 are off-limits unless the change says so.
 
   Transition: docs/decisions/ (ADR-001..021) stays binding until each ADR is migrated into
-  openspec/changes/archive/ and its outcome into openspec/specs/. Where they disagree, the ADR wins.
+  openspec/changes/archive/ and its outcome into openspec/specs/. ADR sections marked "Migrated to
+  OpenSpec" are normative in the spec; every other ADR section wins over a spec.
 
 rules:
   proposal:

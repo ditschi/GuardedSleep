@@ -218,7 +218,7 @@ Store recent successful connections on both devices for reconnection without QR 
 - Editable names (default: device model + role, e.g., "Samsung A53 (Baby)")
 - Swipe to delete individual connections
 - "Delete all connections & keys" panic button in settings
-- Reconnection timeout: 15s, then "Device not reachable. Scan QR code again?"
+- ~~Reconnection timeout: 15s, then "Device not reachable. Scan QR code again?"~~ superseded: the link never gives up while monitoring and shows a troubleshooter from escalation level 2 ([`link-supervision`](../../openspec/specs/link-supervision/spec.md))
 
 **Mode persistence**: App remembers last role + one-tap confirmation on start:
 
@@ -236,21 +236,11 @@ Store recent successful connections on both devices for reconnection without QR 
 
 ### Network Resilience
 
-- Automatic reconnection when connection drops (WebRTC ICE restart)
-- Buffer detected noise events locally during outages
-- Deliver buffered events when connection is restored
-- Clear status indication to parent: connected / reconnecting / disconnected
+> STATUS: DECIDED -- moved to [`openspec/specs/link-supervision`](../../openspec/specs/link-supervision/spec.md) (recovery by a new attempt, missed-event buffer, link states). ICE restart stays `IDEA`.
 
 ### Heartbeat -- MVP
 
-> STATUS: DECIDED -- 10 second default, configurable 5-30s.
-
-- Periodic lightweight signal via WebRTC DataChannel
-- Default: every 10 seconds (~360 packets/h, <100 bytes each = negligible bandwidth)
-- 2 missed beats (~20s) = connection loss detected → escalation begins
-- Heartbeat includes: battery level, noise status, timestamp
-- Configurable in settings (5-30s range) for power users
-- 10s aligns well with the alert escalation (0-20s silent phase)
+> STATUS: DECIDED -- moved to [`openspec/specs/link-supervision`](../../openspec/specs/link-supervision/spec.md): both sides send it, 10 s default, 5-15 s, loss after `2 × interval + 5 s`. The earlier "5-30 s, 2 missed beats" wording was superseded by ADR-017 §5.
 
 ## Dependencies
 
@@ -263,7 +253,7 @@ Store recent successful connections on both devices for reconnection without QR 
 - ~~Which web framework (Svelte, React, Vue) for the Capacitor app?~~ **RESOLVED, superseded**: Svelte 5; the Capacitor app is legacy and the web client is rebuilt on Vite 8 + Svelte 5 ([ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §5)
 - Exact QR code data format and encoding (binary vs. base64)?
 - How to handle re-pairing if a device is replaced?
-- Optimal heartbeat interval (balance responsiveness vs. battery)?
+- ~~Optimal heartbeat interval (balance responsiveness vs. battery)?~~ **RESOLVED**: 10 s default, 5-15 s ([`link-supervision`](../../openspec/specs/link-supervision/spec.md))
 - Should the app guide users through hotspot setup with OS-specific screenshots?
 
 ## Discarded Alternatives
