@@ -2,7 +2,7 @@
 
 Deterministic host-side system simulation of the GuardedSleep link (ADR-015 AC-9/AC-10, ADR-016
 Stage 1). Two `Link`s (baby, parent) run in virtual time against a simulated relay that mirrors
-`apps/signaling-server` (welcome/members/peer, `to` routing, BABY_TAKEN, parent cap, WebSocket
+`crates/guardedsleep-relay` (welcome/members/peer, `to` routing, BABY_TAKEN, parent cap, WebSocket
 liveness eviction within 20 s, v3 room-id format) and a fake media layer (synthetic SDPs with
 `a=fingerprint` and `sendonly`/`recvonly` lines, so the pairing proof and baby SDP check run for
 real). A seed fully determines latencies, jitter and fault timing. Ticks come every 250 ms after

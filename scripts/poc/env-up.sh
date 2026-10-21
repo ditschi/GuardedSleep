@@ -34,8 +34,9 @@ start_emulator gs-baby 5554
 start_emulator gs-parent 5556
 
 # Signaling: plain WS for the emulator network only (never expose without TLS).
-(cd "$ROOT" && pnpm --filter @guardedsleep/signaling-server build >/dev/null)
-NODE_ENV=development PORT=8787 nohup node "$ROOT/apps/signaling-server/dist/index.js" >"$OUT/signaling.log" 2>&1 &
+# STUN stays off: the coturn below owns UDP 3478 on the host.
+"$ROOT/scripts/cargo.sh" build -q -p guardedsleep-server
+STUN_DISABLED=1 PORT=8787 nohup "$ROOT/target/debug/guardedsleep-server" >"$OUT/signaling.log" 2>&1 &
 
 # Test-only TURN credentials (poc/poc); loopback peers let both relay allocations reach each other.
 docker rm -f gs-poc-turn >/dev/null 2>&1 || true

@@ -170,9 +170,13 @@ gate:
 # The same verdict as CI (the PR title check and the emulator gate are CI-only).
 ci: lint test build e2e
 
-# Signaling server (legacy Node, wave 2 swaps in the Rust server) plus the web client, for local development.
+# Rust signaling server plus the web client, for local development.
 dev:
     scripts/dev.sh
+
+# Signaling server smoke: starts the built guardedsleep-server binary and relays hello + signal over a WebSocket.
+smoke:
+    scripts/cargo.sh test -p guardedsleep-server --test smoke
 
 # Docker stack with the host LAN IP, for phone tests.
 [script("bash")]
