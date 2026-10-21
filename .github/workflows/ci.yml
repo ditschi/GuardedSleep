@@ -1,192 +1,210 @@
-# Quality gates: same checks as local pre-commit (+ optional PR title for squash)
+# Quality gates. Every job calls a `just` recipe, so CI and local runs share one definition
+# (ADR-020 §9). `ci-ok` is the only check that branch protection requires.
 name: CI
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [main]
   pull_request:
+
+# Granted per job.
+permissions: {}
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  # scripts/core-build.sh and scripts/gradle.sh run natively on the runner (no Docker image).
+  # A missing Docker/KVM/SDK fails the job instead of printing SKIPPED.
+  GS_STRICT: "1"
   CORE_BUILD_NATIVE: "1"
   CARGO_HOME_OVERRIDE: /home/runner/.cargo
 
 jobs:
-  pre-commit:
-    name: pre-commit
-    runs-on: ubuntu-latest
+  changes:
+    name: changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          python-version: "3.12"
-
-      - uses: pnpm/action-setup@v4
+          persist-credentials: false
+      # "code" is everything except documentation, so docs-only changes skip the heavy jobs.
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
         with:
-          version: 9
+          predicate-quantifier: every
+          filters: |
+            code:
+              - "**"
+              - "!docs/**"
+              - "!**/*.md"
+              - "!LICENSE"
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "pnpm"
-
-      - name: Install pnpm dependencies (commitlint config resolution)
-        run: pnpm install --frozen-lockfile
-
-      - uses: ./.github/actions/setup-rust
-
-      - name: pre-commit
-        uses: pre-commit/action@v3.0.1
-
-  test-and-build:
-    name: test + build (monorepo)
-    runs-on: ubuntu-latest
+  pr-title:
+    name: PR title
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
     steps:
-      - uses: actions/checkout@v4
+      # Squash merges take the PR title as the commit subject (AGENTS.md section 8).
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            build
+            chore
+            ci
+            docs
+            feat
+            fix
+            perf
+            refactor
+            revert
+            security
+            style
+            test
+          requireScope: false
 
+  workflow-lint:
+    name: workflow lint (actionlint + zizmor)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
+        with:
+          install_args: actionlint zizmor
+          cache_save: ${{ github.event_name != 'pull_request' }}
+      - name: actionlint
+        run: actionlint
+      - name: zizmor (offline, medium and above)
+        run: zizmor --offline --min-severity medium .github
+
+  lint:
+    name: lint
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
+        with:
+          cache_save: ${{ github.event_name != 'pull_request' }}
       - uses: ./.github/actions/setup-rust
-        with:
-          targets: wasm32-unknown-unknown
-          wasm-bindgen: "true"
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "pnpm"
-
       - run: pnpm install --frozen-lockfile
+      - run: just lint
 
-      - name: pnpm audit (high or above)
-        run: pnpm audit --audit-level=high
+  test:
+    name: test
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
+        with:
+          cache_save: ${{ github.event_name != 'pull_request' }}
+      - uses: ./.github/actions/setup-rust
+        with:
+          wasm-bindgen: "true"
+      # `just test` includes the Android JVM tests; with GS_STRICT=1 they need the SDK.
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+      - run: pnpm install --frozen-lockfile
+      - run: just test
 
-      - name: Prettier (repo-wide)
-        run: pnpm run format:check
+  build:
+    name: build
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
+        with:
+          cache_save: ${{ github.event_name != 'pull_request' }}
+      - uses: ./.github/actions/setup-rust
+        with:
+          wasm-bindgen: "true"
+      - run: pnpm install --frozen-lockfile
+      - run: just build
 
-      - name: Localization catalogue (parity, plurals, UI literals)
-        run: pnpm run i18n:check
-
-      - name: Localization generator tests
-        run: pnpm run i18n:test
-
-      - name: Rust tests (core + golden vectors, host simulation)
-        run: cargo test -p guardedsleep-sim -p guardedsleep-core
-
-      - name: Build core WASM
-        run: scripts/core-build.sh wasm
-
-      - name: WASM conformance (AC-5)
-        run: node --test crates/guardedsleep-core/js/*.test.mjs
-
-      - name: Localization generation is reproducible
-        run: |
-          cargo run -q -p i18n-gen -- all --web-out "$RUNNER_TEMP/i18n-a/web" --android-out "$RUNNER_TEMP/i18n-a/res"
-          cargo run -q -p i18n-gen -- all --web-out "$RUNNER_TEMP/i18n-b/web" --android-out "$RUNNER_TEMP/i18n-b/res"
-          diff -r "$RUNNER_TEMP/i18n-a" "$RUNNER_TEMP/i18n-b"
-
-      - name: Unit & integration tests
-        run: pnpm test
-
-      - name: Build mobile (SvelteKit static)
-        run: pnpm --filter @guardedsleep/mobile build
-
-      - name: Build signaling-server (TypeScript)
-        run: pnpm --filter @guardedsleep/signaling-server build
-
-      - name: Signaling smoke (WebSocket relay)
-        run: pnpm --filter @guardedsleep/signaling-server smoke
-
-  e2e-browser:
+  e2e:
     name: browser E2E (Playwright)
-    needs: test-and-build
-    runs-on: ubuntu-latest
+    needs: [changes, build]
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
+        with:
+          cache_save: ${{ github.event_name != 'pull_request' }}
       - uses: ./.github/actions/setup-rust
         with:
-          targets: wasm32-unknown-unknown
           wasm-bindgen: "true"
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "pnpm"
-
       - run: pnpm install --frozen-lockfile
-
       - name: Install Playwright Chromium (system deps)
         run: pnpm --filter @guardedsleep/e2e exec playwright install --with-deps chromium
-
-      - name: Browser E2E tests
-        run: pnpm --filter @guardedsleep/e2e test
-
+      - run: just e2e
       - if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-e2e-artifacts
           path: |
             apps/e2e/test-results/
             apps/e2e/playwright-report/
 
-  commitlint-pr-title:
-    name: commitlint (PR title)
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+  # Single required status check. Skipped jobs (path filters) count as success.
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs: [changes, pr-title, workflow-lint, lint, test, build, e2e]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "pnpm"
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Validate PR title (Conventional Commits)
+      - name: Fail if any needed job failed or was cancelled
         env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-        run: printf '%s\n' "$PR_TITLE" | pnpm exec commitlint
-
-  # Validate every commit in the PR head against the base branch. Husky's commit-msg
-  # hook covers locally created commits, but rebases / amends / GitHub web UI edits
-  # can introduce non-conforming subjects. Release Please depends on conventional
-  # subjects for changelog generation, so this is a pre-condition check (ADR-006).
-  commitlint-pr-commits:
-    name: commitlint (PR commits)
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "pnpm"
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Validate PR commits (Conventional Commits)
-        run: pnpm exec commitlint --from "origin/${{ github.event.pull_request.base.ref }}" --to "HEAD" --verbose
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          if echo "$NEEDS" | jq -e 'any(.[]; .result == "failure" or .result == "cancelled")' >/dev/null; then
+            echo "::error::at least one required job failed or was cancelled"
+            exit 1
+          fi

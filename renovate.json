@@ -1,0 +1,143 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "ADR-020 section 9. Requires Renovate >= 44.3.1: earlier versions skip minimumReleaseAge for digest updates, which would let a freshly moved tag or digest through unchecked.",
+    "Weekly schedule, one group per ecosystem, majors monthly and separate. Automerge is limited to dev-only tools and Action digests and is never enabled for runtime or crypto dependencies, libwebrtc or uniffi."
+  ],
+  "extends": ["config:best-practices"],
+  "timezone": "Europe/Berlin",
+  "schedule": ["before 6am on monday"],
+  "dependencyDashboard": true,
+  "labels": ["dependencies"],
+  "minimumReleaseAge": "3 days",
+  "internalChecksFilter": "strict",
+  "mise": { "enabled": true },
+  "customManagers": [
+    {
+      "description": "Rust toolchain pin in rust-toolchain.toml (no native manager)",
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/)rust-toolchain\\.toml$/"],
+      "matchStrings": ["channel\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""],
+      "depNameTemplate": "rust",
+      "packageNameTemplate": "rust-lang/rust",
+      "datasourceTemplate": "github-tags",
+      "versioningTemplate": "semver"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Cargo: one group for minor and patch updates",
+      "matchManagers": ["cargo"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "cargo"
+    },
+    {
+      "description": "Rust toolchain: own PR, reviewed by hand",
+      "matchPackageNames": ["rust", "rust-lang/rust"],
+      "groupName": "rust toolchain"
+    },
+    {
+      "description": "Gradle: everything that is not part of the Android train",
+      "matchManagers": ["gradle", "gradle-wrapper"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "gradle"
+    },
+    {
+      "description": "Gradle: Android train (AGP, Kotlin, Compose, AndroidX) moves together",
+      "matchManagers": ["gradle"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchPackageNames": [
+        "com.android.*",
+        "org.jetbrains.kotlin*",
+        "org.jetbrains.compose*",
+        "com.google.devtools.ksp*",
+        "androidx.**"
+      ],
+      "groupName": "android train"
+    },
+    {
+      "description": "npm: one group for minor and patch updates",
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "npm"
+    },
+    {
+      "description": "Docker: image and digest updates in one group",
+      "matchDatasources": ["docker"],
+      "groupName": "docker"
+    },
+    {
+      "description": "CI and dev tools: GitHub Actions and mise tools",
+      "matchManagers": ["github-actions", "mise"],
+      "groupName": "ci and dev tools"
+    },
+    {
+      "description": "uniffi runtime crate and uniffi-bindgen move together; own PR, never automerged",
+      "matchManagers": ["cargo"],
+      "matchPackageNames": ["uniffi", "uniffi_*", "uniffi-bindgen*"],
+      "groupName": "uniffi",
+      "automerge": false
+    },
+    {
+      "description": "wasm-bindgen crate and CLI move together; own PR, never automerged",
+      "matchPackageNames": ["wasm-bindgen", "wasm-bindgen-cli", "wasm-bindgen-*"],
+      "groupName": "wasm-bindgen",
+      "automerge": false
+    },
+    {
+      "description": "Slower release-age gate for libwebrtc and Gradle plugins",
+      "matchPackageNames": ["io.github.webrtc-sdk:*"],
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "matchManagers": ["gradle"],
+      "matchDepTypes": ["plugin"],
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "description": "Automerge: npm devDependencies only",
+      "matchManagers": ["npm"],
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    },
+    {
+      "description": "Automerge: pinned Action digests and mise dev tools",
+      "matchManagers": ["github-actions", "mise"],
+      "matchUpdateTypes": ["digest", "pin", "pinDigest", "minor", "patch"],
+      "automerge": true
+    },
+    {
+      "description": "Majors: monthly, one PR per package, never automerged",
+      "matchUpdateTypes": ["major"],
+      "schedule": ["before 6am on the first day of the month"],
+      "groupName": null,
+      "automerge": false
+    },
+    {
+      "description": "Never automerge runtime or crypto dependencies, libwebrtc or uniffi",
+      "matchPackageNames": [
+        "hmac",
+        "hkdf",
+        "sha2",
+        "subtle",
+        "ring",
+        "rustls*",
+        "uniffi*",
+        "io.github.webrtc-sdk:*"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "Never automerge runtime cargo and Gradle dependencies",
+      "matchManagers": ["cargo", "gradle", "gradle-wrapper"],
+      "automerge": false
+    },
+    {
+      "description": "Never automerge runtime npm dependencies",
+      "matchManagers": ["npm"],
+      "matchDepTypes": ["dependencies", "peerDependencies", "optionalDependencies"],
+      "automerge": false
+    }
+  ]
+}
