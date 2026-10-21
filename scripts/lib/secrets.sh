@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Secret scan with Betterleaks (.betterleaks.toml). Live validation stays off: never pass --validation.
-#   scripts/lib/secrets.sh            # full history of the current checkout
+#   scripts/lib/secrets.sh            # full history of the current branch (HEAD); other local branches and agent worktrees are not scanned
 #   scripts/lib/secrets.sh --staged   # staged changes only (lefthook pre-commit)
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -17,4 +17,4 @@ common=(--config .betterleaks.toml --no-banner --redact --log-level warn)
 if [ "${1:-}" = "--staged" ]; then
   exec betterleaks git "${common[@]}" --staged .
 fi
-betterleaks git "${common[@]}" .
+betterleaks git "${common[@]}" --log-opts HEAD .
