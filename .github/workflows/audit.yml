@@ -13,6 +13,11 @@ concurrency:
   group: audit
   cancel-in-progress: false
 
+env:
+  # mise.lock must cover every tool; an unlocked bump fails instead of installing unverified binaries.
+  # https://mise.jdx.dev/configuration/settings.html#locked
+  MISE_LOCKED: "1"
+
 jobs:
   rust:
     name: cargo-deny advisories

@@ -16,6 +16,9 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
+  # mise.lock must cover every tool; an unlocked bump fails instead of installing unverified binaries.
+  # https://mise.jdx.dev/configuration/settings.html#locked
+  MISE_LOCKED: "1"
   # A missing Docker/KVM/SDK fails the job instead of printing SKIPPED.
   GS_STRICT: "1"
   CORE_BUILD_NATIVE: "1"
@@ -214,7 +217,7 @@ jobs:
 
   e2e:
     name: browser E2E (Playwright)
-    needs: [changes, build]
+    needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
