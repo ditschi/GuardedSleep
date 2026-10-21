@@ -90,8 +90,9 @@
       "automerge": false
     },
     {
-      "description": "Slower release-age gate for libwebrtc and Gradle plugins. The Android app takes libwebrtc from the Stream build today; the webrtc-sdk names cover the swap in wave 2.",
-      "matchPackageNames": ["io.getstream:stream-webrtc-android", "io.github.webrtc-sdk:*"],
+      "description": "Slower release-age gate for libwebrtc and Gradle plugins. The Android app takes libwebrtc from the webrtc-sdk build behind the MediaEngine seam (ADR-020 section 4).",
+      "matchPackageNames": ["io.github.webrtc-sdk:android"],
+      "groupName": "libwebrtc",
       "minimumReleaseAge": "7 days"
     },
     {
@@ -146,8 +147,7 @@
         "ring",
         "rustls*",
         "uniffi*",
-        "io.getstream:stream-webrtc-android",
-        "io.github.webrtc-sdk:*"
+        "io.github.webrtc-sdk:android"
       ],
       "automerge": false
     },
