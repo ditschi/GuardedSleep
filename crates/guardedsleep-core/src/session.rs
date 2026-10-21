@@ -4,6 +4,23 @@
 //! WebRTC and audio; it feeds [`Input`]s (with a monotonic millisecond timestamp) into
 //! [`Session::handle`] and executes the returned [`Action`]s.
 
+// Peer-supplied messages flow through here: return errors instead of panicking (AGENTS.md §5.3).
+#![deny(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::indexing_slicing
+)]
+#![cfg_attr(
+    test,
+    allow(
+        clippy::unwrap_used,
+        clippy::expect_used,
+        clippy::panic,
+        clippy::indexing_slicing
+    )
+)]
+
 use serde::{Deserialize, Serialize};
 
 use crate::attempt::{Attempt, AttemptConfig, AttemptEvent};
@@ -173,7 +190,7 @@ pub struct Session {
 fn session_aid(role: Role, room_id: &str) -> String {
     use sha2::{Digest, Sha256};
     let digest = Sha256::digest(format!("gs-session-aid|{}|{room_id}", role.as_str()));
-    digest[..16].iter().map(|b| format!("{b:02x}")).collect()
+    digest.iter().take(16).map(|b| format!("{b:02x}")).collect()
 }
 
 impl Session {

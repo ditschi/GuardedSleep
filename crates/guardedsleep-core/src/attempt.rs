@@ -2,6 +2,23 @@
 //! An [`Attempt`] knows nothing about signaling membership and never retries; the owner (`Link`
 //! or the legacy `Session`) creates a new attempt after this one is finished.
 
+// Peer-supplied messages flow through here: return errors instead of panicking (AGENTS.md §5.3).
+#![deny(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::indexing_slicing
+)]
+#![cfg_attr(
+    test,
+    allow(
+        clippy::unwrap_used,
+        clippy::expect_used,
+        clippy::panic,
+        clippy::indexing_slicing
+    )
+)]
+
 use crate::pairing::{
     extract_sha256_fingerprint, macs_equal, normalize_dtls_fingerprint, pair_proof_mac_v3,
 };

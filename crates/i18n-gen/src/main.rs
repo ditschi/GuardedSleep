@@ -1,5 +1,7 @@
 //! Localization generator: validates `locales/*.json` and emits web JSON and Android resources.
 
+#![forbid(unsafe_code)]
+
 mod android;
 mod catalogue;
 mod icu;
