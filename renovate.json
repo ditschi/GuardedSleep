@@ -2,7 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "description": [
     "ADR-020 section 9. Requires Renovate >= 44.3.1: earlier versions skip minimumReleaseAge for digest updates, which would let a freshly moved tag or digest through unchecked.",
-    "Weekly schedule, one group per ecosystem, majors monthly and separate. Automerge is limited to dev-only tools and Action digests and is never enabled for runtime or crypto dependencies, libwebrtc or uniffi."
+    "Weekly schedule, one group per ecosystem, majors monthly and separate. Automerge is limited to test and lint tooling that is not bundled into a shipped artifact, and to GitHub Action digest updates. It is never enabled for runtime or crypto dependencies, the web build chain, node, pnpm, the gate tools in mise.toml, libwebrtc or uniffi."
   ],
   "extends": ["config:best-practices"],
   "timezone": "Europe/Berlin",
@@ -11,6 +11,11 @@
   "labels": ["dependencies"],
   "minimumReleaseAge": "3 days",
   "internalChecksFilter": "strict",
+  "lockFileMaintenance": {
+    "description": "Refresh transitive pnpm and cargo lock entries monthly. https://docs.renovatebot.com/configuration-options/#lockfilemaintenance",
+    "enabled": true,
+    "schedule": ["before 6am on the first day of the month"]
+  },
   "mise": { "enabled": true },
   "customManagers": [
     {
@@ -85,8 +90,8 @@
       "automerge": false
     },
     {
-      "description": "Slower release-age gate for libwebrtc and Gradle plugins",
-      "matchPackageNames": ["io.github.webrtc-sdk:*"],
+      "description": "Slower release-age gate for libwebrtc and Gradle plugins. The Android app takes libwebrtc from the Stream build today; the webrtc-sdk names cover the swap in wave 2.",
+      "matchPackageNames": ["io.getstream:stream-webrtc-android", "io.github.webrtc-sdk:*"],
       "minimumReleaseAge": "7 days"
     },
     {
@@ -95,16 +100,34 @@
       "minimumReleaseAge": "7 days"
     },
     {
-      "description": "Automerge: npm devDependencies only",
+      "description": "Automerge: test and lint tooling that is not bundled into a shipped artifact (devDependencies only)",
       "matchManagers": ["npm"],
       "matchDepTypes": ["devDependencies"],
       "matchUpdateTypes": ["minor", "patch"],
+      "matchPackageNames": [
+        "vitest",
+        "@vitest/**",
+        "@playwright/test",
+        "playwright",
+        "playwright-core",
+        "prettier",
+        "prettier-plugin-svelte",
+        "svelte-check",
+        "typescript",
+        "@types/**",
+        "jsdom",
+        "@testing-library/**",
+        "tsx",
+        "cspell",
+        "@cspell/**"
+      ],
       "automerge": true
     },
     {
-      "description": "Automerge: pinned Action digests and mise dev tools",
-      "matchManagers": ["github-actions", "mise"],
-      "matchUpdateTypes": ["digest", "pin", "pinDigest", "minor", "patch"],
+      "description": "Automerge: GitHub Action digest updates only, in their own group so a minor or major bump never rides along",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["digest", "pin", "pinDigest"],
+      "groupName": "action digests",
       "automerge": true
     },
     {
@@ -124,6 +147,7 @@
         "ring",
         "rustls*",
         "uniffi*",
+        "io.getstream:stream-webrtc-android",
         "io.github.webrtc-sdk:*"
       ],
       "automerge": false
@@ -137,6 +161,41 @@
       "description": "Never automerge runtime npm dependencies",
       "matchManagers": ["npm"],
       "matchDepTypes": ["dependencies", "peerDependencies", "optionalDependencies"],
+      "automerge": false
+    },
+    {
+      "description": "Never automerge what is bundled into the shipped web client, even though it is a devDependency",
+      "matchManagers": ["npm"],
+      "matchPackageNames": [
+        "svelte",
+        "@sveltejs/**",
+        "vite",
+        "vite-plugin-pwa",
+        "@vite-pwa/**",
+        "workbox-*",
+        "tailwindcss",
+        "@tailwindcss/**"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "Never automerge the runtimes and the gate tools: a gate must not be able to update itself unreviewed",
+      "matchManagers": ["mise"],
+      "matchPackageNames": [
+        "node",
+        "pnpm",
+        "cargo-deny",
+        "betterleaks",
+        "zizmor",
+        "pipx:reuse",
+        "reuse"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "Never automerge Action minor or major updates (digest, pin and pinDigest are the only automerged types)",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "major", "patch"],
       "automerge": false
     }
   ]
