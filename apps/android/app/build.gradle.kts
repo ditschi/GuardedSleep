@@ -113,7 +113,7 @@ dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
-    implementation(libs.stream.webrtc)
+    implementation(libs.webrtc.sdk)
     implementation(libs.okhttp)
     implementation(libs.camera.camera2)
     implementation(libs.camera.lifecycle)
