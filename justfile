@@ -72,13 +72,14 @@ lint-workflows:
     actionlint
     zizmor --offline --min-severity medium .github
 
-# Code: Rust format and clippy (all features), iOS check, supply chain, i18n, UI literals, types.
+# Code: Rust format and clippy (all features), iOS check, supply chain, API snapshots, i18n, UI literals, types.
 lint-code: _js-deps _js-gen check-ios
     scripts/cargo.sh fmt --all -- --check
     taplo fmt --check
     scripts/cspell-i18n.sh
     scripts/cargo.sh clippy --workspace --all-targets --all-features -- -D warnings
     just deny
+    just api-check
     pnpm run i18n:check
     scripts/lint-ui-literals.sh
     pnpm -r --if-present run check
@@ -86,6 +87,15 @@ lint-code: _js-deps _js-gen check-ios
 # The core and the UniFFI facade must stay buildable for iOS (ADR-020 §3); rust-toolchain.toml installs the target.
 check-ios:
     scripts/cargo.sh check -p guardedsleep-core -p guardedsleep-ffi --target aarch64-apple-ios
+
+# API-surface snapshots of the binding facades (cargo public-api on the pinned nightly in tools/nightly, plus
+# the generated .d.ts). Fails on a diff; `just api-snapshot` regenerates. SKIPPED without Docker.
+api-check:
+    scripts/lib/api-snapshot.sh check
+
+# Regenerate crates/guardedsleep-{ffi,wasm}/api.txt and packages/core-wasm/api/core.d.ts after an intended change.
+api-snapshot:
+    scripts/lib/api-snapshot.sh update
 
 # cargo-deny (advisories, licences, sources, sans-IO bans) plus the core dependency-count guard.
 deny:

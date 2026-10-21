@@ -1,7 +1,7 @@
 //! UniFFI declarations for the core types that cross the Kotlin/Swift boundary. The core carries no
 //! binding attributes (ADR-020), so each type is declared again here with `#[uniffi::remote]`. The
 //! field and variant lists must match the core definitions exactly; a mismatch fails to compile.
-//! Docs: https://mozilla.github.io/uniffi-rs/latest/proc_macro/index.html#the-uniffiremote-attribute
+//! Docs: <https://mozilla.github.io/uniffi-rs/latest/proc_macro/index.html#the-uniffiremote-attribute>
 
 use guardedsleep_core::link::{
     LinkAction, LinkConfig, LinkEvent, LinkInput, LinkState, LinkStatus,

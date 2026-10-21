@@ -44,7 +44,9 @@ crates/
   guardedsleep-core/    Rust sans-IO core (protocol v3, pairing, Link/Attempt); vectors + traces      [exists; short name `core`]
   guardedsleep-sim/     Host simulation (gs-scenario), trace recording                                [exists; short name `sim`]
   i18n-gen/ , uniffi-bindgen/                                                                         [exist]
-  guardedsleep-{ffi,wasm,relay,server}/                                                              (planned, wave 2)
+  guardedsleep-ffi/     UniFFI façade (libguardedsleep_ffi.so, Kotlin bindings); api.txt snapshot      [exists; short name `ffi`]
+  guardedsleep-wasm/    wasm-bindgen + tsify façade for the web client; api.txt snapshot                [exists; short name `wasm`]
+  guardedsleep-{relay,server}/                                                                        (planned, wave 2)
 apps/
   android/              Native client (Kotlin + Compose); :core = UniFFI bindings + JNI libs          [exists; modules app/ui-contract/platform/core-bindings planned, wave 2]
   web/                  Vite 8 + Svelte 5 web client                                                   (planned, wave 3)
@@ -70,7 +72,7 @@ Per-package `AGENTS.md` files may exist later; they inherit this file and docume
 
 - Tasks needing Docker, KVM, the Android SDK or Playwright browsers print `SKIPPED: <task> needs <x>` and exit 0. A SKIPPED is not a pass. CI sets `GS_STRICT=1`, which turns every skip into a failure.
 - `just test` builds no Android ABI (host Rust, wasm, Vitest, Android JVM tests against the host build of the core). Cross-compiled ABIs belong to `just build-android`, `just gate` and release builds.
-- The core graph checks (`just deny`, dependency count) run on the default-feature graph; wave 2 moves uniffi into `guardedsleep-ffi` and checks the core with all features.
+- The core graph checks (`just deny`, dependency count) run on the all-features graph of `guardedsleep-core`. `just lint` also diffs the binding surface (`just api-check`; regenerate with `just api-snapshot` after an intended change): `crates/guardedsleep-{ffi,wasm}/api.txt` and `packages/core-wasm/api/core.d.ts`, using the nightly pinned in `tools/nightly/rust-toolchain.toml`. Only the façades may allow `unsafe`; the core forbids it and carries no binding attributes (its optional `tsify` feature is enabled by `guardedsleep-wasm` alone).
 
 | Task                       | Command                                                                                                                                     |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -1,0 +1,13 @@
+pub mod guardedsleep_wasm
+pub struct guardedsleep_wasm::WasmLink
+impl guardedsleep_wasm::WasmLink
+pub fn guardedsleep_wasm::WasmLink::handle(&mut self, f64, &str) -> core::result::Result<alloc::string::String, wasm_bindgen::JsError>
+pub fn guardedsleep_wasm::WasmLink::new(&str) -> core::result::Result<guardedsleep_wasm::WasmLink, wasm_bindgen::JsError>
+pub fn guardedsleep_wasm::WasmLink::room_id(&self) -> alloc::string::String
+pub struct guardedsleep_wasm::WasmSession
+impl guardedsleep_wasm::WasmSession
+pub fn guardedsleep_wasm::WasmSession::handle(&mut self, f64, &str) -> core::result::Result<alloc::string::String, wasm_bindgen::JsError>
+pub fn guardedsleep_wasm::WasmSession::new(&str) -> core::result::Result<guardedsleep_wasm::WasmSession, wasm_bindgen::JsError>
+pub fn guardedsleep_wasm::conformance_eval(&str) -> alloc::string::String
+pub fn guardedsleep_wasm::derive_room_id(&[u8]) -> alloc::string::String
+pub fn guardedsleep_wasm::message_keys() -> alloc::string::String

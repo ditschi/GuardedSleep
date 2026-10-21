@@ -71,3 +71,6 @@ packages/core-wasm/pkg-node/
 
 # Agent worktrees (Claude Code)
 .claude/worktrees/
+
+# Kotlin compiler daemon sessions
+.kotlin/

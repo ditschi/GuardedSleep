@@ -60,3 +60,9 @@ OPENSPEC_NO_UPDATE_CHECK = "1"
 lockfile = true
 # Never use the Node version file of a sub project (apps/mobile is frozen).
 idiomatic_version_file_enable_tools = []
+
+# Tool versions that mise does not install (a `cargo:` backend would need a host cargo, which the Docker-only
+# setup does not require). scripts/lib/api-snapshot.sh reads this one and runs `cargo install` in a container.
+# https://github.com/cargo-public-api/cargo-public-api and https://mise.jdx.dev/tasks/task-configuration.html
+[vars]
+cargo_public_api = "0.52.0"

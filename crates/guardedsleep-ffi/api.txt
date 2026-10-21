@@ -1,0 +1,63 @@
+pub mod guardedsleep_ffi
+pub enum guardedsleep_ffi::CoreError
+pub guardedsleep_ffi::CoreError::InvalidConfig
+pub guardedsleep_ffi::CoreError::InvalidConfig::reason: alloc::string::String
+impl core::convert::From<guardedsleep_core::session::ConfigError> for guardedsleep_ffi::CoreError
+pub fn guardedsleep_ffi::CoreError::from(guardedsleep_core::session::ConfigError) -> Self
+impl core::fmt::Display for guardedsleep_ffi::CoreError
+pub fn guardedsleep_ffi::CoreError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<UT> uniffi_core::ffi_converter_traits::ConvertError<UT> for guardedsleep_ffi::CoreError
+pub fn guardedsleep_ffi::CoreError::try_convert_unexpected_callback_error(uniffi_core::ffi::callbackinterface::UnexpectedUniFFICallbackError) -> anyhow::Result<Self>
+impl<UT> uniffi_core::ffi_converter_traits::Lift<UT> for guardedsleep_ffi::CoreError
+pub type guardedsleep_ffi::CoreError::FfiType = <guardedsleep_ffi::CoreError as uniffi_core::ffi_converter_traits::FfiConverter<UT>>::FfiType
+pub fn guardedsleep_ffi::CoreError::try_lift(Self::FfiType) -> anyhow::Result<Self>
+pub fn guardedsleep_ffi::CoreError::try_read(&mut &[u8]) -> anyhow::Result<Self>
+impl<UT> uniffi_core::ffi_converter_traits::LiftRef<UT> for guardedsleep_ffi::CoreError
+pub type guardedsleep_ffi::CoreError::LiftType = guardedsleep_ffi::CoreError
+impl<UT> uniffi_core::ffi_converter_traits::LiftReturn<UT> for guardedsleep_ffi::CoreError
+pub type guardedsleep_ffi::CoreError::ReturnType = <guardedsleep_ffi::CoreError as uniffi_core::ffi_converter_traits::Lift<UT>>::FfiType
+pub fn guardedsleep_ffi::CoreError::try_lift_successful_return(Self::ReturnType) -> anyhow::Result<Self>
+impl<UT> uniffi_core::ffi_converter_traits::Lower<UT> for guardedsleep_ffi::CoreError
+pub type guardedsleep_ffi::CoreError::FfiType = <guardedsleep_ffi::CoreError as uniffi_core::ffi_converter_traits::FfiConverter<UT>>::FfiType
+pub fn guardedsleep_ffi::CoreError::lower(Self) -> Self::FfiType
+pub fn guardedsleep_ffi::CoreError::write(Self, &mut alloc::vec::Vec<u8>)
+impl<UT> uniffi_core::ffi_converter_traits::LowerError<UT> for guardedsleep_ffi::CoreError
+pub fn guardedsleep_ffi::CoreError::lower_error(Self) -> uniffi_core::ffi::rustbuffer::RustBuffer
+impl<UT> uniffi_core::ffi_converter_traits::LowerReturn<UT> for guardedsleep_ffi::CoreError
+pub type guardedsleep_ffi::CoreError::ReturnType = <guardedsleep_ffi::CoreError as uniffi_core::ffi_converter_traits::Lower<UT>>::FfiType
+pub fn guardedsleep_ffi::CoreError::lower_return(Self) -> anyhow::Result<Self::ReturnType, uniffi_core::ffi::rustcalls::RustCallError>
+impl<UT> uniffi_core::ffi_converter_traits::TypeId<UT> for guardedsleep_ffi::CoreError
+pub const guardedsleep_ffi::CoreError::TYPE_ID_META: uniffi_core::metadata::MetadataBuffer
+pub struct guardedsleep_ffi::CoreLink
+impl guardedsleep_ffi::CoreLink
+pub fn guardedsleep_ffi::CoreLink::handle(&self, u64, guardedsleep_core::link::LinkInput) -> alloc::vec::Vec<guardedsleep_core::link::LinkAction>
+pub fn guardedsleep_ffi::CoreLink::new(guardedsleep_core::link::LinkConfig) -> core::result::Result<alloc::rcs::arc::Arc<Self>, guardedsleep_ffi::CoreError>
+pub fn guardedsleep_ffi::CoreLink::room_id(&self) -> alloc::string::String
+impl<UT> uniffi_core::ffi_converter_traits::LiftRef<UT> for guardedsleep_ffi::CoreLink
+pub type guardedsleep_ffi::CoreLink::LiftType = alloc::rcs::arc::Arc<guardedsleep_ffi::CoreLink>
+impl<UT> uniffi_core::ffi_converter_traits::LowerError<UT> for guardedsleep_ffi::CoreLink
+pub fn guardedsleep_ffi::CoreLink::lower_error(Self) -> uniffi_core::ffi::rustbuffer::RustBuffer
+impl<UT> uniffi_core::ffi_converter_traits::LowerReturn<UT> for guardedsleep_ffi::CoreLink
+pub type guardedsleep_ffi::CoreLink::ReturnType = <alloc::rcs::arc::Arc<guardedsleep_ffi::CoreLink> as uniffi_core::ffi_converter_traits::LowerReturn<UniFfiTag>>::ReturnType
+pub fn guardedsleep_ffi::CoreLink::lower_return(Self) -> core::result::Result<Self::ReturnType, uniffi_core::ffi::rustcalls::RustCallError>
+impl<UT> uniffi_core::ffi_converter_traits::TypeId<UT> for guardedsleep_ffi::CoreLink
+pub const guardedsleep_ffi::CoreLink::TYPE_ID_META: uniffi_core::metadata::MetadataBuffer
+pub struct guardedsleep_ffi::CoreSession
+impl guardedsleep_ffi::CoreSession
+pub fn guardedsleep_ffi::CoreSession::handle(&self, u64, guardedsleep_core::session::Input) -> alloc::vec::Vec<guardedsleep_core::session::Action>
+pub fn guardedsleep_ffi::CoreSession::new(guardedsleep_core::session::SessionConfig) -> core::result::Result<alloc::rcs::arc::Arc<Self>, guardedsleep_ffi::CoreError>
+impl<UT> uniffi_core::ffi_converter_traits::LiftRef<UT> for guardedsleep_ffi::CoreSession
+pub type guardedsleep_ffi::CoreSession::LiftType = alloc::rcs::arc::Arc<guardedsleep_ffi::CoreSession>
+impl<UT> uniffi_core::ffi_converter_traits::LowerError<UT> for guardedsleep_ffi::CoreSession
+pub fn guardedsleep_ffi::CoreSession::lower_error(Self) -> uniffi_core::ffi::rustbuffer::RustBuffer
+impl<UT> uniffi_core::ffi_converter_traits::LowerReturn<UT> for guardedsleep_ffi::CoreSession
+pub type guardedsleep_ffi::CoreSession::ReturnType = <alloc::rcs::arc::Arc<guardedsleep_ffi::CoreSession> as uniffi_core::ffi_converter_traits::LowerReturn<UniFfiTag>>::ReturnType
+pub fn guardedsleep_ffi::CoreSession::lower_return(Self) -> core::result::Result<Self::ReturnType, uniffi_core::ffi::rustcalls::RustCallError>
+impl<UT> uniffi_core::ffi_converter_traits::TypeId<UT> for guardedsleep_ffi::CoreSession
+pub const guardedsleep_ffi::CoreSession::TYPE_ID_META: uniffi_core::metadata::MetadataBuffer
+pub fn guardedsleep_ffi::conformance_eval(alloc::string::String) -> alloc::string::String
+pub fn guardedsleep_ffi::default_link_config(guardedsleep_core::protocol::Role, alloc::string::String) -> guardedsleep_core::link::LinkConfig
+pub fn guardedsleep_ffi::default_session_config(guardedsleep_core::protocol::Role, alloc::string::String, core::option::Option<alloc::string::String>) -> guardedsleep_core::session::SessionConfig
+pub fn guardedsleep_ffi::derive_room_id(alloc::vec::Vec<u8>) -> alloc::string::String
+pub fn guardedsleep_ffi::encode_psk(alloc::vec::Vec<u8>) -> alloc::string::String
+pub fn guardedsleep_ffi::message_keys() -> alloc::vec::Vec<alloc::string::String>
