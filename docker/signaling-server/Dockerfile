@@ -1,48 +1,55 @@
 # syntax=docker/dockerfile:1
-# Build from repository root: docker build -f docker/signaling-server/Dockerfile .
-FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS builder
+# Build from the repository root: docker build -f docker/signaling-server/Dockerfile .
+# The Rust server (crates/guardedsleep-server) on a distroless runtime. Multi-arch: build with
+# `docker buildx build --platform linux/amd64,linux/arm64`; each platform compiles natively.
+# Dockerfile reference: https://docs.docker.com/reference/dockerfile/
+
+# --- toolchain: the channel comes from rust-toolchain.toml, the single source (ADR-020 section 1) ---
+FROM debian:trixie-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad AS chef
+ENV RUSTUP_HOME=/opt/rustup CARGO_HOME=/opt/cargo PATH=/opt/cargo/bin:${PATH}
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends build-essential ca-certificates curl \
+	&& rm -rf /var/lib/apt/lists/*
+COPY rust-toolchain.toml /tmp/rust-toolchain.toml
+# Only the channel is installed here. The file itself is not copied into /app, so rustup does not pull
+# the Android, iOS and WASM targets that the workspace toolchain file lists.
+RUN CHANNEL="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' /tmp/rust-toolchain.toml)" \
+	&& test -n "$CHANNEL" \
+	&& curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain "$CHANNEL" \
+	&& cargo install --locked cargo-chef@0.1.78 \
+	&& rm -rf /opt/cargo/registry /opt/cargo/git /tmp/rust-toolchain.toml
 WORKDIR /app
 
-ENV CI=true
-# pnpm 11 at the version pinned in mise.toml (the single source; corepack is not used, ADR-020 section 5).
-# https://pnpm.io/installation
-COPY mise.toml /tmp/mise.toml
-RUN PNPM_VERSION="$(sed -n 's/^pnpm *= *"\(.*\)"/\1/p' /tmp/mise.toml)" \
-	&& test -n "$PNPM_VERSION" \
-	&& npm install --global "pnpm@${PNPM_VERSION}" \
-	&& rm /tmp/mise.toml
+# --- planner: the dependency recipe, stable while only crate sources change ---
+FROM chef AS planner
+COPY Cargo.toml Cargo.lock ./
+COPY crates crates
+RUN cargo chef prepare --recipe-path recipe.json
 
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
-COPY packages/protocol/package.json packages/protocol/
-COPY apps/signaling-server/package.json apps/signaling-server/
+# --- builder: dependencies first (cached layer), then the server ---
+FROM chef AS builder
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --release --locked --recipe-path recipe.json -p guardedsleep-server
+COPY Cargo.toml Cargo.lock ./
+COPY crates crates
+RUN cargo build --release --locked -p guardedsleep-server
 
-RUN pnpm install --frozen-lockfile --ignore-scripts
+# --- runtime: no shell, no package manager, non-root (uid 65532) ---
+FROM gcr.io/distroless/cc-debian13:nonroot@sha256:83b9b50586253821cf63ffcec87d3d94265a093ad30da232039af962dd8f4edf AS runner
+COPY --from=builder /app/target/release/guardedsleep-server /usr/local/bin/guardedsleep-server
 
-COPY packages/protocol/tsconfig.json packages/protocol/tsconfig.build.json packages/protocol/
-COPY packages/protocol/src packages/protocol/src
-COPY apps/signaling-server/tsconfig.json apps/signaling-server/
-COPY apps/signaling-server/src ./apps/signaling-server/src
-
-RUN pnpm --filter @guardedsleep/protocol build \
-	&& pnpm --filter @guardedsleep/signaling-server build
-
-RUN pnpm --filter @guardedsleep/signaling-server deploy /out --prod
-
-FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS runner
-WORKDIR /app
-
-ENV NODE_ENV=production
 ENV PORT=8787
-# Non-empty default so the process passes startup checks; override in real deployments.
+ENV STUN_PORT=3478
+# Non-empty default so the process passes the production startup check; override in real deployments.
+ENV NODE_ENV=production
 ENV SIGNALING_ALLOWED_ORIGINS=http://127.0.0.1,http://localhost
 
-COPY --from=builder --chown=node:node /out/ ./
+USER nonroot
+EXPOSE 8787/tcp 3478/udp
 
-USER node
-
-EXPOSE 8787
-
+# The image has no curl or shell, so the binary probes its own /healthz.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-	CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||8787)+'/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+	CMD ["/usr/local/bin/guardedsleep-server", "--healthcheck"]
 
-CMD ["node", "dist/index.js"]
+# Run with a read-only root filesystem (`docker run --read-only`): the server writes nothing.
+ENTRYPOINT ["/usr/local/bin/guardedsleep-server"]

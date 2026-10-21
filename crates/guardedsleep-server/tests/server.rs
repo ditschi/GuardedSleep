@@ -559,3 +559,20 @@ async fn stun_can_be_disabled() {
     assert!(srv.stun_addr.is_none());
     srv.shutdown().await;
 }
+
+#[tokio::test]
+async fn healthcheck_probe_reports_a_running_server() {
+    let srv = run(&[], &NO_LIMITS).await;
+    let port = srv.signaling_addr.port();
+    assert!(
+        tokio::task::spawn_blocking(move || guardedsleep_server::healthcheck(port))
+            .await
+            .unwrap()
+    );
+    srv.shutdown().await;
+    assert!(
+        !tokio::task::spawn_blocking(move || guardedsleep_server::healthcheck(port))
+            .await
+            .unwrap()
+    );
+}

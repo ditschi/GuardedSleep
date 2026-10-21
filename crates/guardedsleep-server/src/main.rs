@@ -3,7 +3,15 @@ use guardedsleep_server::config::{Cli, Config, Limits};
 
 #[tokio::main]
 async fn main() {
-    let cfg = match Config::new(Cli::parse(), Limits::from_env()) {
+    let cli = Cli::parse();
+    if cli.healthcheck {
+        std::process::exit(if guardedsleep_server::healthcheck(cli.port) {
+            0
+        } else {
+            1
+        });
+    }
+    let cfg = match Config::new(cli, Limits::from_env()) {
         Ok(cfg) => cfg,
         Err(e) => {
             eprintln!("guardedsleep-server: {e}");

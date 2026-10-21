@@ -54,6 +54,11 @@ pub struct Cli {
     #[arg(long, env = "STUN_ALLOW_SHORT_REQUESTS", value_parser = clap::builder::BoolishValueParser::new())]
     pub stun_allow_short_requests: bool,
 
+    /// Probe `GET /healthz` on 127.0.0.1:<port> and exit 0 when healthy, 1 otherwise. For the
+    /// container HEALTHCHECK: the distroless image has no shell or curl.
+    #[arg(long)]
+    pub healthcheck: bool,
+
     /// Print relay events (connect, join, leave, close reason; never addresses or ids) to stderr.
     #[arg(long, env = "GS_LOG_EVENTS", value_parser = clap::builder::BoolishValueParser::new())]
     pub log_events: bool,

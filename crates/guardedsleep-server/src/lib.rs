@@ -67,6 +67,24 @@ fn serve(
     })
 }
 
+/// Blocking probe of `GET /healthz` on loopback, for `--healthcheck`.
+pub fn healthcheck(port: u16) -> bool {
+    use std::io::{Read, Write};
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    let Ok(mut s) = std::net::TcpStream::connect_timeout(&addr, Duration::from_secs(2)) else {
+        return false;
+    };
+    let timeout = Some(Duration::from_secs(2));
+    let _ = s.set_read_timeout(timeout);
+    let _ = s.set_write_timeout(timeout);
+    let req = "GET /healthz HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n";
+    let mut raw = String::new();
+    s.write_all(req.as_bytes()).is_ok()
+        && s.read_to_string(&mut raw).is_ok()
+        && raw.starts_with("HTTP/1.1 200")
+        && raw.ends_with("ok\n")
+}
+
 pub async fn start(cfg: Config) -> io::Result<RunningServer> {
     let cli = &cfg.cli;
     let hub = Arc::new(Hub::new(cfg.relay_config(), cli.log_events));
