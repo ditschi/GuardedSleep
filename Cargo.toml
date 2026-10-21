@@ -5,6 +5,7 @@ members = [
   "crates/guardedsleep-ffi",
   "crates/guardedsleep-wasm",
   "crates/guardedsleep-sim",
+  "crates/guardedsleep-relay",
   "crates/uniffi-bindgen",
   "crates/i18n-gen",
 ]

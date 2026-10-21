@@ -1,0 +1,18 @@
+[package]
+name = "guardedsleep-relay"
+version = "0.0.1"
+description = "Sans-IO signaling relay for GuardedSleep: rooms, admission, limits (ADR-021 section 1)"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+base64 = "0.23"
+guardedsleep-core = { path = "../guardedsleep-core" }
+serde_json = { version = "1", features = ["preserve_order"] }
+
+[dev-dependencies]
+proptest = "1"
+
+[lints]
+workspace = true
