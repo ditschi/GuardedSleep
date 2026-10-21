@@ -1,10 +1,16 @@
 # syntax=docker/dockerfile:1
 # Build from repository root: docker build -f docker/signaling-server/Dockerfile .
-FROM node:22-alpine AS builder
+FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS builder
 WORKDIR /app
 
-ENV HUSKY=0 CI=true
-RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+ENV CI=true
+# pnpm 11 at the version pinned in mise.toml (the single source; corepack is not used, ADR-020 section 5).
+# https://pnpm.io/installation
+COPY mise.toml /tmp/mise.toml
+RUN PNPM_VERSION="$(sed -n 's/^pnpm *= *"\(.*\)"/\1/p' /tmp/mise.toml)" \
+	&& test -n "$PNPM_VERSION" \
+	&& npm install --global "pnpm@${PNPM_VERSION}" \
+	&& rm /tmp/mise.toml
 
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY packages/protocol/package.json packages/protocol/
@@ -22,7 +28,7 @@ RUN pnpm --filter @guardedsleep/protocol build \
 
 RUN pnpm --filter @guardedsleep/signaling-server deploy /out --prod
 
-FROM node:22-alpine AS runner
+FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production

@@ -5,6 +5,11 @@
 # own graph, via `--manifest-path`:
 #   cargo deny --manifest-path crates/guardedsleep-core/Cargo.toml --config deny.core.toml check bans
 # `just deny` (scripts/lib/deny.sh) runs this for guardedsleep-core and, once it exists, guardedsleep-relay.
+#
+# The graph below is the default-feature graph. Today guardedsleep-core still carries the `uniffi` and
+# `wasm` features, and the uniffi graph pulls getrandom in through a bindgen-time dependency (tempfile),
+# so enabling all features here would fail the ban. Wave 2 moves uniffi into guardedsleep-ffi and wasm
+# into its own crate; the core graph is then checked with all-features = true (docs/ci-gates.md).
 # Ban syntax: https://embarkstudios.github.io/cargo-deny/checks/bans/cfg.html
 
 [graph]

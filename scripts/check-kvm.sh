@@ -34,7 +34,7 @@ echo ""
 if [[ "$fail" -eq 0 ]]; then
 	echo "Result: KVM ready — hybrid docker emulator should use hardware acceleration."
 else
-	echo "Result: KVM not ready — browser E2E still works via pnpm run e2e:docker"
+	echo "Result: KVM not ready — browser E2E still works via just e2e-docker"
 	echo "        Hybrid emulator falls back to software mode (EMULATOR_ALLOW_NO_KVM=1) or is skipped."
 fi
 

@@ -3,8 +3,10 @@ set -euo pipefail
 
 cd /workspace
 
-corepack enable
-corepack prepare pnpm@9.15.4 --activate
+# pnpm 11 at the version pinned in mise.toml (corepack is not used, ADR-020 section 5).
+PNPM_VERSION="$(sed -n 's/^pnpm *= *"\(.*\)"/\1/p' mise.toml)"
+test -n "$PNPM_VERSION"
+npm install --global "pnpm@${PNPM_VERSION}"
 
 pnpm install --no-frozen-lockfile
 

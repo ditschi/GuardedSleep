@@ -4,7 +4,8 @@
 #   - push to main, paths under signaling/protocol → publishes :dev + :sha-<short>
 #   - push of a manual tag `signaling-server-v*` → publishes :latest, :vX.Y.Z, :vX.Y (+ :vX post-1.0)
 #     (releases are manual tags during the alpha; Release Please returns at beta, ADR-020 §10)
-#   - pull_request → builds only (no push), validates Dockerfile on both architectures
+#   - pull_request → build-check job only (read-only token, no registry login, no push), validates the
+#     Dockerfile on both architectures
 #   - workflow_dispatch → manual one-off (publishes :dev unless a tag was pushed too)
 #
 # Each architecture builds on a native runner (no QEMU), pushes by digest, and the `merge` job
@@ -22,6 +23,7 @@ on:
       - "apps/signaling-server/**"
       - "packages/protocol/**"
       - "pnpm-lock.yaml"
+      - "mise.toml"
       - ".github/workflows/docker-signaling.yml"
   pull_request:
     paths:
@@ -29,6 +31,7 @@ on:
       - "apps/signaling-server/**"
       - "packages/protocol/**"
       - "pnpm-lock.yaml"
+      - "mise.toml"
       - ".github/workflows/docker-signaling.yml"
   workflow_dispatch:
 
@@ -44,8 +47,40 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Pull requests only validate the Dockerfile: no registry login, no push, read-only token.
+  build-check:
+    name: build check (${{ matrix.platform }})
+    if: github.event_name == 'pull_request'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build (no push)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: docker/signaling-server/Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: false
+
   build:
     name: build (${{ matrix.platform }})
+    if: github.event_name != 'pull_request'
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     permissions:
@@ -78,7 +113,6 @@ jobs:
         run: echo "PLATFORM_PAIR=${PLATFORM//\//-}" >> "$GITHUB_ENV"
 
       - name: Log in to GHCR
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ${{ env.REGISTRY }}
@@ -104,12 +138,11 @@ jobs:
           file: docker/signaling-server/Dockerfile
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=image,name=${{ env.REGISTRY }}/${{ steps.owner.outputs.value }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=${{ github.event_name != 'pull_request' }}
+          outputs: type=image,name=${{ env.REGISTRY }}/${{ steps.owner.outputs.value }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=${{ env.IMAGE_NAME }}-${{ env.PLATFORM_PAIR }}
-          cache-to: ${{ github.event_name != 'pull_request' && format('type=gha,mode=max,scope={0}-{1}', env.IMAGE_NAME, env.PLATFORM_PAIR) || '' }}
+          cache-to: ${{ format('type=gha,mode=max,scope={0}-{1}', env.IMAGE_NAME, env.PLATFORM_PAIR) }}
 
       - name: Export digest
-        if: github.event_name != 'pull_request'
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
         run: |
@@ -117,7 +150,6 @@ jobs:
           touch "$RUNNER_TEMP/digests/${DIGEST#sha256:}"
 
       - name: Upload digest
-        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: digests-${{ env.IMAGE_NAME }}-${{ env.PLATFORM_PAIR }}

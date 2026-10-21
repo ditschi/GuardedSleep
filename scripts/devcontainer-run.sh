@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Run a command in the same Docker Compose service as the Dev Container (mount: repo → /workspace).
-# Usage (from repository root): ./scripts/devcontainer-run.sh pnpm run lint
+# Usage (from repository root): ./scripts/devcontainer-run.sh just lint
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=lib/dev-compose-env.sh

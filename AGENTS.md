@@ -17,7 +17,7 @@
 
 - **Product:** GuardedSleep – Privacy Baby Monitor. Open-source, privacy-first, **fully local-capable** (no cloud dependency for media).
 - **Names:** npm scope `@guardedsleep/*`, Android app id `org.guardedsleep.app` (alpha: `org.guardedsleep.app.alpha`), Docker images `guardedsleep-*`.
-- **Phase:** alpha build-out ([ADR-018](docs/decisions/ADR-018-alpha-milestone-scope-and-trust-features.md)). The tooling is **in transition** to ADR-020, implemented in three waves: **wave 1** guardrails and cleanup, **wave 2** structure (crates, server, Android modules), **wave 3** web client and quality gates. Items marked "(planned, wave N)" do not exist yet: do not look for them or invent them.
+- **Phase:** alpha build-out ([ADR-018](docs/decisions/ADR-018-alpha-milestone-scope-and-trust-features.md)). The tooling is **in transition** to ADR-020, implemented in three waves: **wave 1** guardrails and cleanup (done), **wave 2** structure (crates, server, Android modules), **wave 3** web client and quality gates. Items marked "(planned, wave N)" do not exist yet: do not look for them or invent them.
 - **Platforms:** native Android (Kotlin + Compose) and a web client (Svelte 5 on the WASM core), both on one Rust core ([ADR-015](docs/decisions/ADR-015-native-clients-with-shared-rust-core.md), [ADR-019](docs/decisions/ADR-019-language-repository-and-client-policy.md)). iOS, desktop apps and video are deferred (§9).
 - **License:** AGPL-3.0-or-later ([`LICENSE`](LICENSE), [ADR-014](docs/decisions/ADR-014-open-source-license-agpl-and-trademark.md)); trademark policy in [`docs/legal/trademark.md`](docs/legal/trademark.md).
 
@@ -34,7 +34,7 @@
 | Tests            | nextest, proptest, insta, golden + negative vectors through every binding; Robolectric/Roborazzi; Vitest; Playwright; Maestro; emulator gate  |
 | Crypto / media   | WebRTC DTLS-SRTP + DataChannel; direction-bound pairing proof (ADR-004 amendment). No custom transport crypto                                 |
 
-**Legacy, frozen, never extend:** `apps/mobile` (SvelteKit + Capacitor; reference for the `apps/web` rebuild, deleted at parity), `apps/signaling-server` (Node, replaced by the Rust server), `packages/protocol` (hand-written TS types, to be deleted), `docker/android-build` (Capacitor image).
+**Legacy, frozen, never extend:** `apps/mobile` (SvelteKit + Capacitor; reference for the `apps/web` rebuild, deleted at parity), `apps/signaling-server` (Node, replaced by the Rust server), `packages/protocol` (hand-written TS types, to be deleted), (`docker/android-build`, the Capacitor image, is gone).
 
 ## 3. Repository map
 
@@ -56,38 +56,36 @@ locales/                UI copy catalogue (en master), ~20 locales planned, wave
 docker/                 signaling-server, mobile-web, stack, android-native-build, android-emulator
 scripts/                core-build.sh, cargo.sh, poc/ (emulator gate), lint-ui-literals.sh, …
 docs/                   concept, features, decisions (ADRs), technical, roles, reviews, contributing, legal
-                        docs/ci-gates.md (gate owners, runbooks, last-catch dates)                      (planned, wave 1)
-mise.toml, mise.lock, rust-toolchain.toml, lefthook.yml, renovate.json                                  (planned, wave 1)
+                        docs/ci-gates.md (gate owners, runbooks, last-catch dates)
+mise.toml, mise.lock, rust-toolchain.toml, lefthook.yml, renovate.json, justfile
 ```
 
 Per-package `AGENTS.md` files may exist later; they inherit this file and document only deltas.
 
 ## 4. Commands
 
-**Target: `just` is the single entry point**, with the fixed vocabulary `setup fmt lint test gen build e2e gate ci` (planned, wave 1; sub-recipes such as `fmt-check` and `build-android` are allowed). Recipes call the native tools and never re-implement them; `just ci` gives the same verdict as CI. Prefer `just <task>` as soon as the recipe exists (a `justfile` is already in the repo; check `just --list`).
+**`just` is the single entry point**, with the fixed vocabulary `setup fmt lint test gen build e2e gate ci` (sub-recipes such as `fmt-check`, `lint-text`, `build-android` are allowed). Recipes call the native tools and never re-implement them; `just ci` gives the same verdict as CI (lint + test + build + e2e; the PR title check and the emulator gate are CI-only). Check `just --list`.
 
-- (planned, wave 1) Tasks needing Docker, KVM or the Android SDK print `SKIPPED: <task> needs <x>` and exit 0. CI sets `GS_STRICT=1`, which turns every skip into a failure.
-- Today only `just test|lint|build|gate|e2e` (plus `install`, `test-*`) exist; missing Docker makes them fail, not skip, and `just test` still builds the Android ABIs.
-- (planned, wave 1) `just test` builds no Android ABI (host Rust, wasm, Vitest, Android JVM tests). Cross-compiled ABIs belong to `just build-android`, `just gate` and release builds.
+- Tasks needing Docker, KVM, the Android SDK or Playwright browsers print `SKIPPED: <task> needs <x>` and exit 0. A SKIPPED is not a pass. CI sets `GS_STRICT=1`, which turns every skip into a failure.
+- `just test` builds no Android ABI (host Rust, wasm, Vitest, Android JVM tests against the host build of the core). Cross-compiled ABIs belong to `just build-android`, `just gate` and release builds.
+- The core graph checks (`just deny`, dependency count) run on the default-feature graph; wave 2 moves uniffi into `guardedsleep-ffi` and checks the core with all features.
 
-**Current commands until wave 1 lands** (these keep working; do not delete them):
+| Task                       | Command                                                                                                                                     |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setup (tools, deps, hooks) | `just setup` (mise, rustup toolchain, `pnpm install --frozen-lockfile`, lefthook)                                                           |
+| Format                     | `just fmt` · `just fmt-check`                                                                                                               |
+| Lint                       | `just lint` (= `lint-text` + `lint-workflows` + `lint-code`; clippy runs with `--all-features`, plus `cargo check` for `aarch64-apple-ios`) |
+| Test                       | `just test` (cargo workspace, WASM conformance, Vitest, Android JVM tests) · `scripts/cargo.sh test -p guardedsleep-sim` (host simulation)  |
+| Generate                   | `just gen` (i18n output) · `scripts/core-build.sh host` (host core library + Kotlin bindings) · `scripts/core-build.sh wasm`                |
+| Build                      | `just build` (web + Android) · `just build-web` · `just build-android` · `just verify-android` (adds JVM tests and Roborazzi)               |
+| Browser E2E                | `just e2e` (Playwright; starts `just dev`)                                                                                                  |
+| Emulator gate (KVM)        | `just gate` (`DOZE_MINUTES=2 just gate` for a quick run; run `just build-android` first)                                                    |
+| Local dev                  | `just dev` (Vite 5173 + legacy signaling server 8787)                                                                                       |
+| Docker stack               | `just stack-lan` · `just stack-up`                                                                                                          |
+| Supply chain, secrets      | `just deny` · `just secrets` · `just audit`                                                                                                 |
+| Legacy server smoke test   | `pnpm --filter @guardedsleep/signaling-server smoke`                                                                                        |
 
-| Task                   | Command                                                                                                                                                                                                        |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Install JS deps        | `corepack enable && pnpm install --frozen-lockfile` (becomes pnpm 11 via mise, no corepack)                                                                                                                    |
-| Lint / format          | `pnpm run lint` (= `pre-commit run --all-files`), `pnpm run format`, `pnpm run format:check`                                                                                                                   |
-| Rust fmt, clippy, test | `scripts/core-build.sh test` (Docker image; cargo is not needed on the host)                                                                                                                                   |
-| Core for Android / web | `scripts/core-build.sh android` · `scripts/core-build.sh wasm`                                                                                                                                                 |
-| Host simulation        | `scripts/cargo.sh test -p guardedsleep-sim`                                                                                                                                                                    |
-| Android unit + build   | in `apps/android`, in the `guardedsleep-android-native-build:local` image: `./gradlew :core:testDebugUnitTest :app:testDebugUnitTest :app:assembleDebug` (wrap concurrent runs in `flock target/.gradle.lock`) |
-| Emulator gate (KVM)    | `scripts/poc/local-gate.sh` (`DOZE_MINUTES=2` for a quick run) · `scripts/poc/release-check.sh` · `scripts/poc/size-check.sh`                                                                                  |
-| i18n                   | `pnpm run i18n:check` · `pnpm run i18n:gen`                                                                                                                                                                    |
-| Local dev / E2E        | `pnpm run dev:local` (Vite 5173, signaling 8787) · `pnpm run e2e` (Playwright)                                                                                                                                 |
-| JS tests / build       | `pnpm test` · `pnpm run build` · `pnpm --filter @guardedsleep/signaling-server smoke` (legacy server)                                                                                                          |
-| Docker stack           | `pnpm run stack:lan` · `docker compose -f docker/stack/compose.yaml up --build`                                                                                                                                |
-| Dependency audit       | `pnpm run audit`                                                                                                                                                                                               |
-
-Before a commit the current Husky hook runs `pre-commit run` and commitlint; after wave 1 lefthook runs formatting + typos on staged files, and CI re-runs everything. Never bypass hooks; re-run the lint task manually before declaring "done".
+Before a commit lefthook runs Prettier, cargo fmt, typos, hygiene and Betterleaks on staged files; CI re-runs everything. Never bypass hooks; re-run `just lint` manually before declaring "done".
 
 ## 5. Coding conventions
 
@@ -112,7 +110,7 @@ Core       Rust, sans-IO (core, relay): no I/O, threads or clocks; emits message
 - **UI renders contract models only** (`UiContract.kt`; web stores mirror it). UI code never imports UniFFI/WASM types. In Android only `platform` may depend on `core-bindings` (wave 2).
 - **`relay` is shared** by the server and the Android LAN listener; the platform owns the sockets.
 - **cargo-deny** bans tokio, mio, getrandom and socket crates from the `core` and `relay` graphs. This keeps them sans-IO: do not work around it. Binding attributes never appear in `core`.
-- **No SvelteKit:** `$app/*` and `+page` files do not exist in `apps/web`. Capacitor is legacy and is removed in wave 1.
+- **No SvelteKit:** `$app/*` and `+page` files do not exist in `apps/web`. Capacitor was removed in wave 1.
 - Cross-cutting new modules → propose in `docs/technical/sw-architecture.md` or open an ADR first.
 
 ### 5.2 Style and tooling rules
@@ -123,7 +121,7 @@ Core       Rust, sans-IO (core, relay): no I/O, threads or clocks; emits message
 - **Commit nothing generated** (bindings, generated TS, i18n output). API-surface snapshots (`cargo public-api` on `ffi`/`wasm`, the generated `.d.ts`) are committed instead; CI generates twice and compares hashes.
 - **Never hand-edit screenshot baselines.** They are recorded only in the pinned build image.
 - `svelte-ignore` and `@ts-expect-error` need an inline reason. No `@ts-ignore`, no `any` in production code, no ESLint/Biome (Prettier + `svelte-check --fail-on-warnings`).
-- **Commit messages:** Conventional Commits are checked on the **PR title only**, in CI (squash merges). Local commit-msg hooks go away in wave 1.
+- **Commit messages:** Conventional Commits are checked on the **PR title only**, in CI (squash merges). There is no local commit-msg hook.
 - **Dependencies:** Renovate (weekly, grouped, `minimumReleaseAge` 3 days; UniFFI and wasm-bindgen get own PRs; no automerge for runtime/crypto deps). Never invent versions; add via the package manager. Justify new dependencies in the PR. Do not silence audit findings.
 - **Tooling budget:** maintenance ceiling is **12 h/month**. Every gate has an owner, runbook and last-catch date in `docs/ci-gates.md`; do not add a gate without an entry there.
 
@@ -163,7 +161,7 @@ Core       Rust, sans-IO (core, relay): no I/O, threads or clocks; emits message
 5. **No telemetry, crash reporting or analytics** without an ADR and an opt-in UX.
 6. **No raw PII in logs** (IPs, device names, fingerprints). The server logs no IPs by default. The **log-canary test** (simulation and gate runs pair with a known PSK; CI fails if it appears in any log in any encoding) must pass once added (planned, wave 2).
 7. **No new `*.key`, `*.pem`, `.env`, `credentials.json`**; never commit signing keys. The direct-distribution APK key is generated offline and never stored in CI.
-8. **LAN listener rules (ADR-021 §1, phone and PC):** bind only while a session is active; the browser talks only to its own local binary over loopback (UI and loopback API bind to `127.0.0.1`/`::1`, `Origin` and `Host` are checked), only the LAN signaling port binds to the LAN; admit a joiner only after a nonce challenge (relay sends a fresh nonce, joiner answers `HMAC(HKDF(PSK, "guardedsleep relay admission v1"), nonce ‖ direction ‖ room id)`, planned, wave 2); close unauthenticated sockets within 5 s; never advertise anything derived from the PSK; Android cleartext is allowed toward private LAN addresses by the network security config, and one platform-layer check rejects any non-private destination before connecting. LAN signaling is an untrusted relay: end-to-end security comes from the pairing proof and DTLS fingerprint binding.
+8. **LAN listener rules (ADR-021 §1, phone and PC):** bind only while a session is active; the browser talks only to its own local binary over loopback (UI and loopback API bind to `127.0.0.1`/`::1`, `Origin` and `Host` are checked), only the LAN signaling port binds to the LAN; admit a joiner only after a nonce challenge (relay sends a fresh nonce, joiner answers `HMAC(HKDF(PSK, "guardedsleep relay admission v1"), nonce ‖ direction ‖ room id)`, planned, wave 2); close unauthenticated sockets within 5 s; never advertise anything derived from the PSK; Android cleartext is allowed toward private LAN addresses by the network security config (planned, wave 2; today debug allows cleartext and release none), and one platform-layer check rejects any non-private destination before connecting. LAN signaling is an untrusted relay: end-to-end security comes from the pairing proof and DTLS fingerprint binding.
 9. **Supply chain:** cargo-deny (advisories, AGPL-compatible licences, crates.io only), dependency-count guard on `core`, `pnpm audit`, SHA-pinned Actions with `permissions: {}`. Release-APK assertions: no trackers, expected permissions, backup exclusion, `debuggable=false`.
 
 ## 8. Git, PRs and releases
@@ -172,7 +170,7 @@ Core       Rust, sans-IO (core, relay): no I/O, threads or clocks; emits message
 - **Branch protection on `main`:** required `ci-ok` status check + linear history, squash merges. **No required reviews, no signed-commit requirement, no separate agent identity** (ADR-020 §9). Target `main`; never push to it directly, never force-push, never `--no-verify`, never `git config` in an agent run.
 - **Releases (ADR-020 §10):** at alpha, a **manual `android-v*` tag**; `versionCode` is derived from `versionName` in `version.properties`, never edited by hand. Release Please is **T1** (beta) with components `app` (one product version for Android and web), `server` and `core`. Do not edit released sections of `CHANGELOG.md`; only `## [Unreleased]`. The old npm-centric components (protocol, signaling-server, mobile) are legacy.
 - **Images** ([ADR-008](docs/decisions/ADR-008-container-image-build-and-distribution.md), amended by ADR-020): `guardedsleep-signaling` and `guardedsleep-web` on GHCR, built on native amd64 and arm64 runners (no QEMU); `:dev` for every `main` push.
-- **PR checklist:** Conventional title; lint/test green via `just ci` (planned, wave 1; until then `just lint` + `just test`, or the current commands in §4); docs respect STATUS tags; an ADR exists for architecture/scope/security changes.
+- **PR checklist:** Conventional title; lint/test green via `just ci`; docs respect STATUS tags; an ADR exists for architecture/scope/security changes.
 
 ## 9. Not-yet-implemented features — agent guardrails
 

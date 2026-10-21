@@ -20,28 +20,31 @@ deny() {
     cargo deny "$@"
     return
   fi
-  local bin image="${CORE_BUILD_IMAGE:-guardedsleep-android-native-build:local}"
+  local bin
   bin="$(command -v cargo-deny || true)"
   [ -n "$bin" ] || { echo "cargo-deny not found: run 'just setup' (mise install)" >&2; exit 1; }
-  docker image inspect "$image" >/dev/null 2>&1 || docker build -t "$image" docker/android-native-build
+  # shellcheck source=build-image.sh
+  source scripts/lib/build-image.sh
+  gs_ensure_build_image
   mkdir -p target/.cargo-home
-  # The image has no VCS client, so the advisory database is fetched on the host into the shared CARGO_HOME.
-  CARGO_HOME="$ROOT/target/.cargo-home" cargo-deny fetch db
+  # The build image ships a VCS client, so cargo-deny fetches the advisory database and the crates it
+  # needs for `cargo metadata` itself, into the shared CARGO_HOME (needs network).
   docker run --rm -e HOME=/workspace/target/.cargo-home \
     -e CARGO_HOME=/workspace/target/.cargo-home \
     -e CARGO_TARGET_DIR=/workspace/target \
     -v "$ROOT":/workspace -v "$bin":/usr/local/bin/cargo-deny:ro -w /workspace \
-    "$image" cargo-deny "$@"
+    "$GS_BUILD_IMAGE" cargo-deny "$@"
 }
 
-OFFLINE=()
-command -v cargo >/dev/null 2>&1 || OFFLINE=(--offline)
+deny check "${CHECKS[@]}"
 
-deny "${OFFLINE[@]}" check "${CHECKS[@]}"
-
+# The bans and the dependency count look at the default-feature graph of the core. Today the `uniffi`
+# feature (bindgen-time tempfile -> getrandom) lives in guardedsleep-core and would trip the ban, so the
+# shipped binding graphs are not checked here. Wave 2 moves uniffi into guardedsleep-ffi; the core graph
+# is then checked with --all-features (docs/ci-gates.md).
 for manifest in crates/guardedsleep-core/Cargo.toml crates/guardedsleep-relay/Cargo.toml; do
   [ -f "$manifest" ] || continue
-  deny "${OFFLINE[@]}" --manifest-path "$manifest" --config deny.core.toml check bans
+  deny --manifest-path "$manifest" --config deny.core.toml check bans
 done
 
 scripts/lib/core-dep-count.sh

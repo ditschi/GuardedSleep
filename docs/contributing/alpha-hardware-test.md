@@ -16,7 +16,7 @@
 - [ ] Host simulation green: `cargo test -p guardedsleep-sim -p guardedsleep-core` (AC-9, AC-10 on the host).
 - [ ] Emulator gate green: `scripts/poc/local-gate.sh` (AC-1 … AC-4, AC-10; 30 min Doze).
 - [ ] Debug APK installed on both units (`adb install -r -g app-debug.apk`; app id `org.guardedsleep.app.alpha`).
-- [ ] Signaling: a LAN or self-hosted server as **primary** (`pnpm run stack:lan` on a PC/NAS, or the Traefik setup) and a public server as **fallback** in Advanced → signaling URLs; TURN configured for mobile-data runs. Hotspot without internet (UC-4) is not supported in the alpha.
+- [ ] Signaling: a LAN or self-hosted server as **primary** (`just stack-lan` on a PC/NAS, or the Traefik setup) and a public server as **fallback** in Advanced → signaling URLs; TURN configured for mobile-data runs. Hotspot without internet (UC-4) is not supported in the alpha.
 - [ ] Note per device: manufacturer, model, Android version, OEM skin, battery health, whether it is rooted.
 
 ## 1. Devices

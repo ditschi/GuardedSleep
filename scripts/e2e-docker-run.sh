@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run the host-independent E2E suite in docker/e2e-local (Linux + Docker only).
-# Usage: pnpm run e2e:docker          # full auto matrix
-#        pnpm run e2e:docker browser # browser baseline only
+# Usage: just e2e-docker          # full auto matrix
+#        just e2e-docker browser # browser baseline only
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

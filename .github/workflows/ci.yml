@@ -12,7 +12,8 @@ permissions: {}
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Runs on main finish, so every merge gets a result and writes its caches.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   # A missing Docker/KVM/SDK fails the job instead of printing SKIPPED.
@@ -29,14 +30,16 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      code: ${{ steps.filter.outputs.code }}
+      code: ${{ steps.code.outputs.code }}
+      android: ${{ steps.android.outputs.android }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # "code" is everything except documentation, so docs-only changes skip the heavy jobs.
+      # "code" is everything except documentation, so docs-only changes skip the heavy jobs (the text
+      # lint job still runs for them).
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
-        id: filter
+        id: code
         with:
           predicate-quantifier: every
           filters: |
@@ -45,6 +48,29 @@ jobs:
               - "!docs/**"
               - "!**/*.md"
               - "!LICENSE"
+      # Inputs of the Android build (ABI libs, Kotlin bindings, JVM tests, APKs). The emulator gate has
+      # its own, wider filter in android-native.yml.
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: android
+        with:
+          filters: |
+            android:
+              - "crates/**"
+              - "Cargo.toml"
+              - "Cargo.lock"
+              - "rust-toolchain.toml"
+              - "mise.toml"
+              - "justfile"
+              - "apps/android/**"
+              - "locales/**"
+              - "scripts/core-build.sh"
+              - "scripts/gradle.sh"
+              - "scripts/lib/**"
+              - "scripts/poc/release-check.sh"
+              - "scripts/poc/size-check.sh"
+              - "docker/android-native-build/**"
+              - ".github/actions/**"
+              - ".github/workflows/ci.yml"
 
   pr-title:
     name: PR title
@@ -74,27 +100,28 @@ jobs:
             test
           requireScope: false
 
-  workflow-lint:
-    name: workflow lint (actionlint + zizmor)
+  # Cheap and unfiltered: runs on every PR, documentation-only ones included.
+  text-lint:
+    name: text lint (format, spelling, REUSE, secrets, workflows)
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
+      # Full history: the secret scan reads every commit, so a PSK that a later commit of the same PR
+      # removes again is still found.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
         with:
-          install_args: actionlint zizmor
           cache_save: ${{ github.event_name != 'pull_request' }}
-      - name: actionlint
-        run: actionlint
-      - name: zizmor (offline, medium and above)
-        run: zizmor --offline --min-severity medium .github
+      - run: just lint-text
+      - run: just lint-workflows
 
   lint:
-    name: lint
+    name: lint (code)
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-24.04
@@ -109,9 +136,12 @@ jobs:
         with:
           cache_save: ${{ github.event_name != 'pull_request' }}
       - uses: ./.github/actions/setup-rust
-      - run: pnpm install --frozen-lockfile
-      - run: just lint
+        with:
+          wasm-bindgen: "true"
+      - run: just lint-code
 
+  # Host Rust, WASM and Android JVM tests. No ABI cross-compile: the JVM tests load the host build of the
+  # core, so this job needs the SDK but neither the NDK nor cargo-ndk.
   test:
     name: test
     needs: changes
@@ -130,21 +160,18 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           wasm-bindgen: "true"
-      # `just test` includes the Android JVM tests; with GS_STRICT=1 they need the SDK.
-      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+      - uses: ./.github/actions/setup-android
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
-          distribution: temurin
-          java-version: "21"
-      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
-      - run: pnpm install --frozen-lockfile
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
       - run: just test
 
   build:
-    name: build
+    name: build (web)
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -157,8 +184,33 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           wasm-bindgen: "true"
-      - run: pnpm install --frozen-lockfile
-      - run: just build
+      - run: just build-web
+
+  # ABI cross-compile, JVM tests, Roborazzi, debug and release APKs, release-surface and core-size
+  # checks: one Gradle run (cached). The emulator gate lives in android-native.yml and is not part of ci-ok.
+  android:
+    name: android (core, tests, screenshots, APKs)
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
+        with:
+          cache_save: ${{ github.event_name != 'pull_request' }}
+      - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-android
+        with:
+          ndk: "true"
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+      - run: just verify-android
 
   e2e:
     name: browser E2E (Playwright)
@@ -178,9 +230,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           wasm-bindgen: "true"
-      - run: pnpm install --frozen-lockfile
-      - name: Install Playwright Chromium (system deps)
-        run: pnpm --filter @guardedsleep/e2e exec playwright install --with-deps chromium
+      # The recipe installs Chromium with its system dependencies because GS_STRICT=1.
       - run: just e2e
       - if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -194,7 +244,7 @@ jobs:
   ci-ok:
     name: ci-ok
     if: always()
-    needs: [changes, pr-title, workflow-lint, lint, test, build, e2e]
+    needs: [changes, pr-title, text-lint, lint, test, build, android, e2e]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}

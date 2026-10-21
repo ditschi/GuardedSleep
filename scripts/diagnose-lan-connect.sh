@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Quick LAN connectivity checklist for phone + laptop browser setups.
-# Usage (repo root, with dev stack running): pnpm run diagnose:lan
+# Usage (repo root, with dev stack running): just diagnose-lan
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -27,8 +27,8 @@ fi
 
 echo "LAN IP:            $LAN_IP"
 echo "Dev PWA:           http://${LAN_IP}:${WEB_PORT}/"
-echo "Dev signaling:     ws://${LAN_IP}:${SIGNAL_PORT}     (pnpm run dev:local)"
-echo "E2E signaling:     ws://${LAN_IP}:${E2E_SIGNAL_PORT}  (pnpm run e2e)"
+echo "Dev signaling:     ws://${LAN_IP}:${SIGNAL_PORT}     (just dev)"
+echo "E2E signaling:     ws://${LAN_IP}:${E2E_SIGNAL_PORT}  (just e2e)"
 if [[ -n "$VITE_SIGNALING_URL" ]]; then
   echo "Docker signaling:  ${VITE_SIGNALING_URL}"
   echo "Docker PWA:        https://${LAN_IP}:${WEB_HTTPS_PORT}/"
@@ -87,7 +87,7 @@ echo "  • Host firewall must allow TCP ${WEB_PORT} and ${SIGNAL_PORT} (e.g. uf
 echo "  • Docker stack: open https://${LAN_IP}:${WEB_HTTPS_PORT}/ on the phone and accept the self-signed cert."
 echo ""
 echo "Automated checks:"
-echo "  pnpm run e2e:lan          # dual Chromium via LAN IP (no phone)"
+echo "  just e2e-lan          # dual Chromium via LAN IP (no phone)"
 echo "  GUARDEDSLEEP_HYBRID_E2E=1 GUARDEDSLEEP_HYBRID_LAN=1 pnpm run e2e:hybrid  # phone + browser"
 
 if [[ "$fail" -ne 0 ]]; then

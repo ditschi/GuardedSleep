@@ -13,7 +13,7 @@ Use this checklist when merging a **Release Please** release PR or tagging a mil
 | Layer                     | Command                                              | Scope                                                                   |
 | ------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------- |
 | Unit / integration        | `pnpm test`                                          | Protocol, signaling, mobile parsers                                     |
-| Browser E2E (2× Chromium) | `pnpm run e2e`                                       | Pairing, WebRTC, Listen, noise alert, **RMS non-silence** (tests 14–15) |
+| Browser E2E (2× Chromium) | `just e2e`                                           | Pairing, WebRTC, Listen, noise alert, **RMS non-silence** (tests 14–15) |
 | Signaling smoke           | `pnpm --filter @guardedsleep/signaling-server smoke` | WebSocket relay                                                         |
 
 ---
@@ -23,7 +23,7 @@ Use this checklist when merging a **Release Please** release PR or tagging a mil
 - [ ] CI green on the release commit (`pre-commit`, `test-and-build`, `e2e-browser`).
 - [ ] Debug or release APK built from the same commit (`docs/contributing/android-apk-build.md`).
 - [ ] **Two physical Android devices** (or one phone + one tablet) on the same Wi‑Fi, or phone + laptop browser only for a reduced smoke (see §6).
-- [ ] Signaling reachable from both devices (local `pnpm run dev:local`, Docker stack, or self-hosted WSS).
+- [ ] Signaling reachable from both devices (local `just dev`, Docker stack, or self-hosted WSS).
 - [ ] Microphone and notification permissions granted on both apps.
 
 **Minimum device matrix (PoC gate, ADR-001):**

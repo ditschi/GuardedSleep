@@ -40,6 +40,12 @@ venv/
 !.env.test
 credentials.json
 *.key
+# Signing material (Android release keystores, Play service accounts, certificates)
+*.jks
+*.keystore
+*.pem
+*.p12
+service-account*.json
 # Playwright (apps/e2e)
 apps/e2e/test-results/
 apps/e2e/playwright-report/

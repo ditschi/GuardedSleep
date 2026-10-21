@@ -34,7 +34,7 @@ start_emulator gs-baby 5554
 start_emulator gs-parent 5556
 
 # Signaling: plain WS for the emulator network only (never expose without TLS).
-(cd "$ROOT" && corepack pnpm --filter @guardedsleep/signaling-server build >/dev/null)
+(cd "$ROOT" && pnpm --filter @guardedsleep/signaling-server build >/dev/null)
 NODE_ENV=development PORT=8787 nohup node "$ROOT/apps/signaling-server/dist/index.js" >"$OUT/signaling.log" 2>&1 &
 
 # Test-only TURN credentials (poc/poc); loopback peers let both relay allocations reach each other.
