@@ -292,6 +292,11 @@ impl<E: Entropy> Relay<E> {
         true
     }
 
+    /// `None` when no key is registered for the room, else whether it equals `key`.
+    pub fn admission_key_matches(&self, room_id: &str, key: &AdmissionKey) -> Option<bool> {
+        self.keys.get(room_id).map(|k| k == key)
+    }
+
     pub fn remove_admission_key(&mut self, room_id: &str) {
         self.keys.remove(room_id);
     }
