@@ -79,4 +79,4 @@ Drop-in self-hosting of **web + signaling** together without cloning this repo: 
 
 ## Relation to signaling-only Compose
 
-The signaling server alone is documented in [signaling-server-docker.md](signaling-server-docker.md). The stack under `docker/stack/` adds the **static web** service for self-hosted **browser** clients; **Android APK** builds are documented in [android-apk-build.md](android-apk-build.md).
+The signaling server alone is documented in [signaling-server-docker.md](signaling-server-docker.md). The stack under `docker/stack/` adds the **static web** service for self-hosted **browser** clients; **Android APK** builds are built with `just build-android` (the `android` job in `.github/workflows/ci.yml`).

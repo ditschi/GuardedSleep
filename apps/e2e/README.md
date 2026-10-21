@@ -4,7 +4,7 @@ Playwright tests that spin up **two Chromium instances** (baby + parent) against
 
 ## Prereqs
 
-- Node 22+, pnpm 9.15.4
+- the mise-pinned Node and pnpm (`just setup`)
 - `pnpm install` at repo root (installs Playwright in this workspace)
 - First run: `pnpm --filter @guardedsleep/e2e exec playwright install chromium` (CI uses `--with-deps`)
 
