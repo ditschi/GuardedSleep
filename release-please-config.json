@@ -31,10 +31,6 @@
       "package-name": "@guardedsleep/protocol",
       "component": "protocol"
     },
-    "apps/signaling-server": {
-      "package-name": "@guardedsleep/signaling-server",
-      "component": "signaling-server"
-    },
     "apps/mobile": {
       "package-name": "@guardedsleep/mobile",
       "component": "mobile"
