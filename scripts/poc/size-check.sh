@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # AC-6 (ADR-015): the Rust core may add at most CORE_MAX_BYTES (15 MB) to the debug APK, counted
-# as the stripped libguardedsleep_core.so for every packaged ABI.
+# as the stripped libguardedsleep_ffi.so for every packaged ABI.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -9,7 +9,7 @@ APK="${APK:-$ROOT/apps/android/app/build/outputs/apk/debug/app-debug.apk}"
 CORE_MAX_BYTES="${CORE_MAX_BYTES:-15728640}"
 
 total=0
-for so in "$JNI"/*/libguardedsleep_core.so; do
+for so in "$JNI"/*/libguardedsleep_ffi.so; do
 	size=$(stat -c %s "$so")
 	echo "$(basename "$(dirname "$so")"): $size bytes"
 	total=$((total + size))

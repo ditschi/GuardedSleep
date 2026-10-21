@@ -6,7 +6,7 @@ import { createRequire } from "node:module";
 import { test } from "node:test";
 
 const require = createRequire(import.meta.url);
-const wasm = require("../../../target/wasm-pkg/node/guardedsleep_core.js");
+const wasm = require("../../../target/wasm-pkg/node/guardedsleep_wasm.js");
 const vectors = JSON.parse(
   readFileSync(new URL("../vectors/conformance.json", import.meta.url), "utf8"),
 );

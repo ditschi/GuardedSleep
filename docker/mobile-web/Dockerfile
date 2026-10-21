@@ -22,8 +22,8 @@ RUN V="$(awk '/^name = "wasm-bindgen"$/{getline; gsub(/version = |"/,""); print;
 	&& cargo install --locked wasm-bindgen-cli --version "$V"
 COPY Cargo.toml ./
 COPY crates crates
-RUN cargo build -p guardedsleep-core --release --target wasm32-unknown-unknown --features wasm \
-	&& wasm-bindgen --target web --out-dir /out target/wasm32-unknown-unknown/release/guardedsleep_core.wasm
+RUN cargo build -p guardedsleep-wasm --release --target wasm32-unknown-unknown \
+	&& wasm-bindgen --target web --out-dir /out target/wasm32-unknown-unknown/release/guardedsleep_wasm.wasm
 
 FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS builder
 WORKDIR /app

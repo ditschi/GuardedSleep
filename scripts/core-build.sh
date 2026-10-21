@@ -32,28 +32,28 @@ mkdir -p "$CARGO_HOME"
 run_test() {
 	cargo fmt --all -- --check
 	cargo clippy --workspace --all-targets --all-features -- -D warnings
-	cargo test -p guardedsleep-core
+	cargo test --workspace
 }
 
 run_wasm() {
 	if [[ "$(wasm-bindgen --version 2>/dev/null | awk '{print $2}')" != "$WASM_BINDGEN_VERSION" ]]; then
 		cargo install --locked wasm-bindgen-cli --version "$WASM_BINDGEN_VERSION"
 	fi
-	cargo build -p guardedsleep-core --release --target wasm32-unknown-unknown --features wasm
-	local wasm_file=target/wasm32-unknown-unknown/release/guardedsleep_core.wasm
+	cargo build -p guardedsleep-wasm --release --target wasm32-unknown-unknown
+	local wasm_file=target/wasm32-unknown-unknown/release/guardedsleep_wasm.wasm
 	wasm-bindgen --target nodejs --out-dir target/wasm-pkg/node "$wasm_file"
 	wasm-bindgen --target web --out-dir target/wasm-pkg/web "$wasm_file"
 	ls -l target/wasm-pkg/web/*.wasm
 }
 
-# Unstripped host build: the Kotlin bindings are generated from its UniFFI metadata (the release profile
+# Unstripped host build of guardedsleep-ffi: the Kotlin bindings are generated from its UniFFI metadata (the release profile
 # strips those symbols), and the Android JVM unit tests load it through JNA (jna.library.path in
 # apps/android/{core,app}/build.gradle.kts points at target/debug).
 run_host() {
 	local gen=apps/android/core/src/main/kotlin
-	cargo build -p guardedsleep-core --features uniffi
+	cargo build -p guardedsleep-ffi
 	rm -rf "$gen/uniffi"
-	cargo run -q -p uniffi-bindgen -- generate --library target/debug/libguardedsleep_core.so \
+	cargo run -q -p uniffi-bindgen -- generate --library target/debug/libguardedsleep_ffi.so \
 		--language kotlin --out-dir "$gen" --no-format
 }
 
@@ -66,9 +66,9 @@ run_android() {
 	if [[ -d "${ANDROID_HOME:-}/ndk/$PINNED_NDK" ]]; then
 		export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/$PINNED_NDK"
 	fi
-	cargo ndk -t arm64-v8a -t x86_64 -P 26 -o "$jni" build -p guardedsleep-core --release --features uniffi
+	cargo ndk -t arm64-v8a -t x86_64 -P 26 -o "$jni" build -p guardedsleep-ffi --release
 	run_host
-	ls -l "$jni"/*/libguardedsleep_core.so
+	ls -l "$jni"/*/libguardedsleep_ffi.so
 }
 
 for cmd in "${@:-test}"; do

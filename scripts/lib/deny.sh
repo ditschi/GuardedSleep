@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # cargo-deny for the workspace (deny.toml) and the per-crate sans-IO bans (deny.core.toml), plus the
-# dependency-count guard for guardedsleep-core. cargo-deny needs `cargo metadata`, so without a host
+# dependency-count guard for guardedsleep-core (both on its all-features graph). cargo-deny needs `cargo metadata`, so without a host
 # cargo it runs inside the build image, with the mise-installed cargo-deny binary mounted in.
 #   scripts/lib/deny.sh            # everything
 #   scripts/lib/deny.sh advisories # only the given cargo-deny checks for deny.toml
@@ -38,13 +38,11 @@ deny() {
 
 deny check "${CHECKS[@]}"
 
-# The bans and the dependency count look at the default-feature graph of the core. Today the `uniffi`
-# feature (bindgen-time tempfile -> getrandom) lives in guardedsleep-core and would trip the ban, so the
-# shipped binding graphs are not checked here. Wave 2 moves uniffi into guardedsleep-ffi; the core graph
-# is then checked with --all-features (docs/ci-gates.md).
+# The bans and the dependency count look at the graph of the core with all features (the optional
+# `tsify` feature included, ADR-020 section 3; docs/ci-gates.md).
 for manifest in crates/guardedsleep-core/Cargo.toml crates/guardedsleep-relay/Cargo.toml; do
   [ -f "$manifest" ] || continue
-  deny --manifest-path "$manifest" --config deny.core.toml check bans
+  deny --manifest-path "$manifest" --config deny.core.toml --all-features check bans
 done
 
 scripts/lib/core-dep-count.sh

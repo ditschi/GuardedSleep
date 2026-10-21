@@ -3,13 +3,12 @@
 # transitively. cargo-deny bans apply to the whole graph it is given, and the workspace graph
 # legitimately contains such crates later (server, sim). So these bans run per crate, on that crate's
 # own graph, via `--manifest-path`:
-#   cargo deny --manifest-path crates/guardedsleep-core/Cargo.toml --config deny.core.toml check bans
+#   cargo deny --manifest-path crates/guardedsleep-core/Cargo.toml --config deny.core.toml --all-features check bans
 # `just deny` (scripts/lib/deny.sh) runs this for guardedsleep-core and, once it exists, guardedsleep-relay.
 #
-# The graph below is the default-feature graph. Today guardedsleep-core still carries the `uniffi` and
-# `wasm` features, and the uniffi graph pulls getrandom in through a bindgen-time dependency (tempfile),
-# so enabling all features here would fail the ban. Wave 2 moves uniffi into guardedsleep-ffi and wasm
-# into its own crate; the core graph is then checked with all-features = true (docs/ci-gates.md).
+# The bans run with --all-features, so the optional `tsify` feature (wasm-bindgen, enabled only by
+# guardedsleep-wasm) is checked too. The uniffi and wasm-bindgen glue lives in guardedsleep-ffi and
+# guardedsleep-wasm, which are not subject to these bans.
 # Ban syntax: https://embarkstudios.github.io/cargo-deny/checks/bans/cfg.html
 
 [graph]

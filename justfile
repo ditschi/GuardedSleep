@@ -83,9 +83,9 @@ lint-code: _js-deps _js-gen check-ios
     scripts/lint-ui-literals.sh
     pnpm -r --if-present run check
 
-# The core must stay buildable for iOS (ADR-020 §3); rust-toolchain.toml installs the target.
+# The core and the UniFFI facade must stay buildable for iOS (ADR-020 §3); rust-toolchain.toml installs the target.
 check-ios:
-    scripts/cargo.sh check -p guardedsleep-core --target aarch64-apple-ios
+    scripts/cargo.sh check -p guardedsleep-core -p guardedsleep-ffi --target aarch64-apple-ios
 
 # cargo-deny (advisories, licences, sources, sans-IO bans) plus the core dependency-count guard.
 deny:

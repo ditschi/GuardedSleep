@@ -19,7 +19,7 @@
     "pretest": "pnpm run i18n:gen && pnpm run core:ensure",
     "test": "vitest run",
     "test:watch": "vitest",
-    "core:ensure": "test -f ../../packages/core-wasm/pkg/guardedsleep_core_bg.wasm -a -f ../../packages/core-wasm/pkg-node/guardedsleep_core.js || pnpm --filter @guardedsleep/core-wasm build"
+    "core:ensure": "test -f ../../packages/core-wasm/pkg/guardedsleep_wasm_bg.wasm -a -f ../../packages/core-wasm/pkg-node/guardedsleep_wasm.js || pnpm --filter @guardedsleep/core-wasm build"
   },
   "dependencies": {
     "@guardedsleep/core-wasm": "workspace:*",
