@@ -45,6 +45,7 @@ fmt-check:
     scripts/cargo.sh fmt --all -- --check
     taplo fmt --check
     scripts/lib/hygiene.sh
+    scripts/lib/workspace-lints.sh
 
 # ktfmt over apps/android. Not part of fmt/fmt-check yet: 72 files differ today (fold in during wave 2).
 fmt-kotlin *args:
@@ -59,6 +60,7 @@ lint-text: _js-deps
     pnpm exec prettier --check .
     typos --force-exclude
     scripts/lib/hygiene.sh
+    scripts/lib/workspace-lints.sh
     reuse lint
     scripts/lib/secrets.sh
 
