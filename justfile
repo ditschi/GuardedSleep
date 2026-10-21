@@ -9,6 +9,7 @@
 
 set shell := ["./scripts/lib/shell.sh", "-c"]
 
+[private]
 default:
     @just --list
 
@@ -23,6 +24,13 @@ setup:
     # rustup reads rust-toolchain.toml and installs the pinned toolchain, components and targets.
     if command -v rustup >/dev/null 2>&1; then rustup show >/dev/null; else echo "hint: install rustup (https://rustup.rs) for host cargo; Docker is the fallback."; fi
     mise exec -- pnpm install --frozen-lockfile
+    # Clones that ran the old Husky setup still point core.hooksPath at .husky/_; lefthook refuses to
+    # install over it, and the stale Husky hooks do nothing once .husky is gone.
+    hooks_path="$(git config --local --get core.hooksPath || true)"
+    if [ "${hooks_path#*.husky}" != "$hooks_path" ]; then
+      git config --local --unset core.hooksPath
+      echo "Removed the stale Husky core.hooksPath ($hooks_path); lefthook replaces it."
+    fi
     mise exec -- lefthook install
 
 # Format everything that is formatted automatically (Kotlin: see fmt-kotlin).
@@ -42,19 +50,37 @@ fmt-check:
 fmt-kotlin *args:
     scripts/lib/ktfmt.sh {{ args }}
 
-# Everything static: format, spelling, clippy, supply chain, REUSE, i18n, UI literals, types, workflows, secrets.
-lint: _js-deps _js-gen fmt-check
+# Everything static: text, workflows, then the code checks. CI runs the three parts as separate jobs.
+lint: lint-text lint-workflows lint-code
+
+# Text and repository hygiene for every file, docs included: Prettier, spelling, whitespace/JSON hygiene,
+# REUSE and the secret scan over the full history (CI checks out with fetch-depth 0).
+lint-text: _js-deps
+    pnpm exec prettier --check .
     typos --force-exclude
-    scripts/cspell-i18n.sh
-    scripts/cargo.sh clippy --workspace --all-targets -- -D warnings
-    just deny
+    scripts/lib/hygiene.sh
     reuse lint
+    scripts/lib/secrets.sh
+
+# GitHub workflow linters.
+lint-workflows:
+    actionlint
+    zizmor --offline --min-severity medium .github
+
+# Code: Rust format and clippy (all features), iOS check, supply chain, i18n, UI literals, types.
+lint-code: _js-deps _js-gen check-ios
+    scripts/cargo.sh fmt --all -- --check
+    taplo fmt --check
+    scripts/cspell-i18n.sh
+    scripts/cargo.sh clippy --workspace --all-targets --all-features -- -D warnings
+    just deny
     pnpm run i18n:check
     scripts/lint-ui-literals.sh
     pnpm -r --if-present run check
-    actionlint
-    zizmor --offline --min-severity medium .github
-    scripts/lib/secrets.sh
+
+# The core must stay buildable for iOS (ADR-020 §3); rust-toolchain.toml installs the target.
+check-ios:
+    scripts/cargo.sh check -p guardedsleep-core --target aarch64-apple-ios
 
 # cargo-deny (advisories, licences, sources, sans-IO bans) plus the core dependency-count guard.
 deny:
@@ -64,30 +90,28 @@ deny:
 secrets:
     scripts/lib/secrets.sh
 
-# Host Rust, WASM + node conformance, pnpm tests, Android JVM tests. Builds no Android ABI.
+# Host Rust, WASM + node conformance, pnpm tests, Android JVM tests. Builds no Android ABI: the JVM tests
+# load the host build of the core.
 test: _js-deps _js-gen test-rust test-wasm test-web test-android
 
 # Cargo workspace tests; nextest when installed, doctests through cargo test.
 test-rust:
     if command -v cargo-nextest >/dev/null 2>&1 && command -v cargo >/dev/null 2>&1; then cargo nextest run --workspace && cargo test --workspace --doc; else scripts/cargo.sh test --workspace; fi
 
-test-wasm:
-    scripts/core-build.sh wasm
+# `_js-gen` has already built the WASM core (the core-wasm package build runs core-build.sh wasm).
+test-wasm: _js-gen
     node --test crates/guardedsleep-core/js/*.test.mjs
 
 test-web:
     pnpm test
 
-# Android JVM unit tests in the build image.
+# Android JVM unit tests (core + app) against the host build of the core, no ABI cross-compile.
 [script("bash")]
 test-android:
     set -euo pipefail
-    # TODO(wave 2): the JNI libs and Kotlin bindings still come from `scripts/core-build.sh android`,
-    # which cross-compiles ABIs. Replace this step with the host-built core library once the
-    # :core-bindings module exists (ADR-020 §1/§4).
     source scripts/lib/require.sh
     require test-android android-sdk
-    scripts/core-build.sh android
+    scripts/core-build.sh host
     scripts/gradle.sh :core:testDebugUnitTest :app:testDebugUnitTest
 
 # Generate the i18n output (Android resources, web JSON). Nothing generated is committed.
@@ -100,20 +124,25 @@ build: _js-deps build-web build-android
 build-web:
     pnpm run build
 
-# Core for Android (cross-compiled ABIs), debug APK, release APK and its checks.
+# Core for Android (cross-compiled ABIs), debug and release APKs and their checks. Extra Gradle tasks
+# join the single Gradle run, e.g. `just build-android :app:verifyRoborazziDebug`.
 [script("bash")]
-build-android:
+build-android *gradle_tasks:
     set -euo pipefail
     source scripts/lib/require.sh
     require build-android android-sdk
     scripts/core-build.sh android
-    scripts/gradle.sh :app:assembleDebug :app:assembleRelease
+    scripts/gradle.sh {{ gradle_tasks }} :app:assembleDebug :app:assembleRelease
     scripts/poc/release-check.sh
     scripts/poc/size-check.sh
 
-# Browser E2E (Playwright, local dev stack).
-e2e: _js-deps
-    pnpm run e2e
+# What the CI android job runs: build-android plus the JVM tests and Roborazzi screenshot verification.
+verify-android:
+    just build-android :core:testDebugUnitTest :app:testDebugUnitTest :app:verifyRoborazziDebug
+
+# Browser E2E (Playwright, local dev stack). Prints SKIPPED without Playwright browsers unless GS_STRICT=1.
+e2e: _js-deps _js-gen
+    scripts/lib/e2e.sh
 
 # Emulator gate AC-1..AC-4 (needs KVM; DOZE_MINUTES=2 just gate for a quick run). Run build-android first.
 [script("bash")]
@@ -123,18 +152,12 @@ gate:
     require gate kvm docker
     scripts/poc/local-gate.sh
 
-# The same verdict as CI.
-ci: lint test build
+# The same verdict as CI (the PR title check and the emulator gate are CI-only).
+ci: lint test build e2e
 
-# Signaling server (legacy Node) plus the web client, for local development.
-[script("bash")]
+# Signaling server (legacy Node, wave 2 swaps in the Rust server) plus the web client, for local development.
 dev:
-    set -euo pipefail
-    mise exec -- pnpm --filter @guardedsleep/protocol build
-    trap 'kill 0' EXIT
-    mise exec -- pnpm --filter @guardedsleep/signaling-server dev &
-    mise exec -- pnpm --filter @guardedsleep/mobile dev &
-    wait
+    scripts/dev.sh
 
 # Docker stack with the host LAN IP, for phone tests.
 [script("bash")]

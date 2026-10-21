@@ -21,6 +21,11 @@ INJECT_ACTION=org.guardedsleep.app.alpha.debug.INJECT_AUDIO
 FLOWS="$ROOT/apps/android/maestro"
 OUT="${OUT:-$ROOT/target/poc-gate}"
 DOZE_MINUTES="${DOZE_MINUTES:-30}"
+# Used in shell arithmetic below, which would evaluate an injected expression: integers only.
+[[ "$DOZE_MINUTES" =~ ^[0-9]{1,3}$ ]] || {
+	echo "gate: DOZE_MINUTES must be an integer (got '$DOZE_MINUTES')" >&2
+	exit 2
+}
 ALERT_MAX_MS="${ALERT_MAX_MS:-5000}"
 HB_INTERVAL_MS="${HB_INTERVAL_MS:-5000}"
 ALARM_AFTER_MS="${ALARM_AFTER_MS:-60000}"

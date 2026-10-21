@@ -7,18 +7,17 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-IMAGE="${CORE_BUILD_IMAGE:-guardedsleep-android-native-build:local}"
 mkdir -p "$ROOT/target"
 
 if [[ "${CORE_BUILD_NATIVE:-0}" != "1" ]]; then
-	if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
-		docker build -t "$IMAGE" "$ROOT/docker/android-native-build"
-	fi
+	# shellcheck source=lib/build-image.sh
+	source "$ROOT/scripts/lib/build-image.sh"
+	gs_ensure_build_image
 	exec flock "$ROOT/target/.gradle.lock" docker run --rm \
 		-e CORE_BUILD_NATIVE=1 \
 		-e GRADLE_USER_HOME=/workspace/target/.gradle-home \
 		-v "$ROOT":/workspace -w /workspace \
-		"$IMAGE" bash scripts/gradle.sh "$@"
+		"$GS_BUILD_IMAGE" bash scripts/gradle.sh "$@"
 fi
 
 cd "$ROOT/apps/android"

@@ -1,28 +1,26 @@
 #!/usr/bin/env bash
 # Builds and tests the Rust core (ADR-015) inside the guardedsleep-android-native-build image, so the
-# host needs only Docker. Subcommands can be combined: test wasm android kotlin
+# host needs only Docker. Subcommands can be combined: test wasm host android
 #   scripts/core-build.sh test            # cargo fmt/clippy/test (incl. golden vectors)
 #   scripts/core-build.sh wasm            # target/wasm-pkg/node + target/wasm-pkg/web
-#   scripts/core-build.sh android         # jniLibs (arm64-v8a, x86_64) + Kotlin bindings for apps/android
+#   scripts/core-build.sh host            # host library + Kotlin bindings (what the Android JVM unit tests load; no ABIs)
+#   scripts/core-build.sh android         # host + jniLibs (arm64-v8a, x86_64) for apps/android
 # Inside CI or the image itself, set CORE_BUILD_NATIVE=1 to run without Docker.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-IMAGE="${CORE_BUILD_IMAGE:-guardedsleep-android-native-build:local}"
 WASM_BINDGEN_VERSION="$(awk '/^name = "wasm-bindgen"$/{getline; gsub(/version = |"/,""); print; exit}' "$ROOT/Cargo.lock")"
 
 if [[ "${CORE_BUILD_NATIVE:-0}" != "1" ]]; then
-	TOOLCHAIN_HASH="$(sha256sum "$ROOT/rust-toolchain.toml" | cut -c1-16)"
-	# (Re)builds the image when it is missing or was built from a different rust-toolchain.toml.
-	if [[ "$(docker image inspect -f '{{ index .Config.Labels "gs.toolchain" }}' "$IMAGE" 2>/dev/null)" != "$TOOLCHAIN_HASH" ]]; then
-		docker build --build-context repo="$ROOT" --label "gs.toolchain=$TOOLCHAIN_HASH" -t "$IMAGE" "$ROOT/docker/android-native-build"
-	fi
+	# shellcheck source=lib/build-image.sh
+	source "$ROOT/scripts/lib/build-image.sh"
+	gs_ensure_build_image
 	exec docker run --rm \
 		-e CORE_BUILD_NATIVE=1 \
 		-e CARGO_TARGET_DIR=/workspace/target \
 		-e GRADLE_USER_HOME=/workspace/target/.gradle-home \
 		-v "$ROOT":/workspace -w /workspace \
-		"$IMAGE" bash scripts/core-build.sh "$@"
+		"$GS_BUILD_IMAGE" bash scripts/core-build.sh "$@"
 fi
 
 cd "$ROOT"
@@ -32,7 +30,7 @@ mkdir -p "$CARGO_HOME"
 
 run_test() {
 	cargo fmt --all -- --check
-	cargo clippy --workspace --all-targets --features guardedsleep-core/uniffi -- -D warnings
+	cargo clippy --workspace --all-targets --all-features -- -D warnings
 	cargo test -p guardedsleep-core
 }
 
@@ -47,16 +45,28 @@ run_wasm() {
 	ls -l target/wasm-pkg/web/*.wasm
 }
 
-run_android() {
-	local jni=apps/android/core/src/main/jniLibs
+# Unstripped host build: the Kotlin bindings are generated from its UniFFI metadata (the release profile
+# strips those symbols), and the Android JVM unit tests load it through JNA (jna.library.path in
+# apps/android/{core,app}/build.gradle.kts points at target/debug).
+run_host() {
 	local gen=apps/android/core/src/main/kotlin
-	cargo ndk -t arm64-v8a -t x86_64 -P 26 -o "$jni" build -p guardedsleep-core --release --features uniffi
-	# Unstripped host build: bindings are generated from its UniFFI metadata (the release profile
-	# strips those symbols), and the JVM conformance test loads it through JNA.
 	cargo build -p guardedsleep-core --features uniffi
 	rm -rf "$gen/uniffi"
 	cargo run -q -p uniffi-bindgen -- generate --library target/debug/libguardedsleep_core.so \
 		--language kotlin --out-dir "$gen" --no-format
+}
+
+# Same NDK as docker/android-native-build/Dockerfile and the setup-android action. Runners ship other
+# other NDK versions and export their path as the NDK home, so the pinned one wins when it is installed.
+PINNED_NDK=30.0.16248370
+
+run_android() {
+	local jni=apps/android/core/src/main/jniLibs
+	if [[ -d "${ANDROID_HOME:-}/ndk/$PINNED_NDK" ]]; then
+		export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/$PINNED_NDK"
+	fi
+	cargo ndk -t arm64-v8a -t x86_64 -P 26 -o "$jni" build -p guardedsleep-core --release --features uniffi
+	run_host
 	ls -l "$jni"/*/libguardedsleep_core.so
 }
 
@@ -64,6 +74,7 @@ for cmd in "${@:-test}"; do
 	case "$cmd" in
 	test) run_test ;;
 	wasm) run_wasm ;;
+	host) run_host ;;
 	android) run_android ;;
 	*)
 		echo "unknown subcommand: $cmd" >&2
