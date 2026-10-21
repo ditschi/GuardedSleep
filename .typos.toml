@@ -49,6 +49,9 @@ Avent = "Avent"
 # typos only supports English locales. de/fr/es message JSON uses CSpell (cspell-i18n-*.json).
 extend-exclude = [
   ".git/**",
+  # Generated vectors, traces and scenarios carry base64 ids that typos would "correct".
+  "crates/guardedsleep-core/vectors/**",
+  "crates/guardedsleep-sim/scenarios/**",
   "pnpm-lock.yaml",
   "locales/de.json",
   "locales/fr.json",
