@@ -1,6 +1,6 @@
 # Host-independent browser E2E runner (Playwright + Chromium + system deps preinstalled).
 # Build context: docker/e2e-local/
-FROM mcr.microsoft.com/playwright:v1.60.0-noble
+FROM mcr.microsoft.com/playwright:v1.60.0-noble@sha256:9bd26ad900bb5e0f4dee75839e957a89ae89c2b7ab1e76050e559790e946b948
 
 USER root
 
@@ -17,7 +17,8 @@ RUN apt-get update \
 		-o /usr/local/lib/docker/cli-plugins/docker-compose \
 	&& chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
-RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+# pnpm is installed by the entrypoint at the version pinned in /workspace/mise.toml (this build context is
+# docker/e2e-local, which cannot see the repo root).
 
 WORKDIR /workspace
 

@@ -8,6 +8,10 @@ node = "22.23.3"
 # pnpm 11 through mise, corepack is not used (ADR-020 §5). https://pnpm.io/installation
 pnpm = "11.28.6"
 
+# JDK for Gradle, ktfmt and the Android JVM tests (the build image uses the same major version).
+# https://mise.jdx.dev/lang/java.html
+java = "temurin-21.0.12+101.0.LTS"
+
 # Task runner. https://just.systems/man/en/
 just = "1.59.0"
 # Git hooks. https://lefthook.dev/
@@ -18,7 +22,9 @@ typos = "1.51.1"
 # Workflow linters. https://github.com/rhysd/actionlint and https://docs.zizmor.sh/
 actionlint = "1.7.12"
 zizmor = "1.31.1"
-# SPDX/REUSE licence compliance (Python tool, installed with uvx/pipx).
+# SPDX/REUSE licence compliance (Python tool, installed with the host uvx/pipx). uv is deliberately not
+# pinned: reuse 6.2.0 publishes only an sdist, and mise's locked uv install refuses source builds
+# (--no-build). Pin uv here once reuse ships a wheel.
 # https://reuse.readthedocs.io/ and https://mise.jdx.dev/dev-tools/backends/pipx.html
 "pipx:reuse" = "6.2.0"
 

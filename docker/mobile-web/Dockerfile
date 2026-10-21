@@ -2,7 +2,7 @@
 # Static PWA (SvelteKit adapter-static) behind nginx. Build from repository root:
 #   docker build -f docker/mobile-web/Dockerfile --build-arg VITE_SIGNALING_URL=wss://signal.example.com -t guardedsleep-web:local .
 # Localization bundles come from the Rust generator (locales/*.json -> JSON), not from Node.
-FROM rust:1-bookworm AS i18n
+FROM rust:1-bookworm@sha256:665b6e0a9290a7298236c08c6e4f1e754e3f0d9b70421c434daa3dfba888d63e AS i18n
 WORKDIR /src
 COPY Cargo.toml Cargo.lock ./
 COPY crates crates
@@ -10,7 +10,7 @@ COPY locales locales
 RUN cargo run -q -p i18n-gen -- web --out /out
 
 # WASM core (ADR-017): same steps as `scripts/core-build.sh wasm`, wasm-bindgen-cli pinned to Cargo.lock.
-FROM rust:1-bookworm AS wasm
+FROM rust:1-bookworm@sha256:665b6e0a9290a7298236c08c6e4f1e754e3f0d9b70421c434daa3dfba888d63e AS wasm
 WORKDIR /src
 RUN rustup target add wasm32-unknown-unknown
 COPY Cargo.lock ./
@@ -21,11 +21,17 @@ COPY crates crates
 RUN cargo build -p guardedsleep-core --release --target wasm32-unknown-unknown --features wasm \
 	&& wasm-bindgen --target web --out-dir /out target/wasm32-unknown-unknown/release/guardedsleep_core.wasm
 
-FROM node:22-alpine AS builder
+FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS builder
 WORKDIR /app
 
-ENV HUSKY=0 CI=true
-RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+ENV CI=true
+# pnpm 11 at the version pinned in mise.toml (the single source; corepack is not used, ADR-020 section 5).
+# https://pnpm.io/installation
+COPY mise.toml /tmp/mise.toml
+RUN PNPM_VERSION="$(sed -n 's/^pnpm *= *"\(.*\)"/\1/p' /tmp/mise.toml)" \
+	&& test -n "$PNPM_VERSION" \
+	&& npm install --global "pnpm@${PNPM_VERSION}" \
+	&& rm /tmp/mise.toml
 
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY packages/protocol/package.json packages/protocol/
@@ -47,7 +53,7 @@ ENV VITE_SIGNALING_URL=$VITE_SIGNALING_URL
 RUN pnpm --filter @guardedsleep/protocol build \
 	&& pnpm --filter @guardedsleep/mobile exec vite build
 
-FROM nginx:1.27-alpine AS runner
+FROM nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10 AS runner
 
 # Optional build-arg, e.g. IP:192.168.1.42 — adds that name to the self-signed cert (better match when opening https://192.168…).
 ARG TLS_EXTRA_SAN=

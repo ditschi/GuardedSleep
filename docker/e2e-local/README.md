@@ -5,9 +5,9 @@ Runs the **full local test matrix** in one container — no host Node, pnpm, Pla
 ## Quick start
 
 ```bash
-pnpm run e2e:docker          # browser + LAN + hybrid (ws/wss when possible)
-pnpm run e2e:docker:browser  # browser baseline only (fast smoke)
-pnpm run check:kvm             # diagnose /dev/kvm for hybrid emulator
+just e2e-docker          # browser + LAN + hybrid (ws/wss when possible)
+just e2e-docker browser  # browser baseline only (fast smoke)
+just check-kvm             # diagnose /dev/kvm for hybrid emulator
 ```
 
 ## Why a dedicated container?
@@ -21,16 +21,16 @@ pnpm run check:kvm             # diagnose /dev/kvm for hybrid emulator
 
 ## Test tiers
 
-| Tier                | Needs                                          | Command                       |
-| ------------------- | ---------------------------------------------- | ----------------------------- |
-| Browser E2E (01–16) | Docker + Linux                                 | `pnpm run e2e:docker:browser` |
-| + LAN browser       | same                                           | included in `e2e:docker`      |
-| Hybrid ws/wss       | `/dev/kvm` on Docker **host** (recommended)    | included in `e2e:docker`      |
-| Hybrid without KVM  | `EMULATOR_ALLOW_NO_KVM=1` (default in compose) | very slow software emulator   |
+| Tier                | Needs                                          | Command                     |
+| ------------------- | ---------------------------------------------- | --------------------------- |
+| Browser E2E (01–16) | Docker + Linux                                 | `just e2e-docker browser`   |
+| + LAN browser       | same                                           | included in `e2e:docker`    |
+| Hybrid ws/wss       | `/dev/kvm` on Docker **host** (recommended)    | included in `e2e:docker`    |
+| Hybrid without KVM  | `EMULATOR_ALLOW_NO_KVM=1` (default in compose) | very slow software emulator |
 
 ## KVM setup (hybrid Android)
 
-If `pnpm run check:kvm` fails:
+If `just check-kvm` fails:
 
 1. Enable **VT-x / AMD-V** in BIOS/UEFI.
 2. Load modules: `sudo modprobe kvm` and `kvm_intel` or `kvm_amd`.
@@ -42,9 +42,9 @@ Without KVM, browser tests still run; hybrid uses software emulation or is skipp
 ## Environment overrides
 
 ```bash
-RUN_WSS_STACK=0 pnpm run e2e:docker           # skip Docker WSS stack + wss hybrid
-USE_DOCKER_EMULATOR=0 pnpm run e2e:docker      # skip android emulator (browser only)
-EMULATOR_ALLOW_NO_KVM=0 pnpm run e2e:docker   # fail fast if no KVM
+RUN_WSS_STACK=0 just e2e-docker           # skip Docker WSS stack + wss hybrid
+USE_DOCKER_EMULATOR=0 just e2e-docker      # skip android emulator (browser only)
+EMULATOR_ALLOW_NO_KVM=0 just e2e-docker   # fail fast if no KVM
 ```
 
 ## Related

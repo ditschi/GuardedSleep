@@ -19,14 +19,14 @@ For **Mode A** also run commands from the **repository root** (so build contexts
 `127.0.0.1` in the default URL is the **phone itself**, not your PC — WebSocket signaling fails from a second device. Until a public EU community signaling server is configured, use the **local Docker stack with your host’s LAN IP**:
 
 ```bash
-pnpm run stack:lan
+just stack-lan
 ```
 
 This runs [`scripts/stack-lan-env.sh`](../../scripts/stack-lan-env.sh) (detects LAN IPv4, writes `docker/stack/.env`) and starts `docker compose … up --build`. The PWA and Android `cap sync` build use `VITE_SIGNALING_URL=wss://<your-LAN-IP>:8443/signaling`.
 
 On the phone (same Wi‑Fi): open **`https://<LAN-IP>:8443`** (accept the self-signed certificate warning).
 
-Regenerate `.env` only: `pnpm run stack:lan:env` · Start stack with existing `.env`: `pnpm run stack:up`
+Regenerate `.env` only: `bash scripts/stack-lan-env.sh` · Start stack with existing `.env`: `just stack-up`
 
 ## Mode A — build from source (current repo)
 
@@ -103,15 +103,15 @@ If you **cannot load the UI at all** from the phone, check: same Wi‑Fi, use **
 
 ## Files
 
-| File                                                                                             | Role                                                                |
-| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| [compose.yaml](compose.yaml)                                                                     | **Mode A** — build both images from this repo (local development)   |
-| [.env.example](.env.example)                                                                     | Mode A defaults — ports, origins, `VITE_SIGNALING_URL`              |
-| [`scripts/stack-lan-env.sh`](../../scripts/stack-lan-env.sh)                                     | Auto-write `.env` with host LAN IP (`pnpm run stack:lan:env`)       |
-| [compose.ghcr.yaml](compose.ghcr.yaml)                                                           | **Mode B** — pull pre-built images from GHCR (no repo clone needed) |
-| [.env.ghcr.example](.env.ghcr.example)                                                           | Mode B defaults — owner, tags, origins                              |
-| [compose.traefik.yaml](compose.traefik.yaml)                                                     | **Mode C** — GHCR images behind an existing Traefik (one domain)    |
-| [traefik.env.example](traefik.env.example)                                                       | Mode C defaults — domain, Traefik network/entrypoint/resolver       |
-| [compose.web-and-signaling.traefik.example.yaml](compose.web-and-signaling.traefik.example.yaml) | Deprecated — superseded by `compose.traefik.yaml`                   |
+| File                                                                                             | Role                                                                 |
+| ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| [compose.yaml](compose.yaml)                                                                     | **Mode A** — build both images from this repo (local development)    |
+| [.env.example](.env.example)                                                                     | Mode A defaults — ports, origins, `VITE_SIGNALING_URL`               |
+| [`scripts/stack-lan-env.sh`](../../scripts/stack-lan-env.sh)                                     | Auto-write `.env` with host LAN IP (`bash scripts/stack-lan-env.sh`) |
+| [compose.ghcr.yaml](compose.ghcr.yaml)                                                           | **Mode B** — pull pre-built images from GHCR (no repo clone needed)  |
+| [.env.ghcr.example](.env.ghcr.example)                                                           | Mode B defaults — owner, tags, origins                               |
+| [compose.traefik.yaml](compose.traefik.yaml)                                                     | **Mode C** — GHCR images behind an existing Traefik (one domain)     |
+| [traefik.env.example](traefik.env.example)                                                       | Mode C defaults — domain, Traefik network/entrypoint/resolver        |
+| [compose.web-and-signaling.traefik.example.yaml](compose.web-and-signaling.traefik.example.yaml) | Deprecated — superseded by `compose.traefik.yaml`                    |
 
 More detail: [docs/contributing/mobile-web-docker.md](../../docs/contributing/mobile-web-docker.md). Tag strategy: [ADR-008](../../docs/decisions/ADR-008-container-image-build-and-distribution.md).

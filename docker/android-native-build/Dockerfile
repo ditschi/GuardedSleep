@@ -1,7 +1,7 @@
 # JDK 21 + Android SDK/NDK + Rust (Android + WASM targets) for the ADR-015 native PoC.
 # Build: scripts/core-build.sh (rebuilds the image when rust-toolchain.toml changes)
 # Use:   scripts/core-build.sh (mounts the repo at /workspace)
-FROM eclipse-temurin:21-jdk-jammy
+FROM eclipse-temurin:21-jdk-jammy@sha256:742daacb9316be4b6fc60258f6e4ac2a11882f6c597373c92290a57bfad0d2e0
 
 ENV ANDROID_HOME=/opt/android-sdk
 ENV ANDROID_NDK_VERSION=30.0.16248370

@@ -1,5 +1,5 @@
 # One-shot local E2E: browser + optional hybrid Android (nested docker compose via socket).
-# From repository root: pnpm run e2e:docker
+# From repository root: just e2e-docker
 #
 # Uses host networking so WebRTC/loopback matches CI (127.0.0.1:5173 + :18787).
 # Requires Linux + Docker. Hybrid emulator needs /dev/kvm on the Docker host (or very slow software emu).
