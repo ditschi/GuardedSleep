@@ -258,6 +258,6 @@ jobs:
           TAGS: ${{ steps.meta.outputs.tags }}
         run: |
           echo "Produced tags:"
-          echo "$TAGS" | sed 's/^/  /'
+          while read -r tag; do echo "  $tag"; done <<< "$TAGS"
           echo "$TAGS" | grep -q ':latest' \
             || (echo "::error::Tag push did not produce :latest — check TAG_PREFIX against the pushed tag"; exit 1)
