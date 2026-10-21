@@ -52,22 +52,3 @@ export async function pairDual(
   await pasteInvite(dual.parentPage, invite);
   return invite;
 }
-
-const defaultSignalUrl = (): string => process.env.E2E_SIGNALING_URL ?? "ws://127.0.0.1:18787";
-
-/**
- * Legacy v2 deep links. The web client ignores them: v3 pairing needs a code, see `pairDual`.
- */
-export function babyDeepLink(
-  room: string,
-  signal = defaultSignalUrl(),
-  extra?: Record<string, string>,
-): string {
-  const q = new URLSearchParams({ room, signal });
-  for (const [k, v] of Object.entries(extra ?? {})) q.set(k, v);
-  return `/baby?${q.toString()}`;
-}
-
-export function parentDeepLink(room: string, signal = defaultSignalUrl()): string {
-  return `/parent?room=${encodeURIComponent(room)}&signal=${encodeURIComponent(signal)}`;
-}
