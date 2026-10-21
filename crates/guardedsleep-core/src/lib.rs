@@ -3,9 +3,9 @@
 //! platforms supply all I/O and a monotonic millisecond clock.
 
 // The generated UniFFI/wasm-bindgen glue needs `unsafe`; it moves to facade crates in wave 2
-// (ADR-020). Without those features the crate is unsafe-free by construction.
+// (ADR-020); the workspace lint denies `unsafe_code` everywhere else. Without those features the crate
+// is unsafe-free by construction.
 #![cfg_attr(not(any(feature = "uniffi", feature = "wasm")), forbid(unsafe_code))]
-#![cfg_attr(any(feature = "uniffi", feature = "wasm"), deny(unsafe_code))]
 
 pub mod attempt;
 pub mod conformance;
