@@ -20,8 +20,12 @@ keywords = ["guardedsleep://"]
 
 [[rules]]
 id = "guardedsleep-qr-payload-psk"
-description = "PSK in the compact pairing QR payload {\"v\":3,\"k\":...}"
-regex = '''"v"\s*:\s*[23]\s*,\s*"k"\s*:\s*"([A-Za-z0-9_\-]{22,})"'''
+description = "PSK in a pairing QR or invite payload: v1 compact invite, v2/v3 payloads and the persisted pairing file, in any field order"
+# Matches the "k" field on its own, so field order and the version number do not matter
+# (apps/mobile/src/lib/pairing/compact-invite.ts, PairingStore.kt). The entropy floor keeps short or
+# repetitive values out.
+regex = '''"k"\s*:\s*"([A-Za-z0-9_\-]{22,})"'''
+entropy = 3.5
 keywords = ['"k"']
 
 [[rules]]
@@ -82,5 +86,12 @@ paths = [
 ]
 
 [[allowlists]]
-description = "Dependency lockfiles and generated reports carry hashes, not secrets"
+description = "Dependency lockfiles carry integrity hashes that look like keys; only the rules that fire on them are skipped, so URL credentials (generic-credential-uri) stay active"
+targetRules = [
+  "generic-api-key",
+  "guardedsleep-psk-json-field",
+  "guardedsleep-psk-assignment-base64url",
+  "guardedsleep-psk-assignment-base32",
+  "guardedsleep-qr-payload-psk",
+]
 paths = ['''(^|/)pnpm-lock\.yaml$''', '''(^|/)Cargo\.lock$''']
