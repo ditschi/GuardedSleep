@@ -9,11 +9,18 @@ cd "$ROOT"
 # shellcheck source=lib/require.sh
 source scripts/lib/require.sh
 
+# `wait -n` needs bash 4.3 or newer (stock macOS bash is 3.2).
+if (( BASH_VERSINFO[0] < 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] < 3) )); then
+  echo "dev.sh needs bash >= 4.3 (found ${BASH_VERSION}); install a newer bash." >&2
+  exit 2
+fi
+
 pnpm --filter @guardedsleep/protocol build
 
 # Everything stays in this script's process group on purpose: Playwright stops its webServer by killing
 # the whole group (SIGKILL, so no trap runs), and `kill 0` below does the same on a normal exit.
-trap 'trap - EXIT INT TERM; kill 0' EXIT INT TERM
+# The trap keeps the real exit status (no always-143) and ignores TERM while it tears the group down.
+trap 'rc=$?; trap "" TERM; trap - EXIT INT; kill 0 2>/dev/null; exit "$rc"' EXIT INT TERM
 
 pnpm --filter @guardedsleep/signaling-server dev &
 pnpm --filter @guardedsleep/mobile dev &
