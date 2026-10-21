@@ -82,6 +82,9 @@ defaults:
     shell: bash
 
 env:
+  # mise.lock must cover every tool; an unlocked bump fails instead of installing unverified binaries.
+  # https://mise.jdx.dev/configuration/settings.html#locked
+  MISE_LOCKED: "1"
   GS_STRICT: "1"
   CORE_BUILD_NATIVE: "1"
   CARGO_HOME_OVERRIDE: /home/runner/.cargo

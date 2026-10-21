@@ -25,6 +25,14 @@ on:
       - "apps/mobile/**"
       - "packages/protocol/**"
       - "pnpm-lock.yaml"
+      - "crates/**"
+      - "locales/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "packages/core-wasm/**"
+      - "package.json"
+      - "pnpm-workspace.yaml"
       - "mise.toml"
       - ".github/workflows/docker-web.yml"
   pull_request:
@@ -33,6 +41,14 @@ on:
       - "apps/mobile/**"
       - "packages/protocol/**"
       - "pnpm-lock.yaml"
+      - "crates/**"
+      - "locales/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "packages/core-wasm/**"
+      - "package.json"
+      - "pnpm-workspace.yaml"
       - "mise.toml"
       - ".github/workflows/docker-web.yml"
   workflow_dispatch:
@@ -242,6 +258,6 @@ jobs:
           TAGS: ${{ steps.meta.outputs.tags }}
         run: |
           echo "Produced tags:"
-          printf '  %s\n' $TAGS
+          while read -r tag; do echo "  $tag"; done <<< "$TAGS"
           echo "$TAGS" | grep -q ':latest' \
             || (echo "::error::Tag push did not produce :latest — check TAG_PREFIX against the pushed tag"; exit 1)

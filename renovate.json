@@ -113,7 +113,6 @@
         "prettier",
         "prettier-plugin-svelte",
         "svelte-check",
-        "typescript",
         "@types/**",
         "jsdom",
         "@testing-library/**",
@@ -164,7 +163,7 @@
       "automerge": false
     },
     {
-      "description": "Never automerge what is bundled into the shipped web client, even though it is a devDependency",
+      "description": "Never automerge what is bundled into the shipped web client or server image, even though it is a devDependency",
       "matchManagers": ["npm"],
       "matchPackageNames": [
         "svelte",
@@ -174,7 +173,8 @@
         "@vite-pwa/**",
         "workbox-*",
         "tailwindcss",
-        "@tailwindcss/**"
+        "@tailwindcss/**",
+        "typescript"
       ],
       "automerge": false
     },

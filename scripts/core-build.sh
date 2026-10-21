@@ -9,13 +9,14 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-WASM_BINDGEN_VERSION="$(awk '/^name = "wasm-bindgen"$/{getline; gsub(/version = |"/,""); print; exit}' "$ROOT/Cargo.lock")"
+WASM_BINDGEN_VERSION="$("$ROOT/scripts/lib/wasm-bindgen-version.sh")"
 
 if [[ "${CORE_BUILD_NATIVE:-0}" != "1" ]]; then
 	# shellcheck source=lib/build-image.sh
 	source "$ROOT/scripts/lib/build-image.sh"
 	gs_ensure_build_image
 	exec docker run --rm \
+		"${GS_DOCKER_USER_ARGS[@]}" \
 		-e CORE_BUILD_NATIVE=1 \
 		-e CARGO_TARGET_DIR=/workspace/target \
 		-e GRADLE_USER_HOME=/workspace/target/.gradle-home \
@@ -57,7 +58,7 @@ run_host() {
 }
 
 # Same NDK as docker/android-native-build/Dockerfile and the setup-android action. Runners ship other
-# other NDK versions and export their path as the NDK home, so the pinned one wins when it is installed.
+# NDK versions and export their path as the NDK home, so the pinned one wins when it is installed.
 PINNED_NDK=30.0.16248370
 
 run_android() {

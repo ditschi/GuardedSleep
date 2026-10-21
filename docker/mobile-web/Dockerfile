@@ -4,6 +4,9 @@
 # Localization bundles come from the Rust generator (locales/*.json -> JSON), not from Node.
 FROM rust:1-bookworm@sha256:665b6e0a9290a7298236c08c6e4f1e754e3f0d9b70421c434daa3dfba888d63e AS i18n
 WORKDIR /src
+# The Rust toolchain comes from rust-toolchain.toml (ADR-020 section 1), not from the base image's Rust.
+COPY rust-toolchain.toml ./
+RUN rustup toolchain install
 COPY Cargo.toml Cargo.lock ./
 COPY crates crates
 COPY locales locales
@@ -12,7 +15,8 @@ RUN cargo run -q -p i18n-gen -- web --out /out
 # WASM core (ADR-017): same steps as `scripts/core-build.sh wasm`, wasm-bindgen-cli pinned to Cargo.lock.
 FROM rust:1-bookworm@sha256:665b6e0a9290a7298236c08c6e4f1e754e3f0d9b70421c434daa3dfba888d63e AS wasm
 WORKDIR /src
-RUN rustup target add wasm32-unknown-unknown
+COPY rust-toolchain.toml ./
+RUN rustup toolchain install
 COPY Cargo.lock ./
 RUN V="$(awk '/^name = "wasm-bindgen"$/{getline; gsub(/version = |"/,""); print; exit}' Cargo.lock)" \
 	&& cargo install --locked wasm-bindgen-cli --version "$V"

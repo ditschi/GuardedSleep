@@ -85,7 +85,7 @@ if [[ $REUSE == 0 ]]; then
 fi
 
 docker run -d --name gs-gate-signaling --network host \
-	-e NODE_ENV=development -e PORT=$SIGNAL_PORT -e SIGNALING_ALLOWED_ORIGINS=http://localhost "$SIG_IMAGE" >/dev/null
+	-e NODE_ENV=development -e PORT="$SIGNAL_PORT" -e SIGNALING_ALLOWED_ORIGINS=http://localhost "$SIG_IMAGE" >/dev/null
 sleep 2
 running gs-gate-signaling || {
 	echo "local-gate: signaling container exited (port $SIGNAL_PORT busy?):" >&2

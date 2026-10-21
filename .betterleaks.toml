@@ -24,9 +24,10 @@ description = "PSK in a pairing QR or invite payload: v1 compact invite, v2/v3 p
 # Matches the "k" field on its own, so field order and the version number do not matter
 # (apps/mobile/src/lib/pairing/compact-invite.ts, PairingStore.kt). The entropy floor keeps short or
 # repetitive values out.
-regex = '''"k"\s*:\s*"([A-Za-z0-9_\-]{22,})"'''
+# The backslashes also match the field escaped inside a string literal or a log line.
+regex = '''\\?"k\\?"\s*:\s*\\?"([A-Za-z0-9_\-]{22,})\\?"'''
 entropy = 3.5
-keywords = ['"k"']
+keywords = ['"k"', 'k\"']
 
 [[rules]]
 id = "guardedsleep-psk-json-field"
@@ -76,7 +77,11 @@ paths = ['''^apps/android/app/src/test/kotlin/org/guardedsleep/app/ui/OtherShots
 
 [[allowlists]]
 description = "Conformance vectors, golden traces and tests with throw-away counting-byte PSKs (00 01 02 ...)"
-targetRules = ["guardedsleep-psk-json-field", "guardedsleep-psk-assignment-base64url"]
+targetRules = [
+  "guardedsleep-psk-json-field",
+  "guardedsleep-psk-assignment-base64url",
+  "guardedsleep-qr-payload-psk",
+]
 paths = [
   '''^crates/guardedsleep-core/vectors/conformance\.json$''',
   '''^crates/guardedsleep-core/vectors/traces/[a-z0-9-]+\.json$''',

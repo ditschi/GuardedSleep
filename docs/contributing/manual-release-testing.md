@@ -21,7 +21,7 @@ Use this checklist when merging a **Release Please** release PR or tagging a mil
 ## 1. Preconditions
 
 - [ ] CI green on the release commit (`pre-commit`, `test-and-build`, `e2e-browser`).
-- [ ] Debug or release APK built from the same commit (`docs/contributing/android-apk-build.md`).
+- [ ] Debug or release APK built from the same commit (`just build-android`).
 - [ ] **Two physical Android devices** (or one phone + one tablet) on the same Wi‑Fi, or phone + laptop browser only for a reduced smoke (see §6).
 - [ ] Signaling reachable from both devices (local `just dev`, Docker stack, or self-hosted WSS).
 - [ ] Microphone and notification permissions granted on both apps.

@@ -24,7 +24,7 @@ runs:
       id: wb
       shell: bash
       run: |
-        v="$(awk '/^name = "wasm-bindgen"$/{getline; gsub(/version = |"/,""); print; exit}' Cargo.lock)"
+        v="$(scripts/lib/wasm-bindgen-version.sh)"
         echo "version=$v" >> "$GITHUB_OUTPUT"
         echo "rust=$(rustc --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
     - name: Restore wasm-bindgen-cli

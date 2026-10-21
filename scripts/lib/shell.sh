@@ -4,5 +4,6 @@
 if command -v mise >/dev/null 2>&1; then
   exec mise exec -- bash -euo pipefail "$@"
 fi
-echo "hint: mise not found, using tools from PATH. Install mise (https://mise.jdx.dev) and run 'just setup'." >&2
+echo "hint: mise not found, using tools from PATH. Install mise (https://mise.jdx.dev) and run 'just setup' for the pinned versions." >&2
+export GS_MISE_HINT_SHOWN=1
 exec bash -euo pipefail "$@"

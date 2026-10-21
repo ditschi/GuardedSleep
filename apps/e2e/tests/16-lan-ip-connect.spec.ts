@@ -40,7 +40,7 @@ test("LAN IP: baby and parent connect via host LAN address (not loopback)", asyn
     const secure = await dual.babyPage.evaluate(() => window.isSecureContext);
     test.skip(
       !secure,
-      "This Chromium build does not treat the plain-http LAN origin as secure, so the browser baby cannot open the microphone. Run the LAN check against the HTTPS stack (pnpm run stack:lan).",
+      "This Chromium build does not treat the plain-http LAN origin as secure, so the browser baby cannot open the microphone. Run the LAN check against the HTTPS stack (just stack-lan).",
     );
     await pairDual(dual);
 

@@ -28,7 +28,7 @@ setup:
     # install over it, and the stale Husky hooks do nothing once .husky is gone.
     hooks_path="$(git config --local --get core.hooksPath || true)"
     if [ "${hooks_path#*.husky}" != "$hooks_path" ]; then
-      git config --local --unset core.hooksPath
+      git config --local --unset-all core.hooksPath
       echo "Removed the stale Husky core.hooksPath ($hooks_path); lefthook replaces it."
     fi
     mise exec -- lefthook install
@@ -45,6 +45,8 @@ fmt-check:
     scripts/cargo.sh fmt --all -- --check
     taplo fmt --check
     scripts/lib/hygiene.sh
+    scripts/lib/workspace-lints.sh
+    git ls-files -z 'scripts/*.sh' | xargs -0 shellcheck -x -P SCRIPTDIR
 
 # ktfmt over apps/android. Not part of fmt/fmt-check yet: 72 files differ today (fold in during wave 2).
 fmt-kotlin *args:
@@ -59,6 +61,7 @@ lint-text: _js-deps
     pnpm exec prettier --check .
     typos --force-exclude
     scripts/lib/hygiene.sh
+    scripts/lib/workspace-lints.sh
     reuse lint
     scripts/lib/secrets.sh
 

@@ -22,6 +22,8 @@ typos = "1.51.1"
 # Workflow linters. https://github.com/rhysd/actionlint and https://docs.zizmor.sh/
 actionlint = "1.7.12"
 zizmor = "1.31.1"
+# Shell script linter (aqua backend). https://www.shellcheck.net/ and https://mise.jdx.dev/dev-tools/backends/aqua.html
+"aqua:koalaman/shellcheck" = "0.11.0"
 # SPDX/REUSE licence compliance (Python tool, installed with the host uvx/pipx). uv is deliberately not
 # pinned: reuse 6.2.0 publishes only an sdist, and mise's locked uv install refuses source builds
 # (--no-build). Pin uv here once reuse ships a wheel.
@@ -37,7 +39,7 @@ betterleaks = "1.9.0"
 "aqua:nextest-rs/nextest/cargo-nextest" = "0.9.148"
 taplo = "0.10.0"
 
-# ktfmt is a jar, not a binary: the http backend only downloads it, and scripts/ktfmt.sh runs it with
+# ktfmt is a jar, not a binary: the http backend only downloads it, and scripts/lib/ktfmt.sh runs it with
 # `java -jar`. https://mise.jdx.dev/dev-tools/backends/http.html
 # Maven Central: https://repo1.maven.org/maven2/com/facebook/ktfmt/
 "http:ktfmt" = { version = "0.64", url = "https://repo1.maven.org/maven2/com/facebook/ktfmt/{{version}}/ktfmt-{{version}}-with-dependencies.jar" }

@@ -20,20 +20,30 @@ runs:
         packages=("platforms;android-37.0" "build-tools;36.0.0")
         if [ "$WITH_NDK" = "true" ]; then packages+=("ndk;30.0.16248370"); fi
         sdkmanager --install "${packages[@]}" >/dev/null
+    - name: cargo-ndk version and cache key
+      if: inputs.ndk == 'true'
+      id: ndk-ver
+      shell: bash
+      run: |
+        version=4.1.2
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+        echo "key=cargo-ndk-$version-${{ runner.os }}-${{ runner.arch }}-rust-${{ hashFiles('rust-toolchain.toml') }}" >> "$GITHUB_OUTPUT"
     - name: Restore cargo-ndk
       if: inputs.ndk == 'true'
       id: ndk-cache
       uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ~/.cargo/bin/cargo-ndk
-        key: cargo-ndk-4.1.2-${{ runner.os }}-${{ runner.arch }}-rust-${{ hashFiles('rust-toolchain.toml') }}
+        key: ${{ steps.ndk-ver.outputs.key }}
     - name: Install cargo-ndk
       if: inputs.ndk == 'true' && steps.ndk-cache.outputs.cache-hit != 'true'
       shell: bash
-      run: cargo install --locked cargo-ndk@4.1.2
+      env:
+        NDK_VERSION: ${{ steps.ndk-ver.outputs.version }}
+      run: cargo install --locked "cargo-ndk@$NDK_VERSION"
     - name: Save cargo-ndk
       if: inputs.ndk == 'true' && steps.ndk-cache.outputs.cache-hit != 'true' && github.event_name != 'pull_request'
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ~/.cargo/bin/cargo-ndk
-        key: cargo-ndk-4.1.2-${{ runner.os }}-${{ runner.arch }}-rust-${{ hashFiles('rust-toolchain.toml') }}
+        key: ${{ steps.ndk-ver.outputs.key }}
