@@ -25,7 +25,6 @@
   const babyPrefs = readBabyUnitPreferences();
   let babyThreshold = $state(babyPrefs.threshold);
   let babyHoldMs = $state(babyPrefs.holdMs);
-  let babyKiosk = $state(babyPrefs.kioskImmersive);
 
   const returnTo = $derived(page.url.searchParams.get("returnTo"));
 
@@ -196,12 +195,7 @@
         <h3 class="text-sm font-semibold text-zinc-100">
           {i18n?.t("settings.sectionBaby") ?? ""}
         </h3>
-        <BabySoundDetectionSettings
-          showKiosk={false}
-          bind:threshold={babyThreshold}
-          bind:holdMs={babyHoldMs}
-          bind:kioskImmersive={babyKiosk}
-        />
+        <BabySoundDetectionSettings bind:threshold={babyThreshold} bind:holdMs={babyHoldMs} />
         <a
           class="inline-flex text-sm font-medium text-emerald-400 underline hover:text-emerald-300"
           href="/pair?role=baby"

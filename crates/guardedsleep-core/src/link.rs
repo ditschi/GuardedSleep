@@ -12,6 +12,23 @@
 //!   core drops them.
 //! - `close_attempt` is always emitted before the `create_attempt` that replaces it.
 
+// Peer-supplied messages flow through here: return errors instead of panicking (AGENTS.md §5.3).
+#![deny(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::indexing_slicing
+)]
+#![cfg_attr(
+    test,
+    allow(
+        clippy::unwrap_used,
+        clippy::expect_used,
+        clippy::panic,
+        clippy::indexing_slicing
+    )
+)]
+
 use std::collections::VecDeque;
 
 use serde::{Deserialize, Serialize};

@@ -17,6 +17,11 @@ declare global {
       waitNextNoiseAlert?: (timeoutMs?: number) => Promise<number>;
       getNoiseAlertCount?: () => number;
       resetNoiseAlertCount?: () => void;
+      sampleRemoteAudioRms?: (opts?: {
+        windowMs?: number;
+        intervalMs?: number;
+      }) => Promise<{ maxRms: number; avgRms: number; samples: number }>;
+      resetListenAudioForE2e?: () => Promise<void>;
     };
   }
 }

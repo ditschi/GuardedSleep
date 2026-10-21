@@ -73,12 +73,14 @@ export async function launchDualContexts(opts: {
   });
 
   const signalWs = opts.signalUrl ?? process.env.E2E_SIGNALING_URL ?? "ws://127.0.0.1:18787";
-  const seedStorage = (signalingUrl: string, prefsJson: string) => {
-    localStorage.setItem("guardedsleep:signaling-url", signalingUrl);
-    localStorage.setItem("guardedsleep:app-preferences", prefsJson);
+  // addInitScript takes exactly one argument: pass an object, extra positional args are dropped.
+  const seedStorage = ({ url, prefs }: { url: string; prefs: string }) => {
+    localStorage.setItem("guardedsleep:signaling-url", url);
+    localStorage.setItem("guardedsleep:app-preferences", prefs);
   };
-  await baby.addInitScript(seedStorage, signalWs, E2E_APP_PREFERENCES_JSON);
-  await parent.addInitScript(seedStorage, signalWs, E2E_APP_PREFERENCES_JSON);
+  const seed = { url: signalWs, prefs: E2E_APP_PREFERENCES_JSON };
+  await baby.addInitScript(seedStorage, seed);
+  await parent.addInitScript(seedStorage, seed);
 
   // The Vite dev client reloads the page after its socket was cut and restored (as
   // `context.setOffline()` does), which would forget the in-memory pairing key. E2E needs no

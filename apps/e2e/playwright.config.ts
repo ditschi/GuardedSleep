@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-/** Dedicated port so `pnpm run e2e` does not collide with a developer `dev:local` on 8787. */
+/** Dedicated port so `pnpm run e2e` does not collide with a developer `just dev` on 8787. */
 const e2eSignalPort = process.env.GUARDEDSLEEP_E2E_SIGNAL_PORT ?? "18787";
 const e2eSignalWs = `ws://127.0.0.1:${e2eSignalPort}`;
 process.env.E2E_SIGNALING_URL = process.env.E2E_SIGNALING_URL ?? e2eSignalWs;
@@ -19,7 +19,7 @@ export default defineConfig({
     video: "off",
   },
   webServer: {
-    command: "pnpm run dev:local",
+    command: "just dev",
     cwd: "../..",
     url: "http://127.0.0.1:5173",
     reuseExistingServer: process.env.PW_REUSE_EXISTING_SERVER === "1",
