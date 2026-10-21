@@ -10,7 +10,7 @@ import org.guardedsleep.app.media.AttemptListener
 import org.guardedsleep.app.media.AttemptPort
 import org.guardedsleep.app.media.InboundAudioStats
 import org.guardedsleep.app.media.InjectedAudio
-import org.guardedsleep.app.media.MediaPort
+import org.guardedsleep.app.media.MediaEngine
 import org.guardedsleep.app.signaling.SignalingFactory
 import org.guardedsleep.app.signaling.SignalingListener
 import org.guardedsleep.app.signaling.SignalingTransport
@@ -56,7 +56,7 @@ class LinkRunner(
     private val config: LinkConfig,
     private val signalingUrls: List<String>,
     private val signaling: SignalingFactory,
-    private val mediaFactory: () -> MediaPort,
+    private val mediaFactory: () -> MediaEngine,
     private val clock: Clock,
     private val executor: ScheduledExecutorService,
     private val listener: LinkListener,
@@ -67,7 +67,7 @@ class LinkRunner(
     private val entropy: Long,
 ) {
     private lateinit var link: CoreLink
-    private var media: MediaPort? = null
+    private var media: MediaEngine? = null
     private var transport: SignalingTransport? = null
     private var transportGen = 0
     private val attempts = HashMap<UInt, AttemptPort>()
@@ -120,7 +120,7 @@ class LinkRunner(
 
     fun input(input: LinkInput) = post { if (!closing) dispatch(input) }
 
-    fun media(action: (MediaPort) -> Unit) = post { media?.let(action) }
+    fun media(action: (MediaEngine) -> Unit) = post { media?.let(action) }
 
     /** Runs a task on the core thread (used by the controller for model changes that need ordering). */
     fun run(task: () -> Unit) = post(task)

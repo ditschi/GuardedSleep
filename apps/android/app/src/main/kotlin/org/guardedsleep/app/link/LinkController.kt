@@ -13,7 +13,7 @@ import org.guardedsleep.app.config.PairingPolicy
 import org.guardedsleep.app.diag.PocLog
 import org.guardedsleep.app.media.IceConfig
 import org.guardedsleep.app.media.InboundAudioStats
-import org.guardedsleep.app.media.MediaPort
+import org.guardedsleep.app.media.MediaEngine
 import org.guardedsleep.app.pairing.PairingPayload
 import org.guardedsleep.app.pairing.PairingStore
 import org.guardedsleep.app.pairing.StoredPairing
@@ -52,7 +52,7 @@ class LinkController(
     private val settingsRepo: SettingsRepository,
     private val pairingStore: PairingStore,
     private val signaling: SignalingFactory,
-    private val mediaFactory: (CoreRole, IceConfig) -> MediaPort,
+    private val mediaFactory: (CoreRole, IceConfig) -> MediaEngine,
     private val silence: SilenceGateway,
     private val alerts: AlertSink,
     private val readiness: ReadinessProvider,
