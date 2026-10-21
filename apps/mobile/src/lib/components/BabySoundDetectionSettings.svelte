@@ -6,22 +6,15 @@
     HOLD_DURATION_DEFAULT_MS,
     HOLD_DURATION_PRESET_MS,
   } from "$lib/audio/hold-duration-presets.js";
-  import {
-    persistBabyKioskImmersive,
-    persistBabyNoiseGate,
-  } from "$lib/audio/baby-unit-preferences.js";
+  import { persistBabyNoiseGate } from "$lib/audio/baby-unit-preferences.js";
   import { getI18n } from "$lib/i18n/context.js";
 
   let {
-    showKiosk = false,
     threshold = $bindable(0.035),
     holdMs = $bindable(HOLD_DURATION_DEFAULT_MS),
-    kioskImmersive = $bindable(true),
   }: {
-    showKiosk?: boolean;
     threshold?: number;
     holdMs?: number;
-    kioskImmersive?: boolean;
   } = $props();
 
   const i18n = getI18n();
@@ -31,20 +24,9 @@
   $effect(() => {
     persistBabyNoiseGate(threshold, holdMs);
   });
-
-  $effect(() => {
-    if (showKiosk) persistBabyKioskImmersive(kioskImmersive);
-  });
 </script>
 
 <div class="space-y-4 text-sm text-zinc-400">
-  {#if showKiosk}
-    <label class="flex items-center gap-2">
-      <input type="checkbox" bind:checked={kioskImmersive} class="min-h-11 min-w-11" />
-      <span>{i18n?.t("babySound.kioskLabel") ?? ""}</span>
-    </label>
-  {/if}
-
   <div class="rounded-lg border border-zinc-800 bg-zinc-950/80 p-3">
     <p class="mb-1 text-xs uppercase tracking-wide text-zinc-500">
       {i18n?.t("babySound.sectionTitle") ?? ""}

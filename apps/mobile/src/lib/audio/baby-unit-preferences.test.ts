@@ -12,7 +12,6 @@ describe("baby-unit-preferences", () => {
     const p = readBabyUnitPreferences();
     expect(p.threshold).toBe(0.06);
     expect(p.holdMs).toBe(12_000);
-    expect(p.kioskImmersive).toBe(true);
   });
 
   it("uses defaults when storage empty", () => {
