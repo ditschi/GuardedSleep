@@ -2,6 +2,8 @@
 resolver = "3"
 members = [
   "crates/guardedsleep-core",
+  "crates/guardedsleep-ffi",
+  "crates/guardedsleep-wasm",
   "crates/guardedsleep-sim",
   "crates/uniffi-bindgen",
   "crates/i18n-gen",

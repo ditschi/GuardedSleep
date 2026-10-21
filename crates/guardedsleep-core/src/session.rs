@@ -32,7 +32,7 @@ use crate::protocol::{
 };
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub struct SessionConfig {
     pub role: Role,
     pub room_id: String,
@@ -65,7 +65,7 @@ impl SessionConfig {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
-#[cfg_attr(feature = "uniffi", derive(uniffi::Enum))]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub enum Input {
     SignalingOpen,
     SignalingMessage {
@@ -106,7 +106,7 @@ pub enum Input {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
-#[cfg_attr(feature = "uniffi", derive(uniffi::Enum))]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub enum Action {
     SendSignaling { text: String },
     CreateOffer,
@@ -121,7 +121,7 @@ pub enum Action {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-#[cfg_attr(feature = "uniffi", derive(uniffi::Enum))]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub enum SessionState {
     Connecting,
     Joined,
@@ -133,7 +133,7 @@ pub enum SessionState {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
-#[cfg_attr(feature = "uniffi", derive(uniffi::Enum))]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub enum SessionEvent {
     StateChanged {
         state: SessionState,

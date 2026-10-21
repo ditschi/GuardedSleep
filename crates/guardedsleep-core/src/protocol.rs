@@ -29,7 +29,7 @@ const MAX_ID_LEN: usize = 128;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-#[cfg_attr(feature = "uniffi", derive(uniffi::Enum))]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub enum Role {
     Baby,
     Parent,
@@ -191,7 +191,7 @@ pub enum SignalPayload {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub struct IceCandidate {
     pub candidate: String,
     pub sdp_mid: Option<String>,
@@ -318,7 +318,7 @@ pub fn signal_payload_json(p: &SignalPayload) -> Value {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-#[cfg_attr(feature = "uniffi", derive(uniffi::Enum))]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub enum Ringer {
     Normal,
     Vibrate,
@@ -328,7 +328,7 @@ pub enum Ringer {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-#[cfg_attr(feature = "uniffi", derive(uniffi::Enum))]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub enum Dnd {
     Off,
     AlarmsOnly,
@@ -350,7 +350,7 @@ fn coarsen_next_alarm(min: u32) -> u32 {
 /// stable wire order.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-#[cfg_attr(feature = "uniffi", derive(uniffi::Enum))]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub enum UnitWarning {
     PageHidden,
     WakeLockOff,
@@ -365,7 +365,7 @@ pub const MAX_UNIT_WARNINGS: usize = 8;
 /// Coarse baby-phone state shown to the parent (ADR-018). Every field may be unknown (`None`).
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
-#[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub struct DeviceStatus {
     /// Rounded to 5 by [`DeviceStatus::normalized`].
     #[serde(skip_serializing_if = "Option::is_none")]

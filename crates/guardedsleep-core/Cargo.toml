@@ -6,13 +6,11 @@ edition.workspace = true
 license.workspace = true
 publish.workspace = true
 
-[lib]
-crate-type = ["lib", "cdylib"]
-
 [features]
 default = []
-uniffi = ["dep:uniffi"]
-wasm = ["dep:wasm-bindgen"]
+# Derives TypeScript definitions for the wire types (tsify). Enabled only by guardedsleep-wasm; the
+# default graph has no wasm-bindgen. Docs: https://github.com/madonoharu/tsify
+tsify = ["dep:tsify", "dep:wasm-bindgen"]
 
 [dependencies]
 base64 = "0.23"
@@ -21,7 +19,7 @@ hmac = "0.13"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 sha2 = "0.11"
-uniffi = { version = "=0.32.2", optional = true }
+tsify = { version = "0.5.8", optional = true }
 wasm-bindgen = { version = "=0.2.129", optional = true }
 
 [dev-dependencies]

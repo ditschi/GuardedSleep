@@ -1,9 +1,19 @@
-//! UniFFI surface for Kotlin (Android) and Swift (iOS).
+//! UniFFI surface for Kotlin (Android) and Swift (iOS) over `guardedsleep-core` (ADR-015, ADR-020).
+//! Wrapper objects only: all safety logic stays in the sans-IO core.
+
+// The UniFFI macros expand to `unsafe` FFI glue. This is the one place besides the wasm facade
+// where it is allowed; the workspace lint denies it everywhere else and the core forbids it.
+#![allow(unsafe_code)]
 
 use std::sync::{Arc, Mutex};
 
-use crate::link::{Link, LinkAction, LinkConfig, LinkInput};
-use crate::session::{Action, ConfigError, Input, Session, SessionConfig};
+use guardedsleep_core::link::{Link, LinkAction, LinkConfig, LinkInput};
+use guardedsleep_core::session::{Action, ConfigError, Input, Session, SessionConfig};
+
+mod remote_types;
+
+// The namespace keeps the Kotlin package `uniffi.guardedsleep_core` that the Android code imports.
+uniffi::setup_scaffolding!("guardedsleep_core");
 
 #[derive(Debug, uniffi::Error)]
 pub enum CoreError {
@@ -83,14 +93,17 @@ impl CoreLink {
 }
 
 #[uniffi::export]
-pub fn default_link_config(role: crate::protocol::Role, psk_b64url: String) -> LinkConfig {
+pub fn default_link_config(
+    role: guardedsleep_core::protocol::Role,
+    psk_b64url: String,
+) -> LinkConfig {
     LinkConfig::with_defaults(role, psk_b64url)
 }
 
 /// Every status key, cause hint and security-warning key the core can emit.
 #[uniffi::export]
 pub fn message_keys() -> Vec<String> {
-    crate::link::message_keys()
+    guardedsleep_core::link::message_keys()
         .iter()
         .map(|k| (*k).to_owned())
         .collect()
@@ -98,12 +111,12 @@ pub fn message_keys() -> Vec<String> {
 
 #[uniffi::export]
 pub fn derive_room_id(psk: Vec<u8>) -> String {
-    crate::pairing::derive_room_id(&psk)
+    guardedsleep_core::pairing::derive_room_id(&psk)
 }
 
 #[uniffi::export]
 pub fn default_session_config(
-    role: crate::protocol::Role,
+    role: guardedsleep_core::protocol::Role,
     room_id: String,
     psk_b64url: Option<String>,
 ) -> SessionConfig {
@@ -112,10 +125,10 @@ pub fn default_session_config(
 
 #[uniffi::export]
 pub fn encode_psk(bytes: Vec<u8>) -> String {
-    crate::pairing::encode_psk(&bytes)
+    guardedsleep_core::pairing::encode_psk(&bytes)
 }
 
 #[uniffi::export]
 pub fn conformance_eval(case_json: String) -> String {
-    crate::conformance::evaluate(&case_json)
+    guardedsleep_core::conformance::evaluate(&case_json)
 }

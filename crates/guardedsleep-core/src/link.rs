@@ -94,7 +94,7 @@ pub fn message_keys() -> &'static [&'static str] {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub struct LinkConfig {
     pub role: Role,
     /// Pairing PSK (base64url). The room id is derived from it.
@@ -158,7 +158,7 @@ impl LinkConfig {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-#[cfg_attr(feature = "uniffi", derive(uniffi::Enum))]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub enum LinkState {
     /// Started, never verified in this run.
     Connecting,
@@ -171,7 +171,7 @@ pub enum LinkState {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub struct LinkStatus {
     pub state: LinkState,
     /// Escalation level 0-3 while `connecting` / `reconnecting`, otherwise 0.
@@ -191,7 +191,7 @@ pub struct LinkStatus {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
-#[cfg_attr(feature = "uniffi", derive(uniffi::Enum))]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub enum LinkInput {
     Start {
         entropy: u64,
@@ -273,7 +273,7 @@ pub enum LinkInput {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
-#[cfg_attr(feature = "uniffi", derive(uniffi::Enum))]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub enum LinkAction {
     OpenSignaling,
     CloseSignaling,
@@ -322,7 +322,7 @@ pub enum LinkAction {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
-#[cfg_attr(feature = "uniffi", derive(uniffi::Enum))]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub enum LinkEvent {
     /// Emitted whenever the status changes.
     Status {

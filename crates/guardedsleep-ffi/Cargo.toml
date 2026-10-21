@@ -1,0 +1,19 @@
+[package]
+name = "guardedsleep-ffi"
+version = "0.0.1"
+description = "UniFFI facade (Kotlin, later Swift) over guardedsleep-core"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+# `cdylib` is libguardedsleep_ffi.so (Android, host JVM tests); `lib` lets clippy, tests and
+# cargo-public-api see the crate.
+[lib]
+crate-type = ["lib", "cdylib"]
+
+[dependencies]
+guardedsleep-core = { path = "../guardedsleep-core" }
+uniffi = { version = "=0.32.2" }
+
+[lints]
+workspace = true

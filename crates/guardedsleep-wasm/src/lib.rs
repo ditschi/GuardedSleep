@@ -1,10 +1,16 @@
 //! wasm-bindgen surface for the web client and Node conformance tests. JSON strings keep the
-//! boundary small; the shapes are the serde forms of `Input` / `Action`.
+//! boundary small; the shapes are the serde forms of `Input` / `Action`. The TypeScript
+//! definitions of those shapes are derived from the core types (tsify) and land in the generated
+//! `.d.ts`.
+
+// wasm-bindgen expands to `unsafe` glue. This is the one place besides the UniFFI facade where
+// it is allowed; the workspace lint denies it everywhere else and the core forbids it.
+#![allow(unsafe_code)]
 
 use wasm_bindgen::prelude::*;
 
-use crate::link::{Link, LinkConfig, LinkInput};
-use crate::session::{Input, Session, SessionConfig};
+use guardedsleep_core::link::{Link, LinkConfig, LinkInput};
+use guardedsleep_core::session::{Input, Session, SessionConfig};
 
 #[wasm_bindgen]
 pub struct WasmSession {
@@ -59,15 +65,15 @@ impl WasmLink {
 /// JSON array of every UI key the core can emit.
 #[wasm_bindgen(js_name = messageKeys)]
 pub fn message_keys() -> String {
-    serde_json::to_string(crate::link::message_keys()).unwrap_or_else(|_| "[]".into())
+    serde_json::to_string(guardedsleep_core::link::message_keys()).unwrap_or_else(|_| "[]".into())
 }
 
 #[wasm_bindgen(js_name = deriveRoomId)]
 pub fn derive_room_id(psk: &[u8]) -> String {
-    crate::pairing::derive_room_id(psk)
+    guardedsleep_core::pairing::derive_room_id(psk)
 }
 
 #[wasm_bindgen(js_name = conformanceEval)]
 pub fn conformance_eval(case_json: &str) -> String {
-    crate::conformance::evaluate(case_json)
+    guardedsleep_core::conformance::evaluate(case_json)
 }
