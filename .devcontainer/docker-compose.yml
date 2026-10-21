@@ -27,6 +27,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # Named context for rust-toolchain.toml (see the Dockerfile header).
+      additional_contexts:
+        repo: ..
     image: guardedsleep-dev:local
     volumes:
       # Compose file lives in .devcontainer/ → parent directory is the repo root

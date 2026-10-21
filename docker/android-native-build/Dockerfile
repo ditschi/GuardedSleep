@@ -10,7 +10,7 @@ ENV RUSTUP_HOME=/opt/rustup CARGO_HOME=/opt/cargo
 ENV PATH="/opt/cargo/bin:${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools"
 
 RUN apt-get update \
-	&& apt-get install -y --no-install-recommends unzip wget curl ca-certificates build-essential \
+	&& apt-get install -y --no-install-recommends unzip wget curl ca-certificates build-essential git \
 	&& rm -rf /var/lib/apt/lists/*
 
 ARG ANDROID_CLI_TOOLS_URL=https://dl.google.com/android/repository/commandlinetools-linux-16111833_latest.zip

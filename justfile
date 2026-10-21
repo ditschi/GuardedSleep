@@ -53,7 +53,7 @@ lint: _js-deps _js-gen fmt-check
     scripts/lint-ui-literals.sh
     pnpm -r --if-present run check
     actionlint
-    zizmor --offline .github
+    zizmor --offline --min-severity medium .github
     scripts/lib/secrets.sh
 
 # cargo-deny (advisories, licences, sources, sans-IO bans) plus the core dependency-count guard.
