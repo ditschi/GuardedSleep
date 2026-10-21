@@ -100,3 +100,8 @@ targetRules = [
   "guardedsleep-qr-payload-psk",
 ]
 paths = ['''(^|/)pnpm-lock\.yaml$''', '''(^|/)Cargo\.lock$''']
+
+[[allowlists]]
+description = "mise npm-backend lockfiles list package names such as '@inquirer/password' with their versions; only generic-password is skipped there"
+targetRules = ["generic-password"]
+paths = ['''^\.mise/locks/.+-lock\.yaml$''']
