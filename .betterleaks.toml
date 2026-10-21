@@ -77,7 +77,11 @@ paths = ['''^apps/android/app/src/test/kotlin/org/guardedsleep/app/ui/OtherShots
 
 [[allowlists]]
 description = "Conformance vectors, golden traces and tests with throw-away counting-byte PSKs (00 01 02 ...)"
-targetRules = ["guardedsleep-psk-json-field", "guardedsleep-psk-assignment-base64url", "guardedsleep-qr-payload-psk"]
+targetRules = [
+  "guardedsleep-psk-json-field",
+  "guardedsleep-psk-assignment-base64url",
+  "guardedsleep-qr-payload-psk",
+]
 paths = [
   '''^crates/guardedsleep-core/vectors/conformance\.json$''',
   '''^crates/guardedsleep-core/vectors/traces/[a-z0-9-]+\.json$''',
