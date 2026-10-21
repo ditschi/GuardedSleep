@@ -28,7 +28,7 @@ setup:
     # install over it, and the stale Husky hooks do nothing once .husky is gone.
     hooks_path="$(git config --local --get core.hooksPath || true)"
     if [ "${hooks_path#*.husky}" != "$hooks_path" ]; then
-      git config --local --unset core.hooksPath
+      git config --local --unset-all core.hooksPath
       echo "Removed the stale Husky core.hooksPath ($hooks_path); lefthook replaces it."
     fi
     mise exec -- lefthook install
