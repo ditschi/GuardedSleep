@@ -43,7 +43,7 @@ Audio and control data must be protected in transit; pairing must resist casual 
 
 ## Amendment 2026-10-19: direction-bound pairing proof and PSK-derived room id
 
-- Status: PROPOSED (with [ADR-017](ADR-017-link-recovery-and-connection-supervision.md) §1)
+- Status: DECIDED (owner, 2026-10-21, with [ADR-017](ADR-017-link-recovery-and-connection-supervision.md) §1). A deep security audit is required before the alpha release, see [backlog](../backlog.md) "Security audit before alpha"
 
 The fingerprint-binding MAC as implemented (`HMAC(PSK, room|sorted fingerprints|version)`) is **symmetric**: both peers send the value they expect, so a peer that only knows the room id can reflect the other side's proof and pass verification (security review 2026-10-19, CRITICAL). Protocol v3 replaces it:
 

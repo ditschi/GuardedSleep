@@ -1,6 +1,6 @@
 # ADR-012: Connection model -- offline-LAN signaling, path selection, and network handoff
 
-- Status: PROPOSED
+- Status: DECIDED for the goals (owner, 2026-10-21). The state machine and detailed logic (§1, §2, §4) are kept as implemented during waves 1–3 and are re-evaluated afterwards for the native app and the new stack, see [backlog](../backlog.md) "Connection model re-evaluation"
 - Date: 2026-05-13
 - Deciders: Product owner (user), coordinated design (Tech Architect, Security/Privacy, UX, Critical Reviewer 2026-05)
 - Supersedes parts of: [ADR-003](ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md) "Local: no server" -- this ADR **precises** that statement; see §"Relationship to ADR-003".

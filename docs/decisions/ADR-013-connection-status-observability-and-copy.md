@@ -1,6 +1,6 @@
 # ADR-013: Connection-status observability and copy on both devices
 
-- Status: PROPOSED
+- Status: DECIDED for concept and goals (owner, 2026-10-21). UI realisation and detailed implementation are re-evaluated after the rework, including a UX review, see [backlog](../backlog.md) "Connection-status UI review"
 - Date: 2026-05-13
 - Deciders: Product owner (user), coordinated design (UX/Usability, Critical Reviewer 2026-05)
 - Companion ADR: [ADR-012](ADR-012-connection-model-offline-lan-and-handoff.md) (defines the **states** this ADR renders).

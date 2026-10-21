@@ -24,11 +24,10 @@ Every requirement, feature item, or proposal MUST carry a status tag:
 ## User Feature Suggestions
 
 When the user suggests a new feature or idea:
-1. ALWAYS write it to the appropriate feature document (or `docs/concept/initial-ideas.md` if no feature doc fits)
+1. ALWAYS write it to `docs/backlog.md` under the matching capability (feature docs are being migrated to OpenSpec, see `docs/openspec-onboarding.md` section 6)
 2. Tag it as `STATUS: IDEA` -- do NOT assign a phase unless the user explicitly decides on one
 3. Phase assignment happens later when the user reviews and prioritizes ideas
-4. If the idea relates to an existing feature, add it as a sub-item in that feature's document
-5. If the idea is entirely new, create a new feature document or add it to the feature README's ideas list
+4. If no capability fits, add a new capability heading in `docs/backlog.md`
 
 ## Discarded Items
 

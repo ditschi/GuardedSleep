@@ -1,6 +1,6 @@
 # ADR-015: Native Clients with a Shared Rust Core
 
-- Status: PROPOSED
+- Status: DECIDED (owner, 2026-10-21; PoC gate AC-1…AC-4 passed 2026-10-20, AC-10 next)
 - Date: 2026-10-19
 - Deciders: Project owner (pending), Technical Architect, Security/Privacy Architect, UX, Product Owner, Critical Reviewer (perspectives applied by agent)
 - Supersedes: ADR-002 (client platform and signaling server stack) — **only once this ADR is DECIDED** and the PoC gate below passes

@@ -1,6 +1,6 @@
 # ADR-011: Parent-side alert audio routing (speaker vs headphones) and call interruption
 
-- Status: PROPOSED
+- Status: DECIDED (owner, 2026-10-21; UX re-evaluation after wave 3, see [backlog](../backlog.md) "Alert audio routing UX")
 - Date: 2026-05-13
 - Deciders: Product owner (user), coordinated design (Critical Review 2026-05)
 

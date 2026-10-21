@@ -1,6 +1,6 @@
 # ADR-009: Personas, use cases, and parent-side failure model
 
-- Status: PROPOSED
+- Status: DECIDED (owner, 2026-10-21)
 - Date: 2026-05-13
 - Deciders: Product owner (user), coordinated design (Critical Review 2026-05)
 
