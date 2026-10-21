@@ -37,7 +37,7 @@ betterleaks = "1.9.0"
 "aqua:nextest-rs/nextest/cargo-nextest" = "0.9.148"
 taplo = "0.10.0"
 
-# ktfmt is a jar, not a binary: the http backend only downloads it, and scripts/ktfmt.sh runs it with
+# ktfmt is a jar, not a binary: the http backend only downloads it, and scripts/lib/ktfmt.sh runs it with
 # `java -jar`. https://mise.jdx.dev/dev-tools/backends/http.html
 # Maven Central: https://repo1.maven.org/maven2/com/facebook/ktfmt/
 "http:ktfmt" = { version = "0.64", url = "https://repo1.maven.org/maven2/com/facebook/ktfmt/{{version}}/ktfmt-{{version}}-with-dependencies.jar" }
