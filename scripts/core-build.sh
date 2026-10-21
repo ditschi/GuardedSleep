@@ -57,7 +57,7 @@ run_host() {
 }
 
 # Same NDK as docker/android-native-build/Dockerfile and the setup-android action. Runners ship other
-# other NDK versions and export their path as the NDK home, so the pinned one wins when it is installed.
+# NDK versions and export their path as the NDK home, so the pinned one wins when it is installed.
 PINNED_NDK=30.0.16248370
 
 run_android() {
