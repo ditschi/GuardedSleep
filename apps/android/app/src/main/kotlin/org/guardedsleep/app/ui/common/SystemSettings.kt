@@ -1,24 +1,25 @@
 package org.guardedsleep.app.ui.common
 
+import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.net.toUri
 
 /** Intents into system settings, built here so the checklist rows stay a pure UI concern. */
 object SystemSettings {
-    private fun pkgUri(ctx: Context) = Uri.parse("package:" + ctx.packageName)
+    private fun pkgUri(ctx: Context) = ("package:" + ctx.packageName).toUri()
 
-    fun appDetails(ctx: Context) =
-        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkgUri(ctx))
+    fun appDetails(ctx: Context) = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkgUri(ctx))
 
     fun notificationSettings(ctx: Context) =
-        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName)
+        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName)
 
     fun fullScreenIntentSettings(ctx: Context): Intent =
         if (Build.VERSION.SDK_INT >= 34) {
@@ -29,6 +30,10 @@ object SystemSettings {
 
     fun dndAccess() = Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
 
+    // The monitor must survive Doze with the screen off (Android guide: "BatteryLife" is a policy
+    // reminder). Direct-distribution builds are unaffected; for the store listing the policy
+    // declaration form names this use.
+    @SuppressLint("BatteryLife")
     fun batteryOptimization(ctx: Context) =
         Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, pkgUri(ctx))
 
@@ -38,21 +43,32 @@ object SystemSettings {
         try {
             ctx.startActivity(i)
         } catch (_: ActivityNotFoundException) {
-            runCatching { ctx.startActivity(appDetails(ctx).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            runCatching {
+                ctx.startActivity(appDetails(ctx).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
         } catch (_: SecurityException) {
-            runCatching { ctx.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            runCatching {
+                ctx.startActivity(
+                    Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
+            }
         }
     }
 
-    fun notificationsEnabled(ctx: Context) = NotificationManagerCompat.from(ctx).areNotificationsEnabled()
+    fun notificationsEnabled(ctx: Context) =
+        NotificationManagerCompat.from(ctx).areNotificationsEnabled()
 
     fun fullScreenAllowed(ctx: Context): Boolean =
         Build.VERSION.SDK_INT < 34 ||
-            (ctx.getSystemService(NotificationManager::class.java)?.canUseFullScreenIntent() ?: true)
+            (ctx.getSystemService(NotificationManager::class.java)?.canUseFullScreenIntent()
+                ?: true)
 
     fun dndAccessGranted(ctx: Context) =
-        ctx.getSystemService(NotificationManager::class.java)?.isNotificationPolicyAccessGranted ?: false
+        ctx.getSystemService(NotificationManager::class.java)?.isNotificationPolicyAccessGranted
+            ?: false
 
     fun batteryUnrestricted(ctx: Context) =
-        ctx.getSystemService(PowerManager::class.java)?.isIgnoringBatteryOptimizations(ctx.packageName) ?: false
+        ctx.getSystemService(PowerManager::class.java)
+            ?.isIgnoringBatteryOptimizations(ctx.packageName) ?: false
 }

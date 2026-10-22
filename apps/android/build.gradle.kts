@@ -6,3 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.roborazzi) apply false
 }
+
+// Unit tests of the convention plugins (versionCode ordering); runs in the same Gradle invocation
+// as the module tests.
+tasks.register("buildLogicTest") { dependsOn(gradle.includedBuild("build-logic").task(":test")) }

@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -34,7 +33,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.guardedsleep.app.R
+import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AppCard
 import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.ConfirmDialog
@@ -54,7 +53,12 @@ private val HoldOptions = listOf(3, 5, 10, 15)
 
 /** S12: Basic settings per role; Advanced only behind a warning. */
 @Composable
-fun SettingsScreen(controller: AppController, onBack: () -> Unit, onOpenSetup: () -> Unit, onTestAlert: () -> Unit) {
+fun SettingsScreen(
+    controller: AppController,
+    onBack: () -> Unit,
+    onOpenSetup: () -> Unit,
+    onTestAlert: () -> Unit,
+) {
     val s = controller.settings.collectAsState().value
     val app = controller.app.collectAsState().value
     val b = controller.baby.collectAsState().value
@@ -65,104 +69,208 @@ fun SettingsScreen(controller: AppController, onBack: () -> Unit, onOpenSetup: (
     BackHandler(onBack = onBack)
     ScreenRoot("settings") {
         ScrollColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 Row(
-                    Modifier.size(48.dp).clickable(role = SemRole.Button, onClick = onBack).testTag("settings_back"),
-                    horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
-                ) { GlyphIcon(Glyph.BACK, MaterialTheme.colorScheme.onBackground) }
+                    Modifier.size(48.dp)
+                        .clickable(role = SemRole.Button, onClick = onBack)
+                        .testTag("settings_back"),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    GlyphIcon(Glyph.BACK, MaterialTheme.colorScheme.onBackground)
+                }
                 Text(
                     stringResource(R.string.native_ui_common_settings),
                     Modifier.testTag("settings_title").semantics { heading() },
-                    style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground,
                 )
             }
 
             if (isBaby) {
-                Section(R.string.native_ui_settings_group_sound_detection, "settings_group_detection") {
+                Section(
+                    R.string.native_ui_settings_group_sound_detection,
+                    "settings_group_detection",
+                ) {
                     var th by remember(s.threshold) { mutableFloatStateOf(s.threshold) }
-                    Body(stringResource(R.string.native_ui_settings_sensitivity), color = MaterialTheme.colorScheme.onSurface)
+                    Body(
+                        stringResource(R.string.native_ui_settings_sensitivity),
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
                     MicLevelBar(b.micLevel, th, tag = "settings_mic_bar")
                     Slider(
-                        value = th, onValueChange = { th = it },
-                        onValueChangeFinished = { controller.updateSettings { st -> st.copy(threshold = th) } },
-                        valueRange = 0.03f..0.4f, modifier = Modifier.testTag("settings_threshold"),
+                        value = th,
+                        onValueChange = { th = it },
+                        onValueChangeFinished = {
+                            controller.updateSettings { st -> st.copy(threshold = th) }
+                        },
+                        valueRange = 0.03f..0.4f,
+                        modifier = Modifier.testTag("settings_threshold"),
                     )
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Body(stringResource(R.string.native_ui_settings_more_sensitive))
                         Body(stringResource(R.string.native_ui_settings_less_sensitive))
                     }
-                    Body(stringResource(R.string.native_ui_settings_hold_label), color = MaterialTheme.colorScheme.onSurface)
+                    Body(
+                        stringResource(R.string.native_ui_settings_hold_label),
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         HoldOptions.forEach { sec ->
-                            ChoiceChip(stringResource(R.string.native_ui_common_seconds_short, sec.toString()), s.holdSeconds == sec, "settings_hold_$sec") {
+                            ChoiceChip(
+                                stringResource(
+                                    R.string.native_ui_common_seconds_short,
+                                    sec.toString(),
+                                ),
+                                s.holdSeconds == sec,
+                                "settings_hold_$sec",
+                            ) {
                                 controller.updateSettings { st -> st.copy(holdSeconds = sec) }
                             }
                         }
                     }
                 }
                 Section(R.string.native_ui_settings_group_silence, "settings_group_silence") {
-                    SwitchRow(stringResource(R.string.native_ui_setup_silence_title), s.silenceWhileMonitoring, "settings_silence") { on ->
+                    SwitchRow(
+                        stringResource(R.string.native_ui_setup_silence_title),
+                        s.silenceWhileMonitoring,
+                        "settings_silence",
+                    ) { on ->
                         controller.updateSettings { st -> st.copy(silenceWhileMonitoring = on) }
                     }
                     Body(
-                        stringResource(if (b.dndAccess) R.string.native_ui_settings_silence_access_ok else R.string.native_ui_baby_silence_no_access),
+                        stringResource(
+                            if (b.dndAccess) R.string.native_ui_settings_silence_access_ok
+                            else R.string.native_ui_baby_silence_no_access
+                        ),
                         tag = "settings_silence_status",
                     )
                 }
             } else {
                 Section(R.string.native_ui_settings_group_alerts, "settings_group_alerts") {
-                    Body(stringResource(R.string.native_ui_settings_output_label), color = MaterialTheme.colorScheme.onSurface)
-                    ChoiceRow(stringResource(R.string.native_ui_settings_output_default), s.alertOutput == AlertOutput.DEFAULT, "settings_output_default") {
-                        controller.updateSettings { st -> st.copy(alertOutput = AlertOutput.DEFAULT) }
-                    }
-                    ChoiceRow(stringResource(R.string.native_ui_settings_output_speaker), s.alertOutput == AlertOutput.SPEAKER_ONLY, "settings_output_speaker") {
-                        controller.updateSettings { st -> st.copy(alertOutput = AlertOutput.SPEAKER_ONLY) }
-                    }
-                    var gain by remember(s.alertGainPct) { mutableFloatStateOf(s.alertGainPct.toFloat()) }
-                    Body(stringResource(R.string.native_ui_settings_gain, gain.toInt().toString()), tag = "settings_gain_label", color = MaterialTheme.colorScheme.onSurface)
-                    Slider(
-                        value = gain, onValueChange = { gain = it },
-                        onValueChangeFinished = { controller.updateSettings { st -> st.copy(alertGainPct = gain.toInt()) } },
-                        valueRange = 25f..150f, modifier = Modifier.testTag("settings_gain"),
-                    )
-                    SecondaryButton(stringResource(R.string.native_ui_probe_button), onTestAlert, "settings_test_alert")
                     Body(
-                        s.lastTestWallMs?.let { stringResource(R.string.native_ui_settings_last_test, formatTime(it)) }
-                            ?: stringResource(R.string.native_ui_settings_never_tested),
+                        stringResource(R.string.native_ui_settings_output_label),
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    ChoiceRow(
+                        stringResource(R.string.native_ui_settings_output_default),
+                        s.alertOutput == AlertOutput.DEFAULT,
+                        "settings_output_default",
+                    ) {
+                        controller.updateSettings { st ->
+                            st.copy(alertOutput = AlertOutput.DEFAULT)
+                        }
+                    }
+                    ChoiceRow(
+                        stringResource(R.string.native_ui_settings_output_speaker),
+                        s.alertOutput == AlertOutput.SPEAKER_ONLY,
+                        "settings_output_speaker",
+                    ) {
+                        controller.updateSettings { st ->
+                            st.copy(alertOutput = AlertOutput.SPEAKER_ONLY)
+                        }
+                    }
+                    var gain by
+                        remember(s.alertGainPct) { mutableFloatStateOf(s.alertGainPct.toFloat()) }
+                    Body(
+                        stringResource(R.string.native_ui_settings_gain, gain.toInt().toString()),
+                        tag = "settings_gain_label",
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Slider(
+                        value = gain,
+                        onValueChange = { gain = it },
+                        onValueChangeFinished = {
+                            controller.updateSettings { st -> st.copy(alertGainPct = gain.toInt()) }
+                        },
+                        valueRange = 25f..150f,
+                        modifier = Modifier.testTag("settings_gain"),
+                    )
+                    SecondaryButton(
+                        stringResource(R.string.native_ui_probe_button),
+                        onTestAlert,
+                        "settings_test_alert",
+                    )
+                    Body(
+                        s.lastTestWallMs?.let {
+                            stringResource(R.string.native_ui_settings_last_test, formatTime(it))
+                        } ?: stringResource(R.string.native_ui_settings_never_tested),
                         tag = "settings_last_test",
                     )
                 }
                 Section(R.string.native_ui_settings_group_screen, "settings_group_screen") {
-                    ChoiceRow(stringResource(R.string.native_ui_settings_theme_dark), s.theme == Theme.DARK, "settings_theme_dark") { controller.updateSettings { st -> st.copy(theme = Theme.DARK) } }
-                    ChoiceRow(stringResource(R.string.native_ui_settings_theme_light), s.theme == Theme.LIGHT, "settings_theme_light") { controller.updateSettings { st -> st.copy(theme = Theme.LIGHT) } }
-                    ChoiceRow(stringResource(R.string.native_ui_settings_theme_system), s.theme == Theme.SYSTEM, "settings_theme_system") { controller.updateSettings { st -> st.copy(theme = Theme.SYSTEM) } }
+                    ChoiceRow(
+                        stringResource(R.string.native_ui_settings_theme_dark),
+                        s.theme == Theme.DARK,
+                        "settings_theme_dark",
+                    ) {
+                        controller.updateSettings { st -> st.copy(theme = Theme.DARK) }
+                    }
+                    ChoiceRow(
+                        stringResource(R.string.native_ui_settings_theme_light),
+                        s.theme == Theme.LIGHT,
+                        "settings_theme_light",
+                    ) {
+                        controller.updateSettings { st -> st.copy(theme = Theme.LIGHT) }
+                    }
+                    ChoiceRow(
+                        stringResource(R.string.native_ui_settings_theme_system),
+                        s.theme == Theme.SYSTEM,
+                        "settings_theme_system",
+                    ) {
+                        controller.updateSettings { st -> st.copy(theme = Theme.SYSTEM) }
+                    }
                 }
             }
 
             Section(R.string.native_ui_settings_group_paired, "settings_group_paired") {
                 if (app.paired) {
-                    Body(peer, tag = "settings_peer_name", color = MaterialTheme.colorScheme.onSurface)
+                    Body(
+                        peer,
+                        tag = "settings_peer_name",
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
                     SecondaryButton(
-                        stringResource(if (isBaby) R.string.native_ui_settings_forget_parent else R.string.native_ui_settings_forget_baby),
-                        { confirmForget = true }, "settings_forget", Modifier.fillMaxWidth(), destructive = true,
+                        stringResource(
+                            if (isBaby) R.string.native_ui_settings_forget_parent
+                            else R.string.native_ui_settings_forget_baby
+                        ),
+                        { confirmForget = true },
+                        "settings_forget",
+                        Modifier.fillMaxWidth(),
+                        destructive = true,
                     )
                 } else {
                     Body(stringResource(R.string.native_ui_home_empty), tag = "settings_not_paired")
                 }
             }
             Section(R.string.native_ui_settings_group_this_phone, "settings_group_phone") {
-                SecondaryButton(stringResource(R.string.native_ui_settings_check_phone), onOpenSetup, "settings_open_setup", Modifier.fillMaxWidth())
+                SecondaryButton(
+                    stringResource(R.string.native_ui_settings_check_phone),
+                    onOpenSetup,
+                    "settings_open_setup",
+                    Modifier.fillMaxWidth(),
+                )
             }
             Section(R.string.native_ui_settings_group_language, "settings_group_language") {
-                val langs = listOf<Pair<String?, Int>>(
-                    null to R.string.native_ui_settings_lang_system,
-                    "en" to R.string.native_ui_settings_lang_en,
-                    "de" to R.string.native_ui_settings_lang_de,
-                    "fr" to R.string.native_ui_settings_lang_fr,
-                    "es" to R.string.native_ui_settings_lang_es,
-                )
+                val langs =
+                    listOf<Pair<String?, Int>>(
+                        null to R.string.native_ui_settings_lang_system,
+                        "en" to R.string.native_ui_settings_lang_en,
+                        "de" to R.string.native_ui_settings_lang_de,
+                        "fr" to R.string.native_ui_settings_lang_fr,
+                        "es" to R.string.native_ui_settings_lang_es,
+                    )
                 langs.forEach { (code, label) ->
-                    ChoiceRow(stringResource(label), s.language == code, "settings_lang_" + (code ?: "system")) {
+                    ChoiceRow(
+                        stringResource(label),
+                        s.language == code,
+                        "settings_lang_" + (code ?: "system"),
+                    ) {
                         controller.updateSettings { st -> st.copy(language = code) }
                     }
                 }
@@ -172,10 +280,16 @@ fun SettingsScreen(controller: AppController, onBack: () -> Unit, onOpenSetup: (
             }
 
             Section(R.string.native_ui_settings_group_advanced, "settings_group_advanced") {
-                SwitchRow(stringResource(R.string.native_ui_settings_advanced_toggle), s.advancedEnabled, "settings_advanced_toggle") { on ->
-                    if (on) confirmAdvanced = true else controller.updateSettings { st -> st.copy(advancedEnabled = false) }
+                SwitchRow(
+                    stringResource(R.string.native_ui_settings_advanced_toggle),
+                    s.advancedEnabled,
+                    "settings_advanced_toggle",
+                ) { on ->
+                    if (on) confirmAdvanced = true
+                    else controller.updateSettings { st -> st.copy(advancedEnabled = false) }
                 }
-                if (s.advancedEnabled) AdvancedFields(controller, s.signalingUrls, s.turnUrl, s.heartbeatSeconds)
+                if (s.advancedEnabled)
+                    AdvancedFields(controller, s.signalingUrls, s.turnUrl, s.heartbeatSeconds)
             }
         }
         if (confirmAdvanced) {
@@ -187,7 +301,10 @@ fun SettingsScreen(controller: AppController, onBack: () -> Unit, onOpenSetup: (
                 cancelText = stringResource(R.string.native_ui_settings_advanced_cancel),
                 confirmTag = "dialog_advanced_confirm",
                 cancelTag = "dialog_advanced_cancel",
-                onConfirm = { confirmAdvanced = false; controller.updateSettings { st -> st.copy(advancedEnabled = true) } },
+                onConfirm = {
+                    confirmAdvanced = false
+                    controller.updateSettings { st -> st.copy(advancedEnabled = true) }
+                },
                 onDismiss = { confirmAdvanced = false },
                 destructive = false,
             )
@@ -195,14 +312,23 @@ fun SettingsScreen(controller: AppController, onBack: () -> Unit, onOpenSetup: (
         if (confirmForget) {
             ConfirmDialog(
                 tag = "dialog_forget",
-                title = customPeerName(app.peerName)?.let { stringResource(R.string.native_ui_forget_title, it) }
-                    ?: stringResource(if (isBaby) R.string.native_ui_forget_title_parent_default else R.string.native_ui_forget_title_baby_default),
+                title =
+                    customPeerName(app.peerName)?.let {
+                        stringResource(R.string.native_ui_forget_title, it)
+                    }
+                        ?: stringResource(
+                            if (isBaby) R.string.native_ui_forget_title_parent_default
+                            else R.string.native_ui_forget_title_baby_default
+                        ),
                 body = stringResource(R.string.native_ui_forget_body),
                 confirmText = stringResource(R.string.native_ui_forget_confirm),
                 cancelText = stringResource(R.string.native_ui_common_cancel),
                 confirmTag = "dialog_forget_confirm",
                 cancelTag = "dialog_forget_cancel",
-                onConfirm = { confirmForget = false; controller.forgetPairing() },
+                onConfirm = {
+                    confirmForget = false
+                    controller.forgetPairing()
+                },
                 onDismiss = { confirmForget = false },
             )
         }
@@ -210,60 +336,121 @@ fun SettingsScreen(controller: AppController, onBack: () -> Unit, onOpenSetup: (
 }
 
 @Composable
-private fun AdvancedFields(controller: AppController, urls: List<String>, turn: String?, heartbeat: Int) {
+private fun AdvancedFields(
+    controller: AppController,
+    urls: List<String>,
+    turn: String?,
+    heartbeat: Int,
+) {
     var newUrl by remember { mutableStateOf("") }
     var urlError by remember { mutableStateOf(false) }
     var turnText by remember(turn) { mutableStateOf(turn.orEmpty()) }
     var turnError by remember { mutableStateOf(false) }
     var hb by remember(heartbeat) { mutableFloatStateOf(heartbeat.toFloat()) }
-    Body(stringResource(R.string.native_ui_settings_urls_label), color = MaterialTheme.colorScheme.onSurface)
+    Body(
+        stringResource(R.string.native_ui_settings_urls_label),
+        color = MaterialTheme.colorScheme.onSurface,
+    )
     urls.forEachIndexed { i, url ->
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(url, Modifier.weight(1f).testTag("settings_url_$i"), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-            SecondaryButton(stringResource(R.string.native_ui_common_remove), {
-                controller.updateSettings { st -> st.copy(signalingUrls = st.signalingUrls.filterIndexed { j, _ -> j != i }) }
-            }, "settings_url_remove_$i")
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                url,
+                Modifier.weight(1f).testTag("settings_url_$i"),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            SecondaryButton(
+                stringResource(R.string.native_ui_common_remove),
+                {
+                    controller.updateSettings { st ->
+                        st.copy(signalingUrls = st.signalingUrls.filterIndexed { j, _ -> j != i })
+                    }
+                },
+                "settings_url_remove_$i",
+            )
         }
     }
     OutlinedTextField(
-        value = newUrl, onValueChange = { newUrl = it; urlError = false },
+        value = newUrl,
+        onValueChange = {
+            newUrl = it
+            urlError = false
+        },
         label = { Text(stringResource(R.string.native_ui_settings_url_new)) },
         isError = urlError,
-        supportingText = if (urlError) { { Text(stringResource(R.string.native_ui_settings_url_invalid)) } } else null,
-        singleLine = true, modifier = Modifier.fillMaxWidth().testTag("settings_url_new"),
+        supportingText =
+            if (urlError) {
+                { Text(stringResource(R.string.native_ui_settings_url_invalid)) }
+            } else null,
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth().testTag("settings_url_new"),
     )
-    SecondaryButton(stringResource(R.string.native_ui_common_add), {
-        val v = newUrl.trim()
-        if (Regex("^wss?://\\S+$").matches(v)) {
-            controller.updateSettings { st -> st.copy(signalingUrls = st.signalingUrls + v) }
-            newUrl = ""
-        } else urlError = true
-    }, "settings_url_add")
+    SecondaryButton(
+        stringResource(R.string.native_ui_common_add),
+        {
+            val v = newUrl.trim()
+            if (Regex("^wss?://\\S+$").matches(v)) {
+                controller.updateSettings { st -> st.copy(signalingUrls = st.signalingUrls + v) }
+                newUrl = ""
+            } else urlError = true
+        },
+        "settings_url_add",
+    )
     OutlinedTextField(
-        value = turnText, onValueChange = { turnText = it; turnError = false },
+        value = turnText,
+        onValueChange = {
+            turnText = it
+            turnError = false
+        },
         label = { Text(stringResource(R.string.native_ui_settings_turn_label)) },
         isError = turnError,
-        supportingText = if (turnError) { { Text(stringResource(R.string.native_ui_settings_turn_invalid)) } } else null,
-        singleLine = true, modifier = Modifier.fillMaxWidth().testTag("settings_turn"),
+        supportingText =
+            if (turnError) {
+                { Text(stringResource(R.string.native_ui_settings_turn_invalid)) }
+            } else null,
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth().testTag("settings_turn"),
     )
-    SecondaryButton(stringResource(R.string.native_ui_common_save), {
-        val v = turnText.trim()
-        if (v.isEmpty() || Regex("^turns?:\\S+$").matches(v)) {
-            controller.updateSettings { st -> st.copy(turnUrl = v.ifEmpty { null }) }
-        } else turnError = true
-    }, "settings_turn_save")
-    Body(stringResource(R.string.native_ui_settings_heartbeat, hb.toInt().toString()), tag = "settings_heartbeat_label", color = MaterialTheme.colorScheme.onSurface)
+    SecondaryButton(
+        stringResource(R.string.native_ui_common_save),
+        {
+            val v = turnText.trim()
+            if (v.isEmpty() || Regex("^turns?:\\S+$").matches(v)) {
+                controller.updateSettings { st -> st.copy(turnUrl = v.ifEmpty { null }) }
+            } else turnError = true
+        },
+        "settings_turn_save",
+    )
+    Body(
+        stringResource(R.string.native_ui_settings_heartbeat, hb.toInt().toString()),
+        tag = "settings_heartbeat_label",
+        color = MaterialTheme.colorScheme.onSurface,
+    )
     Slider(
-        value = hb, onValueChange = { hb = it },
-        onValueChangeFinished = { controller.updateSettings { st -> st.copy(heartbeatSeconds = hb.toInt()) } },
-        valueRange = 5f..15f, steps = 9, modifier = Modifier.testTag("settings_heartbeat"),
+        value = hb,
+        onValueChange = { hb = it },
+        onValueChangeFinished = {
+            controller.updateSettings { st -> st.copy(heartbeatSeconds = hb.toInt()) }
+        },
+        valueRange = 5f..15f,
+        steps = 9,
+        modifier = Modifier.testTag("settings_heartbeat"),
     )
 }
 
 @Composable
 private fun Section(title: Int, tag: String, content: @Composable () -> Unit) {
     AppCard(Modifier.testTag(tag)) {
-        Text(stringResource(title), Modifier.semantics { heading() }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = LocalAppColors.current.secondaryText)
+        Text(
+            stringResource(title),
+            Modifier.semantics { heading() },
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = LocalAppColors.current.secondaryText,
+        )
         content()
     }
 }
@@ -271,25 +458,37 @@ private fun Section(title: Int, tag: String, content: @Composable () -> Unit) {
 @Composable
 private fun ChoiceRow(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 48.dp).selectable(selected, role = SemRole.RadioButton, onClick = onClick).testTag(tag),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
+        Modifier.fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .selectable(selected, role = SemRole.RadioButton, onClick = onClick)
+            .testTag(tag),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         RadioButton(selected, onClick = null)
-        Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
     }
 }
 
 @Composable
 private fun ChoiceChip(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
     val bg = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
-    val fg = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+    val fg =
+        if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
     Row(
         Modifier.heightIn(min = 48.dp)
             .androidxBg(bg)
             .selectable(selected, role = SemRole.RadioButton, onClick = onClick)
-            .padding(horizontal = 16.dp).testTag(tag),
+            .padding(horizontal = 16.dp)
+            .testTag(tag),
         verticalAlignment = Alignment.CenterVertically,
-    ) { Text(label, color = fg, style = MaterialTheme.typography.titleMedium) }
+    ) {
+        Text(label, color = fg, style = MaterialTheme.typography.titleMedium)
+    }
 }
 
 private fun Modifier.androidxBg(c: androidx.compose.ui.graphics.Color): Modifier =
@@ -298,10 +497,19 @@ private fun Modifier.androidxBg(c: androidx.compose.ui.graphics.Color): Modifier
 @Composable
 private fun SwitchRow(label: String, checked: Boolean, tag: String, onChange: (Boolean) -> Unit) {
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 48.dp).toggleable(checked, role = SemRole.Switch, onValueChange = onChange).testTag(tag),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
+        Modifier.fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .toggleable(checked, role = SemRole.Switch, onValueChange = onChange)
+            .testTag(tag),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(label, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+        Text(
+            label,
+            Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
         Switch(checked, onCheckedChange = null)
     }
 }

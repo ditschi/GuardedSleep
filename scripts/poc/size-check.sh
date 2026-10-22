@@ -4,7 +4,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-JNI="$ROOT/apps/android/core/src/main/jniLibs"
+JNI="$ROOT/apps/android/core-bindings/src/main/jniLibs"
 APK="${APK:-$ROOT/apps/android/app/build/outputs/apk/debug/app-debug.apk}"
 CORE_MAX_BYTES="${CORE_MAX_BYTES:-15728640}"
 

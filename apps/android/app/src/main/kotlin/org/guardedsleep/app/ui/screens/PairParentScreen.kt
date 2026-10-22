@@ -56,7 +56,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import org.guardedsleep.app.R
+import java.util.concurrent.Executors
+import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.Glyph
 import org.guardedsleep.app.ui.common.GlyphIcon
@@ -74,14 +75,13 @@ import org.guardedsleep.app.ui.model.PairingError
 import org.guardedsleep.app.ui.model.PairingPhase
 import org.guardedsleep.app.ui.theme.LocalAppColors
 import org.guardedsleep.app.ui.theme.StateColors
-import org.guardedsleep.app.ui.common.systemReduceMotion
-import java.util.concurrent.Executors
 import zxingcpp.BarcodeReader
 
 /** Camera preview + QR analyzer; replaced by a placeholder in screenshot tests. */
-val LocalScannerView = staticCompositionLocalOf<@Composable (onCode: (String) -> Unit, modifier: Modifier) -> Unit> {
-    { onCode, modifier -> CameraScanner(onCode, modifier) }
-}
+val LocalScannerView =
+    staticCompositionLocalOf<@Composable (onCode: (String) -> Unit, modifier: Modifier) -> Unit> {
+        { onCode, modifier -> CameraScanner(onCode, modifier) }
+    }
 
 /** S05: parent phone scans the code (or pastes it). */
 @Composable
@@ -90,14 +90,22 @@ fun PairParentScreen(controller: AppController) {
     val env = LocalUiEnv.current
     val state = controller.pairing.collectAsState().value
     var refresh by remember { mutableIntStateOf(0) }
-    LifecycleResumeEffect(Unit) { refresh++; onPauseOrDispose { } }
-    val granted = env.cameraGranted
-        ?: remember(refresh) { ContextCompat.checkSelfPermission(ctx, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED }
-    var denials by remember { mutableIntStateOf(0) }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+    LifecycleResumeEffect(Unit) {
         refresh++
-        if (!ok) denials++
+        onPauseOrDispose {}
     }
+    val granted =
+        env.cameraGranted
+            ?: remember(refresh) {
+                ContextCompat.checkSelfPermission(ctx, Manifest.permission.CAMERA) ==
+                    PackageManager.PERMISSION_GRANTED
+            }
+    var denials by remember { mutableIntStateOf(0) }
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+            refresh++
+            if (!ok) denials++
+        }
     val activity = ctx.findActivity()
     val focus = remember { FocusRequester() }
     // The pasted code is a secret: plain remember, never saved instance state.
@@ -105,7 +113,10 @@ fun PairParentScreen(controller: AppController) {
     var askedOnce by remember { mutableStateOf(false) }
     if (!granted && !askedOnce && env.cameraGranted == null) {
         askedOnce = true
-        DisposableEffect(Unit) { launcher.launch(Manifest.permission.CAMERA); onDispose { } }
+        DisposableEffect(Unit) {
+            launcher.launch(Manifest.permission.CAMERA)
+            onDispose {}
+        }
     }
     BackHandler { controller.cancelPairing() }
 
@@ -119,7 +130,11 @@ fun PairParentScreen(controller: AppController) {
         onCode = { controller.submitPairingCode(it) },
         onSubmitPaste = { controller.submitPairingCode(pasted.trim()) },
         onAllowCamera = {
-            if (denials > 0 && activity != null && !activity.shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
+            if (
+                denials > 0 &&
+                    activity != null &&
+                    !activity.shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)
+            ) {
                 SystemSettings.launch(ctx, SystemSettings.appDetails(ctx))
             } else {
                 launcher.launch(Manifest.permission.CAMERA)
@@ -149,43 +164,74 @@ fun ParentPairContent(
     ScreenRoot("parent_pair") {
         ScrollColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Title(stringResource(R.string.native_ui_pair_parent_title), "parent_pair_title")
-            Body(stringResource(R.string.native_ui_pair_parent_camera_why), tag = "parent_pair_camera_why")
+            Body(
+                stringResource(R.string.native_ui_pair_parent_camera_why),
+                tag = "parent_pair_camera_why",
+            )
             if (cameraDenied) {
                 Column(
-                    Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(20.dp)).padding(16.dp),
+                    Modifier.fillMaxWidth()
+                        .background(
+                            MaterialTheme.colorScheme.surfaceVariant,
+                            RoundedCornerShape(20.dp),
+                        )
+                        .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         GlyphIcon(Glyph.CROSS, LocalAppColors.current.bad)
                         Text(
                             stringResource(R.string.native_ui_pair_error_camera_denied),
                             Modifier.testTag("parent_pair_camera_denied"),
-                            style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                     }
-                    SecondaryButton(stringResource(R.string.native_ui_pair_error_allow_camera), onAllowCamera, "parent_pair_allow_camera", Modifier.fillMaxWidth())
+                    SecondaryButton(
+                        stringResource(R.string.native_ui_pair_error_allow_camera),
+                        onAllowCamera,
+                        "parent_pair_allow_camera",
+                        Modifier.fillMaxWidth(),
+                    )
                     SecondaryButton(
                         stringResource(R.string.native_ui_pair_error_paste_instead),
                         { runCatching { focus.requestFocus() } },
-                        "parent_pair_paste_instead", Modifier.fillMaxWidth(),
+                        "parent_pair_paste_instead",
+                        Modifier.fillMaxWidth(),
                     )
                 }
             } else {
                 Box(
-                    Modifier.fillMaxWidth().widthIn(max = 420.dp).aspectRatio(1f).clip(RoundedCornerShape(20.dp)).background(Color.Black)
-                        .testTag("parent_pair_scanner"),
+                    Modifier.fillMaxWidth()
+                        .widthIn(max = 420.dp)
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color.Black)
+                        .testTag("parent_pair_scanner")
                 ) {
                     LocalScannerView.current(onCode, Modifier.matchParentSize())
                 }
             }
             if (connecting) {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    if (LocalUiEnv.current.reduceMotion) GlyphIcon(Glyph.REFRESH, MaterialTheme.colorScheme.primary)
-                    else CircularProgressIndicator(Modifier.padding(2.dp).heightIn(max = 24.dp), strokeWidth = 2.dp)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (LocalUiEnv.current.reduceMotion)
+                        GlyphIcon(Glyph.REFRESH, MaterialTheme.colorScheme.primary)
+                    else
+                        CircularProgressIndicator(
+                            Modifier.padding(2.dp).heightIn(max = 24.dp),
+                            strokeWidth = 2.dp,
+                        )
                     Text(
                         stringResource(R.string.native_ui_pair_parent_connecting),
                         Modifier.testTag("parent_pair_connecting"),
-                        style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
                     )
                 }
             }
@@ -197,42 +243,70 @@ fun ParentPairContent(
                     value = pasted,
                     onValueChange = onPastedChange,
                     label = { Text(stringResource(R.string.native_ui_pair_parent_paste_label)) },
-                    modifier = Modifier.fillMaxWidth().focusRequester(focus).testTag("parent_pair_paste_field"),
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .focusRequester(focus)
+                            .testTag("parent_pair_paste_field"),
                     maxLines = 4,
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false),
+                    keyboardOptions =
+                        KeyboardOptions(
+                            capitalization = KeyboardCapitalization.None,
+                            autoCorrectEnabled = false,
+                        ),
                 )
-                PrimaryButton(stringResource(R.string.native_ui_pair_parent_paste_submit), onSubmitPaste, "parent_pair_paste_submit", enabled = pasted.isNotBlank())
+                PrimaryButton(
+                    stringResource(R.string.native_ui_pair_parent_paste_submit),
+                    onSubmitPaste,
+                    "parent_pair_paste_submit",
+                    enabled = pasted.isNotBlank(),
+                )
             }
-            QuietButton(stringResource(R.string.native_ui_common_cancel), onCancel, "parent_pair_cancel")
+            QuietButton(
+                stringResource(R.string.native_ui_common_cancel),
+                onCancel,
+                "parent_pair_cancel",
+            )
         }
     }
 }
 
 @Composable
 private fun ErrorBlock(error: PairingError, onRetry: () -> Unit) {
-    val text = when (error) {
-        PairingError.NOT_OUR_CODE -> R.string.native_ui_pair_error_not_ours
-        PairingError.EXPIRED -> R.string.native_ui_pair_error_expired
-        PairingError.KEY_MISMATCH -> R.string.native_ui_pair_error_mismatch
-        PairingError.ALREADY_PAIRED -> R.string.native_ui_pair_error_already_paired
-        PairingError.UNREACHABLE -> R.string.native_ui_pair_error_unreachable
-        PairingError.INCOMPLETE_PASTE -> R.string.native_ui_pair_error_incomplete
-        PairingError.CAMERA_DENIED -> R.string.native_ui_pair_error_camera_denied
-    }
+    val text =
+        when (error) {
+            PairingError.NOT_OUR_CODE -> R.string.native_ui_pair_error_not_ours
+            PairingError.EXPIRED -> R.string.native_ui_pair_error_expired
+            PairingError.KEY_MISMATCH -> R.string.native_ui_pair_error_mismatch
+            PairingError.ALREADY_PAIRED -> R.string.native_ui_pair_error_already_paired
+            PairingError.UNREACHABLE -> R.string.native_ui_pair_error_unreachable
+            PairingError.INCOMPLETE_PASTE -> R.string.native_ui_pair_error_incomplete
+            PairingError.CAMERA_DENIED -> R.string.native_ui_pair_error_camera_denied
+        }
     Column(
-        Modifier.fillMaxWidth().background(StateColors.Red, RoundedCornerShape(16.dp)).padding(14.dp),
+        Modifier.fillMaxWidth()
+            .background(StateColors.Red, RoundedCornerShape(16.dp))
+            .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.Top,
+        ) {
             GlyphIcon(Glyph.EXCLAIM, StateColors.OnState)
             Text(
                 stringResource(text),
                 Modifier.testTag("parent_pair_error").weight(1f),
-                style = MaterialTheme.typography.titleMedium, color = StateColors.OnState,
+                style = MaterialTheme.typography.titleMedium,
+                color = StateColors.OnState,
             )
         }
         if (error == PairingError.UNREACHABLE) {
-            SecondaryButton(stringResource(R.string.native_ui_common_try_again), onRetry, "parent_pair_retry", Modifier.fillMaxWidth())
+            SecondaryButton(
+                stringResource(R.string.native_ui_common_try_again),
+                onRetry,
+                "parent_pair_retry",
+                Modifier.fillMaxWidth(),
+            )
         }
     }
 }
@@ -249,20 +323,31 @@ private fun CameraScanner(onCode: (String) -> Unit, modifier: Modifier) {
         val analysisExecutor = Executors.newSingleThreadExecutor()
         val future = ProcessCameraProvider.getInstance(ctx)
         val main = ContextCompat.getMainExecutor(ctx)
-        val reader = BarcodeReader(
-            BarcodeReader.Options(formats = setOf(BarcodeReader.Format.QR_CODE), tryInvert = true, tryHarder = true),
-        )
+        val reader =
+            BarcodeReader(
+                BarcodeReader.Options(
+                    formats = setOf(BarcodeReader.Format.QR_CODE),
+                    tryInvert = true,
+                    tryHarder = true,
+                )
+            )
         var lastText: String? = null
         var lastAt = 0L
         val handler = Handler(Looper.getMainLooper())
-        val analysis = ImageAnalysis.Builder()
-            .setResolutionSelector(
-                ResolutionSelector.Builder()
-                    .setResolutionStrategy(ResolutionStrategy(Size(1280, 720), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER))
-                    .build(),
-            )
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .build()
+        val analysis =
+            ImageAnalysis.Builder()
+                .setResolutionSelector(
+                    ResolutionSelector.Builder()
+                        .setResolutionStrategy(
+                            ResolutionStrategy(
+                                Size(1280, 720),
+                                ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER,
+                            )
+                        )
+                        .build()
+                )
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
         analysis.setAnalyzer(analysisExecutor) { image ->
             try {
                 val text = reader.read(image).firstOrNull()?.text
@@ -277,14 +362,25 @@ private fun CameraScanner(onCode: (String) -> Unit, modifier: Modifier) {
             }
         }
         var provider: ProcessCameraProvider? = null
-        future.addListener({
-            provider = future.get()
-            val preview = Preview.Builder().build().also { it.setSurfaceProvider(previewView.surfaceProvider) }
-            runCatching {
-                provider?.unbindAll()
-                provider?.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis)
-            }
-        }, main)
+        future.addListener(
+            {
+                provider = future.get()
+                val preview =
+                    Preview.Builder().build().also {
+                        it.setSurfaceProvider(previewView.surfaceProvider)
+                    }
+                runCatching {
+                    provider?.unbindAll()
+                    provider?.bindToLifecycle(
+                        lifecycleOwner,
+                        CameraSelector.DEFAULT_BACK_CAMERA,
+                        preview,
+                        analysis,
+                    )
+                }
+            },
+            main,
+        )
         onDispose {
             analysis.clearAnalyzer()
             provider?.unbindAll()

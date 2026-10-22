@@ -25,8 +25,27 @@ import kotlin.math.sin
  * adjacent text is the accessible name.
  */
 enum class Glyph {
-    LINK, BROKEN_LINK, REFRESH, PAUSE, MOON, SUN, BELL, QUESTION, CHECK, CROSS, EXCLAIM,
-    HEADPHONES, LOCK, MIC, BATTERY, DOTS, BACK, GEAR, WAVE, ZZ, STOP,
+    LINK,
+    BROKEN_LINK,
+    REFRESH,
+    PAUSE,
+    MOON,
+    SUN,
+    BELL,
+    QUESTION,
+    CHECK,
+    CROSS,
+    EXCLAIM,
+    HEADPHONES,
+    LOCK,
+    MIC,
+    BATTERY,
+    DOTS,
+    BACK,
+    GEAR,
+    WAVE,
+    ZZ,
+    STOP,
 }
 
 @Composable
@@ -61,8 +80,14 @@ private fun DrawScope.drawGlyph(g: Glyph, c: Color) {
             drawRoundRect(c, p(14f, 5f), Size(4f * u, 14f * u), CornerRadius(1f * u))
         }
         Glyph.MOON -> {
-            val a = Path().apply { addOval(androidx.compose.ui.geometry.Rect(p(4f, 3f), Size(16f * u, 18f * u))) }
-            val b = Path().apply { addOval(androidx.compose.ui.geometry.Rect(p(10f, 1f), Size(14f * u, 16f * u))) }
+            val a =
+                Path().apply {
+                    addOval(androidx.compose.ui.geometry.Rect(p(4f, 3f), Size(16f * u, 18f * u)))
+                }
+            val b =
+                Path().apply {
+                    addOval(androidx.compose.ui.geometry.Rect(p(10f, 1f), Size(14f * u, 16f * u)))
+                }
             drawPath(Path.combine(PathOperation.Difference, a, b), c)
         }
         Glyph.SUN -> {
@@ -73,16 +98,20 @@ private fun DrawScope.drawGlyph(g: Glyph, c: Color) {
                     c,
                     p(12f + 7f * cos(a).toFloat(), 12f + 7f * sin(a).toFloat()),
                     p(12f + 10f * cos(a).toFloat(), 12f + 10f * sin(a).toFloat()),
-                    sw, StrokeCap.Round,
+                    sw,
+                    StrokeCap.Round,
                 )
             }
         }
         Glyph.BELL -> {
-            val path = Path().apply {
-                moveTo(6f * u, 17f * u); lineTo(6f * u, 11f * u)
-                cubicTo(6f * u, 6f * u, 18f * u, 6f * u, 18f * u, 11f * u)
-                lineTo(18f * u, 17f * u); close()
-            }
+            val path =
+                Path().apply {
+                    moveTo(6f * u, 17f * u)
+                    lineTo(6f * u, 11f * u)
+                    cubicTo(6f * u, 6f * u, 18f * u, 6f * u, 18f * u, 11f * u)
+                    lineTo(18f * u, 17f * u)
+                    close()
+                }
             drawPath(path, c, style = st)
             drawLine(c, p(4f, 17f), p(20f, 17f), sw, StrokeCap.Round)
             drawArc(c, 0f, 180f, false, p(9.5f, 17.5f), Size(5f * u, 4f * u), style = st)
@@ -93,8 +122,17 @@ private fun DrawScope.drawGlyph(g: Glyph, c: Color) {
             drawCircle(c, 1.2f * u, p(12f, 19.5f))
         }
         Glyph.CHECK -> {
-            val path = Path().apply { moveTo(4f * u, 12.5f * u); lineTo(10f * u, 18f * u); lineTo(20f * u, 6f * u) }
-            drawPath(path, c, style = Stroke(width = 2.6f * u, cap = StrokeCap.Round, join = StrokeJoin.Round))
+            val path =
+                Path().apply {
+                    moveTo(4f * u, 12.5f * u)
+                    lineTo(10f * u, 18f * u)
+                    lineTo(20f * u, 6f * u)
+                }
+            drawPath(
+                path,
+                c,
+                style = Stroke(width = 2.6f * u, cap = StrokeCap.Round, join = StrokeJoin.Round),
+            )
         }
         Glyph.CROSS -> {
             drawLine(c, p(6f, 6f), p(18f, 18f), 2.6f * u, StrokeCap.Round)
@@ -127,8 +165,17 @@ private fun DrawScope.drawGlyph(g: Glyph, c: Color) {
             for (y in listOf(5f, 12f, 19f)) drawCircle(c, 2f * u, p(12f, y))
         }
         Glyph.BACK -> {
-            val path = Path().apply { moveTo(14f * u, 5f * u); lineTo(7f * u, 12f * u); lineTo(14f * u, 19f * u) }
-            drawPath(path, c, style = Stroke(width = 2.6f * u, cap = StrokeCap.Round, join = StrokeJoin.Round))
+            val path =
+                Path().apply {
+                    moveTo(14f * u, 5f * u)
+                    lineTo(7f * u, 12f * u)
+                    lineTo(14f * u, 19f * u)
+                }
+            drawPath(
+                path,
+                c,
+                style = Stroke(width = 2.6f * u, cap = StrokeCap.Round, join = StrokeJoin.Round),
+            )
         }
         Glyph.GEAR -> {
             drawCircle(c, 4f * u, p(12f, 12f), style = st)
@@ -138,7 +185,8 @@ private fun DrawScope.drawGlyph(g: Glyph, c: Color) {
                     c,
                     p(12f + 7f * cos(a).toFloat(), 12f + 7f * sin(a).toFloat()),
                     p(12f + 10f * cos(a).toFloat(), 12f + 10f * sin(a).toFloat()),
-                    3f * u, StrokeCap.Round,
+                    3f * u,
+                    StrokeCap.Round,
                 )
             }
         }
@@ -151,11 +199,22 @@ private fun DrawScope.drawGlyph(g: Glyph, c: Color) {
         }
         Glyph.STOP -> drawRoundRect(c, p(5f, 5f), Size(14f * u, 14f * u), CornerRadius(2.5f * u))
         Glyph.ZZ -> {
-            val path = Path().apply {
-                moveTo(4f * u, 5f * u); lineTo(12f * u, 5f * u); lineTo(4f * u, 13f * u); lineTo(12f * u, 13f * u)
-                moveTo(13f * u, 14f * u); lineTo(20f * u, 14f * u); lineTo(13f * u, 21f * u); lineTo(20f * u, 21f * u)
-            }
-            drawPath(path, c, style = Stroke(width = 2f * u, cap = StrokeCap.Round, join = StrokeJoin.Round))
+            val path =
+                Path().apply {
+                    moveTo(4f * u, 5f * u)
+                    lineTo(12f * u, 5f * u)
+                    lineTo(4f * u, 13f * u)
+                    lineTo(12f * u, 13f * u)
+                    moveTo(13f * u, 14f * u)
+                    lineTo(20f * u, 14f * u)
+                    lineTo(13f * u, 21f * u)
+                    lineTo(20f * u, 21f * u)
+                }
+            drawPath(
+                path,
+                c,
+                style = Stroke(width = 2f * u, cap = StrokeCap.Round, join = StrokeJoin.Round),
+            )
         }
     }
 }

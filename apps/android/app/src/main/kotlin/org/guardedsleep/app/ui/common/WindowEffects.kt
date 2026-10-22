@@ -22,9 +22,11 @@ fun WindowBrightness(level: Float?) {
         }
         onDispose {
             if (window != null && level != null) {
-                window.attributes = window.attributes.also {
-                    it.screenBrightness = previous ?: WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
-                }
+                window.attributes =
+                    window.attributes.also {
+                        it.screenBrightness =
+                            previous ?: WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+                    }
             }
         }
     }

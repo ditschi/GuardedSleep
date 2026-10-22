@@ -55,7 +55,7 @@ The image carries the native toolchain (ADR-015, ADR-019), mirroring `docker/and
 - **Shell `PATH`:** the Node dev image loads **nvm** in login shells; the Dockerfile appends the mise shims, `JAVA_HOME` and `ANDROID_HOME` entries to `/etc/profile.d` and `~/.bashrc` so `just`, `java` and `./gradlew` work in integrated terminals.
 
 ```bash
-just test    # cargo workspace, WASM + node conformance, pnpm tests, Android :core/:app unit tests
+just test    # cargo workspace, WASM + node conformance, pnpm tests, Android module unit tests
 just lint    # text, workflows and code checks
 just build   # web build, Android debug + release APKs, release/size checks
 just gate    # emulator gate (needs KVM and Docker, so run it on the host)

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- Generated UniFFI bindings (not ours to edit): they pick java.lang.ref.Cleaner only when the
+         class exists and fall back to a JNA cleaner on API below 33. -->
+    <issue id="NewApi">
+        <ignore path="**/kotlin/uniffi/**" />
+    </issue>
+</lint>

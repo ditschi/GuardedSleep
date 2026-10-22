@@ -53,9 +53,9 @@ run_wasm() {
 
 # Unstripped host build of guardedsleep-ffi: the Kotlin bindings are generated from its UniFFI metadata (the release profile
 # strips those symbols), and the Android JVM unit tests load it through JNA (jna.library.path in
-# apps/android/{core,app}/build.gradle.kts points at target/debug).
+# apps/android/{core-bindings,platform}/build.gradle.kts points at target/debug).
 run_host() {
-	local gen=apps/android/core/src/main/kotlin
+	local gen=apps/android/core-bindings/src/main/kotlin
 	cargo build -p guardedsleep-ffi
 	rm -rf "$gen/uniffi"
 	cargo run -q -p uniffi-bindgen -- generate --library target/debug/libguardedsleep_ffi.so \
@@ -67,7 +67,7 @@ run_host() {
 PINNED_NDK=30.0.16248370
 
 run_android() {
-	local jni=apps/android/core/src/main/jniLibs
+	local jni=apps/android/core-bindings/src/main/jniLibs
 	if [[ -d "${ANDROID_HOME:-}/ndk/$PINNED_NDK" ]]; then
 		export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/$PINNED_NDK"
 	fi

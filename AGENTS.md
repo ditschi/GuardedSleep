@@ -49,7 +49,7 @@ crates/
   guardedsleep-relay/   Sans-IO signaling relay: rooms, limits, LAN admission                          [exists]
   guardedsleep-server/  Rust signaling server (axum), built-in STUN, optional local web UI            [exists]
 apps/
-  android/              Native client (Kotlin + Compose); :core = UniFFI bindings + JNI libs          [exists; modules app/ui-contract/platform/core-bindings planned, wave 2]
+  android/              Native client (Kotlin + Compose); modules app, ui-contract, platform, core-bindings [exists; build-logic holds the Gradle conventions]
   web/                  Vite 8 + Svelte 5 web client                                                   (planned, wave 3)
   e2e/                  Playwright browser E2E
   mobile/               LEGACY, frozen reference
@@ -112,7 +112,7 @@ Core       Rust, sans-IO (core, relay): no I/O, threads or clocks; emits message
 
 - **Safety logic lives once, in the Rust core** (pairing, link supervision, escalation, noise gate, validation). Platform reconnect loops or timer-based alarms are bugs.
 - **Protocol shapes come from the Rust core.** Never hand-edit a second schema.
-- **UI renders contract models only** (`UiContract.kt`; web stores mirror it). UI code never imports UniFFI/WASM types. In Android only `platform` may depend on `core-bindings` (wave 2).
+- **UI renders contract models only** (`UiContract.kt`; web stores mirror it). UI code never imports UniFFI/WASM types. In Android only `platform` may depend on `core-bindings`; `app` reaches platform components through `ui-contract` models and the wiring interfaces.
 - **`relay` is shared** by the server and the Android LAN listener; the platform owns the sockets.
 - **cargo-deny** bans tokio, mio, getrandom and socket crates from the `core` and `relay` graphs. This keeps them sans-IO: do not work around it. Binding attributes never appear in `core`.
 - **No SvelteKit:** `$app/*` and `+page` files do not exist in `apps/web`. Capacitor was removed in wave 1.

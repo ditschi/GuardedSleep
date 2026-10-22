@@ -38,22 +38,24 @@ setup:
 machine-profile *args:
     scripts/lib/machine-profile.sh {{ args }}
 
-# Format everything that is formatted automatically (Kotlin: see fmt-kotlin).
+# Format everything that is formatted automatically (Prettier, rustfmt, taplo, ktfmt).
 fmt:
     pnpm exec prettier --write .
     scripts/cargo.sh fmt --all
     taplo fmt
+    scripts/lib/ktfmt.sh
 
 # Same checks without writing; also the whitespace/JSON hygiene the old pre-commit config had.
 fmt-check:
     pnpm exec prettier --check .
     scripts/cargo.sh fmt --all -- --check
     taplo fmt --check
+    scripts/lib/ktfmt.sh --dry-run --set-exit-if-changed
     scripts/lib/hygiene.sh
     scripts/lib/workspace-lints.sh
     git ls-files -z 'scripts/*.sh' | xargs -0 shellcheck -x -P SCRIPTDIR
 
-# ktfmt over apps/android. Not part of fmt/fmt-check yet: 72 files differ today (fold in during wave 2).
+# ktfmt over apps/android (also part of fmt and fmt-check).
 fmt-kotlin *args:
     scripts/lib/ktfmt.sh {{ args }}
 
@@ -86,6 +88,7 @@ lint-code:
 _lint-code: _js-deps _js-gen check-ios check-determinism
     scripts/cargo.sh fmt --all -- --check
     taplo fmt --check
+    scripts/lib/ktfmt.sh --dry-run --set-exit-if-changed
     scripts/cspell-i18n.sh
     scripts/cargo.sh clippy --workspace --all-targets --all-features -- -D warnings
     just deny
@@ -150,7 +153,7 @@ test-android:
     source scripts/lib/require.sh
     require test-android android-sdk
     scripts/core-build.sh host
-    scripts/gradle.sh :core:testDebugUnitTest :app:testDebugUnitTest
+    scripts/gradle.sh buildLogicTest :core-bindings:testDebugUnitTest :platform:testDebugUnitTest :app:testDebugUnitTest
 
 # Generate the i18n output (Android resources, web JSON). Nothing generated is committed.
 gen:
@@ -182,9 +185,9 @@ _build-android *gradle_tasks:
     scripts/poc/release-check.sh
     scripts/poc/size-check.sh
 
-# What the CI android job runs: build-android plus the JVM tests and Roborazzi screenshot verification.
+# What the CI android job runs: build-android plus Android Lint (warnings are errors), the JVM tests and Roborazzi screenshot verification.
 verify-android:
-    just build-android :core:testDebugUnitTest :app:testDebugUnitTest :app:verifyRoborazziDebug
+    just build-android lintDebug buildLogicTest :core-bindings:testDebugUnitTest :platform:testDebugUnitTest :app:testDebugUnitTest :app:verifyRoborazziDebug
 
 # Browser E2E (Playwright, local dev stack). Prints SKIPPED without Playwright browsers unless GS_STRICT=1.
 e2e:

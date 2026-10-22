@@ -9,7 +9,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -41,7 +40,7 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
-import org.guardedsleep.app.R
+import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AdaptiveButtonRow
 import org.guardedsleep.app.ui.common.AmbientBar
 import org.guardedsleep.app.ui.common.BabyQuiet
@@ -62,15 +61,16 @@ import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.PairingPhase
 
 /**
- * Renders the pairing payload as a QR bitmap. Inverted by default (light modules on near-black,
- * our scanner handles inversion, ADR-018) and deliberately not full white (<= 50 % brightness look).
+ * Renders the pairing payload as a QR bitmap. Inverted by default (light modules on near-black, our
+ * scanner handles inversion, ADR-018) and deliberately not full white (<= 50 % brightness look).
  */
 fun renderQr(payload: String, bright: Boolean): ImageBitmap? = runCatching {
-    val hints = mapOf(
-        EncodeHintType.MARGIN to 2,
-        EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.M,
-        EncodeHintType.CHARACTER_SET to "UTF-8",
-    )
+    val hints =
+        mapOf(
+            EncodeHintType.MARGIN to 2,
+            EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.M,
+            EncodeHintType.CHARACTER_SET to "UTF-8",
+        )
     val matrix = QRCodeWriter().encode(payload, BarcodeFormat.QR_CODE, 0, 0, hints)
     val scale = (560 / matrix.width).coerceAtLeast(4)
     val fg = if (bright) 0xFFFFFFFF.toInt() else 0xFFB8B8B8.toInt()
@@ -81,9 +81,11 @@ fun renderQr(payload: String, bright: Boolean): ImageBitmap? = runCatching {
     for (y in 0 until h) for (x in 0 until w) {
         px[y * w + x] = if (matrix.get(x / scale, y / scale)) fg else bg
     }
-    val bmp = android.graphics.Bitmap.createBitmap(px, w, h, android.graphics.Bitmap.Config.ARGB_8888)
+    val bmp =
+        android.graphics.Bitmap.createBitmap(px, w, h, android.graphics.Bitmap.Config.ARGB_8888)
     bmp.asImageBitmap()
-}.getOrNull()
+}
+    .getOrNull()
 
 /** S04: baby phone shows the pairing code. */
 @Composable
@@ -95,8 +97,9 @@ fun PairBabyScreen(controller: AppController) {
     var copied by remember { mutableStateOf(false) }
     var showText by remember { mutableStateOf(false) }
     BackHandler { controller.cancelPairing() }
-    val expired = state?.phase == PairingPhase.EXPIRED ||
-        (state?.expiresAtElapsedMs?.let { it <= now } ?: false)
+    val expired =
+        state?.phase == PairingPhase.EXPIRED ||
+            (state?.expiresAtElapsedMs?.let { it <= now } ?: false)
     val payload = state?.codePayload
     WindowBrightness(if (bright) 0.9f else 0.4f)
     BabyQuiet {
@@ -104,9 +107,27 @@ fun PairBabyScreen(controller: AppController) {
             ScrollColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 Title(stringResource(R.string.native_ui_pair_baby_title), "baby_pair_title")
                 when (state?.phase) {
-                    PairingPhase.PAIRED -> AmbientBar(Glyph.LINK, stringResource(R.string.native_ui_baby_status_connected), Tone.OK, "baby_pair_connected")
-                    PairingPhase.CONNECTING -> AmbientBar(Glyph.REFRESH, stringResource(R.string.native_ui_pair_baby_parent_found), Tone.INFO, "baby_pair_connecting")
-                    PairingPhase.FAILED -> AmbientBar(Glyph.EXCLAIM, stringResource(R.string.native_ui_pair_baby_failed), Tone.BAD, "baby_pair_failed")
+                    PairingPhase.PAIRED ->
+                        AmbientBar(
+                            Glyph.LINK,
+                            stringResource(R.string.native_ui_baby_status_connected),
+                            Tone.OK,
+                            "baby_pair_connected",
+                        )
+                    PairingPhase.CONNECTING ->
+                        AmbientBar(
+                            Glyph.REFRESH,
+                            stringResource(R.string.native_ui_pair_baby_parent_found),
+                            Tone.INFO,
+                            "baby_pair_connecting",
+                        )
+                    PairingPhase.FAILED ->
+                        AmbientBar(
+                            Glyph.EXCLAIM,
+                            stringResource(R.string.native_ui_pair_baby_failed),
+                            Tone.BAD,
+                            "baby_pair_failed",
+                        )
                     else -> Unit
                 }
                 if (payload != null && state.phase != PairingPhase.PAIRED) {
@@ -116,37 +137,70 @@ fun PairBabyScreen(controller: AppController) {
                         if (qr != null) {
                             Image(
                                 qr,
-                                contentDescription = stringResource(R.string.native_ui_pair_baby_qr_alt),
+                                contentDescription =
+                                    stringResource(R.string.native_ui_pair_baby_qr_alt),
                                 filterQuality = FilterQuality.None,
-                                modifier = Modifier.size(280.dp).alpha(if (dimmed) 0.2f else 1f).testTag("baby_pair_qr"),
+                                modifier =
+                                    Modifier.size(280.dp)
+                                        .alpha(if (dimmed) 0.2f else 1f)
+                                        .testTag("baby_pair_qr"),
                             )
                         }
                     }
                     if (dimmed) {
-                        Body(stringResource(R.string.native_ui_pair_baby_expired), tag = "baby_pair_expired", color = Color(0xFFFFB4A9))
-                        PrimaryButton(stringResource(R.string.native_ui_pair_baby_new_code), { copied = false; controller.refreshPairingCode() }, "baby_pair_new_code")
+                        Body(
+                            stringResource(R.string.native_ui_pair_baby_expired),
+                            tag = "baby_pair_expired",
+                            color = Color(0xFFFFB4A9),
+                        )
+                        PrimaryButton(
+                            stringResource(R.string.native_ui_pair_baby_new_code),
+                            {
+                                copied = false
+                                controller.refreshPairingCode()
+                            },
+                            "baby_pair_new_code",
+                        )
                     } else {
-                        Body(stringResource(R.string.native_ui_pair_baby_instruction), tag = "baby_pair_instruction", color = Color(0xFFD0D0D0))
+                        Body(
+                            stringResource(R.string.native_ui_pair_baby_instruction),
+                            tag = "baby_pair_instruction",
+                            color = Color(0xFFD0D0D0),
+                        )
                         val remaining = (state.expiresAtElapsedMs ?: now) - now
                         Text(
-                            stringResource(R.string.native_ui_pair_baby_valid_for, formatClock(remaining)),
+                            stringResource(
+                                R.string.native_ui_pair_baby_valid_for,
+                                formatClock(remaining),
+                            ),
                             Modifier.testTag("baby_pair_countdown"),
                             style = MaterialTheme.typography.titleLarge,
                             color = Color(0xFFE0E0E0),
                         )
                         if (state.phase == PairingPhase.SHOWING_CODE) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
                                 GlyphIcon(Glyph.REFRESH, Color(0xFFB0B0B0), size = 20.dp)
-                                Body(stringResource(R.string.native_ui_pair_baby_waiting), tag = "baby_pair_waiting", color = Color(0xFFB0B0B0))
+                                Body(
+                                    stringResource(R.string.native_ui_pair_baby_waiting),
+                                    tag = "baby_pair_waiting",
+                                    color = Color(0xFFB0B0B0),
+                                )
                             }
                         }
                     }
                     if (!dimmed) {
-                        // The text form contains the secret: only on request, never saved or logged.
+                        // The text form contains the secret: only on request, never saved or
+                        // logged.
                         if (showText) {
                             Text(
                                 payload,
-                                Modifier.fillMaxWidth().background(Color(0xFF151515), RoundedCornerShape(12.dp)).padding(12.dp).testTag("baby_pair_code_text"),
+                                Modifier.fillMaxWidth()
+                                    .background(Color(0xFF151515), RoundedCornerShape(12.dp))
+                                    .padding(12.dp)
+                                    .testTag("baby_pair_code_text"),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontFamily = FontFamily.Monospace,
                                 color = Color(0xFFB0B0B0),
@@ -156,23 +210,49 @@ fun PairBabyScreen(controller: AppController) {
                         }
                         AdaptiveButtonRow {
                             SecondaryButton(
-                                stringResource(if (copied) R.string.native_ui_pair_baby_copied else R.string.native_ui_pair_baby_copy),
-                                { copyCode(ctx, payload); copied = true },
+                                stringResource(
+                                    if (copied) R.string.native_ui_pair_baby_copied
+                                    else R.string.native_ui_pair_baby_copy
+                                ),
+                                {
+                                    copyCode(ctx, payload)
+                                    copied = true
+                                },
                                 "baby_pair_copy",
                             )
                             SecondaryButton(
-                                stringResource(if (showText) R.string.native_ui_pair_baby_hide_text else R.string.native_ui_pair_baby_show_text),
+                                stringResource(
+                                    if (showText) R.string.native_ui_pair_baby_hide_text
+                                    else R.string.native_ui_pair_baby_show_text
+                                ),
                                 { showText = !showText },
                                 "baby_pair_show_text",
                             )
-                            SecondaryButton(stringResource(R.string.native_ui_pair_baby_brighter), { bright = !bright }, "baby_pair_brighter")
+                            SecondaryButton(
+                                stringResource(R.string.native_ui_pair_baby_brighter),
+                                { bright = !bright },
+                                "baby_pair_brighter",
+                            )
                         }
                     }
-                    Body(stringResource(R.string.native_ui_pair_baby_privacy), tag = "baby_pair_privacy", color = Color(0xFFD0D0D0))
+                    Body(
+                        stringResource(R.string.native_ui_pair_baby_privacy),
+                        tag = "baby_pair_privacy",
+                        color = Color(0xFFD0D0D0),
+                    )
                 } else if (state?.phase != PairingPhase.PAIRED) {
-                    Body(stringResource(R.string.native_ui_pair_baby_waiting), tag = "baby_pair_waiting", color = Color(0xFFB0B0B0))
+                    Body(
+                        stringResource(R.string.native_ui_pair_baby_waiting),
+                        tag = "baby_pair_waiting",
+                        color = Color(0xFFB0B0B0),
+                    )
                 }
-                QuietButton(stringResource(R.string.native_ui_common_cancel), { controller.cancelPairing() }, "baby_pair_cancel", Modifier.heightIn(min = 48.dp))
+                QuietButton(
+                    stringResource(R.string.native_ui_common_cancel),
+                    { controller.cancelPairing() },
+                    "baby_pair_cancel",
+                    Modifier.heightIn(min = 48.dp),
+                )
             }
         }
     }
@@ -182,6 +262,7 @@ fun PairBabyScreen(controller: AppController) {
 private fun copyCode(ctx: Context, payload: String) {
     val cm = ctx.getSystemService(ClipboardManager::class.java) ?: return
     val clip = ClipData.newPlainText("", payload)
-    clip.description.extras = PersistableBundle().apply { putBoolean("android.content.extra.IS_SENSITIVE", true) }
+    clip.description.extras =
+        PersistableBundle().apply { putBoolean("android.content.extra.IS_SENSITIVE", true) }
     cm.setPrimaryClip(clip)
 }

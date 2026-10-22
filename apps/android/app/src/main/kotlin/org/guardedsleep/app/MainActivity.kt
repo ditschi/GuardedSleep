@@ -23,20 +23,27 @@ class MainActivity : ComponentActivity() {
         val controller = graph().controller
         // The baby phone never vibrates or clicks, not even for a touch (ADR-018 §3.1).
         lifecycleScope.launch {
-            controller.app.map { it.role == Role.BABY }.collect { baby ->
-                window.decorView.isHapticFeedbackEnabled = !baby
-                window.decorView.isSoundEffectsEnabled = !baby
-            }
+            controller.app
+                .map { it.role == Role.BABY }
+                .collect { baby ->
+                    window.decorView.isHapticFeedbackEnabled = !baby
+                    window.decorView.isSoundEffectsEnabled = !baby
+                }
         }
-        // The pairing code is a secret: no screenshots, recents thumbnail or screen recording while it is shown.
+        // The pairing code is a secret: no screenshots, recents thumbnail or screen recording while
+        // it is shown.
         lifecycleScope.launch {
-            controller.pairing.map { it?.codePayload != null }.collect { shown ->
-                if (shown) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-                else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-            }
+            controller.pairing
+                .map { it?.codePayload != null }
+                .collect { shown ->
+                    if (shown) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                    else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                }
         }
         setContent {
-            Box(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) { GuardedSleepRoot(controller) }
+            Box(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
+                GuardedSleepRoot(controller)
+            }
         }
     }
 
