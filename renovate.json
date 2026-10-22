@@ -147,6 +147,14 @@
       "automerge": false
     },
     {
+      "description": "webrtc-sdk milestone bumps are semver majors: propose weekly instead of monthly so a CVE fix is not delayed by the Majors schedule (swap-webrtc-sdk design.md)",
+      "matchPackageNames": ["io.github.webrtc-sdk:android"],
+      "matchUpdateTypes": ["major"],
+      "schedule": ["before 6am on monday"],
+      "groupName": "libwebrtc",
+      "automerge": false
+    },
+    {
       "description": "Never automerge runtime or crypto dependencies, libwebrtc or uniffi",
       "matchPackageNames": [
         "hmac",
