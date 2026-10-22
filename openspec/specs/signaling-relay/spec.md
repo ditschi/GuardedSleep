@@ -114,17 +114,21 @@ The relay SHALL carry only connection metadata (room membership and opaque setup
 
 ### Requirement: Client ICE configuration
 
-The Android client SHALL use the STUN service of its configured relay by default and SHALL NOT contact any public STUN server by default. A third-party STUN server SHALL be used only after the user opts in, with copy that names who sees the device's IP address (the choice among vetted servers is `add-stun-server-choice`). The web client follows in `rebuild-web-client`. Release builds SHALL ship without a default signaling URL; the user enters the signaling URL list on the baby unit, and the invite carries it to the parent. A VPN SHALL get no special handling: media MAY use VPN candidates, and signaling SHALL always go through the configured relay.
-
-#### Scenario: Fresh release install
-
-- **WHEN** a release build without a configured signaling URL starts pairing on the baby unit
-- **THEN** pairing fails as unreachable until a signaling URL is entered in the settings
+The Android client SHALL use the STUN service of its configured relay by default and SHALL NOT contact any public STUN server by default. A third-party STUN server SHALL be used only after the user opts in, with copy that names who sees the device's IP address. A VPN SHALL get no special handling: media MAY use VPN candidates, and signaling SHALL always go through the configured relay.
 
 #### Scenario: Public STUN not chosen
 
 - **WHEN** the user has not opted in to a third-party STUN server
 - **THEN** no request goes to any STUN server other than the configured relay
+
+### Requirement: Signaling URL configuration
+
+Release builds SHALL ship without a default signaling URL; the user enters the signaling URL list on the baby unit, and the invite carries it to the parent.
+
+#### Scenario: Fresh release install
+
+- **WHEN** a release build without a configured signaling URL starts pairing on the baby unit
+- **THEN** pairing fails as unreachable until a signaling URL is entered in the settings
 
 ### Requirement: Built-in STUN
 
