@@ -113,7 +113,7 @@ This is the **only privacy-conformant software backup** for the parent-dead case
 - Both devices continue trying to reconnect via all known IP paths (saved local IP, signaling URL, VPN IP), using the **path-selector** introduced in [ADR-012](../decisions/ADR-012-connection-model-offline-lan-and-handoff.md): primary signaling URL first, then each entry in `Saved Connections → Fallback signaling URLs`.
 - IP-sync mechanism ensures the latest known IPs are used (see [connectivity-pairing.md](../features/connectivity-pairing.md)).
 - Noise events on the baby side are buffered locally for delivery on reconnect.
-- UI escalation per [ADR-013](../decisions/ADR-013-connection-status-observability-and-copy.md): ambient bar yellow → orange (20-60 s) → red (> 60 s) with gentle, then escalating vibration on the parent, slow red pulse on the baby (does not wake the child).
+- UI escalation per [ADR-013](../../openspec/changes/archive/2026-10-21-adr-013-connection-status-observability-and-copy/design.md): ambient bar yellow → orange (20-60 s) → red (> 60 s) with gentle, then escalating vibration on the parent, slow red pulse on the baby (does not wake the child).
 
 **What the user does**: wait for the network to come back, or trigger manual reconnect from the parent app. If it stays down: physically check both devices and restart the network.
 

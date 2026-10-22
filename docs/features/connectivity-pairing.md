@@ -36,7 +36,7 @@ For devices on the same network or ad-hoc connections:
 - User must manually create hotspot via OS settings (no programmatic API available)
 - App provides step-by-step hotspot setup guide
 - No data leaves the local network = maximum privacy
-- UI prominently indicates when connection is local ("Secure local mode") -- copy and timing per [ADR-013](../decisions/ADR-013-connection-status-observability-and-copy.md)
+- UI prominently indicates when connection is local ("Secure local mode") -- copy and timing per [ADR-013](../../openspec/changes/archive/2026-10-21-adr-013-connection-status-observability-and-copy/design.md)
 
 ### LAN Docker fallback (power-user)
 

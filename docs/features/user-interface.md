@@ -12,13 +12,11 @@ The user interface must be simple, reliable, and usable under stress (tired pare
 - `[STATUS: DECIDED]` Night mode / dark UI: essential for nighttime use without blinding the parent -- **MVP**
 - `[STATUS: DECIDED]` Live volume level display: visual noise meter on parent device -- **MVP**
 - `[STATUS: DECIDED]` "All quiet since..." indicator: shows time since last noise event -- **MVP**
-- `[STATUS: DECIDED]` Connection quality indicator (good/medium/poor from WebRTC stats) -- **MVP**
 - `[STATUS: DECIDED]` Baby battery level display on parent device -- **MVP**
 - `[STATUS: DECIDED]` Screen wake lock option in listen mode (for party/event scenarios) -- **MVP**
 - `[STATUS: DECIDED]` Multi-language support: **English, German, French and Spanish are officially supported from Phase 1** (owner decision 2026-10-19; superseded by the ADR-021 locale policy: about 20 AI-translated locales, see Multi-Language Support below); further languages by community contribution (`[STATUS: IDEA]`) -- **MVP**
 - `[STATUS: IDEA]` Temperature / humidity display: show sensor data if the device supports it
-- `[STATUS: DECIDED]` **MVP:** **Ambient connection affordance** on parent monitoring screen (e.g. thin top-edge glow / bar: green connected, yellow reconnecting, red disconnected) so "monitoring off" is noticeable at a glance ([failure-model.md](../concept/failure-model.md), [ui-design.md](../technical/ui-design.md)).
-- `[STATUS: DECIDED]` **MVP:** **Indicator training** during onboarding -- show "connected" vs "disconnected" visuals once; copy explains that missing green indicator means you are not monitoring.
+- `[STATUS: DECIDED]` Connection status on both units (ambient bar, weak-connection chip, baby edge indicator): see [`openspec/specs/connection-status`](../../openspec/specs/connection-status/spec.md)
 - `[STATUS: DECIDED]` **MVP:** **One unified app** for all contexts (home + travel + events); **no** persona-specific layouts or mandatory “home vs event” profile that forks defaults. **Context-aware** behavior (network metered, captive portal failure, connection quality) is documented in [connectivity-pairing.md](connectivity-pairing.md) and [notifications-alerts.md](notifications-alerts.md); design lenses remain in [personas.md](../concept/personas.md).
 - `[STATUS: DECIDED]` **MVP:** **Settings: Basic vs Advanced** -- Advanced hidden behind toggle + short warning; dangerous knobs (heartbeat interval, signaling URL, codec tweaks) live only in Advanced ([concept review](../reviews/concept-review-2026-05.md) CRIT-6).
 - `[STATUS: DECIDED]` **MVP (Expert-only):** Optional **emoji fingerprint** display for manual verification under Security → Connection details (friendlier than hex; see [concept review](../reviews/concept-review-2026-05.md) SUG-3).
@@ -53,13 +51,6 @@ The user interface must be simple, reliable, and usable under stress (tired pare
 - Resets when new noise event detected
 - Large, readable text in night mode
 
-### Connection Quality Indicator -- MVP
-
-- Shows current connection quality as icon (good / medium / poor)
-- Based on WebRTC stats API (RTT, packet loss, jitter)
-- Warns when connection is degrading before it drops
-- Color-coded: green, yellow, red
-
 ### Baby Battery Level Display -- MVP
 
 - Shows baby device battery percentage on parent UI
@@ -88,7 +79,7 @@ Rule: **all defaults must work in both quiet home nights and loud social venues*
 ### Onboarding and indicator training -- MVP
 
 - **No** first-launch “persona profile” fork (see [personas.md](../concept/personas.md) “Unified app”).
-- **Indicator training** during onboarding -- show "connected" vs "disconnected" visuals once; copy explains that missing green indicator means you are not monitoring.
+- Indicator training is not built yet; it is part of the planned "Connection-status UI review" in the [backlog](../backlog.md).
 - Optional **probe alert** hand-off to [notifications-alerts.md](notifications-alerts.md) (recommended once after onboarding and before leaving baby out of earshot).
 
 ### Multi-Language Support (i18n)
@@ -97,7 +88,7 @@ Rule: **all defaults must work in both quiet home nights and loud social venues*
 
 - English is the master catalogue. AI-translated catalogues ship for about 20 frequently spoken languages: en, de, fr, es, it, pt, nl, pl, sv, da, cs, ro, zh-Hans, ja, ko, hi, ar (right-to-left), tr, uk, id. Native speakers improve them over time; further locales can be added the same way without a new ADR
 - A locale ships only if every key tagged `critical` (alerts, link loss, connection state, safety warnings) is present, so an alarm is never mixed-language; non-critical keys may fall back to English
-- Each non-English value carries a `machineTranslated` or `reviewed` marker; review is an improvement path, not a shipping gate. Alert and connection-loss copy must still be understandable in each locale, see [ADR-013](../decisions/ADR-013-connection-status-observability-and-copy.md))
+- Each non-English value carries a `machineTranslated` or `reviewed` marker; review is an improvement path, not a shipping gate. Alert and connection-loss copy must still be understandable in each locale, see [ADR-013](../../openspec/changes/archive/2026-10-21-adr-013-connection-status-observability-and-copy/design.md))
 - Translations are maintained once in a shared catalogue and reused by every client (Android, iOS, web, later desktop)
 - Architecture supports easy addition of new languages; community can contribute translations
 - UI text externalized from code from the start

@@ -111,13 +111,13 @@ The baby side, in the absence of an embedded local listener (Phase 2), simply us
 
 - **Hysteresis:** ignore network-change events for the first **2-5 s** (configurable, default **3 s**) -- transient flapping does not trigger reconnect.
 - After the window elapses with a **different** active network, drop the current `PeerSession`, run `discovering_paths` fresh (same path-ranking), and start a new `PeerSession`. **No half-reuse** of the prior peer connection.
-- During reconnect: UI stays in **`reconnecting_handoff`** state -- silent for 0--20 s (matching the existing failure-model escalation), then the standard escalation kicks in (see [ADR-013](ADR-013-connection-status-observability-and-copy.md) for copy + timing).
+- During reconnect: UI stays in **`reconnecting_handoff`** state -- silent for 0--20 s (matching the existing failure-model escalation), then the standard escalation kicks in (see [ADR-013](../../openspec/changes/archive/2026-10-21-adr-013-connection-status-observability-and-copy/design.md) for copy + timing).
 - `restartIce()` (in-place) is **explicitly deferred** as a later optimization once the orchestrator is stable. Reasoning: fewer Android-specific quirks, fewer Audio-Focus interruption issues when we tear down cleanly.
 - **Listen mode auto-resume:** if the user had Listen ON when the handoff started, the parent **re-enables** Listen automatically once the new session reaches `connected`, **without** an extra tap. A small toast ("Connection restored -- Listen on") acknowledges the auto-resume.
 
 ### 5. Connection status surface (cross-reference)
 
-UI/UX (ambient bar, escalation timing, plain-language copy) is delegated to [ADR-013](ADR-013-connection-status-observability-and-copy.md). This ADR fixes only the **states** the UI must render.
+UI/UX (ambient bar, escalation timing, plain-language copy) is delegated to [ADR-013](../../openspec/changes/archive/2026-10-21-adr-013-connection-status-observability-and-copy/design.md). This ADR fixes only the **states** the UI must render.
 
 ### 6. Relationship to ADR-003
 
@@ -159,20 +159,20 @@ UI/UX (ambient bar, escalation timing, plain-language copy) is delegated to [ADR
 
 ## Phase split
 
-| Item                                                                                    | Phase                                                                                                    |
-| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| ADR-012 documented, ADR-013 documented, ADR-003 precision note                          | **MVP / this sprint**                                                                                    |
-| `path-selector.ts` + unit tests                                                         | **MVP / this sprint**                                                                                    |
-| `connection-store.ts` extension: `fallbackSignalingUrls?: string[]`                     | **MVP / this sprint**                                                                                    |
-| `PeerSession` consumes path-selector for ordered URL attempts                           | **MVP / this sprint**                                                                                    |
-| Playwright E2E test: two WS instances, primary unreachable → fallback wins              | **MVP / this sprint**                                                                                    |
-| Ambient status bar component + symmetric, non-technical copy + reconnect countdown copy | **MVP / this sprint** (per [ADR-013](ADR-013-connection-status-observability-and-copy.md))               |
-| Embedded WebSocket server on Baby-Android (`GuardedSleepNativePlugin` extension)        | **Phase 2 — implemented** (Java relay + `prependSignalingUrls` / localhost WS)                           |
-| Opaque NSD discovery token (replacing `gssleep-<roomId>`)                               | **Phase 2 — implemented** (`gst-<token>`, `lanPeerResolved` includes `port` + `token`)                   |
-| `@capacitor/network` listener + handoff hysteresis state machine                        | **Phase 2 — implemented** (`subscribeNetworkHandoff`, 3 s debounce → `start({ resetBackoff: true })`)    |
-| `pc.restartIce()` optimization                                                          | **Phase 3** if metrics show audio-cut > 2 s is a real complaint                                          |
-| Slow red baby pulse animation (failure-model F-1 secondary observability)               | **Phase 2 — implemented** (`guardedsleep-slow-pulse` after ~60 s idle/failed without parent)             |
-| Captive-portal detection / out-of-home explicit prompts                                 | **Phase 2** (referenced in [`connectivity-pairing.md`](../features/connectivity-pairing.md) Out-of-Home) |
+| Item                                                                                    | Phase                                                                                                                                       |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| ADR-012 documented, ADR-013 documented, ADR-003 precision note                          | **MVP / this sprint**                                                                                                                       |
+| `path-selector.ts` + unit tests                                                         | **MVP / this sprint**                                                                                                                       |
+| `connection-store.ts` extension: `fallbackSignalingUrls?: string[]`                     | **MVP / this sprint**                                                                                                                       |
+| `PeerSession` consumes path-selector for ordered URL attempts                           | **MVP / this sprint**                                                                                                                       |
+| Playwright E2E test: two WS instances, primary unreachable → fallback wins              | **MVP / this sprint**                                                                                                                       |
+| Ambient status bar component + symmetric, non-technical copy + reconnect countdown copy | **MVP / this sprint** (per [ADR-013](../../openspec/changes/archive/2026-10-21-adr-013-connection-status-observability-and-copy/design.md)) |
+| Embedded WebSocket server on Baby-Android (`GuardedSleepNativePlugin` extension)        | **Phase 2 — implemented** (Java relay + `prependSignalingUrls` / localhost WS)                                                              |
+| Opaque NSD discovery token (replacing `gssleep-<roomId>`)                               | **Phase 2 — implemented** (`gst-<token>`, `lanPeerResolved` includes `port` + `token`)                                                      |
+| `@capacitor/network` listener + handoff hysteresis state machine                        | **Phase 2 — implemented** (`subscribeNetworkHandoff`, 3 s debounce → `start({ resetBackoff: true })`)                                       |
+| `pc.restartIce()` optimization                                                          | **Phase 3** if metrics show audio-cut > 2 s is a real complaint                                                                             |
+| Slow red baby pulse animation (failure-model F-1 secondary observability)               | **Phase 2 — implemented** (`guardedsleep-slow-pulse` after ~60 s idle/failed without parent)                                                |
+| Captive-portal detection / out-of-home explicit prompts                                 | **Phase 2** (referenced in [`connectivity-pairing.md`](../features/connectivity-pairing.md) Out-of-Home)                                    |
 
 ## Platform matrix
 

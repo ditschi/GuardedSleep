@@ -44,7 +44,7 @@ The goals of ADR-012 are fixed. During waves 1–3 the current logic stays as im
 
 `PLANNED` — target: after the rework (owner, 2026-10-21; ADR-013).
 
-Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and detailed implementation on Android and the new web client, including a UX review (ambient bar, copy, baby-side indicator, onboarding on indicator loss).
+Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and detailed implementation on Android and the new web client, including a UX review (ambient bar, copy, baby-side indicator, onboarding on indicator loss). Decided but not built yet: the network-mode banner ("Now on mobile data", "Local — no data leaves your network") with a "Show connection details" setting (ADR-013 §4, ADR-018 T2); indicator-loss training in onboarding with the same components as in reality, followed by the test alert, and a reminder once per 30 days (ADR-013 §5, ADR-018 onboarding); a quality indicator with good/medium/poor (built: only a "weak connection" chip); a user-facing diagnostics view for technical details.
 
 ## By capability
 
