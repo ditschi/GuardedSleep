@@ -32,6 +32,11 @@ setup:
       echo "Removed the stale Husky core.hooksPath ($hooks_path); lefthook replaces it."
     fi
     mise exec -- lefthook install
+    scripts/lib/machine-profile.sh
+
+# Measure cores, RAM and KVM and write .cache/machine-profile.env (AGENTS.md section 10.1). Pass --force to re-detect.
+machine-profile *args:
+    scripts/lib/machine-profile.sh {{ args }}
 
 # Format everything that is formatted automatically (Kotlin: see fmt-kotlin).
 fmt:
