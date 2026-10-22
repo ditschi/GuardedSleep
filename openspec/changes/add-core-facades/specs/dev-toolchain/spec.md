@@ -4,12 +4,16 @@
 
 ### Requirement: Binding-free core
 
-Binding attributes (UniFFI, wasm-bindgen) SHALL appear only in the façade crates `guardedsleep-ffi` and `guardedsleep-wasm`, never in `guardedsleep-core`. The single exception is `#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]` behind the non-default `tsify` feature of `guardedsleep-core`, which only `guardedsleep-wasm` enables and which SHALL NOT be in the core's default-feature graph; the core SHALL carry no other binding attribute. The web client's protocol types (`packages/core-wasm`) SHALL be generated from the core.
+Binding attributes (UniFFI, wasm-bindgen) SHALL appear only in the façade crates `guardedsleep-ffi` and `guardedsleep-wasm`, never in `guardedsleep-core`, except for the tsify derive described in the next requirement. The web client's protocol types (`packages/core-wasm`) SHALL be generated from the core.
 
 #### Scenario: UniFFI attribute in the core
 
 - **WHEN** a change adds a UniFFI attribute to `guardedsleep-core`
 - **THEN** the build or lint fails
+
+### Requirement: tsify exception in the core
+
+`guardedsleep-core` SHALL carry no binding attribute except `#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]` behind the non-default `tsify` feature, which only `guardedsleep-wasm` enables.
 
 #### Scenario: wasm-bindgen in the core's default graph
 
