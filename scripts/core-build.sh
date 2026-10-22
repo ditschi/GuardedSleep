@@ -129,7 +129,9 @@ for cmd in "${@:-test}"; do
 	wasm) run_wasm ;;
 	host) run_host ;;
 	android) run_android ;;
-	determinism) run_determinism ;;
+	# RUSTC_WRAPPER is emptied for this call only (works in the Docker and CORE_BUILD_NATIVE paths): with sccache a
+	# cache hit would make the second build a copy of the first, and the generate-twice check could never fail.
+	determinism) RUSTC_WRAPPER='' run_determinism ;;
 	swift) run_swift ;;
 	*)
 		echo "unknown subcommand: $cmd" >&2

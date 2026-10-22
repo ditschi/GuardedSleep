@@ -15,6 +15,10 @@
 # CARGO_HOME_OVERRIDE (read by core-build.sh) and GRADLE_USER_HOME, so worktrees download dependencies
 # once. Cargo's package-cache lock and Gradle's cross-process cache locks make concurrent runs safe;
 # target/ and the Gradle project cache stay per worktree. AGENTS.md section 10.1.
+# Unless GS_SCCACHE=0 or CI is set, it also mounts a shared sccache directory ($cache/sccache, capped by
+# GS_SCCACHE_SIZE, default 10G) and sets RUSTC_WRAPPER=sccache, so worktrees reuse compiled dependencies
+# (every worktree compiles at /workspace, so cache keys match). Off in CI, and core-build.sh determinism
+# empties RUSTC_WRAPPER: a cache hit would make its generate-twice check compare a build with its own copy.
 # Named build contexts: https://docs.docker.com/reference/cli/docker/buildx/build/#build-context
 # shellcheck disable=SC2034 # GS_BUILD_IMAGE, GS_DOCKER_USER_ARGS and GS_DOCKER_CACHE_ARGS are read by the scripts that source this file
 
@@ -38,4 +42,11 @@ gs_ensure_build_image() {
     -v "$cache/cargo:/cache/cargo" -v "$cache/gradle:/cache/gradle"
     -e CARGO_HOME=/cache/cargo -e CARGO_HOME_OVERRIDE=/cache/cargo -e GRADLE_USER_HOME=/cache/gradle
   )
+  if [[ "${GS_SCCACHE:-1}" != "0" && -z "${CI:-}" ]]; then
+    mkdir -p "$cache/sccache"
+    GS_DOCKER_CACHE_ARGS+=(
+      -v "$cache/sccache:/cache/sccache"
+      -e RUSTC_WRAPPER=sccache -e SCCACHE_DIR=/cache/sccache -e SCCACHE_CACHE_SIZE="${GS_SCCACHE_SIZE:-10G}"
+    )
+  fi
 }
