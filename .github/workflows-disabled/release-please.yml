@@ -50,9 +50,5 @@ jobs:
       - name: Print release outputs
         if: ${{ steps.rp.outputs.releases_created == 'true' }}
         run: |
-          echo "protocol released:          ${{ steps.rp.outputs['packages/protocol--release_created'] }}"
-          echo "protocol tag:               ${{ steps.rp.outputs['packages/protocol--tag_name'] }}"
-          echo "signaling-server released:  ${{ steps.rp.outputs['apps/signaling-server--release_created'] }}"
-          echo "signaling-server tag:       ${{ steps.rp.outputs['apps/signaling-server--tag_name'] }}"
           echo "mobile released:            ${{ steps.rp.outputs['apps/mobile--release_created'] }}"
           echo "mobile tag:                 ${{ steps.rp.outputs['apps/mobile--tag_name'] }}"

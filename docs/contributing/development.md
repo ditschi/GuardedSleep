@@ -39,7 +39,7 @@ The hook binary comes from mise. Git clients that do not load your shell profile
 
 ### Supply-chain and licence checks
 
-`just deny` runs cargo-deny (`deny.toml`, plus `deny.core.toml` for the sans-IO bans on `guardedsleep-core` and later `guardedsleep-relay`) and the dependency-count guard (`.core-dep-count`; `scripts/lib/core-dep-count.sh --bless` after a reviewed change). Both look at the all-features graph of the core. `just api-check` (part of `just lint`) diffs the binding surface of `guardedsleep-ffi` and `guardedsleep-wasm` against the committed snapshots; `just api-snapshot` regenerates them. `reuse lint` checks licence annotations (`REUSE.toml`). `just secrets` scans the full history with Betterleaks (`.betterleaks.toml`, live validation off).
+`just deny` runs cargo-deny (`deny.toml`, plus `deny.core.toml` for the sans-IO bans on `guardedsleep-core` and `guardedsleep-relay`) and the dependency-count guard (`.core-dep-count`; `scripts/lib/core-dep-count.sh --bless` after a reviewed change). Both look at the all-features graph of the core. `just api-check` (part of `just lint`) diffs the binding surface of `guardedsleep-ffi` and `guardedsleep-wasm` against the committed snapshots; `just api-snapshot` regenerates them. `reuse lint` checks licence annotations (`REUSE.toml`). `just secrets` scans the full history with Betterleaks (`.betterleaks.toml`, live validation off).
 
 ## Dev Container (recommended)
 

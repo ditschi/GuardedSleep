@@ -1,4 +1,4 @@
-//! Behaviour of the retired Node server (apps/signaling-server tests) plus admission.
+//! Behaviour of the retired Node server (its tests: `git show ae71762d:apps/signaling-server`) plus admission.
 
 use std::collections::HashMap;
 
