@@ -1,8 +1,8 @@
 import javax.inject.Inject
 
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.compose)
+    id("guardedsleep.android-application")
+    id("guardedsleep.compose")
     alias(libs.plugins.roborazzi)
 }
 
@@ -62,13 +62,9 @@ androidComponents {
 
 android {
     namespace = "org.guardedsleep.app"
-    compileSdk = 37
-
     defaultConfig {
         // ADR-018: alpha builds install next to the Capacitor app (org.guardedsleep.app).
         applicationId = "org.guardedsleep.app.alpha"
-        minSdk = 26
-        targetSdk = 36
         versionCode = 1
         versionName = "0.1.0-alpha.1"
         // Must match the ABIs scripts/core-build.sh builds; libwebrtc alone would ship more,
@@ -88,13 +84,7 @@ android {
         }
     }
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
     buildFeatures {
-        compose = true
         buildConfig = true
     }
 
@@ -109,11 +99,6 @@ android {
             )
         }
     }
-}
-
-kotlin {
-    jvmToolchain(21)
-    compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) }
 }
 
 dependencies {

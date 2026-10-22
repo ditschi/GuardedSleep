@@ -4,7 +4,7 @@ Refined 2026-10-22 from the wave-2 plan (group 2, after group 1). Repository con
 
 ## 1. Build structure
 
-- [ ] 1.1 `apps/android/build-logic` included build with convention plugins (android-application, android-library, compose, kotlin); configuration cache and build cache on in `gradle.properties`; wrapper `distributionSha256Sum`
+- [x] 1.1 `apps/android/build-logic` included build with convention plugins (android-application, android-library, compose, kotlin); configuration cache and build cache on in `gradle.properties`; wrapper `distributionSha256Sum`
 - [ ] 1.2 Modules `app` (UI + navigation), `ui-contract` (state models from `UiContract.kt`, no Android UI deps), `platform` (service, media, signaling, `media/libwebrtc`), `core-bindings` (renamed from `:core`: UniFFI output + JNI libs); only `platform` depends on `core-bindings`; manual constructor DI wiring in `app`
 - [ ] 1.3 Prove the boundary: a temporary import of a `core-bindings` type in `app` fails to compile (record the result, revert); the `MediaEngineSeamTest` and `ConformanceTest` still run in their new modules
 

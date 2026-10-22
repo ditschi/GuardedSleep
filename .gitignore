@@ -59,7 +59,7 @@ apps/e2e/tests/fixtures/*.wav
 apps/android/core/src/main/jniLibs/
 apps/android/core/src/main/kotlin/uniffi/
 apps/android/**/build/
-apps/android/.gradle/
+apps/android/**/.gradle/
 apps/android/local.properties
 
 # Generated localization bundles (tools/i18n-gen)
