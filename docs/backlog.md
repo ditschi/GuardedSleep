@@ -73,6 +73,7 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 - `UNDER DISCUSSION` Operate a project-hosted public signaling instance as the default in release builds (today: no default URL; owner, 2026-10-21: open). Needs an operator, a privacy statement and abuse handling.
 - `PLANNED` (T1) Hardened TURN profile (coturn ≥ 4.15 or eturnal), HMAC credentials with TTL ≤ 10 min issued only after the pairing proof; Caddy + signaling (+ TURN) compose bundle with a self-hosting guide; Trivy image scanning (ADR-020 §6).
 - `IDEA` Signaling rate limits beyond ADR-020 §6 (per room, per message; reverse proxy or in-process; mobile IP churn). Design first.
+- `IDEA` Refuse legacy v2 rooms on the public server (`SIGNALING_ACCEPT_V2=0`) once the last v2 client is gone: v2 room ids are not HKDF-derived and can be squatted (review of `add-rust-signaling-server`). Key IPv6 rate limits by /64 prefix instead of the /128 address.
 - `REJECTED` Signaling-free VPN mode (Tailscale/Headscale treated like LAN): cleartext signaling toward 100.64/10 is refused (ADR-021 §1); VPN works transparently through the normal relay (owner, 2026-10-21).
 
 ### audio-monitoring

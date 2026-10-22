@@ -13,9 +13,25 @@ RUN apt-get update \
 COPY rust-toolchain.toml /tmp/rust-toolchain.toml
 # Only the channel is installed here. The file itself is not copied into /app, so rustup does not pull
 # the Android, iOS and WASM targets that the workspace toolchain file lists.
-RUN CHANNEL="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' /tmp/rust-toolchain.toml)" \
+# rustup-init is downloaded for the build platform and checked against a pinned SHA-256 before it
+# runs; no piped installer script. Bump RUSTUP_VERSION and both digests together, taking the digests
+# from https://static.rust-lang.org/rustup/archive/<version>/<target>/rustup-init.sha256
+ARG TARGETARCH
+ARG RUSTUP_VERSION=1.29.2
+ARG RUSTUP_SHA256_AMD64=5be191e8c70a5007074254cb74d78dbfdd25cd5a61c27de7b8e5410122ec24f4
+ARG RUSTUP_SHA256_ARM64=a9c168dbea81a84671c6b7a5c1795cb0eb699020110d107ddfca427bd797e697
+RUN case "$TARGETARCH" in \
+		amd64) TRIPLE=x86_64-unknown-linux-gnu; SHA="$RUSTUP_SHA256_AMD64" ;; \
+		arm64) TRIPLE=aarch64-unknown-linux-gnu; SHA="$RUSTUP_SHA256_ARM64" ;; \
+		*) echo "unsupported architecture: $TARGETARCH" >&2; exit 1 ;; \
+	esac \
+	&& CHANNEL="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' /tmp/rust-toolchain.toml)" \
 	&& test -n "$CHANNEL" \
-	&& curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain "$CHANNEL" \
+	&& curl -sSfo /tmp/rustup-init "https://static.rust-lang.org/rustup/archive/${RUSTUP_VERSION}/${TRIPLE}/rustup-init" \
+	&& echo "${SHA}  /tmp/rustup-init" | sha256sum -c - \
+	&& chmod +x /tmp/rustup-init \
+	&& /tmp/rustup-init -y --profile minimal --default-toolchain "$CHANNEL" \
+	&& rm /tmp/rustup-init \
 	&& cargo install --locked cargo-chef@0.1.78 \
 	&& rm -rf /opt/cargo/registry /opt/cargo/git /tmp/rust-toolchain.toml
 WORKDIR /app

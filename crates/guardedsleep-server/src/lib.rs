@@ -223,3 +223,22 @@ pub async fn start(cfg: Config) -> io::Result<RunningServer> {
         tasks,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn only_a_missing_ipv6_loopback_is_skipped_not_a_port_conflict() {
+        assert!(ipv6_loopback_unavailable(&io::Error::from(
+            io::ErrorKind::AddrNotAvailable
+        )));
+        assert!(ipv6_loopback_unavailable(&io::Error::from_raw_os_error(97)));
+        assert!(!ipv6_loopback_unavailable(&io::Error::from(
+            io::ErrorKind::AddrInUse
+        )));
+        assert!(!ipv6_loopback_unavailable(&io::Error::from(
+            io::ErrorKind::PermissionDenied
+        )));
+    }
+}

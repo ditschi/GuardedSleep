@@ -22,11 +22,11 @@ Refined 2026-10-22 from the wave-2 plan. Most items were implemented as W2-B on 
 
 ## 4. Review fixes (2026-10-22)
 
-- [ ] 4.1 Built-in STUN per the amended requirement: answer 20-byte Binding requests, response ≤ 44 bytes and ≤ 2.2× request, per-IP rate limit, enabled by default in config and every compose file
-- [ ] 4.2 Per-client connection cap and per-connection frame rate limit in the relay (one address can no longer hold all slots)
-- [ ] 4.3 `SIGNALING_TRUST_PROXY=1` in both Traefik compose files, documented
-- [ ] 4.4 Spec deltas describe the built admission: `challenge`/`admit` messages, both admission error codes, Open mode on the public server, the exact MAC input; "Joining a room" amended for Required mode
-- [ ] 4.5 MINOR review items (IPv6 bind, stale references, broken links, no-panic lints in the server crate, verified downloads in the Dockerfile, test gaps)
+- [x] 4.1 Built-in STUN per the amended requirement: answer 20-byte Binding requests, response ≤ 44 bytes and ≤ 2.2× request, per-IP rate limit, enabled by default in config and every compose file
+- [x] 4.2 Per-client connection cap and per-connection frame rate limit in the relay (one address can no longer hold all slots)
+- [x] 4.3 `SIGNALING_TRUST_PROXY=1` in both Traefik compose files, documented
+- [x] 4.4 Spec deltas describe the built admission: `challenge`/`admit` messages, both admission error codes, Open mode on the public server, the exact MAC input; "Joining a room" amended for Required mode
+- [x] 4.5 MINOR review items (IPv6 bind, stale references, broken links, no-panic lints in the server crate, verified downloads in the Dockerfile, test gaps)
 
 ## 5. Close
 
