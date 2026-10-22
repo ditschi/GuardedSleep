@@ -1,9 +1,7 @@
 import { isLoopbackSignalingHost } from "$lib/signaling-url.js";
 
 export type DevSignalingConnectHint =
-  | { kind: "loopback" }
-  | { kind: "wss_lan"; suggestedPlainWs: string }
-  | { kind: "none" };
+  { kind: "loopback" } | { kind: "wss_lan"; suggestedPlainWs: string } | { kind: "none" };
 
 /** Dev-only troubleshooting: common LAN / native-app signaling misconfigurations. */
 export function devSignalingConnectHint(signalingUrl: string): DevSignalingConnectHint {

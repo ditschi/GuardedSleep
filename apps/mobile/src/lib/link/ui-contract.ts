@@ -35,12 +35,7 @@ export type LinkUi = {
 };
 
 export type SilenceStatus =
-  | "silent"
-  | "screen_may_light"
-  | "may_buzz"
-  | "may_ring"
-  | "unknown"
-  | "no_access";
+  "silent" | "screen_may_light" | "may_buzz" | "may_ring" | "unknown" | "no_access";
 
 export type PeerStatusUi = {
   batteryPct: number | null;

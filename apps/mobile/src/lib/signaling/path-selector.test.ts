@@ -7,9 +7,7 @@ import {
 } from "./path-selector.js";
 
 type FakeBehavior =
-  | { kind: "open"; delayMs?: number }
-  | { kind: "error"; delayMs?: number }
-  | { kind: "timeout" }; // never fires anything
+  { kind: "open"; delayMs?: number } | { kind: "error"; delayMs?: number } | { kind: "timeout" }; // never fires anything
 
 function makeFakeFactory(map: Record<string, FakeBehavior>) {
   const opened: string[] = [];
