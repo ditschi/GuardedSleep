@@ -51,7 +51,7 @@ The relay SHALL reject messages larger than 64 KiB and answer unparsable message
 
 #### Scenario: Frame flood
 
-- **WHEN** a socket sends more than 120 frames in a minute without joining, or more than 600 once joined
+- **WHEN** a socket sends frames faster than its budget allows (a burst of 120 that refills at 120 per minute before joining; 600 once joined)
 - **THEN** the relay answers `RATE_LIMITED` and closes the socket
 
 #### Scenario: Behind a reverse proxy
@@ -63,7 +63,7 @@ The relay SHALL reject messages larger than 64 KiB and answer unparsable message
 
 ### Requirement: Built-in STUN
 
-The signaling server SHALL answer STUN Binding requests only, on UDP port 3478, enabled by default; an operator MAY disable it or move its port. A response SHALL be at most 44 bytes and at most 2.2 times the size of its request, and each source address SHALL be limited by a per-IP rate limit (default 60 per minute), so the server is useless as a traffic amplifier while bare 20-byte Binding requests from browsers and libwebrtc are answered.
+The signaling server SHALL answer STUN Binding requests only, on UDP port 3478, enabled by default; an operator MAY disable it or move its port. A response SHALL be at most 44 bytes and at most 2.2 times the size of its request, and each source address SHALL be limited by a per-IP rate limit (default 60 per minute) and a global cap bounds the total answer rate, so the server is useless as a traffic amplifier while bare 20-byte Binding requests from browsers and libwebrtc are answered.
 
 #### Scenario: Browser Binding request
 
@@ -73,7 +73,7 @@ The signaling server SHALL answer STUN Binding requests only, on UDP port 3478, 
 #### Scenario: Amplification attempt
 
 - **WHEN** a client sends many small STUN requests with a spoofed source address
-- **THEN** each response is at most 2.2 times its request and at most 44 bytes, and the per-IP rate limit stops answering after a few requests
+- **THEN** each response is at most 2.2 times its request and at most 44 bytes, and once the address's budget (default 60 per minute) is spent, no further answers are sent
 
 #### Scenario: Other STUN traffic
 

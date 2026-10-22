@@ -23,4 +23,4 @@ The relay runs on the legacy Node server, the client uses public STUN by default
 
 ## Impact
 
-`crates/guardedsleep-relay`, `crates/guardedsleep-server`, `apps/signaling-server` (deleted), `docker/signaling-server`, Android `config/Policy.kt` and settings copy, `deny.core.toml` (relay graph), `docs/ci-gates.md`.
+`crates/guardedsleep-relay`, `crates/guardedsleep-server`, `apps/signaling-server` (deleted), `docker/signaling-server`, Android `config/RelayStun.kt` and settings copy, `deny.core.toml` (relay graph), `docs/ci-gates.md`.

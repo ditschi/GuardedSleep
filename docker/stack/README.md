@@ -103,15 +103,14 @@ If you **cannot load the UI at all** from the phone, check: same Wi‑Fi, use **
 
 ## Files
 
-| File                                                                                             | Role                                                                 |
-| ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
-| [compose.yaml](compose.yaml)                                                                     | **Mode A** — build both images from this repo (local development)    |
-| [.env.example](.env.example)                                                                     | Mode A defaults — ports, origins, `VITE_SIGNALING_URL`               |
-| [`scripts/stack-lan-env.sh`](../../scripts/stack-lan-env.sh)                                     | Auto-write `.env` with host LAN IP (`bash scripts/stack-lan-env.sh`) |
-| [compose.ghcr.yaml](compose.ghcr.yaml)                                                           | **Mode B** — pull pre-built images from GHCR (no repo clone needed)  |
-| [.env.ghcr.example](.env.ghcr.example)                                                           | Mode B defaults — owner, tags, origins                               |
-| [compose.traefik.yaml](compose.traefik.yaml)                                                     | **Mode C** — GHCR images behind an existing Traefik (one domain)     |
-| [traefik.env.example](traefik.env.example)                                                       | Mode C defaults — domain, Traefik network/entrypoint/resolver        |
-| [compose.web-and-signaling.traefik.example.yaml](compose.web-and-signaling.traefik.example.yaml) | Deprecated — superseded by `compose.traefik.yaml`                    |
+| File                                                         | Role                                                                 |
+| ------------------------------------------------------------ | -------------------------------------------------------------------- |
+| [compose.yaml](compose.yaml)                                 | **Mode A** — build both images from this repo (local development)    |
+| [.env.example](.env.example)                                 | Mode A defaults — ports, origins, `VITE_SIGNALING_URL`               |
+| [`scripts/stack-lan-env.sh`](../../scripts/stack-lan-env.sh) | Auto-write `.env` with host LAN IP (`bash scripts/stack-lan-env.sh`) |
+| [compose.ghcr.yaml](compose.ghcr.yaml)                       | **Mode B** — pull pre-built images from GHCR (no repo clone needed)  |
+| [.env.ghcr.example](.env.ghcr.example)                       | Mode B defaults — owner, tags, origins                               |
+| [compose.traefik.yaml](compose.traefik.yaml)                 | **Mode C** — GHCR images behind an existing Traefik (one domain)     |
+| [traefik.env.example](traefik.env.example)                   | Mode C defaults — domain, Traefik network/entrypoint/resolver        |
 
 More detail: [docs/contributing/mobile-web-docker.md](../../docs/contributing/mobile-web-docker.md). Tag strategy: [ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md).

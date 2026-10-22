@@ -11,7 +11,7 @@ Refined 2026-10-22 from the wave-2 plan. Most items were implemented as W2-B on 
 ## 2. Server
 
 - [x] 2.1 `guardedsleep-server` (axum) on the relay crate: same WebSocket path, ports and env names as the Node server, health endpoint, no IP logging
-- [x] 2.2 Built-in STUN: Binding requests only, response no larger than the request, per-IP rate limit, UDP 3478, decode without panics
+- [x] 2.2 Built-in STUN: Binding requests only, response no larger than the request (superseded by 4.1: ≤ 44 bytes and ≤ 2.2×), per-IP rate limit, UDP 3478, decode without panics
 - [x] 2.3 Distroless, non-root, read-only image (cargo-chef, `--healthcheck` probe); compose files; image workflow builds the Rust image natively for amd64 and arm64
 - [x] 2.4 Parity: every Node relay test ported to Rust; `just dev`, Playwright E2E and the PoC gate scripts run against the Rust server; smoke test replaces `smoke-relay.ts`
 - [x] 2.5 Delete `apps/signaling-server` and `packages/protocol` (moved here from `add-core-facades`); `apps/mobile` conformance test uses the generated types
@@ -26,7 +26,9 @@ Refined 2026-10-22 from the wave-2 plan. Most items were implemented as W2-B on 
 - [x] 4.2 Per-client connection cap and per-connection frame rate limit in the relay (one address can no longer hold all slots)
 - [x] 4.3 `SIGNALING_TRUST_PROXY=1` in both Traefik compose files, documented
 - [x] 4.4 Spec deltas describe the built admission: `challenge`/`admit` messages, both admission error codes, Open mode on the public server, the exact MAC input; "Joining a room" amended for Required mode
-- [x] 4.5 MINOR review items (IPv6 bind, stale references, broken links, no-panic lints in the server crate, verified downloads in the Dockerfile, test gaps)
+- [x] 4.5 MINOR review items (IPv6 loopback UI bind, stale references, broken links, no-panic lints in the server crate, verified downloads in the Dockerfile, test gaps)
+
+- [x] 4.6 Remove the two deprecated Traefik example compose files (critical review N-1: no trusted proxy, no STUN port, not read-only)
 
 ## 5. Close
 
