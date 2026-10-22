@@ -267,7 +267,7 @@ audit:
 release-preview:
     npx --yes release-please release-pr --token=$GH_TOKEN --repo-url=$GITHUB_REPOSITORY --config-file=release-please-config.json --manifest-file=.release-please-manifest.json --dry-run --debug
 
-# List leftover dev servers, stuck agent polls and old project containers; --stop ends them (AGENTS.md section 10.2).
+# List leftover dev servers, stuck agent polls and old project containers; --stop ends them; --worktrees / --prune-worktrees list / remove finished agent worktrees (AGENTS.md section 10.2).
 reap *args:
     scripts/lib/reap.sh {{ args }}
 
