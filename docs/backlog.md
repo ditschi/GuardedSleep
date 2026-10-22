@@ -9,6 +9,10 @@ Everything that is not current behaviour: decided work not started yet, ideas, d
 
 ## Planned
 
+### libwebrtc CVE decision by 2026-11-19
+
+`PLANNED` (deadline 2026-11-19, owner: project owner) Chrome 156 (2026-10-20) fixed a critical WebRTC memory-corruption bug; `io.github.webrtc-sdk:android` 150.7871.01 predates it (found in the `swap-webrtc-sdk` CVE check; CVE id and component still unverified, only secondary reports). Per the CVE-based SLA (`swap-webrtc-sdk` design): confirm the CVE and whether the audio/DTLS/SCTP/ICE/SDP paths are affected; if the vendor has not shipped a patched build 30 days after the Chrome fix, propose a change that switches vendor, patch-builds libwebrtc, or disables the affected feature.
+
 ### Security audit before alpha
 
 `PLANNED` — target: before the first `android-v*` alpha tag (owner, 2026-10-21; ADR-004 amendment).
