@@ -11,7 +11,7 @@ Refined 2026-10-22 from the wave-2 plan. Items 1.1, 1.3 (snapshots), 1.4 and 1.6
 ## 2. Snapshots and determinism
 
 - [x] 2.1 Commit `cargo public-api` snapshots for `ffi` and `wasm` and the generated `.d.ts`; `just lint` fails on a diff (`scripts/lib/api-snapshot.sh`, pinned nightly in `tools/nightly/`)
-- [ ] 2.2 Generate-twice check: build the Kotlin bindings and the wasm package twice, compare hashes, fail on a difference (`just lint`, CI)
+- [x] 2.2 Generate-twice check: build the Kotlin bindings and the wasm package twice, compare hashes, fail on a difference (`just lint`, CI)
 
 ## 3. Bindings and platforms
 

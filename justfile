@@ -72,8 +72,8 @@ lint-workflows:
     actionlint
     zizmor --offline --min-severity medium .github
 
-# Code: Rust format and clippy (all features), iOS check, supply chain, API snapshots, i18n, UI literals, types.
-lint-code: _js-deps _js-gen check-ios
+# Code: Rust format and clippy (all features), iOS check, supply chain, API snapshots, generate-twice, i18n, UI literals, types.
+lint-code: _js-deps _js-gen check-ios check-determinism
     scripts/cargo.sh fmt --all -- --check
     taplo fmt --check
     scripts/cspell-i18n.sh
@@ -87,6 +87,15 @@ lint-code: _js-deps _js-gen check-ios
 # The core and the UniFFI facade must stay buildable for iOS (ADR-020 §3); rust-toolchain.toml installs the target.
 check-ios:
     scripts/cargo.sh check -p guardedsleep-core -p guardedsleep-ffi --target aarch64-apple-ios
+
+# Generate-twice check: the Kotlin bindings (from the host ffi library) and the wasm package are generated
+# twice from one build and must hash identically. SKIPPED without Docker.
+[script("bash")]
+check-determinism:
+    set -euo pipefail
+    source scripts/lib/require.sh
+    require check-determinism docker
+    scripts/core-build.sh determinism
 
 # API-surface snapshots of the binding facades (cargo public-api on the pinned nightly in tools/nightly, plus
 # the generated .d.ts). Fails on a diff; `just api-snapshot` regenerates. SKIPPED without Docker.

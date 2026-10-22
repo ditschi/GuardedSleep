@@ -5,6 +5,7 @@
 #   scripts/core-build.sh wasm            # target/wasm-pkg/node + target/wasm-pkg/web
 #   scripts/core-build.sh host            # host library + Kotlin bindings (what the Android JVM unit tests load; no ABIs)
 #   scripts/core-build.sh android         # host + jniLibs (arm64-v8a, x86_64) for apps/android
+#   scripts/core-build.sh determinism     # generate the Kotlin bindings and the wasm package twice, fail on differing hashes
 # Inside CI or the image itself, set CORE_BUILD_NATIVE=1 to run without Docker.
 set -euo pipefail
 
@@ -35,10 +36,14 @@ run_test() {
 	cargo test --workspace
 }
 
-run_wasm() {
+ensure_wasm_bindgen() {
 	if [[ "$(wasm-bindgen --version 2>/dev/null | awk '{print $2}')" != "$WASM_BINDGEN_VERSION" ]]; then
 		cargo install --locked wasm-bindgen-cli --version "$WASM_BINDGEN_VERSION"
 	fi
+}
+
+run_wasm() {
+	ensure_wasm_bindgen
 	cargo build -p guardedsleep-wasm --release --target wasm32-unknown-unknown
 	local wasm_file=target/wasm32-unknown-unknown/release/guardedsleep_wasm.wasm
 	wasm-bindgen --target nodejs --out-dir target/wasm-pkg/node "$wasm_file"
@@ -71,12 +76,44 @@ run_android() {
 	ls -l "$jni"/*/libguardedsleep_ffi.so
 }
 
+# Generate-twice check (ADR-020 section 3): the generated Kotlin bindings and the wasm package must be
+# byte-identical across two generations from the same build. Only the generators run twice; the two builds
+# are reused (cargo is incremental, so a prior `host` / `wasm` run makes this fast).
+run_determinism() {
+	local out=target/determinism wasm_file=target/wasm32-unknown-unknown/release/guardedsleep_wasm.wasm
+	ensure_wasm_bindgen
+	cargo build -p guardedsleep-ffi
+	cargo build -p guardedsleep-wasm --release --target wasm32-unknown-unknown
+	rm -rf "$out"
+	for i in 1 2; do
+		cargo run -q -p uniffi-bindgen -- generate --library target/debug/libguardedsleep_ffi.so \
+			--language kotlin --out-dir "$out/kotlin-$i" --no-format
+		wasm-bindgen --target nodejs --out-dir "$out/wasm-node-$i" "$wasm_file"
+		wasm-bindgen --target web --out-dir "$out/wasm-web-$i" "$wasm_file"
+	done
+	local status=0 kind
+	for kind in kotlin wasm-node wasm-web; do
+		local h1 h2
+		h1="$(cd "$out/$kind-1" && find . -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum)"
+		h2="$(cd "$out/$kind-2" && find . -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum)"
+		if [[ "$h1" != "$h2" ]]; then
+			echo "determinism: $kind output differs between two generations" >&2
+			diff -r "$out/$kind-1" "$out/$kind-2" | head -20 >&2 || true
+			status=1
+		else
+			echo "determinism: $kind ${h1%% *} (identical)"
+		fi
+	done
+	return "$status"
+}
+
 for cmd in "${@:-test}"; do
 	case "$cmd" in
 	test) run_test ;;
 	wasm) run_wasm ;;
 	host) run_host ;;
 	android) run_android ;;
+	determinism) run_determinism ;;
 	*)
 		echo "unknown subcommand: $cmd" >&2
 		exit 2
