@@ -93,7 +93,7 @@ The alpha uses internet signaling for all pairs. Offline Android ↔ Android and
 
 ### Offline LAN
 
-- **A: Android ↔ Android only** (team recommendation). Pros: smallest scope. Cons: excludes the laptop baby unit, which [ADR-019](ADR-019-language-repository-and-client-policy.md) made a supported product role.
+- **A: Android ↔ Android only** (team recommendation). Pros: smallest scope. Cons: excludes the laptop baby unit, which [ADR-019](../../openspec/changes/archive/2026-10-20-adr-019-language-repository-and-client-policy/design.md) made a supported product role.
 - **B: Android ↔ Android plus a local PC mode (CHOSEN by the owner).** Pros: laptops work offline without certificate warnings, and the same binary serves self-hosters. Cons: the PC user must install and run a local app.
 - **C: HTTPS web client ↔ phone listener with a self-signed certificate.** REJECTED: certificate warnings break the trust model.
 - **D: Chrome Local Network Access.** IDEA: Chromium only, WebSockets not yet covered.

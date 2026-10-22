@@ -4,7 +4,7 @@
 - Date: 2026-04-15
 - Deciders: Product owner (user), coordinated design
 
-> **Partially superseded (2026-10-20):** the Capacitor/WebView PoC mechanism → the native PoC gate in [ADR-015](../../../../docs/decisions/ADR-015-native-clients-with-shared-rust-core.md) and [ADR-020](../../../../docs/decisions/ADR-020-toolchain-and-development-setup.md) (Capacitor shell removed in wave 1). Scope, App-Lock and authentication decisions stand.
+> **Partially superseded (2026-10-20):** the Capacitor/WebView PoC mechanism → the native PoC gate in [ADR-015](../2026-10-21-adr-015-native-clients-with-shared-rust-core/design.md) and [ADR-020](../../../../docs/decisions/ADR-020-toolchain-and-development-setup.md) (Capacitor shell removed in wave 1). Scope, App-Lock and authentication decisions stand.
 
 ## Context
 

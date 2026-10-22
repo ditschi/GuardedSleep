@@ -3,7 +3,7 @@
 - Status: DECIDED
 - Date: 2026-05-13
 - Deciders: User decision after option analysis (Technical Architect + Critical Reviewer perspectives synthesized)
-- Related: [ADR-002](../../../../docs/decisions/ADR-002-client-platform-and-repository-structure.md) (signaling stack), [ADR-005](../2026-04-15-adr-005-parent-alerts-product-naming-and-distribution/design.md) (distribution), [ADR-006](../2026-05-13-adr-006-release-and-changelog-automation/design.md) (release automation)
+- Related: [ADR-002](../2026-04-15-adr-002-client-platform-and-repository-structure/design.md) (signaling stack), [ADR-005](../2026-04-15-adr-005-parent-alerts-product-naming-and-distribution/design.md) (distribution), [ADR-006](../2026-05-13-adr-006-release-and-changelog-automation/design.md) (release automation)
 
 > **Partially superseded (2026-10-20):** the QEMU-emulated arm64 build → native amd64 and arm64 runners merged into one manifest, no QEMU ([ADR-020](../../../../docs/decisions/ADR-020-toolchain-and-development-setup.md) §6); the signaling image is the distroless Rust axum image that can also serve the static web UI; the `apps/mobile` nginx web image is replaced by the `apps/web` static build. Tag scheme and `:latest`/`:dev` semantics stand, but `:latest` depends on the T1 Release Please setup ([ADR-020](../../../../docs/decisions/ADR-020-toolchain-and-development-setup.md) §10).
 

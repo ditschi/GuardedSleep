@@ -1,10 +1,10 @@
 # ADR-002: Client Platform, UI Stack, and Repository Structure
 
-- Status: DECIDED — partly SUPERSEDED: language, repository-layout and settings-storage rows by [ADR-019](ADR-019-language-repository-and-client-policy.md) (2026-10-20); client platform under supersession by [ADR-015](ADR-015-native-clients-with-shared-rust-core.md) (PROPOSED). Do not extend the Capacitor path.
+- Status: DECIDED — partly SUPERSEDED: language, repository-layout and settings-storage rows by [ADR-019](../2026-10-20-adr-019-language-repository-and-client-policy/design.md) (2026-10-20); client platform under supersession by [ADR-015](../2026-10-21-adr-015-native-clients-with-shared-rust-core/design.md) (PROPOSED). Do not extend the Capacitor path.
 - Date: 2026-04-15
 - Deciders: Technical direction + user acceptance of stack
 
-> **Further superseded (2026-10-20):** the web framework row (SvelteKit → Vite + Svelte 5 + vite-plugin-pwa, `apps/web`), the package-manager/tooling rows and the signaling-server row (Node `ws` → Rust axum, now) → [ADR-020](ADR-020-toolchain-and-development-setup.md) §5–§6. The Capacitor shell and Capacitor Preferences are legacy; offline-LAN listener → [ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md).
+> **Further superseded (2026-10-20):** the web framework row (SvelteKit → Vite + Svelte 5 + vite-plugin-pwa, `apps/web`), the package-manager/tooling rows and the signaling-server row (Node `ws` → Rust axum, now) → [ADR-020](../../../../docs/decisions/ADR-020-toolchain-and-development-setup.md) §5–§6. The Capacitor shell and Capacitor Preferences are legacy; offline-LAN listener → [ADR-021](../../../../docs/decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md).
 
 ## Context
 
@@ -33,7 +33,7 @@ We need a maintainable, contributor-friendly stack for **GuardedSleep – Privac
 
 **Architecture:** `lib/core/` = framework-agnostic TypeScript (WebRTC, audio, crypto, protocol); `lib/platform/` = Capacitor/browser; UI = Svelte.
 
-Details: see [sw-architecture.md](../technical/sw-architecture.md).
+Details: see [sw-architecture.md](../../../../docs/technical/sw-architecture.md).
 
 ## Consequences
 

@@ -1,6 +1,6 @@
 # GuardedSleep trademark policy
 
-> STATUS: DECIDED — companion to [ADR-014](../decisions/ADR-014-open-source-license-agpl-and-trademark.md).
+> STATUS: DECIDED — companion to [ADR-014](../../openspec/changes/archive/2026-07-07-adr-014-open-source-license-agpl-and-trademark/design.md).
 
 The software in this repository is licensed under the **GNU Affero General Public License v3.0 or later** ([`LICENSE`](../../LICENSE)). The license grants broad rights to use, modify, and redistribute the **code**, subject to AGPL conditions (including source availability for distributed derivatives and for network-facing AGPL-covered services you modify).
 

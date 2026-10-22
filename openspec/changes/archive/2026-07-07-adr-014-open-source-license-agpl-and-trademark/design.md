@@ -4,7 +4,7 @@
 - Date: 2026-07-07
 - Deciders: Product owner (user)
 
-> **Partially superseded (2026-10-20):** goal 3 and the package names in the Decision section. F-Droid main repository is `DEFERRED` ([ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md) §3); packages `@guardedsleep/protocol` and `@guardedsleep/signaling-server` are replaced by Rust crates ([ADR-020](ADR-020-toolchain-and-development-setup.md) §5–§6). The AGPL-3.0-or-later license and trademark policy are unchanged.
+> **Partially superseded (2026-10-20):** goal 3 and the package names in the Decision section. F-Droid main repository is `DEFERRED` ([ADR-021](../../../../docs/decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §3); packages `@guardedsleep/protocol` and `@guardedsleep/signaling-server` are replaced by Rust crates ([ADR-020](../../../../docs/decisions/ADR-020-toolchain-and-development-setup.md) §5–§6). The AGPL-3.0-or-later license and trademark policy are unchanged.
 
 ## Context
 
@@ -43,7 +43,7 @@ A **non-commercial (NC)** license would forbid many commercial uses outright but
 Adopt **Option C**:
 
 1. **License:** [GNU Affero General Public License v3.0 or later](https://www.gnu.org/licenses/agpl-3.0.html) for the entire monorepo (`LICENSE` at repository root applies to `@guardedsleep/mobile`, `@guardedsleep/signaling-server`, `@guardedsleep/protocol` (superseded, see ADR-020 §5), Docker images built from this source, and documentation where copyright applies).
-2. **Trademark:** Publish [`docs/legal/trademark.md`](../legal/trademark.md) — AGPL does not grant use of the **GuardedSleep** product name or official branding for third-party store listings; forks must use distinct naming.
+2. **Trademark:** Publish [`docs/legal/trademark.md`](../../../../docs/legal/trademark.md) — AGPL does not grant use of the **GuardedSleep** product name or official branding for third-party store listings; forks must use distinct naming.
 
 **Clarification (product owner intent):** Operating **signaling infrastructure** (even commercially) is acceptable. Shipping a **derivative baby-monitor app** as a proprietary closed-source product is the outcome we want to prevent — AGPL requires source for distributed derivatives; trademark policy reduces passing off as the official app.
 

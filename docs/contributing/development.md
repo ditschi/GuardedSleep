@@ -193,4 +193,4 @@ Conventional Commits are checked on the **PR title** in CI (squash merges); ther
 
 ## Building and testing apps
 
-Application packages under `apps/` each document their `pnpm` scripts (build, test). **Browser E2E** for the mobile web client lives in `apps/e2e` ([ADR-007](../decisions/ADR-007-browser-e2e-test-strategy.md), `just e2e`). Other checks that have no recipe of their own: `pnpm run audit` (dependency advisories, `--audit-level=high`), `pnpm --filter @guardedsleep/mobile check` (`svelte-check`).
+Application packages under `apps/` each document their `pnpm` scripts (build, test). **Browser E2E** for the mobile web client lives in `apps/e2e` ([ADR-007](../../openspec/changes/archive/2026-05-13-adr-007-browser-e2e-test-strategy/design.md), `just e2e`). Other checks that have no recipe of their own: `pnpm run audit` (dependency advisories, `--audit-level=high`), `pnpm --filter @guardedsleep/mobile check` (`svelte-check`).

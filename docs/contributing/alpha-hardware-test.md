@@ -1,6 +1,6 @@
 # Alpha hardware test plan
 
-`STATUS: UNDER DISCUSSION` — companion to [ADR-018](../decisions/ADR-018-alpha-milestone-scope-and-trust-features.md) §4/§5 and [ADR-016](../decisions/ADR-016-test-strategy-local-virtual-physical.md) Stage 3. Results are recorded per device as a local `gs-device-report/1` ([test-schemas.md](../technical/test-schemas.md) §3); nothing is uploaded.
+`STATUS: UNDER DISCUSSION` — companion to [ADR-018](../decisions/ADR-018-alpha-milestone-scope-and-trust-features.md) §4/§5 and [ADR-016](../../openspec/changes/archive/2026-10-21-adr-016-test-strategy-local-virtual-physical/design.md) Stage 3. Results are recorded per device as a local `gs-device-report/1` ([test-schemas.md](../technical/test-schemas.md) §3); nothing is uploaded.
 
 ## Tester briefing (read first — conditions from the Critical Review 2026-10-20)
 

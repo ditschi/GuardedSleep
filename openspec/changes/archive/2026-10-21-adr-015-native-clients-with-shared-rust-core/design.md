@@ -4,10 +4,10 @@
 - Date: 2026-10-19
 - Deciders: Project owner (pending), Technical Architect, Security/Privacy Architect, UX, Product Owner, Critical Reviewer (perspectives applied by agent)
 - Supersedes: ADR-002 (client platform and signaling server stack) — **only once this ADR is DECIDED** and the PoC gate below passes
-- Related: [ADR-016](ADR-016-test-strategy-local-virtual-physical.md) (test strategy; owns all test details, this ADR keeps the PoC gate). **ADR-015 and ADR-016 are decided together.**
+- Related: [ADR-016](../2026-10-21-adr-016-test-strategy-local-virtual-physical/design.md) (test strategy; owns all test details, this ADR keeps the PoC gate). **ADR-015 and ADR-016 are decided together.**
 - Owner decisions 2026-10-19: English, German, French and Spanish are officially supported from Phase 1 (see Localization; superseded, see ADR-021 §2: about 20 AI-translated locales); link recovery is designed first and then **gated in the PoC as AC-10** (automatic reconnect after Wi-Fi loss/network change, on both roles; see Link recovery)
 
-> **Partially superseded (2026-10-20):** the web row (SvelteKit → Vite + Svelte 5), the signaling row (Node stays until parity → Rust axum now), the WebRTC vendor (`stream-webrtc-android` → `io.github.webrtc-sdk:android` behind a `MediaEngine`) and the four-locale owner decision → [ADR-020](ADR-020-toolchain-and-development-setup.md) §4–§6 and [ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md) §2. Status stays PROPOSED until its gate passes.
+> **Partially superseded (2026-10-20):** the web row (SvelteKit → Vite + Svelte 5), the signaling row (Node stays until parity → Rust axum now), the WebRTC vendor (`stream-webrtc-android` → `io.github.webrtc-sdk:android` behind a `MediaEngine`) and the four-locale owner decision → [ADR-020](../../../../docs/decisions/ADR-020-toolchain-and-development-setup.md) §4–§6 and [ADR-021](../../../../docs/decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §2. Status stays PROPOSED until its gate passes.
 
 ## Context
 
@@ -70,7 +70,7 @@ Rationale: the UI is small (~7 screens) and highly platform-specific, so native 
 | Web                 | SvelteKit (superseded, see ADR-020 §5: Vite + Svelte 5) (existing UI becomes the web client) + core via WASM + browser WebRTC                                                                                                          |
 | Signaling server    | Rust (`axum` + `tokio-tungstenite`), sharing the protocol crate. Node implementation stays until parity is proven (superseded, see ADR-020 §6: Rust server now, Node deleted).                                                         |
 | Localization        | One platform-neutral catalogue (`locales/`), generated into native resources per target; the core emits message keys, never prose (see "Localization" below)                                                                           |
-| Tests               | Local → virtual → physical, device-agnostic physical runner; see [ADR-016](ADR-016-test-strategy-local-virtual-physical.md)                                                                                                            |
+| Tests               | Local → virtual → physical, device-agnostic physical runner; see [ADR-016](../2026-10-21-adr-016-test-strategy-local-virtual-physical/design.md)                                                                                       |
 
 ### Invariant: signaling server deployment
 
@@ -91,11 +91,11 @@ Regardless of implementation language, the signaling server keeps its current de
 - **Fallback policy:** at runtime, missing non-alert strings may fall back to English; for **alert and connection-loss keys, CI fails** if any supported locale lacks the key.
 - **Quality gates (all in CI):** key and placeholder parity of every locale against `en` (the current `parity.test.ts` logic moves into the generator check), and **plural-category completeness per locale according to CLDR** (not `en`'s categories: e.g. French and Spanish use `many` where English does not); English `typos` and native-dictionary CSpell as today; a generated **pseudo-locale** (accented, ~40 % longer) for overflow screenshots and for spotting hard-coded strings; a lint rule that forbids string literals in UI code (Android Lint `HardcodedText` is not assumed to cover Compose `Text("…")`; Detekt or a custom lint rule is named in the PoC; SwiftLint custom rule for iOS). Screenshot tests run in the pseudo-locale, at 200 % font scale and at narrow width.
 - **Translator workflow:** plain JSON stays compatible with hosted translation tools (`STATUS: IDEA`, not decided here).
-- **Tests do not select UI by copy:** UI elements carry stable IDs (see [ADR-016](ADR-016-test-strategy-local-virtual-physical.md)).
+- **Tests do not select UI by copy:** UI elements carry stable IDs (see [ADR-016](../2026-10-21-adr-016-test-strategy-local-virtual-physical/design.md)).
 
 ### Test strategy
 
-Defined in [ADR-016](ADR-016-test-strategy-local-virtual-physical.md). In short:
+Defined in [ADR-016](../2026-10-21-adr-016-test-strategy-local-virtual-physical/design.md). In short:
 
 1. **Local first:** the sans-IO core is the main test target — unit, property and fuzz tests, a deterministic two-peer system simulation with fault injection, scenario traces replayed by every binding (Kotlin, Swift, WASM). A device-side trace recorder is deferred (ADR-016 §9).
 2. **Virtual second:** emulator matrix across API levels, an OEM-chaos `adb` set, Maestro flows by stable IDs, and the web client as interop peer and media harness (ADR-007, narrowed).
@@ -114,7 +114,7 @@ Scenarios the design must cover (minimum): Wi-Fi off/on on the baby unit; Wi-Fi 
 
 Scope: Rust core (pairing state machine + session/heartbeat) → UniFFI → minimal Compose app (baby + parent roles) → native libwebrtc audio, talking to the existing signaling server and to the existing Svelte web client.
 
-The PoC passes when **all** of the following hold in CI on two Android emulators (API 34+, `x86_64`), orchestrated by a shell script around Maestro. The emulators sit behind separate NATs, so the test stack connects them through a TURN relay (coturn) unless the emulator's virtual Wi-Fi link proves sufficient. The wider API-level matrix and the long soak belong to [ADR-016](ADR-016-test-strategy-local-virtual-physical.md), not to this gate.
+The PoC passes when **all** of the following hold in CI on two Android emulators (API 34+, `x86_64`), orchestrated by a shell script around Maestro. The emulators sit behind separate NATs, so the test stack connects them through a TURN relay (coturn) unless the emulator's virtual Wi-Fi link proves sufficient. The wider API-level matrix and the long soak belong to [ADR-016](../2026-10-21-adr-016-test-strategy-local-virtual-physical/design.md), not to this gate.
 
 | ID    | Criterion                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

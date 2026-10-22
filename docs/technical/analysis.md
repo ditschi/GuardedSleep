@@ -2,13 +2,13 @@
 
 This document records the technical analysis that informed the architecture. **Authoritative MVP decisions:** [Architecture Decision Records](../decisions/README.md). If this document and an ADR disagree, **the ADR wins**.
 
-> **Partially superseded (2026-10-20):** the platform analysis recommended the Hybrid Web App + Capacitor; that was replaced by native clients on a shared Rust core ([ADR-015](../decisions/ADR-015-native-clients-with-shared-rust-core.md), [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md)). Distribution wording on F-Droid is superseded by [ADR-021](../decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §3 (Play and GitHub APK at alpha, IzzyOnDroid at beta, F-Droid main repository `DEFERRED`). The Capacitor sections stay as decision history.
+> **Partially superseded (2026-10-20):** the platform analysis recommended the Hybrid Web App + Capacitor; that was replaced by native clients on a shared Rust core ([ADR-015](../../openspec/changes/archive/2026-10-21-adr-015-native-clients-with-shared-rust-core/design.md), [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md)). Distribution wording on F-Droid is superseded by [ADR-021](../decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §3 (Play and GitHub APK at alpha, IzzyOnDroid at beta, F-Droid main repository `DEFERRED`). The Capacitor sections stay as decision history.
 
 ## Analysis Topics
 
 | #   | Topic                            | Status                   | ADR                                                                                                                  |
 | --- | -------------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| 1   | App Platform                     | DECIDED                  | [ADR-002](../decisions/ADR-002-client-platform-and-repository-structure.md)                                          |
+| 1   | App Platform                     | DECIDED                  | [ADR-002](../../openspec/changes/archive/2026-04-15-adr-002-client-platform-and-repository-structure/design.md)      |
 | 2   | Communication Architecture       | DECIDED                  | [ADR-003](../decisions/ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md)                                      |
 | 3   | Server Requirements              | DECIDED                  | [ADR-003](../decisions/ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md)                                      |
 | 4   | Encryption Approach              | DECIDED                  | [ADR-004](../../openspec/changes/archive/2026-04-15-adr-004-encryption-transport-and-key-storage/design.md)          |
@@ -20,7 +20,7 @@ This document records the technical analysis that informed the architecture. **A
 
 ## 1. App Platform
 
-> STATUS: DECIDED -- See [ADR-002](../decisions/ADR-002-client-platform-and-repository-structure.md).
+> STATUS: DECIDED -- See [ADR-002](../../openspec/changes/archive/2026-04-15-adr-002-client-platform-and-repository-structure/design.md).
 
 **Question**: What technology do we use to build the app?
 

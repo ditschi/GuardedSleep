@@ -23,7 +23,7 @@ The user interface must be simple, reliable, and usable under stress (tired pare
 ## Open Questions
 
 - ~~Should night mode be automatic or manual toggle?~~ **RESOLVED**: Default dark, manual toggle + optional auto-switch in settings
-- ~~Which i18n framework to use?~~ **RESOLVED (proposed)**: single platform-neutral catalogue with generated per-platform resources ([ADR-015](../decisions/ADR-015-native-clients-with-shared-rust-core.md))
+- ~~Which i18n framework to use?~~ **RESOLVED (proposed)**: single platform-neutral catalogue with generated per-platform resources ([ADR-015](../../openspec/changes/archive/2026-10-21-adr-015-native-clients-with-shared-rust-core/design.md))
 - ~~How many languages for the initial release?~~ **RESOLVED, superseded**: English, German, French, Spanish (owner decision 2026-10-19) → about 20 AI-translated locales (ADR-021 §2)
 - Which devices actually have accessible temperature/humidity sensors?
 - Phone vs. tablet layout: responsive design approach? Breakpoints?

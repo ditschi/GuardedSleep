@@ -1,6 +1,6 @@
 # Test data schemas: traces and device reports
 
-`STATUS: UNDER DISCUSSION` — sketch accompanying [ADR-016](../decisions/ADR-016-test-strategy-local-virtual-physical.md) (PROPOSED). Field names and versions may change until ADR-016 is DECIDED. Nothing here is implemented yet.
+`STATUS: UNDER DISCUSSION` — sketch accompanying [ADR-016](../../openspec/changes/archive/2026-10-21-adr-016-test-strategy-local-virtual-physical/design.md) (PROPOSED). Field names and versions may change until ADR-016 is DECIDED. Nothing here is implemented yet.
 
 Two artefacts tie the test stages together:
 

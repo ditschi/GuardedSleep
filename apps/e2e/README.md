@@ -67,7 +67,7 @@ See [docker/e2e-local](../../docker/e2e-local/README.md) and [docker/android-emu
 
 ## Dev-only hooks
 
-The mobile app exposes `window.__guardedsleep_test` **only** when `import.meta.env.DEV` is true (Vite dev server). Production static builds must not contain this surface — see [ADR-007](../../docs/decisions/ADR-007-browser-e2e-test-strategy.md). On the **parent** route: `getNoiseAlertCount` / `resetNoiseAlertCount`, and `sampleRemoteAudioRms()` for inbound WebRTC RMS sampling. On the **baby** route: `getInviteJson()` (the pairing code) and `injectAudioLevel()`.
+The mobile app exposes `window.__guardedsleep_test` **only** when `import.meta.env.DEV` is true (Vite dev server). Production static builds must not contain this surface — see [ADR-007](../../openspec/changes/archive/2026-05-13-adr-007-browser-e2e-test-strategy/design.md). On the **parent** route: `getNoiseAlertCount` / `resetNoiseAlertCount`, and `sampleRemoteAudioRms()` for inbound WebRTC RMS sampling. On the **baby** route: `getInviteJson()` (the pairing code) and `injectAudioLevel()`.
 
 ## Privacy
 

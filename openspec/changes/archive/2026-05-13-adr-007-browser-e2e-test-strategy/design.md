@@ -4,7 +4,7 @@
 - Date: 2026-05-13
 - Deciders: Technical Architect, Security/Privacy Architect, Critical Reviewer (synchronous review in implementation PR)
 
-> **Partially superseded (2026-10-20):** the hybrid (Capacitor) part → [ADR-020](ADR-020-toolchain-and-development-setup.md) (hybrid E2E removed in wave 1); browser E2E scope narrowed per [ADR-016](ADR-016-test-strategy-local-virtual-physical.md). In the web rebuild Playwright adds fake media devices, `@axe-core/playwright` and an overflow check ([ADR-020](ADR-020-toolchain-and-development-setup.md) §5).
+> **Partially superseded (2026-10-20):** the hybrid (Capacitor) part → [ADR-020](../../../../docs/decisions/ADR-020-toolchain-and-development-setup.md) (hybrid E2E removed in wave 1); browser E2E scope narrowed per [ADR-016](../2026-10-21-adr-016-test-strategy-local-virtual-physical/design.md). In the web rebuild Playwright adds fake media devices, `@axe-core/playwright` and an overflow check ([ADR-020](../../../../docs/decisions/ADR-020-toolchain-and-development-setup.md) §5).
 
 ## Context
 
