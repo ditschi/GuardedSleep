@@ -45,6 +45,10 @@ Medium and heavy recipes (`just lint-code`, `just test`, builds, `just e2e`, `ju
 GS_SLOT_WAIT=60 GS_RUN_TIMEOUT=15m just test
 ```
 
+### Compiler cache
+
+Local container builds (`scripts/cargo.sh`, `scripts/core-build.sh`, `scripts/gradle.sh`) use sccache with a shared cache in `~/.cache/guardedsleep/sccache` (`GS_SHARED_CACHE` moves it). Every worktree compiles at `/workspace`, so a new worktree reuses the dependencies another one already compiled; workspace crates still compile. `GS_SCCACHE_SIZE` caps it (default `10G`), `GS_SCCACHE=0` turns it off. CI and the generate-twice check run without it. Host cargo is not wrapped.
+
 ### Supply-chain and licence checks
 
 `just deny` runs cargo-deny (`deny.toml`, plus `deny.core.toml` for the sans-IO bans on `guardedsleep-core` and `guardedsleep-relay`) and the dependency-count guard (`.core-dep-count`; `scripts/lib/core-dep-count.sh --bless` after a reviewed change). Both look at the all-features graph of the core. `just api-check` (part of `just lint`) diffs the binding surface of `guardedsleep-ffi` and `guardedsleep-wasm` against the committed snapshots; `just api-snapshot` regenerates them. `reuse lint` checks licence annotations (`REUSE.toml`). `just secrets` scans the full history with Betterleaks (`.betterleaks.toml`, live validation off).
