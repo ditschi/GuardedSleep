@@ -4,7 +4,7 @@
 - Date: 2026-10-19
 - Deciders: Project owner, Technical Architect, Security/Privacy Architect, UX, Critical Reviewer (reviewed by four independent review agents, see "Critical review record")
 - Depends on: [ADR-015](ADR-015-native-clients-with-shared-rust-core.md) (shared Rust core, native clients). ADR-015 delegates test details to this ADR, so **both must be decided together**.
-- Amends / narrows (only once ADR-015 and this ADR are DECIDED, via a status note on each, never by silent edit): [ADR-001](ADR-001-mvp-scope-poc-gate-and-authentication.md) (WebView/Capacitor PoC gate and the "two OEMs" rule), [ADR-007](ADR-007-browser-e2e-test-strategy.md) (scope narrowed to the web client). Replaces the test sections of ADR-015 by a pointer.
+- Amends / narrows (only once ADR-015 and this ADR are DECIDED, via a status note on each, never by silent edit): [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md) (WebView/Capacitor PoC gate and the "two OEMs" rule), [ADR-007](ADR-007-browser-e2e-test-strategy.md) (scope narrowed to the web client). Replaces the test sections of ADR-015 by a pointer.
 
 > **Partially superseded (2026-10-20):** test tooling details → [ADR-020](ADR-020-toolchain-and-development-setup.md) §3–§5: nextest, proptest, insta, negative vectors through every binding, two nightly fuzz targets, Roborazzi + accessibility check on 11 goldens (replacing the broader screenshot matrix), Playwright with `@axe-core/playwright`, `just` as the only entry point and a mandatory `ci-ok` gate. The layering of local → virtual → physical stands. Decided by the owner together with ADR-015 on 2026-10-21.
 

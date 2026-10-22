@@ -204,7 +204,7 @@ DataChannel handshake must include a protocol version number. On connection: min
 
 ## 8. App-Lock (Biometrics / PIN)
 
-> STATUS: **DEFERRED** (Phase 2) -- See [ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md). **MVP:** no in-app PIN/biometrics; users rely on **OS screen lock**.
+> STATUS: **DEFERRED** (Phase 2) -- See [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md). **MVP:** no in-app PIN/biometrics; users rely on **OS screen lock**.
 
 Future implementation (not MVP): optional App-Lock before saved connections, BiometricPrompt, panic "delete all keys".
 

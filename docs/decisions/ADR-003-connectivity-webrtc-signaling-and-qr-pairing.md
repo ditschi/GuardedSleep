@@ -6,6 +6,8 @@
 
 > **Context note (2026-10-20):** the "Local: no server" path is realised through the offline LAN topologies in [ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md) §1 (see also [ADR-012](ADR-012-connection-model-offline-lan-and-handoff.md)). No decision here is changed.
 
+> **Migrated to OpenSpec (2026-10-22):** §3 and §4 are normative in [`openspec/specs/pairing`](../../openspec/specs/pairing/spec.md) (superseded parts resolved there); §6 was superseded by ADR-017 §5. §1, §2 and §5 stay binding until `signaling-relay` and `offline-lan` are migrated.
+
 ## Context
 
 Devices must connect over LAN, over the internet (without forcing users to install Tailscale), and optionally over VPN; pairing must be simple and secure.

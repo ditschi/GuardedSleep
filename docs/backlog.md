@@ -48,6 +48,20 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 
 ## By capability
 
+### pairing
+
+- `DEFERRED` (Phase 2) Multi-parent: up to 4 parent units per baby (product cap); "Add device" on a paired baby or parent unit, the baby unit only after kiosk unlock and confirmation; a join request with device name after the invite is dismissed; failover of alerts to another parent when one stops responding (failure model F-1a).
+- `DEFERRED` (Phase 2) Remote revocation of a device with re-keying, so a lost or stolen device cannot reconnect (failure model F-7).
+- `DEFERRED` (Phase 2) In-app App-Lock (PIN or biometrics); the MVP relies on the OS screen lock (ADR-001).
+- `DEFERRED` (Phase 2) Application-level end-to-end layer with HKDF-derived keys on top of DTLS (ADR-004 §3).
+- `DEFERRED` (Phase 2) Remote pairing by invite code; the MVP requires a physical QR scan.
+- `IDEA` Babysitter mode: a time-limited invite (6–24 h) whose pairing expires without manual revocation.
+- `IDEA` Join notification to all paired devices; with more than two devices a second device confirms the join; audit log of joins and leaves.
+- `IDEA` Key rotation of the pairing key (e.g. every 30 days), distinct from re-keying after revocation; `DEFERRED` per AGENTS.md §9.
+- `IDEA` Forward secrecy with an ephemeral Diffie-Hellman exchange per connection.
+- `IDEA` Emoji fingerprint shown on both units for an optional visual check (ADR-018 T2).
+- `IDEA` Move the invite payload codec from Kotlin into the core, so the web client and Android share one parser (found during migration, fits the wave-2 façades).
+
 ### link-supervision
 
 - `IDEA` Recovery by ICE restart on the existing peer connection, to save the DTLS handshake; measure new-attempt recovery over TURN on hardware first (ADR-017 Option A).

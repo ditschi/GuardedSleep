@@ -54,7 +54,7 @@ Hotspot fallback fails the moment the parent leaves the hotspot's physical range
 
 _Why it matters_: the most emotionally important use case ("baby monitor for a wedding") is the one most likely to fail silently, exactly when failure is most painful.
 
-_Action_: new "Out-of-Home / Captive-WLAN" section in [connectivity-pairing.md](../features/connectivity-pairing.md). Defined UC-3 in [use-cases.md](../concept/use-cases.md) with Cellular-first as the recommended Persona-A path. Added PoC test for captive-WLAN to [ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md).
+_Action_: new "Out-of-Home / Captive-WLAN" section in [connectivity-pairing.md](../features/connectivity-pairing.md). Defined UC-3 in [use-cases.md](../concept/use-cases.md) with Cellular-first as the recommended Persona-A path. Added PoC test for captive-WLAN to [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md).
 
 ---
 

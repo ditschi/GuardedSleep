@@ -4,6 +4,8 @@
 - Date: 2026-04-15
 - Deciders: Security-informed architecture
 
+> **Migrated to OpenSpec (2026-10-22):** §1–§3, §5, §6 and both amendments are normative in [`openspec/specs/pairing`](../../openspec/specs/pairing/spec.md); §3 (application-level E2E) is `DEFERRED` in the [backlog](../backlog.md). §4 (WSS) stays binding until `signaling-relay` is migrated.
+
 ## Context
 
 Audio and control data must be protected in transit; pairing must resist casual MITM; keys must not live in plaintext on disk.

@@ -229,13 +229,13 @@ This applies **once**, when Release Please is first turned on (which is part of 
 
 Each project phase has different release expectations.
 
-| Phase                                                                              | Versioning posture                                                                                                               |
-| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| **Concept (current)**                                                              | Release Please is wired but inactive — no `Release-As` and no commits since bootstrap. Manual `## [Unreleased]` bullets allowed. |
-| **PoC** ([ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md)) | Optionally cut a `0.0.x` for each package as the PoC runs; useful for tagging known-good states.                                 |
-| **MVP (Phase 1)**                                                                  | First real release: `0.1.0` across packages (use `Release-As: 0.1.0`). After that, normal Conventional Commit driven bumps.      |
-| **Phase 2 (iOS, multi-parent, talk-back)**                                         | Likely `0.2.x → 0.9.x` series; first deliberate `1.0.0` candidate when the feature set is stable.                                |
-| **Phase 3+ (video, on-device AI)**                                                 | `1.x` series, normal SemVer. Breaking protocol changes go through ADRs first.                                                    |
+| Phase                                                                                                                  | Versioning posture                                                                                                               |
+| ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Concept (current)**                                                                                                  | Release Please is wired but inactive — no `Release-As` and no commits since bootstrap. Manual `## [Unreleased]` bullets allowed. |
+| **PoC** ([ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md)) | Optionally cut a `0.0.x` for each package as the PoC runs; useful for tagging known-good states.                                 |
+| **MVP (Phase 1)**                                                                                                      | First real release: `0.1.0` across packages (use `Release-As: 0.1.0`). After that, normal Conventional Commit driven bumps.      |
+| **Phase 2 (iOS, multi-parent, talk-back)**                                                                             | Likely `0.2.x → 0.9.x` series; first deliberate `1.0.0` candidate when the feature set is stable.                                |
+| **Phase 3+ (video, on-device AI)**                                                                                     | `1.x` series, normal SemVer. Breaking protocol changes go through ADRs first.                                                    |
 
 ## 12. Mobile `versionCode` (Android Play Store)
 
@@ -341,7 +341,7 @@ Project phases ([feature roadmap](../features/README.md)) and major scope checkp
 
 **Naming convention:** `<phase-or-milestone>-v<semver>`. Examples:
 
-- `mvp-v0.1.0` — the commit that ships the first MVP per [ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md).
+- `mvp-v0.1.0` — the commit that ships the first MVP per [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md).
 - `poc-v0.0.1` — the commit at which the PoC gate is declared passed.
 - `phase-2-v0.2.0` — entry into Phase 2 (iOS, multi-parent, talk-back).
 - `phase-3-v0.3.0` — entry into Phase 3 (video, on-device AI).
@@ -385,9 +385,9 @@ git push origin mvp-v0.1.0
 
 This table is the human-readable answer to "which versions go together?" Update it **manually** whenever a new milestone meta-tag is created, or whenever a non-trivial breaking change lands.
 
-| Milestone meta-tag     | `@guardedsleep/protocol` | `@guardedsleep/signaling-server` | `@guardedsleep/mobile` | Notes                                                                                                            |
-| ---------------------- | ------------------------ | -------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| _(none yet — pre-PoC)_ | `workspace:*` (0.0.1)    | `workspace:*` (0.0.1)            | `workspace:*` (0.0.1)  | Scaffolded code only. No releases. See [ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md). |
+| Milestone meta-tag     | `@guardedsleep/protocol` | `@guardedsleep/signaling-server` | `@guardedsleep/mobile` | Notes                                                                                                                                                |
+| ---------------------- | ------------------------ | -------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| _(none yet — pre-PoC)_ | `workspace:*` (0.0.1)    | `workspace:*` (0.0.1)            | `workspace:*` (0.0.1)  | Scaffolded code only. No releases. See [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md). |
 
 **Convention for filling rows:**
 

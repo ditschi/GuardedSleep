@@ -77,7 +77,7 @@ We do not collect, store, or transmit personal information of children to any se
 - Cryptographic keys (PSK) are stored in the **Android Keystore** (hardware-backed, not extractable)
 - App settings are stored locally on the device
 - No data is stored on any server
-- **Device lock:** Users should use the **operating system** screen lock (PIN, pattern, biometrics). The MVP app does not add a separate in-app lock (see [ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md)).
+- **Device lock:** Users should use the **operating system** screen lock (PIN, pattern, biometrics). The MVP app does not add a separate in-app lock (see [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md)).
 
 ## 7. Your Rights (GDPR)
 

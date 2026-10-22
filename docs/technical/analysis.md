@@ -6,15 +6,15 @@ This document records the technical analysis that informed the architecture. **A
 
 ## Analysis Topics
 
-| #   | Topic                            | Status                   | ADR                                                                              |
-| --- | -------------------------------- | ------------------------ | -------------------------------------------------------------------------------- |
-| 1   | App Platform                     | DECIDED                  | [ADR-002](../decisions/ADR-002-client-platform-and-repository-structure.md)      |
-| 2   | Communication Architecture       | DECIDED                  | [ADR-003](../decisions/ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md)  |
-| 3   | Server Requirements              | DECIDED                  | [ADR-003](../decisions/ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md)  |
-| 4   | Encryption Approach              | DECIDED                  | [ADR-004](../decisions/ADR-004-encryption-transport-and-key-storage.md)          |
-| 5   | Audio Processing                 | DECIDED (features + PoC) | [ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md)         |
-| 6   | Deployment Model                 | DECIDED                  | [ADR-005](../decisions/ADR-005-parent-alerts-product-naming-and-distribution.md) |
-| --  | MVP scope, PoC gate, in-app lock | DECIDED                  | [ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md)         |
+| #   | Topic                            | Status                   | ADR                                                                                                          |
+| --- | -------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| 1   | App Platform                     | DECIDED                  | [ADR-002](../decisions/ADR-002-client-platform-and-repository-structure.md)                                  |
+| 2   | Communication Architecture       | DECIDED                  | [ADR-003](../decisions/ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md)                              |
+| 3   | Server Requirements              | DECIDED                  | [ADR-003](../decisions/ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md)                              |
+| 4   | Encryption Approach              | DECIDED                  | [ADR-004](../decisions/ADR-004-encryption-transport-and-key-storage.md)                                      |
+| 5   | Audio Processing                 | DECIDED (features + PoC) | [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md) |
+| 6   | Deployment Model                 | DECIDED                  | [ADR-005](../decisions/ADR-005-parent-alerts-product-naming-and-distribution.md)                             |
+| --  | MVP scope, PoC gate, in-app lock | DECIDED                  | [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md) |
 
 ---
 
@@ -316,19 +316,19 @@ Self-hosted coturn recommended for production. EU STUN servers as fallback. User
 
 ### Security Requirements (from Security Architect review)
 
-| Requirement                                                | Priority   | Status                                                                                                                                  |
-| ---------------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| DTLS fingerprint bound to QR pairing key (MITM protection) | CRITICAL   | Must be designed                                                                                                                        |
-| Threat model formally documented                           | CRITICAL   | Must be created                                                                                                                         |
-| Cluster join with confirmation mechanism                   | CRITICAL   | Must be designed                                                                                                                        |
-| Additional E2E encryption layer (defense-in-depth)         | IMPORTANT  | Strongly recommended                                                                                                                    |
-| Key rotation and forward secrecy                           | IMPORTANT  | Must be designed                                                                                                                        |
-| Remote device revocation with re-keying                    | IMPORTANT  | Must be designed                                                                                                                        |
-| STUN/TURN privacy implications documented                  | IMPORTANT  | Must be documented                                                                                                                      |
-| In-app device lock (PIN/biometrics) before app access      | IMPORTANT  | **DEFERRED (Phase 2)** -- MVP relies on **OS screen lock** per [ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md) |
-| Key material in platform keystore, never in plaintext      | IMPORTANT  | Must be implemented                                                                                                                     |
-| QR code one-time-use with timeout (~30s)                   | IMPORTANT  | Must be designed                                                                                                                        |
-| Replay protection (nonces, timestamps in QR protocol)      | SUGGESTION | Should be implemented                                                                                                                   |
+| Requirement                                                | Priority   | Status                                                                                                                                                                      |
+| ---------------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DTLS fingerprint bound to QR pairing key (MITM protection) | CRITICAL   | Must be designed                                                                                                                                                            |
+| Threat model formally documented                           | CRITICAL   | Must be created                                                                                                                                                             |
+| Cluster join with confirmation mechanism                   | CRITICAL   | Must be designed                                                                                                                                                            |
+| Additional E2E encryption layer (defense-in-depth)         | IMPORTANT  | Strongly recommended                                                                                                                                                        |
+| Key rotation and forward secrecy                           | IMPORTANT  | Must be designed                                                                                                                                                            |
+| Remote device revocation with re-keying                    | IMPORTANT  | Must be designed                                                                                                                                                            |
+| STUN/TURN privacy implications documented                  | IMPORTANT  | Must be documented                                                                                                                                                          |
+| In-app device lock (PIN/biometrics) before app access      | IMPORTANT  | **DEFERRED (Phase 2)** -- MVP relies on **OS screen lock** per [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md) |
+| Key material in platform keystore, never in plaintext      | IMPORTANT  | Must be implemented                                                                                                                                                         |
+| QR code one-time-use with timeout (~30s)                   | IMPORTANT  | Must be designed                                                                                                                                                            |
+| Replay protection (nonces, timestamps in QR protocol)      | SUGGESTION | Should be implemented                                                                                                                                                       |
 
 ### Threat Model (Security Architect assessment)
 
@@ -351,7 +351,7 @@ Self-hosted coturn recommended for production. EU STUN servers as fallback. User
 
 ## 5. Audio Processing
 
-> STATUS: DECIDED (baseline) -- Requirements in [audio-monitoring.md](../features/audio-monitoring.md); Opus DTX / capture behavior validated in PoC per [ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md).
+> STATUS: DECIDED (baseline) -- Requirements in [audio-monitoring.md](../features/audio-monitoring.md); Opus DTX / capture behavior validated in PoC per [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md).
 
 **Question**: How do we capture and process audio on the baby unit?
 
@@ -477,11 +477,11 @@ Everything else happens automatically: network detection, DTLS binding, permissi
 
 ## 8. MVP Definition (Phase 1)
 
-> Informed by Critical Reviewer + Technical Architect + Product Owner perspectives. **Scope:** full documented MVP (no deliberate reduction) per [ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md). Effort risk remains; PoC reduces platform risk first.
+> Informed by Critical Reviewer + Technical Architect + Product Owner perspectives. **Scope:** full documented MVP (no deliberate reduction) per [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md). Effort risk remains; PoC reduces platform risk first.
 
 ### PREREQUISITE: Proof of Concept
 
-**Full definition, Go/No-Go criteria, and rationale (PoC vs straight-to-MVP):** [ADR-001: MVP Scope, PoC Gate, and Authentication Strategy](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md).
+**Full definition, Go/No-Go criteria, and rationale (PoC vs straight-to-MVP):** [ADR-001: MVP Scope, PoC Gate, and Authentication Strategy](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md).
 
 Before any implementation, validate (minimum checklist):
 

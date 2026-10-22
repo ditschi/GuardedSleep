@@ -73,7 +73,7 @@ Open `http://<host>:${WEB_PORT}/` (default `:8080`) or `https://<host>:${WEB_HTT
 | `:dev` (alias `:edge`) | Every push to `main`                             | Testers / bleeding edge           |
 | `:sha-<short>`         | Every push                                       | Debug / exact commit reproduction |
 
-**Important:** until GuardedSleep cuts its first release, `:latest` does **not** exist. Use `SIGNALING_TAG=dev` and `WEB_TAG=dev` during the pre-release / PoC phase. ([ADR-001](../../docs/decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md) defines the PoC gate; [ADR-006](../../docs/decisions/ADR-006-release-and-changelog-automation.md) governs when tags are created.)
+**Important:** until GuardedSleep cuts its first release, `:latest` does **not** exist. Use `SIGNALING_TAG=dev` and `WEB_TAG=dev` during the pre-release / PoC phase. ([ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md) defines the PoC gate; [ADR-006](../../docs/decisions/ADR-006-release-and-changelog-automation.md) governs when tags are created.)
 
 - **PWA / UI (HTTP):** `http://127.0.0.1:8080/` (or your `WEB_PORT`)
 - **PWA / UI (HTTPS, self-signed):** `https://127.0.0.1:8443/` (or your `WEB_HTTPS_PORT`; browser warning is normal)

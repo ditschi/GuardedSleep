@@ -104,7 +104,7 @@ This is one of the most critical technical challenges:
 
 ## Security: Physical Access Protection -- MVP
 
-> STATUS: DECIDED -- Kiosk + QR rules + parent notifications; **no in-app App-Lock in MVP** ([ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md)). Rely on **OS screen lock** for device protection.
+> STATUS: DECIDED -- Kiosk + QR rules + parent notifications; **no in-app App-Lock in MVP** ([ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md)). Rely on **OS screen lock** for device protection.
 
 **Kiosk mode is the primary defense against unauthorized physical access:**
 

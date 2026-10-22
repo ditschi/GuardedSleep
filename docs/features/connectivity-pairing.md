@@ -6,7 +6,7 @@ Manages how baby and parent units discover, authenticate, and communicate with e
 
 ## Requirements
 
-- `[STATUS: DECIDED]` **MVP (Phase 1):** exactly **one** baby device and **one** parent device (1:1). **Phase 2:** up to **4** parent devices per baby (product limit); signaling/server may allow more — app enforces 4.
+- `[STATUS: DECIDED]` Pairing, encryption and saved pairings: see [`openspec/specs/pairing`](../../openspec/specs/pairing/spec.md); multi-parent (up to 4) is `DEFERRED` in the [backlog](../backlog.md)
 - `[STATUS: DECIDED]` Works over the internet (signaling server + EU STUN, or optional VPN) -- in MVP
 - `[STATUS: DECIDED]` Works on local networks without internet (WiFi, hotspot). Superseded wording "in MVP / Phase 2" (the feature list and the listener section disagreed): the offline LAN topologies below are DECIDED with target **beta** ([ADR-021](../decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §1); the alpha uses internet signaling for all pairs
 - `[STATUS: DECIDED]` Offline topology **Android <-> Android**: the Android baby unit runs an embedded signaling listener while monitoring is active; the parent finds it by NSD or from the QR invite -- target **beta**
@@ -14,79 +14,15 @@ Manages how baby and parent units discover, authenticate, and communicate with e
 - `[STATUS: REJECTED]` Web client over HTTPS <-> phone listener (self-signed certificate click-through): it would teach users to accept certificate warnings and undermines pairing as the trust anchor ([ADR-021](../decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md))
 - `[STATUS: IDEA]` Chrome Local Network Access (long-polling `fetch`) for an HTTPS web client to reach a phone; Chromium only, WebSockets not yet covered -- re-check when Chrome covers WebSockets
 - `[STATUS: DEFERRED]` Offline iOS (Phase 2, revisit at the iOS gate)
-- `[STATUS: DECIDED]` Secure device pairing via QR code -- in MVP
-- `[STATUS: DECIDED]` End-to-end encryption (DTLS-SRTP + fingerprint binding) -- in MVP
 - `[STATUS: DECIDED]` Automatic reconnection after network interruptions -- **MVP**
 - `[STATUS: DECIDED]` Heartbeat interval: 10 seconds default (configurable 5-30s) -- **MVP**
-- `[STATUS: DECIDED]` Saved connections for reconnection without QR code -- **MVP**
 - `[STATUS: IDEA]` Network resilience: buffer events during brief disconnections
 - `[STATUS: IDEA]` LAN <-> Internet automatic handoff (same session: Wi-Fi path fails → **prefer continuing on cellular default route** when OS allows; Wi-Fi viable again → **prefer cheaper/local path** without a user "mode" switch) -- see subsection _Path selection vs explicit LAN mode_ below
 - `[STATUS: IDEA]` Signaling server rate limiting (e.g. connections or messages per IP / per room) to mitigate abuse and DoS — needs design (reverse proxy vs. in-process; mobile IP churn)
 
-### Invite link / QR (mobile app — UX phase)
+### Pairing
 
-The app implements a **single** invitation QR / deep link on `/pair` with query parameters **`room` + `signal`** (WebSocket URL of the inviting device). This is **meeting-link style** convenience: anyone with the link can join that signaling room; it is **not** the full secure JSON payload (PSK, DTLS fingerprint, nonce, …) described under _QR Code Pairing_ below. That cryptographic payload is planned as an evolution of the **same** one-scan UX.
-
-**Saved connections** persist **`roomId` + `signalingUrl` per entry** so reconnect uses the server from the invite; the **Settings** default signaling URL is **not** overwritten when using an invitation.
-
-## Sub-Features
-
-### QR Code Pairing
-
-> Informed by Technical Architect and Security Architect reviews. See [technical analysis](../technical/analysis.md).
-
-Secure pairing workflow using QR codes for physical key exchange:
-
-1. Device A (already in cluster) generates a time-limited QR code containing:
-   - Device ID
-   - Pre-Shared Key (PSK) -- cryptographic key material (min. 256-bit entropy)
-   - Local IP address (if on same network)
-   - Optional: signaling server endpoint (for internet mode)
-   - Nonce + timestamp for replay protection
-2. Device B scans the QR code
-3. **While QR is displayed on Device A**: Device B is auto-accepted (physical proximity = trust)
-4. **After QR is dismissed** (screen changed, timeout): any connection attempt shows a join request on Device A: "Device [name] wants to join -- Accept / Reject"
-5. WebRTC DataChannel established, authenticated via PSK
-6. DTLS certificate fingerprint verified against PSK-derived value (MITM protection) -- **invisible to user, automatic verification**
-7. Over the authenticated DataChannel, long-term keys are exchanged
-8. Trust established -- no manual fingerprint comparison needed (QR scan = physical verification)
-
-### Adding further parent devices (Phase 2)
-
-> `[STATUS: DECIDED]` -- same UX as the first pairing; implementation in Phase 2 after MVP 1:1 is stable.
-
-- User chooses **Add device** (or equivalent) on a device that is **already in the cluster**.
-- That device shows a **time-limited QR** (same payload family as initial pairing: PSK material, IPs, signaling, nonce, etc.).
-- The **new** device **scans** the QR — flow matches steps 3–8 above (auto-accept while QR visible; join request after dismiss).
-- **Either role may show the QR:** an already-paired **baby** unit or an already-paired **parent** unit can host “Add device”. On the baby unit, **kiosk unlock + explicit confirmation** is required before showing pairing QR (see [device-management.md](device-management.md)).
-- **Cap:** at most **4** parent devices per baby (enforced in app; cluster UX must surface the limit clearly).
-- **Failover (Phase 2):** when one paired parent device becomes unresponsive (see [failure-model.md](../concept/failure-model.md) F-1a), the baby unit **escalates alerts** to another paired parent so monitoring is not a single-point-of-failure on the parent phone. Engineering: parallel WebRTC parent sessions on the baby unit.
-
-**Payload format:** UTF-8 JSON with **human-readable field names** (`psk`, `dtls_fingerprint`, `ips`, `signal`, `nonce`, `ts`). Size verified to fit standard QR codes; see [technical analysis](../technical/analysis.md) (QR Code IP Discovery).
-
-### Time-limited pairing ("Babysitter mode")
-
-> `[STATUS: IDEA]` -- Phase 2 UX + security design.
-
-For temporary access (babysitter, grandparent overnight), a cluster member may issue a **QR or invite with expiry** (e.g. 6--24 hours). After expiry, the guest device's saved connection is invalidated without manual revoke. Distinct from full remote pairing (still DEFERRED for Phase 1 per table below).
-
-Security requirements:
-
-- `[STATUS: DECIDED]` QR code must be one-time-use with configurable timeout (~30 seconds)
-- `[STATUS: DECIDED]` DTLS fingerprint bound to QR pairing key material (MITM protection) -- invisible/automatic
-- `[STATUS: DECIDED]` While QR is displayed: auto-accept on scan. After dismissed: join request with device name.
-- `[STATUS: IDEA]` Cluster join notification to all existing devices
-- `[STATUS: IDEA]` If cluster has >2 devices: second device must confirm the join
-- `[STATUS: IDEA]` Audit log of all join/leave events visible in app
-- `[STATUS: DECIDED]` Product cap: **max 4 parent devices** per baby (Phase 2); optional stricter server limits are a deployment detail
-
-### Cluster Management
-
-- `[STATUS: DECIDED]` **Phase 2:** Remote device revocation: any cluster member can remove a device; re-keying after removal so lost/stolen devices cannot reconnect with old material ([failure-model.md](../concept/failure-model.md) F-7).
-- `[STATUS: DEFERRED]` App lock (PIN/biometrics) before accessing monitoring functions -- Phase 2; MVP uses OS screen lock ([ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md))
-- `[STATUS: IDEA]` Key rotation: periodic renewal of cluster root key (e.g., every 30 days) -- distinct from re-key-on-revocation
-- `[STATUS: IDEA]` Forward secrecy: ephemeral Diffie-Hellman per connection
-- `[STATUS: IDEA]` Key material stored in platform keystore (Android Keystore / iOS Keychain), never in plaintext
+> STATUS: DECIDED -- moved to [`openspec/specs/pairing`](../../openspec/specs/pairing/spec.md) (QR invite v3, pairing proof, storage, Forget). Multi-parent, babysitter mode, cluster management, revocation, key rotation and forward secrecy are in the [backlog](../backlog.md) under `pairing`.
 
 ### Internet Connectivity (Signaling Server -- Primary)
 

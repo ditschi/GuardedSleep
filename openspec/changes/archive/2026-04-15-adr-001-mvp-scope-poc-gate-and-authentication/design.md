@@ -4,7 +4,7 @@
 - Date: 2026-04-15
 - Deciders: Product owner (user), coordinated design
 
-> **Partially superseded (2026-10-20):** the Capacitor/WebView PoC mechanism → the native PoC gate in [ADR-015](ADR-015-native-clients-with-shared-rust-core.md) and [ADR-020](ADR-020-toolchain-and-development-setup.md) (Capacitor shell removed in wave 1). Scope, App-Lock and authentication decisions stand.
+> **Partially superseded (2026-10-20):** the Capacitor/WebView PoC mechanism → the native PoC gate in [ADR-015](../../../../docs/decisions/ADR-015-native-clients-with-shared-rust-core.md) and [ADR-020](../../../../docs/decisions/ADR-020-toolchain-and-development-setup.md) (Capacitor shell removed in wave 1). Scope, App-Lock and authentication decisions stand.
 
 ## Context
 
@@ -53,8 +53,8 @@ Before implementation we must fix: (1) how much to build before validating risky
 **PoC extensions (2026-05, concept review follow-up):**
 
 - **Captive / venue WiFi:** exercise signaling path from a network that mimics hotel constraints (client isolation or separate subnets) **or** document failure + fallback to cellular data on two phones.
-- **Parent audio focus:** place/receive a PSTN or VoIP test call while WebRTC alert audio is playing; record whether child audio resumes automatically and whether extra UX is required ([ADR-011](ADR-011-audio-routing-parent-side.md)).
-- **Persona-C device:** repeat the 30-minute baby-side run on an **older Android** representative of repurposed hardware (per [ADR-010](ADR-010-baby-unit-hardware-requirements.md)); capture WebView version + any ICE failures.
+- **Parent audio focus:** place/receive a PSTN or VoIP test call while WebRTC alert audio is playing; record whether child audio resumes automatically and whether extra UX is required ([ADR-011](../../../../docs/decisions/ADR-011-audio-routing-parent-side.md)).
+- **Persona-C device:** repeat the 30-minute baby-side run on an **older Android** representative of repurposed hardware (per [ADR-010](../../../../docs/decisions/ADR-010-baby-unit-hardware-requirements.md)); capture WebView version + any ICE failures.
 
 **PoC vs "build MVP then test":** Starting full MVP without PoC is **allowed** only if timelines force it; the **default** is PoC first to avoid throwing away large UI/signaling work if the platform choice is wrong.
 
