@@ -109,6 +109,7 @@ describe("core-wasm wrapper", () => {
       },
       messageKeys: () => "[]",
       deriveRoomId: () => "",
+      conformanceEval: () => "{}",
     });
     expect(() => fake.createLink(config("baby")).handle(0, { type: "tick" })).toThrow(
       /unknown action/,

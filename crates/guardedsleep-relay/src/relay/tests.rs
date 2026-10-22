@@ -125,6 +125,18 @@ impl H {
 }
 
 #[test]
+fn the_defaults_are_the_numbers_of_the_signaling_relay_spec() {
+    let c = RelayConfig::default();
+    assert_eq!(c.hello_timeout_ms, 30_000);
+    assert_eq!(c.ping_interval_ms, 10_000);
+    assert_eq!(c.admission_timeout_ms, 5_000);
+    assert_eq!(c.max_frame_bytes, 64 * 1024);
+    assert_eq!(c.hello_rate_per_min, 20);
+    assert_eq!(c.new_room_rate_per_min, 10);
+    assert_eq!(c.max_parents_per_room, 1);
+}
+
+#[test]
 fn answers_ping_with_pong() {
     let mut h = H::open();
     h.connect(1);

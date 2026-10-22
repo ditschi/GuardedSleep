@@ -289,10 +289,10 @@ See [ADR-006](../../openspec/changes/archive/2026-05-13-adr-006-release-and-chan
 
 The monorepo contains **independently versioned packages (the hand-written `@guardedsleep/protocol` package was removed; protocol types are generated from the Rust core into `packages/core-wasm`, which is private and unversioned for releases, and the signaling server is the Rust `crates/guardedsleep-server` image)**:
 
-| Package                          | Role                                       | Whose version do users / operators see?                                               |
-| -------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------- |
-| `@guardedsleep/mobile`           | User-facing Android app (Capacitor)        | **Yes — this is the headline "GuardedSleep version"** shown in About, Play, F-Droid   |
-| `@guardedsleep/signaling-server` | Self-hostable WebSocket relay              | Operators see this in Docker tags (`ghcr.io/<owner>/guardedsleep-signaling:vX.Y.Z`)   |
+| Package                          | Role                                | Whose version do users / operators see?                                             |
+| -------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------- |
+| `@guardedsleep/mobile`           | User-facing Android app (Capacitor) | **Yes — this is the headline "GuardedSleep version"** shown in About, Play, F-Droid |
+| `@guardedsleep/signaling-server` | Self-hostable WebSocket relay       | Operators see this in Docker tags (`ghcr.io/<owner>/guardedsleep-signaling:vX.Y.Z`) |
 
 **Practical implications:**
 
