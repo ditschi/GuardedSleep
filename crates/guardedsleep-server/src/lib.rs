@@ -2,6 +2,25 @@
 //! `guardedsleep-relay`. It carries connection metadata only, never media, and never logs client
 //! addresses (AGENTS.md section 7).
 
+#![forbid(unsafe_code)]
+// Untrusted HTTP, WebSocket and UDP input is parsed here: return errors instead of panicking
+// (AGENTS.md section 5.3).
+#![deny(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::indexing_slicing
+)]
+#![cfg_attr(
+    test,
+    allow(
+        clippy::unwrap_used,
+        clippy::expect_used,
+        clippy::panic,
+        clippy::indexing_slicing
+    )
+)]
+
 pub mod config;
 pub mod http;
 pub mod hub;
@@ -19,7 +38,6 @@ use tokio::task::JoinHandle;
 use crate::config::Config;
 use crate::http::{AppState, loopback_router, public_router, static_service};
 use crate::hub::Hub;
-use crate::stun::StunPolicy;
 
 /// How often the relay clock runs; bounds the accuracy of timeouts.
 const TICK: Duration = Duration::from_millis(500);
@@ -65,6 +83,14 @@ fn serve(
         })
         .await;
     })
+}
+
+/// Whether binding `[::1]` failed because the host has no IPv6 loopback (as opposed to a conflict).
+fn ipv6_loopback_unavailable(e: &io::Error) -> bool {
+    matches!(
+        e.kind(),
+        io::ErrorKind::AddrNotAvailable | io::ErrorKind::Unsupported
+    ) || e.raw_os_error() == Some(97) // EAFNOSUPPORT on Linux: IPv6 compiled out or disabled
 }
 
 /// Blocking probe of `GET /healthz` on loopback, for `--healthcheck`.
@@ -132,12 +158,21 @@ pub async fn start(cfg: Config) -> io::Result<RunningServer> {
         ui_addrs.push(v4.local_addr()?);
         let app = loopback_router(state(web, Some(ui_port)));
         tasks.push(serve(v4, app.clone(), shutdown_rx.clone()));
-        // `localhost` may resolve to ::1 first; hosts without IPv6 loopback just skip it.
-        if let Ok(v6) =
-            TcpListener::bind(SocketAddr::new(IpAddr::V6(Ipv6Addr::LOCALHOST), ui_port)).await
-        {
-            ui_addrs.push(v6.local_addr()?);
-            tasks.push(serve(v6, app, shutdown_rx.clone()));
+        // `localhost` may resolve to ::1 first. Hosts without IPv6 loopback skip it; any other
+        // failure (another process already holds the port) is an error, so a foreign page cannot
+        // answer for `localhost` and phish the key hand-over.
+        match TcpListener::bind(SocketAddr::new(IpAddr::V6(Ipv6Addr::LOCALHOST), ui_port)).await {
+            Ok(v6) => {
+                ui_addrs.push(v6.local_addr()?);
+                tasks.push(serve(v6, app, shutdown_rx.clone()));
+            }
+            Err(e) if ipv6_loopback_unavailable(&e) => {}
+            Err(e) => {
+                return Err(io::Error::new(
+                    e.kind(),
+                    format!("cannot bind the UI port on [::1]: {e}"),
+                ));
+            }
         }
     } else {
         let l = bind(SocketAddr::new(cli.bind, cli.port), "the signaling port").await?;
@@ -160,13 +195,9 @@ pub async fn start(cfg: Config) -> io::Result<RunningServer> {
                 )
             })?;
         stun_addr = Some(socket.local_addr()?);
-        let policy = StunPolicy {
-            allow_short_requests: cli.stun_allow_short_requests,
-        };
         tasks.push(tokio::spawn(stun::serve(
             Arc::new(socket),
             cli.stun_rate_per_min,
-            policy,
             shutdown_rx.clone(),
         )));
     }

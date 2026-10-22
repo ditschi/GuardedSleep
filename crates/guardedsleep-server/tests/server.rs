@@ -506,7 +506,7 @@ async fn run_stun(args: &[&str]) -> RunningServer {
 }
 
 #[tokio::test]
-async fn stun_answers_binding_requests_with_the_senders_address_and_never_grows_them() {
+async fn stun_answers_binding_requests_with_the_senders_address_within_the_bound() {
     let srv = run_stun(&[]).await;
     let to = srv.stun_addr.unwrap();
     let sock = UdpSocket::bind("127.0.0.1:0").await.unwrap();
@@ -520,12 +520,11 @@ async fn stun_answers_binding_requests_with_the_senders_address_and_never_grows_
     assert_eq!(port, me.port());
     assert_eq!(&resp[28..32], &[127 ^ 0x21, 0x12, 0xa4, 0x42 ^ 1]);
 
-    // A bare 20-byte request would need a longer response: no answer by default.
-    assert!(
-        stun_roundtrip(&sock, to, &binding_request(0))
-            .await
-            .is_none()
-    );
+    // A bare 20-byte request, as browsers and libwebrtc send it, is answered with the default flags.
+    let bare = stun_roundtrip(&sock, to, &binding_request(0))
+        .await
+        .expect("a bare request is answered");
+    assert_eq!(bare.len(), 32);
     // Other STUN message types and junk get no answer either.
     let mut indication = binding_request(16);
     indication[0..2].copy_from_slice(&0x0011u16.to_be_bytes());
@@ -539,8 +538,8 @@ async fn stun_answers_binding_requests_with_the_senders_address_and_never_grows_
 }
 
 #[tokio::test]
-async fn stun_can_answer_bare_requests_and_rate_limits_per_address() {
-    let srv = run_stun(&["--stun-allow-short-requests", "--stun-rate-per-min", "2"]).await;
+async fn stun_rate_limits_per_address() {
+    let srv = run_stun(&["--stun-rate-per-min", "2"]).await;
     let to = srv.stun_addr.unwrap();
     let sock = UdpSocket::bind("127.0.0.1:0").await.unwrap();
     let bare = binding_request(0);
@@ -575,4 +574,64 @@ async fn healthcheck_probe_reports_a_running_server() {
             .await
             .unwrap()
     );
+}
+
+#[tokio::test]
+async fn one_address_cannot_hold_more_connections_than_the_cap() {
+    let srv = run(
+        &[],
+        &[
+            ("SIGNALING_MAX_CONNECTIONS_PER_IP", "2"),
+            ("SIGNALING_HELLO_RATE_PER_MIN", "0"),
+            ("SIGNALING_NEW_ROOM_RATE_PER_MIN", "0"),
+        ],
+    )
+    .await;
+    let mut a = Client::connect(srv.signaling_addr, "/").await;
+    let b = Client::connect(srv.signaling_addr, "/").await;
+    let mut third = Client::connect(srv.signaling_addr, "/").await;
+    assert_eq!(third.close_code().await, Some(1008));
+    // The refused socket did not cost the others anything.
+    a.send(json!({"type":"ping"})).await;
+    assert_eq!(a.recv().await["type"], "pong");
+    // A freed slot is usable again.
+    drop(b);
+    let mut again = None;
+    for _ in 0..50 {
+        let mut c = Client::connect(srv.signaling_addr, "/").await;
+        c.send(json!({"type":"ping"})).await;
+        if c.next().await.is_some() {
+            again = Some(c);
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    assert!(
+        again.is_some(),
+        "the slot of the dropped socket is free again"
+    );
+    srv.shutdown().await;
+}
+
+#[tokio::test]
+async fn a_flooding_socket_is_closed_with_rate_limited() {
+    let srv = run(
+        &[],
+        &[
+            ("SIGNALING_FRAME_RATE_UNJOINED_PER_MIN", "5"),
+            ("SIGNALING_HELLO_RATE_PER_MIN", "0"),
+            ("SIGNALING_NEW_ROOM_RATE_PER_MIN", "0"),
+        ],
+    )
+    .await;
+    let mut c = Client::connect(srv.signaling_addr, "/").await;
+    for _ in 0..6 {
+        c.send(json!({"type":"ping"})).await;
+    }
+    let mut last = None;
+    while let Some(m) = c.next().await {
+        last = Some(m);
+    }
+    assert_eq!(last.unwrap()["code"], "RATE_LIMITED");
+    srv.shutdown().await;
 }
