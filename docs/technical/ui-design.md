@@ -262,7 +262,7 @@ Even darker than night mode. Status dots only: 4dp diameter.
 
 ### 4. Settings Screen
 
-> **MVP structure:** split **Basic** vs **Advanced** (toggle at bottom of Basic). Advanced hides heartbeat, signaling URL, codec experiments, security diagnostics, and debug export ([user-interface.md](../features/user-interface.md)). **Parent alert output and gain** live under **Basic → Notifications** ([ADR-011](../decisions/ADR-011-audio-routing-parent-side.md)).
+> **MVP structure:** split **Basic** vs **Advanced** (toggle at bottom of Basic). Advanced hides heartbeat, signaling URL, codec experiments, security diagnostics, and debug export ([user-interface.md](../features/user-interface.md)). **Parent alert output and gain** live under **Basic → Notifications** ([ADR-011](../../openspec/changes/archive/2026-10-21-adr-011-audio-routing-parent-side/design.md)).
 
 **Basic**
 
@@ -387,7 +387,7 @@ Legacy flat outline (reference only -- do **not** ship as a single list to users
 
 ### Noise Alert
 
-- Threshold exceeded → **vibration + screen on + app to foreground + volume meter / noise bars live + child audio** on the route selected per [ADR-011](../decisions/ADR-011-audio-routing-parent-side.md) (daily profile still biases to speaker for audibility)
+- Threshold exceeded → **vibration + screen on + app to foreground + volume meter / noise bars live + child audio** on the route selected per [ADR-011](../../openspec/changes/archive/2026-10-21-adr-011-audio-routing-parent-side/design.md) (daily profile still biases to speaker for audibility)
 - No separate alarm ringtone -- the child's actual voice/cry IS the alert
 - Audio plays on ALARM stream (works even in silent mode / DND)
 - This is more natural and less anxiety-inducing than a synthetic alarm sound

@@ -1,14 +1,14 @@
 # ADR-011: Parent-side alert audio routing (speaker vs headphones) and call interruption
 
-- Status: DECIDED (owner, 2026-10-21; UX re-evaluation after wave 3, see [backlog](../backlog.md) "Alert audio routing UX")
+- Status: DECIDED (owner, 2026-10-21; UX re-evaluation after wave 3, see [backlog](../../../../docs/backlog.md) "Alert audio routing UX")
 - Date: 2026-05-13
 - Deciders: Product owner (user), coordinated design (Critical Review 2026-05)
 
 ## Context
 
-[ADR-005](ADR-005-parent-alerts-product-naming-and-distribution.md) locks the **alert content** to child audio (no synthetic siren). It does not fully resolve **where** that audio plays on the parent device.
+[ADR-005](../../../../docs/decisions/ADR-005-parent-alerts-product-naming-and-distribution.md) locks the **alert content** to child audio (no synthetic siren). It does not fully resolve **where** that audio plays on the parent device.
 
-The notifications feature doc previously left open: force speaker even when headphones are connected ("likely yes for safety"). That default is **wrong for discreet social use** (e.g. wedding: in-ear monitoring). Night home use often **wants** optional forced speaker so a muted phone still wakes the caregiver -- without forking the whole app into "persona modes" ([ADR-009](ADR-009-personas-and-failure-model.md), [personas.md](../concept/personas.md)).
+The notifications feature doc previously left open: force speaker even when headphones are connected ("likely yes for safety"). That default is **wrong for discreet social use** (e.g. wedding: in-ear monitoring). Night home use often **wants** optional forced speaker so a muted phone still wakes the caregiver -- without forking the whole app into "persona modes" ([ADR-009](../../../../docs/decisions/ADR-009-personas-and-failure-model.md), [personas.md](../../../../docs/concept/personas.md)).
 
 Incoming **phone calls** can steal audio focus and interrupt WebRTC playback -- behavior must be specified and PoC-tested.
 
@@ -36,7 +36,7 @@ Incoming **phone calls** can steal audio focus and interrupt WebRTC playback -- 
 
 ### Option E: Unified app + system routing default + Advanced override (supersedes C for onboarding)
 
-- **Pros**: One primary experience; headphones at a wedding and speaker on the nightstand both work without switching "persona mode"; matches [ADR-009](../decisions/ADR-009-personas-and-failure-model.md) "no forked UX" and [personas.md](../concept/personas.md) unified-app section.
+- **Pros**: One primary experience; headphones at a wedding and speaker on the nightstand both work without switching "persona mode"; matches [ADR-009](../../../../docs/decisions/ADR-009-personas-and-failure-model.md) "no forked UX" and [personas.md](../../../../docs/concept/personas.md) unified-app section.
 - **Cons**: **Dual-route** ("Speaker + default") and per-OEM audio policy add engineering + QA cost; mitigated by PoC gate before exposing the setting broadly.
 
 ## Decision
@@ -61,13 +61,13 @@ Optional checkbox (Basic): **Warn if headphones connected** -- non-blocking bann
 
 ### Parent setting: alert playback volume / audibility
 
-- **Stream class:** Alert-triggered playback on the parent MUST use **`AudioAttributes.USAGE_ALARM`** (or platform equivalent) so volume follows the **alarm / clock** volume curve and is **not** silently tied to "media" mute-only paths -- see [notifications-alerts.md](../features/notifications-alerts.md) (DND + alarm stream).
+- **Stream class:** Alert-triggered playback on the parent MUST use **`AudioAttributes.USAGE_ALARM`** (or platform equivalent) so volume follows the **alarm / clock** volume curve and is **not** silently tied to "media" mute-only paths -- see [notifications-alerts.md](../../../../docs/features/notifications-alerts.md) (DND + alarm stream).
 - **In-app gain:** Basic setting **slider** (e.g. 25 %--150 % of decoded level, default 100 %) applied **in software** to the alert playback path so parents can tune perceived loudness **without** changing the global system alarm index (avoids needing invasive `MODIFY_AUDIO_SETTINGS` in MVP).
 - **Optional "force minimum gain during alert"** (toggle, default off): clamps in-app gain to a **floor** (e.g. never below 80 %) while a noise alert is active, with copy that the user must still ensure **hardware alarm volume** is not at zero. **IDEA:** one-shot OS prompt "raise alarm volume" using public APIs only -- only if a future ADR accepts any extra permission.
 
 **Listen mode (non-alert) continuous audio** may remain on `USAGE_MEDIA` unless product decides to unify; alert path above applies specifically to **threshold-triggered alert chain** and **probe test**.
 
-**Connection type (Wi-Fi vs metered cellular):** does **not** switch the app layout; it may adjust **non-safety** alert emphasis or codec defaults per [notifications-alerts.md](../features/notifications-alerts.md) (IDEA: connection-context alert policy) and [communication.md](../features/communication.md) (data honesty).
+**Connection type (Wi-Fi vs metered cellular):** does **not** switch the app layout; it may adjust **non-safety** alert emphasis or codec defaults per [notifications-alerts.md](../../../../docs/features/notifications-alerts.md) (IDEA: connection-context alert policy) and [communication.md](../../../../docs/features/communication.md) (data honesty).
 
 **Phone calls:** Document and PoC-test: on incoming call, monitoring/alerts may pause; on call end, app **must** attempt automatic resume of the monitoring session and surface a non-dismissible banner if resume fails.
 

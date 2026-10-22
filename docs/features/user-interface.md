@@ -79,7 +79,7 @@ The user interface must be simple, reliable, and usable under stress (tired pare
 
 > `[STATUS: DECIDED]` -- keeps casual users from breaking monitoring via expert knobs.
 
-**Basic (default):** Notifications (threshold + duration + snooze defaults; **alert audio output** Default / Speaker / Speaker+default; **alert playback gain** + optional **minimum gain during alert** per [ADR-011](../decisions/ADR-011-audio-routing-parent-side.md)), Display (night mode + wake lock in listen mode), Saved connections, Battery & background (wizard + deep link), About / Help.
+**Basic (default):** Notifications (threshold + duration + snooze defaults; **alert audio output** Default / Speaker / Speaker+default; **alert playback gain** + optional **minimum gain during alert** per [ADR-011](../../openspec/changes/archive/2026-10-21-adr-011-audio-routing-parent-side/design.md)), Display (night mode + wake lock in listen mode), Saved connections, Battery & background (wizard + deep link), About / Help.
 
 **Advanced (toggle + warning):** Heartbeat interval, audio codec/bitrate experiments, signaling URL override, VPN hints, emoji fingerprint / security diagnostics, debug log export, auto-resume toggles, optional session data cap hooks ([communication.md](communication.md)).
 

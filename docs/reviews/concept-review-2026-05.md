@@ -127,7 +127,7 @@ Hard rule: all defaults work for both personas without entering Advanced.
 
 _What is missing_: [notifications-alerts.md](../features/notifications-alerts.md) leaves open: "Should alerts play through the phone speaker even if headphones are connected? (Likely yes for safety)". For Persona A at a wedding, "Likely yes" is wrong -- they may be wearing in-ears specifically to monitor discreetly.
 
-_Action_: [ADR-011 (PROPOSED)](../decisions/ADR-011-audio-routing-parent-side.md) -- Option C (persona-dependent default, overridable in Advanced). Phone-call-interruption behavior to be specified and validated in PoC.
+_Action_: [ADR-011 (PROPOSED)](../../openspec/changes/archive/2026-10-21-adr-011-audio-routing-parent-side/design.md) -- Option C (persona-dependent default, overridable in Advanced). Phone-call-interruption behavior to be specified and validated in PoC.
 
 ---
 

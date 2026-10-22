@@ -32,7 +32,7 @@ When the baby unit detects noise above the configured threshold (child awake):
 
 1. Baby unit sends lightweight alert via DataChannel (event type, noise level, timestamp)
 2. Baby unit **automatically enables audio track** (`track.enabled = true`)
-3. Parent device receives alert → **vibration + screen on + app to foreground + volume meter visible + immediately plays child audio** on the route defined by [ADR-011](../decisions/ADR-011-audio-routing-parent-side.md) (not always the loudspeaker)
+3. Parent device receives alert → **vibration + screen on + app to foreground + volume meter visible + immediately plays child audio** on the route defined by [ADR-011](../../openspec/changes/archive/2026-10-21-adr-011-audio-routing-parent-side/design.md) (not always the loudspeaker)
 4. No separate alarm ringtone -- the child's actual audio IS the alert. Parent hears the child directly.
 5. Audio plays on ALARM stream (overrides silent mode / DND)
 6. Parent hears the child immediately without any manual action

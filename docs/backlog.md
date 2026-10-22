@@ -32,7 +32,7 @@ Design as an OpenSpec change touching `audio-monitoring` and `parent-alerts`.
 
 `PLANNED` — target: after wave 3 (owner, 2026-10-21; ADR-011).
 
-ADR-011 is decided as the baseline. Re-evaluate speaker or headphone routing, call interruption and the volume settings with real users on the native app, to make sure the experience is good.
+ADR-011 is decided as the baseline. Re-evaluate speaker or headphone routing, call interruption and the volume settings with real users on the native app, to make sure the experience is good. Decided in ADR-011 but not built yet: the "Speaker + default device" dual route, a minimum gain during alerts, and automatic resume of alert or listen audio after a phone call with a banner if resume fails (ADR-018 T2).
 
 ### Connection model re-evaluation
 
@@ -68,6 +68,14 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 - `PLANNED` (T1) Hardened TURN profile (coturn ≥ 4.15 or eturnal), HMAC credentials with TTL ≤ 10 min issued only after the pairing proof; Caddy + signaling (+ TURN) compose bundle with a self-hosting guide; Trivy image scanning (ADR-020 §6).
 - `IDEA` Signaling rate limits beyond ADR-020 §6 (per room, per message; reverse proxy or in-process; mobile IP churn). Design first.
 - `REJECTED` Signaling-free VPN mode (Tailscale/Headscale treated like LAN): cleartext signaling toward 100.64/10 is refused (ADR-021 §1); VPN works transparently through the normal relay (owner, 2026-10-21).
+
+### parent-alerts
+
+- `DEFERRED` (Phase 2) With multi-parent: failover banner and escalation to another parent when the primary parent stops acknowledging heartbeats.
+- `IDEA` Configurable alert behaviour beyond the built chain (which combination of sound, vibration and screen per alert type), vibration strength or pattern, and a cool-down between repeated alerts.
+- `IDEA` Connection-context alert policy: full alert chain on unmetered Wi-Fi, a lighter chain on metered or cellular data.
+- `IDEA` Opt-out of the Do Not Disturb override with a clear warning that alerts will be silent when the phone is muted.
+- `IDEA` Re-prompt the test alert after an app update and before the first use on mobile data (alpha-ux-flows §3.9; built: readiness warns after 30 days).
 
 ### link-supervision
 
