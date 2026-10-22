@@ -31,11 +31,19 @@ A task that needs Docker, KVM, the Android SDK or Playwright browsers and does n
 
 ### Hooks
 
-`just setup` runs `lefthook install`. A clone that ran the old Husky setup still has `core.hooksPath` pointing at `.husky/_`; `just setup` removes that setting (and says so) before installing lefthook. Without the cleanup the stale Husky hooks do nothing and no pre-commit check runs.
+`just setup` runs `lefthook install`. A clone that ran the old Husky setup still has `core.hooksPath` pointing at `.husky/_`; `just setup` removes that setting (and says so) before installing lefthook. Without the cleanup the stale Husky hooks do nothing and no pre-commit check runs. Outside CI, `just lint` warns (without failing) when the hooks are off: a stale Husky `core.hooksPath` or no lefthook `pre-commit` hook (`scripts/lib/hooks-check.sh`).
 
 `lefthook.yml` runs on staged files only (target: under 5 s): Prettier, `cargo fmt` (when `.rs` files are staged and a host cargo exists), typos, whitespace/JSON hygiene and a Betterleaks secret scan. There is no commit-msg hook: Conventional Commits are checked on the PR title in CI. Hooks are a convenience; `just lint` and CI re-run everything. `lefthook run pre-commit --all-files` runs them on the whole tree.
 
 The hook binary comes from mise. Git clients that do not load your shell profile (GUI clients, IDE commit buttons) only find it when the mise shims are on `PATH`: add `eval "$(mise activate --shims)"` to your login profile, otherwise the hook silently does not run there.
+
+### Load slots
+
+Medium and heavy recipes (`just lint-code`, `just test`, builds, `just e2e`, `just gate`) run through `scripts/lib/slot.sh`, a machine-wide `flock` semaphore shared by all worktrees; `just machine-profile` sizes the pools (AGENTS.md §10.1). `GS_SLOT_WAIT` (default 3600 s) bounds the wait for a slot (exit 75). `GS_RUN_TIMEOUT` (unset: no limit) bounds the run itself and starts only once the slot is held (exit 124), so a queued job is never cut off by its own deadline:
+
+```sh
+GS_SLOT_WAIT=60 GS_RUN_TIMEOUT=15m just test
+```
 
 ### Supply-chain and licence checks
 
