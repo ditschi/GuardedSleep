@@ -45,4 +45,8 @@ for manifest in crates/guardedsleep-core/Cargo.toml crates/guardedsleep-relay/Ca
   deny --manifest-path "$manifest" --config deny.core.toml --all-features check bans
 done
 
+# The core must also stay binding-free: source grep plus the default-feature graph (wasm-bindgen is
+# reachable only through the optional tsify feature, so cargo-deny's all-features run cannot ban it).
+scripts/lib/core-bindings-check.sh
+
 scripts/lib/core-dep-count.sh
