@@ -66,6 +66,7 @@ lint: lint-text lint-workflows lint-code
 # REUSE, OpenSpec spec/change validation and the secret scan over the full history (CI checks out
 # with fetch-depth 0).
 lint-text: _js-deps
+    scripts/lib/hooks-check.sh
     pnpm exec prettier --check .
     openspec validate --all --strict --no-interactive
     typos --force-exclude

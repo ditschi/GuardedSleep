@@ -13,6 +13,12 @@
 # GS_SLOT_WAIT seconds (default 3600); on timeout exit with status 75 and an error message.
 # `light` never waits: the command is just executed.
 #
+# Run deadline: if GS_RUN_TIMEOUT is set (any GNU `timeout` duration, e.g. 900 or 15m), the command
+# runs under `timeout --kill-after=30s` and the clock starts only AFTER the slot is acquired, so
+# queueing time is not counted. Exit 124 means "ran too long", exit 75 means "waited too long for a
+# slot" (GS_SLOT_WAIT). GS_RUN_TIMEOUT is cleared for the child so a nested acquisition does not
+# start a second deadline. Light and re-entrant calls apply no deadline.
+#
 # Re-entrancy: GS_SLOT_HELD names the heaviest class this process tree already holds. A nested call
 # for the same or a lighter class runs the command without acquiring. A nested heavy call inside a
 # medium slot acquires a heavy slot as well: medium and heavy are separate pools, so a medium holder
@@ -78,7 +84,13 @@ if [ -z "$acquired" ]; then
 fi
 
 export GS_SLOT_HELD="$class"
-"$@" <&0 &
+run_timeout="${GS_RUN_TIMEOUT:-}"
+unset GS_RUN_TIMEOUT
+if [ -n "$run_timeout" ]; then
+  timeout --kill-after=30s "$run_timeout" "$@" <&0 &
+else
+  "$@" <&0 &
+fi
 child=$!
 # shellcheck disable=SC2329 # invoked through the trap
 forward() { kill -TERM "$child" 2>/dev/null || true; }
@@ -88,5 +100,8 @@ wait "$child" || status=$?
 if kill -0 "$child" 2>/dev/null; then
   # wait was interrupted by a trapped signal; the child is still shutting down.
   wait "$child" || status=$?
+fi
+if [ "$status" -eq 124 ] && [ -n "$run_timeout" ]; then
+  echo "error: $class run exceeded GS_RUN_TIMEOUT=$run_timeout (slot wait not counted)" >&2
 fi
 exit "$status"
