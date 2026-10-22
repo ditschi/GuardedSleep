@@ -6,7 +6,7 @@ Refined 2026-10-22 from the wave-2 plan. Items 1.1, 1.3 (snapshots), 1.4 and 1.6
 
 - [x] 1.1 Create `guardedsleep-ffi` and move all UniFFI attributes out of `core` (`#[uniffi::remote]` for the boundary types; namespace stays `guardedsleep_core`, so Kotlin needs no source change)
 - [x] 1.2 Create `guardedsleep-wasm` with tsify types; generate TS into `packages/core-wasm` (`types.ts` re-exports the generated types)
-- [ ] 1.3 Lint fails when a UniFFI or wasm-bindgen attribute or dependency appears in `guardedsleep-core` (cargo-deny ban in `deny.core.toml` plus a source check in `just lint`)
+- [x] 1.3 Lint fails when a UniFFI or wasm-bindgen attribute or dependency appears in `guardedsleep-core` (cargo-deny ban in `deny.core.toml` plus a source check in `just lint`)
 
 ## 2. Snapshots and determinism
 

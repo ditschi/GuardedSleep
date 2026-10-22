@@ -17,6 +17,7 @@ Sources: ADR-020 §3, ADR-019 (Rust is the only protocol source), AGENTS.md §5.
 - **`packages/protocol` deletion moves to `add-rust-signaling-server`** (decided 2026-10-22): the Node signaling server is its last real consumer, so the package goes in the same change that deletes the server. `apps/mobile` only uses it in one test, which switches to the generated types.
 - **cargo-public-api runs on a separately pinned nightly** (`tools/nightly/rust-toolchain.toml`) inside the stock `rust:1-bookworm` image, because rustdoc JSON needs nightly and the build image lacks `libssl-dev`. The pin lives in `mise.toml` `[vars]`, not `[tools]`, so `mise install` works without a host cargo.
 - **tsify stays an optional core feature enabled only by `guardedsleep-wasm`**: wrapper types would duplicate the protocol types; the default core graph stays free of wasm-bindgen.
+- **Binding-free core is enforced in three layers** (decided 2026-10-22): `deny.core.toml` bans `uniffi` on the all-features graph; `scripts/lib/core-bindings-check.sh` bans `uniffi*`, `wasm-bindgen`, `js-sys` and `web-sys` on the default-feature graph (`cargo tree -p guardedsleep-core`) and greps `crates/guardedsleep-core/src` for `uniffi::`, `#[uniffi` and `wasm_bindgen`. cargo-deny cannot do the default-feature check itself because it unifies features across the workspace, where `guardedsleep-wasm` enables the optional `tsify` feature (which legitimately pulls wasm-bindgen, js-sys and web-sys), so a ban on those three in the all-features run would always fail.
 
 ## Risks / Trade-offs
 
