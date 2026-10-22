@@ -11,7 +11,7 @@ Sources: ADR-020 §3, ADR-019 (Rust is the only protocol source), AGENTS.md §5.
 ## Decisions
 
 - **UniFFI pinned exactly** and bumped in its own Renovate PR, because generated Kotlin and the runtime must match.
-- **Snapshots are committed, generated bindings are not**; CI generates twice and compares hashes to catch non-determinism.
+- **Snapshots are committed, generated bindings are not**; CI builds and generates twice and compares hashes to catch non-determinism. The second round cleans and recompiles `guardedsleep-core`, `-ffi` and `-wasm` (about 15 s on a warm cache, the dependencies stay cached), so macro expansion and metadata emission (uniffi, tsify, wasm-bindgen) are covered, not only the generators.
 - **Discarded alternatives:** hand-written JNI (unsafe surface, double maintenance); Diplomat (smaller ecosystem for Kotlin); keeping `packages/protocol` (a second schema drifts from the core).
 
 - **`packages/protocol` deletion moves to `add-rust-signaling-server`** (decided 2026-10-22): the Node signaling server is its last real consumer, so the package goes in the same change that deletes the server. `apps/mobile` only uses it in one test, which switches to the generated types.

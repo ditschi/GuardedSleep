@@ -22,7 +22,7 @@ Binding attributes (UniFFI, wasm-bindgen) SHALL appear only in the façade crate
 
 ### Requirement: API-surface snapshots
 
-The public API of `guardedsleep-ffi` and `guardedsleep-wasm` and the generated `.d.ts` SHALL be committed as snapshots, and CI SHALL fail when they differ from the code. CI SHALL generate the bindings twice and fail when the hashes differ.
+The public API of `guardedsleep-ffi` and `guardedsleep-wasm` and the generated `.d.ts` SHALL be committed as snapshots, and CI SHALL fail when they differ from the code. CI SHALL build the core, `guardedsleep-ffi` and `guardedsleep-wasm` twice from clean workspace crates, generate the bindings from each build, and fail when the hashes differ.
 
 #### Scenario: Unnoticed API change
 
