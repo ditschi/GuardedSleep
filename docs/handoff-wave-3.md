@@ -6,7 +6,7 @@
 
 1. **Branch.** Use `chore/toolchain-wave-2`. Waves 1 and 2 are merged on it; nothing is pushed and no PRs are open. Earlier branches build on each other: `chore/agent-model-routing` → `docs/toolchain-realignment` → `chore/toolchain-wave-1` → `docs/openspec-adoption` → `chore/toolchain-wave-2`. Create `chore/toolchain-wave-3` from the tip of wave 2.
 2. **Setup** (once per checkout): `just setup`. It installs the mise tools, writes the machine profile, and replaces the stale Husky `core.hooksPath` with lefthook. Until this runs, git hooks are off in the main checkout.
-3. **Read.** AGENTS.md is binding. §6 covers OpenSpec, §7 the guardrails, §10.1 machine load and parallel agents, and §10.2 commands that must finish. Then read `openspec/specs/`, the active changes in `openspec/changes/`, and `docs/backlog.md`.
+3. **Read.** AGENTS.md is binding. §6 covers OpenSpec, §7 the guardrails, §10.1 machine load and parallel agents, §10.2 commands that must finish, and §10.3 agent worktrees, interruptions and hooks. Then read `openspec/specs/`, the active changes in `openspec/changes/`, and `docs/backlog.md`.
 4. **OpenSpec.** Call it only via `mise exec -- openspec …` or `just`, because telemetry and update checks are disabled there. The workflow per change:
    1. Refine the coarse `tasks.md` against the current code.
    2. Delegate implementation to the `implementer` sub-agent, with the tasks section as the brief.
@@ -73,7 +73,7 @@ Suggested grouping on this machine (2 medium slots, 1 heavy slot):
   - Generate the offline key for the direct APK distribution.
   - Provide a brand launcher icon (`ic_launcher.xml` is a placeholder).
 
-## 5. Working rules learned (also in AGENTS.md §10.1/§10.2)
+## 5. Working rules learned (also in AGENTS.md §10.1–§10.3)
 
 - **Machine load.**
   - Load comes from what agents run, not from how many there are.
