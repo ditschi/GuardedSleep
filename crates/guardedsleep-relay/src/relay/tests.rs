@@ -237,6 +237,21 @@ fn relays_signals_between_two_peers_without_a_target() {
 }
 
 #[test]
+fn a_claimed_sender_in_a_signal_is_replaced_by_the_real_client_id() {
+    let mut h = H::open();
+    h.connect(1);
+    h.connect(2);
+    h.hello(1, "baby", "r", 2);
+    h.hello(2, "parent", "r", 2);
+    h.send(
+        2,
+        r#"{"type":"signal","roomId":"r","from":"forged","payload":{"sdp":"x"}}"#,
+    );
+    assert_eq!(h.last(1)["from"], h.client_id(2));
+    assert_ne!(h.last(1)["from"], "forged");
+}
+
+#[test]
 fn signal_errors() {
     let mut h = H::open();
     h.connect(1);
@@ -460,6 +475,23 @@ fn rate_limits_hello_attempts_per_client() {
         "welcome",
         "another client key has its own budget"
     );
+}
+
+#[test]
+fn the_eleventh_new_room_of_one_client_within_a_minute_is_rate_limited_by_default() {
+    let mut h = H::new(RelayConfig {
+        hello_rate_per_min: 0,
+        ..RelayConfig::default()
+    });
+    for i in 0..10u64 {
+        h.connect_from(100 + i, 7);
+        h.hello(100 + i, "baby", &format!("r-stuff-{i}"), 2);
+        assert_eq!(h.first(100 + i)["type"], "welcome");
+    }
+    h.connect_from(200, 7);
+    h.hello(200, "baby", "r-stuff-10", 2);
+    assert_eq!(h.first(200)["code"], "RATE_LIMITED");
+    assert_eq!(h.closed[&200], CloseReason::RateLimited);
 }
 
 #[test]
