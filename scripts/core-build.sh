@@ -18,10 +18,9 @@ if [[ "${CORE_BUILD_NATIVE:-0}" != "1" ]]; then
 	source "$ROOT/scripts/lib/build-image.sh"
 	gs_ensure_build_image
 	exec docker run --rm \
-		"${GS_DOCKER_USER_ARGS[@]}" \
+		"${GS_DOCKER_USER_ARGS[@]}" "${GS_DOCKER_CACHE_ARGS[@]}" \
 		-e CORE_BUILD_NATIVE=1 \
 		-e CARGO_TARGET_DIR=/workspace/target \
-		-e GRADLE_USER_HOME=/workspace/target/.gradle-home \
 		-v "$ROOT":/workspace -w /workspace \
 		"$GS_BUILD_IMAGE" bash scripts/core-build.sh "$@"
 fi

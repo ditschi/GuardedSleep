@@ -10,8 +10,13 @@
 # uid so files written to target/ stay owned by the caller (host cargo shares that directory); rootless
 # Docker already maps container root to the caller, so nothing is added there. HOME points at a
 # writable directory under target/ because the uid has no passwd entry in the image.
+# GS_DOCKER_CACHE_ARGS mounts the shared Cargo home (registry, git DBs, installed tools) and Gradle user
+# home from ${GS_SHARED_CACHE:-$HOME/.cache/guardedsleep}/{cargo,gradle} at /cache and sets CARGO_HOME,
+# CARGO_HOME_OVERRIDE (read by core-build.sh) and GRADLE_USER_HOME, so worktrees download dependencies
+# once. Cargo's package-cache lock and Gradle's cross-process cache locks make concurrent runs safe;
+# target/ and the Gradle project cache stay per worktree. AGENTS.md section 10.1.
 # Named build contexts: https://docs.docker.com/reference/cli/docker/buildx/build/#build-context
-# shellcheck disable=SC2034 # GS_BUILD_IMAGE and GS_DOCKER_USER_ARGS are read by the scripts that source this file
+# shellcheck disable=SC2034 # GS_BUILD_IMAGE, GS_DOCKER_USER_ARGS and GS_DOCKER_CACHE_ARGS are read by the scripts that source this file
 
 gs_ensure_build_image() {
   local root hash
@@ -27,4 +32,10 @@ gs_ensure_build_image() {
     mkdir -p "$root/target/.home"
     GS_DOCKER_USER_ARGS=(--user "$(id -u):$(id -g)" -e HOME=/workspace/target/.home)
   fi
+  local cache="${GS_SHARED_CACHE:-$HOME/.cache/guardedsleep}"
+  mkdir -p "$cache/cargo" "$cache/gradle"
+  GS_DOCKER_CACHE_ARGS=(
+    -v "$cache/cargo:/cache/cargo" -v "$cache/gradle:/cache/gradle"
+    -e CARGO_HOME=/cache/cargo -e CARGO_HOME_OVERRIDE=/cache/cargo -e GRADLE_USER_HOME=/cache/gradle
+  )
 }

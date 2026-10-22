@@ -138,6 +138,7 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 
 - `IDEA` Kani proof for "alarm within T after link loss".
 - `IDEA` `examples/` folder with PoC reproductions.
+- `IDEA` sccache for local agent worktrees (ADR-020 tier T2 → reconsider): the shared Cargo registry does not share compiled artefacts, so every new worktree still builds cold.
 - `UNDER DISCUSSION` refactor-scout items: a shared `docker run` helper; YAML anchors for the duplicated CI path filters; one source for the NDK and cargo-ndk pins (Renovate regex manager); whether `stack-up` prints `SKIPPED` without Docker.
 - `PLANNED` (wave 2/3) The generated Dev Container from ADR-020 §2; complete the ktfmt and uv pins once `reuse` ships a wheel.
 

@@ -12,8 +12,7 @@ fi
 source "$ROOT/scripts/lib/build-image.sh"
 gs_ensure_build_image
 exec docker run --rm \
-	"${GS_DOCKER_USER_ARGS[@]}" \
-	-e CARGO_HOME=/workspace/target/.cargo-home \
+	"${GS_DOCKER_USER_ARGS[@]}" "${GS_DOCKER_CACHE_ARGS[@]}" \
 	-e CARGO_TARGET_DIR=/workspace/target \
 	-v "$ROOT":/workspace -w /workspace \
 	"$GS_BUILD_IMAGE" cargo "$@"

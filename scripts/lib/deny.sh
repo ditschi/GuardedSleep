@@ -26,11 +26,9 @@ deny() {
   # shellcheck source=build-image.sh
   source scripts/lib/build-image.sh
   gs_ensure_build_image
-  mkdir -p target/.cargo-home
   # The build image ships a VCS client, so cargo-deny fetches the advisory database and the crates it
   # needs for `cargo metadata` itself, into the shared CARGO_HOME (needs network).
-  docker run --rm "${GS_DOCKER_USER_ARGS[@]}" -e HOME=/workspace/target/.cargo-home \
-    -e CARGO_HOME=/workspace/target/.cargo-home \
+  docker run --rm "${GS_DOCKER_USER_ARGS[@]}" "${GS_DOCKER_CACHE_ARGS[@]}" -e HOME=/cache/cargo \
     -e CARGO_TARGET_DIR=/workspace/target \
     -v "$ROOT":/workspace -v "$bin":/usr/local/bin/cargo-deny:ro -w /workspace \
     "$GS_BUILD_IMAGE" cargo-deny "$@"
