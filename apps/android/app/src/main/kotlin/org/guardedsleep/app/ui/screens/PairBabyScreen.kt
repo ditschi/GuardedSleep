@@ -40,7 +40,7 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
-import org.guardedsleep.app.R
+import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AdaptiveButtonRow
 import org.guardedsleep.app.ui.common.AmbientBar
 import org.guardedsleep.app.ui.common.BabyQuiet

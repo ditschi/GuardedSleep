@@ -38,7 +38,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import org.guardedsleep.app.R
+import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AdaptiveButtonRow
 import org.guardedsleep.app.ui.common.AppCard
 import org.guardedsleep.app.ui.common.Body
@@ -137,7 +137,8 @@ fun ParentMonitorScreen(
     val hidden = chips.size - visible.size
 
     val top: @Composable ColumnScope.() -> Unit = {
-        if (p.restoredAfterMs != null) {
+        val restoredAfterMs = p.restoredAfterMs
+        if (restoredAfterMs != null) {
             Row(
                 Modifier.fillMaxWidth()
                     .background(StateColors.Green, RoundedCornerShape(12.dp))
@@ -150,7 +151,7 @@ fun ParentMonitorScreen(
                 Text(
                     stringResource(
                         R.string.native_ui_link_restored_after,
-                        formatDuration(p.restoredAfterMs),
+                        formatDuration(restoredAfterMs),
                     ),
                     color = StateColors.OnState,
                     style = MaterialTheme.typography.titleMedium,
@@ -672,6 +673,8 @@ private fun Headline(p: ParentMonitorState, elapsed: Long, wall: Long, snoozed: 
     val connected = p.link.phase == LinkPhase.CONNECTED
     val colors = LocalAppColors.current
     val noise = connected && p.noiseAlertActive
+    val quietSince = p.quietSinceWallMs
+    val lastSound = p.lastSound
     val text =
         when {
             !connected -> {
@@ -693,16 +696,16 @@ private fun Headline(p: ParentMonitorState, elapsed: Long, wall: Long, snoozed: 
                     R.string.native_ui_parent_sound_since,
                     formatTime(p.noiseSinceWallMs ?: wall),
                 )
-            p.quietSinceWallMs != null ->
+            quietSince != null ->
                 stringResource(
                     R.string.native_ui_parent_all_quiet_since,
-                    formatTime(p.quietSinceWallMs),
+                    formatTime(quietSince),
                 )
-            p.lastSound != null ->
+            lastSound != null ->
                 stringResource(
                     R.string.native_ui_parent_sound_at,
-                    formatTime(p.lastSound.atWallMs),
-                    formatDuration(p.lastSound.durationMs),
+                    formatTime(lastSound.atWallMs),
+                    formatDuration(lastSound.durationMs),
                 )
             else -> stringResource(R.string.native_ui_parent_monitoring_now)
         }
@@ -718,14 +721,15 @@ private fun Headline(p: ParentMonitorState, elapsed: Long, wall: Long, snoozed: 
 private fun MissedCard(m: MissedEventsUi, wall: Long, onOk: () -> Unit) {
     val end = m.endWallMs ?: wall
     val start = end - m.downMs
+    val count = m.count
     val text =
         when {
             m.complete && m.count == 0 -> stringResource(R.string.native_ui_missed_none)
-            m.complete && m.count != null && m.count > 0 ->
+            m.complete && count != null && count > 0 ->
                 pluralStringResource(
                     R.plurals.native_ui_missed_some,
-                    m.count,
-                    m.count,
+                    count,
+                    count,
                     formatTime(start),
                     formatTime(end),
                     stringResource(

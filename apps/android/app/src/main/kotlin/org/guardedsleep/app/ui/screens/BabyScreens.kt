@@ -62,7 +62,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
-import org.guardedsleep.app.R
+import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AdaptiveButtonRow
 import org.guardedsleep.app.ui.common.AmbientBar
 import org.guardedsleep.app.ui.common.AppCard
@@ -467,18 +467,19 @@ fun BabyKioskScreen(controller: AppController) {
                     Modifier.testTag("baby_kiosk_link_icon"),
                     size = 12.dp,
                 )
+                val lastAlive = b.link.lastAliveElapsedMs
                 Text(
                     babyStatusText(b.link) +
                         if (
                             b.link.level >= 2 &&
-                                b.link.lastAliveElapsedMs != null &&
+                                lastAlive != null &&
                                 b.link.phase != LinkPhase.PEER_STOPPED &&
                                 b.link.phase != LinkPhase.CONNECTED
                         ) {
                             " " +
                                 stringResource(
                                     R.string.native_ui_baby_for_duration,
-                                    formatDuration(env.elapsedNow() - b.link.lastAliveElapsedMs),
+                                    formatDuration(env.elapsedNow() - lastAlive),
                                 )
                         } else "",
                     Modifier.testTag("baby_status"),

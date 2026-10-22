@@ -23,6 +23,10 @@ gradlePlugin {
             id = "guardedsleep.compose"
             implementationClass = "org.guardedsleep.buildlogic.ComposeConventionPlugin"
         }
+        register("i18n") {
+            id = "guardedsleep.i18n"
+            implementationClass = "org.guardedsleep.buildlogic.I18nConventionPlugin"
+        }
         register("kotlin") {
             id = "guardedsleep.kotlin"
             implementationClass = "org.guardedsleep.buildlogic.KotlinConventionPlugin"

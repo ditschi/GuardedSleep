@@ -36,7 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
-import org.guardedsleep.app.R
+import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AppCard
 import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.Glyph

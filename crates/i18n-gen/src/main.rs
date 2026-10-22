@@ -60,7 +60,7 @@ fn main() -> ExitCode {
         .unwrap_or_else(|| root.join("apps/mobile/src/lib/i18n/generated"));
     let android_out = arg(&argv, "--android-out")
         .or_else(|| if cmd == "android" { out.clone() } else { None })
-        .unwrap_or_else(|| root.join("apps/android/app/build/generated/i18n/res"));
+        .unwrap_or_else(|| root.join("apps/android/ui-contract/build/generated/i18n/res"));
 
     let mut issues = Vec::new();
     let cat = catalogue::load(

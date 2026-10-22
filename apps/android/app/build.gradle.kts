@@ -1,67 +1,14 @@
-import javax.inject.Inject
-
+// UI (Compose screens), navigation and the manual dependency wiring. Depends on `ui-contract` and
+// `platform` only: UniFFI types are not on this module's compile classpath.
 plugins {
     id("guardedsleep.android-application")
     id("guardedsleep.compose")
     alias(libs.plugins.roborazzi)
 }
 
-// Android string resources are generated from the platform-neutral catalogue (locales/*.json).
-abstract class GenerateI18nTask : DefaultTask() {
-    @get:InputDirectory
-    @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val localesDir: DirectoryProperty
-
-    @get:InputDirectory
-    @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val generatorDir: DirectoryProperty
-
-    @get:OutputDirectory abstract val outputDir: DirectoryProperty
-
-    @get:Internal abstract val repoRoot: DirectoryProperty
-
-    @get:Inject abstract val exec: ExecOperations
-
-    @TaskAction
-    fun generate() {
-        val root = repoRoot.get().asFile
-        exec.exec {
-            workingDir = root
-            environment("CARGO_HOME", System.getenv("CARGO_HOME") ?: "${root}/target/.cargo-home")
-            environment("CARGO_TARGET_DIR", System.getenv("CARGO_TARGET_DIR") ?: "${root}/target")
-            commandLine(
-                "bash",
-                "scripts/cargo.sh",
-                "run",
-                "-q",
-                "-p",
-                "i18n-gen",
-                "--",
-                "android",
-                "--out",
-                outputDir.get().asFile.absolutePath,
-            )
-        }
-    }
-}
-
-val generateI18n =
-    tasks.register<GenerateI18nTask>("generateI18n") {
-        val root = rootProject.layout.projectDirectory.dir("../..")
-        repoRoot.set(root)
-        localesDir.set(root.dir("locales"))
-        generatorDir.set(root.dir("crates/i18n-gen/src"))
-        outputDir.set(layout.buildDirectory.dir("generated/i18n/res"))
-    }
-
-androidComponents {
-    onVariants { variant ->
-        variant.sources.res?.addGeneratedSourceDirectory(generateI18n, GenerateI18nTask::outputDir)
-    }
-}
-
 android {
     namespace = "org.guardedsleep.app"
+
     defaultConfig {
         // ADR-018: alpha builds install next to the Capacitor app (org.guardedsleep.app).
         applicationId = "org.guardedsleep.app.alpha"
@@ -84,32 +31,17 @@ android {
         }
     }
 
-    buildFeatures {
-        buildConfig = true
-    }
-
-    testOptions {
-        unitTests.isIncludeAndroidResources = true
-        unitTests.all {
-            // Host build of the core (scripts/core-build.sh android); JNA loads it for the real
-            // CoreLink in tests.
-            it.systemProperty(
-                "jna.library.path",
-                rootProject.file("../../target/debug").absolutePath,
-            )
-        }
-    }
+    testOptions { unitTests.isIncludeAndroidResources = true }
 }
 
 dependencies {
-    implementation(project(":core"))
+    implementation(project(":ui-contract"))
+    implementation(project(":platform"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
-    implementation(libs.webrtc.sdk)
-    implementation(libs.okhttp)
     implementation(libs.camera.camera2)
     implementation(libs.camera.lifecycle)
     implementation(libs.camera.view)
@@ -121,8 +53,6 @@ dependencies {
     implementation(libs.coroutines.android)
 
     testImplementation(libs.junit)
-    testImplementation(libs.jna)
-    testImplementation(libs.json)
     testImplementation(libs.robolectric)
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)

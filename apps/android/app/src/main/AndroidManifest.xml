@@ -47,9 +47,5 @@
 
         <receiver android:name=".AlertActionReceiver" android:exported="false" />
 
-        <service
-            android:name=".service.MonitorService"
-            android:exported="false"
-            android:foregroundServiceType="microphone|mediaPlayback" />
     </application>
 </manifest>

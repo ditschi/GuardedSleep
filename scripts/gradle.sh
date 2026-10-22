@@ -3,7 +3,7 @@
 # Docker). Concurrent invocations are serialised with flock on target/.gradle.lock because parallel
 # Gradle runs on one project dir corrupt each other's caches. The Gradle user home is shared between
 # worktrees (build-image.sh): Gradle locks it across processes, so only the project dir needs the flock.
-#   scripts/gradle.sh :core:testDebugUnitTest :app:assembleDebug
+#   scripts/gradle.sh :platform:testDebugUnitTest :app:assembleDebug
 # Inside CI or the image itself, set CORE_BUILD_NATIVE=1 to run without Docker.
 set -euo pipefail
 

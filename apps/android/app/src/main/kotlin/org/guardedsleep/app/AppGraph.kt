@@ -20,14 +20,16 @@ import org.guardedsleep.app.service.ServiceLauncher
 import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.signaling.OkHttpSignalingFactory
 import org.guardedsleep.app.silence.SilenceController
+import org.guardedsleep.app.wiring.EntryPoints
+import org.guardedsleep.app.wiring.PlatformServices
 
 /** Manual dependency graph; one per process, created by [GuardedSleepApp]. */
 @OptIn(ExperimentalCoroutinesApi::class)
-class AppGraph(context: Context) {
+class AppGraph(context: Context) : PlatformServices {
     private val app = context.applicationContext
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
 
-    val settings =
+    override val settings =
         SettingsRepository(
             PreferenceDataStoreFactory.create(scope = ioScope) {
                 File(app.filesDir, "datastore/gs_settings.preferences_pb")
@@ -35,10 +37,11 @@ class AppGraph(context: Context) {
             ioScope,
         )
     val pairingStore = PairingStore(File(app.filesDir, "pairing.bin"), KeystorePairingCipher())
-    val silence = SilenceController(app, settings)
-    val alerts = AlertController(app)
+    override val entryPoints: EntryPoints = AppEntryPoints
+    val silence = SilenceController(app, settings, entryPoints)
+    val alerts = AlertController(app, entryPoints)
     val readiness = ReadinessChecker(AndroidReadinessEnv(app), settings, SystemClockSource)
-    val controller =
+    override val controller =
         LinkController(
             settingsRepo = settings,
             pairingStore = pairingStore,
@@ -50,6 +53,13 @@ class AppGraph(context: Context) {
             host = ServiceLauncher(app),
             network = AndroidNetworkWatcher(app),
         )
+}
+
+/** The `app` components behind the platform notifications. */
+private object AppEntryPoints : EntryPoints {
+    override val mainActivity = MainActivity::class.java
+    override val alertActivity = AlertActivity::class.java
+    override val alertActionReceiver = AlertActionReceiver::class.java
 }
 
 fun Context.graph(): AppGraph = (applicationContext as GuardedSleepApp).graph

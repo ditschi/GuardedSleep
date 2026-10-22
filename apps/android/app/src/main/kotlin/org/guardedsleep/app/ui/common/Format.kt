@@ -7,7 +7,7 @@ import androidx.compose.ui.res.stringResource
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
-import org.guardedsleep.app.R
+import org.guardedsleep.app.contract.R
 
 /** `{time}`: short clock time in the user's locale (formatting stays native, ADR-015). */
 @Composable

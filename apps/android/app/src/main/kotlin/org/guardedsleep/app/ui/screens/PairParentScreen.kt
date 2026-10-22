@@ -57,7 +57,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import java.util.concurrent.Executors
-import org.guardedsleep.app.R
+import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.Glyph
 import org.guardedsleep.app.ui.common.GlyphIcon

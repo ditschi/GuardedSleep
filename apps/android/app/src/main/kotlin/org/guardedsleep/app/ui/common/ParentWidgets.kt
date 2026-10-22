@@ -49,7 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.withTimeoutOrNull
-import org.guardedsleep.app.R
+import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.LinkUi
 import org.guardedsleep.app.ui.model.ListenMode

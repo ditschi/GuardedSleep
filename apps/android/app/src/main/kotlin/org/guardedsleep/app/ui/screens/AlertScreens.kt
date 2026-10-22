@@ -38,7 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
-import org.guardedsleep.app.R
+import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AdaptiveButtonRow
 import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.ConfirmDialog
@@ -325,10 +325,11 @@ fun LinkAlarmContent(controller: AppController, onClose: () -> Unit) {
                         textAlign = TextAlign.Center,
                     )
                 }
-                if (variant == AlarmVariant.LOST && link.causeHint != null) {
+                val causeHint = link.causeHint
+                if (variant == AlarmVariant.LOST && causeHint != null) {
                     Text(
                         stringResource(
-                            when (link.causeHint) {
+                            when (causeHint) {
                                 CauseHint.SERVER_UNREACHABLE ->
                                     R.string.native_ui_link_alarm_cause_server
                                 CauseHint.PEER_ABSENT -> R.string.native_ui_link_alarm_cause_peer
