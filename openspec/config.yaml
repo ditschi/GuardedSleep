@@ -32,7 +32,7 @@ context: |
 rules:
   proposal:
     - Name the tier (T0/T1/T2) the change belongs to and what is explicitly out of scope.
-    - State the persona impact (docs/concept/personas.md): which persona it serves, which it trades off.
+    - "State the persona impact (docs/concept/personas.md): which persona it serves, which it trades off."
     - Changes to architecture, scope, the security model or a core concept say so in Why, so the
       Critical Reviewer role is applied (AGENTS.md section 6).
   design:

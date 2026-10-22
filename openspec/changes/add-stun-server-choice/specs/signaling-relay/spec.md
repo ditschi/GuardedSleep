@@ -4,12 +4,16 @@
 
 ### Requirement: Third-party STUN choice
 
-The client SHALL offer, in its advanced settings, a choice of STUN service: the configured relay (default), a server from a vetted list of privacy-respecting European STUN servers, or a manually entered `host:port`. Selecting a third-party server SHALL first show a warning that names the operator and states that it sees the device's IP address and when the app connects. Google STUN servers SHALL NOT appear in the list, in defaults or in code. The client SHALL never switch to a third-party server without the user's choice.
+The client SHALL offer, in its advanced settings, a choice of STUN service: the configured relay (default), a server from a vetted list of privacy-respecting European STUN servers, or a manually entered `host:port`. Selecting a third-party server SHALL first show a warning that names the operator and states that it sees the device's IP address and when the app connects.
 
 #### Scenario: Choosing a listed server
 
 - **WHEN** the user selects a server from the vetted list
 - **THEN** the warning names the operator, and the server is used only after the user confirms
+
+### Requirement: No implicit third-party STUN
+
+The client SHALL never switch to a third-party STUN server without the user's choice, and Google STUN servers SHALL NOT appear in the list, in defaults or in code.
 
 #### Scenario: Relay STUN does not answer
 
