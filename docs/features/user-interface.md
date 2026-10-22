@@ -12,14 +12,7 @@ The user interface must be simple, reliable, and usable under stress (tired pare
 
 ### Multi-Language Support (i18n)
 
-> STATUS: DECIDED -- locale policy per [ADR-021](../decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §2 (owner, 2026-10-20), superseding the four-locale decision of 2026-10-19 (en, de, fr, es). Mechanism: [ADR-015](../decisions/ADR-015-native-clients-with-shared-rust-core.md) "Localization" (PROPOSED).
-
-- English is the master catalogue. AI-translated catalogues ship for about 20 frequently spoken languages: en, de, fr, es, it, pt, nl, pl, sv, da, cs, ro, zh-Hans, ja, ko, hi, ar (right-to-left), tr, uk, id. Native speakers improve them over time; further locales can be added the same way without a new ADR
-- A locale ships only if every key tagged `critical` (alerts, link loss, connection state, safety warnings) is present, so an alarm is never mixed-language; non-critical keys may fall back to English
-- Each non-English value carries a `machineTranslated` or `reviewed` marker; review is an improvement path, not a shipping gate. Alert and connection-loss copy must still be understandable in each locale, see [ADR-013](../../openspec/changes/archive/2026-10-21-adr-013-connection-status-observability-and-copy/design.md))
-- Translations are maintained once in a shared catalogue and reused by every client (Android, iOS, web, later desktop)
-- Architecture supports easy addition of new languages; community can contribute translations
-- UI text externalized from code from the start
+> STATUS: DECIDED -- moved to [`openspec/specs/i18n`](../../openspec/specs/i18n/spec.md) (built: en, de, fr, es); the ADR-021 locale policy (about 20 locales) is the prepared change `expand-locales`.
 
 ## Dependencies
 

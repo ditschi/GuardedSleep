@@ -10,6 +10,8 @@
   - The "F-Droid" store wording in [vision.md](../concept/vision.md) and [ADR-005](ADR-005-parent-alerts-product-naming-and-distribution.md).
 - Related: [ADR-020](ADR-020-toolchain-and-development-setup.md), [ADR-003](ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md), [ADR-004](../../openspec/changes/archive/2026-04-15-adr-004-encryption-transport-and-key-storage/design.md)
 
+> **Migrated to OpenSpec (2026-10-22):** §2 is decided but only partly built: the four shipped locales are normative in [`openspec/specs/i18n`](../../openspec/specs/i18n/spec.md), the ~20-locale policy goes into the prepared change `expand-locales`. §1 and §3 stay binding until `add-offline-lan` and `distribution` are done.
+
 ## Context
 
 The toolchain review ([ADR-020](ADR-020-toolchain-and-development-setup.md)) raised three product questions that tooling cannot decide.

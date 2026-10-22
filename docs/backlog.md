@@ -112,6 +112,8 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 
 ### i18n
 
+- `PLANNED` (T1) Weblate for volunteer translators (ADR-021 §2).
+- `PLANNED` (wave 3) Check in `just lint` that every key of the core's `message_keys()` exists in `locales/en.json` (today a unit test only checks the list itself).
 - `IDEA` A "translation feedback" link next to machine-translated copy.
 
 ### dev-toolchain
