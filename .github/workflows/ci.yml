@@ -40,40 +40,21 @@ jobs:
         with:
           persist-credentials: false
       # "code" is everything except documentation, so docs-only changes skip the heavy jobs (the text
-      # lint job still runs for them).
+      # lint job still runs for them). The filters live in .github/path-filters.yml (shared with
+      # `just test-affected`); dorny applies one predicate-quantifier to all filters of a step, so each
+      # step reads the whole file and uses only its own output.
+      # https://github.com/dorny/paths-filter#usage
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: code
         with:
           predicate-quantifier: every
-          filters: |
-            code:
-              - "**"
-              - "!docs/**"
-              - "!**/*.md"
-              - "!LICENSE"
+          filters: .github/path-filters.yml
       # Inputs of the Android build (ABI libs, Kotlin bindings, JVM tests, APKs). The emulator gate has
       # its own, wider filter in android-native.yml.
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: android
         with:
-          filters: |
-            android:
-              - "crates/**"
-              - "Cargo.toml"
-              - "Cargo.lock"
-              - "rust-toolchain.toml"
-              - "mise.toml"
-              - "justfile"
-              - "apps/android/**"
-              - "locales/**"
-              - "scripts/core-build.sh"
-              - "scripts/gradle.sh"
-              - "scripts/lib/**"
-              - "scripts/poc/release-check.sh"
-              - "scripts/poc/size-check.sh"
-              - "docker/android-native-build/**"
-              - ".github/actions/**"
-              - ".github/workflows/ci.yml"
+          filters: .github/path-filters.yml
 
   pr-title:
     name: PR title
