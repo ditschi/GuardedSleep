@@ -89,6 +89,13 @@ pub struct RelayConfig {
     pub new_room_rate_per_min: u32,
     pub max_frame_bytes: usize,
     pub max_connections: usize,
+    /// Open connections per client key, so one address cannot hold every slot; 0 disables.
+    pub max_connections_per_client: usize,
+    /// Frames per connection and minute before the connection has joined (a legitimate client
+    /// sends one or two); 0 disables.
+    pub frame_rate_unjoined_per_min: u32,
+    /// Frames per connection and minute once joined (pings and ICE candidates); 0 disables.
+    pub frame_rate_per_min: u32,
     /// Rooms whose admission key can be held at once (Required mode).
     pub max_admission_keys: usize,
 }
@@ -105,6 +112,9 @@ impl Default for RelayConfig {
             new_room_rate_per_min: 10,
             max_frame_bytes: 64 * 1024,
             max_connections: 10_000,
+            max_connections_per_client: 16,
+            frame_rate_unjoined_per_min: 120,
+            frame_rate_per_min: 600,
             max_admission_keys: 16,
         }
     }
@@ -237,6 +247,9 @@ pub struct Relay<E: Entropy> {
     keys: HashMap<String, AdmissionKey>,
     hello_limiter: RateLimiter<ClientKey>,
     room_limiter: RateLimiter<ClientKey>,
+    unjoined_frame_limiter: RateLimiter<ConnId>,
+    joined_frame_limiter: RateLimiter<ConnId>,
+    per_client: HashMap<ClientKey, usize>,
     last_liveness: Option<Millis>,
 }
 
@@ -261,6 +274,12 @@ impl<E: Entropy> Relay<E> {
         Self {
             hello_limiter: RateLimiter::new(cfg.hello_rate_per_min),
             room_limiter: RateLimiter::new(cfg.new_room_rate_per_min),
+            // Entries are removed with their connection, so the map is bounded by `max_connections`.
+            unjoined_frame_limiter: RateLimiter::new(cfg.frame_rate_unjoined_per_min)
+                .with_max_keys(usize::MAX),
+            joined_frame_limiter: RateLimiter::new(cfg.frame_rate_per_min)
+                .with_max_keys(usize::MAX),
+            per_client: HashMap::new(),
             cfg,
             entropy,
             conns: HashMap::new(),
@@ -332,7 +351,10 @@ impl<E: Entropy> Relay<E> {
         if self.conns.contains_key(&conn) {
             return out;
         }
-        if self.conns.len() >= self.cfg.max_connections {
+        let per_client_cap = self.cfg.max_connections_per_client;
+        let over_client_cap = per_client_cap > 0
+            && self.per_client.get(&client).copied().unwrap_or(0) >= per_client_cap;
+        if self.conns.len() >= self.cfg.max_connections || over_client_cap {
             out.push(RelayEffect::Close {
                 conn,
                 reason: CloseReason::Capacity,
@@ -348,6 +370,7 @@ impl<E: Entropy> Relay<E> {
             out.push(send(conn, encode_challenge(n)));
         }
         self.last_liveness.get_or_insert(now);
+        *self.per_client.entry(client).or_insert(0) += 1;
         self.conns.insert(
             conn,
             Conn {
@@ -429,6 +452,21 @@ impl<E: Entropy> Relay<E> {
             return out;
         };
         c.awaiting_pong = false;
+        let within_budget = if c.joined.is_some() {
+            self.joined_frame_limiter.take(conn, now)
+        } else {
+            self.unjoined_frame_limiter.take(conn, now)
+        };
+        if !within_budget {
+            self.reject(
+                conn,
+                "RATE_LIMITED",
+                "too many messages",
+                CloseReason::RateLimited,
+                &mut out,
+            );
+            return out;
+        }
         if bytes.len() > self.cfg.max_frame_bytes {
             self.drop_conn(conn, Some(CloseReason::TooLarge), &mut out);
             return out;
@@ -785,6 +823,14 @@ impl<E: Entropy> Relay<E> {
         let Some(c) = self.conns.remove(&conn) else {
             return;
         };
+        self.unjoined_frame_limiter.remove(&conn);
+        self.joined_frame_limiter.remove(&conn);
+        if let Some(n) = self.per_client.get_mut(&c.client) {
+            *n = n.saturating_sub(1);
+            if *n == 0 {
+                self.per_client.remove(&c.client);
+            }
+        }
         if let Some(reason) = reason {
             out.push(RelayEffect::Close { conn, reason });
             out.push(RelayEffect::Log {
