@@ -38,22 +38,24 @@ setup:
 machine-profile *args:
     scripts/lib/machine-profile.sh {{ args }}
 
-# Format everything that is formatted automatically (Kotlin: see fmt-kotlin).
+# Format everything that is formatted automatically (Prettier, rustfmt, taplo, ktfmt).
 fmt:
     pnpm exec prettier --write .
     scripts/cargo.sh fmt --all
     taplo fmt
+    scripts/lib/ktfmt.sh
 
 # Same checks without writing; also the whitespace/JSON hygiene the old pre-commit config had.
 fmt-check:
     pnpm exec prettier --check .
     scripts/cargo.sh fmt --all -- --check
     taplo fmt --check
+    scripts/lib/ktfmt.sh --dry-run --set-exit-if-changed
     scripts/lib/hygiene.sh
     scripts/lib/workspace-lints.sh
     git ls-files -z 'scripts/*.sh' | xargs -0 shellcheck -x -P SCRIPTDIR
 
-# ktfmt over apps/android. Not part of fmt/fmt-check yet: 72 files differ today (fold in during wave 2).
+# ktfmt over apps/android (also part of fmt and fmt-check).
 fmt-kotlin *args:
     scripts/lib/ktfmt.sh {{ args }}
 

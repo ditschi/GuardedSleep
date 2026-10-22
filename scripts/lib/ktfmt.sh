@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs the mise-pinned ktfmt jar (mise.toml "http:ktfmt") over the Android Kotlin sources.
-#   scripts/lib/ktfmt.sh --dry-run   # check (lists unformatted files, exit 1)
+#   scripts/lib/ktfmt.sh --dry-run --set-exit-if-changed   # check (lists unformatted files, exit 1)
 #   scripts/lib/ktfmt.sh             # format in place
 # Options: https://github.com/facebook/ktfmt#command-line
 set -euo pipefail
