@@ -1,4 +1,4 @@
-//! The simulated world: virtual time, a relay that mirrors `apps/signaling-server`, a fake WebRTC
+//! The simulated world: virtual time, a relay that mirrors `crates/guardedsleep-relay`, a fake WebRTC
 //! media layer, and the `Link` instances (plus raw protocol clients) living in it.
 //!
 //! Everything is driven by one event queue ordered by `(time, priority, sequence)`. The only
@@ -1108,7 +1108,7 @@ impl World {
         self.deliver(a, input);
     }
 
-    // ---- signaling: server side (mirrors apps/signaling-server/src/server.ts) --------------
+    // ---- signaling: server side (mirrors crates/guardedsleep-relay) --------------
 
     fn signaling_down(&mut self) {
         self.server.up = false;

@@ -6,10 +6,12 @@ use serde_json::{Value, json};
 
 use crate::link::{Link, LinkConfig, LinkInput};
 use crate::pairing::{
-    decode_psk, derive_room_id, pair_proof_mac_v2_legacy, pair_proof_mac_v3, stop_notice_mac,
+    AdmissionKey, admission_mac, decode_psk, derive_admission_key, derive_room_id,
+    pair_proof_mac_v2_legacy, pair_proof_mac_v3, stop_notice_mac, verify_admission,
 };
 use crate::protocol::{
-    Role, parse_data_message, parse_data_message_v2_legacy, parse_server_message,
+    Role, parse_challenge, parse_client_message, parse_data_message, parse_data_message_v2_legacy,
+    parse_server_message,
 };
 use crate::session::{Input, Session, SessionConfig};
 
@@ -36,6 +38,31 @@ fn evaluate_value(case_json: &str) -> Result<Value, String> {
     };
     match kind {
         "parse_server" => to_value(parse_server_message(s("raw")?)),
+        "parse_client" => to_value(parse_client_message(s("raw")?)),
+        "parse_challenge" => to_value(parse_challenge(s("raw")?)),
+        "admission_key" => {
+            let psk = decode_psk(s("psk_b64url")?).ok_or("bad psk")?;
+            to_value(derive_admission_key(&psk).to_b64url())
+        }
+        "admission_mac" | "admission_verify" => {
+            let key = AdmissionKey::from_b64url(s("key_b64url")?).ok_or("bad key")?;
+            let role = match s("role")? {
+                "baby" => Role::Baby,
+                "parent" => Role::Parent,
+                other => return Err(format!("bad role {other}")),
+            };
+            if kind == "admission_mac" {
+                to_value(admission_mac(&key, s("nonce")?, role, s("room")?))
+            } else {
+                to_value(verify_admission(
+                    &key,
+                    s("nonce")?,
+                    role,
+                    s("room")?,
+                    s("mac")?,
+                ))
+            }
+        }
         "parse_data" => to_value(parse_data_message_v2_legacy(s("raw")?)),
         "parse_data_v3" => to_value(parse_data_message(s("raw")?)),
         "derive_room" => {

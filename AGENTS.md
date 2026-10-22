@@ -35,7 +35,7 @@
 | Tests            | nextest, proptest, insta, golden + negative vectors through every binding; Robolectric/Roborazzi; Vitest; Playwright; Maestro; emulator gate  |
 | Crypto / media   | WebRTC DTLS-SRTP + DataChannel; direction-bound pairing proof (ADR-004 amendment). No custom transport crypto                                 |
 
-**Legacy, frozen, never extend:** `apps/mobile` (SvelteKit + Capacitor; reference for the `apps/web` rebuild, deleted at parity), `apps/signaling-server` (Node, replaced by the Rust server), `packages/protocol` (hand-written TS types, to be deleted), (`docker/android-build`, the Capacitor image, is gone).
+**Legacy, frozen, never extend:** `apps/mobile` (SvelteKit + Capacitor; reference for the `apps/web` rebuild, deleted at parity). `docker/android-build` (the Capacitor image) is gone.
 
 ## 3. Repository map
 
@@ -46,12 +46,13 @@ crates/
   i18n-gen/ , uniffi-bindgen/                                                                         [exist]
   guardedsleep-ffi/     UniFFI façade (libguardedsleep_ffi.so, Kotlin bindings); api.txt snapshot      [exists; short name `ffi`]
   guardedsleep-wasm/    wasm-bindgen + tsify façade for the web client; api.txt snapshot                [exists; short name `wasm`]
-  guardedsleep-{relay,server}/                                                                        (planned, wave 2)
+  guardedsleep-relay/   Sans-IO signaling relay: rooms, limits, LAN admission                          [exists]
+  guardedsleep-server/  Rust signaling server (axum), built-in STUN, optional local web UI            [exists]
 apps/
   android/              Native client (Kotlin + Compose); :core = UniFFI bindings + JNI libs          [exists; modules app/ui-contract/platform/core-bindings planned, wave 2]
   web/                  Vite 8 + Svelte 5 web client                                                   (planned, wave 3)
   e2e/                  Playwright browser E2E
-  mobile/               LEGACY, frozen reference     signaling-server/   LEGACY Node relay, frozen
+  mobile/               LEGACY, frozen reference
 packages/
   core-wasm/            WASM build of the core + generated TS types
   protocol/             LEGACY, deleted in wave 2
@@ -84,10 +85,10 @@ Per-package `AGENTS.md` files may exist later; they inherit this file and docume
 | Build                      | `just build` (web + Android) · `just build-web` · `just build-android` · `just verify-android` (adds JVM tests and Roborazzi)               |
 | Browser E2E                | `just e2e` (Playwright; starts `just dev`)                                                                                                  |
 | Emulator gate (KVM)        | `just gate` (`DOZE_MINUTES=2 just gate` for a quick run; run `just build-android` first)                                                    |
-| Local dev                  | `just dev` (Vite 5173 + legacy signaling server 8787)                                                                                       |
+| Local dev                  | `just dev` (Vite 5173 + Rust signaling server 8787)                                                                                         |
 | Docker stack               | `just stack-lan` · `just stack-up`                                                                                                          |
 | Supply chain, secrets      | `just deny` · `just secrets` · `just audit`                                                                                                 |
-| Legacy server smoke test   | `pnpm --filter @guardedsleep/signaling-server smoke`                                                                                        |
+| Server smoke test          | `just smoke` (built `guardedsleep-server` binary, hello + signal relay over a WebSocket)                                                    |
 
 Before a commit lefthook runs Prettier, cargo fmt, typos, hygiene and Betterleaks on staged files; CI re-runs everything. Never bypass hooks; re-run `just lint` manually before declaring "done".
 
@@ -110,7 +111,7 @@ Core       Rust, sans-IO (core, relay): no I/O, threads or clocks; emits message
 ```
 
 - **Safety logic lives once, in the Rust core** (pairing, link supervision, escalation, noise gate, validation). Platform reconnect loops or timer-based alarms are bugs.
-- **Protocol shapes come from the Rust core.** Never hand-edit a second schema; never extend `packages/protocol`.
+- **Protocol shapes come from the Rust core.** Never hand-edit a second schema.
 - **UI renders contract models only** (`UiContract.kt`; web stores mirror it). UI code never imports UniFFI/WASM types. In Android only `platform` may depend on `core-bindings` (wave 2).
 - **`relay` is shared** by the server and the Android LAN listener; the platform owns the sockets.
 - **cargo-deny** bans tokio, mio, getrandom and socket crates from the `core` and `relay` graphs. This keeps them sans-IO: do not work around it. Binding attributes never appear in `core`.

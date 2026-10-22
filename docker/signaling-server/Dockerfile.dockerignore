@@ -1,0 +1,8 @@
+# Build context of docker/signaling-server/Dockerfile: only what the Rust build reads.
+# BuildKit picks <Dockerfile name>.dockerignore over the repository .dockerignore.
+*
+!Cargo.toml
+!Cargo.lock
+!rust-toolchain.toml
+!crates
+crates/**/target

@@ -1,4 +1,4 @@
-//! Wire format shared with `@guardedsleep/protocol` (TypeScript). Parsers mirror the TS validators
+//! Wire format shared with the web client (TypeScript types are generated from this module). Parsers mirror the retired TS validators
 //! so both implementations accept and reject the same inputs (see `vectors/conformance.json`).
 
 // Untrusted input is parsed here: return errors instead of panicking (AGENTS.md §5.3).
@@ -79,6 +79,8 @@ const ERROR_CODES: &[&str] = &[
     "PARENT_CAP",
     "SIGNAL_TARGET_REQUIRED",
     "RATE_LIMITED",
+    "ADMISSION_REQUIRED",
+    "ADMISSION_FAILED",
 ];
 
 fn object(raw: &str) -> Option<Map<String, Value>> {
@@ -696,6 +698,126 @@ fn json_number(n: f64) -> Value {
     }
 }
 
+/// Relay admission nonce (ADR-021 section 1): 128 random bits as 22 base64url characters.
+pub fn valid_nonce(nonce: &str) -> bool {
+    nonce.len() == 22
+        && nonce
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+}
+
+/// First message of a relay that requires admission: a fresh single-use nonce for this connection.
+pub fn encode_challenge(nonce: &str) -> String {
+    json!({ "type": "challenge", "nonce": nonce }).to_string()
+}
+
+/// The nonce of a `challenge`, `None` for anything else or a malformed nonce.
+pub fn parse_challenge(raw: &str) -> Option<String> {
+    let o = object(raw)?;
+    if o.get("type")?.as_str()? != "challenge" {
+        return None;
+    }
+    let nonce = o.get("nonce")?.as_str()?;
+    valid_nonce(nonce).then(|| nonce.to_owned())
+}
+
+/// Joins a room on a relay that requires admission. It replaces `hello`: `mac` is
+/// `admission_mac(key, nonce, role, room_id)` over the nonce of this connection's `challenge`.
+pub fn encode_admit(role: Role, room_id: &str, mac: &str) -> String {
+    json!({
+        "type": "admit",
+        "role": role.as_str(),
+        "roomId": room_id,
+        "protocolVersion": PROTOCOL_VERSION,
+        "mac": mac,
+    })
+    .to_string()
+}
+
+/// A message from a client to the signaling relay. Mirrors `parseClientMessage` of the TypeScript
+/// package, plus the admission `admit`.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum ClientMessage {
+    Ping,
+    Hello {
+        role: Role,
+        room_id: String,
+        protocol_version: u64,
+    },
+    Admit {
+        role: Role,
+        room_id: String,
+        protocol_version: u64,
+        /// 64 lowercase hex characters.
+        mac: String,
+    },
+    Signal {
+        room_id: String,
+        to: Option<String>,
+        payload: Value,
+    },
+}
+
+fn protocol_version_of(v: &Value) -> Option<u64> {
+    let n = v.as_number()?;
+    n.as_u64().or_else(|| {
+        n.as_f64()
+            .filter(|f| f.fract() == 0.0 && (0.0..9.0e15).contains(f))
+            .map(|f| f as u64)
+    })
+}
+
+/// Untrusted input from a client; `None` for anything malformed.
+pub fn parse_client_message(raw: &str) -> Option<ClientMessage> {
+    let o = object(raw)?;
+    match o.get("type")?.as_str()? {
+        "ping" => Some(ClientMessage::Ping),
+        t @ ("hello" | "admit") => {
+            let role = Role::parse(o.get("role")?)?;
+            let room_id = o.get("roomId")?.as_str()?;
+            if !valid_room_id(room_id) {
+                return None;
+            }
+            let protocol_version = protocol_version_of(o.get("protocolVersion")?)?;
+            if t == "hello" {
+                return Some(ClientMessage::Hello {
+                    role,
+                    room_id: room_id.to_owned(),
+                    protocol_version,
+                });
+            }
+            let mac = o.get("mac")?.as_str()?;
+            let hex =
+                mac.len() == 64 && mac.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'));
+            hex.then(|| ClientMessage::Admit {
+                role,
+                room_id: room_id.to_owned(),
+                protocol_version,
+                mac: mac.to_owned(),
+            })
+        }
+        "signal" => {
+            let room_id = o.get("roomId")?.as_str()?;
+            if !valid_room_id(room_id) {
+                return None;
+            }
+            let payload = o.get("payload")?.clone();
+            let to = match o.get("to") {
+                None => None,
+                Some(Value::String(t)) if valid_room_id(t) => Some(t.clone()),
+                Some(_) => return None,
+            };
+            Some(ClientMessage::Signal {
+                room_id: room_id.to_owned(),
+                to,
+                payload,
+            })
+        }
+        _ => None,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1044,5 +1166,82 @@ mod tests {
     fn hello_announces_protocol_v3() {
         let v: Value = serde_json::from_str(&encode_hello(Role::Baby, "r")).unwrap();
         assert_eq!(v["protocolVersion"], 3);
+    }
+
+    #[test]
+    fn client_messages_match_the_ts_parser() {
+        assert_eq!(
+            parse_client_message(r#"{"type":"ping"}"#),
+            Some(ClientMessage::Ping)
+        );
+        let hello = encode_hello(Role::Baby, "r1");
+        assert_eq!(
+            parse_client_message(&hello),
+            Some(ClientMessage::Hello {
+                role: Role::Baby,
+                room_id: "r1".into(),
+                protocol_version: 3
+            })
+        );
+        assert_eq!(
+            parse_client_message(
+                r#"{"type":"hello","role":"admin","roomId":"r","protocolVersion":3}"#
+            ),
+            None
+        );
+        assert_eq!(
+            parse_client_message(
+                r#"{"type":"hello","role":"baby","roomId":"","protocolVersion":3}"#
+            ),
+            None
+        );
+        assert_eq!(
+            parse_client_message(
+                r#"{"type":"hello","role":"baby","roomId":"r","protocolVersion":"3"}"#
+            ),
+            None
+        );
+        assert!(matches!(
+            parse_client_message(r#"{"type":"signal","roomId":"r","payload":null}"#),
+            Some(ClientMessage::Signal { to: None, .. })
+        ));
+        assert_eq!(
+            parse_client_message(r#"{"type":"signal","roomId":"r"}"#),
+            None
+        );
+        assert_eq!(
+            parse_client_message(r#"{"type":"signal","roomId":"r","to":"","payload":1}"#),
+            None
+        );
+        assert_eq!(parse_client_message("[]"), None);
+        assert_eq!(parse_client_message("nope"), None);
+    }
+
+    #[test]
+    fn admission_messages_round_trip() {
+        let nonce = "AAAAAAAAAAAAAAAAAAAAAA";
+        assert!(valid_nonce(nonce));
+        assert!(!valid_nonce("short"));
+        assert!(!valid_nonce("AAAAAAAAAAAAAAAAAAAAA!"));
+        assert_eq!(
+            parse_challenge(&encode_challenge(nonce)).as_deref(),
+            Some(nonce)
+        );
+        assert_eq!(parse_challenge(r#"{"type":"challenge","nonce":"x"}"#), None);
+        assert_eq!(parse_challenge(r#"{"type":"pong"}"#), None);
+        let mac = "ab".repeat(32);
+        assert_eq!(
+            parse_client_message(&encode_admit(Role::Parent, "r1", &mac)),
+            Some(ClientMessage::Admit {
+                role: Role::Parent,
+                room_id: "r1".into(),
+                protocol_version: 3,
+                mac
+            })
+        );
+        assert_eq!(
+            parse_client_message(&encode_admit(Role::Parent, "r1", "AB")),
+            None
+        );
     }
 }

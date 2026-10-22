@@ -10,11 +10,11 @@ Use this checklist when merging a **Release Please** release PR or tagging a mil
 
 **Related automation**
 
-| Layer                     | Command                                              | Scope                                                                   |
-| ------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------- |
-| Unit / integration        | `pnpm test`                                          | Protocol, signaling, mobile parsers                                     |
-| Browser E2E (2× Chromium) | `just e2e`                                           | Pairing, WebRTC, Listen, noise alert, **RMS non-silence** (tests 14–15) |
-| Signaling smoke           | `pnpm --filter @guardedsleep/signaling-server smoke` | WebSocket relay                                                         |
+| Layer                     | Command                                        | Scope                                                                   |
+| ------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------- |
+| Unit / integration        | `pnpm test`                                    | Rust core, relay, server, mobile                                        |
+| Browser E2E (2× Chromium) | `just e2e`                                     | Pairing, WebRTC, Listen, noise alert, **RMS non-silence** (tests 14–15) |
+| Signaling smoke           | `just test` (`guardedsleep-server` smoke test) | WebSocket relay through the built binary                                |
 
 ---
 

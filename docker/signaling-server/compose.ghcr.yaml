@@ -21,6 +21,7 @@ services:
     pull_policy: ${PULL_POLICY:-always}
     ports:
       - "${SIGNALING_PORT:-8787}:${SIGNALING_INTERNAL_PORT:-8787}"
+      - "${STUN_PORT:-3478}:3478/udp"
     environment:
       PORT: "${SIGNALING_INTERNAL_PORT:-8787}"
       SIGNALING_ALLOWED_ORIGINS: "${SIGNALING_ALLOWED_ORIGINS:-http://127.0.0.1,http://localhost}"
@@ -31,4 +32,10 @@ services:
       SIGNALING_TRUST_PROXY: "${SIGNALING_TRUST_PROXY:-}"
       SIGNALING_TRUSTED_PROXY_HOPS: "${SIGNALING_TRUSTED_PROXY_HOPS:-}"
       SIGNALING_HELLO_TIMEOUT_MS: "${SIGNALING_HELLO_TIMEOUT_MS:-}"
+      STUN_DISABLED: "${STUN_DISABLED:-0}"
     restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true

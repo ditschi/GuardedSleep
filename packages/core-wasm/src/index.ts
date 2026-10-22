@@ -12,6 +12,7 @@ export interface RawCoreModule {
   };
   messageKeys(): string;
   deriveRoomId(psk: Uint8Array): string;
+  conformanceEval(caseJson: string): string;
 }
 
 export interface CoreLink {
@@ -26,6 +27,8 @@ export interface CoreApi {
   createLink(config: LinkConfig): CoreLink;
   messageKeys(): string[];
   deriveRoomId(psk: Uint8Array): string;
+  /** Evaluates one `vectors/conformance.json` case; the result is JSON, `{error}` for a bad case. */
+  conformanceEval(caseJson: string): unknown;
 }
 
 export function createCoreApi(mod: RawCoreModule): CoreApi {
@@ -46,5 +49,6 @@ export function createCoreApi(mod: RawCoreModule): CoreApi {
     },
     messageKeys: () => JSON.parse(mod.messageKeys()) as string[],
     deriveRoomId: (psk) => mod.deriveRoomId(psk),
+    conformanceEval: (caseJson) => JSON.parse(mod.conformanceEval(caseJson)) as unknown,
   };
 }

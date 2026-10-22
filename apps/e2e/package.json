@@ -7,9 +7,9 @@
   "scripts": {
     "check": "tsc --noEmit -p tsconfig.json",
     "generate-fixtures": "node ./scripts/generate-fixtures.mjs",
-    "test": "pnpm --filter @guardedsleep/signaling-server build && pnpm run generate-fixtures && playwright test",
-    "test:lan": "pnpm --filter @guardedsleep/signaling-server build && pnpm run generate-fixtures && playwright test tests/16-lan-ip-connect.spec.ts",
-    "test:ui": "pnpm --filter @guardedsleep/signaling-server build && pnpm run generate-fixtures && playwright test --ui"
+    "test": "pnpm run generate-fixtures && playwright test",
+    "test:lan": "pnpm run generate-fixtures && playwright test tests/16-lan-ip-connect.spec.ts",
+    "test:ui": "pnpm run generate-fixtures && playwright test --ui"
   },
   "devDependencies": {
     "@playwright/test": "1.60.0",

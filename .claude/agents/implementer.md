@@ -9,7 +9,7 @@ You implement a task that a planning agent has already designed. Follow the brie
 Rules (full text in `AGENTS.md`, which wins on conflict):
 
 - Language follows the area (ADR-015, ADR-019, ADR-020): Rust for the shared core, relay, server and tooling that shares protocol logic (`crates/`), Kotlin + Compose for Android (`apps/android/`), TypeScript/Svelte 5 on Vite for the web client (`apps/web`, planned wave 3; no SvelteKit, `$app/*` does not exist). No new plain JavaScript in app code.
-- Legacy, frozen, never extend: `apps/mobile` (SvelteKit + Capacitor), `apps/signaling-server` (Node), `packages/protocol`. Protocol types come from the Rust core.
+- Legacy, frozen, never extend: `apps/mobile` (SvelteKit + Capacitor). Protocol types come from the Rust core.
 - Rust core: sans-IO (no I/O, threads or clocks; cargo-deny bans tokio/mio/getrandom/sockets in `core` and `relay`), emits message keys never prose, `cargo fmt` + `clippy -D warnings`, unit tests per module plus conformance vectors. Entry point is `just <task>` (`setup fmt lint test gen build e2e gate ci`); cargo runs in the build image via `scripts/cargo.sh` when it is not on the host. Tasks without Docker/KVM print SKIPPED, which is not a pass.
 - Android: UI → state (`StateFlow`) → platform glue → UniFFI core; no logic that belongs in the core; stable `testTag` ids; Gradle runs in the `guardedsleep-android-native-build:local` image. Never hand-edit screenshot baselines.
 - Web client: UI → State → Platform → Core; `svelte-ignore` needs a reason; Prettier + `svelte-check --fail-on-warnings`.

@@ -9,7 +9,7 @@ mise install     # node 22, pnpm 11, java 21, just, lefthook, typos, actionlint,
 just setup       # mise install, rustup toolchain, pnpm install --frozen-lockfile, lefthook install
 just --list      # setup fmt lint test gen build e2e gate ci (+ sub-recipes such as lint-text, build-android, dev)
 just ci          # lint + test + build + e2e: the same verdict as CI (minus the PR title check and the emulator gate)
-just dev         # signaling server (legacy Node) + Vite dev server for apps/mobile
+just dev         # Rust signaling server + Vite dev server for apps/mobile
 ```
 
 Activate mise in your shell (`eval "$(mise activate bash)"`, see the [mise docs](https://mise.jdx.dev/getting-started.html#activate-mise)) so your editor sees the pinned tools. Recipes use the pinned tools through `mise exec`; without mise they fall back to the tools on `PATH` and print a hint.
@@ -152,7 +152,7 @@ From the repository root, after `just setup`:
 just dev
 ```
 
-This builds `@guardedsleep/protocol` once, then runs the signaling server (`apps/signaling-server`, default port **8787**, `PORT` overrides it) and the SvelteKit dev server (`apps/mobile`, Vite default **5173**) in parallel; Ctrl-C stops both (`scripts/dev.sh`). Wave 2 swaps in the Rust server. Open e.g. `/baby?room=demo` and `/parent?room=demo` in two browser contexts to exercise pairing.
+This builds and runs the Rust signaling server (`crates/guardedsleep-server`, default port **8787**, `PORT` overrides it; the STUN responder is off in dev, `STUN_DISABLED=0` turns it on) and the SvelteKit dev server (`apps/mobile`, Vite default **5173**) in parallel; Ctrl-C stops both (`scripts/dev.sh`). Open e.g. `/baby?room=demo` and `/parent?room=demo` in two browser contexts to exercise pairing.
 
 **PWA:** `vite dev` does not enable the service worker (`devOptions.enabled: false`). To test installability and precaching, build and preview the mobile app:
 
@@ -179,13 +179,13 @@ For a container image and Compose (local build vs. GHCR), see [signaling-server-
 
 ### Signaling server smoke test
 
-End-to-end WebSocket hello + relay (builds the server, then starts `dist/index.js` in a child process; child stdio is discarded so `console.log` in the server cannot block on a full pipe):
+End-to-end WebSocket hello + relay: starts the built `guardedsleep-server` binary in a child process (configured through the environment only) and checks `/healthz`, hello, signal relay and the v2/v3 room pinning:
 
 ```bash
-pnpm --filter @guardedsleep/signaling-server smoke
+just smoke
 ```
 
-This legacy Node server and its smoke test are replaced by Rust server tests and the simulation in wave 2 ([ADR-020](../../openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md) §6).
+The server's and relay's own tests (the ported Node test cases, admission, STUN, local mode) run with `just test`.
 
 ## Commits
 

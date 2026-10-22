@@ -28,7 +28,7 @@ Work on the directory you are given (a clean checkout of `origin/main`). Read `A
 
 - Anything that changes behavior, public protocol shape, security model, or architecture → list under "Needs decision" instead (these require an OpenSpec change, AGENTS.md §6).
 - Features from the not-yet-implemented matrix (§9).
-- Legacy, frozen code (`apps/mobile`, `apps/signaling-server`, `packages/protocol`): never propose refactors there, at most deletion progress under "Needs decision".
+- Legacy, frozen code (`apps/mobile`): never propose refactors there, at most deletion progress under "Needs decision".
 - Dependency upgrades, formatting-only churn, `CHANGELOG.md`, generated files, screenshot baselines.
 - Topics already covered by the open PR titles you are given.
 

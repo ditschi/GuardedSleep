@@ -84,9 +84,9 @@ lint-code: _js-deps _js-gen check-ios check-determinism
     scripts/lint-ui-literals.sh
     pnpm -r --if-present run check
 
-# The core and the UniFFI facade must stay buildable for iOS (ADR-020 §3); rust-toolchain.toml installs the target.
+# The core, the relay (shared with the Android LAN listener) and the UniFFI facade must stay buildable for iOS (ADR-020 §3); rust-toolchain.toml installs the target.
 check-ios:
-    scripts/cargo.sh check -p guardedsleep-core -p guardedsleep-ffi --target aarch64-apple-ios
+    scripts/cargo.sh check -p guardedsleep-core -p guardedsleep-relay -p guardedsleep-ffi --target aarch64-apple-ios
 
 # Generate-twice check: the Kotlin bindings (from the host ffi library) and the wasm package are generated
 # twice from one build and must hash identically. SKIPPED without Docker.
@@ -179,9 +179,13 @@ gate:
 # The same verdict as CI (the PR title check and the emulator gate are CI-only).
 ci: lint test build e2e
 
-# Signaling server (legacy Node, wave 2 swaps in the Rust server) plus the web client, for local development.
+# Rust signaling server plus the web client, for local development.
 dev:
     scripts/dev.sh
+
+# Signaling server smoke: starts the built guardedsleep-server binary and relays hello + signal over a WebSocket.
+smoke:
+    scripts/cargo.sh test -p guardedsleep-server --test smoke
 
 # Docker stack with the host LAN IP, for phone tests.
 [script("bash")]
@@ -214,10 +218,9 @@ audit:
 release-preview:
     npx --yes release-please release-pr --token=$GH_TOKEN --repo-url=$GITHUB_REPOSITORY --config-file=release-please-config.json --manifest-file=.release-please-manifest.json --dry-run --debug
 
-# Generated, uncommitted packages that svelte-check and Vitest import (WASM core, protocol types).
+# Generated, uncommitted packages that svelte-check and Vitest import (the WASM core).
 [private]
 _js-gen:
-    pnpm --filter @guardedsleep/protocol build
     pnpm --filter @guardedsleep/core-wasm build
 
 [private]

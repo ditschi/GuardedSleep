@@ -24,9 +24,17 @@ services:
       SIGNALING_TRUST_PROXY: "${SIGNALING_TRUST_PROXY:-}"
       SIGNALING_TRUSTED_PROXY_HOPS: "${SIGNALING_TRUSTED_PROXY_HOPS:-}"
       SIGNALING_HELLO_TIMEOUT_MS: "${SIGNALING_HELLO_TIMEOUT_MS:-}"
+      STUN_DISABLED: "${STUN_DISABLED:-0}"
+    ports:
+      - "${STUN_PORT:-3478}:3478/udp"
     networks:
       - proxy
     restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=${TRAEFIK_NETWORK:-proxy}"
