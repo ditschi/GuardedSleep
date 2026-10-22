@@ -29,6 +29,16 @@
       "versioningTemplate": "semver"
     },
     {
+      "description": "sccache pin in the build image Dockerfile; update the SCCACHE_SHA256_* checksums in the same PR",
+      "customType": "regex",
+      "managerFilePatterns": ["/^docker/android-native-build/Dockerfile$/"],
+      "matchStrings": ["ARG SCCACHE_VERSION=(?<currentValue>\\S+)"],
+      "depNameTemplate": "mozilla/sccache",
+      "packageNameTemplate": "mozilla/sccache",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
       "description": "Digest-pinned image in api-snapshot.sh (same as docker/mobile-web/Dockerfile)",
       "customType": "regex",
       "managerFilePatterns": ["/^scripts/lib/api-snapshot\\.sh$/"],

@@ -38,3 +38,22 @@ RUN curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-too
 	&& chmod -R a+rwX /opt/cargo /opt/rustup
 
 WORKDIR /workspace
+
+# sccache for local builds (scripts/lib/build-image.sh turns it on; CI and determinism/release builds run without it).
+# Release page: https://github.com/mozilla/sccache/releases ; the checksums are the release's .sha256 assets.
+# Renovate bumps SCCACHE_VERSION only: update both checksums in the same PR.
+ARG TARGETARCH
+ARG SCCACHE_VERSION=0.18.0
+ARG SCCACHE_SHA256_X86_64=45f1447fbe231e3037bde351ef70677dd212216c8d62ae7ca409fecc4d6acc89
+ARG SCCACHE_SHA256_AARCH64=2b3284d5da3b46a47dc4229e75bb7b88ac4aa99c8d754fb7d2f84997e5a4354a
+RUN case "${TARGETARCH}" in \
+		amd64) arch=x86_64; sum="${SCCACHE_SHA256_X86_64}" ;; \
+		arm64) arch=aarch64; sum="${SCCACHE_SHA256_AARCH64}" ;; \
+		*) echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
+	esac \
+	&& name="sccache-v${SCCACHE_VERSION}-${arch}-unknown-linux-musl" \
+	&& curl -fsSL -o "/tmp/${name}.tar.gz" "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSION}/${name}.tar.gz" \
+	&& echo "${sum}  /tmp/${name}.tar.gz" | sha256sum -c - \
+	&& tar -xzf "/tmp/${name}.tar.gz" -C /tmp \
+	&& install -m 0755 "/tmp/${name}/sccache" /usr/local/bin/sccache \
+	&& rm -rf "/tmp/${name}" "/tmp/${name}.tar.gz"
