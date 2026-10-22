@@ -10,6 +10,7 @@ import org.guardedsleep.app.alerts.NoiseKind
 import org.guardedsleep.app.config.AppDefaults
 import org.guardedsleep.app.config.DebugOptions
 import org.guardedsleep.app.config.PairingPolicy
+import org.guardedsleep.app.config.RelayStun
 import org.guardedsleep.app.diag.PocLog
 import org.guardedsleep.app.media.IceConfig
 import org.guardedsleep.app.media.InboundAudioStats
@@ -339,9 +340,10 @@ class LinkController(
         val coreRole = if (role == Role.BABY) CoreRole.BABY else CoreRole.PARENT
         val config = buildConfig(coreRole, pending.psk, pairedBefore, s)
         val r = Run(++runCounter, role, if (isPending) pending else null, monitoring)
+        val signalingUrls = effectiveUrls(pending.urls)
         val ice =
             IceConfig(
-                stunUrls = AppDefaults.stunUrls,
+                stunUrls = RelayStun.urls(signalingUrls),
                 turnUrl = pending.turn?.url ?: s.turnUrl,
                 turnUser = pending.turn?.username,
                 turnCredential = pending.turn?.credential,
@@ -350,7 +352,7 @@ class LinkController(
         val runner =
             LinkRunner(
                 config = config,
-                signalingUrls = effectiveUrls(pending.urls),
+                signalingUrls = signalingUrls,
                 signaling = signaling,
                 mediaFactory = { mediaFactory(coreRole, ice) },
                 clock = clock,

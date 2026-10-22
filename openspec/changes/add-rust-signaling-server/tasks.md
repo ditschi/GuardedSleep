@@ -18,7 +18,7 @@ Refined 2026-10-22 from the wave-2 plan. Most items were implemented as W2-B on 
 
 ## 3. Clients
 
-- [ ] 3.1 Android: built-in STUN of the configured relay by default; remove every public (Google) STUN default; no third-party STUN without an explicit opt-in (the picker itself is `add-stun-server-choice`)
+- [x] 3.1 Android: built-in STUN of the configured relay by default; remove every public (Google) STUN default; no third-party STUN without an explicit opt-in (the picker itself is `add-stun-server-choice`)
 
 ## 4. Review fixes (2026-10-22)
 
