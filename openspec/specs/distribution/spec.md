@@ -59,3 +59,12 @@ The stripped Rust core library SHALL add at most 15 MB to the APK, summed over e
 
 - **WHEN** a change makes the packaged core libraries larger than 15 MB in total
 - **THEN** the size check fails
+
+### Requirement: Hardened signaling image
+
+The signaling image SHALL run as a non-root user on a distroless base with a read-only root filesystem.
+
+#### Scenario: Container compromise
+
+- **WHEN** the server process is compromised
+- **THEN** it cannot write to the image's file system or find a shell
