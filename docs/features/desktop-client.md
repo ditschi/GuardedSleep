@@ -4,7 +4,7 @@
 
 ## Overview
 
-Ship the same web UI (SvelteKit static build; superseded, see [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §5: Vite 8 + Svelte 5 static build) inside a **native desktop shell** so users get a familiar **installer** (e.g. `.exe` on Windows, `.dmg` on macOS, `.AppImage`/`.deb` on Linux) instead of “Add to Home Screen” / browser install flows.
+Ship the same web UI (SvelteKit static build; superseded, see [ADR-020](../../openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md) §5: Vite 8 + Svelte 5 static build) inside a **native desktop shell** so users get a familiar **installer** (e.g. `.exe` on Windows, `.dmg` on macOS, `.AppImage`/`.deb` on Linux) instead of “Add to Home Screen” / browser install flows.
 
 ## Motivation
 
@@ -15,7 +15,7 @@ Ship the same web UI (SvelteKit static build; superseded, see [ADR-020](../decis
 
 - **Capacitor** (legacy, see ADR-015/ADR-020) targets **Android, iOS, and web**; it is **not** the primary path for Windows/macOS/Linux desktop binaries.
 - Typical options: **Tauri** (smaller artifacts, system WebView) or **Electron** (heavier, widely used). Both wrap the existing `adapter-static` output.
-- **Local PC mode (DECIDED, target beta, [ADR-021](../decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §1):** the GuardedSleep server binary can serve the static web UI on `http://localhost` and signaling on the LAN, so a laptop works as baby or parent unit without internet and without certificate warnings. This covers the offline need that a native desktop shell was partly meant for; the installable desktop client itself stays an `IDEA`.
+- **Local PC mode (DECIDED, target beta, [ADR-021](../../openspec/changes/archive/2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md) §1):** the GuardedSleep server binary can serve the static web UI on `http://localhost` and signaling on the LAN, so a laptop works as baby or parent unit without internet and without certificate warnings. This covers the offline need that a native desktop shell was partly meant for; the installable desktop client itself stays an `IDEA`.
 - **Signaling server** remains deployed **via Docker** for operators; the desktop app is **client-only**, same as PWA/APK (signaling URL configurable in-app per product direction).
 
 ## Requirements (draft)

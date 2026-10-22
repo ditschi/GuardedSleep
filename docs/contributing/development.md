@@ -1,6 +1,6 @@
 # Development environment
 
-Setup follows [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §1, §2, §5 and §8: **mise** pins every tool except Rust, **rustup** reads `rust-toolchain.toml`, **just** is the single entry point, **lefthook** runs the hooks and **pnpm 11** (from mise, no corepack) manages JavaScript. Host prerequisites: the version control client, [mise](https://mise.jdx.dev/getting-started.html) and, for host cargo, [rustup](https://rustup.rs). Docker is needed for the build image and the emulator gate, KVM for the gate.
+Setup follows [ADR-020](../../openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md) §1, §2, §5 and §8: **mise** pins every tool except Rust, **rustup** reads `rust-toolchain.toml`, **just** is the single entry point, **lefthook** runs the hooks and **pnpm 11** (from mise, no corepack) manages JavaScript. Host prerequisites: the version control client, [mise](https://mise.jdx.dev/getting-started.html) and, for host cargo, [rustup](https://rustup.rs). Docker is needed for the build image and the emulator gate, KVM for the gate.
 
 ## Quick start
 
@@ -185,7 +185,7 @@ End-to-end WebSocket hello + relay (builds the server, then starts `dist/index.j
 pnpm --filter @guardedsleep/signaling-server smoke
 ```
 
-This legacy Node server and its smoke test are replaced by Rust server tests and the simulation in wave 2 ([ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §6).
+This legacy Node server and its smoke test are replaced by Rust server tests and the simulation in wave 2 ([ADR-020](../../openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md) §6).
 
 ## Commits
 

@@ -46,9 +46,15 @@ The goals of ADR-012 are fixed. During waves 1–3 the current logic stays as im
 
 Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and detailed implementation on Android and the new web client, including a UX review (ambient bar, copy, baby-side indicator, onboarding on indicator loss). Decided but not built yet: the network-mode banner ("Now on mobile data", "Local — no data leaves your network") with a "Show connection details" setting (ADR-013 §4, ADR-018 T2); indicator-loss training in onboarding with the same components as in reality, followed by the test alert, and a reminder once per 30 days (ADR-013 §5, ADR-018 onboarding); a quality indicator with good/medium/poor (built: only a "weak connection" chip); a user-facing diagnostics view for technical details.
 
+### Alpha exit criteria
+
+`PLANNED` — target: before hardware tests (ADR-018 §5). Measured in the emulator gate and host simulation: noise → parent alert ≤ 2 s; outage ≤ 30 s → no level 2; outage ≥ 60 s → level 2 within 62 s of last contact and `link_restored` afterwards; one-tap start of a saved pairing → connected ≤ 15 s; wrong key and reflection attack rejected; automated baby-silence checks green (Android and web baby); role reviews (UX with screenshots, Security, Critical Reviewer) without open CRITICAL findings; hardware checklist written (`docs/contributing/alpha-hardware-test.md`). The first hardware round is a real-device smoke test (pairing, overnight foreground service, Wi-Fi flap, link-lost alarm).
+
 ## By capability
 
 ### pairing
+
+- `IDEA` Saved connections as a list (up to 5, editable names, swipe to delete, auto-delete after 90 days without use with a 7-day warning) and a "Delete all connections & keys" panic button; today one pairing is stored and "Forget" deletes it.
 
 - `DEFERRED` (Phase 2) Multi-parent: up to 4 parent units per baby (product cap); "Add device" on a paired baby or parent unit, the baby unit only after kiosk unlock and confirmation; a join request with device name after the invite is dismissed; failover of alerts to another parent when one stops responding (failure model F-1a).
 - `DEFERRED` (Phase 2) Remote revocation of a device with re-keying, so a lost or stolen device cannot reconnect (failure model F-7).
@@ -88,6 +94,7 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 - `IDEA` Configurable alert behaviour beyond the built chain (which combination of sound, vibration and screen per alert type), vibration strength or pattern, and a cool-down between repeated alerts.
 - `IDEA` Connection-context alert policy: full alert chain on unmetered Wi-Fi, a lighter chain on metered or cellular data.
 - `IDEA` Opt-out of the Do Not Disturb override with a clear warning that alerts will be silent when the phone is muted.
+- `IDEA` Change the baby unit's sensitivity remotely from the parent (ADR-018 T2).
 - `IDEA` Re-prompt the test alert after an app update and before the first use on mobile data (alpha-ux-flows §3.9; built: readiness warns after 30 days).
 
 ### device-setup
@@ -108,12 +115,16 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 
 ### offline-lan
 
+- `IDEA` Automatic LAN ↔ internet handoff in the same session (prefer the cheaper or local path again when it returns); switching is manual (AGENTS.md §9). Part of the "Connection model re-evaluation".
+- `IDEA` Out-of-home and venue Wi-Fi: detect captive portals and client isolation after pairing or on reconnect, and suggest mobile data on both phones in plain words (use case UC-3).
+- `IDEA` Exchange current address lists over the DataChannel on network changes (labels instead of full IPs, short TTL, never logged), and measure path quality to prefer the best path.
+- `IDEA` Show "Secure local mode" when media stays on the local network (part of the connection-status UI review).
+
 - `IDEA` Chrome Local Network Access as a way for an HTTPS page to reach a LAN relay (ADR-021 §1 keeps HTTPS web ↔ phone listener `REJECTED`).
 
 ### i18n
 
 - `PLANNED` (T1) Weblate for volunteer translators (ADR-021 §2).
-- `PLANNED` (wave 3) Check in `just lint` that every key of the core's `message_keys()` exists in `locales/en.json` (today a unit test only checks the list itself).
 - `IDEA` A "translation feedback" link next to machine-translated copy.
 
 ### distribution

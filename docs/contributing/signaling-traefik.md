@@ -1,6 +1,6 @@
 # Signaling server behind a reverse proxy (Traefik, Caddy, nginx)
 
-> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §6:** the Node signaling image referenced here is replaced by the Rust axum server; the T1 plan adds a Caddy + signaling (+ TURN) compose bundle with a self-hosting guide. Replaced in toolchain realignment wave 2 and T1; this procedure stays valid until then.
+> **Superseded by [ADR-020](../../openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md) §6:** the Node signaling image referenced here is replaced by the Rust axum server; the T1 plan adds a Caddy + signaling (+ TURN) compose bundle with a self-hosting guide. Replaced in toolchain realignment wave 2 and T1; this procedure stays valid until then.
 
 This complements [signaling-server-docker.md](signaling-server-docker.md). Use it when you already run a **reverse proxy on port 443** and want clients to reach signaling via **`wss://` on your own domain**.
 

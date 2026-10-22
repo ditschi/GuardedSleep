@@ -4,7 +4,7 @@
 - Date: 2026-07-07
 - Deciders: Product owner (user)
 
-> **Partially superseded (2026-10-20):** goal 3 and the package names in the Decision section. F-Droid main repository is `DEFERRED` ([ADR-021](../../../../docs/decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §3); packages `@guardedsleep/protocol` and `@guardedsleep/signaling-server` are replaced by Rust crates ([ADR-020](../../../../docs/decisions/ADR-020-toolchain-and-development-setup.md) §5–§6). The AGPL-3.0-or-later license and trademark policy are unchanged.
+> **Partially superseded (2026-10-20):** goal 3 and the package names in the Decision section. F-Droid main repository is `DEFERRED` ([ADR-021](../2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md) §3); packages `@guardedsleep/protocol` and `@guardedsleep/signaling-server` are replaced by Rust crates ([ADR-020](../2026-10-20-adr-020-toolchain-and-development-setup/design.md) §5–§6). The AGPL-3.0-or-later license and trademark policy are unchanged.
 
 ## Context
 

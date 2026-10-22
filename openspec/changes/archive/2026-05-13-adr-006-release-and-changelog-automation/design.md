@@ -5,7 +5,7 @@
 - Deciders: User decision after option analysis (Technical Architect + Product Owner + Critical Reviewer perspectives synthesized in the analysis)
 - Supersedes: nothing; supplements [docs/contributing/release-and-changelog.md](../../../../docs/contributing/release-and-changelog.md)
 
-> **Partially superseded (2026-10-20):** the release component layout (`protocol`, `signaling-server`, `mobile` as npm packages with the `node` release type and `node-workspace` plugin) and the Husky + commitlint commit check → [ADR-020](../../../../docs/decisions/ADR-020-toolchain-and-development-setup.md) §8 and §10: alpha uses a manual `android-v*` tag; at beta Release Please runs with components `app`, `server`, `core`; Conventional Commits are checked on the PR title only, in CI. `packages/protocol` and `apps/signaling-server` are deleted.
+> **Partially superseded (2026-10-20):** the release component layout (`protocol`, `signaling-server`, `mobile` as npm packages with the `node` release type and `node-workspace` plugin) and the Husky + commitlint commit check → [ADR-020](../2026-10-20-adr-020-toolchain-and-development-setup/design.md) §8 and §10: alpha uses a manual `android-v*` tag; at beta Release Please runs with components `app`, `server`, `core`; Conventional Commits are checked on the PR title only, in CI. `packages/protocol` and `apps/signaling-server` are deleted.
 
 ## Context
 

@@ -4,7 +4,7 @@
 >
 > **Source of truth precedence** (highest first):
 >
-> 1. [Architecture Decision Records](docs/decisions/README.md) — `DECIDED` items are binding. The newest ADRs win: [ADR-020](docs/decisions/ADR-020-toolchain-and-development-setup.md) (toolchain) and [ADR-021](docs/decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) (offline LAN, locales, distribution) supersede older tooling, locale and distribution statements.
+> 1. [Architecture Decision Records](docs/decisions/README.md) — `DECIDED` items are binding. The newest ADRs win: [ADR-020](openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md) (toolchain) and [ADR-021](openspec/changes/archive/2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md) (offline LAN, locales, distribution) supersede older tooling, locale and distribution statements.
 > 2. [`docs/concept/vision.md`](docs/concept/vision.md), [`docs/features/`](docs/features/README.md), [`docs/technical/`](docs/technical/sw-architecture.md).
 > 3. This file.
 > 4. [`.cursor/rules/`](.cursor/rules/) (Cursor only; mirrors this file).
@@ -17,7 +17,7 @@
 
 - **Product:** GuardedSleep – Privacy Baby Monitor. Open-source, privacy-first, **fully local-capable** (no cloud dependency for media).
 - **Names:** npm scope `@guardedsleep/*`, Android app id `org.guardedsleep.app` (alpha: `org.guardedsleep.app.alpha`), Docker images `guardedsleep-*`.
-- **Phase:** alpha build-out ([ADR-018](docs/decisions/ADR-018-alpha-milestone-scope-and-trust-features.md)). The tooling is **in transition** to ADR-020, implemented in three waves: **wave 1** guardrails and cleanup (done), **wave 2** structure (crates, server, Android modules), **wave 3** web client and quality gates. Items marked "(planned, wave N)" do not exist yet: do not look for them or invent them.
+- **Phase:** alpha build-out ([ADR-018](openspec/changes/archive/2026-10-20-adr-018-alpha-milestone-scope-and-trust-features/design.md)). The tooling is **in transition** to ADR-020, implemented in three waves: **wave 1** guardrails and cleanup (done), **wave 2** structure (crates, server, Android modules), **wave 3** web client and quality gates. Items marked "(planned, wave N)" do not exist yet: do not look for them or invent them.
 - **Platforms:** native Android (Kotlin + Compose) and a web client (Svelte 5 on the WASM core), both on one Rust core ([ADR-015](openspec/changes/archive/2026-10-21-adr-015-native-clients-with-shared-rust-core/design.md), [ADR-019](openspec/changes/archive/2026-10-20-adr-019-language-repository-and-client-policy/design.md)). iOS, desktop apps and video are deferred (§9).
 - **License:** AGPL-3.0-or-later ([`LICENSE`](LICENSE), [ADR-014](openspec/changes/archive/2026-07-07-adr-014-open-source-license-agpl-and-trademark/design.md)); trademark policy in [`docs/legal/trademark.md`](docs/legal/trademark.md).
 

@@ -1,6 +1,6 @@
 # CI gates
 
-Register of every automated gate, per [ADR-020](decisions/ADR-020-toolchain-and-development-setup.md) §9 and §12. The only required status check on `main` is `ci-ok` (skipped jobs count as passing); everything else feeds into it or runs on its own schedule.
+Register of every automated gate, per [ADR-020](../openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md) §9 and §12. The only required status check on `main` is `ci-ok` (skipped jobs count as passing); everything else feeds into it or runs on its own schedule.
 
 ## Budget rule
 

@@ -3,9 +3,9 @@
 - Status: DECIDED for concept and goals (owner, 2026-10-21). UI realisation and detailed implementation are re-evaluated after the rework, including a UX review, see [backlog](../../../../docs/backlog.md) "Connection-status UI review"
 - Date: 2026-05-13
 - Deciders: Product owner (user), coordinated design (UX/Usability, Critical Reviewer 2026-05)
-- Companion ADR: [ADR-012](../../../../docs/decisions/ADR-012-connection-model-offline-lan-and-handoff.md) (defines the **states** this ADR renders).
+- Companion ADR: [ADR-012](../2026-10-21-adr-012-connection-model-offline-lan-and-handoff/design.md) (defines the **states** this ADR renders).
 
-> **Context note (2026-10-20):** file references under `apps/mobile` (Capacitor-era TypeScript) are historical. Link states come from the Rust core ([ADR-017](../2026-10-20-adr-017-link-recovery-and-connection-supervision/design.md)); UIs render them from the catalogue. The web client is rebuilt as `apps/web` ([ADR-020](../../../../docs/decisions/ADR-020-toolchain-and-development-setup.md) §5).
+> **Context note (2026-10-20):** file references under `apps/mobile` (Capacitor-era TypeScript) are historical. Link states come from the Rust core ([ADR-017](../2026-10-20-adr-017-link-recovery-and-connection-supervision/design.md)); UIs render them from the catalogue. The web client is rebuilt as `apps/web` ([ADR-020](../2026-10-20-adr-020-toolchain-and-development-setup/design.md) §5).
 
 ## Context
 
@@ -127,7 +127,7 @@ When network handoff drops the session while Listen is ON:
 
 ### Risks
 
-- Persona B (daily home) may experience too many "yellow" yellow states on flaky home Wi-Fi → fatigue. Mitigation: hysteresis from [ADR-012](../../../../docs/decisions/ADR-012-connection-model-offline-lan-and-handoff.md) keeps the bar **green** through 2-5 s blips; escalation starts only after the failure-model 20-s mark.
+- Persona B (daily home) may experience too many "yellow" yellow states on flaky home Wi-Fi → fatigue. Mitigation: hysteresis from [ADR-012](../2026-10-21-adr-012-connection-model-offline-lan-and-handoff/design.md) keeps the bar **green** through 2-5 s blips; escalation starts only after the failure-model 20-s mark.
 
 ## Discarded alternatives
 

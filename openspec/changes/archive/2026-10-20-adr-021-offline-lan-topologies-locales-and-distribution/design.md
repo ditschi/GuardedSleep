@@ -4,17 +4,17 @@
 - Date: 2026-10-20
 - Deciders: Project owner. Team review 2026-10-20: Product Owner, Technical Architect, Security/Privacy Architect, UX/Usability Expert, Critical Reviewer.
 - Supersedes:
-  - [ADR-012](ADR-012-connection-model-offline-lan-and-handoff.md): the platform matrix row "no internet, same LAN" for web clients, and the Capacitor implementation of the embedded listener.
+  - [ADR-012](../2026-10-21-adr-012-connection-model-offline-lan-and-handoff/design.md): the platform matrix row "no internet, same LAN" for web clients, and the Capacitor implementation of the embedded listener.
   - The owner decision of 2026-10-19 that limited i18n to en, de, fr, es (AGENTS.md §9).
-  - [ADR-018](ADR-018-alpha-milestone-scope-and-trust-features.md): the cleartext, language-fallback and offline-LAN deferral statements (partly, marked inline there).
-  - The "F-Droid" store wording in [vision.md](../concept/vision.md) and [ADR-005](../../openspec/changes/archive/2026-04-15-adr-005-parent-alerts-product-naming-and-distribution/design.md).
-- Related: [ADR-020](ADR-020-toolchain-and-development-setup.md), [ADR-003](ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md), [ADR-004](../../openspec/changes/archive/2026-04-15-adr-004-encryption-transport-and-key-storage/design.md)
+  - [ADR-018](../2026-10-20-adr-018-alpha-milestone-scope-and-trust-features/design.md): the cleartext, language-fallback and offline-LAN deferral statements (partly, marked inline there).
+  - The "F-Droid" store wording in [vision.md](../../../../docs/concept/vision.md) and [ADR-005](../2026-04-15-adr-005-parent-alerts-product-naming-and-distribution/design.md).
+- Related: [ADR-020](../2026-10-20-adr-020-toolchain-and-development-setup/design.md), [ADR-003](../2026-04-15-adr-003-connectivity-webrtc-signaling-and-qr-pairing/design.md), [ADR-004](../2026-04-15-adr-004-encryption-transport-and-key-storage/design.md)
 
-> **Migrated to OpenSpec (2026-10-22):** §2 is decided but only partly built: the four shipped locales are normative in [`openspec/specs/i18n`](../../openspec/specs/i18n/spec.md), the ~20-locale policy goes into the prepared change `expand-locales`. §3 is normative in [`openspec/specs/distribution`](../../openspec/specs/distribution/spec.md) for what is built; the Android channels go into the prepared change `add-android-release`. §1 stays binding until `add-offline-lan` is prepared.
+> **Migrated to OpenSpec (2026-10-22):** §2 is decided but only partly built: the four shipped locales are normative in [`openspec/specs/i18n`](../../../specs/i18n/spec.md), the ~20-locale policy goes into the prepared change `expand-locales`. §3 is normative in [`openspec/specs/distribution`](../../../specs/distribution/spec.md) for what is built; the Android channels go into the prepared change `add-android-release`. §1 stays binding until `add-offline-lan` is prepared.
 
 ## Context
 
-The toolchain review ([ADR-020](ADR-020-toolchain-and-development-setup.md)) raised three product questions that tooling cannot decide.
+The toolchain review ([ADR-020](../2026-10-20-adr-020-toolchain-and-development-setup/design.md)) raised three product questions that tooling cannot decide.
 
 1. **Offline LAN.** A web client served over HTTPS cannot open `ws://` to a phone on the LAN: it is mixed content, and Chrome's Local Network Access does not yet cover WebSockets. A phone without internet cannot obtain a certificate that browsers trust. `connectivity-pairing.md` also contradicted itself: offline LAN is listed as MVP, but the phone listener as Phase 2.
 2. **Locales.** The 2026-10-19 decision fixed four locales and implied native-speaker review before shipping. The team found no named reviewers for fr/es, and noted that hiding a locale in the picker does not stop Android from using its resources.
@@ -39,19 +39,19 @@ How the local PC mode stays secure and simple:
 - **The browser stays on loopback.** It talks only to its own local GuardedSleep binary (`http://localhost` page, `ws://localhost` signaling) and never connects to a LAN address directly. Toward the LAN, the local binary is either the relay itself (the hosting PC) or a client of the hosting relay (a second PC: its binary forwards to the host over the LAN). Because only loopback is used, this works in all browsers and there is no mixed-content or Local Network Access question.
 - `http://localhost` is a secure context, so `getUserMedia`, the service worker, notifications and Wake Lock work.
 - **Loopback binding:** the local UI and its loopback API bind to `127.0.0.1`/`::1` only. The binary checks `Origin` and `Host` on every request (DNS-rebinding and cross-site protection). Only the LAN signaling port binds to the LAN interface.
-- LAN signaling is an untrusted relay. End-to-end security comes from the direction-bound pairing proof and the DTLS fingerprint binding ([ADR-004](../../openspec/changes/archive/2026-04-15-adr-004-encryption-transport-and-key-storage/design.md)), as for the phone listener, and is unchanged by the admission rule below.
+- LAN signaling is an untrusted relay. End-to-end security comes from the direction-bound pairing proof and the DTLS fingerprint binding ([ADR-004](../2026-04-15-adr-004-encryption-transport-and-key-storage/design.md)), as for the phone listener, and is unchanged by the admission rule below.
 - **Relay admission (Android listener and PC relay alike):**
   - The paired client gives its local relay an admission key, `HKDF(PSK, "guardedsleep relay admission v1")`. The client is the phone app itself, or the local UI over loopback. The key is not reversible to the PSK, so the PC relay never holds the PSK.
   - The relay sends each joiner a fresh nonce.
   - The joiner answers with `HMAC(admission key, nonce ‖ direction ‖ room id)`.
   - A role slot is assigned only after a valid answer, so replaying a captured first message fails and cannot take the single parent slot.
   - Unauthenticated sockets are closed within 5 s.
-  - This needs a protocol change in the `relay` crate (wave 2), with a negative vector for a replayed first message ([ADR-020](ADR-020-toolchain-and-development-setup.md) §3).
+  - This needs a protocol change in the `relay` crate (wave 2), with a negative vector for a replayed first message ([ADR-020](../2026-10-20-adr-020-toolchain-and-development-setup/design.md) §3).
 - **Listener rules (phone and PC):**
   - It binds only while a session is active.
   - It never advertises anything derived from the PSK.
   - The server, not the page, reports the PC's LAN address for the QR.
-- **Android cleartext:** the network security config allows cleartext toward private LAN addresses (it takes domains, not CIDR ranges, so it cannot be tighter). One check in the platform layer, before any connection, rejects every non-private destination: only RFC 1918, RFC 4193 (ULA) and link-local literal addresses pass; 100.64/10 and hostnames are refused. The release-APK assertion checks that the base config stays restrictive. This partly supersedes [ADR-018](ADR-018-alpha-milestone-scope-and-trust-features.md) ("Release builds disable cleartext traffic"), which holds for the alpha only.
+- **Android cleartext:** the network security config allows cleartext toward private LAN addresses (it takes domains, not CIDR ranges, so it cannot be tighter). One check in the platform layer, before any connection, rejects every non-private destination: only RFC 1918, RFC 4193 (ULA) and link-local literal addresses pass; 100.64/10 and hostnames are refused. The release-APK assertion checks that the base config stays restrictive. This partly supersedes [ADR-018](../2026-10-20-adr-018-alpha-milestone-scope-and-trust-features/design.md) ("Release builds disable cleartext traffic"), which holds for the alpha only.
 - The PC shows the LAN signaling address in the pairing QR, so the phone needs no manual input.
 - The room and admission logic lives once, in the sans-IO Rust `relay` crate. The platform owns the sockets: axum in the server binary, Kotlin on Android.
 - **User copy:** the app says plainly that a laptop without internet needs the local GuardedSleep app running. It never implies that an ordinary browser tab works offline.
@@ -93,7 +93,7 @@ The alpha uses internet signaling for all pairs. Offline Android ↔ Android and
 
 ### Offline LAN
 
-- **A: Android ↔ Android only** (team recommendation). Pros: smallest scope. Cons: excludes the laptop baby unit, which [ADR-019](../../openspec/changes/archive/2026-10-20-adr-019-language-repository-and-client-policy/design.md) made a supported product role.
+- **A: Android ↔ Android only** (team recommendation). Pros: smallest scope. Cons: excludes the laptop baby unit, which [ADR-019](../2026-10-20-adr-019-language-repository-and-client-policy/design.md) made a supported product role.
 - **B: Android ↔ Android plus a local PC mode (CHOSEN by the owner).** Pros: laptops work offline without certificate warnings, and the same binary serves self-hosters. Cons: the PC user must install and run a local app.
 - **C: HTTPS web client ↔ phone listener with a self-signed certificate.** REJECTED: certificate warnings break the trust model.
 - **D: Chrome Local Network Access.** IDEA: Chromium only, WebSockets not yet covered.

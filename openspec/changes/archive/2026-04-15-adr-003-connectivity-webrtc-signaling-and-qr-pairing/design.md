@@ -4,9 +4,9 @@
 - Date: 2026-04-15
 - Deciders: Architecture + security review inputs
 
-> **Context note (2026-10-20):** the "Local: no server" path is realised through the offline LAN topologies in [ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md) §1 (see also [ADR-012](ADR-012-connection-model-offline-lan-and-handoff.md)). No decision here is changed.
+> **Context note (2026-10-20):** the "Local: no server" path is realised through the offline LAN topologies in [ADR-021](../2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md) §1 (see also [ADR-012](../2026-10-21-adr-012-connection-model-offline-lan-and-handoff/design.md)). No decision here is changed.
 
-> **Migrated to OpenSpec (2026-10-22):** §3 and §4 are normative in [`openspec/specs/pairing`](../../openspec/specs/pairing/spec.md) (superseded parts resolved there); §2 is normative in [`openspec/specs/signaling-relay`](../../openspec/specs/signaling-relay/spec.md); §6 was superseded by ADR-017 §5. §1 is normative in [`openspec/specs/audio-monitoring`](../../openspec/specs/audio-monitoring/spec.md). §5 stays binding until `offline-lan` is migrated.
+> **Migrated to OpenSpec (2026-10-22):** §3 and §4 are normative in [`openspec/specs/pairing`](../../../specs/pairing/spec.md) (superseded parts resolved there); §2 is normative in [`openspec/specs/signaling-relay`](../../../specs/signaling-relay/spec.md); §6 was superseded by ADR-017 §5. §1 is normative in [`openspec/specs/audio-monitoring`](../../../specs/audio-monitoring/spec.md). §5 stays binding until `offline-lan` is migrated.
 
 ## Context
 
@@ -17,11 +17,11 @@ Devices must connect over LAN, over the internet (without forcing users to insta
 1. **Transport:** **WebRTC** peer-to-peer -- DataChannel for heartbeat, alerts, control; MediaStream for audio (pre-negotiated muted track, enable on alert/listen).
 
 2. **Three connectivity paths** (same app logic -- connect to IPs):
-   - **Local:** WiFi / hotspot. _No separate signaling **service/product** is required; clarification in [ADR-012](ADR-012-connection-model-offline-lan-and-handoff.md) -- a small signaling endpoint **on one of the peers** is still needed for SDP/ICE exchange and ships in Phase 2 as an embedded WebSocket listener on the Baby-Android unit._
+   - **Local:** WiFi / hotspot. _No separate signaling **service/product** is required; clarification in [ADR-012](../2026-10-21-adr-012-connection-model-offline-lan-and-handoff/design.md) -- a small signaling endpoint **on one of the peers** is still needed for SDP/ICE exchange and ships in Phase 2 as an embedded WebSocket listener on the Baby-Android unit._
    - **Internet (primary):** **WebSocket signaling server** + **EU STUN** (fallback TURN self-hosted optional).
    - **Internet (optional):** **Tailscale/Headscale** -- external VPN; app treats VPN IPs like any other.
 
-3. **Pairing:** **QR code** with JSON payload, human-readable keys: `psk`, `dtls_fingerprint` (64 hex chars), `ips`, `signal` (optional), `nonce`, `ts`. Payload size **verified** to fit QR Version 12--13 with EC-M (see [analysis.md](../technical/analysis.md)).
+3. **Pairing:** **QR code** with JSON payload, human-readable keys: `psk`, `dtls_fingerprint` (64 hex chars), `ips`, `signal` (optional), `nonce`, `ts`. Payload size **verified** to fit QR Version 12--13 with EC-M (see [analysis.md](../../../../docs/technical/analysis.md)).
 
 4. **Behavior:** QR visible → auto-accept scan; QR dismissed → join requests with device name. **No new QR display in baby kiosk mode** for pairing new devices (exit baby mode to pair) -- see device management spec.
 

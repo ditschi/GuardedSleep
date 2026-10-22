@@ -46,7 +46,7 @@ The application must work on Android and iOS phones and tablets. Desktop support
 **Will users find the app when searching "baby monitor"?**
 
 - Listing text should still repeat _baby monitor_, _encrypted_, _open source_ in the first lines of the description for search relevance.
-- **F-Droid clients (via IzzyOnDroid at beta):** Summary line should include "baby monitor" and "privacy". The F-Droid main repository is `STATUS: DEFERRED` until a from-source build of libwebrtc and JNA is sized; make no public promise of F-Droid main ([ADR-021](../decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §3). Wording: "F-Droid clients via IzzyOnDroid; F-Droid main repository later".
+- **F-Droid clients (via IzzyOnDroid at beta):** Summary line should include "baby monitor" and "privacy". The F-Droid main repository is `STATUS: DEFERRED` until a from-source build of libwebrtc and JNA is sized; make no public promise of F-Droid main ([ADR-021](../../openspec/changes/archive/2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md) §3). Wording: "F-Droid clients via IzzyOnDroid; F-Droid main repository later".
 
 ## Non-Goals
 

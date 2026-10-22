@@ -3,14 +3,14 @@
 - Status: DECIDED (owner, 2026-10-20)
 - Date: 2026-10-20
 - Deciders: Project owner. Team review 2026-10-20: Technical Architect, Security/Privacy Architect, DevEx & Release Engineer (ad-hoc role), Product Owner, UX/Usability Expert, Critical Reviewer.
-- Supersedes: the tool and process rows of [ADR-019](../../openspec/changes/archive/2026-10-20-adr-019-language-repository-and-client-policy/design.md) §2 (signaling "after the alpha"), §4 (pnpm as task host) and §5 (rename of `apps/mobile`); the release component layout of [ADR-006](../../openspec/changes/archive/2026-05-13-adr-006-release-and-changelog-automation/design.md); the QEMU build and image-tag details of [ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md) where they conflict; the hybrid (Capacitor) part of [ADR-007](../../openspec/changes/archive/2026-05-13-adr-007-browser-e2e-test-strategy/design.md); partly [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md), [ADR-002](../../openspec/changes/archive/2026-04-15-adr-002-client-platform-and-repository-structure/design.md), [ADR-014](../../openspec/changes/archive/2026-07-07-adr-014-open-source-license-agpl-and-trademark/design.md), [ADR-015](../../openspec/changes/archive/2026-10-21-adr-015-native-clients-with-shared-rust-core/design.md) and [ADR-016](../../openspec/changes/archive/2026-10-21-adr-016-test-strategy-local-virtual-physical/design.md) where their notes say so
-- Related: [ADR-015](../../openspec/changes/archive/2026-10-21-adr-015-native-clients-with-shared-rust-core/design.md), [ADR-016](../../openspec/changes/archive/2026-10-21-adr-016-test-strategy-local-virtual-physical/design.md), [ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md)
+- Supersedes: the tool and process rows of [ADR-019](../2026-10-20-adr-019-language-repository-and-client-policy/design.md) §2 (signaling "after the alpha"), §4 (pnpm as task host) and §5 (rename of `apps/mobile`); the release component layout of [ADR-006](../2026-05-13-adr-006-release-and-changelog-automation/design.md); the QEMU build and image-tag details of [ADR-008](../2026-05-13-adr-008-container-image-build-and-distribution/design.md) where they conflict; the hybrid (Capacitor) part of [ADR-007](../2026-05-13-adr-007-browser-e2e-test-strategy/design.md); partly [ADR-001](../2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md), [ADR-002](../2026-04-15-adr-002-client-platform-and-repository-structure/design.md), [ADR-014](../2026-07-07-adr-014-open-source-license-agpl-and-trademark/design.md), [ADR-015](../2026-10-21-adr-015-native-clients-with-shared-rust-core/design.md) and [ADR-016](../2026-10-21-adr-016-test-strategy-local-virtual-physical/design.md) where their notes say so
+- Related: [ADR-015](../2026-10-21-adr-015-native-clients-with-shared-rust-core/design.md), [ADR-016](../2026-10-21-adr-016-test-strategy-local-virtual-physical/design.md), [ADR-021](../2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md)
 
-> **Migrated to OpenSpec (2026-10-22):** the built part of §7 (catalogue, generator, literal lint) is normative in [`openspec/specs/i18n`](../../openspec/specs/i18n/spec.md); the rest of §7 (critical tags, markers, pseudo-RTL, tokens) goes into the prepared change `expand-locales`. §10 goes into the prepared change `add-android-release` (T0) and the backlog (T1); the image part of §6 and §9 is in [`openspec/specs/distribution`](../../openspec/specs/distribution/spec.md). §1–§5, §8, §9, §11 and §12 as built in wave 1 are normative in [`openspec/specs/dev-toolchain`](../../openspec/specs/dev-toolchain/spec.md); their unbuilt wave-2/3 parts go into the prepared wave changes.
+> **Migrated to OpenSpec (2026-10-22):** the built part of §7 (catalogue, generator, literal lint) is normative in [`openspec/specs/i18n`](../../../specs/i18n/spec.md); the rest of §7 (critical tags, markers, pseudo-RTL, tokens) goes into the prepared change `expand-locales`. §10 goes into the prepared change `add-android-release` (T0) and the backlog (T1); the image part of §6 and §9 is in [`openspec/specs/distribution`](../../../specs/distribution/spec.md). §1–§5, §8, §9, §11 and §12 as built in wave 1 are normative in [`openspec/specs/dev-toolchain`](../../../specs/dev-toolchain/spec.md); their unbuilt wave-2/3 parts go into the prepared wave changes.
 
 ## Context
 
-Most of the tooling was chosen for a single SvelteKit app wrapped by Capacitor: Husky + Python pre-commit + Node commitlint, an npm-centred Release Please setup, a Node signaling server, a hand-written TypeScript protocol package and a pnpm root that runs most tasks. The product now is a sans-IO Rust core with a native Android client, a WASM web client and a self-hosted signaling server ([ADR-015](../../openspec/changes/archive/2026-10-21-adr-015-native-clients-with-shared-rust-core/design.md), [ADR-019](../../openspec/changes/archive/2026-10-20-adr-019-language-repository-and-client-policy/design.md)).
+Most of the tooling was chosen for a single SvelteKit app wrapped by Capacitor: Husky + Python pre-commit + Node commitlint, an npm-centred Release Please setup, a Node signaling server, a hand-written TypeScript protocol package and a pnpm root that runs most tasks. The product now is a sans-IO Rust core with a native Android client, a WASM web client and a self-hosted signaling server ([ADR-015](../2026-10-21-adr-015-native-clients-with-shared-rust-core/design.md), [ADR-019](../2026-10-20-adr-019-language-repository-and-client-policy/design.md)).
 
 The owner asked for a review that ignored all existing ADRs: design the development setup as if the project started today, then compare it with the repository and decide what to keep, adjust, rework or remove. Five roles wrote independent proposals (tool status verified on the web, October 2026). A Critical Reviewer challenged the merged draft with 18 findings, and every role answered each finding addressed to it. No disagreement between roles remained. The team's records are in the review notes summarised below.
 
@@ -53,7 +53,7 @@ The setup is tiered: **T0** must exist for the alpha, **T1** by beta, **T2** at 
   - Sources: crates.io only.
   - Bans: tokio, mio, getrandom and socket crates are forbidden in the `core` and `relay` graphs, which enforces the sans-IO layering mechanically.
 - Two further supply-chain checks: a dependency-count guard on `core`, and a daily scheduled advisory scan. cargo-vet on the core's runtime closure is **T1**.
-- **Tests:** nextest, proptest, insta, and golden vectors including **negative vectors** that run through every binding (Rust, Kotlin, TS). One negative vector covers a replayed first message against the relay admission challenge ([ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md) §1). The simulator stays.
+- **Tests:** nextest, proptest, insta, and golden vectors including **negative vectors** that run through every binding (Rust, Kotlin, TS). One negative vector covers a replayed first message against the relay admission challenge ([ADR-021](../2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md) §1). The simulator stays.
 - **Fuzzing:**
   - T0: two cargo-fuzz targets run nightly (signaling envelope decode, QR/invite parse). The pairing-proof verify gets proptest properties at T0.
   - T1: the full fuzz set plus ClusterFuzzLite.
@@ -77,7 +77,7 @@ The setup is tiered: **T0** must exist for the alpha, **T1** by beta, **T2** at 
 - **WebRTC:** `io.github.webrtc-sdk:android` behind a Kotlin `MediaEngine` interface. Patch policy is CVE-based:
   - A critical or exploited CVE in a used path (audio codecs, DTLS/SRTP, SCTP, ICE/STUN, SDP) that is still unpatched by the vendor 30 days after the Chrome fix triggers an ADR: switch vendor, patch-build, or disable the feature.
   - Six months without a vendor release also opens that ADR.
-  - Building libwebrtc from source is DEFERRED with F-Droid main ([ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md)).
+  - Building libwebrtc from source is DEFERRED with F-Droid main ([ADR-021](../2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md)).
 - **Tests:**
   - Robolectric and JVM tests against the host-built core.
   - Roborazzi + `roborazzi-accessibility-check` on **11 goldens**: 5 critical screens (connected, alert, reconnecting, link lost, mic denied) × {en 100 %, de 200 % font on a small phone} + 1 light-mode monitor screen.
@@ -116,7 +116,7 @@ The setup is tiered: **T0** must exist for the alpha, **T1** by beta, **T2** at 
   - No IP logging by default.
   - Room IDs derived by HKDF, never anything reversible to the PSK.
 - **Built-in STUN** answers Binding requests only: response no larger than the request, per-IP rate limit, UDP 3478 published beside the reverse proxy. Public STUN is opt-in only, with UI copy that names who sees the IP address.
-- The binary can also **serve the static web UI**, which is the offline PC mode in [ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md).
+- The binary can also **serve the static web UI**, which is the offline PC mode in [ADR-021](../2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md).
 - **T1:**
   - A hardened TURN profile (coturn ≥ 4.15 or eturnal) with HMAC credentials, TTL ≤ 10 min, issued only after the pairing proof.
   - Trivy image scanning.
@@ -130,7 +130,7 @@ The setup is tiered: **T0** must exist for the alpha, **T1** by beta, **T2** at 
   - The generator fails on placeholder, plural or missing-key errors.
 - **Shipping rules for locales:**
   - A shipped locale must be complete for every key tagged `critical` (alert, link loss, connection), so there is never a mixed-language alarm.
-  - Each key carries a `machineTranslated` / `reviewed` marker, which tracks native-speaker review. Review improves a locale; it does not gate shipping ([ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md)).
+  - Each key carries a `machineTranslated` / `reviewed` marker, which tracks native-speaker review. Review improves a locale; it does not gate shipping ([ADR-021](../2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md)).
   - `androidResources.localeFilters` lists exactly the generated locales.
   - A pseudo-locale and an RTL pseudo-locale exist, and a lint rejects hard-coded UI literals.
   - Weblate is T1.

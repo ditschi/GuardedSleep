@@ -1,6 +1,6 @@
 # Manual release testing checklist
 
-> **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §9 and §10:** the Capacitor baby setup and `mobile-v*` tags in this checklist, and the `pre-commit` CI job name, are legacy; CI is a single `ci-ok` aggregator and releases start from manual `android-v*` tags. Replaced in toolchain realignment waves 1 to 3; this procedure stays valid until then.
+> **Superseded by [ADR-020](../../openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md) §9 and §10:** the Capacitor baby setup and `mobile-v*` tags in this checklist, and the `pre-commit` CI job name, are legacy; CI is a single `ci-ok` aggregator and releases start from manual `android-v*` tags. Replaced in toolchain realignment waves 1 to 3; this procedure stays valid until then.
 
 `STATUS: DECIDED`
 

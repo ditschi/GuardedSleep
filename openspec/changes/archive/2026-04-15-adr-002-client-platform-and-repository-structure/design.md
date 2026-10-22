@@ -4,7 +4,7 @@
 - Date: 2026-04-15
 - Deciders: Technical direction + user acceptance of stack
 
-> **Further superseded (2026-10-20):** the web framework row (SvelteKit → Vite + Svelte 5 + vite-plugin-pwa, `apps/web`), the package-manager/tooling rows and the signaling-server row (Node `ws` → Rust axum, now) → [ADR-020](../../../../docs/decisions/ADR-020-toolchain-and-development-setup.md) §5–§6. The Capacitor shell and Capacitor Preferences are legacy; offline-LAN listener → [ADR-021](../../../../docs/decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md).
+> **Further superseded (2026-10-20):** the web framework row (SvelteKit → Vite + Svelte 5 + vite-plugin-pwa, `apps/web`), the package-manager/tooling rows and the signaling-server row (Node `ws` → Rust axum, now) → [ADR-020](../2026-10-20-adr-020-toolchain-and-development-setup/design.md) §5–§6. The Capacitor shell and Capacitor Preferences are legacy; offline-LAN listener → [ADR-021](../2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md).
 
 ## Context
 

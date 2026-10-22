@@ -1,17 +1,17 @@
 # ADR-012: Connection model -- offline-LAN signaling, path selection, and network handoff
 
-- Status: DECIDED for the goals (owner, 2026-10-21). The state machine and detailed logic (§1, §2, §4) are kept as implemented during waves 1–3 and are re-evaluated afterwards for the native app and the new stack, see [backlog](../backlog.md) "Connection model re-evaluation"
+- Status: DECIDED for the goals (owner, 2026-10-21). The state machine and detailed logic (§1, §2, §4) are kept as implemented during waves 1–3 and are re-evaluated afterwards for the native app and the new stack, see [backlog](../../../../docs/backlog.md) "Connection model re-evaluation"
 - Date: 2026-05-13
 - Deciders: Product owner (user), coordinated design (Tech Architect, Security/Privacy, UX, Critical Reviewer 2026-05)
-- Supersedes parts of: [ADR-003](ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md) "Local: no server" -- this ADR **precises** that statement; see §"Relationship to ADR-003".
+- Supersedes parts of: [ADR-003](../2026-04-15-adr-003-connectivity-webrtc-signaling-and-qr-pairing/design.md) "Local: no server" -- this ADR **precises** that statement; see §"Relationship to ADR-003".
 
-> **Partially superseded (2026-10-20):** the offline-LAN platform matrix row "no internet, same LAN" for web clients and the Capacitor implementation of the embedded listener (§3, Phase split, matrix) → [ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md) §1: Android ↔ Android (embedded Kotlin listener on the Rust `relay` crate) and local PC mode, both DECIDED for beta; HTTPS web ↔ phone listener is REJECTED. `@capacitor/network` handoff is legacy; the Rust core owns link supervision ([ADR-017](../../openspec/changes/archive/2026-10-20-adr-017-link-recovery-and-connection-supervision/design.md)).
+> **Partially superseded (2026-10-20):** the offline-LAN platform matrix row "no internet, same LAN" for web clients and the Capacitor implementation of the embedded listener (§3, Phase split, matrix) → [ADR-021](../2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md) §1: Android ↔ Android (embedded Kotlin listener on the Rust `relay` crate) and local PC mode, both DECIDED for beta; HTTPS web ↔ phone listener is REJECTED. `@capacitor/network` handoff is legacy; the Rust core owns link supervision ([ADR-017](../2026-10-20-adr-017-link-recovery-and-connection-supervision/design.md)).
 
 ## Context
 
 Today `apps/mobile/src/lib/webrtc/peer-session.ts` always opens a WebSocket to a single signaling URL via `connectSignaling(...)`. If that URL is unreachable (no internet, captive portal, hotel WiFi blocking WSS), the session goes to `failed` -- even when the two devices are sitting on the **same LAN** and could trivially exchange SDP/ICE locally. The current Android plugin already advertises and discovers peers via NSD (`_guardedsleep._tcp.`, `lanPeerResolved` event), but the discovered host is **only shown in a diagnostics box** -- it never feeds into the actual signaling.
 
-Three other gaps surfaced in the [2026-05 Critical Review](../reviews/concept-review-2026-05.md) and the connection-model design pass:
+Three other gaps surfaced in the [2026-05 Critical Review](../../../../docs/reviews/concept-review-2026-05.md) and the connection-model design pass:
 
 1. **Live network handoff** (Wi-Fi ↔ cellular, walk out of range and back) -- no listener on OS network events; the only mitigation today is exponential backoff with full `start()` on next attempt ([`session-auto-reconnect.ts`](../../apps/mobile/src/lib/webrtc/session-auto-reconnect.ts)).
 2. **Concurrent path racing** -- there is no abstraction that says "try LAN first, then internet"; whichever signaling URL is in the query string wins.
@@ -87,7 +87,7 @@ The baby side, in the absence of an embedded local listener (Phase 2), simply us
 - **Advertised via existing NSD** (`_guardedsleep._tcp.`) -- the **port from `WifiLock`-protected listener replaces the placeholder `9`** currently in `GuardedSleepNativePlugin.java`.
 - **Discovery name is OPAQUE:** the service name is changed from `gssleep-<roomId>` to a per-session **random discovery token** (no semantic link to room id; ~64 bits entropy, regenerated per session). The room id is **only** revealed after the WebSocket open and `pair_proof` (PSK + DTLS fingerprint) succeeds. Migration: the old `gssleep-<roomId>` name is dropped; backwards compatibility is **not** required because no users yet rely on offline-LAN (the feature is new). This addresses the Security IMPORTANT finding.
 - **Parent (Android)** resolves the NSD service, builds `ws://<lan-ip>:<port>` (no TLS on LAN listener -- relying on **DTLS-SRTP + `pair_proof`** for E2E security; the LAN signaling is treated as **untrusted relay** per `AGENTS.md` §7).
-- **PWA / iOS scope (non-goal in MVP; superseded for PCs, see ADR-021 §1: local PC mode):** PWA browsers cannot host an incoming socket and Capacitor iOS is not in MVP scope; for those targets, **internet signaling is required**. Users who want fully-offline LAN on those platforms can run the public-image `guardedsleep-signaling` Docker on a NAS/router (see option D in §Options Considered and [ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md)). Stated explicitly in the platform matrix below.
+- **PWA / iOS scope (non-goal in MVP; superseded for PCs, see ADR-021 §1: local PC mode):** PWA browsers cannot host an incoming socket and Capacitor iOS is not in MVP scope; for those targets, **internet signaling is required**. Users who want fully-offline LAN on those platforms can run the public-image `guardedsleep-signaling` Docker on a NAS/router (see option D in §Options Considered and [ADR-008](../2026-05-13-adr-008-container-image-build-and-distribution/design.md)). Stated explicitly in the platform matrix below.
 
 **Android lifecycle (binding):**
 
@@ -111,17 +111,17 @@ The baby side, in the absence of an embedded local listener (Phase 2), simply us
 
 - **Hysteresis:** ignore network-change events for the first **2-5 s** (configurable, default **3 s**) -- transient flapping does not trigger reconnect.
 - After the window elapses with a **different** active network, drop the current `PeerSession`, run `discovering_paths` fresh (same path-ranking), and start a new `PeerSession`. **No half-reuse** of the prior peer connection.
-- During reconnect: UI stays in **`reconnecting_handoff`** state -- silent for 0--20 s (matching the existing failure-model escalation), then the standard escalation kicks in (see [ADR-013](../../openspec/changes/archive/2026-10-21-adr-013-connection-status-observability-and-copy/design.md) for copy + timing).
+- During reconnect: UI stays in **`reconnecting_handoff`** state -- silent for 0--20 s (matching the existing failure-model escalation), then the standard escalation kicks in (see [ADR-013](../2026-10-21-adr-013-connection-status-observability-and-copy/design.md) for copy + timing).
 - `restartIce()` (in-place) is **explicitly deferred** as a later optimization once the orchestrator is stable. Reasoning: fewer Android-specific quirks, fewer Audio-Focus interruption issues when we tear down cleanly.
 - **Listen mode auto-resume:** if the user had Listen ON when the handoff started, the parent **re-enables** Listen automatically once the new session reaches `connected`, **without** an extra tap. A small toast ("Connection restored -- Listen on") acknowledges the auto-resume.
 
 ### 5. Connection status surface (cross-reference)
 
-UI/UX (ambient bar, escalation timing, plain-language copy) is delegated to [ADR-013](../../openspec/changes/archive/2026-10-21-adr-013-connection-status-observability-and-copy/design.md). This ADR fixes only the **states** the UI must render.
+UI/UX (ambient bar, escalation timing, plain-language copy) is delegated to [ADR-013](../2026-10-21-adr-013-connection-status-observability-and-copy/design.md). This ADR fixes only the **states** the UI must render.
 
 ### 6. Relationship to ADR-003
 
-[ADR-003](ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md) §"Three connectivity paths" line 2 says **"Local: WiFi / hotspot, no server"**. That phrasing is misleading and is **clarified** by this ADR: "no separate signaling **product/service** is required" (true), but a **process listening on a socket on one of the peers** is still needed for SDP/ICE exchange. ADR-003 is **not superseded**; a precision note is added to it pointing here.
+[ADR-003](../2026-04-15-adr-003-connectivity-webrtc-signaling-and-qr-pairing/design.md) §"Three connectivity paths" line 2 says **"Local: WiFi / hotspot, no server"**. That phrasing is misleading and is **clarified** by this ADR: "no separate signaling **product/service** is required" (true), but a **process listening on a socket on one of the peers** is still needed for SDP/ICE exchange. ADR-003 is **not superseded**; a precision note is added to it pointing here.
 
 ## Options Considered
 
@@ -142,37 +142,37 @@ UI/UX (ambient bar, escalation timing, plain-language copy) is delegated to [ADR
 
 ### Option D: Mandatory user-run LAN Docker signaling
 
-- **Pros:** zero extra code in the apps; reuses `ghcr.io/<owner>/guardedsleep-signaling` ([ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md)).
+- **Pros:** zero extra code in the apps; reuses `ghcr.io/<owner>/guardedsleep-signaling` ([ADR-008](../2026-05-13-adr-008-container-image-build-and-distribution/design.md)).
 - **Cons:** excludes ordinary families without a NAS; setup friction kills the "install, scan, done" UX promise.
-- **Kept** as **complementary** power-user path (documented in [connectivity-pairing.md](../features/connectivity-pairing.md) §"LAN Docker fallback"), **not as a substitute for Option A.**
+- **Kept** as **complementary** power-user path (documented in [connectivity-pairing.md](../../../../docs/features/connectivity-pairing.md) §"LAN Docker fallback"), **not as a substitute for Option A.**
 
 ### Option E: BLE / Wi-Fi Aware for signaling
 
 - **Pros:** no IP at all.
-- **Cons:** complex permissions on Android (Bluetooth Scan), worse on iOS, fragile on old devices ([Persona C](../concept/personas.md)). **REJECTED** for MVP; documented as IDEA only.
+- **Cons:** complex permissions on Android (Bluetooth Scan), worse on iOS, fragile on old devices ([Persona C](../../../../docs/concept/personas.md)). **REJECTED** for MVP; documented as IDEA only.
 
 ### Option F: Defer offline-LAN to Phase 2 entirely
 
 - **Pros:** smallest code change today; only path-selector + tests.
-- **Cons:** keeps a known [Persona B / Persona A](../concept/personas.md) failure mode unaddressed.
+- **Cons:** keeps a known [Persona B / Persona A](../../../../docs/concept/personas.md) failure mode unaddressed.
 - **REJECTED** as full deferral. **Compromise actually chosen:** documentation + path-selector + saved-connection `fallbackSignalingUrls` shipped in the first sprint; embedded baby-side LAN relay + opaque NSD + network handoff shipped in Phase 2 (this document’s Phase split table).
 
 ## Phase split
 
-| Item                                                                                    | Phase                                                                                                                                       |
-| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| ADR-012 documented, ADR-013 documented, ADR-003 precision note                          | **MVP / this sprint**                                                                                                                       |
-| `path-selector.ts` + unit tests                                                         | **MVP / this sprint**                                                                                                                       |
-| `connection-store.ts` extension: `fallbackSignalingUrls?: string[]`                     | **MVP / this sprint**                                                                                                                       |
-| `PeerSession` consumes path-selector for ordered URL attempts                           | **MVP / this sprint**                                                                                                                       |
-| Playwright E2E test: two WS instances, primary unreachable → fallback wins              | **MVP / this sprint**                                                                                                                       |
-| Ambient status bar component + symmetric, non-technical copy + reconnect countdown copy | **MVP / this sprint** (per [ADR-013](../../openspec/changes/archive/2026-10-21-adr-013-connection-status-observability-and-copy/design.md)) |
-| Embedded WebSocket server on Baby-Android (`GuardedSleepNativePlugin` extension)        | **Phase 2 — implemented** (Java relay + `prependSignalingUrls` / localhost WS)                                                              |
-| Opaque NSD discovery token (replacing `gssleep-<roomId>`)                               | **Phase 2 — implemented** (`gst-<token>`, `lanPeerResolved` includes `port` + `token`)                                                      |
-| `@capacitor/network` listener + handoff hysteresis state machine                        | **Phase 2 — implemented** (`subscribeNetworkHandoff`, 3 s debounce → `start({ resetBackoff: true })`)                                       |
-| `pc.restartIce()` optimization                                                          | **Phase 3** if metrics show audio-cut > 2 s is a real complaint                                                                             |
-| Slow red baby pulse animation (failure-model F-1 secondary observability)               | **Phase 2 — implemented** (`guardedsleep-slow-pulse` after ~60 s idle/failed without parent)                                                |
-| Captive-portal detection / out-of-home explicit prompts                                 | **Phase 2** (referenced in [`connectivity-pairing.md`](../features/connectivity-pairing.md) Out-of-Home)                                    |
+| Item                                                                                    | Phase                                                                                                                  |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| ADR-012 documented, ADR-013 documented, ADR-003 precision note                          | **MVP / this sprint**                                                                                                  |
+| `path-selector.ts` + unit tests                                                         | **MVP / this sprint**                                                                                                  |
+| `connection-store.ts` extension: `fallbackSignalingUrls?: string[]`                     | **MVP / this sprint**                                                                                                  |
+| `PeerSession` consumes path-selector for ordered URL attempts                           | **MVP / this sprint**                                                                                                  |
+| Playwright E2E test: two WS instances, primary unreachable → fallback wins              | **MVP / this sprint**                                                                                                  |
+| Ambient status bar component + symmetric, non-technical copy + reconnect countdown copy | **MVP / this sprint** (per [ADR-013](../2026-10-21-adr-013-connection-status-observability-and-copy/design.md))        |
+| Embedded WebSocket server on Baby-Android (`GuardedSleepNativePlugin` extension)        | **Phase 2 — implemented** (Java relay + `prependSignalingUrls` / localhost WS)                                         |
+| Opaque NSD discovery token (replacing `gssleep-<roomId>`)                               | **Phase 2 — implemented** (`gst-<token>`, `lanPeerResolved` includes `port` + `token`)                                 |
+| `@capacitor/network` listener + handoff hysteresis state machine                        | **Phase 2 — implemented** (`subscribeNetworkHandoff`, 3 s debounce → `start({ resetBackoff: true })`)                  |
+| `pc.restartIce()` optimization                                                          | **Phase 3** if metrics show audio-cut > 2 s is a real complaint                                                        |
+| Slow red baby pulse animation (failure-model F-1 secondary observability)               | **Phase 2 — implemented** (`guardedsleep-slow-pulse` after ~60 s idle/failed without parent)                           |
+| Captive-portal detection / out-of-home explicit prompts                                 | **Phase 2** (referenced in [`connectivity-pairing.md`](../../../../docs/features/connectivity-pairing.md) Out-of-Home) |
 
 ## Platform matrix
 
@@ -189,7 +189,7 @@ UI/UX (ambient bar, escalation timing, plain-language copy) is delegated to [ADR
 - Automatic Wi-Fi + cellular **bonding** (both interfaces simultaneously).
 - Captive-portal-bypass tricks (privacy-hostile, may be flagged by stores).
 - Cross-platform native libraries for offline LAN beyond the existing Capacitor plugin scope.
-- Persisting full SDP into the QR code (size unreliable -- already rejected in [analysis.md](../technical/analysis.md)).
+- Persisting full SDP into the QR code (size unreliable -- already rejected in [analysis.md](../../../../docs/technical/analysis.md)).
 
 ## Implementation
 
@@ -217,8 +217,8 @@ UI/UX (ambient bar, escalation timing, plain-language copy) is delegated to [ADR
 
 ### Risks
 
-- **Android OEM lifecycle quirks** (Doze, Wi-Fi sleep on aggressive OEMs) may kill the embedded listener silently. Mitigation: Phase 2 PR will include the "Lakmus test" idea from [failure-model.md](../concept/failure-model.md) F-5 -- counted heartbeats over the first 30 min to detect silent OS-kill of the listener.
-- **NSD on hotspot / captive networks**: NSD may not traverse client-isolation. Mitigation: documented in [connectivity-pairing.md](../features/connectivity-pairing.md) §"Out-of-Home"; user-facing copy must say "If both phones cannot find each other, switch one phone's mobile data on".
+- **Android OEM lifecycle quirks** (Doze, Wi-Fi sleep on aggressive OEMs) may kill the embedded listener silently. Mitigation: Phase 2 PR will include the "Lakmus test" idea from [failure-model.md](../../../../docs/concept/failure-model.md) F-5 -- counted heartbeats over the first 30 min to detect silent OS-kill of the listener.
+- **NSD on hotspot / captive networks**: NSD may not traverse client-isolation. Mitigation: documented in [connectivity-pairing.md](../../../../docs/features/connectivity-pairing.md) §"Out-of-Home"; user-facing copy must say "If both phones cannot find each other, switch one phone's mobile data on".
 - **CI test feasibility**: the user-requested test "no internet, but same LAN" cannot be reproduced in Playwright with real NSD. We instead test the **path-selection layer** (Tech Architect Option A's orchestration responsibility) with two WS-server processes; real NSD + real offline LAN is covered by Phase 2 Android-instrumented tests and manual release validation.
 
 ## Discarded alternatives

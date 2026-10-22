@@ -19,7 +19,7 @@ just gate                  # builds the APK, starts emulators + signaling + cotu
 DOZE_MINUTES=2 just gate   # quick run
 ```
 
-Without KVM, `just gate` prints `SKIPPED: gate needs kvm` (a failure under `GS_STRICT=1`). The hybrid browser E2E flow and its `pnpm run emulator:*` / `e2e:hybrid*` scripts were removed in wave 1 ([ADR-020](../../docs/decisions/ADR-020-toolchain-and-development-setup.md)).
+Without KVM, `just gate` prints `SKIPPED: gate needs kvm` (a failure under `GS_STRICT=1`). The hybrid browser E2E flow and its `pnpm run emulator:*` / `e2e:hybrid*` scripts were removed in wave 1 ([ADR-020](../../openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md)).
 
 ## How it works
 

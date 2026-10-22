@@ -18,7 +18,7 @@ See **[docs/contributing/development.md](docs/contributing/development.md)** for
 - Running the same checks as CI: `just ci` (lint + test + build + e2e); single tasks are `just lint`, `just test`, `just build`, `just e2e` (`just --list`)
 - Git hooks: lefthook (installed by `just setup`) runs Prettier, cargo fmt, typos, hygiene and a secret scan on staged files; CI re-runs everything
 - Tasks needing Docker, KVM or the Android SDK print `SKIPPED` locally (a skip is not a pass); CI runs with `GS_STRICT=1`, which fails on skips
-- Tool pins, Renovate, and the gate list: [ADR-020](docs/decisions/ADR-020-toolchain-and-development-setup.md)
+- Tool pins, Renovate, and the gate list: [ADR-020](openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md)
 
 ## Commits and pull requests
 

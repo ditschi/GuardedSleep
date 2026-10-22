@@ -8,10 +8,10 @@ Manages how baby and parent units discover, authenticate, and communicate with e
 
 - `[STATUS: DECIDED]` Pairing, encryption and saved pairings: see [`openspec/specs/pairing`](../../openspec/specs/pairing/spec.md); multi-parent (up to 4) is `DEFERRED` in the [backlog](../backlog.md)
 - `[STATUS: DECIDED]` Works over the internet: see [`openspec/specs/signaling-relay`](../../openspec/specs/signaling-relay/spec.md)
-- `[STATUS: DECIDED]` Works on local networks without internet (WiFi, hotspot). Superseded wording "in MVP / Phase 2" (the feature list and the listener section disagreed): the offline LAN topologies below are DECIDED with target **beta** ([ADR-021](../decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §1); the alpha uses internet signaling for all pairs
+- `[STATUS: DECIDED]` Works on local networks without internet (WiFi, hotspot). Superseded wording "in MVP / Phase 2" (the feature list and the listener section disagreed): the offline LAN topologies below are DECIDED with target **beta** ([ADR-021](../../openspec/changes/archive/2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md) §1); the alpha uses internet signaling for all pairs
 - `[STATUS: DECIDED]` Offline topology **Android <-> Android**: the Android baby unit runs an embedded signaling listener while monitoring is active; the parent finds it by NSD or from the QR invite -- target **beta**
 - `[STATUS: DECIDED]` Offline topology **Android <-> PC/laptop and PC <-> PC (local PC mode)**: the PC runs the GuardedSleep server binary (or compose bundle) in local mode, which serves the web UI on `http://localhost` and signaling on the LAN; Android devices connect to the PC's LAN address, shown in the pairing QR -- target **beta**
-- `[STATUS: REJECTED]` Web client over HTTPS <-> phone listener (self-signed certificate click-through): it would teach users to accept certificate warnings and undermines pairing as the trust anchor ([ADR-021](../decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md))
+- `[STATUS: REJECTED]` Web client over HTTPS <-> phone listener (self-signed certificate click-through): it would teach users to accept certificate warnings and undermines pairing as the trust anchor ([ADR-021](../../openspec/changes/archive/2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md))
 - `[STATUS: IDEA]` Chrome Local Network Access (long-polling `fetch`) for an HTTPS web client to reach a phone; Chromium only, WebSockets not yet covered -- re-check when Chrome covers WebSockets
 - `[STATUS: DEFERRED]` Offline iOS (Phase 2, revisit at the iOS gate)
 - `[STATUS: DECIDED]` Automatic reconnection after network interruptions -- **MVP**
@@ -31,7 +31,7 @@ Manages how baby and parent units discover, authenticate, and communicate with e
 
 For devices on the same network or ad-hoc connections:
 
-- **No separate signaling service** is required (no Docker, no public server); SDP/ICE exchange uses an **embedded WebSocket listener on the Baby-Android unit** (target **beta**, Kotlin on the Rust `relay` crate per [ADR-021](../decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §1; the Capacitor plugin implementation is legacy; see [ADR-012](../decisions/ADR-012-connection-model-offline-lan-and-handoff.md)). The path-selector layer ships now so saved-connection fallbacks already work.
+- **No separate signaling service** is required (no Docker, no public server); SDP/ICE exchange uses an **embedded WebSocket listener on the Baby-Android unit** (target **beta**, Kotlin on the Rust `relay` crate per [ADR-021](../../openspec/changes/archive/2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md) §1; the Capacitor plugin implementation is legacy; see [ADR-012](../../openspec/changes/archive/2026-10-21-adr-012-connection-model-offline-lan-and-handoff/design.md)). The path-selector layer ships now so saved-connection fallbacks already work.
 - No STUN/TURN needed on local networks
 - User must manually create hotspot via OS settings (no programmatic API available)
 - App provides step-by-step hotspot setup guide
@@ -40,9 +40,9 @@ For devices on the same network or ad-hoc connections:
 
 ### LAN Docker fallback (power-user)
 
-> STATUS: DOCUMENTED -- complementary to the embedded-listener path, **not** a substitute. See [ADR-012](../decisions/ADR-012-connection-model-offline-lan-and-handoff.md) Option D.
+> STATUS: DOCUMENTED -- complementary to the embedded-listener path, **not** a substitute. See [ADR-012](../../openspec/changes/archive/2026-10-21-adr-012-connection-model-offline-lan-and-handoff/design.md) Option D.
 
-Users with a NAS / router that can run Docker may run the `ghcr.io/<owner>/guardedsleep-signaling` image ([ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md)) on the LAN and add its URL (e.g. `wss://nas.local:8443/`) to **Saved Connections → Fallback signaling URLs** (Advanced). The path-selector will try it after the primary URL fails. This was the only offline-LAN option for PWA/iOS targets (superseded for PCs by the local PC mode, see [ADR-021](../decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §1; it remains a power-user option and the same Rust server binary serves it). Browsers over HTTPS cannot reach a phone listener.
+Users with a NAS / router that can run Docker may run the `ghcr.io/<owner>/guardedsleep-signaling` image ([ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md)) on the LAN and add its URL (e.g. `wss://nas.local:8443/`) to **Saved Connections → Fallback signaling URLs** (Advanced). The path-selector will try it after the primary URL fails. This was the only offline-LAN option for PWA/iOS targets (superseded for PCs by the local PC mode, see [ADR-021](../../openspec/changes/archive/2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md) §1; it remains a power-user option and the same Rust server binary serves it). Browsers over HTTPS cannot reach a phone listener.
 
 ### Out-of-Home / Event connectivity (hotels, venues)
 
@@ -66,7 +66,7 @@ Event use (Persona A) often hits **captive portals**, **client isolation** on ve
 
 ### LAN <-> Internet Handoff
 
-> STATUS: **DECIDED** (this sprint = path-selector + saved-connection fallbacks; Phase 2 = live `@capacitor/network` handoff with hysteresis; superseded: link supervision lives in the Rust core, see [ADR-017](../../openspec/changes/archive/2026-10-20-adr-017-link-recovery-and-connection-supervision/design.md)). Binding spec: [ADR-012](../decisions/ADR-012-connection-model-offline-lan-and-handoff.md).
+> STATUS: **DECIDED** (this sprint = path-selector + saved-connection fallbacks; Phase 2 = live `@capacitor/network` handoff with hysteresis; superseded: link supervision lives in the Rust core, see [ADR-017](../../openspec/changes/archive/2026-10-20-adr-017-link-recovery-and-connection-supervision/design.md)). Binding spec: [ADR-012](../../openspec/changes/archive/2026-10-21-adr-012-connection-model-offline-lan-and-handoff/design.md).
 
 When the local connection drops (e.g., device leaves WiFi range), the app should automatically attempt reconnection via Tailscale IP (or future signaling server). When both devices are on the same network again, prefer the direct local connection for maximum privacy and minimum latency.
 
@@ -154,7 +154,7 @@ Store recent successful connections on both devices for reconnection without QR 
 
 ## Open Questions
 
-- ~~Which web framework (Svelte, React, Vue) for the Capacitor app?~~ **RESOLVED, superseded**: Svelte 5; the Capacitor app is legacy and the web client is rebuilt on Vite 8 + Svelte 5 ([ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §5)
+- ~~Which web framework (Svelte, React, Vue) for the Capacitor app?~~ **RESOLVED, superseded**: Svelte 5; the Capacitor app is legacy and the web client is rebuilt on Vite 8 + Svelte 5 ([ADR-020](../../openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md) §5)
 - Exact QR code data format and encoding (binary vs. base64)?
 - How to handle re-pairing if a device is replaced?
 - ~~Optimal heartbeat interval (balance responsiveness vs. battery)?~~ **RESOLVED**: 10 s default, 5-15 s ([`link-supervision`](../../openspec/specs/link-supervision/spec.md))

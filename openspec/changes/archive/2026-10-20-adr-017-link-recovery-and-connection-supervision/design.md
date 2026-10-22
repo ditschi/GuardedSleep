@@ -3,12 +3,12 @@
 - Status: DECIDED (owner, 2026-10-20; revision 2 after role reviews)
 - Date: 2026-10-19
 - Deciders: Project owner (pending); reviewed by Security/Privacy Architect (NEEDS REWORK → addressed), Critical Reviewer (NEEDS REWORK → addressed), Technical Architect (APPROVED WITH CONCERNS), Product Owner (APPROVED WITH CONCERNS), UX
-- Related: [ADR-004](../2026-04-15-adr-004-encryption-transport-and-key-storage/design.md) (amended: direction-bound `pair_proof`), [ADR-015](../2026-10-21-adr-015-native-clients-with-shared-rust-core/design.md) (open item C1, gate AC-4/AC-10), [ADR-012](../../../../docs/decisions/ADR-012-connection-model-offline-lan-and-handoff.md), [ADR-013](../2026-10-21-adr-013-connection-status-observability-and-copy/design.md), [failure-model.md](../../../../docs/concept/failure-model.md), [ADR-016](../2026-10-21-adr-016-test-strategy-local-virtual-physical/design.md)
+- Related: [ADR-004](../2026-04-15-adr-004-encryption-transport-and-key-storage/design.md) (amended: direction-bound `pair_proof`), [ADR-015](../2026-10-21-adr-015-native-clients-with-shared-rust-core/design.md) (open item C1, gate AC-4/AC-10), [ADR-012](../2026-10-21-adr-012-connection-model-offline-lan-and-handoff/design.md), [ADR-013](../2026-10-21-adr-013-connection-status-observability-and-copy/design.md), [failure-model.md](../../../../docs/concept/failure-model.md), [ADR-016](../2026-10-21-adr-016-test-strategy-local-virtual-physical/design.md)
 - Supersedes (once DECIDED): ADR-012 §1 "retries exhausted → failed_needs_user"; failure-model "Reconnect timeout 15 s → troubleshooter"; `heartbeat_stale_ms` default 50 s; the DECIDED heartbeat range "5–30 s" (now 5–15 s, §5)
 
 > **Migrated to OpenSpec (2026-10-21):** §2–§9 and §11 are now normative in [`openspec/specs/link-supervision/spec.md`](../../../specs/link-supervision/spec.md); change them there. This file keeps the rationale and options, §1 is normative in [`openspec/specs/pairing`](../../../specs/pairing/spec.md). §10 is normative in [`openspec/specs/signaling-relay`](../../../specs/signaling-relay/spec.md) (server side as built; the Rust server is the prepared change `add-rust-signaling-server`), and the §12 cases are scenarios in `link-supervision`. Archived 2026-10-22.
 
-> **Context note (2026-10-20):** references to the Capacitor app and the Node server are historical; the Rust `relay` crate and server ([ADR-020](../../../../docs/decisions/ADR-020-toolchain-and-development-setup.md) §3, §6) implement the server-side liveness and room pinning described here. No decision in this ADR is changed.
+> **Context note (2026-10-20):** references to the Capacitor app and the Node server are historical; the Rust `relay` crate and server ([ADR-020](../2026-10-20-adr-020-toolchain-and-development-setup/design.md) §3, §6) implement the server-side liveness and room pinning described here. No decision in this ADR is changed.
 
 ## Context
 

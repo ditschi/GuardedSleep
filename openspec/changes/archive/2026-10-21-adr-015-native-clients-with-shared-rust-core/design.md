@@ -7,7 +7,7 @@
 - Related: [ADR-016](../2026-10-21-adr-016-test-strategy-local-virtual-physical/design.md) (test strategy; owns all test details, this ADR keeps the PoC gate). **ADR-015 and ADR-016 are decided together.**
 - Owner decisions 2026-10-19: English, German, French and Spanish are officially supported from Phase 1 (see Localization; superseded, see ADR-021 §2: about 20 AI-translated locales); link recovery is designed first and then **gated in the PoC as AC-10** (automatic reconnect after Wi-Fi loss/network change, on both roles; see Link recovery)
 
-> **Partially superseded (2026-10-20):** the web row (SvelteKit → Vite + Svelte 5), the signaling row (Node stays until parity → Rust axum now), the WebRTC vendor (`stream-webrtc-android` → `io.github.webrtc-sdk:android` behind a `MediaEngine`) and the four-locale owner decision → [ADR-020](../../../../docs/decisions/ADR-020-toolchain-and-development-setup.md) §4–§6 and [ADR-021](../../../../docs/decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §2. Status stays PROPOSED until its gate passes.
+> **Partially superseded (2026-10-20):** the web row (SvelteKit → Vite + Svelte 5), the signaling row (Node stays until parity → Rust axum now), the WebRTC vendor (`stream-webrtc-android` → `io.github.webrtc-sdk:android` behind a `MediaEngine`) and the four-locale owner decision → [ADR-020](../2026-10-20-adr-020-toolchain-and-development-setup/design.md) §4–§6 and [ADR-021](../2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md) §2. Status stays PROPOSED until its gate passes.
 
 ## Context
 
