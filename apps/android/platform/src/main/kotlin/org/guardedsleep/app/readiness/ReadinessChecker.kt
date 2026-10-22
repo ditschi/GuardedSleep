@@ -1,5 +1,6 @@
 package org.guardedsleep.app.readiness
 
+import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
@@ -115,6 +116,8 @@ class AndroidReadinessEnv(private val context: Context) : ReadinessEnv {
         context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
     private companion object {
+        // TYPE_BLE_HEADSET (API 31) is an inlined int: on older systems no device reports it.
+        @SuppressLint("InlinedApi")
         val HEADPHONE_TYPES =
             setOf(
                 AudioDeviceInfo.TYPE_WIRED_HEADSET,

@@ -184,9 +184,9 @@ _build-android *gradle_tasks:
     scripts/poc/release-check.sh
     scripts/poc/size-check.sh
 
-# What the CI android job runs: build-android plus the JVM tests and Roborazzi screenshot verification.
+# What the CI android job runs: build-android plus Android Lint (warnings are errors), the JVM tests and Roborazzi screenshot verification.
 verify-android:
-    just build-android :core-bindings:testDebugUnitTest :platform:testDebugUnitTest :app:testDebugUnitTest :app:verifyRoborazziDebug
+    just build-android lintDebug :core-bindings:testDebugUnitTest :platform:testDebugUnitTest :app:testDebugUnitTest :app:verifyRoborazziDebug
 
 # Browser E2E (Playwright, local dev stack). Prints SKIPPED without Playwright browsers unless GS_STRICT=1.
 e2e:

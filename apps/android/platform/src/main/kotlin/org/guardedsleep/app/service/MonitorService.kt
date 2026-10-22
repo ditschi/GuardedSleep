@@ -1,5 +1,6 @@
 package org.guardedsleep.app.service
 
+import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
@@ -48,9 +49,7 @@ class MonitorService : Service() {
             return START_NOT_STICKY
         }
         val notifier = StatusNotifier(this, graph.entryPoints)
-        val type =
-            if (role == Role.BABY) ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
-            else ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+        val type = foregroundType(role)
         try {
             ServiceCompat.startForeground(
                 this,
@@ -74,13 +73,23 @@ class MonitorService : Service() {
             wakeLock =
                 getSystemService(PowerManager::class.java)
                     .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "GuardedSleep:monitor")
-                    .apply { acquire() }
+                    // No timeout: the lock lives exactly as long as this foreground service
+                    // (released in
+                    // onDestroy) and the core's timers must tick through the whole night.
+                    .apply { @SuppressLint("WakelockTimeout") acquire() }
         }
         graph.controller.ensureRun()
         graph.controller.onServiceRunning(true)
         observe(role, notifier)
         return START_STICKY
     }
+
+    // The constants are compile-time ints; below API 30 / 29 the system ignores the type bits that
+    // it does not know, and ServiceCompat passes them through unchanged.
+    @SuppressLint("InlinedApi")
+    private fun foregroundType(role: Role): Int =
+        if (role == Role.BABY) ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+        else ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
 
     /** Keeps Wi-Fi at full speed with the screen off, so the link does not stall in power save. */
     private fun acquireWifiLock() {

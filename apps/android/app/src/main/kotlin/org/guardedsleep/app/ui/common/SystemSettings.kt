@@ -1,18 +1,19 @@
 package org.guardedsleep.app.ui.common
 
+import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.net.toUri
 
 /** Intents into system settings, built here so the checklist rows stay a pure UI concern. */
 object SystemSettings {
-    private fun pkgUri(ctx: Context) = Uri.parse("package:" + ctx.packageName)
+    private fun pkgUri(ctx: Context) = ("package:" + ctx.packageName).toUri()
 
     fun appDetails(ctx: Context) = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkgUri(ctx))
 
@@ -29,6 +30,10 @@ object SystemSettings {
 
     fun dndAccess() = Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
 
+    // The monitor must survive Doze with the screen off (Android guide: "BatteryLife" is a policy
+    // reminder). Direct-distribution builds are unaffected; for the store listing the policy
+    // declaration form names this use.
+    @SuppressLint("BatteryLife")
     fun batteryOptimization(ctx: Context) =
         Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, pkgUri(ctx))
 

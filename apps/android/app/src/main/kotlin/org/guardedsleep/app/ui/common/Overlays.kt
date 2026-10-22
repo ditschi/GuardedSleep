@@ -24,7 +24,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
@@ -44,7 +45,8 @@ fun SheetOverlay(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     BackHandler(onBack = onDismiss)
-    val maxH = (LocalConfiguration.current.screenHeightDp * 0.85f).dp
+    val windowHeight = LocalWindowInfo.current.containerSize.height
+    val maxH = with(LocalDensity.current) { (windowHeight * 0.85f).toDp() }
     Box(Modifier.fillMaxSize()) {
         Box(
             Modifier.fillMaxSize()

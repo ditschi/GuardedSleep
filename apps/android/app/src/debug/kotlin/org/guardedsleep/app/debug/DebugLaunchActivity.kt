@@ -1,5 +1,6 @@
 package org.guardedsleep.app.debug
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.os.Bundle
 import org.guardedsleep.app.config.DebugOptions
@@ -16,6 +17,9 @@ import org.guardedsleep.app.ui.model.Role
  * relay_only, auto_listen, heartbeat_interval_ms, alarm_after_ms, noise_hold_ms. Protected by the
  * DUMP permission (adb shell only). The PSK is read from the extras and never logged.
  */
+// Debug-only trampoline that finishes in onCreate and never shows a window, so the splash-screen
+// advice does not apply.
+@SuppressLint("CustomSplashScreen")
 class DebugLaunchActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

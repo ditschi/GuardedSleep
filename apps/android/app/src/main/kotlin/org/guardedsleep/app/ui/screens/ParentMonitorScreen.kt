@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -30,6 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -115,10 +118,10 @@ fun ParentMonitorScreen(
     val snoozeLeft = (p.snoozedUntilWallMs ?: 0L) - wall
     val snoozed = snoozeLeft > 0
     val acknowledged = (p.link.acknowledgedUntilElapsedMs ?: 0L) > elapsed
+    val windowWidth = LocalWindowInfo.current.containerSize.width
     val wide =
-        LocalConfiguration.current.let {
-            it.orientation == Configuration.ORIENTATION_LANDSCAPE || it.screenWidthDp >= 600
-        }
+        LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE ||
+            with(LocalDensity.current) { windowWidth.toDp() } >= 600.dp
 
     val lastContactWall = p.link.lastAliveElapsedMs?.let { wall - (elapsed - it) }
     val chips =
@@ -914,7 +917,7 @@ private fun ProbeSheet(
     onReadiness: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var stage by remember { mutableStateOf(0) }
+    var stage by remember { mutableIntStateOf(0) }
     LaunchedEffect(stage) {
         if (stage == 1) {
             delay(5000)

@@ -13,6 +13,8 @@ import android.os.BatteryManager
 import android.os.Build
 import android.service.notification.Condition
 import android.service.notification.ZenPolicy
+import androidx.annotation.RequiresApi
+import androidx.core.net.toUri
 import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.diag.PocLog
 import org.guardedsleep.app.settings.SettingsRepository
@@ -167,6 +169,7 @@ class SilenceController(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun rule(): AutomaticZenRule {
         val policy =
             ZenPolicy.Builder()
@@ -196,6 +199,6 @@ class SilenceController(
 
     private companion object {
         const val MAX_MINUTES = 1440L
-        val CONDITION_ID: Uri = Uri.parse("condition://org.guardedsleep.app/monitoring")
+        val CONDITION_ID: Uri = "condition://org.guardedsleep.app/monitoring".toUri()
     }
 }
