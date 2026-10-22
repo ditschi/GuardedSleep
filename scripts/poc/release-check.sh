@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # ADR-016: test-only surfaces must not ship. Fails if the release APK still contains the debug launch activity, the audio
-# injection receiver class or its intent action (manifest or dex).
+# injection receiver class or its intent action (manifest or dex), or if the merged manifest names a permission that is
+# not in scripts/poc/release-permissions.txt (a dependency update must not add one silently).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -15,6 +16,7 @@ FORBIDDEN=("DebugLaunchActivity" "DebugInjectReceiver" "org.guardedsleep.app.alp
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 unzip -q -o "$APK" 'classes*.dex' AndroidManifest.xml -d "$TMP"
+ALLOWED="$ROOT/scripts/poc/release-permissions.txt"
 
 found=0
 for needle in "${FORBIDDEN[@]}"; do
@@ -25,5 +27,15 @@ for needle in "${FORBIDDEN[@]}"; do
 		found=1
 	fi
 done
-[[ $found -eq 0 ]] && echo "PASS release-check — no test-only surfaces in release APK"
+
+# Binary manifest strings are UTF-16LE; every permission name contains ".permission." or ends in "_PERMISSION".
+actual="$(strings -el -n 6 "$TMP/AndroidManifest.xml" | grep -oE '[a-z][a-z0-9_.]*\.permission\.[A-Z0-9_]+|[a-z][a-z0-9_.]*\.[A-Z0-9_]+_PERMISSION' | sort -u)"
+allowed="$(grep -vE '^\s*(#|$)' "$ALLOWED" | sort -u)"
+extra="$(comm -23 <(printf '%s\n' "$actual") <(printf '%s\n' "$allowed"))"
+if [[ -n "$extra" ]]; then
+	echo "FAIL release-check — permissions not in release-permissions.txt:"
+	printf '  %s\n' $extra
+	found=1
+fi
+[[ $found -eq 0 ]] && echo "PASS release-check — no test-only surfaces, permissions match the allow-list"
 exit $found
