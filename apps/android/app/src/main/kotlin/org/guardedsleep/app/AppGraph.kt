@@ -10,7 +10,7 @@ import kotlinx.coroutines.SupervisorJob
 import org.guardedsleep.app.alerts.AlertController
 import org.guardedsleep.app.link.LinkController
 import org.guardedsleep.app.link.SystemClockSource
-import org.guardedsleep.app.media.MediaEngine
+import org.guardedsleep.app.media.LibWebRtcMediaEngine
 import org.guardedsleep.app.pairing.KeystorePairingCipher
 import org.guardedsleep.app.pairing.PairingStore
 import org.guardedsleep.app.readiness.AndroidReadinessEnv
@@ -43,7 +43,7 @@ class AppGraph(context: Context) {
             settingsRepo = settings,
             pairingStore = pairingStore,
             signaling = OkHttpSignalingFactory(),
-            mediaFactory = { role, ice -> MediaEngine(app, role, ice) },
+            mediaFactory = { role, ice -> LibWebRtcMediaEngine(app, role, ice) },
             silence = silence,
             alerts = alerts,
             readiness = readiness,

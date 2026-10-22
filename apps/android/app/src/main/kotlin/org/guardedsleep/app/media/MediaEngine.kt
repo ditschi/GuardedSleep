@@ -1,174 +1,79 @@
 package org.guardedsleep.app.media
 
-import android.content.Context
-import android.media.AudioAttributes
-import android.media.AudioManager
-import java.nio.ByteBuffer
-import java.util.concurrent.CopyOnWriteArrayList
-import org.guardedsleep.app.diag.PocLog
-import org.webrtc.AudioSource
-import org.webrtc.AudioTrack
-import org.webrtc.AudioTrackSink
-import org.webrtc.MediaConstraints
-import org.webrtc.PeerConnection
-import org.webrtc.PeerConnectionFactory
-import org.webrtc.audio.AudioRecordDataCallback
-import org.webrtc.audio.JavaAudioDeviceModule
-import uniffi.guardedsleep_core.Role
+import uniffi.guardedsleep_core.IceCandidate
 
-/**
- * libwebrtc for one monitoring run: one factory and audio device module, one send track (baby).
- * Playout goes to the alarm stream so the parent's alarm volume and DND-alarm rules apply.
- *
- * The record callback sees the PCM that is about to be encoded: it (a) measures the microphone
- * level for the core, (b) mixes the debug cry injection before measuring so injection exercises
- * the real path, and (c) mixes the probe tone after measuring so the tone cannot trigger the gate.
- */
-class MediaEngine(context: Context, private val role: Role, private val ice: IceConfig) : MediaPort {
-    private val appContext = context.applicationContext
-    private val micWindow = RmsWindow()
-    private val remoteWindow = RmsWindow()
-    private val probe = ProbeTone()
-    private val remoteTracks = CopyOnWriteArrayList<AudioTrack>()
-    @Volatile private var gain = 1.0
-    @Volatile private var speakerMuted = false
-    private val adm: JavaAudioDeviceModule
-    private val factory: PeerConnectionFactory
-    private var source: AudioSource? = null
-    private var track: AudioTrack? = null
+/** Callbacks of one peer connection. Called on WebRTC threads; the receiver must hop to its executor. */
+interface AttemptListener {
+    fun onLocalDescription(type: String, sdp: String)
 
-    private val remoteSink =
-        AudioTrackSink { data, bitsPerSample, _, _, _, _ ->
-            if (bitsPerSample == 16) {
-                val (sum, n) = Pcm.sumSquares(data)
-                remoteWindow.add(sum, n)
-            }
-        }
+    fun onLocalIce(candidate: IceCandidate)
 
-    private val recordCallback =
-        AudioRecordDataCallback { _, channels, rate, buffer: ByteBuffer ->
-            InjectedAudio.mix(buffer, channels)
-            val (sum, n) = Pcm.sumSquares(buffer)
-            micWindow.add(sum, n)
-            probe.mix(buffer, channels, rate)
-        }
+    fun onDataOpen()
 
-    init {
-        ensureInitialized(appContext)
-        val attributes =
-            AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ALARM)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                .build()
-        val builder =
-            JavaAudioDeviceModule.builder(appContext)
-                .setAudioAttributes(attributes)
-                .setAudioTrackErrorCallback(
-                    object : JavaAudioDeviceModule.AudioTrackErrorCallback {
-                        override fun onWebRtcAudioTrackInitError(errorMessage: String?) = trackError(errorMessage)
+    fun onDataMessage(text: String)
 
-                        override fun onWebRtcAudioTrackStartError(
-                            errorCode: JavaAudioDeviceModule.AudioTrackStartErrorCode?,
-                            errorMessage: String?,
-                        ) = trackError(errorMessage)
+    fun onDataClosed()
 
-                        override fun onWebRtcAudioTrackError(errorMessage: String?) = trackError(errorMessage)
-                    }
-                )
-        if (role == Role.BABY) builder.setAudioRecordDataCallback(recordCallback)
-        adm = builder.createAudioDeviceModule()
-        // The baby never plays audio (ADR-018 §3): belt and braces on top of the sendonly SDP.
-        if (role == Role.BABY) adm.setSpeakerMute(true)
-        factory = PeerConnectionFactory.builder().setAudioDeviceModule(adm).createPeerConnectionFactory()
-        if (role == Role.BABY) {
-            val src = factory.createAudioSource(MediaConstraints())
-            source = src
-            track = factory.createAudioTrack("gs-audio", src).apply { setEnabled(false) }
-        }
-    }
+    /** Lowercase `RTCPeerConnectionState`: new, connecting, connected, disconnected, failed, closed. */
+    fun onConnectionState(state: String)
 
-    override fun createAttempt(offerer: Boolean, listener: AttemptListener): AttemptPort =
-        AttemptPeer(factory, rtcConfig(), track, offerer, listener, ::onRemoteAudio)
-
-    override fun setMicEnabled(enabled: Boolean) {
-        track?.setEnabled(enabled)
-    }
-
-    override fun startProbeTone(durationMs: Long) = probe.request(durationMs)
-
-    override fun setPlaybackMuted(muted: Boolean) {
-        speakerMuted = muted
-        if (role == Role.PARENT) adm.setSpeakerMute(muted)
-    }
-
-    override fun setPlaybackGainPct(pct: Int) {
-        gain = pct.coerceIn(0, 200) / 100.0
-        remoteTracks.forEach { it.setVolume(gain) }
-    }
-
-    @Suppress("DEPRECATION")
-    override fun setSpeakerOnly(speakerOnly: Boolean) {
-        // Best effort: alarm-stream playback already uses the speaker on most phones.
-        appContext.getSystemService(AudioManager::class.java)?.isSpeakerphoneOn = speakerOnly
-    }
-
-    override fun drainMicRms(): Double? = micWindow.drain()
-
-    override fun drainRemoteRms(): Double? = remoteWindow.drain()
-
-    override fun release() {
-        runCatching {
-            remoteTracks.forEach { it.removeSink(remoteSink) }
-            remoteTracks.clear()
-            track?.dispose()
-            source?.dispose()
-            factory.dispose()
-            adm.release()
-        }
-    }
-
-    private fun onRemoteAudio(t: AudioTrack) {
-        t.setVolume(gain)
-        t.addSink(remoteSink)
-        remoteTracks += t
-    }
-
-    private fun trackError(message: String?) {
-        PocLog.event("audio_track_error", "message" to message?.replace(' ', '_'))
-    }
-
-    private fun rtcConfig(): PeerConnection.RTCConfiguration =
-        PeerConnection.RTCConfiguration(iceServers()).apply {
-            sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
-            continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY
-            iceTransportsType =
-                if (ice.relayOnly) PeerConnection.IceTransportsType.RELAY else PeerConnection.IceTransportsType.ALL
-        }
-
-    private fun iceServers(): List<PeerConnection.IceServer> = buildList {
-        ice.stunUrls.forEach { add(PeerConnection.IceServer.builder(it).createIceServer()) }
-        ice.turnUrl?.let { url ->
-            add(
-                PeerConnection.IceServer.builder(url)
-                    .setUsername(ice.turnUser ?: "")
-                    .setPassword(ice.turnCredential ?: "")
-                    .createIceServer()
-            )
-        }
-    }
-
-    private companion object {
-        @Volatile private var initialized = false
-
-        fun ensureInitialized(context: Context) {
-            if (initialized) return
-            synchronized(this) {
-                if (initialized) return
-                PeerConnectionFactory.initialize(
-                    PeerConnectionFactory.InitializationOptions.builder(context).createInitializationOptions()
-                )
-                initialized = true
-            }
-        }
-    }
+    /** SHA-256 fingerprint of the remote DTLS certificate (colon-separated hex), once connected. */
+    fun onDtlsFingerprint(fingerprint: String)
 }
+
+data class InboundAudioStats(val packetsReceived: Long, val packetsLost: Long)
+
+/** One RTCPeerConnection + DataChannel lifetime (an "attempt" of the core). */
+interface AttemptPort {
+    fun createOffer()
+
+    fun setRemoteDescription(type: String, sdp: String)
+
+    /** Runs after the remote description is applied, even if requested earlier. */
+    fun createAnswer()
+
+    fun addRemoteIce(candidate: IceCandidate)
+
+    fun sendData(text: String): Boolean
+
+    /** Parent: inbound audio counters; null when no audio receiver exists yet. */
+    fun inboundAudioStats(callback: (InboundAudioStats?) -> Unit)
+
+    fun close()
+}
+
+/** Microphone/playout side of a link: one factory and audio device module per monitoring run. */
+interface MediaEngine {
+    fun createAttempt(offerer: Boolean, listener: AttemptListener): AttemptPort
+
+    /** Baby: gate the outgoing track (the core opens it for noise, listen and probe). */
+    fun setMicEnabled(enabled: Boolean)
+
+    /** Baby: mix a synthetic test tone into the outgoing stream; never played locally. */
+    fun startProbeTone(durationMs: Long)
+
+    /** Parent: playout muted ("Stop sound") without stopping decode or the meter. */
+    fun setPlaybackMuted(muted: Boolean)
+
+    /** Parent: alert gain in percent (25..150). */
+    fun setPlaybackGainPct(pct: Int)
+
+    fun setSpeakerOnly(speakerOnly: Boolean)
+
+    /** RMS of the microphone since the previous call; null when no audio was recorded (baby). */
+    fun drainMicRms(): Double?
+
+    /** RMS of the received baby audio since the previous call; null when none (parent). */
+    fun drainRemoteRms(): Double?
+
+    fun release()
+}
+
+data class IceConfig(
+    val stunUrls: List<String>,
+    val turnUrl: String? = null,
+    val turnUser: String? = null,
+    val turnCredential: String? = null,
+    /** Debug gate only: the emulators reach each other through TURN. */
+    val relayOnly: Boolean = false,
+)

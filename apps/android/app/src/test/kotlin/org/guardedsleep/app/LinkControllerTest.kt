@@ -13,7 +13,7 @@ import org.guardedsleep.app.link.NetworkWatcher
 import org.guardedsleep.app.media.AttemptListener
 import org.guardedsleep.app.media.AttemptPort
 import org.guardedsleep.app.media.InboundAudioStats
-import org.guardedsleep.app.media.MediaPort
+import org.guardedsleep.app.media.MediaEngine
 import org.guardedsleep.app.pairing.PairingStore
 import org.guardedsleep.app.signaling.SignalingFactory
 import org.guardedsleep.app.signaling.SignalingListener
@@ -174,7 +174,7 @@ private class FakeAttempt(val net: FakeNet, val listener: AttemptListener, val b
     }
 }
 
-private class FakeMedia(val net: FakeNet, val baby: Boolean) : MediaPort {
+private class FakeMedia(val net: FakeNet, val baby: Boolean) : MediaEngine {
     val mic = CopyOnWriteArrayList<Boolean>()
     override fun createAttempt(offerer: Boolean, listener: AttemptListener): AttemptPort {
         net.attemptsCreated.incrementAndGet()
