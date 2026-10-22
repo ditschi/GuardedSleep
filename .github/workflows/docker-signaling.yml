@@ -1,7 +1,7 @@
-# Signaling-server container image — see ADR-008.
+# Signaling-server container image (distroless Rust image, `distribution` spec) — see ADR-008.
 #
 # Triggers:
-#   - push to main, paths under signaling/protocol → publishes :dev + :sha-<short>
+#   - push to main, paths under crates/, the Rust toolchain pin and docker/signaling-server → publishes :dev + :sha-<short>
 #   - push of a manual tag `signaling-server-v*` → publishes :latest, :vX.Y.Z, :vX.Y (+ :vX post-1.0)
 #     (releases are manual tags during the alpha; Release Please returns at beta, ADR-020 §10)
 #   - pull_request → build-check job only (read-only token, no registry login, no push), validates the
@@ -19,23 +19,17 @@ on:
     tags:
       - "signaling-server-v*"
     paths:
+      - "crates/**"
+      - "rust-toolchain.toml"
+      - "Cargo.*"
       - "docker/signaling-server/**"
-      - "apps/signaling-server/**"
-      - "packages/protocol/**"
-      - "pnpm-lock.yaml"
-      - "package.json"
-      - "pnpm-workspace.yaml"
-      - "mise.toml"
       - ".github/workflows/docker-signaling.yml"
   pull_request:
     paths:
+      - "crates/**"
+      - "rust-toolchain.toml"
+      - "Cargo.*"
       - "docker/signaling-server/**"
-      - "apps/signaling-server/**"
-      - "packages/protocol/**"
-      - "pnpm-lock.yaml"
-      - "package.json"
-      - "pnpm-workspace.yaml"
-      - "mise.toml"
       - ".github/workflows/docker-signaling.yml"
   workflow_dispatch:
 
@@ -130,7 +124,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ steps.owner.outputs.value }}/${{ env.IMAGE_NAME }}
           labels: |
             org.opencontainers.image.title=GuardedSleep Signaling Server
-            org.opencontainers.image.description=WebSocket signaling relay for GuardedSleep – Privacy Baby Monitor.
+            org.opencontainers.image.description=Rust WebSocket signaling relay with built-in STUN for GuardedSleep – Privacy Baby Monitor.
             org.opencontainers.image.vendor=GuardedSleep
             org.opencontainers.image.licenses=AGPL-3.0-or-later
 
