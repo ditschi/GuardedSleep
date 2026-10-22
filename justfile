@@ -88,6 +88,7 @@ lint-code:
 _lint-code: _js-deps _js-gen check-ios check-determinism
     scripts/cargo.sh fmt --all -- --check
     taplo fmt --check
+    scripts/lib/ktfmt.sh --dry-run --set-exit-if-changed
     scripts/cspell-i18n.sh
     scripts/cargo.sh clippy --workspace --all-targets --all-features -- -D warnings
     just deny

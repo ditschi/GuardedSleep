@@ -17,5 +17,5 @@ Refined 2026-10-22 from the wave-2 plan (group 2, after group 1). Repository con
 
 ## 3. Close
 
-- [ ] 3.1 Update scripts, CI recipes and docs that name `:core`; `docs/ci-gates.md`
+- [x] 3.1 Update scripts, CI recipes and docs that name `:core`; `docs/ci-gates.md`
 - [ ] 3.2 `just lint`, `just test`, `just verify-android` and the emulator gate green
