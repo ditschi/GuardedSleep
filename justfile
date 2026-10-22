@@ -134,7 +134,18 @@ test:
     scripts/lib/slot.sh medium -- just _test
 
 [private]
-_test: _js-deps _js-gen test-rust test-wasm test-web test-android
+_test: _js-deps _js-gen test-rust test-wasm test-web test-android test-tooling
+
+# Unit tests of the repository scripts (delta-test planner and the like).
+test-tooling:
+    node --test scripts/lib/*.test.mjs
+
+# Runs only the tests the changed paths need (committed since the merge base with <base>, uncommitted and
+# untracked files), mapped by .github/path-filters.yml; global or unmapped paths run the full `just test`.
+# The plan itself runs `_js-deps`/`_js-gen` where Vitest or WASM tests need them. `--dry-run` prints the
+# plan only: `node scripts/lib/affected.mjs --dry-run [base]`.
+test-affected base="origin/main":
+    scripts/lib/slot.sh medium -- node scripts/lib/affected.mjs {{ base }}
 
 # Cargo workspace tests; nextest when installed, doctests through cargo test.
 test-rust:
