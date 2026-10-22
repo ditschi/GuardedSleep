@@ -23,9 +23,9 @@ codegen-units = 1
 strip = true
 panic = "abort"
 
-# `deny` (not `forbid`) so the generated UniFFI/wasm glue in guardedsleep-core can opt in with a
-# module-scoped `#[allow(unsafe_code)]` until the wave-2 facade crates; `forbid` cannot be lifted.
-# Crates without FFI glue add a crate-level `#![forbid(unsafe_code)]`. New crates inherit `deny`.
+# `deny` (not `forbid`) so the facade crates guardedsleep-ffi and guardedsleep-wasm can opt in with a
+# crate-level `#![allow(unsafe_code)]` for generated UniFFI/wasm-bindgen glue. Every other crate adds
+# `#![forbid(unsafe_code)]`; guardedsleep-core must never opt in. New crates inherit `deny`.
 # Docs: https://doc.rust-lang.org/cargo/reference/workspaces.html#the-lints-table
 [workspace.lints.rust]
 unsafe_code = "deny"
