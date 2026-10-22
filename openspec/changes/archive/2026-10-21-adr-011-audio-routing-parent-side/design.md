@@ -6,7 +6,7 @@
 
 ## Context
 
-[ADR-005](../../../../docs/decisions/ADR-005-parent-alerts-product-naming-and-distribution.md) locks the **alert content** to child audio (no synthetic siren). It does not fully resolve **where** that audio plays on the parent device.
+[ADR-005](../2026-04-15-adr-005-parent-alerts-product-naming-and-distribution/design.md) locks the **alert content** to child audio (no synthetic siren). It does not fully resolve **where** that audio plays on the parent device.
 
 The notifications feature doc previously left open: force speaker even when headphones are connected ("likely yes for safety"). That default is **wrong for discreet social use** (e.g. wedding: in-ear monitoring). Night home use often **wants** optional forced speaker so a muted phone still wakes the caregiver -- without forking the whole app into "persona modes" ([ADR-009](../2026-10-21-adr-009-personas-and-failure-model/design.md), [personas.md](../../../../docs/concept/personas.md)).
 

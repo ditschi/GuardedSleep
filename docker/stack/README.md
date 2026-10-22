@@ -2,11 +2,11 @@
 
 Two ways to run the full GuardedSleep stack: **build from source** (this repo) or **pull pre-built images from GHCR** (no clone needed).
 
-| Mode                                 | Compose file                                                                                    | When to use                                                                                                                                                                                 |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A. Build from source** (this repo) | [`compose.yaml`](compose.yaml) (+ optional [`.env.example`](.env.example))                      | Development, customising `VITE_SIGNALING_URL` at build time, testing local code changes.                                                                                                    |
-| **B. Pre-built images (GHCR)**       | [`compose.ghcr.yaml`](compose.ghcr.yaml) (+ [`.env.ghcr.example`](.env.ghcr.example))           | Deployments / self-hosting. **No repo clone required** — download just the two files. Tag strategy: see [ADR-008](../../docs/decisions/ADR-008-container-image-build-and-distribution.md).  |
-| **C. Pre-built images + Traefik**    | [`compose.traefik.yaml`](compose.traefik.yaml) (+ [`traefik.env.example`](traefik.env.example)) | Behind an existing Traefik on 443. One domain: app at `/`, signaling at `/signaling`. Configure via `.env` only — see [signaling-traefik.md](../../docs/contributing/signaling-traefik.md). |
+| Mode                                 | Compose file                                                                                    | When to use                                                                                                                                                                                                            |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A. Build from source** (this repo) | [`compose.yaml`](compose.yaml) (+ optional [`.env.example`](.env.example))                      | Development, customising `VITE_SIGNALING_URL` at build time, testing local code changes.                                                                                                                               |
+| **B. Pre-built images (GHCR)**       | [`compose.ghcr.yaml`](compose.ghcr.yaml) (+ [`.env.ghcr.example`](.env.ghcr.example))           | Deployments / self-hosting. **No repo clone required** — download just the two files. Tag strategy: see [ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md). |
+| **C. Pre-built images + Traefik**    | [`compose.traefik.yaml`](compose.traefik.yaml) (+ [`traefik.env.example`](traefik.env.example)) | Behind an existing Traefik on 443. One domain: app at `/`, signaling at `/signaling`. Configure via `.env` only — see [signaling-traefik.md](../../docs/contributing/signaling-traefik.md).                            |
 
 ## Requirements
 
@@ -62,7 +62,7 @@ For end-user self-hosting. Works without cloning this repository — just two fi
 
 Open `http://<host>:${WEB_PORT}/` (default `:8080`) or `https://<host>:${WEB_HTTPS_PORT}/` (default `:8443`, self-signed warning expected). The PWA's signaling URL can be set in-app (Settings) — the published `:latest` image is built without a baked-in `VITE_SIGNALING_URL`.
 
-### Tag strategy (per [ADR-008](../../docs/decisions/ADR-008-container-image-build-and-distribution.md))
+### Tag strategy (per [ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md))
 
 | Tag                    | Pushed when                                      | Use for                           |
 | ---------------------- | ------------------------------------------------ | --------------------------------- |
@@ -73,7 +73,7 @@ Open `http://<host>:${WEB_PORT}/` (default `:8080`) or `https://<host>:${WEB_HTT
 | `:dev` (alias `:edge`) | Every push to `main`                             | Testers / bleeding edge           |
 | `:sha-<short>`         | Every push                                       | Debug / exact commit reproduction |
 
-**Important:** until GuardedSleep cuts its first release, `:latest` does **not** exist. Use `SIGNALING_TAG=dev` and `WEB_TAG=dev` during the pre-release / PoC phase. ([ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md) defines the PoC gate; [ADR-006](../../docs/decisions/ADR-006-release-and-changelog-automation.md) governs when tags are created.)
+**Important:** until GuardedSleep cuts its first release, `:latest` does **not** exist. Use `SIGNALING_TAG=dev` and `WEB_TAG=dev` during the pre-release / PoC phase. ([ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md) defines the PoC gate; [ADR-006](../../openspec/changes/archive/2026-05-13-adr-006-release-and-changelog-automation/design.md) governs when tags are created.)
 
 - **PWA / UI (HTTP):** `http://127.0.0.1:8080/` (or your `WEB_PORT`)
 - **PWA / UI (HTTPS, self-signed):** `https://127.0.0.1:8443/` (or your `WEB_HTTPS_PORT`; browser warning is normal)
@@ -114,4 +114,4 @@ If you **cannot load the UI at all** from the phone, check: same Wi‑Fi, use **
 | [traefik.env.example](traefik.env.example)                                                       | Mode C defaults — domain, Traefik network/entrypoint/resolver        |
 | [compose.web-and-signaling.traefik.example.yaml](compose.web-and-signaling.traefik.example.yaml) | Deprecated — superseded by `compose.traefik.yaml`                    |
 
-More detail: [docs/contributing/mobile-web-docker.md](../../docs/contributing/mobile-web-docker.md). Tag strategy: [ADR-008](../../docs/decisions/ADR-008-container-image-build-and-distribution.md).
+More detail: [docs/contributing/mobile-web-docker.md](../../docs/contributing/mobile-web-docker.md). Tag strategy: [ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md).

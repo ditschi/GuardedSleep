@@ -238,10 +238,10 @@ Tracked in plan file `concept_review_findings_f5631aa5.plan.md`. Execution statu
 
 ## 6. Discarded review threads
 
-| Thread                                                   | Reason                                                                                                                           |
-| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Add acoustic siren on baby unit when connection is lost  | Rejected -- wakes the sleeping child, contradicts the core purpose. User-rejected during CRIT-5 revision.                        |
-| Mandatory cloud push as alarm fallback                   | Rejected -- violates privacy-first principle ([ADR-005](../decisions/ADR-005-parent-alerts-product-naming-and-distribution.md)). |
-| Require a second device as hardware fallback             | Rejected -- excludes single-parent setups; mismatches Persona A.                                                                 |
-| Whitelist of approved baby-unit devices                  | Rejected for ADR-010 -- too restrictive; replaced by API minimum + Self-Test.                                                    |
-| Force speaker output for alerts regardless of headphones | Rejected for ADR-009 -- Persona A failure mode; replaced by persona-aware default.                                               |
+| Thread                                                   | Reason                                                                                                                                                               |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add acoustic siren on baby unit when connection is lost  | Rejected -- wakes the sleeping child, contradicts the core purpose. User-rejected during CRIT-5 revision.                                                            |
+| Mandatory cloud push as alarm fallback                   | Rejected -- violates privacy-first principle ([ADR-005](../../openspec/changes/archive/2026-04-15-adr-005-parent-alerts-product-naming-and-distribution/design.md)). |
+| Require a second device as hardware fallback             | Rejected -- excludes single-parent setups; mismatches Persona A.                                                                                                     |
+| Whitelist of approved baby-unit devices                  | Rejected for ADR-010 -- too restrictive; replaced by API minimum + Self-Test.                                                                                        |
+| Force speaker output for alerts regardless of headphones | Rejected for ADR-009 -- Persona A failure mode; replaced by persona-aware default.                                                                                   |

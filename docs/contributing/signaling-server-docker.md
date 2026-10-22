@@ -91,7 +91,7 @@ docker run --rm -p 8787:8787 guardedsleep-signaling:local
 
 The workflow [`.github/workflows/docker-signaling.yml`](../../.github/workflows/docker-signaling.yml) publishes `ghcr.io/<owner-lowercase>/guardedsleep-signaling` for the **`linux/amd64`** and **`linux/arm64`** platforms.
 
-### Tag strategy ([ADR-008](../decisions/ADR-008-container-image-build-and-distribution.md))
+### Tag strategy ([ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md))
 
 | Tag                    | When                                                                                              | Intended consumer                                          |
 | ---------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |

@@ -3,13 +3,13 @@
 - Status: DECIDED
 - Date: 2026-05-13
 - Deciders: User decision after option analysis (Technical Architect + Product Owner + Critical Reviewer perspectives synthesized in the analysis)
-- Supersedes: nothing; supplements [docs/contributing/release-and-changelog.md](../contributing/release-and-changelog.md)
+- Supersedes: nothing; supplements [docs/contributing/release-and-changelog.md](../../../../docs/contributing/release-and-changelog.md)
 
-> **Partially superseded (2026-10-20):** the release component layout (`protocol`, `signaling-server`, `mobile` as npm packages with the `node` release type and `node-workspace` plugin) and the Husky + commitlint commit check → [ADR-020](ADR-020-toolchain-and-development-setup.md) §8 and §10: alpha uses a manual `android-v*` tag; at beta Release Please runs with components `app`, `server`, `core`; Conventional Commits are checked on the PR title only, in CI. `packages/protocol` and `apps/signaling-server` are deleted.
+> **Partially superseded (2026-10-20):** the release component layout (`protocol`, `signaling-server`, `mobile` as npm packages with the `node` release type and `node-workspace` plugin) and the Husky + commitlint commit check → [ADR-020](../../../../docs/decisions/ADR-020-toolchain-and-development-setup.md) §8 and §10: alpha uses a manual `android-v*` tag; at beta Release Please runs with components `app`, `server`, `core`; Conventional Commits are checked on the PR title only, in CI. `packages/protocol` and `apps/signaling-server` are deleted.
 
 ## Context
 
-The repository already enforces **Conventional Commits** (via Husky + commitlint (superseded, see ADR-020 §8), and via PR-title check in CI for squash merges) and maintains a manual **Keep a Changelog**–style [`CHANGELOG.md`](../../CHANGELOG.md). We need a deterministic, low-friction path from those signals to:
+The repository already enforces **Conventional Commits** (via Husky + commitlint (superseded, see ADR-020 §8), and via PR-title check in CI for squash merges) and maintains a manual **Keep a Changelog**–style [`CHANGELOG.md`](../../../../CHANGELOG.md). We need a deterministic, low-friction path from those signals to:
 
 1. A **SemVer version** per workspace package.
 2. A **changelog** with explicit sections (Added / Fixed / Changed / Removed / Security) that maps from commit types.
@@ -74,7 +74,7 @@ Restrict automation to the library; apps stay manual.
 
 ## Decision
 
-**Adopt Option A — Release Please** in **manifest (monorepo) mode**, configured for the three workspace packages with **independent versioning** and the **`node-workspace` plugin** enabled to propagate version bumps across the workspace dependency graph. The **mobile app's version is treated as the user-facing product version**; `protocol` and `signaling-server` carry their own SemVer streams. **Project milestones** (MVP, Phase 2, …) receive **manual meta-tags** (e.g. `mvp-v0.1.0`) that pin the exact package triplet — these are documentation aids, not Release Please artefacts. Triggered both **automatically on push to `main`** and via **`workflow_dispatch`** (manual button on GitHub Actions UI). Initial activation deferred until the **PoC gate** ([ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md)) passes; the wiring is committed in this change so activation is a no-op flag flip.
+**Adopt Option A — Release Please** in **manifest (monorepo) mode**, configured for the three workspace packages with **independent versioning** and the **`node-workspace` plugin** enabled to propagate version bumps across the workspace dependency graph. The **mobile app's version is treated as the user-facing product version**; `protocol` and `signaling-server` carry their own SemVer streams. **Project milestones** (MVP, Phase 2, …) receive **manual meta-tags** (e.g. `mvp-v0.1.0`) that pin the exact package triplet — these are documentation aids, not Release Please artefacts. Triggered both **automatically on push to `main`** and via **`workflow_dispatch`** (manual button on GitHub Actions UI). Initial activation deferred until the **PoC gate** ([ADR-001](../2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md)) passes; the wiring is committed in this change so activation is a no-op flag flip.
 
 ### Concrete configuration choices
 
@@ -97,7 +97,7 @@ Restrict automation to the library; apps stay manual.
 | Hidden by default                 | `docs`, `chore`, `style`, `refactor`, `test`, `build`, `ci`, `deps`                                                                                                                                                                                                                                                                     |
 | Breaking change marker            | `feat!:` or `BREAKING CHANGE:` footer → `⚠ BREAKING CHANGES` block at top of release notes                                                                                                                                                                                                                                              |
 | Pre-1.0 SemVer behavior           | **`feat!:` bumps minor** (project accepts this until a deliberate `release-as: 1.0.0` is requested)                                                                                                                                                                                                                                     |
-| Compatibility matrix              | Maintained as a table in [`docs/contributing/release-and-changelog.md`](../contributing/release-and-changelog.md). Each meta-tag's annotated message also lists the exact package triplet.                                                                                                                                              |
+| Compatibility matrix              | Maintained as a table in [`docs/contributing/release-and-changelog.md`](../../../../docs/contributing/release-and-changelog.md). Each meta-tag's annotated message also lists the exact package triplet.                                                                                                                                |
 | Mobile `versionName` update       | Via `extra-files` rule in Release Please config targeting `apps/mobile/android/app/build.gradle`                                                                                                                                                                                                                                        |
 | Mobile `versionCode` update       | **Manual** for now (Phase 2 follow-up: small script invoked from the release PR)                                                                                                                                                                                                                                                        |
 | Publishing                        | **None on tag** in MVP — no `npm publish`, no Docker push, no APK upload. Tag = "code is release-ready".                                                                                                                                                                                                                                |
@@ -127,9 +127,9 @@ Restrict automation to the library; apps stay manual.
 
 ### Risks
 
-- **Risk:** Release Please bootstrap creates a huge initial PR scanning all historical commits. **Mitigation:** Maintainer sets `bootstrap-sha` to the activation commit; documented in [release-and-changelog.md](../contributing/release-and-changelog.md).
+- **Risk:** Release Please bootstrap creates a huge initial PR scanning all historical commits. **Mitigation:** Maintainer sets `bootstrap-sha` to the activation commit; documented in [release-and-changelog.md](../../../../docs/contributing/release-and-changelog.md).
 - **Risk:** Mobile `versionCode` drifts from `versionName` (manual updates). **Mitigation:** Phase 2 follow-up to script this; in MVP, the release PR description must list the `versionCode` increment as a checklist item.
-- **Risk:** Pre-1.0 behavior surprises a contributor who expected `feat!:` → major. **Mitigation:** Explicit note in [release-and-changelog.md](../contributing/release-and-changelog.md) and the PR template.
+- **Risk:** Pre-1.0 behavior surprises a contributor who expected `feat!:` → major. **Mitigation:** Explicit note in [release-and-changelog.md](../../../../docs/contributing/release-and-changelog.md) and the PR template.
 
 ## Discarded alternatives
 

@@ -116,6 +116,13 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 - `PLANNED` (wave 3) Check in `just lint` that every key of the core's `message_keys()` exists in `locales/en.json` (today a unit test only checks the list itself).
 - `IDEA` A "translation feedback" link next to machine-translated copy.
 
+### distribution
+
+- `PLANNED` (T1) Release Please with the components `app` (one product version for Android and web), `server` and `core`; fastlane metadata for Play and F-Droid clients; CycloneDX SBOMs, `actions/attest` provenance and cosign-signed images; a build-twice reproducibility check (apksigcopier, diffoscope) (ADR-020 §10).
+- `PLANNED` (beta) IzzyOnDroid (developer-signed, reproducibility-verified) (ADR-021 §3).
+- `DEFERRED` F-Droid main repository until a from-source build of libwebrtc and JNA is sized; public wording says "via IzzyOnDroid" (ADR-021 §3).
+- `PLANNED` (owner) Play organisation account with D-U-N-S if easy, otherwise a 14-day closed test with at least 15 testers as the beta; register developer verification now (ADR-021 §3).
+
 ### dev-toolchain
 
 - `IDEA` Kani proof for "alarm within T after link loss".

@@ -42,7 +42,7 @@ For devices on the same network or ad-hoc connections:
 
 > STATUS: DOCUMENTED -- complementary to the embedded-listener path, **not** a substitute. See [ADR-012](../decisions/ADR-012-connection-model-offline-lan-and-handoff.md) Option D.
 
-Users with a NAS / router that can run Docker may run the `ghcr.io/<owner>/guardedsleep-signaling` image ([ADR-008](../decisions/ADR-008-container-image-build-and-distribution.md)) on the LAN and add its URL (e.g. `wss://nas.local:8443/`) to **Saved Connections → Fallback signaling URLs** (Advanced). The path-selector will try it after the primary URL fails. This was the only offline-LAN option for PWA/iOS targets (superseded for PCs by the local PC mode, see [ADR-021](../decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §1; it remains a power-user option and the same Rust server binary serves it). Browsers over HTTPS cannot reach a phone listener.
+Users with a NAS / router that can run Docker may run the `ghcr.io/<owner>/guardedsleep-signaling` image ([ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md)) on the LAN and add its URL (e.g. `wss://nas.local:8443/`) to **Saved Connections → Fallback signaling URLs** (Advanced). The path-selector will try it after the primary URL fails. This was the only offline-LAN option for PWA/iOS targets (superseded for PCs by the local PC mode, see [ADR-021](../decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §1; it remains a power-user option and the same Rust server binary serves it). Browsers over HTTPS cannot reach a phone listener.
 
 ### Out-of-Home / Event connectivity (hotels, venues)
 

@@ -29,7 +29,7 @@ One device acts as the **Baby Unit** (placed near the child), another as the **P
 - [Architecture Decisions](docs/decisions/README.md)
 - [Development Roles](docs/roles/README.md)
 - [Contributing](CONTRIBUTING.md) — setup, hooks, CI, changelog expectations
-- **Self-hosted stack (Docker):** [docker/stack/README.md](docker/stack/README.md) — local build (`compose.yaml`) or pull from GHCR (`compose.ghcr.yaml`); image tags and CI: [ADR-008](docs/decisions/ADR-008-container-image-build-and-distribution.md)
+- **Self-hosted stack (Docker):** [docker/stack/README.md](docker/stack/README.md) — local build (`compose.yaml`) or pull from GHCR (`compose.ghcr.yaml`); image tags and CI: [ADR-008](openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md)
 
 ## Contributing
 

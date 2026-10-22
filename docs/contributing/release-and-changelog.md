@@ -2,7 +2,7 @@
 
 > **Superseded by [ADR-020](../decisions/ADR-020-toolchain-and-development-setup.md) §8 and §10:** the Release Please node setup (components `protocol`, `signaling-server`, `mobile`), the Husky/commitlint commit check and the `release:lint` flow. Alpha uses manual `android-v*` tags; Release Please returns at beta with components `app`, `server`, `core`; Conventional Commits are checked on the PR title only. Replaced in toolchain realignment wave 1 (hooks, PR-title lint) and T1 (Release Please); this procedure stays valid until then.
 
-> **Tooling decision:** [ADR-006](../decisions/ADR-006-release-and-changelog-automation.md) — Release Please in monorepo manifest mode.
+> **Tooling decision:** [ADR-006](../../openspec/changes/archive/2026-05-13-adr-006-release-and-changelog-automation/design.md) — Release Please in monorepo manifest mode.
 >
 > **External references** (read once, then come back here):
 >
@@ -245,7 +245,7 @@ The Play Store requires a **monotonically increasing integer** `versionCode` ind
 - [ ] Bump `versionCode` in apps/mobile/android/app/build.gradle to <next integer>
 ```
 
-The maintainer increments it manually before merging the release PR. A small scripted updater is tracked as a Phase 2 follow-up in [ADR-006](../decisions/ADR-006-release-and-changelog-automation.md).
+The maintainer increments it manually before merging the release PR. A small scripted updater is tracked as a Phase 2 follow-up in [ADR-006](../../openspec/changes/archive/2026-05-13-adr-006-release-and-changelog-automation/design.md).
 
 ## 13. What `CHANGELOG.md` looks like over time
 
@@ -283,7 +283,7 @@ Each package's section is prefixed with its component name. The `## [Unreleased]
 
 ## 15. Discarded alternatives
 
-See [ADR-006](../decisions/ADR-006-release-and-changelog-automation.md) for the full options analysis. Briefly: Changesets duplicates effort already done by Conventional Commits; semantic-release does not fit app-store cadence; manual-only is the status quo we accept until first artifact ships. Linked versions across all packages are rejected (would force needless lockstep bumps); a single umbrella version is rejected in favour of "mobile = product version" plus manual milestone meta-tags.
+See [ADR-006](../../openspec/changes/archive/2026-05-13-adr-006-release-and-changelog-automation/design.md) for the full options analysis. Briefly: Changesets duplicates effort already done by Conventional Commits; semantic-release does not fit app-store cadence; manual-only is the status quo we accept until first artifact ships. Linked versions across all packages are rejected (would force needless lockstep bumps); a single umbrella version is rejected in favour of "mobile = product version" plus manual milestone meta-tags.
 
 ## 16. Versioning posture — "mobile is the product version"
 
@@ -394,4 +394,4 @@ This table is the human-readable answer to "which versions go together?" Update 
 - One row per **milestone meta-tag**, not per Release Please cut. Intermediate per-package bumps live in `CHANGELOG.md` only.
 - The `Notes` column states the headline change relative to the previous row.
 - When `protocol` introduces a breaking change (`feat!:` in `packages/protocol`), add a row even if no milestone meta-tag exists, with the meta-tag column set to `—` and Notes describing the contract change.
-- Once Phase 2 follow-up "Automated compatibility-matrix updater" lands (see [ADR-006](../decisions/ADR-006-release-and-changelog-automation.md) discarded alternatives), this table becomes auto-generated.
+- Once Phase 2 follow-up "Automated compatibility-matrix updater" lands (see [ADR-006](../../openspec/changes/archive/2026-05-13-adr-006-release-and-changelog-automation/design.md) discarded alternatives), this table becomes auto-generated.

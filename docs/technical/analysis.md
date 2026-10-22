@@ -6,15 +6,15 @@ This document records the technical analysis that informed the architecture. **A
 
 ## Analysis Topics
 
-| #   | Topic                            | Status                   | ADR                                                                                                          |
-| --- | -------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| 1   | App Platform                     | DECIDED                  | [ADR-002](../decisions/ADR-002-client-platform-and-repository-structure.md)                                  |
-| 2   | Communication Architecture       | DECIDED                  | [ADR-003](../decisions/ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md)                              |
-| 3   | Server Requirements              | DECIDED                  | [ADR-003](../decisions/ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md)                              |
-| 4   | Encryption Approach              | DECIDED                  | [ADR-004](../../openspec/changes/archive/2026-04-15-adr-004-encryption-transport-and-key-storage/design.md)  |
-| 5   | Audio Processing                 | DECIDED (features + PoC) | [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md) |
-| 6   | Deployment Model                 | DECIDED                  | [ADR-005](../decisions/ADR-005-parent-alerts-product-naming-and-distribution.md)                             |
-| --  | MVP scope, PoC gate, in-app lock | DECIDED                  | [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md) |
+| #   | Topic                            | Status                   | ADR                                                                                                                  |
+| --- | -------------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| 1   | App Platform                     | DECIDED                  | [ADR-002](../decisions/ADR-002-client-platform-and-repository-structure.md)                                          |
+| 2   | Communication Architecture       | DECIDED                  | [ADR-003](../decisions/ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md)                                      |
+| 3   | Server Requirements              | DECIDED                  | [ADR-003](../decisions/ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md)                                      |
+| 4   | Encryption Approach              | DECIDED                  | [ADR-004](../../openspec/changes/archive/2026-04-15-adr-004-encryption-transport-and-key-storage/design.md)          |
+| 5   | Audio Processing                 | DECIDED (features + PoC) | [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md)         |
+| 6   | Deployment Model                 | DECIDED                  | [ADR-005](../../openspec/changes/archive/2026-04-15-adr-005-parent-alerts-product-naming-and-distribution/design.md) |
+| --  | MVP scope, PoC gate, in-app lock | DECIDED                  | [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md)         |
 
 ---
 
@@ -383,7 +383,7 @@ Microphone → Audio Capture (Web Audio API / native plugin)
 
 ## 6. Deployment Model
 
-> STATUS: DECIDED -- See [ADR-005](../decisions/ADR-005-parent-alerts-product-naming-and-distribution.md) (naming, stores); options below remain as reference.
+> STATUS: DECIDED -- See [ADR-005](../../openspec/changes/archive/2026-04-15-adr-005-parent-alerts-product-naming-and-distribution/design.md) (naming, stores); options below remain as reference.
 
 **Question**: How do users set up and access the system?
 
@@ -635,7 +635,7 @@ A PWA (Progressive Web App) is distributed as a website. Users access it via URL
 
 ## 10. App Store Distribution & Monetization
 
-> STATUS: DECIDED -- See [ADR-005](../decisions/ADR-005-parent-alerts-product-naming-and-distribution.md); details below.
+> STATUS: DECIDED -- See [ADR-005](../../openspec/changes/archive/2026-04-15-adr-005-parent-alerts-product-naming-and-distribution/design.md); details below.
 
 ### Capacitor = Real Native Apps
 

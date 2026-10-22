@@ -25,7 +25,7 @@ Operational lifecycle text belongs here; [privacy-policy.md](privacy-policy.md) 
 
 ## Discarded alternatives
 
-| Approach                                  | Reason                                                                                                                                                       |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Mandatory cloud account for continuity    | Contradicts privacy-first positioning.                                                                                                                       |
-| Silent auto-updates without release notes | Unacceptable for security-sensitive users; Release Please + changelog already decided ([ADR-006](../decisions/ADR-006-release-and-changelog-automation.md)). |
+| Approach                                  | Reason                                                                                                                                                                                           |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Mandatory cloud account for continuity    | Contradicts privacy-first positioning.                                                                                                                                                           |
+| Silent auto-updates without release notes | Unacceptable for security-sensitive users; Release Please + changelog already decided ([ADR-006](../../openspec/changes/archive/2026-05-13-adr-006-release-and-changelog-automation/design.md)). |

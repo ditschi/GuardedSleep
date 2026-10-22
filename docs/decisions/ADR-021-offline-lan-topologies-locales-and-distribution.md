@@ -7,10 +7,10 @@
   - [ADR-012](ADR-012-connection-model-offline-lan-and-handoff.md): the platform matrix row "no internet, same LAN" for web clients, and the Capacitor implementation of the embedded listener.
   - The owner decision of 2026-10-19 that limited i18n to en, de, fr, es (AGENTS.md §9).
   - [ADR-018](ADR-018-alpha-milestone-scope-and-trust-features.md): the cleartext, language-fallback and offline-LAN deferral statements (partly, marked inline there).
-  - The "F-Droid" store wording in [vision.md](../concept/vision.md) and [ADR-005](ADR-005-parent-alerts-product-naming-and-distribution.md).
+  - The "F-Droid" store wording in [vision.md](../concept/vision.md) and [ADR-005](../../openspec/changes/archive/2026-04-15-adr-005-parent-alerts-product-naming-and-distribution/design.md).
 - Related: [ADR-020](ADR-020-toolchain-and-development-setup.md), [ADR-003](ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md), [ADR-004](../../openspec/changes/archive/2026-04-15-adr-004-encryption-transport-and-key-storage/design.md)
 
-> **Migrated to OpenSpec (2026-10-22):** §2 is decided but only partly built: the four shipped locales are normative in [`openspec/specs/i18n`](../../openspec/specs/i18n/spec.md), the ~20-locale policy goes into the prepared change `expand-locales`. §1 and §3 stay binding until `add-offline-lan` and `distribution` are done.
+> **Migrated to OpenSpec (2026-10-22):** §2 is decided but only partly built: the four shipped locales are normative in [`openspec/specs/i18n`](../../openspec/specs/i18n/spec.md), the ~20-locale policy goes into the prepared change `expand-locales`. §3 is normative in [`openspec/specs/distribution`](../../openspec/specs/distribution/spec.md) for what is built; the Android channels go into the prepared change `add-android-release`. §1 stays binding until `add-offline-lan` is prepared.
 
 ## Context
 

@@ -4,9 +4,9 @@
 - Date: 2026-04-15
 - Deciders: UX + user
 
-> **Partially superseded (2026-10-20):** the Distribution line (F-Droid) → [ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md) §3: Play and GitHub APK at alpha, IzzyOnDroid at beta, F-Droid main repository `DEFERRED`.
+> **Partially superseded (2026-10-20):** the Distribution line (F-Droid) → [ADR-021](../../../../docs/decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §3: Play and GitHub APK at alpha, IzzyOnDroid at beta, F-Droid main repository `DEFERRED`.
 
-> **Migrated to OpenSpec (2026-10-22):** "Noise alert behavior" and "Connection-loss alerts" are normative in [`openspec/specs/parent-alerts`](../../openspec/specs/parent-alerts/spec.md) and `link-supervision`. Naming, store ASO and distribution stay binding until `distribution` is migrated.
+> **Migrated to OpenSpec (2026-10-22):** "Noise alert behavior" and "Connection-loss alerts" are normative in [`openspec/specs/parent-alerts`](../../../specs/parent-alerts/spec.md) and `link-supervision`. Naming, store ASO and distribution stay binding until `distribution` is migrated.
 
 ## Context
 

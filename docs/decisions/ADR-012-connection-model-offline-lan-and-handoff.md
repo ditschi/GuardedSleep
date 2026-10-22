@@ -87,7 +87,7 @@ The baby side, in the absence of an embedded local listener (Phase 2), simply us
 - **Advertised via existing NSD** (`_guardedsleep._tcp.`) -- the **port from `WifiLock`-protected listener replaces the placeholder `9`** currently in `GuardedSleepNativePlugin.java`.
 - **Discovery name is OPAQUE:** the service name is changed from `gssleep-<roomId>` to a per-session **random discovery token** (no semantic link to room id; ~64 bits entropy, regenerated per session). The room id is **only** revealed after the WebSocket open and `pair_proof` (PSK + DTLS fingerprint) succeeds. Migration: the old `gssleep-<roomId>` name is dropped; backwards compatibility is **not** required because no users yet rely on offline-LAN (the feature is new). This addresses the Security IMPORTANT finding.
 - **Parent (Android)** resolves the NSD service, builds `ws://<lan-ip>:<port>` (no TLS on LAN listener -- relying on **DTLS-SRTP + `pair_proof`** for E2E security; the LAN signaling is treated as **untrusted relay** per `AGENTS.md` §7).
-- **PWA / iOS scope (non-goal in MVP; superseded for PCs, see ADR-021 §1: local PC mode):** PWA browsers cannot host an incoming socket and Capacitor iOS is not in MVP scope; for those targets, **internet signaling is required**. Users who want fully-offline LAN on those platforms can run the public-image `guardedsleep-signaling` Docker on a NAS/router (see option D in §Options Considered and [ADR-008](ADR-008-container-image-build-and-distribution.md)). Stated explicitly in the platform matrix below.
+- **PWA / iOS scope (non-goal in MVP; superseded for PCs, see ADR-021 §1: local PC mode):** PWA browsers cannot host an incoming socket and Capacitor iOS is not in MVP scope; for those targets, **internet signaling is required**. Users who want fully-offline LAN on those platforms can run the public-image `guardedsleep-signaling` Docker on a NAS/router (see option D in §Options Considered and [ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md)). Stated explicitly in the platform matrix below.
 
 **Android lifecycle (binding):**
 
@@ -142,7 +142,7 @@ UI/UX (ambient bar, escalation timing, plain-language copy) is delegated to [ADR
 
 ### Option D: Mandatory user-run LAN Docker signaling
 
-- **Pros:** zero extra code in the apps; reuses `ghcr.io/<owner>/guardedsleep-signaling` ([ADR-008](ADR-008-container-image-build-and-distribution.md)).
+- **Pros:** zero extra code in the apps; reuses `ghcr.io/<owner>/guardedsleep-signaling` ([ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md)).
 - **Cons:** excludes ordinary families without a NAS; setup friction kills the "install, scan, done" UX promise.
 - **Kept** as **complementary** power-user path (documented in [connectivity-pairing.md](../features/connectivity-pairing.md) §"LAN Docker fallback"), **not as a substitute for Option A.**
 

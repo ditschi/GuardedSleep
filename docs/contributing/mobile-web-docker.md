@@ -55,7 +55,7 @@ Details, variables, and Caddy / nginx equivalents: [signaling-traefik.md](signal
 
 The workflow [`.github/workflows/docker-web.yml`](../../.github/workflows/docker-web.yml) publishes `ghcr.io/<owner-lowercase>/guardedsleep-web` for the **`linux/amd64`** and **`linux/arm64`** platforms.
 
-### Tag strategy ([ADR-008](../decisions/ADR-008-container-image-build-and-distribution.md))
+### Tag strategy ([ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md))
 
 Identical to the signaling image:
 
