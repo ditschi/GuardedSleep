@@ -4,6 +4,8 @@
 #   2. default-feature graph: no uniffi, wasm-bindgen, js-sys or web-sys (`cargo tree -p` resolves the
 #      features of the core alone; cargo-deny cannot, it unifies features across the workspace, where
 #      guardedsleep-wasm enables the optional tsify feature)
+#   3. facades: no hand-written `unsafe` in guardedsleep-ffi / guardedsleep-wasm (they allow unsafe_code
+#      crate-wide for macro-generated glue only)
 # The all-features graph is covered by the `uniffi` ban in deny.core.toml; tsify legitimately adds
 # wasm-bindgen, js-sys and web-sys there.
 set -euo pipefail
@@ -17,6 +19,10 @@ fi
 tree="$(scripts/cargo.sh tree -p guardedsleep-core -e normal --prefix none)"
 if echo "$tree" | grep -E '^(uniffi|uniffi_[a-z_]+|wasm-bindgen|js-sys|web-sys) '; then
   echo "core-bindings-check: guardedsleep-core pulls a binding crate into its default-feature graph (see above)" >&2
+  exit 1
+fi
+if grep -rnE '\bunsafe[[:space:]]*(\{|fn\b|impl\b|extern\b)' crates/guardedsleep-ffi/src crates/guardedsleep-wasm/src; then
+  echo "core-bindings-check: hand-written unsafe in a facade crate; only macro-generated glue is allowed" >&2
   exit 1
 fi
 echo "core-bindings-check: guardedsleep-core is binding-free (ok)"

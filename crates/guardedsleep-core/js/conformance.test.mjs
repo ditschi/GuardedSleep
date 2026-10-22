@@ -22,6 +22,20 @@ for (const f of readdirSync(traceDir)
   });
 }
 
+// Typed replay: the trace inputs go through WasmLink.handle (serde lift of LinkConfig/LinkInput in the
+// wasm build, not the conformanceEval pass-through) and every returned action list must equal the
+// committed expectation.
+for (const f of readdirSync(traceDir)
+  .filter((n) => n.endsWith(".json"))
+  .sort()) {
+  test(`wasm typed link replay: ${f}`, () => {
+    const trace = JSON.parse(readFileSync(new URL(f, traceDir), "utf8"));
+    const link = new wasm.WasmLink(JSON.stringify(trace.config));
+    const got = trace.steps.map((s) => JSON.parse(link.handle(s.now, JSON.stringify(s.input))));
+    assert.deepStrictEqual(got, trace.expect);
+  });
+}
+
 for (const v of vectors) {
   test(`wasm conformance: ${v.name}`, () => {
     const { expect, ...input } = v;

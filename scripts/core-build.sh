@@ -6,7 +6,7 @@
 #   scripts/core-build.sh host            # host library + Kotlin bindings (what the Android JVM unit tests load; no ABIs)
 #   scripts/core-build.sh android         # host + jniLibs (arm64-v8a, x86_64) for apps/android
 #   scripts/core-build.sh swift           # Swift bindings from the host ffi library into target/swift-bindings (iOS smoke, no Xcode)
-#   scripts/core-build.sh determinism     # generate the Kotlin bindings and the wasm package twice, fail on differing hashes
+#   scripts/core-build.sh determinism     # build and generate the Kotlin bindings and the wasm package twice (second time after a clean of the workspace crates), fail on differing hashes
 # Inside CI or the image itself, set CORE_BUILD_NATIVE=1 to run without Docker.
 set -euo pipefail
 
@@ -88,15 +88,20 @@ run_swift() {
 }
 
 # Generate-twice check (ADR-020 section 3): the generated Kotlin bindings and the wasm package must be
-# byte-identical across two generations from the same build. Only the generators run twice; the two builds
-# are reused (cargo is incremental, so a prior `host` / `wasm` run makes this fast).
+# byte-identical across two independent builds. The second round cleans and recompiles the three workspace
+# crates (core, ffi, wasm), so non-determinism in macro expansion or metadata emission (uniffi, tsify,
+# wasm-bindgen) is caught as well as in the generators. Dependencies stay cached.
 run_determinism() {
 	local out=target/determinism wasm_file=target/wasm32-unknown-unknown/release/guardedsleep_wasm.wasm
 	ensure_wasm_bindgen
-	cargo build -p guardedsleep-ffi
-	cargo build -p guardedsleep-wasm --release --target wasm32-unknown-unknown
 	rm -rf "$out"
 	for i in 1 2; do
+		if [[ "$i" == 2 ]]; then
+			cargo clean -q -p guardedsleep-core -p guardedsleep-ffi
+			cargo clean -q -p guardedsleep-core -p guardedsleep-wasm --release --target wasm32-unknown-unknown
+		fi
+		cargo build -p guardedsleep-ffi
+		cargo build -p guardedsleep-wasm --release --target wasm32-unknown-unknown
 		cargo run -q -p uniffi-bindgen -- generate --library target/debug/libguardedsleep_ffi.so \
 			--language kotlin --out-dir "$out/kotlin-$i" --no-format
 		wasm-bindgen --target nodejs --out-dir "$out/wasm-node-$i" "$wasm_file"

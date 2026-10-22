@@ -27,6 +27,15 @@
       "packageNameTemplate": "rust-lang/rust",
       "datasourceTemplate": "github-tags",
       "versioningTemplate": "semver"
+    },
+    {
+      "description": "Digest-pinned image in api-snapshot.sh (same as docker/mobile-web/Dockerfile)",
+      "customType": "regex",
+      "managerFilePatterns": ["/^scripts/lib/api-snapshot\\.sh$/"],
+      "matchStrings": [
+        "image=\"(?<depName>rust):(?<currentValue>[^@\"]+)@(?<currentDigest>sha256:[a-f0-9]+)\""
+      ],
+      "datasourceTemplate": "docker"
     }
   ],
   "packageRules": [
