@@ -98,7 +98,7 @@ check-ios:
     scripts/cargo.sh check -p guardedsleep-core -p guardedsleep-relay -p guardedsleep-ffi --target aarch64-apple-ios
 
 # Generate-twice check: the Kotlin bindings (from the host ffi library) and the wasm package are generated
-# twice from one build and must hash identically. SKIPPED without Docker.
+# twice (the second time after a clean of the three workspace crates) and must hash identically. SKIPPED without Docker.
 [script("bash")]
 check-determinism:
     set -euo pipefail

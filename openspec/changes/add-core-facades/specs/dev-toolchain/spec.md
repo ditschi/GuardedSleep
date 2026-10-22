@@ -4,7 +4,7 @@
 
 ### Requirement: Binding-free core
 
-Binding attributes (UniFFI, wasm-bindgen) SHALL appear only in the façade crates `guardedsleep-ffi` and `guardedsleep-wasm`, never in `guardedsleep-core`, except for the tsify derive described in the next requirement. The web client's protocol types (`packages/core-wasm`) SHALL be generated from the core.
+Binding attributes (UniFFI, wasm-bindgen) SHALL appear only in the façade crates `guardedsleep-ffi` and `guardedsleep-wasm`, never in `guardedsleep-core`, except for the tsify derive allowed by the requirement "tsify exception in the core". The web client's protocol types (`packages/core-wasm`) SHALL be generated from the core.
 
 #### Scenario: UniFFI attribute in the core
 
@@ -22,7 +22,7 @@ Binding attributes (UniFFI, wasm-bindgen) SHALL appear only in the façade crate
 
 ### Requirement: API-surface snapshots
 
-The public API of `guardedsleep-ffi` and `guardedsleep-wasm` and the generated `.d.ts` SHALL be committed as snapshots, and CI SHALL fail when they differ from the code. CI SHALL build the core, `guardedsleep-ffi` and `guardedsleep-wasm` twice from clean workspace crates, generate the bindings from each build, and fail when the hashes differ.
+The public API of `guardedsleep-ffi` and `guardedsleep-wasm` and the generated `.d.ts` SHALL be committed as snapshots, and CI SHALL fail when they differ from the code. CI SHALL build the core, `guardedsleep-ffi` and `guardedsleep-wasm` twice, the second time after cleaning those three crates, generate the bindings from each build, and fail when the hashes differ.
 
 #### Scenario: Unnoticed API change
 
@@ -31,14 +31,32 @@ The public API of `guardedsleep-ffi` and `guardedsleep-wasm` and the generated `
 
 ### Requirement: Vectors through every binding
 
-Conformance vectors, including negative vectors, SHALL be evaluated through the exported entry point of the Rust core, the Kotlin (UniFFI) bindings and the TypeScript (wasm-bindgen) bindings. The committed link traces SHALL additionally replay through the typed `CoreLink` / `WasmLink` handle of each binding and match the committed expectation. Peer input SHALL be parsed only in the core, never in a binding.
+Conformance vectors, including negative vectors, SHALL be evaluated through the exported entry point of the Rust core, the Kotlin (UniFFI) bindings and the TypeScript (wasm-bindgen) bindings. Signaling and DataChannel messages from the peer SHALL be parsed only in the core; the bindings pass them through as opaque strings.
 
 #### Scenario: Binding diverges from the core
 
-- **WHEN** the UniFFI or wasm build of the core returns a different result than the Rust core for a vector or a trace
+- **WHEN** the UniFFI or wasm build of the core returns a different result than the Rust core for a vector
 - **THEN** that binding's conformance test fails
 
+### Requirement: Trace replay through the binding handles
+
+The committed link traces SHALL replay through each binding's `Link` handle: in Kotlin through the generated UniFFI types (`CoreLink`), comparing action and event kinds, attempt numbers, message texts and SDP with the committed expectation; in TypeScript through `WasmLink` (JSON in, JSON out), comparing the full action JSON.
+
+#### Scenario: Lift bug in a binding
+
+- **WHEN** a binding returns a different action kind, attempt number, text or SDP than the committed trace
+- **THEN** that binding's replay test fails
+
 ## MODIFIED Requirements
+
+### Requirement: Rust rules
+
+Rust crates SHALL use edition 2024 and inherit the workspace lints (checked by a lint), pass `cargo fmt` and `clippy -D warnings`, forbid `unsafe` outside generated FFI glue, and deny `unwrap`, `expect`, `panic` and unchecked indexing in parser modules. The core and `guardedsleep-ffi` SHALL stay buildable for iOS (`cargo check --target aarch64-apple-ios`), and a weekly job SHALL generate the Swift bindings from the ffi library.
+
+#### Scenario: New crate without workspace lints
+
+- **WHEN** a new crate does not inherit the workspace lints
+- **THEN** the lint check fails
 
 ### Requirement: Nothing generated is committed
 

@@ -6,7 +6,7 @@ Refined 2026-10-22 from the wave-2 plan. Items 1.1, 1.3 (snapshots), 1.4 and 1.6
 
 - [x] 1.1 Create `guardedsleep-ffi` and move all UniFFI attributes out of `core` (`#[uniffi::remote]` for the boundary types; namespace stays `guardedsleep_core`, so Kotlin needs no source change)
 - [x] 1.2 Create `guardedsleep-wasm` with tsify types; generate TS into `packages/core-wasm` (`types.ts` re-exports the generated types)
-- [x] 1.3 Lint fails when a UniFFI or wasm-bindgen attribute or dependency appears in `guardedsleep-core` (cargo-deny ban in `deny.core.toml` plus a source check in `just lint`)
+- [x] 1.3 Lint fails when a UniFFI or wasm-bindgen attribute appears in `guardedsleep-core`, or a binding crate enters its default-feature graph (cargo-deny ban in `deny.core.toml` plus a source check in `just lint`)
 
 ## 2. Snapshots and determinism
 
@@ -15,7 +15,7 @@ Refined 2026-10-22 from the wave-2 plan. Items 1.1, 1.3 (snapshots), 1.4 and 1.6
 
 ## 3. Bindings and platforms
 
-- [x] 3.1 Conformance vectors (61, of which 16 negative) and traces run through Rust, Kotlin (`ConformanceTest.kt`) and TypeScript (`conformance.test.mjs`) via `conformanceEval`, and the link traces also replay through the typed `CoreLink` / `WasmLink` handle in both
+- [x] 3.1 All conformance vectors (61, of which 16 negative, at implementation; the file now also holds the relay vectors) and traces run through Rust, Kotlin (`ConformanceTest.kt`) and TypeScript (`conformance.test.mjs`) via `conformanceEval`, and the link traces also replay through the typed `CoreLink` / `WasmLink` handle in both
 - [x] 3.2 iOS check for `core` and `ffi` in `just lint` (`relay` is added by `add-rust-signaling-server`)
 - [x] 3.3 Weekly CI job: generate the Swift bindings from the ffi library on Linux and fail if generation fails; upload them as an artifact
 

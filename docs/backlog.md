@@ -54,6 +54,8 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 
 ### pairing
 
+- `IDEA` Redact the PSK in `Debug` for `LinkConfig`/`SessionConfig` and in the Kotlin `toString` of the generated config types (AGENTS.md §7.2; found in the `add-core-facades` security review). Candidate for the pre-alpha security audit.
+- `IDEA` Move the QR invite codec from Kotlin (`PairingPayload.kt`) into the core, so no peer input is parsed on a platform.
 - `IDEA` Saved connections as a list (up to 5, editable names, swipe to delete, auto-delete after 90 days without use with a 7-day warning) and a "Delete all connections & keys" panic button; today one pairing is stored and "Forget" deletes it.
 
 - `DEFERRED` (Phase 2) Multi-parent: up to 4 parent units per baby (product cap); "Add device" on a paired baby or parent unit, the baby unit only after kiosk unlock and confirmation; a join request with device name after the invite is dismissed; failover of alerts to another parent when one stops responding (failure model F-1a).
@@ -138,6 +140,7 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 
 - `IDEA` Kani proof for "alarm within T after link loss".
 - `IDEA` `examples/` folder with PoC reproductions.
+- `IDEA` Open minor items from the `add-core-facades` architecture review (A-F6, A-F7, A-F8, A-F10; see the archived change's design): small binding and snapshot refinements, none blocking.
 - `IDEA` sccache for local agent worktrees (ADR-020 tier T2 → reconsider): the shared Cargo registry does not share compiled artefacts, so every new worktree still builds cold.
 - `UNDER DISCUSSION` refactor-scout items: a shared `docker run` helper; YAML anchors for the duplicated CI path filters; one source for the NDK and cargo-ndk pins (Renovate regex manager); whether `stack-up` prints `SKIPPED` without Docker.
 - `PLANNED` (wave 2/3) The generated Dev Container from ADR-020 §2; complete the ktfmt and uv pins once `reuse` ships a wheel.
