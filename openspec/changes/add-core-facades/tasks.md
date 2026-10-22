@@ -15,7 +15,7 @@ Refined 2026-10-22 from the wave-2 plan. Items 1.1, 1.3 (snapshots), 1.4 and 1.6
 
 ## 3. Bindings and platforms
 
-- [x] 3.1 Conformance vectors (61, of which 16 negative) and traces run through Rust, Kotlin (`ConformanceTest.kt`) and TypeScript (`conformance.test.mjs`)
+- [x] 3.1 Conformance vectors (61, of which 16 negative) and traces run through Rust, Kotlin (`ConformanceTest.kt`) and TypeScript (`conformance.test.mjs`) via `conformanceEval`, and the link traces also replay through the typed `CoreLink` / `WasmLink` handle in both
 - [x] 3.2 iOS check for `core` and `ffi` in `just lint` (`relay` is added by `add-rust-signaling-server`)
 - [x] 3.3 Weekly CI job: generate the Swift bindings from the ffi library on Linux and fail if generation fails; upload them as an artifact
 

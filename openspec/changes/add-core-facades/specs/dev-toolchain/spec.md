@@ -31,12 +31,12 @@ The public API of `guardedsleep-ffi` and `guardedsleep-wasm` and the generated `
 
 ### Requirement: Vectors through every binding
 
-Conformance vectors, including negative vectors, SHALL run through the Rust core, the Kotlin bindings and the TypeScript bindings.
+Conformance vectors, including negative vectors, SHALL be evaluated through the exported entry point of the Rust core, the Kotlin (UniFFI) bindings and the TypeScript (wasm-bindgen) bindings. The committed link traces SHALL additionally replay through the typed `CoreLink` / `WasmLink` handle of each binding and match the committed expectation. Peer input SHALL be parsed only in the core, never in a binding.
 
-#### Scenario: Binding-specific parsing bug
+#### Scenario: Binding diverges from the core
 
-- **WHEN** the Kotlin binding accepts a vector that the core rejects
-- **THEN** the Kotlin vector test fails
+- **WHEN** the UniFFI or wasm build of the core returns a different result than the Rust core for a vector or a trace
+- **THEN** that binding's conformance test fails
 
 ## MODIFIED Requirements
 

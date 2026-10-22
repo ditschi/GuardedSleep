@@ -7,8 +7,12 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import uniffi.guardedsleep_core.Action
+import uniffi.guardedsleep_core.CoreLink
 import uniffi.guardedsleep_core.CoreSession
 import uniffi.guardedsleep_core.Input
+import uniffi.guardedsleep_core.LinkAction
+import uniffi.guardedsleep_core.LinkConfig
+import uniffi.guardedsleep_core.LinkInput
 import uniffi.guardedsleep_core.Role
 import uniffi.guardedsleep_core.SessionEvent
 import uniffi.guardedsleep_core.conformanceEval
@@ -42,6 +46,82 @@ class ConformanceTest {
             val trace = JSONObject(f.readText())
             val got = parseJson(conformanceEval(trace.toString()))
             assertJsonEquals(f.name, trace.get("expect"), got)
+        }
+    }
+
+    /**
+     * Typed replay: the trace inputs are lowered as generated UniFFI types into [CoreLink], and the
+     * lifted actions are compared with the committed expectation (action and event kind, attempt,
+     * message text, SDP). This exercises the record/enum lift and lower of the 17 remote types.
+     */
+    @Test
+    fun linkTracesReplayThroughTypedApi() {
+        val files = File(System.getProperty("conformance.traces")!!)
+            .listFiles { f -> f.extension == "json" }!!.sortedBy { it.name }
+        assertTrue(files.isNotEmpty())
+        for (f in files) {
+            val trace = JSONObject(f.readText())
+            val c = trace.getJSONObject("config")
+            val link = CoreLink(
+                LinkConfig(
+                    role = if (c.getString("role") == "baby") Role.BABY else Role.PARENT,
+                    pskB64url = c.getString("psk_b64url"),
+                    pairedBefore = c.getBoolean("paired_before"),
+                    heartbeatIntervalMs = c.getLong("heartbeat_interval_ms").toULong(),
+                    alarmAfterMs = c.getLong("alarm_after_ms").toULong(),
+                    noiseThreshold = c.getDouble("noise_threshold"),
+                    noiseHoldMs = c.getLong("noise_hold_ms").toULong(),
+                    requireDtlsFingerprint = c.getBoolean("require_dtls_fingerprint"),
+                ),
+            )
+            val steps = trace.getJSONArray("steps")
+            val expect = trace.getJSONArray("expect")
+            for (n in 0 until steps.length()) {
+                val step = steps.getJSONObject(n)
+                val got = link.handle(step.getLong("now").toULong(), linkInput(step.getJSONObject("input")))
+                val want = (0 until expect.getJSONArray(n).length()).map { expectedSummary(expect.getJSONArray(n).getJSONObject(it)) }
+                assertEquals("${f.name} step $n", want, got.map(::actionSummary))
+            }
+        }
+    }
+
+    private fun linkInput(i: JSONObject): LinkInput {
+        val attempt = i.optLong("attempt").toUInt()
+        return when (val type = i.getString("type")) {
+            "start" -> LinkInput.Start(i.getLong("entropy").toULong())
+            "tick" -> LinkInput.Tick
+            "network_available" -> LinkInput.NetworkAvailable
+            "signaling_opened" -> LinkInput.SignalingOpened
+            "signaling_closed" -> LinkInput.SignalingClosed
+            "signaling_message" -> LinkInput.SignalingMessage(i.getString("text"))
+            "attempt_local_description" -> LinkInput.AttemptLocalDescription(attempt, i.getString("sdp_type"), i.getString("sdp"))
+            "attempt_data_open" -> LinkInput.AttemptDataOpen(attempt)
+            "attempt_data_message" -> LinkInput.AttemptDataMessage(attempt, i.getString("text"))
+            "attempt_dtls_fingerprint" -> LinkInput.AttemptDtlsFingerprint(attempt, i.getString("fingerprint"))
+            "attempt_pc_state" -> LinkInput.AttemptPcState(attempt, i.getString("state"))
+            else -> error("trace input $type has no typed mapping")
+        }
+    }
+
+    private fun snake(name: String) = name.replace(Regex("([a-z])([A-Z])"), "$1_$2").lowercase()
+
+    private fun detail(a: JSONObject) = listOf("attempt", "text", "sdp").mapNotNull { k -> a.opt(k)?.let { "$k=$it" } }.joinToString(",")
+
+    private fun expectedSummary(a: JSONObject): String =
+        if (a.getString("type") == "emit") "emit:${a.getJSONObject("event").getString("type")}" else "${a.getString("type")}:${detail(a)}"
+
+    private fun actionSummary(a: LinkAction): String {
+        val kind = snake(a::class.simpleName!!)
+        return when (a) {
+            is LinkAction.Emit -> "emit:${snake(a.event::class.simpleName!!)}"
+            is LinkAction.SendSignaling -> "$kind:text=${a.text}"
+            is LinkAction.CreateAttempt -> "$kind:attempt=${a.attempt}"
+            is LinkAction.CloseAttempt -> "$kind:attempt=${a.attempt}"
+            is LinkAction.CreateOffer -> "$kind:attempt=${a.attempt}"
+            is LinkAction.CreateAnswer -> "$kind:attempt=${a.attempt}"
+            is LinkAction.SetRemoteDescription -> "$kind:attempt=${a.attempt},sdp=${a.sdp}"
+            is LinkAction.SendData -> "$kind:attempt=${a.attempt},text=${a.text}"
+            else -> "$kind:"
         }
     }
 
