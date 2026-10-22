@@ -6,4 +6,4 @@ Refined 2026-10-22. Implemented as W2-C on branch `worktree-agent-a409f09da55bdd
 - [x] 1.2 Swap `io.getstream:stream-webrtc-android` for `io.github.webrtc-sdk:android` (150.7871.01, verified on Maven Central); audio-only behaviour, DTLS fingerprint handling and link-quality stats unchanged
 - [x] 1.3 Renovate rule: own PR, no automerge and a 7-day release age for libwebrtc
 - [x] 1.4 `just lint`, `just test`, release-check and size-check green; APK size before/after recorded in `design.md`
-- [ ] 1.5 Emulator gate AC-1…AC-4 and AC-10 green (`DOZE_MINUTES=2 just gate`)
+- [x] 1.5 Emulator gate AC-1…AC-4 and AC-10 green (`DOZE_MINUTES=2 just gate`)
