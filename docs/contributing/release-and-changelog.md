@@ -199,7 +199,7 @@ Two mechanisms:
   git push
   ```
 
-  Release Please picks this up and proposes exactly that version on the **package whose path the commit touches** (use `chore(protocol): release 0.1.0` style scopes when the commit is empty — Release Please reads the directory of the changed files, so for an empty commit, the **next commit** on the package path is what gets the override; the cleanest path is therefore a one-line `release-as` change inside the package directory, e.g. add a comment to `packages/protocol/CHANGELOG.md` or `package.json`).
+  Release Please picks this up and proposes exactly that version on the **package whose path the commit touches** (use `chore(mobile): release 0.1.0` style scopes when the commit is empty — Release Please reads the directory of the changed files, so for an empty commit, the **next commit** on the package path is what gets the override; the cleanest path is therefore a one-line `release-as` change inside the package directory, e.g. add a comment to `apps/mobile/CHANGELOG.md` or `package.json`).
 
 - **`release-as` in `release-please-config.json`** per package: pin a target version until released, then remove the key. Useful for one-shot major bumps.
 
@@ -287,13 +287,12 @@ See [ADR-006](../../openspec/changes/archive/2026-05-13-adr-006-release-and-chan
 
 ## 16. Versioning posture — "mobile is the product version"
 
-The monorepo contains **three independently versioned packages**:
+The monorepo contains **independently versioned packages (the hand-written `@guardedsleep/protocol` package was removed; protocol types are generated from the Rust core into `packages/core-wasm`, which is private and unversioned for releases, and the signaling server is the Rust `crates/guardedsleep-server` image)**:
 
 | Package                          | Role                                       | Whose version do users / operators see?                                               |
 | -------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------- |
 | `@guardedsleep/mobile`           | User-facing Android app (Capacitor)        | **Yes — this is the headline "GuardedSleep version"** shown in About, Play, F-Droid   |
 | `@guardedsleep/signaling-server` | Self-hostable WebSocket relay              | Operators see this in Docker tags (`ghcr.io/<owner>/guardedsleep-signaling:vX.Y.Z`)   |
-| `@guardedsleep/protocol`         | Internal TypeScript library (shared types) | Hidden — never published; developers see it in `package.json` dependency declarations |
 
 **Practical implications:**
 
@@ -306,7 +305,9 @@ The monorepo contains **three independently versioned packages**:
 
 Release Please is configured with the **`node-workspace` plugin** ([config reference](../../release-please-config.json) → `plugins: ["node-workspace"]`). This automates dependency-graph awareness:
 
-**Scenario: `protocol` bumps from `0.1.0` → `0.2.0`** (because a `feat:` commit landed in `packages/protocol/`).
+_Illustrative only: no workspace package has a released dependent today (the former `@guardedsleep/protocol` package is gone)._
+
+**Scenario: a shared package `protocol` bumps from `0.1.0` → `0.2.0`** (because a `feat:` commit landed in its directory).
 
 What Release Please does automatically:
 
@@ -393,5 +394,5 @@ This table is the human-readable answer to "which versions go together?" Update 
 
 - One row per **milestone meta-tag**, not per Release Please cut. Intermediate per-package bumps live in `CHANGELOG.md` only.
 - The `Notes` column states the headline change relative to the previous row.
-- When `protocol` introduces a breaking change (`feat!:` in `packages/protocol`), add a row even if no milestone meta-tag exists, with the meta-tag column set to `—` and Notes describing the contract change.
+- When `protocol` introduces a breaking change (`feat!:` in a shared package or the Rust wire format), add a row even if no milestone meta-tag exists, with the meta-tag column set to `—` and Notes describing the contract change.
 - Once Phase 2 follow-up "Automated compatibility-matrix updater" lands (see [ADR-006](../../openspec/changes/archive/2026-05-13-adr-006-release-and-changelog-automation/design.md) discarded alternatives), this table becomes auto-generated.

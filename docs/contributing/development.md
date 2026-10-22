@@ -152,7 +152,7 @@ From the repository root, after `just setup`:
 just dev
 ```
 
-This builds `@guardedsleep/protocol` once, then builds and runs the Rust signaling server (`crates/guardedsleep-server`, default port **8787**, `PORT` overrides it; the STUN responder is off in dev, `STUN_DISABLED=0` turns it on) and the SvelteKit dev server (`apps/mobile`, Vite default **5173**) in parallel; Ctrl-C stops both (`scripts/dev.sh`). Open e.g. `/baby?room=demo` and `/parent?room=demo` in two browser contexts to exercise pairing.
+This builds and runs the Rust signaling server (`crates/guardedsleep-server`, default port **8787**, `PORT` overrides it; the STUN responder is off in dev, `STUN_DISABLED=0` turns it on) and the SvelteKit dev server (`apps/mobile`, Vite default **5173**) in parallel; Ctrl-C stops both (`scripts/dev.sh`). Open e.g. `/baby?room=demo` and `/parent?room=demo` in two browser contexts to exercise pairing.
 
 **PWA:** `vite dev` does not enable the service worker (`devOptions.enabled: false`). To test installability and precaching, build and preview the mobile app:
 

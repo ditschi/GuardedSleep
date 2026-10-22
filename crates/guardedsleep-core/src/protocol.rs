@@ -1,4 +1,4 @@
-//! Wire format shared with `@guardedsleep/protocol` (TypeScript). Parsers mirror the TS validators
+//! Wire format shared with the web client (TypeScript types are generated from this module). Parsers mirror the retired TS validators
 //! so both implementations accept and reject the same inputs (see `vectors/conformance.json`).
 
 // Untrusted input is parsed here: return errors instead of panicking (AGENTS.md §5.3).

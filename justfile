@@ -209,10 +209,9 @@ audit:
 release-preview:
     npx --yes release-please release-pr --token=$GH_TOKEN --repo-url=$GITHUB_REPOSITORY --config-file=release-please-config.json --manifest-file=.release-please-manifest.json --dry-run --debug
 
-# Generated, uncommitted packages that svelte-check and Vitest import (WASM core, protocol types).
+# Generated, uncommitted packages that svelte-check and Vitest import (the WASM core).
 [private]
 _js-gen:
-    pnpm --filter @guardedsleep/protocol build
     pnpm --filter @guardedsleep/core-wasm build
 
 [private]

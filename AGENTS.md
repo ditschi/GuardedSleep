@@ -35,7 +35,7 @@
 | Tests            | nextest, proptest, insta, golden + negative vectors through every binding; Robolectric/Roborazzi; Vitest; Playwright; Maestro; emulator gate  |
 | Crypto / media   | WebRTC DTLS-SRTP + DataChannel; direction-bound pairing proof (ADR-004 amendment). No custom transport crypto                                 |
 
-**Legacy, frozen, never extend:** `apps/mobile` (SvelteKit + Capacitor; reference for the `apps/web` rebuild, deleted at parity), `packages/protocol` (hand-written TS types, to be deleted), (`docker/android-build`, the Capacitor image, is gone).
+**Legacy, frozen, never extend:** `apps/mobile` (SvelteKit + Capacitor; reference for the `apps/web` rebuild, deleted at parity). `docker/android-build` (the Capacitor image) is gone.
 
 ## 3. Repository map
 
@@ -111,7 +111,7 @@ Core       Rust, sans-IO (core, relay): no I/O, threads or clocks; emits message
 ```
 
 - **Safety logic lives once, in the Rust core** (pairing, link supervision, escalation, noise gate, validation). Platform reconnect loops or timer-based alarms are bugs.
-- **Protocol shapes come from the Rust core.** Never hand-edit a second schema; never extend `packages/protocol`.
+- **Protocol shapes come from the Rust core.** Never hand-edit a second schema.
 - **UI renders contract models only** (`UiContract.kt`; web stores mirror it). UI code never imports UniFFI/WASM types. In Android only `platform` may depend on `core-bindings` (wave 2).
 - **`relay` is shared** by the server and the Android LAN listener; the platform owns the sockets.
 - **cargo-deny** bans tokio, mio, getrandom and socket crates from the `core` and `relay` graphs. This keeps them sans-IO: do not work around it. Binding attributes never appear in `core`.

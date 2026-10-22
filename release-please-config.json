@@ -27,10 +27,6 @@
   "draft": false,
   "prerelease": false,
   "packages": {
-    "packages/protocol": {
-      "package-name": "@guardedsleep/protocol",
-      "component": "protocol"
-    },
     "apps/mobile": {
       "package-name": "@guardedsleep/mobile",
       "component": "mobile"

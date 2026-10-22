@@ -38,14 +38,11 @@ RUN PNPM_VERSION="$(sed -n 's/^pnpm *= *"\(.*\)"/\1/p' /tmp/mise.toml)" \
 	&& rm /tmp/mise.toml
 
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
-COPY packages/protocol/package.json packages/protocol/
 COPY packages/core-wasm/package.json packages/core-wasm/
 COPY apps/mobile/package.json apps/mobile/
 
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
-COPY packages/protocol/tsconfig.json packages/protocol/tsconfig.build.json packages/protocol/
-COPY packages/protocol/src packages/protocol/src
 COPY packages/core-wasm/src packages/core-wasm/src
 COPY --from=wasm /out packages/core-wasm/pkg
 COPY apps/mobile apps/mobile
@@ -54,8 +51,7 @@ COPY --from=i18n /out apps/mobile/src/lib/i18n/generated
 ARG VITE_SIGNALING_URL=
 ENV VITE_SIGNALING_URL=$VITE_SIGNALING_URL
 
-RUN pnpm --filter @guardedsleep/protocol build \
-	&& pnpm --filter @guardedsleep/mobile exec vite build
+RUN pnpm --filter @guardedsleep/mobile exec vite build
 
 FROM nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10 AS runner
 

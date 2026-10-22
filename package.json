@@ -15,7 +15,7 @@
     "i18n:gen": "bash scripts/cargo.sh run -q -p i18n-gen -- all",
     "i18n:test": "bash scripts/cargo.sh test -q -p i18n-gen",
     "build": "pnpm -r build",
-    "test": "pnpm --filter @guardedsleep/protocol build && pnpm -r --filter '!@guardedsleep/e2e' test",
+    "test": "pnpm -r --filter '!@guardedsleep/e2e' test",
     "check": "pnpm -r --if-present run check",
     "audit": "pnpm audit --audit-level=high",
     "e2e": "pnpm --filter @guardedsleep/e2e test",

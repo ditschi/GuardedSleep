@@ -23,7 +23,6 @@ on:
     paths:
       - "docker/mobile-web/**"
       - "apps/mobile/**"
-      - "packages/protocol/**"
       - "pnpm-lock.yaml"
       - "crates/**"
       - "locales/**"
@@ -39,7 +38,6 @@ on:
     paths:
       - "docker/mobile-web/**"
       - "apps/mobile/**"
-      - "packages/protocol/**"
       - "pnpm-lock.yaml"
       - "crates/**"
       - "locales/**"

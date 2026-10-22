@@ -18,8 +18,6 @@ if (( BASH_VERSINFO[0] < 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] < 3) ))
   exit 2
 fi
 
-pnpm --filter @guardedsleep/protocol build
-
 # Everything stays in this script's process group on purpose: Playwright stops its webServer by killing
 # the whole group (SIGKILL, so no trap runs), and `kill 0` below does the same on a normal exit.
 # The trap keeps the real exit status (no always-143) and ignores TERM while it tears the group down.
