@@ -1,6 +1,6 @@
 # Failure Model
 
-> STATUS: PROPOSED -- to be finalized via [ADR-009](../decisions/ADR-009-personas-and-failure-model.md) (in preparation).
+> STATUS: PROPOSED -- to be finalized via [ADR-009](../../openspec/changes/archive/2026-10-21-adr-009-personas-and-failure-model/design.md) (in preparation).
 >
 > **Why this document exists**: GuardedSleep is a safety-adjacent app. Until 2026-05, the project documented the happy path in detail but left the "what happens when X fails?" answers scattered across feature documents. The [concept review 2026-05](../reviews/concept-review-2026-05.md) (CRIT-5) surfaced that the most important failure case -- **parent device dead/crashed** -- was undocumented and accidentally led to a Baby-Side acoustic-alarm proposal that contradicts the core purpose of the app. This document is the single source of truth for failure handling.
 

@@ -84,7 +84,7 @@ Concrete safety risks not addressed:
 4. Microphone quality variation.
 5. Frozen security updates.
 
-_Action_: [ADR-010 (PROPOSED)](../decisions/ADR-010-baby-unit-hardware-requirements.md) defines minimum Android API + Self-Test + battery safety notice. New "Baby-Unit Self-Test" feature in [device-management.md](../features/device-management.md) (Mic, WiFi latency, battery health, WebView version) as DECIDED MVP. Added PoC test for Persona-C devices to ADR-001.
+_Action_: [ADR-010 (PROPOSED)](../../openspec/changes/archive/2026-10-21-adr-010-baby-unit-hardware-requirements/design.md) defines minimum Android API + Self-Test + battery safety notice. New "Baby-Unit Self-Test" feature in [device-management.md](../features/device-management.md) (Mic, WiFi latency, battery health, WebView version) as DECIDED MVP. Added PoC test for Persona-C devices to ADR-001.
 
 ---
 

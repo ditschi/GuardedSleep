@@ -4,7 +4,7 @@
 
 Handles all data transmission between baby and parent units. Two audio transmission modes: (1) automatic alert-triggered audio when baby noise exceeds threshold, and (2) manual listen mode activated by parent. Audio always flows baby -> parent only. Parent -> child communication ("talk-back") is a future feature.
 
-**Mobile data:** Internet / signaling mode may run on **cellular** whenever the OS default route uses mobile data (same user at home or away). The app must surface **approximate data usage** and a **roaming warning** when Internet mode is active on a metered or roaming network ([use-cases.md](../concept/use-cases.md) UC-3, [ADR-009](../decisions/ADR-009-personas-and-failure-model.md) companion).
+**Mobile data:** Internet / signaling mode may run on **cellular** whenever the OS default route uses mobile data (same user at home or away). The app must surface **approximate data usage** and a **roaming warning** when Internet mode is active on a metered or roaming network ([use-cases.md](../concept/use-cases.md) UC-3, [ADR-009](../../openspec/changes/archive/2026-10-21-adr-009-personas-and-failure-model/design.md) companion).
 
 ## Requirements
 

@@ -90,6 +90,17 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 - `IDEA` Opt-out of the Do Not Disturb override with a clear warning that alerts will be silent when the phone is muted.
 - `IDEA` Re-prompt the test alert after an app update and before the first use on mobile data (alpha-ux-flows §3.9; built: readiness warns after 30 days).
 
+### device-setup
+
+- `IDEA` Role switching in the UI: switching to baby mode warns that the microphone will be active and asks for confirmation; switching to parent is immediate; "Start as [last role]?" on start. Today the role is chosen once (a different role deletes the pairing) and there is no switch UI.
+- `DEFERRED` Auto-resume baby monitoring after a reboot: Android 14+ does not let a microphone foreground service start from the background (ADR-017 §9, ADR-018); "baby phone reboots overnight" stays a must-pass hardware scenario where the parent reaches level 2. `IDEA` (Phase 2) the same for the parent, more conservative.
+- `IDEA` Tell the parent when the baby kiosk is unlocked ("Baby unit was unlocked"); with multi-parent, show "Add device" on the baby unit only after kiosk unlock and confirmation.
+- `IDEA` OEM check: count heartbeats for about 30 minutes after battery-optimisation setup and warn if the OS seems to kill the app (ADR-018 T2 "30-minute heartbeat self-check").
+- `IDEA` Estimated remaining runtime of the baby unit on the parent; tune screen-off and CPU throttling on the baby unit.
+- `IDEA` Several baby units (one per child or room) with one parent app switching between them (use case UC-5).
+- `IDEA` About/FAQ: hardware vs software baby monitors and range expectations (Wi-Fi, hotspot, internet).
+- `IDEA` Responsive layout for tablets.
+
 ### link-supervision
 
 - `IDEA` Recovery by ICE restart on the existing peer connection, to save the DTLS handshake; measure new-attempt recovery over TURN on hardware first (ADR-017 Option A).

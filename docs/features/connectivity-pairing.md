@@ -46,7 +46,7 @@ Users with a NAS / router that can run Docker may run the `ghcr.io/<owner>/guard
 
 ### Out-of-Home / Event connectivity (hotels, venues)
 
-> STATUS: DECIDED product intent, **PROPOSED** UX detail -- see [use-cases.md](../concept/use-cases.md) UC-3 and [ADR-009](../decisions/ADR-009-personas-and-failure-model.md).
+> STATUS: DECIDED product intent, **PROPOSED** UX detail -- see [use-cases.md](../concept/use-cases.md) UC-3 and [ADR-009](../../openspec/changes/archive/2026-10-21-adr-009-personas-and-failure-model/design.md).
 
 Event use (Persona A) often hits **captive portals**, **client isolation** on venue WiFi, or **blocked WebSocket / STUN / TURN** ports. The app must not assume "same SSID = same LAN" in those environments.
 

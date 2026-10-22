@@ -2,7 +2,7 @@
 
 This document is the central feature map of GuardedSleep. It lists all features with their current phase, status, and priority. Each feature links to a detailed specification document.
 
-> Updated after full expert review round (Technical Architect, UX Expert, Product Owner, Security Architect, Critical Reviewer). See [technical analysis](../technical/analysis.md), [SW architecture](../technical/sw-architecture.md), and [UI design](../technical/ui-design.md). **2026-05:** Personas, failure model, and use cases: [personas.md](../concept/personas.md), [failure-model.md](../concept/failure-model.md), [use-cases.md](../concept/use-cases.md); review: [concept-review-2026-05.md](../reviews/concept-review-2026-05.md); ADRs [ADR-009](../decisions/ADR-009-personas-and-failure-model.md), [ADR-010](../decisions/ADR-010-baby-unit-hardware-requirements.md), [ADR-011](../../openspec/changes/archive/2026-10-21-adr-011-audio-routing-parent-side/design.md) (PROPOSED).
+> Updated after full expert review round (Technical Architect, UX Expert, Product Owner, Security Architect, Critical Reviewer). See [technical analysis](../technical/analysis.md), [SW architecture](../technical/sw-architecture.md), and [UI design](../technical/ui-design.md). **2026-05:** Personas, failure model, and use cases: [personas.md](../concept/personas.md), [failure-model.md](../concept/failure-model.md), [use-cases.md](../concept/use-cases.md); review: [concept-review-2026-05.md](../reviews/concept-review-2026-05.md); ADRs [ADR-009](../../openspec/changes/archive/2026-10-21-adr-009-personas-and-failure-model/design.md), [ADR-010](../../openspec/changes/archive/2026-10-21-adr-010-baby-unit-hardware-requirements/design.md), [ADR-011](../../openspec/changes/archive/2026-10-21-adr-011-audio-routing-parent-side/design.md) (PROPOSED).
 
 ## Feature Map
 
@@ -41,7 +41,7 @@ Before MVP implementation begins, the following must be validated:
 - Background audio capture works via Android Foreground Service
 - Battery consumption is acceptable (target: 8h+ screen-off monitoring)
 - Reconnection works after WiFi interruption
-- **2026-05 extensions (see [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md)):** venue-style / captive-network or cellular-fallback path; parent audio + phone-call interruption; older Android baby-unit smoke run ([ADR-010](../decisions/ADR-010-baby-unit-hardware-requirements.md))
+- **2026-05 extensions (see [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md)):** venue-style / captive-network or cellular-fallback path; parent audio + phone-call interruption; older Android baby-unit smoke run ([ADR-010](../../openspec/changes/archive/2026-10-21-adr-010-baby-unit-hardware-requirements/design.md))
 
 ## Deferred and Rejected Features
 
@@ -66,5 +66,5 @@ Features that were considered during brainstorming but not included in the activ
 | Sleep/wake scheduling                                     | DEFERRED | Automatic monitoring activation during sleep times                                                                                                                                                                | Phase 2    |
 | Video monitoring                                          | DEFERRED | Future feature                                                                                                                                                                                                    | Phase 3+   |
 | Sound categorization (ML)                                 | DEFERRED | Future feature                                                                                                                                                                                                    | Phase 3+   |
-| Baby-side acoustic alarm on parent-device failure         | REJECTED | Wakes the child; contradicts core purpose ([failure-model.md](../concept/failure-model.md), [ADR-009](../decisions/ADR-009-personas-and-failure-model.md))                                                        | --         |
+| Baby-side acoustic alarm on parent-device failure         | REJECTED | Wakes the child; contradicts core purpose ([failure-model.md](../concept/failure-model.md), [ADR-009](../../openspec/changes/archive/2026-10-21-adr-009-personas-and-failure-model/design.md))                    | --         |
 | Cloud push / SMS / VoIP as alarm when parent phone is off | REJECTED | Violates privacy-first / no cloud in alarm path ([vision.md](../concept/vision.md) Non-Goals)                                                                                                                     | --         |

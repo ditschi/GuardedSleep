@@ -1,6 +1,6 @@
 # Use Cases
 
-> STATUS: PROPOSED -- companion document to [personas.md](personas.md) and [failure-model.md](failure-model.md); finalized via [ADR-009](../decisions/ADR-009-personas-and-failure-model.md).
+> STATUS: PROPOSED -- companion document to [personas.md](personas.md) and [failure-model.md](failure-model.md); finalized via [ADR-009](../../openspec/changes/archive/2026-10-21-adr-009-personas-and-failure-model/design.md).
 >
 > **Why this document exists**: features should be designed against concrete situations, not against an abstract "user". The [concept review 2026-05](../reviews/concept-review-2026-05.md) (finding CRIT-1) called out the lack of a use-case catalogue as a root cause for blind spots like the captive-WLAN problem (CRIT-2) and the parent-device-dead case (CRIT-5).
 

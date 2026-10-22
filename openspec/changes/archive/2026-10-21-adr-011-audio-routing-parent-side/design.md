@@ -8,7 +8,7 @@
 
 [ADR-005](../../../../docs/decisions/ADR-005-parent-alerts-product-naming-and-distribution.md) locks the **alert content** to child audio (no synthetic siren). It does not fully resolve **where** that audio plays on the parent device.
 
-The notifications feature doc previously left open: force speaker even when headphones are connected ("likely yes for safety"). That default is **wrong for discreet social use** (e.g. wedding: in-ear monitoring). Night home use often **wants** optional forced speaker so a muted phone still wakes the caregiver -- without forking the whole app into "persona modes" ([ADR-009](../../../../docs/decisions/ADR-009-personas-and-failure-model.md), [personas.md](../../../../docs/concept/personas.md)).
+The notifications feature doc previously left open: force speaker even when headphones are connected ("likely yes for safety"). That default is **wrong for discreet social use** (e.g. wedding: in-ear monitoring). Night home use often **wants** optional forced speaker so a muted phone still wakes the caregiver -- without forking the whole app into "persona modes" ([ADR-009](../2026-10-21-adr-009-personas-and-failure-model/design.md), [personas.md](../../../../docs/concept/personas.md)).
 
 Incoming **phone calls** can steal audio focus and interrupt WebRTC playback -- behavior must be specified and PoC-tested.
 
@@ -36,7 +36,7 @@ Incoming **phone calls** can steal audio focus and interrupt WebRTC playback -- 
 
 ### Option E: Unified app + system routing default + Advanced override (supersedes C for onboarding)
 
-- **Pros**: One primary experience; headphones at a wedding and speaker on the nightstand both work without switching "persona mode"; matches [ADR-009](../../../../docs/decisions/ADR-009-personas-and-failure-model.md) "no forked UX" and [personas.md](../../../../docs/concept/personas.md) unified-app section.
+- **Pros**: One primary experience; headphones at a wedding and speaker on the nightstand both work without switching "persona mode"; matches [ADR-009](../2026-10-21-adr-009-personas-and-failure-model/design.md) "no forked UX" and [personas.md](../../../../docs/concept/personas.md) unified-app section.
 - **Cons**: **Dual-route** ("Speaker + default") and per-OEM audio policy add engineering + QA cost; mitigated by PoC gate before exposing the setting broadly.
 
 ## Decision

@@ -13,7 +13,7 @@ Two **additional** legitimate groups were under-specified:
 1. **Persona A -- Event-only use** (wedding, restaurant, hotel) -- hostile networks (captive portal, client isolation), mobile data, headphone use, no charger.
 2. **Persona C -- Hardware reuse** -- old phones/tablets as baby units without documented minimums or self-tests.
 
-The Critical Review also surfaced an incorrect mitigation for "parent phone dead": an **acoustic alarm on the baby unit**. That contradicts the core purpose (do not wake a sleeping child). The correct model matches classic hardware baby monitors: the **parent notices a missing receiver-side indicator** and reconnects without touching the baby device ([failure-model.md](../concept/failure-model.md)).
+The Critical Review also surfaced an incorrect mitigation for "parent phone dead": an **acoustic alarm on the baby unit**. That contradicts the core purpose (do not wake a sleeping child). The correct model matches classic hardware baby monitors: the **parent notices a missing receiver-side indicator** and reconnects without touching the baby device ([failure-model.md](../../../../docs/concept/failure-model.md)).
 
 This ADR binds those outcomes so feature docs and UX can align.
 
@@ -38,8 +38,8 @@ This ADR binds those outcomes so feature docs and UX can align.
 
 **Adopt Option B.** The project adopts:
 
-- **Three named personas** (A event, **B daily home as primary default**, C recycler) and a use-case matrix in [personas.md](../concept/personas.md) and [use-cases.md](../concept/use-cases.md). Feature docs must name persona impact; **unspecified behavior defaults to optimizing for Persona B** unless an ADR states otherwise.
-- A single failure-model document in [failure-model.md](../concept/failure-model.md), including the **explicit rejection** of baby-side acoustic alarms, cloud push/SMS/VoIP as alarm fallbacks, and mandatory second hardware.
+- **Three named personas** (A event, **B daily home as primary default**, C recycler) and a use-case matrix in [personas.md](../../../../docs/concept/personas.md) and [use-cases.md](../../../../docs/concept/use-cases.md). Feature docs must name persona impact; **unspecified behavior defaults to optimizing for Persona B** unless an ADR states otherwise.
+- A single failure-model document in [failure-model.md](../../../../docs/concept/failure-model.md), including the **explicit rejection** of baby-side acoustic alarms, cloud push/SMS/VoIP as alarm fallbacks, and mandatory second hardware.
 - **Option C is REJECTED** for the same reasons as in the review.
 
 **Personas vs. product UX:** The three personas **must not** drive separate app layouts, skins, or mandatory “modes” the user must pick before every trip. Real users move across contexts (home daily **and** occasional events). Personas inform **requirements, acceptance tests, and adaptive defaults** (network, battery, honesty about data use) -- not a forked experience.
@@ -60,7 +60,7 @@ This ADR binds those outcomes so feature docs and UX can align.
 ### Negative
 
 - More onboarding and copy; risk of "too much text" unless tightly edited.
-- Headphones vs speaker trade-off resolved per [ADR-011](../../openspec/changes/archive/2026-10-21-adr-011-audio-routing-parent-side/design.md) (unified default + Advanced); optional metered-network alert emphasis in [notifications-alerts.md](../features/notifications-alerts.md).
+- Headphones vs speaker trade-off resolved per [ADR-011](../2026-10-21-adr-011-audio-routing-parent-side/design.md) (unified default + Advanced); optional metered-network alert emphasis in [notifications-alerts.md](../../../../docs/features/notifications-alerts.md).
 
 ### Risks
 

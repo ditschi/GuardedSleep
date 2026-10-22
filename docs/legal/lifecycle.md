@@ -1,6 +1,6 @@
 # Project and app lifecycle (trust, updates, continuity)
 
-> STATUS: PROPOSED -- companion to [concept review 2026-05](../reviews/concept-review-2026-05.md) (IMP-6) and [ADR-009](../decisions/ADR-009-personas-and-failure-model.md).
+> STATUS: PROPOSED -- companion to [concept review 2026-05](../reviews/concept-review-2026-05.md) (IMP-6) and [ADR-009](../../openspec/changes/archive/2026-10-21-adr-009-personas-and-failure-model/design.md).
 
 ## Why this document exists
 

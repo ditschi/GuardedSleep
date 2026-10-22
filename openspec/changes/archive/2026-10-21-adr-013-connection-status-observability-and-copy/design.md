@@ -64,7 +64,7 @@ The baby unit's role is to **not wake the child** ([failure-model.md](../../../.
 - **Primary affordance:** the baby unit shows a small ambient indicator **only at the screen edge** (color + symbol), mirroring the parent (green / yellow / orange / red). When the baby device is in kiosk-immersive mode with the screen dimmed/off, the indicator does not light up the screen.
 - **Secondary observability (`failure-model.md` F-1):** after **~60 s of parent-heartbeat loss**, the baby unit's screen shows a **slow red pulse** -- ~10 s period, **dimmed**, **near-black** baseline (OLED-friendly), capped luminance. Designed for an adult walking past the room, **not** the sleeping child.
 - **On touch-wake of the baby unit while disconnected** the screen shows plain copy: "Parent device not responding -- we keep trying". Never shows IPs or technical detail.
-- **No audible alarm on the baby unit under any connection-loss state** (binding from [ADR-009](../../../../docs/decisions/ADR-009-personas-and-failure-model.md) and [failure-model.md](../../../../docs/concept/failure-model.md)).
+- **No audible alarm on the baby unit under any connection-loss state** (binding from [ADR-009](../2026-10-21-adr-009-personas-and-failure-model/design.md) and [failure-model.md](../../../../docs/concept/failure-model.md)).
 
 ### 4. Network-mode banner (Wi-Fi / cellular / local)
 
@@ -131,10 +131,10 @@ When network handoff drops the session while Listen is ON:
 
 ## Discarded alternatives
 
-| Alternative                                                    | Reason                                                                                                                                                                             |
-| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Always-on "Now on Wi-Fi / mobile" mode-banner                  | Default-off; only on for sustained changes or opt-in (see §4).                                                                                                                     |
-| Baby-side audible alarm on disconnect                          | Wakes the child; binding rejection in [ADR-009](../../../../docs/decisions/ADR-009-personas-and-failure-model.md) / [failure-model.md](../../../../docs/concept/failure-model.md). |
-| Bright baby-screen flash on disconnect                         | Wakes the child by light; rejected in [failure-model.md](../../../../docs/concept/failure-model.md). Only **slow dim red pulse** survived.                                         |
-| Loud audible parent alarm on every disconnect <20 s            | Alarm fatigue; replaced by failure-model escalation table.                                                                                                                         |
-| Technical text "WebSocket closed (1006)" / IP / port for users | Reserved for Advanced → Diagnostics.                                                                                                                                               |
+| Alternative                                                    | Reason                                                                                                                                                                       |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Always-on "Now on Wi-Fi / mobile" mode-banner                  | Default-off; only on for sustained changes or opt-in (see §4).                                                                                                               |
+| Baby-side audible alarm on disconnect                          | Wakes the child; binding rejection in [ADR-009](../2026-10-21-adr-009-personas-and-failure-model/design.md) / [failure-model.md](../../../../docs/concept/failure-model.md). |
+| Bright baby-screen flash on disconnect                         | Wakes the child by light; rejected in [failure-model.md](../../../../docs/concept/failure-model.md). Only **slow dim red pulse** survived.                                   |
+| Loud audible parent alarm on every disconnect <20 s            | Alarm fatigue; replaced by failure-model escalation table.                                                                                                                   |
+| Technical text "WebSocket closed (1006)" / IP / port for users | Reserved for Advanced → Diagnostics.                                                                                                                                         |

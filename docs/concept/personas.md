@@ -1,6 +1,6 @@
 # Personas
 
-> STATUS: PROPOSED -- to be finalized via [ADR-009](../decisions/ADR-009-personas-and-failure-model.md) (in preparation).
+> STATUS: PROPOSED -- to be finalized via [ADR-009](../../openspec/changes/archive/2026-10-21-adr-009-personas-and-failure-model/design.md) (in preparation).
 >
 > **Why this document exists**: Until 2026-05, the project **implicitly** optimized for **Persona B -- daily home** ("sleep-deprived parent at 3 AM", nursery + living room, same WiFi every night) **without naming that persona**. The [concept review 2026-05](../reviews/concept-review-2026-05.md) (finding CRIT-1) surfaced that this **unwritten default** caused trade-offs to silently hurt two **other** groups: **Persona A** (event-only) and **Persona C** (hardware recyclers). This document **names all three** so features can declare whom they optimize for.
 
@@ -123,7 +123,7 @@ This matrix shows which features primarily serve which persona, and which featur
 | Headphone-vs-speaker alarm routing                                 | Headphone-friendly                        | Speaker-friendly                | Speaker-friendly       | **Unified** default: follow system; Advanced can prefer speaker -- [ADR-011](../../openspec/changes/archive/2026-10-21-adr-011-audio-routing-parent-side/design.md). |
 | Mobile data / roaming warnings                                     | Critical                                  | Rare                            | Rare                   | CRIT-3: **unified** UX -- warn when OS reports metered/roaming on Internet path, regardless of persona.                                                              |
 | Auto-resume after reboot                                           | Less important                            | Critical                        | Critical               | IMP-5: single sensible default for all (baby unit auto-resume on); Advanced may expose toggles.                                                                      |
-| Baby-unit self-test (mic, WiFi, battery)                           | Useful                                    | Useful                          | **Critical**           | Drives [ADR-010](../decisions/ADR-010-baby-unit-hardware-requirements.md) minimum-hardware decision.                                                                 |
+| Baby-unit self-test (mic, WiFi, battery)                           | Useful                                    | Useful                          | **Critical**           | Drives [ADR-010](../../openspec/changes/archive/2026-10-21-adr-010-baby-unit-hardware-requirements/design.md) minimum-hardware decision.                             |
 | Heartbeat / connection-loss escalation                             | Critical                                  | Critical                        | Critical (more often)  | Aligned.                                                                                                                                                             |
 | Multi-parent (Phase 2)                                             | Backup at distance                        | Convenience + failover          | Convenience + failover | Failover dimension is new -- see [failure-model.md](failure-model.md).                                                                                               |
 | In-app data-volume monitor                                         | Critical                                  | Optional                        | Optional               | Persona A-specific.                                                                                                                                                  |
@@ -132,7 +132,7 @@ This matrix shows which features primarily serve which persona, and which featur
 
 ## Unified app -- personas do not fork the UI
 
-> STATUS: DECIDED -- product direction (2026-05); aligns with [ADR-009](../decisions/ADR-009-personas-and-failure-model.md) and [user-interface.md](../features/user-interface.md).
+> STATUS: DECIDED -- product direction (2026-05); aligns with [ADR-009](../../openspec/changes/archive/2026-10-21-adr-009-personas-and-failure-model/design.md) and [user-interface.md](../features/user-interface.md).
 
 The same app install must serve **Persona B tonight and Persona A next month** without looking or behaving like a different product. **Connection path, alert emphasis, and data-use honesty** adapt to **observed context** (same SSID but isolated AP vs. real LAN path, metered cellular vs. home WiFi, captive portal failure). Users opt into **specific behaviors** only where unavoidable (e.g. roaming acknowledgment, Advanced audio override) -- not by declaring a lifelong “persona profile” at first launch.
 
