@@ -1,6 +1,6 @@
 # Technical Analysis
 
-This document records the technical analysis that informed the architecture. **Authoritative MVP decisions:** [Architecture Decision Records](../decisions/README.md). If this document and an ADR disagree, **the ADR wins**.
+This document records the technical analysis that informed the architecture. **Authoritative MVP decisions:** [Architecture Decision Records](../../openspec/changes/archive/README.md). If this document and an ADR disagree, **the ADR wins**.
 
 > **Partially superseded (2026-10-20):** the platform analysis recommended the Hybrid Web App + Capacitor; that was replaced by native clients on a shared Rust core ([ADR-015](../../openspec/changes/archive/2026-10-21-adr-015-native-clients-with-shared-rust-core/design.md), [ADR-020](../../openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md)). Distribution wording on F-Droid is superseded by [ADR-021](../../openspec/changes/archive/2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md) §3 (Play and GitHub APK at alpha, IzzyOnDroid at beta, F-Droid main repository `DEFERRED`). The Capacitor sections stay as decision history.
 
@@ -351,7 +351,7 @@ Self-hosted coturn recommended for production. EU STUN servers as fallback. User
 
 ## 5. Audio Processing
 
-> STATUS: DECIDED (baseline) -- Requirements in [audio-monitoring.md](../features/audio-monitoring.md); Opus DTX / capture behavior validated in PoC per [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md).
+> STATUS: DECIDED (baseline) -- Requirements in [audio-monitoring spec](../../openspec/specs/audio-monitoring/spec.md); Opus DTX / capture behavior validated in PoC per [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md).
 
 **Question**: How do we capture and process audio on the baby unit?
 
@@ -552,7 +552,7 @@ As of the current tree:
 ### Phase 2 extension (multi-parent, planned)
 
 - **After MVP 1:1 is validated:** up to **4** parent devices per **one** baby device (hard product cap).
-- **Add device:** same QR workflow as initial pairing (`Add device` → show QR → scan). **Either** the baby or an already-paired **parent** may display the QR; on the baby, **kiosk unlock + explicit action** is required first (see [device-management.md](../features/device-management.md)).
+- **Add device:** same QR workflow as initial pairing (`Add device` → show QR → scan). **Either** the baby or an already-paired **parent** may display the QR; on the baby, **kiosk unlock + explicit action** is required first (see [device-setup spec](../../openspec/specs/device-setup/spec.md)).
 
 ### Pre-Negotiated Audio: How It Works
 

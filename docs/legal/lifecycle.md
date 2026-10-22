@@ -17,7 +17,7 @@ This document states **honest expectations** and the **minimum continuity commit
 ## Saved connections and continuity
 
 - **Export / import (IDEA Phase 2+):** Allow advanced users to export **non-secret** connection metadata (names, signaling URLs) and re-import after reinstall. **Secrets remain in keystore** -- export must never include raw PSK material.
-- **Pairing redo:** If export is unavailable, users always retain the QR re-pair path ([connectivity-pairing.md](../features/connectivity-pairing.md)).
+- **Pairing redo:** If export is unavailable, users always retain the QR re-pair path ([pairing spec](../../openspec/specs/pairing/spec.md)).
 
 ## Relationship to privacy policy
 

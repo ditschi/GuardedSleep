@@ -1,11 +1,11 @@
 # Contributing
 
-Thank you for helping improve **GuardedSleep**. This repository combines product documentation, ADRs, and (soon) application code in one place.
+Thank you for helping improve **GuardedSleep**. This repository combines the product specification (OpenSpec), documentation and application code in one place.
 
 ## Where to start
 
-- Read the [Vision](docs/concept/vision.md) and [Feature overview](docs/features/README.md).
-- Architecture decisions live under [docs/decisions/](docs/decisions/README.md).
+- Read the [Vision](docs/concept/vision.md), the current behaviour in [`openspec/specs/`](openspec/specs/) and the [backlog](docs/backlog.md).
+- Changes to behaviour, scope or architecture start as an OpenSpec change (`/opsx:propose`, see [AGENTS.md §6](AGENTS.md)); past decisions, including the former ADRs, are in the [decision archive](openspec/changes/archive/README.md).
 
 ## Development setup
 

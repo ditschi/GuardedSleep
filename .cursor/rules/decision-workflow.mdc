@@ -32,8 +32,8 @@ When suggesting multiple options or approaches to the user, follow this protocol
 ## Documenting Outcomes
 
 When the user selects or rejects options:
-- Selected options: update the relevant document, mark as `STATUS: DECIDED` with the rationale
-- Rejected options: move to the "Discarded Alternatives" section of the relevant document with the reason for rejection
+- Selected options: record them in the OpenSpec change's `design.md` (Decisions, with the rationale); if nothing is built yet and no change exists, add a `PLANNED` item to `docs/backlog.md`
+- Rejected options: keep them under "Discarded alternatives" in the change's `design.md` (or in the "Rejected" section of `docs/backlog.md`) with the reason for rejection
 - NEVER delete rejected options -- they provide valuable context for future decisions
 
 ## When NOT to Present Options

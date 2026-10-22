@@ -60,7 +60,7 @@ This ADR binds those outcomes so feature docs and UX can align.
 ### Negative
 
 - More onboarding and copy; risk of "too much text" unless tightly edited.
-- Headphones vs speaker trade-off resolved per [ADR-011](../2026-10-21-adr-011-audio-routing-parent-side/design.md) (unified default + Advanced); optional metered-network alert emphasis in [notifications-alerts.md](../../../../docs/features/notifications-alerts.md).
+- Headphones vs speaker trade-off resolved per [ADR-011](../2026-10-21-adr-011-audio-routing-parent-side/design.md) (unified default + Advanced); optional metered-network alert emphasis in [parent-alerts spec](../../../specs/parent-alerts/spec.md).
 
 ### Risks
 

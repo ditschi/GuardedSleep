@@ -1,5 +1,7 @@
 # Alpha UX flows, screens and copy
 
+> **Reference only (2026-10-22):** built behaviour from this document is normative in [`openspec/specs/`](../../openspec/specs/) (`parent-alerts`, `audio-monitoring`, `connection-status`, `device-setup`); where they differ, the spec wins. Screens and layouts here remain a design reference for the planned UX reviews in the [backlog](../backlog.md).
+
 > `STATUS: UNDER DISCUSSION` — UX/Usability proposal (2026-10-19) for the alpha defined in [ADR-018](../../openspec/changes/archive/2026-10-20-adr-018-alpha-milestone-scope-and-trust-features/design.md). It renders the link model of [ADR-017](../../openspec/changes/archive/2026-10-20-adr-017-link-recovery-and-connection-supervision/design.md) and the observability rules of [ADR-013](../../openspec/changes/archive/2026-10-21-adr-013-connection-status-observability-and-copy/design.md). Where this document deviates from an ADR, the deviation is listed in [§0](#0-proposed-amendments-to-adrs) and stays a proposal until the ADR is amended.
 >
 > **Scope:** native Android app (baby + parent, Compose) and the web client (baby + parent, browser). Replaces the PoC UI in `apps/android/.../poc/` and the current SvelteKit routes (the web client is rebuilt as `apps/web`, see [ADR-020](../../openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md) §5).

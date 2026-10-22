@@ -23,7 +23,7 @@ Spawn `refactor-scout` (foreground) with: the scout worktree path, the last swee
 
 ## 3. Triage
 
-Pick at most `3 − (open sweep PRs)` findings. Drop any finding that, after your own quick look at the cited code, is wrong, behavior-changing, needs an ADR, or touches §9 features. Keep the dropped ones and the scout's "Needs decision" list for the report.
+Pick at most `3 − (open sweep PRs)` findings. Drop any finding that, after your own quick look at the cited code, is wrong, behavior-changing, needs an OpenSpec change, or touches §9 features. Keep the dropped ones and the scout's "Needs decision" list for the report.
 
 ## 4. Implement each finding (sequentially)
 

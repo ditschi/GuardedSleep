@@ -22,7 +22,7 @@ The application must work on Android and iOS phones and tablets. Desktop support
 ### Open Source and Community-Driven
 
 - The full source code is publicly available and auditable
-- Development decisions are documented transparently (see [decisions](../decisions/README.md))
+- Development decisions are documented transparently (see [decisions](../../openspec/changes/archive/README.md))
 - Community contributions are welcome and guided by clear documentation
 
 ### Usable by Non-Technical People
@@ -30,7 +30,7 @@ The application must work on Android and iOS phones and tablets. Desktop support
 - Setup must be straightforward (ideally: install, scan QR code, done)
 - Daily operation must be simple enough for a sleep-deprived parent at 3 AM
 - The system should not require technical knowledge to deploy or maintain
-- **Personas and failure expectations** are documented in [personas.md](personas.md), [use-cases.md](use-cases.md), and [failure-model.md](failure-model.md); binding decision: [ADR-009](../../openspec/changes/archive/2026-10-21-adr-009-personas-and-failure-model/design.md) (PROPOSED). Personas are **design and test lenses** (who we do not forget); they **do not** mean different app chrome or divergent primary flows -- the same build must work at home tonight and at a wedding tomorrow. **Engineering and copy priority** still stress Persona B (daily home) so edge cases (A/C) are not silently broken; **runtime behavior** is meant to be **context-aware** (network type, captive portal failure, metered data) per [connectivity-pairing.md](../features/connectivity-pairing.md).
+- **Personas and failure expectations** are documented in [personas.md](personas.md), [use-cases.md](use-cases.md), and [failure-model.md](failure-model.md); binding decision: [ADR-009](../../openspec/changes/archive/2026-10-21-adr-009-personas-and-failure-model/design.md) (PROPOSED). Personas are **design and test lenses** (who we do not forget); they **do not** mean different app chrome or divergent primary flows -- the same build must work at home tonight and at a wedding tomorrow. **Engineering and copy priority** still stress Persona B (daily home) so edge cases (A/C) are not silently broken; **runtime behavior** is meant to be **context-aware** (network type, captive portal failure, metered data) per [pairing spec](../../openspec/specs/pairing/spec.md).
 
 ## App name and store discovery (ASO)
 

@@ -25,13 +25,14 @@ context: |
   Tiers: T0 = alpha, T1 = beta, T2 = 1.0+. Do not plan work for a later tier. Features marked
   DEFERRED, IDEA or REJECTED in AGENTS.md section 9 are off-limits unless the change says so.
 
-  Transition: docs/decisions/ (ADR-001..021) stays binding until each ADR is migrated into
-  openspec/changes/archive/ and its outcome into openspec/specs/. ADR sections marked "Migrated to
-  OpenSpec" are normative in the spec; every other ADR section wins over a spec.
+  openspec/specs/ describes what is built; decided but unbuilt work is an active change; ideas,
+  deferred and rejected items live in docs/backlog.md. History, including the 21 former ADRs, is in
+  openspec/changes/archive/ (references like "ADR-017 §6" resolve there).
 
 rules:
   proposal:
     - Name the tier (T0/T1/T2) the change belongs to and what is explicitly out of scope.
+    - State the persona impact (docs/concept/personas.md): which persona it serves, which it trades off.
     - Changes to architecture, scope, the security model or a core concept say so in Why, so the
       Critical Reviewer role is applied (AGENTS.md section 6).
   design:

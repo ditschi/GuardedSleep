@@ -1,6 +1,6 @@
 # OpenSpec onboarding: GuardedSleep
 
-STATUS: UNDER DISCUSSION (temporary onboarding note, 2026-10-21; delete once the ADR migration in section 6 is finished).
+Archived 2026-10-22: the onboarding note written for the switch to OpenSpec, kept as the design record of the toolchain review of 2026-10-20/21 and of the ADR migration.
 
 Purpose: everything OpenSpec needs for the initial setup (`openspec init` → `openspec/project.md`, baseline specs, open changes), plus the decisions and reasoning from the toolchain-review session of 2026-10-20/21.
 
@@ -227,7 +227,7 @@ Branches: `docs/toolchain-realignment` → `chore/toolchain-wave-1` (→ `-wave-
 
 ## 5. Open points
 
-Moved to [`backlog.md`](backlog.md) (2026-10-21). How OpenSpec and ADRs coexist is decided: the ADRs are migrated and then removed (section 6).
+Moved to [`backlog.md`](../../../../docs/backlog.md) (2026-10-21). How OpenSpec and ADRs coexist is decided: the ADRs are migrated and then removed (section 6).
 
 ---
 
@@ -241,14 +241,14 @@ Goal: one system. `docs/decisions/` disappears; every ADR ends up as an archived
 - **Wave 1 is not ported.** Its outcome reaches the specs when ADR-020 is migrated into `dev-toolchain`; git history and ADR-020 keep the rest.
 - **Waves 2 and 3 become OpenSpec changes**, smaller than a wave (wave 2: e.g. `add-ffi-wasm-facades`, `add-rust-signaling-server`, `swap-webrtc-sdk`, `split-android-modules`). A change can only modify requirements that exist, so the capabilities a wave touches are migrated before its changes are proposed (wave 2: `pairing`, `signaling-relay`).
 - **Remaining capabilities are migrated with the skills.** The planner runs `/opsx:explore` on the source ADRs and feature docs, then `/opsx:propose migrate-<capability>`. Everything clear is answered without asking; every real doubt (contradiction, code drift, unclear status, scope) is asked interactively and the answer is recorded in the change's `design.md`. Then `/opsx:apply`, `/opsx:archive` and one commit. The `link-supervision` pilot is not redone; its spec is reviewed in the `pairing` + `signaling-relay` run.
-- **Backlog:** `IDEA`, `DEFERRED`, `REJECTED` and decided-but-not-started (`PLANNED`) items live in [`backlog.md`](backlog.md); GitHub issues once outside contributors arrive.
+- **Backlog:** `IDEA`, `DEFERRED`, `REJECTED` and decided-but-not-started (`PLANNED`) items live in [`backlog.md`](../../../../docs/backlog.md); GitHub issues once outside contributors arrive.
 - **Formerly `PROPOSED` ADRs are decided:** 004 amendment, 009, 010 (amended), 011, 012 (goals), 013 (concept), 015, 016. The re-evaluations attached to 010–013 and the security audit for 004 are `PLANNED` in the backlog.
 
 ### Procedure per capability (one commit)
 
 1. Write `openspec/specs/<capability>/spec.md` from the ADR sections and the `DECIDED` feature-doc items listed below. Resolve contradictions in favour of the newest ADR, check numbers against the code, and note what changed in the commit message.
 2. Add a `Migrated to OpenSpec` note under the header of each source ADR, naming the sections it now covers. Those sections become normative in the spec; the rest of the ADR stays binding.
-3. In the feature doc, replace the migrated `DECIDED` text with a link to the spec, and move the capability's `IDEA`, `DEFERRED` and `REJECTED` items to [`backlog.md`](backlog.md).
+3. In the feature doc, replace the migrated `DECIDED` text with a link to the spec, and move the capability's `IDEA`, `DEFERRED` and `REJECTED` items to [`backlog.md`](../../../../docs/backlog.md).
 4. When **every** section of an ADR is migrated (or the ADR is archive-only), archive it in the same commit:
    - `git mv` the ADR to `openspec/changes/archive/<decided-date>-adr-NNN-<slug>/design.md` (verbatim, so options, discarded alternatives and the `§` numbers cited in code comments stay valid);
    - add `proposal.md` (Why = the ADR's Context in two or three sentences; What Changes = the decision; Capabilities = the specs it fed);

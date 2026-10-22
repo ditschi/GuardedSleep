@@ -131,7 +131,7 @@ Even darker than night mode. Status dots only: 4dp diameter.
 
 **Probe / test alert:**
 
-- Small **Test** control (icon + label) in the status zone triggers a synthetic alert (see [notifications-alerts.md](../features/notifications-alerts.md)) so caregivers verify DND override + audio routing after updates or before leaving for an event.
+- Small **Test** control (icon + label) in the status zone triggers a synthetic alert (see [parent-alerts spec](../../openspec/specs/parent-alerts/spec.md)) so caregivers verify DND override + audio routing after updates or before leaving for an event.
 
 **Status bar (Zone 1):**
 
@@ -262,7 +262,7 @@ Even darker than night mode. Status dots only: 4dp diameter.
 
 ### 4. Settings Screen
 
-> **MVP structure:** split **Basic** vs **Advanced** (toggle at bottom of Basic). Advanced hides heartbeat, signaling URL, codec experiments, security diagnostics, and debug export ([user-interface.md](../features/user-interface.md)). **Parent alert output and gain** live under **Basic → Notifications** ([ADR-011](../../openspec/changes/archive/2026-10-21-adr-011-audio-routing-parent-side/design.md)).
+> **MVP structure:** split **Basic** vs **Advanced** (toggle at bottom of Basic). Advanced hides heartbeat, signaling URL, codec experiments, security diagnostics, and debug export ([device-setup spec](../../openspec/specs/device-setup/spec.md)). **Parent alert output and gain** live under **Basic → Notifications** ([ADR-011](../../openspec/changes/archive/2026-10-21-adr-011-audio-routing-parent-side/design.md)).
 
 **Basic**
 

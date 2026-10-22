@@ -21,12 +21,12 @@ One device acts as the **Baby Unit** (placed near the child), another as the **P
 
 ## Documentation
 
-- [Architecture Decision Records (ADRs)](docs/decisions/README.md) -- authoritative MVP decisions
+- [Specs (`openspec/specs/`)](openspec/specs/) -- what GuardedSleep does today, per capability
+- [Prepared changes (`openspec/changes/`)](openspec/changes/) and the [backlog](docs/backlog.md) -- decided work and ideas
+- [Decision archive](openspec/changes/archive/README.md) -- history, including the former ADRs
 - [Vision and Goals](docs/concept/vision.md)
 - [Initial Ideas and Brainstorm](docs/concept/initial-ideas.md)
-- [Feature Overview](docs/features/README.md)
 - [Technical Analysis](docs/technical/analysis.md)
-- [Architecture Decisions](docs/decisions/README.md)
 - [Development Roles](docs/roles/README.md)
 - [Contributing](CONTRIBUTING.md) — setup, hooks, CI, changelog expectations
 - **Self-hosted stack (Docker):** [docker/stack/README.md](docker/stack/README.md) — local build (`compose.yaml`) or pull from GHCR (`compose.ghcr.yaml`); image tags and CI: [ADR-008](openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md)
@@ -35,7 +35,7 @@ One device acts as the **Baby Unit** (placed near the child), another as the **P
 
 See **[CONTRIBUTING.md](CONTRIBUTING.md)** and **[docs/contributing/development.md](docs/contributing/development.md)** for Dev Container usage, local tool setup (mise, `just`; transitioning from `pnpm`/`pre-commit`), and how to run the same checks as GitHub Actions. For release/changelog automation plans, see **[docs/contributing/release-and-changelog.md](docs/contributing/release-and-changelog.md)**.
 
-If you want to contribute ideas or review proposals, start with the [Vision](docs/concept/vision.md) and the [Feature Overview](docs/features/README.md).
+If you want to contribute ideas or review proposals, start with the [Vision](docs/concept/vision.md) and the [Feature Overview](docs/backlog.md).
 
 ## License
 

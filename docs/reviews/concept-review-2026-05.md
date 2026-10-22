@@ -33,7 +33,7 @@ Failure-Model and Use-Cases were spun out as separate documents during the revie
 
 **CRIT-1 -- No documented personas; "the user" is implicitly only Persona B.**
 
-_What is missing_: no persona, no user journey, no use-case matrix. The only Persona-A hint in the entire codebase is one line in [user-interface.md](../features/user-interface.md) (Screen Wake Lock "for party/event scenarios").
+_What is missing_: no persona, no user journey, no use-case matrix. The only Persona-A hint in the entire codebase is one line in [device-setup spec](../../openspec/specs/device-setup/spec.md) (Screen Wake Lock "for party/event scenarios").
 
 _Why it matters_: every default (heartbeat, audio routing, battery, onboarding) is silently optimized for Persona B. Persona A and C inherit suboptimal defaults without anyone having decided that.
 
@@ -54,15 +54,15 @@ Hotspot fallback fails the moment the parent leaves the hotspot's physical range
 
 _Why it matters_: the most emotionally important use case ("baby monitor for a wedding") is the one most likely to fail silently, exactly when failure is most painful.
 
-_Action_: new "Out-of-Home / Captive-WLAN" section in [connectivity-pairing.md](../features/connectivity-pairing.md). Defined UC-3 in [use-cases.md](../concept/use-cases.md) with Cellular-first as the recommended Persona-A path. Added PoC test for captive-WLAN to [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md).
+_Action_: new "Out-of-Home / Captive-WLAN" section in [pairing spec](../../openspec/specs/pairing/spec.md). Defined UC-3 in [use-cases.md](../concept/use-cases.md) with Cellular-first as the recommended Persona-A path. Added PoC test for captive-WLAN to [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md).
 
 ---
 
 **CRIT-3 -- Mobile data volume and roaming costs are invisible for Persona A.**
 
-_What is missing_: [communication.md](../features/communication.md) lists 0.2-18 MB/h for silence frames; active listen mode is ~10-18 MB/h. A 6-hour wedding event easily produces 100-300 MB. No in-app counter, no warning, no roaming hint.
+_What is missing_: [audio-monitoring spec](../../openspec/specs/audio-monitoring/spec.md) lists 0.2-18 MB/h for silence frames; active listen mode is ~10-18 MB/h. A 6-hour wedding event easily produces 100-300 MB. No in-app counter, no warning, no roaming hint.
 
-_Action_: in-app data-volume monitor (IDEA -> MVP), Roaming warning when activating Internet mode (DECIDED MVP), session-data-cap setting (Phase 2). Tracked in [communication.md](../features/communication.md).
+_Action_: in-app data-volume monitor (IDEA -> MVP), Roaming warning when activating Internet mode (DECIDED MVP), session-data-cap setting (Phase 2). Tracked in [audio-monitoring spec](../../openspec/specs/audio-monitoring/spec.md).
 
 ---
 
@@ -84,7 +84,7 @@ Concrete safety risks not addressed:
 4. Microphone quality variation.
 5. Frozen security updates.
 
-_Action_: [ADR-010 (PROPOSED)](../../openspec/changes/archive/2026-10-21-adr-010-baby-unit-hardware-requirements/design.md) defines minimum Android API + Self-Test + battery safety notice. New "Baby-Unit Self-Test" feature in [device-management.md](../features/device-management.md) (Mic, WiFi latency, battery health, WebView version) as DECIDED MVP. Added PoC test for Persona-C devices to ADR-001.
+_Action_: [ADR-010 (PROPOSED)](../../openspec/changes/archive/2026-10-21-adr-010-baby-unit-hardware-requirements/design.md) defines minimum Android API + Self-Test + battery safety notice. New "Baby-Unit Self-Test" feature in [device-setup spec](../../openspec/specs/device-setup/spec.md) (Mic, WiFi latency, battery health, WebView version) as DECIDED MVP. Added PoC test for Persona-C devices to ADR-001.
 
 ---
 
@@ -102,7 +102,7 @@ _Action_: five-part response:
 
 - **5a** -- New `failure-model.md`, explicit REJECT-list (acoustic siren, Cloud push, SMS, VoIP), classic baby-monitor analogy.
 - **5b** -- Observability: Ambient-Glow on parent screen, Persistent Foreground Notification, Indicator-Training in onboarding (NEW-1).
-- **5c** -- One-tap reconnect from saved connection -- specification hardened in [connectivity-pairing.md](../features/connectivity-pairing.md).
+- **5c** -- One-tap reconnect from saved connection -- specification hardened in [pairing spec](../../openspec/specs/pairing/spec.md).
 - **5d** -- Phase-2 Multi-Parent reframed from comfort to **failover**: when Phone-1 is unobservable, baby unit escalates to Phone-2.
 - **5e** -- Pre-monitoring parent-battery reminder; Persona-aware default to warn at <30 %.
 
@@ -114,7 +114,7 @@ Additionally, this revision drove two new findings (NEW-1, NEW-2 below) and a ne
 
 _What is missing_: a single Settings screen mixes "Volume threshold" with "Heartbeat 5-30s" and "Signaling URL override". Non-technical Persona A/B easily nudges a critical parameter and silently degrades monitoring.
 
-_Action_: Basic/Advanced toggle in [user-interface.md](../features/user-interface.md) and [ui-design.md](../technical/ui-design.md):
+_Action_: Basic/Advanced toggle in [device-setup spec](../../openspec/specs/device-setup/spec.md) and [ui-design.md](../technical/ui-design.md):
 
 - Basic (default): Notifications, Display, Saved Connections, Battery & Background (auto-wizard), About.
 - Advanced (sticky toggle with warning): Heartbeat, Detection-Duration, Audio Codec, Signaling URL, VPN mode, Emoji-Fingerprint, Debug Logs, Session Data Cap, Self-Test, Persona-Profile switch.
@@ -125,7 +125,7 @@ Hard rule: all defaults work for both personas without entering Advanced.
 
 **CRIT-7 -- Phone-call interruption and Bluetooth-headphone routing are undocumented; ADR required.**
 
-_What is missing_: [notifications-alerts.md](../features/notifications-alerts.md) leaves open: "Should alerts play through the phone speaker even if headphones are connected? (Likely yes for safety)". For Persona A at a wedding, "Likely yes" is wrong -- they may be wearing in-ears specifically to monitor discreetly.
+_What is missing_: [parent-alerts spec](../../openspec/specs/parent-alerts/spec.md) leaves open: "Should alerts play through the phone speaker even if headphones are connected? (Likely yes for safety)". For Persona A at a wedding, "Likely yes" is wrong -- they may be wearing in-ears specifically to monitor discreetly.
 
 _Action_: [ADR-011 (PROPOSED)](../../openspec/changes/archive/2026-10-21-adr-011-audio-routing-parent-side/design.md) -- Option C (persona-dependent default, overridable in Advanced). Phone-call-interruption behavior to be specified and validated in PoC.
 
@@ -135,23 +135,23 @@ _Action_: [ADR-011 (PROPOSED)](../../openspec/changes/archive/2026-10-21-adr-011
 
 **IMP-1 -- Expectation gap vs. hardware baby monitors.**
 
-Daily users switching from Avent / Philips will expect: nightlight, lullabies (REJECTED -- but should be sign-posted), talk-back (DEFERRED Phase 2 -- top-3 expectation), temp/humidity sensor (IDEA), standalone receiver mode (no, parent phone IS the receiver). Captured in [user-interface.md](../features/user-interface.md) About section + FAQ.
+Daily users switching from Avent / Philips will expect: nightlight, lullabies (REJECTED -- but should be sign-posted), talk-back (DEFERRED Phase 2 -- top-3 expectation), temp/humidity sensor (IDEA), standalone receiver mode (no, parent phone IS the receiver). Captured in [device-setup spec](../../openspec/specs/device-setup/spec.md) About section + FAQ.
 
 **IMP-2 -- Persona-A Pre-Departure Wizard missing.**
 
-Existing "Verbindung testen" button is too passive. Persona A needs: pre-flight checklist, probe-alarm, 60-second synthetic stream test, at the venue, before parents leave the room. Added to [notifications-alerts.md](../features/notifications-alerts.md).
+Existing "Verbindung testen" button is too passive. Persona A needs: pre-flight checklist, probe-alarm, 60-second synthetic stream test, at the venue, before parents leave the room. Added to [parent-alerts spec](../../openspec/specs/parent-alerts/spec.md).
 
 **IMP-3 -- Multiple children / siblings missing.**
 
-Multi-baby (Geschwister) is not even an IDEA today. MVP is 1+1, Phase 2 is 1+4 parents (not 2+1). Captured as UC-5 in [use-cases.md](../concept/use-cases.md) and listed as Phase 3+ IDEA in [features/README.md](../features/README.md).
+Multi-baby (Geschwister) is not even an IDEA today. MVP is 1+1, Phase 2 is 1+4 parents (not 2+1). Captured as UC-5 in [use-cases.md](../concept/use-cases.md) and listed as Phase 3+ IDEA in [backlog](../backlog.md).
 
 **IMP-4 -- Pair-Lifecycle / babysitter risk.**
 
-Once paired, always paired. No revocation, no expiry. Risk for grandparents / former babysitters / stolen phones. Action: pair revocation + key rotation moved from IDEA to DECIDED Phase 2 in [connectivity-pairing.md](../features/connectivity-pairing.md). New "Babysitter Mode" (SUG-4 below) for time-limited pairing.
+Once paired, always paired. No revocation, no expiry. Risk for grandparents / former babysitters / stolen phones. Action: pair revocation + key rotation moved from IDEA to DECIDED Phase 2 in [pairing spec](../../openspec/specs/pairing/spec.md). New "Babysitter Mode" (SUG-4 below) for time-limited pairing.
 
 **IMP-5 -- Auto-Resume / Boot resilience.**
 
-After OS update or power outage, the baby unit does NOT auto-restart monitoring; user thinks they are monitoring but are silently offline. Action: Auto-Resume Baby-Mode after reboot as DECIDED MVP (Advanced setting, default ON for Persona B). Documented in [device-management.md](../features/device-management.md).
+After OS update or power outage, the baby unit does NOT auto-restart monitoring; user thinks they are monitoring but are silently offline. Action: Auto-Resume Baby-Mode after reboot as DECIDED MVP (Advanced setting, default ON for Persona B). Documented in [device-setup spec](../../openspec/specs/device-setup/spec.md).
 
 **IMP-6 -- Long-term lifecycle / single-developer risk.**
 
@@ -159,23 +159,23 @@ Single-dev project, security patch cadence and store availability not guaranteed
 
 **IMP-7 -- Range expectations vs. hardware baby monitors.**
 
-"100 m like my Avent SCD843" is not what GuardedSleep delivers -- it delivers either unlimited (within WLAN/internet) or 10-30 m (hotspot). Needs explicit FAQ; folded into the Hardware-vs-Software FAQ in [user-interface.md](../features/user-interface.md).
+"100 m like my Avent SCD843" is not what GuardedSleep delivers -- it delivers either unlimited (within WLAN/internet) or 10-30 m (hotspot). Needs explicit FAQ; folded into the Hardware-vs-Software FAQ in [device-setup spec](../../openspec/specs/device-setup/spec.md).
 
 **IMP-8 -- Battery-optimization deep-link is OEM hell.**
 
-OEM-specific behavior (Samsung, Xiaomi, Huawei, OnePlus) varies wildly. Persona C is on the most aggressive OEMs. Action: Lakmus test -- count heartbeats over a 30 min window after onboarding to detect silent OS-kill (IDEA in [device-management.md](../features/device-management.md)).
+OEM-specific behavior (Samsung, Xiaomi, Huawei, OnePlus) varies wildly. Persona C is on the most aggressive OEMs. Action: Lakmus test -- count heartbeats over a 30 min window after onboarding to detect silent OS-kill (IDEA in [device-setup spec](../../openspec/specs/device-setup/spec.md)).
 
 ---
 
 ### 2.3 SUGGESTION
 
-- **SUG-1** -- Persona-based onboarding (single question at first launch). Documented in [user-interface.md](../features/user-interface.md).
-- **SUG-2** -- Probe-Alarm button always visible on parent screen. DECIDED MVP in [notifications-alerts.md](../features/notifications-alerts.md).
-- **SUG-3** -- Emoji-Fingerprints as default in the hidden Expert security view. DECIDED in [user-interface.md](../features/user-interface.md).
-- **SUG-4** -- "Babysitter-Mode": time-limited pairing (e.g. 12 h). Captured as Phase 2 IDEA in [connectivity-pairing.md](../features/connectivity-pairing.md) and as UC-2 in [use-cases.md](../concept/use-cases.md).
-- **SUG-5** -- Hardware vs Software FAQ section in About. Captured as IDEA in [user-interface.md](../features/user-interface.md).
-- **SUG-6** -- Session data cap for Persona A (mobile data protection). Captured in [communication.md](../features/communication.md).
-- **SUG-7** -- Baby-Unit battery-health self-test on first start (battery age, swelling warning). Captured in [device-management.md](../features/device-management.md). Drives ADR-010.
+- **SUG-1** -- Persona-based onboarding (single question at first launch). Documented in [device-setup spec](../../openspec/specs/device-setup/spec.md).
+- **SUG-2** -- Probe-Alarm button always visible on parent screen. DECIDED MVP in [parent-alerts spec](../../openspec/specs/parent-alerts/spec.md).
+- **SUG-3** -- Emoji-Fingerprints as default in the hidden Expert security view. DECIDED in [device-setup spec](../../openspec/specs/device-setup/spec.md).
+- **SUG-4** -- "Babysitter-Mode": time-limited pairing (e.g. 12 h). Captured as Phase 2 IDEA in [pairing spec](../../openspec/specs/pairing/spec.md) and as UC-2 in [use-cases.md](../concept/use-cases.md).
+- **SUG-5** -- Hardware vs Software FAQ section in About. Captured as IDEA in [device-setup spec](../../openspec/specs/device-setup/spec.md).
+- **SUG-6** -- Session data cap for Persona A (mobile data protection). Captured in [audio-monitoring spec](../../openspec/specs/audio-monitoring/spec.md).
+- **SUG-7** -- Baby-Unit battery-health self-test on first start (battery age, swelling warning). Captured in [device-setup spec](../../openspec/specs/device-setup/spec.md). Drives ADR-010.
 
 ---
 
@@ -183,11 +183,11 @@ OEM-specific behavior (Samsung, Xiaomi, Huawei, OnePlus) varies wildly. Persona 
 
 **NEW-1 -- Indicator-Loss recognition must be trained.**
 
-If the safety model relies on the parent noticing a missing indicator, the parent must be taught what that looks like. Onboarding step: show "Connected" look, show "Disconnected" look, run a 5 s demonstration. Optional periodic re-training. Captured in [user-interface.md](../features/user-interface.md).
+If the safety model relies on the parent noticing a missing indicator, the parent must be taught what that looks like. Onboarding step: show "Connected" look, show "Disconnected" look, run a 5 s demonstration. Optional periodic re-training. Captured in [device-setup spec](../../openspec/specs/device-setup/spec.md).
 
 **NEW-2 -- Communicate the failure model before installation.**
 
-Play Store / F-Droid listings (F-Droid main deferred, ADR-021 §3) and the first onboarding slide must explicitly state: "Like every baby monitor, GuardedSleep cannot alert if your receiver phone dies. Keep it charged." Added as a Non-Goal in [vision.md](../concept/vision.md). Onboarding slide added to [user-interface.md](../features/user-interface.md).
+Play Store / F-Droid listings (F-Droid main deferred, ADR-021 §3) and the first onboarding slide must explicitly state: "Like every baby monitor, GuardedSleep cannot alert if your receiver phone dies. Keep it charged." Added as a Non-Goal in [vision.md](../concept/vision.md). Onboarding slide added to [device-setup spec](../../openspec/specs/device-setup/spec.md).
 
 ---
 

@@ -9,8 +9,8 @@
 - [ ] **User-visible change?** Add a bullet under `## [Unreleased]` in [CHANGELOG.md](../CHANGELOG.md) **or** rely on Release Please to pick it up from a `feat:` / `fix:` / `perf:` / `revert:` / `security:` commit (see [release-and-changelog.md §2](../docs/contributing/release-and-changelog.md)).
 - [ ] Ran **`just lint`** locally.
 - [ ] Conventional PR title (checked in CI; commits are not checked, ADR-020 §8).
-- [ ] Docs-only: status tags / ADR rules respected (see [`.cursor/rules/docs-conventions.mdc`](../.cursor/rules/docs-conventions.mdc) and [AGENTS.md §6.1](../AGENTS.md)).
-- [ ] Architecture/scope/security-model change? An ADR exists or is part of this PR (see [docs/decisions/](../docs/decisions/README.md) and [AGENTS.md §6.2](../AGENTS.md)).
+- [ ] Docs-only: backlog STATUS tags respected (see [`.cursor/rules/docs-conventions.mdc`](../.cursor/rules/docs-conventions.mdc) and [AGENTS.md §6](../AGENTS.md)).
+- [ ] Behaviour, architecture, scope or security-model change? The OpenSpec change is linked or part of this PR, and `openspec validate --all --strict` passes (see [AGENTS.md §6](../AGENTS.md)).
 
 <!-- For breaking changes only, uncomment and fill in:
 

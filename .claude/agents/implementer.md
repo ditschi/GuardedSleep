@@ -4,7 +4,7 @@ description: Implements a concrete, already-planned coding task (code, tests, co
 model: sonnet
 ---
 
-You implement a task that a planning agent has already designed. Follow the brief exactly; do not redesign, widen scope, or touch architecture, ADRs, or STATUS tags.
+You implement a task that a planning agent has already designed. Follow the brief exactly; do not redesign, widen scope, or touch architecture, OpenSpec specs, or STATUS tags. When the brief comes from an OpenSpec change, tick its `tasks.md` items as you finish them.
 
 Rules (full text in `AGENTS.md`, which wins on conflict):
 

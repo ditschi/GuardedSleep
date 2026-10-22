@@ -46,7 +46,7 @@ The following cases are exhaustive for the MVP scope. Each case lists: trigger, 
 - The persistent foreground notification disappears from the lock screen / notification shade.
 - The ambient-glow status indicator at the top of the parent screen is gone (because the app is gone).
 - "Always quiet since…" timer freezes.
-- When the parent next picks up their phone, they see the absence -- this is the trained recognition path (see [Indicator Training](../features/user-interface.md)).
+- When the parent next picks up their phone, they see the absence -- this is the trained recognition path (see [Indicator Training](../../openspec/specs/device-setup/spec.md)).
 
 **Observability on baby side**:
 
@@ -55,7 +55,7 @@ The following cases are exhaustive for the MVP scope. Each case lists: trigger, 
 
 **What the app does**:
 
-- Baby unit continues to record noise events locally (see [audio-monitoring.md](../features/audio-monitoring.md)).
+- Baby unit continues to record noise events locally (see [audio-monitoring spec](../../openspec/specs/audio-monitoring/spec.md)).
 - Baby unit keeps trying to reconnect in the background.
 - In Phase 2 multi-parent, baby unit escalates to other paired parent devices (see F-1a below).
 
@@ -69,7 +69,7 @@ The following cases are exhaustive for the MVP scope. Each case lists: trigger, 
 
 ### F-1a: Parent-1 dead, Parent-2 available (Phase 2 multi-parent failover)
 
-> STATUS: DECIDED for Phase 2 -- documented here, implemented in [device-management.md](../features/device-management.md) and [notifications-alerts.md](../features/notifications-alerts.md).
+> STATUS: DECIDED for Phase 2 -- documented here, implemented in [device-setup spec](../../openspec/specs/device-setup/spec.md) and [parent-alerts spec](../../openspec/specs/parent-alerts/spec.md).
 
 **Trigger**: Parent-1 unobservable (per F-1). Baby unit holds a second active DataChannel to Parent-2.
 
@@ -111,7 +111,7 @@ This is the **only privacy-conformant software backup** for the parent-dead case
 **What the app does**:
 
 - Both devices continue trying to reconnect via all known IP paths (saved local IP, signaling URL, VPN IP), using the **path-selector** introduced in [ADR-012](../../openspec/changes/archive/2026-10-21-adr-012-connection-model-offline-lan-and-handoff/design.md): primary signaling URL first, then each entry in `Saved Connections → Fallback signaling URLs`.
-- IP-sync mechanism ensures the latest known IPs are used (see [connectivity-pairing.md](../features/connectivity-pairing.md)).
+- IP-sync mechanism ensures the latest known IPs are used (see [pairing spec](../../openspec/specs/pairing/spec.md)).
 - Noise events on the baby side are buffered locally for delivery on reconnect.
 - UI escalation per [ADR-013](../../openspec/changes/archive/2026-10-21-adr-013-connection-status-observability-and-copy/design.md): ambient bar yellow → orange (20-60 s) → red (> 60 s) with gentle, then escalating vibration on the parent, slow red pulse on the baby (does not wake the child).
 
@@ -161,7 +161,7 @@ This is the **only privacy-conformant software backup** for the parent-dead case
 **What the app does**:
 
 - Saved Connections can be deleted on the user's own device.
-- Phase 2 ([connectivity-pairing.md](../features/connectivity-pairing.md)): **Pair revocation** -- any cluster member can remove a device, triggers re-keying.
+- Phase 2 ([pairing spec](../../openspec/specs/pairing/spec.md)): **Pair revocation** -- any cluster member can remove a device, triggers re-keying.
 - "Panic button" in settings deletes all connections + keys on the local device.
 
 **What the user does**: revoke the lost device via any other cluster member; or if they cannot, re-pair from scratch (which invalidates the old PSK if re-keying is implemented).
@@ -170,7 +170,7 @@ This is the **only privacy-conformant software backup** for the parent-dead case
 
 The "indicator-loss as alarm" model only works if reconnection is trivial. The following are **hard requirements** for the parent-side app:
 
-1. **PSK persistence**: the PSK is stored in Android Keystore (TEE) and survives reboots, app updates, and OS unlocks (already DECIDED in [connectivity-pairing.md](../features/connectivity-pairing.md)).
+1. **PSK persistence**: the PSK is stored in Android Keystore (TEE) and survives reboots, app updates, and OS unlocks (already DECIDED in [pairing spec](../../openspec/specs/pairing/spec.md)).
 2. **Saved-Connection persistence**: device name, known IPs, signaling URL, PSK reference -- persisted in encrypted SharedPreferences, key-wrapped by Android Keystore.
 3. **Cold-start path**: after a parent-phone reboot, the user unlocks the OS, opens GuardedSleep, sees the Saved-Connection card, taps once -- reconnection completes within 15 s using the persisted credentials and the same WebRTC ICE bootstrap as the original pairing.
 4. **No QR re-scan required** in the F-1, F-3, F-5 reconnection paths. QR re-scan is reserved for: (a) first-ever pairing, (b) pairing a new device, (c) post-revocation re-pair.
@@ -178,7 +178,7 @@ The "indicator-loss as alarm" model only works if reconnection is trivial. The f
 
 ### Auto-resume after reboot (Persona B requirement)
 
-> STATUS: DECIDED MVP, Advanced setting -- see [device-management.md](../features/device-management.md).
+> STATUS: DECIDED MVP, Advanced setting -- see [device-setup spec](../../openspec/specs/device-setup/spec.md).
 
 For Persona B (Daily Home), reconnect should ideally happen without any user action:
 
@@ -192,9 +192,9 @@ If auto-resume fails (e.g. permission revoked after an OS update), the parent ob
 For the indicator-loss model to actually work, the parent UI must make the "Connected" state distinctive enough that its absence is noticed. The following are **hard UI requirements**:
 
 - **Ambient-glow status indicator**: dimensionally constant element at the top edge of the parent screen, green when connected, yellow when reconnecting, red when disconnected. Specified in [ui-design.md](../technical/ui-design.md).
-- **Persistent foreground-service notification**: visible in the system notification shade even when the app is backgrounded or the phone is locked. Format: "GuardedSleep -- connected to [Babyname]". Specified in [notifications-alerts.md](../features/notifications-alerts.md).
-- **Indicator Training in onboarding**: new users explicitly see the "connected" look and the "disconnected" look during a 30 s onboarding step. They are told: "When the green indicator disappears, you are not monitoring." Specified in [user-interface.md](../features/user-interface.md).
-- **Probe-alarm button**: one-tap synthetic alarm to verify the end-to-end chain still works (especially after OS updates and for Persona A pre-departure). Specified in [notifications-alerts.md](../features/notifications-alerts.md).
+- **Persistent foreground-service notification**: visible in the system notification shade even when the app is backgrounded or the phone is locked. Format: "GuardedSleep -- connected to [Babyname]". Specified in [parent-alerts spec](../../openspec/specs/parent-alerts/spec.md).
+- **Indicator Training in onboarding**: new users explicitly see the "connected" look and the "disconnected" look during a 30 s onboarding step. They are told: "When the green indicator disappears, you are not monitoring." Specified in [device-setup spec](../../openspec/specs/device-setup/spec.md).
+- **Probe-alarm button**: one-tap synthetic alarm to verify the end-to-end chain still works (especially after OS updates and for Persona A pre-departure). Specified in [parent-alerts spec](../../openspec/specs/parent-alerts/spec.md).
 
 ## Discarded alternatives
 

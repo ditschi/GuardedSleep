@@ -71,16 +71,16 @@ The baby unit's role is to **not wake the child** ([failure-model.md](../../../.
 **Default: OFF.** The banner shows **only** when a meaningful path change persists ≥ 30 s and was triggered by a network event (not just startup choice). Wording:
 
 - "Now on mobile data" -- one quiet line, no sound, no vibration.
-- "Local -- no data leaves your network" -- only when LAN signaling won and ICE has only host candidates; this is the "Secure local mode" UI promise from [connectivity-pairing.md](../../../../docs/features/connectivity-pairing.md).
+- "Local -- no data leaves your network" -- only when LAN signaling won and ICE has only host candidates; this is the "Secure local mode" UI promise from [pairing spec](../../../specs/pairing/spec.md).
 
 If the user enables "Show connection details" in **Basic → Display**, the banner is always visible. Default is off to avoid 3 AM jitter.
 
 ### 5. Indicator-loss training (onboarding)
 
-Already DECIDED in [user-interface.md](../../../../docs/features/user-interface.md). This ADR makes it specific:
+Already DECIDED in [device-setup spec](../../../specs/device-setup/spec.md). This ADR makes it specific:
 
 - During the **30-second "connected vs disconnected" lesson**, show the **same components** (ambient bar, baby pulse, escalating copy) the user will see in reality -- so the recognition path works.
-- Immediately after the lesson, prompt the user to run the **probe test** (already DECIDED in [notifications-alerts.md](../../../../docs/features/notifications-alerts.md)).
+- Immediately after the lesson, prompt the user to run the **probe test** (already DECIDED in [parent-alerts spec](../../../specs/parent-alerts/spec.md)).
 - Optional gentle in-app reminder ("2-second check: green bar visible?") once per **30 days of unmonitored time** -- low-friction, no push notification.
 
 ### 6. Listen-mode interaction during handoff

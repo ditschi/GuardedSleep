@@ -144,7 +144,7 @@ UI/UX (ambient bar, escalation timing, plain-language copy) is delegated to [ADR
 
 - **Pros:** zero extra code in the apps; reuses `ghcr.io/<owner>/guardedsleep-signaling` ([ADR-008](../2026-05-13-adr-008-container-image-build-and-distribution/design.md)).
 - **Cons:** excludes ordinary families without a NAS; setup friction kills the "install, scan, done" UX promise.
-- **Kept** as **complementary** power-user path (documented in [connectivity-pairing.md](../../../../docs/features/connectivity-pairing.md) §"LAN Docker fallback"), **not as a substitute for Option A.**
+- **Kept** as **complementary** power-user path (documented in [pairing spec](../../../specs/pairing/spec.md) §"LAN Docker fallback"), **not as a substitute for Option A.**
 
 ### Option E: BLE / Wi-Fi Aware for signaling
 
@@ -159,20 +159,20 @@ UI/UX (ambient bar, escalation timing, plain-language copy) is delegated to [ADR
 
 ## Phase split
 
-| Item                                                                                    | Phase                                                                                                                  |
-| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| ADR-012 documented, ADR-013 documented, ADR-003 precision note                          | **MVP / this sprint**                                                                                                  |
-| `path-selector.ts` + unit tests                                                         | **MVP / this sprint**                                                                                                  |
-| `connection-store.ts` extension: `fallbackSignalingUrls?: string[]`                     | **MVP / this sprint**                                                                                                  |
-| `PeerSession` consumes path-selector for ordered URL attempts                           | **MVP / this sprint**                                                                                                  |
-| Playwright E2E test: two WS instances, primary unreachable → fallback wins              | **MVP / this sprint**                                                                                                  |
-| Ambient status bar component + symmetric, non-technical copy + reconnect countdown copy | **MVP / this sprint** (per [ADR-013](../2026-10-21-adr-013-connection-status-observability-and-copy/design.md))        |
-| Embedded WebSocket server on Baby-Android (`GuardedSleepNativePlugin` extension)        | **Phase 2 — implemented** (Java relay + `prependSignalingUrls` / localhost WS)                                         |
-| Opaque NSD discovery token (replacing `gssleep-<roomId>`)                               | **Phase 2 — implemented** (`gst-<token>`, `lanPeerResolved` includes `port` + `token`)                                 |
-| `@capacitor/network` listener + handoff hysteresis state machine                        | **Phase 2 — implemented** (`subscribeNetworkHandoff`, 3 s debounce → `start({ resetBackoff: true })`)                  |
-| `pc.restartIce()` optimization                                                          | **Phase 3** if metrics show audio-cut > 2 s is a real complaint                                                        |
-| Slow red baby pulse animation (failure-model F-1 secondary observability)               | **Phase 2 — implemented** (`guardedsleep-slow-pulse` after ~60 s idle/failed without parent)                           |
-| Captive-portal detection / out-of-home explicit prompts                                 | **Phase 2** (referenced in [`connectivity-pairing.md`](../../../../docs/features/connectivity-pairing.md) Out-of-Home) |
+| Item                                                                                    | Phase                                                                                                           |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| ADR-012 documented, ADR-013 documented, ADR-003 precision note                          | **MVP / this sprint**                                                                                           |
+| `path-selector.ts` + unit tests                                                         | **MVP / this sprint**                                                                                           |
+| `connection-store.ts` extension: `fallbackSignalingUrls?: string[]`                     | **MVP / this sprint**                                                                                           |
+| `PeerSession` consumes path-selector for ordered URL attempts                           | **MVP / this sprint**                                                                                           |
+| Playwright E2E test: two WS instances, primary unreachable → fallback wins              | **MVP / this sprint**                                                                                           |
+| Ambient status bar component + symmetric, non-technical copy + reconnect countdown copy | **MVP / this sprint** (per [ADR-013](../2026-10-21-adr-013-connection-status-observability-and-copy/design.md)) |
+| Embedded WebSocket server on Baby-Android (`GuardedSleepNativePlugin` extension)        | **Phase 2 — implemented** (Java relay + `prependSignalingUrls` / localhost WS)                                  |
+| Opaque NSD discovery token (replacing `gssleep-<roomId>`)                               | **Phase 2 — implemented** (`gst-<token>`, `lanPeerResolved` includes `port` + `token`)                          |
+| `@capacitor/network` listener + handoff hysteresis state machine                        | **Phase 2 — implemented** (`subscribeNetworkHandoff`, 3 s debounce → `start({ resetBackoff: true })`)           |
+| `pc.restartIce()` optimization                                                          | **Phase 3** if metrics show audio-cut > 2 s is a real complaint                                                 |
+| Slow red baby pulse animation (failure-model F-1 secondary observability)               | **Phase 2 — implemented** (`guardedsleep-slow-pulse` after ~60 s idle/failed without parent)                    |
+| Captive-portal detection / out-of-home explicit prompts                                 | **Phase 2** (referenced in [pairing spec](../../../specs/pairing/spec.md) Out-of-Home)                          |
 
 ## Platform matrix
 
@@ -218,7 +218,7 @@ UI/UX (ambient bar, escalation timing, plain-language copy) is delegated to [ADR
 ### Risks
 
 - **Android OEM lifecycle quirks** (Doze, Wi-Fi sleep on aggressive OEMs) may kill the embedded listener silently. Mitigation: Phase 2 PR will include the "Lakmus test" idea from [failure-model.md](../../../../docs/concept/failure-model.md) F-5 -- counted heartbeats over the first 30 min to detect silent OS-kill of the listener.
-- **NSD on hotspot / captive networks**: NSD may not traverse client-isolation. Mitigation: documented in [connectivity-pairing.md](../../../../docs/features/connectivity-pairing.md) §"Out-of-Home"; user-facing copy must say "If both phones cannot find each other, switch one phone's mobile data on".
+- **NSD on hotspot / captive networks**: NSD may not traverse client-isolation. Mitigation: documented in [pairing spec](../../../specs/pairing/spec.md) §"Out-of-Home"; user-facing copy must say "If both phones cannot find each other, switch one phone's mobile data on".
 - **CI test feasibility**: the user-requested test "no internet, but same LAN" cannot be reproduced in Playwright with real NSD. We instead test the **path-selection layer** (Tech Architect Option A's orchestration responsibility) with two WS-server processes; real NSD + real offline LAN is covered by Phase 2 Android-instrumented tests and manual release validation.
 
 ## Discarded alternatives

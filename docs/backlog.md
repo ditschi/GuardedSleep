@@ -5,7 +5,7 @@ Everything that is not current behaviour: decided work not started yet, ideas, d
 - **STATUS tags:** `PLANNED` (decided, not started; has a target), `IDEA` (captured, not evaluated; no target unless the owner sets one), `DEFERRED` (reason + target phase), `REJECTED` (reason; never deleted).
 - **Picking an item up:** start an OpenSpec change (`/opsx:propose <change-id>`), link the item from its proposal, and delete the item here in the same commit.
 - **New ideas** go here as `IDEA`, under the matching capability.
-- **Migration:** while ADRs and feature docs are migrated (see [`openspec-onboarding.md`](openspec-onboarding.md) §6), each capability's `IDEA`/`DEFERRED`/`REJECTED` items move here in the same commit. Until then, the feature docs still hold the ones not moved yet. Agent guardrails for off-limits features stay in `AGENTS.md` §9.
+- **Origin:** most items came from the former feature docs and ADRs when they were migrated to OpenSpec (2026-10-22, see the [decision archive](../openspec/changes/archive/README.md)). Agent guardrails for off-limits features stay in `AGENTS.md` §9.
 
 ## Planned
 
@@ -140,3 +140,35 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 - `IDEA` `examples/` folder with PoC reproductions.
 - `UNDER DISCUSSION` refactor-scout items: a shared `docker run` helper; YAML anchors for the duplicated CI path filters; one source for the NDK and cargo-ndk pins (Renovate regex manager); whether `stack-up` prints `SKIPPED` without Docker.
 - `PLANNED` (wave 2/3) The generated Dev Container from ADR-020 §2; complete the ktfmt and uv pins once `reuse` ships a wheel.
+
+### platforms
+
+- `DEFERRED` (Phase 2) iOS: no Swift or Xcode code until the iOS gate; only `cargo check --target aarch64-apple-ios` in CI and a weekly bindings smoke test (AGENTS.md §9).
+- `IDEA` Desktop installable client (Tauri or Electron around the web build): parent station on a PC; open questions are roles, auto-update and code signing. Today the desktop story is the PWA plus local PC mode.
+- `IDEA` (Phase 3+) Video monitoring: motion-triggered video from the baby unit's camera, adaptive frame rate and resolution, night vision where the camera supports it, end-to-end encrypted. No camera capture or video pipeline before it is decided (AGENTS.md §9).
+
+### later product ideas
+
+- `DEFERRED` (Phase 2) Audio sensitivity calibration with a room baseline.
+- `DEFERRED` (Phase 2) Event history and sleep log.
+- `DEFERRED` Sleep and wake scheduling (start monitoring automatically at sleep times).
+
+## Rejected
+
+Never deleted; kept so the reasoning is not lost.
+
+| Item                                                             | Reason                                                                                                   |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| White noise or lullaby playback                                  | Out of scope: GuardedSleep is a monitor, not a sound player.                                             |
+| Audible alarm on the baby unit when the parent device fails      | Wakes the child; contradicts the core purpose (failure model, ADR-009).                                  |
+| Cloud push, SMS or VoIP as an alarm when the parent phone is off | No cloud in the alarm path (vision non-goals).                                                           |
+| Cloud-based audio analysis                                       | Violates privacy-first; adds latency and a cloud dependency.                                             |
+| Continuous audio streaming to the parent                         | Wastes bandwidth; audio is sent only on demand.                                                          |
+| Manual IP address entry for pairing                              | Poor UX, error-prone, exposes technical details.                                                         |
+| Cloud-based device discovery                                     | Violates privacy-first; adds a cloud dependency.                                                         |
+| Programmatic hotspot creation                                    | Not possible on mobile operating systems.                                                                |
+| Full SDP in the QR code                                          | About 2500 bytes, beyond QR capacity; the v3 invite carries only the PSK, URLs and expiry.               |
+| Tailscale-only internet mode                                     | VPN slot conflict, complex setup, privacy contradiction.                                                 |
+| WireGuard embedded in the app                                    | VPN slot conflict remains; about 1000 lines of native code for little gain.                              |
+| Signaling-free VPN mode                                          | See `signaling-relay` above (owner, 2026-10-21).                                                         |
+| HTTPS web client ↔ phone listener with a self-signed certificate | Teaches users to accept certificate warnings, which undermines pairing as the trust anchor (ADR-021 §1). |

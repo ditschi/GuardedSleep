@@ -61,13 +61,13 @@ Optional checkbox (Basic): **Warn if headphones connected** -- non-blocking bann
 
 ### Parent setting: alert playback volume / audibility
 
-- **Stream class:** Alert-triggered playback on the parent MUST use **`AudioAttributes.USAGE_ALARM`** (or platform equivalent) so volume follows the **alarm / clock** volume curve and is **not** silently tied to "media" mute-only paths -- see [notifications-alerts.md](../../../../docs/features/notifications-alerts.md) (DND + alarm stream).
+- **Stream class:** Alert-triggered playback on the parent MUST use **`AudioAttributes.USAGE_ALARM`** (or platform equivalent) so volume follows the **alarm / clock** volume curve and is **not** silently tied to "media" mute-only paths -- see [parent-alerts spec](../../../specs/parent-alerts/spec.md) (DND + alarm stream).
 - **In-app gain:** Basic setting **slider** (e.g. 25 %--150 % of decoded level, default 100 %) applied **in software** to the alert playback path so parents can tune perceived loudness **without** changing the global system alarm index (avoids needing invasive `MODIFY_AUDIO_SETTINGS` in MVP).
 - **Optional "force minimum gain during alert"** (toggle, default off): clamps in-app gain to a **floor** (e.g. never below 80 %) while a noise alert is active, with copy that the user must still ensure **hardware alarm volume** is not at zero. **IDEA:** one-shot OS prompt "raise alarm volume" using public APIs only -- only if a future ADR accepts any extra permission.
 
 **Listen mode (non-alert) continuous audio** may remain on `USAGE_MEDIA` unless product decides to unify; alert path above applies specifically to **threshold-triggered alert chain** and **probe test**.
 
-**Connection type (Wi-Fi vs metered cellular):** does **not** switch the app layout; it may adjust **non-safety** alert emphasis or codec defaults per [notifications-alerts.md](../../../../docs/features/notifications-alerts.md) (IDEA: connection-context alert policy) and [communication.md](../../../../docs/features/communication.md) (data honesty).
+**Connection type (Wi-Fi vs metered cellular):** does **not** switch the app layout; it may adjust **non-safety** alert emphasis or codec defaults per [parent-alerts spec](../../../specs/parent-alerts/spec.md) (IDEA: connection-context alert policy) and [audio-monitoring spec](../../../specs/audio-monitoring/spec.md) (data honesty).
 
 **Phone calls:** Document and PoC-test: on incoming call, monitoring/alerts may pause; on call end, app **must** attempt automatic resume of the monitoring session and surface a non-dismissible banner if resume fails.
 

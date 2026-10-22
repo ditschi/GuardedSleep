@@ -337,7 +337,7 @@ What Release Please does automatically:
 
 ## 18. Milestone meta-tags
 
-Project phases ([feature roadmap](../features/README.md)) and major scope checkpoints get **manually created annotated tags** that are not produced by Release Please. They are pure documentation aids.
+Project phases ([feature roadmap](../backlog.md)) and major scope checkpoints get **manually created annotated tags** that are not produced by Release Please. They are pure documentation aids.
 
 **Naming convention:** `<phase-or-milestone>-v<semver>`. Examples:
 
@@ -361,7 +361,7 @@ Package triplet:
 - signaling-server-v0.1.0
 - mobile-v0.1.0
 
-Scope: matches MVP definition in docs/features/README.md and ADR-001.
+Scope: matches the MVP definition in ADR-001 (decision archive) and the capability specs in openspec/specs/.
 PoC gate: PASSED on YYYY-MM-DD.
 License: AGPL-3.0-or-later (see LICENSE).
 "
