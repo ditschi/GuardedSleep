@@ -24,4 +24,4 @@
 
 ## 6. Verify
 
-- [ ] 6.1 `just lint` and `just test` (the full sweep).
+- [x] 6.1 `just lint` and `just test` (the full sweep).
