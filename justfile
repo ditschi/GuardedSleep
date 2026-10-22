@@ -78,7 +78,11 @@ lint-workflows:
     zizmor --offline --min-severity medium .github
 
 # Code: Rust format and clippy (all features), iOS check, supply chain, API snapshots, generate-twice, i18n, UI literals, types.
-lint-code: _js-deps _js-gen check-ios check-determinism
+lint-code:
+    scripts/lib/slot.sh medium -- just _lint-code
+
+[private]
+_lint-code: _js-deps _js-gen check-ios check-determinism
     scripts/cargo.sh fmt --all -- --check
     taplo fmt --check
     scripts/cspell-i18n.sh
@@ -121,7 +125,11 @@ secrets:
 
 # Host Rust, WASM + node conformance, pnpm tests, Android JVM tests. Builds no Android ABI: the JVM tests
 # load the host build of the core.
-test: _js-deps _js-gen test-rust test-wasm test-web test-android
+test:
+    scripts/lib/slot.sh medium -- just _test
+
+[private]
+_test: _js-deps _js-gen test-rust test-wasm test-web test-android
 
 # Cargo workspace tests; nextest when installed, doctests through cargo test.
 test-rust:
@@ -148,15 +156,23 @@ gen:
     pnpm run i18n:gen
 
 # Everything: web, Android debug + release APKs, release-surface and core-size checks.
-build: _js-deps build-web build-android
+build:
+    scripts/lib/slot.sh medium -- just _build
+
+[private]
+_build: _js-deps build-web build-android
 
 build-web:
     pnpm run build
 
 # Core for Android (cross-compiled ABIs), debug and release APKs and their checks. Extra Gradle tasks
 # join the single Gradle run, e.g. `just build-android :app:verifyRoborazziDebug`.
-[script("bash")]
 build-android *gradle_tasks:
+    scripts/lib/slot.sh heavy -- just _build-android {{ gradle_tasks }}
+
+[private]
+[script("bash")]
+_build-android *gradle_tasks:
     set -euo pipefail
     source scripts/lib/require.sh
     require build-android android-sdk
@@ -170,12 +186,20 @@ verify-android:
     just build-android :core:testDebugUnitTest :app:testDebugUnitTest :app:verifyRoborazziDebug
 
 # Browser E2E (Playwright, local dev stack). Prints SKIPPED without Playwright browsers unless GS_STRICT=1.
-e2e: _js-deps _js-gen
+e2e:
+    scripts/lib/slot.sh heavy -- just _e2e
+
+[private]
+_e2e: _js-deps _js-gen
     scripts/lib/e2e.sh
 
 # Emulator gate AC-1..AC-4 (needs KVM; DOZE_MINUTES=2 just gate for a quick run). Run build-android first.
-[script("bash")]
 gate:
+    scripts/lib/slot.sh heavy -- just _gate
+
+[private]
+[script("bash")]
+_gate:
     set -euo pipefail
     source scripts/lib/require.sh
     require gate kvm docker
@@ -189,8 +213,12 @@ dev:
     scripts/dev.sh
 
 # Docker stack with the host LAN IP, for phone tests.
-[script("bash")]
 stack-lan:
+    scripts/lib/slot.sh heavy -- just _stack-lan
+
+[private]
+[script("bash")]
+_stack-lan:
     set -euo pipefail
     source scripts/lib/require.sh
     require stack-lan docker
@@ -198,7 +226,7 @@ stack-lan:
     docker compose -f docker/stack/compose.yaml --env-file docker/stack/.env up --build
 
 stack-up:
-    docker compose -f docker/stack/compose.yaml --env-file docker/stack/.env up --build
+    scripts/lib/slot.sh heavy -- docker compose -f docker/stack/compose.yaml --env-file docker/stack/.env up --build
 
 diagnose-lan:
     bash scripts/diagnose-lan-connect.sh
@@ -210,7 +238,7 @@ e2e-lan: _js-deps
     pnpm run e2e:lan
 
 e2e-docker *args:
-    bash scripts/e2e-docker-run.sh {{ args }}
+    scripts/lib/slot.sh heavy -- bash scripts/e2e-docker-run.sh {{ args }}
 
 audit:
     pnpm run audit
@@ -218,6 +246,10 @@ audit:
 # Preview the Release Please output (maintainer; needs GH_TOKEN and GITHUB_REPOSITORY).
 release-preview:
     npx --yes release-please release-pr --token=$GH_TOKEN --repo-url=$GITHUB_REPOSITORY --config-file=release-please-config.json --manifest-file=.release-please-manifest.json --dry-run --debug
+
+# List leftover dev servers, stuck agent polls and old project containers; --stop ends them (AGENTS.md section 10.2).
+reap *args:
+    scripts/lib/reap.sh {{ args }}
 
 # Generated, uncommitted packages that svelte-check and Vitest import (WASM core, protocol types).
 [private]
