@@ -84,9 +84,9 @@ lint-code: _js-deps _js-gen check-ios
     scripts/lint-ui-literals.sh
     pnpm -r --if-present run check
 
-# The core and the UniFFI facade must stay buildable for iOS (ADR-020 §3); rust-toolchain.toml installs the target.
+# The core, the relay (shared with the Android LAN listener) and the UniFFI facade must stay buildable for iOS (ADR-020 §3); rust-toolchain.toml installs the target.
 check-ios:
-    scripts/cargo.sh check -p guardedsleep-core -p guardedsleep-ffi --target aarch64-apple-ios
+    scripts/cargo.sh check -p guardedsleep-core -p guardedsleep-relay -p guardedsleep-ffi --target aarch64-apple-ios
 
 # API-surface snapshots of the binding facades (cargo public-api on the pinned nightly in tools/nightly, plus
 # the generated .d.ts). Fails on a diff; `just api-snapshot` regenerates. SKIPPED without Docker.
