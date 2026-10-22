@@ -21,5 +21,5 @@ Refined 2026-10-22 from the wave-2 plan. Items 1.1, 1.3 (snapshots), 1.4 and 1.6
 
 ## 4. Close
 
-- [x] 4.1 Core dependency count re-blessed with `--all-features` (60)
+- [x] 4.1 Core dependency count re-blessed with `--all-features` (48 unique crates; the guard now dedupes `(*)` repeats; trimming tsify's `json` feature was tried and rejected, see design.md)
 - [x] 4.2 `docs/ci-gates.md` rows for the API snapshot, generate-twice, binding-free core and Swift smoke gates; `just ci` green

@@ -8,7 +8,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
-actual="$(scripts/cargo.sh tree -p guardedsleep-core --all-features -e normal --prefix none | sort -u | wc -l | tr -d ' ')"
+actual="$(scripts/cargo.sh tree -p guardedsleep-core --all-features -e normal --prefix none | sed -E 's/ \(\*\)$//' | sort -u | wc -l | tr -d ' ')"
 if [ "${1:-}" = "--bless" ]; then
   echo "$actual" > .core-dep-count
   echo "core-dep-count: wrote $actual"
