@@ -4,12 +4,17 @@
 
 ### Requirement: Binding-free core
 
-Binding attributes (UniFFI, wasm-bindgen) SHALL appear only in the façade crates `guardedsleep-ffi` and `guardedsleep-wasm`, never in `guardedsleep-core`, and TypeScript protocol types SHALL be generated from the core.
+Binding attributes (UniFFI, wasm-bindgen) SHALL appear only in the façade crates `guardedsleep-ffi` and `guardedsleep-wasm`, never in `guardedsleep-core`. The single exception is `#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]` behind the non-default `tsify` feature of `guardedsleep-core`, which only `guardedsleep-wasm` enables and which SHALL NOT be in the core's default-feature graph; the core SHALL carry no other binding attribute. The web client's protocol types (`packages/core-wasm`) SHALL be generated from the core.
 
 #### Scenario: UniFFI attribute in the core
 
 - **WHEN** a change adds a UniFFI attribute to `guardedsleep-core`
 - **THEN** the build or lint fails
+
+#### Scenario: wasm-bindgen in the core's default graph
+
+- **WHEN** a change makes `wasm-bindgen`, `js-sys` or `web-sys` part of the default-feature graph of `guardedsleep-core`
+- **THEN** the binding-free check in `just deny` fails
 
 ### Requirement: API-surface snapshots
 
