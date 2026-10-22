@@ -1,11 +1,18 @@
-package org.guardedsleep.app.media
+package org.guardedsleep.app.media.libwebrtc
 
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioManager
-import java.nio.ByteBuffer
 import java.util.concurrent.CopyOnWriteArrayList
 import org.guardedsleep.app.diag.PocLog
+import org.guardedsleep.app.media.AttemptListener
+import org.guardedsleep.app.media.AttemptPort
+import org.guardedsleep.app.media.CaptureTap
+import org.guardedsleep.app.media.IceConfig
+import org.guardedsleep.app.media.MediaEngine
+import org.guardedsleep.app.media.Pcm
+import org.guardedsleep.app.media.ProbeTone
+import org.guardedsleep.app.media.RmsWindow
 import org.webrtc.AudioSource
 import org.webrtc.AudioTrack
 import org.webrtc.AudioTrackSink
@@ -44,16 +51,11 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
             }
         }
 
+    private val captureTap = CaptureTap(micWindow, probe)
+
     private val recordCallback =
-        JavaAudioDeviceModule.AudioBufferCallback { buffer, _, channels, rate, bytesRead, _ ->
-            // The valid PCM is [0, bytesRead); the helpers read position..limit of a view.
-            val pcm: ByteBuffer = buffer.duplicate().clear().limit(bytesRead) as ByteBuffer
-            InjectedAudio.mix(pcm, channels)
-            val (sum, n) = Pcm.sumSquares(pcm)
-            micWindow.add(sum, n)
-            probe.mix(pcm, channels, rate)
-            // -1: keep the capture timestamp libwebrtc computed.
-            -1L
+        JavaAudioDeviceModule.AudioBufferCallback { buffer, _, channels, rate, bytesRead, captureTimeNs ->
+            captureTap.onBuffer(buffer, channels, rate, bytesRead, captureTimeNs)
         }
 
     init {
@@ -91,7 +93,7 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
     }
 
     override fun createAttempt(offerer: Boolean, listener: AttemptListener): AttemptPort =
-        AttemptPeer(factory, rtcConfig(), track, offerer, listener, ::onRemoteAudio)
+        LibWebRtcAttemptPeer(factory, rtcConfig(), track, offerer, listener, ::onRemoteAudio)
 
     override fun setMicEnabled(enabled: Boolean) {
         track?.setEnabled(enabled)

@@ -1,8 +1,11 @@
-package org.guardedsleep.app.media
+package org.guardedsleep.app.media.libwebrtc
 
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 import org.guardedsleep.app.diag.PocLog
+import org.guardedsleep.app.media.AttemptListener
+import org.guardedsleep.app.media.AttemptPort
+import org.guardedsleep.app.media.InboundAudioStats
 import org.webrtc.AudioTrack
 import org.webrtc.DataChannel
 import org.webrtc.MediaConstraints
@@ -20,7 +23,7 @@ import uniffi.guardedsleep_core.IceCandidate as CoreIce
  * audio m-line (the core refuses anything else) and creates the "guardedsleep" channel; the
  * parent only receives.
  */
-class AttemptPeer(
+internal class LibWebRtcAttemptPeer(
     factory: PeerConnectionFactory,
     rtcConfig: PeerConnection.RTCConfiguration,
     private val sendTrack: AudioTrack?,

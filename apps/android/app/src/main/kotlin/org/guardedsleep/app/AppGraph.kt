@@ -10,7 +10,7 @@ import kotlinx.coroutines.SupervisorJob
 import org.guardedsleep.app.alerts.AlertController
 import org.guardedsleep.app.link.LinkController
 import org.guardedsleep.app.link.SystemClockSource
-import org.guardedsleep.app.media.LibWebRtcMediaEngine
+import org.guardedsleep.app.media.libwebrtc.LibWebRtcMediaEngine
 import org.guardedsleep.app.pairing.KeystorePairingCipher
 import org.guardedsleep.app.pairing.PairingStore
 import org.guardedsleep.app.readiness.AndroidReadinessEnv
