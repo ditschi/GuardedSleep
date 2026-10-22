@@ -82,6 +82,11 @@ impl<K: Eq + Hash> RateLimiter<K> {
         });
     }
 
+    /// Forgets a key, e.g. when the thing it identifies is gone.
+    pub fn remove(&mut self, key: &K) {
+        self.buckets.remove(key);
+    }
+
     pub fn len(&self) -> usize {
         self.buckets.len()
     }

@@ -1,3 +1,11 @@
+#![forbid(unsafe_code)]
+#![deny(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::indexing_slicing
+)]
+
 use clap::Parser;
 use guardedsleep_server::config::{Cli, Config, Limits};
 

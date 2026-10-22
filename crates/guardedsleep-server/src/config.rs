@@ -1,8 +1,8 @@
 //! Configuration from environment variables and command-line flags.
 //!
-//! The `SIGNALING_*` and `PORT` variables keep the names and the lenient parsing of the retired Node
-//! server (a value that is missing, malformed or out of range falls back to the default), so
-//! existing deployments keep working. New options are flags with `GS_*` / `STUN_*` environment
+//! The `SIGNALING_*` and `PORT` variables keep the names of the retired Node server, so existing
+//! deployments keep working. A value that is missing, malformed (`5000ms` included) or out of range
+//! falls back to the default. New options are flags with `GS_*` / `STUN_*` environment
 //! counterparts. Docs: https://docs.rs/clap/latest/clap/_derive/index.html
 
 use std::net::IpAddr;
@@ -44,15 +44,10 @@ pub struct Cli {
     #[arg(long, env = "STUN_DISABLED", value_parser = clap::builder::BoolishValueParser::new())]
     pub no_stun: bool,
 
-    /// Binding requests answered per client address and minute.
+    /// Binding requests answered per client address and minute (with the 44-byte and 2.2x response
+    /// bound this keeps the responder useless as a traffic amplifier).
     #[arg(long, env = "STUN_RATE_PER_MIN", default_value_t = 60)]
     pub stun_rate_per_min: u32,
-
-    /// Also answer requests shorter than the 32/44-byte response (a bare 20-byte Binding request is
-    /// what browsers send). The response is then up to 2.2 times the request instead of never
-    /// larger; the per-address rate limit still applies.
-    #[arg(long, env = "STUN_ALLOW_SHORT_REQUESTS", value_parser = clap::builder::BoolishValueParser::new())]
-    pub stun_allow_short_requests: bool,
 
     /// Probe `GET /healthz` on 127.0.0.1:<port> and exit 0 when healthy, 1 otherwise. For the
     /// container HEALTHCHECK: the distroless image has no shell or curl.
@@ -64,7 +59,7 @@ pub struct Cli {
     pub log_events: bool,
 }
 
-/// Limits with the Node server's lenient parsing; see `apps/signaling-server/src/config.ts`.
+/// Limits with the retired Node server's names and defaults (`git show ae71762d:apps/signaling-server/src/config.ts`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Limits {
     pub hello_timeout_ms: u64,
@@ -72,6 +67,9 @@ pub struct Limits {
     pub ping_interval_ms: u64,
     pub hello_rate_per_min: u32,
     pub new_room_rate_per_min: u32,
+    pub max_connections_per_ip: usize,
+    pub frame_rate_unjoined_per_min: u32,
+    pub frame_rate_per_min: u32,
     pub trust_proxy: bool,
     pub trusted_proxy_hops: usize,
     pub allowed_origins: Vec<String>,
@@ -106,6 +104,19 @@ impl Limits {
             },
             hello_rate_per_min: parse_in(get("SIGNALING_HELLO_RATE_PER_MIN"), 0, 100_000, 20),
             new_room_rate_per_min: parse_in(get("SIGNALING_NEW_ROOM_RATE_PER_MIN"), 0, 100_000, 10),
+            max_connections_per_ip: parse_in(
+                get("SIGNALING_MAX_CONNECTIONS_PER_IP"),
+                0,
+                100_000,
+                16,
+            ),
+            frame_rate_unjoined_per_min: parse_in(
+                get("SIGNALING_FRAME_RATE_UNJOINED_PER_MIN"),
+                0,
+                1_000_000,
+                120,
+            ),
+            frame_rate_per_min: parse_in(get("SIGNALING_FRAME_RATE_PER_MIN"), 0, 1_000_000, 600),
             trust_proxy: get("SIGNALING_TRUST_PROXY").as_deref() == Some("1"),
             trusted_proxy_hops: match get("SIGNALING_TRUSTED_PROXY_HOPS")
                 .and_then(|s| s.trim().parse::<usize>().ok())
@@ -154,6 +165,9 @@ impl Config {
             ping_interval_ms: l.ping_interval_ms,
             hello_rate_per_min: l.hello_rate_per_min,
             new_room_rate_per_min: l.new_room_rate_per_min,
+            max_connections_per_client: l.max_connections_per_ip,
+            frame_rate_unjoined_per_min: l.frame_rate_unjoined_per_min,
+            frame_rate_per_min: l.frame_rate_per_min,
             ..RelayConfig::default()
         }
     }
@@ -180,6 +194,9 @@ mod tests {
         assert_eq!(l.ping_interval_ms, 10_000);
         assert_eq!(l.hello_rate_per_min, 20);
         assert_eq!(l.new_room_rate_per_min, 10);
+        assert_eq!(l.max_connections_per_ip, 16);
+        assert_eq!(l.frame_rate_unjoined_per_min, 120);
+        assert_eq!(l.frame_rate_per_min, 600);
         assert!(!l.trust_proxy);
         assert_eq!(l.trusted_proxy_hops, 1);
         assert!(l.allowed_origins.is_empty());
@@ -193,6 +210,7 @@ mod tests {
             ("SIGNALING_PING_INTERVAL_MS", "1999"),
             ("SIGNALING_HELLO_RATE_PER_MIN", "-1"),
             ("SIGNALING_NEW_ROOM_RATE_PER_MIN", "x"),
+            ("SIGNALING_MAX_CONNECTIONS_PER_IP", "-3"),
             ("SIGNALING_TRUSTED_PROXY_HOPS", "0"),
         ]);
         assert_eq!(l, limits(&[]));
@@ -206,6 +224,9 @@ mod tests {
             ("SIGNALING_PING_INTERVAL_MS", "2000"),
             ("SIGNALING_HELLO_RATE_PER_MIN", "0"),
             ("SIGNALING_NEW_ROOM_RATE_PER_MIN", "7"),
+            ("SIGNALING_MAX_CONNECTIONS_PER_IP", "4"),
+            ("SIGNALING_FRAME_RATE_UNJOINED_PER_MIN", "30"),
+            ("SIGNALING_FRAME_RATE_PER_MIN", "90"),
             ("SIGNALING_TRUST_PROXY", "1"),
             ("SIGNALING_TRUSTED_PROXY_HOPS", "2"),
             (
@@ -218,6 +239,9 @@ mod tests {
         assert_eq!(l.ping_interval_ms, 2000);
         assert_eq!(l.hello_rate_per_min, 0);
         assert_eq!(l.new_room_rate_per_min, 7);
+        assert_eq!(l.max_connections_per_ip, 4);
+        assert_eq!(l.frame_rate_unjoined_per_min, 30);
+        assert_eq!(l.frame_rate_per_min, 90);
         assert!(l.trust_proxy);
         assert_eq!(l.trusted_proxy_hops, 2);
         assert_eq!(
@@ -236,6 +260,22 @@ mod tests {
             ("SIGNALING_ALLOWED_ORIGINS", "https://a.example"),
         ]);
         assert!(Config::new(cli, ok).is_ok());
+    }
+
+    #[test]
+    fn relay_limits_reach_the_relay_config() {
+        let cfg = Config::new(
+            Cli::parse_from(["x"]),
+            limits(&[
+                ("SIGNALING_MAX_CONNECTIONS_PER_IP", "3"),
+                ("SIGNALING_FRAME_RATE_PER_MIN", "50"),
+            ]),
+        )
+        .unwrap();
+        let r = cfg.relay_config();
+        assert_eq!(r.max_connections_per_client, 3);
+        assert_eq!(r.frame_rate_per_min, 50);
+        assert_eq!(r.frame_rate_unjoined_per_min, 120);
     }
 
     #[test]

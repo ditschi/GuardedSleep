@@ -1,6 +1,6 @@
 //! End-to-end smoke (`just smoke`): starts the built binary as a child process, configured through
 //! the environment only, and checks hello and signal relay over a real WebSocket. It replaces
-//! apps/signaling-server/scripts/smoke-relay.ts.
+//! the retired Node `smoke-relay.ts` (`git show ae71762d:apps/signaling-server/scripts/smoke-relay.ts`).
 
 mod common;
 

@@ -1,4 +1,4 @@
-//! Behaviour of the retired Node server (apps/signaling-server tests) plus admission.
+//! Behaviour of the retired Node server (its tests: `git show ae71762d:apps/signaling-server`) plus admission.
 
 use std::collections::HashMap;
 
@@ -134,6 +134,9 @@ fn the_defaults_are_the_numbers_of_the_signaling_relay_spec() {
     assert_eq!(c.hello_rate_per_min, 20);
     assert_eq!(c.new_room_rate_per_min, 10);
     assert_eq!(c.max_parents_per_room, 1);
+    assert_eq!(c.max_connections_per_client, 16);
+    assert_eq!(c.frame_rate_unjoined_per_min, 120);
+    assert_eq!(c.frame_rate_per_min, 600);
 }
 
 #[test]
@@ -618,6 +621,128 @@ fn connections_are_capped() {
 }
 
 #[test]
+fn one_client_cannot_hold_more_than_its_share_of_connections() {
+    let mut h = H::new(RelayConfig {
+        max_connections_per_client: 3,
+        ..RelayConfig::default()
+    });
+    for id in 1..=3 {
+        h.connect_from(id, 7);
+    }
+    h.connect_from(4, 7);
+    assert_eq!(h.closed[&4], CloseReason::Capacity);
+    assert_eq!(h.relay.conn_count(), 3);
+    // Another client is unaffected.
+    h.connect_from(5, 8);
+    assert!(!h.closed.contains_key(&5));
+    // A freed slot is usable again, and the refused connection did not count.
+    h.close(1);
+    h.connect_from(6, 7);
+    assert!(!h.closed.contains_key(&6));
+    h.connect_from(7, 7);
+    assert_eq!(h.closed[&7], CloseReason::Capacity);
+}
+
+#[test]
+fn connections_dropped_by_the_relay_free_the_client_slot() {
+    let mut h = H::new(RelayConfig {
+        max_connections_per_client: 1,
+        ..RelayConfig::default()
+    });
+    h.connect_from(1, 7);
+    h.tick(30_000);
+    assert_eq!(h.closed[&1], CloseReason::HelloTimeout);
+    h.connect_from(2, 7);
+    assert!(!h.closed.contains_key(&2));
+}
+
+#[test]
+fn the_connection_cap_per_client_can_be_disabled() {
+    let mut h = H::new(RelayConfig {
+        max_connections_per_client: 0,
+        ..RelayConfig::default()
+    });
+    for id in 1..=50 {
+        h.connect_from(id, 7);
+    }
+    assert_eq!(h.relay.conn_count(), 50);
+}
+
+#[test]
+fn a_connection_that_floods_before_joining_is_closed() {
+    let mut h = H::new(RelayConfig {
+        frame_rate_unjoined_per_min: 5,
+        ..RelayConfig::default()
+    });
+    h.connect(1);
+    for _ in 0..5 {
+        h.send(1, r#"{"type":"ping"}"#);
+    }
+    assert!(!h.closed.contains_key(&1));
+    h.send(1, r#"{"type":"ping"}"#);
+    assert_eq!(h.last(1)["code"], "RATE_LIMITED");
+    assert_eq!(h.closed[&1], CloseReason::RateLimited);
+    assert_eq!(h.relay.conn_count(), 0);
+}
+
+#[test]
+fn a_joined_connection_has_its_own_larger_frame_budget_that_refills() {
+    let mut h = H::new(RelayConfig {
+        frame_rate_unjoined_per_min: 2,
+        frame_rate_per_min: 6,
+        hello_rate_per_min: 0,
+        new_room_rate_per_min: 0,
+        ping_interval_ms: 3_600_000,
+        ..RelayConfig::default()
+    });
+    h.connect(1);
+    h.hello(1, "baby", ROOM_V3, 3);
+    assert!(h.joined(1));
+    for _ in 0..6 {
+        h.send(1, r#"{"type":"ping"}"#);
+    }
+    assert!(!h.closed.contains_key(&1), "joined budget is separate");
+    h.tick(10_000);
+    h.send(1, r#"{"type":"ping"}"#);
+    assert!(!h.closed.contains_key(&1), "one token refilled in 10 s");
+    h.send(1, r#"{"type":"ping"}"#);
+    assert_eq!(h.closed[&1], CloseReason::RateLimited);
+    assert_eq!(h.relay.room_count(), 0);
+}
+
+#[test]
+fn one_flooding_connection_does_not_limit_another() {
+    let mut h = H::new(RelayConfig {
+        frame_rate_unjoined_per_min: 1,
+        ..RelayConfig::default()
+    });
+    h.connect(1);
+    h.connect(2);
+    h.send(1, r#"{"type":"ping"}"#);
+    h.send(1, r#"{"type":"ping"}"#);
+    assert_eq!(h.closed[&1], CloseReason::RateLimited);
+    h.send(2, r#"{"type":"ping"}"#);
+    assert_eq!(h.types(2), ["pong"]);
+}
+
+#[test]
+fn a_silent_baby_is_stale_within_the_spec_bound_with_the_default_config() {
+    // Spec: terminated within 20 s; the server ticks every 500 ms.
+    let mut h = H::new(RelayConfig::default());
+    h.connect(1);
+    h.hello(1, "baby", ROOM_V3, 3);
+    assert!(h.joined(1));
+    let mut elapsed = 0;
+    while !h.closed.contains_key(&1) && elapsed <= 30_000 {
+        h.tick(500);
+        elapsed += 500;
+    }
+    assert_eq!(h.closed[&1], CloseReason::Stale);
+    assert!(elapsed <= 20_500, "closed after {elapsed} ms");
+    assert!(h.pings[&1] >= 1);
+}
+
+#[test]
 fn frames_for_unknown_connections_are_ignored() {
     let mut h = H::open();
     h.send(9, r#"{"type":"ping"}"#);
@@ -721,9 +846,19 @@ fn a_wrong_key_fails_and_closes() {
 #[test]
 fn a_replayed_first_message_fails_and_cannot_take_the_parent_slot() {
     let mut h = required();
+    let key = derive_admission_key(&PSK);
+    h.connect(0);
+    let nonce = nonce_of(&h, 0);
+    let mac = admission_mac(&key, &nonce, Role::Baby, ROOM_V3).unwrap();
+    h.send(
+        0,
+        &json!({"type":"admit","role":"baby","roomId":ROOM_V3,"protocolVersion":3,"mac":mac})
+            .to_string(),
+    );
+    assert!(h.joined(0));
+
     h.connect(1);
     let nonce = nonce_of(&h, 1);
-    let key = derive_admission_key(&PSK);
     let mac = admission_mac(&key, &nonce, Role::Parent, ROOM_V3).unwrap();
     let first =
         json!({"type":"admit","role":"parent","roomId":ROOM_V3,"protocolVersion":3,"mac":mac})
@@ -731,14 +866,17 @@ fn a_replayed_first_message_fails_and_cannot_take_the_parent_slot() {
     h.send(1, &first);
     assert!(h.joined(1));
     h.close(1);
-    assert_eq!(h.relay.room_count(), 0);
+    assert_eq!(h.relay.room_count(), 1, "the baby is still in the room");
 
     // An eavesdropper replays the captured message on its own connection.
     h.connect(2);
     h.send(2, &first);
     assert_eq!(h.last(2)["code"], "ADMISSION_FAILED");
     assert_eq!(h.closed[&2], CloseReason::AdmissionFailed);
-    assert_eq!(h.relay.room_count(), 0, "the replay took no slot");
+    let members = h.last(0);
+    assert_eq!(members["type"], "members");
+    assert_eq!(members["peers"].as_array().unwrap().len(), 1, "baby only");
+    assert_eq!(h.relay.room_count(), 1);
 }
 
 #[test]

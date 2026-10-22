@@ -287,6 +287,8 @@ See [ADR-006](../../openspec/changes/archive/2026-05-13-adr-006-release-and-chan
 
 ## 16. Versioning posture — "mobile is the product version"
 
+> Sections 16 to 19 keep the pre-ADR-020 npm component names for history. `@guardedsleep/signaling-server` is now the Rust `guardedsleep-server` (planned component `server`), and `@guardedsleep/protocol` no longer exists. Current posture: AGENTS.md section 8.
+
 The monorepo contains **independently versioned packages (the hand-written `@guardedsleep/protocol` package was removed; protocol types are generated from the Rust core into `packages/core-wasm`, which is private and unversioned for releases, and the signaling server is the Rust `crates/guardedsleep-server` image)**:
 
 | Package                          | Role                                | Whose version do users / operators see?                                             |

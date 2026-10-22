@@ -7,7 +7,7 @@ Binding attributes still live in the core (`uniffi` feature, `wasm.rs`), the web
 ## What Changes
 
 - New crates `guardedsleep-ffi` (UniFFI, exact pin `=0.32.x`, in-repo bindgen) and `guardedsleep-wasm` (wasm-bindgen + tsify); `core` loses every binding attribute.
-- TypeScript types generated from the core into `packages/core-wasm`; `packages/protocol` is deleted together with the Node server in `add-rust-signaling-server`.
+- TypeScript types generated from the core into `packages/core-wasm`; `packages/protocol` is deleted in `add-rust-signaling-server`.
 - Committed API-surface snapshots (`cargo public-api` on `ffi` and `wasm`, the generated `.d.ts`); CI generates bindings twice and compares hashes.
 - Conformance vectors, including negative ones, run through every binding (Rust, Kotlin, TypeScript).
 - iOS check for `core`, `relay` and `ffi`; weekly Swift-bindings smoke test.

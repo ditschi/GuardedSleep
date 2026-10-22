@@ -1,10 +1,11 @@
 //! Minimal STUN Binding responder (RFC 5389 sections 6, 7.3 and 15.2).
 //!
 //! It answers Binding requests and nothing else: every other message type is dropped without a
-//! reply. The response carries one XOR-MAPPED-ADDRESS and is never larger than the request unless
-//! `allow_short_requests` is set (a bare 20-byte request is what browsers send; the response is then
-//! 32 bytes for IPv4 and 44 for IPv6). The decoder never panics: it reads through `get`, and the
-//! unit tests plus the property test feed it arbitrary bytes.
+//! reply. The response carries one XOR-MAPPED-ADDRESS (32 bytes for IPv4, 44 for IPv6) and is
+//! bounded: at most [`MAX_RESPONSE_LEN`] bytes and at most 2.2 times the request, so a bare 20-byte
+//! request from a browser or libwebrtc is answered while the server stays useless as an amplifier.
+//! The per-address rate limit in [`serve`] is part of that bound. The decoder never panics: it reads
+//! through `get`, and the unit tests plus the property test feed it arbitrary bytes.
 
 use std::net::{IpAddr, SocketAddr};
 use std::sync::Arc;
@@ -22,19 +23,28 @@ const XOR_MAPPED_ADDRESS: u16 = 0x0020;
 /// Datagrams larger than this are not STUN requests worth parsing.
 const MAX_REQUEST_LEN: usize = 548;
 
-#[derive(Debug, Clone, Copy, Default)]
-pub struct StunPolicy {
-    pub allow_short_requests: bool,
-}
+/// The largest response: header plus an IPv6 XOR-MAPPED-ADDRESS.
+pub const MAX_RESPONSE_LEN: usize = 44;
+/// Amplification bound as a ratio: the response is at most 22/10 = 2.2 times the request.
+const AMPLIFICATION_NUM: usize = 22;
+const AMPLIFICATION_DEN: usize = 10;
+/// Distinct client addresses tracked by the rate limiter; spoofed sources cannot grow it further.
+const MAX_TRACKED_ADDRESSES: usize = 65_536;
+/// Answers per minute across all clients (20 000 per second), a cap on the total STUN output.
+const GLOBAL_RATE_PER_MIN: u32 = 20_000 * 60;
 
-/// `Some(response)` for a well-formed Binding request that may be answered, else `None`.
-pub fn respond(request: &[u8], src: SocketAddr, policy: StunPolicy) -> Option<Vec<u8>> {
+/// `Some(response)` for a well-formed Binding request that may be answered within the
+/// amplification bound, else `None`.
+pub fn respond(request: &[u8], src: SocketAddr) -> Option<Vec<u8>> {
     let txid = decode_binding_request(request)?;
     let response = encode_success(txid, src);
-    if response.len() > request.len() && !policy.allow_short_requests {
-        return None;
-    }
-    Some(response)
+    within_bound(request.len(), response.len()).then_some(response)
+}
+
+fn within_bound(request_len: usize, response_len: usize) -> bool {
+    response_len <= MAX_RESPONSE_LEN
+        && response_len.saturating_mul(AMPLIFICATION_DEN)
+            <= request_len.saturating_mul(AMPLIFICATION_NUM)
 }
 
 /// The 12-byte transaction id of a Binding request.
@@ -59,10 +69,10 @@ fn decode_binding_request(buf: &[u8]) -> Option<[u8; 12]> {
 /// Type-length-value structure only; the content of attributes is not interpreted.
 fn attributes_well_formed(mut attrs: &[u8]) -> bool {
     while !attrs.is_empty() {
-        let Some(len_bytes) = attrs.get(2..4) else {
+        let Some(&[hi, lo]) = attrs.get(2..4).and_then(|b| <&[u8; 2]>::try_from(b).ok()) else {
             return false;
         };
-        let len = usize::from(u16::from_be_bytes([len_bytes[0], len_bytes[1]]));
+        let len = usize::from(u16::from_be_bytes([hi, lo]));
         let padded = (len + 3) & !3;
         let Some(rest) = attrs.get(4 + padded..) else {
             return false;
@@ -98,15 +108,49 @@ fn encode_success(txid: [u8; 12], src: SocketAddr) -> Vec<u8> {
     out
 }
 
+/// Admission of one request to the answer budget: a per-address bucket plus a global one. Unknown
+/// addresses beyond the tracking cap are pruned first, so spoofed sources cannot lock real
+/// clients out of the table.
+pub struct AnswerBudget {
+    per_address: RateLimiter<IpAddr>,
+    max_addresses: usize,
+    global: RateLimiter<()>,
+}
+
+impl AnswerBudget {
+    pub fn new(rate_per_min: u32) -> Self {
+        Self::with_capacity(rate_per_min, MAX_TRACKED_ADDRESSES, GLOBAL_RATE_PER_MIN)
+    }
+
+    pub fn with_capacity(rate_per_min: u32, max_addresses: usize, global_per_min: u32) -> Self {
+        Self {
+            per_address: RateLimiter::new(rate_per_min).with_max_keys(max_addresses),
+            max_addresses,
+            global: RateLimiter::new(global_per_min),
+        }
+    }
+
+    pub fn tracked(&self) -> usize {
+        self.per_address.len()
+    }
+
+    pub fn prune(&mut self, now: u64) {
+        self.per_address.prune(now);
+    }
+
+    /// `true` when the address may be answered now.
+    pub fn take(&mut self, ip: IpAddr, now: u64) -> bool {
+        if self.per_address.len() >= self.max_addresses {
+            self.per_address.prune(now);
+        }
+        self.per_address.take(ip, now) && self.global.take((), now)
+    }
+}
+
 /// Serves the socket until `shutdown` flips. Requests above the per-address budget are dropped
 /// silently. Nothing about senders is logged.
-pub async fn serve(
-    socket: Arc<UdpSocket>,
-    rate_per_min: u32,
-    policy: StunPolicy,
-    mut shutdown: watch::Receiver<bool>,
-) {
-    let mut limiter: RateLimiter<IpAddr> = RateLimiter::new(rate_per_min).with_max_keys(65_536);
+pub async fn serve(socket: Arc<UdpSocket>, rate_per_min: u32, mut shutdown: watch::Receiver<bool>) {
+    let mut budget = AnswerBudget::new(rate_per_min);
     let start = Instant::now();
     let mut last_prune = 0u64;
     let mut buf = vec![0u8; MAX_REQUEST_LEN + 1];
@@ -120,17 +164,17 @@ pub async fn serve(
         };
         let now = u64::try_from(start.elapsed().as_millis()).unwrap_or(u64::MAX);
         if now.saturating_sub(last_prune) >= 10_000 {
-            limiter.prune(now);
+            budget.prune(now);
             last_prune = now;
         }
         let Some(request) = buf.get(..n) else {
             continue;
         };
         // Parse before spending a token: junk from spoofed sources must not drain a victim's budget.
-        let Some(response) = respond(request, src, policy) else {
+        let Some(response) = respond(request, src) else {
             continue;
         };
-        if !limiter.take(src.ip().to_canonical(), now) {
+        if !budget.take(src.ip().to_canonical(), now) {
             continue;
         }
         let _ = socket.send_to(&response, src).await;
@@ -167,7 +211,7 @@ mod tests {
     #[test]
     fn answers_with_the_rfc_5769_mapped_address() {
         let req = request(&padding(16));
-        let resp = respond(&req, v4(), StunPolicy::default()).unwrap();
+        let resp = respond(&req, v4()).unwrap();
         assert!(resp.len() <= req.len());
         assert_eq!(&resp[0..2], &[0x01, 0x01]);
         assert_eq!(&resp[2..4], &[0x00, 0x0c]);
@@ -188,7 +232,7 @@ mod tests {
             .parse()
             .unwrap();
         let req = request(&padding(32));
-        let resp = respond(&req, src, StunPolicy::default()).unwrap();
+        let resp = respond(&req, src).unwrap();
         assert_eq!(resp.len(), 44);
         assert!(resp.len() <= req.len());
         assert_eq!(&resp[20..26], &[0x00, 0x20, 0x00, 0x14, 0x00, 0x02]);
@@ -204,72 +248,64 @@ mod tests {
     }
 
     #[test]
-    fn a_response_is_never_larger_than_the_request_by_default() {
+    fn a_bare_20_byte_request_is_answered_within_the_amplification_bound() {
         let bare = request(&[]);
         assert_eq!(bare.len(), 20);
-        assert!(respond(&bare, v4(), StunPolicy::default()).is_none());
-        let resp = respond(
-            &bare,
-            v4(),
-            StunPolicy {
-                allow_short_requests: true,
-            },
-        )
-        .unwrap();
+        let resp = respond(&bare, v4()).expect("a bare request is answered");
         assert_eq!(resp.len(), 32);
-        let exact = request(&padding(8));
-        assert_eq!(exact.len(), 32);
-        assert_eq!(
-            respond(&exact, v4(), StunPolicy::default()).unwrap().len(),
-            32
-        );
-        let v6: SocketAddr = "[::1]:1".parse().unwrap();
+        let v6: SocketAddr = "[2001:db8::1]:1".parse().unwrap();
+        let resp = respond(&bare, v6).expect("a bare request over IPv6 is answered");
+        assert_eq!(resp.len(), MAX_RESPONSE_LEN);
+        assert!(resp.len() * 10 <= bare.len() * 22, "at most 2.2 times");
+    }
+
+    #[test]
+    fn a_response_beyond_the_bound_is_not_sent() {
+        // 44 bytes is the ceiling and exactly 2.2 times the smallest request.
+        assert!(within_bound(20, 44));
+        assert!(within_bound(20, 32));
+        assert!(!within_bound(20, 45), "above the byte ceiling");
+        assert!(!within_bound(19, 44), "above 2.2 times the request");
         assert!(
-            respond(&exact, v6, StunPolicy::default()).is_none(),
-            "44 > 32"
+            !within_bound(100, 45),
+            "the ceiling holds for large requests"
         );
+        assert!(within_bound(100, 44));
     }
 
     #[test]
     fn only_binding_requests_are_answered() {
-        let pol = StunPolicy {
-            allow_short_requests: true,
-        };
         for msg_type in [0x0101u16, 0x0111, 0x0003, 0x0000, 0x4001] {
             let mut r = request(&[]);
             r[0..2].copy_from_slice(&msg_type.to_be_bytes());
-            assert!(respond(&r, v4(), pol).is_none(), "type {msg_type:#06x}");
+            assert!(respond(&r, v4()).is_none(), "type {msg_type:#06x}");
         }
         let mut bad_cookie = request(&[]);
         bad_cookie[4] ^= 1;
-        assert!(respond(&bad_cookie, v4(), pol).is_none());
+        assert!(respond(&bad_cookie, v4()).is_none());
     }
 
     #[test]
     fn malformed_lengths_and_attributes_are_dropped() {
-        let pol = StunPolicy {
-            allow_short_requests: true,
-        };
         let mut short = request(&padding(8));
         short.truncate(25);
-        assert!(respond(&short, v4(), pol).is_none());
+        assert!(respond(&short, v4()).is_none());
         let mut unaligned = request(&padding(8));
         unaligned[3] = 11;
-        assert!(respond(&unaligned, v4(), pol).is_none());
+        assert!(respond(&unaligned, v4()).is_none());
         // Attribute claims more bytes than the message holds.
         let mut overlong = request(&[0x80, 0x22, 0x00, 0x40, 1, 2, 3, 4]);
-        assert!(respond(&overlong, v4(), pol).is_none());
+        assert!(respond(&overlong, v4()).is_none());
         overlong.extend(std::iter::repeat_n(0, 600));
-        assert!(respond(&overlong, v4(), pol).is_none());
-        assert!(respond(&[], v4(), pol).is_none());
-        assert!(respond(&[0u8; 19], v4(), pol).is_none());
+        assert!(respond(&overlong, v4()).is_none());
+        assert!(respond(&[], v4()).is_none());
+        assert!(respond(&[0u8; 19], v4()).is_none());
         // Zero-length attributes are fine.
-        assert!(respond(&request(&[0x80, 0x22, 0x00, 0x00]), v4(), pol).is_some());
+        assert!(respond(&request(&[0x80, 0x22, 0x00, 0x00]), v4()).is_some());
         assert!(
             respond(
                 &request(&[0x80, 0x22, 0x00, 0x00, 0x80, 0x22, 0x00, 0x00]),
-                v4(),
-                pol
+                v4()
             )
             .is_some()
         );
@@ -277,9 +313,6 @@ mod tests {
 
     #[test]
     fn arbitrary_bytes_never_panic() {
-        let pol = StunPolicy {
-            allow_short_requests: true,
-        };
         let mut x = 0x1234_5678_9abc_def0u64;
         for len in 0..120usize {
             for _ in 0..200 {
@@ -296,8 +329,47 @@ mod tests {
                     buf[1] = 1;
                     buf[4..8].copy_from_slice(&MAGIC_COOKIE.to_be_bytes());
                 }
-                let _ = respond(&buf, v4(), pol);
+                let _ = respond(&buf, v4());
             }
         }
+    }
+
+    #[test]
+    fn the_per_address_limit_stops_answers() {
+        let mut b = AnswerBudget::new(2);
+        let ip: IpAddr = "192.0.2.1".parse().unwrap();
+        assert!(b.take(ip, 0));
+        assert!(b.take(ip, 0));
+        assert!(!b.take(ip, 0));
+        assert!(b.take("192.0.2.2".parse().unwrap(), 0));
+    }
+
+    #[test]
+    fn a_full_address_table_is_pruned_instead_of_locking_new_clients_out() {
+        let mut b = AnswerBudget::with_capacity(1, 2, u32::MAX);
+        let ips: Vec<IpAddr> = (1..=3)
+            .map(|i| format!("192.0.2.{i}").parse().unwrap())
+            .collect();
+        assert!(b.take(ips[0], 0));
+        assert!(b.take(ips[1], 0));
+        assert_eq!(b.tracked(), 2);
+        assert!(
+            !b.take(ips[2], 0),
+            "table full and nothing has refilled yet"
+        );
+        assert_eq!(b.tracked(), 2, "the table stays bounded");
+        // A minute later the old buckets are full again; the third address is answered at once,
+        // without waiting for the periodic prune.
+        assert!(b.take(ips[2], 60_000));
+        assert_eq!(b.tracked(), 1);
+    }
+
+    #[test]
+    fn the_global_limit_caps_total_output() {
+        let mut b = AnswerBudget::with_capacity(60, 100, 3);
+        let answered = (1..=10)
+            .filter(|i| b.take(format!("192.0.2.{i}").parse().unwrap(), 0))
+            .count();
+        assert_eq!(answered, 3);
     }
 }

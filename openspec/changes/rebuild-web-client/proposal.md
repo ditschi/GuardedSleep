@@ -9,7 +9,7 @@ The web client is the frozen SvelteKit + Capacitor-era `apps/mobile` with hand-w
 - New `apps/web` (Vite 8, Svelte 5, vite-plugin-pwa, TypeScript strict, no SvelteKit) on the WASM `Link`, as baby unit and parent unit.
 - New capability spec `web-client` with the browser-specific behaviour (keep-awake setup, alert sound unlock, background warning, silence status "unknown", memory-only pairing material, CSP).
 - Web checks: `svelte-check --fail-on-warnings`, Vitest for logic, Playwright with fake media, axe and overflow checks, a storage test for pairing material, pnpm 11 settings.
-- `apps/mobile` and `packages/protocol` are deleted at parity; the web image builds `apps/web`.
+- `apps/mobile` is deleted at parity (`packages/protocol` is already gone with `add-rust-signaling-server`); the web image builds `apps/web`.
 
 ## Capabilities
 
@@ -23,4 +23,4 @@ The web client is the frozen SvelteKit + Capacitor-era `apps/mobile` with hand-w
 
 ## Impact
 
-`apps/web` (new), `apps/mobile` and `packages/protocol` (deleted), `apps/e2e`, `docker/mobile-web` (renamed or rebuilt), `docker-web.yml`, `pnpm-workspace.yaml`, `docs/ci-gates.md`.
+`apps/web` (new), `apps/mobile` (deleted), `apps/e2e`, `docker/mobile-web` (renamed or rebuilt), `docker-web.yml`, `pnpm-workspace.yaml`, `docs/ci-gates.md`.
