@@ -216,6 +216,27 @@ When in doubt, read the matching spec in `openspec/specs/` and the backlog entry
 - **Refactor sweep (weekly):** the [`refactor-sweep`](.claude/skills/refactor-sweep/SKILL.md) procedure: the scout proposes up to 5 behavior-preserving improvements, the planner triages, the `implementer` works each in its own worktree off `origin/main`, the planner verifies and opens one **draft PR** per finding (label `refactor-sweep`, max 3 open). Needs-an-ADR items are reported, not implemented. Sweeps never merge or push to `main`.
 - **Cross-IDE etiquette:** tool-specific files complement, never replace, this file; mirror their intent here.
 
+### 10.1 Machine load and parallel agents
+
+Load comes from what an agent runs, not from how many agents run. Budgets are per machine and derived, never hard-coded here.
+
+- **Machine profile:** `just machine-profile` measures cores, RAM and KVM once and writes the git-ignored `.cache/machine-profile.env` (`just setup` runs it; re-run after a hardware change). Rule of thumb: `GS_MEDIUM_SLOTS = max(1, min(cores/4, RAM_GB/6))`, `GS_HEAVY_SLOTS = max(1, min(cores/8, RAM_GB/12))`. Override with the same variables in the environment. Read the file once per session; do not probe the machine again.
+- **Weight classes:**
+  - _light_: reading, reviews, docs, OpenSpec artifacts, small edits checked with targeted commands (no full builds);
+  - _medium_: building or testing one area, `just test`, `just lint`, `just build`;
+  - _heavy_: `just gate` (emulators), `just e2e`, Docker image builds, full Android ABI builds.
+- **Slots enforce it:** medium and heavy recipes run through `scripts/lib/slot.sh <class>`, a machine-wide `flock` semaphore in `/tmp` shared by all worktrees and sessions. Without a free slot a job waits (bounded by `GS_SLOT_WAIT`, default 3600 s) instead of overloading the machine. Slots are re-entrant for nested recipes.
+- **Coordinator rule:** start light agents freely (practical limit about 6, set by coordination effort, not by the machine). Start at most `GS_MEDIUM_SLOTS` agents that build or test at the same time; heavy phases queue on their own. Prefer one agent per large work package over splitting it into agents that rebuild the same tree.
+- **Targeted checks per step, full checks once:** after each step run only the affected crate/module/package check (`scripts/cargo.sh test -p <crate>`, one Gradle module, `pnpm --filter <pkg> test`); run the full `just lint` / `just test` once at the end of a work package.
+- **Shared caches:** the build-image scripts share the Cargo registry and the Gradle home across worktrees (`${GS_SHARED_CACHE:-$HOME/.cache/guardedsleep}`); each worktree keeps its own `target/`. The first build in a new worktree is still cold (several minutes); that is expected, not a hang.
+
+### 10.2 Commands that must finish
+
+- **Every long command gets a deadline:** wrap it in `timeout N`, below the tool limit (10 min for a foreground call). Longer runs go to the background and the harness completion notice is the only signal.
+- **Never write polling loops** (`until …; do sleep …; done`, `while ! …`) and never use `pgrep -f <pattern>` as a wait condition: the pattern matches the polling shell's own command line, so the loop never ends. A waited-for output file also stays empty forever when its producer was killed (for example by a rate limit).
+- **Leave nothing running:** servers start only with a trap that stops them (Playwright manages `just dev` itself); the gate stops its emulator containers. Before reporting, an agent checks that no process or container it started is still running. `just reap` lists leftovers (dev servers, stuck shells, project containers) and stops them on request.
+- **Report progress through commits:** commit after each step so a stalled or cut-off agent loses nothing, and the coordinator can check progress with `git log` instead of waiting blind.
+
 ## 11. Maintenance of this file
 
 Update it when the stack, repository layout, commands, spec set, role process, guardrails or the §9 matrix change, and when a wave lands (drop the "(planned, wave N)" marker and the matching "current commands" row). Keep it under ~300 lines; move detail to `docs/contributing/*.md` and link it.
