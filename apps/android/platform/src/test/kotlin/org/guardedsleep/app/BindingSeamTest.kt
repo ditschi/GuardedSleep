@@ -20,13 +20,12 @@ class BindingSeamTest {
 
     @Test
     fun uniffiIsOnlyImportedInsidePlatform() {
-        val sources =
-            modules.flatMap { module ->
-                File(module, "src")
-                    .walkTopDown()
-                    .filter { it.isFile && it.extension in sourceExtensions }
-                    .toList()
-            }
+        val sources = modules.flatMap { module ->
+            File(module, "src")
+                .walkTopDown()
+                .filter { it.isFile && it.extension in sourceExtensions }
+                .toList()
+        }
         assertTrue("no sources found; wrong working directory?", sources.isNotEmpty())
         val offenders =
             sources

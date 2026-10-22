@@ -15,6 +15,10 @@ class I18nConventionPlugin : Plugin<Project> {
                 repoRoot.set(root)
                 localesDir.set(root.dir("locales"))
                 generatorDir.set(root.dir("crates/i18n-gen/src"))
+                generatorManifests.from(
+                    root.file("crates/i18n-gen/Cargo.toml"),
+                    root.file("Cargo.lock"),
+                )
                 outputDir.set(target.layout.buildDirectory.dir("generated/i18n/res"))
             }
         target.extensions.configure<LibraryAndroidComponentsExtension> {

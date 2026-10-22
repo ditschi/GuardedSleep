@@ -74,8 +74,8 @@ class MonitorService : Service() {
                 getSystemService(PowerManager::class.java)
                     .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "GuardedSleep:monitor")
                     // No timeout: the lock lives exactly as long as this foreground service
-                    // (released in
-                    // onDestroy) and the core's timers must tick through the whole night.
+                    // (released in onDestroy) and the core's timers must tick through the whole
+                    // night.
                     .apply { @SuppressLint("WakelockTimeout") acquire() }
         }
         graph.controller.ensureRun()
@@ -84,8 +84,8 @@ class MonitorService : Service() {
         return START_STICKY
     }
 
-    // The constants are compile-time ints; below API 30 / 29 the system ignores the type bits that
-    // it does not know, and ServiceCompat passes them through unchanged.
+    // The constants are compile-time ints and the manifest declares the same bits, so the API 29
+    // subset check passes; API 26-28 ignore the type.
     @SuppressLint("InlinedApi")
     private fun foregroundType(role: Role): Int =
         if (role == Role.BABY) ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
