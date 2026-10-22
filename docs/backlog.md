@@ -11,7 +11,13 @@ Everything that is not current behaviour: decided work not started yet, ideas, d
 
 ### libwebrtc CVE decision by 2026-11-19
 
-`PLANNED` (deadline 2026-11-19, owner: project owner) Chrome 156 (2026-10-20) fixed a critical WebRTC memory-corruption bug; `io.github.webrtc-sdk:android` 150.7871.01 predates it (found in the `swap-webrtc-sdk` CVE check; CVE id and component still unverified, only secondary reports). Per the CVE-based SLA (`swap-webrtc-sdk` design): confirm the CVE and whether the audio/DTLS/SCTP/ICE/SDP paths are affected; if the vendor has not shipped a patched build 30 days after the Chrome fix, propose a change that switches vendor, patch-builds libwebrtc, or disables the affected feature.
+`PLANNED` (deadline 2026-11-19, owner: project owner) Chrome 156 (156.0.8078.47, 2026-10-20) fixed **CVE-2026-113303**, a critical memory corruption in WebRTC (Chrome Releases post and NVD agree; the subcomponent is not public, so whether our audio/DTLS/SRTP/SCTP/ICE/SDP path is affected is unknown). `io.github.webrtc-sdk:android` 150.7871.01 (2026-08-31) predates it, and the vendor has published nothing newer. Per the libwebrtc patch policy (dev-toolchain spec; check recorded in the `swap-webrtc-sdk` design, which moves to `openspec/changes/archive/` on archive): if no vendor build carries the fix by 2026-11-19, propose a change that switches vendor, patch-builds libwebrtc, or disables the affected feature.
+
+The adoption check (2026-10-22) covered M151–M156: no other critical or exploited WebRTC CVE, so no earlier deadline applies. Seven High WebRTC fixes from M152–M156 are also missing from 150.7871.01; they do not trigger the policy but should weigh in the decision.
+
+**CVE watch log** (monthly, `docs/ci-gates.md`): record each check here as one line (date, Chrome stable version, new critical/exploited WebRTC CVEs with fix date + 30 days, newest webrtc-sdk release).
+
+- 2026-10-22: Chrome 156.0.8078.47; new trigger CVE-2026-113303 (due 2026-11-19); webrtc-sdk 150.7871.01.
 
 ### Security audit before alpha
 
