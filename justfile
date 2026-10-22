@@ -260,6 +260,10 @@ release-preview:
 reap *args:
     scripts/lib/reap.sh {{ args }}
 
+# Per-command run and wait times of the slot-held recipes of the last N days (default 7), from the shared timings.tsv.
+timings *args:
+    scripts/lib/timings.sh {{ args }}
+
 # Generated, uncommitted packages that svelte-check and Vitest import (the WASM core).
 [private]
 _js-gen:
