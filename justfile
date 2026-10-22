@@ -152,7 +152,7 @@ test-android:
     source scripts/lib/require.sh
     require test-android android-sdk
     scripts/core-build.sh host
-    scripts/gradle.sh :core-bindings:testDebugUnitTest :platform:testDebugUnitTest :app:testDebugUnitTest
+    scripts/gradle.sh buildLogicTest :core-bindings:testDebugUnitTest :platform:testDebugUnitTest :app:testDebugUnitTest
 
 # Generate the i18n output (Android resources, web JSON). Nothing generated is committed.
 gen:
@@ -186,7 +186,7 @@ _build-android *gradle_tasks:
 
 # What the CI android job runs: build-android plus Android Lint (warnings are errors), the JVM tests and Roborazzi screenshot verification.
 verify-android:
-    just build-android lintDebug :core-bindings:testDebugUnitTest :platform:testDebugUnitTest :app:testDebugUnitTest :app:verifyRoborazziDebug
+    just build-android lintDebug buildLogicTest :core-bindings:testDebugUnitTest :platform:testDebugUnitTest :app:testDebugUnitTest :app:verifyRoborazziDebug
 
 # Browser E2E (Playwright, local dev stack). Prints SKIPPED without Playwright browsers unless GS_STRICT=1.
 e2e:

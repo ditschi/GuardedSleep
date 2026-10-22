@@ -12,8 +12,6 @@ android {
     defaultConfig {
         // ADR-018: alpha builds install next to the Capacitor app (org.guardedsleep.app).
         applicationId = "org.guardedsleep.app.alpha"
-        versionCode = 1
-        versionName = "0.1.0-alpha.1"
         // Must match the ABIs scripts/core-build.sh builds; libwebrtc alone would ship more,
         // and the app would then crash on devices without a matching core library.
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }

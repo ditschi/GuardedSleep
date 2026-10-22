@@ -3,6 +3,8 @@ package org.guardedsleep.buildlogic
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.dsl.CommonExtension
 import com.android.build.api.dsl.LibraryExtension
+import java.io.StringReader
+import java.util.Properties
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -44,6 +46,20 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
         target.extensions.configure<ApplicationExtension> {
             configureCommon()
             defaultConfig.targetSdk = TARGET_SDK
+            // version.properties is the only place a release number is written.
+            val versionName =
+                target.providers
+                    .fileContents(
+                        target.rootProject.layout.projectDirectory.file("version.properties")
+                    )
+                    .asText
+                    .map { text ->
+                        Properties().apply { load(StringReader(text)) }.getProperty("versionName")
+                            ?: error("version.properties has no versionName")
+                    }
+                    .get()
+            defaultConfig.versionName = versionName
+            defaultConfig.versionCode = AndroidVersion.versionCode(versionName)
         }
     }
 }

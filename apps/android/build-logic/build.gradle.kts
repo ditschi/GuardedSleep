@@ -2,11 +2,15 @@ plugins { `kotlin-dsl` }
 
 kotlin { jvmToolchain(21) }
 
+tasks.test { useJUnit() }
+
 dependencies {
     // The plugins themselves are on the root build's classpath (`apply false` in build.gradle.kts);
     // build-logic only needs their DSL types to compile.
     compileOnly(libs.android.gradle.plugin)
     compileOnly(libs.kotlin.gradle.plugin)
+
+    testImplementation(libs.junit)
 }
 
 gradlePlugin {
