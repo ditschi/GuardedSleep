@@ -5,6 +5,7 @@
 #   scripts/core-build.sh wasm            # target/wasm-pkg/node + target/wasm-pkg/web
 #   scripts/core-build.sh host            # host library + Kotlin bindings (what the Android JVM unit tests load; no ABIs)
 #   scripts/core-build.sh android         # host + jniLibs (arm64-v8a, x86_64) for apps/android
+#   scripts/core-build.sh swift           # Swift bindings from the host ffi library into target/swift-bindings (iOS smoke, no Xcode)
 #   scripts/core-build.sh determinism     # generate the Kotlin bindings and the wasm package twice, fail on differing hashes
 # Inside CI or the image itself, set CORE_BUILD_NATIVE=1 to run without Docker.
 set -euo pipefail
@@ -76,6 +77,17 @@ run_android() {
 	ls -l "$jni"/*/libguardedsleep_ffi.so
 }
 
+# The Swift smoke check (weekly workflow): generation must keep working on Linux although no iOS client exists yet.
+run_swift() {
+	local out=target/swift-bindings
+	cargo build -p guardedsleep-ffi
+	rm -rf "$out"
+	cargo run -q -p uniffi-bindgen -- generate --library target/debug/libguardedsleep_ffi.so \
+		--language swift --out-dir "$out" --no-format
+	ls -l "$out"
+	[[ -n "$(find "$out" -name '*.swift' -print -quit)" ]] || { echo "swift: no .swift file generated" >&2; return 1; }
+}
+
 # Generate-twice check (ADR-020 section 3): the generated Kotlin bindings and the wasm package must be
 # byte-identical across two generations from the same build. Only the generators run twice; the two builds
 # are reused (cargo is incremental, so a prior `host` / `wasm` run makes this fast).
@@ -114,6 +126,7 @@ for cmd in "${@:-test}"; do
 	host) run_host ;;
 	android) run_android ;;
 	determinism) run_determinism ;;
+	swift) run_swift ;;
 	*)
 		echo "unknown subcommand: $cmd" >&2
 		exit 2
