@@ -40,7 +40,7 @@ If you use Internet mode (signaling server + STUN), the following metadata is vi
 | **Signaling server** | Which devices connect, when, IP addresses | Audio, messages, settings, any content |
 | **STUN server**      | Public IP addresses of both devices       | Audio, messages, connection content    |
 
-**Mitigation:** You can self-host the signaling server for full control. EU-based STUN servers are used by default. In local mode (WiFi/hotspot), no server is involved at all.
+**Mitigation:** You can self-host the signaling server for full control. The Android app uses the STUN service of the signaling server you configured by default; the web client still uses EU-based public STUN servers until it follows. In local mode (WiFi/hotspot), no server is involved at all.
 
 ## 3. Data We Do NOT Collect
 

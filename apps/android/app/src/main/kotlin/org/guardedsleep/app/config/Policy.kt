@@ -50,9 +50,6 @@ object AppDefaults {
     val signalingUrls: List<String> =
         if (BuildConfig.DEBUG) listOf("ws://10.0.2.2:8787") else emptyList()
 
-    /** Same EU STUN defaults as the web client. */
-    val stunUrls = listOf("stun:stun.sipgate.de:3478", "stun:stun.linphone.org:3478")
-
     const val ALARM_AFTER_MS = 60_000L
     const val TICK_MS = 250L
     const val AUDIO_LEVEL_MS = 100L

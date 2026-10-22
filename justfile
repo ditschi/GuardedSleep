@@ -69,6 +69,7 @@ lint-text: _js-deps
     typos --force-exclude
     scripts/lib/hygiene.sh
     scripts/lib/workspace-lints.sh
+    scripts/lib/no-google-stun.sh
     reuse lint
     scripts/lib/secrets.sh
 
