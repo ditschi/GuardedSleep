@@ -110,6 +110,7 @@ Bindings   UniFFI (ffi) · wasm-bindgen (wasm)
 Core       Rust, sans-IO (core, relay): no I/O, threads or clocks; emits message keys, never prose
 ```
 
+- **Android:** `ui-contract` is the port between State and Platform: `platform` implements `AppController` and emits contract models, `app` only consumes them; `ui-contract` depends on neither.
 - **Safety logic lives once, in the Rust core** (pairing, link supervision, escalation, noise gate, validation). Platform reconnect loops or timer-based alarms are bugs.
 - **Protocol shapes come from the Rust core.** Never hand-edit a second schema.
 - **UI renders contract models only** (`UiContract.kt`; web stores mirror it). UI code never imports UniFFI/WASM types. In Android only `platform` may depend on `core-bindings`; `app` reaches platform components through `ui-contract` models and the wiring interfaces.

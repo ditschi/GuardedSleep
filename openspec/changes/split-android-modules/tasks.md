@@ -19,3 +19,5 @@ Refined 2026-10-22 from the wave-2 plan (group 2, after group 1). Repository con
 
 - [x] 3.1 Update scripts, CI recipes and docs that name `:core`; `docs/ci-gates.md`
 - [x] 3.2 `just lint`, `just test`, `just verify-android` and the emulator gate green
+- [x] 3.3 Review fixes: spec deltas completed (R8, lint, versionCode format, wrapper checksum, seam guard, permission allow-list), release permission allow-list in `release-check.sh`, `BindingSeamTest`, JNA `-keepattributes`, minor items (lint scope, backup domains, i18n task caching, strict version regex, ktfmt check without java, doc corrections)
+- [ ] 3.4 Release smoke on a device (R8 release APK) is open and tracked as task 1.6 of `add-android-release`

@@ -22,9 +22,11 @@ class AndroidVersionTest {
                 "0.1.0-beta.1",
                 "0.1.0-beta.12",
                 "0.1.0-rc.1",
+                "0.1.0-rc.99",
                 "0.1.0",
                 "0.1.1-alpha.1",
                 "0.1.1",
+                "0.1.99",
                 "0.2.0-alpha.1",
                 "0.99.99",
                 "1.0.0-alpha.1",
@@ -48,6 +50,8 @@ class AndroidVersionTest {
                 "0.100.0",
                 "0.0.0-alpha.100",
                 "210.0.0",
+                "0.01.0",
+                "0.1.0-alpha.0",
             )
             .forEach { name ->
                 try {

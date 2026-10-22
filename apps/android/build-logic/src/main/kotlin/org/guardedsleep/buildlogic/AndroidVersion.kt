@@ -11,7 +11,8 @@ package org.guardedsleep.buildlogic
  * major up to 209 (the result must fit the 2_100_000_000 ceiling of Google Play).
  */
 object AndroidVersion {
-    private val pattern = Regex("""(\d+)\.(\d+)\.(\d+)(?:-(alpha|beta|rc)\.(\d+))?""")
+    private val pattern =
+        Regex("""(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(alpha|beta|rc)\.([1-9]\d*))?""")
     private val stages = mapOf("alpha" to 1, "beta" to 2, "rc" to 3)
     private const val RELEASE_STAGE = 9
     private const val MAX_MAJOR = 209

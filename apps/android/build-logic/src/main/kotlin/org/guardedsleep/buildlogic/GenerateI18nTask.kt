@@ -2,8 +2,11 @@ package org.guardedsleep.buildlogic
 
 import javax.inject.Inject
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
@@ -15,6 +18,7 @@ import org.gradle.process.ExecOperations
  * Android string resources are generated from the platform-neutral catalogue (the files under
  * locales/).
  */
+@CacheableTask
 abstract class GenerateI18nTask : DefaultTask() {
     @get:InputDirectory
     @get:PathSensitive(PathSensitivity.RELATIVE)
@@ -23,6 +27,11 @@ abstract class GenerateI18nTask : DefaultTask() {
     @get:InputDirectory
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val generatorDir: DirectoryProperty
+
+    /** A generator dependency bump (Cargo.toml, Cargo.lock) must invalidate the output too. */
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val generatorManifests: ConfigurableFileCollection
 
     @get:OutputDirectory abstract val outputDir: DirectoryProperty
 
