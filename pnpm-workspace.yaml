@@ -19,7 +19,9 @@ minimumReleaseAge: 4320
 # https://pnpm.io/settings/dependency-resolution#blockexoticsubdeps
 blockExoticSubdeps: true
 
-# Security floor for a transitive dependency.
+# Security floors for transitive dependencies. Selectors are scoped to the vulnerable range so a
+# parent's own newer range (e.g. @sveltejs/kit on cookie 1.x) stays untouched; an unscoped
+# ">=" floor would pull cookie 2.x, which dropped the exports kit imports.
 # https://pnpm.io/settings/dependency-resolution#overrides
 overrides:
-  cookie: ">=0.7.0"
+  "cookie@<0.7.0": "^0.7.2"
