@@ -20,27 +20,43 @@ import uniffi.guardedsleep_core.Dnd
 import uniffi.guardedsleep_core.Ringer
 
 class MappingTest {
-    private fun dev(ringer: Ringer? = Ringer.NORMAL, dnd: Dnd? = Dnd.OFF, access: Boolean? = true, quiet: Boolean? = false) =
-        DeviceStatus(null, null, ringer, dnd, true, access, quiet, null, null, null, emptyList())
+    private fun dev(
+        ringer: Ringer? = Ringer.NORMAL,
+        dnd: Dnd? = Dnd.OFF,
+        access: Boolean? = true,
+        quiet: Boolean? = false,
+    ) = DeviceStatus(null, null, ringer, dnd, true, access, quiet, null, null, null, emptyList())
 
-    @Test fun silenceMapping() {
+    @Test
+    fun silenceMapping() {
         assertEquals(SilenceStatus.MAY_BUZZ, SilenceMapping.silence(dev(Ringer.VIBRATE)))
         assertEquals(SilenceStatus.MAY_RING, SilenceMapping.silence(dev(Ringer.NORMAL)))
-        assertEquals(SilenceStatus.SILENT, SilenceMapping.silence(dev(Ringer.NORMAL, Dnd.ALARMS_ONLY, quiet = true)))
+        assertEquals(
+            SilenceStatus.SILENT,
+            SilenceMapping.silence(dev(Ringer.NORMAL, Dnd.ALARMS_ONLY, quiet = true)),
+        )
         assertEquals(SilenceStatus.SCREEN_MAY_LIGHT, SilenceMapping.silence(dev(Ringer.SILENT)))
-        assertEquals(SilenceStatus.SCREEN_MAY_LIGHT, SilenceMapping.silence(dev(Ringer.NORMAL, Dnd.ALARMS_ONLY)))
-        assertEquals(SilenceStatus.NO_ACCESS, SilenceMapping.silence(dev(Ringer.NORMAL, access = false)))
+        assertEquals(
+            SilenceStatus.SCREEN_MAY_LIGHT,
+            SilenceMapping.silence(dev(Ringer.NORMAL, Dnd.ALARMS_ONLY)),
+        )
+        assertEquals(
+            SilenceStatus.NO_ACCESS,
+            SilenceMapping.silence(dev(Ringer.NORMAL, access = false)),
+        )
         assertEquals(SilenceStatus.UNKNOWN, SilenceMapping.silence(null))
     }
 
-    @Test fun webBabyIsUnknown() {
+    @Test
+    fun webBabyIsUnknown() {
         val web = dev(ringer = null, dnd = null, access = null, quiet = null)
         assertEquals(SilenceStatus.UNKNOWN, SilenceMapping.silence(web))
         assertTrue(SilenceMapping.peerStatus(web).isWebClient)
         assertFalse(SilenceMapping.peerStatus(dev()).isWebClient)
     }
 
-    @Test fun linkLevelsToFeedback() {
+    @Test
+    fun linkLevelsToFeedback() {
         val p = LinkPhase.RECONNECTING
         assertTrue(FeedbackPlans.forLink(p, 0, false).silent)
         val l1 = FeedbackPlans.forLink(p, 1, false)
@@ -60,7 +76,8 @@ class MappingTest {
         assertTrue(FeedbackPlans.forLink(LinkPhase.PEER_STOPPED, 2, false).silent)
     }
 
-    @Test fun noiseToFeedback() {
+    @Test
+    fun noiseToFeedback() {
         assertTrue(FeedbackPlans.forNoise(NoiseKind.NEW, false).fullScreen)
         assertTrue(FeedbackPlans.forNoise(NoiseKind.NEW, false).repeatingHaptic)
         val cont = FeedbackPlans.forNoise(NoiseKind.CONTINUE, false)
@@ -69,7 +86,8 @@ class MappingTest {
         assertFalse(FeedbackPlans.forNoise(NoiseKind.NEW, true).notify)
     }
 
-    @Test fun noiseEventLifecycle() {
+    @Test
+    fun noiseEventLifecycle() {
         val t = NoiseTracker()
         assertEquals(NoiseKind.NEW, t.onAlert(0))
         assertEquals(NoiseKind.CONTINUE, t.onAlert(10_000))
@@ -83,35 +101,68 @@ class MappingTest {
         assertEquals(NoiseKind.NEW, t.onAlert(ended2 + AlertPolicy.NOISE_EVENT_JOIN_MS))
     }
 
-    @Test fun linkQuality() {
+    @Test
+    fun linkQuality() {
         assertNull(LinkMapping.quality(5, 0))
         assertEquals(LinkQuality.GOOD, LinkMapping.quality(250, 2))
         assertEquals(LinkQuality.MEDIUM, LinkMapping.quality(250, 12))
         assertEquals(LinkQuality.POOR, LinkMapping.quality(100, 20))
     }
 
-    @Test fun causeHints() {
-        assertEquals(org.guardedsleep.app.ui.model.CauseHint.PEER_ABSENT, LinkMapping.causeHint("peer_absent"))
+    @Test
+    fun causeHints() {
+        assertEquals(
+            org.guardedsleep.app.ui.model.CauseHint.PEER_ABSENT,
+            LinkMapping.causeHint("peer_absent"),
+        )
         assertNull(LinkMapping.causeHint("nonsense"))
     }
 
-    @Test fun unitWarningsUseWireNames() {
-        val s = dev().copy(unitWarnings = listOf(uniffi.guardedsleep_core.UnitWarning.NOT_CHARGING, uniffi.guardedsleep_core.UnitWarning.MIC_PERMISSION_LOST))
-        assertEquals(listOf("not_charging", "mic_permission_lost"), SilenceMapping.peerStatus(s).unitWarnings)
+    @Test
+    fun unitWarningsUseWireNames() {
+        val s =
+            dev()
+                .copy(
+                    unitWarnings =
+                        listOf(
+                            uniffi.guardedsleep_core.UnitWarning.NOT_CHARGING,
+                            uniffi.guardedsleep_core.UnitWarning.MIC_PERMISSION_LOST,
+                        )
+                )
+        assertEquals(
+            listOf("not_charging", "mic_permission_lost"),
+            SilenceMapping.peerStatus(s).unitWarnings,
+        )
     }
 
-    @Test fun lastAliveComesFromTheCoreAndUpdateRequiredIsSticky() {
-        val ui = LinkMapping.linkUi(status(uniffi.guardedsleep_core.LinkState.RECONNECTING, 1, cause = "update_required", lastAlive = 4_200), LinkQuality.UNKNOWN)
+    @Test
+    fun lastAliveComesFromTheCoreAndUpdateRequiredIsSticky() {
+        val ui =
+            LinkMapping.linkUi(
+                status(
+                    uniffi.guardedsleep_core.LinkState.RECONNECTING,
+                    1,
+                    cause = "update_required",
+                    lastAlive = 4_200,
+                ),
+                LinkQuality.UNKNOWN,
+            )
         assertEquals(4_200L, ui.lastAliveElapsedMs)
         assertEquals("update_required", ui.failureKey)
         assertNull(LinkMapping.causeHint("update_required"))
     }
 
-    @Test fun failedAfterConnectedIsNeverSilent() {
-        assertTrue(FeedbackPlans.forLink(LinkPhase.FAILED_NEEDS_USER, 0, false, wasConnected = false).silent)
+    @Test
+    fun failedAfterConnectedIsNeverSilent() {
+        assertTrue(
+            FeedbackPlans.forLink(LinkPhase.FAILED_NEEDS_USER, 0, false, wasConnected = false)
+                .silent
+        )
         val plan = FeedbackPlans.forLink(LinkPhase.FAILED_NEEDS_USER, 0, false, wasConnected = true)
         assertTrue(plan.fullScreen)
         assertEquals(AlertPolicy.LEVEL2_HAPTIC_INTERVAL_MS, plan.hapticEveryMs)
-        assertTrue(FeedbackPlans.forLink(LinkPhase.FAILED_NEEDS_USER, 0, true, wasConnected = true).silent)
+        assertTrue(
+            FeedbackPlans.forLink(LinkPhase.FAILED_NEEDS_USER, 0, true, wasConnected = true).silent
+        )
     }
 }

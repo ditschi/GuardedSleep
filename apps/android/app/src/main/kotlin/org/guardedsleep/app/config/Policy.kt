@@ -3,8 +3,8 @@ package org.guardedsleep.app.config
 import org.guardedsleep.app.BuildConfig
 
 /**
- * Owner defaults that are still pending confirmation (ADR-018 §6). Everything that may change
- * after the owner decides lives here, so a decision is a one-line edit.
+ * Owner defaults that are still pending confirmation (ADR-018 §6). Everything that may change after
+ * the owner decides lives here, so a decision is a one-line edit.
  */
 object AlertPolicy {
     /** Level 1 (20 s without contact): visual only, no vibration (alarm fatigue on flaky Wi-Fi). */
@@ -13,7 +13,10 @@ object AlertPolicy {
     /** Level 2 (60 s): repeating connection haptic. */
     const val LEVEL2_HAPTIC_INTERVAL_MS = 10_000L
 
-    /** Level 2: short soft tone on the alarm stream, every 10 s like a classic hardware monitor (owner, final). */
+    /**
+     * Level 2: short soft tone on the alarm stream, every 10 s like a classic hardware monitor
+     * (owner, final).
+     */
     const val LEVEL2_TONE_INTERVAL_MS = 10_000L
 
     /** Level 3 (180 s): continuous alarm until acknowledged or restored. */

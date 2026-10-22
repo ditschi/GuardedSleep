@@ -30,45 +30,67 @@ class PairingTest {
 
     private fun rejected(text: String) = (PairingPayload.parse(text, now) as Result.Rejected).error
 
-    @Test fun roundTrip() {
+    @Test
+    fun roundTrip() {
         val p = PairingPayload.create(psk, listOf("ws://h:1"), now)
         val parsed = PairingPayload.parse(p.toJson(), now) as Result.Ok
         assertEquals(p, parsed.payload)
         assertEquals((now + 300_000) / 1000, p.expiresAtEpochSec)
     }
 
-    @Test fun acceptsPastedWhitespace() {
+    @Test
+    fun acceptsPastedWhitespace() {
         assertTrue(PairingPayload.parse("  \n${payload()}\n ", now) is Result.Ok)
     }
 
-    @Test fun rejectsExpired() = assertEquals(PairingError.EXPIRED, rejected(payload(x = now / 1000 - 1)))
+    @Test
+    fun rejectsExpired() = assertEquals(PairingError.EXPIRED, rejected(payload(x = now / 1000 - 1)))
 
-    @Test fun rejectsWrongVersion() = assertEquals(PairingError.NOT_OUR_CODE, rejected(payload(v = 2)))
+    @Test
+    fun rejectsWrongVersion() = assertEquals(PairingError.NOT_OUR_CODE, rejected(payload(v = 2)))
 
-    @Test fun rejectsShortKey() =
-        assertEquals(PairingError.NOT_OUR_CODE, rejected(payload(k = PairingPayload.b64(ByteArray(16)))))
+    @Test
+    fun rejectsShortKey() =
+        assertEquals(
+            PairingError.NOT_OUR_CODE,
+            rejected(payload(k = PairingPayload.b64(ByteArray(16)))),
+        )
 
-    @Test fun rejectsBadScheme() {
+    @Test
+    fun rejectsBadScheme() {
         assertEquals(PairingError.NOT_OUR_CODE, rejected(payload(s = """["http://h"]""")))
         assertEquals(PairingError.NOT_OUR_CODE, rejected(payload(s = "[]")))
     }
 
-    @Test fun truncatedJsonIsIncomplete() {
+    @Test
+    fun truncatedJsonIsIncomplete() {
         assertEquals(PairingError.INCOMPLETE_PASTE, rejected(payload().dropLast(10)))
         assertEquals(PairingError.INCOMPLETE_PASTE, rejected("   "))
     }
 
-    @Test fun otherTextIsNotOurCode() {
+    @Test
+    fun otherTextIsNotOurCode() {
         assertEquals(PairingError.NOT_OUR_CODE, rejected("https://example.com"))
-        assertEquals(PairingError.NOT_OUR_CODE, rejected("""{"v":1,"r":"room","s":"ws://x","k":"abc"}"""))
+        assertEquals(
+            PairingError.NOT_OUR_CODE,
+            rejected("""{"v":1,"r":"room","s":"ws://x","k":"abc"}"""),
+        )
     }
 
-    private fun store(cipher: FakeCipher = FakeCipher()) = PairingStore(File(tmp.root, "pairing.bin"), cipher) to cipher
+    private fun store(cipher: FakeCipher = FakeCipher()) =
+        PairingStore(File(tmp.root, "pairing.bin"), cipher) to cipher
 
-    @Test fun storeRoundTripAndFileIsNotPlain() {
+    @Test
+    fun storeRoundTripAndFileIsNotPlain() {
         val (s, _) = store()
         assertNull(s.load())
-        val p = StoredPairing(PairingPayload.b64(psk), listOf("ws://h"), false, TurnCredentials("turn:t", "u", "c"))
+        val p =
+            StoredPairing(
+                PairingPayload.b64(psk),
+                listOf("ws://h"),
+                false,
+                TurnCredentials("turn:t", "u", "c"),
+            )
         s.save(p)
         assertEquals(p, s.load())
         assertFalse(File(tmp.root, "pairing.bin").readText().contains(p.pskB64url))
@@ -77,7 +99,8 @@ class PairingTest {
         assertFalse(p.toString().contains(p.pskB64url))
     }
 
-    @Test fun clearDeletesFileAndKey() {
+    @Test
+    fun clearDeletesFileAndKey() {
         val (s, cipher) = store()
         s.save(StoredPairing("k", listOf("ws://h"), true))
         s.clear()
@@ -85,7 +108,8 @@ class PairingTest {
         assertTrue(cipher.keyDeleted)
     }
 
-    @Test fun corruptFileCountsAsNotPaired() {
+    @Test
+    fun corruptFileCountsAsNotPaired() {
         val (s, _) = store()
         File(tmp.root, "pairing.bin").writeBytes(byteArrayOf(1, 2, 3))
         assertNull(s.load())

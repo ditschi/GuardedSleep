@@ -27,10 +27,11 @@ import uniffi.guardedsleep_core.Role
  * Playout goes to the alarm stream so the parent's alarm volume and DND-alarm rules apply.
  *
  * The record callback sees the PCM that is about to be encoded: it (a) measures the microphone
- * level for the core, (b) mixes the debug cry injection before measuring so injection exercises
- * the real path, and (c) mixes the probe tone after measuring so the tone cannot trigger the gate.
+ * level for the core, (b) mixes the debug cry injection before measuring so injection exercises the
+ * real path, and (c) mixes the probe tone after measuring so the tone cannot trigger the gate.
  */
-class LibWebRtcMediaEngine(context: Context, private val role: Role, private val ice: IceConfig) : MediaEngine {
+class LibWebRtcMediaEngine(context: Context, private val role: Role, private val ice: IceConfig) :
+    MediaEngine {
     private val appContext = context.applicationContext
     private val micWindow = RmsWindow()
     private val remoteWindow = RmsWindow()
@@ -43,18 +44,23 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
     private var source: AudioSource? = null
     private var track: AudioTrack? = null
 
-    private val remoteSink =
-        AudioTrackSink { data, bitsPerSample, _, _, _, _ ->
-            if (bitsPerSample == 16) {
-                val (sum, n) = Pcm.sumSquares(data)
-                remoteWindow.add(sum, n)
-            }
+    private val remoteSink = AudioTrackSink { data, bitsPerSample, _, _, _, _ ->
+        if (bitsPerSample == 16) {
+            val (sum, n) = Pcm.sumSquares(data)
+            remoteWindow.add(sum, n)
         }
+    }
 
     private val captureTap = CaptureTap(micWindow, probe)
 
     private val recordCallback =
-        JavaAudioDeviceModule.AudioBufferCallback { buffer, _, channels, rate, bytesRead, captureTimeNs ->
+        JavaAudioDeviceModule.AudioBufferCallback {
+            buffer,
+            _,
+            channels,
+            rate,
+            bytesRead,
+            captureTimeNs ->
             captureTap.onBuffer(buffer, channels, rate, bytesRead, captureTimeNs)
         }
 
@@ -70,21 +76,24 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
                 .setAudioAttributes(attributes)
                 .setAudioTrackErrorCallback(
                     object : JavaAudioDeviceModule.AudioTrackErrorCallback {
-                        override fun onWebRtcAudioTrackInitError(errorMessage: String?) = trackError(errorMessage)
+                        override fun onWebRtcAudioTrackInitError(errorMessage: String?) =
+                            trackError(errorMessage)
 
                         override fun onWebRtcAudioTrackStartError(
                             errorCode: JavaAudioDeviceModule.AudioTrackStartErrorCode?,
                             errorMessage: String?,
                         ) = trackError(errorMessage)
 
-                        override fun onWebRtcAudioTrackError(errorMessage: String?) = trackError(errorMessage)
+                        override fun onWebRtcAudioTrackError(errorMessage: String?) =
+                            trackError(errorMessage)
                     }
                 )
         if (role == Role.BABY) builder.setAudioBufferCallback(recordCallback)
         adm = builder.createAudioDeviceModule()
         // The baby never plays audio (ADR-018 §3): belt and braces on top of the sendonly SDP.
         if (role == Role.BABY) adm.setSpeakerMute(true)
-        factory = PeerConnectionFactory.builder().setAudioDeviceModule(adm).createPeerConnectionFactory()
+        factory =
+            PeerConnectionFactory.builder().setAudioDeviceModule(adm).createPeerConnectionFactory()
         if (role == Role.BABY) {
             val src = factory.createAudioSource(MediaConstraints())
             source = src
@@ -147,7 +156,8 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
             sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
             continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY
             iceTransportsType =
-                if (ice.relayOnly) PeerConnection.IceTransportsType.RELAY else PeerConnection.IceTransportsType.ALL
+                if (ice.relayOnly) PeerConnection.IceTransportsType.RELAY
+                else PeerConnection.IceTransportsType.ALL
         }
 
     private fun iceServers(): List<PeerConnection.IceServer> = buildList {
@@ -170,7 +180,8 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
             synchronized(this) {
                 if (initialized) return
                 PeerConnectionFactory.initialize(
-                    PeerConnectionFactory.InitializationOptions.builder(context).createInitializationOptions()
+                    PeerConnectionFactory.InitializationOptions.builder(context)
+                        .createInitializationOptions()
                 )
                 initialized = true
             }

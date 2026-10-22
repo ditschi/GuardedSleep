@@ -6,9 +6,13 @@ import uniffi.guardedsleep_core.DeviceStatus
 import uniffi.guardedsleep_core.Dnd
 import uniffi.guardedsleep_core.Ringer
 
-/** Raw baby `device_status` → the single value the parent sees (ADR-018 §3, alpha-ux-flows §3.12). */
+/**
+ * Raw baby `device_status` → the single value the parent sees (ADR-018 §3, alpha-ux-flows §3.12).
+ */
 object SilenceMapping {
-    /** A browser baby cannot read ringer, DND or access at all, so none of them is ever reported. */
+    /**
+     * A browser baby cannot read ringer, DND or access at all, so none of them is ever reported.
+     */
     fun isWebClient(s: DeviceStatus?): Boolean =
         s != null && s.ringer == null && s.dnd == null && s.dndAccess == null
 

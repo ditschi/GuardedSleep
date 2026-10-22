@@ -83,12 +83,21 @@ class RmsWindow {
 
 /** Sine bursts with a short fade so tones never click. */
 object PcmSynth {
-    fun sine(freqHz: Double, durationMs: Int, sampleRate: Int, amplitude: Double, fadeMs: Int = 20): ShortArray {
+    fun sine(
+        freqHz: Double,
+        durationMs: Int,
+        sampleRate: Int,
+        amplitude: Double,
+        fadeMs: Int = 20,
+    ): ShortArray {
         val n = sampleRate * durationMs / 1000
         val fade = (sampleRate * fadeMs / 1000).coerceAtLeast(1)
         return ShortArray(n) { i ->
-            val env = minOf(1.0, i / fade.toDouble(), (n - 1 - i) / fade.toDouble()).coerceAtLeast(0.0)
-            (sin(2 * PI * freqHz * i / sampleRate) * amplitude * env * Short.MAX_VALUE).toInt().toShort()
+            val env =
+                minOf(1.0, i / fade.toDouble(), (n - 1 - i) / fade.toDouble()).coerceAtLeast(0.0)
+            (sin(2 * PI * freqHz * i / sampleRate) * amplitude * env * Short.MAX_VALUE)
+                .toInt()
+                .toShort()
         }
     }
 
@@ -153,7 +162,8 @@ object InjectedAudio {
         untilMs = nowMs + durationMs
     }
 
-    fun active(nowMs: Long = System.currentTimeMillis()): Boolean = BuildConfig.DEBUG && nowMs < untilMs
+    fun active(nowMs: Long = System.currentTimeMillis()): Boolean =
+        BuildConfig.DEBUG && nowMs < untilMs
 
     /** The injected level while active, for a fallback when the record callback is not running. */
     fun level(nowMs: Long = System.currentTimeMillis()): Double? = if (active(nowMs)) rms else null
@@ -162,6 +172,8 @@ object InjectedAudio {
         if (!active()) return
         // Uniform noise in [-a, a] has RMS a / sqrt(3).
         val a = rms * sqrt(3.0) * Short.MAX_VALUE
-        synchronized(random) { Pcm.mixInPlace(buffer, channels) { ((random.nextDouble() * 2 - 1) * a).toInt() } }
+        synchronized(random) {
+            Pcm.mixInPlace(buffer, channels) { ((random.nextDouble() * 2 - 1) * a).toInt() }
+        }
     }
 }

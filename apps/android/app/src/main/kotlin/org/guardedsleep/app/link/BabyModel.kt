@@ -42,7 +42,8 @@ class BabyModel(private val clock: Clock) {
     fun onEvent(event: LinkEvent, now: Long) {
         // Only the parent's heartbeat proves the parent is there; nothing else on the baby does.
         when (event) {
-            is LinkEvent.NoiseGateChanged -> setSettings(event.threshold.toFloat(), (event.holdMs / 1000u).toInt())
+            is LinkEvent.NoiseGateChanged ->
+                setSettings(event.threshold.toFloat(), (event.holdMs / 1000u).toInt())
             else -> Unit
         }
     }

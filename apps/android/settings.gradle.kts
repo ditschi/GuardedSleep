@@ -27,4 +27,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "guardedsleep-native"
+
 include(":core", ":app")

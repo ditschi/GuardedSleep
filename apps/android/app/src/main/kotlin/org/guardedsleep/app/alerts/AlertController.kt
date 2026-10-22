@@ -51,10 +51,18 @@ class AlertController(private val context: Context) : AlertSink {
         val snapshot = lastLink
         var plan =
             if (snapshot == null) LinkFeedbackPlan()
-            else FeedbackPlans.forLink(snapshot.phase, snapshot.level, snapshot.acknowledged, snapshot.wasConnected)
+            else
+                FeedbackPlans.forLink(
+                    snapshot.phase,
+                    snapshot.level,
+                    snapshot.acknowledged,
+                    snapshot.wasConnected,
+                )
         if (fgsLost && plan.silent) plan = FeedbackPlans.forLink(LinkPhase.RECONNECTING, 2, false)
         val calm =
-            snapshot == null || snapshot.phase == LinkPhase.CONNECTED || snapshot.phase == LinkPhase.IDLE ||
+            snapshot == null ||
+                snapshot.phase == LinkPhase.CONNECTED ||
+                snapshot.phase == LinkPhase.IDLE ||
                 snapshot.phase == LinkPhase.STOPPED
         if (calm && !fgsLost) {
             nm.cancel(ID_LINK_INFO)
@@ -63,18 +71,40 @@ class AlertController(private val context: Context) : AlertSink {
             linkPlan = plan
             return
         }
-        if (snapshot != null && (snapshot.phase == LinkPhase.RECONNECTING || snapshot.phase == LinkPhase.CONNECTING)) {
+        if (
+            snapshot != null &&
+                (snapshot.phase == LinkPhase.RECONNECTING || snapshot.phase == LinkPhase.CONNECTING)
+        ) {
             maxLevelInOutage = maxOf(maxLevelInOutage, snapshot.level)
         }
         if (plan.notify == NotifyLevel.LOW && linkPlan.notify != NotifyLevel.LOW) {
-            nm.notify(ID_LINK_INFO, linkNotification(AlertChannels.INFO, R.string.native_notif_status_trouble, high = false))
+            nm.notify(
+                ID_LINK_INFO,
+                linkNotification(
+                    AlertChannels.INFO,
+                    R.string.native_notif_status_trouble,
+                    high = false,
+                ),
+            )
             if (plan.oneShotHaptic) haptics.play(HapticPattern.SHORT)
         }
         if (plan.notify == NotifyLevel.HIGH) {
             nm.cancel(ID_LINK_INFO)
-            // Terminal failure of a link that worked: no LinkLost event comes, so raise the alarm here.
-            if (snapshot?.phase == LinkPhase.FAILED_NEEDS_USER && linkPlan.notify != NotifyLevel.HIGH) {
-                nm.notify(ID_LINK_ALARM, linkNotification(AlertChannels.ALARM_LINK, R.string.native_notif_status_failed, high = true, title = R.string.native_notif_link_lost_title))
+            // Terminal failure of a link that worked: no LinkLost event comes, so raise the alarm
+            // here.
+            if (
+                snapshot?.phase == LinkPhase.FAILED_NEEDS_USER &&
+                    linkPlan.notify != NotifyLevel.HIGH
+            ) {
+                nm.notify(
+                    ID_LINK_ALARM,
+                    linkNotification(
+                        AlertChannels.ALARM_LINK,
+                        R.string.native_notif_status_failed,
+                        high = true,
+                        title = R.string.native_notif_link_lost_title,
+                    ),
+                )
             }
         }
         applyLinkLoops(plan)
@@ -86,7 +116,15 @@ class AlertController(private val context: Context) : AlertSink {
         fgsLost = lost
         if (lost) {
             PocLog.event("alert_shown", "kind" to "fgs_missing")
-            nm.notify(ID_FGS, linkNotification(AlertChannels.ALARM_LINK, R.string.native_notif_fgs_missing_text, high = true, title = R.string.native_notif_fgs_missing_title))
+            nm.notify(
+                ID_FGS,
+                linkNotification(
+                    AlertChannels.ALARM_LINK,
+                    R.string.native_notif_fgs_missing_text,
+                    high = true,
+                    title = R.string.native_notif_fgs_missing_title,
+                ),
+            )
         } else {
             nm.cancel(ID_FGS)
         }
@@ -95,16 +133,28 @@ class AlertController(private val context: Context) : AlertSink {
 
     override fun linkLost(downMs: Long) = onMain {
         PocLog.event("alert_shown", "kind" to "link_lost")
-        nm.notify(ID_LINK_ALARM, linkNotification(AlertChannels.ALARM_LINK, R.string.native_notif_link_lost_text, high = true, title = R.string.native_notif_link_lost_title, withAck = true))
+        nm.notify(
+            ID_LINK_ALARM,
+            linkNotification(
+                AlertChannels.ALARM_LINK,
+                R.string.native_notif_link_lost_text,
+                high = true,
+                title = R.string.native_notif_link_lost_title,
+                withAck = true,
+            ),
+        )
     }
 
     override fun noiseAlert(kind: NoiseKind, probe: Boolean, snoozed: Boolean) = onMain {
         val plan = FeedbackPlans.forNoise(kind, snoozed)
         if (!plan.notify) return@onMain
-        val title = if (probe) R.string.native_notif_noise_test_title else R.string.native_notif_noise_title
-        val text = if (probe) R.string.native_notif_noise_test_text else R.string.native_notif_noise_text
+        val title =
+            if (probe) R.string.native_notif_noise_test_title else R.string.native_notif_noise_title
+        val text =
+            if (probe) R.string.native_notif_noise_test_text else R.string.native_notif_noise_text
         nm.notify(ID_NOISE, noiseNotification(title, text, plan.fullScreen))
-        if (plan.repeatingHaptic) startNoiseHaptics() else if (plan.shortHaptic) haptics.play(HapticPattern.SHORT)
+        if (plan.repeatingHaptic) startNoiseHaptics()
+        else if (plan.shortHaptic) haptics.play(HapticPattern.SHORT)
     }
 
     override fun noiseEnded() = onMain {
@@ -123,37 +173,93 @@ class AlertController(private val context: Context) : AlertSink {
                 // One connection haptic and one soft tone, no loop (alpha-ux-flows §3.4).
                 haptics.play(HapticPattern.CONNECTION)
                 tones.playSoft()
-                nm.notify(ID_PEER_STOPPED, linkNotification(AlertChannels.ALARM_LINK, R.string.native_notif_peer_stopped_text, high = true, title = R.string.native_notif_peer_stopped_title))
+                nm.notify(
+                    ID_PEER_STOPPED,
+                    linkNotification(
+                        AlertChannels.ALARM_LINK,
+                        R.string.native_notif_peer_stopped_text,
+                        high = true,
+                        title = R.string.native_notif_peer_stopped_title,
+                    ),
+                )
             }
             is Notice.LinkRestored -> {
                 if (maxLevelInOutage >= 2) haptics.play(HapticPattern.SHORT)
                 maxLevelInOutage = 0
                 nm.cancel(ID_LINK_ALARM)
-                nm.notify(ID_RESTORED, simple(AlertChannels.INFO, context.getString(R.string.native_notif_restored_title), context.getString(R.string.native_notif_restored_text, mmss(notice.downMs)), timeoutMs = AlertPolicy.RESTORED_NOTICE_MS))
+                nm.notify(
+                    ID_RESTORED,
+                    simple(
+                        AlertChannels.INFO,
+                        context.getString(R.string.native_notif_restored_title),
+                        context.getString(R.string.native_notif_restored_text, mmss(notice.downMs)),
+                        timeoutMs = AlertPolicy.RESTORED_NOTICE_MS,
+                    ),
+                )
             }
             is Notice.LowBattery -> {
                 val pct = notice.pct.toString()
                 if (notice.critical) {
                     haptics.play(HapticPattern.CONNECTION)
                     tones.playSoft()
-                    nm.notify(ID_BATTERY, simple(AlertChannels.ALARM_LINK, context.getString(R.string.native_notif_battery_critical_title), context.getString(R.string.native_notif_battery_critical_text, pct)))
+                    nm.notify(
+                        ID_BATTERY,
+                        simple(
+                            AlertChannels.ALARM_LINK,
+                            context.getString(R.string.native_notif_battery_critical_title),
+                            context.getString(R.string.native_notif_battery_critical_text, pct),
+                        ),
+                    )
                 } else {
-                    nm.notify(ID_BATTERY, simple(AlertChannels.NOTICE, context.getString(R.string.native_notif_battery_low_title), context.getString(R.string.native_notif_battery_low_text, pct)))
+                    nm.notify(
+                        ID_BATTERY,
+                        simple(
+                            AlertChannels.NOTICE,
+                            context.getString(R.string.native_notif_battery_low_title),
+                            context.getString(R.string.native_notif_battery_low_text, pct),
+                        ),
+                    )
                 }
             }
             Notice.ChargerUnplugged ->
-                nm.notify(ID_CHARGER, simple(AlertChannels.NOTICE, context.getString(R.string.native_notif_charger_title), context.getString(R.string.native_notif_charger_text)))
+                nm.notify(
+                    ID_CHARGER,
+                    simple(
+                        AlertChannels.NOTICE,
+                        context.getString(R.string.native_notif_charger_title),
+                        context.getString(R.string.native_notif_charger_text),
+                    ),
+                )
             Notice.SecurityWarning ->
-                nm.notify(ID_SECURITY, simple(AlertChannels.NOTICE, context.getString(R.string.native_notif_security_title), context.getString(R.string.native_notif_security_text)))
+                nm.notify(
+                    ID_SECURITY,
+                    simple(
+                        AlertChannels.NOTICE,
+                        context.getString(R.string.native_notif_security_title),
+                        context.getString(R.string.native_notif_security_text),
+                    ),
+                )
             is Notice.MissedEvents -> {
                 val d = mmss(notice.downMs)
                 val text =
                     when (notice.count) {
                         null -> context.getString(R.string.native_notif_missed_unknown, d)
                         0 -> context.getString(R.string.native_notif_missed_none, d)
-                        else -> context.getString(R.string.native_notif_missed_count, notice.count.toString(), d)
+                        else ->
+                            context.getString(
+                                R.string.native_notif_missed_count,
+                                notice.count.toString(),
+                                d,
+                            )
                     }
-                nm.notify(ID_MISSED, simple(AlertChannels.INFO, context.getString(R.string.native_notif_missed_title), text))
+                nm.notify(
+                    ID_MISSED,
+                    simple(
+                        AlertChannels.INFO,
+                        context.getString(R.string.native_notif_missed_title),
+                        text,
+                    ),
+                )
             }
         }
     }
@@ -163,7 +269,18 @@ class AlertController(private val context: Context) : AlertSink {
         stopNoiseHaptics()
         tones.stop()
         haptics.cancel()
-        listOf(ID_LINK_INFO, ID_LINK_ALARM, ID_NOISE, ID_PEER_STOPPED, ID_RESTORED, ID_BATTERY, ID_CHARGER, ID_SECURITY, ID_MISSED, ID_FGS)
+        listOf(
+                ID_LINK_INFO,
+                ID_LINK_ALARM,
+                ID_NOISE,
+                ID_PEER_STOPPED,
+                ID_RESTORED,
+                ID_BATTERY,
+                ID_CHARGER,
+                ID_SECURITY,
+                ID_MISSED,
+                ID_FGS,
+            )
             .forEach(nm::cancel)
         linkPlan = LinkFeedbackPlan()
         lastLink = null
@@ -174,14 +291,19 @@ class AlertController(private val context: Context) : AlertSink {
     // ---- loops -------------------------------------------------------------------------------
 
     private fun applyLinkLoops(plan: LinkFeedbackPlan) {
-        if (plan.hapticEveryMs != linkPlan.hapticEveryMs || linkHapticLoop == null && plan.hapticEveryMs != null) {
+        if (
+            plan.hapticEveryMs != linkPlan.hapticEveryMs ||
+                linkHapticLoop == null && plan.hapticEveryMs != null
+        ) {
             linkHapticLoop?.let(handler::removeCallbacks)
             linkHapticLoop = null
             plan.hapticEveryMs?.let { every ->
                 linkHapticLoop = repeat(every) { haptics.play(HapticPattern.CONNECTION) }
             }
         }
-        if (plan.toneEveryMs != linkPlan.toneEveryMs || toneLoop == null && plan.toneEveryMs != null) {
+        if (
+            plan.toneEveryMs != linkPlan.toneEveryMs || toneLoop == null && plan.toneEveryMs != null
+        ) {
             toneLoop?.let(handler::removeCallbacks)
             toneLoop = null
             plan.toneEveryMs?.let { every -> toneLoop = repeat(every) { tones.playSoft() } }
@@ -201,7 +323,8 @@ class AlertController(private val context: Context) : AlertSink {
 
     private fun startNoiseHaptics() {
         stopNoiseHaptics()
-        noiseHapticLoop = repeat(AlertPolicy.NOISE_HAPTIC_INTERVAL_MS) { haptics.play(HapticPattern.NOISE) }
+        noiseHapticLoop =
+            repeat(AlertPolicy.NOISE_HAPTIC_INTERVAL_MS) { haptics.play(HapticPattern.NOISE) }
     }
 
     private fun stopNoiseHaptics() {
@@ -243,10 +366,19 @@ class AlertController(private val context: Context) : AlertSink {
                 .setOnlyAlertOnce(true)
                 .setPublicVersion(publicVersion(AlertChannels.ALARM_NOISE))
                 .setContentIntent(activity(AlertActivity.KIND_NOISE, ID_NOISE))
-                .addAction(0, context.getString(R.string.native_notif_action_stop_sound), receiver(AlertActionReceiver.ACTION_STOP_SOUND))
-                .addAction(0, context.getString(R.string.native_notif_action_snooze10), receiver(AlertActionReceiver.ACTION_SNOOZE_10))
+                .addAction(
+                    0,
+                    context.getString(R.string.native_notif_action_stop_sound),
+                    receiver(AlertActionReceiver.ACTION_STOP_SOUND),
+                )
+                .addAction(
+                    0,
+                    context.getString(R.string.native_notif_action_snooze10),
+                    receiver(AlertActionReceiver.ACTION_SNOOZE_10),
+                )
         // Without the permission (Android 14+) the notification still appears as a heads-up.
-        if (fullScreen && canFullScreen()) builder.setFullScreenIntent(activity(AlertActivity.KIND_NOISE, ID_NOISE), true)
+        if (fullScreen && canFullScreen())
+            builder.setFullScreenIntent(activity(AlertActivity.KIND_NOISE, ID_NOISE), true)
         return builder.build()
     }
 
@@ -271,18 +403,29 @@ class AlertController(private val context: Context) : AlertSink {
                     if (high) activity(AlertActivity.KIND_LINK, ID_LINK_ALARM) else mainIntent()
                 )
         if (high) {
-            b.setCategory(NotificationCompat.CATEGORY_ALARM).setPriority(NotificationCompat.PRIORITY_MAX)
-            if (canFullScreen()) b.setFullScreenIntent(activity(AlertActivity.KIND_LINK, ID_LINK_ALARM), true)
+            b.setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+            if (canFullScreen())
+                b.setFullScreenIntent(activity(AlertActivity.KIND_LINK, ID_LINK_ALARM), true)
         } else {
             b.setPriority(NotificationCompat.PRIORITY_LOW)
         }
         if (withAck) {
-            b.addAction(0, context.getString(R.string.native_notif_action_checking), receiver(AlertActionReceiver.ACTION_ACK))
+            b.addAction(
+                0,
+                context.getString(R.string.native_notif_action_checking),
+                receiver(AlertActionReceiver.ACTION_ACK),
+            )
         }
         return b.build()
     }
 
-    private fun simple(channel: String, title: String, text: String, timeoutMs: Long? = null): Notification =
+    private fun simple(
+        channel: String,
+        title: String,
+        text: String,
+        timeoutMs: Long? = null,
+    ): Notification =
         NotificationCompat.Builder(context, channel)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle(title)
@@ -292,7 +435,8 @@ class AlertController(private val context: Context) : AlertSink {
             .setPublicVersion(publicVersion(channel))
             .setContentIntent(mainIntent())
             .apply {
-                if (channel == AlertChannels.ALARM_LINK) setCategory(NotificationCompat.CATEGORY_ALARM)
+                if (channel == AlertChannels.ALARM_LINK)
+                    setCategory(NotificationCompat.CATEGORY_ALARM)
                 timeoutMs?.let(::setTimeoutAfter)
             }
             .build()
@@ -305,7 +449,12 @@ class AlertController(private val context: Context) : AlertSink {
             .build()
 
     private fun mainIntent(): PendingIntent =
-        PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+        PendingIntent.getActivity(
+            context,
+            0,
+            Intent(context, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE,
+        )
 
     private fun activity(kind: String, requestCode: Int): PendingIntent =
         PendingIntent.getActivity(

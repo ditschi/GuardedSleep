@@ -13,7 +13,10 @@ interface SignalingListener {
 
     fun onMessage(text: String)
 
-    /** The socket failed or the server closed it. Not called after our own [SignalingTransport.close]. */
+    /**
+     * The socket failed or the server closed it. Not called after our own
+     * [SignalingTransport.close].
+     */
     fun onClosed()
 }
 
@@ -32,16 +35,19 @@ fun interface SignalingFactory {
 
 class OkHttpSignalingFactory(
     private val client: OkHttpClient =
-        OkHttpClient.Builder().connectTimeout(8, TimeUnit.SECONDS).readTimeout(0, TimeUnit.SECONDS).build(),
+        OkHttpClient.Builder()
+            .connectTimeout(8, TimeUnit.SECONDS)
+            .readTimeout(0, TimeUnit.SECONDS)
+            .build()
 ) : SignalingFactory {
     override fun create(urls: List<String>, listener: SignalingListener): SignalingTransport =
         OkHttpSignalingTransport(client, urls, listener)
 }
 
 /**
- * Tries the configured URLs in order each time the core opens signaling (the first is the
- * primary, so a recovered primary is preferred again). A URL that fails before it opened moves on
- * to the next; when all fail, the core is told once and applies its own backoff.
+ * Tries the configured URLs in order each time the core opens signaling (the first is the primary,
+ * so a recovered primary is preferred again). A URL that fails before it opened moves on to the
+ * next; when all fail, the core is told once and applies its own backoff.
  */
 class OkHttpSignalingTransport(
     private val client: OkHttpClient,
@@ -91,7 +97,11 @@ class OkHttpSignalingTransport(
 
                     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) = ended()
 
-                    override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) = ended()
+                    override fun onFailure(
+                        webSocket: WebSocket,
+                        t: Throwable,
+                        response: Response?,
+                    ) = ended()
 
                     private fun ended() {
                         if (!current(gen)) return

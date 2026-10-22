@@ -7,7 +7,10 @@ import org.junit.Test
 class RelayStunTest {
     @Test
     fun usesTheRelayHostOnTheStunPort() {
-        assertEquals(listOf("stun:relay.example.org:3478"), RelayStun.urls(listOf("wss://relay.example.org/ws")))
+        assertEquals(
+            listOf("stun:relay.example.org:3478"),
+            RelayStun.urls(listOf("wss://relay.example.org/ws")),
+        )
         assertEquals(listOf("stun:10.0.2.2:3478"), RelayStun.urls(listOf("ws://10.0.2.2:8787")))
     }
 

@@ -4,8 +4,8 @@ import android.util.Log
 import org.guardedsleep.app.BuildConfig
 
 /**
- * Machine-readable events for the emulator gate (`scripts/poc/`), debug builds only.
- * Format: `GS_POC <event> t=<epoch ms> [key=value…]`. Never log IPs, SDPs or keys (guardrail 6).
+ * Machine-readable events for the emulator gate (`scripts/poc/`), debug builds only. Format:
+ * `GS_POC <event> t=<epoch ms> [key=value…]`. Never log IPs, SDPs or keys (guardrail 6).
  */
 object PocLog {
     private const val TAG = "GS_POC"

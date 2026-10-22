@@ -4,19 +4,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
-import org.guardedsleep.app.R
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
+import org.guardedsleep.app.R
 
 /** `{time}`: short clock time in the user's locale (formatting stays native, ADR-015). */
 @Composable
 fun formatTime(wallMs: Long): String {
     val env = LocalUiEnv.current
     val locale: Locale = LocalConfiguration.current.locales[0]
-    val fmt = remember(locale, env.zone) {
-        DateFormat.getTimeInstance(DateFormat.SHORT, locale).apply { timeZone = env.zone }
-    }
+    val fmt =
+        remember(locale, env.zone) {
+            DateFormat.getTimeInstance(DateFormat.SHORT, locale).apply { timeZone = env.zone }
+        }
     return fmt.format(Date(wallMs))
 }
 
@@ -27,8 +28,14 @@ fun formatDuration(ms: Long): String {
     return when {
         total < 60 -> stringResource(R.string.native_ui_common_duration_sec, total)
         total < 3600 -> stringResource(R.string.native_ui_common_duration_min, total / 60)
-        total % 3600 / 60 == 0 -> stringResource(R.string.native_ui_common_duration_hour, total / 3600)
-        else -> stringResource(R.string.native_ui_common_duration_hour_min, total / 3600, total % 3600 / 60)
+        total % 3600 / 60 == 0 ->
+            stringResource(R.string.native_ui_common_duration_hour, total / 3600)
+        else ->
+            stringResource(
+                R.string.native_ui_common_duration_hour_min,
+                total / 3600,
+                total % 3600 / 60,
+            )
     }
 }
 

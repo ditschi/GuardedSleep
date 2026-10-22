@@ -4,16 +4,16 @@ import android.content.Context
 import android.os.SystemClock
 import android.provider.Settings
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
-import kotlinx.coroutines.delay
-import java.util.TimeZone
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import java.util.TimeZone
+import kotlinx.coroutines.delay
 
 data class BatteryReading(val pct: Int, val charging: Boolean)
 
@@ -42,8 +42,13 @@ fun systemReduceMotion(): Boolean {
     val ctx = LocalContext.current
     return remember(ctx) {
         runCatching {
-            Settings.Global.getFloat(ctx.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
-        }.getOrDefault(false)
+                Settings.Global.getFloat(
+                    ctx.contentResolver,
+                    Settings.Global.ANIMATOR_DURATION_SCALE,
+                    1f,
+                ) == 0f
+            }
+            .getOrDefault(false)
     }
 }
 
@@ -59,7 +64,12 @@ fun rememberElapsedNow(): State<Long> {
             state.longValue = env.elapsedNow()
         }
     }
-    return remember { object : State<Long> { override val value: Long get() = state.longValue } }
+    return remember {
+        object : State<Long> {
+            override val value: Long
+                get() = state.longValue
+        }
+    }
 }
 
 @Composable
@@ -73,7 +83,12 @@ fun rememberWallNow(): State<Long> {
             state.longValue = env.wallNow()
         }
     }
-    return remember { object : State<Long> { override val value: Long get() = state.longValue } }
+    return remember {
+        object : State<Long> {
+            override val value: Long
+                get() = state.longValue
+        }
+    }
 }
 
 fun Context.findActivity(): android.app.Activity? {

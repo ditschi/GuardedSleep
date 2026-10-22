@@ -37,17 +37,30 @@ import androidx.compose.ui.unit.dp
  */
 
 @Composable
-fun SheetOverlay(tag: String, title: String, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+fun SheetOverlay(
+    tag: String,
+    title: String,
+    onDismiss: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     BackHandler(onBack = onDismiss)
     val maxH = (LocalConfiguration.current.screenHeightDp * 0.85f).dp
     Box(Modifier.fillMaxSize()) {
         Box(
-            Modifier.fillMaxSize().background(Color(0xAA000000))
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onDismiss),
+            Modifier.fillMaxSize()
+                .background(Color(0xAA000000))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onDismiss,
+                )
         )
         Surface(
-            Modifier.align(Alignment.BottomCenter).fillMaxWidth().heightIn(max = maxH)
-                .semantics { paneTitle = title }.testTag(tag),
+            Modifier.align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .heightIn(max = maxH)
+                .semantics { paneTitle = title }
+                .testTag(tag),
             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
             color = MaterialTheme.colorScheme.surface,
         ) {
@@ -55,7 +68,12 @@ fun SheetOverlay(tag: String, title: String, onDismiss: () -> Unit, content: @Co
                 Modifier.verticalScroll(rememberScrollState()).padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
                 content()
             }
         }
@@ -78,20 +96,39 @@ fun ConfirmDialog(
     BackHandler(onBack = onDismiss)
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Box(
-            Modifier.fillMaxSize().background(Color(0xAA000000))
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onDismiss),
+            Modifier.fillMaxSize()
+                .background(Color(0xAA000000))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onDismiss,
+                )
         )
         Surface(
-            Modifier.padding(24.dp).widthIn(max = 420.dp).semantics { paneTitle = title }.testTag(tag),
+            Modifier.padding(24.dp)
+                .widthIn(max = 420.dp)
+                .semantics { paneTitle = title }
+                .testTag(tag),
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surface,
         ) {
             Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
                 Body(body)
                 // Safe choice first and largest; the destructive one is smaller and apart.
                 PrimaryButton(cancelText, onDismiss, cancelTag)
-                SecondaryButton(confirmText, onConfirm, confirmTag, Modifier.fillMaxWidth(), destructive = destructive)
+                SecondaryButton(
+                    confirmText,
+                    onConfirm,
+                    confirmTag,
+                    Modifier.fillMaxWidth(),
+                    destructive = destructive,
+                )
             }
         }
     }

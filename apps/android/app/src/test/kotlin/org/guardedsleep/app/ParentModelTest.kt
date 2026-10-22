@@ -38,7 +38,8 @@ class ParentModelTest {
         st(LinkState.CONNECTED)
     }
 
-    @Test fun neverQuietWhileDisconnected() {
+    @Test
+    fun neverQuietWhileDisconnected() {
         assertNull(model.state.value.quietSinceWallMs)
         st(LinkState.CONNECTING)
         assertNull(model.state.value.quietSinceWallMs)
@@ -49,7 +50,8 @@ class ParentModelTest {
         assertEquals(1, model.state.value.link.level)
     }
 
-    @Test fun afterRecoveryQuietOnlyWithCompleteSummary() {
+    @Test
+    fun afterRecoveryQuietOnlyWithCompleteSummary() {
         val since = connected()
         outage(5)
         assertNull(model.state.value.quietSinceWallMs)
@@ -58,7 +60,8 @@ class ParentModelTest {
         assertEquals(0, model.state.value.missed!!.count)
     }
 
-    @Test fun incompleteSummaryRestartsQuietAtReconnect() {
+    @Test
+    fun incompleteSummaryRestartsQuietAtReconnect() {
         connected()
         outage(5)
         val reconnect = clock.wall
@@ -67,7 +70,8 @@ class ParentModelTest {
         assertNull(model.state.value.missed!!.count)
     }
 
-    @Test fun missingSummaryFallsBackAfterGrace() {
+    @Test
+    fun missingSummaryFallsBackAfterGrace() {
         connected()
         outage(5)
         val reconnect = clock.wall
@@ -79,7 +83,8 @@ class ParentModelTest {
         assertEquals(reconnect, model.state.value.quietSinceWallMs)
     }
 
-    @Test fun restoredNoticeExpires() {
+    @Test
+    fun restoredNoticeExpires() {
         connected()
         st(LinkState.RECONNECTING, 2)
         clock.advance(90_000)
@@ -92,7 +97,8 @@ class ParentModelTest {
         assertNull(model.state.value.restoredAfterMs)
     }
 
-    @Test fun linkLostAndStopNoticesReachTheSink() {
+    @Test
+    fun linkLostAndStopNoticesReachTheSink() {
         connected()
         st(LinkState.RECONNECTING, 2, cause = "peer_absent")
         model.onEvent(LinkEvent.LinkLost(60_000u), clock.elapsed)
@@ -105,7 +111,8 @@ class ParentModelTest {
         assertEquals(0, model.state.value.link.level)
     }
 
-    @Test fun acknowledgeIsVisibleToTheSink() {
+    @Test
+    fun acknowledgeIsVisibleToTheSink() {
         connected()
         st(LinkState.RECONNECTING, 2)
         assertFalse(sink.snapshots.last().acknowledged)
@@ -113,7 +120,8 @@ class ParentModelTest {
         assertTrue(sink.snapshots.last().acknowledged)
     }
 
-    @Test fun noiseEventsAndSnooze() {
+    @Test
+    fun noiseEventsAndSnooze() {
         connected()
         model.onEvent(LinkEvent.NoiseAlert(0.4, false, false), clock.elapsed)
         assertTrue(model.state.value.noiseAlertActive)
@@ -131,7 +139,8 @@ class ParentModelTest {
         assertEquals(true, effects.muted.last())
     }
 
-    @Test fun noiseEndsAfterTwoQuietMinutes() {
+    @Test
+    fun noiseEndsAfterTwoQuietMinutes() {
         val since = connected()
         model.onEvent(LinkEvent.NoiseAlert(0.4, true, false), clock.elapsed)
         assertTrue(model.state.value.noiseIsTest)
@@ -143,7 +152,8 @@ class ParentModelTest {
         assertTrue(model.state.value.quietSinceWallMs!! >= since)
     }
 
-    @Test fun listenRulesAndLimit() {
+    @Test
+    fun listenRulesAndLimit() {
         assertFalse(model.setListen(ListenMode.HOLD, clock.elapsed))
         connected()
         assertTrue(model.setListen(ListenMode.LOCKED, clock.elapsed))
@@ -153,14 +163,29 @@ class ParentModelTest {
         assertEquals(1, effects.listenStopped)
     }
 
-    @Test fun webBabyStatusIsUnknownNotAlarming() {
+    @Test
+    fun webBabyStatusIsUnknownNotAlarming() {
         connected()
-        val web = uniffi.guardedsleep_core.DeviceStatus(null, null, null, null, null, null, null, null, null, null, emptyList())
+        val web =
+            uniffi.guardedsleep_core.DeviceStatus(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                emptyList(),
+            )
         model.onEvent(LinkEvent.PeerStatus(web), clock.elapsed)
         assertTrue(model.state.value.peer.isWebClient)
     }
 
-    @Test fun stalePairingHintAfterTenMinutesOfAbsence() {
+    @Test
+    fun stalePairingHintAfterTenMinutesOfAbsence() {
         st(LinkState.CONNECTING)
         st(LinkState.CONNECTING, 2, cause = "peer_absent")
         clock.advance(9 * 60_000)
@@ -173,7 +198,8 @@ class ParentModelTest {
         assertFalse(model.state.value.link.stalePairingHint)
     }
 
-    @Test fun failedAfterConnectedReachesSinkAsWasConnected() {
+    @Test
+    fun failedAfterConnectedReachesSinkAsWasConnected() {
         connected()
         st(LinkState.FAILED_NEEDS_USER)
         assertTrue(sink.snapshots.last().wasConnected)

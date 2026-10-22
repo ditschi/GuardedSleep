@@ -57,7 +57,10 @@ interface AlertSink {
 
     fun notice(notice: Notice)
 
-    /** Parent: the foreground service is missing while monitoring is on; plays the level 2 feedback until restored. */
+    /**
+     * Parent: the foreground service is missing while monitoring is on; plays the level 2 feedback
+     * until restored.
+     */
     fun backgroundProtection(lost: Boolean)
 
     /** Monitoring ended: cancel every loop and notification. */

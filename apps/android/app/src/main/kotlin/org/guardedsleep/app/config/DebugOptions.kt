@@ -13,14 +13,28 @@ object DebugOptions {
     @Volatile private var alarmAfterMsValue: Long? = null
     @Volatile private var noiseHoldMsValue: Long? = null
 
-    val relayOnly: Boolean get() = BuildConfig.DEBUG && relayOnlyValue
-    val autoListen: Boolean get() = BuildConfig.DEBUG && autoListenValue
-    val heartbeatMs: Long? get() = if (BuildConfig.DEBUG) heartbeatMsValue else null
-    val alarmAfterMs: Long? get() = if (BuildConfig.DEBUG) alarmAfterMsValue else null
+    val relayOnly: Boolean
+        get() = BuildConfig.DEBUG && relayOnlyValue
 
-    val noiseHoldMs: Long? get() = if (BuildConfig.DEBUG) noiseHoldMsValue else null
+    val autoListen: Boolean
+        get() = BuildConfig.DEBUG && autoListenValue
 
-    fun set(relayOnly: Boolean, autoListen: Boolean, heartbeatMs: Long?, alarmAfterMs: Long?, noiseHoldMs: Long? = null) {
+    val heartbeatMs: Long?
+        get() = if (BuildConfig.DEBUG) heartbeatMsValue else null
+
+    val alarmAfterMs: Long?
+        get() = if (BuildConfig.DEBUG) alarmAfterMsValue else null
+
+    val noiseHoldMs: Long?
+        get() = if (BuildConfig.DEBUG) noiseHoldMsValue else null
+
+    fun set(
+        relayOnly: Boolean,
+        autoListen: Boolean,
+        heartbeatMs: Long?,
+        alarmAfterMs: Long?,
+        noiseHoldMs: Long? = null,
+    ) {
         noiseHoldMsValue = noiseHoldMs
         relayOnlyValue = relayOnly
         autoListenValue = autoListen

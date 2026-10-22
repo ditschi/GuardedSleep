@@ -16,14 +16,11 @@ abstract class GenerateI18nTask : DefaultTask() {
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val generatorDir: DirectoryProperty
 
-    @get:OutputDirectory
-    abstract val outputDir: DirectoryProperty
+    @get:OutputDirectory abstract val outputDir: DirectoryProperty
 
-    @get:Internal
-    abstract val repoRoot: DirectoryProperty
+    @get:Internal abstract val repoRoot: DirectoryProperty
 
-    @get:Inject
-    abstract val exec: ExecOperations
+    @get:Inject abstract val exec: ExecOperations
 
     @TaskAction
     fun generate() {
@@ -33,20 +30,29 @@ abstract class GenerateI18nTask : DefaultTask() {
             environment("CARGO_HOME", System.getenv("CARGO_HOME") ?: "${root}/target/.cargo-home")
             environment("CARGO_TARGET_DIR", System.getenv("CARGO_TARGET_DIR") ?: "${root}/target")
             commandLine(
-                "bash", "scripts/cargo.sh", "run", "-q", "-p", "i18n-gen", "--",
-                "android", "--out", outputDir.get().asFile.absolutePath,
+                "bash",
+                "scripts/cargo.sh",
+                "run",
+                "-q",
+                "-p",
+                "i18n-gen",
+                "--",
+                "android",
+                "--out",
+                outputDir.get().asFile.absolutePath,
             )
         }
     }
 }
 
-val generateI18n = tasks.register<GenerateI18nTask>("generateI18n") {
-    val root = rootProject.layout.projectDirectory.dir("../..")
-    repoRoot.set(root)
-    localesDir.set(root.dir("locales"))
-    generatorDir.set(root.dir("crates/i18n-gen/src"))
-    outputDir.set(layout.buildDirectory.dir("generated/i18n/res"))
-}
+val generateI18n =
+    tasks.register<GenerateI18nTask>("generateI18n") {
+        val root = rootProject.layout.projectDirectory.dir("../..")
+        repoRoot.set(root)
+        localesDir.set(root.dir("locales"))
+        generatorDir.set(root.dir("crates/i18n-gen/src"))
+        outputDir.set(layout.buildDirectory.dir("generated/i18n/res"))
+    }
 
 androidComponents {
     onVariants { variant ->
@@ -95,8 +101,12 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
         unitTests.all {
-            // Host build of the core (scripts/core-build.sh android); JNA loads it for the real CoreLink in tests.
-            it.systemProperty("jna.library.path", rootProject.file("../../target/debug").absolutePath)
+            // Host build of the core (scripts/core-build.sh android); JNA loads it for the real
+            // CoreLink in tests.
+            it.systemProperty(
+                "jna.library.path",
+                rootProject.file("../../target/debug").absolutePath,
+            )
         }
     }
 }

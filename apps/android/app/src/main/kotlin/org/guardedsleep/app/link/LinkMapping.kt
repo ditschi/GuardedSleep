@@ -36,7 +36,9 @@ object LinkMapping {
             acknowledgedUntilElapsedMs = status.acknowledgedUntil?.toLong(),
             causeHint = causeHint(status.cause),
             // update_required also arrives as a sticky cause while connected or reconnecting.
-            failureKey = if (phase == LinkPhase.FAILED_NEEDS_USER) status.key else status.cause.takeIf { it == "update_required" },
+            failureKey =
+                if (phase == LinkPhase.FAILED_NEEDS_USER) status.key
+                else status.cause.takeIf { it == "update_required" },
             quality = if (phase == LinkPhase.CONNECTED) quality else LinkQuality.UNKNOWN,
         )
     }

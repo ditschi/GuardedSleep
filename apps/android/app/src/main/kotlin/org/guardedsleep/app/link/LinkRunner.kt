@@ -83,37 +83,35 @@ class LinkRunner(
     private val isBaby = config.role == Role.BABY
 
     /** Builds the core and the media engine, opens signaling and starts the timers. */
-    fun start() =
-        post {
-            link =
-                try {
-                    CoreLink(config)
-                } catch (e: Exception) {
-                    PocLog.event("failed", "reason" to "core_config_${e.javaClass.simpleName}")
-                    teardown()
-                    return@post
-                }
-            media = mediaFactory()
-            PocLog.event("session_start", "role" to config.role.name.lowercase())
-            dispatch(LinkInput.Start(entropy.toULong()))
-            every(AppDefaults.TICK_MS) {
-                val now = clock.elapsedMs()
-                dispatch(LinkInput.Tick)
-                listener.onTick(now)
+    fun start() = post {
+        link =
+            try {
+                CoreLink(config)
+            } catch (e: Exception) {
+                PocLog.event("failed", "reason" to "core_config_${e.javaClass.simpleName}")
+                teardown()
+                return@post
             }
-            every(AppDefaults.AUDIO_LEVEL_MS) { sampleAudio() }
-            if (isBaby) every(AppDefaults.DEVICE_STATUS_CHECK_MS) { sendDeviceStatus(force = false) }
-            else every(STATS_MS) { pollStats() }
+        media = mediaFactory()
+        PocLog.event("session_start", "role" to config.role.name.lowercase())
+        dispatch(LinkInput.Start(entropy.toULong()))
+        every(AppDefaults.TICK_MS) {
+            val now = clock.elapsedMs()
+            dispatch(LinkInput.Tick)
+            listener.onTick(now)
         }
+        every(AppDefaults.AUDIO_LEVEL_MS) { sampleAudio() }
+        if (isBaby) every(AppDefaults.DEVICE_STATUS_CHECK_MS) { sendDeviceStatus(force = false) }
+        else every(STATS_MS) { pollStats() }
+    }
 
     /** Announces a deliberate stop to the peer, then tears everything down after a short flush. */
-    fun stop() =
-        post {
-            if (closing || tornDown) return@post
-            closing = true
-            dispatch(LinkInput.Stop)
-            schedule(FLUSH_MS + 200) { teardown() }
-        }
+    fun stop() = post {
+        if (closing || tornDown) return@post
+        closing = true
+        dispatch(LinkInput.Stop)
+        schedule(FLUSH_MS + 200) { teardown() }
+    }
 
     /** Immediate teardown without telling the peer (process shutdown paths). */
     fun abort() = post { teardown() }
@@ -122,7 +120,9 @@ class LinkRunner(
 
     fun media(action: (MediaEngine) -> Unit) = post { media?.let(action) }
 
-    /** Runs a task on the core thread (used by the controller for model changes that need ordering). */
+    /**
+     * Runs a task on the core thread (used by the controller for model changes that need ordering).
+     */
     fun run(task: () -> Unit) = post(task)
 
     private fun sampleAudio() {
@@ -182,7 +182,8 @@ class LinkRunner(
             is LinkAction.SetRemoteDescription ->
                 attempts[action.attempt]?.setRemoteDescription(action.sdpType, action.sdp)
             is LinkAction.CreateAnswer -> attempts[action.attempt]?.createAnswer()
-            is LinkAction.AddIceCandidate -> attempts[action.attempt]?.addRemoteIce(action.candidate)
+            is LinkAction.AddIceCandidate ->
+                attempts[action.attempt]?.addRemoteIce(action.candidate)
             is LinkAction.SendData -> attempts[action.attempt]?.sendData(action.text)
             is LinkAction.SetMicEnabled -> media?.setMicEnabled(action.enabled)
             LinkAction.ApplyQuiet -> applyQuietNow()
@@ -203,7 +204,8 @@ class LinkRunner(
                         "level" to s.level,
                         "cause" to s.cause,
                     )
-                    if (s.state == LinkState.CONNECTED && lastState != LinkState.CONNECTED) PocLog.event("pairing_verified")
+                    if (s.state == LinkState.CONNECTED && lastState != LinkState.CONNECTED)
+                        PocLog.event("pairing_verified")
                     if (s.state == LinkState.FAILED_NEEDS_USER && lastState != s.state) {
                         PocLog.event("failed", "reason" to (s.key ?: "failed_needs_user"))
                     }
@@ -213,8 +215,15 @@ class LinkRunner(
                 listener.onStatus(s, now)
             }
             is LinkEvent.NoiseAlert ->
-                if (!event.snoozed) PocLog.event("alert", "kind" to "noise", "rms" to event.rms, "probe" to event.probe)
-            is LinkEvent.LinkLost -> PocLog.event("alert", "kind" to "link_lost", "down_ms" to event.downMs)
+                if (!event.snoozed)
+                    PocLog.event(
+                        "alert",
+                        "kind" to "noise",
+                        "rms" to event.rms,
+                        "probe" to event.probe,
+                    )
+            is LinkEvent.LinkLost ->
+                PocLog.event("alert", "kind" to "link_lost", "down_ms" to event.downMs)
             is LinkEvent.LinkRestored -> PocLog.event("link_restored", "down_ms" to event.downMs)
             is LinkEvent.Failed -> PocLog.event("failed", "reason" to event.reason)
             else -> Unit
@@ -229,12 +238,17 @@ class LinkRunner(
             signaling.create(
                 signalingUrls,
                 object : SignalingListener {
-                    override fun onOpened() = post { if (gen == transportGen) dispatch(LinkInput.SignalingOpened) }
+                    override fun onOpened() = post {
+                        if (gen == transportGen) dispatch(LinkInput.SignalingOpened)
+                    }
 
-                    override fun onMessage(text: String) =
-                        post { if (gen == transportGen) dispatch(LinkInput.SignalingMessage(text)) }
+                    override fun onMessage(text: String) = post {
+                        if (gen == transportGen) dispatch(LinkInput.SignalingMessage(text))
+                    }
 
-                    override fun onClosed() = post { if (gen == transportGen) dispatch(LinkInput.SignalingClosed) }
+                    override fun onClosed() = post {
+                        if (gen == transportGen) dispatch(LinkInput.SignalingClosed)
+                    }
                 },
             )
         transport?.open()
@@ -251,20 +265,26 @@ class LinkRunner(
         val l =
             object : AttemptListener {
                 override fun onLocalDescription(type: String, sdp: String) =
-                    forAttempt(handle) { dispatch(LinkInput.AttemptLocalDescription(handle, type, sdp)) }
+                    forAttempt(handle) {
+                        dispatch(LinkInput.AttemptLocalDescription(handle, type, sdp))
+                    }
 
                 override fun onLocalIce(candidate: IceCandidate) =
                     forAttempt(handle) { dispatch(LinkInput.AttemptLocalIce(handle, candidate)) }
 
-                override fun onDataOpen() = forAttempt(handle) { dispatch(LinkInput.AttemptDataOpen(handle)) }
+                override fun onDataOpen() =
+                    forAttempt(handle) { dispatch(LinkInput.AttemptDataOpen(handle)) }
 
                 override fun onDataMessage(text: String) =
                     forAttempt(handle) { dispatch(LinkInput.AttemptDataMessage(handle, text)) }
 
-                override fun onDataClosed() = forAttempt(handle) { dispatch(LinkInput.AttemptDataClosed(handle)) }
+                override fun onDataClosed() =
+                    forAttempt(handle) { dispatch(LinkInput.AttemptDataClosed(handle)) }
 
                 override fun onDtlsFingerprint(fingerprint: String) =
-                    forAttempt(handle) { dispatch(LinkInput.AttemptDtlsFingerprint(handle, fingerprint)) }
+                    forAttempt(handle) {
+                        dispatch(LinkInput.AttemptDtlsFingerprint(handle, fingerprint))
+                    }
 
                 override fun onConnectionState(state: String) =
                     forAttempt(handle) { dispatch(LinkInput.AttemptPcState(handle, state)) }
@@ -304,8 +324,9 @@ class LinkRunner(
         dispatch(LinkInput.QuietApplied(state))
     }
 
-    private fun forAttempt(handle: UInt, block: () -> Unit) =
-        post { if (attempts.containsKey(handle) && !tornDown) block() }
+    private fun forAttempt(handle: UInt, block: () -> Unit) = post {
+        if (attempts.containsKey(handle) && !tornDown) block()
+    }
 
     private fun teardown() {
         if (tornDown) return
@@ -340,15 +361,21 @@ class LinkRunner(
     private fun schedule(delayMs: Long, task: () -> Unit) {
         try {
             executor.schedule({ post(task) }, delayMs, TimeUnit.MILLISECONDS)
-        } catch (_: RejectedExecutionException) {
-        }
+        } catch (_: RejectedExecutionException) {}
     }
 
     private fun every(periodMs: Long, task: () -> Unit) {
-        tasks += executor.scheduleWithFixedDelay({ post(task) }, periodMs, periodMs, TimeUnit.MILLISECONDS)
+        tasks +=
+            executor.scheduleWithFixedDelay(
+                { post(task) },
+                periodMs,
+                periodMs,
+                TimeUnit.MILLISECONDS,
+            )
     }
 
-    private fun DeviceStatus.rounded() = copy(batteryPct = batteryPct?.let { (it.toInt() / 5 * 5).toUByte() })
+    private fun DeviceStatus.rounded() =
+        copy(batteryPct = batteryPct?.let { (it.toInt() / 5 * 5).toUByte() })
 
     private companion object {
         const val FLUSH_MS = 300L

@@ -10,8 +10,8 @@ import org.guardedsleep.app.config.AlertPolicy
 import org.guardedsleep.app.media.InboundAudioStats
 import org.guardedsleep.app.silence.SilenceMapping
 import org.guardedsleep.app.ui.model.LinkPhase
-import org.guardedsleep.app.ui.model.LinkUi
 import org.guardedsleep.app.ui.model.LinkQuality
+import org.guardedsleep.app.ui.model.LinkUi
 import org.guardedsleep.app.ui.model.ListenMode
 import org.guardedsleep.app.ui.model.MissedEventsUi
 import org.guardedsleep.app.ui.model.ParentMonitorState
@@ -126,7 +126,9 @@ class ParentModel(
         publish(clock.elapsedMs())
     }
 
-    /** Restores a snooze that survived a restart; [untilWallMs] is converted to the monotonic clock. */
+    /**
+     * Restores a snooze that survived a restart; [untilWallMs] is converted to the monotonic clock.
+     */
     @Synchronized
     fun restoreSnooze(untilWallMs: Long?) {
         val now = clock.elapsedMs()
@@ -142,8 +144,7 @@ class ParentModel(
     }
 
     /** Monotonic end of the active snooze, for `set_snooze`. */
-    @Synchronized
-    fun snoozeUntilElapsedMs(): Long? = snoozeUntilElapsed
+    @Synchronized fun snoozeUntilElapsedMs(): Long? = snoozeUntilElapsed
 
     @Synchronized
     fun snooze(minutes: Int): Long {
@@ -171,7 +172,8 @@ class ParentModel(
         last = status
         phase = next
         if (next == LinkPhase.CONNECTED) everConnected = true
-        if (status.cause == "peer_absent") peerAbsentSince = peerAbsentSince ?: now else peerAbsentSince = null
+        if (status.cause == "peer_absent") peerAbsentSince = peerAbsentSince ?: now
+        else peerAbsentSince = null
         val wall = clock.wallMs()
         when {
             next == LinkPhase.CONNECTED && prev != LinkPhase.CONNECTED -> {
@@ -233,7 +235,9 @@ class ParentModel(
                 }
             }
             // Baby-side gate echo; the parent learns the real threshold from peer_status.
-            is LinkEvent.NoiseGateChanged, is LinkEvent.Status, is LinkEvent.Failed -> Unit
+            is LinkEvent.NoiseGateChanged,
+            is LinkEvent.Status,
+            is LinkEvent.Failed -> Unit
         }
         publish(now)
     }
@@ -255,7 +259,10 @@ class ParentModel(
         val prev = statsPrev
         statsPrev = stats
         if (prev != null) {
-            LinkMapping.quality(stats.packetsReceived - prev.packetsReceived, stats.packetsLost - prev.packetsLost)
+            LinkMapping.quality(
+                    stats.packetsReceived - prev.packetsReceived,
+                    stats.packetsLost - prev.packetsLost,
+                )
                 ?.let { quality = it }
         }
         publishLink(now)
@@ -267,39 +274,50 @@ class ParentModel(
         if (now - remoteAt > STALE_AUDIO_MS) remoteLevel *= DECAY
         if (tracker.tick(now)) {
             val wall = clock.wallMs()
-            quietSinceWall = if (phase == LinkPhase.CONNECTED) wall - (now - tracker.lastLoudElapsedMs) else null
+            quietSinceWall =
+                if (phase == LinkPhase.CONNECTED) wall - (now - tracker.lastLoudElapsedMs) else null
             sink.noiseEnded()
         }
-        restoredUntil?.takeIf { now >= it }?.let {
-            restoredUntil = null
-            restoredAfterMs = null
-        }
-        awaitingMissedUntil?.takeIf { now >= it }?.let {
-            // No summary arrived (baby restarted, or older peer): honest fallback is the reconnect time.
-            awaitingMissedUntil = null
-            quietSinceWall = reconnectWall
-        }
+        restoredUntil
+            ?.takeIf { now >= it }
+            ?.let {
+                restoredUntil = null
+                restoredAfterMs = null
+            }
+        awaitingMissedUntil
+            ?.takeIf { now >= it }
+            ?.let {
+                // No summary arrived (baby restarted, or older peer): honest fallback is the
+                // reconnect time.
+                awaitingMissedUntil = null
+                quietSinceWall = reconnectWall
+            }
         if (listen == ListenMode.LOCKED && now - listenSince >= AlertPolicy.LISTEN_MAX_MS) {
             listen = ListenMode.OFF
             effects.listenStopped()
         }
-        if (silenceRequest == SilenceRequest.PENDING && now - silenceRequestedAt >= SILENCE_TIMEOUT_MS) {
+        if (
+            silenceRequest == SilenceRequest.PENDING &&
+                now - silenceRequestedAt >= SILENCE_TIMEOUT_MS
+        ) {
             silenceRequest = SilenceRequest.FAILED
             silenceDoneAt = now
         }
         if (silenceRequest == SilenceRequest.APPLIED && now - silenceDoneAt >= APPLIED_VISIBLE_MS) {
             silenceRequest = SilenceRequest.IDLE
         }
-        snoozeUntilElapsed?.takeIf { now >= it }?.let {
-            snoozeUntilElapsed = null
-            snoozeUntilWall = null
-            effects.snoozeEnded()
-            // Noise that is still going at the end of the snooze alerts immediately.
-            if (tracker.active && now - lastLoudLevelAt < 3_000) {
-                effects.muteRemote(false)
-                sink.noiseAlert(NoiseKind.NEW, probe = false, snoozed = false)
+        snoozeUntilElapsed
+            ?.takeIf { now >= it }
+            ?.let {
+                snoozeUntilElapsed = null
+                snoozeUntilWall = null
+                effects.snoozeEnded()
+                // Noise that is still going at the end of the snooze alerts immediately.
+                if (tracker.active && now - lastLoudLevelAt < 3_000) {
+                    effects.muteRemote(false)
+                    sink.noiseAlert(NoiseKind.NEW, probe = false, snoozed = false)
+                }
             }
-        }
         publish(now)
     }
 
@@ -388,7 +406,8 @@ class ParentModel(
         }
     }
 
-    private fun staleHint(now: Long): Boolean = peerAbsentSince?.let { now - it > STALE_PAIRING_MS } == true
+    private fun staleHint(now: Long): Boolean =
+        peerAbsentSince?.let { now - it > STALE_PAIRING_MS } == true
 
     private fun meter(now: Long): Float {
         val hb = if (now - heartbeatAt < HEARTBEAT_VISIBLE_MS) heartbeatRms else 0.0
@@ -400,7 +419,9 @@ class ParentModel(
         val s = last
         _state.value =
             ParentMonitorState(
-                link = if (s == null) LinkUi() else LinkMapping.linkUi(s, quality).copy(stalePairingHint = staleHint(now)),
+                link =
+                    if (s == null) LinkUi()
+                    else LinkMapping.linkUi(s, quality).copy(stalePairingHint = staleHint(now)),
                 peer = SilenceMapping.peerStatus(peerStatus),
                 babyThreshold = peerStatus?.noiseThreshold?.toFloat(),
                 level = if (connected) meter(now) else 0f,
@@ -414,7 +435,10 @@ class ParentModel(
                 restoredAfterMs = restoredAfterMs,
                 securityWarning = security,
                 noiseSinceWallMs = if (tracker.active) noiseSinceWall else null,
-                lastSound = noiseSinceWall?.let { SoundEventUi(it, ((noiseLastWall ?: it) - it).coerceAtLeast(0)) },
+                lastSound =
+                    noiseSinceWall?.let {
+                        SoundEventUi(it, ((noiseLastWall ?: it) - it).coerceAtLeast(0))
+                    },
                 ownBatteryPct = ownBatteryPct,
                 noiseIsTest = noiseIsTest && tracker.active,
             )

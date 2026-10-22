@@ -18,24 +18,50 @@ class StatusNotifier(private val context: Context) {
     }
 
     fun build(role: Role, link: LinkUi): Notification {
-        val open = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+        val open =
+            PendingIntent.getActivity(
+                context,
+                0,
+                Intent(context, MainActivity::class.java),
+                PendingIntent.FLAG_IMMUTABLE,
+            )
         val baby = role == Role.BABY
-        return NotificationCompat.Builder(context, if (baby) AlertChannels.BABY_STATUS else AlertChannels.STATUS)
+        return NotificationCompat.Builder(
+                context,
+                if (baby) AlertChannels.BABY_STATUS else AlertChannels.STATUS,
+            )
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .setContentTitle(context.getString(R.string.native_notif_app_title))
-            .setContentText(context.getString(if (baby) R.string.native_notif_baby_monitoring else parentText(link)))
+            .setContentText(
+                context.getString(
+                    if (baby) R.string.native_notif_baby_monitoring else parentText(link)
+                )
+            )
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
-            .setPriority(if (baby) NotificationCompat.PRIORITY_MIN else NotificationCompat.PRIORITY_LOW)
-            .setVisibility(if (baby) NotificationCompat.VISIBILITY_SECRET else NotificationCompat.VISIBILITY_PRIVATE)
+            .setPriority(
+                if (baby) NotificationCompat.PRIORITY_MIN else NotificationCompat.PRIORITY_LOW
+            )
+            .setVisibility(
+                if (baby) NotificationCompat.VISIBILITY_SECRET
+                else NotificationCompat.VISIBILITY_PRIVATE
+            )
             .setContentIntent(open)
             .build()
     }
 
-    /** Baby after the OS killed the process: a microphone service cannot start from the background. */
+    /**
+     * Baby after the OS killed the process: a microphone service cannot start from the background.
+     */
     fun resumePrompt(): Notification {
-        val open = PendingIntent.getActivity(context, 1, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+        val open =
+            PendingIntent.getActivity(
+                context,
+                1,
+                Intent(context, MainActivity::class.java),
+                PendingIntent.FLAG_IMMUTABLE,
+            )
         return NotificationCompat.Builder(context, AlertChannels.BABY_STATUS)
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .setContentTitle(context.getString(R.string.native_notif_app_title))
@@ -54,7 +80,9 @@ class StatusNotifier(private val context: Context) {
         fun parentText(link: LinkUi): Int =
             when (link.phase) {
                 LinkPhase.CONNECTED -> R.string.native_notif_status_connected
-                LinkPhase.CONNECTING -> if (link.level >= 2) R.string.native_notif_status_alarm else R.string.native_notif_status_connecting
+                LinkPhase.CONNECTING ->
+                    if (link.level >= 2) R.string.native_notif_status_alarm
+                    else R.string.native_notif_status_connecting
                 LinkPhase.RECONNECTING ->
                     when {
                         link.level >= 2 -> R.string.native_notif_status_alarm
@@ -63,7 +91,8 @@ class StatusNotifier(private val context: Context) {
                     }
                 LinkPhase.PEER_STOPPED -> R.string.native_notif_status_peer_stopped
                 LinkPhase.FAILED_NEEDS_USER -> R.string.native_notif_status_failed
-                LinkPhase.IDLE, LinkPhase.STOPPED -> R.string.native_notif_status_connecting
+                LinkPhase.IDLE,
+                LinkPhase.STOPPED -> R.string.native_notif_status_connecting
             }
     }
 }

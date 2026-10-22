@@ -25,7 +25,8 @@ class FakeClock(var elapsed: Long = 1_000, var wall: Long = 1_700_000_000_000) :
 class FakeCipher : PairingCipher {
     var keyDeleted = false
 
-    override fun encrypt(plain: ByteArray) = plain.map { (it.toInt() xor 0x5a).toByte() }.toByteArray()
+    override fun encrypt(plain: ByteArray) =
+        plain.map { (it.toInt() xor 0x5a).toByte() }.toByteArray()
 
     override fun decrypt(sealed: ByteArray) = encrypt(sealed)
 

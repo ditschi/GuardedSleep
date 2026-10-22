@@ -12,12 +12,27 @@ import kotlinx.coroutines.flow.StateFlow
  * `*WallMs` = System.currentTimeMillis() (clock times shown to the user, e.g. "quiet since 02:14").
  */
 
-enum class Role { BABY, PARENT }
+enum class Role {
+    BABY,
+    PARENT,
+}
 
 /** Link state per ADR-017 §7; IDLE = monitoring not started. */
-enum class LinkPhase { IDLE, CONNECTING, CONNECTED, RECONNECTING, PEER_STOPPED, FAILED_NEEDS_USER, STOPPED }
+enum class LinkPhase {
+    IDLE,
+    CONNECTING,
+    CONNECTED,
+    RECONNECTING,
+    PEER_STOPPED,
+    FAILED_NEEDS_USER,
+    STOPPED,
+}
 
-enum class CauseHint { SERVER_UNREACHABLE, PEER_ABSENT, MEDIA_BLOCKED }
+enum class CauseHint {
+    SERVER_UNREACHABLE,
+    PEER_ABSENT,
+    MEDIA_BLOCKED,
+}
 
 data class LinkUi(
     val phase: LinkPhase = LinkPhase.IDLE,
@@ -32,14 +47,29 @@ data class LinkUi(
     val failureKey: String? = null,
     /** Weak connection shown only when POOR (link quality folded into the bar). */
     val quality: LinkQuality = LinkQuality.UNKNOWN,
-    /** The baby unit has been absent for over 10 minutes: hint that a re-paired baby needs a new scan. */
+    /**
+     * The baby unit has been absent for over 10 minutes: hint that a re-paired baby needs a new
+     * scan.
+     */
     val stalePairingHint: Boolean = false,
 )
 
-enum class LinkQuality { GOOD, MEDIUM, POOR, UNKNOWN }
+enum class LinkQuality {
+    GOOD,
+    MEDIUM,
+    POOR,
+    UNKNOWN,
+}
 
 /** One value for the parent (ADR-018 §3.3). */
-enum class SilenceStatus { SILENT, SCREEN_MAY_LIGHT, MAY_BUZZ, MAY_RING, UNKNOWN, NO_ACCESS }
+enum class SilenceStatus {
+    SILENT,
+    SCREEN_MAY_LIGHT,
+    MAY_BUZZ,
+    MAY_RING,
+    UNKNOWN,
+    NO_ACCESS,
+}
 
 data class PeerStatusUi(
     val batteryPct: Int? = null,
@@ -50,7 +80,10 @@ data class PeerStatusUi(
     val micSilent: Boolean? = null,
     /** Baby is a browser: silence can never be read or set. */
     val isWebClient: Boolean = false,
-    /** Wire names of the baby unit's own warnings, e.g. "not_charging", "mic_permission_lost", "page_hidden". */
+    /**
+     * Wire names of the baby unit's own warnings, e.g. "not_charging", "mic_permission_lost",
+     * "page_hidden".
+     */
     val unitWarnings: List<String> = emptyList(),
 )
 
@@ -65,9 +98,18 @@ enum class ReadinessIssue {
     NEVER_TESTED,
 }
 
-enum class ListenMode { OFF, HOLD, LOCKED }
+enum class ListenMode {
+    OFF,
+    HOLD,
+    LOCKED,
+}
 
-enum class SilenceRequest { IDLE, PENDING, APPLIED, FAILED }
+enum class SilenceRequest {
+    IDLE,
+    PENDING,
+    APPLIED,
+    FAILED,
+}
 
 data class MissedEventsUi(
     val downMs: Long,
@@ -87,7 +129,10 @@ data class ParentMonitorState(
     val peer: PeerStatusUi = PeerStatusUi(),
     /** Live level 0..1 of the received baby audio (meter). */
     val level: Float = 0f,
-    /** Start of the current quiet period; null while disconnected or unknown (never "All quiet" then). */
+    /**
+     * Start of the current quiet period; null while disconnected or unknown (never "All quiet"
+     * then).
+     */
     val quietSinceWallMs: Long? = null,
     val noiseAlertActive: Boolean = false,
     val listen: ListenMode = ListenMode.OFF,
@@ -101,7 +146,10 @@ data class ParentMonitorState(
     /** UI-pass additions (defaults keep the platform layer source compatible). */
     val noiseSinceWallMs: Long? = null,
     val noiseIsTest: Boolean = false,
-    /** The baby unit's real noise threshold (from peer_status), so the meter can draw it; null until known. */
+    /**
+     * The baby unit's real noise threshold (from peer_status), so the meter can draw it; null until
+     * known.
+     */
     val babyThreshold: Float? = null,
     val lastSound: SoundEventUi? = null,
     /** Parent phone's own battery percent, for "Your phone is at {percent}". */
@@ -123,9 +171,24 @@ data class BabyMonitorState(
     val parentListening: Boolean = false,
 )
 
-enum class PairingPhase { SHOWING_CODE, EXPIRED, SCANNING, CONNECTING, PAIRED, FAILED }
+enum class PairingPhase {
+    SHOWING_CODE,
+    EXPIRED,
+    SCANNING,
+    CONNECTING,
+    PAIRED,
+    FAILED,
+}
 
-enum class PairingError { CAMERA_DENIED, NOT_OUR_CODE, EXPIRED, KEY_MISMATCH, ALREADY_PAIRED, UNREACHABLE, INCOMPLETE_PASTE }
+enum class PairingError {
+    CAMERA_DENIED,
+    NOT_OUR_CODE,
+    EXPIRED,
+    KEY_MISMATCH,
+    ALREADY_PAIRED,
+    UNREACHABLE,
+    INCOMPLETE_PASTE,
+}
 
 data class PairingState(
     val phase: PairingPhase,
@@ -135,12 +198,20 @@ data class PairingState(
     val error: PairingError? = null,
 ) {
     // The payload contains the PSK: keep it out of logs and crash reports.
-    override fun toString(): String = "PairingState(phase=$phase, codePayload=${if (codePayload == null) "null" else "<redacted>"}, error=$error)"
+    override fun toString(): String =
+        "PairingState(phase=$phase, codePayload=${if (codePayload == null) "null" else "<redacted>"}, error=$error)"
 }
 
-enum class Theme { DARK, LIGHT, SYSTEM }
+enum class Theme {
+    DARK,
+    LIGHT,
+    SYSTEM,
+}
 
-enum class AlertOutput { DEFAULT, SPEAKER_ONLY }
+enum class AlertOutput {
+    DEFAULT,
+    SPEAKER_ONLY,
+}
 
 data class SettingsState(
     val theme: Theme = Theme.DARK,
@@ -166,7 +237,10 @@ data class AppState(
     val paired: Boolean = false,
     val peerName: String? = null,
     val monitoring: Boolean = false,
-    /** False while monitoring is on but Android is not running the foreground service: show red, never green. */
+    /**
+     * False while monitoring is on but Android is not running the foreground service: show red,
+     * never green.
+     */
     val backgroundProtection: Boolean = true,
     /** UI-pass additions. */
     val lastUsedWallMs: Long? = null,
@@ -176,7 +250,12 @@ data class AppState(
 )
 
 /** Baby self-test result (ADR-010) shown on the setup checklist. */
-enum class DeviceCheck { UNKNOWN, OK, LIMITED, NOT_RECOMMENDED }
+enum class DeviceCheck {
+    UNKNOWN,
+    OK,
+    LIMITED,
+    NOT_RECOMMENDED,
+}
 
 interface AppController {
     val app: StateFlow<AppState>
@@ -186,34 +265,53 @@ interface AppController {
     val pairing: StateFlow<PairingState?>
 
     fun chooseRole(role: Role)
+
     fun completeOnboarding()
+
     fun startPairing()
+
     fun cancelPairing()
+
     /** Parent: decoded QR text or pasted code. */
     fun submitPairingCode(payload: String)
+
     fun refreshPairingCode()
+
     fun startMonitoring()
+
     fun stopMonitoring()
+
     fun forgetPairing()
+
     fun updateSettings(transform: (SettingsState) -> SettingsState)
 
     // Parent
     fun setListen(mode: ListenMode)
+
     fun requestTestAlert()
+
     fun snooze(minutes: Int)
+
     fun cancelSnooze()
+
     fun acknowledgeAlarm()
+
     fun stopAlertSound()
+
     fun requestSilenceBaby()
+
     fun tryReconnectNow()
+
     fun dismissMissedEvents()
 
     // Baby
     fun setKioskLocked(locked: Boolean)
+
     fun dismissSilenceRestoredNotice()
 
     // UI-pass additions: default no-ops so existing implementations keep compiling.
     /** Parent answered "Did you hear and feel it?" after a test alert. */
     fun reportTestResult(heardAndFelt: Boolean) {}
+
     fun dismissCoach() {}
 }

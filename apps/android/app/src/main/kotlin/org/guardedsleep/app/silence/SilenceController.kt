@@ -43,7 +43,8 @@ interface SilenceGateway {
  * hides every visual effect; API 26-28 fall back to the global "alarms only" filter. The user's own
  * mode returns when the rule is switched off or removed.
  */
-class SilenceController(private val context: Context, private val settings: SettingsRepository) : SilenceGateway {
+class SilenceController(private val context: Context, private val settings: SettingsRepository) :
+    SilenceGateway {
     private val nm = context.getSystemService(NotificationManager::class.java)
 
     override fun hasAccess(): Boolean = nm.isNotificationPolicyAccessGranted
@@ -53,18 +54,20 @@ class SilenceController(private val context: Context, private val settings: Sett
         val st = settings.current.silence
         if (st.active) return true
         return runCatching {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    val id = nm.addAutomaticZenRule(rule())
-                    nm.setAutomaticZenRuleState(id, condition(Condition.STATE_TRUE))
-                    settings.update { it.copy(silence = SilenceMarker(active = true, ruleId = id)) }
-                } else {
-                    val previous = nm.currentInterruptionFilter
-                    nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS)
-                    settings.update { it.copy(silence = SilenceMarker(active = true, previousFilter = previous)) }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val id = nm.addAutomaticZenRule(rule())
+                nm.setAutomaticZenRuleState(id, condition(Condition.STATE_TRUE))
+                settings.update { it.copy(silence = SilenceMarker(active = true, ruleId = id)) }
+            } else {
+                val previous = nm.currentInterruptionFilter
+                nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS)
+                settings.update {
+                    it.copy(silence = SilenceMarker(active = true, previousFilter = previous))
                 }
-                PocLog.event("silence", "state" to "on")
-                true
             }
+            PocLog.event("silence", "state" to "on")
+            true
+        }
             .getOrElse {
                 PocLog.event("failed", "reason" to "silence_activate")
                 false
@@ -88,12 +91,15 @@ class SilenceController(private val context: Context, private val settings: Sett
         val marked = settings.current.silence.active
         if (marked) deactivate()
         // Also remove rules of ours that a crash left without a saved marker.
-        val orphans =
-            runCatching {
-                    if (!hasAccess()) 0
-                    else nm.automaticZenRules.entries.filter { it.value.conditionId == CONDITION_ID }.onEach { nm.removeAutomaticZenRule(it.key) }.size
-                }
-                .getOrDefault(0)
+        val orphans = runCatching {
+            if (!hasAccess()) 0
+            else
+                nm.automaticZenRules.entries
+                    .filter { it.value.conditionId == CONDITION_ID }
+                    .onEach { nm.removeAutomaticZenRule(it.key) }
+                    .size
+        }
+            .getOrDefault(0)
         return marked || orphans > 0
     }
 
@@ -121,11 +127,20 @@ class SilenceController(private val context: Context, private val settings: Sett
         val pct = if (level >= 0 && scale > 0) (level * 100 / scale).coerceIn(0, 100) else null
         val nextAlarm =
             context.getSystemService(AlarmManager::class.java)?.nextAlarmClock?.triggerTime?.let {
-                ((it - System.currentTimeMillis()) / 60_000L).coerceAtLeast(0).coerceAtMost(MAX_MINUTES).toUInt()
+                ((it - System.currentTimeMillis()) / 60_000L)
+                    .coerceAtLeast(0)
+                    .coerceAtMost(MAX_MINUTES)
+                    .toUInt()
             }
         return DeviceStatus(
             batteryPct = pct?.toUByte(),
-            charging = status.takeIf { it >= 0 }?.let { it == BatteryManager.BATTERY_STATUS_CHARGING || it == BatteryManager.BATTERY_STATUS_FULL },
+            charging =
+                status
+                    .takeIf { it >= 0 }
+                    ?.let {
+                        it == BatteryManager.BATTERY_STATUS_CHARGING ||
+                            it == BatteryManager.BATTERY_STATUS_FULL
+                    },
             ringer = ringer,
             dnd = dnd,
             alarmsAllowed = dnd != Dnd.TOTAL,
@@ -141,7 +156,10 @@ class SilenceController(private val context: Context, private val settings: Sett
     private fun warnings(batteryStatus: Int, battery: Intent?): List<UnitWarning> = buildList {
         val plugged = (battery?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0
         if (battery != null && !plugged && batteryStatus >= 0) add(UnitWarning.NOT_CHARGING)
-        if (context.checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+        if (
+            context.checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) !=
+                android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
             add(UnitWarning.MIC_PERMISSION_LOST)
         }
     }

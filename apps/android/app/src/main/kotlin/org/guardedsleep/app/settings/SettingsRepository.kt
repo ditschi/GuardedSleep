@@ -20,10 +20,19 @@ import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.SettingsState
 import org.guardedsleep.app.ui.model.Theme
 
-/** Do Not Disturb state this app switched on, persisted so a crash can be undone at the next start. */
-data class SilenceMarker(val active: Boolean = false, val ruleId: String? = null, val previousFilter: Int? = null)
+/**
+ * Do Not Disturb state this app switched on, persisted so a crash can be undone at the next start.
+ */
+data class SilenceMarker(
+    val active: Boolean = false,
+    val ruleId: String? = null,
+    val previousFilter: Int? = null,
+)
 
-/** Everything that survives a process restart and is not secret (pairing material is in PairingStore). */
+/**
+ * Everything that survives a process restart and is not secret (pairing material is in
+ * PairingStore).
+ */
 data class PersistedState(
     val settings: SettingsState,
     val role: Role? = null,
@@ -41,7 +50,10 @@ data class PersistedState(
  * DataStore-backed preferences with an in-memory mirror: reads are synchronous, writes are applied
  * immediately and persisted in the background.
  */
-class SettingsRepository(private val store: DataStore<Preferences>, private val scope: CoroutineScope) {
+class SettingsRepository(
+    private val store: DataStore<Preferences>,
+    private val scope: CoroutineScope,
+) {
     private val state = MutableStateFlow(runBlocking { read(store.data.first()) })
 
     val flow: StateFlow<PersistedState> = state
@@ -67,15 +79,20 @@ class SettingsRepository(private val store: DataStore<Preferences>, private val 
         val defaults = SettingsState(signalingUrls = AppDefaults.signalingUrls)
         val settings =
             SettingsState(
-                theme = p[THEME]?.let { runCatching { Theme.valueOf(it) }.getOrNull() } ?: defaults.theme,
+                theme =
+                    p[THEME]?.let { runCatching { Theme.valueOf(it) }.getOrNull() }
+                        ?: defaults.theme,
                 language = p[LANGUAGE],
                 threshold = p[THRESHOLD] ?: defaults.threshold,
                 holdSeconds = p[HOLD] ?: defaults.holdSeconds,
-                alertOutput = p[OUTPUT]?.let { runCatching { AlertOutput.valueOf(it) }.getOrNull() } ?: defaults.alertOutput,
+                alertOutput =
+                    p[OUTPUT]?.let { runCatching { AlertOutput.valueOf(it) }.getOrNull() }
+                        ?: defaults.alertOutput,
                 alertGainPct = p[GAIN] ?: defaults.alertGainPct,
                 silenceWhileMonitoring = p[SILENCE] ?: defaults.silenceWhileMonitoring,
                 advancedEnabled = p[ADVANCED] ?: defaults.advancedEnabled,
-                signalingUrls = p[URLS]?.split('\n')?.filter { it.isNotBlank() } ?: defaults.signalingUrls,
+                signalingUrls =
+                    p[URLS]?.split('\n')?.filter { it.isNotBlank() } ?: defaults.signalingUrls,
                 turnUrl = p[TURN],
                 heartbeatSeconds = p[HEARTBEAT] ?: defaults.heartbeatSeconds,
             )
@@ -91,7 +108,10 @@ class SettingsRepository(private val store: DataStore<Preferences>, private val 
         )
     }
 
-    private fun write(p: androidx.datastore.preferences.core.MutablePreferences, s: PersistedState) {
+    private fun write(
+        p: androidx.datastore.preferences.core.MutablePreferences,
+        s: PersistedState,
+    ) {
         fun <T> set(key: Preferences.Key<T>, v: T?) {
             if (v == null) p.remove(key) else p[key] = v
         }

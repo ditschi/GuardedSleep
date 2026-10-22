@@ -33,8 +33,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -47,7 +47,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.guardedsleep.app.ui.theme.LocalAppColors
 import org.guardedsleep.app.ui.theme.StateColors
 
@@ -59,9 +58,18 @@ val LocalSingleLine = androidx.compose.runtime.compositionLocalOf { false }
  * Children must be plain buttons (one layout node each).
  */
 @Composable
-fun AdaptiveButtonRow(modifier: Modifier = Modifier, gap: Dp = 8.dp, content: @Composable () -> Unit) {
+fun AdaptiveButtonRow(
+    modifier: Modifier = Modifier,
+    gap: Dp = 8.dp,
+    content: @Composable () -> Unit,
+) {
     androidx.compose.ui.layout.Layout(
-        content = { androidx.compose.runtime.CompositionLocalProvider(LocalSingleLine provides true, content) },
+        content = {
+            androidx.compose.runtime.CompositionLocalProvider(
+                LocalSingleLine provides true,
+                content,
+            )
+        },
         modifier = modifier.fillMaxWidth(),
     ) { measurables, constraints ->
         val g = gap.roundToPx()
@@ -71,13 +79,23 @@ fun AdaptiveButtonRow(modifier: Modifier = Modifier, gap: Dp = 8.dp, content: @C
         val w = constraints.maxWidth
         if (sideBySide) {
             val cw = (w - g * (n - 1)) / n
-            val ps = measurables.map { it.measure(androidx.compose.ui.unit.Constraints.fixedWidth(cw)) }
+            val ps = measurables.map {
+                it.measure(androidx.compose.ui.unit.Constraints.fixedWidth(cw))
+            }
             val h = ps.maxOfOrNull { it.height } ?: 0
             layout(w, h) { ps.forEachIndexed { i, p -> p.placeRelative(i * (cw + g), 0) } }
         } else {
-            val ps = measurables.map { it.measure(androidx.compose.ui.unit.Constraints.fixedWidth(w)) }
+            val ps = measurables.map {
+                it.measure(androidx.compose.ui.unit.Constraints.fixedWidth(w))
+            }
             val h = ps.sumOf { it.height } + g * (n - 1).coerceAtLeast(0)
-            layout(w, h) { var y = 0; ps.forEach { p -> p.placeRelative(0, y); y += p.height + g } }
+            layout(w, h) {
+                var y = 0
+                ps.forEach { p ->
+                    p.placeRelative(0, y)
+                    y += p.height + g
+                }
+            }
         }
     }
 }
@@ -86,7 +104,10 @@ val MinTouch = 48.dp
 val PrimaryHeight = 72.dp
 val Gutter = 16.dp
 
-/** Screen root: safe-drawing insets, background, test tags exposed as resource ids (Maestro/UiAutomator). */
+/**
+ * Screen root: safe-drawing insets, background, test tags exposed as resource ids
+ * (Maestro/UiAutomator).
+ */
 @Composable
 fun ScreenRoot(
     tag: String,
@@ -100,8 +121,10 @@ fun ScreenRoot(
             .background(background)
             .safeDrawingPadding()
             .semantics { testTagsAsResourceId = true }
-            .testTag(tag),
-    ) { content() }
+            .testTag(tag)
+    ) {
+        content()
+    }
 }
 
 @Composable
@@ -132,7 +155,12 @@ fun Title(text: String, tag: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun Body(text: String, modifier: Modifier = Modifier, tag: String? = null, color: Color = LocalAppColors.current.secondaryText) {
+fun Body(
+    text: String,
+    modifier: Modifier = Modifier,
+    tag: String? = null,
+    color: Color = LocalAppColors.current.secondaryText,
+) {
     Text(
         text,
         (if (tag != null) modifier.testTag(tag) else modifier),
@@ -160,9 +188,18 @@ fun PrimaryButton(
         colors = ButtonDefaults.buttonColors(containerColor = container, contentColor = content),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
     ) {
-        if (leading != null) { leading(); Spacer(Modifier.size(10.dp)) }
+        if (leading != null) {
+            leading()
+            Spacer(Modifier.size(10.dp))
+        }
         val single = LocalSingleLine.current
-        Text(text, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, softWrap = !single, maxLines = if (single) 1 else Int.MAX_VALUE)
+        Text(
+            text,
+            style = MaterialTheme.typography.titleLarge,
+            textAlign = TextAlign.Center,
+            softWrap = !single,
+            maxLines = if (single) 1 else Int.MAX_VALUE,
+        )
     }
 }
 
@@ -175,22 +212,43 @@ fun SecondaryButton(
     enabled: Boolean = true,
     destructive: Boolean = false,
 ) {
-    val color = if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
+    val color =
+        if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier.heightIn(min = MinTouch).testTag(tag),
-        border = BorderStroke(1.5.dp, if (enabled) color.copy(alpha = 0.7f) else MaterialTheme.colorScheme.outline),
+        border =
+            BorderStroke(
+                1.5.dp,
+                if (enabled) color.copy(alpha = 0.7f) else MaterialTheme.colorScheme.outline,
+            ),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = color),
     ) {
         val single = LocalSingleLine.current
-        Text(text, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center, softWrap = !single, maxLines = if (single) 1 else Int.MAX_VALUE)
+        Text(
+            text,
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center,
+            softWrap = !single,
+            maxLines = if (single) 1 else Int.MAX_VALUE,
+        )
     }
 }
 
 @Composable
-fun QuietButton(text: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier, enabled: Boolean = true) {
-    TextButton(onClick = onClick, enabled = enabled, modifier = modifier.heightIn(min = MinTouch).testTag(tag)) {
+fun QuietButton(
+    text: String,
+    onClick: () -> Unit,
+    tag: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    TextButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.heightIn(min = MinTouch).testTag(tag),
+    ) {
         Text(text, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
     }
 }
@@ -207,20 +265,34 @@ fun AppCard(
         modifier = if (onClick != null) m.clickable(role = Role.Button, onClick = onClick) else m,
         shape = RoundedCornerShape(20.dp),
         color = container,
-    ) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp), content = content) }
+    ) {
+        Column(
+            Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            content = content,
+        )
+    }
 }
 
 /** Visual weight of a state, always paired with a glyph and text. */
-enum class Tone { OK, INFO, WARN, BAD, NEUTRAL, SNOOZE }
-
-fun Tone.container(): Color = when (this) {
-    Tone.OK -> StateColors.Green
-    Tone.INFO -> StateColors.Yellow
-    Tone.WARN -> StateColors.Orange
-    Tone.BAD -> StateColors.Red
-    Tone.NEUTRAL -> StateColors.Grey
-    Tone.SNOOZE -> StateColors.Amber
+enum class Tone {
+    OK,
+    INFO,
+    WARN,
+    BAD,
+    NEUTRAL,
+    SNOOZE,
 }
+
+fun Tone.container(): Color =
+    when (this) {
+        Tone.OK -> StateColors.Green
+        Tone.INFO -> StateColors.Yellow
+        Tone.WARN -> StateColors.Orange
+        Tone.BAD -> StateColors.Red
+        Tone.NEUTRAL -> StateColors.Grey
+        Tone.SNOOZE -> StateColors.Amber
+    }
 
 /** Full-width ambient bar: colour + glyph + text, a live region for screen readers. */
 @Composable
@@ -250,8 +322,18 @@ fun AmbientBar(
         GlyphIcon(glyph, StateColors.OnState, size = 28.dp)
         if (extra != null) GlyphIcon(extra, StateColors.OnState, size = 22.dp)
         Column(Modifier.weight(1f)) {
-            Text(text, style = MaterialTheme.typography.titleLarge, color = StateColors.OnState, fontWeight = FontWeight.SemiBold)
-            if (subText != null) Text(subText, style = MaterialTheme.typography.bodyMedium, color = StateColors.OnState)
+            Text(
+                text,
+                style = MaterialTheme.typography.titleLarge,
+                color = StateColors.OnState,
+                fontWeight = FontWeight.SemiBold,
+            )
+            if (subText != null)
+                Text(
+                    subText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = StateColors.OnState,
+                )
         }
     }
 }
@@ -269,11 +351,16 @@ fun StatusChip(
     dimmed: Boolean = false,
 ) {
     val colors = LocalAppColors.current
-    val (bg, fg) = when (tone) {
-        Tone.NEUTRAL -> colors.neutralChip to colors.onNeutralChip
-        else -> tone.container() to StateColors.OnState
-    }
-    val base = modifier.heightIn(min = MinTouch).alpha(if (dimmed) 0.6f else 1f).background(bg, RoundedCornerShape(24.dp))
+    val (bg, fg) =
+        when (tone) {
+            Tone.NEUTRAL -> colors.neutralChip to colors.onNeutralChip
+            else -> tone.container() to StateColors.OnState
+        }
+    val base =
+        modifier
+            .heightIn(min = MinTouch)
+            .alpha(if (dimmed) 0.6f else 1f)
+            .background(bg, RoundedCornerShape(24.dp))
     Row(
         (if (onClick != null) base.clickable(role = Role.Button, onClick = onClick) else base)
             .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -283,15 +370,27 @@ fun StatusChip(
     ) {
         GlyphIcon(glyph, fg, size = 20.dp)
         if (extraGlyph != null) GlyphIcon(extraGlyph, fg, size = 20.dp)
-        Text(text, style = MaterialTheme.typography.bodyMedium, color = fg, modifier = Modifier.weight(1f, fill = false))
+        Text(
+            text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = fg,
+            modifier = Modifier.weight(1f, fill = false),
+        )
     }
 }
 
 /** Setup/permission row state (S02/S03). */
-enum class RowState { DONE, TODO, BLOCKED, CHECKING }
+enum class RowState {
+    DONE,
+    TODO,
+    BLOCKED,
+    CHECKING,
+}
 
 @Composable
-fun RowScope.Spacer8() { Spacer(Modifier.size(8.dp)) }
+fun RowScope.Spacer8() {
+    Spacer(Modifier.size(8.dp))
+}
 
 fun Modifier.minWidth(w: Dp): Modifier = widthIn(min = w)
 

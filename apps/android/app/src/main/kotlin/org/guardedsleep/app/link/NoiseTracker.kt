@@ -20,7 +20,8 @@ class NoiseTracker {
 
     fun onAlert(now: Long): NoiseKind {
         val kind =
-            if (active || endedAt?.let { now - it < AlertPolicy.NOISE_EVENT_JOIN_MS } == true) NoiseKind.CONTINUE
+            if (active || endedAt?.let { now - it < AlertPolicy.NOISE_EVENT_JOIN_MS } == true)
+                NoiseKind.CONTINUE
             else NoiseKind.NEW
         active = true
         endedAt = null

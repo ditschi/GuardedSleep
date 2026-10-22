@@ -42,7 +42,9 @@ class KeystorePairingCipher(private val alias: String = KEY_ALIAS) : PairingCiph
     private fun keyStore(): KeyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
 
     private fun key(): SecretKey {
-        (keyStore().getKey(alias, null) as? SecretKey)?.let { return it }
+        (keyStore().getKey(alias, null) as? SecretKey)?.let {
+            return it
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             try {
                 return generate(strongBox = true)
@@ -55,12 +57,16 @@ class KeystorePairingCipher(private val alias: String = KEY_ALIAS) : PairingCiph
 
     private fun generate(strongBox: Boolean): SecretKey {
         val spec =
-            KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
+            KeyGenParameterSpec.Builder(
+                    alias,
+                    KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
+                )
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                 .setKeySize(256)
                 .apply {
-                    if (strongBox && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) setIsStrongBoxBacked(true)
+                    if (strongBox && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+                        setIsStrongBoxBacked(true)
                 }
                 .build()
         return KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)

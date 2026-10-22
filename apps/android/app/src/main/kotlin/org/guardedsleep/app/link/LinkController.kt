@@ -41,13 +41,14 @@ import uniffi.guardedsleep_core.LinkEvent
 import uniffi.guardedsleep_core.LinkInput
 import uniffi.guardedsleep_core.LinkState
 import uniffi.guardedsleep_core.LinkStatus
-import uniffi.guardedsleep_core.defaultLinkConfig
 import uniffi.guardedsleep_core.Role as CoreRole
+import uniffi.guardedsleep_core.defaultLinkConfig
 
 /**
- * The platform layer's single entry point for the UI. Owns at most one [LinkRunner] (one [uniffi
- * .guardedsleep_core.CoreLink]) per monitoring or pairing run, keeps the persisted choices, and maps
- * the core's status and events onto the UI models. Decisions about the link itself stay in the core.
+ * The platform layer's single entry point for the UI. Owns at most one [LinkRunner] (one
+ * [uniffi .guardedsleep_core.CoreLink]) per monitoring or pairing run, keeps the persisted choices,
+ * and maps the core's status and events onto the UI models. Decisions about the link itself stay in
+ * the core.
  */
 class LinkController(
     private val settingsRepo: SettingsRepository,
@@ -74,6 +75,7 @@ class LinkController(
     override val pairing: StateFlow<PairingState?> = _pairing
     override val parent: StateFlow<ParentMonitorState>
         get() = parentModel.state
+
     override val baby: StateFlow<BabyMonitorState>
         get() = babyModel.state
 
@@ -96,7 +98,8 @@ class LinkController(
             }
         }
 
-    private val parentModel = ParentModel(clock, alerts, parentEffects) { _settings.value.threshold.toDouble() }
+    private val parentModel =
+        ParentModel(clock, alerts, parentEffects) { _settings.value.threshold.toDouble() }
     private val babyModel = BabyModel(clock)
 
     private class PendingPairing(
@@ -153,14 +156,27 @@ class LinkController(
         babyModel.setSettings(after.threshold, after.holdSeconds)
         val r = run
         if (r != null) {
-            if (r.role == Role.BABY && (after.threshold != before.threshold || after.holdSeconds != before.holdSeconds)) {
-                r.runner.input(LinkInput.SetNoiseGate(after.threshold.toDouble(), (after.holdSeconds * 1000L).toULong()))
+            if (
+                r.role == Role.BABY &&
+                    (after.threshold != before.threshold || after.holdSeconds != before.holdSeconds)
+            ) {
+                r.runner.input(
+                    LinkInput.SetNoiseGate(
+                        after.threshold.toDouble(),
+                        (after.holdSeconds * 1000L).toULong(),
+                    )
+                )
             }
-            if (after.alertGainPct != before.alertGainPct) r.runner.media { it.setPlaybackGainPct(after.alertGainPct) }
+            if (after.alertGainPct != before.alertGainPct)
+                r.runner.media { it.setPlaybackGainPct(after.alertGainPct) }
             if (after.alertOutput != before.alertOutput) {
                 r.runner.media { it.setSpeakerOnly(after.alertOutput == AlertOutput.SPEAKER_ONLY) }
             }
-            if (r.role == Role.BABY && r.monitoring && after.silenceWhileMonitoring != before.silenceWhileMonitoring) {
+            if (
+                r.role == Role.BABY &&
+                    r.monitoring &&
+                    after.silenceWhileMonitoring != before.silenceWhileMonitoring
+            ) {
                 applySilence(after.silenceWhileMonitoring)
             }
         }
@@ -177,21 +193,37 @@ class LinkController(
         refreshApp()
     }
 
-    /** MainActivity start/resume: resume a monitoring flag that outlived the process and re-check readiness. */
+    /**
+     * MainActivity start/resume: resume a monitoring flag that outlived the process and re-check
+     * readiness.
+     */
     fun onForeground() {
-        if (settingsRepo.current.monitoringActive && (run == null || fgs == Fgs.LOST) && pairingStore.exists()) startHost()
+        if (
+            settingsRepo.current.monitoringActive &&
+                (run == null || fgs == Fgs.LOST) &&
+                pairingStore.exists()
+        )
+            startHost()
         refreshReadiness()
     }
 
     fun refreshReadiness() {
-        if (settingsRepo.current.role == Role.PARENT) parentModel.setReadiness(readiness.check(), readiness.ownBatteryPct())
+        if (settingsRepo.current.role == Role.PARENT)
+            parentModel.setReadiness(readiness.check(), readiness.ownBatteryPct())
     }
 
-    private enum class Fgs { UNKNOWN, RUNNING, LOST }
+    private enum class Fgs {
+        UNKNOWN,
+        RUNNING,
+        LOST,
+    }
 
     @Volatile private var fgs = Fgs.UNKNOWN
 
-    /** Asks for the foreground service; a refusal is visible (red state, parent alarm), never swallowed. */
+    /**
+     * Asks for the foreground service; a refusal is visible (red state, parent alarm), never
+     * swallowed.
+     */
     private fun startHost() {
         fgs = Fgs.UNKNOWN
         try {
@@ -244,7 +276,8 @@ class LinkController(
         val psk = ByteArray(PairingPolicy.PSK_BYTES).also(random::nextBytes)
         val now = clock.elapsedMs()
         val payload = PairingPayload.create(psk, urls, clock.wallMs())
-        val pending = PendingPairing(payload.pskB64url, urls, null, now, now + PairingPolicy.QR_VALIDITY_MS)
+        val pending =
+            PendingPairing(payload.pskB64url, urls, null, now, now + PairingPolicy.QR_VALIDITY_MS)
         _pairing.value =
             PairingState(
                 PairingPhase.SHOWING_CODE,
@@ -272,7 +305,8 @@ class LinkController(
                 val p = parsed.payload
                 val now = clock.elapsedMs()
                 _pairing.value = PairingState(PairingPhase.CONNECTING)
-                // Persisted only after the first verification, so a wrong code never leaves a pairing.
+                // Persisted only after the first verification, so a wrong code never leaves a
+                // pairing.
                 startRun(
                     Role.PARENT,
                     PendingPairing(p.pskB64url, p.signalingUrls, null, now, null),
@@ -322,7 +356,13 @@ class LinkController(
     private fun resumeRun(role: Role, stored: StoredPairing) =
         startRun(
             role,
-            PendingPairing(stored.pskB64url, stored.signalingUrls, stored.turn, clock.elapsedMs(), null),
+            PendingPairing(
+                stored.pskB64url,
+                stored.signalingUrls,
+                stored.turn,
+                clock.elapsedMs(),
+                null,
+            ),
             stored.pairedBefore,
             monitoring = true,
             isPending = false,
@@ -375,7 +415,9 @@ class LinkController(
                 it.setPlaybackGainPct(s.alertGainPct)
                 it.setSpeakerOnly(s.alertOutput == AlertOutput.SPEAKER_ONLY)
             }
-            parentModel.snoozeUntilElapsedMs()?.let { runner.input(LinkInput.SetSnooze(it.toULong())) }
+            parentModel.snoozeUntilElapsedMs()?.let {
+                runner.input(LinkInput.SetSnooze(it.toULong()))
+            }
             refreshReadiness()
         } else if (monitoring) {
             applySilence(s.silenceWhileMonitoring)
@@ -411,9 +453,15 @@ class LinkController(
         return silence.readDeviceStatus()
     }
 
-    private fun buildConfig(role: CoreRole, psk: String, pairedBefore: Boolean, s: SettingsState): LinkConfig {
+    private fun buildConfig(
+        role: CoreRole,
+        psk: String,
+        pairedBefore: Boolean,
+        s: SettingsState,
+    ): LinkConfig {
         val base = defaultLinkConfig(role, psk)
-        val heartbeat = (DebugOptions.heartbeatMs ?: (s.heartbeatSeconds * 1000L)).coerceIn(5_000L, 15_000L)
+        val heartbeat =
+            (DebugOptions.heartbeatMs ?: (s.heartbeatSeconds * 1000L)).coerceIn(5_000L, 15_000L)
         val liveness = 2 * heartbeat + 5_000
         var alarmAfter = DebugOptions.alarmAfterMs ?: AppDefaults.ALARM_AFTER_MS
         // The core rejects a link whose loss detection is not at least 20 s ahead of the alarm.
@@ -460,7 +508,9 @@ class LinkController(
     override fun snooze(minutes: Int) {
         val wallUntil = parentModel.snooze(minutes)
         settingsRepo.update { it.copy(snoozeUntilWallMs = wallUntil) }
-        parentModel.snoozeUntilElapsedMs()?.let { run?.runner?.input(LinkInput.SetSnooze(it.toULong())) }
+        parentModel.snoozeUntilElapsedMs()?.let {
+            run?.runner?.input(LinkInput.SetSnooze(it.toULong()))
+        }
     }
 
     override fun cancelSnooze() {
@@ -500,9 +550,15 @@ class LinkController(
 
         override fun onStatus(status: LinkStatus, nowMs: Long) {
             if (!current()) return
-            if (r.role == Role.PARENT) parentModel.onStatus(status, nowMs) else babyModel.onStatus(status, nowMs)
+            if (r.role == Role.PARENT) parentModel.onStatus(status, nowMs)
+            else babyModel.onStatus(status, nowMs)
             onPairingStatus(status)
-            if (status.state == LinkState.CONNECTED && !r.autoListenDone && r.role == Role.PARENT && DebugOptions.autoListen) {
+            if (
+                status.state == LinkState.CONNECTED &&
+                    !r.autoListenDone &&
+                    r.role == Role.PARENT &&
+                    DebugOptions.autoListen
+            ) {
                 r.autoListenDone = true
                 parentModel.setListen(ListenMode.LOCKED, nowMs)
                 r.runner.input(LinkInput.SetListen(true))
@@ -511,7 +567,8 @@ class LinkController(
 
         override fun onEvent(event: LinkEvent, nowMs: Long) {
             if (!current()) return
-            if (r.role == Role.PARENT) parentModel.onEvent(event, nowMs) else babyModel.onEvent(event, nowMs)
+            if (r.role == Role.PARENT) parentModel.onEvent(event, nowMs)
+            else babyModel.onEvent(event, nowMs)
         }
 
         override fun onTick(nowMs: Long) {
@@ -549,16 +606,19 @@ class LinkController(
                     pairingStore.save(StoredPairing(pending.psk, pending.urls, true, pending.turn))
                     r.pending = null
                     PocLog.event("pairing_saved")
-                    // The pairing link becomes the monitoring run; the other phone never sees a gap.
+                    // The pairing link becomes the monitoring run; the other phone never sees a
+                    // gap.
                     settingsRepo.update { it.copy(monitoringActive = true) }
                     refreshApp()
                     startHost()
-                    // Last, so a UI that reacts to PAIRED already sees a consistent monitoring state.
+                    // Last, so a UI that reacts to PAIRED already sees a consistent monitoring
+                    // state.
                     _pairing.value = PairingState(PairingPhase.PAIRED)
                 }
                 LinkState.FAILED_NEEDS_USER -> {
                     val error =
-                        if (status.key == "pairing_key_mismatch") PairingError.KEY_MISMATCH else PairingError.UNREACHABLE
+                        if (status.key == "pairing_key_mismatch") PairingError.KEY_MISMATCH
+                        else PairingError.UNREACHABLE
                     _pairing.value = PairingState(PairingPhase.FAILED, error = error)
                     PocLog.event("failed", "reason" to (status.key ?: "failed_needs_user"))
                     endPendingRun()
@@ -576,14 +636,20 @@ class LinkController(
                 endPendingRun()
                 return
             }
-            if (r.role == Role.PARENT && !pending.unreachableShown && now - pending.startedAt >= UNREACHABLE_AFTER_MS) {
+            if (
+                r.role == Role.PARENT &&
+                    !pending.unreachableShown &&
+                    now - pending.startedAt >= UNREACHABLE_AFTER_MS
+            ) {
                 pending.unreachableShown = true
-                _pairing.value = PairingState(PairingPhase.CONNECTING, error = PairingError.UNREACHABLE)
+                _pairing.value =
+                    PairingState(PairingPhase.CONNECTING, error = PairingError.UNREACHABLE)
             }
         }
 
         private fun endPendingRun() {
-            val owned = synchronized(this@LinkController) { (run === r).also { if (it) run = null } }
+            val owned =
+                synchronized(this@LinkController) { (run === r).also { if (it) run = null } }
             if (!owned) return
             network.stop()
             r.runner.stop()

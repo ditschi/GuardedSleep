@@ -19,9 +19,9 @@ import org.webrtc.SessionDescription
 import uniffi.guardedsleep_core.IceCandidate as CoreIce
 
 /**
- * One PeerConnection + DataChannel for one core attempt handle. The baby sends a `sendonly`
- * audio m-line (the core refuses anything else) and creates the "guardedsleep" channel; the
- * parent only receives.
+ * One PeerConnection + DataChannel for one core attempt handle. The baby sends a `sendonly` audio
+ * m-line (the core refuses anything else) and creates the "guardedsleep" channel; the parent only
+ * receives.
  */
 internal class LibWebRtcAttemptPeer(
     factory: PeerConnectionFactory,
@@ -52,10 +52,12 @@ internal class LibWebRtcAttemptPeer(
             override fun onIceGatheringChange(state: PeerConnection.IceGatheringState) = Unit
 
             override fun onIceCandidate(c: org.webrtc.IceCandidate) {
-                if (!closed.get()) listener.onLocalIce(CoreIce(c.sdp, c.sdpMid, c.sdpMLineIndex.toUInt()))
+                if (!closed.get())
+                    listener.onLocalIce(CoreIce(c.sdp, c.sdpMid, c.sdpMLineIndex.toUInt()))
             }
 
-            override fun onIceCandidatesRemoved(candidates: Array<out org.webrtc.IceCandidate>) = Unit
+            override fun onIceCandidatesRemoved(candidates: Array<out org.webrtc.IceCandidate>) =
+                Unit
 
             override fun onAddStream(stream: MediaStream) = Unit
 
@@ -77,12 +79,15 @@ internal class LibWebRtcAttemptPeer(
             override fun onConnectionChange(newState: PeerConnection.PeerConnectionState) {
                 if (closed.get()) return
                 listener.onConnectionState(newState.name.lowercase())
-                if (newState == PeerConnection.PeerConnectionState.CONNECTED) reportFingerprint(tries = FP_TRIES)
+                if (newState == PeerConnection.PeerConnectionState.CONNECTED)
+                    reportFingerprint(tries = FP_TRIES)
             }
         }
 
     private val pc: PeerConnection =
-        requireNotNull(factory.createPeerConnection(rtcConfig, observer)) { "createPeerConnection failed" }
+        requireNotNull(factory.createPeerConnection(rtcConfig, observer)) {
+            "createPeerConnection failed"
+        }
 
     init {
         if (sendTrack != null) {
@@ -95,7 +100,9 @@ internal class LibWebRtcAttemptPeer(
             )
         }
         if (offerer) {
-            attachChannel(pc.createDataChannel("guardedsleep", DataChannel.Init().apply { ordered = true }))
+            attachChannel(
+                pc.createDataChannel("guardedsleep", DataChannel.Init().apply { ordered = true })
+            )
         }
     }
 
@@ -146,7 +153,11 @@ internal class LibWebRtcAttemptPeer(
 
     override fun addRemoteIce(candidate: CoreIce) {
         val ice =
-            org.webrtc.IceCandidate(candidate.sdpMid ?: "0", candidate.sdpMLineIndex?.toInt() ?: 0, candidate.candidate)
+            org.webrtc.IceCandidate(
+                candidate.sdpMid ?: "0",
+                candidate.sdpMLineIndex?.toInt() ?: 0,
+                candidate.candidate,
+            )
         synchronized(lock) {
             if (!remoteSet) {
                 pendingRemoteIce += ice
@@ -166,7 +177,9 @@ internal class LibWebRtcAttemptPeer(
         if (closed.get() || !hasAudioReceiver) return callback(null)
         pc.getStats { report ->
             val audio =
-                report.statsMap.values.firstOrNull { it.type == "inbound-rtp" && it.members["kind"] == "audio" }
+                report.statsMap.values.firstOrNull {
+                    it.type == "inbound-rtp" && it.members["kind"] == "audio"
+                }
             callback(
                 audio?.let {
                     InboundAudioStats(
@@ -191,7 +204,10 @@ internal class LibWebRtcAttemptPeer(
         }
     }
 
-    /** Reads the remote DTLS certificate fingerprint from the stats; the core cannot verify without it. */
+    /**
+     * Reads the remote DTLS certificate fingerprint from the stats; the core cannot verify without
+     * it.
+     */
     private fun reportFingerprint(tries: Int) {
         if (closed.get() || fingerprintSent.get()) return
         pc.getStats { report ->
@@ -204,9 +220,14 @@ internal class LibWebRtcAttemptPeer(
             val fp = cert?.members?.get("fingerprint") as? String
             val algo = (cert?.members?.get("fingerprintAlgorithm") as? String)?.lowercase()
             if (fp != null && algo == "sha-256") {
-                if (fingerprintSent.compareAndSet(false, true) && !closed.get()) listener.onDtlsFingerprint(fp)
+                if (fingerprintSent.compareAndSet(false, true) && !closed.get())
+                    listener.onDtlsFingerprint(fp)
             } else if (tries > 1) {
-                retry.schedule({ reportFingerprint(tries - 1) }, FP_RETRY_MS, java.util.concurrent.TimeUnit.MILLISECONDS)
+                retry.schedule(
+                    { reportFingerprint(tries - 1) },
+                    FP_RETRY_MS,
+                    java.util.concurrent.TimeUnit.MILLISECONDS,
+                )
             }
         }
     }
@@ -273,6 +294,8 @@ internal class LibWebRtcAttemptPeer(
         const val FP_TRIES = 10
         const val FP_RETRY_MS = 300L
         val retry: java.util.concurrent.ScheduledExecutorService =
-            java.util.concurrent.Executors.newSingleThreadScheduledExecutor { r -> Thread(r, "gs-fp").apply { isDaemon = true } }
+            java.util.concurrent.Executors.newSingleThreadScheduledExecutor { r ->
+                Thread(r, "gs-fp").apply { isDaemon = true }
+            }
     }
 }

@@ -36,7 +36,10 @@ import uniffi.guardedsleep_core.DeviceStatus
 import uniffi.guardedsleep_core.IceCandidate
 import uniffi.guardedsleep_core.Role as CoreRole
 
-/** In-memory signaling relay (the v3 server protocol) and fake WebRTC, so two real cores talk to each other. */
+/**
+ * In-memory signaling relay (the v3 server protocol) and fake WebRTC, so two real cores talk to
+ * each other.
+ */
 private class FakeNet {
     val delivery = Executors.newSingleThreadExecutor { Thread(it, "fake-net") }
     private val lock = Any()
@@ -48,21 +51,32 @@ private class FakeNet {
 
     fun later(block: () -> Unit) = delivery.execute { runCatching(block) }
 
-    fun join(t: FakeTransport, role: String, room: String) = synchronized(lock) {
-        val id = UUID.randomUUID().toString().take(8)
-        members[id] = role to t
-        t.clientId = id
-        t.room = room
-        rooms.getOrPut(room) { mutableListOf() } += id
-        t.deliver(JSONObject().put("type", "welcome").put("clientId", id).put("roomId", room).toString())
-        broadcastMembers(room)
-    }
+    fun join(t: FakeTransport, role: String, room: String) =
+        synchronized(lock) {
+            val id = UUID.randomUUID().toString().take(8)
+            members[id] = role to t
+            t.clientId = id
+            t.room = room
+            rooms.getOrPut(room) { mutableListOf() } += id
+            t.deliver(
+                JSONObject()
+                    .put("type", "welcome")
+                    .put("clientId", id)
+                    .put("roomId", room)
+                    .toString()
+            )
+            broadcastMembers(room)
+        }
 
-    fun leave(t: FakeTransport) = synchronized(lock) {
-        val id = t.clientId ?: return@synchronized
-        members.remove(id)
-        t.room?.let { r -> rooms[r]?.remove(id); broadcastMembers(r) }
-    }
+    fun leave(t: FakeTransport) =
+        synchronized(lock) {
+            val id = t.clientId ?: return@synchronized
+            members.remove(id)
+            t.room?.let { r ->
+                rooms[r]?.remove(id)
+                broadcastMembers(r)
+            }
+        }
 
     private fun broadcastMembers(room: String) {
         val ids = rooms[room].orEmpty()
@@ -72,25 +86,37 @@ private class FakeNet {
         ids.forEach { members[it]!!.second.deliver(msg) }
     }
 
-    fun handle(from: FakeTransport, text: String) = synchronized(lock) {
-        val o = JSONObject(text)
-        when (o.getString("type")) {
-            "hello" -> join(from, o.getString("role"), o.getString("roomId"))
-            "ping" -> from.deliver("""{"type":"pong"}""")
-            "signal" -> {
-                val to = o.optString("to", "")
-                val msg = JSONObject().put("type", "signal").put("from", from.clientId).put("payload", o.get("payload")).toString()
-                rooms[from.room].orEmpty().filter { it != from.clientId && (to.isEmpty() || it == to) }
-                    .forEach { members[it]!!.second.deliver(msg) }
+    fun handle(from: FakeTransport, text: String) =
+        synchronized(lock) {
+            val o = JSONObject(text)
+            when (o.getString("type")) {
+                "hello" -> join(from, o.getString("role"), o.getString("roomId"))
+                "ping" -> from.deliver("""{"type":"pong"}""")
+                "signal" -> {
+                    val to = o.optString("to", "")
+                    val msg =
+                        JSONObject()
+                            .put("type", "signal")
+                            .put("from", from.clientId)
+                            .put("payload", o.get("payload"))
+                            .toString()
+                    rooms[from.room]
+                        .orEmpty()
+                        .filter { it != from.clientId && (to.isEmpty() || it == to) }
+                        .forEach { members[it]!!.second.deliver(msg) }
+                }
             }
         }
-    }
 
     private val answerers = ConcurrentHashMap<String, FakeAttempt>()
 
-    fun registerOffer(token: String, a: FakeAttempt) { offers[token] = a }
+    fun registerOffer(token: String, a: FakeAttempt) {
+        offers[token] = a
+    }
 
-    fun registerAnswerer(token: String, a: FakeAttempt) { answerers[token] = a }
+    fun registerAnswerer(token: String, a: FakeAttempt) {
+        answerers[token] = a
+    }
 
     fun connect(token: String) {
         val offerer = offers[token]
@@ -111,13 +137,17 @@ private class FakeNet {
     /** Both ends of every live connection fail, like a Wi-Fi outage. */
     fun breakAll() {
         liveAttempts.forEach { a ->
-            later { a.listener.onDataClosed(); a.listener.onConnectionState("failed") }
+            later {
+                a.listener.onDataClosed()
+                a.listener.onConnectionState("failed")
+            }
         }
         liveAttempts.clear()
     }
 }
 
-private class FakeTransport(private val net: FakeNet, private val listener: SignalingListener) : SignalingTransport {
+private class FakeTransport(private val net: FakeNet, private val listener: SignalingListener) :
+    SignalingTransport {
     var clientId: String? = null
     var room: String? = null
     @Volatile var closed = false
@@ -126,12 +156,19 @@ private class FakeTransport(private val net: FakeNet, private val listener: Sign
 
     override fun open() = net.later { if (!closed) listener.onOpened() }
 
-    override fun send(text: String): Boolean { net.later { if (!closed) net.handle(this, text) }; return true }
+    override fun send(text: String): Boolean {
+        net.later { if (!closed) net.handle(this, text) }
+        return true
+    }
 
-    override fun close() { closed = true; net.leave(this) }
+    override fun close() {
+        closed = true
+        net.leave(this)
+    }
 }
 
-private class FakeAttempt(val net: FakeNet, val listener: AttemptListener, val baby: Boolean) : AttemptPort {
+private class FakeAttempt(val net: FakeNet, val listener: AttemptListener, val baby: Boolean) :
+    AttemptPort {
     var token: String? = null
     val fpValue = (0 until 32).joinToString(":") { "%02X".format(java.util.Random().nextInt(256)) }
     private val fingerprint = "a=fingerprint:sha-256 $fpValue"
@@ -141,7 +178,8 @@ private class FakeAttempt(val net: FakeNet, val listener: AttemptListener, val b
     override fun createOffer() {
         token = UUID.randomUUID().toString()
         net.registerOffer(token!!, this)
-        val sdp = "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\n$fingerprint\r\na=gs-token:$token\r\n"
+        val sdp =
+            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\n$fingerprint\r\na=gs-token:$token\r\n"
         net.later { listener.onLocalDescription("offer", sdp) }
     }
 
@@ -152,7 +190,8 @@ private class FakeAttempt(val net: FakeNet, val listener: AttemptListener, val b
     }
 
     override fun createAnswer() {
-        val sdp = "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\n$fingerprint\r\na=gs-token:$token\r\n"
+        val sdp =
+            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\n$fingerprint\r\na=gs-token:$token\r\n"
         net.later { listener.onLocalDescription("answer", sdp) }
     }
 
@@ -176,33 +215,68 @@ private class FakeAttempt(val net: FakeNet, val listener: AttemptListener, val b
 
 private class FakeMedia(val net: FakeNet, val baby: Boolean) : MediaEngine {
     val mic = CopyOnWriteArrayList<Boolean>()
+
     override fun createAttempt(offerer: Boolean, listener: AttemptListener): AttemptPort {
         net.attemptsCreated.incrementAndGet()
         return FakeAttempt(net, listener, baby)
     }
-    override fun setMicEnabled(enabled: Boolean) { mic += enabled }
+
+    override fun setMicEnabled(enabled: Boolean) {
+        mic += enabled
+    }
+
     override fun startProbeTone(durationMs: Long) = Unit
+
     override fun setPlaybackMuted(muted: Boolean) = Unit
+
     override fun setPlaybackGainPct(pct: Int) = Unit
+
     override fun setSpeakerOnly(speakerOnly: Boolean) = Unit
+
     override fun drainMicRms(): Double? = null
+
     override fun drainRemoteRms(): Double? = null
+
     override fun release() = Unit
 }
 
 private class FakeSilence : SilenceGateway {
     var active = false
+
     override fun hasAccess() = true
-    override fun activate(): Boolean { active = true; return true }
-    override fun deactivate() { active = false }
+
+    override fun activate(): Boolean {
+        active = true
+        return true
+    }
+
+    override fun deactivate() {
+        active = false
+    }
+
     override fun restoreLeftover() = false
+
     override fun readDeviceStatus() =
-        DeviceStatus(80u, true, uniffi.guardedsleep_core.Ringer.NORMAL, uniffi.guardedsleep_core.Dnd.OFF, true, true, active, null, null, null, emptyList())
+        DeviceStatus(
+            80u,
+            true,
+            uniffi.guardedsleep_core.Ringer.NORMAL,
+            uniffi.guardedsleep_core.Dnd.OFF,
+            true,
+            true,
+            active,
+            null,
+            null,
+            null,
+            emptyList(),
+        )
 }
 
 private class RealClock : Clock {
     private val t0 = System.nanoTime()
+
     override fun elapsedMs() = 1_000 + (System.nanoTime() - t0) / 1_000_000
+
     override fun wallMs() = System.currentTimeMillis()
 }
 
@@ -225,33 +299,42 @@ class LinkControllerTest {
         val sink = RecordingSink()
         val silence = FakeSilence()
         lateinit var controller: LinkController
-        val host = object : MonitorHost {
-            override fun start() {
-                if (hostThrows) throw IllegalStateException("fgs not allowed")
-                controller.ensureRun()
+        val host =
+            object : MonitorHost {
+                override fun start() {
+                    if (hostThrows) throw IllegalStateException("fgs not allowed")
+                    controller.ensureRun()
+                }
+
+                override fun stop() = Unit
             }
-            override fun stop() = Unit
-        }
-        controller = LinkController(
-            settingsRepo = settings,
-            pairingStore = store,
-            signaling = SignalingFactory { _, l -> FakeTransport(net, l) },
-            mediaFactory = { r, _ -> FakeMedia(net, r == CoreRole.BABY) },
-            silence = silence,
-            alerts = sink,
-            readiness = { emptyList() },
-            host = host,
-            network = object : NetworkWatcher { override fun start(onAvailable: () -> Unit) = Unit; override fun stop() = Unit },
-            clock = RealClock(),
-            random = SecureRandom(),
-        )
+        controller =
+            LinkController(
+                settingsRepo = settings,
+                pairingStore = store,
+                signaling = SignalingFactory { _, l -> FakeTransport(net, l) },
+                mediaFactory = { r, _ -> FakeMedia(net, r == CoreRole.BABY) },
+                silence = silence,
+                alerts = sink,
+                readiness = { emptyList() },
+                host = host,
+                network =
+                    object : NetworkWatcher {
+                        override fun start(onAvailable: () -> Unit) = Unit
+
+                        override fun stop() = Unit
+                    },
+                clock = RealClock(),
+                random = SecureRandom(),
+            )
         controller.updateSettings { it.copy(signalingUrls = listOf("ws://fake")) }
         controller.chooseRole(role)
         controllers += controller
         return Unit2(controller, store, sink, silence)
     }
 
-    @After fun tearDown() {
+    @After
+    fun tearDown() {
         controllers.forEach { it.stopMonitoring() }
         net.delivery.shutdownNow()
     }
@@ -273,7 +356,8 @@ class LinkControllerTest {
         parent.controller.submitPairingCode(payload)
         try {
             await("both paired", 8_000) {
-                baby.controller.pairing.value?.phase == PairingPhase.PAIRED && parent.controller.pairing.value?.phase == PairingPhase.PAIRED
+                baby.controller.pairing.value?.phase == PairingPhase.PAIRED &&
+                    parent.controller.pairing.value?.phase == PairingPhase.PAIRED
             }
         } catch (e: AssertionError) {
             throw AssertionError(
@@ -282,12 +366,15 @@ class LinkControllerTest {
                 e,
             )
         }
-        await("parent connected") { parent.controller.parent.value.link.phase == LinkPhase.CONNECTED }
+        await("parent connected") {
+            parent.controller.parent.value.link.phase == LinkPhase.CONNECTED
+        }
         await("baby connected") { baby.controller.baby.value.link.phase == LinkPhase.CONNECTED }
         return baby to parent
     }
 
-    @Test fun happyPathPairsAndMonitors() {
+    @Test
+    fun happyPathPairsAndMonitors() {
         val (baby, parent) = pair()
         assertTrue(baby.store.load()!!.pairedBefore)
         assertTrue(parent.store.load()!!.pairedBefore)
@@ -301,21 +388,24 @@ class LinkControllerTest {
         assertTrue(parent.sink.lost.isEmpty())
     }
 
-    @Test fun recoversFromBrokenConnection() {
+    @Test
+    fun recoversFromBrokenConnection() {
         val (_, parent) = pair()
         val quietBefore = parent.controller.parent.value.quietSinceWallMs
         val created = net.attemptsCreated.get()
         net.breakAll()
         await("new attempts") { net.attemptsCreated.get() > created }
         await("parent connected again") {
-            parent.controller.parent.value.link.phase == LinkPhase.CONNECTED && net.liveAttempts.size == 2
+            parent.controller.parent.value.link.phase == LinkPhase.CONNECTED &&
+                net.liveAttempts.size == 2
         }
         // The baby's summary says nothing was missed, so "quiet since" returns to the earlier time.
         await("quiet restored") { parent.controller.parent.value.quietSinceWallMs == quietBefore }
         assertTrue(parent.sink.lost.isEmpty())
     }
 
-    @Test fun parentStopIsNotAnOutageOnTheBaby() {
+    @Test
+    fun parentStopIsNotAnOutageOnTheBaby() {
         val (baby, parent) = pair()
         parent.controller.stopMonitoring()
         await("baby sees stop") { baby.controller.baby.value.link.phase == LinkPhase.PEER_STOPPED }
@@ -323,7 +413,8 @@ class LinkControllerTest {
         assertEquals(LinkPhase.IDLE, parent.controller.parent.value.link.phase)
     }
 
-    @Test fun wrongCodeFailsPairingWithoutSaving() {
+    @Test
+    fun wrongCodeFailsPairingWithoutSaving() {
         val baby = unit("baby", Role.BABY)
         val parent = unit("parent", Role.PARENT)
         baby.controller.startPairing()
@@ -336,9 +427,16 @@ class LinkControllerTest {
         assertEquals(PairingPhase.CONNECTING, parent.controller.pairing.value?.phase)
     }
 
-    @Test fun refusedForegroundServiceIsVisibleAndAlarmsTheParent() {
+    @Test
+    fun refusedForegroundServiceIsVisibleAndAlarmsTheParent() {
         val parent = unit("parent", Role.PARENT, hostThrows = true)
-        parent.store.save(org.guardedsleep.app.pairing.StoredPairing(org.guardedsleep.app.pairing.PairingPayload.b64(ByteArray(32) { 3 }), listOf("ws://fake"), true))
+        parent.store.save(
+            org.guardedsleep.app.pairing.StoredPairing(
+                org.guardedsleep.app.pairing.PairingPayload.b64(ByteArray(32) { 3 }),
+                listOf("ws://fake"),
+                true,
+            )
+        )
         assertTrue(parent.controller.app.value.backgroundProtection)
         parent.controller.startMonitoring()
         assertEquals(false, parent.controller.app.value.backgroundProtection)
@@ -349,7 +447,8 @@ class LinkControllerTest {
         assertEquals(false, parent.sink.fgsLost.last())
     }
 
-    @Test fun systemStoppingTheServiceTurnsRed() {
+    @Test
+    fun systemStoppingTheServiceTurnsRed() {
         val (baby, parent) = pair()
         parent.controller.onServiceRunning(false)
         assertEquals(false, parent.controller.app.value.backgroundProtection)

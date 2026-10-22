@@ -6,9 +6,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.remember
 import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.common.systemReduceMotion
 import org.guardedsleep.app.ui.model.AppController
@@ -35,7 +35,9 @@ fun GuardedSleepRoot(controller: AppController) {
     val settings by controller.settings.collectAsState()
     val env = LocalUiEnv.current
     val systemReduce = systemReduceMotion()
-    CompositionLocalProvider(LocalUiEnv provides env.copy(reduceMotion = env.reduceMotion || systemReduce)) {
+    CompositionLocalProvider(
+        LocalUiEnv provides env.copy(reduceMotion = env.reduceMotion || systemReduce)
+    ) {
         // The baby phone is always dark (dark-room rules); the parent follows the theme setting.
         GuardedSleepTheme(settings.theme, forceDark = app.role == Role.BABY) {
             AppNavigator(controller)
@@ -43,7 +45,11 @@ fun GuardedSleepRoot(controller: AppController) {
     }
 }
 
-private enum class Overlay { NONE, SETTINGS, SETUP }
+private enum class Overlay {
+    NONE,
+    SETTINGS,
+    SETUP,
+}
 
 /**
  * Screen choice is a pure function of [AppState]/pairing so process restarts and the platform layer
@@ -62,20 +68,35 @@ private fun AppNavigator(controller: AppController) {
         role == null -> RoleScreen(controller)
         role == Role.BABY && app.monitoring && baby.kioskLocked -> BabyKioskScreen(controller)
         !app.onboardingDone -> SetupScreen(controller, role, onboarding = true, onBack = {})
-        overlay == Overlay.SETUP -> SetupScreen(controller, role, onboarding = false, onBack = { overlay = Overlay.SETTINGS })
-        overlay == Overlay.SETTINGS -> SettingsScreen(
-            controller,
-            onBack = { overlay = Overlay.NONE },
-            onOpenSetup = { overlay = Overlay.SETUP },
-            onTestAlert = { openProbe = true; overlay = Overlay.NONE },
-        )
+        overlay == Overlay.SETUP ->
+            SetupScreen(
+                controller,
+                role,
+                onboarding = false,
+                onBack = { overlay = Overlay.SETTINGS },
+            )
+        overlay == Overlay.SETTINGS ->
+            SettingsScreen(
+                controller,
+                onBack = { overlay = Overlay.NONE },
+                onOpenSetup = { overlay = Overlay.SETUP },
+                onTestAlert = {
+                    openProbe = true
+                    overlay = Overlay.NONE
+                },
+            )
         app.monitoring && role == Role.PARENT -> {
             val sheet = if (openProbe) ParentSheet.PROBE else null
             LaunchedEffect(openProbe) { if (openProbe) openProbe = false }
-            ParentMonitorScreen(controller, onSettings = { overlay = Overlay.SETTINGS }, initialSheet = sheet)
+            ParentMonitorScreen(
+                controller,
+                onSettings = { overlay = Overlay.SETTINGS },
+                initialSheet = sheet,
+            )
         }
         app.monitoring -> BabyMonitorScreen(controller, onSettings = { overlay = Overlay.SETTINGS })
-        pairing != null -> if (role == Role.BABY) PairBabyScreen(controller) else PairParentScreen(controller)
+        pairing != null ->
+            if (role == Role.BABY) PairBabyScreen(controller) else PairParentScreen(controller)
         else -> HomeScreen(controller, onSettings = { overlay = Overlay.SETTINGS })
     }
 }
@@ -96,7 +117,9 @@ fun LinkAlarmScreen(controller: AppController, onClose: () -> Unit) {
 private fun AlertTheme(controller: AppController, content: @Composable () -> Unit) {
     val env = LocalUiEnv.current
     val systemReduce = systemReduceMotion()
-    CompositionLocalProvider(LocalUiEnv provides env.copy(reduceMotion = env.reduceMotion || systemReduce)) {
+    CompositionLocalProvider(
+        LocalUiEnv provides env.copy(reduceMotion = env.reduceMotion || systemReduce)
+    ) {
         // Alerts are dark red on dark in every theme (never a white flash, alpha-ux-flows §6.3).
         GuardedSleepTheme(Theme.DARK, forceDark = true, content = content)
     }

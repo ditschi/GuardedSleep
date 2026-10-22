@@ -7,14 +7,15 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 
-/** Distinct patterns so a parent can tell the alerts apart without looking (alpha-ux-flows §1.2). */
+/**
+ * Distinct patterns so a parent can tell the alerts apart without looking (alpha-ux-flows §1.2).
+ */
 enum class HapticPattern(val timings: LongArray) {
     /** Long-long-longer: noise. */
     NOISE(longArrayOf(0, 600, 250, 600, 250, 1000)),
 
     /** Short pulses: connection. */
     CONNECTION(longArrayOf(0, 150, 100, 150, 100, 150, 100, 150)),
-
     SHORT(longArrayOf(0, 150)),
 }
 

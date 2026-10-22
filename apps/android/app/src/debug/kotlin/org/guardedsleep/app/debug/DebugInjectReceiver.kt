@@ -7,7 +7,9 @@ import org.guardedsleep.app.diag.PocLog
 import org.guardedsleep.app.media.InjectedAudio
 
 /**
- * `adb shell am broadcast -a org.guardedsleep.app.alpha.debug.INJECT_AUDIO -n org.guardedsleep.app.alpha/org.guardedsleep.app.debug.DebugInjectReceiver --ef rms 0.6 --el duration_ms 3000`
+ * `adb shell am broadcast -a org.guardedsleep.app.alpha.debug.INJECT_AUDIO -n
+ * org.guardedsleep.app.alpha/org.guardedsleep.app.debug.DebugInjectReceiver --ef rms 0.6 --el
+ * duration_ms 3000`
  */
 class DebugInjectReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {

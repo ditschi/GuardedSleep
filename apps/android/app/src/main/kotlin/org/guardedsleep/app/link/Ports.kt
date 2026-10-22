@@ -4,7 +4,10 @@ import org.guardedsleep.app.ui.model.ReadinessIssue
 
 /** Starts and stops the foreground service that keeps monitoring alive. */
 interface MonitorHost {
-    /** Requests the foreground service; throws when Android refuses (the caller must make that visible). */
+    /**
+     * Requests the foreground service; throws when Android refuses (the caller must make that
+     * visible).
+     */
     fun start()
 
     fun stop()

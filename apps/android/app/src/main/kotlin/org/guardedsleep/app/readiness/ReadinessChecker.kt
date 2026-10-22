@@ -53,10 +53,12 @@ class ReadinessChecker(
         if (!env.dndBypassAllowed()) issues += ReadinessIssue.DND_BYPASS_MISSING
         if (!env.batteryOptimizationIgnored()) issues += ReadinessIssue.BATTERY_OPTIMIZED
         val battery = env.ownBatteryPct()
-        if (battery != null && battery < LOW_BATTERY_PCT && !env.ownCharging()) issues += ReadinessIssue.PARENT_BATTERY_LOW
+        if (battery != null && battery < LOW_BATTERY_PCT && !env.ownCharging())
+            issues += ReadinessIssue.PARENT_BATTERY_LOW
         if (env.headphonesConnected()) issues += ReadinessIssue.HEADPHONES_CONNECTED
         val lastTest = settings.current.lastTestWallMs
-        if (lastTest == null || clock.wallMs() - lastTest > TEST_MAX_AGE_MS) issues += ReadinessIssue.NEVER_TESTED
+        if (lastTest == null || clock.wallMs() - lastTest > TEST_MAX_AGE_MS)
+            issues += ReadinessIssue.NEVER_TESTED
         return issues
     }
 
@@ -74,7 +76,8 @@ class AndroidReadinessEnv(private val context: Context) : ReadinessEnv {
     override fun notificationsEnabled(): Boolean {
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return false
         return listOf(AlertChannels.ALARM_NOISE, AlertChannels.ALARM_LINK).all {
-            (nm.getNotificationChannel(it)?.importance ?: NotificationManager.IMPORTANCE_HIGH) != NotificationManager.IMPORTANCE_NONE
+            (nm.getNotificationChannel(it)?.importance ?: NotificationManager.IMPORTANCE_HIGH) !=
+                NotificationManager.IMPORTANCE_NONE
         }
     }
 
@@ -85,10 +88,14 @@ class AndroidReadinessEnv(private val context: Context) : ReadinessEnv {
 
     override fun dndBypassAllowed(): Boolean =
         nm.isNotificationPolicyAccessGranted &&
-            listOf(AlertChannels.ALARM_NOISE, AlertChannels.ALARM_LINK).all { nm.getNotificationChannel(it)?.canBypassDnd() == true }
+            listOf(AlertChannels.ALARM_NOISE, AlertChannels.ALARM_LINK).all {
+                nm.getNotificationChannel(it)?.canBypassDnd() == true
+            }
 
     override fun batteryOptimizationIgnored(): Boolean =
-        context.getSystemService(PowerManager::class.java)?.isIgnoringBatteryOptimizations(context.packageName) == true
+        context
+            .getSystemService(PowerManager::class.java)
+            ?.isIgnoringBatteryOptimizations(context.packageName) == true
 
     override fun ownBatteryPct(): Int? {
         val i = battery() ?: return null
@@ -97,12 +104,15 @@ class AndroidReadinessEnv(private val context: Context) : ReadinessEnv {
         return if (level >= 0 && scale > 0) level * 100 / scale else null
     }
 
-    override fun ownCharging(): Boolean = (battery()?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0
+    override fun ownCharging(): Boolean =
+        (battery()?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0
 
     override fun headphonesConnected(): Boolean =
-        audio?.getDevices(AudioManager.GET_DEVICES_OUTPUTS)?.any { it.type in HEADPHONE_TYPES } == true
+        audio?.getDevices(AudioManager.GET_DEVICES_OUTPUTS)?.any { it.type in HEADPHONE_TYPES } ==
+            true
 
-    private fun battery(): Intent? = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+    private fun battery(): Intent? =
+        context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
     private companion object {
         val HEADPHONE_TYPES =

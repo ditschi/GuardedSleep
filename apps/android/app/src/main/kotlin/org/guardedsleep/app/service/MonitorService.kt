@@ -52,11 +52,17 @@ class MonitorService : Service() {
             if (role == Role.BABY) ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
             else ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
         try {
-            ServiceCompat.startForeground(this, StatusNotifier.ID_STATUS, notifier.build(role, LinkUi()), type)
+            ServiceCompat.startForeground(
+                this,
+                StatusNotifier.ID_STATUS,
+                notifier.build(role, LinkUi()),
+                type,
+            )
         } catch (e: Exception) {
             PocLog.event("failed", "reason" to "fgs_${e.javaClass.simpleName}")
             if (role == Role.BABY) {
-                getSystemService(NotificationManager::class.java).notify(StatusNotifier.ID_RESUME, notifier.resumePrompt())
+                getSystemService(NotificationManager::class.java)
+                    .notify(StatusNotifier.ID_RESUME, notifier.resumePrompt())
             }
             graph.controller.onServiceRunning(false)
             stopSelf()
@@ -80,10 +86,12 @@ class MonitorService : Service() {
     private fun acquireWifiLock() {
         if (wifiLock?.isHeld == true) return
         val mode =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) WifiManager.WIFI_MODE_FULL_LOW_LATENCY
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                WifiManager.WIFI_MODE_FULL_LOW_LATENCY
             else @Suppress("DEPRECATION") WifiManager.WIFI_MODE_FULL_HIGH_PERF
         wifiLock =
-            applicationContext.getSystemService(WifiManager::class.java)
+            applicationContext
+                .getSystemService(WifiManager::class.java)
                 ?.createWifiLock(mode, "GuardedSleep:wifi")
                 ?.apply {
                     setReferenceCounted(false)
@@ -100,14 +108,19 @@ class MonitorService : Service() {
             s.launch {
                 controller.parent
                     .map { it.link }
-                    .distinctUntilChanged { a, b -> StatusNotifier.parentText(a) == StatusNotifier.parentText(b) }
+                    .distinctUntilChanged { a, b ->
+                        StatusNotifier.parentText(a) == StatusNotifier.parentText(b)
+                    }
                     .collect { nm.notify(StatusNotifier.ID_STATUS, notifier.build(role, it)) }
             }
         }
         s.launch {
-            controller.app.map { it.monitoring }.distinctUntilChanged().collect { monitoring ->
-                if (!monitoring) stopSelf()
-            }
+            controller.app
+                .map { it.monitoring }
+                .distinctUntilChanged()
+                .collect { monitoring ->
+                    if (!monitoring) stopSelf()
+                }
         }
     }
 
@@ -118,7 +131,8 @@ class MonitorService : Service() {
         wakeLock = null
         wifiLock?.takeIf { it.isHeld }?.release()
         wifiLock = null
-        // Unexpected ends (system stop) show as the red state; a deliberate stop clears the flag first.
+        // Unexpected ends (system stop) show as the red state; a deliberate stop clears the flag
+        // first.
         graph().controller.onServiceRunning(false)
         PocLog.event("service_stopped")
         super.onDestroy()

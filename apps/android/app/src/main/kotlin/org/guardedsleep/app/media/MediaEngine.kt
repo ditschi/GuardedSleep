@@ -2,7 +2,10 @@ package org.guardedsleep.app.media
 
 import uniffi.guardedsleep_core.IceCandidate
 
-/** Callbacks of one peer connection. Called on WebRTC threads; the receiver must hop to its executor. */
+/**
+ * Callbacks of one peer connection. Called on WebRTC threads; the receiver must hop to its
+ * executor.
+ */
 interface AttemptListener {
     fun onLocalDescription(type: String, sdp: String)
 
@@ -14,7 +17,9 @@ interface AttemptListener {
 
     fun onDataClosed()
 
-    /** Lowercase `RTCPeerConnectionState`: new, connecting, connected, disconnected, failed, closed. */
+    /**
+     * Lowercase `RTCPeerConnectionState`: new, connecting, connected, disconnected, failed, closed.
+     */
     fun onConnectionState(state: String)
 
     /** SHA-256 fingerprint of the remote DTLS certificate (colon-separated hex), once connected. */
