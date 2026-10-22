@@ -31,4 +31,4 @@ Refined 2026-10-22 from the wave-2 plan. Most items were implemented as W2-B on 
 ## 5. Close
 
 - [x] 5.1 `docs/ci-gates.md` rows; `just lint`, `just test`, `just e2e` green (before review fixes)
-- [ ] 5.2 `just lint`, `just test`, `just e2e` green after the review fixes
+- [x] 5.2 `just lint`, `just test`, `just e2e` green after the review fixes
