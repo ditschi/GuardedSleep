@@ -69,6 +69,19 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 - `IDEA` Signaling rate limits beyond ADR-020 §6 (per room, per message; reverse proxy or in-process; mobile IP churn). Design first.
 - `REJECTED` Signaling-free VPN mode (Tailscale/Headscale treated like LAN): cleartext signaling toward 100.64/10 is refused (ADR-021 §1); VPN works transparently through the normal relay (owner, 2026-10-21).
 
+### audio-monitoring
+
+- `DEFERRED` (Phase 2) Talk-back: the parent speaks through the baby unit's speaker (high parent expectation compared to hardware monitors); open: full or half duplex; only one child device at a time with several children. Until then the track stays muted and there is no UI (AGENTS.md §9).
+- `IDEA` (Phase 3+) Sound categorisation on the device (crying, coughing, babbling, environmental noise, silence) for smarter alerts. Research notes (2026-04): YAMNet transfer learning with a compact classifier reaches about 95 % on cry detection with under 0.8 s latency; quantised TFLite models are 1–5 MB; MFCC or mel-spectrogram features with EMA smoothing; run only while charging or duty-cycled; risks are false positives from TV, pets and appliances. No TFLite, YAMNet or MFCC code before this is decided (AGENTS.md §9).
+- `IDEA` (Phase 3+) Community data contribution for model training; privacy and legal questions first.
+- `IDEA` Several alert levels (soft alert at a low threshold, urgent alert at a high one).
+- `IDEA` Roaming cost warning when the internet path is first used on cellular data while roaming (communication.md "MVP", ADR-018 T2; not built).
+- `IDEA` Session data estimate (heartbeat, silence frames, listen bursts) and, later, an optional per-session data ceiling that keeps the safety path.
+- `IDEA` User settings for audio quality, bitrate or codec; show the audio delay in the parent UI. Open: which codec settings give the best quality per bandwidth for voice.
+- `IDEA` Fall back from a muted track (Opus DTX) to `replaceTrack(null)` on mobile data if measurements show high silence-frame traffic.
+- `IDEA` Nightlight mode on the baby unit (very dim warm glow), only if it cannot wake the child.
+- `IDEA` Temperature and humidity display when the baby phone has such sensors.
+
 ### parent-alerts
 
 - `DEFERRED` (Phase 2) With multi-parent: failover banner and escalation to another parent when the primary parent stops acknowledging heartbeats.

@@ -7,6 +7,8 @@
 
 > **Context note (2026-10-20):** the "SvelteKit web client" is rebuilt as `apps/web` on Vite 8 + Svelte 5 ([ADR-020](ADR-020-toolchain-and-development-setup.md) §5); the alpha uses internet signaling for all pairs, offline LAN modes are beta exit criteria ([ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md) §1); distribution at alpha is Google Play (`org.guardedsleep.app.alpha`) plus GitHub Releases APK ([ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md) §3). Alpha scope changes only where inline marks say "superseded".
 
+> **Migrated to OpenSpec (2026-10-22):** §3 and these §2 rows are normative in the specs: Link recovery (`link-supervision`), Connection visibility (`connection-status`), Connection alarm (`link-supervision`), Parent alert path, Parent readiness check, Noise alert chain, Test alert, Other alerts (`parent-alerts`), Pairing (`pairing`), Parent monitoring and Child-side silence ([`openspec/specs/audio-monitoring`](../../openspec/specs/audio-monitoring/spec.md)). The other §2 rows, §1 and §4–§6 stay binding until `device-setup` and the web-client change are done.
+
 ## Context
 
 The owner asked (2026-10-19, paraphrased from German) to move from the PoC to a **first alpha** suitable for hardware tests — automated and manual, native app plus browser — with every feature needed for a usable app, everything virtually testable tested, a good user experience, and above all **trust**: parents are reliably informed, the parent side clearly signals any problem, and the app never wakes the child (no audio on the baby device except an explicit talk-back; the parent can check and, where possible, set remotely that the baby phone is silent; alarms may stay).
