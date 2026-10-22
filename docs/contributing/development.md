@@ -45,6 +45,14 @@ Medium and heavy recipes (`just lint-code`, `just test`, builds, `just e2e`, `ju
 GS_SLOT_WAIT=60 GS_RUN_TIMEOUT=15m just test
 ```
 
+### Delta tests and timings
+
+`just test-affected [base]` runs only the tests the changed paths need: everything committed since the merge base with `base` (default `origin/main`) plus uncommitted and untracked files. Paths map to areas through `.github/path-filters.yml`, the file CI's path filters read too. Rust changes run the Rust, WASM, web and Android tests (the core feeds all of them); web changes run Vitest with `--changed`; Android changes run the JVM tests (Gradle skips unchanged modules). A global path (justfile, tool pins, lockfiles, `scripts/lib/`, the build image, `.github/`) or a path in no area runs the full `just test`. The output names the heavy checks (`just e2e`, `just gate`, `just build-android`) the change needs before the PR; delta tests do not replace the full sweep. `node scripts/lib/affected.mjs --dry-run [base]` prints the plan without running it.
+
+Every slot-held run is appended to `~/.cache/guardedsleep/timings.tsv` (shared by all worktrees, never uploaded); `just timings [days]` summarises runs, median/p90/max run time, wait time and failures per command.
+
+Finished agent worktrees: `just reap --worktrees` lists the ones that are clean and whose HEAD is in a pushed branch; `just reap --prune-worktrees` removes those (no `--force`, stale locks of dead processes only, `worktree-agent-*` branches deleted with `git branch -d`).
+
 ### Compiler cache
 
 Local container builds (`scripts/cargo.sh`, `scripts/core-build.sh`, `scripts/gradle.sh`) use sccache with a shared cache in `~/.cache/guardedsleep/sccache` (`GS_SHARED_CACHE` moves it). Every worktree compiles at `/workspace`, so a new worktree reuses the dependencies another one already compiled; workspace crates still compile. `GS_SCCACHE_SIZE` caps it (default `10G`), `GS_SCCACHE=0` turns it off. CI and the generate-twice check run without it. Host cargo is not wrapped.
