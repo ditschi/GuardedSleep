@@ -11,7 +11,8 @@
 
 ## 3. Gradle measurement
 
-- [ ] 3.1 Fresh worktree, warm shared cache, `just test-android`: record Gradle's task summary here; remove the worktree.
+- [x] 3.1 Fresh worktree, warm shared cache, `just test-android`: record Gradle's task summary here; remove the worktree.
+  - Result (2026-10-22, fresh worktree at 784115f1, warm shared caches): `just test-android` 79 s wall; host core build 12 s (sccache); Gradle `BUILD SUCCESSFUL in 24s`, `97 actionable tasks: 36 executed, 61 from cache`; every Kotlin/Java compile task `FROM-CACHE`. The build cache works across worktrees; no Gradle change needed.
 
 ## 4. Worktree cleanup
 
