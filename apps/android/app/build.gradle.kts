@@ -24,7 +24,12 @@ android {
             manifestPlaceholders["usesCleartextTraffic"] = "true"
         }
         release {
-            isMinifyEnabled = false
+            // R8 shrinks and obfuscates; the keep rules for UniFFI/JNA and libwebrtc are the
+            // consumer-rules.pro of core-bindings and platform. Doc:
+            // https://developer.android.com/build/shrink-code
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
             manifestPlaceholders["usesCleartextTraffic"] = "false"
         }
     }

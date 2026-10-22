@@ -12,7 +12,7 @@ Refined 2026-10-22 from the wave-2 plan (group 2, after group 1). Repository con
 
 - [x] 2.1 One reformat commit with the pinned ktfmt over all Kotlin; `just fmt` / `just fmt-check` include Kotlin
 - [x] 2.2 Android Lint `warningsAsErrors` in every module, no baseline file; fix or justify (with `@Suppress` and a reason) every finding
-- [ ] 2.3 R8 on for release with keep rules for UniFFI/JNA and libwebrtc; release-check and size-check still pass
+- [x] 2.3 R8 on for release with keep rules for UniFFI/JNA and libwebrtc; release-check and size-check still pass
 - [x] 2.4 `version.properties` holds `versionName`; Gradle derives `versionCode` deterministically (documented formula with room for pre-release numbers); test for ordering of alpha/beta/release names
 
 ## 3. Close

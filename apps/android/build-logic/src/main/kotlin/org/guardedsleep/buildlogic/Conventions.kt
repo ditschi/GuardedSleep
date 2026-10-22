@@ -68,7 +68,13 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         target.pluginManager.apply("com.android.library")
         target.pluginManager.apply("guardedsleep.kotlin")
-        target.extensions.configure<LibraryExtension> { configureCommon() }
+        target.extensions.configure<LibraryExtension> {
+            configureCommon()
+            // R8 keep rules a library needs travel with it: see core-bindings and platform.
+            if (target.file("consumer-rules.pro").exists()) {
+                defaultConfig.consumerProguardFiles("consumer-rules.pro")
+            }
+        }
     }
 }
 
