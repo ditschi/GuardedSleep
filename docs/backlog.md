@@ -13,7 +13,7 @@ Everything that is not current behaviour: decided work not started yet, ideas, d
 
 `PLANNED` — target: before the first `android-v*` alpha tag (owner, 2026-10-21; ADR-004 amendment).
 
-A deep security audit of everything an attacker on the network, the relay or a nearby device can reach: pairing proof and PSK-derived room id, fingerprint parsing and the DTLS cross-check, relay admission, signaling validation and the parsers, key storage (Keystore/StrongBox, web memory-only), the LAN listener rules, the log canary, and the release APK surface. Open: who performs it (independent reviewer or agent-based review roles) and how findings gate the tag.
+A deep security audit of everything an attacker on the network, the relay or a nearby device can reach: pairing proof and PSK-derived room id, fingerprint parsing and the DTLS cross-check, relay admission, signaling validation and the parsers, key storage (Keystore/StrongBox, web memory-only), the LAN listener rules, the log canary, and the release APK surface. Open: who performs it (independent reviewer or agent-based review roles) and how findings gate the tag. Known gap to include: the Android client uses public STUN by default without telling the user who sees the IP address (AGENTS.md §7.1); fixed by `add-rust-signaling-server`.
 
 ### Baby-unit self-tests
 
@@ -61,6 +61,13 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 - `IDEA` Forward secrecy with an ephemeral Diffie-Hellman exchange per connection.
 - `IDEA` Emoji fingerprint shown on both units for an optional visual check (ADR-018 T2).
 - `IDEA` Move the invite payload codec from Kotlin into the core, so the web client and Android share one parser (found during migration, fits the wave-2 façades).
+
+### signaling-relay
+
+- `UNDER DISCUSSION` Operate a project-hosted public signaling instance as the default in release builds (today: no default URL; owner, 2026-10-21: open). Needs an operator, a privacy statement and abuse handling.
+- `PLANNED` (T1) Hardened TURN profile (coturn ≥ 4.15 or eturnal), HMAC credentials with TTL ≤ 10 min issued only after the pairing proof; Caddy + signaling (+ TURN) compose bundle with a self-hosting guide; Trivy image scanning (ADR-020 §6).
+- `IDEA` Signaling rate limits beyond ADR-020 §6 (per room, per message; reverse proxy or in-process; mobile IP churn). Design first.
+- `REJECTED` Signaling-free VPN mode (Tailscale/Headscale treated like LAN): cleartext signaling toward 100.64/10 is refused (ADR-021 §1); VPN works transparently through the normal relay (owner, 2026-10-21).
 
 ### link-supervision
 

@@ -11,7 +11,7 @@ This document records the technical analysis that informed the architecture. **A
 | 1   | App Platform                     | DECIDED                  | [ADR-002](../decisions/ADR-002-client-platform-and-repository-structure.md)                                  |
 | 2   | Communication Architecture       | DECIDED                  | [ADR-003](../decisions/ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md)                              |
 | 3   | Server Requirements              | DECIDED                  | [ADR-003](../decisions/ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md)                              |
-| 4   | Encryption Approach              | DECIDED                  | [ADR-004](../decisions/ADR-004-encryption-transport-and-key-storage.md)                                      |
+| 4   | Encryption Approach              | DECIDED                  | [ADR-004](../../openspec/changes/archive/2026-04-15-adr-004-encryption-transport-and-key-storage/design.md)  |
 | 5   | Audio Processing                 | DECIDED (features + PoC) | [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md) |
 | 6   | Deployment Model                 | DECIDED                  | [ADR-005](../decisions/ADR-005-parent-alerts-product-naming-and-distribution.md)                             |
 | --  | MVP scope, PoC gate, in-app lock | DECIDED                  | [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md) |
@@ -264,7 +264,7 @@ Self-hosted coturn recommended for production. EU STUN servers as fallback. User
 
 ## 4. Encryption Approach
 
-> STATUS: **DECIDED** -- [ADR-004](../decisions/ADR-004-encryption-transport-and-key-storage.md). Three-layer model; Layer 3 application E2E in Phase 2.
+> STATUS: **DECIDED** -- [ADR-004](../../openspec/changes/archive/2026-04-15-adr-004-encryption-transport-and-key-storage/design.md). Three-layer model; Layer 3 application E2E in Phase 2.
 
 **Decision**: DTLS-SRTP + Fingerprint Binding + Application E2E Layer. This covers ALL transmission types: audio, video, data, and control messages.
 

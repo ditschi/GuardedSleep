@@ -4,7 +4,7 @@
 - Date: 2026-04-15
 - Deciders: Security-informed architecture
 
-> **Migrated to OpenSpec (2026-10-22):** §1–§3, §5, §6 and both amendments are normative in [`openspec/specs/pairing`](../../openspec/specs/pairing/spec.md); §3 (application-level E2E) is `DEFERRED` in the [backlog](../backlog.md). §4 (WSS) stays binding until `signaling-relay` is migrated.
+> **Migrated to OpenSpec (2026-10-22):** §1–§3, §5, §6 and both amendments are normative in [`openspec/specs/pairing`](../../../specs/pairing/spec.md); §3 (application-level E2E) is `DEFERRED` in the [backlog](../../../../docs/backlog.md). §4 (WSS) is covered by the `pairing` requirement "Signaling transport security". Archived 2026-10-22.
 
 ## Context
 
@@ -45,7 +45,7 @@ Audio and control data must be protected in transit; pairing must resist casual 
 
 ## Amendment 2026-10-19: direction-bound pairing proof and PSK-derived room id
 
-- Status: DECIDED (owner, 2026-10-21, with [ADR-017](ADR-017-link-recovery-and-connection-supervision.md) §1). A deep security audit is required before the alpha release, see [backlog](../backlog.md) "Security audit before alpha"
+- Status: DECIDED (owner, 2026-10-21, with [ADR-017](../2026-10-20-adr-017-link-recovery-and-connection-supervision/design.md) §1). A deep security audit is required before the alpha release, see [backlog](../../../../docs/backlog.md) "Security audit before alpha"
 
 The fingerprint-binding MAC as implemented (`HMAC(PSK, room|sorted fingerprints|version)`) is **symmetric**: both peers send the value they expect, so a peer that only knows the room id can reflect the other side's proof and pass verification (security review 2026-10-19, CRITICAL). Protocol v3 replaces it:
 

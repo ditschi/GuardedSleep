@@ -8,7 +8,7 @@
   - The owner decision of 2026-10-19 that limited i18n to en, de, fr, es (AGENTS.md §9).
   - [ADR-018](ADR-018-alpha-milestone-scope-and-trust-features.md): the cleartext, language-fallback and offline-LAN deferral statements (partly, marked inline there).
   - The "F-Droid" store wording in [vision.md](../concept/vision.md) and [ADR-005](ADR-005-parent-alerts-product-naming-and-distribution.md).
-- Related: [ADR-020](ADR-020-toolchain-and-development-setup.md), [ADR-003](ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md), [ADR-004](ADR-004-encryption-transport-and-key-storage.md)
+- Related: [ADR-020](ADR-020-toolchain-and-development-setup.md), [ADR-003](ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md), [ADR-004](../../openspec/changes/archive/2026-04-15-adr-004-encryption-transport-and-key-storage/design.md)
 
 ## Context
 
@@ -37,7 +37,7 @@ How the local PC mode stays secure and simple:
 - **The browser stays on loopback.** It talks only to its own local GuardedSleep binary (`http://localhost` page, `ws://localhost` signaling) and never connects to a LAN address directly. Toward the LAN, the local binary is either the relay itself (the hosting PC) or a client of the hosting relay (a second PC: its binary forwards to the host over the LAN). Because only loopback is used, this works in all browsers and there is no mixed-content or Local Network Access question.
 - `http://localhost` is a secure context, so `getUserMedia`, the service worker, notifications and Wake Lock work.
 - **Loopback binding:** the local UI and its loopback API bind to `127.0.0.1`/`::1` only. The binary checks `Origin` and `Host` on every request (DNS-rebinding and cross-site protection). Only the LAN signaling port binds to the LAN interface.
-- LAN signaling is an untrusted relay. End-to-end security comes from the direction-bound pairing proof and the DTLS fingerprint binding ([ADR-004](ADR-004-encryption-transport-and-key-storage.md)), as for the phone listener, and is unchanged by the admission rule below.
+- LAN signaling is an untrusted relay. End-to-end security comes from the direction-bound pairing proof and the DTLS fingerprint binding ([ADR-004](../../openspec/changes/archive/2026-04-15-adr-004-encryption-transport-and-key-storage/design.md)), as for the phone listener, and is unchanged by the admission rule below.
 - **Relay admission (Android listener and PC relay alike):**
   - The paired client gives its local relay an admission key, `HKDF(PSK, "guardedsleep relay admission v1")`. The client is the phone app itself, or the local UI over loopback. The key is not reversible to the PSK, so the PC relay never holds the PSK.
   - The relay sends each joiner a fresh nonce.

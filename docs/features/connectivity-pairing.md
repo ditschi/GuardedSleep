@@ -7,7 +7,7 @@ Manages how baby and parent units discover, authenticate, and communicate with e
 ## Requirements
 
 - `[STATUS: DECIDED]` Pairing, encryption and saved pairings: see [`openspec/specs/pairing`](../../openspec/specs/pairing/spec.md); multi-parent (up to 4) is `DEFERRED` in the [backlog](../backlog.md)
-- `[STATUS: DECIDED]` Works over the internet (signaling server + EU STUN, or optional VPN) -- in MVP
+- `[STATUS: DECIDED]` Works over the internet: see [`openspec/specs/signaling-relay`](../../openspec/specs/signaling-relay/spec.md)
 - `[STATUS: DECIDED]` Works on local networks without internet (WiFi, hotspot). Superseded wording "in MVP / Phase 2" (the feature list and the listener section disagreed): the offline LAN topologies below are DECIDED with target **beta** ([ADR-021](../decisions/ADR-021-offline-lan-topologies-locales-and-distribution.md) §1); the alpha uses internet signaling for all pairs
 - `[STATUS: DECIDED]` Offline topology **Android <-> Android**: the Android baby unit runs an embedded signaling listener while monitoring is active; the parent finds it by NSD or from the QR invite -- target **beta**
 - `[STATUS: DECIDED]` Offline topology **Android <-> PC/laptop and PC <-> PC (local PC mode)**: the PC runs the GuardedSleep server binary (or compose bundle) in local mode, which serves the web UI on `http://localhost` and signaling on the LAN; Android devices connect to the PC's LAN address, shown in the pairing QR -- target **beta**
@@ -18,46 +18,14 @@ Manages how baby and parent units discover, authenticate, and communicate with e
 - `[STATUS: DECIDED]` Heartbeat interval: 10 seconds default (configurable 5-30s) -- **MVP**
 - `[STATUS: IDEA]` Network resilience: buffer events during brief disconnections
 - `[STATUS: IDEA]` LAN <-> Internet automatic handoff (same session: Wi-Fi path fails → **prefer continuing on cellular default route** when OS allows; Wi-Fi viable again → **prefer cheaper/local path** without a user "mode" switch) -- see subsection _Path selection vs explicit LAN mode_ below
-- `[STATUS: IDEA]` Signaling server rate limiting (e.g. connections or messages per IP / per room) to mitigate abuse and DoS — needs design (reverse proxy vs. in-process; mobile IP churn)
 
 ### Pairing
 
 > STATUS: DECIDED -- moved to [`openspec/specs/pairing`](../../openspec/specs/pairing/spec.md) (QR invite v3, pairing proof, storage, Forget). Multi-parent, babysitter mode, cluster management, revocation, key rotation and forward secrecy are in the [backlog](../backlog.md) under `pairing`.
 
-### Internet Connectivity (Signaling Server -- Primary)
+### Internet connectivity and VPN
 
-> STATUS: **DECIDED** -- included in MVP. Mainstream internet mode.
-
-For devices on different networks, a minimal signaling server enables WebRTC connection:
-
-- Minimal WebSocket signaling server (~300-400 LOC production-ready, Docker)
-- EU-based STUN servers for NAT traversal (defaults in code: **sipgate.de**, **Linphone** public STUN; no Google STUN)
-- Self-hosted coturn recommended for production (STUN + TURN)
-- TURN relay as fallback when P2P fails (~10-15% of cases)
-- Audio/video flows P2P directly between devices after signaling
-- Community-hosted signaling instance available for non-technical users
-- QR code contains signaling server URL + all device IPs
-
-Privacy notes:
-
-- Signaling server sees which devices connect + when (metadata only, no content)
-- STUN servers see public IPs of both devices + connection times
-- Self-hosted signaling + coturn = full privacy control
-- Users informed in-app which servers are used and what metadata they see
-
-### Internet Connectivity (VPN -- Optional Power-User Mode)
-
-> STATUS: **DECIDED** -- optional in MVP. For technically advanced users.
-
-[Tailscale](https://tailscale.com/) or [Headscale](https://github.com/juanfont/headscale) (self-hosted) creates a WireGuard VPN mesh that makes devices appear on the same LAN:
-
-- Both devices install Tailscale and join the same tailnet
-- Our app treats Tailscale IP like any other local IP -- no code difference
-- Double encryption: WireGuard (Tailscale) + DTLS-SRTP (our WebRTC)
-- For full privacy: use Headscale (self-hosted, open source)
-- No signaling server needed when using VPN (devices are "local")
-
-Note: Android allows only 1 VPN at a time. Users with corporate VPN, ad-blockers, or other VPNs must choose. This is why VPN mode is optional, not primary.
+> STATUS: DECIDED -- moved to [`openspec/specs/signaling-relay`](../../openspec/specs/signaling-relay/spec.md) (relay behaviour, limits, ICE defaults). VPN gets no special support; signaling always uses the configured relay (owner, 2026-10-21). The Rust server with built-in STUN is the prepared change `add-rust-signaling-server`; TURN, a public instance and rate-limit ideas are in the [backlog](../backlog.md).
 
 ### Local / Hotspot Connectivity
 
@@ -98,7 +66,7 @@ Event use (Persona A) often hits **captive portals**, **client isolation** on ve
 
 ### LAN <-> Internet Handoff
 
-> STATUS: **DECIDED** (this sprint = path-selector + saved-connection fallbacks; Phase 2 = live `@capacitor/network` handoff with hysteresis; superseded: link supervision lives in the Rust core, see [ADR-017](../decisions/ADR-017-link-recovery-and-connection-supervision.md)). Binding spec: [ADR-012](../decisions/ADR-012-connection-model-offline-lan-and-handoff.md).
+> STATUS: **DECIDED** (this sprint = path-selector + saved-connection fallbacks; Phase 2 = live `@capacitor/network` handoff with hysteresis; superseded: link supervision lives in the Rust core, see [ADR-017](../../openspec/changes/archive/2026-10-20-adr-017-link-recovery-and-connection-supervision/design.md)). Binding spec: [ADR-012](../decisions/ADR-012-connection-model-offline-lan-and-handoff.md).
 
 When the local connection drops (e.g., device leaves WiFi range), the app should automatically attempt reconnection via Tailscale IP (or future signaling server). When both devices are on the same network again, prefer the direct local connection for maximum privacy and minimum latency.
 

@@ -5,7 +5,7 @@
 - Deciders: Product owner (user), coordinated design (Tech Architect, Security/Privacy, UX, Critical Reviewer 2026-05)
 - Supersedes parts of: [ADR-003](ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md) "Local: no server" -- this ADR **precises** that statement; see §"Relationship to ADR-003".
 
-> **Partially superseded (2026-10-20):** the offline-LAN platform matrix row "no internet, same LAN" for web clients and the Capacitor implementation of the embedded listener (§3, Phase split, matrix) → [ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md) §1: Android ↔ Android (embedded Kotlin listener on the Rust `relay` crate) and local PC mode, both DECIDED for beta; HTTPS web ↔ phone listener is REJECTED. `@capacitor/network` handoff is legacy; the Rust core owns link supervision ([ADR-017](ADR-017-link-recovery-and-connection-supervision.md)).
+> **Partially superseded (2026-10-20):** the offline-LAN platform matrix row "no internet, same LAN" for web clients and the Capacitor implementation of the embedded listener (§3, Phase split, matrix) → [ADR-021](ADR-021-offline-lan-topologies-locales-and-distribution.md) §1: Android ↔ Android (embedded Kotlin listener on the Rust `relay` crate) and local PC mode, both DECIDED for beta; HTTPS web ↔ phone listener is REJECTED. `@capacitor/network` handoff is legacy; the Rust core owns link supervision ([ADR-017](../../openspec/changes/archive/2026-10-20-adr-017-link-recovery-and-connection-supervision/design.md)).
 
 ## Context
 
