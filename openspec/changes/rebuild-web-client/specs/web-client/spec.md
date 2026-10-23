@@ -67,7 +67,7 @@ The browser baby unit SHALL offer the invite as a QR code without a logo and as 
 #### Scenario: Copy the code
 
 - **WHEN** the user taps "Copy code" on the baby unit
-- **THEN** the v3 invite text is on the clipboard and no share sheet opens
+- **THEN** the invite text is on the clipboard and no share sheet opens
 
 ### Requirement: Pairing material in memory only
 
@@ -80,7 +80,7 @@ The web client SHALL keep the PSK and pairing material only in memory, never in 
 
 ### Requirement: Browser security
 
-The web client SHALL use a strict Content Security Policy with Trusted Types, without inline scripts, and SHALL load nothing from third-party origins.
+The web client SHALL use a strict Content Security Policy with Trusted Types, without inline scripts. It SHALL load scripts, styles, fonts and images only from its own origin, and SHALL connect only to its own origin, configured signaling origins and the origins of curated public services shipped with the build.
 
 #### Scenario: Injected script
 

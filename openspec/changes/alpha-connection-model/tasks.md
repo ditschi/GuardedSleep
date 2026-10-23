@@ -1,51 +1,110 @@
 # Tasks
 
-Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group 4 (web link driver). Folds in `add-offline-lan` and `add-stun-server-choice`. Each task is a brief for the `implementer`: layer rules from AGENTS.md §5.1 (all supervision, mailbox choice and timing in the core; the platforms own the sockets), privacy guardrails as amended by this change, commit after each task, and `just test-affected` after each task.
+Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group 4 (web link driver); `add-offline-lan` follows this change. Each task is a brief for the `implementer`:
 
-## 1. Guardrails and decisions in place
+- layer rules from AGENTS.md §5.1: all supervision, mailbox choice, timing and crypto in the core; the platforms own the sockets and supply randomness and clocks;
+- the privacy guardrails as amended in task 1.1;
+- new RustCrypto crates with `default-features = false`, on the generation already in use (`hkdf 0.13`, `hmac 0.13`, `sha2 0.11`);
+- commit after each task, and run `just test-affected` after each task.
 
-- [ ] 1.1 Amend AGENTS.md §7.1 (vetted EU mailboxes and STUN by default with disclosure and an off switch), §7.3 (sealed signaling envelope with a standard AEAD), §7.8 (the LAN listener in the alpha) and the §9 rows (offline LAN: alpha; LAN ↔ internet handoff: parallel mailboxes; TURN: user-entered only in the alpha), plus the matching `.cursor/rules` mirror. Verify: `just lint-text`.
-- [ ] 1.2 Withdraw `add-offline-lan` and `add-stun-server-choice` (delete the change directories, note it in the decision archive README), and move the backlog items they referenced. Verify: `openspec validate --all --strict`.
+## 1. Guardrails, decisions and history
 
-## 2. Core: sealed envelope
+- [ ] 1.1 Amend AGENTS.md §7.1 and §7.3 with the exact wording in `design.md` §2 and §7, and the §9 rows (internet mailboxes: alpha; TURN: user-entered only in the alpha). Mirror the change in `.cursor/rules`. Add a context note to ADR-018 in the decision archive README (tester setup: Nostr and relay mailboxes, no TURN), and update the rounds in `docs/contributing/alpha-hardware-test.md` (Nostr cross-network, network switch, a Persona A venue round). Verify: `just lint-text`.
+- [ ] 1.2 Threat model entries in `docs/concept/failure-model.md` (or the security doc it points to): operators learn IPs and timing; the fixed kind lets anyone count setups; the 3-relay set is stable across days; no forward secrecy for signaling; parent pin limits. Verify: `just lint-text`.
 
-- [ ] 2.1 `envelope` module in `guardedsleep-core`: key `HKDF-SHA256(PSK, "guardedsleep signal seal v1")`; XChaCha20-Poly1305 (`chacha20poly1305`, added with `cargo add`); the platform supplies the 24-byte nonce as an input (sans-IO); associated data is version, role, epoch and attempt id; 4 KiB padding buckets; envelope id; a replay window. Rejects bad tags, its own role, out-of-window epochs and replays. Parser lint denies; unit tests and proptests (round trip; no reflection or replay); no `Debug` of keys. Verify: `scripts/cargo.sh test -p guardedsleep-core`, `just deny` with the dependency count re-blessed and justified.
-- [ ] 2.2 Envelope conformance vectors (valid, wrong key, own role, old epoch, replay, truncated, wrong bucket) through every binding, and a `cargo-fuzz` target for envelope parsing. Verify: core tests, `just test-wasm`, the fuzz target builds.
+## 2. Core inputs and envelope
 
-## 3. Core: mailbox set and Nostr
+- [ ] 2.1 New `Link` inputs: a 32-byte `seed` in `start`, feeding an in-core `ChaCha20Rng` (`rand_chacha`); and `wall_clock(unix_s)` at start, with ticks and on time changes. Construction fails without a seed. Traces record both inputs; existing traces are re-blessed with a fixed seed and must show no other diff. Update the bindings and `just api-snapshot`. Verify: core tests, sim tests, `just api-check`.
+- [ ] 2.2 `envelope` module:
+  - HKDF-SHA256 extract with an empty salt, then expand per purpose (`guardedsleep seal v1`, `guardedsleep nostr tag v1`, `guardedsleep nostr key v1`);
+  - XChaCha20-Poly1305 (`chacha20poly1305`, feature `alloc`); nonce from the CSPRNG; nonce = envelope id;
+  - associated data `"gs-env/1" ‖ role ‖ class`;
+  - plaintext of `recipient_session`, `sender_session`, message and padding over the bucket ladder (1, 4, 8 KiB);
+  - a replay window (1024 ids or 10 min);
+  - rejection of a bad tag, own role, wrong session and replays;
+  - parser lint denies; no `Debug` of keys; proptests (round trip, no reflection, no replay).
 
-- [ ] 3.1 Mailbox set in `Link`: kinds `relay`, `lan` and `nostr`; actions `open_mailbox`, `send`, `close_mailbox`; inputs `mailbox_opened`, `mailbox_closed`, `mailbox_received`; fan-out to every open mailbox and de-duplication by envelope id; presence (`here`) with backoff replacing relay `members`/`peer` as the attempt trigger; the outage of every mailbox escalates as a relay outage does today. Bless the sim traces. Verify: core tests and new `guardedsleep-sim` scenarios ("one of three mailboxes dies during setup", "all mailboxes down", "Wi-Fi to mobile data").
-- [ ] 3.2 Nostr codec: daily epoch, tag `HMAC(PSK, "gs-mailbox/1|"‖epoch)`, per-role per-epoch BIP-340 keys (`k256` with `schnorr`), event build and verify, a fixed ephemeral kind (pick and record it in the spec), REQ/EVENT/OK/NOTICE/CLOSED handling, parking refusing relays, a ±15 min dual epoch, the events-per-attempt budget (≤ 6 per side) and no heartbeats. Verify: core tests; NIP-01 vectors (event id and signature) checked against an independent implementation; proptest that no PSK-derived value other than the tag and public key is ever emitted.
-- [ ] 3.3 Invite v4 in the core codec (`{"v":4,"k","m","x"}`, 1–6 mailboxes, ≤ 480 bytes, kind-specific URL rules, v3 rejected), replacing v3 in the ffi and wasm façades and `packages/core-wasm`. Update the conformance vectors and run `just api-snapshot`. Verify: `just api-check`, the core and core-wasm tests.
-- [ ] 3.4 Curated lists: `data/nostr-relays.json` and `data/stun-servers.json` (seeded from `spike.md`, with operator, country, policy, software and vetted date), validated and generated into both clients by a small generator (drops entries older than 12 months, fails on duplicate operators). The relay pick is deterministic from the PSK, 3 relays from distinct operators. Verify: generator tests; `just lint` fails on a stale or duplicate entry.
+  Verify: `scripts/cargo.sh test -p guardedsleep-core`; `just deny` with the dependency count re-blessed and justified.
 
-## 4. Relay and server
+- [ ] 2.3 Envelope conformance vectors (valid, wrong key, own role, wrong session, replay, truncated, each bucket) through every binding, and a `cargo-fuzz` target for envelope parsing. Verify: core tests, `just test-wasm`, the fuzz target builds.
 
-- [ ] 4.1 `guardedsleep-relay` and the server carry the sealed envelope opaquely; protocol and docs updated; local mode from `add-offline-lan` 1.3 completed (static UI and loopback API on 127.0.0.1/::1, `Origin`/`Host` checks, LAN signaling port, forwarding for a second PC, admission Required on LAN). Verify: `scripts/cargo.sh test -p guardedsleep-relay -p guardedsleep-server`, `just smoke`, a security test for a foreign `Origin`.
+## 3. Core mailbox set
 
-## 5. Android
+- [ ] 3.1 Mailbox abstraction with the relay mailbox only: the `Sig` state becomes one `relay` mailbox behind `open_mailbox`, `mailbox_send`, `close_mailbox`, `mailbox_opened`, `mailbox_closed` and `mailbox_frame`. No behaviour change: existing traces replay unchanged apart from the action names, which are mapped in the trace format. Update the bindings and the Android and web drivers with a minimal adapter. Verify: core and sim tests, `just test`.
+- [ ] 3.2 Sealing on the relay mailbox: `signal` payloads become envelopes; the stop MAC is replaced by session binding; relay protocol docs updated. Verify: core tests, new sim scenario "stored stop after parent restart is ignored", `just smoke`.
+- [ ] 3.3 Invite v4 in the core codec:
+  - compact entries `n:`, `r:` and `l:`;
+  - ≤ 300 bytes and ≤ 6 entries;
+  - the drop order;
+  - rules per kind (RFC 1918 and ULA only for `l:`);
+  - v3 rejected.
 
-- [ ] 5.1 Platform mailbox clients (one WebSocket per mailbox, opened and closed only on core actions), nonce supply, the ICE config from the core lists (own relay STUN plus 2 listed STUN servers; user TURN only), and the "Use only my own server" switch. Verify: JVM tests with fake sockets; a lint check that no Google STUN host appears in source.
-- [ ] 5.2 Embedded LAN listener on the `relay` crate (only while monitoring, Wi-Fi and multicast locks, opaque NSD token, admission, 5 s unauthenticated close) and the private-address cleartext rule (network security config plus one platform check; the release-APK assertion is updated). Verify: JVM tests, `just verify-android`, `just build-android` with the release check.
-- [ ] 5.3 Settings → Connection (operator disclosure, own-server-only, own relay URLs, TURN, connection-type diagnostics), setup disclosure, "No direct connection between these networks" copy, all copy in `locales/*.json` with critical tags where it belongs to connection state. Verify: Roborazzi recorded in the pinned image, `just verify-android`.
-- [ ] 5.4 Emulator gate scenarios: LAN-only pairing without internet, Nostr-only pairing (public relays reached from the emulator, skipped with `SKIPPED:` when offline), and a network switch during monitoring. `docs/ci-gates.md` rows. Verify: `DOZE_MINUTES=2 just gate`.
+  Replace v3 in `ffi`, `wasm` and `packages/core-wasm`, with new conformance vectors and `just api-snapshot`. Verify: `just api-check`, the core and core-wasm tests.
+
+- [ ] 3.4 Presence and sessions: a session nonce per start; sealed `here`; offer direction, accepted senders, scheduling and causes over presence (`specs/link-supervision`); parent id and pin; closing the mailboxes while verified, the 30-minute reachability check and the `recovery_path_unavailable` hint; the mailbox update over the DataChannel. Verify: sim scenarios "photographed QR during an outage is refused", "all mailboxes dead at a reachability check", "mailbox update after relay churn".
+- [ ] 3.5 Nostr mailbox:
+  - epoch from 12:00 UTC (u32 BE), tag, per-role keys (`k256` with features `schnorr` and `arithmetic`; scalar reduced, zero rejected);
+  - NIP-01 frames with ASCII base64url content only and 64 KiB caps;
+  - subscription with `since` = now − 15 min and dual epochs for the hour around the change;
+  - re-subscribe at the change and every 60 s while not connected;
+  - presence-gated attempts, pacing of ≤ 2/s, ≤ 6 per attempt, ≤ 120 per hour, parking with 1/5/30-minute backoff, an inbound cap, and a resend once after 6 s;
+  - pick the ephemeral kind and record it in the spec.
+
+  Verify: core tests; NIP-01 id and signature vectors checked against an independent implementation; a fuzz target for NIP-01 frames; sim scenarios "relay accepts but never delivers", "clock five minutes off at the epoch change", "one-hour outage stays within budget".
+
+- [ ] 3.6 Curated lists:
+  - `data/nostr-relays.json` and `data/stun-servers.json`, seeded from `spike.md`;
+  - a generator into both clients and into the web CSP `connect-src`;
+  - build minimums (6 relays from 4 operators, 2 STUN servers from distinct operators), a warning for stale entries, and a lint against unlisted STUN hosts in source;
+  - the deterministic relay pick (3 from distinct operators, plus up to 2 own-list relays).
+
+  Verify: generator tests; `just lint` fails below the minimums and on a Google STUN host.
+
+## 4. Go/no-go
+
+- [ ] 4.1 Commit the spike scripts to `scripts/spike/` and add a CLI soak prototype on the core (`scripts/spike/soak`), plus a weekly non-blocking job with its `docs/ci-gates.md` row. Verify: the job runs once on a branch.
+- [ ] 4.2 Owner-run gate: one night on 3 EU relays, a burst test behind one CGNAT IP, the tag-only filter, and LTE / IPv6-only. Record the results in `spike.md`. Go needs at least 2 of 3 relays without loss and setup p95 < 3 s. On no-go, Nostr moves to beta and tasks 5–6 drop their Nostr parts. Verify: the decision is recorded in `design.md` §9.
+- [ ] 4.3 Owner task: contact the listed relay operators about acceptable use and logging, and record their answers in the data notes. Verify: the notes are present for every shipped relay.
+
+## 5. Server and Android
+
+- [ ] 5.1 `guardedsleep-relay` and the server carry sealed envelopes opaquely; protocol docs. Verify: `scripts/cargo.sh test -p guardedsleep-relay -p guardedsleep-server`, `just smoke`.
+- [ ] 5.2 Android platform:
+  - mailbox clients, one WebSocket per mailbox, opened and closed only on core actions;
+  - the seed from `SecureRandom` and wall-clock reporting;
+  - the ICE config from the core lists;
+  - the off switch;
+  - the parent id and mailbox set in the encrypted pairing record.
+
+  Verify: JVM tests with fake sockets; `just verify-android`.
+
+- [ ] 5.3 Android UI:
+  - the Connection section with the disclosure and "Who are they?";
+  - Advanced: the off switch, own relays and TURN;
+  - the diagnostics view and the `media_blocked` troubleshooter copy;
+  - "Make brighter" for the larger QR code;
+  - a scan test of the v4 QR code inverted at 50 % (Robolectric with zxing);
+  - copy in `locales/*.json`, with critical tags for connection state.
+
+  Verify: Roborazzi recorded in the pinned image, `just verify-android`.
+
+- [ ] 5.4 Emulator gate scenarios: pairing through the local Nostr test relay; a network switch during monitoring; a stored stop replayed after a parent restart. Add `docs/ci-gates.md` rows. Verify: `DOZE_MINUTES=2 just gate`.
 
 ## 6. Web
 
-- [ ] 6.1 Web link driver: mailbox WebSockets, nonce from `crypto.getRandomValues`, ICE config from the lists, own-server-only; local PC mode detection (`http://localhost` served by the binary) adds the `lan` mailbox. Verify: Vitest with fake sockets; the storage test still finds no PSK or derived values.
-- [ ] 6.2 Settings → Connection, setup disclosure, no-direct-path copy, diagnostics view, in the web catalogue groups. Verify: Vitest, Playwright with axe, `just lint-text`.
-- [ ] 6.3 Playwright: two browser contexts pair through a local Nostr relay test double (a minimal NIP-01 relay in `apps/e2e` test utils, no public relays in CI) and through the local PC mode; a mailbox drop during setup still verifies. Verify: `just e2e`.
+- [ ] 6.1 Web link driver: mailbox WebSockets; the seed from `crypto.getRandomValues`; the wall clock; the ICE config from the lists; the off switch; the CSP `connect-src` from the generated list. Verify: Vitest with fake sockets; the storage test still finds no PSK, derived value or parent id.
+- [ ] 6.2 Web settings and copy as in 5.3, plus the QR scan test in Playwright (inverted, 50 %). Verify: Vitest, Playwright with axe, `just lint-text`.
+- [ ] 6.3 Playwright: a minimal NIP-01 test relay in the `apps/e2e` utilities (no public relays in CI); two contexts pair through it; a mailbox drop during setup still verifies; a CSP check that only listed origins connect. Verify: `just e2e`.
 
 ## 7. Integration
 
-- [ ] 7.1 Host simulation and log canary: no PSK, tag, key or plaintext SDP in any log or relay-visible byte in any encoding. Verify: `scripts/cargo.sh test -p guardedsleep-sim`, the canary test.
-- [ ] 7.2 Manual soak, owner-run: one night on three public EU relays with real devices (home Wi-Fi ↔ mobile data); record reconnects and the connection types from the diagnostics view in `spike.md`. Verify: the results are recorded.
-- [ ] 7.3 `GS_STRICT=1 just ci` green on the wave branch.
+- [ ] 7.1 Add the log canary (AGENTS.md §7.6): the simulation and gate runs pair with a known PSK, and CI fails if the PSK, a derived key, the room id or plaintext SDP appears in any log in any encoding. The tag is allowed in relay-visible bytes and not in logs. Verify: the canary test fails on a planted leak and passes otherwise.
+- [ ] 7.2 `GS_STRICT=1 just ci` green on the wave branch.
 
 ## Workflow follow-up
 
-- Archive `rebuild-web-client` first. Its deltas also modify `pairing` "Invite payload v3" and `signaling-relay` "Client ICE configuration", so re-check these MODIFIED blocks against the merged specs before archiving this change (copy any scenarios they added).
-
-- Role reviews: Technical Architect (mailbox set in the core, layers), Security Architect (envelope, Nostr key and tag derivation, LAN listener, disclosure), Product Owner and UX (alpha scope, copy, Persona A–C), then the Critical Reviewer gate (scope, security model and guardrail changes); the originator answers every CRITICAL and IMPORTANT finding.
-- Owner decides project TURN for beta with the 7.2 data (alpha: no default TURN, owner 2026-10-23).
+- Archive `rebuild-web-client` first. Its deltas also modify `pairing` "Invite payload v3" and `signaling-relay` "Client ICE configuration" and add "One invite codec in the core", `web-client` "Copy code without sharing" and "Browser security". Re-check this change's MODIFIED blocks against the merged specs before archiving it.
+- Second Critical Reviewer pass on the security sections (envelope, sessions, parent pin, Nostr derivations) before `/opsx:apply`. The originator answers every CRITICAL and IMPORTANT finding.
+- Role reviews at the end of implementation: Technical Architect, Security Architect, UX.
+- The owner decides project TURN for beta with the hardware-round data (alpha: no default TURN, owner 2026-10-23).
 - `mise exec -- openspec archive alpha-connection-model --yes`, then `openspec validate --all --strict`.

@@ -1,5 +1,7 @@
 # Proposal
 
+> **Withdrawn 2026-10-23, not implemented.** Superseded by `alpha-connection-model` (owner: vetted EU STUN is used automatically with disclosure and an off switch instead of opt-in only). Its discarded alternatives are carried over into that change's `design.md`. The specs were not changed.
+
 ## Why
 
 The relay's built-in STUN is the default (`add-rust-signaling-server`), but not every user runs or reaches a relay whose STUN works for their network, and not every user can run their own server. A community server comes later, if at all. Public Google STUN is not an option: it shows the user's IP address and usage times to a large third party. The owner decided (2026-10-22) on a user choice from a vetted list of European, privacy-respecting STUN servers, plus manual entry, with a clear warning.

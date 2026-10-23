@@ -46,3 +46,9 @@ The ADR → OpenSpec migration, one change per capability:
 - [`2026-10-22-migrate-parent-alerts`](2026-10-22-migrate-parent-alerts/proposal.md)
 - [`2026-10-22-migrate-release-checks`](2026-10-22-migrate-release-checks/proposal.md)
 - [`2026-10-22-migrate-signaling-relay`](2026-10-22-migrate-signaling-relay/proposal.md)
+
+## Withdrawn changes
+
+Prepared but never implemented; kept for their options and discarded alternatives.
+
+- [`2026-10-23-add-stun-server-choice`](2026-10-23-add-stun-server-choice/proposal.md): superseded by `alpha-connection-model` (automatic, disclosed EU STUN).

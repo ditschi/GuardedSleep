@@ -2,226 +2,349 @@
 
 ## Context
 
-See `proposal.md` (Why). Current state:
+See `proposal.md` (Why).
 
-- **Signaling:** one transport, our Rust relay (`signaling-relay`), with rooms, `members`/`peer` presence and an opaque `signal` payload. The relay is untrusted: confidentiality and integrity come from the pairing proof and the DTLS fingerprint binding (`pairing`). Today it still sees the plaintext SDP and ICE candidates.
-- **Configuration:** release builds ship without a signaling URL. The v3 invite carries a URL list.
-- **ICE:** only the relay's built-in STUN by default; third-party STUN is opt-in (`add-stun-server-choice`, not built). TURN is T1.
-- **Offline LAN:** prepared in `add-offline-lan` (beta). Its decisions (embedded listener, opaque NSD, local PC mode, admission, private-address cleartext) are kept and move here.
-- **Spike:** see `spike.md` (2026-10-23). Nostr ephemeral events work as a mailbox on about 11 EU relays (p95 < 600 ms). Rate limits allow only a few events per attempt. strfry keeps ephemeral events for about 5 minutes. No free EU TURN exists.
+**Current state:**
 
-Owner decisions of 2026-10-23:
+- **Signaling:** one transport, our Rust relay (`signaling-relay`), with rooms, `members`/`peer` presence and an opaque `signal` payload. The relay is untrusted: the pairing proof and the DTLS fingerprint binding (`pairing`) carry confidentiality and integrity, but the relay still sees plaintext SDP and ICE candidates. Release builds ship without a signaling URL. The invite (v3) carries a URL list.
+- **The core `Link`** (`crates/guardedsleep-core/src/link.rs`, about 2250 lines) is sans-IO. It has a monotonic clock that includes sleep, a `SplitMix64` PRNG seeded by `start{entropy}` for wire ids (not cryptographic), and a single `Sig` state machine bound to relay membership.
+- **ICE:** only the relay's built-in STUN; third-party STUN is opt-in. TURN is T1.
 
-| Topic               | Decision                                                                        |
-| ------------------- | ------------------------------------------------------------------------------- |
-| Internet rendezvous | Nostr EU set as default, no project-run server                                  |
-| STUN fallbacks      | Automatic, from a vetted EU list, disclosed                                     |
-| Signaling payloads  | End-to-end sealed on every mailbox                                              |
-| TURN                | None by default in the alpha; user-entered TURN only; decide for beta with data |
+**Spike:** see `spike.md` (2026-10-23). Nostr ephemeral events work as a mailbox on about 11 EU relays with p95 < 600 ms. Rate limits allow only a few events per attempt. strfry keeps ephemeral events for about 5 minutes and serves them to any subscriber.
+
+**Owner decisions of 2026-10-23:**
+
+- Nostr EU set as the default internet mailbox, with no project-run server.
+- Automatic, disclosed EU STUN.
+- A sealed envelope on every mailbox.
+- No default TURN in the alpha.
+- Offline LAN in the alpha, as a separate change (`add-offline-lan`, retargeted to the alpha) applied after this one.
+- The baby device pins the first verified parent device.
+- Internet mailboxes are closed while an attempt is verified.
+
+**Critical review of 2026-10-23:** all CRITICAL and IMPORTANT findings are answered in the decisions below and in the review response at the end.
 
 ## Goals / Non-Goals
 
 **Goals:**
 
-- Pairing and monitoring without any manual address, at home, offline on one Wi-Fi, phone ↔ PC, and across networks.
+- Pairing and monitoring without any manual address, with internet on any networks.
 - No single operator whose outage stops every family.
-- Mailbox operators learn no more than IP addresses, timing and an opaque address that rotates daily.
+- Mailbox operators learn only IP addresses, timing and opaque daily values.
+- A relay can never mute escalation, fake "monitored", or swap the parent device.
 
 **Non-Goals:**
 
-- A project-run public server or TURN (the alpha has none).
-- Background wake-up push.
+- The LAN listener and the local PC mode (`add-offline-lan`). This change only defines the `lan` mailbox kind and leaves room for it.
+- Project-run server or TURN.
+- Web Push.
 - iOS.
 - Remote pairing without a QR code.
-- Refreshing the relay list without an app release (`IDEA`).
+- A post-pairing key change (stays `IDEA`).
+- Refreshing the lists without an app release.
 
 ## Decisions
 
-### 1. Parallel mailboxes, owned by the core (layer: core; platforms own sockets)
+### 1. Mailbox set in the core (layer: core decides; platforms own sockets)
 
-The `Link` holds a set of mailbox transports instead of one signaling transport, each with its own connection state. The kinds:
+The `Link` holds a set of mailboxes instead of the single `Sig` machine. Kinds:
 
-- `relay`: our server, internet or self-hosted;
-- `lan`: the baby device's embedded listener or a local PC relay;
-- `nostr`: a public relay.
+- `relay`: our server;
+- `nostr`: a public relay;
+- `lan`: defined here, produced by `add-offline-lan`.
 
-The core emits `open_mailbox(id)`, `send(mailbox_ids, envelope)` and `close_mailbox(id)`, and accepts `mailbox_opened/closed/received(id, bytes)`. Every outgoing envelope goes to all open mailboxes. Inbound envelopes are de-duplicated by envelope id, so whichever mailbox delivers first wins.
+**Interface:**
 
-Attempts, liveness and escalation are unchanged. A network change remains `network_available` → fresh attempt, now over whichever mailboxes are still open. The platform still runs no reconnect loops (`link-supervision`).
+- Actions: `open_mailbox(id, kind, url)`, `mailbox_send(id, frame)`, `close_mailbox(id)`.
+- Inputs: `mailbox_opened(id)`, `mailbox_closed(id, reason)`, `mailbox_frame(id, bytes)`.
+- The core speaks each kind's wire protocol: relay `hello`/`signal`, and NIP-01 `REQ`/`EVENT`/`OK`/`NOTICE`/`CLOSED`.
 
-- **Pros:** LAN and internet work at the same time with no mode switch. Wi-Fi ↔ mobile data recovers automatically. One relay outage is invisible.
-- **Cons:** more connections per device (3–5 sockets). The core state grows.
+**Behaviour:**
+
+- **Fan-out and de-duplication:** every envelope is sent to every open mailbox. Inbound envelopes are de-duplicated by envelope id (§2).
+- **While an attempt is verified:**
+  - The core closes all internet mailboxes. A `lan` listener stays (owner decision).
+  - Every 30 minutes the core opens them briefly for a reachability check: connect plus `REQ` and `EOSE` for Nostr, `hello` and `welcome` for a relay, without publishing anything.
+  - If none is reachable, the core emits a hint, `recovery_path_unavailable`. The UI shows it calmly; it is not an alarm.
+- **On loss:** the core reopens every mailbox at once.
+- **While not connected:** the core re-issues the subscription on each open Nostr mailbox every 60 s, because browsers cannot detect half-open sockets. This costs no events.
+
+Attempts, liveness, escalation and listen are unchanged. Loss is still detected on the DataChannel.
+
+- **Pros:** one relay outage is invisible, and no single operator is needed. Closing the mailboxes saves battery on old phones and denies relays an all-night connection pattern.
+- **Cons:** a large refactor of `link.rs`. Recovery is about 0.3–1 s slower, because mailboxes must reopen after a loss.
+- **Recommendation:** adopt, in the staged order of `tasks.md` (relay mailbox first, so the traces stay unchanged).
+
+### 2. Sealed envelope (layer: core)
+
+**Keys:** one HKDF-SHA256 extract over the PSK with an empty salt, then a separate expand per purpose:
+
+| Purpose                | Info string                 | Output   |
+| ---------------------- | --------------------------- | -------- |
+| Envelope seal key      | `guardedsleep seal v1`      | 32 bytes |
+| Nostr tag key          | `guardedsleep nostr tag v1` | 32 bytes |
+| Nostr signing key seed | `guardedsleep nostr key v1` | 32 bytes |
+
+The pairing-proof MAC, the room id and the relay-admission key keep their existing derivations. No key is used for two purposes.
+
+**Cipher:** XChaCha20-Poly1305 (RustCrypto `chacha20poly1305`, `default-features = false`, features `alloc`). The 24-byte nonce comes from an in-core CSPRNG, `ChaCha20Rng` from `rand_chacha` with `default-features = false`.
+
+- The CSPRNG is seeded with 32 bytes that the platform supplies in `start` (Android `SecureRandom`, web `crypto.getRandomValues`). It is deterministic in recorded traces, which keep the seed.
+- `SplitMix64` stays for non-secret ids only.
+
+**Envelope id:** the AEAD nonce, so it is authenticated implicitly.
+
+**Associated data:** `"gs-env/1" ‖ sender_role ‖ kind_of_message`, fixed-width encoded.
+
+**Plaintext:**
+
+- `recipient_session` (16 bytes): the recipient's current session nonce, taken from its last `here`; all zeros for `here` itself.
+- `sender_session` (16 bytes).
+- The message, as the existing JSON shapes.
+- Padding to a bucket ladder of 1, 4 and 8 KiB, chosen by message class.
+
+**Receiver rules:**
+
+- Reject envelopes that fail authentication, carry the receiver's own role, or repeat a nonce in the replay window (the last 1024 ids, or 10 minutes, whichever is larger).
+- Reject any message other than `here` whose `recipient_session` is not the receiver's current session.
+- The receiver draws a fresh session nonce at every `start` and process restart.
+
+This closes the stop replay through strfry retention: a stored stop carries the old session and is ignored after a restart.
+
+**Epoch:** checked only for Nostr addressing (§3), never on relay or LAN mailboxes. A wrong clock therefore cannot break those.
+
+**Allowed relay-visible items, exhaustively:**
+
+- on Nostr: the daily tag, the daily public keys, BIP-340 signatures, ciphertext under the seal key, and the event `created_at`;
+- on a relay: the derived room id, as today, and the ciphertext.
+
+The log canary covers the PSK, every derived key, the room id and plaintext SDP. The tag is excluded only for relay-visible bytes.
+
+**AGENTS.md §7.3 amendment (exact wording for task 1.1):** "No custom transport crypto: media uses DTLS-SRTP. HKDF-SHA256 (distinct info strings per purpose) and HMAC-SHA256 only for the pairing proof, room and admission derivation, and the Nostr tag. XChaCha20-Poly1305 only for the signaling envelope, with 192-bit nonces from the in-core CSPRNG seeded by the platform. BIP-340 only for signing Nostr events, never for a trust decision."
+
+- **Pros:** operators see no SDP, candidates or fingerprints. The binding to the recipient's session defeats replay of stored events. One path for all kinds.
+- **Cons:** a new primitive, so it needs vectors, fuzzing and a security review. No forward secrecy: a later PSK compromise decrypts retained envelopes (SDP and IPs, never audio). That is recorded in the threat model.
 - **Recommendation:** adopt.
 
-### 2. Sealed signaling envelope (layer: core)
+### 3. Nostr mailbox (layer: core)
 
-Every signaling message on every mailbox kind (offer, answer, candidates, presence, stop) is sealed:
+**Epoch:** days since the Unix epoch, counted from **12:00 UTC**, as a u32 big-endian. The rollover therefore falls in the afternoon in Europe, not during the night.
 
-- **Cipher:** XChaCha20-Poly1305 (RustCrypto `chacha20poly1305`).
-- **Key:** `HKDF-SHA256(PSK, info "guardedsleep signal seal v1")`.
-- **Nonce:** a random 24-byte nonce supplied by the platform. The core stays sans-IO: randomness is an input, as for the PSK today.
-- **Associated data:** version, sender role, epoch and attempt id.
-- **Padding:** every plaintext is padded to a 4 KiB bucket, so message types cannot be told apart by length.
+- The core needs a wall clock. A new input, `wall_clock(unix_s)`, is sent at `start`, with every tick, and after the platform observes a time change.
+- An unknown wall clock means no Nostr mailbox is opened, and the core emits the `clock_unknown` hint. Relay mailboxes still work.
 
-The receiver rejects envelopes from its own role, from outside the current epoch ± grace, and envelope ids it has already seen (replay window). The pairing proof and the DTLS binding stay as they are. The envelope adds confidentiality and replay protection on top; it is not a substitute.
+**Tag:** `base64url(HMAC-SHA256(tag_key, epoch_be32))[0..22]`.
 
-This amends AGENTS.md §7.3 ("HMAC/HKDF only for the pairing proof and room derivation"): a standard AEAD from RustCrypto for the signaling envelope is allowed. It is not transport crypto, because media stays on DTLS-SRTP.
+**Signing key:** the secp256k1 scalar is `HKDF-Expand(sign_seed, "role|" ‖ role ‖ epoch_be32)`, reduced modulo n, and rejected without a panic if it is 0. BIP-340 uses `k256` with `default-features = false` and features `schnorr` and `arithmetic`.
 
-- **Pros:** operators no longer see SDP, LAN addresses or fingerprints. Replayed or reflected messages are rejected before the attempt logic. A single path for all mailbox kinds.
-- **Cons:** a new crypto use that needs a Security Architect review and test vectors. Plaintext debugging of signaling is gone (debug builds may log decrypted envelopes behind the existing `GS_POC` gate, never the key).
-- **Recommendation:** adopt.
+**Subscription:**
 
-### 3. Nostr mailbox (layer: core builds and verifies events; platform holds the WebSockets)
+- Filter `{kinds:[K], authors:[peer_pubkey(epoch)], "#t":[tag], since: now − 15 min}`.
+- During the hour around the rollover, subscribe to both epochs.
+- At rollover the core re-subscribes with the new tag and authors.
+- The receiver drops stale events through the session binding of §2, not through `since`.
 
-| Item         | Rule                                                                                      |
-| ------------ | ----------------------------------------------------------------------------------------- |
-| Epoch        | The UTC day; both sides also listen to the neighbouring epoch for ±15 min around midnight |
-| Address      | Tag `t = base64url(HMAC-SHA256(PSK, "gs-mailbox/1                                         | " ‖ epoch))[0..22]`                                           |
-| Signing keys | Per role and epoch: `sk = HKDF(PSK, "gs-nostr-key/1                                       | " ‖ role ‖ epoch)`, BIP-340 via RustCrypto `k256` (`schnorr`) |
-| Subscription | Filter on the peer's public key, our kind and `#t`, with `since` = now − 60 s             |
-| Event kind   | One fixed ephemeral kind (25xxx, not shared with other apps' known kinds)                 |
-| Content      | The sealed envelope, base64                                                               |
-| Fan-out      | Each device publishes to the 3 relays the invite names (§5) and subscribes on all of them |
+**Kind:** one fixed ephemeral kind K, recorded in the spec at implementation time.
 
-**Budget:** relays carry presence and attempt setup only.
+- Discarded: a kind shared with other apps, which would hide the app better but mix traffic and filtering.
+- Trade-off: anyone can count GuardedSleep setups on strfry relays. This is recorded in the threat model.
 
-- An attempt bundles candidates: offer and answer with gathered candidates, at most 2 trickle batches, at most 6 events per side.
-- Presence ("here") is sent at start, after a network change, and while unpaired-in-room with backoff of 5 s, 15 s, 60 s and then every 5 min.
-- No heartbeats go through Nostr: liveness runs on the DataChannel, as today.
-- The core enforces an events-per-hour cap per mailbox.
+**Content:** base64url of the sealed envelope only. Content and tags are ASCII base64url; any other characters are rejected. This avoids divergence in NIP-01 canonical JSON. Frames are capped at 64 KiB on the platform and in the core.
 
-**Relays that misbehave:**
+**Presence:**
 
-- A relay that answers `blocked`, `restricted`, `auth-required`, `pow` or `rate-limited` is parked for the session.
-- A relay's `OK` is not taken as delivery. The peer's answer is the acknowledgement, and an unanswered offer is resent on the other mailboxes.
+- A device publishes a sealed `here` (role, session nonce, capability flags):
+  - at start;
+  - after a network change;
+  - after any mailbox reopens while the link is not connected;
+  - after a received `here` that carries a session the device has not seen before;
+  - while waiting, with backoff of 5, 15 and 60 s, then every 5 min.
+- Over Nostr the baby starts an attempt only after a fresh parent `here`, and the parent sends `request_offer` only after a fresh baby `here`.
+- The attempt schedule of `link-supervision` still applies. Nostr adds this gating so the budget holds during long outages.
 
-**Presence replaces `members`/`peer`.** A sealed `here` envelope (role, a fresh session nonce, capabilities) tells the peer to start or answer an attempt. The one-parent cap now rests on the PSK: only PSK holders can produce valid envelopes, and the parent persists the pairing after its first verified attempt (`pairing`).
+**Budget and pacing:**
 
-- **Pros:** no project server. About 10 independent EU operators. Prior art exists (Trystero, voistr). The scheme is protocol-compatible with any NIP-01 relay.
-- **Cons:**
-  - Volunteer infrastructure with churn and rate limits.
-  - Every relay used sees both IPs and timing.
-  - Two new core dependencies (`k256` with `schnorr`, `chacha20poly1305`); the dependency-count guard rises and is justified in the PR.
-- **Recommendation:** adopt. Our relay remains the mailbox for LAN, PC mode and self-hosting.
+- At most 2 events/s per relay.
+- At most 6 events per attempt and side (candidates bundled; at most 2 trickle batches).
+- At most 120 events per hour per mailbox. When the cap is reached, that mailbox carries only `here` until the hour rolls over. The link keeps escalating as normal, and the cause hint names the servers.
+- Inbound: at most 60 events per minute per mailbox are verified. Above that, the relay is parked.
 
-### 4. Invite v4 (layer: core codec from `rebuild-web-client`)
+**Parking:** a refusal (`blocked`, `restricted`, `auth-required`, `pow`, `rate-limited`), invalid or forged events, or inbound floods park a relay with backoff of 1, 5 and 30 min.
 
-The v4 invite is `{"v":4,"k":<PSK>,"m":[<mailbox>…],"x":<expiry>}`. Each mailbox is `{"t":"relay"|"lan"|"nostr","u":<ws:// or wss:// URL>}`.
+**Delivery:** an `OK` is not delivery. If an offer, answer or `request_offer` is not answered within 6 s, the same envelope (same id) is resent once to every open mailbox. The attempt is still abandoned at 20 s, as today.
 
-The baby device fills the list:
+### 4. Parent pin (layer: core; pairing spec)
 
-- its LAN listener address, or the PC relay's address in local mode, when there is one;
-- any configured own relay;
-- 3 Nostr relays picked from the shipped list.
+The parent draws a random 16-byte parent id at pairing and persists it with the pairing. It is sent inside sealed envelopes and confirmed over the verified DataChannel.
 
-Room ids and Nostr tags are derived, never carried.
+- After its first verified attempt, the baby persists the parent id. On Android it is encrypted next to the PSK; on the web it is in memory only.
+- From then on the baby refuses `request_offer`, offers and answers from any other parent id until "Forget".
+- The invite closes after the first verification, as today, but is now enforced by the pin instead of `PARENT_CAP`.
 
-**Size:** at most 6 mailboxes and 480 bytes, so the QR code stays scannable at level M when inverted at ≤ 50 % brightness.
+- **Pros:** a photographed QR code or an old install cannot take over the baby during an outage.
+- **Cons:** the PSK stays long-lived. Losing the real parent device means re-pairing (that is "Forget" on the baby).
+- **Recommendation:** adopt. The post-pairing key change stays `IDEA`.
 
-**v3 handling:** v3 is dropped (BREAKING), which is fine because nothing has been released. The core codec now builds and parses v4 only, with new conformance vectors. A v3 code is `not_our_code`.
+### 5. Invite v4 (layer: core codec)
 
-- **Pros:** the parent learns every path from one scan, so no settings are needed.
-- **Cons:** a larger QR code. The relay choice is frozen at pairing time; a re-pair refreshes it.
-- **Recommendation:** adopt.
+`{"v":4,"k":<PSK>,"m":[…],"x":<expiry>}`. Each mailbox is a compact string:
 
-### 5. Curated lists as data (repository: `data/`; generated into both clients)
+- `"n:<host>"` for a Nostr relay (always `wss://<host>`);
+- `"r:<host[:port][/path]>"` for an own relay (always `wss://`);
+- `"l:<rfc1918-or-ula>:<port>"` for a LAN mailbox (`add-offline-lan`; IPv6 link-local is not allowed).
 
-`data/nostr-relays.json` and `data/stun-servers.json` hold, for each entry: URL, operator, country, privacy-policy link, software, last-vetted date and measured notes.
+**Size:**
 
-**Vetting criteria:**
+- At most 6 entries and **≤ 300 bytes** encoded, about QR version 13 at level M.
+- When over budget, the baby drops entries in this order: extra own relays, then Nostr beyond 3, then Nostr down to 2. A `lan` entry and the first own relay are never dropped.
+- A scan test renders the QR inverted at 50 % brightness and decodes it with zxing (Playwright and Robolectric).
 
-- Operator in the EU, EEA or CH.
-- No payment, membership or whitelist needed for ephemeral events.
-- Accepts 4 KiB events.
-- No known logging of event contents.
-- Distinct operators: one entry per operator; nos.lol and nostr.mom count as one.
+**Mailbox update:** after verification the baby may send a sealed `mailboxes` message over the DataChannel. The parent replaces its stored set, so pairings survive relay churn and app updates without a re-pair.
 
-**Selection:**
+**Version skew:** the invite and the update carry hosts. A receiver uses them even if they are not in its own shipped list, as long as they pass the kind's URL rules. Both devices also add up to 2 relays from their own list, chosen deterministically from the PSK, so devices with overlapping lists still meet.
 
-- The baby device picks 3 relays per pairing, spread over different operators and hosters (deterministic from the PSK, so retries pick the same ones), and skips relays the current session has parked.
-- A non-blocking scheduled CI job re-measures the lists (the spike scripts, kept in `scripts/spike/`). It needs a `docs/ci-gates.md` row.
-- Re-vetting happens quarterly; an entry older than 12 months is dropped by the generator.
+**v3:** rejected as `not_our_code`. Nothing has been released.
 
-- **Pros:** an update is a small reviewed change. Users and auditors see exactly who is used.
-- **Cons:** a stale list until the next release. Monthly churn needs about 1 h per quarter.
-- **Recommendation:** adopt.
+### 6. Curated lists (repository `data/`; generator into both clients and the web CSP)
 
-### 6. ICE: automatic EU STUN, no default TURN (layer: platform builds the ICE config from core-supplied lists)
+`data/nostr-relays.json` and `data/stun-servers.json`, seeded from `spike.md`.
 
-**STUN:** the ICE servers are the own relay's STUN when a relay mailbox is configured, plus 2 entries from the STUN list (Nextcloud on 443/3478 and Telekom first, chosen for distinct operators). ICE queries all of them in parallel, so the list is kept short to limit who sees the IP.
+**Vetting:**
 
-**Disclosure:** the setup screen and Settings → Connection name the STUN and Nostr operators: "These services see this device's internet address and when it connects. They never hear the baby." The switch "Use only my own server" turns both off.
+- operator in the EU, EEA or CH;
+- free for ephemeral events;
+- accepts **8 KiB** events;
+- no known logging of contents;
+- one entry per operator.
 
-This amends AGENTS.md §7.1 ("public STUN is opt-in only") into: vetted EU STUN and mailboxes are allowed by default with disclosure and an off switch; Google and big-tech STUN stay excluded.
+**Build check:** at least 6 usable relays from at least 4 operators, and at least 2 STUN servers from distinct operators. Otherwise the build fails. Entries older than 12 months are only a warning, plus an issue opened by the scheduled job; this is not a lint failure.
 
-**TURN:**
+**Scheduled job:** the spike scripts are committed under `scripts/spike/` and run weekly as a non-blocking job. It needs a `docs/ci-gates.md` row.
 
-- No default TURN in the alpha. The existing Advanced "TURN server" setting takes a user-entered `turn:`/`turns:` URL with credentials.
-- When ICE fails with no relayed candidate, the parent shows "No direct connection between these networks" with two actions: "use the same Wi-Fi" or "add a TURN server".
-- A local diagnostics view (Settings → Connection → Details) shows the selected candidate-pair type of the last attempt (host, srflx or relay). It never leaves the device.
-- Decide project TURN (Cloudflare with a project account and a credential Worker, or an EU VPS) for beta with that data.
+**Web CSP:** the web CSP's `connect-src` is generated from the relay list, our origin and configured own relays (amends `rebuild-web-client` "Browser security").
 
-**Alternatives considered (TURN):**
+### 7. ICE (layer: platform builds the ICE config from core-supplied lists)
 
-| Option                                | Pros           | Cons                                                                             |
-| ------------------------------------- | -------------- | -------------------------------------------------------------------------------- |
-| Automatic Cloudflare TURN like Signal | best reach     | US operator; a project account and a credential service; abuse and cost exposure |
-| Own EU TURN                           | best reach, EU | a server the owner must run                                                      |
-| No TURN (recommended for the alpha)   | no operation   | about 10–25 % of cross-network pairs fail, with clear copy                       |
+- **With an own relay mailbox configured:** only its STUN.
+- **Otherwise (the default):** the first 2 STUN entries of distinct operators (Nextcloud on 443/3478 and Telekom), queried in parallel by ICE.
+- Google and big-tech STUN are excluded, and a lint check fails on them in source.
 
-### 7. Offline LAN in the alpha (layers: platform listener and NSD, server local mode)
+**TURN:** none by default; a user-entered TURN in Advanced. An attempt that fails with no relayed candidate maps to the existing `media_blocked` cause. Its level-2 troubleshooter copy is plain: "These two devices can't reach each other from where they are." Its actions are "Try again" and "Put both on the same Wi-Fi", plus "Advanced: TURN server" for experts. It never replaces the alarm.
 
-The decisions of `add-offline-lan` are taken over unchanged:
+**Diagnostics:** a local view shows the connection type of the last attempt. It never leaves the device.
 
-- embedded listener on the Android baby device, only while monitoring, with Wi-Fi and multicast locks;
-- opaque per-session NSD token;
-- local PC mode with loopback-only UI and API and `Origin`/`Host` checks;
-- relay admission on every LAN relay;
-- the private-address cleartext rule.
+**AGENTS.md §7.1 amendment (exact wording for task 1.1):** "Media, alerts and heartbeats never transit a third party, except an encrypted, user-entered TURN. Signaling may use vetted EU/EEA/CH mailboxes and STUN from `data/` (criteria in `alpha-connection-model`), with disclosure and an off switch on each device. Google and big-tech STUN are excluded."
 
-The listener is one more mailbox kind (`lan`), so it runs in parallel with the internet mailboxes. A LAN-only session works without internet.
+### 8. Disclosure and off switch (layer: UI over contract models)
 
-`add-offline-lan` is withdrawn once its specs live here. `add-stun-server-choice` is withdrawn too: its list moves here, its settings become the disclosure and the off switch.
+**Basic settings (Connection) and setup:**
 
-### 8. Guardrail and spec updates (AGENTS.md §7, §9)
+- One sentence: "To find each other over the internet, your devices use a few independent services in Europe. They see this device's internet address and when it is in use, never the baby's sound."
+- A "Who are they?" list that expands. Operator names come from the data files, not from locale copy.
 
-- **§7.1:** vetted EU mailboxes and STUN by default with disclosure and an off switch; no third party in the media path except user-chosen TURN.
-- **§7.3:** sealed signaling envelope allowed (standard AEAD, HKDF from the PSK).
-- **§7.8:** applies to the LAN listener in the alpha.
-- **§9:** "Offline LAN" becomes alpha, and "LAN ↔ Internet automatic handoff" is covered by parallel mailboxes. Remove the TURN row's alpha restriction only for user-entered TURN.
+**Advanced:** the switch "Only same Wi-Fi or my own server".
+
+- It acts on its own device: no public relay or STUN is contacted from it.
+- If the peer still announces public mailboxes, the UI shows a hint.
+
+### 9. Cut list and go/no-go
+
+A **go/no-go gate** sits after the core work (tasks 2–3) and before Android and web (5–6).
+
+- **What it tests:** a CLI soak prototype (`scripts/spike/soak`) on the core runs one night on 3 EU relays, plus the spike's unknowns 1–4 (8 h subscriptions, bursts behind one CGNAT IP, tag-only filter, LTE / IPv6-only).
+- **Go:** at least 2 of 3 relays without data loss and setup p95 < 3 s.
+- **If no-go:** the alpha ships with relay mailboxes (self-hosted or LAN) only. Nostr moves to beta, and the owner decides again.
+
+**Deferred regardless:**
+
+- second-PC forwarding (`add-offline-lan`);
+- refreshing the lists at run time;
+- the events-per-hour cap beyond the fixed limit in §3.
+
+**Operator contact:** an owner task before release. Contact the listed operators about acceptable use and logging, and record their answers in the data notes.
 
 ### Discarded alternatives
 
+**From this change:**
+
 - **Project-run public signaling instance as default:** a single operator and single point of failure, and owner workload (owner, 2026-10-23).
-- **Nostr plus a project fallback instance:** better availability, but the owner would run a server anyway.
-- **Public MQTT test brokers, WebTorrent trackers, IPFS/libp2p, Matrix, ntfy.sh, Supabase/Firebase:** see `spike.md` (operators discourage reliance, too few operators, heavy, account-bound, or a cloud vendor).
-- **Signaling over the QR code only (manual two-way exchange):** reconnects at night need a channel without user action.
-- **Remembering the peer's public address for direct reconnects:** NAT mappings expire, CGNAT and DS-Lite prevent inbound connections, and UPnP is rare and risky.
-- **A short authentication string (emojis) instead of a mailbox:** it authenticates but does not deliver messages. It is kept for remote pairing (`DEFERRED`).
-- **Sealing only on Nostr:** two code paths, and our own relay would keep seeing candidates.
-- **Keeping invite v3 with a flat URL list:** cannot say which URL is LAN, relay or Nostr, and so cannot apply the cleartext and admission rules per kind.
+- **Nostr plus a project fallback instance:** the owner would still run a server.
+- **Public MQTT test brokers, WebTorrent trackers, IPFS/libp2p, Matrix, ntfy.sh, Supabase/Firebase:** see `spike.md`.
+- **Signaling over the QR code only:** night-time reconnects need a channel without user action.
+- **Remembering the peer's public address for direct reconnects:** NAT mappings expire, CGNAT and DS-Lite block inbound connections, and UPnP is rare and risky.
+- **A short authentication string instead of a mailbox:** it authenticates but does not deliver. Kept for remote pairing (`DEFERRED`).
+- **Sealing only on Nostr:** two paths, and relays would still see candidates.
+- **Keeping all mailboxes open while connected:** costs battery and exposes the monitoring pattern (owner, 2026-10-23).
+- **Epoch checked on every mailbox:** a wrong clock on an offline phone would break LAN pairing.
+- **Epoch rollover at 00:00 UTC:** falls in the middle of every European night.
+- **Freshness through `since` only:** strfry retention and clock skew make it unsafe.
+- **Envelope nonce supplied by the platform per message:** a sans-IO core cannot request input mid-step. The SplitMix64 PRNG is not cryptographic.
+- **A cap on the parent device by the PSK alone:** a photographed QR code could take over the baby.
+- **Post-pairing key change now:** stronger, but a large crypto addition for the alpha (owner, 2026-10-23; stays `IDEA`).
+- **Lint failure on stale list entries:** would turn CI red by date.
+- **One change for everything:** too large to review and archive (owner, 2026-10-23: split, `add-offline-lan` follows).
+- **Automatic Cloudflare TURN like Signal; own EU TURN:** a US operator or a server run by the owner. Decided for beta with data.
+
+**Carried over from `add-stun-server-choice` (withdrawn by this change):**
+
+- Google or big-tech STUN (a third party sees IP and usage times).
+- A single hard-coded fallback (no user choice, a single point of trust).
+- Only manual `host:port` entry (too technical).
+- "Never automatic" (superseded by the owner, 2026-10-23: automatic and disclosed).
 
 ## Risks / Trade-offs
 
-| Risk                                                                          | Mitigation                                                                                                                        |
-| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| strfry relays keep events for about 5 min and serve them to anyone            | sealed envelopes, daily-rotating tags and keys, padding                                                                           |
-| Rate limits, and shared CGNAT IPs exhausting per-IP limits                    | a per-mailbox event budget, bundled candidates, parking relays, 3 relays per pair, and our relay as the fallback for self-hosters |
-| Relay churn: a relay the invite named disappears                              | the other two relays carry on; a re-pair picks fresh ones; the copy on persistent failure suggests re-pairing                     |
-| Silent drops (`OK` without delivery)                                          | application-level acks (answer to offer, answer to presence) and resend on the other mailboxes                                    |
-| Every relay used and the STUN operators learn IPs and timing (sleep patterns) | EU operators only, 3 relays, daily rotation, disclosure, and "Use only my own server"                                             |
-| Clock skew around the epoch change                                            | ±15 min dual-epoch listening                                                                                                      |
-| Mailbox outage at night                                                       | link supervision escalates exactly as for a relay outage today; no new alarm logic                                                |
-| Cross-network pairs without a direct path fail in the alpha                   | honest copy, the local diagnostics, and a TURN decision for beta                                                                  |
-| Larger core attack surface (event parsing, AEAD)                              | parser lint denies, proptests, conformance vectors through every binding, a fuzz target for envelope and event parsing            |
+| Risk                                                                                                   | Mitigation                                                                                                                                                       |
+| ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Volunteer relays disappear or start requiring auth                                                     | 3+2 relays per pair, the mailbox update over the DataChannel, the build minimums, the weekly job, operator contact, and the go/no-go fallback to relay mailboxes |
+| strfry retention                                                                                       | session-bound envelopes, daily rotation, padding                                                                                                                 |
+| Per-IP rate limits behind CGNAT                                                                        | pacing, the budget, presence-gated attempts, parking with backoff                                                                                                |
+| All mailboxes dead while connected                                                                     | the 30-minute reachability check and a calm hint                                                                                                                 |
+| A third party counts GuardedSleep setups through the fixed kind; the 3-relay set is stable across days | recorded in the threat model; the mailbox update allows rotating the set                                                                                         |
+| No forward secrecy for signaling                                                                       | recorded in the threat model; envelopes never contain audio                                                                                                      |
+| Persona A (venue Wi-Fi, mobile ↔ mobile) is served only where a direct path exists                     | the proposal claims A only partly; a hardware round measures it for the beta TURN decision                                                                       |
+| Larger parser surface (NIP-01, AEAD)                                                                   | parser lint denies, the ASCII-only content rule, 64 KiB caps, fuzz targets for envelopes and NIP-01 frames                                                       |
 
 ## Migration Plan
 
-Nothing is released, so there is no data migration.
+Nothing is released.
 
-- **Order of work:** core (envelope, Nostr, mailbox set, invite v4) → relay and server → Android → web. LAN pieces in parallel after the mailbox set.
-- **Rollback:** the own-relay mailbox alone reproduces today's behaviour, with "Use only my own server" on.
+- **Order:** core (inputs, envelope, relay mailbox with sealing, invite v4, presence, Nostr) → go/no-go → server → Android → web → `add-offline-lan`.
+- **Rollback:** relay mailboxes only.
 
-## Open Questions
+## Review response (critical review 2026-10-23)
 
-- **Exact ephemeral kind number:** pick one not in a registry or in known apps, and record it in the spec at implementation time. It does not change the approach.
+| Finding                                                                                | Where it is answered                                                                                                                                             |
+| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Link-supervision relied on membership                                                  | `specs/link-supervision`: MODIFIED offer direction, accepted senders, scheduling, errors, causes, deliberate stop, authenticated stop, transport liveness, clock |
+| No wall clock and no CSPRNG                                                            | §2, §3; `specs/link-supervision` "Clock and time jumps" and "Deterministic attempt identity"                                                                     |
+| Stop replay through retention                                                          | §2 session binding; `specs/signaling-mailboxes`                                                                                                                  |
+| Unauthenticated envelope id                                                            | §2                                                                                                                                                               |
+| Epoch check on LAN                                                                     | §2, §3                                                                                                                                                           |
+| `since` versus clock skew                                                              | §3                                                                                                                                                               |
+| Parent cap without a relay room                                                        | §4; `specs/pairing`                                                                                                                                              |
+| Room id in clear on the LAN                                                            | moved to `add-offline-lan` (LAN admission without the room id in clear)                                                                                          |
+| §7.1 and §7.3 wording                                                                  | §2, §7 exact texts                                                                                                                                               |
+| Parking per session                                                                    | §3 backoff                                                                                                                                                       |
+| Budget versus "never give up"                                                          | §3 presence gating and cap behaviour                                                                                                                             |
+| Key separation                                                                         | §2 table                                                                                                                                                         |
+| Untestable spec wording                                                                | `specs/signaling-mailboxes` "Relay-visible data", tasks 7.1                                                                                                      |
+| Overlaps with `rebuild-web-client`                                                     | its delta is edited to be version-agnostic and to allow the curated `connect-src`                                                                                |
+| Missing cut list                                                                       | §9                                                                                                                                                               |
+| Invite size                                                                            | §5 (≤ 300 bytes, scan test, drop order)                                                                                                                          |
+| Task size and order                                                                    | `tasks.md` groups 2–4                                                                                                                                            |
+| Dependency defaults                                                                    | §2, §3                                                                                                                                                           |
+| Linkability, padding, link-local                                                       | §3 kind, §2 ladder, §5                                                                                                                                           |
+| Scope and budget                                                                       | split; §9 deferrals; maintenance estimate of 1–2 h per month in the proposal                                                                                     |
+| Freshness lint                                                                         | §6                                                                                                                                                               |
+| Deleting folded changes                                                                | `add-stun-server-choice` archived as withdrawn; `add-offline-lan` retargeted                                                                                     |
+| ADR-018 tester setup                                                                   | task 1.1 amends the context note and the hardware-test rounds                                                                                                    |
+| Off switch placement and label                                                         | §8                                                                                                                                                               |
+| "No direct connection" copy                                                            | §7                                                                                                                                                               |
+| LAN address change, second PC, PC browser launch, mDNS candidates, Android permissions | `add-offline-lan`                                                                                                                                                |
+| All mailboxes down while connected; causes over the set                                | §1; `specs/link-supervision` "Never give up"                                                                                                                     |
+| STUN fallback versus parallel                                                          | §7, aligned with the proposal                                                                                                                                    |
+| Resend versus fan-out                                                                  | §3 delivery                                                                                                                                                      |
+| Untestable scenarios                                                                   | `specs/*`, with timings named                                                                                                                                    |
+| Storage requirement                                                                    | `specs/pairing` "Encrypted storage"                                                                                                                              |
+| Operator consent                                                                       | §9                                                                                                                                                               |

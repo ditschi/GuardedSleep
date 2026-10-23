@@ -9,33 +9,38 @@
 
 ### Requirement: Default signaling configuration
 
-Release builds SHALL work without any configured signaling URL: the baby device SHALL fill the invite with its LAN mailbox when one runs and three public relays from the curated list (`signaling-mailboxes`), unless "Use only my own server" is on. A user MAY add own relay URLs in Advanced; they are added to the invite as `relay` mailboxes. Our relay SHALL treat the `signal` payload as an opaque sealed envelope.
+Release builds SHALL work without any configured signaling URL: the baby unit SHALL fill the invite with Nostr relays from the curated list (`signaling-mailboxes`), unless "Only same Wi-Fi or my own server" is on. A user MAY add own relay URLs in Advanced; they are added to the invite as own-relay mailboxes. The relay SHALL treat every `signal` payload as an opaque sealed envelope.
 
 #### Scenario: Fresh release install
 
-- **WHEN** a release build with no configured signaling URL starts pairing on the baby device with internet
-- **THEN** pairing works through the curated public relays without any manual input
+- **WHEN** a release build with no configured signaling URL starts pairing on the baby unit with internet (in CI: against the local Nostr test relay)
+- **THEN** pairing completes through the public relays without any manual input
 
 #### Scenario: Own server only, nothing configured
 
-- **WHEN** "Use only my own server" is on and no own relay is configured
-- **THEN** pairing works only through the LAN mailbox, and without one the baby device explains that an own server or the same Wi-Fi is needed
+- **WHEN** "Only same Wi-Fi or my own server" is on and no own relay is configured
+- **THEN** the baby unit explains that pairing needs the same Wi-Fi or an own server, and no public service is contacted
 
 ### Requirement: Client ICE configuration
 
-Clients SHALL use the STUN service of a configured own relay when there is one, plus at most two STUN servers of different operators from the curated EU list, unless "Use only my own server" is on. They SHALL NOT contact Google or other STUN servers outside the list. The operators in use SHALL be named in setup and settings. Clients SHALL use TURN only when the user has entered a TURN server. A VPN SHALL get no special handling: media MAY use VPN candidates.
-
-#### Scenario: Default install
-
-- **WHEN** a release build with default settings sets up an attempt
-- **THEN** STUN requests go only to the two listed operators named in the connection settings
+With an own relay mailbox configured, clients SHALL use only that relay's STUN service. Otherwise they SHALL use the first two STUN servers of distinct operators from the curated EU list, named in the connection settings, unless "Only same Wi-Fi or my own server" is on, which allows no public STUN at all. Clients SHALL NOT contact Google or other STUN servers outside the list, and SHALL use TURN only when the user has entered a TURN server. A VPN SHALL get no special handling: media MAY use VPN candidates.
 
 #### Scenario: Public STUN not chosen
 
-- **WHEN** "Use only my own server" is on
-- **THEN** no request goes to any STUN server other than the configured own relay
+- **WHEN** "Only same Wi-Fi or my own server" is on
+- **THEN** no request goes to any STUN server other than a configured own relay
+
+#### Scenario: Default install
+
+- **WHEN** a release build with default settings and no own relay sets up an attempt
+- **THEN** STUN requests go only to the two listed operators named in the connection settings
+
+#### Scenario: Google STUN in the code
+
+- **WHEN** a change adds a Google or other unlisted public STUN host to client source or configuration
+- **THEN** `just lint` fails
 
 #### Scenario: No direct path between the networks
 
-- **WHEN** an attempt fails because no candidate pair connects and no TURN server is configured
-- **THEN** the parent device says that there is no direct connection between these networks and offers "use the same Wi-Fi" and "add a TURN server"
+- **WHEN** attempts fail because no candidate pair connects and no TURN server is configured
+- **THEN** the level-2 troubleshooter shows the `media_blocked` cause in plain words with "Try again" and "Put both on the same Wi-Fi", the TURN setting only under Advanced, and the alarm is not replaced

@@ -2,45 +2,64 @@
 
 ## Purpose
 
-Carry the signaling between a paired baby device and parent device over several rendezvous channels at once (our relay, a LAN listener or local PC relay, and public Nostr relays), so that pairing and recovery work without a manual address, without internet on one network, and across networks, while every channel operator learns only connection metadata.
+Carry the signaling between a paired baby device and parent device over several rendezvous channels at once (our relay, public Nostr relays and, with `offline-lan`, a LAN listener), so that pairing and recovery need no manual address and no single operator, while every operator learns only connection metadata and can never mute escalation or take over a pairing.
 
 ## ADDED Requirements
 
 ### Requirement: Parallel mailboxes
 
-The core SHALL keep a set of mailboxes for a pairing: the ones named in the invite and any user-configured own relay. It SHALL send every signaling envelope to all open mailboxes and SHALL accept the first copy of an envelope from any mailbox, dropping later copies with the same envelope id. Losing one mailbox SHALL NOT close an attempt or the link while another mailbox reaches the peer.
+The core SHALL keep a set of mailboxes for a pairing (the ones named in the invite or a later mailbox update, plus configured own relays) and SHALL send every signaling envelope to all open mailboxes. It SHALL process the first copy of an envelope from any mailbox and drop later copies with the same envelope id. Losing one mailbox SHALL NOT close an attempt or the link while another mailbox reaches the peer.
 
 #### Scenario: One relay goes down during setup
 
 - **WHEN** one of three mailboxes closes while an attempt is being set up
-- **THEN** the offer and answer still arrive through the remaining mailboxes and the attempt verifies
+- **THEN** the offer and answer still arrive through the remaining mailboxes and the attempt verifies within the 20 s attempt limit
 
 #### Scenario: Duplicate delivery
 
 - **WHEN** the same envelope arrives through two mailboxes
 - **THEN** the core processes it once
 
-#### Scenario: All mailboxes unreachable
+### Requirement: Mailboxes closed while connected
 
-- **WHEN** no mailbox reaches the peer while the link is down
-- **THEN** link supervision escalates to the parent exactly as for a relay outage, and the cause names the connection to the servers
+While an attempt is verified, the core SHALL close all internet mailboxes and SHALL open them briefly every 30 minutes to check reachability without publishing anything. If no mailbox is reachable it SHALL emit the hint `recovery_path_unavailable`, which the UI shows calmly and never as an alarm. On loss of the verified attempt the core SHALL reopen every mailbox at once.
+
+#### Scenario: A whole night of stable monitoring
+
+- **WHEN** a pairing stays verified for eight hours
+- **THEN** each device has published only the events of the first attempt to public relays, and holds no internet mailbox socket between reachability checks
+
+#### Scenario: Every relay disappears during the night
+
+- **WHEN** no mailbox is reachable at a reachability check while monitoring is verified
+- **THEN** the parent shows the calm hint that reconnecting would not work right now, and monitoring continues
+
+#### Scenario: Loss after the mailboxes were closed
+
+- **WHEN** the verified attempt is lost
+- **THEN** the core reopens the mailboxes immediately and recovery follows the normal attempt schedule and escalation
 
 ### Requirement: Sealed signaling envelope
 
-Every signaling message (presence, offer, answer, candidates, stop) on every mailbox SHALL be sealed with an authenticated cipher under a key derived from the PSK, with the sender role, the epoch and the attempt id authenticated as associated data and the plaintext padded to a fixed size bucket. The pairing proof and the DTLS fingerprint binding SHALL remain required.
+Every signaling message on every mailbox SHALL be sealed with XChaCha20-Poly1305 under a key used only for the envelope and derived from the PSK, with a nonce from a core CSPRNG seeded by the platform; the nonce SHALL be the envelope id. Sender role and message class SHALL be authenticated, and the plaintext SHALL be padded to a size bucket per message class. The pairing proof and the DTLS fingerprint binding SHALL remain required.
 
 #### Scenario: Operator reads the traffic
 
 - **WHEN** a mailbox operator stores and inspects every message of a session
-- **THEN** it finds no SDP, ICE candidate, fingerprint, LAN address or device name, and all messages of a session have the same length
+- **THEN** it finds no SDP, ICE candidate, fingerprint, LAN address, parent id or device name, and all messages of one class have the same length
 
-### Requirement: Envelope rejection
+### Requirement: Session-bound freshness
 
-A receiver SHALL reject envelopes that fail authentication, carry its own role, lie outside the current epoch window, or repeat an envelope id it has already seen, without changing state.
+Each device SHALL draw a fresh session nonce at every start and process restart and announce it in `here`. Every message other than `here` SHALL carry the recipient's current session nonce inside the ciphertext, and a receiver SHALL drop messages for another session. A receiver SHALL also drop envelopes that fail authentication, carry its own role, or repeat an envelope id within the replay window.
+
+#### Scenario: Stop replayed after a parent restart
+
+- **WHEN** a relay serves the baby's earlier stop notice to a parent that has just restarted
+- **THEN** the parent ignores it and escalation continues as normal
 
 #### Scenario: Replayed envelope
 
-- **WHEN** an attacker resends a captured envelope
+- **WHEN** an attacker resends a captured envelope within the same session
 - **THEN** the receiver drops it without changing state
 
 #### Scenario: Reflected envelope
@@ -48,62 +67,94 @@ A receiver SHALL reject envelopes that fail authentication, carry its own role, 
 - **WHEN** an attacker sends a parent's envelope back to the parent
 - **THEN** it is rejected because it carries the receiver's own role
 
-### Requirement: Rotating mailbox address
+### Requirement: Rotating Nostr address
 
-On public relays the address used to find a pairing's messages (tag and signing keys) SHALL be derived from the PSK and the UTC day, and SHALL change every day. Both devices SHALL also accept the neighbouring day for 15 minutes around midnight. Nothing derived from the PSK other than these daily values SHALL be sent to a public relay.
+On public relays, the tag and signing keys SHALL be derived from the PSK and a daily epoch that changes at 12:00 UTC. Both devices SHALL subscribe to both epochs during the hour around the change and SHALL re-subscribe at the change. Subscriptions SHALL look back 15 minutes. The epoch SHALL be checked only for Nostr addressing, never on relay or LAN mailboxes, and a device without a known wall clock SHALL open no Nostr mailbox.
 
-#### Scenario: Two nights in a row
+#### Scenario: Two days in a row
 
-- **WHEN** a pairing monitors on two consecutive nights
-- **THEN** the tags and public keys used on the public relays differ between the nights
+- **WHEN** a pairing monitors on two consecutive days
+- **THEN** the tags and public keys used on the public relays differ between the days
 
-#### Scenario: Clock skew at midnight
+#### Scenario: Clock five minutes off at the epoch change
 
-- **WHEN** one device's clock is five minutes ahead at midnight
-- **THEN** the devices still exchange envelopes
+- **WHEN** one device's clock is five minutes ahead around 12:00 UTC and the link is lost
+- **THEN** the devices still exchange envelopes and the attempt verifies
+
+#### Scenario: Old phone with a wrong clock on a relay mailbox
+
+- **WHEN** a device's clock is a day off and the pairing has an own relay mailbox
+- **THEN** pairing and recovery through the relay work, and the device shows that the internet services need a correct clock
+
+### Requirement: Relay-visible data
+
+A public relay SHALL receive only: the daily tag, the daily public keys, BIP-340 signatures, `created_at`, and ciphertext under the envelope key. Our relay SHALL receive only the derived room id, protocol fields and ciphertext. No other PSK-derived value, no PSK and no plaintext signaling SHALL leave the device.
+
+#### Scenario: Captured relay traffic
+
+- **WHEN** the bytes a device sends to a public relay during pairing and recovery are captured
+- **THEN** they contain no value outside the allowed list
 
 ### Requirement: Event budget on public relays
 
-Public relays SHALL carry presence and attempt setup only. A device SHALL send at most six events per attempt and side, SHALL bundle ICE candidates, SHALL announce presence only at start, after a network change and with backoff while waiting for the peer, and SHALL NOT send heartbeats through public relays. A relay that refuses events (blocked, restricted, authentication or proof-of-work required, rate limited) SHALL be left out for the rest of the session.
+Public relays SHALL carry presence and attempt setup only, never heartbeats. A device SHALL send at most 2 events per second per relay, at most 6 events per attempt and side with ICE candidates bundled, and at most 120 events per hour per mailbox, after which that mailbox carries only presence until the hour ends. Over Nostr an attempt SHALL start only after a fresh `here` from the peer. Reaching a limit SHALL NOT stop escalation.
 
-#### Scenario: A whole night of monitoring
+#### Scenario: One-hour outage
 
-- **WHEN** a pairing monitors for eight hours without a reconnect
-- **THEN** each device has sent only its start-up events to the public relays
+- **WHEN** the baby device is off for an hour while the parent monitors
+- **THEN** the parent sends no more than 120 events per relay in that hour, keeps escalating, and recovers through presence when the baby returns
+
+### Requirement: Relay parking
+
+A relay that refuses events (blocked, restricted, authentication or proof of work required, rate limited), delivers invalid or forged events, or floods more than 60 events per minute SHALL be left out with a backoff of 1, 5 and 30 minutes and then retried.
 
 #### Scenario: Rate-limited relay
 
 - **WHEN** a relay answers an event with a rate-limit notice
-- **THEN** the device stops using that relay for the session and carries on with the others
+- **THEN** the device stops using it for one minute, carries on with the other relays, and retries it afterwards
+
+#### Scenario: Malicious relay floods forged events
+
+- **WHEN** a relay delivers hundreds of events with invalid signatures in a minute
+- **THEN** the device parks the relay and its monitoring is not disturbed
 
 ### Requirement: Delivery is acknowledged by the peer
 
-A relay's acceptance of an event SHALL NOT count as delivery. An offer or presence announcement that gets no answer from the peer within the core's timeout SHALL be resent through the remaining mailboxes as part of the core's recovery.
+A relay's acceptance of an event SHALL NOT count as delivery. An offer, answer or `request_offer` without a reply within 6 seconds SHALL be resent once, with the same envelope id, to every open mailbox; the attempt SHALL still be abandoned after 20 seconds.
 
 #### Scenario: Relay accepts but never delivers
 
-- **WHEN** a relay acknowledges the parent's events but never delivers them
-- **THEN** the attempt is set up through the other mailboxes, and the parent shows no error while one mailbox works
+- **WHEN** a relay acknowledges the parent's events but never delivers them and a second relay works
+- **THEN** the attempt verifies through the second relay and the parent shows no error
+
+### Requirement: Mailbox update
+
+After verification the baby device MAY send its current mailbox set over the DataChannel, and the parent device SHALL replace its stored set with it. Each device SHALL additionally use up to two relays from its own shipped list, chosen deterministically from the PSK, and SHALL use a received relay host even if its own list does not contain it.
+
+#### Scenario: A relay of the invite shuts down
+
+- **WHEN** a relay named at pairing time stops working and the baby's app update ships a new list
+- **THEN** the baby sends the new set after the next verification, and later recoveries use it without re-pairing
 
 ### Requirement: Curated public services
 
-Public relays and STUN servers SHALL come only from curated lists shipped with the app. Each entry SHALL name the operator, the country, the privacy policy where one exists, and the date it was last vetted. Entries SHALL be operated in the EU, EEA or Switzerland, and entries older than twelve months SHALL be dropped. The baby device SHALL pick three relays from different operators for a pairing.
+Public relays and STUN servers SHALL come only from curated lists shipped with the app. Each entry SHALL name the operator, the country, the privacy policy where one exists, and the date it was last vetted. Entries SHALL be operated in the EU, EEA or Switzerland. A build SHALL fail with fewer than 6 usable relays from at least 4 operators or fewer than 2 STUN servers from distinct operators. The baby device SHALL pick relays from different operators.
 
-#### Scenario: Stale entry
+#### Scenario: List too small
 
-- **WHEN** a list entry was last vetted more than twelve months ago
-- **THEN** it is not shipped in the build
+- **WHEN** the relay list has usable entries from only three operators
+- **THEN** the build fails and names the shortfall
 
 #### Scenario: Two relays of one operator
 
 - **WHEN** two list entries share an operator
 - **THEN** a pairing never gets both of them
 
-### Requirement: Disclosure and own-server-only
+### Requirement: Disclosure and off switch
 
-The setup screen and the connection settings SHALL name the operators of the public relays and STUN servers in use, saying that they see the device's internet address and when it connects and never hear the baby. A switch "Use only my own server" SHALL turn off all public relays and public STUN, after which only configured own relays and LAN mailboxes are used.
+Setup and the Basic connection settings SHALL say in one sentence that independent services in Europe help the devices find each other, seeing the internet address and when the device is in use but never the baby's sound, with an expandable list of operators from the data files. An Advanced switch "Only same Wi-Fi or my own server" SHALL stop the device from contacting any public relay or STUN server; if the peer still announces public mailboxes the device SHALL show a hint.
 
 #### Scenario: Privacy-minded parent
 
-- **WHEN** a parent turns on "Use only my own server" and has no own relay configured
-- **THEN** no public relay or STUN server is contacted, and setup explains that pairing then works only on the same Wi-Fi or with an own server
+- **WHEN** a parent turns on "Only same Wi-Fi or my own server" and has no own relay
+- **THEN** the parent device contacts no public relay or STUN server, and explains that monitoring then works only on the same Wi-Fi or with an own server
