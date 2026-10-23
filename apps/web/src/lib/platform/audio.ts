@@ -227,7 +227,7 @@ export interface PlaybackDeps {
   gate: SoundGate;
   timers: Timers;
   /** Chromium delivers a remote WebRTC stream to Web Audio only while a media element holds it. */
-  createSink(): { srcObject: MediaStream | null; muted: boolean; play(): Promise<void> };
+  createSink(): { srcObject: MediaProvider | null; muted: boolean; play(): Promise<void> };
 }
 
 export function createRemotePlayback(deps: PlaybackDeps): RemotePlayback {
@@ -239,7 +239,7 @@ export function createRemotePlayback(deps: PlaybackDeps): RemotePlayback {
   mute.connect(deps.gate.master());
   let current: {
     source: MediaStreamAudioSourceNode;
-    sink: { srcObject: MediaStream | null };
+    sink: { srcObject: MediaProvider | null };
   } | null = null;
 
   const detach = (): void => {

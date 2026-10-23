@@ -26,7 +26,7 @@ Greenfield build of `apps/web` (design.md). `apps/mobile` is read-only reference
 
 - [x] 4.1 Link driver: monotonic clock, `WasmLink` input/action loop, signaling WebSocket, one `RTCPeerConnection` per attempt, DTLS fingerprint from `getStats()` (`attempt_dtls_fingerprint`), ICE servers = the relay's built-in STUN only (no sipgate/linphone/Google defaults). Fake-environment tests for attempt lifecycle, reconnect and fingerprint report. Verify: Vitest.
 - [x] 4.2 Audio: baby microphone capture with RMS reporting (`audio_level`) and mic enable/disable; parent playback for listen and alerts; alert tones after the sound-unlock gesture. Verify: Vitest with fake media.
-- [ ] 4.3 Map core status/events onto the contract stores (link phase, level, cause, last contact, peer status, noise alert, missed events, listen, snooze, probe). Verify: Vitest table tests per event.
+- [x] 4.3 Map core status/events onto the contract stores (link phase, level, cause, last contact, peer status, noise alert, missed events, listen, snooze, probe). Verify: Vitest table tests per event.
 
 ## 5. Pairing screens
 
