@@ -21,6 +21,7 @@ Sources: ADR-019 (permanent full web client, Rust as the only protocol source), 
 - **Background-loss detection** (owner, 2026-10-23): a page cannot alert from the background, and a wake-up push would need a third-party push service (AGENTS.md §7.1). The client instead reduces and reports the loss: a system notification when the monitoring page becomes hidden (when the user granted notifications in parent setup), a leave-page confirmation while monitoring, a warning when the wake lock is released, and on return the background warning with the core's missed-events summary. Setup copy recommends the Android app for an all-night parent device.
 - **Browser security**: a CSP delivered as a header by both hosts and as a `<meta>` fallback: `default-src 'self'`, `script-src 'self' 'wasm-unsafe-eval'`, `connect-src 'self'` plus the configured `ws:`/`wss:` signaling origins, `img-src 'self' data: blob:`, `object-src 'none'`, `base-uri 'none'`, `frame-ancestors 'none'`, `require-trusted-types-for 'script'` with a single named policy. No inline scripts (the theme bootstrap is an external script that runs before first paint), no third-party origins.
 - **QR**: generation with `qrcode` (error correction level M, no logo), scanning with the native `BarcodeDetector` where available and `@zxing/browser` as fallback; the camera is requested only on the scan screen.
+- **Vitest 5** (owner, 2026-10-23): `apps/web` starts on Vitest 5 (current `latest` 5.0.5), and `packages/core-wasm` (5 tests, no mocks) moves to it in the same step. `apps/mobile` moves only if its 237 tests pass unchanged; otherwise it stays on 4.x until group 9 deletes it. pnpm resolves a version per package, so the workspace can carry both for that period.
 - **Image tags**: the web image keeps its tag rules until Release Please (T1) introduces the `app` component; a later change modifies `distribution`.
 
 ## Discarded alternatives
@@ -38,6 +39,8 @@ Sources: ADR-019 (permanent full web client, Rust as the only protocol source), 
 - **Logo in the QR code** (owner): denser code that is harder to scan when inverted at ≤ 50 % brightness.
 - **Web Share button for the code**: exposes the long-term key in chat history; waits for a post-pairing key change.
 - **Keep the tab alive with silent audio**: unreliable across browsers and drains the battery.
+- **Start `apps/web` on Vitest 4.x**: the known version, but a planned major upgrade right after the rebuild.
+- **Adapt `apps/mobile` tests to Vitest 5**: effort spent on a frozen client that group 9 deletes.
 - **Web Push to wake a closed parent tab**: needs a third-party push service in the alert path.
 
 ## Risks / Trade-offs
