@@ -123,7 +123,7 @@ export const BATTERY_CRITICAL_PCT = 5;
  * Only one full screen at a time: connection lost, then noise alert, then the baby device
  * stopped, then its battery (section 5). "I'm checking" hides the lost-connection screen for the
  * mute period; the ambient bar keeps showing the state. `dismissed` holds the kinds the user
- * closed with OK for the current situation.
+ * closed for the current situation ("Stop sound" closes the noise alert, OK the others).
  */
 export function fullScreenOf(
   p: ParentMonitorState,
@@ -135,20 +135,37 @@ export function fullScreenOf(
   const acknowledged =
     link.acknowledgedUntilElapsedMs !== null && link.acknowledgedUntilElapsedMs > nowElapsedMs;
   if (escalating && link.level >= 2 && !acknowledged) return "link_lost";
-  if (p.noiseAlertActive) return "noise";
+  if (p.noiseAlertActive && !dismissed.has("noise")) return "noise";
   if (link.phase === "failed_needs_user") return "needs_pairing";
   if (link.phase === "peer_stopped" && !dismissed.has("baby_stopped")) return "baby_stopped";
+  if (batteryCritical(p) && !dismissed.has("battery_critical")) return "battery_critical";
+  return null;
+}
+
+/** The baby device is about to switch off and is not charging. */
+export function batteryCritical(p: ParentMonitorState): boolean {
   const pct = p.peer.batteryPct;
-  if (
-    link.phase === "connected" &&
+  return (
+    p.link.phase === "connected" &&
     pct !== null &&
     pct < BATTERY_CRITICAL_PCT &&
-    p.peer.charging !== true &&
-    !dismissed.has("battery_critical")
-  ) {
-    return "battery_critical";
-  }
-  return null;
+    p.peer.charging !== true
+  );
+}
+
+/**
+ * Drops the dismissals whose situation is over, so the next noise event, stop or low battery
+ * shows its full screen again. Returns the same set when nothing changed.
+ */
+export function pruneDismissed(
+  p: ParentMonitorState,
+  dismissed: ReadonlySet<FullScreenKind>,
+): ReadonlySet<FullScreenKind> {
+  const next = new Set(dismissed);
+  if (!p.noiseAlertActive) next.delete("noise");
+  if (p.link.phase !== "peer_stopped") next.delete("baby_stopped");
+  if (!batteryCritical(p)) next.delete("battery_critical");
+  return next.size === dismissed.size ? dismissed : next;
 }
 
 // ---- chips -----------------------------------------------------------------------------------

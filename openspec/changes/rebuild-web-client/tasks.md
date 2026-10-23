@@ -36,8 +36,8 @@ Greenfield build of `apps/web` (design.md). `apps/mobile` is read-only reference
 
 ## 6. Monitoring screens
 
-- [ ] 6.1 S07 baby monitor (status, mic level, battery from the Battery API where present, silence `unknown`, keep-awake card) and S09 parent monitor (ambient bar with colour + icon + text, headline, meter, chips, Listen ≥ 72 px, Snooze, Test alert, More, Stop in More) per `alpha-ux-flows.md` §4–§5. Verify: Playwright with fake media; axe has no violations.
-- [ ] 6.2 S10 noise alert and S11 link alarm in page, priority per §5 (one full-screen at a time), document title flash, Notification API when granted. Verify: Playwright `05`-style noise-alert and link-loss tests.
+- [x] 6.1 S07 baby monitor (status, mic level, battery from the Battery API where present, silence `unknown`, keep-awake card) and S09 parent monitor (ambient bar with colour + icon + text, headline, meter, chips, Listen ≥ 72 px, Snooze, Test alert, More, Stop in More) per `alpha-ux-flows.md` §4–§5. Verify: Playwright with fake media; axe has no violations.
+- [x] 6.2 S10 noise alert and S11 link alarm in page, priority per §5 (one full-screen at a time), document title flash, Notification API when granted. Verify: Playwright `05`-style noise-alert and link-loss tests.
 - [x] 6.3 S12 settings (signaling URL list, theme, sensitivity on the baby device, forget pairing). Verify: Playwright settings flow.
 
 ## 7. Browser-specific behaviour

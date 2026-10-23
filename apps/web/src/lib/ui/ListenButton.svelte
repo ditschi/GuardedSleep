@@ -25,7 +25,8 @@
 
   function onpointerdown(event: PointerEvent): void {
     if (!enabled || event.button !== 0) return;
-    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    // Keeps the release and the upward drag coming even when the finger leaves the button.
+    (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
     pointerId = event.pointerId;
     startY = event.clientY;
     if (mode === "locked") {

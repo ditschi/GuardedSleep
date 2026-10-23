@@ -380,6 +380,10 @@
   .gs-ambient .gs-status-bar {
     flex-wrap: wrap;
   }
+  .gs-status-bar .gs-btn[data-variant="text"] {
+    color: inherit;
+    text-decoration: underline;
+  }
   .gs-ambient__text {
     flex: 1;
     min-width: 8rem;
@@ -474,6 +478,14 @@
   }
   .gs-fullscreen .gs-status-bar {
     border-radius: var(--gs-radius-l);
+  }
+  .gs-fullscreen__top {
+    margin-block-start: var(--gs-space-5);
+  }
+  .gs-fullscreen__top h1 {
+    font-size: 2rem;
+    line-height: 1.2;
+    font-weight: 700;
   }
   .gs-fullscreen__hero {
     display: flex;
