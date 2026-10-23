@@ -1,7 +1,18 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
+  import { provideController, type AppController } from "./lib/contract";
+  import { resolveLocale } from "./lib/i18n/bundles";
   import { locale, t } from "./lib/i18n/store";
   import { createRouter, focusRouteHeading, formatDocumentTitle, type RouteId } from "./lib/router";
+  import { applyTheme, resolveTheme } from "./lib/theme";
+
+  let { controller }: { controller: AppController } = $props();
+
+  // The controller never changes for the lifetime of the page, so it is read once.
+  // svelte-ignore state_referenced_locally -- the controller prop is fixed for the page's life
+  provideController(controller);
+  // svelte-ignore state_referenced_locally -- the controller prop is fixed for the page's life
+  const { app, settings } = controller;
 
   const router = createRouter(window);
   const route = router.route;
@@ -23,6 +34,16 @@
     lastRoute = id;
   });
 
+  // Settings drive the language (null = follow the browser) and the theme; the baby device
+  // switches to the dim theme while it monitors.
+  $effect(() => {
+    locale.set(resolveLocale($settings.language, navigator.languages));
+  });
+  $effect(() => {
+    const dim = $app.role === "baby" && $app.monitoring;
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    applyTheme(document, resolveTheme($settings.theme, prefersDark, dim));
+  });
   $effect(() => {
     document.documentElement.lang = $locale;
   });
