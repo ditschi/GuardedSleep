@@ -37,3 +37,15 @@ export function applyTheme(doc: Document, theme: AppliedTheme): void {
   doc.documentElement.dataset.theme = theme;
   doc.querySelector('meta[name="theme-color"]')?.setAttribute("content", THEME_COLOR[theme]);
 }
+
+/**
+ * Remembers the theme setting for the next visit: `theme-boot.js` reads it before first paint.
+ * Storage can be blocked; the setting then lasts for this page only.
+ */
+export function storeThemeSetting(storage: Pick<Storage, "setItem">, setting: ThemeSetting): void {
+  try {
+    storage.setItem(THEME_STORAGE_KEY, setting);
+  } catch {
+    // Private window or site data off: nothing to do.
+  }
+}

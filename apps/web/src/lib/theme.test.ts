@@ -4,6 +4,7 @@ import {
   isThemeSetting,
   resolveTheme,
   THEME_COLOR,
+  storeThemeSetting,
   THEME_STORAGE_KEY,
   type ThemeSetting,
 } from "./theme";
@@ -104,5 +105,26 @@ describe("theme-boot.js agrees with resolveTheme", () => {
     });
     runBoot();
     expect(document.documentElement.dataset.theme).toBe("dark");
+  });
+});
+
+describe("storeThemeSetting", () => {
+  it("writes the setting under the key the boot script reads", () => {
+    const set = vi.fn();
+    storeThemeSetting({ setItem: set }, "light");
+    expect(set).toHaveBeenCalledWith(THEME_STORAGE_KEY, "light");
+  });
+
+  it("carries on when storage is blocked", () => {
+    expect(() =>
+      storeThemeSetting(
+        {
+          setItem: () => {
+            throw new DOMException("blocked", "SecurityError");
+          },
+        },
+        "dark",
+      ),
+    ).not.toThrow();
   });
 });
