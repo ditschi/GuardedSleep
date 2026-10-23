@@ -39,6 +39,32 @@ class PairingTest {
     }
 
     @Test
+    fun parsedInviteCarriesTheCoreValues() {
+        val parsed = PairingPayload.parse(payload(x = now / 1000 + 5), now) as Result.Ok
+        assertEquals(PairingPayload.b64(psk), parsed.payload.pskB64url)
+        assertEquals(
+            listOf("ws://10.0.2.2:8787", "wss://a.example/sig"),
+            parsed.payload.signalingUrls,
+        )
+        assertEquals(now / 1000 + 5, parsed.payload.expiresAtEpochSec)
+    }
+
+    @Test
+    fun expiryBoundaryIsExclusive() {
+        assertTrue(PairingPayload.parse(payload(x = now / 1000 + 1), now) is Result.Ok)
+        assertEquals(PairingError.EXPIRED, rejected(payload(x = now / 1000)))
+    }
+
+    @Test
+    fun rejectsMissingExpiryAndBadUrlHost() {
+        assertEquals(
+            PairingError.NOT_OUR_CODE,
+            rejected("""{"v":3,"k":"${PairingPayload.b64(psk)}","s":["ws://h"]}"""),
+        )
+        assertEquals(PairingError.NOT_OUR_CODE, rejected(payload(s = """["ws:///path"]""")))
+    }
+
+    @Test
     fun acceptsPastedWhitespace() {
         assertTrue(PairingPayload.parse("  \n${payload()}\n ", now) is Result.Ok)
     }

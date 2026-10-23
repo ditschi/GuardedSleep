@@ -3,11 +3,15 @@ package org.guardedsleep.app.pairing
 import java.util.Base64
 import org.guardedsleep.app.config.PairingPolicy
 import org.guardedsleep.app.ui.model.PairingError
-import org.json.JSONArray
-import org.json.JSONException
-import org.json.JSONObject
+import uniffi.guardedsleep_core.InviteException
+import uniffi.guardedsleep_core.buildInvite
+import uniffi.guardedsleep_core.parseInvite
 
-/** QR payload v3: `{"v":3,"k":<psk b64url>,"s":[signaling urls],"x":<expiry epoch seconds>}`. */
+/**
+ * The v3 invite as the platform holds it. Building and parsing the text is the core's job (one
+ * codec for every client, via the binding); this class only carries the values and maps the core's
+ * rejection onto [PairingError].
+ */
 data class PairingPayload(
     val pskB64url: String,
     val signalingUrls: List<String>,
@@ -15,12 +19,12 @@ data class PairingPayload(
 ) {
     /** Contains the PSK: never log, never put into an Intent or Bundle. */
     fun toJson(): String =
-        JSONObject()
-            .put("v", PairingPolicy.PAYLOAD_VERSION)
-            .put("k", pskB64url)
-            .put("s", JSONArray(signalingUrls))
-            .put("x", expiresAtEpochSec)
-            .toString()
+        // The values come from `create` or a successful parse, so the core accepts them.
+        buildInvite(
+            decodePsk(pskB64url) ?: ByteArray(0),
+            signalingUrls,
+            expiresAtEpochSec.toULong(),
+        )
 
     companion object {
         sealed interface Result {
@@ -45,47 +49,24 @@ data class PairingPayload(
             .getOrNull()
 
         /** Accepts the decoded QR text or a pasted code (surrounding whitespace is ignored). */
-        fun parse(text: String, nowWallMs: Long): Result {
-            val trimmed = text.trim()
-            if (trimmed.isEmpty()) return Result.Rejected(PairingError.INCOMPLETE_PASTE)
-            val obj =
-                try {
-                    JSONObject(trimmed)
-                } catch (_: JSONException) {
-                    // A JSON-looking text that does not parse was most likely cut off while
-                    // copying.
-                    return Result.Rejected(
-                        if (trimmed.startsWith("{")) PairingError.INCOMPLETE_PASTE
-                        else PairingError.NOT_OUR_CODE
+        fun parse(text: String, nowWallMs: Long): Result =
+            try {
+                val invite = parseInvite(text, (nowWallMs / 1000).coerceAtLeast(0).toULong())
+                Result.Ok(
+                    PairingPayload(
+                        b64(invite.psk),
+                        invite.urls,
+                        invite.expiresAtEpochS.toLong(),
                     )
-                }
-            if (obj.optInt("v", -1) != PairingPolicy.PAYLOAD_VERSION)
-                return Result.Rejected(PairingError.NOT_OUR_CODE)
-            val key = obj.optString("k", "")
-            if (decodePsk(key)?.size != PairingPolicy.PSK_BYTES)
-                return Result.Rejected(PairingError.NOT_OUR_CODE)
-            val urls =
-                obj.optJSONArray("s")?.let { arr ->
-                    (0 until arr.length()).map { arr.optString(it, "") }
-                }
-            if (urls.isNullOrEmpty() || urls.any { !isSignalingUrl(it) }) {
-                return Result.Rejected(PairingError.NOT_OUR_CODE)
+                )
+            } catch (e: InviteException) {
+                Result.Rejected(
+                    when (e) {
+                        is InviteException.NotOurCode -> PairingError.NOT_OUR_CODE
+                        is InviteException.IncompletePaste -> PairingError.INCOMPLETE_PASTE
+                        is InviteException.Expired -> PairingError.EXPIRED
+                    }
+                )
             }
-            val expiry = obj.optLong("x", -1)
-            if (expiry <= 0) return Result.Rejected(PairingError.NOT_OUR_CODE)
-            if (expiry * 1000 <= nowWallMs) return Result.Rejected(PairingError.EXPIRED)
-            return Result.Ok(PairingPayload(key, urls, expiry))
-        }
-
-        fun isSignalingUrl(url: String): Boolean {
-            val u = url.trim()
-            val rest =
-                when {
-                    u.startsWith("ws://") -> u.removePrefix("ws://")
-                    u.startsWith("wss://") -> u.removePrefix("wss://")
-                    else -> return false
-                }
-            return rest.isNotEmpty() && !rest.startsWith("/") && rest.none { it.isWhitespace() }
-        }
     }
 }
