@@ -895,6 +895,12 @@
       "quietUnknownWeb": "Modo silencio desconocido · actívelo en el dispositivo del bebé",
       "keepOpen": "Mantenga esta página abierta y la pantalla encendida. Si no, su navegador no puede avisarle.",
       "soundGate": "Toque para activar el sonido de alerta"
+    },
+    "guard": {
+      "wakeLockHeld": "La pantalla se mantiene encendida",
+      "wakeLockLost": "La pantalla ya no se mantiene encendida: este dispositivo puede suspenderse y dejar de vigilar.",
+      "wakeLockUnsupported": "Este navegador no puede mantener la pantalla encendida. Desactive la suspensión de pantalla en los ajustes del dispositivo.",
+      "wakeLockRetry": "Mantener la pantalla encendida"
     }
   }
 }

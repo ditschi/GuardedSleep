@@ -5,6 +5,7 @@ import type { AppController, CodeScanner } from "../contract";
 import { AlertPlayer, createSoundGate } from "./audio";
 import { watchBattery, type BatteryManagerLike } from "./battery";
 import { createClock, createTimers } from "./clock";
+import { createPageWatch, type WakeLockApi } from "./page-watch";
 import { createQrScanner, type BarcodeDetectorCtor } from "./qr-scanner";
 import { defaultSignalingUrls } from "./relay-stun";
 import { createWebSocketSignaling, type WebSocketCtor } from "./signaling";
@@ -26,6 +27,14 @@ function browserNetwork(): NetworkWatcher {
   };
 }
 
+// One clock for the controller and for the screens' countdowns, so both agree after a sleep.
+const clock = createClock();
+
+/** Monotonic milliseconds as the controller counts them (the screens' ticker reads this). */
+export function elapsedNow(): number {
+  return clock.elapsedMs();
+}
+
 /** 53 random bits: the core seeds its jitter with them and needs no entropy source of its own. */
 function entropy53(): number {
   const [hi = 0, lo = 0] = crypto.getRandomValues(new Uint32Array(2));
@@ -44,9 +53,16 @@ export async function createWebApp(): Promise<AppController> {
   const battery = watchBattery(
     navigator as unknown as { getBattery?: () => Promise<BatteryManagerLike> },
   );
+  const page = createPageWatch({
+    doc: document,
+    win: window,
+    wakeLock: (navigator as unknown as { wakeLock?: WakeLockApi }).wakeLock,
+    clock,
+  });
   return new WebController({
     core,
-    clock: createClock(),
+    clock,
+    page,
     timers,
     signaling: createWebSocketSignaling(WebSocket as unknown as WebSocketCtor),
     createMedia: (role, iceServers) =>
@@ -71,7 +87,10 @@ export async function createWebApp(): Promise<AppController> {
     randomBytes: (length) => crypto.getRandomValues(new Uint8Array(length)),
     entropy: entropy53,
     battery: battery.state,
-    deviceStatus: () => battery.deviceStatus(),
+    deviceStatus: () => {
+      const unit_warnings = page.unitWarnings();
+      return { ...battery.deviceStatus(), ...(unit_warnings.length > 0 ? { unit_warnings } : {}) };
+    },
     defaultSignalingUrls: () => defaultSignalingUrls(window.location, import.meta.env.DEV),
   });
 }

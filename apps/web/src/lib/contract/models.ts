@@ -159,6 +159,32 @@ export interface DeviceBattery {
   charging: boolean | null;
 }
 
+/**
+ * Web only: the state of the Screen Wake Lock. `off` = not monitoring (or not taken yet),
+ * `lost` = the system or the browser released it or refused it, `unsupported` = no such API here.
+ */
+export type WakeLockState = "off" | "held" | "lost" | "unsupported";
+
+/** Web only: this page was away while monitoring (hidden tab, or the device slept). */
+export interface AwayReport {
+  kind: "background" | "sleep";
+  awayMs: number;
+  /** When the page came back (wall clock). */
+  endWallMs: number;
+}
+
+/**
+ * Web only: what the browser did to this page while it monitors. Decisions about alarms stay in
+ * the core; this only reports the page's own state so the screens can warn.
+ */
+export interface PageGuardState {
+  wakeLock: WakeLockState;
+  /** The page is not in front (another tab, a minimised window, a locked screen). */
+  hidden: boolean;
+  /** Set when the page returns from the background or from sleep; cleared by the user. */
+  away: AwayReport | null;
+}
+
 export type Theme = "dark" | "light" | "system";
 
 export type AlertOutput = "default" | "speaker_only";

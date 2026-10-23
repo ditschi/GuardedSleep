@@ -895,6 +895,12 @@
       "quietUnknownWeb": "Ruhemodus unbekannt · am Babygerät einschalten",
       "keepOpen": "Lassen Sie diese Seite offen und den Bildschirm an. Sonst kann Ihr Browser Sie nicht warnen.",
       "soundGate": "Tippen, um den Alarmton zu aktivieren"
+    },
+    "guard": {
+      "wakeLockHeld": "Bildschirm bleibt an",
+      "wakeLockLost": "Der Bildschirm bleibt nicht mehr an, deshalb kann dieses Gerät einschlafen und die Überwachung beenden.",
+      "wakeLockUnsupported": "Dieser Browser kann den Bildschirm nicht anhalten. Schalten Sie den Bildschirmschoner in den Geräteeinstellungen aus.",
+      "wakeLockRetry": "Bildschirm anlassen"
     }
   }
 }

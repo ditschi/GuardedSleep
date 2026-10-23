@@ -10,6 +10,7 @@
   import Dialog from "../lib/ui/Dialog.svelte";
   import { levelWordKey } from "../lib/ui/format";
   import Glyph from "../lib/ui/Glyph.svelte";
+  import KeepAwakeNotice from "../lib/ui/KeepAwakeNotice.svelte";
   import type { GlyphName, Tone } from "../lib/ui/glyphs";
   import Meter from "../lib/ui/Meter.svelte";
   import { babyFailureKey, coreMessageKey, isMicFailure } from "../lib/ui/messages";
@@ -17,7 +18,7 @@
 
   const controller = useController();
   const router = useRouter();
-  const { baby, deviceBattery } = controller;
+  const { baby, deviceBattery, pageGuard } = controller;
 
   let stopOpen = $state(false);
 
@@ -115,6 +116,8 @@
     </div>
   {/if}
 
+  <KeepAwakeNotice />
+
   {#if $baby.micSilent}
     <Banner tone="warn" message={$t("native.ui.baby.micSilent")} testid="baby_mic_silent" />
   {/if}
@@ -135,6 +138,14 @@
       <Chip icon="battery" label={batteryText} testid="baby_battery" />
     {/if}
     <Chip icon="info" label={$t("webScreens.baby.quietUnknown")} testid="baby_silence" />
+    {#if $pageGuard.wakeLock === "held"}
+      <Chip
+        tone="ok"
+        icon="sun"
+        label={$t("webScreens.guard.wakeLockHeld")}
+        testid="baby_wake_lock"
+      />
+    {/if}
   </div>
 
   <div class="gs-checklist" data-testid="baby_keep_awake">

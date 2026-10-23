@@ -18,6 +18,7 @@
   import Dialog from "../lib/ui/Dialog.svelte";
   import { formatClock, formatDuration, levelWordKey } from "../lib/ui/format";
   import Glyph from "../lib/ui/Glyph.svelte";
+  import KeepAwakeNotice from "../lib/ui/KeepAwakeNotice.svelte";
   import ListenButton from "../lib/ui/ListenButton.svelte";
   import Meter from "../lib/ui/Meter.svelte";
   import {
@@ -230,6 +231,8 @@
         <p>{$t("native.ui.parent.securityBody")}</p>
       </Card>
     {/if}
+
+    <KeepAwakeNotice />
 
     {#if $parent.restoredAfterMs !== null}
       <Banner

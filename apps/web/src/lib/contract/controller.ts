@@ -4,6 +4,7 @@ import type {
   BabyMonitorState,
   DeviceBattery,
   ListenMode,
+  PageGuardState,
   PairingState,
   ParentMonitorState,
   Role,
@@ -31,6 +32,11 @@ export interface AppController {
    * (Firefox, Safari). The baby device also reports it to the parent.
    */
   readonly deviceBattery: Readable<DeviceBattery | null>;
+  /**
+   * Web only: wake lock, page visibility and away reports while monitoring (a browser can pause
+   * or freeze a page that is not in front; the screens warn about it).
+   */
+  readonly pageGuard: Readable<PageGuardState>;
 
   chooseRole(role: Role): void;
   completeOnboarding(): void;
@@ -61,6 +67,11 @@ export interface AppController {
 
   /** Web only. Call it from a click handler ("Tap to turn on alert sound"); it unlocks audio. */
   unlockSound(): void;
+
+  /** Web only. Takes the screen wake lock again after the system released it. */
+  retryKeepAwake(): void;
+  /** Web only. Clears the "page was in the background / device slept" report. */
+  dismissAwayReport(): void;
 
   /** Parent answered "Did you hear and feel it?" after a test alert. */
   reportTestResult(heardAndFelt: boolean): void;

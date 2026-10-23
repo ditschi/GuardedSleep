@@ -10,6 +10,7 @@ import {
   type AppState,
   type BabyMonitorState,
   type DeviceBattery,
+  type PageGuardState,
   type PairingState,
   type ParentMonitorState,
   type SettingsState,
@@ -24,6 +25,7 @@ export interface FakeController extends AppController {
   readonly pairing: Writable<PairingState | null>;
   readonly soundUnlocked: Writable<boolean>;
   readonly deviceBattery: Writable<DeviceBattery | null>;
+  readonly pageGuard: Writable<PageGuardState>;
   /** Every action call as `[method, ...args]`, oldest first. */
   readonly calls: Array<[string, ...unknown[]]>;
 }
@@ -41,6 +43,7 @@ export function createFakeController(): FakeController {
   const pairing = writable<PairingState | null>(null);
   const soundUnlocked = writable(false);
   const deviceBattery = writable<DeviceBattery | null>(null);
+  const pageGuard = writable<PageGuardState>({ wakeLock: "off", hidden: false, away: null });
   const calls: Array<[string, ...unknown[]]> = [];
   const record =
     (name: string) =>
@@ -56,6 +59,7 @@ export function createFakeController(): FakeController {
     pairing,
     soundUnlocked,
     deviceBattery,
+    pageGuard,
     calls,
     chooseRole(role) {
       calls.push(["chooseRole", role]);
@@ -126,6 +130,11 @@ export function createFakeController(): FakeController {
     unlockSound() {
       calls.push(["unlockSound"]);
       soundUnlocked.set(true);
+    },
+    retryKeepAwake: record("retryKeepAwake"),
+    dismissAwayReport() {
+      calls.push(["dismissAwayReport"]);
+      pageGuard.update((s) => ({ ...s, away: null }));
     },
     reportTestResult: record("reportTestResult"),
     dismissCoach() {

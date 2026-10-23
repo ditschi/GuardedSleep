@@ -45,3 +45,8 @@ export const MISSED_EVENTS_GRACE_MS = 5_000;
 
 export const LEVEL2_TONE_INTERVAL_MS = 10_000;
 export const NOISE_TONE_INTERVAL_MS = 4_000;
+
+/** A stay in the background shorter than this is not reported on return. */
+export const AWAY_REPORT_MIN_MS = 15_000;
+/** The baby device keeps reporting "woke from sleep" this long after it did. */
+export const RESUMED_WARNING_MS = 10 * 60_000;

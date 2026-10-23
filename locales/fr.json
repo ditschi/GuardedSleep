@@ -895,6 +895,12 @@
       "quietUnknownWeb": "Mode silencieux inconnu · à activer sur l’appareil bébé",
       "keepOpen": "Gardez cette page ouverte et l’écran allumé. Sinon, votre navigateur ne peut pas vous alerter.",
       "soundGate": "Touchez pour activer le son d’alerte"
+    },
+    "guard": {
+      "wakeLockHeld": "L'écran reste allumé",
+      "wakeLockLost": "L'écran ne reste plus allumé : cet appareil peut se mettre en veille et arrêter la surveillance.",
+      "wakeLockUnsupported": "Ce navigateur ne peut pas garder l'écran allumé. Désactivez la mise en veille de l'écran dans les réglages de l'appareil.",
+      "wakeLockRetry": "Garder l'écran allumé"
     }
   }
 }

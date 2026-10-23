@@ -66,6 +66,9 @@
     { "pattern": "webScreens.baby.keepSilent", "budget": 100 },
     { "pattern": "webScreens.parent.quietUnknownWeb", "budget": 80 },
     { "pattern": "webScreens.parent.keepOpen", "budget": 140 },
-    { "pattern": "webScreens.parent.soundGate", "budget": 50 }
+    { "pattern": "webScreens.parent.soundGate", "budget": 50 },
+    { "pattern": "webScreens.guard.wakeLockLost", "budget": 130 },
+    { "pattern": "webScreens.guard.wakeLockUnsupported", "budget": 140 },
+    { "pattern": "webScreens.guard.wakeLockRetry", "budget": 40 }
   ]
 }

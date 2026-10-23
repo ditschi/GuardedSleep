@@ -910,6 +910,12 @@
     "settings": {
       "urlHint": "The baby device writes these addresses into its code, so the parent device uses them too.",
       "sensitivityBabyOnly": "Sensitivity is set on the baby device."
+    },
+    "guard": {
+      "wakeLockHeld": "Screen is kept on",
+      "wakeLockLost": "The screen is no longer kept on, so this device may fall asleep and stop monitoring.",
+      "wakeLockUnsupported": "This browser can't keep the screen on. Turn off screen sleep in this device's settings.",
+      "wakeLockRetry": "Keep screen on"
     }
   }
 }

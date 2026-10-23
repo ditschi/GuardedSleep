@@ -199,7 +199,14 @@ describe("AppController mirrors UiContract.kt", () => {
     // Nothing extra on the web side besides the stores, the recorded calls and the web-only
     // sound gate (browsers lock audio until a user gesture; Android has no counterpart) and the
     // Battery API reading of the device.
-    const webOnly = ["soundUnlocked", "unlockSound", "deviceBattery"];
+    const webOnly = [
+      "soundUnlocked",
+      "unlockSound",
+      "deviceBattery",
+      "pageGuard",
+      "retryKeepAwake",
+      "dismissAwayReport",
+    ];
     const own = Object.keys(fake).filter(
       (k) => !stores.includes(k) && k !== "calls" && !webOnly.includes(k),
     );

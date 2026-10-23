@@ -18,6 +18,7 @@ import {
   type BabyMonitorState,
   type DeviceBattery,
   type ListenMode,
+  type PageGuardState,
   type PairingError,
   type PairingState,
   type ParentMonitorState,
@@ -31,6 +32,7 @@ import type { Clock, Timers } from "./clock";
 import { encodeBase64Url } from "./encoding";
 import { LinkDriver, type LinkListener } from "./link-driver";
 import type { InboundAudioStats, MediaEngine } from "./media-engine";
+import { idleWatch, type PageWatch } from "./page-watch";
 import { ParentModel } from "./parent-model";
 import {
   ALARM_AFTER_MS,
@@ -68,6 +70,8 @@ export interface ControllerDeps {
   deviceStatus?: () => DeviceStatus;
   /** The device's battery for the baby screen; absent where the browser has no Battery API. */
   battery?: Readable<DeviceBattery | null>;
+  /** Wake lock, page visibility and sleep detection; absent in tests that do not need them. */
+  page?: PageWatch;
 }
 
 /** Pairing material of this page. In memory only: never storage, URLs, logs or the DOM. */
@@ -120,7 +124,9 @@ export class WebController implements AppController {
   readonly parent: Readable<ParentMonitorState> = this.parentStore;
   readonly baby: Readable<BabyMonitorState> = this.babyStore;
   readonly deviceBattery: Readable<DeviceBattery | null>;
+  readonly pageGuard: Readable<PageGuardState>;
 
+  private readonly page: PageWatch;
   private appState: AppState = defaultAppState();
   private settingsState: SettingsState = defaultSettings();
   private stored: StoredPairing | null = null;
@@ -129,6 +135,11 @@ export class WebController implements AppController {
 
   constructor(private readonly deps: ControllerDeps) {
     this.deviceBattery = deps.battery ?? readable<DeviceBattery | null>(null);
+    this.page = deps.page ?? idleWatch();
+    this.pageGuard = this.page.state;
+    // After a sleep or a return from the background the sockets are likely dead: the core retries
+    // at once on this existing input and decides everything else itself.
+    this.page.onResumed(() => this.run?.driver?.input({ type: "network_available" }));
     this.parentModel = new ParentModel(
       deps.clock,
       deps.alerts,
@@ -362,6 +373,14 @@ export class WebController implements AppController {
     this.parentModel.dismissMissed();
   }
 
+  retryKeepAwake(): void {
+    this.page.retryKeepAwake();
+  }
+
+  dismissAwayReport(): void {
+    this.page.dismissAway();
+  }
+
   reportTestResult(heardAndFelt: boolean): void {
     if (heardAndFelt) this.updateSettingsState({ lastTestWallMs: this.deps.clock.wallMs() });
   }
@@ -582,6 +601,7 @@ export class WebController implements AppController {
   private setApp(patch: Partial<AppState>): void {
     this.appState = { ...this.appState, ...patch };
     this.appStore.set(this.appState);
+    if (patch.monitoring !== undefined) this.page.setMonitoring(patch.monitoring);
   }
 
   private updateSettingsState(patch: Partial<SettingsState>): void {

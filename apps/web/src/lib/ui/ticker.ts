@@ -6,8 +6,18 @@ export interface Instant {
   wallMs: number;
 }
 
+let elapsedSource: () => number = () => performance.now();
+
+/**
+ * Where the monotonic reading comes from. `main.ts` hands over the platform clock, which adds the
+ * time a sleeping laptop did not count, so the screens and the controller agree on "now".
+ */
+export function setElapsedSource(source: () => number): void {
+  elapsedSource = source;
+}
+
 export function instantNow(): Instant {
-  return { elapsedMs: performance.now(), wallMs: Date.now() };
+  return { elapsedMs: elapsedSource(), wallMs: Date.now() };
 }
 
 /**
