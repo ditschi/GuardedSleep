@@ -4,17 +4,19 @@
 
 mod android;
 mod catalogue;
+mod critical;
 mod icu;
 mod web;
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 
-const USAGE: &str = "usage: i18n-gen <check|web|android|all> [--out <dir>] [--web-out <dir>] [--android-out <dir>] [--locales <dir>]
+const USAGE: &str = "usage: i18n-gen <check|web|android|all|locales> [--out <path>] [--web-out <dir>] [--android-out <dir>] [--locales <dir>]
   check     validate the catalogue and Kotlin UI literals
-  web       write web JSON bundles (+ pseudo.json) to --out
+  web       write web JSON bundles (+ pseudo.json, pseudo-rtl.json) to --out
   android   write Android res/values*/strings.xml to --out
-  all       web + android (--web-out / --android-out, defaults to the app build dirs)";
+  all       web + android (--web-out / --android-out, defaults to the app build dirs)
+  locales   write the shipped locale tags, one per line, to the file --out (Android localeFilters)";
 
 fn arg(argv: &[String], name: &str) -> Option<PathBuf> {
     argv.iter()
@@ -45,13 +47,13 @@ fn fail(issues: &[String]) -> ExitCode {
 fn main() -> ExitCode {
     let argv: Vec<String> = std::env::args().skip(1).collect();
     let cmd = argv.first().map(String::as_str).unwrap_or("");
-    if !["check", "web", "android", "all"].contains(&cmd) {
+    if !["check", "web", "android", "all", "locales"].contains(&cmd) {
         eprintln!("{USAGE}");
         return ExitCode::from(2);
     }
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let out = arg(&argv, "--out");
-    if matches!(cmd, "web" | "android") && out.is_none() {
+    if matches!(cmd, "web" | "android" | "locales") && out.is_none() {
         eprintln!("{cmd}: --out <dir> is required");
         return ExitCode::from(2);
     }
@@ -67,9 +69,21 @@ fn main() -> ExitCode {
         &arg(&argv, "--locales").unwrap_or_else(|| root.join("locales")),
         &mut issues,
     );
-    issues.extend(catalogue::validate(&cat));
-    let android_files = android::render_android(&cat, &mut issues);
-    let web_files = match web::render_web(&cat) {
+    let report = catalogue::validate(&cat);
+    issues.extend(report.errors.iter().cloned());
+    // A locale that misses a critical key is not generated (an alarm is never mixed-language);
+    // `check` still fails and names the key.
+    let unshipped = report.unshipped_locales();
+    for (l, problem) in &report.unshipped {
+        if cmd == "check" {
+            issues.push(format!("{l}: not shipped, {problem}"));
+        } else {
+            eprintln!("i18n: locale {l} is not generated: {problem}");
+        }
+    }
+    let shipped = cat.without(&unshipped);
+    let android_files = android::render_android(&shipped, &mut issues);
+    let web_files = match web::render_web(&shipped) {
         Ok(f) => f,
         Err(e) => {
             issues.push(format!("web: {e}"));
@@ -86,6 +100,15 @@ fn main() -> ExitCode {
     }
     if matches!(cmd, "android" | "all") && !io(write(&android_out, &android_files)) {
         return ExitCode::from(1);
+    }
+    if cmd == "locales" {
+        let tags: String = shipped.tags().iter().map(|t| format!("{t}\n")).collect();
+        if let Some(target) = &out
+            && let Err(e) = std::fs::write(target, tags)
+        {
+            eprintln!("i18n: write failed: {e}");
+            return ExitCode::from(1);
+        }
     }
     if cmd == "check" {
         match Command::new("bash")

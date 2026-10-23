@@ -1,4 +1,4 @@
-use crate::catalogue::{Catalogue, Flat, LOCALES, MASTER};
+use crate::catalogue::{Catalogue, Flat, MASTER, lookup};
 use crate::icu::{Case, Node, parse, serialize};
 use serde_json::{Map, Value};
 
@@ -58,6 +58,57 @@ pub fn pseudo_message(msg: &str) -> Result<String, String> {
     Ok(serialize(&nodes, false))
 }
 
+const RLM: char = '\u{200F}';
+const RLO: char = '\u{202E}';
+const PDF: char = '\u{202C}';
+
+fn rtl_nodes(nodes: &[Node]) -> Vec<Node> {
+    nodes
+        .iter()
+        .map(|n| match n {
+            Node::Text(t) => Node::Text(format!("{RLO}{t}{PDF}")),
+            Node::Plural { name, cases } => Node::Plural {
+                name: name.clone(),
+                cases: rtl_cases(cases),
+            },
+            Node::Select { name, cases } => Node::Select {
+                name: name.clone(),
+                cases: rtl_cases(cases),
+            },
+            other => other.clone(),
+        })
+        .collect()
+}
+
+fn rtl_cases(cases: &[Case]) -> Vec<Case> {
+    cases
+        .iter()
+        .map(|c| Case {
+            sel: c.sel.clone(),
+            body: rtl_nodes(&c.body),
+        })
+        .collect()
+}
+
+/// RTL pseudo-locale: every text run is bidi-overridden (RLO..PDF, so its letters render
+/// mirrored) and the message is marked right-to-left (RLM); arguments and ICU syntax are
+/// preserved. It exercises layout mirroring and bidi handling without an Arabic translation.
+pub fn pseudo_rtl_message(msg: &str) -> Result<String, String> {
+    let mut nodes = vec![Node::Text(RLM.to_string())];
+    nodes.extend(rtl_nodes(&parse(msg)?));
+    nodes.push(Node::Text(RLM.to_string()));
+    Ok(serialize(&nodes, false))
+}
+
+/// The locale's messages in master order; keys it lacks fall back to the master text.
+pub fn with_fallback(cat: &Catalogue, locale: &str) -> Flat {
+    let own = cat.get(locale);
+    cat.get(MASTER)
+        .iter()
+        .map(|(k, m)| (k.clone(), lookup(own, k).unwrap_or(m).to_string()))
+        .collect()
+}
+
 /// Rebuilds the nested catalogue shape from flat dot paths, preserving order.
 pub fn nest(flat: &Flat, map: &dyn Fn(&str) -> Result<String, String>) -> Result<Value, String> {
     let mut root = Map::new();
@@ -83,18 +134,22 @@ fn pretty(v: &Value) -> String {
     )
 }
 
-/// File name to JSON text: one per locale plus `pseudo.json`.
+/// File name to JSON text: one per shipped locale plus `pseudo.json` and `pseudo-rtl.json`.
 pub fn render_web(cat: &Catalogue) -> Result<Vec<(String, String)>, String> {
     let mut files = Vec::new();
-    for l in LOCALES {
+    for l in cat.tags() {
         files.push((
             format!("{l}.json"),
-            pretty(&nest(cat.get(l), &|s| Ok(s.to_string()))?),
+            pretty(&nest(&with_fallback(cat, l), &|s| Ok(s.to_string()))?),
         ));
     }
     files.push((
         "pseudo.json".into(),
         pretty(&nest(cat.get(MASTER), &pseudo_message)?),
+    ));
+    files.push((
+        "pseudo-rtl.json".into(),
+        pretty(&nest(cat.get(MASTER), &pseudo_rtl_message)?),
     ));
     Ok(files)
 }
@@ -135,12 +190,12 @@ mod tests {
         let v = nest(&flat, &|s| Ok(s.to_string())).unwrap();
         assert_eq!(v, serde_json::json!({"a": {"b": "x", "c": "y"}, "d": "z"}));
         let one: Flat = vec![("a.b".into(), "x {n}".into())];
-        let cat = Catalogue {
-            locales: LOCALES
+        let cat = Catalogue::new(
+            ["en", "de", "fr", "es"]
                 .iter()
                 .map(|l| (l.to_string(), one.clone()))
                 .collect(),
-        };
+        );
         let names: Vec<String> = render_web(&cat)
             .unwrap()
             .into_iter()
@@ -148,7 +203,39 @@ mod tests {
             .collect();
         assert_eq!(
             names,
-            ["en.json", "de.json", "fr.json", "es.json", "pseudo.json"]
+            [
+                "en.json",
+                "de.json",
+                "fr.json",
+                "es.json",
+                "pseudo.json",
+                "pseudo-rtl.json"
+            ]
         );
+    }
+
+    #[test]
+    fn rtl_pseudo_overrides_text_keeps_arguments_and_is_marked() {
+        let src = "Hello {name}: {n, plural, one {# apple} other {# apples}}";
+        let out = pseudo_rtl_message(src).unwrap();
+        assert!(out.starts_with(RLM) && out.ends_with(RLM));
+        assert!(out.contains(&format!("{RLO}Hello {PDF}")));
+        assert_eq!(
+            collect_args(&parse(&out).unwrap()),
+            collect_args(&parse(src).unwrap())
+        );
+        // Letters stay readable once the override flips them back, so reviewers can read it.
+        assert!(out.contains("apples"));
+    }
+
+    #[test]
+    fn missing_keys_fall_back_to_the_master_text() {
+        let en: Flat = vec![("a.b".into(), "Bee".into()), ("a.c".into(), "Sea".into())];
+        let de: Flat = vec![("a.b".into(), "Biene".into())];
+        let cat = Catalogue::new(vec![("en".into(), en), ("de".into(), de)]);
+        let files = render_web(&cat).unwrap();
+        let de_json = &files.iter().find(|(n, _)| n == "de.json").unwrap().1;
+        let v: serde_json::Value = serde_json::from_str(de_json).unwrap();
+        assert_eq!(v, serde_json::json!({"a": {"b": "Biene", "c": "Sea"}}));
     }
 }

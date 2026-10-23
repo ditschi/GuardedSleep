@@ -4,5 +4,9 @@
   "import": ["./cspell-i18n-terms.json", "@cspell/dict-de-de/cspell-ext.json"],
   "language": "de,en",
   "files": ["locales/de.json"],
-  "ignoreRegExpList": ["/\\{[^}]+\\}/g", "/\"[A-Za-z0-9_.]+\"\\s*:/g"]
+  "ignoreRegExpList": [
+    "/\"\\$meta\"\\s*:\\s*\\{[^}]*\\}/g",
+    "/\\{[^}]+\\}/g",
+    "/\"[A-Za-z0-9_.]+\"\\s*:/g"
+  ]
 }

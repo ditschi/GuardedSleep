@@ -4,10 +4,10 @@ Depends on `rebuild-web-client` for groups 3–5 (the web key set). Groups 1–2
 
 ## 1. Generator rules
 
-- [ ] 1.1 `locales/critical.json` (patterns + length budgets) for alert, link-loss, connection-state, silence and safety keys of the `native.*` group; `i18n-gen` loads it, fails on patterns without an `en` match, and enforces the budgets per locale. Verify: `scripts/cargo.sh test -p i18n-gen` with cases for a stale pattern and an over-budget value.
-- [ ] 1.2 Critical-key completeness replaces full parity: a locale missing a critical key (or its plural categories or placeholders) is not generated and the check names it; missing non-critical keys fall back to `en` in Android and web output. Verify: i18n-gen tests for both scenarios of the spec delta.
-- [ ] 1.3 Review markers: reserved `$meta` (`default`, `reviewed`) in each non-English catalogue, ignored by output, validated by the check; add `$meta` with `default: machineTranslated` to de, fr, es (de keys reviewed by the owner listed after review). Verify: i18n-gen tests; `just lint-text` (CSpell skips `$meta`).
-- [ ] 1.4 RTL pseudo-locale (bidi-wrapped, mirrored) next to the accented one, in Android and web output. Verify: i18n-gen tests.
+- [x] 1.1 `locales/critical.json` (patterns + length budgets) for alert, link-loss, connection-state, silence and safety keys of the `native.*` group; `i18n-gen` loads it, fails on patterns without an `en` match, and enforces the budgets per locale. Verify: `scripts/cargo.sh test -p i18n-gen` with cases for a stale pattern and an over-budget value.
+- [x] 1.2 Critical-key completeness replaces full parity: a locale missing a critical key (or its plural categories or placeholders) is not generated and the check names it; missing non-critical keys fall back to `en` in Android and web output. Verify: i18n-gen tests for both scenarios of the spec delta.
+- [x] 1.3 Review markers: reserved `$meta` (`default`, `reviewed`) in each non-English catalogue, ignored by output, validated by the check; add `$meta` with `default: machineTranslated` to de, fr, es (de keys reviewed by the owner listed after review). Verify: i18n-gen tests; `just lint-text` (CSpell skips `$meta`).
+- [x] 1.4 RTL pseudo-locale (bidi-wrapped, mirrored) next to the accented one, in Android and web output. Verify: i18n-gen tests.
 - [ ] 1.5 Android `androidResources.localeFilters` generated from the shipped locales (no hand-kept list); `supportsRtl` stays on. Verify: `just build-android` and `aapt2 dump` / `release-check.sh` list exactly the shipped locales (report `SKIPPED` without the SDK).
 - [ ] 1.6 Core message-key check in `just lint`: every `message_keys()` entry exists in `en.json`; remove the backlog item. Verify: a test with a missing key fails, `just lint` green.
 
