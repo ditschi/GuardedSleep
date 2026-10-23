@@ -1,9 +1,9 @@
 package org.guardedsleep.buildlogic
 
 import com.android.build.api.dsl.ApplicationExtension
-import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 import com.android.build.api.dsl.CommonExtension
 import com.android.build.api.dsl.LibraryExtension
+import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 import java.io.StringReader
 import java.util.Properties
 import org.gradle.api.JavaVersion
