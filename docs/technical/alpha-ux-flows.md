@@ -16,19 +16,19 @@
 
 `STATUS: UNDER DISCUSSION`
 
-| #   | ADR / doc         | Today                                                         | Proposal                                                                                                                                                             | Why                                                                                                         |
-| --- | ----------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| A1  | ADR-017 §7        | Level 1 (20 s): one gentle vibration + banner                 | Level 1: **visual only** (orange bar, ongoing notification text changes), no vibration, no heads-up                                                                  | Liveness detection takes 25 s, so every Wi-Fi flap would buzz the parent at night (alarm fatigue).          |
-| A2  | ADR-017 §7        | Level 2 (60 s): vibration + screen on; sound only at level 3  | Level 2: full-screen + repeating vibration **+ a short soft tone every 30 s** on the alarm stream; Level 3 (180 s): continuous alarm tone                            | A sleeping parent does not feel a phone vibrating on a nightstand; 3 min unmonitored is too long.           |
-| A3  | ADR-017 §7–8      | No acknowledge semantics for the connection alarm             | "I'm checking" mutes sound + vibration for 5 min, bar stays red, re-escalates to level 3 if still down                                                               | Without it, parents kill the app to silence it and end up unmonitored.                                      |
-| A4  | ADR-017 §6–7      | Deliberate stop on one side looks like an outage to the other | Link sends `stop_notice{reason}` before closing; peer shows "stopped" (not "lost"), parent gets one clear alert, no loop                                             | Babysitter stopping the baby phone must be told plainly; a parent stop must not leave the baby pulsing red. |
-| A5  | ADR-018 §3        | Silence policy covers sound only                              | DND policy also suppresses **visual effects** (screen-on, peek, notification light, ambient display); status reports `screen_may_light`                              | Light wakes children too (failure-model rejected flashes).                                                  |
-| A6  | ADR-018 T1        | Parent device's own ability to alert is not checked           | **Parent readiness check** (notifications, full-screen alerts, DND bypass, alarm volume > 0, battery optimisation, own battery) with a chip on the monitoring screen | "Reliably informed" fails silently if the parent's alarm volume is 0.                                       |
-| A7  | ADR-018 T1        | Low battery only for the baby                                 | Add parent's own battery (< 20 % not charging) and "baby phone stopped charging"                                                                                     | F-1 (parent phone dies) is the most likely undetectable failure.                                            |
-| A8  | ADR-013 §2 copy   | "Baby unit", "not restricted"                                 | Copy vocabulary of §1.1 ("baby phone", no "restricted")                                                                                                              | One term everywhere; "restricted" is jargon.                                                                |
-| A9  | ADR-013 §6        | Listen auto-resumes only within the 20 s handoff window       | Follow ADR-017 §8: re-sent if outage < 60 s                                                                                                                          | Two ADRs disagree; ADR-017 is the newer source.                                                             |
-| A10 | failure-model F-6 | Probe = "synthetic noise burst on the baby device"            | Probe injects a **digital** synthetic event in the baby pipeline; **no sound on the baby**                                                                           | Child-side silence guarantee (ADR-018 §3.1).                                                                |
-| A11 | ADR-017 §7        | Headline semantics during outage undefined                    | "All quiet since" is never shown while not connected; after recovery it only continues if `missed_events` covered the gap                                            | Claiming "all quiet" across an outage is false reassurance.                                                 |
+| #   | ADR / doc         | Today                                                         | Proposal                                                                                                                                                             | Why                                                                                                          |
+| --- | ----------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| A1  | ADR-017 §7        | Level 1 (20 s): one gentle vibration + banner                 | Level 1: **visual only** (orange bar, ongoing notification text changes), no vibration, no heads-up                                                                  | Liveness detection takes 25 s, so every Wi-Fi flap would buzz the parent at night (alarm fatigue).           |
+| A2  | ADR-017 §7        | Level 2 (60 s): vibration + screen on; sound only at level 3  | Level 2: full-screen + repeating vibration **+ a short soft tone every 30 s** on the alarm stream; Level 3 (180 s): continuous alarm tone                            | A sleeping parent does not feel a phone vibrating on a nightstand; 3 min unmonitored is too long.            |
+| A3  | ADR-017 §7–8      | No acknowledge semantics for the connection alarm             | "I'm checking" mutes sound + vibration for 5 min, bar stays red, re-escalates to level 3 if still down                                                               | Without it, parents kill the app to silence it and end up unmonitored.                                       |
+| A4  | ADR-017 §6–7      | Deliberate stop on one side looks like an outage to the other | Link sends `stop_notice{reason}` before closing; peer shows "stopped" (not "lost"), parent gets one clear alert, no loop                                             | Babysitter stopping the baby device must be told plainly; a parent stop must not leave the baby pulsing red. |
+| A5  | ADR-018 §3        | Silence policy covers sound only                              | DND policy also suppresses **visual effects** (screen-on, peek, notification light, ambient display); status reports `screen_may_light`                              | Light wakes children too (failure-model rejected flashes).                                                   |
+| A6  | ADR-018 T1        | Parent device's own ability to alert is not checked           | **Parent readiness check** (notifications, full-screen alerts, DND bypass, alarm volume > 0, battery optimisation, own battery) with a chip on the monitoring screen | "Reliably informed" fails silently if the parent's alarm volume is 0.                                        |
+| A7  | ADR-018 T1        | Low battery only for the baby                                 | Add parent's own battery (< 20 % not charging) and "baby device stopped charging"                                                                                    | F-1 (the parent device dies) is the most likely undetectable failure.                                        |
+| A8  | ADR-013 §2 copy   | "Baby unit", "not restricted"                                 | Copy vocabulary of §1.1: **"baby device" / "parent device"** (Option C, decided by the owner 2026-10-23), no "restricted"                                            | One term everywhere; "restricted" is jargon.                                                                 |
+| A9  | ADR-013 §6        | Listen auto-resumes only within the 20 s handoff window       | Follow ADR-017 §8: re-sent if outage < 60 s                                                                                                                          | Two ADRs disagree; ADR-017 is the newer source.                                                              |
+| A10 | failure-model F-6 | Probe = "synthetic noise burst on the baby device"            | Probe injects a **digital** synthetic event in the baby pipeline; **no sound on the baby**                                                                           | Child-side silence guarantee (ADR-018 §3.1).                                                                 |
+| A11 | ADR-017 §7        | Headline semantics during outage undefined                    | "All quiet since" is never shown while not connected; after recovery it only continues if `missed_events` covered the gap                                            | Claiming "all quiet" across an outage is false reassurance.                                                  |
 
 ---
 
@@ -38,16 +38,16 @@
 
 ### 1.1 Words users see
 
-| Concept                | Use                                                | Never use                                             |
-| ---------------------- | -------------------------------------------------- | ----------------------------------------------------- |
-| Device near the child  | **baby phone** (or its name, default "Baby phone") | baby unit, baby device, transmitter, host, offerer    |
-| Device with the parent | **parent phone** / "this phone"                    | parent unit, receiver, client                         |
-| Running session        | **monitoring**                                     | session, link, attempt                                |
-| Link OK                | **connected**                                      | verified, paired-up, online                           |
-| Link down, retrying    | **reconnecting** / **can't reach**                 | backoff, ICE, socket, signaling, timeout              |
-| Pairing material       | **code** (QR code / pairing code)                  | PSK, secret, token, room, invite JSON                 |
-| DND state              | **silent** / **may ring**                          | interruption filter, ringer mode, notification policy |
-| Listen                 | **listen**                                         | stream, track, media                                  |
+| Concept                | Use                                                  | Never use                                             |
+| ---------------------- | ---------------------------------------------------- | ----------------------------------------------------- |
+| Device near the child  | **baby device** (or its name, default "Baby device") | baby unit, transmitter, host, offerer                 |
+| Device with the parent | **parent device** / "this device"                    | parent unit, receiver, client                         |
+| Running session        | **monitoring**                                       | session, link, attempt                                |
+| Link OK                | **connected**                                        | verified, paired-up, online                           |
+| Link down, retrying    | **reconnecting** / **can't reach**                   | backoff, ICE, socket, signaling, timeout              |
+| Pairing material       | **code** (QR code / pairing code)                    | PSK, secret, token, room, invite JSON                 |
+| DND state              | **silent** / **may ring**                            | interruption filter, ringer mode, notification policy |
+| Listen                 | **listen**                                           | stream, track, media                                  |
 
 ADR-013 forbidden list applies (IPs, ports, WebSocket, DTLS, ICE, error codes). Those appear only in Settings → Advanced → Diagnostics.
 
@@ -66,9 +66,9 @@ ADR-013 forbidden list applies (IPs, ports, WebSocket, DTLS, ICE, error codes). 
 
 | ID  | Screen (route / Compose destination)        | Native baby | Native parent |  Web baby   | Web parent  | Purpose                                                                                                                                                            |
 | --- | ------------------------------------------- | :---------: | :-----------: | :---------: | :---------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| S01 | `role` — Which phone is this?               |      ✓      |       ✓       |      ✓      |      ✓      | First run only; picks role                                                                                                                                         |
-| S02 | `baby_setup` — Get this phone ready         |      ✓      |               | ✓ (reduced) |             | Permissions, silence access, battery, safety, self-test                                                                                                            |
-| S03 | `parent_setup` — Get this phone ready       |             |       ✓       |             | ✓ (reduced) | Notifications, lock-screen alerts, DND bypass, battery, honest limits                                                                                              |
+| S01 | `role` — Which device is this?              |      ✓      |       ✓       |      ✓      |      ✓      | First run only; picks role                                                                                                                                         |
+| S02 | `baby_setup` — Get this device ready        |      ✓      |               | ✓ (reduced) |             | Permissions, silence access, battery, safety, self-test                                                                                                            |
+| S03 | `parent_setup` — Get this device ready      |             |       ✓       |             | ✓ (reduced) | Notifications, lock-screen alerts, DND bypass, battery, honest limits                                                                                              |
 | S04 | `baby_pair` — Show code                     |      ✓      |               |      ✓      |             | QR + copyable code, countdown                                                                                                                                      |
 | S05 | `parent_pair` — Scan code                   |             |       ✓       |             |      ✓      | Camera scan + paste                                                                                                                                                |
 | S06 | `home` — saved pairing                      |      ✓      |       ✓       |      ✓      |      ✓      | One-tap start; entry to settings / new pairing                                                                                                                     |
@@ -87,26 +87,26 @@ Launch routing (all clients): monitoring flag set → resume straight into S07/S
 
 ## 3. Flows
 
-### 3.1 First run — baby phone
+### 3.1 First run — baby device
 
 `STATUS: UNDER DISCUSSION`
 
-| Step | Screen | User sees / does                                                                                                                                    | System                                                    | Failure path                                                                                                                     |
-| ---- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | S01    | Two large cards; hint "Start with the baby phone". Taps **Baby phone**.                                                                             | Role remembered.                                          | —                                                                                                                                |
-| 2    | S02    | One checklist screen, each row = status + button: Microphone (required), Keep running in background, Silence this phone, Safety note, Device check. | Self-test runs in background (ADR-010).                   | Mic denied → row red + "Allow in Settings"; **Continue** disabled until granted. Others may be skipped; skipped rows stay amber. |
-| 3    | S02    | Taps **Continue**.                                                                                                                                  | —                                                         | Device check "may disconnect sometimes" → amber row text only, never blocks (Persona C).                                         |
-| 4    | S04    | QR code + "Code valid for 4:59". Instruction: "On your phone, open GuardedSleep and choose Parent phone."                                           | Pairing window open 5 min (ADR-018).                      | See §3.3.                                                                                                                        |
-| 5    | S07    | After the parent verifies: "Connected to parent phone" + "Monitoring". Hint "The screen goes dark in 30 s".                                         | Monitoring starts automatically; silence applied (§3.12). | —                                                                                                                                |
-| 6    | S08    | Screen fades to near-black over 5 s.                                                                                                                | Kiosk on.                                                 | —                                                                                                                                |
+| Step | Screen | User sees / does                                                                                                                                     | System                                                    | Failure path                                                                                                                     |
+| ---- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | S01    | Two large cards; hint "Start with the baby device". Taps **Baby device**.                                                                            | Role remembered.                                          | —                                                                                                                                |
+| 2    | S02    | One checklist screen, each row = status + button: Microphone (required), Keep running in background, Silence this device, Safety note, Device check. | Self-test runs in background (ADR-010).                   | Mic denied → row red + "Allow in Settings"; **Continue** disabled until granted. Others may be skipped; skipped rows stay amber. |
+| 3    | S02    | Taps **Continue**.                                                                                                                                   | —                                                         | Device check "may disconnect sometimes" → amber row text only, never blocks (Persona C).                                         |
+| 4    | S04    | QR code + "Code valid for 4:59". Instruction: "On the other device, open GuardedSleep and choose Parent device."                                     | Pairing window open 5 min (ADR-018).                      | See §3.3.                                                                                                                        |
+| 5    | S07    | After the parent verifies: "Connected to parent device" + "Monitoring". Hint "The screen goes dark in 30 s".                                         | Monitoring starts automatically; silence applied (§3.12). | —                                                                                                                                |
+| 6    | S08    | Screen fades to near-black over 5 s.                                                                                                                 | Kiosk on.                                                 | —                                                                                                                                |
 
-### 3.2 First run — parent phone
+### 3.2 First run — parent device
 
 `STATUS: UNDER DISCUSSION`
 
 | Step | Screen | User sees / does                                                                                                                                          | System                                                             | Failure path                                                                                                                                                             |
 | ---- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1    | S01    | Taps **Parent phone**.                                                                                                                                    |                                                                    |                                                                                                                                                                          |
+| 1    | S01    | Taps **Parent device**.                                                                                                                                   |                                                                    |                                                                                                                                                                          |
 | 2    | S03    | Checklist: Notifications (required), Alerts on the lock screen, Alerts during Do Not Disturb, Keep running in background. Honest-limits card (F-1, F-4).  | —                                                                  | Notifications denied → **Continue** disabled with "GuardedSleep can't alert you without notifications". Others: amber, skippable; later shown as readiness chip (§3.17). |
 | 3    | S05    | Camera opens after a one-line rationale; paste field visible below.                                                                                       | Camera permission requested just in time.                          | §3.3                                                                                                                                                                     |
 | 4    | S09    | Connecting → connected. **First-run coach** (3 callouts on the real screen): green bar, Listen, Test alert. Last callout: **Run test alert now** / Later. | Coach marks shown once; counts as indicator training (ADR-013 §5). | Skipped test → S09 shows "Test your alerts" chip until one test succeeds.                                                                                                |
@@ -118,16 +118,16 @@ Indicator training uses the real components on the real screen, not a demo (ADR-
 
 `STATUS: UNDER DISCUSSION`
 
-| Case                                    | Detected by                            | Baby phone (S04)                                     | Parent phone (S05)                                                                                                                   | Recovery action                     |
-| --------------------------------------- | -------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
-| Happy path                              | parent verified                        | "Connected to parent phone" → S07                    | "Connected to {name}" → S09 + coach                                                                                                  | —                                   |
-| Camera permission denied                | OS                                     | —                                                    | Inline: "Camera not allowed" + **Allow camera** (opens app settings) + **Paste code instead** (focus field)                          | either button                       |
-| Not a GuardedSleep code                 | parser                                 | —                                                    | "This isn't a GuardedSleep code. Scan the code on the baby phone."                                                                   | keep scanning                       |
-| Code expired (window closed by timeout) | baby window / server reject            | QR dims, "This code has expired" + **Show new code** | "This code has expired. Tap Show new code on the baby phone, then scan again."                                                       | new code on baby                    |
-| Wrong code (proof fails during pairing) | `pair_proof_mismatch` on first attempt | stays on QR, no change                               | "The code doesn't match. Scan the code that is on the baby phone right now."                                                         | rescan                              |
-| Baby already paired                     | window closed by first verified parent | —                                                    | "This baby phone is already paired with another phone."                                                                              | forget on baby (§3.14) then re-pair |
-| Phones can't reach each other           | no verified attempt after 20 s         | "Waiting for parent phone…"                          | "Can't find the baby phone yet. Make sure both phones are on the same Wi-Fi, or both use mobile data." + **Try again**; keeps trying | wait / fix network                  |
-| Pasted text incomplete                  | parser                                 | —                                                    | "This code is incomplete. Copy the whole code from the baby phone."                                                                  | paste again                         |
+| Case                                    | Detected by                            | Baby device (S04)                                    | Parent device (S05)                                                                                                                    | Recovery action                     |
+| --------------------------------------- | -------------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| Happy path                              | parent verified                        | "Connected to parent device" → S07                   | "Connected to {name}" → S09 + coach                                                                                                    | —                                   |
+| Camera permission denied                | OS                                     | —                                                    | Inline: "Camera not allowed" + **Allow camera** (opens app settings) + **Paste code instead** (focus field)                            | either button                       |
+| Not a GuardedSleep code                 | parser                                 | —                                                    | "This isn't a GuardedSleep code. Scan the code on the baby device."                                                                    | keep scanning                       |
+| Code expired (window closed by timeout) | baby window / server reject            | QR dims, "This code has expired" + **Show new code** | "This code has expired. Tap Show new code on the baby device, then scan again."                                                        | new code on baby                    |
+| Wrong code (proof fails during pairing) | `pair_proof_mismatch` on first attempt | stays on QR, no change                               | "The code doesn't match. Scan the code that is on the baby device right now."                                                          | rescan                              |
+| Baby already paired                     | window closed by first verified parent | —                                                    | "This baby device is already paired with another device."                                                                              | forget on baby (§3.14) then re-pair |
+| Devices can't reach each other          | no verified attempt after 20 s         | "Waiting for parent device…"                         | "Can't find the baby device yet. Make sure both devices are on the same Wi-Fi, or both use mobile data." + **Try again**; keeps trying | wait / fix network                  |
+| Pasted text incomplete                  | parser                                 | —                                                    | "This code is incomplete. Copy the whole code from the baby device."                                                                   | paste again                         |
 
 Baby QR rendering: inverted (light modules on near-black, our scanner handles inversion), screen brightness ≤ 50 %; **Make code brighter** button for difficult cameras. Copy-code button shares the same invite text.
 
@@ -135,11 +135,11 @@ Baby QR rendering: inverted (light modules on near-black, our scanner handles in
 
 `STATUS: UNDER DISCUSSION`
 
-| Action                   | Where                                | Interaction                  | Effect on this phone                              | Effect on the other phone                                                                       |
+| Action                   | Where                                | Interaction                  | Effect on this device                             | Effect on the other device                                                                      |
 | ------------------------ | ------------------------------------ | ---------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | Start (baby)             | S06 card "Start monitoring"          | one tap                      | S07 → kiosk after 30 s idle; silence applied      | parent auto-connects if monitoring                                                              |
 | Start (parent)           | S06 card "Connect to {name}"         | one tap                      | S09, yellow "Connecting to {name}…"               | —                                                                                               |
-| Stop (parent)            | S09 overflow → **Stop monitoring**   | confirm dialog `dialog_stop` | S06; ongoing notification removed                 | baby: "Parent phone stopped monitoring" (grey, no red pulse), keeps waiting for a parent        |
+| Stop (parent)            | S09 overflow → **Stop monitoring**   | confirm dialog `dialog_stop` | S06; ongoing notification removed                 | baby: "Parent device stopped monitoring" (grey, no red pulse), keeps waiting for a parent       |
 | Stop (baby)              | S08 unlock → S07 **Stop monitoring** | confirm dialog               | S06; silence restored, toast "Sounds are back on" | parent: S11 variant "{name} stopped monitoring" — one connection haptic + tone, no loop, **OK** |
 | App swiped away / killed | —                                    | —                            | next launch resumes (ADR-017 §9)                  | normal escalation §3.6                                                                          |
 
@@ -151,20 +151,20 @@ Stop is never adjacent to Listen and never a single tap.
 
 1. Launch → monitoring flag set? → straight to S09/S07 with "Reconnecting…" (no tap at all).
 2. Else S06 shows the saved card first (ui-design "returning user"); one tap starts.
-3. Not connected after 15 s → bar stays in normal escalation; S09 shows **What can I do?** opening `sheet_help_reconnect` (checklist: baby phone on and showing GuardedSleep? same Wi-Fi or both on mobile data? restart the app on the baby phone). Never a dead "Failed" screen; the link keeps trying (ADR-017 §6).
-4. `failed_needs_user` (pairing no longer valid): "These phones are no longer paired. Pair them again to keep monitoring." + **Pair again** → S05.
+3. Not connected after 15 s → bar stays in normal escalation; S09 shows **What can I do?** opening `sheet_help_reconnect` (checklist: baby device on and showing GuardedSleep? same Wi-Fi or both on mobile data? restart the app on the baby device). Never a dead "Failed" screen; the link keeps trying (ADR-017 §6).
+4. `failed_needs_user` (pairing no longer valid): "These devices are no longer paired. Pair them again to keep monitoring." + **Pair again** → S05.
 
-### 3.6 Reconnect and escalation on both phones
+### 3.6 Reconnect and escalation on both devices
 
 `STATUS: UNDER DISCUSSION` — timings measured from `last_alive` (ADR-017 §5). Liveness detection needs up to 25 s, so a silent loss enters the table at level 1.
 
-| Time since last contact | Level | Parent bar                                                    | Parent other                                                                                                                                                                        | Parent notification (ongoing)             | Baby (S08 dark)                            | Baby on touch-wake                           |
-| ----------------------- | ----- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ------------------------------------------ | -------------------------------------------- |
-| 0–20 s                  | 0     | yellow, ↻ icon, "Reconnecting…"                               | headline "Last heard {time}"; Listen disabled                                                                                                                                       | text "Reconnecting to {name}…"            | link icon yellow (dim)                     | "Reconnecting to parent phone…"              |
-| 20–60 s                 | 1     | orange, broken-link icon, "Can't reach {name} — still trying" | same; **no vibration** (A1)                                                                                                                                                         | text updates, silent                      | icon orange (dim)                          | "Parent phone not responding — still trying" |
-| 60–180 s                | 2     | red, slow pulse, "No connection for {duration}"               | **S11 full screen** over lock screen; connection haptic every 10 s; soft tone every 30 s (A2)                                                                                       | high-priority, full-screen intent         | **slow dim red pulse** (§6.2), never sound | same + "for {duration}"                      |
-| > 180 s                 | 3     | red, "No connection for {duration}"                           | continuous alarm tone (alarm stream, user's alarm volume) + haptics until acknowledged or restored                                                                                  | same                                      | unchanged                                  | unchanged                                    |
-| Restored                | —     | green, "Connected to {name}"                                  | if level ≥ 1: toast "Connected again after {duration}" (5 s); if level ≥ 2: S11 turns green "Connected again" + one short haptic, auto-closes after 10 s; then `card_missed_events` | back to "Connected to {name} · All quiet" | icon green                                 | "Connected to parent phone"                  |
+| Time since last contact | Level | Parent bar                                                    | Parent other                                                                                                                                                                        | Parent notification (ongoing)             | Baby (S08 dark)                            | Baby on touch-wake                            |
+| ----------------------- | ----- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ------------------------------------------ | --------------------------------------------- |
+| 0–20 s                  | 0     | yellow, ↻ icon, "Reconnecting…"                               | headline "Last heard {time}"; Listen disabled                                                                                                                                       | text "Reconnecting to {name}…"            | link icon yellow (dim)                     | "Reconnecting to parent device…"              |
+| 20–60 s                 | 1     | orange, broken-link icon, "Can't reach {name} — still trying" | same; **no vibration** (A1)                                                                                                                                                         | text updates, silent                      | icon orange (dim)                          | "Parent device not responding — still trying" |
+| 60–180 s                | 2     | red, slow pulse, "No connection for {duration}"               | **S11 full screen** over lock screen; connection haptic every 10 s; soft tone every 30 s (A2)                                                                                       | high-priority, full-screen intent         | **slow dim red pulse** (§6.2), never sound | same + "for {duration}"                       |
+| > 180 s                 | 3     | red, "No connection for {duration}"                           | continuous alarm tone (alarm stream, user's alarm volume) + haptics until acknowledged or restored                                                                                  | same                                      | unchanged                                  | unchanged                                     |
+| Restored                | —     | green, "Connected to {name}"                                  | if level ≥ 1: toast "Connected again after {duration}" (5 s); if level ≥ 2: S11 turns green "Connected again" + one short haptic, auto-closes after 10 s; then `card_missed_events` | back to "Connected to {name} · All quiet" | icon green                                 | "Connected to parent device"                  |
 
 Acknowledge (S11): **I'm checking** → sound and haptics off for 5 min, bar stays red, notification stays; after 5 min still down → level 3 directly (A3). **Stop monitoring** (secondary, confirm). Snooze never affects this table (ADR-017 §7).
 
@@ -204,11 +204,11 @@ Locked listening auto-stops after 60 min with a toast "Listening stopped after 1
 
 `STATUS: UNDER DISCUSSION`
 
-1. S09 **Test alert** (secondary button) → `sheet_probe`: "This plays a test sound **on this phone**. The baby phone stays silent." + output line per ADR-011 + **Run test**.
+1. S09 **Test alert** (secondary button) → `sheet_probe`: "This plays a test sound **on this device**. The baby device stays silent." + output line per ADR-011 + **Run test**.
 2. Parent requests probe → baby injects a digital test event through its alert pipeline (A10) → parent runs the full noise-alert chain with a bundled test sound, labelled **TEST** on S10.
 3. After 5 s: "Did you hear and feel it?" **Yes** / **No**.
 4. Yes → "Last test: today" stored, shown in settings. No → `sheet_readiness` with fixes (alarm volume, alert output, lock-screen alerts, Do Not Disturb).
-5. Not connected → test runs locally only and says "Tested this phone only — the baby phone is not connected".
+5. Not connected → test runs locally only and says "Tested this device only — the baby device is not connected".
 6. Prompted again: after app update, after 30 days, before first use on mobile data.
 
 ### 3.10 Snooze
@@ -226,17 +226,17 @@ Locked listening auto-stops after 60 min with a toast "Listening stopped after 1
 | Persistence            | stored as "until" time; survives reconnects and app restarts                                                                              |
 | Listen                 | unchanged by snooze                                                                                                                       |
 
-### 3.11 Low battery (both phones)
+### 3.11 Low battery (both devices)
 
 `STATUS: UNDER DISCUSSION`
 
-| Condition                                   | Parent shows                                                            | Haptic / sound                    | Clears when                |
-| ------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------- | -------------------------- |
-| Baby < 15 %, not charging                   | amber chip "Baby phone battery {percent} — plug it in" + notification   | one short haptic                  | charging or > 20 %         |
-| Baby < 5 % (always)                         | red chip + S11 variant once "Baby phone battery almost empty"           | connection haptic + one soft tone | charging                   |
-| Baby stopped charging while monitoring (A7) | info chip "Baby phone is no longer charging"                            | one short haptic                  | charging again / dismissed |
-| Parent < 20 %, not charging (A7)            | amber chip "Your phone is at {percent} — plug it in to keep monitoring" | one short haptic                  | charging                   |
-| Parent < 10 %, not charging                 | same, red                                                               | one short haptic, repeated at 5 % | charging                   |
+| Condition                                   | Parent shows                                                             | Haptic / sound                    | Clears when                |
+| ------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------- | -------------------------- |
+| Baby < 15 %, not charging                   | amber chip "Baby device battery {percent} — plug it in" + notification   | one short haptic                  | charging or > 20 %         |
+| Baby < 5 % (always)                         | red chip + S11 variant once "Baby device battery almost empty"           | connection haptic + one soft tone | charging                   |
+| Baby stopped charging while monitoring (A7) | info chip "Baby device is no longer charging"                            | one short haptic                  | charging again / dismissed |
+| Parent < 20 %, not charging (A7)            | amber chip "This device is at {percent} — plug it in to keep monitoring" | one short haptic                  | charging                   |
+| Parent < 10 %, not charging                 | same, red                                                                | one short haptic, repeated at 5 % | charging                   |
 
 Baby side shows battery only on touch-wake. Battery warnings cannot be snoozed but never loop.
 
@@ -246,39 +246,39 @@ Baby side shows battery only on touch-wake. Battery warnings cannot be snoozed b
 
 Derived on the baby from `device_status` (ADR-018 §3.2) into one parent-visible value:
 
-| Value              | Rule                                                                                        | Parent chip (icon + text)                                        | Tone                                                 | Action in `sheet_silence`                                                                |
-| ------------------ | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `silent`           | DND active blocking calls, messages, reminders; visual effects suppressed; or ringer silent | moon · "Baby phone is silent"                                    | neutral                                              | sub-line "Alarm clocks on it can still ring"; **Allow sounds again** (secondary)         |
-| `screen_may_light` | silent, but visual effects not suppressed                                                   | moon + sun · "Baby phone is silent, but its screen may light up" | amber                                                | **Silence it fully** (if access) / manual steps                                          |
-| `may_vibrate`      | ringer vibrate, no DND                                                                      | bell · "Baby phone may buzz"                                     | amber                                                | **Silence baby phone** / manual steps                                                    |
-| `may_ring`         | ringer normal, no DND                                                                       | bell · "Baby phone may ring"                                     | amber                                                | **Silence baby phone** / manual steps                                                    |
-| `unknown`          | browser baby, or status not yet received                                                    | question · "Can't check if the baby phone is silent"             | neutral grey (not amber, avoids a permanent warning) | manual steps                                                                             |
-| `no_access`        | native baby without DND access                                                              | as `may_*`, action replaced                                      | amber                                                | "Allow GuardedSleep to silence it: on the baby phone open Settings → Silence this phone" |
+| Value              | Rule                                                                                        | Parent chip (icon + text)                                         | Tone                                                 | Action in `sheet_silence`                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `silent`           | DND active blocking calls, messages, reminders; visual effects suppressed; or ringer silent | moon · "Baby device is silent"                                    | neutral                                              | sub-line "Alarm clocks on it can still ring"; **Allow sounds again** (secondary)           |
+| `screen_may_light` | silent, but visual effects not suppressed                                                   | moon + sun · "Baby device is silent, but its screen may light up" | amber                                                | **Silence it fully** (if access) / manual steps                                            |
+| `may_vibrate`      | ringer vibrate, no DND                                                                      | bell · "Baby device may buzz"                                     | amber                                                | **Silence baby device** / manual steps                                                     |
+| `may_ring`         | ringer normal, no DND                                                                       | bell · "Baby device may ring"                                     | amber                                                | **Silence baby device** / manual steps                                                     |
+| `unknown`          | browser baby, or status not yet received                                                    | question · "Can't check if the baby device is silent"             | neutral grey (not amber, avoids a permanent warning) | manual steps                                                                               |
+| `no_access`        | native baby without DND access                                                              | as `may_*`, action replaced                                       | amber                                                | "Allow GuardedSleep to silence it: on the baby device open Settings → Silence this device" |
 
-Remote silence: **Silence baby phone** → chip shows "Silencing…" (max 10 s) → result chip, or "Couldn't silence the baby phone. {reason}" with the manual steps. Baby applies DND "alarms only" + suppressed visual effects (A5), stores previous mode, restores on stop. If restore was missed (crash), the baby's next launch restores and shows "This phone was left on silent. Sounds are back on." A baby phone that is someone's everyday phone shows at start (S07): "Calls and messages on this phone stay silent until you stop monitoring."
+Remote silence: **Silence baby device** → chip shows "Silencing…" (max 10 s) → result chip, or "Couldn't silence the baby device. {reason}" with the manual steps. Baby applies DND "alarms only" + suppressed visual effects (A5), stores previous mode, restores on stop. If restore was missed (crash), the baby's next launch restores and shows "This device was left on silent. Sounds are back on." A baby device that is someone's everyday phone shows at start (S07): "Calls and messages on this device stay silent until you stop monitoring."
 
 ### 3.13 Settings — Basic / Advanced
 
 `STATUS: UNDER DISCUSSION`
 
-| Group (Basic)                   | Parent phone                                                                                                                                                                              | Baby phone (reachable only after kiosk unlock)                                                                                         |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Alerts / Sound detection        | Alert sound plays on [On this phone's current output · Speaker only]; Alert volume boost (slider 25–150 %); Keep alert volume up during alerts (toggle); Test alert + "Last test: {date}" | Sensitivity slider with live meter + threshold line ("More sensitive ↔ Less sensitive"); Noise must last 3 / 5 / 10 / 15 s (default 5) |
-| Silence                         | —                                                                                                                                                                                         | Silence this phone while monitoring (default on when access granted); status line                                                      |
-| Screen                          | Theme (Dark default / Light / Match system); Keep screen on while listening                                                                                                               | While monitoring: Dim (default) / Off                                                                                                  |
-| Paired phone                    | {name}: Rename · Forget this baby phone                                                                                                                                                   | Forget this parent phone                                                                                                               |
-| This phone                      | Readiness checklist (§3.17); Battery & background                                                                                                                                         | Device check (run again); Battery & background; safety note                                                                            |
-| Language                        | ADR-021 §2 set (~20 AI-translated locales, en master; previously en / de / fr / es, superseded, ADR-021 §2)                                                                               | same                                                                                                                                   |
-| About & help                    | Limits (F-1/F-4 copy), help, version, privacy                                                                                                                                             | same                                                                                                                                   |
-| **Advanced** (toggle + warning) | Connection server address, relay (TURN), Heartbeat 5–30 s, Always show connection details, Diagnostics export                                                                             | same                                                                                                                                   |
+| Group (Basic)                   | Parent device                                                                                                                                                                              | Baby device (reachable only after kiosk unlock)                                                                                        |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Alerts / Sound detection        | Alert sound plays on [On this device's current output · Speaker only]; Alert volume boost (slider 25–150 %); Keep alert volume up during alerts (toggle); Test alert + "Last test: {date}" | Sensitivity slider with live meter + threshold line ("More sensitive ↔ Less sensitive"); Noise must last 3 / 5 / 10 / 15 s (default 5) |
+| Silence                         | —                                                                                                                                                                                          | Silence this device while monitoring (default on when access granted); status line                                                     |
+| Screen                          | Theme (Dark default / Light / Match system); Keep screen on while listening                                                                                                                | While monitoring: Dim (default) / Off                                                                                                  |
+| Paired device                   | {name}: Rename · Forget this baby device                                                                                                                                                   | Forget this parent device                                                                                                              |
+| This device                     | Readiness checklist (§3.17); Battery & background                                                                                                                                          | Device check (run again); Battery & background; safety note                                                                            |
+| Language                        | ADR-021 §2 set (~20 AI-translated locales, en master; previously en / de / fr / es, superseded, ADR-021 §2)                                                                                | same                                                                                                                                   |
+| About & help                    | Limits (F-1/F-4 copy), help, version, privacy                                                                                                                                              | same                                                                                                                                   |
+| **Advanced** (toggle + warning) | Connection server address, relay (TURN), Heartbeat 5–30 s, Always show connection details, Diagnostics export                                                                              | same                                                                                                                                   |
 
 ### 3.14 Forget pairing
 
 `STATUS: UNDER DISCUSSION`
 
-1. Settings → Paired phone → **Forget this baby phone** → `dialog_forget`: "Forget {name}? Monitoring stops and you'll need to scan a new code to connect again." [Forget] [Cancel].
+1. Settings → Paired device → **Forget this baby device** → `dialog_forget`: "Forget {name}? Monitoring stops and you'll need to scan a new code to connect again." [Forget] [Cancel].
 2. Stops monitoring if active, deletes the key from secure storage, returns to S06 empty state.
-3. Other phone on its next attempt: `failed_needs_user` → §3.5 step 4 copy. No alarm sound for this terminal state on the parent beyond one connection haptic.
+3. Other device on its next attempt: `failed_needs_user` → §3.5 step 4 copy. No alarm sound for this terminal state on the parent beyond one connection haptic.
 
 ### 3.15 Missed events after an outage
 
@@ -310,15 +310,15 @@ Card stays until **OK**; also logged in the parent's event list (T2).
 
 Checked at start of monitoring, on app resume, and every 5 min. The most severe failing item shows as one chip on S09 (`parent_readiness_chip`); tapping opens `sheet_readiness` with all items and fix buttons.
 
-| Item                                       | Severity | Chip / row text                                      | Fix button                                            |
-| ------------------------------------------ | -------- | ---------------------------------------------------- | ----------------------------------------------------- |
-| Notifications blocked                      | red      | "Alerts are turned off for GuardedSleep"             | Turn on alerts                                        |
-| Alarm volume is 0                          | red      | "Your alarm volume is off — you won't hear alerts"   | (instruction: press volume up during test) Test alert |
-| Lock-screen alerts not allowed             | amber    | "Alerts can't appear on the lock screen"             | Allow                                                 |
-| DND on and bypass not allowed              | amber    | "Do Not Disturb may silence alerts"                  | Allow alerts during Do Not Disturb                    |
-| Battery optimisation active                | amber    | "Your phone may stop GuardedSleep in the background" | Allow background use                                  |
-| Headphones connected + Default output (T2) | info     | "Alerts will play in your headphones"                | Change                                                |
-| Never tested / > 30 days                   | info     | "Test your alerts"                                   | Test alert                                            |
+| Item                                       | Severity | Chip / row text                                       | Fix button                                            |
+| ------------------------------------------ | -------- | ----------------------------------------------------- | ----------------------------------------------------- |
+| Notifications blocked                      | red      | "Alerts are turned off for GuardedSleep"              | Turn on alerts                                        |
+| Alarm volume is 0                          | red      | "Your alarm volume is off — you won't hear alerts"    | (instruction: press volume up during test) Test alert |
+| Lock-screen alerts not allowed             | amber    | "Alerts can't appear on the lock screen"              | Allow                                                 |
+| DND on and bypass not allowed              | amber    | "Do Not Disturb may silence alerts"                   | Allow alerts during Do Not Disturb                    |
+| Battery optimisation active                | amber    | "This device may stop GuardedSleep in the background" | Allow background use                                  |
+| Headphones connected + Default output (T2) | info     | "Alerts will play in your headphones"                 | Change                                                |
+| Never tested / > 30 days                   | info     | "Test your alerts"                                    | Test alert                                            |
 
 ---
 
@@ -332,118 +332,118 @@ Every screen: states, primary action, at-a-glance content, test IDs, message key
 
 | Test ID           | Key                 | English                            |
 | ----------------- | ------------------- | ---------------------------------- |
-| `role_title`      | `role.title`        | Which phone is this?               |
-| `role_baby`       | `role.baby.title`   | Baby phone                         |
+| `role_title`      | `role.title`        | Which device is this?              |
+| `role_baby`       | `role.baby.title`   | Baby device                        |
 |                   | `role.baby.hint`    | Stays with your child and listens. |
-| `role_parent`     | `role.parent.title` | Parent phone                       |
+| `role_parent`     | `role.parent.title` | Parent device                      |
 |                   | `role.parent.hint`  | Stays with you and alerts you.     |
-| `role_order_hint` | `role.orderHint`    | Set up the baby phone first.       |
+| `role_order_hint` | `role.orderHint`    | Set up the baby device first.      |
 
 ### 4.2 S02 `baby_setup` / S03 `parent_setup`
 
 `STATUS: UNDER DISCUSSION` — States per row: `done` (green ✓), `todo` (amber !), `blocked` (red ✕), `checking` (spinner). Primary: **Continue** (enabled when required rows are done).
 
-| Test ID                   | Key                                | English                                                                                                                                      |
-| ------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `setup_title`             | `setup.title`                      | Get this phone ready                                                                                                                         |
-| `setup_row_mic`           | `setup.mic.title`                  | Microphone                                                                                                                                   |
-|                           | `setup.mic.why`                    | Needed to hear your child.                                                                                                                   |
-| `setup_row_background`    | `setup.background.title`           | Keep running in the background                                                                                                               |
-|                           | `setup.background.why`             | Otherwise your phone may stop monitoring to save battery.                                                                                    |
-| `setup_row_silence`       | `setup.silence.title`              | Silence this phone while monitoring                                                                                                          |
-|                           | `setup.silence.why`                | Calls and messages won't ring or light up the screen next to your child. Alarm clocks still work.                                            |
-| `setup_row_safety`        | `setup.safety.body`                | Keep this phone on the charger, on a stable surface, out of your child's reach. Don't use a phone with a swollen or damaged battery.         |
-| `setup_row_device_check`  | `setup.deviceCheck.ok`             | This phone works well as a baby phone.                                                                                                       |
-|                           | `setup.deviceCheck.limited`        | This phone may lose the connection now and then. It still works.                                                                             |
-|                           | `setup.deviceCheck.notRecommended` | This phone may not monitor reliably. Use another phone if you can.                                                                           |
-| `setup_row_notifications` | `setup.notifications.title`        | Alerts                                                                                                                                       |
-|                           | `setup.notifications.why`          | Needed so you hear when your child makes noise.                                                                                              |
-|                           | `setup.notifications.required`     | GuardedSleep can't alert you without this.                                                                                                   |
-| `setup_row_lockscreen`    | `setup.lockScreen.title`           | Alerts on the lock screen                                                                                                                    |
-| `setup_row_dnd_bypass`    | `setup.dndBypass.title`            | Alerts during Do Not Disturb                                                                                                                 |
-| `setup_limits_card`       | `setup.limits.body`                | GuardedSleep can only alert you while this phone is on and charged. Keep it plugged in at night. If both phones turn off, nobody is alerted. |
-| `setup_row_allow`         | `common.allow`                     | Allow                                                                                                                                        |
-| `setup_continue`          | `common.continue`                  | Continue                                                                                                                                     |
-| `setup_skip_row`          | `common.later`                     | Later                                                                                                                                        |
+| Test ID                   | Key                                | English                                                                                                                                        |
+| ------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `setup_title`             | `setup.title`                      | Get this device ready                                                                                                                          |
+| `setup_row_mic`           | `setup.mic.title`                  | Microphone                                                                                                                                     |
+|                           | `setup.mic.why`                    | Needed to hear your child.                                                                                                                     |
+| `setup_row_background`    | `setup.background.title`           | Keep running in the background                                                                                                                 |
+|                           | `setup.background.why`             | Otherwise this device may stop monitoring to save battery.                                                                                     |
+| `setup_row_silence`       | `setup.silence.title`              | Silence this device while monitoring                                                                                                           |
+|                           | `setup.silence.why`                | Calls and messages won't ring or light up the screen next to your child. Alarm clocks still work.                                              |
+| `setup_row_safety`        | `setup.safety.body`                | Keep this device on the charger, on a stable surface, out of your child's reach. Don't use a device with a swollen or damaged battery.         |
+| `setup_row_device_check`  | `setup.deviceCheck.ok`             | This device works well as a baby device.                                                                                                       |
+|                           | `setup.deviceCheck.limited`        | This device may lose the connection now and then. It still works.                                                                              |
+|                           | `setup.deviceCheck.notRecommended` | This device may not monitor reliably. Use another device if you can.                                                                           |
+| `setup_row_notifications` | `setup.notifications.title`        | Alerts                                                                                                                                         |
+|                           | `setup.notifications.why`          | Needed so you hear when your child makes noise.                                                                                                |
+|                           | `setup.notifications.required`     | GuardedSleep can't alert you without this.                                                                                                     |
+| `setup_row_lockscreen`    | `setup.lockScreen.title`           | Alerts on the lock screen                                                                                                                      |
+| `setup_row_dnd_bypass`    | `setup.dndBypass.title`            | Alerts during Do Not Disturb                                                                                                                   |
+| `setup_limits_card`       | `setup.limits.body`                | GuardedSleep can only alert you while this device is on and charged. Keep it plugged in at night. If both devices turn off, nobody is alerted. |
+| `setup_row_allow`         | `common.allow`                     | Allow                                                                                                                                          |
+| `setup_continue`          | `common.continue`                  | Continue                                                                                                                                       |
+| `setup_skip_row`          | `common.later`                     | Later                                                                                                                                          |
 
 ### 4.3 S04 `baby_pair`
 
 `STATUS: UNDER DISCUSSION` — States: `showing`, `expired`, `connecting` (parent found), `connected`. Primary: none while showing (wait); **Show new code** when expired.
 
-| Test ID                 | Key                     | English                                                                   |
-| ----------------------- | ----------------------- | ------------------------------------------------------------------------- |
-| `baby_pair_title`       | `pair.baby.title`       | Connect your phone                                                        |
-| `baby_pair_qr`          | `pair.baby.qrAlt`       | Pairing code                                                              |
-| `baby_pair_instruction` | `pair.baby.instruction` | On your phone, open GuardedSleep, choose Parent phone and scan this code. |
-| `baby_pair_countdown`   | `pair.baby.validFor`    | Code valid for {duration}                                                 |
-| `baby_pair_expired`     | `pair.baby.expired`     | This code has expired.                                                    |
-| `baby_pair_new_code`    | `pair.baby.newCode`     | Show new code                                                             |
-| `baby_pair_copy`        | `pair.baby.copy`        | Copy code                                                                 |
-| `baby_pair_brighter`    | `pair.baby.brighter`    | Make code brighter                                                        |
-| `baby_pair_waiting`     | `pair.baby.waiting`     | Waiting for parent phone…                                                 |
-| `baby_pair_privacy`     | `pair.baby.privacy`     | Anyone with this code can listen. Only show it to people you trust.       |
+| Test ID                 | Key                     | English                                                                          |
+| ----------------------- | ----------------------- | -------------------------------------------------------------------------------- |
+| `baby_pair_title`       | `pair.baby.title`       | Connect the parent device                                                        |
+| `baby_pair_qr`          | `pair.baby.qrAlt`       | Pairing code                                                                     |
+| `baby_pair_instruction` | `pair.baby.instruction` | On the other device, open GuardedSleep, choose Parent device and scan this code. |
+| `baby_pair_countdown`   | `pair.baby.validFor`    | Code valid for {duration}                                                        |
+| `baby_pair_expired`     | `pair.baby.expired`     | This code has expired.                                                           |
+| `baby_pair_new_code`    | `pair.baby.newCode`     | Show new code                                                                    |
+| `baby_pair_copy`        | `pair.baby.copy`        | Copy code                                                                        |
+| `baby_pair_brighter`    | `pair.baby.brighter`    | Make code brighter                                                               |
+| `baby_pair_waiting`     | `pair.baby.waiting`     | Waiting for parent device…                                                       |
+| `baby_pair_privacy`     | `pair.baby.privacy`     | Anyone with this code can listen. Only show it to people you trust.              |
 
 ### 4.4 S05 `parent_pair`
 
 `STATUS: UNDER DISCUSSION` — States: `camera_rationale`, `scanning`, `camera_denied`, `connecting`, `error(kind)`. Primary: scan; secondary: paste.
 
-| Test ID                     | Key                        | English                                                                                              |
-| --------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `parent_pair_title`         | `pair.parent.title`        | Scan the code on the baby phone                                                                      |
-| `parent_pair_camera_why`    | `pair.parent.cameraWhy`    | GuardedSleep uses the camera only to read the code.                                                  |
-| `parent_pair_scanner`       | —                          | (camera view)                                                                                        |
-| `parent_pair_paste_field`   | `pair.parent.pasteLabel`   | Or paste the code                                                                                    |
-| `parent_pair_paste_submit`  | `pair.parent.pasteSubmit`  | Connect                                                                                              |
-| `parent_pair_camera_denied` | `pair.error.cameraDenied`  | Camera not allowed.                                                                                  |
-| `parent_pair_allow_camera`  | `pair.error.allowCamera`   | Allow camera                                                                                         |
-| `parent_pair_paste_instead` | `pair.error.pasteInstead`  | Paste code instead                                                                                   |
-| `parent_pair_error`         | `pair.error.notOurs`       | This isn't a GuardedSleep code. Scan the code on the baby phone.                                     |
-|                             | `pair.error.expired`       | This code has expired. Tap Show new code on the baby phone, then scan again.                         |
-|                             | `pair.error.mismatch`      | The code doesn't match. Scan the code that is on the baby phone right now.                           |
-|                             | `pair.error.alreadyPaired` | This baby phone is already paired with another phone.                                                |
-|                             | `pair.error.unreachable`   | Can't find the baby phone yet. Make sure both phones are on the same Wi-Fi, or both use mobile data. |
-|                             | `pair.error.incomplete`    | This code is incomplete. Copy the whole code from the baby phone.                                    |
-| `parent_pair_retry`         | `common.tryAgain`          | Try again                                                                                            |
-| `parent_pair_connecting`    | `pair.parent.connecting`   | Connecting to the baby phone…                                                                        |
+| Test ID                     | Key                        | English                                                                                                |
+| --------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `parent_pair_title`         | `pair.parent.title`        | Scan the code on the baby device                                                                       |
+| `parent_pair_camera_why`    | `pair.parent.cameraWhy`    | GuardedSleep uses the camera only to read the code.                                                    |
+| `parent_pair_scanner`       | —                          | (camera view)                                                                                          |
+| `parent_pair_paste_field`   | `pair.parent.pasteLabel`   | Or paste the code                                                                                      |
+| `parent_pair_paste_submit`  | `pair.parent.pasteSubmit`  | Connect                                                                                                |
+| `parent_pair_camera_denied` | `pair.error.cameraDenied`  | Camera not allowed.                                                                                    |
+| `parent_pair_allow_camera`  | `pair.error.allowCamera`   | Allow camera                                                                                           |
+| `parent_pair_paste_instead` | `pair.error.pasteInstead`  | Paste code instead                                                                                     |
+| `parent_pair_error`         | `pair.error.notOurs`       | This isn't a GuardedSleep code. Scan the code on the baby device.                                      |
+|                             | `pair.error.expired`       | This code has expired. Tap Show new code on the baby device, then scan again.                          |
+|                             | `pair.error.mismatch`      | The code doesn't match. Scan the code that is on the baby device right now.                            |
+|                             | `pair.error.alreadyPaired` | This baby device is already paired with another device.                                                |
+|                             | `pair.error.unreachable`   | Can't find the baby device yet. Make sure both devices are on the same Wi-Fi, or both use mobile data. |
+|                             | `pair.error.incomplete`    | This code is incomplete. Copy the whole code from the baby device.                                     |
+| `parent_pair_retry`         | `common.tryAgain`          | Try again                                                                                              |
+| `parent_pair_connecting`    | `pair.parent.connecting`   | Connecting to the baby device…                                                                         |
 
 ### 4.5 S06 `home`
 
 `STATUS: UNDER DISCUSSION` — States: `saved` (card), `empty`. Primary: the card (≥ 96 dp, full width).
 
-| Test ID            | Key                     | English               |
-| ------------------ | ----------------------- | --------------------- |
-| `home_card`        | `home.parent.cardTitle` | Connect to {name}     |
-|                    | `home.baby.cardTitle`   | Start monitoring      |
-| `home_card_last`   | `home.lastUsed`         | Last used {time}      |
-| `home_new_pairing` | `home.newPairing`       | Set up new phones     |
-| `home_settings`    | `common.settings`       | Settings              |
-| `home_empty`       | `home.empty`            | No phones paired yet. |
+| Test ID            | Key                     | English                |
+| ------------------ | ----------------------- | ---------------------- |
+| `home_card`        | `home.parent.cardTitle` | Connect to {name}      |
+|                    | `home.baby.cardTitle`   | Start monitoring       |
+| `home_card_last`   | `home.lastUsed`         | Last used {time}       |
+| `home_new_pairing` | `home.newPairing`       | Set up new devices     |
+| `home_settings`    | `common.settings`       | Settings               |
+| `home_empty`       | `home.empty`            | No devices paired yet. |
 
 ### 4.6 S07 `baby_monitor` (awake / unlocked)
 
-`STATUS: UNDER DISCUSSION` — States: `waiting_parent`, `connected`, `reconnecting`, `parent_stopped`, `needs_pairing`. Primary: **Lock screen** (auto after 30 s idle). At a glance: big status line, parent phone, battery, silence status. Dark theme only.
+`STATUS: UNDER DISCUSSION` — States: `waiting_parent`, `connected`, `reconnecting`, `parent_stopped`, `needs_pairing`. Primary: **Lock screen** (auto after 30 s idle). At a glance: big status line, parent device, battery, silence status. Dark theme only.
 
-| Test ID                | Key                          | English                                                                 |
-| ---------------------- | ---------------------------- | ----------------------------------------------------------------------- |
-| `baby_status`          | `baby.status.connected`      | Connected to parent phone                                               |
-|                        | `baby.status.waiting`        | Waiting for parent phone…                                               |
-|                        | `baby.status.reconnecting`   | Reconnecting to parent phone…                                           |
-|                        | `baby.status.notResponding`  | Parent phone not responding — still trying                              |
-|                        | `baby.status.parentStopped`  | Parent phone stopped monitoring                                         |
-|                        | `link.needsPairing`          | These phones are no longer paired. Pair them again to keep monitoring.  |
-| `baby_monitoring_line` | `baby.monitoring`            | Monitoring                                                              |
-| `baby_listening`       | `baby.parentListening`       | Parent is listening                                                     |
-| `baby_battery`         | `baby.battery`               | Battery {percent}                                                       |
-|                        | `baby.batteryCharging`       | Charging · {percent}                                                    |
-| `baby_silence`         | `baby.silence.on`            | This phone is silent                                                    |
-|                        | `baby.silence.off`           | This phone may ring                                                     |
-|                        | `baby.silence.everydayPhone` | Calls and messages on this phone stay silent until you stop monitoring. |
-|                        | `baby.silence.restored`      | This phone was left on silent. Sounds are back on.                      |
-| `baby_lock`            | `baby.lock`                  | Lock screen                                                             |
-| `baby_autolock_hint`   | `baby.autolockHint`          | The screen goes dark in {seconds} s                                     |
-| `baby_stop`            | `baby.stop`                  | Stop monitoring                                                         |
-| `baby_settings`        | `common.settings`            | Settings                                                                |
-| `baby_mic_level`       | `baby.micLevel`              | Sound level here                                                        |
+| Test ID                | Key                          | English                                                                  |
+| ---------------------- | ---------------------------- | ------------------------------------------------------------------------ |
+| `baby_status`          | `baby.status.connected`      | Connected to parent device                                               |
+|                        | `baby.status.waiting`        | Waiting for parent device…                                               |
+|                        | `baby.status.reconnecting`   | Reconnecting to parent device…                                           |
+|                        | `baby.status.notResponding`  | Parent device not responding — still trying                              |
+|                        | `baby.status.parentStopped`  | Parent device stopped monitoring                                         |
+|                        | `link.needsPairing`          | These devices are no longer paired. Pair them again to keep monitoring.  |
+| `baby_monitoring_line` | `baby.monitoring`            | Monitoring                                                               |
+| `baby_listening`       | `baby.parentListening`       | Parent is listening                                                      |
+| `baby_battery`         | `baby.battery`               | Battery {percent}                                                        |
+|                        | `baby.batteryCharging`       | Charging · {percent}                                                     |
+| `baby_silence`         | `baby.silence.on`            | This device is silent                                                    |
+|                        | `baby.silence.off`           | This device may ring                                                     |
+|                        | `baby.silence.everydayPhone` | Calls and messages on this device stay silent until you stop monitoring. |
+|                        | `baby.silence.restored`      | This device was left on silent. Sounds are back on.                      |
+| `baby_lock`            | `baby.lock`                  | Lock screen                                                              |
+| `baby_autolock_hint`   | `baby.autolockHint`          | The screen goes dark in {seconds} s                                      |
+| `baby_stop`            | `baby.stop`                  | Stop monitoring                                                          |
+| `baby_settings`        | `common.settings`            | Settings                                                                 |
+| `baby_mic_level`       | `baby.micLevel`              | Sound level here                                                         |
 
 ### 4.7 S08 `baby_kiosk`
 
@@ -462,41 +462,41 @@ Every screen: states, primary action, at-a-glance content, test IDs, message key
 
 `STATUS: UNDER DISCUSSION` — States: `connecting`, `connected_quiet`, `connected_noise_below`, `alert` (if S10 not shown), `snoozed`, `reconnecting(level)`, `baby_stopped`, `needs_pairing`. Primary: **Listen**. Layout §5.
 
-| Test ID                    | Key                                      | English                                                                |
-| -------------------------- | ---------------------------------------- | ---------------------------------------------------------------------- |
-| `parent_ambient_bar`       | `link.connected`                         | Connected to {name}                                                    |
-|                            | `link.connecting`                        | Connecting to {name}…                                                  |
-|                            | `link.reconnecting`                      | Reconnecting…                                                          |
-|                            | `link.cantReach`                         | Can't reach {name} — still trying                                      |
-|                            | `link.lostFor`                           | No connection for {duration}                                           |
-|                            | `link.babyStopped`                       | {name} stopped monitoring                                              |
-|                            | `link.needsPairing`                      | These phones are no longer paired. Pair them again to keep monitoring. |
-| `parent_headline`          | `parent.allQuietSince`                   | All quiet since {time}                                                 |
-|                            | `parent.soundSince`                      | Sound detected · since {time}                                          |
-|                            | `parent.soundAt`                         | Sound at {time} · lasted {duration}                                    |
-|                            | `parent.soundSnoozed`                    | Sound at {time} · alerts snoozed                                       |
-|                            | `parent.lastHeard`                       | Last heard {time}                                                      |
-| `parent_meter`             | `parent.meterA11y`                       | Sound level: {level}                                                   |
-|                            | `parent.level.quiet` / `.some` / `.loud` | quiet / some sound / loud                                              |
-| `parent_baby_battery_chip` | `battery.baby`                           | Baby phone {percent}                                                   |
-| `parent_silence_chip`      | `silence.*` (§4.11)                      |                                                                        |
-| `parent_quality_chip`      | `link.weak`                              | Weak connection — sound may break up                                   |
-| `parent_snooze_chip`       | `snooze.active`                          | Snoozed · {minutes} min left                                           |
-| `parent_readiness_chip`    | `readiness.*` (§3.17)                    |                                                                        |
-| `parent_listen`            | `listen.idle`                            | Hold to listen                                                         |
-|                            | `listen.holding`                         | Listening…                                                             |
-|                            | `listen.locked`                          | Listening · tap to stop                                                |
-|                            | `listen.lockHint`                        | Slide up to keep listening                                             |
-|                            | `listen.disabled`                        | Listen when connected                                                  |
-|                            | `listen.autoStopped`                     | Listening stopped after 1 h                                            |
-|                            | `listen.resumed`                         | Connected again — listening                                            |
-| `parent_snooze`            | `snooze.button`                          | Snooze                                                                 |
-| `parent_probe`             | `probe.button`                           | Test alert                                                             |
-| `parent_overflow`          | `common.more`                            | More                                                                   |
-| `parent_stop`              | `parent.stop`                            | Stop monitoring                                                        |
-| `parent_help_reconnect`    | `help.reconnect.open`                    | What can I do?                                                         |
-| `parent_restored_toast`    | `link.restoredAfter`                     | Connected again after {duration}                                       |
-| `parent_test_chip`         | `readiness.neverTested`                  | Test your alerts                                                       |
+| Test ID                    | Key                                      | English                                                                 |
+| -------------------------- | ---------------------------------------- | ----------------------------------------------------------------------- |
+| `parent_ambient_bar`       | `link.connected`                         | Connected to {name}                                                     |
+|                            | `link.connecting`                        | Connecting to {name}…                                                   |
+|                            | `link.reconnecting`                      | Reconnecting…                                                           |
+|                            | `link.cantReach`                         | Can't reach {name} — still trying                                       |
+|                            | `link.lostFor`                           | No connection for {duration}                                            |
+|                            | `link.babyStopped`                       | {name} stopped monitoring                                               |
+|                            | `link.needsPairing`                      | These devices are no longer paired. Pair them again to keep monitoring. |
+| `parent_headline`          | `parent.allQuietSince`                   | All quiet since {time}                                                  |
+|                            | `parent.soundSince`                      | Sound detected · since {time}                                           |
+|                            | `parent.soundAt`                         | Sound at {time} · lasted {duration}                                     |
+|                            | `parent.soundSnoozed`                    | Sound at {time} · alerts snoozed                                        |
+|                            | `parent.lastHeard`                       | Last heard {time}                                                       |
+| `parent_meter`             | `parent.meterA11y`                       | Sound level: {level}                                                    |
+|                            | `parent.level.quiet` / `.some` / `.loud` | quiet / some sound / loud                                               |
+| `parent_baby_battery_chip` | `battery.baby`                           | Baby device {percent}                                                   |
+| `parent_silence_chip`      | `silence.*` (§4.11)                      |                                                                         |
+| `parent_quality_chip`      | `link.weak`                              | Weak connection — sound may break up                                    |
+| `parent_snooze_chip`       | `snooze.active`                          | Snoozed · {minutes} min left                                            |
+| `parent_readiness_chip`    | `readiness.*` (§3.17)                    |                                                                         |
+| `parent_listen`            | `listen.idle`                            | Hold to listen                                                          |
+|                            | `listen.holding`                         | Listening…                                                              |
+|                            | `listen.locked`                          | Listening · tap to stop                                                 |
+|                            | `listen.lockHint`                        | Slide up to keep listening                                              |
+|                            | `listen.disabled`                        | Listen when connected                                                   |
+|                            | `listen.autoStopped`                     | Listening stopped after 1 h                                             |
+|                            | `listen.resumed`                         | Connected again — listening                                             |
+| `parent_snooze`            | `snooze.button`                          | Snooze                                                                  |
+| `parent_probe`             | `probe.button`                           | Test alert                                                              |
+| `parent_overflow`          | `common.more`                            | More                                                                    |
+| `parent_stop`              | `parent.stop`                            | Stop monitoring                                                         |
+| `parent_help_reconnect`    | `help.reconnect.open`                    | What can I do?                                                          |
+| `parent_restored_toast`    | `link.restoredAfter`                     | Connected again after {duration}                                        |
+| `parent_test_chip`         | `readiness.neverTested`                  | Test your alerts                                                        |
 
 ### 4.9 S10 `parent_noise_alert`
 
@@ -517,20 +517,20 @@ Every screen: states, primary action, at-a-glance content, test IDs, message key
 
 `STATUS: UNDER DISCUSSION` — Variants: `lost` (level 2/3), `baby_stopped`, `battery_critical`, `restored`. Primary: **I'm checking** (lost) / **OK** (others).
 
-| Test ID               | Key                        | English                                                                                                                  |
-| --------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `link_alarm_title`    | `linkAlarm.lost.title`     | No connection to {name}                                                                                                  |
-| `link_alarm_body`     | `linkAlarm.lost.body`      | For {duration}. You won't hear your child until it reconnects. Check that the baby phone is on and showing GuardedSleep. |
-|                       | `linkAlarm.stopped.title`  | {name} stopped monitoring                                                                                                |
-|                       | `linkAlarm.stopped.body`   | Someone stopped monitoring on the baby phone. You won't get alerts.                                                      |
-|                       | `linkAlarm.battery.title`  | Baby phone battery almost empty                                                                                          |
-|                       | `linkAlarm.battery.body`   | Plug in the baby phone now, or monitoring will stop.                                                                     |
-|                       | `linkAlarm.restored.title` | Connected again                                                                                                          |
-| `link_alarm_ack`      | `linkAlarm.ack`            | I'm checking                                                                                                             |
-| `link_alarm_ack_note` | `linkAlarm.ackNote`        | Sound off for 5 min. We'll alert you again if it's still not connected.                                                  |
-| `link_alarm_ok`       | `common.ok`                | OK                                                                                                                       |
-| `link_alarm_stop`     | `parent.stop`              | Stop monitoring                                                                                                          |
-| `link_alarm_help`     | `help.reconnect.open`      | What can I do?                                                                                                           |
+| Test ID               | Key                        | English                                                                                                                   |
+| --------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `link_alarm_title`    | `linkAlarm.lost.title`     | No connection to {name}                                                                                                   |
+| `link_alarm_body`     | `linkAlarm.lost.body`      | For {duration}. You won't hear your child until it reconnects. Check that the baby device is on and showing GuardedSleep. |
+|                       | `linkAlarm.stopped.title`  | {name} stopped monitoring                                                                                                 |
+|                       | `linkAlarm.stopped.body`   | Someone stopped monitoring on the baby device. You won't get alerts.                                                      |
+|                       | `linkAlarm.battery.title`  | Baby device battery almost empty                                                                                          |
+|                       | `linkAlarm.battery.body`   | Plug in the baby device now, or monitoring will stop.                                                                     |
+|                       | `linkAlarm.restored.title` | Connected again                                                                                                           |
+| `link_alarm_ack`      | `linkAlarm.ack`            | I'm checking                                                                                                              |
+| `link_alarm_ack_note` | `linkAlarm.ackNote`        | Sound off for 5 min. We'll alert you again if it's still not connected.                                                   |
+| `link_alarm_ok`       | `common.ok`                | OK                                                                                                                        |
+| `link_alarm_stop`     | `parent.stop`              | Stop monitoring                                                                                                           |
+| `link_alarm_help`     | `help.reconnect.open`      | What can I do?                                                                                                            |
 
 ### 4.11 Sheets and dialogs
 
@@ -538,45 +538,45 @@ Every screen: states, primary action, at-a-glance content, test IDs, message key
 
 | Test ID                    | Key                          | English                                                                                                          |
 | -------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `sheet_silence`            | `silence.silent`             | Baby phone is silent                                                                                             |
+| `sheet_silence`            | `silence.silent`             | Baby device is silent                                                                                            |
 |                            | `silence.alarmsStillRing`    | Alarm clocks on it can still ring.                                                                               |
-|                            | `silence.screenMayLight`     | Baby phone is silent, but its screen may light up                                                                |
-|                            | `silence.mayVibrate`         | Baby phone may buzz                                                                                              |
-|                            | `silence.mayRing`            | Baby phone may ring                                                                                              |
-|                            | `silence.unknown`            | Can't check if the baby phone is silent                                                                          |
-|                            | `silence.manual`             | On the baby phone, turn on Do Not Disturb and turn the brightness down.                                          |
-|                            | `silence.noAccess`           | To silence it from here, open Settings on the baby phone and turn on "Silence this phone while monitoring".      |
-| `sheet_silence_apply`      | `silence.apply`              | Silence baby phone                                                                                               |
+|                            | `silence.screenMayLight`     | Baby device is silent, but its screen may light up                                                               |
+|                            | `silence.mayVibrate`         | Baby device may buzz                                                                                             |
+|                            | `silence.mayRing`            | Baby device may ring                                                                                             |
+|                            | `silence.unknown`            | Can't check if the baby device is silent                                                                         |
+|                            | `silence.manual`             | On the baby device, turn on Do Not Disturb and turn the brightness down.                                         |
+|                            | `silence.noAccess`           | To silence it from here, open Settings on the baby device and turn on "Silence this device while monitoring".    |
+| `sheet_silence_apply`      | `silence.apply`              | Silence baby device                                                                                              |
 | `sheet_silence_apply_full` | `silence.applyFull`          | Silence it fully                                                                                                 |
 | `sheet_silence_pending`    | `silence.pending`            | Silencing…                                                                                                       |
-| `sheet_silence_failed`     | `silence.failed`             | Couldn't silence the baby phone.                                                                                 |
+| `sheet_silence_failed`     | `silence.failed`             | Couldn't silence the baby device.                                                                                |
 | `sheet_silence_undo`       | `silence.allowSounds`        | Allow sounds again                                                                                               |
 | `sheet_snooze`             | `snooze.title`               | Snooze noise alerts                                                                                              |
 |                            | `snooze.help`                | You still get alerts if the connection drops or a battery runs low.                                              |
 | `sheet_snooze_10` / `_30`  | `snooze.minutes`             | Snooze {minutes} min                                                                                             |
 | `sheet_snooze_end`         | `snooze.end`                 | End snooze                                                                                                       |
 | `sheet_probe`              | `probe.title`                | Test your alerts                                                                                                 |
-|                            | `probe.body`                 | This plays a test sound on this phone. The baby phone stays silent.                                              |
+|                            | `probe.body`                 | This plays a test sound on this device. The baby device stays silent.                                            |
 |                            | `probe.output`               | Alerts play on: {output}                                                                                         |
 | `sheet_probe_run`          | `probe.run`                  | Run test                                                                                                         |
 | `sheet_probe_question`     | `probe.question`             | Did you hear and feel it?                                                                                        |
 | `sheet_probe_yes` / `_no`  | `common.yes` / `common.no`   | Yes / No                                                                                                         |
-|                            | `probe.localOnly`            | Tested this phone only — the baby phone is not connected.                                                        |
+|                            | `probe.localOnly`            | Tested this device only — the baby device is not connected.                                                      |
 | `sheet_readiness`          | `readiness.title`            | Can alerts reach you?                                                                                            |
 |                            | `readiness.notificationsOff` | Alerts are turned off for GuardedSleep                                                                           |
 |                            | `readiness.alarmVolumeZero`  | Your alarm volume is off — you won't hear alerts                                                                 |
 |                            | `readiness.lockScreen`       | Alerts can't appear on the lock screen                                                                           |
 |                            | `readiness.dnd`              | Do Not Disturb may silence alerts                                                                                |
-|                            | `readiness.battery`          | Your phone may stop GuardedSleep in the background                                                               |
+|                            | `readiness.battery`          | This device may stop GuardedSleep in the background                                                              |
 |                            | `readiness.headphones`       | Alerts will play in your headphones                                                                              |
 |                            | `readiness.ok`               | All set — alerts can reach you                                                                                   |
 | `sheet_help_reconnect`     | `help.reconnect.title`       | Getting connected again                                                                                          |
-|                            | `help.reconnect.step1`       | Is the baby phone on and showing GuardedSleep?                                                                   |
-|                            | `help.reconnect.step2`       | Are both phones on the same Wi-Fi, or both using mobile data?                                                    |
-|                            | `help.reconnect.step3`       | Still stuck? Close and reopen GuardedSleep on the baby phone.                                                    |
+|                            | `help.reconnect.step1`       | Is the baby device on and showing GuardedSleep?                                                                  |
+|                            | `help.reconnect.step2`       | Are both devices on the same Wi-Fi, or both using mobile data?                                                   |
+|                            | `help.reconnect.step3`       | Still stuck? Close and reopen GuardedSleep on the baby device.                                                   |
 | `dialog_stop`              | `stop.title`                 | Stop monitoring?                                                                                                 |
 |                            | `stop.parentBody`            | You won't get alerts from {name}.                                                                                |
-|                            | `stop.babyBody`              | The parent phone will stop getting alerts.                                                                       |
+|                            | `stop.babyBody`              | The parent device will stop getting alerts.                                                                      |
 | `dialog_stop_confirm`      | `stop.confirm`               | Stop                                                                                                             |
 | `dialog_stop_cancel`       | `stop.cancel`                | Keep monitoring                                                                                                  |
 | `dialog_forget`            | `forget.title`               | Forget {name}?                                                                                                   |
@@ -594,24 +594,24 @@ Every screen: states, primary action, at-a-glance content, test IDs, message key
 
 `STATUS: UNDER DISCUSSION`
 
-| Test ID                    | Key                       | English                                                    |
-| -------------------------- | ------------------------- | ---------------------------------------------------------- |
-| `parent_baby_battery_chip` | `battery.babyLow`         | Baby phone battery {percent} — plug it in                  |
-|                            | `battery.babyNotCharging` | Baby phone is no longer charging                           |
-| `parent_own_battery_chip`  | `battery.parentLow`       | Your phone is at {percent} — plug it in to keep monitoring |
+| Test ID                    | Key                       | English                                                     |
+| -------------------------- | ------------------------- | ----------------------------------------------------------- |
+| `parent_baby_battery_chip` | `battery.babyLow`         | Baby device battery {percent} — plug it in                  |
+|                            | `battery.babyNotCharging` | Baby device is no longer charging                           |
+| `parent_own_battery_chip`  | `battery.parentLow`       | This device is at {percent} — plug it in to keep monitoring |
 
 ### 4.13 Native notifications
 
 `STATUS: UNDER DISCUSSION`
 
-| Channel (id)       | Role   | Importance / behaviour                                                                   | Title key / English                                     | Text key / English                                                                         | Actions                    |
-| ------------------ | ------ | ---------------------------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------- |
-| `monitoring`       | parent | low, ongoing, silent; text follows link state                                            | `notif.monitoring.title` GuardedSleep                   | `link.*` + `parent.allQuietSince` (e.g. "Connected to Baby phone · All quiet since 22:14") | Open                       |
-| `noise_alert`      | parent | high, full-screen, bypass DND; audio played by app on alarm stream                       | `alert.title` Sound detected                            | `alert.since`                                                                              | Stop sound · Snooze 10 min |
-| `connection_alert` | parent | high, full-screen, bypass DND (levels 2–3, baby stopped, battery < 5 %)                  | `linkAlarm.*.title`                                     | `linkAlarm.*.body`                                                                         | I'm checking / OK          |
-| `warnings`         | parent | default, one short haptic, no sound                                                      | e.g. `battery.babyLow`                                  | —                                                                                          | Open                       |
-| `info`             | parent | low, silent (restored, missed events)                                                    | `link.restoredAfter`                                    | `missed.*`                                                                                 | —                          |
-| `baby_monitoring`  | baby   | **min, silent, no vibration, no lights, no heads-up, not on lock screen** (ADR-018 §3.1) | `notif.babyMonitoring.title` GuardedSleep is monitoring | —                                                                                          | —                          |
+| Channel (id)       | Role   | Importance / behaviour                                                                   | Title key / English                                     | Text key / English                                                                          | Actions                    |
+| ------------------ | ------ | ---------------------------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------- |
+| `monitoring`       | parent | low, ongoing, silent; text follows link state                                            | `notif.monitoring.title` GuardedSleep                   | `link.*` + `parent.allQuietSince` (e.g. "Connected to Baby device · All quiet since 22:14") | Open                       |
+| `noise_alert`      | parent | high, full-screen, bypass DND; audio played by app on alarm stream                       | `alert.title` Sound detected                            | `alert.since`                                                                               | Stop sound · Snooze 10 min |
+| `connection_alert` | parent | high, full-screen, bypass DND (levels 2–3, baby stopped, battery < 5 %)                  | `linkAlarm.*.title`                                     | `linkAlarm.*.body`                                                                          | I'm checking / OK          |
+| `warnings`         | parent | default, one short haptic, no sound                                                      | e.g. `battery.babyLow`                                  | —                                                                                           | Open                       |
+| `info`             | parent | low, silent (restored, missed events)                                                    | `link.restoredAfter`                                    | `missed.*`                                                                                  | —                          |
+| `baby_monitoring`  | baby   | **min, silent, no vibration, no lights, no heads-up, not on lock screen** (ADR-018 §3.1) | `notif.babyMonitoring.title` GuardedSleep is monitoring | —                                                                                           | —                          |
 
 ---
 
@@ -655,7 +655,7 @@ Tablet / landscape: two columns — left: bar + headline + meter; right: chips +
 | Haptics                 | Distinct patterns (§1.2); every haptic also has a visual state                                                                                                                                                                                    |
 | Languages               | All alert, connection and silence keys present in every shipped locale (ADR-015 CI rule, ADR-021 §2 completeness rule; de and ar are the screenshot locales per ADR-021 §2); layouts tested with the longest locale and pseudo-locale (Roborazzi) |
 
-### 6.2 Dark-room rules (baby phone)
+### 6.2 Dark-room rules (baby device)
 
 `STATUS: UNDER DISCUSSION`
 
@@ -668,10 +668,10 @@ Tablet / landscape: two columns — left: bar + headline + meter; right: chips +
 | No flashes             | No transition faster than 1 s; no white or saturated full-screen colour on the baby side; QR screen ≤ 50 % brightness, inverted code by default |
 | Screen-off option      | "While monitoring: Off" turns the display off; monitoring continues; touch-wake still works                                                     |
 | Other apps             | Silence policy suppresses screen-on, peek, notification light and ambient display (A5)                                                          |
-| Charging               | Setup tip on S02: turn off "wake screen when plugged in" if the phone has it (cannot be set by the app)                                         |
+| Charging               | Setup tip on S02: turn off "wake screen when plugged in" if the device has it (cannot be set by the app)                                        |
 | Web baby               | Black full-screen overlay; cannot change brightness → instruction line on S07                                                                   |
 
-### 6.3 Dark-room rules (parent phone)
+### 6.3 Dark-room rules (parent device)
 
 `STATUS: UNDER DISCUSSION`
 
@@ -693,14 +693,15 @@ Tablet / landscape: two columns — left: bar + headline + meter; right: chips +
 
 ### Options for the user-facing device term (A8)
 
-- [ ] **Option A: "baby phone" / "parent phone"** — Pros: matches ADR-018 copy and how parents talk ("Babyphone" in German). Cons: slightly off for tablets.
+- [ ] **Option A: "baby phone" / "parent phone"** — Pros: matches ADR-018 copy and how parents talk ("Babyphone" in German). Cons: slightly off for tablets and laptops.
 - [ ] **Option B: "baby unit" / "parent unit"** — Pros: hardware-monitor wording. Cons: sounds technical; "unit" is translated awkwardly.
+- [x] **Option C: "baby device" / "parent device"** — Pros: true for phones, tablets and laptops; translates naturally into German, French and Spanish. Cons: slightly longer than "phone".
 
-**Recommendation:** Option A.
+**Decided (owner, 2026-10-23):** Option C. The catalogue (`locales/*.json`, en, de, fr, es) and the copy tables in this document use "baby device", "parent device" and "this device". Options A and B stay here as history.
 
-### Remote sensitivity change from the parent phone
+### Remote sensitivity change from the parent device
 
-- [ ] **Option A: baby phone only (alpha)** — Pros: no protocol change. Cons: parent must walk into the nursery to tune false alerts.
+- [ ] **Option A: baby device only (alpha)** — Pros: no protocol change. Cons: parent must walk into the nursery to tune false alerts.
 - [ ] **Option B: parent can change sensitivity and hold time remotely** — Pros: 3 AM tuning without waking the child. Cons: needs a protocol message and a trust check.
 
 **Recommendation:** Option A for the alpha, Option B as `STATUS: IDEA` for alpha 2.

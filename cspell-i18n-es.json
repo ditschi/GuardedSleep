@@ -3,6 +3,7 @@
   "version": "0.2",
   "import": ["./cspell-i18n-terms.json", "@cspell/dict-es-es/cspell-ext.json"],
   "language": "es,en",
+  "words": ["conéctalo", "empárelos", "enchúfelo"],
   "files": ["locales/es.json"],
   "ignoreRegExpList": [
     "/\"\\$meta\"\\s*:\\s*\\{[^}]*\\}/g",
