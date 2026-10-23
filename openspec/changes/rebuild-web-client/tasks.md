@@ -44,7 +44,7 @@ Greenfield build of `apps/web` (design.md). `apps/mobile` is read-only reference
 
 - [x] 7.1 Screen Wake Lock while monitoring (re-acquired on visibility return), keep-awake setup on the baby device, "Tap to turn on alert sound" gate on the parent device. Verify: Playwright with a stubbed `navigator.wakeLock`.
 - [x] 7.2 Night screen on both roles: black overlay, drifting dim dot (static under `prefers-reduced-motion`), first tap shows status, second tap closes, parent alerts replace it. Verify: Playwright.
-- [ ] 7.3 Background-loss reporting: notification on `visibilitychange` → hidden while monitoring (when allowed), `beforeunload` confirmation while monitoring, warning on wake-lock release, background warning with missed events on return, resume-from-sleep warning (time gap). Verify: Playwright emulating visibility changes; Vitest for the time-gap detector.
+- [x] 7.3 Background-loss reporting: notification on `visibilitychange` → hidden while monitoring (when allowed), `beforeunload` confirmation while monitoring, warning on wake-lock release, background warning with missed events on return, resume-from-sleep warning (time gap). Verify: Playwright emulating visibility changes; Vitest for the time-gap detector.
 - [ ] 7.4 CSP header (nginx, `--serve-web`) and `<meta>` fallback as in design.md, Trusted Types policy, no inline script. Verify: Playwright asserts no CSP violation on every screen and that an injected cross-origin script is blocked.
 
 ## 8. Web checks

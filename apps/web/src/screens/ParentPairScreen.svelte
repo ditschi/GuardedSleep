@@ -5,6 +5,7 @@
   import { useRouter } from "../lib/router-context";
   import Banner from "../lib/ui/Banner.svelte";
   import Button from "../lib/ui/Button.svelte";
+  import { askForNotifications, browserNotifications } from "../lib/ui/attention";
   import Glyph from "../lib/ui/Glyph.svelte";
   import { pairErrorKey } from "../lib/ui/messages";
   import ScreenHeader from "../lib/ui/ScreenHeader.svelte";
@@ -39,8 +40,15 @@
     if ($pairing?.phase === "connecting") pasted = "";
   });
 
+  // Setup is the moment to ask for system notifications ("this page went to the background");
+  // nothing changes if the user declines.
+  function askNotifications(): void {
+    void askForNotifications(browserNotifications(window));
+  }
+
   async function allowCamera(): Promise<void> {
     if (!scanner) return;
+    askNotifications();
     camera = "starting";
     await tick();
     if (!video) return;
@@ -59,6 +67,7 @@
     event.preventDefault();
     if (pasted.trim() === "") return;
     scanner?.stop();
+    askNotifications();
     controller.submitPairingCode(pasted);
   }
 

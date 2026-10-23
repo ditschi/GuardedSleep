@@ -1,12 +1,12 @@
 import { get } from "svelte/store";
 import { describe, expect, it } from "vitest";
-import { createClock } from "./clock";
 import {
   createPageWatch,
   type PageWatch,
   type WakeLockApi,
   type WakeLockSentinelLike,
 } from "./page-watch";
+import { FakeTime } from "./test-support";
 
 class FakeSentinel implements WakeLockSentinelLike {
   released = false;
@@ -26,7 +26,8 @@ class FakeSentinel implements WakeLockSentinelLike {
 }
 
 function setup(opts: { wakeLock?: boolean; refuse?: boolean } = {}) {
-  const t = { perf: 0, wall: 1_700_000_000_000, visibility: "visible" as DocumentVisibilityState };
+  const time = new FakeTime();
+  const t = { visibility: "visible" as DocumentVisibilityState };
   const target = new EventTarget();
   Object.defineProperty(target, "visibilityState", { get: () => t.visibility });
   const doc = target as unknown as Document;
@@ -43,18 +44,17 @@ function setup(opts: { wakeLock?: boolean; refuse?: boolean } = {}) {
             return Promise.resolve(s);
           },
         };
-  const clock = createClock({ now: () => t.perf }, () => t.wall);
-  const watch: PageWatch = createPageWatch({ doc, win, wakeLock, clock });
-  const tick = (ms: number): void => {
-    t.perf += ms;
-    t.wall += ms;
-  };
+  const watch: PageWatch = createPageWatch({ doc, win, wakeLock, clock: time, timers: time });
   const setVisibility = (v: DocumentVisibilityState): void => {
     t.visibility = v;
     doc.dispatchEvent(new Event("visibilitychange"));
   };
+  /** The device sleeps: the clock moves on, no timer runs. */
+  const sleep = (ms: number): void => {
+    time.now += ms;
+  };
   const flush = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
-  return { t, doc, win, watch, sentinels, clock, tick, setVisibility, flush };
+  return { time, doc, win, watch, sentinels, setVisibility, sleep, flush };
 }
 
 describe("wake lock", () => {
@@ -117,14 +117,32 @@ describe("visibility and away reports", () => {
     await e.flush();
     e.setVisibility("hidden");
     expect(e.watch.unitWarnings()).toContain("page_hidden");
-    e.tick(6 * 60_000);
+    e.time.advance(6 * 60_000);
     e.setVisibility("visible");
     const s = get(e.watch.state);
     expect(s.hidden).toBe(false);
-    expect(s.away).toEqual({ kind: "background", awayMs: 6 * 60_000, endWallMs: e.t.wall });
+    expect(s.away).toEqual({
+      kind: "background",
+      awayMs: 6 * 60_000,
+      endWallMs: e.time.wallMs(),
+    });
     e.watch.dismissAway();
     expect(get(e.watch.state).away).toBeNull();
     expect(e.watch.unitWarnings()).not.toContain("page_hidden");
+  });
+
+  it("does not take the throttled timers of a hidden page for a sleep", async () => {
+    const e = setup();
+    e.watch.setMonitoring(true);
+    await e.flush();
+    e.setVisibility("hidden");
+    // Chrome runs a hidden page's timers once a minute.
+    for (let i = 0; i < 10; i++) {
+      e.sleep(59_000);
+      e.time.advance(1_000);
+    }
+    expect(e.watch.unitWarnings()).not.toContain("resumed_from_sleep");
+    expect(get(e.watch.state).away).toBeNull();
   });
 
   it("stays quiet about a short glance away and when nothing is monitored", async () => {
@@ -132,13 +150,13 @@ describe("visibility and away reports", () => {
     e.watch.setMonitoring(true);
     await e.flush();
     e.setVisibility("hidden");
-    e.tick(3_000);
+    e.time.advance(3_000);
     e.setVisibility("visible");
     expect(get(e.watch.state).away).toBeNull();
 
     e.watch.setMonitoring(false);
     e.setVisibility("hidden");
-    e.tick(10 * 60_000);
+    e.time.advance(10 * 60_000);
     e.setVisibility("visible");
     expect(get(e.watch.state).away).toBeNull();
   });
@@ -165,35 +183,48 @@ describe("resume from sleep", () => {
     e.watch.onResumed(() => resumed++);
     e.watch.setMonitoring(true);
     await e.flush();
-    e.clock.elapsedMs();
-    // The laptop sleeps for 40 minutes with the page still "visible".
-    e.t.wall += 40 * 60_000;
-    e.clock.elapsedMs();
+    e.time.advance(5_000);
+    // The laptop sleeps for 40 minutes with the page still visible; the first timer after the
+    // wake-up finds the clock 40 minutes further.
+    e.sleep(40 * 60_000);
+    e.time.advance(1_000);
     const away = get(e.watch.state).away;
-    expect(away).toEqual({ kind: "sleep", awayMs: 40 * 60_000, endWallMs: e.t.wall });
+    expect(away?.kind).toBe("sleep");
+    expect(away?.awayMs).toBeGreaterThanOrEqual(40 * 60_000);
+    expect(away?.endWallMs).toBeLessThanOrEqual(e.time.wallMs());
     expect(resumed).toBe(1);
     expect(e.watch.unitWarnings()).toEqual(["resumed_from_sleep"]);
-    e.tick(11 * 60_000);
+    e.time.advance(11 * 60_000);
     expect(e.watch.unitWarnings()).toEqual([]);
   });
 
-  it("names a sleep during a hidden stay as sleep", async () => {
+  it("notices the wake-up on the page's own events before the next timer", async () => {
     const e = setup();
     e.watch.setMonitoring(true);
     await e.flush();
-    e.clock.elapsedMs();
-    e.setVisibility("hidden");
-    e.t.wall += 20 * 60_000;
-    e.clock.elapsedMs();
-    e.setVisibility("visible");
+    e.sleep(20 * 60_000);
+    e.win.dispatchEvent(new Event("focus"));
     expect(get(e.watch.state).away?.kind).toBe("sleep");
+  });
+
+  it("calls a long silence of a hidden page a stay in the background", async () => {
+    const e = setup();
+    let resumed = 0;
+    e.watch.onResumed(() => resumed++);
+    e.watch.setMonitoring(true);
+    await e.flush();
+    e.setVisibility("hidden");
+    e.sleep(30 * 60_000);
+    e.setVisibility("visible");
+    expect(get(e.watch.state).away?.kind).toBe("background");
+    expect(resumed).toBe(1);
   });
 
   it("does nothing when it is not monitoring", () => {
     const e = setup();
-    e.clock.elapsedMs();
-    e.t.wall += 60 * 60_000;
-    e.clock.elapsedMs();
+    e.sleep(60 * 60_000);
+    e.time.advance(1_000);
+    e.win.dispatchEvent(new Event("focus"));
     expect(get(e.watch.state).away).toBeNull();
     expect(e.watch.unitWarnings()).toEqual([]);
   });

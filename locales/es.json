@@ -900,7 +900,11 @@
       "wakeLockHeld": "La pantalla se mantiene encendida",
       "wakeLockLost": "La pantalla ya no se mantiene encendida: este dispositivo puede suspenderse y dejar de vigilar.",
       "wakeLockUnsupported": "Este navegador no puede mantener la pantalla encendida. Desactive la suspensión de pantalla en los ajustes del dispositivo.",
-      "wakeLockRetry": "Mantener la pantalla encendida"
+      "wakeLockRetry": "Mantener la pantalla encendida",
+      "hiddenTitle": "GuardedSleep podría dejar de vigilar",
+      "hiddenBody": "Esta página está en segundo plano. Ábrala de nuevo para seguir vigilando.",
+      "awayBackground": "Esta página estuvo en segundo plano durante {duration}. Es posible que se hayan perdido alertas.",
+      "awaySleep": "Este dispositivo estuvo suspendido durante {duration}. Es posible que se hayan perdido alertas."
     },
     "night": {
       "open": "Pantalla nocturna",

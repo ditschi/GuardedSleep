@@ -7,6 +7,7 @@ import type {
 } from "@guardedsleep/core-wasm";
 import { loadCoreNode } from "@guardedsleep/core-wasm/node";
 import { describe, expect, it } from "vitest";
+import { createClock } from "./clock";
 import { LinkDriver, type LinkListener } from "./link-driver";
 import { createWebSocketSignaling } from "./signaling";
 import { FakeMedia, FakeTime, FakeWebSocket } from "./test-support";
@@ -285,6 +286,36 @@ describe("LinkDriver with a scripted core", () => {
     const ticks = core.inputs.filter((i) => i.input.type === "tick");
     expect(ticks.map((t) => t.at)).toEqual([250, 500, 750, 1000]);
     expect(listener.log.filter((l) => l === "tick")).toHaveLength(4);
+  });
+
+  it("hands a sleep gap to the core as elapsed time and never goes back in time", () => {
+    const core = new ScriptedCore();
+    FakeWebSocket.instances = [];
+    const time = new FakeTime();
+    // The device's wall clock; the production clock reads `Date.now()` clamped the same way.
+    const wall = { now: 1_700_000_000_000 };
+    const driver = new LinkDriver({
+      config: config("parent"),
+      signalingUrls: ["ws://relay.test:8787"],
+      core,
+      signaling: createWebSocketSignaling(FakeWebSocket),
+      media: new FakeMedia(),
+      clock: createClock(() => wall.now),
+      timers: time,
+      listener: new Recorder(),
+      entropy: 7,
+    });
+    driver.start();
+    wall.now += 250;
+    time.advance(250);
+    // The laptop sleeps for ten minutes: the next tick carries the whole gap.
+    wall.now += 10 * 60_000;
+    time.advance(250);
+    // The wall clock is set back by a minute: the core's time does not.
+    wall.now -= 60_000;
+    time.advance(250);
+    const ticks = core.inputs.filter((i) => i.input.type === "tick").map((i) => i.at);
+    expect(ticks).toEqual([1_700_000_000_250, 1_700_000_600_250, 1_700_000_600_250]);
   });
 
   it("reports microphone levels to the meter and the core (baby), remote levels to the meter (parent)", () => {

@@ -68,6 +68,83 @@ export async function wakeLockCounts(page: Page): Promise<{ requests: number; ac
   });
 }
 
+/**
+ * Page visibility, focus, notifications and a skewable clock for the background specs.
+ * `window.__guard.setHidden(true)` behaves like switching to another tab; `skew(ms)` moves
+ * `Date.now()` forward without any timer running, like a laptop that slept; `shown` lists the
+ * notifications the page raised and whether they were closed again.
+ */
+export interface GuardProbe {
+  setHidden(hidden: boolean): void;
+  skew(ms: number): void;
+  shown: Array<{ title: string; body: string; tag: string; closed: boolean }>;
+}
+
+export const pageGuardStub = (): void => {
+  let hidden = false;
+  let skew = 0;
+  const realNow = Date.now.bind(Date);
+  Date.now = () => realNow() + skew;
+  Object.defineProperty(document, "visibilityState", {
+    configurable: true,
+    get: () => (hidden ? "hidden" : "visible"),
+  });
+  Object.defineProperty(document, "hidden", { configurable: true, get: () => hidden });
+  document.hasFocus = () => !hidden;
+
+  const shown: GuardProbe["shown"] = [];
+  class FakeNotification {
+    static permission = "granted";
+    static requestPermission = () => Promise.resolve("granted");
+    private readonly entry: GuardProbe["shown"][number];
+    constructor(title: string, options?: NotificationOptions) {
+      this.entry = {
+        title,
+        body: options?.body ?? "",
+        tag: options?.tag ?? "",
+        closed: false,
+      };
+      shown.push(this.entry);
+    }
+    close(): void {
+      this.entry.closed = true;
+    }
+  }
+  (window as unknown as { Notification: unknown }).Notification = FakeNotification;
+
+  const probe: GuardProbe = {
+    setHidden(value) {
+      hidden = value;
+      document.dispatchEvent(new Event("visibilitychange"));
+    },
+    skew(ms) {
+      skew += ms;
+    },
+    shown,
+  };
+  (window as unknown as { __guard: GuardProbe }).__guard = probe;
+};
+
+export async function setHidden(page: Page, hidden: boolean): Promise<void> {
+  await page.evaluate(
+    (value) => (window as unknown as { __guard: GuardProbe }).__guard.setHidden(value),
+    hidden,
+  );
+}
+
+export async function skewClock(page: Page, ms: number): Promise<void> {
+  await page.evaluate(
+    (value) => (window as unknown as { __guard: GuardProbe }).__guard.skew(value),
+    ms,
+  );
+}
+
+export async function shownNotifications(page: Page): Promise<GuardProbe["shown"]> {
+  return page.evaluate(() =>
+    (window as unknown as { __guard: GuardProbe }).__guard.shown.map((n) => ({ ...n })),
+  );
+}
+
 export async function revokeWakeLocks(page: Page): Promise<void> {
   await page.evaluate(() =>
     (window as unknown as { __wakeLock: WakeLockProbe }).__wakeLock.revokeAll(),

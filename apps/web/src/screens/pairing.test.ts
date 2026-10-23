@@ -70,7 +70,7 @@ describe("S04 baby pair screen", () => {
     controller.pairing.set(
       makePairingState("showing_code", {
         codePayload: INVITE,
-        expiresAtElapsedMs: performance.now() + remainingMs,
+        expiresAtElapsedMs: Date.now() + remainingMs,
       }),
     );
   }

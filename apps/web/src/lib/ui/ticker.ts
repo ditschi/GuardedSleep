@@ -1,16 +1,17 @@
 import { readable, type Readable } from "svelte/store";
 
-/** Both clocks the screens read for what they show: monotonic for durations, wall for times. */
+/** Both clocks the screens read for what they show: core clock for durations, wall clock for times. */
 export interface Instant {
   elapsedMs: number;
   wallMs: number;
 }
 
-let elapsedSource: () => number = () => performance.now();
+let elapsedSource: () => number = () => Date.now();
 
 /**
- * Where the monotonic reading comes from. `main.ts` hands over the platform clock, which adds the
- * time a sleeping laptop did not count, so the screens and the controller agree on "now".
+ * Where the "elapsed" reading comes from. `main.ts` hands over the platform clock (`Date.now()`
+ * clamped never to go backwards, the clock the core runs on), so the screens and the controller
+ * agree on "now".
  */
 export function setElapsedSource(source: () => number): void {
   elapsedSource = source;

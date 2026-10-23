@@ -8,6 +8,7 @@
   } from "./lib/contract";
   import { resolveLocale } from "./lib/i18n/bundles";
   import { locale, t } from "./lib/i18n/store";
+  import PageAttention from "./lib/ui/PageAttention.svelte";
   import { createRouter, focusRouteHeading, formatDocumentTitle, type RouteId } from "./lib/router";
   import { provideRouter } from "./lib/router-context";
   import { applyTheme, resolveTheme } from "./lib/theme";
@@ -76,6 +77,7 @@
   });
 </script>
 
+<PageAttention />
 <a class="gs-skip" href="#main">{$t("webShell.skipToContent")}</a>
 <main id="main" bind:this={main}>
   {#if $route.id === "role"}

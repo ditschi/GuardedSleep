@@ -27,7 +27,7 @@ function browserNetwork(): NetworkWatcher {
   };
 }
 
-// One clock for the controller and for the screens' countdowns, so both agree after a sleep.
+// One clock for the controller and for the screens' countdowns, so both agree.
 const clock = createClock();
 
 /** Monotonic milliseconds as the controller counts them (the screens' ticker reads this). */
@@ -58,6 +58,7 @@ export async function createWebApp(): Promise<AppController> {
     win: window,
     wakeLock: (navigator as unknown as { wakeLock?: WakeLockApi }).wakeLock,
     clock,
+    timers,
   });
   return new WebController({
     core,

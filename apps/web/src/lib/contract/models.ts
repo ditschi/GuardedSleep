@@ -5,7 +5,7 @@
  * appears on one side only. Enum members are lower_snake_case strings (`PEER_STOPPED` becomes
  * `peer_stopped`); fields keep their Kotlin names.
  *
- * Times: `*ElapsedMs` = `performance.now()` based monotonic milliseconds (durations,
+ * Times: `*ElapsedMs` = `Date.now()` clamped never to go backwards (the core clock; durations,
  * countdowns); `*WallMs` = `Date.now()` (clock times shown to the user).
  */
 import type { Locale } from "../i18n/bundles";

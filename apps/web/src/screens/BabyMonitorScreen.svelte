@@ -10,6 +10,8 @@
   import Dialog from "../lib/ui/Dialog.svelte";
   import { levelWordKey } from "../lib/ui/format";
   import Glyph from "../lib/ui/Glyph.svelte";
+  import AwayNotice from "../lib/ui/AwayNotice.svelte";
+  import { askForNotifications, browserNotifications } from "../lib/ui/attention";
   import KeepAwakeNotice from "../lib/ui/KeepAwakeNotice.svelte";
   import type { GlyphName, Tone } from "../lib/ui/glyphs";
   import Meter from "../lib/ui/Meter.svelte";
@@ -74,6 +76,12 @@
       : $t("native.ui.baby.battery", { percent: b.pct });
   });
 
+  function openNight(): void {
+    nightOpen = true;
+    // A tap is the moment to ask for notifications; nothing changes if the user declines.
+    void askForNotifications(browserNotifications(window));
+  }
+
   function stop(): void {
     stopOpen = false;
     controller.stopMonitoring();
@@ -118,6 +126,7 @@
     </div>
   {/if}
 
+  <AwayNotice />
   <KeepAwakeNotice />
 
   {#if $baby.micSilent}
@@ -163,13 +172,7 @@
 
   <div class="gs-fill"></div>
 
-  <Button
-    variant="tonal"
-    block
-    size="large"
-    testid="baby_night_open"
-    onclick={() => (nightOpen = true)}
-  >
+  <Button variant="tonal" block size="large" testid="baby_night_open" onclick={openNight}>
     <Glyph name="moon" />
     {$t("webScreens.night.open")}
   </Button>

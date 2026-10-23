@@ -50,3 +50,9 @@ export const NOISE_TONE_INTERVAL_MS = 4_000;
 export const AWAY_REPORT_MIN_MS = 15_000;
 /** The baby device keeps reporting "woke from sleep" this long after it did. */
 export const RESUMED_WARNING_MS = 10 * 60_000;
+/** How often the page watch looks at its own clock to notice a sleep (no link decision). */
+export const GAP_CHECK_MS = 1_000;
+/** Silence this long on a visible page means the device slept or was suspended. */
+export const SLEEP_GAP_MS = 10_000;
+/** A hidden page's timers run at most once a minute; only a clearly longer silence counts. */
+export const BACKGROUND_GAP_MS = 150_000;

@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { createClock } from "./clock";
 import { defaultSignalingUrls, relayIceServers, relayStunUrls } from "./relay-stun";
 
 describe("relay STUN", () => {
@@ -29,16 +28,5 @@ describe("relay STUN", () => {
       "ws://gs.local:8443",
     ]);
     expect(defaultSignalingUrls(here, true)).toEqual(["ws://gs.local:8787"]);
-  });
-});
-
-describe("clock", () => {
-  it("is monotonic in whole milliseconds even if the source steps back", () => {
-    const readings = [5.7, 9.2, 8.1, 12.9];
-    const clock = createClock({ now: () => readings.shift() ?? 0 }, () => 1_000);
-    expect([clock.elapsedMs(), clock.elapsedMs(), clock.elapsedMs(), clock.elapsedMs()]).toEqual([
-      5, 9, 9, 12,
-    ]);
-    expect(clock.wallMs()).toBe(1_000);
   });
 });

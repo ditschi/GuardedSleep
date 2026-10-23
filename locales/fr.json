@@ -900,7 +900,11 @@
       "wakeLockHeld": "L'écran reste allumé",
       "wakeLockLost": "L'écran ne reste plus allumé : cet appareil peut se mettre en veille et arrêter la surveillance.",
       "wakeLockUnsupported": "Ce navigateur ne peut pas garder l'écran allumé. Désactivez la mise en veille de l'écran dans les réglages de l'appareil.",
-      "wakeLockRetry": "Garder l'écran allumé"
+      "wakeLockRetry": "Garder l'écran allumé",
+      "hiddenTitle": "GuardedSleep risque d'arrêter la surveillance",
+      "hiddenBody": "Cette page est en arrière-plan. Rouvrez-la pour continuer la surveillance.",
+      "awayBackground": "Cette page était en arrière-plan depuis {duration}. Des alertes ont pu être manquées.",
+      "awaySleep": "Cet appareil était en veille depuis {duration}. Des alertes ont pu être manquées."
     },
     "night": {
       "open": "Écran de nuit",

@@ -1,8 +1,14 @@
 import type { UnitWarning } from "@guardedsleep/core-wasm";
 import { readable, writable, type Readable } from "svelte/store";
 import type { AwayReport, PageGuardState } from "../contract";
-import type { SleepAwareClock } from "./clock";
-import { AWAY_REPORT_MIN_MS, RESUMED_WARNING_MS } from "./policy";
+import type { Cancel, Clock, Timers } from "./clock";
+import {
+  AWAY_REPORT_MIN_MS,
+  BACKGROUND_GAP_MS,
+  GAP_CHECK_MS,
+  RESUMED_WARNING_MS,
+  SLEEP_GAP_MS,
+} from "./policy";
 
 /** The slice of the Screen Wake Lock API the page uses (a fake in tests). */
 export interface WakeLockSentinelLike {
@@ -19,10 +25,16 @@ export interface PageWatchDeps {
   win: Pick<Window, "addEventListener" | "removeEventListener">;
   /** `navigator.wakeLock`; absent in Firefox before 126, Safari before 16.4 and on plain http. */
   wakeLock: WakeLockApi | undefined;
-  clock: SleepAwareClock;
+  /** The same clock the core runs on: it keeps counting while the device sleeps. */
+  clock: Clock;
+  timers: Timers;
 }
 
-/** Why a page that is monitoring may stop doing so. Pure browser glue: no alarm decision here. */
+/**
+ * Why a page that is monitoring may stop doing so, reported to the user and (baby) to the parent.
+ * Pure browser glue: it feeds the core nothing but "the network may have changed" after a gap, and
+ * decides no alarm. The core sees a sleep as elapsed time through the clock and escalates itself.
+ */
 export interface PageWatch {
   readonly state: Readable<PageGuardState>;
   /** Monitoring started or stopped: takes or gives up the wake lock and the leave-page prompt. */
@@ -32,7 +44,7 @@ export interface PageWatch {
   dismissAway(): void;
   /** The baby device's reliability warnings for the parent, in the core's wire names. */
   unitWarnings(): UnitWarning[];
-  /** Called after the device slept or the page came back to the front while monitoring. */
+  /** Called after a gap in the page's own timers or a return from the background. */
   onResumed(fn: () => void): () => void;
   stop(): void;
 }
@@ -52,15 +64,17 @@ export function idleWatch(): PageWatch {
 }
 
 export function createPageWatch(deps: PageWatchDeps): PageWatch {
-  const { doc, win, clock } = deps;
-  const store = writable<PageGuardState>({ wakeLock: "off", hidden: false, away: null });
-  let state: PageGuardState = { wakeLock: "off", hidden: false, away: null };
+  const { doc, win, clock, timers } = deps;
+  const initial: PageGuardState = { wakeLock: "off", hidden: false, away: null };
+  const store = writable<PageGuardState>(initial);
+  let state = initial;
   let monitoring = false;
   let sentinel: WakeLockSentinelLike | null = null;
   let requesting = false;
   let hiddenSinceWall: number | null = null;
-  let sleptMs = 0;
   let resumedAtWall: number | null = null;
+  let lastLook = clock.elapsedMs();
+  let stopLooking: Cancel | null = null;
   const resumed = new Set<() => void>();
 
   const set = (patch: Partial<PageGuardState>): void => {
@@ -106,29 +120,50 @@ export function createPageWatch(deps: PageWatchDeps): PageWatch {
     for (const fn of [...resumed]) fn();
   }
 
+  /**
+   * Looks at how long it was since the last look. A hidden page's timers run once a minute at
+   * most, so only a much longer silence counts there; a visible page that was silent for 10 s
+   * slept (or was suspended). Returns the silent time when it counts as a gap, else 0.
+   */
+  function look(wasHidden: boolean): number {
+    const now = clock.elapsedMs();
+    const silent = now - lastLook;
+    lastLook = now;
+    return silent >= (wasHidden ? BACKGROUND_GAP_MS : SLEEP_GAP_MS) ? silent : 0;
+  }
+
+  function onGap(silentMs: number, wasHidden: boolean): void {
+    if (!monitoring) return;
+    // The sockets did not survive the gap: let the core retry at once.
+    noteResumed();
+    if (wasHidden) return; // the return from the background reports it
+    resumedAtWall = clock.wallMs();
+    set({ away: { kind: "sleep", awayMs: silentMs, endWallMs: clock.wallMs() } });
+  }
+
+  function onTimer(): void {
+    const wasHidden = hidden();
+    const gap = look(wasHidden);
+    if (gap > 0) onGap(gap, wasHidden);
+  }
+
   function onVisibility(): void {
-    clock.check();
+    const nowHidden = hidden();
+    // The look belongs to the state the page was in until now.
+    const gap = look(!nowHidden);
     const nowWall = clock.wallMs();
-    if (hidden()) {
+    if (nowHidden) {
       hiddenSinceWall = nowWall;
       set({ hidden: true });
+      if (gap > 0) onGap(gap, false);
       return;
     }
     const since = hiddenSinceWall;
     hiddenSinceWall = null;
-    const slept = sleptMs;
-    sleptMs = 0;
     if (monitoring && since !== null) {
       const awayMs = nowWall - since;
-      // The sleep gap is part of the wall-clock span; whichever explains the absence is named.
       const away: AwayReport | null =
-        awayMs >= AWAY_REPORT_MIN_MS || slept > 0
-          ? {
-              kind: slept > 0 ? "sleep" : "background",
-              awayMs: Math.max(awayMs, slept),
-              endWallMs: nowWall,
-            }
-          : null;
+        awayMs >= AWAY_REPORT_MIN_MS ? { kind: "background", awayMs, endWallMs: nowWall } : null;
       set({ hidden: false, ...(away ? { away } : {}) });
       noteResumed();
     } else {
@@ -137,20 +172,6 @@ export function createPageWatch(deps: PageWatchDeps): PageWatch {
     acquire();
   }
 
-  const unsubscribeGap = clock.onGap((gap) => {
-    if (!monitoring) return;
-    resumedAtWall = gap.wallMs;
-    if (hidden()) {
-      sleptMs += gap.gapMs;
-      // The sockets did not survive the sleep: let the core retry at once.
-      noteResumed();
-      return;
-    }
-    // A sleep while the page stayed "visible" (lid closed, screen off, no visibility event).
-    set({ away: { kind: "sleep", awayMs: gap.gapMs, endWallMs: gap.wallMs } });
-    noteResumed();
-  });
-
   function onBeforeUnload(event: BeforeUnloadEvent): void {
     if (!monitoring) return;
     // The browser shows its own confirmation; the text of the page cannot be customised.
@@ -158,10 +179,11 @@ export function createPageWatch(deps: PageWatchDeps): PageWatch {
     event.returnValue = "";
   }
 
+  // The page can be restored from the back/forward cache or regain focus after a sleep.
+  const onWake = (): void => onTimer();
+
   doc.addEventListener("visibilitychange", onVisibility);
   win.addEventListener("beforeunload", onBeforeUnload as EventListener);
-  // The page can be restored from the back/forward cache or regain focus after a sleep.
-  const onWake = (): void => clock.check();
   win.addEventListener("pageshow", onWake);
   win.addEventListener("focus", onWake);
   hiddenSinceWall = hidden() ? clock.wallMs() : null;
@@ -173,14 +195,17 @@ export function createPageWatch(deps: PageWatchDeps): PageWatch {
       if (on === monitoring) return;
       monitoring = on;
       if (on) {
+        lastLook = clock.elapsedMs();
+        stopLooking = timers.every(onTimer, GAP_CHECK_MS);
         acquire();
         return;
       }
+      stopLooking?.();
+      stopLooking = null;
       const old = sentinel;
       sentinel = null;
       if (old) void old.release().catch(() => undefined);
       resumedAtWall = null;
-      sleptMs = 0;
       set({ wakeLock: "off", away: null });
     },
     retryKeepAwake() {
@@ -209,7 +234,8 @@ export function createPageWatch(deps: PageWatchDeps): PageWatch {
       return () => resumed.delete(fn);
     },
     stop() {
-      unsubscribeGap();
+      stopLooking?.();
+      stopLooking = null;
       doc.removeEventListener("visibilitychange", onVisibility);
       win.removeEventListener("beforeunload", onBeforeUnload as EventListener);
       win.removeEventListener("pageshow", onWake);

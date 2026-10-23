@@ -25,7 +25,7 @@ function parentController(): FakeController {
   c.soundUnlocked.set(true);
   c.parent.update((p) => ({
     ...p,
-    link: link({ phase: "connected", lastAliveElapsedMs: performance.now() }),
+    link: link({ phase: "connected", lastAliveElapsedMs: Date.now() }),
     quietSinceWallMs: Date.now() - 5 * 60_000,
   }));
   return c;
@@ -178,7 +178,7 @@ describe("S09 parent monitor", () => {
     open("/parent", c);
     c.parent.update((p) => ({
       ...p,
-      link: link({ phase: "reconnecting", level: 1, lastAliveElapsedMs: performance.now() }),
+      link: link({ phase: "reconnecting", level: 1, lastAliveElapsedMs: Date.now() }),
       quietSinceWallMs: null,
     }));
     await waitFor(() =>
@@ -423,7 +423,7 @@ describe("S11 link alarm", () => {
       link: link({
         phase: "reconnecting",
         level,
-        lastAliveElapsedMs: performance.now() - 120_000,
+        lastAliveElapsedMs: Date.now() - 120_000,
         causeHint: "peer_absent",
       }),
       quietSinceWallMs: null,
@@ -466,7 +466,7 @@ describe("S11 link alarm", () => {
     await screen.findByRole("alertdialog");
     c.parent.update((p) => ({
       ...p,
-      link: { ...p.link, acknowledgedUntilElapsedMs: performance.now() + 300_000 },
+      link: { ...p.link, acknowledgedUntilElapsedMs: Date.now() + 300_000 },
     }));
     expect(await screen.findByTestId("parent_headline")).toBeInTheDocument();
     expect(screen.getByTestId("parent_ambient_bar")).toHaveAttribute("data-kind", "cant_reach");
@@ -527,7 +527,7 @@ describe("S11 link alarm", () => {
     await fireEvent.click(await screen.findByTestId("link_alarm_ack"));
     c.parent.update((p) => ({
       ...p,
-      link: { ...p.link, acknowledgedUntilElapsedMs: performance.now() + 300_000 },
+      link: { ...p.link, acknowledgedUntilElapsedMs: Date.now() + 300_000 },
     }));
     await fireEvent.click(await screen.findByTestId("parent_help_reconnect"));
     expect(screen.getByTestId("sheet_help_reconnect")).toHaveTextContent(
