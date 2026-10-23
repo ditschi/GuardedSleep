@@ -20,6 +20,11 @@ export interface AppController {
   readonly parent: Readable<ParentMonitorState>;
   readonly baby: Readable<BabyMonitorState>;
   readonly pairing: Readable<PairingState | null>;
+  /**
+   * Web only (no counterpart in UiContract.kt): browsers keep audio locked until a user gesture.
+   * False until `unlockSound()` ran from one; alerts and baby audio are silent before.
+   */
+  readonly soundUnlocked: Readable<boolean>;
 
   chooseRole(role: Role): void;
   completeOnboarding(): void;
@@ -47,6 +52,9 @@ export interface AppController {
   // Baby
   setKioskLocked(locked: boolean): void;
   dismissSilenceRestoredNotice(): void;
+
+  /** Web only. Call it from a click handler ("Tap to turn on alert sound"); it unlocks audio. */
+  unlockSound(): void;
 
   /** Parent answered "Did you hear and feel it?" after a test alert. */
   reportTestResult(heardAndFelt: boolean): void;

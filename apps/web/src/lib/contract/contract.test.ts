@@ -196,9 +196,15 @@ describe("AppController mirrors UiContract.kt", () => {
     for (const name of actions) {
       expect(typeof (fake as unknown as Record<string, unknown>)[name], name).toBe("function");
     }
-    // Nothing extra on the web side besides the stores and the recorded calls.
-    const own = Object.keys(fake).filter((k) => !stores.includes(k) && k !== "calls");
+    // Nothing extra on the web side besides the stores, the recorded calls and the web-only
+    // sound gate (browsers lock audio until a user gesture; Android has no counterpart).
+    const webOnly = ["soundUnlocked", "unlockSound"];
+    const own = Object.keys(fake).filter(
+      (k) => !stores.includes(k) && k !== "calls" && !webOnly.includes(k),
+    );
     expect(sorted(own)).toEqual(sorted(actions));
+    expect(typeof fake.unlockSound).toBe("function");
+    expect(typeof fake.soundUnlocked.subscribe).toBe("function");
   });
 });
 

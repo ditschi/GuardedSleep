@@ -20,6 +20,7 @@ export interface FakeController extends AppController {
   readonly parent: Writable<ParentMonitorState>;
   readonly baby: Writable<BabyMonitorState>;
   readonly pairing: Writable<PairingState | null>;
+  readonly soundUnlocked: Writable<boolean>;
   /** Every action call as `[method, ...args]`, oldest first. */
   readonly calls: Array<[string, ...unknown[]]>;
 }
@@ -35,6 +36,7 @@ export function createFakeController(): FakeController {
   const parent = writable(defaultParentMonitor());
   const baby = writable(defaultBabyMonitor());
   const pairing = writable<PairingState | null>(null);
+  const soundUnlocked = writable(false);
   const calls: Array<[string, ...unknown[]]> = [];
   const record =
     (name: string) =>
@@ -48,6 +50,7 @@ export function createFakeController(): FakeController {
     parent,
     baby,
     pairing,
+    soundUnlocked,
     calls,
     chooseRole(role) {
       calls.push(["chooseRole", role]);
@@ -114,6 +117,10 @@ export function createFakeController(): FakeController {
     dismissSilenceRestoredNotice() {
       calls.push(["dismissSilenceRestoredNotice"]);
       baby.update((s) => ({ ...s, silenceRestoredNotice: false }));
+    },
+    unlockSound() {
+      calls.push(["unlockSound"]);
+      soundUnlocked.set(true);
     },
     reportTestResult: record("reportTestResult"),
     dismissCoach() {
