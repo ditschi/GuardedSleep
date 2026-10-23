@@ -1,12 +1,24 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { provideController, type AppController } from "./lib/contract";
+  import {
+    provideController,
+    provideScanner,
+    type AppController,
+    type CodeScanner,
+  } from "./lib/contract";
   import { resolveLocale } from "./lib/i18n/bundles";
   import { locale, t } from "./lib/i18n/store";
   import { createRouter, focusRouteHeading, formatDocumentTitle, type RouteId } from "./lib/router";
+  import { provideRouter } from "./lib/router-context";
   import { applyTheme, resolveTheme } from "./lib/theme";
+  import BabyMonitorScreen from "./screens/BabyMonitorScreen.svelte";
+  import BabyPairScreen from "./screens/BabyPairScreen.svelte";
+  import ParentMonitorScreen from "./screens/ParentMonitorScreen.svelte";
+  import ParentPairScreen from "./screens/ParentPairScreen.svelte";
+  import RoleScreen from "./screens/RoleScreen.svelte";
+  import SettingsScreen from "./screens/SettingsScreen.svelte";
 
-  let { controller }: { controller: AppController } = $props();
+  let { controller, scanner }: { controller: AppController; scanner?: CodeScanner } = $props();
 
   // The controller never changes for the lifetime of the page, so it is read once.
   // svelte-ignore state_referenced_locally -- the controller prop is fixed for the page's life
@@ -14,8 +26,12 @@
   // svelte-ignore state_referenced_locally -- the controller prop is fixed for the page's life
   const { app, settings } = controller;
 
+  // svelte-ignore state_referenced_locally -- the scanner prop is fixed for the page's life
+  provideScanner(scanner);
+
   const router = createRouter(window);
   const route = router.route;
+  provideRouter(router);
   onDestroy(() => router.destroy());
 
   let main: HTMLElement | undefined = $state();
@@ -34,13 +50,24 @@
     lastRoute = id;
   });
 
+  // The monitoring screens only exist while this device monitors in that role. Pairing material
+  // lives in memory, so a reload (or a stopped session) lands on the start screen.
+  $effect(() => {
+    const id = $route.id;
+    const role = id === "baby" ? "baby" : id === "parent" ? "parent" : null;
+    if (role !== null && !($app.role === role && $app.monitoring)) {
+      router.navigate("/", { replace: true });
+    }
+  });
+
   // Settings drive the language (null = follow the browser) and the theme; the baby device
   // switches to the dim theme while it monitors.
   $effect(() => {
     locale.set(resolveLocale($settings.language, navigator.languages));
   });
   $effect(() => {
-    const dim = $app.role === "baby" && $app.monitoring;
+    const onBabyScreen = $route.id === "babyPair" || $route.id === "baby";
+    const dim = $app.role === "baby" && ($app.monitoring || onBabyScreen);
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     applyTheme(document, resolveTheme($settings.theme, prefersDark, dim));
   });
@@ -51,6 +78,17 @@
 
 <a class="gs-skip" href="#main">{$t("webShell.skipToContent")}</a>
 <main id="main" bind:this={main}>
-  <!-- Screens (groups 5 and 6) replace this placeholder heading with their own. -->
-  <h1 tabindex="-1" data-route-heading>{$t($route.titleKey)}</h1>
+  {#if $route.id === "role"}
+    <RoleScreen />
+  {:else if $route.id === "babyPair"}
+    <BabyPairScreen />
+  {:else if $route.id === "baby"}
+    <BabyMonitorScreen />
+  {:else if $route.id === "parentPair"}
+    <ParentPairScreen />
+  {:else if $route.id === "parent"}
+    <ParentMonitorScreen />
+  {:else}
+    <SettingsScreen />
+  {/if}
 </main>

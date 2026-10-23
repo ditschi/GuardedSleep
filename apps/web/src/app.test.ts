@@ -16,7 +16,7 @@ describe("app shell", () => {
     render(App, { controller: createFakeController() });
     expect(screen.getByRole("main")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Skip to content" })).toHaveAttribute("href", "#main");
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Which device is this?");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Use this device as");
     await waitFor(() => expect(document.title).toBe("Which device is this? · GuardedSleep"));
     expect(document.documentElement.lang).toBe("en");
   });
@@ -24,7 +24,9 @@ describe("app shell", () => {
   it("opens on the path in the address bar", async () => {
     window.history.replaceState(null, "", "/parent/pair");
     render(App, { controller: createFakeController() });
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Pair the parent device");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Scan the code on the baby device",
+    );
     await waitFor(() => expect(document.title).toContain("Pair the parent device"));
   });
 
@@ -42,7 +44,7 @@ describe("app shell", () => {
     controller.settings.update((s) => ({ ...s, language: "de" }));
     await waitFor(() =>
       expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-        createTranslator("de")("webShell.route.role"),
+        createTranslator("de")("webScreens.role.title"),
       ),
     );
     expect(document.documentElement.lang).toBe("de");

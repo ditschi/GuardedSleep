@@ -87,6 +87,29 @@
     --gs-alert-bg: #2a0a0a;
     --gs-alert-surface: #3d1212;
 
+    /* Full-screen alerts (noise alert, link alarm): dark red, never white. */
+    --gs-alarm-bg: #1f0a0a;
+    --gs-on-alert: #ffe4e4;
+    --gs-on-alert-muted: #ffc9c9;
+    --gs-alert-panel: rgb(0 0 0 / 0.28);
+    --gs-alert-action: #ffd9d9;
+    --gs-on-alert-action: #3a0d0d;
+    --gs-alert-border: rgb(255 217 217 / 0.4);
+
+    /* Borders, role cards, camera box and the pairing code. */
+    --gs-border: light-dark(#c7ccd4, #2c343f);
+    --gs-role-baby-bg: light-dark(#f6e9c9, #2a2417);
+    --gs-role-baby-fg: light-dark(#7a5200, #f2c66d);
+    --gs-role-parent-bg: var(--gs-primary-container);
+    --gs-role-parent-fg: var(--gs-primary);
+    --gs-camera-bg: light-dark(#0b0d11, #07090c);
+    --gs-on-camera: #e8ecf1;
+    /* The code is shown light on dark ("inverted") at about 45 % brightness; "Make code
+       brighter" switches to the bright value. */
+    --gs-qr-ground: #000000;
+    --gs-qr-module: #7a7468;
+    --gs-qr-module-bright: #cfc6b6;
+
     /* Shape, spacing, type. Sizes are rem so 200 % text zoom grows the layout. */
     --gs-radius-s: 0.5rem;
     --gs-radius-m: 0.75rem;
@@ -115,33 +138,37 @@
     color-scheme: dark;
   }
 
-  /* Baby device while monitoring: pure black, dim text, state fills at kiosk strength. */
+  /* Baby device: pure black with warm, dim text (the owner-approved mockup), state fills at
+     kiosk strength. Used on the pairing screen and while monitoring. */
   :root[data-theme="dim"] {
     color-scheme: dark;
     --gs-bg: #000000;
-    --gs-surface: #0b0c0e;
-    --gs-surface-variant: #14161a;
-    --gs-on-bg: #8c8c8c;
-    --gs-on-surface-variant: #7a7f87;
-    --gs-outline: #4a4f57;
-    --gs-primary: #6f8fc4;
-    --gs-on-primary: #000000;
-    --gs-primary-container: #12203a;
-    --gs-on-primary-container: #9aa8c2;
+    --gs-surface: #14120e;
+    --gs-surface-variant: #1c1912;
+    --gs-on-bg: #cfc6b6;
+    --gs-on-surface-variant: #9c927f;
+    --gs-outline: #6b6252;
+    --gs-border: #2a2620;
+    --gs-primary: #c9b48a;
+    --gs-on-primary: #1a1408;
+    --gs-primary-container: #2a2417;
+    --gs-on-primary-container: #e0cfa8;
+    --gs-role-baby-bg: #2a2417;
+    --gs-role-baby-fg: #c9b48a;
     --gs-error: #c46a64;
-    --gs-ok: #4e9a6d;
-    --gs-warn: #b8963a;
+    --gs-ok: #a8d5b5;
+    --gs-warn: #c9a85a;
     --gs-bad: #c46a64;
-    --gs-chip: #14161a;
-    --gs-on-chip: #8c8c8c;
+    --gs-chip: #14120e;
+    --gs-on-chip: #b5aa95;
     --gs-state-green: #0e4a28;
     --gs-state-yellow: #4a3a00;
     --gs-state-orange: #4f2400;
     --gs-state-red: #330000;
     --gs-state-grey: #30333a;
     --gs-state-amber: #3f3000;
-    --gs-on-state: #8c8c8c;
-    --gs-focus: #6f8fc4;
+    --gs-on-state: #cfc6b6;
+    --gs-focus: #c9b48a;
     --gs-scrim: rgb(0 0 0 / 0.8);
   }
 }

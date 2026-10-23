@@ -1,9 +1,11 @@
 import { loadCore } from "@guardedsleep/core-wasm/web";
 // Vite emits the wasm file and hands over its URL; the glue code would otherwise guess it.
 import wasmUrl from "@guardedsleep/core-wasm/pkg/guardedsleep_wasm_bg.wasm?url";
-import type { AppController } from "../contract";
+import type { AppController, CodeScanner } from "../contract";
 import { AlertPlayer, createSoundGate } from "./audio";
+import { watchBattery, type BatteryManagerLike } from "./battery";
 import { createClock, createTimers } from "./clock";
+import { createQrScanner, type BarcodeDetectorCtor } from "./qr-scanner";
 import { defaultSignalingUrls } from "./relay-stun";
 import { createWebSocketSignaling, type WebSocketCtor } from "./signaling";
 import { createWebMediaEngine } from "./web-media";
@@ -39,6 +41,9 @@ export async function createWebApp(): Promise<AppController> {
   const core = await loadCore(wasmUrl);
   const timers = createTimers();
   const gate = createSoundGate(() => new AudioContext({ latencyHint: "interactive" }));
+  const battery = watchBattery(
+    navigator as unknown as { getBattery?: () => Promise<BatteryManagerLike> },
+  );
   return new WebController({
     core,
     clock: createClock(),
@@ -65,6 +70,33 @@ export async function createWebApp(): Promise<AppController> {
     network: browserNetwork(),
     randomBytes: (length) => crypto.getRandomValues(new Uint8Array(length)),
     entropy: entropy53,
+    battery: battery.state,
+    deviceStatus: () => battery.deviceStatus(),
     defaultSignalingUrls: () => defaultSignalingUrls(window.location, import.meta.env.DEV),
+  });
+}
+
+/** The camera scanner of the parent pairing screen (native `BarcodeDetector`, zxing otherwise). */
+export function createWebScanner(): CodeScanner {
+  return createQrScanner({
+    // Absent on a page that is not a secure context (plain http on a LAN address).
+    mediaDevices: navigator.mediaDevices,
+    barcodeDetector: (window as unknown as { BarcodeDetector?: BarcodeDetectorCtor })
+      .BarcodeDetector,
+    // Loaded only when the browser has no native detector, so most visitors never fetch it.
+    loadFallback: async () => {
+      const { BrowserQRCodeReader } = await import("@zxing/browser");
+      const reader = new BrowserQRCodeReader();
+      return (canvas) => {
+        try {
+          return reader.decodeFromCanvas(canvas).getText();
+        } catch {
+          // "No QR code in this frame" is an exception in zxing; the next frame tries again.
+          return null;
+        }
+      };
+    },
+    createCanvas: () => document.createElement("canvas"),
+    timers: createTimers(),
   });
 }

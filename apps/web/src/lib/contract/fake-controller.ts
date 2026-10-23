@@ -1,5 +1,6 @@
 import { writable, type Writable } from "svelte/store";
 import type { AppController } from "./controller";
+import { ScanError, type CodeScanner, type ScanFailure } from "./scanner";
 import {
   defaultAppState,
   defaultBabyMonitor,
@@ -8,6 +9,7 @@ import {
   makePairingState,
   type AppState,
   type BabyMonitorState,
+  type DeviceBattery,
   type PairingState,
   type ParentMonitorState,
   type SettingsState,
@@ -21,6 +23,7 @@ export interface FakeController extends AppController {
   readonly baby: Writable<BabyMonitorState>;
   readonly pairing: Writable<PairingState | null>;
   readonly soundUnlocked: Writable<boolean>;
+  readonly deviceBattery: Writable<DeviceBattery | null>;
   /** Every action call as `[method, ...args]`, oldest first. */
   readonly calls: Array<[string, ...unknown[]]>;
 }
@@ -37,6 +40,7 @@ export function createFakeController(): FakeController {
   const baby = writable(defaultBabyMonitor());
   const pairing = writable<PairingState | null>(null);
   const soundUnlocked = writable(false);
+  const deviceBattery = writable<DeviceBattery | null>(null);
   const calls: Array<[string, ...unknown[]]> = [];
   const record =
     (name: string) =>
@@ -51,6 +55,7 @@ export function createFakeController(): FakeController {
     baby,
     pairing,
     soundUnlocked,
+    deviceBattery,
     calls,
     chooseRole(role) {
       calls.push(["chooseRole", role]);
@@ -128,4 +133,44 @@ export function createFakeController(): FakeController {
       app.update((s) => ({ ...s, coachPending: false }));
     },
   };
+}
+
+/** A scanner whose camera tests drive: `emit` reads a code, `failNext` makes the next start fail. */
+export interface FakeScanner extends CodeScanner {
+  readonly started: HTMLVideoElement[];
+  stops: number;
+  emit(text: string): void;
+  failNext(kind: ScanFailure): void;
+}
+
+export function createFakeScanner(): FakeScanner {
+  let handler: ((text: string) => void) | null = null;
+  let failure: ScanFailure | null = null;
+  const fake: FakeScanner = {
+    started: [],
+    stops: 0,
+    start(video, onCode) {
+      if (failure !== null) {
+        const kind = failure;
+        failure = null;
+        return Promise.reject(new ScanError(kind));
+      }
+      fake.started.push(video);
+      handler = onCode;
+      return Promise.resolve();
+    },
+    stop() {
+      fake.stops++;
+      handler = null;
+    },
+    emit(text) {
+      const h = handler;
+      handler = null;
+      h?.(text);
+    },
+    failNext(kind) {
+      failure = kind;
+    },
+  };
+  return fake;
 }

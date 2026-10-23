@@ -881,5 +881,35 @@
     },
     "skipToContent": "Skip to content",
     "dismiss": "Dismiss"
+  },
+  "webScreens": {
+    "role": {
+      "title": "Use this device as",
+      "subtitle": "Phone, tablet or laptop. Set up the baby device first.",
+      "navLabel": "Choose a role",
+      "privacyNote": "Sound goes directly between your two devices and is never recorded."
+    },
+    "pair": {
+      "copyHint": "Paste it on the parent device within 5 minutes. Don't send it in a chat.",
+      "or": "or",
+      "cameraUnavailable": "No camera is available here. Paste the code instead.",
+      "cameraView": "Camera view"
+    },
+    "baby": {
+      "failMicDenied": "The microphone is blocked, so this device can't hear your child. Allow it in the browser's site settings.",
+      "failMicUnavailable": "No microphone was found, so this device can't hear your child.",
+      "silenceUnknown": "Silence: unknown",
+      "keepAwake": "Keep this device awake: plugged in, lid open, this tab visible.",
+      "keepSilent": "Turn on Do Not Disturb and lower brightness on this device."
+    },
+    "parent": {
+      "silenceUnknownWeb": "Silence unknown · set it on the baby device",
+      "keepOpen": "Keep this page open and the screen on. Your browser can't alert you otherwise.",
+      "soundGate": "Tap to turn on alert sound"
+    },
+    "settings": {
+      "urlHint": "The baby device writes these addresses into its code, so the parent device uses them too.",
+      "sensitivityBabyOnly": "Sensitivity is set on the baby device."
+    }
   }
 }

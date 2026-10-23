@@ -150,6 +150,15 @@ export interface PairingState {
   error: PairingError | null;
 }
 
+/**
+ * Web only (no counterpart in UiContract.kt): the browser's own battery reading of this device,
+ * from the Battery API where it exists. `pct` is 0..100; `charging` is null when unknown.
+ */
+export interface DeviceBattery {
+  pct: number;
+  charging: boolean | null;
+}
+
 export type Theme = "dark" | "light" | "system";
 
 export type AlertOutput = "default" | "speaker_only";

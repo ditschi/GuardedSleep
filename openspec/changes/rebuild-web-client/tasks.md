@@ -30,8 +30,8 @@ Greenfield build of `apps/web` (design.md). `apps/mobile` is read-only reference
 
 ## 5. Pairing screens
 
-- [ ] 5.1 S01 role screen and S04 baby pair: fresh 32-byte PSK from `crypto.getRandomValues`, invite from the core codec, QR (level M, inverted, ≤ 50 % brightness, "Make brighter"), countdown and "Show new code", "Copy code" with the no-chat hint, no share action. Verify: Vitest for the countdown; Playwright test ids `baby_pair_*`.
-- [ ] 5.2 S05 parent pair: camera only after "Allow camera", `BarcodeDetector` with `@zxing/browser` fallback, paste field, error copy per `PairingError`, connecting state. Verify: Vitest for error mapping; Playwright paste flow.
+- [x] 5.1 S01 role screen and S04 baby pair: fresh 32-byte PSK from `crypto.getRandomValues`, invite from the core codec, QR (level M, inverted, ≤ 50 % brightness, "Make brighter"), countdown and "Show new code", "Copy code" with the no-chat hint, no share action. Verify: Vitest for the countdown; Playwright test ids `baby_pair_*`.
+- [x] 5.2 S05 parent pair: camera only after "Allow camera", `BarcodeDetector` with `@zxing/browser` fallback, paste field, error copy per `PairingError`, connecting state. Verify: Vitest for error mapping; Playwright paste flow.
 - [ ] 5.3 Pairing material in memory only; a Playwright storage test pairs, reloads and asserts `localStorage`, `sessionStorage`, IndexedDB and Cache API hold no PSK, invite or room id. Verify: `just e2e` storage test.
 
 ## 6. Monitoring screens

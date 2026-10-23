@@ -6,7 +6,7 @@ import type {
   LinkState,
   LinkStatus,
 } from "@guardedsleep/core-wasm";
-import { writable, type Readable } from "svelte/store";
+import { readable, writable, type Readable } from "svelte/store";
 import {
   defaultAppState,
   defaultBabyMonitor,
@@ -16,6 +16,7 @@ import {
   type AppController,
   type AppState,
   type BabyMonitorState,
+  type DeviceBattery,
   type ListenMode,
   type PairingError,
   type PairingState,
@@ -65,6 +66,8 @@ export interface ControllerDeps {
   defaultSignalingUrls(): string[];
   /** Baby: the browser's own state (battery, page visibility, ...). A browser reports no ringer. */
   deviceStatus?: () => DeviceStatus;
+  /** The device's battery for the baby screen; absent where the browser has no Battery API. */
+  battery?: Readable<DeviceBattery | null>;
 }
 
 /** Pairing material of this page. In memory only: never storage, URLs, logs or the DOM. */
@@ -116,6 +119,7 @@ export class WebController implements AppController {
   readonly soundUnlocked: Readable<boolean> = this.soundStore;
   readonly parent: Readable<ParentMonitorState> = this.parentStore;
   readonly baby: Readable<BabyMonitorState> = this.babyStore;
+  readonly deviceBattery: Readable<DeviceBattery | null>;
 
   private appState: AppState = defaultAppState();
   private settingsState: SettingsState = defaultSettings();
@@ -124,6 +128,7 @@ export class WebController implements AppController {
   private runCounter = 0;
 
   constructor(private readonly deps: ControllerDeps) {
+    this.deviceBattery = deps.battery ?? readable<DeviceBattery | null>(null);
     this.parentModel = new ParentModel(
       deps.clock,
       deps.alerts,

@@ -48,6 +48,16 @@
     background: var(--gs-error);
     color: var(--gs-on-error);
   }
+  /* On the dark-red full screens (noise alert, link alarm). */
+  .gs-btn[data-variant="alert"] {
+    background: var(--gs-alert-action);
+    color: var(--gs-on-alert-action);
+  }
+  .gs-btn[data-variant="alert-outline"] {
+    background: transparent;
+    color: var(--gs-on-alert);
+    border-color: var(--gs-alert-border);
+  }
   .gs-btn[data-size="large"] {
     min-height: var(--gs-target-large);
     padding-inline: var(--gs-space-6);

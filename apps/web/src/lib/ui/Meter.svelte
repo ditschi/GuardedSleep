@@ -8,16 +8,19 @@
     threshold?: number | null;
     /** Accessible text for the level ("Quiet", "Loud"); the meter exposes words, not numbers. */
     label: string;
+    /** The slim variant of the baby screen. */
+    compact?: boolean;
     testid?: string;
   };
 
-  let { level, threshold = null, label, testid }: Props = $props();
+  let { level, threshold = null, label, compact = false, testid }: Props = $props();
 
   const bars = $derived(meterBars(level));
 </script>
 
 <div
   class="gs-meter"
+  data-compact={compact || undefined}
   data-testid={testid}
   role="meter"
   aria-valuemin="0"

@@ -2,6 +2,7 @@ import type { Readable } from "svelte/store";
 import type {
   AppState,
   BabyMonitorState,
+  DeviceBattery,
   ListenMode,
   PairingState,
   ParentMonitorState,
@@ -25,6 +26,11 @@ export interface AppController {
    * False until `unlockSound()` ran from one; alerts and baby audio are silent before.
    */
   readonly soundUnlocked: Readable<boolean>;
+  /**
+   * Web only: this device's battery from the Battery API, null where the browser has none
+   * (Firefox, Safari). The baby device also reports it to the parent.
+   */
+  readonly deviceBattery: Readable<DeviceBattery | null>;
 
   chooseRole(role: Role): void;
   completeOnboarding(): void;

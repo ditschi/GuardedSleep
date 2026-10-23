@@ -58,6 +58,14 @@
     { "pattern": "native.ui.setup.safety.body", "budget": 230 },
     { "pattern": "native.ui.setup.limits.body", "budget": 240 },
     { "pattern": "native.ui.missed.*", "budget": 120 },
-    { "pattern": "native.ui.fgsMissing.*", "budget": 180 }
+    { "pattern": "native.ui.fgsMissing.*", "budget": 180 },
+    { "pattern": "webScreens.baby.failMicDenied", "budget": 140 },
+    { "pattern": "webScreens.baby.failMicUnavailable", "budget": 100 },
+    { "pattern": "webScreens.baby.silenceUnknown", "budget": 40 },
+    { "pattern": "webScreens.baby.keepAwake", "budget": 110 },
+    { "pattern": "webScreens.baby.keepSilent", "budget": 100 },
+    { "pattern": "webScreens.parent.silenceUnknownWeb", "budget": 80 },
+    { "pattern": "webScreens.parent.keepOpen", "budget": 140 },
+    { "pattern": "webScreens.parent.soundGate", "budget": 50 }
   ]
 }
