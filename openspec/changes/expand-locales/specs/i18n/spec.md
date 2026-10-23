@@ -23,6 +23,15 @@ A locale SHALL be generated and shipped only when every key tagged `critical` (a
 
 ## ADDED Requirements
 
+### Requirement: Critical tags
+
+The keys tagged `critical` and their length budgets SHALL be listed in one file, `locales/critical.json`, by exact key or group prefix. The catalogue check SHALL fail when a listed pattern matches no key in `en.json`.
+
+#### Scenario: Renamed alert key
+
+- **WHEN** a change renames a critical key in `en.json` without updating `locales/critical.json`
+- **THEN** the catalogue check fails and names the stale pattern
+
 ### Requirement: Review markers
 
 Every non-English value SHALL carry a `machineTranslated` or `reviewed` marker; review SHALL NOT gate shipping.
@@ -49,3 +58,12 @@ Every key returned by the core's `message_keys()` SHALL exist in `locales/en.jso
 
 - **WHEN** the core adds a message key without a catalogue entry
 - **THEN** `just lint` fails
+
+### Requirement: No unused keys
+
+Every key in `locales/en.json` SHALL be used by the Android or web client or returned by the core's `message_keys()`, checked by `just lint`.
+
+#### Scenario: Screen removed
+
+- **WHEN** a change deletes the last use of a key
+- **THEN** `just lint` fails until the key is removed from every catalogue

@@ -10,7 +10,8 @@ ADR-021 §2 (owner D2) ships about 20 AI-translated locales for reach, with the 
 - `critical` tags on alert, link-loss, connection-state and safety keys; a locale ships only when all critical keys are present, other keys fall back to English.
 - `machineTranslated` / `reviewed` markers; the owner reviews German; review never gates shipping.
 - Generator: length budgets on critical keys, `androidResources.localeFilters` with exactly the generated locales, an RTL pseudo-locale; screenshot and overflow tests for de (long) and ar (RTL).
-- A check that every core `message_keys()` entry exists in `locales/en.json` (moved here from the backlog).
+- A check that every core `message_keys()` entry exists in `locales/en.json` (moved here from the backlog), and a check that no catalogue key is unused.
+- Device wording "baby device" / "parent device" across the catalogue (owner, 2026-10-23).
 
 ## Capabilities
 
@@ -22,4 +23,4 @@ ADR-021 §2 (owner D2) ships about 20 AI-translated locales for reach, with the 
 
 ## Impact
 
-`locales/*.json`, `crates/i18n-gen`, Android Gradle config, Roborazzi and Playwright tests, `docs/backlog.md` (remove the message-key item).
+`locales/*.json`, `locales/critical.json` (new), `crates/i18n-gen`, Android Gradle config, Roborazzi and Playwright tests, `docs/technical/alpha-ux-flows.md` (device wording, A8), `docs/backlog.md` (remove the message-key item).
