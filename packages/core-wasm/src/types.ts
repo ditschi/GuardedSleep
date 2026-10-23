@@ -79,3 +79,26 @@ export function isLinkAction(v: unknown): v is LinkAction {
   const ev = (v as { event?: { type?: unknown } }).event;
   return typeof ev?.type === "string" && ev.type in LINK_EVENT_TYPES;
 }
+
+/** Why an invite text was rejected; the snake_case keys of the core's `InviteError`. */
+export const INVITE_ERRORS = {
+  not_our_code: true,
+  incomplete_paste: true,
+  expired: true,
+} as const;
+export type InviteErrorKey = keyof typeof INVITE_ERRORS;
+
+export function isInviteErrorKey(v: unknown): v is InviteErrorKey {
+  return typeof v === "string" && Object.hasOwn(INVITE_ERRORS, v);
+}
+
+/** A valid, unexpired invite. `psk` is the pairing key: keep it in memory only, never log it. */
+export interface Invite {
+  psk: Uint8Array;
+  urls: string[];
+  expiresAtEpochS: number;
+}
+
+export type ParseInviteResult = { ok: true; invite: Invite } | { ok: false; error: InviteErrorKey };
+
+export type BuildInviteResult = { ok: true; text: string } | { ok: false; error: InviteErrorKey };

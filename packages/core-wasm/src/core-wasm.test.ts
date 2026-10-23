@@ -96,6 +96,45 @@ describe("core-wasm wrapper", () => {
     expect(() => core.createLink({ ...config("baby"), alarm_after_ms: 1000 })).toThrow();
   });
 
+  describe("invite codec", () => {
+    const psk = Uint8Array.from({ length: 32 }, (_, i) => i);
+    const urls = ["ws://10.0.2.2:8787", "wss://a.example/sig"];
+    const now = 1_700_000_000;
+
+    it("builds and parses an invite as typed values", () => {
+      const built = core.buildInvite(psk, urls, now + 300);
+      if (!built.ok) throw new Error("build failed");
+      expect(JSON.parse(built.text)).toEqual({ v: 3, k: PSK, s: urls, x: now + 300 });
+      const parsed = core.parseInvite(` ${built.text}\n`, now);
+      expect(parsed).toEqual({ ok: true, invite: { psk, urls, expiresAtEpochS: now + 300 } });
+    });
+
+    it("classifies rejected texts", () => {
+      const built = core.buildInvite(psk, urls, now + 300);
+      if (!built.ok) throw new Error("build failed");
+      expect(core.parseInvite(built.text.slice(0, -10), now)).toEqual({
+        ok: false,
+        error: "incomplete_paste",
+      });
+      expect(core.parseInvite("https://example.com", now)).toEqual({
+        ok: false,
+        error: "not_our_code",
+      });
+      expect(core.parseInvite(built.text, now + 300)).toEqual({ ok: false, error: "expired" });
+    });
+
+    it("refuses to build an invalid invite", () => {
+      expect(core.buildInvite(psk.slice(0, 16), urls, now)).toEqual({
+        ok: false,
+        error: "not_our_code",
+      });
+      expect(core.buildInvite(psk, ["http://h"], now)).toEqual({
+        ok: false,
+        error: "not_our_code",
+      });
+    });
+  });
+
   it("fails loudly when the core returns an unknown action", () => {
     const fake = createCoreApi({
       WasmLink: class {
@@ -109,6 +148,8 @@ describe("core-wasm wrapper", () => {
       },
       messageKeys: () => "[]",
       deriveRoomId: () => "",
+      parseInvite: () => "{}",
+      buildInvite: () => "",
       conformanceEval: () => "{}",
     });
     expect(() => fake.createLink(config("baby")).handle(0, { type: "tick" })).toThrow(

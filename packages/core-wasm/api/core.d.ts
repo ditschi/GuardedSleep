@@ -172,6 +172,11 @@ export class WasmSession {
     constructor(config_json: string);
 }
 
+/**
+ * Builds the v3 invite text. Throws the snake_case error key if the inputs are not a valid invite.
+ */
+export function buildInvite(psk: Uint8Array, urls: string[], expires_at_epoch_s: number): string;
+
 export function conformanceEval(case_json: string): string;
 
 export function deriveRoomId(psk: Uint8Array): string;
@@ -181,23 +186,32 @@ export function deriveRoomId(psk: Uint8Array): string;
  */
 export function messageKeys(): string;
 
+/**
+ * Parses a scanned or pasted v3 invite. Returns JSON, `{"type":"ok","psk_b64url":..,"urls":[..],
+ * "expires_at_epoch_s":..}` or `{"type":"error","error":"not_our_code"|"incomplete_paste"|"expired"}`;
+ * the `packages/core-wasm` wrapper turns it into a typed result. `now_epoch_s` is wall-clock seconds.
+ */
+export function parseInvite(text: string, now_epoch_s: number): string;
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_wasmlink_free: (a: number, b: number) => void;
     readonly __wbg_wasmsession_free: (a: number, b: number) => void;
+    readonly buildInvite: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly conformanceEval: (a: number, b: number, c: number) => void;
     readonly deriveRoomId: (a: number, b: number, c: number) => void;
     readonly messageKeys: (a: number) => void;
+    readonly parseInvite: (a: number, b: number, c: number, d: number) => void;
     readonly wasmlink_handle: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmlink_new: (a: number, b: number, c: number) => void;
     readonly wasmlink_roomId: (a: number, b: number) => void;
     readonly wasmsession_handle: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmsession_new: (a: number, b: number, c: number) => void;
-    readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
+    readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
     readonly __wbindgen_export3: (a: number, b: number, c: number) => void;
 }
 

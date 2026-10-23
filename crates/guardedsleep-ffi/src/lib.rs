@@ -7,6 +7,10 @@
 
 use std::sync::{Arc, Mutex};
 
+use guardedsleep_core::invite::{
+    InviteError as CoreInviteError, build_invite as core_build_invite,
+    parse_invite as core_parse_invite,
+};
 use guardedsleep_core::link::{Link, LinkAction, LinkConfig, LinkInput};
 use guardedsleep_core::session::{Action, ConfigError, Input, Session, SessionConfig};
 
@@ -126,6 +130,65 @@ pub fn default_session_config(
 #[uniffi::export]
 pub fn encode_psk(bytes: Vec<u8>) -> String {
     guardedsleep_core::pairing::encode_psk(&bytes)
+}
+
+/// Why an invite text was rejected (`guardedsleep_core::invite::InviteError`). Kotlin sees it as
+/// `InviteException`.
+#[derive(Debug, uniffi::Error)]
+pub enum InviteError {
+    NotOurCode,
+    IncompletePaste,
+    Expired,
+}
+
+impl std::fmt::Display for InviteError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            InviteError::NotOurCode => "not_our_code",
+            InviteError::IncompletePaste => "incomplete_paste",
+            InviteError::Expired => "expired",
+        })
+    }
+}
+
+impl From<CoreInviteError> for InviteError {
+    fn from(e: CoreInviteError) -> Self {
+        match e {
+            CoreInviteError::NotOurCode => InviteError::NotOurCode,
+            CoreInviteError::IncompletePaste => InviteError::IncompletePaste,
+            CoreInviteError::Expired => InviteError::Expired,
+        }
+    }
+}
+
+/// A valid, unexpired invite. Holds the pairing key: no `Debug`; never log it or put it into an
+/// Intent or Bundle.
+#[derive(uniffi::Record)]
+pub struct ParsedInvite {
+    pub psk: Vec<u8>,
+    pub urls: Vec<String>,
+    pub expires_at_epoch_s: u64,
+}
+
+/// Parses a scanned or pasted v3 invite. `now_epoch_s` is the platform's wall clock in seconds.
+#[uniffi::export]
+pub fn parse_invite(text: String, now_epoch_s: u64) -> Result<ParsedInvite, InviteError> {
+    let invite = core_parse_invite(&text, now_epoch_s)?;
+    Ok(ParsedInvite {
+        psk: invite.psk().to_vec(),
+        urls: invite.urls.clone(),
+        expires_at_epoch_s: invite.expires_at_epoch_s,
+    })
+}
+
+/// Builds the v3 invite text for the QR code and the copy action.
+#[uniffi::export]
+pub fn build_invite(
+    psk: Vec<u8>,
+    urls: Vec<String>,
+    expires_at_epoch_s: u64,
+) -> Result<String, InviteError> {
+    Ok(core_build_invite(&psk, &urls, expires_at_epoch_s)?)
 }
 
 #[uniffi::export]

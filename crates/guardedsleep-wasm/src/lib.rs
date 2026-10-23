@@ -73,6 +73,34 @@ pub fn derive_room_id(psk: &[u8]) -> String {
     guardedsleep_core::pairing::derive_room_id(psk)
 }
 
+/// Parses a scanned or pasted v3 invite. Returns JSON, `{"type":"ok","psk_b64url":..,"urls":[..],
+/// "expires_at_epoch_s":..}` or `{"type":"error","error":"not_our_code"|"incomplete_paste"|"expired"}`;
+/// the `packages/core-wasm` wrapper turns it into a typed result. `now_epoch_s` is wall-clock seconds.
+#[wasm_bindgen(js_name = parseInvite)]
+pub fn parse_invite(text: &str, now_epoch_s: f64) -> String {
+    match guardedsleep_core::invite::parse_invite(text, now_epoch_s.max(0.0) as u64) {
+        Ok(inv) => serde_json::json!({
+            "type": "ok",
+            "psk_b64url": guardedsleep_core::pairing::encode_psk(inv.psk()),
+            "urls": inv.urls,
+            "expires_at_epoch_s": inv.expires_at_epoch_s,
+        }),
+        Err(e) => serde_json::json!({ "type": "error", "error": e.as_str() }),
+    }
+    .to_string()
+}
+
+/// Builds the v3 invite text. Throws the snake_case error key if the inputs are not a valid invite.
+#[wasm_bindgen(js_name = buildInvite)]
+pub fn build_invite(
+    psk: &[u8],
+    urls: Vec<String>,
+    expires_at_epoch_s: f64,
+) -> Result<String, JsError> {
+    guardedsleep_core::invite::build_invite(psk, &urls, expires_at_epoch_s.max(0.0) as u64)
+        .map_err(|e| JsError::new(e.as_str()))
+}
+
 #[wasm_bindgen(js_name = conformanceEval)]
 pub fn conformance_eval(case_json: &str) -> String {
     guardedsleep_core::conformance::evaluate(case_json)

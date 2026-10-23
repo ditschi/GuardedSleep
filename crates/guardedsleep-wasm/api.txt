@@ -8,6 +8,8 @@ pub struct guardedsleep_wasm::WasmSession
 impl guardedsleep_wasm::WasmSession
 pub fn guardedsleep_wasm::WasmSession::handle(&mut self, f64, &str) -> core::result::Result<alloc::string::String, wasm_bindgen::JsError>
 pub fn guardedsleep_wasm::WasmSession::new(&str) -> core::result::Result<guardedsleep_wasm::WasmSession, wasm_bindgen::JsError>
+pub fn guardedsleep_wasm::build_invite(&[u8], alloc::vec::Vec<alloc::string::String>, f64) -> core::result::Result<alloc::string::String, wasm_bindgen::JsError>
 pub fn guardedsleep_wasm::conformance_eval(&str) -> alloc::string::String
 pub fn guardedsleep_wasm::derive_room_id(&[u8]) -> alloc::string::String
 pub fn guardedsleep_wasm::message_keys() -> alloc::string::String
+pub fn guardedsleep_wasm::parse_invite(&str, f64) -> alloc::string::String
