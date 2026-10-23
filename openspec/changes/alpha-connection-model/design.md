@@ -12,12 +12,12 @@ See `proposal.md` (Why). Current state:
 
 Owner decisions of 2026-10-23:
 
-| Topic               | Decision                                                                                                                         |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Internet rendezvous | Nostr EU set as default, no project-run server                                                                                   |
-| STUN fallbacks      | Automatic, from a vetted EU list, disclosed                                                                                      |
-| Signaling payloads  | End-to-end sealed on every mailbox                                                                                               |
-| TURN                | None by default in the alpha; user-entered TURN only; decide for beta with data (recommended, awaiting the owner's confirmation) |
+| Topic               | Decision                                                                        |
+| ------------------- | ------------------------------------------------------------------------------- |
+| Internet rendezvous | Nostr EU set as default, no project-run server                                  |
+| STUN fallbacks      | Automatic, from a vetted EU list, disclosed                                     |
+| Signaling payloads  | End-to-end sealed on every mailbox                                              |
+| TURN                | None by default in the alpha; user-entered TURN only; decide for beta with data |
 
 ## Goals / Non-Goals
 

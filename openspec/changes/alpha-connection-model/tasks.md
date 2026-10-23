@@ -47,5 +47,5 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 - Archive `rebuild-web-client` first. Its deltas also modify `pairing` "Invite payload v3" and `signaling-relay` "Client ICE configuration", so re-check these MODIFIED blocks against the merged specs before archiving this change (copy any scenarios they added).
 
 - Role reviews: Technical Architect (mailbox set in the core, layers), Security Architect (envelope, Nostr key and tag derivation, LAN listener, disclosure), Product Owner and UX (alpha scope, copy, Persona A–C), then the Critical Reviewer gate (scope, security model and guardrail changes); the originator answers every CRITICAL and IMPORTANT finding.
-- Owner confirms the TURN choice for beta after 7.2.
+- Owner decides project TURN for beta with the 7.2 data (alpha: no default TURN, owner 2026-10-23).
 - `mise exec -- openspec archive alpha-connection-model --yes`, then `openspec validate --all --strict`.
