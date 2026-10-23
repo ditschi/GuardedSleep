@@ -20,7 +20,7 @@ context: |
   Users: sleep-deprived parents at 3 AM. A missed alarm is the worst failure; a false alarm is the
   second worst. User-visible copy lives only in locales/*.json (en master); alerts are critical keys.
   One unified app for home, travel and events: no persona-specific profiles or layouts.
-  User copy says "baby unit" and "parent unit", never "phone": tablets and laptops can be units.
+  User copy says "baby device" and "parent device", never "phone" or "unit": tablets and laptops can be devices.
 
   Tiers: T0 = alpha, T1 = beta, T2 = 1.0+. Do not plan work for a later tier. Features marked
   DEFERRED, IDEA or REJECTED in AGENTS.md section 9 are off-limits unless the change says so.
