@@ -8,7 +8,7 @@ Greenfield build of `apps/web` (design.md). `apps/mobile` is read-only reference
 - [x] 1.2 Add `parse_invite` and `build_invite` conformance vectors (valid, wrong version, short PSK, bad URL, missing expiry, expired, cut-off JSON, not JSON, surrounding whitespace) to `vectors/conformance.json` and `conformance_eval`. Verify: core tests and `just test-wasm` pass with the new cases.
 - [x] 1.3 Export the codec from `guardedsleep-ffi` and `guardedsleep-wasm` and the `packages/core-wasm` wrapper (typed result, no raw JSON in callers); `just api-snapshot`, review the diff. Verify: `just api-check`, `pnpm --filter @guardedsleep/core-wasm test`.
 - [ ] 1.4 Switch Android to the core codec: `LinkController` and the debug launcher call the binding; delete the parser in `PairingPayload.kt` (keep `PairingError` mapping in `platform`); port `PairingTest` cases to the binding. Verify: `just test-android` green, `rg -n 'JSONObject' apps/android/platform/src/main/kotlin/org/guardedsleep/app/pairing` finds no invite parsing.
-- [ ] 1.5 Remove the "Move the QR invite codec … into the core" items from `docs/backlog.md`; add the `IDEA` "Post-pairing key change so a shared code is single-use; then a Web Share action for the invite" under pairing. Verify: `just lint-text`.
+- [x] 1.5 Remove the "Move the QR invite codec … into the core" items from `docs/backlog.md`; add the `IDEA` "Post-pairing key change so a shared code is single-use; then a Web Share action for the invite" under pairing. Verify: `just lint-text`.
 
 ## 2. Scaffold apps/web
 

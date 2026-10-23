@@ -65,7 +65,6 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 ### pairing
 
 - `IDEA` Redact the PSK in `Debug` for `LinkConfig`/`SessionConfig` and in the Kotlin `toString` of the generated config types (AGENTS.md §7.2; found in the `add-core-facades` security review). Candidate for the pre-alpha security audit.
-- `IDEA` Move the QR invite codec from Kotlin (`PairingPayload.kt`) into the core, so no peer input is parsed on a platform.
 - `IDEA` Saved connections as a list (up to 5, editable names, swipe to delete, auto-delete after 90 days without use with a 7-day warning) and a "Delete all connections & keys" panic button; today one pairing is stored and "Forget" deletes it.
 
 - `DEFERRED` (Phase 2) Multi-parent: up to 4 parent units per baby (product cap); "Add device" on a paired baby or parent unit, the baby unit only after kiosk unlock and confirmation; a join request with device name after the invite is dismissed; failover of alerts to another parent when one stops responding (failure model F-1a).
@@ -78,7 +77,7 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 - `IDEA` Key rotation of the pairing key (e.g. every 30 days), distinct from re-keying after revocation; `DEFERRED` per AGENTS.md §9.
 - `IDEA` Forward secrecy with an ephemeral Diffie-Hellman exchange per connection.
 - `IDEA` Emoji fingerprint shown on both units for an optional visual check (ADR-018 T2).
-- `IDEA` Move the invite payload codec from Kotlin into the core, so the web client and Android share one parser (found during migration, fits the wave-2 façades).
+- `IDEA` Post-pairing key change so a shared code is single-use; then a Web Share action for the invite.
 
 ### signaling-relay
 
