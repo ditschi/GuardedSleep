@@ -18,7 +18,7 @@ Greenfield build of `apps/web` (design.md). `apps/mobile` is read-only reference
 ## 3. App shell: router, theme, i18n, stores
 
 - [x] 3.1 History API router (`/`, `/baby/pair`, `/baby`, `/parent/pair`, `/parent`, `/settings`) with focus on the screen heading and `document.title` per route; Vitest for matching and fallback to `/`. Verify: Vitest.
-- [ ] 3.2 `theme.css`: custom properties for dark (default), light and the dim baby theme, cascade layers, system font stack; external `theme-boot.js` applies the theme before first paint; base components (button, card, status bar, chip, banner, meter, switch, dialog, list row) per the mockup. Verify: `check` passes, a Vitest/DOM test renders each component with its label.
+- [x] 3.2 `theme.css`: custom properties for dark (default), light and the dim baby theme, cascade layers, system font stack; external `theme-boot.js` applies the theme before first paint; base components (button, card, status bar, chip, banner, meter, switch, dialog, list row) per the mockup. Verify: `check` passes, a Vitest/DOM test renders each component with its label.
 - [ ] 3.3 Typed i18n: a `t(key, args)` over the generated web catalogue with ICU formatting and English fallback for non-critical keys; new web copy keys added to `locales/en.json` only, using "baby device" / "parent device"; `scripts/lint-ui-literals.sh` covers `apps/web/src`. Verify: Vitest for formatting, `just lint-text` (literal lint) green.
 - [ ] 3.4 Contract stores mirroring `UiContract.kt` (`AppState`, `LinkUi`, `ParentMonitorState`, `BabyMonitorState`, `PairingState`, `SettingsState`) and an `AppController` interface; UI imports only these. Verify: Vitest; `rg -n "core-wasm" apps/web/src/lib/ui apps/web/src/screens` is empty.
 
