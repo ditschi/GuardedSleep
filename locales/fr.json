@@ -290,8 +290,8 @@
           "why": "Sinon cet appareil peut arrêter la surveillance pour économiser la batterie."
         },
         "silence": {
-          "title": "Mettre cet appareil en silence pendant la surveillance",
-          "why": "Les appels et messages ne sonneront pas et n'allumeront pas l'écran près de votre enfant. Les réveils fonctionnent toujours."
+          "title": "Mode silencieux pendant la surveillance",
+          "why": "Aucun son, sonnerie ni lumière sur l'appareil bébé. Les réveils fonctionnent toujours."
         },
         "safety": {
           "body": "Gardez cet appareil sur son chargeur, sur une surface stable, hors de portée de votre enfant. N'utilisez pas un appareil dont la batterie est gonflée ou abîmée."
@@ -384,11 +384,11 @@
         "battery": "Cet appareil : batterie {percent} %",
         "batteryCharging": "Cet appareil : en charge · {percent} %",
         "silence": {
-          "on": "Cet appareil est en silence",
-          "off": "Cet appareil peut sonner",
-          "everydayPhone": "Les appels et messages sur cet appareil restent silencieux jusqu'à l'arrêt de la surveillance.",
-          "restored": "Cet appareil était resté en silence. Les sons sont rétablis.",
-          "noAccess": "L'accès au mode silence est désactivé. Activez-le dans les réglages pour que les appels et messages restent silencieux."
+          "on": "Mode silencieux activé",
+          "off": "Mode silencieux désactivé : cet appareil peut sonner",
+          "everydayPhone": "Mode silencieux activé. Les appels et messages sur cet appareil restent silencieux jusqu'à l'arrêt de la surveillance.",
+          "restored": "Cet appareil était resté en mode silencieux. Les sons sont rétablis.",
+          "noAccess": "L'accès au mode silencieux est désactivé. Activez-le dans les réglages pour que les appels et messages restent silencieux."
         },
         "lock": "Verrouiller l'écran",
         "autolockHint": "L'écran s'assombrit dans {seconds} s",
@@ -523,19 +523,19 @@
         }
       },
       "silence": {
-        "silent": "L'appareil bébé est en silence",
+        "silent": "L'appareil bébé est en mode silencieux",
         "alarmsStillRing": "Les réveils dessus peuvent quand même sonner.",
-        "screenMayLight": "L'appareil bébé est en silence, mais son écran peut s'allumer",
+        "screenMayLight": "L'appareil bébé est en mode silencieux, mais son écran peut s'allumer",
         "mayVibrate": "L'appareil bébé peut vibrer",
         "mayRing": "L'appareil bébé peut sonner",
-        "unknown": "Impossible de vérifier si l'appareil bébé est en silence",
+        "unknown": "Mode silencieux : inconnu, appareil bébé non vérifiable",
         "manual": "Sur l'appareil bébé, activez Ne pas déranger et baissez la luminosité.",
-        "noAccess": "Pour le mettre en silence d'ici, ouvrez les réglages de l'appareil bébé et activez « Mettre cet appareil en silence pendant la surveillance ».",
-        "apply": "Mettre l'appareil bébé en silence",
-        "applyFull": "Le mettre totalement en silence",
-        "pending": "Mise en silence…",
-        "failed": "Impossible de mettre l'appareil bébé en silence.",
-        "webUnknown": "Inconnu — mettez l'appareil bébé en silence vous-même",
+        "noAccess": "Pour activer le mode silencieux d'ici, ouvrez les réglages de l'appareil bébé et activez « Mode silencieux pendant la surveillance ».",
+        "apply": "Activer le mode silencieux",
+        "applyFull": "Activer le mode silencieux complet",
+        "pending": "Activation du mode silencieux…",
+        "failed": "Impossible d'activer le mode silencieux sur l'appareil bébé.",
+        "webUnknown": "Inconnu — activez vous-même le mode silencieux sur l'appareil bébé",
         "webHint": "Si l'appareil bébé est un ordinateur portable, laissez-le branché, couvercle ouvert et écran allumé."
       },
       "help": {
@@ -585,7 +585,7 @@
       "settings": {
         "group": {
           "soundDetection": "Détection du son",
-          "silence": "Silence",
+          "silence": "Mode silencieux",
           "alerts": "Alertes",
           "screen": "Écran",
           "paired": "Appareil appairé",
@@ -598,7 +598,7 @@
         "moreSensitive": "Plus sensible",
         "lessSensitive": "Moins sensible",
         "holdLabel": "Le bruit doit durer au moins",
-        "silenceAccessOk": "L'accès au mode silence est activé.",
+        "silenceAccessOk": "L'accès au mode silencieux est activé.",
         "outputLabel": "Le son d'alerte est lu sur",
         "output": {
           "default": "Écouteurs s'ils sont connectés, sinon haut-parleur",
@@ -661,7 +661,7 @@
       "micLevel": "Niveau sonore ici",
       "micSilent": "Le microphone ne capte que du silence. Vérifiez qu'il n'est pas coupé.",
       "monitoring": "Surveillance en cours",
-      "silenceManual": "Ce navigateur ne peut pas mettre l'appareil en silence. Activez « Ne pas déranger » et baissez la luminosité sur cet appareil.",
+      "silenceManual": "Ce navigateur ne peut pas activer le mode silencieux. Activez « Ne pas déranger » et baissez la luminosité sur cet appareil.",
       "title": "Appareil bébé"
     },
     "background": {
@@ -836,8 +836,8 @@
     "silence": {
       "mayRing": "L'appareil bébé peut sonner",
       "mayVibrate": "L'appareil bébé peut vibrer",
-      "silent": "L'appareil bébé est en silence",
-      "unknownManual": "Impossible de vérifier si l'appareil bébé est en silence — mettez-le en silence manuellement"
+      "silent": "L'appareil bébé est en mode silencieux",
+      "unknownManual": "Mode silencieux : inconnu — activez-le manuellement sur l'appareil bébé"
     },
     "snooze": {
       "active": "En pause · encore {minutes} min",

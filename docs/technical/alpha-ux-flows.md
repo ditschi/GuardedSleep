@@ -38,16 +38,17 @@
 
 ### 1.1 Words users see
 
-| Concept                | Use                                                  | Never use                                             |
-| ---------------------- | ---------------------------------------------------- | ----------------------------------------------------- |
-| Device near the child  | **baby device** (or its name, default "Baby device") | baby unit, transmitter, host, offerer                 |
-| Device with the parent | **parent device** / "this device"                    | parent unit, receiver, client                         |
-| Running session        | **monitoring**                                       | session, link, attempt                                |
-| Link OK                | **connected**                                        | verified, paired-up, online                           |
-| Link down, retrying    | **reconnecting** / **can't reach**                   | backoff, ICE, socket, signaling, timeout              |
-| Pairing material       | **code** (QR code / pairing code)                    | PSK, secret, token, room, invite JSON                 |
-| DND state              | **silent** / **may ring**                            | interruption filter, ringer mode, notification policy |
-| Listen                 | **listen**                                           | stream, track, media                                  |
+| Concept                   | Use                                                               | Never use                                             |
+| ------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------- |
+| Device near the child     | **baby device** (or its name, default "Baby device")              | baby unit, transmitter, host, offerer                 |
+| Device with the parent    | **parent device** / "this device"                                 | parent unit, receiver, client                         |
+| Running session           | **monitoring**                                                    | session, link, attempt                                |
+| Link OK                   | **connected**                                                     | verified, paired-up, online                           |
+| Link down, retrying       | **reconnecting** / **can't reach**                                | backoff, ICE, socket, signaling, timeout              |
+| Pairing material          | **code** (QR code / pairing code)                                 | PSK, secret, token, room, invite JSON                 |
+| DND state                 | **silent** / **may ring**                                         | interruption filter, ringer mode, notification policy |
+| Silencing the baby device | **Quiet mode** ("No sounds, rings or lights on the baby device.") | silence, silent mode, mute, stealth, do-not-wake      |
+| Listen                    | **listen**                                                        | stream, track, media                                  |
 
 ADR-013 forbidden list applies (IPs, ports, WebSocket, DTLS, ICE, error codes). Those appear only in Settings → Advanced → Diagnostics.
 
@@ -67,7 +68,7 @@ ADR-013 forbidden list applies (IPs, ports, WebSocket, DTLS, ICE, error codes). 
 | ID  | Screen (route / Compose destination)        | Native baby | Native parent |  Web baby   | Web parent  | Purpose                                                                                                                                                            |
 | --- | ------------------------------------------- | :---------: | :-----------: | :---------: | :---------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | S01 | `role` — Which device is this?              |      ✓      |       ✓       |      ✓      |      ✓      | First run only; picks role                                                                                                                                         |
-| S02 | `baby_setup` — Get this device ready        |      ✓      |               | ✓ (reduced) |             | Permissions, silence access, battery, safety, self-test                                                                                                            |
+| S02 | `baby_setup` — Get this device ready        |      ✓      |               | ✓ (reduced) |             | Permissions, Quiet mode access, battery, safety, self-test                                                                                                         |
 | S03 | `parent_setup` — Get this device ready      |             |       ✓       |             | ✓ (reduced) | Notifications, lock-screen alerts, DND bypass, battery, honest limits                                                                                              |
 | S04 | `baby_pair` — Show code                     |      ✓      |               |      ✓      |             | QR + copyable code, countdown                                                                                                                                      |
 | S05 | `parent_pair` — Scan code                   |             |       ✓       |             |      ✓      | Camera scan + paste                                                                                                                                                |
@@ -91,14 +92,14 @@ Launch routing (all clients): monitoring flag set → resume straight into S07/S
 
 `STATUS: UNDER DISCUSSION`
 
-| Step | Screen | User sees / does                                                                                                                                     | System                                                    | Failure path                                                                                                                     |
-| ---- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | S01    | Two large cards; hint "Start with the baby device". Taps **Baby device**.                                                                            | Role remembered.                                          | —                                                                                                                                |
-| 2    | S02    | One checklist screen, each row = status + button: Microphone (required), Keep running in background, Silence this device, Safety note, Device check. | Self-test runs in background (ADR-010).                   | Mic denied → row red + "Allow in Settings"; **Continue** disabled until granted. Others may be skipped; skipped rows stay amber. |
-| 3    | S02    | Taps **Continue**.                                                                                                                                   | —                                                         | Device check "may disconnect sometimes" → amber row text only, never blocks (Persona C).                                         |
-| 4    | S04    | QR code + "Code valid for 4:59". Instruction: "On the other device, open GuardedSleep and choose Parent device."                                     | Pairing window open 5 min (ADR-018).                      | See §3.3.                                                                                                                        |
-| 5    | S07    | After the parent verifies: "Connected to parent device" + "Monitoring". Hint "The screen goes dark in 30 s".                                         | Monitoring starts automatically; silence applied (§3.12). | —                                                                                                                                |
-| 6    | S08    | Screen fades to near-black over 5 s.                                                                                                                 | Kiosk on.                                                 | —                                                                                                                                |
+| Step | Screen | User sees / does                                                                                                                                             | System                                                       | Failure path                                                                                                                     |
+| ---- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | S01    | Two large cards; hint "Start with the baby device". Taps **Baby device**.                                                                                    | Role remembered.                                             | —                                                                                                                                |
+| 2    | S02    | One checklist screen, each row = status + button: Microphone (required), Keep running in background, Quiet mode while monitoring, Safety note, Device check. | Self-test runs in background (ADR-010).                      | Mic denied → row red + "Allow in Settings"; **Continue** disabled until granted. Others may be skipped; skipped rows stay amber. |
+| 3    | S02    | Taps **Continue**.                                                                                                                                           | —                                                            | Device check "may disconnect sometimes" → amber row text only, never blocks (Persona C).                                         |
+| 4    | S04    | QR code + "Code valid for 4:59". Instruction: "On the other device, open GuardedSleep and choose Parent device."                                             | Pairing window open 5 min (ADR-018).                         | See §3.3.                                                                                                                        |
+| 5    | S07    | After the parent verifies: "Connected to parent device" + "Monitoring". Hint "The screen goes dark in 30 s".                                                 | Monitoring starts automatically; Quiet mode applied (§3.12). | —                                                                                                                                |
+| 6    | S08    | Screen fades to near-black over 5 s.                                                                                                                         | Kiosk on.                                                    | —                                                                                                                                |
 
 ### 3.2 First run — parent device
 
@@ -135,13 +136,13 @@ Baby QR rendering: inverted (light modules on near-black, our scanner handles in
 
 `STATUS: UNDER DISCUSSION`
 
-| Action                   | Where                                | Interaction                  | Effect on this device                             | Effect on the other device                                                                      |
-| ------------------------ | ------------------------------------ | ---------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Start (baby)             | S06 card "Start monitoring"          | one tap                      | S07 → kiosk after 30 s idle; silence applied      | parent auto-connects if monitoring                                                              |
-| Start (parent)           | S06 card "Connect to {name}"         | one tap                      | S09, yellow "Connecting to {name}…"               | —                                                                                               |
-| Stop (parent)            | S09 overflow → **Stop monitoring**   | confirm dialog `dialog_stop` | S06; ongoing notification removed                 | baby: "Parent device stopped monitoring" (grey, no red pulse), keeps waiting for a parent       |
-| Stop (baby)              | S08 unlock → S07 **Stop monitoring** | confirm dialog               | S06; silence restored, toast "Sounds are back on" | parent: S11 variant "{name} stopped monitoring" — one connection haptic + tone, no loop, **OK** |
-| App swiped away / killed | —                                    | —                            | next launch resumes (ADR-017 §9)                  | normal escalation §3.6                                                                          |
+| Action                   | Where                                | Interaction                  | Effect on this device                                | Effect on the other device                                                                      |
+| ------------------------ | ------------------------------------ | ---------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Start (baby)             | S06 card "Start monitoring"          | one tap                      | S07 → kiosk after 30 s idle; Quiet mode applied      | parent auto-connects if monitoring                                                              |
+| Start (parent)           | S06 card "Connect to {name}"         | one tap                      | S09, yellow "Connecting to {name}…"                  | —                                                                                               |
+| Stop (parent)            | S09 overflow → **Stop monitoring**   | confirm dialog `dialog_stop` | S06; ongoing notification removed                    | baby: "Parent device stopped monitoring" (grey, no red pulse), keeps waiting for a parent       |
+| Stop (baby)              | S08 unlock → S07 **Stop monitoring** | confirm dialog               | S06; Quiet mode restored, toast "Sounds are back on" | parent: S11 variant "{name} stopped monitoring" — one connection haptic + tone, no loop, **OK** |
+| App swiped away / killed | —                                    | —                            | next launch resumes (ADR-017 §9)                     | normal escalation §3.6                                                                          |
 
 Stop is never adjacent to Listen and never a single tap.
 
@@ -240,22 +241,22 @@ Locked listening auto-stops after 60 min with a toast "Listening stopped after 1
 
 Baby side shows battery only on touch-wake. Battery warnings cannot be snoozed but never loop.
 
-### 3.12 Baby silence status and remote silence
+### 3.12 Baby Quiet mode status and remote Quiet mode
 
 `STATUS: UNDER DISCUSSION`
 
 Derived on the baby from `device_status` (ADR-018 §3.2) into one parent-visible value:
 
-| Value              | Rule                                                                                        | Parent chip (icon + text)                                         | Tone                                                 | Action in `sheet_silence`                                                                  |
-| ------------------ | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `silent`           | DND active blocking calls, messages, reminders; visual effects suppressed; or ringer silent | moon · "Baby device is silent"                                    | neutral                                              | sub-line "Alarm clocks on it can still ring"; **Allow sounds again** (secondary)           |
-| `screen_may_light` | silent, but visual effects not suppressed                                                   | moon + sun · "Baby device is silent, but its screen may light up" | amber                                                | **Silence it fully** (if access) / manual steps                                            |
-| `may_vibrate`      | ringer vibrate, no DND                                                                      | bell · "Baby device may buzz"                                     | amber                                                | **Silence baby device** / manual steps                                                     |
-| `may_ring`         | ringer normal, no DND                                                                       | bell · "Baby device may ring"                                     | amber                                                | **Silence baby device** / manual steps                                                     |
-| `unknown`          | browser baby, or status not yet received                                                    | question · "Can't check if the baby device is silent"             | neutral grey (not amber, avoids a permanent warning) | manual steps                                                                               |
-| `no_access`        | native baby without DND access                                                              | as `may_*`, action replaced                                       | amber                                                | "Allow GuardedSleep to silence it: on the baby device open Settings → Silence this device" |
+| Value              | Rule                                                                                        | Parent chip (icon + text)                                                | Tone                                                 | Action in `sheet_silence`                                                                         |
+| ------------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `silent`           | DND active blocking calls, messages, reminders; visual effects suppressed; or ringer silent | moon · "Baby device is in Quiet mode"                                    | neutral                                              | sub-line "Alarm clocks on it can still ring"; **Allow sounds again** (secondary)                  |
+| `screen_may_light` | silent, but visual effects not suppressed                                                   | moon + sun · "Baby device is in Quiet mode, but its screen may light up" | amber                                                | **Turn on Quiet mode fully** (if access) / manual steps                                           |
+| `may_vibrate`      | ringer vibrate, no DND                                                                      | bell · "Baby device may buzz"                                            | amber                                                | **Turn on Quiet mode** / manual steps                                                             |
+| `may_ring`         | ringer normal, no DND                                                                       | bell · "Baby device may ring"                                            | amber                                                | **Turn on Quiet mode** / manual steps                                                             |
+| `unknown`          | browser baby, or status not yet received                                                    | question · "Quiet mode: unknown — can't check the baby device"           | neutral grey (not amber, avoids a permanent warning) | manual steps                                                                                      |
+| `no_access`        | native baby without DND access                                                              | as `may_*`, action replaced                                              | amber                                                | "To turn on Quiet mode from here: on the baby device open Settings → Quiet mode while monitoring" |
 
-Remote silence: **Silence baby device** → chip shows "Silencing…" (max 10 s) → result chip, or "Couldn't silence the baby device. {reason}" with the manual steps. Baby applies DND "alarms only" + suppressed visual effects (A5), stores previous mode, restores on stop. If restore was missed (crash), the baby's next launch restores and shows "This device was left on silent. Sounds are back on." A baby device that is someone's everyday phone shows at start (S07): "Calls and messages on this device stay silent until you stop monitoring."
+Remote Quiet mode: **Turn on Quiet mode** → chip shows "Turning on Quiet mode…" (max 10 s) → result chip, or "Couldn't turn on Quiet mode on the baby device. {reason}" with the manual steps. Baby applies DND "alarms only" + suppressed visual effects (A5), stores previous mode, restores on stop. If restore was missed (crash), the baby's next launch restores and shows "This device was left in Quiet mode. Sounds are back on." A baby device that is someone's everyday phone shows at start (S07): "Calls and messages on this device stay silent until you stop monitoring."
 
 ### 3.13 Settings — Basic / Advanced
 
@@ -264,7 +265,7 @@ Remote silence: **Silence baby device** → chip shows "Silencing…" (max 10 s)
 | Group (Basic)                   | Parent device                                                                                                                                                                              | Baby device (reachable only after kiosk unlock)                                                                                        |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
 | Alerts / Sound detection        | Alert sound plays on [On this device's current output · Speaker only]; Alert volume boost (slider 25–150 %); Keep alert volume up during alerts (toggle); Test alert + "Last test: {date}" | Sensitivity slider with live meter + threshold line ("More sensitive ↔ Less sensitive"); Noise must last 3 / 5 / 10 / 15 s (default 5) |
-| Silence                         | —                                                                                                                                                                                          | Silence this device while monitoring (default on when access granted); status line                                                     |
+| Quiet mode                      | —                                                                                                                                                                                          | Quiet mode while monitoring (default on when access granted); status line                                                              |
 | Screen                          | Theme (Dark default / Light / Match system); Keep screen on while listening                                                                                                                | While monitoring: Dim (default) / Off                                                                                                  |
 | Paired device                   | {name}: Rename · Forget this baby device                                                                                                                                                   | Forget this parent device                                                                                                              |
 | This device                     | Readiness checklist (§3.17); Battery & background                                                                                                                                          | Device check (run again); Battery & background; safety note                                                                            |
@@ -301,7 +302,7 @@ Card stays until **OK**; also logged in the parent's event list (T2).
 | Sound unlock         | Monitoring starts with a **Tap to turn on alert sound** gate (browser autoplay rule)                                                                                                                                                        | Tap to allow microphone (existing)                                                        |
 | Background           | Persistent banner: "Keep this page open and the screen on. Your browser can't alert you otherwise."; Screen Wake Lock requested; if hidden tab is detected → on return show "This page was in the background — alerts may have been missed" | Same banner; Fullscreen API + dark overlay instead of kiosk                               |
 | Full screen alert    | In-page S10/S11, document title flashes "Sound detected", Notification API if granted                                                                                                                                                       | —                                                                                         |
-| Silence              | n/a                                                                                                                                                                                                                                         | reports `unknown`; S07 shows "Turn on Do Not Disturb and lower brightness on this device" |
+| Quiet mode           | n/a                                                                                                                                                                                                                                         | reports `unknown`; S07 shows "Turn on Do Not Disturb and lower brightness on this device" |
 | Battery optimisation | rows hidden                                                                                                                                                                                                                                 | rows hidden                                                                               |
 
 ### 3.17 Parent readiness check
@@ -350,8 +351,8 @@ Every screen: states, primary action, at-a-glance content, test IDs, message key
 |                           | `setup.mic.why`                    | Needed to hear your child.                                                                                                                     |
 | `setup_row_background`    | `setup.background.title`           | Keep running in the background                                                                                                                 |
 |                           | `setup.background.why`             | Otherwise this device may stop monitoring to save battery.                                                                                     |
-| `setup_row_silence`       | `setup.silence.title`              | Silence this device while monitoring                                                                                                           |
-|                           | `setup.silence.why`                | Calls and messages won't ring or light up the screen next to your child. Alarm clocks still work.                                              |
+| `setup_row_silence`       | `setup.silence.title`              | Quiet mode while monitoring                                                                                                                    |
+|                           | `setup.silence.why`                | No sounds, rings or lights on the baby device. Alarm clocks still work.                                                                        |
 | `setup_row_safety`        | `setup.safety.body`                | Keep this device on the charger, on a stable surface, out of your child's reach. Don't use a device with a swollen or damaged battery.         |
 | `setup_row_device_check`  | `setup.deviceCheck.ok`             | This device works well as a baby device.                                                                                                       |
 |                           | `setup.deviceCheck.limited`        | This device may lose the connection now and then. It still works.                                                                              |
@@ -421,29 +422,29 @@ Every screen: states, primary action, at-a-glance content, test IDs, message key
 
 ### 4.6 S07 `baby_monitor` (awake / unlocked)
 
-`STATUS: UNDER DISCUSSION` — States: `waiting_parent`, `connected`, `reconnecting`, `parent_stopped`, `needs_pairing`. Primary: **Lock screen** (auto after 30 s idle). At a glance: big status line, parent device, battery, silence status. Dark theme only.
+`STATUS: UNDER DISCUSSION` — States: `waiting_parent`, `connected`, `reconnecting`, `parent_stopped`, `needs_pairing`. Primary: **Lock screen** (auto after 30 s idle). At a glance: big status line, parent device, battery, Quiet mode status. Dark theme only.
 
-| Test ID                | Key                          | English                                                                  |
-| ---------------------- | ---------------------------- | ------------------------------------------------------------------------ |
-| `baby_status`          | `baby.status.connected`      | Connected to parent device                                               |
-|                        | `baby.status.waiting`        | Waiting for parent device…                                               |
-|                        | `baby.status.reconnecting`   | Reconnecting to parent device…                                           |
-|                        | `baby.status.notResponding`  | Parent device not responding — still trying                              |
-|                        | `baby.status.parentStopped`  | Parent device stopped monitoring                                         |
-|                        | `link.needsPairing`          | These devices are no longer paired. Pair them again to keep monitoring.  |
-| `baby_monitoring_line` | `baby.monitoring`            | Monitoring                                                               |
-| `baby_listening`       | `baby.parentListening`       | Parent is listening                                                      |
-| `baby_battery`         | `baby.battery`               | Battery {percent}                                                        |
-|                        | `baby.batteryCharging`       | Charging · {percent}                                                     |
-| `baby_silence`         | `baby.silence.on`            | This device is silent                                                    |
-|                        | `baby.silence.off`           | This device may ring                                                     |
-|                        | `baby.silence.everydayPhone` | Calls and messages on this device stay silent until you stop monitoring. |
-|                        | `baby.silence.restored`      | This device was left on silent. Sounds are back on.                      |
-| `baby_lock`            | `baby.lock`                  | Lock screen                                                              |
-| `baby_autolock_hint`   | `baby.autolockHint`          | The screen goes dark in {seconds} s                                      |
-| `baby_stop`            | `baby.stop`                  | Stop monitoring                                                          |
-| `baby_settings`        | `common.settings`            | Settings                                                                 |
-| `baby_mic_level`       | `baby.micLevel`              | Sound level here                                                         |
+| Test ID                | Key                          | English                                                                                    |
+| ---------------------- | ---------------------------- | ------------------------------------------------------------------------------------------ |
+| `baby_status`          | `baby.status.connected`      | Connected to parent device                                                                 |
+|                        | `baby.status.waiting`        | Waiting for parent device…                                                                 |
+|                        | `baby.status.reconnecting`   | Reconnecting to parent device…                                                             |
+|                        | `baby.status.notResponding`  | Parent device not responding — still trying                                                |
+|                        | `baby.status.parentStopped`  | Parent device stopped monitoring                                                           |
+|                        | `link.needsPairing`          | These devices are no longer paired. Pair them again to keep monitoring.                    |
+| `baby_monitoring_line` | `baby.monitoring`            | Monitoring                                                                                 |
+| `baby_listening`       | `baby.parentListening`       | Parent is listening                                                                        |
+| `baby_battery`         | `baby.battery`               | Battery {percent}                                                                          |
+|                        | `baby.batteryCharging`       | Charging · {percent}                                                                       |
+| `baby_silence`         | `baby.silence.on`            | Quiet mode is on                                                                           |
+|                        | `baby.silence.off`           | Quiet mode is off — this device may ring                                                   |
+|                        | `baby.silence.everydayPhone` | Quiet mode is on. Calls and messages on this device stay silent until you stop monitoring. |
+|                        | `baby.silence.restored`      | This device was left in Quiet mode. Sounds are back on.                                    |
+| `baby_lock`            | `baby.lock`                  | Lock screen                                                                                |
+| `baby_autolock_hint`   | `baby.autolockHint`          | The screen goes dark in {seconds} s                                                        |
+| `baby_stop`            | `baby.stop`                  | Stop monitoring                                                                            |
+| `baby_settings`        | `common.settings`            | Settings                                                                                   |
+| `baby_mic_level`       | `baby.micLevel`              | Sound level here                                                                           |
 
 ### 4.7 S08 `baby_kiosk`
 
@@ -538,18 +539,18 @@ Every screen: states, primary action, at-a-glance content, test IDs, message key
 
 | Test ID                    | Key                          | English                                                                                                          |
 | -------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `sheet_silence`            | `silence.silent`             | Baby device is silent                                                                                            |
+| `sheet_silence`            | `silence.silent`             | Baby device is in Quiet mode                                                                                     |
 |                            | `silence.alarmsStillRing`    | Alarm clocks on it can still ring.                                                                               |
-|                            | `silence.screenMayLight`     | Baby device is silent, but its screen may light up                                                               |
+|                            | `silence.screenMayLight`     | Baby device is in Quiet mode, but its screen may light up                                                        |
 |                            | `silence.mayVibrate`         | Baby device may buzz                                                                                             |
 |                            | `silence.mayRing`            | Baby device may ring                                                                                             |
-|                            | `silence.unknown`            | Can't check if the baby device is silent                                                                         |
+|                            | `silence.unknown`            | Quiet mode: unknown — can't check the baby device                                                                |
 |                            | `silence.manual`             | On the baby device, turn on Do Not Disturb and turn the brightness down.                                         |
-|                            | `silence.noAccess`           | To silence it from here, open Settings on the baby device and turn on "Silence this device while monitoring".    |
-| `sheet_silence_apply`      | `silence.apply`              | Silence baby device                                                                                              |
-| `sheet_silence_apply_full` | `silence.applyFull`          | Silence it fully                                                                                                 |
-| `sheet_silence_pending`    | `silence.pending`            | Silencing…                                                                                                       |
-| `sheet_silence_failed`     | `silence.failed`             | Couldn't silence the baby device.                                                                                |
+|                            | `silence.noAccess`           | To turn on Quiet mode from here, open Settings on the baby device and turn on "Quiet mode while monitoring".     |
+| `sheet_silence_apply`      | `silence.apply`              | Turn on Quiet mode                                                                                               |
+| `sheet_silence_apply_full` | `silence.applyFull`          | Turn on Quiet mode fully                                                                                         |
+| `sheet_silence_pending`    | `silence.pending`            | Turning on Quiet mode…                                                                                           |
+| `sheet_silence_failed`     | `silence.failed`             | Couldn't turn on Quiet mode on the baby device.                                                                  |
 | `sheet_silence_undo`       | `silence.allowSounds`        | Allow sounds again                                                                                               |
 | `sheet_snooze`             | `snooze.title`               | Snooze noise alerts                                                                                              |
 |                            | `snooze.help`                | You still get alerts if the connection drops or a battery runs low.                                              |
@@ -621,14 +622,14 @@ Every screen: states, primary action, at-a-glance content, test IDs, message key
 
 Readable from 1–2 m: **bar colour + headline**. Everything else is secondary.
 
-| Order (top → bottom) | Element                                   | Size / rule                                                                                                                | Visible                                                                              |
-| -------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| 1                    | `parent_ambient_bar`                      | full width, ≥ 56 dp, icon + text, never hidden while monitoring                                                            | always                                                                               |
-| 2                    | `parent_headline`                         | 24 sp+, one line (wraps at large font)                                                                                     | always; never "All quiet" while not connected                                        |
-| 3                    | `parent_meter`                            | ≥ 120 dp high, 5–8 bars, threshold line                                                                                    | always (flat + "Last heard" when not connected)                                      |
-| 4                    | Chip row (max 2 visible, "+N")            | priority: readiness red > baby battery critical > own battery > silence warning > snooze > weak connection > test reminder | only when not "all fine", except baby battery % and silence status (always, neutral) |
-| 5                    | `parent_listen`                           | ≥ 72 dp high, ≥ 80 % width, bottom third (thumb zone)                                                                      | always (disabled when not connected)                                                 |
-| 6                    | Secondary row: Snooze · Test alert · More | ≥ 48 dp each, ≥ 24 dp gap from Listen; Stop monitoring only inside More                                                    | always                                                                               |
+| Order (top → bottom) | Element                                   | Size / rule                                                                                                                   | Visible                                                                              |
+| -------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| 1                    | `parent_ambient_bar`                      | full width, ≥ 56 dp, icon + text, never hidden while monitoring                                                               | always                                                                               |
+| 2                    | `parent_headline`                         | 24 sp+, one line (wraps at large font)                                                                                        | always; never "All quiet" while not connected                                        |
+| 3                    | `parent_meter`                            | ≥ 120 dp high, 5–8 bars, threshold line                                                                                       | always (flat + "Last heard" when not connected)                                      |
+| 4                    | Chip row (max 2 visible, "+N")            | priority: readiness red > baby battery critical > own battery > Quiet mode warning > snooze > weak connection > test reminder | only when not "all fine", except baby battery % and silence status (always, neutral) |
+| 5                    | `parent_listen`                           | ≥ 72 dp high, ≥ 80 % width, bottom third (thumb zone)                                                                         | always (disabled when not connected)                                                 |
+| 6                    | Secondary row: Snooze · Test alert · More | ≥ 48 dp each, ≥ 24 dp gap from Listen; Stop monitoring only inside More                                                       | always                                                                               |
 
 Full-screen priority when several things happen: connection lost (S11) > noise alert (S10) > baby stopped > battery critical. Only one full-screen at a time; the lower one becomes a chip.
 
@@ -642,18 +643,18 @@ Tablet / landscape: two columns — left: bar + headline + meter; right: chips +
 
 `STATUS: UNDER DISCUSSION`
 
-| Rule                    | Requirement                                                                                                                                                                                                                                       |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Colour + symbol + text  | Every state uses all three: connected = green + link icon + text; reconnecting = yellow + ↻; can't reach = orange + broken link; lost = red + broken link + "!"; stopped = grey + pause; snoozed = amber + "zZ"                                   |
-| Contrast                | WCAG 2.1 AA (4.5:1 text, 3:1 icons) in dark theme; the night palette in `ui-design.md` is raised where it fails (e.g. `#666666` secondary text on black fails)                                                                                    |
-| Touch targets           | ≥ 48 dp everywhere; primary actions ≥ 72 dp; ≥ 8 dp spacing; destructive actions never next to Listen                                                                                                                                             |
-| Screen reader           | `parent_ambient_bar` = live region (polite for levels 0–1, assertive for ≥ 2 and alerts); meter exposes text level (`parent.level.*`), not numbers; icons have `contentDescription` from the catalogue                                            |
-| Listen without gestures | TalkBack double-tap toggles locked listening; custom action "Listen while holding" not required                                                                                                                                                   |
-| Kiosk unlock            | TalkBack users get a custom action "Unlock" after a 2 s long-press confirmation                                                                                                                                                                   |
-| Font scaling            | Up to 200 % without truncating bar text or headline (bar grows in height)                                                                                                                                                                         |
-| Reduced motion          | Pulses become static colour + icon; meter still updates                                                                                                                                                                                           |
-| Haptics                 | Distinct patterns (§1.2); every haptic also has a visual state                                                                                                                                                                                    |
-| Languages               | All alert, connection and silence keys present in every shipped locale (ADR-015 CI rule, ADR-021 §2 completeness rule; de and ar are the screenshot locales per ADR-021 §2); layouts tested with the longest locale and pseudo-locale (Roborazzi) |
+| Rule                    | Requirement                                                                                                                                                                                                                                                        |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Colour + symbol + text  | Every state uses all three: connected = green + link icon + text; reconnecting = yellow + ↻; can't reach = orange + broken link; lost = red + broken link + "!"; stopped = grey + pause; snoozed = amber + "zZ"                                                    |
+| Contrast                | WCAG 2.1 AA (4.5:1 text, 3:1 icons) in dark theme; the night palette in `ui-design.md` is raised where it fails (e.g. `#666666` secondary text on black fails)                                                                                                     |
+| Touch targets           | ≥ 48 dp everywhere; primary actions ≥ 72 dp; ≥ 8 dp spacing; destructive actions never next to Listen                                                                                                                                                              |
+| Screen reader           | `parent_ambient_bar` = live region (polite for levels 0–1, assertive for ≥ 2 and alerts); meter exposes text level (`parent.level.*`), not numbers; icons have `contentDescription` from the catalogue                                                             |
+| Listen without gestures | TalkBack double-tap toggles locked listening; custom action "Listen while holding" not required                                                                                                                                                                    |
+| Kiosk unlock            | TalkBack users get a custom action "Unlock" after a 2 s long-press confirmation                                                                                                                                                                                    |
+| Font scaling            | Up to 200 % without truncating bar text or headline (bar grows in height)                                                                                                                                                                                          |
+| Reduced motion          | Pulses become static colour + icon; meter still updates                                                                                                                                                                                                            |
+| Haptics                 | Distinct patterns (§1.2); every haptic also has a visual state                                                                                                                                                                                                     |
+| Languages               | All alert, connection and Quiet mode (`silence.*`) keys present in every shipped locale (ADR-015 CI rule, ADR-021 §2 completeness rule; de and ar are the screenshot locales per ADR-021 §2); layouts tested with the longest locale and pseudo-locale (Roborazzi) |
 
 ### 6.2 Dark-room rules (baby device)
 
@@ -667,7 +668,7 @@ Tablet / landscape: two columns — left: bar + headline + meter; right: chips +
 | Connection pulse       | Level ≥ 2 only; dark red (peak `#330000`) on near-black, 10 s sinusoidal period, no hard edges, brightness stays at minimum                     |
 | No flashes             | No transition faster than 1 s; no white or saturated full-screen colour on the baby side; QR screen ≤ 50 % brightness, inverted code by default |
 | Screen-off option      | "While monitoring: Off" turns the display off; monitoring continues; touch-wake still works                                                     |
-| Other apps             | Silence policy suppresses screen-on, peek, notification light and ambient display (A5)                                                          |
+| Other apps             | Quiet mode suppresses screen-on, peek, notification light and ambient display (A5)                                                              |
 | Charging               | Setup tip on S02: turn off "wake screen when plugged in" if the device has it (cannot be set by the app)                                        |
 | Web baby               | Black full-screen overlay; cannot change brightness → instruction line on S07                                                                   |
 
@@ -698,6 +699,8 @@ Tablet / landscape: two columns — left: bar + headline + meter; right: chips +
 - [x] **Option C: "baby device" / "parent device"** — Pros: true for phones, tablets and laptops; translates naturally into German, French and Spanish. Cons: slightly longer than "phone".
 
 **Decided (owner, 2026-10-23):** Option C. The catalogue (`locales/*.json`, en, de, fr, es) and the copy tables in this document use "baby device", "parent device" and "this device". Options A and B stay here as history.
+
+**Decided (owner, 2026-10-23):** the user-facing concept formerly called "silence" (ringer, notification sounds, vibration and lights off on the baby device) is renamed **"Quiet mode"** ("No sounds, rings or lights on the baby device."). Message keys (`silence.*`) and test ids keep their names.
 
 ### Remote sensitivity change from the parent device
 

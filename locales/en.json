@@ -289,8 +289,8 @@
           "why": "Otherwise this device may stop monitoring to save battery."
         },
         "silence": {
-          "title": "Silence this device while monitoring",
-          "why": "Calls and messages won't ring or light up the screen next to your child. Alarm clocks still work."
+          "title": "Quiet mode while monitoring",
+          "why": "No sounds, rings or lights on the baby device. Alarm clocks still work."
         },
         "safety": {
           "body": "Keep this device on the charger, on a stable surface, out of your child's reach. Don't use a device with a swollen or damaged battery."
@@ -383,11 +383,11 @@
         "battery": "This device: battery {percent}%",
         "batteryCharging": "This device: charging · {percent}%",
         "silence": {
-          "on": "This device is silent",
-          "off": "This device may ring",
-          "everydayPhone": "Calls and messages on this device stay silent until you stop monitoring.",
-          "restored": "This device was left on silent. Sounds are back on.",
-          "noAccess": "Silence access is off. Turn it on in Settings so calls and messages stay quiet."
+          "on": "Quiet mode is on",
+          "off": "Quiet mode is off — this device may ring",
+          "everydayPhone": "Quiet mode is on. Calls and messages on this device stay silent until you stop monitoring.",
+          "restored": "This device was left in Quiet mode. Sounds are back on.",
+          "noAccess": "Quiet mode access is off. Turn it on in Settings so calls and messages stay quiet."
         },
         "lock": "Lock screen",
         "autolockHint": "The screen goes dark in {seconds} s",
@@ -522,19 +522,19 @@
         }
       },
       "silence": {
-        "silent": "Baby device is silent",
+        "silent": "Baby device is in Quiet mode",
         "alarmsStillRing": "Alarm clocks on it can still ring.",
-        "screenMayLight": "Baby device is silent, but its screen may light up",
+        "screenMayLight": "Baby device is in Quiet mode, but its screen may light up",
         "mayVibrate": "Baby device may buzz",
         "mayRing": "Baby device may ring",
-        "unknown": "Can't check if the baby device is silent",
+        "unknown": "Quiet mode: unknown — can't check the baby device",
         "manual": "On the baby device, turn on Do Not Disturb and turn the brightness down.",
-        "noAccess": "To silence it from here, open Settings on the baby device and turn on \"Silence this device while monitoring\".",
-        "apply": "Silence baby device",
-        "applyFull": "Silence it fully",
-        "pending": "Silencing…",
-        "failed": "Couldn't silence the baby device.",
-        "webUnknown": "Unknown — silence the baby device manually",
+        "noAccess": "To turn on Quiet mode from here, open Settings on the baby device and turn on \"Quiet mode while monitoring\".",
+        "apply": "Turn on Quiet mode",
+        "applyFull": "Turn on Quiet mode fully",
+        "pending": "Turning on Quiet mode…",
+        "failed": "Couldn't turn on Quiet mode on the baby device.",
+        "webUnknown": "Unknown — turn on Quiet mode on the baby device yourself",
         "webHint": "If the baby device is a laptop, keep it plugged in, lid open and screen on."
       },
       "help": {
@@ -584,7 +584,7 @@
       "settings": {
         "group": {
           "soundDetection": "Sound detection",
-          "silence": "Silence",
+          "silence": "Quiet mode",
           "alerts": "Alerts",
           "screen": "Screen",
           "paired": "Paired device",
@@ -597,7 +597,7 @@
         "moreSensitive": "More sensitive",
         "lessSensitive": "Less sensitive",
         "holdLabel": "Noise must last at least",
-        "silenceAccessOk": "Silence access is on.",
+        "silenceAccessOk": "Quiet mode access is on.",
         "outputLabel": "Alert sound plays on",
         "output": {
           "default": "Headphones if connected, otherwise speaker",
@@ -660,7 +660,7 @@
       "micLevel": "Sound level here",
       "micSilent": "The microphone delivers only silence. Check that it is not muted.",
       "monitoring": "Monitoring",
-      "silenceManual": "This browser can't silence the device. Turn on Do Not Disturb and lower the brightness on this device.",
+      "silenceManual": "This browser can't turn on Quiet mode. Turn on Do Not Disturb and lower the brightness on this device.",
       "title": "Baby device"
     },
     "background": {
@@ -835,8 +835,8 @@
     "silence": {
       "mayRing": "Baby device may ring",
       "mayVibrate": "Baby device may buzz",
-      "silent": "Baby device is silent",
-      "unknownManual": "Can't check if the baby device is silent — silence it manually"
+      "silent": "Baby device is in Quiet mode",
+      "unknownManual": "Quiet mode: unknown — turn it on manually on the baby device"
     },
     "snooze": {
       "active": "Snoozed · {minutes} min left",

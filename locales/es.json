@@ -290,8 +290,8 @@
           "why": "Si no, este dispositivo puede detener la vigilancia para ahorrar batería."
         },
         "silence": {
-          "title": "Silenciar este dispositivo mientras vigila",
-          "why": "Las llamadas y los mensajes no sonarán ni encenderán la pantalla junto a su hijo. Las alarmas siguen funcionando."
+          "title": "Modo silencio mientras vigila",
+          "why": "Sin sonidos, timbres ni luces en el dispositivo del bebé. Las alarmas siguen funcionando."
         },
         "safety": {
           "body": "Mantenga este dispositivo en el cargador, sobre una superficie estable y fuera del alcance de su hijo. No use un dispositivo con la batería hinchada o dañada."
@@ -384,11 +384,11 @@
         "battery": "Este dispositivo: batería {percent} %",
         "batteryCharging": "Este dispositivo: cargando · {percent} %",
         "silence": {
-          "on": "Este dispositivo está en silencio",
-          "off": "Este dispositivo puede sonar",
-          "everydayPhone": "Las llamadas y los mensajes de este dispositivo permanecen en silencio hasta que detenga la vigilancia.",
-          "restored": "Este dispositivo se quedó en silencio. Los sonidos se han restablecido.",
-          "noAccess": "El acceso para silenciar está desactivado. Actívelo en Ajustes para que las llamadas y los mensajes no suenen."
+          "on": "Modo silencio activado",
+          "off": "Modo silencio desactivado: este dispositivo puede sonar",
+          "everydayPhone": "Modo silencio activado. Las llamadas y los mensajes de este dispositivo permanecen en silencio hasta que detenga la vigilancia.",
+          "restored": "Este dispositivo se quedó en modo silencio. Los sonidos se han restablecido.",
+          "noAccess": "El acceso al modo silencio está desactivado. Actívelo en Ajustes para que las llamadas y los mensajes no suenen."
         },
         "lock": "Bloquear la pantalla",
         "autolockHint": "La pantalla se oscurece en {seconds} s",
@@ -523,19 +523,19 @@
         }
       },
       "silence": {
-        "silent": "El dispositivo del bebé está en silencio",
+        "silent": "El dispositivo del bebé está en modo silencio",
         "alarmsStillRing": "Las alarmas del dispositivo aún pueden sonar.",
-        "screenMayLight": "El dispositivo del bebé está en silencio, pero su pantalla puede encenderse",
+        "screenMayLight": "El dispositivo del bebé está en modo silencio, pero su pantalla puede encenderse",
         "mayVibrate": "El dispositivo del bebé puede vibrar",
         "mayRing": "El dispositivo del bebé puede sonar",
-        "unknown": "No se puede comprobar si el dispositivo del bebé está en silencio",
+        "unknown": "Modo silencio: desconocido, dispositivo del bebé no verificable",
         "manual": "En el dispositivo del bebé, active No molestar y baje el brillo.",
-        "noAccess": "Para silenciarlo desde aquí, abra Ajustes en el dispositivo del bebé y active \"Silenciar este dispositivo mientras vigila\".",
-        "apply": "Silenciar el dispositivo del bebé",
-        "applyFull": "Silenciarlo por completo",
-        "pending": "Silenciando…",
-        "failed": "No se pudo silenciar el dispositivo del bebé.",
-        "webUnknown": "Desconocido — silencie el dispositivo del bebé usted mismo",
+        "noAccess": "Para activar el modo silencio desde aquí, abra Ajustes en el dispositivo del bebé y active \"Modo silencio mientras vigila\".",
+        "apply": "Activar el modo silencio",
+        "applyFull": "Activar el modo silencio completo",
+        "pending": "Activando el modo silencio…",
+        "failed": "No se pudo activar el modo silencio en el dispositivo del bebé.",
+        "webUnknown": "Desconocido — active usted mismo el modo silencio en el dispositivo del bebé",
         "webHint": "Si el dispositivo del bebé es un portátil, déjelo enchufado, con la tapa abierta y la pantalla encendida."
       },
       "help": {
@@ -585,7 +585,7 @@
       "settings": {
         "group": {
           "soundDetection": "Detección de sonido",
-          "silence": "Silencio",
+          "silence": "Modo silencio",
           "alerts": "Alertas",
           "screen": "Pantalla",
           "paired": "Dispositivo emparejado",
@@ -598,7 +598,7 @@
         "moreSensitive": "Más sensible",
         "lessSensitive": "Menos sensible",
         "holdLabel": "El ruido debe durar al menos",
-        "silenceAccessOk": "El acceso para silenciar está activado.",
+        "silenceAccessOk": "El acceso al modo silencio está activado.",
         "outputLabel": "El sonido de alerta suena en",
         "output": {
           "default": "Auriculares si están conectados; si no, altavoz",
@@ -661,7 +661,7 @@
       "micLevel": "Nivel de sonido aquí",
       "micSilent": "El micrófono solo entrega silencio. Compruebe que no esté silenciado.",
       "monitoring": "Vigilando",
-      "silenceManual": "Este navegador no puede silenciar el dispositivo. Active «No molestar» y baje el brillo en este dispositivo.",
+      "silenceManual": "Este navegador no puede activar el modo silencio. Active «No molestar» y baje el brillo en este dispositivo.",
       "title": "Dispositivo del bebé"
     },
     "background": {
@@ -836,8 +836,8 @@
     "silence": {
       "mayRing": "El dispositivo del bebé puede sonar",
       "mayVibrate": "El dispositivo del bebé puede vibrar",
-      "silent": "El dispositivo del bebé está en silencio",
-      "unknownManual": "No se puede comprobar si el dispositivo del bebé está en silencio — siléncielo manualmente"
+      "silent": "El dispositivo del bebé está en modo silencio",
+      "unknownManual": "Modo silencio: desconocido — actívelo manualmente en el dispositivo del bebé"
     },
     "snooze": {
       "active": "En pausa · quedan {minutes} min",

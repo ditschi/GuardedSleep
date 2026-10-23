@@ -290,8 +290,8 @@
           "why": "Sonst beendet dieses Gerät die Überwachung möglicherweise, um Akku zu sparen."
         },
         "silence": {
-          "title": "Dieses Gerät beim Überwachen stummschalten",
-          "why": "Anrufe und Nachrichten klingeln nicht und lassen den Bildschirm neben Ihrem Kind nicht aufleuchten. Wecker funktionieren weiterhin."
+          "title": "Ruhemodus beim Überwachen",
+          "why": "Keine Töne, kein Klingeln und kein Licht am Babygerät. Wecker funktionieren weiterhin."
         },
         "safety": {
           "body": "Lassen Sie dieses Gerät am Ladegerät, auf einer stabilen Fläche und außerhalb der Reichweite Ihres Kindes. Verwenden Sie kein Gerät mit aufgeblähtem oder beschädigtem Akku."
@@ -384,11 +384,11 @@
         "battery": "Dieses Gerät: Akku {percent} %",
         "batteryCharging": "Dieses Gerät: lädt · {percent} %",
         "silence": {
-          "on": "Dieses Gerät ist stumm",
-          "off": "Dieses Gerät kann klingeln",
-          "everydayPhone": "Anrufe und Nachrichten auf diesem Gerät bleiben stumm, bis Sie die Überwachung beenden.",
-          "restored": "Dieses Gerät war noch stumm geschaltet. Die Töne sind wieder an.",
-          "noAccess": "Der Zugriff zum Stummschalten ist aus. Aktivieren Sie ihn in den Einstellungen, damit Anrufe und Nachrichten still bleiben."
+          "on": "Ruhemodus ist an",
+          "off": "Ruhemodus ist aus – dieses Gerät kann klingeln",
+          "everydayPhone": "Ruhemodus ist an. Anrufe und Nachrichten auf diesem Gerät bleiben still, bis Sie die Überwachung beenden.",
+          "restored": "Dieses Gerät war noch im Ruhemodus. Die Töne sind wieder an.",
+          "noAccess": "Der Zugriff für den Ruhemodus ist aus. Aktivieren Sie ihn in den Einstellungen, damit Anrufe und Nachrichten still bleiben."
         },
         "lock": "Bildschirm sperren",
         "autolockHint": "Der Bildschirm wird in {seconds} s dunkel",
@@ -523,19 +523,19 @@
         }
       },
       "silence": {
-        "silent": "Babygerät ist stumm",
+        "silent": "Babygerät ist im Ruhemodus",
         "alarmsStillRing": "Wecker darauf können weiterhin klingeln.",
-        "screenMayLight": "Babygerät ist stumm, aber der Bildschirm kann aufleuchten",
+        "screenMayLight": "Babygerät ist im Ruhemodus, aber der Bildschirm kann aufleuchten",
         "mayVibrate": "Babygerät kann vibrieren",
         "mayRing": "Babygerät kann klingeln",
-        "unknown": "Ob das Babygerät stumm ist, lässt sich nicht prüfen",
+        "unknown": "Ruhemodus: unbekannt – Babygerät nicht prüfbar",
         "manual": "Schalten Sie am Babygerät „Bitte nicht stören“ ein und verringern Sie die Helligkeit.",
-        "noAccess": "Um es von hier stummzuschalten, öffnen Sie am Babygerät die Einstellungen und aktivieren Sie „Dieses Gerät beim Überwachen stummschalten“.",
-        "apply": "Babygerät stummschalten",
-        "applyFull": "Vollständig stummschalten",
-        "pending": "Wird stummgeschaltet …",
-        "failed": "Das Babygerät konnte nicht stummgeschaltet werden.",
-        "webUnknown": "Unbekannt — Babygerät selbst stummschalten",
+        "noAccess": "Um den Ruhemodus von hier einzuschalten, öffnen Sie am Babygerät die Einstellungen und aktivieren Sie „Ruhemodus beim Überwachen“.",
+        "apply": "Ruhemodus einschalten",
+        "applyFull": "Ruhemodus vollständig einschalten",
+        "pending": "Ruhemodus wird eingeschaltet …",
+        "failed": "Der Ruhemodus ließ sich am Babygerät nicht einschalten.",
+        "webUnknown": "Unbekannt — Ruhemodus am Babygerät selbst einschalten",
         "webHint": "Ist das Babygerät ein Laptop, lassen Sie es am Ladegerät, den Deckel offen und den Bildschirm an."
       },
       "help": {
@@ -585,7 +585,7 @@
       "settings": {
         "group": {
           "soundDetection": "Geräuscherkennung",
-          "silence": "Stummschaltung",
+          "silence": "Ruhemodus",
           "alerts": "Alarme",
           "screen": "Bildschirm",
           "paired": "Gekoppeltes Gerät",
@@ -598,7 +598,7 @@
         "moreSensitive": "Empfindlicher",
         "lessSensitive": "Weniger empfindlich",
         "holdLabel": "Das Geräusch muss mindestens dauern:",
-        "silenceAccessOk": "Zugriff zum Stummschalten ist aktiv.",
+        "silenceAccessOk": "Zugriff für den Ruhemodus ist aktiv.",
         "outputLabel": "Alarmton wird abgespielt über",
         "output": {
           "default": "Kopfhörer, falls verbunden, sonst Lautsprecher",
@@ -661,7 +661,7 @@
       "micLevel": "Geräuschpegel hier",
       "micSilent": "Das Mikrofon liefert nur Stille. Prüfen Sie, ob es nicht stummgeschaltet ist.",
       "monitoring": "Überwachung läuft",
-      "silenceManual": "Dieser Browser kann das Gerät nicht stummschalten. Aktivieren Sie an diesem Gerät „Nicht stören“ und verringern Sie die Helligkeit.",
+      "silenceManual": "Dieser Browser kann den Ruhemodus nicht einschalten. Aktivieren Sie an diesem Gerät „Nicht stören“ und verringern Sie die Helligkeit.",
       "title": "Babygerät"
     },
     "background": {
@@ -836,8 +836,8 @@
     "silence": {
       "mayRing": "Babygerät kann klingeln",
       "mayVibrate": "Babygerät kann vibrieren",
-      "silent": "Babygerät ist stumm",
-      "unknownManual": "Ob das Babygerät stumm ist, lässt sich nicht prüfen – stellen Sie es selbst stumm"
+      "silent": "Babygerät ist im Ruhemodus",
+      "unknownManual": "Ruhemodus: unbekannt – am Babygerät selbst einschalten"
     },
     "snooze": {
       "active": "Pausiert · noch {minutes} Min.",
