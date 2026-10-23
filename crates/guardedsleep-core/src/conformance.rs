@@ -4,9 +4,10 @@
 
 use serde_json::{Value, json};
 
+use crate::invite::{build_invite, parse_invite};
 use crate::link::{Link, LinkConfig, LinkInput};
 use crate::pairing::{
-    AdmissionKey, admission_mac, decode_psk, derive_admission_key, derive_room_id,
+    AdmissionKey, admission_mac, decode_psk, derive_admission_key, derive_room_id, encode_psk,
     pair_proof_mac_v2_legacy, pair_proof_mac_v3, stop_notice_mac, verify_admission,
 };
 use crate::protocol::{
@@ -108,6 +109,34 @@ fn evaluate_value(case_json: &str) -> Result<Value, String> {
                 s("local_sdp")?,
                 s("remote_sdp")?,
             ))
+        }
+        "parse_invite" => {
+            let now = case
+                .get("now_epoch_s")
+                .and_then(Value::as_u64)
+                .ok_or("missing now_epoch_s")?;
+            Ok(match parse_invite(s("text")?, now) {
+                Ok(inv) => json!({ "ok": {
+                    "psk_b64url": encode_psk(inv.psk()),
+                    "urls": inv.urls,
+                    "expires_at_epoch_s": inv.expires_at_epoch_s,
+                } }),
+                Err(e) => json!({ "error": e.as_str() }),
+            })
+        }
+        "build_invite" => {
+            let psk = decode_psk(s("psk_b64url")?).ok_or("bad psk")?;
+            let urls: Vec<String> =
+                serde_json::from_value(case.get("urls").cloned().ok_or("missing urls")?)
+                    .map_err(|e| e.to_string())?;
+            let expires = case
+                .get("expires_at_epoch_s")
+                .and_then(Value::as_u64)
+                .ok_or("missing expires_at_epoch_s")?;
+            Ok(match build_invite(&psk, &urls, expires) {
+                Ok(text) => json!({ "ok": text }),
+                Err(e) => json!({ "error": e.as_str() }),
+            })
         }
         "session" => run_session(&case),
         "link" => run_link(&case),
