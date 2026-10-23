@@ -8,7 +8,7 @@ Depends on `rebuild-web-client` for groups 3–5 (the web key set). Groups 1–2
 - [x] 1.2 Critical-key completeness replaces full parity: a locale missing a critical key (or its plural categories or placeholders) is not generated and the check names it; missing non-critical keys fall back to `en` in Android and web output. Verify: i18n-gen tests for both scenarios of the spec delta.
 - [x] 1.3 Review markers: reserved `$meta` (`default`, `reviewed`) in each non-English catalogue, ignored by output, validated by the check; add `$meta` with `default: machineTranslated` to de, fr, es (de keys reviewed by the owner listed after review). Verify: i18n-gen tests; `just lint-text` (CSpell skips `$meta`).
 - [x] 1.4 RTL pseudo-locale (bidi-wrapped, mirrored) next to the accented one, in Android and web output. Verify: i18n-gen tests.
-- [ ] 1.5 Android `androidResources.localeFilters` generated from the shipped locales (no hand-kept list); `supportsRtl` stays on. Verify: `just build-android` and `aapt2 dump` / `release-check.sh` list exactly the shipped locales (report `SKIPPED` without the SDK).
+- [x] 1.5 Android `androidResources.localeFilters` generated from the shipped locales (no hand-kept list); `supportsRtl` stays on. Verify: `just build-android` and `aapt2 dump` / `release-check.sh` list exactly the shipped locales (report `SKIPPED` without the SDK).
 - [ ] 1.6 Core message-key check in `just lint`: every `message_keys()` entry exists in `en.json`; remove the backlog item. Verify: a test with a missing key fails, `just lint` green.
 
 ## 2. Device wording

@@ -1,6 +1,7 @@
 package org.guardedsleep.buildlogic
 
 import com.android.build.api.dsl.ApplicationExtension
+import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 import com.android.build.api.dsl.CommonExtension
 import com.android.build.api.dsl.LibraryExtension
 import java.io.StringReader
@@ -9,6 +10,7 @@ import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.register
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 
@@ -60,6 +62,41 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                     .get()
             defaultConfig.versionName = versionName
             defaultConfig.versionCode = AndroidVersion.versionCode(versionName)
+        }
+        configureLocaleFilters(target)
+    }
+}
+
+/**
+ * `androidResources.localeFilters` is generated from the shipped locales (see
+ * [ShippedLocalesTask]), so the APK lists exactly the generated languages. Debug builds also keep
+ * the platform pseudo-locales (en-XA accented, ar-XB right-to-left) that `isPseudoLocalesEnabled`
+ * adds; a filter would otherwise drop them. Doc:
+ * https://developer.android.com/reference/tools/gradle-api/9.4/com/android/build/api/variant/ApplicationAndroidResources
+ */
+private fun configureLocaleFilters(target: Project) {
+    val root = target.rootProject.layout.projectDirectory.dir("../..")
+    val shipped =
+        target.tasks.register<ShippedLocalesTask>("shippedLocales") {
+            repoRoot.set(root)
+            localesDir.set(root.dir("locales"))
+            generatorDir.set(root.dir("crates/i18n-gen/src"))
+            generatorManifests.from(
+                root.file("crates/i18n-gen/Cargo.toml"),
+                root.file("Cargo.lock"),
+            )
+            outputFile.set(target.layout.buildDirectory.file("generated/i18n/locales.txt"))
+        }
+    val tags =
+        shipped
+            .flatMap { it.outputFile }
+            .map { file -> file.asFile.readLines().filter { it.isNotBlank() } }
+    target.extensions.configure<ApplicationAndroidComponentsExtension> {
+        onVariants { variant ->
+            variant.androidResources.localeFilters.addAll(tags)
+            if (variant.debuggable) {
+                variant.androidResources.localeFilters.addAll(listOf("en-rXA", "ar-rXB"))
+            }
         }
     }
 }
