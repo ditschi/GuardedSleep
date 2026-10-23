@@ -13,7 +13,7 @@ Depends on `rebuild-web-client` for groups 3–5 (the web key set). Groups 1–2
 
 ## 2. Device wording
 
-- [ ] 2.1 Rename "baby phone" / "parent phone" (and "this phone" where it means the device) to "baby device" / "parent device" in `en`, de, fr, es; close A8 in `docs/technical/alpha-ux-flows.md` (Option C "baby device / parent device", owner 2026-10-23) and update its copy tables. Verify: `rg -i "baby phone|parent phone" locales docs/technical/alpha-ux-flows.md` only in the A8 history; Android Roborazzi baselines re-recorded in the pinned image and reviewed.
+- [x] 2.1 Rename "baby phone" / "parent phone" (and "this phone" where it means the device) to "baby device" / "parent device" in `en`, de, fr, es; close A8 in `docs/technical/alpha-ux-flows.md` (Option C "baby device / parent device", owner 2026-10-23) and update its copy tables. Verify: `rg -i "baby phone|parent phone" locales docs/technical/alpha-ux-flows.md` only in the A8 history; Android Roborazzi baselines re-recorded in the pinned image and reviewed.
 
 ## 3. Unused keys
 
