@@ -11,7 +11,7 @@
     "./pkg/*": "./pkg/*"
   },
   "scripts": {
-    "build": "bash ../../scripts/core-build.sh wasm && node scripts/copy-pkg.mjs",
+    "build": "node ../../scripts/lib/core-wasm-fresh.mjs build",
     "check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"

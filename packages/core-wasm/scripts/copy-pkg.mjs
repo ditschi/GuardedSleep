@@ -1,4 +1,5 @@
-// Copies the wasm-bindgen output of `scripts/core-build.sh wasm` into this package (both gitignored).
+// Copies the wasm-bindgen output of `scripts/core-build.sh wasm` into this package (both gitignored); run by
+// scripts/lib/core-wasm-fresh.mjs, which stamps the result with a hash of the Rust inputs.
 //   target/wasm-pkg/web  -> pkg/       (browser ESM, loaded by ./web)
 //   target/wasm-pkg/node -> pkg-node/  (CommonJS, loaded by ./node for Vitest and Node tools)
 import { cpSync, mkdirSync, rmSync, writeFileSync } from "node:fs";

@@ -158,7 +158,7 @@ test-affected base="origin/main":
 test-rust:
     if command -v cargo-nextest >/dev/null 2>&1 && command -v cargo >/dev/null 2>&1; then cargo nextest run --workspace && cargo test --workspace --doc; else scripts/cargo.sh test --workspace; fi
 
-# `_js-gen` has already built the WASM core (the core-wasm package build runs core-build.sh wasm).
+# `_js-gen` has already built (or found up to date) the WASM core.
 test-wasm: _js-gen
     node --test crates/guardedsleep-core/js/*.test.mjs
 
@@ -319,10 +319,11 @@ reap *args:
 timings *args:
     scripts/lib/timings.sh {{ args }}
 
-# Generated, uncommitted packages that svelte-check and Vitest import (the WASM core).
+# Generated, uncommitted packages that svelte-check and Vitest import (the WASM core); rebuilt only when its
+# Rust inputs changed (scripts/lib/core-wasm-fresh.mjs). `pnpm --filter @guardedsleep/core-wasm build` forces it.
 [private]
 _js-gen:
-    pnpm --filter @guardedsleep/core-wasm build
+    node scripts/lib/core-wasm-fresh.mjs ensure
 
 [private]
 _js-deps:

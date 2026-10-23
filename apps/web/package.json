@@ -7,7 +7,7 @@
   "scripts": {
     "i18n:gen": "bash ../../scripts/cargo.sh run -q -p i18n-gen -- web --out apps/web/src/lib/i18n/generated",
     "lists:gen": "bash ../../scripts/cargo.sh run -q -p public-lists -- web --web-out apps/web/src/lib/public-lists/generated --csp-out apps/web/csp/generated",
-    "core:ensure": "test -f ../../packages/core-wasm/pkg/guardedsleep_wasm_bg.wasm -a -f ../../packages/core-wasm/pkg-node/guardedsleep_wasm.js || pnpm --filter @guardedsleep/core-wasm build",
+    "core:ensure": "node ../../scripts/lib/core-wasm-fresh.mjs ensure",
     "predev": "pnpm run i18n:gen && pnpm run lists:gen && pnpm run core:ensure",
     "dev": "vite dev --host 0.0.0.0",
     "prebuild": "pnpm run i18n:gen && pnpm run lists:gen && pnpm run core:ensure",
