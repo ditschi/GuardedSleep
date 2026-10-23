@@ -6,8 +6,10 @@ The web client is the frozen SvelteKit + Capacitor-era `apps/mobile` with hand-w
 
 ## What Changes
 
-- New `apps/web` (Vite 8, Svelte 5, vite-plugin-pwa, TypeScript strict, no SvelteKit) on the WASM `Link`, as baby unit and parent unit.
-- New capability spec `web-client` with the browser-specific behaviour (keep-awake setup, alert sound unlock, background warning, silence status "unknown", memory-only pairing material, CSP).
+- New `apps/web` (Vite 8, Svelte 5, vite-plugin-pwa, TypeScript strict, no SvelteKit), a greenfield build on the WASM `Link`, as baby unit and parent unit; plain CSS with own components, History API routing.
+- New capability spec `web-client` with the browser-specific behaviour (keep-awake setup, alert sound unlock, night screen, background-loss reporting, silence status "unknown", copy code without sharing, memory-only pairing material, CSP).
+- The v3 invite codec moves into the core and is used by both clients through their bindings; Android's Kotlin parser is deleted.
+- Web clients use the relay's built-in STUN by default, as Android does.
 - Web checks: `svelte-check --fail-on-warnings`, Vitest for logic, Playwright with fake media, axe and overflow checks, a storage test for pairing material, pnpm 11 settings.
 - `apps/mobile` is deleted at parity (`packages/protocol` is already gone with `add-rust-signaling-server`); the web image builds `apps/web`.
 
@@ -20,7 +22,9 @@ The web client is the frozen SvelteKit + Capacitor-era `apps/mobile` with hand-w
 ### Modified Capabilities
 
 - `dev-toolchain`: web checks.
+- `pairing`: one invite codec in the core.
+- `signaling-relay`: client ICE configuration covers the web client.
 
 ## Impact
 
-`apps/web` (new), `apps/mobile` (deleted), `apps/e2e`, `docker/mobile-web` (renamed or rebuilt), `docker-web.yml`, `pnpm-workspace.yaml`, `docs/ci-gates.md`.
+`crates/guardedsleep-core` (invite codec, vectors), `crates/guardedsleep-ffi`, `crates/guardedsleep-wasm`, `packages/core-wasm` (API snapshots), Android `platform` pairing, `apps/web` (new), `apps/mobile` (deleted), `apps/e2e`, `docker/mobile-web` (renamed to `docker/web`), `docker-web.yml`, `scripts/dev.sh`, `pnpm-workspace.yaml`, `locales/en.json` (new web keys), `docs/ci-gates.md`, `docs/backlog.md`.
