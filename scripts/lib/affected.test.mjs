@@ -15,7 +15,7 @@ import {
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const read = (p) => readFileSync(join(root, p), "utf8");
 const filters = parseFilters(read(".github/path-filters.yml"));
-const vitestPackages = ["@guardedsleep/core-wasm", "@guardedsleep/mobile"];
+const vitestPackages = ["@guardedsleep/core-wasm", "@guardedsleep/mobile", "@guardedsleep/web"];
 const classifyGlobs = () =>
   Object.fromEntries(Object.entries(filters).filter(([n]) => n !== "code"));
 const plan = (files) => makePlan({ files, filters, mergeBase: "abc123", vitestPackages });
@@ -64,8 +64,16 @@ test("plan: web only uses Vitest --changed per package", () => {
     "just _js-gen",
     "pnpm --filter @guardedsleep/core-wasm exec vitest run --changed abc123 --passWithNoTests",
     "pnpm --filter @guardedsleep/mobile exec vitest run --changed abc123 --passWithNoTests",
+    "pnpm --filter @guardedsleep/web exec vitest run --changed abc123 --passWithNoTests",
   ]);
   assert.ok(p.notes.some((n) => n.startsWith("e2e:")));
+});
+
+test("plan: apps/web belongs to the web and e2e areas", () => {
+  const p = plan(["apps/web/src/lib/router.ts"]);
+  assert.deepEqual(p.areas.web, ["apps/web/src/lib/router.ts"]);
+  assert.deepEqual(p.areas.e2e, ["apps/web/src/lib/router.ts"]);
+  assert.ok(cmds(p).some((c) => c.startsWith("pnpm --filter @guardedsleep/web exec vitest")));
 });
 
 test("plan: locales run the full web tests", () => {

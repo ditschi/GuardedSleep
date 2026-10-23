@@ -39,6 +39,8 @@ export default defineConfig({
       devOptions: { enabled: false },
     }),
   ],
+  // `just dev` and the Playwright config expect the dev server on 5173; fail instead of drifting.
+  server: { port: 5173, strictPort: true },
   // Svelte 5 under Vitest: resolve the browser build (mount does not exist in the server build).
   resolve: {
     conditions: process.env.VITEST ? ["browser"] : undefined,

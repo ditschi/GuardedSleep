@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Local development stack: the Rust signaling server (crates/guardedsleep-server) and the Vite dev
-# server for apps/mobile, started together and stopped together (Ctrl-C, or when either exits).
+# server for apps/web, started together and stopped together (Ctrl-C, or when either exits).
 # Used by `just dev` and by the Playwright webServer (apps/e2e/playwright.config.ts).
 #   PORT=18787 just dev      # the signaling server reads PORT (Vite stays on 5173)
 #   STUN_DISABLED=0 just dev # also start the STUN responder (UDP 3478); off by default in dev
@@ -26,6 +26,6 @@ trap 'rc=$?; trap "" TERM; trap - EXIT INT; kill 0 2>/dev/null; exit "$rc"' EXIT
 
 scripts/cargo.sh build -q -p guardedsleep-server
 STUN_DISABLED="${STUN_DISABLED:-1}" target/debug/guardedsleep-server &
-pnpm --filter @guardedsleep/mobile dev &
+pnpm --filter @guardedsleep/web dev &
 
 wait -n

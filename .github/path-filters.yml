@@ -50,6 +50,7 @@ rust:
 # JavaScript packages and the UI catalogue.
 web:
   - "apps/mobile/**"
+  - "apps/web/**"
   - "packages/**"
   - "locales/**"
 
@@ -57,6 +58,7 @@ web:
 e2e:
   - "apps/e2e/**"
   - "apps/mobile/**"
+  - "apps/web/**"
   - "crates/guardedsleep-relay/**"
   - "crates/guardedsleep-server/**"
 
