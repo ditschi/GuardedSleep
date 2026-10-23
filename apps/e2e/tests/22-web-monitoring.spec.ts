@@ -35,7 +35,7 @@ test("monitoring screens with fake media: content, a11y, listen, stop", async ()
     await expect(parent.getByTestId("parent_overflow")).toBeVisible();
     // The browser baby device reports its silence as unknown, in grey, and cannot be silenced.
     await expect(parent.getByTestId("parent_silence_chip")).toContainText(
-      "set it on the baby device",
+      "turn it on at the baby device",
       { timeout: 30_000 },
     );
     await expect(parent.getByTestId("parent_silence_chip")).toHaveAttribute("data-tone", "neutral");

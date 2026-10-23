@@ -61,10 +61,10 @@
     { "pattern": "native.ui.fgsMissing.*", "budget": 180 },
     { "pattern": "webScreens.baby.failMicDenied", "budget": 140 },
     { "pattern": "webScreens.baby.failMicUnavailable", "budget": 100 },
-    { "pattern": "webScreens.baby.silenceUnknown", "budget": 40 },
+    { "pattern": "webScreens.baby.quietUnknown", "budget": 40 },
     { "pattern": "webScreens.baby.keepAwake", "budget": 110 },
     { "pattern": "webScreens.baby.keepSilent", "budget": 100 },
-    { "pattern": "webScreens.parent.silenceUnknownWeb", "budget": 80 },
+    { "pattern": "webScreens.parent.quietUnknownWeb", "budget": 80 },
     { "pattern": "webScreens.parent.keepOpen", "budget": 140 },
     { "pattern": "webScreens.parent.soundGate", "budget": 50 }
   ]

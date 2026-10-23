@@ -219,7 +219,7 @@ export function fixedChips(p: ParentMonitorState): ChipSpec[] {
       id: "parent_silence_chip",
       tone: "neutral",
       icon: "info",
-      key: "webScreens.parent.silenceUnknownWeb",
+      key: "webScreens.parent.quietUnknownWeb",
     });
   } else {
     const look = SILENCE_CHIP[p.peer.silence];

@@ -57,7 +57,7 @@ describe("S07 baby monitor", () => {
 
   it("reports silence as unknown and shows the battery where the browser has one", async () => {
     open("/baby", c);
-    expect(await screen.findByTestId("baby_silence")).toHaveTextContent("Silence: unknown");
+    expect(await screen.findByTestId("baby_silence")).toHaveTextContent("Quiet mode: unknown");
     expect(screen.queryByTestId("baby_battery")).toBeNull();
     c.deviceBattery.set({ pct: 80, charging: true });
     expect(await screen.findByTestId("baby_battery")).toHaveTextContent("charging · 80%");
@@ -160,7 +160,7 @@ describe("S09 parent monitor", () => {
     }));
     open("/parent", c);
     expect(await screen.findByTestId("parent_silence_chip")).toHaveTextContent(
-      "Silence unknown · set it on the baby device",
+      "Quiet mode unknown · turn it on at the baby device",
     );
     expect(screen.getByTestId("parent_silence_chip")).toHaveAttribute("data-tone", "neutral");
     expect(screen.getByTestId("parent_baby_battery_chip")).toHaveTextContent("Baby device 80%");

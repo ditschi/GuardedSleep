@@ -134,7 +134,7 @@
     {#if batteryText}
       <Chip icon="battery" label={batteryText} testid="baby_battery" />
     {/if}
-    <Chip icon="info" label={$t("webScreens.baby.silenceUnknown")} testid="baby_silence" />
+    <Chip icon="info" label={$t("webScreens.baby.quietUnknown")} testid="baby_silence" />
   </div>
 
   <div class="gs-checklist" data-testid="baby_keep_awake">

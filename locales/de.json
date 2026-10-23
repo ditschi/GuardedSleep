@@ -887,12 +887,12 @@
     "baby": {
       "failMicDenied": "Das Mikrofon ist blockiert, deshalb kann dieses Gerät Ihr Kind nicht hören. Erlauben Sie es in den Website-Einstellungen des Browsers.",
       "failMicUnavailable": "Es wurde kein Mikrofon gefunden, deshalb kann dieses Gerät Ihr Kind nicht hören.",
-      "silenceUnknown": "Stumm: unbekannt",
+      "quietUnknown": "Ruhemodus: unbekannt",
       "keepAwake": "Halten Sie dieses Gerät wach: am Strom, Deckel offen, dieser Tab sichtbar.",
       "keepSilent": "Schalten Sie „Bitte nicht stören“ ein und verringern Sie die Helligkeit dieses Geräts."
     },
     "parent": {
-      "silenceUnknownWeb": "Stumm unbekannt · am Babygerät einstellen",
+      "quietUnknownWeb": "Ruhemodus unbekannt · am Babygerät einschalten",
       "keepOpen": "Lassen Sie diese Seite offen und den Bildschirm an. Sonst kann Ihr Browser Sie nicht warnen.",
       "soundGate": "Tippen, um den Alarmton zu aktivieren"
     }

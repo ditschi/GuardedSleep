@@ -887,12 +887,12 @@
     "baby": {
       "failMicDenied": "El micrófono está bloqueado, así que este dispositivo no puede oír a su hijo. Permítalo en los ajustes del sitio del navegador.",
       "failMicUnavailable": "No se encontró ningún micrófono, así que este dispositivo no puede oír a su hijo.",
-      "silenceUnknown": "Silencio: desconocido",
+      "quietUnknown": "Modo silencio: desconocido",
       "keepAwake": "Mantenga este dispositivo activo: enchufado, tapa abierta, esta pestaña visible.",
       "keepSilent": "Active No molestar y baje el brillo de este dispositivo."
     },
     "parent": {
-      "silenceUnknownWeb": "Silencio desconocido · ajústelo en el dispositivo del bebé",
+      "quietUnknownWeb": "Modo silencio desconocido · actívelo en el dispositivo del bebé",
       "keepOpen": "Mantenga esta página abierta y la pantalla encendida. Si no, su navegador no puede avisarle.",
       "soundGate": "Toque para activar el sonido de alerta"
     }

@@ -887,12 +887,12 @@
     "baby": {
       "failMicDenied": "Le microphone est bloqué, cet appareil ne peut donc pas entendre votre enfant. Autorisez-le dans les paramètres du site du navigateur.",
       "failMicUnavailable": "Aucun microphone trouvé, cet appareil ne peut donc pas entendre votre enfant.",
-      "silenceUnknown": "Silence : inconnu",
+      "quietUnknown": "Mode silencieux : inconnu",
       "keepAwake": "Gardez cet appareil éveillé : branché, écran ouvert, cet onglet visible.",
       "keepSilent": "Activez Ne pas déranger et baissez la luminosité de cet appareil."
     },
     "parent": {
-      "silenceUnknownWeb": "Silence inconnu · à régler sur l’appareil bébé",
+      "quietUnknownWeb": "Mode silencieux inconnu · à activer sur l’appareil bébé",
       "keepOpen": "Gardez cette page ouverte et l’écran allumé. Sinon, votre navigateur ne peut pas vous alerter.",
       "soundGate": "Touchez pour activer le son d’alerte"
     }

@@ -198,11 +198,11 @@ describe("pruneDismissed", () => {
 describe("chips", () => {
   const peer = defaultParentMonitor().peer;
 
-  it("shows the battery and a grey 'unknown, set it on the baby device' for a browser baby", () => {
+  it("shows the battery and a grey 'unknown, turn it on at the baby device' for a browser baby", () => {
     const chips = fixedChips(connected({ peer: { ...peer, batteryPct: 80, isWebClient: true } }));
     expect(chips.map((c) => c.id)).toEqual(["parent_baby_battery_chip", "parent_silence_chip"]);
     expect(chips[0]).toMatchObject({ key: "native.ui.battery.baby", tone: "neutral" });
-    expect(chips[1]).toMatchObject({ key: "webScreens.parent.silenceUnknownWeb", tone: "neutral" });
+    expect(chips[1]).toMatchObject({ key: "webScreens.parent.quietUnknownWeb", tone: "neutral" });
   });
 
   it("asks for the charger when the battery is low and not charging", () => {
