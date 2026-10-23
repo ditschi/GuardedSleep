@@ -52,7 +52,7 @@ The generator SHALL produce an RTL pseudo-locale, enforce length budgets on crit
 
 ### Requirement: Core message keys exist
 
-Every key returned by the core's `message_keys()` SHALL exist in `locales/en.json`, checked by `just lint`.
+Every key returned by the core's `message_keys()` SHALL exist in `locales/en.json` as `core.<camelCase key>` (for example `server_unreachable` as `core.serverUnreachable`), checked by `just lint`.
 
 #### Scenario: New core message key
 
