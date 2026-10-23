@@ -145,6 +145,14 @@
       "galleryHelp": "If live scan fails on this device, pick a photo of the QR code from the gallery. HTTPS (e.g. port 8443) can also help."
     }
   },
+  "core": {
+    "pairingKeyMismatch": "These devices are no longer paired. Pair them again to keep monitoring.",
+    "updateRequired": "One of the devices needs a GuardedSleep update to keep monitoring.",
+    "serverUnreachable": "This device can't reach the connection server. Check its internet connection.",
+    "peerAbsent": "The baby device isn't answering. Check that it is on and showing GuardedSleep.",
+    "mediaBlocked": "The devices found each other, but sound can't get through. Try the same Wi-Fi on both.",
+    "wrongKeyAttempt": "Someone tried to connect with a wrong key. Monitoring continues."
+  },
   "native": {
     "appName": "GuardedSleep Alpha",
     "roleBaby": "Baby device",
@@ -221,7 +229,6 @@
       "chargerTitle": "Baby device is no longer charging",
       "chargerText": "Plug the baby device in so it lasts the night.",
       "securityTitle": "Wrong key",
-      "securityText": "Someone tried to connect with a wrong key. Monitoring continues.",
       "publicTitle": "GuardedSleep alarm",
       "fgsMissingTitle": "Not monitoring in the background",
       "fgsMissingText": "Open GuardedSleep to turn background monitoring back on."
@@ -401,8 +408,6 @@
         "cantReach": "Can't reach {name} — still trying",
         "lostFor": "No connection for {duration}",
         "babyStopped": "{name} stopped monitoring",
-        "needsPairing": "These devices are no longer paired. Pair them again to keep monitoring.",
-        "updateRequired": "One of the devices needs a GuardedSleep update to keep monitoring.",
         "idle": "Not monitoring",
         "weak": "Weak connection — sound may break up",
         "restoredAfter": "Connected again after {duration}. You can hear your child again.",
@@ -439,11 +444,6 @@
         },
         "ack": "I'm checking",
         "ackNote": "Sound off for {time}. We'll alert you again if it's still not connected.",
-        "cause": {
-          "server": "This device can't reach the connection server. Check its internet connection.",
-          "peer": "The baby device isn't answering. Check that it is on and showing GuardedSleep.",
-          "media": "The devices found each other, but sound can't get through. Try the same Wi-Fi on both."
-        },
         "soundNote": "A soft alarm tone repeats until you check.",
         "soundNoteUrgent": "The alarm keeps sounding until you check."
       },

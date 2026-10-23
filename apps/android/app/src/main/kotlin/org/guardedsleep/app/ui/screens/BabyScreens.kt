@@ -119,7 +119,7 @@ internal fun babyStatusText(link: LinkUi): String =
         when (link.phase) {
             LinkPhase.CONNECTED -> R.string.native_ui_baby_status_connected
             LinkPhase.PEER_STOPPED -> R.string.native_ui_baby_status_parent_stopped
-            LinkPhase.FAILED_NEEDS_USER -> R.string.native_ui_link_needs_pairing
+            LinkPhase.FAILED_NEEDS_USER -> R.string.core_pairing_key_mismatch
             LinkPhase.IDLE,
             LinkPhase.STOPPED -> R.string.native_ui_baby_status_waiting
             LinkPhase.CONNECTING,

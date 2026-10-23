@@ -95,8 +95,13 @@ _lint-code: _js-deps _js-gen check-ios check-determinism
     just deny
     just api-check
     pnpm run i18n:check
+    just lint-message-keys
     scripts/lint-ui-literals.sh
     pnpm -r --if-present run check
+
+# Every `message_keys()` entry of the core exists in locales/en.json as `core.<camelCase>` (openspec i18n spec).
+lint-message-keys:
+    scripts/lib/slot.sh medium -- scripts/cargo.sh test -p guardedsleep-core --test message_keys_catalogue
 
 # The core, the relay (shared with the Android LAN listener) and the UniFFI facade must stay buildable for iOS (ADR-020 §3); rust-toolchain.toml installs the target.
 check-ios:

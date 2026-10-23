@@ -236,7 +236,7 @@ class AlertController(private val context: Context, private val entryPoints: Ent
                     simple(
                         AlertChannels.NOTICE,
                         context.getString(R.string.native_notif_security_title),
-                        context.getString(R.string.native_notif_security_text),
+                        context.getString(R.string.core_wrong_key_attempt),
                     ),
                 )
             is Notice.MissedEvents -> {

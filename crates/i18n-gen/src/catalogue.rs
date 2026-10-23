@@ -5,7 +5,7 @@ use std::path::Path;
 
 pub const MASTER: &str = "en";
 /// Top-level groups emitted to Android; every other group is web-only.
-pub const ANDROID_GROUPS: [&str; 2] = ["native", "shared"];
+pub const ANDROID_GROUPS: [&str; 3] = ["core", "native", "shared"];
 /// Reserved top-level key of non-English catalogues: review markers, never output.
 pub const META_KEY: &str = "$meta";
 /// File in `locales/` that is not a catalogue.

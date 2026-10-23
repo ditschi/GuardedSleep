@@ -311,7 +311,7 @@ fun LinkAlarmContent(controller: AppController, onClose: () -> Unit) {
                         AlarmVariant.BATTERY ->
                             stringResource(R.string.native_ui_link_alarm_battery_body)
                         AlarmVariant.NEEDS_PAIRING ->
-                            stringResource(R.string.native_ui_link_needs_pairing)
+                            stringResource(R.string.core_pairing_key_mismatch)
                         AlarmVariant.RESTORED -> null
                         AlarmVariant.NO_BACKGROUND ->
                             stringResource(R.string.native_ui_fgs_missing_body)
@@ -330,10 +330,9 @@ fun LinkAlarmContent(controller: AppController, onClose: () -> Unit) {
                     Text(
                         stringResource(
                             when (causeHint) {
-                                CauseHint.SERVER_UNREACHABLE ->
-                                    R.string.native_ui_link_alarm_cause_server
-                                CauseHint.PEER_ABSENT -> R.string.native_ui_link_alarm_cause_peer
-                                CauseHint.MEDIA_BLOCKED -> R.string.native_ui_link_alarm_cause_media
+                                CauseHint.SERVER_UNREACHABLE -> R.string.core_server_unreachable
+                                CauseHint.PEER_ABSENT -> R.string.core_peer_absent
+                                CauseHint.MEDIA_BLOCKED -> R.string.core_media_blocked
                             }
                         ),
                         Modifier.testTag("link_alarm_cause"),

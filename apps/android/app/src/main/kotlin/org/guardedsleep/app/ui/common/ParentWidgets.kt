@@ -98,8 +98,8 @@ fun LinkBar(
         else stringResource(R.string.native_ui_link_baby_stopped_default)
     val needsPairing =
         stringResource(
-            if (link.failureKey == "update_required") R.string.native_ui_link_update_required
-            else R.string.native_ui_link_needs_pairing
+            if (link.failureKey == "update_required") R.string.core_update_required
+            else R.string.core_pairing_key_mismatch
         )
     val idle = stringResource(R.string.native_ui_link_idle)
     val noBackground = stringResource(R.string.native_ui_fgs_missing_bar)

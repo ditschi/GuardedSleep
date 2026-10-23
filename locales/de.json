@@ -146,6 +146,14 @@
       "galleryHelp": "Falls der Live-Scan auf diesem Gerät nicht klappt: QR-Foto aus der Galerie wählen. HTTPS (z. B. Port 8443) kann ebenfalls helfen."
     }
   },
+  "core": {
+    "pairingKeyMismatch": "Diese Geräte sind nicht mehr gekoppelt. Koppeln Sie sie erneut, um weiter zu überwachen.",
+    "updateRequired": "Eines der Geräte braucht ein GuardedSleep-Update, um weiter zu überwachen.",
+    "serverUnreachable": "Dieses Gerät erreicht den Verbindungsserver nicht. Prüfen Sie die Internetverbindung.",
+    "peerAbsent": "Das Babygerät antwortet nicht. Prüfen Sie, ob es an ist und GuardedSleep anzeigt.",
+    "mediaBlocked": "Die Geräte haben sich gefunden, aber der Ton kommt nicht durch. Versuchen Sie dasselbe WLAN auf beiden.",
+    "wrongKeyAttempt": "Jemand hat versucht, sich mit einem falschen Schlüssel zu verbinden. Die Überwachung läuft weiter."
+  },
   "native": {
     "appName": "GuardedSleep Alpha",
     "roleBaby": "Babygerät",
@@ -222,7 +230,6 @@
       "chargerTitle": "Babygerät lädt nicht mehr",
       "chargerText": "Schließe das Babygerät an, damit es die Nacht durchhält.",
       "securityTitle": "Falscher Schlüssel",
-      "securityText": "Jemand hat versucht, sich mit einem falschen Schlüssel zu verbinden. Die Überwachung läuft weiter.",
       "publicTitle": "GuardedSleep-Alarm",
       "fgsMissingTitle": "Keine Überwachung im Hintergrund",
       "fgsMissingText": "Öffnen Sie GuardedSleep, um die Überwachung im Hintergrund wieder einzuschalten."
@@ -402,8 +409,6 @@
         "cantReach": "{name} nicht erreichbar — es wird weiter versucht",
         "lostFor": "Seit {duration} keine Verbindung",
         "babyStopped": "{name} hat die Überwachung beendet",
-        "needsPairing": "Diese Geräte sind nicht mehr gekoppelt. Koppeln Sie sie erneut, um weiter zu überwachen.",
-        "updateRequired": "Eines der Geräte braucht ein GuardedSleep-Update, um weiter zu überwachen.",
         "idle": "Keine Überwachung",
         "weak": "Schwache Verbindung — der Ton kann aussetzen",
         "restoredAfter": "Nach {duration} wieder verbunden. Sie hören Ihr Kind wieder.",
@@ -440,11 +445,6 @@
         },
         "ack": "Ich schaue nach",
         "ackNote": "Ton für {time} aus. Wir alarmieren Sie erneut, falls noch keine Verbindung besteht.",
-        "cause": {
-          "server": "Dieses Gerät erreicht den Verbindungsserver nicht. Prüfen Sie die Internetverbindung.",
-          "peer": "Das Babygerät antwortet nicht. Prüfen Sie, ob es an ist und GuardedSleep anzeigt.",
-          "media": "Die Geräte haben sich gefunden, aber der Ton kommt nicht durch. Versuchen Sie dasselbe WLAN auf beiden."
-        },
         "soundNote": "Ein leiser Alarmton wiederholt sich, bis Sie nachsehen.",
         "soundNoteUrgent": "Der Alarm ertönt so lange, bis Sie nachsehen."
       },

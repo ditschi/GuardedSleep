@@ -146,6 +146,14 @@
       "galleryHelp": "Si le scan en direct échoue sur cet appareil, choisissez une photo du QR dans la galerie. HTTPS (p. ex. port 8443) peut aussi aider."
     }
   },
+  "core": {
+    "pairingKeyMismatch": "Ces appareils ne sont plus appairés. Appairez-les à nouveau pour continuer la surveillance.",
+    "updateRequired": "L'un des appareils doit mettre à jour GuardedSleep pour continuer la surveillance.",
+    "serverUnreachable": "Cet appareil ne joint pas le serveur de connexion. Vérifiez sa connexion Internet.",
+    "peerAbsent": "L'appareil bébé ne répond pas. Vérifiez qu'il est allumé et affiche GuardedSleep.",
+    "mediaBlocked": "Les appareils se sont trouvés, mais le son ne passe pas. Essayez le même Wi-Fi sur les deux.",
+    "wrongKeyAttempt": "Quelqu'un a tenté de se connecter avec une mauvaise clé. La surveillance continue."
+  },
   "native": {
     "appName": "GuardedSleep Alpha",
     "roleBaby": "Appareil bébé",
@@ -222,7 +230,6 @@
       "chargerTitle": "L'appareil bébé ne charge plus",
       "chargerText": "Branchez l'appareil bébé pour qu'il tienne toute la nuit.",
       "securityTitle": "Mauvaise clé",
-      "securityText": "Quelqu'un a tenté de se connecter avec une mauvaise clé. La surveillance continue.",
       "publicTitle": "Alarme GuardedSleep",
       "fgsMissingTitle": "Pas de surveillance en arrière-plan",
       "fgsMissingText": "Ouvrez GuardedSleep pour réactiver la surveillance en arrière-plan."
@@ -402,8 +409,6 @@
         "cantReach": "Impossible de joindre {name} — nouvelle tentative en cours",
         "lostFor": "Pas de connexion depuis {duration}",
         "babyStopped": "{name} a arrêté la surveillance",
-        "needsPairing": "Ces appareils ne sont plus appairés. Appairez-les à nouveau pour continuer la surveillance.",
-        "updateRequired": "L'un des appareils doit mettre à jour GuardedSleep pour continuer la surveillance.",
         "idle": "Pas de surveillance",
         "weak": "Connexion faible — le son peut être haché",
         "restoredAfter": "Reconnecté après {duration}. Vous entendez de nouveau votre enfant.",
@@ -440,11 +445,6 @@
         },
         "ack": "Je vérifie",
         "ackNote": "Son coupé pendant {time}. Nous vous alerterons à nouveau si la connexion n'est toujours pas rétablie.",
-        "cause": {
-          "server": "Cet appareil ne joint pas le serveur de connexion. Vérifiez sa connexion Internet.",
-          "peer": "L'appareil bébé ne répond pas. Vérifiez qu'il est allumé et affiche GuardedSleep.",
-          "media": "Les appareils se sont trouvés, mais le son ne passe pas. Essayez le même Wi-Fi sur les deux."
-        },
         "soundNote": "Un son d'alarme discret se répète jusqu'à ce que vous vérifiiez.",
         "soundNoteUrgent": "L'alarme retentit jusqu'à ce que vous vérifiiez."
       },

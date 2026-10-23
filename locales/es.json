@@ -146,6 +146,14 @@
       "galleryHelp": "Si el escaneo en vivo falla en este dispositivo, elige una foto del QR en la galería. HTTPS (p. ej. puerto 8443) también puede ayudar."
     }
   },
+  "core": {
+    "pairingKeyMismatch": "Estos dispositivos ya no están emparejados. Vuelva a emparejarlos para seguir vigilando.",
+    "updateRequired": "Uno de los dispositivos necesita actualizar GuardedSleep para seguir vigilando.",
+    "serverUnreachable": "Este dispositivo no llega al servidor de conexión. Compruebe su conexión a Internet.",
+    "peerAbsent": "El dispositivo del bebé no responde. Compruebe que está encendido y muestra GuardedSleep.",
+    "mediaBlocked": "Los dispositivos se encontraron, pero el sonido no pasa. Pruebe la misma Wi-Fi en ambos.",
+    "wrongKeyAttempt": "Alguien intentó conectarse con una clave incorrecta. La vigilancia continúa."
+  },
   "native": {
     "appName": "GuardedSleep Alpha",
     "roleBaby": "Dispositivo del bebé",
@@ -222,7 +230,6 @@
       "chargerTitle": "El dispositivo del bebé ya no carga",
       "chargerText": "Conecta el dispositivo del bebé para que aguante la noche.",
       "securityTitle": "Clave incorrecta",
-      "securityText": "Alguien intentó conectarse con una clave incorrecta. La vigilancia continúa.",
       "publicTitle": "Alarma de GuardedSleep",
       "fgsMissingTitle": "Sin vigilancia en segundo plano",
       "fgsMissingText": "Abre GuardedSleep para reactivar la vigilancia en segundo plano."
@@ -402,8 +409,6 @@
         "cantReach": "No se puede contactar con {name} — sigue intentándolo",
         "lostFor": "Sin conexión desde hace {duration}",
         "babyStopped": "{name} dejó de vigilar",
-        "needsPairing": "Estos dispositivos ya no están emparejados. Vuelva a emparejarlos para seguir vigilando.",
-        "updateRequired": "Uno de los dispositivos necesita actualizar GuardedSleep para seguir vigilando.",
         "idle": "Sin vigilancia",
         "weak": "Conexión débil — el sonido puede cortarse",
         "restoredAfter": "Conectado de nuevo tras {duration}. Vuelve a oír a su hijo.",
@@ -440,11 +445,6 @@
         },
         "ack": "Estoy comprobando",
         "ackNote": "Sonido apagado durante {time}. Le avisaremos de nuevo si sigue sin conexión.",
-        "cause": {
-          "server": "Este dispositivo no llega al servidor de conexión. Compruebe su conexión a Internet.",
-          "peer": "El dispositivo del bebé no responde. Compruebe que está encendido y muestra GuardedSleep.",
-          "media": "Los dispositivos se encontraron, pero el sonido no pasa. Pruebe la misma Wi-Fi en ambos."
-        },
         "soundNote": "Un tono de alarma suave se repite hasta que lo compruebe.",
         "soundNoteUrgent": "La alarma suena hasta que lo compruebe."
       },
