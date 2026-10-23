@@ -33,6 +33,8 @@ export async function launchDualContexts(opts: {
   baseUrl?: string;
   /** Signaling URL seeded into both browsers (default: the e2e server). */
   signalUrl?: string;
+  /** Browser permissions for both contexts (default: the microphone only). */
+  permissions?: string[];
 }): Promise<DualContexts> {
   const baseUrl = opts.baseUrl ?? "http://127.0.0.1:5173";
   // A LAN IP over plain http is not a secure context; treat it as one so getUserMedia works.
@@ -64,12 +66,12 @@ export async function launchDualContexts(opts: {
   const baby = await browserBaby.newContext({
     baseURL: baseUrl,
     ignoreHTTPSErrors: true,
-    permissions: ["microphone"],
+    permissions: opts.permissions ?? ["microphone"],
   });
   const parent = await browserParent.newContext({
     baseURL: baseUrl,
     ignoreHTTPSErrors: true,
-    permissions: ["microphone"],
+    permissions: opts.permissions ?? ["microphone"],
   });
 
   const signalWs = opts.signalUrl ?? process.env.E2E_SIGNALING_URL ?? "ws://127.0.0.1:18787";

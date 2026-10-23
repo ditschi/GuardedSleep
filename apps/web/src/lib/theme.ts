@@ -49,3 +49,13 @@ export function storeThemeSetting(storage: Pick<Storage, "setItem">, setting: Th
     // Private window or site data off: nothing to do.
   }
 }
+
+/** The remembered theme setting, or null when none (or an unknown value) is stored. */
+export function readThemeSetting(storage: Pick<Storage, "getItem">): ThemeSetting | null {
+  try {
+    const value = storage.getItem(THEME_STORAGE_KEY);
+    return isThemeSetting(value) ? value : null;
+  } catch {
+    return null;
+  }
+}

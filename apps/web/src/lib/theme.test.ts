@@ -4,6 +4,7 @@ import {
   isThemeSetting,
   resolveTheme,
   THEME_COLOR,
+  readThemeSetting,
   storeThemeSetting,
   THEME_STORAGE_KEY,
   type ThemeSetting,
@@ -126,5 +127,20 @@ describe("storeThemeSetting", () => {
         "dark",
       ),
     ).not.toThrow();
+  });
+});
+
+describe("readThemeSetting", () => {
+  it("returns a stored setting and nothing for junk or blocked storage", () => {
+    expect(readThemeSetting({ getItem: () => "light" })).toBe("light");
+    expect(readThemeSetting({ getItem: () => "purple" })).toBeNull();
+    expect(readThemeSetting({ getItem: () => null })).toBeNull();
+    expect(
+      readThemeSetting({
+        getItem: () => {
+          throw new DOMException("blocked", "SecurityError");
+        },
+      }),
+    ).toBeNull();
   });
 });
