@@ -901,6 +901,12 @@
       "wakeLockLost": "La pantalla ya no se mantiene encendida: este dispositivo puede suspenderse y dejar de vigilar.",
       "wakeLockUnsupported": "Este navegador no puede mantener la pantalla encendida. Desactive la suspensión de pantalla en los ajustes del dispositivo.",
       "wakeLockRetry": "Mantener la pantalla encendida"
+    },
+    "night": {
+      "open": "Pantalla nocturna",
+      "label": "Pantalla nocturna. Se sigue vigilando. Toque para ver el estado.",
+      "monitoring": "Vigilando",
+      "leave": "Toque de nuevo para salir de la pantalla nocturna"
     }
   }
 }

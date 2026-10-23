@@ -901,6 +901,12 @@
       "wakeLockLost": "Der Bildschirm bleibt nicht mehr an, deshalb kann dieses Gerät einschlafen und die Überwachung beenden.",
       "wakeLockUnsupported": "Dieser Browser kann den Bildschirm nicht anhalten. Schalten Sie den Bildschirmschoner in den Geräteeinstellungen aus.",
       "wakeLockRetry": "Bildschirm anlassen"
+    },
+    "night": {
+      "open": "Nachtbildschirm",
+      "label": "Nachtbildschirm. Die Überwachung läuft weiter. Tippen, um den Status zu zeigen.",
+      "monitoring": "Überwachung läuft",
+      "leave": "Erneut tippen, um den Nachtbildschirm zu verlassen"
     }
   }
 }

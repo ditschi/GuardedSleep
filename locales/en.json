@@ -916,6 +916,12 @@
       "wakeLockLost": "The screen is no longer kept on, so this device may fall asleep and stop monitoring.",
       "wakeLockUnsupported": "This browser can't keep the screen on. Turn off screen sleep in this device's settings.",
       "wakeLockRetry": "Keep screen on"
+    },
+    "night": {
+      "open": "Night screen",
+      "label": "Night screen. Still monitoring. Tap to show status.",
+      "monitoring": "Still monitoring",
+      "leave": "Tap again to leave the night screen"
     }
   }
 }

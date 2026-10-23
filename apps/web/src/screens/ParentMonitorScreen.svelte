@@ -21,6 +21,7 @@
   import KeepAwakeNotice from "../lib/ui/KeepAwakeNotice.svelte";
   import ListenButton from "../lib/ui/ListenButton.svelte";
   import Meter from "../lib/ui/Meter.svelte";
+  import NightScreen from "../lib/ui/NightScreen.svelte";
   import {
     canRequestSilence,
     downForMs,
@@ -48,6 +49,11 @@
     if (after !== before) dismissed = after;
   });
   const fullScreen = $derived(fullScreenOf($parent, $everySecond.elapsedMs, dismissed));
+
+  // An alert replaces the night screen at once; it stays off afterwards, the parent is awake now.
+  $effect(() => {
+    if (fullScreen !== null) nightOpen = false;
+  });
 
   function dismiss(kind: FullScreenKind): void {
     dismissed = new Set(dismissed).add(kind);
@@ -165,6 +171,7 @@
   let probeOpen = $state(false);
   let moreOpen = $state(false);
   let stopOpen = $state(false);
+  let nightOpen = $state(false);
   let helpOpen = $state(false);
   let questionOpen = $state(false);
   let localOnly = $state(false);
@@ -326,11 +333,19 @@
       <Button variant="outline" testid="parent_probe" onclick={() => (probeOpen = true)}>
         {$t("native.ui.probe.button")}
       </Button>
-      <!-- The night screen button (7.2) joins this row. -->
+      <Button
+        variant="outline"
+        label={$t("webScreens.night.open")}
+        testid="parent_night_open"
+        onclick={() => (nightOpen = true)}
+      >
+        <Glyph name="moon" />
+      </Button>
       <Button variant="outline" testid="parent_overflow" onclick={() => (moreOpen = true)}>
         {$t("native.ui.common.more")}
       </Button>
     </div>
+    <NightScreen bind:open={nightOpen} statusText={headlineText} />
   </div>
 {/if}
 

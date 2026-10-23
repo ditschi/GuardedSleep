@@ -14,6 +14,7 @@
   import type { GlyphName, Tone } from "../lib/ui/glyphs";
   import Meter from "../lib/ui/Meter.svelte";
   import { babyFailureKey, coreMessageKey, isMicFailure } from "../lib/ui/messages";
+  import NightScreen from "../lib/ui/NightScreen.svelte";
   import ScreenHeader from "../lib/ui/ScreenHeader.svelte";
 
   const controller = useController();
@@ -21,6 +22,7 @@
   const { baby, deviceBattery, pageGuard } = controller;
 
   let stopOpen = $state(false);
+  let nightOpen = $state(false);
 
   interface StatusLook {
     key: MessageKey;
@@ -159,13 +161,25 @@
     </div>
   </div>
 
-  <!-- The night screen button (7.2) goes here, above the stop button. -->
   <div class="gs-fill"></div>
+
+  <Button
+    variant="tonal"
+    block
+    size="large"
+    testid="baby_night_open"
+    onclick={() => (nightOpen = true)}
+  >
+    <Glyph name="moon" />
+    {$t("webScreens.night.open")}
+  </Button>
 
   <Button variant="outline" block testid="baby_stop" onclick={() => (stopOpen = true)}>
     {$t("native.ui.baby.stop")}
   </Button>
 </div>
+
+<NightScreen bind:open={nightOpen} statusText={$t(status.key)} />
 
 <Dialog bind:open={stopOpen} title={$t("native.ui.stop.title")} testid="dialog_stop">
   <p>{$t("native.ui.stop.babyBody")}</p>

@@ -901,6 +901,12 @@
       "wakeLockLost": "L'écran ne reste plus allumé : cet appareil peut se mettre en veille et arrêter la surveillance.",
       "wakeLockUnsupported": "Ce navigateur ne peut pas garder l'écran allumé. Désactivez la mise en veille de l'écran dans les réglages de l'appareil.",
       "wakeLockRetry": "Garder l'écran allumé"
+    },
+    "night": {
+      "open": "Écran de nuit",
+      "label": "Écran de nuit. La surveillance continue. Touchez pour afficher l'état.",
+      "monitoring": "Surveillance en cours",
+      "leave": "Touchez de nouveau pour quitter l'écran de nuit"
     }
   }
 }
