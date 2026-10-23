@@ -19,10 +19,10 @@ See `proposal.md` (Why).
 - A sealed envelope on every mailbox.
 - No default TURN in the alpha.
 - Offline LAN in the alpha, as a separate change (`add-offline-lan`, retargeted to the alpha) applied after this one.
-- The baby device pins the first verified parent device.
+- The baby device pins the first verified parent device with a parent secret that travels only over the verified DTLS DataChannel (owner, 2026-10-23, second review), and shows the parent device's name with "Not my device".
 - Internet mailboxes are closed while an attempt is verified.
 
-**Critical review of 2026-10-23:** all CRITICAL and IMPORTANT findings are answered in the decisions below and in the review response at the end.
+**Critical reviews of 2026-10-23:** two passes. Every CRITICAL and IMPORTANT finding is answered in the decisions below and in the review-response tables at the end.
 
 ## Goals / Non-Goals
 
@@ -61,12 +61,13 @@ The `Link` holds a set of mailboxes instead of the single `Sig` machine. Kinds:
 
 **Behaviour:**
 
-- **Fan-out and de-duplication:** every envelope is sent to every open mailbox. Inbound envelopes are de-duplicated by envelope id (§2).
+- **Fan-out and de-duplication:** every envelope is sent to every open mailbox. Inbound envelopes are de-duplicated by envelope id only **after** they authenticate and pass the session checks (§2), so a corrupted copy from one relay cannot block the genuine copies.
 - **While an attempt is verified:**
   - The core closes all internet mailboxes. A `lan` listener stays (owner decision).
-  - Every 30 minutes the core opens them briefly for a reachability check: connect plus `REQ` and `EOSE` for Nostr, `hello` and `welcome` for a relay, without publishing anything.
+  - Every 30 minutes the core opens them briefly for a reachability check without any pairing identifier: for Nostr, a connect plus a `REQ` with a random throwaway filter, waiting for `EOSE`; for a relay, a connect and a WebSocket ping. Nothing is published.
+  - A stop sent while verified goes over the DataChannel only, because no internet mailbox is open.
   - If none is reachable, the core emits a hint, `recovery_path_unavailable`. The UI shows it calmly; it is not an alarm.
-- **On loss:** the core reopens every mailbox at once.
+- **On loss, and on entering `peer_stopped`:** the core reopens every mailbox at once, because it then has to hear the peer's new session.
 - **While not connected:** the core re-issues the subscription on each open Nostr mailbox every 60 s, because browsers cannot detect half-open sockets. This costs no events.
 
 Attempts, liveness, escalation and listen are unchanged. Loss is still detected on the DataChannel.
@@ -79,48 +80,79 @@ Attempts, liveness, escalation and listen are unchanged. Loss is still detected 
 
 **Keys:** one HKDF-SHA256 extract over the PSK with an empty salt, then a separate expand per purpose:
 
-| Purpose                | Info string                 | Output   |
-| ---------------------- | --------------------------- | -------- |
-| Envelope seal key      | `guardedsleep seal v1`      | 32 bytes |
-| Nostr tag key          | `guardedsleep nostr tag v1` | 32 bytes |
-| Nostr signing key seed | `guardedsleep nostr key v1` | 32 bytes |
+| Purpose                | Info string                  | Output   |
+| ---------------------- | ---------------------------- | -------- |
+| Envelope seal key      | `guardedsleep seal v1`       | 32 bytes |
+| Nostr tag key          | `guardedsleep nostr tag v1`  | 32 bytes |
+| Nostr signing key seed | `guardedsleep nostr key v1`  | 32 bytes |
+| Relay pick seed        | `guardedsleep relay pick v1` | 32 bytes |
 
-The pairing-proof MAC, the room id and the relay-admission key keep their existing derivations. No key is used for two purposes.
+- The room id and the relay-admission key keep their existing derivations on the same PRK.
+- The raw PSK is also the HMAC key of the existing pairing proof. That predates this change; it is noted, and no new use of the raw PSK is added.
 
-**Cipher:** XChaCha20-Poly1305 (RustCrypto `chacha20poly1305`, `default-features = false`, features `alloc`). The 24-byte nonce comes from an in-core CSPRNG, `ChaCha20Rng` from `rand_chacha` with `default-features = false`.
+**CSPRNG and seed:**
 
-- The CSPRNG is seeded with 32 bytes that the platform supplies in `start` (Android `SecureRandom`, web `crypto.getRandomValues`). It is deterministic in recorded traces, which keep the seed.
-- `SplitMix64` stays for non-secret ids only.
+- The CSPRNG is `chacha20` 0.10 with its `rng` feature (`ChaCha20Rng`), already in the lockfile through `rand 0.10`, so no duplicate `rand_core` appears.
+- It is seeded with 32 bytes in `LinkConfig.seed`, so construction fails without one. The platform draws a **fresh seed for every `Link` run** (Android `SecureRandom`, web `crypto.getRandomValues`). Reusing a seed would repeat nonces under a long-lived key.
+- The seed is secret-class: it predicts every nonce, session nonce and parent secret. Real seeds never appear in release or gate logs or traces. Only simulation traces with test PSKs record them, and the log canary covers seeds.
+- Session nonces, envelope nonces, BIP-340 `aux_rand`, the parent id and the parent secret all come from the CSPRNG. `SplitMix64` stays for the non-secret wire `aid` only.
+
+**Cipher:** XChaCha20-Poly1305 (RustCrypto `chacha20poly1305`, `default-features = false`, features `alloc`). Task 2.2 checks on the registry that the release is on the same RustCrypto generation as `hkdf 0.13`, `hmac 0.13` and `sha2 0.11`.
 
 **Envelope id:** the AEAD nonce, so it is authenticated implicitly.
 
-**Associated data:** `"gs-env/1" ‖ sender_role ‖ kind_of_message`, fixed-width encoded.
+**Associated data:** `"gs-env/1" ‖ sender_role ‖ message_class`, one byte each after the version string.
+
+- The header in clear is the version byte, role and class, followed by the nonce, the ciphertext and the tag.
+- Role and class are visible in the header (listed in "Relay-visible data"). They are not secret: the event's author key already reveals the role on Nostr.
 
 **Plaintext:**
 
-- `recipient_session` (16 bytes): the recipient's current session nonce, taken from its last `here`; all zeros for `here` itself.
+- `recipient_session` (16 bytes): all zeros for `here`, otherwise as below.
 - `sender_session` (16 bytes).
+- `seq` (u32): per sender session, starting at 0.
 - The message, as the existing JSON shapes.
-- Padding to a bucket ladder of 1, 4 and 8 KiB, chosen by message class.
+- Padding to a bucket ladder of 1, 4 and 8 KiB, chosen by message class. A message that does not fit its class's largest bucket is not sent: the core bundles fewer candidates per envelope instead. That is a sender bug, covered by a test.
 
-**Receiver rules:**
+**Sessions (answers review 2, C2 and I1):**
 
-- Reject envelopes that fail authentication, carry the receiver's own role, or repeat a nonce in the replay window (the last 1024 ids, or 10 minutes, whichever is larger).
-- Reject any message other than `here` whose `recipient_session` is not the receiver's current session.
-- The receiver draws a fresh session nonce at every `start` and process restart.
-
-This closes the stop replay through strfry retention: a stored stop carries the old session and is ignored after a restart.
+- **Drawing:** every `Link` run draws a fresh session nonce.
+- **Candidates:** a session the receiver has not seen in a `here` becomes a _candidate_. The receiver answers once with its own `here`, whose `recipient_session` is the candidate. Replies are limited to one `here` per candidate and at most one per 5 s overall.
+- **Confirmation:** the candidate becomes the peer's _current_ session only when an envelope arrives from it that carries the receiver's own current session as `recipient_session`. That proves the peer is live now.
+- **Gating:** attempts and `request_offer` over Nostr are gated on a confirmed session. In the spec, "fresh" means exactly this.
+- **Receiver checks** on every message other than `here`:
+  - `recipient_session` must be the receiver's current session;
+  - `sender_session` must be the peer's current confirmed session;
+  - `seq` must be new for that sender session (bitmap window of 256).
+- **Retirement:** a processed stop retires that sender session for good. Later `here` messages naming it are ignored, and the receiver keeps a bounded set of the last 16 retired sessions.
+- **Replay window:** in addition, one envelope-id window per `Link` run, across all mailboxes, never cleared on a mailbox reopen: 4096 ids or 30 minutes, whichever is larger.
+- **Effect:**
+  - A stored stop from an earlier baby session is ignored, whether or not the parent restarted, and so is the mirror case.
+  - An old `here` creates at most one candidate reply and never an attempt.
 
 **Epoch:** checked only for Nostr addressing (§3), never on relay or LAN mailboxes. A wrong clock therefore cannot break those.
 
-**Allowed relay-visible items, exhaustively:**
+**Allowed relay-visible items, exhaustively (testable capture list):**
 
-- on Nostr: the daily tag, the daily public keys, BIP-340 signatures, ciphertext under the seal key, and the event `created_at`;
-- on a relay: the derived room id, as today, and the ciphertext.
+- **On Nostr:**
+  - the kind K;
+  - the event id;
+  - `created_at`;
+  - the daily public key;
+  - the daily tag;
+  - the BIP-340 signature;
+  - random subscription ids;
+  - filter fields (`kinds`, `authors`, `#t`, `since`, plus random throwaway filters for probes);
+  - the envelope header (version, role, class), the nonce and the ciphertext with its tag.
+- **On our relay:**
+  - `hello`/`welcome`/`members`/`peer` with the derived room id, role, protocol version and client ids;
+  - `signal` with `to`/`from` and the sealed envelope;
+  - `ping`/`pong`;
+  - error codes.
 
-The log canary covers the PSK, every derived key, the room id and plaintext SDP. The tag is excluded only for relay-visible bytes.
+The log canary covers the PSK, every derived key, the seed, the parent secret, the room id and plaintext SDP. The tag is excluded only for relay-visible bytes.
 
-**AGENTS.md §7.3 amendment (exact wording for task 1.1):** "No custom transport crypto: media uses DTLS-SRTP. HKDF-SHA256 (distinct info strings per purpose) and HMAC-SHA256 only for the pairing proof, room and admission derivation, and the Nostr tag. XChaCha20-Poly1305 only for the signaling envelope, with 192-bit nonces from the in-core CSPRNG seeded by the platform. BIP-340 only for signing Nostr events, never for a trust decision."
+**AGENTS.md §7.3 amendment (exact wording for task 1.1, from review 2, I8):** "No custom transport crypto: media and DataChannel use DTLS-SRTP/DTLS. HKDF-SHA256 with one info string per purpose derives every key from the PSK. HMAC-SHA256 is used only for the pairing and parent proofs, admission and the Nostr tag. XChaCha20-Poly1305 is used only for the signaling envelope, with 192-bit nonces from the in-core CSPRNG seeded freshly by the platform at every start; a nonce never repeats under a key. BIP-340 is used only to sign Nostr events, never to authenticate the peer. Secret types use `secrecy`/`zeroize`."
 
 - **Pros:** operators see no SDP, candidates or fingerprints. The binding to the recipient's session defeats replay of stored events. One path for all kinds.
 - **Cons:** a new primitive, so it needs vectors, fuzzing and a security review. No forward secrecy: a later PSK compromise decrypts retained envelopes (SDP and IPs, never audio). That is recorded in the threat model.
@@ -131,11 +163,13 @@ The log canary covers the PSK, every derived key, the room id and plaintext SDP.
 **Epoch:** days since the Unix epoch, counted from **12:00 UTC**, as a u32 big-endian. The rollover therefore falls in the afternoon in Europe, not during the night.
 
 - The core needs a wall clock. A new input, `wall_clock(unix_s)`, is sent at `start`, with every tick, and after the platform observes a time change.
-- An unknown wall clock means no Nostr mailbox is opened, and the core emits the `clock_unknown` hint. Relay mailboxes still work.
+- The core cannot tell that its own clock is wrong. It therefore compares clocks with the peer: `here` and the DataChannel heartbeat carry the sender's wall clock. If the two differ by more than 10 minutes, the core raises the hint `clock_skew` on both devices. That is testable.
+- The `since` filter limits the tolerated skew to ±15 minutes.
+- A relay refusal that names `created_at` (too old or too new) raises `clock_skew` and does not park the relay. Spike unknown 9 measures the `created_at` tolerance per relay software.
 
 **Tag:** `base64url(HMAC-SHA256(tag_key, epoch_be32))[0..22]`.
 
-**Signing key:** the secp256k1 scalar is `HKDF-Expand(sign_seed, "role|" ‖ role ‖ epoch_be32)`, reduced modulo n, and rejected without a panic if it is 0. BIP-340 uses `k256` with `default-features = false` and features `schnorr` and `arithmetic`.
+**Signing key:** the secp256k1 scalar is `HKDF-Expand(sign_seed, "role|" ‖ role ‖ epoch_be32)`, reduced modulo n (bias about 2^-128, accepted) into a `NonZeroScalar`. If it is zero, there is no Nostr key for that epoch and role, and the device uses its other mailboxes. BIP-340 uses `k256` with `default-features = false` and features `schnorr` and `arithmetic`, with `aux_rand` from the CSPRNG.
 
 **Subscription:**
 
@@ -157,9 +191,9 @@ The log canary covers the PSK, every derived key, the room id and plaintext SDP.
   - at start;
   - after a network change;
   - after any mailbox reopens while the link is not connected;
-  - after a received `here` that carries a session the device has not seen before;
+  - once in reply to a new candidate session (§2), rate-limited;
   - while waiting, with backoff of 5, 15 and 60 s, then every 5 min.
-- Over Nostr the baby starts an attempt only after a fresh parent `here`, and the parent sends `request_offer` only after a fresh baby `here`.
+- Over Nostr the baby starts an attempt only for a confirmed parent session, and the parent sends `request_offer` only to a confirmed baby session (§2).
 - The attempt schedule of `link-supervision` still applies. Nostr adds this gating so the budget holds during long outages.
 
 **Budget and pacing:**
@@ -171,18 +205,50 @@ The log canary covers the PSK, every derived key, the room id and plaintext SDP.
 
 **Parking:** a refusal (`blocked`, `restricted`, `auth-required`, `pow`, `rate-limited`), invalid or forged events, or inbound floods park a relay with backoff of 1, 5 and 30 min.
 
-**Delivery:** an `OK` is not delivery. If an offer, answer or `request_offer` is not answered within 6 s, the same envelope (same id) is resent once to every open mailbox. The attempt is still abandoned at 20 s, as today.
+**Delivery:** an `OK` is not delivery. If an offer, answer or `request_offer` is not answered within 6 s, the same envelope (same envelope id) is resent once to every open mailbox. On Nostr it is wrapped in a new event with a new `created_at`, because relays drop an identical event id as a duplicate. The attempt is still abandoned at 20 s, as today.
 
-### 4. Parent pin (layer: core; pairing spec)
+### 4. Parent pin with a parent secret (layer: core; pairing spec)
 
-The parent draws a random 16-byte parent id at pairing and persists it with the pairing. It is sent inside sealed envelopes and confirmed over the verified DataChannel.
+The first review's design used a bearer parent id inside the envelopes. A PSK holder can decrypt those, so review 2 (C1) showed the pin was ineffective. The owner chose the parent secret (2026-10-23).
 
-- After its first verified attempt, the baby persists the parent id. On Android it is encrypted next to the PSK; on the web it is in memory only.
-- From then on the baby refuses `request_offer`, offers and answers from any other parent id until "Forget".
-- The invite closes after the first verification, as today, but is now enforced by the pin instead of `PARENT_CAP`.
+**At the first verification:**
 
-- **Pros:** a photographed QR code or an old install cannot take over the baby during an outage.
-- **Cons:** the PSK stays long-lived. Losing the real parent device means re-pairing (that is "Forget" on the baby).
+- The parent draws a random 32-byte `parent_secret` from the CSPRNG and sends it **only over the verified DTLS DataChannel**, never in an envelope.
+- The baby confirms receipt and emits `parent_pinned`. The platform persists the secret: on Android encrypted next to the PSK, on the web in memory only. There a reload means a new pairing, as for the PSK.
+- The parent persists the secret in the same way.
+
+**Every later attempt:**
+
+- Before the baby opens its microphone path for the parent, the parent proves itself over the DataChannel with `HMAC(parent_secret, "gs-parent-proof/1|" ‖ fp_parent ‖ fp_baby)`.
+- The baby checks it in constant time with its own view of both fingerprints.
+- A PSK holder who saw every relayed envelope cannot produce it. A PSK holder in the middle of two DTLS sessions is detected, because the fingerprints differ.
+
+**Early refusal:**
+
+- Envelopes from a pinned parent also carry `HMAC(parent_secret, envelope_nonce)[0..16]` inside the ciphertext.
+- The baby refuses other parents before attempting, which saves budget, and emits `security_warning` for each refused parent, rate-limited.
+
+**Interface:**
+
+- `LinkConfig.pinned_parent: Option<ParentSecret>` and `LinkEvent::ParentPinned { secret }`, persisted as `paired_before` is today.
+- It is listed in the bindings and in `api-snapshot`.
+
+**What the baby shows:**
+
+- After pinning, the parent device's name, sent over the DataChannel: "Connected to <name>".
+- A "Not my device" action, which leads to "Forget".
+- The copy says that forgetting on the parent alone leaves the baby pinned until it is forgotten there too.
+
+**"Show new code" while paired:** a new PSK replaces the old pairing and pin only after the new verification. Until then the old pairing keeps monitoring.
+
+**Our relay:** `PARENT_CAP` stays. A PSK holder can still squat the single parent slot on an own relay in setups that use only their own server. That is a denial of service only, because escalation still runs, and it is documented.
+
+- **Pros:**
+  - A photographed QR code, an old install or a PSK-holding relay cannot take over the baby after the first pairing.
+  - It also detects a man in the middle on later attempts.
+- **Cons:**
+  - The first pairing still trusts whoever verifies first within the 5-minute invite. The name display and "Not my device" make that visible.
+  - The PSK stays long-lived.
 - **Recommendation:** adopt. The post-pairing key change stays `IDEA`.
 
 ### 5. Invite v4 (layer: core codec)
@@ -201,7 +267,11 @@ The parent draws a random 16-byte parent id at pairing and persists it with the 
 
 **Mailbox update:** after verification the baby may send a sealed `mailboxes` message over the DataChannel. The parent replaces its stored set, so pairings survive relay churn and app updates without a re-pair.
 
-**Version skew:** the invite and the update carry hosts. A receiver uses them even if they are not in its own shipped list, as long as they pass the kind's URL rules. Both devices also add up to 2 relays from their own list, chosen deterministically from the PSK, so devices with overlapping lists still meet.
+**Version skew:** the invite and the update carry hosts.
+
+- **Android:** uses a received host even if its own shipped list lacks it, as long as the host passes the kind's URL rules.
+- **Web:** uses only hosts its CSP allows (§6), and ignores the rest, which is accepted skew.
+- **Both:** add up to 2 relays from their own list, chosen deterministically from the relay-pick seed, so devices with overlapping lists still meet.
 
 **v3:** rejected as `not_our_code`. Nothing has been released.
 
@@ -213,7 +283,7 @@ The parent draws a random 16-byte parent id at pairing and persists it with the 
 
 - operator in the EU, EEA or CH;
 - free for ephemeral events;
-- accepts **8 KiB** events;
+- accepts **16 KiB** events (an 8 KiB bucket is about 11–12 KB as an event);
 - no known logging of contents;
 - one entry per operator.
 
@@ -221,19 +291,24 @@ The parent draws a random 16-byte parent id at pairing and persists it with the 
 
 **Scheduled job:** the spike scripts are committed under `scripts/spike/` and run weekly as a non-blocking job. It needs a `docs/ci-gates.md` row.
 
-**Web CSP:** the web CSP's `connect-src` is generated from the relay list, our origin and configured own relays (amends `rebuild-web-client` "Browser security").
+**Web CSP (answers review 2, I9):**
+
+- `connect-src` is `'self'`, plus the shipped relay list, plus the own relays configured **for the deployment**.
+- The server's `--serve-web` and the nginx image emit the header from deployment settings, with the `<meta>` fallback for the defaults.
+- The web client offers own relays only from the deployment list, so the user cannot type arbitrary origins, and it ignores invite hosts outside its CSP.
+- A blanket `wss:` is never used.
 
 ### 7. ICE (layer: platform builds the ICE config from core-supplied lists)
 
 - **With an own relay mailbox configured:** only its STUN.
 - **Otherwise (the default):** the first 2 STUN entries of distinct operators (Nextcloud on 443/3478 and Telekom), queried in parallel by ICE.
-- Google and big-tech STUN are excluded, and a lint check fails on them in source.
+- Only STUN hosts in `data/stun-servers.json` are allowed, enforced by a lint check on client source and configuration.
 
 **TURN:** none by default; a user-entered TURN in Advanced. An attempt that fails with no relayed candidate maps to the existing `media_blocked` cause. Its level-2 troubleshooter copy is plain: "These two devices can't reach each other from where they are." Its actions are "Try again" and "Put both on the same Wi-Fi", plus "Advanced: TURN server" for experts. It never replaces the alarm.
 
 **Diagnostics:** a local view shows the connection type of the last attempt. It never leaves the device.
 
-**AGENTS.md §7.1 amendment (exact wording for task 1.1):** "Media, alerts and heartbeats never transit a third party, except an encrypted, user-entered TURN. Signaling may use vetted EU/EEA/CH mailboxes and STUN from `data/` (criteria in `alpha-connection-model`), with disclosure and an off switch on each device. Google and big-tech STUN are excluded."
+**AGENTS.md §7.1 amendment (exact wording for task 1.1, from review 2, I8):** "Media, alerts and heartbeats never transit a third party, except an encrypted, user-entered TURN. Signaling may use the vetted EU/EEA/CH mailboxes and STUN servers in `data/` (criteria: `openspec/specs/signaling-mailboxes`, "Curated public services"), only as sealed envelopes, so operators see only the items in "Relay-visible data", with disclosure and an off switch on each device. Only STUN hosts in `data/stun-servers.json` are allowed, enforced by lint."
 
 ### 8. Disclosure and off switch (layer: UI over contract models)
 
@@ -284,6 +359,12 @@ A **go/no-go gate** sits after the core work (tasks 2–3) and before Android an
 - **Lint failure on stale list entries:** would turn CI red by date.
 - **One change for everything:** too large to review and archive (owner, 2026-10-23: split, `add-offline-lan` follows).
 - **Automatic Cloudflare TURN like Signal; own EU TURN:** a US operator or a server run by the owner. Decided for beta with data.
+
+- **A bearer parent id inside envelopes:** a PSK holder decrypts it and copies it (review 2, C1).
+- **A short code compared on both screens at first pairing:** it would also catch a man in the middle at the first pairing, but costs a setup step. The owner chose the name display with "Not my device" (2026-10-23).
+- **Checking only `recipient_session`:** an old authentic stop from an earlier sender session would still mute escalation (review 2, C2).
+- **A blanket `wss:` in the web CSP:** it would let an injected script connect anywhere.
+- **Reachability probes with the pairing's tag and authors:** they would reveal the all-night monitoring pattern (review 2, I11).
 
 **Carried over from `add-stun-server-choice` (withdrawn by this change):**
 
@@ -348,3 +429,22 @@ Nothing is released.
 | Untestable scenarios                                                                   | `specs/*`, with timings named                                                                                                                                    |
 | Storage requirement                                                                    | `specs/pairing` "Encrypted storage"                                                                                                                              |
 | Operator consent                                                                       | §9                                                                                                                                                               |
+
+## Review response (second critical review 2026-10-23, security sections)
+
+| Finding                                 | Where it is answered                                                                                                                                                                                            |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C1 bearer parent id                     | §4 parent secret over DTLS and the parent proof; `specs/pairing`                                                                                                                                                |
+| C2 sender session not checked           | §2 sessions (confirmed sender session, retirement on stop); `specs/signaling-mailboxes` "Session-bound freshness"                                                                                               |
+| I1 replayed `here`                      | §2 candidate and confirmation, rate-limited replies, gating on a confirmed session                                                                                                                              |
+| I2 de-duplication before authentication | §1; `specs/signaling-mailboxes` "Parallel mailboxes"                                                                                                                                                            |
+| I3 window too short or reset            | §2 one window per run (4096 ids or 30 min) plus a `seq` bitmap per session                                                                                                                                      |
+| I4 wall clock                           | §3 clock comparison with the peer, `clock_skew` hint, `created_at` refusals not parked; spike unknown 9                                                                                                         |
+| I5 pin interface                        | §4 `LinkConfig.pinned_parent`, `LinkEvent::ParentPinned`; task 3.4                                                                                                                                              |
+| I6 first-pairing race                   | §4 name display, "Not my device", `security_warning`, "Show new code" rule                                                                                                                                      |
+| I7 seed and CSPRNG                      | §2 seed in `LinkConfig`, fresh per run, secret-class, `chacha20` `rng`                                                                                                                                          |
+| I8 guardrail wording                    | §2 and §7 exact texts                                                                                                                                                                                           |
+| I9 CSP versus skew                      | §5, §6                                                                                                                                                                                                          |
+| I10 LAN cleartext contradiction         | `add-offline-lan` design and task 2.2                                                                                                                                                                           |
+| I11 probes reveal the pattern           | §1 throwaway probes                                                                                                                                                                                             |
+| M1–M7                                   | §2 (oversize, header), §3 (`NonZeroScalar`, `aux_rand`, new event on resend), §1 (`peer_stopped` reopens; a stop while verified goes over the DataChannel), `add-offline-lan` (admission squat, PC key storage) |

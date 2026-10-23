@@ -4,13 +4,13 @@ Alpha (T0), after `alpha-connection-model`. Each task is a brief for the `implem
 
 ## 1. Relay and core
 
-- [ ] 1.1 LAN admission without a room id (`gs-relay-admit/2`), with a constant-time key loop over at most 4 keys on the PC relay. Vectors and relay tests. Verify: `scripts/cargo.sh test -p guardedsleep-relay`.
+- [ ] 1.1 LAN admission without a room id (`gs-relay-admit/2`), with a constant-time key loop over at most 4 memory-only keys on the PC relay, the newest admitted parent replacing the old socket, and no room id in `welcome` or `members`. Vectors and relay tests. Verify: `scripts/cargo.sh test -p guardedsleep-relay`.
 - [ ] 1.2 Core `lan` mailbox: the LAN address in sealed `here` and in the mailbox update, and NSD candidates as inputs with the retry timing in the core. Verify: sim scenario "baby gets a new DHCP address offline → the parent recovers without re-pairing".
 
 ## 2. Android
 
 - [ ] 2.1 Listener on the `relay` crate: lifecycle per active session, locks, the fixed default port with a fallback, the opaque NSD token, admission, closing unauthenticated sockets within 5 s. Verify: JVM tests, `just verify-android`.
-- [ ] 2.2 The private-address cleartext rule: the network security config plus one platform check. Update the release-APK assertion so the base config stays restrictive. Verify the permission set for the pinned target SDK and update `add-android-release` 1.4 if needed. Verify: JVM tests, `just build-android` with the release check.
+- [ ] 2.2 The private-address cleartext rule: a permissive base network security config plus one guarded connection factory with the address check, a lint or test against direct socket and HTTP client construction, and the parser test list in `design.md`. Update the release-APK assertion to check the guarded factory, not a restrictive config. Verify the permission set for the pinned target SDK and update `add-android-release` 1.4 if needed. Verify: JVM tests, `just build-android` with the release check.
 - [ ] 2.3 Parent NSD browse and admission tries. Copy for offline use and for a blocked LAN, in `locales/*.json`. Verify: JVM tests, Roborazzi in the pinned image.
 
 ## 3. Server local mode and web

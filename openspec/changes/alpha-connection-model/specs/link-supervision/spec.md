@@ -46,16 +46,16 @@ Offers and candidates SHALL be accepted only from envelopes that authenticate un
 
 ### Requirement: Deterministic attempt identity
 
-Attempts SHALL be identified by a local `u32` handle between core and platform and by a 128-bit wire `aid` drawn from a PRNG seeded by `start{entropy}`, so that recorded traces replay deterministically. Envelope nonces SHALL come from a separate cryptographic generator seeded by 32 random bytes the platform supplies in `start`; traces SHALL record that seed.
+Attempts SHALL be identified by a local `u32` handle between core and platform and by a 128-bit wire `aid` drawn from a PRNG seeded by `start{entropy}`, so that recorded traces replay deterministically. Envelope nonces, session nonces and the parent secret SHALL come from a separate cryptographic generator seeded by 32 random bytes in the `Link` configuration, freshly drawn by the platform for every run; only simulation traces with test keys SHALL record that seed.
 
 #### Scenario: Trace replay
 
-- **WHEN** a recorded trace is replayed with its recorded `start` entropy and seed
+- **WHEN** a simulation trace is replayed with its recorded `start` entropy and seed
 - **THEN** the replay produces the same `aid` values, envelope nonces and actions
 
 #### Scenario: Missing seed
 
-- **WHEN** a platform starts a `Link` without the 32-byte seed
+- **WHEN** a platform constructs a `Link` without a 32-byte seed
 - **THEN** construction fails with a configuration error
 
 ### Requirement: Attempt scheduling
@@ -97,7 +97,7 @@ The `Link` SHALL keep retrying while monitoring is on. From escalation level 2 i
 
 ### Requirement: Deliberate stop is not an outage
 
-`stop` SHALL send a stop notice over the DataChannel and over every open mailbox before closing. On an authenticated stop notice for the current session the peer link SHALL close the verified attempt and go to `peer_stopped`: the parent raises one non-repeating alert, the baby shows a calm grey state, and no escalation runs. The link SHALL then wait until the peer announces a new session.
+`stop` SHALL send a stop notice over the DataChannel and over every open mailbox before closing. On an authenticated stop notice for the current session the peer link SHALL close the verified attempt and go to `peer_stopped`: the parent raises one non-repeating alert, the baby shows a calm grey state, and no escalation runs. The link SHALL then reopen its mailboxes and wait until the peer announces a new session that confirms.
 
 #### Scenario: Baby is stopped on purpose
 
@@ -106,7 +106,7 @@ The `Link` SHALL keep retrying while monitoring is on. From escalation level 2 i
 
 ### Requirement: Authenticated signaling stop
 
-A stop notice sent through a mailbox SHALL be a sealed envelope bound to the receiver's current session (`signaling-mailboxes`). Stop notices that fail authentication, name another session or repeat an envelope id SHALL be ignored, so a mailbox cannot mute escalation, including by replaying a stored stop after a restart.
+A stop notice sent through a mailbox SHALL be a sealed envelope bound to the receiver's current session (`signaling-mailboxes`). Stop notices that fail authentication, name another recipient session, come from a sender session that is not the peer's current confirmed session, or repeat an envelope id SHALL be ignored, so a mailbox cannot mute escalation, including by replaying a stored stop after a restart.
 
 #### Scenario: Relay forges a stop
 
@@ -116,6 +116,11 @@ A stop notice sent through a mailbox SHALL be a sealed envelope bound to the rec
 #### Scenario: Stored stop after a restart
 
 - **WHEN** a public relay serves an authentic stop notice from an earlier session to a restarted parent
+- **THEN** the parent ignores it and escalation continues as normal
+
+#### Scenario: Stored stop from a retired sender session
+
+- **WHEN** a mailbox injects an authentic stop from a baby session that has since been replaced by a new one
 - **THEN** the parent ignores it and escalation continues as normal
 
 ### Requirement: Signaling transport liveness

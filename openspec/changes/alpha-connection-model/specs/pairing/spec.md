@@ -28,26 +28,36 @@ The invite SHALL be UTF-8 JSON `{"v":4,"k":<PSK>,"m":[<mailbox>…],"x":<expiry>
 
 ### Requirement: One baby unit and one parent unit
 
-A pairing SHALL connect exactly one baby unit and one parent unit. The parent unit SHALL draw a random parent id at pairing and send it only inside sealed envelopes and over the verified DataChannel. After its first verified attempt the baby unit SHALL pin that parent id, close the invite, and refuse requests, offers and answers carrying any other parent id until the pairing is forgotten. On our relay a second parent SHALL still be refused with `PARENT_CAP`.
+A pairing SHALL connect exactly one baby unit and one parent unit. At the first verification the parent unit SHALL send a random 32-byte parent secret and its device name only over the verified DTLS DataChannel, never through a mailbox, and the baby unit SHALL pin that secret and close the invite. On every later attempt the baby unit SHALL open its microphone path for the parent only after the parent proves the secret, bound to both DTLS fingerprints, over the DataChannel, and SHALL refuse every other parent until the pairing is forgotten, raising a security warning. After pinning, the baby unit SHALL show the parent device's name with a "Not my device" action that forgets the pairing. On our relay a second parent SHALL still be refused with `PARENT_CAP`.
 
 #### Scenario: Second parent in the room
 
 - **WHEN** a second parent unit joins a room that already has a parent
 - **THEN** the relay refuses it with `PARENT_CAP` and the existing pairing is unaffected
 
-#### Scenario: Photographed QR code during an outage
+#### Scenario: Attacker holds the PSK and every relayed envelope
 
-- **WHEN** someone who photographed the invite tries to connect to the baby device while the real parent device is offline
-- **THEN** the baby device refuses every attempt from that device, and the real parent device still escalates the outage
+- **WHEN** someone who photographed the invite and recorded every envelope ever relayed tries to connect to the baby unit while the real parent unit is offline
+- **THEN** the baby unit never opens its microphone path for them, shows a security warning, and the real parent unit still escalates the outage
+
+#### Scenario: Man in the middle after pairing
+
+- **WHEN** a PSK holder relays between two separate DTLS sessions to the baby unit and the parent unit
+- **THEN** the parent proof fails because the fingerprints differ, and the baby unit refuses the attempt
+
+#### Scenario: Someone else paired first
+
+- **WHEN** the baby unit shows "Connected to" a device name the user does not recognise
+- **THEN** "Not my device" forgets the pairing and a new invite can be shown
 
 #### Scenario: Forget on the baby device
 
 - **WHEN** the user forgets the pairing on the baby device
-- **THEN** the pinned parent id is deleted and a new invite can pair a new parent device
+- **THEN** the pinned parent secret is deleted and a new invite can pair a new parent device
 
 ### Requirement: Encrypted storage of pairing material
 
-On Android the PSK, the derived room id, the mailbox set and the parent id SHALL be stored encrypted with an AES-GCM key held in the Android Keystore (StrongBox when available). Pairing material SHALL NOT appear in logs, Intents, Bundles, URLs or saved UI state, and app backup SHALL be disabled.
+On Android the PSK, the derived room id, the mailbox set and the parent secret SHALL be stored encrypted with an AES-GCM key held in the Android Keystore (StrongBox when available). Pairing material SHALL NOT appear in logs, Intents, Bundles, URLs or saved UI state, and app backup SHALL be disabled.
 
 #### Scenario: Pasted code in the UI
 

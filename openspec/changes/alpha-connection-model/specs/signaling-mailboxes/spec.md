@@ -8,12 +8,21 @@ Carry the signaling between a paired baby device and parent device over several 
 
 ### Requirement: Parallel mailboxes
 
-The core SHALL keep a set of mailboxes for a pairing (the ones named in the invite or a later mailbox update, plus configured own relays) and SHALL send every signaling envelope to all open mailboxes. It SHALL process the first copy of an envelope from any mailbox and drop later copies with the same envelope id. Losing one mailbox SHALL NOT close an attempt or the link while another mailbox reaches the peer.
+The core SHALL keep a set of mailboxes for a pairing (the ones named in the invite or a later mailbox update, plus configured own relays) and SHALL send every signaling envelope to all open mailboxes. Losing one mailbox SHALL NOT close an attempt or the link while another mailbox reaches the peer.
 
 #### Scenario: One relay goes down during setup
 
 - **WHEN** one of three mailboxes closes while an attempt is being set up
 - **THEN** the offer and answer still arrive through the remaining mailboxes and the attempt verifies within the 20 s attempt limit
+
+### Requirement: De-duplication after authentication
+
+The core SHALL process the first copy of an envelope that authenticates and passes the session checks, from any mailbox, and drop later copies with the same envelope id. An envelope id SHALL be recorded only after those checks.
+
+#### Scenario: Corrupted copy arrives first
+
+- **WHEN** one relay forwards a corrupted copy of an envelope before the other relays deliver the genuine one
+- **THEN** the corrupted copy is dropped and the genuine copy is processed
 
 #### Scenario: Duplicate delivery
 
@@ -22,7 +31,7 @@ The core SHALL keep a set of mailboxes for a pairing (the ones named in the invi
 
 ### Requirement: Mailboxes closed while connected
 
-While an attempt is verified, the core SHALL close all internet mailboxes and SHALL open them briefly every 30 minutes to check reachability without publishing anything. If no mailbox is reachable it SHALL emit the hint `recovery_path_unavailable`, which the UI shows calmly and never as an alarm. On loss of the verified attempt the core SHALL reopen every mailbox at once.
+While an attempt is verified, the core SHALL close all internet mailboxes and SHALL open them briefly every 30 minutes to check reachability without publishing anything and without sending any value derived from the PSK. If no mailbox is reachable it SHALL emit the hint `recovery_path_unavailable`, which the UI shows calmly and never as an alarm. On loss of the verified attempt the core SHALL reopen every mailbox at once.
 
 #### Scenario: A whole night of stable monitoring
 
@@ -48,19 +57,42 @@ Every signaling message on every mailbox SHALL be sealed with XChaCha20-Poly1305
 - **WHEN** a mailbox operator stores and inspects every message of a session
 - **THEN** it finds no SDP, ICE candidate, fingerprint, LAN address, parent id or device name, and all messages of one class have the same length
 
+### Requirement: Session confirmation
+
+Each device SHALL draw a fresh session nonce for every `Link` run and announce it in `here`. A session SHALL become the peer's current session only after an envelope from it carries the receiver's own current session; until then it is a candidate, answered with at most one `here`.
+
+#### Scenario: Old presence replayed
+
+- **WHEN** a relay replays a `here` from an earlier session of the peer
+- **THEN** the receiver sends at most one reply and starts no attempt, because the old session never confirms
+
 ### Requirement: Session-bound freshness
 
-Each device SHALL draw a fresh session nonce at every start and process restart and announce it in `here`. Every message other than `here` SHALL carry the recipient's current session nonce inside the ciphertext, and a receiver SHALL drop messages for another session. A receiver SHALL also drop envelopes that fail authentication, carry its own role, or repeat an envelope id within the replay window.
+Every message other than `here` SHALL carry the recipient's current session and the sender's session and sequence number inside the ciphertext; a receiver SHALL drop messages whose recipient session is not its own current session, whose sender session is not the peer's current confirmed session, or whose sequence number or envelope id was already seen in this run. A processed stop SHALL retire the sender's session for good.
 
 #### Scenario: Stop replayed after a parent restart
 
 - **WHEN** a relay serves the baby's earlier stop notice to a parent that has just restarted
 - **THEN** the parent ignores it and escalation continues as normal
 
+#### Scenario: Stored baby stop after the baby restarted
+
+- **WHEN** the baby stopped on purpose, started again with a new session, and later loses the link while a relay injects the old stop to the unchanged parent
+- **THEN** the parent ignores it because the stop names a retired baby session, and escalation continues as normal
+
+#### Scenario: Stored parent stop after the parent restarted
+
+- **WHEN** the parent stopped on purpose, started again, and a relay later injects the old parent stop to the unchanged baby
+- **THEN** the baby ignores it
+
+### Requirement: Replay state per run
+
+The replay state (envelope ids and sequence numbers) SHALL cover the whole `Link` run across all mailboxes and SHALL NOT be cleared when a mailbox reopens.
+
 #### Scenario: Replayed envelope
 
-- **WHEN** an attacker resends a captured envelope within the same session
-- **THEN** the receiver drops it without changing state
+- **WHEN** an attacker resends a captured envelope within the same run
+- **THEN** the receiver drops it without changing state, also after the mailbox reopened
 
 #### Scenario: Reflected envelope
 
@@ -81,19 +113,29 @@ On public relays, the tag and signing keys SHALL be derived from the PSK and a d
 - **WHEN** one device's clock is five minutes ahead around 12:00 UTC and the link is lost
 - **THEN** the devices still exchange envelopes and the attempt verifies
 
-#### Scenario: Old phone with a wrong clock on a relay mailbox
+#### Scenario: Clocks of the two devices disagree
 
-- **WHEN** a device's clock is a day off and the pairing has an own relay mailbox
-- **THEN** pairing and recovery through the relay work, and the device shows that the internet services need a correct clock
+- **WHEN** the two devices' wall clocks differ by more than ten minutes
+- **THEN** both devices show that the internet services need a correct clock, and pairing and recovery through a relay mailbox still work
+
+#### Scenario: Relay refuses an event as too old
+
+- **WHEN** a relay refuses an event because of its creation time
+- **THEN** the device shows the clock hint and does not park the relay
 
 ### Requirement: Relay-visible data
 
-A public relay SHALL receive only: the daily tag, the daily public keys, BIP-340 signatures, `created_at`, and ciphertext under the envelope key. Our relay SHALL receive only the derived room id, protocol fields and ciphertext. No other PSK-derived value, no PSK and no plaintext signaling SHALL leave the device.
+A public relay SHALL receive only the event kind, event id, creation time, daily public key, daily tag and signature, random subscription ids and filter fields, and the envelope header (version, role, class), nonce and ciphertext. Our relay SHALL receive only its protocol fields (derived room id, role, protocol version, client ids, error codes, ping) and sealed envelopes.
+
+#### Scenario: No secret leaves through a mailbox
+
+- **WHEN** a device's mailbox traffic is searched for the PSK, every derived key, the seed, the parent secret and plaintext SDP in any encoding
+- **THEN** none of them is found
 
 #### Scenario: Captured relay traffic
 
-- **WHEN** the bytes a device sends to a public relay during pairing and recovery are captured
-- **THEN** they contain no value outside the allowed list
+- **WHEN** the bytes a device sends to public relays and to our relay during pairing, recovery and reachability checks are captured
+- **THEN** every field is on the allowed list, and no reachability check contains the tag or a public key of the pairing
 
 ### Requirement: Event budget on public relays
 

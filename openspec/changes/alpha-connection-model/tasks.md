@@ -14,17 +14,17 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 
 ## 2. Core inputs and envelope
 
-- [ ] 2.1 New `Link` inputs: a 32-byte `seed` in `start`, feeding an in-core `ChaCha20Rng` (`rand_chacha`); and `wall_clock(unix_s)` at start, with ticks and on time changes. Construction fails without a seed. Traces record both inputs; existing traces are re-blessed with a fixed seed and must show no other diff. Update the bindings and `just api-snapshot`. Verify: core tests, sim tests, `just api-check`.
+- [ ] 2.1 New `Link` inputs: a 32-byte `LinkConfig.seed`, drawn fresh for every run, feeding an in-core `ChaCha20Rng` (`chacha20` 0.10 with feature `rng`, no `rand_chacha`); and `wall_clock(unix_s)` at start, with ticks and on time changes, used only for Nostr. Construction fails without a seed. The seed is secret-class: never logged, and recorded only in simulation traces. Traces record both inputs; existing traces are re-blessed with a fixed seed and must show no other diff. Update the bindings and `just api-snapshot`. Verify: core tests, sim tests, `just api-check`.
 - [ ] 2.2 `envelope` module:
   - HKDF-SHA256 extract with an empty salt, then expand per purpose (`guardedsleep seal v1`, `guardedsleep nostr tag v1`, `guardedsleep nostr key v1`);
   - XChaCha20-Poly1305 (`chacha20poly1305`, feature `alloc`); nonce from the CSPRNG; nonce = envelope id;
   - associated data `"gs-env/1" ‖ role ‖ class`;
-  - plaintext of `recipient_session`, `sender_session`, message and padding over the bucket ladder (1, 4, 8 KiB);
-  - a replay window (1024 ids or 10 min);
-  - rejection of a bad tag, own role, wrong session and replays;
+  - a clear header (version, role, class) and a plaintext of `recipient_session`, `sender_session`, `seq`, message and padding over the bucket ladder (1, 4, 8 KiB), with a refusal to send anything oversized;
+  - session candidates and confirmation, retirement on stop, a `seq` bitmap per session, and one replay window per run (4096 ids or 30 min) never cleared on a mailbox reopen;
+  - rejection of a bad tag, own role, wrong recipient or sender session and replays; de-duplication only after authentication;
   - parser lint denies; no `Debug` of keys; proptests (round trip, no reflection, no replay).
 
-  Verify: `scripts/cargo.sh test -p guardedsleep-core`; `just deny` with the dependency count re-blessed and justified.
+  Verify: `scripts/cargo.sh test -p guardedsleep-core`, including the tests "stored stop from a retired sender session" and "corrupted copy first"; `just deny` with the dependency count re-blessed and justified; the registry check that `chacha20poly1305` and `k256` releases are on the `rand_core 0.10` generation.
 
 - [ ] 2.3 Envelope conformance vectors (valid, wrong key, own role, wrong session, replay, truncated, each bucket) through every binding, and a `cargo-fuzz` target for envelope parsing. Verify: core tests, `just test-wasm`, the fuzz target builds.
 
@@ -41,13 +41,23 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 
   Replace v3 in `ffi`, `wasm` and `packages/core-wasm`, with new conformance vectors and `just api-snapshot`. Verify: `just api-check`, the core and core-wasm tests.
 
-- [ ] 3.4 Presence and sessions: a session nonce per start; sealed `here`; offer direction, accepted senders, scheduling and causes over presence (`specs/link-supervision`); parent id and pin; closing the mailboxes while verified, the 30-minute reachability check and the `recovery_path_unavailable` hint; the mailbox update over the DataChannel. Verify: sim scenarios "photographed QR during an outage is refused", "all mailboxes dead at a reachability check", "mailbox update after relay churn".
+- [ ] 3.4 Presence, sessions and parent pin:
+  - sealed `here` with the wall clock; offer direction, accepted senders, scheduling and causes over confirmed sessions (`specs/link-supervision`); the `clock_skew` hint;
+  - the parent secret and device name over the DataChannel only, and the parent proof `HMAC(parent_secret, "gs-parent-proof/1|" ‖ fp_parent ‖ fp_baby)` before the microphone path opens;
+  - early refusal with a MAC over the nonce, and a rate-limited `security_warning`;
+  - `LinkConfig.pinned_parent` and `LinkEvent::ParentPinned`, in the bindings and `api-snapshot`;
+  - closing the mailboxes while verified, throwaway-filter reachability checks and the `recovery_path_unavailable` hint; reopening on `peer_stopped`;
+  - the mailbox update over the DataChannel.
+
+  Verify: sim scenarios "attacker with the PSK and every envelope is refused", "man in the middle after pairing is refused", "all mailboxes dead at a reachability check", "mailbox update after relay churn", "stored baby stop after the baby restarted"; a capture test that no probe contains the tag or a key.
+
 - [ ] 3.5 Nostr mailbox:
   - epoch from 12:00 UTC (u32 BE), tag, per-role keys (`k256` with features `schnorr` and `arithmetic`; scalar reduced, zero rejected);
   - NIP-01 frames with ASCII base64url content only and 64 KiB caps;
   - subscription with `since` = now − 15 min and dual epochs for the hour around the change;
   - re-subscribe at the change and every 60 s while not connected;
-  - presence-gated attempts, pacing of ≤ 2/s, ≤ 6 per attempt, ≤ 120 per hour, parking with 1/5/30-minute backoff, an inbound cap, and a resend once after 6 s;
+  - attempts gated on a confirmed session, pacing of ≤ 2/s, ≤ 6 per attempt, ≤ 120 per hour, parking with 1/5/30-minute backoff (not for `created_at` refusals, which raise `clock_skew`), an inbound cap, and a resend once after 6 s in a new event;
+  - `NonZeroScalar` keys (no key for that epoch on zero) and `aux_rand` from the CSPRNG;
   - pick the ephemeral kind and record it in the spec.
 
   Verify: core tests; NIP-01 id and signature vectors checked against an independent implementation; a fuzz target for NIP-01 frames; sim scenarios "relay accepts but never delivers", "clock five minutes off at the epoch change", "one-hour outage stays within budget".
@@ -63,7 +73,7 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 ## 4. Go/no-go
 
 - [ ] 4.1 Commit the spike scripts to `scripts/spike/` and add a CLI soak prototype on the core (`scripts/spike/soak`), plus a weekly non-blocking job with its `docs/ci-gates.md` row. Verify: the job runs once on a branch.
-- [ ] 4.2 Owner-run gate: one night on 3 EU relays, a burst test behind one CGNAT IP, the tag-only filter, and LTE / IPv6-only. Record the results in `spike.md`. Go needs at least 2 of 3 relays without loss and setup p95 < 3 s. On no-go, Nostr moves to beta and tasks 5–6 drop their Nostr parts. Verify: the decision is recorded in `design.md` §9.
+- [ ] 4.2 Owner-run gate: one night on 3 EU relays, a burst test behind one CGNAT IP, the tag-only filter, LTE / IPv6-only, and the `created_at` tolerance per relay software (spike unknown 9). Record the results in `spike.md`. Go needs at least 2 of 3 relays without loss and setup p95 < 3 s. On no-go, Nostr moves to beta and tasks 5–6 drop their Nostr parts. Verify: the decision is recorded in `design.md` §9.
 - [ ] 4.3 Owner task: contact the listed relay operators about acceptable use and logging, and record their answers in the data notes. Verify: the notes are present for every shipped relay.
 
 ## 5. Server and Android
@@ -80,6 +90,7 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 
 - [ ] 5.3 Android UI:
   - the Connection section with the disclosure and "Who are they?";
+  - on the baby: "Connected to <name>" with "Not my device", the security warning for refused parents, and the copy that forgetting on the parent alone leaves the baby paired;
   - Advanced: the off switch, own relays and TURN;
   - the diagnostics view and the `media_blocked` troubleshooter copy;
   - "Make brighter" for the larger QR code;
@@ -98,13 +109,13 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 
 ## 7. Integration
 
-- [ ] 7.1 Add the log canary (AGENTS.md §7.6): the simulation and gate runs pair with a known PSK, and CI fails if the PSK, a derived key, the room id or plaintext SDP appears in any log in any encoding. The tag is allowed in relay-visible bytes and not in logs. Verify: the canary test fails on a planted leak and passes otherwise.
+- [ ] 7.1 Add the log canary (AGENTS.md §7.6): the simulation and gate runs pair with a known PSK, and CI fails if the PSK, a derived key, the seed, the parent secret, the room id or plaintext SDP appears in any log in any encoding. The tag is allowed in relay-visible bytes and not in logs. Verify: the canary test fails on a planted leak and passes otherwise.
 - [ ] 7.2 `GS_STRICT=1 just ci` green on the wave branch.
 
 ## Workflow follow-up
 
 - Archive `rebuild-web-client` first. Its deltas also modify `pairing` "Invite payload v3" and `signaling-relay` "Client ICE configuration" and add "One invite codec in the core", `web-client` "Copy code without sharing" and "Browser security". Re-check this change's MODIFIED blocks against the merged specs before archiving it.
-- Second Critical Reviewer pass on the security sections (envelope, sessions, parent pin, Nostr derivations) before `/opsx:apply`. The originator answers every CRITICAL and IMPORTANT finding.
+- Second Critical Reviewer pass done (2026-10-23); its findings are answered in `design.md`. Security Architect review of tasks 2.2 and 3.4 diffs before merging them.
 - Role reviews at the end of implementation: Technical Architect, Security Architect, UX.
 - The owner decides project TURN for beta with the hardware-round data (alpha: no default TURN, owner 2026-10-23).
 - `mise exec -- openspec archive alpha-connection-model --yes`, then `openspec validate --all --strict`.
