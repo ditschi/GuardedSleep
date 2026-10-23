@@ -314,6 +314,22 @@
     font-size: 0.875rem;
   }
 
+  /* Skip link: off-screen until it takes keyboard focus. */
+  .gs-skip {
+    position: absolute;
+    inset-block-start: var(--gs-space-2);
+    inset-inline-start: var(--gs-space-2);
+    z-index: 10;
+    padding: var(--gs-space-3) var(--gs-space-4);
+    border-radius: var(--gs-radius-m);
+    background: var(--gs-primary);
+    color: var(--gs-on-primary);
+    transform: translateY(-300%);
+  }
+  .gs-skip:focus {
+    transform: none;
+  }
+
   /* Visually hidden, still read by screen readers. */
   .gs-sr-only {
     position: absolute;

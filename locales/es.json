@@ -870,5 +870,17 @@
       "hidden": "Esta pestaña está oculta. El navegador puede pausarla: tráigala al frente.",
       "notCharging": "No se está cargando. Conecte este dispositivo a la corriente o la batería puede agotarse durante la noche."
     }
+  },
+  "webShell": {
+    "route": {
+      "role": "¿Qué dispositivo es este?",
+      "babyPair": "Vincular el dispositivo del bebé",
+      "baby": "Dispositivo del bebé",
+      "parentPair": "Vincular el dispositivo de los padres",
+      "parent": "Dispositivo de los padres",
+      "settings": "Ajustes"
+    },
+    "skipToContent": "Saltar al contenido",
+    "dismiss": "Cerrar"
   }
 }

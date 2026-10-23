@@ -869,5 +869,17 @@
       "hidden": "This tab is hidden. The browser may pause it — bring it to the front.",
       "notCharging": "Not charging. Plug this device in, or the battery may run out overnight."
     }
+  },
+  "webShell": {
+    "route": {
+      "role": "Which device is this?",
+      "babyPair": "Pair the baby device",
+      "baby": "Baby device",
+      "parentPair": "Pair the parent device",
+      "parent": "Parent device",
+      "settings": "Settings"
+    },
+    "skipToContent": "Skip to content",
+    "dismiss": "Dismiss"
   }
 }

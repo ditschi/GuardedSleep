@@ -1,4 +1,5 @@
 import { readable, type Readable } from "svelte/store";
+import type { MessageKey } from "./i18n/keys";
 
 /**
  * History API router: clean paths on `pushState`/`popstate`. Both hosts serve `index.html` for
@@ -13,7 +14,7 @@ export interface Route {
   readonly id: RouteId;
   readonly path: string;
   /** Catalogue key of the screen name; used for `document.title` and the heading. */
-  readonly titleKey: string;
+  readonly titleKey: MessageKey;
 }
 
 export const ROUTES: readonly Route[] = [

@@ -870,5 +870,17 @@
       "hidden": "Cet onglet est masqué. Le navigateur peut le mettre en pause — ramenez-le au premier plan.",
       "notCharging": "Ne charge pas. Branchez cet appareil, sinon la batterie peut se vider pendant la nuit."
     }
+  },
+  "webShell": {
+    "route": {
+      "role": "Quel appareil est-ce ?",
+      "babyPair": "Associer l'appareil bébé",
+      "baby": "Appareil bébé",
+      "parentPair": "Associer l'appareil parent",
+      "parent": "Appareil parent",
+      "settings": "Réglages"
+    },
+    "skipToContent": "Aller au contenu",
+    "dismiss": "Fermer"
   }
 }

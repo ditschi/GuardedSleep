@@ -870,5 +870,17 @@
       "hidden": "Dieser Tab ist verdeckt. Der Browser kann ihn pausieren – holen Sie ihn in den Vordergrund.",
       "notCharging": "Lädt nicht. Schließen Sie dieses Gerät an den Strom an, sonst kann der Akku über Nacht leer werden."
     }
+  },
+  "webShell": {
+    "route": {
+      "role": "Welches Gerät ist das?",
+      "babyPair": "Babygerät koppeln",
+      "baby": "Babygerät",
+      "parentPair": "Elterngerät koppeln",
+      "parent": "Elterngerät",
+      "settings": "Einstellungen"
+    },
+    "skipToContent": "Zum Inhalt springen",
+    "dismiss": "Schließen"
   }
 }
