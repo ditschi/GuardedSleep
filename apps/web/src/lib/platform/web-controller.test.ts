@@ -612,16 +612,16 @@ describe("WebController: TURN server", () => {
 
   it("reports the entry without the password and keeps it on an empty field", async () => {
     const t = setup();
-    t.controller.setTurnServer(TURN, "test-only", "pw");
+    t.controller.setTurnServer(TURN, "test-only", "turn-pw-test-only");
     expect(get(t.controller.settings)).toMatchObject({
       turnUrl: TURN,
       turnUsername: "test-only",
       turnPasswordSaved: true,
     });
-    expect(JSON.stringify(get(t.controller.settings))).not.toContain('pw"');
+    expect(JSON.stringify(get(t.controller.settings))).not.toContain("turn-pw-test-only");
     expect(t.controller.setTurnServer(TURN, "test-only", "")).toBe("saved");
     const ice = await babyRun(t);
-    expect(ice[1]).toMatchObject({ credential: "pw" });
+    expect(ice[1]).toMatchObject({ credential: "turn-pw-test-only" });
   });
 
   it("rejects bad input and keeps the previous entry", () => {

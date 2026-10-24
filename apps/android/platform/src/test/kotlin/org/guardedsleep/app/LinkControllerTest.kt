@@ -344,12 +344,12 @@ class LinkControllerTest {
     fun turnServerIsSealedAndMirroredWithoutPassword() {
         val u = unit("turn1", Role.PARENT)
         val c = u.controller
-        assertEquals(TurnSaveResult.SAVED, c.setTurnServer(" turn:h:3478 ", "user", "pw"))
+        assertEquals(TurnSaveResult.SAVED, c.setTurnServer(" turn:h:3478 ", "user", "turn-pw-test-only"))
         assertEquals("turn:h:3478", c.settings.value.turnUrl)
         assertEquals("user", c.settings.value.turnUsername)
         assertTrue(c.settings.value.turnPasswordSaved)
-        assertFalse(c.settings.value.toString().contains("pw"))
-        await("sealed") { u.turn.load()?.credential == "pw" }
+        assertFalse(c.settings.value.toString().contains("turn-pw-test-only"))
+        await("sealed") { u.turn.load()?.credential == "turn-pw-test-only" }
 
         // Empty password with unchanged address and user name keeps the saved one.
         assertEquals(TurnSaveResult.SAVED, c.setTurnServer("turn:h:3478", "user", ""))
