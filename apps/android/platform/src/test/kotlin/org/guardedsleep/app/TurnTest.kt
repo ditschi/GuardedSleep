@@ -74,6 +74,47 @@ class TurnTest {
         assertTrue(TurnServerInput.validate(url, "", "") is Result.Ok)
     }
 
+    private val saved = TurnCredentials("turn:h", "u", "pw")
+
+    private fun savedEntry(r: TurnServerInput.Resolution) =
+        (r as TurnServerInput.Resolution.Saved).turn
+
+    @Test
+    fun resolveKeepsTheSavedPasswordForAnUnchangedEntry() {
+        assertEquals(saved, savedEntry(TurnServerInput.resolve(saved, "turn:h", "u", "")))
+    }
+
+    @Test
+    fun resolveDoesNotKeepItWhenAddressOrUserNameChanged() {
+        val invalid = TurnServerInput.Resolution.Invalid(Result.InvalidCredentials)
+        assertEquals(invalid, TurnServerInput.resolve(saved, "turn:other", "u", ""))
+        assertEquals(invalid, TurnServerInput.resolve(saved, "turn:h", "v", ""))
+    }
+
+    @Test
+    fun resolveTrimsAddressAndUserNameButNotThePassword() {
+        assertEquals(
+            TurnCredentials("turn:h", "u", " pw "),
+            savedEntry(TurnServerInput.resolve(null, " turn:h ", " u ", " pw ")),
+        )
+    }
+
+    @Test
+    fun resolveClearsOnAnEmptyAddress() {
+        assertEquals(
+            TurnServerInput.Resolution.Cleared,
+            TurnServerInput.resolve(saved, " ", "", ""),
+        )
+    }
+
+    @Test
+    fun resolveReportsAnInvalidAddress() {
+        assertEquals(
+            TurnServerInput.Resolution.Invalid(Result.InvalidAddress),
+            TurnServerInput.resolve(saved, "stun:x", "u", "pw"),
+        )
+    }
+
     @Test
     fun storeRoundTripAndClear() {
         val cipher = FakeCipher()

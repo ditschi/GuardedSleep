@@ -15,6 +15,17 @@ object TurnServerInput {
         data object InvalidCredentials : Result
     }
 
+    /** What saving the entry does; the same outcomes as the web `resolveTurnSave`. */
+    sealed interface Resolution {
+        /** An empty address removes the saved entry. */
+        data object Cleared : Resolution
+
+        data class Saved(val turn: TurnCredentials) : Resolution
+
+        /** [reason] is [Result.InvalidAddress] or [Result.InvalidCredentials]. */
+        data class Invalid(val reason: Result) : Resolution
+    }
+
     const val MAX_CREDENTIAL_CHARS = 256
 
     // turn: or turns:, then an IPv4/DNS host or a bracketed IPv6, optional port, optional
@@ -38,5 +49,28 @@ object TurnServerInput {
             return Result.InvalidCredentials
         }
         return Result.Ok(u, n, p)
+    }
+
+    /**
+     * Turns the typed fields into a save: an empty address clears, address and user name are
+     * trimmed (the password never is), and an empty password keeps the [saved] one while address
+     * and user name are unchanged.
+     */
+    fun resolve(
+        saved: TurnCredentials?,
+        url: String,
+        username: String,
+        password: String,
+    ): Resolution {
+        val u = url.trim()
+        if (u.isEmpty()) return Resolution.Cleared
+        val n = username.trim()
+        val keep = password.isEmpty() && saved != null && saved.url == u && saved.username == n
+        val effective = if (keep && saved != null) saved.credential else password
+        return when (val r = validate(u, n, effective)) {
+            Result.InvalidAddress,
+            Result.InvalidCredentials -> Resolution.Invalid(r)
+            is Result.Ok -> Resolution.Saved(TurnCredentials(r.url, r.username, r.password))
+        }
     }
 }

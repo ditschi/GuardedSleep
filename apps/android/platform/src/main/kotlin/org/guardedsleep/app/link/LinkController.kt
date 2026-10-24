@@ -200,23 +200,21 @@ class LinkController(
 
     @Synchronized
     override fun setTurnServer(url: String, username: String, password: String): TurnSaveResult {
-        val u = url.trim()
-        if (u.isEmpty()) {
-            clearTurnServer()
-            return TurnSaveResult.CLEARED
-        }
-        val n = username.trim()
-        val saved = turn
-        val keep = password.isEmpty() && saved != null && saved.url == u && saved.username == n
-        val effective = if (keep) saved.credential else password
-        return when (val r = TurnServerInput.validate(u, n, effective)) {
-            TurnServerInput.Result.InvalidAddress -> TurnSaveResult.INVALID_ADDRESS
-            TurnServerInput.Result.InvalidCredentials -> TurnSaveResult.INVALID_CREDENTIALS
-            is TurnServerInput.Result.Ok -> {
-                val next = TurnCredentials(r.url, r.username, r.password)
-                turn = next
-                _settings.value = withTurn(_settings.value, next)
-                turnIo.execute { runCatching { turnStore.save(next) } }
+        return when (val r = TurnServerInput.resolve(turn, url, username, password)) {
+            TurnServerInput.Resolution.Cleared -> {
+                clearTurnServer()
+                TurnSaveResult.CLEARED
+            }
+            is TurnServerInput.Resolution.Invalid ->
+                if (r.reason == TurnServerInput.Result.InvalidAddress) {
+                    TurnSaveResult.INVALID_ADDRESS
+                } else {
+                    TurnSaveResult.INVALID_CREDENTIALS
+                }
+            is TurnServerInput.Resolution.Saved -> {
+                turn = r.turn
+                _settings.value = withTurn(_settings.value, r.turn)
+                turnIo.execute { runCatching { turnStore.save(r.turn) } }
                 TurnSaveResult.SAVED
             }
         }

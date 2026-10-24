@@ -2,6 +2,8 @@ package org.guardedsleep.app.ui
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.guardedsleep.app.pairing.TurnCredentials
+import org.guardedsleep.app.pairing.TurnServerInput
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
@@ -95,22 +97,37 @@ class FakeAppController(
     override fun setTurnServer(url: String, username: String, password: String): TurnSaveResult {
         // Never record the password.
         calls += "setTurnServer:$url:$username:${password.isNotEmpty()}"
-        val u = url.trim()
-        if (u.isEmpty()) {
-            clearTurnServer()
-            return TurnSaveResult.CLEARED
+        val cur = settingsFlow.value
+        // The fake keeps no password; a placeholder stands in for a saved one.
+        val saved =
+            cur.turnUrl?.let {
+                TurnCredentials(
+                    it,
+                    cur.turnUsername.orEmpty(),
+                    if (cur.turnPasswordSaved) "kept" else "",
+                )
+            }
+        return when (val r = TurnServerInput.resolve(saved, url, username, password)) {
+            TurnServerInput.Resolution.Cleared -> {
+                clearTurnServer()
+                TurnSaveResult.CLEARED
+            }
+            is TurnServerInput.Resolution.Invalid ->
+                if (r.reason == TurnServerInput.Result.InvalidAddress) {
+                    TurnSaveResult.INVALID_ADDRESS
+                } else {
+                    TurnSaveResult.INVALID_CREDENTIALS
+                }
+            is TurnServerInput.Resolution.Saved -> {
+                settingsFlow.value =
+                    cur.copy(
+                        turnUrl = r.turn.url,
+                        turnUsername = r.turn.username.ifEmpty { null },
+                        turnPasswordSaved = r.turn.credential.isNotEmpty(),
+                    )
+                TurnSaveResult.SAVED
+            }
         }
-        if (!Regex("^turns?:\\S+$").matches(u)) return TurnSaveResult.INVALID_ADDRESS
-        if (username.isEmpty() != password.isEmpty() && !settingsFlow.value.turnPasswordSaved) {
-            return TurnSaveResult.INVALID_CREDENTIALS
-        }
-        settingsFlow.value =
-            settingsFlow.value.copy(
-                turnUrl = u,
-                turnUsername = username.ifEmpty { null },
-                turnPasswordSaved = password.isNotEmpty() || settingsFlow.value.turnPasswordSaved,
-            )
-        return TurnSaveResult.SAVED
     }
 
     override fun clearTurnServer() {
