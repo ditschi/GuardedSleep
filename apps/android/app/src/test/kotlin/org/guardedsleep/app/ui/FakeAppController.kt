@@ -10,6 +10,7 @@ import org.guardedsleep.app.ui.model.PairingState
 import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.SettingsState
+import org.guardedsleep.app.ui.model.TurnSaveResult
 
 /**
  * Test double: plain state flows plus a call log. Listen and kiosk changes are applied to state
@@ -89,6 +90,33 @@ class FakeAppController(
     override fun updateSettings(transform: (SettingsState) -> SettingsState) {
         calls += "updateSettings"
         settingsFlow.value = transform(settingsFlow.value)
+    }
+
+    override fun setTurnServer(url: String, username: String, password: String): TurnSaveResult {
+        // Never record the password.
+        calls += "setTurnServer:$url:$username:${password.isNotEmpty()}"
+        val u = url.trim()
+        if (u.isEmpty()) {
+            clearTurnServer()
+            return TurnSaveResult.CLEARED
+        }
+        if (!Regex("^turns?:\\S+$").matches(u)) return TurnSaveResult.INVALID_ADDRESS
+        if (username.isEmpty() != password.isEmpty() && !settingsFlow.value.turnPasswordSaved) {
+            return TurnSaveResult.INVALID_CREDENTIALS
+        }
+        settingsFlow.value =
+            settingsFlow.value.copy(
+                turnUrl = u,
+                turnUsername = username.ifEmpty { null },
+                turnPasswordSaved = password.isNotEmpty() || settingsFlow.value.turnPasswordSaved,
+            )
+        return TurnSaveResult.SAVED
+    }
+
+    override fun clearTurnServer() {
+        calls += "clearTurnServer"
+        settingsFlow.value =
+            settingsFlow.value.copy(turnUrl = null, turnUsername = null, turnPasswordSaved = false)
     }
 
     override fun setListen(mode: ListenMode) {

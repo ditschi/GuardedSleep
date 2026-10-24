@@ -224,11 +224,23 @@ data class SettingsState(
     val silenceWhileMonitoring: Boolean = true,
     val advancedEnabled: Boolean = false,
     val signalingUrls: List<String> = emptyList(),
+    /** Mirrors the sealed TURN entry; never persisted by `updateSettings`. */
     val turnUrl: String? = null,
+    val turnUsername: String? = null,
+    /** The password itself never leaves the platform layer. */
+    val turnPasswordSaved: Boolean = false,
     val heartbeatSeconds: Int = 10,
     /** UI-pass addition: last successful test alert (settings line "Last test"). */
     val lastTestWallMs: Long? = null,
 )
+
+/** Outcome of [AppController.setTurnServer]. */
+enum class TurnSaveResult {
+    SAVED,
+    CLEARED,
+    INVALID_ADDRESS,
+    INVALID_CREDENTIALS,
+}
 
 data class AppState(
     val role: Role? = null,
@@ -284,6 +296,14 @@ interface AppController {
     fun forgetPairing()
 
     fun updateSettings(transform: (SettingsState) -> SettingsState)
+
+    /**
+     * Saves the one TURN server of this device. An empty [url] removes it. An empty [password]
+     * keeps the saved one while [url] and [username] are unchanged.
+     */
+    fun setTurnServer(url: String, username: String, password: String): TurnSaveResult
+
+    fun clearTurnServer()
 
     // Parent
     fun setListen(mode: ListenMode)

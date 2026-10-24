@@ -17,7 +17,8 @@ object TurnServerInput {
 
     const val MAX_CREDENTIAL_CHARS = 256
 
-    // turn: or turns:, then an IPv4/DNS host or a bracketed IPv6, optional port, optional transport.
+    // turn: or turns:, then an IPv4/DNS host or a bracketed IPv6, optional port, optional
+    // transport.
     private val ADDRESS =
         Regex(
             "^turns?:(?:\\[[0-9A-Fa-f:.]+\\]|[A-Za-z0-9.-]+)(?::(\\d{1,5}))?" +

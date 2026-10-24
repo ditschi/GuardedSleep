@@ -10,11 +10,14 @@ import org.guardedsleep.app.link.Clock
 import org.guardedsleep.app.link.LinkController
 import org.guardedsleep.app.link.MonitorHost
 import org.guardedsleep.app.link.NetworkWatcher
+import org.guardedsleep.app.link.buildIceConfig
 import org.guardedsleep.app.media.AttemptListener
 import org.guardedsleep.app.media.AttemptPort
 import org.guardedsleep.app.media.InboundAudioStats
 import org.guardedsleep.app.media.MediaEngine
 import org.guardedsleep.app.pairing.PairingStore
+import org.guardedsleep.app.pairing.TurnCredentials
+import org.guardedsleep.app.pairing.TurnStore
 import org.guardedsleep.app.signaling.SignalingFactory
 import org.guardedsleep.app.signaling.SignalingListener
 import org.guardedsleep.app.signaling.SignalingTransport
@@ -22,10 +25,12 @@ import org.guardedsleep.app.silence.SilenceGateway
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.PairingPhase
 import org.guardedsleep.app.ui.model.Role
+import org.guardedsleep.app.ui.model.TurnSaveResult
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -289,12 +294,14 @@ class LinkControllerTest {
         val store: PairingStore,
         val sink: RecordingSink,
         val silence: FakeSilence,
+        val turn: TurnStore,
     )
 
     private fun unit(name: String, role: Role, hostThrows: Boolean = false): Unit2 {
         val dir = tmp.newFolder(name)
         val settings = testSettings(dir)
         val store = PairingStore(java.io.File(dir, "pairing.bin"), FakeCipher())
+        val turnStore = TurnStore(java.io.File(dir, "turn.bin"), FakeCipher())
         val sink = RecordingSink()
         val silence = FakeSilence()
         lateinit var controller: LinkController
@@ -311,6 +318,7 @@ class LinkControllerTest {
             LinkController(
                 settingsRepo = settings,
                 pairingStore = store,
+                turnStore = turnStore,
                 signaling = SignalingFactory { _, l -> FakeTransport(net, l) },
                 mediaFactory = { r, _ -> FakeMedia(net, r == Role.BABY) },
                 silence = silence,
@@ -329,7 +337,60 @@ class LinkControllerTest {
         controller.updateSettings { it.copy(signalingUrls = listOf("ws://fake")) }
         controller.chooseRole(role)
         controllers += controller
-        return Unit2(controller, store, sink, silence)
+        return Unit2(controller, store, sink, silence, turnStore)
+    }
+
+    @Test
+    fun turnServerIsSealedAndMirroredWithoutPassword() {
+        val u = unit("turn1", Role.PARENT)
+        val c = u.controller
+        assertEquals(TurnSaveResult.SAVED, c.setTurnServer(" turn:h:3478 ", "user", "pw"))
+        assertEquals("turn:h:3478", c.settings.value.turnUrl)
+        assertEquals("user", c.settings.value.turnUsername)
+        assertTrue(c.settings.value.turnPasswordSaved)
+        assertFalse(c.settings.value.toString().contains("pw"))
+        await("sealed") { u.turn.load()?.credential == "pw" }
+
+        // Empty password with unchanged address and user name keeps the saved one.
+        assertEquals(TurnSaveResult.SAVED, c.setTurnServer("turn:h:3478", "user", ""))
+        // A changed address needs the password again.
+        assertEquals(TurnSaveResult.INVALID_CREDENTIALS, c.setTurnServer("turn:other", "user", ""))
+        assertTrue(c.settings.value.turnPasswordSaved)
+        assertEquals(TurnSaveResult.INVALID_ADDRESS, c.setTurnServer("stun:x", "", ""))
+
+        // updateSettings cannot write the TURN fields.
+        c.updateSettings { it.copy(turnUrl = "turn:evil", turnPasswordSaved = false) }
+        assertEquals("turn:h:3478", c.settings.value.turnUrl)
+        assertTrue(c.settings.value.turnPasswordSaved)
+
+        assertEquals(TurnSaveResult.CLEARED, c.setTurnServer("", "", ""))
+        assertNull(c.settings.value.turnUrl)
+        assertFalse(c.settings.value.turnPasswordSaved)
+        await("cleared") { u.turn.load() == null }
+    }
+
+    @Test
+    fun clearTurnServerRemovesTheEntry() {
+        val u = unit("turn2", Role.PARENT)
+        u.controller.setTurnServer("turn:h", "", "")
+        assertEquals("turn:h", u.controller.settings.value.turnUrl)
+        u.controller.clearTurnServer()
+        assertNull(u.controller.settings.value.turnUrl)
+    }
+
+    @Test
+    fun iceConfigPrefersDebugLaunchEntryOverStoredOne() {
+        val stored = TurnCredentials("turn:stored", "su", "sp")
+        val pending = TurnCredentials("turn:debug", "du", "dp")
+        val fromStore = buildIceConfig(listOf("stun:a"), null, stored, false)
+        assertEquals("turn:stored", fromStore.turnUrl)
+        assertEquals("su", fromStore.turnUser)
+        assertEquals("sp", fromStore.turnCredential)
+        assertEquals("turn:debug", buildIceConfig(emptyList(), pending, stored, true).turnUrl)
+        val bare = buildIceConfig(emptyList(), null, TurnCredentials("turn:h", "", ""), false)
+        assertNull(bare.turnUser)
+        assertNull(bare.turnCredential)
+        assertNull(buildIceConfig(emptyList(), null, null, false).turnUrl)
     }
 
     @After

@@ -13,6 +13,7 @@ import org.guardedsleep.app.link.SystemClockSource
 import org.guardedsleep.app.media.libwebrtc.LibWebRtcMediaEngine
 import org.guardedsleep.app.pairing.KeystorePairingCipher
 import org.guardedsleep.app.pairing.PairingStore
+import org.guardedsleep.app.pairing.TurnStore
 import org.guardedsleep.app.readiness.AndroidReadinessEnv
 import org.guardedsleep.app.readiness.ReadinessChecker
 import org.guardedsleep.app.service.AndroidNetworkWatcher
@@ -29,12 +30,19 @@ class AppGraph(context: Context) : PlatformServices {
     private val app = context.applicationContext
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
 
+    // Sealed apart from the pairing: forgetting one must not delete the other.
+    val turnStore =
+        TurnStore(
+            File(app.filesDir, TurnStore.FILE_NAME),
+            KeystorePairingCipher(TurnStore.KEY_ALIAS),
+        )
     override val settings =
         SettingsRepository(
             PreferenceDataStoreFactory.create(scope = ioScope) {
                 File(app.filesDir, "datastore/gs_settings.preferences_pb")
             },
             ioScope,
+            turnStore,
         )
     val pairingStore = PairingStore(File(app.filesDir, "pairing.bin"), KeystorePairingCipher())
     override val entryPoints: EntryPoints = AppEntryPoints
@@ -45,6 +53,7 @@ class AppGraph(context: Context) : PlatformServices {
         LinkController(
             settingsRepo = settings,
             pairingStore = pairingStore,
+            turnStore = turnStore,
             signaling = OkHttpSignalingFactory(),
             mediaFactory = { role, ice -> LibWebRtcMediaEngine(app, role, ice) },
             silence = silence,

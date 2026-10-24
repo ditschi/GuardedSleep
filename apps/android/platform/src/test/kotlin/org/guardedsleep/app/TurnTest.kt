@@ -1,10 +1,18 @@
 package org.guardedsleep.app
 
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import java.io.File
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import org.guardedsleep.app.pairing.TurnCredentials
 import org.guardedsleep.app.pairing.TurnServerInput
 import org.guardedsleep.app.pairing.TurnServerInput.Result
 import org.guardedsleep.app.pairing.TurnStore
+import org.guardedsleep.app.settings.SettingsRepository
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -91,5 +99,26 @@ class TurnTest {
     @Test
     fun credentialsToStringHidesPassword() {
         assertFalse(TurnCredentials("turn:h", "u", "secretpw").toString().contains("secretpw"))
+    }
+
+    @Test
+    fun legacyTurnUrlMovesIntoTheSealedStoreOnce() {
+        val scope = CoroutineScope(Dispatchers.Unconfined)
+        val prefs =
+            PreferenceDataStoreFactory.create(scope = scope) {
+                File(tmp.root, "legacy.preferences_pb")
+            }
+        runBlocking { prefs.edit { it[stringPreferencesKey("turn_url")] = "turn:old:3478" } }
+        val turn = TurnStore(File(tmp.root, "turn.bin"), FakeCipher())
+        val repo = SettingsRepository(prefs, scope, turn)
+        assertEquals(TurnCredentials("turn:old:3478", "", "").url, turn.load()?.url)
+        assertEquals("", turn.load()?.username)
+        assertNull(repo.current.settings.turnUrl)
+        assertNull(runBlocking { prefs.data.first()[stringPreferencesKey("turn_url")] })
+
+        // A second start must not overwrite an entry the user saved meanwhile.
+        turn.save(TurnCredentials("turn:new", "u", "pw"))
+        SettingsRepository(prefs, scope, turn)
+        assertEquals("turn:new", turn.load()?.url)
     }
 }

@@ -25,8 +25,7 @@ class TurnStore(private val file: File, private val cipher: PairingCipher) {
 
     @Synchronized
     fun save(turn: TurnCredentials) {
-        val o =
-            JSONObject().put("u", turn.url).put("n", turn.username).put("c", turn.credential)
+        val o = JSONObject().put("u", turn.url).put("n", turn.username).put("c", turn.credential)
         val tmp = File(file.parentFile, file.name + ".tmp")
         tmp.writeBytes(cipher.encrypt(o.toString().toByteArray(Charsets.UTF_8)))
         check(tmp.renameTo(file)) { "cannot replace TURN file" }

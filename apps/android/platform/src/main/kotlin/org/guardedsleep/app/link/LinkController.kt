@@ -19,6 +19,8 @@ import org.guardedsleep.app.pairing.PairingPayload
 import org.guardedsleep.app.pairing.PairingStore
 import org.guardedsleep.app.pairing.StoredPairing
 import org.guardedsleep.app.pairing.TurnCredentials
+import org.guardedsleep.app.pairing.TurnServerInput
+import org.guardedsleep.app.pairing.TurnStore
 import org.guardedsleep.app.readiness.ReadinessChecker
 import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.signaling.SignalingFactory
@@ -35,6 +37,7 @@ import org.guardedsleep.app.ui.model.PairingState
 import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.SettingsState
+import org.guardedsleep.app.ui.model.TurnSaveResult
 import uniffi.guardedsleep_core.DeviceStatus
 import uniffi.guardedsleep_core.LinkConfig
 import uniffi.guardedsleep_core.LinkEvent
@@ -53,6 +56,7 @@ import uniffi.guardedsleep_core.defaultLinkConfig
 class LinkController(
     private val settingsRepo: SettingsRepository,
     private val pairingStore: PairingStore,
+    private val turnStore: TurnStore,
     private val signaling: SignalingFactory,
     private val mediaFactory: (Role, IceConfig) -> MediaEngine,
     private val silence: SilenceGateway,
@@ -67,7 +71,12 @@ class LinkController(
     private val random: SecureRandom = SecureRandom(),
 ) : AppController {
     private val _app = MutableStateFlow(AppState())
-    private val _settings = MutableStateFlow(settingsRepo.current.settings)
+    // The sealed TURN entry; the disk copy is written on [turnIo] so the caller never blocks.
+    @Volatile private var turn: TurnCredentials? = turnStore.load()
+    private val turnIo = Executors.newSingleThreadExecutor { r ->
+        Thread(r, "gs-turn-io").apply { isDaemon = true }
+    }
+    private val _settings = MutableStateFlow(withTurn(settingsRepo.current.settings, turn))
     private val _pairing = MutableStateFlow<PairingState?>(null)
 
     override val app: StateFlow<AppState> = _app
@@ -149,7 +158,14 @@ class LinkController(
 
     override fun updateSettings(transform: (SettingsState) -> SettingsState) {
         val before = _settings.value
-        val after = transform(before)
+        // TURN fields live in the sealed store and change only through [setTurnServer].
+        val after =
+            transform(before)
+                .copy(
+                    turnUrl = before.turnUrl,
+                    turnUsername = before.turnUsername,
+                    turnPasswordSaved = before.turnPasswordSaved,
+                )
         if (after == before) return
         settingsRepo.update { it.copy(settings = after) }
         _settings.value = after
@@ -180,6 +196,37 @@ class LinkController(
                 applySilence(after.silenceWhileMonitoring)
             }
         }
+    }
+
+    @Synchronized
+    override fun setTurnServer(url: String, username: String, password: String): TurnSaveResult {
+        val u = url.trim()
+        if (u.isEmpty()) {
+            clearTurnServer()
+            return TurnSaveResult.CLEARED
+        }
+        val n = username.trim()
+        val saved = turn
+        val keep = password.isEmpty() && saved != null && saved.url == u && saved.username == n
+        val effective = if (keep) saved?.credential.orEmpty() else password
+        return when (val r = TurnServerInput.validate(u, n, effective)) {
+            TurnServerInput.Result.InvalidAddress -> TurnSaveResult.INVALID_ADDRESS
+            TurnServerInput.Result.InvalidCredentials -> TurnSaveResult.INVALID_CREDENTIALS
+            is TurnServerInput.Result.Ok -> {
+                val next = TurnCredentials(r.url, r.username, r.password)
+                turn = next
+                _settings.value = withTurn(_settings.value, next)
+                turnIo.execute { runCatching { turnStore.save(next) } }
+                TurnSaveResult.SAVED
+            }
+        }
+    }
+
+    @Synchronized
+    override fun clearTurnServer() {
+        turn = null
+        _settings.value = withTurn(_settings.value, null)
+        turnIo.execute { runCatching { turnStore.clear() } }
     }
 
     override fun forgetPairing() {
@@ -382,12 +429,11 @@ class LinkController(
         val r = Run(++runCounter, role, if (isPending) pending else null, monitoring)
         val signalingUrls = effectiveUrls(pending.urls)
         val ice =
-            IceConfig(
-                stunUrls = RelayStun.urls(signalingUrls),
-                turnUrl = pending.turn?.url ?: s.turnUrl,
-                turnUser = pending.turn?.username,
-                turnCredential = pending.turn?.credential,
-                relayOnly = DebugOptions.relayOnly,
+            buildIceConfig(
+                RelayStun.urls(signalingUrls),
+                pending.turn,
+                turn,
+                DebugOptions.relayOnly,
             )
         val runner =
             LinkRunner(
@@ -661,4 +707,28 @@ class LinkController(
     private companion object {
         const val UNREACHABLE_AFTER_MS = 20_000L
     }
+}
+
+private fun withTurn(s: SettingsState, turn: TurnCredentials?): SettingsState =
+    s.copy(
+        turnUrl = turn?.url,
+        turnUsername = turn?.username?.takeIf { it.isNotEmpty() },
+        turnPasswordSaved = turn?.credential?.isNotEmpty() == true,
+    )
+
+/** The debug launch entry (`pending`) wins over the one saved in the settings. */
+internal fun buildIceConfig(
+    stunUrls: List<String>,
+    pending: TurnCredentials?,
+    stored: TurnCredentials?,
+    relayOnly: Boolean,
+): IceConfig {
+    val t = pending ?: stored
+    return IceConfig(
+        stunUrls = stunUrls,
+        turnUrl = t?.url,
+        turnUser = t?.username?.takeIf { it.isNotEmpty() },
+        turnCredential = t?.credential?.takeIf { it.isNotEmpty() },
+        relayOnly = relayOnly,
+    )
 }
