@@ -8,7 +8,9 @@ PNPM_VERSION="$(sed -n 's/^pnpm *= *"\(.*\)"/\1/p' mise.toml)"
 test -n "$PNPM_VERSION"
 npm install --global "pnpm@${PNPM_VERSION}"
 
-pnpm install --no-frozen-lockfile
+# The lockfile is the reviewed dependency set: never resolve anew in a test run.
+# https://pnpm.io/cli/install#--frozen-lockfile
+pnpm install --frozen-lockfile
 
 case "${1:-auto}" in
 	auto)
