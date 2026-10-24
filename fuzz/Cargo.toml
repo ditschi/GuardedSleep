@@ -12,7 +12,11 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4.13"
-guardedsleep-core = { path = "../crates/guardedsleep-core" }
+# The generator type the core takes (same version and features as the core).
+chacha20 = { version = "0.10.2", default-features = false, features = ["rng"] }
+# The fuzz targets need fixed-nonce sealing; the feature is never part of a release build.
+guardedsleep-core = { path = "../crates/guardedsleep-core", features = ["conformance"] }
+arbitrary = { version = "1.5.0", features = ["derive"] }
 
 # Keeps this crate out of the root workspace: it needs a nightly toolchain and sanitizer flags,
 # and its own lockfile. Docs: https://doc.rust-lang.org/cargo/reference/workspaces.html
@@ -21,6 +25,13 @@ guardedsleep-core = { path = "../crates/guardedsleep-core" }
 [[bin]]
 name = "envelope_open"
 path = "fuzz_targets/envelope_open.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "envelope_session"
+path = "fuzz_targets/envelope_session.rs"
 test = false
 doc = false
 bench = false

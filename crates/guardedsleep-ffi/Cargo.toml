@@ -11,6 +11,11 @@ publish.workspace = true
 [lib]
 crate-type = ["lib", "cdylib"]
 
+# Test builds only (scripts/core-build.sh host, which the Android JVM tests load). Docs:
+# https://doc.rust-lang.org/cargo/reference/features.html
+[features]
+conformance = ["guardedsleep-core/conformance"]
+
 [dependencies]
 guardedsleep-core = { path = "../guardedsleep-core" }
 uniffi = { version = "=0.32.2" }

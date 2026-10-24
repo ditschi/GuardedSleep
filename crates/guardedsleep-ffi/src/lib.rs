@@ -196,3 +196,17 @@ pub fn build_invite(
 pub fn conformance_eval(case_json: String) -> String {
     guardedsleep_core::conformance::evaluate(&case_json)
 }
+
+// The test-only envelope entry points (fixed-nonce sealing, key export) must not exist in a build
+// without the `conformance` feature, which is what ships.
+#[cfg(all(test, not(feature = "conformance")))]
+mod release_surface {
+    #[test]
+    fn envelope_test_entry_points_are_absent() {
+        for kind in ["envelope_key", "envelope_seal", "envelope_open"] {
+            let case = format!(r#"{{"kind":"{kind}"}}"#);
+            let got = super::conformance_eval(case);
+            assert!(got.contains("unknown kind"), "{kind}: {got}");
+        }
+    }
+}

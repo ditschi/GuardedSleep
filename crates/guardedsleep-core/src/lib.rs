@@ -6,6 +6,9 @@
 
 pub mod attempt;
 pub mod conformance;
+// Envelope vector evaluation needs fixed-nonce sealing: never part of a release build.
+#[cfg(any(test, feature = "conformance"))]
+mod conformance_envelope;
 pub mod envelope;
 pub mod invite;
 pub mod link;

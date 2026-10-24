@@ -42,21 +42,26 @@ ensure_wasm_bindgen() {
 	fi
 }
 
+# The node package runs the conformance vectors, so it is built with the test-only `conformance` feature
+# (fixed-nonce sealing and key export of the envelope). The web package, which ships, is built without it.
 run_wasm() {
 	ensure_wasm_bindgen
-	cargo build -p guardedsleep-wasm --release --target wasm32-unknown-unknown
 	local wasm_file=target/wasm32-unknown-unknown/release/guardedsleep_wasm.wasm
+	cargo build -p guardedsleep-wasm --release --target wasm32-unknown-unknown --features conformance
 	wasm-bindgen --target nodejs --out-dir target/wasm-pkg/node "$wasm_file"
+	cargo build -p guardedsleep-wasm --release --target wasm32-unknown-unknown
 	wasm-bindgen --target web --out-dir target/wasm-pkg/web "$wasm_file"
 	ls -l target/wasm-pkg/web/*.wasm
 }
 
 # Unstripped host build of guardedsleep-ffi: the Kotlin bindings are generated from its UniFFI metadata (the release profile
 # strips those symbols), and the Android JVM unit tests load it through JNA (jna.library.path in
-# apps/android/{core-bindings,platform}/build.gradle.kts points at target/debug).
+# apps/android/{core-bindings,platform}/build.gradle.kts points at target/debug). It is built with the
+# test-only `conformance` feature so the Kotlin conformance test can run the envelope vectors; the
+# cross-compiled release libraries (run_android) are built without it.
 run_host() {
 	local gen=apps/android/core-bindings/src/main/kotlin
-	cargo build -p guardedsleep-ffi
+	cargo build -p guardedsleep-ffi --features conformance
 	rm -rf "$gen/uniffi"
 	cargo run -q -p uniffi-bindgen -- generate --library target/debug/libguardedsleep_ffi.so \
 		--language kotlin --out-dir "$gen" --no-format
