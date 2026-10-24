@@ -5,16 +5,23 @@ package org.guardedsleep.app.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.center
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.text.AnnotatedString
 import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
@@ -22,9 +29,11 @@ import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.ListenMode
 import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.Role
+import org.guardedsleep.app.ui.model.SettingsState
 import org.guardedsleep.app.ui.model.Theme
 import org.guardedsleep.app.ui.screens.BabyKioskScreen
 import org.guardedsleep.app.ui.screens.ParentMonitorScreen
+import org.guardedsleep.app.ui.screens.SettingsScreen
 import org.guardedsleep.app.ui.theme.GuardedSleepTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -235,5 +244,45 @@ class InteractionTests : ShotBase() {
     @Test
     fun noRecordedClockLeak() {
         assertEquals(1_000_000L, ELAPSED)
+    }
+
+    private fun advancedSettings() =
+        FakeAppController(
+            app = monitoring,
+            settings = SettingsState(advancedEnabled = true),
+        )
+
+    @Test
+    fun turnCredentialsErrorIsShownForUserNameWithoutPassword() = runComposeUiTest {
+        val c = advancedSettings()
+        show { SettingsScreen(c, {}, {}, {}) }
+        onNodeWithTag("settings_turn").performScrollTo().performTextInput("turn:h:3478")
+        onNodeWithTag("settings_turn_user").performScrollTo().performTextInput("user")
+        onNodeWithTag("settings_turn_save").performScrollTo().performClick()
+        waitForIdle()
+        onNodeWithText("both user name and password", substring = true).assertIsDisplayed()
+        assertEquals(null, c.settingsFlow.value.turnUrl)
+    }
+
+    @Test
+    fun savedPasswordLeavesTheFieldEmptyWithAHint() = runComposeUiTest {
+        val c = advancedSettings()
+        show { SettingsScreen(c, {}, {}, {}) }
+        onNodeWithTag("settings_turn_remove").assertDoesNotExist()
+        onNodeWithTag("settings_turn").performScrollTo().performTextInput("turn:h:3478")
+        onNodeWithTag("settings_turn_user").performScrollTo().performTextInput("user")
+        onNodeWithTag("settings_turn_pass").performScrollTo().performTextInput("pw")
+        onNodeWithTag("settings_turn_save").performScrollTo().performClick()
+        waitForIdle()
+        assertTrue(c.settingsFlow.value.turnPasswordSaved)
+        onNodeWithTag("settings_turn_pass")
+            .assert(
+                SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString(""))
+            )
+        onNodeWithText("Password saved", substring = true).assertIsDisplayed()
+        onNodeWithTag("settings_turn_remove").performScrollTo().performClick()
+        waitForIdle()
+        assertFalse(c.settingsFlow.value.turnPasswordSaved)
+        onNodeWithTag("settings_turn_remove").assertDoesNotExist()
     }
 }
