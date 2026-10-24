@@ -1,14 +1,17 @@
 /** Outcome of saving the TURN entry (mirrors the Android `TurnServerInput` result). */
 export type TurnSaveResult = "saved" | "cleared" | "invalid_address" | "invalid_credentials";
 
-export const TURN_CREDENTIAL_MAX = 256;
+/** The ways a TURN entry can be rejected. */
+export type TurnSaveError = Exclude<TurnSaveResult, "saved" | "cleared">;
+
+const TURN_CREDENTIAL_MAX = 256;
 
 // `turn:` or `turns:`, a host (IPv4 and DNS names share the label charset; bracketed IPv6), an
 // optional port and an optional transport. Nothing else: no whitespace, path or userinfo.
 const TURN_ADDRESS =
   /^turns?:(?:\[[0-9A-Fa-f:.]+\]|[A-Za-z0-9][A-Za-z0-9.-]*)(?::(\d{1,5}))?(?:\?transport=(?:udp|tcp))?$/;
 
-export function isTurnAddress(text: string): boolean {
+function isTurnAddress(text: string): boolean {
   const match = TURN_ADDRESS.exec(text.trim());
   if (match === null) return false;
   const port = match[1];
@@ -25,7 +28,7 @@ export function validateTurnServer(
   url: string,
   username: string,
   password: string,
-): "valid" | "invalid_address" | "invalid_credentials" {
+): "valid" | TurnSaveError {
   if (!isTurnAddress(url)) return "invalid_address";
   if ((username === "") !== (password === "")) return "invalid_credentials";
   if (username.length > TURN_CREDENTIAL_MAX || password.length > TURN_CREDENTIAL_MAX) {

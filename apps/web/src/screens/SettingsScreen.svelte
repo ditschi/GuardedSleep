@@ -1,6 +1,6 @@
 <script lang="ts">
   import { get } from "svelte/store";
-  import { useController, type Theme } from "../lib/contract";
+  import { useController, type Theme, type TurnSaveError } from "../lib/contract";
   import { isLocale, LOCALES, type Locale } from "../lib/i18n/bundles";
   import type { MessageKey } from "../lib/i18n/keys";
   import { t } from "../lib/i18n/store";
@@ -104,7 +104,7 @@
   let turnUrl = $state(get(settings).turnUrl ?? "");
   let turnUser = $state(get(settings).turnUsername ?? "");
   let turnPass = $state("");
-  let turnError = $state<"invalid_address" | "invalid_credentials" | null>(null);
+  let turnError = $state<TurnSaveError | null>(null);
 
   function saveTurn(event: SubmitEvent): void {
     event.preventDefault();
