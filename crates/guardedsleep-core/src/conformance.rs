@@ -4,7 +4,7 @@
 
 use serde_json::{Value, json};
 
-use crate::invite::{build_invite, parse_invite};
+use crate::invite::{InviteMailbox, build_invite, parse_invite};
 use crate::link::{Link, LinkConfig, LinkInput};
 use crate::pairing::{
     AdmissionKey, admission_mac, decode_psk, derive_admission_key, derive_room_id, encode_psk,
@@ -99,10 +99,10 @@ fn evaluate_value(case_json: &str) -> Result<Value, String> {
                 .get("now_epoch_s")
                 .and_then(Value::as_u64)
                 .ok_or("missing now_epoch_s")?;
-            Ok(match parse_invite(s("text")?, now) {
+            Ok(match parse_invite(s("text")?, now, dev_loopback(&case)) {
                 Ok(inv) => json!({ "ok": {
                     "psk_b64url": encode_psk(inv.psk()),
-                    "urls": inv.urls,
+                    "mailboxes": inv.mailboxes,
                     "expires_at_epoch_s": inv.expires_at_epoch_s,
                 } }),
                 Err(e) => json!({ "error": e.as_str() }),
@@ -110,14 +110,15 @@ fn evaluate_value(case_json: &str) -> Result<Value, String> {
         }
         "build_invite" => {
             let psk = decode_psk(s("psk_b64url")?).ok_or("bad psk")?;
-            let urls: Vec<String> =
-                serde_json::from_value(case.get("urls").cloned().ok_or("missing urls")?)
-                    .map_err(|e| e.to_string())?;
+            let mailboxes: Vec<InviteMailbox> = serde_json::from_value(
+                case.get("mailboxes").cloned().ok_or("missing mailboxes")?,
+            )
+            .map_err(|e| e.to_string())?;
             let expires = case
                 .get("expires_at_epoch_s")
                 .and_then(Value::as_u64)
                 .ok_or("missing expires_at_epoch_s")?;
-            Ok(match build_invite(&psk, &urls, expires) {
+            Ok(match build_invite(&psk, &mailboxes, expires, dev_loopback(&case)) {
                 Ok(text) => json!({ "ok": text }),
                 Err(e) => json!({ "error": e.as_str() }),
             })
@@ -131,6 +132,13 @@ fn evaluate_value(case_json: &str) -> Result<Value, String> {
         "link" => run_link(&case),
         other => Err(format!("unknown kind {other}")),
     }
+}
+
+/// The development-only loopback switch of the invite codec; absent means off.
+fn dev_loopback(case: &Value) -> bool {
+    case.get("allow_dev_loopback")
+        .and_then(Value::as_bool)
+        .unwrap_or(false)
 }
 
 /// A `gs-trace/1` document (docs/technical/test-schemas.md): replays `steps` and returns one

@@ -3845,14 +3845,195 @@
     }
   },
   {
-    "name": "invite parse: valid",
+    "name": "invite parse: nostr entry",
     "kind": "parse_invite",
-    "text": "{\"v\":3,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"s\":[\"ws://10.0.2.2:8787\",\"wss://a.example/sig\"],\"x\":1700000300}",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"n:relay.example.org\"],\"x\":1700000300}",
     "now_epoch_s": 1700000000,
     "expect": {
       "ok": {
         "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-        "urls": ["ws://10.0.2.2:8787", "wss://a.example/sig"],
+        "mailboxes": [
+          {
+            "kind": "nostr",
+            "url": "wss://relay.example.org"
+          }
+        ],
+        "expires_at_epoch_s": 1700000300
+      }
+    }
+  },
+  {
+    "name": "invite parse: own relay with port and path",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com:8443/sig\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "ok": {
+        "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+        "mailboxes": [
+          {
+            "kind": "relay",
+            "url": "wss://gs.example.com:8443/sig"
+          }
+        ],
+        "expires_at_epoch_s": 1700000300
+      }
+    }
+  },
+  {
+    "name": "invite parse: own relay plain host",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "ok": {
+        "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+        "mailboxes": [
+          {
+            "kind": "relay",
+            "url": "wss://gs.example.com"
+          }
+        ],
+        "expires_at_epoch_s": 1700000300
+      }
+    }
+  },
+  {
+    "name": "invite parse: lan rfc1918 10/8",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:10.0.2.2:8787\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "ok": {
+        "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+        "mailboxes": [
+          {
+            "kind": "lan",
+            "url": "ws://10.0.2.2:8787"
+          }
+        ],
+        "expires_at_epoch_s": 1700000300
+      }
+    }
+  },
+  {
+    "name": "invite parse: lan rfc1918 172.16/12",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:172.31.0.9:80\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "ok": {
+        "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+        "mailboxes": [
+          {
+            "kind": "lan",
+            "url": "ws://172.31.0.9:80"
+          }
+        ],
+        "expires_at_epoch_s": 1700000300
+      }
+    }
+  },
+  {
+    "name": "invite parse: lan rfc1918 192.168/16",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:192.168.1.5:8787\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "ok": {
+        "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+        "mailboxes": [
+          {
+            "kind": "lan",
+            "url": "ws://192.168.1.5:8787"
+          }
+        ],
+        "expires_at_epoch_s": 1700000300
+      }
+    }
+  },
+  {
+    "name": "invite parse: lan ula",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:[fd12:3456::1]:9000\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "ok": {
+        "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+        "mailboxes": [
+          {
+            "kind": "lan",
+            "url": "ws://[fd12:3456::1]:9000"
+          }
+        ],
+        "expires_at_epoch_s": 1700000300
+      }
+    }
+  },
+  {
+    "name": "invite parse: all kinds in order",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com\",\"n:a.example.org\",\"n:b.example.org\",\"l:192.168.1.5:8787\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "ok": {
+        "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+        "mailboxes": [
+          {
+            "kind": "relay",
+            "url": "wss://gs.example.com"
+          },
+          {
+            "kind": "nostr",
+            "url": "wss://a.example.org"
+          },
+          {
+            "kind": "nostr",
+            "url": "wss://b.example.org"
+          },
+          {
+            "kind": "lan",
+            "url": "ws://192.168.1.5:8787"
+          }
+        ],
+        "expires_at_epoch_s": 1700000300
+      }
+    }
+  },
+  {
+    "name": "invite parse: six entries",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"n:a.example\",\"n:b.example\",\"n:c.example\",\"n:d.example\",\"n:e.example\",\"n:f.example\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "ok": {
+        "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+        "mailboxes": [
+          {
+            "kind": "nostr",
+            "url": "wss://a.example"
+          },
+          {
+            "kind": "nostr",
+            "url": "wss://b.example"
+          },
+          {
+            "kind": "nostr",
+            "url": "wss://c.example"
+          },
+          {
+            "kind": "nostr",
+            "url": "wss://d.example"
+          },
+          {
+            "kind": "nostr",
+            "url": "wss://e.example"
+          },
+          {
+            "kind": "nostr",
+            "url": "wss://f.example"
+          }
+        ],
         "expires_at_epoch_s": 1700000300
       }
     }
@@ -3860,20 +4041,43 @@
   {
     "name": "invite parse: surrounding whitespace",
     "kind": "parse_invite",
-    "text": "  \n{\"v\":3,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"s\":[\"ws://10.0.2.2:8787\",\"wss://a.example/sig\"],\"x\":1700000300}\n ",
+    "text": "  \n{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com\"],\"x\":1700000300}\n ",
     "now_epoch_s": 1700000000,
     "expect": {
       "ok": {
         "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-        "urls": ["ws://10.0.2.2:8787", "wss://a.example/sig"],
+        "mailboxes": [
+          {
+            "kind": "relay",
+            "url": "wss://gs.example.com"
+          }
+        ],
         "expires_at_epoch_s": 1700000300
       }
     }
   },
   {
-    "name": "invite parse: wrong version",
+    "name": "invite parse: v3 rejected",
     "kind": "parse_invite",
-    "text": "{\"v\":2,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"s\":[\"ws://10.0.2.2:8787\",\"wss://a.example/sig\"],\"x\":1700000300}",
+    "text": "{\"v\":3,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"s\":[\"wss://gs.example.com\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: v3 version with v4 mailboxes rejected",
+    "kind": "parse_invite",
+    "text": "{\"v\":3,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: wrong version 5",
+    "kind": "parse_invite",
+    "text": "{\"v\":5,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com\"],\"x\":1700000300}",
     "now_epoch_s": 1700000000,
     "expect": {
       "error": "not_our_code"
@@ -3882,43 +4086,272 @@
   {
     "name": "invite parse: short psk",
     "kind": "parse_invite",
-    "text": "{\"v\":3,\"k\":\"AAECAwQFBgcICQoLDA0ODw\",\"s\":[\"ws://10.0.2.2:8787\",\"wss://a.example/sig\"],\"x\":1700000300}",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODw\",\"m\":[\"r:gs.example.com\"],\"x\":1700000300}",
     "now_epoch_s": 1700000000,
     "expect": {
       "error": "not_our_code"
     }
   },
   {
-    "name": "invite parse: bad url scheme",
+    "name": "invite parse: empty mailbox list",
     "kind": "parse_invite",
-    "text": "{\"v\":3,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"s\":[\"http://h\"],\"x\":1700000300}",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[],\"x\":1700000300}",
     "now_epoch_s": 1700000000,
     "expect": {
       "error": "not_our_code"
     }
   },
   {
-    "name": "invite parse: empty url list",
+    "name": "invite parse: seven entries",
     "kind": "parse_invite",
-    "text": "{\"v\":3,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"s\":[],\"x\":1700000300}",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"n:a.example\",\"n:b.example\",\"n:c.example\",\"n:d.example\",\"n:e.example\",\"n:f.example\",\"n:g.example\"],\"x\":1700000300}",
     "now_epoch_s": 1700000000,
     "expect": {
       "error": "not_our_code"
     }
   },
   {
-    "name": "invite parse: url without host",
+    "name": "invite parse: link-local ipv4",
     "kind": "parse_invite",
-    "text": "{\"v\":3,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"s\":[\"ws:///path\"],\"x\":1700000300}",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:169.254.1.1:80\"],\"x\":1700000300}",
     "now_epoch_s": 1700000000,
     "expect": {
       "error": "not_our_code"
     }
   },
   {
-    "name": "invite parse: missing expiry",
+    "name": "invite parse: link-local ipv6",
     "kind": "parse_invite",
-    "text": "{\"v\":3,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"s\":[\"ws://h\"]}",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:[fe80::1]:80\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: public ipv4",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:8.8.8.8:80\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: cgnat",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:100.64.0.1:80\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: hostname",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:gs.local:80\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: loopback without dev switch",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:127.0.0.1:8787\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: localhost without dev switch",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:localhost:8787\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: lan without port",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:10.0.0.1\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: lan port zero",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:10.0.0.1:0\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: lan public ipv6",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:[2001:db8::1]:80\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: wss scheme in n",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"n:wss://a.example\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: ws scheme in r",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:ws://a.example\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: nostr with port",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"n:a.example:443\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: nostr with path",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"n:a.example/x\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: relay with query",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:a.example/x?y=1\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: unknown kind",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"x:a.example\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: no kind",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"a.example\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: dev switch allows loopback ipv4",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:127.0.0.1:8787\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "allow_dev_loopback": true,
+    "expect": {
+      "ok": {
+        "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+        "mailboxes": [
+          {
+            "kind": "lan",
+            "url": "ws://127.0.0.1:8787"
+          }
+        ],
+        "expires_at_epoch_s": 1700000300
+      }
+    }
+  },
+  {
+    "name": "invite parse: dev switch allows loopback ipv6",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:[::1]:8787\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "allow_dev_loopback": true,
+    "expect": {
+      "ok": {
+        "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+        "mailboxes": [
+          {
+            "kind": "lan",
+            "url": "ws://[::1]:8787"
+          }
+        ],
+        "expires_at_epoch_s": 1700000300
+      }
+    }
+  },
+  {
+    "name": "invite parse: dev switch allows localhost",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:localhost:8787\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "allow_dev_loopback": true,
+    "expect": {
+      "ok": {
+        "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+        "mailboxes": [
+          {
+            "kind": "lan",
+            "url": "ws://localhost:8787"
+          }
+        ],
+        "expires_at_epoch_s": 1700000300
+      }
+    }
+  },
+  {
+    "name": "invite parse: dev switch keeps public refused",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:8.8.8.8:80\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "allow_dev_loopback": true,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite parse: exactly 300 bytes",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"n:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaa.example\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "ok": {
+        "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+        "mailboxes": [
+          {
+            "kind": "nostr",
+            "url": "wss://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaa.example"
+          }
+        ],
+        "expires_at_epoch_s": 1700000300
+      }
+    }
+  },
+  {
+    "name": "invite parse: 301 bytes rejected",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"n:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaa.example\"],\"x\":1700000300}",
     "now_epoch_s": 1700000000,
     "expect": {
       "error": "not_our_code"
@@ -3927,7 +4360,7 @@
   {
     "name": "invite parse: expired",
     "kind": "parse_invite",
-    "text": "{\"v\":3,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"s\":[\"ws://10.0.2.2:8787\",\"wss://a.example/sig\"],\"x\":1699999999}",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com\"],\"x\":1699999999}",
     "now_epoch_s": 1700000000,
     "expect": {
       "error": "expired"
@@ -3936,16 +4369,25 @@
   {
     "name": "invite parse: expires now",
     "kind": "parse_invite",
-    "text": "{\"v\":3,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"s\":[\"ws://10.0.2.2:8787\",\"wss://a.example/sig\"],\"x\":1700000000}",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com\"],\"x\":1700000000}",
     "now_epoch_s": 1700000000,
     "expect": {
       "error": "expired"
     }
   },
   {
+    "name": "invite parse: missing expiry",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com\"]}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
     "name": "invite parse: cut-off json",
     "kind": "parse_invite",
-    "text": "{\"v\":3,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"s\":[\"ws://10.0.2.2:8787\",\"wss://a.example/sig\"],\"x\":1",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com\"],\"x\":1",
     "now_epoch_s": 1700000000,
     "expect": {
       "error": "incomplete_paste"
@@ -3982,37 +4424,109 @@
     "name": "invite build: valid",
     "kind": "build_invite",
     "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "urls": ["ws://10.0.2.2:8787", "wss://a.example/sig"],
+    "mailboxes": [
+      {
+        "kind": "relay",
+        "url": "wss://gs.example.com"
+      },
+      {
+        "kind": "lan",
+        "url": "ws://10.0.2.2:8787"
+      }
+    ],
     "expires_at_epoch_s": 1700000300,
     "expect": {
-      "ok": "{\"v\":3,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"s\":[\"ws://10.0.2.2:8787\",\"wss://a.example/sig\"],\"x\":1700000300}"
+      "ok": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com\",\"l:10.0.2.2:8787\"],\"x\":1700000300}"
+    }
+  },
+  {
+    "name": "invite build: all kinds",
+    "kind": "build_invite",
+    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "mailboxes": [
+      {
+        "kind": "relay",
+        "url": "wss://gs.example.com:8443/sig"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://a.example.org"
+      },
+      {
+        "kind": "lan",
+        "url": "ws://[fd12:3456::1]:9000"
+      }
+    ],
+    "expires_at_epoch_s": 1700000300,
+    "expect": {
+      "ok": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com:8443/sig\",\"n:a.example.org\",\"l:[fd12:3456::1]:9000\"],\"x\":1700000300}"
     }
   },
   {
     "name": "invite build: short psk",
     "kind": "build_invite",
     "psk_b64url": "AAECAwQFBgcICQoLDA0ODw",
-    "urls": ["ws://10.0.2.2:8787", "wss://a.example/sig"],
+    "mailboxes": [
+      {
+        "kind": "relay",
+        "url": "wss://gs.example.com"
+      }
+    ],
     "expires_at_epoch_s": 1700000300,
     "expect": {
       "error": "not_our_code"
     }
   },
   {
-    "name": "invite build: bad url",
+    "name": "invite build: bad scheme for kind",
     "kind": "build_invite",
     "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "urls": ["http://h"],
+    "mailboxes": [
+      {
+        "kind": "relay",
+        "url": "ws://gs.example.com"
+      }
+    ],
     "expires_at_epoch_s": 1700000300,
     "expect": {
       "error": "not_our_code"
     }
   },
   {
-    "name": "invite build: no urls",
+    "name": "invite build: public lan address",
     "kind": "build_invite",
     "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "urls": [],
+    "mailboxes": [
+      {
+        "kind": "lan",
+        "url": "ws://8.8.8.8:80"
+      }
+    ],
+    "expires_at_epoch_s": 1700000300,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite build: link-local lan address",
+    "kind": "build_invite",
+    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "mailboxes": [
+      {
+        "kind": "lan",
+        "url": "ws://[fe80::1]:80"
+      }
+    ],
+    "expires_at_epoch_s": 1700000300,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite build: no mailboxes",
+    "kind": "build_invite",
+    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "mailboxes": [],
     "expires_at_epoch_s": 1700000300,
     "expect": {
       "error": "not_our_code"
@@ -4022,8 +4536,242 @@
     "name": "invite build: zero expiry",
     "kind": "build_invite",
     "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "urls": ["ws://10.0.2.2:8787", "wss://a.example/sig"],
+    "mailboxes": [
+      {
+        "kind": "relay",
+        "url": "wss://gs.example.com"
+      }
+    ],
     "expires_at_epoch_s": 0,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite build: loopback needs the dev switch",
+    "kind": "build_invite",
+    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "mailboxes": [
+      {
+        "kind": "lan",
+        "url": "ws://127.0.0.1:8787"
+      }
+    ],
+    "expires_at_epoch_s": 1700000300,
+    "expect": {
+      "error": "not_our_code"
+    }
+  },
+  {
+    "name": "invite build: loopback with the dev switch",
+    "kind": "build_invite",
+    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "mailboxes": [
+      {
+        "kind": "lan",
+        "url": "ws://127.0.0.1:8787"
+      }
+    ],
+    "expires_at_epoch_s": 1700000300,
+    "allow_dev_loopback": true,
+    "expect": {
+      "ok": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"l:127.0.0.1:8787\"],\"x\":1700000300}"
+    }
+  },
+  {
+    "name": "invite build: fits: nothing dropped",
+    "kind": "build_invite",
+    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "mailboxes": [
+      {
+        "kind": "relay",
+        "url": "wss://gs.example.com"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://a.example.org"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://b.example.org"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://c.example.org"
+      },
+      {
+        "kind": "lan",
+        "url": "ws://192.168.1.5:8787"
+      }
+    ],
+    "expires_at_epoch_s": 1700000300,
+    "expect": {
+      "ok": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com\",\"n:a.example.org\",\"n:b.example.org\",\"n:c.example.org\",\"l:192.168.1.5:8787\"],\"x\":1700000300}"
+    }
+  },
+  {
+    "name": "invite build: seven entries drop the last",
+    "kind": "build_invite",
+    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "mailboxes": [
+      {
+        "kind": "nostr",
+        "url": "wss://a.example"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://b.example"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://c.example"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://d.example"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://e.example"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://f.example"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://g.example"
+      }
+    ],
+    "expires_at_epoch_s": 1700000300,
+    "expect": {
+      "ok": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"n:a.example\",\"n:b.example\",\"n:c.example\",\"n:d.example\",\"n:e.example\",\"n:f.example\"],\"x\":1700000300}"
+    }
+  },
+  {
+    "name": "invite build: drop order: extra own relays first, last first",
+    "kind": "build_invite",
+    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "mailboxes": [
+      {
+        "kind": "relay",
+        "url": "wss://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.relay.example.com"
+      },
+      {
+        "kind": "relay",
+        "url": "wss://bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.relay.example.com"
+      },
+      {
+        "kind": "relay",
+        "url": "wss://cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.relay.example.com"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://a.example.org"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://b.example.org"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://c.example.org"
+      }
+    ],
+    "expires_at_epoch_s": 1700000300,
+    "expect": {
+      "ok": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.relay.example.com\",\"r:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.relay.example.com\",\"n:a.example.org\",\"n:b.example.org\",\"n:c.example.org\"],\"x\":1700000300}"
+    }
+  },
+  {
+    "name": "invite build: drop order: one extra own relay is enough",
+    "kind": "build_invite",
+    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "mailboxes": [
+      {
+        "kind": "relay",
+        "url": "wss://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.relay.example.com"
+      },
+      {
+        "kind": "relay",
+        "url": "wss://bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.relay.example.com"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://a.example.org"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://b.example.org"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://c.example.org"
+      }
+    ],
+    "expires_at_epoch_s": 1700000300,
+    "expect": {
+      "ok": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.relay.example.com\",\"r:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.relay.example.com\",\"n:a.example.org\",\"n:b.example.org\",\"n:c.example.org\"],\"x\":1700000300}"
+    }
+  },
+  {
+    "name": "invite build: drop order: nostr down to two, keeps lan and first relay",
+    "kind": "build_invite",
+    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "mailboxes": [
+      {
+        "kind": "relay",
+        "url": "wss://gs.example.com"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.nostr.example.org"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.nostr.example.org"
+      },
+      {
+        "kind": "nostr",
+        "url": "wss://cccccccccccccccccccccccccccccccccccccccc.nostr.example.org"
+      },
+      {
+        "kind": "lan",
+        "url": "ws://192.168.1.5:8787"
+      }
+    ],
+    "expires_at_epoch_s": 1700000300,
+    "expect": {
+      "ok": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com\",\"n:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.nostr.example.org\",\"n:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.nostr.example.org\",\"l:192.168.1.5:8787\"],\"x\":1700000300}"
+    }
+  },
+  {
+    "name": "invite build: protected entries alone over budget",
+    "kind": "build_invite",
+    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "mailboxes": [
+      {
+        "kind": "relay",
+        "url": "wss://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.example.com/pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp"
+      },
+      {
+        "kind": "lan",
+        "url": "ws://[fd12:3456:789a:bcde:f012:3456:789a:bcd0]:65535"
+      },
+      {
+        "kind": "lan",
+        "url": "ws://[fd12:3456:789a:bcde:f012:3456:789a:bcd1]:65535"
+      },
+      {
+        "kind": "lan",
+        "url": "ws://[fd12:3456:789a:bcde:f012:3456:789a:bcd2]:65535"
+      },
+      {
+        "kind": "lan",
+        "url": "ws://[fd12:3456:789a:bcde:f012:3456:789a:bcd3]:65535"
+      }
+    ],
+    "expires_at_epoch_s": 1700000300,
     "expect": {
       "error": "not_our_code"
     }

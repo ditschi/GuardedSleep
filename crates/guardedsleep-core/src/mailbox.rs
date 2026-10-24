@@ -26,6 +26,10 @@ pub const RELAY_MAILBOX: MailboxId = 0;
 pub enum MailboxKind {
     /// Our signaling relay (`signaling-relay`): `hello`/`welcome`/`members`/`peer`/`signal`.
     Relay,
+    /// A Nostr relay (`n:` in an invite); its wire protocol joins with task 3.5.
+    Nostr,
+    /// A LAN mailbox (`l:` in an invite); the listener joins with `add-offline-lan`.
+    Lan,
 }
 
 /// Transport state of one mailbox.
