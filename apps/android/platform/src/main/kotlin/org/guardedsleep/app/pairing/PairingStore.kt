@@ -26,22 +26,20 @@ data class StoredPairing(
  * PSK, server list and TURN credentials sealed with [PairingCipher] in an app-private file. Plain
  * preferences never hold pairing material (guardrail 7.2).
  */
-class PairingStore(private val file: File, private val cipher: PairingCipher) {
+class PairingStore(file: File, cipher: PairingCipher) {
+    private val sealed = SealedJsonFile(file, cipher)
+
     @Synchronized
     fun load(): StoredPairing? {
-        if (!file.exists()) return null
+        val o = sealed.read() ?: return null
+        // A well-formed file with missing fields is treated like an unreadable one.
         return runCatching {
-            val o = JSONObject(String(cipher.decrypt(file.readBytes()), Charsets.UTF_8))
             val urls = o.getJSONArray("s").let { a -> (0 until a.length()).map { a.getString(it) } }
-            val turn =
-                o.optJSONObject("t")?.let {
-                    TurnCredentials(it.getString("u"), it.getString("n"), it.getString("c"))
-                }
+            val turn = o.optJSONObject("t")?.let(::turnCredentialsFromJson)
             StoredPairing(o.getString("k"), urls, o.optBoolean("p", false), turn)
         }
             .getOrElse {
-                // Unreadable (key lost after a restore or a corrupt file): treat as not paired.
-                clear()
+                sealed.clear()
                 null
             }
     }
@@ -53,12 +51,8 @@ class PairingStore(private val file: File, private val cipher: PairingCipher) {
                 .put("k", pairing.pskB64url)
                 .put("s", JSONArray(pairing.signalingUrls))
                 .put("p", pairing.pairedBefore)
-        pairing.turn?.let {
-            o.put("t", JSONObject().put("u", it.url).put("n", it.username).put("c", it.credential))
-        }
-        val tmp = File(file.parentFile, file.name + ".tmp")
-        tmp.writeBytes(cipher.encrypt(o.toString().toByteArray(Charsets.UTF_8)))
-        check(tmp.renameTo(file)) { "cannot replace pairing file" }
+        pairing.turn?.let { o.put("t", it.toJson()) }
+        sealed.write(o)
     }
 
     @Synchronized
@@ -66,13 +60,8 @@ class PairingStore(private val file: File, private val cipher: PairingCipher) {
         load()?.takeIf { !it.pairedBefore }?.let { save(it.copy(pairedBefore = true)) }
     }
 
-    @Synchronized fun exists(): Boolean = file.exists()
+    @Synchronized fun exists(): Boolean = sealed.exists()
 
     /** Deletes the file and the key alias. */
-    @Synchronized
-    fun clear() {
-        file.delete()
-        File(file.parentFile, file.name + ".tmp").delete()
-        cipher.deleteKey()
-    }
+    @Synchronized fun clear() = sealed.clear()
 }
