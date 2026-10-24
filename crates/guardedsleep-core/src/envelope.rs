@@ -23,7 +23,9 @@
 //! answer to a candidate is a `here` that carries a fresh 16-byte *challenge*; only a `here` that
 //! echoes the open challenge (single use, valid [`CHALLENGE_VALID_MS`]) promotes the candidate to
 //! the peer's confirmed session, replacing and retiring the previous one. Messages other than
-//! `here` from a candidate are dropped and never promote. Retired sessions are kept for the whole
+//! `here` from a candidate are dropped and never promote. If the confirming echo is lost, the peer repeats its `here`
+//! with its open challenge and the confirmed side echoes again (at most once per 5 s, within the reply
+//! budget). Retired sessions are kept for the whole
 //! run. A stored message can therefore only be replayed into a session that is still current,
 //! and then the replay window and the sequence window drop it.
 //!
@@ -105,6 +107,8 @@ const CANDIDATES_KEEP: usize = 16;
 pub const CHALLENGE_VALID_MS: u64 = 60_000;
 /// Challenges are issued at most once per this long overall.
 pub const CHALLENGE_MIN_INTERVAL_MS: u64 = 5_000;
+/// A repeated echo for the same confirmed peer is sent at most once per this long.
+pub const ECHO_MIN_INTERVAL_MS: u64 = 5_000;
 /// While a confirmed session exists, at most [`REPLY_BUDGET`] replies per this long ...
 pub const REPLY_BUDGET_WINDOW_MS: u64 = 10 * 60 * 1000;
 /// ... that is this many.
@@ -697,6 +701,7 @@ pub struct SessionState {
     retired: BTreeSet<SessionId>,
     retired_order: VecDeque<SessionId>,
     last_challenge_ms: Option<u64>,
+    last_echo_ms: Option<u64>,
     reply_times: VecDeque<u64>,
     replay: ReplayWindow,
 }
@@ -723,6 +728,7 @@ impl SessionState {
             retired: BTreeSet::new(),
             retired_order: VecDeque::new(),
             last_challenge_ms: None,
+            last_echo_ms: None,
             reply_times: VecDeque::new(),
             replay: ReplayWindow::new(),
         }
@@ -910,6 +916,24 @@ impl SessionState {
             Verdict::Accept => {
                 if let Some(p) = self.peer.as_mut() {
                     p.seqs.mark(parsed.seq);
+                }
+                // The confirmed peer repeats its `here` with its open challenge: it is still
+                // waiting for our echo (the first one was lost). Echo again, rarely and within
+                // the reply budget, so a lost echo costs seconds and not the challenge's life.
+                if class == MessageClass::Here
+                    && parsed.challenge != NO_CHALLENGE
+                    && self
+                        .last_echo_ms
+                        .is_none_or(|t| now_ms.saturating_sub(t) >= ECHO_MIN_INTERVAL_MS)
+                    && self.budget_ok(now_ms, false)
+                {
+                    self.spend_budget(now_ms, false);
+                    self.last_echo_ms = Some(now_ms);
+                    reply = Some(Reply {
+                        to: sender,
+                        challenge: NO_CHALLENGE,
+                        echo: parsed.challenge,
+                    });
                 }
             }
             Verdict::Promote => {
@@ -1557,6 +1581,103 @@ mod tests {
             10,
         );
         assert_eq!(p.parent_opens(&stale), Err(OpenError::ReplayedSeq));
+    }
+
+    #[test]
+    fn a_lost_final_echo_is_repaired_by_one_repeat() {
+        let (mut rb, mut rp) = (rng(21), rng(22));
+        let k = key();
+        let mut baby = SessionState::new(Role::Baby, SessionId::random(&mut rb));
+        let mut parent = SessionState::new(Role::Parent, SessionId::random(&mut rp));
+        let h1 = baby
+            .seal(&k, &mut rb, MessageClass::Here, SessionId::NONE, b"h")
+            .unwrap();
+        let r1 = parent
+            .open(&k, &mut rp, 0, &h1.bytes)
+            .unwrap()
+            .reply
+            .unwrap();
+        let s1 = parent.seal_reply(&k, &mut rp, &r1, b"h").unwrap();
+        let r2 = baby.open(&k, &mut rb, 1, &s1.bytes).unwrap().reply.unwrap();
+        let s2 = baby.seal_reply(&k, &mut rb, &r2, b"h").unwrap();
+        // The parent confirms the baby and answers with the final echo, which is lost.
+        let o3 = parent.open(&k, &mut rp, 2, &s2.bytes).unwrap();
+        assert!(o3.confirmed);
+        let lost = parent
+            .seal_reply(&k, &mut rp, &o3.reply.unwrap(), b"h")
+            .unwrap();
+        assert_eq!(baby.peer_session(), None);
+        let _ = lost;
+        // The baby repeats its `here` with the challenge it is still waiting on.
+        let repeat = baby.seal_reply(&k, &mut rb, &r2, b"h").unwrap();
+        let o4 = parent.open(&k, &mut rp, 3_000, &repeat.bytes).unwrap();
+        assert!(!o4.confirmed);
+        let echo = o4.reply.expect("echoed again");
+        assert_eq!((echo.challenge, echo.echo), (NO_CHALLENGE, r2.challenge));
+        let again = parent.seal_reply(&k, &mut rp, &echo, b"h").unwrap();
+        // One repeat later the baby confirms the parent.
+        assert!(
+            baby.open(&k, &mut rb, 3_001, &again.bytes)
+                .unwrap()
+                .confirmed
+        );
+        assert_eq!(baby.peer_session(), Some(parent.own_session()));
+        // A second repeat within 5 s gets no echo; after 5 s it does.
+        let r3 = baby.seal_reply(&k, &mut rb, &r2, b"h").unwrap();
+        assert!(
+            parent
+                .open(&k, &mut rp, 4_000, &r3.bytes)
+                .unwrap()
+                .reply
+                .is_none()
+        );
+        let r4 = baby.seal_reply(&k, &mut rb, &r2, b"h").unwrap();
+        assert!(
+            parent
+                .open(&k, &mut rp, 8_001, &r4.bytes)
+                .unwrap()
+                .reply
+                .is_some()
+        );
+        // A plain `here` from the confirmed peer (no challenge) is never echoed.
+        let plain = baby
+            .seal(&k, &mut rb, MessageClass::Here, SessionId::NONE, b"h")
+            .unwrap();
+        assert!(
+            parent
+                .open(&k, &mut rp, 20_000, &plain.bytes)
+                .unwrap()
+                .reply
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn repeated_echoes_count_in_the_reply_budget() {
+        let mut p = Pair::confirmed();
+        p.t = 100_000;
+        let ch = [0x5A; CHALLENGE_LEN];
+        let mut echoed = 0;
+        for i in 0..30u8 {
+            p.t += ECHO_MIN_INTERVAL_MS;
+            let s = forge(
+                &p.k,
+                Role::Baby,
+                MessageClass::Here,
+                SessionId::NONE,
+                p.baby.own_session(),
+                100 + u32::from(i),
+                ch,
+                NO_CHALLENGE,
+                0xC0 + i,
+            );
+            if p.parent_opens(&s).unwrap().reply.is_some() {
+                echoed += 1;
+            }
+        }
+        // 30 repeats over 150 s: only the budget (shared with the handshake replies) limits them.
+        assert!(echoed <= REPLY_BUDGET, "{echoed}");
+        assert!(echoed >= REPLY_BUDGET - 3, "{echoed}");
     }
 
     #[test]
