@@ -166,6 +166,16 @@ This is the **only privacy-conformant software backup** for the parent-dead case
 
 **What the user does**: revoke the lost device via any other cluster member; or if they cannot, re-pair from scratch (which invalidates the old PSK if re-keying is implemented).
 
+### F-8: Untrusted signaling infrastructure (`alpha-connection-model`)
+
+**Trigger**: a public Nostr relay, our relay, a LAN relay or a STUN operator misbehaves (drops, delays, replays, floods) or simply observes.
+
+**What it learns**: IP addresses and the times the devices set up or recover a connection; on Nostr also the daily tag and public keys, and, because GuardedSleep uses one fixed event kind, anyone can count GuardedSleep setups on relays that retain ephemeral events. The three relays of a pairing stay the same across days until a mailbox update. Envelopes are sealed (no SDP, candidates, fingerprints or names), but there is no forward secrecy: a later PSK compromise (F-7) decrypts retained envelopes (SDP and IPs, never audio).
+
+**What it cannot do**: hear the baby, fake "monitored" (liveness runs on the DataChannel), mute escalation (stops are bound to confirmed sessions), or take over the baby after the first pairing (parent secret over DTLS). A PSK holder can still squat the single parent slot on an own relay or a LAN relay: denial of service only, escalation still runs.
+
+**Residual risk**: at the first pairing, whoever verifies first within the 5-minute invite is pinned; the baby shows the parent device's name with "Not my device".
+
 ## Reconnection specification (one-tap requirement)
 
 The "indicator-loss as alarm" model only works if reconnection is trivial. The following are **hard requirements** for the parent-side app:

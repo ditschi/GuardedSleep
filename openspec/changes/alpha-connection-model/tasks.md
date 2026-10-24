@@ -9,8 +9,8 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 
 ## 1. Guardrails, decisions and history
 
-- [ ] 1.1 Amend AGENTS.md §7.1 and §7.3 with the exact wording in `design.md` §2 and §7, and the §9 rows (internet mailboxes: alpha; TURN: user-entered only in the alpha). Mirror the change in `.cursor/rules`. Add a context note to ADR-018 in the decision archive README (tester setup: Nostr and relay mailboxes, no TURN), and update the rounds in `docs/contributing/alpha-hardware-test.md` (Nostr cross-network, network switch, a Persona A venue round). Verify: `just lint-text`.
-- [ ] 1.2 Threat model entries in `docs/concept/failure-model.md` (or the security doc it points to): operators learn IPs and timing; the fixed kind lets anyone count setups; the 3-relay set is stable across days; no forward secrecy for signaling; parent pin limits. Verify: `just lint-text`.
+- [x] 1.1 Amend AGENTS.md §7.1 and §7.3 with the exact wording in `design.md` §2 and §7, and the §9 rows (internet mailboxes: alpha; TURN: user-entered only in the alpha). Mirror the change in `.cursor/rules`. Add a context note to ADR-018 in the decision archive README (tester setup: Nostr and relay mailboxes, no TURN), and update the rounds in `docs/contributing/alpha-hardware-test.md` (Nostr cross-network, network switch, a Persona A venue round). Verify: `just lint-text`.
+- [x] 1.2 Threat model entries in `docs/concept/failure-model.md` (or the security doc it points to): operators learn IPs and timing; the fixed kind lets anyone count setups; the 3-relay set is stable across days; no forward secrecy for signaling; parent pin limits. Verify: `just lint-text`.
 
 ## 2. Core inputs and envelope
 

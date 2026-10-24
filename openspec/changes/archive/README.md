@@ -47,6 +47,10 @@ The ADR → OpenSpec migration, one change per capability:
 - [`2026-10-22-migrate-release-checks`](2026-10-22-migrate-release-checks/proposal.md)
 - [`2026-10-22-migrate-signaling-relay`](2026-10-22-migrate-signaling-relay/proposal.md)
 
+## Context notes
+
+- **ADR-018 (2026-10-23):** the alpha tester setup changes with `alpha-connection-model` and `add-offline-lan`: internet signaling through curated EU Nostr relays and own relays (no default server), automatic disclosed EU STUN, no TURN configured by default, and offline LAN in the alpha. Mobile-data rounds no longer require a TURN server; pairs without a direct path are expected to fail with the `media_blocked` troubleshooter.
+
 ## Withdrawn changes
 
 Prepared but never implemented; kept for their options and discarded alternatives.
