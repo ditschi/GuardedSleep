@@ -147,11 +147,9 @@ describe("S12 settings", () => {
     it("masks the password and offers no Remove before anything is saved", async () => {
       open(c);
       expect(await screen.findByTestId("settings_turn_pass")).toHaveAttribute("type", "password");
-      expect(screen.getByTestId("settings_turn_pass")).toHaveAttribute(
-        "autocomplete",
-        "new-password",
-      );
-      expect(screen.getByTestId("settings_turn_user")).toHaveAttribute("autocomplete", "username");
+      // The browser password manager must not store TURN credentials.
+      expect(screen.getByTestId("settings_turn_pass")).toHaveAttribute("autocomplete", "off");
+      expect(screen.getByTestId("settings_turn_user")).toHaveAttribute("autocomplete", "off");
       expect(screen.queryByTestId("settings_turn_remove")).toBeNull();
       expect(screen.queryByTestId("settings_turn_pass_saved")).toBeNull();
     });

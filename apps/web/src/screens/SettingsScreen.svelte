@@ -264,6 +264,8 @@
           </Button>
         </form>
         <p class="gs-hint">{$t("webScreens.settings.urlHint")}</p>
+        <!-- autocomplete="off" on user name and password: the browser password manager must not
+             store TURN credentials; the web client keeps them in memory only (guardrail 7.2). -->
         <form class="gs-stack gs-stack--tight" onsubmit={saveTurn} data-testid="settings_turn_form">
           <label for="settings-turn" class="gs-group__title">
             {$t("native.ui.settings.turn.label")}
@@ -288,7 +290,7 @@
             class="gs-input"
             type="text"
             spellcheck="false"
-            autocomplete="username"
+            autocomplete="off"
             autocapitalize="off"
             data-testid="settings_turn_user"
             bind:value={turnUser}
@@ -301,7 +303,7 @@
             id="settings-turn-pass"
             class="gs-input"
             type="password"
-            autocomplete="new-password"
+            autocomplete="off"
             aria-describedby={$settings.turnPasswordSaved ? "settings-turn-pass-saved" : undefined}
             data-testid="settings_turn_pass"
             bind:value={turnPass}
