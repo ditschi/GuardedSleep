@@ -49,7 +49,7 @@ Greenfield build of `apps/web` (design.md). `apps/mobile` is read-only reference
 
 ## 8. Web checks
 
-- [ ] 8.1 Playwright suite against `apps/web` with fake media devices: rewrite `apps/e2e` tests to the new test ids (pairing, audio flow, noise alert and no-alert cases, listen, reconnect, wrong PSK, signaling unreachable, recovery, storage); delete tests for legacy-only behaviour (deep-link invites, v1 paste). Verify: `just e2e` green.
+- [x] 8.1 Playwright suite against `apps/web` with fake media devices: rewrite `apps/e2e` tests to the new test ids (pairing, audio flow, noise alert and no-alert cases, listen, reconnect, wrong PSK, signaling unreachable, recovery, storage); delete tests for legacy-only behaviour (deep-link invites, v1 paste). Verify: `just e2e` green.
 - [ ] 8.2 axe on every screen and a text-overflow check at 320 px width and 200 % text size. Verify: `just e2e`.
 - [ ] 8.3 pnpm settings per the `Web checks` requirement (allow-list, minimum release age, exotic sub-deps blocked, frozen lockfile in CI) are in force for the new dependencies. Verify: `pnpm install --frozen-lockfile` and `just lint`.
 - [ ] 8.4 `docs/ci-gates.md` rows for svelte-check, the storage test, the CSP test and axe (owner, runbook, last catch). Verify: `just lint-text`.

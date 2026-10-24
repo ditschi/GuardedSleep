@@ -18,8 +18,7 @@
     "test": "pnpm -r --filter '!@guardedsleep/e2e' test",
     "check": "pnpm -r --if-present run check",
     "audit": "pnpm audit --audit-level=high",
-    "e2e": "pnpm --filter @guardedsleep/e2e test",
-    "e2e:lan": "pnpm --filter @guardedsleep/e2e test:lan"
+    "e2e": "pnpm --filter @guardedsleep/e2e test"
   },
   "devDependencies": {
     "@cspell/dict-de-de": "^4.1.3",

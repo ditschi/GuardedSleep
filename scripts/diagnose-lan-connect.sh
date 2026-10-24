@@ -86,9 +86,6 @@ echo "  • Phone and laptop must be on the same Wi-Fi; guest/isolated VLAN bloc
 echo "  • Host firewall must allow TCP ${WEB_PORT} and ${SIGNAL_PORT} (e.g. ufw allow ${SIGNAL_PORT}/tcp)."
 echo "  • Docker stack: open https://${LAN_IP}:${WEB_HTTPS_PORT}/ on the phone and accept the self-signed cert."
 echo ""
-echo "Automated checks:"
-echo "  just e2e-lan          # dual Chromium via LAN IP (no phone)"
-echo "  GUARDEDSLEEP_HYBRID_E2E=1 GUARDEDSLEEP_HYBRID_LAN=1 pnpm run e2e:hybrid  # phone + browser"
 
 if [[ "$fail" -ne 0 ]]; then
   echo ""

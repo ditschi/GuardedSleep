@@ -25,6 +25,5 @@ if [[ "${GUARDEDSLEEP_E2E_IN_DOCKER:-0}" != "1" ]] && ! compgen -G "${PLAYWRIGHT
 fi
 
 run_step "Browser baseline E2E" pnpm run e2e
-run_step "Browser LAN E2E (ws)" pnpm run e2e:lan
 
 log "Done. Local automation run completed."

@@ -53,22 +53,28 @@ test("noise alert: full screen, flashing title, notification, stop sound", async
   }
 });
 
-test("silence never raises the noise alert", async () => {
-  test.setTimeout(120_000);
-  const dual = await launchDualContexts({
-    babyFakeWav: join(fixturesDir, "silence-30s.wav"),
-    parentFakeWav: join(fixturesDir, "silence-30s.wav"),
-    permissions: CLIPBOARD_PERMISSIONS,
+// Digital silence, and a 50 ms blip that is shorter than the hold time: neither is an alert.
+for (const [fixture, what] of [
+  ["silence-30s.wav", "silence"],
+  ["blip-50ms.wav", "a short blip"],
+] as const) {
+  test(`${what} never raises the noise alert`, async () => {
+    test.setTimeout(120_000);
+    const dual = await launchDualContexts({
+      babyFakeWav: join(fixturesDir, fixture),
+      parentFakeWav: join(fixturesDir, "silence-30s.wav"),
+      permissions: CLIPBOARD_PERMISSIONS,
+    });
+    try {
+      await pairWeb(dual);
+      await dual.parentPage.waitForTimeout(12_000);
+      await expect(dual.parentPage.getByTestId("alert_title")).toHaveCount(0);
+      await expect(dual.parentPage.getByTestId("parent_headline")).toBeVisible();
+    } finally {
+      await dual.dispose();
+    }
   });
-  try {
-    await pairWeb(dual);
-    await dual.parentPage.waitForTimeout(12_000);
-    await expect(dual.parentPage.getByTestId("alert_title")).toHaveCount(0);
-    await expect(dual.parentPage.getByTestId("parent_headline")).toBeVisible();
-  } finally {
-    await dual.dispose();
-  }
-});
+}
 
 test("link alarm: baby device stopped, then connection lost", async () => {
   test.setTimeout(240_000);

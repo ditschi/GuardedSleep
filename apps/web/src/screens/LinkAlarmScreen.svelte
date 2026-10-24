@@ -98,7 +98,9 @@
             })}
           </p>
           <p>{$t("native.ui.linkAlarm.lost.body")}</p>
-          {#if cause}<p data-testid="link_alarm_cause">{$t(cause)}</p>{/if}
+          {#if cause}<p data-testid="link_alarm_cause" data-cause={$parent.link.causeHint}>
+              {$t(cause)}
+            </p>{/if}
         {:else if kind === "baby_stopped"}
           <p>{$t("native.ui.linkAlarm.stopped.body")}</p>
         {:else if kind === "battery_critical"}
