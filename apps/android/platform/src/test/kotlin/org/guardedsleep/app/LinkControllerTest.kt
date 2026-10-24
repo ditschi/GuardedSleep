@@ -380,12 +380,13 @@ class LinkControllerTest {
 
     @Test
     fun iceConfigPrefersDebugLaunchEntryOverStoredOne() {
-        val stored = TurnCredentials("turn:stored", "su", "sp")
+        val stored = TurnCredentials("turn:stored", "su", "stored-secret-test-only")
         val pending = TurnCredentials("turn:debug", "du", "dp")
         val fromStore = buildIceConfig(listOf("stun:a"), null, stored, false)
         assertEquals("turn:stored", fromStore.turnUrl)
         assertEquals("su", fromStore.turnUser)
-        assertEquals("sp", fromStore.turnCredential)
+        assertEquals("stored-secret-test-only", fromStore.turnCredential)
+        assertFalse(fromStore.toString().contains("stored-secret-test-only"))
         assertEquals("turn:debug", buildIceConfig(emptyList(), pending, stored, true).turnUrl)
         val bare = buildIceConfig(emptyList(), null, TurnCredentials("turn:h", "", ""), false)
         assertNull(bare.turnUser)

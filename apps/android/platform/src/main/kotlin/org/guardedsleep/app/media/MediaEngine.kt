@@ -81,4 +81,9 @@ data class IceConfig(
     val turnCredential: String? = null,
     /** Debug gate only: the emulators reach each other through TURN. */
     val relayOnly: Boolean = false,
-)
+) {
+    // The TURN password must never reach logs through string templates.
+    override fun toString(): String =
+        "IceConfig(stunUrls=$stunUrls, relayOnly=$relayOnly, turnUrlSet=${turnUrl != null}, " +
+            "turnUserSet=${turnUser != null}, turnCredential=<redacted>)"
+}
