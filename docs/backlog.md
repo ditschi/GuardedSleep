@@ -78,6 +78,7 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 - `IDEA` Forward secrecy with an ephemeral Diffie-Hellman exchange per connection.
 - `IDEA` Emoji fingerprint shown on both units for an optional visual check (ADR-018 T2).
 - `IDEA` Post-pairing key change so a shared code is single-use; then a Web Share action for the invite.
+- `IDEA` Carry the TURN entry (address, user name, password) in the QR invite, so the user enters it on one device only; needs a v3 invite extension in the core and both bindings (discarded in `add-turn-credentials` while `alpha-connection-model` reworks pairing).
 
 ### signaling-relay
 

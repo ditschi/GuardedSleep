@@ -118,9 +118,21 @@ docker run --rm --network host --entrypoint turnutils_uclient coturn/coturn:4.18
 
 Open the WebRTC sample page [Trickle ICE](https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/), remove the default server, add `turn:<TURN_PUBLIC_IP>:3478` with user and password, and click "Gather candidates". A line of type **`relay`** with your public IP and a port from 49160–49200 means the server works for WebRTC. The page runs in your browser and talks only to the servers you enter; still, use the test credential and rotate it afterwards (§8).
 
-### 5.3 With the Android app (debug build)
+### 5.3 With the apps
 
-The release UI does not take TURN credentials yet (see §9), so the end-to-end test uses the debug launch extras that the emulator gate uses ([`scripts/poc/gate.sh`](../../scripts/poc/gate.sh), `launch()`). Put the two phones on networks without a direct path (for example both on mobile data, or one with `relay_only`), install the debug APK (`just build-android`), and start both roles with the same fresh PSK:
+Put the two devices on networks without a direct path (for example both on mobile data, or a phone on mobile data and a laptop behind a hotel Wi-Fi). On **each** device open Settings → Advanced → "Relay server (TURN), optional" and enter:
+
+| Field     | Value                        |
+| --------- | ---------------------------- |
+| Address   | `turn:<TURN_PUBLIC_IP>:3478` |
+| User name | `guardedsleep` (`TURN_USER`) |
+| Password  | `TURN_PASSWORD` from `.env`  |
+
+Save. Android stores the entry encrypted with its own Keystore key and shows only "Password saved" afterwards; the web client keeps it in memory, so enter it again after a reload. The entry is used from the next connection attempt on: stop and start monitoring once.
+
+Pass: monitoring connects, and `docker compose logs` shows new sessions for the user `guardedsleep` with allocations on relay ports in your range.
+
+To force the relay path regardless of the networks (emulator gate style), the Android debug build still takes the TURN entry and `relay_only` as launch extras ([`scripts/poc/gate.sh`](../../scripts/poc/gate.sh), `launch()`); the launch entry wins over the setting:
 
 ```bash
 PSK="$(head -c 32 /dev/urandom | base64 | tr '+/' '-_' | tr -d '=\n')"
@@ -133,7 +145,7 @@ for role in baby parent; do
 done
 ```
 
-Pass: monitoring connects, and `docker compose logs` shows new sessions for the user `guardedsleep` with allocations on relay ports in your range. The PSK lives only in this shell; never paste it into logs or issues.
+The PSK lives only in this shell; never paste it into logs or issues.
 
 ## 6. Running signaling on the same VPS
 
@@ -157,8 +169,8 @@ The Rust signaling server ([`docker/signaling-server`](../../docker/signaling-se
 
 ## 9. Known gaps in the app (alpha)
 
-- **Android settings take only the TURN URL** (Advanced → "Relay server (TURN), optional"), no user name or password. A coturn with authentication, which is the only safe setup, therefore works today only through the debug launch (§5.3); the QR pairing payload carries no TURN data either. Closing that gap is app work and needs an OpenSpec change (credential fields, sealed storage under guardrail §7.2).
-- **The web client has no TURN setting yet.**
+- **Each device needs its own entry:** the QR invite carries no TURN data (backlog `IDEA`).
+- **Web: memory only.** A reload forgets the entry, like the other web settings except the theme; credentials never go to browser storage.
 - **Static credential:** the planned beta profile replaces it with `--use-auth-secret` and short-lived HMAC credentials (TTL ≤ 10 minutes) that the app obtains only after the pairing proof.
 
 ## 10. Troubleshooting
