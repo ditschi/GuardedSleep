@@ -16,6 +16,12 @@ tsify = ["dep:tsify", "dep:wasm-bindgen"]
 # of the facades and by the fuzz crate; a release build must not contain them.
 # Docs: https://doc.rust-lang.org/cargo/reference/features.html
 conformance = []
+# Test support for sealed signaling (`testing`: a PSK-holding peer, readers and a rewriting
+# intermediary). Enabled by the integration tests of this crate and by the simulation, never by a
+# release build. Kept apart from `conformance` so that a workspace-wide test run, which unifies
+# features, does not switch on the conformance entry points of the facades.
+# Docs: https://doc.rust-lang.org/cargo/reference/features.html#feature-unification
+testing = []
 
 [dependencies]
 base64 = "0.23"
@@ -33,10 +39,10 @@ zeroize = "1.9.1"
 [dev-dependencies]
 proptest = "1"
 # The integration tests (`tests/`) play a PSK-holding attacker and read what a device sent, which
-# needs the test-only entry points of the envelope. A crate may depend on itself in
-# dev-dependencies to switch features on for its own tests; the library build is unaffected.
+# needs the `testing` support. A crate may depend on itself in dev-dependencies to switch features
+# on for its own tests; the library build is unaffected.
 # Docs: https://doc.rust-lang.org/cargo/reference/features.html#feature-unification
-guardedsleep-core = { path = ".", features = ["conformance"] }
+guardedsleep-core = { path = ".", features = ["testing"] }
 
 [lints]
 workspace = true

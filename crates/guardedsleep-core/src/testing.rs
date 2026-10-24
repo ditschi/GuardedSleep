@@ -1,8 +1,7 @@
 //! Test support for sealed signaling, shared by the integration tests and the simulation: a peer
 //! that holds the PSK and speaks sealed envelopes (so it can run the confirmation handshake with a
 //! `Link` and say sealed messages), and readers for what a device sent. Only in test and
-//! `conformance` builds: a release build has no way to read or forge an envelope without a
-//! session.
+//! `testing` builds: a release build has no way to read or forge an envelope without a session.
 
 use base64::Engine as _;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;

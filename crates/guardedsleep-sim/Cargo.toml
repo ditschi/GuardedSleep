@@ -14,9 +14,9 @@ name = "gs-sim"
 path = "src/main.rs"
 
 [dependencies]
-# `conformance` for the sealed-signaling test support (a PSK-holding peer and a rewriting relay).
-# The simulation is never part of a release build.
-guardedsleep-core = { path = "../guardedsleep-core", features = ["conformance"] }
+# `testing` for the sealed-signaling test support (a PSK-holding peer and a rewriting relay). The
+# simulation is never part of a release build.
+guardedsleep-core = { path = "../guardedsleep-core", features = ["testing"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 

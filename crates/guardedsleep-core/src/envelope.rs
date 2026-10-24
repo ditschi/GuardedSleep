@@ -510,7 +510,7 @@ pub fn seal_raw_plaintext(
 /// An envelope as a PSK holder sitting in a mailbox reads it: no session state, no replay window.
 /// Simulations and tests use it to play such an attacker (rewrite an SDP) and to record what a
 /// device sent; a release build has no such function.
-#[cfg(any(test, feature = "conformance"))]
+#[cfg(any(test, feature = "testing"))]
 #[derive(Debug, Clone)]
 pub struct Peeked {
     pub frame: Frame,
@@ -518,7 +518,7 @@ pub struct Peeked {
 }
 
 /// Decrypts `bytes` with the envelope key; `None` for anything that does not authenticate.
-#[cfg(any(test, feature = "conformance"))]
+#[cfg(any(test, feature = "testing"))]
 pub fn peek(key: &SecretKey, bytes: &[u8]) -> Option<Peeked> {
     let (head, rest) = bytes.split_first_chunk::<HEADER_LEN>()?;
     let [version, role_b, class_b] = *head;
@@ -554,7 +554,7 @@ pub fn peek(key: &SecretKey, bytes: &[u8]) -> Option<Peeked> {
 
 /// Seals `message` into the frame of `peeked` (same role, class, sessions and sequence number)
 /// under a fresh `nonce`: the rewrite a PSK-holding intermediary can do.
-#[cfg(any(test, feature = "conformance"))]
+#[cfg(any(test, feature = "testing"))]
 pub fn reseal(
     key: &SecretKey,
     peeked: &Peeked,
