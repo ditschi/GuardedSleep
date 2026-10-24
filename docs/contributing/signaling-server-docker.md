@@ -33,7 +33,7 @@ Use **TLS** (reverse proxy or `wss://`) in production; the container alone speak
 
 **Reverse proxy (Traefik, Caddy, nginx):** see **[signaling-traefik.md](signaling-traefik.md)**. Ready-to-use Traefik file: [compose.traefik.yaml](../../docker/signaling-server/compose.traefik.yaml) + [traefik.env.example](../../docker/signaling-server/traefik.env.example) — only port 443 on the proxy, no published host port. Health endpoint: `GET /healthz`.
 
-**Static PWA + signaling (full stack):** see **[mobile-web-docker.md](mobile-web-docker.md)** for the `docker/mobile-web` image and Compose examples under [docker/stack/](../../docker/stack/).
+**Static PWA + signaling (full stack):** see **[web-docker.md](web-docker.md)** for the `docker/web` image and Compose examples under [docker/stack/](../../docker/stack/).
 
 ## Option A — build and run locally
 

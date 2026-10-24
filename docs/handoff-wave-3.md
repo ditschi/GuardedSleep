@@ -49,14 +49,14 @@ Tooling added during wave 2:
 
 ## 3. Wave 3: active changes and order
 
-| Change                   | Tier      | Depends on                            | Notes                                                                                                                                                              |
-| ------------------------ | --------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `rebuild-web-client`     | T0        | (facades done)                        | New `apps/web` on Vite 8 and Svelte 5, no SvelteKit. Task 1.6: relay STUN by default, drop the sipgate/linphone defaults. Then delete `apps/mobile`.               |
-| `expand-locales`         | T0        | —                                     | About 20 AI-translated locales, `critical` keys, `machineTranslated`/`reviewed` markers. The owner reviews German.                                                 |
-| `add-quality-gates`      | T0        | ideally after `rebuild-web-client`    | Tokens with a contrast test, Roborazzi a11y goldens, log canary, 2 fuzz targets, size budgets, `secrecy`/`zeroize`, `SECURITY.md`.                                 |
-| `add-android-release`    | T0        | versionCode (done)                    | Manual `android-v*` tag release. Task 1.6 is the release smoke of the R8 APK on the emulator before the first release APK; the R8 build has never run on a device. |
-| `add-stun-server-choice` | T0/T1     | `rebuild-web-client` for the web part | Vetted EU STUN list plus manual entry, with a warning. Research the candidates first (task 1.1).                                                                   |
-| `add-offline-lan`        | beta (T1) | `rebuild-web-client`                  | Android listener and local PC mode. The local-mode code already exists in the server (`--serve-web`, `--local`); this change specifies and reviews it.             |
+| Change                   | Tier      | Depends on                            | Notes                                                                                                                                                                  |
+| ------------------------ | --------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rebuild-web-client`     | T0        | (facades done)                        | New `apps/web` on Vite 8 and Svelte 5, no SvelteKit. Task 1.6: relay STUN by default, drop the sipgate/linphone defaults. Then delete the legacy mobile client (done). |
+| `expand-locales`         | T0        | —                                     | About 20 AI-translated locales, `critical` keys, `machineTranslated`/`reviewed` markers. The owner reviews German.                                                     |
+| `add-quality-gates`      | T0        | ideally after `rebuild-web-client`    | Tokens with a contrast test, Roborazzi a11y goldens, log canary, 2 fuzz targets, size budgets, `secrecy`/`zeroize`, `SECURITY.md`.                                     |
+| `add-android-release`    | T0        | versionCode (done)                    | Manual `android-v*` tag release. Task 1.6 is the release smoke of the R8 APK on the emulator before the first release APK; the R8 build has never run on a device.     |
+| `add-stun-server-choice` | T0/T1     | `rebuild-web-client` for the web part | Vetted EU STUN list plus manual entry, with a warning. Research the candidates first (task 1.1).                                                                       |
+| `add-offline-lan`        | beta (T1) | `rebuild-web-client`                  | Android listener and local PC mode. The local-mode code already exists in the server (`--serve-web`, `--local`); this change specifies and reviews it.                 |
 
 Suggested grouping on this machine (2 medium slots, 1 heavy slot):
 

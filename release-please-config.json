@@ -26,10 +26,5 @@
   "bump-patch-for-minor-pre-major": false,
   "draft": false,
   "prerelease": false,
-  "packages": {
-    "apps/mobile": {
-      "package-name": "@guardedsleep/mobile",
-      "component": "mobile"
-    }
-  }
+  "packages": {}
 }

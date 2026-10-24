@@ -58,7 +58,7 @@ OPENSPEC_NO_UPDATE_CHECK = "1"
 [settings]
 # Write mise.lock with checksums. https://mise.jdx.dev/dev-tools/mise-lock.html
 lockfile = true
-# Never use the Node version file of a sub project (apps/mobile is frozen).
+# Never use the Node version file of a sub project (none is used).
 idiomatic_version_file_enable_tools = []
 
 # Tool versions that mise does not install (a `cargo:` backend would need a host cargo, which the Docker-only

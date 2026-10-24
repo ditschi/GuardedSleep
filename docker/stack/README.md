@@ -4,7 +4,7 @@ Two ways to run the full GuardedSleep stack: **build from source** (this repo) o
 
 | Mode                                 | Compose file                                                                                    | When to use                                                                                                                                                                                                            |
 | ------------------------------------ | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A. Build from source** (this repo) | [`compose.yaml`](compose.yaml) (+ optional [`.env.example`](.env.example))                      | Development and testing local code changes.                                                                                                                               |
+| **A. Build from source** (this repo) | [`compose.yaml`](compose.yaml) (+ optional [`.env.example`](.env.example))                      | Development and testing local code changes.                                                                                                                                                                            |
 | **B. Pre-built images (GHCR)**       | [`compose.ghcr.yaml`](compose.ghcr.yaml) (+ [`.env.ghcr.example`](.env.ghcr.example))           | Deployments / self-hosting. **No repo clone required** — download just the two files. Tag strategy: see [ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md). |
 | **C. Pre-built images + Traefik**    | [`compose.traefik.yaml`](compose.traefik.yaml) (+ [`traefik.env.example`](traefik.env.example)) | Behind an existing Traefik on 443. One domain: app at `/`, signaling at `/signaling`. Configure via `.env` only — see [signaling-traefik.md](../../docs/contributing/signaling-traefik.md).                            |
 
@@ -66,7 +66,7 @@ Open `http://<host>:${WEB_PORT}/` (default `:8080`) or `https://<host>:${WEB_HTT
 
 | Tag                    | Pushed when                                      | Use for                           |
 | ---------------------- | ------------------------------------------------ | --------------------------------- |
-| `:latest`              | A `signaling-server-v*` / `web-v*` tag exists | Production self-hosting           |
+| `:latest`              | A `signaling-server-v*` / `mobile-v*` tag exists | Production self-hosting           |
 | `:vX.Y.Z`              | Same release tag                                 | Reproducible / pinned deployments |
 | `:vX.Y`                | Same release tag                                 | Auto-patch updates within a minor |
 | `:vX` (post-1.0 only)  | Same release tag                                 | Auto-minor updates within a major |
@@ -104,7 +104,7 @@ If you **cannot load the UI at all** from the phone, check: same Wi‑Fi, use **
 | File                                                         | Role                                                                 |
 | ------------------------------------------------------------ | -------------------------------------------------------------------- |
 | [compose.yaml](compose.yaml)                                 | **Mode A** — build both images from this repo (local development)    |
-| [.env.example](.env.example)                                 | Mode A defaults — ports, origins                            |
+| [.env.example](.env.example)                                 | Mode A defaults — ports, origins                                     |
 | [`scripts/stack-lan-env.sh`](../../scripts/stack-lan-env.sh) | Auto-write `.env` with host LAN IP (`bash scripts/stack-lan-env.sh`) |
 | [compose.ghcr.yaml](compose.ghcr.yaml)                       | **Mode B** — pull pre-built images from GHCR (no repo clone needed)  |
 | [.env.ghcr.example](.env.ghcr.example)                       | Mode B defaults — owner, tags, origins                               |

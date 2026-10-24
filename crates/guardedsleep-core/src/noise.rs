@@ -1,4 +1,4 @@
-//! RMS threshold + hold gate (same semantics as `apps/mobile/src/lib/audio/noise-monitor.ts`).
+//! RMS threshold + hold gate.
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum GateChange {

@@ -59,7 +59,7 @@ fn main() -> ExitCode {
     }
     let web_out = arg(&argv, "--web-out")
         .or_else(|| if cmd == "web" { out.clone() } else { None })
-        .unwrap_or_else(|| root.join("apps/mobile/src/lib/i18n/generated"));
+        .unwrap_or_else(|| root.join("apps/web/src/lib/i18n/generated"));
     let android_out = arg(&argv, "--android-out")
         .or_else(|| if cmd == "android" { out.clone() } else { None })
         .unwrap_or_else(|| root.join("apps/android/ui-contract/build/generated/i18n/res"));

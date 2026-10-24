@@ -9,7 +9,7 @@ mise install     # node 22, pnpm 11, java 21, just, lefthook, typos, actionlint,
 just setup       # mise install, rustup toolchain, pnpm install --frozen-lockfile, lefthook install
 just --list      # setup fmt lint test gen build e2e gate ci (+ sub-recipes such as lint-text, build-android, dev)
 just ci          # lint + test + build + e2e: the same verdict as CI (minus the PR title check and the emulator gate)
-just dev         # Rust signaling server + Vite dev server for apps/mobile
+just dev         # Rust signaling server + Vite dev server for apps/web
 ```
 
 Activate mise in your shell (`eval "$(mise activate bash)"`, see the [mise docs](https://mise.jdx.dev/getting-started.html#activate-mise)) so your editor sees the pinned tools. Recipes use the pinned tools through `mise exec`; without mise they fall back to the tools on `PATH` and print a hint.
@@ -158,7 +158,7 @@ If you do **not** want to install Node, pnpm or mise on the host, use Docker onl
 ./scripts/dev-shell.sh
 ```
 
-This builds the Dev Container image if needed and opens a shell with **`--service-ports`** so **Vite (5173)** and **signaling (8787)** reach your browser on the host. Inside it run `just setup` once, then `just dev`. Open e.g. `http://localhost:5173/`. The mobile dev server binds `0.0.0.0` so port publishing from Docker works.
+This builds the Dev Container image if needed and opens a shell with **`--service-ports`** so **Vite (5173)** and **signaling (8787)** reach your browser on the host. Inside it run `just setup` once, then `just dev`. Open e.g. `http://localhost:5173/`. The Vite dev server binds `0.0.0.0` so port publishing from Docker works.
 
 ## Local setup (without Dev Container or Docker)
 
@@ -172,16 +172,16 @@ From the repository root, after `just setup`:
 just dev
 ```
 
-This builds and runs the Rust signaling server (`crates/guardedsleep-server`, default port **8787**, `PORT` overrides it; the STUN responder is off in dev, `STUN_DISABLED=0` turns it on) and the SvelteKit dev server (`apps/mobile`, Vite default **5173**) in parallel; Ctrl-C stops both (`scripts/dev.sh`). Open e.g. `/baby?room=demo` and `/parent?room=demo` in two browser contexts to exercise pairing.
+This builds and runs the Rust signaling server (`crates/guardedsleep-server`, default port **8787**, `PORT` overrides it; the STUN responder is off in dev, `STUN_DISABLED=0` turns it on) and the Vite dev server (`apps/web`, default **5173**) in parallel; Ctrl-C stops both (`scripts/dev.sh`). Open e.g. `/baby?room=demo` and `/parent?room=demo` in two browser contexts to exercise pairing.
 
-**PWA:** `vite dev` does not enable the service worker (`devOptions.enabled: false`). To test installability and precaching, build and preview the mobile app:
+**PWA:** `vite dev` does not enable the service worker (`devOptions.enabled: false`). To test installability and precaching, build and preview the web app:
 
 ```bash
-pnpm --filter @guardedsleep/mobile build
-pnpm --filter @guardedsleep/mobile preview
+pnpm --filter @guardedsleep/web build
+pnpm --filter @guardedsleep/web preview
 ```
 
-**Docker (no Node on host):** build and run the **production-like** static stack (nginx + signaling) from the current revision — see [docker/stack/README.md](../../docker/stack/README.md) and [mobile-web-docker.md](mobile-web-docker.md):
+**Docker (no Node on host):** build and run the **production-like** static stack (nginx + signaling) from the current revision — see [docker/stack/README.md](../../docker/stack/README.md) and [web-docker.md](web-docker.md):
 
 ```bash
 # Phone/tablet on same Wi-Fi: auto LAN IP + stack
@@ -213,4 +213,4 @@ Conventional Commits are checked on the **PR title** in CI (squash merges); ther
 
 ## Building and testing apps
 
-Application packages under `apps/` each document their `pnpm` scripts (build, test). **Browser E2E** for the mobile web client lives in `apps/e2e` ([ADR-007](../../openspec/changes/archive/2026-05-13-adr-007-browser-e2e-test-strategy/design.md), `just e2e`). Other checks that have no recipe of their own: `pnpm run audit` (dependency advisories, `--audit-level=high`), `pnpm --filter @guardedsleep/mobile check` (`svelte-check`).
+Application packages under `apps/` each document their `pnpm` scripts (build, test). **Browser E2E** for the web client lives in `apps/e2e` ([ADR-007](../../openspec/changes/archive/2026-05-13-adr-007-browser-e2e-test-strategy/design.md), `just e2e`). Other checks that have no recipe of their own: `pnpm run audit` (dependency advisories, `--audit-level=high`), `pnpm --filter @guardedsleep/web check` (`svelte-check`).

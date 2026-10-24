@@ -58,7 +58,7 @@ if command -v cargo >/dev/null 2>&1 && command -v rustup >/dev/null 2>&1 \
   && rustup toolchain list | grep -q "^$nightly"; then
   API_SNAPSHOT_NATIVE=1 CARGO_TARGET_DIR="$ROOT/target/api" "$0" "$out"
 else
-  # Same digest as docker/mobile-web/Dockerfile (the custom manager in renovate.json keeps this copy in step).
+  # Same digest as docker/web/Dockerfile (the custom manager in renovate.json keeps this copy in step).
   image="rust:1-bookworm@sha256:665b6e0a9290a7298236c08c6e4f1e754e3f0d9b70421c434daa3dfba888d63e"
   user_args=()
   if ! docker info -f '{{.SecurityOptions}}' 2>/dev/null | grep -q rootless; then

@@ -56,8 +56,8 @@ Greenfield build of `apps/web` (design.md). `apps/mobile` is read-only reference
 
 ## 9. Switch over and delete the legacy client
 
-- [ ] 9.1 Rebuild the web image on `apps/web` (rename `docker/mobile-web` to `docker/web`, CSP header in nginx, update `docker-web.yml`, `docker/stack/*`, `just stack-*`). Verify: `just stack-lan` builds (or prints `SKIPPED` without Docker; report it).
-- [ ] 9.2 Delete `apps/mobile` and every reference (AGENTS.md §2/§3, README, CONTRIBUTING, `docs/contributing/*`, `renovate.json`, `release-please-config.json`, `.release-please-manifest.json`, `.betterleaks.toml`, `mise.toml`, `.claude/agents/*`, `crates/i18n-gen` output paths, `scripts/*`); `git grep -n "apps/mobile\|@guardedsleep/mobile"` outside the archive is empty. Verify: the grep, `just lint`.
+- [x] 9.1 Rebuild the web image on `apps/web` (rename `docker/mobile-web` to `docker/web`, CSP header in nginx, update `docker-web.yml`, `docker/stack/*`, `just stack-*`). Verify: `just stack-lan` builds (or prints `SKIPPED` without Docker; report it).
+- [x] 9.2 Delete `apps/mobile` and every reference (AGENTS.md §2/§3, README, CONTRIBUTING, `docs/contributing/*`, `renovate.json`, `release-please-config.json`, `.release-please-manifest.json`, `.betterleaks.toml`, `mise.toml`, `.claude/agents/*`, `crates/i18n-gen` output paths, `scripts/*`); `git grep -n "apps/mobile\|@guardedsleep/mobile"` outside the archive is empty. Verify: the grep, `just lint`.
 - [ ] 9.3 Integrated check on the wave branch: `GS_STRICT=1 just ci` green.
 
 ## Workflow follow-up

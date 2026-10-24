@@ -15,7 +15,7 @@ import {
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const read = (p) => readFileSync(join(root, p), "utf8");
 const filters = parseFilters(read(".github/path-filters.yml"));
-const vitestPackages = ["@guardedsleep/core-wasm", "@guardedsleep/mobile", "@guardedsleep/web"];
+const vitestPackages = ["@guardedsleep/core-wasm", "@guardedsleep/web"];
 const classifyGlobs = () =>
   Object.fromEntries(Object.entries(filters).filter(([n]) => n !== "code"));
 const plan = (files) => makePlan({ files, filters, mergeBase: "abc123", vitestPackages });
@@ -58,12 +58,11 @@ test("plan: nothing, docs only", () => {
 });
 
 test("plan: web only uses Vitest --changed per package", () => {
-  const p = plan(["apps/mobile/src/x.ts"]);
+  const p = plan(["apps/web/src/x.ts"]);
   assert.deepEqual(cmds(p), [
     "just _js-deps",
     "just _js-gen",
     "pnpm --filter @guardedsleep/core-wasm exec vitest run --changed abc123 --passWithNoTests",
-    "pnpm --filter @guardedsleep/mobile exec vitest run --changed abc123 --passWithNoTests",
     "pnpm --filter @guardedsleep/web exec vitest run --changed abc123 --passWithNoTests",
   ]);
   assert.ok(p.notes.some((n) => n.startsWith("e2e:")));

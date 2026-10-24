@@ -39,7 +39,7 @@
       "extractVersionTemplate": "^v(?<version>.*)$"
     },
     {
-      "description": "Digest-pinned image in api-snapshot.sh (same as docker/mobile-web/Dockerfile)",
+      "description": "Digest-pinned image in api-snapshot.sh (same as docker/web/Dockerfile)",
       "customType": "regex",
       "managerFilePatterns": ["/^scripts/lib/api-snapshot\\.sh$/"],
       "matchStrings": [

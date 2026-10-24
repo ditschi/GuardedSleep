@@ -35,7 +35,7 @@
 | Tests            | nextest, proptest, insta, golden + negative vectors through every binding; Robolectric/Roborazzi; Vitest; Playwright; Maestro; emulator gate  |
 | Crypto / media   | WebRTC DTLS-SRTP + DataChannel; direction-bound pairing proof (ADR-004 amendment). No custom transport crypto                                 |
 
-**Legacy, frozen, never extend:** `apps/mobile` (SvelteKit + Capacitor; reference for the `apps/web` rebuild, deleted at parity). `docker/android-build` (the Capacitor image) is gone.
+**Gone:** the legacy SvelteKit + Capacitor web client and `docker/android-build` (the Capacitor image); do not look for them or recreate them.
 
 ## 3. Repository map
 
@@ -50,14 +50,13 @@ crates/
   guardedsleep-server/  Rust signaling server (axum), built-in STUN, optional local web UI            [exists]
 apps/
   android/              Native client (Kotlin + Compose); modules app, ui-contract, platform, core-bindings [exists; build-logic holds the Gradle conventions]
-  web/                  Vite 8 + Svelte 5 web client                                                   (planned, wave 3)
+  web/                  Vite 8 + Svelte 5 web client (PWA)                                             [exists]
   e2e/                  Playwright browser E2E
-  mobile/               LEGACY, frozen reference
 packages/
   core-wasm/            WASM build of the core + generated TS types
   protocol/             LEGACY, deleted in wave 2
 locales/                UI copy catalogue (en master), ~20 locales planned, wave 2 (4 today; §5.2a)
-docker/                 signaling-server, mobile-web, stack, android-native-build, android-emulator
+docker/                 signaling-server, web, stack, android-native-build, android-emulator
 scripts/                core-build.sh, cargo.sh, poc/ (emulator gate), lint-ui-literals.sh, …
 docs/                   backlog.md, ci-gates.md, concept, technical (reference only), roles, reviews, contributing, legal
 openspec/               OpenSpec: config.yaml, specs/ (current behaviour), changes/ (prepared work), changes/archive/ (history incl. ADRs), §6
@@ -176,7 +175,7 @@ Core       Rust, sans-IO (core, relay): no I/O, threads or clocks; emits message
 
 - **Conventional Commits** are enforced on the **PR title** in CI (types: `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `security`, `style`, `test`). Breaking changes: `<type>!:` plus a `BREAKING CHANGE: <description>` footer in the PR description.
 - **Branch protection on `main`:** required `ci-ok` status check + linear history, squash merges. **No required reviews, no signed-commit requirement, no separate agent identity** (ADR-020 §9). Target `main`; never push to it directly, never force-push, never `--no-verify`, never `git config` in an agent run.
-- **Releases (ADR-020 §10):** at alpha, a **manual `android-v*` tag**; `versionCode` is derived from `versionName` in `version.properties`, never edited by hand. Release Please is **T1** (beta) with components `app` (one product version for Android and web), `server` and `core`. Do not edit released sections of `CHANGELOG.md`; only `## [Unreleased]`. The old npm-centric components (protocol, signaling-server, mobile) are legacy.
+- **Releases (ADR-020 §10):** at alpha, a **manual `android-v*` tag**; `versionCode` is derived from `versionName` in `version.properties`, never edited by hand. Release Please is **T1** (beta) with components `app` (one product version for Android and web), `server` and `core`. Do not edit released sections of `CHANGELOG.md`; only `## [Unreleased]`. The old npm-centric components (protocol, signaling-server, mobile) are gone.
 - **Images** ([ADR-008](openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md), amended by ADR-020): `guardedsleep-signaling` and `guardedsleep-web` on GHCR, built on native amd64 and arm64 runners (no QEMU); `:dev` for every `main` push.
 - **PR checklist:** Conventional title; lint/test green via `just ci`; `openspec validate` green; behaviour, architecture, scope or security changes go through an OpenSpec change (link it in the PR).
 

@@ -90,7 +90,7 @@ server {
 }
 ```
 
-The `guardedsleep-web` image ships the same `/signaling` proxy internally ([nginx.default.conf](../../docker/mobile-web/nginx.default.conf)), which is how the LAN stack works without an external proxy.
+The `guardedsleep-web` image ships the same `/signaling` proxy internally ([nginx.default.conf](../../docker/web/nginx.default.conf)), which is how the LAN stack works without an external proxy.
 
 ## Notes for all proxies
 

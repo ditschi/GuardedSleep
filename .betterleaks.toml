@@ -22,7 +22,7 @@ keywords = ["guardedsleep://"]
 id = "guardedsleep-qr-payload-psk"
 description = "PSK in a pairing QR or invite payload: v1 compact invite, v2/v3 payloads and the persisted pairing file, in any field order"
 # Matches the "k" field on its own, so field order and the version number do not matter
-# (apps/mobile/src/lib/pairing/compact-invite.ts, PairingStore.kt). The entropy floor keeps short or
+# (the invite codec in crates/guardedsleep-core, PairingStore.kt). The entropy floor keeps short or
 # repetitive values out.
 # The backslashes also match the field escaped inside a string literal or a log line.
 regex = '''\\?"k\\?"\s*:\s*\\?"([A-Za-z0-9_\-]{22,})\\?"'''
@@ -88,6 +88,7 @@ paths = [
   '''^crates/guardedsleep-core/vectors/traces/[a-z0-9-]+\.json$''',
   '''^crates/guardedsleep-core/js/conformance\.test\.mjs$''',
   '''^packages/core-wasm/src/core-wasm\.test\.ts$''',
+  # Deleted with the legacy client; the scan walks the whole history, where the file still exists.
   '''^apps/mobile/src/lib/link/link-driver\.test\.ts$''',
 ]
 

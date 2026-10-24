@@ -24,7 +24,7 @@ This document is the single source of truth for **what a contributor needs to do
 - Pull request titles must also be Conventional (squash merge uses them as commit subject).
 - Don't edit `CHANGELOG.md` by hand for **released** versions — Release Please owns the file. The `## [Unreleased]` section may still receive manual entries until automation is activated; once active, even Unreleased entries are normally added via merged commits.
 - Releases are cut by merging the **"chore(release): main"** pull request that Release Please opens.
-- **`@guardedsleep/mobile`'s version is the user-facing product version.** `protocol` and `signaling-server` carry their own SemVer streams. Package versions never need to match. See §16.
+- **the legacy `mobile` package's version is the user-facing product version.** `protocol` and `signaling-server` carry their own SemVer streams. Package versions never need to match. See §16.
 - **Inter-package bumps propagate automatically** via the `node-workspace` plugin. See §17.
 - **Project milestones get manual meta-tags** like `mvp-v0.1.0` listing the exact package triplet. See §18.
 
@@ -199,7 +199,7 @@ Two mechanisms:
   git push
   ```
 
-  Release Please picks this up and proposes exactly that version on the **package whose path the commit touches** (use `chore(mobile): release 0.1.0` style scopes when the commit is empty — Release Please reads the directory of the changed files, so for an empty commit, the **next commit** on the package path is what gets the override; the cleanest path is therefore a one-line `release-as` change inside the package directory, e.g. add a comment to `apps/mobile/CHANGELOG.md` or `package.json`).
+  Release Please picks this up and proposes exactly that version on the **package whose path the commit touches** (use `chore(mobile): release 0.1.0` style scopes when the commit is empty — Release Please reads the directory of the changed files, so for an empty commit, the **next commit** on the package path is what gets the override; the cleanest path is therefore a one-line `release-as` change inside the package directory, e.g. add a comment to the package changelog or `package.json`).
 
 - **`release-as` in `release-please-config.json`** per package: pin a target version until released, then remove the key. Useful for one-shot major bumps.
 
@@ -239,10 +239,10 @@ Each project phase has different release expectations.
 
 ## 12. Mobile `versionCode` (Android Play Store)
 
-The Play Store requires a **monotonically increasing integer** `versionCode` independent of `versionName`. Release Please updates `versionName` via the `extra-files` rule on `apps/mobile/android/app/build.gradle`. The `versionCode` is **not** managed automatically in MVP — the release PR description must contain a checklist line:
+The Play Store requires a **monotonically increasing integer** `versionCode` independent of `versionName`. Release Please updates `versionName` via the `extra-files` rule on the Android app `build.gradle`. The `versionCode` is **not** managed automatically in MVP — the release PR description must contain a checklist line:
 
 ```text
-- [ ] Bump `versionCode` in apps/mobile/android/app/build.gradle to <next integer>
+- [ ] Bump `versionCode` in the Android app `build.gradle` to <next integer>
 ```
 
 The maintainer increments it manually before merging the release PR. A small scripted updater is tracked as a Phase 2 follow-up in [ADR-006](../../openspec/changes/archive/2026-05-13-adr-006-release-and-changelog-automation/design.md).
@@ -293,7 +293,7 @@ The monorepo contains **independently versioned packages (the hand-written `@gua
 
 | Package                          | Role                                | Whose version do users / operators see?                                             |
 | -------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------- |
-| `@guardedsleep/mobile`           | User-facing Android app (Capacitor) | **Yes — this is the headline "GuardedSleep version"** shown in About, Play, F-Droid |
+| the legacy `mobile` package      | User-facing Android app (Capacitor) | **Yes — this is the headline "GuardedSleep version"** shown in About, Play, F-Droid |
 | `@guardedsleep/signaling-server` | Self-hostable WebSocket relay       | Operators see this in Docker tags (`ghcr.io/<owner>/guardedsleep-signaling:vX.Y.Z`) |
 
 **Practical implications:**
@@ -313,7 +313,7 @@ _Illustrative only: no workspace package has a released dependent today (the for
 
 What Release Please does automatically:
 
-1. Detects that `apps/mobile` and `apps/signaling-server` both declare a workspace dependency on `@guardedsleep/protocol`.
+1. Detects that the mobile package and `apps/signaling-server` both declare a workspace dependency on `@guardedsleep/protocol`.
 2. Computes a **topologically ordered** version bump: `protocol` first, then its consumers.
 3. Adds a **patch bump** to `mobile` (e.g. `0.3.1 → 0.3.2`) and `signaling-server` (e.g. `0.1.4 → 0.1.5`).
 4. Adds an explicit changelog entry under the consumer's section:
@@ -388,9 +388,9 @@ git push origin mvp-v0.1.0
 
 This table is the human-readable answer to "which versions go together?" Update it **manually** whenever a new milestone meta-tag is created, or whenever a non-trivial breaking change lands.
 
-| Milestone meta-tag     | `@guardedsleep/protocol` | `@guardedsleep/signaling-server` | `@guardedsleep/mobile` | Notes                                                                                                                                                |
-| ---------------------- | ------------------------ | -------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| _(none yet — pre-PoC)_ | `workspace:*` (0.0.1)    | `workspace:*` (0.0.1)            | `workspace:*` (0.0.1)  | Scaffolded code only. No releases. See [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md). |
+| Milestone meta-tag     | `@guardedsleep/protocol` | `@guardedsleep/signaling-server` | the legacy `mobile` package | Notes                                                                                                                                                |
+| ---------------------- | ------------------------ | -------------------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| _(none yet — pre-PoC)_ | `workspace:*` (0.0.1)    | `workspace:*` (0.0.1)            | `workspace:*` (0.0.1)       | Scaffolded code only. No releases. See [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md). |
 
 **Convention for filling rows:**
 

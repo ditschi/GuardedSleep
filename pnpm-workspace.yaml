@@ -20,11 +20,9 @@ minimumReleaseAge: 4320
 blockExoticSubdeps: true
 
 # Security floors for transitive dependencies. Selectors are scoped to the vulnerable range so a
-# parent's own newer range (e.g. @sveltejs/kit on cookie 1.x) stays untouched; an unscoped
-# ">=" floor would pull cookie 2.x, which dropped the exports kit imports.
+# parent's own newer range stays untouched.
 # https://pnpm.io/settings/dependency-resolution#overrides
 overrides:
-  "cookie@<0.7.0": "^0.7.2"
   # Dev/build-time chains (vite-plugin-pwa -> workbox-build, vite -> tsx) whose parents pin old
   # ranges. Each selector stays inside the major version of the vulnerable range.
   # @babel/core: GHSA-4x5r-pxfx-6jf8
