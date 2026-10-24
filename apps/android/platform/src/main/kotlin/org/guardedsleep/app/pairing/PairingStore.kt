@@ -4,7 +4,10 @@ import java.io.File
 import org.json.JSONArray
 import org.json.JSONObject
 
-data class TurnCredentials(val url: String, val username: String, val credential: String)
+data class TurnCredentials(val url: String, val username: String, val credential: String) {
+    // The password must never reach logs through string templates.
+    override fun toString(): String = "TurnCredentials(url=<redacted>, credential=<redacted>)"
+}
 
 /** The one saved pairing of this phone (ADR-018: 1 baby + 1 parent). */
 data class StoredPairing(

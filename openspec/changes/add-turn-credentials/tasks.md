@@ -4,7 +4,7 @@ Commit after each task; `just test-affected` after each task. Branch `feat/turn-
 
 ## 1. Android
 
-- [ ] 1.1 `platform`: `TurnStore` (file `turn.bin`, Keystore alias `guardedsleep_turn`, `KeystorePairingCipher`) with `load`, `save`, `clear`; a pure `TurnServerInput.validate(url, username, password)` with the case table of design.md; wiring in `AppGraph`. Verify: JVM tests for the store (fake cipher) and the validator.
+- [x] 1.1 `platform`: `TurnStore` (file `turn.bin`, Keystore alias `guardedsleep_turn`, `KeystorePairingCipher`) with `load`, `save`, `clear`; a pure `TurnServerInput.validate(url, username, password)` with the case table of design.md; wiring in `AppGraph`. Verify: JVM tests for the store (fake cipher) and the validator.
 - [ ] 1.2 `ui-contract`: `SettingsState.turnUsername`, `turnPasswordSaved`; `AppController.setTurnServer(url, username, password)` returning a validation result, `clearTurnServer()`. `platform` implements them; `SettingsRepository` stops persisting `turn_url` and migrates a legacy value into `TurnStore` once. Verify: JVM tests for keep-password, clear and the migration.
 - [ ] 1.3 `LinkController` passes the stored user name and password to `IceConfig` (debug `pending.turn` first). Verify: a JVM test on the built `IceConfig`.
 - [ ] 1.4 `app` settings screen: address, user name and password fields (password masked, "Password saved" placeholder), Save and Remove, error for each rule; stable test tags `settings_turn`, `settings_turn_user`, `settings_turn_pass`, `settings_turn_save`, `settings_turn_remove`. Verify: Robolectric test; Roborazzi baselines re-recorded in the pinned image (report `SKIPPED` without it).
