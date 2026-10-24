@@ -634,6 +634,60 @@ fn listen_intent_is_resent_after_a_short_outage_and_reset_after_a_long_one() {
 }
 
 #[test]
+fn the_baby_is_told_when_the_parent_listens_and_when_the_intent_is_reset() {
+    let listen_changes = |w: &World, mark: usize| -> Vec<bool> {
+        w.events_since(BABY, mark)
+            .iter()
+            .filter_map(|e| match e {
+                LinkEvent::ListenChanged { enabled } => Some(*enabled),
+                _ => None,
+            })
+            .collect()
+    };
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    let m = w.mark(BABY);
+    w.input(PARENT, LinkInput::SetListen { enabled: true });
+    assert_eq!(listen_changes(&w, m), vec![true]);
+    // The same intent again is no change.
+    w.input(PARENT, LinkInput::SetListen { enabled: true });
+    assert_eq!(listen_changes(&w, m), vec![true]);
+    w.input(PARENT, LinkInput::SetListen { enabled: false });
+    assert_eq!(listen_changes(&w, m), vec![true, false]);
+    // Nothing is announced for a baby that was not listened to when the link drops.
+    w.set_net(BABY, false);
+    w.advance(40_000);
+    assert_eq!(listen_changes(&w, m), vec![true, false]);
+    w.set_net(BABY, true);
+    w.advance(30_000);
+    assert_eq!(w.state(BABY), LinkState::Connected);
+
+    // A lost link resets the intent on the baby, and a re-sent one shows again after recovery.
+    let m = w.mark(BABY);
+    w.input(PARENT, LinkInput::SetListen { enabled: true });
+    assert_eq!(listen_changes(&w, m), vec![true]);
+    w.set_net(BABY, false);
+    w.advance(30_000);
+    assert_eq!(
+        listen_changes(&w, m),
+        vec![true, false],
+        "reset by the loss"
+    );
+    w.set_net(BABY, true);
+    w.advance(30_000);
+    assert_eq!(
+        listen_changes(&w, m),
+        vec![true, false, true],
+        "the parent re-sent its intent after a short outage"
+    );
+    // The parent side is unchanged: it hears nothing about its own request.
+    assert_eq!(
+        w.count_events(PARENT, 0, |e| matches!(e, LinkEvent::ListenChanged { .. })),
+        0
+    );
+}
+
+#[test]
 fn server_restart_while_connected_changes_no_state_and_signaling_returns() {
     let mut w = World::pair(&PSK_A, &PSK_A);
     w.connect_pair();

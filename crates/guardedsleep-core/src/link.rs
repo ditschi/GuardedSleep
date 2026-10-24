@@ -1689,7 +1689,13 @@ impl Link {
             self.outage_start = Some(last_alive);
             self.outage_max_audio_gap = 0;
         }
-        self.parent_listen = false;
+        // The intent died with the attempt; the parent re-sends it after a short outage.
+        if self.parent_listen {
+            self.parent_listen = false;
+            if self.cfg.role == Role::Baby {
+                emit(out, LinkEvent::ListenChanged { enabled: false });
+            }
+        }
         self.apply_mic(now, out);
         self.last_sent_status = None;
         self.immediate_retry(now);
@@ -1810,7 +1816,11 @@ impl Link {
         }
         match (self.cfg.role, msg) {
             (Role::Baby, DataMessage::Listen { enabled }) => {
-                self.parent_listen = enabled;
+                // The baby unit shows "Parent is listening" from this event only.
+                if self.parent_listen != enabled {
+                    self.parent_listen = enabled;
+                    emit(out, LinkEvent::ListenChanged { enabled });
+                }
                 self.apply_mic(now, out);
             }
             (Role::Baby, DataMessage::ProbeTest { .. }) => {

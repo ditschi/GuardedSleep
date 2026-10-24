@@ -44,6 +44,10 @@ class BabyModel(private val clock: Clock) {
         when (event) {
             is LinkEvent.NoiseGateChanged ->
                 setSettings(event.threshold.toFloat(), (event.holdMs / 1000u).toInt())
+            // The parent's listen intent (and its reset when the link is lost) reaches the baby as
+            // this event; the screen shows it only when someone wakes the display.
+            is LinkEvent.ListenChanged ->
+                _state.value = _state.value.copy(parentListening = event.enabled)
             else -> Unit
         }
     }
