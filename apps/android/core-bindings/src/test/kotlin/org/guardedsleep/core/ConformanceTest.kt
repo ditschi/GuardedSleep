@@ -107,6 +107,7 @@ class ConformanceTest {
         return when (val type = i.getString("type")) {
             "start" -> LinkInput.Start(i.getLong("entropy").toULong())
             "tick" -> LinkInput.Tick
+            "wall_clock" -> LinkInput.WallClock(i.getLong("unix_s").toULong())
             "network_available" -> LinkInput.NetworkAvailable
             "signaling_opened" -> LinkInput.SignalingOpened
             "signaling_closed" -> LinkInput.SignalingClosed
