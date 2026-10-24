@@ -1,7 +1,7 @@
 import { mount } from "svelte";
-import { registerSW } from "virtual:pwa-register";
 import App from "./App.svelte";
 import { createWebApp, createWebScanner, elapsedNow } from "./lib/platform";
+import { registerServiceWorker, type TrustedTypesFactory } from "./lib/service-worker";
 import { readThemeSetting } from "./lib/theme";
 import { setElapsedSource } from "./lib/ui/ticker";
 import "./lib/ui/theme.css";
@@ -22,5 +22,12 @@ void createWebApp().then((controller) => {
   mount(App, { target, props: { controller, scanner: createWebScanner() } });
 });
 
-// autoUpdate: the new worker takes over on the next load; nothing is shown to the user.
-registerSW({ immediate: true });
+// autoUpdate: the new worker takes over on the next load; nothing is shown to the user. Only the
+// production build has a worker (`devOptions.enabled` is off in vite.config.ts).
+if (import.meta.env.PROD) {
+  void registerServiceWorker(
+    navigator,
+    (window as unknown as { trustedTypes?: TrustedTypesFactory }).trustedTypes,
+    window.location.origin,
+  );
+}

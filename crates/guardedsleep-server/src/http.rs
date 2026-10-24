@@ -25,6 +25,7 @@ use tokio::time::timeout;
 use tower::ServiceExt;
 use tower_http::services::{ServeDir, ServeFile};
 
+use crate::csp;
 use crate::hub::{Hub, KeyError, Out};
 
 /// Longest a single send to a socket may block before the socket is given up.
@@ -38,13 +39,26 @@ pub struct AppState {
     pub trusted_hops: usize,
     pub max_message_bytes: usize,
     pub shutdown: watch::Receiver<bool>,
-    pub web: Option<ServeDir<ServeFile>>,
+    pub web: Option<WebUi>,
     /// Port of the loopback UI listener (local mode); enables the Host/Origin guard.
     pub loopback_port: Option<u16>,
 }
 
-pub fn static_service(dir: &Path) -> ServeDir<ServeFile> {
-    ServeDir::new(dir).fallback(ServeFile::new(dir.join("index.html")))
+/// The static web UI and the Content-Security-Policy it is served with.
+#[derive(Clone)]
+pub struct WebUi {
+    files: ServeDir<ServeFile>,
+    csp: HeaderValue,
+}
+
+/// `extra_connect`: the WebSocket origins the web build allows besides the serving host.
+pub fn static_service(dir: &Path, extra_connect: &[String]) -> WebUi {
+    WebUi {
+        files: ServeDir::new(dir).fallback(ServeFile::new(dir.join("index.html"))),
+        // The origins were validated when they were loaded, so the value is plain visible ASCII.
+        csp: HeaderValue::from_str(&csp::header_value(extra_connect))
+            .unwrap_or_else(|_| HeaderValue::from_static("default-src 'none'")),
+    }
 }
 
 /// Signaling plus health and (optionally) the static UI on one listener.
@@ -232,8 +246,13 @@ async fn endpoint(
         return text(StatusCode::OK, "ok\n");
     }
     match st.web.clone() {
-        Some(web) => match web.oneshot(req).await {
-            Ok(res) => with_security_headers(res.into_response()),
+        Some(web) => match web.files.oneshot(req).await {
+            Ok(res) => {
+                let mut res = with_security_headers(res.into_response());
+                res.headers_mut()
+                    .insert(header::CONTENT_SECURITY_POLICY, web.csp);
+                res
+            }
             Err(never) => match never {},
         },
         None => text(StatusCode::OK, "GuardedSleep signaling\n"),

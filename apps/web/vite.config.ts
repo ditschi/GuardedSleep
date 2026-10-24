@@ -1,10 +1,12 @@
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { VitePWA } from "vite-plugin-pwa";
 import { defineConfig } from "vitest/config";
+import { cspPlugin } from "./csp/csp";
 
 // Plain Vite + Svelte 5, no SvelteKit (rebuild-web-client design.md).
 export default defineConfig({
   plugins: [
+    cspPlugin(),
     svelte(),
     VitePWA({
       registerType: "autoUpdate",
@@ -46,7 +48,7 @@ export default defineConfig({
     conditions: process.env.VITEST ? ["browser"] : undefined,
   },
   test: {
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "csp/**/*.test.ts"],
     environment: "jsdom",
     setupFiles: ["src/test/setup.ts"],
   },

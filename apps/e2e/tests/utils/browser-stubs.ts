@@ -145,6 +145,30 @@ export async function shownNotifications(page: Page): Promise<GuardProbe["shown"
   );
 }
 
+/** A recorded `securitypolicyviolation` event. */
+export interface CspViolation {
+  directive: string;
+  blocked: string;
+  sample: string;
+}
+
+/** Records every CSP and Trusted Types violation of the page in `window.__csp`. */
+export const cspProbeStub = (): void => {
+  const seen: CspViolation[] = [];
+  (window as unknown as { __csp: CspViolation[] }).__csp = seen;
+  document.addEventListener("securitypolicyviolation", (event) => {
+    seen.push({
+      directive: event.effectiveDirective,
+      blocked: event.blockedURI,
+      sample: event.sample,
+    });
+  });
+};
+
+export async function cspViolations(page: Page): Promise<CspViolation[]> {
+  return page.evaluate(() => [...(window as unknown as { __csp: CspViolation[] }).__csp]);
+}
+
 export async function revokeWakeLocks(page: Page): Promise<void> {
   await page.evaluate(() =>
     (window as unknown as { __wakeLock: WakeLockProbe }).__wakeLock.revokeAll(),

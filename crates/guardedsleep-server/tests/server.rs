@@ -260,6 +260,65 @@ async fn serves_the_web_ui_with_spa_fallback_and_keeps_health_and_websocket() {
 }
 
 #[tokio::test]
+async fn web_ui_carries_the_csp_with_the_origins_of_the_web_build() {
+    let dir = web_dir("csp");
+    std::fs::write(
+        dir.join("csp-connect-origins.json"),
+        r#"{"origins":["wss://relay.example.org"]}"#,
+    )
+    .unwrap();
+    let srv = run(&["--serve-web", dir.to_str().unwrap()], &NO_LIMITS).await;
+    let addr = srv.signaling_addr;
+    for path in ["/", "/app.js", "/some/client/route"] {
+        let (status, head, _) = http_get(addr, path, &[]).await;
+        assert_eq!(status, 200, "{path}");
+        let head = head.to_ascii_lowercase();
+        let line = head
+            .lines()
+            .find(|l| l.starts_with("content-security-policy:"))
+            .unwrap_or_else(|| panic!("no CSP header on {path}: {head}"));
+        for part in [
+            "default-src 'self'",
+            "script-src 'self' 'wasm-unsafe-eval'",
+            "connect-src 'self' wss://relay.example.org;",
+            "object-src 'none'",
+            "base-uri 'none'",
+            "frame-ancestors 'none'",
+            "require-trusted-types-for 'script'",
+            "trusted-types guardedsleep svelte-trusted-html",
+        ] {
+            assert!(line.contains(part), "{path}: {part} missing in {line}");
+        }
+        assert!(!line.contains("unsafe-inline"), "{line}");
+    }
+    srv.shutdown().await;
+    std::fs::remove_dir_all(dir).unwrap();
+}
+
+#[tokio::test]
+async fn a_broken_csp_origins_file_is_a_startup_error() {
+    let dir = web_dir("csp-bad");
+    std::fs::write(
+        dir.join("csp-connect-origins.json"),
+        r#"{"origins":["https://not-a-websocket.example"]}"#,
+    )
+    .unwrap();
+    let cli = Cli::parse_from([
+        "x",
+        "--bind",
+        "127.0.0.1",
+        "--port",
+        "0",
+        "--no-stun",
+        "--serve-web",
+        dir.to_str().unwrap(),
+    ]);
+    let cfg = Config::new(cli, Limits::from_lookup(|_| None)).unwrap();
+    assert!(start(cfg).await.is_err());
+    std::fs::remove_dir_all(dir).unwrap();
+}
+
+#[tokio::test]
 async fn missing_web_dir_is_a_startup_error() {
     let cli = Cli::parse_from([
         "x",

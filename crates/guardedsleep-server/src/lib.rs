@@ -22,6 +22,7 @@
 )]
 
 pub mod config;
+pub mod csp;
 pub mod http;
 pub mod hub;
 pub mod stun;
@@ -123,7 +124,7 @@ pub async fn start(cfg: Config) -> io::Result<RunningServer> {
                 format!("--serve-web: {} is not a directory", dir.display()),
             ));
         }
-        Some(dir) => Some(static_service(dir)),
+        Some(dir) => Some(static_service(dir, &csp::load_connect_origins(dir)?)),
         None => None,
     };
     let state = |web, loopback_port| AppState {
