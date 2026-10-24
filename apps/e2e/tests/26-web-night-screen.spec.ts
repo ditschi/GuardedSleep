@@ -47,6 +47,8 @@ test("night screen: dark and full screen, first tap shows status, second tap clo
       await page.getByTestId("night_screen_tap").click();
       await expect(page.getByTestId("night_screen_status")).toContainText("Still monitoring");
       await expect(page.getByTestId("night_screen_status")).toContainText("Tap again to leave");
+      // axe measures contrast with the computed opacity, so wait for the fade-in to finish.
+      await expect(page.getByTestId("night_screen")).toHaveCSS("opacity", "1");
       await expectNoAxeViolations(page);
       await page.getByTestId("night_screen_tap").click();
       await expect(page.getByTestId("night_screen")).toBeHidden();
