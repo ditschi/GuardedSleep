@@ -208,7 +208,7 @@ class LinkController(
         val n = username.trim()
         val saved = turn
         val keep = password.isEmpty() && saved != null && saved.url == u && saved.username == n
-        val effective = if (keep) saved?.credential.orEmpty() else password
+        val effective = if (keep) saved.credential else password
         return when (val r = TurnServerInput.validate(u, n, effective)) {
             TurnServerInput.Result.InvalidAddress -> TurnSaveResult.INVALID_ADDRESS
             TurnServerInput.Result.InvalidCredentials -> TurnSaveResult.INVALID_CREDENTIALS
