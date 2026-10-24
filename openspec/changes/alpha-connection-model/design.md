@@ -114,21 +114,33 @@ Attempts, liveness, escalation and listen are unchanged. Loss is still detected 
 - The message, as the existing JSON shapes.
 - Padding to a bucket ladder of 1, 4 and 8 KiB, chosen by message class. A message that does not fit its class's largest bucket is not sent: the core bundles fewer candidates per envelope instead. That is a sender bug, covered by a test.
 
-**Sessions (answers review 2, C2 and I1):**
+**Sessions (answers review 2, C2 and I1; amended by the security review of tasks 2.1–2.3, C1):**
 
 - **Drawing:** every `Link` run draws a fresh session nonce.
-- **Candidates:** a session the receiver has not seen in a `here` becomes a _candidate_. The receiver answers once with its own `here`, whose `recipient_session` is the candidate. Replies are limited to one `here` per candidate and at most one per 5 s overall.
-- **Confirmation:** the candidate becomes the peer's _current_ session only when an envelope arrives from it that carries the receiver's own current session as `recipient_session`. That proves the peer is live now.
+- **Candidates:**
+  - A `here` from a session the receiver has not confirmed makes that session a _candidate_. This holds even when the `here` names the receiver's current session.
+  - The receiver answers once with its own `here`, which carries a fresh 16-byte CSPRNG **challenge** for that candidate. The challenge is single-use and valid for 60 s.
+  - Replies are limited to one per candidate, at most one per 5 s, and at most 10 per 10 minutes while a confirmed session exists.
+- **Confirmation:**
+  - A candidate becomes the peer's _current_ session only through a `here` that echoes the open challenge issued for it.
+  - That proves the peer is live now. Merely naming the receiver's session proves only that the peer was alive at some point in this run.
+  - Non-`here` messages from a candidate never promote it; they are dropped.
+  - A new confirmation replaces the previous current session and retires it.
 - **Gating:** attempts and `request_offer` over Nostr are gated on a confirmed session. In the spec, "fresh" means exactly this.
-- **Receiver checks** on every message other than `here`:
-  - `recipient_session` must be the receiver's current session;
+- **Receiver checks** on every message, `here` included, from the confirmed session:
+  - `recipient_session` must be the receiver's current session (except for an initial `here`, where it is all zeros);
   - `sender_session` must be the peer's current confirmed session;
-  - `seq` must be new for that sender session (bitmap window of 256).
-- **Retirement:** a processed stop retires that sender session for good. Later `here` messages naming it are ignored, and the receiver keeps a bounded set of the last 16 retired sessions.
-- **Replay window:** in addition, one envelope-id window per `Link` run, across all mailboxes, never cleared on a mailbox reopen: 4096 ids or 30 minutes, whichever is larger.
+  - `seq` must be new for that sender session (bitmap window of 256, across all classes).
+- **Retirement:** a processed stop, or a replacement, retires that sender session. Retired sessions are kept for the whole run without a fixed small limit, bounded only by the replay cap below, so "retired for good" holds.
+- **Replay window:** in addition, one envelope-id window per `Link` run, across all mailboxes, never cleared on a mailbox reopen: 4096 ids or 30 minutes, whichever is larger. A hard cap of 65,536 ids applies, counted only for authenticated ids.
+- **Plaintext length:** a u16 length field after `seq`, inside the ciphertext, lets the receiver strip the padding.
+- **Message classes and buckets:** Here and Control (`request_offer`, `stop`) 1 KiB, Description 4 KiB, Candidates 8 KiB. Here and Control share a size, so they cannot be told apart on the wire. Task 3.2 settles the sizes against real SDP and candidate sizes.
+- **Error locality:** open failures never cause a reply on any mailbox (no error or timing oracle).
+- **Test-only paths:** fixed-nonce sealing and key export exist only behind a `conformance` cargo feature, enabled for the test builds of the façades, never in release builds.
 - **Effect:**
-  - A stored stop from an earlier baby session is ignored, whether or not the parent restarted, and so is the mirror case.
-  - An old `here` creates at most one candidate reply and never an attempt.
+  - A stored stop from an earlier session is ignored, whether or not the parent restarted, and so is the mirror case.
+  - A delayed or withheld `here` from a superseded session cannot displace the live session, because it cannot answer a challenge issued after its sender died.
+  - An old `here` creates at most one bounded reply and never an attempt.
 
 **Epoch:** checked only for Nostr addressing (§3), never on relay or LAN mailboxes. A wrong clock therefore cannot break those.
 

@@ -59,12 +59,17 @@ Every signaling message on every mailbox SHALL be sealed with XChaCha20-Poly1305
 
 ### Requirement: Session confirmation
 
-Each device SHALL draw a fresh session nonce for every `Link` run and announce it in `here`. A session SHALL become the peer's current session only after an envelope from it carries the receiver's own current session; until then it is a candidate, answered with at most one `here`.
+Each device SHALL draw a fresh session nonce for every `Link` run and announce it in `here`. A session SHALL become the peer's current session only through a `here` that echoes a fresh, single-use challenge the receiver issued for it within the last 60 seconds; until then it is a candidate, answered with at most one `here` carrying that challenge, and messages from it are dropped.
 
 #### Scenario: Old presence replayed
 
 - **WHEN** a relay replays a `here` from an earlier session of the peer
 - **THEN** the receiver sends at most one reply and starts no attempt, because the old session never confirms
+
+#### Scenario: Delayed presence from a superseded session
+
+- **WHEN** a `here` from the peer's previous session, naming the receiver's current session, arrives after the peer's newer session was confirmed
+- **THEN** the newer session stays current and keeps working
 
 ### Requirement: Session-bound freshness
 
