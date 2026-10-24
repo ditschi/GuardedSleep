@@ -19,4 +19,4 @@ Commit after each task; `just test-affected` after each task. Branch `feat/turn-
 
 - [x] 3.1 `locales/en.json`: `native.ui.settings.turn.username`, `.password`, `.passwordSaved`, `.credentialsInvalid` (one message for the both-or-neither and length rules); de, fr, es translated (`machineTranslated`). Verify: `just gen`, `just lint-text`.
 - [x] 3.2 Update `docs/contributing/turn-server-vps.md` §5.3 and §9; add the backlog `IDEA` "TURN entry in the QR invite". Verify: `just lint-text`.
-- [ ] 3.3 Full checks: `just lint`, `just test`. Verify: both green.
+- [x] 3.3 Full checks: `just lint`, `just test`. Verify: both green.
