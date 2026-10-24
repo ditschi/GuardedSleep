@@ -59,6 +59,7 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
   - attempts gated on a confirmed session, pacing of ≤ 2/s, ≤ 6 per attempt, ≤ 120 per hour, parking with 1/5/30-minute backoff (not for `created_at` refusals, which raise `clock_skew`), an inbound cap, and a resend once after 6 s in a new event;
   - `NonZeroScalar` keys (no key for that epoch on zero) and `aux_rand` from the CSPRNG;
   - pick the ephemeral kind and record it in the spec.
+  - bundle ICE candidates into one `ice` payload with a short flush delay (deferred here from 3.2: on the relay each candidate is its own 8 KiB-class envelope), and the resend-once-after-6 s rule for all mailbox kinds (deferred from 3.2; the relay path is reliable and in order).
 
   Verify: core tests; NIP-01 id and signature vectors checked against an independent implementation; a fuzz target for NIP-01 frames; sim scenarios "relay accepts but never delivers", "clock five minutes off at the epoch change", "one-hour outage stays within budget".
 
