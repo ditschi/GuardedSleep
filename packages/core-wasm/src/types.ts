@@ -19,6 +19,7 @@ export type {
   LinkInput,
   LinkState,
   LinkStatus,
+  MailboxKind,
   Ringer,
   Role,
   UnitWarning,
@@ -37,9 +38,9 @@ export type LinkMessageKey = (typeof LINK_MESSAGE_KEYS)[number];
 
 /** Exhaustive tag tables: adding a variant to the Rust enum (hence the generated union) without listing it here fails `tsc`. */
 export const LINK_ACTION_TYPES = {
-  open_signaling: true,
-  close_signaling: true,
-  send_signaling: true,
+  open_mailbox: true,
+  mailbox_send: true,
+  close_mailbox: true,
   create_attempt: true,
   close_attempt: true,
   create_offer: true,

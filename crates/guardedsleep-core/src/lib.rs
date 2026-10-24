@@ -12,6 +12,7 @@ mod conformance_envelope;
 pub mod envelope;
 pub mod invite;
 pub mod link;
+pub mod mailbox;
 pub mod noise;
 pub mod pairing;
 pub mod protocol;

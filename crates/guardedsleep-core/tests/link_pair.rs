@@ -226,7 +226,7 @@ fn stranger_ice_and_answers_are_ignored() {
     let text = json!({"type":"signal","from":"stranger","payload":ice}).to_string();
     let actions = w.nodes[BABY]
         .link
-        .handle(w.now, LinkInput::SignalingMessage { text });
+        .handle(w.now, LinkInput::MailboxFrame { id: 0, bytes: text });
     assert!(
         !actions
             .iter()
@@ -249,7 +249,13 @@ fn reflected_proof_never_verifies_and_baby_stays_unverified() {
         {"clientId": w.client_id(BABY).unwrap(), "role": "baby"},
         {"clientId": atk, "role": "parent"}]})
     .to_string();
-    w.input(BABY, LinkInput::SignalingMessage { text: members });
+    w.input(
+        BABY,
+        LinkInput::MailboxFrame {
+            id: 0,
+            bytes: members,
+        },
+    );
     let h = w.nodes[BABY]
         .link
         .live_attempt()
@@ -645,8 +651,11 @@ fn parent_cap_is_retryable_too() {
 }
 
 fn error_text(code: &str) -> LinkInput {
-    LinkInput::SignalingMessage {
-        text: json!({"type":"error","code":code,"message":"x"}).to_string(),
+    LinkInput::MailboxFrame {
+        id: 0,
+        bytes: json!({"type":"error","code":code,"message":"x",
+        })
+        .to_string(),
     }
 }
 
@@ -654,9 +663,9 @@ fn error_text(code: &str) -> LinkInput {
 fn unsupported_protocol_as_the_reply_to_hello_is_terminal() {
     let mut link = Link::new(cfg(Role::Baby, &PSK_A)).unwrap();
     link.handle(0, LinkInput::Start { entropy: 1 });
-    link.handle(1, LinkInput::SignalingOpened);
+    link.handle(1, LinkInput::MailboxOpened { id: 0 });
     let acts = link.handle(2, error_text("UNSUPPORTED_PROTOCOL"));
-    assert!(acts.contains(&LinkAction::CloseSignaling));
+    assert!(acts.contains(&LinkAction::CloseMailbox { id: 0 }));
     let s = link.status().unwrap();
     assert_eq!(s.state, LinkState::FailedNeedsUser);
     assert_eq!(s.key.as_deref(), Some("update_required"));
@@ -747,9 +756,9 @@ fn unsupported_protocol_is_never_terminal_for_a_paired_before_link() {
         c.paired_before = true;
         let mut link = Link::new(c).unwrap();
         link.handle(0, LinkInput::Start { entropy: 1 });
-        link.handle(1, LinkInput::SignalingOpened);
+        link.handle(1, LinkInput::MailboxOpened { id: 0 });
         let acts = link.handle(2, error_text("UNSUPPORTED_PROTOCOL"));
-        assert!(acts.contains(&LinkAction::CloseSignaling));
+        assert!(acts.contains(&LinkAction::CloseMailbox { id: 0 }));
         let s = link.status().unwrap();
         assert_eq!(s.state, LinkState::Connecting, "{role:?}");
         assert_eq!(s.cause.as_deref(), Some("update_required"));
@@ -1704,9 +1713,10 @@ fn parent_with_offer(offer_sdp: &str, answer_sdp: &str) -> (Link, Vec<LinkAction
     let mut link = Link::new(cfg(Role::Parent, &PSK_A)).unwrap();
     let room = link.room_id().to_owned();
     link.handle(0, LinkInput::Start { entropy: 5 });
-    link.handle(1, LinkInput::SignalingOpened);
-    let text = |v: Value| LinkInput::SignalingMessage {
-        text: v.to_string(),
+    link.handle(1, LinkInput::MailboxOpened { id: 0 });
+    let text = |v: Value| LinkInput::MailboxFrame {
+        id: 0,
+        bytes: v.to_string(),
     };
     link.handle(
         2,

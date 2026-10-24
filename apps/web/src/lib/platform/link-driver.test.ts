@@ -168,7 +168,7 @@ describe("LinkDriver with a scripted core", () => {
     core.script = (input) =>
       input.type === "start"
         ? [
-            { type: "open_signaling" },
+            { type: "open_mailbox", id: 0, kind: "relay", url: "" },
             { type: "emit", event: { type: "status", status: status("connecting") } },
           ]
         : [];
@@ -182,19 +182,22 @@ describe("LinkDriver with a scripted core", () => {
 
   it("feeds signaling events to the core and ignores a replaced socket", () => {
     const core = new ScriptedCore();
-    core.script = (input) => (input.type === "start" ? [{ type: "open_signaling" }] : []);
+    core.script = (input) =>
+      input.type === "start" ? [{ type: "open_mailbox", id: 0, kind: "relay", url: "" }] : [];
     const { driver } = setup("parent", core);
     driver.start();
     const first = FakeWebSocket.instances[0];
     first?.open();
     first?.receive('{"type":"welcome"}');
     expect(core.inputs.slice(1).map((i) => i.input)).toEqual([
-      { type: "signaling_opened" },
-      { type: "signaling_message", text: '{"type":"welcome"}' },
+      { type: "mailbox_opened", id: 0 },
+      { type: "mailbox_frame", id: 0, bytes: '{"type":"welcome"}' },
     ]);
     // The core asks for a new socket; late events of the old one no longer reach it.
     core.script = (input) =>
-      input.type === "signaling_closed" ? [{ type: "open_signaling" }] : [];
+      input.type === "mailbox_closed"
+        ? [{ type: "open_mailbox", id: 0, kind: "relay", url: "" }]
+        : [];
     first?.drop();
     expect(FakeWebSocket.instances).toHaveLength(2);
     expect(first?.closed).toBe(false); // already closed by the peer; nothing left to close
@@ -207,8 +210,8 @@ describe("LinkDriver with a scripted core", () => {
   it("sends the core's signaling text through the open socket", () => {
     const core = new ScriptedCore();
     core.script = (input) => {
-      if (input.type === "start") return [{ type: "open_signaling" }];
-      if (input.type === "signaling_opened") return [{ type: "send_signaling", text: "hello" }];
+      if (input.type === "start") return [{ type: "open_mailbox", id: 0, kind: "relay", url: "" }];
+      if (input.type === "mailbox_opened") return [{ type: "mailbox_send", id: 0, frame: "hello" }];
       return [];
     };
     const { driver } = setup("parent", core);
@@ -454,12 +457,14 @@ describe("LinkDriver with a scripted core", () => {
     const order: string[] = [];
     core.script = (input) => {
       order.push(input.type);
-      return input.type === "start" ? [{ type: "open_signaling" }] : [];
+      return input.type === "start"
+        ? [{ type: "open_mailbox", id: 0, kind: "relay", url: "" }]
+        : [];
     };
     const { driver } = setup("parent", core);
     driver.start();
     FakeWebSocket.instances[0]?.open();
-    expect(order).toEqual(["start", "signaling_opened"]);
+    expect(order).toEqual(["start", "mailbox_opened"]);
   });
 
   it("announces a stop, flushes the close and tears down", () => {
@@ -470,7 +475,7 @@ describe("LinkDriver with a scripted core", () => {
         return [
           { type: "send_data", attempt: 1, text: "stop_notice" },
           { type: "close_attempt", attempt: 1 },
-          { type: "close_signaling" },
+          { type: "close_mailbox", id: 0 },
         ];
       }
       return [];

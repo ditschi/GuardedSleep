@@ -254,15 +254,15 @@ export class LinkDriver {
 
   private exec(action: LinkAction): void {
     switch (action.type) {
-      case "open_signaling":
+      case "open_mailbox":
         this.openSocket();
         break;
-      case "close_signaling":
+      case "close_mailbox":
         this.closeSocket();
         break;
-      case "send_signaling":
+      case "mailbox_send":
         try {
-          this.socket?.send(action.text);
+          this.socket?.send(action.frame);
         } catch (e) {
           this.opts.onError?.(e);
         }
@@ -323,8 +323,8 @@ export class LinkDriver {
       socket = this.env.createSocket(url);
     } catch {
       this.urlIndex += 1;
-      // Reported asynchronously: the core must not see a re-entrant `signaling_closed`.
-      queueMicrotask(() => this.feed({ type: "signaling_closed" }));
+      // Reported asynchronously: the core must not see a re-entrant `mailbox_closed`.
+      queueMicrotask(() => this.feed({ type: "mailbox_closed", id: 0, reason: "closed" }));
       return;
     }
     this.socket = socket;
@@ -332,17 +332,17 @@ export class LinkDriver {
     socket.onopen = () => {
       if (!current()) return;
       this.socketEverOpened = true;
-      this.feed({ type: "signaling_opened" });
+      this.feed({ type: "mailbox_opened", id: 0 });
     };
     socket.onmessage = (ev) => {
       if (!current() || typeof ev.data !== "string") return;
-      this.feed({ type: "signaling_message", text: ev.data });
+      this.feed({ type: "mailbox_frame", id: 0, bytes: ev.data });
     };
     const lost = (): void => {
       if (!current()) return;
       this.socket = null;
       if (!this.socketEverOpened && urls.length > 1) this.urlIndex += 1;
-      this.feed({ type: "signaling_closed" });
+      this.feed({ type: "mailbox_closed", id: 0, reason: "closed" });
     };
     socket.onclose = lost;
     socket.onerror = lost;

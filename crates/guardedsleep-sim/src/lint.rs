@@ -205,7 +205,7 @@ mod tests {
         format!(
             r#"{{"schema":"gs-trace/1","id":"t","class":"simulated","privacy":"shareable",
             "config":{{"role":"parent","psk_b64url":"{psk}","seed":"{seed}"}},
-            "steps":[{{"n":0,"now":0,"input":{{"type":"signaling_message","text":"{extra_step_input}"}}}}],
+            "steps":[{{"n":0,"now":0,"input":{{"type":"mailbox_frame","id":0,"bytes":"{extra_step_input}"}}}}],
             "expect":[[]]}}"#
         )
     }

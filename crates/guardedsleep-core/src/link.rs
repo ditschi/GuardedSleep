@@ -37,6 +37,7 @@ use serde::{Deserialize, Serialize};
 use zeroize::Zeroize;
 
 use crate::attempt::{Attempt, AttemptConfig, AttemptEvent, DEFAULT_ATTEMPT_TIMEOUT_MS};
+use crate::mailbox::{MailboxId, MailboxKind, MailboxSet, MailboxState, RELAY_MAILBOX};
 use crate::noise::{GateChange, NoiseGate};
 use crate::pairing::{decode_psk, derive_room_id, link_epoch, macs_equal, stop_notice_mac};
 use crate::protocol::{
@@ -278,11 +279,22 @@ pub enum LinkInput {
     AcknowledgeAlarm,
     /// The platform's network changed or came back: retry immediately, reset the backoff.
     NetworkAvailable,
-    SignalingOpened,
-    SignalingMessage {
-        text: String,
+    /// The socket of mailbox `id` opened (the answer to `open_mailbox`).
+    MailboxOpened {
+        id: MailboxId,
     },
-    SignalingClosed,
+    /// The socket of mailbox `id` closed or failed to open (`reason` is diagnostic, not a UI key).
+    /// Also the answer to a refused `open_mailbox`.
+    MailboxClosed {
+        id: MailboxId,
+        reason: String,
+    },
+    /// One inbound frame of mailbox `id`. `bytes` is the WebSocket text frame (UTF-8): every
+    /// mailbox kind speaks JSON text frames.
+    MailboxFrame {
+        id: MailboxId,
+        bytes: String,
+    },
     AttemptLocalDescription {
         attempt: u32,
         sdp_type: String,
@@ -352,10 +364,21 @@ pub enum LinkInput {
 #[serde(tag = "type", rename_all = "snake_case")]
 #[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub enum LinkAction {
-    OpenSignaling,
-    CloseSignaling,
-    SendSignaling {
-        text: String,
+    /// Open a socket for mailbox `id`. `url` empty: the platform's configured address for the kind.
+    /// After `close_mailbox` the platform discards further events of that socket; a failed open is
+    /// reported as `mailbox_closed`.
+    OpenMailbox {
+        id: MailboxId,
+        kind: MailboxKind,
+        url: String,
+    },
+    /// Send one WebSocket text frame on mailbox `id`.
+    MailboxSend {
+        id: MailboxId,
+        frame: String,
+    },
+    CloseMailbox {
+        id: MailboxId,
     },
     CreateAttempt {
         attempt: u32,
@@ -470,15 +493,6 @@ enum Mode {
     Failed(String),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Sig {
-    Closed,
-    Opening,
-    /// Socket open, `hello` sent, no `welcome` yet.
-    Open,
-    Joined,
-}
-
 struct Live {
     attempt: Attempt,
     peer_id: String,
@@ -514,14 +528,8 @@ pub struct Link {
     wall_unix_s: Option<u64>,
     started_at: u64,
 
-    sig: Sig,
-    sig_changed_at: u64,
-    sig_failures: u32,
-    sig_next_open_at: u64,
-    sig_last_rx: u64,
-    sig_last_ping: u64,
-    client_id: Option<String>,
-    members: Vec<Member>,
+    /// The mailbox set (3.1: exactly the relay mailbox) with the transport state of each.
+    mb: MailboxSet,
     peer_present: bool,
 
     live: Option<Live>,
@@ -623,14 +631,7 @@ impl Link {
             csprng: Some(csprng),
             wall_unix_s: None,
             started_at: 0,
-            sig: Sig::Closed,
-            sig_changed_at: 0,
-            sig_failures: 0,
-            sig_next_open_at: 0,
-            sig_last_rx: 0,
-            sig_last_ping: 0,
-            client_id: None,
-            members: Vec::new(),
+            mb: MailboxSet::new(),
             peer_present: false,
             live: None,
             next_handle: 1,
@@ -722,10 +723,18 @@ impl Link {
             LinkInput::Stop => self.on_stop(&mut out),
             LinkInput::AcknowledgeAlarm => self.on_acknowledge(now, &mut out),
             LinkInput::NetworkAvailable => self.on_network_available(now, &mut out),
-            LinkInput::SignalingOpened => self.on_signaling_opened(now, &mut out),
-            LinkInput::SignalingMessage { text } => self.on_signaling_text(now, &text, &mut out),
-            LinkInput::SignalingClosed => {
-                if self.sig != Sig::Closed {
+            LinkInput::MailboxOpened { id } => {
+                if self.mb.contains(id) {
+                    self.on_signaling_opened(now, &mut out);
+                }
+            }
+            LinkInput::MailboxFrame { id, bytes } => {
+                if self.mb.contains(id) {
+                    self.on_signaling_text(now, &bytes, &mut out);
+                }
+            }
+            LinkInput::MailboxClosed { id, .. } => {
+                if self.mb.contains(id) && self.mb.relay.state != MailboxState::Closed {
                     self.signaling_down(now, false, &mut out);
                 }
             }
@@ -815,6 +824,28 @@ impl Link {
         out
     }
 
+    fn open_action(&self) -> LinkAction {
+        LinkAction::OpenMailbox {
+            id: self.mb.relay.id,
+            kind: self.mb.relay.kind,
+            url: self.mb.relay.url.clone(),
+        }
+    }
+
+    fn close_action(&self) -> LinkAction {
+        LinkAction::CloseMailbox {
+            id: self.mb.relay.id,
+        }
+    }
+
+    /// A frame for the relay mailbox, the only one of the first stage.
+    fn send_action(frame: String) -> LinkAction {
+        LinkAction::MailboxSend {
+            id: RELAY_MAILBOX,
+            frame,
+        }
+    }
+
     fn live_mut(&mut self, handle: u32) -> Option<&mut Live> {
         self.live
             .as_mut()
@@ -836,7 +867,7 @@ impl Link {
 
     fn peer_member(&self) -> Option<&Member> {
         let other = self.other_role();
-        self.members.iter().find(|m| m.role == other)
+        self.mb.relay.members.iter().find(|m| m.role == other)
     }
 
     fn fresh_aid(&mut self) -> String {
@@ -860,21 +891,21 @@ impl Link {
         fresh.started_at = now;
         fresh.last_success_at = now;
         fresh.next_try_at = now;
-        fresh.sig = Sig::Opening;
-        fresh.sig_changed_at = now;
+        fresh.mb.relay.state = MailboxState::Opening;
+        fresh.mb.relay.changed_at = now;
         fresh.next_handle = self.next_handle;
         fresh.last_status = self.last_status.take();
         *self = fresh;
-        out.push(LinkAction::OpenSignaling);
+        out.push(self.open_action());
     }
 
     fn on_stop(&mut self, out: &mut Vec<LinkAction>) {
         if self.mode == Mode::Running {
             self.announce_stop(out);
             self.close_live(out);
-            if self.sig != Sig::Closed {
-                out.push(LinkAction::CloseSignaling);
-                self.sig = Sig::Closed;
+            if self.mb.relay.state != MailboxState::Closed {
+                out.push(self.close_action());
+                self.mb.relay.state = MailboxState::Closed;
             }
             if self.mic_enabled {
                 self.mic_enabled = false;
@@ -894,7 +925,7 @@ impl Link {
         if self.live_verified() {
             self.send_app(&DataMessage::StopNotice, out);
         }
-        if let (Sig::Joined, Some(epoch)) = (self.sig, self.epoch.clone()) {
+        if let (MailboxState::Joined, Some(epoch)) = (self.mb.relay.state, self.epoch.clone()) {
             let target = self
                 .live
                 .as_ref()
@@ -903,16 +934,14 @@ impl Link {
             if let Some(to) = target {
                 let aid = self.fresh_aid();
                 let mac = stop_notice_mac(&self.psk, self.cfg.role, &self.room, &epoch, &to, &aid);
-                out.push(LinkAction::SendSignaling {
-                    text: encode_signal(
-                        &self.room,
-                        Some(&to),
-                        signal_payload_json(&SignalPayload::StopNotice {
-                            aid: Some(aid),
-                            mac,
-                        }),
-                    ),
-                });
+                out.push(Self::send_action(encode_signal(
+                    &self.room,
+                    Some(&to),
+                    signal_payload_json(&SignalPayload::StopNotice {
+                        aid: Some(aid),
+                        mac,
+                    }),
+                )));
             }
         }
     }
@@ -924,9 +953,9 @@ impl Link {
             return;
         }
         self.close_live(out);
-        if self.sig != Sig::Closed {
-            out.push(LinkAction::CloseSignaling);
-            self.sig = Sig::Closed;
+        if self.mb.relay.state != MailboxState::Closed {
+            out.push(self.close_action());
+            self.mb.relay.state = MailboxState::Closed;
         }
         self.mode = Mode::Failed(key.to_owned());
     }
@@ -934,9 +963,9 @@ impl Link {
     fn on_network_available(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         // Platform-originated, so it may also lift the post-mismatch hold.
         self.hold_until = 0;
-        if self.sig == Sig::Closed {
-            self.sig_failures = 0;
-            self.sig_next_open_at = now;
+        if self.mb.relay.state == MailboxState::Closed {
+            self.mb.relay.failures = 0;
+            self.mb.relay.next_open_at = now;
         }
         if self.live.as_ref().is_some_and(|l| !l.attempt.is_verified()) {
             self.close_live(out);
@@ -968,31 +997,29 @@ impl Link {
     // ---- signaling transport ---------------------------------------------------------------
 
     fn on_signaling_opened(&mut self, now: u64, out: &mut Vec<LinkAction>) {
-        if self.sig != Sig::Opening {
+        if self.mb.relay.state != MailboxState::Opening {
             return;
         }
-        self.sig = Sig::Open;
-        self.sig_last_rx = now;
-        self.sig_last_ping = now;
-        out.push(LinkAction::SendSignaling {
-            text: encode_hello(self.cfg.role, &self.room),
-        });
+        self.mb.relay.state = MailboxState::Open;
+        self.mb.relay.last_rx = now;
+        self.mb.relay.last_ping = now;
+        out.push(Self::send_action(encode_hello(self.cfg.role, &self.room)));
         self.immediate_retry(now);
     }
 
     fn signaling_down(&mut self, now: u64, emit_close: bool, out: &mut Vec<LinkAction>) {
-        if emit_close && self.sig != Sig::Closed {
-            out.push(LinkAction::CloseSignaling);
+        if emit_close && self.mb.relay.state != MailboxState::Closed {
+            out.push(self.close_action());
         }
-        self.sig = Sig::Closed;
-        self.client_id = None;
-        self.members.clear();
+        self.mb.relay.state = MailboxState::Closed;
+        self.mb.relay.client_id = None;
+        self.mb.relay.members.clear();
         self.peer_present = false;
         self.outstanding = None;
         self.pending_request = None;
         self.stop_seen.clear();
-        self.sig_next_open_at = now + self.delay(now, self.sig_failures);
-        self.sig_failures += 1;
+        self.mb.relay.next_open_at = now + self.delay(now, self.mb.relay.failures);
+        self.mb.relay.failures += 1;
     }
 
     fn delay(&self, now: u64, failures: u32) -> u64 {
@@ -1004,28 +1031,31 @@ impl Link {
     }
 
     fn on_signaling_text(&mut self, now: u64, text: &str, out: &mut Vec<LinkAction>) {
-        if !matches!(self.sig, Sig::Open | Sig::Joined) {
+        if !matches!(
+            self.mb.relay.state,
+            MailboxState::Open | MailboxState::Joined
+        ) {
             return;
         }
-        self.sig_last_rx = now;
+        self.mb.relay.last_rx = now;
         let Some(msg) = parse_server_message(text) else {
             return;
         };
         match msg {
             ServerMessage::Welcome { client_id, room_id } => {
-                if self.sig == Sig::Open && room_id == self.room {
-                    self.sig = Sig::Joined;
-                    self.client_id = Some(client_id);
-                    self.sig_failures = 0;
+                if self.mb.relay.state == MailboxState::Open && room_id == self.room {
+                    self.mb.relay.state = MailboxState::Joined;
+                    self.mb.relay.client_id = Some(client_id);
+                    self.mb.relay.failures = 0;
                     self.update_required = false;
                 }
             }
             ServerMessage::Members { peers } => {
-                if self.sig != Sig::Joined {
+                if self.mb.relay.state != MailboxState::Joined {
                     return;
                 }
-                let me = self.client_id.clone();
-                self.members = peers
+                let me = self.mb.relay.client_id.clone();
+                self.mb.relay.members = peers
                     .into_iter()
                     .filter(|m| Some(&m.client_id) != me.as_ref())
                     .collect();
@@ -1041,7 +1071,7 @@ impl Link {
                 self.peer_present = present;
             }
             ServerMessage::Signal { from, payload } => {
-                if self.sig != Sig::Joined {
+                if self.mb.relay.state != MailboxState::Joined {
                     return;
                 }
                 if let Some(p) = parse_signal_payload(&payload) {
@@ -1068,13 +1098,13 @@ impl Link {
     /// outage into a silent terminal state, so escalation continues from `last_alive` and
     /// signaling is retried on the long backoff. Only a link that never verified is terminal.
     fn on_unsupported_protocol(&mut self, now: u64, out: &mut Vec<LinkAction>) {
-        if self.sig != Sig::Open {
+        if self.mb.relay.state != MailboxState::Open {
             return;
         }
         if self.ever_verified {
             self.update_required = true;
             self.signaling_down(now, true, out);
-            self.sig_next_open_at = now + LONG_CAP_MS;
+            self.mb.relay.next_open_at = now + LONG_CAP_MS;
         } else {
             self.terminal("update_required", out);
         }
@@ -1120,7 +1150,8 @@ impl Link {
         mac: Option<String>,
         out: &mut Vec<LinkAction>,
     ) {
-        let (Some(aid), Some(mac), Some(me)) = (aid, mac, self.client_id.as_deref()) else {
+        let (Some(aid), Some(mac), Some(me)) = (aid, mac, self.mb.relay.client_id.as_deref())
+        else {
             return;
         };
         let Some(epoch) = self.epoch.as_deref() else {
@@ -1203,6 +1234,8 @@ impl Link {
 
     fn on_request_offer(&mut self, now: u64, from: &str, aid: String, out: &mut Vec<LinkAction>) {
         let from_parent = self
+            .mb
+            .relay
             .members
             .iter()
             .any(|m| m.client_id == from && m.role == Role::Parent);
@@ -1235,6 +1268,8 @@ impl Link {
         let (to, remote_aid) = match self.pending_request.take() {
             Some((from, aid))
                 if self
+                    .mb
+                    .relay
                     .members
                     .iter()
                     .any(|m| m.client_id == from && m.role == Role::Parent) =>
@@ -1338,14 +1373,12 @@ impl Link {
             let handle = live.attempt.handle();
             match ev {
                 AttemptEvent::Signal(payload) => {
-                    if self.sig == Sig::Joined {
-                        out.push(LinkAction::SendSignaling {
-                            text: encode_signal(
-                                &self.room,
-                                Some(&live.peer_id),
-                                signal_payload_json(&payload),
-                            ),
-                        });
+                    if self.mb.relay.state == MailboxState::Joined {
+                        out.push(Self::send_action(encode_signal(
+                            &self.room,
+                            Some(&live.peer_id),
+                            signal_payload_json(&payload),
+                        )));
                     }
                 }
                 AttemptEvent::SendData(text) => out.push(LinkAction::SendData {
@@ -1779,27 +1812,25 @@ impl Link {
     }
 
     fn signaling_housekeeping(&mut self, now: u64, out: &mut Vec<LinkAction>) {
-        match self.sig {
-            Sig::Closed => {
-                if now >= self.sig_next_open_at {
-                    self.sig = Sig::Opening;
-                    self.sig_changed_at = now;
-                    out.push(LinkAction::OpenSignaling);
+        match self.mb.relay.state {
+            MailboxState::Closed => {
+                if now >= self.mb.relay.next_open_at {
+                    self.mb.relay.state = MailboxState::Opening;
+                    self.mb.relay.changed_at = now;
+                    out.push(self.open_action());
                 }
             }
-            Sig::Opening => {
-                if now.saturating_sub(self.sig_changed_at) >= SIGNALING_OPEN_TIMEOUT_MS {
+            MailboxState::Opening => {
+                if now.saturating_sub(self.mb.relay.changed_at) >= SIGNALING_OPEN_TIMEOUT_MS {
                     self.signaling_down(now, true, out);
                 }
             }
-            Sig::Open | Sig::Joined => {
-                if now.saturating_sub(self.sig_last_rx) >= SIGNALING_DEAD_MS {
+            MailboxState::Open | MailboxState::Joined => {
+                if now.saturating_sub(self.mb.relay.last_rx) >= SIGNALING_DEAD_MS {
                     self.signaling_down(now, true, out);
-                } else if now.saturating_sub(self.sig_last_ping) >= SIGNALING_PING_MS {
-                    self.sig_last_ping = now;
-                    out.push(LinkAction::SendSignaling {
-                        text: encode_ping(),
-                    });
+                } else if now.saturating_sub(self.mb.relay.last_ping) >= SIGNALING_PING_MS {
+                    self.mb.relay.last_ping = now;
+                    out.push(Self::send_action(encode_ping()));
                 }
             }
         }
@@ -1807,7 +1838,7 @@ impl Link {
 
     fn schedule(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         if self.live.is_some()
-            || self.sig != Sig::Joined
+            || self.mb.relay.state != MailboxState::Joined
             || !self.peer_present
             || (self.peer_stopped && self.stop_pending_absence)
             || now < self.next_try_at
@@ -1824,13 +1855,11 @@ impl Link {
                     return;
                 };
                 let aid = self.fresh_aid();
-                out.push(LinkAction::SendSignaling {
-                    text: encode_signal(
-                        &self.room,
-                        Some(&baby),
-                        signal_payload_json(&SignalPayload::RequestOffer { aid: aid.clone() }),
-                    ),
-                });
+                out.push(Self::send_action(encode_signal(
+                    &self.room,
+                    Some(&baby),
+                    signal_payload_json(&SignalPayload::RequestOffer { aid: aid.clone() }),
+                )));
                 self.outstanding = Some((now + DEFAULT_ATTEMPT_TIMEOUT_MS, aid));
             }
         }
@@ -1878,7 +1907,7 @@ impl Link {
     }
 
     fn cause(&self) -> Option<String> {
-        let c = if self.sig != Sig::Joined {
+        let c = if self.mb.relay.state != MailboxState::Joined {
             "server_unreachable"
         } else if !self.peer_present {
             "peer_absent"
@@ -2151,15 +2180,18 @@ mod tests {
     fn inputs_before_start_and_after_stop_are_ignored() {
         let mut l = Link::new(cfg(Role::Baby)).unwrap();
         assert!(l.handle(0, LinkInput::Tick).is_empty());
-        assert!(l.handle(0, LinkInput::SignalingOpened).is_empty());
+        assert!(l.handle(0, LinkInput::MailboxOpened { id: 0 }).is_empty());
         assert!(l.status().is_none());
         let a = l.handle(1, LinkInput::Start { entropy: 1 });
-        assert_eq!(a[0], LinkAction::OpenSignaling);
+        assert!(matches!(a[0], LinkAction::OpenMailbox { id: 0, .. }));
         l.handle(2, LinkInput::Stop);
         assert_eq!(l.status().unwrap().state, LinkState::Stopped);
         assert!(l.handle(3, LinkInput::Tick).is_empty());
         let a = l.handle(4, LinkInput::Start { entropy: 1 });
-        assert_eq!(a[0], LinkAction::OpenSignaling, "start again after stop");
+        assert!(
+            matches!(a[0], LinkAction::OpenMailbox { id: 0, .. }),
+            "start again after stop"
+        );
     }
 
     #[test]
@@ -2259,9 +2291,15 @@ mod tests {
             LinkInput::Stop,
             LinkInput::AcknowledgeAlarm,
             LinkInput::NetworkAvailable,
-            LinkInput::SignalingOpened,
-            LinkInput::SignalingMessage { text: "x".into() },
-            LinkInput::SignalingClosed,
+            LinkInput::MailboxOpened { id: 0 },
+            LinkInput::MailboxFrame {
+                id: 0,
+                bytes: "x".into(),
+            },
+            LinkInput::MailboxClosed {
+                id: 0,
+                reason: "closed".into(),
+            },
             LinkInput::AttemptLocalDescription {
                 attempt: 1,
                 sdp_type: "offer".into(),
@@ -2389,12 +2427,14 @@ mod tests {
     #[test]
     fn terminal_state_only_accepts_stop() {
         let (mut l, _) = started(Role::Baby);
-        l.handle(1, LinkInput::SignalingOpened);
+        l.handle(1, LinkInput::MailboxOpened { id: 0 });
         l.handle(
             2,
-            LinkInput::SignalingMessage {
-                text: json!({"type":"error","code":"UNSUPPORTED_PROTOCOL","message":"x"})
-                    .to_string(),
+            LinkInput::MailboxFrame {
+                id: 0,
+                bytes: json!({"type":"error","code":"UNSUPPORTED_PROTOCOL","message":"x",
+                })
+                .to_string(),
             },
         );
         assert_eq!(l.status().unwrap().state, LinkState::FailedNeedsUser);
@@ -2424,27 +2464,65 @@ mod tests {
     #[test]
     fn wrong_room_in_welcome_is_ignored() {
         let (mut l, _) = started(Role::Baby);
-        l.handle(1, LinkInput::SignalingOpened);
+        l.handle(1, LinkInput::MailboxOpened { id: 0 });
         l.handle(
             2,
-            LinkInput::SignalingMessage {
-                text: json!({"type":"welcome","clientId":"x","roomId":"other"}).to_string(),
+            LinkInput::MailboxFrame {
+                id: 0,
+                bytes: json!({"type":"welcome","clientId":"x","roomId":"other",
+                })
+                .to_string(),
             },
         );
-        assert_eq!(l.sig, Sig::Open);
+        assert_eq!(l.mb.relay.state, MailboxState::Open);
+    }
+
+    #[test]
+    fn events_of_an_unknown_mailbox_are_ignored() {
+        let (mut l, first) = started(Role::Baby);
+        assert!(matches!(
+            first.first(),
+            Some(LinkAction::OpenMailbox { id: 0, kind: MailboxKind::Relay, url }) if url.is_empty()
+        ));
+        assert!(l.handle(1, LinkInput::MailboxOpened { id: 7 }).is_empty());
+        assert_eq!(l.mb.relay.state, MailboxState::Opening);
+        l.handle(2, LinkInput::MailboxOpened { id: 0 });
+        l.handle(
+            3,
+            LinkInput::MailboxClosed {
+                id: 7,
+                reason: "x".into(),
+            },
+        );
+        let frame = LinkInput::MailboxFrame {
+            id: 7,
+            bytes: json!({"type":"welcome","clientId":"x","roomId": l.room_id()}).to_string(),
+        };
+        l.handle(4, frame);
+        assert_eq!(
+            l.mb.relay.state,
+            MailboxState::Open,
+            "only mailbox 0 exists"
+        );
     }
 
     #[test]
     fn malformed_server_input_never_changes_state() {
         let (mut l, _) = started(Role::Parent);
-        l.handle(1, LinkInput::SignalingOpened);
+        l.handle(1, LinkInput::MailboxOpened { id: 0 });
         for junk in ["", "{}", "[]", "null", "{\"type\":\"members\"}", "\u{0}"] {
-            let a = l.handle(2, LinkInput::SignalingMessage { text: junk.into() });
+            let a = l.handle(
+                2,
+                LinkInput::MailboxFrame {
+                    id: 0,
+                    bytes: junk.into(),
+                },
+            );
             assert!(
                 a.iter()
                     .all(|x| !matches!(x, LinkAction::CreateAttempt { .. }))
             );
         }
-        assert_eq!(l.sig, Sig::Open);
+        assert_eq!(l.mb.relay.state, MailboxState::Open);
     }
 }

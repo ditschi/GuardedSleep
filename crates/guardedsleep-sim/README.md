@@ -51,3 +51,11 @@ scenario files and lives in `crates/guardedsleep-core/vectors/traces/`; Rust
 (`tests/traces.rs`), WASM (`js/conformance.test.mjs`) and Kotlin (`ConformanceTest`) replay it.
 After an intentional core change run `bless-traces` and review the diff. `lint-trace` implements
 test-schemas section 1.4.
+
+Names changed with the mailbox set (`alpha-connection-model` task 3.1): `open_signaling` /
+`send_signaling{text}` / `close_signaling` became `open_mailbox{id,kind,url}` /
+`mailbox_send{id,frame}` / `close_mailbox{id}`, and `signaling_opened` / `signaling_message{text}` /
+`signaling_closed` became `mailbox_opened{id}` / `mailbox_frame{id,bytes}` /
+`mailbox_closed{id,reason}`. The relay is mailbox `0`, `url` is empty (the platform still owns the
+URL list) and `reason` is `closed`. The curated traces were re-blessed with that mapping and
+checked to be identical otherwise.

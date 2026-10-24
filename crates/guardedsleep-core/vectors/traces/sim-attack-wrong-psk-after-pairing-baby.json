@@ -23,27 +23,33 @@
   "steps": [
     { "n": 0, "now": 0, "input": { "type": "start", "entropy": 2939126732 } },
     { "n": 1, "now": 0, "input": { "type": "wall_clock", "unix_s": 1000000 } },
-    { "n": 2, "now": 27, "input": { "type": "signaling_opened" } },
+    { "n": 2, "now": 27, "input": { "type": "mailbox_opened", "id": 0 } },
     {
       "n": 3,
       "now": 81,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"welcome\",\"clientId\":\"c2\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\"}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"welcome\",\"clientId\":\"c2\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\"}"
       }
     },
     {
       "n": 4,
       "now": 101,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c1\",\"role\":\"parent\"},{\"clientId\":\"c2\",\"role\":\"baby\"}]}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c1\",\"role\":\"parent\"},{\"clientId\":\"c2\",\"role\":\"baby\"}]}"
       }
     },
     {
       "n": 5,
       "now": 101,
-      "input": { "type": "signaling_message", "text": "{\"type\":\"peer\",\"peerId\":\"c1\"}" }
+      "input": {
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"peer\",\"peerId\":\"c1\"}"
+      }
     },
     {
       "n": 6,
@@ -59,8 +65,9 @@
       "n": 7,
       "now": 149,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"signal\",\"from\":\"c1\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"fd4a1da5c9ffed2c30fe44a2082df0b6\"}}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c1\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"fd4a1da5c9ffed2c30fe44a2082df0b6\"}}"
       }
     },
     {
@@ -77,8 +84,9 @@
       "n": 9,
       "now": 238,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"signal\",\"from\":\"c1\",\"payload\":{\"type\":\"sdp\",\"aid\":\"31b1484d24e856bad605e9f1d22c0748\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:03\\r\\n\"}}}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c1\",\"payload\":{\"type\":\"sdp\",\"aid\":\"31b1484d24e856bad605e9f1d22c0748\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:03\\r\\n\"}}}"
       }
     },
     { "n": 10, "now": 250, "input": { "type": "tick" } },
@@ -86,8 +94,9 @@
       "n": 11,
       "now": 259,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"signal\",\"from\":\"c1\",\"payload\":{\"type\":\"sdp\",\"aid\":\"fd4a1da5c9ffed2c30fe44a2082df0b6\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:04\\r\\n\"}}}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c1\",\"payload\":{\"type\":\"sdp\",\"aid\":\"fd4a1da5c9ffed2c30fe44a2082df0b6\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:04\\r\\n\"}}}"
       }
     },
     { "n": 12, "now": 500, "input": { "type": "tick" } },
@@ -183,22 +192,24 @@
       "n": 57,
       "now": 15053,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"signal\",\"from\":\"c1\",\"payload\":{\"type\":\"stop_notice\",\"aid\":\"ab63050adf8174c529ac3027fbf91148\",\"mac\":\"b73d98f8ed4082d9bb47613834fa1a73671d3b4839427530131c1b483e48f900\"}}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c1\",\"payload\":{\"type\":\"stop_notice\",\"aid\":\"ab63050adf8174c529ac3027fbf91148\",\"mac\":\"b73d98f8ed4082d9bb47613834fa1a73671d3b4839427530131c1b483e48f900\"}}"
       }
     },
     {
       "n": 58,
       "now": 15053,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c2\",\"role\":\"baby\"}]}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c2\",\"role\":\"baby\"}]}"
       }
     },
     {
       "n": 59,
       "now": 15073,
-      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+      "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 60, "now": 15500, "input": { "type": "tick" } },
     { "n": 61, "now": 15750, "input": { "type": "tick" } },
@@ -211,14 +222,19 @@
       "n": 67,
       "now": 17086,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c2\",\"role\":\"baby\"},{\"clientId\":\"c3\",\"role\":\"parent\"}]}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c2\",\"role\":\"baby\"},{\"clientId\":\"c3\",\"role\":\"parent\"}]}"
       }
     },
     {
       "n": 68,
       "now": 17089,
-      "input": { "type": "signaling_message", "text": "{\"type\":\"peer\",\"peerId\":\"c3\"}" }
+      "input": {
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"peer\",\"peerId\":\"c3\"}"
+      }
     },
     {
       "n": 69,
@@ -234,8 +250,9 @@
       "n": 70,
       "now": 17167,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"dce25e7cff11e5b9f3aeab08b4a02424\"}}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"dce25e7cff11e5b9f3aeab08b4a02424\"}}"
       }
     },
     {
@@ -252,8 +269,9 @@
       "n": 72,
       "now": 17214,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"617afb2e3b3881e834b79835244ced06\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:06\\r\\n\"}}}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"617afb2e3b3881e834b79835244ced06\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:06\\r\\n\"}}}"
       }
     },
     { "n": 73, "now": 17250, "input": { "type": "tick" } },
@@ -261,8 +279,9 @@
       "n": 74,
       "now": 17254,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"dce25e7cff11e5b9f3aeab08b4a02424\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:08\\r\\n\"}}}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"dce25e7cff11e5b9f3aeab08b4a02424\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:08\\r\\n\"}}}"
       }
     },
     { "n": 75, "now": 17500, "input": { "type": "tick" } },
@@ -325,7 +344,7 @@
     {
       "n": 112,
       "now": 30560,
-      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+      "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 113, "now": 31000, "input": { "type": "tick" } },
     { "n": 114, "now": 31250, "input": { "type": "tick" } },
@@ -351,8 +370,9 @@
       "n": 124,
       "now": 33832,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"51d27743935310d95cb6d1655394b650\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0A\\r\\n\"}}}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"51d27743935310d95cb6d1655394b650\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0A\\r\\n\"}}}"
       }
     },
     {
@@ -410,7 +430,7 @@
     {
       "n": 157,
       "now": 45822,
-      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+      "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 158, "now": 46250, "input": { "type": "tick" } },
     { "n": 159, "now": 46500, "input": { "type": "tick" } },
@@ -437,8 +457,9 @@
       "n": 170,
       "now": 49633,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"b331364f8c359ddda8a9fb779a1d825c\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0C\\r\\n\"}}}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"b331364f8c359ddda8a9fb779a1d825c\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0C\\r\\n\"}}}"
       }
     },
     { "n": 171, "now": 50000, "input": { "type": "tick" } },
@@ -496,7 +517,7 @@
     {
       "n": 203,
       "now": 60784,
-      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+      "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 204, "now": 61250, "input": { "type": "tick" } },
     { "n": 205, "now": 61500, "input": { "type": "tick" } },
@@ -525,8 +546,9 @@
       "n": 218,
       "now": 65611,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"e4af026c614a4c2bf13f1f2a1d91aa44\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0E\\r\\n\"}}}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"e4af026c614a4c2bf13f1f2a1d91aa44\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0E\\r\\n\"}}}"
       }
     },
     {
@@ -581,7 +603,7 @@
     {
       "n": 248,
       "now": 76041,
-      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+      "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 249, "now": 76500, "input": { "type": "tick" } },
     { "n": 250, "now": 76750, "input": { "type": "tick" } },
@@ -611,8 +633,9 @@
       "n": 264,
       "now": 81349,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"bcba653b4560d1652e34795b4a17ea56\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:10\\r\\n\"}}}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"bcba653b4560d1652e34795b4a17ea56\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:10\\r\\n\"}}}"
       }
     },
     { "n": 265, "now": 81750, "input": { "type": "tick" } },
@@ -666,7 +689,7 @@
     {
       "n": 293,
       "now": 91059,
-      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+      "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 294, "now": 91500, "input": { "type": "tick" } },
     { "n": 295, "now": 91750, "input": { "type": "tick" } },
@@ -698,8 +721,9 @@
       "n": 311,
       "now": 97335,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"e878b5c54669c151b48756bf266ec80e\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:12\\r\\n\"}}}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"e878b5c54669c151b48756bf266ec80e\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:12\\r\\n\"}}}"
       }
     },
     { "n": 312, "now": 97750, "input": { "type": "tick" } },
@@ -751,7 +775,7 @@
     {
       "n": 338,
       "now": 106030,
-      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+      "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 339, "now": 106500, "input": { "type": "tick" } },
     { "n": 340, "now": 106750, "input": { "type": "tick" } },
@@ -785,8 +809,9 @@
       "n": 358,
       "now": 113348,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"3cae78eee32db264076c957ae15bafcd\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:14\\r\\n\"}}}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"3cae78eee32db264076c957ae15bafcd\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:14\\r\\n\"}}}"
       }
     },
     { "n": 359, "now": 113750, "input": { "type": "tick" } },
@@ -839,7 +864,7 @@
     {
       "n": 386,
       "now": 121308,
-      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+      "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 387, "now": 121750, "input": { "type": "tick" } },
     { "n": 388, "now": 122000, "input": { "type": "tick" } },
@@ -876,8 +901,9 @@
       "n": 409,
       "now": 130120,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"46f2a67e939dd3388a3c1c65912efed4\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:16\\r\\n\"}}}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"46f2a67e939dd3388a3c1c65912efed4\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:16\\r\\n\"}}}"
       }
     },
     { "n": 410, "now": 130500, "input": { "type": "tick" } },
@@ -925,7 +951,7 @@
     {
       "n": 432,
       "now": 136543,
-      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+      "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 433, "now": 137000, "input": { "type": "tick" } },
     { "n": 434, "now": 137250, "input": { "type": "tick" } },
@@ -941,8 +967,9 @@
       "n": 443,
       "now": 140057,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c2\",\"role\":\"baby\"}]}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c2\",\"role\":\"baby\"}]}"
       }
     },
     { "n": 444, "now": 140250, "input": { "type": "tick" } },
@@ -953,21 +980,27 @@
       "n": 448,
       "now": 141065,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c2\",\"role\":\"baby\"},{\"clientId\":\"c4\",\"role\":\"parent\"}]}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c2\",\"role\":\"baby\"},{\"clientId\":\"c4\",\"role\":\"parent\"}]}"
       }
     },
     {
       "n": 449,
       "now": 141079,
-      "input": { "type": "signaling_message", "text": "{\"type\":\"peer\",\"peerId\":\"c4\"}" }
+      "input": {
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"peer\",\"peerId\":\"c4\"}"
+      }
     },
     {
       "n": 450,
       "now": 141104,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"signal\",\"from\":\"c4\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"38d850136e045de1bd7d6d2299ab044b\"}}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c4\",\"payload\":{\"type\":\"request_offer\",\"aid\":\"38d850136e045de1bd7d6d2299ab044b\"}}"
       }
     },
     { "n": 451, "now": 141250, "input": { "type": "tick" } },
@@ -999,8 +1032,9 @@
       "n": 467,
       "now": 146387,
       "input": {
-        "type": "signaling_message",
-        "text": "{\"type\":\"signal\",\"from\":\"c4\",\"payload\":{\"type\":\"sdp\",\"aid\":\"38d850136e045de1bd7d6d2299ab044b\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:18\\r\\n\"}}}"
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c4\",\"payload\":{\"type\":\"sdp\",\"aid\":\"38d850136e045de1bd7d6d2299ab044b\",\"sdp\":{\"type\":\"answer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=recvonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:18\\r\\n\"}}}"
       }
     },
     { "n": 468, "now": 146750, "input": { "type": "tick" } },
@@ -1056,7 +1090,7 @@
     {
       "n": 490,
       "now": 151807,
-      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+      "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 491, "now": 152250, "input": { "type": "tick" } },
     { "n": 492, "now": 152500, "input": { "type": "tick" } },
@@ -1107,7 +1141,7 @@
     {
       "n": 529,
       "now": 166797,
-      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+      "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 530, "now": 167250, "input": { "type": "tick" } },
     { "n": 531, "now": 167500, "input": { "type": "tick" } },
@@ -1170,7 +1204,7 @@
     {
       "n": 572,
       "now": 181800,
-      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+      "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 573, "now": 182250, "input": { "type": "tick" } },
     { "n": 574, "now": 182500, "input": { "type": "tick" } },
@@ -1221,7 +1255,7 @@
     {
       "n": 611,
       "now": 196799,
-      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+      "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 612, "now": 197250, "input": { "type": "tick" } },
     { "n": 613, "now": 197500, "input": { "type": "tick" } },
@@ -1284,7 +1318,7 @@
     {
       "n": 654,
       "now": 211795,
-      "input": { "type": "signaling_message", "text": "{\"type\":\"pong\"}" }
+      "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 655, "now": 212250, "input": { "type": "tick" } },
     { "n": 656, "now": 212500, "input": { "type": "tick" } },
@@ -1321,7 +1355,7 @@
   ],
   "expect": [
     [
-      { "type": "open_signaling" },
+      { "type": "open_mailbox", "id": 0, "kind": "relay", "url": "" },
       {
         "type": "emit",
         "event": {
@@ -1340,8 +1374,9 @@
     [],
     [
       {
-        "type": "send_signaling",
-        "text": "{\"type\":\"hello\",\"role\":\"baby\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"protocolVersion\":3}"
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"hello\",\"role\":\"baby\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"protocolVersion\":3}"
       }
     ],
     [],
@@ -1352,8 +1387,9 @@
     [],
     [
       {
-        "type": "send_signaling",
-        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c1\",\"payload\":{\"type\":\"sdp\",\"aid\":\"c7c161defb0102c24c9ca28e05ae6865\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:01\\r\\n\"}}}"
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c1\",\"payload\":{\"type\":\"sdp\",\"aid\":\"c7c161defb0102c24c9ca28e05ae6865\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:01\\r\\n\"}}}"
       }
     ],
     [
@@ -1363,8 +1399,9 @@
     ],
     [
       {
-        "type": "send_signaling",
-        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c1\",\"payload\":{\"type\":\"sdp\",\"aid\":\"ca6b8ce6c8b1daa12a485d338353f23e\",\"re\":\"fd4a1da5c9ffed2c30fe44a2082df0b6\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:02\\r\\n\"}}}"
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c1\",\"payload\":{\"type\":\"sdp\",\"aid\":\"ca6b8ce6c8b1daa12a485d338353f23e\",\"re\":\"fd4a1da5c9ffed2c30fe44a2082df0b6\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:02\\r\\n\"}}}"
       }
     ],
     [],
@@ -1460,7 +1497,7 @@
     [],
     [
       { "type": "close_attempt", "attempt": 2 },
-      { "type": "send_signaling", "text": "{\"type\":\"ping\"}" },
+      { "type": "mailbox_send", "id": 0, "frame": "{\"type\":\"ping\"}" },
       { "type": "emit", "event": { "type": "peer_stopped" } },
       {
         "type": "emit",
@@ -1494,8 +1531,9 @@
     [],
     [
       {
-        "type": "send_signaling",
-        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"0f655e0dff080f610c0de08cf59fb0cd\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:05\\r\\n\"}}}"
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"0f655e0dff080f610c0de08cf59fb0cd\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:05\\r\\n\"}}}"
       }
     ],
     [
@@ -1505,8 +1543,9 @@
     ],
     [
       {
-        "type": "send_signaling",
-        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"79a8ac9f33dae15b9a04e2db1e1e8a0f\",\"re\":\"dce25e7cff11e5b9f3aeab08b4a02424\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:07\\r\\n\"}}}"
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"79a8ac9f33dae15b9a04e2db1e1e8a0f\",\"re\":\"dce25e7cff11e5b9f3aeab08b4a02424\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:07\\r\\n\"}}}"
       }
     ],
     [],
@@ -1565,7 +1604,7 @@
     [],
     [],
     [],
-    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [{ "type": "mailbox_send", "id": 0, "frame": "{\"type\":\"ping\"}" }],
     [],
     [],
     [],
@@ -1582,8 +1621,9 @@
     ],
     [
       {
-        "type": "send_signaling",
-        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"8922336bb4abeabb7b1fa010caa64e72\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:09\\r\\n\"}}}"
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"8922336bb4abeabb7b1fa010caa64e72\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:09\\r\\n\"}}}"
       }
     ],
     [
@@ -1635,7 +1675,7 @@
     [],
     [],
     [],
-    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [{ "type": "mailbox_send", "id": 0, "frame": "{\"type\":\"ping\"}" }],
     [],
     [],
     [],
@@ -1653,8 +1693,9 @@
     ],
     [
       {
-        "type": "send_signaling",
-        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"6ef692058a817f78e7d2b82b8347f717\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0B\\r\\n\"}}}"
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"6ef692058a817f78e7d2b82b8347f717\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0B\\r\\n\"}}}"
       }
     ],
     [
@@ -1706,7 +1747,7 @@
     [],
     [],
     [],
-    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [{ "type": "mailbox_send", "id": 0, "frame": "{\"type\":\"ping\"}" }],
     [],
     [],
     [],
@@ -1726,8 +1767,9 @@
     ],
     [
       {
-        "type": "send_signaling",
-        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"4cd6455e279e00d674f8841302a58b77\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0D\\r\\n\"}}}"
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"4cd6455e279e00d674f8841302a58b77\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0D\\r\\n\"}}}"
       }
     ],
     [
@@ -1776,7 +1818,7 @@
     [],
     [],
     [],
-    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [{ "type": "mailbox_send", "id": 0, "frame": "{\"type\":\"ping\"}" }],
     [],
     [],
     [],
@@ -1797,8 +1839,9 @@
     ],
     [
       {
-        "type": "send_signaling",
-        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"137b83187be8d5a2225559b287e4fd7e\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0F\\r\\n\"}}}"
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"137b83187be8d5a2225559b287e4fd7e\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0F\\r\\n\"}}}"
       }
     ],
     [
@@ -1846,7 +1889,7 @@
     [],
     [],
     [],
-    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [{ "type": "mailbox_send", "id": 0, "frame": "{\"type\":\"ping\"}" }],
     [],
     [],
     [],
@@ -1869,8 +1912,9 @@
     ],
     [
       {
-        "type": "send_signaling",
-        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"ce468b5fc409746a3f8d98793b5bb6dc\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:11\\r\\n\"}}}"
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"ce468b5fc409746a3f8d98793b5bb6dc\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:11\\r\\n\"}}}"
       }
     ],
     [
@@ -1916,7 +1960,7 @@
     [],
     [],
     [],
-    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [{ "type": "mailbox_send", "id": 0, "frame": "{\"type\":\"ping\"}" }],
     [],
     [],
     [],
@@ -1941,8 +1985,9 @@
     ],
     [
       {
-        "type": "send_signaling",
-        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"d32bca9548e4ac0325de46e2c0329ca6\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:13\\r\\n\"}}}"
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"d32bca9548e4ac0325de46e2c0329ca6\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:13\\r\\n\"}}}"
       }
     ],
     [
@@ -1989,7 +2034,7 @@
     [],
     [],
     [],
-    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [{ "type": "mailbox_send", "id": 0, "frame": "{\"type\":\"ping\"}" }],
     [],
     [],
     [],
@@ -2017,8 +2062,9 @@
     ],
     [
       {
-        "type": "send_signaling",
-        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"4a84c041fe1f804a3b1cf28dce260108\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:15\\r\\n\"}}}"
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"type\":\"sdp\",\"aid\":\"4a84c041fe1f804a3b1cf28dce260108\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:15\\r\\n\"}}}"
       }
     ],
     [
@@ -2060,7 +2106,7 @@
     [],
     [],
     [],
-    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [{ "type": "mailbox_send", "id": 0, "frame": "{\"type\":\"ping\"}" }],
     [],
     [],
     [],
@@ -2100,8 +2146,9 @@
     ],
     [
       {
-        "type": "send_signaling",
-        "text": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c4\",\"payload\":{\"type\":\"sdp\",\"aid\":\"ccae1fe1fffa43b49238b2bba3449f87\",\"re\":\"38d850136e045de1bd7d6d2299ab044b\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:17\\r\\n\"}}}"
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c4\",\"payload\":{\"type\":\"sdp\",\"aid\":\"ccae1fe1fffa43b49238b2bba3449f87\",\"re\":\"38d850136e045de1bd7d6d2299ab044b\",\"sdp\":{\"type\":\"offer\",\"sdp\":\"v=0\\r\\nm=audio 9 UDP/TLS/RTP/SAVPF 111\\r\\na=sendonly\\r\\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:17\\r\\n\"}}}"
       }
     ],
     [
@@ -2169,7 +2216,7 @@
     [],
     [],
     [],
-    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [{ "type": "mailbox_send", "id": 0, "frame": "{\"type\":\"ping\"}" }],
     [],
     [],
     [],
@@ -2214,7 +2261,7 @@
     [],
     [],
     [],
-    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [{ "type": "mailbox_send", "id": 0, "frame": "{\"type\":\"ping\"}" }],
     [],
     [],
     [
@@ -2269,7 +2316,7 @@
     [],
     [],
     [],
-    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [{ "type": "mailbox_send", "id": 0, "frame": "{\"type\":\"ping\"}" }],
     [],
     [],
     [],
@@ -2314,7 +2361,7 @@
     [],
     [],
     [],
-    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [{ "type": "mailbox_send", "id": 0, "frame": "{\"type\":\"ping\"}" }],
     [],
     [],
     [
@@ -2369,7 +2416,7 @@
     [],
     [],
     [],
-    [{ "type": "send_signaling", "text": "{\"type\":\"ping\"}" }],
+    [{ "type": "mailbox_send", "id": 0, "frame": "{\"type\":\"ping\"}" }],
     [],
     [],
     [],

@@ -336,8 +336,14 @@ impl World {
                 && self.nodes[n].sock == Some(s)
                 && self.nodes[n].net_up
             {
-                self.queue
-                    .push_back(Item::Sig(n, s, LinkInput::SignalingClosed));
+                self.queue.push_back(Item::Sig(
+                    n,
+                    s,
+                    LinkInput::MailboxClosed {
+                        id: 0,
+                        reason: "closed".into(),
+                    },
+                ));
             }
         }
         self.drain();
@@ -414,9 +420,9 @@ impl World {
     fn exec(&mut self, n: usize, actions: Vec<LinkAction>) {
         for a in actions {
             match a {
-                LinkAction::OpenSignaling => self.open_signaling(n),
-                LinkAction::CloseSignaling => self.close_signaling(n),
-                LinkAction::SendSignaling { text } => self.node_to_server(n, &text),
+                LinkAction::OpenMailbox { .. } => self.open_signaling(n),
+                LinkAction::CloseMailbox { .. } => self.close_signaling(n),
+                LinkAction::MailboxSend { frame, .. } => self.node_to_server(n, &frame),
                 LinkAction::CreateAttempt { attempt, .. } => {
                     assert!(
                         self.nodes[n].pcs.values().all(|p| p.closed),
@@ -471,10 +477,17 @@ impl World {
         self.nodes[n].sock = Some(s);
         if self.nodes[n].net_up {
             self.queue
-                .push_back(Item::Sig(n, s, LinkInput::SignalingOpened));
+                .push_back(Item::Sig(n, s, LinkInput::MailboxOpened { id: 0 }));
         } else {
-            self.delayed
-                .push((self.now + 3_000, n, s, LinkInput::SignalingClosed));
+            self.delayed.push((
+                self.now + 3_000,
+                n,
+                s,
+                LinkInput::MailboxClosed {
+                    id: 0,
+                    reason: "closed".into(),
+                },
+            ));
         }
     }
 
@@ -505,8 +518,9 @@ impl World {
         self.queue.push_back(Item::Sig(
             n,
             sock,
-            LinkInput::SignalingMessage {
-                text: msg.to_string(),
+            LinkInput::MailboxFrame {
+                id: 0,
+                bytes: msg.to_string(),
             },
         ));
     }
@@ -550,8 +564,14 @@ impl World {
         }
         if !server_has {
             // TCP reset on the first send after the server dropped the socket.
-            self.queue
-                .push_back(Item::Sig(n, sock, LinkInput::SignalingClosed));
+            self.queue.push_back(Item::Sig(
+                n,
+                sock,
+                LinkInput::MailboxClosed {
+                    id: 0,
+                    reason: "closed".into(),
+                },
+            ));
             return;
         }
         match kind.as_str() {
@@ -850,7 +870,7 @@ impl World {
     /// Delivers a signaling `signal` message to `n` from an arbitrary client id.
     pub fn inject_signal(&mut self, n: usize, from: &str, payload: Value) {
         let text = json!({ "type": "signal", "from": from, "payload": payload }).to_string();
-        self.input(n, LinkInput::SignalingMessage { text });
+        self.input(n, LinkInput::MailboxFrame { id: 0, bytes: text });
     }
 
     /// Chooses what node `n` reports as the remote DTLS fingerprint from now on.

@@ -9,6 +9,7 @@ use std::collections::BTreeMap;
 use guardedsleep_core::link::{
     Link, LinkAction, LinkConfig, LinkEvent, LinkInput, LinkState, LinkStatus,
 };
+use guardedsleep_core::mailbox::RELAY_MAILBOX;
 use guardedsleep_core::pairing::{
     derive_room_id, encode_psk, extract_sha256_fingerprint, extract_sha256_fingerprint_v2_legacy,
 };
@@ -898,8 +899,8 @@ impl World {
     fn exec(&mut self, a: usize, actions: Vec<LinkAction>) {
         for act in actions {
             match act {
-                LinkAction::OpenSignaling => self.open_signaling(a),
-                LinkAction::CloseSignaling => {
+                LinkAction::OpenMailbox { .. } => self.open_signaling(a),
+                LinkAction::CloseMailbox { .. } => {
                     if let Some(s) = self.actors[a].sock.take() {
                         let epoch = self.socks[&s].1;
                         if self.reach(a, epoch) {
@@ -908,7 +909,7 @@ impl World {
                         }
                     }
                 }
-                LinkAction::SendSignaling { text } => self.client_send(a, text, None),
+                LinkAction::MailboxSend { frame, .. } => self.client_send(a, frame, None),
                 LinkAction::CreateAttempt { attempt, .. } => {
                     if self.actors[a].pcs.values().any(|p| !p.closed) {
                         self.violations.push(format!(
@@ -1133,9 +1134,15 @@ impl World {
             return;
         }
         let input = match msg {
-            ToClient::Opened => LinkInput::SignalingOpened,
-            ToClient::Text(text) => LinkInput::SignalingMessage { text },
-            ToClient::Closed => LinkInput::SignalingClosed,
+            ToClient::Opened => LinkInput::MailboxOpened { id: RELAY_MAILBOX },
+            ToClient::Text(bytes) => LinkInput::MailboxFrame {
+                id: RELAY_MAILBOX,
+                bytes,
+            },
+            ToClient::Closed => LinkInput::MailboxClosed {
+                id: RELAY_MAILBOX,
+                reason: "closed".into(),
+            },
         };
         self.deliver(a, input);
     }

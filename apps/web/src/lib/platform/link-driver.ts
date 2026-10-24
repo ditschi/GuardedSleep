@@ -67,7 +67,8 @@ export interface LinkDriverOptions {
 export class LinkDriver {
   private readonly o: LinkDriverOptions;
   private link: CoreLink | null = null;
-  private socket: SignalingSocket | null = null;
+  /** One socket per mailbox id, opened and closed only on the core's actions. */
+  private readonly sockets = new Map<number, { gen: number; socket: SignalingSocket }>();
   private socketGen = 0;
   private readonly attempts = new Map<number, AttemptPort>();
   private liveAttempt: number | null = null;
@@ -177,12 +178,12 @@ export class LinkDriver {
 
   private execute(action: LinkAction, now: number): void {
     switch (action.type) {
-      case "open_signaling":
-        return this.openSignaling();
-      case "close_signaling":
-        return this.closeSignaling();
-      case "send_signaling":
-        return this.socket?.send(action.text);
+      case "open_mailbox":
+        return this.openMailbox(action.id);
+      case "close_mailbox":
+        return this.closeMailbox(action.id);
+      case "mailbox_send":
+        return this.sockets.get(action.id)?.socket.send(action.frame);
       case "create_attempt":
         return this.createAttempt(action.attempt, action.offerer);
       case "close_attempt":
@@ -211,27 +212,32 @@ export class LinkDriver {
     }
   }
 
-  private openSignaling(): void {
-    this.closeSignaling();
+  /**
+   * The core's `url` is empty in the first stage: the relay URL list still lives here (invite v4
+   * moves it into the core). A failed open comes back as `mailbox_closed`, never as a retry.
+   */
+  private openMailbox(id: number): void {
+    this.closeMailbox(id);
     const gen = ++this.socketGen;
     // Callbacks of a replaced socket are dropped; the core only hears about the current one.
-    this.socket = this.o.signaling(this.o.signalingUrls, {
+    const current = (): boolean => this.sockets.get(id)?.gen === gen;
+    const socket = this.o.signaling(this.o.signalingUrls, {
       onOpen: () => {
-        if (gen === this.socketGen) this.dispatch({ type: "signaling_opened" });
+        if (current()) this.dispatch({ type: "mailbox_opened", id });
       },
-      onMessage: (text) => {
-        if (gen === this.socketGen) this.dispatch({ type: "signaling_message", text });
+      onMessage: (bytes) => {
+        if (current()) this.dispatch({ type: "mailbox_frame", id, bytes });
       },
       onClose: () => {
-        if (gen === this.socketGen) this.dispatch({ type: "signaling_closed" });
+        if (current()) this.dispatch({ type: "mailbox_closed", id, reason: "closed" });
       },
     });
+    this.sockets.set(id, { gen, socket });
   }
 
-  private closeSignaling(): void {
-    this.socketGen++;
-    this.socket?.close();
-    this.socket = null;
+  private closeMailbox(id: number): void {
+    this.sockets.get(id)?.socket.close();
+    this.sockets.delete(id);
   }
 
   private createAttempt(handle: number, offerer: boolean): void {
@@ -345,9 +351,8 @@ export class LinkDriver {
     this.tornDown = true;
     for (const cancel of this.cancels) cancel();
     this.cancels.clear();
-    this.socket?.close();
-    this.socket = null;
-    this.socketGen++;
+    for (const { socket } of this.sockets.values()) socket.close();
+    this.sockets.clear();
     for (const port of this.attempts.values()) {
       try {
         port.close();

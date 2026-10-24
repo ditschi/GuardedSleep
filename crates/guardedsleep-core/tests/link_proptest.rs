@@ -74,9 +74,9 @@ fn input() -> impl Strategy<Value = LinkInput> {
         Just(LinkInput::Stop),
         Just(LinkInput::AcknowledgeAlarm),
         Just(LinkInput::NetworkAvailable),
-        Just(LinkInput::SignalingOpened),
-        Just(LinkInput::SignalingClosed),
-        server_text().prop_map(|text| LinkInput::SignalingMessage { text }),
+        Just(LinkInput::MailboxOpened { id: 0 }),
+        Just(LinkInput::MailboxClosed { id: 0, reason: "closed".into() }),
+        server_text().prop_map(|text| LinkInput::MailboxFrame { id: 0, bytes: text }),
         (
             attempt.clone(),
             prop::sample::select(vec!["offer", "answer"])
@@ -273,7 +273,7 @@ proptest! {
         for i in 0..to_parent.len().max(to_baby.len()) {
             for (node, texts) in [(PARENT, &to_parent), (BABY, &to_baby)] {
                 if let Some(text) = texts.get(i) {
-                    w.input(node, LinkInput::SignalingMessage { text: text.clone() });
+                    w.input(node, LinkInput::MailboxFrame { id: 0, bytes: text.clone() });
                 }
             }
             w.advance(100);

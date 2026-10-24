@@ -112,15 +112,17 @@ test("wasm link: parent joins, asks the baby for an offer and exposes the PSK-de
   assert.equal(link.roomId(), "J8uOkdP8JbRE_-Q9zX1rxA");
   const step = (now, input) => JSON.parse(link.handle(now, JSON.stringify(input)));
   const first = step(0, { type: "start", entropy: 1 });
-  assert.equal(first[0].type, "open_signaling");
-  step(1, { type: "signaling_opened" });
+  assert.equal(first[0].type, "open_mailbox");
+  step(1, { type: "mailbox_opened", id: 0 });
   step(2, {
-    type: "signaling_message",
-    text: JSON.stringify({ type: "welcome", clientId: "p", roomId: link.roomId() }),
+    type: "mailbox_frame",
+    id: 0,
+    bytes: JSON.stringify({ type: "welcome", clientId: "p", roomId: link.roomId() }),
   });
   const out = step(3, {
-    type: "signaling_message",
-    text: JSON.stringify({
+    type: "mailbox_frame",
+    id: 0,
+    bytes: JSON.stringify({
       type: "members",
       peers: [
         { clientId: "b", role: "baby" },
@@ -128,7 +130,7 @@ test("wasm link: parent joins, asks the baby for an offer and exposes the PSK-de
       ],
     }),
   });
-  const sent = JSON.parse(out.find((a) => a.type === "send_signaling").text);
+  const sent = JSON.parse(out.find((a) => a.type === "mailbox_send").frame);
   assert.equal(sent.to, "b");
   assert.equal(sent.payload.type, "request_offer");
   assert.match(sent.payload.aid, /^[0-9a-f]{32}$/);

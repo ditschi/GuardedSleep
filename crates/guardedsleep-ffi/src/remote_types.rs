@@ -6,6 +6,7 @@
 use guardedsleep_core::link::{
     LinkAction, LinkConfig, LinkEvent, LinkInput, LinkState, LinkStatus,
 };
+use guardedsleep_core::mailbox::MailboxKind;
 use guardedsleep_core::protocol::{DeviceStatus, Dnd, IceCandidate, Ringer, Role, UnitWarning};
 use guardedsleep_core::session::{Action, Input, SessionConfig, SessionEvent, SessionState};
 
@@ -100,6 +101,12 @@ pub struct LinkConfig {
 }
 
 #[uniffi::remote(Enum)]
+pub enum MailboxKind {
+    /// Our signaling relay (`signaling-relay`).
+    Relay,
+}
+
+#[uniffi::remote(Enum)]
 pub enum LinkState {
     /// Started, never verified in this run.
     Connecting,
@@ -145,11 +152,22 @@ pub enum LinkInput {
     AcknowledgeAlarm,
     /// The platform's network changed or came back: retry immediately, reset the backoff.
     NetworkAvailable,
-    SignalingOpened,
-    SignalingMessage {
-        text: String,
+    /// The socket of mailbox `id` opened (the answer to `open_mailbox`).
+    MailboxOpened {
+        id: u32,
     },
-    SignalingClosed,
+    /// The socket of mailbox `id` closed or failed to open (`reason` is diagnostic, not a UI key).
+    /// Also the answer to a refused `open_mailbox`.
+    MailboxClosed {
+        id: u32,
+        reason: String,
+    },
+    /// One inbound frame of mailbox `id`. `bytes` is the WebSocket text frame (UTF-8): every
+    /// mailbox kind speaks JSON text frames.
+    MailboxFrame {
+        id: u32,
+        bytes: String,
+    },
     AttemptLocalDescription {
         attempt: u32,
         sdp_type: String,
@@ -217,10 +235,21 @@ pub enum LinkInput {
 
 #[uniffi::remote(Enum)]
 pub enum LinkAction {
-    OpenSignaling,
-    CloseSignaling,
-    SendSignaling {
-        text: String,
+    /// Open a socket for mailbox `id`. `url` empty: the platform's configured address for the kind.
+    /// After `close_mailbox` the platform discards further events of that socket; a failed open is
+    /// reported as `mailbox_closed`.
+    OpenMailbox {
+        id: u32,
+        kind: MailboxKind,
+        url: String,
+    },
+    /// Send one WebSocket text frame on mailbox `id`.
+    MailboxSend {
+        id: u32,
+        frame: String,
+    },
+    CloseMailbox {
+        id: u32,
     },
     CreateAttempt {
         attempt: u32,

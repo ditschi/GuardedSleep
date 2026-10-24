@@ -20,7 +20,7 @@ const RECORDED: { at: number; input: object; actions: LinkAction[] }[] = [
     at: 1000,
     input: { type: "start", entropy: 42 },
     actions: [
-      { type: "open_signaling" },
+      { type: "open_mailbox", id: 0, kind: "relay", url: "" },
       {
         type: "emit",
         event: {
@@ -39,20 +39,26 @@ const RECORDED: { at: number; input: object; actions: LinkAction[] }[] = [
   },
   {
     at: 1001,
-    input: { type: "signaling_opened" },
+    input: { type: "mailbox_opened", id: 0 },
     actions: [
       {
-        type: "send_signaling",
-        text: '{"type":"hello","role":"parent","roomId":"FrcBBWi_uGBOkaphqPhl_w","protocolVersion":3}',
+        type: "mailbox_send",
+        id: 0,
+        frame:
+          '{"type":"hello","role":"parent","roomId":"FrcBBWi_uGBOkaphqPhl_w","protocolVersion":3}',
       },
     ],
   },
-  { at: 2000, input: { type: "signaling_closed" }, actions: [{ type: "open_signaling" }] },
+  {
+    at: 2000,
+    input: { type: "mailbox_closed", id: 0, reason: "closed" },
+    actions: [{ type: "open_mailbox", id: 0, kind: "relay", url: "" }],
+  },
   {
     at: 62_000,
     input: { type: "tick" },
     actions: [
-      { type: "close_signaling" },
+      { type: "close_mailbox", id: 0 },
       { type: "emit", event: { type: "link_lost", down_ms: 61_000 } },
       {
         type: "emit",

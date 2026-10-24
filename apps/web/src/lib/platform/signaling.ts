@@ -34,7 +34,7 @@ const OPEN = 1;
 /**
  * Tries the URLs in order until one opens, starting at the URL that worked last (so a dead first
  * entry does not delay every reconnect the core asks for). When none opens the listener gets
- * `onClose` and the core schedules the next `open_signaling` itself; the transport never retries.
+ * `onClose` and the core schedules the next `open_mailbox` itself; the transport never retries.
  */
 export function createWebSocketSignaling(ctor: WebSocketCtor): SignalingFactory {
   let start = 0;

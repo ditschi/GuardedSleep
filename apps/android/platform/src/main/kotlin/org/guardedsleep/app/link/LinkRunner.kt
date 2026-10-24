@@ -68,8 +68,11 @@ class LinkRunner(
 ) {
     private lateinit var link: CoreLink
     private var media: MediaEngine? = null
-    private var transport: SignalingTransport? = null
-    private var transportGen = 0
+    /** One socket per mailbox id, opened and closed only on the core's actions. */
+    private class MailboxSocket(val gen: Int, val transport: SignalingTransport)
+
+    private val mailboxes = HashMap<UInt, MailboxSocket>()
+    private var mailboxGen = 0
     private val attempts = HashMap<UInt, AttemptPort>()
     private var liveAttempt: UInt? = null
     private val tasks = mutableListOf<ScheduledFuture<*>>()
@@ -202,9 +205,9 @@ class LinkRunner(
 
     private fun execute(action: LinkAction, now: Long) {
         when (action) {
-            LinkAction.OpenSignaling -> openSignaling()
-            LinkAction.CloseSignaling -> closeSignaling()
-            is LinkAction.SendSignaling -> transport?.send(action.text)
+            is LinkAction.OpenMailbox -> openMailbox(action.id)
+            is LinkAction.CloseMailbox -> closeMailbox(action.id)
+            is LinkAction.MailboxSend -> mailboxes[action.id]?.transport?.send(action.frame)
             is LinkAction.CreateAttempt -> createAttempt(action.attempt, action.offerer)
             is LinkAction.CloseAttempt -> closeAttempt(action.attempt)
             is LinkAction.CreateOffer -> attempts[action.attempt]?.createOffer()
@@ -260,33 +263,39 @@ class LinkRunner(
         if (event !is LinkEvent.Status) listener.onEvent(event, now)
     }
 
-    private fun openSignaling() {
-        closeSignaling()
-        val gen = ++transportGen
-        transport =
+    /**
+     * The core's `url` is empty in the first stage: the relay URL list still lives here (invite v4
+     * moves it into the core). A failed open comes back as `MailboxClosed`, never as a retry.
+     */
+    private fun openMailbox(id: UInt) {
+        closeMailbox(id)
+        val gen = ++mailboxGen
+        val transport =
             signaling.create(
                 signalingUrls,
                 object : SignalingListener {
                     override fun onOpened() = post {
-                        if (gen == transportGen) dispatch(LinkInput.SignalingOpened)
+                        if (isCurrent(id, gen)) dispatch(LinkInput.MailboxOpened(id))
                     }
 
                     override fun onMessage(text: String) = post {
-                        if (gen == transportGen) dispatch(LinkInput.SignalingMessage(text))
+                        if (isCurrent(id, gen)) dispatch(LinkInput.MailboxFrame(id, text))
                     }
 
                     override fun onClosed() = post {
-                        if (gen == transportGen) dispatch(LinkInput.SignalingClosed)
+                        if (isCurrent(id, gen)) dispatch(LinkInput.MailboxClosed(id, "closed"))
                     }
                 },
             )
-        transport?.open()
+        mailboxes[id] = MailboxSocket(gen, transport)
+        transport.open()
     }
 
-    private fun closeSignaling() {
-        transportGen++
-        transport?.close()
-        transport = null
+    /** Late callbacks of a closed or replaced socket carry an old generation and are dropped. */
+    private fun isCurrent(id: UInt, gen: Int) = mailboxes[id]?.gen == gen
+
+    private fun closeMailbox(id: UInt) {
+        mailboxes.remove(id)?.transport?.close()
     }
 
     private fun createAttempt(handle: UInt, offerer: Boolean) {
@@ -362,8 +371,8 @@ class LinkRunner(
         tornDown = true
         tasks.forEach { it.cancel(false) }
         tasks.clear()
-        transport?.close()
-        transport = null
+        mailboxes.values.forEach { it.transport.close() }
+        mailboxes.clear()
         attempts.values.forEach { runCatching { it.close() } }
         attempts.clear()
         runCatching { media?.release() }

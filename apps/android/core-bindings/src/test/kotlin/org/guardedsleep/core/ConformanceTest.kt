@@ -109,9 +109,10 @@ class ConformanceTest {
             "tick" -> LinkInput.Tick
             "wall_clock" -> LinkInput.WallClock(i.getLong("unix_s").toULong())
             "network_available" -> LinkInput.NetworkAvailable
-            "signaling_opened" -> LinkInput.SignalingOpened
-            "signaling_closed" -> LinkInput.SignalingClosed
-            "signaling_message" -> LinkInput.SignalingMessage(i.getString("text"))
+            "mailbox_opened" -> LinkInput.MailboxOpened(i.getLong("id").toUInt())
+            "mailbox_closed" ->
+                LinkInput.MailboxClosed(i.getLong("id").toUInt(), i.getString("reason"))
+            "mailbox_frame" -> LinkInput.MailboxFrame(i.getLong("id").toUInt(), i.getString("bytes"))
             "attempt_local_description" ->
                 LinkInput.AttemptLocalDescription(
                     attempt,
@@ -130,7 +131,7 @@ class ConformanceTest {
     private fun snake(name: String) = name.replace(Regex("([a-z])([A-Z])"), "$1_$2").lowercase()
 
     private fun detail(a: JSONObject) =
-        listOf("attempt", "text", "sdp")
+        listOf("attempt", "frame", "text", "sdp")
             .mapNotNull { k -> a.opt(k)?.let { "$k=$it" } }
             .joinToString(",")
 
@@ -142,7 +143,7 @@ class ConformanceTest {
         val kind = snake(a::class.simpleName!!)
         return when (a) {
             is LinkAction.Emit -> "emit:${snake(a.event::class.simpleName!!)}"
-            is LinkAction.SendSignaling -> "$kind:text=${a.text}"
+            is LinkAction.MailboxSend -> "$kind:frame=${a.frame}"
             is LinkAction.CreateAttempt -> "$kind:attempt=${a.attempt}"
             is LinkAction.CloseAttempt -> "$kind:attempt=${a.attempt}"
             is LinkAction.CreateOffer -> "$kind:attempt=${a.attempt}"
