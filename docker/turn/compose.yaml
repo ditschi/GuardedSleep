@@ -1,0 +1,81 @@
+# Self-hosted TURN server (coturn) for a VPS. Guide: docs/contributing/turn-server-vps.md
+#
+# Quick usage:
+#   1. cp turn.env.example .env   # then set TURN_PUBLIC_IP, TURN_PRIVATE_IP, TURN_REALM, TURN_PASSWORD
+#   2. open the firewall (cloud security list and host firewall), see the guide
+#   3. docker compose up -d && docker compose logs -f
+#
+# Host networking: coturn needs the whole relay port range and must see the real client
+# addresses; publishing thousands of ports through docker-proxy is slow and breaks under load.
+# https://github.com/coturn/coturn/blob/master/docker/coturn/README.md
+name: guardedsleep-turn
+
+services:
+  coturn:
+    # Same pin as the emulator gate (scripts/poc/env-up.sh); multi-arch, so Ampere A1 (arm64) works.
+    image: coturn/coturn:${COTURN_TAG:-4.18.0}
+    network_mode: host
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /var/lib/coturn
+      - /tmp
+    cap_drop:
+      - ALL
+    # /usr/bin/turnserver carries the file capability cap_net_bind_service; without it in the
+    # bounding set the exec fails with "Operation not permitted".
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    # Option reference: https://github.com/coturn/coturn/blob/master/docker/coturn/turnserver.conf
+    # The image entrypoint runs `eval "echo $arg"` on every argument: keep values free of shell
+    # characters ($, `, ", spaces), and do not pass -n (echo swallows it).
+    command:
+      - --log-file=stdout
+      - --simple-log
+      - --log-min-level=info
+      - --fingerprint
+      - --realm=${TURN_REALM:?set TURN_REALM}
+      - --server-name=${TURN_REALM}
+      # Static long-term credential for testing. The planned beta profile uses
+      # --use-auth-secret with short-lived HMAC credentials instead (docs/backlog.md, TURN).
+      - --lt-cred-mech
+      - --user=${TURN_USER:-guardedsleep}:${TURN_PASSWORD:?set TURN_PASSWORD}
+      # 1:1 NAT on most clouds (Oracle, AWS, GCP): bind the private address, advertise the public one.
+      - --listening-ip=${TURN_PRIVATE_IP:?set TURN_PRIVATE_IP}
+      - --relay-ip=${TURN_PRIVATE_IP}
+      - --external-ip=${TURN_PUBLIC_IP:?set TURN_PUBLIC_IP}/${TURN_PRIVATE_IP}
+      - --listening-port=${TURN_PORT:-3478}
+      - --min-port=${TURN_MIN_PORT:-49160}
+      - --max-port=${TURN_MAX_PORT:-49200}
+      # TLS (turns:) stays off until certificates are mounted, see the guide. The CLI, DTLS and the
+      # software attribute are off by default since coturn 4.18.
+      - --no-tls
+      # WebRTC relays media over UDP only; TCP relay allocations are not needed.
+      - --no-tcp-relay
+      # Abuse limits: audio-only sessions need far less than this (bytes per second).
+      - --user-quota=${TURN_USER_QUOTA:-12}
+      - --total-quota=${TURN_TOTAL_QUOTA:-100}
+      - --max-bps=${TURN_MAX_BPS:-125000}
+      - --stale-nonce=600
+      - --no-multicast-peers
+      # Never relay into private, loopback, link-local (cloud metadata 169.254.169.254) or CGNAT
+      # space: an open TURN server is otherwise a proxy into the provider network.
+      - --denied-peer-ip=0.0.0.0-0.255.255.255
+      - --denied-peer-ip=10.0.0.0-10.255.255.255
+      - --denied-peer-ip=100.64.0.0-100.127.255.255
+      - --denied-peer-ip=127.0.0.0-127.255.255.255
+      - --denied-peer-ip=169.254.0.0-169.254.255.255
+      - --denied-peer-ip=172.16.0.0-172.31.255.255
+      - --denied-peer-ip=192.0.0.0-192.0.0.255
+      - --denied-peer-ip=192.168.0.0-192.168.255.255
+      - --denied-peer-ip=198.18.0.0-198.19.255.255
+      - --denied-peer-ip=::1
+      - --denied-peer-ip=fc00::-fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+      - --denied-peer-ip=fe80::-febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
