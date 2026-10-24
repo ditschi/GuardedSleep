@@ -106,3 +106,8 @@ paths = ['''(^|/)pnpm-lock\.yaml$''', '''(^|/)Cargo\.lock$''']
 description = "mise npm-backend lockfiles list package names such as '@inquirer/password' with their versions; only generic-password is skipped there"
 targetRules = ["generic-password"]
 paths = ['''^\.mise/locks/.+-lock\.yaml$''']
+
+[[allowlists]]
+description = "UI copy catalogues label the TURN password field (`\"password\": \"Password\"`); only generic-password is skipped there, the PSK and URL-credential rules stay active"
+targetRules = ["generic-password"]
+paths = ['''^locales/[^/]+\.json$''']

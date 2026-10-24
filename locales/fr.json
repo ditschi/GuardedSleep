@@ -638,7 +638,11 @@
         },
         "turn": {
           "label": "Serveur relais (TURN), facultatif",
-          "invalid": "L'adresse du relais doit commencer par turn: ou turns:."
+          "invalid": "L'adresse du relais doit commencer par turn: ou turns:.",
+          "username": "Nom d’utilisateur",
+          "password": "Mot de passe",
+          "passwordSaved": "Mot de passe enregistré. Laissez vide pour le conserver.",
+          "credentialsInvalid": "Saisissez le nom d’utilisateur et le mot de passe (256 caractères maximum chacun), ou aucun des deux."
         },
         "heartbeat": "Vérification de la connexion toutes les {seconds} s"
       },

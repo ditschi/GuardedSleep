@@ -638,7 +638,11 @@
         },
         "turn": {
           "label": "Servidor de retransmisión (TURN), opcional",
-          "invalid": "La dirección del relé debe empezar por turn: o turns:."
+          "invalid": "La dirección del relé debe empezar por turn: o turns:.",
+          "username": "Nombre de usuario",
+          "password": "Contraseña",
+          "passwordSaved": "Contraseña guardada. Déjalo vacío para conservarla.",
+          "credentialsInvalid": "Introduce el nombre de usuario y la contraseña (hasta 256 caracteres cada uno), o ninguno."
         },
         "heartbeat": "Comprobación de la conexión cada {seconds} s"
       },

@@ -638,7 +638,11 @@
         },
         "turn": {
           "label": "Relay-Server (TURN), optional",
-          "invalid": "Die Relay-Adresse muss mit turn: oder turns: beginnen."
+          "invalid": "Die Relay-Adresse muss mit turn: oder turns: beginnen.",
+          "username": "Benutzername",
+          "password": "Passwort",
+          "passwordSaved": "Passwort gespeichert. Leer lassen, um es zu behalten.",
+          "credentialsInvalid": "Gib Benutzername und Passwort ein (je bis zu 256 Zeichen) oder keins von beiden."
         },
         "heartbeat": "Verbindungsprüfung alle {seconds} s"
       },
