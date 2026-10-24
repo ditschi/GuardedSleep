@@ -15,6 +15,7 @@ const URL_B = "ws://signal.test:2";
 const cfg = (role: LinkConfig["role"], psk = PSK): LinkConfig => ({
   role,
   psk_b64url: psk,
+  seed: "07".repeat(32),
   heartbeat_interval_ms: 10_000,
   alarm_after_ms: 60_000,
   noise_threshold: 0.12,

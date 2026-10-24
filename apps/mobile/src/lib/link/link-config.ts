@@ -23,6 +23,10 @@ export function buildLinkConfig(
   return {
     role,
     psk_b64url: pskB64Url,
+    // Fresh per run: the core derives its nonces from it (kept minimal; this app is frozen).
+    seed: Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) =>
+      b.toString(16).padStart(2, "0"),
+    ).join(""),
     paired_before: pairedBefore,
     heartbeat_interval_ms: hb,
     alarm_after_ms: Math.max(DEFAULT_ALARM_AFTER_MS, liveness + ALARM_MARGIN_MS),
