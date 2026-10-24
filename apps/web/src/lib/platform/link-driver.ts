@@ -73,6 +73,7 @@ export class LinkDriver {
   private tornDown = false;
   private lastSentStatus: DeviceStatus | null = null;
   private lastSentStatusAt = 0;
+  private lastWallS = -1;
   private readonly isBaby: boolean;
 
   constructor(options: LinkDriverOptions) {
@@ -93,13 +94,26 @@ export class LinkDriver {
       return;
     }
     this.dispatch({ type: "start", entropy: this.o.entropy });
+    this.reportWallClock();
     this.every(() => {
       this.dispatch({ type: "tick" });
+      this.reportWallClock();
       this.o.listener.onTick(this.o.clock.elapsedMs());
     }, TICK_MS);
     this.every(() => this.sampleAudio(), AUDIO_LEVEL_MS);
     if (this.isBaby) this.every(() => this.sendDeviceStatus(false), DEVICE_STATUS_CHECK_MS);
     else this.every(() => this.pollStats(), STATS_MS);
+  }
+
+  /**
+   * The wall clock in Unix seconds, for the core's Nostr epochs only (never liveness): sent at start
+   * and with the ticks whenever the second changed, which also covers a changed device time.
+   */
+  private reportWallClock(): void {
+    const unixS = Math.floor(Date.now() / 1000);
+    if (unixS === this.lastWallS) return;
+    this.lastWallS = unixS;
+    this.dispatch({ type: "wall_clock", unix_s: unixS });
   }
 
   /** Announces a deliberate stop to the peer, then tears down after a short flush. */

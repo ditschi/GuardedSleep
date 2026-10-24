@@ -23,12 +23,18 @@ const RELAY = "ws://relay.test:8787";
 class ScriptedCore {
   readonly configs: LinkConfig[] = [];
   readonly inputs: LinkInput[] = [];
+  /** The wall clock reports, kept apart so the input assertions stay about behaviour. */
+  readonly wallClocks: number[] = [];
   freed = 0;
   script: (input: LinkInput) => LinkAction[] = () => [];
   createLink(config: LinkConfig): CoreLink {
     this.configs.push(config);
     return {
       handle: (_at, input) => {
+        if (input.type === "wall_clock") {
+          this.wallClocks.push(input.unix_s);
+          return [];
+        }
         this.inputs.push(input);
         return this.script(input);
       },

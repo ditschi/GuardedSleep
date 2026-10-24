@@ -80,6 +80,7 @@ class LinkRunner(
     private var lastShape: Triple<LinkState, UByte, String?>? = null
     private var lastSentStatus: DeviceStatus? = null
     private var lastSentStatusAt = 0L
+    private var lastWallS = -1L
 
     private val isBaby = config.role == Role.BABY
 
@@ -102,14 +103,28 @@ class LinkRunner(
         media = mediaFactory()
         PocLog.event("session_start", "role" to config.role.name.lowercase())
         dispatch(LinkInput.Start(entropy.toULong()))
+        reportWallClock()
         every(AppDefaults.TICK_MS) {
             val now = clock.elapsedMs()
             dispatch(LinkInput.Tick)
+            reportWallClock()
             listener.onTick(now)
         }
         every(AppDefaults.AUDIO_LEVEL_MS) { sampleAudio() }
         if (isBaby) every(AppDefaults.DEVICE_STATUS_CHECK_MS) { sendDeviceStatus(force = false) }
         else every(STATS_MS) { pollStats() }
+    }
+
+    /**
+     * The wall clock in Unix seconds, for the core's Nostr epochs only (never liveness): sent at
+     * start and with the ticks whenever the second changed, which also covers a changed device
+     * time.
+     */
+    private fun reportWallClock() {
+        val unixS = System.currentTimeMillis() / 1000
+        if (unixS == lastWallS) return
+        lastWallS = unixS
+        dispatch(LinkInput.WallClock(unixS.toULong()))
     }
 
     /** Announces a deliberate stop to the peer, then tears everything down after a short flush. */

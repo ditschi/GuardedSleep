@@ -22,9 +22,10 @@
   },
   "steps": [
     { "n": 0, "now": 0, "input": { "type": "start", "entropy": 569173874 } },
-    { "n": 1, "now": 45, "input": { "type": "signaling_opened" } },
+    { "n": 1, "now": 0, "input": { "type": "wall_clock", "unix_s": 1000000 } },
+    { "n": 2, "now": 45, "input": { "type": "signaling_opened" } },
     {
-      "n": 2,
+      "n": 3,
       "now": 93,
       "input": {
         "type": "signaling_message",
@@ -32,7 +33,7 @@
       }
     },
     {
-      "n": 3,
+      "n": 4,
       "now": 93,
       "input": {
         "type": "signaling_message",
@@ -40,12 +41,12 @@
       }
     },
     {
-      "n": 4,
+      "n": 5,
       "now": 93,
       "input": { "type": "signaling_message", "text": "{\"type\":\"peer\",\"peerId\":null}" }
     },
     {
-      "n": 5,
+      "n": 6,
       "now": 93,
       "input": {
         "type": "signaling_message",
@@ -53,12 +54,12 @@
       }
     },
     {
-      "n": 6,
+      "n": 7,
       "now": 93,
       "input": { "type": "signaling_message", "text": "{\"type\":\"peer\",\"peerId\":\"c2\"}" }
     },
     {
-      "n": 7,
+      "n": 8,
       "now": 164,
       "input": {
         "type": "signaling_message",
@@ -66,7 +67,7 @@
       }
     },
     {
-      "n": 8,
+      "n": 9,
       "now": 186,
       "input": {
         "type": "attempt_local_description",
@@ -76,7 +77,7 @@
       }
     },
     {
-      "n": 9,
+      "n": 10,
       "now": 225,
       "input": {
         "type": "signaling_message",
@@ -84,7 +85,7 @@
       }
     },
     {
-      "n": 10,
+      "n": 11,
       "now": 236,
       "input": {
         "type": "attempt_local_description",
@@ -93,16 +94,16 @@
         "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:08\r\n"
       }
     },
-    { "n": 11, "now": 250, "input": { "type": "tick" } },
-    { "n": 12, "now": 500, "input": { "type": "tick" } },
+    { "n": 12, "now": 250, "input": { "type": "tick" } },
+    { "n": 13, "now": 500, "input": { "type": "tick" } },
     {
-      "n": 13,
+      "n": 14,
       "now": 618,
       "input": { "type": "attempt_pc_state", "attempt": 2, "state": "connected" }
     },
-    { "n": 14, "now": 618, "input": { "type": "attempt_data_open", "attempt": 2 } },
+    { "n": 15, "now": 618, "input": { "type": "attempt_data_open", "attempt": 2 } },
     {
-      "n": 15,
+      "n": 16,
       "now": 618,
       "input": {
         "type": "attempt_dtls_fingerprint",
@@ -111,7 +112,7 @@
       }
     },
     {
-      "n": 16,
+      "n": 17,
       "now": 638,
       "input": {
         "type": "attempt_data_message",
@@ -120,7 +121,7 @@
       }
     },
     {
-      "n": 17,
+      "n": 18,
       "now": 677,
       "input": {
         "type": "signaling_message",
@@ -128,7 +129,7 @@
       }
     },
     {
-      "n": 18,
+      "n": 19,
       "now": 704,
       "input": {
         "type": "attempt_local_description",
@@ -137,9 +138,9 @@
         "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:0D\r\n"
       }
     },
-    { "n": 19, "now": 750, "input": { "type": "tick" } },
+    { "n": 20, "now": 750, "input": { "type": "tick" } },
     {
-      "n": 20,
+      "n": 21,
       "now": 773,
       "input": {
         "type": "signaling_message",
@@ -147,7 +148,7 @@
       }
     },
     {
-      "n": 21,
+      "n": 22,
       "now": 786,
       "input": {
         "type": "attempt_local_description",
@@ -156,18 +157,19 @@
         "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:11\r\n"
       }
     },
-    { "n": 22, "now": 1000, "input": { "type": "tick" } },
-    { "n": 23, "now": 1250, "input": { "type": "tick" } },
-    { "n": 24, "now": 1500, "input": { "type": "tick" } },
-    { "n": 25, "now": 1750, "input": { "type": "tick" } },
+    { "n": 23, "now": 1000, "input": { "type": "tick" } },
+    { "n": 24, "now": 1000, "input": { "type": "wall_clock", "unix_s": 1000001 } },
+    { "n": 25, "now": 1250, "input": { "type": "tick" } },
+    { "n": 26, "now": 1500, "input": { "type": "tick" } },
+    { "n": 27, "now": 1750, "input": { "type": "tick" } },
     {
-      "n": 26,
+      "n": 28,
       "now": 1758,
       "input": { "type": "attempt_pc_state", "attempt": 4, "state": "connected" }
     },
-    { "n": 27, "now": 1758, "input": { "type": "attempt_data_open", "attempt": 4 } },
+    { "n": 29, "now": 1758, "input": { "type": "attempt_data_open", "attempt": 4 } },
     {
-      "n": 28,
+      "n": 30,
       "now": 1758,
       "input": {
         "type": "attempt_dtls_fingerprint",
@@ -176,7 +178,7 @@
       }
     },
     {
-      "n": 29,
+      "n": 31,
       "now": 1807,
       "input": {
         "type": "attempt_data_message",
@@ -184,7 +186,8 @@
         "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"3c53cc877d728ec9e1bb47e1e64394445b2b17f28a9e9b292e47b1b81b546d54\"}"
       }
     },
-    { "n": 30, "now": 2000, "input": { "type": "tick" } }
+    { "n": 32, "now": 2000, "input": { "type": "tick" } },
+    { "n": 33, "now": 2000, "input": { "type": "wall_clock", "unix_s": 1000002 } }
   ],
   "expect": [
     [
@@ -204,6 +207,7 @@
         }
       }
     ],
+    [],
     [
       {
         "type": "send_signaling",
@@ -311,6 +315,7 @@
     [],
     [],
     [],
+    [],
     [
       {
         "type": "send_data",
@@ -338,6 +343,7 @@
         }
       }
     ],
+    [],
     []
   ],
   "final": { "state": "failed_needs_user" }

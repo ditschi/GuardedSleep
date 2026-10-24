@@ -598,16 +598,15 @@ impl Link {
         let csprng = ChaCha20Rng::from_seed(seed);
         seed.zeroize();
         cfg.seed.zeroize();
-        Self::build(cfg, csprng).map_err(|(e, _)| e)
+        Self::build(cfg, &mut Some(csprng))
     }
 
-    /// Everything but the seed check, so `start` can rebuild the state around the live CSPRNG. On
-    /// an error the generator is handed back, so the caller never has to invent a stand-in.
-    fn build(cfg: LinkConfig, csprng: ChaCha20Rng) -> Result<Self, (ConfigError, ChaCha20Rng)> {
-        let psk = match cfg.validate() {
-            Ok(psk) => psk,
-            Err(e) => return Err((e, csprng)),
-        };
+    /// Everything but the seed check, so `start` can rebuild the state around the live CSPRNG. The
+    /// generator is taken out of `slot` only once the config validated, so a failure leaves it
+    /// where it was and nobody has to invent a stand-in.
+    fn build(cfg: LinkConfig, slot: &mut Option<ChaCha20Rng>) -> Result<Self, ConfigError> {
+        let psk = cfg.validate()?;
+        let csprng = slot.take().ok_or(ConfigError::InvalidSeed)?;
         let room = derive_room_id(&psk);
         let gate = NoiseGate::new(cfg.noise_threshold, cfg.noise_hold_ms);
         Ok(Self {
@@ -715,7 +714,11 @@ impl Link {
         }
         match input {
             LinkInput::Start { entropy } => self.on_start(now, entropy, &mut out),
-            LinkInput::WallClock { unix_s } => self.wall_unix_s = Some(unix_s),
+            // A plain setter: no timers run, so reporting the clock never moves anything.
+            LinkInput::WallClock { unix_s } => {
+                self.wall_unix_s = Some(unix_s);
+                return out;
+            }
             LinkInput::Stop => self.on_stop(&mut out),
             LinkInput::AcknowledgeAlarm => self.on_acknowledge(now, &mut out),
             LinkInput::NetworkAvailable => self.on_network_available(now, &mut out),
@@ -846,16 +849,9 @@ impl Link {
         let mut cfg = self.cfg.clone();
         cfg.paired_before = self.ever_verified;
         // The seed was consumed in `new`; the generator carries over into the fresh state.
-        let Some(csprng) = self.csprng.take() else {
+        // A failed build leaves the generator in place.
+        let Ok(mut fresh) = Link::build(cfg, &mut self.csprng) else {
             return;
-        };
-        let mut fresh = match Link::build(cfg, csprng) {
-            Ok(fresh) => fresh,
-            Err((_, csprng)) => {
-                // Never leave the link without its generator (and never with a made-up one).
-                self.csprng = Some(csprng);
-                return;
-            }
         };
         fresh.now = now;
         fresh.mode = Mode::Running;

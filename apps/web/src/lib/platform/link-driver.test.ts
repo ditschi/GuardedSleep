@@ -41,12 +41,18 @@ const status = (state: LinkStatus["state"], level = 0): LinkStatus => ({
 /** A core whose answer to every input is scripted by the test; records the inputs it got. */
 class ScriptedCore {
   readonly inputs: Array<{ at: number; input: LinkInput }> = [];
+  /** The wall clock reports, kept apart so the input assertions stay about behaviour. */
+  readonly wallClocks: number[] = [];
   freed = false;
   script: (input: LinkInput) => LinkAction[] = () => [];
 
   createLink(): CoreLink {
     return {
       handle: (at, input) => {
+        if (input.type === "wall_clock") {
+          this.wallClocks.push(input.unix_s);
+          return [];
+        }
         this.inputs.push({ at, input });
         return this.script(input);
       },
@@ -112,6 +118,36 @@ function setup(role: LinkConfig["role"] = "parent", core: ScriptedCore = new Scr
 }
 
 describe("LinkDriver with a scripted core", () => {
+  it("reports the wall clock at start and when the second changes, never as a tick", () => {
+    const core = new ScriptedCore();
+    const { driver, time } = setup("parent", core);
+    driver.start();
+    expect(core.wallClocks).toHaveLength(1);
+    const first = core.wallClocks[0] ?? 0;
+    expect(first).toBeGreaterThan(1_700_000_000);
+    time.advance(500);
+    time.advance(500);
+    time.advance(500);
+    // The fake timers do not move Date.now: the same second is reported once.
+    expect(core.wallClocks.length).toBeGreaterThanOrEqual(1);
+    expect(core.types()).not.toContain("wall_clock");
+  });
+
+  it("hands the seed to the core once", () => {
+    const core = new ScriptedCore();
+    const seen: string[] = [];
+    const createLink = core.createLink.bind(core);
+    core.createLink = ((config: LinkConfig) => {
+      seen.push(config.seed);
+      return createLink();
+    }) as typeof core.createLink;
+    const { driver } = setup("parent", core);
+    driver.start();
+    expect(seen).toEqual(["07".repeat(32)]);
+    driver.start();
+    expect(seen).toHaveLength(1);
+  });
+
   it("starts the core with the entropy and executes the actions it returns", () => {
     const core = new ScriptedCore();
     core.script = (input) =>
