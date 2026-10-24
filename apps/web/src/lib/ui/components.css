@@ -10,7 +10,9 @@
     gap: var(--gs-space-2);
     min-height: var(--gs-target);
     min-width: var(--gs-target);
-    padding: var(--gs-space-2) var(--gs-space-5);
+    /* A button never grows past its row: its label wraps at 320 px with 200 % text. */
+    max-width: 100%;
+    padding: var(--gs-space-2) min(var(--gs-space-5), 5vw);
     border: 0.0625rem solid transparent;
     border-radius: var(--gs-radius-full);
     background: var(--gs-primary);
@@ -89,6 +91,7 @@
   /* Status bar: full width, at least 56 dp, grows with the text. */
   .gs-status-bar {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--gs-space-3);
     min-height: 3.5rem;
@@ -175,6 +178,7 @@
   .gs-banner__body {
     flex: 1;
     min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   /* Meter: 8 bars, filled from the left; the threshold is a marker line. */
@@ -218,6 +222,10 @@
     gap: var(--gs-space-4);
     min-height: var(--gs-target);
     cursor: pointer;
+  }
+  .gs-switch > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
   .gs-switch__input {
     appearance: none;
@@ -263,7 +271,7 @@
   .gs-dialog {
     width: min(100% - 2rem, 28rem);
     max-height: calc(100dvh - 2rem);
-    padding: var(--gs-space-5);
+    padding: min(var(--gs-space-5), 5vw);
     border: 0;
     border-radius: var(--gs-radius-l);
     background: var(--gs-surface);

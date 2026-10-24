@@ -9,7 +9,8 @@
     min-height: 100dvh;
     max-width: 32rem;
     margin-inline: auto;
-    padding: var(--gs-space-3) var(--gs-space-5) var(--gs-space-5);
+    /* vw does not grow with the text size, so the side gutters stay small at 320 px / 200 %. */
+    padding: var(--gs-space-3) min(var(--gs-space-5), 5vw) var(--gs-space-5);
   }
   .gs-screen--center {
     align-items: center;
@@ -112,10 +113,11 @@
   /* S01 role cards */
   .gs-role-card {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--gs-space-5);
     min-height: 8.5rem;
-    padding: var(--gs-space-5);
+    padding: min(var(--gs-space-5), 4vw);
     border: 0.0625rem solid var(--gs-border);
     border-radius: 1.5rem;
     background: var(--gs-surface);
@@ -147,9 +149,11 @@
   }
   .gs-role-card__text {
     display: flex;
+    flex: 1 1 8rem;
     flex-direction: column;
     gap: var(--gs-space-1);
     min-width: 0;
+    overflow-wrap: anywhere;
   }
   .gs-role-card__title {
     font-size: 1.375rem;
@@ -227,7 +231,7 @@
     justify-content: center;
     gap: var(--gs-space-4);
     min-height: 18.75rem;
-    padding: var(--gs-space-5);
+    padding: min(var(--gs-space-5), 4vw);
     border: 0.0625rem solid var(--gs-border);
     border-radius: 1.5rem;
     background: var(--gs-camera-bg);
@@ -305,7 +309,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--gs-space-2);
-    padding: var(--gs-space-5);
+    padding: min(var(--gs-space-5), 4vw);
     border: 0.0625rem solid var(--gs-border);
     border-radius: 1.5rem;
     background: var(--gs-surface);
@@ -324,8 +328,10 @@
     color: var(--gs-bad);
   }
   .gs-status-card h1 {
+    min-width: 0;
     font-size: 1.375rem;
     line-height: 1.3;
+    overflow-wrap: anywhere;
   }
   .gs-meter-block {
     display: flex;
@@ -384,9 +390,11 @@
     color: inherit;
     text-decoration: underline;
   }
+  /* The percentage keeps the text inside a bar narrower than 8rem plus the icon (320 px, 200 % text). */
   .gs-ambient__text {
     flex: 1;
-    min-width: 8rem;
+    min-width: min(8rem, 100%);
+    overflow-wrap: anywhere;
   }
   .gs-headline {
     padding-inline: var(--gs-space-1);
