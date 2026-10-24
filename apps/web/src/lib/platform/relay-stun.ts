@@ -1,3 +1,4 @@
+import type { TurnEntry } from "../contract/turn";
 import { RELAY_STUN_PORT } from "./policy";
 
 /**
@@ -22,6 +23,19 @@ export function relayStunUrls(signalingUrls: readonly string[]): string[] {
 export function relayIceServers(signalingUrls: readonly string[]): RTCIceServer[] {
   const urls = relayStunUrls(signalingUrls);
   return urls.length === 0 ? [] : [{ urls }];
+}
+
+/** The relay STUN entry first, then the user's TURN server with its credentials when set. */
+export function iceServers(
+  signalingUrls: readonly string[],
+  turn: TurnEntry | null,
+): RTCIceServer[] {
+  const servers = relayIceServers(signalingUrls);
+  if (turn === null) return servers;
+  const entry: RTCIceServer = { urls: [turn.url] };
+  if (turn.username !== "") entry.username = turn.username;
+  if (turn.password !== "") entry.credential = turn.password;
+  return [...servers, entry];
 }
 
 /**
