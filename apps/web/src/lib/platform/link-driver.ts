@@ -85,6 +85,8 @@ export class LinkDriver {
     if (this.link || this.tornDown) return;
     try {
       this.link = this.o.core.createLink(this.o.config);
+      // The core took the seed; do not keep it around (best effort: a JS string cannot be wiped).
+      this.o.config = { ...this.o.config, seed: "" };
     } catch {
       // A rejected config is a programming error, never a runtime state; nothing to run.
       this.teardown();

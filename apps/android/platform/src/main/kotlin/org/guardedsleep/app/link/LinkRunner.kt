@@ -73,6 +73,7 @@ class LinkRunner(
     private val attempts = HashMap<UInt, AttemptPort>()
     private var liveAttempt: UInt? = null
     private val tasks = mutableListOf<ScheduledFuture<*>>()
+    private var started = false
     private var closing = false
     private var tornDown = false
     private var lastState: LinkState? = null
@@ -84,6 +85,9 @@ class LinkRunner(
 
     /** Builds the core and the media engine, opens signaling and starts the timers. */
     fun start() = post {
+        // One run per runner: a second start would hand the core the same (wiped) seed.
+        if (started) return@post
+        started = true
         link =
             try {
                 CoreLink(config)
@@ -91,6 +95,9 @@ class LinkRunner(
                 PocLog.event("failed", "reason" to "core_config_${e.javaClass.simpleName}")
                 teardown()
                 return@post
+            } finally {
+                // The core copied the seed; wipe ours.
+                config.seed.fill(0)
             }
         media = mediaFactory()
         PocLog.event("session_start", "role" to config.role.name.lowercase())

@@ -103,9 +103,11 @@ pub const SEED_LEN: usize = 32;
 /// simulation traces); UniFFI sees plain bytes.
 mod seed_hex {
     use serde::{Deserialize, Deserializer, Serializer, de::Error};
+    use zeroize::Zeroizing;
 
     pub fn serialize<S: Serializer>(bytes: &[u8], s: S) -> Result<S::Ok, S::Error> {
-        let mut out = String::with_capacity(bytes.len() * 2);
+        // The hex text is the seed too: wipe it when done.
+        let mut out = Zeroizing::new(String::with_capacity(bytes.len() * 2));
         for b in bytes {
             out.push(char::from_digit(u32::from(b >> 4), 16).unwrap_or('0'));
             out.push(char::from_digit(u32::from(b & 0xf), 16).unwrap_or('0'));
@@ -114,7 +116,7 @@ mod seed_hex {
     }
 
     pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Vec<u8>, D::Error> {
-        let text = String::deserialize(d)?;
+        let text = Zeroizing::new(String::deserialize(d)?);
         if !text.len().is_multiple_of(2) || !text.is_ascii() {
             return Err(D::Error::custom("seed must be hex"));
         }
@@ -507,7 +509,7 @@ pub struct Link {
     /// `start` so a restarted `Link` never replays a nonce stream. Consumed by the envelope
     /// (`alpha-connection-model` tasks 2.2 and 3.2).
     #[allow(dead_code)]
-    csprng: ChaCha20Rng,
+    csprng: Option<ChaCha20Rng>,
     /// Last `wall_clock` input (Unix seconds); read by the Nostr mailbox only.
     wall_unix_s: Option<u64>,
     started_at: u64,
@@ -596,12 +598,16 @@ impl Link {
         let csprng = ChaCha20Rng::from_seed(seed);
         seed.zeroize();
         cfg.seed.zeroize();
-        Self::build(cfg, csprng)
+        Self::build(cfg, csprng).map_err(|(e, _)| e)
     }
 
-    /// Everything but the seed check, so `start` can rebuild the state around the live CSPRNG.
-    fn build(cfg: LinkConfig, csprng: ChaCha20Rng) -> Result<Self, ConfigError> {
-        let psk = cfg.validate()?;
+    /// Everything but the seed check, so `start` can rebuild the state around the live CSPRNG. On
+    /// an error the generator is handed back, so the caller never has to invent a stand-in.
+    fn build(cfg: LinkConfig, csprng: ChaCha20Rng) -> Result<Self, (ConfigError, ChaCha20Rng)> {
+        let psk = match cfg.validate() {
+            Ok(psk) => psk,
+            Err(e) => return Err((e, csprng)),
+        };
         let room = derive_room_id(&psk);
         let gate = NoiseGate::new(cfg.noise_threshold, cfg.noise_hold_ms);
         Ok(Self {
@@ -615,7 +621,7 @@ impl Link {
             has_started: false,
             now: 0,
             rng: SplitMix64(0),
-            csprng,
+            csprng: Some(csprng),
             wall_unix_s: None,
             started_at: 0,
             sig: Sig::Closed,
@@ -840,9 +846,16 @@ impl Link {
         let mut cfg = self.cfg.clone();
         cfg.paired_before = self.ever_verified;
         // The seed was consumed in `new`; the generator carries over into the fresh state.
-        let csprng = std::mem::replace(&mut self.csprng, ChaCha20Rng::from_seed([0; SEED_LEN]));
-        let Ok(mut fresh) = Link::build(cfg, csprng) else {
+        let Some(csprng) = self.csprng.take() else {
             return;
+        };
+        let mut fresh = match Link::build(cfg, csprng) {
+            Ok(fresh) => fresh,
+            Err((_, csprng)) => {
+                // Never leave the link without its generator (and never with a made-up one).
+                self.csprng = Some(csprng);
+                return;
+            }
         };
         fresh.now = now;
         fresh.mode = Mode::Running;
@@ -2061,6 +2074,28 @@ mod tests {
         let dbg = format!("{c:?}");
         assert!(!dbg.contains("0707"), "{dbg}");
         assert!(!dbg.contains(&c.psk_b64url), "{dbg}");
+    }
+
+    #[test]
+    fn the_csprng_survives_a_restart_and_a_failed_start() {
+        use chacha20::rand_core::Rng;
+        let mut l = Link::new(cfg(Role::Baby)).unwrap();
+        l.csprng.as_mut().unwrap().next_u64();
+        let pos = l.csprng.as_ref().unwrap().get_word_pos();
+        let seed = l.csprng.as_ref().unwrap().get_seed();
+        assert_ne!(seed, [0; SEED_LEN]);
+        // A start with a config that no longer validates leaves the generator where it was.
+        l.cfg.heartbeat_interval_ms = 1;
+        l.handle(0, LinkInput::Start { entropy: 1 });
+        assert_eq!(l.csprng.as_ref().unwrap().get_word_pos(), pos);
+        assert_eq!(l.csprng.as_ref().unwrap().get_seed(), seed);
+        // A normal start, stop and start keeps the same stream.
+        l.cfg.heartbeat_interval_ms = 10_000;
+        l.handle(1, LinkInput::Start { entropy: 1 });
+        l.handle(2, LinkInput::Stop);
+        l.handle(3, LinkInput::Start { entropy: 2 });
+        assert_eq!(l.csprng.as_ref().unwrap().get_seed(), seed);
+        assert!(l.csprng.as_ref().unwrap().get_word_pos() >= pos);
     }
 
     #[test]
