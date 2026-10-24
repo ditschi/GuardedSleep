@@ -48,15 +48,17 @@ class TurnTest {
                 "turn:host:70000",
                 "turn:host?transport=sctp",
                 "https://x",
+                "turn:-host",
+                "turn:.host",
                 "",
             )
             .forEach { assertEquals(it, Result.InvalidAddress, address(it)) }
     }
 
     @Test
-    fun addressAndCredentialsAreTrimmed() {
+    fun addressAndUserNameAreTrimmedPasswordIsNot() {
         val r = TurnServerInput.validate(" turn:h ", " u ", " pw ")
-        assertEquals(Result.Ok("turn:h", "u", "pw"), r)
+        assertEquals(Result.Ok("turn:h", "u", " pw "), r)
     }
 
     @Test

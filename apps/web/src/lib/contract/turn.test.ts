@@ -21,6 +21,8 @@ describe("validateTurnServer", () => {
     "turn:host:70000",
     "turn:host?transport=sctp",
     "https://x",
+    "turn:-host",
+    "turn:.host",
   ])("rejects the address %j", (url) => {
     expect(validateTurnServer(url, "", "")).toBe("invalid_address");
   });
@@ -54,6 +56,13 @@ describe("resolveTurnSave", () => {
   it("does not keep it when the address or user name changed", () => {
     expect(resolveTurnSave(saved, "turn:other", "u", "").result).toBe("invalid_credentials");
     expect(resolveTurnSave(saved, "turn:h", "v", "").result).toBe("invalid_credentials");
+  });
+
+  it("trims the address and user name but not the password", () => {
+    expect(resolveTurnSave(null, " turn:h ", " u ", " pw ")).toEqual({
+      result: "saved",
+      entry: { url: "turn:h", username: "u", password: " pw " },
+    });
   });
 
   it("clears on an empty address", () => {

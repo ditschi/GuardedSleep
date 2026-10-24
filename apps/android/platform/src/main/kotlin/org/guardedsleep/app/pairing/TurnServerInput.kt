@@ -21,7 +21,7 @@ object TurnServerInput {
     // transport.
     private val ADDRESS =
         Regex(
-            "^turns?:(?:\\[[0-9A-Fa-f:.]+\\]|[A-Za-z0-9.-]+)(?::(\\d{1,5}))?" +
+            "^turns?:(?:\\[[0-9A-Fa-f:.]+\\]|[A-Za-z0-9][A-Za-z0-9.-]*)(?::(\\d{1,5}))?" +
                 "(?:\\?transport=(?:udp|tcp))?$"
         )
 
@@ -31,7 +31,8 @@ object TurnServerInput {
         val port = match.groupValues[1]
         if (port.isNotEmpty() && port.toInt() !in 1..65535) return Result.InvalidAddress
         val n = username.trim()
-        val p = password.trim()
+        // The password is used as typed: spaces can be part of a valid credential.
+        val p = password
         if (n.isEmpty() != p.isEmpty()) return Result.InvalidCredentials
         if (n.length > MAX_CREDENTIAL_CHARS || p.length > MAX_CREDENTIAL_CHARS) {
             return Result.InvalidCredentials

@@ -50,12 +50,14 @@ export function resolveTurnSave(
 ): { result: TurnSaveResult; entry: TurnEntry | null } {
   const trimmed = url.trim();
   if (trimmed === "") return { result: "cleared", entry: null };
+  // Address and user name are trimmed; the password is used as typed (same as Android).
+  const name = username.trim();
   const keep =
-    password === "" && saved !== null && saved.url === trimmed && saved.username === username;
+    password === "" && saved !== null && saved.url === trimmed && saved.username === name;
   const effective = keep ? saved.password : password;
-  const check = validateTurnServer(trimmed, username, effective);
+  const check = validateTurnServer(trimmed, name, effective);
   if (check !== "valid") return { result: check, entry: saved };
-  return { result: "saved", entry: { url: trimmed, username, password: effective } };
+  return { result: "saved", entry: { url: trimmed, username: name, password: effective } };
 }
 
 /** Settings fields derived from the entry; the password is reduced to a flag. */
