@@ -79,11 +79,15 @@ async fn hello_and_signal_relay_through_the_built_binary() {
     );
     assert_eq!(a.recv().await["peerId"], wb["clientId"]);
 
-    a.send(json!({"type":"signal","roomId":room,"payload":{"smoke":true}}))
+    // The payload is a sealed envelope `{"env": base64url}` since the alpha connection model; the
+    // relay forwards it unread.
+    let envelope = json!({"env": "AQEBsmoke_smoke-smoke0123456789"});
+    a.send(json!({"type":"signal","roomId":room,"payload":envelope}))
         .await;
     let relayed = b.recv().await;
     assert_eq!(relayed["type"], "signal");
     assert_eq!(relayed["from"], wa["clientId"]);
+    assert_eq!(relayed["payload"], envelope);
 
     let v3_room = "smokeSmokeSmokeSmoke22";
     let mut c = Client::connect(addr, "/").await;

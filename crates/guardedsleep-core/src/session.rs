@@ -373,7 +373,7 @@ impl Session {
                             out.push(Action::AddIceCandidate { candidate });
                         }
                     }
-                    SignalPayload::RequestOffer { .. } | SignalPayload::StopNotice { .. } => {}
+                    SignalPayload::RequestOffer { .. } | SignalPayload::StopNotice => {}
                 }
             }
             ServerMessage::Error { code, .. } => self.fail(&format!("signaling_error:{code}"), out),

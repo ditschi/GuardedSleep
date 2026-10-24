@@ -68,6 +68,7 @@ class LinkRunner(
 ) {
     private lateinit var link: CoreLink
     private var media: MediaEngine? = null
+
     /** One socket per mailbox id, opened and closed only on the core's actions. */
     private class MailboxSocket(val gen: Int, val transport: SignalingTransport)
 

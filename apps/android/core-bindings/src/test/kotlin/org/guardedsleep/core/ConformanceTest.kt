@@ -112,7 +112,8 @@ class ConformanceTest {
             "mailbox_opened" -> LinkInput.MailboxOpened(i.getLong("id").toUInt())
             "mailbox_closed" ->
                 LinkInput.MailboxClosed(i.getLong("id").toUInt(), i.getString("reason"))
-            "mailbox_frame" -> LinkInput.MailboxFrame(i.getLong("id").toUInt(), i.getString("bytes"))
+            "mailbox_frame" ->
+                LinkInput.MailboxFrame(i.getLong("id").toUInt(), i.getString("bytes"))
             "attempt_local_description" ->
                 LinkInput.AttemptLocalDescription(
                     attempt,

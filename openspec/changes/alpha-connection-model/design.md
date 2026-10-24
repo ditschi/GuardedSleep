@@ -145,6 +145,15 @@ Attempts, liveness, escalation and listen are unchanged. Loss is still detected 
 
 **Epoch:** checked only for Nostr addressing (§3), never on relay or LAN mailboxes. A wrong clock therefore cannot break those.
 
+**Relay mailbox as built (task 3.2):**
+
+- **Wire:** a relay `signal` payload is `{"env": "<base64url of the envelope>"}`; the relay forwards it unread. Every offer, answer, candidate, `request_offer` and `stop` goes through `SessionState`; an open error changes nothing and sends nothing.
+- **Presence:** on our relay the room membership is the trigger. When a member with the peer's role appears (or the mailbox reopens with one present) the `Link` sends a sealed `here` to it, and repeats it after 5, 15 and 60 s, then every 5 minutes, while no session of that member is confirmed. A repeat also carries the last challenge we still wait on, so a lost confirming echo costs seconds, not the challenge's 60 s.
+- **Ready:** attempts and `request_offer` need a confirmed peer session **and** a room member with the relay client id that session last spoke from. A member that never confirms (a stranger) gets presence only, never an offer. `peer_absent` is shown for "no confirmed peer", not only for "nobody in the room".
+- **Stop:** the stop message carries nothing. A stop from the peer's confirmed session closes the attempt even when it is verified, and retires that session; the DataChannel stop retires it too. The old MAC (`gs-stop/3`), the link epoch and the stop nonce list are gone.
+- **Sizes (Chrome 152, audio sendonly plus a DataChannel):** offer message 1.9 KB without and 2.5 KB with four host candidates, answer 1.7 and 2.0 KB, one ICE candidate message about 250 bytes. The Description bucket holds 4,026 bytes, so everything fits with margin. One candidate per envelope costs a whole 8 KiB bucket (about 11 KB on the wire); bundling candidates is part of the Nostr event budget (task 3.5).
+- **Wrong key in a shared room:** envelopes do not authenticate, so the pairing proof is never reached; both sides keep running and escalate with `peer_absent`. The `pairing_key_mismatch` terminal stays reachable for a PSK holder that fails the proof or the DTLS binding.
+
 **Allowed relay-visible items, exhaustively (testable capture list):**
 
 - **On Nostr:**

@@ -3,10 +3,11 @@
 //! credentials, URLs, absolute timestamps, key-like strings) and unknown fields.
 
 use guardedsleep_core::pairing::decode_psk;
-use serde_json::Value;
+use guardedsleep_core::testing::decode_message;
+use serde_json::{Value, json};
 
 use crate::trace::TRACE_SCHEMA;
-use crate::world::{SYNTH_FP_PREFIX_HEX, SYNTH_PSK_PREFIX, SYNTH_SEED_PREFIX};
+use crate::world::{SYNTH_FP_PREFIX_HEX, SYNTH_PSK_PREFIX, SYNTH_SEED_PREFIX, synthetic_psk};
 
 const TOP_LEVEL: &[&str] = &[
     "schema", "id", "class", "privacy", "origin", "seed", "config", "steps", "expect", "final",
@@ -111,7 +112,7 @@ fn lint_string(s: &str, psk: &str, errs: &mut Vec<String>) {
             errs.push(format!("contains `{b}`"));
         }
     }
-    let masked = mask_fingerprints(s, errs);
+    let masked = mask_fingerprints(&mask_envelopes(s, psk, errs), errs);
     if has_ipv4(&masked) {
         errs.push("contains an IPv4 literal".into());
     }
@@ -135,6 +136,37 @@ fn lint_string(s: &str, psk: &str, errs: &mut Vec<String>) {
             errs.push("contains a long number (absolute timestamp?)".into());
         }
     }
+}
+
+/// Replaces every sealed envelope (`"env":"<base64url>"` of a relay `signal`) by `ENV` after
+/// checking that it decrypts under a synthetic PSK (the declared one, or the other one a scenario
+/// uses for its second pairing). Ciphertext of a synthetic key says nothing about a real pairing;
+/// ciphertext that opens under none of them might.
+fn mask_envelopes(s: &str, psk: &str, errs: &mut Vec<String>) -> String {
+    const KEY: &str = "\"env\":\"";
+    let keys = [
+        decode_psk(psk).unwrap_or_default(),
+        synthetic_psk("A"),
+        synthetic_psk("B"),
+    ];
+    let mut out = String::new();
+    let mut rest = s;
+    while let Some(i) = rest.find(KEY) {
+        let after = &rest[i + KEY.len()..];
+        let end = after
+            .find(|c: char| !(c.is_ascii_alphanumeric() || c == '_' || c == '-'))
+            .unwrap_or(after.len());
+        let token = &after[..end];
+        let envelope = json!({ "env": token });
+        if !keys.iter().any(|k| decode_message(k, &envelope).is_some()) {
+            errs.push("contains a sealed envelope that does not open under a synthetic PSK".into());
+        }
+        out.push_str(&rest[..i + KEY.len()]);
+        out.push_str("ENV");
+        rest = &after[end..];
+    }
+    out.push_str(rest);
+    out
 }
 
 /// Replaces every `a=fingerprint:sha-256 <value>` by `FP` after checking the value is synthetic.
@@ -193,7 +225,7 @@ fn has_iso_date(s: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::world::{colon_upper, synthetic_psk};
+    use crate::world::colon_upper;
 
     fn trace(extra_step_input: &str) -> String {
         let psk = guardedsleep_core::pairing::encode_psk(&synthetic_psk("A"));
@@ -234,6 +266,25 @@ mod tests {
         ] {
             assert!(!lint_trace(&trace(bad)).is_empty(), "{why} slipped through");
         }
+    }
+
+    #[test]
+    fn sealed_envelopes_pass_only_when_they_open_under_a_synthetic_psk() {
+        use guardedsleep_core::protocol::Role;
+        use guardedsleep_core::testing::SealedPeer;
+        let sealed = |psk_name: &str| {
+            let mut peer = SealedPeer::new(Role::Parent, &synthetic_psk(psk_name), 3);
+            let frame = json!({"type":"signal","from":"p","payload":peer.here()}).to_string();
+            frame.replace('"', "\\\"")
+        };
+        // Sealed under the synthetic PSK of the trace: a long ciphertext, still shareable.
+        assert_eq!(lint_trace(&trace(&sealed("A"))), Vec::<String>::new());
+        assert_eq!(lint_trace(&trace(&sealed("B"))), Vec::<String>::new());
+        // Sealed under any other key it could be a real pairing's, so it is refused.
+        let mut peer = SealedPeer::new(Role::Parent, &[9u8; 32], 3);
+        let frame = json!({"type":"signal","from":"p","payload":peer.here()}).to_string();
+        let errs = lint_trace(&trace(&frame.replace('"', "\\\"")));
+        assert!(errs.iter().any(|e| e.contains("does not open")), "{errs:?}");
     }
 
     #[test]

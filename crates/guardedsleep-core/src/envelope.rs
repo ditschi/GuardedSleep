@@ -1,7 +1,7 @@
 //! The sealed signaling envelope (`alpha-connection-model`, design section 2): every signaling
 //! message on every mailbox is sealed with XChaCha20-Poly1305 under a key derived from the PSK, so
-//! a mailbox operator sees no SDP, candidate, fingerprint or address. The module is standalone:
-//! `Link` does not use it yet (task 3.2).
+//! a mailbox operator sees no SDP, candidate, fingerprint or address. `Link` seals and opens every
+//! signaling message of the relay mailbox with it (`alpha-connection-model` task 3.2).
 //!
 //! Wire format (all lengths fixed per class, so every message of a class is equally long):
 //!
@@ -38,7 +38,7 @@
 //! A failed open ([`OpenError`]) must never cause any reply, on any mailbox: the sender of a
 //! forged or replayed envelope learns nothing from timing or traffic. [`SessionState::open`]
 //! returns a [`Reply`] only for envelopes that fully passed; the caller must not send anything
-//! else in response to an `Err`. Task 3.2 enforces this at the call site.
+//! else in response to an `Err`. `Link::on_envelope` drops every `Err` without a trace.
 
 // Untrusted bytes are parsed here: return errors instead of panicking (AGENTS.md section 5.3).
 #![deny(
@@ -197,8 +197,8 @@ pub fn derive_key(psk: &[u8], purpose: Purpose) -> Option<SecretKey> {
 
 /// What an envelope carries. Authenticated in the clear header; fixes the padded size, so all
 /// messages of a class have the same length. `Here` and `Control` share a size, so they cannot be
-/// told apart by length. The class set and its buckets are settled against real SDP and candidate
-/// sizes in task 3.2.
+/// told apart by length. Task 3.2 checked the buckets against real browser messages (Chrome 152:
+/// an offer is 1.9 to 2.5 KB, one ICE candidate about 250 bytes); everything fits.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MessageClass {
     /// Presence: role, session nonce, capability flags.
@@ -505,6 +505,63 @@ pub fn seal_raw_plaintext(
         return Err(SealError::Oversized);
     }
     encrypt_plaintext(key, role, class, plaintext, nonce)
+}
+
+/// An envelope as a PSK holder sitting in a mailbox reads it: no session state, no replay window.
+/// Simulations and tests use it to play such an attacker (rewrite an SDP) and to record what a
+/// device sent; a release build has no such function.
+#[cfg(any(test, feature = "conformance"))]
+#[derive(Debug, Clone)]
+pub struct Peeked {
+    pub frame: Frame,
+    pub message: Vec<u8>,
+}
+
+/// Decrypts `bytes` with the envelope key; `None` for anything that does not authenticate.
+#[cfg(any(test, feature = "conformance"))]
+pub fn peek(key: &SecretKey, bytes: &[u8]) -> Option<Peeked> {
+    let (head, rest) = bytes.split_first_chunk::<HEADER_LEN>()?;
+    let [version, role_b, class_b] = *head;
+    if version != VERSION {
+        return None;
+    }
+    let role = role_from_code(role_b)?;
+    let class = MessageClass::from_code(class_b)?;
+    if bytes.len() != class.wire_len() {
+        return None;
+    }
+    let (nonce, ct) = rest.split_first_chunk::<NONCE_LEN>()?;
+    let ad = associated_data(role, class);
+    let plain = Zeroizing::new(
+        cipher(key)
+            .decrypt(&XNonce::from(*nonce), Payload { msg: ct, aad: &ad })
+            .ok()?,
+    );
+    let p = parse_plaintext(&plain, class)?;
+    Some(Peeked {
+        frame: Frame {
+            role,
+            class,
+            recipient: p.recipient,
+            sender: p.sender,
+            seq: p.seq,
+            challenge: p.challenge,
+            echo: p.echo,
+        },
+        message: p.message.to_vec(),
+    })
+}
+
+/// Seals `message` into the frame of `peeked` (same role, class, sessions and sequence number)
+/// under a fresh `nonce`: the rewrite a PSK-holding intermediary can do.
+#[cfg(any(test, feature = "conformance"))]
+pub fn reseal(
+    key: &SecretKey,
+    peeked: &Peeked,
+    message: &[u8],
+    nonce: [u8; NONCE_LEN],
+) -> Result<Sealed, SealError> {
+    seal_frame(key, &peeked.frame, message, nonce)
 }
 
 // ---- opening and the per-run state -----------------------------------------------------------

@@ -17,3 +17,6 @@ pub mod noise;
 pub mod pairing;
 pub mod protocol;
 pub mod session;
+// Sealed-signaling test support: a PSK-holding peer for tests and the simulation; never in a release.
+#[cfg(any(test, feature = "conformance"))]
+pub mod testing;

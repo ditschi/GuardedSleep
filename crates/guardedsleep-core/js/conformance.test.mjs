@@ -95,7 +95,7 @@ test("wasm session: wrong PSK is rejected end to end", () => {
   );
 });
 
-test("wasm link: parent joins, asks the baby for an offer and exposes the PSK-derived room", () => {
+test("wasm link: parent joins, announces itself sealed and exposes the PSK-derived room", () => {
   const psk = "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA";
   const link = new wasm.WasmLink(
     JSON.stringify({
@@ -132,8 +132,12 @@ test("wasm link: parent joins, asks the baby for an offer and exposes the PSK-de
   });
   const sent = JSON.parse(out.find((a) => a.type === "mailbox_send").frame);
   assert.equal(sent.to, "b");
-  assert.equal(sent.payload.type, "request_offer");
-  assert.match(sent.payload.aid, /^[0-9a-f]{32}$/);
+  // Signaling is sealed: the parent only announces itself (`here`, one 1 KiB envelope); no
+  // request_offer leaves before the baby's session is confirmed, and nothing is readable.
+  assert.deepEqual(Object.keys(sent.payload), ["env"]);
+  assert.match(sent.payload.env, /^[A-Za-z0-9_-]+$/);
+  assert.equal(Buffer.from(sent.payload.env, "base64url").length, 1067);
+  assert.equal(out.filter((a) => a.type === "mailbox_send").length, 1);
 });
 
 test("wasm: message keys and room derivation", () => {

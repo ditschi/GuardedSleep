@@ -1,0 +1,79 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "stored-baby-stop-after-baby-restart",
+  "description": "The baby stops on purpose and the parent honours it; the baby starts again with a new session and the pair verifies. When the link is lost later, a relay replays the old stop to the unchanged parent: it names a retired baby session, so it is ignored and escalation continues.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "relay": {},
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "stop",
+      "peer": "baby"
+    },
+    {
+      "at": 25000,
+      "do": "start",
+      "peer": "baby"
+    },
+    {
+      "at": 70000,
+      "do": "drop_data",
+      "from": "baby"
+    },
+    {
+      "at": 110000,
+      "do": "replay_stop",
+      "peer": "parent"
+    },
+    {
+      "at": 200000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 60000
+    },
+    {
+      "peer": "parent",
+      "event": "peer_stopped",
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "event": "link_lost",
+      "count": 1,
+      "since_last_contact_ms": [60000, 62000]
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "peer_stopped"
+        }
+      },
+      "within_ms": [40000, 200000]
+    },
+    {
+      "peer": "parent",
+      "reaches_level": 2
+    }
+  ]
+}

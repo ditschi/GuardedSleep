@@ -3,9 +3,10 @@
 mod common;
 
 use common::*;
+use guardedsleep_core::envelope::MessageClass;
 use guardedsleep_core::link::Link;
 use guardedsleep_core::link::{LinkAction, LinkEvent, LinkInput, LinkState};
-use guardedsleep_core::pairing::{encode_psk, stop_notice_mac};
+use guardedsleep_core::pairing::encode_psk;
 use guardedsleep_core::protocol::{DeviceStatus, Dnd, Ringer, Role, UnitWarning};
 use serde_json::{Value, json};
 
@@ -200,6 +201,25 @@ fn forged_new_aid_offer_does_not_close_a_verified_attempt() {
             0
         );
     }
+    // A room member that holds the PSK and confirms its own session gets no further: a verified
+    // attempt is never closed by an offer.
+    let imp = w.add_impostor("holder", Role::Baby, &PSK_A, 31);
+    w.impostor_greets(imp, PARENT);
+    for aid in [
+        "77777777777777777777777777777777",
+        "88888888888888888888888888888888",
+    ] {
+        let m = w.mark(PARENT);
+        w.impostor_says(imp, PARENT, MessageClass::Description, &offer(aid));
+        w.advance(500);
+        assert_eq!(w.nodes[PARENT].link.live_attempt(), Some(handle));
+        assert_eq!(w.state(PARENT), LinkState::Connected);
+        assert_eq!(
+            w.count_events(PARENT, m, |e| matches!(e, LinkEvent::Failed { .. })),
+            0
+        );
+    }
+    w.remove_impostor(imp);
     // A request_offer from the baby-side stranger must not touch the baby's verified attempt.
     let baby_handle = w.nodes[BABY].link.live_attempt().unwrap();
     w.inject_signal(
@@ -237,29 +257,17 @@ fn stranger_ice_and_answers_are_ignored() {
 
 #[test]
 fn reflected_proof_never_verifies_and_baby_stays_unverified() {
-    // A baby whose "parent" only knows the room and reflects the baby's own proof.
+    // A parent-side attacker that holds the PSK (so its envelopes authenticate) answers the baby's
+    // offer and reflects the baby's own proof back.
     let mut w = World::pair(&PSK_A, &PSK_A);
+    let atk = w.add_impostor("attacker", Role::Parent, &PSK_A, 9);
     w.start(BABY, 1);
     w.advance(500);
-    // No parent yet. Create the "attacker" as a raw join by injecting members and an answer.
-    let atk = "attacker";
-    let room = w.nodes[BABY].link.room_id().to_owned();
-    let _ = room;
-    let members = json!({"type":"members","peers":[
-        {"clientId": w.client_id(BABY).unwrap(), "role": "baby"},
-        {"clientId": atk, "role": "parent"}]})
-    .to_string();
-    w.input(
-        BABY,
-        LinkInput::MailboxFrame {
-            id: 0,
-            bytes: members,
-        },
-    );
+    w.impostor_greets(atk, BABY);
     let h = w.nodes[BABY]
         .link
         .live_attempt()
-        .expect("baby offers to the parent");
+        .expect("baby offers to the attacker");
     w.advance(100);
     // The baby's offer has been given the fake local description by the harness; answer it.
     let answer_sdp = format!(
@@ -267,7 +275,7 @@ fn reflected_proof_never_verifies_and_baby_stays_unverified() {
         colon_fp(&"ab".repeat(32))
     );
     let answer = json!({"type":"sdp","aid":"66666666666666666666666666666666","sdp":{"type":"answer","sdp":answer_sdp}});
-    w.inject_signal(BABY, atk, answer);
+    w.impostor_says(atk, BABY, MessageClass::Description, &answer);
     let acts = w.nodes[BABY]
         .link
         .handle(w.now, LinkInput::AttemptDataOpen { attempt: h });
@@ -297,8 +305,12 @@ fn reflected_proof_never_verifies_and_baby_stays_unverified() {
 }
 
 #[test]
-fn wrong_psk_at_first_pairing_is_terminal_after_two_mismatches_on_both_sides() {
-    let mut w = World::pair(&PSK_A, &PSK_B);
+fn mismatching_certificates_at_first_pairing_are_terminal_after_two_mismatches_on_both_sides() {
+    // Both sides hold the PSK, but a man in the middle terminates DTLS: each reports a certificate
+    // that the SDP does not commit to.
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.set_dtls(BABY, Dtls::Mismatch);
+    w.set_dtls(PARENT, Dtls::Mismatch);
     w.start(BABY, 1);
     w.start(PARENT, 2);
     w.advance(10_000);
@@ -311,7 +323,7 @@ fn wrong_psk_at_first_pairing_is_terminal_after_two_mismatches_on_both_sides() {
             w.count_events(
                 n,
                 0,
-                |e| matches!(e, LinkEvent::Failed { reason } if reason == "pair_proof_mismatch")
+                |e| matches!(e, LinkEvent::Failed { reason } if reason == "dtls_fingerprint_mismatch")
             ),
             2,
             "exactly two consecutive mismatches"
@@ -331,12 +343,46 @@ fn wrong_psk_at_first_pairing_is_terminal_after_two_mismatches_on_both_sides() {
 }
 
 #[test]
+fn devices_with_different_keys_never_confirm_a_session_and_start_no_attempt() {
+    // Two devices that share a room but not the PSK (a wrongly scanned code in a relay that does not
+    // separate rooms): their envelopes do not authenticate, so nothing is ever offered or proven.
+    let mut w = World::pair(&PSK_A, &PSK_B);
+    w.start(BABY, 1);
+    w.start(PARENT, 2);
+    w.advance(70_000);
+    for n in [BABY, PARENT] {
+        let s = w.status(n);
+        assert_eq!(s.state, LinkState::Connecting, "node {n}");
+        assert!(s.key.is_none());
+        assert!(s.level >= 2, "the silence still escalates");
+        assert_eq!(s.cause.as_deref(), Some("peer_absent"));
+        assert!(!w.nodes[n].link.peer_confirmed());
+        assert!(w.nodes[n].created.is_empty(), "no attempt for node {n}");
+        assert_eq!(
+            w.count_events(n, 0, |e| matches!(e, LinkEvent::Failed { .. })),
+            0
+        );
+        assert_eq!(
+            w.count_events(n, 0, |e| matches!(e, LinkEvent::SecurityWarning { .. })),
+            0
+        );
+        // Presence is all that was ever sent; no offer, request or stop leaked out.
+        assert!(
+            w.nodes[n].sent_signal_types.iter().all(|t| t == "here"),
+            "{:?}",
+            w.nodes[n].sent_signal_types
+        );
+    }
+}
+
+#[test]
 fn spoofed_mismatch_after_pairing_is_not_terminal_and_slows_retries() {
     let mut w = World::empty();
     let baby = w.add_node(cfg(Role::Baby, &PSK_A));
     let parent = w.add_node(cfg(Role::Parent, &PSK_A));
-    // The outsider never gives up on its side.
-    let mut atk_cfg = cfg(Role::Parent, &PSK_B);
+    // The outsider holds the PSK (it reads the invite) but terminates DTLS itself, so the baby
+    // sees a certificate the SDP does not commit to. It never gives up on its side.
+    let mut atk_cfg = cfg(Role::Parent, &PSK_A);
     atk_cfg.paired_before = true;
     let atk = w.add_node(atk_cfg);
     w.start(baby, 1);
@@ -344,19 +390,20 @@ fn spoofed_mismatch_after_pairing_is_not_terminal_and_slows_retries() {
     w.advance(5_000);
     assert_eq!(w.state(baby), LinkState::Connected);
 
-    // The real parent stops on purpose; an outsider who knows the room joins instead.
+    // The real parent stops on purpose; the outsider joins instead.
     w.stop(parent);
     w.advance(1_000);
     assert_eq!(w.state(baby), LinkState::PeerStopped);
     let m = w.mark(baby);
     let t0 = w.now;
+    w.set_dtls(baby, Dtls::Mismatch);
     w.start(atk, 3);
     w.advance(120_000);
 
     let mismatches = w.count_events(
         baby,
         m,
-        |e| matches!(e, LinkEvent::Failed { reason } if reason == "pair_proof_mismatch"),
+        |e| matches!(e, LinkEvent::Failed { reason } if reason == "dtls_fingerprint_mismatch"),
     );
     let warnings = w.count_events(
         baby,
@@ -389,6 +436,7 @@ fn spoofed_mismatch_after_pairing_is_not_terminal_and_slows_retries() {
     }
     // The outsider leaves; the real parent comes back and is verified once the hold expired.
     w.stop(atk);
+    w.set_dtls(baby, Dtls::Honest);
     w.start(parent, 4);
     w.advance(40_000);
     assert_eq!(w.state(parent), LinkState::Connected);
@@ -400,7 +448,9 @@ fn paired_before_makes_the_first_mismatch_non_terminal() {
     c.paired_before = true;
     let mut w = World::empty();
     w.add_node(c);
-    w.add_node(cfg(Role::Parent, &PSK_B));
+    w.add_node(cfg(Role::Parent, &PSK_A));
+    w.set_dtls(BABY, Dtls::Mismatch);
+    w.set_dtls(PARENT, Dtls::Mismatch);
     w.start(BABY, 1);
     w.start(PARENT, 2);
     w.advance(120_000);
@@ -892,14 +942,24 @@ fn peer_absent_and_server_unreachable_cause_hints() {
 
 #[test]
 fn backoff_between_failed_attempts_follows_the_schedule() {
-    // The parent joined but is hung: every offer goes unanswered and times out after 20 s.
+    // The parent confirmed its session and then hung: every offer goes unanswered and times out
+    // after 20 s. (A parent that never confirms gets no offer at all.)
     let mut w = World::pair(&PSK_A, &PSK_A);
     w.start(PARENT, 2);
     w.advance(1_000);
-    w.nodes[PARENT].alive = false;
     w.start(BABY, 1);
+    while !w.nodes[BABY].link.peer_confirmed() {
+        w.advance_by(50, 50);
+    }
+    w.nodes[PARENT].alive = false;
     w.advance_by(200_000, 100);
-    let t = &w.nodes[BABY].create_times;
+    // A request that crosses the baby's own offer replaces that attempt within the same instant.
+    let mut t: Vec<u64> = Vec::new();
+    for c in &w.nodes[BABY].create_times {
+        if t.last().is_none_or(|last| c - last > 1_000) {
+            t.push(*c);
+        }
+    }
     assert!(t.len() >= 6, "{t:?}");
     // Each attempt lives 20 s; gaps after failure are 0, 1, 2, 4, 8, 15, 15, ...
     let gaps: Vec<u64> = t.windows(2).map(|p| p[1] - p[0] - 20_000).collect();
@@ -1423,30 +1483,24 @@ fn a_crash_is_an_outage_not_a_stop() {
     assert!(w.status(PARENT).level >= 2);
 }
 
-/// A signaling `stop_notice` payload as the peer `from_role` would send it to `to_node`.
-fn stop_payload(w: &World, from_role: Role, to_node: usize, psk: &[u8], aid: &str) -> Value {
-    let epoch = w.nodes[to_node]
-        .link
-        .epoch()
-        .expect("receiver verified once");
-    stop_payload_for_epoch(w, from_role, to_node, psk, epoch, aid)
+/// The sealed stop that `node` would put on the relay when it stops on purpose, taken straight
+/// from the core so that nothing else (the DataChannel notice, the socket close) reaches the peer.
+/// The node is stopped afterwards.
+fn stop_envelope(w: &mut World, node: usize) -> Value {
+    let acts = w.nodes[node].link.handle(w.now, LinkInput::Stop);
+    let stops: Vec<_> = signals_in(&acts)
+        .into_iter()
+        .filter(|(_, p)| {
+            decode_message(&psk_of(w, node), p).is_some_and(|m| m["type"] == "stop_notice")
+        })
+        .collect();
+    assert_eq!(stops.len(), 1, "exactly one stop on the relay");
+    stops[0].1.clone()
 }
 
-fn stop_payload_for_epoch(
-    w: &World,
-    from_role: Role,
-    to_node: usize,
-    psk: &[u8],
-    epoch: &str,
-    aid: &str,
-) -> Value {
-    let receiver = w.client_id(to_node).expect("receiver is joined");
-    let room = w.nodes[to_node].link.room_id().to_owned();
-    let mac = stop_notice_mac(psk, from_role, &room, epoch, &receiver, aid).unwrap();
-    json!({"type":"stop_notice","aid":aid,"mac":mac})
+fn psk_of(w: &World, node: usize) -> Vec<u8> {
+    guardedsleep_core::pairing::decode_psk(&w.nodes[node].cfg.psk_b64url).unwrap()
 }
-
-const STOP_AID: &str = "5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a";
 
 /// Baby unreachable for long enough that the parent has no live attempt but still sees the baby in
 /// the room.
@@ -1461,52 +1515,172 @@ fn parent_without_attempt() -> World {
 }
 
 #[test]
-fn authenticated_signaling_stop_marks_the_peer_stopped_without_a_verified_attempt() {
+fn a_real_stop_over_signaling_reaches_a_parent_that_lost_its_attempt() {
     let mut w = parent_without_attempt();
-    let baby_id = "whoever-the-relay-says";
-    let payload = stop_payload(&w, Role::Baby, PARENT, &PSK_A, STOP_AID);
-    w.inject_signal(PARENT, baby_id, payload.clone());
+    w.set_net(BABY, true);
+    w.stop(BABY);
+    w.advance(500);
     assert_eq!(w.state(PARENT), LinkState::PeerStopped);
-    assert!(w.status(PARENT).last_alive_ms.is_some());
+    assert_eq!(w.live_attempts(PARENT), 0);
 }
 
 #[test]
-fn unauthenticated_or_wrongly_authenticated_stop_during_an_outage_is_ignored() {
-    let mut w = parent_without_attempt();
-    let good = stop_payload(&w, Role::Baby, PARENT, &PSK_A, STOP_AID);
-    let mut flipped = good.clone();
-    flipped["mac"] = json!(
-        good["mac"]
-            .as_str()
-            .unwrap()
-            .replace('a', "b")
-            .replace('0', "1")
+fn a_sealed_stop_ends_even_a_verified_attempt_without_an_alarm() {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    let baby_id = w.client_id(BABY).unwrap();
+    let stop = stop_envelope(&mut w, BABY);
+    let m = w.mark(PARENT);
+    w.inject_signal(PARENT, &baby_id, stop);
+    assert_eq!(w.state(PARENT), LinkState::PeerStopped);
+    assert_eq!(w.live_attempts(PARENT), 0);
+    assert_eq!(
+        w.count_events(PARENT, m, |e| matches!(e, LinkEvent::PeerStopped)),
+        1
     );
+    w.advance(120_000);
+    assert_eq!(w.state(PARENT), LinkState::PeerStopped);
+    assert_eq!(w.count_events(PARENT, m, is_link_lost), 0);
+}
+
+#[test]
+fn a_stored_stop_after_a_parent_restart_is_ignored() {
+    // The baby stopped on purpose once; a relay kept the notice. The parent has restarted since,
+    // so the notice names a session that no longer exists.
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    let stored = stop_envelope(&mut w, BABY);
+    w.restart(PARENT, 4);
+    w.restart(BABY, 3);
+    w.advance(30_000);
+    assert_eq!(w.state(PARENT), LinkState::Connected);
+    w.set_net(BABY, false);
+    w.advance(27_000);
+    assert_eq!(w.state(PARENT), LinkState::Reconnecting);
+    let m = w.mark(PARENT);
+    w.inject_signal(PARENT, "whoever", stored);
+    assert_eq!(w.state(PARENT), LinkState::Reconnecting);
+    w.advance(60_000);
+    assert!(w.status(PARENT).level >= 2);
+    assert_eq!(w.count_events(PARENT, m, is_link_lost), 1);
+    assert_eq!(
+        w.count_events(PARENT, m, |e| matches!(e, LinkEvent::PeerStopped)),
+        0
+    );
+}
+
+#[test]
+fn a_stored_baby_stop_after_the_baby_restarted_is_ignored() {
+    // The stop is delivered once and honoured; the baby starts again with a new session and the
+    // pair verifies. When the link is lost later, the relay replays the old notice to the
+    // unchanged parent: it names a retired baby session.
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    let stored = stop_envelope(&mut w, BABY);
+    w.inject_signal(PARENT, "b", stored.clone());
+    assert_eq!(w.state(PARENT), LinkState::PeerStopped);
+    w.restart(BABY, 3);
+    w.advance(30_000);
+    assert_eq!(w.state(PARENT), LinkState::Connected);
+    w.set_net(BABY, false);
+    w.advance(27_000);
+    assert_eq!(w.state(PARENT), LinkState::Reconnecting);
+    let m = w.mark(PARENT);
+    w.inject_signal(PARENT, "b", stored);
+    assert_eq!(w.state(PARENT), LinkState::Reconnecting);
+    w.advance(60_000);
+    assert!(w.status(PARENT).level >= 2);
+    assert_eq!(w.count_events(PARENT, m, is_link_lost), 1);
+}
+
+#[test]
+fn a_stored_stop_is_ignored_when_the_baby_restarted_before_it_was_delivered() {
+    // The notice was never delivered; the baby came back as a new session that the parent
+    // confirmed, which retired the old one.
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    let stored = stop_envelope(&mut w, BABY);
+    w.restart(BABY, 3);
+    w.advance(30_000);
+    assert_eq!(w.state(PARENT), LinkState::Connected);
+    let handle = w.nodes[PARENT].link.live_attempt().unwrap();
+    w.inject_signal(PARENT, "b", stored);
+    assert_eq!(w.state(PARENT), LinkState::Connected);
+    assert_eq!(w.nodes[PARENT].link.live_attempt(), Some(handle));
+}
+
+#[test]
+fn a_replayed_stop_changes_nothing() {
+    let mut w = parent_without_attempt();
+    w.set_net(BABY, true);
+    let stop = stop_envelope(&mut w, BABY);
+    w.inject_signal(PARENT, "b", stop.clone());
+    assert_eq!(w.state(PARENT), LinkState::PeerStopped);
+    let m = w.mark(PARENT);
+    let before = w.status(PARENT);
+    w.inject_signal(PARENT, "b", stop.clone());
+    assert_eq!(w.status(PARENT), before);
+    // A reopened mailbox does not make it count again (the replay state covers the whole run).
+    w.server_restart();
+    w.advance(5_000);
+    w.inject_signal(PARENT, "b", stop);
+    assert_eq!(
+        w.count_events(PARENT, m, |e| matches!(e, LinkEvent::PeerStopped)),
+        0
+    );
+}
+
+#[test]
+fn forged_stops_are_ignored_and_escalation_continues() {
+    let mut w = parent_without_attempt();
+    let good = {
+        // A genuine stop of the baby's current session, kept back.
+        w.set_net(BABY, true);
+        stop_envelope(&mut w, BABY)
+    };
+    w.set_net(BABY, false);
+    let mut flipped = good.clone();
+    let env = good["env"].as_str().unwrap();
+    let mut chars: Vec<char> = env.chars().collect();
+    let mid = chars.len() / 2;
+    chars[mid] = if chars[mid] == 'A' { 'B' } else { 'A' };
+    flipped["env"] = json!(chars.into_iter().collect::<String>());
+    // A stop of the parent's own role, reflected back at the parent.
+    let own_role = {
+        let acts = w.nodes[PARENT].link.handle(w.now, LinkInput::Tick);
+        let _ = acts;
+        let mut other = SealedPeer::new(Role::Parent, &PSK_A, 77);
+        other.say_to(
+            MessageClass::Control,
+            guardedsleep_core::envelope::SessionId::new([1; 16]),
+            &json!({"type":"stop_notice"}),
+        )
+    };
+    // Sealed under another pairing's key.
+    let other_key = {
+        let mut other = SealedPeer::new(Role::Baby, &PSK_B, 78);
+        other.say_to(
+            MessageClass::Control,
+            guardedsleep_core::envelope::SessionId::new([1; 16]),
+            &json!({"type":"stop_notice"}),
+        )
+    };
+    // A PSK holder that never confirmed a session names the parent's session guess.
+    let unconfirmed = {
+        let mut other = SealedPeer::new(Role::Baby, &PSK_A, 79);
+        other.say_to(
+            MessageClass::Control,
+            guardedsleep_core::envelope::SessionId::new([2; 16]),
+            &json!({"type":"stop_notice"}),
+        )
+    };
     let forged = [
-        // The old shape: no proof at all.
         json!({"type":"stop_notice"}),
-        json!({"type":"stop_notice","aid":STOP_AID}),
-        // Valid MAC with the wrong sender role (the parent's own stop, reflected back).
-        stop_payload(&w, Role::Parent, PARENT, &PSK_A, STOP_AID),
-        // Key of another pairing.
-        stop_payload(&w, Role::Baby, PARENT, &PSK_B, STOP_AID),
-        // Valid for another receiver client id.
-        {
-            let room = w.nodes[PARENT].link.room_id().to_owned();
-            let epoch = w.nodes[PARENT].link.epoch().unwrap().to_owned();
-            let mac = stop_notice_mac(&PSK_A, Role::Baby, &room, &epoch, "someone-else", STOP_AID)
-                .unwrap();
-            json!({"type":"stop_notice","aid":STOP_AID,"mac":mac})
-        },
-        // Valid for another link epoch (an earlier monitoring period).
-        stop_payload_for_epoch(&w, Role::Baby, PARENT, &PSK_A, "old.epoch", STOP_AID),
-        // Valid MAC, different nonce.
-        {
-            let mut p = good.clone();
-            p["aid"] = json!("6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b");
-            p
-        },
+        json!({"type":"stop_notice","aid":"5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a","mac":"0".repeat(64)}),
         flipped,
+        own_role,
+        other_key,
+        unconfirmed,
     ];
     let m = w.mark(PARENT);
     for p in forged {
@@ -1521,102 +1695,9 @@ fn unauthenticated_or_wrongly_authenticated_stop_during_an_outage_is_ignored() {
         w.count_events(PARENT, m, |e| matches!(e, LinkEvent::PeerStopped)),
         0
     );
-}
-
-#[test]
-fn a_signaling_stop_does_not_replay_on_the_same_or_a_new_connection() {
-    let mut w = parent_without_attempt();
-    let payload = stop_payload(&w, Role::Baby, PARENT, &PSK_A, STOP_AID);
-    w.inject_signal(PARENT, "b", payload.clone());
+    // The genuine one still works afterwards: nothing above was recorded as seen.
+    w.inject_signal(PARENT, "b", good);
     assert_eq!(w.state(PARENT), LinkState::PeerStopped);
-    // The same message again changes nothing (nonce already seen)...
-    let m = w.mark(PARENT);
-    w.inject_signal(PARENT, "b", payload.clone());
-    assert_eq!(
-        w.count_events(PARENT, m, |e| matches!(e, LinkEvent::PeerStopped)),
-        0
-    );
-    // ...and after the parent's signaling reconnected (new client id) it does not verify at all.
-    w.server_restart();
-    w.advance(5_000);
-    let before = w.status(PARENT);
-    w.inject_signal(PARENT, "b", payload);
-    assert_eq!(w.status(PARENT), before);
-}
-
-#[test]
-fn authenticated_signaling_stop_is_ignored_while_the_attempt_is_verified() {
-    let mut w = World::pair(&PSK_A, &PSK_A);
-    w.connect_pair();
-    let payload = stop_payload(&w, Role::Baby, PARENT, &PSK_A, STOP_AID);
-    let handle = w.nodes[PARENT].link.live_attempt().unwrap();
-    w.inject_signal(PARENT, "b", payload);
-    // The DataChannel stop is the authority on a verified attempt.
-    assert_eq!(w.state(PARENT), LinkState::Connected);
-    assert_eq!(w.nodes[PARENT].link.live_attempt(), Some(handle));
-}
-
-#[test]
-fn a_real_stop_over_signaling_reaches_a_parent_that_lost_its_attempt() {
-    let mut w = parent_without_attempt();
-    w.set_net(BABY, true);
-    w.stop(BABY);
-    w.advance(500);
-    assert_eq!(w.state(PARENT), LinkState::PeerStopped);
-    assert_eq!(w.live_attempts(PARENT), 0);
-}
-
-#[test]
-fn a_signaling_stop_is_ignored_before_any_verification_in_this_run() {
-    let mut w = World::empty();
-    let mut baby = cfg(Role::Baby, &PSK_A);
-    baby.paired_before = true;
-    let mut parent = cfg(Role::Parent, &PSK_A);
-    parent.paired_before = true;
-    w.add_node(baby);
-    w.add_node(parent);
-    w.block_media = true;
-    w.start(BABY, 1);
-    w.start(PARENT, 2);
-    w.advance(3_000);
-    assert!(w.nodes[PARENT].link.epoch().is_none());
-    // Valid for every epoch the attacker can guess, none of which the parent holds.
-    let payload = stop_payload_for_epoch(&w, Role::Baby, PARENT, &PSK_A, "a.b", STOP_AID);
-    w.inject_signal(PARENT, "b", payload);
-    assert_ne!(w.state(PARENT), LinkState::PeerStopped);
-    // A baby without a verified epoch does not send a signaling stop at all.
-    w.stop(BABY);
-    w.advance(500);
-    assert!(
-        !w.nodes[BABY]
-            .sent_signal_types
-            .iter()
-            .any(|t| t == "stop_notice")
-    );
-    assert_ne!(w.state(PARENT), LinkState::PeerStopped);
-}
-
-#[test]
-fn a_recorded_stop_does_not_replay_after_a_new_verification_even_with_the_same_client_id() {
-    let mut w = parent_without_attempt();
-    let old_epoch = w.nodes[PARENT].link.epoch().unwrap().to_owned();
-    let recorded = stop_payload_for_epoch(&w, Role::Baby, PARENT, &PSK_A, &old_epoch, STOP_AID);
-    // The baby returns and verifies again (new epoch); the parent's signaling is untouched, so
-    // its client id is the one the recording was made for.
-    w.set_net(BABY, true);
-    w.advance(30_000);
-    assert_eq!(w.state(PARENT), LinkState::Connected);
-    assert_ne!(w.nodes[PARENT].link.epoch().unwrap(), old_epoch);
-    // A later outage: the replay is ignored and escalation continues.
-    w.set_net(BABY, false);
-    w.advance(27_000);
-    assert_eq!(w.state(PARENT), LinkState::Reconnecting);
-    let m = w.mark(PARENT);
-    w.inject_signal(PARENT, "b", recorded);
-    assert_eq!(w.state(PARENT), LinkState::Reconnecting);
-    w.advance(60_000);
-    assert!(w.status(PARENT).level >= 2);
-    assert_eq!(w.count_events(PARENT, m, is_link_lost), 1);
 }
 
 #[test]
@@ -1625,6 +1706,136 @@ fn a_stranger_stop_notice_never_counts() {
     w.connect_pair();
     w.inject_signal(PARENT, "stranger", json!({"type":"stop_notice"}));
     assert_eq!(w.state(PARENT), LinkState::Connected);
+}
+
+// ---- confirmation handshake ----------------------------------------------------------------------
+
+/// A baby `Link` in a room with a parent member "p", joined and waiting for its `here`.
+fn baby_with_a_parent_member() -> (Link, SealedPeer, Value) {
+    let mut link = Link::new(cfg(Role::Baby, &PSK_A)).unwrap();
+    let room = link.room_id().to_owned();
+    link.handle(0, LinkInput::Start { entropy: 5 });
+    link.handle(1, LinkInput::MailboxOpened { id: 0 });
+    let text = |v: Value| LinkInput::MailboxFrame {
+        id: 0,
+        bytes: v.to_string(),
+    };
+    link.handle(
+        2,
+        text(json!({"type":"welcome","clientId":"b","roomId":room})),
+    );
+    let acts = link.handle(
+        3,
+        text(json!({"type":"members","peers":[
+            {"clientId":"b","role":"baby"},{"clientId":"p","role":"parent"}]})),
+    );
+    let here = signals_in(&acts)
+        .into_iter()
+        .find(|(to, _)| to == "p")
+        .expect("the baby announces itself to the parent member")
+        .1;
+    (link, SealedPeer::new(Role::Parent, &PSK_A, 21), here)
+}
+
+#[test]
+fn a_lost_confirming_echo_is_repaired_by_repeating_the_pending_challenge() {
+    let (mut link, mut parent, here) = baby_with_a_parent_member();
+    // The parent answers the baby's `here` with a challenge; the baby answers with its own
+    // challenge and the echo of the parent's.
+    let (_, r1) = parent.accept(3, &here).unwrap();
+    let acts = link.handle(4, signal_frame("p", &r1.expect("a challenge")));
+    let second = signals_in(&acts)
+        .into_iter()
+        .next()
+        .expect("baby replies")
+        .1;
+    // The parent confirms the baby and echoes; that echo is lost.
+    let (opened, lost_echo) = parent.accept(4, &second).unwrap();
+    assert!(opened.confirmed && lost_echo.is_some());
+    assert!(!link.peer_confirmed(), "the baby never saw the echo");
+    // Nothing repeats too early...
+    assert!(signals_in(&link.handle(4_000, LinkInput::Tick)).is_empty());
+    // ...and after 5 s the baby sends its `here` again, with the challenge it still waits on.
+    let acts = link.handle(5_003, LinkInput::Tick);
+    let repeats = signals_in(&acts);
+    assert_eq!(repeats.len(), 2, "a plain here and the pending challenge");
+    let mut echoed = None;
+    for (_, payload) in &repeats {
+        if let Ok((_, Some(reply))) = parent.accept(5_003, payload) {
+            echoed = Some(reply);
+        }
+    }
+    let echo = echoed.expect("the confirmed parent echoes again");
+    link.handle(5_100, signal_frame("p", &echo));
+    assert!(link.peer_confirmed());
+}
+
+#[test]
+fn a_member_that_never_answers_gets_presence_on_a_backoff_and_no_attempt() {
+    let (mut link, _silent, _) = baby_with_a_parent_member();
+    let mut sent_at = Vec::new();
+    for t in (500..400_000).step_by(500) {
+        let acts = link.handle(t, LinkInput::Tick);
+        if !signals_in(&acts).is_empty() {
+            sent_at.push(t);
+        }
+        // The relay answers every ping, so the mailbox stays alive.
+        link.handle(
+            t,
+            LinkInput::MailboxFrame {
+                id: 0,
+                bytes: json!({"type":"pong"}).to_string(),
+            },
+        );
+        assert!(
+            !acts
+                .iter()
+                .any(|a| matches!(a, LinkAction::CreateAttempt { .. })),
+            "no attempt for a member that never confirmed"
+        );
+    }
+    // 5 s, 15 s and 60 s after the first, then every 5 minutes.
+    let gaps: Vec<u64> = sent_at.windows(2).map(|p| p[1] - p[0]).collect();
+    assert_eq!(gaps, vec![15_000, 60_000, 300_000], "{sent_at:?}");
+}
+
+// ---- envelope sizes ------------------------------------------------------------------------------
+
+#[test]
+fn browser_sized_descriptions_fit_their_envelope_class() {
+    // Measured in Chrome 152 (audio sendonly plus a DataChannel, four host candidates in the SDP):
+    // the offer message is 1,940 bytes without and 2,460 with candidates. The class holds 4,026.
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.nodes[BABY].sdp_pad = 2_300;
+    w.nodes[PARENT].sdp_pad = 1_900;
+    w.connect_pair();
+    let sizes: Vec<usize> = w
+        .sent_of(BABY, "sdp")
+        .iter()
+        .chain(w.sent_of(PARENT, "sdp").iter())
+        .map(|(m, _)| m.to_string().len())
+        .collect();
+    assert!(sizes.iter().any(|n| *n > 2_300), "{sizes:?}");
+    assert!(sizes.iter().all(|n| *n < 4_026), "{sizes:?}");
+}
+
+#[test]
+fn an_sdp_that_does_not_fit_its_class_is_never_sent_and_never_truncated() {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.nodes[BABY].sdp_pad = 4_100;
+    w.start(BABY, 1);
+    w.start(PARENT, 2);
+    w.advance(30_000);
+    assert!(
+        w.count_events(
+            BABY,
+            0,
+            |e| matches!(e, LinkEvent::Failed { reason } if reason == "signal_oversized")
+        ) >= 1
+    );
+    assert!(w.sent_of(BABY, "sdp").is_empty());
+    assert_ne!(w.state(BABY), LinkState::Connected);
+    assert_ne!(w.state(PARENT), LinkState::Connected);
 }
 
 // ---- DTLS fingerprint binding --------------------------------------------------------------------
@@ -1727,12 +1938,15 @@ fn parent_with_offer(offer_sdp: &str, answer_sdp: &str) -> (Link, Vec<LinkAction
         text(json!({"type":"members","peers":[
             {"clientId":"b","role":"baby"},{"clientId":"p","role":"parent"}]})),
     );
-    link.handle(
-        4,
-        text(json!({"type":"signal","from":"b","payload":{
-            "type":"sdp","aid":"1f2e3d4c5b6a79880918273645546372",
-            "sdp":{"type":"offer","sdp":offer_sdp}}})),
+    // The baby confirms its session first, as a real one would; then it offers.
+    let mut baby = SealedPeer::new(Role::Baby, &PSK_A, 21);
+    handshake(&mut link, 3, &mut baby, "b");
+    let offer = baby.say(
+        MessageClass::Description,
+        &json!({"type":"sdp","aid":"1f2e3d4c5b6a79880918273645546372",
+            "sdp":{"type":"offer","sdp":offer_sdp}}),
     );
+    link.handle(4, signal_frame("b", &offer));
     let attempt = link.live_attempt().expect("parent created an attempt");
     link.handle(
         5,
@@ -1965,9 +2179,11 @@ fn entropy_makes_attempt_ids_deterministic() {
         w.start(BABY, entropy);
         w.start(PARENT, 2);
         w.advance(3_000);
-        w.server_signal_log
+        // The ids travel inside sealed envelopes; read them from the decrypted messages.
+        w.nodes
             .iter()
-            .filter_map(|(_, p)| p["aid"].as_str().map(str::to_owned))
+            .flat_map(|n| n.sent.iter())
+            .filter_map(|(m, _)| m["aid"].as_str().map(str::to_owned))
             .collect::<Vec<_>>()
     };
     assert_eq!(run(5), run(5));

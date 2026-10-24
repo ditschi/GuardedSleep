@@ -183,13 +183,10 @@ pub enum SignalPayload {
     },
     /// Parent to baby: "offer me a fresh attempt"; `aid` is the parent's id for that attempt.
     RequestOffer { aid: String },
-    /// Deliberate stop of the sending link (ADR-017 §7). Authenticated with a PSK MAC (see
-    /// `pairing::stop_notice_mac`) because `from` on the signaling path is relay-asserted; `aid` is
-    /// a fresh per-stop nonce. A stop without both fields is never trusted.
-    StopNotice {
-        aid: Option<String>,
-        mac: Option<String>,
-    },
+    /// Deliberate stop of the sending link (ADR-017 §7). It carries nothing: the sealed envelope
+    /// authenticates it and binds it to the receiver's session and the sender's session
+    /// (`signaling-mailboxes`, "Session-bound freshness"), which replaced the old stop MAC.
+    StopNotice,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -245,23 +242,7 @@ pub fn parse_signal_payload(v: &Value) -> Option<SignalPayload> {
             })
         }
         "request_offer" => Some(SignalPayload::RequestOffer { aid: aid()? }),
-        "stop_notice" => {
-            let aid = match o.get("aid") {
-                None => None,
-                Some(_) => Some(aid()?),
-            };
-            let mac = match o.get("mac") {
-                None => None,
-                Some(v) => {
-                    let m = v.as_str()?;
-                    if m.len() != 64 || !m.bytes().all(|b| b.is_ascii_hexdigit()) {
-                        return None;
-                    }
-                    Some(m.to_ascii_lowercase())
-                }
-            };
-            Some(SignalPayload::StopNotice { aid, mac })
-        }
+        "stop_notice" => Some(SignalPayload::StopNotice),
         _ => None,
     }
 }
@@ -304,17 +285,7 @@ pub fn signal_payload_json(p: &SignalPayload) -> Value {
             json!({ "type": "ice", "aid": aid, "candidate": Value::Object(c) })
         }
         SignalPayload::RequestOffer { aid } => json!({ "type": "request_offer", "aid": aid }),
-        SignalPayload::StopNotice { aid, mac } => {
-            let mut o = Map::new();
-            o.insert("type".into(), "stop_notice".into());
-            if let Some(aid) = aid {
-                o.insert("aid".into(), aid.clone().into());
-            }
-            if let Some(mac) = mac {
-                o.insert("mac".into(), mac.clone().into());
-            }
-            Value::Object(o)
-        }
+        SignalPayload::StopNotice => json!({ "type": "stop_notice" }),
     }
 }
 
@@ -1061,27 +1032,12 @@ mod tests {
             parse_signal_payload(&json!({"type":"request_offer","aid":AID})),
             Some(SignalPayload::RequestOffer { aid: AID.into() })
         );
-        assert_eq!(
-            parse_signal_payload(&json!({"type":"stop_notice"})),
-            Some(SignalPayload::StopNotice {
-                aid: None,
-                mac: None
-            })
-        );
-        let mac = "ab".repeat(32);
-        assert_eq!(
-            parse_signal_payload(&json!({"type":"stop_notice","aid":AID,"mac":mac.to_uppercase()})),
-            Some(SignalPayload::StopNotice {
-                aid: Some(AID.into()),
-                mac: Some(mac)
-            })
-        );
-        for bad in [
-            json!({"type":"stop_notice","aid":"x","mac":"ab".repeat(32)}),
-            json!({"type":"stop_notice","aid":AID,"mac":"abc"}),
-            json!({"type":"stop_notice","aid":AID,"mac":5}),
+        // The stop carries nothing; a leftover MAC from an old peer is ignored, not trusted.
+        for stop in [
+            json!({"type":"stop_notice"}),
+            json!({"type":"stop_notice","aid":AID,"mac":"ab".repeat(32)}),
         ] {
-            assert!(parse_signal_payload(&bad).is_none());
+            assert_eq!(parse_signal_payload(&stop), Some(SignalPayload::StopNotice));
         }
     }
 
@@ -1148,14 +1104,7 @@ mod tests {
                 },
             },
             SignalPayload::RequestOffer { aid: AID.into() },
-            SignalPayload::StopNotice {
-                aid: None,
-                mac: None,
-            },
-            SignalPayload::StopNotice {
-                aid: Some(AID.into()),
-                mac: Some("0f".repeat(32)),
-            },
+            SignalPayload::StopNotice,
         ];
         for p in all {
             assert_eq!(parse_signal_payload(&signal_payload_json(&p)), Some(p));

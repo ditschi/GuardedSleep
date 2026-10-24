@@ -28,7 +28,6 @@ use crate::protocol::{LEGACY_PROTOCOL_VERSION, Role};
 
 const ROOM_INFO: &[u8] = b"gs-room/3";
 const PROOF_PREFIX: &str = "gs-pair-proof/3|";
-const STOP_PREFIX: &str = "gs-stop/3|";
 const ADMISSION_INFO: &[u8] = b"guardedsleep relay admission v1";
 const ADMISSION_PREFIX: &str = "gs-relay-admit/1|";
 
@@ -151,39 +150,6 @@ pub fn pair_proof_mac_v3(
     let mut mac = Hmac::<Sha256>::new_from_slice(psk).ok()?;
     mac.update(canonical.as_bytes());
     Some(hex(&mac.finalize().into_bytes()))
-}
-
-/// MAC authenticating a signaling `stop_notice` (the relay can forge `from`, so the sender proves
-/// PSK possession): HMAC-SHA256(psk, "gs-stop/3|sender_role|room|epoch|receiver_client_id|sender_aid")
-/// as lowercase hex. `epoch` is the link epoch (`link_epoch`: the `aid` pair of the most recent
-/// verified attempt), which the relay cannot recycle, so a stop recorded in one monitoring period
-/// never matches a later outage even if the relay hands out the same client id again. The
-/// receiver's client id and the per-stop nonce `sender_aid` bind it to one connection and message.
-pub fn stop_notice_mac(
-    psk: &[u8],
-    sender_role: Role,
-    room_id: &str,
-    epoch: &str,
-    receiver_client_id: &str,
-    sender_aid: &str,
-) -> Option<String> {
-    let canonical = format!(
-        "{STOP_PREFIX}{}|{room_id}|{epoch}|{receiver_client_id}|{sender_aid}",
-        sender_role.as_str()
-    );
-    let mut mac = Hmac::<Sha256>::new_from_slice(psk).ok()?;
-    mac.update(canonical.as_bytes());
-    Some(hex(&mac.finalize().into_bytes()))
-}
-
-/// The link epoch both sides derive from a verified attempt: the two attempt ids, sorted and
-/// joined. Both ids are known to both peers after verification and are fresh per attempt.
-pub fn link_epoch(own_aid: &str, peer_aid: &str) -> String {
-    if own_aid <= peer_aid {
-        format!("{own_aid}.{peer_aid}")
-    } else {
-        format!("{peer_aid}.{own_aid}")
-    }
 }
 
 /// v2 symmetric proof: HMAC-SHA256(psk, "room|min(fpA,fpB)|max(fpA,fpB)|2"). **Only** kept so the
@@ -405,42 +371,6 @@ mod tests {
         assert_eq!(normalize_dtls_fingerprint("AA:BB"), None);
         assert_eq!(normalize_dtls_fingerprint(""), None);
         assert_eq!(normalize_dtls_fingerprint(&"zz".repeat(32)), None);
-    }
-
-    #[test]
-    fn stop_mac_known_answer_and_bindings() {
-        let aid = "0123456789abcdef0123456789abcdef";
-        let base = stop_notice_mac(&[7u8; 32], Role::Baby, "room", "ea.eb", "c2", aid).unwrap();
-        assert_eq!(base.len(), 64);
-        for other in [
-            stop_notice_mac(&[8u8; 32], Role::Baby, "room", "ea.eb", "c2", aid),
-            stop_notice_mac(&[7u8; 32], Role::Parent, "room", "ea.eb", "c2", aid),
-            stop_notice_mac(&[7u8; 32], Role::Baby, "roon", "ea.eb", "c2", aid),
-            stop_notice_mac(&[7u8; 32], Role::Baby, "room", "ea.ec", "c2", aid),
-            stop_notice_mac(&[7u8; 32], Role::Baby, "room", "ea.eb", "c3", aid),
-            stop_notice_mac(
-                &[7u8; 32],
-                Role::Baby,
-                "room",
-                "ea.eb",
-                "c2",
-                "f".repeat(32).as_str(),
-            ),
-        ] {
-            assert!(!macs_equal(&base, &other.unwrap()));
-        }
-        // HMAC-SHA256(key = 32 x 0x07, "gs-stop/3|baby|room|ea.eb|c2|<aid>") computed with Python.
-        assert_eq!(
-            base,
-            "167aa7df7b7408c98cdb78b5289311b7f37c27000b91c1819833ddda865e07d6"
-        );
-    }
-
-    #[test]
-    fn link_epoch_is_order_independent() {
-        assert_eq!(link_epoch("b", "a"), "a.b");
-        assert_eq!(link_epoch("a", "b"), link_epoch("b", "a"));
-        assert_ne!(link_epoch("a", "b"), link_epoch("a", "c"));
     }
 
     #[test]

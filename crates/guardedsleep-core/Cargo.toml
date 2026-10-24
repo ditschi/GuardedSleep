@@ -32,6 +32,11 @@ zeroize = "1.9.1"
 
 [dev-dependencies]
 proptest = "1"
+# The integration tests (`tests/`) play a PSK-holding attacker and read what a device sent, which
+# needs the test-only entry points of the envelope. A crate may depend on itself in
+# dev-dependencies to switch features on for its own tests; the library build is unaffected.
+# Docs: https://doc.rust-lang.org/cargo/reference/features.html#feature-unification
+guardedsleep-core = { path = ".", features = ["conformance"] }
 
 [lints]
 workspace = true

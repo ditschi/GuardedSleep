@@ -252,6 +252,28 @@ fn relays_signals_between_two_peers_without_a_target() {
 }
 
 #[test]
+fn a_sealed_envelope_payload_is_forwarded_untouched_up_to_the_largest_class() {
+    // Since the alpha connection model every payload is `{"env": base64url(envelope)}`. The
+    // largest class (8 KiB bucket) is 8,235 bytes, 10,980 characters of base64url. The relay does
+    // not parse, resize or log it; only the frame cap applies.
+    let mut h = H::open();
+    h.connect(1);
+    h.connect(2);
+    h.hello(1, "baby", "r", 2);
+    h.hello(2, "parent", "r", 2);
+    let env: String = (0..10_980)
+        .map(|i| ["A", "b", "-", "_", "9", "Z"][i % 6])
+        .collect();
+    let payload = json!({ "env": env });
+    h.send(
+        2,
+        &json!({"type":"signal","roomId":"r","payload":payload}).to_string(),
+    );
+    assert_eq!(h.last(1)["payload"], payload);
+    assert_eq!(h.last(1)["payload"]["env"].as_str().unwrap().len(), 10_980);
+}
+
+#[test]
 fn a_claimed_sender_in_a_signal_is_replaced_by_the_real_client_id() {
     let mut h = H::open();
     h.connect(1);

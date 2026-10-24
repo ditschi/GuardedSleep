@@ -717,6 +717,9 @@ impl<E: Entropy> Relay<E> {
         }
     }
 
+    /// The payload is opaque to the relay. Since the alpha connection model it is a sealed
+    /// envelope, `{"env": "<base64url>"}` (`signaling-mailboxes`); the relay forwards whatever
+    /// JSON it got and never reads, resizes or logs it.
     fn on_signal(
         &mut self,
         conn: ConnId,

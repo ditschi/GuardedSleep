@@ -31,7 +31,7 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 ## 3. Core mailbox set
 
 - [x] 3.1 Mailbox abstraction with the relay mailbox only: the `Sig` state becomes one `relay` mailbox behind `open_mailbox`, `mailbox_send`, `close_mailbox`, `mailbox_opened`, `mailbox_closed` and `mailbox_frame`. No behaviour change: existing traces replay unchanged apart from the action names, which are mapped in the trace format. Update the bindings and the Android and web drivers with a minimal adapter. Verify: core and sim tests, `just test`.
-- [ ] 3.2 Sealing on the relay mailbox: `signal` payloads become envelopes; the stop MAC is replaced by session binding; relay protocol docs updated. Verify: core tests, new sim scenario "stored stop after parent restart is ignored", `just smoke`.
+- [x] 3.2 Sealing on the relay mailbox: `signal` payloads become envelopes; the stop MAC is replaced by session binding; relay protocol docs updated. Verify: core tests, new sim scenario "stored stop after parent restart is ignored", `just smoke`.
 - [ ] 3.3 Invite v4 in the core codec:
   - compact entries `n:`, `r:` and `l:`;
   - ≤ 300 bytes and ≤ 6 entries;

@@ -1,7 +1,7 @@
 {
   "schema": "gs-scenario/1",
   "id": "wrong-psk-first-pairing",
-  "description": "AC-1: two links with different PSKs share a room through the relay alias; both end terminal after two consecutive mismatches.",
+  "description": "AC-1 after sealing: two links with different PSKs share a room through the relay alias. Their envelopes never authenticate, so neither side confirms a session, starts an attempt or reaches a pairing proof: both keep running, only presence leaves the device, and the silence escalates with the peer_absent hint. (The pairing_key_mismatch terminal is still reached by a PSK holder that fails the proof or the DTLS binding, see attack-sdp-fingerprint-confusion.)",
   "seed": 1,
   "peers": [
     {
@@ -24,38 +24,58 @@
       "do": "start"
     },
     {
-      "at": 60000,
+      "at": 90000,
       "do": "end"
     }
   ],
   "assert": [
     {
       "peer": "baby",
-      "state": "failed_needs_user",
-      "at_ms": 40000,
-      "key": "pairing_key_mismatch"
+      "state": "connecting",
+      "at_ms": 85000,
+      "level": 2
     },
     {
       "peer": "parent",
-      "state": "failed_needs_user",
-      "at_ms": 40000,
-      "key": "pairing_key_mismatch"
+      "state": "connecting",
+      "at_ms": 85000,
+      "level": 2
     },
     {
       "peer": "baby",
-      "event": "failed",
-      "where": {
-        "reason": "pair_proof_mismatch"
-      },
-      "count": 2
+      "reaches_level": 2
     },
     {
       "peer": "parent",
-      "event": "failed",
+      "reaches_level": 2
+    },
+    {
+      "peer": "baby",
+      "event": "status",
       "where": {
-        "reason": "pair_proof_mismatch"
+        "status": {
+          "cause": "peer_absent"
+        }
       },
-      "count": 2
+      "count_min": 1
+    },
+    {
+      "peer": "parent",
+      "event": "status",
+      "where": {
+        "status": {
+          "cause": "peer_absent"
+        }
+      },
+      "count_min": 1
+    },
+    {
+      "peer": "baby",
+      "never": "failed"
+    },
+    {
+      "peer": "parent",
+      "never": "failed"
     },
     {
       "peer": "baby",
@@ -82,6 +102,26 @@
           "state": "connected"
         }
       }
+    },
+    {
+      "peer": "baby",
+      "sent_signal": "sdp",
+      "count": 0
+    },
+    {
+      "peer": "parent",
+      "sent_signal": "request_offer",
+      "count": 0
+    },
+    {
+      "peer": "baby",
+      "sent_signal": "here",
+      "count_min": 1
+    },
+    {
+      "peer": "parent",
+      "sent_signal": "here",
+      "count_min": 1
     }
   ],
   "export_traces": [

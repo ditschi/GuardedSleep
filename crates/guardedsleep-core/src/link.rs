@@ -1,13 +1,15 @@
 //! `Link`: one monitoring relationship from `start` to `stop` (ADR-017 §2-§11). It owns the
-//! signaling-transport state, the (at most one) live [`Attempt`], liveness, escalation, listen
-//! intent, snooze, peer status and the baby's missed-event buffer. Platforms talk only to the
+//! mailbox set (the relay mailbox, `mailbox`), the sessions of the sealed signaling envelope, the
+//! (at most one) live [`Attempt`], liveness, escalation, listen intent, snooze, peer status and the
+//! baby's missed-event buffer. Platforms talk only to the
 //! `Link`: they feed [`LinkInput`]s with a **monotonic** millisecond clock (it must keep running
 //! in deep sleep; `Date.now()` clamped to never go backwards on the web) and execute the returned
 //! [`LinkAction`]s. Call `tick` at least every 500 ms while monitoring; Doze gaps are time jumps.
 //!
 //! Platform contract worth stating plainly:
-//! - After `close_signaling` the platform must discard further events of that socket, and a
-//!   failed `open_signaling` is reported as `signaling_closed`.
+//! - After `close_mailbox` the platform must discard further events of that socket, and a failed
+//!   `open_mailbox` is reported as `mailbox_closed`. Every signaling message on the relay mailbox
+//!   is a sealed envelope (`envelope`); the platform forwards the frames and never reads them.
 //! - After `close_attempt` the platform may still deliver late callbacks for that handle; the
 //!   core drops them.
 //! - `close_attempt` is always emitted before the `create_attempt` that replaces it.
@@ -31,15 +33,22 @@
 
 use std::collections::VecDeque;
 
+use base64::Engine as _;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use chacha20::ChaCha20Rng;
 use chacha20::rand_core::SeedableRng;
 use serde::{Deserialize, Serialize};
+use serde_json::{Value, json};
 use zeroize::Zeroize;
 
 use crate::attempt::{Attempt, AttemptConfig, AttemptEvent, DEFAULT_ATTEMPT_TIMEOUT_MS};
+use crate::envelope::{
+    CHALLENGE_LEN, CHALLENGE_VALID_MS, MessageClass, Purpose, Reply, SealError, Sealed, SecretKey,
+    SessionId, SessionState, derive_key,
+};
 use crate::mailbox::{MailboxId, MailboxKind, MailboxSet, MailboxState, RELAY_MAILBOX};
 use crate::noise::{GateChange, NoiseGate};
-use crate::pairing::{decode_psk, derive_room_id, link_epoch, macs_equal, stop_notice_mac};
+use crate::pairing::{decode_psk, derive_room_id};
 use crate::protocol::{
     DataMessage, DeviceStatus, IceCandidate, Member, Role, ServerMessage, SignalPayload,
     encode_data_message, encode_hello, encode_ping, encode_signal, parse_server_message,
@@ -66,8 +75,13 @@ const PROBE_TONE_MS: u64 = 2_000;
 const MEDIA_BLOCKED_AFTER: u32 = 3;
 const FIRST_PAIRING_MISMATCHES: u32 = 2;
 const ALERT_LOG_CAP: usize = 128;
-/// Accepted signaling stop nonces remembered per signaling connection (replay guard).
-const STOP_SEEN_CAP: usize = 8;
+/// The presence message (`here`): its content is only a tag; role, session and challenge travel in
+/// the authenticated envelope fields.
+const HERE_MESSAGE: &str = r#"{"type":"here"}"#;
+/// Unsolicited `here` repeats while the peer is a room member but has not confirmed a session:
+/// after these delays, then every [`HERE_LONG_MS`].
+const HERE_BACKOFF_MS: [u64; 3] = [5_000, 15_000, 60_000];
+const HERE_LONG_MS: u64 = 300_000;
 /// The PSK is 32 random bytes (QR pairing, ADR-004).
 const PSK_LEN: usize = 32;
 /// Longest gap between `audio_level` samples that still counts as "the baby was listening".
@@ -531,6 +545,22 @@ pub struct Link {
     /// The mailbox set (3.1: exactly the relay mailbox) with the transport state of each.
     mb: MailboxSet,
     peer_present: bool,
+    /// The key of the sealed signaling envelope (`signaling-mailboxes`, "Sealed signaling envelope").
+    env_key: SecretKey,
+    /// Sessions, replay windows and challenges of this run. Never cleared on a mailbox reopen.
+    sess: SessionState,
+    /// Relay client ids of the room members that carry the peer's role, as of the last `members`.
+    known_peers: Vec<String>,
+    /// The relay client id the peer's confirmed session last spoke from. A confirmed session counts
+    /// as reachable only while a room member with this id exists.
+    peer_client: Option<String>,
+    /// Unsolicited `here`s sent since a peer member appeared, and when the next repeat is due.
+    here_sent: u32,
+    here_next_at: u64,
+    /// The last `here` we sent that carries a challenge for a peer session that has not confirmed
+    /// yet, and when it was first sent. If the peer's echo is lost, repeating exactly this message
+    /// makes the peer (who confirmed us meanwhile) echo again (`envelope`, "a lost echo").
+    pending_reply: Option<(Reply, u64)>,
 
     live: Option<Live>,
     next_handle: u32,
@@ -544,9 +574,6 @@ pub struct Link {
 
     ever_verified: bool,
     verified_in_run: bool,
-    /// `link_epoch` of the most recent verified attempt in this run; a signaling stop is only
-    /// valid for this epoch, so one recorded earlier can never match a later outage.
-    epoch: Option<String>,
     consecutive_mismatches: u32,
     media_failures: u32,
     last_success_at: u64,
@@ -573,8 +600,6 @@ pub struct Link {
     mic_enabled: bool,
     /// The relay rejected our protocol version while a verified attempt kept running.
     update_required: bool,
-    /// Nonces of accepted signaling stops on this signaling connection (replay guard).
-    stop_seen: VecDeque<String>,
     alert_log: VecDeque<(u64, f64)>,
     alert_log_dropped_t: Option<u64>,
     audio_seen: bool,
@@ -586,6 +611,15 @@ pub struct Link {
     platform_status: DeviceStatus,
     last_sent_status: Option<DeviceStatus>,
     last_quiet_at: Option<u64>,
+}
+
+/// The envelope class of a signaling payload: it fixes the padded size on the wire.
+fn class_of(payload: &SignalPayload) -> MessageClass {
+    match payload {
+        SignalPayload::Sdp { .. } => MessageClass::Description,
+        SignalPayload::Ice { .. } => MessageClass::Candidates,
+        SignalPayload::RequestOffer { .. } | SignalPayload::StopNotice => MessageClass::Control,
+    }
 }
 
 fn emit(out: &mut Vec<LinkAction>, event: LinkEvent) {
@@ -614,13 +648,16 @@ impl Link {
     /// where it was and nobody has to invent a stand-in.
     fn build(cfg: LinkConfig, slot: &mut Option<ChaCha20Rng>) -> Result<Self, ConfigError> {
         let psk = cfg.validate()?;
-        let csprng = slot.take().ok_or(ConfigError::InvalidSeed)?;
+        let mut csprng = slot.take().ok_or(ConfigError::InvalidSeed)?;
         let room = derive_room_id(&psk);
+        let env_key = derive_key(&psk, Purpose::Seal).ok_or(ConfigError::InvalidPsk)?;
+        // A fresh session per run: the generator carries on across `start`, so a restarted `Link`
+        // never repeats one.
+        let sess = SessionState::new(cfg.role, SessionId::random(&mut csprng));
         let gate = NoiseGate::new(cfg.noise_threshold, cfg.noise_hold_ms);
         Ok(Self {
             liveness_ms: cfg.liveness_ms(),
             ever_verified: cfg.paired_before,
-            epoch: None,
             cfg,
             psk,
             room,
@@ -633,6 +670,13 @@ impl Link {
             started_at: 0,
             mb: MailboxSet::new(),
             peer_present: false,
+            env_key,
+            sess,
+            known_peers: Vec::new(),
+            peer_client: None,
+            here_sent: 0,
+            here_next_at: 0,
+            pending_reply: None,
             live: None,
             next_handle: 1,
             next_try_at: 0,
@@ -663,7 +707,6 @@ impl Link {
             probe_until: None,
             mic_enabled: false,
             update_required: false,
-            stop_seen: VecDeque::new(),
             alert_log: VecDeque::new(),
             alert_log_dropped_t: None,
             audio_seen: false,
@@ -696,9 +739,10 @@ impl Link {
         self.live.as_ref().map(|l| l.attempt.handle())
     }
 
-    /// Link epoch of the most recent verified attempt in this run (for tests and diagnostics).
-    pub fn epoch(&self) -> Option<&str> {
-        self.epoch.as_deref()
+    /// The peer's confirmed session is current and reachable on the relay (for tests and
+    /// diagnostics).
+    pub fn peer_confirmed(&self) -> bool {
+        self.peer_ready()
     }
 
     pub fn handle(&mut self, now_ms: u64, input: LinkInput) -> Vec<LinkAction> {
@@ -865,9 +909,35 @@ impl Link {
         }
     }
 
+    /// The room member that speaks for the peer: the one the confirmed session last spoke from,
+    /// otherwise the first member with the peer's role.
     fn peer_member(&self) -> Option<&Member> {
         let other = self.other_role();
-        self.mb.relay.members.iter().find(|m| m.role == other)
+        let mut others = self.mb.relay.members.iter().filter(|m| m.role == other);
+        match self.peer_client.as_deref() {
+            Some(id) => self
+                .mb
+                .relay
+                .members
+                .iter()
+                .find(|m| m.role == other && m.client_id == id)
+                .or_else(|| others.next()),
+            None => others.next(),
+        }
+    }
+
+    /// Attempts and requests need a peer that confirmed a session in this run and that is a room
+    /// member right now (`signaling-mailboxes`, "Session confirmation").
+    fn peer_ready(&self) -> bool {
+        self.mb.relay.state == MailboxState::Joined
+            && self.sess.peer_session().is_some()
+            && self.peer_client.as_deref().is_some_and(|id| {
+                self.mb
+                    .relay
+                    .members
+                    .iter()
+                    .any(|m| m.role == self.other_role() && m.client_id == id)
+            })
     }
 
     fn fresh_aid(&mut self) -> String {
@@ -925,24 +995,15 @@ impl Link {
         if self.live_verified() {
             self.send_app(&DataMessage::StopNotice, out);
         }
-        if let (MailboxState::Joined, Some(epoch)) = (self.mb.relay.state, self.epoch.clone()) {
-            let target = self
-                .live
-                .as_ref()
-                .map(|l| l.peer_id.clone())
-                .or_else(|| self.peer_member().map(|m| m.client_id.clone()));
-            if let Some(to) = target {
-                let aid = self.fresh_aid();
-                let mac = stop_notice_mac(&self.psk, self.cfg.role, &self.room, &epoch, &to, &aid);
-                out.push(Self::send_action(encode_signal(
-                    &self.room,
-                    Some(&to),
-                    signal_payload_json(&SignalPayload::StopNotice {
-                        aid: Some(aid),
-                        mac,
-                    }),
-                )));
-            }
+        // Sealed and bound to the peer's confirmed session: without one there is nobody who could
+        // act on it, and a stop to a stale session would be ignored anyway.
+        let target = self
+            .live
+            .as_ref()
+            .map(|l| l.peer_id.clone())
+            .or_else(|| self.peer_client.clone());
+        if let Some(to) = target {
+            self.send_payload(&to, &SignalPayload::StopNotice, out);
         }
     }
 
@@ -1017,7 +1078,8 @@ impl Link {
         self.peer_present = false;
         self.outstanding = None;
         self.pending_request = None;
-        self.stop_seen.clear();
+        self.known_peers.clear();
+        self.peer_client = None;
         self.mb.relay.next_open_at = now + self.delay(now, self.mb.relay.failures);
         self.mb.relay.failures += 1;
     }
@@ -1059,7 +1121,29 @@ impl Link {
                     .into_iter()
                     .filter(|m| Some(&m.client_id) != me.as_ref())
                     .collect();
-                let present = self.peer_member().is_some();
+                let other = self.other_role();
+                let others: Vec<String> = self
+                    .mb
+                    .relay
+                    .members
+                    .iter()
+                    .filter(|m| m.role == other)
+                    .map(|m| m.client_id.clone())
+                    .collect();
+                let fresh: Vec<String> = others
+                    .iter()
+                    .filter(|id| !self.known_peers.contains(id))
+                    .cloned()
+                    .collect();
+                // The confirmed session counts only while its member is in the room.
+                if self
+                    .peer_client
+                    .as_ref()
+                    .is_some_and(|pc| !others.contains(pc))
+                {
+                    self.peer_client = None;
+                }
+                let present = !others.is_empty();
                 if present && !self.peer_present {
                     // Reappearing is attacker-influenceable, so it never lifts the mismatch hold.
                     self.immediate_retry(now);
@@ -1068,15 +1152,22 @@ impl Link {
                     self.outstanding = None;
                     self.stop_pending_absence = false;
                 }
+                if !fresh.is_empty() {
+                    self.here_sent = 0;
+                }
                 self.peer_present = present;
+                self.known_peers = others;
+                // Presence over our relay: the room membership is the trigger, the sealed `here`
+                // carries the session (design section 2).
+                for id in fresh {
+                    self.announce(now, &id, out);
+                }
             }
             ServerMessage::Signal { from, payload } => {
                 if self.mb.relay.state != MailboxState::Joined {
                     return;
                 }
-                if let Some(p) = parse_signal_payload(&payload) {
-                    self.on_signal(now, &from, p, out);
-                }
+                self.on_envelope(now, &from, &payload, out);
             }
             ServerMessage::Error { code, .. } => {
                 if code == "UNSUPPORTED_PROTOCOL" {
@@ -1088,6 +1179,185 @@ impl Link {
             }
             ServerMessage::Peer { .. } | ServerMessage::Pong => {}
         }
+    }
+
+    /// Seals `message` as `class` to the peer's confirmed session and wraps it as a relay `signal`
+    /// to the room member `to`.
+    fn seal_signal(
+        &mut self,
+        to: &str,
+        class: MessageClass,
+        message: &[u8],
+    ) -> Result<LinkAction, SealError> {
+        let rng = self.csprng.as_mut().ok_or(SealError::Crypto)?;
+        let sealed = self.sess.seal_to_peer(&self.env_key, rng, class, message)?;
+        Ok(self.envelope_action(to, &sealed))
+    }
+
+    fn envelope_action(&self, to: &str, sealed: &Sealed) -> LinkAction {
+        Self::send_action(encode_signal(
+            &self.room,
+            Some(to),
+            json!({ "env": URL_SAFE_NO_PAD.encode(&sealed.bytes) }),
+        ))
+    }
+
+    /// Sends one signaling payload sealed to the peer's confirmed session. A message that does not
+    /// fit its class is a sender bug: it is never truncated and surfaces as a failure reason.
+    fn send_payload(&mut self, to: &str, payload: &SignalPayload, out: &mut Vec<LinkAction>) {
+        if self.mb.relay.state != MailboxState::Joined {
+            return;
+        }
+        let message = signal_payload_json(payload).to_string();
+        match self.seal_signal(to, class_of(payload), message.as_bytes()) {
+            Ok(action) => out.push(action),
+            Err(SealError::Oversized) => emit(
+                out,
+                LinkEvent::Failed {
+                    reason: "signal_oversized".into(),
+                },
+            ),
+            // No confirmed peer session (or an exhausted counter): nothing to send to.
+            Err(_) => {}
+        }
+    }
+
+    /// An unsolicited presence message to the room member `to`; schedules the next repeat.
+    fn send_here(&mut self, now: u64, to: &str, out: &mut Vec<LinkAction>) {
+        if self.mb.relay.state != MailboxState::Joined {
+            return;
+        }
+        let sealed = match self.csprng.as_mut() {
+            Some(rng) => self.sess.seal(
+                &self.env_key,
+                rng,
+                MessageClass::Here,
+                SessionId::NONE,
+                HERE_MESSAGE.as_bytes(),
+            ),
+            None => Err(SealError::Crypto),
+        };
+        if let Ok(sealed) = sealed {
+            out.push(self.envelope_action(to, &sealed));
+        }
+        self.here_sent = self.here_sent.saturating_add(1);
+        self.here_next_at = now.saturating_add(Self::here_wait(self.here_sent));
+    }
+
+    /// The `here` that answers a candidate or echoes a challenge (`Opened::reply`).
+    fn send_reply(&mut self, now: u64, to: &str, reply: &Reply, out: &mut Vec<LinkAction>) {
+        let Some(rng) = self.csprng.as_mut() else {
+            return;
+        };
+        if let Ok(sealed) = self
+            .sess
+            .seal_reply(&self.env_key, rng, reply, HERE_MESSAGE.as_bytes())
+        {
+            out.push(self.envelope_action(to, &sealed));
+        }
+        // A reply with a challenge of ours waits for the peer's echo; remember it for a repeat.
+        if reply.challenge != [0; CHALLENGE_LEN] {
+            // A repeat keeps the first issue time: the challenge's 60 s do not restart.
+            let issued = match self.pending_reply {
+                Some((old, at)) if old.challenge == reply.challenge => at,
+                _ => now,
+            };
+            self.pending_reply = Some((*reply, issued));
+        }
+    }
+
+    /// Repeats `here` to a room member that has not confirmed a session (backoff 5, 15, 60 s, then
+    /// every 5 minutes). On our relay this only covers a lost message; the relay is reliable.
+    fn here_housekeeping(&mut self, now: u64, out: &mut Vec<LinkAction>) {
+        if self.mb.relay.state != MailboxState::Joined
+            || self.known_peers.is_empty()
+            || self.peer_ready()
+            || now < self.here_next_at
+        {
+            return;
+        }
+        for id in self.known_peers.clone() {
+            self.announce(now, &id, out);
+        }
+    }
+
+    /// A presence message for the room member `to`, plus a repeat of the challenge we still wait
+    /// on: halfway through the confirmation handshake a plain `here` would not move a peer that
+    /// already confirmed us (the repeat makes it echo again), and a peer that restarted needs the
+    /// plain one because it does not know our earlier reply.
+    fn announce(&mut self, now: u64, to: &str, out: &mut Vec<LinkAction>) {
+        self.send_here(now, to, out);
+        let pending = match self.pending_reply {
+            Some((reply, at)) if now.saturating_sub(at) <= CHALLENGE_VALID_MS => Some(reply),
+            _ => {
+                self.pending_reply = None;
+                None
+            }
+        };
+        if let Some(reply) = pending {
+            self.send_reply(now, to, &reply, out);
+        }
+    }
+
+    fn here_wait(sent: u32) -> u64 {
+        HERE_BACKOFF_MS
+            .get(sent.saturating_sub(1) as usize)
+            .copied()
+            .unwrap_or(HERE_LONG_MS)
+    }
+
+    /// One inbound `signal` payload of the relay: a sealed envelope or noise. Every failure is
+    /// silent and changes nothing: an open error must never cause a reply (no error or timing
+    /// oracle for whoever sent it).
+    fn on_envelope(&mut self, now: u64, from: &str, payload: &Value, out: &mut Vec<LinkAction>) {
+        let Some(text) = payload.get("env").and_then(Value::as_str) else {
+            return;
+        };
+        if text.len() > MessageClass::Candidates.wire_len().div_ceil(3) * 4 {
+            return;
+        }
+        let Ok(bytes) = URL_SAFE_NO_PAD.decode(text) else {
+            return;
+        };
+        let Some(rng) = self.csprng.as_mut() else {
+            return;
+        };
+        let Ok(opened) = self.sess.open(&self.env_key, rng, now, &bytes) else {
+            return;
+        };
+        if self.sess.peer_session() == Some(opened.sender_session) {
+            self.peer_client = Some(from.to_owned());
+        }
+        if let Some(reply) = &opened.reply {
+            self.send_reply(now, from, reply, out);
+        }
+        if opened.confirmed {
+            // The peer echoed our challenge: nothing is pending any more.
+            self.pending_reply = None;
+            self.on_peer_confirmed(now, out);
+        }
+        if opened.class == MessageClass::Here {
+            return;
+        }
+        let Ok(value) = serde_json::from_slice::<Value>(&opened.message) else {
+            return;
+        };
+        // The class is authenticated: a payload that claims another class is not ours.
+        match parse_signal_payload(&value) {
+            Some(p) if class_of(&p) == opened.class => {
+                self.on_signal(now, from, opened.sender_session, p, out);
+            }
+            _ => {}
+        }
+    }
+
+    /// A new session of the peer confirmed: whatever was in flight belongs to the previous one.
+    fn on_peer_confirmed(&mut self, now: u64, out: &mut Vec<LinkAction>) {
+        self.pending_request = None;
+        if self.live.as_ref().is_some_and(|l| !l.attempt.is_verified()) {
+            self.close_live(out);
+        }
+        self.immediate_retry(now);
     }
 
     /// Only the reply to our `hello` (before `welcome`) can mean "your version is not supported";
@@ -1110,15 +1380,18 @@ impl Link {
         }
     }
 
+    /// `payload` came out of an envelope that authenticated, named our session and was sent by the
+    /// peer's confirmed session `sender`.
     fn on_signal(
         &mut self,
         now: u64,
         from: &str,
+        sender: SessionId,
         payload: SignalPayload,
         out: &mut Vec<LinkAction>,
     ) {
         match payload.clone() {
-            SignalPayload::StopNotice { aid, mac } => self.on_signal_stop(aid, mac, out),
+            SignalPayload::StopNotice => self.on_signal_stop(now, sender, out),
             SignalPayload::RequestOffer { aid } => {
                 if self.cfg.role == Role::Baby {
                     self.on_request_offer(now, from, aid, out);
@@ -1139,41 +1412,29 @@ impl Link {
         }
     }
 
-    /// `from` on the signaling path is relay-asserted, so a stop counts only with a valid PSK MAC
-    /// bound to our last-verified link epoch (a relay can recycle client ids but not epochs, so a
-    /// recorded stop never matches a later outage), our current client id and a nonce not seen
-    /// before. Before any verification in this run it is ignored. A verified peer announces its
-    /// stop over the DataChannel instead.
-    fn on_signal_stop(
-        &mut self,
-        aid: Option<String>,
-        mac: Option<String>,
-        out: &mut Vec<LinkAction>,
-    ) {
-        let (Some(aid), Some(mac), Some(me)) = (aid, mac, self.mb.relay.client_id.as_deref())
-        else {
-            return;
-        };
-        let Some(epoch) = self.epoch.as_deref() else {
-            return;
-        };
-        let Some(expected) =
-            stop_notice_mac(&self.psk, self.other_role(), &self.room, epoch, me, &aid)
-        else {
-            return;
-        };
-        if !macs_equal(&expected, &mac) || self.stop_seen.contains(&aid) {
-            return;
-        }
-        if self.stop_seen.len() >= STOP_SEEN_CAP {
-            self.stop_seen.pop_front();
-        }
-        self.stop_seen.push_back(aid);
-        if self.live_verified() {
-            return;
-        }
-        self.close_live(out);
+    /// A stop that reached here authenticated under the envelope key, names our current session
+    /// and comes from the peer's confirmed session, so it is that session's own deliberate stop.
+    /// A stored stop of an earlier run cannot get here: its sender session is retired or was never
+    /// confirmed. The stop retires the session for good.
+    fn on_signal_stop(&mut self, now: u64, sender: SessionId, out: &mut Vec<LinkAction>) {
+        self.sess.retire(sender);
+        self.peer_client = None;
+        self.stop_peer(now, out);
+    }
+
+    /// The peer announced that it stopped (over a mailbox or the DataChannel): the verified attempt
+    /// ends without alarm and nothing escalates.
+    fn stop_peer(&mut self, now: u64, out: &mut Vec<LinkAction>) {
+        let verified_since = self
+            .live
+            .as_ref()
+            .filter(|l| l.attempt.is_verified())
+            .map(|l| l.attempt.last_alive());
         self.set_peer_stopped();
+        self.close_live(out);
+        if let Some(last_alive) = verified_since {
+            self.on_verified_attempt_lost(now, last_alive, out);
+        }
     }
 
     fn set_peer_stopped(&mut self) {
@@ -1373,13 +1634,8 @@ impl Link {
             let handle = live.attempt.handle();
             match ev {
                 AttemptEvent::Signal(payload) => {
-                    if self.mb.relay.state == MailboxState::Joined {
-                        out.push(Self::send_action(encode_signal(
-                            &self.room,
-                            Some(&live.peer_id),
-                            signal_payload_json(&payload),
-                        )));
-                    }
+                    let to = live.peer_id.clone();
+                    self.send_payload(&to, &payload, out);
                 }
                 AttemptEvent::SendData(text) => out.push(LinkAction::SendData {
                     attempt: handle,
@@ -1471,11 +1727,6 @@ impl Link {
 
     fn on_verified(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         let first = !self.verified_in_run;
-        if let Some(l) = self.live.as_ref()
-            && let Some(remote) = l.attempt.remote_aid()
-        {
-            self.epoch = Some(link_epoch(l.attempt.own_aid(), remote));
-        }
         self.ever_verified = true;
         self.verified_in_run = true;
         self.consecutive_mismatches = 0;
@@ -1624,13 +1875,15 @@ impl Link {
 
     /// Authenticated by the verified attempt, so the attempt can end right away.
     fn on_dc_stop(&mut self, now: u64, out: &mut Vec<LinkAction>) {
-        let Some(l) = self.live.as_ref() else {
+        if self.live.is_none() {
             return;
-        };
-        let last_alive = l.attempt.last_alive();
-        self.set_peer_stopped();
-        self.close_live(out);
-        self.on_verified_attempt_lost(now, last_alive, out);
+        }
+        // The same stop may still be stored on a mailbox: retire the session so it cannot be used.
+        if let Some(session) = self.sess.peer_session() {
+            self.sess.retire(session);
+        }
+        self.peer_client = None;
+        self.stop_peer(now, out);
     }
 
     fn on_peer_status(&mut self, s: DeviceStatus, out: &mut Vec<LinkAction>) {
@@ -1787,6 +2040,7 @@ impl Link {
     fn pump(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         if self.mode == Mode::Running {
             self.signaling_housekeeping(now, out);
+            self.here_housekeeping(now, out);
             if self.cfg.role == Role::Baby {
                 let rms = round4(self.gate.last_rms());
                 if let Some(l) = self.live.as_mut() {
@@ -1838,8 +2092,7 @@ impl Link {
 
     fn schedule(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         if self.live.is_some()
-            || self.mb.relay.state != MailboxState::Joined
-            || !self.peer_present
+            || !self.peer_ready()
             || (self.peer_stopped && self.stop_pending_absence)
             || now < self.next_try_at
         {
@@ -1851,15 +2104,15 @@ impl Link {
                 if self.outstanding.is_some() {
                     return;
                 }
-                let Some(baby) = self.peer_member().map(|m| m.client_id.clone()) else {
+                let Some(baby) = self.peer_client.clone() else {
                     return;
                 };
                 let aid = self.fresh_aid();
-                out.push(Self::send_action(encode_signal(
-                    &self.room,
-                    Some(&baby),
-                    signal_payload_json(&SignalPayload::RequestOffer { aid: aid.clone() }),
-                )));
+                self.send_payload(
+                    &baby,
+                    &SignalPayload::RequestOffer { aid: aid.clone() },
+                    out,
+                );
                 self.outstanding = Some((now + DEFAULT_ATTEMPT_TIMEOUT_MS, aid));
             }
         }
@@ -1909,7 +2162,7 @@ impl Link {
     fn cause(&self) -> Option<String> {
         let c = if self.mb.relay.state != MailboxState::Joined {
             "server_unreachable"
-        } else if !self.peer_present {
+        } else if !self.peer_ready() {
             "peer_absent"
         } else if self.media_failures >= MEDIA_BLOCKED_AFTER {
             "media_blocked"

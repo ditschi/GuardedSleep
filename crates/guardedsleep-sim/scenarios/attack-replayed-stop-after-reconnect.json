@@ -1,7 +1,7 @@
 {
   "schema": "gs-scenario/1",
   "id": "attack-replayed-stop-after-reconnect",
-  "description": "A relay that recycles client ids records the baby's signaling stop from a normal Stop, lets the pair restart and verify again, and replays the recording to the parent during a later outage (after a signaling reconnect with the same client id). The stop is bound to the link epoch of the earlier monitoring period, so it is ignored: link_lost is still raised and the parent never goes peer_stopped again.",
+  "description": "A relay that recycles client ids records the baby's signaling stop from a normal Stop, lets the pair restart and verify again, and replays the recording to the parent during a later outage (after a signaling reconnect with the same client id). The stop names the baby session that has been retired by the stop and replaced by the restart, so it is ignored: link_lost is still raised and the parent never goes peer_stopped again.",
   "seed": 1,
   "peers": [
     {

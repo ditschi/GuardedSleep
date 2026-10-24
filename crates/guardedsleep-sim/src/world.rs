@@ -11,9 +11,11 @@ use guardedsleep_core::link::{
 };
 use guardedsleep_core::mailbox::RELAY_MAILBOX;
 use guardedsleep_core::pairing::{
-    derive_room_id, encode_psk, extract_sha256_fingerprint, extract_sha256_fingerprint_v2_legacy,
+    decode_psk, derive_room_id, encode_psk, extract_sha256_fingerprint,
+    extract_sha256_fingerprint_v2_legacy,
 };
 use guardedsleep_core::protocol::Role;
+use guardedsleep_core::testing::{decode_message, rewrite_message};
 use serde_json::{Value, json};
 
 use crate::raw::RawState;
@@ -1082,7 +1084,7 @@ impl World {
         let Some(sock) = self.actors[a].sock else {
             return;
         };
-        if let Some(t) = signal_type(&text) {
+        if let Some(t) = self.signal_type_for(a, &text) {
             let now = self.now;
             self.actors[a].sent_signals.push((now, t));
         }
@@ -1470,12 +1472,36 @@ impl World {
             return;
         };
         let mut payload = msg["payload"].clone();
-        if payload["type"].as_str() == Some("stop_notice") {
+        // The recording and rewriting relays below read sealed payloads: the simulation stands in
+        // for a relay that holds the PSK (a compromised one that was handed the invite).
+        let sender_psk = self.server.conns[&sock]
+            .actor
+            .and_then(|sa| self.actor_psk(sa));
+        let message = match &sender_psk {
+            Some(psk) if payload.get("env").is_some() => decode_message(psk, &payload),
+            _ => Some(payload.clone()),
+        };
+        if message.as_ref().and_then(|m| m["type"].as_str()) == Some("stop_notice") {
             self.server.last_stop = Some((from.clone(), payload.clone()));
         }
         if self.relay.sdp_rewrite.as_deref() == Some("fingerprint_confusion") {
             let mitm = self.fresh_fp();
-            if let Some(sdp) = payload["sdp"]["sdp"].as_str() {
+            if let Some(psk) = &sender_psk
+                && payload.get("env").is_some()
+            {
+                let mut nonce = [0u8; 24];
+                for chunk in nonce.chunks_mut(8) {
+                    chunk.copy_from_slice(&self.rng.next_u64().to_le_bytes()[..chunk.len()]);
+                }
+                let rewritten = rewrite_message(psk, &payload, nonce, |m| {
+                    if let Some(sdp) = m["sdp"]["sdp"].as_str() {
+                        m["sdp"]["sdp"] = Value::from(confuse_fingerprint(sdp, &mitm));
+                    }
+                });
+                if let Some(p) = rewritten {
+                    payload = p;
+                }
+            } else if let Some(sdp) = payload["sdp"]["sdp"].as_str() {
                 payload["sdp"]["sdp"] = Value::from(confuse_fingerprint(sdp, &mitm));
             }
         }
@@ -1889,6 +1915,28 @@ impl World {
         self.actors.len() - 1
     }
 
+    fn actor_psk(&self, a: usize) -> Option<Vec<u8>> {
+        decode_psk(&self.actors[a].cfg.psk_b64url)
+    }
+
+    /// What a frame `a` sent is, for the "sent_signal" assertions: the frame type, or for a relay
+    /// `signal` the type of the message inside (read with the sender's PSK when it is sealed).
+    fn signal_type_for(&self, a: usize, text: &str) -> Option<String> {
+        let v: Value = serde_json::from_str(text).ok()?;
+        let t = v["type"].as_str()?;
+        if t != "signal" {
+            return Some(t.to_owned());
+        }
+        let payload = &v["payload"];
+        if payload.get("env").is_some() {
+            let psk = self.actor_psk(a)?;
+            return decode_message(&psk, payload)?["type"]
+                .as_str()
+                .map(str::to_owned);
+        }
+        payload["type"].as_str().map(str::to_owned)
+    }
+
     pub(crate) fn pc_close(&mut self, a: usize, h: u32) {
         self.close_attempt(a, h);
     }
@@ -1912,14 +1960,4 @@ fn valid_v3_room(room: &str) -> bool {
         && room
             .bytes()
             .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
-}
-
-fn signal_type(text: &str) -> Option<String> {
-    let v: Value = serde_json::from_str(text).ok()?;
-    let t = v["type"].as_str()?;
-    if t == "signal" {
-        v["payload"]["type"].as_str().map(str::to_owned)
-    } else {
-        Some(t.to_owned())
-    }
 }

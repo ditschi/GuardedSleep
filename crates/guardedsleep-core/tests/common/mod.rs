@@ -4,10 +4,11 @@
 
 use std::collections::{HashMap, VecDeque};
 
+use guardedsleep_core::envelope::MessageClass;
 use guardedsleep_core::link::{
     Link, LinkAction, LinkConfig, LinkEvent, LinkInput, LinkState, LinkStatus,
 };
-use guardedsleep_core::pairing::encode_psk;
+use guardedsleep_core::pairing::{decode_psk, encode_psk};
 use guardedsleep_core::protocol::{DeviceStatus, Role};
 use serde_json::{Value, json};
 
@@ -26,12 +27,22 @@ pub const PSK_B: [u8; 32] = [9; 32];
 pub const BABY: usize = 0;
 pub const PARENT: usize = 1;
 
+/// A distinct seed per role, so the two devices never draw the same session or nonce.
 pub fn cfg(role: Role, psk: &[u8]) -> LinkConfig {
-    let mut c = LinkConfig::with_defaults(role, encode_psk(psk), &[5u8; 32]);
+    let seed_byte = match role {
+        Role::Baby => 5u8,
+        Role::Parent => 6u8,
+    };
+    let mut c = LinkConfig::with_defaults(role, encode_psk(psk), &[seed_byte; 32]);
     c.noise_threshold = 0.2;
     c.noise_hold_ms = 300;
     c
 }
+
+#[allow(unused_imports)]
+pub use guardedsleep_core::testing::{
+    HERE, SealedPeer, decode_message, handshake, signal_frame, signals_in,
+};
 
 /// What a node's fake WebRTC stack reports as the remote DTLS certificate fingerprint.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -69,6 +80,11 @@ pub struct Node {
     pub apply_quiet_calls: u32,
     pub probe_tones: u32,
     pub sent_signal_types: Vec<String>,
+    /// Every signal this node sent: the decrypted message and the wire payload.
+    pub sent: Vec<(Value, Value)>,
+    pub restarts: u32,
+    /// Extra bytes of SDP, to size the offers and answers like a real browser's.
+    pub sdp_pad: usize,
     pub max_level: u8,
     pub baby_direction: &'static str,
     pub dtls: Dtls,
@@ -106,6 +122,15 @@ pub struct World {
     next_client: u32,
     fp_seq: u32,
     pub server_signal_log: Vec<(String, Value)>,
+    pub impostors: Vec<Impostor>,
+}
+
+/// A room member that holds the PSK but is no `Link`: scripted by the test.
+pub struct Impostor {
+    pub id: String,
+    pub peer: SealedPeer,
+    sock: usize,
+    inbox: Vec<Value>,
 }
 
 impl World {
@@ -127,6 +152,7 @@ impl World {
             next_client: 0,
             fp_seq: 0,
             server_signal_log: Vec::new(),
+            impostors: Vec::new(),
         }
     }
 
@@ -138,7 +164,9 @@ impl World {
         w
     }
 
-    pub fn add_node(&mut self, cfg: LinkConfig) -> usize {
+    pub fn add_node(&mut self, mut cfg: LinkConfig) -> usize {
+        // Every node draws its own session and nonces.
+        cfg.seed = vec![0x40 + self.nodes.len() as u8; 32];
         let role = cfg.role;
         self.nodes.push(Node {
             link: Link::new(cfg.clone()).expect("valid config"),
@@ -155,6 +183,9 @@ impl World {
             apply_quiet_calls: 0,
             probe_tones: 0,
             sent_signal_types: Vec::new(),
+            sent: Vec::new(),
+            restarts: 0,
+            sdp_pad: 0,
             max_level: 0,
             baby_direction: "sendonly",
             dtls: Dtls::Honest,
@@ -318,7 +349,11 @@ impl World {
         }
         let mut cfg = self.nodes[n].cfg.clone();
         cfg.paired_before = true;
+        // A restart is a new run: a new seed, as the platforms draw one per run.
+        self.nodes[n].restarts += 1;
+        cfg.seed = vec![0x80 + (n as u8) * 16 + self.nodes[n].restarts as u8; 32];
         let node = &mut self.nodes[n];
+        node.cfg = cfg.clone();
         node.link = Link::new(cfg).expect("valid config");
         node.pcs.clear();
         node.alive = true;
@@ -584,10 +619,18 @@ impl World {
                     .clone();
                 let payload = msg["payload"].clone();
                 self.server_signal_log.push((from.clone(), payload.clone()));
-                if let Some(t) = payload["type"].as_str() {
-                    self.nodes[n].sent_signal_types.push(t.to_owned());
+                let psk = decode_psk(&self.nodes[n].cfg.psk_b64url).expect("psk");
+                if let Some(message) = decode_message(&psk, &payload) {
+                    if let Some(t) = message["type"].as_str() {
+                        self.nodes[n].sent_signal_types.push(t.to_owned());
+                    }
+                    self.nodes[n].sent.push((message, payload.clone()));
                 }
                 let to = msg["to"].as_str().unwrap_or("").to_owned();
+                if let Some(i) = self.impostors.iter().position(|im| im.id == to) {
+                    self.impostors[i].inbox.push(payload);
+                    return;
+                }
                 let target = (0..self.conns.len()).find(|s| {
                     self.conns[*s]
                         .as_ref()
@@ -664,8 +707,12 @@ impl World {
             Role::Baby => self.nodes[n].baby_direction,
             Role::Parent => "recvonly",
         };
+        let pad = match self.nodes[n].sdp_pad {
+            0 => String::new(),
+            k => format!("a=x-pad:{}\r\n", "x".repeat(k)),
+        };
         format!(
-            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na={dir}\r\na=fingerprint:sha-256 {}\r\n",
+            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na={dir}\r\n{pad}a=fingerprint:sha-256 {}\r\n",
             colon_fp(fp)
         )
     }
@@ -865,6 +912,73 @@ impl World {
                 text: text.to_owned(),
             },
         );
+    }
+
+    /// Adds a PSK-holding room member that the test scripts.
+    pub fn add_impostor(&mut self, id: &str, role: Role, psk: &[u8], seed: u8) -> usize {
+        let sock = self.conns.len();
+        self.conns.push(Some(Conn {
+            node: usize::MAX,
+            role,
+            client_id: id.to_owned(),
+        }));
+        self.impostors.push(Impostor {
+            id: id.to_owned(),
+            peer: SealedPeer::new(role, psk, seed),
+            sock,
+            inbox: Vec::new(),
+        });
+        self.broadcast_members();
+        self.drain();
+        self.impostors.len() - 1
+    }
+
+    pub fn remove_impostor(&mut self, i: usize) {
+        let sock = self.impostors[i].sock;
+        self.remove_conn(sock);
+        self.drain();
+    }
+
+    /// Sends the impostor's `here` to node `n` and settles the confirmation handshake.
+    pub fn impostor_greets(&mut self, i: usize, n: usize) {
+        let id = self.impostors[i].id.clone();
+        let here = self.impostors[i].peer.here();
+        self.inject_signal(n, &id, here);
+        self.impostor_settle(i, n);
+    }
+
+    /// Answers everything node `n` sent to the impostor until both sides are quiet.
+    pub fn impostor_settle(&mut self, i: usize, n: usize) {
+        for _ in 0..10 {
+            let inbox = std::mem::take(&mut self.impostors[i].inbox);
+            if inbox.is_empty() {
+                return;
+            }
+            let id = self.impostors[i].id.clone();
+            for payload in inbox {
+                let now = self.now;
+                if let Ok((_, Some(reply))) = self.impostors[i].peer.accept(now, &payload) {
+                    self.inject_signal(n, &id, reply);
+                }
+            }
+        }
+    }
+
+    /// A message the impostor seals to node `n`'s confirmed session and delivers.
+    pub fn impostor_says(&mut self, i: usize, n: usize, class: MessageClass, message: &Value) {
+        let id = self.impostors[i].id.clone();
+        let payload = self.impostors[i].peer.say(class, message);
+        self.inject_signal(n, &id, payload);
+    }
+
+    /// The decrypted messages of type `ty` that node `n` sent, oldest first.
+    pub fn sent_of(&self, n: usize, ty: &str) -> Vec<(Value, Value)> {
+        self.nodes[n]
+            .sent
+            .iter()
+            .filter(|(m, _)| m["type"] == ty)
+            .cloned()
+            .collect()
     }
 
     /// Delivers a signaling `signal` message to `n` from an arbitrary client id.

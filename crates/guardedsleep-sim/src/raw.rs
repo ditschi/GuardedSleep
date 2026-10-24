@@ -1,12 +1,18 @@
 //! Raw protocol clients ("strangers"): a third party in the room that speaks the signaling and
-//! pairing protocol directly, without a `Link`, to mount the ADR-017 section 12 attacks.
+//! pairing protocol directly, without a `Link`, to mount the ADR-017 section 12 attacks. The
+//! proof-level attackers (`WrongPsk`, `Reflect`) hold the room's PSK, as an attacker who got the
+//! invite does, so their sealed envelopes authenticate and only the pairing proof and the DTLS
+//! binding stop them. `ForgedOffer` is the outsider without the PSK and sends plaintext junk.
 
-use guardedsleep_core::pairing::{extract_sha256_fingerprint, pair_proof_mac_v3};
+use guardedsleep_core::envelope::MessageClass;
+use guardedsleep_core::pairing::{decode_psk, extract_sha256_fingerprint, pair_proof_mac_v3};
 use guardedsleep_core::protocol::{
     DataMessage, Role, ServerMessage, SignalPayload, encode_data_message, encode_hello,
     encode_signal, parse_data_message, parse_server_message, parse_signal_payload,
     signal_payload_json,
 };
+use guardedsleep_core::testing::SealedPeer;
+use serde_json::Value;
 
 use crate::scenario::Step;
 use crate::world::{Time, ToClient, World, colon_upper, synthetic_psk};
@@ -34,6 +40,18 @@ pub struct RawState {
     pub pc: Option<u32>,
     pub baby_fp: Option<String>,
     pub acted: bool,
+    /// The PSK holder's sealed side (`WrongPsk`, `Reflect`); `None` for the PSK-less outsider.
+    pub peer: Option<SealedPeer>,
+    /// The room member the last `here` went to.
+    pub greeted: Option<String>,
+}
+
+fn class_of(p: &SignalPayload) -> MessageClass {
+    match p {
+        SignalPayload::Sdp { .. } => MessageClass::Description,
+        SignalPayload::Ice { .. } => MessageClass::Candidates,
+        SignalPayload::RequestOffer { .. } | SignalPayload::StopNotice => MessageClass::Control,
+    }
 }
 
 impl World {
@@ -50,6 +68,13 @@ impl World {
         };
         let role = st.role.unwrap_or(Role::Parent);
         let name = st.id.clone().unwrap_or_else(|| "stranger".into());
+        // The PSK holders use the room's real PSK for envelopes; their proof key stays "B".
+        let peer = (mode != RawMode::ForgedOffer)
+            .then(|| {
+                let room_psk = decode_psk(&self.actors[0].cfg.psk_b64url)?;
+                Some(SealedPeer::new(role, &room_psk, 0x61))
+            })
+            .flatten();
         let raw = RawState {
             mode,
             room: self.target_room(),
@@ -63,6 +88,8 @@ impl World {
             pc: None,
             baby_fp: None,
             acted: false,
+            peer,
+            greeted: None,
         };
         let a = self.add_raw_actor(&name, role, raw);
         self.open_signaling(a);
@@ -92,17 +119,88 @@ impl World {
                     ServerMessage::Members { peers } => {
                         let raw = self.actors[a].raw.as_mut().expect("raw");
                         raw.members = peers.into_iter().map(|m| (m.client_id, m.role)).collect();
+                        self.raw_greet(a);
                         self.raw_maybe_request(a);
                     }
                     ServerMessage::Signal { from, payload } => {
-                        if let Some(p) = parse_signal_payload(&payload) {
-                            self.raw_on_signal(a, &from, p);
-                        }
+                        self.raw_on_payload(a, &from, &payload);
                     }
                     _ => {}
                 }
             }
         }
+    }
+
+    /// One inbound relay `signal`: a PSK holder opens the envelope (and answers the confirmation
+    /// handshake); the outsider only understands plaintext.
+    fn raw_on_payload(&mut self, a: usize, from: &str, payload: &Value) {
+        let now = self.now;
+        let has_peer = self.actors[a]
+            .raw
+            .as_ref()
+            .is_some_and(|r| r.peer.is_some());
+        if !has_peer {
+            if let Some(p) = parse_signal_payload(payload) {
+                self.raw_on_signal(a, from, p);
+            }
+            return;
+        }
+        let room = self.actors[a].room.clone();
+        let opened = {
+            let raw = self.actors[a].raw.as_mut().expect("raw");
+            raw.peer.as_mut().and_then(|p| p.accept(now, payload).ok())
+        };
+        let Some((opened, reply)) = opened else {
+            return;
+        };
+        if let Some(reply) = reply {
+            let text = encode_signal(&room, Some(from), reply);
+            self.client_send(a, text, None);
+        }
+        if opened.class != MessageClass::Here
+            && let Ok(v) = serde_json::from_slice::<Value>(&opened.message)
+            && let Some(p) = parse_signal_payload(&v)
+        {
+            self.raw_on_signal(a, from, p);
+        }
+    }
+
+    /// A PSK holder announces itself to the baby once per baby socket.
+    fn raw_greet(&mut self, a: usize) {
+        let Some(baby) = self.raw_baby(a) else {
+            return;
+        };
+        let room = self.actors[a].room.clone();
+        let raw = self.actors[a].raw.as_mut().expect("raw");
+        if raw.greeted.as_deref() == Some(baby.as_str()) {
+            return;
+        }
+        let Some(peer) = raw.peer.as_mut() else {
+            return;
+        };
+        let here = peer.here();
+        raw.greeted = Some(baby.clone());
+        let text = encode_signal(&room, Some(&baby), here);
+        self.client_send(a, text, None);
+    }
+
+    /// Sends `payload` to `to`: sealed for a PSK holder (dropped while the baby has not confirmed
+    /// it yet), plaintext for the outsider.
+    fn raw_send_signal(&mut self, a: usize, to: &str, payload: &SignalPayload) {
+        let room = self.actors[a].room.clone();
+        let json = signal_payload_json(payload);
+        let wire = {
+            let raw = self.actors[a].raw.as_mut().expect("raw");
+            match raw.peer.as_mut() {
+                Some(peer) => match peer.try_say(class_of(payload), &json) {
+                    Some(sealed) => sealed,
+                    None => return,
+                },
+                None => json,
+            }
+        };
+        let text = encode_signal(&room, Some(to), wire);
+        self.client_send(a, text, None);
     }
 
     fn raw_baby(&self, a: usize) -> Option<String> {
@@ -132,16 +230,10 @@ impl World {
             return;
         }
         let aid = self.rng.aid();
-        let room = self.actors[a].room.clone();
         let raw = self.actors[a].raw.as_mut().expect("raw");
         raw.my_aid = Some(aid.clone());
         raw.last_request = Some(self.now);
-        let text = encode_signal(
-            &room,
-            Some(&baby),
-            signal_payload_json(&SignalPayload::RequestOffer { aid }),
-        );
-        self.client_send(a, text, None);
+        self.raw_send_signal(a, &baby, &SignalPayload::RequestOffer { aid });
     }
 
     pub(crate) fn raw_tick(&mut self, a: usize) {
@@ -193,18 +285,16 @@ impl World {
             raw.baby_fp = extract_sha256_fingerprint(&sdp);
         }
         self.actors[a].pcs.get_mut(&handle).expect("pc").local = true;
-        let room = self.actors[a].room.clone();
-        let text = encode_signal(
-            &room,
-            Some(from),
-            signal_payload_json(&SignalPayload::Sdp {
+        self.raw_send_signal(
+            a,
+            from,
+            &SignalPayload::Sdp {
                 aid: answer_aid,
                 sdp_type: "answer".into(),
                 sdp: answer_sdp,
                 re: None,
-            }),
+            },
         );
-        self.client_send(a, text, None);
         self.maybe_connect(a, handle);
     }
 
@@ -277,23 +367,10 @@ impl World {
         let request = SignalPayload::RequestOffer {
             aid: self.rng.aid(),
         };
-        // Without the PSK the stranger cannot MAC its stop: neither a bare one nor a made-up MAC
-        // passes.
-        let bare_stop = SignalPayload::StopNotice {
-            aid: None,
-            mac: None,
-        };
-        let guessed_stop = SignalPayload::StopNotice {
-            aid: Some(self.rng.aid()),
-            mac: Some("0".repeat(64)),
-        };
-        let to_parent = [
-            forged_offer,
-            forged_ice,
-            bare_stop.clone(),
-            guessed_stop.clone(),
-        ];
-        let to_baby = [request, bare_stop, guessed_stop];
+        // Without the PSK the stranger cannot seal anything: a bare stop is plaintext noise.
+        let bare_stop = SignalPayload::StopNotice;
+        let to_parent = [forged_offer, forged_ice, bare_stop.clone()];
+        let to_baby = [request, bare_stop];
         for p in to_parent {
             let text = encode_signal(&room, Some(&parent), signal_payload_json(&p));
             self.client_send(a, text, spoof.then(|| baby.clone()));

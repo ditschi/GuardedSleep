@@ -8,7 +8,7 @@ use crate::invite::{build_invite, parse_invite};
 use crate::link::{Link, LinkConfig, LinkInput};
 use crate::pairing::{
     AdmissionKey, admission_mac, decode_psk, derive_admission_key, derive_room_id, encode_psk,
-    pair_proof_mac_v2_legacy, pair_proof_mac_v3, stop_notice_mac, verify_admission,
+    pair_proof_mac_v2_legacy, pair_proof_mac_v3, verify_admission,
 };
 use crate::protocol::{
     Role, parse_challenge, parse_client_message, parse_data_message, parse_data_message_v2_legacy,
@@ -83,22 +83,6 @@ fn evaluate_value(case_json: &str) -> Result<Value, String> {
                 s("room")?,
                 s("fp_sender")?,
                 s("fp_receiver")?,
-            ))
-        }
-        "stop_mac" => {
-            let psk = decode_psk(s("psk_b64url")?).ok_or("bad psk")?;
-            let role = match s("sender_role")? {
-                "baby" => Role::Baby,
-                "parent" => Role::Parent,
-                other => return Err(format!("bad sender_role {other}")),
-            };
-            to_value(stop_notice_mac(
-                &psk,
-                role,
-                s("room")?,
-                s("epoch")?,
-                s("receiver_client_id")?,
-                s("sender_aid")?,
             ))
         }
         "pair_mac" => {
