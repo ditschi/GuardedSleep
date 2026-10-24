@@ -132,6 +132,94 @@ describe("S12 settings", () => {
     });
   });
 
+  describe("TURN server", () => {
+    beforeEach(() => {
+      c.settings.update((s) => ({ ...s, advancedEnabled: true }));
+    });
+
+    async function fill(url: string, user: string, pass: string): Promise<void> {
+      await fireEvent.input(await screen.findByTestId("settings_turn"), { target: { value: url } });
+      await fireEvent.input(screen.getByTestId("settings_turn_user"), { target: { value: user } });
+      await fireEvent.input(screen.getByTestId("settings_turn_pass"), { target: { value: pass } });
+      await fireEvent.click(screen.getByTestId("settings_turn_save"));
+    }
+
+    it("masks the password and offers no Remove before anything is saved", async () => {
+      open(c);
+      expect(await screen.findByTestId("settings_turn_pass")).toHaveAttribute("type", "password");
+      expect(screen.getByTestId("settings_turn_pass")).toHaveAttribute(
+        "autocomplete",
+        "new-password",
+      );
+      expect(screen.getByTestId("settings_turn_user")).toHaveAttribute("autocomplete", "username");
+      expect(screen.queryByTestId("settings_turn_remove")).toBeNull();
+      expect(screen.queryByTestId("settings_turn_pass_saved")).toBeNull();
+    });
+
+    it("rejects an address that is not turn: or turns:", async () => {
+      open(c);
+      await fill("stun:x", "", "");
+      expect(await screen.findByTestId("settings_turn_error")).toHaveTextContent(
+        "must start with turn: or turns:",
+      );
+      expect(get(c.settings).turnUrl).toBeNull();
+    });
+
+    it("rejects a user name without a password", async () => {
+      open(c);
+      await fill("turn:turn.example.org", "test-only", "");
+      expect(await screen.findByTestId("settings_turn_error")).toHaveTextContent(
+        "both user name and password",
+      );
+      expect(get(c.settings).turnUrl).toBeNull();
+    });
+
+    it("saves, clears the password field and says a password is saved", async () => {
+      open(c);
+      await fill(" turn:turn.example.org ", "test-only", "pw");
+      expect(await screen.findByTestId("settings_turn_pass_saved")).toHaveTextContent(
+        "Password saved",
+      );
+      expect(get(c.settings)).toMatchObject({
+        turnUrl: "turn:turn.example.org",
+        turnUsername: "test-only",
+        turnPasswordSaved: true,
+      });
+      expect(screen.getByTestId("settings_turn_pass")).toHaveValue("");
+      expect(screen.queryByTestId("settings_turn_error")).toBeNull();
+      expect(screen.getByTestId("settings_turn_remove")).toBeInTheDocument();
+    });
+
+    it("keeps the saved password when saved again with an empty field", async () => {
+      open(c);
+      await fill("turn:turn.example.org", "test-only", "pw");
+      await fireEvent.click(await screen.findByTestId("settings_turn_save"));
+      expect(screen.queryByTestId("settings_turn_error")).toBeNull();
+      expect(get(c.settings).turnPasswordSaved).toBe(true);
+    });
+
+    it("removes the entry and empties the fields", async () => {
+      open(c);
+      await fill("turn:turn.example.org", "test-only", "pw");
+      await fireEvent.click(await screen.findByTestId("settings_turn_remove"));
+      expect(c.calls).toContainEqual(["clearTurnServer"]);
+      expect(get(c.settings).turnUrl).toBeNull();
+      expect(screen.getByTestId("settings_turn")).toHaveValue("");
+      expect(screen.getByTestId("settings_turn_user")).toHaveValue("");
+      expect(screen.queryByTestId("settings_turn_remove")).toBeNull();
+    });
+
+    it("never writes the entry to browser storage", async () => {
+      open(c);
+      await fill("turn:turn.example.org", "turn-user-test-only", "turn-pw-test-only");
+      await screen.findByTestId("settings_turn_pass_saved");
+      const stored = [...Object.values(localStorage), ...Object.values(sessionStorage)].join("\n");
+      expect(stored).not.toContain("turn-pw-test-only");
+      expect(stored).not.toContain("turn-user-test-only");
+      expect(stored).not.toContain("turn.example.org");
+    });
+  });
+
   it("forgets the pairing after a confirmation and returns to the start screen", async () => {
     c.app.update((s) => ({ ...s, role: "parent", paired: true }));
     open(c);

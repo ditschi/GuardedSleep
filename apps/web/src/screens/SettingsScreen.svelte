@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { get } from "svelte/store";
   import { useController, type Theme } from "../lib/contract";
   import { isLocale, LOCALES, type Locale } from "../lib/i18n/bundles";
   import type { MessageKey } from "../lib/i18n/keys";
@@ -95,6 +96,34 @@
       ...s,
       signalingUrls: s.signalingUrls.filter((u) => u !== url),
     }));
+  }
+
+  // ---- advanced: TURN server -------------------------------------------------------------
+  // The password field starts empty and is cleared after saving: the saved one is never shown.
+
+  let turnUrl = $state(get(settings).turnUrl ?? "");
+  let turnUser = $state(get(settings).turnUsername ?? "");
+  let turnPass = $state("");
+  let turnError = $state<"invalid_address" | "invalid_credentials" | null>(null);
+
+  function saveTurn(event: SubmitEvent): void {
+    event.preventDefault();
+    const result = controller.setTurnServer(turnUrl, turnUser, turnPass);
+    if (result === "invalid_address" || result === "invalid_credentials") {
+      turnError = result;
+      return;
+    }
+    turnError = null;
+    turnPass = "";
+    if (result === "cleared") turnUser = "";
+  }
+
+  function removeTurn(): void {
+    controller.clearTurnServer();
+    turnUrl = "";
+    turnUser = "";
+    turnPass = "";
+    turnError = null;
   }
 
   // ---- forget pairing --------------------------------------------------------------------
@@ -235,6 +264,72 @@
           </Button>
         </form>
         <p class="gs-hint">{$t("webScreens.settings.urlHint")}</p>
+        <form class="gs-stack gs-stack--tight" onsubmit={saveTurn} data-testid="settings_turn_form">
+          <label for="settings-turn" class="gs-group__title">
+            {$t("native.ui.settings.turn.label")}
+          </label>
+          <input
+            id="settings-turn"
+            class="gs-input"
+            type="text"
+            inputmode="url"
+            spellcheck="false"
+            autocomplete="off"
+            autocapitalize="off"
+            data-testid="settings_turn"
+            bind:value={turnUrl}
+            oninput={() => (turnError = null)}
+          />
+          <label for="settings-turn-user" class="gs-hint">
+            {$t("native.ui.settings.turn.username")}
+          </label>
+          <input
+            id="settings-turn-user"
+            class="gs-input"
+            type="text"
+            spellcheck="false"
+            autocomplete="username"
+            autocapitalize="off"
+            data-testid="settings_turn_user"
+            bind:value={turnUser}
+            oninput={() => (turnError = null)}
+          />
+          <label for="settings-turn-pass" class="gs-hint">
+            {$t("native.ui.settings.turn.password")}
+          </label>
+          <input
+            id="settings-turn-pass"
+            class="gs-input"
+            type="password"
+            autocomplete="new-password"
+            aria-describedby={$settings.turnPasswordSaved ? "settings-turn-pass-saved" : undefined}
+            data-testid="settings_turn_pass"
+            bind:value={turnPass}
+            oninput={() => (turnError = null)}
+          />
+          {#if $settings.turnPasswordSaved}
+            <p id="settings-turn-pass-saved" class="gs-hint" data-testid="settings_turn_pass_saved">
+              {$t("native.ui.settings.turn.passwordSaved")}
+            </p>
+          {/if}
+          {#if turnError !== null}
+            <Banner
+              tone="bad"
+              message={turnError === "invalid_address"
+                ? $t("native.ui.settings.turn.invalid")
+                : $t("native.ui.settings.turn.credentialsInvalid")}
+              testid="settings_turn_error"
+            />
+          {/if}
+          <Button type="submit" variant="tonal" testid="settings_turn_save">
+            {$t("native.ui.common.save")}
+          </Button>
+          {#if $settings.turnUrl !== null}
+            <Button variant="text" testid="settings_turn_remove" onclick={removeTurn}>
+              {$t("native.ui.common.remove")}
+            </Button>
+          {/if}
+        </form>
       </div>
     {/if}
   </div>

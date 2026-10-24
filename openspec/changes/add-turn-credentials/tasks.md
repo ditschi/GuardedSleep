@@ -13,7 +13,7 @@ Commit after each task; `just test-affected` after each task. Branch `feat/turn-
 
 - [x] 2.1 Contract models and controller: `turnUsername`, `turnPasswordSaved`, `setTurnServer`, `clearTurnServer`, memory only; validator with the same case table. Verify: Vitest.
 - [x] 2.2 ICE servers: relay STUN plus the TURN entry with `username` and `credential`. Verify: Vitest on the servers passed to `createMedia`.
-- [ ] 2.3 Settings screen fields with the same test ids; the browser-storage test covers the TURN password. Verify: Vitest; Playwright settings flow (report `SKIPPED` without browsers).
+- [x] 2.3 Settings screen fields with the same test ids; the browser-storage test covers the TURN password. Verify: Vitest; Playwright settings flow (report `SKIPPED` without browsers).
 
 ## 3. Copy and docs
 

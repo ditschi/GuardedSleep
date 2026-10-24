@@ -49,6 +49,19 @@ test("settings: theme survives a reload, language, addresses, sensitivity, forge
     await page.getByTestId("settings_url_remove_0").click();
     await expect(page.getByTestId("settings_url_list")).not.toContainText("relay.example.test");
 
+    // TURN server: both credentials or neither, the password is never shown again.
+    await page.getByTestId("settings_turn").fill("turn:turn.example.test:3478");
+    await page.getByTestId("settings_turn_user").fill("test-only");
+    await page.getByTestId("settings_turn_save").click();
+    await expect(page.getByTestId("settings_turn_error")).toBeVisible();
+    await page.getByTestId("settings_turn_pass").fill("pw");
+    await page.getByTestId("settings_turn_save").click();
+    await expect(page.getByTestId("settings_turn_pass_saved")).toBeVisible();
+    await expect(page.getByTestId("settings_turn_pass")).toHaveValue("");
+    await expectNoAxeViolations(page);
+    await page.getByTestId("settings_turn_remove").click();
+    await expect(page.getByTestId("settings_turn")).toHaveValue("");
+
     // Pair, then sensitivity (baby device only) and forgetting the pairing.
     await pairWeb(dual);
     await page.getByTestId("baby_settings").click();
