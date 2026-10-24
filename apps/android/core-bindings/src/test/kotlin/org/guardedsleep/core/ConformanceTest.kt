@@ -71,6 +71,7 @@ class ConformanceTest {
                     LinkConfig(
                         role = if (c.getString("role") == "baby") Role.BABY else Role.PARENT,
                         pskB64url = c.getString("psk_b64url"),
+                        seed = c.getString("seed").chunked(2).map { it.toInt(16).toByte() }.toByteArray(),
                         pairedBefore = c.getBoolean("paired_before"),
                         heartbeatIntervalMs = c.getLong("heartbeat_interval_ms").toULong(),
                         alarmAfterMs = c.getLong("alarm_after_ms").toULong(),

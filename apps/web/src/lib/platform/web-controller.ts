@@ -98,6 +98,13 @@ interface Run {
 }
 
 /** Web-only failure keys of a run that could not start (no core key exists for them). */
+/** Length of the core's CSPRNG seed (the seed field of the link config, sent as hex). */
+const SEED_BYTES = 32;
+
+function toHex(bytes: Uint8Array): string {
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 const MIC_DENIED = "mic_denied";
 const MIC_UNAVAILABLE = "mic_unavailable";
 
@@ -506,6 +513,8 @@ export class WebController implements AppController {
     return {
       role,
       psk_b64url: pskB64Url,
+      // Fresh for every run: the core derives every nonce from it, so a reused seed would repeat them.
+      seed: toHex(this.deps.randomBytes(SEED_BYTES)),
       paired_before: pairedBefore,
       heartbeat_interval_ms: heartbeat,
       alarm_after_ms: alarmAfter,

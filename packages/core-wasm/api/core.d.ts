@@ -59,6 +59,14 @@ export interface LinkConfig {
      */
     psk_b64url: string;
     /**
+     * 32 fresh random bytes for the in-core CSPRNG (envelope nonces, session nonces, parent
+     * secret). The platform draws a new seed for every run (Android `SecureRandom`, web
+     * `crypto.getRandomValues`); reusing one would repeat nonces under a long-lived key.
+     * Secret-class: never logged. `Link::new` fails without exactly 32 bytes, takes the bytes
+     * and wipes its copy. JSON form: 64 hex characters.
+     */
+    seed: string;
+    /**
      * The PSK was verified successfully in an earlier run, so a mismatch is never terminal.
      */
     paired_before?: boolean;
@@ -135,7 +143,7 @@ export type LinkAction = { type: "open_signaling" } | { type: "close_signaling" 
 
 export type LinkEvent = { type: "status"; status: LinkStatus } | { type: "link_lost"; down_ms: number } | { type: "link_restored"; down_ms: number } | { type: "security_warning"; key: string } | { type: "peer_stopped" } | { type: "alarm_acknowledged"; until_ms: number } | { type: "noise_alert"; rms: number; probe: boolean; snoozed: boolean } | { type: "peer_heartbeat"; seq: number; rms: number | null } | { type: "peer_status"; status: DeviceStatus } | { type: "low_battery"; pct: number; critical: boolean } | { type: "charger_unplugged" } | { type: "missed_events"; count: number; max_rms: number; complete: boolean; down_ms: number } | { type: "noise_gate_changed"; threshold: number; hold_ms: number } | { type: "listen_changed"; enabled: boolean } | { type: "failed"; reason: string };
 
-export type LinkInput = { type: "start"; entropy: number } | { type: "stop" } | { type: "acknowledge_alarm" } | { type: "network_available" } | { type: "signaling_opened" } | { type: "signaling_message"; text: string } | { type: "signaling_closed" } | { type: "attempt_local_description"; attempt: number; sdp_type: string; sdp: string } | { type: "attempt_local_ice"; attempt: number; candidate: IceCandidate } | { type: "attempt_data_open"; attempt: number } | { type: "attempt_data_message"; attempt: number; text: string } | { type: "attempt_data_closed"; attempt: number } | { type: "attempt_dtls_fingerprint"; attempt: number; fingerprint: string } | { type: "attempt_pc_state"; attempt: number; state: string } | { type: "audio_level"; rms: number } | { type: "device_status"; status: DeviceStatus } | { type: "set_noise_gate"; threshold: number; hold_ms: number } | { type: "set_listen"; enabled: boolean } | { type: "request_probe" } | { type: "set_snooze"; until_ms: number | null } | { type: "request_quiet" } | { type: "quiet_applied"; state: DeviceStatus } | { type: "tick" };
+export type LinkInput = { type: "start"; entropy: number } | { type: "wall_clock"; unix_s: number } | { type: "stop" } | { type: "acknowledge_alarm" } | { type: "network_available" } | { type: "signaling_opened" } | { type: "signaling_message"; text: string } | { type: "signaling_closed" } | { type: "attempt_local_description"; attempt: number; sdp_type: string; sdp: string } | { type: "attempt_local_ice"; attempt: number; candidate: IceCandidate } | { type: "attempt_data_open"; attempt: number } | { type: "attempt_data_message"; attempt: number; text: string } | { type: "attempt_data_closed"; attempt: number } | { type: "attempt_dtls_fingerprint"; attempt: number; fingerprint: string } | { type: "attempt_pc_state"; attempt: number; state: string } | { type: "audio_level"; rms: number } | { type: "device_status"; status: DeviceStatus } | { type: "set_noise_gate"; threshold: number; hold_ms: number } | { type: "set_listen"; enabled: boolean } | { type: "request_probe" } | { type: "set_snooze"; until_ms: number | null } | { type: "request_quiet" } | { type: "quiet_applied"; state: DeviceStatus } | { type: "tick" };
 
 export type LinkState = "connecting" | "connected" | "reconnecting" | "peer_stopped" | "failed_needs_user" | "stopped";
 

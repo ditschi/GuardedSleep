@@ -35,6 +35,10 @@ pub const SYNTH_PSK_PREFIX: &[u8; 16] = b"GS-SYNTHETIC-PSK";
 /// First four bytes of every synthetic DTLS fingerprint ("SYNT"), lowercase hex.
 pub const SYNTH_FP_PREFIX_HEX: &str = "53594e54";
 
+/// Every simulation `Link` seed starts with these 16 bytes, so the lint can tell a test seed from
+/// a real one.
+pub const SYNTH_SEED_PREFIX: &[u8; 16] = b"GS-SYNTH-SEED-v1";
+
 pub fn synthetic_psk(name: &str) -> Vec<u8> {
     let fill = match name {
         "B" => 0xB2,
@@ -357,7 +361,8 @@ impl World {
 
     fn add_link_actor(&mut self, spec: &PeerSpec) -> Result<(), String> {
         let psk = synthetic_psk(&spec.psk);
-        let mut cfg = LinkConfig::with_defaults(spec.role, encode_psk(&psk));
+        let seed = link_seed(self.seed, &spec.id, 0);
+        let mut cfg = LinkConfig::with_defaults(spec.role, encode_psk(&psk), &seed);
         cfg.paired_before = spec.paired_before;
         if let Some(h) = spec.heartbeat_interval_ms {
             cfg.heartbeat_interval_ms = h;
@@ -822,6 +827,8 @@ impl World {
         }
         let mut cfg = self.actors[a].cfg.clone();
         cfg.paired_before = true;
+        // A restart is a new run: a new seed, as the platforms draw one per run.
+        cfg.seed = link_seed(self.seed, &self.actors[a].name, self.actors[a].instance + 1);
         let Ok(link) = Link::new(cfg.clone()) else {
             return;
         };
@@ -1841,7 +1848,8 @@ impl World {
     }
 
     pub(crate) fn add_raw_actor(&mut self, name: &str, role: Role, raw: RawState) -> usize {
-        let cfg = LinkConfig::with_defaults(role, encode_psk(&synthetic_psk("A")));
+        let seed = link_seed(self.seed, name, 0);
+        let cfg = LinkConfig::with_defaults(role, encode_psk(&synthetic_psk("A")), &seed);
         let room = raw.room.clone();
         let mut a = Actor::new(name, role, cfg, room);
         a.raw = Some(raw);
@@ -1852,6 +1860,19 @@ impl World {
     pub(crate) fn pc_close(&mut self, a: usize, h: u32) {
         self.close_attempt(a, h);
     }
+}
+
+/// Test seed of one `Link` run, derived from the scenario seed, the actor and the run number.
+/// It uses its own generator, so the world's random stream (latencies, faults) is untouched.
+/// Simulation traces record it; real seeds are never recorded.
+fn link_seed(world_seed: u64, actor: &str, run: u32) -> Vec<u8> {
+    let name_hash = actor.bytes().fold(0xcbf2_9ce4_8422_2325_u64, |h, b| {
+        (h ^ u64::from(b)).wrapping_mul(0x0100_0000_01b3)
+    });
+    let mut rng = Rng::new(world_seed ^ name_hash ^ (u64::from(run) << 48));
+    let mut seed = SYNTH_SEED_PREFIX.to_vec();
+    seed.extend((0..2).flat_map(|_| rng.next_u64().to_le_bytes()));
+    seed
 }
 
 fn valid_v3_room(room: &str) -> bool {

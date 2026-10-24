@@ -8,6 +8,7 @@
   "config": {
     "role": "parent",
     "psk_b64url": "R1MtU1lOVEhFVElDLVBTS6GhoaGhoaGhoaGhoaGhoaE",
+    "seed": "47532d53594e54482d534545442d76319adcdea57ed556b0774f4284ae0458be",
     "paired_before": true,
     "heartbeat_interval_ms": 10000,
     "alarm_after_ms": 60000,

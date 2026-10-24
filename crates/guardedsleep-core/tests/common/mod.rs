@@ -27,7 +27,7 @@ pub const BABY: usize = 0;
 pub const PARENT: usize = 1;
 
 pub fn cfg(role: Role, psk: &[u8]) -> LinkConfig {
-    let mut c = LinkConfig::with_defaults(role, encode_psk(psk));
+    let mut c = LinkConfig::with_defaults(role, encode_psk(psk), &[5u8; 32]);
     c.noise_threshold = 0.2;
     c.noise_hold_ms = 300;
     c

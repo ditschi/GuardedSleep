@@ -459,7 +459,8 @@ class LinkController(
         pairedBefore: Boolean,
         s: SettingsState,
     ): LinkConfig {
-        val base = defaultLinkConfig(role, psk)
+        // A fresh seed for every run: the core derives every nonce from it.
+        val base = defaultLinkConfig(role, psk, ByteArray(CORE_SEED_BYTES).also(random::nextBytes))
         val heartbeat =
             (DebugOptions.heartbeatMs ?: (s.heartbeatSeconds * 1000L)).coerceIn(5_000L, 15_000L)
         val liveness = 2 * heartbeat + 5_000
@@ -660,5 +661,8 @@ class LinkController(
 
     private companion object {
         const val UNREACHABLE_AFTER_MS = 20_000L
+
+        /** Length of the core CSPRNG seed (`LinkConfig.seed`). */
+        const val CORE_SEED_BYTES = 32
     }
 }

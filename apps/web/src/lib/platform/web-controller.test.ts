@@ -170,6 +170,9 @@ describe("WebController: pairing", () => {
     t.controller.refreshPairingCode();
     await flush();
     expect(t.core.configs[1]?.psk_b64url).not.toBe(first);
+    // Every run gets its own 32-byte seed, as 64 hex characters.
+    expect(t.core.configs[0]?.seed).toMatch(/^[0-9a-f]{64}$/);
+    expect(t.core.configs[1]?.seed).not.toBe(t.core.configs[0]?.seed);
     t.time.advance(500);
     expect(t.core.freed).toBe(1); // the first run said stop, flushed and was torn down
   });

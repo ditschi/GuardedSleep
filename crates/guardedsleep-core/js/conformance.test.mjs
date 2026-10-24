@@ -101,6 +101,7 @@ test("wasm link: parent joins, asks the baby for an offer and exposes the PSK-de
     JSON.stringify({
       role: "parent",
       psk_b64url: psk,
+      seed: "07".repeat(32),
       paired_before: false,
       heartbeat_interval_ms: 10000,
       alarm_after_ms: 60000,

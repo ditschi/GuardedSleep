@@ -7,6 +7,7 @@ const PSK = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8";
 const config = (role: LinkConfig["role"]): LinkConfig => ({
   role,
   psk_b64url: PSK,
+  seed: "07".repeat(32),
   heartbeat_interval_ms: 10_000,
   alarm_after_ms: 60_000,
   noise_threshold: 0.12,
@@ -94,6 +95,12 @@ describe("core-wasm wrapper", () => {
   it("rejects an invalid PSK and invalid timing", () => {
     expect(() => core.createLink({ ...config("baby"), psk_b64url: "" })).toThrow();
     expect(() => core.createLink({ ...config("baby"), alarm_after_ms: 1000 })).toThrow();
+  });
+
+  it("refuses a link without a 32-byte seed", () => {
+    expect(() => core.createLink({ ...config("baby"), seed: "" })).toThrow();
+    expect(() => core.createLink({ ...config("baby"), seed: "07".repeat(31) })).toThrow();
+    expect(() => core.createLink({ ...config("baby"), seed: "zz".repeat(32) })).toThrow();
   });
 
   describe("invite codec", () => {

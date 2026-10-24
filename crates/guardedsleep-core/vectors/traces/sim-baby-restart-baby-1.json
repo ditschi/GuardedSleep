@@ -8,6 +8,7 @@
   "config": {
     "role": "baby",
     "psk_b64url": "R1MtU1lOVEhFVElDLVBTS6GhoaGhoaGhoaGhoaGhoaE",
+    "seed": "47532d53594e54482d534545442d763144fe794ab100ffa8a749d8ba9f7c50cd",
     "paired_before": true,
     "heartbeat_interval_ms": 10000,
     "alarm_after_ms": 60000,

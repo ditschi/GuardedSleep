@@ -31,7 +31,10 @@
 
 use std::collections::VecDeque;
 
+use chacha20::ChaCha20Rng;
+use chacha20::rand_core::SeedableRng;
 use serde::{Deserialize, Serialize};
+use zeroize::Zeroize;
 
 use crate::attempt::{Attempt, AttemptConfig, AttemptEvent, DEFAULT_ATTEMPT_TIMEOUT_MS};
 use crate::noise::{GateChange, NoiseGate};
@@ -93,12 +96,58 @@ pub fn message_keys() -> &'static [&'static str] {
     ]
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+/// Length of [`LinkConfig::seed`].
+pub const SEED_LEN: usize = 32;
+
+/// The seed travels as 64 lowercase hex characters in JSON (config of the wasm binding and
+/// simulation traces); UniFFI sees plain bytes.
+mod seed_hex {
+    use serde::{Deserialize, Deserializer, Serializer, de::Error};
+
+    pub fn serialize<S: Serializer>(bytes: &[u8], s: S) -> Result<S::Ok, S::Error> {
+        let mut out = String::with_capacity(bytes.len() * 2);
+        for b in bytes {
+            out.push(char::from_digit(u32::from(b >> 4), 16).unwrap_or('0'));
+            out.push(char::from_digit(u32::from(b & 0xf), 16).unwrap_or('0'));
+        }
+        s.serialize_str(&out)
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Vec<u8>, D::Error> {
+        let text = String::deserialize(d)?;
+        if text.len() % 2 != 0 || !text.is_ascii() {
+            return Err(D::Error::custom("seed must be hex"));
+        }
+        text.as_bytes()
+            .chunks(2)
+            .map(|pair| {
+                let digit = |c: u8| char::from(c).to_digit(16).map(|v| v as u8);
+                match pair {
+                    [hi, lo] => match (digit(*hi), digit(*lo)) {
+                        (Some(h), Some(l)) => Ok((h << 4) | l),
+                        _ => Err(D::Error::custom("seed must be hex")),
+                    },
+                    _ => Err(D::Error::custom("seed must be hex")),
+                }
+            })
+            .collect()
+    }
+}
+
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub struct LinkConfig {
     pub role: Role,
     /// Pairing PSK (base64url). The room id is derived from it.
     pub psk_b64url: String,
+    /// 32 fresh random bytes for the in-core CSPRNG (envelope nonces, session nonces, parent
+    /// secret). The platform draws a new seed for every run (Android `SecureRandom`, web
+    /// `crypto.getRandomValues`); reusing one would repeat nonces under a long-lived key.
+    /// Secret-class: never logged. `Link::new` fails without exactly 32 bytes, takes the bytes
+    /// and wipes its copy. JSON form: 64 hex characters.
+    #[serde(with = "seed_hex")]
+    #[cfg_attr(feature = "tsify", tsify(type = "string"))]
+    pub seed: Vec<u8>,
     /// The PSK was verified successfully in an earlier run, so a mismatch is never terminal.
     #[serde(default)]
     pub paired_before: bool,
@@ -119,11 +168,31 @@ fn default_true() -> bool {
     true
 }
 
+// Hand-written so the PSK and the seed can never reach a log through `{:?}`.
+impl std::fmt::Debug for LinkConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LinkConfig")
+            .field("role", &self.role)
+            .field("psk_b64url", &"<redacted>")
+            .field("seed", &"<redacted>")
+            .field("paired_before", &self.paired_before)
+            .field("heartbeat_interval_ms", &self.heartbeat_interval_ms)
+            .field("alarm_after_ms", &self.alarm_after_ms)
+            .field("noise_threshold", &self.noise_threshold)
+            .field("noise_hold_ms", &self.noise_hold_ms)
+            .field("require_dtls_fingerprint", &self.require_dtls_fingerprint)
+            .finish()
+    }
+}
+
 impl LinkConfig {
-    pub fn with_defaults(role: Role, psk_b64url: String) -> Self {
+    /// `seed` is the 32 fresh random bytes of [`LinkConfig::seed`]; `Link::new` rejects any other
+    /// length.
+    pub fn with_defaults(role: Role, psk_b64url: String, seed: &[u8]) -> Self {
         Self {
             role,
             psk_b64url,
+            seed: seed.to_vec(),
             paired_before: false,
             heartbeat_interval_ms: 10_000,
             alarm_after_ms: 60_000,
@@ -195,6 +264,12 @@ pub struct LinkStatus {
 pub enum LinkInput {
     Start {
         entropy: u64,
+    },
+    /// The platform's wall clock in Unix seconds: at start, with ticks and after a time change.
+    /// Stored for the Nostr mailbox only (epoch, event times); never used for liveness or
+    /// escalation, which run on the monotonic clock.
+    WallClock {
+        unix_s: u64,
     },
     Stop,
     /// Parent: "I'm checking" - mute levels 2-3 for 5 minutes.
@@ -428,6 +503,13 @@ pub struct Link {
     has_started: bool,
     now: u64,
     rng: SplitMix64,
+    /// Cryptographic generator for nonces and secrets, seeded from `LinkConfig::seed`. Kept across
+    /// `start` so a restarted `Link` never replays a nonce stream. Consumed by the envelope
+    /// (`alpha-connection-model` tasks 2.2 and 3.2).
+    #[allow(dead_code)]
+    csprng: ChaCha20Rng,
+    /// Last `wall_clock` input (Unix seconds); read by the Nostr mailbox only.
+    wall_unix_s: Option<u64>,
     started_at: u64,
 
     sig: Sig,
@@ -505,7 +587,20 @@ fn round4(x: f64) -> f64 {
 }
 
 impl Link {
-    pub fn new(cfg: LinkConfig) -> Result<Self, ConfigError> {
+    pub fn new(mut cfg: LinkConfig) -> Result<Self, ConfigError> {
+        let mut seed: [u8; SEED_LEN] = cfg
+            .seed
+            .as_slice()
+            .try_into()
+            .map_err(|_| ConfigError::InvalidSeed)?;
+        let csprng = ChaCha20Rng::from_seed(seed);
+        seed.zeroize();
+        cfg.seed.zeroize();
+        Self::build(cfg, csprng)
+    }
+
+    /// Everything but the seed check, so `start` can rebuild the state around the live CSPRNG.
+    fn build(cfg: LinkConfig, csprng: ChaCha20Rng) -> Result<Self, ConfigError> {
         let psk = cfg.validate()?;
         let room = derive_room_id(&psk);
         let gate = NoiseGate::new(cfg.noise_threshold, cfg.noise_hold_ms);
@@ -520,6 +615,8 @@ impl Link {
             has_started: false,
             now: 0,
             rng: SplitMix64(0),
+            csprng,
+            wall_unix_s: None,
             started_at: 0,
             sig: Sig::Closed,
             sig_changed_at: 0,
@@ -579,6 +676,11 @@ impl Link {
         &self.room
     }
 
+    /// Last wall clock the platform reported (Unix seconds), for the Nostr mailbox.
+    pub fn wall_clock_unix_s(&self) -> Option<u64> {
+        self.wall_unix_s
+    }
+
     pub fn status(&self) -> Option<&LinkStatus> {
         self.last_status.as_ref()
     }
@@ -607,6 +709,7 @@ impl Link {
         }
         match input {
             LinkInput::Start { entropy } => self.on_start(now, entropy, &mut out),
+            LinkInput::WallClock { unix_s } => self.wall_unix_s = Some(unix_s),
             LinkInput::Stop => self.on_stop(&mut out),
             LinkInput::AcknowledgeAlarm => self.on_acknowledge(now, &mut out),
             LinkInput::NetworkAvailable => self.on_network_available(now, &mut out),
@@ -736,7 +839,9 @@ impl Link {
     fn on_start(&mut self, now: u64, entropy: u64, out: &mut Vec<LinkAction>) {
         let mut cfg = self.cfg.clone();
         cfg.paired_before = self.ever_verified;
-        let Ok(mut fresh) = Link::new(cfg) else {
+        // The seed was consumed in `new`; the generator carries over into the fresh state.
+        let csprng = std::mem::replace(&mut self.csprng, ChaCha20Rng::from_seed([0; SEED_LEN]));
+        let Ok(mut fresh) = Link::build(cfg, csprng) else {
             return;
         };
         fresh.now = now;
@@ -1855,7 +1960,7 @@ mod tests {
     use serde_json::json;
 
     fn cfg(role: Role) -> LinkConfig {
-        LinkConfig::with_defaults(role, encode_psk(&[3u8; 32]))
+        LinkConfig::with_defaults(role, encode_psk(&[3u8; 32]), &[7u8; 32])
     }
 
     fn started(role: Role) -> (Link, Vec<LinkAction>) {
@@ -1905,6 +2010,7 @@ mod tests {
         let c: LinkConfig = serde_json::from_value(json!({
             "role": "baby",
             "psk_b64url": encode_psk(&[3u8; 32]),
+            "seed": "07".repeat(32),
             "heartbeat_interval_ms": 10000,
             "alarm_after_ms": 60000,
             "noise_threshold": 0.2,
@@ -1922,6 +2028,68 @@ mod tests {
         assert_eq!(c.liveness_ms(), 35_000);
         c.heartbeat_interval_ms = 5_000;
         assert_eq!(c.liveness_ms(), 15_000);
+    }
+
+    #[test]
+    fn construction_needs_a_32_byte_seed() {
+        for bad in [0usize, 1, 31, 33, 64] {
+            let c = LinkConfig::with_defaults(Role::Baby, encode_psk(&[3u8; 32]), &vec![1u8; bad]);
+            assert_eq!(Link::new(c).err(), Some(ConfigError::InvalidSeed), "{bad}");
+        }
+        // A config without the field does not even parse.
+        let missing = serde_json::from_value::<LinkConfig>(json!({
+            "role": "baby",
+            "psk_b64url": encode_psk(&[3u8; 32]),
+            "heartbeat_interval_ms": 10000,
+            "alarm_after_ms": 60000,
+            "noise_threshold": 0.2,
+            "noise_hold_ms": 300
+        }));
+        assert!(missing.is_err());
+    }
+
+    #[test]
+    fn the_seed_is_hex_in_json_and_never_in_debug() {
+        let c = cfg(Role::Parent);
+        let v = serde_json::to_value(&c).unwrap();
+        assert_eq!(v["seed"], "07".repeat(32));
+        let back: LinkConfig = serde_json::from_value(v).unwrap();
+        assert_eq!(back, c);
+        let mut bad = serde_json::to_value(&c).unwrap();
+        bad["seed"] = json!("zz");
+        assert!(serde_json::from_value::<LinkConfig>(bad).is_err());
+        let dbg = format!("{c:?}");
+        assert!(!dbg.contains("0707"), "{dbg}");
+        assert!(!dbg.contains(&c.psk_b64url), "{dbg}");
+    }
+
+    #[test]
+    fn the_wall_clock_is_stored_and_changes_no_behaviour() {
+        let mut a = Link::new(cfg(Role::Baby)).unwrap();
+        let mut b = Link::new(cfg(Role::Baby)).unwrap();
+        a.handle(0, LinkInput::Start { entropy: 1 });
+        b.handle(0, LinkInput::Start { entropy: 1 });
+        assert_eq!(a.wall_clock_unix_s(), None);
+        assert!(
+            a.handle(
+                10,
+                LinkInput::WallClock {
+                    unix_s: 1_800_000_000
+                }
+            )
+            .is_empty()
+        );
+        assert_eq!(a.wall_clock_unix_s(), Some(1_800_000_000));
+        // A jump of a day moves no timer: the same ticks give the same actions.
+        a.handle(
+            20,
+            LinkInput::WallClock {
+                unix_s: 1_800_086_400,
+            },
+        );
+        for t in [1_000, 30_000, 70_000] {
+            assert_eq!(a.handle(t, LinkInput::Tick), b.handle(t, LinkInput::Tick));
+        }
     }
 
     #[test]

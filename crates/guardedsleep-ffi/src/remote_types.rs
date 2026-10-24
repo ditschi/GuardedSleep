@@ -80,6 +80,11 @@ pub struct LinkConfig {
     pub role: Role,
     /// Pairing PSK (base64url). The room id is derived from it.
     pub psk_b64url: String,
+    /// 32 fresh random bytes for the in-core CSPRNG, drawn anew for every run (Android
+    /// `SecureRandom`, web `crypto.getRandomValues`). Secret-class: never logged. `Link::new`
+    /// fails without exactly 32 bytes, takes the bytes and wipes its copy. JSON form: 64 hex
+    /// characters.
+    pub seed: Vec<u8>,
     /// The PSK was verified successfully in an earlier run, so a mismatch is never terminal.
     pub paired_before: bool,
     /// 5000..=15000.
@@ -128,6 +133,12 @@ pub struct LinkStatus {
 pub enum LinkInput {
     Start {
         entropy: u64,
+    },
+    /// The platform's wall clock in Unix seconds: at start, with ticks and after a time change.
+    /// Stored for the Nostr mailbox only (epoch, event times); never used for liveness or
+    /// escalation, which run on the monotonic clock.
+    WallClock {
+        unix_s: u64,
     },
     Stop,
     /// Parent: "I'm checking" - mute levels 2-3 for 5 minutes.

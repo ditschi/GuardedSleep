@@ -14,6 +14,7 @@ tsify = ["dep:tsify", "dep:wasm-bindgen"]
 
 [dependencies]
 base64 = "0.23"
+chacha20 = { version = "0.10.2", default-features = false, features = ["rng", "zeroize"] }
 hkdf = "0.13"
 hmac = "0.13"
 serde = { version = "1", features = ["derive"] }

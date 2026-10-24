@@ -22,6 +22,7 @@ const PSK = btoa(String.fromCharCode(...PSK_BYTES))
 const config = (role: LinkConfig["role"]): LinkConfig => ({
   role,
   psk_b64url: PSK,
+  seed: "07".repeat(32),
   heartbeat_interval_ms: 10_000,
   alarm_after_ms: 60_000,
   noise_threshold: 0.12,

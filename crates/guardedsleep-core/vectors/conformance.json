@@ -477,6 +477,7 @@
     "config": {
       "role": "baby",
       "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "seed": "0707070707070707070707070707070707070707070707070707070707070707",
       "paired_before": false,
       "heartbeat_interval_ms": 10000,
       "alarm_after_ms": 60000,
@@ -732,6 +733,7 @@
     "config": {
       "role": "parent",
       "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "seed": "0707070707070707070707070707070707070707070707070707070707070707",
       "paired_before": false,
       "heartbeat_interval_ms": 10000,
       "alarm_after_ms": 60000,
@@ -1017,6 +1019,7 @@
     "config": {
       "role": "parent",
       "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "seed": "0707070707070707070707070707070707070707070707070707070707070707",
       "paired_before": false,
       "heartbeat_interval_ms": 10000,
       "alarm_after_ms": 60000,
@@ -1218,6 +1221,7 @@
     "config": {
       "role": "parent",
       "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "seed": "0707070707070707070707070707070707070707070707070707070707070707",
       "paired_before": false,
       "heartbeat_interval_ms": 10000,
       "alarm_after_ms": 60000,
@@ -1553,6 +1557,7 @@
     "config": {
       "role": "baby",
       "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "seed": "0707070707070707070707070707070707070707070707070707070707070707",
       "paired_before": false,
       "heartbeat_interval_ms": 10000,
       "alarm_after_ms": 60000,
@@ -1738,6 +1743,7 @@
     "config": {
       "role": "parent",
       "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "seed": "0707070707070707070707070707070707070707070707070707070707070707",
       "paired_before": false,
       "heartbeat_interval_ms": 10000,
       "alarm_after_ms": 60000,
@@ -1877,6 +1883,7 @@
     "config": {
       "role": "parent",
       "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "seed": "0707070707070707070707070707070707070707070707070707070707070707",
       "paired_before": false,
       "heartbeat_interval_ms": 10000,
       "alarm_after_ms": 60000,
@@ -2016,6 +2023,7 @@
     "config": {
       "role": "parent",
       "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "seed": "0707070707070707070707070707070707070707070707070707070707070707",
       "paired_before": false,
       "heartbeat_interval_ms": 10000,
       "alarm_after_ms": 60000,
@@ -2188,6 +2196,7 @@
     "config": {
       "role": "parent",
       "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "seed": "0707070707070707070707070707070707070707070707070707070707070707",
       "paired_before": false,
       "heartbeat_interval_ms": 10000,
       "alarm_after_ms": 60000,
@@ -2355,6 +2364,7 @@
     "config": {
       "role": "parent",
       "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "seed": "0707070707070707070707070707070707070707070707070707070707070707",
       "paired_before": false,
       "heartbeat_interval_ms": 10000,
       "alarm_after_ms": 60000,
@@ -2534,6 +2544,7 @@
     "config": {
       "role": "parent",
       "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "seed": "0707070707070707070707070707070707070707070707070707070707070707",
       "paired_before": false,
       "heartbeat_interval_ms": 10000,
       "alarm_after_ms": 60000,
@@ -2693,6 +2704,7 @@
     "config": {
       "role": "baby",
       "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "seed": "0707070707070707070707070707070707070707070707070707070707070707",
       "paired_before": false,
       "heartbeat_interval_ms": 10000,
       "alarm_after_ms": 60000,
@@ -2771,6 +2783,7 @@
     "config": {
       "role": "baby",
       "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "seed": "0707070707070707070707070707070707070707070707070707070707070707",
       "paired_before": false,
       "heartbeat_interval_ms": 10000,
       "alarm_after_ms": 60000,
@@ -2852,6 +2865,7 @@
     "config": {
       "role": "baby",
       "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "seed": "0707070707070707070707070707070707070707070707070707070707070707",
       "paired_before": true,
       "heartbeat_interval_ms": 10000,
       "alarm_after_ms": 60000,
@@ -2976,6 +2990,7 @@
     "config": {
       "role": "parent",
       "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "seed": "0707070707070707070707070707070707070707070707070707070707070707",
       "paired_before": false,
       "heartbeat_interval_ms": 10000,
       "alarm_after_ms": 60000,
@@ -3124,6 +3139,7 @@
     "config": {
       "role": "parent",
       "psk_b64url": "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA",
+      "seed": "0707070707070707070707070707070707070707070707070707070707070707",
       "paired_before": false,
       "heartbeat_interval_ms": 10000,
       "alarm_after_ms": 60000,

@@ -150,7 +150,12 @@ fn input() -> impl Strategy<Value = LinkInput> {
 }
 
 fn run(role: Role, steps: Vec<(u64, LinkInput)>) {
-    let mut link = Link::new(LinkConfig::with_defaults(role, encode_psk(&PSK))).unwrap();
+    let mut link = Link::new(LinkConfig::with_defaults(
+        role,
+        encode_psk(&PSK),
+        &[9u8; 32],
+    ))
+    .unwrap();
     let mut live: HashSet<u32> = HashSet::new();
     let mut now = 0u64;
     for (dt, input) in steps {

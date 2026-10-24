@@ -100,8 +100,9 @@ impl CoreLink {
 pub fn default_link_config(
     role: guardedsleep_core::protocol::Role,
     psk_b64url: String,
+    seed: Vec<u8>,
 ) -> LinkConfig {
-    LinkConfig::with_defaults(role, psk_b64url)
+    LinkConfig::with_defaults(role, psk_b64url, &seed)
 }
 
 /// Every status key, cause hint and security-warning key the core can emit.

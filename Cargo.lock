@@ -332,6 +332,7 @@ dependencies = [
  "cfg-if",
  "cpufeatures 0.3.1",
  "rand_core 0.10.1",
+ "zeroize",
 ]
 
 [[package]]
@@ -636,6 +637,7 @@ name = "guardedsleep-core"
 version = "0.0.1"
 dependencies = [
  "base64 0.23.1",
+ "chacha20",
  "hkdf",
  "hmac",
  "proptest",

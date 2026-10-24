@@ -113,7 +113,7 @@ impl<UT> uniffi_core::ffi_converter_traits::TypeId<UT> for guardedsleep_ffi::Par
 pub const guardedsleep_ffi::ParsedInvite::TYPE_ID_META: uniffi_core::metadata::MetadataBuffer
 pub fn guardedsleep_ffi::build_invite(alloc::vec::Vec<u8>, alloc::vec::Vec<alloc::string::String>, u64) -> core::result::Result<alloc::string::String, guardedsleep_ffi::InviteError>
 pub fn guardedsleep_ffi::conformance_eval(alloc::string::String) -> alloc::string::String
-pub fn guardedsleep_ffi::default_link_config(guardedsleep_core::protocol::Role, alloc::string::String) -> guardedsleep_core::link::LinkConfig
+pub fn guardedsleep_ffi::default_link_config(guardedsleep_core::protocol::Role, alloc::string::String, alloc::vec::Vec<u8>) -> guardedsleep_core::link::LinkConfig
 pub fn guardedsleep_ffi::default_session_config(guardedsleep_core::protocol::Role, alloc::string::String, core::option::Option<alloc::string::String>) -> guardedsleep_core::session::SessionConfig
 pub fn guardedsleep_ffi::derive_room_id(alloc::vec::Vec<u8>) -> alloc::string::String
 pub fn guardedsleep_ffi::encode_psk(alloc::vec::Vec<u8>) -> alloc::string::String

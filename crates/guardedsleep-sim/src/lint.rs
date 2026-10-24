@@ -6,7 +6,7 @@ use guardedsleep_core::pairing::decode_psk;
 use serde_json::Value;
 
 use crate::trace::TRACE_SCHEMA;
-use crate::world::{SYNTH_FP_PREFIX_HEX, SYNTH_PSK_PREFIX};
+use crate::world::{SYNTH_FP_PREFIX_HEX, SYNTH_PSK_PREFIX, SYNTH_SEED_PREFIX};
 
 const TOP_LEVEL: &[&str] = &[
     "schema", "id", "class", "privacy", "origin", "seed", "config", "steps", "expect", "final",
@@ -50,6 +50,17 @@ pub fn lint_trace(text: &str) -> Vec<String> {
     let psk_bytes = decode_psk(psk).unwrap_or_default();
     if !psk_bytes.starts_with(SYNTH_PSK_PREFIX) {
         errs.push("config.psk_b64url is not a declared synthetic PSK".into());
+    }
+    // The seed predicts every nonce and secret of a run: a real one must never be committed.
+    let seed_hex: String = SYNTH_SEED_PREFIX
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect();
+    if !doc["config"]["seed"]
+        .as_str()
+        .is_some_and(|s| s.starts_with(&seed_hex))
+    {
+        errs.push("config.seed is not a declared synthetic seed".into());
     }
     match (doc["steps"].as_array(), doc["expect"].as_array()) {
         (Some(steps), Some(expect)) => {
@@ -186,9 +197,14 @@ mod tests {
 
     fn trace(extra_step_input: &str) -> String {
         let psk = guardedsleep_core::pairing::encode_psk(&synthetic_psk("A"));
+        let seed: String = SYNTH_SEED_PREFIX
+            .iter()
+            .chain(&[0u8; 16])
+            .map(|b| format!("{b:02x}"))
+            .collect();
         format!(
             r#"{{"schema":"gs-trace/1","id":"t","class":"simulated","privacy":"shareable",
-            "config":{{"role":"parent","psk_b64url":"{psk}"}},
+            "config":{{"role":"parent","psk_b64url":"{psk}","seed":"{seed}"}},
             "steps":[{{"n":0,"now":0,"input":{{"type":"signaling_message","text":"{extra_step_input}"}}}}],
             "expect":[[]]}}"#
         )
@@ -233,5 +249,14 @@ mod tests {
             "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
         );
         assert!(lint_trace(&t).iter().any(|e| e.contains("synthetic PSK")));
+    }
+
+    #[test]
+    fn rejects_a_seed_that_is_not_synthetic() {
+        let t = trace("x").replace(
+            "47532d53594e54482d534545442d7631",
+            "00112233445566778899aabbccddeeff",
+        );
+        assert!(lint_trace(&t).iter().any(|e| e.contains("synthetic seed")));
     }
 }

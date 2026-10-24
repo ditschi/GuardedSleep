@@ -162,6 +162,7 @@ pub enum ConfigError {
     InvalidRoomId,
     InvalidPsk,
     InvalidTiming,
+    InvalidSeed,
 }
 
 impl std::fmt::Display for ConfigError {
@@ -170,6 +171,7 @@ impl std::fmt::Display for ConfigError {
             ConfigError::InvalidRoomId => "room id must be 1..=128 characters",
             ConfigError::InvalidPsk => "psk must be non-empty base64url",
             ConfigError::InvalidTiming => "intervals and timeouts must be > 0",
+            ConfigError::InvalidSeed => "seed must be exactly 32 bytes",
         })
     }
 }
