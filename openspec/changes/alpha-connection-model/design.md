@@ -126,6 +126,7 @@ Attempts, liveness, escalation and listen are unchanged. Loss is still detected 
   - That proves the peer is live now. Merely naming the receiver's session proves only that the peer was alive at some point in this run.
   - Non-`here` messages from a candidate never promote it; they are dropped.
   - A new confirmation replaces the previous current session and retires it.
+  - If the confirming echo is lost, the peer repeats its `here` with its open challenge. The confirmed side answers such a repeat with its echo again: one per 5 s, within the reply budget. So a lost echo costs seconds, not the 60 s challenge lifetime.
 - **Gating:** attempts and `request_offer` over Nostr are gated on a confirmed session. In the spec, "fresh" means exactly this.
 - **Receiver checks** on every message, `here` included, from the confirmed session:
   - `recipient_session` must be the receiver's current session (except for an initial `here`, where it is all zeros);
@@ -174,7 +175,7 @@ The log canary covers the PSK, every derived key, the seed, the parent secret, t
 
 **Epoch:** days since the Unix epoch, counted from **12:00 UTC**, as a u32 big-endian. The rollover therefore falls in the afternoon in Europe, not during the night.
 
-- The core needs a wall clock. A new input, `wall_clock(unix_s)`, is sent at `start`, with every tick, and after the platform observes a time change.
+- The core needs a wall clock. A new input, `wall_clock(unix_s)`, is sent at `start`, then every 60 s, and after the platform observes a time change. Minute resolution is enough for the epoch and `created_at`, and keeps traces small.
 - The core cannot tell that its own clock is wrong. It therefore compares clocks with the peer: `here` and the DataChannel heartbeat carry the sender's wall clock. If the two differ by more than 10 minutes, the core raises the hint `clock_skew` on both devices. That is testable.
 - The `since` filter limits the tolerated skew to ±15 minutes.
 - A relay refusal that names `created_at` (too old or too new) raises `clock_skew` and does not park the relay. Spike unknown 9 measures the `created_at` tolerance per relay software.

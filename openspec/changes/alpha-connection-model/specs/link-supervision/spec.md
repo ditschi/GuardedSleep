@@ -139,7 +139,7 @@ On our relay, clients SHALL send an application `ping` every 15 s and treat a so
 
 ### Requirement: Clock and time jumps
 
-The core clock SHALL be monotonic milliseconds that include deep sleep (Android `SystemClock.elapsedRealtime()`; web `Date.now()` clamped never to go backwards), ticked at least every 500 ms while monitoring. Doze gaps SHALL be treated as time jumps. Separately, the platform SHALL report the wall clock in Unix seconds at start, with ticks and after a time change; it SHALL be used only for Nostr epochs and event times, never for liveness or escalation.
+The core clock SHALL be monotonic milliseconds that include deep sleep (Android `SystemClock.elapsedRealtime()`; web `Date.now()` clamped never to go backwards), ticked at least every 500 ms while monitoring. Doze gaps SHALL be treated as time jumps. Separately, the platform SHALL report the wall clock in Unix seconds at start, every 60 seconds and after a time change; it SHALL be used only for Nostr epochs and event times, never for liveness or escalation.
 
 #### Scenario: Ten-minute Doze gap
 
