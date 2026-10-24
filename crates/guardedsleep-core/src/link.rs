@@ -115,7 +115,7 @@ mod seed_hex {
 
     pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Vec<u8>, D::Error> {
         let text = String::deserialize(d)?;
-        if text.len() % 2 != 0 || !text.is_ascii() {
+        if !text.len().is_multiple_of(2) || !text.is_ascii() {
             return Err(D::Error::custom("seed must be hex"));
         }
         text.as_bytes()

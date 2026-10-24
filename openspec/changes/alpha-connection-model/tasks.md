@@ -26,7 +26,7 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 
   Verify: `scripts/cargo.sh test -p guardedsleep-core`, including the tests "stored stop from a retired sender session" and "corrupted copy first"; `just deny` with the dependency count re-blessed and justified; the registry check that `chacha20poly1305` and `k256` releases are on the `rand_core 0.10` generation.
 
-- [ ] 2.3 Envelope conformance vectors (valid, wrong key, own role, wrong session, replay, truncated, each bucket) through every binding, and a `cargo-fuzz` target for envelope parsing. Verify: core tests, `just test-wasm`, the fuzz target builds.
+- [x] 2.3 Envelope conformance vectors (valid, wrong key, own role, wrong session, replay, truncated, each bucket) through every binding, and a `cargo-fuzz` target for envelope parsing. Verify: core tests, `just test-wasm`, the fuzz target builds.
 
 ## 3. Core mailbox set
 

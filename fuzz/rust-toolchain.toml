@@ -1,0 +1,7 @@
+# cargo-fuzz needs a nightly compiler (sanitizer flags). This pin is deliberately independent of
+# the product pin in the root rust-toolchain.toml; it is the nightly already verified for
+# tools/nightly (cargo-public-api). Do not align it with the stable pin.
+# File format: https://rust-lang.github.io/rustup/overrides.html#the-toolchain-file
+[toolchain]
+channel = "nightly-2026-10-15"
+profile = "minimal"
