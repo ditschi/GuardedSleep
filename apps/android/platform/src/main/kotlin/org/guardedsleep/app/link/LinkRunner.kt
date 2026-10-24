@@ -80,7 +80,8 @@ class LinkRunner(
     private var lastShape: Triple<LinkState, UByte, String?>? = null
     private var lastSentStatus: DeviceStatus? = null
     private var lastSentStatusAt = 0L
-    private var lastWallS = -1L
+    private var lastWallMs = -1L
+    private var lastWallElapsedMs = 0L
 
     private val isBaby = config.role == Role.BABY
 
@@ -117,14 +118,20 @@ class LinkRunner(
 
     /**
      * The wall clock in Unix seconds, for the core's Nostr epochs only (never liveness): sent at
-     * start and with the ticks whenever the second changed, which also covers a changed device
-     * time.
+     * start, every 60 s, and when a tick sees the clock jump (more than 2 s off the elapsed
+     * monotonic time since the last report), which covers a changed device time or time zone.
      */
     private fun reportWallClock() {
-        val unixS = System.currentTimeMillis() / 1000
-        if (unixS == lastWallS) return
-        lastWallS = unixS
-        dispatch(LinkInput.WallClock(unixS.toULong()))
+        val wallMs = System.currentTimeMillis()
+        val elapsed = clock.elapsedMs()
+        val sinceMs = elapsed - lastWallElapsedMs
+        if (lastWallMs >= 0) {
+            val jumpMs = kotlin.math.abs(wallMs - lastWallMs - sinceMs)
+            if (sinceMs < WALL_CLOCK_EVERY_MS && jumpMs <= WALL_CLOCK_JUMP_MS) return
+        }
+        lastWallMs = wallMs
+        lastWallElapsedMs = elapsed
+        dispatch(LinkInput.WallClock((wallMs / 1000).toULong()))
     }
 
     /** Announces a deliberate stop to the peer, then tears everything down after a short flush. */
@@ -402,5 +409,11 @@ class LinkRunner(
     private companion object {
         const val FLUSH_MS = 300L
         const val STATS_MS = 5_000L
+
+        /** The wall clock is reported this often (the core needs minute resolution). */
+        const val WALL_CLOCK_EVERY_MS = 60_000L
+
+        /** A wall clock this far off the monotonic time since the last report is a time change. */
+        const val WALL_CLOCK_JUMP_MS = 2_000L
     }
 }

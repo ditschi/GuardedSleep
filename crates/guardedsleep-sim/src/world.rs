@@ -36,6 +36,8 @@ pub const SYNTH_PSK_PREFIX: &[u8; 16] = b"GS-SYNTHETIC-PSK";
 pub const SYNTH_FP_PREFIX_HEX: &str = "53594e54";
 /// The simulated wall clock starts at this Unix second (a synthetic value, not a date).
 const SIM_WALL_BASE_S: u64 = 1_000_000;
+/// Drivers report the wall clock this often (and after a time change).
+const WALL_CLOCK_EVERY_MS: u64 = 60_000;
 
 /// Every simulation `Link` seed starts with these 16 bytes, so the lint can tell a test seed from
 /// a real one.
@@ -216,7 +218,7 @@ pub struct Actor {
     pub sent_signals: Vec<(Time, String)>,
     pub next_raw_handle: u32,
     /// Simulated wall-clock second last reported to the link.
-    last_wall_s: Option<u64>,
+    last_wall_ms: Option<u64>,
 }
 
 impl Actor {
@@ -246,7 +248,7 @@ impl Actor {
             welcomes: Vec::new(),
             sent_signals: Vec::new(),
             next_raw_handle: 1,
-            last_wall_s: None,
+            last_wall_ms: None,
         }
     }
 }
@@ -769,18 +771,21 @@ impl World {
         let entropy = self.rng.next_u64() & 0xFFFF_FFFF;
         self.actors[a].chain += 1;
         let chain = self.actors[a].chain;
-        self.actors[a].last_wall_s = None;
+        self.actors[a].last_wall_ms = None;
         self.deliver(a, LinkInput::Start { entropy });
         self.report_wall_clock(a);
         self.push(self.now + 250, 3, Ev::Tick { actor: a, chain });
     }
 
-    /// Reports the simulated wall clock when its second changed, like a driver that sends it at
-    /// start and with the ticks. Synthetic (no real date) and not an "input" for the tick pacing.
+    /// Reports the simulated wall clock at start and then every 60 s of virtual time, like a driver
+    /// does. Synthetic (no real date) and not an "input" for the tick pacing.
     fn report_wall_clock(&mut self, a: usize) {
-        let unix_s = SIM_WALL_BASE_S + self.now / 1_000;
-        if self.actors[a].last_wall_s != Some(unix_s) {
-            self.actors[a].last_wall_s = Some(unix_s);
+        let due = self.actors[a]
+            .last_wall_ms
+            .is_none_or(|t| self.now.saturating_sub(t) >= WALL_CLOCK_EVERY_MS);
+        if due {
+            self.actors[a].last_wall_ms = Some(self.now);
+            let unix_s = SIM_WALL_BASE_S + self.now / 1_000;
             self.deliver(a, LinkInput::WallClock { unix_s });
         }
     }

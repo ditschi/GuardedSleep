@@ -158,18 +158,17 @@
       }
     },
     { "n": 23, "now": 1000, "input": { "type": "tick" } },
-    { "n": 24, "now": 1000, "input": { "type": "wall_clock", "unix_s": 1000001 } },
-    { "n": 25, "now": 1250, "input": { "type": "tick" } },
-    { "n": 26, "now": 1500, "input": { "type": "tick" } },
-    { "n": 27, "now": 1750, "input": { "type": "tick" } },
+    { "n": 24, "now": 1250, "input": { "type": "tick" } },
+    { "n": 25, "now": 1500, "input": { "type": "tick" } },
+    { "n": 26, "now": 1750, "input": { "type": "tick" } },
     {
-      "n": 28,
+      "n": 27,
       "now": 1758,
       "input": { "type": "attempt_pc_state", "attempt": 4, "state": "connected" }
     },
-    { "n": 29, "now": 1758, "input": { "type": "attempt_data_open", "attempt": 4 } },
+    { "n": 28, "now": 1758, "input": { "type": "attempt_data_open", "attempt": 4 } },
     {
-      "n": 30,
+      "n": 29,
       "now": 1758,
       "input": {
         "type": "attempt_dtls_fingerprint",
@@ -178,7 +177,7 @@
       }
     },
     {
-      "n": 31,
+      "n": 30,
       "now": 1807,
       "input": {
         "type": "attempt_data_message",
@@ -186,8 +185,7 @@
         "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"3c53cc877d728ec9e1bb47e1e64394445b2b17f28a9e9b292e47b1b81b546d54\"}"
       }
     },
-    { "n": 32, "now": 2000, "input": { "type": "tick" } },
-    { "n": 33, "now": 2000, "input": { "type": "wall_clock", "unix_s": 1000002 } }
+    { "n": 31, "now": 2000, "input": { "type": "tick" } }
   ],
   "expect": [
     [
@@ -315,7 +313,6 @@
     [],
     [],
     [],
-    [],
     [
       {
         "type": "send_data",
@@ -343,7 +340,6 @@
         }
       }
     ],
-    [],
     []
   ],
   "final": { "state": "failed_needs_user" }

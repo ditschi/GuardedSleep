@@ -118,19 +118,34 @@ function setup(role: LinkConfig["role"] = "parent", core: ScriptedCore = new Scr
 }
 
 describe("LinkDriver with a scripted core", () => {
-  it("reports the wall clock at start and when the second changes, never as a tick", () => {
+  it("reports the wall clock at start, every 60 s and after a time change", () => {
+    const base = 1_800_000_000_000;
+    let skew = 0;
+    const realNow = Date.now;
     const core = new ScriptedCore();
     const { driver, time } = setup("parent", core);
-    driver.start();
-    expect(core.wallClocks).toHaveLength(1);
-    const first = core.wallClocks[0] ?? 0;
-    expect(first).toBeGreaterThan(1_700_000_000);
-    time.advance(500);
-    time.advance(500);
-    time.advance(500);
-    // The fake timers do not move Date.now: the same second is reported once.
-    expect(core.wallClocks.length).toBeGreaterThanOrEqual(1);
-    expect(core.types()).not.toContain("wall_clock");
+    try {
+      // Date.now follows the manual time plus a skew the test controls.
+      Date.now = () => base + time.elapsedMs() + skew;
+      driver.start();
+      expect(core.wallClocks).toEqual([base / 1000]);
+      time.advance(30_000);
+      expect(core.wallClocks).toHaveLength(1);
+      time.advance(30_500);
+      expect(core.wallClocks).toHaveLength(2);
+      // The user sets the clock back by an hour: the next tick reports it at once.
+      skew = -3_600_000;
+      time.advance(500);
+      expect(core.wallClocks).toHaveLength(3);
+      expect(core.wallClocks[2]).toBeLessThan((core.wallClocks[1] ?? 0) - 3_000);
+      // A 1 s wobble is not a time change.
+      skew = -3_599_000;
+      time.advance(1_000);
+      expect(core.wallClocks).toHaveLength(3);
+      expect(core.types()).not.toContain("wall_clock");
+    } finally {
+      Date.now = realNow;
+    }
   });
 
   it("hands the seed to the core once", () => {

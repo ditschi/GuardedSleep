@@ -35,6 +35,11 @@ export interface LinkListener {
   onTornDown(): void;
 }
 
+/** The wall clock is reported this often (the core needs minute resolution). */
+const WALL_CLOCK_EVERY_MS = 60_000;
+/** A wall clock this far off the monotonic time since the last report counts as a time change. */
+const WALL_CLOCK_JUMP_MS = 2_000;
+
 export interface LinkDriverOptions {
   config: LinkConfig;
   signalingUrls: readonly string[];
@@ -73,7 +78,7 @@ export class LinkDriver {
   private tornDown = false;
   private lastSentStatus: DeviceStatus | null = null;
   private lastSentStatusAt = 0;
-  private lastWallS = -1;
+  private lastWall: { wallMs: number; elapsedMs: number } | null = null;
   private readonly isBaby: boolean;
 
   constructor(options: LinkDriverOptions) {
@@ -106,14 +111,21 @@ export class LinkDriver {
   }
 
   /**
-   * The wall clock in Unix seconds, for the core's Nostr epochs only (never liveness): sent at start
-   * and with the ticks whenever the second changed, which also covers a changed device time.
+   * The wall clock in Unix seconds, for the core's Nostr epochs only (never liveness): sent at start,
+   * every 60 s, and when a tick sees the clock jump (more than 2 s off the elapsed monotonic time
+   * since the last report), which covers a changed device time.
    */
   private reportWallClock(): void {
-    const unixS = Math.floor(Date.now() / 1000);
-    if (unixS === this.lastWallS) return;
-    this.lastWallS = unixS;
-    this.dispatch({ type: "wall_clock", unix_s: unixS });
+    const wallMs = Date.now();
+    const elapsed = this.o.clock.elapsedMs();
+    const last = this.lastWall;
+    if (last) {
+      const sinceMs = elapsed - last.elapsedMs;
+      const jumpMs = Math.abs(wallMs - last.wallMs - sinceMs);
+      if (sinceMs < WALL_CLOCK_EVERY_MS && jumpMs <= WALL_CLOCK_JUMP_MS) return;
+    }
+    this.lastWall = { wallMs, elapsedMs: elapsed };
+    this.dispatch({ type: "wall_clock", unix_s: Math.floor(wallMs / 1000) });
   }
 
   /** Announces a deliberate stop to the peer, then tears down after a short flush. */
