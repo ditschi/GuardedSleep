@@ -8,10 +8,11 @@
 use std::sync::{Arc, Mutex};
 
 use guardedsleep_core::invite::{
-    InviteError as CoreInviteError, build_invite as core_build_invite,
-    parse_invite as core_parse_invite,
+    InviteError as CoreInviteError, InviteMailbox as CoreInviteMailbox,
+    build_invite as core_build_invite, parse_invite as core_parse_invite,
 };
 use guardedsleep_core::link::{Link, LinkAction, LinkConfig, LinkInput};
+use guardedsleep_core::mailbox::MailboxKind;
 use guardedsleep_core::session::{Action, ConfigError, Input, Session, SessionConfig};
 
 mod remote_types;
@@ -162,34 +163,73 @@ impl From<CoreInviteError> for InviteError {
     }
 }
 
+/// One mailbox of an invite: its kind and the URL to open (`wss://host` for Nostr,
+/// `wss://host[:port][/path]` for an own relay, `ws://ip:port` for a LAN mailbox).
+#[derive(uniffi::Record)]
+pub struct InviteMailbox {
+    pub kind: MailboxKind,
+    pub url: String,
+}
+
+impl From<CoreInviteMailbox> for InviteMailbox {
+    fn from(m: CoreInviteMailbox) -> Self {
+        Self {
+            kind: m.kind,
+            url: m.url,
+        }
+    }
+}
+
+impl From<InviteMailbox> for CoreInviteMailbox {
+    fn from(m: InviteMailbox) -> Self {
+        Self {
+            kind: m.kind,
+            url: m.url,
+        }
+    }
+}
+
 /// A valid, unexpired invite. Holds the pairing key: no `Debug`; never log it or put it into an
 /// Intent or Bundle.
 #[derive(uniffi::Record)]
 pub struct ParsedInvite {
     pub psk: Vec<u8>,
-    pub urls: Vec<String>,
+    pub mailboxes: Vec<InviteMailbox>,
     pub expires_at_epoch_s: u64,
 }
 
-/// Parses a scanned or pasted v3 invite. `now_epoch_s` is the platform's wall clock in seconds.
+/// Parses a scanned or pasted v4 invite. `now_epoch_s` is the platform's wall clock in seconds.
+/// `allow_dev_loopback` accepts loopback `l:` entries and is for debug builds only.
 #[uniffi::export]
-pub fn parse_invite(text: String, now_epoch_s: u64) -> Result<ParsedInvite, InviteError> {
-    let invite = core_parse_invite(&text, now_epoch_s)?;
+pub fn parse_invite(
+    text: String,
+    now_epoch_s: u64,
+    allow_dev_loopback: bool,
+) -> Result<ParsedInvite, InviteError> {
+    let invite = core_parse_invite(&text, now_epoch_s, allow_dev_loopback)?;
     Ok(ParsedInvite {
         psk: invite.psk().to_vec(),
-        urls: invite.urls.clone(),
+        mailboxes: invite.mailboxes.iter().cloned().map(Into::into).collect(),
         expires_at_epoch_s: invite.expires_at_epoch_s,
     })
 }
 
-/// Builds the v3 invite text for the QR code and the copy action.
+/// Builds the v4 invite text for the QR code and the copy action; applies the size budget's drop
+/// order and fails with `NotOurCode` if the protected entries alone do not fit.
 #[uniffi::export]
 pub fn build_invite(
     psk: Vec<u8>,
-    urls: Vec<String>,
+    mailboxes: Vec<InviteMailbox>,
     expires_at_epoch_s: u64,
+    allow_dev_loopback: bool,
 ) -> Result<String, InviteError> {
-    Ok(core_build_invite(&psk, &urls, expires_at_epoch_s)?)
+    let mailboxes: Vec<CoreInviteMailbox> = mailboxes.into_iter().map(Into::into).collect();
+    Ok(core_build_invite(
+        &psk,
+        &mailboxes,
+        expires_at_epoch_s,
+        allow_dev_loopback,
+    )?)
 }
 
 #[uniffi::export]

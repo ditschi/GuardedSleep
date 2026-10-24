@@ -1,6 +1,7 @@
 import type {
   CoreApi,
   CoreLink,
+  InviteMailbox,
   LinkAction,
   LinkConfig,
   LinkInput,
@@ -17,7 +18,8 @@ import { asContext, FakeAudioContext } from "./test-audio";
 import { WebController, type NetworkWatcher } from "./web-controller";
 
 const realCore = loadCoreNode();
-const RELAY = "ws://relay.test:8787";
+const RELAY = "wss://relay.test/sig";
+const RELAY_MAILBOX: InviteMailbox = { kind: "relay", url: RELAY };
 
 /** The real invite codec; the link itself is scripted so a test decides what the core "says". */
 class ScriptedCore {
@@ -44,7 +46,8 @@ class ScriptedCore {
       },
     };
   }
-  buildInvite: CoreApi["buildInvite"] = (psk, urls, exp) => realCore.buildInvite(psk, urls, exp);
+  buildInvite: CoreApi["buildInvite"] = (psk, mailboxes, exp) =>
+    realCore.buildInvite(psk, mailboxes, exp);
   parseInvite: CoreApi["parseInvite"] = (text, now) => realCore.parseInvite(text, now);
   types(): string[] {
     return this.inputs.map((i) => i.type);
@@ -137,7 +140,7 @@ type Setup = ReturnType<typeof setup>;
 async function pairedParent(t: Setup): Promise<void> {
   t.controller.chooseRole("parent");
   const psk = Uint8Array.from({ length: 32 }, (_, i) => i + 1);
-  const invite = realCore.buildInvite(psk, [RELAY], t.time.wallMs() / 1000 + 300);
+  const invite = realCore.buildInvite(psk, [RELAY_MAILBOX], t.time.wallMs() / 1000 + 300);
   if (!invite.ok) throw new Error("invite");
   t.core.script = (input) => (input.type === "start" ? [emitStatus({ state: "connecting" })] : []);
   t.controller.submitPairingCode(invite.text);
@@ -156,7 +159,7 @@ describe("WebController: pairing", () => {
     expect(state?.phase).toBe("showing_code");
     expect(state?.expiresAtElapsedMs).toBe(300_000);
     const parsed = realCore.parseInvite(state?.codePayload ?? "", t.time.wallMs() / 1000);
-    expect(parsed.ok && parsed.invite.urls).toEqual([RELAY]);
+    expect(parsed.ok && parsed.invite.mailboxes).toEqual([RELAY_MAILBOX]);
     expect(parsed.ok && parsed.invite.expiresAtEpochS).toBe(t.time.wallMs() / 1000 + 300);
     await flush();
     // One microphone request, the relay's STUN and nothing else, one core link, one socket.
@@ -241,7 +244,7 @@ describe("WebController: pairing", () => {
     const t = setup();
     t.controller.chooseRole("parent");
     const psk = new Uint8Array(32).fill(7);
-    const invite = realCore.buildInvite(psk, [RELAY], t.time.wallMs() / 1000 - 10);
+    const invite = realCore.buildInvite(psk, [RELAY_MAILBOX], t.time.wallMs() / 1000 - 10);
     if (!invite.ok) throw new Error("invite");
     t.controller.submitPairingCode(invite.text);
     expect(get(t.controller.pairing)).toMatchObject({ phase: "failed", error: "expired" });
@@ -250,7 +253,11 @@ describe("WebController: pairing", () => {
   it("parent: connects with the invite's relay and shows 'unreachable' after 20 s", async () => {
     const t = setup();
     t.controller.chooseRole("parent");
-    const invite = realCore.buildInvite(new Uint8Array(32).fill(9), ["wss://other.example"], 1e10);
+    const invite = realCore.buildInvite(
+      new Uint8Array(32).fill(9),
+      [{ kind: "relay", url: "wss://other.example" }],
+      1e10,
+    );
     if (!invite.ok) throw new Error("invite");
     t.controller.submitPairingCode(invite.text);
     expect(get(t.controller.pairing)?.phase).toBe("connecting");
@@ -276,7 +283,7 @@ describe("WebController: pairing", () => {
   it("a key mismatch fails pairing and ends the run", async () => {
     const t = setup();
     t.controller.chooseRole("parent");
-    const invite = realCore.buildInvite(new Uint8Array(32).fill(3), [RELAY], 1e10);
+    const invite = realCore.buildInvite(new Uint8Array(32).fill(3), [RELAY_MAILBOX], 1e10);
     if (!invite.ok) throw new Error("invite");
     t.core.script = () => [];
     t.controller.submitPairingCode(invite.text);
@@ -291,7 +298,7 @@ describe("WebController: pairing", () => {
   it("another terminal failure while pairing reads as unreachable", async () => {
     const t = setup();
     t.controller.chooseRole("parent");
-    const invite = realCore.buildInvite(new Uint8Array(32).fill(3), [RELAY], 1e10);
+    const invite = realCore.buildInvite(new Uint8Array(32).fill(3), [RELAY_MAILBOX], 1e10);
     if (!invite.ok) throw new Error("invite");
     t.controller.submitPairingCode(invite.text);
     await flush();
@@ -407,7 +414,7 @@ describe("WebController: monitoring", () => {
       signalingUrls: ["wss://mine.example"],
     }));
     t.controller.chooseRole("parent");
-    const invite = realCore.buildInvite(new Uint8Array(32).fill(5), [RELAY], 1e10);
+    const invite = realCore.buildInvite(new Uint8Array(32).fill(5), [RELAY_MAILBOX], 1e10);
     if (!invite.ok) throw new Error("invite");
     t.controller.submitPairingCode(invite.text);
     await flush();

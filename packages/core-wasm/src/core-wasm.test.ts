@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { createCoreApi, LINK_MESSAGE_KEYS, type LinkAction, type LinkConfig } from "./index.js";
+import {
+  createCoreApi,
+  LINK_MESSAGE_KEYS,
+  type InviteMailbox,
+  type LinkAction,
+  type LinkConfig,
+} from "./index.js";
 import { loadCoreNode } from "./node.js";
 
 const PSK = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8";
@@ -111,19 +117,28 @@ describe("core-wasm wrapper", () => {
 
   describe("invite codec", () => {
     const psk = Uint8Array.from({ length: 32 }, (_, i) => i);
-    const urls = ["ws://10.0.2.2:8787", "wss://a.example/sig"];
+    const mailboxes: InviteMailbox[] = [
+      { kind: "relay", url: "wss://gs.example.com:8443/sig" },
+      { kind: "nostr", url: "wss://relay.example.org" },
+      { kind: "lan", url: "ws://10.0.2.2:8787" },
+    ];
     const now = 1_700_000_000;
 
     it("builds and parses an invite as typed values", () => {
-      const built = core.buildInvite(psk, urls, now + 300);
+      const built = core.buildInvite(psk, mailboxes, now + 300);
       if (!built.ok) throw new Error("build failed");
-      expect(JSON.parse(built.text)).toEqual({ v: 3, k: PSK, s: urls, x: now + 300 });
+      expect(JSON.parse(built.text)).toEqual({
+        v: 4,
+        k: PSK,
+        m: ["r:gs.example.com:8443/sig", "n:relay.example.org", "l:10.0.2.2:8787"],
+        x: now + 300,
+      });
       const parsed = core.parseInvite(` ${built.text}\n`, now);
-      expect(parsed).toEqual({ ok: true, invite: { psk, urls, expiresAtEpochS: now + 300 } });
+      expect(parsed).toEqual({ ok: true, invite: { psk, mailboxes, expiresAtEpochS: now + 300 } });
     });
 
     it("classifies rejected texts", () => {
-      const built = core.buildInvite(psk, urls, now + 300);
+      const built = core.buildInvite(psk, mailboxes, now + 300);
       if (!built.ok) throw new Error("build failed");
       expect(core.parseInvite(built.text.slice(0, -10), now)).toEqual({
         ok: false,
@@ -136,15 +151,39 @@ describe("core-wasm wrapper", () => {
       expect(core.parseInvite(built.text, now + 300)).toEqual({ ok: false, error: "expired" });
     });
 
+    it("rejects a v3 invite", () => {
+      const v3 = JSON.stringify({ v: 3, k: PSK, s: ["wss://gs.example.com"], x: now + 300 });
+      expect(core.parseInvite(v3, now)).toEqual({ ok: false, error: "not_our_code" });
+    });
+
     it("refuses to build an invalid invite", () => {
-      expect(core.buildInvite(psk.slice(0, 16), urls, now)).toEqual({
+      const relay: InviteMailbox = { kind: "relay", url: "wss://gs.example.com" };
+      expect(core.buildInvite(psk.slice(0, 16), [relay], now)).toEqual({
         ok: false,
         error: "not_our_code",
       });
-      expect(core.buildInvite(psk, ["http://h"], now)).toEqual({
+      expect(core.buildInvite(psk, [], now)).toEqual({ ok: false, error: "not_our_code" });
+      expect(core.buildInvite(psk, [{ kind: "relay", url: "ws://h" }], now)).toEqual({
         ok: false,
         error: "not_our_code",
       });
+      expect(core.buildInvite(psk, [{ kind: "lan", url: "ws://8.8.8.8:80" }], now)).toEqual({
+        ok: false,
+        error: "not_our_code",
+      });
+    });
+
+    it("accepts loopback only when development builds ask for it", () => {
+      const loopback: InviteMailbox = { kind: "lan", url: "ws://127.0.0.1:8787" };
+      expect(core.buildInvite(psk, [loopback], now + 300)).toEqual({
+        ok: false,
+        error: "not_our_code",
+      });
+      const dev = loadCoreNode({ allowDevLoopback: true });
+      const built = dev.buildInvite(psk, [loopback], now + 300);
+      if (!built.ok) throw new Error("dev build failed");
+      expect(dev.parseInvite(built.text, now).ok).toBe(true);
+      expect(core.parseInvite(built.text, now)).toEqual({ ok: false, error: "not_our_code" });
     });
   });
 

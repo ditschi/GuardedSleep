@@ -47,7 +47,9 @@ function entropy53(): number {
  * result to the UI.
  */
 export async function createWebApp(): Promise<AppController> {
-  const core = await loadCore(wasmUrl);
+  // Dev builds (`just dev`, the browser E2E) run the signaling server on loopback, which the invite
+  // codec refuses in a release build.
+  const core = await loadCore(wasmUrl, { allowDevLoopback: import.meta.env.DEV });
   const timers = createTimers();
   const gate = createSoundGate(() => new AudioContext({ latencyHint: "interactive" }));
   const battery = watchBattery(

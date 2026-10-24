@@ -30,6 +30,7 @@ import type { SoundGate } from "./audio";
 import { BabyModel } from "./baby-model";
 import type { Clock, Timers } from "./clock";
 import { encodeBase64Url } from "./encoding";
+import { mailboxesForUrls, signalingUrlsOf } from "./invite-mailboxes";
 import { LinkDriver, type LinkListener } from "./link-driver";
 import type { InboundAudioStats, MediaEngine } from "./media-engine";
 import { idleWatch, type PageWatch } from "./page-watch";
@@ -228,7 +229,7 @@ export class WebController implements AppController {
     const invite = urls.length
       ? this.deps.core.buildInvite(
           psk,
-          urls,
+          mailboxesForUrls(urls),
           Math.floor(this.deps.clock.wallMs() / 1000) + INVITE_VALIDITY_MS / 1000,
         )
       : null;
@@ -280,7 +281,7 @@ export class WebController implements AppController {
       "parent",
       {
         pskB64Url,
-        urls: parsed.invite.urls,
+        urls: signalingUrlsOf(parsed.invite.mailboxes),
         startedAt: this.deps.clock.elapsedMs(),
         expiresAtElapsedMs: null,
         unreachableShown: false,

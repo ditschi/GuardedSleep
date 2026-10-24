@@ -73,16 +73,21 @@ pub fn derive_room_id(psk: &[u8]) -> String {
     guardedsleep_core::pairing::derive_room_id(psk)
 }
 
-/// Parses a scanned or pasted v3 invite. Returns JSON, `{"type":"ok","psk_b64url":..,"urls":[..],
-/// "expires_at_epoch_s":..}` or `{"type":"error","error":"not_our_code"|"incomplete_paste"|"expired"}`;
-/// the `packages/core-wasm` wrapper turns it into a typed result. `now_epoch_s` is wall-clock seconds.
+/// Parses a scanned or pasted v4 invite. Returns JSON, `{"type":"ok","psk_b64url":..,"mailboxes":
+/// [{"kind":"relay"|"nostr"|"lan","url":..}],"expires_at_epoch_s":..}` or `{"type":"error","error":
+/// "not_our_code"|"incomplete_paste"|"expired"}`; the `packages/core-wasm` wrapper turns it into a
+/// typed result. `now_epoch_s` is wall-clock seconds; `allow_dev_loopback` is for dev builds only.
 #[wasm_bindgen(js_name = parseInvite)]
-pub fn parse_invite(text: &str, now_epoch_s: f64) -> String {
-    match guardedsleep_core::invite::parse_invite(text, now_epoch_s.max(0.0) as u64) {
+pub fn parse_invite(text: &str, now_epoch_s: f64, allow_dev_loopback: bool) -> String {
+    match guardedsleep_core::invite::parse_invite(
+        text,
+        now_epoch_s.max(0.0) as u64,
+        allow_dev_loopback,
+    ) {
         Ok(inv) => serde_json::json!({
             "type": "ok",
             "psk_b64url": guardedsleep_core::pairing::encode_psk(inv.psk()),
-            "urls": inv.urls,
+            "mailboxes": inv.mailboxes,
             "expires_at_epoch_s": inv.expires_at_epoch_s,
         }),
         Err(e) => serde_json::json!({ "type": "error", "error": e.as_str() }),
@@ -90,15 +95,25 @@ pub fn parse_invite(text: &str, now_epoch_s: f64) -> String {
     .to_string()
 }
 
-/// Builds the v3 invite text. Throws the snake_case error key if the inputs are not a valid invite.
+/// Builds the v4 invite text from a JSON array of `{"kind","url"}` mailboxes (the
+/// `packages/core-wasm` wrapper passes typed values). Throws the snake_case error key if the inputs
+/// are not a valid invite or the protected entries alone exceed the size budget.
 #[wasm_bindgen(js_name = buildInvite)]
 pub fn build_invite(
     psk: &[u8],
-    urls: Vec<String>,
+    mailboxes_json: &str,
     expires_at_epoch_s: f64,
+    allow_dev_loopback: bool,
 ) -> Result<String, JsError> {
-    guardedsleep_core::invite::build_invite(psk, &urls, expires_at_epoch_s.max(0.0) as u64)
-        .map_err(|e| JsError::new(e.as_str()))
+    let mailboxes: Vec<guardedsleep_core::invite::InviteMailbox> =
+        serde_json::from_str(mailboxes_json).map_err(|_| JsError::new("not_our_code"))?;
+    guardedsleep_core::invite::build_invite(
+        psk,
+        &mailboxes,
+        expires_at_epoch_s.max(0.0) as u64,
+        allow_dev_loopback,
+    )
+    .map_err(|e| JsError::new(e.as_str()))
 }
 
 #[wasm_bindgen(js_name = conformanceEval)]

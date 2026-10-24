@@ -7,7 +7,7 @@
  * `core-wasm.test.ts` checks them against `messageKeys()` and a recorded sample of real actions.
  */
 
-import type { LinkAction, LinkEvent } from "../pkg/guardedsleep_wasm.js";
+import type { InviteMailbox, LinkAction, LinkEvent } from "../pkg/guardedsleep_wasm.js";
 
 export type {
   DeviceStatus,
@@ -15,6 +15,7 @@ export type {
   IceCandidate,
   LinkAction,
   LinkConfig,
+  InviteMailbox,
   LinkEvent,
   LinkInput,
   LinkState,
@@ -96,7 +97,8 @@ export function isInviteErrorKey(v: unknown): v is InviteErrorKey {
 /** A valid, unexpired invite. `psk` is the pairing key: keep it in memory only, never log it. */
 export interface Invite {
   psk: Uint8Array;
-  urls: string[];
+  /** Kind and URL of each mailbox, in invite order (`relay` = own relay, `nostr`, `lan`). */
+  mailboxes: InviteMailbox[];
   expiresAtEpochS: number;
 }
 

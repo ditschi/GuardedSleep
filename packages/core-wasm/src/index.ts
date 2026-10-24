@@ -1,5 +1,6 @@
 import type {
   BuildInviteResult,
+  InviteMailbox,
   LinkAction,
   LinkConfig,
   LinkInput,
@@ -18,8 +19,13 @@ export interface RawCoreModule {
   };
   messageKeys(): string;
   deriveRoomId(psk: Uint8Array): string;
-  parseInvite(text: string, nowEpochS: number): string;
-  buildInvite(psk: Uint8Array, urls: string[], expiresAtEpochS: number): string;
+  parseInvite(text: string, nowEpochS: number, allowDevLoopback: boolean): string;
+  buildInvite(
+    psk: Uint8Array,
+    mailboxesJson: string,
+    expiresAtEpochS: number,
+    allowDevLoopback: boolean,
+  ): string;
   conformanceEval(caseJson: string): string;
 }
 
@@ -35,15 +41,31 @@ export interface CoreApi {
   createLink(config: LinkConfig): CoreLink;
   messageKeys(): string[];
   deriveRoomId(psk: Uint8Array): string;
-  /** Parses a scanned or pasted v3 invite. `nowEpochS` is the wall clock in epoch seconds. */
+  /** Parses a scanned or pasted v4 invite. `nowEpochS` is the wall clock in epoch seconds. */
   parseInvite(text: string, nowEpochS: number): ParseInviteResult;
-  /** Builds the v3 invite text; `{ ok: false }` when the inputs are not a valid invite. */
-  buildInvite(psk: Uint8Array, urls: string[], expiresAtEpochS: number): BuildInviteResult;
+  /**
+   * Builds the v4 invite text; `{ ok: false }` when the inputs are not a valid invite or the
+   * protected entries alone exceed the size budget. Over-budget lists are trimmed by the core.
+   */
+  buildInvite(
+    psk: Uint8Array,
+    mailboxes: InviteMailbox[],
+    expiresAtEpochS: number,
+  ): BuildInviteResult;
   /** Evaluates one `vectors/conformance.json` case; the result is JSON, `{error}` for a bad case. */
   conformanceEval(caseJson: string): unknown;
 }
 
-export function createCoreApi(mod: RawCoreModule): CoreApi {
+export interface CoreOptions {
+  /**
+   * Development builds only (`import.meta.env.DEV`): also accept loopback `l:` mailboxes, because
+   * `just dev` and the browser E2E run the signaling server on 127.0.0.1. Release builds leave it off.
+   */
+  allowDevLoopback?: boolean;
+}
+
+export function createCoreApi(mod: RawCoreModule, options: CoreOptions = {}): CoreApi {
+  const allowDevLoopback = options.allowDevLoopback ?? false;
   return {
     createLink(config) {
       const raw = new mod.WasmLink(JSON.stringify(config));
@@ -62,12 +84,13 @@ export function createCoreApi(mod: RawCoreModule): CoreApi {
     messageKeys: () => JSON.parse(mod.messageKeys()) as string[],
     deriveRoomId: (psk) => mod.deriveRoomId(psk),
     parseInvite(text, nowEpochS) {
-      const out: unknown = JSON.parse(mod.parseInvite(text, nowEpochS));
+      const out: unknown = JSON.parse(mod.parseInvite(text, nowEpochS, allowDevLoopback));
       return toParseInviteResult(out);
     },
-    buildInvite(psk, urls, expiresAtEpochS) {
+    buildInvite(psk, mailboxes, expiresAtEpochS) {
       try {
-        return { ok: true, text: mod.buildInvite(psk, urls, expiresAtEpochS) };
+        const json = JSON.stringify(mailboxes);
+        return { ok: true, text: mod.buildInvite(psk, json, expiresAtEpochS, allowDevLoopback) };
       } catch (e) {
         // The core throws its snake_case error key; anything else is a genuine failure.
         const key = e instanceof Error ? e.message : e;
@@ -83,7 +106,7 @@ interface RawInviteResult {
   type?: unknown;
   error?: unknown;
   psk_b64url?: unknown;
-  urls?: unknown;
+  mailboxes?: unknown;
   expires_at_epoch_s?: unknown;
 }
 
@@ -93,20 +116,27 @@ function toParseInviteResult(out: unknown): ParseInviteResult {
   if (
     o?.type === "ok" &&
     typeof o.psk_b64url === "string" &&
-    Array.isArray(o.urls) &&
-    o.urls.every((u): u is string => typeof u === "string") &&
+    Array.isArray(o.mailboxes) &&
+    o.mailboxes.every(isInviteMailbox) &&
     typeof o.expires_at_epoch_s === "number"
   ) {
     return {
       ok: true,
       invite: {
         psk: decodeBase64Url(o.psk_b64url),
-        urls: o.urls,
+        mailboxes: o.mailboxes,
         expiresAtEpochS: o.expires_at_epoch_s,
       },
     };
   }
   throw new Error("core returned an unknown invite result shape");
+}
+
+function isInviteMailbox(v: unknown): v is InviteMailbox {
+  const m = v as Partial<Record<keyof InviteMailbox, unknown>> | null;
+  return (
+    (m?.kind === "relay" || m?.kind === "nostr" || m?.kind === "lan") && typeof m.url === "string"
+  );
 }
 
 function decodeBase64Url(s: string): Uint8Array {

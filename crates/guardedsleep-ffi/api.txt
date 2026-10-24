@@ -85,10 +85,39 @@ pub type guardedsleep_ffi::CoreSession::ReturnType = <alloc::rcs::arc::Arc<guard
 pub fn guardedsleep_ffi::CoreSession::lower_return(Self) -> core::result::Result<Self::ReturnType, uniffi_core::ffi::rustcalls::RustCallError>
 impl<UT> uniffi_core::ffi_converter_traits::TypeId<UT> for guardedsleep_ffi::CoreSession
 pub const guardedsleep_ffi::CoreSession::TYPE_ID_META: uniffi_core::metadata::MetadataBuffer
+pub struct guardedsleep_ffi::InviteMailbox
+pub guardedsleep_ffi::InviteMailbox::kind: guardedsleep_core::mailbox::MailboxKind
+pub guardedsleep_ffi::InviteMailbox::url: alloc::string::String
+impl core::convert::From<guardedsleep_core::invite::InviteMailbox> for guardedsleep_ffi::InviteMailbox
+pub fn guardedsleep_ffi::InviteMailbox::from(guardedsleep_core::invite::InviteMailbox) -> Self
+impl core::convert::From<guardedsleep_ffi::InviteMailbox> for guardedsleep_core::invite::InviteMailbox
+pub fn guardedsleep_core::invite::InviteMailbox::from(guardedsleep_ffi::InviteMailbox) -> Self
+impl<UT> uniffi_core::ffi_converter_traits::ConvertError<UT> for guardedsleep_ffi::InviteMailbox
+pub fn guardedsleep_ffi::InviteMailbox::try_convert_unexpected_callback_error(uniffi_core::ffi::callbackinterface::UnexpectedUniFFICallbackError) -> anyhow::Result<Self>
+impl<UT> uniffi_core::ffi_converter_traits::Lift<UT> for guardedsleep_ffi::InviteMailbox
+pub type guardedsleep_ffi::InviteMailbox::FfiType = <guardedsleep_ffi::InviteMailbox as uniffi_core::ffi_converter_traits::FfiConverter<UT>>::FfiType
+pub fn guardedsleep_ffi::InviteMailbox::try_lift(Self::FfiType) -> anyhow::Result<Self>
+pub fn guardedsleep_ffi::InviteMailbox::try_read(&mut &[u8]) -> anyhow::Result<Self>
+impl<UT> uniffi_core::ffi_converter_traits::LiftRef<UT> for guardedsleep_ffi::InviteMailbox
+pub type guardedsleep_ffi::InviteMailbox::LiftType = guardedsleep_ffi::InviteMailbox
+impl<UT> uniffi_core::ffi_converter_traits::LiftReturn<UT> for guardedsleep_ffi::InviteMailbox
+pub type guardedsleep_ffi::InviteMailbox::ReturnType = <guardedsleep_ffi::InviteMailbox as uniffi_core::ffi_converter_traits::Lift<UT>>::FfiType
+pub fn guardedsleep_ffi::InviteMailbox::try_lift_successful_return(Self::ReturnType) -> anyhow::Result<Self>
+impl<UT> uniffi_core::ffi_converter_traits::Lower<UT> for guardedsleep_ffi::InviteMailbox
+pub type guardedsleep_ffi::InviteMailbox::FfiType = <guardedsleep_ffi::InviteMailbox as uniffi_core::ffi_converter_traits::FfiConverter<UT>>::FfiType
+pub fn guardedsleep_ffi::InviteMailbox::lower(Self) -> Self::FfiType
+pub fn guardedsleep_ffi::InviteMailbox::write(Self, &mut alloc::vec::Vec<u8>)
+impl<UT> uniffi_core::ffi_converter_traits::LowerError<UT> for guardedsleep_ffi::InviteMailbox
+pub fn guardedsleep_ffi::InviteMailbox::lower_error(Self) -> uniffi_core::ffi::rustbuffer::RustBuffer
+impl<UT> uniffi_core::ffi_converter_traits::LowerReturn<UT> for guardedsleep_ffi::InviteMailbox
+pub type guardedsleep_ffi::InviteMailbox::ReturnType = <guardedsleep_ffi::InviteMailbox as uniffi_core::ffi_converter_traits::Lower<UT>>::FfiType
+pub fn guardedsleep_ffi::InviteMailbox::lower_return(Self) -> anyhow::Result<Self::ReturnType, uniffi_core::ffi::rustcalls::RustCallError>
+impl<UT> uniffi_core::ffi_converter_traits::TypeId<UT> for guardedsleep_ffi::InviteMailbox
+pub const guardedsleep_ffi::InviteMailbox::TYPE_ID_META: uniffi_core::metadata::MetadataBuffer
 pub struct guardedsleep_ffi::ParsedInvite
 pub guardedsleep_ffi::ParsedInvite::expires_at_epoch_s: u64
+pub guardedsleep_ffi::ParsedInvite::mailboxes: alloc::vec::Vec<guardedsleep_ffi::InviteMailbox>
 pub guardedsleep_ffi::ParsedInvite::psk: alloc::vec::Vec<u8>
-pub guardedsleep_ffi::ParsedInvite::urls: alloc::vec::Vec<alloc::string::String>
 impl<UT> uniffi_core::ffi_converter_traits::ConvertError<UT> for guardedsleep_ffi::ParsedInvite
 pub fn guardedsleep_ffi::ParsedInvite::try_convert_unexpected_callback_error(uniffi_core::ffi::callbackinterface::UnexpectedUniFFICallbackError) -> anyhow::Result<Self>
 impl<UT> uniffi_core::ffi_converter_traits::Lift<UT> for guardedsleep_ffi::ParsedInvite
@@ -111,11 +140,11 @@ pub type guardedsleep_ffi::ParsedInvite::ReturnType = <guardedsleep_ffi::ParsedI
 pub fn guardedsleep_ffi::ParsedInvite::lower_return(Self) -> anyhow::Result<Self::ReturnType, uniffi_core::ffi::rustcalls::RustCallError>
 impl<UT> uniffi_core::ffi_converter_traits::TypeId<UT> for guardedsleep_ffi::ParsedInvite
 pub const guardedsleep_ffi::ParsedInvite::TYPE_ID_META: uniffi_core::metadata::MetadataBuffer
-pub fn guardedsleep_ffi::build_invite(alloc::vec::Vec<u8>, alloc::vec::Vec<alloc::string::String>, u64) -> core::result::Result<alloc::string::String, guardedsleep_ffi::InviteError>
+pub fn guardedsleep_ffi::build_invite(alloc::vec::Vec<u8>, alloc::vec::Vec<guardedsleep_ffi::InviteMailbox>, u64, bool) -> core::result::Result<alloc::string::String, guardedsleep_ffi::InviteError>
 pub fn guardedsleep_ffi::conformance_eval(alloc::string::String) -> alloc::string::String
 pub fn guardedsleep_ffi::default_link_config(guardedsleep_core::protocol::Role, alloc::string::String, alloc::vec::Vec<u8>) -> guardedsleep_core::link::LinkConfig
 pub fn guardedsleep_ffi::default_session_config(guardedsleep_core::protocol::Role, alloc::string::String, core::option::Option<alloc::string::String>) -> guardedsleep_core::session::SessionConfig
 pub fn guardedsleep_ffi::derive_room_id(alloc::vec::Vec<u8>) -> alloc::string::String
 pub fn guardedsleep_ffi::encode_psk(alloc::vec::Vec<u8>) -> alloc::string::String
 pub fn guardedsleep_ffi::message_keys() -> alloc::vec::Vec<alloc::string::String>
-pub fn guardedsleep_ffi::parse_invite(alloc::string::String, u64) -> core::result::Result<guardedsleep_ffi::ParsedInvite, guardedsleep_ffi::InviteError>
+pub fn guardedsleep_ffi::parse_invite(alloc::string::String, u64, bool) -> core::result::Result<guardedsleep_ffi::ParsedInvite, guardedsleep_ffi::InviteError>

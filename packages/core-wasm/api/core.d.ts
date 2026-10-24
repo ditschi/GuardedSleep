@@ -41,6 +41,15 @@ export interface DeviceStatus {
 }
 
 /**
+ * One mailbox of an invite: its kind and the URL the platform opens (`wss://host` for Nostr,
+ * `wss://host[:port][/path]` for an own relay, `ws://ip:port` for a LAN mailbox).
+ */
+export interface InviteMailbox {
+    kind: MailboxKind;
+    url: string;
+}
+
+/**
  * Why a baby unit may stop monitoring reliably (mainly a web/laptop baby). Variant order is the
  * stable wire order.
  */
@@ -147,7 +156,7 @@ export type LinkInput = { type: "start"; entropy: number } | { type: "wall_clock
 
 export type LinkState = "connecting" | "connected" | "reconnecting" | "peer_stopped" | "failed_needs_user" | "stopped";
 
-export type MailboxKind = "relay";
+export type MailboxKind = "relay" | "nostr" | "lan";
 
 export type Ringer = "normal" | "vibrate" | "silent" | "unknown";
 
@@ -183,9 +192,11 @@ export class WasmSession {
 }
 
 /**
- * Builds the v3 invite text. Throws the snake_case error key if the inputs are not a valid invite.
+ * Builds the v4 invite text from a JSON array of `{"kind","url"}` mailboxes (the
+ * `packages/core-wasm` wrapper passes typed values). Throws the snake_case error key if the inputs
+ * are not a valid invite or the protected entries alone exceed the size budget.
  */
-export function buildInvite(psk: Uint8Array, urls: string[], expires_at_epoch_s: number): string;
+export function buildInvite(psk: Uint8Array, mailboxes_json: string, expires_at_epoch_s: number, allow_dev_loopback: boolean): string;
 
 export function conformanceEval(case_json: string): string;
 
@@ -197,11 +208,12 @@ export function deriveRoomId(psk: Uint8Array): string;
 export function messageKeys(): string;
 
 /**
- * Parses a scanned or pasted v3 invite. Returns JSON, `{"type":"ok","psk_b64url":..,"urls":[..],
- * "expires_at_epoch_s":..}` or `{"type":"error","error":"not_our_code"|"incomplete_paste"|"expired"}`;
- * the `packages/core-wasm` wrapper turns it into a typed result. `now_epoch_s` is wall-clock seconds.
+ * Parses a scanned or pasted v4 invite. Returns JSON, `{"type":"ok","psk_b64url":..,"mailboxes":
+ * [{"kind":"relay"|"nostr"|"lan","url":..}],"expires_at_epoch_s":..}` or `{"type":"error","error":
+ * "not_our_code"|"incomplete_paste"|"expired"}`; the `packages/core-wasm` wrapper turns it into a
+ * typed result. `now_epoch_s` is wall-clock seconds; `allow_dev_loopback` is for dev builds only.
  */
-export function parseInvite(text: string, now_epoch_s: number): string;
+export function parseInvite(text: string, now_epoch_s: number, allow_dev_loopback: boolean): string;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
@@ -209,19 +221,19 @@ export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_wasmlink_free: (a: number, b: number) => void;
     readonly __wbg_wasmsession_free: (a: number, b: number) => void;
-    readonly buildInvite: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
+    readonly buildInvite: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
     readonly conformanceEval: (a: number, b: number, c: number) => void;
     readonly deriveRoomId: (a: number, b: number, c: number) => void;
     readonly messageKeys: (a: number) => void;
-    readonly parseInvite: (a: number, b: number, c: number, d: number) => void;
+    readonly parseInvite: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmlink_handle: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmlink_new: (a: number, b: number, c: number) => void;
     readonly wasmlink_roomId: (a: number, b: number) => void;
     readonly wasmsession_handle: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmsession_new: (a: number, b: number, c: number) => void;
+    readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
     readonly __wbindgen_export: (a: number, b: number) => number;
     readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
-    readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
     readonly __wbindgen_export3: (a: number, b: number, c: number) => void;
 }
 

@@ -506,7 +506,11 @@ mod tests {
         let inv = parse_invite(&text, NOW, true).unwrap();
         assert_eq!(
             inv.mailboxes,
-            vec![lan("127.0.0.1:8787"), lan("[::1]:8787"), lan("localhost:8787")]
+            vec![
+                lan("127.0.0.1:8787"),
+                lan("[::1]:8787"),
+                lan("localhost:8787")
+            ]
         );
         // Public and link-local stay refused in development.
         for bad in ["l:8.8.8.8:80", "l:[fe80::1]:80"] {
@@ -585,7 +589,10 @@ mod tests {
         let seven = r#"["n:a.example","n:b.example","n:c.example","n:d.example","n:e.example","n:f.example","n:g.example"]"#;
         assert_eq!(parse_m(seven), Err(InviteError::NotOurCode));
         assert_eq!(parse_m(r#""n:a.example""#), Err(InviteError::NotOurCode));
-        assert_eq!(parse_m(r#"["n:a.example",5]"#), Err(InviteError::NotOurCode));
+        assert_eq!(
+            parse_m(r#"["n:a.example",5]"#),
+            Err(InviteError::NotOurCode)
+        );
     }
 
     #[test]
@@ -598,12 +605,7 @@ mod tests {
         };
         let make = |len: usize| {
             let host = format!("{}.example", pad(len));
-            payload(
-                "4",
-                &good_key(),
-                &format!(r#"["n:{host}"]"#),
-                "4000000000",
-            )
+            payload("4", &good_key(), &format!(r#"["n:{host}"]"#), "4000000000")
         };
         let base = make(1).len();
         let at_limit = make(1 + MAX_INVITE_BYTES - base);
@@ -699,7 +701,10 @@ mod tests {
         let kept = built(&list);
         assert!(kept.contains(&relay("gs.example.com")));
         assert!(kept.contains(&lan("192.168.1.5:8787")));
-        let nostrs: Vec<_> = kept.iter().filter(|m| m.kind == MailboxKind::Nostr).collect();
+        let nostrs: Vec<_> = kept
+            .iter()
+            .filter(|m| m.kind == MailboxKind::Nostr)
+            .collect();
         assert_eq!(nostrs.len(), 2);
         // The earlier Nostr entries survive, the last goes first.
         assert_eq!(nostrs[0], &long("a"));
@@ -725,7 +730,13 @@ mod tests {
 
     #[test]
     fn two_nostr_floor_is_not_crossed() {
-        let long = |c: &str| nostr(&format!("{}.{}.nostr.example.org", c.repeat(60), c.repeat(60)));
+        let long = |c: &str| {
+            nostr(&format!(
+                "{}.{}.nostr.example.org",
+                c.repeat(60),
+                c.repeat(60)
+            ))
+        };
         let list = vec![long("a"), long("b")];
         assert_eq!(
             build_invite(&psk(), &list, 4_000_000_000, false),
@@ -827,7 +838,8 @@ mod tests {
                     let port = port.map(|p| format!(":{p}")).unwrap_or_default();
                     relay(&format!("{h}{port}{}", path.unwrap_or_default()))
                 }),
-            (any::<[u8; 2]>(), 1u16..).prop_map(|(b, p)| lan(&format!("10.{}.{}.1:{p}", b[0], b[1]))),
+            (any::<[u8; 2]>(), 1u16..)
+                .prop_map(|(b, p)| lan(&format!("10.{}.{}.1:{p}", b[0], b[1]))),
             (1u16.., 1u16..).prop_map(|(s, p)| lan(&format!("[fd00::{s:x}]:{p}"))),
         ]
     }

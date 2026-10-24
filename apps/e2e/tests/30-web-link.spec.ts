@@ -18,9 +18,10 @@ import { CLIPBOARD_PERMISSIONS, pairWeb, showCode, waitForBarKind } from "./util
  */
 
 const silence = join(fixturesDir, "silence-30s.wav");
-const DEAD_SIGNALING = "ws://127.0.0.1:19999";
+// A mailbox entry; the dev build of the page accepts loopback, a release build would not.
+const DEAD_MAILBOX = "l:127.0.0.1:19999";
 
-type Invite = { v: number; k: string; s: string[]; x: number };
+type Invite = { v: number; k: string; m: string[]; x: number };
 
 async function pasteInto(page: Page, code: string): Promise<void> {
   await page.goto("/");
@@ -64,15 +65,12 @@ test("a code whose only server is unreachable says so, and a dead first address 
     const invite = JSON.parse(await showCode(dual.babyPage)) as Invite;
 
     // Only a dead address: the parent keeps trying and names the server after 20 s.
-    await pasteInto(dual.parentPage, JSON.stringify({ ...invite, s: [DEAD_SIGNALING] }));
+    await pasteInto(dual.parentPage, JSON.stringify({ ...invite, m: [DEAD_MAILBOX] }));
     await expect(dual.parentPage.getByTestId("parent_pair_error")).toBeVisible({ timeout: 60_000 });
     await dual.parentPage.getByTestId("parent_pair_back").click();
 
     // The same code with the dead address in front: the driver moves on to the real one.
-    await pasteInto(
-      dual.parentPage,
-      JSON.stringify({ ...invite, s: [DEAD_SIGNALING, ...invite.s] }),
-    );
+    await pasteInto(dual.parentPage, JSON.stringify({ ...invite, m: [DEAD_MAILBOX, ...invite.m] }));
     await waitForBarKind(dual.parentPage, "connected", 90_000);
     await expect(dual.babyPage.getByTestId("baby_status")).toHaveAttribute(
       "data-state",

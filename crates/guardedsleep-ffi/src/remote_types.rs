@@ -104,6 +104,10 @@ pub struct LinkConfig {
 pub enum MailboxKind {
     /// Our signaling relay (`signaling-relay`).
     Relay,
+    /// A Nostr relay (`n:` in an invite).
+    Nostr,
+    /// A LAN mailbox (`l:` in an invite).
+    Lan,
 }
 
 #[uniffi::remote(Enum)]

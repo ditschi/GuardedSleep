@@ -110,18 +110,19 @@ fn evaluate_value(case_json: &str) -> Result<Value, String> {
         }
         "build_invite" => {
             let psk = decode_psk(s("psk_b64url")?).ok_or("bad psk")?;
-            let mailboxes: Vec<InviteMailbox> = serde_json::from_value(
-                case.get("mailboxes").cloned().ok_or("missing mailboxes")?,
-            )
-            .map_err(|e| e.to_string())?;
+            let mailboxes: Vec<InviteMailbox> =
+                serde_json::from_value(case.get("mailboxes").cloned().ok_or("missing mailboxes")?)
+                    .map_err(|e| e.to_string())?;
             let expires = case
                 .get("expires_at_epoch_s")
                 .and_then(Value::as_u64)
                 .ok_or("missing expires_at_epoch_s")?;
-            Ok(match build_invite(&psk, &mailboxes, expires, dev_loopback(&case)) {
-                Ok(text) => json!({ "ok": text }),
-                Err(e) => json!({ "error": e.as_str() }),
-            })
+            Ok(
+                match build_invite(&psk, &mailboxes, expires, dev_loopback(&case)) {
+                    Ok(text) => json!({ "ok": text }),
+                    Err(e) => json!({ "error": e.as_str() }),
+                },
+            )
         }
         // Fixed-nonce sealing and key export exist only in test and conformance builds.
         #[cfg(any(test, feature = "conformance"))]

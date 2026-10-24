@@ -50,11 +50,11 @@ test("baby pair: QR, countdown, copy code without share, brightness, waiting", a
     // No share action anywhere on the screen.
     await expect(page.getByRole("button", { name: /share/i })).toHaveCount(0);
 
-    // The code on the clipboard is the v3 invite: 32-byte key, one signaling URL, a short expiry.
-    const invite = JSON.parse(code) as { v: number; k: string; s: string[]; x: number };
-    expect(invite.v).toBe(3);
+    // The code on the clipboard is the v4 invite: 32-byte key, one mailbox entry, a short expiry.
+    const invite = JSON.parse(code) as { v: number; k: string; m: string[]; x: number };
+    expect(invite.v).toBe(4);
     expect(Buffer.from(invite.k, "base64url")).toHaveLength(32);
-    expect(invite.s.length).toBeGreaterThan(0);
+    expect(invite.m.length).toBeGreaterThan(0);
     expect(invite.x * 1000).toBeGreaterThan(Date.now());
     expect(invite.x * 1000).toBeLessThanOrEqual(Date.now() + 300_000);
 
@@ -117,14 +117,14 @@ test("parent pair: camera only after Allow camera; paste errors per kind", async
     await submit.click();
     await expect(page.getByTestId("parent_pair_error")).toContainText("isn't a GuardedSleep code");
 
-    await field.fill('{"v":3,"k":"AAAA');
+    await field.fill('{"v":4,"k":"AAAA');
     await submit.click();
     await expect(page.getByTestId("parent_pair_error")).toContainText("incomplete");
 
     const expired = JSON.stringify({
-      v: 3,
+      v: 4,
       k: "A".repeat(43),
-      s: ["ws://127.0.0.1:1"],
+      m: ["l:127.0.0.1:1"],
       x: Math.floor(Date.now() / 1000) - 60,
     });
     await field.fill(expired);
