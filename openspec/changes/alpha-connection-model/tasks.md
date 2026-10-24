@@ -15,7 +15,7 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 ## 2. Core inputs and envelope
 
 - [x] 2.1 New `Link` inputs: a 32-byte `LinkConfig.seed`, drawn fresh for every run, feeding an in-core `ChaCha20Rng` (`chacha20` 0.10 with feature `rng`, no `rand_chacha`); and `wall_clock(unix_s)` at start, with ticks and on time changes, used only for Nostr. Construction fails without a seed. The seed is secret-class: never logged, and recorded only in simulation traces. Traces record both inputs; existing traces are re-blessed with a fixed seed and must show no other diff. Update the bindings and `just api-snapshot`. Verify: core tests, sim tests, `just api-check`.
-- [ ] 2.2 `envelope` module:
+- [x] 2.2 `envelope` module:
   - HKDF-SHA256 extract with an empty salt, then expand per purpose (`guardedsleep seal v1`, `guardedsleep nostr tag v1`, `guardedsleep nostr key v1`);
   - XChaCha20-Poly1305 (`chacha20poly1305`, feature `alloc`); nonce from the CSPRNG; nonce = envelope id;
   - associated data `"gs-env/1" ‖ role ‖ class`;

@@ -6,6 +6,7 @@
 
 pub mod attempt;
 pub mod conformance;
+pub mod envelope;
 pub mod invite;
 pub mod link;
 pub mod noise;
