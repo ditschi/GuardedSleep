@@ -4,14 +4,14 @@
 #
 # Optional: copy docker/stack/.env.example → docker/stack/.env and use
 #   --env-file docker/stack/.env
-# when you need LAN origins, different ports, or a non-default VITE_SIGNALING_URL.
+# when you need LAN origins or different ports.
 #
 # Then open http://127.0.0.1:8080/ or https://127.0.0.1:8443/ (self-signed cert; browser warning is expected).
-# Default compiled signaling URL: wss://127.0.0.1:8443/signaling (proxied to signaling:8787 for mic-friendly HTTPS).
+# The PWA connects to the origin it was served from; nginx proxies WebSocket upgrades to signaling:8787.
 #
-# PHONE / another device on your LAN: 127.0.0.1 in that URL is the phone itself — WebSocket will fail (“connection failed”).
-# Use docker/stack/.env with your PC’s LAN IP, e.g. VITE_SIGNALING_URL=wss://192.168.1.42:8443/signaling and add
-# https://192.168.1.42:8443 to SIGNALING_ALLOWED_ORIGINS, then rebuild (--build). Open https://192.168.1.42:8443 on the phone
+# PHONE / another device on your LAN: open the app via your PC’s LAN IP, never 127.0.0.1 (that is the phone itself).
+# Use docker/stack/.env with TLS_EXTRA_SAN=IP:192.168.1.42 and add https://192.168.1.42:8443 to
+# SIGNALING_ALLOWED_ORIGINS (`just stack-lan` writes both), then rebuild (--build). Open https://192.168.1.42:8443 on the phone
 # (accept the self-signed warning; hostname mismatch vs cert is normal when using the IP).
 name: guardedsleep-local
 
@@ -51,9 +51,8 @@ services:
   web:
     build:
       context: ../..
-      dockerfile: docker/mobile-web/Dockerfile
+      dockerfile: docker/web/Dockerfile
       args:
-        VITE_SIGNALING_URL: "${VITE_SIGNALING_URL:-wss://127.0.0.1:8443/signaling}"
         TLS_EXTRA_SAN: "${TLS_EXTRA_SAN:-}"
     image: guardedsleep-web:local
     ports:

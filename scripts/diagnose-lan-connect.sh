@@ -8,11 +8,10 @@ WEB_PORT="${WEB_PORT:-5173}"
 SIGNAL_PORT="${SIGNAL_PORT:-8787}"
 E2E_SIGNAL_PORT="${GUARDEDSLEEP_E2E_SIGNAL_PORT:-18787}"
 WEB_HTTPS_PORT="${WEB_HTTPS_PORT:-8443}"
-VITE_SIGNALING_URL="${VITE_SIGNALING_URL:-}"
 
 if [[ -f "$ROOT/docker/stack/.env" ]]; then
   # shellcheck disable=SC1090
-  eval "$(grep -E '^(WEB_HTTPS_PORT|VITE_SIGNALING_URL)=' "$ROOT/docker/stack/.env" | sed 's/^/export /')"
+  eval "$(grep -E '^(WEB_HTTPS_PORT)=' "$ROOT/docker/stack/.env" | sed 's/^/export /')"
 fi
 
 LAN_IP="$(bash "$ROOT/scripts/stack-lan-env.sh" --dry-run 2>/dev/null | sed -n 's/^# Host LAN IP: //p' | head -1)"
@@ -29,8 +28,8 @@ echo "LAN IP:            $LAN_IP"
 echo "Dev PWA:           http://${LAN_IP}:${WEB_PORT}/"
 echo "Dev signaling:     ws://${LAN_IP}:${SIGNAL_PORT}     (just dev)"
 echo "E2E signaling:     ws://${LAN_IP}:${E2E_SIGNAL_PORT}  (just e2e)"
-if [[ -n "$VITE_SIGNALING_URL" ]]; then
-  echo "Docker signaling:  ${VITE_SIGNALING_URL}"
+if [[ -f "$ROOT/docker/stack/.env" ]]; then
+  echo "Docker signaling:  wss://${LAN_IP}:${WEB_HTTPS_PORT} (same origin as the PWA)"
   echo "Docker PWA:        https://${LAN_IP}:${WEB_HTTPS_PORT}/"
 fi
 echo ""

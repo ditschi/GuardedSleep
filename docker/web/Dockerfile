@@ -1,6 +1,8 @@
 # syntax=docker/dockerfile:1
-# Static PWA (SvelteKit adapter-static) behind nginx. Build from repository root:
-#   docker build -f docker/mobile-web/Dockerfile --build-arg VITE_SIGNALING_URL=wss://signal.example.com -t guardedsleep-web:local .
+# Static PWA (apps/web: Vite + Svelte 5, no SvelteKit) behind nginx. Build from repository root:
+#   docker build -f docker/web/Dockerfile -t guardedsleep-web:local .
+# The PWA infers its signaling URL from the page origin (nginx proxies /signaling), so there is no
+# build-time signaling URL.
 # Localization bundles come from the Rust generator (locales/*.json -> JSON), not from Node.
 FROM rust:1-bookworm@sha256:665b6e0a9290a7298236c08c6e4f1e754e3f0d9b70421c434daa3dfba888d63e AS i18n
 WORKDIR /src
@@ -39,19 +41,18 @@ RUN PNPM_VERSION="$(sed -n 's/^pnpm *= *"\(.*\)"/\1/p' /tmp/mise.toml)" \
 
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY packages/core-wasm/package.json packages/core-wasm/
-COPY apps/mobile/package.json apps/mobile/
+COPY apps/web/package.json apps/web/
 
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
 COPY packages/core-wasm/src packages/core-wasm/src
 COPY --from=wasm /out packages/core-wasm/pkg
-COPY apps/mobile apps/mobile
-COPY --from=i18n /out apps/mobile/src/lib/i18n/generated
+COPY apps/web apps/web
+COPY --from=i18n /out apps/web/src/lib/i18n/generated
 
-ARG VITE_SIGNALING_URL=
-ENV VITE_SIGNALING_URL=$VITE_SIGNALING_URL
-
-RUN pnpm --filter @guardedsleep/mobile exec vite build
+# `vite build` directly: the package's `prebuild` hook would run cargo, and both generated inputs
+# (i18n, WASM core) come from the stages above.
+RUN pnpm --filter @guardedsleep/web exec vite build
 
 FROM nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10 AS runner
 
@@ -67,8 +68,8 @@ RUN apk add --no-cache openssl \
 		-subj "/CN=localhost" \
 		-addext "subjectAltName=$SAN"
 
-COPY docker/mobile-web/nginx.default.conf /etc/nginx/conf.d/default.conf
-COPY --from=builder /app/apps/mobile/build /usr/share/nginx/html
+COPY docker/web/nginx.default.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
 
 EXPOSE 80 443
 

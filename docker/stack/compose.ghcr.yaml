@@ -1,5 +1,5 @@
 # GuardedSleep full stack — pulls pre-built images from GHCR.
-# See ADR-008 for the tag strategy and docs/contributing/mobile-web-docker.md for end-to-end docs.
+# See ADR-008 for the tag strategy and docs/contributing/web-docker.md for end-to-end docs.
 #
 # Minimum usage (no clone of the repo required):
 #   1. Download this file and `.env.ghcr.example` to an empty directory.

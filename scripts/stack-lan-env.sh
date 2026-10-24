@@ -90,7 +90,6 @@ detect_lan_ipv4() {
 
 LAN_IP="$(detect_lan_ipv4)"
 
-VITE_SIGNALING_URL="wss://${LAN_IP}:${WEB_HTTPS_PORT}/signaling"
 SIGNALING_ALLOWED_ORIGINS="http://127.0.0.1:${WEB_PORT},http://localhost:${WEB_PORT},https://127.0.0.1:${WEB_HTTPS_PORT},https://localhost:${WEB_HTTPS_PORT},http://${LAN_IP}:${WEB_PORT},https://${LAN_IP}:${WEB_HTTPS_PORT}"
 TLS_EXTRA_SAN="IP:${LAN_IP}"
 
@@ -101,7 +100,6 @@ WEB_HTTPS_PORT=${WEB_HTTPS_PORT}
 TLS_EXTRA_SAN=${TLS_EXTRA_SAN}
 SIGNALING_PORT=${SIGNALING_PORT}
 SIGNALING_INTERNAL_PORT=${SIGNALING_INTERNAL_PORT}
-VITE_SIGNALING_URL=${VITE_SIGNALING_URL}
 SIGNALING_ALLOWED_ORIGINS=${SIGNALING_ALLOWED_ORIGINS}
 "
 
@@ -109,7 +107,7 @@ if [[ "$DRY_RUN" == true ]]; then
   printf '%s' "$ENV_CONTENT"
   echo "---"
   echo "PWA (phone):  https://${LAN_IP}:${WEB_HTTPS_PORT}/"
-  echo "Signaling URL: ${VITE_SIGNALING_URL}"
+  echo "Signaling:     wss://${LAN_IP}:${WEB_HTTPS_PORT} (same origin, proxied by nginx)"
   exit 0
 fi
 
@@ -118,6 +116,6 @@ printf '%s' "$ENV_CONTENT" >"$ENV_FILE"
 echo "Wrote ${ENV_FILE}"
 echo "  LAN IP:          ${LAN_IP}"
 echo "  Open on phone:   https://${LAN_IP}:${WEB_HTTPS_PORT}/"
-echo "  Signaling (WSS): ${VITE_SIGNALING_URL}"
+echo "  Signaling (WSS): wss://${LAN_IP}:${WEB_HTTPS_PORT} (same origin)"
 echo ""
 echo "Next: just stack-up   (or just stack-lan to regenerate .env and start)"

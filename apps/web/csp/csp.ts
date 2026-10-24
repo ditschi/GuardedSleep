@@ -1,6 +1,6 @@
 /*
  * The Content-Security-Policy of the web client, in one place (rebuild-web-client design.md,
- * "Browser security"). Two hosts send it as a header (nginx in docker/mobile-web, `--serve-web` in
+ * "Browser security"). Two hosts send it as a header (nginx in docker/web, `--serve-web` in
  * crates/guardedsleep-server/src/csp.rs) and index.html carries it as a <meta> fallback; this
  * module builds the <meta> value, and `csp.test.ts` fails when either header drifts from it.
  *

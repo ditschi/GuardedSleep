@@ -63,7 +63,7 @@ describe("buildCsp", () => {
 
 describe("the three places that carry the policy agree", () => {
   it("nginx sends the same policy on every server and index.html location", () => {
-    const conf = read("docker/mobile-web/nginx.default.conf");
+    const conf = read("docker/web/nginx.default.conf");
     const values = [...conf.matchAll(/add_header Content-Security-Policy "([^"]+)" always;/g)].map(
       (m) => m[1],
     );
