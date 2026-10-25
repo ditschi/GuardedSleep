@@ -245,10 +245,10 @@ impl World {
     }
 
     pub(super) fn nostr_close(&mut self, a: usize, id: MailboxId) {
-        if let Some(nsock) = self.nostr.by_actor.remove(&(a, id)) {
-            if let Some(s) = self.nostr.socks.remove(&nsock) {
-                self.nostr.closes.push((a, s.url, self.now));
-            }
+        if let Some(nsock) = self.nostr.by_actor.remove(&(a, id))
+            && let Some(s) = self.nostr.socks.remove(&nsock)
+        {
+            self.nostr.closes.push((a, s.url, self.now));
         }
     }
 
