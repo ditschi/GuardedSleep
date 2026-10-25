@@ -45,6 +45,7 @@ crates/
   guardedsleep-sim/     Host simulation (gs-scenario), trace recording                                [exists; short name `sim`]
   i18n-gen/ , uniffi-bindgen/                                                                         [exist]
   public-lists/         Validator and generator for data/*.json (curated relays and STUN) -> web module, Kotlin, CSP origins [exists]
+  gs-soak/              Go/no-go tooling for the public Nostr relays: soak of two real Links, burst test, event signer (`just soak`, docs/contributing/relay-soak.md); never released [exists]
   guardedsleep-ffi/     UniFFI façade (libguardedsleep_ffi.so, Kotlin bindings); api.txt snapshot      [exists; short name `ffi`]
   guardedsleep-wasm/    wasm-bindgen + tsify façade for the web client; api.txt snapshot                [exists; short name `wasm`]
   guardedsleep-relay/   Sans-IO signaling relay: rooms, limits, LAN admission                          [exists]
