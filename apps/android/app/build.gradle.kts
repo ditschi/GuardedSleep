@@ -34,6 +34,11 @@ android {
         }
     }
 
+    // AppLocale can switch to any shipped language at runtime, so the bundle must not split
+    // resources by device language. Doc:
+    // https://developer.android.com/guide/app-bundle/configure-base#handle_language_changes
+    bundle { language { enableSplit = false } }
+
     testOptions { unitTests.isIncludeAndroidResources = true }
 }
 

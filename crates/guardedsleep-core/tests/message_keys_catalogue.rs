@@ -70,3 +70,45 @@ fn every_core_message_key_exists_in_the_master_catalogue() {
         missing.join(", ")
     );
 }
+
+/// Keys of the catalogue's `core` group (as `core.<name>`) that no entry of `keys` produces: a
+/// message the core can no longer emit, which would otherwise ship unused.
+fn stray_keys(catalogue: &Value, keys: &[&str]) -> Vec<String> {
+    let known: Vec<String> = keys.iter().map(|k| camel_case(k)).collect();
+    catalogue
+        .get("core")
+        .and_then(Value::as_object)
+        .map(|group| {
+            group
+                .keys()
+                .filter(|name| !known.contains(name))
+                .map(|name| format!("core.{name}"))
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+#[test]
+fn a_stray_core_key_is_reported_by_its_catalogue_name() {
+    let catalogue: Value =
+        serde_json::from_str(r#"{"core":{"peerAbsent":"x","oldKey":"y"},"native":{"other":"z"}}"#)
+            .unwrap();
+    assert_eq!(
+        stray_keys(&catalogue, &["peer_absent"]),
+        vec!["core.oldKey".to_string()]
+    );
+    assert!(stray_keys(&catalogue, &["peer_absent", "old_key"]).is_empty());
+    let empty: Value = serde_json::from_str("{}").unwrap();
+    assert!(stray_keys(&empty, &["peer_absent"]).is_empty());
+}
+
+#[test]
+fn every_core_catalogue_key_is_a_core_message_key() {
+    let catalogue: Value = serde_json::from_str(EN).unwrap();
+    let stray = stray_keys(&catalogue, message_keys());
+    assert!(
+        stray.is_empty(),
+        "locales/en.json has core keys that message_keys() does not produce: {}",
+        stray.join(", ")
+    );
+}

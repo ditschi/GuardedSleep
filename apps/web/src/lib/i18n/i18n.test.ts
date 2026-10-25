@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BUNDLES, LOCALES, resolveLocale, type Bundle } from "./bundles";
+import { BUNDLES, directionOf, ENDONYMS, LOCALES, resolveLocale, type Bundle } from "./bundles";
 import { formatMessage } from "./icu";
 import { createTranslator } from "./translate";
 import { ROUTES } from "../router";
@@ -117,13 +117,32 @@ describe("resolveLocale", () => {
   });
 
   it("follows the browser languages, region tags included", () => {
-    expect(resolveLocale(null, ["pt-BR", "de-AT", "en"])).toBe("de");
+    expect(resolveLocale(null, ["sw-KE", "de-AT", "en"])).toBe("de");
     expect(resolveLocale(null, ["ES"])).toBe("es");
+    expect(resolveLocale(null, ["pt-BR"])).toBe("pt");
+    expect(resolveLocale(null, ["zh-CN"])).toBe("zh-Hans");
+    expect(resolveLocale(null, ["zh-Hans"])).toBe("zh-Hans");
   });
 
   it("falls back to English", () => {
-    expect(resolveLocale(null, ["ja"])).toBe("en");
+    expect(resolveLocale(null, ["sw"])).toBe("en");
     expect(resolveLocale("xx", [])).toBe("en");
     expect(resolveLocale(null, [])).toBe("en");
+  });
+});
+
+describe("language choice data", () => {
+  it("names every shipped locale in its own language", () => {
+    expect(LOCALES).toHaveLength(20);
+    expect(ENDONYMS.de).toBe("Deutsch");
+    expect(ENDONYMS.ja).toBe("日本語");
+    expect(ENDONYMS["zh-Hans"]).toBe("中文（简体）");
+    expect(Object.keys(ENDONYMS).sort()).toEqual([...LOCALES].sort());
+  });
+
+  it("sets right-to-left for Arabic only", () => {
+    expect(directionOf("ar")).toBe("rtl");
+    expect(directionOf("de")).toBe("ltr");
+    expect(directionOf("zh-Hans")).toBe("ltr");
   });
 });

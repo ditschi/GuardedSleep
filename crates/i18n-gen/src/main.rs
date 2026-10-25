@@ -5,6 +5,7 @@
 mod android;
 mod catalogue;
 mod critical;
+mod endonyms;
 mod icu;
 mod usage;
 mod web;
@@ -66,10 +67,10 @@ fn main() -> ExitCode {
         .unwrap_or_else(|| root.join("apps/android/ui-contract/build/generated/i18n/res"));
 
     let mut issues = Vec::new();
-    let cat = catalogue::load(
-        &arg(&argv, "--locales").unwrap_or_else(|| root.join("locales")),
-        &mut issues,
-    );
+    let locales_dir = arg(&argv, "--locales").unwrap_or_else(|| root.join("locales"));
+    let cat = catalogue::load(&locales_dir, &mut issues);
+    let endonyms = endonyms::load(&locales_dir, &mut issues);
+    endonyms.validate(&cat, &mut issues);
     let report = catalogue::validate(&cat);
     issues.extend(report.errors.iter().cloned());
     // A locale that misses a critical key is not generated (an alarm is never mixed-language);
@@ -91,9 +92,13 @@ fn main() -> ExitCode {
         ));
     }
     let shipped = cat.without(&unshipped);
-    let android_files = android::render_android(&shipped, &mut issues);
+    let mut android_files = android::render_android(&shipped, &mut issues);
+    android_files.push(endonyms::render_android_choices(&shipped, &endonyms));
     let web_files = match web::render_web(&shipped) {
-        Ok(f) => f,
+        Ok(mut f) => {
+            f.push(endonyms::render_web_module(&shipped, &endonyms));
+            f
+        }
         Err(e) => {
             issues.push(format!("web: {e}"));
             Vec::new()

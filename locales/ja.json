@@ -1,5 +1,8 @@
 {
-  "$meta": { "default": "machineTranslated", "reviewed": [] },
+  "$meta": {
+    "default": "machineTranslated",
+    "reviewed": []
+  },
   "meta": {
     "appTitle": "GuardedSleep"
   },
@@ -454,11 +457,7 @@
         "forgetBaby": "この赤ちゃん用端末を削除",
         "checkPhone": "この端末の設定を確認",
         "lang": {
-          "system": "システムに合わせる",
-          "en": "English",
-          "de": "Deutsch",
-          "fr": "Français",
-          "es": "Español"
+          "system": "システムに合わせる"
         },
         "advanced": {
           "toggle": "詳細設定を表示",

@@ -1,5 +1,8 @@
 {
-  "$meta": { "default": "machineTranslated", "reviewed": [] },
+  "$meta": {
+    "default": "machineTranslated",
+    "reviewed": []
+  },
   "meta": {
     "appTitle": "GuardedSleep"
   },
@@ -454,11 +457,7 @@
         "forgetBaby": "Lupakan perangkat bayi ini",
         "checkPhone": "Periksa pengaturan perangkat ini",
         "lang": {
-          "system": "Ikuti sistem",
-          "en": "English",
-          "de": "Deutsch",
-          "fr": "Français",
-          "es": "Español"
+          "system": "Ikuti sistem"
         },
         "advanced": {
           "toggle": "Tampilkan pengaturan lanjutan",

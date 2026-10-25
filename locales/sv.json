@@ -457,11 +457,7 @@
         "forgetBaby": "Glöm den här babyenheten",
         "checkPhone": "Kontrollera den här enhetens inställningar",
         "lang": {
-          "system": "Följ systemet",
-          "en": "English",
-          "de": "Deutsch",
-          "fr": "Français",
-          "es": "Español"
+          "system": "Följ systemet"
         },
         "advanced": {
           "toggle": "Visa avancerade inställningar",

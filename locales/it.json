@@ -457,11 +457,7 @@
         "forgetBaby": "Dimentica questo dispositivo del bambino",
         "checkPhone": "Controlla la configurazione di questo dispositivo",
         "lang": {
-          "system": "Come il sistema",
-          "en": "English",
-          "de": "Deutsch",
-          "fr": "Français",
-          "es": "Español"
+          "system": "Come il sistema"
         },
         "advanced": {
           "toggle": "Mostra le impostazioni avanzate",

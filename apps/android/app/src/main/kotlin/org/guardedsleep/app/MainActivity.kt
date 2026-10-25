@@ -1,5 +1,6 @@
 package org.guardedsleep.app
 
+import android.content.Context
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -11,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.guardedsleep.app.ui.GuardedSleepRoot
@@ -18,9 +20,24 @@ import org.guardedsleep.app.ui.model.Role
 
 @OptIn(ExperimentalComposeUiApi::class)
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(base: Context) {
+        // Android 12 and older: start in the stored language (the settings load synchronously).
+        val app = base.applicationContext as? GuardedSleepApp
+        super.attachBaseContext(
+            AppLocale.wrap(base, app?.graph?.settings?.current?.settings?.language)
+        )
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val controller = graph().controller
+        // The language choice applies at once (per-app locale API, see AppLocale).
+        lifecycleScope.launch {
+            controller.settings
+                .map { it.language }
+                .distinctUntilChanged()
+                .collect { AppLocale.apply(this@MainActivity, it) }
+        }
         // The baby phone never vibrates or clicks, not even for a touch (ADR-018 §3.1).
         lifecycleScope.launch {
             controller.app

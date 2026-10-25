@@ -457,11 +457,7 @@
         "forgetBaby": "Șterge acest dispozitiv al bebelușului",
         "checkPhone": "Verifică configurarea acestui dispozitiv",
         "lang": {
-          "system": "Ca în sistem",
-          "en": "English",
-          "de": "Deutsch",
-          "fr": "Français",
-          "es": "Español"
+          "system": "Ca în sistem"
         },
         "advanced": {
           "toggle": "Arată setările avansate",

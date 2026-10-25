@@ -457,11 +457,7 @@
         "forgetBaby": "Dit babyapparaat vergeten",
         "checkPhone": "De instelling van dit apparaat controleren",
         "lang": {
-          "system": "Systeem volgen",
-          "en": "English",
-          "de": "Deutsch",
-          "fr": "Français",
-          "es": "Español"
+          "system": "Systeem volgen"
         },
         "advanced": {
           "toggle": "Geavanceerde instellingen tonen",

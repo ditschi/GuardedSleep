@@ -1,5 +1,8 @@
 {
-  "$meta": { "default": "machineTranslated", "reviewed": [] },
+  "$meta": {
+    "default": "machineTranslated",
+    "reviewed": []
+  },
   "meta": {
     "appTitle": "GuardedSleep"
   },
@@ -454,11 +457,7 @@
         "forgetBaby": "इस बच्चे के डिवाइस को भूल जाएँ",
         "checkPhone": "इस डिवाइस का सेटअप जाँचें",
         "lang": {
-          "system": "सिस्टम के अनुसार",
-          "en": "English",
-          "de": "Deutsch",
-          "fr": "Français",
-          "es": "Español"
+          "system": "सिस्टम के अनुसार"
         },
         "advanced": {
           "toggle": "उन्नत सेटिंग दिखाएँ",

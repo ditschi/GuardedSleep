@@ -1,5 +1,8 @@
 {
-  "$meta": { "default": "machineTranslated", "reviewed": [] },
+  "$meta": {
+    "default": "machineTranslated",
+    "reviewed": []
+  },
   "meta": {
     "appTitle": "GuardedSleep"
   },
@@ -454,11 +457,7 @@
         "forgetBaby": "Забути цей пристрій дитини",
         "checkPhone": "Перевірити налаштування цього пристрою",
         "lang": {
-          "system": "Як у системі",
-          "en": "English",
-          "de": "Deutsch",
-          "fr": "Français",
-          "es": "Español"
+          "system": "Як у системі"
         },
         "advanced": {
           "toggle": "Показати додаткові налаштування",

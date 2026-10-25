@@ -457,11 +457,7 @@
         "forgetBaby": "Zapomenout toto zařízení dítěte",
         "checkPhone": "Zkontrolovat nastavení tohoto zařízení",
         "lang": {
-          "system": "Podle systému",
-          "en": "English",
-          "de": "Deutsch",
-          "fr": "Français",
-          "es": "Español"
+          "system": "Podle systému"
         },
         "advanced": {
           "toggle": "Zobrazit pokročilá nastavení",

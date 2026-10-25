@@ -1,6 +1,6 @@
 <script lang="ts">
   import { useController, type Theme } from "../lib/contract";
-  import { isLocale, LOCALES, type Locale } from "../lib/i18n/bundles";
+  import { ENDONYMS, isLocale, LOCALES } from "../lib/i18n/bundles";
   import type { MessageKey } from "../lib/i18n/keys";
   import { t } from "../lib/i18n/store";
   import { useRouter } from "../lib/router-context";
@@ -21,12 +21,6 @@
     { value: "light", label: "native.ui.settings.theme.light" },
     { value: "system", label: "native.ui.settings.theme.system" },
   ];
-  const LANGUAGE_LABELS: Record<Locale, MessageKey> = {
-    en: "native.ui.settings.lang.en",
-    de: "native.ui.settings.lang.de",
-    fr: "native.ui.settings.lang.fr",
-    es: "native.ui.settings.lang.es",
-  };
 
   function back(): void {
     const a = $app;
@@ -152,7 +146,7 @@
     >
       <option value="">{$t("native.ui.settings.lang.system")}</option>
       {#each LOCALES as code (code)}
-        <option value={code}>{$t(LANGUAGE_LABELS[code])}</option>
+        <option value={code} lang={code} dir="auto">{ENDONYMS[code]}</option>
       {/each}
     </select>
   </div>

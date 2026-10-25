@@ -455,11 +455,7 @@
         "forgetBaby": "Forget this baby device",
         "checkPhone": "Check this device's setup",
         "lang": {
-          "system": "Match system",
-          "en": "English",
-          "de": "Deutsch",
-          "fr": "Français",
-          "es": "Español"
+          "system": "Match system"
         },
         "advanced": {
           "toggle": "Show advanced settings",

@@ -10,6 +10,7 @@ pub const ANDROID_GROUPS: [&str; 3] = ["core", "native", "shared"];
 pub const META_KEY: &str = "$meta";
 /// File in `locales/` that is not a catalogue.
 pub const CRITICAL_FILE: &str = "critical.json";
+use crate::endonyms::ENDONYMS_FILE;
 pub const MARKERS: [&str; 2] = ["machineTranslated", "reviewed"];
 
 /// Messages as (dot path, ICU string) in file order.
@@ -169,7 +170,7 @@ pub fn load(dir: &Path, issues: &mut Vec<String>) -> Catalogue {
         Ok(rd) => rd
             .filter_map(|e| e.ok())
             .filter_map(|e| e.file_name().into_string().ok())
-            .filter(|n| n.ends_with(".json") && n != CRITICAL_FILE)
+            .filter(|n| n.ends_with(".json") && n != CRITICAL_FILE && n != ENDONYMS_FILE)
             .map(|n| n.trim_end_matches(".json").to_string())
             .collect(),
         Err(e) => {

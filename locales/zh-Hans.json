@@ -1,5 +1,8 @@
 {
-  "$meta": { "default": "machineTranslated", "reviewed": [] },
+  "$meta": {
+    "default": "machineTranslated",
+    "reviewed": []
+  },
   "meta": {
     "appTitle": "GuardedSleep"
   },
@@ -454,11 +457,7 @@
         "forgetBaby": "忘记此宝宝设备",
         "checkPhone": "检查此设备的设置",
         "lang": {
-          "system": "跟随系统",
-          "en": "English",
-          "de": "Deutsch",
-          "fr": "Français",
-          "es": "Español"
+          "system": "跟随系统"
         },
         "advanced": {
           "toggle": "显示高级设置",

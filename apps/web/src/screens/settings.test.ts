@@ -1,8 +1,11 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
+import { readdirSync } from "node:fs";
+import { resolve } from "node:path";
 import { get } from "svelte/store";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import App from "../App.svelte";
 import { createFakeController, type FakeController } from "../lib/contract/fake-controller";
+import { ENDONYMS, LOCALES } from "../lib/i18n/bundles";
 import { locale } from "../lib/i18n/store";
 import { THEME_STORAGE_KEY } from "../lib/theme";
 import { sensitivityOf } from "../lib/ui/sensitivity";
@@ -39,6 +42,39 @@ describe("S12 settings", () => {
     await waitFor(() => expect(document.documentElement.dataset.theme).toBe("light"));
     // The theme is no secret; this key is the only one the boot script reads.
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
+  });
+
+  it("lists the system default first, then every shipped locale by endonym", async () => {
+    open(c);
+    const select = await screen.findByTestId("settings_language");
+    const options = within(select).getAllByRole("option");
+    expect(options.map((o) => (o as HTMLOptionElement).value)).toEqual(["", ...LOCALES]);
+    expect(options[0]).toHaveTextContent("Match system");
+    expect(options.slice(1).map((o) => o.textContent)).toEqual(LOCALES.map((l) => ENDONYMS[l]));
+    expect(within(select).getByRole("option", { name: "Deutsch" })).toBeInTheDocument();
+    expect(within(select).getByRole("option", { name: "日本語" })).toBeInTheDocument();
+    // Each name carries its own language and direction, so Arabic renders right to left.
+    const arabic = within(select).getByRole("option", { name: "العربية" });
+    expect(arabic).toHaveAttribute("lang", "ar");
+    expect(arabic).toHaveAttribute("dir", "auto");
+  });
+
+  it("lists exactly the locales under locales/", () => {
+    const shipped = readdirSync(resolve(process.cwd(), "../../locales"))
+      .filter((n) => n.endsWith(".json") && n !== "critical.json" && n !== "endonyms.json")
+      .map((n) => n.replace(/\.json$/, ""))
+      .sort();
+    expect([...LOCALES].sort()).toEqual(shipped);
+  });
+
+  it("switches the page to right-to-left for Arabic and back", async () => {
+    open(c);
+    await fireEvent.change(await screen.findByTestId("settings_language"), {
+      target: { value: "ar" },
+    });
+    await waitFor(() => expect(document.documentElement.dir).toBe("rtl"));
+    await fireEvent.change(screen.getByTestId("settings_language"), { target: { value: "en" } });
+    await waitFor(() => expect(document.documentElement.dir).toBe("ltr"));
   });
 
   it("changes the language", async () => {

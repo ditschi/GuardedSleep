@@ -1,5 +1,8 @@
 {
-  "$meta": { "default": "machineTranslated", "reviewed": [] },
+  "$meta": {
+    "default": "machineTranslated",
+    "reviewed": []
+  },
   "meta": {
     "appTitle": "GuardedSleep"
   },
@@ -454,11 +457,7 @@
         "forgetBaby": "이 아기 기기 삭제",
         "checkPhone": "이 기기 설정 확인",
         "lang": {
-          "system": "시스템 설정에 맞춤",
-          "en": "English",
-          "de": "Deutsch",
-          "fr": "Français",
-          "es": "Español"
+          "system": "시스템 설정에 맞춤"
         },
         "advanced": {
           "toggle": "고급 설정 표시",

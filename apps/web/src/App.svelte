@@ -6,7 +6,7 @@
     type AppController,
     type CodeScanner,
   } from "./lib/contract";
-  import { resolveLocale } from "./lib/i18n/bundles";
+  import { directionOf, resolveLocale } from "./lib/i18n/bundles";
   import { locale, t } from "./lib/i18n/store";
   import PageAttention from "./lib/ui/PageAttention.svelte";
   import { createRouter, focusRouteHeading, formatDocumentTitle, type RouteId } from "./lib/router";
@@ -74,6 +74,7 @@
   });
   $effect(() => {
     document.documentElement.lang = $locale;
+    document.documentElement.dir = directionOf($locale);
   });
 </script>
 

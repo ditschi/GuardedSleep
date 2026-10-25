@@ -1,5 +1,8 @@
 {
-  "$meta": { "default": "machineTranslated", "reviewed": [] },
+  "$meta": {
+    "default": "machineTranslated",
+    "reviewed": []
+  },
   "meta": {
     "appTitle": "GuardedSleep"
   },
@@ -454,11 +457,7 @@
         "forgetBaby": "Olvidar este dispositivo del bebé",
         "checkPhone": "Revisar la configuración de este dispositivo",
         "lang": {
-          "system": "Igual que el sistema",
-          "en": "English",
-          "de": "Deutsch",
-          "fr": "Français",
-          "es": "Español"
+          "system": "Igual que el sistema"
         },
         "advanced": {
           "toggle": "Mostrar ajustes avanzados",

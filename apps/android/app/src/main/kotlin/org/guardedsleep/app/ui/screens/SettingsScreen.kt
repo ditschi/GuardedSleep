@@ -43,6 +43,7 @@ import org.guardedsleep.app.ui.common.ScreenRoot
 import org.guardedsleep.app.ui.common.ScrollColumn
 import org.guardedsleep.app.ui.common.SecondaryButton
 import org.guardedsleep.app.ui.common.formatTime
+import org.guardedsleep.app.ui.common.rememberLanguageChoices
 import org.guardedsleep.app.ui.model.AlertOutput
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.Role
@@ -257,20 +258,17 @@ fun SettingsScreen(
                 )
             }
             Section(R.string.native_ui_settings_group_language, "settings_group_language") {
-                val langs =
-                    listOf<Pair<String?, Int>>(
-                        null to R.string.native_ui_settings_lang_system,
-                        "en" to R.string.native_ui_settings_lang_en,
-                        "de" to R.string.native_ui_settings_lang_de,
-                        "fr" to R.string.native_ui_settings_lang_fr,
-                        "es" to R.string.native_ui_settings_lang_es,
-                    )
-                langs.forEach { (code, label) ->
-                    ChoiceRow(
-                        stringResource(label),
-                        s.language == code,
-                        "settings_lang_" + (code ?: "system"),
-                    ) {
+                // "Match system" is translated; the languages are shown by endonym (generated).
+                val langs = rememberLanguageChoices().map { it.tag to it.endonym }
+                ChoiceRow(
+                    stringResource(R.string.native_ui_settings_lang_system),
+                    s.language == null,
+                    "settings_lang_system",
+                ) {
+                    controller.updateSettings { st -> st.copy(language = null) }
+                }
+                langs.forEach { (code, name) ->
+                    ChoiceRow(name, s.language == code, "settings_lang_$code") {
                         controller.updateSettings { st -> st.copy(language = code) }
                     }
                 }
