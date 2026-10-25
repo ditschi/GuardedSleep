@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { BUNDLES, directionOf, ENDONYMS, LOCALES, resolveLocale, type Bundle } from "./bundles";
+import {
+  BUNDLES,
+  DIRECTIONS,
+  directionOf,
+  ENDONYMS,
+  LOCALES,
+  resolveLocale,
+  type Bundle,
+} from "./bundles";
 import { formatMessage } from "./icu";
 import { createTranslator } from "./translate";
 import { ROUTES } from "../router";
@@ -140,7 +148,9 @@ describe("language choice data", () => {
     expect(Object.keys(ENDONYMS).sort()).toEqual([...LOCALES].sort());
   });
 
-  it("sets right-to-left for Arabic only", () => {
+  it("sets right-to-left for Arabic only, from the generated table", () => {
+    expect(Object.keys(DIRECTIONS).sort()).toEqual([...LOCALES].sort());
+    expect(LOCALES.filter((l) => DIRECTIONS[l] === "rtl")).toEqual(["ar"]);
     expect(directionOf("ar")).toBe("rtl");
     expect(directionOf("de")).toBe("ltr");
     expect(directionOf("zh-Hans")).toBe("ltr");

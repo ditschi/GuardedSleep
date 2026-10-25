@@ -1,9 +1,9 @@
 // `generated/*` is written by `pnpm run i18n:gen` from /locales (git-ignored); `dev`, `build`,
 // `check` and `test` run it first. The shipped locale set, the endonyms and the bundles all come
 // from there, so no list of languages is kept in this file.
-import { ENDONYMS, GENERATED_BUNDLES, LOCALES, type Locale } from "./generated/locales";
+import { DIRECTIONS, ENDONYMS, GENERATED_BUNDLES, LOCALES, type Locale } from "./generated/locales";
 
-export { ENDONYMS, LOCALES };
+export { DIRECTIONS, ENDONYMS, LOCALES };
 export type { Locale };
 
 export const DEFAULT_LOCALE: Locale = "en";
@@ -45,12 +45,10 @@ export function resolveLocale(
   return DEFAULT_LOCALE;
 }
 
-// Right-to-left languages among the shipped and plausible future locales. `Intl.Locale` text info
-// is not in every browser yet, so a short list is the portable choice:
+// The table is generated (i18n-gen keeps it next to the endonyms) because `Intl.Locale` text info
+// is not in every browser yet:
 // https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/Locale/getTextInfo
-const RTL_LANGUAGES: readonly string[] = ["ar", "fa", "he", "ur"];
-
-/** Text direction of the UI language, for `<html dir>`. */
+/** Text direction of the UI language, for `<html dir>` (generated per shipped locale). */
 export function directionOf(locale: Locale): "ltr" | "rtl" {
-  return RTL_LANGUAGES.includes(locale.split("-")[0] ?? locale) ? "rtl" : "ltr";
+  return DIRECTIONS[locale];
 }

@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, describe, expect, it } from "vitest";
 import App from "./App.svelte";
 import { createFakeController } from "./lib/contract/fake-controller";
+import { DIRECTIONS } from "./lib/i18n/bundles";
 import { locale } from "./lib/i18n/store";
 import { createTranslator } from "./lib/i18n/translate";
 
@@ -51,6 +52,17 @@ describe("app shell", () => {
     controller.settings.update((s) => ({ ...s, language: null }));
     // jsdom reports en-US.
     await waitFor(() => expect(document.documentElement.lang).toBe("en"));
+  });
+
+  it("sets <html dir> from the generated direction of the language", async () => {
+    const controller = createFakeController();
+    render(App, { controller });
+    controller.settings.update((s) => ({ ...s, language: "ar" }));
+    await waitFor(() => expect(document.documentElement.dir).toBe(DIRECTIONS.ar));
+    expect(document.documentElement.dir).toBe("rtl");
+    controller.settings.update((s) => ({ ...s, language: "de" }));
+    await waitFor(() => expect(document.documentElement.dir).toBe(DIRECTIONS.de));
+    expect(document.documentElement.dir).toBe("ltr");
   });
 
   it("applies the theme setting, and dims the monitoring baby device", async () => {

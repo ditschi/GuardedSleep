@@ -16,6 +16,42 @@ use std::path::Path;
 /// File in `locales/` that is not a catalogue.
 pub const ENDONYMS_FILE: &str = "endonyms.json";
 
+/// Text direction per base language, for the shipped locales and the plausible next ones. An
+/// explicit table (no "rtl list, ltr otherwise") so a new locale with an unlisted language fails
+/// `check` until someone decides its direction.
+/// Doc: https://www.w3.org/International/questions/qa-html-dir
+const DIRECTIONS: &[(&str, &str)] = &[
+    ("ar", "rtl"),
+    ("fa", "rtl"),
+    ("he", "rtl"),
+    ("ur", "rtl"),
+    ("cs", "ltr"),
+    ("da", "ltr"),
+    ("de", "ltr"),
+    ("en", "ltr"),
+    ("es", "ltr"),
+    ("fr", "ltr"),
+    ("hi", "ltr"),
+    ("id", "ltr"),
+    ("it", "ltr"),
+    ("ja", "ltr"),
+    ("ko", "ltr"),
+    ("nl", "ltr"),
+    ("pl", "ltr"),
+    ("pt", "ltr"),
+    ("ro", "ltr"),
+    ("sv", "ltr"),
+    ("tr", "ltr"),
+    ("uk", "ltr"),
+    ("zh", "ltr"),
+];
+
+/// "rtl" or "ltr" for a locale tag (`zh-Hans` looks up `zh`).
+pub fn direction_of(tag: &str) -> Option<&'static str> {
+    let base = tag.split('-').next().unwrap_or(tag);
+    DIRECTIONS.iter().find(|(l, _)| *l == base).map(|(_, d)| *d)
+}
+
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct Endonyms(Vec<(String, String)>);
 
@@ -47,6 +83,13 @@ impl Endonyms {
         for t in &tags {
             if self.get(t).is_none() {
                 issues.push(format!("{ENDONYMS_FILE}: no endonym for locale \"{t}\""));
+            }
+        }
+        for t in &tags {
+            if direction_of(t).is_none() {
+                issues.push(format!(
+                    "endonyms.rs: no text direction for locale \"{t}\" (add its language to DIRECTIONS)"
+                ));
             }
         }
         for (t, _) in &self.0 {
@@ -101,6 +144,15 @@ pub fn render_web_module(cat: &Catalogue, endonyms: &Endonyms) -> (String, Strin
     s.push_str("export const ENDONYMS: Readonly<Record<Locale, string>> = {\n");
     for (t, n) in endonyms.of(&tags) {
         s.push_str(&format!("  {}: {},\n", js(t), js(n)));
+    }
+    s.push_str("};\n\n/** Text direction per locale, for `<html dir>`. */\n");
+    s.push_str("export const DIRECTIONS: Readonly<Record<Locale, \"ltr\" | \"rtl\">> = {\n");
+    for t in &tags {
+        s.push_str(&format!(
+            "  {}: {},\n",
+            js(t),
+            js(direction_of(t).unwrap_or("ltr"))
+        ));
     }
     s.push_str("};\n\nexport const GENERATED_BUNDLES = {\n");
     for t in &tags {
@@ -170,6 +222,21 @@ mod tests {
         assert!(ts.contains(r#""zh-Hans": "中文（简体）","#));
         assert!(ts.contains(r#"import b_zh_Hans from "./zh-Hans.json";"#));
         assert!(ts.contains(r#""de": b_de,"#));
+    }
+
+    #[test]
+    fn directions_cover_shipped_locales_and_reach_the_web_module() {
+        assert_eq!(direction_of("ar"), Some("rtl"));
+        assert_eq!(direction_of("he"), Some("rtl"));
+        assert_eq!(direction_of("zh-Hans"), Some("ltr"));
+        assert_eq!(direction_of("xx"), None);
+        let e = Endonyms::parse(r#"{"en":"English","ar":"العربية","xx":"X"}"#).unwrap();
+        let mut issues = Vec::new();
+        e.validate(&cat(&["en", "ar", "xx"]), &mut issues);
+        assert_eq!(issues.len(), 1, "{issues:?}");
+        assert!(issues[0].contains("no text direction for locale \"xx\""));
+        let (_, ts) = render_web_module(&cat(&["en", "ar"]), &e);
+        assert!(ts.contains(r#""ar": "rtl","#) && ts.contains(r#""en": "ltr","#));
     }
 
     #[test]
