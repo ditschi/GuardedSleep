@@ -170,6 +170,7 @@ fn one_relay(url: &str, opts: &BurstOptions) -> Result<Value, String> {
     while Instant::now() < end {
         let left = end.saturating_duration_since(Instant::now());
         let Ok(m) = rx.recv_timeout(left) else { break };
+        let arrived = m.at;
         match m.ev {
             Ev::Closed(_) => {
                 closed_early = true;
@@ -183,7 +184,7 @@ fn one_relay(url: &str, opts: &BurstOptions) -> Result<Value, String> {
                     message,
                 }) => {
                     if let Some(s) = sent.get_mut(&id) {
-                        s.ok = Some((accepted, message, s.at.elapsed()));
+                        s.ok = Some((accepted, message, arrived.saturating_duration_since(s.at)));
                     }
                 }
                 Some(RelayFrame::Event { event, .. }) => {
@@ -191,7 +192,7 @@ fn one_relay(url: &str, opts: &BurstOptions) -> Result<Value, String> {
                         && s.from != m.actor
                         && s.delivered.is_none()
                     {
-                        s.delivered = Some(s.at.elapsed());
+                        s.delivered = Some(arrived.saturating_duration_since(s.at));
                     }
                 }
                 Some(RelayFrame::Notice { message }) => notices.push(clip(&message)),

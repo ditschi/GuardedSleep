@@ -43,6 +43,17 @@ const PROGRESS_EVERY_MS: u64 = 60_000;
 const LOCAL_CANDIDATES: u32 = 6;
 const PAIRING_WINDOW_S: u64 = 2 * 3_600;
 
+/// The core also asks to open its own signaling relay (`relay` mailbox, the platform's configured
+/// server). This test has none; what a platform without one does is the question.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RelayMailbox {
+    /// Report the open as failed after 100 ms, every time the core retries (a configured server
+    /// that is down, or none configured and the platform says so).
+    Fail,
+    /// Never answer: the core gives up on its own after 15 s and retries with backoff.
+    Silent,
+}
+
 pub struct SoakOptions {
     pub relays: Vec<String>,
     pub duration: Duration,
@@ -54,6 +65,8 @@ pub struct SoakOptions {
     pub parent_wall_offset_s: i64,
     /// Time the fake ICE needs after the descriptions and a remote candidate arrived.
     pub ice_ms: u64,
+    /// How the harness answers the core's request to open its own signaling relay (mailbox 0).
+    pub relay_mailbox: RelayMailbox,
     /// Print a timeline of what the core asked for and what the relays answered (kinds and sizes,
     /// never content) to stderr.
     pub trace: bool,
@@ -143,6 +156,8 @@ struct Pending {
 
 pub struct Soak {
     opts: SoakOptions,
+    /// The throwaway pairing key, kept only to name sealed messages in `--trace`; never printed.
+    psk: Vec<u8>,
     start: Instant,
     started_unix_s: u64,
     events: Sender<Msg>,
@@ -210,6 +225,7 @@ impl Soak {
             .map(|u| (u.clone(), RelayStats::new(u)))
             .collect();
         Ok(Self {
+            psk: if opts.trace { psk.to_vec() } else { Vec::new() },
             opts,
             start: Instant::now(),
             started_unix_s: unix,
@@ -341,13 +357,18 @@ impl Soak {
     fn exec(&mut self, a: usize, actions: Vec<LinkAction>) {
         for action in actions {
             if self.opts.trace {
-                self.trace(a, &describe(&action));
+                let sealed = match &action {
+                    LinkAction::MailboxSend { frame, .. } => self.describe_sealed(frame),
+                    _ => String::new(),
+                };
+                self.trace(a, &format!("{}{sealed}", describe(&action)));
             }
             match action {
                 LinkAction::OpenMailbox { id, kind, url } => match kind {
                     MailboxKind::Nostr => self.open_socket(a, id, &url),
                     // Our own relay and the LAN are not part of this test: a refused open, like a
                     // server that is down.
+                    MailboxKind::Relay if self.opts.relay_mailbox == RelayMailbox::Silent => {}
                     MailboxKind::Relay | MailboxKind::Lan => {
                         self.after(100, Timer::MailboxClosed { actor: a, id });
                     }
@@ -405,6 +426,33 @@ impl Soak {
             Role::Parent => "parent",
         };
         eprintln!("[trace {:>7} ms] {who} {text}", self.now());
+    }
+
+    /// `type`, `sdp_type`, `aid` and `re` of the sealed message inside an `EVENT` frame (a relay
+    /// frame or one we publish), or "?" when it is not one of ours. Ids only, no content.
+    fn describe_sealed(&self, text: &str) -> String {
+        let event = match guardedsleep_core::testing::event_of_frame(text) {
+            Some(e) => Some(e),
+            None => match parse_relay_frame(text) {
+                Some(RelayFrame::Event { event, .. }) => Some(event),
+                _ => None,
+            },
+        };
+        let Some(event) = event else {
+            return String::new();
+        };
+        let payload = guardedsleep_core::testing::payload_of(&event);
+        let Some(message) = guardedsleep_core::testing::decode_message(&self.psk, &payload) else {
+            return " [sealed, not decodable]".to_owned();
+        };
+        let field = |k: &str| message.get(k).and_then(Value::as_str).unwrap_or("-");
+        format!(
+            " [{} {} aid={} re={}]",
+            field("type"),
+            field("sdp_type"),
+            field("aid"),
+            field("re")
+        )
     }
 
     fn on_event(&mut self, a: usize, event: LinkEvent) {
@@ -515,7 +563,8 @@ impl Soak {
 
     fn on_ws(&mut self, msg: Msg) {
         let key = (msg.actor, msg.id);
-        let now = self.now();
+        // The time the socket thread saw it, not the time this loop got to it.
+        let now = msg.at.saturating_duration_since(self.start).as_millis() as u64;
         let (url, spawned_ms, opened) = match self.socks.get(&key) {
             Some(s) if s.gen_no == msg.gen_no => (s.url.clone(), s.spawned_ms, s.opened),
             _ => return,
@@ -523,7 +572,7 @@ impl Soak {
         if self.opts.trace {
             let what = match &msg.ev {
                 Ev::Opened => "socket opened".to_owned(),
-                Ev::Text(t) => format!("frame {}", frame_verb(t)),
+                Ev::Text(t) => format!("frame {}{}", frame_verb(t), self.describe_sealed(t)),
                 Ev::Closed(r) => format!("socket closed ({r})"),
             };
             self.trace(msg.actor, &format!("{what} {}", host_of(&url)));
@@ -1027,6 +1076,7 @@ impl Soak {
                 "tag_only_filter": self.opts.tag_only,
                 "parent_wall_offset_s": self.opts.parent_wall_offset_s,
                 "fake_ice_ms": self.opts.ice_ms,
+                "relay_mailbox": format!("{:?}", self.opts.relay_mailbox),
             },
             "link": {
                 "initial_setup_ms": self.initial_ms,

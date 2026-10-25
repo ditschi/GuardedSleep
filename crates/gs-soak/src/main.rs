@@ -22,7 +22,7 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 use std::time::Duration;
 
-use clap::{Args, Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 use guardedsleep_core::relay_pick::{PICK_COUNT, pick_relays};
 
 #[derive(Parser)]
@@ -49,6 +49,12 @@ struct RelayArgs {
     data: PathBuf,
 }
 
+#[derive(Clone, Copy, ValueEnum)]
+enum RelayMailboxArg {
+    Fail,
+    Silent,
+}
+
 #[derive(Subcommand)]
 enum Command {
     /// Two Links (baby, parent) over real relays for a duration, with forced link losses.
@@ -71,6 +77,13 @@ enum Command {
         /// Time the fake ICE takes once descriptions and a remote candidate are in.
         #[arg(long, default_value_t = 150)]
         ice_ms: u64,
+        /// What the harness answers when the core opens its own signaling relay (mailbox 0):
+        /// `silent` never answers (the default: the public relays are measured alone), `fail`
+        /// reports every open as failed, as a platform without an own server may. `fail` makes the
+        /// core drop the parent's open `request_offer` at every report and stalls setups for 20 s
+        /// (see the runbook).
+        #[arg(long, value_enum, default_value_t = RelayMailboxArg::Silent)]
+        relay_mailbox: RelayMailboxArg,
         /// Print a timeline of the core's actions and the relays' answers (kinds and sizes only).
         #[arg(long)]
         trace: bool,
@@ -163,6 +176,7 @@ fn run(cli: Cli) -> Result<ExitCode, String> {
             tag_only,
             parent_wall_offset_s,
             ice_ms,
+            relay_mailbox,
             trace,
             out,
         } => {
@@ -198,6 +212,10 @@ fn run(cli: Cli) -> Result<ExitCode, String> {
                 tag_only,
                 parent_wall_offset_s,
                 ice_ms,
+                relay_mailbox: match relay_mailbox {
+                    RelayMailboxArg::Fail => soak::RelayMailbox::Fail,
+                    RelayMailboxArg::Silent => soak::RelayMailbox::Silent,
+                },
                 trace,
                 out: Some(path.clone()),
             })?;

@@ -13,7 +13,9 @@ path = "src/main.rs"
 [dependencies]
 # Consumes the public API only. This crate does the I/O (sockets, clock, randomness) the sans-IO
 # core must not; the cargo-deny bans of deny.core.toml apply to the core and relay graphs only.
-guardedsleep-core = { path = "../guardedsleep-core" }
+# `testing` lets `--trace` name the type of a sealed message (the tool holds the throwaway pairing key);
+# the simulation enables the same feature, and this tool is never part of a release.
+guardedsleep-core = { path = "../guardedsleep-core", features = ["testing"] }
 clap = { version = "4.6.7", features = ["derive"] }
 getrandom = "0.4.3"
 # TLS for `wss://`: ring as the crypto provider, no aws-lc. tungstenite enables rustls without a

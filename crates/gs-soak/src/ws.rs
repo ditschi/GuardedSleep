@@ -40,6 +40,9 @@ pub struct Msg {
     pub actor: usize,
     pub id: u32,
     pub gen_no: u64,
+    /// When the socket thread saw the event: latencies must not include the time a message waited
+    /// in the channel.
+    pub at: Instant,
     pub ev: Ev,
 }
 
@@ -90,6 +93,7 @@ pub fn spawn(url: String, actor: usize, id: u32, gen_no: u64, events: Sender<Msg
                 actor,
                 id,
                 gen_no,
+                at: Instant::now(),
                 ev,
             });
         };
