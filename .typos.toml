@@ -52,7 +52,7 @@ gradle = "gradle"
 Avent = "Avent"
 
 [files]
-# typos only supports English locales. non-English message JSON uses CSpell (cspell-i18n-*.json).
+# typos only supports English locales. Non-English message JSON uses CSpell where a dictionary exists (cspell-i18n-*.json).
 extend-exclude = [
   ".git/**",
   # Generated vectors, traces and scenarios carry base64 ids that typos would "correct".

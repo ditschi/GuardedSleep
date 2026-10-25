@@ -1,0 +1,545 @@
+{
+  "$meta": { "default": "machineTranslated", "reviewed": [] },
+  "meta": {
+    "appTitle": "GuardedSleep"
+  },
+  "layout": {
+    "settingsAria": "Ayarlar",
+    "backAria": "Önceki ekrana dön"
+  },
+  "core": {
+    "pairingKeyMismatch": "Bu cihazlar artık eşleşmiş değil. İzlemeye devam etmek için yeniden eşleştirin.",
+    "updateRequired": "İzlemeye devam etmek için cihazlardan birinin GuardedSleep'i güncellemesi gerekiyor.",
+    "serverUnreachable": "Bu cihaz bağlantı sunucusuna ulaşamıyor. İnternet bağlantısını kontrol edin.",
+    "peerAbsent": "Bebek cihazı yanıt vermiyor. Açık olduğundan ve GuardedSleep'in göründüğünden emin olun.",
+    "mediaBlocked": "Cihazlar birbirini buldu ama ses geçemiyor. İkisini de aynı Wi-Fi'ye bağlamayı deneyin.",
+    "wrongKeyAttempt": "Biri yanlış anahtarla bağlanmaya çalıştı. İzleme sürüyor."
+  },
+  "native": {
+    "appName": "GuardedSleep Alpha",
+    "notif": {
+      "appTitle": "GuardedSleep",
+      "silenceRuleName": "GuardedSleep",
+      "channelNoise": "Ses uyarıları",
+      "channelNoiseDesc": "Bebek cihazı ses duyduğunda yüksek sesli uyarılar.",
+      "channelLink": "Bağlantı alarmları",
+      "channelLinkDesc": "Bebek cihazıyla bağlantı koptuğunda alarmlar.",
+      "channelStatus": "İzleme durumu",
+      "channelStatusDesc": "İzlemenin çalıştığını gösterir.",
+      "channelNotice": "Uyarılar",
+      "channelNoticeDesc": "Pil ve güvenlik uyarıları.",
+      "channelInfo": "Bilgi",
+      "channelInfoDesc": "Sessiz notlar, örneğin bağlantı geri geldikten sonra.",
+      "channelBaby": "İzleme",
+      "channelBabyDesc": "Bu cihazın izlediğini bildiren sessiz not.",
+      "babyMonitoring": "GuardedSleep izliyor",
+      "babyResume": "İzlemeyi sürdürmek için dokunun",
+      "statusConnected": "Bebek cihazına bağlı",
+      "statusConnecting": "Bebek cihazına bağlanılıyor…",
+      "statusReconnecting": "Bebek cihazına yeniden bağlanılıyor…",
+      "statusTrouble": "Bebek cihazına ulaşılamıyor — denemeye devam ediliyor",
+      "statusAlarm": "Bebek cihazıyla bağlantı yok",
+      "statusPeerStopped": "Bebek cihazı izlemeyi durdurdu",
+      "statusFailed": "Bu cihazlar artık eşleşmiş değil",
+      "noiseTitle": "Ses algılandı",
+      "noiseText": "Bebek cihazı bir ses duyuyor.",
+      "noiseTestTitle": "Test uyarısı",
+      "noiseTestText": "Bu bir testtir. Bebek cihazı sessiz kalır.",
+      "actionStopSound": "Sesi durdur",
+      "actionSnooze10": "10 dk ertele",
+      "actionChecking": "Bakıyorum",
+      "linkLostTitle": "Bağlantı koptu",
+      "linkLostText": "Bebek cihazıyla bağlantı yok. Hemen bebeğinize bakın.",
+      "peerStoppedTitle": "Bebek cihazı izlemeyi durdurdu",
+      "peerStoppedText": "Bebek cihazında izleme durduruldu. Yeniden başlatılana kadar hiçbir şey duymayacaksınız.",
+      "restoredTitle": "Yeniden bağlandı",
+      "restoredText": "{duration} boyunca izlenmedi.",
+      "missedTitle": "Bağlantı yokken",
+      "missedCount": "Bağlantı yokken gelen sesler: {count} ({duration} boyunca izlenmedi).",
+      "missedNone": "Bağlantı yokken ses olmadı ({duration} boyunca izlenmedi).",
+      "missedUnknown": "Bağlantı yokken ne olduğunu bilmiyoruz ({duration} boyunca izlenmedi).",
+      "batteryLowTitle": "Bebek cihazının pili azaldı",
+      "batteryLowText": "Bebek cihazının pili %{percent} — şarja takın.",
+      "batteryCriticalTitle": "Bebek cihazının pili bitmek üzere",
+      "batteryCriticalText": "Bebek cihazının pili %{percent} — hemen şarja takın.",
+      "chargerTitle": "Bebek cihazı şarj olmuyor",
+      "chargerText": "Gece boyunca dayanması için bebek cihazını şarja takın.",
+      "securityTitle": "Yanlış anahtar",
+      "publicTitle": "GuardedSleep alarmı",
+      "fgsMissingTitle": "Arka planda izlenmiyor",
+      "fgsMissingText": "Arka planda izlemeyi yeniden açmak için GuardedSleep'i açın."
+    },
+    "ui": {
+      "common": {
+        "appName": "GuardedSleep",
+        "allow": "İzin ver",
+        "continue": "Devam",
+        "later": "Sonra",
+        "ok": "Tamam",
+        "cancel": "İptal",
+        "more": "Daha fazla",
+        "moreCount": "+{count}",
+        "settings": "Ayarlar",
+        "tryAgain": "Tekrar dene",
+        "yes": "Evet",
+        "no": "Hayır",
+        "add": "Ekle",
+        "remove": "Kaldır",
+        "save": "Kaydet",
+        "change": "Değiştir",
+        "durationSec": "{seconds} sn",
+        "durationMin": "{minutes} dk",
+        "durationHour": "{hours} sa",
+        "durationHourMin": "{hours} sa {minutes} dk",
+        "secondsShort": "{seconds} sn",
+        "state": {
+          "done": "Tamam",
+          "todo": "Yapılacak",
+          "blocked": "Engellendi",
+          "checking": "Kontrol ediliyor"
+        },
+        "babyUnitDefault": "Bebek cihazı",
+        "parentUnitDefault": "Ebeveyn cihazı"
+      },
+      "role": {
+        "title": "Bu hangi cihaz?",
+        "baby": {
+          "title": "Bebek cihazı",
+          "hint": "Çocuğunuzun yanında durur ve dinler."
+        },
+        "parent": {
+          "title": "Ebeveyn cihazı",
+          "hint": "Sizinle birlikte durur ve sizi uyarır."
+        },
+        "orderHint": "Önce bebek cihazını kurun."
+      },
+      "setup": {
+        "title": "Bu cihazı hazırlayın",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Çocuğunuzu duymak için gerekli.",
+          "required": "Devam etmek için mikrofona izin verin."
+        },
+        "background": {
+          "title": "Arka planda çalışmaya devam etsin",
+          "why": "Aksi halde bu cihaz pil tasarrufu için izlemeyi durdurabilir."
+        },
+        "silence": {
+          "title": "İzlerken Sessiz mod",
+          "why": "Bebek cihazında ses, zil ve ışık olmaz. Çalar saatler yine çalışır."
+        },
+        "safety": {
+          "body": "Bu cihazı şarjda, sağlam bir yüzeyde ve çocuğunuzun erişemeyeceği yerde tutun. Pili şişmiş veya hasarlı bir cihazı kullanmayın."
+        },
+        "chargingTip": "İpucu: Bu cihazda \"şarjdayken ekranı uyandır\" seçeneği varsa kapatın, ekran karanlık kalsın.",
+        "deviceCheck": {
+          "checking": "Bu cihaz kontrol ediliyor…",
+          "ok": "Bu cihaz bebek cihazı olarak iyi çalışıyor.",
+          "limited": "Bu cihaz zaman zaman bağlantıyı kaybedebilir. Yine de çalışır.",
+          "notRecommended": "Bu cihaz güvenilir şekilde izleyemeyebilir. Mümkünse başka bir cihaz kullanın."
+        },
+        "notifications": {
+          "title": "Uyarılar",
+          "why": "Çocuğunuz ses çıkardığında haberiniz olması için gerekli.",
+          "required": "Bu olmadan GuardedSleep sizi uyaramaz."
+        },
+        "lockScreen": {
+          "title": "Kilit ekranında uyarılar",
+          "why": "Ekran kilitliyken de uyarılar görünsün diye."
+        },
+        "dndBypass": {
+          "title": "Rahatsız Etmeyin sırasında uyarılar",
+          "why": "Rahatsız Etmeyin açıkken de uyarılar size ulaşsın diye."
+        },
+        "limits": {
+          "body": "GuardedSleep sizi yalnızca bu cihaz açık ve şarjlıyken uyarabilir. Geceleri şarjda tutun. İki cihaz da kapanırsa kimse uyarılmaz."
+        },
+        "skipped": "Şimdilik atlandı"
+      },
+      "pair": {
+        "baby": {
+          "title": "Ebeveyn cihazını bağlayın",
+          "qrAlt": "Eşleştirme kodu",
+          "instruction": "Diğer cihazda GuardedSleep'i açın, Ebeveyn cihazı'nı seçin ve bu kodu tarayın.",
+          "validFor": "Kod {duration} geçerli",
+          "expired": "Bu kodun süresi doldu.",
+          "newCode": "Yeni kod göster",
+          "copy": "Kodu kopyala",
+          "copied": "Kopyalandı",
+          "brighter": "Kodu daha parlak yap",
+          "waiting": "Ebeveyn cihazı bekleniyor…",
+          "privacy": "Bu koda sahip herkes dinleyebilir. Yalnızca güvendiğiniz kişilere gösterin.",
+          "parentFound": "Ebeveyn cihazı bulundu. Bağlanılıyor…",
+          "failed": "Eşleştirme olmadı. Yeni bir kod gösterip tekrar deneyin.",
+          "showText": "Kodu metin olarak göster",
+          "hideText": "Metni gizle"
+        },
+        "parent": {
+          "title": "Bebek cihazındaki kodu tarayın",
+          "cameraWhy": "GuardedSleep kamerayı yalnızca kodu okumak için kullanır.",
+          "pasteLabel": "Veya kodu yapıştırın",
+          "pasteSubmit": "Bağlan",
+          "connecting": "Bebek cihazına bağlanılıyor…"
+        },
+        "error": {
+          "cameraDenied": "Kameraya izin verilmedi.",
+          "allowCamera": "Kameraya izin ver",
+          "pasteInstead": "Bunun yerine kodu yapıştır",
+          "notOurs": "Bu bir GuardedSleep kodu değil. Bebek cihazındaki kodu tarayın.",
+          "expired": "Bu kodun süresi doldu. Bebek cihazında Yeni kod göster'e dokunun, sonra tekrar tarayın.",
+          "mismatch": "Kod eşleşmiyor. Bebek cihazında şu anda görünen kodu tarayın.",
+          "alreadyPaired": "Bu bebek cihazı zaten başka bir cihazla eşleşmiş.",
+          "unreachable": "Bebek cihazı henüz bulunamıyor. İki cihazın da çevrimiçi olduğundan emin olun.",
+          "incomplete": "Bu kod eksik. Kodun tamamını bebek cihazından kopyalayın."
+        }
+      },
+      "home": {
+        "parent": {
+          "cardTitle": "Bağlan: {name}",
+          "cardTitleDefault": "Bebek cihazına bağlan"
+        },
+        "baby": {
+          "cardTitle": "İzlemeyi başlat"
+        },
+        "lastUsed": "Son kullanım: {time}",
+        "newPairing": "Yeni cihazlar kur",
+        "empty": "Henüz eşleşmiş cihaz yok."
+      },
+      "baby": {
+        "status": {
+          "connected": "Ebeveyn cihazına bağlı",
+          "waiting": "Ebeveyn cihazı bekleniyor…",
+          "reconnecting": "Ebeveyn cihazına yeniden bağlanılıyor…",
+          "notResponding": "Ebeveyn cihazı yanıt vermiyor — denemeye devam ediliyor",
+          "parentStopped": "Ebeveyn cihazı izlemeyi durdurdu"
+        },
+        "forDuration": "{duration} süredir",
+        "monitoring": "İzleniyor",
+        "parentListening": "Ebeveyn dinliyor",
+        "battery": "Bu cihaz: pil %{percent}",
+        "batteryCharging": "Bu cihaz: şarj oluyor · %{percent}",
+        "silence": {
+          "on": "Sessiz mod açık",
+          "off": "Sessiz mod kapalı — bu cihaz çalabilir",
+          "everydayPhone": "Sessiz mod açık. İzlemeyi durdurana kadar bu cihazdaki aramalar ve mesajlar sessiz kalır.",
+          "restored": "Bu cihaz Sessiz modda kalmıştı. Sesler yeniden açıldı.",
+          "noAccess": "Sessiz mod erişimi kapalı. Aramalar ve mesajlar sessiz kalsın diye Ayarlar'dan açın."
+        },
+        "lock": "Ekranı kilitle",
+        "autolockHint": "Ekran {seconds} sn içinde kararacak",
+        "stop": "İzlemeyi durdur",
+        "micLevel": "Buradaki ses düzeyi",
+        "micSilent": "Mikrofon hiç ses almıyor. İzlemeyi yeniden başlatın veya mikrofonu kontrol edin."
+      },
+      "kiosk": {
+        "a11yLabel": "İzleniyor. Ekran kilitli.",
+        "unlockHint": "Basılı tutup yukarı kaydırarak kilidi açın",
+        "unlockZone": "Buraya kaydırın",
+        "unlockAction": "Kilidi aç"
+      },
+      "link": {
+        "connected": "Bağlı: {name}",
+        "connecting": "Bağlanılıyor: {name}…",
+        "reconnecting": "Yeniden bağlanılıyor…",
+        "cantReach": "{name} ile bağlantı kurulamıyor — denemeye devam ediliyor",
+        "lostFor": "{duration} süredir bağlantı yok",
+        "babyStopped": "{name} izlemeyi durdurdu",
+        "idle": "İzleme yok",
+        "weak": "Zayıf bağlantı — ses kesilebilir",
+        "restoredAfter": "{duration} sonra yeniden bağlandı. Çocuğunuzu yine duyabilirsiniz.",
+        "tryNow": "Şimdi dene",
+        "pairAgain": "Yeniden eşleştir",
+        "connectedDefault": "Bebek cihazına bağlı",
+        "connectingDefault": "Bebek cihazına bağlanılıyor…",
+        "cantReachDefault": "Bebek cihazına ulaşılamıyor — denemeye devam ediliyor",
+        "babyStoppedDefault": "Bebek cihazı izlemeyi durdurdu",
+        "stalePairingHint": "Bebek cihazını yeniden eşleştirdiyseniz yeni kodunu tarayın."
+      },
+      "linkAlarm": {
+        "lost": {
+          "title": "{name} ile bağlantı yok",
+          "titleUrgent": "{name} ile bağlantı yok!",
+          "body": "Cihazlar yeniden bağlanana kadar çocuğunuzu duymayacaksınız.",
+          "titleDefault": "Bebek cihazıyla bağlantı yok",
+          "titleUrgentDefault": "Bebek cihazıyla bağlantı yok!"
+        },
+        "stopped": {
+          "title": "{name} izlemeyi durdurdu",
+          "body": "Biri bebek cihazında izlemeyi durdurdu. Uyarı almayacaksınız.",
+          "titleDefault": "Bebek cihazı izlemeyi durdurdu"
+        },
+        "battery": {
+          "title": "Bebek cihazının pili bitmek üzere",
+          "body": "Bebek cihazını hemen şarja takın, yoksa izleme duracak."
+        },
+        "needsPairing": {
+          "title": "Cihazlar artık eşleşmiş değil"
+        },
+        "restored": {
+          "title": "Yeniden bağlandı"
+        },
+        "ack": "Bakıyorum",
+        "ackNote": "Ses {time} kapalı. Hâlâ bağlı değilse sizi yeniden uyaracağız.",
+        "soundNote": "Siz bakana kadar hafif bir alarm sesi tekrarlanır.",
+        "soundNoteUrgent": "Siz bakana kadar alarm çalmaya devam eder."
+      },
+      "parent": {
+        "allQuietSince": "{time} saatinden beri sessiz",
+        "soundSince": "Ses algılandı · {time} saatinden beri",
+        "soundAt": "Saat {time} civarında ses · {duration} sürdü",
+        "soundSnoozed": "Saat {time} civarında ses · uyarılar ertelendi",
+        "lastHeard": "Son temas: {time}",
+        "noContactYet": "Henüz temas yok",
+        "monitoringNow": "İzleniyor",
+        "meterA11y": "Ses düzeyi: {level}",
+        "level": {
+          "quiet": "sessiz",
+          "some": "biraz ses",
+          "loud": "yüksek"
+        },
+        "stop": "İzlemeyi durdur",
+        "securityTitle": "Güvenlik uyarısı",
+        "securityBody": "Bağlantı doğrulanamadı. Cihazları az önce yeniden eşleştirmediyseniz hemen yeniden eşleştirin.",
+        "staleSuffix": "· {time}",
+        "unitWarning": {
+          "pageHidden": "Bebek cihazı duraklayabilir — sayfası gizli",
+          "wakeLockOff": "Bebek cihazı uykuya geçebilir — ekranı açık tutulmuyor",
+          "resumedFromSleep": "Bebek cihazı uykudan uyandı — sesler kaçırılmış olabilir",
+          "notCharging": "Bebek cihazı şarj olmuyor",
+          "micPermissionLost": "Bebek cihazı mikrofon erişimini kaybetti"
+        }
+      },
+      "battery": {
+        "baby": "Bebek cihazı %{percent}",
+        "babyLow": "Bebek cihazının pili %{percent} — şarja takın",
+        "parentLow": "Bu cihazın pili %{percent} — izlemeye devam etmek için şarja takın",
+        "parentLowGeneric": "Bu cihazın pili azaldı — izlemeye devam etmek için şarja takın"
+      },
+      "listen": {
+        "idle": "Dinlemek için basılı tutun",
+        "holding": "Dinleniyor…",
+        "locked": "Dinleniyor · durdurmak için dokunun",
+        "lockHint": "Dinlemeye devam etmek için yukarı kaydırın",
+        "disabled": "Bağlanınca dinleyin",
+        "a11yLocked": "Dinleniyor. Durdurmak için çift dokunun."
+      },
+      "snooze": {
+        "button": "Ertele",
+        "title": "Ses uyarılarını ertele",
+        "help": "Bağlantı koparsa veya pil azalırsa yine uyarı alırsınız.",
+        "minutes": "{minutes} dk ertele",
+        "end": "Ertelemeyi bitir",
+        "active": "Ertelendi · {minutes} dk kaldı"
+      },
+      "probe": {
+        "button": "Test uyarısı",
+        "title": "Uyarılarınızı test edin",
+        "body": "Bu, bu cihazda bir test sesi çalar. Bebek cihazı sessiz kalır.",
+        "output": "Uyarılar şurada çalar: {output}",
+        "run": "Testi başlat",
+        "running": "Test çalışıyor…",
+        "question": "Duydunuz ve hissettiniz mi?",
+        "localOnly": "Yalnızca bu cihaz test edildi — bebek cihazı bağlı değil."
+      },
+      "readiness": {
+        "title": "Uyarılar size ulaşır mı?",
+        "notificationsOff": "GuardedSleep için uyarılar kapalı",
+        "alarmVolumeZero": "Alarm sesiniz kapalı — uyarıları duymazsınız",
+        "lockScreen": "Uyarılar kilit ekranında görünemez",
+        "dnd": "Rahatsız Etmeyin uyarıları susturabilir",
+        "battery": "Bu cihaz GuardedSleep'i arka planda durdurabilir",
+        "headphones": "Uyarılar kulaklığınızda çalacak",
+        "neverTested": "Uyarılarınızı test edin",
+        "ok": "Hazır — uyarılar size ulaşır",
+        "fix": {
+          "notifications": "Uyarıları aç",
+          "dnd": "Rahatsız Etmeyin sırasında uyarılara izin ver",
+          "battery": "Arka planda kullanıma izin ver"
+        }
+      },
+      "silence": {
+        "silent": "Bebek cihazı Sessiz modda",
+        "alarmsStillRing": "Üzerindeki çalar saatler yine çalabilir.",
+        "screenMayLight": "Bebek cihazı Sessiz modda ama ekranı yanabilir",
+        "mayVibrate": "Bebek cihazı titreyebilir",
+        "mayRing": "Bebek cihazı çalabilir",
+        "unknown": "Sessiz mod: bilinmiyor — bebek cihazı kontrol edilemiyor",
+        "manual": "Bebek cihazında Rahatsız Etmeyin'i açın ve parlaklığı azaltın.",
+        "noAccess": "Buradan Sessiz modu açmak için bebek cihazında Ayarlar'ı açın ve \"İzlerken Sessiz mod\" seçeneğini etkinleştirin.",
+        "apply": "Sessiz modu aç",
+        "applyFull": "Sessiz modu tamamen aç",
+        "pending": "Sessiz mod açılıyor…",
+        "failed": "Bebek cihazında Sessiz mod açılamadı.",
+        "webUnknown": "Bilinmiyor — bebek cihazında Sessiz modu kendiniz açın",
+        "webHint": "Bebek cihazı bir dizüstü bilgisayarsa şarjda, kapağı açık ve ekranı açık tutun."
+      },
+      "help": {
+        "reconnect": {
+          "open": "Ne yapabilirim?",
+          "title": "Yeniden bağlanma",
+          "step1": "Bebek cihazı açık mı ve GuardedSleep görünüyor mu?",
+          "step2": "İki cihaz da aynı Wi-Fi'de mi, ya da ikisi de mobil veride mi?",
+          "step3": "Hâlâ olmadı mı? Bebek cihazında GuardedSleep'i kapatıp yeniden açın."
+        }
+      },
+      "stop": {
+        "title": "İzleme durdurulsun mu?",
+        "parentBody": "{name} cihazından uyarı almayacaksınız.",
+        "babyBody": "Ebeveyn cihazı artık uyarı almayacak.",
+        "confirm": "Durdur",
+        "cancel": "İzlemeye devam et",
+        "parentBodyDefault": "Bebek cihazından uyarı almayacaksınız."
+      },
+      "forget": {
+        "title": "{name} unutulsun mu?",
+        "body": "İzleme durur ve yeniden bağlanmak için yeni bir kod taramanız gerekir.",
+        "confirm": "Unut",
+        "titleBabyDefault": "Bebek cihazı unutulsun mu?",
+        "titleParentDefault": "Ebeveyn cihazı unutulsun mu?"
+      },
+      "missed": {
+        "some": "Bağlantı yokken: {start} ile {end} arasında {count, plural, one {1 ses} other {# ses}}. En yüksek: {level}.",
+        "none": "Bağlantı yokken ses olmadı.",
+        "unknown": "{start} ile {end} arasında ne olduğunu bilmiyoruz."
+      },
+      "coach": {
+        "bar": "Yeşil, izlediğiniz anlamına gelir. Kırmızıya dönerse veya kaybolursa izlemiyorsunuz.",
+        "listen": "Dinlemek için basılı tutun. Dinlemeye devam etmek için yukarı kaydırın.",
+        "test": "Uyarının nasıl hissettirdiğini görmek için bir test uyarısı çalıştırın.",
+        "runTest": "Test uyarısını şimdi çalıştır"
+      },
+      "alert": {
+        "title": "Ses algılandı",
+        "since": "{time} saatinden beri",
+        "ended": "Ses durdu.",
+        "testBadge": "TEST",
+        "stopSound": "Sesi durdur",
+        "soundStopped": "Ses durduruldu",
+        "openApp": "GuardedSleep'i aç"
+      },
+      "settings": {
+        "group": {
+          "soundDetection": "Ses algılama",
+          "silence": "Sessiz mod",
+          "alerts": "Uyarılar",
+          "screen": "Ekran",
+          "paired": "Eşleşmiş cihaz",
+          "thisPhone": "Bu cihaz",
+          "language": "Dil",
+          "about": "Hakkında ve sınırlar",
+          "advanced": "Gelişmiş"
+        },
+        "sensitivity": "Hassasiyet",
+        "moreSensitive": "Daha hassas",
+        "lessSensitive": "Daha az hassas",
+        "holdLabel": "Gürültü en az şu kadar sürmeli",
+        "silenceAccessOk": "Sessiz mod erişimi açık.",
+        "outputLabel": "Uyarı sesi şurada çalar",
+        "output": {
+          "default": "Bağlıysa kulaklık, değilse hoparlör",
+          "speaker": "Yalnızca hoparlör"
+        },
+        "gain": "Ekstra yüksek uyarılar: %{percent}",
+        "lastTest": "Son test: {time}",
+        "neverTested": "Henüz test edilmedi",
+        "theme": {
+          "dark": "Koyu (varsayılan)",
+          "light": "Açık",
+          "system": "Sistemle aynı"
+        },
+        "forgetParent": "Bu ebeveyn cihazını unut",
+        "forgetBaby": "Bu bebek cihazını unut",
+        "checkPhone": "Bu cihazın kurulumunu kontrol et",
+        "lang": {
+          "system": "Sistemle aynı",
+          "en": "English",
+          "de": "Deutsch",
+          "fr": "Français",
+          "es": "Español"
+        },
+        "advanced": {
+          "toggle": "Gelişmiş ayarları göster",
+          "warning": {
+            "title": "Gelişmiş ayarlar değiştirilsin mi?",
+            "body": "Buradaki yanlış değerler cihazların bağlanmasını engelleyebilir. Yalnızca ne yaptığınızı biliyorsanız değiştirin."
+          },
+          "confirm": "Gelişmiş ayarları göster",
+          "cancel": "Şimdi değil"
+        },
+        "urlsLabel": "Bağlantı sunucusu adresleri (sırayla denenir)",
+        "url": {
+          "new": "Yeni adres (wss://…)",
+          "invalid": "Adres wss:// veya ws:// ile başlamalıdır."
+        },
+        "turn": {
+          "label": "Aktarma sunucusu (TURN), isteğe bağlı",
+          "invalid": "Aktarma adresi turn: veya turns: ile başlamalıdır."
+        },
+        "heartbeat": "Her {seconds} sn'de bir bağlantı kontrolü"
+      },
+      "fgsMissing": {
+        "bar": "Arka planda izlenmiyor — uygulamayı açın",
+        "body": "Android, GuardedSleep'in arka plan hizmetini durdurdu. Ekran kapalıyken uyarılar size ulaşmayabilir.",
+        "fix": "Arka planda izlemeyi yeniden aç"
+      }
+    }
+  },
+  "webShell": {
+    "route": {
+      "role": "Bu hangi cihaz?",
+      "babyPair": "Bebek cihazını eşleştir",
+      "baby": "Bebek cihazı",
+      "parentPair": "Ebeveyn cihazını eşleştir",
+      "parent": "Ebeveyn cihazı",
+      "settings": "Ayarlar"
+    },
+    "skipToContent": "İçeriğe geç",
+    "dismiss": "Kapat"
+  },
+  "webScreens": {
+    "role": {
+      "title": "Bu cihazı şu olarak kullan",
+      "subtitle": "Telefon, tablet veya dizüstü bilgisayar. Önce bebek cihazını kurun.",
+      "navLabel": "Rol seçin",
+      "privacyNote": "Ses doğrudan iki cihazınız arasında gider ve asla kaydedilmez."
+    },
+    "pair": {
+      "copyHint": "5 dakika içinde ebeveyn cihazına yapıştırın. Bir sohbette göndermeyin.",
+      "or": "veya",
+      "cameraUnavailable": "Burada kamera yok. Bunun yerine kodu yapıştırın.",
+      "cameraView": "Kamera görüntüsü"
+    },
+    "baby": {
+      "failMicDenied": "Mikrofon engellendi, bu yüzden bu cihaz çocuğunuzu duyamıyor. Tarayıcının site ayarlarından izin verin.",
+      "failMicUnavailable": "Mikrofon bulunamadı, bu yüzden bu cihaz çocuğunuzu duyamıyor.",
+      "quietUnknown": "Sessiz mod: bilinmiyor",
+      "keepAwake": "Bu cihazı uyanık tutun: şarjda, kapak açık, bu sekme görünür.",
+      "keepSilent": "Bu cihazda Rahatsız Etmeyin'i açın ve parlaklığı azaltın."
+    },
+    "parent": {
+      "quietUnknownWeb": "Sessiz mod bilinmiyor · bebek cihazında açın",
+      "keepOpen": "Bu sayfayı açık ve ekranı açık tutun. Aksi halde tarayıcınız sizi uyaramaz.",
+      "soundGate": "Uyarı sesini açmak için dokunun"
+    },
+    "settings": {
+      "urlHint": "Bebek cihazı bu adresleri koduna yazar, böylece ebeveyn cihazı da bunları kullanır.",
+      "sensitivityBabyOnly": "Hassasiyet bebek cihazında ayarlanır."
+    },
+    "guard": {
+      "wakeLockHeld": "Ekran açık tutuluyor",
+      "wakeLockLost": "Ekran artık açık tutulmuyor, bu yüzden bu cihaz uykuya geçip izlemeyi durdurabilir.",
+      "wakeLockUnsupported": "Bu tarayıcı ekranı açık tutamıyor. Bu cihazın ayarlarından ekran uykusunu kapatın.",
+      "wakeLockRetry": "Ekranı açık tut",
+      "hiddenTitle": "GuardedSleep izlemeyi durdurabilir",
+      "hiddenBody": "Bu sayfa arka planda. İzlemeyi sürdürmek için yeniden açın.",
+      "awayBackground": "Bu sayfa {duration} boyunca arka plandaydı. Uyarılar kaçırılmış olabilir.",
+      "awaySleep": "Bu cihaz {duration} boyunca uykudaydı. Uyarılar kaçırılmış olabilir."
+    },
+    "night": {
+      "open": "Gece ekranı",
+      "label": "Gece ekranı. İzleme sürüyor. Durumu görmek için dokunun.",
+      "monitoring": "İzleme sürüyor",
+      "leave": "Gece ekranından çıkmak için tekrar dokunun"
+    }
+  }
+}
