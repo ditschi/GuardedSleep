@@ -1,9 +1,5 @@
 {
   "patterns": [
-    { "pattern": "native.alertNoiseTitle", "budget": 50 },
-    { "pattern": "native.alertNoiseText", "budget": 100 },
-    { "pattern": "native.alertLinkLostTitle", "budget": 50 },
-    { "pattern": "native.alertLinkLostText", "budget": 100 },
     { "pattern": "native.notif.noiseTitle", "budget": 50 },
     { "pattern": "native.notif.noiseText", "budget": 80 },
     { "pattern": "native.notif.noiseTestTitle", "budget": 50 },

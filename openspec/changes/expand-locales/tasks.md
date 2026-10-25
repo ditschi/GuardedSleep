@@ -17,8 +17,8 @@ Depends on `rebuild-web-client` for groups 3–5 (the web key set). Groups 1–2
 
 ## 3. Unused keys
 
-- [ ] 3.1 Unused-key check in `i18n-gen check`: a key counts as used when Android code references its resource name, `apps/web/src` references it via `t("…")`, or it is a core message key. Verify: i18n-gen tests with a fixture tree.
-- [ ] 3.2 Remove all unused keys from every catalogue (after `rebuild-web-client` group 9 deletes `apps/mobile`). Verify: `just lint` green.
+- [x] 3.1 Unused-key check in `i18n-gen check`: a key counts as used when Android code references its resource name, `apps/web/src` references it via `t("…")`, or it is a core message key. Verify: i18n-gen tests with a fixture tree.
+- [x] 3.2 Remove all unused keys from every catalogue (after `rebuild-web-client` group 9 deletes `apps/mobile`). Verify: `just lint` green.
 
 ## 4. New locales
 
