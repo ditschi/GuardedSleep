@@ -1443,7 +1443,8 @@ impl Link {
             .live
             .as_ref()
             .map(|l| l.peer_id.clone())
-            .or_else(|| self.peer_client.clone());
+            .or_else(|| self.peer_client.clone())
+            .or_else(|| self.nostr_ready().then(|| NOSTR_ORIGIN.to_owned()));
         if let Some(to) = target {
             self.send_payload(&to, &SignalPayload::StopNotice, out);
         }

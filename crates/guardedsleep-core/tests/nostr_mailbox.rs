@@ -125,7 +125,7 @@ impl Rig {
         let end = self.now + ms;
         while self.now < end {
             self.now = (self.now + 250).min(end);
-            if self.now % 60_000 == 0 {
+            if self.now.is_multiple_of(60_000) {
                 all.extend(self.report_wall());
             }
             all.extend(self.feed(LinkInput::Tick));
@@ -741,4 +741,126 @@ fn the_third_relay_dies_and_the_others_carry_the_pairing() {
         asks.contains(&1) && asks.contains(&3) && !asks.contains(&2),
         "{asks:?}"
     );
+}
+
+// ---- attempts over Nostr ---------------------------------------------------------------------
+
+const AID: &str = "1f2e3d4c5b6a79880918273645546372";
+
+fn offer() -> Value {
+    json!({"type":"sdp","aid":AID,"sdp":{"type":"offer","sdp":"v=0\r\nm=audio 9 X 1\r\na=sendonly\r\na=fingerprint:sha-256 AA\r\n"}})
+}
+
+fn candidate(n: u32) -> guardedsleep_core::protocol::IceCandidate {
+    guardedsleep_core::protocol::IceCandidate {
+        candidate: format!("candidate:{n} 1 udp 2122260223 192.168.1.{n} 5000{n} typ host"),
+        sdp_mid: Some("0".into()),
+        sdp_m_line_index: Some(0),
+    }
+}
+
+/// The attempt handle in a list of actions.
+fn created(actions: &[LinkAction]) -> Option<u32> {
+    actions.iter().find_map(|a| match a {
+        LinkAction::CreateAttempt { attempt, .. } => Some(*attempt),
+        _ => None,
+    })
+}
+
+#[test]
+fn an_offer_over_nostr_starts_an_attempt_and_candidates_leave_in_two_batches() {
+    let mut r = Rig::parent(&[URL_A]);
+    r.report_wall();
+    r.advance(1_000);
+    r.confirm();
+    let payload = r.peer.peer.say(
+        guardedsleep_core::envelope::MessageClass::Description,
+        &offer(),
+    );
+    let acts = r.deliver(1, &payload);
+    let attempt = created(&acts).expect("the offer started an attempt");
+    let mut all = r.feed(LinkInput::AttemptLocalDescription {
+        attempt,
+        sdp_type: "answer".into(),
+        sdp: "v=0\r\nm=audio 9 X 1\r\na=recvonly\r\na=fingerprint:sha-256 BB\r\n".into(),
+    });
+    // Two candidates close together leave as one message, 400 ms after the first.
+    all.extend(r.feed(LinkInput::AttemptLocalIce {
+        attempt,
+        candidate: candidate(1),
+    }));
+    all.extend(r.advance(100));
+    all.extend(r.feed(LinkInput::AttemptLocalIce {
+        attempt,
+        candidate: candidate(2),
+    }));
+    all.extend(r.advance(1_000));
+    // A second batch, then a third that the event budget keeps off the public relays.
+    all.extend(r.feed(LinkInput::AttemptLocalIce {
+        attempt,
+        candidate: candidate(3),
+    }));
+    all.extend(r.advance(2_500));
+    all.extend(r.feed(LinkInput::AttemptLocalIce {
+        attempt,
+        candidate: candidate(4),
+    }));
+    all.extend(r.advance(5_000));
+    let messages: Vec<Value> = Rig::events(&all)
+        .into_iter()
+        .filter_map(|(_, e)| decode_message(&PSK, &payload_of(&e)))
+        .filter(|m| m["type"] == "ice")
+        .collect();
+    assert_eq!(messages.len(), 2, "{messages:?}");
+    assert_eq!(messages[0]["candidates"].as_array().unwrap().len(), 2);
+    assert_eq!(messages[1]["candidates"].as_array().unwrap().len(), 1);
+    // The answer and the two batches: three of the six setup events of this attempt.
+    let kinds: Vec<String> = Rig::kinds(&all).into_iter().map(|(_, t)| t).collect();
+    assert_eq!(
+        kinds.iter().filter(|t| *t == "sdp").count(),
+        1 + 1,
+        "answer and its resend"
+    );
+}
+
+#[test]
+fn a_stop_leaves_over_nostr_before_the_sockets_close() {
+    let mut r = Rig::parent(&[URL_A]);
+    r.report_wall();
+    r.advance(1_000);
+    r.confirm();
+    let acts = r.feed(LinkInput::Stop);
+    let kinds = Rig::kinds(&acts);
+    assert!(kinds.iter().any(|(_, t)| t == "stop_notice"), "{kinds:?}");
+    let pos_stop = acts
+        .iter()
+        .position(|a| matches!(a, LinkAction::MailboxSend { id: 1, frame } if frame.starts_with("[\"EVENT\"")))
+        .unwrap();
+    let pos_close = acts
+        .iter()
+        .position(|a| matches!(a, LinkAction::CloseMailbox { id: 1 }))
+        .unwrap();
+    assert!(pos_stop < pos_close);
+}
+
+#[test]
+fn a_stop_of_the_peer_over_nostr_ends_the_outage_without_alarm() {
+    let mut r = Rig::parent(&[URL_A]);
+    r.report_wall();
+    r.advance(1_000);
+    r.confirm();
+    let stop = r.peer.peer.say(
+        guardedsleep_core::envelope::MessageClass::Control,
+        &json!({"type":"stop_notice"}),
+    );
+    let acts = r.deliver(1, &stop);
+    assert!(acts.iter().any(|a| matches!(
+        a,
+        LinkAction::Emit {
+            event: LinkEvent::PeerStopped
+        }
+    )));
+    // No request for an offer follows a stop, however long we wait.
+    let acts = r.advance(60_000);
+    assert!(Rig::kinds(&acts).iter().all(|(_, t)| t != "request_offer"));
 }

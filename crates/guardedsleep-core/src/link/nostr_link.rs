@@ -610,10 +610,7 @@ impl Link {
             return;
         };
         for i in 0..self.mb.nostr.len() {
-            loop {
-                let Some(b) = self.mb.nostr.get_mut(i) else {
-                    break;
-                };
+            while let Some(b) = self.mb.nostr.get_mut(i) {
                 if !b.is_open() || b.outbox.is_empty() {
                     break;
                 }
