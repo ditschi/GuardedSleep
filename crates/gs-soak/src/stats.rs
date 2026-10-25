@@ -94,9 +94,16 @@ impl RelayStats {
         }
     }
 
+    /// Events were lost, or the relay never forwarded a single one although the peer listened (a
+    /// relay that answers `REQ` and drops every `EVENT`, for example for an unlisted kind: every
+    /// such event ends up "inconclusive" or "lost" depending on timing, so the whole run is judged).
+    pub fn lossy(&self) -> bool {
+        self.lost > 0 || (self.eligible >= MIN_ELIGIBLE_EVENTS && self.delivered == 0)
+    }
+
     /// No loss, and enough evidence for that.
     pub fn clean(&self) -> bool {
-        self.lost == 0 && self.eligible >= MIN_ELIGIBLE_EVENTS
+        !self.lossy() && self.eligible >= MIN_ELIGIBLE_EVENTS
     }
 
     pub fn to_json(&self) -> Value {
@@ -132,6 +139,7 @@ impl RelayStats {
             "eligible": self.eligible,
             "delivered": self.delivered,
             "lost": self.lost,
+            "never_delivered": self.eligible >= MIN_ELIGIBLE_EVENTS && self.delivered == 0,
             "inconclusive": self.inconclusive,
             "no_ok": self.no_ok,
             "delivery_ms": {
@@ -174,7 +182,7 @@ pub fn verdict(relays: &[RelayStats], recoveries_ms: &[u64]) -> Verdict {
     let mut reasons = Vec::new();
     let total = relays.len();
     let clean = relays.iter().filter(|r| r.clean()).count();
-    let lossy = relays.iter().filter(|r| r.lost > 0).count();
+    let lossy = relays.iter().filter(|r| r.lossy()).count();
     let p95 = percentile(recoveries_ms, 95);
     reasons.push(format!(
         "{clean} of {total} relays without loss ({lossy} with loss), setup p95 {}",
@@ -234,6 +242,7 @@ mod tests {
             url: url.into(),
             eligible,
             lost,
+            delivered: eligible.saturating_sub(lost),
             ..RelayStats::default()
         }
     }
@@ -269,6 +278,15 @@ mod tests {
         recoveries.extend([3_500, 4_000]);
         let v = verdict(&relays, &recoveries);
         assert_eq!(v.outcome, Outcome::NoGo);
+    }
+
+    #[test]
+    fn a_relay_that_never_forwards_counts_as_lossy() {
+        let mut silent = relay("a", 40, 0);
+        silent.delivered = 0;
+        assert!(silent.lossy() && !silent.clean());
+        let relays = [silent.clone(), silent, relay("c", 40, 0)];
+        assert_eq!(verdict(&relays, &[900; 10]).outcome, Outcome::NoGo);
     }
 
     #[test]

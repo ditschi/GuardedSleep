@@ -1,6 +1,6 @@
 // Measures every active entry of data/nostr-relays.json (NIP-11, connect, delivery, sizes,
 // retention, created_at tolerance, burst) and every active STUN server of data/stun-servers.json.
-//   node scripts/spike/relays-check.mjs [--data data] [--out .cache/relays-check] [--only host,host]
+//   node scripts/spike/relays-check.mjs [--data data] [--out .cache/relays-check] [--only host,host] [--skip host,host]
 //                                       [--events 20] [--quick] [--concurrency 4] [--no-stun]
 // Writes relays-check.json and relays-check.md into --out and prints the table. Exit code 1 when an
 // active relay or STUN server fails (see judge() in relay-probe.mjs); re-vet it and mark it
@@ -18,6 +18,7 @@ const args = parseArgs(process.argv.slice(2), {
   data: { default: "data" },
   out: { default: ".cache/relays-check" },
   only: { default: "" },
+  skip: { default: "" },
   events: { default: 20, number: true },
   concurrency: { default: 4, number: true },
   quick: { flag: true, default: false },
@@ -141,8 +142,9 @@ function stunTable(results) {
 
 ensureSigner();
 const only = args.only ? args.only.split(",") : null;
+const skip = args.skip ? args.skip.split(",") : [];
 const relays = readData(args.data, "nostr-relays.json").relays.filter(
-  (r) => r.status === "active" && (!only || only.includes(r.host)),
+  (r) => r.status === "active" && (!only || only.includes(r.host)) && !skip.includes(r.host),
 );
 const stunServers = args["no-stun"]
   ? []

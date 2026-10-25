@@ -84,6 +84,15 @@ pub fn soak_markdown(report: &SoakReport) -> String {
         ));
     }
     out.push('\n');
+    for r in report.relays.iter().filter(|r| r.lossy() && r.lost == 0) {
+        out.push_str(&format!(
+            "- {} never forwarded an event ({} events sent, {} answered with OK): it answers `REQ` and drops what it is sent. Judged as loss.\n",
+            host(&r.url),
+            r.events_sent,
+            r.ok_true + r.refused,
+        ));
+    }
+    out.push('\n');
     out
 }
 
