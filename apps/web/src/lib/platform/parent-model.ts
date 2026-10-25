@@ -2,6 +2,7 @@ import type { DeviceStatus, LinkEvent, LinkStatus } from "@guardedsleep/core-was
 import {
   defaultLinkUi,
   defaultParentMonitor,
+  type LinkHint,
   type LinkPhase,
   type LinkQuality,
   type ListenMode,
@@ -15,7 +16,14 @@ import type { Clock } from "./clock";
 import type { InboundAudioStats } from "./media-engine";
 import { NoiseTracker } from "./noise-tracker";
 import { LISTEN_MAX_MS, MISSED_EVENTS_GRACE_MS, RESTORED_NOTICE_MS } from "./policy";
-import { causeHintOf, linkUiOf, peerStatusOf, phaseOf, qualityOf } from "./status-mapping";
+import {
+  causeHintOf,
+  linkUiOf,
+  peerStatusOf,
+  phaseOf,
+  qualityOf,
+  withHint,
+} from "./status-mapping";
 
 /** Side effects of the parent model that are not alerts. */
 export interface ParentEffects {
@@ -78,6 +86,7 @@ export class ParentModel {
 
   private missed: MissedEventsUi | null = null;
   private security = false;
+  private hints: LinkHint[] = [];
   private readiness: ReadinessIssue[] = [];
   private ownBatteryPct: number | null = null;
   private lastSnapshot: LinkSnapshot | null = null;
@@ -118,6 +127,7 @@ export class ParentModel {
     this.silenceRequest = "idle";
     this.missed = null;
     this.security = false;
+    this.hints = [];
     this.lastSnapshot = null;
     this.publish(this.clock.elapsedMs());
   }
@@ -229,10 +239,17 @@ export class ParentModel {
           this.effects.listenStopped();
         }
         break;
+      case "hint":
+        this.hints = withHint(this.hints, event.key, event.active);
+        break;
       // Baby-side gate echo; the parent learns the real threshold from peer_status.
+      // The pin and the mailbox set are kept by the controller, not shown.
       case "noise_gate_changed":
       case "status":
       case "failed":
+      case "parent_pinned":
+      case "parent_connected":
+      case "mailboxes_updated":
         break;
     }
     this.publish(now);
@@ -432,8 +449,8 @@ export class ParentModel {
     return {
       ...base,
       link: s
-        ? { ...linkUiOf(s, this.quality), stalePairingHint: this.staleHint(now) }
-        : defaultLinkUi(),
+        ? { ...linkUiOf(s, this.quality, this.hints), stalePairingHint: this.staleHint(now) }
+        : { ...defaultLinkUi(), hints: this.hints },
       peer: peerStatusOf(this.peerStatus),
       babyThreshold: this.peerStatus?.noise_threshold ?? null,
       level: connected ? this.meter(now) : 0,

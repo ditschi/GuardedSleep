@@ -5,6 +5,7 @@ import type { AppController, CodeScanner } from "../contract";
 import { AlertPlayer, createSoundGate } from "./audio";
 import { watchBattery, type BatteryManagerLike } from "./battery";
 import { createClock, createTimers } from "./clock";
+import { browserDeviceName } from "./device-name";
 import { createPageWatch, type WakeLockApi } from "./page-watch";
 import { createQrScanner, type BarcodeDetectorCtor } from "./qr-scanner";
 import { defaultSignalingUrls } from "./relay-stun";
@@ -95,6 +96,8 @@ export async function createWebApp(): Promise<AppController> {
       return { ...battery.deviceStatus(), ...(unit_warnings.length > 0 ? { unit_warnings } : {}) };
     },
     defaultSignalingUrls: () => defaultSignalingUrls(window.location, import.meta.env.DEV),
+    deviceName: () => browserDeviceName(navigator),
+    allowDevLoopback: import.meta.env.DEV,
   });
 }
 

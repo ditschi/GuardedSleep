@@ -1,6 +1,7 @@
 import type {
   CoreApi,
   DeviceStatus,
+  InviteMailbox,
   LinkConfig,
   LinkEvent,
   LinkState,
@@ -71,6 +72,13 @@ export interface ControllerDeps {
   deviceStatus?: () => DeviceStatus;
   /** The device's battery for the baby screen; absent where the browser has no Battery API. */
   battery?: Readable<DeviceBattery | null>;
+  /**
+   * Parent: the name shown on the baby device ("Chrome on Android"), sent over the verified
+   * DataChannel only. The browser family and system, never an identifier or a fingerprint.
+   */
+  deviceName?: () => string;
+  /** Development builds only: the core also accepts loopback mailboxes in a received update. */
+  allowDevLoopback?: boolean;
   /** Wake lock, page visibility and sleep detection; absent in tests that do not need them. */
   page?: PageWatch;
 }
@@ -80,6 +88,8 @@ interface StoredPairing {
   pskB64Url: string;
   urls: string[];
   pairedBefore: boolean;
+  /** The pinned parent secret (64 hex characters): memory only, like the PSK. */
+  parentSecret: string | null;
 }
 
 interface PendingPairing {
@@ -88,6 +98,14 @@ interface PendingPairing {
   startedAt: number;
   expiresAtElapsedMs: number | null;
   unreachableShown: boolean;
+  /** The parent secret of a stored pairing (a pending first pairing has none yet). */
+  parentSecret: string | null;
+  /**
+   * What the core reported before the first verification saved the pairing (the events can come
+   * before or after the `connected` status).
+   */
+  pinnedSecret: string | null;
+  receivedUrls: string[] | null;
 }
 
 interface Run {
@@ -245,6 +263,9 @@ export class WebController implements AppController {
       startedAt: now,
       expiresAtElapsedMs: now + INVITE_VALIDITY_MS,
       unreachableShown: false,
+      parentSecret: null,
+      pinnedSecret: null,
+      receivedUrls: null,
     };
     this.pairingStore.set(
       makePairingState("showing_code", {
@@ -285,6 +306,9 @@ export class WebController implements AppController {
         startedAt: this.deps.clock.elapsedMs(),
         expiresAtElapsedMs: null,
         unreachableShown: false,
+        parentSecret: null,
+        pinnedSecret: null,
+        receivedUrls: null,
       },
       false,
       false,
@@ -315,6 +339,9 @@ export class WebController implements AppController {
         startedAt: this.deps.clock.elapsedMs(),
         expiresAtElapsedMs: null,
         unreachableShown: false,
+        parentSecret: stored.parentSecret,
+        pinnedSecret: null,
+        receivedUrls: null,
       },
       stored.pairedBefore,
       true,
@@ -439,7 +466,7 @@ export class WebController implements AppController {
 
     const settings = this.settingsState;
     const driver = new LinkDriver({
-      config: this.buildConfig(role, pending.pskB64Url, pairedBefore, settings),
+      config: this.buildConfig(role, pending, pairedBefore, settings),
       signalingUrls,
       core: this.deps.core,
       signaling: this.deps.signaling,
@@ -500,7 +527,7 @@ export class WebController implements AppController {
 
   private buildConfig(
     role: Role,
-    pskB64Url: string,
+    pending: PendingPairing,
     pairedBefore: boolean,
     s: SettingsState,
   ): LinkConfig {
@@ -513,7 +540,7 @@ export class WebController implements AppController {
     const alarmAfter = Math.max(ALARM_AFTER_MS, liveness + 20_000);
     return {
       role,
-      psk_b64url: pskB64Url,
+      psk_b64url: pending.pskB64Url,
       // Fresh for every run: the core derives every nonce from it, so a reused seed would repeat them.
       seed: toHex(this.deps.randomBytes(SEED_BYTES)),
       paired_before: pairedBefore,
@@ -521,6 +548,11 @@ export class WebController implements AppController {
       alarm_after_ms: alarmAfter,
       noise_threshold: s.threshold,
       noise_hold_ms: s.holdSeconds * 1000,
+      ...(pending.parentSecret === null ? {} : { pinned_parent: pending.parentSecret }),
+      ...(role === "parent" ? { device_name: this.deps.deviceName?.() ?? "" } : {}),
+      // The baby sends the parent the set it showed in the invite, after each verification.
+      ...(role === "baby" ? { mailboxes: mailboxesForUrls(pending.urls) } : {}),
+      allow_dev_loopback: this.deps.allowDevLoopback ?? false,
     };
   }
 
@@ -545,6 +577,9 @@ export class WebController implements AppController {
       },
       onEvent: (event: LinkEvent, now: number) => {
         if (!current()) return;
+        // The one event that carries the parent secret: kept in memory next to the PSK, never logged.
+        if (event.type === "parent_pinned") this.keepParentSecret(r, event.secret);
+        else if (event.type === "mailboxes_updated") this.keepMailboxes(r, event.mailboxes);
         if (r.role === "parent") this.parentModel.onEvent(event, now);
         else this.babyModel.onEvent(event);
       },
@@ -571,7 +606,12 @@ export class WebController implements AppController {
     if (!pending) return;
     const state: LinkState = status.state;
     if (state === "connected") {
-      this.stored = { pskB64Url: pending.pskB64Url, urls: pending.urls, pairedBefore: true };
+      this.stored = {
+        pskB64Url: pending.pskB64Url,
+        urls: pending.receivedUrls ?? pending.urls,
+        pairedBefore: true,
+        parentSecret: pending.pinnedSecret,
+      };
       r.pending = null;
       r.monitoring = true;
       // The pairing link becomes the monitoring run; the other device never sees a gap.
@@ -584,6 +624,20 @@ export class WebController implements AppController {
       this.pairingStore.set(makePairingState("failed", { error }));
       this.endPendingRun(r);
     }
+  }
+
+  /** Before the first verification saved the pairing the secret waits in the run. */
+  private keepParentSecret(r: Run, secret: string): void {
+    if (r.pending) r.pending.pinnedSecret = secret;
+    else if (this.stored) this.stored = { ...this.stored, parentSecret: secret };
+  }
+
+  /** The baby's current mailbox set replaces the stored one. */
+  private keepMailboxes(r: Run, mailboxes: InviteMailbox[]): void {
+    const urls = signalingUrlsOf(mailboxes);
+    if (urls.length === 0) return;
+    if (r.pending) r.pending.receivedUrls = urls;
+    else if (this.stored) this.stored = { ...this.stored, urls };
   }
 
   private checkPairingTimers(r: Run, now: number): void {

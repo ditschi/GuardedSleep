@@ -1,6 +1,7 @@
 import type { DeviceStatus, LinkState, LinkStatus } from "@guardedsleep/core-wasm";
 import type {
   CauseHint,
+  LinkHint,
   LinkPhase,
   LinkQuality,
   LinkUi,
@@ -38,7 +39,25 @@ export function causeHintOf(key: string | null): CauseHint | null {
   return key !== null && Object.hasOwn(CAUSES, key) ? (CAUSES[key] ?? null) : null;
 }
 
-export function linkUiOf(status: LinkStatus, quality: LinkQuality): LinkUi {
+const HINTS: Record<string, LinkHint> = {
+  clock_skew: "clock_skew",
+  recovery_path_unavailable: "recovery_path_unavailable",
+};
+
+/** The contract hint for a core hint key; null for a key this client does not know. */
+export function linkHintOf(key: string): LinkHint | null {
+  return Object.hasOwn(HINTS, key) ? (HINTS[key] ?? null) : null;
+}
+
+/** `hints` plus or minus `key`, as the core's `hint` event says; unknown keys change nothing. */
+export function withHint(hints: LinkHint[], key: string, active: boolean): LinkHint[] {
+  const hint = linkHintOf(key);
+  if (hint === null) return hints;
+  const rest = hints.filter((h) => h !== hint);
+  return active ? [...rest, hint] : rest;
+}
+
+export function linkUiOf(status: LinkStatus, quality: LinkQuality, hints: LinkHint[] = []): LinkUi {
   const phase = phaseOf(status.state);
   const escalating = phase === "connecting" || phase === "reconnecting";
   return {
@@ -56,6 +75,7 @@ export function linkUiOf(status: LinkStatus, quality: LinkQuality): LinkUi {
           : null,
     quality: phase === "connected" ? quality : "unknown",
     stalePairingHint: false,
+    hints,
   };
 }
 

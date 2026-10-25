@@ -131,6 +131,7 @@ function setup(options: { micDenied?: boolean; core?: ScriptedCore; defaultUrls?
     randomBytes: (n) => Uint8Array.from({ length: n }, () => ++counter % 251),
     entropy: () => 99,
     defaultSignalingUrls: () => options.defaultUrls ?? [RELAY],
+    deviceName: () => "Chrome on Android",
   });
   return { controller, time, core, medias, media, ctx, gate, alerts, network };
 }
@@ -419,6 +420,164 @@ describe("WebController: monitoring", () => {
     t.controller.submitPairingCode(invite.text);
     await flush();
     expect(t.media.requests[0]?.ice).toEqual([{ urls: ["stun:mine.example:3478"] }]);
+  });
+});
+
+const SECRET = "ab".repeat(32);
+
+const emit = (event: Extract<LinkAction, { type: "emit" }>["event"]): LinkAction => ({
+  type: "emit",
+  event,
+});
+
+describe("WebController: the parent pin", () => {
+  it("parent: the config carries the device name, the baby's carries its mailbox set", async () => {
+    const parent = setup();
+    await pairedParent(parent);
+    expect(parent.core.configs[0]).toMatchObject({
+      device_name: "Chrome on Android",
+      allow_dev_loopback: false,
+    });
+    expect(parent.core.configs[0]?.mailboxes).toBeUndefined();
+    expect(parent.core.configs[0]?.pinned_parent).toBeUndefined();
+
+    const baby = setup();
+    baby.controller.chooseRole("baby");
+    baby.controller.startPairing();
+    await flush();
+    expect(baby.core.configs[0]?.mailboxes).toEqual([RELAY_MAILBOX]);
+    expect(baby.core.configs[0]?.device_name).toBeUndefined();
+  });
+
+  it("the pinned secret is kept in memory and handed back to the next run", async () => {
+    const t = setup();
+    await pairedParent(t);
+    // The event can come after the `connected` status ...
+    t.core.script = () => [emit({ type: "parent_pinned", secret: SECRET })];
+    t.time.advance(250);
+    t.controller.stopMonitoring();
+    t.time.advance(600);
+    await flush();
+    t.controller.startMonitoring();
+    await flush();
+    expect(t.core.configs[1]?.pinned_parent).toBe(SECRET);
+    expect(t.core.configs[1]).toMatchObject({ paired_before: true });
+  });
+
+  it("... or before it, while the pairing is still pending", async () => {
+    const t = setup();
+    t.controller.chooseRole("parent");
+    const psk = Uint8Array.from({ length: 32 }, (_, i) => i + 1);
+    const invite = realCore.buildInvite(psk, [RELAY_MAILBOX], t.time.wallMs() / 1000 + 300);
+    if (!invite.ok) throw new Error("invite");
+    t.core.script = (input) =>
+      input.type === "tick"
+        ? [emit({ type: "parent_pinned", secret: SECRET }), emitStatus({ state: "connected" })]
+        : [];
+    t.controller.submitPairingCode(invite.text);
+    await flush();
+    t.time.advance(250);
+    expect(get(t.controller.pairing)?.phase).toBe("paired");
+    t.core.script = () => [];
+    t.controller.stopMonitoring();
+    t.time.advance(600);
+    await flush();
+    t.controller.startMonitoring();
+    await flush();
+    expect(t.core.configs[1]?.pinned_parent).toBe(SECRET);
+  });
+
+  it("a new pairing starts without the old secret, and forgetting drops it", async () => {
+    const t = setup();
+    await pairedParent(t);
+    t.core.script = () => [emit({ type: "parent_pinned", secret: SECRET })];
+    t.time.advance(250);
+    t.controller.forgetPairing();
+    t.time.advance(600);
+    await flush();
+    t.controller.chooseRole("parent");
+    await pairedParent(t);
+    expect(t.core.configs[1]?.pinned_parent).toBeUndefined();
+  });
+
+  it("the secret never reaches a store, a socket URL or the storage", async () => {
+    const setItem = vi.spyOn(Storage.prototype, "setItem");
+    const t = setup();
+    await pairedParent(t);
+    t.core.script = () => [emit({ type: "parent_pinned", secret: SECRET })];
+    t.time.advance(250);
+    const everything = [
+      JSON.stringify(get(t.controller.app)),
+      JSON.stringify(get(t.controller.pairing)),
+      JSON.stringify(get(t.controller.settings)),
+      JSON.stringify(get(t.controller.parent)),
+      JSON.stringify(get(t.controller.baby)),
+      ...FakeWebSocket.instances.map((w) => w.url),
+      ...Object.values(window.localStorage),
+    ].join("\n");
+    expect(everything).not.toContain(SECRET);
+    expect(setItem).not.toHaveBeenCalled();
+    setItem.mockRestore();
+  });
+
+  it("a mailbox update from the baby replaces the relay list of the next run", async () => {
+    const t = setup();
+    await pairedParent(t);
+    t.core.script = () => [
+      emit({
+        type: "mailboxes_updated",
+        mailboxes: [{ kind: "relay", url: "wss://new-relay.test/sig" }],
+      }),
+    ];
+    t.time.advance(250);
+    t.controller.stopMonitoring();
+    t.time.advance(600);
+    await flush();
+    FakeWebSocket.instances = [];
+    // The core asks for its relay mailbox when it starts; the platform opens the stored address.
+    t.core.script = (input) =>
+      input.type === "start" ? [{ type: "open_mailbox", id: 0, kind: "relay", url: "" }] : [];
+    t.controller.startMonitoring();
+    await flush();
+    expect(FakeWebSocket.instances.map((w) => w.url)).toEqual(["wss://new-relay.test/sig"]);
+  });
+
+  it("baby: the parent's name shows while connected; warnings and hints reach the store", async () => {
+    const t = setup();
+    t.controller.chooseRole("baby");
+    t.controller.startPairing();
+    await flush();
+    t.core.script = () => [
+      emit({ type: "parent_connected", name: "Pixel 8" }),
+      emit({ type: "hint", key: "clock_skew", active: true }),
+      emit({ type: "security_warning", key: "unknown_parent_attempt" }),
+      emitStatus({ state: "connected" }),
+    ];
+    t.time.advance(250);
+    expect(get(t.controller.baby)).toMatchObject({
+      parentName: "Pixel 8",
+      securityWarning: true,
+    });
+    expect(get(t.controller.baby).link.hints).toEqual(["clock_skew"]);
+    t.core.script = () => [
+      emit({ type: "hint", key: "clock_skew", active: false }),
+      emitStatus({ state: "reconnecting" }),
+    ];
+    t.time.advance(250);
+    expect(get(t.controller.baby).parentName).toBeNull();
+    expect(get(t.controller.baby).link.hints).toEqual([]);
+  });
+
+  it("parent: calm hints reach the link state, unknown keys are ignored", async () => {
+    const t = setup();
+    await pairedParent(t);
+    t.core.script = () => [
+      emit({ type: "hint", key: "recovery_path_unavailable", active: true }),
+      emit({ type: "hint", key: "something_new", active: true }),
+    ];
+    t.time.advance(250);
+    expect(get(t.controller.parent).link.hints).toEqual(["recovery_path_unavailable"]);
+    expect(get(t.controller.parent).securityWarning).toBe(false);
   });
 });
 

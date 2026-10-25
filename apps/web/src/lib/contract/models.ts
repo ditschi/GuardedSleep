@@ -24,6 +24,12 @@ export type LinkPhase =
 
 export type CauseHint = "server_unreachable" | "peer_absent" | "media_blocked";
 
+/**
+ * A calm hint of the core (never an alarm): the clocks of the two devices differ by more than 10
+ * minutes, or no mailbox was reachable at the last reachability check while the link is verified.
+ */
+export type LinkHint = "clock_skew" | "recovery_path_unavailable";
+
 export type LinkQuality = "good" | "medium" | "poor" | "unknown";
 
 export interface LinkUi {
@@ -41,6 +47,8 @@ export interface LinkUi {
   quality: LinkQuality;
   /** The baby device has been absent for over 10 minutes: a re-paired baby needs a new scan. */
   stalePairingHint: boolean;
+  /** Calm hints currently raised by the core; the UI renders them later (tasks 5.3, 6.2). */
+  hints: LinkHint[];
 }
 
 /** One value for the parent (ADR-018 section 3.3). */
@@ -128,6 +136,13 @@ export interface BabyMonitorState {
   micSilent: boolean;
   /** The parent is listening (shown on touch-wake only). */
   parentListening: boolean;
+  /**
+   * The name the pinned parent device sent over the verified DataChannel ("Connected to {name}");
+   * null unless connected, empty when it sent none.
+   */
+  parentName: string | null;
+  /** A device that is not the paired parent tried to connect (the core refused it). */
+  securityWarning: boolean;
 }
 
 export type PairingPhase =
@@ -236,6 +251,7 @@ export function defaultLinkUi(): LinkUi {
     failureKey: null,
     quality: "unknown",
     stalePairingHint: false,
+    hints: [],
   };
 }
 
@@ -286,6 +302,8 @@ export function defaultBabyMonitor(): BabyMonitorState {
     silenceRestoredNotice: false,
     micSilent: false,
     parentListening: false,
+    parentName: null,
+    securityWarning: false,
   };
 }
 

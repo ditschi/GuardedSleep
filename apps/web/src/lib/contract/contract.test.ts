@@ -14,6 +14,7 @@ import {
   type AlertOutput,
   type CauseHint,
   type DeviceCheck,
+  type LinkHint,
   type LinkPhase,
   type LinkQuality,
   type ListenMode,
@@ -83,6 +84,7 @@ describe("enums mirror UiContract.kt", () => {
       "stopped",
     ] satisfies LinkPhase[],
     CauseHint: ["server_unreachable", "peer_absent", "media_blocked"] satisfies CauseHint[],
+    LinkHint: ["clock_skew", "recovery_path_unavailable"] satisfies LinkHint[],
     LinkQuality: ["good", "medium", "poor", "unknown"] satisfies LinkQuality[],
     SilenceStatus: [
       "silent",

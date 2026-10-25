@@ -33,6 +33,9 @@ const CORE_KEYS: Readonly<Record<string, MessageKey>> = {
   peer_absent: "core.peerAbsent",
   media_blocked: "core.mediaBlocked",
   wrong_key_attempt: "core.wrongKeyAttempt",
+  unknown_parent_attempt: "core.unknownParentAttempt",
+  clock_skew: "core.clockSkew",
+  recovery_path_unavailable: "core.recoveryPathUnavailable",
 };
 
 export function coreMessageKey(key: string | null): MessageKey | null {

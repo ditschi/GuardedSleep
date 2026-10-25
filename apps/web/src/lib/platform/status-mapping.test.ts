@@ -1,5 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { causeHintOf, qualityOf } from "./status-mapping";
+import { causeHintOf, linkHintOf, qualityOf, withHint } from "./status-mapping";
+
+describe("calm hints", () => {
+  it("map the core's hint keys and ignore unknown ones", () => {
+    expect(linkHintOf("clock_skew")).toBe("clock_skew");
+    expect(linkHintOf("recovery_path_unavailable")).toBe("recovery_path_unavailable");
+    expect(linkHintOf("something_new")).toBeNull();
+    expect(linkHintOf("toString")).toBeNull();
+  });
+
+  it("are switched on and off without duplicates", () => {
+    const on = withHint([], "clock_skew", true);
+    expect(on).toEqual(["clock_skew"]);
+    expect(withHint(on, "clock_skew", true)).toEqual(["clock_skew"]);
+    expect(withHint(on, "recovery_path_unavailable", true)).toEqual([
+      "clock_skew",
+      "recovery_path_unavailable",
+    ]);
+    expect(withHint(on, "clock_skew", false)).toEqual([]);
+    expect(withHint(on, "unknown_key", true)).toBe(on);
+  });
+});
 
 describe("qualityOf", () => {
   const cases: Array<[number, number, string | null]> = [

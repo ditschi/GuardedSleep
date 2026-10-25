@@ -1,7 +1,12 @@
 import type { LinkEvent, LinkStatus } from "@guardedsleep/core-wasm";
-import { defaultBabyMonitor, defaultLinkUi, type BabyMonitorState } from "../contract";
+import {
+  defaultBabyMonitor,
+  defaultLinkUi,
+  type BabyMonitorState,
+  type LinkHint,
+} from "../contract";
 import type { Clock } from "./clock";
-import { linkUiOf } from "./status-mapping";
+import { linkUiOf, withHint } from "./status-mapping";
 
 /** Same window as the core's `mic_silent` (30 s of digital silence). */
 const MIC_SILENT_MS = 30_000;
@@ -14,6 +19,9 @@ export class BabyModel {
   private last: LinkStatus | null = null;
   private micLevel = 0;
   private zeroSince: number | null = null;
+  private hints: LinkHint[] = [];
+  private parentName = "";
+  private security = false;
   private state: BabyMonitorState = defaultBabyMonitor();
 
   constructor(
@@ -26,6 +34,9 @@ export class BabyModel {
     this.last = null;
     this.micLevel = 0;
     this.zeroSince = null;
+    this.hints = [];
+    this.parentName = "";
+    this.security = false;
     this.state = {
       ...defaultBabyMonitor(),
       threshold: this.state.threshold,
@@ -47,6 +58,18 @@ export class BabyModel {
       // The parent's listen request reaches the baby as this echo.
       case "listen_changed":
         this.update({ parentListening: event.enabled });
+        break;
+      case "parent_connected":
+        this.parentName = event.name;
+        this.publish(this.clock.elapsedMs());
+        break;
+      case "security_warning":
+        this.security = true;
+        this.publish(this.clock.elapsedMs());
+        break;
+      case "hint":
+        this.hints = withHint(this.hints, event.key, event.active);
+        this.publish(this.clock.elapsedMs());
         break;
       default:
         break;
@@ -87,9 +110,12 @@ export class BabyModel {
     const s = this.last;
     const silent = this.zeroSince !== null && now - this.zeroSince >= MIC_SILENT_MS;
     this.update({
-      link: s ? linkUiOf(s, "unknown") : defaultLinkUi(),
+      link: s ? linkUiOf(s, "unknown", this.hints) : { ...defaultLinkUi(), hints: this.hints },
       micLevel: this.micLevel,
       micSilent: silent,
+      // The name belongs to the attempt that is connected right now.
+      parentName: s?.state === "connected" ? this.parentName : null,
+      securityWarning: this.security,
     });
   }
 }
