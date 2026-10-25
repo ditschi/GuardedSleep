@@ -1,0 +1,78 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "nostr-third-party-replay-does-not-park-the-relay",
+  "description": "After the pair lost its link, a third party replays the events it captured from the only public relay at 200 a minute. Events already seen are dropped before they are counted, so the relay is not parked and the pair recovers through it.",
+  "seed": 1,
+  "max_seeds": 5,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby",
+      "mailboxes": [
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-a.example"
+        }
+      ]
+    },
+    {
+      "id": "parent",
+      "role": "parent",
+      "mailboxes": [
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-a.example"
+        }
+      ]
+    }
+  ],
+  "nostr": [
+    {
+      "url": "wss://nostr-a.example"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "signaling_down"
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 12000,
+      "do": "path_switch",
+      "peer": "baby",
+      "gap_ms": 2000
+    },
+    {
+      "at": 30000,
+      "do": "nostr_replay",
+      "id": "wss://nostr-a.example",
+      "for_ms": 150000,
+      "gap_ms": 300
+    },
+    {
+      "at": 200000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 150000
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 150000
+    },
+    {
+      "peer": "parent",
+      "nostr_closes_max": 2,
+      "within_ms": [20000, 150000]
+    }
+  ]
+}

@@ -42,6 +42,10 @@ pub struct NostrRelaySpec {
     /// The relay is down from the start.
     #[serde(default)]
     pub down: bool,
+    /// The relay closes the socket right after it answered a subscription with EOSE (a flapping
+    /// relay behind a bad proxy).
+    #[serde(default)]
+    pub close_after_eose: bool,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -109,6 +113,8 @@ struct RelaySim {
     drops: bool,
     stored: Vec<Stored>,
     recent: Vec<Time>,
+    /// Every accepted event, kept for a third party that replays them.
+    captured: Vec<guardedsleep_core::nostr::Event>,
 }
 
 struct NSock {
@@ -136,6 +142,8 @@ pub struct NostrWorld {
     by_actor: BTreeMap<(usize, MailboxId), usize>,
     next: usize,
     pub sent: Vec<NostrSent>,
+    /// Every socket an actor's core closed: `(actor, relay url, time)`.
+    pub closes: Vec<(usize, String, Time)>,
 }
 
 impl NostrWorld {
@@ -152,6 +160,7 @@ impl NostrWorld {
                             spec: s.clone(),
                             stored: Vec::new(),
                             recent: Vec::new(),
+                            captured: Vec::new(),
                         },
                     )
                 })
@@ -237,7 +246,9 @@ impl World {
 
     pub(super) fn nostr_close(&mut self, a: usize, id: MailboxId) {
         if let Some(nsock) = self.nostr.by_actor.remove(&(a, id)) {
-            self.nostr.socks.remove(&nsock);
+            if let Some(s) = self.nostr.socks.remove(&nsock) {
+                self.nostr.closes.push((a, s.url, self.now));
+            }
         }
     }
 
@@ -389,6 +400,14 @@ impl World {
             );
         }
         self.push_client_text(nsock, json!(["EOSE", sub]));
+        if self
+            .nostr
+            .relays
+            .get(url)
+            .is_some_and(|r| r.spec.close_after_eose)
+        {
+            self.push_client(nsock, ToClient::Closed);
+        }
     }
 
     fn relay_event(&mut self, nsock: usize, url: &str, text: &str) {
@@ -428,6 +447,12 @@ impl World {
         if drops {
             return;
         }
+        if let Some(r) = self.nostr.relays.get_mut(url) {
+            r.captured.push(event.clone());
+            if r.captured.len() > 400 {
+                r.captured.remove(0);
+            }
+        }
         if retention_ms > 0
             && let Some(r) = self.nostr.relays.get_mut(url)
         {
@@ -452,6 +477,47 @@ impl World {
             let frame = guardedsleep_core::testing::relay_event_frame(&sub, &event);
             self.push_client(k, ToClient::Text(frame));
         }
+    }
+
+    /// One event of a replaying third party: every captured event again, in a loop, to every
+    /// subscription it matches, at the scenario's pace.
+    pub(super) fn on_nostr_replay(&mut self, url: &str, until: Time, gap: u64, idx: usize) {
+        if self.now >= until {
+            return;
+        }
+        let event = self.nostr.relays.get(url).and_then(|r| {
+            (!r.captured.is_empty())
+                .then(|| r.captured.get(idx % r.captured.len()).cloned())
+                .flatten()
+        });
+        if let Some(event) = event {
+            let targets: Vec<(usize, String)> = self
+                .nostr
+                .socks
+                .iter()
+                .filter(|(_, s)| s.url == url && s.accepted)
+                .flat_map(|(k, s)| {
+                    s.subs
+                        .iter()
+                        .filter(|(_, fs)| fs.iter().any(|f| f.matches(&event)))
+                        .map(move |(sub, _)| (*k, sub.clone()))
+                })
+                .collect();
+            for (k, sub) in targets {
+                let frame = guardedsleep_core::testing::relay_event_frame(&sub, &event);
+                self.push_client(k, ToClient::Text(frame));
+            }
+        }
+        self.push(
+            self.now + gap,
+            2,
+            Ev::NReplay {
+                url: url.to_owned(),
+                until,
+                gap,
+                idx: idx + 1,
+            },
+        );
     }
 
     // ---- timeline verbs ----------------------------------------------------------------
@@ -483,6 +549,20 @@ impl World {
                 for k in gone {
                     self.push_client(k, ToClient::Closed);
                 }
+            }
+            "nostr_replay" => {
+                let until = self.now.saturating_add(st.for_ms.unwrap_or(60_000));
+                let gap = st.gap_ms.unwrap_or(300).max(1);
+                self.push(
+                    self.now + gap,
+                    2,
+                    Ev::NReplay {
+                        url: url.clone(),
+                        until,
+                        gap,
+                        idx: 0,
+                    },
+                );
             }
             "nostr_up" => {
                 if let Some(r) = self.nostr.relays.get_mut(&url) {

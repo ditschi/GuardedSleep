@@ -203,6 +203,9 @@ pub struct Assertion {
     pub nostr_probe: Option<bool>,
     /// The peer sent at least one frame to each of these Nostr relays (all of them).
     pub nostr_used: Option<Vec<String>>,
+    /// The peer closed at most this many Nostr sockets within `within_ms` (a relay it parked or
+    /// found unusable shows up as a close; 0 proves it never left a relay).
+    pub nostr_closes_max: Option<usize>,
 }
 
 impl Scenario {

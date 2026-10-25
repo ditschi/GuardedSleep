@@ -185,6 +185,13 @@ enum Ev {
         nsock: usize,
         msg: ToClient,
     },
+    /// A third party re-delivers events it captured from a relay.
+    NReplay {
+        url: String,
+        until: Time,
+        gap: u64,
+        idx: usize,
+    },
 }
 
 pub struct Pc {
@@ -561,6 +568,12 @@ impl World {
             Ev::NAccept { nsock } => self.on_nostr_accept(nsock),
             Ev::NToRelay { nsock, text } => self.on_nostr_relay_rx(nsock, &text),
             Ev::NToClient { actor, nsock, msg } => self.on_nostr_client_rx(actor, nsock, msg),
+            Ev::NReplay {
+                url,
+                until,
+                gap,
+                idx,
+            } => self.on_nostr_replay(&url, until, gap, idx),
         }
     }
 
@@ -656,7 +669,9 @@ impl World {
                     self.push(self.now + after, 2, Ev::Restart { actor: a });
                 }
             }
-            "nostr_down" | "nostr_up" | "nostr_drop_delivery" => self.nostr_verb(&st),
+            "nostr_down" | "nostr_up" | "nostr_drop_delivery" | "nostr_replay" => {
+                self.nostr_verb(&st)
+            }
             "drop_data" | "delay" | "duplicate" | "reorder" => self.add_fault(&st),
             "clear_faults" => self.faults.clear(),
             "time_jump" => self.time_jump(&st),

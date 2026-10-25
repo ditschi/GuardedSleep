@@ -65,7 +65,10 @@ fn check_nostr_probe(world: &World, ix: usize) -> (bool, String) {
         .collect();
     let mut bad = Vec::new();
     for f in &frames {
+        // Not even the event kind of the app: a check asks for a random event id only.
         let revealing = f.text.contains("\"authors\"")
+            || f.text.contains("24861")
+            || f.text.contains("\"#t\"")
             || f.text.starts_with("[\"EVENT\"")
             || keys
                 .as_ref()
@@ -246,6 +249,18 @@ fn check_one(world: &World, a: &Assertion) -> (bool, String) {
         return (
             busiest > 0 && busiest <= max,
             format!("most events to one relay: {busiest} (limit {max}); {per_relay:?}"),
+        );
+    }
+    if let Some(max) = a.nostr_closes_max {
+        let n = world
+            .nostr
+            .closes
+            .iter()
+            .filter(|(actor, _, t)| *actor == ix && in_window(*t))
+            .count();
+        return (
+            n <= max,
+            format!("{n} Nostr socket(s) closed by the peer (limit {max})"),
         );
     }
     if let Some(used) = &a.nostr_used {

@@ -818,7 +818,10 @@ fn a_relay_that_talks_too_much_is_disconnected_and_retried_with_backoff() {
             break;
         }
     }
-    assert!(closed.is_some_and(|n| (298..=301).contains(&n)), "{closed:?}");
+    assert!(
+        closed.is_some_and(|n| (298..=301).contains(&n)),
+        "{closed:?}"
+    );
     // Not parked: it comes back after the short backoff.
     let acts = r.advance(3_000);
     assert!(opens(&acts).iter().any(|(id, ..)| *id == 1));
