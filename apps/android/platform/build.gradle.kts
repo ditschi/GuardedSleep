@@ -1,6 +1,10 @@
 // Everything that touches the OS or the network: monitor service, alerts, signaling, libwebrtc
 // engine, pairing storage. The only module that depends on `core-bindings` (UniFFI).
-plugins { id("guardedsleep.android-library") }
+plugins {
+    id("guardedsleep.android-library")
+    // PublicLists.kt: the curated relay and STUN servers, generated from data/*.json.
+    id("guardedsleep.public-lists")
+}
 
 android {
     namespace = "org.guardedsleep.app.platform"

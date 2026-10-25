@@ -10,6 +10,7 @@ import org.guardedsleep.app.alerts.NoiseKind
 import org.guardedsleep.app.config.AppDefaults
 import org.guardedsleep.app.config.DebugOptions
 import org.guardedsleep.app.config.PairingPolicy
+import org.guardedsleep.app.config.PublicRelays
 import org.guardedsleep.app.config.RelayStun
 import org.guardedsleep.app.diag.PocLog
 import org.guardedsleep.app.media.IceConfig
@@ -76,6 +77,12 @@ class LinkController(
      * or a fingerprint.
      */
     private val deviceName: () -> String = { "" },
+    /**
+     * Baby: the public Nostr relays named in the invite, chosen from the pairing key by the core.
+     * The default is empty in release builds (release gate, [PublicRelays.ENABLED]); tests pass
+     * their own.
+     */
+    private val nostrRelays: (ByteArray) -> List<InviteMailbox> = { PublicRelays.forInvite(it) },
 ) : AppController {
     private val _app = MutableStateFlow(AppState())
     private val _settings = MutableStateFlow(settingsRepo.current.settings)
@@ -301,7 +308,8 @@ class LinkController(
         }
         val psk = ByteArray(PairingPolicy.PSK_BYTES).also(random::nextBytes)
         val now = clock.elapsedMs()
-        val payload = PairingPayload.create(psk, urls, clock.wallMs())
+        val nostr = nostrRelays(psk)
+        val payload = PairingPayload.create(psk, urls, clock.wallMs(), nostr)
         val inviteText = payload.toInviteText()
         if (inviteText == null) {
             // The core refuses an invite for these addresses (e.g. a public ws:// address).
@@ -315,6 +323,13 @@ class LinkController(
                 null,
                 now,
                 now + PairingPolicy.QR_VALIDITY_MS,
+                // The core opens the picked relays and the baby sends the whole set to the parent.
+                mailboxes =
+                    if (nostr.isEmpty()) emptyList()
+                    else
+                        PairingPayload.mailboxesFor(urls).map {
+                            StoredMailbox(kindName(it.kind), it.url)
+                        } + nostr.map { StoredMailbox("nostr", it.url) },
                 pinUntilS = payload.expiresAtEpochSec,
             )
         _pairing.value =
@@ -449,7 +464,7 @@ class LinkController(
         val signalingUrls = effectiveUrls(pending.urls)
         val ice =
             IceConfig(
-                stunUrls = RelayStun.urls(signalingUrls),
+                stunUrls = RelayStun.iceUrls(signalingUrls),
                 turnUrl = pending.turn?.url ?: s.turnUrl,
                 turnUser = pending.turn?.username,
                 turnCredential = pending.turn?.credential,

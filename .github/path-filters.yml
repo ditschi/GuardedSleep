@@ -32,6 +32,7 @@ android:
   - "justfile"
   - "apps/android/**"
   - "locales/**"
+  - "data/**"
   - "scripts/core-build.sh"
   - "scripts/gradle.sh"
   - "scripts/lib/**"
@@ -52,10 +53,12 @@ web:
   - "apps/web/**"
   - "packages/**"
   - "locales/**"
+  - "data/**"
 
 # Browser E2E inputs.
 e2e:
   - "apps/e2e/**"
+  - "data/**"
   - "apps/web/**"
   - "crates/guardedsleep-relay/**"
   - "crates/guardedsleep-server/**"
@@ -73,6 +76,7 @@ gate:
   - "pnpm-workspace.yaml"
   - "apps/android/**"
   - "locales/**"
+  - "data/**"
   - "scripts/core-build.sh"
   - "scripts/gradle.sh"
   - "scripts/lib/**"

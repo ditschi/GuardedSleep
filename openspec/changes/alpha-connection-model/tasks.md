@@ -64,13 +64,15 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 
   Verify: core tests; NIP-01 id and signature vectors checked against an independent implementation; a fuzz target for NIP-01 frames; sim scenarios "relay accepts but never delivers", "clock five minutes off at the epoch change", "one-hour outage stays within budget".
 
-- [ ] 3.6 Curated lists:
+- [x] 3.6 Curated lists:
   - `data/nostr-relays.json` and `data/stun-servers.json`, seeded from `spike.md`;
   - a generator into both clients and into the web CSP `connect-src`;
   - build minimums (6 relays from 4 operators, 2 STUN servers from distinct operators), a warning for stale entries, and a lint against unlisted STUN hosts in source;
   - the deterministic relay pick (3 from distinct operators, plus up to 2 own-list relays).
 
   Verify: generator tests; `just lint` fails below the minimums and on a Google STUN host.
+
+  As built: design.md section 6 ("As built (task 3.6)") and the release gate in section 8. The own-list extras (`extra_relays`) exist in the core and its bindings, but no platform feeds them into the link config yet.
 
 ## 4. Go/no-go
 
@@ -90,7 +92,7 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 
   Verify: JVM tests with fake sockets; `just verify-android`.
 
-- [ ] 5.3 Android UI (BLOCKER for any build that ships 3.6 relay entries: disclosure and the off switch must exist before a release baby emits `n:` entries; security review of 3.5, M7):
+- [ ] 5.3 Android UI (BLOCKER for any build that ships 3.6 relay entries: disclosure and the off switch must exist before a release baby emits `n:` entries; security review of 3.5, M7; this task flips `PublicRelays.enabledFor` to on for release builds, see design.md section 8):
   - the Connection section with the disclosure and "Who are they?";
   - on the baby: "Connected to <name>" with "Not my device", the security warning for refused parents, and the copy that forgetting on the parent alone leaves the baby paired;
   - Advanced: the off switch, own relays and TURN;
@@ -107,7 +109,7 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 ## 6. Web
 
 - [ ] 6.1 Web link driver: mailbox WebSockets; the seed from `crypto.getRandomValues`; the wall clock; the ICE config from the lists; the off switch; the CSP `connect-src` from the generated list. Verify: Vitest with fake sockets; the storage test still finds no PSK, derived value or parent id.
-- [ ] 6.2 Web settings and copy as in 5.3 (same blocker as 5.3), plus the QR scan test in Playwright (inverted, 50 %). Verify: Vitest, Playwright with axe, `just lint-text`.
+- [ ] 6.2 Web settings and copy as in 5.3 (same blocker as 5.3; this task flips `publicRelaysEnabled` to on for production builds), plus the QR scan test in Playwright (inverted, 50 %). Verify: Vitest, Playwright with axe, `just lint-text`.
 - [ ] 6.3 Playwright: a minimal NIP-01 test relay in the `apps/e2e` utilities (no public relays in CI); two contexts pair through it; a mailbox drop during setup still verifies; a CSP check that only listed origins connect. Verify: `just e2e`.
 
 ## 7. Integration

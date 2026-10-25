@@ -44,6 +44,7 @@ crates/
   guardedsleep-core/    Rust sans-IO core (protocol v3, pairing, Link/Attempt); vectors + traces      [exists; short name `core`]
   guardedsleep-sim/     Host simulation (gs-scenario), trace recording                                [exists; short name `sim`]
   i18n-gen/ , uniffi-bindgen/                                                                         [exist]
+  public-lists/         Validator and generator for data/*.json (curated relays and STUN) -> web module, Kotlin, CSP origins [exists]
   guardedsleep-ffi/     UniFFI façade (libguardedsleep_ffi.so, Kotlin bindings); api.txt snapshot      [exists; short name `ffi`]
   guardedsleep-wasm/    wasm-bindgen + tsify façade for the web client; api.txt snapshot                [exists; short name `wasm`]
   guardedsleep-relay/   Sans-IO signaling relay: rooms, limits, LAN admission                          [exists]
@@ -55,6 +56,7 @@ apps/
 packages/
   core-wasm/            WASM build of the core + generated TS types
   protocol/             LEGACY, deleted in wave 2
+data/                   Curated public Nostr relays and STUN servers (nostr-relays.json, stun-servers.json); `just lint` checks them
 locales/                UI copy catalogue (en master), ~20 locales planned, wave 2 (4 today; §5.2a)
 docker/                 signaling-server, web, stack, android-native-build, android-emulator
 scripts/                core-build.sh, cargo.sh, poc/ (emulator gate), lint-ui-literals.sh, …

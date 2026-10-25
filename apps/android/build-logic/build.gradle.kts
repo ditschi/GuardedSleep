@@ -31,6 +31,10 @@ gradlePlugin {
             id = "guardedsleep.i18n"
             implementationClass = "org.guardedsleep.buildlogic.I18nConventionPlugin"
         }
+        register("publicLists") {
+            id = "guardedsleep.public-lists"
+            implementationClass = "org.guardedsleep.buildlogic.PublicListsConventionPlugin"
+        }
         register("kotlin") {
             id = "guardedsleep.kotlin"
             implementationClass = "org.guardedsleep.buildlogic.KotlinConventionPlugin"

@@ -391,6 +391,14 @@ The first review's design used a bearer parent id inside the envelopes. A PSK ho
 - The web client offers own relays only from the deployment list, so the user cannot type arbitrary origins, and it ignores invite hosts outside its CSP.
 - A blanket `wss:` is never used.
 
+**As built (task 3.6):**
+
+- **Data:** `data/nostr-relays.json` (11 relays, 11 operators; `nos.lol` and `nostr.mom` are one operator and one entry) and `data/stun-servers.json` (10 entries from 9 operators; Nextcloud twice, on 443 and 3478). Each entry has operator, country, privacy policy (or null), `last_vetted` and notes; relays also have `hoster`, software and `keeps_ephemeral`. A `status` of `suspended` keeps an entry in the file without shipping or counting it.
+- **Generator and build check:** the `public-lists` crate (`crates/public-lists`, outside the core) loads the files with a typed, `deny_unknown_fields` loader and `check` enforces the entry rules (EU/EEA/CH country, `https://` policy link, lower-case DNS hosts, one active relay per operator, no duplicates, no future dates) and the minimums (6 usable relays from 4 operators, 2 STUN operators); a `last_vetted` older than 12 months only warns. `web` writes the TypeScript module and the CSP origins, `android` writes `PublicLists.kt`; nothing generated is committed. `just lint` runs `check` and `stun-sources`, which fails on any STUN host outside the list in `apps/`, `crates/`, `docker/`, `scripts/` and `.github/` (a built-in self-test proves that `stun.l.google.com` is caught before the scan runs).
+- **Relay pick:** `guardedsleep_core::relay_pick`. The platform passes its shipped list as `RelayCandidate { host, operator, hoster }`. Each candidate scores `HMAC-SHA256(K, lower-case host)` with `K = HKDF(PSK, "guardedsleep relay pick v1")`; the lowest scores win (rendezvous hashing, so a list that differs by one entry moves at most one pick). `pick_relays` walks the ranking, skips parked hosts and any operator already taken, and prefers a hoster not yet taken, relaxing only that preference when slots would stay empty. `extra_relays` runs the same walk over the device's own list for the up to 2 extra relays beyond the invite's hosts. Conformance vectors `relay pick: …` run through every binding.
+- **ICE:** the generator resolves the default set (every entry of the first two distinct STUN operators: Nextcloud 443 and 3478, Telekom) into `DEFAULT_STUN_URLS` / `PublicLists.defaultStunUrls`. The platforms use it only when no own relay is configured; with `only_local` they use no public STUN.
+- **Web CSP:** `connect-src` is `'self'` plus the generated relay origins, `connect-origins.json` and `GS_CSP_CONNECT_ORIGINS`. The web build writes `csp-connect-origins.json` (read by `guardedsleep-server --serve-web`) and `csp-header.conf` (the nginx `add_header` line, which the image moves to `/etc/nginx` and four `include`s pick up), so the header, the `<meta>` fallback and the server all follow the same list.
+
 ### 7. ICE (layer: platform builds the ICE config from core-supplied lists)
 
 - **With an own relay mailbox configured:** only its STUN.
@@ -404,6 +412,8 @@ The first review's design used a bearer parent id inside the envelopes. A PSK ho
 **AGENTS.md §7.1 amendment (exact wording for task 1.1, from review 2, I8):** "Media, alerts and heartbeats never transit a third party, except an encrypted, user-entered TURN. Signaling may use the vetted EU/EEA/CH mailboxes and STUN servers in `data/` (criteria: `openspec/specs/signaling-mailboxes`, "Curated public services"), only as sealed envelopes, so operators see only the items in "Relay-visible data", with disclosure and an off switch on each device. Only STUN hosts in `data/stun-servers.json` are allowed, enforced by lint."
 
 ### 8. Disclosure and off switch (layer: UI over contract models)
+
+**Release gate (task 3.6, security review of 3.5, M7):** until the disclosure and the off switch exist, a release build must not put `n:` entries into invites, because that would send connection metadata to third parties without the user seeing or refusing it. One build-time flag per platform decides: Android `PublicRelays.enabledFor(BuildConfig.DEBUG)` (on for debug builds and the emulator gate, off for release) and the web `publicRelaysEnabled(import.meta.env)` (on for `vite dev` and `--mode e2e`, off for `--mode production`, which the release build and the web image use). A test asserts the release value is off on each platform. Tasks 5.3 and 6.2 flip these flags when the disclosure and the off switch land. The dev and E2E builds additionally let a set `guardedsleep:dev-nostr-relays` list (even an empty one) replace the public relays, so no test reaches a public relay.
 
 **Basic settings (Connection) and setup:**
 

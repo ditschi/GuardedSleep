@@ -1,6 +1,8 @@
-import { expect, test, type Page } from "@playwright/test";
+import { chromium, expect, test, type Page } from "@playwright/test";
+import { readFileSync } from "node:fs";
 import { createServer, type Server } from "node:http";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { cspProbeStub, cspViolations, wakeLockStub } from "./utils/browser-stubs";
 import { fixturesDir, launchDualContexts, type DualContexts } from "./utils/dual-context";
 import { startProdServer, type ProdServer } from "./utils/prod-server";
@@ -108,6 +110,62 @@ test("the header matches the meta fallback, and no screen violates the policy", 
     await expectNoViolations([baby, parent], "link alarm");
   } finally {
     await dual.dispose();
+  }
+});
+
+test("connect-src allows the curated relay origins and blocks an unlisted one", async () => {
+  test.setTimeout(120_000);
+  const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../..", "..");
+  const data = JSON.parse(readFileSync(join(repoRoot, "data/nostr-relays.json"), "utf8")) as {
+    relays: { host: string; status: string }[];
+  };
+  const listed = data.relays.filter((r) => r.status === "active").map((r) => r.host);
+  expect(listed.length).toBeGreaterThanOrEqual(6);
+  const unlisted = "unlisted-relay.example.org";
+  expect(listed).not.toContain(unlisted);
+
+  // Every name except the local server fails to resolve: the sockets below never reach a public
+  // relay (CI makes no request to a third party), but the CSP still decides before any lookup.
+  // Chromium flag: https://chromium.googlesource.com/chromium/src/+/HEAD/net/dns/README.md
+  const browser = await chromium.launch({
+    headless: true,
+    args: ["--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1", "--no-sandbox"],
+  });
+  try {
+    const context = await browser.newContext({ baseURL: prod.baseUrl });
+    await context.addInitScript(cspProbeStub);
+    const page = await context.newPage();
+    // The header carries each curated origin and no blanket wss:.
+    const response = await page.goto("/");
+    await expect(page.getByTestId("role_title")).toBeVisible();
+    const header = response?.headers()["content-security-policy"] ?? "";
+    for (const host of listed) expect(header).toContain(` wss://${host}`);
+    expect(header).not.toContain(unlisted);
+    expect(header).not.toMatch(/ wss:[ ;]/);
+
+    const open = (hosts: string[]) =>
+      page.evaluate(
+        async (urls) => {
+          for (const url of urls) {
+            try {
+              new WebSocket(url).close();
+            } catch {
+              // a malformed URL, not a policy decision
+            }
+          }
+          // The violation events fire asynchronously, right after the attempts.
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        },
+        hosts.map((h) => `wss://${h}`),
+      );
+    await open([listed[0] ?? "", unlisted]);
+    const blocked = (await cspViolations(page))
+      .filter((v) => v.directive === "connect-src")
+      .map((v) => v.blocked);
+    expect(blocked.some((b) => b.includes(unlisted))).toBe(true);
+    expect(blocked.some((b) => b.includes(listed[0] ?? "-"))).toBe(false);
+  } finally {
+    await browser.close();
   }
 });
 
