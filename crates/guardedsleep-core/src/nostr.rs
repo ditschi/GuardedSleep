@@ -677,6 +677,24 @@ mod tests {
     }
 
     #[test]
+    fn the_signature_matches_the_first_bip340_test_vector() {
+        // BIP-340 test-vectors.csv, index 0: secret key 3, aux_rand and message all zero.
+        let mut d = [0u8; 32];
+        d[31] = 3;
+        let key = scalar_key(&d).unwrap();
+        assert_eq!(
+            hex_encode(&key.verifying_key().to_bytes()),
+            "f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9"
+        );
+        let sig = key.sign_raw(&[0u8; 32], &[0u8; 32]).unwrap();
+        assert_eq!(
+            hex_encode(&sig.to_bytes()),
+            "e907831f80848d1069a5371b402410364bdf1c5f8307b0084c55f1ce2dca8215\
+             25f66a4a85ea8b71e482a74f382d2ce5ebeee8fdb2172f477df4900d310536c0"
+        );
+    }
+
+    #[test]
     fn a_zero_scalar_gives_no_key() {
         assert!(scalar_key(&[0u8; 32]).is_none());
         // The curve order reduces to zero as well.
@@ -850,6 +868,47 @@ mod tests {
         );
         assert_eq!(classify_closed("auth-required: x"), Verdict::Park);
         assert_eq!(classify_closed("error: shutting down"), Verdict::Fine);
+    }
+
+    mod props {
+        use super::*;
+        use proptest::prelude::*;
+
+        proptest! {
+            /// Whatever a relay sends, parsing never panics, and an event that parses stays inside
+            /// the permitted alphabets and survives a round trip through our own serialisation.
+            #[test]
+            fn arbitrary_frames_never_panic(text in "\\[\"(EVENT|OK|EOSE|NOTICE|CLOSED|AUTH)\",.{0,300}") {
+                if let Some(RelayFrame::Event { sub, event }) = parse_relay_frame(&text) {
+                    prop_assert!(is_base64url(&event.content));
+                    prop_assert!(is_base64url(&sub));
+                    let _ = verify_event(&event);
+                }
+            }
+
+            #[test]
+            fn arbitrary_text_never_panics(text in ".{0,400}") {
+                let _ = parse_relay_frame(&text);
+            }
+
+            #[test]
+            fn a_built_event_always_verifies_and_round_trips(
+                content in "[A-Za-z0-9_-]{1,200}",
+                created_at in 0u64..4_000_000_000,
+                aux in proptest::array::uniform32(any::<u8>()),
+            ) {
+                let k = keys();
+                let epoch = epoch_of(created_at);
+                let sk = k.signing_key(Role::Baby, epoch).unwrap();
+                let ev = build_event(&sk, &aux, created_at, &k.tag(epoch), &content).unwrap();
+                prop_assert!(verify_event(&ev));
+                let frame = format!("[\"EVENT\",\"s\",{}]", ev.to_json());
+                prop_assert_eq!(
+                    parse_relay_frame(&frame),
+                    Some(RelayFrame::Event { sub: "s".into(), event: ev })
+                );
+            }
+        }
     }
 
     #[test]

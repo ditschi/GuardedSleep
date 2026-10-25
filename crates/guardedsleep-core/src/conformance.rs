@@ -161,6 +161,10 @@ fn evaluate_value(case_json: &str) -> Result<Value, String> {
         "envelope_key" | "envelope_seal" | "envelope_open" => {
             crate::conformance_envelope::evaluate(kind, &case)
         }
+        // The Nostr cases sign with a caller-chosen `aux_rand`: test and conformance builds only.
+        #[cfg(any(test, feature = "conformance"))]
+        "nostr_epoch" | "nostr_tag" | "nostr_pubkey" | "nostr_event" | "nostr_verify"
+        | "nostr_frame" => crate::conformance_nostr::evaluate(kind, &case),
         "session" => run_session(&case),
         "link" => run_link(&case),
         other => Err(format!("unknown kind {other}")),

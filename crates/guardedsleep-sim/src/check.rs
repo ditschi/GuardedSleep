@@ -74,10 +74,16 @@ fn check_nostr_probe(world: &World, ix: usize) -> (bool, String) {
             bad.push(f.text.clone());
         }
     }
-    let reqs = frames.iter().filter(|f| f.text.starts_with("[\"REQ\"")).count();
+    let reqs = frames
+        .iter()
+        .filter(|f| f.text.starts_with("[\"REQ\""))
+        .count();
     (
         bad.is_empty() && reqs > 0,
-        format!("{reqs} throwaway REQ(s) among {} probe frame(s); revealing: {bad:?}", frames.len()),
+        format!(
+            "{reqs} throwaway REQ(s) among {} probe frame(s); revealing: {bad:?}",
+            frames.len()
+        ),
     )
 }
 
@@ -90,14 +96,13 @@ fn probe_mentions_pairing(
 ) -> bool {
     use guardedsleep_core::protocol::Role;
     let around = guardedsleep_core::nostr::epoch_of(world.wall_base + world.end / 1_000);
-    (around.saturating_sub(2)..=around + 2)
-        .any(|e| {
-            text.contains(&keys.tag(e))
-                || [Role::Baby, Role::Parent]
-                    .into_iter()
-                    .filter_map(|r| keys.public_key_hex(r, e))
-                    .any(|pk| text.contains(&pk))
-        })
+    (around.saturating_sub(2)..=around + 2).any(|e| {
+        text.contains(&keys.tag(e))
+            || [Role::Baby, Role::Parent]
+                .into_iter()
+                .filter_map(|r| keys.public_key_hex(r, e))
+                .any(|pk| text.contains(&pk))
+    })
 }
 
 pub fn evaluate(world: &World, sc: &Scenario) -> Vec<Check> {

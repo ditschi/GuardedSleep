@@ -9,6 +9,9 @@ pub mod conformance;
 // Envelope vector evaluation needs fixed-nonce sealing: never part of a release build.
 #[cfg(any(test, feature = "conformance"))]
 mod conformance_envelope;
+// The Nostr cases sign with a caller-chosen `aux_rand`: never part of a release build either.
+#[cfg(any(test, feature = "conformance"))]
+mod conformance_nostr;
 pub mod envelope;
 pub mod invite;
 pub mod link;

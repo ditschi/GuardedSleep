@@ -12,7 +12,7 @@ use std::collections::BTreeMap;
 use chacha20::ChaCha20Rng;
 use chacha20::rand_core::SeedableRng;
 use guardedsleep_core::envelope::{
-    CHALLENGE_LEN, CHALLENGE_VALID_MS, Frame, MessageClass, NONCE_LEN, OpenError, PARENT_TAG_LEN,
+    CHALLENGE_LEN, CHALLENGE_VALID_MS, Frame, MessageClass, NONCE_LEN, OpenError,
     Purpose, SessionId, SessionState, derive_key, seal_with_nonce,
 };
 use guardedsleep_core::protocol::Role;
@@ -89,7 +89,7 @@ fuzz_target!(|ops: Vec<Op>| {
                     seq: u32::from(*seq),
                     challenge: [0; CHALLENGE_LEN],
                     echo: [0; CHALLENGE_LEN],
-                    parent_tag: [0; PARENT_TAG_LEN],
+                    tag_key: None,
                 };
                 let Ok(s) = seal_with_nonce(&key, &frame, b"m", n) else {
                     continue;
@@ -127,7 +127,7 @@ fuzz_target!(|ops: Vec<Op>| {
                         [0; CHALLENGE_LEN]
                     },
                     echo: echo_value,
-                    parent_tag: [0; PARENT_TAG_LEN],
+                    tag_key: None,
                 };
                 let Ok(s) = seal_with_nonce(&key, &frame, b"h", n) else {
                     continue;

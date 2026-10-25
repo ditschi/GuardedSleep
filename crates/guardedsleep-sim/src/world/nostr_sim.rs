@@ -180,15 +180,7 @@ impl World {
         }
         let lat = self.nlat();
         let t = self.fifo_time(6, nsock, 0, self.now + lat, false);
-        self.push(
-            t,
-            2,
-            Ev::NToClient {
-                actor,
-                nsock,
-                msg,
-            },
-        );
+        self.push(t, 2, Ev::NToClient { actor, nsock, msg });
     }
 
     fn to_client_text(&mut self, nsock: usize, v: Value) {
@@ -371,11 +363,7 @@ impl World {
         let Some(sub) = items.get(1).and_then(Value::as_str) else {
             return;
         };
-        let filters: Vec<Filter> = items
-            .iter()
-            .skip(2)
-            .filter_map(Filter::parse)
-            .collect();
+        let filters: Vec<Filter> = items.iter().skip(2).filter_map(Filter::parse).collect();
         let now = self.now;
         let mut serve: Vec<guardedsleep_core::nostr::Event> = Vec::new();
         if let Some(r) = self.nostr.relays.get_mut(url) {
@@ -400,9 +388,7 @@ impl World {
         for e in serve {
             self.to_client(
                 nsock,
-                ToClient::Text(
-                    guardedsleep_core::testing::relay_event_frame(sub, &e),
-                ),
+                ToClient::Text(guardedsleep_core::testing::relay_event_frame(sub, &e)),
             );
         }
         self.to_client_text(nsock, json!(["EOSE", sub]));

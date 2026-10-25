@@ -9,7 +9,7 @@
 use chacha20::ChaCha20Rng;
 use chacha20::rand_core::SeedableRng;
 use guardedsleep_core::envelope::{
-    CHALLENGE_LEN, Frame, MessageClass, NONCE_LEN, PARENT_TAG_LEN, Purpose, SessionId, SessionState,
+    CHALLENGE_LEN, Frame, MessageClass, NONCE_LEN, Purpose, SessionId, SessionState,
     derive_key, seal_raw_plaintext, seal_with_nonce,
 };
 use guardedsleep_core::protocol::Role;
@@ -59,7 +59,7 @@ fuzz_target!(|data: &[u8]| {
         seq: 0,
         challenge: [0; CHALLENGE_LEN],
         echo: [0; CHALLENGE_LEN],
-        parent_tag: [0; PARENT_TAG_LEN],
+        tag_key: None,
     };
     let Ok(good) = seal_with_nonce(&key, &frame, message, [7; NONCE_LEN]) else {
         return;
