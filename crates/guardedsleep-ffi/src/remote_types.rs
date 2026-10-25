@@ -10,6 +10,7 @@ use guardedsleep_core::link::{
 use guardedsleep_core::mailbox::MailboxKind;
 use guardedsleep_core::pairing::ParentSecret;
 use guardedsleep_core::protocol::{DeviceStatus, Dnd, IceCandidate, Ringer, Role, UnitWarning};
+use guardedsleep_core::relay_pick::RelayCandidate;
 use guardedsleep_core::session::{Action, Input, SessionConfig, SessionEvent, SessionState};
 
 #[uniffi::remote(Enum)]
@@ -135,6 +136,14 @@ pub struct ParentSecret {
 pub struct InviteMailbox {
     pub kind: MailboxKind,
     pub url: String,
+}
+
+/// One entry of the shipped relay list, as far as the deterministic pick needs it.
+#[uniffi::remote(Record)]
+pub struct RelayCandidate {
+    pub host: String,
+    pub operator: String,
+    pub hoster: Option<String>,
 }
 
 #[uniffi::remote(Enum)]

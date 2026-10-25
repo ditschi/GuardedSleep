@@ -49,7 +49,7 @@ import {
   PAIRING_UNREACHABLE_AFTER_MS,
   PSK_BYTES,
 } from "./policy";
-import { relayIceServers } from "./relay-stun";
+import { iceServersFor } from "./relay-stun";
 import type { SignalingFactory } from "./signaling";
 
 /** Tells the controller when the network came back (the core then retries at once). */
@@ -85,10 +85,11 @@ export interface ControllerDeps {
   /** Development builds only: the core also accepts loopback mailboxes in a received update. */
   allowDevLoopback?: boolean;
   /**
-   * Nostr relays a baby names in its invite. Empty until the curated list arrives (task 3.6); the
-   * development and E2E builds read a local test relay from here.
+   * Nostr relays a baby names in its invite, chosen from the pairing key: the curated public
+   * relays (behind the release gate `publicRelaysEnabled`) or the local test relay of the dev and
+   * E2E builds.
    */
-  nostrRelays?: () => string[];
+  nostrRelays?: (psk: Uint8Array) => string[];
   /** Wake lock, page visibility and sleep detection; absent in tests that do not need them. */
   page?: PageWatch;
 }
@@ -266,7 +267,7 @@ export class WebController implements AppController {
     const now = this.deps.clock.elapsedMs();
     const psk = this.deps.randomBytes(PSK_BYTES);
     const expiresAtS = Math.floor(this.deps.clock.wallMs() / 1000) + INVITE_VALIDITY_MS / 1000;
-    const nostr = nostrMailboxesForUrls(this.deps.nostrRelays?.() ?? []);
+    const nostr = nostrMailboxesForUrls(this.deps.nostrRelays?.(psk) ?? []);
     const invite = urls.length
       ? this.deps.core.buildInvite(psk, [...mailboxesForUrls(urls), ...nostr], expiresAtS)
       : null;
@@ -481,7 +482,7 @@ export class WebController implements AppController {
     const signalingUrls = this.effectiveUrls(pending.urls);
     let media: MediaEngine;
     try {
-      media = await this.deps.createMedia(role, relayIceServers(signalingUrls));
+      media = await this.deps.createMedia(role, iceServersFor(signalingUrls));
     } catch (e) {
       if (this.run === run) this.onMediaFailed(run, e);
       return;

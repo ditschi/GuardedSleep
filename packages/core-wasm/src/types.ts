@@ -22,6 +22,7 @@ export type {
   LinkStatus,
   MailboxKind,
   Ringer,
+  RelayCandidate,
   Role,
   UnitWarning,
 } from "../pkg/guardedsleep_wasm.js";

@@ -187,6 +187,32 @@ describe("core-wasm wrapper", () => {
     });
   });
 
+  describe("relay pick", () => {
+    const psk = Uint8Array.from({ length: 32 }, (_, i) => i);
+    const list = ["a", "b", "c", "d", "e", "f"].map((id) => ({
+      host: `${id}.example.net`,
+      operator: id.toUpperCase(),
+      hoster: null,
+    }));
+
+    it("picks three nostr mailboxes from distinct operators, the same way every time", () => {
+      const picked = core.pickRelays(psk, list);
+      expect(picked).toHaveLength(3);
+      expect(picked.every((m) => m.kind === "nostr" && m.url.startsWith("wss://"))).toBe(true);
+      expect(core.pickRelays(psk, list)).toEqual(picked);
+    });
+
+    it("skips parked relays and builds extras beside the invite's hosts", () => {
+      const picked = core.pickRelays(psk, list);
+      const first = (picked[0]?.url ?? "").replace("wss://", "");
+      expect(core.pickRelays(psk, list, [first]).map((m) => m.url)).not.toContain(`wss://${first}`);
+      const current = picked.map((m) => m.url.replace("wss://", ""));
+      const extra = core.extraRelays(psk, list, current);
+      expect(extra).toHaveLength(2);
+      for (const m of extra) expect(picked.map((p) => p.url)).not.toContain(m.url);
+    });
+  });
+
   it("fails loudly when the core returns an unknown action", () => {
     const fake = createCoreApi({
       WasmLink: class {
@@ -202,6 +228,8 @@ describe("core-wasm wrapper", () => {
       deriveRoomId: () => "",
       parseInvite: () => "{}",
       buildInvite: () => "",
+      pickRelays: () => "[]",
+      extraRelays: () => "[]",
       conformanceEval: () => "{}",
     });
     expect(() => fake.createLink(config("baby")).handle(0, { type: "tick" })).toThrow(

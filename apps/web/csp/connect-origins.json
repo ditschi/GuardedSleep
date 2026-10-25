@@ -1,4 +1,4 @@
 {
-  "$comment": "Extra WebSocket origins the page may connect to besides its own host (CSP connect-src). Add curated public relay origins here, e.g. \"wss://relay.example.org\"; alpha-connection-model puts its Nostr relay set in this list. Operators of a self-hosted build add their signaling origin through GS_CSP_CONNECT_ORIGINS (build) or --csp-connect-origin (guardedsleep-server).",
+  "$comment": "Extra WebSocket origins the page may connect to besides its own host (CSP connect-src). The curated public Nostr relays are not listed here: they come from data/nostr-relays.json (generated/relay-origins.json). Operators of a self-hosted build add their signaling origin through GS_CSP_CONNECT_ORIGINS (build) or --csp-connect-origin (guardedsleep-server).",
   "origins": []
 }

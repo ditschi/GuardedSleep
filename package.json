@@ -13,6 +13,8 @@
     "lint:cspell-i18n": "bash scripts/cspell-i18n.sh",
     "i18n:check": "bash scripts/cargo.sh run -q -p i18n-gen -- check",
     "i18n:gen": "bash scripts/cargo.sh run -q -p i18n-gen -- all --web-out apps/web/src/lib/i18n/generated",
+    "lists:check": "bash scripts/cargo.sh run -q -p public-lists -- check",
+    "lists:stun": "bash scripts/cargo.sh run -q -p public-lists -- stun-sources",
     "i18n:test": "bash scripts/cargo.sh test -q -p i18n-gen",
     "build": "pnpm -r build",
     "test": "pnpm -r --filter '!@guardedsleep/e2e' test",

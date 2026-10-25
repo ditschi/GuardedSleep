@@ -2,7 +2,14 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { buildCsp, configuredConnectOrigins, validateConnectOrigins } from "./csp";
+import {
+  buildCsp,
+  configuredConnectOrigins,
+  nginxCspHeader,
+  NGINX_CSP_FILE,
+  validateConnectOrigins,
+} from "./csp";
+import relayOrigins from "./generated/relay-origins.json";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = join(here, "../../..");
@@ -52,23 +59,58 @@ describe("buildCsp", () => {
     expect(buildCsp()).not.toContain("unsafe-inline");
   });
 
-  it("reads the configured origins from the data file and the build variable", () => {
-    expect(configuredConnectOrigins({})).toEqual([]);
+  it("reads the curated relays, the data file and the build variable", () => {
+    // Without a deployment setting the policy allows exactly the curated public relays.
+    expect(configuredConnectOrigins({})).toEqual(relayOrigins.origins);
     expect(
       configuredConnectOrigins({ GS_CSP_CONNECT_ORIGINS: "wss://a.example, wss://b.example" }),
-    ).toEqual(["wss://a.example", "wss://b.example"]);
+    ).toEqual([...relayOrigins.origins, "wss://a.example", "wss://b.example"]);
     expect(() => configuredConnectOrigins({ GS_CSP_CONNECT_ORIGINS: "http://x" })).toThrow();
+  });
+
+  it("the curated relays come from data/nostr-relays.json, wss only, no wildcard", () => {
+    const data = JSON.parse(read("data/nostr-relays.json")) as {
+      relays: { host: string; status: string }[];
+    };
+    const active = data.relays.filter((r) => r.status === "active").map((r) => `wss://${r.host}`);
+    expect(relayOrigins.origins).toEqual(active);
+    expect(active.length).toBeGreaterThanOrEqual(6);
+    const connect = buildCsp({ connectOrigins: configuredConnectOrigins({}) });
+    for (const origin of active) expect(connect).toContain(` ${origin}`);
+    expect(connect).not.toMatch(/ wss:[ ;]/);
+    expect(connect).not.toContain("unlisted.example");
   });
 });
 
 describe("the three places that carry the policy agree", () => {
-  it("nginx sends the same policy on every server and index.html location", () => {
+  it("nginx includes the generated policy on every server and index.html location", () => {
     const conf = read("docker/web/nginx.default.conf");
-    const values = [...conf.matchAll(/add_header Content-Security-Policy "([^"]+)" always;/g)].map(
-      (m) => m[1],
+    // No policy is spelled out in the nginx file: the build writes it (see below).
+    expect(conf).not.toMatch(/add_header Content-Security-Policy/);
+    expect(conf.match(/^\s*include \/etc\/nginx\/csp-header\.conf;$/gm)).toHaveLength(4);
+    const dockerfile = read("docker/web/Dockerfile");
+    expect(dockerfile).toContain(
+      `/usr/share/nginx/html/${NGINX_CSP_FILE} /etc/nginx/${NGINX_CSP_FILE}`,
     );
-    expect(values).toHaveLength(4);
-    for (const value of values) expect(value).toBe(buildCsp());
+  });
+
+  it("the build writes the nginx header line with the same policy as the meta element", async () => {
+    const { cspPlugin } = await import("./csp");
+    const emitted: { fileName: string; source: string }[] = [];
+    const plugin = cspPlugin();
+    const generate = plugin.generateBundle as (this: {
+      emitFile(file: { type: "asset"; fileName: string; source: string }): void;
+    }) => void;
+    generate.call({ emitFile: (file) => emitted.push(file) });
+    const nginx = emitted.find((f) => f.fileName === NGINX_CSP_FILE);
+    expect(nginx?.source).toBe(nginxCspHeader(configuredConnectOrigins(process.env)));
+    expect(nginx?.source).toBe(
+      `add_header Content-Security-Policy "${buildCsp({ connectOrigins: configuredConnectOrigins(process.env) })}" always;\n`,
+    );
+    const origins = emitted.find((f) => f.fileName === "csp-connect-origins.json");
+    expect(JSON.parse(origins?.source ?? "{}")).toEqual({
+      origins: configuredConnectOrigins(process.env),
+    });
   });
 
   it("guardedsleep-server --serve-web sends the same policy", () => {
@@ -81,6 +123,8 @@ describe("the three places that carry the policy agree", () => {
       // A backslash at the end of a line continues the string without the indentation.
       return match[1].replace(/\\\n\s*/g, "");
     };
+    // The server fills `connect-src` from the origins file the web build writes; with none it is
+    // the bare policy.
     expect(`${constant("BEFORE_CONNECT")}; ${constant("AFTER_CONNECT")}`).toBe(buildCsp());
   });
 
@@ -94,7 +138,9 @@ describe("the three places that carry the policy agree", () => {
     expect(built).toMatch(
       /<head>\s*<meta http-equiv="Content-Security-Policy" content="[^"]+" \/>/,
     );
-    expect(built).toContain(`content="${buildCsp({ meta: true })}"`);
+    expect(built).toContain(
+      `content="${buildCsp({ connectOrigins: configuredConnectOrigins(process.env), meta: true })}"`,
+    );
     expect(built).not.toMatch(/<script(?![^>]*\bsrc=)[^>]*>/);
   });
 });

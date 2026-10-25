@@ -41,6 +41,21 @@ export interface DeviceStatus {
 }
 
 /**
+ * One entry of a shipped relay list, as far as the choice needs it.
+ */
+export interface RelayCandidate {
+    /**
+     * DNS name; the relay is `wss://<host>`.
+     */
+    host: string;
+    operator: string;
+    /**
+     * Who runs the machine; `None` when unknown or private (no hoster constraint).
+     */
+    hoster: string | null;
+}
+
+/**
  * One mailbox of an invite: its kind and the URL the platform opens (`wss://host` for Nostr,
  * `wss://host[:port][/path]` for an own relay, `ws://ip:port` for a LAN mailbox).
  */
@@ -240,6 +255,12 @@ export function conformanceEval(case_json: string): string;
 export function deriveRoomId(psk: Uint8Array): string;
 
 /**
+ * Up to `max` more relays from this device's own list on top of the invite's `current` hosts
+ * (a JSON array of host names); same shapes as [`pick_relays`].
+ */
+export function extraRelays(psk: Uint8Array, candidates_json: string, parked_json: string, current_json: string, max: number): string;
+
+/**
  * JSON array of every UI key the core can emit.
  */
 export function messageKeys(): string;
@@ -252,6 +273,13 @@ export function messageKeys(): string;
  */
 export function parseInvite(text: string, now_epoch_s: number, allow_dev_loopback: boolean): string;
 
+/**
+ * The public Nostr relays a baby adds to its invite, as a JSON array of `{"kind","url"}`.
+ * `candidates_json` is the shipped list (`{"host","operator","hoster"}`), `parked_json` an array
+ * of hosts to skip. Empty array for bad input.
+ */
+export function pickRelays(psk: Uint8Array, candidates_json: string, parked_json: string, count: number): string;
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
@@ -261,8 +289,10 @@ export interface InitOutput {
     readonly buildInvite: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
     readonly conformanceEval: (a: number, b: number, c: number) => void;
     readonly deriveRoomId: (a: number, b: number, c: number) => void;
+    readonly extraRelays: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => void;
     readonly messageKeys: (a: number) => void;
     readonly parseInvite: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly pickRelays: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly wasmlink_handle: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmlink_new: (a: number, b: number, c: number) => void;
     readonly wasmlink_roomId: (a: number, b: number) => void;

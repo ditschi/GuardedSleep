@@ -37,7 +37,9 @@ export async function launchDualContexts(opts: {
   permissions?: string[];
   /**
    * Local Nostr test relays (`ws://127.0.0.1:port`) the baby device names in its invite. The
-   * development and E2E builds read them from localStorage; a release build reads nothing.
+   * development and E2E builds read them from localStorage; a release build reads nothing. Without
+   * this option the list is empty, not unset: an unset list lets a dev or E2E client add the
+   * curated public relays to its invites, and a test must never reach those.
    */
   nostrRelays?: string[];
 }): Promise<DualContexts> {
@@ -97,7 +99,7 @@ export async function launchDualContexts(opts: {
   const seed = {
     url: signalWs,
     prefs: E2E_APP_PREFERENCES_JSON,
-    nostr: opts.nostrRelays ? JSON.stringify(opts.nostrRelays) : null,
+    nostr: JSON.stringify(opts.nostrRelays ?? []),
   };
   await baby.addInitScript(seedStorage, seed);
   await parent.addInitScript(seedStorage, seed);

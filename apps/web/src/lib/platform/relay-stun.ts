@@ -1,9 +1,10 @@
+import { DEFAULT_STUN_URLS } from "../public-lists/generated/public-lists";
 import { RELAY_STUN_PORT } from "./policy";
 
 /**
- * ICE servers come from the configured relay, never from a public default: the relay answers
- * STUN Binding requests on UDP 3478 (add-rust-signaling-server). Only connection metadata reaches
- * a server we run or the user chose (AGENTS.md section 7.1). No sipgate, linphone or Google.
+ * A configured relay brings its own STUN: it answers Binding requests on UDP 3478
+ * (add-rust-signaling-server), so connection metadata reaches only a server we run or the user
+ * chose (AGENTS.md section 7.1). Without one, {@link iceServersFor} falls back to the curated list.
  */
 export function relayStunUrls(signalingUrls: readonly string[]): string[] {
   const hosts = new Set<string>();
@@ -22,6 +23,23 @@ export function relayStunUrls(signalingUrls: readonly string[]): string[] {
 export function relayIceServers(signalingUrls: readonly string[]): RTCIceServer[] {
   const urls = relayStunUrls(signalingUrls);
   return urls.length === 0 ? [] : [{ urls }];
+}
+
+/**
+ * The ICE servers of an attempt (design.md section 7): with an own relay configured only its STUN;
+ * otherwise the default pair of operators from `data/stun-servers.json`, unless "Only same Wi-Fi or
+ * my own server" is on, which allows no public STUN at all. No host outside that list is ever used
+ * (`just lint` enforces it); TURN is the user's own and not handled here.
+ */
+export function iceServersFor(
+  signalingUrls: readonly string[],
+  options: { onlyLocal?: boolean; defaultStun?: readonly string[] } = {},
+): RTCIceServer[] {
+  const own = relayIceServers(signalingUrls);
+  if (own.length > 0) return own;
+  if (options.onlyLocal) return [];
+  const urls = options.defaultStun ?? DEFAULT_STUN_URLS;
+  return urls.length === 0 ? [] : [{ urls: [...urls] }];
 }
 
 /**

@@ -14,6 +14,17 @@ COPY crates crates
 COPY locales locales
 RUN cargo run -q -p i18n-gen -- web --out /out
 
+# Curated public relay and STUN lists (data/*.json -> TypeScript module + CSP connect-src origins),
+# from the same Rust generator as `pnpm run lists:gen`.
+FROM rust:1-bookworm@sha256:665b6e0a9290a7298236c08c6e4f1e754e3f0d9b70421c434daa3dfba888d63e AS lists
+WORKDIR /src
+COPY rust-toolchain.toml ./
+RUN rustup toolchain install
+COPY Cargo.toml Cargo.lock ./
+COPY crates crates
+COPY data data
+RUN cargo run -q -p public-lists -- web --web-out /out/lists --csp-out /out/csp
+
 # WASM core (ADR-017): same steps as `scripts/core-build.sh wasm`, wasm-bindgen-cli pinned to Cargo.lock.
 FROM rust:1-bookworm@sha256:665b6e0a9290a7298236c08c6e4f1e754e3f0d9b70421c434daa3dfba888d63e AS wasm
 WORKDIR /src
@@ -49,9 +60,11 @@ COPY packages/core-wasm/src packages/core-wasm/src
 COPY --from=wasm /out packages/core-wasm/pkg
 COPY apps/web apps/web
 COPY --from=i18n /out apps/web/src/lib/i18n/generated
+COPY --from=lists /out/lists apps/web/src/lib/public-lists/generated
+COPY --from=lists /out/csp apps/web/csp/generated
 
-# `vite build` directly: the package's `prebuild` hook would run cargo, and both generated inputs
-# (i18n, WASM core) come from the stages above.
+# `vite build` directly: the package's `prebuild` hook would run cargo, and the generated inputs
+# (i18n, public lists, WASM core) come from the stages above.
 # `--mode production` is explicit on purpose: a release build must never use the `e2e` mode, which
 # lets the invite codec accept loopback mailboxes (https://vite.dev/guide/env-and-mode#modes).
 RUN pnpm --filter @guardedsleep/web exec vite build --mode production
@@ -72,6 +85,9 @@ RUN apk add --no-cache openssl \
 
 COPY docker/web/nginx.default.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
+# The Content-Security-Policy header line the web build wrote (curated relay origins in connect-src)
+# belongs to nginx, not to the served files.
+RUN mv /usr/share/nginx/html/csp-header.conf /etc/nginx/csp-header.conf
 
 EXPOSE 80 443
 

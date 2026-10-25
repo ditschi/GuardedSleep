@@ -81,7 +81,7 @@ lint-workflows:
     actionlint
     zizmor --offline --min-severity medium .github
 
-# Code: Rust format and clippy (all features), iOS check, supply chain, API snapshots, generate-twice, i18n, UI literals, types.
+# Code: Rust format and clippy (all features), iOS check, supply chain, API snapshots, generate-twice, i18n, curated public lists (minimums, unlisted STUN hosts), UI literals, types.
 lint-code:
     scripts/lib/slot.sh medium -- just _lint-code
 
@@ -95,6 +95,8 @@ _lint-code: _js-deps _js-gen check-ios check-determinism
     just deny
     just api-check
     pnpm run i18n:check
+    pnpm run lists:check
+    pnpm run lists:stun
     just lint-message-keys
     scripts/lint-ui-literals.sh
     pnpm -r --if-present run check
@@ -172,9 +174,10 @@ test-android:
     scripts/core-build.sh host
     scripts/gradle.sh buildLogicTest :core-bindings:testDebugUnitTest :platform:testDebugUnitTest :app:testDebugUnitTest
 
-# Generate the i18n output (Android resources, web JSON). Nothing generated is committed.
+# Generate the i18n output (Android resources, web JSON) and the curated public lists (web module, CSP origins). Nothing generated is committed.
 gen:
     pnpm run i18n:gen
+    pnpm --filter @guardedsleep/web run lists:gen
 
 # Everything: web, Android debug + release APKs, release-surface and core-size checks.
 build:

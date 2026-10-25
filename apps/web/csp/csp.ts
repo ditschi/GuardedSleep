@@ -4,12 +4,17 @@
  * crates/guardedsleep-server/src/csp.rs) and index.html carries it as a <meta> fallback; this
  * module builds the <meta> value, and `csp.test.ts` fails when either header drifts from it.
  *
- * `connect-src` is 'self' plus the origins listed in `connect-origins.json` and in the build-time
- * variable GS_CSP_CONNECT_ORIGINS (comma separated). A page may only open WebSockets to those
- * origins: a signaling address that is neither the serving host nor listed here is blocked.
+ * `connect-src` is 'self' plus the curated public relays (`generated/relay-origins.json`, written
+ * by `public-lists web` from data/nostr-relays.json), the origins listed in `connect-origins.json`
+ * and the build-time variable GS_CSP_CONNECT_ORIGINS (comma separated, the own relays of a
+ * deployment). A page may only open WebSockets to those origins: a signaling address that is
+ * neither the serving host nor listed here is blocked. A blanket `wss:` is never used.
  */
 import type { Plugin } from "vite";
 import fileOrigins from "./connect-origins.json";
+// Generated and git-ignored by `lists:gen` (apps/web); the web scripts run it before dev, build,
+// check and test.
+import relayOrigins from "./generated/relay-origins.json";
 
 /** The Trusted Types policies the page may create: ours, and the one Svelte creates itself. */
 export const TRUSTED_TYPES_POLICIES = ["guardedsleep", "svelte-trusted-html"] as const;
@@ -55,13 +60,15 @@ export function buildCsp(options: CspOptions = {}): string {
   return directives.join("; ");
 }
 
-/** Origins named in `connect-origins.json` and in `GS_CSP_CONNECT_ORIGINS`. */
+/** The curated relay origins, then those of `connect-origins.json` and `GS_CSP_CONNECT_ORIGINS`. */
 export function configuredConnectOrigins(env: Record<string, string | undefined>): string[] {
   const fromEnv = (env.GS_CSP_CONNECT_ORIGINS ?? "")
     .split(",")
     .map((s) => s.trim())
     .filter((s) => s !== "");
-  return validateConnectOrigins([...fileOrigins.origins, ...fromEnv]);
+  return validateConnectOrigins([
+    ...new Set([...relayOrigins.origins, ...fileOrigins.origins, ...fromEnv]),
+  ]);
 }
 
 /**
@@ -69,6 +76,17 @@ export function configuredConnectOrigins(env: Record<string, string | undefined>
  * --serve-web` reads it so that its header allows exactly what the <meta> allows.
  */
 export const CONNECT_ORIGINS_FILE = "csp-connect-origins.json";
+
+/**
+ * The nginx image sends the same policy as a header. nginx cannot compute it, so the build writes
+ * the `add_header` line next to the page and the Dockerfile moves it to /etc/nginx (it is not
+ * meant to be served).
+ */
+export const NGINX_CSP_FILE = "csp-header.conf";
+
+export function nginxCspHeader(connectOrigins: readonly string[]): string {
+  return `add_header Content-Security-Policy "${buildCsp({ connectOrigins })}" always;\n`;
+}
 
 /** Puts the policy into index.html as the first element of <head>. */
 export function cspPlugin(): Plugin {
@@ -81,6 +99,7 @@ export function cspPlugin(): Plugin {
         fileName: CONNECT_ORIGINS_FILE,
         source: `${JSON.stringify({ origins })}\n`,
       });
+      this.emitFile({ type: "asset", fileName: NGINX_CSP_FILE, source: nginxCspHeader(origins) });
     },
     transformIndexHtml: {
       order: "pre",
