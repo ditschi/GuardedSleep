@@ -275,9 +275,18 @@ mod tests {
     fn slow_setup_is_no_go() {
         let relays = [relay("a", 40, 0), relay("b", 40, 0), relay("c", 40, 0)];
         let mut recoveries = vec![1_000; 18];
-        recoveries.extend([3_500, 4_000]);
+        recoveries.extend([11_000, 12_000]);
         let v = verdict(&relays, &recoveries);
         assert_eq!(v.outcome, Outcome::NoGo);
+    }
+
+    #[test]
+    fn setup_below_the_limit_is_not_no_go_for_timing() {
+        let relays = [relay("a", 40, 0), relay("b", 40, 0), relay("c", 40, 0)];
+        let mut recoveries = vec![2_500; 18];
+        recoveries.extend([5_800, 6_000]);
+        let v = verdict(&relays, &recoveries);
+        assert_ne!(v.outcome, Outcome::NoGo);
     }
 
     #[test]
