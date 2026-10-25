@@ -174,7 +174,7 @@ Attempts, liveness, escalation and listen are unchanged. Loss is still detected 
 
 The log canary covers the PSK, every derived key, the seed, the parent secret, the room id and plaintext SDP. The tag is excluded only for relay-visible bytes.
 
-**AGENTS.md §7.3 amendment (exact wording for task 1.1, from review 2, I8):** "No custom transport crypto: media and DataChannel use DTLS-SRTP/DTLS. HKDF-SHA256 with one info string per purpose derives every key from the PSK. HMAC-SHA256 is used only for the pairing and parent proofs, admission and the Nostr tag. XChaCha20-Poly1305 is used only for the signaling envelope, with 192-bit nonces from the in-core CSPRNG seeded freshly by the platform at every start; a nonce never repeats under a key. BIP-340 is used only to sign Nostr events, never to authenticate the peer. Secret types use `secrecy`/`zeroize`."
+**AGENTS.md §7.3 amendment (exact wording for task 1.1, from review 2, I8):** "No custom transport crypto: media and DataChannel use DTLS-SRTP/DTLS. HKDF-SHA256 with one info string per purpose derives every key from the PSK. HMAC-SHA256 is used only for the pairing, parent and baby proofs, the pin tags, admission and the Nostr tag. XChaCha20-Poly1305 is used only for the signaling envelope, with 192-bit nonces from the in-core CSPRNG seeded freshly by the platform at every start; a nonce never repeats under a key. BIP-340 is used only to sign Nostr events, never to authenticate the peer. Secret types use `secrecy`/`zeroize`."
 
 - **Pros:** operators see no SDP, candidates or fingerprints. The binding to the recipient's session defeats replay of stored events. One path for all kinds.
 - **Cons:** a new primitive, so it needs vectors, fuzzing and a security review. No forward secrecy: a later PSK compromise decrypts retained envelopes (SDP and IPs, never audio). That is recorded in the threat model.
@@ -244,6 +244,22 @@ The first review's design used a bearer parent id inside the envelopes. A PSK ho
 - Before the baby opens its microphone path for the parent, the parent proves itself over the DataChannel with `HMAC(parent_secret, "gs-parent-proof/1|" ‖ fp_parent ‖ fp_baby)`.
 - The baby checks it in constant time with its own view of both fingerprints.
 - A PSK holder who saw every relayed envelope cannot produce it. A PSK holder in the middle of two DTLS sessions is detected, because the fingerprints differ.
+
+**Security review of task 3.4 (2026-10-25), binding:**
+
+- **Subkeys:** the parent secret is never used directly. `HKDF-SHA256(parent_secret, info)` derives one key each for `gs-parent-tag/1`, `gs-baby-tag/1`, `gs-parent-proof/1` and `gs-baby-proof/1`.
+- **Both directions tagged (C1):** after pinning, the parent's and the baby's envelopes both carry a tag inside the ciphertext. Each side refuses untagged or wrongly tagged envelopes from the peer role before any session check. A PSK holder can therefore neither confirm a session, nor send a stop, nor retire the real peer's session once the pairing is pinned and acknowledged.
+- **The tag covers the whole envelope (I1):** `HMAC(tag_key, nonce ‖ AD ‖ plaintext before the tag)[0..16]`, not the nonce alone. A re-sealed forgery under a withheld genuine nonce then fails, and verbatim replays are dropped by the replay windows.
+- **The first-pairing window is bounded by the invite expiry (I2, I4):**
+  - The parent persists `{secret, acked, until = invite expiry}` and sends the raw secret only before `until`.
+  - After `until` it behaves as pinned (proofs only), whatever `acked` says.
+  - The baby treats a pairing as complete only once it has pinned, accepts `parent_pin` only while its invite is valid, and an unpinned baby with `paired_before` grants no trust and shows "pair again".
+  - The secret is never re-sent outside the window, including when the peer reports "not pinned".
+- **Persist before send is binding (I3):**
+  - The platform durably persists `ParentPinned` (an fsync before the rename on Android) before executing any later action of the same output.
+  - The core emits `ParentPinned` again with every repeat while the pin is unacknowledged, which is idempotent.
+- **Recovery:** on repeated missing baby proofs the parent says "The baby device does not recognise this device: show a new code on it". "Show new code" (physical access) is the only recovery path.
+- **Hygiene:** device names are cleaned of control, format and bidi characters (Cc, Cf, Zl, Zp) before display. The `parent_pin` action is redacted in `Debug`, and the parent secret and the `parent_pin` text are on the log-canary list.
 
 **Mutual proof (added after the 3.4 implementation review):** the baby answers with `HMAC(parent_secret, "gs-baby-proof/1|" ‖ fp_baby ‖ fp_parent)` over the DataChannel. On a pinned pairing the parent treats an attempt as trusted (connected, outage bookkeeping reset, restoration, listen, missed events) only after a valid baby proof. Without this, a PSK holder in the middle could keep the parent briefly "connected" in every cycle and hold escalation below level 2.
 

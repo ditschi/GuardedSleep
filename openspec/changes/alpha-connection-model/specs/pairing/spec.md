@@ -28,7 +28,7 @@ The invite SHALL be UTF-8 JSON `{"v":4,"k":<PSK>,"m":[<mailbox>…],"x":<expiry>
 
 ### Requirement: One baby unit and one parent unit
 
-A pairing SHALL connect exactly one baby unit and one parent unit. At the first verification the parent unit SHALL send a random 32-byte parent secret and its device name only over the verified DTLS DataChannel, never through a mailbox, and the baby unit SHALL pin that secret and close the invite. On every later attempt the baby unit SHALL open its microphone path for the parent only after the parent proves the secret, bound to both DTLS fingerprints, over the DataChannel, and SHALL refuse every other parent until the pairing is forgotten, raising a security warning. The parent unit SHALL count a pinned pairing's attempt as connected only after the baby unit proves the same secret, bound to both fingerprints, over the DataChannel, and SHALL persist the secret before sending it. After pinning, the baby unit SHALL show the parent device's name with a "Not my device" action that forgets the pairing. On our relay a second parent SHALL still be refused with `PARENT_CAP`.
+A pairing SHALL connect exactly one baby unit and one parent unit. At the first verification the parent unit SHALL send a random 32-byte parent secret and its device name only over the verified DTLS DataChannel, never through a mailbox, and the baby unit SHALL pin that secret and close the invite. On every later attempt the baby unit SHALL open its microphone path for the parent only after the parent proves the secret, bound to both DTLS fingerprints, over the DataChannel, and SHALL refuse every other parent until the pairing is forgotten, raising a security warning. The parent unit SHALL count a pinned pairing's attempt as connected only after the baby unit proves the same secret, bound to both fingerprints, over the DataChannel. The platform SHALL durably persist the parent secret before executing any later action that could send it, and the secret SHALL be sent only while the invite is valid. Once pinned, both units SHALL refuse envelopes from the peer role that do not carry a valid pin tag over the whole envelope. After pinning, the baby unit SHALL show the parent device's name with a "Not my device" action that forgets the pairing. On our relay a second parent SHALL still be refused with `PARENT_CAP`.
 
 #### Scenario: Second parent in the room
 
@@ -59,6 +59,16 @@ A pairing SHALL connect exactly one baby unit and one parent unit. At the first 
 
 - **WHEN** the baby unit shows "Connected to" a device name the user does not recognise
 - **THEN** "Not my device" forgets the pairing and a new invite can be shown
+
+#### Scenario: PSK holder poses as the baby during an outage
+
+- **WHEN** someone with the PSK sends presence and a stop notice to a pinned parent unit while the real baby unit is offline
+- **THEN** the parent unit refuses them, escalation reaches level 2 on schedule, and the real baby unit reconnects afterwards
+
+#### Scenario: Secret never reached the baby
+
+- **WHEN** the DataChannel fails right after the first verification and the parent unit restarts after the invite expired
+- **THEN** both units show that they need to be paired again, and neither sends the secret again
 
 #### Scenario: Forget on the baby device
 
