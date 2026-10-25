@@ -25,13 +25,16 @@ export function relayIceServers(signalingUrls: readonly string[]): RTCIceServer[
 }
 
 /**
- * Where a page without configured signaling URLs connects: the server that serves it (offline PC
- * mode, `--serve-web`), or the dev server's companion on 8787. Never a third party.
+ * Where a page without configured signaling URLs connects: `/signaling` on the server that serves it
+ * (`--serve-web`, the web image, a reverse proxy), or the dev server's companion on 8787. Never a
+ * third party.
  */
 export function defaultSignalingUrls(
   location: { protocol: string; hostname: string; host: string },
   dev: boolean,
 ): string[] {
   if (dev) return [`ws://${location.hostname}:8787`];
-  return [`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`];
+  // `/signaling` matches the one-domain reverse-proxy layout (docs/contributing/signaling-traefik.md);
+  // the server and the bundled nginx image accept the upgrade on any path.
+  return [`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/signaling`];
 }

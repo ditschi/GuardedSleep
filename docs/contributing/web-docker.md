@@ -52,13 +52,13 @@ The workflow [`.github/workflows/docker-web.yml`](../../.github/workflows/docker
 
 Identical to the signaling image:
 
-| Tag                    | When                                              | Intended consumer                                 |
-| ---------------------- | ------------------------------------------------- | ------------------------------------------------- |
-| `:latest`              | A `mobile-v*` tag is pushed (manual during alpha) | Production self-hosters wanting "stable, current" |
-| `:vX.Y.Z` / `:vX.Y`    | Same as `:latest`                                 | Reproducible / auto-patch deploys                 |
-| `:vX` (post-1.0 only)  | Same as `:latest`                                 | Auto-minor within a major                         |
-| `:dev` (alias `:edge`) | Every push to `main`                              | Testers — **use this until first release**        |
-| `:sha-<short>`         | Every push                                        | Exact-commit debugging                            |
+| Tag                    | When                                           | Intended consumer                                 |
+| ---------------------- | ---------------------------------------------- | ------------------------------------------------- |
+| `:latest`              | A `web-v*` tag is pushed (manual during alpha) | Production self-hosters wanting "stable, current" |
+| `:vX.Y.Z` / `:vX.Y`    | Same as `:latest`                              | Reproducible / auto-patch deploys                 |
+| `:vX` (post-1.0 only)  | Same as `:latest`                              | Auto-minor within a major                         |
+| `:dev` (alias `:edge`) | Every push to `main`                           | Testers — **use this until first release**        |
+| `:sha-<short>`         | Every push                                     | Exact-commit debugging                            |
 
 ### Published image
 

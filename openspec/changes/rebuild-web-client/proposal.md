@@ -21,7 +21,8 @@ The web client is the frozen SvelteKit + Capacitor-era `apps/mobile` with hand-w
 
 ### Modified Capabilities
 
-- `dev-toolchain`: web checks.
+- `dev-toolchain`: web checks; the delta-test example names `apps/web`.
+- `distribution`: the web image is released on `web-v*` tags (was `mobile-v*`).
 - `pairing`: one invite codec in the core.
 - `signaling-relay`: client ICE configuration covers the web client.
 

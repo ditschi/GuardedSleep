@@ -64,14 +64,14 @@ Open `http://<host>:${WEB_PORT}/` (default `:8080`) or `https://<host>:${WEB_HTT
 
 ### Tag strategy (per [ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md))
 
-| Tag                    | Pushed when                                      | Use for                           |
-| ---------------------- | ------------------------------------------------ | --------------------------------- |
-| `:latest`              | A `signaling-server-v*` / `mobile-v*` tag exists | Production self-hosting           |
-| `:vX.Y.Z`              | Same release tag                                 | Reproducible / pinned deployments |
-| `:vX.Y`                | Same release tag                                 | Auto-patch updates within a minor |
-| `:vX` (post-1.0 only)  | Same release tag                                 | Auto-minor updates within a major |
-| `:dev` (alias `:edge`) | Every push to `main`                             | Testers / bleeding edge           |
-| `:sha-<short>`         | Every push                                       | Debug / exact commit reproduction |
+| Tag                    | Pushed when                                   | Use for                           |
+| ---------------------- | --------------------------------------------- | --------------------------------- |
+| `:latest`              | A `signaling-server-v*` / `web-v*` tag exists | Production self-hosting           |
+| `:vX.Y.Z`              | Same release tag                              | Reproducible / pinned deployments |
+| `:vX.Y`                | Same release tag                              | Auto-patch updates within a minor |
+| `:vX` (post-1.0 only)  | Same release tag                              | Auto-minor updates within a major |
+| `:dev` (alias `:edge`) | Every push to `main`                          | Testers / bleeding edge           |
+| `:sha-<short>`         | Every push                                    | Debug / exact commit reproduction |
 
 **Important:** until GuardedSleep cuts its first release, `:latest` does **not** exist. Use `SIGNALING_TAG=dev` and `WEB_TAG=dev` during the pre-release / PoC phase. ([ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md) defines the PoC gate; [ADR-006](../../openspec/changes/archive/2026-05-13-adr-006-release-and-changelog-automation/design.md) governs when tags are created.)
 

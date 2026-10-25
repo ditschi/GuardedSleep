@@ -23,9 +23,9 @@ describe("relay STUN", () => {
 
   it("defaults the signaling URL to the serving host, or the dev companion", () => {
     const here = { protocol: "https:", hostname: "gs.local", host: "gs.local:8443" };
-    expect(defaultSignalingUrls(here, false)).toEqual(["wss://gs.local:8443"]);
+    expect(defaultSignalingUrls(here, false)).toEqual(["wss://gs.local:8443/signaling"]);
     expect(defaultSignalingUrls({ ...here, protocol: "http:" }, false)).toEqual([
-      "ws://gs.local:8443",
+      "ws://gs.local:8443/signaling",
     ]);
     expect(defaultSignalingUrls(here, true)).toEqual(["ws://gs.local:8787"]);
   });

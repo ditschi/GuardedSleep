@@ -23,7 +23,7 @@ Forks and derivatives should use a **distinct name** and branding. AGPL still re
 
 ## Official releases
 
-Builds published by the GuardedSleep maintainers (e.g. GitHub Releases artifacts, tagged `mobile-v*`, documented Docker images on GHCR under the project namespace) are the **reference** distributions. Third-party builds are welcome under AGPL but must not be presented as official without agreement.
+Builds published by the GuardedSleep maintainers (e.g. GitHub Releases artifacts, tagged `web-v*` or `android-v*`, documented Docker images on GHCR under the project namespace) are the **reference** distributions. Third-party builds are welcome under AGPL but must not be presented as official without agreement.
 
 ## Contact
 

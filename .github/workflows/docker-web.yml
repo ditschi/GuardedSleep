@@ -2,7 +2,7 @@
 #
 # Triggers:
 #   - push to main, paths under apps/web, packages/core-wasm and the core crates → publishes :dev + :sha-<short>
-#   - push of a manual tag `mobile-v*` → publishes :latest, :vX.Y.Z, :vX.Y (+ :vX post-1.0)
+#   - push of a manual tag `web-v*` → publishes :latest, :vX.Y.Z, :vX.Y (+ :vX post-1.0)
 #     (releases are manual tags during the alpha; Release Please returns at beta, ADR-020 §10)
 #   - pull_request → build-check job only (read-only token, no registry login, no push), validates the
 #     Dockerfile on both architectures
@@ -18,7 +18,7 @@ on:
   push:
     branches: [main]
     tags:
-      - "mobile-v*"
+      - "web-v*"
     paths:
       - "docker/web/**"
       - "apps/web/**"
@@ -55,7 +55,7 @@ permissions: {}
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: guardedsleep-web
-  TAG_PREFIX: mobile-v
+  TAG_PREFIX: web-v
 
 concurrency:
   group: docker-web-${{ github.ref }}
@@ -209,10 +209,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # Tags per ADR-008:
-      #   - :latest                      ← only on a `mobile-v*` tag push
-      #   - :vMAJOR.MINOR.PATCH          ← only on a `mobile-v*` tag push
-      #   - :vMAJOR.MINOR                ← only on a `mobile-v*` tag push
-      #   - :vMAJOR                      ← only on a `mobile-v*` tag push, post-1.0
+      #   - :latest                      ← only on a `web-v*` tag push
+      #   - :vMAJOR.MINOR.PATCH          ← only on a `web-v*` tag push
+      #   - :vMAJOR.MINOR                ← only on a `web-v*` tag push
+      #   - :vMAJOR                      ← only on a `web-v*` tag push, post-1.0
       #   - :dev (alias :edge)           ← on every push to main
       #   - :sha-<short>                 ← every push
       - name: Docker metadata (tags)
