@@ -135,6 +135,14 @@ class MappingTest {
             org.guardedsleep.app.ui.model.CauseHint.PEER_ABSENT,
             LinkMapping.causeHint("peer_absent"),
         )
+        assertEquals(
+            org.guardedsleep.app.ui.model.CauseHint.PAIR_AGAIN,
+            LinkMapping.causeHint("pair_again"),
+        )
+        assertEquals(
+            org.guardedsleep.app.ui.model.CauseHint.BABY_UNRECOGNISED,
+            LinkMapping.causeHint("baby_unrecognised"),
+        )
         assertNull(LinkMapping.causeHint("nonsense"))
     }
 

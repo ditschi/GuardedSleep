@@ -32,6 +32,13 @@ enum class CauseHint {
     SERVER_UNREACHABLE,
     PEER_ABSENT,
     MEDIA_BLOCKED,
+    /** This (baby) device holds no secret for the parent and its invite is over: pair again. */
+    PAIR_AGAIN,
+    /**
+     * Parent: the baby device does not recognise this device. Only a new code on the baby device
+     * recovers it.
+     */
+    BABY_UNRECOGNISED,
 }
 
 /**

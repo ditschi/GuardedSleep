@@ -202,7 +202,13 @@ class LinkRunner(
                 PocLog.event("failed", "reason" to "core_${e.javaClass.simpleName}")
                 return
             }
-        for (a in actions) execute(a, now)
+        try {
+            for (a in actions) execute(a, now)
+        } catch (e: PinNotPersisted) {
+            // The secret is not durable, so nothing after the event may run (the message that
+            // carries it follows in this very batch). The core repeats the event on its next resend.
+            PocLog.event("failed", "reason" to "pin_not_persisted")
+        }
     }
 
     private fun execute(action: LinkAction, now: Long) {
@@ -262,8 +268,17 @@ class LinkRunner(
             is LinkEvent.Failed -> PocLog.event("failed", "reason" to event.reason)
             else -> Unit
         }
-        if (event !is LinkEvent.Status) listener.onEvent(event, now)
+        if (event !is LinkEvent.Status) {
+            try {
+                listener.onEvent(event, now)
+            } catch (e: Exception) {
+                if (event is LinkEvent.ParentPinned) throw PinNotPersisted() else throw e
+            }
+        }
     }
+
+    /** The parent secret could not be stored; the exception carries no secret. */
+    private class PinNotPersisted : RuntimeException("parent secret not persisted")
 
     /**
      * The core's `url` is empty in the first stage: the relay URL list still lives here (invite v4

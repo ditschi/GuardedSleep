@@ -333,6 +333,8 @@ fun LinkAlarmContent(controller: AppController, onClose: () -> Unit) {
                                 CauseHint.SERVER_UNREACHABLE -> R.string.core_server_unreachable
                                 CauseHint.PEER_ABSENT -> R.string.core_peer_absent
                                 CauseHint.MEDIA_BLOCKED -> R.string.core_media_blocked
+                                CauseHint.PAIR_AGAIN -> R.string.core_pair_again
+                                CauseHint.BABY_UNRECOGNISED -> R.string.core_baby_unrecognised
                             }
                         ),
                         Modifier.testTag("link_alarm_cause"),

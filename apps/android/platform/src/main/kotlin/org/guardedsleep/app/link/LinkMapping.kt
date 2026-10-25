@@ -24,6 +24,8 @@ object LinkMapping {
             "server_unreachable" -> CauseHint.SERVER_UNREACHABLE
             "peer_absent" -> CauseHint.PEER_ABSENT
             "media_blocked" -> CauseHint.MEDIA_BLOCKED
+            "pair_again" -> CauseHint.PAIR_AGAIN
+            "baby_unrecognised" -> CauseHint.BABY_UNRECOGNISED
             else -> null
         }
 

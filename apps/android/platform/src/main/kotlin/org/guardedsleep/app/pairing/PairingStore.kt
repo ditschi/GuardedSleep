@@ -19,8 +19,9 @@ data class StoredPairing(
     val pairedBefore: Boolean,
     val turn: TurnCredentials? = null,
     /**
-     * The pinned parent secret (base64url of 32 bytes): the baby's pinned parent, or the parent's
-     * acknowledged secret. Null before the first verified pairing completed.
+     * The pinned parent secret (base64url of 32 bytes): the baby's pinned parent, or the secret
+     * the parent drew (acknowledged or not). Null before the first pairing completed. The record
+     * holds it durably before the parent sends it to the baby (persist before send).
      */
     val parentSecretB64url: String? = null,
     /**
@@ -28,6 +29,12 @@ data class StoredPairing(
      * was received yet, [signalingUrls] is all there is).
      */
     val mailboxes: List<StoredMailbox> = emptyList(),
+    /**
+     * Parent: the end of the first-pairing window (Unix seconds, the invite expiry) while the baby
+     * has not acknowledged the secret; the raw secret is never sent after it. Null once
+     * acknowledged (and on the baby).
+     */
+    val pinUntilS: Long? = null,
 ) {
     // The PSK and the parent secret must never reach logs through string templates.
     override fun toString(): String =
@@ -64,6 +71,7 @@ class PairingStore(private val file: File, private val cipher: PairingCipher) {
                 turn,
                 o.optString("ps").ifEmpty { null },
                 mailboxes,
+                o.optLong("pu", -1L).takeIf { it >= 0 },
             )
         }
             .getOrElse {
@@ -84,6 +92,7 @@ class PairingStore(private val file: File, private val cipher: PairingCipher) {
             o.put("t", JSONObject().put("u", it.url).put("n", it.username).put("c", it.credential))
         }
         pairing.parentSecretB64url?.let { o.put("ps", it) }
+        pairing.pinUntilS?.let { o.put("pu", it) }
         if (pairing.mailboxes.isNotEmpty()) {
             o.put(
                 "m",
@@ -93,7 +102,13 @@ class PairingStore(private val file: File, private val cipher: PairingCipher) {
             )
         }
         val tmp = File(file.parentFile, file.name + ".tmp")
-        tmp.writeBytes(cipher.encrypt(o.toString().toByteArray(Charsets.UTF_8)))
+        // The bytes reach the disk before the rename makes them the record: a caller that sends the
+        // parent secret to the baby after `save` returned must find it again after a crash. A
+        // failure throws, so the caller does not send an unpersisted secret.
+        java.io.FileOutputStream(tmp).use { out ->
+            out.write(cipher.encrypt(o.toString().toByteArray(Charsets.UTF_8)))
+            out.fd.sync()
+        }
         check(tmp.renameTo(file)) { "cannot replace pairing file" }
     }
 
@@ -103,13 +118,14 @@ class PairingStore(private val file: File, private val cipher: PairingCipher) {
     }
 
     /**
-     * Stores the parent secret in the same encrypted record. False when there is no pairing yet
-     * (the caller keeps the secret until the first verification saves the record).
+     * Stores the parent secret and the first-pairing window in the same encrypted record. False
+     * when there is no pairing yet (the caller keeps the secret until the record exists). Throws
+     * when the record cannot be written.
      */
     @Synchronized
-    fun setParentSecret(secretB64url: String): Boolean {
+    fun setParentSecret(secretB64url: String, pinUntilS: Long? = null): Boolean {
         val stored = load() ?: return false
-        save(stored.copy(parentSecretB64url = secretB64url))
+        save(stored.copy(parentSecretB64url = secretB64url, pinUntilS = pinUntilS))
         return true
     }
 

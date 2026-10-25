@@ -58,7 +58,7 @@ class ParentModelTest {
         connected()
         val before = model.state.value
         model.onEvent(
-            LinkEvent.ParentPinned(uniffi.guardedsleep_core.ParentSecret(ByteArray(32))),
+            LinkEvent.ParentPinned(uniffi.guardedsleep_core.ParentSecret(ByteArray(32)), null),
             clock.elapsed,
         )
         model.onEvent(LinkEvent.MailboxesUpdated(emptyList()), clock.elapsed)

@@ -88,6 +88,9 @@ class ConformanceTest {
                         pinnedParent =
                             if (c.isNull("pinned_parent")) null
                             else ParentSecret(hexBytes(c.getString("pinned_parent"))),
+                        pinWindowUntilS =
+                            if (c.isNull("pin_window_until_s")) null
+                            else c.getLong("pin_window_until_s").toULong(),
                         deviceName = c.optString("device_name", ""),
                         mailboxes =
                             c.optJSONArray("mailboxes")?.let { a ->

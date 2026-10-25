@@ -130,6 +130,11 @@ class LinkController(
          */
         var pinnedSecret: ByteArray? = null,
         var receivedMailboxes: List<StoredMailbox>? = null,
+        /**
+         * The first-pairing window (Unix seconds): the expiry of the invite, then the last
+         * `window_until_s` of `ParentPinned`. Null once the baby acknowledged the secret.
+         */
+        var pinUntilS: Long? = null,
     )
 
     private inner class Run(
@@ -304,7 +309,14 @@ class LinkController(
             return
         }
         val pending =
-            PendingPairing(payload.pskB64url, urls, null, now, now + PairingPolicy.QR_VALIDITY_MS)
+            PendingPairing(
+                payload.pskB64url,
+                urls,
+                null,
+                now,
+                now + PairingPolicy.QR_VALIDITY_MS,
+                pinUntilS = payload.expiresAtEpochSec,
+            )
         _pairing.value =
             PairingState(
                 PairingPhase.SHOWING_CODE,
@@ -336,7 +348,14 @@ class LinkController(
                 // pairing.
                 startRun(
                     Role.PARENT,
-                    PendingPairing(p.pskB64url, p.signalingUrls, null, now, null),
+                    PendingPairing(
+                        p.pskB64url,
+                        p.signalingUrls,
+                        null,
+                        now,
+                        null,
+                        pinUntilS = p.expiresAtEpochSec,
+                    ),
                     pairedBefore = false,
                     monitoring = false,
                     isPending = true,
@@ -391,6 +410,7 @@ class LinkController(
                 null,
                 parentSecret = stored.parentSecretB64url?.let { PairingPayload.decodePsk(it) },
                 mailboxes = stored.mailboxes,
+                pinUntilS = stored.pinUntilS,
             ),
             stored.pairedBefore,
             monitoring = true,
@@ -514,6 +534,7 @@ class LinkController(
         return base.copy(
             // A copy for the core, which takes it and wipes it; our own bytes stay with the run.
             pinnedParent = pending.parentSecret?.let { ParentSecret(it.copyOf()) },
+            pinWindowUntilS = pending.pinUntilS?.toULong(),
             deviceName = if (role == CoreRole.PARENT) deviceName() else "",
             mailboxes = if (role == CoreRole.BABY) storedMailboxes(pending) else emptyList(),
             allowDevLoopback = BuildConfig.DEBUG,
@@ -618,7 +639,14 @@ class LinkController(
         override fun onEvent(event: LinkEvent, nowMs: Long) {
             if (!current()) return
             when (event) {
-                is LinkEvent.ParentPinned -> persistParentSecret(r, event.secret.bytes)
+                is LinkEvent.ParentPinned ->
+                    try {
+                        persistParentSecret(r, event.secret.bytes, event.windowUntilS?.toLong())
+                    } finally {
+                        // Our copies are the base64 text in the record and the run; wipe the
+                        // event's bytes.
+                        event.secret.bytes.fill(0)
+                    }
                 is LinkEvent.MailboxesUpdated -> persistMailboxes(r, event.mailboxes)
                 else -> Unit
             }
@@ -657,21 +685,9 @@ class LinkController(
         private fun onPairingStatus(status: LinkStatus) {
             val pending = r.pending ?: return
             when (status.state) {
-                LinkState.CONNECTED -> {
-                    savePending(pending)
-                    pending.pinnedSecret?.fill(0)
-                    pending.pinnedSecret = null
-                    r.pending = null
-                    PocLog.event("pairing_saved")
-                    // The pairing link becomes the monitoring run; the other phone never sees a
-                    // gap.
-                    settingsRepo.update { it.copy(monitoringActive = true) }
-                    refreshApp()
-                    startHost()
-                    // Last, so a UI that reacts to PAIRED already sees a consistent monitoring
-                    // state.
-                    _pairing.value = PairingState(PairingPhase.PAIRED)
-                }
+                // The baby counts the pairing as complete only when it pinned the parent
+                // (`ParentPinned`), not when the link connects: an unpinned baby has no parent.
+                LinkState.CONNECTED -> if (r.role == Role.PARENT) completePairing(pending)
                 LinkState.FAILED_NEEDS_USER -> {
                     val error =
                         if (status.key == "pairing_key_mismatch") PairingError.KEY_MISMATCH
@@ -684,22 +700,45 @@ class LinkController(
             }
         }
 
+        /** The record is saved and the pairing link becomes the monitoring run. */
+        private fun completePairing(pending: PendingPairing) {
+            savePending(pending)
+            pending.pinnedSecret?.fill(0)
+            pending.pinnedSecret = null
+            r.pending = null
+            PocLog.event("pairing_saved")
+            // The pairing link becomes the monitoring run; the other phone never sees a gap.
+            settingsRepo.update { it.copy(monitoringActive = true) }
+            refreshApp()
+            startHost()
+            // Last, so a UI that reacts to PAIRED already sees a consistent monitoring state.
+            _pairing.value = PairingState(PairingPhase.PAIRED)
+        }
+
         /**
-         * The core pinned (baby) or acknowledged (parent) the parent secret: keep it next to the
-         * PSK. Before the first verification saved the record it waits in the run. Never logged.
+         * `ParentPinned`: keep the secret (and the first-pairing window) next to the PSK. This is
+         * binding **persist before send**: the parent's core emits it before every action that
+         * carries the raw secret and the runner executes the actions of one output in order on
+         * this thread, so the record is durable (fsync, then rename) before the baby can have
+         * pinned a secret this phone would lose in a restart. A failure throws; the runner then
+         * drops the rest of the batch (the secret is not sent) and the core emits the event again
+         * with its next resend. The baby pins at this event, which completes its pairing. Never
+         * logged.
          */
-        private fun persistParentSecret(r: Run, secret: ByteArray) {
+        private fun persistParentSecret(r: Run, secret: ByteArray, untilS: Long?) {
             val pending = r.pending
             if (pending == null) {
-                pairingStore.setParentSecret(PairingPayload.b64(secret))
+                check(pairingStore.setParentSecret(PairingPayload.b64(secret), untilS)) {
+                    "no pairing record to hold the parent secret"
+                }
                 return
             }
+            pending.pinnedSecret?.fill(0)
             pending.pinnedSecret = secret.copyOf()
-            // The parent draws the secret just before the action that sends it to the baby, and
-            // the core runner executes the actions in order on this thread: the record is on disk
-            // before the baby can have pinned a secret this phone would lose in a restart. The
-            // attempt is verified at this point, so the pairing is real.
+            pending.pinUntilS = untilS
+            // The attempt is verified at this point, so the pairing is real.
             savePending(pending)
+            if (r.role == Role.BABY) completePairing(pending)
         }
 
         /** Writes the pending pairing as the stored record (the first verification happened). */
@@ -713,6 +752,7 @@ class LinkController(
                     pending.turn,
                     pending.pinnedSecret?.let { PairingPayload.b64(it) },
                     received ?: emptyList(),
+                    pending.pinUntilS,
                 )
             )
         }

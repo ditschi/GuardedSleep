@@ -46,6 +46,8 @@ private class FakeNet {
     private val members = LinkedHashMap<String, Pair<String, FakeTransport>>() // clientId -> role
     private val rooms = HashMap<String, MutableList<String>>()
     private val offers = ConcurrentHashMap<String, FakeAttempt>()
+    /** Sees every DataChannel text before it is delivered (on the sender's thread). */
+    @Volatile var onSend: ((text: String) -> Unit)? = null
     val attemptsCreated = AtomicInteger()
     val liveAttempts = CopyOnWriteArrayList<FakeAttempt>()
 
@@ -198,6 +200,7 @@ private class FakeAttempt(val net: FakeNet, val listener: AttemptListener, val b
     override fun addRemoteIce(candidate: IceCandidate) = Unit
 
     override fun sendData(text: String): Boolean {
+        net.onSend?.invoke(text)
         val p = peer ?: return false
         if (closed) return false
         net.later { if (!p.closed) p.listener.onDataMessage(text) }
@@ -279,6 +282,8 @@ private class RealClock : Clock {
 
     override fun wallMs() = System.currentTimeMillis()
 }
+
+private const val PIN_TYPE = "\"parent_pin\""
 
 class LinkControllerTest {
     @get:Rule val tmp = TemporaryFolder()
@@ -419,6 +424,53 @@ class LinkControllerTest {
         )
         assertEquals(emptyList<StoredMailbox>(), baby.store.load()!!.mailboxes)
         assertTrue(!baby.store.load().toString().contains(baby.store.load()!!.parentSecretB64url!!))
+    }
+
+    @Test
+    fun theParentSecretIsOnDiskBeforeTheMessageThatCarriesItIsSent() {
+        val baby = unit("baby", Role.BABY)
+        val parent = unit("parent", Role.PARENT, deviceName = "Pixel 8")
+        val checks = CopyOnWriteArrayList<Pair<Boolean, Boolean>>()
+        net.onSend = { text ->
+            if (text.contains(PIN_TYPE)) {
+                val stored = parent.store.load()?.parentSecretB64url
+                // The message carries the secret as hex, the record as base64url.
+                val hex =
+                    stored?.let { org.guardedsleep.app.pairing.PairingPayload.decodePsk(it) }
+                        ?.joinToString("") { "%02x".format(it) }
+                checks += (stored != null) to (hex != null && text.contains(hex))
+            }
+        }
+        baby.controller.startPairing()
+        parent.controller.submitPairingCode(baby.controller.pairing.value!!.codePayload!!)
+        await("the secret was sent") { checks.isNotEmpty() }
+        assertTrue("persisted before the send: $checks", checks.all { it.first && it.second })
+        await("both paired") {
+            baby.controller.pairing.value?.phase == PairingPhase.PAIRED &&
+                parent.controller.pairing.value?.phase == PairingPhase.PAIRED
+        }
+        // The baby's pairing is complete at the pin: its record holds the same secret.
+        await("the baby stores the pin") { baby.store.load()?.parentSecretB64url != null }
+        assertEquals(
+            baby.store.load()!!.parentSecretB64url,
+            parent.store.load()!!.parentSecretB64url,
+        )
+    }
+
+    @Test
+    fun aSecretThatCannotBePersistedIsNotSent() {
+        val baby = unit("baby", Role.BABY)
+        val parent = unit("parent", Role.PARENT, deviceName = "Pixel 8")
+        val sent = CopyOnWriteArrayList<String>()
+        net.onSend = { text -> if (text.contains(PIN_TYPE)) sent += text }
+        // The first-pairing record cannot be written: a directory sits where the temp file goes.
+        java.io.File(tmp.root, "parent/pairing.bin.tmp").mkdirs()
+        baby.controller.startPairing()
+        parent.controller.submitPairingCode(baby.controller.pairing.value!!.codePayload!!)
+        Thread.sleep(3_000)
+        assertTrue("nothing was sent: $sent", sent.isEmpty())
+        assertNull(parent.store.load())
+        assertNull(baby.store.load())
     }
 
     @Test
