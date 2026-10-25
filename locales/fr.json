@@ -14,7 +14,9 @@
     "peerAbsent": "L'appareil bébé ne répond pas. Vérifiez qu'il est allumé et affiche GuardedSleep.",
     "mediaBlocked": "Les appareils se sont trouvés, mais le son ne passe pas. Essayez le même Wi-Fi sur les deux.",
     "wrongKeyAttempt": "Quelqu'un a tenté de se connecter avec une mauvaise clé. La surveillance continue.",
-    "unknownParentAttempt": "Un appareil qui n'est pas votre appareil parent associé a tenté de se connecter. La surveillance continue."
+    "unknownParentAttempt": "Un appareil qui n'est pas votre appareil parent associé a tenté de se connecter. La surveillance continue.",
+    "pairAgain": "Cet appareil ne connaît plus d'appareil parent. Touchez Afficher un nouveau code et appairez à nouveau.",
+    "babyUnrecognised": "L'appareil bébé ne reconnaît pas cet appareil. Touchez Afficher un nouveau code sur l'appareil bébé et appairez à nouveau."
   },
   "native": {
     "appName": "GuardedSleep Alpha",

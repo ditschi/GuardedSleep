@@ -14,8 +14,8 @@
     "mediaBlocked": "The devices found each other, but sound can't get through. Try the same Wi-Fi on both.",
     "wrongKeyAttempt": "Someone tried to connect with a wrong key. Monitoring continues.",
     "unknownParentAttempt": "A device that is not your paired parent device tried to connect. Monitoring continues.",
-    "pairAgain": "This device does not know a parent device any more. Show a new code on it and pair again.",
-    "babyUnrecognised": "The baby device does not recognise this device. Show a new code on the baby device and pair again.",
+    "pairAgain": "This device no longer knows a parent device. Tap Show new code and pair again.",
+    "babyUnrecognised": "The baby device does not recognise this device. Tap Show new code on the baby device and pair again.",
     "clockSkew": "The clocks of the two devices differ by more than 10 minutes. Check the date and time on both.",
     "recoveryPathUnavailable": "If the connection drops, the devices may not find each other again right now. Monitoring continues."
   },

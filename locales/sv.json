@@ -17,7 +17,9 @@
     "peerAbsent": "Babyenheten svarar inte. Kontrollera att den är på och visar GuardedSleep.",
     "mediaBlocked": "Enheterna hittade varandra, men ljudet kommer inte fram. Testa samma wifi på båda.",
     "wrongKeyAttempt": "Någon försökte ansluta med fel nyckel. Övervakningen fortsätter.",
-    "unknownParentAttempt": "En enhet som inte är din parkopplade föräldraenhet försökte ansluta. Övervakningen fortsätter."
+    "unknownParentAttempt": "En enhet som inte är din parkopplade föräldraenhet försökte ansluta. Övervakningen fortsätter.",
+    "pairAgain": "Den här enheten känner inte längre till någon föräldraenhet. Tryck på Visa ny kod och parkoppla igen.",
+    "babyUnrecognised": "Babyenheten känner inte igen den här enheten. Tryck på Visa ny kod på babyenheten och parkoppla igen."
   },
   "native": {
     "appName": "GuardedSleep Alpha",

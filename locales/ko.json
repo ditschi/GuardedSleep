@@ -14,7 +14,9 @@
     "peerAbsent": "아기 기기가 응답하지 않아요. 전원이 켜져 있고 GuardedSleep이 표시되는지 확인하세요.",
     "mediaBlocked": "기기끼리는 찾았지만 소리가 전달되지 않아요. 두 기기를 같은 Wi-Fi에 연결해 보세요.",
     "wrongKeyAttempt": "누군가 잘못된 키로 연결을 시도했어요. 지켜보기는 계속돼요.",
-    "unknownParentAttempt": "페어링한 보호자 기기가 아닌 기기가 연결을 시도했습니다. 모니터링은 계속됩니다."
+    "unknownParentAttempt": "페어링한 보호자 기기가 아닌 기기가 연결을 시도했습니다. 모니터링은 계속됩니다.",
+    "pairAgain": "이 기기가 더 이상 부모 기기를 알지 못해요. 새 코드 표시를 눌러 다시 페어링하세요.",
+    "babyUnrecognised": "아기 기기가 이 기기를 알아보지 못해요. 아기 기기에서 새 코드 표시를 눌러 다시 페어링하세요."
   },
   "native": {
     "appName": "GuardedSleep Alpha",

@@ -17,7 +17,9 @@
     "peerAbsent": "Zařízení dítěte neodpovídá. Zkontrolujte, zda je zapnuté a zobrazuje GuardedSleep.",
     "mediaBlocked": "Zařízení se našla, ale zvuk neprochází. Zkuste na obou stejnou síť Wi-Fi.",
     "wrongKeyAttempt": "Někdo se zkusil připojit s chybným klíčem. Sledování pokračuje.",
-    "unknownParentAttempt": "Zařízení, které není vaše spárované rodičovské zařízení, se pokusilo připojit. Sledování pokračuje."
+    "unknownParentAttempt": "Zařízení, které není vaše spárované rodičovské zařízení, se pokusilo připojit. Sledování pokračuje.",
+    "pairAgain": "Toto zařízení už nezná žádné zařízení rodiče. Klepněte na Zobrazit nový kód a spárujte je znovu.",
+    "babyUnrecognised": "Zařízení dítěte toto zařízení nepoznává. Na zařízení dítěte klepněte na Zobrazit nový kód a spárujte je znovu."
   },
   "native": {
     "appName": "GuardedSleep Alpha",

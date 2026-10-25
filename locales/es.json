@@ -14,7 +14,9 @@
     "peerAbsent": "El dispositivo del bebé no responde. Compruebe que está encendido y muestra GuardedSleep.",
     "mediaBlocked": "Los dispositivos se encontraron, pero el sonido no pasa. Pruebe la misma Wi-Fi en ambos.",
     "wrongKeyAttempt": "Alguien intentó conectarse con una clave incorrecta. La vigilancia continúa.",
-    "unknownParentAttempt": "Un dispositivo que no es su dispositivo de los padres emparejado intentó conectarse. La vigilancia continúa."
+    "unknownParentAttempt": "Un dispositivo que no es su dispositivo de los padres emparejado intentó conectarse. La vigilancia continúa.",
+    "pairAgain": "Este dispositivo ya no conoce ningún dispositivo de los padres. Toque Mostrar código nuevo y vuelva a emparejar.",
+    "babyUnrecognised": "El dispositivo del bebé no reconoce este dispositivo. Toque Mostrar código nuevo en el dispositivo del bebé y vuelva a emparejar."
   },
   "native": {
     "appName": "GuardedSleep Alpha",

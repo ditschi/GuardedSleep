@@ -17,7 +17,9 @@
     "peerAbsent": "Urządzenie dziecka nie odpowiada. Sprawdź, czy jest włączone i pokazuje GuardedSleep.",
     "mediaBlocked": "Urządzenia się znalazły, ale dźwięk nie przechodzi. Spróbuj użyć tej samej sieci Wi-Fi na obu.",
     "wrongKeyAttempt": "Ktoś próbował się połączyć z błędnym kluczem. Monitorowanie trwa.",
-    "unknownParentAttempt": "Urządzenie, które nie jest Twoim sparowanym urządzeniem rodzica, próbowało się połączyć. Monitorowanie trwa."
+    "unknownParentAttempt": "Urządzenie, które nie jest Twoim sparowanym urządzeniem rodzica, próbowało się połączyć. Monitorowanie trwa.",
+    "pairAgain": "To urządzenie nie zna już urządzenia rodzica. Dotknij Pokaż nowy kod i sparuj ponownie.",
+    "babyUnrecognised": "Urządzenie dziecka nie rozpoznaje tego urządzenia. Dotknij Pokaż nowy kod na urządzeniu dziecka i sparuj ponownie."
   },
   "native": {
     "appName": "GuardedSleep Alpha",

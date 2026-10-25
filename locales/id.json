@@ -14,7 +14,9 @@
     "peerAbsent": "Perangkat bayi tidak menjawab. Pastikan perangkat menyala dan menampilkan GuardedSleep.",
     "mediaBlocked": "Kedua perangkat saling menemukan, tetapi suara tidak sampai. Coba gunakan Wi-Fi yang sama di keduanya.",
     "wrongKeyAttempt": "Seseorang mencoba terhubung dengan kunci yang salah. Pemantauan terus berjalan.",
-    "unknownParentAttempt": "Perangkat yang bukan perangkat orang tua yang Anda pasangkan mencoba terhubung. Pemantauan tetap berjalan."
+    "unknownParentAttempt": "Perangkat yang bukan perangkat orang tua yang Anda pasangkan mencoba terhubung. Pemantauan tetap berjalan.",
+    "pairAgain": "Perangkat ini tidak lagi mengenal perangkat orang tua. Ketuk Tampilkan kode baru lalu pasangkan lagi.",
+    "babyUnrecognised": "Perangkat bayi tidak mengenali perangkat ini. Ketuk Tampilkan kode baru di perangkat bayi lalu pasangkan lagi."
   },
   "native": {
     "appName": "GuardedSleep Alpha",

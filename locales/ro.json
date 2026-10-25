@@ -17,7 +17,9 @@
     "peerAbsent": "Dispozitivul bebelușului nu răspunde. Verifică dacă este pornit și afișează GuardedSleep.",
     "mediaBlocked": "Dispozitivele s-au găsit, dar sunetul nu trece. Încearcă aceeași rețea Wi-Fi pe ambele.",
     "wrongKeyAttempt": "Cineva a încercat să se conecteze cu o cheie greșită. Monitorizarea continuă.",
-    "unknownParentAttempt": "Un dispozitiv care nu este dispozitivul părintelui asociat a încercat să se conecteze. Monitorizarea continuă."
+    "unknownParentAttempt": "Un dispozitiv care nu este dispozitivul părintelui asociat a încercat să se conecteze. Monitorizarea continuă.",
+    "pairAgain": "Acest dispozitiv nu mai cunoaște niciun dispozitiv al părintelui. Atinge Arată un cod nou și asociază din nou.",
+    "babyUnrecognised": "Dispozitivul bebelușului nu recunoaște acest dispozitiv. Atinge Arată un cod nou pe dispozitivul bebelușului și asociază din nou."
   },
   "native": {
     "appName": "GuardedSleep Alpha",
