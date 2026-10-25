@@ -122,6 +122,21 @@ pub(crate) struct NostrBox {
     pub bad_count: u32,
     /// A reachability check is waiting for EOSE on this subscription id.
     pub probe_sub: Option<String>,
+    /// Ids of the most recent verified events: a relay that serves the same event again (strfry
+    /// retention, a re-subscription, a replaying third party) is dropped before it is counted.
+    pub seen: VecDeque<String>,
+    /// The newest `created_at` of a verified event, for the next `since`.
+    pub newest_seen: Option<u64>,
+    pub frames_start: u64,
+    pub frames_count: u32,
+    /// When the opening `here` last went to this relay.
+    pub opened_here_at: Option<u64>,
+    /// Presence events sent beyond the hourly cap in this hour window.
+    pub presence_over: u32,
+    /// When this relay refused an event for its creation time (last 30 minutes).
+    pub clock_refusals: Vec<u64>,
+    /// When this relay last accepted an event with `OK true`.
+    pub ok_at: Option<u64>,
 }
 
 impl NostrBox {
@@ -149,6 +164,14 @@ impl NostrBox {
             bad_start: 0,
             bad_count: 0,
             probe_sub: None,
+            seen: VecDeque::new(),
+            newest_seen: None,
+            frames_start: 0,
+            frames_count: 0,
+            opened_here_at: None,
+            presence_over: 0,
+            clock_refusals: Vec::new(),
+            ok_at: None,
         }
     }
 

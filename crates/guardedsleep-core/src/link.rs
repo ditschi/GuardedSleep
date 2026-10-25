@@ -851,8 +851,6 @@ pub struct Link {
     nostr_peer_heard_at: Option<u64>,
     /// Setup envelopes sent over Nostr in the current attempt.
     nostr_attempt_events: u32,
-    /// A relay refused an event for its creation time at this time.
-    clock_refused_at: Option<u64>,
     /// The peer's wall clock differs from ours by more than 10 minutes.
     peer_skew: bool,
     resend: Option<PendingResend>,
@@ -1022,7 +1020,6 @@ impl Link {
             nostr_here_next_at: 0,
             nostr_peer_heard_at: None,
             nostr_attempt_events: 0,
-            clock_refused_at: None,
             peer_skew: false,
             resend: None,
             ice: None,
@@ -1878,15 +1875,30 @@ impl Link {
         let Ok(bytes) = URL_SAFE_NO_PAD.decode(text) else {
             return;
         };
-        self.open_envelope(now, from, &bytes, out);
+        self.open_envelope(now, from, &bytes, None, out);
     }
 
     /// One inbound sealed envelope, from the relay (`from`: the sender's client id) or from Nostr
     /// (`from`: [`NOSTR_ORIGIN`]).
-    fn open_envelope(&mut self, now: u64, from: &str, bytes: &[u8], out: &mut Vec<LinkAction>) {
+    fn open_envelope(
+        &mut self,
+        now: u64,
+        from: &str,
+        bytes: &[u8],
+        created_at: Option<u64>,
+        out: &mut Vec<LinkAction>,
+    ) {
         if bytes.len() > MessageClass::Candidates.wire_len() {
             return;
         }
+        // Whether the signed `created_at` of a Nostr event is recent enough to count as a sign of
+        // life (a stored or replayed event proves nothing about now). A relay frame has no such time.
+        let signed_fresh = match created_at {
+            None => true,
+            Some(c) => self
+                .wall_now(now)
+                .is_some_and(|w| c.saturating_add(nostr_link::HEARD_FRESH_S) >= w),
+        };
         let Some(rng) = self.csprng.as_mut() else {
             return;
         };
@@ -1915,7 +1927,9 @@ impl Link {
         }
         if self.sess.peer_session() == Some(opened.sender_session) {
             if from == NOSTR_ORIGIN {
-                self.nostr_peer_heard_at = Some(now);
+                if signed_fresh {
+                    self.nostr_peer_heard_at = Some(now);
+                }
             } else {
                 self.peer_client = Some(from.to_owned());
             }
@@ -1935,7 +1949,7 @@ impl Link {
             self.on_peer_confirmed(now, out);
         }
         if opened.class == MessageClass::Here {
-            if self.sess.peer_session() == Some(opened.sender_session) {
+            if self.sess.peer_session() == Some(opened.sender_session) && signed_fresh {
                 self.check_clock(now, &opened.message, out);
             }
             return;

@@ -45,6 +45,7 @@ use k256::schnorr::{Signature, SigningKey, VerifyingKey};
 use k256::{FieldBytes, NonZeroScalar, Scalar};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
+use zeroize::Zeroizing;
 
 use crate::envelope::{Purpose, SecretKey, derive_key};
 use crate::protocol::Role;
@@ -146,8 +147,8 @@ impl NostrKeys {
         info.extend_from_slice(b"role|");
         info.extend_from_slice(role.as_str().as_bytes());
         info.extend_from_slice(&epoch.to_be_bytes());
-        let mut okm = [0u8; 32];
-        hk.expand(&info, &mut okm).ok()?;
+        let mut okm = Zeroizing::new([0u8; 32]);
+        hk.expand(&info, &mut *okm).ok()?;
         scalar_key(&okm)
     }
 
@@ -160,7 +161,8 @@ impl NostrKeys {
 
 /// Reduces 32 bytes modulo the curve order into a signing key; `None` for the zero scalar.
 pub fn scalar_key(okm: &[u8; 32]) -> Option<SigningKey> {
-    let scalar = <Scalar as Reduce<FieldBytes>>::reduce(&FieldBytes::from(*okm));
+    let bytes = Zeroizing::new(FieldBytes::from(*okm));
+    let scalar = <Scalar as Reduce<FieldBytes>>::reduce(&bytes);
     let nonzero = NonZeroScalar::new(scalar).into_option()?;
     Some(SigningKey::from(nonzero))
 }
@@ -399,13 +401,14 @@ pub fn req_frame(sub: &str, filters: &[Filter]) -> Option<String> {
     Some(text)
 }
 
-/// The throwaway `REQ` of a reachability check: nothing derived from the pairing, a random tag.
-pub fn probe_req_frame(sub: &str, random_tag: &str) -> Option<String> {
-    if !is_base64url(sub) || sub.len() > MAX_SUB_ID || !is_base64url(random_tag) {
+/// The throwaway `REQ` of a reachability check: nothing derived from the pairing and not even the
+/// event kind, only a random event id that cannot exist (`random_id_hex`: 64 hex characters).
+pub fn probe_req_frame(sub: &str, random_id_hex: &str) -> Option<String> {
+    if !is_base64url(sub) || sub.len() > MAX_SUB_ID || !is_hex64(random_id_hex) {
         return None;
     }
     Some(format!(
-        "[\"REQ\",\"{sub}\",{{\"kinds\":[{KIND}],\"#t\":[\"{random_tag}\"],\"limit\":1}}]"
+        "[\"REQ\",\"{sub}\",{{\"ids\":[\"{random_id_hex}\"],\"limit\":1}}]"
     ))
 }
 
@@ -508,6 +511,8 @@ pub enum Verdict {
     /// A refusal (blocked, restricted, authentication or proof of work, rate limit, any other
     /// rejection): park the relay.
     Park,
+    /// The relay reports an internal error: treat the socket as down and reconnect with backoff.
+    Down,
 }
 
 fn mentions_clock(lower: &str) -> bool {
@@ -530,8 +535,11 @@ pub fn classify_ok(accepted: bool, message: &str) -> Verdict {
         return Verdict::Fine;
     }
     let lower = message.to_ascii_lowercase();
-    if lower.starts_with("duplicate") {
+    if lower.starts_with("duplicate") || lower.starts_with("mute:") {
         return Verdict::Fine;
+    }
+    if lower.starts_with("error:") {
+        return Verdict::Down;
     }
     if mentions_clock(&lower) {
         return Verdict::Clock;
@@ -779,9 +787,16 @@ mod tests {
         assert_eq!(close_frame("sub-1").unwrap(), "[\"CLOSE\",\"sub-1\"]");
         assert!(req_frame("bad id", &[]).is_none());
         assert!(close_frame("a\"b").is_none());
-        let probe = probe_req_frame("p1", "RANDOM").unwrap();
-        assert!(!probe.contains("authors"));
-        assert!(probe.contains("\"limit\":1"));
+        let probe = probe_req_frame("p1", &"ab".repeat(32)).unwrap();
+        assert_eq!(
+            probe,
+            format!(
+                "[\"REQ\",\"p1\",{{\"ids\":[\"{}\"],\"limit\":1}}]",
+                "ab".repeat(32)
+            )
+        );
+        assert!(!probe.contains("authors") && !probe.contains(&KIND.to_string()));
+        assert!(probe_req_frame("p1", "RANDOM").is_none());
     }
 
     #[test]
@@ -852,6 +867,8 @@ mod tests {
         assert_eq!(classify_ok(false, "auth-required: x"), Verdict::Park);
         assert_eq!(classify_ok(false, "pow: need 20 bits"), Verdict::Park);
         assert_eq!(classify_ok(false, ""), Verdict::Park);
+        assert_eq!(classify_ok(false, "error: shutting down"), Verdict::Down);
+        assert_eq!(classify_ok(false, "mute: you are muted"), Verdict::Fine);
         assert_eq!(
             classify_ok(false, "invalid: event creation date is too far off"),
             Verdict::Clock

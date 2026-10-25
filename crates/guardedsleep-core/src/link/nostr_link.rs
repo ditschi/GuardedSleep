@@ -24,7 +24,7 @@ use crate::mailbox::{MailboxId, MailboxKind, MailboxState, Outgoing};
 use crate::nostr::{
     Event, Filter, KIND, MAX_FRAME_BYTES, NostrKeys, RelayFrame, SINCE_S, Verdict, build_event,
     classify_closed, classify_notice, classify_ok, close_frame, epoch_of, epochs_to_listen,
-    event_frame, parse_relay_frame, probe_req_frame, req_frame, verify_event,
+    event_frame, hex_encode, parse_relay_frame, probe_req_frame, req_frame, verify_event,
 };
 
 /// The `from` of an envelope that came in over Nostr (a relay client id never starts with `~`).
@@ -45,6 +45,27 @@ const PARK_MS: [u64; 3] = [60_000, 300_000, 1_800_000];
 /// A relay that stayed clean for this long starts again at the first backoff step.
 const PARK_FORGET_MS: u64 = 2 * HOUR_MS;
 const OUTBOX_CAP: usize = 16;
+/// Ids of verified events remembered per relay.
+const SEEN_CAP: usize = 256;
+/// An event is looked at only if its `created_at` is within this of our clock.
+const EVENT_PAST_S: u64 = 15 * 60;
+const EVENT_FUTURE_S: u64 = 10 * 60;
+/// A `since` for a re-subscription starts this long before the newest event seen.
+const SUB_SLACK_S: u64 = 30;
+/// Frames of any type per minute and relay before the socket is closed.
+const FRAME_CAP: u32 = 300;
+/// A socket that stayed open this long counts as healthy: only then the reconnect backoff resets.
+const OPEN_STABLE_MS: u64 = 60_000;
+/// The opening `here` goes to one relay at most this often.
+const OPEN_HERE_MIN_MS: u64 = 180_000;
+/// Presence events per hour and relay beyond the hourly cap.
+const PRESENCE_OVER_CAP: u32 = 30;
+/// Clock refusals of one relay in the refusal window before it is parked (if others accept).
+const CLOCK_PARK_AFTER: usize = 3;
+/// Refusing relays needed for the `clock_skew` hint.
+const CLOCK_HINT_RELAYS: usize = 2;
+/// A signed `created_at` older than this proves nothing about the peer being there now.
+pub(super) const HEARD_FRESH_S: u64 = 7 * 60;
 /// While not connected the subscription is re-issued this often (a browser cannot see a half-open
 /// socket), and the relay must answer within [`EOSE_WAIT_MS`] or the mailbox counts as closed.
 const RESUBSCRIBE_MS: u64 = 60_000;
@@ -200,8 +221,16 @@ impl Link {
             && self.wall_unix_s.is_none()
             && now.saturating_sub(self.started_at) >= CLOCK_GRACE_MS;
         let refused = self
-            .clock_refused_at
-            .is_some_and(|t| now.saturating_sub(t) <= CLOCK_REFUSAL_MS);
+            .mb
+            .nostr
+            .iter()
+            .filter(|b| {
+                b.clock_refusals
+                    .iter()
+                    .any(|t| now.saturating_sub(*t) <= CLOCK_REFUSAL_MS)
+            })
+            .count()
+            >= CLOCK_HINT_RELAYS;
         self.set_hint(HINT_CLOCK_SKEW, self.peer_skew || unknown || refused, out);
     }
 
@@ -322,7 +351,7 @@ impl Link {
         };
         let wall = self.wall_now(now);
         let sub_id = match self.csprng.as_mut() {
-            Some(rng) => random_text(rng, 12),
+            Some(rng) => random_text(rng, 16),
             None => return,
         };
         let probing = {
@@ -340,11 +369,15 @@ impl Link {
         };
         if probing {
             // A reachability check: a throwaway filter and nothing of the pairing.
-            let tag = match self.csprng.as_mut() {
-                Some(rng) => random_text(rng, 17),
+            let random_id = match self.csprng.as_mut() {
+                Some(rng) => {
+                    let mut raw = [0u8; 32];
+                    rng.fill_bytes(&mut raw);
+                    hex_encode(&raw)
+                }
                 None => return,
             };
-            if let Some(frame) = probe_req_frame(&sub_id, &tag)
+            if let Some(frame) = probe_req_frame(&sub_id, &random_id)
                 && let Some(b) = self.mb.nostr.get_mut(i)
             {
                 b.probe_sub = Some(sub_id);
@@ -357,8 +390,21 @@ impl Link {
             let epochs = epochs_to_listen(w);
             self.nostr_subscribe(i, now, w, epochs, out);
         }
-        // The relay is new to the peer: say who we are on it.
-        self.nostr_announce(now, Some(id));
+        // The relay is new to the peer: say who we are on it (at most every 3 minutes per relay, so
+        // a relay that flaps cannot make us publish at every reconnect).
+        let due = self.mb.nostr.get(i).is_some_and(|b| {
+            b.opened_here_at
+                .is_none_or(|t| now.saturating_sub(t) >= OPEN_HERE_MIN_MS)
+        });
+        if due {
+            if let Some(b) = self.mb.nostr.get_mut(i) {
+                b.opened_here_at = Some(now);
+            }
+            self.nostr_announce(now, Some(id));
+        } else if self.nostr_here_sent == 0 {
+            self.nostr_here_sent = 1;
+            self.nostr_here_next_at = now.saturating_add(HERE_BACKOFF_MS[0]);
+        }
     }
 
     pub(super) fn on_nostr_closed(&mut self, id: MailboxId, now: u64, out: &mut Vec<LinkAction>) {
@@ -384,6 +430,13 @@ impl Link {
         out: &mut Vec<LinkAction>,
     ) {
         let mut filters = Vec::with_capacity(epochs.len());
+        // A re-subscription asks from just before the newest event seen, not from 15 minutes back:
+        // a relay that keeps ephemeral events would otherwise serve the same ones every time.
+        let floor = wall.saturating_sub(SINCE_S);
+        let since = match self.mb.nostr.get(i).and_then(|b| b.newest_seen) {
+            Some(newest) => newest.saturating_sub(SUB_SLACK_S).max(floor),
+            None => floor,
+        };
         for epoch in &epochs {
             if let Some(day) = self.day(*epoch)
                 && let Some(author) = day.peer_pub
@@ -391,7 +444,7 @@ impl Link {
                 filters.push(Filter {
                     author,
                     tag: day.tag,
-                    since: wall.saturating_sub(SINCE_S),
+                    since,
                 });
             }
         }
@@ -414,6 +467,13 @@ impl Link {
         wall: Option<u64>,
         out: &mut Vec<LinkAction>,
     ) {
+        if let Some(b) = self.mb.nostr.get_mut(i)
+            && b.failures > 0
+            && now.saturating_sub(b.changed_at) >= OPEN_STABLE_MS
+        {
+            // Open for a minute: this relay is healthy, the next failure starts from the bottom.
+            b.failures = 0;
+        }
         let Some(b) = self.mb.nostr.get(i) else {
             return;
         };
@@ -442,13 +502,27 @@ impl Link {
         let Some(i) = self.mb.nostr.iter().position(|b| b.id == id) else {
             return;
         };
-        if self
-            .mb
-            .nostr
-            .get(i)
-            .is_none_or(|b| b.state != MailboxState::Open)
-            || text.len() > MAX_FRAME_BYTES
-        {
+        // Cheap first: every frame of any type counts, before anything is parsed. A relay that
+        // talks more than this is not one to listen to; the socket closes and backs off.
+        let over = {
+            let Some(b) = self.mb.nostr.get_mut(i) else {
+                return;
+            };
+            if b.state != MailboxState::Open {
+                return;
+            }
+            if now.saturating_sub(b.frames_start) >= RX_WINDOW_MS {
+                b.frames_start = now;
+                b.frames_count = 0;
+            }
+            b.frames_count = b.frames_count.saturating_add(1);
+            b.frames_count > FRAME_CAP
+        };
+        if over {
+            self.nostr_down(i, now, true, out);
+            return;
+        }
+        if text.len() > MAX_FRAME_BYTES {
             return;
         }
         let Some(frame) = parse_relay_frame(text) else {
@@ -459,7 +533,12 @@ impl Link {
             RelayFrame::Eose { sub } => self.on_nostr_eose(i, now, &sub, out),
             RelayFrame::Ok {
                 accepted, message, ..
-            } => self.on_nostr_verdict(i, now, classify_ok(accepted, &message), out),
+            } => {
+                if accepted && let Some(b) = self.mb.nostr.get_mut(i) {
+                    b.ok_at = Some(now);
+                }
+                self.on_nostr_verdict(i, now, classify_ok(accepted, &message), out)
+            }
             RelayFrame::Notice { message } => {
                 self.on_nostr_verdict(i, now, classify_notice(&message), out)
             }
@@ -476,7 +555,9 @@ impl Link {
                     self.nostr_down(i, now, true, out);
                 }
             }
-            RelayFrame::Auth => self.nostr_park(i, now, out),
+            // We never authenticate. An unsolicited AUTH proves nothing about our events; only an
+            // `auth-required:` answer to one of them parks the relay.
+            RelayFrame::Auth => {}
         }
     }
 
@@ -489,8 +570,30 @@ impl Link {
     ) {
         match verdict {
             Verdict::Fine => {}
-            Verdict::Clock => self.clock_refused_at = Some(now),
+            Verdict::Clock => self.on_clock_refusal(i, now, out),
             Verdict::Park => self.nostr_park(i, now, out),
+            Verdict::Down => self.nostr_down(i, now, true, out),
+        }
+    }
+
+    /// A relay refused an event for its creation time. The hint needs two relays to agree (or our
+    /// own clock unknown, or the peer reporting skew); a relay that keeps refusing what the others
+    /// accept is the odd one out and is parked.
+    fn on_clock_refusal(&mut self, i: usize, now: u64, out: &mut Vec<LinkAction>) {
+        let Some(b) = self.mb.nostr.get_mut(i) else {
+            return;
+        };
+        b.clock_refusals
+            .retain(|t| now.saturating_sub(*t) <= CLOCK_REFUSAL_MS);
+        b.clock_refusals.push(now);
+        let refusals = b.clock_refusals.len();
+        let others_accept = self.mb.nostr.iter().enumerate().any(|(j, o)| {
+            j != i
+                && o.ok_at
+                    .is_some_and(|t| now.saturating_sub(t) <= CLOCK_REFUSAL_MS)
+        });
+        if refusals >= CLOCK_PARK_AFTER && others_accept {
+            self.nostr_park(i, now, out);
         }
     }
 
@@ -506,8 +609,10 @@ impl Link {
             }
             self.finish_probe(now, true, out);
         } else if b.sub_id == sub {
+            // Answered. The reconnect backoff resets only after the socket stayed open for a while
+            // (`nostr_open_housekeeping`), so a relay that closes right after EOSE gets no quicker
+            // retry for it.
             b.eose_deadline = None;
-            b.failures = 0;
         }
     }
 
@@ -519,22 +624,30 @@ impl Link {
         event: Event,
         out: &mut Vec<LinkAction>,
     ) {
-        let Some(b) = self.mb.nostr.get_mut(i) else {
+        let epochs = {
+            let Some(b) = self.mb.nostr.get(i) else {
+                return;
+            };
+            if sub != b.sub_id {
+                return;
+            }
+            // An event this relay already gave us (strfry keeps ephemeral events for minutes, a
+            // re-subscription asks again, a third party may replay what it captured) is dropped
+            // before it is counted or verified.
+            if b.seen.iter().any(|id| *id == event.id) {
+                return;
+            }
+            b.sub_epochs.clone()
+        };
+        // Stale or far-future events are noise from the relay's store, not worth a signature check.
+        let Some(wall) = self.wall_now(now) else {
             return;
         };
-        if sub != b.sub_id {
+        if event.created_at.saturating_add(EVENT_PAST_S) < wall
+            || event.created_at > wall.saturating_add(EVENT_FUTURE_S)
+        {
             return;
         }
-        if now.saturating_sub(b.rx_start) >= RX_WINDOW_MS {
-            b.rx_start = now;
-            b.rx_count = 0;
-        }
-        b.rx_count = b.rx_count.saturating_add(1);
-        if b.rx_count > RX_CAP {
-            self.nostr_park(i, now, out);
-            return;
-        }
-        let epochs = b.sub_epochs.clone();
         let mut in_scope = event.kind == KIND;
         if in_scope {
             in_scope = epochs.iter().any(|e| {
@@ -544,24 +657,58 @@ impl Link {
                 })
             });
         }
-        if !in_scope || !verify_event(&event) {
+        if !in_scope {
+            self.nostr_bad_event(i, now, out);
+            return;
+        }
+        // In scope and new: at most 60 a minute are verified. Distinct events beyond that are
+        // dropped for the rest of the window; they are not a reason to leave the relay.
+        {
             let Some(b) = self.mb.nostr.get_mut(i) else {
                 return;
             };
-            if now.saturating_sub(b.bad_start) >= BAD_WINDOW_MS {
-                b.bad_start = now;
-                b.bad_count = 0;
+            if now.saturating_sub(b.rx_start) >= RX_WINDOW_MS {
+                b.rx_start = now;
+                b.rx_count = 0;
             }
-            b.bad_count = b.bad_count.saturating_add(1);
-            if b.bad_count >= BAD_CAP {
-                self.nostr_park(i, now, out);
+            if b.rx_count >= RX_CAP {
+                return;
             }
+            b.rx_count += 1;
+        }
+        if !verify_event(&event) {
+            self.nostr_bad_event(i, now, out);
             return;
+        }
+        if let Some(b) = self.mb.nostr.get_mut(i) {
+            b.seen.push_back(event.id.clone());
+            while b.seen.len() > SEEN_CAP {
+                b.seen.pop_front();
+            }
+            b.newest_seen = Some(
+                b.newest_seen
+                    .map_or(event.created_at, |n| n.max(event.created_at)),
+            );
         }
         let Ok(bytes) = URL_SAFE_NO_PAD.decode(&event.content) else {
             return;
         };
-        self.open_envelope(now, NOSTR_ORIGIN, &bytes, out);
+        self.open_envelope(now, NOSTR_ORIGIN, &bytes, Some(event.created_at), out);
+    }
+
+    /// A forged or out-of-scope event: three in a minute park the relay.
+    fn nostr_bad_event(&mut self, i: usize, now: u64, out: &mut Vec<LinkAction>) {
+        let Some(b) = self.mb.nostr.get_mut(i) else {
+            return;
+        };
+        if now.saturating_sub(b.bad_start) >= BAD_WINDOW_MS {
+            b.bad_start = now;
+            b.bad_count = 0;
+        }
+        b.bad_count = b.bad_count.saturating_add(1);
+        if b.bad_count >= BAD_CAP {
+            self.nostr_park(i, now, out);
+        }
     }
 
     // ---- publishing ------------------------------------------------------------------------
@@ -623,12 +770,17 @@ impl Link {
                 if now.saturating_sub(b.hour_start) >= HOUR_MS {
                     b.hour_start = now;
                     b.hour_sent = 0;
+                    b.presence_over = 0;
                 }
                 let Some(item) = b.outbox.pop_front() else {
                     break;
                 };
-                if !item.presence && b.hour_sent >= HOUR_CAP {
-                    continue;
+                if b.hour_sent >= HOUR_CAP {
+                    // Over the hourly cap only presence goes, and not without limit either.
+                    if !item.presence || b.presence_over >= PRESENCE_OVER_CAP {
+                        continue;
+                    }
+                    b.presence_over += 1;
                 }
                 let id = b.id;
                 if let Some(frame) = self.nostr_event_frame(wall, &item.sealed)

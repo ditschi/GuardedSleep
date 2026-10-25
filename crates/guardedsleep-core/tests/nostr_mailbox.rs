@@ -605,20 +605,55 @@ fn a_notice_about_a_rate_limit_parks_and_an_ordinary_one_does_not() {
     assert_eq!(closes(&acts), vec![1]);
 }
 
+fn refuse_on(r: &mut Rig, mailbox: MailboxId, message: &str) -> Vec<LinkAction> {
+    let id = "a".repeat(64);
+    r.feed(frame_input(
+        mailbox,
+        &format!("[\"OK\",\"{id}\",false,\"{message}\"]"),
+    ))
+}
+
+fn accept_on(r: &mut Rig, mailbox: MailboxId) -> Vec<LinkAction> {
+    let id = "b".repeat(64);
+    r.feed(frame_input(
+        mailbox,
+        &format!("[\"OK\",\"{id}\",true,\"\"]"),
+    ))
+}
+
+const TOO_FAR: &str = "invalid: event creation date is too far off from the current time";
+
 #[test]
-fn a_refusal_about_the_creation_time_raises_the_clock_hint_and_does_not_park() {
-    let mut r = Rig::parent(&[URL_A]);
+fn one_relay_refusing_the_creation_time_is_not_enough_for_the_clock_hint() {
+    let mut r = Rig::parent(&[URL_A, URL_B]);
     r.report_wall();
     r.advance(1_000);
-    let acts = refuse(
-        &mut r,
-        "invalid: event creation date is too far off from the current time",
-    );
+    let acts = refuse_on(&mut r, 1, TOO_FAR);
     assert!(closes(&acts).is_empty(), "not parked");
+    assert!(hint_events(&acts, "clock_skew").is_empty());
+    // A second relay that agrees raises it, and it goes away by itself after a while.
+    let acts = refuse_on(&mut r, 2, TOO_FAR);
     assert_eq!(hint_events(&acts, "clock_skew"), vec![true]);
-    // The hint goes away by itself after a while.
+    assert!(closes(&acts).is_empty());
     let acts = r.advance(31 * 60 * 1000);
     assert_eq!(hint_events(&acts, "clock_skew"), vec![false]);
+}
+
+#[test]
+fn a_relay_that_keeps_refusing_the_time_the_others_accept_is_parked() {
+    let mut r = Rig::parent(&[URL_A, URL_B]);
+    r.report_wall();
+    r.advance(1_000);
+    accept_on(&mut r, 2);
+    assert!(closes(&refuse_on(&mut r, 1, TOO_FAR)).is_empty());
+    assert!(closes(&refuse_on(&mut r, 1, TOO_FAR)).is_empty());
+    // Without a relay that accepts, three refusals would not park (the clock may be the problem).
+    let acts = refuse_on(&mut r, 1, TOO_FAR);
+    assert_eq!(closes(&acts), vec![1]);
+    assert!(
+        hint_events(&acts, "clock_skew").is_empty(),
+        "one relay only"
+    );
 }
 
 #[test]
@@ -668,7 +703,24 @@ fn events_by_someone_else_or_of_another_tag_count_as_bad() {
 }
 
 #[test]
-fn more_than_sixty_events_a_minute_park_the_relay() {
+fn a_flood_of_distinct_valid_events_is_dropped_not_punished() {
+    let mut r = Rig::parent(&[URL_A]);
+    r.report_wall();
+    r.advance(1_000);
+    let sub = r.sub_of(1);
+    for _ in 0..200 {
+        let wall = r.wall();
+        let here = r.peer.peer.here();
+        let frame = r.peer.frame(&sub, wall, &here);
+        assert!(closes(&r.feed(frame_input(1, &frame))).is_empty());
+    }
+    // The rest of the window is dropped; the relay is still in use afterwards.
+    let acts = r.advance(70_000);
+    assert!(closes(&acts).is_empty());
+}
+
+#[test]
+fn a_replayed_event_is_dropped_before_it_is_counted() {
     let mut r = Rig::parent(&[URL_A]);
     r.report_wall();
     r.advance(1_000);
@@ -676,15 +728,202 @@ fn more_than_sixty_events_a_minute_park_the_relay() {
     let wall = r.wall();
     let here = r.peer.peer.here();
     let frame = r.peer.frame(&sub, wall, &here);
-    let mut parked_at = None;
-    for i in 1..=70 {
-        let acts = r.feed(frame_input(1, &frame));
+    for _ in 0..250 {
+        assert!(closes(&r.feed(frame_input(1, &frame))).is_empty());
+    }
+    // Over 60 copies in a minute neither park nor starve a different, new event.
+    let before = r.log.len();
+    let again = r.peer.peer.here();
+    let wall = r.wall();
+    let fresh = r.peer.frame(&sub, wall, &again);
+    r.feed(frame_input(1, &fresh));
+    assert!(r.log.len() >= before);
+}
+
+#[test]
+fn events_with_a_time_outside_the_window_are_dropped_without_a_penalty() {
+    let mut r = Rig::parent(&[URL_A]);
+    r.report_wall();
+    r.advance(1_000);
+    let sub = r.sub_of(1);
+    for age in [16 * 60, 60 * 60, 3 * 3600] {
+        let here = r.peer.peer.here();
+        let frame = r.peer.frame(&sub, r.wall() - age, &here);
+        assert!(closes(&r.feed(frame_input(1, &frame))).is_empty());
+    }
+    for ahead in [11 * 60, 3600] {
+        let here = r.peer.peer.here();
+        let frame = r.peer.frame(&sub, r.wall() + ahead, &here);
+        assert!(closes(&r.feed(frame_input(1, &frame))).is_empty());
+    }
+    // Five bad ones in a row never added up to a park.
+    let acts = r.advance(1_000);
+    assert!(closes(&acts).is_empty());
+}
+
+#[test]
+fn a_resubscription_asks_from_just_before_the_newest_event_seen() {
+    let mut r = Rig::parent(&[URL_A]);
+    r.report_wall();
+    r.advance(1_000);
+    let sub = r.sub_of(1);
+    let here = r.peer.peer.here();
+    let at = r.wall();
+    let frame = r.peer.frame(&sub, at, &here);
+    r.feed(frame_input(1, &frame));
+    let acts = r.advance(61_000);
+    let reqs = requests_in(&acts);
+    let since = reqs.last().unwrap().2[0]["since"].as_u64().unwrap();
+    assert_eq!(since, at - 30);
+}
+
+#[test]
+fn a_signed_time_older_than_seven_minutes_is_no_sign_of_life() {
+    let mut r = Rig::parent(&[URL_A]);
+    r.report_wall();
+    r.advance(1_000);
+    r.confirm();
+    r.advance(8 * 60 * 1000);
+    // The peer's presence arrives, but the event is ten minutes old (a relay's store): it proves
+    // nothing about the peer being there now, so no request follows.
+    let here = r.peer.peer.here();
+    let sub = r.sub_of(1);
+    let frame = r.peer.frame(&sub, r.wall() - 10 * 60, &here);
+    r.feed(frame_input(1, &frame));
+    let acts = r.advance(60_000);
+    assert!(Rig::kinds(&acts).iter().all(|(_, t)| t != "request_offer"));
+}
+
+// ---- relay misbehaviour -----------------------------------------------------------------------
+
+#[test]
+fn an_unsolicited_auth_frame_changes_nothing_but_auth_required_answers_park() {
+    let mut r = Rig::parent(&[URL_A]);
+    r.report_wall();
+    r.advance(1_000);
+    assert!(closes(&r.feed(frame_input(1, "[\"AUTH\",\"challenge\"]"))).is_empty());
+    assert_eq!(closes(&refuse(&mut r, "auth-required: log in")), vec![1]);
+}
+
+#[test]
+fn a_relay_that_talks_too_much_is_disconnected_and_retried_with_backoff() {
+    let mut r = Rig::parent(&[URL_A]);
+    r.report_wall();
+    r.advance(1_000);
+    let mut closed = None;
+    for i in 1..=400 {
+        let acts = r.feed(frame_input(1, "[\"NOTICE\",\"hello\"]"));
         if !closes(&acts).is_empty() {
-            parked_at = Some(i);
+            closed = Some(i);
             break;
         }
     }
-    assert_eq!(parked_at, Some(61));
+    assert!(closed.is_some_and(|n| (298..=301).contains(&n)), "{closed:?}");
+    // Not parked: it comes back after the short backoff.
+    let acts = r.advance(3_000);
+    assert!(opens(&acts).iter().any(|(id, ..)| *id == 1));
+}
+
+#[test]
+fn an_error_answer_drops_the_socket_and_a_mute_answer_is_ignored() {
+    let mut r = Rig::parent(&[URL_A]);
+    r.report_wall();
+    r.advance(1_000);
+    assert!(closes(&refuse(&mut r, "mute: you are muted")).is_empty());
+    assert_eq!(closes(&refuse(&mut r, "error: shutting down")), vec![1]);
+    let acts = r.advance(3_000);
+    assert!(
+        opens(&acts).iter().any(|(id, ..)| *id == 1),
+        "retried, not parked"
+    );
+}
+
+// ---- a flapping relay -------------------------------------------------------------------------
+
+#[test]
+fn a_relay_that_closes_right_after_eose_gets_a_slower_retry_every_time() {
+    let mut r = Rig::parent(&[URL_A]);
+    r.report_wall();
+    let mut waits = Vec::new();
+    r.advance(500);
+    for _ in 0..4 {
+        let closed_at = r.now;
+        r.feed(LinkInput::MailboxClosed {
+            id: 1,
+            reason: "closed".into(),
+        });
+        let mut reopened = None;
+        for _ in 0..4_800 {
+            let acts = r.advance(250);
+            if opens(&acts).iter().any(|(id, ..)| *id == 1) {
+                reopened = Some(r.now - closed_at);
+                break;
+            }
+        }
+        waits.push(reopened.expect("it reopens"));
+    }
+    // 2, 5, 15 and 60 s: answering the subscription does not reset the backoff.
+    assert!(waits[0] >= 2_000 && waits[0] < 3_000, "{waits:?}");
+    assert!(waits[1] >= 5_000 && waits[1] < 6_000, "{waits:?}");
+    assert!(waits[2] >= 15_000 && waits[2] < 16_000, "{waits:?}");
+    assert!(waits[3] >= 60_000 && waits[3] < 61_000, "{waits:?}");
+}
+
+#[test]
+fn the_opening_presence_goes_to_a_relay_at_most_every_three_minutes() {
+    let mut r = Rig::parent(&[URL_A]);
+    r.report_wall();
+    let acts = r.advance(500);
+    let heres = |acts: &[LinkAction]| {
+        Rig::kinds(acts)
+            .iter()
+            .filter(|(id, t)| *id == 1 && t == "here")
+            .count()
+    };
+    assert_eq!(heres(&acts), 1);
+    r.feed(LinkInput::MailboxClosed {
+        id: 1,
+        reason: "closed".into(),
+    });
+    let acts = r.advance(2_500);
+    assert!(opens(&acts).iter().any(|(id, ..)| *id == 1));
+    assert_eq!(
+        heres(&acts),
+        0,
+        "no second opening presence within 3 minutes"
+    );
+}
+
+#[test]
+fn a_socket_open_for_a_minute_resets_the_backoff() {
+    let mut r = Rig::parent(&[URL_A]);
+    r.report_wall();
+    r.advance(500);
+    r.feed(LinkInput::MailboxClosed {
+        id: 1,
+        reason: "closed".into(),
+    });
+    r.advance(2_600);
+    // Open again and healthy for more than a minute ...
+    r.advance(70_000);
+    let closed_at = r.now;
+    r.feed(LinkInput::MailboxClosed {
+        id: 1,
+        reason: "closed".into(),
+    });
+    let mut wait = None;
+    for _ in 0..40 {
+        let acts = r.advance(250);
+        if opens(&acts).iter().any(|(id, ..)| *id == 1) {
+            wait = Some(r.now - closed_at);
+            break;
+        }
+    }
+    // ... so the next failure starts from the 2 s step again, not the 5 s one.
+    assert!(
+        wait.is_some_and(|w| (2_000..3_000).contains(&w)),
+        "{wait:?}"
+    );
 }
 
 #[test]
