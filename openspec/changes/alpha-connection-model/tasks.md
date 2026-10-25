@@ -76,7 +76,10 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 
 ## 4. Go/no-go
 
-- [ ] 4.1 Commit the spike scripts to `scripts/spike/` and add a CLI soak prototype on the core (`scripts/spike/soak`), plus a weekly non-blocking job with its `docs/ci-gates.md` row. Verify: the job runs once on a branch.
+- [x] 4.1 Commit the spike scripts to `scripts/spike/` and add a CLI soak prototype on the core (`scripts/spike/soak`), plus a weekly non-blocking job with its `docs/ci-gates.md` row. Verify: the job runs once on a branch.
+
+  As built: `crates/gs-soak` (soak, burst and the event signer on the core's public API), the Node probes in `scripts/spike/`, `just soak [hours]` and `just relays-check`, `.github/workflows/relays-weekly.yml` and the runbook `docs/contributing/relay-soak.md`. The workflow cannot run on a branch before it exists on the default branch (`workflow_dispatch` rule); the same `just relays-check` was run locally instead, and the first scheduled or dispatched run after merging is the remaining check.
+
 - [ ] 4.2 Owner-run gate: one night on 3 EU relays, a burst test behind one CGNAT IP, the tag-only filter, LTE / IPv6-only, and the `created_at` tolerance per relay software (spike unknown 9). Record the results in `spike.md`. Go needs at least 2 of 3 relays without loss and setup p95 < 3 s. On no-go, Nostr moves to beta and tasks 5–6 drop their Nostr parts. Verify: the decision is recorded in `design.md` §9.
 - [ ] 4.3 Owner task: contact the listed relay operators about acceptable use and logging, and record their answers in the data notes. Verify: the notes are present for every shipped relay.
 
