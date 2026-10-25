@@ -1,0 +1,545 @@
+{
+  "$meta": { "default": "machineTranslated", "reviewed": [] },
+  "meta": {
+    "appTitle": "GuardedSleep"
+  },
+  "layout": {
+    "settingsAria": "设置",
+    "backAria": "返回上一屏幕"
+  },
+  "core": {
+    "pairingKeyMismatch": "这些设备已不再配对。请重新配对以继续监护。",
+    "updateRequired": "其中一台设备需要更新 GuardedSleep 才能继续监护。",
+    "serverUnreachable": "此设备无法连接到连接服务器。请检查它的网络连接。",
+    "peerAbsent": "宝宝设备没有响应。请确认它已开机并显示 GuardedSleep。",
+    "mediaBlocked": "设备已互相找到，但声音无法传送。请让两台设备使用同一个 Wi-Fi。",
+    "wrongKeyAttempt": "有人用错误的密钥尝试连接。监护继续进行。"
+  },
+  "native": {
+    "appName": "GuardedSleep Alpha",
+    "notif": {
+      "appTitle": "GuardedSleep",
+      "silenceRuleName": "GuardedSleep",
+      "channelNoise": "声音提醒",
+      "channelNoiseDesc": "宝宝设备听到声音时发出的响亮提醒。",
+      "channelLink": "连接警报",
+      "channelLinkDesc": "与宝宝设备的连接中断时的警报。",
+      "channelStatus": "监护状态",
+      "channelStatusDesc": "显示监护正在运行。",
+      "channelNotice": "警告",
+      "channelNoticeDesc": "电量和安全警告。",
+      "channelInfo": "信息",
+      "channelInfoDesc": "安静的提示，例如连接恢复之后。",
+      "channelBaby": "监护中",
+      "channelBabyDesc": "提示此设备正在监护的静音通知。",
+      "babyMonitoring": "GuardedSleep 正在监护",
+      "babyResume": "点按以继续监护",
+      "statusConnected": "已连接到宝宝设备",
+      "statusConnecting": "正在连接宝宝设备…",
+      "statusReconnecting": "正在重新连接宝宝设备…",
+      "statusTrouble": "无法连接宝宝设备，仍在重试",
+      "statusAlarm": "与宝宝设备失去连接",
+      "statusPeerStopped": "宝宝设备已停止监护",
+      "statusFailed": "这些设备已不再配对",
+      "noiseTitle": "听到声音",
+      "noiseText": "宝宝设备听到了声音。",
+      "noiseTestTitle": "测试提醒",
+      "noiseTestText": "这是测试。宝宝设备保持安静。",
+      "actionStopSound": "停止声音",
+      "actionSnooze10": "暂停 10 分钟",
+      "actionChecking": "我在查看",
+      "linkLostTitle": "连接中断",
+      "linkLostText": "与宝宝设备失去连接。请立即去看看宝宝。",
+      "peerStoppedTitle": "宝宝设备已停止监护",
+      "peerStoppedText": "宝宝设备上的监护已停止。在重新开始之前，您将听不到任何声音。",
+      "restoredTitle": "已重新连接",
+      "restoredText": "有 {duration} 未被监护。",
+      "missedTitle": "断开期间",
+      "missedCount": "断开期间的声音：{count} 次（有 {duration} 未被监护）。",
+      "missedNone": "断开期间没有声音（有 {duration} 未被监护）。",
+      "missedUnknown": "不清楚断开期间发生了什么（有 {duration} 未被监护）。",
+      "batteryLowTitle": "宝宝设备电量低",
+      "batteryLowText": "宝宝设备电量 {percent}%，请接上电源。",
+      "batteryCriticalTitle": "宝宝设备电量即将耗尽",
+      "batteryCriticalText": "宝宝设备电量 {percent}%，请立即接上电源。",
+      "chargerTitle": "宝宝设备已不在充电",
+      "chargerText": "请给宝宝设备接上电源，以便撑过整晚。",
+      "securityTitle": "密钥错误",
+      "publicTitle": "GuardedSleep 警报",
+      "fgsMissingTitle": "后台未在监护",
+      "fgsMissingText": "打开 GuardedSleep 以重新开启后台监护。"
+    },
+    "ui": {
+      "common": {
+        "appName": "GuardedSleep",
+        "allow": "允许",
+        "continue": "继续",
+        "later": "稍后",
+        "ok": "确定",
+        "cancel": "取消",
+        "more": "更多",
+        "moreCount": "+{count}",
+        "settings": "设置",
+        "tryAgain": "重试",
+        "yes": "是",
+        "no": "否",
+        "add": "添加",
+        "remove": "移除",
+        "save": "保存",
+        "change": "更改",
+        "durationSec": "{seconds} 秒",
+        "durationMin": "{minutes} 分钟",
+        "durationHour": "{hours} 小时",
+        "durationHourMin": "{hours} 小时 {minutes} 分钟",
+        "secondsShort": "{seconds} 秒",
+        "state": {
+          "done": "已完成",
+          "todo": "待办",
+          "blocked": "受阻",
+          "checking": "检查中"
+        },
+        "babyUnitDefault": "宝宝设备",
+        "parentUnitDefault": "家长设备"
+      },
+      "role": {
+        "title": "这是哪台设备？",
+        "baby": {
+          "title": "宝宝设备",
+          "hint": "留在孩子身边，负责聆听。"
+        },
+        "parent": {
+          "title": "家长设备",
+          "hint": "留在您身边，负责提醒您。"
+        },
+        "orderHint": "请先设置宝宝设备。"
+      },
+      "setup": {
+        "title": "准备好此设备",
+        "mic": {
+          "title": "麦克风",
+          "why": "需要它来听到孩子的声音。",
+          "required": "请允许使用麦克风以继续。"
+        },
+        "background": {
+          "title": "保持在后台运行",
+          "why": "否则此设备可能为省电而停止监护。"
+        },
+        "silence": {
+          "title": "监护时开启安静模式",
+          "why": "宝宝设备上没有声音、铃声和灯光。闹钟仍会响。"
+        },
+        "safety": {
+          "body": "请让此设备保持充电，放在平稳的地方，并远离孩子够得到的范围。请勿使用电池鼓包或损坏的设备。"
+        },
+        "chargingTip": "提示：如果此设备有“插电时唤醒屏幕”，请将其关闭，让屏幕保持黑暗。",
+        "deviceCheck": {
+          "checking": "正在检查此设备…",
+          "ok": "此设备很适合用作宝宝设备。",
+          "limited": "此设备有时可能会断开连接，但仍可使用。",
+          "notRecommended": "此设备可能无法稳定监护。如有可能，请换一台设备。"
+        },
+        "notifications": {
+          "title": "提醒",
+          "why": "需要它，您才能在孩子发出声音时听到提醒。",
+          "required": "没有此权限，GuardedSleep 无法提醒您。"
+        },
+        "lockScreen": {
+          "title": "锁屏上的提醒",
+          "why": "这样即使屏幕锁定，提醒也会显示。"
+        },
+        "dndBypass": {
+          "title": "勿扰模式下的提醒",
+          "why": "这样开启勿扰模式时，提醒仍能送达。"
+        },
+        "limits": {
+          "body": "只有在此设备开机且有电时，GuardedSleep 才能提醒您。夜间请保持接通电源。如果两台设备都关机，没有人会收到提醒。"
+        },
+        "skipped": "暂时跳过"
+      },
+      "pair": {
+        "baby": {
+          "title": "连接家长设备",
+          "qrAlt": "配对码",
+          "instruction": "在另一台设备上打开 GuardedSleep，选择“家长设备”，然后扫描此码。",
+          "validFor": "此码有效时间：{duration}",
+          "expired": "此码已过期。",
+          "newCode": "显示新码",
+          "copy": "复制配对码",
+          "copied": "已复制",
+          "brighter": "调亮二维码",
+          "waiting": "正在等待家长设备…",
+          "privacy": "任何拥有此码的人都能收听。请只展示给您信任的人。",
+          "parentFound": "已找到家长设备。正在连接…",
+          "failed": "配对没有成功。请显示新码后重试。",
+          "showText": "以文字显示配对码",
+          "hideText": "隐藏文字"
+        },
+        "parent": {
+          "title": "扫描宝宝设备上的码",
+          "cameraWhy": "GuardedSleep 仅用相机读取配对码。",
+          "pasteLabel": "或粘贴配对码",
+          "pasteSubmit": "连接",
+          "connecting": "正在连接宝宝设备…"
+        },
+        "error": {
+          "cameraDenied": "相机未获允许。",
+          "allowCamera": "允许使用相机",
+          "pasteInstead": "改为粘贴配对码",
+          "notOurs": "这不是 GuardedSleep 的配对码。请扫描宝宝设备上的码。",
+          "expired": "此码已过期。请在宝宝设备上点按“显示新码”，然后重新扫描。",
+          "mismatch": "配对码不匹配。请扫描宝宝设备上当前显示的码。",
+          "alreadyPaired": "此宝宝设备已与另一台设备配对。",
+          "unreachable": "暂时找不到宝宝设备。请确认两台设备都已联网。",
+          "incomplete": "此码不完整。请从宝宝设备上复制完整的码。"
+        }
+      },
+      "home": {
+        "parent": {
+          "cardTitle": "连接到 {name}",
+          "cardTitleDefault": "连接到宝宝设备"
+        },
+        "baby": {
+          "cardTitle": "开始监护"
+        },
+        "lastUsed": "上次使用：{time}",
+        "newPairing": "设置新设备",
+        "empty": "尚未配对任何设备。"
+      },
+      "baby": {
+        "status": {
+          "connected": "已连接到家长设备",
+          "waiting": "正在等待家长设备…",
+          "reconnecting": "正在重新连接家长设备…",
+          "notResponding": "家长设备没有响应，仍在重试",
+          "parentStopped": "家长设备已停止监护"
+        },
+        "forDuration": "已持续 {duration}",
+        "monitoring": "监护中",
+        "parentListening": "家长正在收听",
+        "battery": "此设备：电量 {percent}%",
+        "batteryCharging": "此设备：充电中 · {percent}%",
+        "silence": {
+          "on": "安静模式已开启",
+          "off": "安静模式已关闭，此设备可能会响",
+          "everydayPhone": "安静模式已开启。在您停止监护之前，此设备上的来电和消息都不会发出声音。",
+          "restored": "此设备上次停留在安静模式。声音已恢复。",
+          "noAccess": "未获得安静模式权限。请在设置中开启，这样来电和消息才会保持安静。"
+        },
+        "lock": "锁定屏幕",
+        "autolockHint": "屏幕将在 {seconds} 秒后变黑",
+        "stop": "停止监护",
+        "micLevel": "此处声音强度",
+        "micSilent": "麦克风没有收到任何声音。请重新开始监护，或检查麦克风。"
+      },
+      "kiosk": {
+        "a11yLabel": "监护中。屏幕已锁定。",
+        "unlockHint": "按住并向上滑动以解锁",
+        "unlockZone": "在此滑动",
+        "unlockAction": "解锁"
+      },
+      "link": {
+        "connected": "已连接到 {name}",
+        "connecting": "正在连接 {name}…",
+        "reconnecting": "正在重新连接…",
+        "cantReach": "无法连接 {name}，仍在重试",
+        "lostFor": "已断开 {duration}",
+        "babyStopped": "{name} 已停止监护",
+        "idle": "未在监护",
+        "weak": "连接较弱，声音可能断续",
+        "restoredAfter": "断开 {duration} 后已重新连接。您又能听到孩子了。",
+        "tryNow": "立即重试",
+        "pairAgain": "重新配对",
+        "connectedDefault": "已连接到宝宝设备",
+        "connectingDefault": "正在连接宝宝设备…",
+        "cantReachDefault": "无法连接宝宝设备，仍在重试",
+        "babyStoppedDefault": "宝宝设备已停止监护",
+        "stalePairingHint": "如果您重新配对了宝宝设备，请扫描它的新码。"
+      },
+      "linkAlarm": {
+        "lost": {
+          "title": "与 {name} 失去连接",
+          "titleUrgent": "与 {name} 失去连接！",
+          "body": "在设备重新连接之前，您听不到孩子的声音。",
+          "titleDefault": "与宝宝设备失去连接",
+          "titleUrgentDefault": "与宝宝设备失去连接！"
+        },
+        "stopped": {
+          "title": "{name} 已停止监护",
+          "body": "有人在宝宝设备上停止了监护。您将收不到提醒。",
+          "titleDefault": "宝宝设备已停止监护"
+        },
+        "battery": {
+          "title": "宝宝设备电量即将耗尽",
+          "body": "请立即给宝宝设备接上电源，否则监护将会停止。"
+        },
+        "needsPairing": {
+          "title": "设备已不再配对"
+        },
+        "restored": {
+          "title": "已重新连接"
+        },
+        "ack": "我在查看",
+        "ackNote": "声音已关闭 {time}。如果仍未连接，我们会再次提醒您。",
+        "soundNote": "柔和的警报音会重复，直到您确认查看。",
+        "soundNoteUrgent": "警报会一直响，直到您确认查看。"
+      },
+      "parent": {
+        "allQuietSince": "自 {time} 起一直安静",
+        "soundSince": "听到声音 · 自 {time} 起",
+        "soundAt": "{time} 有声音 · 持续 {duration}",
+        "soundSnoozed": "{time} 有声音 · 提醒已暂停",
+        "lastHeard": "上次联系：{time}",
+        "noContactYet": "尚未联系",
+        "monitoringNow": "监护中",
+        "meterA11y": "声音强度：{level}",
+        "level": {
+          "quiet": "安静",
+          "some": "有些声音",
+          "loud": "很响"
+        },
+        "stop": "停止监护",
+        "securityTitle": "安全警告",
+        "securityBody": "无法验证此连接。如果您刚才没有重新配对设备，请立即重新配对。",
+        "staleSuffix": "· {time}",
+        "unitWarning": {
+          "pageHidden": "宝宝设备可能暂停，其页面已被隐藏",
+          "wakeLockOff": "宝宝设备可能进入睡眠，其屏幕没有保持常亮",
+          "resumedFromSleep": "宝宝设备刚从睡眠中唤醒，可能漏掉了声音",
+          "notCharging": "宝宝设备已不在充电",
+          "micPermissionLost": "宝宝设备失去了麦克风权限"
+        }
+      },
+      "battery": {
+        "baby": "宝宝设备 {percent}%",
+        "babyLow": "宝宝设备电量 {percent}%，请接上电源",
+        "parentLow": "此设备电量为 {percent}%，请接上电源以继续监护",
+        "parentLowGeneric": "此设备电量低，请接上电源以继续监护"
+      },
+      "listen": {
+        "idle": "按住收听",
+        "holding": "正在收听…",
+        "locked": "收听中 · 点按停止",
+        "lockHint": "向上滑动以持续收听",
+        "disabled": "连接后即可收听",
+        "a11yLocked": "收听中。双击以停止。"
+      },
+      "snooze": {
+        "button": "暂停",
+        "title": "暂停噪声提醒",
+        "help": "如果连接中断或电量不足，您仍会收到提醒。",
+        "minutes": "暂停 {minutes} 分钟",
+        "end": "结束暂停",
+        "active": "已暂停 · 还剩 {minutes} 分钟"
+      },
+      "probe": {
+        "button": "测试提醒",
+        "title": "测试您的提醒",
+        "body": "这会在此设备上播放测试音。宝宝设备保持安静。",
+        "output": "提醒播放位置：{output}",
+        "run": "开始测试",
+        "running": "正在测试…",
+        "question": "您听到并感觉到了吗？",
+        "localOnly": "只测试了此设备，宝宝设备未连接。"
+      },
+      "readiness": {
+        "title": "提醒能送达您吗？",
+        "notificationsOff": "GuardedSleep 的提醒已关闭",
+        "alarmVolumeZero": "闹钟音量已关闭，您将听不到提醒",
+        "lockScreen": "提醒无法显示在锁屏上",
+        "dnd": "勿扰模式可能会让提醒静音",
+        "battery": "此设备可能会在后台停止 GuardedSleep",
+        "headphones": "提醒将在您的耳机中播放",
+        "neverTested": "测试您的提醒",
+        "ok": "一切就绪，提醒可以送达您",
+        "fix": {
+          "notifications": "开启提醒",
+          "dnd": "允许在勿扰模式下提醒",
+          "battery": "允许后台使用"
+        }
+      },
+      "silence": {
+        "silent": "宝宝设备处于安静模式",
+        "alarmsStillRing": "上面的闹钟仍然会响。",
+        "screenMayLight": "宝宝设备处于安静模式，但屏幕可能会亮起",
+        "mayVibrate": "宝宝设备可能会振动",
+        "mayRing": "宝宝设备可能会响铃",
+        "unknown": "安静模式：未知，无法检查宝宝设备",
+        "manual": "请在宝宝设备上开启勿扰模式并调低亮度。",
+        "noAccess": "要从这里开启安静模式，请在宝宝设备上打开设置，并开启“监护时开启安静模式”。",
+        "apply": "开启安静模式",
+        "applyFull": "完全开启安静模式",
+        "pending": "正在开启安静模式…",
+        "failed": "无法在宝宝设备上开启安静模式。",
+        "webUnknown": "未知，请自行在宝宝设备上开启安静模式",
+        "webHint": "如果宝宝设备是笔记本电脑，请保持接通电源、合盖打开且屏幕亮着。"
+      },
+      "help": {
+        "reconnect": {
+          "open": "我能做什么？",
+          "title": "重新连接",
+          "step1": "宝宝设备是否已开机并显示 GuardedSleep？",
+          "step2": "两台设备是否使用同一个 Wi-Fi，或都在用移动数据？",
+          "step3": "仍然不行？请在宝宝设备上关闭并重新打开 GuardedSleep。"
+        }
+      },
+      "stop": {
+        "title": "停止监护？",
+        "parentBody": "您将收不到来自 {name} 的提醒。",
+        "babyBody": "家长设备将不再收到提醒。",
+        "confirm": "停止",
+        "cancel": "继续监护",
+        "parentBodyDefault": "您将收不到来自宝宝设备的提醒。"
+      },
+      "forget": {
+        "title": "忘记 {name}？",
+        "body": "监护将停止，您需要扫描新码才能再次连接。",
+        "confirm": "忘记",
+        "titleBabyDefault": "忘记宝宝设备？",
+        "titleParentDefault": "忘记家长设备？"
+      },
+      "missed": {
+        "some": "断开期间：{start} 至 {end} 之间有 {count, plural, other {# 次声音}}。最响：{level}。",
+        "none": "断开期间没有声音。",
+        "unknown": "不清楚 {start} 至 {end} 之间发生了什么。"
+      },
+      "coach": {
+        "bar": "绿色表示您正在监护。如果变红或消失，则表示没有在监护。",
+        "listen": "按住收听。向上滑动可持续收听。",
+        "test": "运行一次测试提醒，了解提醒是什么感觉。",
+        "runTest": "立即运行测试提醒"
+      },
+      "alert": {
+        "title": "听到声音",
+        "since": "自 {time} 起",
+        "ended": "声音已停止。",
+        "testBadge": "测试",
+        "stopSound": "停止声音",
+        "soundStopped": "声音已停止",
+        "openApp": "打开 GuardedSleep"
+      },
+      "settings": {
+        "group": {
+          "soundDetection": "声音检测",
+          "silence": "安静模式",
+          "alerts": "提醒",
+          "screen": "屏幕",
+          "paired": "已配对设备",
+          "thisPhone": "此设备",
+          "language": "语言",
+          "about": "关于与限制",
+          "advanced": "高级"
+        },
+        "sensitivity": "灵敏度",
+        "moreSensitive": "更灵敏",
+        "lessSensitive": "更不灵敏",
+        "holdLabel": "噪声至少持续",
+        "silenceAccessOk": "安静模式权限已开启。",
+        "outputLabel": "提醒声音播放位置",
+        "output": {
+          "default": "已连接耳机时用耳机，否则用扬声器",
+          "speaker": "仅扬声器"
+        },
+        "gain": "加强提醒音量：{percent}%",
+        "lastTest": "上次测试：{time}",
+        "neverTested": "尚未测试",
+        "theme": {
+          "dark": "深色（默认）",
+          "light": "浅色",
+          "system": "跟随系统"
+        },
+        "forgetParent": "忘记此家长设备",
+        "forgetBaby": "忘记此宝宝设备",
+        "checkPhone": "检查此设备的设置",
+        "lang": {
+          "system": "跟随系统",
+          "en": "English",
+          "de": "Deutsch",
+          "fr": "Français",
+          "es": "Español"
+        },
+        "advanced": {
+          "toggle": "显示高级设置",
+          "warning": {
+            "title": "要更改高级设置吗？",
+            "body": "这里的值设错可能导致设备无法连接。请仅在您清楚自己在做什么时更改。"
+          },
+          "confirm": "显示高级设置",
+          "cancel": "暂不"
+        },
+        "urlsLabel": "连接服务器地址（按顺序尝试）",
+        "url": {
+          "new": "新地址 (wss://…)",
+          "invalid": "地址必须以 wss:// 或 ws:// 开头。"
+        },
+        "turn": {
+          "label": "中继服务器 (TURN)，可选",
+          "invalid": "中继地址必须以 turn: 或 turns: 开头。"
+        },
+        "heartbeat": "每 {seconds} 秒检查一次连接"
+      },
+      "fgsMissing": {
+        "bar": "后台未在监护，请打开应用",
+        "body": "Android 停止了 GuardedSleep 的后台服务。屏幕关闭时，提醒可能无法送达您。",
+        "fix": "重新开启后台监护"
+      }
+    }
+  },
+  "webShell": {
+    "route": {
+      "role": "这是哪台设备？",
+      "babyPair": "配对宝宝设备",
+      "baby": "宝宝设备",
+      "parentPair": "配对家长设备",
+      "parent": "家长设备",
+      "settings": "设置"
+    },
+    "skipToContent": "跳到内容",
+    "dismiss": "关闭"
+  },
+  "webScreens": {
+    "role": {
+      "title": "将此设备用作",
+      "subtitle": "手机、平板或笔记本电脑均可。请先设置宝宝设备。",
+      "navLabel": "选择角色",
+      "privacyNote": "声音直接在您的两台设备之间传输，绝不会被录制。"
+    },
+    "pair": {
+      "copyHint": "请在 5 分钟内将它粘贴到家长设备上。请勿通过聊天发送。",
+      "or": "或",
+      "cameraUnavailable": "此处没有可用的相机。请改为粘贴配对码。",
+      "cameraView": "相机画面"
+    },
+    "baby": {
+      "failMicDenied": "麦克风已被阻止，因此此设备听不到孩子的声音。请在浏览器的网站设置中允许。",
+      "failMicUnavailable": "未找到麦克风，因此此设备听不到孩子的声音。",
+      "quietUnknown": "安静模式：未知",
+      "keepAwake": "请让此设备保持唤醒：接通电源、盖子打开、此标签页可见。",
+      "keepSilent": "请在此设备上开启勿扰模式并调低亮度。"
+    },
+    "parent": {
+      "quietUnknownWeb": "安静模式未知 · 请在宝宝设备上开启",
+      "keepOpen": "请保持此页面打开且屏幕常亮。否则浏览器无法提醒您。",
+      "soundGate": "点按以开启提醒声音"
+    },
+    "settings": {
+      "urlHint": "宝宝设备会把这些地址写入它的配对码，家长设备也会使用它们。",
+      "sensitivityBabyOnly": "灵敏度在宝宝设备上设置。"
+    },
+    "guard": {
+      "wakeLockHeld": "屏幕保持常亮",
+      "wakeLockLost": "屏幕不再保持常亮，此设备可能进入睡眠并停止监护。",
+      "wakeLockUnsupported": "此浏览器无法保持屏幕常亮。请在此设备的设置中关闭屏幕休眠。",
+      "wakeLockRetry": "保持屏幕常亮",
+      "hiddenTitle": "GuardedSleep 可能停止监护",
+      "hiddenBody": "此页面在后台运行。请重新打开它以继续监护。",
+      "awayBackground": "此页面在后台运行了 {duration}。提醒可能已被漏掉。",
+      "awaySleep": "此设备睡眠了 {duration}。提醒可能已被漏掉。"
+    },
+    "night": {
+      "open": "夜间屏幕",
+      "label": "夜间屏幕。仍在监护。点按以显示状态。",
+      "monitoring": "仍在监护",
+      "leave": "再次点按以离开夜间屏幕"
+    }
+  }
+}
