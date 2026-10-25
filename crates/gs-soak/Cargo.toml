@@ -21,12 +21,14 @@ getrandom = "0.4.3"
 # socket), which keeps tokio out of this tool.
 # Docs: https://docs.rs/rustls/0.23/rustls/#cryptography-providers
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+# The system's trust store instead of webpki-roots: that crate is CDLA-Permissive-2.0, which the
+# licence allow-list of deny.toml does not contain, and a system store is what a real client uses.
+# Docs: https://docs.rs/rustls-native-certs/0.8/rustls_native_certs/
+rustls-native-certs = "0.8.5"
 # Only to name the signing key type the core's `scalar_key` returns (same features as the core).
 k256 = { version = "0.14.0", default-features = false, features = ["schnorr", "arithmetic"] }
 serde_json = { version = "1.0.154", features = ["preserve_order"] }
-tungstenite = { version = "0.30.0", features = ["rustls-tls-webpki-roots"] }
-# The version tungstenite requires (^0.26): one copy in the lockfile.
-webpki-roots = "0.26"
+tungstenite = { version = "0.30.0", features = ["rustls-tls-native-roots"] }
 
 [lints]
 workspace = true

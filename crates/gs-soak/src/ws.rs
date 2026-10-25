@@ -47,9 +47,12 @@ fn tls_config() -> Result<Arc<ClientConfig>, String> {
     static CONFIG: OnceLock<Result<Arc<ClientConfig>, String>> = OnceLock::new();
     CONFIG
         .get_or_init(|| {
-            let roots = RootCertStore {
-                roots: webpki_roots::TLS_SERVER_ROOTS.to_vec(),
-            };
+            let mut roots = RootCertStore::empty();
+            let (added, _) =
+                roots.add_parsable_certificates(rustls_native_certs::load_native_certs().certs);
+            if added == 0 {
+                return Err("tls: no trusted root certificates on this system".to_owned());
+            }
             let provider = Arc::new(rustls::crypto::ring::default_provider());
             let config = ClientConfig::builder_with_provider(provider)
                 .with_safe_default_protocol_versions()
