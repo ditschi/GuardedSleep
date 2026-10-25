@@ -762,6 +762,13 @@
     [
       { "type": "close_mailbox", "id": 0 },
       {
+        "type": "emit",
+        "event": {
+          "type": "parent_pinned",
+          "secret": "53e40754b342928159e80a0ef09e684b38f5e7be0e2247ad9a71ebb4075cab22"
+        }
+      },
+      {
         "type": "send_data",
         "attempt": 2,
         "text": "{\"type\":\"parent_pin\",\"v\":3,\"secret\":\"53e40754b342928159e80a0ef09e684b38f5e7be0e2247ad9a71ebb4075cab22\",\"name\":\"\"}"
@@ -788,15 +795,7 @@
     ],
     [{ "type": "emit", "event": { "type": "peer_status", "status": { "noise_threshold": 0.12 } } }],
     [{ "type": "emit", "event": { "type": "peer_heartbeat", "seq": 1, "rms": 0.0 } }],
-    [
-      {
-        "type": "emit",
-        "event": {
-          "type": "parent_pinned",
-          "secret": "53e40754b342928159e80a0ef09e684b38f5e7be0e2247ad9a71ebb4075cab22"
-        }
-      }
-    ],
+    [],
     [],
     [],
     [],

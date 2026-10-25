@@ -8,8 +8,8 @@ use crate::envelope::parent_tag;
 use crate::invite::{InviteMailbox, build_invite, parse_invite};
 use crate::link::{Link, LinkConfig, LinkInput};
 use crate::pairing::{
-    AdmissionKey, admission_mac, decode_psk, derive_admission_key, derive_room_id, encode_psk,
-    pair_proof_mac_v2_legacy, pair_proof_mac_v3, parent_proof_mac, verify_admission,
+    AdmissionKey, admission_mac, baby_proof_mac, decode_psk, derive_admission_key, derive_room_id,
+    encode_psk, pair_proof_mac_v2_legacy, pair_proof_mac_v3, parent_proof_mac, verify_admission,
 };
 use crate::protocol::{
     Role, parse_challenge, parse_client_message, parse_data_message, parse_data_message_v2_legacy,
@@ -98,6 +98,10 @@ fn evaluate_value(case_json: &str) -> Result<Value, String> {
         "parent_proof" => {
             let secret = hex_bytes(s("secret")?).ok_or("bad secret")?;
             to_value(parent_proof_mac(&secret, s("fp_parent")?, s("fp_baby")?))
+        }
+        "baby_proof" => {
+            let secret = hex_bytes(s("secret")?).ok_or("bad secret")?;
+            to_value(baby_proof_mac(&secret, s("fp_baby")?, s("fp_parent")?))
         }
         "parent_tag" => {
             let secret: [u8; 32] = hex_bytes(s("secret")?)

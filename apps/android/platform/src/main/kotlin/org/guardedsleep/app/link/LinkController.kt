@@ -658,17 +658,7 @@ class LinkController(
             val pending = r.pending ?: return
             when (status.state) {
                 LinkState.CONNECTED -> {
-                    val received = pending.receivedMailboxes
-                    pairingStore.save(
-                        StoredPairing(
-                            pending.psk,
-                            received?.let(::signalingUrlsOf)?.ifEmpty { null } ?: pending.urls,
-                            true,
-                            pending.turn,
-                            pending.pinnedSecret?.let { PairingPayload.b64(it) },
-                            received ?: emptyList(),
-                        )
-                    )
+                    savePending(pending)
                     pending.pinnedSecret?.fill(0)
                     pending.pinnedSecret = null
                     r.pending = null
@@ -700,8 +690,31 @@ class LinkController(
          */
         private fun persistParentSecret(r: Run, secret: ByteArray) {
             val pending = r.pending
-            if (pending != null) pending.pinnedSecret = secret.copyOf()
-            else pairingStore.setParentSecret(PairingPayload.b64(secret))
+            if (pending == null) {
+                pairingStore.setParentSecret(PairingPayload.b64(secret))
+                return
+            }
+            pending.pinnedSecret = secret.copyOf()
+            // The parent draws the secret just before the action that sends it to the baby, and
+            // the core runner executes the actions in order on this thread: the record is on disk
+            // before the baby can have pinned a secret this phone would lose in a restart. The
+            // attempt is verified at this point, so the pairing is real.
+            savePending(pending)
+        }
+
+        /** Writes the pending pairing as the stored record (the first verification happened). */
+        private fun savePending(pending: PendingPairing) {
+            val received = pending.receivedMailboxes
+            pairingStore.save(
+                StoredPairing(
+                    pending.psk,
+                    received?.let(::signalingUrlsOf)?.ifEmpty { null } ?: pending.urls,
+                    true,
+                    pending.turn,
+                    pending.pinnedSecret?.let { PairingPayload.b64(it) },
+                    received ?: emptyList(),
+                )
+            )
         }
 
         /** The baby's current mailbox set replaces the stored one. */

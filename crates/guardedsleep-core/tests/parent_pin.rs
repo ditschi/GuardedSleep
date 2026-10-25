@@ -472,3 +472,146 @@ fn only_the_parent_takes_a_mailbox_update_and_only_the_baby_a_secret() {
         ) >= 1
     );
 }
+
+// ---- the baby proves the secret too ----------------------------------------------------------
+
+/// A pinned pairing where both devices restart and the baby's proof is faulty.
+fn restart_with_faulty_baby_proof(fault: ProofFault) -> (World, usize, usize) {
+    let mut w = named_pair("Pixel 8");
+    w.connect_pair();
+    w.nodes[BABY].baby_proof = fault;
+    let (bm, pm) = (w.mark(BABY), w.mark(PARENT));
+    w.restart(BABY, 11);
+    w.restart(PARENT, 12);
+    (w, bm, pm)
+}
+
+fn is_connected(e: &LinkEvent) -> bool {
+    matches!(e, LinkEvent::Status { status } if status.state == LinkState::Connected)
+}
+
+#[test]
+fn a_pinned_parent_trusts_the_attempt_only_after_the_baby_proof() {
+    let mut w = named_pair("Pixel 8");
+    w.connect_pair();
+    let pm = w.mark(PARENT);
+    w.restart(BABY, 11);
+    w.restart(PARENT, 12);
+    w.advance(60_000);
+    assert_eq!(w.state(PARENT), LinkState::Connected);
+    assert_eq!(w.state(BABY), LinkState::Connected);
+    assert_eq!(w.count_events(PARENT, pm, is_connected), 1);
+}
+
+#[test]
+fn a_tampered_baby_proof_is_no_contact_for_the_pinned_parent() {
+    let (mut w, bm, pm) = restart_with_faulty_baby_proof(ProofFault::Corrupt);
+    w.advance(90_000);
+    assert!(
+        w.count_events(
+            PARENT,
+            pm,
+            |e| matches!(e, LinkEvent::Failed { reason } if reason == "baby_proof_mismatch")
+        ) >= 1
+    );
+    assert_eq!(w.count_events(PARENT, pm, is_connected), 0);
+    assert_eq!(
+        w.count_events(PARENT, pm, |e| matches!(e, LinkEvent::LinkRestored { .. })),
+        0
+    );
+    assert_eq!(
+        w.count_events(PARENT, pm, |e| matches!(
+            e,
+            LinkEvent::SecurityWarning { key } if key == "wrong_key_attempt"
+        )),
+        1,
+        "one warning, rate limited"
+    );
+    // The outage kept its start: the alarm level is reached despite the cycling attempts.
+    assert!(w.status(PARENT).level >= 2);
+    assert_eq!(
+        w.count_events(PARENT, pm, |e| matches!(e, LinkEvent::LinkLost { .. })),
+        1
+    );
+    // The baby had trusted the parent (its proof was valid); only the parent refused.
+    assert!(w.count_events(BABY, bm, is_connected) >= 1);
+}
+
+#[test]
+fn a_missing_baby_proof_is_refused_after_ten_seconds() {
+    let (mut w, _, pm) = restart_with_faulty_baby_proof(ProofFault::Withhold);
+    w.advance(40_000);
+    assert!(
+        w.count_events(
+            PARENT,
+            pm,
+            |e| matches!(e, LinkEvent::Failed { reason } if reason == "baby_proof_missing")
+        ) >= 1
+    );
+    assert_eq!(w.count_events(PARENT, pm, is_connected), 0);
+}
+
+#[test]
+fn the_first_pairing_needs_no_baby_proof() {
+    // Nothing is pinned yet: both sides connect as before.
+    let mut w = named_pair("Pixel 8");
+    w.nodes[BABY].baby_proof = ProofFault::Withhold;
+    w.connect_pair();
+    assert_eq!(w.state(PARENT), LinkState::Connected);
+}
+
+// ---- persist before send ---------------------------------------------------------------------
+
+#[test]
+fn the_secret_is_emitted_before_the_message_that_carries_it() {
+    let mut w = named_pair("Pixel 8");
+    w.connect_pair();
+    let at = |m: &str| w.order.iter().position(|x| x == m);
+    let (pinned, sent) = (at("pinned:1").unwrap(), at("pin:1").unwrap());
+    assert!(pinned < sent, "{:?}", w.order);
+    // And it is emitted once: the acknowledgement adds nothing.
+    assert_eq!(w.order.iter().filter(|x| *x == "pinned:1").count(), 1);
+}
+
+#[test]
+fn a_lost_acknowledgement_and_a_parent_restart_reconnect_without_forgetting() {
+    let mut w = named_pair("Pixel 8");
+    w.nodes[BABY].drop_pin_ack = true;
+    w.connect_pair();
+    // The baby pinned; the parent never heard it. The parent restarts with what it persisted.
+    assert_eq!(pinned(&w, BABY).len(), 1);
+    assert_eq!(
+        w.nodes[PARENT].cfg.pinned_parent.as_ref(),
+        Some(&pinned(&w, BABY)[0])
+    );
+    w.nodes[BABY].drop_pin_ack = false;
+    let (bm, pm) = (w.mark(BABY), w.mark(PARENT));
+    w.restart(PARENT, 12);
+    w.advance(60_000);
+    assert_eq!(w.state(PARENT), LinkState::Connected);
+    assert_eq!(w.state(BABY), LinkState::Connected);
+    assert_eq!(w.count_events(BABY, bm, is_unknown_parent_warning), 0);
+    assert_eq!(
+        w.count_events(PARENT, pm, |e| matches!(
+            e,
+            LinkEvent::SecurityWarning { .. }
+        )),
+        0
+    );
+    assert_eq!(names(&w, BABY, bm), vec!["Pixel 8".to_owned()]);
+}
+
+#[test]
+fn a_lost_acknowledgement_is_repeated_within_the_run() {
+    let mut w = named_pair("Pixel 8");
+    w.nodes[BABY].drop_pin_ack = true;
+    w.connect_pair();
+    // The link drops and recovers in the same run: the parent still repeats the secret.
+    w.set_net(BABY, false);
+    w.advance(40_000);
+    w.set_net(BABY, true);
+    w.advance(40_000);
+    assert_eq!(w.state(PARENT), LinkState::Connected);
+    assert_eq!(w.state(BABY), LinkState::Connected);
+    assert_eq!(pinned(&w, PARENT).len(), 1, "one secret for the whole run");
+}

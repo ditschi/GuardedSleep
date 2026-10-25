@@ -249,7 +249,7 @@
     { "n": 92, "now": 48500, "input": { "type": "tick" } },
     {
       "n": 93,
-      "now": 48515,
+      "now": 48560,
       "input": {
         "type": "attempt_data_message",
         "attempt": 2,
@@ -282,7 +282,7 @@
     { "n": 117, "now": 58750, "input": { "type": "tick" } },
     {
       "n": 118,
-      "now": 58800,
+      "now": 58787,
       "input": {
         "type": "attempt_data_message",
         "attempt": 2,
@@ -315,7 +315,7 @@
     { "n": 142, "now": 69000, "input": { "type": "tick" } },
     {
       "n": 143,
-      "now": 69042,
+      "now": 69041,
       "input": {
         "type": "attempt_data_message",
         "attempt": 2,
@@ -348,7 +348,7 @@
     { "n": 167, "now": 79250, "input": { "type": "tick" } },
     {
       "n": 168,
-      "now": 79277,
+      "now": 79302,
       "input": {
         "type": "attempt_data_message",
         "attempt": 2,
@@ -382,7 +382,7 @@
     { "n": 193, "now": 89500, "input": { "type": "tick" } },
     {
       "n": 194,
-      "now": 89522,
+      "now": 89540,
       "input": {
         "type": "attempt_data_message",
         "attempt": 2,
@@ -536,6 +536,11 @@
       }
     ],
     [
+      {
+        "type": "send_data",
+        "attempt": 2,
+        "text": "{\"type\":\"baby_proof\",\"v\":3,\"mac\":\"2235a681adacc4eaed4baf4f2ef3db62715263fd889a0d21ddfefe90b82f31a0\"}"
+      },
       { "type": "emit", "event": { "type": "parent_connected", "name": "" } },
       { "type": "close_mailbox", "id": 0 },
       {

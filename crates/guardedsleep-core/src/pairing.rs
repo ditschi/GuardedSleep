@@ -31,6 +31,7 @@ const PROOF_PREFIX: &str = "gs-pair-proof/3|";
 const ADMISSION_INFO: &[u8] = b"guardedsleep relay admission v1";
 const ADMISSION_PREFIX: &str = "gs-relay-admit/1|";
 const PARENT_PROOF_PREFIX: &[u8] = b"gs-parent-proof/1|";
+const BABY_PROOF_PREFIX: &[u8] = b"gs-baby-proof/1|";
 
 /// Length of the parent secret (`alpha-connection-model` design section 4).
 pub const PARENT_SECRET_LEN: usize = 32;
@@ -302,15 +303,27 @@ fn hex_digit(c: u8) -> Option<u8> {
 /// the baby's). `None` for a secret of the wrong length or a fingerprint that is not 64 hex
 /// characters (normalized as in [`extract_sha256_fingerprint`]).
 pub fn parent_proof_mac(secret: &[u8], fp_parent: &str, fp_baby: &str) -> Option<String> {
+    proof_mac(PARENT_PROOF_PREFIX, secret, fp_parent, fp_baby)
+}
+
+/// The baby's answer to a pinned parent: `HMAC-SHA256(parent_secret, "gs-baby-proof/1|" ||
+/// fp_baby || fp_parent)` over the same raw digests, as lowercase hex. Without it a man in the
+/// middle that relays between two DTLS sessions could keep the parent's attempt looking alive
+/// while the baby refuses it; the parent trusts a pinned attempt only after this proof.
+pub fn baby_proof_mac(secret: &[u8], fp_baby: &str, fp_parent: &str) -> Option<String> {
+    proof_mac(BABY_PROOF_PREFIX, secret, fp_baby, fp_parent)
+}
+
+fn proof_mac(prefix: &[u8], secret: &[u8], first: &str, second: &str) -> Option<String> {
     if secret.len() != PARENT_SECRET_LEN {
         return None;
     }
-    let parent = fingerprint_bytes(fp_parent)?;
-    let baby = fingerprint_bytes(fp_baby)?;
+    let first = fingerprint_bytes(first)?;
+    let second = fingerprint_bytes(second)?;
     let mut mac = Hmac::<Sha256>::new_from_slice(secret).ok()?;
-    mac.update(PARENT_PROOF_PREFIX);
-    mac.update(&parent);
-    mac.update(&baby);
+    mac.update(prefix);
+    mac.update(&first);
+    mac.update(&second);
     Some(hex(&mac.finalize().into_bytes()))
 }
 

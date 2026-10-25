@@ -535,6 +535,11 @@ pub enum DataMessage {
         mac: String,
         name: String,
     },
+    /// Baby to a pinned parent, right after the parent proof checked out: the baby's own proof of
+    /// the secret, bound to both DTLS fingerprints (`pairing::baby_proof_mac`).
+    BabyProof {
+        mac: String,
+    },
     /// Baby to parent after verification: the mailbox set the parent stores for later recoveries.
     Mailboxes {
         mailboxes: Vec<InviteMailbox>,
@@ -625,6 +630,15 @@ fn parse_data_versioned(raw: &str, version: u32) -> Option<DataMessage> {
             name: device_name_field(&o),
         }),
         "pin_ack" if v3 => Some(DataMessage::PinAck),
+        "baby_proof" if v3 => {
+            let mac = o.get("mac")?.as_str()?;
+            if mac.len() != 64 || !mac.bytes().all(|b| b.is_ascii_hexdigit()) {
+                return None;
+            }
+            Some(DataMessage::BabyProof {
+                mac: mac.to_ascii_lowercase(),
+            })
+        }
         "parent_proof" if v3 => {
             let mac = o.get("mac")?.as_str()?;
             if mac.len() != 64 || !mac.bytes().all(|b| b.is_ascii_hexdigit()) {
@@ -727,6 +741,9 @@ pub fn encode_data_message(m: &DataMessage) -> String {
         })
         .to_string(),
         DataMessage::PinAck => json!({ "type": "pin_ack", "v": v }).to_string(),
+        DataMessage::BabyProof { mac } => {
+            json!({ "type": "baby_proof", "v": v, "mac": mac }).to_string()
+        }
         DataMessage::ParentProof { mac, name } => json!({
             "type": "parent_proof", "v": v, "mac": mac, "name": clean_device_name(name)
         })
@@ -975,6 +992,9 @@ mod tests {
                 name: "Pixel 8".into(),
             },
             DataMessage::PinAck,
+            DataMessage::BabyProof {
+                mac: "5a".repeat(32),
+            },
             DataMessage::ParentProof {
                 mac: "0f".repeat(32),
                 name: String::new(),

@@ -1016,6 +1016,13 @@
           "id": 0
         },
         {
+          "type": "emit",
+          "event": {
+            "type": "parent_pinned",
+            "secret": "b82dfde680c1964a263e95de9d92b637c82fb56107fe74a0d3679f844d9b0a20"
+          }
+        },
+        {
           "type": "send_data",
           "attempt": 1,
           "text": "{\"type\":\"parent_pin\",\"v\":3,\"secret\":\"b82dfde680c1964a263e95de9d92b637c82fb56107fe74a0d3679f844d9b0a20\",\"name\":\"\"}"
@@ -1341,6 +1348,13 @@
           "id": 0
         },
         {
+          "type": "emit",
+          "event": {
+            "type": "parent_pinned",
+            "secret": "b82dfde680c1964a263e95de9d92b637c82fb56107fe74a0d3679f844d9b0a20"
+          }
+        },
+        {
           "type": "send_data",
           "attempt": 1,
           "text": "{\"type\":\"parent_pin\",\"v\":3,\"secret\":\"b82dfde680c1964a263e95de9d92b637c82fb56107fe74a0d3679f844d9b0a20\",\"name\":\"\"}"
@@ -1615,6 +1629,13 @@
         {
           "type": "close_mailbox",
           "id": 0
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "parent_pinned",
+            "secret": "b82dfde680c1964a263e95de9d92b637c82fb56107fe74a0d3679f844d9b0a20"
+          }
         },
         {
           "type": "send_data",
@@ -2764,6 +2785,13 @@
           "id": 0
         },
         {
+          "type": "emit",
+          "event": {
+            "type": "parent_pinned",
+            "secret": "b82dfde680c1964a263e95de9d92b637c82fb56107fe74a0d3679f844d9b0a20"
+          }
+        },
+        {
           "type": "send_data",
           "attempt": 1,
           "text": "{\"type\":\"parent_pin\",\"v\":3,\"secret\":\"b82dfde680c1964a263e95de9d92b637c82fb56107fe74a0d3679f844d9b0a20\",\"name\":\"\"}"
@@ -3211,6 +3239,13 @@
         {
           "type": "close_mailbox",
           "id": 0
+        },
+        {
+          "type": "emit",
+          "event": {
+            "type": "parent_pinned",
+            "secret": "b82dfde680c1964a263e95de9d92b637c82fb56107fe74a0d3679f844d9b0a20"
+          }
         },
         {
           "type": "send_data",
@@ -6319,6 +6354,45 @@
     "name": "data v3: mailboxes unknown kind",
     "kind": "parse_data_v3",
     "raw": "{\"type\": \"mailboxes\", \"v\": 3, \"mailboxes\": [{\"kind\": \"mqtt\", \"url\": \"wss://x.example\"}]}",
+    "expect": null
+  },
+  {
+    "name": "baby proof: direction-bound over both fingerprints",
+    "kind": "baby_proof",
+    "secret": "1111111111111111111111111111111111111111111111111111111111111111",
+    "fp_baby": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+    "fp_parent": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+    "expect": "5caf3c814a7dd488c63da5b9cb96f8e094332261b55485b5aca76910171dc564"
+  },
+  {
+    "name": "baby proof: swapped fingerprints give another MAC",
+    "kind": "baby_proof",
+    "secret": "1111111111111111111111111111111111111111111111111111111111111111",
+    "fp_baby": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+    "fp_parent": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+    "expect": "0a20bdc1090a4df7ee5fc83c6053916099646f3c37de190ff3d43ee8e6dac7b5"
+  },
+  {
+    "name": "baby proof: a secret of the wrong length",
+    "kind": "baby_proof",
+    "secret": "11111111111111111111111111111111111111111111111111111111111111",
+    "fp_baby": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+    "fp_parent": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+    "expect": null
+  },
+  {
+    "name": "data v3: baby_proof",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\": \"baby_proof\", \"v\": 3, \"mac\": \"ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB\"}",
+    "expect": {
+      "type": "baby_proof",
+      "mac": "abababababababababababababababababababababababababababababababab"
+    }
+  },
+  {
+    "name": "data v3: baby_proof mac too short",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\": \"baby_proof\", \"v\": 3, \"mac\": \"ababababababababababababababababababababababababababababababab\"}",
     "expect": null
   }
 ]

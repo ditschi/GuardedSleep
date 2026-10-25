@@ -50,7 +50,8 @@ use crate::invite::{InviteMailbox, validate_mailboxes};
 use crate::mailbox::{MailboxId, MailboxKind, MailboxSet, MailboxState, RELAY_MAILBOX};
 use crate::noise::{GateChange, NoiseGate};
 use crate::pairing::{
-    PARENT_SECRET_LEN, ParentSecret, decode_psk, derive_room_id, macs_equal, parent_proof_mac,
+    PARENT_SECRET_LEN, ParentSecret, baby_proof_mac, decode_psk, derive_room_id, macs_equal,
+    parent_proof_mac,
 };
 use crate::protocol::{
     DataMessage, DeviceStatus, IceCandidate, Member, Role, ServerMessage, SignalPayload,
@@ -671,11 +672,11 @@ pub struct Link {
     /// The pinned parent secret (baby: the pinned parent; parent: the acknowledged secret).
     pin: Option<SecretBytes>,
     /// Parent: a secret drawn at the first verification that the baby has not acknowledged yet.
-    unacked_pin: Option<SecretBytes>,
+    pin_unacked: bool,
     /// Baby with a pinned parent: the attempt verified at the DTLS level but the parent proof is
     /// still due (deadline). While set, the microphone path, status, alerts and the heartbeat level
     /// stay closed to that attempt.
-    parent_proof_due: Option<u64>,
+    proof_due: Option<u64>,
     /// Baby: when the last `unknown_parent_attempt` warning went out (they are rate-limited).
     last_parent_warn: Option<u64>,
     /// The calm hints currently raised (`clock_skew`, `recovery_path_unavailable`).
@@ -807,8 +808,8 @@ impl Link {
         sess.set_parent_pin(pin.as_ref().map(|s| s.0.as_slice()));
         Ok(Self {
             pin,
-            unacked_pin: None,
-            parent_proof_due: None,
+            pin_unacked: false,
+            proof_due: None,
             last_parent_warn: None,
             hints: Vec::new(),
             probe_next_at: 0,
@@ -1070,7 +1071,7 @@ impl Link {
 
     /// `l` is verified at the DTLS level and not waiting for a parent proof.
     fn trusted(&self, l: &Live) -> bool {
-        l.attempt.is_verified() && self.parent_proof_due.is_none()
+        l.attempt.is_verified() && self.proof_due.is_none()
     }
 
     /// A reachability check is running (mailboxes are held closed otherwise).
@@ -1143,7 +1144,7 @@ impl Link {
         fresh.mb.relay.changed_at = now;
         fresh.next_handle = self.next_handle;
         fresh.last_status = self.last_status.take();
-        fresh.unacked_pin = self.unacked_pin.take();
+        fresh.pin_unacked = self.pin_unacked;
         fresh.last_parent_warn = self.last_parent_warn;
         fresh.sync_session_pin();
         *self = fresh;
@@ -1681,7 +1682,7 @@ impl Link {
     }
 
     fn close_live(&mut self, out: &mut Vec<LinkAction>) {
-        self.parent_proof_due = None;
+        self.proof_due = None;
         if let Some(l) = self.live.take() {
             out.push(LinkAction::CloseAttempt {
                 attempt: l.attempt.handle(),
@@ -1938,8 +1939,15 @@ impl Link {
     /// untrusted until the parent proves the secret (no microphone path, no status, nothing that
     /// counts as recovery); everything else is trusted at once.
     fn on_verified(&mut self, now: u64, out: &mut Vec<LinkAction>) {
-        if self.cfg.role == Role::Baby && self.pin.is_some() {
-            self.parent_proof_due = Some(now.saturating_add(PARENT_PROOF_WAIT_MS));
+        // A pinned pairing proves the secret in both directions before either side trusts the
+        // attempt: the baby waits for the parent proof, the parent for the baby proof. A parent
+        // whose secret the baby has not acknowledged yet is still in the first pairing.
+        let pinned = self.pin.is_some() && !(self.cfg.role == Role::Parent && self.pin_unacked);
+        if pinned {
+            self.proof_due = Some(now.saturating_add(PARENT_PROOF_WAIT_MS));
+            if self.cfg.role == Role::Parent {
+                self.send_parent_credentials(out);
+            }
             return;
         }
         self.on_trusted(now, out);
@@ -1977,7 +1985,10 @@ impl Link {
                 self.send_mailbox_update(out);
             }
             Role::Parent => {
-                self.send_parent_credentials(out);
+                // A pinned parent sent its proof when the attempt verified.
+                if self.pin.is_none() || self.pin_unacked {
+                    self.send_parent_credentials(out);
+                }
                 if self.listen_intent {
                     if first || outage_start.is_none() || down_ms < LISTEN_RESUME_MS {
                         self.send_app(&DataMessage::Listen { enabled: true }, out);
@@ -1994,11 +2005,8 @@ impl Link {
 
     /// The secret the session layer tags with (parent) or checks against (baby).
     fn sync_session_pin(&mut self) {
-        let secret = match self.cfg.role {
-            Role::Parent => self.pin.as_ref().or(self.unacked_pin.as_ref()),
-            Role::Baby => self.pin.as_ref(),
-        };
-        self.sess.set_parent_pin(secret.map(|s| s.0.as_slice()));
+        self.sess
+            .set_parent_pin(self.pin.as_ref().map(|s| s.0.as_slice()));
     }
 
     /// Both DTLS fingerprints of the live attempt as `(parent, baby)`, as this side sees them.
@@ -2012,38 +2020,53 @@ impl Link {
 
     /// Parent, right after the attempt verified: the first time the secret and the device name
     /// (only over this DataChannel), later the proof of the secret bound to both fingerprints.
+    ///
+    /// The secret is drawn once and `ParentPinned` is emitted **before** the action that sends it:
+    /// the platform must persist it before it executes the later actions, so a parent that
+    /// restarts before the baby's acknowledgement arrives still holds the secret the baby pinned.
+    /// Until the acknowledgement arrives in this run the parent repeats the secret (an unpinned or
+    /// already pinned baby takes the same one) instead of proving it.
     fn send_parent_credentials(&mut self, out: &mut Vec<LinkAction>) {
         let name = clean_device_name(&self.cfg.device_name);
-        if let Some(pin) = self.pin.as_ref() {
-            let Some((fp_parent, fp_baby)) = self.parent_baby_fingerprints() else {
-                return;
-            };
-            if let Some(mac) = parent_proof_mac(&pin.0, &fp_parent, &fp_baby) {
-                self.send_app(&DataMessage::ParentProof { mac, name }, out);
-            }
-            return;
-        }
-        // First verification: draw the secret once; a retry in this run sends the same one.
-        if self.unacked_pin.is_none() {
+        if self.pin.is_none() {
             let Some(rng) = self.csprng.as_mut() else {
                 return;
             };
             let mut bytes = [0u8; PARENT_SECRET_LEN];
             rng.fill_bytes(&mut bytes);
-            self.unacked_pin = Some(SecretBytes(bytes));
+            let secret = SecretBytes(bytes);
             bytes.zeroize();
+            emit(
+                out,
+                LinkEvent::ParentPinned {
+                    secret: secret.to_parent_secret(),
+                },
+            );
+            self.pin = Some(secret);
+            self.pin_unacked = true;
             // Tag every envelope from now on: the baby may pin before the acknowledgement arrives.
             self.sync_session_pin();
         }
-        if let Some(secret) = self.unacked_pin.as_ref().map(SecretBytes::to_parent_secret) {
+        let Some(pin) = self.pin.as_ref() else {
+            return;
+        };
+        if self.pin_unacked {
+            let secret = pin.to_parent_secret();
             self.send_app(&DataMessage::ParentPin { secret, name }, out);
+            return;
+        }
+        let Some((fp_parent, fp_baby)) = self.parent_baby_fingerprints() else {
+            return;
+        };
+        if let Some(mac) = parent_proof_mac(&pin.0, &fp_parent, &fp_baby) {
+            self.send_app(&DataMessage::ParentProof { mac, name }, out);
         }
     }
 
     /// Baby: a parent message while the attempt is untrusted (only the proof and the pin count),
     /// or while pinning.
     fn on_parent_proof(&mut self, now: u64, mac: &str, name: String, out: &mut Vec<LinkAction>) {
-        if self.parent_proof_due.is_none() {
+        if self.proof_due.is_none() {
             return;
         }
         let expected = self.pin.as_ref().and_then(|pin| {
@@ -2082,7 +2105,7 @@ impl Link {
                 self.send_app(&DataMessage::PinAck, out);
             }
             Some(pin) if pin.same(&secret.bytes) => {
-                if self.parent_proof_due.is_some() {
+                if self.proof_due.is_some() {
                     self.trust_parent(now, name, out);
                 }
                 self.send_app(&DataMessage::PinAck, out);
@@ -2093,7 +2116,15 @@ impl Link {
 
     /// Baby: the parent proved the secret; the attempt becomes a link.
     fn trust_parent(&mut self, now: u64, name: String, out: &mut Vec<LinkAction>) {
-        self.parent_proof_due = None;
+        self.proof_due = None;
+        // The pinned parent trusts this attempt only after this proof, so it goes first: whatever
+        // the baby sends next would be ignored by a parent that is still waiting for it.
+        if let (Some(pin), Some((fp_parent, fp_baby))) =
+            (self.pin.as_ref(), self.parent_baby_fingerprints())
+            && let Some(mac) = baby_proof_mac(&pin.0, &fp_baby, &fp_parent)
+        {
+            self.send_app(&DataMessage::BabyProof { mac }, out);
+        }
         emit(out, LinkEvent::ParentConnected { name });
         self.on_trusted(now, out);
     }
@@ -2131,21 +2162,55 @@ impl Link {
         );
     }
 
-    /// Parent: the baby pinned the secret.
-    fn on_pin_ack(&mut self, out: &mut Vec<LinkAction>) {
-        if self.cfg.role != Role::Parent || self.pin.is_some() {
+    /// Parent: the baby pinned the secret (it was persisted when it was drawn).
+    fn on_pin_ack(&mut self) {
+        if self.cfg.role == Role::Parent {
+            self.pin_unacked = false;
+        }
+    }
+
+    /// Parent with a pinned pairing: the baby's proof of the secret. Only a valid one makes the
+    /// attempt a link; anything else ends it and warns, rate limited.
+    fn on_baby_proof(&mut self, now: u64, mac: &str, out: &mut Vec<LinkAction>) {
+        if self.cfg.role != Role::Parent || self.proof_due.is_none() {
             return;
         }
-        if let Some(secret) = self.unacked_pin.take() {
+        let expected = self.pin.as_ref().and_then(|pin| {
+            let (fp_parent, fp_baby) = self.parent_baby_fingerprints()?;
+            baby_proof_mac(&pin.0, &fp_baby, &fp_parent)
+        });
+        match expected {
+            Some(expected) if macs_equal(&expected, mac) => {
+                self.proof_due = None;
+                self.on_trusted(now, out);
+            }
+            _ => self.refuse_baby(now, "baby_proof_mismatch", out),
+        }
+    }
+
+    /// Parent: an attempt whose baby could not prove the secret is closed and is no contact: the
+    /// outage keeps its start, so escalation runs on. The warning reuses `wrong_key_attempt`.
+    fn refuse_baby(&mut self, now: u64, reason: &str, out: &mut Vec<LinkAction>) {
+        self.close_live(out);
+        emit(
+            out,
+            LinkEvent::Failed {
+                reason: reason.to_owned(),
+            },
+        );
+        if self
+            .last_parent_warn
+            .is_none_or(|t| now.saturating_sub(t) >= PARENT_WARN_MIN_MS)
+        {
+            self.last_parent_warn = Some(now);
             emit(
                 out,
-                LinkEvent::ParentPinned {
-                    secret: secret.to_parent_secret(),
+                LinkEvent::SecurityWarning {
+                    key: "wrong_key_attempt".into(),
                 },
             );
-            self.pin = Some(secret);
-            self.sync_session_pin();
         }
+        self.try_failed(now);
     }
 
     // ---- mailbox update --------------------------------------------------------------------
@@ -2313,9 +2378,10 @@ impl Link {
     }
 
     fn on_peer_message(&mut self, now: u64, msg: DataMessage, out: &mut Vec<LinkAction>) {
-        // An attempt that has not proved its parent hears nothing but the proof (or the secret).
-        if self.parent_proof_due.is_some() {
+        // An attempt that has not proved its peer hears nothing but the proof (or the secret).
+        if self.proof_due.is_some() {
             match msg {
+                DataMessage::BabyProof { mac } => self.on_baby_proof(now, &mac, out),
                 DataMessage::ParentProof { mac, name } => {
                     self.on_parent_proof(now, &mac, name, out)
                 }
@@ -2381,7 +2447,7 @@ impl Link {
             (Role::Baby, DataMessage::ParentPin { secret, name }) => {
                 self.on_parent_pin(now, &secret, name, out)
             }
-            (Role::Parent, DataMessage::PinAck) => self.on_pin_ack(out),
+            (Role::Parent, DataMessage::PinAck) => self.on_pin_ack(),
             (Role::Parent, DataMessage::Mailboxes { mailboxes }) => {
                 self.on_mailbox_update(&mailboxes, out)
             }
@@ -2563,7 +2629,14 @@ impl Link {
 
     fn send_app(&self, msg: &DataMessage, out: &mut Vec<LinkAction>) {
         // Nothing but the acknowledgement goes to an attempt whose parent is not proven yet.
-        if self.parent_proof_due.is_some() && *msg != DataMessage::PinAck {
+        if self.proof_due.is_some()
+            && !matches!(
+                msg,
+                DataMessage::PinAck
+                    | DataMessage::ParentProof { .. }
+                    | DataMessage::BabyProof { .. }
+            )
+        {
             return;
         }
         if let Some(l) = self.live.as_ref()
@@ -2592,8 +2665,12 @@ impl Link {
                     l.attempt.set_heartbeat_rms(rms);
                 }
             }
-            if self.parent_proof_due.is_some_and(|due| now >= due) {
-                self.refuse_parent(now, "parent_proof_missing", out);
+            if self.proof_due.is_some_and(|due| now >= due) {
+                if self.cfg.role == Role::Baby {
+                    self.refuse_parent(now, "parent_proof_missing", out);
+                } else {
+                    self.refuse_baby(now, "baby_proof_missing", out);
+                }
             }
             if let Some(l) = self.live.as_mut() {
                 let ev = l.attempt.tick(now);

@@ -93,6 +93,10 @@ pub struct Node {
     /// What this node does to its own `parent_proof` DataChannel messages (a tampered or withheld
     /// proof); the other messages are untouched.
     pub parent_proof: ProofFault,
+    /// The same for this node's `baby_proof` messages.
+    pub baby_proof: ProofFault,
+    /// This node never sends its `pin_ack` (a lost acknowledgement).
+    pub drop_pin_ack: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -136,6 +140,9 @@ pub struct World {
     pub server_signal_log: Vec<(String, Value)>,
     /// Every frame any node sent to the server, in order (node, text).
     pub frames: Vec<(usize, String)>,
+    /// Executed actions that matter for ordering: `pinned:<node>` for a `ParentPinned` event and
+    /// `pin:<node>` for the DataChannel message that carries the secret, in execution order.
+    pub order: Vec<String>,
     pub impostors: Vec<Impostor>,
 }
 
@@ -167,6 +174,7 @@ impl World {
             fp_seq: 0,
             server_signal_log: Vec::new(),
             frames: Vec::new(),
+            order: Vec::new(),
             impostors: Vec::new(),
         }
     }
@@ -207,6 +215,8 @@ impl World {
             down_since: None,
             create_times: Vec::new(),
             parent_proof: ProofFault::None,
+            baby_proof: ProofFault::None,
+            drop_pin_ack: false,
         });
         self.nodes.len() - 1
     }
@@ -506,7 +516,12 @@ impl World {
                     self.set_remote(n, attempt, &sdp);
                 }
                 LinkAction::AddIceCandidate { .. } => {}
-                LinkAction::SendData { attempt, text } => self.send_data(n, attempt, &text),
+                LinkAction::SendData { attempt, text } => {
+                    if text.contains("\"parent_pin\"") {
+                        self.order.push(format!("pin:{n}"));
+                    }
+                    self.send_data(n, attempt, &text)
+                }
                 LinkAction::SetMicEnabled { enabled } => self.nodes[n].mic_calls.push(enabled),
                 LinkAction::ApplyQuiet => self.nodes[n].apply_quiet_calls += 1,
                 LinkAction::SendProbeTone { .. } => self.nodes[n].probe_tones += 1,
@@ -518,6 +533,7 @@ impl World {
                     // Like a platform: persist the pinned parent secret, so that a restarted run
                     // (`restart`) is configured with it.
                     if let LinkEvent::ParentPinned { secret } = &event {
+                        self.order.push(format!("pinned:{n}"));
                         self.nodes[n].cfg.pinned_parent = Some(secret.clone());
                     }
                     self.nodes[n].events.push(event);
@@ -915,8 +931,17 @@ impl World {
             return;
         }
         let mut text = text.to_owned();
-        if text.contains("\"parent_proof\"") {
-            match self.nodes[n].parent_proof {
+        if text.contains("\"pin_ack\"") && self.nodes[n].drop_pin_ack {
+            return;
+        }
+        for (marker, fault) in [
+            ("\"parent_proof\"", self.nodes[n].parent_proof),
+            ("\"baby_proof\"", self.nodes[n].baby_proof),
+        ] {
+            if !text.contains(marker) {
+                continue;
+            }
+            match fault {
                 ProofFault::None => {}
                 ProofFault::Withhold => return,
                 ProofFault::Corrupt => {
