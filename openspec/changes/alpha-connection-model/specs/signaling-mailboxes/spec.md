@@ -15,6 +15,16 @@ The core SHALL keep a set of mailboxes for a pairing (the ones named in the invi
 - **WHEN** one of three mailboxes closes while an attempt is being set up
 - **THEN** the offer and answer still arrive through the remaining mailboxes and the attempt verifies within the 20 s attempt limit
 
+#### Scenario: A failing relay mailbox does not stall the setup
+
+- **WHEN** the own relay mailbox opens and closes repeatedly while a public relay reaches the peer
+- **THEN** the parent's outstanding `request_offer` stays valid, the baby answers it and the attempt verifies in seconds, not after the attempt timeout
+
+#### Scenario: Our own events echoed by a relay
+
+- **WHEN** a relay delivers an event that we signed ourselves
+- **THEN** the core drops it before counting it and the relay is not penalised
+
 ### Requirement: De-duplication after authentication
 
 The core SHALL process the first copy of an envelope that authenticates and passes the session checks, from any mailbox, and drop later copies with the same envelope id. An envelope id SHALL be recorded only after those checks.

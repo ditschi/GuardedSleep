@@ -919,6 +919,43 @@ fn the_opening_presence_goes_to_a_relay_at_most_every_three_minutes() {
 }
 
 #[test]
+fn every_relay_hears_us_within_five_seconds_of_a_reopen_inside_the_three_minute_window() {
+    // The opening presence is rate limited per relay; the 5 s repeat goes to every open relay, so
+    // a loss that follows the previous open by less than 3 minutes still announces us everywhere.
+    let urls = [URL_A, URL_B, URL_C];
+    let mut r = Rig::parent(&urls);
+    r.report_wall();
+    r.advance(1_000);
+    for id in 1..=3 {
+        r.feed(LinkInput::MailboxClosed {
+            id,
+            reason: "closed".into(),
+        });
+    }
+    let mut reopened = None;
+    let mut heard = std::collections::BTreeSet::new();
+    for _ in 0..80 {
+        let acts = r.advance(250);
+        if reopened.is_none() && opens(&acts).iter().any(|(id, ..)| *id != 0) {
+            reopened = Some(r.now);
+        }
+        if let Some(t) = reopened {
+            for (id, kind) in Rig::kinds(&acts) {
+                if kind == "here" && r.now - t <= 5_500 {
+                    heard.insert(id);
+                }
+            }
+        }
+    }
+    assert!(reopened.is_some(), "the relays reopen");
+    assert_eq!(
+        heard.into_iter().collect::<Vec<_>>(),
+        vec![1, 2, 3],
+        "every relay got a presence within 5 s of the reopen"
+    );
+}
+
+#[test]
 fn a_socket_open_for_a_minute_resets_the_backoff() {
     let mut r = Rig::parent(&[URL_A]);
     r.report_wall();

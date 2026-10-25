@@ -79,9 +79,8 @@ enum Command {
         ice_ms: u64,
         /// What the harness answers when the core opens its own signaling relay (mailbox 0):
         /// `silent` never answers (the default: the public relays are measured alone), `fail`
-        /// reports every open as failed, as a platform without an own server may. `fail` makes the
-        /// core drop the parent's open `request_offer` at every report and stalls setups for 20 s
-        /// (see the runbook).
+        /// reports every open as failed, as a platform without an own server may. Setups must take
+        /// as long as with `silent` (see the runbook).
         #[arg(long, value_enum, default_value_t = RelayMailboxArg::Silent)]
         relay_mailbox: RelayMailboxArg,
         /// Print a timeline of the core's actions and the relays' answers (kinds and sizes only).

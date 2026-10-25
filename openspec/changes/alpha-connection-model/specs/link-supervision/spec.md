@@ -28,12 +28,17 @@ The Rust core `Link` SHALL own the state of every mailbox, attempts, liveness, e
 
 ### Requirement: Offer direction
 
-Only the baby SHALL create offers, and only when it has no live verified attempt and a parent is present. A parent is present when the pinned parent (or, before pinning, any parent) has announced a current session with `here` on any mailbox, or is a member of the room on our relay. The parent SHALL send `request_offer` to the baby's current session when it starts or recovers without a live attempt. An offer answering a request SHALL carry `re` set to that request's id, and the parent SHALL adopt an offer only for its current request.
+Only the baby SHALL create offers, and only when it has no live verified attempt and a parent is present. A parent is present when the pinned parent (or, before pinning, any parent) has announced a current session with `here` on any mailbox, or is a member of the room on our relay. The parent SHALL send `request_offer` to the baby's current session when it starts or recovers without a live attempt. An offer answering a request SHALL carry `re` set to that request's id, and the parent SHALL adopt an offer only for its current request. A baby that sees a parent present SHALL wait a short grace period (2.5 s) for that request before it offers unasked, so that a clean setup builds one attempt per side.
 
 #### Scenario: Both sides start at the same time
 
 - **WHEN** the parent and the baby start within the same tick and the parent's request crosses an earlier offer
 - **THEN** the parent adopts only the offer whose `re` matches its request, and the two devices converge on one verified attempt
+
+#### Scenario: Clean setup builds one attempt
+
+- **WHEN** a baby and a parent start together over Nostr alone, or over the own relay and Nostr, and nothing fails
+- **THEN** each core creates exactly one attempt and the link verifies without a replaced attempt
 
 ### Requirement: Accepted signaling senders
 
