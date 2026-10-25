@@ -17,6 +17,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.net.toUri
 import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.diag.PocLog
+import org.guardedsleep.app.locale.localizedContext
 import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.settings.SilenceMarker
 import org.guardedsleep.app.wiring.EntryPoints
@@ -184,7 +185,7 @@ class SilenceController(
                 .hideAllVisualEffects()
                 .build()
         return AutomaticZenRule(
-            context.getString(R.string.native_notif_silence_rule_name),
+            ruleName(),
             null,
             ComponentName(context, entryPoints.mainActivity),
             CONDITION_ID,
@@ -194,8 +195,12 @@ class SilenceController(
         )
     }
 
+    private fun ruleName() =
+        localizedContext(context, settings.current.settings.language)
+            .getString(R.string.native_notif_silence_rule_name)
+
     private fun condition(state: Int) =
-        Condition(CONDITION_ID, context.getString(R.string.native_notif_silence_rule_name), state)
+        Condition(CONDITION_ID, ruleName(), state)
 
     private companion object {
         const val MAX_MINUTES = 1440L

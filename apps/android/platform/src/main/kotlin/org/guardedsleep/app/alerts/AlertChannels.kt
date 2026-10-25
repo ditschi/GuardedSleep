@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.media.AudioAttributes
 import org.guardedsleep.app.contract.R
+import org.guardedsleep.app.locale.localizedContext
 
 /**
  * Notification channels. The two alarm channels carry no sound or vibration of their own: the app
@@ -27,7 +28,12 @@ object AlertChannels {
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
 
-    fun ensure(context: Context) {
+    /**
+     * Creates the channels, or renames them when the language changed (an existing channel keeps
+     * its other settings). Names follow the stored app language [storedTag] on every API level.
+     */
+    fun ensure(base: Context, storedTag: String?) {
+        val context = localizedContext(base, storedTag)
         val nm = context.getSystemService(NotificationManager::class.java)
         fun create(
             id: String,

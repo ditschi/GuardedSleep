@@ -16,8 +16,8 @@ import java.util.Locale
  * - Android 13+ (API 33): `LocaleManager.setApplicationLocales`. The system stores the choice,
  *   recreates the activities and also uses it for notifications and the system settings entry.
  * - Android 8 to 12: no system API exists without AppCompat, so the activity wraps its base context
- *   with the stored tag ([wrap]) and is recreated when the choice changes. Notifications and the
- *   foreground service text follow the system language there.
+ *   with the stored tag ([wrap]) and is recreated when the choice changes. Notifications, channel
+ *   names and the foreground service text use `localizedContext` in `platform` instead.
  *
  * Doc: https://developer.android.com/guide/topics/resources/app-languages
  */

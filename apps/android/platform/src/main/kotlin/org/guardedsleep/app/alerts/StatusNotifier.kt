@@ -6,18 +6,37 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import org.guardedsleep.app.contract.R
+import org.guardedsleep.app.locale.localizedContext
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.LinkUi
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.wiring.EntryPoints
 
 /** The foreground-service notification: ongoing, silent, text follows the link state. */
-class StatusNotifier(private val context: Context, private val entryPoints: EntryPoints) {
+class StatusNotifier(
+    private val baseContext: Context,
+    private val entryPoints: EntryPoints,
+    /** The stored app language (`SettingsState.language`), read when the notification is built. */
+    private val language: () -> String?,
+) {
+    private var channelsLanguage: String? = language()
+
     init {
-        AlertChannels.ensure(context)
+        AlertChannels.ensure(baseContext, channelsLanguage)
+    }
+
+    /** Resources in the stored app language (also on Android 8 to 12, see [localizedContext]). */
+    private fun localized(): Context {
+        val tag = language()
+        if (tag != channelsLanguage) {
+            channelsLanguage = tag
+            AlertChannels.ensure(baseContext, tag)
+        }
+        return localizedContext(baseContext, tag)
     }
 
     fun build(role: Role, link: LinkUi): Notification {
+        val context = localized()
         val open =
             PendingIntent.getActivity(
                 context,
@@ -55,6 +74,7 @@ class StatusNotifier(private val context: Context, private val entryPoints: Entr
      * Baby after the OS killed the process: a microphone service cannot start from the background.
      */
     fun resumePrompt(): Notification {
+        val context = localized()
         val open =
             PendingIntent.getActivity(
                 context,

@@ -8,6 +8,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import org.guardedsleep.app.alerts.AlertChannels
 import org.guardedsleep.app.alerts.AlertController
 import org.guardedsleep.app.link.LinkController
 import org.guardedsleep.app.link.SystemClockSource
@@ -40,8 +44,20 @@ class AppGraph(context: Context) : PlatformServices {
     val pairingStore = PairingStore(File(app.filesDir, "pairing.bin"), KeystorePairingCipher())
     override val entryPoints: EntryPoints = AppEntryPoints
     val silence = SilenceController(app, settings, entryPoints)
-    val alerts = AlertController(app, entryPoints)
+    val alerts = AlertController(app, entryPoints) { settings.current.settings.language }
     val readiness = ReadinessChecker(AndroidReadinessEnv(app), settings, SystemClockSource)
+
+    init {
+        // Notification channel names follow the app language as soon as it changes, not only with
+        // the next alert.
+        ioScope.launch {
+            settings.flow
+                .map { it.settings.language }
+                .distinctUntilChanged()
+                .collect { AlertChannels.ensure(app, it) }
+        }
+    }
+
     override val controller =
         LinkController(
             settingsRepo = settings,

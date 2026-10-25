@@ -12,6 +12,7 @@ import androidx.core.app.NotificationCompat
 import org.guardedsleep.app.config.AlertPolicy
 import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.diag.PocLog
+import org.guardedsleep.app.locale.localizedContext
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.wiring.AlertIntents
 import org.guardedsleep.app.wiring.EntryPoints
@@ -22,11 +23,31 @@ import org.guardedsleep.app.wiring.EntryPoints
  * haptics and a soft tone; level 3 a continuous alarm. "I'm checking" mutes sound and vibration
  * while the notification stays. The child's audio itself is played by WebRTC, not here.
  */
-class AlertController(private val context: Context, private val entryPoints: EntryPoints) :
-    AlertSink {
-    private val nm = context.getSystemService(NotificationManager::class.java)
+class AlertController(
+    private val baseContext: Context,
+    private val entryPoints: EntryPoints,
+    /** The stored app language (`SettingsState.language`), read when a notification is built. */
+    private val language: () -> String? = { null },
+) : AlertSink {
+    private var channelsLanguage: String? = language()
+
+    /**
+     * Resources in the stored app language for all notification text (also on Android 8 to 12, see
+     * [localizedContext]); channel names are refreshed when the language changed.
+     */
+    private val context: Context
+        get() {
+            val tag = language()
+            if (tag != channelsLanguage) {
+                channelsLanguage = tag
+                AlertChannels.ensure(baseContext, tag)
+            }
+            return localizedContext(baseContext, tag)
+        }
+
+    private val nm = baseContext.getSystemService(NotificationManager::class.java)
     private val handler = Handler(Looper.getMainLooper())
-    private val haptics = Haptics(context)
+    private val haptics = Haptics(baseContext)
     private val tones = TonePlayer()
 
     private var linkPlan = LinkFeedbackPlan()
@@ -38,7 +59,7 @@ class AlertController(private val context: Context, private val entryPoints: Ent
     private var toneLoop: Runnable? = null
 
     init {
-        AlertChannels.ensure(context)
+        AlertChannels.ensure(baseContext, channelsLanguage)
     }
 
     override fun linkState(snapshot: LinkSnapshot) = onMain {

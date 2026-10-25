@@ -8,6 +8,8 @@ android {
     buildFeatures { buildConfig = true }
 
     testOptions {
+        // Notification text tests (Robolectric) read the contract module's string resources.
+        unitTests.isIncludeAndroidResources = true
         unitTests.all {
             // Host build of the core (scripts/core-build.sh host); JNA loads it for the real
             // CoreLink in tests. AGP drops .so files from unit-test resources.
@@ -29,6 +31,8 @@ dependencies {
     implementation(libs.coroutines.android)
 
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
     testImplementation(libs.jna)
     testImplementation(libs.json)
     testImplementation(libs.coroutines.test)
