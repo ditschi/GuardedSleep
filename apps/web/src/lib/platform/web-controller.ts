@@ -90,6 +90,8 @@ interface StoredPairing {
   pairedBefore: boolean;
   /** The pinned parent secret (64 hex characters): memory only, like the PSK. */
   parentSecret: string | null;
+  /** Parent: the end of the first-pairing window (Unix seconds) while the baby has not acknowledged. */
+  pinUntilS: number | null;
 }
 
 interface PendingPairing {
@@ -106,6 +108,11 @@ interface PendingPairing {
    */
   pinnedSecret: string | null;
   receivedUrls: string[] | null;
+  /**
+   * The first-pairing window (Unix seconds): the expiry of the invite, then the last
+   * `window_until_s` of `parent_pinned`. Null once the baby acknowledged the secret.
+   */
+  pinUntilS: number | null;
 }
 
 interface Run {
@@ -244,12 +251,9 @@ export class WebController implements AppController {
     const urls = this.effectiveUrls(null);
     const now = this.deps.clock.elapsedMs();
     const psk = this.deps.randomBytes(PSK_BYTES);
+    const expiresAtS = Math.floor(this.deps.clock.wallMs() / 1000) + INVITE_VALIDITY_MS / 1000;
     const invite = urls.length
-      ? this.deps.core.buildInvite(
-          psk,
-          mailboxesForUrls(urls),
-          Math.floor(this.deps.clock.wallMs() / 1000) + INVITE_VALIDITY_MS / 1000,
-        )
+      ? this.deps.core.buildInvite(psk, mailboxesForUrls(urls), expiresAtS)
       : null;
     const pskB64Url = encodeBase64Url(psk);
     psk.fill(0);
@@ -266,6 +270,7 @@ export class WebController implements AppController {
       parentSecret: null,
       pinnedSecret: null,
       receivedUrls: null,
+      pinUntilS: expiresAtS,
     };
     this.pairingStore.set(
       makePairingState("showing_code", {
@@ -309,6 +314,7 @@ export class WebController implements AppController {
         parentSecret: null,
         pinnedSecret: null,
         receivedUrls: null,
+        pinUntilS: parsed.invite.expiresAtEpochS,
       },
       false,
       false,
@@ -342,6 +348,7 @@ export class WebController implements AppController {
         parentSecret: stored.parentSecret,
         pinnedSecret: null,
         receivedUrls: null,
+        pinUntilS: stored.pinUntilS,
       },
       stored.pairedBefore,
       true,
@@ -549,6 +556,7 @@ export class WebController implements AppController {
       noise_threshold: s.threshold,
       noise_hold_ms: s.holdSeconds * 1000,
       ...(pending.parentSecret === null ? {} : { pinned_parent: pending.parentSecret }),
+      ...(pending.pinUntilS === null ? {} : { pin_window_until_s: pending.pinUntilS }),
       ...(role === "parent" ? { device_name: this.deps.deviceName?.() ?? "" } : {}),
       // The baby sends the parent the set it showed in the invite, after each verification.
       ...(role === "baby" ? { mailboxes: mailboxesForUrls(pending.urls) } : {}),
@@ -578,7 +586,8 @@ export class WebController implements AppController {
       onEvent: (event: LinkEvent, now: number) => {
         if (!current()) return;
         // The one event that carries the parent secret: kept in memory next to the PSK, never logged.
-        if (event.type === "parent_pinned") this.keepParentSecret(r, event.secret);
+        if (event.type === "parent_pinned")
+          this.keepParentSecret(r, event.secret, event.window_until_s ?? null);
         else if (event.type === "mailboxes_updated") this.keepMailboxes(r, event.mailboxes);
         if (r.role === "parent") this.parentModel.onEvent(event, now);
         else this.babyModel.onEvent(event);
@@ -605,19 +614,10 @@ export class WebController implements AppController {
     const pending = r.pending;
     if (!pending) return;
     const state: LinkState = status.state;
+    // The baby counts the pairing as complete only when it pinned the parent (`parent_pinned`),
+    // not when the link connects: an unpinned baby has no parent.
     if (state === "connected") {
-      this.stored = {
-        pskB64Url: pending.pskB64Url,
-        urls: pending.receivedUrls ?? pending.urls,
-        pairedBefore: true,
-        parentSecret: pending.pinnedSecret,
-      };
-      r.pending = null;
-      r.monitoring = true;
-      // The pairing link becomes the monitoring run; the other device never sees a gap.
-      this.setApp({ paired: true, monitoring: true });
-      // Last, so a UI that reacts to "paired" already sees a consistent monitoring state.
-      this.pairingStore.set(makePairingState("paired"));
+      if (r.role === "parent") this.completePairing(r, pending);
     } else if (state === "failed_needs_user") {
       const error: PairingError =
         status.key === "pairing_key_mismatch" ? "key_mismatch" : "unreachable";
@@ -626,10 +626,36 @@ export class WebController implements AppController {
     }
   }
 
-  /** Before the first verification saved the pairing the secret waits in the run. */
-  private keepParentSecret(r: Run, secret: string): void {
-    if (r.pending) r.pending.pinnedSecret = secret;
-    else if (this.stored) this.stored = { ...this.stored, parentSecret: secret };
+  /** The pairing is kept (in memory) and the pairing link becomes the monitoring run. */
+  private completePairing(r: Run, pending: PendingPairing): void {
+    this.stored = {
+      pskB64Url: pending.pskB64Url,
+      urls: pending.receivedUrls ?? pending.urls,
+      pairedBefore: true,
+      parentSecret: pending.pinnedSecret,
+      pinUntilS: pending.pinUntilS,
+    };
+    r.pending = null;
+    r.monitoring = true;
+    // The pairing link becomes the monitoring run; the other device never sees a gap.
+    this.setApp({ paired: true, monitoring: true });
+    // Last, so a UI that reacts to "paired" already sees a consistent monitoring state.
+    this.pairingStore.set(makePairingState("paired"));
+  }
+
+  /**
+   * `parent_pinned`: the secret (and the first-pairing window) next to the PSK, in memory. Before
+   * the first verification saved the pairing they wait in the run; the baby completes its pairing
+   * here, at the pin.
+   */
+  private keepParentSecret(r: Run, secret: string, untilS: number | null): void {
+    if (r.pending) {
+      r.pending.pinnedSecret = secret;
+      r.pending.pinUntilS = untilS;
+      if (r.role === "baby") this.completePairing(r, r.pending);
+    } else if (this.stored) {
+      this.stored = { ...this.stored, parentSecret: secret, pinUntilS: untilS };
+    }
   }
 
   /** The baby's current mailbox set replaces the stored one. */

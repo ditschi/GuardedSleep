@@ -43,6 +43,8 @@ describe("causeHintOf", () => {
     expect(causeHintOf("peer_absent")).toBe("peer_absent");
     expect(causeHintOf("media_blocked")).toBe("media_blocked");
     expect(causeHintOf("update_required")).toBeNull();
+    expect(causeHintOf("pair_again")).toBe("pair_again");
+    expect(causeHintOf("baby_unrecognised")).toBe("baby_unrecognised");
     expect(causeHintOf("toString")).toBeNull();
     expect(causeHintOf(null)).toBeNull();
   });

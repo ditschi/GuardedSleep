@@ -36,6 +36,8 @@ const CORE_KEYS: Readonly<Record<string, MessageKey>> = {
   unknown_parent_attempt: "core.unknownParentAttempt",
   clock_skew: "core.clockSkew",
   recovery_path_unavailable: "core.recoveryPathUnavailable",
+  pair_again: "core.pairAgain",
+  baby_unrecognised: "core.babyUnrecognised",
 };
 
 export function coreMessageKey(key: string | null): MessageKey | null {

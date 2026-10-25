@@ -33,6 +33,8 @@ const CAUSES: Record<string, CauseHint> = {
   server_unreachable: "server_unreachable",
   peer_absent: "peer_absent",
   media_blocked: "media_blocked",
+  pair_again: "pair_again",
+  baby_unrecognised: "baby_unrecognised",
 };
 
 export function causeHintOf(key: string | null): CauseHint | null {

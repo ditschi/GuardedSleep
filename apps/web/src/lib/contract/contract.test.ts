@@ -83,7 +83,13 @@ describe("enums mirror UiContract.kt", () => {
       "failed_needs_user",
       "stopped",
     ] satisfies LinkPhase[],
-    CauseHint: ["server_unreachable", "peer_absent", "media_blocked"] satisfies CauseHint[],
+    CauseHint: [
+      "server_unreachable",
+      "peer_absent",
+      "media_blocked",
+      "pair_again",
+      "baby_unrecognised",
+    ] satisfies CauseHint[],
     LinkHint: ["clock_skew", "recovery_path_unavailable"] satisfies LinkHint[],
     LinkQuality: ["good", "medium", "poor", "unknown"] satisfies LinkQuality[],
     SilenceStatus: [

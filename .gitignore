@@ -17,6 +17,7 @@ Thumbs.db
 # Node
 node_modules/
 dist/
+dist-e2e/
 build/
 .svelte-kit/
 coverage/

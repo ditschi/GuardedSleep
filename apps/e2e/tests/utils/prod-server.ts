@@ -12,7 +12,9 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const binary = join(repoRoot, "target/debug/guardedsleep-server");
-const dist = join(repoRoot, "apps/web/dist");
+// Its own output directory: the E2E build accepts loopback mailboxes and must never overwrite the
+// `dist` that a release or an image build ships.
+const dist = join(repoRoot, "apps/web/dist-e2e");
 
 export interface ProdServer {
   baseUrl: string;
@@ -35,12 +37,17 @@ async function freePort(): Promise<number> {
 export async function startProdServer(): Promise<ProdServer> {
   if (!existsSync(binary)) throw new Error(`${binary} is missing: run \`just dev\` once`);
   // `--mode e2e`: the only production-style build that accepts loopback mailboxes (the server
-  // runs on 127.0.0.1); the release and the image build in production mode.
-  execFileSync("pnpm", ["--filter", "@guardedsleep/web", "build", "--mode", "e2e"], {
-    cwd: repoRoot,
-    stdio: "pipe",
-    timeout: 240_000,
-  });
+  // runs on 127.0.0.1); the release and the image build in production mode. `--outDir dist-e2e`
+  // keeps it apart from `apps/web/dist`.
+  execFileSync(
+    "pnpm",
+    ["--filter", "@guardedsleep/web", "build", "--mode", "e2e", "--outDir", "dist-e2e"],
+    {
+      cwd: repoRoot,
+      stdio: "pipe",
+      timeout: 240_000,
+    },
+  );
   const port = await freePort();
   const child: ChildProcess = spawn(
     binary,

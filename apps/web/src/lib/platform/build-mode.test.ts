@@ -18,5 +18,9 @@ describe("loopbackAllowed", () => {
     expect(dockerfile).toMatch(/vite build --mode production/);
     expect(dockerfile).not.toMatch(/--mode e2e/);
     expect(prodServer).toMatch(/"--mode",\s*"e2e"/);
+    // The E2E bundle never lands in the directory a release or the image ships.
+    expect(prodServer).toMatch(/"--outDir",\s*"dist-e2e"/);
+    expect(prodServer).toMatch(/apps\/web\/dist-e2e"/);
+    expect(prodServer).not.toMatch(/apps\/web\/dist"/);
   });
 });

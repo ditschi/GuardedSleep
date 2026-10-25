@@ -22,7 +22,14 @@ export type LinkPhase =
   | "failed_needs_user"
   | "stopped";
 
-export type CauseHint = "server_unreachable" | "peer_absent" | "media_blocked";
+export type CauseHint =
+  | "server_unreachable"
+  | "peer_absent"
+  | "media_blocked"
+  /** Baby: no secret for the parent and the invite is over; show a new code. */
+  | "pair_again"
+  /** Parent: the baby device does not recognise this device; show a new code on it. */
+  | "baby_unrecognised";
 
 /**
  * A calm hint of the core (never an alarm): the clocks of the two devices differ by more than 10

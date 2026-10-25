@@ -161,7 +161,9 @@ describe("WebController: pairing", () => {
     expect(state?.expiresAtElapsedMs).toBe(300_000);
     const parsed = realCore.parseInvite(state?.codePayload ?? "", t.time.wallMs() / 1000);
     expect(parsed.ok && parsed.invite.mailboxes).toEqual([RELAY_MAILBOX]);
-    expect(parsed.ok && parsed.invite.expiresAtEpochS).toBe(t.time.wallMs() / 1000 + 300);
+    expect(parsed.ok && parsed.invite.expiresAtEpochS).toBe(
+      Math.floor(t.time.wallMs() / 1000) + 300,
+    );
     await flush();
     // One microphone request, the relay's STUN and nothing else, one core link, one socket.
     expect(t.media.requests).toEqual([{ role: "baby", ice: [{ urls: ["stun:relay.test:3478"] }] }]);
@@ -485,6 +487,45 @@ describe("WebController: the parent pin", () => {
     t.controller.startMonitoring();
     await flush();
     expect(t.core.configs[1]?.pinned_parent).toBe(SECRET);
+  });
+
+  it("the first-pairing window is the invite expiry, then what the core reports", async () => {
+    const t = setup();
+    await pairedParent(t);
+    // The window of the parsed invite goes to the core of the pairing run ...
+    expect(t.core.configs[0]?.pin_window_until_s).toBe(Math.floor(t.time.wallMs() / 1000) + 300);
+    // ... and the last `window_until_s` of the core to the next run (null: acknowledged).
+    t.core.script = () => [emit({ type: "parent_pinned", secret: SECRET, window_until_s: 1_234 })];
+    t.time.advance(250);
+    t.controller.stopMonitoring();
+    t.time.advance(600);
+    await flush();
+    t.controller.startMonitoring();
+    await flush();
+    expect(t.core.configs[1]?.pin_window_until_s).toBe(1_234);
+    t.core.script = () => [emit({ type: "parent_pinned", secret: SECRET })];
+    t.time.advance(250);
+    t.controller.stopMonitoring();
+    t.time.advance(600);
+    await flush();
+    t.controller.startMonitoring();
+    await flush();
+    expect(t.core.configs[2]?.pin_window_until_s).toBeUndefined();
+  });
+
+  it("the baby counts the pairing as complete at the pin, not at the connection", async () => {
+    const t = setup();
+    t.controller.chooseRole("baby");
+    t.controller.startPairing();
+    await flush();
+    expect(t.core.configs[0]?.pin_window_until_s).toBe(Math.floor(t.time.wallMs() / 1000) + 300);
+    t.core.script = (input) => (input.type === "tick" ? [emitStatus({ state: "connected" })] : []);
+    t.time.advance(250);
+    expect(get(t.controller.pairing)?.phase).not.toBe("paired");
+    t.core.script = (input) =>
+      input.type === "tick" ? [emit({ type: "parent_pinned", secret: SECRET })] : [];
+    t.time.advance(250);
+    expect(get(t.controller.pairing)?.phase).toBe("paired");
   });
 
   it("a new pairing starts without the old secret, and forgetting drops it", async () => {
