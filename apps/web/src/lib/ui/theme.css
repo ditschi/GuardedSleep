@@ -186,6 +186,12 @@
     background: var(--gs-bg);
     color: var(--gs-on-bg);
   }
+  h1,
+  h2,
+  h3 {
+    /* Long words (German "Einstellungen") wrap at 200 % text and 320 px instead of overflowing. */
+    overflow-wrap: anywhere;
+  }
   h1 {
     font-size: 1.5rem;
     line-height: 1.25;

@@ -37,7 +37,7 @@ private val BabyApp =
         monitoring = true,
         peerName = null,
     )
-private const val CODE =
+internal const val CODE =
     "guardedsleep://pair?v=1&room=0123456789abcdef&psk=ZmFrZS1wc2stZm9yLXNjcmVlbnNob3RzLW9ubHk&url=wss%3A%2F%2Fsignal.example.org%2Fsig&exp=1792462740000"
 
 class BabyShots : ShotBase() {

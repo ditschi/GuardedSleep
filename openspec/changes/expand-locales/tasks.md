@@ -28,9 +28,9 @@ Depends on `rebuild-web-client` for groups 3–5 (the web key set). Groups 1–2
 
 ## 5. Layout checks
 
-- [ ] 5.1 Roborazzi screenshots for de and ar on the main screens (pseudo-locales on the overflow check). Verify: `just verify-android` (baselines recorded in the pinned image).
-- [ ] 5.2 Playwright screenshot-free overflow and axe runs for de and ar (`dir="rtl"`) on every web screen. Verify: `just e2e`.
-- [ ] 5.3 `docs/ci-gates.md` rows for the critical-key, unused-key and message-key checks; `GS_STRICT=1 just ci` green.
+- [x] 5.1 Roborazzi screenshots for de and ar on the main screens (pseudo-locales on the overflow check). Verify: `just verify-android` (baselines recorded in the pinned image).
+- [x] 5.2 Playwright screenshot-free overflow and axe runs for de and ar (`dir="rtl"`) on every web screen. Verify: `just e2e`.
+- [x] 5.3 `docs/ci-gates.md` rows for the critical-key, unused-key and message-key checks; `GS_STRICT=1 just ci` green.
 
 ## Workflow follow-up
 

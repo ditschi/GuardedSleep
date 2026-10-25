@@ -20,6 +20,8 @@
     font-weight: 600;
     line-height: 1.2;
     text-align: center;
+    /* A single long word (German "Nachtbildschirm") breaks rather than pushing the page wide. */
+    overflow-wrap: anywhere;
     cursor: pointer;
     transition: filter var(--gs-duration);
   }

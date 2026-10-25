@@ -42,6 +42,8 @@ export async function launchDualContexts(opts: {
    * curated public relays to its invites, and a test must never reach those.
    */
   nostrRelays?: string[];
+  /** Browser language (`navigator.languages`), so the client follows it: "de", "ar", ... */
+  locale?: string;
 }): Promise<DualContexts> {
   const baseUrl = opts.baseUrl ?? "http://127.0.0.1:5173";
   // A LAN IP over plain http is not a secure context; treat it as one so getUserMedia works.
@@ -74,11 +76,13 @@ export async function launchDualContexts(opts: {
     baseURL: baseUrl,
     ignoreHTTPSErrors: true,
     permissions: opts.permissions ?? ["microphone"],
+    ...(opts.locale ? { locale: opts.locale } : {}),
   });
   const parent = await browserParent.newContext({
     baseURL: baseUrl,
     ignoreHTTPSErrors: true,
     permissions: opts.permissions ?? ["microphone"],
+    ...(opts.locale ? { locale: opts.locale } : {}),
   });
 
   const signalWs = opts.signalUrl ?? process.env.E2E_SIGNALING_URL ?? "ws://127.0.0.1:18787";

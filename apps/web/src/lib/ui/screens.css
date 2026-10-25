@@ -491,6 +491,9 @@
     margin-block-start: var(--gs-space-5);
   }
   .gs-fullscreen__top h1 {
+    /* A long word (German "Geräusch") must wrap instead of leaving the page at 200 % text. */
+    min-width: 0;
+    overflow-wrap: anywhere;
     font-size: 2rem;
     line-height: 1.2;
     font-weight: 700;
@@ -504,6 +507,9 @@
     text-align: center;
   }
   .gs-fullscreen__hero h1 {
+    /* Same as above: wrap a long word instead of overflowing the narrow page. */
+    max-inline-size: 100%;
+    overflow-wrap: anywhere;
     font-size: 2.25rem;
     line-height: 1.2;
     font-weight: 700;
@@ -616,6 +622,11 @@
     gap: var(--gs-space-3);
     color: var(--gs-on-surface-variant);
     font-size: 0.8125rem;
+  }
+  /* Both labels may share the row or wrap; a long German word must not push the page wide. */
+  .gs-range-labels > * {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
   .gs-url-row {
     display: flex;
