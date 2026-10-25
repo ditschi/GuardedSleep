@@ -153,12 +153,16 @@ Public relays SHALL carry presence and attempt setup only, never heartbeats. A d
 
 ### Requirement: Relay parking
 
-A relay that refuses events (blocked, restricted, authentication or proof of work required, rate limited) or delivers forged or out-of-scope events SHALL be left out with a backoff of 1, 5 and 30 minutes and then retried. Repeated or re-delivered events SHALL be dropped by event id before counting or verifying, and an excess of distinct, verified in-scope events SHALL be dropped for the rest of the minute without parking the relay, so a third party replaying captured events cannot isolate a pairing.
+A relay that refuses events (blocked, restricted, authentication or proof of work required, rate limited) or delivers forged or out-of-scope events SHALL be left out with a backoff of 1, 5 and 30 minutes and then retried.
 
 #### Scenario: Rate-limited relay
 
 - **WHEN** a relay answers an event with a rate-limit notice
 - **THEN** the device stops using it for one minute, carries on with the other relays, and retries it afterwards
+
+### Requirement: Replay-proof inbound limits
+
+Repeated or re-delivered events SHALL be dropped by event id before counting or verifying, and an excess of distinct, verified in-scope events SHALL be dropped for the rest of the minute without parking the relay, so a third party replaying captured events cannot isolate a pairing.
 
 #### Scenario: Third party replays captured events
 
