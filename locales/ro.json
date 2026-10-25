@@ -1,0 +1,548 @@
+{
+  "$meta": {
+    "default": "machineTranslated",
+    "reviewed": []
+  },
+  "meta": {
+    "appTitle": "GuardedSleep"
+  },
+  "layout": {
+    "settingsAria": "Setări",
+    "backAria": "Înapoi la ecranul anterior"
+  },
+  "core": {
+    "pairingKeyMismatch": "Aceste dispozitive nu mai sunt asociate. Asociază-le din nou pentru a continua monitorizarea.",
+    "updateRequired": "Unul dintre dispozitive are nevoie de o actualizare GuardedSleep pentru a continua monitorizarea.",
+    "serverUnreachable": "Acest dispozitiv nu poate ajunge la serverul de conectare. Verifică conexiunea lui la internet.",
+    "peerAbsent": "Dispozitivul bebelușului nu răspunde. Verifică dacă este pornit și afișează GuardedSleep.",
+    "mediaBlocked": "Dispozitivele s-au găsit, dar sunetul nu trece. Încearcă aceeași rețea Wi-Fi pe ambele.",
+    "wrongKeyAttempt": "Cineva a încercat să se conecteze cu o cheie greșită. Monitorizarea continuă."
+  },
+  "native": {
+    "appName": "GuardedSleep Alpha",
+    "notif": {
+      "appTitle": "GuardedSleep",
+      "silenceRuleName": "GuardedSleep",
+      "channelNoise": "Alerte sonore",
+      "channelNoiseDesc": "Alerte puternice când dispozitivul bebelușului aude un sunet.",
+      "channelLink": "Alarme de conexiune",
+      "channelLinkDesc": "Alarme când se pierde conexiunea cu dispozitivul bebelușului.",
+      "channelStatus": "Starea monitorizării",
+      "channelStatusDesc": "Arată că monitorizarea rulează.",
+      "channelNotice": "Avertismente",
+      "channelNoticeDesc": "Avertismente despre baterie și securitate.",
+      "channelInfo": "Informații",
+      "channelInfoDesc": "Note discrete, de exemplu după revenirea conexiunii.",
+      "channelBaby": "Monitorizare",
+      "channelBabyDesc": "Notă silențioasă că acest dispozitiv monitorizează.",
+      "babyMonitoring": "GuardedSleep monitorizează",
+      "babyResume": "Atinge pentru a relua monitorizarea",
+      "statusConnected": "Conectat la dispozitivul bebelușului",
+      "statusConnecting": "Se conectează la dispozitivul bebelușului…",
+      "statusReconnecting": "Se reconectează la dispozitivul bebelușului…",
+      "statusTrouble": "Dispozitivul bebelușului nu răspunde, încerc în continuare",
+      "statusAlarm": "Nicio conexiune cu dispozitivul bebelușului",
+      "statusPeerStopped": "Dispozitivul bebelușului a oprit monitorizarea",
+      "statusFailed": "Aceste dispozitive nu mai sunt asociate",
+      "noiseTitle": "Sunet detectat",
+      "noiseText": "Dispozitivul bebelușului aude un sunet.",
+      "noiseTestTitle": "Alertă de test",
+      "noiseTestText": "Este un test. Dispozitivul bebelușului rămâne liniștit.",
+      "actionStopSound": "Oprește sunetul",
+      "actionSnooze10": "Amână 10 min",
+      "actionChecking": "Verific",
+      "linkLostTitle": "Conexiune pierdută",
+      "linkLostText": "Nicio conexiune cu dispozitivul bebelușului. Du-te să vezi cum e bebelușul.",
+      "peerStoppedTitle": "Monitorizare oprită",
+      "peerStoppedText": "Monitorizarea a fost oprită pe dispozitivul bebelușului. Nu vei auzi nimic până nu este pornită din nou.",
+      "restoredTitle": "Conectat din nou",
+      "restoredText": "Nemonitorizat timp de {duration}.",
+      "missedTitle": "În timpul deconectării",
+      "missedCount": "Sunete în timpul deconectării: {count} (nemonitorizat timp de {duration}).",
+      "missedNone": "Niciun sunet în timpul deconectării (nemonitorizat timp de {duration}).",
+      "missedUnknown": "Nu știm ce s-a întâmplat în timpul deconectării (nemonitorizat timp de {duration}).",
+      "batteryLowTitle": "Baterie slabă pe dispozitivul bebelușului",
+      "batteryLowText": "Bateria dispozitivului bebelușului: {percent}%. Pune-l la încărcat.",
+      "batteryCriticalTitle": "Bateria dispozitivului bebelușului aproape goală",
+      "batteryCriticalText": "Bateria dispozitivului bebelușului: {percent}%. Pune-l la încărcat acum.",
+      "chargerTitle": "Dispozitivul bebelușului nu se mai încarcă",
+      "chargerText": "Pune dispozitivul bebelușului la încărcat ca să reziste toată noaptea.",
+      "securityTitle": "Cheie greșită",
+      "publicTitle": "Alarmă GuardedSleep",
+      "fgsMissingTitle": "Nu se monitorizează în fundal",
+      "fgsMissingText": "Deschide GuardedSleep pentru a reactiva monitorizarea în fundal."
+    },
+    "ui": {
+      "common": {
+        "appName": "GuardedSleep",
+        "allow": "Permite",
+        "continue": "Continuă",
+        "later": "Mai târziu",
+        "ok": "OK",
+        "cancel": "Anulează",
+        "more": "Mai multe",
+        "moreCount": "+{count}",
+        "settings": "Setări",
+        "tryAgain": "Încearcă din nou",
+        "yes": "Da",
+        "no": "Nu",
+        "add": "Adaugă",
+        "remove": "Elimină",
+        "save": "Salvează",
+        "change": "Schimbă",
+        "durationSec": "{seconds} s",
+        "durationMin": "{minutes} min",
+        "durationHour": "{hours} h",
+        "durationHourMin": "{hours} h {minutes} min",
+        "secondsShort": "{seconds} s",
+        "state": {
+          "done": "Gata",
+          "todo": "De făcut",
+          "blocked": "Blocat",
+          "checking": "Se verifică"
+        },
+        "babyUnitDefault": "Dispozitivul bebelușului",
+        "parentUnitDefault": "Dispozitivul părintelui"
+      },
+      "role": {
+        "title": "Ce dispozitiv este acesta?",
+        "baby": {
+          "title": "Dispozitivul bebelușului",
+          "hint": "Rămâne lângă copilul tău și ascultă."
+        },
+        "parent": {
+          "title": "Dispozitivul părintelui",
+          "hint": "Rămâne lângă tine și te alertează."
+        },
+        "orderHint": "Configurează mai întâi dispozitivul bebelușului."
+      },
+      "setup": {
+        "title": "Pregătește acest dispozitiv",
+        "mic": {
+          "title": "Microfon",
+          "why": "Necesar pentru a-ți auzi copilul.",
+          "required": "Permite microfonul pentru a continua."
+        },
+        "background": {
+          "title": "Rulează în fundal",
+          "why": "Altfel acest dispozitiv poate opri monitorizarea pentru a economisi bateria."
+        },
+        "silence": {
+          "title": "Mod silențios în timpul monitorizării",
+          "why": "Fără sunete, tonuri de apel sau lumini pe dispozitivul bebelușului. Alarmele de ceas funcționează în continuare."
+        },
+        "safety": {
+          "body": "Ține acest dispozitiv la încărcat, pe o suprafață stabilă, departe de copil. Nu folosi un dispozitiv cu bateria umflată sau deteriorată."
+        },
+        "chargingTip": "Sfat: dacă acest dispozitiv are „trezește ecranul la conectarea încărcătorului”, dezactivează opțiunea ca ecranul să rămână întunecat.",
+        "deviceCheck": {
+          "checking": "Se verifică acest dispozitiv…",
+          "ok": "Acest dispozitiv funcționează bine ca dispozitiv al bebelușului.",
+          "limited": "Acest dispozitiv poate pierde conexiunea din când în când. Funcționează totuși.",
+          "notRecommended": "Acest dispozitiv poate să nu monitorizeze fiabil. Folosește altul dacă poți."
+        },
+        "notifications": {
+          "title": "Alerte",
+          "why": "Necesare ca să auzi când copilul face zgomot.",
+          "required": "Fără ele, GuardedSleep nu te poate alerta."
+        },
+        "lockScreen": {
+          "title": "Alerte pe ecranul de blocare",
+          "why": "Ca alertele să apară chiar și cu ecranul blocat."
+        },
+        "dndBypass": {
+          "title": "Alerte în modul Nu deranja",
+          "why": "Ca alertele să ajungă la tine chiar și cu Nu deranja activat."
+        },
+        "limits": {
+          "body": "GuardedSleep te poate alerta doar cât timp acest dispozitiv este pornit și încărcat. Ține-l la încărcat noaptea. Dacă ambele dispozitive se opresc, nimeni nu este alertat."
+        },
+        "skipped": "Omis deocamdată"
+      },
+      "pair": {
+        "baby": {
+          "title": "Conectează dispozitivul părintelui",
+          "qrAlt": "Cod de asociere",
+          "instruction": "Pe celălalt dispozitiv deschide GuardedSleep, alege Dispozitivul părintelui și scanează acest cod.",
+          "validFor": "Cod valabil {duration}",
+          "expired": "Acest cod a expirat.",
+          "newCode": "Arată un cod nou",
+          "copy": "Copiază codul",
+          "copied": "Copiat",
+          "brighter": "Fă codul mai luminos",
+          "waiting": "Se așteaptă dispozitivul părintelui…",
+          "privacy": "Oricine are acest cod poate asculta. Arată-l doar persoanelor în care ai încredere.",
+          "parentFound": "Dispozitivul părintelui a fost găsit. Se conectează…",
+          "failed": "Asocierea nu a mers. Arată un cod nou și încearcă din nou.",
+          "showText": "Arată codul ca text",
+          "hideText": "Ascunde textul"
+        },
+        "parent": {
+          "title": "Scanează codul de pe dispozitivul bebelușului",
+          "cameraWhy": "GuardedSleep folosește camera doar pentru a citi codul.",
+          "pasteLabel": "Sau lipește codul",
+          "pasteSubmit": "Conectează",
+          "connecting": "Se conectează la dispozitivul bebelușului…"
+        },
+        "error": {
+          "cameraDenied": "Camera nu este permisă.",
+          "allowCamera": "Permite camera",
+          "pasteInstead": "Lipește codul",
+          "notOurs": "Acesta nu este un cod GuardedSleep. Scanează codul de pe dispozitivul bebelușului.",
+          "expired": "Acest cod a expirat. Atinge Arată un cod nou pe dispozitivul bebelușului, apoi scanează din nou.",
+          "mismatch": "Codul nu se potrivește. Scanează codul care este acum pe dispozitivul bebelușului.",
+          "alreadyPaired": "Acest dispozitiv al bebelușului este deja asociat cu alt dispozitiv.",
+          "unreachable": "Dispozitivul bebelușului nu a fost găsit încă. Verifică dacă ambele dispozitive sunt online.",
+          "incomplete": "Acest cod este incomplet. Copiază întregul cod de pe dispozitivul bebelușului."
+        }
+      },
+      "home": {
+        "parent": {
+          "cardTitle": "Conectează-te la {name}",
+          "cardTitleDefault": "Conectează-te la dispozitivul bebelușului"
+        },
+        "baby": {
+          "cardTitle": "Pornește monitorizarea"
+        },
+        "lastUsed": "Folosit ultima dată {time}",
+        "newPairing": "Configurează dispozitive noi",
+        "empty": "Niciun dispozitiv asociat încă."
+      },
+      "baby": {
+        "status": {
+          "connected": "Conectat la dispozitivul părintelui",
+          "waiting": "Se așteaptă dispozitivul părintelui…",
+          "reconnecting": "Se reconectează la dispozitivul părintelui…",
+          "notResponding": "Dispozitivul părintelui nu răspunde, încerc în continuare",
+          "parentStopped": "Dispozitivul părintelui a oprit monitorizarea"
+        },
+        "forDuration": "de {duration}",
+        "monitoring": "Monitorizare",
+        "parentListening": "Părintele ascultă",
+        "battery": "Acest dispozitiv: baterie {percent}%",
+        "batteryCharging": "Acest dispozitiv: se încarcă · {percent}%",
+        "silence": {
+          "on": "Modul silențios este activat",
+          "off": "Modul silențios este dezactivat: acest dispozitiv poate suna",
+          "everydayPhone": "Modul silențios este activat. Apelurile și mesajele de pe acest dispozitiv rămân silențioase până oprești monitorizarea.",
+          "restored": "Acest dispozitiv rămăsese în modul silențios. Sunetele sunt din nou active.",
+          "noAccess": "Accesul la modul silențios este dezactivat. Activează-l în Setări ca apelurile și mesajele să rămână silențioase."
+        },
+        "lock": "Blochează ecranul",
+        "autolockHint": "Ecranul se întunecă în {seconds} s",
+        "stop": "Oprește monitorizarea",
+        "micLevel": "Nivelul sunetului aici",
+        "micSilent": "Microfonul nu captează niciun sunet. Repornește monitorizarea sau verifică microfonul."
+      },
+      "kiosk": {
+        "a11yLabel": "Se monitorizează. Ecran blocat.",
+        "unlockHint": "Ține apăsat și glisează în sus pentru a debloca",
+        "unlockZone": "Glisează aici",
+        "unlockAction": "Deblochează"
+      },
+      "link": {
+        "connected": "Conectat la {name}",
+        "connecting": "Se conectează la {name}…",
+        "reconnecting": "Se reconectează…",
+        "cantReach": "{name} nu răspunde, încerc în continuare",
+        "lostFor": "Fără conexiune de {duration}",
+        "babyStopped": "{name} a oprit monitorizarea",
+        "idle": "Nu se monitorizează",
+        "weak": "Conexiune slabă: sunetul poate fi întrerupt",
+        "restoredAfter": "Conectat din nou după {duration}. Îți auzi din nou copilul.",
+        "tryNow": "Încearcă acum",
+        "pairAgain": "Asociază din nou",
+        "connectedDefault": "Conectat la dispozitivul bebelușului",
+        "connectingDefault": "Se conectează la dispozitivul bebelușului…",
+        "cantReachDefault": "Dispozitivul bebelușului nu răspunde, încerc în continuare",
+        "babyStoppedDefault": "Dispozitivul bebelușului a oprit monitorizarea",
+        "stalePairingHint": "Dacă ai asociat din nou dispozitivul bebelușului, scanează noul lui cod."
+      },
+      "linkAlarm": {
+        "lost": {
+          "title": "Nicio conexiune cu {name}",
+          "titleUrgent": "Nicio conexiune cu {name}!",
+          "body": "Nu îți vei auzi copilul până când dispozitivele se reconectează.",
+          "titleDefault": "Nicio conexiune cu dispozitivul bebelușului",
+          "titleUrgentDefault": "Nicio conexiune cu dispozitivul bebelușului!"
+        },
+        "stopped": {
+          "title": "{name} a oprit monitorizarea",
+          "body": "Cineva a oprit monitorizarea pe dispozitivul bebelușului. Nu vei primi alerte.",
+          "titleDefault": "Dispozitivul bebelușului a oprit monitorizarea"
+        },
+        "battery": {
+          "title": "Bateria dispozitivului bebelușului aproape goală",
+          "body": "Pune acum dispozitivul bebelușului la încărcat, altfel monitorizarea se oprește."
+        },
+        "needsPairing": {
+          "title": "Dispozitivele nu mai sunt asociate"
+        },
+        "restored": {
+          "title": "Conectat din nou"
+        },
+        "ack": "Verific",
+        "ackNote": "Sunet oprit pentru {time}. Te alertăm din nou dacă tot nu e conexiune.",
+        "soundNote": "Un ton de alarmă lin se repetă până verifici.",
+        "soundNoteUrgent": "Alarma sună până verifici."
+      },
+      "parent": {
+        "allQuietSince": "Liniște de la {time}",
+        "soundSince": "Sunet detectat · de la {time}",
+        "soundAt": "Sunet la {time} · a durat {duration}",
+        "soundSnoozed": "Sunet la {time} · alerte amânate",
+        "lastHeard": "Ultimul contact {time}",
+        "noContactYet": "Niciun contact încă",
+        "monitoringNow": "Monitorizare",
+        "meterA11y": "Nivelul sunetului: {level}",
+        "level": {
+          "quiet": "liniște",
+          "some": "ceva sunet",
+          "loud": "puternic"
+        },
+        "stop": "Oprește monitorizarea",
+        "securityTitle": "Avertisment de securitate",
+        "securityBody": "Conexiunea nu a putut fi verificată. Dacă nu ai asociat chiar acum dispozitivele din nou, asociază-le din nou acum.",
+        "staleSuffix": "· la {time}",
+        "unitWarning": {
+          "pageHidden": "Dispozitivul bebelușului se poate opri: pagina lui este ascunsă",
+          "wakeLockOff": "Dispozitivul bebelușului poate adormi: ecranul nu este ținut aprins",
+          "resumedFromSleep": "Dispozitivul bebelușului s-a trezit din repaus: unele sunete pot fi ratate",
+          "notCharging": "Dispozitivul bebelușului nu se mai încarcă",
+          "micPermissionLost": "Dispozitivul bebelușului a pierdut accesul la microfon"
+        }
+      },
+      "battery": {
+        "baby": "Dispozitivul bebelușului {percent}%",
+        "babyLow": "Bateria dispozitivului bebelușului: {percent}%. Pune-l la încărcat",
+        "parentLow": "Acest dispozitiv are {percent}%: pune-l la încărcat ca să continue monitorizarea",
+        "parentLowGeneric": "Bateria acestui dispozitiv este slabă: pune-l la încărcat ca să continue monitorizarea"
+      },
+      "listen": {
+        "idle": "Ține apăsat pentru a asculta",
+        "holding": "Se ascultă…",
+        "locked": "Se ascultă · atinge pentru a opri",
+        "lockHint": "Glisează în sus pentru a continua să asculți",
+        "disabled": "Ascultă când ești conectat",
+        "a11yLocked": "Se ascultă. Atinge de două ori pentru a opri."
+      },
+      "snooze": {
+        "button": "Amână",
+        "title": "Amână alertele de zgomot",
+        "help": "Primești în continuare alerte dacă se pierde conexiunea sau bateria se descarcă.",
+        "minutes": "Amână {minutes} min",
+        "end": "Încheie amânarea",
+        "active": "Amânat · mai sunt {minutes} min"
+      },
+      "probe": {
+        "button": "Alertă de test",
+        "title": "Testează-ți alertele",
+        "body": "Redă un sunet de test pe acest dispozitiv. Dispozitivul bebelușului rămâne liniștit.",
+        "output": "Alertele sună pe: {output}",
+        "run": "Rulează testul",
+        "running": "Se rulează testul…",
+        "question": "Ai auzit și ai simțit alerta?",
+        "localOnly": "S-a testat doar acest dispozitiv: dispozitivul bebelușului nu este conectat."
+      },
+      "readiness": {
+        "title": "Ajung alertele la tine?",
+        "notificationsOff": "Alertele sunt dezactivate pentru GuardedSleep",
+        "alarmVolumeZero": "Volumul alarmei este oprit: nu vei auzi alertele",
+        "lockScreen": "Alertele nu pot apărea pe ecranul de blocare",
+        "dnd": "Nu deranja poate dezactiva sunetul alertelor",
+        "battery": "Acest dispozitiv poate opri GuardedSleep în fundal",
+        "headphones": "Alertele vor suna în căști",
+        "neverTested": "Testează-ți alertele",
+        "ok": "Totul e pregătit: alertele ajung la tine",
+        "fix": {
+          "notifications": "Activează alertele",
+          "dnd": "Permite alertele în modul Nu deranja",
+          "battery": "Permite rularea în fundal"
+        }
+      },
+      "silence": {
+        "silent": "Dispozitivul bebelușului este în modul silențios",
+        "alarmsStillRing": "Alarmele de ceas de pe el pot suna în continuare.",
+        "screenMayLight": "Dispozitivul bebelușului este în modul silențios, dar ecranul se poate aprinde",
+        "mayVibrate": "Dispozitivul bebelușului poate vibra",
+        "mayRing": "Dispozitivul bebelușului poate suna",
+        "unknown": "Mod silențios: necunoscut, dispozitivul bebelușului nu poate fi verificat",
+        "manual": "Pe dispozitivul bebelușului activează Nu deranja și scade luminozitatea.",
+        "noAccess": "Pentru a activa modul silențios de aici, deschide Setări pe dispozitivul bebelușului și activează „Mod silențios în timpul monitorizării”.",
+        "apply": "Activează modul silențios",
+        "applyFull": "Activează complet modul silențios",
+        "pending": "Se activează modul silențios…",
+        "failed": "Modul silențios nu a putut fi activat pe dispozitivul bebelușului.",
+        "webUnknown": "Necunoscut: activează singur modul silențios pe dispozitivul bebelușului",
+        "webHint": "Dacă dispozitivul bebelușului este un laptop, ține-l la încărcat, cu capacul deschis și ecranul pornit."
+      },
+      "help": {
+        "reconnect": {
+          "open": "Ce pot face?",
+          "title": "Reconectarea",
+          "step1": "Este dispozitivul bebelușului pornit și afișează GuardedSleep?",
+          "step2": "Sunt ambele dispozitive în aceeași rețea Wi-Fi sau folosesc ambele date mobile?",
+          "step3": "Tot nu merge? Închide și redeschide GuardedSleep pe dispozitivul bebelușului."
+        }
+      },
+      "stop": {
+        "title": "Oprești monitorizarea?",
+        "parentBody": "Nu vei primi alerte de la {name}.",
+        "babyBody": "Dispozitivul părintelui nu va mai primi alerte.",
+        "confirm": "Oprește",
+        "cancel": "Continuă monitorizarea",
+        "parentBodyDefault": "Nu vei primi alerte de la dispozitivul bebelușului."
+      },
+      "forget": {
+        "title": "Ștergi {name}?",
+        "body": "Monitorizarea se oprește și va trebui să scanezi un cod nou pentru a te conecta din nou.",
+        "confirm": "Șterge",
+        "titleBabyDefault": "Ștergi dispozitivul bebelușului?",
+        "titleParentDefault": "Ștergi dispozitivul părintelui?"
+      },
+      "missed": {
+        "some": "În timpul deconectării: {count, plural, one {1 sunet} few {# sunete} other {# de sunete}} între {start} și {end}. Cel mai puternic: {level}.",
+        "none": "Niciun sunet în timpul deconectării.",
+        "unknown": "Nu știm ce s-a întâmplat între {start} și {end}."
+      },
+      "coach": {
+        "bar": "Verde înseamnă că monitorizezi. Dacă devine roșu sau dispare, nu monitorizezi.",
+        "listen": "Ține apăsat pentru a asculta. Glisează în sus pentru a continua să asculți.",
+        "test": "Rulează o alertă de test ca să știi cum se simte o alertă.",
+        "runTest": "Rulează acum alerta de test"
+      },
+      "alert": {
+        "title": "Sunet detectat",
+        "since": "De la {time}",
+        "ended": "Sunetul s-a oprit.",
+        "testBadge": "TEST",
+        "stopSound": "Oprește sunetul",
+        "soundStopped": "Sunet oprit",
+        "openApp": "Deschide GuardedSleep"
+      },
+      "settings": {
+        "group": {
+          "soundDetection": "Detectarea sunetului",
+          "silence": "Mod silențios",
+          "alerts": "Alerte",
+          "screen": "Ecran",
+          "paired": "Dispozitiv asociat",
+          "thisPhone": "Acest dispozitiv",
+          "language": "Limbă",
+          "about": "Despre și limite",
+          "advanced": "Avansat"
+        },
+        "sensitivity": "Sensibilitate",
+        "moreSensitive": "Mai sensibil",
+        "lessSensitive": "Mai puțin sensibil",
+        "holdLabel": "Zgomotul trebuie să dureze cel puțin",
+        "silenceAccessOk": "Accesul la modul silențios este activat.",
+        "outputLabel": "Sunetul alertei se aude pe",
+        "output": {
+          "default": "Căști dacă sunt conectate, altfel difuzor",
+          "speaker": "Doar difuzor"
+        },
+        "gain": "Alerte extra puternice: {percent}%",
+        "lastTest": "Ultimul test: {time}",
+        "neverTested": "Netestat încă",
+        "theme": {
+          "dark": "Întunecat (implicit)",
+          "light": "Luminos",
+          "system": "Ca în sistem"
+        },
+        "forgetParent": "Șterge acest dispozitiv al părintelui",
+        "forgetBaby": "Șterge acest dispozitiv al bebelușului",
+        "checkPhone": "Verifică configurarea acestui dispozitiv",
+        "lang": {
+          "system": "Ca în sistem",
+          "en": "English",
+          "de": "Deutsch",
+          "fr": "Français",
+          "es": "Español"
+        },
+        "advanced": {
+          "toggle": "Arată setările avansate",
+          "warning": {
+            "title": "Schimbi setările avansate?",
+            "body": "Valorile greșite pot împiedica conectarea dispozitivelor. Schimbă-le doar dacă știi ce faci."
+          },
+          "confirm": "Arată setările avansate",
+          "cancel": "Nu acum"
+        },
+        "urlsLabel": "Adresele serverului de conectare (încercate în ordine)",
+        "url": {
+          "new": "Adresă nouă (wss://…)",
+          "invalid": "Adresa trebuie să înceapă cu wss:// sau ws://."
+        },
+        "turn": {
+          "label": "Server releu (TURN), opțional",
+          "invalid": "Adresa releului trebuie să înceapă cu turn: sau turns:."
+        },
+        "heartbeat": "Verificarea conexiunii la fiecare {seconds} s"
+      },
+      "fgsMissing": {
+        "bar": "Nu se monitorizează în fundal: deschide aplicația",
+        "body": "Android a oprit serviciul GuardedSleep din fundal. Alertele pot să nu ajungă la tine cât timp ecranul este stins.",
+        "fix": "Reactivează monitorizarea în fundal"
+      }
+    }
+  },
+  "webShell": {
+    "route": {
+      "role": "Ce dispozitiv este acesta?",
+      "babyPair": "Asociază dispozitivul bebelușului",
+      "baby": "Dispozitivul bebelușului",
+      "parentPair": "Asociază dispozitivul părintelui",
+      "parent": "Dispozitivul părintelui",
+      "settings": "Setări"
+    },
+    "skipToContent": "Salt la conținut",
+    "dismiss": "Închide"
+  },
+  "webScreens": {
+    "role": {
+      "title": "Folosește acest dispozitiv ca",
+      "subtitle": "Telefon, tabletă sau laptop. Configurează mai întâi dispozitivul bebelușului.",
+      "navLabel": "Alege un rol",
+      "privacyNote": "Sunetul merge direct între cele două dispozitive ale tale și nu este niciodată înregistrat."
+    },
+    "pair": {
+      "copyHint": "Lipește-l pe dispozitivul părintelui în 5 minute. Nu-l trimite într-un chat.",
+      "or": "sau",
+      "cameraUnavailable": "Aici nu este disponibilă nicio cameră. Lipește codul.",
+      "cameraView": "Imagine de la cameră"
+    },
+    "baby": {
+      "failMicDenied": "Microfonul este blocat, deci acest dispozitiv nu-ți poate auzi copilul. Permite-l în setările site-ului din browser.",
+      "failMicUnavailable": "Nu s-a găsit niciun microfon, deci acest dispozitiv nu-ți poate auzi copilul.",
+      "quietUnknown": "Mod silențios: necunoscut",
+      "keepAwake": "Ține acest dispozitiv treaz: la încărcat, capacul deschis, această filă vizibilă.",
+      "keepSilent": "Activează Nu deranja și scade luminozitatea pe acest dispozitiv."
+    },
+    "parent": {
+      "quietUnknownWeb": "Mod silențios necunoscut · activează-l pe dispozitivul bebelușului",
+      "keepOpen": "Ține această pagină deschisă și ecranul pornit. Altfel browserul nu te poate alerta.",
+      "soundGate": "Atinge pentru a activa sunetul alertelor"
+    },
+    "settings": {
+      "urlHint": "Dispozitivul bebelușului scrie aceste adrese în codul lui, deci le folosește și dispozitivul părintelui.",
+      "sensitivityBabyOnly": "Sensibilitatea se setează pe dispozitivul bebelușului."
+    },
+    "guard": {
+      "wakeLockHeld": "Ecranul rămâne pornit",
+      "wakeLockLost": "Ecranul nu mai este ținut pornit, deci acest dispozitiv poate adormi și poate opri monitorizarea.",
+      "wakeLockUnsupported": "Acest browser nu poate ține ecranul pornit. Dezactivează oprirea ecranului în setările dispozitivului.",
+      "wakeLockRetry": "Ține ecranul pornit",
+      "hiddenTitle": "GuardedSleep poate opri monitorizarea",
+      "hiddenBody": "Această pagină este în fundal. Deschide-o din nou pentru a continua monitorizarea.",
+      "awayBackground": "Această pagină a fost în fundal timp de {duration}. Unele alerte pot fi ratate.",
+      "awaySleep": "Acest dispozitiv a fost în repaus timp de {duration}. Unele alerte pot fi ratate."
+    },
+    "night": {
+      "open": "Ecran de noapte",
+      "label": "Ecran de noapte. Se monitorizează în continuare. Atinge pentru a vedea starea.",
+      "monitoring": "Se monitorizează în continuare",
+      "leave": "Atinge din nou pentru a ieși din ecranul de noapte"
+    }
+  }
+}
