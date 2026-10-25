@@ -274,6 +274,14 @@ The first review's design used a bearer parent id inside the envelopes. A PSK ho
 
 **Persist before send:** the parent's core emits the secret for persistence before the action that sends it, and the platform persists it before it executes later actions. A parent that restarts after sending still has the secret, so a lost acknowledgement cannot lock the real parent out.
 
+**As built (security review follow-up):**
+
+- `pair_again` is raised on a baby that holds no secret for a parent and whose invite window is over, as soon as an envelope of a parent arrives (its pairing never completed, or the record was lost). `baby_unrecognised` is raised on a parent whose secret the baby never acknowledged and whose window is over, after three refused baby envelopes or baby proofs in a run. An acknowledged pairing never raises it, so a PSK holder cannot push the parent into that message. Both are sticky status causes, cleared by a trusted attempt; neither changes the escalation level.
+- A parent or baby without a wall clock treats a bounded window as closed: it sends no raw secret and accepts no `parent_pin` until the platform has reported the clock (the platforms do at start).
+- The sim runs the window through `pin_window_s` on a peer and loses exactly the secret message with `drop_data` `message: "parent_pin"`.
+- The web client keeps the same fields in memory; it has nothing to persist before sending, but its baby completes the pairing at `parent_pinned`, like Android.
+- Android's pairing record is written with an fsync before the rename; a failed write throws, the runner drops the rest of the batch and the core repeats `ParentPinned` with its next resend.
+
 **Early refusal:**
 
 - Envelopes from a pinned parent also carry `HMAC(parent_secret, envelope_nonce)[0..16]` inside the ciphertext.
