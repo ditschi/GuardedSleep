@@ -94,10 +94,7 @@
         "key": "recovery_path_unavailable",
         "active": true
       },
-      "within_ms": [
-        1800000,
-        1830000
-      ],
+      "within_ms": [1800000, 1830000],
       "count": 1
     },
     {
@@ -107,10 +104,7 @@
         "key": "recovery_path_unavailable",
         "active": true
       },
-      "within_ms": [
-        1800000,
-        1830000
-      ],
+      "within_ms": [1800000, 1830000],
       "count": 1
     },
     {
@@ -120,10 +114,7 @@
         "key": "recovery_path_unavailable",
         "active": false
       },
-      "within_ms": [
-        3600000,
-        3650000
-      ],
+      "within_ms": [3600000, 3650000],
       "count": 1
     },
     {

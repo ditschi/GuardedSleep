@@ -88,18 +88,12 @@
     {
       "peer": "parent",
       "never": "peer_stopped",
-      "within_ms": [
-        6000,
-        60000
-      ]
+      "within_ms": [6000, 60000]
     },
     {
       "peer": "parent",
       "max_level": 1,
-      "within_ms": [
-        20000,
-        60000
-      ]
+      "within_ms": [20000, 60000]
     }
   ]
 }

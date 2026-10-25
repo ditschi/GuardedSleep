@@ -220,6 +220,46 @@ describe("LinkDriver with a scripted core", () => {
     expect(FakeWebSocket.instances[0]?.sent).toEqual(["hello"]);
   });
 
+  it("opens a Nostr mailbox at its own address only, next to the relay's list", () => {
+    const core = new ScriptedCore();
+    core.script = (input) =>
+      input.type === "start"
+        ? [
+            { type: "open_mailbox", id: 0, kind: "relay", url: "" },
+            { type: "open_mailbox", id: 1, kind: "nostr", url: "wss://relay-a.example" },
+          ]
+        : [];
+    const { driver } = setup("parent", core);
+    driver.start();
+    expect(FakeWebSocket.instances.map((w) => w.url)).toEqual([
+      "ws://relay.test:8787",
+      "wss://relay-a.example",
+    ]);
+    // Each socket speaks for its own mailbox id.
+    FakeWebSocket.instances[1]?.open();
+    FakeWebSocket.instances[1]?.receive('["EOSE","s"]');
+    expect(core.inputs.slice(1).map((i) => i.input)).toEqual([
+      { type: "mailbox_opened", id: 1 },
+      { type: "mailbox_frame", id: 1, bytes: '["EOSE","s"]' },
+    ]);
+  });
+
+  it("drops a mailbox frame over 64 KiB before the core sees it", () => {
+    const core = new ScriptedCore();
+    core.script = (input) =>
+      input.type === "start"
+        ? [{ type: "open_mailbox", id: 1, kind: "nostr", url: "wss://relay-a.example" }]
+        : [];
+    const { driver } = setup("parent", core);
+    driver.start();
+    const socket = FakeWebSocket.instances[0];
+    socket?.open();
+    socket?.receive("x".repeat(64 * 1024 + 1));
+    socket?.receive("x".repeat(64 * 1024));
+    const frames = core.inputs.slice(1).filter((i) => i.input.type === "mailbox_frame");
+    expect(frames).toHaveLength(1);
+  });
+
   it("runs the attempt lifecycle from the core's actions and reports the browser's events", () => {
     const core = new ScriptedCore();
     core.script = (input) => {

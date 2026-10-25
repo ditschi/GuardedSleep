@@ -100,7 +100,26 @@ export async function createWebApp(): Promise<AppController> {
     defaultSignalingUrls: () => defaultSignalingUrls(window.location, import.meta.env.DEV),
     deviceName: () => browserDeviceName(navigator),
     allowDevLoopback,
+    nostrRelays: () => devNostrRelays(allowDevLoopback),
   });
+}
+
+/**
+ * A local Nostr test relay for `just dev` and the browser E2E (a JSON list of `ws://127.0.0.1:port`
+ * under this key). Release builds read nothing here: public relays come from the curated list
+ * (`alpha-connection-model` task 3.6). The value is not secret and never pairing material.
+ */
+const DEV_NOSTR_KEY = "guardedsleep:dev-nostr-relays";
+
+function devNostrRelays(allowDevLoopback: boolean): string[] {
+  if (!allowDevLoopback) return [];
+  try {
+    const raw = localStorage.getItem(DEV_NOSTR_KEY);
+    const list: unknown = raw === null ? [] : JSON.parse(raw);
+    return Array.isArray(list) ? list.filter((u): u is string => typeof u === "string") : [];
+  } catch {
+    return [];
+  }
 }
 
 /** The camera scanner of the parent pairing screen (native `BarcodeDetector`, zxing otherwise). */

@@ -6700,12 +6700,7 @@
         "pubkey": "b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d",
         "created_at": 86443205,
         "kind": 24861,
-        "tags": [
-          [
-            "t",
-            "VV3ANl6l5deHPTpH6ebfyl"
-          ]
-        ],
+        "tags": [["t", "VV3ANl6l5deHPTpH6ebfyl"]],
         "content": "QUJDREVGRw",
         "sig": "edee599b7b2335d6802ddcc03629fd963534610237023610699b23e0c827f9d7c0bcb0d15a7fc173c22add01b0bddec26bfbedbef1889b8bbc11a535823388ba"
       }

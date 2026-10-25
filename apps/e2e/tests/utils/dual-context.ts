@@ -35,6 +35,11 @@ export async function launchDualContexts(opts: {
   signalUrl?: string;
   /** Browser permissions for both contexts (default: the microphone only). */
   permissions?: string[];
+  /**
+   * Local Nostr test relays (`ws://127.0.0.1:port`) the baby device names in its invite. The
+   * development and E2E builds read them from localStorage; a release build reads nothing.
+   */
+  nostrRelays?: string[];
 }): Promise<DualContexts> {
   const baseUrl = opts.baseUrl ?? "http://127.0.0.1:5173";
   // A LAN IP over plain http is not a secure context; treat it as one so getUserMedia works.
@@ -76,11 +81,24 @@ export async function launchDualContexts(opts: {
 
   const signalWs = opts.signalUrl ?? process.env.E2E_SIGNALING_URL ?? "ws://127.0.0.1:18787";
   // addInitScript takes exactly one argument: pass an object, extra positional args are dropped.
-  const seedStorage = ({ url, prefs }: { url: string; prefs: string }) => {
+  const seedStorage = ({
+    url,
+    prefs,
+    nostr,
+  }: {
+    url: string;
+    prefs: string;
+    nostr: string | null;
+  }) => {
     localStorage.setItem("guardedsleep:signaling-url", url);
     localStorage.setItem("guardedsleep:app-preferences", prefs);
+    if (nostr !== null) localStorage.setItem("guardedsleep:dev-nostr-relays", nostr);
   };
-  const seed = { url: signalWs, prefs: E2E_APP_PREFERENCES_JSON };
+  const seed = {
+    url: signalWs,
+    prefs: E2E_APP_PREFERENCES_JSON,
+    nostr: opts.nostrRelays ? JSON.stringify(opts.nostrRelays) : null,
+  };
   await baby.addInitScript(seedStorage, seed);
   await parent.addInitScript(seedStorage, seed);
 

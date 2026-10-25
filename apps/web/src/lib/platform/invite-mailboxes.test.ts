@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { mailboxesForUrls, signalingUrlsOf } from "./invite-mailboxes";
+import {
+  mailboxesForUrls,
+  nostrMailboxesForUrls,
+  nostrMailboxesOf,
+  signalingUrlsOf,
+} from "./invite-mailboxes";
 
 describe("invite mailboxes", () => {
   it("maps wss to an own relay and ws to a LAN mailbox, skipping other schemes", () => {
@@ -42,13 +47,22 @@ describe("invite mailboxes", () => {
     ]);
   });
 
-  it("opens relay and LAN mailboxes only, until the core speaks Nostr", () => {
+  it("opens relay and LAN mailboxes as signaling URLs and leaves the Nostr relays to the core", () => {
+    const set = [
+      { kind: "nostr" as const, url: "wss://relay.example.org" },
+      { kind: "relay" as const, url: "wss://gs.example.com" },
+      { kind: "lan" as const, url: "ws://10.0.2.2:8787" },
+    ];
+    expect(signalingUrlsOf(set)).toEqual(["wss://gs.example.com", "ws://10.0.2.2:8787"]);
+    expect(nostrMailboxesOf(set)).toEqual([{ kind: "nostr", url: "wss://relay.example.org" }]);
+  });
+
+  it("names Nostr relays by their URL and skips other schemes", () => {
     expect(
-      signalingUrlsOf([
-        { kind: "nostr", url: "wss://relay.example.org" },
-        { kind: "relay", url: "wss://gs.example.com" },
-        { kind: "lan", url: "ws://10.0.2.2:8787" },
-      ]),
-    ).toEqual(["wss://gs.example.com", "ws://10.0.2.2:8787"]);
+      nostrMailboxesForUrls(["wss://relay-a.example", "ws://127.0.0.1:7777", "http://x", ""]),
+    ).toEqual([
+      { kind: "nostr", url: "wss://relay-a.example" },
+      { kind: "nostr", url: "ws://127.0.0.1:7777" },
+    ]);
   });
 });

@@ -18,19 +18,19 @@ const SIGNALING = process.env.E2E_SIGNALING_URL ?? "ws://127.0.0.1:18787";
  * page memory, so the baby device does this once per page load; the parent device takes the
  * addresses from the code.
  */
-export async function useE2eSignaling(page: Page): Promise<void> {
+export async function useE2eSignaling(page: Page, url: string = SIGNALING): Promise<void> {
   await page.goto("/");
   await page.getByTestId("home_settings").click();
   await page.getByTestId("settings_advanced_toggle").click();
   await page.getByTestId("dialog_advanced_confirm").click();
-  await page.getByTestId("settings_url_input").fill(SIGNALING);
+  await page.getByTestId("settings_url_input").fill(url);
   await page.getByTestId("settings_url_add").click();
   await page.getByTestId("settings_back").click();
 }
 
 /** Baby device: opens the pairing screen and returns the code from the clipboard. */
-export async function showCode(page: Page): Promise<string> {
-  await useE2eSignaling(page);
+export async function showCode(page: Page, signalingUrl?: string): Promise<string> {
+  await useE2eSignaling(page, signalingUrl);
   await page.getByTestId("role_baby").click();
   await expect(page.getByTestId("baby_pair_qr")).toBeVisible({ timeout: 20_000 });
   await page.getByTestId("baby_pair_copy").click();
@@ -47,8 +47,8 @@ export async function pasteCode(page: Page, code: string): Promise<void> {
 }
 
 /** Pairs the two pages and waits until both show a connected link. */
-export async function pairWeb(dual: DualContexts): Promise<string> {
-  const code = await showCode(dual.babyPage);
+export async function pairWeb(dual: DualContexts, signalingUrl?: string): Promise<string> {
+  const code = await showCode(dual.babyPage, signalingUrl);
   await pasteCode(dual.parentPage, code);
   await expect(dual.parentPage.getByTestId("parent_ambient_bar")).toHaveAttribute(
     "data-kind",

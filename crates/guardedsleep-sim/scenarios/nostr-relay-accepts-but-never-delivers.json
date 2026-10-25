@@ -81,10 +81,7 @@
     },
     {
       "peer": "parent",
-      "nostr_used": [
-        "wss://nostr-a.example",
-        "wss://nostr-b.example"
-      ]
+      "nostr_used": ["wss://nostr-a.example", "wss://nostr-b.example"]
     }
   ]
 }

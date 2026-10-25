@@ -35,6 +35,8 @@ export interface LinkListener {
   onTornDown(): void;
 }
 
+/** The longest mailbox frame passed on to the core (`signaling-mailboxes`: frames are capped at 64 KiB). */
+const MAX_FRAME_CHARS = 64 * 1024;
 /** The wall clock is reported this often (the core needs minute resolution). */
 const WALL_CLOCK_EVERY_MS = 60_000;
 /** A wall clock this far off the monotonic time since the last report counts as a time change. */
@@ -180,7 +182,7 @@ export class LinkDriver {
   private execute(action: LinkAction, now: number): void {
     switch (action.type) {
       case "open_mailbox":
-        return this.openMailbox(action.id);
+        return this.openMailbox(action.id, action.url);
       case "close_mailbox":
         return this.closeMailbox(action.id);
       case "mailbox_send":
@@ -214,20 +216,24 @@ export class LinkDriver {
   }
 
   /**
-   * The core's `url` is empty in the first stage: the relay URL list still lives here (invite v4
-   * moves it into the core). A failed open comes back as `mailbox_closed`, never as a retry.
+   * The core's `url` is empty for the relay mailbox: its URL list still lives here. A Nostr mailbox
+   * names its relay, and only that address is tried. A failed open comes back as
+   * `mailbox_closed`, never as a retry.
    */
-  private openMailbox(id: number): void {
+  private openMailbox(id: number, url: string): void {
     this.closeMailbox(id);
     const gen = ++this.socketGen;
     // Callbacks of a replaced socket are dropped; the core only hears about the current one.
     const current = (): boolean => this.sockets.get(id)?.gen === gen;
-    const socket = this.o.signaling(this.o.signalingUrls, {
+    const socket = this.o.signaling(url === "" ? this.o.signalingUrls : [url], {
       onOpen: () => {
         if (current()) this.dispatch({ type: "mailbox_opened", id });
       },
       onMessage: (bytes) => {
-        if (current()) this.dispatch({ type: "mailbox_frame", id, bytes });
+        // A frame over the cap is dropped here (a public relay is untrusted); the core caps too.
+        if (current() && bytes.length <= MAX_FRAME_CHARS) {
+          this.dispatch({ type: "mailbox_frame", id, bytes });
+        }
       },
       onClose: () => {
         if (current()) this.dispatch({ type: "mailbox_closed", id, reason: "closed" });

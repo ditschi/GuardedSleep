@@ -79,10 +79,7 @@
     {
       "peer": "parent",
       "nostr_sent_max": 120,
-      "within_ms": [
-        60000,
-        3660000
-      ]
+      "within_ms": [60000, 3660000]
     },
     {
       "peer": "parent",

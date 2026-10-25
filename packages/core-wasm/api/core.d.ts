@@ -116,8 +116,10 @@ export interface LinkConfig {
      */
     device_name?: string;
     /**
-     * Baby: the mailbox set to send the parent after each verification (the mailbox update). Empty:
-     * none is sent.
+     * The pairing's mailbox set. The core opens its `nostr` entries itself (the platform opens one
+     * socket per `open_mailbox` and passes text frames); the `relay` and `lan` entries stay in the
+     * platform's address list for now. Baby: the set is also sent to the parent after each
+     * verification (the mailbox update); empty: none is sent.
      */
     mailboxes?: InviteMailbox[];
     /**
@@ -125,6 +127,11 @@ export interface LinkConfig {
      * `parse_invite`'s flag of the same name.
      */
     allow_dev_loopback?: boolean;
+    /**
+     * "Only same Wi-Fi or my own server": the `nostr` entries of the set, of an invite and of a
+     * mailbox update are ignored, so no public relay is contacted from this device.
+     */
+    only_local?: boolean;
 }
 
 export interface LinkStatus {

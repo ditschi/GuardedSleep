@@ -106,7 +106,7 @@ The replay state (envelope ids and sequence numbers) SHALL cover the whole `Link
 
 ### Requirement: Rotating Nostr address
 
-On public relays, the tag and signing keys SHALL be derived from the PSK and a daily epoch that changes at 12:00 UTC. Both devices SHALL subscribe to both epochs during the hour around the change and SHALL re-subscribe at the change. Subscriptions SHALL look back 15 minutes. The epoch SHALL be checked only for Nostr addressing, never on relay or LAN mailboxes, and a device without a known wall clock SHALL open no Nostr mailbox.
+On public relays, every signaling event SHALL have the fixed ephemeral kind 24861, and the tag and signing keys SHALL be derived from the PSK and a daily epoch that changes at 12:00 UTC. Both devices SHALL subscribe to both epochs during the hour around the change and SHALL re-subscribe at the change. Subscriptions SHALL look back 15 minutes. The epoch SHALL be checked only for Nostr addressing, never on relay or LAN mailboxes, and a device without a known wall clock SHALL open no Nostr mailbox.
 
 #### Scenario: Two days in a row
 

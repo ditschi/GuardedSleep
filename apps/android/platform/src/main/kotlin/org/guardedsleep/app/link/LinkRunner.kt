@@ -214,7 +214,7 @@ class LinkRunner(
 
     private fun execute(action: LinkAction, now: Long) {
         when (action) {
-            is LinkAction.OpenMailbox -> openMailbox(action.id)
+            is LinkAction.OpenMailbox -> openMailbox(action.id, action.url)
             is LinkAction.CloseMailbox -> closeMailbox(action.id)
             is LinkAction.MailboxSend -> mailboxes[action.id]?.transport?.send(action.frame)
             is LinkAction.CreateAttempt -> createAttempt(action.attempt, action.offerer)
@@ -282,22 +282,27 @@ class LinkRunner(
     private class PinNotPersisted : RuntimeException("parent secret not persisted")
 
     /**
-     * The core's `url` is empty in the first stage: the relay URL list still lives here (invite v4
-     * moves it into the core). A failed open comes back as `MailboxClosed`, never as a retry.
+     * The core's `url` is empty for the relay mailbox: its URL list still lives here. A Nostr
+     * mailbox names its relay, and only that address is tried. A failed open comes back as
+     * `MailboxClosed`, never as a retry.
      */
-    private fun openMailbox(id: UInt) {
+    private fun openMailbox(id: UInt, url: String) {
         closeMailbox(id)
         val gen = ++mailboxGen
         val transport =
             signaling.create(
-                signalingUrls,
+                if (url.isEmpty()) signalingUrls else listOf(url),
                 object : SignalingListener {
                     override fun onOpened() = post {
                         if (isCurrent(id, gen)) dispatch(LinkInput.MailboxOpened(id))
                     }
 
                     override fun onMessage(text: String) = post {
-                        if (isCurrent(id, gen)) dispatch(LinkInput.MailboxFrame(id, text))
+                        // A frame over the cap is dropped here (a public relay is untrusted); the
+                        // core caps too.
+                        if (isCurrent(id, gen) && text.length <= MAX_FRAME_CHARS) {
+                            dispatch(LinkInput.MailboxFrame(id, text))
+                        }
                     }
 
                     override fun onClosed() = post {
@@ -436,6 +441,9 @@ class LinkRunner(
     private companion object {
         const val FLUSH_MS = 300L
         const val STATS_MS = 5_000L
+
+        /** The longest mailbox frame passed on to the core (`signaling-mailboxes`: 64 KiB). */
+        const val MAX_FRAME_CHARS = 64 * 1024
 
         /** The wall clock is reported this often (the core needs minute resolution). */
         const val WALL_CLOCK_EVERY_MS = 60_000L

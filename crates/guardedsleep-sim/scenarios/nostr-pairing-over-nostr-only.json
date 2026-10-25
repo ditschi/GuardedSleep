@@ -87,19 +87,11 @@
     },
     {
       "peer": "parent",
-      "nostr_used": [
-        "wss://nostr-a.example",
-        "wss://nostr-b.example",
-        "wss://nostr-c.example"
-      ]
+      "nostr_used": ["wss://nostr-a.example", "wss://nostr-b.example", "wss://nostr-c.example"]
     },
     {
       "peer": "baby",
-      "nostr_used": [
-        "wss://nostr-a.example",
-        "wss://nostr-b.example",
-        "wss://nostr-c.example"
-      ]
+      "nostr_used": ["wss://nostr-a.example", "wss://nostr-b.example", "wss://nostr-c.example"]
     },
     {
       "peer": "parent",

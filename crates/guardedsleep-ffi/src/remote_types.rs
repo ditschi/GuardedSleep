@@ -112,10 +112,13 @@ pub struct LinkConfig {
     /// Parent: this device's name, sent to the baby over the verified DataChannel only (at most 64
     /// characters). Empty: no name.
     pub device_name: String,
-    /// Baby: the mailbox set to send the parent after each verification. Empty: none is sent.
+    /// The pairing's mailbox set; the core opens its `nostr` entries. Baby: also sent to the parent
+    /// after each verification. Empty: none is sent.
     pub mailboxes: Vec<InviteMailbox>,
     /// Development builds only: accept loopback `l:` entries in a received mailbox update.
     pub allow_dev_loopback: bool,
+    /// "Only same Wi-Fi or my own server": ignore the `nostr` entries of the set and of updates.
+    pub only_local: bool,
 }
 
 /// The parent secret (32 bytes) as it crosses the boundary: in `LinkConfig::pinned_parent` and in

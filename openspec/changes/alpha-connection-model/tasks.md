@@ -51,7 +51,7 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 
   Verify: sim scenarios "attacker with the PSK and every envelope is refused", "man in the middle after pairing is refused", "all mailboxes dead at a reachability check", "mailbox update after relay churn", "stored baby stop after the baby restarted"; a capture test that no probe contains the tag or a key.
 
-- [ ] 3.5 Nostr mailbox:
+- [x] 3.5 Nostr mailbox:
   - epoch from 12:00 UTC (u32 BE), tag, per-role keys (`k256` with features `schnorr` and `arithmetic`; scalar reduced, zero rejected);
   - NIP-01 frames with ASCII base64url content only and 64 KiB caps;
   - subscription with `since` = now − 15 min and dual epochs for the hour around the change;
