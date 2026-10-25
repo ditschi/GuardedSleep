@@ -304,6 +304,8 @@ struct Fault {
     kind: FaultKind,
     from: Option<usize>,
     via: Via,
+    /// Only messages whose text contains this.
+    contains: Option<String>,
     start: Time,
     until: Time,
     p: f64,
@@ -382,6 +384,7 @@ impl World {
         let mut cfg = LinkConfig::with_defaults(spec.role, encode_psk(&psk), &seed);
         cfg.paired_before = spec.paired_before;
         cfg.mailboxes = spec.mailboxes.clone();
+        cfg.pin_window_until_s = spec.pin_window_s.map(|s| SIM_WALL_BASE_S + s);
         if let Some(n) = &spec.device_name {
             cfg.device_name = n.clone();
         }
@@ -667,6 +670,7 @@ impl World {
             kind,
             from,
             via,
+            contains: st.message.clone(),
             start: self.now,
             until: st.for_ms.map_or(u64::MAX, |d| self.now + d),
             p: st.p.unwrap_or(1.0),
@@ -675,13 +679,17 @@ impl World {
         });
     }
 
-    fn plan(&mut self, from: usize, via: Via) -> Vec<(u64, bool)> {
+    fn plan(&mut self, from: usize, via: Via, text: &str) -> Vec<(u64, bool)> {
         let now = self.now;
         let faults: Vec<Fault> = self
             .faults
             .iter()
             .filter(|f| {
-                f.via == via && f.start <= now && now < f.until && f.from.is_none_or(|x| x == from)
+                f.via == via
+                    && f.start <= now
+                    && now < f.until
+                    && f.from.is_none_or(|x| x == from)
+                    && f.contains.as_deref().is_none_or(|c| text.contains(c))
             })
             .cloned()
             .collect();
@@ -986,8 +994,13 @@ impl World {
         }
         // Like a platform: persist the pinned parent secret, so that a restarted process
         // (`restart_process`) is configured with it.
-        if let LinkEvent::ParentPinned { secret } = &event {
+        if let LinkEvent::ParentPinned {
+            secret,
+            window_until_s,
+        } = &event
+        {
             ac.cfg.pinned_parent = Some(secret.clone());
+            ac.cfg.pin_window_until_s = *window_until_s;
         }
         let since = if ac.last_rx_data == 0 {
             now
@@ -1113,7 +1126,7 @@ impl World {
             self.actors[a].sent_signals.push((now, t));
         }
         let epoch = self.socks[&sock].1;
-        for (extra, bypass) in self.plan(a, Via::Signaling) {
+        for (extra, bypass) in self.plan(a, Via::Signaling, &text) {
             if self.reach(a, epoch) {
                 let lat = self.rng.range(5, 40) + extra;
                 let t = self.fifo_time(1, sock, 0, self.now + lat, bypass);
@@ -1528,9 +1541,9 @@ impl World {
                 for chunk in nonce.chunks_mut(8) {
                     chunk.copy_from_slice(&self.rng.next_u64().to_le_bytes()[..chunk.len()]);
                 }
-                // The man in the middle reuses the original nonce: the parent tag depends on the
-                // nonce alone, so a rewritten envelope keeps a valid tag and only the DataChannel
-                // parent proof (bound to the fingerprints) can stop it.
+                // The man in the middle reuses the original nonce; it cannot compute the pin tag, which needs
+                // the parent-secret subkey and covers the message, so a rewritten envelope is refused before
+                // any attempt starts (the DataChannel proofs, bound to the fingerprints, are the second layer).
                 if self.relay.sdp_rewrite.as_deref() == Some("mitm_recompute")
                     && let Some(original) = nonce_of(&payload)
                 {
@@ -1950,7 +1963,7 @@ impl World {
         let Some((b, hb)) = self.actors[a].pcs[&h].peer else {
             return;
         };
-        for (extra, bypass) in self.plan(a, Via::Data) {
+        for (extra, bypass) in self.plan(a, Via::Data, &text) {
             let lat = self.rng.range(10, 60) + extra;
             let t = self.fifo_time(2, b, hb, self.now + lat, bypass);
             self.push(

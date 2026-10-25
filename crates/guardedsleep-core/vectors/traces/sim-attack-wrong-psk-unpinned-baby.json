@@ -20,6 +20,7 @@
     "noise_hold_ms": 800,
     "require_dtls_fingerprint": true,
     "pinned_parent": null,
+    "pin_window_until_s": 1003600,
     "device_name": "",
     "mailboxes": [],
     "allow_dev_loopback": false
@@ -2067,7 +2068,8 @@
         "type": "emit",
         "event": {
           "type": "parent_pinned",
-          "secret": "924fe32394ab7f231c1e9e0968706639017d47e376f4044e53e40754b3429281"
+          "secret": "924fe32394ab7f231c1e9e0968706639017d47e376f4044e53e40754b3429281",
+          "window_until_s": null
         }
       },
       { "type": "emit", "event": { "type": "parent_connected", "name": "" } },

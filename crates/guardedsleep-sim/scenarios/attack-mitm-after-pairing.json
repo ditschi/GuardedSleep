@@ -1,7 +1,7 @@
 {
   "schema": "gs-scenario/1",
   "id": "attack-mitm-after-pairing",
-  "description": "After the pairing the relay turns hostile: it holds the PSK and sits between two DTLS sessions with a certificate of its own per leg, recomputing the pairing proof for each. Every attempt through it verifies at the PSK level, but the parent proof was computed over fingerprints the baby never saw, so the baby unit refuses each attempt, never trusts it, and warns. The man in the middle cannot prove the secret to the parent either, so the parent never counts an attempt as contact: it never reports connected, never reports a restored link, and its escalation reaches level 2 on schedule (alarm_after_ms after the last contact, 60 s, plus 2 s) however often the man in the middle cycles. Once the relay behaves again the pair connects.",
+  "description": "After the pairing the relay turns hostile: it holds the PSK and sits between two DTLS sessions with a certificate of its own per leg, recomputing the pairing proof for each. It rewrites the signaling envelopes, so it cannot carry the tag that both pinned units require (the tag key derives from the parent secret and the tag covers the whole message): each rewritten envelope is refused before the message is read, no attempt is made through it, each unit warns once, and the parent never counts it as contact: it never reports connected, never reports a restored link, and its escalation reaches level 2 on schedule (alarm_after_ms after the last contact, 60 s, plus 2 s) however often the man in the middle cycles. Once the relay behaves again, the next presence announcement (at most five minutes later) brings the pair back.",
   "seed": 1,
   "relay": {},
   "peers": [
@@ -37,7 +37,7 @@
       "do": "relay_rewrite"
     },
     {
-      "at": 330000,
+      "at": 570000,
       "do": "end"
     }
   ],
@@ -55,20 +55,21 @@
     },
     {
       "peer": "baby",
-      "event": "failed",
-      "where": {
-        "reason": "parent_proof_mismatch"
-      },
-      "within_ms": [70000, 210000],
-      "count_min": 2
-    },
-    {
-      "peer": "baby",
       "event": "security_warning",
       "where": {
         "key": "unknown_parent_attempt"
       },
-      "within_ms": [58000, 210000],
+      "within_ms": [30000, 210000],
+      "count_min": 1,
+      "count_max": 1
+    },
+    {
+      "peer": "parent",
+      "event": "security_warning",
+      "where": {
+        "key": "wrong_key_attempt"
+      },
+      "within_ms": [30000, 210000],
       "count_min": 1,
       "count_max": 1
     },
@@ -90,12 +91,12 @@
     {
       "peer": "baby",
       "state": "connected",
-      "at_ms": 325000
+      "at_ms": 560000
     },
     {
       "peer": "parent",
       "state": "connected",
-      "at_ms": 325000
+      "at_ms": 560000
     },
     {
       "peer": "parent",
@@ -116,15 +117,6 @@
       "peer": "parent",
       "never": "link_restored",
       "within_ms": [32000, 209000]
-    },
-    {
-      "peer": "parent",
-      "event": "failed",
-      "where": {
-        "reason": "data_channel_closed"
-      },
-      "within_ms": [58000, 209000],
-      "count_min": 1
     },
     {
       "peer": "parent",

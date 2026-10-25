@@ -4,12 +4,13 @@
 
 use serde_json::{Value, json};
 
-use crate::envelope::parent_tag;
+use crate::envelope::{MessageClass, TagKey, envelope_ad, pin_tag};
 use crate::invite::{InviteMailbox, build_invite, parse_invite};
 use crate::link::{Link, LinkConfig, LinkInput};
 use crate::pairing::{
-    AdmissionKey, admission_mac, baby_proof_mac, decode_psk, derive_admission_key, derive_room_id,
-    encode_psk, pair_proof_mac_v2_legacy, pair_proof_mac_v3, parent_proof_mac, verify_admission,
+    AdmissionKey, PinPurpose, admission_mac, baby_proof_mac, decode_psk, derive_admission_key,
+    derive_room_id, encode_psk, pair_proof_mac_v2_legacy, pair_proof_mac_v3, parent_proof_mac,
+    pin_subkey, verify_admission,
 };
 use crate::protocol::{
     Role, parse_challenge, parse_client_message, parse_data_message, parse_data_message_v2_legacy,
@@ -103,14 +104,27 @@ fn evaluate_value(case_json: &str) -> Result<Value, String> {
             let secret = hex_bytes(s("secret")?).ok_or("bad secret")?;
             to_value(baby_proof_mac(&secret, s("fp_baby")?, s("fp_parent")?))
         }
-        "parent_tag" => {
-            let secret: [u8; 32] = hex_bytes(s("secret")?)
-                .and_then(|b| b.try_into().ok())
-                .ok_or("bad secret")?;
+        "pin_subkey" => {
+            let secret = hex_bytes(s("secret")?).ok_or("bad secret")?;
+            let purpose = PinPurpose::from_name(s("purpose")?).ok_or("bad purpose")?;
+            to_value(pin_subkey(&secret, purpose).map(|k| hex_text(&k)))
+        }
+        "pin_tag" => {
+            let secret = hex_bytes(s("secret")?).ok_or("bad secret")?;
+            let purpose = PinPurpose::from_name(s("purpose")?).ok_or("bad purpose")?;
+            let key = pin_subkey(&secret, purpose).ok_or("bad secret")?;
             let nonce: [u8; 24] = hex_bytes(s("nonce")?)
                 .and_then(|b| b.try_into().ok())
                 .ok_or("bad nonce")?;
-            to_value(hex_text(&parent_tag(&secret, &nonce)))
+            let role = match s("role")? {
+                "baby" => Role::Baby,
+                "parent" => Role::Parent,
+                other => return Err(format!("bad role {other}")),
+            };
+            let class = MessageClass::from_name(s("class")?).ok_or("bad class")?;
+            let body = hex_bytes(s("body")?).ok_or("bad body")?;
+            let tag = pin_tag(&TagKey(key), &nonce, &envelope_ad(role, class), &body);
+            to_value(hex_text(&tag))
         }
         "parse_invite" => {
             let now = case

@@ -1,0 +1,102 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "attack-psk-holder-baby-stop-during-outage",
+  "description": "After a successful pairing the baby unit goes dark. Someone who photographed the invite and holds the PSK joins the room as the baby, announces itself with a here, answers the confirmation handshake and sends a stop notice sealed to the parent's session. The parent has pinned the baby direction too: every envelope lacks the baby tag, so the parent refuses each one before it looks at the message (no candidate, no echo, no stop). It escalates to level 2 on schedule (alarm_after_ms after the last contact plus 2 s), never reports peer_stopped, warns once, and the real baby reconnects after the attacker has left.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 30000,
+      "do": "network_down",
+      "peer": "baby"
+    },
+    {
+      "at": 50000,
+      "do": "stranger_join",
+      "mode": "psk_stop",
+      "role": "baby",
+      "id": "stranger"
+    },
+    {
+      "at": 110000,
+      "do": "stranger_leave",
+      "peer": "stranger"
+    },
+    {
+      "at": 111000,
+      "do": "network_up",
+      "peer": "baby"
+    },
+    {
+      "at": 200000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 25000
+    },
+    {
+      "peer": "parent",
+      "reaches_level": 2,
+      "within_ms": [0, 93000]
+    },
+    {
+      "peer": "parent",
+      "event": "security_warning",
+      "where": {
+        "key": "wrong_key_attempt"
+      },
+      "within_ms": [50000, 110000],
+      "count_min": 1
+    },
+    {
+      "peer": "parent",
+      "never": "peer_stopped"
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "peer_stopped"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "connected"
+        }
+      },
+      "within_ms": [32000, 110000]
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 200000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 200000
+    }
+  ]
+}

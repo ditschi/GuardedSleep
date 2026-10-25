@@ -364,6 +364,8 @@ fn spoofed_mismatch_after_pairing_is_not_terminal_and_slows_retries() {
     // nothing pinned yet), so any parent that holds the PSK is let through to the DTLS check.
     let mut baby_cfg = cfg(Role::Baby, &PSK_A);
     baby_cfg.paired_before = true;
+    // ... and its first-pairing window is still open (the invite is valid until 2_000_000 s).
+    baby_cfg.pin_window_until_s = Some(2_000_000);
     let baby = w.add_node(baby_cfg);
     let parent = w.add_node(cfg(Role::Parent, &PSK_A));
     // The outsider holds the PSK (it reads the invite) but terminates DTLS itself, so the baby
@@ -372,6 +374,7 @@ fn spoofed_mismatch_after_pairing_is_not_terminal_and_slows_retries() {
     atk_cfg.paired_before = true;
     let atk = w.add_node(atk_cfg);
     w.start(baby, 1);
+    w.input(baby, LinkInput::WallClock { unix_s: 1_000_000 });
     w.advance(1_000);
     let m = w.mark(baby);
     let t0 = w.now;

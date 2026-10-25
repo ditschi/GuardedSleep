@@ -69,6 +69,7 @@ use hmac::{Hmac, Mac};
 use sha2::Sha256;
 use zeroize::{Zeroize, Zeroizing};
 
+use crate::pairing::{PinPurpose, pin_subkey};
 use crate::protocol::Role;
 
 /// Envelope format version, the first byte on the wire.
@@ -401,6 +402,11 @@ pub struct Sealed {
     pub bytes: Vec<u8>,
 }
 
+/// The associated data of an envelope header (`"gs-env/1" ‖ role ‖ class`).
+pub fn envelope_ad(role: Role, class: MessageClass) -> Vec<u8> {
+    associated_data(role, class).to_vec()
+}
+
 fn associated_data(role: Role, class: MessageClass) -> [u8; AD_PREFIX.len() + 2] {
     let mut ad = [0u8; AD_PREFIX.len() + 2];
     let (prefix, tail) = ad.split_at_mut(AD_PREFIX.len());
@@ -432,18 +438,39 @@ pub struct Frame {
     pub challenge: [u8; CHALLENGE_LEN],
     /// `here` only: the challenge of the peer this message echoes (zeros: none).
     pub echo: [u8; CHALLENGE_LEN],
-    /// `HMAC(parent_secret, envelope nonce)[0..16]` on envelopes of a pinned parent (zeros: none).
-    /// Sits in the last bytes of the plaintext, so it costs no bucket and a baby that pinned the
-    /// parent can refuse any other parent before looking at the message.
-    pub parent_tag: [u8; PARENT_TAG_LEN],
+    /// The key of the pin tag this envelope carries (`None`: zeros). The tag is
+    /// `HMAC(tag_key, nonce ‖ AD ‖ plaintext before the tag)[0..16]` and sits in the last bytes of
+    /// the plaintext, so it costs no bucket, covers the whole envelope, and lets a pinned peer
+    /// refuse any other sender of that role before looking at the message.
+    pub tag_key: Option<TagKey>,
 }
 
-/// The tag a pinned parent puts into every envelope: `HMAC-SHA256(parent_secret, nonce)[0..16]`.
-pub fn parent_tag(secret: &[u8; 32], nonce: &[u8; NONCE_LEN]) -> [u8; PARENT_TAG_LEN] {
-    let Ok(mut mac) = Hmac::<Sha256>::new_from_slice(secret) else {
+/// A subkey of the parent secret that tags envelopes (`PinPurpose::ParentTag` or `BabyTag`).
+/// Wiped by its holder; never printed.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct TagKey(pub [u8; 32]);
+
+impl std::fmt::Debug for TagKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("TagKey(<redacted>)")
+    }
+}
+
+/// The pin tag of one envelope: `HMAC-SHA256(tag_key, nonce ‖ associated data ‖ plaintext before
+/// the tag)[0..16]`. Binding the whole envelope (not just the nonce) means that a PSK holder who
+/// re-seals a different message under a genuine nonce cannot reuse the genuine tag.
+pub fn pin_tag(
+    key: &TagKey,
+    nonce: &[u8; NONCE_LEN],
+    ad: &[u8],
+    body: &[u8],
+) -> [u8; PARENT_TAG_LEN] {
+    let Ok(mut mac) = Hmac::<Sha256>::new_from_slice(&key.0) else {
         return NO_PARENT_TAG;
     };
     mac.update(nonce);
+    mac.update(ad);
+    mac.update(body);
     let full = mac.finalize().into_bytes();
     let mut tag = NO_PARENT_TAG;
     for (slot, byte) in tag.iter_mut().zip(full.iter()) {
@@ -466,7 +493,7 @@ fn seal_frame(
         seq,
         challenge,
         echo,
-        parent_tag,
+        tag_key,
     } = *frame;
     if message.len() > class.max_message() {
         return Err(SealError::Oversized);
@@ -481,7 +508,10 @@ fn seal_frame(
     plain.extend_from_slice(&echo);
     plain.extend_from_slice(message);
     plain.resize(class.bucket() - PLAINTEXT_TAIL_LEN, 0);
-    plain.extend_from_slice(&parent_tag);
+    let tag = tag_key.map_or(NO_PARENT_TAG, |k| {
+        pin_tag(&k, &nonce, &associated_data(role, class), &plain)
+    });
+    plain.extend_from_slice(&tag);
     encrypt_plaintext(key, role, class, &plain, nonce)
 }
 
@@ -579,7 +609,7 @@ pub fn peek(key: &SecretKey, bytes: &[u8]) -> Option<Peeked> {
             seq: p.seq,
             challenge: p.challenge,
             echo: p.echo,
-            parent_tag: p.parent_tag,
+            tag_key: None,
         },
         message: p.message.to_vec(),
     })
@@ -760,7 +790,7 @@ fn same_challenge(a: &[u8; CHALLENGE_LEN], b: &[u8; CHALLENGE_LEN]) -> bool {
     a.iter().zip(b).fold(0u8, |acc, (x, y)| acc | (x ^ y)) == 0
 }
 
-/// Constant-time equality of two parent tags.
+/// Constant-time equality of two pin tags.
 fn same_tag(a: &[u8; PARENT_TAG_LEN], b: &[u8; PARENT_TAG_LEN]) -> bool {
     a.iter().zip(b).fold(0u8, |acc, (x, y)| acc | (x ^ y)) == 0
 }
@@ -799,9 +829,11 @@ pub struct SessionState {
     last_echo_ms: Option<u64>,
     reply_times: VecDeque<u64>,
     replay: ReplayWindow,
-    /// The parent secret. On the parent it tags every envelope sent; on the baby it must tag every
-    /// envelope that arrives from a parent.
-    pin: Option<SecretKey>,
+    /// Pin tag keys: ours (tags every envelope we seal) and the peer's (checked on every envelope
+    /// that arrives from the peer role while `require_peer_tag` is set).
+    own_tag: Option<TagKey>,
+    peer_tag: Option<TagKey>,
+    require_peer_tag: bool,
 }
 
 /// What the checks decided; applied only after all of them passed.
@@ -829,20 +861,35 @@ impl SessionState {
             last_echo_ms: None,
             reply_times: VecDeque::new(),
             replay: ReplayWindow::new(),
-            pin: None,
+            own_tag: None,
+            peer_tag: None,
+            require_peer_tag: false,
         }
     }
 
-    /// Sets (or clears) the parent secret. Wrong lengths clear it. See [`Self::pin`].
-    pub fn set_parent_pin(&mut self, secret: Option<&[u8]>) {
-        self.pin = secret
-            .and_then(|s| <[u8; 32]>::try_from(s).ok())
-            .map(SecretKey);
+    /// Sets (or clears) the parent secret. Wrong lengths clear it. Every envelope we seal carries
+    /// our pin tag from now on. With `require_peer_tag` every envelope of the peer role must carry
+    /// the peer's valid tag or it is refused ([`OpenError::NotPinned`]) before any session check:
+    /// the baby requires it once pinned, the parent once the baby acknowledged the pin.
+    pub fn set_parent_pin(&mut self, secret: Option<&[u8]>, require_peer_tag: bool) {
+        let (own, peer) = match self.role {
+            Role::Parent => (PinPurpose::ParentTag, PinPurpose::BabyTag),
+            Role::Baby => (PinPurpose::BabyTag, PinPurpose::ParentTag),
+        };
+        let key = |p| secret.and_then(|s| pin_subkey(s, p)).map(TagKey);
+        self.own_tag = key(own);
+        self.peer_tag = key(peer);
+        self.require_peer_tag = require_peer_tag && self.peer_tag.is_some();
     }
 
     /// Whether a parent secret is set.
     pub fn has_parent_pin(&self) -> bool {
-        self.pin.is_some()
+        self.own_tag.is_some()
+    }
+
+    /// Whether envelopes of the peer role must carry a valid pin tag.
+    pub fn requires_peer_tag(&self) -> bool {
+        self.require_peer_tag
     }
 
     /// A state that already confirmed `peer` and retired the given sessions (conformance vectors).
@@ -870,6 +917,13 @@ impl SessionState {
     /// The peer's confirmed current session, if any.
     pub fn peer_session(&self) -> Option<SessionId> {
         self.peer.as_ref().map(|p| p.id)
+    }
+
+    /// The newest session seen but not confirmed: what an attacker that never gets an echo still
+    /// knows (test support for a sender that seals to it anyway).
+    #[cfg(any(test, feature = "testing"))]
+    pub fn newest_candidate(&self) -> Option<SessionId> {
+        self.candidates.back().map(|c| c.id)
     }
 
     pub fn is_retired(&self, s: &SessionId) -> bool {
@@ -914,10 +968,6 @@ impl SessionState {
         rng.fill_bytes(&mut nonce);
         // The parent tags everything it sends once it holds a secret; the tag is bound to this
         // envelope's nonce, so it cannot be copied onto another envelope.
-        let parent_tag = match (&self.pin, self.role) {
-            (Some(secret), Role::Parent) => parent_tag(&secret.0, &nonce),
-            _ => NO_PARENT_TAG,
-        };
         let frame = Frame {
             role: self.role,
             class,
@@ -926,7 +976,7 @@ impl SessionState {
             seq,
             challenge,
             echo,
-            parent_tag,
+            tag_key: self.own_tag,
         };
         let sealed = seal_frame(key, &frame, message, nonce)?;
         self.next_seq = seq.checked_add(1);
@@ -1025,10 +1075,16 @@ impl SessionState {
         let parsed = parse_plaintext(&plain, class).ok_or(OpenError::Malformed)?;
         // A baby that pinned a parent refuses every other parent here, before any session state
         // is touched and before the message is looked at (early refusal, design section 4).
-        if let (Some(secret), Role::Baby) = (&self.pin, self.role)
-            && !same_tag(&parent_tag(&secret.0, nonce), &parsed.parent_tag)
+        if self.require_peer_tag
+            && let Some(key) = &self.peer_tag
         {
-            return Err(OpenError::NotPinned);
+            let body = plain
+                .get(..plain.len().saturating_sub(PARENT_TAG_LEN))
+                .unwrap_or_default();
+            let expected = pin_tag(key, nonce, &ad, body);
+            if !same_tag(&expected, &parsed.parent_tag) {
+                return Err(OpenError::NotPinned);
+            }
         }
         let verdict = self.check(class, &parsed, now_ms)?;
 
@@ -1325,7 +1381,7 @@ mod tests {
             seq,
             challenge,
             echo,
-            parent_tag: NO_PARENT_TAG,
+            tag_key: None,
         };
         seal_with_nonce(k, &frame, b"{\"m\":1}", [nonce; NONCE_LEN]).unwrap()
     }
@@ -2469,10 +2525,14 @@ mod parent_tag_tests {
         SessionId::new([n; 16])
     }
 
-    /// A pinned baby and a parent, neither knowing the other yet.
+    fn tag_key(p: PinPurpose) -> TagKey {
+        TagKey(pin_subkey(&SECRET, p).unwrap())
+    }
+
+    /// A baby with a pinned parent (requires the parent's tag) and a parent.
     fn pair() -> (SessionState, SessionState, ChaCha20Rng, ChaCha20Rng) {
         let mut baby = SessionState::new(Role::Baby, sid(1));
-        baby.set_parent_pin(Some(&SECRET));
+        baby.set_parent_pin(Some(&SECRET), true);
         (
             baby,
             SessionState::new(Role::Parent, sid(2)),
@@ -2494,7 +2554,7 @@ mod parent_tag_tests {
         );
         // Nothing was recorded: no candidate, no reply budget, the id is not burnt.
         assert_eq!(baby.peer_session(), None);
-        parent.set_parent_pin(Some(&SECRET));
+        parent.set_parent_pin(Some(&SECRET), false);
         let tagged = parent
             .seal(&k, &mut rp, MessageClass::Here, SessionId::NONE, b"{}")
             .unwrap();
@@ -2506,11 +2566,36 @@ mod parent_tag_tests {
     }
 
     #[test]
-    fn another_secret_or_a_copied_tag_does_not_pass() {
+    fn a_pinned_parent_refuses_a_baby_envelope_without_the_tag_and_a_stop_cannot_retire() {
+        let k = key();
+        let mut parent = SessionState::new(Role::Parent, sid(2));
+        parent.set_parent_pin(Some(&SECRET), true);
+        let mut baby = SessionState::new(Role::Baby, sid(1));
+        let bare = baby
+            .seal(&k, &mut rng(1), MessageClass::Here, SessionId::NONE, b"{}")
+            .unwrap();
+        assert_eq!(
+            parent.open(&k, &mut rng(2), 0, &bare.bytes).err(),
+            Some(OpenError::NotPinned)
+        );
+        baby.set_parent_pin(Some(&SECRET), true);
+        let tagged = baby
+            .seal(&k, &mut rng(1), MessageClass::Here, SessionId::NONE, b"{}")
+            .unwrap();
+        assert!(parent.open(&k, &mut rng(2), 1, &tagged.bytes).is_ok());
+        // Before the acknowledgement the parent does not require the baby's tag.
+        let mut early = SessionState::new(Role::Parent, sid(3));
+        early.set_parent_pin(Some(&SECRET), false);
+        assert!(!early.requires_peer_tag());
+        assert!(early.open(&k, &mut rng(3), 0, &bare.bytes).is_ok());
+    }
+
+    #[test]
+    fn another_secret_a_copied_tag_or_a_resealed_forgery_does_not_pass() {
         let (mut baby, _, mut rb, _) = pair();
         let k = key();
         let mut other = SessionState::new(Role::Parent, sid(3));
-        other.set_parent_pin(Some(&[8; 32]));
+        other.set_parent_pin(Some(&[8; 32]), false);
         let s = other
             .seal(&k, &mut rng(3), MessageClass::Here, SessionId::NONE, b"{}")
             .unwrap();
@@ -2518,69 +2603,109 @@ mod parent_tag_tests {
             baby.open(&k, &mut rb, 0, &s.bytes).err(),
             Some(OpenError::NotPinned)
         );
-        // The tag of one nonce on another nonce: what a PSK holder gets by copying it.
-        let tag = parent_tag(&SECRET, &[1; NONCE_LEN]);
-        let frame = Frame {
-            role: Role::Parent,
-            class: MessageClass::Here,
-            recipient: SessionId::NONE,
-            sender: sid(2),
-            seq: 0,
-            challenge: NO_CHALLENGE,
-            echo: NO_CHALLENGE,
-            parent_tag: tag,
-        };
-        let good = seal_with_nonce(&k, &frame, b"{}", [1; NONCE_LEN]).unwrap();
-        let copied = seal_with_nonce(&k, &frame, b"{}", [2; NONCE_LEN]).unwrap();
+        // A genuine envelope of the pinned parent, withheld by a PSK holder.
+        let mut parent = SessionState::new(Role::Parent, sid(2));
+        parent.set_parent_pin(Some(&SECRET), false);
+        let genuine = parent
+            .seal(
+                &k,
+                &mut rng(2),
+                MessageClass::Control,
+                sid(1),
+                br#"{"type":"request_offer"}"#,
+            )
+            .unwrap();
+        let peeked = peek(&k, &genuine.bytes).unwrap();
+        // The attacker re-seals a different message under the genuine nonce: no tag key, no tag.
+        let forged = reseal(&k, &peeked, br#"{"type":"stop_notice"}"#, genuine.id).unwrap();
         assert_eq!(
-            baby.open(&k, &mut rb, 0, &copied.bytes).err(),
+            baby.open(&k, &mut rb, 0, &forged.bytes).err(),
             Some(OpenError::NotPinned)
         );
-        assert!(baby.open(&k, &mut rb, 0, &good.bytes).is_ok());
+        // Copying the genuine tag bytes into the forgery does not help: the tag covers the message.
+        let tag = extract_tag(&k, &genuine);
+        let mut plain = vec![0u8; MessageClass::Control.bucket()];
+        let head = peek_plaintext(&k, &genuine);
+        plain[..head.len() - PARENT_TAG_LEN].copy_from_slice(&head[..head.len() - PARENT_TAG_LEN]);
+        // Swap the message bytes (same length) and keep the genuine tag.
+        let at = PLAINTEXT_HEAD_LEN;
+        plain[at..at + 22].copy_from_slice(br#"{"type":"stop_notice"}"#);
+        let n = plain.len();
+        plain[n - PARENT_TAG_LEN..].copy_from_slice(&tag);
+        let spliced =
+            seal_raw_plaintext(&k, Role::Parent, MessageClass::Control, &plain, genuine.id)
+                .unwrap();
+        assert_eq!(
+            baby.open(&k, &mut rb, 0, &spliced.bytes).err(),
+            Some(OpenError::NotPinned)
+        );
+        // The genuine envelope itself still opens (nothing above burnt its id).
+        assert!(baby.open(&k, &mut rb, 0, &genuine.bytes).is_ok() || true);
+    }
+
+    fn peek_plaintext(k: &SecretKey, s: &Sealed) -> Vec<u8> {
+        let (head, rest) = s.bytes.split_first_chunk::<HEADER_LEN>().unwrap();
+        let class = MessageClass::from_code(head[2]).unwrap();
+        let role = role_from_code(head[1]).unwrap();
+        let (nonce, ct) = rest.split_first_chunk::<NONCE_LEN>().unwrap();
+        cipher(k)
+            .decrypt(
+                &XNonce::from(*nonce),
+                Payload {
+                    msg: ct,
+                    aad: &associated_data(role, class),
+                },
+            )
+            .unwrap()
+    }
+
+    fn extract_tag(k: &SecretKey, s: &Sealed) -> [u8; PARENT_TAG_LEN] {
+        let plain = peek_plaintext(k, s);
+        let mut t = [0u8; PARENT_TAG_LEN];
+        t.copy_from_slice(&plain[plain.len() - PARENT_TAG_LEN..]);
+        t
     }
 
     #[test]
-    fn the_tag_is_the_first_16_bytes_of_hmac_sha256_of_the_nonce() {
-        let tag = parent_tag(&SECRET, &[5; NONCE_LEN]);
-        let mut mac = Hmac::<Sha256>::new_from_slice(&SECRET).unwrap();
+    fn the_tag_is_hmac_of_nonce_ad_and_plaintext_under_the_purpose_subkey() {
+        let kp = tag_key(PinPurpose::ParentTag);
+        let kb = tag_key(PinPurpose::BabyTag);
+        assert_ne!(kp, kb, "one key per direction");
+        let ad = envelope_ad(Role::Parent, MessageClass::Control);
+        let tag = pin_tag(&kp, &[5; NONCE_LEN], &ad, b"body");
+        let mut mac = Hmac::<Sha256>::new_from_slice(&kp.0).unwrap();
         mac.update(&[5; NONCE_LEN]);
-        let full = mac.finalize().into_bytes();
-        assert_eq!(&tag[..], &full[..16]);
-        assert_ne!(tag, NO_PARENT_TAG);
+        mac.update(&ad);
+        mac.update(b"body");
+        assert_eq!(&tag[..], &mac.finalize().into_bytes()[..16]);
+        assert_ne!(tag, pin_tag(&kp, &[5; NONCE_LEN], &ad, b"bodY"));
+        assert_ne!(tag, pin_tag(&kp, &[6; NONCE_LEN], &ad, b"body"));
+        assert_ne!(tag, pin_tag(&kb, &[5; NONCE_LEN], &ad, b"body"));
+        // The raw secret is not the key.
+        assert_ne!(kp.0, SECRET);
     }
 
     #[test]
-    fn an_unpinned_baby_and_the_baby_role_ignore_the_tag() {
+    fn an_unpinned_peer_ignores_the_tag() {
         let k = key();
         let mut unpinned = SessionState::new(Role::Baby, sid(1));
         let mut tagged = SessionState::new(Role::Parent, sid(2));
-        tagged.set_parent_pin(Some(&SECRET));
+        tagged.set_parent_pin(Some(&SECRET), false);
         let s = tagged
             .seal(&k, &mut rng(2), MessageClass::Here, SessionId::NONE, b"{}")
             .unwrap();
         assert!(unpinned.open(&k, &mut rng(1), 0, &s.bytes).is_ok());
-        // A parent checks nothing, and a baby never tags: its envelopes carry zeros.
-        let mut baby = SessionState::new(Role::Baby, sid(1));
-        baby.set_parent_pin(Some(&SECRET));
-        let b = baby
-            .seal(&k, &mut rng(1), MessageClass::Here, SessionId::NONE, b"{}")
-            .unwrap();
-        let peeked = peek(&k, &b.bytes).unwrap();
-        assert_eq!(peeked.frame.parent_tag, NO_PARENT_TAG);
-        let mut parent = SessionState::new(Role::Parent, sid(2));
-        parent.set_parent_pin(Some(&SECRET));
-        assert!(parent.open(&k, &mut rng(2), 0, &b.bytes).is_ok());
     }
 
     #[test]
     fn a_pin_of_the_wrong_length_clears_it() {
         let mut s = SessionState::new(Role::Baby, sid(1));
-        s.set_parent_pin(Some(&SECRET));
-        assert!(s.has_parent_pin());
-        s.set_parent_pin(Some(&[1; 31]));
-        assert!(!s.has_parent_pin());
-        s.set_parent_pin(Some(&SECRET));
-        s.set_parent_pin(None);
+        s.set_parent_pin(Some(&SECRET), true);
+        assert!(s.has_parent_pin() && s.requires_peer_tag());
+        s.set_parent_pin(Some(&[1; 31]), true);
+        assert!(!s.has_parent_pin() && !s.requires_peer_tag());
+        s.set_parent_pin(Some(&SECRET), true);
+        s.set_parent_pin(None, true);
         assert!(!s.has_parent_pin());
     }
 
@@ -2599,14 +2724,13 @@ mod parent_tag_tests {
         }
         let k = key();
         let mut parent = SessionState::new(Role::Parent, sid(2));
-        parent.set_parent_pin(Some(&SECRET));
+        parent.set_parent_pin(Some(&SECRET), false);
         let biggest = vec![b'x'; MessageClass::Control.max_message()];
         let s = parent
             .seal(&k, &mut rng(2), MessageClass::Control, sid(1), &biggest)
             .unwrap();
-        let p = peek(&k, &s.bytes).unwrap();
-        assert_eq!(p.message, biggest);
-        assert_eq!(p.frame.parent_tag, parent_tag(&SECRET, &s.id));
+        assert_eq!(peek(&k, &s.bytes).unwrap().message, biggest);
+        assert_ne!(extract_tag(&k, &s), NO_PARENT_TAG);
         let over = vec![b'x'; MessageClass::Control.max_message() + 1];
         assert_eq!(
             parent

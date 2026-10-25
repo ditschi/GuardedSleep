@@ -7,12 +7,14 @@
     {
       "id": "baby",
       "role": "baby",
-      "paired_before": true
+      "paired_before": true,
+      "pin_window_s": 3600
     },
     {
       "id": "parent",
       "role": "parent",
-      "paired_before": true
+      "paired_before": true,
+      "pin_window_s": 3600
     }
   ],
   "timeline": [

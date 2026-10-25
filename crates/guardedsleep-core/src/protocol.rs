@@ -549,11 +549,44 @@ pub enum DataMessage {
 /// Longest device name the baby shows, in characters.
 pub const MAX_DEVICE_NAME_CHARS: usize = 64;
 
-/// A device name as the baby may show it: control characters removed, trimmed, at most
-/// [`MAX_DEVICE_NAME_CHARS`] characters.
+/// A device name as the baby may show it: control (Cc), format (Cf, which includes zero-width and
+/// bidirectional override characters) and line and paragraph separator (Zl, Zp) characters removed,
+/// trimmed, at most [`MAX_DEVICE_NAME_CHARS`] characters.
 pub fn clean_device_name(raw: &str) -> String {
-    let cleaned: String = raw.chars().filter(|c| !c.is_control()).collect();
+    let cleaned: String = raw.chars().filter(|c| !is_unwanted_in_name(*c)).collect();
     cleaned.trim().chars().take(MAX_DEVICE_NAME_CHARS).collect()
+}
+
+/// Unicode general categories Cc, Cf, Zl and Zp. `char` has no category lookup in `std`, so the
+/// Cf and separator code points are listed (Unicode 16; new Cf characters are rare).
+fn is_unwanted_in_name(c: char) -> bool {
+    if c.is_control() {
+        return true;
+    }
+    matches!(
+        u32::from(c),
+        0x00AD
+            | 0x0600..=0x0605
+            | 0x061C
+            | 0x06DD
+            | 0x070F
+            | 0x0890..=0x0891
+            | 0x08E2
+            | 0x180E
+            | 0x200B..=0x200F
+            | 0x2028..=0x202E
+            | 0x2060..=0x2064
+            | 0x2066..=0x206F
+            | 0xFEFF
+            | 0xFFF9..=0xFFFB
+            | 0x110BD
+            | 0x110CD
+            | 0x13430..=0x1343F
+            | 0x1BCA0..=0x1BCA3
+            | 0x1D173..=0x1D17A
+            | 0xE0001
+            | 0xE0020..=0xE007F
+    )
 }
 
 fn versioned(o: &Map<String, Value>, version: u32) -> bool {
@@ -943,6 +976,19 @@ mod tests {
             s,
             r#"{"type":"heartbeat","v":3,"t":1700000000000,"seq":3,"rms":0.25}"#
         );
+    }
+
+    #[test]
+    fn device_names_lose_format_bidi_and_separator_characters() {
+        // Bidi overrides and isolates, zero-width characters, line and paragraph separators, BOM.
+        let hostile =
+            "\u{202E}Pixel\u{200B} 8\u{2066}\u{2069}\u{200F}\u{2028}\u{2029}\u{FEFF}\u{202A}";
+        assert_eq!(clean_device_name(hostile), "Pixel 8");
+        assert_eq!(
+            clean_device_name("\u{202A}\u{202B}\u{202C}\u{202D}\u{202E}"),
+            ""
+        );
+        assert_eq!(clean_device_name("Zoë 日本"), "Zoë 日本");
     }
 
     #[test]

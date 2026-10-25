@@ -80,6 +80,16 @@ impl SealedPeer {
             .expect("the other side's session is confirmed")
     }
 
+    /// A message sealed to the newest session seen from the other side even though it never
+    /// echoed a challenge (an attacker does not wait for a reply that will not come).
+    pub fn say_unconfirmed(&mut self, class: MessageClass, message: &Value) -> Option<Value> {
+        let to = self
+            .sess
+            .peer_session()
+            .or_else(|| self.sess.newest_candidate())?;
+        Some(self.say_to(class, to, message))
+    }
+
     /// A message sealed to an explicit recipient session.
     pub fn say_to(&mut self, class: MessageClass, to: SessionId, message: &Value) -> Value {
         let sealed = self

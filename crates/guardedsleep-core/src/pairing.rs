@@ -297,13 +297,67 @@ fn hex_digit(c: u8) -> Option<u8> {
     char::from(c).to_digit(16).map(|v| v as u8)
 }
 
-/// The parent proof: `HMAC-SHA256(parent_secret, "gs-parent-proof/1|" || fp_parent || fp_baby)` as
+/// What a key derived from the parent secret is for. The secret itself is never used as a key:
+/// `HKDF-SHA256(parent_secret, info)` gives one key per purpose, so a tag key can never be
+/// confused with a proof key (`alpha-connection-model` design section 4, security review).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PinPurpose {
+    /// Tags on the parent's envelopes (`gs-parent-tag/1`).
+    ParentTag,
+    /// Tags on the baby's envelopes (`gs-baby-tag/1`).
+    BabyTag,
+    /// The parent's proof over the DataChannel (`gs-parent-proof/1`).
+    ParentProof,
+    /// The baby's proof over the DataChannel (`gs-baby-proof/1`).
+    BabyProof,
+}
+
+impl PinPurpose {
+    pub fn info(self) -> &'static [u8] {
+        match self {
+            PinPurpose::ParentTag => b"gs-parent-tag/1",
+            PinPurpose::BabyTag => b"gs-baby-tag/1",
+            PinPurpose::ParentProof => b"gs-parent-proof/1",
+            PinPurpose::BabyProof => b"gs-baby-proof/1",
+        }
+    }
+
+    pub fn from_name(name: &str) -> Option<Self> {
+        Some(match name {
+            "parent_tag" => PinPurpose::ParentTag,
+            "baby_tag" => PinPurpose::BabyTag,
+            "parent_proof" => PinPurpose::ParentProof,
+            "baby_proof" => PinPurpose::BabyProof,
+            _ => return None,
+        })
+    }
+}
+
+/// `HKDF-SHA256(secret, salt = none, info = purpose)`, 32 bytes. `None` unless the secret is
+/// exactly [`PARENT_SECRET_LEN`] bytes.
+pub fn pin_subkey(secret: &[u8], purpose: PinPurpose) -> Option<[u8; 32]> {
+    if secret.len() != PARENT_SECRET_LEN {
+        return None;
+    }
+    let hk = Hkdf::<Sha256>::new(None, secret);
+    let mut out = [0u8; 32];
+    hk.expand(purpose.info(), &mut out).ok()?;
+    Some(out)
+}
+
+/// The parent proof: `HMAC-SHA256(HKDF(parent_secret, "gs-parent-proof/1"), "gs-parent-proof/1|" || fp_parent || fp_baby)` as
 /// lowercase hex, where both fingerprints are the raw 32-byte SHA-256 digests of the two DTLS
 /// certificates as the computing side sees them (`fp_parent` is the parent's certificate, `fp_baby`
 /// the baby's). `None` for a secret of the wrong length or a fingerprint that is not 64 hex
 /// characters (normalized as in [`extract_sha256_fingerprint`]).
 pub fn parent_proof_mac(secret: &[u8], fp_parent: &str, fp_baby: &str) -> Option<String> {
-    proof_mac(PARENT_PROOF_PREFIX, secret, fp_parent, fp_baby)
+    proof_mac(
+        PinPurpose::ParentProof,
+        PARENT_PROOF_PREFIX,
+        secret,
+        fp_parent,
+        fp_baby,
+    )
 }
 
 /// The baby's answer to a pinned parent: `HMAC-SHA256(parent_secret, "gs-baby-proof/1|" ||
@@ -311,16 +365,26 @@ pub fn parent_proof_mac(secret: &[u8], fp_parent: &str, fp_baby: &str) -> Option
 /// middle that relays between two DTLS sessions could keep the parent's attempt looking alive
 /// while the baby refuses it; the parent trusts a pinned attempt only after this proof.
 pub fn baby_proof_mac(secret: &[u8], fp_baby: &str, fp_parent: &str) -> Option<String> {
-    proof_mac(BABY_PROOF_PREFIX, secret, fp_baby, fp_parent)
+    proof_mac(
+        PinPurpose::BabyProof,
+        BABY_PROOF_PREFIX,
+        secret,
+        fp_baby,
+        fp_parent,
+    )
 }
 
-fn proof_mac(prefix: &[u8], secret: &[u8], first: &str, second: &str) -> Option<String> {
-    if secret.len() != PARENT_SECRET_LEN {
-        return None;
-    }
+fn proof_mac(
+    purpose: PinPurpose,
+    prefix: &[u8],
+    secret: &[u8],
+    first: &str,
+    second: &str,
+) -> Option<String> {
+    let key = pin_subkey(secret, purpose)?;
     let first = fingerprint_bytes(first)?;
     let second = fingerprint_bytes(second)?;
-    let mut mac = Hmac::<Sha256>::new_from_slice(secret).ok()?;
+    let mut mac = Hmac::<Sha256>::new_from_slice(&key).ok()?;
     mac.update(prefix);
     mac.update(&first);
     mac.update(&second);
@@ -632,7 +696,7 @@ mod tests {
         assert_eq!(mac.len(), 64);
         assert_eq!(
             mac,
-            "54d514ad4c1b14619a4c7fccc2c46cec5b7a0e39093dc4cc0bb5274bf129615e"
+            "04f40a4b88f93719615e862be67a8ac0f6f788316876a0b3ad15a33e6a34dec8"
         );
         assert_ne!(Some(mac.clone()), parent_proof_mac(&secret, &b, &p));
         assert_ne!(Some(mac.clone()), parent_proof_mac(&[0x12u8; 32], &p, &b));

@@ -1019,7 +1019,8 @@
           "type": "emit",
           "event": {
             "type": "parent_pinned",
-            "secret": "b82dfde680c1964a263e95de9d92b637c82fb56107fe74a0d3679f844d9b0a20"
+            "secret": "b82dfde680c1964a263e95de9d92b637c82fb56107fe74a0d3679f844d9b0a20",
+            "window_until_s": null
           }
         },
         {
@@ -1351,7 +1352,8 @@
           "type": "emit",
           "event": {
             "type": "parent_pinned",
-            "secret": "b82dfde680c1964a263e95de9d92b637c82fb56107fe74a0d3679f844d9b0a20"
+            "secret": "b82dfde680c1964a263e95de9d92b637c82fb56107fe74a0d3679f844d9b0a20",
+            "window_until_s": null
           }
         },
         {
@@ -1634,7 +1636,8 @@
           "type": "emit",
           "event": {
             "type": "parent_pinned",
-            "secret": "b82dfde680c1964a263e95de9d92b637c82fb56107fe74a0d3679f844d9b0a20"
+            "secret": "b82dfde680c1964a263e95de9d92b637c82fb56107fe74a0d3679f844d9b0a20",
+            "window_until_s": null
           }
         },
         {
@@ -2788,7 +2791,8 @@
           "type": "emit",
           "event": {
             "type": "parent_pinned",
-            "secret": "b82dfde680c1964a263e95de9d92b637c82fb56107fe74a0d3679f844d9b0a20"
+            "secret": "b82dfde680c1964a263e95de9d92b637c82fb56107fe74a0d3679f844d9b0a20",
+            "window_until_s": null
           }
         },
         {
@@ -3244,7 +3248,8 @@
           "type": "emit",
           "event": {
             "type": "parent_pinned",
-            "secret": "b82dfde680c1964a263e95de9d92b637c82fb56107fe74a0d3679f844d9b0a20"
+            "secret": "b82dfde680c1964a263e95de9d92b637c82fb56107fe74a0d3679f844d9b0a20",
+            "window_until_s": null
           }
         },
         {
@@ -6215,7 +6220,7 @@
     "secret": "1111111111111111111111111111111111111111111111111111111111111111",
     "fp_parent": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
     "fp_baby": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
-    "expect": "54d514ad4c1b14619a4c7fccc2c46cec5b7a0e39093dc4cc0bb5274bf129615e"
+    "expect": "04f40a4b88f93719615e862be67a8ac0f6f788316876a0b3ad15a33e6a34dec8"
   },
   {
     "name": "parent proof: swapped fingerprints give another MAC",
@@ -6223,7 +6228,7 @@
     "secret": "1111111111111111111111111111111111111111111111111111111111111111",
     "fp_parent": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
     "fp_baby": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
-    "expect": "ab186066da36ac9d57b4cba91ad2aa5b0e81f9a9a26070f4d189207e1af6ecfd"
+    "expect": "6abac0759fb6aaceb9ec110c45dc9e5dbf890a1dfacc71a4e7f23b53fffe0b9f"
   },
   {
     "name": "parent proof: a fingerprint of the wrong length",
@@ -6240,13 +6245,6 @@
     "fp_parent": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
     "fp_baby": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
     "expect": null
-  },
-  {
-    "name": "parent tag: first 16 bytes of HMAC-SHA256 over the nonce",
-    "kind": "parent_tag",
-    "secret": "1111111111111111111111111111111111111111111111111111111111111111",
-    "nonce": "000102030405060708090a0b0c0d0e0f1011121314151617",
-    "expect": "91bccd8b4d522097a7740efa00b1570f"
   },
   {
     "name": "data v3: parent_pin with a name",
@@ -6362,7 +6360,7 @@
     "secret": "1111111111111111111111111111111111111111111111111111111111111111",
     "fp_baby": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
     "fp_parent": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
-    "expect": "5caf3c814a7dd488c63da5b9cb96f8e094332261b55485b5aca76910171dc564"
+    "expect": "fecc9aa56468d29bb34d46ede55a3ae554a42cc9fd3d7c4d2103bbff11542631"
   },
   {
     "name": "baby proof: swapped fingerprints give another MAC",
@@ -6370,7 +6368,7 @@
     "secret": "1111111111111111111111111111111111111111111111111111111111111111",
     "fp_baby": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
     "fp_parent": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
-    "expect": "0a20bdc1090a4df7ee5fc83c6053916099646f3c37de190ff3d43ee8e6dac7b5"
+    "expect": "63b250dbb7658d126e53a03e3ebdfbc4ea2dd73244b0548f02b21ff94026514c"
   },
   {
     "name": "baby proof: a secret of the wrong length",
@@ -6394,5 +6392,73 @@
     "kind": "parse_data_v3",
     "raw": "{\"type\": \"baby_proof\", \"v\": 3, \"mac\": \"ababababababababababababababababababababababababababababababab\"}",
     "expect": null
+  },
+  {
+    "name": "pin subkey: parent_tag",
+    "kind": "pin_subkey",
+    "secret": "1111111111111111111111111111111111111111111111111111111111111111",
+    "purpose": "parent_tag",
+    "expect": "257432851e48a674954430c2abf187b2ef7d9eb34656fb26caad8a12a46b0be0"
+  },
+  {
+    "name": "pin subkey: baby_tag",
+    "kind": "pin_subkey",
+    "secret": "1111111111111111111111111111111111111111111111111111111111111111",
+    "purpose": "baby_tag",
+    "expect": "06a8a95e2c9648087336c06561c60b3d8e48d5cb106310e45e3c94f48ab8758f"
+  },
+  {
+    "name": "pin subkey: parent_proof",
+    "kind": "pin_subkey",
+    "secret": "1111111111111111111111111111111111111111111111111111111111111111",
+    "purpose": "parent_proof",
+    "expect": "9cafbf51a80056c4700307f433af3eb9025194918c7e31bfb6f5e770971d75d9"
+  },
+  {
+    "name": "pin subkey: baby_proof",
+    "kind": "pin_subkey",
+    "secret": "1111111111111111111111111111111111111111111111111111111111111111",
+    "purpose": "baby_proof",
+    "expect": "516333a7f329853a7bdd8edd73454e4b76b4632b4f93b57267c7e25d81418fe8"
+  },
+  {
+    "name": "pin subkey: a secret of the wrong length",
+    "kind": "pin_subkey",
+    "secret": "11111111111111111111111111111111111111111111111111111111111111",
+    "purpose": "parent_tag",
+    "expect": null
+  },
+  {
+    "name": "pin tag: parent envelope covers nonce, header and plaintext",
+    "kind": "pin_tag",
+    "secret": "1111111111111111111111111111111111111111111111111111111111111111",
+    "purpose": "parent_tag",
+    "nonce": "000102030405060708090a0b0c0d0e0f1011121314151617",
+    "role": "parent",
+    "class": "control",
+    "body": "01010101010101010101010101010101010101010101010101010101010101010101010101010101",
+    "expect": "21e31f930c3f81864ed906cc2e311d86"
+  },
+  {
+    "name": "pin tag: baby envelope covers nonce, header and plaintext",
+    "kind": "pin_tag",
+    "secret": "1111111111111111111111111111111111111111111111111111111111111111",
+    "purpose": "baby_tag",
+    "nonce": "000102030405060708090a0b0c0d0e0f1011121314151617",
+    "role": "baby",
+    "class": "control",
+    "body": "01010101010101010101010101010101010101010101010101010101010101010101010101010101",
+    "expect": "185810446f1d6d3e961d4756fcd9ed39"
+  },
+  {
+    "name": "pin tag: another body gives another tag",
+    "kind": "pin_tag",
+    "secret": "1111111111111111111111111111111111111111111111111111111111111111",
+    "purpose": "parent_tag",
+    "nonce": "000102030405060708090a0b0c0d0e0f1011121314151617",
+    "role": "parent",
+    "class": "control",
+    "body": "01010101010101010101010101010101010101010101010101010101010101010101010101010102",
+    "expect": "ef43f8a21ed8723fc483a6006cb44c05"
   }
 ]

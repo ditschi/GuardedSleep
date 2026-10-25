@@ -16,6 +16,7 @@
     "noise_hold_ms": 800,
     "require_dtls_fingerprint": true,
     "pinned_parent": null,
+    "pin_window_until_s": null,
     "device_name": "",
     "mailboxes": [],
     "allow_dev_loopback": false

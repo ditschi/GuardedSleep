@@ -25,6 +25,9 @@ pub enum RawMode {
     Reflect,
     /// Sits in the room and sends forged offers, requests, candidates and stop notices.
     ForgedOffer,
+    /// Holds the PSK and plays the baby (`role: baby`): announces itself with a `here`, answers the
+    /// confirmation handshake and sends a stop notice sealed to the parent's session.
+    PskStop,
 }
 
 pub struct RawState {
@@ -60,6 +63,7 @@ impl World {
             Some("wrong_psk") => RawMode::WrongPsk,
             Some("reflect") => RawMode::Reflect,
             Some("forged_offer") => RawMode::ForgedOffer,
+            Some("psk_stop") => RawMode::PskStop,
             other => {
                 self.violations
                     .push(format!("stranger_join: unknown mode {other:?}"));
@@ -203,17 +207,24 @@ impl World {
         self.client_send(a, text, None);
     }
 
+    /// The room member this raw client talks to: the baby for the parent-side attackers, the
+    /// parent for `PskStop`.
     fn raw_baby(&self, a: usize) -> Option<String> {
         let raw = self.actors[a].raw.as_ref()?;
+        let want = if raw.mode == RawMode::PskStop {
+            Role::Parent
+        } else {
+            Role::Baby
+        };
         raw.members
             .iter()
-            .find(|(id, r)| *r == Role::Baby && Some(id) != raw.client_id.as_ref())
+            .find(|(id, r)| *r == want && Some(id) != raw.client_id.as_ref())
             .map(|(id, _)| id.clone())
     }
 
     fn raw_maybe_request(&mut self, a: usize) {
         let raw = self.actors[a].raw.as_ref().expect("raw");
-        if raw.mode == RawMode::ForgedOffer {
+        if matches!(raw.mode, RawMode::ForgedOffer | RawMode::PskStop) {
             return;
         }
         let active = raw
@@ -242,6 +253,7 @@ impl World {
         }
         if self.actors[a].sock.is_some() {
             self.raw_maybe_request(a);
+            self.raw_psk_stop(a);
         }
         self.schedule_raw_tick(a, 2_000);
     }
@@ -257,7 +269,7 @@ impl World {
         else {
             return;
         };
-        if mode == RawMode::ForgedOffer
+        if matches!(mode, RawMode::ForgedOffer | RawMode::PskStop)
             || sdp_type != "offer"
             || self.raw_baby(a).as_deref() != Some(from)
         {
@@ -296,6 +308,30 @@ impl World {
             },
         );
         self.maybe_connect(a, handle);
+    }
+
+    /// `PskStop`: once it has seen the parent's session, a stop notice sealed to it (the parent never
+    /// echoes the attacker's challenge, so it is not confirmed).
+    fn raw_psk_stop(&mut self, a: usize) {
+        let Some(parent) = self.raw_baby(a) else {
+            return;
+        };
+        let room = self.actors[a].room.clone();
+        let raw = self.actors[a].raw.as_mut().expect("raw");
+        if raw.mode != RawMode::PskStop || raw.acted {
+            return;
+        }
+        let json = signal_payload_json(&SignalPayload::StopNotice);
+        let Some(sealed) = raw
+            .peer
+            .as_mut()
+            .and_then(|p| p.say_unconfirmed(MessageClass::Control, &json))
+        else {
+            return;
+        };
+        raw.acted = true;
+        let text = encode_signal(&room, Some(&parent), sealed);
+        self.client_send(a, text, None);
     }
 
     pub(crate) fn raw_on_open(&mut self, a: usize, h: u32) {

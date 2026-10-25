@@ -20,15 +20,18 @@ fn named_pair(name: &str) -> World {
     w
 }
 
+/// The distinct secrets a node was told to persist. `ParentPinned` repeats with every resend
+/// while unacknowledged and once more on the acknowledgement; the secret is the same each time.
 fn pinned(w: &World, n: usize) -> Vec<ParentSecret> {
-    w.nodes[n]
-        .events
-        .iter()
-        .filter_map(|e| match e {
-            LinkEvent::ParentPinned { secret } => Some(secret.clone()),
-            _ => None,
-        })
-        .collect()
+    let mut out: Vec<ParentSecret> = Vec::new();
+    for e in &w.nodes[n].events {
+        if let LinkEvent::ParentPinned { secret, .. } = e {
+            if out.last() != Some(secret) {
+                out.push(secret.clone());
+            }
+        }
+    }
+    out
 }
 
 fn names(w: &World, n: usize, mark: usize) -> Vec<String> {
@@ -569,8 +572,14 @@ fn the_secret_is_emitted_before_the_message_that_carries_it() {
     let at = |m: &str| w.order.iter().position(|x| x == m);
     let (pinned, sent) = (at("pinned:1").unwrap(), at("pin:1").unwrap());
     assert!(pinned < sent, "{:?}", w.order);
-    // And it is emitted once: the acknowledgement adds nothing.
-    assert_eq!(w.order.iter().filter(|x| *x == "pinned:1").count(), 1);
+    // Every send of the raw secret is preceded by its own persist event.
+    let sends = w.order.iter().filter(|x| *x == "pin:1").count();
+    let persists = w.order.iter().filter(|x| *x == "pinned:1").count();
+    assert!(
+        persists > sends,
+        "one per send plus the acknowledgement: {:?}",
+        w.order
+    );
 }
 
 #[test]
@@ -614,4 +623,116 @@ fn a_lost_acknowledgement_is_repeated_within_the_run() {
     assert_eq!(w.state(PARENT), LinkState::Connected);
     assert_eq!(w.state(BABY), LinkState::Connected);
     assert_eq!(pinned(&w, PARENT).len(), 1, "one secret for the whole run");
+}
+
+// ---- security review: tags both ways, the first-pairing window ---------------------------------
+
+/// Gives the nodes an invite expiry (wall-clock Unix seconds) before their first start.
+fn window(w: &mut World, nodes: &[usize], until: u64) {
+    for &n in nodes {
+        w.nodes[n].cfg.pin_window_until_s = Some(until);
+        w.nodes[n].link = guardedsleep_core::link::Link::new(w.nodes[n].cfg.clone()).unwrap();
+    }
+}
+
+#[test]
+fn a_psk_holder_cannot_confirm_a_session_or_stop_a_pinned_parent() {
+    use guardedsleep_core::envelope::MessageClass;
+    use serde_json::json;
+    let mut w = named_pair("Pixel 8");
+    w.connect_pair();
+    // The baby goes dark; someone with the PSK takes its place in the room.
+    w.set_net(BABY, false);
+    w.advance(40_000); // the link is lost and the parent reopens its mailbox
+    let pm = w.mark(PARENT);
+    let i = w.add_impostor("evil", Role::Baby, &PSK_A, 0x71);
+    w.impostor_greets(i, PARENT);
+    let id = w.impostors[i].id.clone();
+    let stop = w.impostors[i]
+        .peer
+        .say_unconfirmed(MessageClass::Control, &json!({"type":"stop_notice"}))
+        .expect("the parent's session is a candidate");
+    w.inject_signal(PARENT, &id, stop);
+    w.advance(30_000);
+    assert_ne!(w.state(PARENT), LinkState::PeerStopped);
+    assert_eq!(
+        w.count_events(PARENT, pm, |e| matches!(
+            e,
+            LinkEvent::SecurityWarning { key } if key == "wrong_key_attempt"
+        )),
+        1,
+        "warned once (rate limited), no reply"
+    );
+    // The refused `here` was not answered: the attacker never got a confirmed session.
+    assert!(w.impostors[i].peer.sess.peer_session().is_none());
+    // The attacker leaves, the real baby comes back and connects.
+    w.remove_impostor(i);
+    w.set_net(BABY, true);
+    w.advance(120_000);
+    assert_eq!(w.state(PARENT), LinkState::Connected);
+    assert_eq!(w.state(BABY), LinkState::Connected);
+}
+
+#[test]
+fn after_the_window_the_raw_secret_is_never_sent_again_and_both_say_pair_again() {
+    let mut w = named_pair("Pixel 8");
+    window(&mut w, &[BABY, PARENT], 1_000_100);
+    w.nodes[BABY].drop_pin_ack = true;
+    w.start(BABY, 1);
+    w.input(BABY, LinkInput::WallClock { unix_s: 1_000_000 });
+    w.start(PARENT, 2);
+    w.input(PARENT, LinkInput::WallClock { unix_s: 1_000_000 });
+    w.advance(5_000);
+    assert_eq!(w.state(PARENT), LinkState::Connected);
+    assert!(w.order.iter().any(|x| x == "pin:1"));
+    // The baby forgets what it pinned (it never received it, as far as this test is concerned):
+    // an unpinned baby after the window, a parent whose secret was never acknowledged.
+    w.nodes[BABY].cfg.pinned_parent = None;
+    w.nodes[BABY].cfg.pin_window_until_s = Some(1_000_100);
+    let sent = w.order.iter().filter(|x| *x == "pin:1").count();
+    w.restart(BABY, 11);
+    w.input(BABY, LinkInput::WallClock { unix_s: 1_000_200 });
+    w.restart(PARENT, 12);
+    w.input(PARENT, LinkInput::WallClock { unix_s: 1_000_200 });
+    w.advance(300_000);
+    assert_eq!(
+        w.order.iter().filter(|x| *x == "pin:1").count(),
+        sent,
+        "the raw secret is not sent outside the window, also not after a refusal"
+    );
+    assert_ne!(w.state(BABY), LinkState::Connected);
+    assert_ne!(w.state(PARENT), LinkState::Connected);
+    assert_eq!(w.status(BABY).cause.as_deref(), Some("pair_again"));
+    assert_eq!(w.status(PARENT).cause.as_deref(), Some("baby_unrecognised"));
+}
+
+#[test]
+fn a_baby_refuses_a_parent_pin_outside_its_invite_window() {
+    let mut w = named_pair("Pixel 8");
+    window(&mut w, &[BABY, PARENT], 1_000_100);
+    w.start(BABY, 1);
+    w.input(BABY, LinkInput::WallClock { unix_s: 1_000_500 });
+    w.start(PARENT, 2);
+    w.input(PARENT, LinkInput::WallClock { unix_s: 1_000_000 });
+    w.advance(30_000);
+    assert!(
+        pinned(&w, BABY).is_empty(),
+        "no pin after the invite expired"
+    );
+    assert_ne!(w.state(BABY), LinkState::Connected);
+}
+
+#[test]
+fn the_secret_is_emitted_again_with_every_repeat_while_unacknowledged() {
+    let mut w = named_pair("Pixel 8");
+    w.nodes[BABY].drop_pin_ack = true;
+    w.connect_pair();
+    w.set_net(BABY, false);
+    w.advance(40_000);
+    w.set_net(BABY, true);
+    w.advance(40_000);
+    let sends = w.order.iter().filter(|x| *x == "pin:1").count();
+    let persists = w.order.iter().filter(|x| *x == "pinned:1").count();
+    assert!(sends >= 2, "{:?}", w.order);
+    assert_eq!(persists, sends, "one persist event per send: {:?}", w.order);
 }

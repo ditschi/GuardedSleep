@@ -16,6 +16,7 @@
     "noise_hold_ms": 800,
     "require_dtls_fingerprint": true,
     "pinned_parent": null,
+    "pin_window_until_s": null,
     "device_name": "",
     "mailboxes": [],
     "allow_dev_loopback": false
@@ -765,7 +766,8 @@
         "type": "emit",
         "event": {
           "type": "parent_pinned",
-          "secret": "53e40754b342928159e80a0ef09e684b38f5e7be0e2247ad9a71ebb4075cab22"
+          "secret": "53e40754b342928159e80a0ef09e684b38f5e7be0e2247ad9a71ebb4075cab22",
+          "window_until_s": null
         }
       },
       {
@@ -795,7 +797,16 @@
     ],
     [{ "type": "emit", "event": { "type": "peer_status", "status": { "noise_threshold": 0.12 } } }],
     [{ "type": "emit", "event": { "type": "peer_heartbeat", "seq": 1, "rms": 0.0 } }],
-    [],
+    [
+      {
+        "type": "emit",
+        "event": {
+          "type": "parent_pinned",
+          "secret": "53e40754b342928159e80a0ef09e684b38f5e7be0e2247ad9a71ebb4075cab22",
+          "window_until_s": null
+        }
+      }
+    ],
     [],
     [],
     [],

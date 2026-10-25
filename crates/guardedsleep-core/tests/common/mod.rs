@@ -532,9 +532,14 @@ impl World {
                     }
                     // Like a platform: persist the pinned parent secret, so that a restarted run
                     // (`restart`) is configured with it.
-                    if let LinkEvent::ParentPinned { secret } = &event {
+                    if let LinkEvent::ParentPinned {
+                        secret,
+                        window_until_s,
+                    } = &event
+                    {
                         self.order.push(format!("pinned:{n}"));
                         self.nodes[n].cfg.pinned_parent = Some(secret.clone());
+                        self.nodes[n].cfg.pin_window_until_s = *window_until_s;
                     }
                     self.nodes[n].events.push(event);
                 }

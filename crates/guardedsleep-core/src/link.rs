@@ -96,6 +96,9 @@ const PROBE_TIMEOUT_MS: u64 = 10_000;
 const PARENT_PROOF_WAIT_MS: u64 = 10_000;
 /// At most one `unknown_parent_attempt` warning per this long.
 const PARENT_WARN_MIN_MS: u64 = 300_000;
+/// After this many attempts in a row in which the pinned baby gave no proof the parent says the
+/// baby does not recognise it.
+const BABY_UNRECOGNISED_AFTER: u32 = 3;
 /// The peers' wall clocks may differ this much (seconds) before the `clock_skew` hint appears.
 const CLOCK_SKEW_S: u64 = 600;
 /// Hint keys (`LinkEvent::Hint`); also in [`message_keys`].
@@ -128,6 +131,9 @@ pub fn message_keys() -> &'static [&'static str] {
         // security_warning keys
         "wrong_key_attempt",
         "unknown_parent_attempt",
+        // sticky causes (`LinkStatus::cause`) that tell the user to pair again
+        "pair_again",
+        "baby_unrecognised",
         // hint keys (`LinkEvent::Hint`)
         HINT_CLOCK_SKEW,
         HINT_RECOVERY,
@@ -202,13 +208,21 @@ pub struct LinkConfig {
     /// switch off only for a platform that cannot read WebRTC certificate stats.
     #[serde(default = "default_true")]
     pub require_dtls_fingerprint: bool,
-    /// The parent secret pinned in an earlier run, as the platform persisted it from
-    /// [`LinkEvent::ParentPinned`] (baby: the pinned parent; parent: the acknowledged secret).
-    /// `None` before the first verified pairing. Secret-class: never logged; `Link::new` takes the
-    /// bytes and wipes its copy. JSON form: 64 hex characters.
+    /// The parent secret the platform persisted from the last [`LinkEvent::ParentPinned`] (baby:
+    /// the pinned parent; parent: the secret it drew, acknowledged or not). `None` before the first
+    /// pairing. Secret-class: never logged; `Link::new` takes the bytes and wipes its copy. JSON
+    /// form: 64 hex characters.
     #[serde(default)]
     #[cfg_attr(feature = "tsify", tsify(optional, type = "string"))]
     pub pinned_parent: Option<ParentSecret>,
+    /// The end of the first-pairing window in Unix seconds: the expiry of the invite. Parent:
+    /// the raw secret is sent only before it (give the parsed invite's expiry on the first run and
+    /// the last `window_until_s` of `ParentPinned` on later runs; `None` after the baby
+    /// acknowledged, so the parent only proves). Baby: `parent_pin` is accepted only before it;
+    /// with `None` a baby that was paired before accepts no first parent at all.
+    #[serde(default)]
+    #[cfg_attr(feature = "tsify", tsify(optional))]
+    pub pin_window_until_s: Option<u64>,
     /// Parent: this device's name, sent to the baby over the verified DataChannel only (at most 64
     /// characters, control characters removed). Empty: no name. Never a fingerprint or an id.
     #[serde(default)]
@@ -244,6 +258,7 @@ impl std::fmt::Debug for LinkConfig {
                 "pinned_parent",
                 &self.pinned_parent.as_ref().map(|_| "<redacted>"),
             )
+            .field("pin_window_until_s", &self.pin_window_until_s)
             .field("device_name", &self.device_name)
             .field("mailboxes", &self.mailboxes)
             .field("allow_dev_loopback", &self.allow_dev_loopback)
@@ -266,6 +281,7 @@ impl LinkConfig {
             noise_hold_ms: 800,
             require_dtls_fingerprint: true,
             pinned_parent: None,
+            pin_window_until_s: None,
             device_name: String::new(),
             mailboxes: Vec::new(),
             allow_dev_loopback: false,
@@ -434,7 +450,7 @@ pub enum LinkInput {
     Tick,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 #[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub enum LinkAction {
@@ -492,6 +508,82 @@ pub enum LinkAction {
     Emit {
         event: LinkEvent,
     },
+}
+
+// Written by hand so that the one action that carries the parent secret (`parent_pin`) never
+// prints it, whatever logs a `{:?}` of an action list.
+impl std::fmt::Debug for LinkAction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LinkAction::OpenMailbox { id, kind, url } => f
+                .debug_struct("OpenMailbox")
+                .field("id", id)
+                .field("kind", kind)
+                .field("url", url)
+                .finish(),
+            LinkAction::MailboxSend { id, frame } => f
+                .debug_struct("MailboxSend")
+                .field("id", id)
+                .field("frame", frame)
+                .finish(),
+            LinkAction::CloseMailbox { id } => {
+                f.debug_struct("CloseMailbox").field("id", id).finish()
+            }
+            LinkAction::CreateAttempt { attempt, offerer } => f
+                .debug_struct("CreateAttempt")
+                .field("attempt", attempt)
+                .field("offerer", offerer)
+                .finish(),
+            LinkAction::CloseAttempt { attempt } => f
+                .debug_struct("CloseAttempt")
+                .field("attempt", attempt)
+                .finish(),
+            LinkAction::CreateOffer { attempt } => f
+                .debug_struct("CreateOffer")
+                .field("attempt", attempt)
+                .finish(),
+            LinkAction::SetRemoteDescription {
+                attempt,
+                sdp_type,
+                sdp,
+            } => f
+                .debug_struct("SetRemoteDescription")
+                .field("attempt", attempt)
+                .field("sdp_type", sdp_type)
+                .field("sdp", sdp)
+                .finish(),
+            LinkAction::CreateAnswer { attempt } => f
+                .debug_struct("CreateAnswer")
+                .field("attempt", attempt)
+                .finish(),
+            LinkAction::AddIceCandidate { attempt, candidate } => f
+                .debug_struct("AddIceCandidate")
+                .field("attempt", attempt)
+                .field("candidate", candidate)
+                .finish(),
+            LinkAction::SendData { attempt, text } => {
+                let shown: &dyn std::fmt::Debug = if text.contains("\"parent_pin\"") {
+                    &"<parent_pin redacted>"
+                } else {
+                    text
+                };
+                f.debug_struct("SendData")
+                    .field("attempt", attempt)
+                    .field("text", shown)
+                    .finish()
+            }
+            LinkAction::SetMicEnabled { enabled } => f
+                .debug_struct("SetMicEnabled")
+                .field("enabled", enabled)
+                .finish(),
+            LinkAction::ApplyQuiet => f.write_str("ApplyQuiet"),
+            LinkAction::SendProbeTone { duration_ms } => f
+                .debug_struct("SendProbeTone")
+                .field("duration_ms", duration_ms)
+                .finish(),
+            LinkAction::Emit { event } => f.debug_struct("Emit").field("event", event).finish(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -558,13 +650,21 @@ pub enum LinkEvent {
     Failed {
         reason: String,
     },
-    /// The parent secret was pinned (baby: it received the secret over the verified DataChannel;
-    /// parent: the baby acknowledged it). The platform persists it next to the PSK and passes it
-    /// back as `LinkConfig::pinned_parent`. Secret-class: the one event that carries a secret, so
-    /// platforms must never log it. Emitted once per pinning.
+    /// The parent secret to persist, next to the PSK, as `LinkConfig::pinned_parent` together with
+    /// `window_until_s` as `LinkConfig::pin_window_until_s`. Emitted by the parent when it draws the
+    /// secret and again before every repeat of `parent_pin` while the baby has not acknowledged it
+    /// (`window_until_s`: the end of the first-pairing window), once more with `None` when the
+    /// baby acknowledged it; and by the baby when it pins (`None`). Repeats are idempotent.
+    ///
+    /// **Binding rule:** the platform must durably persist the secret before it executes any later
+    /// action of the same `handle` output (the `parent_pin` message follows in that very output). If
+    /// persisting fails it must drop the rest of the output; the next repeat emits the event again.
+    /// Secret-class: the one event that carries a secret, so platforms must never log it.
     ParentPinned {
         #[cfg_attr(feature = "tsify", tsify(type = "string"))]
         secret: ParentSecret,
+        #[cfg_attr(feature = "tsify", tsify(optional))]
+        window_until_s: Option<u64>,
     },
     /// Baby: the parent device that is now trusted for this attempt, by the name it sent over the
     /// verified DataChannel ("Connected to <name>"). Empty if the parent sent none.
@@ -673,6 +773,18 @@ pub struct Link {
     pin: Option<SecretBytes>,
     /// Parent: a secret drawn at the first verification that the baby has not acknowledged yet.
     pin_unacked: bool,
+    /// The end of the first-pairing window (Unix seconds), and whether this run drew the secret
+    /// without a window (tests, no invite expiry known).
+    window_until: Option<u64>,
+    drawn_in_run: bool,
+    /// What the session layer was last told to require.
+    sess_require: bool,
+    /// Baby: an attempt arrived but no first parent may be pinned (window closed, nothing
+    /// pinned): the pairing must be done again. Parent: the baby repeatedly could not prove the
+    /// secret. Both are sticky causes in the status.
+    pair_again: bool,
+    baby_missing: u32,
+    baby_unrecognised: bool,
     /// Baby with a pinned parent: the attempt verified at the DTLS level but the parent proof is
     /// still due (deadline). While set, the microphone path, status, alerts and the heartbeat level
     /// stay closed to that attempt.
@@ -805,10 +917,26 @@ impl Link {
             p.bytes.zeroize();
             secret
         });
-        sess.set_parent_pin(pin.as_ref().map(|s| s.0.as_slice()));
+        let pin_from_config = pin.is_some();
+        let role_is_parent = cfg.role == Role::Parent;
+        let role_is_baby = cfg.role == Role::Baby;
+        let cfg_window = cfg.pin_window_until_s;
+        // A baby requires the parent's tag as soon as it holds a pin. A parent that is still inside
+        // a first-pairing window does not require the baby's (the baby may never have pinned);
+        // the pump turns it on once the window is known to be closed.
+        sess.set_parent_pin(
+            pin.as_ref().map(|s| s.0.as_slice()),
+            role_is_baby && pin_from_config,
+        );
         Ok(Self {
             pin,
-            pin_unacked: false,
+            pin_unacked: pin_from_config && role_is_parent && cfg_window.is_some(),
+            window_until: cfg_window,
+            drawn_in_run: false,
+            sess_require: role_is_baby && pin_from_config,
+            pair_again: false,
+            baby_missing: 0,
+            baby_unrecognised: false,
             proof_due: None,
             last_parent_warn: None,
             hints: Vec::new(),
@@ -1145,8 +1273,10 @@ impl Link {
         fresh.next_handle = self.next_handle;
         fresh.last_status = self.last_status.take();
         fresh.pin_unacked = self.pin_unacked;
+        fresh.window_until = self.window_until;
+        fresh.drawn_in_run = self.drawn_in_run;
         fresh.last_parent_warn = self.last_parent_warn;
-        fresh.sync_session_pin();
+        fresh.sync_session_pin(now);
         *self = fresh;
         out.push(self.open_action());
     }
@@ -1513,13 +1643,24 @@ impl Link {
             Ok(opened) => opened,
             // Another device that holds the PSK: a warning, never a reply.
             Err(OpenError::NotPinned) => {
-                self.warn_unknown_parent(now, out);
+                if self.cfg.role == Role::Baby {
+                    self.warn_unknown_parent(now, out);
+                } else {
+                    self.warn_wrong_key(now, out);
+                    self.count_untagged_baby(now, out);
+                }
                 return;
             }
             Err(_) => return,
         };
         if self.sess.peer_session() == Some(opened.sender_session) {
             self.peer_client = Some(from.to_owned());
+        }
+        // A parent is there, but this baby holds no secret for it and its invite is over: only a
+        // new code on this device can pair them. (Nothing here can connect; the hint is sticky
+        // until an attempt is trusted.)
+        if self.cfg.role == Role::Baby && self.pin.is_none() && !self.baby_window_open(now) {
+            self.pair_again = true;
         }
         if let Some(reply) = &opened.reply {
             self.send_reply(now, from, reply, out);
@@ -1942,11 +2083,19 @@ impl Link {
         // A pinned pairing proves the secret in both directions before either side trusts the
         // attempt: the baby waits for the parent proof, the parent for the baby proof. A parent
         // whose secret the baby has not acknowledged yet is still in the first pairing.
-        let pinned = self.pin.is_some() && !(self.cfg.role == Role::Parent && self.pin_unacked);
+        let pinned = match self.cfg.role {
+            // An unpinned baby outside the first-pairing window grants no trust to anybody: it
+            // waits for a proof it cannot check and refuses like a missing parent proof.
+            Role::Baby => self.pin.is_some() || !self.baby_window_open(now),
+            Role::Parent => self.pin.is_some() && !self.parent_unacked(now),
+        };
         if pinned {
+            if self.cfg.role == Role::Baby && self.pin.is_none() {
+                self.pair_again = true;
+            }
             self.proof_due = Some(now.saturating_add(PARENT_PROOF_WAIT_MS));
             if self.cfg.role == Role::Parent {
-                self.send_parent_credentials(out);
+                self.send_parent_credentials(now, out);
             }
             return;
         }
@@ -1959,6 +2108,8 @@ impl Link {
         // an all-night connection pattern. Loss and `peer_stopped` reopen them.
         self.hold_mailboxes(now, out);
         let first = !self.verified_in_run;
+        self.pair_again = false;
+        self.baby_unrecognised = false;
         self.ever_verified = true;
         self.verified_in_run = true;
         self.consecutive_mismatches = 0;
@@ -1986,8 +2137,8 @@ impl Link {
             }
             Role::Parent => {
                 // A pinned parent sent its proof when the attempt verified.
-                if self.pin.is_none() || self.pin_unacked {
-                    self.send_parent_credentials(out);
+                if self.pin.is_none() || self.parent_unacked(now) {
+                    self.send_parent_credentials(now, out);
                 }
                 if self.listen_intent {
                     if first || outage_start.is_none() || down_ms < LISTEN_RESUME_MS {
@@ -2004,9 +2155,47 @@ impl Link {
     // ---- parent pin ------------------------------------------------------------------------
 
     /// The secret the session layer tags with (parent) or checks against (baby).
-    fn sync_session_pin(&mut self) {
+    fn sync_session_pin(&mut self, now: u64) {
+        let require = self.pin.is_some() && self.requires_peer_tag(now);
+        self.sess_require = require;
         self.sess
-            .set_parent_pin(self.pin.as_ref().map(|s| s.0.as_slice()));
+            .set_parent_pin(self.pin.as_ref().map(|s| s.0.as_slice()), require);
+    }
+
+    /// Whether envelopes of the peer role must carry the peer's pin tag: the baby once pinned, the
+    /// parent once the first-pairing window is over for it (acknowledged, or expired).
+    fn requires_peer_tag(&self, now: u64) -> bool {
+        match self.cfg.role {
+            Role::Baby => self.pin.is_some(),
+            Role::Parent => self.pin.is_some() && !self.parent_unacked(now),
+        }
+    }
+
+    /// Parent: the baby has not acknowledged the secret and the first-pairing window is still
+    /// open, so the raw secret may still be sent and the baby may not be pinned yet.
+    fn parent_unacked(&self, now: u64) -> bool {
+        self.pin_unacked && self.window_open(now)
+    }
+
+    /// The first-pairing window: until the invite expires. Without an expiry (tests) a secret
+    /// drawn in this run stays sendable for the run; a secret from an earlier run never is.
+    fn window_open(&self, now: u64) -> bool {
+        match self.window_until {
+            Some(until) => self.wall_now(now).is_some_and(|w| w < until),
+            None => self.drawn_in_run,
+        }
+    }
+
+    /// Baby: a first parent may still be pinned (the invite is valid; without an expiry, only a
+    /// baby that was never paired).
+    fn baby_window_open(&self, now: u64) -> bool {
+        if self.pin.is_some() {
+            return false;
+        }
+        match self.cfg.pin_window_until_s {
+            Some(until) => self.wall_now(now).is_some_and(|w| w < until),
+            None => !self.cfg.paired_before,
+        }
     }
 
     /// Both DTLS fingerprints of the live attempt as `(parent, baby)`, as this side sees them.
@@ -2026,9 +2215,15 @@ impl Link {
     /// restarts before the baby's acknowledgement arrives still holds the secret the baby pinned.
     /// Until the acknowledgement arrives in this run the parent repeats the secret (an unpinned or
     /// already pinned baby takes the same one) instead of proving it.
-    fn send_parent_credentials(&mut self, out: &mut Vec<LinkAction>) {
+    fn send_parent_credentials(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         let name = clean_device_name(&self.cfg.device_name);
         if self.pin.is_none() {
+            // The first pairing, and only inside the window the invite allows.
+            if self.cfg.pin_window_until_s.is_some()
+                && !self.window_open_for(now, self.cfg.pin_window_until_s)
+            {
+                return;
+            }
             let Some(rng) = self.csprng.as_mut() else {
                 return;
             };
@@ -2036,30 +2231,43 @@ impl Link {
             rng.fill_bytes(&mut bytes);
             let secret = SecretBytes(bytes);
             bytes.zeroize();
-            emit(
-                out,
-                LinkEvent::ParentPinned {
-                    secret: secret.to_parent_secret(),
-                },
-            );
+            self.window_until = self.cfg.pin_window_until_s;
+            self.drawn_in_run = self.window_until.is_none();
             self.pin = Some(secret);
             self.pin_unacked = true;
             // Tag every envelope from now on: the baby may pin before the acknowledgement arrives.
-            self.sync_session_pin();
+            self.sync_session_pin(now);
         }
         let Some(pin) = self.pin.as_ref() else {
             return;
         };
-        if self.pin_unacked {
+        if self.parent_unacked(now) {
             let secret = pin.to_parent_secret();
+            // Persist before send, on every repeat: the platform stores this before it executes
+            // the `parent_pin` action that follows in the same output.
+            emit(
+                out,
+                LinkEvent::ParentPinned {
+                    secret: secret.clone(),
+                    window_until_s: self.window_until,
+                },
+            );
             self.send_app(&DataMessage::ParentPin { secret, name }, out);
             return;
         }
+        // Acknowledged, or the window is over: the raw secret never goes out again.
         let Some((fp_parent, fp_baby)) = self.parent_baby_fingerprints() else {
             return;
         };
         if let Some(mac) = parent_proof_mac(&pin.0, &fp_parent, &fp_baby) {
             self.send_app(&DataMessage::ParentProof { mac, name }, out);
+        }
+    }
+
+    fn window_open_for(&self, now: u64, until: Option<u64>) -> bool {
+        match until {
+            Some(u) => self.wall_now(now).is_some_and(|w| w < u),
+            None => true,
         }
     }
 
@@ -2090,6 +2298,11 @@ impl Link {
     ) {
         match self.pin.as_ref() {
             None => {
+                // Only while the invite is valid: after that a secret from "the parent" would be
+                // a PSK holder's.
+                if !self.baby_window_open(now) {
+                    return;
+                }
                 let Some(pinned) = SecretBytes::from_slice(&secret.bytes) else {
                     return;
                 };
@@ -2097,10 +2310,11 @@ impl Link {
                     out,
                     LinkEvent::ParentPinned {
                         secret: pinned.to_parent_secret(),
+                        window_until_s: None,
                     },
                 );
                 self.pin = Some(pinned);
-                self.sync_session_pin();
+                self.sync_session_pin(now);
                 emit(out, LinkEvent::ParentConnected { name });
                 self.send_app(&DataMessage::PinAck, out);
             }
@@ -2146,6 +2360,22 @@ impl Link {
         self.next_try_at = self.hold_until;
     }
 
+    /// Parent: a sender of the baby role that is not the pinned baby (rate limited).
+    fn warn_wrong_key(&mut self, now: u64, out: &mut Vec<LinkAction>) {
+        if self
+            .last_parent_warn
+            .is_none_or(|t| now.saturating_sub(t) >= PARENT_WARN_MIN_MS)
+        {
+            self.last_parent_warn = Some(now);
+            emit(
+                out,
+                LinkEvent::SecurityWarning {
+                    key: "wrong_key_attempt".into(),
+                },
+            );
+        }
+    }
+
     fn warn_unknown_parent(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         if self
             .last_parent_warn
@@ -2162,11 +2392,25 @@ impl Link {
         );
     }
 
-    /// Parent: the baby pinned the secret (it was persisted when it was drawn).
-    fn on_pin_ack(&mut self) {
-        if self.cfg.role == Role::Parent {
-            self.pin_unacked = false;
+    /// Parent: the baby pinned the secret. The window is over for good: the platform stores the
+    /// secret without a window, and the parent only proves from now on.
+    fn on_pin_ack(&mut self, now: u64, out: &mut Vec<LinkAction>) {
+        if self.cfg.role != Role::Parent || !self.pin_unacked {
+            return;
         }
+        self.pin_unacked = false;
+        self.window_until = None;
+        self.drawn_in_run = false;
+        if let Some(pin) = self.pin.as_ref() {
+            emit(
+                out,
+                LinkEvent::ParentPinned {
+                    secret: pin.to_parent_secret(),
+                    window_until_s: None,
+                },
+            );
+        }
+        self.sync_session_pin(now);
     }
 
     /// Parent with a pinned pairing: the baby's proof of the secret. Only a valid one makes the
@@ -2182,15 +2426,39 @@ impl Link {
         match expected {
             Some(expected) if macs_equal(&expected, mac) => {
                 self.proof_due = None;
+                self.baby_missing = 0;
                 self.on_trusted(now, out);
             }
             _ => self.refuse_baby(now, "baby_proof_mismatch", out),
         }
     }
 
+    /// Parent whose secret the baby never acknowledged and whose first-pairing window is over:
+    /// every envelope the baby sends lacks the tag, so it never received the secret (it was
+    /// reset, or the message was lost). After a few of them the user is told to show a new code.
+    /// An acknowledged pairing never counts here: a PSK holder must not be able to raise it.
+    fn count_untagged_baby(&mut self, now: u64, out: &mut Vec<LinkAction>) {
+        if !(self.pin_unacked && !self.window_open(now)) {
+            return;
+        }
+        self.baby_missing += 1;
+        if self.baby_missing >= BABY_UNRECOGNISED_AFTER && !self.baby_unrecognised {
+            self.baby_unrecognised = true;
+            self.refresh_status(now, out);
+        }
+    }
+
     /// Parent: an attempt whose baby could not prove the secret is closed and is no contact: the
     /// outage keeps its start, so escalation runs on. The warning reuses `wrong_key_attempt`.
     fn refuse_baby(&mut self, now: u64, reason: &str, out: &mut Vec<LinkAction>) {
+        // A baby that keeps not answering has no pin for this parent (it never received the
+        // secret, was reset or re-paired): only a new code on the baby recovers that.
+        if reason == "baby_proof_missing" {
+            self.baby_missing += 1;
+            if self.baby_missing >= BABY_UNRECOGNISED_AFTER {
+                self.baby_unrecognised = true;
+            }
+        }
         self.close_live(out);
         emit(
             out,
@@ -2198,18 +2466,7 @@ impl Link {
                 reason: reason.to_owned(),
             },
         );
-        if self
-            .last_parent_warn
-            .is_none_or(|t| now.saturating_sub(t) >= PARENT_WARN_MIN_MS)
-        {
-            self.last_parent_warn = Some(now);
-            emit(
-                out,
-                LinkEvent::SecurityWarning {
-                    key: "wrong_key_attempt".into(),
-                },
-            );
-        }
+        self.warn_wrong_key(now, out);
         self.try_failed(now);
     }
 
@@ -2447,7 +2704,7 @@ impl Link {
             (Role::Baby, DataMessage::ParentPin { secret, name }) => {
                 self.on_parent_pin(now, &secret, name, out)
             }
-            (Role::Parent, DataMessage::PinAck) => self.on_pin_ack(),
+            (Role::Parent, DataMessage::PinAck) => self.on_pin_ack(now, out),
             (Role::Parent, DataMessage::Mailboxes { mailboxes }) => {
                 self.on_mailbox_update(&mailboxes, out)
             }
@@ -2653,6 +2910,9 @@ impl Link {
 
     fn pump(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         if self.mode == Mode::Running {
+            if self.pin.is_some() && self.requires_peer_tag(now) != self.sess_require {
+                self.sync_session_pin(now);
+            }
             self.signaling_housekeeping(now, out);
             self.here_housekeeping(now, out);
             if self.cfg.role == Role::Baby {
@@ -2803,7 +3063,16 @@ impl Link {
     }
 
     fn refresh_status(&mut self, now: u64, out: &mut Vec<LinkAction>) {
-        let hint = self.update_required.then(|| "update_required".to_owned());
+        // Sticky causes, most urgent first.
+        let hint = if self.update_required {
+            Some("update_required".to_owned())
+        } else if self.pair_again {
+            Some("pair_again".to_owned())
+        } else if self.baby_unrecognised {
+            Some("baby_unrecognised".to_owned())
+        } else {
+            None
+        };
         let plain = |state, key: Option<String>, cause: Option<String>| LinkStatus {
             state,
             level: 0,
@@ -2888,6 +3157,23 @@ mod tests {
         let mut l = Link::new(cfg(role)).unwrap();
         let a = l.handle(0, LinkInput::Start { entropy: 42 });
         (l, a)
+    }
+
+    #[test]
+    fn debug_of_the_action_that_sends_the_parent_secret_hides_it() {
+        let secret = "ab".repeat(32);
+        let pin = LinkAction::SendData {
+            attempt: 1,
+            text: format!(r#"{{"type":"parent_pin","v":3,"secret":"{secret}","name":"x"}}"#),
+        };
+        let shown = format!("{pin:?}");
+        assert!(!shown.contains(&secret), "{shown}");
+        assert!(shown.contains("redacted"));
+        let other = LinkAction::SendData {
+            attempt: 1,
+            text: r#"{"type":"ping"}"#.to_owned(),
+        };
+        assert!(format!("{other:?}").contains("ping"));
     }
 
     #[test]
@@ -3470,6 +3756,7 @@ mod tests {
         let events = vec![
             LinkEvent::ParentPinned {
                 secret: ParentSecret { bytes: vec![7; 32] },
+                window_until_s: Some(1_800_000_300),
             },
             LinkEvent::ParentConnected {
                 name: "Pixel 8".into(),
@@ -3494,7 +3781,8 @@ mod tests {
         let debug = format!(
             "{:?}",
             LinkEvent::ParentPinned {
-                secret: ParentSecret { bytes: vec![7; 32] }
+                secret: ParentSecret { bytes: vec![7; 32] },
+                window_until_s: None,
             }
         );
         assert!(!debug.contains("0707") && !debug.contains("[7"), "{debug}");

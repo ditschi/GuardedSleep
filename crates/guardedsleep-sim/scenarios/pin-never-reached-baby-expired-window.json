@@ -1,0 +1,108 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "pin-never-reached-baby-expired-window",
+  "description": "The first pairing verifies but the parent's secret never reaches the baby (the message is lost every time). The parent persisted it before sending and repeats it while the invite is valid. The parent restarts after the invite expired: it no longer sends the raw secret (not on any hint either) and behaves as pinned, while the baby grants no trust to a parent it holds no secret for. Neither side connects; the parent tells the user that the baby does not recognise it, the baby that it must be paired again.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby",
+      "pin_window_s": 60
+    },
+    {
+      "id": "parent",
+      "role": "parent",
+      "pin_window_s": 60
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "drop_data",
+      "from": "parent",
+      "message": "parent_pin"
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "kill_process",
+      "peer": "parent"
+    },
+    {
+      "at": 90000,
+      "do": "restart_process",
+      "peer": "parent"
+    },
+    {
+      "at": 400000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "event": "parent_pinned",
+      "within_ms": [0, 20000],
+      "count_min": 1
+    },
+    {
+      "peer": "parent",
+      "never": "parent_pinned",
+      "within_ms": [60000, 400000]
+    },
+    {
+      "peer": "baby",
+      "never": "parent_pinned"
+    },
+    {
+      "peer": "baby",
+      "never": "parent_connected",
+      "within_ms": [90000, 400000]
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "connected"
+        }
+      },
+      "within_ms": [90000, 400000]
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "connected"
+        }
+      },
+      "within_ms": [90000, 400000]
+    },
+    {
+      "peer": "baby",
+      "event": "status",
+      "where": {
+        "status": {
+          "cause": "pair_again"
+        }
+      },
+      "within_ms": [90000, 400000],
+      "count_min": 1
+    },
+    {
+      "peer": "parent",
+      "event": "status",
+      "where": {
+        "status": {
+          "cause": "baby_unrecognised"
+        }
+      },
+      "within_ms": [90000, 400000],
+      "count_min": 1
+    }
+  ]
+}

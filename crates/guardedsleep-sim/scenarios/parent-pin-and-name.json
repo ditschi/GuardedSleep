@@ -1,7 +1,7 @@
 {
   "schema": "gs-scenario/1",
   "id": "parent-pin-and-name",
-  "description": "At the first verification the parent sends its secret and its device name over the DataChannel; the baby pins the secret and shows the name, and the parent keeps the secret only after the baby acknowledged it. A restart of either side later passes the proof and shows the name again; a restarted parent without the secret is refused.",
+  "description": "At the first verification the parent persists its secret (the parent_pinned event, before the message that carries it), then sends it with its device name over the DataChannel; the baby pins the secret and shows the name, and the parent records the acknowledgement with a second parent_pinned event. A restart of either side later passes the proof and shows the name again; a restarted parent without the secret is refused.",
   "seed": 1,
   "peers": [
     {
@@ -44,7 +44,7 @@
     {
       "peer": "parent",
       "event": "parent_pinned",
-      "count": 1,
+      "count": 2,
       "within_ms": [0, 30000]
     },
     {

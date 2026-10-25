@@ -60,6 +60,17 @@ fn challenge_field(case: &Value, k: &str) -> Result<[u8; CHALLENGE_LEN], String>
     }
 }
 
+/// An optional 32-byte hex pin tag key; absent means no tag.
+fn tag_key_field(case: &Value) -> Result<Option<crate::envelope::TagKey>, String> {
+    match case.get("tag_key").and_then(Value::as_str) {
+        None => Ok(None),
+        Some(text) => from_hex(text)
+            .and_then(|b| <[u8; 32]>::try_from(b).ok())
+            .map(|k| Some(crate::envelope::TagKey(k)))
+            .ok_or_else(|| "tag_key must be 32 bytes".to_owned()),
+    }
+}
+
 fn envelope_key(case: &Value) -> Result<SecretKey, String> {
     let psk = decode_psk(str_field(case, "psk_b64url")?).ok_or("bad psk")?;
     derive_key(&psk, Purpose::Seal).ok_or_else(|| "empty psk".to_owned())
@@ -84,7 +95,7 @@ fn envelope_seal(case: &Value) -> Result<Value, String> {
             .ok_or("missing seq")?,
         challenge: challenge_field(case, "challenge")?,
         echo: challenge_field(case, "echo")?,
-        parent_tag: challenge_field(case, "parent_tag")?,
+        tag_key: tag_key_field(case)?,
     };
     // "message_repeat" builds large messages without a huge vector file.
     let mut message = str_field(case, "message")?.as_bytes().to_vec();

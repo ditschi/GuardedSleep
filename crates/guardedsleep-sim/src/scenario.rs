@@ -57,6 +57,9 @@ pub struct PeerSpec {
     /// Baby: the mailbox set it sends the parent after each verification (`LinkConfig::mailboxes`).
     #[serde(default)]
     pub mailboxes: Vec<InviteMailbox>,
+    /// The first-pairing window (`LinkConfig::pin_window_until_s`) as seconds of simulated wall
+    /// clock after the start of the run: the invite expiry of the pairing.
+    pub pin_window_s: Option<u64>,
     /// Parent: the device name it sends the baby (`LinkConfig::device_name`).
     #[serde(default)]
     pub device_name: Option<String>,
@@ -127,6 +130,8 @@ pub struct Step {
     pub for_ms: Option<u64>,
     /// `data` (DataChannel, default) or `signaling`.
     pub via: Option<String>,
+    /// A fault only affects messages whose text contains this (e.g. `"parent_pin"`).
+    pub message: Option<String>,
     pub gap_ms: Option<u64>,
     pub after_ms: Option<u64>,
     pub mode: Option<String>,
