@@ -45,7 +45,6 @@ object PairingPolicy {
     /** QR code validity; single use, fresh PSK per code (ADR-018 §2). */
     const val QR_VALIDITY_MS = 5L * 60_000L
     const val PSK_BYTES = 32
-    const val PAYLOAD_VERSION = 3
 }
 
 object AppDefaults {

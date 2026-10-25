@@ -276,12 +276,18 @@ class LinkController(
         val psk = ByteArray(PairingPolicy.PSK_BYTES).also(random::nextBytes)
         val now = clock.elapsedMs()
         val payload = PairingPayload.create(psk, urls, clock.wallMs())
+        val inviteText = payload.toInviteText()
+        if (inviteText == null) {
+            // The core refuses an invite for these addresses (e.g. a public ws:// address).
+            _pairing.value = PairingState(PairingPhase.FAILED, error = PairingError.UNREACHABLE)
+            return
+        }
         val pending =
             PendingPairing(payload.pskB64url, urls, null, now, now + PairingPolicy.QR_VALIDITY_MS)
         _pairing.value =
             PairingState(
                 PairingPhase.SHOWING_CODE,
-                codePayload = payload.toJson(),
+                codePayload = inviteText,
                 expiresAtElapsedMs = pending.expiresAtElapsedMs,
             )
         startRun(Role.BABY, pending, pairedBefore = false, monitoring = false, isPending = true)

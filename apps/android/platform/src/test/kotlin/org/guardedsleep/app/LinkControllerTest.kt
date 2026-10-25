@@ -326,7 +326,7 @@ class LinkControllerTest {
                 clock = RealClock(),
                 random = SecureRandom(),
             )
-        controller.updateSettings { it.copy(signalingUrls = listOf("ws://fake")) }
+        controller.updateSettings { it.copy(signalingUrls = listOf("wss://fake.example")) }
         controller.chooseRole(role)
         controllers += controller
         return Unit2(controller, store, sink, silence)
@@ -432,7 +432,7 @@ class LinkControllerTest {
         parent.store.save(
             org.guardedsleep.app.pairing.StoredPairing(
                 org.guardedsleep.app.pairing.PairingPayload.b64(ByteArray(32) { 3 }),
-                listOf("ws://fake"),
+                listOf("wss://fake.example"),
                 true,
             )
         )

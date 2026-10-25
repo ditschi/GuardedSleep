@@ -7,6 +7,7 @@ import org.guardedsleep.app.pairing.PairingStore
 import org.guardedsleep.app.pairing.StoredPairing
 import org.guardedsleep.app.pairing.TurnCredentials
 import org.guardedsleep.app.ui.model.PairingError
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -22,20 +23,33 @@ class PairingTest {
     private val psk = ByteArray(32) { it.toByte() }
 
     private fun payload(
-        v: Int = 3,
+        v: Int = 4,
         k: String = PairingPayload.b64(psk),
-        s: String = """["ws://10.0.2.2:8787","wss://a.example/sig"]""",
+        m: String = """["l:10.0.2.2:8787","r:a.example/sig"]""",
         x: Long = now / 1000 + 300,
-    ) = """{"v":$v,"k":"$k","s":$s,"x":$x}"""
+    ) = """{"v":$v,"k":"$k","m":$m,"x":$x}"""
 
     private fun rejected(text: String) = (PairingPayload.parse(text, now) as Result.Rejected).error
 
     @Test
     fun roundTrip() {
-        val p = PairingPayload.create(psk, listOf("ws://h:1"), now)
-        val parsed = PairingPayload.parse(p.toJson(), now) as Result.Ok
+        val p = PairingPayload.create(psk, listOf("wss://relay.example:8443/sig"), now)
+        val parsed = PairingPayload.parse(p.toInviteText()!!, now) as Result.Ok
         assertEquals(p, parsed.payload)
         assertEquals((now + 300_000) / 1000, p.expiresAtEpochSec)
+    }
+
+    @Test
+    fun inviteTextIsTheCompactV4Form() {
+        val p =
+            PairingPayload.create(psk, listOf("wss://a.example/sig", "ws://192.168.1.5:8787"), now)
+        val json = JSONObject(p.toInviteText()!!)
+        assertEquals(4, json.getInt("v"))
+        assertEquals(PairingPayload.b64(psk), json.getString("k"))
+        assertEquals(
+            """["r:a.example/sig","l:192.168.1.5:8787"]""",
+            json.getJSONArray("m").toString(),
+        )
     }
 
     @Test
@@ -50,18 +64,39 @@ class PairingTest {
     }
 
     @Test
+    fun nostrMailboxesAreNotOpenedAsSignalingUrls() {
+        val text = payload(m = """["r:a.example","n:relay.example.org","l:192.168.1.5:8787"]""")
+        val parsed = PairingPayload.parse(text, now) as Result.Ok
+        assertEquals(
+            listOf("wss://a.example", "ws://192.168.1.5:8787"),
+            parsed.payload.signalingUrls,
+        )
+    }
+
+    @Test
+    fun theCoreRefusesAnAddressThatIsNeitherRelayNorPrivateLan() {
+        val publicLan = PairingPayload.create(psk, listOf("ws://8.8.8.8:8787"), now)
+        assertNull(publicLan.toInviteText())
+        val hostnameLan = PairingPayload.create(psk, listOf("ws://gs.local:8787"), now)
+        assertNull(hostnameLan.toInviteText())
+        assertNull(PairingPayload.create(psk, listOf("http://h"), now).toInviteText())
+    }
+
+    @Test
     fun expiryBoundaryIsExclusive() {
         assertTrue(PairingPayload.parse(payload(x = now / 1000 + 1), now) is Result.Ok)
         assertEquals(PairingError.EXPIRED, rejected(payload(x = now / 1000)))
     }
 
     @Test
-    fun rejectsMissingExpiryAndBadUrlHost() {
+    fun rejectsMissingExpiryAndBadMailbox() {
         assertEquals(
             PairingError.NOT_OUR_CODE,
-            rejected("""{"v":3,"k":"${PairingPayload.b64(psk)}","s":["ws://h"]}"""),
+            rejected("""{"v":4,"k":"${PairingPayload.b64(psk)}","m":["r:h.example"]}"""),
         )
-        assertEquals(PairingError.NOT_OUR_CODE, rejected(payload(s = """["ws:///path"]""")))
+        assertEquals(PairingError.NOT_OUR_CODE, rejected(payload(m = """["r:"]""")))
+        assertEquals(PairingError.NOT_OUR_CODE, rejected(payload(m = """["l:169.254.1.1:80"]""")))
+        assertEquals(PairingError.NOT_OUR_CODE, rejected(payload(m = "[]")))
     }
 
     @Test
@@ -73,7 +108,13 @@ class PairingTest {
     fun rejectsExpired() = assertEquals(PairingError.EXPIRED, rejected(payload(x = now / 1000 - 1)))
 
     @Test
-    fun rejectsWrongVersion() = assertEquals(PairingError.NOT_OUR_CODE, rejected(payload(v = 2)))
+    fun rejectsOtherVersionsIncludingV3() {
+        assertEquals(PairingError.NOT_OUR_CODE, rejected(payload(v = 2)))
+        assertEquals(PairingError.NOT_OUR_CODE, rejected(payload(v = 3)))
+        val v3 =
+            """{"v":3,"k":"${PairingPayload.b64(psk)}","s":["wss://h.example"],"x":${now / 1000 + 300}}"""
+        assertEquals(PairingError.NOT_OUR_CODE, rejected(v3))
+    }
 
     @Test
     fun rejectsShortKey() =
@@ -84,8 +125,8 @@ class PairingTest {
 
     @Test
     fun rejectsBadScheme() {
-        assertEquals(PairingError.NOT_OUR_CODE, rejected(payload(s = """["http://h"]""")))
-        assertEquals(PairingError.NOT_OUR_CODE, rejected(payload(s = "[]")))
+        assertEquals(PairingError.NOT_OUR_CODE, rejected(payload(m = """["wss://h.example"]""")))
+        assertEquals(PairingError.NOT_OUR_CODE, rejected(payload(m = """["x:h.example"]""")))
     }
 
     @Test
