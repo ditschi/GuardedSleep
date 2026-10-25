@@ -220,7 +220,7 @@
       "input": {
         "type": "attempt_data_message",
         "attempt": 2,
-        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":38387,\"seq\":1,\"rms\":0}"
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":38387,\"seq\":1}"
       }
     },
     { "n": 68, "now": 38500, "input": { "type": "tick" } },
@@ -593,7 +593,7 @@
         }
       }
     ],
-    [{ "type": "emit", "event": { "type": "peer_heartbeat", "seq": 1, "rms": 0.0 } }],
+    [{ "type": "emit", "event": { "type": "peer_heartbeat", "seq": 1, "rms": null } }],
     [],
     [
       {

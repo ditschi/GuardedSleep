@@ -3,6 +3,7 @@
   "id": "night-holds-no-mailbox",
   "description": "Two hours of verified monitoring (three reachability checks): each device joins the room only for its first attempt and holds no mailbox between the checks, which are pings on sockets that never say hello. The mailbox rule is time-independent, so two hours stand for the whole night and keep the suite fast.",
   "seed": 1,
+  "max_seeds": 2,
   "peers": [
     {
       "id": "baby",

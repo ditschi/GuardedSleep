@@ -532,7 +532,7 @@
       {
         "type": "send_data",
         "attempt": 2,
-        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":38327,\"seq\":1,\"rms\":0}"
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":38327,\"seq\":1}"
       }
     ],
     [

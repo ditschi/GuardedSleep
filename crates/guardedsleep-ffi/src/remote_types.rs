@@ -3,10 +3,12 @@
 //! field and variant lists must match the core definitions exactly; a mismatch fails to compile.
 //! Docs: <https://mozilla.github.io/uniffi-rs/latest/proc_macro/index.html#the-uniffiremote-attribute>
 
+use guardedsleep_core::invite::InviteMailbox;
 use guardedsleep_core::link::{
     LinkAction, LinkConfig, LinkEvent, LinkInput, LinkState, LinkStatus,
 };
 use guardedsleep_core::mailbox::MailboxKind;
+use guardedsleep_core::pairing::ParentSecret;
 use guardedsleep_core::protocol::{DeviceStatus, Dnd, IceCandidate, Ringer, Role, UnitWarning};
 use guardedsleep_core::session::{Action, Input, SessionConfig, SessionEvent, SessionState};
 
@@ -98,6 +100,32 @@ pub struct LinkConfig {
     /// fingerprint (`attempt_dtls_fingerprint`) and it matches the remote SDP. Defaults to `true`;
     /// switch off only for a platform that cannot read WebRTC certificate stats.
     pub require_dtls_fingerprint: bool,
+    /// The parent secret persisted from `LinkEvent::ParentPinned` (baby: the pinned parent; parent:
+    /// the acknowledged secret). `None` before the first verified pairing. Secret-class: never
+    /// logged; `Link::new` takes the bytes and wipes its copy.
+    pub pinned_parent: Option<ParentSecret>,
+    /// Parent: this device's name, sent to the baby over the verified DataChannel only (at most 64
+    /// characters). Empty: no name.
+    pub device_name: String,
+    /// Baby: the mailbox set to send the parent after each verification. Empty: none is sent.
+    pub mailboxes: Vec<InviteMailbox>,
+    /// Development builds only: accept loopback `l:` entries in a received mailbox update.
+    pub allow_dev_loopback: bool,
+}
+
+/// The parent secret (32 bytes) as it crosses the boundary: in `LinkConfig::pinned_parent` and in
+/// the one event that carries it. Never log it.
+#[uniffi::remote(Record)]
+pub struct ParentSecret {
+    pub bytes: Vec<u8>,
+}
+
+/// One mailbox of an invite or of a mailbox update: its kind and the URL to open (`wss://host` for
+/// Nostr, `wss://host[:port][/path]` for an own relay, `ws://ip:port` for a LAN mailbox).
+#[uniffi::remote(Record)]
+pub struct InviteMailbox {
+    pub kind: MailboxKind,
+    pub url: String,
 }
 
 #[uniffi::remote(Enum)]
@@ -356,6 +384,26 @@ pub enum LinkEvent {
     /// Diagnostic reason of a failed or ended attempt; not a UI key.
     Failed {
         reason: String,
+    },
+    /// The parent secret was pinned (baby: it received the secret over the verified DataChannel;
+    /// parent: the baby acknowledged it). The platform persists it next to the PSK and passes it
+    /// back as `LinkConfig::pinned_parent`. The one event that carries a secret: never log it.
+    ParentPinned {
+        secret: ParentSecret,
+    },
+    /// Baby: the parent device that is now trusted for this attempt, by the name it sent over the
+    /// verified DataChannel. Empty if it sent none.
+    ParentConnected {
+        name: String,
+    },
+    /// Parent: the baby sent its current mailbox set; replace the stored one.
+    MailboxesUpdated {
+        mailboxes: Vec<InviteMailbox>,
+    },
+    /// A calm hint appeared or went away: `clock_skew` or `recovery_path_unavailable`.
+    Hint {
+        key: String,
+        active: bool,
     },
 }
 

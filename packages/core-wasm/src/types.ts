@@ -26,7 +26,10 @@ export type {
   UnitWarning,
 } from "../pkg/guardedsleep_wasm.js";
 
-/** Every UI key the core can put into `LinkStatus.key`, `LinkStatus.cause` or a security warning. */
+/**
+ * Every UI key the core can put into `LinkStatus.key`, `LinkStatus.cause`, a security warning or a
+ * calm hint (`hint` event: `clock_skew`, `recovery_path_unavailable`).
+ */
 export const LINK_MESSAGE_KEYS = [
   "pairing_key_mismatch",
   "update_required",
@@ -34,6 +37,9 @@ export const LINK_MESSAGE_KEYS = [
   "peer_absent",
   "media_blocked",
   "wrong_key_attempt",
+  "unknown_parent_attempt",
+  "clock_skew",
+  "recovery_path_unavailable",
 ] as const;
 export type LinkMessageKey = (typeof LINK_MESSAGE_KEYS)[number];
 
@@ -71,6 +77,10 @@ export const LINK_EVENT_TYPES = {
   noise_gate_changed: true,
   listen_changed: true,
   failed: true,
+  parent_pinned: true,
+  parent_connected: true,
+  mailboxes_updated: true,
+  hint: true,
 } as const satisfies Record<LinkEvent["type"], true>;
 
 export function isLinkAction(v: unknown): v is LinkAction {

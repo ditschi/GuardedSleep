@@ -2447,3 +2447,172 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+mod parent_tag_tests {
+    use super::*;
+    use chacha20::ChaCha20Rng;
+    use chacha20::rand_core::SeedableRng;
+
+    const PSK: [u8; 32] = [3; 32];
+    const SECRET: [u8; 32] = [9; 32];
+
+    fn key() -> SecretKey {
+        derive_key(&PSK, Purpose::Seal).unwrap()
+    }
+
+    fn rng(n: u8) -> ChaCha20Rng {
+        ChaCha20Rng::from_seed([n; 32])
+    }
+
+    fn sid(n: u8) -> SessionId {
+        SessionId::new([n; 16])
+    }
+
+    /// A pinned baby and a parent, neither knowing the other yet.
+    fn pair() -> (SessionState, SessionState, ChaCha20Rng, ChaCha20Rng) {
+        let mut baby = SessionState::new(Role::Baby, sid(1));
+        baby.set_parent_pin(Some(&SECRET));
+        (
+            baby,
+            SessionState::new(Role::Parent, sid(2)),
+            rng(1),
+            rng(2),
+        )
+    }
+
+    #[test]
+    fn a_pinned_baby_refuses_a_parent_envelope_without_the_tag() {
+        let (mut baby, mut parent, mut rb, mut rp) = pair();
+        let k = key();
+        let bare = parent
+            .seal(&k, &mut rp, MessageClass::Here, SessionId::NONE, b"{}")
+            .unwrap();
+        assert_eq!(
+            baby.open(&k, &mut rb, 0, &bare.bytes).err(),
+            Some(OpenError::NotPinned)
+        );
+        // Nothing was recorded: no candidate, no reply budget, the id is not burnt.
+        assert_eq!(baby.peer_session(), None);
+        parent.set_parent_pin(Some(&SECRET));
+        let tagged = parent
+            .seal(&k, &mut rp, MessageClass::Here, SessionId::NONE, b"{}")
+            .unwrap();
+        let opened = baby.open(&k, &mut rb, 1, &tagged.bytes).unwrap();
+        assert!(
+            opened.reply.is_some(),
+            "a pinned parent is a candidate like any other"
+        );
+    }
+
+    #[test]
+    fn another_secret_or_a_copied_tag_does_not_pass() {
+        let (mut baby, _, mut rb, _) = pair();
+        let k = key();
+        let mut other = SessionState::new(Role::Parent, sid(3));
+        other.set_parent_pin(Some(&[8; 32]));
+        let s = other
+            .seal(&k, &mut rng(3), MessageClass::Here, SessionId::NONE, b"{}")
+            .unwrap();
+        assert_eq!(
+            baby.open(&k, &mut rb, 0, &s.bytes).err(),
+            Some(OpenError::NotPinned)
+        );
+        // The tag of one nonce on another nonce: what a PSK holder gets by copying it.
+        let tag = parent_tag(&SECRET, &[1; NONCE_LEN]);
+        let frame = Frame {
+            role: Role::Parent,
+            class: MessageClass::Here,
+            recipient: SessionId::NONE,
+            sender: sid(2),
+            seq: 0,
+            challenge: NO_CHALLENGE,
+            echo: NO_CHALLENGE,
+            parent_tag: tag,
+        };
+        let good = seal_with_nonce(&k, &frame, b"{}", [1; NONCE_LEN]).unwrap();
+        let copied = seal_with_nonce(&k, &frame, b"{}", [2; NONCE_LEN]).unwrap();
+        assert_eq!(
+            baby.open(&k, &mut rb, 0, &copied.bytes).err(),
+            Some(OpenError::NotPinned)
+        );
+        assert!(baby.open(&k, &mut rb, 0, &good.bytes).is_ok());
+    }
+
+    #[test]
+    fn the_tag_is_the_first_16_bytes_of_hmac_sha256_of_the_nonce() {
+        let tag = parent_tag(&SECRET, &[5; NONCE_LEN]);
+        let mut mac = Hmac::<Sha256>::new_from_slice(&SECRET).unwrap();
+        mac.update(&[5; NONCE_LEN]);
+        let full = mac.finalize().into_bytes();
+        assert_eq!(&tag[..], &full[..16]);
+        assert_ne!(tag, NO_PARENT_TAG);
+    }
+
+    #[test]
+    fn an_unpinned_baby_and_the_baby_role_ignore_the_tag() {
+        let k = key();
+        let mut unpinned = SessionState::new(Role::Baby, sid(1));
+        let mut tagged = SessionState::new(Role::Parent, sid(2));
+        tagged.set_parent_pin(Some(&SECRET));
+        let s = tagged
+            .seal(&k, &mut rng(2), MessageClass::Here, SessionId::NONE, b"{}")
+            .unwrap();
+        assert!(unpinned.open(&k, &mut rng(1), 0, &s.bytes).is_ok());
+        // A parent checks nothing, and a baby never tags: its envelopes carry zeros.
+        let mut baby = SessionState::new(Role::Baby, sid(1));
+        baby.set_parent_pin(Some(&SECRET));
+        let b = baby
+            .seal(&k, &mut rng(1), MessageClass::Here, SessionId::NONE, b"{}")
+            .unwrap();
+        let peeked = peek(&k, &b.bytes).unwrap();
+        assert_eq!(peeked.frame.parent_tag, NO_PARENT_TAG);
+        let mut parent = SessionState::new(Role::Parent, sid(2));
+        parent.set_parent_pin(Some(&SECRET));
+        assert!(parent.open(&k, &mut rng(2), 0, &b.bytes).is_ok());
+    }
+
+    #[test]
+    fn a_pin_of_the_wrong_length_clears_it() {
+        let mut s = SessionState::new(Role::Baby, sid(1));
+        s.set_parent_pin(Some(&SECRET));
+        assert!(s.has_parent_pin());
+        s.set_parent_pin(Some(&[1; 31]));
+        assert!(!s.has_parent_pin());
+        s.set_parent_pin(Some(&SECRET));
+        s.set_parent_pin(None);
+        assert!(!s.has_parent_pin());
+    }
+
+    #[test]
+    fn the_largest_message_leaves_room_for_the_tag_and_the_tag_is_at_the_end() {
+        for class in [
+            MessageClass::Here,
+            MessageClass::Control,
+            MessageClass::Description,
+            MessageClass::Candidates,
+        ] {
+            assert_eq!(
+                class.max_message(),
+                class.bucket() - PLAINTEXT_HEAD_LEN - PARENT_TAG_LEN
+            );
+        }
+        let k = key();
+        let mut parent = SessionState::new(Role::Parent, sid(2));
+        parent.set_parent_pin(Some(&SECRET));
+        let biggest = vec![b'x'; MessageClass::Control.max_message()];
+        let s = parent
+            .seal(&k, &mut rng(2), MessageClass::Control, sid(1), &biggest)
+            .unwrap();
+        let p = peek(&k, &s.bytes).unwrap();
+        assert_eq!(p.message, biggest);
+        assert_eq!(p.frame.parent_tag, parent_tag(&SECRET, &s.id));
+        let over = vec![b'x'; MessageClass::Control.max_message() + 1];
+        assert_eq!(
+            parent
+                .seal(&k, &mut rng(2), MessageClass::Control, sid(1), &over)
+                .err(),
+            Some(SealError::Oversized)
+        );
+    }
+}

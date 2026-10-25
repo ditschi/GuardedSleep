@@ -17,6 +17,10 @@ pub struct Scenario {
     pub description: String,
     #[serde(default = "one")]
     pub seed: u64,
+    /// Upper bound on the seeds the suite runs for this scenario (default: all). For scenarios of
+    /// many simulated hours, whose run time grows with the simulated time and not with the seed.
+    #[serde(default)]
+    pub max_seeds: Option<u64>,
     pub peers: Vec<PeerSpec>,
     #[serde(default)]
     pub relay: RelaySpec,

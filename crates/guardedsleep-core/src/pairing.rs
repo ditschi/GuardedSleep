@@ -610,4 +610,44 @@ mod tests {
             "other key"
         );
     }
+
+    #[test]
+    fn the_parent_proof_binds_the_secret_and_both_fingerprints_in_order() {
+        let secret = [0x11u8; 32];
+        let (p, b) = (fp_hex(0), fp_hex(32));
+        let mac = parent_proof_mac(&secret, &p, &b).unwrap();
+        assert_eq!(mac.len(), 64);
+        assert_eq!(
+            mac,
+            "54d514ad4c1b14619a4c7fccc2c46cec5b7a0e39093dc4cc0bb5274bf129615e"
+        );
+        assert_ne!(Some(mac.clone()), parent_proof_mac(&secret, &b, &p));
+        assert_ne!(Some(mac.clone()), parent_proof_mac(&[0x12u8; 32], &p, &b));
+        assert_eq!(parent_proof_mac(&secret[..31], &p, &b), None);
+        assert_eq!(parent_proof_mac(&secret, &p[1..], &b), None);
+        assert_eq!(
+            parent_proof_mac(&secret, &p, "zz".repeat(32).as_str()),
+            None
+        );
+    }
+
+    #[test]
+    fn a_parent_secret_is_64_hex_characters_in_json_and_redacted_in_debug() {
+        let secret = ParentSecret {
+            bytes: (0..32).collect(),
+        };
+        let json = serde_json::to_string(&secret).unwrap();
+        assert_eq!(json.len(), 66);
+        assert_eq!(serde_json::from_str::<ParentSecret>(&json).unwrap(), secret);
+        let text = format!("{secret:?}");
+        assert!(!text.contains("0001"), "{text}");
+        for bad in [
+            "\"00\"",
+            "\"zz\"",
+            &format!("\"{}\"", "0".repeat(63)),
+            &format!("\"{}\"", "0".repeat(66)),
+        ] {
+            assert!(serde_json::from_str::<ParentSecret>(bad).is_err(), "{bad}");
+        }
+    }
 }

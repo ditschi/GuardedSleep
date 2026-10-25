@@ -6173,5 +6173,152 @@
         "error": "bad_challenge"
       }
     ]
+  },
+  {
+    "name": "parent proof: direction-bound over both fingerprints",
+    "kind": "parent_proof",
+    "secret": "1111111111111111111111111111111111111111111111111111111111111111",
+    "fp_parent": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+    "fp_baby": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+    "expect": "54d514ad4c1b14619a4c7fccc2c46cec5b7a0e39093dc4cc0bb5274bf129615e"
+  },
+  {
+    "name": "parent proof: swapped fingerprints give another MAC",
+    "kind": "parent_proof",
+    "secret": "1111111111111111111111111111111111111111111111111111111111111111",
+    "fp_parent": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+    "fp_baby": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+    "expect": "ab186066da36ac9d57b4cba91ad2aa5b0e81f9a9a26070f4d189207e1af6ecfd"
+  },
+  {
+    "name": "parent proof: a fingerprint of the wrong length",
+    "kind": "parent_proof",
+    "secret": "1111111111111111111111111111111111111111111111111111111111111111",
+    "fp_parent": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e",
+    "fp_baby": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+    "expect": null
+  },
+  {
+    "name": "parent proof: a secret of the wrong length",
+    "kind": "parent_proof",
+    "secret": "11111111111111111111111111111111111111111111111111111111111111",
+    "fp_parent": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+    "fp_baby": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+    "expect": null
+  },
+  {
+    "name": "parent tag: first 16 bytes of HMAC-SHA256 over the nonce",
+    "kind": "parent_tag",
+    "secret": "1111111111111111111111111111111111111111111111111111111111111111",
+    "nonce": "000102030405060708090a0b0c0d0e0f1011121314151617",
+    "expect": "91bccd8b4d522097a7740efa00b1570f"
+  },
+  {
+    "name": "data v3: parent_pin with a name",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\": \"parent_pin\", \"v\": 3, \"secret\": \"1111111111111111111111111111111111111111111111111111111111111111\", \"name\": \"Pixel 8\"}",
+    "expect": {
+      "type": "parent_pin",
+      "secret": "1111111111111111111111111111111111111111111111111111111111111111",
+      "name": "Pixel 8"
+    }
+  },
+  {
+    "name": "data v3: parent_pin name loses control characters and is cut at 64",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\": \"parent_pin\", \"v\": 3, \"secret\": \"1111111111111111111111111111111111111111111111111111111111111111\", \"name\": \"\\u0007  Pixel\\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}",
+    "expect": {
+      "type": "parent_pin",
+      "secret": "1111111111111111111111111111111111111111111111111111111111111111",
+      "name": "Pixelxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    }
+  },
+  {
+    "name": "data v3: parent_pin without a name",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\": \"parent_pin\", \"v\": 3, \"secret\": \"1111111111111111111111111111111111111111111111111111111111111111\"}",
+    "expect": {
+      "type": "parent_pin",
+      "secret": "1111111111111111111111111111111111111111111111111111111111111111",
+      "name": ""
+    }
+  },
+  {
+    "name": "data v3: parent_pin secret too short",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\": \"parent_pin\", \"v\": 3, \"secret\": \"11111111111111111111111111111111111111111111111111111111111111\", \"name\": \"x\"}",
+    "expect": null
+  },
+  {
+    "name": "data v3: parent_pin secret not hex",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\": \"parent_pin\", \"v\": 3, \"secret\": \"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\", \"name\": \"x\"}",
+    "expect": null
+  },
+  {
+    "name": "data v3: parent_proof",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\": \"parent_proof\", \"v\": 3, \"mac\": \"ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB\", \"name\": \"Pixel 8\"}",
+    "expect": {
+      "type": "parent_proof",
+      "mac": "abababababababababababababababababababababababababababababababab",
+      "name": "Pixel 8"
+    }
+  },
+  {
+    "name": "data v3: parent_proof mac too short",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\": \"parent_proof\", \"v\": 3, \"mac\": \"ababababababababababababababababababababababababababababababab\"}",
+    "expect": null
+  },
+  {
+    "name": "data v3: pin_ack",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\": \"pin_ack\", \"v\": 3}",
+    "expect": {
+      "type": "pin_ack"
+    }
+  },
+  {
+    "name": "data v2: parent_pin is not a v2 message",
+    "kind": "parse_data",
+    "raw": "{\"type\": \"parent_pin\", \"v\": 2, \"secret\": \"1111111111111111111111111111111111111111111111111111111111111111\"}",
+    "expect": null
+  },
+  {
+    "name": "data v3: mailboxes",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\": \"mailboxes\", \"v\": 3, \"mailboxes\": [{\"kind\": \"relay\", \"url\": \"wss://relay.example\"}, {\"kind\": \"nostr\", \"url\": \"wss://nostr.example\"}]}",
+    "expect": {
+      "type": "mailboxes",
+      "mailboxes": [
+        {
+          "kind": "relay",
+          "url": "wss://relay.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr.example"
+        }
+      ]
+    }
+  },
+  {
+    "name": "data v3: mailboxes empty",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\": \"mailboxes\", \"v\": 3, \"mailboxes\": []}",
+    "expect": null
+  },
+  {
+    "name": "data v3: mailboxes more than six",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\": \"mailboxes\", \"v\": 3, \"mailboxes\": [{\"kind\": \"nostr\", \"url\": \"wss://n0.example\"}, {\"kind\": \"nostr\", \"url\": \"wss://n1.example\"}, {\"kind\": \"nostr\", \"url\": \"wss://n2.example\"}, {\"kind\": \"nostr\", \"url\": \"wss://n3.example\"}, {\"kind\": \"nostr\", \"url\": \"wss://n4.example\"}, {\"kind\": \"nostr\", \"url\": \"wss://n5.example\"}, {\"kind\": \"nostr\", \"url\": \"wss://n6.example\"}]}",
+    "expect": null
+  },
+  {
+    "name": "data v3: mailboxes unknown kind",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\": \"mailboxes\", \"v\": 3, \"mailboxes\": [{\"kind\": \"mqtt\", \"url\": \"wss://x.example\"}]}",
+    "expect": null
   }
 ]

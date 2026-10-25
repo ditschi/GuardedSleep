@@ -111,7 +111,7 @@ fn check(args: &[String]) -> Result<bool, String> {
     let mut ok = true;
     for sc in load_scenarios()? {
         let mut bad = Vec::new();
-        for seed in 1..=seeds {
+        for seed in 1..=sc.max_seeds.map_or(seeds, |m| m.min(seeds)) {
             let res = run_scenario(&sc, seed, false)?;
             if !matches!(res.verdict(&sc), Verdict::Pass | Verdict::ExpectedFail) {
                 bad.push(seed);

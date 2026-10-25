@@ -3,6 +3,7 @@
   "id": "all-mailboxes-dead-at-reachability-check",
   "description": "A verified pair holds no mailbox. The server is down when the 30-minute reachability check runs: nothing is reachable, both devices raise the calm hint recovery_path_unavailable and monitoring continues. The next check finds the server again and clears the hint. A check is a connect and a ping on a socket that never says hello, so it carries no pairing identifier.",
   "seed": 1,
+  "max_seeds": 3,
   "peers": [
     {
       "id": "baby",

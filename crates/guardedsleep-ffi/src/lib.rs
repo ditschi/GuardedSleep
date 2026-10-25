@@ -8,11 +8,10 @@
 use std::sync::{Arc, Mutex};
 
 use guardedsleep_core::invite::{
-    InviteError as CoreInviteError, InviteMailbox as CoreInviteMailbox,
-    build_invite as core_build_invite, parse_invite as core_parse_invite,
+    InviteError as CoreInviteError, InviteMailbox, build_invite as core_build_invite,
+    parse_invite as core_parse_invite,
 };
 use guardedsleep_core::link::{Link, LinkAction, LinkConfig, LinkInput};
-use guardedsleep_core::mailbox::MailboxKind;
 use guardedsleep_core::session::{Action, ConfigError, Input, Session, SessionConfig};
 
 mod remote_types;
@@ -163,32 +162,6 @@ impl From<CoreInviteError> for InviteError {
     }
 }
 
-/// One mailbox of an invite: its kind and the URL to open (`wss://host` for Nostr,
-/// `wss://host[:port][/path]` for an own relay, `ws://ip:port` for a LAN mailbox).
-#[derive(uniffi::Record)]
-pub struct InviteMailbox {
-    pub kind: MailboxKind,
-    pub url: String,
-}
-
-impl From<CoreInviteMailbox> for InviteMailbox {
-    fn from(m: CoreInviteMailbox) -> Self {
-        Self {
-            kind: m.kind,
-            url: m.url,
-        }
-    }
-}
-
-impl From<InviteMailbox> for CoreInviteMailbox {
-    fn from(m: InviteMailbox) -> Self {
-        Self {
-            kind: m.kind,
-            url: m.url,
-        }
-    }
-}
-
 /// A valid, unexpired invite. Holds the pairing key: no `Debug`; never log it or put it into an
 /// Intent or Bundle.
 #[derive(uniffi::Record)]
@@ -209,7 +182,7 @@ pub fn parse_invite(
     let invite = core_parse_invite(&text, now_epoch_s, allow_dev_loopback)?;
     Ok(ParsedInvite {
         psk: invite.psk().to_vec(),
-        mailboxes: invite.mailboxes.iter().cloned().map(Into::into).collect(),
+        mailboxes: invite.mailboxes.clone(),
         expires_at_epoch_s: invite.expires_at_epoch_s,
     })
 }
@@ -223,7 +196,6 @@ pub fn build_invite(
     expires_at_epoch_s: u64,
     allow_dev_loopback: bool,
 ) -> Result<String, InviteError> {
-    let mailboxes: Vec<CoreInviteMailbox> = mailboxes.into_iter().map(Into::into).collect();
     Ok(core_build_invite(
         &psk,
         &mailboxes,

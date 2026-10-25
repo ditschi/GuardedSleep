@@ -929,8 +929,62 @@ mod tests {
     }
 
     #[test]
+    fn device_names_lose_control_characters_and_are_cut_at_64_characters() {
+        assert_eq!(clean_device_name("  Pixel 8\n"), "Pixel 8");
+        assert_eq!(clean_device_name("\u{7}a\u{0}b\u{1b}[31m"), "ab[31m");
+        assert_eq!(clean_device_name(&"é".repeat(100)).chars().count(), 64);
+        assert_eq!(clean_device_name(""), "");
+        // A message carries the cleaned name, whatever the sender put in.
+        let wire = encode_data_message(&DataMessage::ParentProof {
+            mac: "ab".repeat(32),
+            name: format!("\u{7}{}", "x".repeat(200)),
+        });
+        let back = parse_data_message(&wire).unwrap();
+        assert!(matches!(back, DataMessage::ParentProof { name, .. } if name == "x".repeat(64)));
+    }
+
+    #[test]
+    fn the_parent_secret_travels_only_in_parent_pin_and_never_in_debug() {
+        let msg = DataMessage::ParentPin {
+            secret: ParentSecret {
+                bytes: vec![0xab; 32],
+            },
+            name: "Pixel 8".into(),
+        };
+        assert!(encode_data_message(&msg).contains(&"ab".repeat(32)));
+        assert!(!format!("{msg:?}").contains("abab"));
+        for other in [
+            DataMessage::PinAck,
+            DataMessage::StopNotice,
+            DataMessage::ParentProof {
+                mac: "cd".repeat(32),
+                name: String::new(),
+            },
+        ] {
+            assert!(!encode_data_message(&other).contains(&"ab".repeat(32)));
+        }
+    }
+
+    #[test]
     fn every_data_message_round_trips() {
         let msgs = vec![
+            DataMessage::ParentPin {
+                secret: ParentSecret {
+                    bytes: (0..32).collect(),
+                },
+                name: "Pixel 8".into(),
+            },
+            DataMessage::PinAck,
+            DataMessage::ParentProof {
+                mac: "0f".repeat(32),
+                name: String::new(),
+            },
+            DataMessage::Mailboxes {
+                mailboxes: vec![InviteMailbox {
+                    kind: crate::mailbox::MailboxKind::Relay,
+                    url: "wss://relay.example".into(),
+                }],
+            },
             DataMessage::Heartbeat {
                 t: 5.0,
                 seq: 2,

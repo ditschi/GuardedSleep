@@ -12,7 +12,7 @@ fn all_scenarios_pass_with_every_seed() {
     assert!(scenarios.len() >= 25, "scenario set shrank");
     let mut problems = Vec::new();
     for sc in &scenarios {
-        for seed in 1..=SEEDS {
+        for seed in 1..=sc.max_seeds.map_or(SEEDS, |m| m.min(SEEDS)) {
             let res = run_scenario(sc, seed, false).expect("scenario builds");
             match res.verdict(sc) {
                 Verdict::Pass | Verdict::ExpectedFail => {}

@@ -2531,9 +2531,11 @@ impl Link {
 
     fn apply_mic(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         let probing = self.probe_until.is_some_and(|u| now < u);
-        // The microphone path opens for a pinned parent only after it proved the secret.
-        let enabled = (self.parent_listen || self.noise_streaming || probing)
-            && self.parent_proof_due.is_none();
+        // The microphone path opens only for a trusted attempt: verified at the DTLS level and,
+        // where a parent is pinned, after the parent proved the secret. A noisy room with no such
+        // attempt (an outage, an attempt that has not proven itself) leaves it closed.
+        let enabled =
+            (self.parent_listen || self.noise_streaming || probing) && self.live_verified();
         if enabled != self.mic_enabled {
             self.mic_enabled = enabled;
             out.push(LinkAction::SetMicEnabled { enabled });
@@ -2581,10 +2583,10 @@ impl Link {
             self.signaling_housekeeping(now, out);
             self.here_housekeeping(now, out);
             if self.cfg.role == Role::Baby {
-                // The sound level is not for a parent that has not proven itself.
-                let rms = self
-                    .parent_proof_due
-                    .is_none()
+                // The sound level is not for a parent that has not proven itself: with a pinned
+                // parent it stays out of the heartbeats until the attempt is trusted (the
+                // heartbeat sent at verification included).
+                let rms = (self.pin.is_none() || self.live_verified())
                     .then(|| round4(self.gate.last_rms()));
                 if let Some(l) = self.live.as_mut() {
                     l.attempt.set_heartbeat_rms(rms);
@@ -3328,5 +3330,96 @@ mod tests {
             );
         }
         assert_eq!(l.mb.relay.state, MailboxState::Open);
+    }
+
+    #[test]
+    fn the_parent_secret_in_the_config_is_validated_redacted_and_taken() {
+        let secret = ParentSecret {
+            bytes: (0..32).collect(),
+        };
+        let mut c = cfg(Role::Baby);
+        c.pinned_parent = Some(secret.clone());
+        let text = format!("{c:?}");
+        assert!(text.contains("pinned_parent"), "{text}");
+        assert!(!text.contains("0001"), "{text}");
+        // JSON form: 64 hex characters; absent and null mean no pin.
+        let v = serde_json::to_value(&c).unwrap();
+        assert_eq!(v["pinned_parent"].as_str().map(str::len), Some(64));
+        assert_eq!(serde_json::from_value::<LinkConfig>(v).unwrap(), c);
+        let mut none = serde_json::to_value(cfg(Role::Baby)).unwrap();
+        none.as_object_mut().unwrap().remove("pinned_parent");
+        assert_eq!(
+            serde_json::from_value::<LinkConfig>(none)
+                .unwrap()
+                .pinned_parent,
+            None
+        );
+        // A secret of the wrong length is a configuration error.
+        c.pinned_parent = Some(ParentSecret { bytes: vec![1; 31] });
+        assert_eq!(Link::new(c).err(), Some(ConfigError::InvalidParentSecret));
+        // The core keeps the only copy: the config it holds no longer carries the secret.
+        let mut c = cfg(Role::Baby);
+        c.pinned_parent = Some(secret);
+        let l = Link::new(c).unwrap();
+        assert!(l.cfg.pinned_parent.is_none());
+        assert!(l.pin.is_some() && l.sess.has_parent_pin());
+    }
+
+    #[test]
+    fn a_pin_survives_stop_and_start_of_the_same_link() {
+        let mut c = cfg(Role::Baby);
+        c.pinned_parent = Some(ParentSecret { bytes: vec![5; 32] });
+        let mut l = Link::new(c).unwrap();
+        l.handle(0, LinkInput::Start { entropy: 1 });
+        l.handle(1, LinkInput::Stop);
+        l.handle(2, LinkInput::Start { entropy: 2 });
+        assert!(l.pin.is_some() && l.sess.has_parent_pin());
+    }
+
+    #[test]
+    fn new_keys_are_listed_for_the_catalogue() {
+        let keys = message_keys();
+        for k in [
+            "unknown_parent_attempt",
+            "clock_skew",
+            "recovery_path_unavailable",
+        ] {
+            assert!(keys.contains(&k), "{k}");
+        }
+    }
+
+    #[test]
+    fn new_events_round_trip_and_only_parent_pinned_carries_a_secret() {
+        let events = vec![
+            LinkEvent::ParentPinned {
+                secret: ParentSecret { bytes: vec![7; 32] },
+            },
+            LinkEvent::ParentConnected {
+                name: "Pixel 8".into(),
+            },
+            LinkEvent::MailboxesUpdated {
+                mailboxes: vec![InviteMailbox {
+                    kind: MailboxKind::Nostr,
+                    url: "wss://nostr.example".into(),
+                }],
+            },
+            LinkEvent::Hint {
+                key: "clock_skew".into(),
+                active: true,
+            },
+        ];
+        for e in events {
+            let v = serde_json::to_value(&e).unwrap();
+            assert_eq!(serde_json::from_value::<LinkEvent>(v.clone()).unwrap(), e);
+            let has_secret = v.to_string().contains(&"07".repeat(32));
+            assert_eq!(has_secret, matches!(e, LinkEvent::ParentPinned { .. }));
+        }
+        let debug = format!(
+            "{:?}",
+            LinkEvent::ParentPinned {
+                secret: ParentSecret { bytes: vec![7; 32] }
+            }
+        );
+        assert!(!debug.contains("0707") && !debug.contains("[7"), "{debug}");
     }
 }

@@ -90,6 +90,18 @@ pub struct Node {
     pub dtls: Dtls,
     pub down_since: Option<u64>,
     pub create_times: Vec<u64>,
+    /// What this node does to its own `parent_proof` DataChannel messages (a tampered or withheld
+    /// proof); the other messages are untouched.
+    pub parent_proof: ProofFault,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ProofFault {
+    None,
+    /// One hex digit of the MAC is flipped.
+    Corrupt,
+    /// The message never leaves.
+    Withhold,
 }
 
 struct Conn {
@@ -122,6 +134,8 @@ pub struct World {
     next_client: u32,
     fp_seq: u32,
     pub server_signal_log: Vec<(String, Value)>,
+    /// Every frame any node sent to the server, in order (node, text).
+    pub frames: Vec<(usize, String)>,
     pub impostors: Vec<Impostor>,
 }
 
@@ -152,6 +166,7 @@ impl World {
             next_client: 0,
             fp_seq: 0,
             server_signal_log: Vec::new(),
+            frames: Vec::new(),
             impostors: Vec::new(),
         }
     }
@@ -191,6 +206,7 @@ impl World {
             dtls: Dtls::Honest,
             down_since: None,
             create_times: Vec::new(),
+            parent_proof: ProofFault::None,
         });
         self.nodes.len() - 1
     }
@@ -598,6 +614,11 @@ impl World {
         let server_has = self.conns.get(sock).is_some_and(Option::is_some);
         let msg: Value = serde_json::from_str(text).expect("link sends valid JSON");
         let kind = msg["type"].as_str().unwrap_or("").to_owned();
+        self.frames.push((n, text.to_owned()));
+        // A reachability check pings a socket that never said hello; the server just answers.
+        if kind == "ping" && !server_has {
+            return;
+        }
         if kind == "hello" {
             self.hello(n, sock, &msg);
             return;
@@ -893,12 +914,23 @@ impl World {
         if other.closed || other.failed || !other.connected || !self.nodes[m].net_up {
             return;
         }
+        let mut text = text.to_owned();
+        if text.contains("\"parent_proof\"") {
+            match self.nodes[n].parent_proof {
+                ProofFault::None => {}
+                ProofFault::Withhold => return,
+                ProofFault::Corrupt => {
+                    let mut v: Value = serde_json::from_str(&text).expect("json");
+                    let mac = v["mac"].as_str().unwrap_or("").to_owned();
+                    let flipped = if mac.starts_with('0') { "1" } else { "0" };
+                    v["mac"] = json!(format!("{flipped}{}", &mac[1..]));
+                    text = v.to_string();
+                }
+            }
+        }
         self.queue.push_back(Item::Input(
             m,
-            LinkInput::AttemptDataMessage {
-                attempt: hp,
-                text: text.to_owned(),
-            },
+            LinkInput::AttemptDataMessage { attempt: hp, text },
         ));
     }
 

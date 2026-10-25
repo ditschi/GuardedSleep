@@ -95,6 +95,28 @@ export interface LinkConfig {
      * switch off only for a platform that cannot read WebRTC certificate stats.
      */
     require_dtls_fingerprint?: boolean;
+    /**
+     * The parent secret pinned in an earlier run, as the platform persisted it from
+     * [`LinkEvent::ParentPinned`] (baby: the pinned parent; parent: the acknowledged secret).
+     * `None` before the first verified pairing. Secret-class: never logged; `Link::new` takes the
+     * bytes and wipes its copy. JSON form: 64 hex characters.
+     */
+    pinned_parent?: string;
+    /**
+     * Parent: this device's name, sent to the baby over the verified DataChannel only (at most 64
+     * characters, control characters removed). Empty: no name. Never a fingerprint or an id.
+     */
+    device_name?: string;
+    /**
+     * Baby: the mailbox set to send the parent after each verification (the mailbox update). Empty:
+     * none is sent.
+     */
+    mailboxes?: InviteMailbox[];
+    /**
+     * Development builds only: accept loopback `l:` entries in a received mailbox update, like
+     * `parse_invite`'s flag of the same name.
+     */
+    allow_dev_loopback?: boolean;
 }
 
 export interface LinkStatus {
@@ -150,7 +172,7 @@ export type Input = { type: "signaling_open" } | { type: "signaling_message"; te
 
 export type LinkAction = { type: "open_mailbox"; id: MailboxId; kind: MailboxKind; url: string } | { type: "mailbox_send"; id: MailboxId; frame: string } | { type: "close_mailbox"; id: MailboxId } | { type: "create_attempt"; attempt: number; offerer: boolean } | { type: "close_attempt"; attempt: number } | { type: "create_offer"; attempt: number } | { type: "set_remote_description"; attempt: number; sdp_type: string; sdp: string } | { type: "create_answer"; attempt: number } | { type: "add_ice_candidate"; attempt: number; candidate: IceCandidate } | { type: "send_data"; attempt: number; text: string } | { type: "set_mic_enabled"; enabled: boolean } | { type: "apply_quiet" } | { type: "send_probe_tone"; duration_ms: number } | { type: "emit"; event: LinkEvent };
 
-export type LinkEvent = { type: "status"; status: LinkStatus } | { type: "link_lost"; down_ms: number } | { type: "link_restored"; down_ms: number } | { type: "security_warning"; key: string } | { type: "peer_stopped" } | { type: "alarm_acknowledged"; until_ms: number } | { type: "noise_alert"; rms: number; probe: boolean; snoozed: boolean } | { type: "peer_heartbeat"; seq: number; rms: number | null } | { type: "peer_status"; status: DeviceStatus } | { type: "low_battery"; pct: number; critical: boolean } | { type: "charger_unplugged" } | { type: "missed_events"; count: number; max_rms: number; complete: boolean; down_ms: number } | { type: "noise_gate_changed"; threshold: number; hold_ms: number } | { type: "listen_changed"; enabled: boolean } | { type: "failed"; reason: string };
+export type LinkEvent = { type: "status"; status: LinkStatus } | { type: "link_lost"; down_ms: number } | { type: "link_restored"; down_ms: number } | { type: "security_warning"; key: string } | { type: "peer_stopped" } | { type: "alarm_acknowledged"; until_ms: number } | { type: "noise_alert"; rms: number; probe: boolean; snoozed: boolean } | { type: "peer_heartbeat"; seq: number; rms: number | null } | { type: "peer_status"; status: DeviceStatus } | { type: "low_battery"; pct: number; critical: boolean } | { type: "charger_unplugged" } | { type: "missed_events"; count: number; max_rms: number; complete: boolean; down_ms: number } | { type: "noise_gate_changed"; threshold: number; hold_ms: number } | { type: "listen_changed"; enabled: boolean } | { type: "failed"; reason: string } | { type: "parent_pinned"; secret: string } | { type: "parent_connected"; name: string } | { type: "mailboxes_updated"; mailboxes: InviteMailbox[] } | { type: "hint"; key: string; active: boolean };
 
 export type LinkInput = { type: "start"; entropy: number } | { type: "wall_clock"; unix_s: number } | { type: "stop" } | { type: "acknowledge_alarm" } | { type: "network_available" } | { type: "mailbox_opened"; id: MailboxId } | { type: "mailbox_closed"; id: MailboxId; reason: string } | { type: "mailbox_frame"; id: MailboxId; bytes: string } | { type: "attempt_local_description"; attempt: number; sdp_type: string; sdp: string } | { type: "attempt_local_ice"; attempt: number; candidate: IceCandidate } | { type: "attempt_data_open"; attempt: number } | { type: "attempt_data_message"; attempt: number; text: string } | { type: "attempt_data_closed"; attempt: number } | { type: "attempt_dtls_fingerprint"; attempt: number; fingerprint: string } | { type: "attempt_pc_state"; attempt: number; state: string } | { type: "audio_level"; rms: number } | { type: "device_status"; status: DeviceStatus } | { type: "set_noise_gate"; threshold: number; hold_ms: number } | { type: "set_listen"; enabled: boolean } | { type: "request_probe" } | { type: "set_snooze"; until_ms: number | null } | { type: "request_quiet" } | { type: "quiet_applied"; state: DeviceStatus } | { type: "tick" };
 

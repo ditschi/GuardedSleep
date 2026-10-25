@@ -4,11 +4,12 @@
 
 use serde_json::{Value, json};
 
+use crate::envelope::parent_tag;
 use crate::invite::{InviteMailbox, build_invite, parse_invite};
 use crate::link::{Link, LinkConfig, LinkInput};
 use crate::pairing::{
     AdmissionKey, admission_mac, decode_psk, derive_admission_key, derive_room_id, encode_psk,
-    pair_proof_mac_v2_legacy, pair_proof_mac_v3, verify_admission,
+    pair_proof_mac_v2_legacy, pair_proof_mac_v3, parent_proof_mac, verify_admission,
 };
 use crate::protocol::{
     Role, parse_challenge, parse_client_message, parse_data_message, parse_data_message_v2_legacy,
@@ -93,6 +94,19 @@ fn evaluate_value(case_json: &str) -> Result<Value, String> {
                 s("local_sdp")?,
                 s("remote_sdp")?,
             ))
+        }
+        "parent_proof" => {
+            let secret = hex_bytes(s("secret")?).ok_or("bad secret")?;
+            to_value(parent_proof_mac(&secret, s("fp_parent")?, s("fp_baby")?))
+        }
+        "parent_tag" => {
+            let secret: [u8; 32] = hex_bytes(s("secret")?)
+                .and_then(|b| b.try_into().ok())
+                .ok_or("bad secret")?;
+            let nonce: [u8; 24] = hex_bytes(s("nonce")?)
+                .and_then(|b| b.try_into().ok())
+                .ok_or("bad nonce")?;
+            to_value(hex_text(&parent_tag(&secret, &nonce)))
         }
         "parse_invite" => {
             let now = case
@@ -197,6 +211,26 @@ fn run_link(case: &Value) -> Result<Value, String> {
     Ok(Value::Array(results))
 }
 
+fn hex_bytes(text: &str) -> Option<Vec<u8>> {
+    if !text.len().is_multiple_of(2) || !text.is_ascii() {
+        return None;
+    }
+    text.as_bytes()
+        .chunks(2)
+        .map(|pair| {
+            let digit = |c: u8| char::from(c).to_digit(16).map(|v| v as u8);
+            match pair {
+                [hi, lo] => Some((digit(*hi)? << 4) | digit(*lo)?),
+                _ => None,
+            }
+        })
+        .collect()
+}
+
+fn hex_text(bytes: &[u8]) -> String {
+    bytes.iter().map(|b| format!("{b:02x}")).collect()
+}
+
 fn to_value<T: serde::Serialize>(v: T) -> Result<Value, String> {
     serde_json::to_value(v).map_err(|e| e.to_string())
 }
@@ -215,26 +249,6 @@ mod tests {
             let got: Value = serde_json::from_str(&evaluate(&case.to_string())).unwrap();
             assert_eq!(got, case["expect"], "vector `{name}`");
         }
-    }
-
-    #[test]
-    #[ignore]
-    fn dump_vector_updates() {
-        let raw = include_str!("../vectors/conformance.json");
-        let cases: Vec<Value> = serde_json::from_str(raw).unwrap();
-        let mut updates = serde_json::Map::new();
-        for case in cases {
-            let name = case["name"].as_str().unwrap_or("?").to_owned();
-            let got: Value = serde_json::from_str(&evaluate(&case.to_string())).unwrap();
-            if got != case["expect"] {
-                updates.insert(name, got);
-            }
-        }
-        std::fs::write(
-            "/workspace/target/vector-updates.json",
-            serde_json::to_string(&updates).unwrap(),
-        )
-        .unwrap();
     }
 
     #[test]

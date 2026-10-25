@@ -937,7 +937,7 @@
       {
         "type": "send_data",
         "attempt": 4,
-        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":42109,\"seq\":1,\"rms\":0}"
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":42109,\"seq\":1}"
       }
     ],
     [],
