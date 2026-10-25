@@ -14,6 +14,7 @@ pub mod invite;
 pub mod link;
 pub mod mailbox;
 pub mod noise;
+pub mod nostr;
 pub mod pairing;
 pub mod protocol;
 pub mod session;

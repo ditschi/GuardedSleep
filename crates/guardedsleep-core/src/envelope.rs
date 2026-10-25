@@ -166,6 +166,12 @@ impl Purpose {
 pub struct SecretKey([u8; 32]);
 
 impl SecretKey {
+    /// The raw key for the in-crate key schedules (Nostr tag and signing keys): never leaves the
+    /// crate.
+    pub(crate) fn expose(&self) -> &[u8; 32] {
+        &self.0
+    }
+
     /// Exposes the raw key: conformance vectors only, never in a release build.
     #[cfg(any(test, feature = "conformance"))]
     pub fn as_bytes(&self) -> &[u8; 32] {

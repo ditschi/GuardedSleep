@@ -29,6 +29,11 @@ chacha20 = { version = "0.10.2", default-features = false, features = ["rng", "z
 chacha20poly1305 = { version = "0.11.0", default-features = false, features = ["alloc", "zeroize"] }
 hkdf = "0.13"
 hmac = "0.13"
+# BIP-340 signatures for Nostr events only (never to authenticate the peer). 0.14 is on the same
+# RustCrypto generation as sha2 0.11; `default-features = false` keeps getrandom out of the graph
+# (the CSPRNG is ours) and `sign_raw` takes `aux_rand` from the Link CSPRNG.
+# Docs: https://docs.rs/k256/0.14.0/k256/schnorr/index.html
+k256 = { version = "0.14.0", default-features = false, features = ["schnorr", "arithmetic"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 sha2 = "0.11"
