@@ -4,6 +4,7 @@ import wasmUrl from "@guardedsleep/core-wasm/pkg/guardedsleep_wasm_bg.wasm?url";
 import type { AppController, CodeScanner } from "../contract";
 import { AlertPlayer, createSoundGate } from "./audio";
 import { watchBattery, type BatteryManagerLike } from "./battery";
+import { loopbackAllowed } from "./build-mode";
 import { createClock, createTimers } from "./clock";
 import { browserDeviceName } from "./device-name";
 import { createPageWatch, type WakeLockApi } from "./page-watch";
@@ -50,7 +51,8 @@ function entropy53(): number {
 export async function createWebApp(): Promise<AppController> {
   // Dev builds (`just dev`, the browser E2E) run the signaling server on loopback, which the invite
   // codec refuses in a release build.
-  const core = await loadCore(wasmUrl, { allowDevLoopback: import.meta.env.DEV });
+  const allowDevLoopback = loopbackAllowed(import.meta.env);
+  const core = await loadCore(wasmUrl, { allowDevLoopback });
   const timers = createTimers();
   const gate = createSoundGate(() => new AudioContext({ latencyHint: "interactive" }));
   const battery = watchBattery(
@@ -97,7 +99,7 @@ export async function createWebApp(): Promise<AppController> {
     },
     defaultSignalingUrls: () => defaultSignalingUrls(window.location, import.meta.env.DEV),
     deviceName: () => browserDeviceName(navigator),
-    allowDevLoopback: import.meta.env.DEV,
+    allowDevLoopback,
   });
 }
 

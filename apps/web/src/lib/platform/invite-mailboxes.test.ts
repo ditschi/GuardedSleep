@@ -11,6 +11,37 @@ describe("invite mailboxes", () => {
     ]);
   });
 
+  it("maps a private or loopback ws URL to ip:port, dropping the path", () => {
+    expect(
+      mailboxesForUrls([
+        "ws://127.0.0.1:41234/signaling",
+        "ws://192.168.1.5/signaling",
+        "ws://10.0.2.2:8787",
+        "ws://172.20.0.3:9/x",
+        "ws://localhost:8787/s",
+        "ws://[::1]:8787/signaling",
+        "ws://[fd12:3456::1]:8787",
+      ]),
+    ).toEqual([
+      { kind: "lan", url: "ws://127.0.0.1:41234" },
+      { kind: "lan", url: "ws://192.168.1.5:80" },
+      { kind: "lan", url: "ws://10.0.2.2:8787" },
+      { kind: "lan", url: "ws://172.20.0.3:9" },
+      { kind: "lan", url: "ws://localhost:8787" },
+      { kind: "lan", url: "ws://[::1]:8787" },
+      { kind: "lan", url: "ws://[fd12:3456::1]:8787" },
+    ]);
+  });
+
+  it("skips a ws URL that is not a private literal, and keeps the path of a wss relay", () => {
+    expect(
+      mailboxesForUrls(["ws://8.8.8.8:1/x", "ws://172.32.0.1:1", "ws://pc.local:8787", "ws://"]),
+    ).toEqual([]);
+    expect(mailboxesForUrls(["wss://gs.example.com/sig"])).toEqual([
+      { kind: "relay", url: "wss://gs.example.com/sig" },
+    ]);
+  });
+
   it("opens relay and LAN mailboxes only, until the core speaks Nostr", () => {
     expect(
       signalingUrlsOf([

@@ -34,7 +34,9 @@ async function freePort(): Promise<number> {
 /** Builds apps/web (once per call) and starts the server on a free loopback port. */
 export async function startProdServer(): Promise<ProdServer> {
   if (!existsSync(binary)) throw new Error(`${binary} is missing: run \`just dev\` once`);
-  execFileSync("pnpm", ["--filter", "@guardedsleep/web", "build"], {
+  // `--mode e2e`: the only production-style build that accepts loopback mailboxes (the server
+  // runs on 127.0.0.1); the release and the image build in production mode.
+  execFileSync("pnpm", ["--filter", "@guardedsleep/web", "build", "--mode", "e2e"], {
     cwd: repoRoot,
     stdio: "pipe",
     timeout: 240_000,

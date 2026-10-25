@@ -52,7 +52,9 @@ COPY --from=i18n /out apps/web/src/lib/i18n/generated
 
 # `vite build` directly: the package's `prebuild` hook would run cargo, and both generated inputs
 # (i18n, WASM core) come from the stages above.
-RUN pnpm --filter @guardedsleep/web exec vite build
+# `--mode production` is explicit on purpose: a release build must never use the `e2e` mode, which
+# lets the invite codec accept loopback mailboxes (https://vite.dev/guide/env-and-mode#modes).
+RUN pnpm --filter @guardedsleep/web exec vite build --mode production
 
 FROM nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10 AS runner
 
