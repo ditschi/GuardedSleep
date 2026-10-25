@@ -357,6 +357,8 @@ pub struct World {
     pub violations: Vec<String>,
     /// Frames received on sockets that had not said `hello`, with the actor that sent them.
     pub preauth: Vec<(usize, String)>,
+    /// `(actor, time)` of every `create_attempt` the cores asked for (assertion `attempts`).
+    pub attempts: Vec<(usize, Time)>,
     pub recs: Vec<TraceRec>,
     record: bool,
     pub seed: u64,
@@ -393,6 +395,7 @@ impl World {
             timeline: sc.timeline.clone(),
             violations: Vec::new(),
             preauth: Vec::new(),
+            attempts: Vec::new(),
             recs: Vec::new(),
             record,
             seed,
@@ -995,6 +998,7 @@ impl World {
                 }
                 LinkAction::MailboxSend { frame, .. } => self.client_send(a, frame, None),
                 LinkAction::CreateAttempt { attempt, .. } => {
+                    self.attempts.push((a, self.now));
                     if self.actors[a].pcs.values().any(|p| !p.closed) {
                         self.violations.push(format!(
                             "{}: create_attempt {attempt} while another attempt is live",

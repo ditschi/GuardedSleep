@@ -111,6 +111,11 @@ const HINT_RECOVERY: &str = "recovery_path_unavailable";
 /// An offer, answer or `request_offer` that got no reply after this long is sent once more, with
 /// the same envelope id (`signaling-mailboxes`, "Delivery is acknowledged by the peer").
 const RESEND_AFTER_MS: u64 = 6_000;
+/// A baby that sees a ready parent waits this long for the parent's `request_offer` before it
+/// offers unasked (`Offer direction`). Without it the baby's presence-triggered offer and the
+/// parent's request cross and the setup builds two attempts. Longer than the Nostr round trip,
+/// shorter than [`RESEND_AFTER_MS`], so a lost request costs one grace, not a resend.
+const BABY_OFFER_GRACE_MS: u64 = 2_500;
 /// Local ICE candidates are bundled into one `ice` message: the first batch leaves this long after
 /// the first candidate, a second batch no sooner than [`ICE_SECOND_BATCH_MS`] after the first.
 /// Over Nostr at most [`ICE_NOSTR_BATCHES`] batches go (the event budget); later batches only use
@@ -884,6 +889,11 @@ pub struct Link {
     outstanding: Option<(u64, String)>,
     /// Baby: the latest valid `request_offer` (sender client id, parent's `aid`).
     pending_request: Option<(String, String)>,
+    /// Baby: since when a peer has been ready without a `request_offer` having arrived. The baby
+    /// offers on its own only after [`BABY_OFFER_GRACE_MS`], so that the parent's request (which
+    /// the parent sends as soon as it hears the baby) normally comes first and one attempt serves
+    /// the setup.
+    ready_since: Option<u64>,
 
     ever_verified: bool,
     verified_in_run: bool,
@@ -1040,6 +1050,7 @@ impl Link {
             hold_until: 0,
             outstanding: None,
             pending_request: None,
+            ready_since: None,
             verified_in_run: false,
             consecutive_mismatches: 0,
             media_failures: 0,
@@ -1521,7 +1532,10 @@ impl Link {
         self.mb.relay.last_rx = now;
         self.mb.relay.last_ping = now;
         out.push(Self::send_action(encode_hello(self.cfg.role, &self.room)));
+        // A request already travelling over another mailbox stays valid (`Parallel mailboxes`).
+        let kept = self.outstanding.take().filter(|_| self.nostr_ready());
         self.immediate_retry(now);
+        self.outstanding = kept;
     }
 
     fn signaling_down(&mut self, now: u64, emit_close: bool, out: &mut Vec<LinkAction>) {
@@ -1532,8 +1546,14 @@ impl Link {
         self.mb.relay.client_id = None;
         self.mb.relay.members.clear();
         self.peer_present = false;
-        self.outstanding = None;
-        self.pending_request = None;
+        // Losing one mailbox must not reset the setup while another one still reaches the peer
+        // (`link-supervision`, "Parallel mailboxes"): a flapping relay would otherwise drop the
+        // parent's `request_offer` again and again while the baby's attempt waits for its answer
+        // until the attempt timeout. Only when no mailbox reaches the peer is the state stale.
+        if !self.nostr_ready() {
+            self.outstanding = None;
+            self.pending_request = None;
+        }
         self.known_peers.clear();
         self.peer_client = None;
         self.mb.relay.next_open_at = now + self.delay(now, self.mb.relay.failures);
@@ -2816,6 +2836,7 @@ impl Link {
         self.peer_present = false;
         self.outstanding = None;
         self.pending_request = None;
+        self.ready_since = None;
         self.known_peers.clear();
         self.peer_client = None;
         self.probe = None;
@@ -3308,6 +3329,9 @@ impl Link {
     }
 
     fn schedule(&mut self, now: u64, out: &mut Vec<LinkAction>) {
+        if !self.peer_ready() {
+            self.ready_since = None;
+        }
         if self.live.is_some()
             || !self.peer_ready()
             || (self.peer_stopped && self.stop_pending_absence)
@@ -3316,7 +3340,15 @@ impl Link {
             return;
         }
         match self.cfg.role {
-            Role::Baby => self.start_baby_attempt(now, out),
+            Role::Baby => {
+                if self.pending_request.is_none() {
+                    let since = *self.ready_since.get_or_insert(now);
+                    if now.saturating_sub(since) < BABY_OFFER_GRACE_MS {
+                        return;
+                    }
+                }
+                self.start_baby_attempt(now, out)
+            }
             Role::Parent => {
                 if self.outstanding.is_some() {
                     return;

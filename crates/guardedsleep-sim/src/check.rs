@@ -251,6 +251,14 @@ fn check_one(world: &World, a: &Assertion) -> (bool, String) {
             format!("most events to one relay: {busiest} (limit {max}); {per_relay:?}"),
         );
     }
+    if let Some(want) = a.attempts {
+        let n = world
+            .attempts
+            .iter()
+            .filter(|(actor, t)| *actor == ix && in_window(*t))
+            .count();
+        return (n == want, format!("{n} attempt(s) created (want {want})"));
+    }
     if let Some(max) = a.nostr_closes_max {
         let n = world
             .nostr

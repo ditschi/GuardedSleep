@@ -246,6 +246,8 @@ fn reflected_proof_never_verifies_and_baby_stays_unverified() {
     w.start(BABY, 1);
     w.advance(500);
     w.impostor_greets(atk, BABY);
+    // No request comes from the attacker: the baby offers on its own after its grace period.
+    w.advance(3_000);
     let h = w.nodes[BABY]
         .link
         .live_attempt()

@@ -89,6 +89,7 @@ pub(super) struct Day {
     pub epoch: u32,
     pub tag: String,
     pub own: Option<SigningKey>,
+    pub own_pub: Option<String>,
     pub peer_pub: Option<String>,
 }
 
@@ -191,6 +192,7 @@ impl Link {
             epoch,
             tag: keys.tag(epoch),
             own: keys.signing_key(self.cfg.role, epoch),
+            own_pub: keys.public_key_hex(self.cfg.role, epoch),
             peer_pub: keys.public_key_hex(self.other_role(), epoch),
         };
         if self.nostr_days.len() >= 4 {
@@ -639,6 +641,15 @@ impl Link {
             }
             b.sub_epochs.clone()
         };
+        // Our own events come back whenever the subscription is not limited to the peer's author
+        // (and a relay may echo them even then). They are neither peer traffic nor a forgery:
+        // dropped before anything is counted, with no penalty for the relay.
+        if epochs.iter().any(|e| {
+            self.day(*e)
+                .is_some_and(|d| d.own_pub.as_deref() == Some(event.pubkey.as_str()))
+        }) {
+            return;
+        }
         // Stale or far-future events are noise from the relay's store, not worth a signature check.
         let Some(wall) = self.wall_now(now) else {
             return;

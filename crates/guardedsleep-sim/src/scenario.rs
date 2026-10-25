@@ -206,6 +206,9 @@ pub struct Assertion {
     /// The peer closed at most this many Nostr sockets within `within_ms` (a relay it parked or
     /// found unusable shows up as a close; 0 proves it never left a relay).
     pub nostr_closes_max: Option<usize>,
+    /// The peer's core asked for exactly this many attempts (`create_attempt`) within `within_ms`:
+    /// a clean setup converges on one attempt per side.
+    pub attempts: Option<usize>,
 }
 
 impl Scenario {

@@ -19,7 +19,8 @@
     "pin_window_until_s": null,
     "device_name": "",
     "mailboxes": [],
-    "allow_dev_loopback": false
+    "allow_dev_loopback": false,
+    "only_local": false
   },
   "steps": [
     { "n": 0, "now": 0, "input": { "type": "start", "entropy": 569173874 } },

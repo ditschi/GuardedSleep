@@ -540,7 +540,13 @@
         }
       },
       {
-        "now": 10,
+        "now": 2603,
+        "input": {
+          "type": "tick"
+        }
+      },
+      {
+        "now": 2610,
         "input": {
           "type": "attempt_local_description",
           "attempt": 1,
@@ -549,7 +555,7 @@
         }
       },
       {
-        "now": 11,
+        "now": 2611,
         "input": {
           "type": "mailbox_frame",
           "id": 0,
@@ -557,14 +563,14 @@
         }
       },
       {
-        "now": 12,
+        "now": 2612,
         "input": {
           "type": "attempt_data_open",
           "attempt": 1
         }
       },
       {
-        "now": 12,
+        "now": 2612,
         "input": {
           "type": "attempt_dtls_fingerprint",
           "attempt": 1,
@@ -572,7 +578,7 @@
         }
       },
       {
-        "now": 13,
+        "now": 2613,
         "input": {
           "type": "attempt_data_message",
           "attempt": 1,
@@ -580,7 +586,7 @@
         }
       },
       {
-        "now": 20,
+        "now": 2620,
         "input": {
           "type": "attempt_local_description",
           "attempt": 2,
@@ -589,7 +595,7 @@
         }
       },
       {
-        "now": 21,
+        "now": 2621,
         "input": {
           "type": "mailbox_frame",
           "id": 0,
@@ -597,14 +603,14 @@
         }
       },
       {
-        "now": 22,
+        "now": 2622,
         "input": {
           "type": "attempt_data_open",
           "attempt": 2
         }
       },
       {
-        "now": 22,
+        "now": 2622,
         "input": {
           "type": "attempt_dtls_fingerprint",
           "attempt": 2,
@@ -612,7 +618,7 @@
         }
       },
       {
-        "now": 23,
+        "now": 2623,
         "input": {
           "type": "attempt_data_message",
           "attempt": 2,
@@ -665,6 +671,8 @@
           "frame": "{\"type\":\"signal\",\"roomId\":\"J8uOkdP8JbRE_-Q9zX1rxA\",\"to\":\"p\",\"payload\":{\"env\":\"AQABwHIEAMlh42a26hTUEfzFPepPRMm7TXQItCw-ok4Bbqx6OfYr1CvV68EOv9DkEUzOe-Sm7DRcnur8AUniNgTy9OafboUAfGargB4FhvLsW4qPzglvN3WojXfLlKYIPAIvHJE_sh186YY3jj9Wi1JdMuCuZhOGCYYsWwggOT_XRcoJiSCLpIeLhlT5U2aMZlLhx9ZajKivhYdqYV7PyLYRUzwsusWP1MOSzDmLaYKkTn8o-txyl_M8kt7hk3JVEx5XNFXf-s5LYYLWeOQ_jbSxLlFTR_wTNebBWZuJQ18KIdKBIFlNtOxtEupcyzd-8ba3uav3hyWroJUTRhaeSHb9zNc4iuvRxtGtRRmzgII0HNMPQD2bmzKuHjzFrcw5FPjZY89F4Y8sMDtqm0UKf40RyE3NgkZyPSbbdh97V0akgVcRPs55Gk9dSoXA45ZBvhM_K4gUZ58iTublvg5DRevyGW6nYw-ihnf6QyRurDq3RTLfpe-3E3_J33ofr0Qw4zm4HTM_7MaDEBgSw03OTKMU3qRN9crNopPS0kKW__lAwcNUzsGIm9cwCBo5J9eyYD9FA9NHV6foCnybOLYXBVgHVTFEVIdUzN9svvOmNcj8A7nvUatw8qGuaz1IPKBzIn5mBwicUX-LdC2GdsnhEhsQefBTCUk6-o3IgBM2QoP35Oo9I5kYUbg91SUiRIWqMvW8heG0z8fNI_zvrIMkLJI-ALXXkTaiXX80r9OeEtLtVLH34BH905wNLgJBOQlb0B0aZH7sTSpg3pwVE9beAsqShnR6k-pcWbydSBp7mJ9prVzv13jN_sDk81n-znFEDBFhIUwv899pnxJkRj--vtNvs0LkMB5dxrAIXx6bC17vMPISG6z2YpxB0pNXU3ZzCBXoX-aVyoIN02ZX73OOrbRQ5wLhuGLqVxelX-8dujsIIWlURW6or7HKxaTitK0voofg9wJXH2aEyCxrjfaQfnQbeh91JUKMl0bvr_6eLwRBKBxS9rLoucek3AkOcimVT7ciCcs3OXkqroizLeLDcmDS1BK1fyyvCy6UH9JGbjWM_IQ1aB9C9jY4tVoiqW9DJdSkDkaRfOrQM64YXLJB9ltWBhHNutWOIicfFaLc-cwaErC56Zm-s0453pt_x55lRdr46dPglpMe7Z__rE7mWHwP2fNEEe-vT3YdZ32sDDLzdKGxxDNSldy-XwAlPsqnpc7gDLbcywGRAbdhGmsGS4Tsmw0ym-cRUXmFoskymqRVPl-G9FQ4lh0vWoax1k_ws-d3KAlaQ3ypFK75YPaVxMroAAdUB-gNiCOEdGFEK0zH1ZeYLy8wLFOywoooXiKX3ZK28ynHTW1MV8ihoDsp_WeoMw6MF9rg-Xt1LeOWaZ3cPb2001-dHYxNmUZRwCANdcINvFCDcovh5gE\"}}"
         }
       ],
+      [],
+      [],
       [
         {
           "type": "create_attempt",
@@ -676,7 +684,6 @@
           "attempt": 1
         }
       ],
-      [],
       [
         {
           "type": "mailbox_send",

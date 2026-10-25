@@ -1,0 +1,101 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "single-attempt-relay-and-nostr-setup",
+  "description": "The own relay and three Nostr relays are all up. The setup runs over every mailbox in parallel and still builds exactly one attempt per side.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby",
+      "mailboxes": [
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-a.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-b.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-c.example"
+        }
+      ]
+    },
+    {
+      "id": "parent",
+      "role": "parent",
+      "mailboxes": [
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-a.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-b.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-c.example"
+        }
+      ]
+    }
+  ],
+  "nostr": [
+    {
+      "url": "wss://nostr-a.example"
+    },
+    {
+      "url": "wss://nostr-b.example"
+    },
+    {
+      "url": "wss://nostr-c.example"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 30000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 9000
+    },
+    {
+      "peer": "baby",
+      "attempts": 1
+    },
+    {
+      "peer": "baby",
+      "max_level": 0
+    },
+    {
+      "peer": "baby",
+      "never": "link_lost"
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 9000
+    },
+    {
+      "peer": "parent",
+      "attempts": 1
+    },
+    {
+      "peer": "parent",
+      "max_level": 0
+    },
+    {
+      "peer": "parent",
+      "never": "link_lost"
+    }
+  ]
+}

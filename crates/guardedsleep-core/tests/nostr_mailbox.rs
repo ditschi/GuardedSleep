@@ -703,6 +703,27 @@ fn events_by_someone_else_or_of_another_tag_count_as_bad() {
 }
 
 #[test]
+fn our_own_events_echoed_by_the_relay_are_dropped_without_a_penalty() {
+    // A subscription limited to the daily tag (or a relay that ignores the author filter) hands
+    // our own events back. They are not peer traffic and not a forgery: ten of them in a minute
+    // do not park the relay.
+    let mut r = Rig::parent(&[URL_A]);
+    r.report_wall();
+    r.advance(1_000);
+    let sub = r.sub_of(1);
+    let mut own = NostrPeer::new(Role::Parent, &PSK, 7);
+    for _ in 0..10 {
+        let wall = r.wall();
+        let here = own.peer.here();
+        let frame = own.frame(&sub, wall, &here);
+        let acts = r.feed(frame_input(1, &frame));
+        assert!(closes(&acts).is_empty(), "an echo parks the relay");
+    }
+    let acts = r.advance(2_000);
+    assert!(closes(&acts).is_empty());
+}
+
+#[test]
 fn a_flood_of_distinct_valid_events_is_dropped_not_punished() {
     let mut r = Rig::parent(&[URL_A]);
     r.report_wall();
@@ -967,13 +988,14 @@ fn the_third_relay_dies_and_the_others_carry_the_pairing() {
     let mut r = Rig::parent(&[URL_A, URL_B, URL_C]);
     r.report_wall();
     r.advance(1_000);
-    r.confirm();
     let acts = r.feed(LinkInput::MailboxClosed {
         id: 2,
         reason: "gone".into(),
     });
     assert!(closes(&acts).is_empty(), "the platform already closed it");
-    let acts = r.advance(4_000);
+    // The request leaves right after the handshake; it must reach the live relays only.
+    let mut acts = r.confirm();
+    acts.extend(r.advance(4_000));
     let asks = Rig::kinds(&acts)
         .into_iter()
         .filter(|(_, t)| t == "request_offer")
