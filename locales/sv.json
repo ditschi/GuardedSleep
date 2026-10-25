@@ -16,7 +16,8 @@
     "serverUnreachable": "Den här enheten når inte anslutningsservern. Kontrollera dess internetanslutning.",
     "peerAbsent": "Babyenheten svarar inte. Kontrollera att den är på och visar GuardedSleep.",
     "mediaBlocked": "Enheterna hittade varandra, men ljudet kommer inte fram. Testa samma wifi på båda.",
-    "wrongKeyAttempt": "Någon försökte ansluta med fel nyckel. Övervakningen fortsätter."
+    "wrongKeyAttempt": "Någon försökte ansluta med fel nyckel. Övervakningen fortsätter.",
+    "unknownParentAttempt": "En enhet som inte är din parkopplade föräldraenhet försökte ansluta. Övervakningen fortsätter."
   },
   "native": {
     "appName": "GuardedSleep Alpha",

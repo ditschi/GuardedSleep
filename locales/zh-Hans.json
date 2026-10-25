@@ -13,7 +13,8 @@
     "serverUnreachable": "此设备无法连接到连接服务器。请检查它的网络连接。",
     "peerAbsent": "宝宝设备没有响应。请确认它已开机并显示 GuardedSleep。",
     "mediaBlocked": "设备已互相找到，但声音无法传送。请让两台设备使用同一个 Wi-Fi。",
-    "wrongKeyAttempt": "有人用错误的密钥尝试连接。监护继续进行。"
+    "wrongKeyAttempt": "有人用错误的密钥尝试连接。监护继续进行。",
+    "unknownParentAttempt": "有一台不是您已配对的家长设备的设备尝试连接。监护仍在继续。"
   },
   "native": {
     "appName": "GuardedSleep Alpha",

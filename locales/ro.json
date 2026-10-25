@@ -16,7 +16,8 @@
     "serverUnreachable": "Acest dispozitiv nu poate ajunge la serverul de conectare. Verifică conexiunea lui la internet.",
     "peerAbsent": "Dispozitivul bebelușului nu răspunde. Verifică dacă este pornit și afișează GuardedSleep.",
     "mediaBlocked": "Dispozitivele s-au găsit, dar sunetul nu trece. Încearcă aceeași rețea Wi-Fi pe ambele.",
-    "wrongKeyAttempt": "Cineva a încercat să se conecteze cu o cheie greșită. Monitorizarea continuă."
+    "wrongKeyAttempt": "Cineva a încercat să se conecteze cu o cheie greșită. Monitorizarea continuă.",
+    "unknownParentAttempt": "Un dispozitiv care nu este dispozitivul părintelui asociat a încercat să se conecteze. Monitorizarea continuă."
   },
   "native": {
     "appName": "GuardedSleep Alpha",

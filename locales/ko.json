@@ -13,7 +13,8 @@
     "serverUnreachable": "이 기기가 연결 서버에 닿지 않아요. 인터넷 연결을 확인하세요.",
     "peerAbsent": "아기 기기가 응답하지 않아요. 전원이 켜져 있고 GuardedSleep이 표시되는지 확인하세요.",
     "mediaBlocked": "기기끼리는 찾았지만 소리가 전달되지 않아요. 두 기기를 같은 Wi-Fi에 연결해 보세요.",
-    "wrongKeyAttempt": "누군가 잘못된 키로 연결을 시도했어요. 지켜보기는 계속돼요."
+    "wrongKeyAttempt": "누군가 잘못된 키로 연결을 시도했어요. 지켜보기는 계속돼요.",
+    "unknownParentAttempt": "페어링한 보호자 기기가 아닌 기기가 연결을 시도했습니다. 모니터링은 계속됩니다."
   },
   "native": {
     "appName": "GuardedSleep Alpha",

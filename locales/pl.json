@@ -16,7 +16,8 @@
     "serverUnreachable": "To urządzenie nie może połączyć się z serwerem połączeń. Sprawdź jego dostęp do internetu.",
     "peerAbsent": "Urządzenie dziecka nie odpowiada. Sprawdź, czy jest włączone i pokazuje GuardedSleep.",
     "mediaBlocked": "Urządzenia się znalazły, ale dźwięk nie przechodzi. Spróbuj użyć tej samej sieci Wi-Fi na obu.",
-    "wrongKeyAttempt": "Ktoś próbował się połączyć z błędnym kluczem. Monitorowanie trwa."
+    "wrongKeyAttempt": "Ktoś próbował się połączyć z błędnym kluczem. Monitorowanie trwa.",
+    "unknownParentAttempt": "Urządzenie, które nie jest Twoim sparowanym urządzeniem rodzica, próbowało się połączyć. Monitorowanie trwa."
   },
   "native": {
     "appName": "GuardedSleep Alpha",

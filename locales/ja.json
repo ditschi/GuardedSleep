@@ -13,7 +13,8 @@
     "serverUnreachable": "この端末は接続サーバーに届きません。インターネット接続を確認してください。",
     "peerAbsent": "赤ちゃん用端末から応答がありません。電源が入り、GuardedSleep が表示されているか確認してください。",
     "mediaBlocked": "端末同士は見つかりましたが、音が届きません。両方を同じ Wi-Fi につないでみてください。",
-    "wrongKeyAttempt": "誰かが誤ったキーで接続しようとしました。見守りは続いています。"
+    "wrongKeyAttempt": "誰かが誤ったキーで接続しようとしました。見守りは続いています。",
+    "unknownParentAttempt": "ペアリングした保護者用の端末ではない端末が接続しようとしました。見守りは続いています。"
   },
   "native": {
     "appName": "GuardedSleep Alpha",

@@ -16,7 +16,8 @@
     "serverUnreachable": "Toto zařízení se nemůže připojit k serveru. Zkontrolujte jeho připojení k internetu.",
     "peerAbsent": "Zařízení dítěte neodpovídá. Zkontrolujte, zda je zapnuté a zobrazuje GuardedSleep.",
     "mediaBlocked": "Zařízení se našla, ale zvuk neprochází. Zkuste na obou stejnou síť Wi-Fi.",
-    "wrongKeyAttempt": "Někdo se zkusil připojit s chybným klíčem. Sledování pokračuje."
+    "wrongKeyAttempt": "Někdo se zkusil připojit s chybným klíčem. Sledování pokračuje.",
+    "unknownParentAttempt": "Zařízení, které není vaše spárované rodičovské zařízení, se pokusilo připojit. Sledování pokračuje."
   },
   "native": {
     "appName": "GuardedSleep Alpha",

@@ -16,7 +16,8 @@
     "serverUnreachable": "Questo dispositivo non raggiunge il server di connessione. Controlla la sua connessione a internet.",
     "peerAbsent": "Il dispositivo del bambino non risponde. Controlla che sia acceso e che mostri GuardedSleep.",
     "mediaBlocked": "I dispositivi si sono trovati, ma l'audio non passa. Prova con lo stesso Wi-Fi su entrambi.",
-    "wrongKeyAttempt": "Qualcuno ha provato a connettersi con una chiave errata. Il monitoraggio continua."
+    "wrongKeyAttempt": "Qualcuno ha provato a connettersi con una chiave errata. Il monitoraggio continua.",
+    "unknownParentAttempt": "Un dispositivo che non è il tuo dispositivo genitore associato ha provato a connettersi. Il monitoraggio continua."
   },
   "native": {
     "appName": "GuardedSleep Alpha",

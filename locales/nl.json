@@ -16,7 +16,8 @@
     "serverUnreachable": "Dit apparaat kan de verbindingsserver niet bereiken. Controleer de internetverbinding.",
     "peerAbsent": "Het babyapparaat reageert niet. Controleer of het aan staat en GuardedSleep toont.",
     "mediaBlocked": "De apparaten hebben elkaar gevonden, maar het geluid komt niet door. Probeer hetzelfde wifi-netwerk op beide.",
-    "wrongKeyAttempt": "Iemand probeerde verbinding te maken met een verkeerde sleutel. De bewaking gaat door."
+    "wrongKeyAttempt": "Iemand probeerde verbinding te maken met een verkeerde sleutel. De bewaking gaat door.",
+    "unknownParentAttempt": "Een apparaat dat niet je gekoppelde ouderapparaat is, probeerde verbinding te maken. De bewaking gaat door."
   },
   "native": {
     "appName": "GuardedSleep Alpha",

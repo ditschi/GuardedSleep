@@ -13,7 +13,8 @@
     "serverUnreachable": "Bu cihaz bağlantı sunucusuna ulaşamıyor. İnternet bağlantısını kontrol edin.",
     "peerAbsent": "Bebek cihazı yanıt vermiyor. Açık olduğundan ve GuardedSleep'in göründüğünden emin olun.",
     "mediaBlocked": "Cihazlar birbirini buldu ama ses geçemiyor. İkisini de aynı Wi-Fi'ye bağlamayı deneyin.",
-    "wrongKeyAttempt": "Biri yanlış anahtarla bağlanmaya çalıştı. İzleme sürüyor."
+    "wrongKeyAttempt": "Biri yanlış anahtarla bağlanmaya çalıştı. İzleme sürüyor.",
+    "unknownParentAttempt": "Eşleştirdiğiniz ebeveyn cihazı olmayan bir cihaz bağlanmaya çalıştı. İzleme sürüyor."
   },
   "native": {
     "appName": "GuardedSleep Alpha",
