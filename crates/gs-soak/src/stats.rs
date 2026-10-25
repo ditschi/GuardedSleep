@@ -77,7 +77,11 @@ impl RelayStats {
 
     pub fn open_failure(&mut self, class: &str) {
         self.open_failures += 1;
-        match self.open_failure_classes.iter_mut().find(|(c, _)| c == class) {
+        match self
+            .open_failure_classes
+            .iter_mut()
+            .find(|(c, _)| c == class)
+        {
             Some((_, n)) => *n += 1,
             None => self.open_failure_classes.push((class.to_owned(), 1)),
         }
@@ -212,7 +216,11 @@ pub fn verdict(relays: &[RelayStats], recoveries_ms: &[u64]) -> Verdict {
     }
     let go = total >= 3 && timing_decided && clean >= CLEAN_RELAYS_NEEDED;
     Verdict {
-        outcome: if go { Outcome::Go } else { Outcome::Inconclusive },
+        outcome: if go {
+            Outcome::Go
+        } else {
+            Outcome::Inconclusive
+        },
         reasons,
     }
 }

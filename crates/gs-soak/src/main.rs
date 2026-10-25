@@ -26,7 +26,10 @@ use clap::{Args, Parser, Subcommand};
 use guardedsleep_core::relay_pick::{PICK_COUNT, pick_relays};
 
 #[derive(Parser)]
-#[command(name = "gs-soak", about = "Go/no-go tooling for the public Nostr mailboxes")]
+#[command(
+    name = "gs-soak",
+    about = "Go/no-go tooling for the public Nostr mailboxes"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -68,6 +71,9 @@ enum Command {
         /// Time the fake ICE takes once descriptions and a remote candidate are in.
         #[arg(long, default_value_t = 150)]
         ice_ms: u64,
+        /// Print a timeline of the core's actions and the relays' answers (kinds and sizes only).
+        #[arg(long)]
+        trace: bool,
         /// Report file (JSON). Default: .cache/relay-soak/soak-<unix time>.json
         #[arg(long)]
         out: Option<PathBuf>,
@@ -157,6 +163,7 @@ fn run(cli: Cli) -> Result<ExitCode, String> {
             tag_only,
             parent_wall_offset_s,
             ice_ms,
+            trace,
             out,
         } => {
             if !(hours > 0.0 && hours.is_finite()) {
@@ -169,6 +176,14 @@ fn run(cli: Cli) -> Result<ExitCode, String> {
             }
             let relays = resolve_relays(&relays)?;
             let path = out.unwrap_or_else(|| default_out("soak"));
+            if every_min > 0.0 && every_min < 4.0 {
+                // The core sends the opening presence to one relay at most every 3 minutes
+                // (OPEN_HERE_MIN_MS in link/nostr_link.rs); a recovery sooner than that waits for
+                // the 5 s presence repeat instead, so its time says nothing about the relays.
+                eprintln!(
+                    "[soak] warning: a forced loss every {every_min:.1} min is inside the core's 3 min presence throttle; recovery times are inflated by about 5 s. Use 4 min or more for the go/no-go numbers."
+                );
+            }
             eprintln!(
                 "[soak] {:.2} h on {}; forced loss every {:.1} min; report: {}",
                 hours,
@@ -183,6 +198,7 @@ fn run(cli: Cli) -> Result<ExitCode, String> {
                 tag_only,
                 parent_wall_offset_s,
                 ice_ms,
+                trace,
                 out: Some(path.clone()),
             })?;
             let report = soak.run()?;

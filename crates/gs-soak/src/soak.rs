@@ -54,17 +54,43 @@ pub struct SoakOptions {
     pub parent_wall_offset_s: i64,
     /// Time the fake ICE needs after the descriptions and a remote candidate arrived.
     pub ice_ms: u64,
+    /// Print a timeline of what the core asked for and what the relays answered (kinds and sizes,
+    /// never content) to stderr.
+    pub trace: bool,
     pub out: Option<PathBuf>,
 }
 
 enum Timer {
     /// A mailbox the harness cannot or will not open (the own relay, LAN).
-    MailboxClosed { actor: usize, id: MailboxId },
-    LocalDesc { actor: usize, attempt: u32, kind: &'static str },
-    LocalIce { actor: usize, attempt: u32, n: u32 },
-    Connect { a: usize, ha: u32, b: usize, hb: u32 },
-    Data { to: usize, handle: u32, text: String },
-    DataClosed { to: usize, handle: u32 },
+    MailboxClosed {
+        actor: usize,
+        id: MailboxId,
+    },
+    LocalDesc {
+        actor: usize,
+        attempt: u32,
+        kind: &'static str,
+    },
+    LocalIce {
+        actor: usize,
+        attempt: u32,
+        n: u32,
+    },
+    Connect {
+        a: usize,
+        ha: u32,
+        b: usize,
+        hb: u32,
+    },
+    Data {
+        to: usize,
+        handle: u32,
+        text: String,
+    },
+    DataClosed {
+        to: usize,
+        handle: u32,
+    },
 }
 
 #[derive(Default)]
@@ -139,6 +165,8 @@ pub struct Soak {
     hints: BTreeMap<String, u64>,
     security_warnings: u64,
     link_lost_events: u64,
+    /// Attempts each Link created (baby, parent): more than one per recovery means restarts.
+    attempts_created: [u64; 2],
 }
 
 fn mailbox_set(relays: &[String]) -> Vec<InviteMailbox> {
@@ -205,6 +233,7 @@ impl Soak {
             hints: BTreeMap::new(),
             security_warnings: 0,
             link_lost_events: 0,
+            attempts_created: [0; 2],
         })
     }
 
@@ -311,6 +340,9 @@ impl Soak {
 
     fn exec(&mut self, a: usize, actions: Vec<LinkAction>) {
         for action in actions {
+            if self.opts.trace {
+                self.trace(a, &describe(&action));
+            }
             match action {
                 LinkAction::OpenMailbox { id, kind, url } => match kind {
                     MailboxKind::Nostr => self.open_socket(a, id, &url),
@@ -323,6 +355,7 @@ impl Soak {
                 LinkAction::CloseMailbox { id } => self.close_socket(a, id),
                 LinkAction::MailboxSend { id, frame } => self.send_frame(a, id, frame),
                 LinkAction::CreateAttempt { attempt, .. } => {
+                    self.attempts_created[a] += 1;
                     self.actors[a].pcs.insert(
                         attempt,
                         Pc {
@@ -364,6 +397,14 @@ impl Soak {
                 | LinkAction::SendProbeTone { .. } => {}
             }
         }
+    }
+
+    fn trace(&self, a: usize, text: &str) {
+        let who = match self.actors[a].role {
+            Role::Baby => "baby  ",
+            Role::Parent => "parent",
+        };
+        eprintln!("[trace {:>7} ms] {who} {text}", self.now());
     }
 
     fn on_event(&mut self, a: usize, event: LinkEvent) {
@@ -479,12 +520,22 @@ impl Soak {
             Some(s) if s.gen_no == msg.gen_no => (s.url.clone(), s.spawned_ms, s.opened),
             _ => return,
         };
+        if self.opts.trace {
+            let what = match &msg.ev {
+                Ev::Opened => "socket opened".to_owned(),
+                Ev::Text(t) => format!("frame {}", frame_verb(t)),
+                Ev::Closed(r) => format!("socket closed ({r})"),
+            };
+            self.trace(msg.actor, &format!("{what} {}", host_of(&url)));
+        }
         match msg.ev {
             Ev::Opened => {
                 if let Some(s) = self.socks.get_mut(&key) {
                     s.opened = true;
                 }
-                self.stats(&url).connect_ms.push(now.saturating_sub(spawned_ms));
+                self.stats(&url)
+                    .connect_ms
+                    .push(now.saturating_sub(spawned_ms));
                 self.deliver(msg.actor, LinkInput::MailboxOpened { id: msg.id });
             }
             Ev::Text(text) => {
@@ -608,10 +659,9 @@ impl Soak {
                 continue;
             }
             let window_over = now >= p.sent_ms + DELIVERY_WINDOW_MS;
-            let peer_socket_same = self
-                .socks
-                .iter()
-                .any(|((who, _), s)| *who == 1 - p.from && s.url == url && s.gen_no == p.peer_gen && s.ready);
+            let peer_socket_same = self.socks.iter().any(|((who, _), s)| {
+                *who == 1 - p.from && s.url == url && s.gen_no == p.peer_gen && s.ready
+            });
             let st = self.stats(&url);
             if window_over && peer_socket_same {
                 st.lost += 1;
@@ -624,7 +674,11 @@ impl Soak {
     // ---- recovery measurement ------------------------------------------------------------------
 
     fn check_recovery(&mut self) {
-        if !self.actors.iter().all(|a| a.state == Some(LinkState::Connected)) {
+        if !self
+            .actors
+            .iter()
+            .all(|a| a.state == Some(LinkState::Connected))
+        {
             return;
         }
         let now = self.now();
@@ -660,11 +714,11 @@ impl Soak {
             self.recovery_failures += 1;
             self.recoveries.push(RECOVERY_LIMIT_MS);
         }
-        let connected = self.actors.iter().all(|a| a.state == Some(LinkState::Connected));
-        if self.cut_at.is_none()
-            && connected
-            && self.next_cut_at.is_some_and(|t| now >= t)
-        {
+        let connected = self
+            .actors
+            .iter()
+            .all(|a| a.state == Some(LinkState::Connected));
+        if self.cut_at.is_none() && connected && self.next_cut_at.is_some_and(|t| now >= t) {
             self.cut_link(now);
         }
     }
@@ -793,7 +847,14 @@ impl Soak {
         let Some((b, hb)) = pc.peer else {
             return;
         };
-        self.after(20, Timer::Data { to: b, handle: hb, text });
+        self.after(
+            20,
+            Timer::Data {
+                to: b,
+                handle: hb,
+                text,
+            },
+        );
     }
 
     fn run_timers(&mut self) {
@@ -839,15 +900,16 @@ impl Soak {
                         },
                     );
                     for n in 0..LOCAL_CANDIDATES {
-                        self.after(
-                            80 * u64::from(n + 1),
-                            Timer::LocalIce { actor, attempt, n },
-                        );
+                        self.after(80 * u64::from(n + 1), Timer::LocalIce { actor, attempt, n });
                     }
                     self.maybe_connect(actor, attempt);
                 }
                 Timer::LocalIce { actor, attempt, n } => {
-                    if self.actors[actor].pcs.get(&attempt).is_some_and(|p| !p.closed) {
+                    if self.actors[actor]
+                        .pcs
+                        .get(&attempt)
+                        .is_some_and(|p| !p.closed)
+                    {
                         // A documentation address (RFC 5737): the candidate is only text.
                         let candidate = IceCandidate {
                             candidate: format!(
@@ -862,9 +924,8 @@ impl Soak {
                     }
                 }
                 Timer::Connect { a, ha, b, hb } => {
-                    let alive = |s: &Self, x: usize, h: u32| {
-                        s.actors[x].pcs.get(&h).is_some_and(Pc::alive)
-                    };
+                    let alive =
+                        |s: &Self, x: usize, h: u32| s.actors[x].pcs.get(&h).is_some_and(Pc::alive);
                     if !alive(self, a, ha) || !alive(self, b, hb) {
                         continue;
                     }
@@ -901,7 +962,13 @@ impl Soak {
                         .get(&handle)
                         .is_some_and(|p| p.connected && p.alive())
                     {
-                        self.deliver(to, LinkInput::AttemptDataMessage { attempt: handle, text });
+                        self.deliver(
+                            to,
+                            LinkInput::AttemptDataMessage {
+                                attempt: handle,
+                                text,
+                            },
+                        );
                     }
                 }
                 Timer::DataClosed { to, handle } => {
@@ -978,6 +1045,10 @@ impl Soak {
                 "hints": self.hints,
                 "security_warnings": self.security_warnings,
                 "link_lost_events": self.link_lost_events,
+                "attempts_created": {
+                    "baby": self.attempts_created[0],
+                    "parent": self.attempts_created[1],
+                },
             },
             "relays": relays.iter().map(RelayStats::to_json).collect::<Vec<Value>>(),
             "verdict": {
@@ -993,6 +1064,59 @@ impl Soak {
     }
 }
 
+fn host_of(url: &str) -> &str {
+    url.strip_prefix("wss://").unwrap_or(url)
+}
+
+/// The verb of a relay frame (`EVENT`, `OK`, ...) for the trace.
+fn frame_verb(text: &str) -> String {
+    text.strip_prefix("[\"")
+        .and_then(|rest| rest.split('"').next())
+        .unwrap_or("?")
+        .to_owned()
+}
+
+/// What an action is, without any content: the trace shows kinds and sizes only.
+fn describe(action: &LinkAction) -> String {
+    match action {
+        LinkAction::OpenMailbox { id, url, .. } => format!("open mailbox {id} {}", host_of(url)),
+        LinkAction::CloseMailbox { id } => format!("close mailbox {id}"),
+        LinkAction::MailboxSend { id, frame } => {
+            format!(
+                "send {} ({} bytes) on mailbox {id}",
+                frame_verb(frame),
+                frame.len()
+            )
+        }
+        LinkAction::CreateAttempt { attempt, offerer } => {
+            format!("create attempt {attempt} (offerer {offerer})")
+        }
+        LinkAction::CloseAttempt { attempt } => format!("close attempt {attempt}"),
+        LinkAction::CreateOffer { attempt } => format!("create offer {attempt}"),
+        LinkAction::CreateAnswer { attempt } => format!("create answer {attempt}"),
+        LinkAction::SetRemoteDescription { attempt, .. } => {
+            format!("remote description {attempt}")
+        }
+        LinkAction::AddIceCandidate { attempt, .. } => format!("remote candidate {attempt}"),
+        LinkAction::SendData { attempt, text } => {
+            format!("data on attempt {attempt} ({} bytes)", text.len())
+        }
+        LinkAction::Emit { event } => match event {
+            LinkEvent::Status { status } => {
+                format!("status {:?} level {}", status.state, status.level)
+            }
+            LinkEvent::Failed { reason } => format!("attempt failed: {reason}"),
+            LinkEvent::Hint { key, active } => format!("hint {key} {active}"),
+            LinkEvent::LinkLost { .. } => "link lost".to_owned(),
+            LinkEvent::LinkRestored { .. } => "link restored".to_owned(),
+            _ => "event".to_owned(),
+        },
+        LinkAction::SetMicEnabled { .. } => "mic".to_owned(),
+        LinkAction::ApplyQuiet => "apply quiet".to_owned(),
+        LinkAction::SendProbeTone { .. } => "probe tone".to_owned(),
+    }
+}
+
 fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
@@ -1000,11 +1124,7 @@ fn hex(bytes: &[u8]) -> String {
 /// The id of an `["EVENT", {...}]` frame.
 fn event_id_of(frame: &str) -> Option<String> {
     let value: Value = serde_json::from_str(frame).ok()?;
-    value
-        .get(1)?
-        .get("id")?
-        .as_str()
-        .map(str::to_owned)
+    value.get(1)?.get("id")?.as_str().map(str::to_owned)
 }
 
 /// The same `REQ` without the `authors` member of its filters (the tag-only filter test).

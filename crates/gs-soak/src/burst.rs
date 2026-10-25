@@ -156,7 +156,8 @@ fn one_relay(url: &str, opts: &BurstOptions) -> Result<Value, String> {
                 delivered: None,
             },
         );
-        let _ = c.tx.send(Out::Text(format!("[\"EVENT\",{}]", event.to_json())));
+        let _ =
+            c.tx.send(Out::Text(format!("[\"EVENT\",{}]", event.to_json())));
         if opts.spacing_ms > 0 && who == 1 {
             std::thread::sleep(Duration::from_millis(opts.spacing_ms));
         }
@@ -197,13 +198,19 @@ fn one_relay(url: &str, opts: &BurstOptions) -> Result<Value, String> {
                 _ => {}
             },
         }
-        if sent.values().all(|s| s.ok.is_some() && s.delivered.is_some()) {
+        if sent
+            .values()
+            .all(|s| s.ok.is_some() && s.delivered.is_some())
+        {
             break;
         }
     }
     close(&clients);
 
-    let accepted = sent.values().filter(|s| matches!(&s.ok, Some((true, ..)))).count();
+    let accepted = sent
+        .values()
+        .filter(|s| matches!(&s.ok, Some((true, ..))))
+        .count();
     let mut refusals: Vec<String> = sent
         .values()
         .filter_map(|s| match &s.ok {

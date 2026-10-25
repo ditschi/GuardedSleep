@@ -60,7 +60,9 @@ pub fn soak_markdown(report: &SoakReport) -> String {
         rec["max"],
     ));
     out.push_str("| Relay | Opens | Open fails | Unexpected closes | Sent | OK | Refused (created_at / park) | Deliverable | Delivered | Lost | Delivery p50 / p95 ms | Connect p50 ms |\n");
-    out.push_str("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n");
+    out.push_str(
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n",
+    );
     for r in &report.relays {
         out.push_str(&format!(
             "| {} | {} | {} | {} | {} | {} | {} ({} / {}) | {} | {} | {} | {} / {} | {} |\n",

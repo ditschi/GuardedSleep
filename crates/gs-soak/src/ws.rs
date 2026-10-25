@@ -118,7 +118,9 @@ fn run(url: &str, rx: &Receiver<Out>, report: &dyn Fn(Ev)) -> Result<(), String>
     stream
         .set_write_timeout(Some(Duration::from_secs(10)))
         .map_err(|_| "socket".to_owned())?;
-    let request = url.into_client_request().map_err(|_| "request".to_owned())?;
+    let request = url
+        .into_client_request()
+        .map_err(|_| "request".to_owned())?;
     let connector = Connector::Rustls(tls_config()?);
     let deadline = Instant::now() + HANDSHAKE_BUDGET;
     let mut attempt = client_tls_with_config(request, stream, None, Some(connector));

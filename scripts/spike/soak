@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# CLI soak prototype on the real core (alpha-connection-model task 4.1, design section 9).
+#   scripts/spike/soak [soak options]        two Links over real public relays, 8 h by default
+#   scripts/spike/soak burst [options]       offer + answer + candidates within ~1 s, two clients, one IP
+#   scripts/spike/soak sign [options]        signed throwaway events (used by the Node scripts)
+# Options: scripts/spike/soak --help, runbook: docs/contributing/relay-soak.md.
+# Builds gs-soak in release mode (host cargo, otherwise the build image) and runs it from the
+# repository root, so data/nostr-relays.json is found and reports land in .cache/relay-soak/.
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "$ROOT"
+case "${1:-}" in
+  soak | burst | sign | help | --help | -h) ;;
+  *) set -- soak "$@" ;;
+esac
+exec scripts/cargo.sh run -q --release -p gs-soak -- "$@"
