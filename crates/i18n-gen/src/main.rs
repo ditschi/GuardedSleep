@@ -6,13 +6,14 @@ mod android;
 mod catalogue;
 mod critical;
 mod icu;
+mod usage;
 mod web;
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 
 const USAGE: &str = "usage: i18n-gen <check|web|android|all|locales> [--out <path>] [--web-out <dir>] [--android-out <dir>] [--locales <dir>]
-  check     validate the catalogue and Kotlin UI literals
+  check     validate the catalogue, unused keys and Kotlin UI literals
   web       write web JSON bundles (+ pseudo.json, pseudo-rtl.json) to --out
   android   write Android res/values*/strings.xml to --out
   all       web + android (--web-out / --android-out, defaults to the app build dirs)
@@ -80,6 +81,14 @@ fn main() -> ExitCode {
         } else {
             eprintln!("i18n: locale {l} is not generated: {problem}");
         }
+    }
+    if cmd == "check" {
+        let usage = usage::Usage::scan(&root.join("apps/android"), &root.join("apps/web/src"));
+        let master = cat.get(catalogue::MASTER);
+        issues.extend(usage::unused_keys(
+            master.iter().map(|(k, _)| k.as_str()),
+            &usage,
+        ));
     }
     let shipped = cat.without(&unshipped);
     let android_files = android::render_android(&shipped, &mut issues);
