@@ -1,0 +1,548 @@
+{
+  "$meta": {
+    "default": "machineTranslated",
+    "reviewed": []
+  },
+  "meta": {
+    "appTitle": "GuardedSleep"
+  },
+  "layout": {
+    "settingsAria": "Inställningar",
+    "backAria": "Tillbaka till föregående skärm"
+  },
+  "core": {
+    "pairingKeyMismatch": "De här enheterna är inte längre parkopplade. Parkoppla dem igen för att fortsätta övervaka.",
+    "updateRequired": "En av enheterna behöver en GuardedSleep-uppdatering för att fortsätta övervaka.",
+    "serverUnreachable": "Den här enheten når inte anslutningsservern. Kontrollera dess internetanslutning.",
+    "peerAbsent": "Babyenheten svarar inte. Kontrollera att den är på och visar GuardedSleep.",
+    "mediaBlocked": "Enheterna hittade varandra, men ljudet kommer inte fram. Testa samma wifi på båda.",
+    "wrongKeyAttempt": "Någon försökte ansluta med fel nyckel. Övervakningen fortsätter."
+  },
+  "native": {
+    "appName": "GuardedSleep Alpha",
+    "notif": {
+      "appTitle": "GuardedSleep",
+      "silenceRuleName": "GuardedSleep",
+      "channelNoise": "Ljudlarm",
+      "channelNoiseDesc": "Höga larm när babyenheten hör ett ljud.",
+      "channelLink": "Anslutningslarm",
+      "channelLinkDesc": "Larm när anslutningen till babyenheten bryts.",
+      "channelStatus": "Övervakningsstatus",
+      "channelStatusDesc": "Visar att övervakningen körs.",
+      "channelNotice": "Varningar",
+      "channelNoticeDesc": "Varningar om batteri och säkerhet.",
+      "channelInfo": "Information",
+      "channelInfoDesc": "Tysta notiser, till exempel när anslutningen är tillbaka.",
+      "channelBaby": "Övervakning",
+      "channelBabyDesc": "Tyst notis om att den här enheten övervakar.",
+      "babyMonitoring": "GuardedSleep övervakar",
+      "babyResume": "Tryck för att återuppta övervakningen",
+      "statusConnected": "Ansluten till babyenheten",
+      "statusConnecting": "Ansluter till babyenheten…",
+      "statusReconnecting": "Ansluter till babyenheten igen…",
+      "statusTrouble": "Når inte babyenheten, försöker fortfarande",
+      "statusAlarm": "Ingen anslutning till babyenheten",
+      "statusPeerStopped": "Babyenheten slutade övervaka",
+      "statusFailed": "De här enheterna är inte längre parkopplade",
+      "noiseTitle": "Ljud upptäckt",
+      "noiseText": "Babyenheten hör ett ljud.",
+      "noiseTestTitle": "Testlarm",
+      "noiseTestText": "Det här är ett test. Babyenheten förblir tyst.",
+      "actionStopSound": "Stoppa ljudet",
+      "actionSnooze10": "Vila 10 min",
+      "actionChecking": "Jag tittar",
+      "linkLostTitle": "Anslutningen bröts",
+      "linkLostText": "Ingen anslutning till babyenheten. Titta till ditt barn nu.",
+      "peerStoppedTitle": "Övervakningen stoppad",
+      "peerStoppedText": "Övervakningen stoppades på babyenheten. Du hör ingenting förrän den startas igen.",
+      "restoredTitle": "Ansluten igen",
+      "restoredText": "Inte övervakat i {duration}.",
+      "missedTitle": "Under avbrottet",
+      "missedCount": "Ljud under avbrottet: {count} (inte övervakat i {duration}).",
+      "missedNone": "Inga ljud under avbrottet (inte övervakat i {duration}).",
+      "missedUnknown": "Vi vet inte vad som hände under avbrottet (inte övervakat i {duration}).",
+      "batteryLowTitle": "Lågt batteri i babyenheten",
+      "batteryLowText": "Babyenhetens batteri {percent}%: sätt i laddaren.",
+      "batteryCriticalTitle": "Babyenhetens batteri nästan slut",
+      "batteryCriticalText": "Babyenhetens batteri {percent}%: sätt i laddaren nu.",
+      "chargerTitle": "Babyenheten laddas inte längre",
+      "chargerText": "Sätt i laddaren i babyenheten så att den räcker hela natten.",
+      "securityTitle": "Fel nyckel",
+      "publicTitle": "GuardedSleep-larm",
+      "fgsMissingTitle": "Övervakar inte i bakgrunden",
+      "fgsMissingText": "Öppna GuardedSleep för att slå på bakgrundsövervakningen igen."
+    },
+    "ui": {
+      "common": {
+        "appName": "GuardedSleep",
+        "allow": "Tillåt",
+        "continue": "Fortsätt",
+        "later": "Senare",
+        "ok": "OK",
+        "cancel": "Avbryt",
+        "more": "Mer",
+        "moreCount": "+{count}",
+        "settings": "Inställningar",
+        "tryAgain": "Försök igen",
+        "yes": "Ja",
+        "no": "Nej",
+        "add": "Lägg till",
+        "remove": "Ta bort",
+        "save": "Spara",
+        "change": "Ändra",
+        "durationSec": "{seconds} s",
+        "durationMin": "{minutes} min",
+        "durationHour": "{hours} h",
+        "durationHourMin": "{hours} h {minutes} min",
+        "secondsShort": "{seconds} s",
+        "state": {
+          "done": "Klart",
+          "todo": "Att göra",
+          "blocked": "Blockerat",
+          "checking": "Kontrollerar"
+        },
+        "babyUnitDefault": "Babyenhet",
+        "parentUnitDefault": "Föräldraenhet"
+      },
+      "role": {
+        "title": "Vilken enhet är det här?",
+        "baby": {
+          "title": "Babyenhet",
+          "hint": "Stannar hos ditt barn och lyssnar."
+        },
+        "parent": {
+          "title": "Föräldraenhet",
+          "hint": "Stannar hos dig och larmar dig."
+        },
+        "orderHint": "Ställ in babyenheten först."
+      },
+      "setup": {
+        "title": "Gör den här enheten redo",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Behövs för att höra ditt barn.",
+          "required": "Tillåt mikrofonen för att fortsätta."
+        },
+        "background": {
+          "title": "Fortsätt köra i bakgrunden",
+          "why": "Annars kan den här enheten sluta övervaka för att spara batteri."
+        },
+        "silence": {
+          "title": "Tyst läge under övervakning",
+          "why": "Inga ljud, ringsignaler eller lampor på babyenheten. Väckarklockor fungerar fortfarande."
+        },
+        "safety": {
+          "body": "Låt den här enheten sitta i laddaren, på ett stabilt underlag, utom räckhåll för ditt barn. Använd inte en enhet med svullet eller skadat batteri."
+        },
+        "chargingTip": "Tips: om den här enheten har \"väck skärmen vid laddning\", stäng av det så att skärmen förblir mörk.",
+        "deviceCheck": {
+          "checking": "Kontrollerar den här enheten…",
+          "ok": "Den här enheten fungerar bra som babyenhet.",
+          "limited": "Den här enheten kan tappa anslutningen då och då. Den fungerar ändå.",
+          "notRecommended": "Den här enheten kanske inte övervakar pålitligt. Använd en annan om du kan."
+        },
+        "notifications": {
+          "title": "Larm",
+          "why": "Behövs för att du ska höra när ditt barn låter.",
+          "required": "GuardedSleep kan inte larma dig utan detta."
+        },
+        "lockScreen": {
+          "title": "Larm på låsskärmen",
+          "why": "Så att larm syns även när skärmen är låst."
+        },
+        "dndBypass": {
+          "title": "Larm vid Stör ej",
+          "why": "Så att larm kommer fram även när Stör ej är på."
+        },
+        "limits": {
+          "body": "GuardedSleep kan bara larma dig så länge den här enheten är på och laddad. Låt den sitta i laddaren på natten. Om båda enheterna stängs av larmas ingen."
+        },
+        "skipped": "Hoppades över för nu"
+      },
+      "pair": {
+        "baby": {
+          "title": "Anslut föräldraenheten",
+          "qrAlt": "Parkopplingskod",
+          "instruction": "Öppna GuardedSleep på den andra enheten, välj Föräldraenhet och skanna den här koden.",
+          "validFor": "Koden gäller i {duration}",
+          "expired": "Koden har gått ut.",
+          "newCode": "Visa ny kod",
+          "copy": "Kopiera koden",
+          "copied": "Kopierad",
+          "brighter": "Gör koden ljusare",
+          "waiting": "Väntar på föräldraenheten…",
+          "privacy": "Alla som har den här koden kan lyssna. Visa den bara för personer du litar på.",
+          "parentFound": "Föräldraenhet hittad. Ansluter…",
+          "failed": "Parkopplingen fungerade inte. Visa en ny kod och försök igen.",
+          "showText": "Visa koden som text",
+          "hideText": "Dölj text"
+        },
+        "parent": {
+          "title": "Skanna koden på babyenheten",
+          "cameraWhy": "GuardedSleep använder kameran bara för att läsa koden.",
+          "pasteLabel": "Eller klistra in koden",
+          "pasteSubmit": "Anslut",
+          "connecting": "Ansluter till babyenheten…"
+        },
+        "error": {
+          "cameraDenied": "Kameran är inte tillåten.",
+          "allowCamera": "Tillåt kameran",
+          "pasteInstead": "Klistra in koden",
+          "notOurs": "Det här är inte en GuardedSleep-kod. Skanna koden på babyenheten.",
+          "expired": "Koden har gått ut. Tryck på Visa ny kod på babyenheten och skanna igen.",
+          "mismatch": "Koden stämmer inte. Skanna koden som visas på babyenheten just nu.",
+          "alreadyPaired": "Den här babyenheten är redan parkopplad med en annan enhet.",
+          "unreachable": "Hittar inte babyenheten än. Kontrollera att båda enheterna är online.",
+          "incomplete": "Koden är ofullständig. Kopiera hela koden från babyenheten."
+        }
+      },
+      "home": {
+        "parent": {
+          "cardTitle": "Anslut till {name}",
+          "cardTitleDefault": "Anslut till babyenheten"
+        },
+        "baby": {
+          "cardTitle": "Starta övervakning"
+        },
+        "lastUsed": "Senast använd {time}",
+        "newPairing": "Ställ in nya enheter",
+        "empty": "Inga enheter parkopplade än."
+      },
+      "baby": {
+        "status": {
+          "connected": "Ansluten till föräldraenheten",
+          "waiting": "Väntar på föräldraenheten…",
+          "reconnecting": "Ansluter till föräldraenheten igen…",
+          "notResponding": "Föräldraenheten svarar inte, försöker fortfarande",
+          "parentStopped": "Föräldraenheten slutade övervaka"
+        },
+        "forDuration": "i {duration}",
+        "monitoring": "Övervakar",
+        "parentListening": "Föräldern lyssnar",
+        "battery": "Den här enheten: batteri {percent}%",
+        "batteryCharging": "Den här enheten: laddar · {percent}%",
+        "silence": {
+          "on": "Tyst läge är på",
+          "off": "Tyst läge är av: den här enheten kan ringa",
+          "everydayPhone": "Tyst läge är på. Samtal och meddelanden på den här enheten förblir tysta tills du slutar övervaka.",
+          "restored": "Den här enheten stod kvar i tyst läge. Ljuden är på igen.",
+          "noAccess": "Åtkomsten till tyst läge är av. Slå på den i Inställningar så att samtal och meddelanden förblir tysta."
+        },
+        "lock": "Lås skärmen",
+        "autolockHint": "Skärmen mörknar om {seconds} s",
+        "stop": "Sluta övervaka",
+        "micLevel": "Ljudnivå här",
+        "micSilent": "Mikrofonen fångar inget ljud. Starta om övervakningen eller kontrollera mikrofonen."
+      },
+      "kiosk": {
+        "a11yLabel": "Övervakar. Skärmen är låst.",
+        "unlockHint": "Håll och svep uppåt för att låsa upp",
+        "unlockZone": "Svep här",
+        "unlockAction": "Lås upp"
+      },
+      "link": {
+        "connected": "Ansluten till {name}",
+        "connecting": "Ansluter till {name}…",
+        "reconnecting": "Ansluter igen…",
+        "cantReach": "Når inte {name}, försöker fortfarande",
+        "lostFor": "Ingen anslutning på {duration}",
+        "babyStopped": "{name} slutade övervaka",
+        "idle": "Övervakar inte",
+        "weak": "Svag anslutning: ljudet kan hacka",
+        "restoredAfter": "Ansluten igen efter {duration}. Du hör ditt barn igen.",
+        "tryNow": "Försök nu",
+        "pairAgain": "Parkoppla igen",
+        "connectedDefault": "Ansluten till babyenheten",
+        "connectingDefault": "Ansluter till babyenheten…",
+        "cantReachDefault": "Når inte babyenheten, försöker fortfarande",
+        "babyStoppedDefault": "Babyenheten slutade övervaka",
+        "stalePairingHint": "Om du parkopplade babyenheten igen, skanna dess nya kod."
+      },
+      "linkAlarm": {
+        "lost": {
+          "title": "Ingen anslutning till {name}",
+          "titleUrgent": "Ingen anslutning till {name}!",
+          "body": "Du hör inte ditt barn förrän enheterna ansluter igen.",
+          "titleDefault": "Ingen anslutning till babyenheten",
+          "titleUrgentDefault": "Ingen anslutning till babyenheten!"
+        },
+        "stopped": {
+          "title": "{name} slutade övervaka",
+          "body": "Någon stoppade övervakningen på babyenheten. Du får inga larm.",
+          "titleDefault": "Babyenheten slutade övervaka"
+        },
+        "battery": {
+          "title": "Babyenhetens batteri nästan slut",
+          "body": "Sätt i laddaren i babyenheten nu, annars slutar övervakningen."
+        },
+        "needsPairing": {
+          "title": "Enheterna är inte längre parkopplade"
+        },
+        "restored": {
+          "title": "Ansluten igen"
+        },
+        "ack": "Jag tittar",
+        "ackNote": "Ljudet är av i {time}. Vi larmar dig igen om anslutningen fortfarande saknas.",
+        "soundNote": "En mjuk larmton upprepas tills du tittar.",
+        "soundNoteUrgent": "Larmet ljuder tills du tittar."
+      },
+      "parent": {
+        "allQuietSince": "Tyst sedan {time}",
+        "soundSince": "Ljud upptäckt · sedan {time}",
+        "soundAt": "Ljud kl. {time} · varade i {duration}",
+        "soundSnoozed": "Ljud kl. {time} · larm på vila",
+        "lastHeard": "Senaste kontakt {time}",
+        "noContactYet": "Ingen kontakt än",
+        "monitoringNow": "Övervakar",
+        "meterA11y": "Ljudnivå: {level}",
+        "level": {
+          "quiet": "tyst",
+          "some": "visst ljud",
+          "loud": "högt"
+        },
+        "stop": "Sluta övervaka",
+        "securityTitle": "Säkerhetsvarning",
+        "securityBody": "Anslutningen kunde inte verifieras. Om du inte nyss parkopplade enheterna igen, parkoppla dem igen nu.",
+        "staleSuffix": "· kl. {time}",
+        "unitWarning": {
+          "pageHidden": "Babyenheten kan pausa: dess sida är dold",
+          "wakeLockOff": "Babyenheten kan somna: skärmen hålls inte på",
+          "resumedFromSleep": "Babyenheten vaknade ur viloläge: ljud kan ha missats",
+          "notCharging": "Babyenheten laddas inte längre",
+          "micPermissionLost": "Babyenheten förlorade åtkomst till mikrofonen"
+        }
+      },
+      "battery": {
+        "baby": "Babyenhet {percent}%",
+        "babyLow": "Babyenhetens batteri {percent}%: sätt i laddaren",
+        "parentLow": "Den här enheten har {percent}%: sätt i laddaren för att fortsätta övervaka",
+        "parentLowGeneric": "Den här enhetens batteri är lågt: sätt i laddaren för att fortsätta övervaka"
+      },
+      "listen": {
+        "idle": "Håll för att lyssna",
+        "holding": "Lyssnar…",
+        "locked": "Lyssnar · tryck för att stoppa",
+        "lockHint": "Svep uppåt för att fortsätta lyssna",
+        "disabled": "Lyssna när du är ansluten",
+        "a11yLocked": "Lyssnar. Tryck två gånger för att stoppa."
+      },
+      "snooze": {
+        "button": "Vila",
+        "title": "Pausa ljudlarm",
+        "help": "Du får fortfarande larm om anslutningen bryts eller ett batteri håller på att ta slut.",
+        "minutes": "Vila {minutes} min",
+        "end": "Avsluta vilan",
+        "active": "På vila · {minutes} min kvar"
+      },
+      "probe": {
+        "button": "Testlarm",
+        "title": "Testa dina larm",
+        "body": "Spelar ett testljud på den här enheten. Babyenheten förblir tyst.",
+        "output": "Larmen spelas på: {output}",
+        "run": "Kör test",
+        "running": "Kör testet…",
+        "question": "Hörde och kände du det?",
+        "localOnly": "Bara den här enheten testades: babyenheten är inte ansluten."
+      },
+      "readiness": {
+        "title": "Når larmen fram till dig?",
+        "notificationsOff": "Larm är avstängda för GuardedSleep",
+        "alarmVolumeZero": "Larmvolymen är av: du hör inte larmen",
+        "lockScreen": "Larm kan inte visas på låsskärmen",
+        "dnd": "Stör ej kan tysta larmen",
+        "battery": "Den här enheten kan stoppa GuardedSleep i bakgrunden",
+        "headphones": "Larmen spelas i hörlurarna",
+        "neverTested": "Testa dina larm",
+        "ok": "Allt klart: larmen når fram till dig",
+        "fix": {
+          "notifications": "Slå på larm",
+          "dnd": "Tillåt larm vid Stör ej",
+          "battery": "Tillåt användning i bakgrunden"
+        }
+      },
+      "silence": {
+        "silent": "Babyenheten är i tyst läge",
+        "alarmsStillRing": "Väckarklockor på den kan fortfarande ringa.",
+        "screenMayLight": "Babyenheten är i tyst läge, men skärmen kan tändas",
+        "mayVibrate": "Babyenheten kan vibrera",
+        "mayRing": "Babyenheten kan ringa",
+        "unknown": "Tyst läge: okänt, kan inte kontrollera babyenheten",
+        "manual": "Slå på Stör ej på babyenheten och sänk ljusstyrkan.",
+        "noAccess": "För att slå på tyst läge härifrån, öppna Inställningar på babyenheten och slå på \"Tyst läge under övervakning\".",
+        "apply": "Slå på tyst läge",
+        "applyFull": "Slå på tyst läge fullt ut",
+        "pending": "Slår på tyst läge…",
+        "failed": "Kunde inte slå på tyst läge på babyenheten.",
+        "webUnknown": "Okänt: slå på tyst läge själv på babyenheten",
+        "webHint": "Om babyenheten är en bärbar dator, låt den sitta i laddaren med locket uppfällt och skärmen på."
+      },
+      "help": {
+        "reconnect": {
+          "open": "Vad kan jag göra?",
+          "title": "Ansluta igen",
+          "step1": "Är babyenheten på och visar GuardedSleep?",
+          "step2": "Sitter båda enheterna på samma wifi, eller använder båda mobildata?",
+          "step3": "Fungerar det fortfarande inte? Stäng och öppna GuardedSleep igen på babyenheten."
+        }
+      },
+      "stop": {
+        "title": "Sluta övervaka?",
+        "parentBody": "Du får inga larm från {name}.",
+        "babyBody": "Föräldraenheten slutar få larm.",
+        "confirm": "Stoppa",
+        "cancel": "Fortsätt övervaka",
+        "parentBodyDefault": "Du får inga larm från babyenheten."
+      },
+      "forget": {
+        "title": "Glöm {name}?",
+        "body": "Övervakningen stoppas och du måste skanna en ny kod för att ansluta igen.",
+        "confirm": "Glöm",
+        "titleBabyDefault": "Glöm babyenheten?",
+        "titleParentDefault": "Glöm föräldraenheten?"
+      },
+      "missed": {
+        "some": "Under avbrottet: {count, plural, one {1 ljud} other {# ljud}} mellan {start} och {end}. Högst: {level}.",
+        "none": "Inga ljud under avbrottet.",
+        "unknown": "Vi vet inte vad som hände mellan {start} och {end}."
+      },
+      "coach": {
+        "bar": "Grönt betyder att du övervakar. Om det blir rött eller försvinner övervakar du inte.",
+        "listen": "Håll för att lyssna. Svep uppåt för att fortsätta lyssna.",
+        "test": "Kör ett testlarm så att du vet hur ett larm känns.",
+        "runTest": "Kör testlarm nu"
+      },
+      "alert": {
+        "title": "Ljud upptäckt",
+        "since": "Sedan {time}",
+        "ended": "Ljudet har tystnat.",
+        "testBadge": "TEST",
+        "stopSound": "Stoppa ljudet",
+        "soundStopped": "Ljudet stoppat",
+        "openApp": "Öppna GuardedSleep"
+      },
+      "settings": {
+        "group": {
+          "soundDetection": "Ljuddetektering",
+          "silence": "Tyst läge",
+          "alerts": "Larm",
+          "screen": "Skärm",
+          "paired": "Parkopplad enhet",
+          "thisPhone": "Den här enheten",
+          "language": "Språk",
+          "about": "Om och begränsningar",
+          "advanced": "Avancerat"
+        },
+        "sensitivity": "Känslighet",
+        "moreSensitive": "Känsligare",
+        "lessSensitive": "Mindre känslig",
+        "holdLabel": "Ljudet måste vara minst",
+        "silenceAccessOk": "Åtkomsten till tyst läge är på.",
+        "outputLabel": "Larmljudet spelas i",
+        "output": {
+          "default": "Hörlurar om anslutna, annars högtalare",
+          "speaker": "Endast högtalare"
+        },
+        "gain": "Extra höga larm: {percent}%",
+        "lastTest": "Senaste test: {time}",
+        "neverTested": "Inte testat än",
+        "theme": {
+          "dark": "Mörkt (standard)",
+          "light": "Ljust",
+          "system": "Följ systemet"
+        },
+        "forgetParent": "Glöm den här föräldraenheten",
+        "forgetBaby": "Glöm den här babyenheten",
+        "checkPhone": "Kontrollera den här enhetens inställningar",
+        "lang": {
+          "system": "Följ systemet",
+          "en": "English",
+          "de": "Deutsch",
+          "fr": "Français",
+          "es": "Español"
+        },
+        "advanced": {
+          "toggle": "Visa avancerade inställningar",
+          "warning": {
+            "title": "Ändra avancerade inställningar?",
+            "body": "Fel värden här kan hindra enheterna från att ansluta. Ändra dem bara om du vet vad du gör."
+          },
+          "confirm": "Visa avancerade inställningar",
+          "cancel": "Inte nu"
+        },
+        "urlsLabel": "Anslutningsserverns adresser (provas i ordning)",
+        "url": {
+          "new": "Ny adress (wss://…)",
+          "invalid": "Adressen måste börja med wss:// eller ws://."
+        },
+        "turn": {
+          "label": "Reläserver (TURN), valfritt",
+          "invalid": "Reläadressen måste börja med turn: eller turns:."
+        },
+        "heartbeat": "Anslutningskontroll var {seconds} s"
+      },
+      "fgsMissing": {
+        "bar": "Övervakar inte i bakgrunden: öppna appen",
+        "body": "Android stoppade GuardedSleeps bakgrundstjänst. Larm når kanske inte fram medan skärmen är av.",
+        "fix": "Slå på bakgrundsövervakningen igen"
+      }
+    }
+  },
+  "webShell": {
+    "route": {
+      "role": "Vilken enhet är det här?",
+      "babyPair": "Parkoppla babyenheten",
+      "baby": "Babyenhet",
+      "parentPair": "Parkoppla föräldraenheten",
+      "parent": "Föräldraenhet",
+      "settings": "Inställningar"
+    },
+    "skipToContent": "Hoppa till innehållet",
+    "dismiss": "Stäng"
+  },
+  "webScreens": {
+    "role": {
+      "title": "Använd den här enheten som",
+      "subtitle": "Telefon, surfplatta eller bärbar dator. Ställ in babyenheten först.",
+      "navLabel": "Välj en roll",
+      "privacyNote": "Ljudet går direkt mellan dina två enheter och spelas aldrig in."
+    },
+    "pair": {
+      "copyHint": "Klistra in den på föräldraenheten inom 5 minuter. Skicka den inte i en chatt.",
+      "or": "eller",
+      "cameraUnavailable": "Ingen kamera finns här. Klistra in koden i stället.",
+      "cameraView": "Kameravy"
+    },
+    "baby": {
+      "failMicDenied": "Mikrofonen är blockerad, så den här enheten kan inte höra ditt barn. Tillåt den i webbläsarens webbplatsinställningar.",
+      "failMicUnavailable": "Ingen mikrofon hittades, så den här enheten kan inte höra ditt barn.",
+      "quietUnknown": "Tyst läge: okänt",
+      "keepAwake": "Håll den här enheten vaken: i laddaren, locket uppfällt, den här fliken synlig.",
+      "keepSilent": "Slå på Stör ej och sänk ljusstyrkan på den här enheten."
+    },
+    "parent": {
+      "quietUnknownWeb": "Tyst läge okänt · slå på det på babyenheten",
+      "keepOpen": "Låt den här sidan vara öppen och skärmen på. Annars kan webbläsaren inte larma dig.",
+      "soundGate": "Tryck för att slå på larmljudet"
+    },
+    "settings": {
+      "urlHint": "Babyenheten skriver in de här adresserna i sin kod, så föräldraenheten använder dem också.",
+      "sensitivityBabyOnly": "Känsligheten ställs in på babyenheten."
+    },
+    "guard": {
+      "wakeLockHeld": "Skärmen hålls på",
+      "wakeLockLost": "Skärmen hålls inte längre på, så den här enheten kan somna och sluta övervaka.",
+      "wakeLockUnsupported": "Den här webbläsaren kan inte hålla skärmen på. Stäng av skärmens viloläge i enhetens inställningar.",
+      "wakeLockRetry": "Håll skärmen på",
+      "hiddenTitle": "GuardedSleep kan sluta övervaka",
+      "hiddenBody": "Den här sidan ligger i bakgrunden. Öppna den igen för att fortsätta övervaka.",
+      "awayBackground": "Den här sidan låg i bakgrunden i {duration}. Larm kan ha missats.",
+      "awaySleep": "Den här enheten sov i {duration}. Larm kan ha missats."
+    },
+    "night": {
+      "open": "Nattskärm",
+      "label": "Nattskärm. Övervakar fortfarande. Tryck för att visa status.",
+      "monitoring": "Övervakar fortfarande",
+      "leave": "Tryck igen för att lämna nattskärmen"
+    }
+  }
+}
