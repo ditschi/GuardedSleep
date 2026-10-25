@@ -354,7 +354,8 @@ class LinkController(
                         null,
                         now,
                         null,
-                        // The invite's public relays: the core opens them from LinkConfig.mailboxes.
+                        // The invite's public relays: the core opens them from
+                        // LinkConfig.mailboxes.
                         mailboxes = p.nostr.map { StoredMailbox("nostr", it.url) },
                         pinUntilS = p.expiresAtEpochSec,
                     ),
@@ -538,7 +539,8 @@ class LinkController(
             pinnedParent = pending.parentSecret?.let { ParentSecret(it.copyOf()) },
             pinWindowUntilS = pending.pinUntilS?.toULong(),
             deviceName = if (role == CoreRole.PARENT) deviceName() else "",
-            // The core opens the Nostr relays of the set; the baby sends the whole set to the parent.
+            // The core opens the Nostr relays of the set; the baby sends the whole set to the
+            // parent.
             mailboxes =
                 if (role == CoreRole.BABY) storedMailboxes(pending)
                 else storedMailboxes(pending).filter { it.kind == MailboxKind.NOSTR },

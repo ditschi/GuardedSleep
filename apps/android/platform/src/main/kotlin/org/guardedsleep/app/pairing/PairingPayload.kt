@@ -16,10 +16,10 @@ import uniffi.guardedsleep_core.parseInvite
  * rejection onto [PairingError].
  *
  * The platform still holds the signaling URL list: a `wss://` URL is shown as an own relay (`r:`),
- * a `ws://` URL as a LAN mailbox (`l:`, which the core accepts only for RFC 1918 and ULA
- * literals), and a received invite's relay and LAN mailboxes are opened as signaling URLs. The
- * Nostr mailboxes ([nostr]) are not in that list: they go to the core in `LinkConfig.mailboxes`,
- * which opens them itself (alpha-connection-model task 3.5).
+ * a `ws://` URL as a LAN mailbox (`l:`, which the core accepts only for RFC 1918 and ULA literals),
+ * and a received invite's relay and LAN mailboxes are opened as signaling URLs. The Nostr mailboxes
+ * ([nostr]) are not in that list: they go to the core in `LinkConfig.mailboxes`, which opens them
+ * itself (alpha-connection-model task 3.5).
  */
 data class PairingPayload(
     val pskB64url: String,
