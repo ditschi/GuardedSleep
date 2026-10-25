@@ -1220,6 +1220,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "public-lists"
+version = "0.0.1"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "quick-error"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
