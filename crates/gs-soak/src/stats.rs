@@ -1,10 +1,10 @@
 //! Counters per relay, percentiles and the go/no-go verdict of `alpha-connection-model` design
-//! section 9: at least 2 of 3 relays without data loss and a setup p95 below 3 s.
+//! section 9: at least 2 of 3 relays without data loss and a setup p95 below 10 s (owner, 2026-10-25).
 
 use serde_json::{Value, json};
 
 /// Setup p95 limit of the go/no-go gate.
-pub const SETUP_P95_LIMIT_MS: u64 = 3_000;
+pub const SETUP_P95_LIMIT_MS: u64 = 10_000;
 /// Relays that must be free of loss (of the three tested).
 pub const CLEAN_RELAYS_NEEDED: usize = 2;
 /// A relay needs this many delivered-or-lost events before "no loss" means anything.

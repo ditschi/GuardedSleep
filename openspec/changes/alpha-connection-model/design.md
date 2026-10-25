@@ -430,7 +430,8 @@ The first review's design used a bearer parent id inside the envelopes. A PSK ho
 A **go/no-go gate** sits after the core work (tasks 2–3) and before Android and web (5–6).
 
 - **What it tests:** a CLI soak prototype (`scripts/spike/soak`) on the core runs one night on 3 EU relays, plus the spike's unknowns 1–4 (8 h subscriptions, bursts behind one CGNAT IP, tag-only filter, LTE / IPv6-only).
-- **Go:** at least 2 of 3 relays without data loss and setup p95 < 3 s.
+- **Go:** at least 2 of 3 relays without data loss and setup p95 < 10 s (owner, 2026-10-25; was 3 s). Loss detection takes 25 s and level 2 comes 60 s after the last contact, so a recovery within 10 s still ends long before the red alarm. The first real-network soaks measured recovery p50 of about 2.5 s and p95 of 3.6–5.8 s over five to six serial relay hops.
+- **Discarded:** keeping 3 s and shortening the handshake (merging the challenge round into the opening presence). It saves one relay round (about 0.5–1 s), stays unreliable on slow relays, and needs a protocol change with a security review.
 - **If no-go:** the alpha ships with relay mailboxes (self-hosted or LAN) only. Nostr moves to beta, and the owner decides again.
 
 **Deferred regardless:**

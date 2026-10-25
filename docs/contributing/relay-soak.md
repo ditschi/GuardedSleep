@@ -2,7 +2,7 @@
 
 The alpha finds the other device through a few public Nostr relays (`signaling-mailboxes`). Before Android and web build on that, the owner runs one night of measurements and decides go or no-go ([design.md section 9](../../openspec/changes/alpha-connection-model/design.md)). This page is the runbook for that gate (task 4.2) and for the operator mail (task 4.3).
 
-**Go** needs at least 2 of 3 relays without data loss and a setup p95 below 3 s. **No-go** moves Nostr to beta: the alpha then ships with relay mailboxes (self-hosted or LAN) only.
+**Go** needs at least 2 of 3 relays without data loss and a setup p95 below 10 s (recovery then still ends well before escalation level 2: loss detection 25 s + 10 s < 60 s). **No-go** moves Nostr to beta: the alpha then ships with relay mailboxes (self-hosted or LAN) only.
 
 ## What exists
 
