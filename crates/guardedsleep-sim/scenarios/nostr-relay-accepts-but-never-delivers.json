@@ -1,0 +1,90 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "nostr-relay-accepts-but-never-delivers",
+  "description": "One public relay acknowledges every event with OK and delivers none of them; a second relay works. An OK is not delivery, but envelopes go to every relay, so the attempt verifies through the second one and the parent shows no error.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby",
+      "mailboxes": [
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-a.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-b.example"
+        }
+      ]
+    },
+    {
+      "id": "parent",
+      "role": "parent",
+      "mailboxes": [
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-a.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-b.example"
+        }
+      ]
+    }
+  ],
+  "nostr": [
+    {
+      "url": "wss://nostr-a.example",
+      "drops": true
+    },
+    {
+      "url": "wss://nostr-b.example"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "signaling_down"
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 40000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 19000
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 19000
+    },
+    {
+      "peer": "parent",
+      "max_level": 0
+    },
+    {
+      "peer": "baby",
+      "max_level": 0
+    },
+    {
+      "peer": "parent",
+      "never": "security_warning"
+    },
+    {
+      "peer": "parent",
+      "nostr_used": [
+        "wss://nostr-a.example",
+        "wss://nostr-b.example"
+      ]
+    }
+  ]
+}

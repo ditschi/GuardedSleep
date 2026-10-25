@@ -52,6 +52,54 @@ fn describe(a: &Assertion) -> String {
     parts.join(" ")
 }
 
+/// The reachability checks of a verified link send nothing of the pairing (design section 1).
+fn check_nostr_probe(world: &World, ix: usize) -> (bool, String) {
+    use guardedsleep_core::nostr::NostrKeys;
+    let psk = crate::world::synthetic_psk("A");
+    let keys = NostrKeys::derive(&psk);
+    let frames: Vec<_> = world
+        .nostr
+        .sent
+        .iter()
+        .filter(|s| s.actor == ix && s.probe)
+        .collect();
+    let mut bad = Vec::new();
+    for f in &frames {
+        let revealing = f.text.contains("\"authors\"")
+            || f.text.starts_with("[\"EVENT\"")
+            || keys
+                .as_ref()
+                .is_some_and(|k| probe_mentions_pairing(k, world, &f.text));
+        if revealing {
+            bad.push(f.text.clone());
+        }
+    }
+    let reqs = frames.iter().filter(|f| f.text.starts_with("[\"REQ\"")).count();
+    (
+        bad.is_empty() && reqs > 0,
+        format!("{reqs} throwaway REQ(s) among {} probe frame(s); revealing: {bad:?}", frames.len()),
+    )
+}
+
+/// Whether a frame names the tag or a public key of the pairing for any day near the simulated
+/// clock.
+fn probe_mentions_pairing(
+    keys: &guardedsleep_core::nostr::NostrKeys,
+    world: &World,
+    text: &str,
+) -> bool {
+    use guardedsleep_core::protocol::Role;
+    let around = guardedsleep_core::nostr::epoch_of(world.wall_base + world.end / 1_000);
+    (around.saturating_sub(2)..=around + 2)
+        .any(|e| {
+            text.contains(&keys.tag(e))
+                || [Role::Baby, Role::Parent]
+                    .into_iter()
+                    .filter_map(|r| keys.public_key_hex(r, e))
+                    .any(|pk| text.contains(&pk))
+        })
+}
+
 pub fn evaluate(world: &World, sc: &Scenario) -> Vec<Check> {
     sc.assert
         .iter()
@@ -178,6 +226,38 @@ fn check_one(world: &World, a: &Assertion) -> (bool, String) {
             ok,
             format!("{} frame(s) before hello: {frames:?}", frames.len()),
         );
+    }
+    if let Some(max) = a.nostr_sent_max {
+        let mut per_relay: std::collections::BTreeMap<&str, usize> = Default::default();
+        for s in world
+            .nostr
+            .sent
+            .iter()
+            .filter(|s| s.actor == ix && in_window(s.t) && s.text.starts_with("[\"EVENT\""))
+        {
+            *per_relay.entry(s.url.as_str()).or_default() += 1;
+        }
+        let busiest = per_relay.values().copied().max().unwrap_or(0);
+        return (
+            busiest > 0 && busiest <= max,
+            format!("most events to one relay: {busiest} (limit {max}); {per_relay:?}"),
+        );
+    }
+    if let Some(used) = &a.nostr_used {
+        let missing: Vec<&String> = used
+            .iter()
+            .filter(|u| {
+                !world
+                    .nostr
+                    .sent
+                    .iter()
+                    .any(|s| s.actor == ix && &s.url == *u && in_window(s.t))
+            })
+            .collect();
+        return (missing.is_empty(), format!("never used: {missing:?}"));
+    }
+    if a.nostr_probe == Some(true) {
+        return check_nostr_probe(world, ix);
     }
     if let Some(want) = a.joined {
         let n = actor.welcomes.iter().filter(|t| in_window(**t)).count();

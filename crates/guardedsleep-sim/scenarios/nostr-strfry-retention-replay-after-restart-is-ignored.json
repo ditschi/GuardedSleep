@@ -1,0 +1,105 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "nostr-strfry-retention-replay-after-restart-is-ignored",
+  "description": "The relays keep ephemeral events for five minutes and serve them to every new subscription, as strfry does. The baby stops on purpose before the pair verified, so its sealed stop sits on the relays; the parent restarts and its fresh subscription receives the stored stop and presence. The stop names the old parent session and is ignored; after the baby restarts the pair verifies and the parent never reports a stopped baby.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby",
+      "mailboxes": [
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-a.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-b.example"
+        }
+      ],
+      "pin_window_s": 600
+    },
+    {
+      "id": "parent",
+      "role": "parent",
+      "mailboxes": [
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-a.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-b.example"
+        }
+      ],
+      "pin_window_s": 600
+    }
+  ],
+  "nostr": [
+    {
+      "url": "wss://nostr-a.example",
+      "retention_s": 300
+    },
+    {
+      "url": "wss://nostr-b.example",
+      "retention_s": 300
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "signaling_down"
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 2500,
+      "do": "stop",
+      "peer": "baby"
+    },
+    {
+      "at": 6000,
+      "do": "restart_process",
+      "peer": "parent"
+    },
+    {
+      "at": 15000,
+      "do": "restart_process",
+      "peer": "baby"
+    },
+    {
+      "at": 60000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 55000
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 55000
+    },
+    {
+      "peer": "parent",
+      "never": "peer_stopped",
+      "within_ms": [
+        6000,
+        60000
+      ]
+    },
+    {
+      "peer": "parent",
+      "max_level": 1,
+      "within_ms": [
+        20000,
+        60000
+      ]
+    }
+  ]
+}

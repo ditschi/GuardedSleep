@@ -1,0 +1,116 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "nostr-pairing-over-nostr-only",
+  "description": "The own relay is down for the whole run. The pair meets on three public Nostr relays alone: presence, the session handshake, the request for an offer, the offer and the answer all travel as sealed events, and the link verifies within the attempt limit without any alarm.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby",
+      "mailboxes": [
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-a.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-b.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-c.example"
+        }
+      ]
+    },
+    {
+      "id": "parent",
+      "role": "parent",
+      "mailboxes": [
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-a.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-b.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-c.example"
+        }
+      ]
+    }
+  ],
+  "nostr": [
+    {
+      "url": "wss://nostr-a.example"
+    },
+    {
+      "url": "wss://nostr-b.example"
+    },
+    {
+      "url": "wss://nostr-c.example"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "signaling_down"
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 40000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 19000
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 19000
+    },
+    {
+      "peer": "parent",
+      "max_level": 0
+    },
+    {
+      "peer": "baby",
+      "max_level": 0
+    },
+    {
+      "peer": "parent",
+      "nostr_used": [
+        "wss://nostr-a.example",
+        "wss://nostr-b.example",
+        "wss://nostr-c.example"
+      ]
+    },
+    {
+      "peer": "baby",
+      "nostr_used": [
+        "wss://nostr-a.example",
+        "wss://nostr-b.example",
+        "wss://nostr-c.example"
+      ]
+    },
+    {
+      "peer": "parent",
+      "never": "hint",
+      "where": {
+        "key": "clock_skew"
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "security_warning"
+    }
+  ]
+}

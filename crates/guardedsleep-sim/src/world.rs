@@ -19,6 +19,10 @@ use guardedsleep_core::protocol::{DataMessage, Role, encode_data_message, parse_
 use guardedsleep_core::testing::{decode_message, nonce_of, rewrite_message};
 use serde_json::{Value, json};
 
+mod nostr_sim;
+
+pub use nostr_sim::{NostrRelaySpec, NostrSent, NostrWorld, RateLimit};
+
 use crate::raw::RawState;
 use crate::rng::Rng;
 use crate::scenario::{PeerSpec, RelaySpec, Scenario, Step};
@@ -169,6 +173,18 @@ enum Ev {
     RawAct {
         actor: usize,
     },
+    NAccept {
+        nsock: usize,
+    },
+    NToRelay {
+        nsock: usize,
+        text: String,
+    },
+    NToClient {
+        actor: usize,
+        nsock: usize,
+        msg: ToClient,
+    },
 }
 
 pub struct Pc {
@@ -225,6 +241,8 @@ pub struct Actor {
     pub next_raw_handle: u32,
     /// Simulated wall-clock second last reported to the link.
     last_wall_ms: Option<u64>,
+    /// This device's clock is this many seconds ahead of true time (negative: behind).
+    wall_offset_s: i64,
 }
 
 impl Actor {
@@ -256,6 +274,7 @@ impl Actor {
             sent_signals: Vec::new(),
             next_raw_handle: 1,
             last_wall_ms: None,
+            wall_offset_s: 0,
         }
     }
 }
@@ -334,6 +353,10 @@ pub struct World {
     pub recs: Vec<TraceRec>,
     record: bool,
     pub seed: u64,
+    /// The simulated public Nostr relays.
+    pub nostr: NostrWorld,
+    /// True wall-clock time (Unix seconds) at virtual time 0.
+    pub wall_base: u64,
 }
 
 impl World {
@@ -366,6 +389,8 @@ impl World {
             recs: Vec::new(),
             record,
             seed,
+            nostr: NostrWorld::new(&sc.nostr),
+            wall_base: sc.wall_start_s.unwrap_or(SIM_WALL_BASE_S),
         };
         for spec in &sc.peers {
             w.add_link_actor(spec)?;
@@ -384,7 +409,8 @@ impl World {
         let mut cfg = LinkConfig::with_defaults(spec.role, encode_psk(&psk), &seed);
         cfg.paired_before = spec.paired_before;
         cfg.mailboxes = spec.mailboxes.clone();
-        cfg.pin_window_until_s = spec.pin_window_s.map(|s| SIM_WALL_BASE_S + s);
+        cfg.pin_window_until_s = spec.pin_window_s.map(|s| self.wall_base + s);
+        cfg.only_local = spec.only_local;
         if let Some(n) = &spec.device_name {
             cfg.device_name = n.clone();
         }
@@ -396,6 +422,7 @@ impl World {
         }
         let link = Link::new(cfg.clone()).map_err(|e| format!("peer {}: {e:?}", spec.id))?;
         let mut a = Actor::new(&spec.id, spec.role, cfg, link.room_id().to_owned());
+        a.wall_offset_s = spec.wall_offset_s;
         a.link = Some(link);
         if let Some(d) = &spec.sdp_direction {
             a.sdp_dir = d.clone();
@@ -531,6 +558,9 @@ impl World {
             }
             Ev::RawTick { actor } => self.raw_tick(actor),
             Ev::RawAct { actor } => self.raw_act(actor),
+            Ev::NAccept { nsock } => self.on_nostr_accept(nsock),
+            Ev::NToRelay { nsock, text } => self.on_nostr_relay_rx(nsock, &text),
+            Ev::NToClient { actor, nsock, msg } => self.on_nostr_client_rx(actor, nsock, msg),
         }
     }
 
@@ -626,6 +656,7 @@ impl World {
                     self.push(self.now + after, 2, Ev::Restart { actor: a });
                 }
             }
+            "nostr_down" | "nostr_up" | "nostr_drop_delivery" => self.nostr_verb(&st),
             "drop_data" | "delay" | "duplicate" | "reorder" => self.add_fault(&st),
             "clear_faults" => self.faults.clear(),
             "time_jump" => self.time_jump(&st),
@@ -812,7 +843,8 @@ impl World {
             .is_none_or(|t| self.now.saturating_sub(t) >= WALL_CLOCK_EVERY_MS);
         if due {
             self.actors[a].last_wall_ms = Some(self.now);
-            let unix_s = SIM_WALL_BASE_S + self.now / 1_000;
+            let true_s = i64::try_from(self.wall_base + self.now / 1_000).unwrap_or(i64::MAX);
+            let unix_s = u64::try_from(true_s + self.actors[a].wall_offset_s).unwrap_or(0);
             self.deliver(a, LinkInput::WallClock { unix_s });
         }
     }
@@ -852,6 +884,7 @@ impl World {
     /// Process death: sockets and peer connections vanish, nobody is told.
     fn kill_actor(&mut self, a: usize) {
         self.finish_rec(a);
+        self.nostr_kill(a);
         let reachable = {
             let ac = &self.actors[a];
             ac.net_up
@@ -928,6 +961,13 @@ impl World {
     fn exec(&mut self, a: usize, actions: Vec<LinkAction>) {
         for act in actions {
             match act {
+                LinkAction::OpenMailbox { id, url, .. } if id != RELAY_MAILBOX => {
+                    self.nostr_open(a, id, &url);
+                }
+                LinkAction::CloseMailbox { id } if id != RELAY_MAILBOX => self.nostr_close(a, id),
+                LinkAction::MailboxSend { id, frame } if id != RELAY_MAILBOX => {
+                    self.nostr_send(a, id, frame);
+                }
                 LinkAction::OpenMailbox { .. } => self.open_signaling(a),
                 LinkAction::CloseMailbox { .. } => {
                     if let Some(s) = self.actors[a].sock.take() {
