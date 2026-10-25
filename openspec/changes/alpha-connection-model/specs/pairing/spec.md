@@ -28,7 +28,7 @@ The invite SHALL be UTF-8 JSON `{"v":4,"k":<PSK>,"m":[<mailbox>…],"x":<expiry>
 
 ### Requirement: One baby unit and one parent unit
 
-A pairing SHALL connect exactly one baby unit and one parent unit. At the first verification the parent unit SHALL send a random 32-byte parent secret and its device name only over the verified DTLS DataChannel, never through a mailbox, and the baby unit SHALL pin that secret and close the invite. On every later attempt the baby unit SHALL open its microphone path for the parent only after the parent proves the secret, bound to both DTLS fingerprints, over the DataChannel, and SHALL refuse every other parent until the pairing is forgotten, raising a security warning. After pinning, the baby unit SHALL show the parent device's name with a "Not my device" action that forgets the pairing. On our relay a second parent SHALL still be refused with `PARENT_CAP`.
+A pairing SHALL connect exactly one baby unit and one parent unit. At the first verification the parent unit SHALL send a random 32-byte parent secret and its device name only over the verified DTLS DataChannel, never through a mailbox, and the baby unit SHALL pin that secret and close the invite. On every later attempt the baby unit SHALL open its microphone path for the parent only after the parent proves the secret, bound to both DTLS fingerprints, over the DataChannel, and SHALL refuse every other parent until the pairing is forgotten, raising a security warning. The parent unit SHALL count a pinned pairing's attempt as connected only after the baby unit proves the same secret, bound to both fingerprints, over the DataChannel, and SHALL persist the secret before sending it. After pinning, the baby unit SHALL show the parent device's name with a "Not my device" action that forgets the pairing. On our relay a second parent SHALL still be refused with `PARENT_CAP`.
 
 #### Scenario: Second parent in the room
 
@@ -44,6 +44,16 @@ A pairing SHALL connect exactly one baby unit and one parent unit. At the first 
 
 - **WHEN** a PSK holder relays between two separate DTLS sessions to the baby unit and the parent unit
 - **THEN** the parent proof fails because the fingerprints differ, and the baby unit refuses the attempt
+
+#### Scenario: Man in the middle keeps cycling the parent
+
+- **WHEN** a PSK holder repeatedly gets the parent unit's DTLS session verified during an outage
+- **THEN** the parent unit never shows connected without a valid baby proof, and escalation reaches level 2 on schedule
+
+#### Scenario: Acknowledgement lost before a parent restart
+
+- **WHEN** the baby unit's acknowledgement of the parent secret is lost and the parent unit restarts
+- **THEN** the parent unit still holds the persisted secret and reconnects without forgetting the pairing
 
 #### Scenario: Someone else paired first
 

@@ -245,6 +245,10 @@ The first review's design used a bearer parent id inside the envelopes. A PSK ho
 - The baby checks it in constant time with its own view of both fingerprints.
 - A PSK holder who saw every relayed envelope cannot produce it. A PSK holder in the middle of two DTLS sessions is detected, because the fingerprints differ.
 
+**Mutual proof (added after the 3.4 implementation review):** the baby answers with `HMAC(parent_secret, "gs-baby-proof/1|" ‖ fp_baby ‖ fp_parent)` over the DataChannel. On a pinned pairing the parent treats an attempt as trusted (connected, outage bookkeeping reset, restoration, listen, missed events) only after a valid baby proof. Without this, a PSK holder in the middle could keep the parent briefly "connected" in every cycle and hold escalation below level 2.
+
+**Persist before send:** the parent's core emits the secret for persistence before the action that sends it, and the platform persists it before it executes later actions. A parent that restarts after sending still has the secret, so a lost acknowledgement cannot lock the real parent out.
+
 **Early refusal:**
 
 - Envelopes from a pinned parent also carry `HMAC(parent_secret, envelope_nonce)[0..16]` inside the ciphertext.
