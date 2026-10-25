@@ -103,6 +103,7 @@ class ConformanceTest {
                                 }
                             } ?: emptyList(),
                         allowDevLoopback = c.optBoolean("allow_dev_loopback", false),
+                        onlyLocal = c.optBoolean("only_local", false),
                     )
                 )
             val steps = trace.getJSONArray("steps")

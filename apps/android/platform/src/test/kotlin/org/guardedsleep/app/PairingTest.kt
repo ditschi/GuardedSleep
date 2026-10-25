@@ -16,6 +16,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import uniffi.guardedsleep_core.InviteMailbox
+import uniffi.guardedsleep_core.MailboxKind
 
 class PairingTest {
     @get:Rule val tmp = TemporaryFolder()
@@ -65,13 +67,34 @@ class PairingTest {
     }
 
     @Test
-    fun nostrMailboxesAreNotOpenedAsSignalingUrls() {
+    fun nostrMailboxesAreNotOpenedAsSignalingUrlsButKeptForTheCore() {
         val text = payload(m = """["r:a.example","n:relay.example.org","l:192.168.1.5:8787"]""")
         val parsed = PairingPayload.parse(text, now) as Result.Ok
         assertEquals(
             listOf("wss://a.example", "ws://192.168.1.5:8787"),
             parsed.payload.signalingUrls,
         )
+        // The core opens the public relays itself, from LinkConfig.mailboxes.
+        assertEquals(
+            listOf(InviteMailbox(MailboxKind.NOSTR, "wss://relay.example.org")),
+            parsed.payload.nostr,
+        )
+    }
+
+    @Test
+    fun anInviteWithNostrRelaysRoundTrips() {
+        val nostr =
+            listOf(
+                InviteMailbox(MailboxKind.NOSTR, "wss://relay-a.example"),
+                InviteMailbox(MailboxKind.NOSTR, "wss://relay-b.example"),
+            )
+        val p = PairingPayload.create(psk, listOf("wss://a.example/sig"), now, nostr)
+        val json = JSONObject(p.toInviteText()!!)
+        assertEquals(
+            """["r:a.example/sig","n:relay-a.example","n:relay-b.example"]""",
+            json.getJSONArray("m").toString(),
+        )
+        assertEquals(p, (PairingPayload.parse(p.toInviteText()!!, now) as Result.Ok).payload)
     }
 
     @Test

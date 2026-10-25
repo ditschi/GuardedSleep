@@ -777,5 +777,8 @@ impl Link {
             }
         }
         self.nostr_peer_heard_at = None;
+        // The next stretch starts with the quick presence cadence again (5, 15, 60 s).
+        self.nostr_here_sent = 0;
+        self.nostr_here_next_at = 0;
     }
 }
