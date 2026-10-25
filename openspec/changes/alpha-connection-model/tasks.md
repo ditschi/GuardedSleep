@@ -83,7 +83,7 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 ## 5. Server and Android
 
 - [ ] 5.1 `guardedsleep-relay` and the server carry sealed envelopes opaquely; protocol docs. Verify: `scripts/cargo.sh test -p guardedsleep-relay -p guardedsleep-server`, `just smoke`.
-- [ ] 5.2 Android platform:
+- [ ] 5.2 Android platform (also: feed up to 2 `extra_relays` from the device's own shipped list into `LinkConfig.mailboxes` at run time only — never into the invite or a mailbox update, not with `only_local`; the 6-entry/300-byte limits apply to invites only):
   - mailbox clients, one WebSocket per mailbox, opened and closed only on core actions;
   - the seed from `SecureRandom` and wall-clock reporting;
   - the ICE config from the core lists;
@@ -108,7 +108,7 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 
 ## 6. Web
 
-- [ ] 6.1 Web link driver: mailbox WebSockets; the seed from `crypto.getRandomValues`; the wall clock; the ICE config from the lists; the off switch; the CSP `connect-src` from the generated list. Verify: Vitest with fake sockets; the storage test still finds no PSK, derived value or parent id.
+- [ ] 6.1 Web link driver (also: ignore invite and update hosts outside the deployment CSP `connect-src`, design §5 version skew; feed `extra_relays` as runtime-only mailboxes, see 5.2): mailbox WebSockets; the seed from `crypto.getRandomValues`; the wall clock; the ICE config from the lists; the off switch; the CSP `connect-src` from the generated list. Verify: Vitest with fake sockets; the storage test still finds no PSK, derived value or parent id.
 - [ ] 6.2 Web settings and copy as in 5.3 (same blocker as 5.3; this task flips `publicRelaysEnabled` to on for production builds), plus the QR scan test in Playwright (inverted, 50 %). Verify: Vitest, Playwright with axe, `just lint-text`.
 - [ ] 6.3 Playwright: a minimal NIP-01 test relay in the `apps/e2e` utilities (no public relays in CI); two contexts pair through it; a mailbox drop during setup still verifies; a CSP check that only listed origins connect. Verify: `just e2e`.
 
