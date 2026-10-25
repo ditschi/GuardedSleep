@@ -90,7 +90,17 @@ private fun configureLocaleFilters(target: Project) {
     val tags =
         shipped
             .flatMap { it.outputFile }
-            .map { file -> file.asFile.readLines().filter { it.isNotBlank() } }
+            .map { file ->
+                // BCP 47 tags with a script subtag (zh-Hans) need AAPT's `b+zh+Hans` form; plain
+                // language tags pass through. Doc:
+                // https://developer.android.com/guide/topics/resources/multilingual-support
+                file.asFile
+                    .readLines()
+                    .filter { it.isNotBlank() }
+                    .map { tag ->
+                        if ('-' in tag) "b+" + tag.replace('-', '+') else tag
+                    }
+            }
     target.extensions.configure<ApplicationAndroidComponentsExtension> {
         onVariants { variant ->
             variant.androidResources.localeFilters.addAll(tags)

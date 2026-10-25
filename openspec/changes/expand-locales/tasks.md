@@ -22,7 +22,7 @@ Depends on `rebuild-web-client` for groups 3–5 (the web key set). Groups 1–2
 
 ## 4. New locales
 
-- [ ] 4.1 Translate it, pt, nl, pl, sv, da, cs, ro, zh-Hans, ja, ko, hi, ar, tr, uk, id with the prompting rules (placeholders and plural categories intact, critical copy within budget, sentence case, the `alpha-ux-flows.md` §1.1 vocabulary); every locale marked `machineTranslated`; CSpell dictionaries where available. Verify: `i18n-gen check` ships all 20 locales.
+- [x] 4.1 Translate it, pt, nl, pl, sv, da, cs, ro, zh-Hans, ja, ko, hi, ar, tr, uk, id with the prompting rules (placeholders and plural categories intact, critical copy within budget, sentence case, the `alpha-ux-flows.md` §1.1 vocabulary); every locale marked `machineTranslated`; CSpell dictionaries where available. Verify: `i18n-gen check` ships all 20 locales.
 - [ ] 4.2 Language choice lists the 20 locales by endonym on Android and web. Verify: Android JVM test and a Vitest for the list.
 - [ ] 4.3 Owner reviews German; reviewed keys go into `de.json` `$meta.reviewed`. Verify: the check accepts the list.
 
