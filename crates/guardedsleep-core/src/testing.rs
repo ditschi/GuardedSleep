@@ -216,3 +216,142 @@ pub fn handshake(
     }
     all
 }
+
+// ---- Nostr ------------------------------------------------------------------------------------
+
+use crate::mailbox::MailboxId;
+use crate::nostr::{Event, NostrKeys, RelayFrame, build_event, epoch_of, parse_relay_frame};
+
+/// A PSK holder on the public relays: a [`SealedPeer`] that also signs events of the day, so tests
+/// and the simulation can feed a `Link` the frames a relay would deliver.
+pub struct NostrPeer {
+    pub peer: SealedPeer,
+    keys: NostrKeys,
+    aux: ChaCha20Rng,
+}
+
+impl NostrPeer {
+    pub fn new(role: Role, psk: &[u8], seed: u8) -> Self {
+        NostrPeer {
+            peer: SealedPeer::new(role, psk, seed),
+            keys: NostrKeys::derive(psk).expect("psk is not empty"),
+            aux: ChaCha20Rng::from_seed([seed.wrapping_add(1); 32]),
+        }
+    }
+
+    pub fn pubkey(&self, epoch: u32) -> String {
+        self.keys
+            .public_key_hex(self.peer.role, epoch)
+            .expect("a usable key")
+    }
+
+    pub fn tag(&self, epoch: u32) -> String {
+        self.keys.tag(epoch)
+    }
+
+    /// The signed event of the day for `wall` (Unix seconds) carrying a `{"env": ..}` payload.
+    pub fn event(&mut self, wall: u64, payload: &Value) -> Event {
+        let epoch = epoch_of(wall);
+        let key = self
+            .keys
+            .signing_key(self.peer.role, epoch)
+            .expect("a usable key");
+        let mut aux = [0u8; 32];
+        chacha20::rand_core::Rng::fill_bytes(&mut self.aux, &mut aux);
+        build_event(
+            &key,
+            &aux,
+            wall,
+            &self.keys.tag(epoch),
+            payload["env"].as_str().expect("an envelope payload"),
+        )
+        .expect("a valid event")
+    }
+
+    /// The `["EVENT", sub, event]` frame a relay delivers for `payload`.
+    pub fn frame(&mut self, sub: &str, wall: u64, payload: &Value) -> String {
+        let e = self.event(wall, payload);
+        relay_event_frame(sub, &e)
+    }
+}
+
+/// `["EVENT", sub, event]` as a relay sends it to a subscriber.
+pub fn relay_event_frame(sub: &str, event: &Event) -> String {
+    format!("[\"EVENT\",\"{sub}\",{}]", event.to_json())
+}
+
+/// The input that delivers a raw text frame on mailbox `id`.
+pub fn frame_input(id: MailboxId, text: &str) -> LinkInput {
+    LinkInput::MailboxFrame {
+        id,
+        bytes: text.to_owned(),
+    }
+}
+
+/// Every frame the link sent on a Nostr mailbox (id other than the relay's).
+pub fn nostr_frames(actions: &[LinkAction]) -> Vec<(MailboxId, String)> {
+    actions
+        .iter()
+        .filter_map(|a| match a {
+            LinkAction::MailboxSend { id, frame } if *id != 0 => Some((*id, frame.clone())),
+            _ => None,
+        })
+        .collect()
+}
+
+/// The events the link published on Nostr mailboxes (as the relay would receive them).
+pub fn nostr_events_in(actions: &[LinkAction]) -> Vec<(MailboxId, Event)> {
+    nostr_frames(actions)
+        .into_iter()
+        .filter_map(|(id, text)| {
+            let v: Value = serde_json::from_str(&text).ok()?;
+            let items = v.as_array()?;
+            if items.first()?.as_str()? != "EVENT" {
+                return None;
+            }
+            let wrapped = format!("[\"EVENT\",\"s\",{}]", items.get(1)?);
+            match parse_relay_frame(&wrapped)? {
+                RelayFrame::Event { event, .. } => Some((id, event)),
+                _ => None,
+            }
+        })
+        .collect()
+}
+
+/// The `{"env": ..}` payload inside an event.
+pub fn payload_of(event: &Event) -> Value {
+    json!({ "env": event.content })
+}
+
+/// `(mailbox, subscription id, filters)` of every `REQ` the link sent.
+pub fn requests_in(actions: &[LinkAction]) -> Vec<(MailboxId, String, Vec<Value>)> {
+    nostr_frames(actions)
+        .into_iter()
+        .filter_map(|(id, text)| {
+            let v: Value = serde_json::from_str(&text).ok()?;
+            let items = v.as_array()?;
+            if items.first()?.as_str()? != "REQ" {
+                return None;
+            }
+            Some((
+                id,
+                items.get(1)?.as_str()?.to_owned(),
+                items.get(2..)?.to_vec(),
+            ))
+        })
+        .collect()
+}
+
+/// The text of an `EVENT` frame a link published, as the id and the event.
+pub fn event_of_frame(text: &str) -> Option<Event> {
+    let v: Value = serde_json::from_str(text).ok()?;
+    let items = v.as_array()?;
+    if items.first()?.as_str()? != "EVENT" {
+        return None;
+    }
+    let wrapped = format!("[\"EVENT\",\"s\",{}]", items.get(1)?);
+    match parse_relay_frame(&wrapped)? {
+        RelayFrame::Event { event, .. } => Some(event),
+        _ => None,
+    }
+}

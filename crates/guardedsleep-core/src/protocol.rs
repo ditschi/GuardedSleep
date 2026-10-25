@@ -29,6 +29,8 @@ pub const PROTOCOL_VERSION: u32 = 3;
 /// Only used by the v2 characterization parser and the `pair_mac` v2 vectors.
 pub const LEGACY_PROTOCOL_VERSION: u32 = 2;
 const MAX_ID_LEN: usize = 128;
+/// Most candidates one `ice` message may carry (an 8 KiB envelope holds about 30 of them).
+pub const MAX_BUNDLED_CANDIDATES: usize = 24;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -184,6 +186,14 @@ pub enum SignalPayload {
         aid: String,
         candidate: IceCandidate,
     },
+    /// Several candidates in one message (`{"type":"ice","aid":..,"candidates":[..]}`): the shape
+    /// `Link` sends on every mailbox, because on a public relay every message is an event with a
+    /// budget (`signaling-mailboxes`, "Event budget on public relays"). The single-candidate
+    /// shape is still accepted.
+    IceBundle {
+        aid: String,
+        candidates: Vec<IceCandidate>,
+    },
     /// Parent to baby: "offer me a fresh attempt"; `aid` is the parent's id for that attempt.
     RequestOffer { aid: String },
     /// Deliberate stop of the sending link (ADR-017 §7). It carries nothing: the sealed envelope
@@ -231,23 +241,60 @@ pub fn parse_signal_payload(v: &Value) -> Option<SignalPayload> {
             })
         }
         "ice" => {
-            let c = o.get("candidate")?.as_object()?;
-            Some(SignalPayload::Ice {
-                aid: aid()?,
-                candidate: IceCandidate {
+            let parse_candidate = |c: &Value| -> Option<IceCandidate> {
+                let c = c.as_object()?;
+                Some(IceCandidate {
                     candidate: c.get("candidate")?.as_str()?.to_owned(),
                     sdp_mid: c.get("sdpMid").and_then(Value::as_str).map(str::to_owned),
                     sdp_m_line_index: c
                         .get("sdpMLineIndex")
                         .and_then(Value::as_u64)
                         .and_then(|n| u32::try_from(n).ok()),
-                },
+                })
+            };
+            if let Some(list) = o.get("candidates") {
+                let list = list.as_array()?;
+                if list.is_empty() || list.len() > MAX_BUNDLED_CANDIDATES {
+                    return None;
+                }
+                return Some(SignalPayload::IceBundle {
+                    aid: aid()?,
+                    candidates: list
+                        .iter()
+                        .map(parse_candidate)
+                        .collect::<Option<Vec<_>>>()?,
+                });
+            }
+            Some(SignalPayload::Ice {
+                aid: aid()?,
+                candidate: parse_candidate(o.get("candidate")?)?,
             })
         }
         "request_offer" => Some(SignalPayload::RequestOffer { aid: aid()? }),
         "stop_notice" => Some(SignalPayload::StopNotice),
         _ => None,
     }
+}
+
+fn candidate_json(candidate: &IceCandidate) -> Value {
+    let mut c = Map::new();
+    c.insert("candidate".into(), candidate.candidate.clone().into());
+    c.insert(
+        "sdpMid".into(),
+        candidate
+            .sdp_mid
+            .clone()
+            .map(Value::from)
+            .unwrap_or(Value::Null),
+    );
+    c.insert(
+        "sdpMLineIndex".into(),
+        candidate
+            .sdp_m_line_index
+            .map(Value::from)
+            .unwrap_or(Value::Null),
+    );
+    Value::Object(c)
 }
 
 pub fn signal_payload_json(p: &SignalPayload) -> Value {
@@ -268,25 +315,13 @@ pub fn signal_payload_json(p: &SignalPayload) -> Value {
             Value::Object(o)
         }
         SignalPayload::Ice { aid, candidate } => {
-            let mut c = Map::new();
-            c.insert("candidate".into(), candidate.candidate.clone().into());
-            c.insert(
-                "sdpMid".into(),
-                candidate
-                    .sdp_mid
-                    .clone()
-                    .map(Value::from)
-                    .unwrap_or(Value::Null),
-            );
-            c.insert(
-                "sdpMLineIndex".into(),
-                candidate
-                    .sdp_m_line_index
-                    .map(Value::from)
-                    .unwrap_or(Value::Null),
-            );
-            json!({ "type": "ice", "aid": aid, "candidate": Value::Object(c) })
+            json!({ "type": "ice", "aid": aid, "candidate": candidate_json(candidate) })
         }
+        SignalPayload::IceBundle { aid, candidates } => json!({
+            "type": "ice",
+            "aid": aid,
+            "candidates": candidates.iter().map(candidate_json).collect::<Vec<_>>(),
+        }),
         SignalPayload::RequestOffer { aid } => json!({ "type": "request_offer", "aid": aid }),
         SignalPayload::StopNotice => json!({ "type": "stop_notice" }),
     }
@@ -1278,6 +1313,27 @@ mod tests {
     }
 
     #[test]
+    fn an_ice_bundle_is_never_empty_or_oversized() {
+        let one = r#"{"candidate":"candidate:1","sdpMid":"0","sdpMLineIndex":0}"#;
+        let bundle = |n: usize| {
+            let list = vec![one; n].join(",");
+            serde_json::from_str::<Value>(&format!(
+                r#"{{"type":"ice","aid":"{AID}","candidates":[{list}]}}"#
+            ))
+            .unwrap()
+        };
+        assert!(parse_signal_payload(&bundle(0)).is_none());
+        assert!(parse_signal_payload(&bundle(1)).is_some());
+        assert!(parse_signal_payload(&bundle(MAX_BUNDLED_CANDIDATES)).is_some());
+        assert!(parse_signal_payload(&bundle(MAX_BUNDLED_CANDIDATES + 1)).is_none());
+        let bad = serde_json::from_str::<Value>(&format!(
+            r#"{{"type":"ice","aid":"{AID}","candidates":[{one},7]}}"#
+        ))
+        .unwrap();
+        assert!(parse_signal_payload(&bad).is_none());
+    }
+
+    #[test]
     fn signal_payloads_round_trip() {
         let all = vec![
             SignalPayload::Sdp {
@@ -1299,6 +1355,21 @@ mod tests {
                     sdp_mid: Some("0".into()),
                     sdp_m_line_index: Some(0),
                 },
+            },
+            SignalPayload::IceBundle {
+                aid: AID.into(),
+                candidates: vec![
+                    IceCandidate {
+                        candidate: "candidate:1".into(),
+                        sdp_mid: Some("0".into()),
+                        sdp_m_line_index: Some(0),
+                    },
+                    IceCandidate {
+                        candidate: "candidate:2".into(),
+                        sdp_mid: None,
+                        sdp_m_line_index: None,
+                    },
+                ],
             },
             SignalPayload::RequestOffer { aid: AID.into() },
             SignalPayload::StopNotice,

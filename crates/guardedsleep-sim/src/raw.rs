@@ -52,7 +52,7 @@ pub struct RawState {
 fn class_of(p: &SignalPayload) -> MessageClass {
     match p {
         SignalPayload::Sdp { .. } => MessageClass::Description,
-        SignalPayload::Ice { .. } => MessageClass::Candidates,
+        SignalPayload::Ice { .. } | SignalPayload::IceBundle { .. } => MessageClass::Candidates,
         SignalPayload::RequestOffer { .. } | SignalPayload::StopNotice => MessageClass::Control,
     }
 }

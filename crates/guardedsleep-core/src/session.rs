@@ -375,6 +375,13 @@ impl Session {
                             out.push(Action::AddIceCandidate { candidate });
                         }
                     }
+                    SignalPayload::IceBundle { aid, candidates } => {
+                        if self.attempt.accepts_ice(&aid) {
+                            for candidate in candidates {
+                                out.push(Action::AddIceCandidate { candidate });
+                            }
+                        }
+                    }
                     SignalPayload::RequestOffer { .. } | SignalPayload::StopNotice => {}
                 }
             }

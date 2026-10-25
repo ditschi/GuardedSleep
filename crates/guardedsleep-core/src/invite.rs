@@ -277,6 +277,14 @@ pub fn parse_invite(
 /// address itself is validated by [`parse_entry`].
 fn entry_text(m: &InviteMailbox) -> Option<String> {
     let (prefix, scheme) = match m.kind {
+        // A development `n:` entry names a loopback relay over `ws://` (see `parse_entry`).
+        MailboxKind::Nostr if m.url.starts_with("ws://") => {
+            return m
+                .url
+                .strip_prefix("ws://")
+                .filter(|rest| is_loopback_authority(rest))
+                .map(|rest| format!("n:{rest}"));
+        }
         MailboxKind::Nostr => ("n:", "wss://"),
         MailboxKind::Relay => ("r:", "wss://"),
         MailboxKind::Lan => ("l:", "ws://"),
@@ -290,10 +298,23 @@ fn entry_text(m: &InviteMailbox) -> Option<String> {
 fn parse_entry(entry: &str, allow_dev_loopback: bool) -> Option<InviteMailbox> {
     let (kind, rest) = entry.split_once(':')?;
     match kind {
-        "n" => is_hostname(rest).then(|| InviteMailbox {
-            kind: MailboxKind::Nostr,
-            url: format!("wss://{rest}"),
-        }),
+        "n" => is_hostname(rest)
+            .then(|| InviteMailbox {
+                kind: MailboxKind::Nostr,
+                url: format!("wss://{rest}"),
+            })
+            // Development only (the browser E2E runs a local Nostr relay): a loopback relay is
+            // reached over plain `ws://`, with a port.
+            .or_else(|| {
+                allow_dev_loopback
+                    .then(|| lan_authority(rest, true))
+                    .flatten()
+                    .filter(|authority| is_loopback_authority(authority))
+                    .map(|authority| InviteMailbox {
+                        kind: MailboxKind::Nostr,
+                        url: format!("ws://{authority}"),
+                    })
+            }),
         "r" => is_relay_address(rest).then(|| InviteMailbox {
             kind: MailboxKind::Relay,
             url: format!("wss://{rest}"),
@@ -304,6 +325,13 @@ fn parse_entry(entry: &str, allow_dev_loopback: bool) -> Option<InviteMailbox> {
         }),
         _ => None,
     }
+}
+
+/// `localhost:port`, `127.x.x.x:port` or `[::1]:port`.
+fn is_loopback_authority(authority: &str) -> bool {
+    authority.starts_with("localhost:")
+        || authority.starts_with("127.")
+        || authority.starts_with("[::1]:")
 }
 
 /// An ASCII DNS name: dot-separated labels of letters, digits and inner hyphens (an IPv4 literal
@@ -508,6 +536,36 @@ mod tests {
                 "{bad}"
             );
         }
+    }
+
+    #[test]
+    fn a_loopback_nostr_relay_is_a_development_entry() {
+        let ok = payload(
+            "4",
+            &good_key(),
+            r#"["n:127.0.0.1:7777","n:localhost:7778","n:[::1]:7779","n:relay.example.org"]"#,
+            "4000000000",
+        );
+        assert!(parse_invite(&ok, NOW, false).is_err());
+        let inv = parse_invite(&ok, NOW, true).unwrap();
+        assert_eq!(
+            inv.mailboxes,
+            vec![
+                mb(MailboxKind::Nostr, "ws://127.0.0.1:7777"),
+                mb(MailboxKind::Nostr, "ws://localhost:7778"),
+                mb(MailboxKind::Nostr, "ws://[::1]:7779"),
+                nostr("relay.example.org"),
+            ]
+        );
+        // A private LAN address is not a Nostr relay, even in development.
+        let lan_ip = payload("4", &good_key(), r#"["n:192.168.1.5:80"]"#, "4000000000");
+        assert!(parse_invite(&lan_ip, NOW, true).is_err());
+        let set = [mb(MailboxKind::Nostr, "ws://127.0.0.1:7777")];
+        let text = build_invite(&psk(), &set, NOW + 300, true).unwrap();
+        assert!(text.contains(r#""n:127.0.0.1:7777""#));
+        assert!(build_invite(&psk(), &set, NOW + 300, false).is_err());
+        assert!(validate_mailboxes(&set, true).is_some());
+        assert!(validate_mailboxes(&set, false).is_none());
     }
 
     #[test]
