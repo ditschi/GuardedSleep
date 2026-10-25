@@ -45,8 +45,8 @@
       "keeps_ephemeral": false,
       "privacy_policy": null,
       "last_vetted": "2026-10-23",
-      "status": "active",
-      "notes": "Spike: p50 62 ms, p95 97 ms, 20/20 events. Operator not yet contacted about acceptable use and logging (alpha-connection-model task 4.3)."
+      "status": "suspended",
+      "notes": "Spike: p50 62 ms, p95 97 ms, 20/20 events. Operator not yet contacted about acceptable use and logging (alpha-connection-model task 4.3). Suspended 2026-10-25: answers REQ with EOSE but never accepts or delivers kind 24861 events (relays-check and gs-soak, 0/20 and 0/53). Re-vet before reactivating."
     },
     {
       "host": "nos.lol",
