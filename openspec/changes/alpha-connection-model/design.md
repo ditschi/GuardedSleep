@@ -297,6 +297,10 @@ The first review's design used a bearer parent id inside the envelopes. A PSK ho
 
 **v3:** rejected as `not_our_code`. Nothing has been released.
 
+**Development builds (as built in 3.3):** `parse_invite` and `build_invite` take an explicit `allow_dev_loopback` flag, off by default. With it on, an `l:` entry may also name `127.0.0.0/8`, `[::1]` or `localhost`, so `just dev` and the e2e suite (`ws://127.0.0.1:…`) work. Android passes `BuildConfig.DEBUG` and the web passes `import.meta.env.DEV`, so release builds refuse loopback. The local PC mode puts the PC's LAN address in an `l:` entry instead (`add-offline-lan`).
+
+**QR rendering:** a 4-module quiet zone (ISO/IEC 18004) on both platforms. A fully used invite (one own relay, three Nostr relays, one LAN entry; 284 bytes) reaches QR version 12 at level M, and 300 bytes reaches version 13.
+
 ### 6. Curated lists (repository `data/`; generator into both clients and the web CSP)
 
 `data/nostr-relays.json` and `data/stun-servers.json`, seeded from `spike.md`.
