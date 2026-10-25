@@ -48,7 +48,8 @@ class MonitorService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
-        val notifier = StatusNotifier(this, graph.entryPoints) { graph.settings.current.settings.language }
+        val notifier =
+            StatusNotifier(this, graph.entryPoints) { graph.settings.current.settings.language }
         val type = foregroundType(role)
         try {
             ServiceCompat.startForeground(

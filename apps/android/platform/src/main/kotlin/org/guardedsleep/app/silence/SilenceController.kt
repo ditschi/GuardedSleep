@@ -199,8 +199,7 @@ class SilenceController(
         localizedContext(context, settings.current.settings.language)
             .getString(R.string.native_notif_silence_rule_name)
 
-    private fun condition(state: Int) =
-        Condition(CONDITION_ID, ruleName(), state)
+    private fun condition(state: Int) = Condition(CONDITION_ID, ruleName(), state)
 
     private companion object {
         const val MAX_MINUTES = 1440L
