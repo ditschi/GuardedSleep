@@ -769,7 +769,7 @@ pub struct Link {
     wall_at: u64,
     started_at: u64,
 
-    /// The pinned parent secret (baby: the pinned parent; parent: the acknowledged secret).
+    /// The pinned parent secret (baby: the pinned parent; parent: the one it drew).
     pin: Option<SecretBytes>,
     /// Parent: a secret drawn at the first verification that the baby has not acknowledged yet.
     pin_unacked: bool,

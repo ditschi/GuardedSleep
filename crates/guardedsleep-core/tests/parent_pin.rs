@@ -25,10 +25,10 @@ fn named_pair(name: &str) -> World {
 fn pinned(w: &World, n: usize) -> Vec<ParentSecret> {
     let mut out: Vec<ParentSecret> = Vec::new();
     for e in &w.nodes[n].events {
-        if let LinkEvent::ParentPinned { secret, .. } = e {
-            if out.last() != Some(secret) {
-                out.push(secret.clone());
-            }
+        if let LinkEvent::ParentPinned { secret, .. } = e
+            && out.last() != Some(secret)
+        {
+            out.push(secret.clone());
         }
     }
     out

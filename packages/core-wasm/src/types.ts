@@ -40,6 +40,8 @@ export const LINK_MESSAGE_KEYS = [
   "unknown_parent_attempt",
   "clock_skew",
   "recovery_path_unavailable",
+  "pair_again",
+  "baby_unrecognised",
 ] as const;
 export type LinkMessageKey = (typeof LINK_MESSAGE_KEYS)[number];
 

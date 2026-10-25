@@ -101,9 +101,14 @@ pub struct LinkConfig {
     /// switch off only for a platform that cannot read WebRTC certificate stats.
     pub require_dtls_fingerprint: bool,
     /// The parent secret persisted from `LinkEvent::ParentPinned` (baby: the pinned parent; parent:
-    /// the acknowledged secret). `None` before the first verified pairing. Secret-class: never
-    /// logged; `Link::new` takes the bytes and wipes its copy.
+    /// the secret drawn for this pairing, acknowledged or not). `None` before the first pairing.
+    /// Secret-class: never logged; `Link::new` takes the bytes and wipes its copy.
     pub pinned_parent: Option<ParentSecret>,
+    /// The first-pairing window as a Unix second (the invite expiry): the platform persists
+    /// `ParentPinned::window_until_s` and passes it back here. Parent: the raw secret is sent only
+    /// before it. Baby: `parent_pin` is accepted only before it (a baby that was never paired and
+    /// has none accepts a first one). `None` after the acknowledgement or outside a first pairing.
+    pub pin_window_until_s: Option<u64>,
     /// Parent: this device's name, sent to the baby over the verified DataChannel only (at most 64
     /// characters). Empty: no name.
     pub device_name: String,
@@ -114,7 +119,8 @@ pub struct LinkConfig {
 }
 
 /// The parent secret (32 bytes) as it crosses the boundary: in `LinkConfig::pinned_parent` and in
-/// the one event that carries it. Never log it.
+/// the one event that carries it. Never log it. The core derives one key per purpose from it with
+/// HKDF-SHA256 and never uses the raw bytes as a key.
 #[uniffi::remote(Record)]
 pub struct ParentSecret {
     pub bytes: Vec<u8>,
@@ -385,11 +391,17 @@ pub enum LinkEvent {
     Failed {
         reason: String,
     },
-    /// The parent secret was pinned (baby: it received the secret over the verified DataChannel;
-    /// parent: the baby acknowledged it). The platform persists it next to the PSK and passes it
-    /// back as `LinkConfig::pinned_parent`. The one event that carries a secret: never log it.
+    /// Persist this secret (and `window_until_s`) next to the PSK, durably, **before executing any
+    /// later action of the same output**: the parent's core emits it before the action that sends
+    /// it, and again with every resend while the baby has not acknowledged it (`window_until_s` is
+    /// then the first-pairing window). It is idempotent. The baby emits it once when it pins; the
+    /// acknowledgement on the parent emits it with `window_until_s: None`. A baby counts the
+    /// pairing as complete at this event, not when it connects. Pass both back as
+    /// `LinkConfig::pinned_parent` / `pin_window_until_s`. The one event that carries a secret:
+    /// never log it.
     ParentPinned {
         secret: ParentSecret,
+        window_until_s: Option<u64>,
     },
     /// Baby: the parent device that is now trusted for this attempt, by the name it sent over the
     /// verified DataChannel. Empty if it sent none.
