@@ -62,7 +62,11 @@ data class PairingPayload(
                 (nowWallMs + PairingPolicy.QR_VALIDITY_MS) / 1000,
             )
 
-        private fun mailboxesFor(urls: List<String>): List<InviteMailbox> = urls.mapNotNull {
+        /**
+         * The mailbox set a URL list stands for (the baby sends it to the parent after
+         * verification).
+         */
+        fun mailboxesFor(urls: List<String>): List<InviteMailbox> = urls.mapNotNull {
             when {
                 it.startsWith("wss://") -> InviteMailbox(MailboxKind.RELAY, it)
                 it.startsWith("ws://") -> InviteMailbox(MailboxKind.LAN, it)

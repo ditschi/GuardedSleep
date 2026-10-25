@@ -17,8 +17,10 @@ import org.guardedsleep.app.media.InboundAudioStats
 import org.guardedsleep.app.media.MediaEngine
 import org.guardedsleep.app.pairing.PairingPayload
 import org.guardedsleep.app.pairing.PairingStore
+import org.guardedsleep.app.pairing.StoredMailbox
 import org.guardedsleep.app.pairing.StoredPairing
 import org.guardedsleep.app.pairing.TurnCredentials
+import org.guardedsleep.app.platform.BuildConfig
 import org.guardedsleep.app.readiness.ReadinessChecker
 import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.signaling.SignalingFactory
@@ -36,11 +38,14 @@ import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.SettingsState
 import uniffi.guardedsleep_core.DeviceStatus
+import uniffi.guardedsleep_core.InviteMailbox
 import uniffi.guardedsleep_core.LinkConfig
 import uniffi.guardedsleep_core.LinkEvent
 import uniffi.guardedsleep_core.LinkInput
 import uniffi.guardedsleep_core.LinkState
 import uniffi.guardedsleep_core.LinkStatus
+import uniffi.guardedsleep_core.MailboxKind
+import uniffi.guardedsleep_core.ParentSecret
 import uniffi.guardedsleep_core.Role as CoreRole
 import uniffi.guardedsleep_core.defaultLinkConfig
 
@@ -65,6 +70,12 @@ class LinkController(
         Executors.newSingleThreadScheduledExecutor { r -> Thread(r, "gs-core") }
     },
     private val random: SecureRandom = SecureRandom(),
+    /**
+     * Parent: the name this device shows on the baby device ("Connected to {name}"), sent over the
+     * verified DataChannel only. The wiring passes a model-based display name; never an identifier
+     * or a fingerprint.
+     */
+    private val deviceName: () -> String = { "" },
 ) : AppController {
     private val _app = MutableStateFlow(AppState())
     private val _settings = MutableStateFlow(settingsRepo.current.settings)
@@ -109,6 +120,16 @@ class LinkController(
         val startedAt: Long,
         val expiresAtElapsedMs: Long?,
         var unreachableShown: Boolean = false,
+        /** The parent secret of a stored pairing (a pending first pairing has none yet). */
+        val parentSecret: ByteArray? = null,
+        /** The stored mailbox set (empty: derive it from [urls]). */
+        val mailboxes: List<StoredMailbox> = emptyList(),
+        /**
+         * Secret and mailbox set the core reported before the first verification saved the record
+         * (the events can come before or after the `connected` status).
+         */
+        var pinnedSecret: ByteArray? = null,
+        var receivedMailboxes: List<StoredMailbox>? = null,
     )
 
     private inner class Run(
@@ -368,11 +389,27 @@ class LinkController(
                 stored.turn,
                 clock.elapsedMs(),
                 null,
+                parentSecret = stored.parentSecretB64url?.let { PairingPayload.decodePsk(it) },
+                mailboxes = stored.mailboxes,
             ),
             stored.pairedBefore,
             monitoring = true,
             isPending = false,
         )
+
+    private fun storedMailboxes(pending: PendingPairing): List<InviteMailbox> =
+        if (pending.mailboxes.isNotEmpty()) {
+            pending.mailboxes.mapNotNull { m ->
+                when (m.kind) {
+                    "relay" -> MailboxKind.RELAY
+                    "nostr" -> MailboxKind.NOSTR
+                    "lan" -> MailboxKind.LAN
+                    else -> null
+                }?.let { InviteMailbox(it, m.url) }
+            }
+        } else {
+            PairingPayload.mailboxesFor(pending.urls)
+        }
 
     private fun startRun(
         role: Role,
@@ -384,7 +421,7 @@ class LinkController(
         stopRun(userStop = false)
         val s = _settings.value
         val coreRole = if (role == Role.BABY) CoreRole.BABY else CoreRole.PARENT
-        val config = buildConfig(coreRole, pending.psk, pairedBefore, s)
+        val config = buildConfig(coreRole, pending.psk, pairedBefore, s, pending)
         val r = Run(++runCounter, role, if (isPending) pending else null, monitoring)
         val signalingUrls = effectiveUrls(pending.urls)
         val ice =
@@ -464,6 +501,7 @@ class LinkController(
         psk: String,
         pairedBefore: Boolean,
         s: SettingsState,
+        pending: PendingPairing,
     ): LinkConfig {
         // A fresh seed for every run: the core derives every nonce from it.
         val base = defaultLinkConfig(role, psk, ByteArray(CORE_SEED_BYTES).also(random::nextBytes))
@@ -474,6 +512,11 @@ class LinkController(
         // The core rejects a link whose loss detection is not at least 20 s ahead of the alarm.
         if (alarmAfter < liveness + 20_000) alarmAfter = liveness + 20_000
         return base.copy(
+            // A copy for the core, which takes it and wipes it; our own bytes stay with the run.
+            pinnedParent = pending.parentSecret?.let { ParentSecret(it.copyOf()) },
+            deviceName = if (role == CoreRole.PARENT) deviceName() else "",
+            mailboxes = if (role == CoreRole.BABY) storedMailboxes(pending) else emptyList(),
+            allowDevLoopback = BuildConfig.DEBUG,
             pairedBefore = pairedBefore,
             heartbeatIntervalMs = heartbeat.toULong(),
             alarmAfterMs = alarmAfter.toULong(),
@@ -574,6 +617,11 @@ class LinkController(
 
         override fun onEvent(event: LinkEvent, nowMs: Long) {
             if (!current()) return
+            when (event) {
+                is LinkEvent.ParentPinned -> persistParentSecret(r, event.secret.bytes)
+                is LinkEvent.MailboxesUpdated -> persistMailboxes(r, event.mailboxes)
+                else -> Unit
+            }
             if (r.role == Role.PARENT) parentModel.onEvent(event, nowMs)
             else babyModel.onEvent(event, nowMs)
         }
@@ -610,7 +658,19 @@ class LinkController(
             val pending = r.pending ?: return
             when (status.state) {
                 LinkState.CONNECTED -> {
-                    pairingStore.save(StoredPairing(pending.psk, pending.urls, true, pending.turn))
+                    val received = pending.receivedMailboxes
+                    pairingStore.save(
+                        StoredPairing(
+                            pending.psk,
+                            received?.let(::signalingUrlsOf)?.ifEmpty { null } ?: pending.urls,
+                            true,
+                            pending.turn,
+                            pending.pinnedSecret?.let { PairingPayload.b64(it) },
+                            received ?: emptyList(),
+                        )
+                    )
+                    pending.pinnedSecret?.fill(0)
+                    pending.pinnedSecret = null
                     r.pending = null
                     PocLog.event("pairing_saved")
                     // The pairing link becomes the monitoring run; the other phone never sees a
@@ -632,6 +692,23 @@ class LinkController(
                 }
                 else -> Unit
             }
+        }
+
+        /**
+         * The core pinned (baby) or acknowledged (parent) the parent secret: keep it next to the
+         * PSK. Before the first verification saved the record it waits in the run. Never logged.
+         */
+        private fun persistParentSecret(r: Run, secret: ByteArray) {
+            val pending = r.pending
+            if (pending != null) pending.pinnedSecret = secret.copyOf()
+            else pairingStore.setParentSecret(PairingPayload.b64(secret))
+        }
+
+        /** The baby's current mailbox set replaces the stored one. */
+        private fun persistMailboxes(r: Run, mailboxes: List<InviteMailbox>) {
+            val set = mailboxes.map { StoredMailbox(kindName(it.kind), it.url) }
+            val pending = r.pending
+            if (pending != null) pending.receivedMailboxes = set else pairingStore.setMailboxes(set)
         }
 
         private fun checkPairingTimers(now: Long) {
@@ -664,6 +741,16 @@ class LinkController(
             babyModel.reset()
         }
     }
+
+    private fun signalingUrlsOf(mailboxes: List<StoredMailbox>): List<String> =
+        mailboxes.filter { it.kind != "nostr" }.map { it.url }
+
+    private fun kindName(kind: MailboxKind): String =
+        when (kind) {
+            MailboxKind.RELAY -> "relay"
+            MailboxKind.NOSTR -> "nostr"
+            MailboxKind.LAN -> "lan"
+        }
 
     private companion object {
         const val UNREACHABLE_AFTER_MS = 20_000L

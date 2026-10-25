@@ -4,6 +4,7 @@ import java.io.File
 import org.guardedsleep.app.pairing.PairingPayload
 import org.guardedsleep.app.pairing.PairingPayload.Companion.Result
 import org.guardedsleep.app.pairing.PairingStore
+import org.guardedsleep.app.pairing.StoredMailbox
 import org.guardedsleep.app.pairing.StoredPairing
 import org.guardedsleep.app.pairing.TurnCredentials
 import org.guardedsleep.app.ui.model.PairingError
@@ -164,6 +165,58 @@ class PairingTest {
         s.markPairedBefore()
         assertTrue(s.load()!!.pairedBefore)
         assertFalse(p.toString().contains(p.pskB64url))
+    }
+
+    @Test
+    fun theParentSecretAndTheMailboxSetLiveInTheEncryptedRecord() {
+        val (s, _) = store()
+        val secret = PairingPayload.b64(ByteArray(32) { (it + 100).toByte() })
+        val set =
+            listOf(
+                StoredMailbox("relay", "wss://r.example/sig"),
+                StoredMailbox("nostr", "wss://n.example"),
+            )
+        // Nothing to attach to before the first verification saved the record.
+        assertFalse(s.setParentSecret(secret))
+        assertFalse(s.setMailboxes(set))
+        s.save(StoredPairing(PairingPayload.b64(psk), listOf("wss://old.example"), true))
+        assertTrue(s.setParentSecret(secret))
+        assertTrue(s.setMailboxes(set))
+        val loaded = s.load()!!
+        assertEquals(secret, loaded.parentSecretB64url)
+        assertEquals(set, loaded.mailboxes)
+        // The platform opens the relay and LAN mailboxes of the set; Nostr waits for the core.
+        assertEquals(listOf("wss://r.example/sig"), loaded.signalingUrls)
+        // Never in the clear on disk, never in the string form.
+        val onDisk = File(tmp.root, "pairing.bin").readText()
+        assertFalse(onDisk.contains(secret))
+        assertFalse(loaded.toString().contains(secret))
+        assertTrue(loaded.pairedBefore)
+        // Another save keeps what the record holds only if the caller passes it on.
+        s.markPairedBefore()
+        assertEquals(secret, s.load()!!.parentSecretB64url)
+    }
+
+    @Test
+    fun aMailboxSetWithoutRelayOrLanKeepsTheCurrentUrls() {
+        val (s, _) = store()
+        s.save(StoredPairing(PairingPayload.b64(psk), listOf("wss://keep.example"), true))
+        s.setMailboxes(listOf(StoredMailbox("nostr", "wss://n.example")))
+        assertEquals(listOf("wss://keep.example"), s.load()!!.signalingUrls)
+    }
+
+    @Test
+    fun aRecordWithoutTheNewFieldsStillLoads() {
+        val (s, cipher) = store()
+        val old =
+            JSONObject()
+                .put("k", PairingPayload.b64(psk))
+                .put("s", org.json.JSONArray(listOf("wss://old.example")))
+                .put("p", true)
+        File(tmp.root, "pairing.bin").writeBytes(cipher.encrypt(old.toString().toByteArray()))
+        val loaded = s.load()!!
+        assertNull(loaded.parentSecretB64url)
+        assertEquals(emptyList<StoredMailbox>(), loaded.mailboxes)
     }
 
     @Test

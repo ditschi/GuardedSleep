@@ -10,9 +10,12 @@ import uniffi.guardedsleep_core.Action
 import uniffi.guardedsleep_core.CoreLink
 import uniffi.guardedsleep_core.CoreSession
 import uniffi.guardedsleep_core.Input
+import uniffi.guardedsleep_core.InviteMailbox
 import uniffi.guardedsleep_core.LinkAction
 import uniffi.guardedsleep_core.LinkConfig
 import uniffi.guardedsleep_core.LinkInput
+import uniffi.guardedsleep_core.MailboxKind
+import uniffi.guardedsleep_core.ParentSecret
 import uniffi.guardedsleep_core.Role
 import uniffi.guardedsleep_core.SessionEvent
 import uniffi.guardedsleep_core.conformanceEval
@@ -82,6 +85,21 @@ class ConformanceTest {
                         noiseThreshold = c.getDouble("noise_threshold"),
                         noiseHoldMs = c.getLong("noise_hold_ms").toULong(),
                         requireDtlsFingerprint = c.getBoolean("require_dtls_fingerprint"),
+                        pinnedParent =
+                            if (c.isNull("pinned_parent")) null
+                            else ParentSecret(hexBytes(c.getString("pinned_parent"))),
+                        deviceName = c.optString("device_name", ""),
+                        mailboxes =
+                            c.optJSONArray("mailboxes")?.let { a ->
+                                (0 until a.length()).map {
+                                    val m = a.getJSONObject(it)
+                                    InviteMailbox(
+                                        MailboxKind.valueOf(m.getString("kind").uppercase()),
+                                        m.getString("url"),
+                                    )
+                                }
+                            } ?: emptyList(),
+                        allowDevLoopback = c.optBoolean("allow_dev_loopback", false),
                     )
                 )
             val steps = trace.getJSONArray("steps")
@@ -101,6 +119,8 @@ class ConformanceTest {
             }
         }
     }
+
+    private fun hexBytes(text: String) = text.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
 
     private fun linkInput(i: JSONObject): LinkInput {
         val attempt = i.optLong("attempt").toUInt()

@@ -1,6 +1,7 @@
 package org.guardedsleep.app.link
 
 import org.guardedsleep.app.ui.model.CauseHint
+import org.guardedsleep.app.ui.model.LinkHint
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.LinkQuality
 import org.guardedsleep.app.ui.model.LinkUi
@@ -26,7 +27,18 @@ object LinkMapping {
             else -> null
         }
 
-    fun linkUi(status: LinkStatus, quality: LinkQuality): LinkUi {
+    fun linkHint(key: String): LinkHint? =
+        when (key) {
+            "clock_skew" -> LinkHint.CLOCK_SKEW
+            "recovery_path_unavailable" -> LinkHint.RECOVERY_PATH_UNAVAILABLE
+            else -> null
+        }
+
+    fun linkUi(
+        status: LinkStatus,
+        quality: LinkQuality,
+        hints: Set<LinkHint> = emptySet(),
+    ): LinkUi {
         val phase = phase(status.state)
         val escalating = phase == LinkPhase.CONNECTING || phase == LinkPhase.RECONNECTING
         return LinkUi(
@@ -40,6 +52,7 @@ object LinkMapping {
                 if (phase == LinkPhase.FAILED_NEEDS_USER) status.key
                 else status.cause.takeIf { it == "update_required" },
             quality = if (phase == LinkPhase.CONNECTED) quality else LinkQuality.UNKNOWN,
+            hints = hints,
         )
     }
 

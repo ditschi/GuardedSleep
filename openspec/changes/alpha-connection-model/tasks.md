@@ -41,7 +41,7 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 
   Replace v3 in `ffi`, `wasm` and `packages/core-wasm`, with new conformance vectors and `just api-snapshot`. Verify: `just api-check`, the core and core-wasm tests.
 
-- [ ] 3.4 Presence, sessions and parent pin:
+- [x] 3.4 Presence, sessions and parent pin:
   - sealed `here` with the wall clock; offer direction, accepted senders, scheduling and causes over confirmed sessions (`specs/link-supervision`); the `clock_skew` hint;
   - the parent secret and device name over the DataChannel only, and the parent proof `HMAC(parent_secret, "gs-parent-proof/1|" ‖ fp_parent ‖ fp_baby)` before the microphone path opens;
   - early refusal with a MAC over the nonce, and a rate-limited `security_warning`;

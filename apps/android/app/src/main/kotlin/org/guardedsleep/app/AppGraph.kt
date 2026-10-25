@@ -1,6 +1,7 @@
 package org.guardedsleep.app
 
 import android.content.Context
+import android.os.Build
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
@@ -52,6 +53,8 @@ class AppGraph(context: Context) : PlatformServices {
             readiness = readiness,
             host = ServiceLauncher(app),
             network = AndroidNetworkWatcher(app),
+            // The model name the user knows the phone by, shown on the baby device; no identifier.
+            deviceName = { Build.MODEL.orEmpty() },
         )
 }
 

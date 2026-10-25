@@ -4,6 +4,7 @@ import org.guardedsleep.app.alerts.NoiseKind
 import org.guardedsleep.app.alerts.Notice
 import org.guardedsleep.app.config.AlertPolicy
 import org.guardedsleep.app.link.ParentModel
+import org.guardedsleep.app.ui.model.LinkHint
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.ListenMode
 import org.junit.Assert.assertEquals
@@ -36,6 +37,32 @@ class ParentModelTest {
         st(LinkState.RECONNECTING)
         clock.advance(seconds * 1000L)
         st(LinkState.CONNECTED)
+    }
+
+    @Test
+    fun calmHintsReachTheLinkStateAndAreNotAlarms() {
+        connected()
+        model.onEvent(LinkEvent.Hint("recovery_path_unavailable", true), clock.elapsed)
+        assertEquals(setOf(LinkHint.RECOVERY_PATH_UNAVAILABLE), model.state.value.link.hints)
+        assertEquals(LinkPhase.CONNECTED, model.state.value.link.phase)
+        assertTrue(sink.lost.isEmpty())
+        model.onEvent(LinkEvent.Hint("recovery_path_unavailable", false), clock.elapsed)
+        assertTrue(model.state.value.link.hints.isEmpty())
+        model.onEvent(LinkEvent.Hint("clock_skew", true), clock.elapsed)
+        model.reset()
+        assertTrue(model.state.value.link.hints.isEmpty())
+    }
+
+    @Test
+    fun theSecretAndTheMailboxEventsChangeNothingTheParentShows() {
+        connected()
+        val before = model.state.value
+        model.onEvent(
+            LinkEvent.ParentPinned(uniffi.guardedsleep_core.ParentSecret(ByteArray(32))),
+            clock.elapsed,
+        )
+        model.onEvent(LinkEvent.MailboxesUpdated(emptyList()), clock.elapsed)
+        assertEquals(before, model.state.value)
     }
 
     @Test

@@ -102,8 +102,9 @@ class LinkRunner(
                 teardown()
                 return@post
             } finally {
-                // The core copied the seed; wipe ours.
+                // The core copied the seed and the parent secret; wipe ours.
                 config.seed.fill(0)
+                config.pinnedParent?.bytes?.fill(0)
             }
         media = mediaFactory()
         PocLog.event("session_start", "role" to config.role.name.lowercase())

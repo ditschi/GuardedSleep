@@ -30,16 +30,19 @@ Verbs (`at` in simulated ms): `start`, `stop`, `end`, `acknowledge`, `input` (an
 `for_ms`, `via: data|signaling`), `clear_faults`, `time_jump` (global Doze gap; `peer_traffic:
 kept` delivers one heartbeat per link at wake-up), `stranger_join` (`mode`: `wrong_psk`,
 `reflect`, `forged_offer`; `spoof_from` models a relay that forges `from`), `stranger_leave`,
-`ghost_join` (silent socket holding a slot until the liveness sweep), `replay_stop` (`peer`: the relay re-delivers the last recorded signaling `stop_notice`), `reject_hello` (`for_ms`, default forever: every `hello` is answered with `UNSUPPORTED_PROTOCOL`). Relay options: `reuse_client_ids` (same client id per role on every connection),
+`ghost_join` (silent socket holding a slot until the liveness sweep), `replay_stop` (`peer`: the relay re-delivers the last recorded signaling `stop_notice`), `reject_hello` (`for_ms`, default forever: every `hello` is answered with `UNSUPPORTED_PROTOCOL`), `relay_rewrite` (`mode`: an `sdp_rewrite` value, absent for an honest relay: the relay turns hostile or honest at run time). `restart_process` takes an optional `mailboxes` list (the new run's mailbox set, as after an app update). Relay options: `reuse_client_ids` (same client id per role on every connection),
 `alias_rooms` (test-only, lets peers with different PSKs share a room), `parent_cap` and
+`sdp_rewrite: "mitm_recompute"` (a PSK-holding man in the middle between two DTLS sessions: every SDP carries its own certificate per leg, it reuses the original envelope nonce so the parent tag stays valid, and it recomputes the pairing proof for each leg; it cannot compute the parent proof) and
 `sdp_rewrite: "fingerprint_confusion"` (a relay that moves each SDP's real `a=fingerprint` into an
 `s=` line and substitutes its own certificate; it forwards the DataChannel both ways, so only the
 core's fingerprint parsing and DTLS binding keep the link from verifying). The fake media layer
 reports the remote DTLS fingerprint (`attempt_dtls_fingerprint`) like the platforms do.
 
+Peers take `mailboxes` (baby: the set it sends after each verification) and `device_name` (parent). A scenario may cap its seeds with `max_seeds` (for many simulated hours).
+
 Assertions per `peer`: `event` (+`where` subset match, `within_ms`, `count`/`count_min`/
 `count_max`, `since_last_contact_ms`), `never`, `state` + `at_ms` (+`key`, `level`), `max_level`,
-`reaches_level`, `sent_signal`, `joined`. `expected_fail: "<reason>"` marks a known core problem;
+`reaches_level`, `sent_signal`, `joined`, `preauth` (every frame the peer sent on a socket that never said `hello`, the reachability probes, equals the given text). `expected_fail: "<reason>"` marks a known core problem;
 the suite fails if such a scenario starts passing.
 
 ## Traces

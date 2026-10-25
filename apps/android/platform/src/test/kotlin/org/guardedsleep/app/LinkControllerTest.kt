@@ -15,6 +15,7 @@ import org.guardedsleep.app.media.AttemptPort
 import org.guardedsleep.app.media.InboundAudioStats
 import org.guardedsleep.app.media.MediaEngine
 import org.guardedsleep.app.pairing.PairingStore
+import org.guardedsleep.app.pairing.StoredMailbox
 import org.guardedsleep.app.signaling.SignalingFactory
 import org.guardedsleep.app.signaling.SignalingListener
 import org.guardedsleep.app.signaling.SignalingTransport
@@ -291,7 +292,12 @@ class LinkControllerTest {
         val silence: FakeSilence,
     )
 
-    private fun unit(name: String, role: Role, hostThrows: Boolean = false): Unit2 {
+    private fun unit(
+        name: String,
+        role: Role,
+        hostThrows: Boolean = false,
+        deviceName: String = "",
+    ): Unit2 {
         val dir = tmp.newFolder(name)
         val settings = testSettings(dir)
         val store = PairingStore(java.io.File(dir, "pairing.bin"), FakeCipher())
@@ -325,6 +331,7 @@ class LinkControllerTest {
                     },
                 clock = RealClock(),
                 random = SecureRandom(),
+                deviceName = { deviceName },
             )
         controller.updateSettings { it.copy(signalingUrls = listOf("wss://fake.example")) }
         controller.chooseRole(role)
@@ -347,9 +354,9 @@ class LinkControllerTest {
         throw AssertionError("timeout waiting for $what")
     }
 
-    private fun pair(): Pair<Unit2, Unit2> {
+    private fun pair(parentName: String = ""): Pair<Unit2, Unit2> {
         val baby = unit("baby", Role.BABY)
-        val parent = unit("parent", Role.PARENT)
+        val parent = unit("parent", Role.PARENT, deviceName = parentName)
         baby.controller.startPairing()
         val payload = baby.controller.pairing.value!!.codePayload!!
         parent.controller.submitPairingCode(payload)
@@ -385,6 +392,63 @@ class LinkControllerTest {
         assertEquals(0, parent.controller.parent.value.link.level)
         await("baby status reaches parent") { parent.controller.parent.value.peer.batteryPct == 80 }
         assertTrue(parent.sink.lost.isEmpty())
+    }
+
+    @Test
+    fun pairingPinsTheParentAndKeepsTheSecretOnBothDevices() {
+        val (baby, parent) = pair("Pixel 8")
+        await("both keep the secret") {
+            baby.store.load()?.parentSecretB64url != null &&
+                parent.store.load()?.parentSecretB64url != null
+        }
+        assertEquals(
+            baby.store.load()!!.parentSecretB64url,
+            parent.store.load()!!.parentSecretB64url,
+        )
+        assertEquals(43, baby.store.load()!!.parentSecretB64url!!.length)
+        // The baby shows who it is connected to; nothing but the name the parent chose.
+        await("the baby shows the parent's name") {
+            baby.controller.baby.value.parentName == "Pixel 8"
+        }
+        assertEquals(false, baby.controller.baby.value.securityWarning)
+        // The parent stores the mailbox set the baby sent, in the same encrypted record.
+        await("the parent stores the mailbox set") { parent.store.load()!!.mailboxes.isNotEmpty() }
+        assertEquals(
+            listOf(StoredMailbox("relay", "wss://fake.example")),
+            parent.store.load()!!.mailboxes,
+        )
+        assertEquals(emptyList<StoredMailbox>(), baby.store.load()!!.mailboxes)
+        assertTrue(!baby.store.load().toString().contains(baby.store.load()!!.parentSecretB64url!!))
+    }
+
+    @Test
+    fun aRestartedPairProvesTheSecretAndConnectsAgain() {
+        val (baby, parent) = pair("Pixel 8")
+        await("secret kept") { parent.store.load()?.parentSecretB64url != null }
+        parent.controller.stopMonitoring()
+        await("baby sees stop") { baby.controller.baby.value.link.phase == LinkPhase.PEER_STOPPED }
+        parent.controller.startMonitoring()
+        await("parent connected again") {
+            parent.controller.parent.value.link.phase == LinkPhase.CONNECTED &&
+                baby.controller.baby.value.link.phase == LinkPhase.CONNECTED
+        }
+        await("name shown again") { baby.controller.baby.value.parentName == "Pixel 8" }
+        assertEquals(false, baby.controller.baby.value.securityWarning)
+    }
+
+    @Test
+    fun aParentThatLostTheSecretIsRefusedAndTheBabyWarns() {
+        val (baby, parent) = pair("Pixel 8")
+        await("secret kept") { parent.store.load()?.parentSecretB64url != null }
+        parent.controller.stopMonitoring()
+        await("baby sees stop") { baby.controller.baby.value.link.phase == LinkPhase.PEER_STOPPED }
+        parent.store.save(parent.store.load()!!.copy(parentSecretB64url = null))
+        parent.controller.startMonitoring()
+        await("baby warns") { baby.controller.baby.value.securityWarning }
+        Thread.sleep(2_000)
+        assertTrue(baby.controller.baby.value.link.phase != LinkPhase.CONNECTED)
+        assertNull(baby.controller.baby.value.parentName)
+        assertTrue(parent.controller.parent.value.link.phase != LinkPhase.CONNECTED)
     }
 
     @Test

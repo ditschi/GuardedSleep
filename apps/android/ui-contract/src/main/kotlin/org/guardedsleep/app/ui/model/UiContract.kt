@@ -34,6 +34,15 @@ enum class CauseHint {
     MEDIA_BLOCKED,
 }
 
+/**
+ * A calm hint of the core (never an alarm): the clocks of the two devices differ by more than 10
+ * minutes, or no mailbox was reachable at the last reachability check while the link is verified.
+ */
+enum class LinkHint {
+    CLOCK_SKEW,
+    RECOVERY_PATH_UNAVAILABLE,
+}
+
 data class LinkUi(
     val phase: LinkPhase = LinkPhase.IDLE,
     /** Escalation level 0..3 while not connected (ADR-017 §7); 0 when connected. */
@@ -52,6 +61,8 @@ data class LinkUi(
      * scan.
      */
     val stalePairingHint: Boolean = false,
+    /** Calm hints currently raised by the core; the UI renders them later (tasks 5.3, 6.2). */
+    val hints: Set<LinkHint> = emptySet(),
 )
 
 enum class LinkQuality {
@@ -169,6 +180,13 @@ data class BabyMonitorState(
     val micSilent: Boolean = false,
     /** UI-pass addition: the parent is listening (shown on touch-wake only). */
     val parentListening: Boolean = false,
+    /**
+     * The name the pinned parent device sent over the verified DataChannel ("Connected to {name}");
+     * null unless connected, empty when it sent none.
+     */
+    val parentName: String? = null,
+    /** A device that is not the paired parent tried to connect (the core refused it). */
+    val securityWarning: Boolean = false,
 )
 
 enum class PairingPhase {

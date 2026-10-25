@@ -3,6 +3,8 @@ package org.guardedsleep.app.link
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.guardedsleep.app.ui.model.BabyMonitorState
+import org.guardedsleep.app.ui.model.LinkHint
+import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.LinkQuality
 import org.guardedsleep.app.ui.model.LinkUi
 import uniffi.guardedsleep_core.LinkEvent
@@ -16,12 +18,18 @@ class BabyModel(private val clock: Clock) {
     private var last: LinkStatus? = null
     private var micLevel = 0f
     private var zeroSince: Long? = null
+    private var hints: Set<LinkHint> = emptySet()
+    private var parentName: String? = null
+    private var security = false
 
     @Synchronized
     fun reset(keepNotice: Boolean = true) {
         last = null
         micLevel = 0f
         zeroSince = null
+        hints = emptySet()
+        parentName = null
+        security = false
         _state.value =
             BabyMonitorState(
                 threshold = _state.value.threshold,
@@ -48,6 +56,20 @@ class BabyModel(private val clock: Clock) {
             // this event; the screen shows it only when someone wakes the display.
             is LinkEvent.ListenChanged ->
                 _state.value = _state.value.copy(parentListening = event.enabled)
+            is LinkEvent.ParentConnected -> {
+                parentName = event.name
+                publish()
+            }
+            is LinkEvent.SecurityWarning -> {
+                security = true
+                publish()
+            }
+            is LinkEvent.Hint -> {
+                LinkMapping.linkHint(event.key)?.let { hint ->
+                    hints = if (event.active) hints + hint else hints - hint
+                }
+                publish()
+            }
             else -> Unit
         }
     }
@@ -84,9 +106,17 @@ class BabyModel(private val clock: Clock) {
         val silent = zeroSince?.let { now - it >= MIC_SILENT_MS } == true
         _state.value =
             _state.value.copy(
-                link = if (s == null) LinkUi() else LinkMapping.linkUi(s, LinkQuality.UNKNOWN),
+                link =
+                    if (s == null) LinkUi(hints = hints)
+                    else LinkMapping.linkUi(s, LinkQuality.UNKNOWN, hints),
                 micLevel = micLevel,
                 micSilent = silent,
+                // The name belongs to the attempt that is connected right now.
+                parentName =
+                    parentName.takeIf {
+                        s?.let { LinkMapping.phase(it.state) } == LinkPhase.CONNECTED
+                    },
+                securityWarning = security,
             )
     }
 

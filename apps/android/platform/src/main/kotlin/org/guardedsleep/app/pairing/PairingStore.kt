@@ -6,6 +6,11 @@ import org.json.JSONObject
 
 data class TurnCredentials(val url: String, val username: String, val credential: String)
 
+/**
+ * One mailbox of the pairing's set: `kind` is `relay`, `nostr` or `lan` (the core's wire names).
+ */
+data class StoredMailbox(val kind: String, val url: String)
+
 /** The one saved pairing of this phone (ADR-018: 1 baby + 1 parent). */
 data class StoredPairing(
     val pskB64url: String,
@@ -13,10 +18,21 @@ data class StoredPairing(
     /** The PSK verified at least once, so a later mismatch is never terminal (ADR-017 §3a). */
     val pairedBefore: Boolean,
     val turn: TurnCredentials? = null,
+    /**
+     * The pinned parent secret (base64url of 32 bytes): the baby's pinned parent, or the parent's
+     * acknowledged secret. Null before the first verified pairing completed.
+     */
+    val parentSecretB64url: String? = null,
+    /**
+     * The mailbox set, the parent's copy of the one the baby sent after a verification (empty: none
+     * was received yet, [signalingUrls] is all there is).
+     */
+    val mailboxes: List<StoredMailbox> = emptyList(),
 ) {
-    // The PSK must never reach logs through string templates.
+    // The PSK and the parent secret must never reach logs through string templates.
     override fun toString(): String =
-        "StoredPairing(pairedBefore=$pairedBefore, urls=${signalingUrls.size})"
+        "StoredPairing(pairedBefore=$pairedBefore, urls=${signalingUrls.size}, " +
+            "pinned=${parentSecretB64url != null}, mailboxes=${mailboxes.size})"
 }
 
 /**
@@ -34,7 +50,21 @@ class PairingStore(private val file: File, private val cipher: PairingCipher) {
                 o.optJSONObject("t")?.let {
                     TurnCredentials(it.getString("u"), it.getString("n"), it.getString("c"))
                 }
-            StoredPairing(o.getString("k"), urls, o.optBoolean("p", false), turn)
+            val mailboxes =
+                o.optJSONArray("m")?.let { a ->
+                    (0 until a.length()).map {
+                        val m = a.getJSONObject(it)
+                        StoredMailbox(m.getString("k"), m.getString("u"))
+                    }
+                } ?: emptyList()
+            StoredPairing(
+                o.getString("k"),
+                urls,
+                o.optBoolean("p", false),
+                turn,
+                o.optString("ps").ifEmpty { null },
+                mailboxes,
+            )
         }
             .getOrElse {
                 // Unreadable (key lost after a restore or a corrupt file): treat as not paired.
@@ -53,6 +83,15 @@ class PairingStore(private val file: File, private val cipher: PairingCipher) {
         pairing.turn?.let {
             o.put("t", JSONObject().put("u", it.url).put("n", it.username).put("c", it.credential))
         }
+        pairing.parentSecretB64url?.let { o.put("ps", it) }
+        if (pairing.mailboxes.isNotEmpty()) {
+            o.put(
+                "m",
+                JSONArray(
+                    pairing.mailboxes.map { JSONObject().put("k", it.kind).put("u", it.url) }
+                ),
+            )
+        }
         val tmp = File(file.parentFile, file.name + ".tmp")
         tmp.writeBytes(cipher.encrypt(o.toString().toByteArray(Charsets.UTF_8)))
         check(tmp.renameTo(file)) { "cannot replace pairing file" }
@@ -61,6 +100,35 @@ class PairingStore(private val file: File, private val cipher: PairingCipher) {
     @Synchronized
     fun markPairedBefore() {
         load()?.takeIf { !it.pairedBefore }?.let { save(it.copy(pairedBefore = true)) }
+    }
+
+    /**
+     * Stores the parent secret in the same encrypted record. False when there is no pairing yet
+     * (the caller keeps the secret until the first verification saves the record).
+     */
+    @Synchronized
+    fun setParentSecret(secretB64url: String): Boolean {
+        val stored = load() ?: return false
+        save(stored.copy(parentSecretB64url = secretB64url))
+        return true
+    }
+
+    /**
+     * Replaces the stored mailbox set (the baby's update) and the signaling URL list derived from
+     * it: the relay and LAN mailboxes, which the platform still opens until the core takes over the
+     * mailbox set (tasks 3.5 and 3.6). False when there is no pairing yet.
+     */
+    @Synchronized
+    fun setMailboxes(mailboxes: List<StoredMailbox>): Boolean {
+        val stored = load() ?: return false
+        val urls = mailboxes.filter { it.kind != "nostr" }.map { it.url }
+        save(
+            stored.copy(
+                mailboxes = mailboxes,
+                signalingUrls = urls.ifEmpty { stored.signalingUrls },
+            )
+        )
+        return true
     }
 
     @Synchronized fun exists(): Boolean = file.exists()

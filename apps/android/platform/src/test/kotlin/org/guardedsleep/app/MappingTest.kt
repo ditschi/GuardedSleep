@@ -7,6 +7,7 @@ import org.guardedsleep.app.config.AlertPolicy
 import org.guardedsleep.app.link.LinkMapping
 import org.guardedsleep.app.link.NoiseTracker
 import org.guardedsleep.app.silence.SilenceMapping
+import org.guardedsleep.app.ui.model.LinkHint
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.LinkQuality
 import org.guardedsleep.app.ui.model.SilenceStatus
@@ -26,6 +27,25 @@ class MappingTest {
         access: Boolean? = true,
         quiet: Boolean? = false,
     ) = DeviceStatus(null, null, ringer, dnd, true, access, quiet, null, null, null, emptyList())
+
+    @Test
+    fun calmHintsMapAndUnknownKeysAreIgnored() {
+        assertEquals(LinkHint.CLOCK_SKEW, LinkMapping.linkHint("clock_skew"))
+        assertEquals(
+            LinkHint.RECOVERY_PATH_UNAVAILABLE,
+            LinkMapping.linkHint("recovery_path_unavailable"),
+        )
+        assertNull(LinkMapping.linkHint("something_new"))
+        val ui =
+            LinkMapping.linkUi(
+                status(uniffi.guardedsleep_core.LinkState.CONNECTED),
+                LinkQuality.GOOD,
+                setOf(LinkHint.CLOCK_SKEW),
+            )
+        assertEquals(setOf(LinkHint.CLOCK_SKEW), ui.hints)
+        // A hint is not a cause: the troubleshooter hint stays null.
+        assertNull(ui.causeHint)
+    }
 
     @Test
     fun silenceMapping() {

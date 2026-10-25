@@ -9,6 +9,7 @@ import org.guardedsleep.app.alerts.Notice
 import org.guardedsleep.app.config.AlertPolicy
 import org.guardedsleep.app.media.InboundAudioStats
 import org.guardedsleep.app.silence.SilenceMapping
+import org.guardedsleep.app.ui.model.LinkHint
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.LinkQuality
 import org.guardedsleep.app.ui.model.LinkUi
@@ -83,6 +84,7 @@ class ParentModel(
 
     private var missed: MissedEventsUi? = null
     private var security = false
+    private var hints: Set<LinkHint> = emptySet()
     private var readiness: List<ReadinessIssue> = emptyList()
     private var ownBatteryPct: Int? = null
     private var lastSnapshot: LinkSnapshot? = null
@@ -115,6 +117,7 @@ class ParentModel(
         silenceRequest = SilenceRequest.IDLE
         missed = null
         security = false
+        hints = emptySet()
         lastSnapshot = null
         publish(clock.elapsedMs())
     }
@@ -234,9 +237,17 @@ class ParentModel(
                     effects.listenStopped()
                 }
             }
+            is LinkEvent.Hint ->
+                LinkMapping.linkHint(event.key)?.let { hint ->
+                    hints = if (event.active) hints + hint else hints - hint
+                }
             // Baby-side gate echo; the parent learns the real threshold from peer_status.
+            // The pin and the mailbox set are persisted by the controller, not shown.
             is LinkEvent.NoiseGateChanged,
             is LinkEvent.Status,
+            is LinkEvent.ParentPinned,
+            is LinkEvent.ParentConnected,
+            is LinkEvent.MailboxesUpdated,
             is LinkEvent.Failed -> Unit
         }
         publish(now)
@@ -420,8 +431,10 @@ class ParentModel(
         _state.value =
             ParentMonitorState(
                 link =
-                    if (s == null) LinkUi()
-                    else LinkMapping.linkUi(s, quality).copy(stalePairingHint = staleHint(now)),
+                    if (s == null) LinkUi(hints = hints)
+                    else
+                        LinkMapping.linkUi(s, quality, hints)
+                            .copy(stalePairingHint = staleHint(now)),
                 peer = SilenceMapping.peerStatus(peerStatus),
                 babyThreshold = peerStatus?.noiseThreshold?.toFloat(),
                 level = if (connected) meter(now) else 0f,
