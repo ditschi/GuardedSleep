@@ -89,10 +89,7 @@ impl Filter {
         self.kinds
             .as_ref()
             .is_none_or(|k| k.contains(&u64::from(e.kind)))
-            && self
-                .authors
-                .as_ref()
-                .is_none_or(|a| a.iter().any(|x| *x == e.pubkey))
+            && self.authors.as_ref().is_none_or(|a| a.contains(&e.pubkey))
             && self
                 .tags
                 .as_ref()
@@ -169,7 +166,7 @@ impl World {
         self.rng.range(5, 40)
     }
 
-    fn to_client(&mut self, nsock: usize, msg: ToClient) {
+    fn push_client(&mut self, nsock: usize, msg: ToClient) {
         let Some(s) = self.nostr.socks.get(&nsock) else {
             return;
         };
@@ -183,8 +180,8 @@ impl World {
         self.push(t, 2, Ev::NToClient { actor, nsock, msg });
     }
 
-    fn to_client_text(&mut self, nsock: usize, v: Value) {
-        self.to_client(nsock, ToClient::Text(v.to_string()));
+    fn push_client_text(&mut self, nsock: usize, v: Value) {
+        self.push_client(nsock, ToClient::Text(v.to_string()));
     }
 
     // ---- platform side -----------------------------------------------------------------
@@ -321,13 +318,13 @@ impl World {
         let url = s.url.clone();
         let up = self.nostr.relays.get(&url).is_some_and(|r| r.up);
         if !up || !self.reach(actor, epoch) {
-            self.to_client(nsock, ToClient::Closed);
+            self.push_client(nsock, ToClient::Closed);
             return;
         }
         if let Some(s) = self.nostr.socks.get_mut(&nsock) {
             s.accepted = true;
         }
-        self.to_client(nsock, ToClient::Opened);
+        self.push_client(nsock, ToClient::Opened);
     }
 
     pub(super) fn on_nostr_relay_rx(&mut self, nsock: usize, text: &str) {
@@ -386,12 +383,12 @@ impl World {
             serve.truncate(n);
         }
         for e in serve {
-            self.to_client(
+            self.push_client(
                 nsock,
                 ToClient::Text(guardedsleep_core::testing::relay_event_frame(sub, &e)),
             );
         }
-        self.to_client_text(nsock, json!(["EOSE", sub]));
+        self.push_client_text(nsock, json!(["EOSE", sub]));
     }
 
     fn relay_event(&mut self, nsock: usize, url: &str, text: &str) {
@@ -424,10 +421,10 @@ impl World {
             (verdict, r.drops, r.spec.retention_s * 1_000)
         };
         if let Some(message) = verdict {
-            self.to_client_text(nsock, json!(["OK", event.id, false, message]));
+            self.push_client_text(nsock, json!(["OK", event.id, false, message]));
             return;
         }
-        self.to_client_text(nsock, json!(["OK", event.id, true, ""]));
+        self.push_client_text(nsock, json!(["OK", event.id, true, ""]));
         if drops {
             return;
         }
@@ -453,7 +450,7 @@ impl World {
             .collect();
         for (k, sub) in targets {
             let frame = guardedsleep_core::testing::relay_event_frame(&sub, &event);
-            self.to_client(k, ToClient::Text(frame));
+            self.push_client(k, ToClient::Text(frame));
         }
     }
 
@@ -484,7 +481,7 @@ impl World {
                     .map(|(k, _)| *k)
                     .collect();
                 for k in gone {
-                    self.to_client(k, ToClient::Closed);
+                    self.push_client(k, ToClient::Closed);
                 }
             }
             "nostr_up" => {
