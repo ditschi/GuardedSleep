@@ -124,6 +124,14 @@ pub fn decode_message(psk: &[u8], payload: &Value) -> Option<Value> {
     serde_json::from_slice(&peek(&key, &bytes)?.message).ok()
 }
 
+/// The nonce (envelope id) of a wire payload, read from the clear header: what a relay that wants to
+/// rewrite an envelope without invalidating a parent tag (which depends on the nonce alone) reuses.
+pub fn nonce_of(payload: &Value) -> Option<[u8; NONCE_LEN]> {
+    let bytes = URL_SAFE_NO_PAD.decode(payload["env"].as_str()?).ok()?;
+    // version, role, class, then the nonce
+    <[u8; NONCE_LEN]>::try_from(bytes.get(3..3 + NONCE_LEN)?).ok()
+}
+
 /// A PSK-holding intermediary: decrypts `payload`, lets `edit` change the message and seals it
 /// again into the same frame (same role, class, sessions and sequence number) with `nonce`.
 pub fn rewrite_message(

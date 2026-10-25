@@ -6,16 +6,17 @@
 
 use std::collections::BTreeMap;
 
+use guardedsleep_core::invite::InviteMailbox;
 use guardedsleep_core::link::{
     Link, LinkAction, LinkConfig, LinkEvent, LinkInput, LinkState, LinkStatus,
 };
 use guardedsleep_core::mailbox::RELAY_MAILBOX;
 use guardedsleep_core::pairing::{
     decode_psk, derive_room_id, encode_psk, extract_sha256_fingerprint,
-    extract_sha256_fingerprint_v2_legacy,
+    extract_sha256_fingerprint_v2_legacy, pair_proof_mac_v3,
 };
-use guardedsleep_core::protocol::Role;
-use guardedsleep_core::testing::{decode_message, rewrite_message};
+use guardedsleep_core::protocol::{DataMessage, Role, encode_data_message, parse_data_message};
+use guardedsleep_core::testing::{decode_message, nonce_of, rewrite_message};
 use serde_json::{Value, json};
 
 use crate::raw::RawState;
@@ -200,6 +201,8 @@ pub struct Actor {
     pub link: Option<Link>,
     pub cfg: LinkConfig,
     pub raw: Option<RawState>,
+    /// A mailbox set the next `restart_process` configures the new run with.
+    pending_mailboxes: Option<Vec<InviteMailbox>>,
     /// Room id this client asks the relay for.
     pub room: String,
     pub sdp_dir: String,
@@ -232,6 +235,7 @@ impl Actor {
             link: None,
             cfg,
             raw: None,
+            pending_mailboxes: None,
             room,
             sdp_dir: "sendonly".into(),
             net_up: true,
@@ -323,6 +327,8 @@ pub struct World {
     fifo: BTreeMap<(u8, usize, u32), Time>,
     timeline: Vec<Step>,
     pub violations: Vec<String>,
+    /// Frames received on sockets that had not said `hello`, with the actor that sent them.
+    pub preauth: Vec<(usize, String)>,
     pub recs: Vec<TraceRec>,
     record: bool,
     pub seed: u64,
@@ -354,6 +360,7 @@ impl World {
             fifo: BTreeMap::new(),
             timeline: sc.timeline.clone(),
             violations: Vec::new(),
+            preauth: Vec::new(),
             recs: Vec::new(),
             record,
             seed,
@@ -374,6 +381,10 @@ impl World {
         let seed = link_seed(self.seed, &spec.id, 0);
         let mut cfg = LinkConfig::with_defaults(spec.role, encode_psk(&psk), &seed);
         cfg.paired_before = spec.paired_before;
+        cfg.mailboxes = spec.mailboxes.clone();
+        if let Some(n) = &spec.device_name {
+            cfg.device_name = n.clone();
+        }
         if let Some(h) = spec.heartbeat_interval_ms {
             cfg.heartbeat_interval_ms = h;
         }
@@ -484,6 +495,7 @@ impl World {
                 if self.actors[to].raw.is_some() {
                     self.raw_on_data(to, handle, &text);
                 } else {
+                    let text = self.mitm_adjust(to, handle, text);
                     self.actors[to].last_rx_data = self.now;
                     self.deliver(
                         to,
@@ -606,6 +618,7 @@ impl World {
             "restart_process" => {
                 if let Some(a) = self.peer_ix(&st) {
                     self.kill_actor(a);
+                    self.actors[a].pending_mailboxes = st.mailboxes.clone();
                     let after = st.after_ms.unwrap_or(0);
                     self.push(self.now + after, 2, Ev::Restart { actor: a });
                 }
@@ -621,6 +634,9 @@ impl World {
             }
             "ghost_join" => self.ghost_join(&st),
             "replay_stop" => self.replay_stop(&st),
+            // The relay turns hostile (or honest again) at run time: `mode` is an `sdp_rewrite`
+            // value, absent for honest.
+            "relay_rewrite" => self.relay.sdp_rewrite = st.mode.clone(),
             "reject_hello" => {
                 let for_ms = st.for_ms.unwrap_or(u64::MAX - self.now);
                 self.server.reject_hello_until = self.now.saturating_add(for_ms);
@@ -856,6 +872,9 @@ impl World {
         cfg.paired_before = true;
         // A restart is a new run: a new seed, as the platforms draw one per run.
         cfg.seed = link_seed(self.seed, &self.actors[a].name, self.actors[a].instance + 1);
+        if let Some(m) = self.actors[a].pending_mailboxes.take() {
+            cfg.mailboxes = m;
+        }
         let Ok(link) = Link::new(cfg.clone()) else {
             return;
         };
@@ -964,6 +983,11 @@ impl World {
         let ac = &mut self.actors[a];
         if let LinkEvent::Status { status } = &event {
             ac.statuses.push((now, status.clone()));
+        }
+        // Like a platform: persist the pinned parent secret, so that a restarted process
+        // (`restart_process`) is configured with it.
+        if let LinkEvent::ParentPinned { secret } = &event {
+            ac.cfg.pinned_parent = Some(secret.clone());
         }
         let since = if ac.last_rx_data == 0 {
             now
@@ -1341,6 +1365,14 @@ impl World {
             self.server_error(sock, "BAD_JSON");
             return;
         };
+        // What a socket says before (or without) joining a room, per actor: the reachability
+        // probes of a verified link. The capture assertion `preauth` reads it.
+        if !self.server.conns[&sock].joined
+            && msg["type"] != "hello"
+            && let Some(a) = self.server.conns[&sock].actor
+        {
+            self.preauth.push((a, text.to_owned()));
+        }
         match msg["type"].as_str().unwrap_or("") {
             "ping" => self.server_send(sock, json!({"type":"pong"})),
             "hello" => self.server_hello(sock, &msg),
@@ -1484,7 +1516,10 @@ impl World {
         if message.as_ref().and_then(|m| m["type"].as_str()) == Some("stop_notice") {
             self.server.last_stop = Some((from.clone(), payload.clone()));
         }
-        if self.relay.sdp_rewrite.as_deref() == Some("fingerprint_confusion") {
+        if matches!(
+            self.relay.sdp_rewrite.as_deref(),
+            Some("fingerprint_confusion" | "mitm_recompute")
+        ) {
             let mitm = self.fresh_fp();
             if let Some(psk) = &sender_psk
                 && payload.get("env").is_some()
@@ -1492,6 +1527,14 @@ impl World {
                 let mut nonce = [0u8; 24];
                 for chunk in nonce.chunks_mut(8) {
                     chunk.copy_from_slice(&self.rng.next_u64().to_le_bytes()[..chunk.len()]);
+                }
+                // The man in the middle reuses the original nonce: the parent tag depends on the
+                // nonce alone, so a rewritten envelope keeps a valid tag and only the DataChannel
+                // parent proof (bound to the fingerprints) can stop it.
+                if self.relay.sdp_rewrite.as_deref() == Some("mitm_recompute")
+                    && let Some(original) = nonce_of(&payload)
+                {
+                    nonce = original;
                 }
                 let rewritten = rewrite_message(psk, &payload, nonce, |m| {
                     if let Some(sdp) = m["sdp"]["sdp"].as_str() {
@@ -1532,6 +1575,38 @@ impl World {
             }
         }
         self.push(self.now + SWEEP_MS, 3, Ev::Sweep { r#gen });
+    }
+
+    /// A man in the middle that holds the PSK and sits between two DTLS sessions
+    /// (`sdp_rewrite: "mitm_recompute"`): the SDPs it relays carry its own certificate per leg, and
+    /// it recomputes the pairing proof for each leg, so the PSK-level verification succeeds. It does
+    /// not know the parent secret, so every other DataChannel message (the parent proof included)
+    /// passes unchanged, computed over fingerprints the other leg never saw.
+    fn mitm_adjust(&self, to: usize, handle: u32, text: String) -> String {
+        if self.relay.sdp_rewrite.as_deref() != Some("mitm_recompute") {
+            return text;
+        }
+        if !matches!(
+            parse_data_message(&text),
+            Some(DataMessage::PairProof { .. })
+        ) {
+            return text;
+        }
+        let ac = &self.actors[to];
+        let (Some(psk), Some(pc)) = (self.actor_psk(to), ac.pcs.get(&handle)) else {
+            return text;
+        };
+        let Some(remote) = pc.dtls_fp.clone() else {
+            return text;
+        };
+        let sender = match ac.role {
+            Role::Baby => Role::Parent,
+            Role::Parent => Role::Baby,
+        };
+        match pair_proof_mac_v3(&psk, sender, &ac.room, &remote, &pc.fp) {
+            Some(mac) => encode_data_message(&DataMessage::PairProof { mac }),
+            None => text,
+        }
     }
 
     /// A hostile relay re-delivers the last recorded `stop_notice` to `peer`, as the original

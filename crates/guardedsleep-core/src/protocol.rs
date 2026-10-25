@@ -21,6 +21,9 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, json};
 
+use crate::invite::InviteMailbox;
+use crate::pairing::ParentSecret;
+
 /// Wire protocol version (ADR-017 §1). v2 and v3 peers never mix.
 pub const PROTOCOL_VERSION: u32 = 3;
 /// Only used by the v2 characterization parser and the `pair_mac` v2 vectors.
@@ -518,6 +521,34 @@ pub enum DataMessage {
     QuietRequest,
     /// The sender stops monitoring on purpose (v3).
     StopNotice,
+    /// Parent to baby, once, at the first verification: the parent secret and the parent device's
+    /// name. Only ever sent over a verified DataChannel (`alpha-connection-model` design section 4).
+    ParentPin {
+        secret: ParentSecret,
+        name: String,
+    },
+    /// Baby to parent: the secret was pinned.
+    PinAck,
+    /// Parent to baby after every later verification: the proof of the parent secret, bound to both
+    /// DTLS fingerprints (`pairing::parent_proof_mac`), and the device's current name.
+    ParentProof {
+        mac: String,
+        name: String,
+    },
+    /// Baby to parent after verification: the mailbox set the parent stores for later recoveries.
+    Mailboxes {
+        mailboxes: Vec<InviteMailbox>,
+    },
+}
+
+/// Longest device name the baby shows, in characters.
+pub const MAX_DEVICE_NAME_CHARS: usize = 64;
+
+/// A device name as the baby may show it: control characters removed, trimmed, at most
+/// [`MAX_DEVICE_NAME_CHARS`] characters.
+pub fn clean_device_name(raw: &str) -> String {
+    let cleaned: String = raw.chars().filter(|c| !c.is_control()).collect();
+    cleaned.trim().chars().take(MAX_DEVICE_NAME_CHARS).collect()
 }
 
 fn versioned(o: &Map<String, Value>, version: u32) -> bool {
@@ -589,8 +620,42 @@ fn parse_data_versioned(raw: &str, version: u32) -> Option<DataMessage> {
         }),
         "quiet_request" if v3 => Some(DataMessage::QuietRequest),
         "stop_notice" if v3 => Some(DataMessage::StopNotice),
+        "parent_pin" if v3 => Some(DataMessage::ParentPin {
+            secret: serde_json::from_value(o.get("secret")?.clone()).ok()?,
+            name: device_name_field(&o),
+        }),
+        "pin_ack" if v3 => Some(DataMessage::PinAck),
+        "parent_proof" if v3 => {
+            let mac = o.get("mac")?.as_str()?;
+            if mac.len() != 64 || !mac.bytes().all(|b| b.is_ascii_hexdigit()) {
+                return None;
+            }
+            Some(DataMessage::ParentProof {
+                mac: mac.to_ascii_lowercase(),
+                name: device_name_field(&o),
+            })
+        }
+        "mailboxes" if v3 => {
+            let list = o.get("mailboxes")?.as_array()?;
+            if list.is_empty() || list.len() > crate::invite::MAX_MAILBOXES {
+                return None;
+            }
+            let mailboxes = list
+                .iter()
+                .map(|m| serde_json::from_value::<InviteMailbox>(m.clone()).ok())
+                .collect::<Option<Vec<_>>>()?;
+            Some(DataMessage::Mailboxes { mailboxes })
+        }
         _ => None,
     }
+}
+
+/// The optional `name` of a parent message, cleaned; absent or not a string means no name.
+fn device_name_field(o: &Map<String, Value>) -> String {
+    o.get("name")
+        .and_then(Value::as_str)
+        .map(clean_device_name)
+        .unwrap_or_default()
 }
 
 pub fn encode_data_message(m: &DataMessage) -> String {
@@ -657,6 +722,18 @@ pub fn encode_data_message(m: &DataMessage) -> String {
         .to_string(),
         DataMessage::QuietRequest => json!({ "type": "quiet_request", "v": v }).to_string(),
         DataMessage::StopNotice => json!({ "type": "stop_notice", "v": v }).to_string(),
+        DataMessage::ParentPin { secret, name } => json!({
+            "type": "parent_pin", "v": v, "secret": secret, "name": clean_device_name(name)
+        })
+        .to_string(),
+        DataMessage::PinAck => json!({ "type": "pin_ack", "v": v }).to_string(),
+        DataMessage::ParentProof { mac, name } => json!({
+            "type": "parent_proof", "v": v, "mac": mac, "name": clean_device_name(name)
+        })
+        .to_string(),
+        DataMessage::Mailboxes { mailboxes } => {
+            json!({ "type": "mailboxes", "v": v, "mailboxes": mailboxes }).to_string()
+        }
     }
 }
 

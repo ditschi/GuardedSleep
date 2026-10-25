@@ -12,7 +12,10 @@
     "serverUnreachable": "This device can't reach the connection server. Check its internet connection.",
     "peerAbsent": "The baby device isn't answering. Check that it is on and showing GuardedSleep.",
     "mediaBlocked": "The devices found each other, but sound can't get through. Try the same Wi-Fi on both.",
-    "wrongKeyAttempt": "Someone tried to connect with a wrong key. Monitoring continues."
+    "wrongKeyAttempt": "Someone tried to connect with a wrong key. Monitoring continues.",
+    "unknownParentAttempt": "A device that is not your paired parent device tried to connect. Monitoring continues.",
+    "clockSkew": "The clocks of the two devices differ by more than 10 minutes. Check the date and time on both.",
+    "recoveryPathUnavailable": "If the connection drops, the devices may not find each other again right now. Monitoring continues."
   },
   "native": {
     "appName": "GuardedSleep Alpha",

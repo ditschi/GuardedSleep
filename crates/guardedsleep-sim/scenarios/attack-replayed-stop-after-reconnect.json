@@ -1,7 +1,7 @@
 {
   "schema": "gs-scenario/1",
   "id": "attack-replayed-stop-after-reconnect",
-  "description": "A relay that recycles client ids records the baby's signaling stop from a normal Stop, lets the pair restart and verify again, and replays the recording to the parent during a later outage (after a signaling reconnect with the same client id). The stop names the baby session that has been retired by the stop and replaced by the restart, so it is ignored: link_lost is still raised and the parent never goes peer_stopped again.",
+  "description": "A relay that recycles client ids records the baby's signaling stop. The baby stops on purpose while both devices have lost the DataChannel (so both hold a mailbox), restarts and verifies again, and the relay later replays the recording to the parent during an outage (after a signaling restart). The stop names the baby session that the stop retired and the restart replaced, so it is ignored: link_lost is still raised and the parent never goes peer_stopped again. While a pair is verified no mailbox is open, so a stop can only be recorded on a mailbox when the link is down.",
   "seed": 1,
   "peers": [
     {
@@ -22,35 +22,43 @@
       "do": "start"
     },
     {
-      "at": 20000,
+      "at": 10000,
+      "do": "drop_data"
+    },
+    {
+      "at": 50000,
       "do": "stop",
       "peer": "baby"
     },
     {
-      "at": 25000,
+      "at": 52000,
+      "do": "clear_faults"
+    },
+    {
+      "at": 55000,
       "do": "start",
       "peer": "baby"
     },
     {
-      "at": 50000,
+      "at": 90000,
       "do": "signaling_down"
     },
     {
-      "at": 55000,
+      "at": 95000,
       "do": "signaling_up"
     },
     {
-      "at": 70000,
+      "at": 110000,
       "do": "drop_data",
       "from": "baby"
     },
     {
-      "at": 110000,
+      "at": 150000,
       "do": "replay_stop",
       "peer": "parent"
     },
     {
-      "at": 200000,
+      "at": 260000,
       "do": "end"
     }
   ],
@@ -58,7 +66,7 @@
     {
       "peer": "parent",
       "state": "connected",
-      "at_ms": 45000
+      "at_ms": 100000
     },
     {
       "peer": "parent",
@@ -79,7 +87,7 @@
           "state": "peer_stopped"
         }
       },
-      "within_ms": [40000, 200000]
+      "within_ms": [100000, 260000]
     },
     {
       "peer": "parent",

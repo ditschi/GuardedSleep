@@ -84,6 +84,7 @@ fn envelope_seal(case: &Value) -> Result<Value, String> {
             .ok_or("missing seq")?,
         challenge: challenge_field(case, "challenge")?,
         echo: challenge_field(case, "echo")?,
+        parent_tag: challenge_field(case, "parent_tag")?,
     };
     // "message_repeat" builds large messages without a huge vector file.
     let mut message = str_field(case, "message")?.as_bytes().to_vec();

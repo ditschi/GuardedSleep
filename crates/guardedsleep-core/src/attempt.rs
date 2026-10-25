@@ -85,8 +85,12 @@ pub struct Attempt {
     proof_sent: bool,
     expected_peer_mac: Option<String>,
     early_peer_mac: Option<String>,
+    /// Baby: a parent proof or secret that arrived before the attempt verified.
+    early_parent: Option<DataMessage>,
     /// Remote SDP fingerprint the proofs were computed over.
     remote_fp: Option<String>,
+    /// Our own SDP fingerprint the proofs were computed over.
+    local_fp: Option<String>,
     /// First DTLS certificate fingerprint reported by the platform (normalized).
     dtls_fp: Option<String>,
     proof_matched: bool,
@@ -111,7 +115,9 @@ impl Attempt {
             proof_sent: false,
             expected_peer_mac: None,
             early_peer_mac: None,
+            early_parent: None,
             remote_fp: None,
+            local_fp: None,
             dtls_fp: None,
             proof_matched: false,
             verified: false,
@@ -159,6 +165,14 @@ impl Attempt {
     /// Both SDPs were exchanged (offer and answer set).
     pub fn sdp_exchanged(&self) -> bool {
         self.local_sdp.is_some() && self.remote_sdp.is_some()
+    }
+
+    /// The DTLS fingerprints of this attempt as `(local, remote)`, normalized lowercase hex: the two
+    /// certificates the pairing proof was computed over. With `require_dtls_fingerprint` the remote
+    /// one was also confirmed against the certificate the platform saw, so a parent proof bound to
+    /// them detects a man in the middle. `None` until both SDPs are known.
+    pub fn fingerprints(&self) -> Option<(&str, &str)> {
+        Some((self.local_fp.as_deref()?, self.remote_fp.as_deref()?))
     }
 
     /// Baby: RMS to put into outgoing heartbeats.
@@ -283,6 +297,16 @@ impl Attempt {
         // Nothing but pair_proof is trusted before the PSK binding succeeded.
         if self.verified {
             out.push(AttemptEvent::Message(msg));
+        } else if self.cfg.role == Role::Baby
+            && matches!(
+                msg,
+                DataMessage::ParentProof { .. } | DataMessage::ParentPin { .. }
+            )
+        {
+            // The parent sends its proof (or secret) the moment it verified, which can be before
+            // the platform reported the DTLS fingerprint that completes our own verification.
+            // Keep the latest one; it is delivered right after `Verified`, never before.
+            self.early_parent = Some(msg);
         }
         out
     }
@@ -384,6 +408,7 @@ impl Attempt {
         self.proof_sent = true;
         self.expected_peer_mac = Some(expected.clone());
         self.remote_fp = Some(fp_remote);
+        self.local_fp = Some(fp_local);
         // A DTLS report that arrived before the SDPs were complete is checked now.
         if self.dtls_fp.is_some() {
             self.check_dtls(now, out);
@@ -442,6 +467,9 @@ impl Attempt {
         self.last_alive = now;
         out.push(AttemptEvent::Verified);
         self.send_heartbeat(now, out);
+        if let Some(early) = self.early_parent.take() {
+            out.push(AttemptEvent::Message(early));
+        }
     }
 
     fn send_heartbeat(&mut self, now: u64, out: &mut Vec<AttemptEvent>) {

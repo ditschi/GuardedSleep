@@ -36,23 +36,26 @@ use std::collections::VecDeque;
 use base64::Engine as _;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use chacha20::ChaCha20Rng;
-use chacha20::rand_core::SeedableRng;
+use chacha20::rand_core::{Rng, SeedableRng};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use zeroize::Zeroize;
 
 use crate::attempt::{Attempt, AttemptConfig, AttemptEvent, DEFAULT_ATTEMPT_TIMEOUT_MS};
 use crate::envelope::{
-    CHALLENGE_LEN, CHALLENGE_VALID_MS, MessageClass, Purpose, Reply, SealError, Sealed, SecretKey,
-    SessionId, SessionState, derive_key,
+    CHALLENGE_LEN, CHALLENGE_VALID_MS, MessageClass, OpenError, Purpose, Reply, SealError, Sealed,
+    SecretKey, SessionId, SessionState, derive_key,
 };
+use crate::invite::{InviteMailbox, validate_mailboxes};
 use crate::mailbox::{MailboxId, MailboxKind, MailboxSet, MailboxState, RELAY_MAILBOX};
 use crate::noise::{GateChange, NoiseGate};
-use crate::pairing::{decode_psk, derive_room_id};
+use crate::pairing::{
+    PARENT_SECRET_LEN, ParentSecret, decode_psk, derive_room_id, macs_equal, parent_proof_mac,
+};
 use crate::protocol::{
     DataMessage, DeviceStatus, IceCandidate, Member, Role, ServerMessage, SignalPayload,
-    encode_data_message, encode_hello, encode_ping, encode_signal, parse_server_message,
-    parse_signal_payload, signal_payload_json,
+    clean_device_name, encode_data_message, encode_hello, encode_ping, encode_signal,
+    parse_server_message, parse_signal_payload, signal_payload_json,
 };
 use crate::session::ConfigError;
 
@@ -82,6 +85,21 @@ const HERE_MESSAGE: &str = r#"{"type":"here"}"#;
 /// after these delays, then every [`HERE_LONG_MS`].
 const HERE_BACKOFF_MS: [u64; 3] = [5_000, 15_000, 60_000];
 const HERE_LONG_MS: u64 = 300_000;
+/// While an attempt is verified the mailboxes are closed; every 30 minutes they open briefly to
+/// check that a recovery path still exists (`signaling-mailboxes`, "Mailboxes closed while
+/// connected").
+const PROBE_EVERY_MS: u64 = 30 * 60 * 1000;
+/// A reachability probe that has not connected after this long counts as unreachable.
+const PROBE_TIMEOUT_MS: u64 = 10_000;
+/// A pinned baby waits this long after the DTLS verification for the parent proof.
+const PARENT_PROOF_WAIT_MS: u64 = 10_000;
+/// At most one `unknown_parent_attempt` warning per this long.
+const PARENT_WARN_MIN_MS: u64 = 300_000;
+/// The peers' wall clocks may differ this much (seconds) before the `clock_skew` hint appears.
+const CLOCK_SKEW_S: u64 = 600;
+/// Hint keys (`LinkEvent::Hint`); also in [`message_keys`].
+const HINT_CLOCK_SKEW: &str = "clock_skew";
+const HINT_RECOVERY: &str = "recovery_path_unavailable";
 /// The PSK is 32 random bytes (QR pairing, ADR-004).
 const PSK_LEN: usize = 32;
 /// Longest gap between `audio_level` samples that still counts as "the baby was listening".
@@ -106,8 +124,12 @@ pub fn message_keys() -> &'static [&'static str] {
         "server_unreachable",
         "peer_absent",
         "media_blocked",
-        // security_warning key
+        // security_warning keys
         "wrong_key_attempt",
+        "unknown_parent_attempt",
+        // hint keys (`LinkEvent::Hint`)
+        HINT_CLOCK_SKEW,
+        HINT_RECOVERY,
     ]
 }
 
@@ -179,6 +201,25 @@ pub struct LinkConfig {
     /// switch off only for a platform that cannot read WebRTC certificate stats.
     #[serde(default = "default_true")]
     pub require_dtls_fingerprint: bool,
+    /// The parent secret pinned in an earlier run, as the platform persisted it from
+    /// [`LinkEvent::ParentPinned`] (baby: the pinned parent; parent: the acknowledged secret).
+    /// `None` before the first verified pairing. Secret-class: never logged; `Link::new` takes the
+    /// bytes and wipes its copy. JSON form: 64 hex characters.
+    #[serde(default)]
+    #[cfg_attr(feature = "tsify", tsify(optional, type = "string"))]
+    pub pinned_parent: Option<ParentSecret>,
+    /// Parent: this device's name, sent to the baby over the verified DataChannel only (at most 64
+    /// characters, control characters removed). Empty: no name. Never a fingerprint or an id.
+    #[serde(default)]
+    pub device_name: String,
+    /// Baby: the mailbox set to send the parent after each verification (the mailbox update). Empty:
+    /// none is sent.
+    #[serde(default)]
+    pub mailboxes: Vec<InviteMailbox>,
+    /// Development builds only: accept loopback `l:` entries in a received mailbox update, like
+    /// `parse_invite`'s flag of the same name.
+    #[serde(default)]
+    pub allow_dev_loopback: bool,
 }
 
 fn default_true() -> bool {
@@ -198,6 +239,13 @@ impl std::fmt::Debug for LinkConfig {
             .field("noise_threshold", &self.noise_threshold)
             .field("noise_hold_ms", &self.noise_hold_ms)
             .field("require_dtls_fingerprint", &self.require_dtls_fingerprint)
+            .field(
+                "pinned_parent",
+                &self.pinned_parent.as_ref().map(|_| "<redacted>"),
+            )
+            .field("device_name", &self.device_name)
+            .field("mailboxes", &self.mailboxes)
+            .field("allow_dev_loopback", &self.allow_dev_loopback)
             .finish()
     }
 }
@@ -216,6 +264,10 @@ impl LinkConfig {
             noise_threshold: 0.12,
             noise_hold_ms: 800,
             require_dtls_fingerprint: true,
+            pinned_parent: None,
+            device_name: String::new(),
+            mailboxes: Vec::new(),
+            allow_dev_loopback: false,
         }
     }
 
@@ -237,6 +289,13 @@ impl LinkConfig {
             && self.alarm_after_ms < LEVEL3_MS;
         if !alarm_ok {
             return Err(ConfigError::InvalidTiming);
+        }
+        if self
+            .pinned_parent
+            .as_ref()
+            .is_some_and(|p| p.bytes.len() != PARENT_SECRET_LEN)
+        {
+            return Err(ConfigError::InvalidParentSecret);
         }
         Ok(psk)
     }
@@ -498,6 +557,29 @@ pub enum LinkEvent {
     Failed {
         reason: String,
     },
+    /// The parent secret was pinned (baby: it received the secret over the verified DataChannel;
+    /// parent: the baby acknowledged it). The platform persists it next to the PSK and passes it
+    /// back as `LinkConfig::pinned_parent`. Secret-class: the one event that carries a secret, so
+    /// platforms must never log it. Emitted once per pinning.
+    ParentPinned {
+        #[cfg_attr(feature = "tsify", tsify(type = "string"))]
+        secret: ParentSecret,
+    },
+    /// Baby: the parent device that is now trusted for this attempt, by the name it sent over the
+    /// verified DataChannel ("Connected to <name>"). Empty if the parent sent none.
+    ParentConnected {
+        name: String,
+    },
+    /// Parent: the baby sent its current mailbox set; the platform replaces its stored set.
+    MailboxesUpdated {
+        mailboxes: Vec<InviteMailbox>,
+    },
+    /// A calm hint appeared or went away (`active`); `key` is `clock_skew` or
+    /// `recovery_path_unavailable`. Not an alarm.
+    Hint {
+        key: String,
+        active: bool,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -510,6 +592,48 @@ enum Mode {
 struct Live {
     attempt: Attempt,
     peer_id: String,
+}
+
+/// The parent secret inside the core: wiped on drop, never printed, compared in constant time.
+struct SecretBytes([u8; PARENT_SECRET_LEN]);
+
+impl SecretBytes {
+    fn from_slice(bytes: &[u8]) -> Option<Self> {
+        <[u8; PARENT_SECRET_LEN]>::try_from(bytes).ok().map(Self)
+    }
+
+    fn to_parent_secret(&self) -> ParentSecret {
+        ParentSecret {
+            bytes: self.0.to_vec(),
+        }
+    }
+
+    fn same(&self, other: &[u8]) -> bool {
+        other.len() == self.0.len()
+            && self
+                .0
+                .iter()
+                .zip(other)
+                .fold(0u8, |acc, (a, b)| acc | (a ^ b))
+                == 0
+    }
+}
+
+impl Clone for SecretBytes {
+    fn clone(&self) -> Self {
+        Self(self.0)
+    }
+}
+
+impl Drop for SecretBytes {
+    fn drop(&mut self) {
+        self.0.zeroize();
+    }
+}
+
+/// A reachability check of the mailboxes while an attempt is verified.
+struct Probe {
+    started_at: u64,
 }
 
 struct SplitMix64(u64);
@@ -538,9 +662,27 @@ pub struct Link {
     /// (`alpha-connection-model` tasks 2.2 and 3.2).
     #[allow(dead_code)]
     csprng: Option<ChaCha20Rng>,
-    /// Last `wall_clock` input (Unix seconds); read by the Nostr mailbox only.
+    /// Last `wall_clock` input (Unix seconds) and the monotonic time it arrived: the Nostr mailbox
+    /// (epoch, event times) and the `clock_skew` comparison with the peer read it.
     wall_unix_s: Option<u64>,
+    wall_at: u64,
     started_at: u64,
+
+    /// The pinned parent secret (baby: the pinned parent; parent: the acknowledged secret).
+    pin: Option<SecretBytes>,
+    /// Parent: a secret drawn at the first verification that the baby has not acknowledged yet.
+    unacked_pin: Option<SecretBytes>,
+    /// Baby with a pinned parent: the attempt verified at the DTLS level but the parent proof is
+    /// still due (deadline). While set, the microphone path, status, alerts and the heartbeat level
+    /// stay closed to that attempt.
+    parent_proof_due: Option<u64>,
+    /// Baby: when the last `unknown_parent_attempt` warning went out (they are rate-limited).
+    last_parent_warn: Option<u64>,
+    /// The calm hints currently raised (`clock_skew`, `recovery_path_unavailable`).
+    hints: Vec<&'static str>,
+    /// While an attempt is verified: when the next reachability check is due, and the one running.
+    probe_next_at: u64,
+    probe: Option<Probe>,
 
     /// The mailbox set (3.1: exactly the relay mailbox) with the transport state of each.
     mb: MailboxSet,
@@ -653,9 +795,25 @@ impl Link {
         let env_key = derive_key(&psk, Purpose::Seal).ok_or(ConfigError::InvalidPsk)?;
         // A fresh session per run: the generator carries on across `start`, so a restarted `Link`
         // never repeats one.
-        let sess = SessionState::new(cfg.role, SessionId::random(&mut csprng));
+        let mut sess = SessionState::new(cfg.role, SessionId::random(&mut csprng));
         let gate = NoiseGate::new(cfg.noise_threshold, cfg.noise_hold_ms);
+        // Take the parent secret out of the config: the core keeps the only (wiped-on-drop) copy.
+        let mut cfg = cfg;
+        let pin = cfg.pinned_parent.take().and_then(|mut p| {
+            let secret = SecretBytes::from_slice(&p.bytes);
+            p.bytes.zeroize();
+            secret
+        });
+        sess.set_parent_pin(pin.as_ref().map(|s| s.0.as_slice()));
         Ok(Self {
+            pin,
+            unacked_pin: None,
+            parent_proof_due: None,
+            last_parent_warn: None,
+            hints: Vec::new(),
+            probe_next_at: 0,
+            probe: None,
+            wall_at: 0,
             liveness_ms: cfg.liveness_ms(),
             ever_verified: cfg.paired_before,
             cfg,
@@ -762,6 +920,7 @@ impl Link {
             // A plain setter: no timers run, so reporting the clock never moves anything.
             LinkInput::WallClock { unix_s } => {
                 self.wall_unix_s = Some(unix_s);
+                self.wall_at = now;
                 return out;
             }
             LinkInput::Stop => self.on_stop(&mut out),
@@ -779,7 +938,13 @@ impl Link {
             }
             LinkInput::MailboxClosed { id, .. } => {
                 if self.mb.contains(id) && self.mb.relay.state != MailboxState::Closed {
-                    self.signaling_down(now, false, &mut out);
+                    if self.probing() {
+                        // The check failed to connect: nothing is reachable (no backoff, no
+                        // reconnect: the mailboxes stay closed while the attempt is verified).
+                        self.finish_probe(now, false, false, &mut out);
+                    } else {
+                        self.signaling_down(now, false, &mut out);
+                    }
                 }
             }
             LinkInput::AttemptLocalDescription {
@@ -896,10 +1061,21 @@ impl Link {
             .filter(|l| l.attempt.handle() == handle && !l.attempt.is_finished())
     }
 
+    /// The live attempt verified and, on a baby that pinned a parent, the parent proof passed too.
     fn live_verified(&self) -> bool {
         self.live
             .as_ref()
-            .is_some_and(|l| l.attempt.is_verified() && !l.attempt.is_finished())
+            .is_some_and(|l| self.trusted(l) && !l.attempt.is_finished())
+    }
+
+    /// `l` is verified at the DTLS level and not waiting for a parent proof.
+    fn trusted(&self, l: &Live) -> bool {
+        l.attempt.is_verified() && self.parent_proof_due.is_none()
+    }
+
+    /// A reachability check is running (mailboxes are held closed otherwise).
+    fn probing(&self) -> bool {
+        self.probe.is_some() && self.live_verified()
     }
 
     fn other_role(&self) -> Role {
@@ -949,6 +1125,8 @@ impl Link {
     fn on_start(&mut self, now: u64, entropy: u64, out: &mut Vec<LinkAction>) {
         let mut cfg = self.cfg.clone();
         cfg.paired_before = self.ever_verified;
+        // A pin made in an earlier run of this object carries over.
+        cfg.pinned_parent = self.pin.as_ref().map(SecretBytes::to_parent_secret);
         // The seed was consumed in `new`; the generator carries over into the fresh state.
         // A failed build leaves the generator in place.
         let Ok(mut fresh) = Link::build(cfg, &mut self.csprng) else {
@@ -965,6 +1143,9 @@ impl Link {
         fresh.mb.relay.changed_at = now;
         fresh.next_handle = self.next_handle;
         fresh.last_status = self.last_status.take();
+        fresh.unacked_pin = self.unacked_pin.take();
+        fresh.last_parent_warn = self.last_parent_warn;
+        fresh.sync_session_pin();
         *self = fresh;
         out.push(self.open_action());
     }
@@ -1028,7 +1209,7 @@ impl Link {
             self.mb.relay.failures = 0;
             self.mb.relay.next_open_at = now;
         }
-        if self.live.as_ref().is_some_and(|l| !l.attempt.is_verified()) {
+        if self.live.as_ref().is_some_and(|l| !self.trusted(l)) {
             self.close_live(out);
         }
         self.immediate_retry(now);
@@ -1059,6 +1240,12 @@ impl Link {
 
     fn on_signaling_opened(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         if self.mb.relay.state != MailboxState::Opening {
+            return;
+        }
+        if self.probing() {
+            // Reachable: it connected. A ping and nothing else, then the socket is closed again.
+            out.push(Self::send_action(encode_ping()));
+            self.finish_probe(now, true, true, out);
             return;
         }
         self.mb.relay.state = MailboxState::Open;
@@ -1227,13 +1414,14 @@ impl Link {
         if self.mb.relay.state != MailboxState::Joined {
             return;
         }
+        let here = self.here_message(now);
         let sealed = match self.csprng.as_mut() {
             Some(rng) => self.sess.seal(
                 &self.env_key,
                 rng,
                 MessageClass::Here,
                 SessionId::NONE,
-                HERE_MESSAGE.as_bytes(),
+                &here,
             ),
             None => Err(SealError::Crypto),
         };
@@ -1246,13 +1434,11 @@ impl Link {
 
     /// The `here` that answers a candidate or echoes a challenge (`Opened::reply`).
     fn send_reply(&mut self, now: u64, to: &str, reply: &Reply, out: &mut Vec<LinkAction>) {
+        let here = self.here_message(now);
         let Some(rng) = self.csprng.as_mut() else {
             return;
         };
-        if let Ok(sealed) = self
-            .sess
-            .seal_reply(&self.env_key, rng, reply, HERE_MESSAGE.as_bytes())
-        {
+        if let Ok(sealed) = self.sess.seal_reply(&self.env_key, rng, reply, &here) {
             out.push(self.envelope_action(to, &sealed));
         }
         // A reply with a challenge of ours waits for the peer's echo; remember it for a repeat.
@@ -1322,8 +1508,14 @@ impl Link {
         let Some(rng) = self.csprng.as_mut() else {
             return;
         };
-        let Ok(opened) = self.sess.open(&self.env_key, rng, now, &bytes) else {
-            return;
+        let opened = match self.sess.open(&self.env_key, rng, now, &bytes) {
+            Ok(opened) => opened,
+            // Another device that holds the PSK: a warning, never a reply.
+            Err(OpenError::NotPinned) => {
+                self.warn_unknown_parent(now, out);
+                return;
+            }
+            Err(_) => return,
         };
         if self.sess.peer_session() == Some(opened.sender_session) {
             self.peer_client = Some(from.to_owned());
@@ -1337,6 +1529,9 @@ impl Link {
             self.on_peer_confirmed(now, out);
         }
         if opened.class == MessageClass::Here {
+            if self.sess.peer_session() == Some(opened.sender_session) {
+                self.check_clock(now, &opened.message, out);
+            }
             return;
         }
         let Ok(value) = serde_json::from_slice::<Value>(&opened.message) else {
@@ -1354,7 +1549,7 @@ impl Link {
     /// A new session of the peer confirmed: whatever was in flight belongs to the previous one.
     fn on_peer_confirmed(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         self.pending_request = None;
-        if self.live.as_ref().is_some_and(|l| !l.attempt.is_verified()) {
+        if self.live.as_ref().is_some_and(|l| !self.trusted(l)) {
             self.close_live(out);
         }
         self.immediate_retry(now);
@@ -1428,7 +1623,7 @@ impl Link {
         let verified_since = self
             .live
             .as_ref()
-            .filter(|l| l.attempt.is_verified())
+            .filter(|l| self.trusted(l))
             .map(|l| l.attempt.last_alive());
         self.set_peer_stopped();
         self.close_live(out);
@@ -1486,6 +1681,7 @@ impl Link {
     }
 
     fn close_live(&mut self, out: &mut Vec<LinkAction>) {
+        self.parent_proof_due = None;
         if let Some(l) = self.live.take() {
             out.push(LinkAction::CloseAttempt {
                 attempt: l.attempt.handle(),
@@ -1663,8 +1859,11 @@ impl Link {
         let Some(live) = self.live.as_ref() else {
             return;
         };
-        let was_verified = live.attempt.is_verified();
-        let exchanged = live.attempt.sdp_exchanged();
+        let was_verified = self.trusted(live);
+        // A DTLS-verified attempt that never proved its parent is neither a recovery nor a media
+        // failure: it only backs off.
+        let untrusted_verified = live.attempt.is_verified() && !was_verified;
+        let exchanged = live.attempt.sdp_exchanged() && !untrusted_verified;
         let last_alive = live.attempt.last_alive();
         self.close_live(out);
         emit(
@@ -1684,6 +1883,10 @@ impl Link {
     }
 
     fn on_verified_attempt_lost(&mut self, now: u64, last_alive: u64, out: &mut Vec<LinkAction>) {
+        // The mailboxes were closed while the attempt was verified; the housekeeping reopens them
+        // now (every one at once: the peer's new session has to be heard).
+        self.probe = None;
+        self.set_hint(HINT_RECOVERY, false, out);
         self.last_alive = Some(last_alive);
         if self.outage_start.is_none() {
             self.outage_start = Some(last_alive);
@@ -1731,7 +1934,22 @@ impl Link {
         }
     }
 
+    /// The attempt verified at the DTLS level. A baby that pinned a parent keeps the attempt
+    /// untrusted until the parent proves the secret (no microphone path, no status, nothing that
+    /// counts as recovery); everything else is trusted at once.
     fn on_verified(&mut self, now: u64, out: &mut Vec<LinkAction>) {
+        if self.cfg.role == Role::Baby && self.pin.is_some() {
+            self.parent_proof_due = Some(now.saturating_add(PARENT_PROOF_WAIT_MS));
+            return;
+        }
+        self.on_trusted(now, out);
+    }
+
+    /// The attempt is verified and, where a pin exists, the parent proved it: this is a link.
+    fn on_trusted(&mut self, now: u64, out: &mut Vec<LinkAction>) {
+        // From here on no internet mailbox is open (design section 1): they would only give relays
+        // an all-night connection pattern. Loss and `peer_stopped` reopen them.
+        self.hold_mailboxes(now, out);
         let first = !self.verified_in_run;
         self.ever_verified = true;
         self.verified_in_run = true;
@@ -1756,8 +1974,10 @@ impl Link {
                 self.send_missed_events(first, outage_start, down_ms, out);
                 self.last_sent_status = None;
                 self.flush_status(out);
+                self.send_mailbox_update(out);
             }
             Role::Parent => {
+                self.send_parent_credentials(out);
                 if self.listen_intent {
                     if first || outage_start.is_none() || down_ms < LISTEN_RESUME_MS {
                         self.send_app(&DataMessage::Listen { enabled: true }, out);
@@ -1768,6 +1988,289 @@ impl Link {
                 }
             }
         }
+    }
+
+    // ---- parent pin ------------------------------------------------------------------------
+
+    /// The secret the session layer tags with (parent) or checks against (baby).
+    fn sync_session_pin(&mut self) {
+        let secret = match self.cfg.role {
+            Role::Parent => self.pin.as_ref().or(self.unacked_pin.as_ref()),
+            Role::Baby => self.pin.as_ref(),
+        };
+        self.sess.set_parent_pin(secret.map(|s| s.0.as_slice()));
+    }
+
+    /// Both DTLS fingerprints of the live attempt as `(parent, baby)`, as this side sees them.
+    fn parent_baby_fingerprints(&self) -> Option<(String, String)> {
+        let (local, remote) = self.live.as_ref()?.attempt.fingerprints()?;
+        Some(match self.cfg.role {
+            Role::Parent => (local.to_owned(), remote.to_owned()),
+            Role::Baby => (remote.to_owned(), local.to_owned()),
+        })
+    }
+
+    /// Parent, right after the attempt verified: the first time the secret and the device name
+    /// (only over this DataChannel), later the proof of the secret bound to both fingerprints.
+    fn send_parent_credentials(&mut self, out: &mut Vec<LinkAction>) {
+        let name = clean_device_name(&self.cfg.device_name);
+        if let Some(pin) = self.pin.as_ref() {
+            let Some((fp_parent, fp_baby)) = self.parent_baby_fingerprints() else {
+                return;
+            };
+            if let Some(mac) = parent_proof_mac(&pin.0, &fp_parent, &fp_baby) {
+                self.send_app(&DataMessage::ParentProof { mac, name }, out);
+            }
+            return;
+        }
+        // First verification: draw the secret once; a retry in this run sends the same one.
+        if self.unacked_pin.is_none() {
+            let Some(rng) = self.csprng.as_mut() else {
+                return;
+            };
+            let mut bytes = [0u8; PARENT_SECRET_LEN];
+            rng.fill_bytes(&mut bytes);
+            self.unacked_pin = Some(SecretBytes(bytes));
+            bytes.zeroize();
+            // Tag every envelope from now on: the baby may pin before the acknowledgement arrives.
+            self.sync_session_pin();
+        }
+        if let Some(secret) = self.unacked_pin.as_ref().map(SecretBytes::to_parent_secret) {
+            self.send_app(&DataMessage::ParentPin { secret, name }, out);
+        }
+    }
+
+    /// Baby: a parent message while the attempt is untrusted (only the proof and the pin count),
+    /// or while pinning.
+    fn on_parent_proof(&mut self, now: u64, mac: &str, name: String, out: &mut Vec<LinkAction>) {
+        if self.parent_proof_due.is_none() {
+            return;
+        }
+        let expected = self.pin.as_ref().and_then(|pin| {
+            let (fp_parent, fp_baby) = self.parent_baby_fingerprints()?;
+            parent_proof_mac(&pin.0, &fp_parent, &fp_baby)
+        });
+        match expected {
+            Some(expected) if macs_equal(&expected, mac) => self.trust_parent(now, name, out),
+            _ => self.refuse_parent(now, "parent_proof_mismatch", out),
+        }
+    }
+
+    /// Baby: the parent sends its secret. Unpinned, it is pinned (the first verification);
+    /// pinned, only the same secret passes (a parent whose acknowledgement was lost).
+    fn on_parent_pin(
+        &mut self,
+        now: u64,
+        secret: &ParentSecret,
+        name: String,
+        out: &mut Vec<LinkAction>,
+    ) {
+        match self.pin.as_ref() {
+            None => {
+                let Some(pinned) = SecretBytes::from_slice(&secret.bytes) else {
+                    return;
+                };
+                emit(
+                    out,
+                    LinkEvent::ParentPinned {
+                        secret: pinned.to_parent_secret(),
+                    },
+                );
+                self.pin = Some(pinned);
+                self.sync_session_pin();
+                emit(out, LinkEvent::ParentConnected { name });
+                self.send_app(&DataMessage::PinAck, out);
+            }
+            Some(pin) if pin.same(&secret.bytes) => {
+                if self.parent_proof_due.is_some() {
+                    self.trust_parent(now, name, out);
+                }
+                self.send_app(&DataMessage::PinAck, out);
+            }
+            Some(_) => self.refuse_parent(now, "parent_secret_mismatch", out),
+        }
+    }
+
+    /// Baby: the parent proved the secret; the attempt becomes a link.
+    fn trust_parent(&mut self, now: u64, name: String, out: &mut Vec<LinkAction>) {
+        self.parent_proof_due = None;
+        emit(out, LinkEvent::ParentConnected { name });
+        self.on_trusted(now, out);
+    }
+
+    /// Baby: an attempt whose parent could not prove the secret is closed, warned about (rate
+    /// limited) and followed by the same hold as a wrong key.
+    fn refuse_parent(&mut self, now: u64, reason: &str, out: &mut Vec<LinkAction>) {
+        self.close_live(out);
+        emit(
+            out,
+            LinkEvent::Failed {
+                reason: reason.to_owned(),
+            },
+        );
+        self.warn_unknown_parent(now, out);
+        let d = self.delay(now, self.fail_count).max(MISMATCH_HOLD_MS);
+        self.fail_count += 1;
+        self.hold_until = now + d;
+        self.next_try_at = self.hold_until;
+    }
+
+    fn warn_unknown_parent(&mut self, now: u64, out: &mut Vec<LinkAction>) {
+        if self
+            .last_parent_warn
+            .is_some_and(|t| now.saturating_sub(t) < PARENT_WARN_MIN_MS)
+        {
+            return;
+        }
+        self.last_parent_warn = Some(now);
+        emit(
+            out,
+            LinkEvent::SecurityWarning {
+                key: "unknown_parent_attempt".into(),
+            },
+        );
+    }
+
+    /// Parent: the baby pinned the secret.
+    fn on_pin_ack(&mut self, out: &mut Vec<LinkAction>) {
+        if self.cfg.role != Role::Parent || self.pin.is_some() {
+            return;
+        }
+        if let Some(secret) = self.unacked_pin.take() {
+            emit(
+                out,
+                LinkEvent::ParentPinned {
+                    secret: secret.to_parent_secret(),
+                },
+            );
+            self.pin = Some(secret);
+            self.sync_session_pin();
+        }
+    }
+
+    // ---- mailbox update --------------------------------------------------------------------
+
+    /// Baby: the current mailbox set for the parent to store (after each trusted verification).
+    fn send_mailbox_update(&self, out: &mut Vec<LinkAction>) {
+        if let Some(mailboxes) =
+            validate_mailboxes(&self.cfg.mailboxes, self.cfg.allow_dev_loopback)
+        {
+            self.send_app(&DataMessage::Mailboxes { mailboxes }, out);
+        }
+    }
+
+    /// Parent: a mailbox set from the baby replaces the stored one (if it is a valid set).
+    fn on_mailbox_update(&self, mailboxes: &[InviteMailbox], out: &mut Vec<LinkAction>) {
+        if let Some(set) = validate_mailboxes(mailboxes, self.cfg.allow_dev_loopback) {
+            emit(out, LinkEvent::MailboxesUpdated { mailboxes: set });
+        }
+    }
+
+    // ---- mailboxes while verified ----------------------------------------------------------
+
+    /// Closes the internet mailboxes (today only the relay; a `lan` listener would stay) when the
+    /// attempt becomes a link. Nothing is a failure here: no backoff, and the first check is due in
+    /// 30 minutes.
+    fn hold_mailboxes(&mut self, now: u64, out: &mut Vec<LinkAction>) {
+        if self.mb.relay.state != MailboxState::Closed {
+            out.push(self.close_action());
+        }
+        self.mb.relay.state = MailboxState::Closed;
+        self.mb.relay.client_id = None;
+        self.mb.relay.members.clear();
+        self.mb.relay.failures = 0;
+        self.mb.relay.next_open_at = now;
+        self.peer_present = false;
+        self.outstanding = None;
+        self.pending_request = None;
+        self.known_peers.clear();
+        self.peer_client = None;
+        self.probe = None;
+        self.probe_next_at = now.saturating_add(PROBE_EVERY_MS);
+    }
+
+    /// While an attempt is verified: start a check when it is due and give up on one that does not
+    /// connect. A check is a connect plus an application ping on the relay (the WebSocket
+    /// ping of the design); no `hello`, so no room id or any other pairing identifier leaves.
+    fn probe_housekeeping(&mut self, now: u64, out: &mut Vec<LinkAction>) {
+        match &self.probe {
+            None => {
+                if now >= self.probe_next_at && self.mb.relay.state == MailboxState::Closed {
+                    self.mb.relay.state = MailboxState::Opening;
+                    self.mb.relay.changed_at = now;
+                    self.probe = Some(Probe { started_at: now });
+                    out.push(self.open_action());
+                }
+            }
+            Some(p) => {
+                if now.saturating_sub(p.started_at) >= PROBE_TIMEOUT_MS {
+                    self.finish_probe(now, false, true, out);
+                }
+            }
+        }
+    }
+
+    /// The check ended: close the socket (unless the platform already did) and raise or clear the
+    /// `recovery_path_unavailable` hint. With only the relay, "nothing reachable" is its verdict.
+    fn finish_probe(&mut self, now: u64, reachable: bool, close: bool, out: &mut Vec<LinkAction>) {
+        if close && self.mb.relay.state != MailboxState::Closed {
+            out.push(self.close_action());
+        }
+        self.mb.relay.state = MailboxState::Closed;
+        self.probe = None;
+        self.probe_next_at = now.saturating_add(PROBE_EVERY_MS);
+        self.set_hint(HINT_RECOVERY, !reachable, out);
+    }
+
+    /// Raises or clears a calm hint, emitting only on change.
+    fn set_hint(&mut self, key: &'static str, active: bool, out: &mut Vec<LinkAction>) {
+        let present = self.hints.contains(&key);
+        if active == present {
+            return;
+        }
+        if active {
+            self.hints.push(key);
+        } else {
+            self.hints.retain(|k| *k != key);
+        }
+        emit(
+            out,
+            LinkEvent::Hint {
+                key: key.to_owned(),
+                active,
+            },
+        );
+    }
+
+    // ---- wall clock ------------------------------------------------------------------------
+
+    /// Our wall clock now (Unix seconds): the last report plus the monotonic time since.
+    fn wall_now(&self, now: u64) -> Option<u64> {
+        self.wall_unix_s
+            .map(|w| w.saturating_add(now.saturating_sub(self.wall_at) / 1000))
+    }
+
+    /// The `here` message: a tag plus our wall clock when we know it.
+    fn here_message(&self, now: u64) -> Vec<u8> {
+        match self.wall_now(now) {
+            Some(t) => format!(r#"{{"type":"here","t":{t}}}"#).into_bytes(),
+            None => HERE_MESSAGE.as_bytes().to_vec(),
+        }
+    }
+
+    /// A `here` of the peer's confirmed session carries its wall clock: more than 10 minutes apart
+    /// raises the `clock_skew` hint on both devices, closer clears it.
+    fn check_clock(&mut self, now: u64, message: &[u8], out: &mut Vec<LinkAction>) {
+        let Some(own) = self.wall_now(now) else {
+            return;
+        };
+        let Some(theirs) = serde_json::from_slice::<Value>(message)
+            .ok()
+            .and_then(|v| v.get("t").and_then(Value::as_u64))
+        else {
+            return;
+        };
+        self.set_hint(HINT_CLOCK_SKEW, own.abs_diff(theirs) > CLOCK_SKEW_S, out);
     }
 
     fn send_missed_events(
@@ -1810,6 +2313,19 @@ impl Link {
     }
 
     fn on_peer_message(&mut self, now: u64, msg: DataMessage, out: &mut Vec<LinkAction>) {
+        // An attempt that has not proved its parent hears nothing but the proof (or the secret).
+        if self.parent_proof_due.is_some() {
+            match msg {
+                DataMessage::ParentProof { mac, name } => {
+                    self.on_parent_proof(now, &mac, name, out)
+                }
+                DataMessage::ParentPin { secret, name } => {
+                    self.on_parent_pin(now, &secret, name, out)
+                }
+                _ => {}
+            }
+            return;
+        }
         if msg == DataMessage::StopNotice {
             self.on_dc_stop(now, out);
             return;
@@ -1862,6 +2378,13 @@ impl Link {
                 emit(out, LinkEvent::PeerHeartbeat { seq, rms });
             }
             (Role::Parent, DataMessage::DeviceStatus(s)) => self.on_peer_status(s, out),
+            (Role::Baby, DataMessage::ParentPin { secret, name }) => {
+                self.on_parent_pin(now, &secret, name, out)
+            }
+            (Role::Parent, DataMessage::PinAck) => self.on_pin_ack(out),
+            (Role::Parent, DataMessage::Mailboxes { mailboxes }) => {
+                self.on_mailbox_update(&mailboxes, out)
+            }
             (
                 Role::Parent,
                 DataMessage::MissedEvents {
@@ -2008,7 +2531,9 @@ impl Link {
 
     fn apply_mic(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         let probing = self.probe_until.is_some_and(|u| now < u);
-        let enabled = self.parent_listen || self.noise_streaming || probing;
+        // The microphone path opens for a pinned parent only after it proved the secret.
+        let enabled = (self.parent_listen || self.noise_streaming || probing)
+            && self.parent_proof_due.is_none();
         if enabled != self.mic_enabled {
             self.mic_enabled = enabled;
             out.push(LinkAction::SetMicEnabled { enabled });
@@ -2035,6 +2560,10 @@ impl Link {
     }
 
     fn send_app(&self, msg: &DataMessage, out: &mut Vec<LinkAction>) {
+        // Nothing but the acknowledgement goes to an attempt whose parent is not proven yet.
+        if self.parent_proof_due.is_some() && *msg != DataMessage::PinAck {
+            return;
+        }
         if let Some(l) = self.live.as_ref()
             && l.attempt.encode_app_message(msg).is_some()
         {
@@ -2052,10 +2581,17 @@ impl Link {
             self.signaling_housekeeping(now, out);
             self.here_housekeeping(now, out);
             if self.cfg.role == Role::Baby {
-                let rms = round4(self.gate.last_rms());
+                // The sound level is not for a parent that has not proven itself.
+                let rms = self
+                    .parent_proof_due
+                    .is_none()
+                    .then(|| round4(self.gate.last_rms()));
                 if let Some(l) = self.live.as_mut() {
-                    l.attempt.set_heartbeat_rms(Some(rms));
+                    l.attempt.set_heartbeat_rms(rms);
                 }
+            }
+            if self.parent_proof_due.is_some_and(|due| now >= due) {
+                self.refuse_parent(now, "parent_proof_missing", out);
             }
             if let Some(l) = self.live.as_mut() {
                 let ev = l.attempt.tick(now);
@@ -2076,6 +2612,11 @@ impl Link {
     }
 
     fn signaling_housekeeping(&mut self, now: u64, out: &mut Vec<LinkAction>) {
+        if self.live_verified() {
+            // The mailboxes are closed on purpose; only the reachability check runs.
+            self.probe_housekeeping(now, out);
+            return;
+        }
         match self.mb.relay.state {
             MailboxState::Closed => {
                 if now >= self.mb.relay.next_open_at {

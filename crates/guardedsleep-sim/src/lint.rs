@@ -127,7 +127,11 @@ fn lint_string(s: &str, psk: &str, errs: &mut Vec<String>) {
             .bytes()
             .all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'));
         if token.len() >= 40 && !hex && token != psk {
-            errs.push("contains a long base64url string that is not the declared PSK".into());
+            errs.push(format!(
+                "contains a long base64url string that is not the declared PSK (starts `{}`, {} characters)",
+                token.chars().take(6).collect::<String>(),
+                token.len()
+            ));
         }
         if hex && token.len() > 64 {
             errs.push("contains an unexpectedly long hex string".into());

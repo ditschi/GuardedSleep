@@ -1,7 +1,7 @@
 {
   "schema": "gs-scenario/1",
   "id": "stored-baby-stop-after-baby-restart",
-  "description": "The baby stops on purpose and the parent honours it; the baby starts again with a new session and the pair verifies. When the link is lost later, a relay replays the old stop to the unchanged parent: it names a retired baby session, so it is ignored and escalation continues.",
+  "description": "The baby stops on purpose while both devices hold a mailbox (the DataChannel is gone) and the parent honours it; the baby starts again with a new session and the pair verifies. When the link is lost later, a relay replays the old stop to the unchanged parent: it names a retired baby session, so it is ignored and escalation continues.",
   "seed": 1,
   "peers": [
     {
@@ -20,27 +20,35 @@
       "do": "start"
     },
     {
-      "at": 20000,
+      "at": 10000,
+      "do": "drop_data"
+    },
+    {
+      "at": 50000,
       "do": "stop",
       "peer": "baby"
     },
     {
-      "at": 25000,
+      "at": 51000,
+      "do": "clear_faults"
+    },
+    {
+      "at": 55000,
       "do": "start",
       "peer": "baby"
     },
     {
-      "at": 70000,
+      "at": 100000,
       "do": "drop_data",
       "from": "baby"
     },
     {
-      "at": 110000,
+      "at": 140000,
       "do": "replay_stop",
       "peer": "parent"
     },
     {
-      "at": 200000,
+      "at": 250000,
       "do": "end"
     }
   ],
@@ -48,7 +56,7 @@
     {
       "peer": "parent",
       "state": "connected",
-      "at_ms": 60000
+      "at_ms": 90000
     },
     {
       "peer": "parent",
@@ -69,7 +77,7 @@
           "state": "peer_stopped"
         }
       },
-      "within_ms": [40000, 200000]
+      "within_ms": [90000, 250000]
     },
     {
       "peer": "parent",

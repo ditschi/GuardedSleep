@@ -1,7 +1,7 @@
 {
   "schema": "gs-scenario/1",
   "id": "stored-stop-after-parent-restart",
-  "description": "The baby stops on purpose and the parent honours it; a relay keeps the notice. The parent restarts (a new session) and the baby starts again. When the link is lost later, the relay serves the stored notice to the restarted parent: it names the old parent session and an old baby session, so it is ignored, link_lost is raised and the parent never goes peer_stopped again.",
+  "description": "The baby stops on purpose while both devices hold a mailbox (the DataChannel is gone) and the parent honours it; a relay keeps the notice. The parent restarts (a new session) and the baby starts again. When the link is lost later, the relay serves the stored notice to the restarted parent: it names the old parent session and an old baby session, so it is ignored, link_lost is raised and the parent never goes peer_stopped again.",
   "seed": 1,
   "peers": [
     {
@@ -20,32 +20,40 @@
       "do": "start"
     },
     {
-      "at": 20000,
+      "at": 10000,
+      "do": "drop_data"
+    },
+    {
+      "at": 50000,
       "do": "stop",
       "peer": "baby"
     },
     {
-      "at": 22000,
+      "at": 51000,
+      "do": "clear_faults"
+    },
+    {
+      "at": 52000,
       "do": "restart_process",
       "peer": "parent"
     },
     {
-      "at": 25000,
+      "at": 55000,
       "do": "start",
       "peer": "baby"
     },
     {
-      "at": 70000,
+      "at": 100000,
       "do": "drop_data",
       "from": "baby"
     },
     {
-      "at": 110000,
+      "at": 140000,
       "do": "replay_stop",
       "peer": "parent"
     },
     {
-      "at": 200000,
+      "at": 250000,
       "do": "end"
     }
   ],
@@ -53,7 +61,7 @@
     {
       "peer": "parent",
       "state": "connected",
-      "at_ms": 60000
+      "at_ms": 90000
     },
     {
       "peer": "parent",
@@ -74,7 +82,7 @@
           "state": "peer_stopped"
         }
       },
-      "within_ms": [40000, 200000]
+      "within_ms": [90000, 250000]
     },
     {
       "peer": "parent",

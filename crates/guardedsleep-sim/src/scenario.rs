@@ -1,6 +1,7 @@
 //! `gs-scenario/1` (docs/technical/test-schemas.md section 2): peers, relay settings, a timeline of
 //! fault verbs and assertions. Unknown fields are errors so typos cannot silently disable a check.
 
+use guardedsleep_core::invite::InviteMailbox;
 use guardedsleep_core::protocol::Role;
 use serde::Deserialize;
 use serde_json::Value;
@@ -49,6 +50,12 @@ pub struct PeerSpec {
     pub alarm_after_ms: Option<u64>,
     /// Direction attribute of the baby's offer (default `sendonly`).
     pub sdp_direction: Option<String>,
+    /// Baby: the mailbox set it sends the parent after each verification (`LinkConfig::mailboxes`).
+    #[serde(default)]
+    pub mailboxes: Vec<InviteMailbox>,
+    /// Parent: the device name it sends the baby (`LinkConfig::device_name`).
+    #[serde(default)]
+    pub device_name: Option<String>,
 }
 
 fn psk_a() -> String {
@@ -127,6 +134,9 @@ pub struct Step {
     /// nothing, as if the peer had been lost during the gap.
     pub peer_traffic: Option<String>,
     pub emit_available: Option<bool>,
+    /// `restart_process`: the mailbox set the restarted process is configured with (an app update
+    /// that ships a new list).
+    pub mailboxes: Option<Vec<InviteMailbox>>,
     /// `input`: any `LinkInput` in its serde form.
     pub input: Option<Value>,
 }
@@ -159,6 +169,9 @@ pub struct Assertion {
     pub reaches_level: Option<u8>,
     pub sent_signal: Option<String>,
     pub joined: Option<bool>,
+    /// The exact text of every frame this peer sent on a socket that never said `hello` (the
+    /// reachability probes of a verified link): at least one, and no other text.
+    pub preauth: Option<String>,
 }
 
 impl Scenario {

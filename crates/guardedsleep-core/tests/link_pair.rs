@@ -183,7 +183,9 @@ fn unit_warnings_reach_the_parent_and_are_sent_only_on_change() {
 fn forged_new_aid_offer_does_not_close_a_verified_attempt() {
     let mut w = World::pair(&PSK_A, &PSK_A);
     w.connect_pair();
-    let baby_id = w.client_id(BABY).unwrap();
+    // No mailbox is open while the attempt is verified; the injection stands for a frame that
+    // reaches the link anyway (a platform that ignored `close_mailbox`).
+    let baby_id = "b".to_owned();
     let offer = |aid: &str| json!({"type":"sdp","aid":aid,"sdp":{"type":"offer","sdp":"v=0\r\nm=audio 9 X 1\r\na=sendonly\r\na=fingerprint:sha-256 AA\r\n"}});
     let handle = w.nodes[PARENT].link.live_attempt().unwrap();
     // From the real baby id with a brand-new aid, and from a stranger.
@@ -201,25 +203,6 @@ fn forged_new_aid_offer_does_not_close_a_verified_attempt() {
             0
         );
     }
-    // A room member that holds the PSK and confirms its own session gets no further: a verified
-    // attempt is never closed by an offer.
-    let imp = w.add_impostor("holder", Role::Baby, &PSK_A, 31);
-    w.impostor_greets(imp, PARENT);
-    for aid in [
-        "77777777777777777777777777777777",
-        "88888888888888888888888888888888",
-    ] {
-        let m = w.mark(PARENT);
-        w.impostor_says(imp, PARENT, MessageClass::Description, &offer(aid));
-        w.advance(500);
-        assert_eq!(w.nodes[PARENT].link.live_attempt(), Some(handle));
-        assert_eq!(w.state(PARENT), LinkState::Connected);
-        assert_eq!(
-            w.count_events(PARENT, m, |e| matches!(e, LinkEvent::Failed { .. })),
-            0
-        );
-    }
-    w.remove_impostor(imp);
     // A request_offer from the baby-side stranger must not touch the baby's verified attempt.
     let baby_handle = w.nodes[BABY].link.live_attempt().unwrap();
     w.inject_signal(
@@ -227,10 +210,9 @@ fn forged_new_aid_offer_does_not_close_a_verified_attempt() {
         "stranger",
         json!({"type":"request_offer","aid":"33333333333333333333333333333333"}),
     );
-    let parent_id = w.client_id(PARENT).unwrap();
     w.inject_signal(
         BABY,
-        &parent_id,
+        "p",
         json!({"type":"request_offer","aid":"44444444444444444444444444444444"}),
     );
     w.advance(500);
@@ -378,7 +360,11 @@ fn devices_with_different_keys_never_confirm_a_session_and_start_no_attempt() {
 #[test]
 fn spoofed_mismatch_after_pairing_is_not_terminal_and_slows_retries() {
     let mut w = World::empty();
-    let baby = w.add_node(cfg(Role::Baby, &PSK_A));
+    // A baby that verified a pairing before but holds no parent secret (the first-pairing window:
+    // nothing pinned yet), so any parent that holds the PSK is let through to the DTLS check.
+    let mut baby_cfg = cfg(Role::Baby, &PSK_A);
+    baby_cfg.paired_before = true;
+    let baby = w.add_node(baby_cfg);
     let parent = w.add_node(cfg(Role::Parent, &PSK_A));
     // The outsider holds the PSK (it reads the invite) but terminates DTLS itself, so the baby
     // sees a certificate the SDP does not commit to. It never gives up on its side.
@@ -386,14 +372,7 @@ fn spoofed_mismatch_after_pairing_is_not_terminal_and_slows_retries() {
     atk_cfg.paired_before = true;
     let atk = w.add_node(atk_cfg);
     w.start(baby, 1);
-    w.start(parent, 2);
-    w.advance(5_000);
-    assert_eq!(w.state(baby), LinkState::Connected);
-
-    // The real parent stops on purpose; the outsider joins instead.
-    w.stop(parent);
     w.advance(1_000);
-    assert_eq!(w.state(baby), LinkState::PeerStopped);
     let m = w.mark(baby);
     let t0 = w.now;
     w.set_dtls(baby, Dtls::Mismatch);
@@ -703,11 +682,19 @@ fn server_restart_while_connected_changes_no_state_and_signaling_returns() {
         "no status change at all"
     );
     assert_eq!(w.nodes[BABY].created.len(), attempts, "no new attempt");
-    assert!(
-        w.nodes[BABY].open_signaling_calls >= 2,
-        "baby reopened signaling"
+    // The mailboxes are closed while verified: a restart of the server is invisible.
+    assert_eq!(
+        w.nodes[BABY].open_signaling_calls, 1,
+        "baby does not reconnect"
     );
-    assert!(w.client_id(BABY).is_some() && w.client_id(PARENT).is_some());
+    assert!(w.client_id(BABY).is_none() && w.client_id(PARENT).is_none());
+    // On loss the mailboxes return at once and the pair recovers through the restarted server.
+    w.set_net(BABY, false);
+    w.advance(30_000);
+    w.set_net(BABY, true);
+    w.advance(20_000);
+    assert_eq!(w.state(BABY), LinkState::Connected);
+    assert_eq!(w.state(PARENT), LinkState::Connected);
 }
 
 #[test]
@@ -811,11 +798,12 @@ fn unsupported_protocol_on_reconnect_keeps_a_verified_link_and_leaves_a_sticky_h
     w.reject_hello = true;
     w.server_restart();
     w.advance(10_000);
-    // Media does not need the relay: still connected on the same attempt, with the hint.
+    // Media does not need the relay, and no mailbox is open while verified, so the rejected
+    // `hello` never happens: still connected on the same attempt, with no hint yet.
     for n in [BABY, PARENT] {
         let s = w.status(n);
         assert_eq!(s.state, LinkState::Connected, "node {n}");
-        assert_eq!(s.cause.as_deref(), Some("update_required"), "node {n}");
+        assert_eq!(s.cause, None, "node {n}");
         assert!(s.key.is_none());
     }
     assert_eq!(w.nodes[PARENT].link.live_attempt(), Some(handle));
@@ -898,13 +886,9 @@ fn request_offer_after_parent_restart() {
     w.advance(3_000);
     let t0 = w.now;
     w.restart(PARENT, 99);
-    // The restarted parent asks for an offer right away.
-    assert!(
-        w.nodes[PARENT]
-            .sent_signal_types
-            .iter()
-            .any(|t| t == "request_offer")
-    );
+    // The baby holds no mailbox while its attempt is verified, so the restarted parent cannot ask
+    // for an offer yet: it waits in the room until the baby's liveness timeout reopens the baby's
+    // mailbox.
     w.advance(40_000);
     assert_eq!(w.state(PARENT), LinkState::Connected);
     assert_eq!(w.state(BABY), LinkState::Connected);
@@ -1552,6 +1536,29 @@ fn stop_envelope(w: &mut World, node: usize) -> Value {
     stops[0].1.clone()
 }
 
+/// A pair that verified and then lost the baby's attempt without losing the network: both devices
+/// reopen their mailboxes (they were closed while verified) and are back in the room with the
+/// peer's session confirmed, so a sealed stop can be taken from the baby's relay traffic.
+fn pair_with_open_mailboxes() -> World {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    let handle = w.nodes[BABY].link.live_attempt().unwrap();
+    // New attempts cannot verify, so the mailboxes stay open.
+    w.block_media = true;
+    w.input(
+        BABY,
+        LinkInput::AttemptPcState {
+            attempt: handle,
+            state: "failed".into(),
+        },
+    );
+    w.advance(1_000);
+    assert!(w.client_id(BABY).is_some(), "the baby is back in the room");
+    assert!(w.nodes[BABY].link.peer_confirmed());
+    w.block_media = false;
+    w
+}
+
 fn psk_of(w: &World, node: usize) -> Vec<u8> {
     guardedsleep_core::pairing::decode_psk(&w.nodes[node].cfg.psk_b64url).unwrap()
 }
@@ -1572,6 +1579,9 @@ fn parent_without_attempt() -> World {
 fn a_real_stop_over_signaling_reaches_a_parent_that_lost_its_attempt() {
     let mut w = parent_without_attempt();
     w.set_net(BABY, true);
+    // The baby's mailbox was closed while it was verified and reopened on the loss; it needs a
+    // moment to be back in the room with the parent's session confirmed.
+    w.advance(20_000);
     w.stop(BABY);
     w.advance(500);
     assert_eq!(w.state(PARENT), LinkState::PeerStopped);
@@ -1579,19 +1589,38 @@ fn a_real_stop_over_signaling_reaches_a_parent_that_lost_its_attempt() {
 }
 
 #[test]
-fn a_sealed_stop_ends_even_a_verified_attempt_without_an_alarm() {
+fn a_verified_link_holds_no_mailbox_and_the_stop_goes_over_the_data_channel() {
     let mut w = World::pair(&PSK_A, &PSK_A);
     w.connect_pair();
-    let baby_id = w.client_id(BABY).unwrap();
-    let stop = stop_envelope(&mut w, BABY);
+    // Both mailboxes were closed when the attempt became a link (design section 1).
+    for n in [BABY, PARENT] {
+        assert!(w.client_id(n).is_none(), "node {n} is not in the room");
+        assert_eq!(
+            w.nodes[n].open_signaling_calls, 1,
+            "node {n} never reconnects"
+        );
+    }
+    w.advance(120_000);
+    for n in [BABY, PARENT] {
+        assert_eq!(w.nodes[n].open_signaling_calls, 1, "node {n}");
+    }
+    // A deliberate stop reaches the parent over the DataChannel only: no mailbox is open.
     let m = w.mark(PARENT);
-    w.inject_signal(PARENT, &baby_id, stop);
+    let before = w.server_signal_log.len();
+    w.stop(BABY);
     assert_eq!(w.state(PARENT), LinkState::PeerStopped);
-    assert_eq!(w.live_attempts(PARENT), 0);
+    assert_eq!(
+        w.server_signal_log.len(),
+        before,
+        "nothing went over a mailbox"
+    );
     assert_eq!(
         w.count_events(PARENT, m, |e| matches!(e, LinkEvent::PeerStopped)),
         1
     );
+    // Entering `peer_stopped` reopens the parent's mailbox: it has to hear the baby's next session.
+    w.advance(2_000);
+    assert!(w.client_id(PARENT).is_some());
     w.advance(120_000);
     assert_eq!(w.state(PARENT), LinkState::PeerStopped);
     assert_eq!(w.count_events(PARENT, m, is_link_lost), 0);
@@ -1601,8 +1630,7 @@ fn a_sealed_stop_ends_even_a_verified_attempt_without_an_alarm() {
 fn a_stored_stop_after_a_parent_restart_is_ignored() {
     // The baby stopped on purpose once; a relay kept the notice. The parent has restarted since,
     // so the notice names a session that no longer exists.
-    let mut w = World::pair(&PSK_A, &PSK_A);
-    w.connect_pair();
+    let mut w = pair_with_open_mailboxes();
     let stored = stop_envelope(&mut w, BABY);
     w.restart(PARENT, 4);
     w.restart(BABY, 3);
@@ -1628,8 +1656,7 @@ fn a_stored_baby_stop_after_the_baby_restarted_is_ignored() {
     // The stop is delivered once and honoured; the baby starts again with a new session and the
     // pair verifies. When the link is lost later, the relay replays the old notice to the
     // unchanged parent: it names a retired baby session.
-    let mut w = World::pair(&PSK_A, &PSK_A);
-    w.connect_pair();
+    let mut w = pair_with_open_mailboxes();
     let stored = stop_envelope(&mut w, BABY);
     w.inject_signal(PARENT, "b", stored.clone());
     assert_eq!(w.state(PARENT), LinkState::PeerStopped);
@@ -1651,8 +1678,7 @@ fn a_stored_baby_stop_after_the_baby_restarted_is_ignored() {
 fn a_stored_stop_is_ignored_when_the_baby_restarted_before_it_was_delivered() {
     // The notice was never delivered; the baby came back as a new session that the parent
     // confirmed, which retired the old one.
-    let mut w = World::pair(&PSK_A, &PSK_A);
-    w.connect_pair();
+    let mut w = pair_with_open_mailboxes();
     let stored = stop_envelope(&mut w, BABY);
     w.restart(BABY, 3);
     w.advance(30_000);
@@ -1666,8 +1692,12 @@ fn a_stored_stop_is_ignored_when_the_baby_restarted_before_it_was_delivered() {
 #[test]
 fn a_replayed_stop_changes_nothing() {
     let mut w = parent_without_attempt();
+    // New attempts cannot verify, so the baby's mailbox stays open for the stop.
+    w.block_media = true;
     w.set_net(BABY, true);
+    w.advance(20_000);
     let stop = stop_envelope(&mut w, BABY);
+    w.block_media = false;
     w.inject_signal(PARENT, "b", stop.clone());
     assert_eq!(w.state(PARENT), LinkState::PeerStopped);
     let m = w.mark(PARENT);
@@ -1689,8 +1719,12 @@ fn forged_stops_are_ignored_and_escalation_continues() {
     let mut w = parent_without_attempt();
     let good = {
         // A genuine stop of the baby's current session, kept back.
+        w.block_media = true;
         w.set_net(BABY, true);
-        stop_envelope(&mut w, BABY)
+        w.advance(20_000);
+        let stop = stop_envelope(&mut w, BABY);
+        w.block_media = false;
+        stop
     };
     w.set_net(BABY, false);
     let mut flipped = good.clone();

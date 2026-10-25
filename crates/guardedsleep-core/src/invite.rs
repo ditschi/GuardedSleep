@@ -172,6 +172,22 @@ pub fn build_invite(
     }
 }
 
+/// Checks a mailbox set that arrived outside an invite (the mailbox update over the DataChannel)
+/// against the invite grammar: one to six entries, each valid for its kind. Returns the canonical
+/// set, or `None` if any entry is refused.
+pub fn validate_mailboxes(
+    mailboxes: &[InviteMailbox],
+    allow_dev_loopback: bool,
+) -> Option<Vec<InviteMailbox>> {
+    if mailboxes.is_empty() || mailboxes.len() > MAX_MAILBOXES {
+        return None;
+    }
+    mailboxes
+        .iter()
+        .map(|m| entry_text(m).and_then(|e| parse_entry(&e, allow_dev_loopback)))
+        .collect()
+}
+
 /// Index of the entry the budget drops next, or `None` when only protected entries remain.
 fn drop_candidate(kinds: &[MailboxKind]) -> Option<usize> {
     let first_relay = kinds.iter().position(|k| *k == MailboxKind::Relay);

@@ -499,6 +499,11 @@ impl World {
                         let node = &mut self.nodes[n];
                         node.max_level = node.max_level.max(status.level);
                     }
+                    // Like a platform: persist the pinned parent secret, so that a restarted run
+                    // (`restart`) is configured with it.
+                    if let LinkEvent::ParentPinned { secret } = &event {
+                        self.nodes[n].cfg.pinned_parent = Some(secret.clone());
+                    }
                     self.nodes[n].events.push(event);
                 }
             }

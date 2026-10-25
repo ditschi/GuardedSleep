@@ -1,7 +1,7 @@
 {
   "schema": "gs-scenario/1",
   "id": "attack-stranger-parent-cap",
-  "description": "With the default parent cap of 1 a stranger cannot join a room that already has a parent; nothing changes for the pair.",
+  "description": "While the pair is verified neither device holds a mailbox, so the room is empty and a stranger that knows the room id takes the free slots; nothing changes for the pair, and the stranger gets no answer it can use (it holds no PSK). A squatted slot can refuse the real device with PARENT_CAP or BABY_TAKEN on its next reconnect: a denial of service only, because escalation still runs (design section 4, \"Our relay\").",
   "seed": 1,
   "peers": [
     {
@@ -67,11 +67,11 @@
     },
     {
       "peer": "stranger",
-      "joined": false
+      "joined": true
     },
     {
       "peer": "stranger2",
-      "joined": false
+      "joined": true
     }
   ]
 }

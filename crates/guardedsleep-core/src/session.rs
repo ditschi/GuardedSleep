@@ -163,6 +163,7 @@ pub enum ConfigError {
     InvalidPsk,
     InvalidTiming,
     InvalidSeed,
+    InvalidParentSecret,
 }
 
 impl std::fmt::Display for ConfigError {
@@ -172,6 +173,7 @@ impl std::fmt::Display for ConfigError {
             ConfigError::InvalidPsk => "psk must be non-empty base64url",
             ConfigError::InvalidTiming => "intervals and timeouts must be > 0",
             ConfigError::InvalidSeed => "seed must be exactly 32 bytes",
+            ConfigError::InvalidParentSecret => "parent secret must be exactly 32 bytes",
         })
     }
 }

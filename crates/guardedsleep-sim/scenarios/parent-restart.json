@@ -1,7 +1,7 @@
 {
   "schema": "gs-scenario/1",
   "id": "parent-restart",
-  "description": "The parent process restarts: it asks for an offer; the baby answers after its liveness timeout (<= 25 s) and no side reaches level 2.",
+  "description": "The parent process restarts. The baby holds no mailbox while its attempt is verified, so it notices only when its liveness timeout (<= 25 s) fires, reopens the mailbox and offers as soon as the restarted parent's new session confirmed. No side reaches level 2.",
   "seed": 1,
   "peers": [
     {
@@ -38,11 +38,6 @@
       "peer": "parent",
       "state": "connected",
       "at_ms": 85000
-    },
-    {
-      "peer": "parent",
-      "sent_signal": "request_offer",
-      "within_ms": [20000, 22000]
     },
     {
       "peer": "parent",

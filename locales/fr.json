@@ -13,7 +13,8 @@
     "serverUnreachable": "Cet appareil ne joint pas le serveur de connexion. Vérifiez sa connexion Internet.",
     "peerAbsent": "L'appareil bébé ne répond pas. Vérifiez qu'il est allumé et affiche GuardedSleep.",
     "mediaBlocked": "Les appareils se sont trouvés, mais le son ne passe pas. Essayez le même Wi-Fi sur les deux.",
-    "wrongKeyAttempt": "Quelqu'un a tenté de se connecter avec une mauvaise clé. La surveillance continue."
+    "wrongKeyAttempt": "Quelqu'un a tenté de se connecter avec une mauvaise clé. La surveillance continue.",
+    "unknownParentAttempt": "Un appareil qui n'est pas votre appareil parent associé a tenté de se connecter. La surveillance continue."
   },
   "native": {
     "appName": "GuardedSleep Alpha",

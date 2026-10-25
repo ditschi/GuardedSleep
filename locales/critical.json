@@ -43,6 +43,7 @@
     { "pattern": "core.peerAbsent", "budget": 150 },
     { "pattern": "core.mediaBlocked", "budget": 150 },
     { "pattern": "core.wrongKeyAttempt", "budget": 130 },
+    { "pattern": "core.unknownParentAttempt", "budget": 130 },
     { "pattern": "native.ui.baby.status.*", "budget": 80 },
     { "pattern": "native.ui.baby.silence.*", "budget": 160 },
     { "pattern": "native.ui.baby.micSilent", "budget": 130 },

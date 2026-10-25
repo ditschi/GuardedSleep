@@ -1,0 +1,123 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "mailbox-update-after-relay-churn",
+  "description": "The baby unit sends its mailbox set over the DataChannel after each verification and the parent stores it. A relay of the invite shuts down and the baby's app update ships a new list: after the baby restarts and verifies again, the parent has the new set and later recoveries use it without a re-pair.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby",
+      "mailboxes": [
+        {
+          "kind": "relay",
+          "url": "wss://old-relay.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-a.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-b.example"
+        }
+      ]
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 40000,
+      "do": "signaling_down"
+    },
+    {
+      "at": 50000,
+      "do": "signaling_up"
+    },
+    {
+      "at": 60000,
+      "do": "restart_process",
+      "peer": "baby",
+      "mailboxes": [
+        {
+          "kind": "relay",
+          "url": "wss://new-relay.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-a.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-c.example"
+        }
+      ]
+    },
+    {
+      "at": 150000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "event": "mailboxes_updated",
+      "where": {
+        "mailboxes": [
+          {
+            "kind": "relay",
+            "url": "wss://old-relay.example"
+          },
+          {
+            "kind": "nostr",
+            "url": "wss://nostr-a.example"
+          },
+          {
+            "kind": "nostr",
+            "url": "wss://nostr-b.example"
+          }
+        ]
+      },
+      "within_ms": [0, 30000],
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "event": "mailboxes_updated",
+      "where": {
+        "mailboxes": [
+          {
+            "kind": "relay",
+            "url": "wss://new-relay.example"
+          },
+          {
+            "kind": "nostr",
+            "url": "wss://nostr-a.example"
+          },
+          {
+            "kind": "nostr",
+            "url": "wss://nostr-c.example"
+          }
+        ]
+      },
+      "within_ms": [60000, 150000],
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 140000
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 140000
+    }
+  ]
+}

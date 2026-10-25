@@ -30,6 +30,10 @@ const ROOM_INFO: &[u8] = b"gs-room/3";
 const PROOF_PREFIX: &str = "gs-pair-proof/3|";
 const ADMISSION_INFO: &[u8] = b"guardedsleep relay admission v1";
 const ADMISSION_PREFIX: &str = "gs-relay-admit/1|";
+const PARENT_PROOF_PREFIX: &[u8] = b"gs-parent-proof/1|";
+
+/// Length of the parent secret (`alpha-connection-model` design section 4).
+pub const PARENT_SECRET_LEN: usize = 32;
 
 /// The DTLS fingerprint an SDP commits to, lowercase hex without separators (64 characters).
 ///
@@ -238,6 +242,90 @@ pub fn verify_admission(
     presented_mac: &str,
 ) -> bool {
     admission_mac(key, nonce, role, room_id).is_some_and(|m| macs_equal(&m, presented_mac))
+}
+
+/// The secret that pins the first verified parent device to the baby unit. It travels only over a
+/// verified DTLS DataChannel and is persisted by the platforms like the PSK. `Debug` is redacted;
+/// the JSON form is 64 lowercase hex characters (config and the explicit `parent_pinned` event).
+///
+/// The struct has no `Drop`: UniFFI's record glue moves the field out. The core wipes its own copy
+/// (`SecretBytes` in `link`) and the config copy; a copy the platform holds is the platform's to
+/// wipe.
+#[derive(Clone, PartialEq, Eq)]
+pub struct ParentSecret {
+    pub bytes: Vec<u8>,
+}
+
+impl std::fmt::Debug for ParentSecret {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("ParentSecret(<redacted>)")
+    }
+}
+
+impl serde::Serialize for ParentSecret {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        // The hex text is the secret too: wipe it when done.
+        let text = zeroize::Zeroizing::new(hex(&self.bytes));
+        s.serialize_str(&text)
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for ParentSecret {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        use serde::de::Error;
+        let text = zeroize::Zeroizing::new(String::deserialize(d)?);
+        if text.len() != PARENT_SECRET_LEN * 2 || !text.bytes().all(|b| b.is_ascii_hexdigit()) {
+            return Err(D::Error::custom("parent secret must be 64 hex characters"));
+        }
+        let bytes = text
+            .as_bytes()
+            .chunks(2)
+            .map(|pair| match pair {
+                [hi, lo] => hex_digit(*hi)
+                    .zip(hex_digit(*lo))
+                    .map(|(h, l)| (h << 4) | l)
+                    .ok_or_else(|| D::Error::custom("parent secret must be hex")),
+                _ => Err(D::Error::custom("parent secret must be hex")),
+            })
+            .collect::<Result<Vec<u8>, _>>()?;
+        Ok(Self { bytes })
+    }
+}
+
+fn hex_digit(c: u8) -> Option<u8> {
+    char::from(c).to_digit(16).map(|v| v as u8)
+}
+
+/// The parent proof: `HMAC-SHA256(parent_secret, "gs-parent-proof/1|" || fp_parent || fp_baby)` as
+/// lowercase hex, where both fingerprints are the raw 32-byte SHA-256 digests of the two DTLS
+/// certificates as the computing side sees them (`fp_parent` is the parent's certificate, `fp_baby`
+/// the baby's). `None` for a secret of the wrong length or a fingerprint that is not 64 hex
+/// characters (normalized as in [`extract_sha256_fingerprint`]).
+pub fn parent_proof_mac(secret: &[u8], fp_parent: &str, fp_baby: &str) -> Option<String> {
+    if secret.len() != PARENT_SECRET_LEN {
+        return None;
+    }
+    let parent = fingerprint_bytes(fp_parent)?;
+    let baby = fingerprint_bytes(fp_baby)?;
+    let mut mac = Hmac::<Sha256>::new_from_slice(secret).ok()?;
+    mac.update(PARENT_PROOF_PREFIX);
+    mac.update(&parent);
+    mac.update(&baby);
+    Some(hex(&mac.finalize().into_bytes()))
+}
+
+/// 32 raw bytes from a normalized lowercase-hex fingerprint.
+fn fingerprint_bytes(fp: &str) -> Option<[u8; 32]> {
+    if fp.len() != 64 {
+        return None;
+    }
+    let mut out = [0u8; 32];
+    for (slot, pair) in out.iter_mut().zip(fp.as_bytes().chunks(2)) {
+        if let [hi, lo] = pair {
+            *slot = (hex_digit(*hi)? << 4) | hex_digit(*lo)?;
+        }
+    }
+    Some(out)
 }
 
 fn hex(bytes: &[u8]) -> String {

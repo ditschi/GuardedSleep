@@ -11,9 +11,11 @@
 //!
 //! The nonce is the envelope id. The associated data is `"gs-env/1" | role | class`. The plaintext
 //! fills the class's bucket exactly: `recipient_session (16) | sender_session (16) | seq (u32 BE) |
-//! message length (u16 BE) | challenge (16) | echo (16) | message | zero padding`. The length field
-//! lets the receiver strip the padding; `challenge` and `echo` are used by `here` only (all zeros
-//! elsewhere), see below.
+//! message length (u16 BE) | challenge (16) | echo (16) | message | zero padding | parent tag (16)`.
+//! The length field lets the receiver strip the padding; `challenge` and `echo` are used by `here`
+//! only (all zeros elsewhere), see below. The parent tag is `HMAC(parent_secret, nonce)[0..16]` on
+//! envelopes of a pinned parent and zeros otherwise; a baby that pinned a parent refuses envelopes
+//! of any other parent from it ([`OpenError::NotPinned`]).
 //!
 //! # Sessions and freshness
 //!
@@ -63,6 +65,7 @@ use chacha20::rand_core::Rng;
 use chacha20poly1305::aead::{Aead, Payload};
 use chacha20poly1305::{Key, KeyInit, XChaCha20Poly1305, XNonce};
 use hkdf::Hkdf;
+use hmac::{Hmac, Mac};
 use sha2::Sha256;
 use zeroize::{Zeroize, Zeroizing};
 
@@ -85,6 +88,11 @@ const TAG_LEN: usize = 16;
 pub const CHALLENGE_LEN: usize = 16;
 /// `recipient | sender | seq | message length | challenge | echo`.
 const PLAINTEXT_HEAD_LEN: usize = 16 + 16 + 4 + 2 + CHALLENGE_LEN + CHALLENGE_LEN;
+/// Length of the parent tag, the last bytes of every plaintext.
+pub const PARENT_TAG_LEN: usize = 16;
+/// Bytes of a bucket that never hold message: the parent tag at its end.
+const PLAINTEXT_TAIL_LEN: usize = PARENT_TAG_LEN;
+const NO_PARENT_TAG: [u8; PARENT_TAG_LEN] = [0; PARENT_TAG_LEN];
 const NO_CHALLENGE: [u8; CHALLENGE_LEN] = [0; CHALLENGE_LEN];
 
 /// Size buckets of the padding ladder (design section 2).
@@ -262,7 +270,7 @@ impl MessageClass {
 
     /// The longest message this class can carry.
     pub fn max_message(self) -> usize {
-        self.bucket() - PLAINTEXT_HEAD_LEN
+        self.bucket() - PLAINTEXT_HEAD_LEN - PLAINTEXT_TAIL_LEN
     }
 
     /// Total envelope length on the wire.
@@ -356,6 +364,9 @@ pub enum OpenError {
     RetiredSender,
     /// The sequence number was already seen or is older than the window.
     ReplayedSeq,
+    /// The baby unit pinned a parent and this envelope of a parent carries no valid parent tag:
+    /// another device that holds the PSK (`pairing`, "One baby unit and one parent unit").
+    NotPinned,
     /// A `here` echoes a challenge that is not open for its sender (unknown, wrong or used).
     BadChallenge,
     /// A `here` echoes a challenge that was valid once but is older than [`CHALLENGE_VALID_MS`].
@@ -374,6 +385,7 @@ impl OpenError {
             OpenError::WrongSender => "wrong_sender",
             OpenError::RetiredSender => "retired_sender",
             OpenError::ReplayedSeq => "replayed_seq",
+            OpenError::NotPinned => "not_pinned",
             OpenError::BadChallenge => "bad_challenge",
             OpenError::ChallengeExpired => "challenge_expired",
         }
@@ -420,6 +432,24 @@ pub struct Frame {
     pub challenge: [u8; CHALLENGE_LEN],
     /// `here` only: the challenge of the peer this message echoes (zeros: none).
     pub echo: [u8; CHALLENGE_LEN],
+    /// `HMAC(parent_secret, envelope nonce)[0..16]` on envelopes of a pinned parent (zeros: none).
+    /// Sits in the last bytes of the plaintext, so it costs no bucket and a baby that pinned the
+    /// parent can refuse any other parent before looking at the message.
+    pub parent_tag: [u8; PARENT_TAG_LEN],
+}
+
+/// The tag a pinned parent puts into every envelope: `HMAC-SHA256(parent_secret, nonce)[0..16]`.
+pub fn parent_tag(secret: &[u8; 32], nonce: &[u8; NONCE_LEN]) -> [u8; PARENT_TAG_LEN] {
+    let Ok(mut mac) = Hmac::<Sha256>::new_from_slice(secret) else {
+        return NO_PARENT_TAG;
+    };
+    mac.update(nonce);
+    let full = mac.finalize().into_bytes();
+    let mut tag = NO_PARENT_TAG;
+    for (slot, byte) in tag.iter_mut().zip(full.iter()) {
+        *slot = *byte;
+    }
+    tag
 }
 
 fn seal_frame(
@@ -436,6 +466,7 @@ fn seal_frame(
         seq,
         challenge,
         echo,
+        parent_tag,
     } = *frame;
     if message.len() > class.max_message() {
         return Err(SealError::Oversized);
@@ -449,7 +480,8 @@ fn seal_frame(
     plain.extend_from_slice(&challenge);
     plain.extend_from_slice(&echo);
     plain.extend_from_slice(message);
-    plain.resize(class.bucket(), 0);
+    plain.resize(class.bucket() - PLAINTEXT_TAIL_LEN, 0);
+    plain.extend_from_slice(&parent_tag);
     encrypt_plaintext(key, role, class, &plain, nonce)
 }
 
@@ -547,6 +579,7 @@ pub fn peek(key: &SecretKey, bytes: &[u8]) -> Option<Peeked> {
             seq: p.seq,
             challenge: p.challenge,
             echo: p.echo,
+            parent_tag: p.parent_tag,
         },
         message: p.message.to_vec(),
     })
@@ -727,6 +760,11 @@ fn same_challenge(a: &[u8; CHALLENGE_LEN], b: &[u8; CHALLENGE_LEN]) -> bool {
     a.iter().zip(b).fold(0u8, |acc, (x, y)| acc | (x ^ y)) == 0
 }
 
+/// Constant-time equality of two parent tags.
+fn same_tag(a: &[u8; PARENT_TAG_LEN], b: &[u8; PARENT_TAG_LEN]) -> bool {
+    a.iter().zip(b).fold(0u8, |acc, (x, y)| acc | (x ^ y)) == 0
+}
+
 struct PeerSession {
     id: SessionId,
     seqs: SeqWindow,
@@ -761,6 +799,9 @@ pub struct SessionState {
     last_echo_ms: Option<u64>,
     reply_times: VecDeque<u64>,
     replay: ReplayWindow,
+    /// The parent secret. On the parent it tags every envelope sent; on the baby it must tag every
+    /// envelope that arrives from a parent.
+    pin: Option<SecretKey>,
 }
 
 /// What the checks decided; applied only after all of them passed.
@@ -788,7 +829,20 @@ impl SessionState {
             last_echo_ms: None,
             reply_times: VecDeque::new(),
             replay: ReplayWindow::new(),
+            pin: None,
         }
+    }
+
+    /// Sets (or clears) the parent secret. Wrong lengths clear it. See [`Self::pin`].
+    pub fn set_parent_pin(&mut self, secret: Option<&[u8]>) {
+        self.pin = secret
+            .and_then(|s| <[u8; 32]>::try_from(s).ok())
+            .map(SecretKey);
+    }
+
+    /// Whether a parent secret is set.
+    pub fn has_parent_pin(&self) -> bool {
+        self.pin.is_some()
     }
 
     /// A state that already confirmed `peer` and retired the given sessions (conformance vectors).
@@ -858,6 +912,12 @@ impl SessionState {
         let seq = self.next_seq.ok_or(SealError::SeqExhausted)?;
         let mut nonce = [0u8; NONCE_LEN];
         rng.fill_bytes(&mut nonce);
+        // The parent tags everything it sends once it holds a secret; the tag is bound to this
+        // envelope's nonce, so it cannot be copied onto another envelope.
+        let parent_tag = match (&self.pin, self.role) {
+            (Some(secret), Role::Parent) => parent_tag(&secret.0, &nonce),
+            _ => NO_PARENT_TAG,
+        };
         let frame = Frame {
             role: self.role,
             class,
@@ -866,6 +926,7 @@ impl SessionState {
             seq,
             challenge,
             echo,
+            parent_tag,
         };
         let sealed = seal_frame(key, &frame, message, nonce)?;
         self.next_seq = seq.checked_add(1);
@@ -962,6 +1023,13 @@ impl SessionState {
             return Err(OpenError::Duplicate);
         }
         let parsed = parse_plaintext(&plain, class).ok_or(OpenError::Malformed)?;
+        // A baby that pinned a parent refuses every other parent here, before any session state
+        // is touched and before the message is looked at (early refusal, design section 4).
+        if let (Some(secret), Role::Baby) = (&self.pin, self.role)
+            && !same_tag(&parent_tag(&secret.0, nonce), &parsed.parent_tag)
+        {
+            return Err(OpenError::NotPinned);
+        }
         let verdict = self.check(class, &parsed, now_ms)?;
 
         // Everything passed: now the state changes.
@@ -1198,6 +1266,7 @@ struct Parsed {
     seq: u32,
     challenge: [u8; CHALLENGE_LEN],
     echo: [u8; CHALLENGE_LEN],
+    parent_tag: [u8; PARENT_TAG_LEN],
     message: Zeroizing<Vec<u8>>,
 }
 
@@ -1205,6 +1274,8 @@ fn parse_plaintext(plain: &[u8], class: MessageClass) -> Option<Parsed> {
     if plain.len() != class.bucket() {
         return None;
     }
+    // The tag occupies the last bytes; a message length that reaches into it is malformed.
+    let (plain, tag) = plain.split_last_chunk::<PARENT_TAG_LEN>()?;
     let (recipient, rest) = plain.split_first_chunk::<16>()?;
     let (sender, rest) = rest.split_first_chunk::<16>()?;
     let (seq, rest) = rest.split_first_chunk::<4>()?;
@@ -1219,6 +1290,7 @@ fn parse_plaintext(plain: &[u8], class: MessageClass) -> Option<Parsed> {
         seq: u32::from_be_bytes(*seq),
         challenge: *challenge,
         echo: *echo,
+        parent_tag: *tag,
         message,
     })
 }
@@ -1253,6 +1325,7 @@ mod tests {
             seq,
             challenge,
             echo,
+            parent_tag: NO_PARENT_TAG,
         };
         seal_with_nonce(k, &frame, b"{\"m\":1}", [nonce; NONCE_LEN]).unwrap()
     }
@@ -2315,7 +2388,7 @@ mod tests {
 
     proptest! {
         #[test]
-        fn any_message_round_trips(msg in proptest::collection::vec(any::<u8>(), 0..=1024 - PLAINTEXT_HEAD_LEN)) {
+        fn any_message_round_trips(msg in proptest::collection::vec(any::<u8>(), 0..=1024 - PLAINTEXT_HEAD_LEN - PLAINTEXT_TAIL_LEN)) {
             let mut p = Pair::confirmed();
             let s = p.baby_sends(MessageClass::Control, &msg);
             let o = p.parent_opens(&s).unwrap();

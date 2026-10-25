@@ -218,6 +218,26 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
+    fn dump_vector_updates() {
+        let raw = include_str!("../vectors/conformance.json");
+        let cases: Vec<Value> = serde_json::from_str(raw).unwrap();
+        let mut updates = serde_json::Map::new();
+        for case in cases {
+            let name = case["name"].as_str().unwrap_or("?").to_owned();
+            let got: Value = serde_json::from_str(&evaluate(&case.to_string())).unwrap();
+            if got != case["expect"] {
+                updates.insert(name, got);
+            }
+        }
+        std::fs::write(
+            "/workspace/target/vector-updates.json",
+            serde_json::to_string(&updates).unwrap(),
+        )
+        .unwrap();
+    }
+
+    #[test]
     fn unknown_trace_schema_is_rejected() {
         let got: Value = serde_json::from_str(&evaluate(
             r#"{"schema":"gs-trace/2","config":{},"steps":[]}"#,

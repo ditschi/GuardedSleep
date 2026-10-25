@@ -1,0 +1,101 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "attack-mitm-after-pairing",
+  "description": "After the pairing the relay turns hostile: it holds the PSK and sits between two DTLS sessions with a certificate of its own per leg, recomputing the pairing proof for each. Every attempt through it verifies at the PSK level, but the parent proof was computed over fingerprints the baby never saw, so the baby unit refuses each attempt, never trusts it, and warns. Once the relay behaves again the pair connects.",
+  "seed": 1,
+  "relay": {},
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 30000,
+      "do": "relay_rewrite",
+      "mode": "mitm_recompute"
+    },
+    {
+      "at": 31000,
+      "do": "drop_data"
+    },
+    {
+      "at": 70000,
+      "do": "clear_faults"
+    },
+    {
+      "at": 210000,
+      "do": "relay_rewrite"
+    },
+    {
+      "at": 330000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 25000
+    },
+    {
+      "peer": "baby",
+      "event": "parent_pinned",
+      "count": 1,
+      "within_ms": [0, 30000]
+    },
+    {
+      "peer": "baby",
+      "event": "failed",
+      "where": {
+        "reason": "parent_proof_mismatch"
+      },
+      "within_ms": [70000, 210000],
+      "count_min": 2
+    },
+    {
+      "peer": "baby",
+      "event": "security_warning",
+      "where": {
+        "key": "unknown_parent_attempt"
+      },
+      "within_ms": [70000, 210000],
+      "count_min": 1,
+      "count_max": 1
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "connected"
+        }
+      },
+      "within_ms": [70000, 210000]
+    },
+    {
+      "peer": "baby",
+      "never": "parent_connected",
+      "within_ms": [60000, 210000]
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 325000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 325000
+    }
+  ]
+}

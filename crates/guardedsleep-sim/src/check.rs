@@ -166,6 +166,19 @@ fn check_one(world: &World, a: &Assertion) -> (bool, String) {
         let ok = count_ok(a, n);
         return (ok, format!("{n} message(s)"));
     }
+    if let Some(want) = &a.preauth {
+        let frames: Vec<&str> = world
+            .preauth
+            .iter()
+            .filter(|(i, _)| *i == ix)
+            .map(|(_, t)| t.as_str())
+            .collect();
+        let ok = !frames.is_empty() && frames.iter().all(|f| f == want);
+        return (
+            ok,
+            format!("{} frame(s) before hello: {frames:?}", frames.len()),
+        );
+    }
     if let Some(want) = a.joined {
         let n = actor.welcomes.iter().filter(|t| in_window(**t)).count();
         return ((n > 0) == want, format!("{n} welcome(s)"));
