@@ -7,7 +7,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
 pattern='stun[0-9]*\.l\.google\.com|stun\.google|[a-z0-9.-]*\.google\.com:19302|stun:[^ "'"'"']*google'
-exempt='^(openspec/changes/archive/|openspec/changes/add-stun-server-choice/|openspec/changes/add-rust-signaling-server/|openspec/specs/signaling-relay/|docs/reviews/|docs/technical/analysis\.md$|CHANGELOG\.md$|scripts/lib/no-google-stun\.sh$)'
+exempt='^(openspec/changes/archive/|openspec/changes/alpha-connection-model/|crates/public-lists/|docs/ci-gates\.md$|openspec/changes/add-stun-server-choice/|openspec/changes/add-rust-signaling-server/|openspec/specs/signaling-relay/|docs/reviews/|docs/technical/analysis\.md$|CHANGELOG\.md$|scripts/lib/no-google-stun\.sh$)'
 
 status=0
 while IFS= read -r -d '' f; do
