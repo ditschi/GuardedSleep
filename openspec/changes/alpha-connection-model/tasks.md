@@ -90,7 +90,7 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 
   Verify: JVM tests with fake sockets; `just verify-android`.
 
-- [ ] 5.3 Android UI:
+- [ ] 5.3 Android UI (BLOCKER for any build that ships 3.6 relay entries: disclosure and the off switch must exist before a release baby emits `n:` entries; security review of 3.5, M7):
   - the Connection section with the disclosure and "Who are they?";
   - on the baby: "Connected to <name>" with "Not my device", the security warning for refused parents, and the copy that forgetting on the parent alone leaves the baby paired;
   - Advanced: the off switch, own relays and TURN;
@@ -107,7 +107,7 @@ Alpha (T0). Builds on `rebuild-web-client` group 1 (core invite codec) and group
 ## 6. Web
 
 - [ ] 6.1 Web link driver: mailbox WebSockets; the seed from `crypto.getRandomValues`; the wall clock; the ICE config from the lists; the off switch; the CSP `connect-src` from the generated list. Verify: Vitest with fake sockets; the storage test still finds no PSK, derived value or parent id.
-- [ ] 6.2 Web settings and copy as in 5.3, plus the QR scan test in Playwright (inverted, 50 %). Verify: Vitest, Playwright with axe, `just lint-text`.
+- [ ] 6.2 Web settings and copy as in 5.3 (same blocker as 5.3), plus the QR scan test in Playwright (inverted, 50 %). Verify: Vitest, Playwright with axe, `just lint-text`.
 - [ ] 6.3 Playwright: a minimal NIP-01 test relay in the `apps/e2e` utilities (no public relays in CI); two contexts pair through it; a mailbox drop during setup still verifies; a CSP check that only listed origins connect. Verify: `just e2e`.
 
 ## 7. Integration
