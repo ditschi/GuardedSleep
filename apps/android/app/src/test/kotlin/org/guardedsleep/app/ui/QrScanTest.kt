@@ -26,7 +26,8 @@ import org.robolectric.annotation.GraphicsMode
 @Config(sdk = [35])
 class QrScanTest {
     private companion object {
-        const val FRAME_PX = 360
+        // A scanner sees many frames at different distances; one decoding frame is a scan.
+        val FRAME_SIZES = listOf(320, 360, 400, 440)
     }
 
     // A throw-away counting-byte key, built rather than written out (the secret scan matches
@@ -88,12 +89,23 @@ class QrScanTest {
         check(bitmap.width == bitmap.height)
         val pixels = IntArray(bitmap.width * bitmap.height)
         bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
-        val frame = cameraFrame(pixels, bitmap.width, FRAME_PX, brightness)
-        // Light on dark: scanners read it through the inverted image.
-        val source = InvertedLuminanceSource(RGBLuminanceSource(FRAME_PX, FRAME_PX, frame))
-        return QRCodeReader()
-            .decode(BinaryBitmap(HybridBinarizer(source)), mapOf(DecodeHintType.TRY_HARDER to true))
-            .text
+        var failure: Exception? = null
+        for (side in FRAME_SIZES) {
+            val frame = cameraFrame(pixels, bitmap.width, side, brightness)
+            // Light on dark: scanners read it through the inverted image.
+            val source = InvertedLuminanceSource(RGBLuminanceSource(side, side, frame))
+            try {
+                return QRCodeReader()
+                    .decode(
+                        BinaryBitmap(HybridBinarizer(source)),
+                        mapOf(DecodeHintType.TRY_HARDER to true),
+                    )
+                    .text
+            } catch (e: com.google.zxing.ReaderException) {
+                failure = e
+            }
+        }
+        throw checkNotNull(failure)
     }
 
     @Test

@@ -67,7 +67,7 @@ import org.guardedsleep.app.ui.model.PairingPhase
 fun renderQr(payload: String, bright: Boolean): ImageBitmap? = runCatching {
     val hints =
         mapOf(
-            EncodeHintType.MARGIN to 2,
+            EncodeHintType.MARGIN to 4, // quiet zone of 4 modules (ISO/IEC 18004)
             EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.M,
             EncodeHintType.CHARACTER_SET to "UTF-8",
         )
