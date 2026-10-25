@@ -19,9 +19,9 @@ data class StoredPairing(
     val pairedBefore: Boolean,
     val turn: TurnCredentials? = null,
     /**
-     * The pinned parent secret (base64url of 32 bytes): the baby's pinned parent, or the secret
-     * the parent drew (acknowledged or not). Null before the first pairing completed. The record
-     * holds it durably before the parent sends it to the baby (persist before send).
+     * The pinned parent secret (base64url of 32 bytes): the baby's pinned parent, or the secret the
+     * parent drew (acknowledged or not). Null before the first pairing completed. The record holds
+     * it durably before the parent sends it to the baby (persist before send).
      */
     val parentSecretB64url: String? = null,
     /**

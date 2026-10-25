@@ -436,7 +436,8 @@ class LinkControllerTest {
                 val stored = parent.store.load()?.parentSecretB64url
                 // The message carries the secret as hex, the record as base64url.
                 val hex =
-                    stored?.let { org.guardedsleep.app.pairing.PairingPayload.decodePsk(it) }
+                    stored
+                        ?.let { org.guardedsleep.app.pairing.PairingPayload.decodePsk(it) }
                         ?.joinToString("") { "%02x".format(it) }
                 checks += (stored != null) to (hex != null && text.contains(hex))
             }

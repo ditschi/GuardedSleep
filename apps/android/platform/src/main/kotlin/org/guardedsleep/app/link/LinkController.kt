@@ -718,12 +718,11 @@ class LinkController(
         /**
          * `ParentPinned`: keep the secret (and the first-pairing window) next to the PSK. This is
          * binding **persist before send**: the parent's core emits it before every action that
-         * carries the raw secret and the runner executes the actions of one output in order on
-         * this thread, so the record is durable (fsync, then rename) before the baby can have
-         * pinned a secret this phone would lose in a restart. A failure throws; the runner then
-         * drops the rest of the batch (the secret is not sent) and the core emits the event again
-         * with its next resend. The baby pins at this event, which completes its pairing. Never
-         * logged.
+         * carries the raw secret and the runner executes the actions of one output in order on this
+         * thread, so the record is durable (fsync, then rename) before the baby can have pinned a
+         * secret this phone would lose in a restart. A failure throws; the runner then drops the
+         * rest of the batch (the secret is not sent) and the core emits the event again with its
+         * next resend. The baby pins at this event, which completes its pairing. Never logged.
          */
         private fun persistParentSecret(r: Run, secret: ByteArray, untilS: Long?) {
             val pending = r.pending

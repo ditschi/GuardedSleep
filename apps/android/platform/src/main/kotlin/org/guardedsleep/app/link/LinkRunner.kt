@@ -206,7 +206,8 @@ class LinkRunner(
             for (a in actions) execute(a, now)
         } catch (e: PinNotPersisted) {
             // The secret is not durable, so nothing after the event may run (the message that
-            // carries it follows in this very batch). The core repeats the event on its next resend.
+            // carries it follows in this very batch). The core repeats the event on its next
+            // resend.
             PocLog.event("failed", "reason" to "pin_not_persisted")
         }
     }
