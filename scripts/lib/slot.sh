@@ -3,9 +3,9 @@
 #   scripts/lib/slot.sh <light|medium|heavy> -- <cmd...>
 #
 # Slots are lock files /tmp/guardedsleep-slots/<class>.<i>.lock held with flock; the number of slots
-# per class comes from .cache/machine-profile.env (GS_MEDIUM_SLOTS, GS_HEAVY_SLOTS), generated on
-# demand by machine-profile.sh. Environment variables override the file. All worktrees and sessions
-# on the machine share the same pools. The lock is released when the command ends or this script is
+# per class is GS_MEDIUM_SLOTS (default 2) and GS_HEAVY_SLOTS (default 1), positive integers; set
+# GS_MEDIUM_SLOTS=1 on machines below 8 cores or 12 GB (docs/contributing/development.md, "Load
+# slots"). All worktrees and sessions on the machine share the same pools. The lock is released when the command ends or this script is
 # killed (the flock fd closes).
 #
 # Behaviour: try every slot of the class without blocking. If none is free, print
@@ -18,13 +18,6 @@
 # queueing time is not counted. Exit 124 means "ran too long", exit 75 means "waited too long for a
 # slot" (GS_SLOT_WAIT). GS_RUN_TIMEOUT is cleared for the child so a nested acquisition does not
 # start a second deadline. Light and re-entrant calls apply no deadline.
-#
-# Timings: every run that goes through the acquisition path appends one line to
-# ${GS_SHARED_CACHE:-$HOME/.cache/guardedsleep}/timings.tsv (tab separated, no header):
-#   1 ISO-8601 UTC time (end of run)  2 worktree (repo directory name)  3 class
-#   4 command (arguments after --, tabs/newlines as spaces)  5 wait seconds (until the slot was
-#   acquired)  6 run seconds  7 exit status  8 "nested" if GS_SLOT_HELD was already set, else "top".
-# A write error is ignored and never changes the exit status. `just timings [days]` summarises it.
 #
 # Re-entrancy: GS_SLOT_HELD names the heaviest class this process tree already holds. A nested call
 # for the same or a lighter class runs the command without acquiring. A nested heavy call inside a
@@ -56,18 +49,16 @@ if [ "$want" -eq 0 ] || [ "$want" -le "$(rank "${GS_SLOT_HELD:-light}")" ]; then
   exec "$@"
 fi
 
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-t_start=$SECONDS
-nesting=top
-[ -z "${GS_SLOT_HELD:-}" ] || nesting=nested
-PROFILE="$ROOT/.cache/machine-profile.env"
-[ -f "$PROFILE" ] || "$ROOT/scripts/lib/machine-profile.sh"
-overrides="$(for v in GS_MEDIUM_SLOTS GS_HEAVY_SLOTS; do
-  if [ -n "${!v:-}" ]; then printf 'export %s=%q\n' "$v" "${!v}"; fi
-done)"
-# shellcheck source=/dev/null
-source "$PROFILE"
-eval "$overrides"
+GS_MEDIUM_SLOTS="${GS_MEDIUM_SLOTS:-2}"
+GS_HEAVY_SLOTS="${GS_HEAVY_SLOTS:-1}"
+for v in GS_MEDIUM_SLOTS GS_HEAVY_SLOTS; do
+  case "${!v}" in
+    '' | *[!0-9]* | 0*)
+      echo "error: $v must be a positive integer (got '${!v}')" >&2
+      exit 2
+      ;;
+  esac
+done
 
 if [ "$class" = medium ]; then slots="$GS_MEDIUM_SLOTS"; else slots="$GS_HEAVY_SLOTS"; fi
 dir=/tmp/guardedsleep-slots
@@ -93,7 +84,6 @@ if [ -z "$acquired" ]; then
   fi
 fi
 
-t_acquired=$SECONDS
 export GS_SLOT_HELD="$class"
 run_timeout="${GS_RUN_TIMEOUT:-}"
 unset GS_RUN_TIMEOUT
@@ -112,18 +102,6 @@ if kill -0 "$child" 2>/dev/null; then
   # wait was interrupted by a trapped signal; the child is still shutting down.
   wait "$child" || status=$?
 fi
-record_timing() {
-  local file="${GS_SHARED_CACHE:-$HOME/.cache/guardedsleep}/timings.tsv" cmd="$*"
-  cmd="${cmd//$'\t'/ }"
-  cmd="${cmd//$'\n'/ }"
-  {
-    mkdir -p "$(dirname "$file")"
-    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-      "$(basename "$ROOT")" "$class" "$cmd" "$((t_acquired - t_start))" \
-      "$((SECONDS - t_acquired))" "$status" "$nesting" >>"$file"
-  } 2>/dev/null || true
-}
-record_timing "$@"
 if [ "$status" -eq 124 ] && [ -n "$run_timeout" ]; then
   echo "error: $class run exceeded GS_RUN_TIMEOUT=$run_timeout (slot wait not counted)" >&2
 fi

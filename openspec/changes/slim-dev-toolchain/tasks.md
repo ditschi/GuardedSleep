@@ -8,7 +8,7 @@ Each task is a brief for the `implementer` sub-agent. Work in one branch off `or
 
 ## 2. Orchestration slimming (D4)
 
-- [ ] 2.1 Files: `scripts/lib/slot.sh`, `justfile`, `scripts/lib/reap.sh`; delete `scripts/lib/timings.sh` and `scripts/lib/machine-profile.sh`.
+- [x] 2.1 Files: `scripts/lib/slot.sh`, `justfile`, `scripts/lib/reap.sh`; delete `scripts/lib/timings.sh` and `scripts/lib/machine-profile.sh`.
   - `slot.sh`: remove `record_timing`, `t_start`, `t_acquired`, `nesting` and the timings header comment. Replace the profile sourcing with `GS_MEDIUM_SLOTS="${GS_MEDIUM_SLOTS:-2}"` and `GS_HEAVY_SLOTS="${GS_HEAVY_SLOTS:-1}"`, validated as positive integers (otherwise exit 2 with a message). Keep the `GS_SLOT_WAIT`/exit 75 and `GS_RUN_TIMEOUT`/exit 124 behaviour and the re-entrancy rules unchanged.
   - `justfile`: remove the `machine-profile` and `timings` recipes and the `machine-profile.sh` call in `setup`.
   - `reap.sh`: remove `--prune-worktrees` and the prune branch; keep `--worktrees` listing and `--stop`; update the usage line and the header comment.

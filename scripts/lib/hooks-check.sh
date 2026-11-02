@@ -11,10 +11,13 @@ set -euo pipefail
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
 
 hooks="$(git rev-parse --path-format=absolute --git-path hooks)"
+# Scope that sets core.hooksPath (local, worktree, global, ...), named in the warning so a setting in
+# .git/worktrees/<name>/config.worktree is not mistaken for the repository config.
+scope="$(git config --show-scope --get core.hooksPath 2>/dev/null | cut -f1 || true)"
 tail_msg="Commits skip formatting, typos and the secret scan until then."
 
 if [[ "$hooks" == *".husky"* ]]; then
-  echo "warning: git hooks are off: core.hooksPath points at a stale Husky directory ($hooks); run 'just setup'. $tail_msg" >&2
+  echo "warning: git hooks are off: core.hooksPath points at a stale Husky directory ($hooks, set in the ${scope:-unknown} scope); run 'just setup'. $tail_msg" >&2
 elif [ ! -x "$hooks/pre-commit" ] || ! grep -q lefthook "$hooks/pre-commit"; then
   echo "warning: git hooks are off: no lefthook pre-commit hook in $hooks; run 'just setup'. $tail_msg" >&2
 fi
