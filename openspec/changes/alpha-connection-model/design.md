@@ -65,7 +65,7 @@ The `nostr` kind is removed (§11; history under "Discarded alternatives").
 
 - Actions: `open_mailbox(id, kind, url)`, `mailbox_send(id, frame)`, `close_mailbox(id)`.
 - Inputs: `mailbox_opened(id)`, `mailbox_closed(id, reason)`, `mailbox_frame(id, bytes)`.
-- The core speaks the relay wire protocol (`hello`/`welcome`/`signal`/`ice`).
+- The core speaks the relay wire protocol (`hello`/`welcome`/`signal`/`ice_servers`).
 
 **Behaviour:**
 
@@ -78,6 +78,8 @@ The `nostr` kind is removed (§11; history under "Discarded alternatives").
 - **On loss, and on entering `peer_stopped`:** the core reopens every mailbox at once, because it then has to hear the peer's new session.
 
 Attempts, liveness, escalation and listen are unchanged. Loss is still detected on the DataChannel.
+
+**Several relay mailboxes (gap found by the review of 2026-11-02, C1; task 8.7):** as built, the set holds exactly one `relay` mailbox (`RELAY_MAILBOX = 0`) plus the Nostr mailboxes, and the platform keeps the `r:` URLs as an address list and fails over between them inside its transport. Nostr was the only way the core held several mailboxes, so removing it leaves "project server and own relay in parallel" unbuilt, and URL failover in the platform is what AGENTS.md §5.1 calls a bug. Task 8.7 therefore moves every `r:` entry into the core as its own relay mailbox with its id, URL and host, room membership, relay client id, presence repeats, supplied ICE set (§7) and reachability check, and removes the platform's URL list and failover. "Ready" (§2, "Relay mailbox as built") becomes per relay: a confirmed peer session plus membership, on any relay, of the client id that session last spoke from on that relay. `request_offer`, offers and candidates fan out to every relay where the peer is a member. Sim scenarios run with two relays (one dies, one flaps, both deliver the same envelope).
 
 **Closed mailboxes as built (task 3.4):**
 
@@ -173,10 +175,10 @@ Attempts, liveness, escalation and listen are unchanged. Loss is still detected 
 - **On a relay (the project server or an own relay):**
   - `hello`/`welcome`/`members`/`peer` with the derived room id, role, protocol version and client ids;
   - `signal` with `to`/`from` and the sealed envelope (header: version, role, class; the nonce; the ciphertext with its tag);
-  - `ice` sent by the relay (§7): ICE URLs and a short-lived TURN credential;
+  - `welcome.iceServers` and `ice_servers` sent by the relay (§7): ICE URLs and a short-lived TURN credential;
   - `ping`/`pong`;
   - error codes.
-- **On the TURN server:** the TURN user name (`<expiry>:<random id>`), the client's addresses and ports, the permitted peer addresses (the other device's candidates), and the volume and timing of DTLS-SRTP and DTLS packets it relays. Never the PSK, the room id or plaintext media.
+- **On the TURN server:** the TURN user name (`<expiry>:<random id>`), the client's addresses and ports, the permitted peer addresses (the other device's candidates, **including its private host-candidate addresses**, §7 "What TURN reveals"), and the volume and timing of DTLS-SRTP and DTLS packets it relays. Never the PSK, the room id or plaintext media.
 
 The log canary covers the PSK, every derived key, the seed, the parent secret, the room id, plaintext SDP and the TURN credential (password) a relay issued.
 
@@ -194,14 +196,14 @@ The log canary covers the PSK, every derived key, the seed, the parent secret, t
 
 **What the server is:** the ordinary `guardedsleep-server` in Open mode (`signaling-relay` "Relay admission": no challenge on the public server), behind the owner's Traefik, with coturn next to it (§7, §9). It carries only sealed envelopes (§2) and is exactly as untrusted as any own relay: the pairing proof, the DTLS fingerprint binding, the session binding and the parent pin hold against it.
 
-**What its operator learns:** the IP addresses of both devices, when they pair, recover and check reachability, the derived room id (stable per pairing), the role, and the size class of each envelope; with TURN (§7) also the relayed volume and timing. This is the same metadata a Nostr operator saw, now seen by one party instead of three to five, and the party is the project itself, named in the disclosure (§8).
+**What its operator learns:** the IP addresses of both devices, when they pair, recover and check reachability, the derived room id (stable per pairing), the role, and the size class of each envelope; with TURN (§7) also the relayed volume and timing. This is the same metadata a Nostr operator saw, now seen by one party instead of three to five, and the party is the project itself, named in the disclosure (§8). A relayed call adds the peers' LAN addresses (§7 "What TURN reveals").
 
-**Outage:** while the server is down, verified monitoring continues (internet mailboxes are closed while verified, §1) but a lost link cannot recover over the internet: the parent escalates normally and the troubleshooter shows `server_unreachable`. Mitigations:
+**Outage:** while the server is down, verified monitoring continues (internet mailboxes are closed while verified, §1) but a lost link cannot recover over the internet: the parent escalates normally (a missed alarm is the worst failure, and escalation never depends on the server) and the troubleshooter shows `server_unreachable`. Mitigations:
 
 - the Uptime Kuma check from the owner's Oracle host alerts the owner (§9);
 - an own relay in Advanced adds a second internet mailbox, and the LAN mailbox (`add-offline-lan`) recovers at home without any server;
 - the mailbox update (§5) lets a later release move the pairing to another host without a re-pair;
-- the domain `mydata.rocks` and the Contabo contract are owner tasks with renewal reminders (§10).
+- the domains `mydata.rocks` and `ditscher.me`, the DNS account and the Contabo contract are owner tasks with renewal reminders, CAA and two-factor login (§10).
 
 **Off switch:** "Only same Wi-Fi or my own server" (§8) removes the project server from the device's set, its invites and the mailbox updates it accepts, and with it the project STUN and TURN.
 
@@ -321,77 +323,90 @@ The first review's design used a bearer parent id inside the envelopes. A PSK ho
 
 ### 6. Shipped data (repository `data/`; generator into both clients and the web CSP)
 
-**`data/project-server.json` (new; replaces `data/nostr-relays.json`):** one entry with the signaling host and path (`gs.mydata.rocks`, `/signaling`), the operator (the GuardedSleep project, run by the owner), the country (DE, the Contabo data centre), the hoster, the privacy policy URL and the imprint URL (§10) and `last_vetted`. The `public-lists` generator emits from it:
+**`data/project-server.json` (new; replaces `data/nostr-relays.json`):** one entry with the signaling host and path (`gs.mydata.rocks`, `/signaling`), the operator (the GuardedSleep project, run by the owner), the country (DE, the Contabo data centre), the hoster, the privacy policy URL, the imprint URL (§10), `last_vetted` and a `status` of `pending` or `live`. The `public-lists` generator emits from it:
 
 - the default mailbox entry (`r:gs.mydata.rocks/signaling`) for both clients;
 - the operator line of the disclosure (§8), so operator names never live in locale copy;
-- the web CSP `connect-src` origin (`wss://gs.mydata.rocks`).
+- the web CSP `connect-src` origin (`wss://gs.mydata.rocks`), **only for web builds that set the official-deployment flag** (below).
 
-**`data/stun-servers.json` (kept as the STUN allowlist):** STUN hosts the clients may contact. After this revision no client uses a third-party STUN server by default (§7); the file holds the project host and stays the lint's allowlist ("Only STUN hosts in `data/stun-servers.json`", AGENTS.md §7.1). The third-party EU entries (Nextcloud, Telekom, …) are removed from the shipped defaults; whether they stay in the file as allowed-but-unused entries is decided in task 9.1 by one rule: an entry stays only if a client can actually reach it, otherwise it goes (the file must not suggest a use that does not exist). The build minimum "2 STUN servers from distinct operators" goes with the default.
+**Build check (answers review 2026-11-02, I11):** with `status: pending` the URLs may be null and `just lint` passes, so groups 8–9 can land before the owner has the pages; a test asserts that a release flag (§8) cannot be on while the entry is `pending`. With `status: live` the generator fails without `https://` privacy policy and imprint URLs. A `last_vetted` older than 12 months only warns, as before.
 
-**Build check:** the generator fails without exactly one active project server entry with an `https://` privacy policy and imprint URL. A `last_vetted` older than 12 months only warns, as before.
+**`data/stun-servers.json` (kept as the STUN allowlist; decided, review 2026-11-02 M20):** it holds `gs.mydata.rocks` only; the third-party EU entries (Nextcloud, Telekom, …) are deleted, because no client contacts them any more (§7). The build minimum "2 STUN servers from distinct operators" goes. The lint (`stun-sources`) keeps allowing only these hosts plus test hosts.
+
+**Who may use the public server from a browser (answers review 2026-11-02, I7):** `guardedsleep-server` refuses browser origins outside `SIGNALING_ALLOWED_ORIGINS` (`signaling-relay` "Origin allowlist"; native clients send no `Origin` and are accepted). The public server allows only the official web origin, if the owner hosts one (§9); self-hosted web deployments bring their own relay. So the project server origin goes into a web build's CSP and default mailbox only when the build sets the official-deployment flag; every other web build defaults to its own origin's `/signaling`, as today.
 
 **Web CSP (answers review 2, I9; unchanged in shape):**
 
-- `connect-src` is `'self'`, plus the project server origin, plus the own relays configured **for the deployment**.
+- `connect-src` is `'self'`, plus the project server origin (official deployment only), plus the own relays configured **for the deployment**.
 - The server's `--serve-web` and the nginx image emit the header from deployment settings, with the `<meta>` fallback for the defaults.
 - The web client offers own relays only from the deployment list, so the user cannot type arbitrary origins, and it ignores invite hosts outside its CSP.
 - A blanket `wss:` is never used.
 - ICE servers are not governed by `connect-src`; the host-binding rule of §7 restricts them instead.
 
-### 7. ICE and TURN from the signaling server (layers: server issues; core validates and selects; platform builds the ICE config)
+### 7. ICE and TURN from the signaling server (layers: relay decides when, server signs, core validates and selects, platform builds the ICE config)
 
-**Source of ICE servers, in order:**
+**Source of ICE servers for an attempt (answers review 2026-11-02, I12):** the core computes one list per attempt:
 
-1. **ICE servers a relay mailbox supplied** (below): STUN and TURN on that relay's own host. For the project server: `stun:gs.mydata.rocks:3478`, `turn:gs.mydata.rocks:3478?transport=udp`, `turn:gs.mydata.rocks:3478?transport=tcp` and, once certificates are in place (task 10.2), `turns:gs.mydata.rocks:5349?transport=tcp`.
-2. **A relay that supplies nothing** (an older or self-hosted server without the setting): `stun:<relay host>:3478`, the built-in STUN, as today (`relay-stun`).
-3. **A user-entered TURN server** (`device-setup` "TURN server entry") is added by the platform next to the above, as today.
-4. **With "Only same Wi-Fi or my own server" and no own relay:** no STUN and no TURN at all; host candidates only.
+1. the union of the still-valid sets that the pairing's relay mailboxes supplied (below), each on its own relay's host. For the project server: `stun:gs.mydata.rocks:3478`, `turn:gs.mydata.rocks:3478?transport=udp`, `turn:gs.mydata.rocks:3478?transport=tcp` and, once task 10.2 lands, `turns:gs.mydata.rocks:5349?transport=tcp`;
+2. for each relay mailbox without a supplied set (an older or self-hosted server without the setting): `stun:<relay host>:3478`, the built-in STUN, as today (`relay-stun`), now computed in the core because the core knows its relay hosts (task 8.7);
+3. nothing for a pairing without any relay mailbox (LAN only, or "Only same Wi-Fi or my own server" without an own relay): host candidates only.
 
-No client contacts a third-party STUN server by default any more; the curated EU STUN default is discarded (see "Discarded alternatives"). Only hosts of the pairing's relays, a user-entered TURN host and the hosts in `data/stun-servers.json` may appear in client ICE configuration, enforced by the existing lint (`stun-sources`, extended to `turn:` and `turns:` URLs in client source).
+The platform adds a user-entered TURN server (`device-setup` "TURN server entry") as today. An attempt is not "over" one mailbox, because envelopes fan out to all of them; the list does not depend on which mailbox carried the offer.
 
-**Wire (relay protocol v3, additive):**
+No client contacts a third-party STUN server by default any more; the curated EU STUN default is discarded (see "Discarded alternatives"). Only hosts of the pairing's relays, a user-entered TURN host and the hosts in `data/stun-servers.json` may appear in client ICE configuration, enforced by the lint (`stun-sources`, extended to `turn:` and `turns:` URLs in client source, task 9.4).
 
-- `welcome` gains an optional `ice` field with STUN URLs only (no credential), so a lone member can gather server-reflexive candidates.
-- A new server message `{"type":"ice","urls":[…],"username":"<expiry>:<id>","credential":"<base64>","ttl":<s>}` carries TURN. The relay sends it to **each** member, with a credential of its own, when the room holds a baby and a parent, **before** the `members`/`peer` update that shows the room complete, so a client always has it before presence can start an attempt. While both stay joined, the relay sends a fresh one at half the TTL. It is never sent into a room with one member.
+**Wire (relay protocol v3, additive; the frame is named `ice_servers` because `ice` is already the sealed candidate payload, review 2026-11-02 M16):**
+
+- `welcome` gains an optional `iceServers` field with STUN URLs only (no credential), so a lone member can gather server-reflexive candidates.
+- A new server message `{"type":"ice_servers","urls":[…],"username":"<expiry>:<id>","credential":"<base64>","ttl":<s>}` carries TURN. The relay sends it to **each** member, with a credential of its own, when the room holds at least one baby and one parent, **before** the `members`/`peer` update that completes the room, so a client always has it before presence can start an attempt. While both roles stay joined, each member gets a fresh one at half the TTL. It is never sent into a room with one role only.
 - A client never asks for credentials; there is no request message to abuse.
+
+**Who does what (answers review 2026-11-02, I2):**
+
+- `guardedsleep-relay` (sans-IO, shared with the Android LAN listener) decides **when**: it emits an effect `IssueIceServers { conn }` at the moment above and on a half-TTL renewal timer driven by `on_tick`, and enforces the per-room and per-address caps below. It holds no secret, no wall clock and no hash for this.
+- `guardedsleep-server` **signs**: it reads the wall clock, draws the 16-byte id, computes the credential with RustCrypto `hmac` and `sha1`, keeps `TURN_SECRET` in a `secrecy` type, and injects the frame. `sha1` appears only in the server's dependency graph; a `cargo deny` / `cargo tree` check asserts it is absent from the `core` and `relay` graphs, so HMAC-SHA1 never reaches a client.
+- At start the server checks that every URL in `TURN_URLS` and `STUN_URLS` names exactly `PUBLIC_HOST` (the signaling host) and refuses to start otherwise, because clients would silently drop the whole set (review 2026-11-02 M18).
 
 **Credential (coturn REST scheme, `--use-auth-secret`):**
 
 - User name `<expiry unix s>:<id>`, where `id` is 16 random bytes in base64url, **never** the room id or anything derived from the PSK (coturn logs user names at some levels).
-- Password `base64(HMAC-SHA1(TURN_SECRET, username))`, coturn's fixed format. HMAC-SHA1 is used only in the server for this purpose (AGENTS.md §7.3 wording in §2).
-- TTL from `TURN_TTL_S`, default 600, clamped to at most 600 s.
-- `TURN_SECRET` (32 random bytes, hex) is shared by the server and coturn through the deployment `.env` (§9), never committed, never in a binary. The server holds it in a `secrecy` type and never logs it; the issued password is on the log-canary list.
-- Without `TURN_SECRET` and `TURN_URLS` the server sends no `ice` message; with only `STUN_URLS` it sends the `welcome` field only.
+- Password `base64(HMAC-SHA1(TURN_SECRET, username))`, coturn's fixed format. HMAC-SHA1 is used only in `guardedsleep-server` for this purpose (AGENTS.md §7.3 wording in §2).
+- TTL from `TURN_TTL_S`, default 600, clamped to at most 600 s (see "Allocation lifetime" for the only way this bound may change).
+- `TURN_SECRET` (32 random bytes, hex) is shared by the server and coturn through the deployment `.env` (§9), never committed, never in an image or a binary. The issued password is on the log-canary list. **Rotation:** set a new secret in `.env` and restart both containers together; credentials already issued stop working for new allocations, and the clients get new ones at their next join or renewal.
+- Without `TURN_SECRET` and `TURN_URLS` the server sends no `ice_servers` message; with only `STUN_URLS` it sends the `welcome` field only.
 
-**Gate ("only a room with two members"):** the server cannot see the pairing proof, and relayed media needs TURN **before** the DTLS handshake can verify anything, so issuing "after the pairing proof" (backlog `IDEA`, 2026-10-25) is impossible; it is discarded. The gate is:
+**Gate and abuse bounds (answers review 2026-11-02, I3):** the server cannot see the pairing proof, and relayed media needs TURN **before** the DTLS handshake can verify anything, so issuing "after the pairing proof" (backlog `IDEA`, 2026-10-25) is impossible; it is discarded. The bounds are:
 
-- a room holding exactly one baby and one parent, each joined with `hello` and a room id of the derived shape (v3);
-- the existing join and new-room rate limits per IP (ADR-020 §6);
-- issuance per member at most once per half TTL;
-- coturn quotas sized for audio (below).
+- a room holding at least one baby and one parent, each joined with `hello` and a room id of the derived shape (v3); every member of such a room gets its own credential (the public server allows one parent; a self-hosted relay with `SIGNALING_MAX_PARENTS` > 1 issues per parent, review M22);
+- at most one live credential per member, renewed only while both roles stay joined;
+- at most `TURN_MAX_LIVE_PER_ADDR` live credentials per client address (IPv4 address or IPv6 /64; default 8, configurable, because many families share one CGNAT address);
+- the existing join and new-room rate limits per address (ADR-020 §6);
+- coturn: `--user-quota=3` (one attempt needs at most a UDP and a TCP allocation plus one spare; every credential has its own user name, so this caps each credential, not each client), `--total-quota` equal to the relay port range (one port per allocation; defaults 200 and 49160–49359), `--max-bps` sized for audio.
 
-Residual risk, accepted (owner, 2026-10-25 and 2026-11-02): two self-made clients can open a room with any room id of the right shape and get credentials. The quotas make that a slow, rate-limited 1 Mbit/s relay that lives 10 minutes per credential, bounded by `total-quota`.
+Residual risk, accepted (owner, 2026-10-25 and 2026-11-02): self-made clients can open rooms with any room id of the right shape and keep credentials alive as long as their two sockets stay joined. Per address that is at most 8 credentials × 3 allocations at 1 Mbit/s each; a botnet with many addresses can still exhaust `total-quota` and deny TURN to relayed families, which then see `media_blocked` while escalation runs. The owner watches coturn's allocation count (§9) and can lower the per-address cap or the quotas.
 
 **Core (sans-IO):**
 
-- The core parses `welcome.ice` and `ice` frames of a relay mailbox with the parser lint denies: at most 8 URLs, schemes `stun:`, `turn:`, `turns:` only, every URL host exactly equal (lower-case) to that mailbox's host, user name and credential at most 128 ASCII characters, `ttl` 1–600. A frame that fails is dropped as a whole.
+- The core parses `welcome.iceServers` and `ice_servers` frames of each relay mailbox with the parser lint denies: at most 8 URLs, schemes `stun:`, `turn:`, `turns:` only, every URL host exactly equal (lower-case) to that mailbox's host, user name and credential at most 128 ASCII characters, `ttl` 1–600. A frame that fails is dropped as a whole.
 - **Host binding:** a relay can never point clients at another host's TURN, so a compromised or malicious relay cannot move media metadata to a third party.
-- It stores the latest valid set per mailbox with its monotonic receipt time, and attaches to every new attempt the ICE servers of the set that is still valid for at least 30 s (receipt + TTL − 30 s by the monotonic clock). Expired sets are dropped. Attempts over a `lan` mailbox get none.
-- The platform builds the WebRTC ICE configuration from the attempt's servers plus a user-entered TURN. Credentials are redacted in `Debug`, never logged, never persisted, never put into the invite or the mailbox update.
+- It stores the latest valid set per relay mailbox with its monotonic receipt time, and builds each attempt's list as above from the sets still valid for at least 30 s (receipt + TTL − 30 s by the monotonic clock). Expired sets are dropped.
+- The platform builds the WebRTC ICE configuration from the attempt's list plus a user-entered TURN. Credentials are redacted in `Debug`, never logged, never persisted, never put into the invite or the mailbox update.
 
-**Allocation lifetime past the credential TTL (to verify, task 9.4):** a relayed call must survive an 8-hour night, but the credential expires after 10 minutes and a running `RTCPeerConnection` cannot take new credentials without an ICE restart. Expected behaviour: coturn checks the REST timestamp when it derives the key for the session's first authenticated request and keeps the session key, so `Refresh`, `CreatePermission` and `ChannelBind` keep working after the expiry. Task 9.4 proves it with the gate's coturn: an allocation made with a 60-second credential still relays after 15 minutes. **If it does not,** relayed media would drop every TTL; the fallback is a TTL of 12 hours per credential with the same gate, and the owner decides (recorded in this section).
+**Allocation lifetime past the credential TTL (verified first, task 9.1; answers review 2026-11-02, I8):** a relayed call must survive an 8-hour night, but the credential expires after 10 minutes and a running `RTCPeerConnection` cannot take new credentials without an ICE restart. Expected behaviour: coturn checks the REST timestamp when it derives the key for the session's first authenticated request and keeps the session key, so `Refresh`, `CreatePermission` and `ChannelBind` keep working after the expiry. Task 9.1 proves it before any other TURN work, against the gate's coturn, with a run longer than `--stale-nonce` (≥ 11 minutes) on an allocation made with a 60-second credential. **If it does not hold,** relayed media would drop every TTL; the fallback is a credential TTL of 12 hours with the same gate, which the owner decides, and which amends the 600-second bound in `specs/signaling-relay` "Short-lived TURN credentials", the server clamp and the core's `ttl` parser bound together (recorded in this section).
 
 **coturn profile (task 10.1; abuse limits carried over from `docker/turn/compose.yaml`):**
 
 - `--use-auth-secret --static-auth-secret=${TURN_SECRET}`, `--realm=gs.mydata.rocks`, `--fingerprint`;
 - host networking; on Contabo the public IPv4 and IPv6 sit on the interface (no 1:1 NAT), so `--listening-ip` and `--relay-ip` are the public addresses and no `--external-ip` mapping is needed;
-- `--no-tcp-relay`, `--no-multicast-peers`, `--stale-nonce=600`, `--user-quota`, `--total-quota`, `--max-bps` as in `docker/turn/compose.yaml`;
+- `--no-tcp-relay`, `--no-multicast-peers`, `--stale-nonce=600`, the quotas above, `--max-bps` as in `docker/turn/compose.yaml`;
 - the `--denied-peer-ip` ranges of `docker/turn/compose.yaml`, **plus the host's own public IPv4 and IPv6**, so TURN can never relay into Traefik, the signaling server or any other service on the host;
-- the relay port range from `.env` (default 49160–49359, 200 ports, about 100 relayed pairs), matched by the firewall;
-- logging: no client IP address in any log (§9); the profile is checked by a log test in task 10.1.
+- the relay port range from `.env` (default 49160–49359), matched by the firewall and by `--total-quota`;
+- **STUN without amplification (answers review 2026-11-02, I4):** coturn now answers the project's STUN, which loses the built-in STUN's guarantees (`signaling-relay` "Built-in STUN": ≤ 44 bytes, ≤ 2.2 × the request, a per-address limit). The profile sets `--no-rfc5780` and keeps the software attribute off, and task 10.1 measures the Binding response to a bare 20-byte request. If it exceeds 44 bytes or 2.2 ×, the owner decides between accepting it (coturn has no per-address STUN limit) and the alternative of serving STUN from the built-in STUN on 3478 with coturn's TURN on another port (`TURN_URLS` follows). The "Built-in STUN" requirement itself is unchanged: it describes `guardedsleep-server`, which keeps it for self-hosting and the local PC mode;
+- logging: no client IP address in any log, including denied-peer lines (§9); proved by the log test of task 10.1.
 
-**TURN:** the troubleshooter copy for `media_blocked` stays plain: "These two devices can't reach each other from where they are." Its actions are "Try again" and "Put both on the same Wi-Fi", plus "Advanced: TURN server" for experts. With the project TURN, `media_blocked` should become rare; the hardware round measures it. It never replaces the alarm.
+**What TURN reveals (answers review 2026-11-02, I5):** a relayed call sends `CreatePermission` for the peer's candidates, including its private host-candidate addresses (native Android does not mask them with mDNS). The TURN server, run by the same operator as the project relay, therefore learns the peers' LAN and server-reflexive addresses that the sealed envelope hides from the relay. This is listed in "Relay-visible data", in the disclosure (§8) and in the threat model (task 8.5).
+
+**Troubleshooter:** the copy for `media_blocked` stays plain: "These two devices can't reach each other from where they are." Its actions are "Try again" and "Put both on the same Wi-Fi", plus "Advanced: TURN server" for experts. With the project TURN, `media_blocked` should become rare; the hardware round measures it. It never replaces the alarm.
 
 **Diagnostics:** a local view shows the connection type of the last attempt (direct on the LAN, direct over the internet, relayed through TURN). It never leaves the device.
 
@@ -401,11 +416,11 @@ The 2026-10-23 text ("Signaling may use the vetted EU/EEA/CH mailboxes and STUN 
 
 ### 8. Disclosure and off switch (layer: UI over contract models)
 
-**Release gate (replaces the 2026-10-25 gate on `n:` entries):** a release build puts the project server into invites and mailbox sets only when (a) the disclosure and the off switch exist on that platform and (b) the privacy policy and imprint URLs in `data/project-server.json` answer (task 10.3). One build-time flag per platform decides, replacing the Nostr flags in place: Android `ProjectServer.enabledFor(BuildConfig.DEBUG)` and the web `projectServerEnabled(import.meta.env)`, on for debug, `vite dev`, `--mode e2e` and the emulator gate, off for release until tasks 5.3 and 6.2 flip them. A test asserts the release value on each platform. Dev and E2E builds never reach the public server: they use the local server of `just dev`, the E2E stack or the gate stack.
+**Release gate (replaces the 2026-10-25 gate on `n:` entries; tightened by review 2026-11-02, I8):** a release build puts the project server into invites and mailbox sets only when (a) the disclosure and the off switch exist on that platform, (b) `data/project-server.json` is `live` with its privacy policy and imprint URLs, (c) every owner task of 10.3 is ticked (data processing agreement, firewall, the live no-IP-logging check, monitoring, renewals) and (d) the allocation-lifetime result of task 9.1 is recorded in §7. One build-time flag per platform decides, replacing the Nostr flags in place: Android `ProjectServer.enabledFor(BuildConfig.DEBUG)` and the web `projectServerEnabled(import.meta.env)` (which also needs the official-deployment flag of §6), on for debug, `vite dev`, `--mode e2e` and the emulator gate, off for release until tasks 5.3 and 6.2 flip them. A test asserts the release value on each platform, and that it cannot be on while the data entry is `pending`. Dev and E2E builds never reach the public server: they use the local server of `just dev`, the E2E stack or the gate stack.
 
 **Basic settings (Connection) and setup:**
 
-- One sentence: "To find each other over the internet, your devices use the GuardedSleep server in Germany. It sees this device's internet address and when it is in use. If the devices can't connect directly, the sound travels through it encrypted, so it can never listen."
+- One sentence: "To find each other over the internet, your devices use the GuardedSleep server in Germany. It sees your devices' network addresses and when they are in use. If they can't connect directly, the sound travels through it encrypted, so it can never listen."
 - A "Who runs it?" line that expands to the operator, the country and the privacy policy and imprint links. They come from `data/project-server.json` (§6), not from locale copy.
 
 **Advanced:** the switch "Only same Wi-Fi or my own server".
@@ -417,53 +432,59 @@ The 2026-10-23 text ("Signaling may use the vetted EU/EEA/CH mailboxes and STUN 
 
 **Host:** Contabo VPS, Ubuntu 26.04, Docker 29, public IPv4 `167.86.115.143` and IPv6 `2a02:c207:3004:4659::1` on the interface. DNS: `gs.mydata.rocks` is a DNS-only CNAME at Cloudflare to `contabo.ditscher.me`, so Cloudflare never proxies or sees the traffic.
 
-**Traefik (owner's homelab repository, not this one):** `compose/contabo/traefik`, copied from `compose/oracle/traefik`, pinned tag, **access log off**, the Let's Encrypt resolver `letsencrypt`, the `secure-headers@file` middleware, external network `traefik`. Idle timeouts of at least 35 s on the WebSocket path (`signaling-relay` "Metadata only, no IP logging").
+**Traefik (owner's homelab repository, not this one):** `compose/contabo/traefik`, copied from `compose/oracle/traefik`, pinned tag, **access log off**, the Let's Encrypt resolver `letsencrypt`, the `secure-headers@file` middleware, external network `traefik`. Idle timeouts of at least 35 s on the WebSocket path (`signaling-relay` "Metadata only, no IP logging"). **IPv6 (review 2026-11-02, I6):** Traefik must see real IPv6 client addresses (an IPv6-enabled `traefik` network or host-mode ports); behind docker-proxy all IPv6 clients would share one address, so `X-Forwarded-For` and every per-address limit would be wrong. An owner check in 10.3.
 
-**GuardedSleep stack (this repository, `docker/public-server/`, task 10.1):** a documented example in the owner's Oracle style, deployed by a clone on the host (`git pull && docker compose up -d`):
+**GuardedSleep stack (this repository, `docker/public-server/`, task 10.1):** the one Traefik example of the repository, in the owner's Oracle style, deployed by a clone on the host (`git pull && docker compose up -d`). It replaces `docker/stack/compose.traefik.yaml` and `docs/contributing/signaling-traefik.md`, which 10.1 folds in and deletes, so two Traefik examples cannot drift (review 2026-11-02, I13).
 
 - `compose.yaml` with:
-  - `signaling`: the `guardedsleep-signaling` image (GHCR, pinned tag or digest), on the external `traefik` network only, no published ports, `STUN_DISABLED=1`, `SIGNALING_TRUST_PROXY=1` with one hop, `TURN_SECRET`, `TURN_URLS`, `STUN_URLS`, `TURN_TTL_S`, read-only, `cap_drop: ALL`, `no-new-privileges`; Traefik labels `traefik.http.routers.guardedsleep-secure.rule` for `Host(gs.mydata.rocks) && PathPrefix(/signaling)`, `tls.certresolver=letsencrypt`, `middlewares=secure-headers@file`, and the entrypoint name of the owner's Oracle files (set in `.env`, not guessed in the example);
+  - `signaling`: the `guardedsleep-signaling` image from GHCR, pinned to a `vX.Y.Z` tag from a `signaling-server-v*` release cut after group 9 (never `latest` or `dev`), on the external `traefik` network only, no published ports, `STUN_DISABLED=1`, `SIGNALING_TRUST_PROXY=1` with one hop, `SIGNALING_ALLOWED_ORIGINS` (the official web origin only, if any; §6), `PUBLIC_HOST`, `TURN_SECRET`, `TURN_URLS`, `STUN_URLS`, `TURN_TTL_S`, `TURN_MAX_LIVE_PER_ADDR`, read-only, `cap_drop: ALL`, `no-new-privileges`; Traefik labels for the router `guardedsleep-secure` on `Host(gs.mydata.rocks) && PathPrefix(/signaling)`, `tls.certresolver=letsencrypt`, `middlewares=secure-headers@file`, and the entrypoint name of the owner's Oracle files (set in `.env`, not guessed in the example);
   - `coturn`: the profile of §7, host networking, pinned tag, read-only with tmpfs, `cap_drop: ALL` plus `NET_BIND_SERVICE`;
-  - `web` (optional profile): the `guardedsleep-web` image at `https://gs.mydata.rocks/` with the CSP of §6, plus the static privacy policy and imprint pages if the owner hosts them there (§10).
+  - `web` (optional profile, **off for the alpha on `gs.mydata.rocks`**; review 2026-11-02, I9): whoever controls the origin that serves the web client controls the client completely (PSK, parent secret, microphone), so a web client is never co-hosted on the signaling origin, whose compromise must stay limited to metadata and denial of service. If the owner hosts an official web client later, it gets its own origin and its own entry in the risk table.
 - `.env.template` with every variable and a comment per setting with its doc link; `.env` is git-ignored and holds `TURN_SECRET`.
-- `README.md`: first deployment, update (`git pull && docker compose up -d`), the firewall rules, the log check, the Uptime Kuma check, and how a self-hoster adapts it (another domain, without coturn, with the built-in STUN).
+- `README.md`: first deployment, update (`git pull && docker compose up -d`), the firewall rules, the log check, the monitoring checks, secret rotation, and how a self-hoster adapts it (another domain, without coturn, with the built-in STUN).
 
-**`turns:` on 5349:** coturn needs the certificate as files, Traefik keeps it in `acme.json`. Task 10.2 adds a pinned certificate-export sidecar (or coturn's own ACME-free reload of an exported file) and the `turns:` URL; until then the server hands out `turn:` only. `turns:` on 443 through Traefik's TCP router with SNI is an `IDEA`.
+**Repository access while it is private (review 2026-11-02, I13):** the host needs a read-only deploy key for the clone and either a public GHCR package or a read-only registry token. An owner task in 10.3.
 
-**Logs and IP addresses:**
+**`turns:` on 5349:** coturn needs the certificate as files. Task 10.2 prefers a dedicated certificate for `gs.mydata.rocks` from a separate, pinned ACME client (HTTP-01 through a Traefik route, or DNS-01 with a Cloudflare token scoped to that zone) over exporting Traefik's `acme.json`, because an exporter would read every private key on the host (review 2026-11-02, M19). Until then the server hands out `turn:` only. `turns:` on 443 through Traefik's TCP router with SNI is an `IDEA`.
+
+**Logs and IP addresses (review 2026-11-02, I6):**
 
 - Traefik access log off (homelab repository); Traefik's own log at `ERROR` level.
-- `guardedsleep-server` logs no IP addresses or room ids (existing requirement); its per-IP rate limits keep addresses in memory only.
-- coturn: logs must not contain client addresses. coturn prints session and allocation lines with addresses at `info`; the profile logs at a level that omits them, or to `/dev/null` if no level does, and task 10.1 proves it with a relayed test call and a search of `docker compose logs` for the test client's address.
-- Docker `json-file` logs capped (`max-size`, `max-file`) as in the existing compose files.
+- `guardedsleep-server` logs no IP addresses or room ids (existing requirement); its per-address limits keep addresses in memory only.
+- coturn: logs must not contain client or peer addresses, including denied-peer lines. coturn prints session and allocation lines with addresses at `info`; the profile logs at a level that omits them, or to `/dev/null` if no level does.
+- The host: `ufw logging off` (its default logging writes blocked source addresses to the kernel log), Docker `json-file` logs capped (`max-size`, `max-file`).
+- **Proof:** task 10.1 runs a relayed test call against a local run of the stack and searches every container log for the test client's address; owner task 10.3 repeats it on the live host over `docker compose logs`, `docker logs` of Traefik and `journalctl` (kernel and system).
 
 **Firewall (owner task, §10):** inbound 22/tcp (SSH), 80/tcp and 443/tcp (Traefik), 3478/udp and 3478/tcp (STUN and TURN), 5349/tcp (`turns:`, once 10.2 lands), the relay range (default 49160–49359/udp); everything else dropped, IPv4 and IPv6 alike. Docker's published ports bypass `ufw`; the stack publishes none (Traefik is the only publisher, coturn uses host networking), and the README says so.
 
-**Monitoring:** an Uptime Kuma check from the owner's Oracle host: an HTTPS keyword check on the server's health response (`https://gs.mydata.rocks/signaling` answers a plain GET without upgrade with a fixed status; task 10.1 names the exact check) and a STUN or TCP check on 3478. Alerts go to the owner; nothing about users is collected.
+**Monitoring (review 2026-11-02, M17):** Uptime Kuma on the owner's Oracle host checks `https://gs.mydata.rocks/signaling/healthz` (the server answers `/healthz` under any prefix) with a keyword, and TURN with an authenticated allocation, because a STUN or TCP check on 3478 would not notice a `TURN_SECRET` mismatch that breaks every relayed call. Task 10.1 picks how: a push monitor fed by a periodic `turnutils_uclient` run with a credential signed by the server's own tool, or a server self-test that turns `/healthz` red. Alerts go to the owner; nothing about users is collected. The owner also watches coturn's allocation count for abuse (§7).
 
-- **Pros:** reuses the owner's Traefik and habits; the stack is a working example for self-hosters; no new tooling in CI.
+- **Pros:** reuses the owner's Traefik and habits; the stack is the working example for self-hosters; no new tooling in CI.
 - **Cons:** the deployment lives partly outside this repository (Traefik), so the README must name the assumptions; no automated deployment, so an update needs the owner.
 - **Recommendation:** adopt. Automated image updates on the host (Watchtower or similar) are out of scope; the owner pulls.
 
 ### 10. Owner tasks
 
-Not implementable by an agent; listed in `tasks.md` group 10 and tracked there:
+Not implementable by an agent; listed in `tasks.md` 10.3 and tracked there. Legal points are checks for the owner, not legal advice.
 
-- **Privacy policy and imprint** for the public service (German law: Impressum per DDG §5 for a service offered in Germany; GDPR Art. 13 information): controller, what is processed (IP addresses and timing, in memory; relayed encrypted media), purpose and legal basis (legitimate interest in running the service), no logging of IP addresses, retention (none beyond memory and the capped container logs, which hold no addresses), Contabo as processor, contact. Published at stable URLs that go into `data/project-server.json`.
+- **Privacy policy and imprint** for the public service (Impressum per DDG §5 for a service offered in Germany; GDPR Art. 13 information): controller, what is processed (IP addresses and timing in memory; the peers' network addresses a relayed call reveals; relayed encrypted media), purpose and legal basis, no logging of IP addresses, retention, Contabo as processor, the monitoring host, contact and abuse address. Published at stable URLs that go into `data/project-server.json`.
+- **Telecom law check (review 2026-11-02, M21):** whether a public signaling and TURN relay counts as a telecommunications service under the German TKG (notification to the Bundesnetzagentur) and which TDDDG duties follow.
+- **AGPL §13:** the public server runs this repository's code, so its users must be offered the source: a link to the repository (public by then) in the imprint or the server's health page.
 - **Data processing agreement with Contabo** (GDPR Art. 28).
-- **No IP logging:** Traefik access log off in the homelab repository; check after the first deployment with the log search of task 10.1.
-- **Firewall** on the Contabo host (§9), and SSH hardening later (key-only root login now; a non-root user is a follow-up).
-- **Uptime Kuma check** on the Oracle host.
-- **Domain and contract renewal:** `mydata.rocks` and the Contabo contract with reminders, because an expired domain would let someone else receive every default pairing's signaling metadata and break internet recovery for all of them (the envelopes and the pin still hold).
-- **Abuse contact:** an address in the imprint for TURN abuse reports.
+- **No IP logging:** Traefik access log off in the homelab repository; the live log search of §9.
+- **Real IPv6 client addresses at Traefik** (§9).
+- **Firewall** on the Contabo host (§9), `ufw logging off`, and SSH hardening later (key-only root login now; a non-root user is a follow-up).
+- **Repository and registry access** on the host while the repository is private (§9).
+- **Monitoring:** the Uptime Kuma checks of §9.
+- **Domains and accounts (review 2026-11-02, I9):** renewal reminders for `mydata.rocks`, `ditscher.me` (the CNAME target) and the Contabo contract; CAA records for `gs.mydata.rocks` limited to Let's Encrypt; two-factor login on the Cloudflare and Contabo accounts. An expired domain or a taken-over DNS account would let someone else receive every default pairing's signaling metadata and break internet recovery for all of them (the envelopes, the session binding and the pin still hold).
 
 ### 11. Nostr removal (what goes, what stays)
 
 **Goes (task group 8):**
 
-- Core: `nostr.rs`, `link/nostr_link.rs`, `conformance_nostr.rs`, `relay_pick.rs`, the `nostr` mailbox kind, the `n:` invite kind, the epoch, the Nostr budgets, parking, freshness window and hygiene rules (§3 as built, under "Discarded alternatives"), the `extra_relays` interface, the Nostr-only `clock_skew` sources, and the `k256` dependency; the Nostr vectors in `vectors/conformance.json`; the `nostr_frame` fuzz target.
+- Core: `nostr.rs`, `link/nostr_link.rs` (after moving the peer clock comparison `refresh_clock_hint` into `link.rs`, review 2026-11-02 M15), `conformance_nostr.rs`, `relay_pick.rs`, the `nostr` mailbox kind, the `n:` invite kind, the epoch, the Nostr budgets, parking, freshness window and hygiene rules (§3 as built, under "Discarded alternatives"), the `extra_relays` interface, the Nostr-only `clock_skew` sources, and the `k256` dependency; the Nostr vectors in `vectors/conformance.json`; the `nostr_frame` fuzz target.
 - Bindings: every Nostr and relay-pick type in `ffi`, `wasm` and `packages/core-wasm` (`just api-snapshot`).
-- Simulation: `world/nostr_sim.rs` and the `nostr-*` scenarios.
+- Simulation: `world/nostr_sim.rs`, the `nostr-*` scenarios and the Nostr scenarios without that prefix (`flapping-relay-does-not-stall-nostr-setup`, `single-attempt-nostr-only-setup`, `single-attempt-relay-and-nostr-setup`).
 - Platforms: the Nostr parts of the Android and web drivers, `PublicRelays` / `public-relays.ts`, the relay pick feeding; E2E `32-web-nostr.spec.ts` and `utils/nostr-relay.ts`.
 - Tooling and data: `data/nostr-relays.json`, `crates/gs-soak`, `scripts/spike/`, `.github/workflows/relays-weekly.yml`, the `soak` and `relays-check` recipes, `docs/contributing/relay-soak.md`, their `docs/ci-gates.md` rows; the Nostr parts of `public-lists`.
 
@@ -471,7 +492,7 @@ Not implementable by an agent; listed in `tasks.md` group 10 and tracked there:
 
 **Ported, not dropped:** sim scenarios whose subject is generic get a relay-only twin before the Nostr version is deleted: "one of three relays dies during setup" (own relay plus project server), "relay accepts but never delivers", "flapping relay does not stall setup", "all mailboxes dead at a reachability check", "reachability check reveals nothing of the pairing", "mailbox update after relay churn", "single attempt" setups, and the stored-stop replay after a restart. Coverage of each requirement in `specs/signaling-mailboxes` must stay with at least one scenario; task 8.2 lists the mapping.
 
-**Order:** the removal lands before the TURN work, so the TURN tasks touch the smaller core. Each task keeps `just test` green on its own.
+**Order:** the removal lands first, then several relay mailboxes in the core (task 8.7, §1), then the TURN work, so the TURN tasks touch the smaller core and can bind ICE servers to a relay host the core knows. Task 9.1 (allocation lifetime) is a standalone spike and may run in parallel with group 8. Each task keeps `just test` green on its own.
 
 ### Discarded alternatives
 
@@ -521,6 +542,11 @@ Not implementable by an agent; listed in `tasks.md` group 10 and tracked there:
 - **Play Integrity / App Attest as the TURN gate:** Google dependency, breaks IzzyOnDroid, privacy (backlog `IDEA`, 2026-10-25).
 - **Caddy as the reverse proxy of the stack** (backlog `PLANNED` T1 bundle): the owner already runs Traefik on the host; the example follows it. A Caddy variant for self-hosters stays possible later.
 - **Cloudflare proxy (orange cloud) in front of the server:** Cloudflare would see every connection's metadata and terminate TLS; DNS only.
+- **Admission-based TURN gate on the public server** (backlog `IDEA`, 2026-10-25: credentials only to peers admitted by the nonce challenge): the public server runs in Open mode because it holds no admission key for rooms it has never seen; registering one on first use would let an abuser register his own, so the challenge adds nothing there (review 2026-11-02, I3). The LAN relays keep Required mode.
+- **Built-in STUN next to coturn on the public host:** keeps the ≤ 2.2 × guarantee but needs coturn's TURN on another port; the owner chose coturn for both on 3478. Stays the fallback if coturn's Binding responses exceed the bound (§7).
+- **Web client co-hosted on `gs.mydata.rocks`:** a compromise of the signaling origin would then hand out arbitrary JavaScript with access to the PSK, the parent secret and the microphone, instead of being limited to metadata and denial of service (review 2026-11-02, I9).
+- **A second Traefik example next to `docker/stack/compose.traefik.yaml`:** two examples drift under the 12 h/month budget; the public-server example replaces it (review 2026-11-02, I13).
+- **Platform-side URL failover between relays:** a platform reconnect loop, which AGENTS.md §5.1 calls a bug; the core holds one mailbox per relay instead (review 2026-11-02, C1).
 
 **2026-10-23 wording of AGENTS.md §7.1 (superseded 2026-11-02):** "Media, alerts and heartbeats never transit a third party, except an encrypted, user-entered TURN. Signaling may use the vetted EU/EEA/CH mailboxes and STUN servers in `data/` (criteria: `openspec/specs/signaling-mailboxes`, "Curated public services"), only as sealed envelopes, so operators see only the items in "Relay-visible data", with disclosure and an off switch on each device. Only STUN hosts in `data/stun-servers.json` are allowed, enforced by lint."
 
@@ -677,18 +703,22 @@ A **go/no-go gate** sits after the core work (tasks 2–3) and before Android an
 
 ## Risks / Trade-offs
 
-| Risk                                                                              | Mitigation                                                                                                                                                                      |
-| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The project server is down: no internet recovery for families on default settings | verified links continue (mailboxes closed while verified); Uptime Kuma alerts the owner; own relay and LAN mailbox as second paths; the mailbox update can move the host        |
-| The domain or the Contabo contract lapses; someone else gets `gs.mydata.rocks`    | renewal reminders (§10); envelopes, session binding and the parent pin hold against a hostile relay; its ICE servers are host-bound, so it learns metadata and can deny service |
-| TURN abuse by self-made clients                                                   | two-member gate, 10-minute credentials, per-IP join limits, coturn quotas and `max-bps`, denied peer ranges including the host's own addresses                                  |
-| A relayed night drops when the TURN credential expires                            | task 9.4 verifies allocation refresh past the TTL before release; fallback TTL of 12 h decided by the owner                                                                     |
-| The owner sees IP addresses and usage times of every default family               | disclosed with the operator's name; no IP logging (server, Traefik, coturn) with a log test; privacy policy; off switch                                                         |
-| coturn logs client addresses                                                      | log level chosen and proved by the log search in task 10.1                                                                                                                      |
-| No forward secrecy for signaling                                                  | recorded in the threat model; envelopes never contain audio                                                                                                                     |
-| A stranger with the room id squats a slot while a pair is verified (room empty)   | denial of service only; escalation still runs (§4 "Our relay"); room ids are HKDF-derived                                                                                       |
-| Removing Nostr loses test coverage of generic mailbox behaviour                   | relay-only twins of the generic scenarios before deletion (§11), with a requirement-to-scenario mapping in task 8.2                                                             |
-| Persona A (venue Wi-Fi, mobile ↔ mobile) needs TURN                               | the project TURN serves it now; the hardware round measures the relayed share                                                                                                   |
+| Risk                                                                                | Mitigation                                                                                                                                                                      |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The project server is down: no internet recovery for families on default settings   | verified links continue (mailboxes closed while verified); Uptime Kuma alerts the owner; own relay and LAN mailbox as second paths; the mailbox update can move the host        |
+| The domain or the Contabo contract lapses; someone else gets `gs.mydata.rocks`      | renewal reminders (§10); envelopes, session binding and the parent pin hold against a hostile relay; its ICE servers are host-bound, so it learns metadata and can deny service |
+| TURN abuse by self-made clients                                                     | two-member gate, 10-minute credentials, per-IP join limits, coturn quotas and `max-bps`, denied peer ranges including the host's own addresses                                  |
+| A relayed night drops when the TURN credential expires                              | task 9.1 verifies allocation refresh past the TTL before release; fallback TTL of 12 h decided by the owner                                                                     |
+| The owner sees IP addresses and usage times of every default family                 | disclosed with the operator's name; no IP logging (server, Traefik, coturn) with a log test; privacy policy; off switch                                                         |
+| coturn logs client addresses                                                        | log level chosen and proved by the log search in task 10.1                                                                                                                      |
+| No forward secrecy for signaling                                                    | recorded in the threat model; envelopes never contain audio                                                                                                                     |
+| A stranger with the room id squats a slot while a pair is verified (room empty)     | denial of service only; escalation still runs (§4 "Our relay"); room ids are HKDF-derived                                                                                       |
+| TURN exhausted by many abusive addresses (botnet), denying TURN to relayed families | per-address cap, per-credential `user-quota`, `max-bps`, allocation-count monitoring; escalation still runs (`media_blocked`)                                                   |
+| coturn's STUN answers exceed the built-in STUN's amplification bound                | `--no-rfc5780`, measured in task 10.1; fallback to the built-in STUN on 3478 (§7)                                                                                               |
+| A relayed call reveals the peers' LAN addresses to the operator                     | listed in "Relay-visible data", the disclosure and the threat model; no logging                                                                                                 |
+| DNS or hosting account takeover                                                     | two-factor login, CAA, no web client on the signaling origin (§9), host-bound ICE; the envelopes and the pin hold                                                               |
+| Removing Nostr loses test coverage of generic mailbox behaviour                     | relay-only twins of the generic scenarios before deletion (§11), with a requirement-to-scenario mapping in task 8.2                                                             |
+| Persona A (venue Wi-Fi, mobile ↔ mobile) needs TURN                                 | the project TURN serves it now; the hardware round measures the relayed share                                                                                                   |
 
 ## Migration Plan
 
@@ -752,3 +782,32 @@ Nothing is released, so no pairing needs migration; invites with `n:` entries si
 | I10 LAN cleartext contradiction         | `add-offline-lan` design and task 2.2                                                                                                                                                                           |
 | I11 probes reveal the pattern           | §1 throwaway probes                                                                                                                                                                                             |
 | M1–M7                                   | §2 (oversize, header), §3 (`NonZeroScalar`, `aux_rand`, new event on resend), §1 (`peer_stopped` reopens; a stop while verified goes over the DataChannel), `add-offline-lan` (admission squat, PC key storage) |
+
+## Review response (critical review 2026-11-02, project server revision)
+
+Critical Reviewer with the Security Architect and Technical Architect perspectives; first verdict "rework". Every finding is answered; the owner decisions themselves were not reopened.
+
+| Finding                                                                         | Where it is answered                                                                                                             |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| C1 the core holds one relay mailbox; the platform fails over between relay URLs | §1 "Several relay mailboxes", task 8.7; §7 ICE list per relay; discarded "Platform-side URL failover"                            |
+| I2 issuer in the sans-IO relay would need a clock, randomness and HMAC-SHA1     | §7 "Who does what": the relay emits `IssueIceServers`, the server signs; `sha1` absent from the core and relay graphs (task 9.2) |
+| I3 coturn quotas per user name do not bound abuse; one address can exhaust TURN | §7 "Gate and abuse bounds": per-member and per-address caps, `user-quota=3`, `total-quota` = port range, corrected residual risk |
+| I4 coturn STUN loses the amplification bound                                    | §7 profile: `--no-rfc5780`, measurement in 10.1, owner fallback to the built-in STUN                                             |
+| I5 TURN permissions reveal the peers' LAN addresses                             | §7 "What TURN reveals"; `specs/signaling-mailboxes` "Relay-visible data"; disclosure §8; threat model task 8.5                   |
+| I6 the log proof misses Traefik and the host; IPv6 behind docker-proxy          | §9 "Logs and IP addresses", Traefik IPv6 note; 10.3 live check; spec scenario "any log on the host"                              |
+| I7 origin allowlist versus the CSP default                                      | §6 "Who may use the public server from a browser"; `SIGNALING_ALLOWED_ORIGINS` in §9 and 10.1                                    |
+| I8 release gate too weak; TTL spike too late; fallback contradicts the spec     | §8 release gate (all of 10.3 and 9.1); 9.1 runs first; §7 fallback amends spec, clamp and parser together; 5.4 runs ≥ 11 min     |
+| I9 web co-hosting turns an origin compromise into full client compromise        | §9 web profile off on the signaling origin; discarded "co-hosted web"; §10 both domains, CAA, two-factor login; risk table       |
+| I10 review responses claimed but missing                                        | this table; `tasks.md` workflow note                                                                                             |
+| I11 the data-file check blocks the build before the owner has URLs              | §6 `status: pending`                                                                                                             |
+| I12 "attempt over a LAN mailbox" undefined; multi-relay ICE selection           | §7 "Source of ICE servers": union per relay, fallback per relay, none without a relay mailbox; `specs/signaling-relay`           |
+| I13 second Traefik example, unnamed pin, private repository                     | §9: replaces `docker/stack/compose.traefik.yaml`; `vX.Y.Z` from `signaling-server-v*`; deploy key or public package in 10.3      |
+| M14 Nostr-era wording in kept link-supervision text; no `clock_skew` scenario   | `specs/link-supervision` "Offer direction", "Accepted signaling senders", "Error classification", "Clock and time jumps"         |
+| M15 `refresh_clock_hint` lives in a Nostr file; unprefixed Nostr scenarios      | §11; tasks 8.1, 8.2                                                                                                              |
+| M16 `ice` collides with the sealed candidate payload                            | renamed `ice_servers` / `welcome.iceServers` everywhere                                                                          |
+| M17 monitoring misses TURN; health URL vague                                    | §9 "Monitoring": `/signaling/healthz` and an authenticated allocation check                                                      |
+| M18 server-side ICE URLs unvalidated                                            | §7: `PUBLIC_HOST` check at start                                                                                                 |
+| M19 certificate export reads all of `acme.json`                                 | §9 `turns:`: dedicated certificate preferred; task 10.2                                                                          |
+| M20 STUN allowlist policy left to the implementer                               | §6: the file holds `gs.mydata.rocks` only                                                                                        |
+| M21 telecom law, AGPL §13, policy coverage                                      | §10 owner tasks                                                                                                                  |
+| M22 two-member gate with more than one parent                                   | §7: "at least one baby and one parent", one credential per member; `specs/signaling-relay`                                       |

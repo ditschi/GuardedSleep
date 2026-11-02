@@ -57,31 +57,40 @@ The relay SHALL carry only connection metadata (room membership, opaque setup me
 #### Scenario: Relayed call on the public deployment
 
 - **WHEN** a test client pairs and monitors through the project server with media relayed through its TURN server
-- **THEN** none of the stack's container logs contains the test client's IP address
+- **THEN** no log on the host (the stack's containers, the reverse proxy, the system journal) contains the test client's IP address
 
 ## ADDED Requirements
 
 ### Requirement: ICE servers from the relay
 
-A relay configured with STUN URLs SHALL include them in `welcome`. A relay configured with TURN SHALL send each member of a room holding one baby unit and one parent unit an `ice` message with the URLs and a credential of its own, before the membership update that completes the room, and a fresh one at half the credential lifetime while both stay joined. It SHALL NOT send TURN credentials into a room with one member, and SHALL NOT accept a client request for them.
+A relay configured with STUN URLs SHALL include them in `welcome`. A relay configured with TURN SHALL send each member of a room holding at least one baby unit and one parent unit an `ice_servers` message with the URLs and a credential of its own, before the membership update that completes the room, and a fresh one at half the credential lifetime while both stay joined. It SHALL NOT send TURN credentials into a room with one role only, and SHALL NOT accept a client request for them.
 
 #### Scenario: Second member joins
 
 - **WHEN** a parent unit joins a room in which the baby unit waits, on a relay with TURN configured
-- **THEN** each of them receives an `ice` message with its own credential before it learns that the other is present
+- **THEN** each of them receives an `ice_servers` message with its own credential before it learns that the other is present
 
 #### Scenario: Lone socket
 
 - **WHEN** a client joins a new room and stays alone in it
 - **THEN** it receives at most the STUN URLs in `welcome` and never a TURN credential
 
+### Requirement: TURN credential caps
+
+A relay SHALL keep at most one live TURN credential per member and at most a configured number per client address (an IPv4 address or an IPv6 /64).
+
+#### Scenario: Many credentials from one address
+
+- **WHEN** one client address already holds the configured number of live credentials and joins another complete room
+- **THEN** the relay issues it no further credential until one expires, and the room still works without TURN
+
 ### Requirement: Host-bound ICE servers in the client
 
-Clients SHALL accept ICE URLs from a relay only when every URL uses `stun:`, `turn:` or `turns:` and its host equals that relay's host, and SHALL drop the whole message otherwise. They SHALL attach a supplied set to a new attempt only while it stays valid for at least another 30 seconds, and SHALL attach none to an attempt over a LAN mailbox.
+Clients SHALL accept ICE URLs from a relay only when every URL uses `stun:`, `turn:` or `turns:` and its host equals that relay's host, and SHALL drop the whole message otherwise. A new attempt SHALL get the union of the sets still valid for at least another 30 seconds, the relay's built-in STUN for each relay without a set, and nothing when the pairing has no relay mailbox.
 
 #### Scenario: Relay names a foreign TURN host
 
-- **WHEN** a relay sends an `ice` message with a URL whose host differs from the relay's own host
+- **WHEN** a relay sends an `ice_servers` message with a URL whose host differs from the relay's own host
 - **THEN** the client drops the whole message and uses none of its URLs
 
 #### Scenario: Credential near its expiry

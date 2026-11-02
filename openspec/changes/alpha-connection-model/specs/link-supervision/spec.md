@@ -28,7 +28,7 @@ The Rust core `Link` SHALL own the state of every mailbox, attempts, liveness, e
 
 ### Requirement: Offer direction
 
-Only the baby SHALL create offers, and only when it has no live verified attempt and a parent is present. A parent is present when the pinned parent (or, before pinning, any parent) has announced a current session with `here` on any mailbox, or is a member of the room on our relay. The parent SHALL send `request_offer` to the baby's current session when it starts or recovers without a live attempt. An offer answering a request SHALL carry `re` set to that request's id, and the parent SHALL adopt an offer only for its current request. A baby that sees a parent present SHALL wait a short grace period (2.5 s) for that request before it offers unasked, so that a clean setup builds one attempt per side.
+Only the baby SHALL create offers, and only when it has no live verified attempt and a parent is present. A parent is present when the pinned parent (or, before pinning, any parent) has a confirmed current session (announced with `here` on any mailbox) and, for a relay mailbox, is a member of that relay's room with the client id the session last spoke from. The parent SHALL send `request_offer` to the baby's current session when it starts or recovers without a live attempt. An offer answering a request SHALL carry `re` set to that request's id, and the parent SHALL adopt an offer only for its current request. A baby that sees a parent present SHALL wait a short grace period (2.5 s) for that request before it offers unasked, so that a clean setup builds one attempt per side.
 
 #### Scenario: Both sides start at the same time
 
@@ -42,7 +42,7 @@ Only the baby SHALL create offers, and only when it has no live verified attempt
 
 ### Requirement: Accepted signaling senders
 
-Offers and candidates SHALL be accepted only from envelopes that authenticate under the pairing's envelope key, carry the peer's role and the receiver's current session, and, on the baby once pinned, the pinned parent id. The wire `aid` SHALL only filter stale candidates and SHALL never be a trust decision.
+Offers and candidates SHALL be accepted only from envelopes that authenticate under the pairing's envelope key, carry the peer's role and the receiver's current session, and, once the pairing is pinned, a valid pin tag of the peer role. The wire `aid` SHALL only filter stale candidates and SHALL never be a trust decision.
 
 #### Scenario: Stranger in the room
 
@@ -74,7 +74,7 @@ Delays before a new attempt SHALL be 0, 1, 2, 4, 8 s and then 15 s (cap); after 
 
 ### Requirement: Error classification
 
-Our relay's errors `BABY_TAKEN`, `PARENT_CAP`, `NOT_JOINED` and `SIGNAL_TARGET_REQUIRED` SHALL be retryable at the mailbox layer. `UNSUPPORTED_PROTOCOL` SHALL be terminal (`failed_needs_user`, key `update_required`) only as the reply to `hello` before `welcome` and only when no other mailbox works; with a verified attempt it SHALL only close that mailbox and set a sticky `update_required` hint.
+A relay's errors `BABY_TAKEN`, `PARENT_CAP`, `NOT_JOINED` and `SIGNAL_TARGET_REQUIRED` SHALL be retryable at the mailbox layer. `UNSUPPORTED_PROTOCOL` SHALL be terminal (`failed_needs_user`, key `update_required`) only as the reply to `hello` before `welcome` and only when no other mailbox works; with a verified attempt it SHALL only close that mailbox and set a sticky `update_required` hint.
 
 #### Scenario: Stale baby socket
 
@@ -130,7 +130,7 @@ A stop notice sent through a mailbox SHALL be a sealed envelope bound to the rec
 
 ### Requirement: Signaling transport liveness
 
-On our relay, clients SHALL send an application `ping` every 15 s and treat a socket without any message for 35 s as dead. Mailbox loss while an attempt is verified SHALL NOT count as monitoring loss.
+On a relay mailbox, clients SHALL send an application `ping` every 15 s and treat a socket without any message for 35 s as dead. Mailbox loss while an attempt is verified SHALL NOT count as monitoring loss.
 
 #### Scenario: Signaling drops, media continues
 
@@ -155,6 +155,16 @@ The core clock SHALL be monotonic milliseconds that include deep sleep (Android 
 
 - **WHEN** the user changes the device time by an hour during monitoring
 - **THEN** liveness and escalation timing are unaffected, and no mailbox is reopened because of it
+
+#### Scenario: Clocks of the two devices disagree
+
+- **WHEN** a `here` of the peer's confirmed session carries a wall clock more than 10 minutes from this device's
+- **THEN** both devices raise the `clock_skew` hint, and signaling and escalation are unaffected
+
+#### Scenario: Parent clock ahead at the first pairing
+
+- **WHEN** the parent's wall clock is 10 minutes ahead of the baby's and it scans a fresh invite with a 5-minute expiry
+- **THEN** the parent refuses the code as expired and stores nothing
 
 ### Requirement: Loss detection
 

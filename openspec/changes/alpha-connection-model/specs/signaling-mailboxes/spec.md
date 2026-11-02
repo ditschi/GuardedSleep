@@ -59,7 +59,7 @@ Every signaling message on every mailbox SHALL be sealed with XChaCha20-Poly1305
 
 #### Scenario: Operator reads the traffic
 
-- **WHEN** a mailbox operator stores and inspects every message of a session
+- **WHEN** a signaling relay operator stores and inspects every signaling message of a session
 - **THEN** it finds no SDP, ICE candidate, fingerprint, LAN address, parent id or device name, and all messages of one class have the same length
 
 ### Requirement: Session confirmation
@@ -111,7 +111,7 @@ The replay state (envelope ids and sequence numbers) SHALL cover the whole `Link
 
 ### Requirement: Relay-visible data
 
-A relay (the project server or an own relay) SHALL receive only its protocol fields (derived room id, role, protocol version, client ids, error codes, ping) and sealed envelopes (header with version, role and class; nonce; ciphertext). A TURN server SHALL receive only the TURN user name, which never contains the room id or a value derived from the PSK, and the addresses, timing and volume of the DTLS and DTLS-SRTP packets it relays.
+A relay (the project server or an own relay) SHALL receive only its protocol fields (derived room id, role, protocol version, client ids, error codes, ping) and sealed envelopes (header with version, role and class; nonce; ciphertext). A TURN server SHALL receive only the TURN user name, which never contains the room id or a value derived from the PSK, the permitted peer addresses (including private host-candidate addresses), and the addresses, timing and volume of the packets it relays.
 
 #### Scenario: No secret leaves through a mailbox
 
@@ -162,7 +162,7 @@ Release builds SHALL use one project-run signaling server as the default interne
 
 ### Requirement: Disclosure and off switch
 
-Setup and the Basic connection settings SHALL say in one sentence that the GuardedSleep server helps the devices find each other and may relay the encrypted sound, seeing the internet address and usage times but never the baby's sound, with an expandable operator line from the data file. An Advanced switch "Only same Wi-Fi or my own server" SHALL stop the device from contacting the project server, its STUN and its TURN, with a hint if the peer still announces the project server.
+Setup and the Basic connection settings SHALL say in one sentence that the GuardedSleep server helps the devices find each other and may relay the encrypted sound, seeing network addresses and usage times but never the baby's sound, with an expandable operator line from the data file. An Advanced switch "Only same Wi-Fi or my own server" SHALL stop the device from contacting the project server, its STUN and its TURN, with a hint if the peer still announces the project server.
 
 #### Scenario: Privacy-minded parent
 
