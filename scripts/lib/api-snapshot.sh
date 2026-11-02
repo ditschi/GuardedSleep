@@ -43,6 +43,8 @@ esac
 
 # shellcheck source=require.sh
 source scripts/lib/require.sh
+# shellcheck source=host-rust.sh
+source scripts/lib/host-rust.sh
 require api-check docker
 
 out="$ROOT/target/api-out"
@@ -54,7 +56,7 @@ scripts/core-build.sh wasm >&2
 cp target/wasm-pkg/web/guardedsleep_wasm.d.ts "$out/core.d.ts"
 
 nightly="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' tools/nightly/rust-toolchain.toml)"
-if command -v cargo >/dev/null 2>&1 && command -v rustup >/dev/null 2>&1 \
+if gs_host_rust \
   && rustup toolchain list | grep -q "^$nightly"; then
   API_SNAPSHOT_NATIVE=1 CARGO_TARGET_DIR="$ROOT/target/api" "$0" "$out"
 else

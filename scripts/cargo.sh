@@ -7,7 +7,9 @@
 # Usage: scripts/cargo.sh run -q -p i18n-gen -- check
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-if command -v rustup >/dev/null 2>&1; then
+# shellcheck source=lib/host-rust.sh
+source "$ROOT/scripts/lib/host-rust.sh"
+if gs_host_rust; then
 	cd "$ROOT"
 	exec cargo "$@"
 fi

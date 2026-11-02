@@ -23,12 +23,14 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WASM_BINDGEN_VERSION="$("$ROOT/scripts/lib/wasm-bindgen-version.sh")"
 
 if [[ "${CORE_BUILD_NATIVE:-0}" != "1" ]]; then
+	# shellcheck source=lib/host-rust.sh
+	source "$ROOT/scripts/lib/host-rust.sh"
 	# shellcheck source=lib/build-image.sh
 	source "$ROOT/scripts/lib/build-image.sh"
 	for cmd in "${@:-test}"; do
 		case "$cmd" in
 		test | wasm)
-			if command -v rustup >/dev/null 2>&1; then
+			if gs_host_rust; then
 				CORE_BUILD_NATIVE=1 bash "$ROOT/scripts/core-build.sh" "$cmd"
 				continue
 			fi
