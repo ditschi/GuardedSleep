@@ -10,10 +10,6 @@ Thumbs.db
 !.vscode/settings.json
 .idea/
 
-# Cursor internal (plans, transcripts, terminals are user-local)
-.cursor/plans/
-.cursor/projects/
-
 # Node
 node_modules/
 dist/
