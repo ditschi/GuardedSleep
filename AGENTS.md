@@ -125,7 +125,7 @@ Core       Rust, sans-IO (core, relay): no I/O, threads or clocks; emits message
 ### 5.2 Style and tooling rules
 
 - `.editorconfig`: LF, UTF-8, 2 spaces. Prettier `printWidth: 100`, `proseWrap: preserve`; no per-file overrides. Filenames `kebab-case.ts`/`.svelte` for modules, `PascalCase.svelte` for components. Named exports (default only for Svelte components). Comments explain **why**, not what.
-- **Pins live in one place each:** `rust-toolchain.toml` (exact stable), `mise.toml` + `mise.lock` (node, pnpm 11, java, just, lefthook, typos, ktfmt, …), Gradle version catalog + wrapper. **Do not align the fuzz toolchain** (`fuzz/rust-toolchain.toml`, pinned nightly for cargo-fuzz and `cargo public-api`) **with the main pin.** pnpm comes from mise; no corepack.
+- **Pins live in one place each:** `rust-toolchain.toml` (exact stable), `mise.toml` + `mise.lock` (node, pnpm 11, java, just, lefthook, typos, ktfmt, …), Gradle version catalog + wrapper. **Do not align the nightly** (`tools/nightly/rust-toolchain.toml`, the one pin for cargo-fuzz and `cargo public-api`) **with the main pin.** pnpm comes from mise; no corepack.
 - **Every version-specific config setting carries a comment with a doc link** (settings go stale, e.g. pnpm 11 `allowBuilds`).
 - **Commit nothing generated** (bindings, generated TS, i18n output). API-surface snapshots (`cargo public-api` on `ffi`/`wasm`, the generated `.d.ts`) are committed instead; CI generates twice and compares hashes.
 - **Never hand-edit screenshot baselines.** They are recorded only in the pinned build image.

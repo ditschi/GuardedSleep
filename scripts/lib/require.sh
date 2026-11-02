@@ -8,7 +8,7 @@
 # All requirements met  -> returns 0.
 # One is missing        -> prints "SKIPPED: <task> needs <x>" and exits 0, so the caller stops here.
 # With GS_STRICT=1 (CI) -> prints "FAILED: <task> needs <x>" and exits 1 instead.
-# Requirements: docker, kvm, android-sdk, cargo, network.
+# Requirements: docker, kvm, android-sdk, cargo, cargo-fuzz, network.
 #
 # Sourcing also puts the mise-managed tools on PATH when mise is installed (see gs_mise_env).
 
@@ -36,6 +36,8 @@ gs_missing() {
       # scripts/cargo.sh falls back to the build image, so docker is an acceptable substitute.
       command -v cargo >/dev/null 2>&1 || docker info >/dev/null 2>&1 || echo "cargo"
       ;;
+    # cargo-fuzz runs on a rustup-managed nightly (tools/nightly), so both must be on the host.
+    cargo-fuzz) { command -v cargo-fuzz >/dev/null 2>&1 && command -v rustup >/dev/null 2>&1; } || echo "cargo-fuzz (and rustup)" ;;
     # The relay tools talk to public hosts; a name that does not resolve means no usable network.
     network) timeout 5 getent hosts github.com >/dev/null 2>&1 || echo "network" ;;
     *) echo "$1 (unknown requirement)" ;;

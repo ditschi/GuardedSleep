@@ -236,6 +236,11 @@ ci: lint test build e2e
 dev:
     scripts/dev.sh
 
+# Runs one cargo-fuzz target (fuzz/Cargo.toml) on the pinned nightly of tools/nightly; extra args go to libFuzzer,
+# e.g. `just fuzz envelope_open -- -max_total_time=60`. SKIPPED without cargo-fuzz and rustup.
+fuzz target="envelope_open" *args:
+    scripts/lib/fuzz.sh {{target}} {{args}}
+
 # Signaling server smoke: starts the built guardedsleep-server binary and relays hello + signal over a WebSocket.
 smoke:
     scripts/cargo.sh test -p guardedsleep-server --test smoke

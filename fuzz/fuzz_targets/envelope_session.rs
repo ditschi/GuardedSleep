@@ -3,8 +3,8 @@
 //! security invariants after every step:
 //! - a session is confirmed only by a `here` that echoes the challenge issued for it, within 60 s;
 //! - a retired session is never accepted again;
-//! - nothing panics. Run with: `cargo fuzz run envelope_session` (nightly, see
-//!   `fuzz/rust-toolchain.toml`).
+//! - nothing panics. Run with: `cargo fuzz run envelope_session` (or `just fuzz envelope_session`;
+//!   nightly, see `tools/nightly/rust-toolchain.toml`).
 #![no_main]
 
 use std::collections::BTreeMap;
