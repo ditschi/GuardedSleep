@@ -5,11 +5,11 @@
 ## Checklist
 
 - [ ] **Conventional PR title**: a squash merge uses it as the commit subject; a rebase merge needs a clean history with Conventional commits (AGENTS.md §8). Format: `<type>(<scope>): <subject>`. Types: `feat`, `fix`, `perf`, `revert`, `security`, `docs`, `refactor`, `test`, `build`, `ci`, `chore`, `style`.
-- [ ] **Breaking change?** Use `<type>!:` in the title **and** add a `BREAKING CHANGE: ...` block at the bottom of this description (preserved in the squash commit body; for a rebase merge, in the commit that breaks). See [release-and-changelog.md §3](../docs/contributing/release-and-changelog.md).
-- [ ] **User-visible change?** Add a bullet under `## [Unreleased]` in [CHANGELOG.md](../CHANGELOG.md) **or** rely on Release Please to pick it up from a `feat:` / `fix:` / `perf:` / `revert:` / `security:` commit (see [release-and-changelog.md §2](../docs/contributing/release-and-changelog.md)).
+- [ ] **Breaking change?** Use `<type>!:` in the title **and** add a `BREAKING CHANGE: ...` block at the bottom of this description (preserved in the squash commit body; for a rebase merge, in the commit that breaks). See [release-and-changelog.md](../docs/contributing/release-and-changelog.md).
+- [ ] **User-visible change?** Add a bullet under `## [Unreleased]` in [CHANGELOG.md](../CHANGELOG.md) **or** rely on Release Please to pick it up from a `feat:` / `fix:` / `perf:` / `revert:` / `security:` commit (see [release-and-changelog.md](../docs/contributing/release-and-changelog.md)).
 - [ ] Ran **`just lint`** locally.
 - [ ] Conventional PR title (checked in CI; commits are not checked, ADR-020 §8).
-- [ ] Docs-only: backlog STATUS tags respected (see [`.cursor/rules/docs-conventions.mdc`](../.cursor/rules/docs-conventions.mdc) and [AGENTS.md §6](../AGENTS.md)).
+- [ ] Docs-only: backlog STATUS tags respected (see [docs/contributing/decisions-and-roles.md](../docs/contributing/decisions-and-roles.md) and [AGENTS.md §6](../AGENTS.md)).
 - [ ] Behaviour, architecture, scope or security-model change? The OpenSpec change is linked or part of this PR, and `openspec validate --all --strict` passes (see [AGENTS.md §6](../AGENTS.md)).
 
 <!-- For breaking changes only, uncomment and fill in:

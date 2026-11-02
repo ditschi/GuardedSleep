@@ -24,8 +24,8 @@ See **[docs/contributing/development.md](docs/contributing/development.md)** for
 
 - **Commit messages** follow [Conventional Commits](https://www.conventionalcommits.org/) (enforced on the PR title in CI; there is no local commit-msg hook). Commits that reach `main` by rebase follow it too.
 - **Pull request titles** must use the same convention; a PR reaches `main` by **Rebase and merge** when its history is clean (linear, no merge commits, every commit Conventional and self-contained), otherwise by **Squash and merge**. `ci-ok` must be green; no reviews are required (AGENTS.md §8).
-- For user-visible changes, update **[CHANGELOG.md](CHANGELOG.md)** under `## [Unreleased]` (see [Release notes and changelog](docs/contributing/release-and-changelog.md)).
+- For user-visible changes, update **[CHANGELOG.md](CHANGELOG.md)** under `## [Unreleased]` (see [Releases and changelog](docs/contributing/release-and-changelog.md)).
 
 ## Changelog and releases
 
-Long-term automation options are described in **[docs/contributing/release-and-changelog.md](docs/contributing/release-and-changelog.md)**.
+How releases and the changelog work: **[docs/contributing/release-and-changelog.md](docs/contributing/release-and-changelog.md)**.

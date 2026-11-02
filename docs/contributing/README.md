@@ -6,7 +6,8 @@
 - [Own TURN server on a VPS (coturn, Compose)](turn-server-vps.md) — Oracle Cloud walk-through, firewall, verification, known app gaps
 - [Static PWA + full stack (Docker)](web-docker.md) — nginx image, Compose with/without Traefik
 - [Relay soak and go/no-go (public Nostr relays)](relay-soak.md) — `just soak`, `just relays-check`, how to read the verdict, operator mail template
-- [Release notes and changelog strategy](release-and-changelog.md) — Keep a Changelog, future Release Please / Changesets
+- [Decisions, roles and documentation conventions](decisions-and-roles.md) — options checklists, role coordination, Critical Review Gate, status tags
+- [Releases and changelog](release-and-changelog.md) — Keep a Changelog, Conventional PR titles, manual alpha tags
 
 Repository entry point: [CONTRIBUTING.md](../../CONTRIBUTING.md).
 

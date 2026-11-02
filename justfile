@@ -306,9 +306,6 @@ diagnose-lan:
 check-kvm:
     bash scripts/check-kvm.sh
 
-e2e-docker *args:
-    scripts/lib/slot.sh heavy -- bash scripts/e2e-docker-run.sh {{ args }}
-
 audit:
     pnpm run audit
 

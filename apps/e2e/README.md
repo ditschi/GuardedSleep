@@ -47,12 +47,10 @@ The hybrid Android + browser E2E was removed in wave 1 (ADR-020); the native app
 
 ```bash
 just diagnose-lan                         # reachability checklist for phone tests
-bash scripts/e2e-local-automation.sh      # Docker-first, host-independent browser path
-just e2e-docker                           # Linux + Docker only
 just check-kvm
 ```
 
-See [docker/e2e-local](../../docker/e2e-local/README.md) and [docker/android-emulator](../../docker/android-emulator/README.md) for KVM prerequisites and troubleshooting.
+See [docker/android-emulator](../../docker/android-emulator/README.md) for KVM prerequisites and troubleshooting.
 
 ## No test hooks in the page
 
