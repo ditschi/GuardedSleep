@@ -2,6 +2,8 @@ package org.guardedsleep.app.ui
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.guardedsleep.app.pairing.TurnCredentials
+import org.guardedsleep.app.pairing.TurnServerInput
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
@@ -10,6 +12,7 @@ import org.guardedsleep.app.ui.model.PairingState
 import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.SettingsState
+import org.guardedsleep.app.ui.model.TurnSaveResult
 
 /**
  * Test double: plain state flows plus a call log. Listen and kiosk changes are applied to state
@@ -89,6 +92,48 @@ class FakeAppController(
     override fun updateSettings(transform: (SettingsState) -> SettingsState) {
         calls += "updateSettings"
         settingsFlow.value = transform(settingsFlow.value)
+    }
+
+    override fun setTurnServer(url: String, username: String, password: String): TurnSaveResult {
+        // Never record the password.
+        calls += "setTurnServer:$url:$username:${password.isNotEmpty()}"
+        val cur = settingsFlow.value
+        // The fake keeps no password; a placeholder stands in for a saved one.
+        val saved =
+            cur.turnUrl?.let {
+                TurnCredentials(
+                    it,
+                    cur.turnUsername.orEmpty(),
+                    if (cur.turnPasswordSaved) "kept" else "",
+                )
+            }
+        return when (val r = TurnServerInput.resolve(saved, url, username, password)) {
+            TurnServerInput.Resolution.Cleared -> {
+                clearTurnServer()
+                TurnSaveResult.CLEARED
+            }
+            is TurnServerInput.Resolution.Invalid ->
+                if (r.reason == TurnServerInput.Result.InvalidAddress) {
+                    TurnSaveResult.INVALID_ADDRESS
+                } else {
+                    TurnSaveResult.INVALID_CREDENTIALS
+                }
+            is TurnServerInput.Resolution.Saved -> {
+                settingsFlow.value =
+                    cur.copy(
+                        turnUrl = r.turn.url,
+                        turnUsername = r.turn.username.ifEmpty { null },
+                        turnPasswordSaved = r.turn.credential.isNotEmpty(),
+                    )
+                TurnSaveResult.SAVED
+            }
+        }
+    }
+
+    override fun clearTurnServer() {
+        calls += "clearTurnServer"
+        settingsFlow.value =
+            settingsFlow.value.copy(turnUrl = null, turnUsername = null, turnPasswordSaved = false)
     }
 
     override fun setListen(mode: ListenMode) {

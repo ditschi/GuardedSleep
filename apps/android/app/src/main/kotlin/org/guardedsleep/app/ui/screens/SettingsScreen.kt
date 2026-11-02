@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -32,6 +33,8 @@ import androidx.compose.ui.semantics.Role as SemRole
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AppCard
@@ -48,6 +51,7 @@ import org.guardedsleep.app.ui.model.AlertOutput
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.Theme
+import org.guardedsleep.app.ui.model.TurnSaveResult
 import org.guardedsleep.app.ui.theme.LocalAppColors
 
 private val HoldOptions = listOf(3, 5, 10, 15)
@@ -287,7 +291,14 @@ fun SettingsScreen(
                     else controller.updateSettings { st -> st.copy(advancedEnabled = false) }
                 }
                 if (s.advancedEnabled)
-                    AdvancedFields(controller, s.signalingUrls, s.turnUrl, s.heartbeatSeconds)
+                    AdvancedFields(
+                        controller,
+                        s.signalingUrls,
+                        s.turnUrl,
+                        s.turnUsername,
+                        s.turnPasswordSaved,
+                        s.heartbeatSeconds,
+                    )
             }
         }
         if (confirmAdvanced) {
@@ -338,12 +349,17 @@ private fun AdvancedFields(
     controller: AppController,
     urls: List<String>,
     turn: String?,
+    turnUsername: String?,
+    turnPasswordSaved: Boolean,
     heartbeat: Int,
 ) {
     var newUrl by remember { mutableStateOf("") }
     var urlError by remember { mutableStateOf(false) }
     var turnText by remember(turn) { mutableStateOf(turn.orEmpty()) }
-    var turnError by remember { mutableStateOf(false) }
+    var turnUser by remember(turnUsername) { mutableStateOf(turnUsername.orEmpty()) }
+    // Plain remember, not rememberSaveable: the password must not reach saved UI state.
+    var turnPass by remember { mutableStateOf("") }
+    var turnResult by remember { mutableStateOf<TurnSaveResult?>(null) }
     var hb by remember(heartbeat) { mutableFloatStateOf(heartbeat.toFloat()) }
     Body(
         stringResource(R.string.native_ui_settings_urls_label),
@@ -401,27 +417,73 @@ private fun AdvancedFields(
         value = turnText,
         onValueChange = {
             turnText = it
-            turnError = false
+            turnResult = null
         },
         label = { Text(stringResource(R.string.native_ui_settings_turn_label)) },
-        isError = turnError,
+        isError = turnResult == TurnSaveResult.INVALID_ADDRESS,
         supportingText =
-            if (turnError) {
+            if (turnResult == TurnSaveResult.INVALID_ADDRESS) {
                 { Text(stringResource(R.string.native_ui_settings_turn_invalid)) }
             } else null,
         singleLine = true,
         modifier = Modifier.fillMaxWidth().testTag("settings_turn"),
     )
-    SecondaryButton(
-        stringResource(R.string.native_ui_common_save),
-        {
-            val v = turnText.trim()
-            if (v.isEmpty() || Regex("^turns?:\\S+$").matches(v)) {
-                controller.updateSettings { st -> st.copy(turnUrl = v.ifEmpty { null }) }
-            } else turnError = true
+    OutlinedTextField(
+        value = turnUser,
+        onValueChange = {
+            turnUser = it
+            turnResult = null
         },
-        "settings_turn_save",
+        label = { Text(stringResource(R.string.native_ui_settings_turn_username)) },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth().testTag("settings_turn_user"),
     )
+    val credentialsError = turnResult == TurnSaveResult.INVALID_CREDENTIALS
+    OutlinedTextField(
+        value = turnPass,
+        onValueChange = {
+            turnPass = it
+            turnResult = null
+        },
+        label = { Text(stringResource(R.string.native_ui_settings_turn_password)) },
+        isError = credentialsError,
+        supportingText =
+            when {
+                credentialsError -> {
+                    { Text(stringResource(R.string.native_ui_settings_turn_credentials_invalid)) }
+                }
+                turnPasswordSaved -> {
+                    { Text(stringResource(R.string.native_ui_settings_turn_password_saved)) }
+                }
+                else -> null
+            },
+        visualTransformation = PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth().testTag("settings_turn_pass"),
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        SecondaryButton(
+            stringResource(R.string.native_ui_common_save),
+            {
+                val r = controller.setTurnServer(turnText, turnUser, turnPass)
+                turnResult = r.takeIf { it != TurnSaveResult.SAVED && it != TurnSaveResult.CLEARED }
+                if (turnResult == null) turnPass = ""
+            },
+            "settings_turn_save",
+        )
+        if (turn != null) {
+            SecondaryButton(
+                stringResource(R.string.native_ui_common_remove),
+                {
+                    controller.clearTurnServer()
+                    turnPass = ""
+                    turnResult = null
+                },
+                "settings_turn_remove",
+            )
+        }
+    }
     Body(
         stringResource(R.string.native_ui_settings_heartbeat, hb.toInt().toString()),
         tag = "settings_heartbeat_label",

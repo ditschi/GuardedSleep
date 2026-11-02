@@ -10,6 +10,7 @@ import type {
   Role,
   SettingsState,
 } from "./models";
+import type { TurnSaveResult } from "./turn";
 
 /**
  * What the screens read and call; the platform layer implements it. The state is a set of stores
@@ -48,7 +49,14 @@ export interface AppController {
   startMonitoring(): void;
   stopMonitoring(): void;
   forgetPairing(): void;
+  /** `turnUrl`, `turnUsername` and `turnPasswordSaved` change only through `setTurnServer`. */
   updateSettings(transform: (settings: SettingsState) => SettingsState): void;
+  /**
+   * Web: memory only, used as an ICE server for every new attempt. An empty URL clears the entry;
+   * an empty password keeps the saved one when URL and user name are unchanged.
+   */
+  setTurnServer(url: string, username: string, password: string): TurnSaveResult;
+  clearTurnServer(): void;
 
   // Parent
   setListen(mode: ListenMode): void;

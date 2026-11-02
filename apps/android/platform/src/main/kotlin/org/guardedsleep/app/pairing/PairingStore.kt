@@ -4,7 +4,10 @@ import java.io.File
 import org.json.JSONArray
 import org.json.JSONObject
 
-data class TurnCredentials(val url: String, val username: String, val credential: String)
+data class TurnCredentials(val url: String, val username: String, val credential: String) {
+    // The password must never reach logs through string templates.
+    override fun toString(): String = "TurnCredentials(url=<redacted>, credential=<redacted>)"
+}
 
 /**
  * One mailbox of the pairing's set: `kind` is `relay`, `nostr` or `lan` (the core's wire names).
@@ -46,17 +49,16 @@ data class StoredPairing(
  * PSK, server list and TURN credentials sealed with [PairingCipher] in an app-private file. Plain
  * preferences never hold pairing material (guardrail 7.2).
  */
-class PairingStore(private val file: File, private val cipher: PairingCipher) {
+class PairingStore(file: File, cipher: PairingCipher) {
+    private val sealed = SealedJsonFile(file, cipher)
+
     @Synchronized
     fun load(): StoredPairing? {
-        if (!file.exists()) return null
+        val o = sealed.read() ?: return null
+        // A well-formed file with missing fields is treated like an unreadable one.
         return runCatching {
-            val o = JSONObject(String(cipher.decrypt(file.readBytes()), Charsets.UTF_8))
             val urls = o.getJSONArray("s").let { a -> (0 until a.length()).map { a.getString(it) } }
-            val turn =
-                o.optJSONObject("t")?.let {
-                    TurnCredentials(it.getString("u"), it.getString("n"), it.getString("c"))
-                }
+            val turn = o.optJSONObject("t")?.let(::turnCredentialsFromJson)
             val mailboxes =
                 o.optJSONArray("m")?.let { a ->
                     (0 until a.length()).map {
@@ -75,8 +77,7 @@ class PairingStore(private val file: File, private val cipher: PairingCipher) {
             )
         }
             .getOrElse {
-                // Unreadable (key lost after a restore or a corrupt file): treat as not paired.
-                clear()
+                sealed.clear()
                 null
             }
     }
@@ -88,9 +89,7 @@ class PairingStore(private val file: File, private val cipher: PairingCipher) {
                 .put("k", pairing.pskB64url)
                 .put("s", JSONArray(pairing.signalingUrls))
                 .put("p", pairing.pairedBefore)
-        pairing.turn?.let {
-            o.put("t", JSONObject().put("u", it.url).put("n", it.username).put("c", it.credential))
-        }
+        pairing.turn?.let { o.put("t", it.toJson()) }
         pairing.parentSecretB64url?.let { o.put("ps", it) }
         pairing.pinUntilS?.let { o.put("pu", it) }
         if (pairing.mailboxes.isNotEmpty()) {
@@ -101,15 +100,9 @@ class PairingStore(private val file: File, private val cipher: PairingCipher) {
                 ),
             )
         }
-        val tmp = File(file.parentFile, file.name + ".tmp")
-        // The bytes reach the disk before the rename makes them the record: a caller that sends the
-        // parent secret to the baby after `save` returned must find it again after a crash. A
-        // failure throws, so the caller does not send an unpersisted secret.
-        java.io.FileOutputStream(tmp).use { out ->
-            out.write(cipher.encrypt(o.toString().toByteArray(Charsets.UTF_8)))
-            out.fd.sync()
-        }
-        check(tmp.renameTo(file)) { "cannot replace pairing file" }
+        // A caller that sends the parent secret to the baby after `save` returned must find it
+        // again after a crash; `write` syncs before the rename and throws on failure.
+        sealed.write(o)
     }
 
     @Synchronized
@@ -147,13 +140,8 @@ class PairingStore(private val file: File, private val cipher: PairingCipher) {
         return true
     }
 
-    @Synchronized fun exists(): Boolean = file.exists()
+    @Synchronized fun exists(): Boolean = sealed.exists()
 
     /** Deletes the file and the key alias. */
-    @Synchronized
-    fun clear() {
-        file.delete()
-        File(file.parentFile, file.name + ".tmp").delete()
-        cipher.deleteKey()
-    }
+    @Synchronized fun clear() = sealed.clear()
 }

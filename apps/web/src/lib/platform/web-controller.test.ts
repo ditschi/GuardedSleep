@@ -795,6 +795,86 @@ describe("WebController: sound gate", () => {
   });
 });
 
+describe("WebController: TURN server", () => {
+  const TURN = "turns:turn.example.org:5349?transport=tcp";
+
+  async function babyRun(t: Setup): Promise<RTCIceServer[]> {
+    t.controller.chooseRole("baby");
+    t.controller.startPairing();
+    await flush();
+    return t.media.requests[0]?.ice ?? [];
+  }
+
+  it("offers the relay STUN first, then the TURN server with its credentials", async () => {
+    const t = setup();
+    expect(t.controller.setTurnServer(TURN, "test-only", "pw")).toBe("saved");
+    expect(await babyRun(t)).toEqual([
+      { urls: ["stun:relay.test:3478"] },
+      { urls: [TURN], username: "test-only", credential: "pw" },
+    ]);
+  });
+
+  it("leaves out the credential keys when the entry has none", async () => {
+    const t = setup();
+    expect(t.controller.setTurnServer("turn:203.0.113.10:3478", "", "")).toBe("saved");
+    const ice = await babyRun(t);
+    expect(ice[1]).toEqual({ urls: ["turn:203.0.113.10:3478"] });
+    expect(Object.keys(ice[1] ?? {})).toEqual(["urls"]);
+  });
+
+  it("takes effect for the next attempt and stops after clearing", async () => {
+    const t = setup();
+    t.controller.setTurnServer(TURN, "test-only", "pw");
+    t.controller.clearTurnServer();
+    expect(get(t.controller.settings)).toMatchObject({
+      turnUrl: null,
+      turnUsername: null,
+      turnPasswordSaved: false,
+    });
+    expect(await babyRun(t)).toEqual([{ urls: ["stun:relay.test:3478"] }]);
+  });
+
+  it("reports the entry without the password and keeps it on an empty field", async () => {
+    const t = setup();
+    t.controller.setTurnServer(TURN, "test-only", "turn-pw-test-only");
+    expect(get(t.controller.settings)).toMatchObject({
+      turnUrl: TURN,
+      turnUsername: "test-only",
+      turnPasswordSaved: true,
+    });
+    expect(JSON.stringify(get(t.controller.settings))).not.toContain("turn-pw-test-only");
+    expect(t.controller.setTurnServer(TURN, "test-only", "")).toBe("saved");
+    const ice = await babyRun(t);
+    expect(ice[1]).toMatchObject({ credential: "turn-pw-test-only" });
+  });
+
+  it("rejects bad input and keeps the previous entry", () => {
+    const t = setup();
+    t.controller.setTurnServer(TURN, "test-only", "pw");
+    expect(t.controller.setTurnServer("stun:x", "test-only", "pw")).toBe("invalid_address");
+    expect(t.controller.setTurnServer(TURN, "other", "")).toBe("invalid_credentials");
+    expect(get(t.controller.settings).turnUrl).toBe(TURN);
+    expect(t.controller.setTurnServer("", "", "")).toBe("cleared");
+    expect(get(t.controller.settings).turnUrl).toBeNull();
+  });
+
+  it("cannot be set or wiped through updateSettings", () => {
+    const t = setup();
+    t.controller.setTurnServer(TURN, "test-only", "pw");
+    t.controller.updateSettings((s) => ({
+      ...s,
+      turnUrl: "turn:evil",
+      turnUsername: "x",
+      turnPasswordSaved: false,
+    }));
+    expect(get(t.controller.settings)).toMatchObject({
+      turnUrl: TURN,
+      turnUsername: "test-only",
+      turnPasswordSaved: true,
+    });
+  });
+});
+
 describe("WebController: pairing material stays in memory", () => {
   let setItem: ReturnType<typeof vi.spyOn>;
   beforeEach(() => {
@@ -808,6 +888,7 @@ describe("WebController: pairing material stays in memory", () => {
 
   it("never writes the key to storage, stores, strings or sockets' URLs", async () => {
     const t = setup();
+    t.controller.setTurnServer("turn:turn.example.org", "turn-user-test-only", "turn-pw-test-only");
     t.controller.chooseRole("baby");
     t.controller.startPairing();
     await flush();
@@ -826,6 +907,9 @@ describe("WebController: pairing material stays in memory", () => {
       ...Object.values(window.sessionStorage),
     ].join("\n");
     expect(everything).not.toContain(psk);
+    // The TURN password follows the same rule. The user name is shown in the settings by design,
+    // so it may be in the stores but never in browser storage (the empty-storage check below).
+    expect(everything).not.toContain("turn-pw-test-only");
     expect(setItem).not.toHaveBeenCalled();
     expect(window.localStorage.length + window.sessionStorage.length).toBe(0);
   });

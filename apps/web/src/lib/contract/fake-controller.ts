@@ -15,6 +15,7 @@ import {
   type ParentMonitorState,
   type SettingsState,
 } from "./models";
+import { resolveTurnSave, turnSettings, type TurnEntry } from "./turn";
 
 /** A controller whose state tests and screenshots set directly, and whose calls are recorded. */
 export interface FakeController extends AppController {
@@ -45,6 +46,7 @@ export function createFakeController(): FakeController {
   const deviceBattery = writable<DeviceBattery | null>(null);
   const pageGuard = writable<PageGuardState>({ wakeLock: "off", hidden: false, away: null });
   const calls: Array<[string, ...unknown[]]> = [];
+  let turn: TurnEntry | null = null;
   const record =
     (name: string) =>
     (...args: unknown[]): void => {
@@ -93,7 +95,19 @@ export function createFakeController(): FakeController {
     },
     updateSettings(transform) {
       calls.push(["updateSettings"]);
-      settings.update(transform);
+      settings.update((s) => ({ ...transform(s), ...turnSettings(turn) }));
+    },
+    setTurnServer(url, username, password) {
+      calls.push(["setTurnServer", url, username]);
+      const { result, entry } = resolveTurnSave(turn, url, username, password);
+      turn = entry;
+      settings.update((s) => ({ ...s, ...turnSettings(turn) }));
+      return result;
+    },
+    clearTurnServer() {
+      calls.push(["clearTurnServer"]);
+      turn = null;
+      settings.update((s) => ({ ...s, ...turnSettings(null) }));
     },
     setListen(mode) {
       calls.push(["setListen", mode]);

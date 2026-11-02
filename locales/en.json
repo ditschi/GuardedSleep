@@ -473,7 +473,11 @@
         },
         "turn": {
           "label": "Relay server (TURN), optional",
-          "invalid": "The relay address must start with turn: or turns:."
+          "invalid": "The relay address must start with turn: or turns:.",
+          "username": "User name",
+          "password": "Password",
+          "passwordSaved": "Password saved. Leave empty to keep it.",
+          "credentialsInvalid": "Enter both user name and password (up to 256 characters each), or neither."
         },
         "heartbeat": "Connection check every {seconds} s"
       },

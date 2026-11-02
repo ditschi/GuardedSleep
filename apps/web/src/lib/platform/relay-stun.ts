@@ -1,3 +1,4 @@
+import type { TurnEntry } from "../contract/turn";
 import { DEFAULT_STUN_URLS } from "../public-lists/generated/public-lists";
 import { RELAY_STUN_PORT } from "./policy";
 
@@ -29,17 +30,32 @@ export function relayIceServers(signalingUrls: readonly string[]): RTCIceServer[
  * The ICE servers of an attempt (design.md section 7): with an own relay configured only its STUN;
  * otherwise the default pair of operators from `data/stun-servers.json`, unless "Only same Wi-Fi or
  * my own server" is on, which allows no public STUN at all. No host outside that list is ever used
- * (`just lint` enforces it); TURN is the user's own and not handled here.
+ * (`just lint` enforces it). The user's own TURN server, when set, comes last with its credentials.
  */
 export function iceServersFor(
   signalingUrls: readonly string[],
-  options: { onlyLocal?: boolean; defaultStun?: readonly string[] } = {},
+  options: { onlyLocal?: boolean; defaultStun?: readonly string[]; turn?: TurnEntry | null } = {},
+): RTCIceServer[] {
+  return [...stunServersFor(signalingUrls, options), ...turnServers(options.turn ?? null)];
+}
+
+function stunServersFor(
+  signalingUrls: readonly string[],
+  options: { onlyLocal?: boolean; defaultStun?: readonly string[] },
 ): RTCIceServer[] {
   const own = relayIceServers(signalingUrls);
   if (own.length > 0) return own;
   if (options.onlyLocal) return [];
   const urls = options.defaultStun ?? DEFAULT_STUN_URLS;
   return urls.length === 0 ? [] : [{ urls: [...urls] }];
+}
+
+function turnServers(turn: TurnEntry | null): RTCIceServer[] {
+  if (turn === null) return [];
+  const entry: RTCIceServer = { urls: [turn.url] };
+  if (turn.username !== "") entry.username = turn.username;
+  if (turn.password !== "") entry.credential = turn.password;
+  return [entry];
 }
 
 /**

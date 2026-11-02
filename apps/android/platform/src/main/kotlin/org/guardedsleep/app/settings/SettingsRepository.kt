@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.guardedsleep.app.config.AppDefaults
+import org.guardedsleep.app.pairing.TurnCredentials
+import org.guardedsleep.app.pairing.TurnStore
 import org.guardedsleep.app.ui.model.AlertOutput
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.SettingsState
@@ -53,8 +55,16 @@ data class PersistedState(
 class SettingsRepository(
     private val store: DataStore<Preferences>,
     private val scope: CoroutineScope,
+    /** Receives a legacy plain `turn_url` once; null in tests that do not care. */
+    private val turnStore: TurnStore? = null,
 ) {
-    private val state = MutableStateFlow(runBlocking { read(store.data.first()) })
+    private val state =
+        MutableStateFlow(
+            runBlocking {
+                migrateLegacyTurn()
+                read(store.data.first())
+            }
+        )
 
     val flow: StateFlow<PersistedState> = state
 
@@ -75,6 +85,20 @@ class SettingsRepository(
         }
     }
 
+    /** Moves the pre-TURN-credentials `turn_url` preference into the sealed store, once. */
+    private suspend fun migrateLegacyTurn() {
+        val legacy = store.data.first()[TURN] ?: return
+        val turnStore = turnStore ?: return
+        val kept = runCatching {
+            if (turnStore.load() == null && legacy.isNotBlank()) {
+                turnStore.save(TurnCredentials(legacy, "", ""))
+            }
+        }
+            .isSuccess
+        // A failed move keeps the key, so the next start retries.
+        if (kept) store.edit { it.remove(TURN) }
+    }
+
     private fun read(p: Preferences): PersistedState {
         val defaults = SettingsState(signalingUrls = AppDefaults.signalingUrls)
         val settings =
@@ -93,7 +117,6 @@ class SettingsRepository(
                 advancedEnabled = p[ADVANCED] ?: defaults.advancedEnabled,
                 signalingUrls =
                     p[URLS]?.split('\n')?.filter { it.isNotBlank() } ?: defaults.signalingUrls,
-                turnUrl = p[TURN],
                 heartbeatSeconds = p[HEARTBEAT] ?: defaults.heartbeatSeconds,
             )
         return PersistedState(
@@ -125,7 +148,6 @@ class SettingsRepository(
         set(SILENCE, c.silenceWhileMonitoring)
         set(ADVANCED, c.advancedEnabled)
         set(URLS, c.signalingUrls.joinToString("\n"))
-        set(TURN, c.turnUrl)
         set(HEARTBEAT, c.heartbeatSeconds)
         set(ROLE, s.role?.name)
         set(ONBOARDING, s.onboardingDone)

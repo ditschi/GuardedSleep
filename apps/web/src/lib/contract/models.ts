@@ -223,6 +223,9 @@ export interface SettingsState {
   advancedEnabled: boolean;
   signalingUrls: string[];
   turnUrl: string | null;
+  turnUsername: string | null;
+  /** Only the fact: the password itself is never part of any state. */
+  turnPasswordSaved: boolean;
   heartbeatSeconds: number;
   /** Last successful test alert (settings line "Last test"). */
   lastTestWallMs: number | null;
@@ -326,6 +329,8 @@ export function defaultSettings(): SettingsState {
     advancedEnabled: false,
     signalingUrls: [],
     turnUrl: null,
+    turnUsername: null,
+    turnPasswordSaved: false,
     heartbeatSeconds: 10,
     lastTestWallMs: null,
   };

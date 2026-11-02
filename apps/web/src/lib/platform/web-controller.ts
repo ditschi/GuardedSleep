@@ -25,7 +25,9 @@ import {
   type ParentMonitorState,
   type Role,
   type SettingsState,
+  type TurnSaveResult,
 } from "../contract";
+import { resolveTurnSave, turnSettings, type TurnEntry } from "../contract/turn";
 import type { AlertSink } from "./alert-sink";
 import type { SoundGate } from "./audio";
 import { BabyModel } from "./baby-model";
@@ -178,6 +180,8 @@ export class WebController implements AppController {
   private appState: AppState = defaultAppState();
   private settingsState: SettingsState = defaultSettings();
   private stored: StoredPairing | null = null;
+  /** The TURN entry with its password: here only, never in a store, a log or browser storage. */
+  private turn: TurnEntry | null = null;
   private run: Run | null = null;
   private runCounter = 0;
 
@@ -218,7 +222,7 @@ export class WebController implements AppController {
 
   updateSettings(transform: (settings: SettingsState) => SettingsState): void {
     const before = this.settingsState;
-    const after = transform(before);
+    const after = { ...transform(before), ...turnSettings(this.turn) };
     if (JSON.stringify(after) === JSON.stringify(before)) return;
     this.settingsState = after;
     this.settingsStore.set(after);
@@ -238,6 +242,18 @@ export class WebController implements AppController {
     if (after.alertGainPct !== before.alertGainPct) {
       r.driver.media((m) => m.setPlaybackGainPct(after.alertGainPct));
     }
+  }
+
+  setTurnServer(url: string, username: string, password: string): TurnSaveResult {
+    const { result, entry } = resolveTurnSave(this.turn, url, username, password);
+    this.turn = entry;
+    this.updateSettingsState(turnSettings(entry));
+    return result;
+  }
+
+  clearTurnServer(): void {
+    this.turn = null;
+    this.updateSettingsState(turnSettings(null));
   }
 
   forgetPairing(): void {
@@ -482,7 +498,7 @@ export class WebController implements AppController {
     const signalingUrls = this.effectiveUrls(pending.urls);
     let media: MediaEngine;
     try {
-      media = await this.deps.createMedia(role, iceServersFor(signalingUrls));
+      media = await this.deps.createMedia(role, iceServersFor(signalingUrls, { turn: this.turn }));
     } catch (e) {
       if (this.run === run) this.onMediaFailed(run, e);
       return;
