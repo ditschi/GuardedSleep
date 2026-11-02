@@ -99,18 +99,18 @@ For a development binary without Docker: `just dev` (server and Vite) or `script
 
 ## CI: publish to GHCR
 
-The workflow [`.github/workflows/docker-signaling.yml`](../../.github/workflows/docker-signaling.yml) publishes `ghcr.io/<owner-lowercase>/guardedsleep-signaling` for the **`linux/amd64`** and **`linux/arm64`** platforms.
+The workflow [`.github/workflows/docker-signaling.yml`](../../.github/workflows/docker-signaling.yml) (triggers; the build is the reusable [`docker-image.yml`](../../.github/workflows/docker-image.yml)) publishes `ghcr.io/<owner-lowercase>/guardedsleep-signaling` for the **`linux/amd64`** and **`linux/arm64`** platforms.
 
 ### Tag strategy ([ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md))
 
-| Tag                    | When                                                                                              | Intended consumer                                          |
-| ---------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `:latest`              | A `signaling-server-v*` git tag is pushed (created by [Release Please](release-and-changelog.md)) | Production self-hosters wanting "stable, current"          |
-| `:vX.Y.Z`              | Same as `:latest`                                                                                 | Reproducible deploys                                       |
-| `:vX.Y`                | Same as `:latest`                                                                                 | Auto-patch within a minor                                  |
-| `:vX` (post-1.0 only)  | Same as `:latest`                                                                                 | Auto-minor within a major                                  |
-| `:dev` (alias `:edge`) | Every push to `main`                                                                              | Testers / bleeding edge — **use this until first release** |
-| `:sha-<short>`         | Every push (including PRs — PR builds are **not** pushed; the tag is for cache attribution only)  | Exact-commit debugging                                     |
+| Tag                    | When                                                                                                                | Intended consumer                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `:latest`              | A `signaling-server-v*` git tag is pushed (a manual tag during the alpha, see [releases](release-and-changelog.md)) | Production self-hosters wanting "stable, current"          |
+| `:vX.Y.Z`              | Same as `:latest`                                                                                                   | Reproducible deploys                                       |
+| `:vX.Y`                | Same as `:latest`                                                                                                   | Auto-patch within a minor                                  |
+| `:vX` (post-1.0 only)  | Same as `:latest`                                                                                                   | Auto-minor within a major                                  |
+| `:dev` (alias `:edge`) | Every push to `main`                                                                                                | Testers / bleeding edge — **use this until first release** |
+| `:sha-<short>`         | Every push (including PRs — PR builds are **not** pushed; the tag is for cache attribution only)                    | Exact-commit debugging                                     |
 
 Until GuardedSleep cuts its first release, `:latest` does **not** exist; use `:dev` in the meantime.
 
