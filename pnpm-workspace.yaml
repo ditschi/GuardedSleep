@@ -1,3 +1,45 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# pnpm 11 settings live here, not in package.json or .npmrc (ADR-020 §5).
+# Reference: https://pnpm.io/settings
+
+# Install-script allow-list. Everything not listed fails the install (strictDepBuilds defaults to
+# true), so a new dependency with a postinstall script is a deliberate review step.
+# https://pnpm.io/settings/build#allowbuilds
+allowBuilds:
+  esbuild: true
+
+# Do not install versions younger than 3 days (value in minutes; the pnpm 11 default is 1 day).
+# https://pnpm.io/settings/dependency-resolution#minimumreleaseage
+minimumReleaseAge: 4320
+
+# Only direct dependencies may come from git or tarball URLs.
+# https://pnpm.io/settings/dependency-resolution#blockexoticsubdeps
+blockExoticSubdeps: true
+
+# Security floors for transitive dependencies. Selectors are scoped to the vulnerable range so a
+# parent's own newer range stays untouched.
+# https://pnpm.io/settings/dependency-resolution#overrides
+overrides:
+  # Dev/build-time chains (vite-plugin-pwa -> workbox-build, vite -> tsx) whose parents pin old
+  # ranges. Each selector stays inside the major version of the vulnerable range.
+  # @babel/core: GHSA-4x5r-pxfx-6jf8
+  "@babel/core@<7.29.6": "^7.29.6"
+  # @babel/plugin-transform-modules-systemjs: GHSA-fv7c-fp4j-7gwp
+  "@babel/plugin-transform-modules-systemjs@<7.29.4": "^7.29.4"
+  # baseline-browser-mapping: GHSA-w5vr-8v7q-w6rv
+  "baseline-browser-mapping@<2.11.0": "^2.11.0"
+  # brace-expansion: GHSA-3jxr-9vmj-r5cp, GHSA-mh99-v99m-4gvg, GHSA-rgw5-rvv9-x895,
+  # GHSA-6j4f-fj2g-mc7p, GHSA-qhr7-859c-m2p7, GHSA-q2hr-2g5m-vwhr, GHSA-jxxr-4gwj-5jf2
+  "brace-expansion@>=2 <2.1.7": "^2.1.7"
+  "brace-expansion@>=5 <5.0.12": "^5.0.12"
+  # browserslist: GHSA-73wf-gq98-2v4g, GHSA-c83g-rgw3-j3cx
+  "browserslist@<4.28.7": "^4.28.7"
+  # esbuild: GHSA-g7r4-m6w7-qqqr
+  "esbuild@>=0.27.3 <0.28.1": "^0.28.1"
+  # fast-uri: GHSA-4c8g-83qw-93j6, GHSA-7p8r-x3mc-p8w7, GHSA-f65p-4m7j-42xc, GHSA-jqff-g426-hqxp,
+  # GHSA-qw65-cvwx-89v3, GHSA-q3j6-qgpj-74h6, GHSA-v39h-62p7-jpjc, GHSA-v2hh-gcrm-f6hx,
+  # GHSA-hrr3-gc8f-f4qj
+  "fast-uri@>=3 <3.1.8": "^3.1.8"

@@ -1,0 +1,77 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "attack-stranger-parent-cap",
+  "description": "While the pair is verified neither device holds a mailbox, so the room is empty and a stranger that knows the room id takes the free slots; nothing changes for the pair, and the stranger gets no answer it can use (it holds no PSK). A squatted slot can refuse the real device with PARENT_CAP or BABY_TAKEN on its next reconnect: a denial of service only, because escalation still runs (design section 4, \"Our relay\").",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "stranger_join",
+      "mode": "forged_offer",
+      "id": "stranger"
+    },
+    {
+      "at": 20000,
+      "do": "stranger_join",
+      "mode": "forged_offer",
+      "role": "baby",
+      "id": "stranger2"
+    },
+    {
+      "at": 80000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 80000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 80000
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "within_ms": [16000, 80000]
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "within_ms": [16000, 80000]
+    },
+    {
+      "peer": "baby",
+      "never": "failed"
+    },
+    {
+      "peer": "parent",
+      "never": "failed"
+    },
+    {
+      "peer": "stranger",
+      "joined": true
+    },
+    {
+      "peer": "stranger2",
+      "joined": true
+    }
+  ]
+}

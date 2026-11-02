@@ -1,0 +1,547 @@
+{
+  "$meta": {
+    "default": "machineTranslated",
+    "reviewed": []
+  },
+  "meta": {
+    "appTitle": "GuardedSleep"
+  },
+  "layout": {
+    "settingsAria": "Instellingen",
+    "backAria": "Terug naar het vorige scherm"
+  },
+  "core": {
+    "pairingKeyMismatch": "Deze apparaten zijn niet meer gekoppeld. Koppel ze opnieuw om te blijven bewaken.",
+    "updateRequired": "Een van de apparaten heeft een GuardedSleep-update nodig om te blijven bewaken.",
+    "serverUnreachable": "Dit apparaat kan de verbindingsserver niet bereiken. Controleer de internetverbinding.",
+    "peerAbsent": "Het babyapparaat reageert niet. Controleer of het aan staat en GuardedSleep toont.",
+    "mediaBlocked": "De apparaten hebben elkaar gevonden, maar het geluid komt niet door. Probeer hetzelfde wifi-netwerk op beide.",
+    "wrongKeyAttempt": "Iemand probeerde verbinding te maken met een verkeerde sleutel. De bewaking gaat door.",
+    "unknownParentAttempt": "Een apparaat dat niet je gekoppelde ouderapparaat is, probeerde verbinding te maken. De bewaking gaat door.",
+    "pairAgain": "Dit apparaat kent geen ouderapparaat meer. Tik op Nieuwe code tonen en koppel opnieuw.",
+    "babyUnrecognised": "Het babyapparaat herkent dit apparaat niet. Tik op het babyapparaat op Nieuwe code tonen en koppel opnieuw."
+  },
+  "native": {
+    "appName": "GuardedSleep Alpha",
+    "notif": {
+      "appTitle": "GuardedSleep",
+      "silenceRuleName": "GuardedSleep",
+      "channelNoise": "Geluidsmeldingen",
+      "channelNoiseDesc": "Luide meldingen wanneer het babyapparaat een geluid hoort.",
+      "channelLink": "Verbindingsalarmen",
+      "channelLinkDesc": "Alarmen wanneer de verbinding met het babyapparaat wegvalt.",
+      "channelStatus": "Bewakingsstatus",
+      "channelStatusDesc": "Laat zien dat de bewaking actief is.",
+      "channelNotice": "Waarschuwingen",
+      "channelNoticeDesc": "Waarschuwingen over batterij en beveiliging.",
+      "channelInfo": "Informatie",
+      "channelInfoDesc": "Stille berichten, bijvoorbeeld nadat de verbinding terug is.",
+      "channelBaby": "Bewaking",
+      "channelBabyDesc": "Stil bericht dat dit apparaat aan het bewaken is.",
+      "babyMonitoring": "GuardedSleep is aan het bewaken",
+      "babyResume": "Tik om de bewaking te hervatten",
+      "statusConnected": "Verbonden met het babyapparaat",
+      "statusConnecting": "Verbinden met het babyapparaat…",
+      "statusReconnecting": "Opnieuw verbinden met het babyapparaat…",
+      "statusTrouble": "Babyapparaat onbereikbaar, we blijven proberen",
+      "statusAlarm": "Geen verbinding met het babyapparaat",
+      "statusPeerStopped": "Babyapparaat is gestopt met bewaken",
+      "statusFailed": "Deze apparaten zijn niet meer gekoppeld",
+      "noiseTitle": "Geluid gehoord",
+      "noiseText": "Het babyapparaat hoort een geluid.",
+      "noiseTestTitle": "Testmelding",
+      "noiseTestText": "Dit is een test. Het babyapparaat blijft stil.",
+      "actionStopSound": "Geluid stoppen",
+      "actionSnooze10": "10 min uitstellen",
+      "actionChecking": "Ik kijk",
+      "linkLostTitle": "Verbinding verbroken",
+      "linkLostText": "Geen verbinding met het babyapparaat. Ga nu bij je baby kijken.",
+      "peerStoppedTitle": "Bewaking gestopt",
+      "peerStoppedText": "De bewaking is gestopt op het babyapparaat. Je hoort niets tot het weer is gestart.",
+      "restoredTitle": "Weer verbonden",
+      "restoredText": "{duration} niet bewaakt.",
+      "missedTitle": "Tijdens de onderbreking",
+      "missedCount": "Geluiden tijdens de onderbreking: {count} ({duration} niet bewaakt).",
+      "missedNone": "Geen geluiden tijdens de onderbreking ({duration} niet bewaakt).",
+      "missedUnknown": "We weten niet wat er tijdens de onderbreking is gebeurd ({duration} niet bewaakt).",
+      "batteryLowTitle": "Batterij babyapparaat bijna leeg",
+      "batteryLowText": "Batterij babyapparaat {percent}%: sluit het aan op de lader.",
+      "batteryCriticalTitle": "Batterij babyapparaat bijna op",
+      "batteryCriticalText": "Batterij babyapparaat {percent}%: sluit het nu aan op de lader.",
+      "chargerTitle": "Babyapparaat laadt niet meer",
+      "chargerText": "Sluit het babyapparaat aan zodat het de nacht volhoudt.",
+      "securityTitle": "Verkeerde sleutel",
+      "publicTitle": "GuardedSleep-alarm",
+      "fgsMissingTitle": "Geen bewaking op de achtergrond",
+      "fgsMissingText": "Open GuardedSleep om de bewaking op de achtergrond weer aan te zetten."
+    },
+    "ui": {
+      "common": {
+        "appName": "GuardedSleep",
+        "allow": "Toestaan",
+        "continue": "Doorgaan",
+        "later": "Later",
+        "ok": "OK",
+        "cancel": "Annuleren",
+        "more": "Meer",
+        "moreCount": "+{count}",
+        "settings": "Instellingen",
+        "tryAgain": "Opnieuw proberen",
+        "yes": "Ja",
+        "no": "Nee",
+        "add": "Toevoegen",
+        "remove": "Verwijderen",
+        "save": "Opslaan",
+        "change": "Wijzigen",
+        "durationSec": "{seconds} s",
+        "durationMin": "{minutes} min",
+        "durationHour": "{hours} u",
+        "durationHourMin": "{hours} u {minutes} min",
+        "secondsShort": "{seconds} s",
+        "state": {
+          "done": "Klaar",
+          "todo": "Te doen",
+          "blocked": "Geblokkeerd",
+          "checking": "Controleren"
+        },
+        "babyUnitDefault": "Babyapparaat",
+        "parentUnitDefault": "Ouderapparaat"
+      },
+      "role": {
+        "title": "Welk apparaat is dit?",
+        "baby": {
+          "title": "Babyapparaat",
+          "hint": "Blijft bij je kind en luistert."
+        },
+        "parent": {
+          "title": "Ouderapparaat",
+          "hint": "Blijft bij jou en waarschuwt je."
+        },
+        "orderHint": "Stel eerst het babyapparaat in."
+      },
+      "setup": {
+        "title": "Dit apparaat voorbereiden",
+        "mic": {
+          "title": "Microfoon",
+          "why": "Nodig om je kind te horen.",
+          "required": "Sta de microfoon toe om door te gaan."
+        },
+        "background": {
+          "title": "Blijven draaien op de achtergrond",
+          "why": "Anders kan dit apparaat stoppen met bewaken om batterij te sparen."
+        },
+        "silence": {
+          "title": "Stille modus tijdens het bewaken",
+          "why": "Geen geluiden, beltonen of lampjes op het babyapparaat. Wekkers werken nog wel."
+        },
+        "safety": {
+          "body": "Laat dit apparaat aan de lader liggen, op een stabiel oppervlak, buiten het bereik van je kind. Gebruik geen apparaat met een opgezwollen of beschadigde batterij."
+        },
+        "chargingTip": "Tip: heeft dit apparaat \"scherm aan bij opladen\", zet dat dan uit zodat het scherm donker blijft.",
+        "deviceCheck": {
+          "checking": "Dit apparaat controleren…",
+          "ok": "Dit apparaat werkt goed als babyapparaat.",
+          "limited": "Dit apparaat kan de verbinding af en toe verliezen. Het werkt wel.",
+          "notRecommended": "Dit apparaat bewaakt mogelijk niet betrouwbaar. Gebruik een ander apparaat als je kunt."
+        },
+        "notifications": {
+          "title": "Meldingen",
+          "why": "Nodig zodat je hoort wanneer je kind lawaai maakt.",
+          "required": "Zonder dit kan GuardedSleep je niet waarschuwen."
+        },
+        "lockScreen": {
+          "title": "Meldingen op het vergrendelscherm",
+          "why": "Zodat meldingen ook verschijnen als het scherm vergrendeld is."
+        },
+        "dndBypass": {
+          "title": "Meldingen bij Niet storen",
+          "why": "Zodat meldingen ook doorkomen als Niet storen aan staat."
+        },
+        "limits": {
+          "body": "GuardedSleep kan je alleen waarschuwen zolang dit apparaat aan staat en opgeladen is. Laat het 's nachts aan de lader. Als beide apparaten uitgaan, wordt niemand gewaarschuwd."
+        },
+        "skipped": "Voorlopig overgeslagen"
+      },
+      "pair": {
+        "baby": {
+          "title": "Het ouderapparaat verbinden",
+          "qrAlt": "Koppelcode",
+          "instruction": "Open GuardedSleep op het andere apparaat, kies Ouderapparaat en scan deze code.",
+          "validFor": "Code geldig voor {duration}",
+          "expired": "Deze code is verlopen.",
+          "newCode": "Nieuwe code tonen",
+          "copy": "Code kopiëren",
+          "copied": "Gekopieerd",
+          "brighter": "Code helderder maken",
+          "waiting": "Wachten op ouderapparaat…",
+          "privacy": "Iedereen met deze code kan meeluisteren. Toon hem alleen aan mensen die je vertrouwt.",
+          "parentFound": "Ouderapparaat gevonden. Verbinden…",
+          "failed": "Koppelen is niet gelukt. Toon een nieuwe code en probeer het opnieuw.",
+          "showText": "Code als tekst tonen",
+          "hideText": "Tekst verbergen"
+        },
+        "parent": {
+          "title": "Scan de code op het babyapparaat",
+          "cameraWhy": "GuardedSleep gebruikt de camera alleen om de code te lezen.",
+          "pasteLabel": "Of plak de code",
+          "pasteSubmit": "Verbinden",
+          "connecting": "Verbinden met het babyapparaat…"
+        },
+        "error": {
+          "cameraDenied": "Camera niet toegestaan.",
+          "allowCamera": "Camera toestaan",
+          "pasteInstead": "Code plakken",
+          "notOurs": "Dit is geen GuardedSleep-code. Scan de code op het babyapparaat.",
+          "expired": "Deze code is verlopen. Tik op het babyapparaat op Nieuwe code tonen en scan opnieuw.",
+          "mismatch": "De code komt niet overeen. Scan de code die nu op het babyapparaat staat.",
+          "alreadyPaired": "Dit babyapparaat is al gekoppeld aan een ander apparaat.",
+          "unreachable": "Het babyapparaat is nog niet te vinden. Controleer of beide apparaten online zijn.",
+          "incomplete": "Deze code is onvolledig. Kopieer de hele code van het babyapparaat."
+        }
+      },
+      "home": {
+        "parent": {
+          "cardTitle": "Verbinden met {name}",
+          "cardTitleDefault": "Verbinden met het babyapparaat"
+        },
+        "baby": {
+          "cardTitle": "Bewaking starten"
+        },
+        "lastUsed": "Laatst gebruikt {time}",
+        "newPairing": "Nieuwe apparaten instellen",
+        "empty": "Nog geen apparaten gekoppeld."
+      },
+      "baby": {
+        "status": {
+          "connected": "Verbonden met ouderapparaat",
+          "waiting": "Wachten op ouderapparaat…",
+          "reconnecting": "Opnieuw verbinden met ouderapparaat…",
+          "notResponding": "Ouderapparaat reageert niet, we blijven proberen",
+          "parentStopped": "Ouderapparaat is gestopt met bewaken"
+        },
+        "forDuration": "al {duration}",
+        "monitoring": "Bewaken",
+        "parentListening": "Ouder luistert mee",
+        "battery": "Dit apparaat: batterij {percent}%",
+        "batteryCharging": "Dit apparaat: laadt op · {percent}%",
+        "silence": {
+          "on": "Stille modus staat aan",
+          "off": "Stille modus staat uit: dit apparaat kan overgaan",
+          "everydayPhone": "Stille modus staat aan. Gesprekken en berichten op dit apparaat blijven stil tot je stopt met bewaken.",
+          "restored": "Dit apparaat stond nog in de stille modus. Geluiden staan weer aan.",
+          "noAccess": "Toegang tot de stille modus staat uit. Zet hem aan in Instellingen zodat gesprekken en berichten stil blijven."
+        },
+        "lock": "Scherm vergrendelen",
+        "autolockHint": "Het scherm gaat uit over {seconds} s",
+        "stop": "Stoppen met bewaken",
+        "micLevel": "Geluidsniveau hier",
+        "micSilent": "De microfoon vangt geen geluid op. Start de bewaking opnieuw of controleer de microfoon."
+      },
+      "kiosk": {
+        "a11yLabel": "Bewaken. Scherm vergrendeld.",
+        "unlockHint": "Houd vast en veeg omhoog om te ontgrendelen",
+        "unlockZone": "Veeg hier",
+        "unlockAction": "Ontgrendelen"
+      },
+      "link": {
+        "connected": "Verbonden met {name}",
+        "connecting": "Verbinden met {name}…",
+        "reconnecting": "Opnieuw verbinden…",
+        "cantReach": "{name} onbereikbaar, we blijven proberen",
+        "lostFor": "Al {duration} geen verbinding",
+        "babyStopped": "{name} is gestopt met bewaken",
+        "idle": "Niet aan het bewaken",
+        "weak": "Zwakke verbinding: geluid kan haperen",
+        "restoredAfter": "Weer verbonden na {duration}. Je hoort je kind weer.",
+        "tryNow": "Nu proberen",
+        "pairAgain": "Opnieuw koppelen",
+        "connectedDefault": "Verbonden met het babyapparaat",
+        "connectingDefault": "Verbinden met het babyapparaat…",
+        "cantReachDefault": "Babyapparaat onbereikbaar, we blijven proberen",
+        "babyStoppedDefault": "Het babyapparaat is gestopt met bewaken",
+        "stalePairingHint": "Heb je het babyapparaat opnieuw gekoppeld, scan dan de nieuwe code."
+      },
+      "linkAlarm": {
+        "lost": {
+          "title": "Geen verbinding met {name}",
+          "titleUrgent": "Geen verbinding met {name}!",
+          "body": "Je hoort je kind niet tot de apparaten weer verbonden zijn.",
+          "titleDefault": "Geen verbinding met het babyapparaat",
+          "titleUrgentDefault": "Geen verbinding met het babyapparaat!"
+        },
+        "stopped": {
+          "title": "{name} is gestopt met bewaken",
+          "body": "Iemand is gestopt met bewaken op het babyapparaat. Je krijgt geen meldingen.",
+          "titleDefault": "Het babyapparaat is gestopt met bewaken"
+        },
+        "battery": {
+          "title": "Batterij babyapparaat bijna op",
+          "body": "Sluit het babyapparaat nu aan op de lader, anders stopt de bewaking."
+        },
+        "needsPairing": {
+          "title": "Apparaten niet meer gekoppeld"
+        },
+        "restored": {
+          "title": "Weer verbonden"
+        },
+        "ack": "Ik kijk",
+        "ackNote": "Geluid uit voor {time}. We waarschuwen je opnieuw als er nog geen verbinding is.",
+        "soundNote": "Een zachte alarmtoon herhaalt zich tot je kijkt.",
+        "soundNoteUrgent": "Het alarm blijft klinken tot je kijkt."
+      },
+      "parent": {
+        "allQuietSince": "Alles rustig sinds {time}",
+        "soundSince": "Geluid gehoord · sinds {time}",
+        "soundAt": "Geluid om {time} · duurde {duration}",
+        "soundSnoozed": "Geluid om {time} · meldingen uitgesteld",
+        "lastHeard": "Laatste contact {time}",
+        "noContactYet": "Nog geen contact",
+        "monitoringNow": "Bewaken",
+        "meterA11y": "Geluidsniveau: {level}",
+        "level": {
+          "quiet": "stil",
+          "some": "wat geluid",
+          "loud": "luid"
+        },
+        "stop": "Stoppen met bewaken",
+        "securityTitle": "Beveiligingswaarschuwing",
+        "securityBody": "De verbinding kon niet worden geverifieerd. Als je de apparaten niet net opnieuw hebt gekoppeld, koppel ze dan nu opnieuw.",
+        "staleSuffix": "· om {time}",
+        "unitWarning": {
+          "pageHidden": "Babyapparaat pauzeert mogelijk: de pagina is verborgen",
+          "wakeLockOff": "Babyapparaat valt mogelijk in slaap: het scherm blijft niet aan",
+          "resumedFromSleep": "Babyapparaat werd wakker uit slaap: geluiden zijn mogelijk gemist",
+          "notCharging": "Babyapparaat laadt niet meer",
+          "micPermissionLost": "Babyapparaat heeft geen microfoontoegang meer"
+        }
+      },
+      "battery": {
+        "baby": "Babyapparaat {percent}%",
+        "babyLow": "Batterij babyapparaat {percent}%: sluit het aan op de lader",
+        "parentLow": "Dit apparaat staat op {percent}%: sluit het aan om te blijven bewaken",
+        "parentLowGeneric": "De batterij van dit apparaat is bijna leeg: sluit het aan om te blijven bewaken"
+      },
+      "listen": {
+        "idle": "Houd vast om te luisteren",
+        "holding": "Luisteren…",
+        "locked": "Luisteren · tik om te stoppen",
+        "lockHint": "Veeg omhoog om te blijven luisteren",
+        "disabled": "Luister zodra er verbinding is",
+        "a11yLocked": "Luisteren. Tik twee keer om te stoppen."
+      },
+      "snooze": {
+        "button": "Uitstellen",
+        "title": "Geluidsmeldingen uitstellen",
+        "help": "Je krijgt nog wel meldingen als de verbinding wegvalt of een batterij bijna leeg is.",
+        "minutes": "{minutes} min uitstellen",
+        "end": "Uitstel beëindigen",
+        "active": "Uitgesteld · nog {minutes} min"
+      },
+      "probe": {
+        "button": "Testmelding",
+        "title": "Test je meldingen",
+        "body": "Dit speelt een testgeluid af op dit apparaat. Het babyapparaat blijft stil.",
+        "output": "Meldingen klinken via: {output}",
+        "run": "Test uitvoeren",
+        "running": "Test wordt uitgevoerd…",
+        "question": "Heb je het gehoord en gevoeld?",
+        "localOnly": "Alleen dit apparaat is getest: het babyapparaat is niet verbonden."
+      },
+      "readiness": {
+        "title": "Komen meldingen bij je aan?",
+        "notificationsOff": "Meldingen staan uit voor GuardedSleep",
+        "alarmVolumeZero": "Je alarmvolume staat uit: je hoort geen meldingen",
+        "lockScreen": "Meldingen kunnen niet op het vergrendelscherm verschijnen",
+        "dnd": "Niet storen kan meldingen dempen",
+        "battery": "Dit apparaat kan GuardedSleep op de achtergrond stoppen",
+        "headphones": "Meldingen klinken via je koptelefoon",
+        "neverTested": "Test je meldingen",
+        "ok": "Alles klaar: meldingen komen bij je aan",
+        "fix": {
+          "notifications": "Meldingen aanzetten",
+          "dnd": "Meldingen toestaan bij Niet storen",
+          "battery": "Gebruik op de achtergrond toestaan"
+        }
+      },
+      "silence": {
+        "silent": "Babyapparaat staat in de stille modus",
+        "alarmsStillRing": "Wekkers erop kunnen nog steeds afgaan.",
+        "screenMayLight": "Babyapparaat staat in de stille modus, maar het scherm kan oplichten",
+        "mayVibrate": "Babyapparaat kan trillen",
+        "mayRing": "Babyapparaat kan overgaan",
+        "unknown": "Stille modus: onbekend, het babyapparaat kan niet worden gecontroleerd",
+        "manual": "Zet op het babyapparaat Niet storen aan en zet de helderheid lager.",
+        "noAccess": "Om de stille modus van hieruit aan te zetten, open je Instellingen op het babyapparaat en zet je \"Stille modus tijdens het bewaken\" aan.",
+        "apply": "Stille modus aanzetten",
+        "applyFull": "Stille modus volledig aanzetten",
+        "pending": "Stille modus wordt aangezet…",
+        "failed": "De stille modus kon niet worden aangezet op het babyapparaat.",
+        "webUnknown": "Onbekend: zet de stille modus zelf aan op het babyapparaat",
+        "webHint": "Is het babyapparaat een laptop, laat hem dan aan de lader, met geopende klep en scherm aan."
+      },
+      "help": {
+        "reconnect": {
+          "open": "Wat kan ik doen?",
+          "title": "Weer verbinden",
+          "step1": "Staat het babyapparaat aan en toont het GuardedSleep?",
+          "step2": "Zitten beide apparaten op hetzelfde wifi-netwerk, of gebruiken ze allebei mobiele data?",
+          "step3": "Lukt het nog niet? Sluit GuardedSleep op het babyapparaat en open het opnieuw."
+        }
+      },
+      "stop": {
+        "title": "Stoppen met bewaken?",
+        "parentBody": "Je krijgt geen meldingen meer van {name}.",
+        "babyBody": "Het ouderapparaat krijgt geen meldingen meer.",
+        "confirm": "Stoppen",
+        "cancel": "Blijven bewaken",
+        "parentBodyDefault": "Je krijgt geen meldingen meer van het babyapparaat."
+      },
+      "forget": {
+        "title": "{name} vergeten?",
+        "body": "De bewaking stopt en je moet een nieuwe code scannen om weer te verbinden.",
+        "confirm": "Vergeten",
+        "titleBabyDefault": "Het babyapparaat vergeten?",
+        "titleParentDefault": "Het ouderapparaat vergeten?"
+      },
+      "missed": {
+        "some": "Tijdens de onderbreking: {count, plural, one {1 geluid} other {# geluiden}} tussen {start} en {end}. Luidst: {level}.",
+        "none": "Geen geluiden tijdens de onderbreking.",
+        "unknown": "We weten niet wat er tussen {start} en {end} is gebeurd."
+      },
+      "coach": {
+        "bar": "Groen betekent dat je aan het bewaken bent. Als het rood wordt of verdwijnt, bewaak je niet.",
+        "listen": "Houd vast om te luisteren. Veeg omhoog om te blijven luisteren.",
+        "test": "Voer een testmelding uit zodat je weet hoe een melding aanvoelt.",
+        "runTest": "Testmelding nu uitvoeren"
+      },
+      "alert": {
+        "title": "Geluid gehoord",
+        "since": "Sinds {time}",
+        "ended": "Het geluid is gestopt.",
+        "testBadge": "TEST",
+        "stopSound": "Geluid stoppen",
+        "soundStopped": "Geluid gestopt",
+        "openApp": "GuardedSleep openen"
+      },
+      "settings": {
+        "group": {
+          "soundDetection": "Geluidsdetectie",
+          "silence": "Stille modus",
+          "alerts": "Meldingen",
+          "screen": "Scherm",
+          "paired": "Gekoppeld apparaat",
+          "thisPhone": "Dit apparaat",
+          "language": "Taal",
+          "about": "Over en beperkingen",
+          "advanced": "Geavanceerd"
+        },
+        "sensitivity": "Gevoeligheid",
+        "moreSensitive": "Gevoeliger",
+        "lessSensitive": "Minder gevoelig",
+        "holdLabel": "Lawaai moet minstens duren",
+        "silenceAccessOk": "Toegang tot de stille modus staat aan.",
+        "outputLabel": "Meldingsgeluid klinkt via",
+        "output": {
+          "default": "Koptelefoon als die is aangesloten, anders luidspreker",
+          "speaker": "Alleen luidspreker"
+        },
+        "gain": "Extra luide meldingen: {percent}%",
+        "lastTest": "Laatste test: {time}",
+        "neverTested": "Nog niet getest",
+        "theme": {
+          "dark": "Donker (standaard)",
+          "light": "Licht",
+          "system": "Systeem volgen"
+        },
+        "forgetParent": "Dit ouderapparaat vergeten",
+        "forgetBaby": "Dit babyapparaat vergeten",
+        "checkPhone": "De instelling van dit apparaat controleren",
+        "lang": {
+          "system": "Systeem volgen"
+        },
+        "advanced": {
+          "toggle": "Geavanceerde instellingen tonen",
+          "warning": {
+            "title": "Geavanceerde instellingen wijzigen?",
+            "body": "Verkeerde waarden kunnen voorkomen dat de apparaten verbinden. Wijzig ze alleen als je weet wat je doet."
+          },
+          "confirm": "Geavanceerde instellingen tonen",
+          "cancel": "Nu niet"
+        },
+        "urlsLabel": "Adressen van de verbindingsserver (in volgorde geprobeerd)",
+        "url": {
+          "new": "Nieuw adres (wss://…)",
+          "invalid": "Het adres moet beginnen met wss:// of ws://."
+        },
+        "turn": {
+          "label": "Relayserver (TURN), optioneel",
+          "invalid": "Het relayadres moet beginnen met turn: of turns:."
+        },
+        "heartbeat": "Verbindingscontrole elke {seconds} s"
+      },
+      "fgsMissing": {
+        "bar": "Geen bewaking op de achtergrond: open de app",
+        "body": "Android heeft de achtergrondservice van GuardedSleep gestopt. Meldingen komen mogelijk niet bij je aan als het scherm uit is.",
+        "fix": "Bewaking op de achtergrond weer aanzetten"
+      }
+    }
+  },
+  "webShell": {
+    "route": {
+      "role": "Welk apparaat is dit?",
+      "babyPair": "Het babyapparaat koppelen",
+      "baby": "Babyapparaat",
+      "parentPair": "Het ouderapparaat koppelen",
+      "parent": "Ouderapparaat",
+      "settings": "Instellingen"
+    },
+    "skipToContent": "Naar de inhoud",
+    "dismiss": "Sluiten"
+  },
+  "webScreens": {
+    "role": {
+      "title": "Gebruik dit apparaat als",
+      "subtitle": "Telefoon, tablet of laptop. Stel eerst het babyapparaat in.",
+      "navLabel": "Kies een rol",
+      "privacyNote": "Geluid gaat rechtstreeks tussen je twee apparaten en wordt nooit opgenomen."
+    },
+    "pair": {
+      "copyHint": "Plak hem binnen 5 minuten op het ouderapparaat. Stuur hem niet via een chat.",
+      "or": "of",
+      "cameraUnavailable": "Hier is geen camera beschikbaar. Plak de code in plaats daarvan.",
+      "cameraView": "Camerabeeld"
+    },
+    "baby": {
+      "failMicDenied": "De microfoon is geblokkeerd, dus dit apparaat kan je kind niet horen. Sta hem toe in de sitevoorkeuren van de browser.",
+      "failMicUnavailable": "Geen microfoon gevonden, dus dit apparaat kan je kind niet horen.",
+      "quietUnknown": "Stille modus: onbekend",
+      "keepAwake": "Houd dit apparaat wakker: aan de lader, klep open, dit tabblad zichtbaar.",
+      "keepSilent": "Zet op dit apparaat Niet storen aan en zet de helderheid lager."
+    },
+    "parent": {
+      "quietUnknownWeb": "Stille modus onbekend · zet hem aan op het babyapparaat",
+      "keepOpen": "Houd deze pagina open en het scherm aan. Anders kan je browser je niet waarschuwen.",
+      "soundGate": "Tik om het meldingsgeluid aan te zetten"
+    },
+    "settings": {
+      "urlHint": "Het babyapparaat schrijft deze adressen in zijn code, dus het ouderapparaat gebruikt ze ook.",
+      "sensitivityBabyOnly": "Gevoeligheid stel je in op het babyapparaat."
+    },
+    "guard": {
+      "wakeLockHeld": "Scherm blijft aan",
+      "wakeLockLost": "Het scherm blijft niet meer aan, dus dit apparaat kan in slaap vallen en stoppen met bewaken.",
+      "wakeLockUnsupported": "Deze browser kan het scherm niet aanhouden. Zet schermslaap uit in de instellingen van dit apparaat.",
+      "wakeLockRetry": "Scherm aanhouden",
+      "hiddenTitle": "GuardedSleep stopt mogelijk met bewaken",
+      "hiddenBody": "Deze pagina staat op de achtergrond. Open hem opnieuw om te blijven bewaken.",
+      "awayBackground": "Deze pagina stond {duration} op de achtergrond. Meldingen zijn mogelijk gemist.",
+      "awaySleep": "Dit apparaat sliep {duration}. Meldingen zijn mogelijk gemist."
+    },
+    "night": {
+      "open": "Nachtscherm",
+      "label": "Nachtscherm. Nog steeds aan het bewaken. Tik om de status te tonen.",
+      "monitoring": "Nog steeds aan het bewaken",
+      "leave": "Tik nogmaals om het nachtscherm te verlaten"
+    }
+  }
+}

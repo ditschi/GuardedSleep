@@ -1,0 +1,33 @@
+# Git hooks (ADR-020 §8). Installed by `just setup` (`lefthook install`).
+# Configuration reference: https://lefthook.dev/configuration/
+# Hooks are a convenience for fast feedback on staged files (target: under 5 s). CI re-runs everything
+# (`just ci`), so nothing here is a gate. There is deliberately no commit-msg hook: Conventional
+# Commits are checked on the PR title only, in CI.
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: prettier
+      glob: "*.{ts,tsx,js,mjs,cjs,svelte,css,html,json,md,yaml,yml}"
+      # `pnpm exec` needs node_modules; skip quietly on a fresh clone before `just setup`.
+      run: >
+        if [ -x node_modules/.bin/prettier ]; then
+        scripts/lib/hook.sh node_modules/.bin/prettier --write --ignore-unknown {staged_files};
+        else echo "prettier skipped: run 'just setup' to install node_modules"; fi
+      stage_fixed: true
+
+    - name: cargo-fmt
+      glob: "*.rs"
+      # Only runs when .rs files are staged. Host cargo only; the Docker fallback is too slow for a hook.
+      run: >
+        if command -v cargo >/dev/null 2>&1; then cargo fmt --all -- --check;
+        else echo "cargo fmt skipped: no host cargo (CI and 'just lint' run it)"; fi
+
+    - name: typos
+      run: scripts/lib/hook.sh typos --force-exclude {staged_files}
+
+    - name: hygiene
+      run: scripts/lib/hook.sh scripts/lib/hygiene.sh {staged_files}
+
+    - name: betterleaks
+      run: scripts/lib/secrets.sh --staged

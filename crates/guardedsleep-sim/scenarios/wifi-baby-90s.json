@@ -1,0 +1,110 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "wifi-baby-90s",
+  "description": "ADR-017 section 12: Wi-Fi off for 90 s on the baby; the parent raises level 2 within 62 s of its last contact, then link_restored.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "network_down",
+      "peer": "baby"
+    },
+    {
+      "at": 110000,
+      "do": "network_up",
+      "peer": "baby"
+    },
+    {
+      "at": 160000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 15000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 15000
+    },
+    {
+      "peer": "parent",
+      "event": "link_lost",
+      "count": 1,
+      "since_last_contact_ms": [60000, 62000]
+    },
+    {
+      "peer": "parent",
+      "event": "link_restored",
+      "count": 1,
+      "within_ms": [110000, 160000]
+    },
+    {
+      "peer": "parent",
+      "max_level": 1,
+      "within_ms": [0, 60000]
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 160000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 160000
+    },
+    {
+      "peer": "parent",
+      "event": "status",
+      "where": {
+        "status": {
+          "state": "connected"
+        }
+      },
+      "within_ms": [110000, 160000],
+      "count_min": 1
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    }
+  ],
+  "export_traces": [
+    {
+      "peer": "parent",
+      "id": "sim-wifi-baby-90s-parent"
+    }
+  ]
+}

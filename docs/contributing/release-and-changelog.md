@@ -1,6 +1,8 @@
 # Releases and Changelog
 
-> **Tooling decision:** [ADR-006](../decisions/ADR-006-release-and-changelog-automation.md) — Release Please in monorepo manifest mode.
+> **Superseded by [ADR-020](../../openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md) §8 and §10:** the Release Please node setup (components `protocol`, `signaling-server`, `mobile`), the Husky/commitlint commit check and the `release:lint` flow. Alpha uses manual `android-v*` tags; Release Please returns at beta with components `app`, `server`, `core`; Conventional Commits are checked on the PR title only. Replaced in toolchain realignment wave 1 (hooks, PR-title lint) and T1 (Release Please); this procedure stays valid until then.
+
+> **Tooling decision:** [ADR-006](../../openspec/changes/archive/2026-05-13-adr-006-release-and-changelog-automation/design.md) — Release Please in monorepo manifest mode.
 >
 > **External references** (read once, then come back here):
 >
@@ -22,7 +24,7 @@ This document is the single source of truth for **what a contributor needs to do
 - Pull request titles must also be Conventional (squash merge uses them as commit subject).
 - Don't edit `CHANGELOG.md` by hand for **released** versions — Release Please owns the file. The `## [Unreleased]` section may still receive manual entries until automation is activated; once active, even Unreleased entries are normally added via merged commits.
 - Releases are cut by merging the **"chore(release): main"** pull request that Release Please opens.
-- **`@guardedsleep/mobile`'s version is the user-facing product version.** `protocol` and `signaling-server` carry their own SemVer streams. Package versions never need to match. See §16.
+- **the legacy `mobile` package's version is the user-facing product version.** `protocol` and `signaling-server` carry their own SemVer streams. Package versions never need to match. See §16.
 - **Inter-package bumps propagate automatically** via the `node-workspace` plugin. See §17.
 - **Project milestones get manual meta-tags** like `mvp-v0.1.0` listing the exact package triplet. See §18.
 
@@ -138,6 +140,12 @@ GH_TOKEN=<token> GITHUB_REPOSITORY=<owner>/<repo> pnpm run release:preview
    natural Critical Review Gate per role-coordination)
               │
               ▼
+   Manual release testing on real Android hardware
+   (checklist: manual-release-testing.md) — required
+   for user-facing mobile releases; optional for
+   protocol/signaling-only bumps
+              │
+              ▼
    Maintainer merges release PR
               │
               ▼
@@ -191,7 +199,7 @@ Two mechanisms:
   git push
   ```
 
-  Release Please picks this up and proposes exactly that version on the **package whose path the commit touches** (use `chore(protocol): release 0.1.0` style scopes when the commit is empty — Release Please reads the directory of the changed files, so for an empty commit, the **next commit** on the package path is what gets the override; the cleanest path is therefore a one-line `release-as` change inside the package directory, e.g. add a comment to `packages/protocol/CHANGELOG.md` or `package.json`).
+  Release Please picks this up and proposes exactly that version on the **package whose path the commit touches** (use `chore(mobile): release 0.1.0` style scopes when the commit is empty — Release Please reads the directory of the changed files, so for an empty commit, the **next commit** on the package path is what gets the override; the cleanest path is therefore a one-line `release-as` change inside the package directory, e.g. add a comment to the package changelog or `package.json`).
 
 - **`release-as` in `release-please-config.json`** per package: pin a target version until released, then remove the key. Useful for one-shot major bumps.
 
@@ -221,23 +229,23 @@ This applies **once**, when Release Please is first turned on (which is part of 
 
 Each project phase has different release expectations.
 
-| Phase                                                                              | Versioning posture                                                                                                                              |
-| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Concept (current)**                                                              | Release Please is wired but inactive — no `Release-As` and no commits since bootstrap. Manual `## [Unreleased]` bullets allowed.                |
-| **PoC** ([ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md)) | Optionally cut a `0.0.x` for each package as the PoC runs; useful for tagging known-good states.                                                |
-| **MVP (Phase 1)**                                                                  | First real release: `0.1.0` across packages (use `Release-As: 0.1.0`). After that, normal Conventional Commit driven bumps.                     |
-| **Phase 2 (iOS, multi-parent, talk-back)**                                         | Likely `0.2.x → 0.9.x` series; first deliberate `1.0.0` candidate when the feature set is stable AND the [license](../../README.md) is decided. |
-| **Phase 3+ (video, on-device AI)**                                                 | `1.x` series, normal SemVer. Breaking protocol changes go through ADRs first.                                                                   |
+| Phase                                                                                                                  | Versioning posture                                                                                                               |
+| ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Concept (current)**                                                                                                  | Release Please is wired but inactive — no `Release-As` and no commits since bootstrap. Manual `## [Unreleased]` bullets allowed. |
+| **PoC** ([ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md)) | Optionally cut a `0.0.x` for each package as the PoC runs; useful for tagging known-good states.                                 |
+| **MVP (Phase 1)**                                                                                                      | First real release: `0.1.0` across packages (use `Release-As: 0.1.0`). After that, normal Conventional Commit driven bumps.      |
+| **Phase 2 (iOS, multi-parent, talk-back)**                                                                             | Likely `0.2.x → 0.9.x` series; first deliberate `1.0.0` candidate when the feature set is stable.                                |
+| **Phase 3+ (video, on-device AI)**                                                                                     | `1.x` series, normal SemVer. Breaking protocol changes go through ADRs first.                                                    |
 
 ## 12. Mobile `versionCode` (Android Play Store)
 
-The Play Store requires a **monotonically increasing integer** `versionCode` independent of `versionName`. Release Please updates `versionName` via the `extra-files` rule on `apps/mobile/android/app/build.gradle`. The `versionCode` is **not** managed automatically in MVP — the release PR description must contain a checklist line:
+The Play Store requires a **monotonically increasing integer** `versionCode` independent of `versionName`. Release Please updates `versionName` via the `extra-files` rule on the Android app `build.gradle`. The `versionCode` is **not** managed automatically in MVP — the release PR description must contain a checklist line:
 
 ```text
-- [ ] Bump `versionCode` in apps/mobile/android/app/build.gradle to <next integer>
+- [ ] Bump `versionCode` in the Android app `build.gradle` to <next integer>
 ```
 
-The maintainer increments it manually before merging the release PR. A small scripted updater is tracked as a Phase 2 follow-up in [ADR-006](../decisions/ADR-006-release-and-changelog-automation.md).
+The maintainer increments it manually before merging the release PR. A small scripted updater is tracked as a Phase 2 follow-up in [ADR-006](../../openspec/changes/archive/2026-05-13-adr-006-release-and-changelog-automation/design.md).
 
 ## 13. What `CHANGELOG.md` looks like over time
 
@@ -275,17 +283,18 @@ Each package's section is prefixed with its component name. The `## [Unreleased]
 
 ## 15. Discarded alternatives
 
-See [ADR-006](../decisions/ADR-006-release-and-changelog-automation.md) for the full options analysis. Briefly: Changesets duplicates effort already done by Conventional Commits; semantic-release does not fit app-store cadence; manual-only is the status quo we accept until first artifact ships. Linked versions across all packages are rejected (would force needless lockstep bumps); a single umbrella version is rejected in favour of "mobile = product version" plus manual milestone meta-tags.
+See [ADR-006](../../openspec/changes/archive/2026-05-13-adr-006-release-and-changelog-automation/design.md) for the full options analysis. Briefly: Changesets duplicates effort already done by Conventional Commits; semantic-release does not fit app-store cadence; manual-only is the status quo we accept until first artifact ships. Linked versions across all packages are rejected (would force needless lockstep bumps); a single umbrella version is rejected in favour of "mobile = product version" plus manual milestone meta-tags.
 
 ## 16. Versioning posture — "mobile is the product version"
 
-The monorepo contains **three independently versioned packages**:
+> Sections 16 to 19 keep the pre-ADR-020 npm component names for history. `@guardedsleep/signaling-server` is now the Rust `guardedsleep-server` (planned component `server`), and `@guardedsleep/protocol` no longer exists. Current posture: AGENTS.md section 8.
 
-| Package                          | Role                                       | Whose version do users / operators see?                                               |
-| -------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------- |
-| `@guardedsleep/mobile`           | User-facing Android app (Capacitor)        | **Yes — this is the headline "GuardedSleep version"** shown in About, Play, F-Droid   |
-| `@guardedsleep/signaling-server` | Self-hostable WebSocket relay              | Operators see this in Docker tags (`ghcr.io/<owner>/guardedsleep-signaling:vX.Y.Z`)   |
-| `@guardedsleep/protocol`         | Internal TypeScript library (shared types) | Hidden — never published; developers see it in `package.json` dependency declarations |
+The monorepo contains **independently versioned packages (the hand-written `@guardedsleep/protocol` package was removed; protocol types are generated from the Rust core into `packages/core-wasm`, which is private and unversioned for releases, and the signaling server is the Rust `crates/guardedsleep-server` image)**:
+
+| Package                          | Role                                | Whose version do users / operators see?                                             |
+| -------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------- |
+| the legacy `mobile` package      | User-facing Android app (Capacitor) | **Yes — this is the headline "GuardedSleep version"** shown in About, Play, F-Droid |
+| `@guardedsleep/signaling-server` | Self-hostable WebSocket relay       | Operators see this in Docker tags (`ghcr.io/<owner>/guardedsleep-signaling:vX.Y.Z`) |
 
 **Practical implications:**
 
@@ -298,11 +307,13 @@ The monorepo contains **three independently versioned packages**:
 
 Release Please is configured with the **`node-workspace` plugin** ([config reference](../../release-please-config.json) → `plugins: ["node-workspace"]`). This automates dependency-graph awareness:
 
-**Scenario: `protocol` bumps from `0.1.0` → `0.2.0`** (because a `feat:` commit landed in `packages/protocol/`).
+_Illustrative only: no workspace package has a released dependent today (the former `@guardedsleep/protocol` package is gone)._
+
+**Scenario: a shared package `protocol` bumps from `0.1.0` → `0.2.0`** (because a `feat:` commit landed in its directory).
 
 What Release Please does automatically:
 
-1. Detects that `apps/mobile` and `apps/signaling-server` both declare a workspace dependency on `@guardedsleep/protocol`.
+1. Detects that the mobile package and `apps/signaling-server` both declare a workspace dependency on `@guardedsleep/protocol`.
 2. Computes a **topologically ordered** version bump: `protocol` first, then its consumers.
 3. Adds a **patch bump** to `mobile` (e.g. `0.3.1 → 0.3.2`) and `signaling-server` (e.g. `0.1.4 → 0.1.5`).
 4. Adds an explicit changelog entry under the consumer's section:
@@ -329,11 +340,11 @@ What Release Please does automatically:
 
 ## 18. Milestone meta-tags
 
-Project phases ([feature roadmap](../features/README.md)) and major scope checkpoints get **manually created annotated tags** that are not produced by Release Please. They are pure documentation aids.
+Project phases ([feature roadmap](../backlog.md)) and major scope checkpoints get **manually created annotated tags** that are not produced by Release Please. They are pure documentation aids.
 
 **Naming convention:** `<phase-or-milestone>-v<semver>`. Examples:
 
-- `mvp-v0.1.0` — the commit that ships the first MVP per [ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md).
+- `mvp-v0.1.0` — the commit that ships the first MVP per [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md).
 - `poc-v0.0.1` — the commit at which the PoC gate is declared passed.
 - `phase-2-v0.2.0` — entry into Phase 2 (iOS, multi-parent, talk-back).
 - `phase-3-v0.3.0` — entry into Phase 3 (video, on-device AI).
@@ -353,9 +364,9 @@ Package triplet:
 - signaling-server-v0.1.0
 - mobile-v0.1.0
 
-Scope: matches MVP definition in docs/features/README.md and ADR-001.
+Scope: matches the MVP definition in ADR-001 (decision archive) and the capability specs in openspec/specs/.
 PoC gate: PASSED on YYYY-MM-DD.
-License: <decided>.
+License: AGPL-3.0-or-later (see LICENSE).
 "
 
 git push origin mvp-v0.1.0
@@ -377,13 +388,13 @@ git push origin mvp-v0.1.0
 
 This table is the human-readable answer to "which versions go together?" Update it **manually** whenever a new milestone meta-tag is created, or whenever a non-trivial breaking change lands.
 
-| Milestone meta-tag     | `@guardedsleep/protocol` | `@guardedsleep/signaling-server` | `@guardedsleep/mobile` | Notes                                                                                                            |
-| ---------------------- | ------------------------ | -------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| _(none yet — pre-PoC)_ | `workspace:*` (0.0.1)    | `workspace:*` (0.0.1)            | `workspace:*` (0.0.1)  | Scaffolded code only. No releases. See [ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md). |
+| Milestone meta-tag     | `@guardedsleep/protocol` | `@guardedsleep/signaling-server` | the legacy `mobile` package | Notes                                                                                                                                                |
+| ---------------------- | ------------------------ | -------------------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| _(none yet — pre-PoC)_ | `workspace:*` (0.0.1)    | `workspace:*` (0.0.1)            | `workspace:*` (0.0.1)       | Scaffolded code only. No releases. See [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md). |
 
 **Convention for filling rows:**
 
 - One row per **milestone meta-tag**, not per Release Please cut. Intermediate per-package bumps live in `CHANGELOG.md` only.
 - The `Notes` column states the headline change relative to the previous row.
-- When `protocol` introduces a breaking change (`feat!:` in `packages/protocol`), add a row even if no milestone meta-tag exists, with the meta-tag column set to `—` and Notes describing the contract change.
-- Once Phase 2 follow-up "Automated compatibility-matrix updater" lands (see [ADR-006](../decisions/ADR-006-release-and-changelog-automation.md) discarded alternatives), this table becomes auto-generated.
+- When `protocol` introduces a breaking change (`feat!:` in a shared package or the Rust wire format), add a row even if no milestone meta-tag exists, with the meta-tag column set to `—` and Notes describing the contract change.
+- Once Phase 2 follow-up "Automated compatibility-matrix updater" lands (see [ADR-006](../../openspec/changes/archive/2026-05-13-adr-006-release-and-changelog-automation/design.md) discarded alternatives), this table becomes auto-generated.

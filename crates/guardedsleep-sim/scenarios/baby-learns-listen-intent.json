@@ -1,0 +1,120 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "baby-learns-listen-intent",
+  "description": "The baby unit is told when the parent starts and stops listening, and when the intent is reset by a lost link: listen_changed reaches the baby side on every change, and the parent's re-sent intent after a short outage shows again.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 15000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_listen",
+        "enabled": true
+      }
+    },
+    {
+      "at": 25000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_listen",
+        "enabled": false
+      }
+    },
+    {
+      "at": 30000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_listen",
+        "enabled": true
+      }
+    },
+    {
+      "at": 40000,
+      "do": "network_down",
+      "peer": "parent"
+    },
+    {
+      "at": 70000,
+      "do": "network_up",
+      "peer": "parent"
+    },
+    {
+      "at": 130000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "event": "listen_changed",
+      "where": {
+        "enabled": true
+      },
+      "within_ms": [15000, 17000],
+      "count": 1
+    },
+    {
+      "peer": "baby",
+      "event": "listen_changed",
+      "where": {
+        "enabled": false
+      },
+      "within_ms": [25000, 27000],
+      "count": 1
+    },
+    {
+      "peer": "baby",
+      "event": "listen_changed",
+      "where": {
+        "enabled": true
+      },
+      "within_ms": [30000, 32000],
+      "count": 1
+    },
+    {
+      "peer": "baby",
+      "event": "listen_changed",
+      "where": {
+        "enabled": false
+      },
+      "within_ms": [40000, 70000],
+      "count_min": 1
+    },
+    {
+      "peer": "baby",
+      "event": "listen_changed",
+      "where": {
+        "enabled": true
+      },
+      "within_ms": [70000, 130000],
+      "count_min": 1
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 125000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 125000
+    }
+  ]
+}

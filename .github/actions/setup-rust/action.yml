@@ -1,0 +1,48 @@
+name: Setup Rust toolchain
+description: >
+  Installs the toolchain, components and targets pinned in rust-toolchain.toml, restores the cargo
+  cache (saved only outside pull requests) and optionally wasm-bindgen-cli at the Cargo.lock version
+  (what scripts/core-build.sh expects).
+inputs:
+  wasm-bindgen:
+    description: Install wasm-bindgen-cli at the Cargo.lock version ("true" / "false")
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - name: rustup toolchain (from rust-toolchain.toml)
+      shell: bash
+      run: |
+        rustup toolchain install
+        rustup show
+    - name: Cargo cache
+      uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      with:
+        save-if: ${{ github.event_name != 'pull_request' }}
+    - name: wasm-bindgen-cli version (from Cargo.lock)
+      if: inputs.wasm-bindgen == 'true'
+      id: wb
+      shell: bash
+      run: |
+        v="$(scripts/lib/wasm-bindgen-version.sh)"
+        echo "version=$v" >> "$GITHUB_OUTPUT"
+        echo "rust=$(rustc --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+    - name: Restore wasm-bindgen-cli
+      if: inputs.wasm-bindgen == 'true'
+      id: wb-cache
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.cargo/bin/wasm-bindgen
+        key: wasm-bindgen-cli-${{ steps.wb.outputs.version }}-rust-${{ steps.wb.outputs.rust }}
+    - name: Install wasm-bindgen-cli
+      if: inputs.wasm-bindgen == 'true' && steps.wb-cache.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        WB_VERSION: ${{ steps.wb.outputs.version }}
+      run: cargo install --locked wasm-bindgen-cli --version "$WB_VERSION"
+    - name: Save wasm-bindgen-cli
+      if: inputs.wasm-bindgen == 'true' && steps.wb-cache.outputs.cache-hit != 'true' && github.event_name != 'pull_request'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.cargo/bin/wasm-bindgen
+        key: wasm-bindgen-cli-${{ steps.wb.outputs.version }}-rust-${{ steps.wb.outputs.rust }}

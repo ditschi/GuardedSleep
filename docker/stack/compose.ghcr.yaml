@@ -1,5 +1,5 @@
 # GuardedSleep full stack — pulls pre-built images from GHCR.
-# See ADR-008 for the tag strategy and docs/contributing/mobile-web-docker.md for end-to-end docs.
+# See ADR-008 for the tag strategy and docs/contributing/web-docker.md for end-to-end docs.
 #
 # Minimum usage (no clone of the repo required):
 #   1. Download this file and `.env.ghcr.example` to an empty directory.
@@ -22,20 +22,28 @@ services:
     pull_policy: ${PULL_POLICY:-always}
     ports:
       - "${SIGNALING_PORT:-8787}:8787"
+      - "${STUN_PORT:-3478}:3478/udp"
     environment:
       PORT: "8787"
       # Required in production. List every browser Origin the PWA will be loaded from.
-      # Native Capacitor clients (no Origin header) remain accepted when the allowlist is set.
+      # Native clients (no Origin header) remain accepted when the allowlist is set.
       SIGNALING_ALLOWED_ORIGINS: "${SIGNALING_ALLOWED_ORIGINS:?Set SIGNALING_ALLOWED_ORIGINS to your PWA origins, e.g. https://app.example.com}"
       SIGNALING_MAX_PARENTS: "${SIGNALING_MAX_PARENTS:-}"
+      SIGNALING_PING_INTERVAL_MS: "${SIGNALING_PING_INTERVAL_MS:-}"
+      SIGNALING_HELLO_RATE_PER_MIN: "${SIGNALING_HELLO_RATE_PER_MIN:-}"
+      SIGNALING_NEW_ROOM_RATE_PER_MIN: "${SIGNALING_NEW_ROOM_RATE_PER_MIN:-}"
+      SIGNALING_TRUST_PROXY: "${SIGNALING_TRUST_PROXY:-}"
+      SIGNALING_TRUSTED_PROXY_HOPS: "${SIGNALING_TRUSTED_PROXY_HOPS:-}"
       SIGNALING_HELLO_TIMEOUT_MS: "${SIGNALING_HELLO_TIMEOUT_MS:-}"
+      STUN_DISABLED: "${STUN_DISABLED:-0}"
     restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
-      test:
-        - CMD
-        - node
-        - -e
-        - "fetch('http://127.0.0.1:'+(process.env.PORT||8787)).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      test: ["CMD", "/usr/local/bin/guardedsleep-server", "--healthcheck"]
       interval: 10s
       timeout: 3s
       retries: 3
@@ -60,5 +68,4 @@ services:
 # Reverse proxy / TLS:
 #   The published web image generates a self-signed TLS cert at build time covering
 #   localhost + 127.0.0.1 only. For real domains use Traefik or another reverse proxy
-#   in front of this stack — see compose.web-and-signaling.traefik.example.yaml for a
-#   labelled example (adapted from local-build to image: references is trivial).
+#   in front of this stack — compose.traefik.yaml is the ready-to-use Traefik variant.

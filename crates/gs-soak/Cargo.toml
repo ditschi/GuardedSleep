@@ -1,0 +1,36 @@
+[package]
+name = "gs-soak"
+version = "0.0.1"
+description = "Go/no-go tooling for the public Nostr mailboxes (alpha-connection-model tasks 4.1/4.2): a soak harness that runs two real Links over real relays, a burst test and an event signer for the measurement scripts. Never part of a release."
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "gs-soak"
+path = "src/main.rs"
+
+[dependencies]
+# Consumes the public API only. This crate does the I/O (sockets, clock, randomness) the sans-IO
+# core must not; the cargo-deny bans of deny.core.toml apply to the core and relay graphs only.
+# `testing` lets `--trace` name the type of a sealed message (the tool holds the throwaway pairing key);
+# the simulation enables the same feature, and this tool is never part of a release.
+guardedsleep-core = { path = "../guardedsleep-core", features = ["testing"] }
+clap = { version = "4.6.7", features = ["derive"] }
+getrandom = "0.4.3"
+# TLS for `wss://`: ring as the crypto provider, no aws-lc. tungstenite enables rustls without a
+# provider, so the provider feature is ours. The websocket client is synchronous (one thread per
+# socket), which keeps tokio out of this tool.
+# Docs: https://docs.rs/rustls/0.23/rustls/#cryptography-providers
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+# The system's trust store instead of webpki-roots: that crate is CDLA-Permissive-2.0, which the
+# licence allow-list of deny.toml does not contain, and a system store is what a real client uses.
+# Docs: https://docs.rs/rustls-native-certs/0.8/rustls_native_certs/
+rustls-native-certs = "0.8.5"
+# Only to name the signing key type the core's `scalar_key` returns (same features as the core).
+k256 = { version = "0.14.0", default-features = false, features = ["schnorr", "arithmetic"] }
+serde_json = { version = "1.0.154", features = ["preserve_order"] }
+tungstenite = { version = "0.30.0", features = ["rustls-tls-native-roots"] }
+
+[lints]
+workspace = true

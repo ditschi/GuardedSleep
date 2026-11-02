@@ -1,0 +1,97 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "attack-replayed-stop-after-reconnect",
+  "description": "A relay that recycles client ids records the baby's signaling stop. The baby stops on purpose while both devices have lost the DataChannel (so both hold a mailbox), restarts and verifies again, and the relay later replays the recording to the parent during an outage (after a signaling restart). The stop names the baby session that the stop retired and the restart replaced, so it is ignored: link_lost is still raised and the parent never goes peer_stopped again. While a pair is verified no mailbox is open, so a stop can only be recorded on a mailbox when the link is down.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "relay": {
+    "reuse_client_ids": true
+  },
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 10000,
+      "do": "drop_data"
+    },
+    {
+      "at": 50000,
+      "do": "stop",
+      "peer": "baby"
+    },
+    {
+      "at": 52000,
+      "do": "clear_faults"
+    },
+    {
+      "at": 55000,
+      "do": "start",
+      "peer": "baby"
+    },
+    {
+      "at": 90000,
+      "do": "signaling_down"
+    },
+    {
+      "at": 95000,
+      "do": "signaling_up"
+    },
+    {
+      "at": 110000,
+      "do": "drop_data",
+      "from": "baby"
+    },
+    {
+      "at": 150000,
+      "do": "replay_stop",
+      "peer": "parent"
+    },
+    {
+      "at": 260000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 100000
+    },
+    {
+      "peer": "parent",
+      "event": "peer_stopped",
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "event": "link_lost",
+      "count": 1,
+      "since_last_contact_ms": [60000, 62000]
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "peer_stopped"
+        }
+      },
+      "within_ms": [100000, 260000]
+    },
+    {
+      "peer": "parent",
+      "reaches_level": 2
+    }
+  ]
+}

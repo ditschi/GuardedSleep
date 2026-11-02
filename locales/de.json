@@ -1,0 +1,535 @@
+{
+  "$meta": {
+    "default": "machineTranslated",
+    "reviewed": []
+  },
+  "meta": {
+    "appTitle": "GuardedSleep"
+  },
+  "layout": {
+    "settingsAria": "Einstellungen",
+    "backAria": "Zurück zur vorherigen Ansicht"
+  },
+  "core": {
+    "pairingKeyMismatch": "Diese Geräte sind nicht mehr gekoppelt. Koppeln Sie sie erneut, um weiter zu überwachen.",
+    "updateRequired": "Eines der Geräte braucht ein GuardedSleep-Update, um weiter zu überwachen.",
+    "serverUnreachable": "Dieses Gerät erreicht den Verbindungsserver nicht. Prüfen Sie die Internetverbindung.",
+    "peerAbsent": "Das Babygerät antwortet nicht. Prüfen Sie, ob es an ist und GuardedSleep anzeigt.",
+    "mediaBlocked": "Die Geräte haben sich gefunden, aber der Ton kommt nicht durch. Versuchen Sie dasselbe WLAN auf beiden.",
+    "wrongKeyAttempt": "Jemand hat versucht, sich mit einem falschen Schlüssel zu verbinden. Die Überwachung läuft weiter.",
+    "unknownParentAttempt": "Ein Gerät, das nicht Ihr gekoppeltes Elterngerät ist, hat versucht, sich zu verbinden. Die Überwachung läuft weiter.",
+    "pairAgain": "Dieses Gerät kennt kein Elterngerät mehr. Tippen Sie auf Neuen Code anzeigen und koppeln Sie erneut.",
+    "babyUnrecognised": "Das Babygerät erkennt dieses Gerät nicht. Tippen Sie am Babygerät auf Neuen Code anzeigen und koppeln Sie erneut."
+  },
+  "native": {
+    "appName": "GuardedSleep Alpha",
+    "notif": {
+      "appTitle": "GuardedSleep",
+      "silenceRuleName": "GuardedSleep",
+      "channelNoise": "Geräusch-Alarme",
+      "channelNoiseDesc": "Laute Alarme, wenn das Babygerät ein Geräusch hört.",
+      "channelLink": "Verbindungsalarme",
+      "channelLinkDesc": "Alarme, wenn die Verbindung zum Babygerät verloren geht.",
+      "channelStatus": "Überwachungsstatus",
+      "channelStatusDesc": "Zeigt, dass die Überwachung läuft.",
+      "channelNotice": "Warnungen",
+      "channelNoticeDesc": "Akku- und Sicherheitswarnungen.",
+      "channelInfo": "Hinweise",
+      "channelInfoDesc": "Leise Hinweise, zum Beispiel wenn die Verbindung zurück ist.",
+      "channelBaby": "Überwachung",
+      "channelBabyDesc": "Stiller Hinweis, dass dieses Gerät überwacht.",
+      "babyMonitoring": "GuardedSleep überwacht",
+      "babyResume": "Tippen, um die Überwachung fortzusetzen",
+      "statusConnected": "Mit dem Babygerät verbunden",
+      "statusConnecting": "Verbindung zum Babygerät wird aufgebaut…",
+      "statusReconnecting": "Verbindung zum Babygerät wird wiederhergestellt…",
+      "statusTrouble": "Babygerät nicht erreichbar — es wird weiter versucht",
+      "statusAlarm": "Keine Verbindung zum Babygerät",
+      "statusPeerStopped": "Babygerät hat die Überwachung beendet",
+      "statusFailed": "Diese Geräte sind nicht mehr gekoppelt",
+      "noiseTitle": "Geräusch erkannt",
+      "noiseText": "Das Babygerät hört ein Geräusch.",
+      "noiseTestTitle": "Testalarm",
+      "noiseTestText": "Das ist ein Test. Das Babygerät bleibt still.",
+      "actionStopSound": "Ton stoppen",
+      "actionSnooze10": "10 Min. pausieren",
+      "actionChecking": "Ich schaue nach",
+      "linkLostTitle": "Verbindung verloren",
+      "linkLostText": "Keine Verbindung zum Babygerät. Sieh jetzt nach deinem Baby.",
+      "peerStoppedTitle": "Babygerät hat die Überwachung beendet",
+      "peerStoppedText": "Die Überwachung wurde am Babygerät beendet. Du hörst nichts, bis es wieder gestartet wird.",
+      "restoredTitle": "Wieder verbunden",
+      "restoredText": "Nicht überwacht für {duration}.",
+      "missedTitle": "Während der Unterbrechung",
+      "missedCount": "Geräusche während der Unterbrechung: {count} (nicht überwacht für {duration}).",
+      "missedNone": "Keine Geräusche während der Unterbrechung (nicht überwacht für {duration}).",
+      "missedUnknown": "Wir wissen nicht, was während der Unterbrechung passiert ist (nicht überwacht für {duration}).",
+      "batteryLowTitle": "Akku des Babygeräts niedrig",
+      "batteryLowText": "Akku des Babygeräts {percent} % — bitte anschließen.",
+      "batteryCriticalTitle": "Akku des Babygeräts fast leer",
+      "batteryCriticalText": "Akku des Babygeräts {percent} % — jetzt anschließen.",
+      "chargerTitle": "Babygerät lädt nicht mehr",
+      "chargerText": "Schließe das Babygerät an, damit es die Nacht durchhält.",
+      "securityTitle": "Falscher Schlüssel",
+      "publicTitle": "GuardedSleep-Alarm",
+      "fgsMissingTitle": "Keine Überwachung im Hintergrund",
+      "fgsMissingText": "Öffnen Sie GuardedSleep, um die Überwachung im Hintergrund wieder einzuschalten."
+    },
+    "ui": {
+      "common": {
+        "appName": "GuardedSleep",
+        "allow": "Erlauben",
+        "continue": "Weiter",
+        "later": "Später",
+        "ok": "OK",
+        "cancel": "Abbrechen",
+        "more": "Mehr",
+        "moreCount": "+{count}",
+        "settings": "Einstellungen",
+        "tryAgain": "Erneut versuchen",
+        "yes": "Ja",
+        "no": "Nein",
+        "add": "Hinzufügen",
+        "remove": "Entfernen",
+        "save": "Speichern",
+        "change": "Ändern",
+        "durationSec": "{seconds} s",
+        "durationMin": "{minutes} Min.",
+        "durationHour": "{hours} Std.",
+        "durationHourMin": "{hours} Std. {minutes} Min.",
+        "secondsShort": "{seconds} s",
+        "state": {
+          "done": "Erledigt",
+          "todo": "Offen",
+          "blocked": "Blockiert",
+          "checking": "Wird geprüft"
+        },
+        "babyUnitDefault": "Babygerät",
+        "parentUnitDefault": "Elterngerät"
+      },
+      "role": {
+        "title": "Welches Gerät ist das?",
+        "baby": {
+          "title": "Babygerät",
+          "hint": "Bleibt bei Ihrem Kind und hört zu."
+        },
+        "parent": {
+          "title": "Elterngerät",
+          "hint": "Bleibt bei Ihnen und alarmiert Sie."
+        },
+        "orderHint": "Richten Sie zuerst das Babygerät ein."
+      },
+      "setup": {
+        "title": "Dieses Gerät vorbereiten",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Nötig, um Ihr Kind zu hören.",
+          "required": "Erlauben Sie das Mikrofon, um fortzufahren."
+        },
+        "background": {
+          "title": "Im Hintergrund weiterlaufen",
+          "why": "Sonst beendet dieses Gerät die Überwachung möglicherweise, um Akku zu sparen."
+        },
+        "silence": {
+          "title": "Ruhemodus beim Überwachen",
+          "why": "Keine Töne, kein Klingeln und kein Licht am Babygerät. Wecker funktionieren weiterhin."
+        },
+        "safety": {
+          "body": "Lassen Sie dieses Gerät am Ladegerät, auf einer stabilen Fläche und außerhalb der Reichweite Ihres Kindes. Verwenden Sie kein Gerät mit aufgeblähtem oder beschädigtem Akku."
+        },
+        "chargingTip": "Tipp: Hat dieses Gerät die Funktion „Bildschirm beim Laden einschalten“, schalten Sie sie aus, damit der Bildschirm dunkel bleibt.",
+        "deviceCheck": {
+          "checking": "Dieses Gerät wird geprüft …",
+          "ok": "Dieses Gerät eignet sich gut als Babygerät.",
+          "limited": "Dieses Gerät verliert die Verbindung möglicherweise ab und zu. Es funktioniert trotzdem.",
+          "notRecommended": "Dieses Gerät überwacht möglicherweise nicht zuverlässig. Nutzen Sie nach Möglichkeit ein anderes Gerät."
+        },
+        "notifications": {
+          "title": "Benachrichtigungen",
+          "why": "Nötig, damit Sie hören, wenn Ihr Kind Geräusche macht.",
+          "required": "Ohne das kann GuardedSleep Sie nicht alarmieren."
+        },
+        "lockScreen": {
+          "title": "Alarme auf dem Sperrbildschirm",
+          "why": "Damit Alarme auch bei gesperrtem Bildschirm erscheinen."
+        },
+        "dndBypass": {
+          "title": "Alarme bei „Bitte nicht stören“",
+          "why": "Damit Alarme auch bei aktivem „Bitte nicht stören“ durchkommen."
+        },
+        "limits": {
+          "body": "GuardedSleep kann Sie nur alarmieren, solange dieses Gerät eingeschaltet und geladen ist. Lassen Sie es nachts am Ladegerät. Wenn beide Geräte ausgehen, wird niemand alarmiert."
+        },
+        "skipped": "Vorerst übersprungen"
+      },
+      "pair": {
+        "baby": {
+          "title": "Elterngerät verbinden",
+          "qrAlt": "Kopplungscode",
+          "instruction": "Öffnen Sie GuardedSleep auf dem anderen Gerät, wählen Sie Elterngerät und scannen Sie diesen Code.",
+          "validFor": "Code gültig für {duration}",
+          "expired": "Dieser Code ist abgelaufen.",
+          "newCode": "Neuen Code anzeigen",
+          "copy": "Code kopieren",
+          "copied": "Kopiert",
+          "brighter": "Code heller machen",
+          "waiting": "Warte auf das Elterngerät …",
+          "privacy": "Jeder mit diesem Code kann zuhören. Zeigen Sie ihn nur Personen, denen Sie vertrauen.",
+          "parentFound": "Elterngerät gefunden. Verbindung wird aufgebaut …",
+          "failed": "Die Kopplung hat nicht geklappt. Zeigen Sie einen neuen Code an und versuchen Sie es erneut.",
+          "showText": "Code als Text anzeigen",
+          "hideText": "Text ausblenden"
+        },
+        "parent": {
+          "title": "Scannen Sie den Code auf dem Babygerät",
+          "cameraWhy": "GuardedSleep nutzt die Kamera nur, um den Code zu lesen.",
+          "pasteLabel": "Oder Code einfügen",
+          "pasteSubmit": "Verbinden",
+          "connecting": "Verbindung zum Babygerät wird aufgebaut …"
+        },
+        "error": {
+          "cameraDenied": "Kamera nicht erlaubt.",
+          "allowCamera": "Kamera erlauben",
+          "pasteInstead": "Stattdessen Code einfügen",
+          "notOurs": "Das ist kein GuardedSleep-Code. Scannen Sie den Code auf dem Babygerät.",
+          "expired": "Dieser Code ist abgelaufen. Tippen Sie auf dem Babygerät auf „Neuen Code anzeigen“ und scannen Sie erneut.",
+          "mismatch": "Der Code passt nicht. Scannen Sie den Code, der gerade auf dem Babygerät angezeigt wird.",
+          "alreadyPaired": "Dieses Babygerät ist bereits mit einem anderen Gerät gekoppelt.",
+          "unreachable": "Das Babygerät ist noch nicht erreichbar. Prüfen Sie, ob beide Geräte online sind.",
+          "incomplete": "Dieser Code ist unvollständig. Kopieren Sie den ganzen Code vom Babygerät."
+        }
+      },
+      "home": {
+        "parent": {
+          "cardTitle": "Mit {name} verbinden",
+          "cardTitleDefault": "Mit dem Babygerät verbinden"
+        },
+        "baby": {
+          "cardTitle": "Überwachung starten"
+        },
+        "lastUsed": "Zuletzt genutzt um {time}",
+        "newPairing": "Neue Geräte einrichten",
+        "empty": "Noch keine Geräte gekoppelt."
+      },
+      "baby": {
+        "status": {
+          "connected": "Mit dem Elterngerät verbunden",
+          "waiting": "Warte auf das Elterngerät …",
+          "reconnecting": "Verbindung zum Elterngerät wird neu aufgebaut …",
+          "notResponding": "Elterngerät antwortet nicht — es wird weiter versucht",
+          "parentStopped": "Elterngerät hat die Überwachung beendet"
+        },
+        "forDuration": "seit {duration}",
+        "monitoring": "Überwachung läuft",
+        "parentListening": "Elternteil hört zu",
+        "battery": "Dieses Gerät: Akku {percent} %",
+        "batteryCharging": "Dieses Gerät: lädt · {percent} %",
+        "silence": {
+          "on": "Ruhemodus ist an",
+          "off": "Ruhemodus ist aus – dieses Gerät kann klingeln",
+          "everydayPhone": "Ruhemodus ist an. Anrufe und Nachrichten auf diesem Gerät bleiben still, bis Sie die Überwachung beenden.",
+          "restored": "Dieses Gerät war noch im Ruhemodus. Die Töne sind wieder an.",
+          "noAccess": "Der Zugriff für den Ruhemodus ist aus. Aktivieren Sie ihn in den Einstellungen, damit Anrufe und Nachrichten still bleiben."
+        },
+        "lock": "Bildschirm sperren",
+        "autolockHint": "Der Bildschirm wird in {seconds} s dunkel",
+        "stop": "Überwachung beenden",
+        "micLevel": "Geräuschpegel hier",
+        "micSilent": "Das Mikrofon nimmt keinen Ton auf. Starten Sie die Überwachung neu oder prüfen Sie das Mikrofon."
+      },
+      "kiosk": {
+        "a11yLabel": "Überwachung läuft. Bildschirm gesperrt.",
+        "unlockHint": "Gedrückt halten und nach oben wischen zum Entsperren",
+        "unlockZone": "Hier wischen",
+        "unlockAction": "Entsperren"
+      },
+      "link": {
+        "connected": "Mit {name} verbunden",
+        "connecting": "Verbindung zu {name} wird aufgebaut …",
+        "reconnecting": "Verbindung wird neu aufgebaut …",
+        "cantReach": "{name} nicht erreichbar — es wird weiter versucht",
+        "lostFor": "Seit {duration} keine Verbindung",
+        "babyStopped": "{name} hat die Überwachung beendet",
+        "idle": "Keine Überwachung",
+        "weak": "Schwache Verbindung — der Ton kann aussetzen",
+        "restoredAfter": "Nach {duration} wieder verbunden. Sie hören Ihr Kind wieder.",
+        "tryNow": "Jetzt versuchen",
+        "pairAgain": "Erneut koppeln",
+        "connectedDefault": "Mit dem Babygerät verbunden",
+        "connectingDefault": "Verbindung zum Babygerät wird aufgebaut …",
+        "cantReachDefault": "Babygerät nicht erreichbar — es wird weiter versucht",
+        "babyStoppedDefault": "Das Babygerät hat die Überwachung beendet",
+        "stalePairingHint": "Wenn Sie das Babygerät neu gekoppelt haben, scannen Sie seinen neuen Code."
+      },
+      "linkAlarm": {
+        "lost": {
+          "title": "Keine Verbindung zu {name}",
+          "titleUrgent": "Keine Verbindung zu {name}!",
+          "body": "Sie hören Ihr Kind erst wieder, wenn die Verbindung wieder steht.",
+          "titleDefault": "Keine Verbindung zum Babygerät",
+          "titleUrgentDefault": "Keine Verbindung zum Babygerät!"
+        },
+        "stopped": {
+          "title": "{name} hat die Überwachung beendet",
+          "body": "Jemand hat die Überwachung auf dem Babygerät beendet. Sie erhalten keine Alarme.",
+          "titleDefault": "Das Babygerät hat die Überwachung beendet"
+        },
+        "battery": {
+          "title": "Akku des Babygeräts fast leer",
+          "body": "Schließen Sie das Babygerät jetzt an das Ladegerät an, sonst endet die Überwachung."
+        },
+        "needsPairing": {
+          "title": "Geräte nicht mehr gekoppelt"
+        },
+        "restored": {
+          "title": "Wieder verbunden"
+        },
+        "ack": "Ich schaue nach",
+        "ackNote": "Ton für {time} aus. Wir alarmieren Sie erneut, falls noch keine Verbindung besteht.",
+        "soundNote": "Ein leiser Alarmton wiederholt sich, bis Sie nachsehen.",
+        "soundNoteUrgent": "Der Alarm ertönt so lange, bis Sie nachsehen."
+      },
+      "parent": {
+        "allQuietSince": "Alles ruhig seit {time}",
+        "soundSince": "Geräusch erkannt · seit {time}",
+        "soundAt": "Geräusch um {time} · dauerte {duration}",
+        "soundSnoozed": "Geräusch um {time} · Alarme pausiert",
+        "lastHeard": "Letzte Verbindung um {time}",
+        "noContactYet": "Noch kein Kontakt",
+        "monitoringNow": "Überwachung läuft",
+        "meterA11y": "Geräuschpegel: {level}",
+        "level": {
+          "quiet": "ruhig",
+          "some": "etwas Geräusch",
+          "loud": "laut"
+        },
+        "stop": "Überwachung beenden",
+        "securityTitle": "Sicherheitswarnung",
+        "securityBody": "Die Verbindung konnte nicht überprüft werden. Falls Sie die Geräte nicht gerade neu gekoppelt haben, koppeln Sie sie jetzt erneut.",
+        "staleSuffix": "· um {time}",
+        "unitWarning": {
+          "pageHidden": "Babygerät kann pausieren – Seite verdeckt",
+          "wakeLockOff": "Babygerät kann einschlafen – Bildschirm wird nicht wachgehalten",
+          "resumedFromSleep": "Babygerät war im Ruhezustand – Geräusche könnten verpasst worden sein",
+          "notCharging": "Babygerät lädt nicht mehr",
+          "micPermissionLost": "Babygerät hat den Mikrofonzugriff verloren"
+        }
+      },
+      "battery": {
+        "baby": "Babygerät {percent} %",
+        "babyLow": "Babygerät-Akku {percent} % — bitte anschließen",
+        "parentLow": "Dieses Gerät hat {percent} % — schließen Sie es an, um weiter zu überwachen",
+        "parentLowGeneric": "Der Akku dieses Geräts ist schwach — schließen Sie es an, um weiter zu überwachen"
+      },
+      "listen": {
+        "idle": "Halten zum Zuhören",
+        "holding": "Hört zu …",
+        "locked": "Hört zu · zum Beenden tippen",
+        "lockHint": "Nach oben wischen, um weiter zuzuhören",
+        "disabled": "Zuhören, sobald verbunden",
+        "a11yLocked": "Hört zu. Doppeltippen zum Beenden."
+      },
+      "snooze": {
+        "button": "Pause",
+        "title": "Geräusch-Alarme pausieren",
+        "help": "Sie werden weiterhin alarmiert, wenn die Verbindung abbricht oder ein Akku fast leer ist.",
+        "minutes": "{minutes} Min. pausieren",
+        "end": "Pause beenden",
+        "active": "Pausiert · noch {minutes} Min."
+      },
+      "probe": {
+        "button": "Testen",
+        "title": "Alarme testen",
+        "body": "Das spielt einen Testton auf diesem Gerät ab. Das Babygerät bleibt stumm.",
+        "output": "Alarme laufen über: {output}",
+        "run": "Test starten",
+        "running": "Test läuft …",
+        "question": "Haben Sie es gehört und gespürt?",
+        "localOnly": "Nur dieses Gerät getestet — das Babygerät ist nicht verbunden."
+      },
+      "readiness": {
+        "title": "Erreichen Sie die Alarme?",
+        "notificationsOff": "Benachrichtigungen für GuardedSleep sind ausgeschaltet",
+        "alarmVolumeZero": "Ihre Alarmlautstärke ist aus — Sie hören keine Alarme",
+        "lockScreen": "Alarme können nicht auf dem Sperrbildschirm erscheinen",
+        "dnd": "„Bitte nicht stören“ kann Alarme stummschalten",
+        "battery": "Dieses Gerät beendet GuardedSleep im Hintergrund möglicherweise",
+        "headphones": "Alarme laufen über Ihre Kopfhörer",
+        "neverTested": "Alarme testen",
+        "ok": "Alles bereit — Alarme erreichen Sie",
+        "fix": {
+          "notifications": "Benachrichtigungen einschalten",
+          "dnd": "Alarme bei „Bitte nicht stören“ erlauben",
+          "battery": "Hintergrundnutzung erlauben"
+        }
+      },
+      "silence": {
+        "silent": "Babygerät ist im Ruhemodus",
+        "alarmsStillRing": "Wecker darauf können weiterhin klingeln.",
+        "screenMayLight": "Babygerät ist im Ruhemodus, aber der Bildschirm kann aufleuchten",
+        "mayVibrate": "Babygerät kann vibrieren",
+        "mayRing": "Babygerät kann klingeln",
+        "unknown": "Ruhemodus: unbekannt – Babygerät nicht prüfbar",
+        "manual": "Schalten Sie am Babygerät „Bitte nicht stören“ ein und verringern Sie die Helligkeit.",
+        "noAccess": "Um den Ruhemodus von hier einzuschalten, öffnen Sie am Babygerät die Einstellungen und aktivieren Sie „Ruhemodus beim Überwachen“.",
+        "apply": "Ruhemodus einschalten",
+        "applyFull": "Ruhemodus vollständig einschalten",
+        "pending": "Ruhemodus wird eingeschaltet …",
+        "failed": "Der Ruhemodus ließ sich am Babygerät nicht einschalten.",
+        "webUnknown": "Unbekannt — Ruhemodus am Babygerät selbst einschalten",
+        "webHint": "Ist das Babygerät ein Laptop, lassen Sie es am Ladegerät, den Deckel offen und den Bildschirm an."
+      },
+      "help": {
+        "reconnect": {
+          "open": "Was kann ich tun?",
+          "title": "Wieder verbinden",
+          "step1": "Ist das Babygerät an und zeigt GuardedSleep an?",
+          "step2": "Sind beide Geräte im selben WLAN oder nutzen beide mobile Daten?",
+          "step3": "Klappt es noch nicht? Schließen Sie GuardedSleep auf dem Babygerät und öffnen Sie es neu."
+        }
+      },
+      "stop": {
+        "title": "Überwachung beenden?",
+        "parentBody": "Sie erhalten keine Alarme von {name}.",
+        "babyBody": "Das Elterngerät erhält dann keine Alarme mehr.",
+        "confirm": "Beenden",
+        "cancel": "Weiter überwachen",
+        "parentBodyDefault": "Sie erhalten keine Alarme vom Babygerät."
+      },
+      "forget": {
+        "title": "{name} vergessen?",
+        "body": "Die Überwachung endet, und Sie müssen einen neuen Code scannen, um wieder zu verbinden.",
+        "confirm": "Vergessen",
+        "titleBabyDefault": "Babygerät vergessen?",
+        "titleParentDefault": "Elterngerät vergessen?"
+      },
+      "missed": {
+        "some": "Während der Unterbrechung: {count, plural, one {1 Geräusch} other {# Geräusche}} zwischen {start} und {end}. Am lautesten: {level}.",
+        "none": "Keine Geräusche während der Unterbrechung.",
+        "unknown": "Wir wissen nicht, was zwischen {start} und {end} passiert ist."
+      },
+      "coach": {
+        "bar": "Grün heißt: Sie überwachen. Wird es rot oder verschwindet es, überwachen Sie nicht.",
+        "listen": "Zum Zuhören gedrückt halten. Nach oben wischen, um weiter zuzuhören.",
+        "test": "Starten Sie einen Test-Alarm, damit Sie wissen, wie sich ein Alarm anfühlt.",
+        "runTest": "Test-Alarm jetzt starten"
+      },
+      "alert": {
+        "title": "Geräusch erkannt",
+        "since": "Seit {time}",
+        "ended": "Das Geräusch ist vorbei.",
+        "testBadge": "TEST",
+        "stopSound": "Ton stoppen",
+        "soundStopped": "Ton gestoppt",
+        "openApp": "GuardedSleep öffnen"
+      },
+      "settings": {
+        "group": {
+          "soundDetection": "Geräuscherkennung",
+          "silence": "Ruhemodus",
+          "alerts": "Alarme",
+          "screen": "Bildschirm",
+          "paired": "Gekoppeltes Gerät",
+          "thisPhone": "Dieses Gerät",
+          "language": "Sprache",
+          "about": "Info und Grenzen",
+          "advanced": "Erweitert"
+        },
+        "sensitivity": "Empfindlichkeit",
+        "moreSensitive": "Empfindlicher",
+        "lessSensitive": "Weniger empfindlich",
+        "holdLabel": "Das Geräusch muss mindestens dauern:",
+        "silenceAccessOk": "Zugriff für den Ruhemodus ist aktiv.",
+        "outputLabel": "Alarmton wird abgespielt über",
+        "output": {
+          "default": "Kopfhörer, falls verbunden, sonst Lautsprecher",
+          "speaker": "Nur Lautsprecher"
+        },
+        "gain": "Alarme extra laut: {percent} %",
+        "lastTest": "Letzter Test: {time}",
+        "neverTested": "Noch nicht getestet",
+        "theme": {
+          "dark": "Dunkel (Standard)",
+          "light": "Hell",
+          "system": "Wie System"
+        },
+        "forgetParent": "Dieses Elterngerät vergessen",
+        "forgetBaby": "Dieses Babygerät vergessen",
+        "checkPhone": "Einrichtung dieses Geräts prüfen",
+        "lang": {
+          "system": "Wie System"
+        },
+        "advanced": {
+          "toggle": "Erweiterte Einstellungen anzeigen",
+          "warning": {
+            "title": "Erweiterte Einstellungen ändern?",
+            "body": "Falsche Werte können verhindern, dass sich die Geräte verbinden. Ändern Sie sie nur, wenn Sie wissen, was Sie tun."
+          },
+          "confirm": "Erweiterte Einstellungen anzeigen",
+          "cancel": "Jetzt nicht"
+        },
+        "urlsLabel": "Adressen der Verbindungsserver (in dieser Reihenfolge versucht)",
+        "url": {
+          "new": "Neue Adresse (wss://…)",
+          "invalid": "Die Adresse muss mit wss:// oder ws:// beginnen."
+        },
+        "turn": {
+          "label": "Relay-Server (TURN), optional",
+          "invalid": "Die Relay-Adresse muss mit turn: oder turns: beginnen.",
+          "username": "Benutzername",
+          "password": "Passwort",
+          "passwordSaved": "Passwort gespeichert. Leer lassen, um es zu behalten.",
+          "credentialsInvalid": "Gib Benutzername und Passwort ein (je bis zu 256 Zeichen) oder keins von beiden."
+        },
+        "heartbeat": "Verbindungsprüfung alle {seconds} s"
+      },
+      "fgsMissing": {
+        "bar": "Keine Überwachung im Hintergrund — App öffnen",
+        "body": "Android hat den Hintergrunddienst von GuardedSleep beendet. Alarme erreichen Sie möglicherweise nicht, solange der Bildschirm aus ist.",
+        "fix": "Überwachung im Hintergrund wieder einschalten"
+      }
+    }
+  },
+  "webShell": {
+    "route": {
+      "role": "Welches Gerät ist das?",
+      "babyPair": "Babygerät koppeln",
+      "baby": "Babygerät",
+      "parentPair": "Elterngerät koppeln",
+      "parent": "Elterngerät",
+      "settings": "Einstellungen"
+    },
+    "skipToContent": "Zum Inhalt springen",
+    "dismiss": "Schließen"
+  },
+  "webScreens": {
+    "baby": {
+      "failMicDenied": "Das Mikrofon ist blockiert, deshalb kann dieses Gerät Ihr Kind nicht hören. Erlauben Sie es in den Website-Einstellungen des Browsers.",
+      "failMicUnavailable": "Es wurde kein Mikrofon gefunden, deshalb kann dieses Gerät Ihr Kind nicht hören.",
+      "quietUnknown": "Ruhemodus: unbekannt",
+      "keepAwake": "Halten Sie dieses Gerät wach: am Strom, Deckel offen, dieser Tab sichtbar.",
+      "keepSilent": "Schalten Sie „Bitte nicht stören“ ein und verringern Sie die Helligkeit dieses Geräts."
+    },
+    "parent": {
+      "quietUnknownWeb": "Ruhemodus unbekannt · am Babygerät einschalten",
+      "keepOpen": "Lassen Sie diese Seite offen und den Bildschirm an. Sonst kann Ihr Browser Sie nicht warnen.",
+      "soundGate": "Tippen, um den Alarmton zu aktivieren"
+    },
+    "guard": {
+      "wakeLockHeld": "Bildschirm bleibt an",
+      "wakeLockLost": "Der Bildschirm bleibt nicht mehr an, deshalb kann dieses Gerät einschlafen und die Überwachung beenden.",
+      "wakeLockUnsupported": "Dieser Browser kann den Bildschirm nicht anhalten. Schalten Sie den Bildschirmschoner in den Geräteeinstellungen aus.",
+      "wakeLockRetry": "Bildschirm anlassen",
+      "hiddenTitle": "GuardedSleep überwacht evtl. nicht mehr",
+      "hiddenBody": "Diese Seite läuft im Hintergrund. Öffnen Sie sie wieder, damit die Überwachung weiterläuft.",
+      "awayBackground": "Diese Seite war {duration} im Hintergrund. Warnungen wurden evtl. verpasst.",
+      "awaySleep": "Dieses Gerät war {duration} im Ruhezustand. Warnungen wurden evtl. verpasst."
+    },
+    "night": {
+      "open": "Nachtbildschirm",
+      "label": "Nachtbildschirm. Die Überwachung läuft weiter. Tippen, um den Status zu zeigen.",
+      "monitoring": "Überwachung läuft",
+      "leave": "Erneut tippen, um den Nachtbildschirm zu verlassen"
+    }
+  }
+}

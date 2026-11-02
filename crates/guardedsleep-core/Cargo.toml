@@ -1,0 +1,53 @@
+[package]
+name = "guardedsleep-core"
+version = "0.0.1"
+description = "Sans-IO protocol, pairing and session core for GuardedSleep (ADR-015 PoC)"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[features]
+default = []
+# Derives TypeScript definitions for the wire types (tsify). Enabled only by guardedsleep-wasm; the
+# default graph has no wasm-bindgen. Docs: https://github.com/madonoharu/tsify
+tsify = ["dep:tsify", "dep:wasm-bindgen"]
+# Test-only entry points of the sealed envelope: fixed-nonce sealing (a nonce must never repeat under
+# the long-lived key), raw key export and the envelope conformance cases. Enabled by the test builds
+# of the facades and by the fuzz crate; a release build must not contain them.
+# Docs: https://doc.rust-lang.org/cargo/reference/features.html
+conformance = []
+# Test support for sealed signaling (`testing`: a PSK-holding peer, readers and a rewriting
+# intermediary). Enabled by the integration tests of this crate and by the simulation, never by a
+# release build. Kept apart from `conformance` so that a workspace-wide test run, which unifies
+# features, does not switch on the conformance entry points of the facades.
+# Docs: https://doc.rust-lang.org/cargo/reference/features.html#feature-unification
+testing = []
+
+[dependencies]
+base64 = "0.23"
+chacha20 = { version = "0.10.2", default-features = false, features = ["rng", "zeroize"] }
+chacha20poly1305 = { version = "0.11.0", default-features = false, features = ["alloc", "zeroize"] }
+hkdf = "0.13"
+hmac = "0.13"
+# BIP-340 signatures for Nostr events only (never to authenticate the peer). 0.14 is on the same
+# RustCrypto generation as sha2 0.11; `default-features = false` keeps getrandom out of the graph
+# (the CSPRNG is ours) and `sign_raw` takes `aux_rand` from the Link CSPRNG.
+# Docs: https://docs.rs/k256/0.14.0/k256/schnorr/index.html
+k256 = { version = "0.14.0", default-features = false, features = ["schnorr", "arithmetic"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+sha2 = "0.11"
+tsify = { version = "0.5.8", optional = true }
+wasm-bindgen = { version = "=0.2.129", optional = true }
+zeroize = "1.9.1"
+
+[dev-dependencies]
+proptest = "1"
+# The integration tests (`tests/`) play a PSK-holding attacker and read what a device sent, which
+# needs the `testing` support. A crate may depend on itself in dev-dependencies to switch features
+# on for its own tests; the library build is unaffected.
+# Docs: https://doc.rust-lang.org/cargo/reference/features.html#feature-unification
+guardedsleep-core = { path = ".", features = ["testing"] }
+
+[lints]
+workspace = true

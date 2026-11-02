@@ -1,0 +1,75 @@
+# Web app + signaling behind an existing Traefik (v2/v3), on ONE domain — no YAML editing required.
+#
+#   https://<APP_DOMAIN>/            → web (static PWA)
+#   wss://<APP_DOMAIN>/signaling     → signaling (the PWA infers this URL from its own origin)
+#
+#   1. Download this file and `traefik.env.example` into an empty directory.
+#   2. `cp traefik.env.example .env` and set at least APP_DOMAIN + GUARDEDSLEEP_OWNER.
+#   3. `docker compose -f compose.traefik.yaml up -d`
+#
+# No host ports are published; Traefik terminates TLS on 443.
+# Docs: docs/contributing/signaling-traefik.md
+name: ${COMPOSE_PROJECT_NAME:-guardedsleep}
+
+services:
+  signaling:
+    image: ${SIGNALING_IMAGE:-ghcr.io/${GUARDEDSLEEP_OWNER:-missing-guardedsleep-owner}/guardedsleep-signaling:${SIGNALING_TAG:-latest}}
+    pull_policy: ${PULL_POLICY:-always}
+    environment:
+      PORT: "8787"
+      SIGNALING_ALLOWED_ORIGINS: "${SIGNALING_ALLOWED_ORIGINS:-https://${APP_DOMAIN:?Set APP_DOMAIN, e.g. baby.example.com}}"
+      SIGNALING_MAX_PARENTS: "${SIGNALING_MAX_PARENTS:-}"
+      SIGNALING_PING_INTERVAL_MS: "${SIGNALING_PING_INTERVAL_MS:-}"
+      SIGNALING_HELLO_RATE_PER_MIN: "${SIGNALING_HELLO_RATE_PER_MIN:-}"
+      SIGNALING_NEW_ROOM_RATE_PER_MIN: "${SIGNALING_NEW_ROOM_RATE_PER_MIN:-}"
+      SIGNALING_TRUST_PROXY: "${SIGNALING_TRUST_PROXY:-1}"
+      SIGNALING_TRUSTED_PROXY_HOPS: "${SIGNALING_TRUSTED_PROXY_HOPS:-1}"
+      SIGNALING_HELLO_TIMEOUT_MS: "${SIGNALING_HELLO_TIMEOUT_MS:-}"
+      STUN_DISABLED: "${STUN_DISABLED:-0}"
+    ports:
+      - "${STUN_PORT:-3478}:3478/udp"
+    networks:
+      - internal
+      - proxy
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-proxy}"
+      # Longer rule than the web router → Traefik gives it priority for /signaling.
+      - "traefik.http.routers.${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-signaling.rule=Host(`${APP_DOMAIN}`) && PathPrefix(`/signaling`)"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-signaling.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-signaling.tls=true"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-signaling.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-signaling.service=${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-signaling"
+      - "traefik.http.services.${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-signaling.loadbalancer.server.port=8787"
+
+  web:
+    image: ${WEB_IMAGE:-ghcr.io/${GUARDEDSLEEP_OWNER:-missing-guardedsleep-owner}/guardedsleep-web:${WEB_TAG:-latest}}
+    pull_policy: ${PULL_POLICY:-always}
+    # The web image's nginx also proxies /signaling to `signaling:8787`; it must resolve that name.
+    networks:
+      - internal
+      - proxy
+    depends_on:
+      - signaling
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-proxy}"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-web.rule=Host(`${APP_DOMAIN}`)"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-web.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-web.tls=true"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-web.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-web.service=${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-web"
+      - "traefik.http.services.${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-web.loadbalancer.server.port=80"
+
+networks:
+  internal: {}
+  proxy:
+    name: ${TRAEFIK_NETWORK:-proxy}
+    external: true

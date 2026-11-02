@@ -1,0 +1,76 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "attack-forged-offer-spoofed",
+  "description": "Same attack with a relay that forges the `from` field as the baby and the parent: authenticated verification still protects the attempts.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "relay": {
+    "parent_cap": 3
+  },
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "stranger_join",
+      "mode": "forged_offer",
+      "id": "stranger",
+      "spoof_from": true
+    },
+    {
+      "at": 80000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 15000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 15000
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 80000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 80000
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "within_ms": [16000, 80000]
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "within_ms": [16000, 80000]
+    },
+    {
+      "peer": "baby",
+      "never": "failed"
+    },
+    {
+      "peer": "parent",
+      "never": "failed"
+    }
+  ]
+}

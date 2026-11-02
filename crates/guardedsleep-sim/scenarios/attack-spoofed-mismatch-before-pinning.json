@@ -1,0 +1,90 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "attack-spoofed-mismatch-before-pinning",
+  "description": "A baby unit that verified a pairing before but holds no parent secret (nothing pinned yet) is joined by a stranger with the right envelope key and a wrong pairing proof: the baby warns and slows retries but is never terminal; the real parent returns afterwards.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby",
+      "paired_before": true,
+      "pin_window_s": 3600
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start",
+      "peer": "baby"
+    },
+    {
+      "at": 2000,
+      "do": "stranger_join",
+      "mode": "wrong_psk",
+      "id": "stranger"
+    },
+    {
+      "at": 125000,
+      "do": "stranger_leave",
+      "peer": "stranger"
+    },
+    {
+      "at": 126000,
+      "do": "start",
+      "peer": "parent"
+    },
+    {
+      "at": 220000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "event": "security_warning",
+      "where": {
+        "key": "wrong_key_attempt"
+      },
+      "within_ms": [2000, 125000],
+      "count_min": 3
+    },
+    {
+      "peer": "baby",
+      "event": "failed",
+      "where": {
+        "reason": "pair_proof_mismatch"
+      },
+      "within_ms": [2000, 125000],
+      "count_max": 10
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 220000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 220000
+    }
+  ],
+  "export_traces": [
+    {
+      "peer": "baby",
+      "id": "sim-attack-wrong-psk-unpinned-baby"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Project and app lifecycle (trust, updates, continuity)
 
-> STATUS: PROPOSED -- companion to [concept review 2026-05](../reviews/concept-review-2026-05.md) (IMP-6) and [ADR-009](../decisions/ADR-009-personas-and-failure-model.md).
+> STATUS: PROPOSED -- companion to [concept review 2026-05](../reviews/concept-review-2026-05.md) (IMP-6) and [ADR-009](../../openspec/changes/archive/2026-10-21-adr-009-personas-and-failure-model/design.md).
 
 ## Why this document exists
 
@@ -17,7 +17,7 @@ This document states **honest expectations** and the **minimum continuity commit
 ## Saved connections and continuity
 
 - **Export / import (IDEA Phase 2+):** Allow advanced users to export **non-secret** connection metadata (names, signaling URLs) and re-import after reinstall. **Secrets remain in keystore** -- export must never include raw PSK material.
-- **Pairing redo:** If export is unavailable, users always retain the QR re-pair path ([connectivity-pairing.md](../features/connectivity-pairing.md)).
+- **Pairing redo:** If export is unavailable, users always retain the QR re-pair path ([pairing spec](../../openspec/specs/pairing/spec.md)).
 
 ## Relationship to privacy policy
 
@@ -25,7 +25,7 @@ Operational lifecycle text belongs here; [privacy-policy.md](privacy-policy.md) 
 
 ## Discarded alternatives
 
-| Approach                                  | Reason                                                                                                                                                       |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Mandatory cloud account for continuity    | Contradicts privacy-first positioning.                                                                                                                       |
-| Silent auto-updates without release notes | Unacceptable for security-sensitive users; Release Please + changelog already decided ([ADR-006](../decisions/ADR-006-release-and-changelog-automation.md)). |
+| Approach                                  | Reason                                                                                                                                                                                           |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Mandatory cloud account for continuity    | Contradicts privacy-first positioning.                                                                                                                                                           |
+| Silent auto-updates without release notes | Unacceptable for security-sensitive users; Release Please + changelog already decided ([ADR-006](../../openspec/changes/archive/2026-05-13-adr-006-release-and-changelog-automation/design.md)). |

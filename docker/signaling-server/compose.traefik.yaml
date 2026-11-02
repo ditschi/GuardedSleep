@@ -1,0 +1,51 @@
+# Signaling server behind an existing Traefik (v2/v3) — ready to use, no YAML editing required.
+#
+#   1. Download this file and `traefik.env.example` into an empty directory.
+#   2. `cp traefik.env.example .env` and set at least SIGNALING_DOMAIN + GUARDEDSLEEP_OWNER.
+#   3. `docker compose -f compose.traefik.yaml up -d`
+#
+# Clients then use wss://<SIGNALING_DOMAIN><SIGNALING_PATH_PREFIX>. No host port is published:
+# Traefik reaches the container over the shared proxy network, TLS terminates in Traefik on 443.
+# Docs: docs/contributing/signaling-traefik.md
+name: ${COMPOSE_PROJECT_NAME:-guardedsleep-signaling}
+
+services:
+  signaling:
+    image: ${SIGNALING_IMAGE:-ghcr.io/${GUARDEDSLEEP_OWNER:-missing-guardedsleep-owner}/guardedsleep-signaling:${SIGNALING_TAG:-latest}}
+    pull_policy: ${PULL_POLICY:-always}
+    environment:
+      PORT: "8787"
+      # Defaults to the HTTPS origin of the web app (or the signaling domain when no app domain is set).
+      SIGNALING_ALLOWED_ORIGINS: "${SIGNALING_ALLOWED_ORIGINS:-https://${APP_DOMAIN:-${SIGNALING_DOMAIN}}}"
+      SIGNALING_MAX_PARENTS: "${SIGNALING_MAX_PARENTS:-}"
+      SIGNALING_PING_INTERVAL_MS: "${SIGNALING_PING_INTERVAL_MS:-}"
+      SIGNALING_HELLO_RATE_PER_MIN: "${SIGNALING_HELLO_RATE_PER_MIN:-}"
+      SIGNALING_NEW_ROOM_RATE_PER_MIN: "${SIGNALING_NEW_ROOM_RATE_PER_MIN:-}"
+      SIGNALING_TRUST_PROXY: "${SIGNALING_TRUST_PROXY:-1}"
+      SIGNALING_TRUSTED_PROXY_HOPS: "${SIGNALING_TRUSTED_PROXY_HOPS:-1}"
+      SIGNALING_HELLO_TIMEOUT_MS: "${SIGNALING_HELLO_TIMEOUT_MS:-}"
+      STUN_DISABLED: "${STUN_DISABLED:-0}"
+    ports:
+      - "${STUN_PORT:-3478}:3478/udp"
+    networks:
+      - proxy
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-proxy}"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-signaling.rule=Host(`${SIGNALING_DOMAIN:?Set SIGNALING_DOMAIN, e.g. signal.example.com}`) && PathPrefix(`${SIGNALING_PATH_PREFIX:-/}`)"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-signaling.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-signaling.tls=true"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-signaling.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-signaling.service=${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-signaling"
+      - "traefik.http.services.${TRAEFIK_ROUTER_PREFIX:-guardedsleep}-signaling.loadbalancer.server.port=8787"
+
+networks:
+  proxy:
+    name: ${TRAEFIK_NETWORK:-proxy}
+    external: true

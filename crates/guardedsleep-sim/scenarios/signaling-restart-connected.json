@@ -1,0 +1,100 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "signaling-restart-connected",
+  "description": "ADR-017 section 12 under the mailbox rule: the server restarts for 10 s while the link is verified. No mailbox is open while verified, so neither device notices: no state change, no new socket, no rejoin.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "signaling_down"
+    },
+    {
+      "at": 30000,
+      "do": "signaling_up"
+    },
+    {
+      "at": 90000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 25000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 25000
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 90000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 90000
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "within_ms": [16000, 90000]
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "within_ms": [16000, 90000]
+    },
+    {
+      "peer": "baby",
+      "never": "failed"
+    },
+    {
+      "peer": "parent",
+      "never": "failed"
+    },
+    {
+      "peer": "baby",
+      "joined": true,
+      "within_ms": [0, 10000]
+    },
+    {
+      "peer": "parent",
+      "joined": true,
+      "within_ms": [0, 10000]
+    },
+    {
+      "peer": "baby",
+      "joined": false,
+      "within_ms": [10001, 90000]
+    },
+    {
+      "peer": "parent",
+      "joined": false,
+      "within_ms": [10001, 90000]
+    }
+  ],
+  "export_traces": [
+    {
+      "peer": "baby",
+      "id": "sim-signaling-restart-connected-baby"
+    }
+  ]
+}

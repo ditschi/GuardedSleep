@@ -1,0 +1,66 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "attack-ghost-parent",
+  "description": "A ghost parent socket (silent client) holds the single parent slot; the real parent is refused with PARENT_CAP, retries, and connects once the sweep evicts the ghost.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "ghost_join",
+      "role": "parent"
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 90000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 85000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 85000
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "joined": true,
+      "within_ms": [10000, 40000]
+    }
+  ]
+}

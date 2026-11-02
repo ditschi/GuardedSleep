@@ -1,24 +1,26 @@
 # Technical Analysis
 
-This document records the technical analysis that informed the architecture. **Authoritative MVP decisions:** [Architecture Decision Records](../decisions/README.md). If this document and an ADR disagree, **the ADR wins**.
+This document records the technical analysis that informed the architecture. **Authoritative MVP decisions:** [Architecture Decision Records](../../openspec/changes/archive/README.md). If this document and an ADR disagree, **the ADR wins**.
+
+> **Partially superseded (2026-10-20):** the platform analysis recommended the Hybrid Web App + Capacitor; that was replaced by native clients on a shared Rust core ([ADR-015](../../openspec/changes/archive/2026-10-21-adr-015-native-clients-with-shared-rust-core/design.md), [ADR-020](../../openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md)). Distribution wording on F-Droid is superseded by [ADR-021](../../openspec/changes/archive/2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md) §3 (Play and GitHub APK at alpha, IzzyOnDroid at beta, F-Droid main repository `DEFERRED`). The Capacitor sections stay as decision history.
 
 ## Analysis Topics
 
-| #   | Topic                            | Status                   | ADR                                                                              |
-| --- | -------------------------------- | ------------------------ | -------------------------------------------------------------------------------- |
-| 1   | App Platform                     | DECIDED                  | [ADR-002](../decisions/ADR-002-client-platform-and-repository-structure.md)      |
-| 2   | Communication Architecture       | DECIDED                  | [ADR-003](../decisions/ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md)  |
-| 3   | Server Requirements              | DECIDED                  | [ADR-003](../decisions/ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md)  |
-| 4   | Encryption Approach              | DECIDED                  | [ADR-004](../decisions/ADR-004-encryption-transport-and-key-storage.md)          |
-| 5   | Audio Processing                 | DECIDED (features + PoC) | [ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md)         |
-| 6   | Deployment Model                 | DECIDED                  | [ADR-005](../decisions/ADR-005-parent-alerts-product-naming-and-distribution.md) |
-| --  | MVP scope, PoC gate, in-app lock | DECIDED                  | [ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md)         |
+| #   | Topic                            | Status                   | ADR                                                                                                                  |
+| --- | -------------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| 1   | App Platform                     | DECIDED                  | [ADR-002](../../openspec/changes/archive/2026-04-15-adr-002-client-platform-and-repository-structure/design.md)      |
+| 2   | Communication Architecture       | DECIDED                  | [ADR-003](../../openspec/changes/archive/2026-04-15-adr-003-connectivity-webrtc-signaling-and-qr-pairing/design.md)  |
+| 3   | Server Requirements              | DECIDED                  | [ADR-003](../../openspec/changes/archive/2026-04-15-adr-003-connectivity-webrtc-signaling-and-qr-pairing/design.md)  |
+| 4   | Encryption Approach              | DECIDED                  | [ADR-004](../../openspec/changes/archive/2026-04-15-adr-004-encryption-transport-and-key-storage/design.md)          |
+| 5   | Audio Processing                 | DECIDED (features + PoC) | [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md)         |
+| 6   | Deployment Model                 | DECIDED                  | [ADR-005](../../openspec/changes/archive/2026-04-15-adr-005-parent-alerts-product-naming-and-distribution/design.md) |
+| --  | MVP scope, PoC gate, in-app lock | DECIDED                  | [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md)         |
 
 ---
 
 ## 1. App Platform
 
-> STATUS: DECIDED -- See [ADR-002](../decisions/ADR-002-client-platform-and-repository-structure.md).
+> STATUS: DECIDED -- See [ADR-002](../../openspec/changes/archive/2026-04-15-adr-002-client-platform-and-repository-structure/design.md).
 
 **Question**: What technology do we use to build the app?
 
@@ -67,7 +69,7 @@ This document records the technical analysis that informed the architecture. **A
   - Clean architecture: Core logic (pure JS/TS) -> Platform layer (Web APIs / Capacitor plugins) -> UI layer
   - **Technical Architect verdict: RECOMMENDED** -- only approach meeting all constraints
 
-**Recommendation**: Hybrid Web App + Capacitor. It is the only approach that simultaneously provides cross-platform support, solves the iOS background audio blocker, allows a browser fallback for desktop, works in local/hotspot scenarios without an HTTPS certificate, and is maintainable by a single developer.
+**Recommendation (superseded, see ADR-015/ADR-020)**: Hybrid Web App + Capacitor. It is the only approach that simultaneously provides cross-platform support, solves the iOS background audio blocker, allows a browser fallback for desktop, works in local/hotspot scenarios without an HTTPS certificate, and is maintainable by a single developer.
 
 ### Discarded Alternatives
 
@@ -81,7 +83,7 @@ This document records the technical analysis that informed the architecture. **A
 
 ## 2. Communication Architecture
 
-> STATUS: DECIDED -- See [ADR-003](../decisions/ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md).
+> STATUS: DECIDED -- See [ADR-003](../../openspec/changes/archive/2026-04-15-adr-003-connectivity-webrtc-signaling-and-qr-pairing/design.md).
 
 **Question**: How do devices communicate with each other?
 
@@ -135,7 +137,7 @@ This document records the technical analysis that informed the architecture. **A
 
 ## 3. Server & Connectivity Architecture
 
-> STATUS: **DECIDED** -- [ADR-003](../decisions/ADR-003-connectivity-webrtc-signaling-and-qr-pairing.md). Three connectivity paths; reviewed by Technical Architect, Security Architect, and Critical Reviewer.
+> STATUS: **DECIDED** -- [ADR-003](../../openspec/changes/archive/2026-04-15-adr-003-connectivity-webrtc-signaling-and-qr-pairing/design.md). Three connectivity paths; reviewed by Technical Architect, Security Architect, and Critical Reviewer.
 
 **Decision**: MVP supports 3 connectivity paths. All paths use the same app code -- the app just connects to IPs.
 
@@ -262,7 +264,7 @@ Self-hosted coturn recommended for production. EU STUN servers as fallback. User
 
 ## 4. Encryption Approach
 
-> STATUS: **DECIDED** -- [ADR-004](../decisions/ADR-004-encryption-transport-and-key-storage.md). Three-layer model; Layer 3 application E2E in Phase 2.
+> STATUS: **DECIDED** -- [ADR-004](../../openspec/changes/archive/2026-04-15-adr-004-encryption-transport-and-key-storage/design.md). Three-layer model; Layer 3 application E2E in Phase 2.
 
 **Decision**: DTLS-SRTP + Fingerprint Binding + Application E2E Layer. This covers ALL transmission types: audio, video, data, and control messages.
 
@@ -314,19 +316,19 @@ Self-hosted coturn recommended for production. EU STUN servers as fallback. User
 
 ### Security Requirements (from Security Architect review)
 
-| Requirement                                                | Priority   | Status                                                                                                                                  |
-| ---------------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| DTLS fingerprint bound to QR pairing key (MITM protection) | CRITICAL   | Must be designed                                                                                                                        |
-| Threat model formally documented                           | CRITICAL   | Must be created                                                                                                                         |
-| Cluster join with confirmation mechanism                   | CRITICAL   | Must be designed                                                                                                                        |
-| Additional E2E encryption layer (defense-in-depth)         | IMPORTANT  | Strongly recommended                                                                                                                    |
-| Key rotation and forward secrecy                           | IMPORTANT  | Must be designed                                                                                                                        |
-| Remote device revocation with re-keying                    | IMPORTANT  | Must be designed                                                                                                                        |
-| STUN/TURN privacy implications documented                  | IMPORTANT  | Must be documented                                                                                                                      |
-| In-app device lock (PIN/biometrics) before app access      | IMPORTANT  | **DEFERRED (Phase 2)** -- MVP relies on **OS screen lock** per [ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md) |
-| Key material in platform keystore, never in plaintext      | IMPORTANT  | Must be implemented                                                                                                                     |
-| QR code one-time-use with timeout (~30s)                   | IMPORTANT  | Must be designed                                                                                                                        |
-| Replay protection (nonces, timestamps in QR protocol)      | SUGGESTION | Should be implemented                                                                                                                   |
+| Requirement                                                | Priority   | Status                                                                                                                                                                      |
+| ---------------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DTLS fingerprint bound to QR pairing key (MITM protection) | CRITICAL   | Must be designed                                                                                                                                                            |
+| Threat model formally documented                           | CRITICAL   | Must be created                                                                                                                                                             |
+| Cluster join with confirmation mechanism                   | CRITICAL   | Must be designed                                                                                                                                                            |
+| Additional E2E encryption layer (defense-in-depth)         | IMPORTANT  | Strongly recommended                                                                                                                                                        |
+| Key rotation and forward secrecy                           | IMPORTANT  | Must be designed                                                                                                                                                            |
+| Remote device revocation with re-keying                    | IMPORTANT  | Must be designed                                                                                                                                                            |
+| STUN/TURN privacy implications documented                  | IMPORTANT  | Must be documented                                                                                                                                                          |
+| In-app device lock (PIN/biometrics) before app access      | IMPORTANT  | **DEFERRED (Phase 2)** -- MVP relies on **OS screen lock** per [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md) |
+| Key material in platform keystore, never in plaintext      | IMPORTANT  | Must be implemented                                                                                                                                                         |
+| QR code one-time-use with timeout (~30s)                   | IMPORTANT  | Must be designed                                                                                                                                                            |
+| Replay protection (nonces, timestamps in QR protocol)      | SUGGESTION | Should be implemented                                                                                                                                                       |
 
 ### Threat Model (Security Architect assessment)
 
@@ -349,7 +351,7 @@ Self-hosted coturn recommended for production. EU STUN servers as fallback. User
 
 ## 5. Audio Processing
 
-> STATUS: DECIDED (baseline) -- Requirements in [audio-monitoring.md](../features/audio-monitoring.md); Opus DTX / capture behavior validated in PoC per [ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md).
+> STATUS: DECIDED (baseline) -- Requirements in [audio-monitoring spec](../../openspec/specs/audio-monitoring/spec.md); Opus DTX / capture behavior validated in PoC per [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md).
 
 **Question**: How do we capture and process audio on the baby unit?
 
@@ -381,7 +383,7 @@ Microphone → Audio Capture (Web Audio API / native plugin)
 
 ## 6. Deployment Model
 
-> STATUS: DECIDED -- See [ADR-005](../decisions/ADR-005-parent-alerts-product-naming-and-distribution.md) (naming, stores); options below remain as reference.
+> STATUS: DECIDED -- See [ADR-005](../../openspec/changes/archive/2026-04-15-adr-005-parent-alerts-product-naming-and-distribution/design.md) (naming, stores); options below remain as reference.
 
 **Question**: How do users set up and access the system?
 
@@ -389,7 +391,7 @@ Microphone → Audio Capture (Web Audio API / native plugin)
 
 - [ ] **App store distribution (Android)**
   - Google Play for mainstream users
-  - F-Droid for privacy-conscious users
+  - F-Droid for privacy-conscious users (superseded, see ADR-021 §3: IzzyOnDroid at beta, F-Droid main deferred)
   - APK direct download as alternative
   - No Apple hardware = no iOS App Store initially (community can assist)
 
@@ -406,7 +408,7 @@ Microphone → Audio Capture (Web Audio API / native plugin)
   - Server sees no content, only connection metadata
 
 - [x] **Hybrid: multiple deployment options (RECOMMENDED)**
-  - App: Google Play + F-Droid + APK download (Android); iOS via community/TestFlight initially
+  - App: Google Play + F-Droid (superseded, see ADR-021 §3) + APK download (Android); iOS via community/TestFlight initially
   - Local mode: no server needed, install app + QR pair
   - Internet mode: self-host signaling (Docker) or use community server
   - Desktop: PWA export accessible via browser
@@ -465,21 +467,21 @@ Everything else happens automatically: network detection, DTLS binding, permissi
 
 ### Platform Tiers
 
-| Tier | Platform              | Support Level                                      |
-| ---- | --------------------- | -------------------------------------------------- |
-| 1    | Android (Capacitor)   | Fully supported by core developer                  |
-| 2    | iOS (Capacitor)       | Community-maintained, CI builds via GitHub Actions |
-| 3    | Desktop/Browser (PWA) | Best-effort, browser fallback                      |
+| Tier | Platform                                 | Support Level                                      |
+| ---- | ---------------------------------------- | -------------------------------------------------- |
+| 1    | Android (Capacitor; superseded, ADR-015) | Fully supported by core developer                  |
+| 2    | iOS (Capacitor; superseded, ADR-015)     | Community-maintained, CI builds via GitHub Actions |
+| 3    | Desktop/Browser (PWA)                    | Best-effort, browser fallback                      |
 
 ---
 
 ## 8. MVP Definition (Phase 1)
 
-> Informed by Critical Reviewer + Technical Architect + Product Owner perspectives. **Scope:** full documented MVP (no deliberate reduction) per [ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md). Effort risk remains; PoC reduces platform risk first.
+> Informed by Critical Reviewer + Technical Architect + Product Owner perspectives. **Scope:** full documented MVP (no deliberate reduction) per [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md). Effort risk remains; PoC reduces platform risk first.
 
 ### PREREQUISITE: Proof of Concept
 
-**Full definition, Go/No-Go criteria, and rationale (PoC vs straight-to-MVP):** [ADR-001: MVP Scope, PoC Gate, and Authentication Strategy](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md).
+**Full definition, Go/No-Go criteria, and rationale (PoC vs straight-to-MVP):** [ADR-001: MVP Scope, PoC Gate, and Authentication Strategy](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md).
 
 Before any implementation, validate (minimum checklist):
 
@@ -539,18 +541,18 @@ Parent UI:
 
 As of the current tree:
 
-- **WebRTC:** [`apps/mobile/src/lib/webrtc/peer-session.ts`](../../apps/mobile/src/lib/webrtc/peer-session.ts) — baby runs `getUserMedia` (audio), adds a **muted-by-default** outbound track (`track.enabled` gates alert + listen), parent plays via `ontrack`; **DataChannel** carries heartbeat (+ optional baby battery / RMS), `noise_alert`, and parent `listen` commands. Protocol helpers: [`packages/protocol/src/datachannel.ts`](../../packages/protocol/src/datachannel.ts), extended heartbeat in [`heartbeat.ts`](../../packages/protocol/src/heartbeat.ts).
-- **Noise / RMS:** [`apps/mobile/src/lib/audio/noise-monitor.ts`](../../apps/mobile/src/lib/audio/noise-monitor.ts) gates sustained loud noise on the baby unit and triggers alert streaming + DC notify.
-- **Pairing UX:** compact **JSON QR** (`v1`: room, signaling URL, PSK) in [`apps/mobile/src/routes/pair/+page.svelte`](../../apps/mobile/src/routes/pair/+page.svelte); legacy `https` invite URLs still parse via [`apps/mobile/src/lib/invite-url.ts`](../../apps/mobile/src/lib/invite-url.ts). **PSK + DTLS:** after both SDPs are set, peers exchange [`pair_proof`](../../packages/protocol/src/datachannel.ts) on the DataChannel using HMAC-SHA256 over `roomId|sorted(fp1,fp2)|protocolVersion` — see [`apps/mobile/src/lib/pairing/pair-mac.ts`](../../apps/mobile/src/lib/pairing/pair-mac.ts). PSK is kept in **`sessionStorage`** only ([`session-material.ts`](../../apps/mobile/src/lib/pairing/session-material.ts)).
-- **Android native:** [`GuardedSleepNativePlugin`](../../apps/mobile/android/app/src/main/java/org/guardedsleep/app/GuardedSleepNativePlugin.java) — app **battery details** intent, **keep screen on**, **immersive / kiosk-style** chrome, **mDNS** advertise/discover (`_guardedsleep._tcp`, service name `gssleep-<room>`). **Foreground notification:** [`@capawesome-team/capacitor-android-foreground-service`](../../apps/mobile/package.json) + [`foreground-monitoring.ts`](../../apps/mobile/src/lib/android/foreground-monitoring.ts) (baby monitoring start).
-- **Parent UX:** listen toggle, **vibration** on noise alert, **screen wake lock** while listening, **snooze** (5 min), coarse **connection quality** from WebRTC stats, baby **battery** + **quiet-since** hints from heartbeats, optional **LAN peer list** from mDNS — [`apps/mobile/src/routes/parent/+page.svelte`](../../apps/mobile/src/routes/parent/+page.svelte).
-- **Saved connections:** [`apps/mobile/src/lib/connection-store.ts`](../../apps/mobile/src/lib/connection-store.ts) (upsert on successful connect).
+- **WebRTC:** `peer-session.ts` — baby runs `getUserMedia` (audio), adds a **muted-by-default** outbound track (`track.enabled` gates alert + listen), parent plays via `ontrack`; **DataChannel** carries heartbeat (+ optional baby battery / RMS), `noise_alert`, and parent `listen` commands. Protocol helpers (the hand-written `packages/protocol` is gone): the shapes live in [`protocol.rs`](../../crates/guardedsleep-core/src/protocol.rs).
+- **Noise / RMS:** `noise-monitor.ts` gates sustained loud noise on the baby unit and triggers alert streaming + DC notify.
+- **Pairing UX:** compact **JSON QR** (`v1`: room, signaling URL, PSK) in `+page.svelte`; legacy `https` invite URLs still parse via `invite-url.ts`. **PSK + DTLS:** after both SDPs are set, peers exchange [`pair_proof`](../../crates/guardedsleep-core/src/protocol.rs) on the DataChannel using HMAC-SHA256 over `roomId|sorted(fp1,fp2)|protocolVersion` — see `pair-mac.ts`. PSK is kept in **`sessionStorage`** only (`session-material.ts`).
+- **Android native:** `GuardedSleepNativePlugin` — app **battery details** intent, **keep screen on**, **immersive / kiosk-style** chrome, **mDNS** advertise/discover (`_guardedsleep._tcp`, service name `gssleep-<room>`). **Foreground notification:** `@capawesome-team/capacitor-android-foreground-service` + `foreground-monitoring.ts` (baby monitoring start).
+- **Parent UX:** listen toggle, **vibration** on noise alert, **screen wake lock** while listening, **snooze** (5 min), coarse **connection quality** from WebRTC stats, baby **battery** + **quiet-since** hints from heartbeats, optional **LAN peer list** from mDNS — `+page.svelte`.
+- **Saved connections:** `connection-store.ts` (upsert on successful connect).
 - **Gaps vs full product doc:** QR **join-request / auto-accept** timing UX, **multi-IP parallel ICE** probing beyond what WebRTC gathers, **saved connections + PSK** in secure storage (Keystore), **OEM-specific** battery exemption intents, **Play/F-Droid** release plumbing, **LAN↔Internet handoff**, and other **Phase 2+** items in feature docs.
 
 ### Phase 2 extension (multi-parent, planned)
 
 - **After MVP 1:1 is validated:** up to **4** parent devices per **one** baby device (hard product cap).
-- **Add device:** same QR workflow as initial pairing (`Add device` → show QR → scan). **Either** the baby or an already-paired **parent** may display the QR; on the baby, **kiosk unlock + explicit action** is required first (see [device-management.md](../features/device-management.md)).
+- **Add device:** same QR workflow as initial pairing (`Add device` → show QR → scan). **Either** the baby or an already-paired **parent** may display the QR; on the baby, **kiosk unlock + explicit action** is required first (see [device-setup spec](../../openspec/specs/device-setup/spec.md)).
 
 ### Pre-Negotiated Audio: How It Works
 
@@ -588,18 +590,18 @@ This requires:
 
 ### Explicitly NOT in Phase 1
 
-| Feature                             | Phase | Reason                                                                      |
-| ----------------------------------- | ----- | --------------------------------------------------------------------------- |
-| iOS support                         | 2     | Unvalidated background audio, needs custom native plugin, no Apple hardware |
-| LAN <-> Internet automatic handoff  | TBD   | Both modes work in Phase 1, but switching is manual                         |
-| Talk-back                           | 2     | Adds complexity, not essential for monitoring                               |
-| Application E2E layer (Layer 3)     | 2     | DTLS + fingerprint binding is sufficient for Phase 1                        |
-| Key rotation                        | 2     | Pairing key valid until manual re-pair                                      |
-| Multi-parent (max 4 parents / baby) | 2     | MVP is 1:1 only; Phase 2 adds parents with same QR add-device flow          |
-| Remote pairing (invite code)        | 2     | Physical QR pairing only in Phase 1                                         |
-| Video monitoring                    | 3+    | Future feature                                                              |
-| Sound categorization (ML)           | 3+    | Future feature                                                              |
-| Multi-language (i18n)               | 2     | English only for Phase 1                                                    |
+| Feature                             | Phase | Reason                                                                          |
+| ----------------------------------- | ----- | ------------------------------------------------------------------------------- |
+| iOS support                         | 2     | Unvalidated background audio, needs custom native plugin, no Apple hardware     |
+| LAN <-> Internet automatic handoff  | TBD   | Both modes work in Phase 1, but switching is manual                             |
+| Talk-back                           | 2     | Adds complexity, not essential for monitoring                                   |
+| Application E2E layer (Layer 3)     | 2     | DTLS + fingerprint binding is sufficient for Phase 1                            |
+| Key rotation                        | 2     | Pairing key valid until manual re-pair                                          |
+| Multi-parent (max 4 parents / baby) | 2     | MVP is 1:1 only; Phase 2 adds parents with same QR add-device flow              |
+| Remote pairing (invite code)        | 2     | Physical QR pairing only in Phase 1                                             |
+| Video monitoring                    | 3+    | Future feature                                                                  |
+| Sound categorization (ML)           | 3+    | Future feature                                                                  |
+| Multi-language (i18n)               | 1     | en/de/fr/es from Phase 1 (owner decision 2026-10-19; supersedes "English only") |
 
 ---
 
@@ -633,7 +635,7 @@ A PWA (Progressive Web App) is distributed as a website. Users access it via URL
 
 ## 10. App Store Distribution & Monetization
 
-> STATUS: DECIDED -- See [ADR-005](../decisions/ADR-005-parent-alerts-product-naming-and-distribution.md); details below.
+> STATUS: DECIDED -- See [ADR-005](../../openspec/changes/archive/2026-04-15-adr-005-parent-alerts-product-naming-and-distribution/design.md); details below.
 
 ### Capacitor = Real Native Apps
 
@@ -648,12 +650,12 @@ Capacitor wraps our web app into **real native apps** (.apk/.aab for Android, .i
 
 ### Distribution Strategy
 
-| Channel                 | Target Audience                         | Version                                                     |
-| ----------------------- | --------------------------------------- | ----------------------------------------------------------- |
-| **F-Droid**             | Privacy-conscious users, FOSS community | Full version, free, with direct donation links              |
-| **Google Play**         | Mainstream Android users                | Full version, free, with optional "Support" in-app purchase |
-| **Direct APK** (GitHub) | Developers, early adopters              | Full version, free                                          |
-| **Apple App Store**     | iOS users (Phase 2)                     | Full version, free, with optional "Support" in-app purchase |
+| Channel                                      | Target Audience                         | Version                                                     |
+| -------------------------------------------- | --------------------------------------- | ----------------------------------------------------------- |
+| **F-Droid** (main repo deferred, ADR-021 §3) | Privacy-conscious users, FOSS community | Full version, free, with direct donation links              |
+| **Google Play**                              | Mainstream Android users                | Full version, free, with optional "Support" in-app purchase |
+| **Direct APK** (GitHub)                      | Developers, early adopters              | Full version, free                                          |
+| **Apple App Store**                          | iOS users (Phase 2)                     | Full version, free, with optional "Support" in-app purchase |
 
 ### Monetization: "Support Me" Model
 
@@ -746,16 +748,16 @@ Google Play prohibits apps from linking to external payment/donation platforms. 
 
 ## Next Steps
 
-| Priority    | Action                                                           | Blocks               |
-| ----------- | ---------------------------------------------------------------- | -------------------- |
-| **BLOCKER** | Build PoC: Capacitor + WebRTC + Background Audio on Android      | Everything           |
-| **BLOCKER** | PoC: Multi-IP QR code + parallel connection + signaling server   | Internet mode        |
-| **HIGH**    | Formalize MVP scope as ADR-001                                   | Implementation start |
-| **HIGH**    | Build minimal signaling server (~300-400 LOC, Docker)            | Internet mode        |
-| **HIGH**    | Design Local Discovery mechanism for reconnection                | Implementation       |
-| **HIGH**    | Verify Opus DTX silence frame data usage in PoC                  | Audio optimization   |
-| **MEDIUM**  | Choose web framework (Svelte/React/Vue)                          | Implementation       |
-| **MEDIUM**  | Design UX wireframes for 3-step setup flow                       | Implementation       |
-| **MEDIUM**  | Set up app store distribution (Google Play + F-Droid)            | Distribution         |
-| **LOW**     | Write Tailscale/Headscale setup guide (optional power-user mode) | Documentation        |
-| **LOW**     | Plan iOS PoC (after Android validated)                           | Phase 2              |
+| Priority    | Action                                                                                   | Blocks               |
+| ----------- | ---------------------------------------------------------------------------------------- | -------------------- |
+| **BLOCKER** | Build PoC: Capacitor + WebRTC + Background Audio on Android                              | Everything           |
+| **BLOCKER** | PoC: Multi-IP QR code + parallel connection + signaling server                           | Internet mode        |
+| **HIGH**    | Formalize MVP scope as ADR-001                                                           | Implementation start |
+| **HIGH**    | Build minimal signaling server (~300-400 LOC, Docker)                                    | Internet mode        |
+| **HIGH**    | Design Local Discovery mechanism for reconnection                                        | Implementation       |
+| **HIGH**    | Verify Opus DTX silence frame data usage in PoC                                          | Audio optimization   |
+| **MEDIUM**  | Choose web framework (Svelte/React/Vue)                                                  | Implementation       |
+| **MEDIUM**  | Design UX wireframes for 3-step setup flow                                               | Implementation       |
+| **MEDIUM**  | Set up app store distribution (Google Play + F-Droid; F-Droid main deferred, ADR-021 §3) | Distribution         |
+| **LOW**     | Write Tailscale/Headscale setup guide (optional power-user mode)                         | Documentation        |
+| **LOW**     | Plan iOS PoC (after Android validated)                                                   | Phase 2              |

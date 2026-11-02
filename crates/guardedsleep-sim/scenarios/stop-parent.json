@@ -1,0 +1,71 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "stop-parent",
+  "description": "A deliberate stop of the parent is peer_stopped on the baby: no escalation, no link_lost.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "stop",
+      "peer": "parent"
+    },
+    {
+      "at": 160000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "state": "stopped",
+      "at_ms": 25000
+    },
+    {
+      "peer": "baby",
+      "state": "peer_stopped",
+      "at_ms": 25000
+    },
+    {
+      "peer": "baby",
+      "state": "peer_stopped",
+      "at_ms": 155000
+    },
+    {
+      "peer": "baby",
+      "event": "peer_stopped",
+      "count": 1
+    },
+    {
+      "peer": "baby",
+      "max_level": 0,
+      "within_ms": [19000, 160000]
+    },
+    {
+      "peer": "baby",
+      "never": "link_lost"
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "reconnecting"
+        }
+      }
+    }
+  ]
+}

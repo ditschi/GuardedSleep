@@ -1,0 +1,146 @@
+//! Localization generator: validates `locales/*.json` and emits web JSON and Android resources.
+
+#![forbid(unsafe_code)]
+
+mod android;
+mod catalogue;
+mod critical;
+mod endonyms;
+mod icu;
+mod usage;
+mod web;
+
+use std::path::{Path, PathBuf};
+use std::process::{Command, ExitCode};
+
+const USAGE: &str = "usage: i18n-gen <check|web|android|all|locales> [--out <path>] [--web-out <dir>] [--android-out <dir>] [--locales <dir>]
+  check     validate the catalogue, unused keys and Kotlin UI literals
+  web       write web JSON bundles (+ pseudo.json, pseudo-rtl.json) to --out
+  android   write Android res/values*/strings.xml to --out
+  all       web + android (--web-out / --android-out, defaults to the app build dirs)
+  locales   write the shipped locale tags, one per line, to the file --out (Android localeFilters)";
+
+fn arg(argv: &[String], name: &str) -> Option<PathBuf> {
+    argv.iter()
+        .position(|a| a == name)
+        .and_then(|i| argv.get(i + 1))
+        .map(PathBuf::from)
+}
+
+fn write(dir: &Path, files: &[(String, String)]) -> std::io::Result<()> {
+    for (rel, content) in files {
+        let target = dir.join(rel);
+        if let Some(parent) = target.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        std::fs::write(target, content)?;
+    }
+    Ok(())
+}
+
+fn fail(issues: &[String]) -> ExitCode {
+    eprintln!("i18n: {} problem(s)", issues.len());
+    for i in issues {
+        eprintln!("  - {i}");
+    }
+    ExitCode::from(1)
+}
+
+fn main() -> ExitCode {
+    let argv: Vec<String> = std::env::args().skip(1).collect();
+    let cmd = argv.first().map(String::as_str).unwrap_or("");
+    if !["check", "web", "android", "all", "locales"].contains(&cmd) {
+        eprintln!("{USAGE}");
+        return ExitCode::from(2);
+    }
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let out = arg(&argv, "--out");
+    if matches!(cmd, "web" | "android" | "locales") && out.is_none() {
+        eprintln!("{cmd}: --out <dir> is required");
+        return ExitCode::from(2);
+    }
+    let web_out = arg(&argv, "--web-out")
+        .or_else(|| if cmd == "web" { out.clone() } else { None })
+        .unwrap_or_else(|| root.join("apps/web/src/lib/i18n/generated"));
+    let android_out = arg(&argv, "--android-out")
+        .or_else(|| if cmd == "android" { out.clone() } else { None })
+        .unwrap_or_else(|| root.join("apps/android/ui-contract/build/generated/i18n/res"));
+
+    let mut issues = Vec::new();
+    let locales_dir = arg(&argv, "--locales").unwrap_or_else(|| root.join("locales"));
+    let cat = catalogue::load(&locales_dir, &mut issues);
+    let endonyms = endonyms::load(&locales_dir, &mut issues);
+    endonyms.validate(&cat, &mut issues);
+    let report = catalogue::validate(&cat);
+    issues.extend(report.errors.iter().cloned());
+    // A locale that misses a critical key is not generated (an alarm is never mixed-language);
+    // `check` still fails and names the key.
+    let unshipped = report.unshipped_locales();
+    for (l, problem) in &report.unshipped {
+        if cmd == "check" {
+            issues.push(format!("{l}: not shipped, {problem}"));
+        } else {
+            eprintln!("i18n: locale {l} is not generated: {problem}");
+        }
+    }
+    if cmd == "check" {
+        let usage = usage::Usage::scan(&root.join("apps/android"), &root.join("apps/web/src"));
+        let master = cat.get(catalogue::MASTER);
+        issues.extend(usage::unused_keys(
+            master.iter().map(|(k, _)| k.as_str()),
+            &usage,
+        ));
+    }
+    let shipped = cat.without(&unshipped);
+    let mut android_files = android::render_android(&shipped, &mut issues);
+    android_files.push(endonyms::render_android_choices(&shipped, &endonyms));
+    let web_files = match web::render_web(&shipped) {
+        Ok(mut f) => {
+            f.push(endonyms::render_web_module(&shipped, &endonyms));
+            f
+        }
+        Err(e) => {
+            issues.push(format!("web: {e}"));
+            Vec::new()
+        }
+    };
+    if !issues.is_empty() {
+        return fail(&issues);
+    }
+
+    let io = |r: std::io::Result<()>| r.map_err(|e| eprintln!("i18n: write failed: {e}")).is_ok();
+    if matches!(cmd, "web" | "all") && !io(write(&web_out, &web_files)) {
+        return ExitCode::from(1);
+    }
+    if matches!(cmd, "android" | "all") && !io(write(&android_out, &android_files)) {
+        return ExitCode::from(1);
+    }
+    if cmd == "locales" {
+        let tags: String = shipped.tags().iter().map(|t| format!("{t}\n")).collect();
+        if let Some(target) = &out
+            && let Err(e) = std::fs::write(target, tags)
+        {
+            eprintln!("i18n: write failed: {e}");
+            return ExitCode::from(1);
+        }
+    }
+    if cmd == "check" {
+        match Command::new("bash")
+            .arg(root.join("scripts/lint-ui-literals.sh"))
+            .status()
+        {
+            Ok(s) if s.success() => {}
+            Ok(s) => return ExitCode::from(s.code().unwrap_or(1) as u8),
+            Err(e) => {
+                eprintln!("i18n: cannot run lint-ui-literals.sh: {e}");
+                return ExitCode::from(1);
+            }
+        }
+        println!(
+            "i18n: {} messages x {} locales OK",
+            cat.get(catalogue::MASTER).len(),
+            cat.locales.len()
+        );
+    }
+    ExitCode::SUCCESS
+}

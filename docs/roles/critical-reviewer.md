@@ -52,4 +52,4 @@ When reviewing any proposal, the Critical Reviewer asks:
 - **Automatic gate**: The Coordinator MUST invoke the Critical Reviewer whenever any expert role reaches a conclusion that changes fundamental aspects (architecture, scope, security model, core concepts, prior decisions). See the "Mandatory Critical Review Gate" in the role-coordination rule.
 - **Review loop**: When CRITICAL or IMPORTANT findings are raised, the originating expert receives the findings and must respond. The Critical Reviewer then gets a second pass to accept the rebuttal or escalate. Unresolved disagreements go to the user.
 - **Manual**: Ask "Critique [document]" or "What are we missing in [proposal]?" or "Play devil's advocate on [decision]"
-- **Typical tasks**: Final review before decisions are finalized (ADR creation), cross-document consistency check, scope reality check, competitor comparison, challenging expert conclusions during active design work
+- **Typical tasks**: Final review before decisions are finalized (OpenSpec change proposals), cross-document consistency check, scope reality check, competitor comparison, challenging expert conclusions during active design work

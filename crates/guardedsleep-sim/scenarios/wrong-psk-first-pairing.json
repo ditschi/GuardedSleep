@@ -1,0 +1,133 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "wrong-psk-first-pairing",
+  "description": "AC-1 after sealing: two links with different PSKs share a room through the relay alias. Their envelopes never authenticate, so neither side confirms a session, starts an attempt or reaches a pairing proof: both keep running, only presence leaves the device, and the silence escalates with the peer_absent hint. (The pairing_key_mismatch terminal is still reached by a PSK holder that fails the proof or the DTLS binding, see attack-sdp-fingerprint-confusion.)",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby",
+      "psk": "A"
+    },
+    {
+      "id": "parent",
+      "role": "parent",
+      "psk": "B"
+    }
+  ],
+  "relay": {
+    "alias_rooms": true
+  },
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 90000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connecting",
+      "at_ms": 85000,
+      "level": 2
+    },
+    {
+      "peer": "parent",
+      "state": "connecting",
+      "at_ms": 85000,
+      "level": 2
+    },
+    {
+      "peer": "baby",
+      "reaches_level": 2
+    },
+    {
+      "peer": "parent",
+      "reaches_level": 2
+    },
+    {
+      "peer": "baby",
+      "event": "status",
+      "where": {
+        "status": {
+          "cause": "peer_absent"
+        }
+      },
+      "count_min": 1
+    },
+    {
+      "peer": "parent",
+      "event": "status",
+      "where": {
+        "status": {
+          "cause": "peer_absent"
+        }
+      },
+      "count_min": 1
+    },
+    {
+      "peer": "baby",
+      "never": "failed"
+    },
+    {
+      "peer": "parent",
+      "never": "failed"
+    },
+    {
+      "peer": "baby",
+      "never": "security_warning"
+    },
+    {
+      "peer": "parent",
+      "never": "security_warning"
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "connected"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "connected"
+        }
+      }
+    },
+    {
+      "peer": "baby",
+      "sent_signal": "sdp",
+      "count": 0
+    },
+    {
+      "peer": "parent",
+      "sent_signal": "request_offer",
+      "count": 0
+    },
+    {
+      "peer": "baby",
+      "sent_signal": "here",
+      "count_min": 1
+    },
+    {
+      "peer": "parent",
+      "sent_signal": "here",
+      "count_min": 1
+    }
+  ],
+  "export_traces": [
+    {
+      "peer": "parent",
+      "id": "sim-wrong-psk-first-pairing-parent"
+    }
+  ]
+}

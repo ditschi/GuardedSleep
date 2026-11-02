@@ -1,0 +1,72 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "signaling-restart-disconnected",
+  "description": "ADR-017 section 12: the server restarts before the pair verified; both reconnect and verify afterwards.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 300,
+      "do": "signaling_down"
+    },
+    {
+      "at": 8000,
+      "do": "signaling_up"
+    },
+    {
+      "at": 60000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 50000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 50000
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "baby",
+      "max_level": 1
+    },
+    {
+      "peer": "parent",
+      "max_level": 1
+    }
+  ]
+}

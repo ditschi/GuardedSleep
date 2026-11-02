@@ -1,0 +1,77 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "baby-restart",
+  "description": "The baby process restarts; the parent keeps its verified attempt until liveness fires, then recovers without level 2.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "restart_process",
+      "peer": "baby"
+    },
+    {
+      "at": 90000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 85000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 85000
+    },
+    {
+      "peer": "parent",
+      "max_level": 1,
+      "within_ms": [15000, 90000]
+    },
+    {
+      "peer": "parent",
+      "never": "link_lost"
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    }
+  ],
+  "export_traces": [
+    {
+      "peer": "baby",
+      "instance": 1,
+      "id": "sim-baby-restart-baby-1"
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "faulty-media",
+  "description": "Delayed, duplicated and reordered DataChannel messages from both peers do not break pairing or liveness.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "delay",
+      "ms": 250,
+      "jitter_ms": 150
+    },
+    {
+      "at": 0,
+      "do": "duplicate",
+      "p": 0.3
+    },
+    {
+      "at": 0,
+      "do": "reorder",
+      "p": 0.3,
+      "ms": 200
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 120000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 20000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 20000
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 120000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 120000
+    },
+    {
+      "peer": "baby",
+      "never": "link_lost"
+    },
+    {
+      "peer": "parent",
+      "never": "link_lost"
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    }
+  ]
+}

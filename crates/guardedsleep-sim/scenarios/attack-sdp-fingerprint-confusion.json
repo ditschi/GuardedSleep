@@ -1,0 +1,77 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "attack-sdp-fingerprint-confusion",
+  "description": "A compromised relay terminates DTLS itself and rewrites every SDP: the real a=fingerprint value moves into an s= line (where a substring search finds it) and the relay's own fingerprint takes the real line, then it forwards the DataChannel both ways. The pairing proof binds the real lines and the platform reports the relay's certificate, so neither side ever verifies. The side that reaches its second mismatch first goes terminal and leaves the room; the other one may stop at one mismatch (its second attempt finds nobody), and still never connects.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "relay": {
+    "sdp_rewrite": "fingerprint_confusion"
+  },
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 60000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "connected"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "connected"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "state": "failed_needs_user",
+      "at_ms": 55000,
+      "key": "pairing_key_mismatch"
+    },
+    {
+      "peer": "baby",
+      "event": "failed",
+      "where": {
+        "reason": "pair_proof_mismatch"
+      },
+      "count_min": 1
+    },
+    {
+      "peer": "parent",
+      "event": "failed",
+      "where": {
+        "reason": "pair_proof_mismatch"
+      },
+      "count_min": 2
+    }
+  ],
+  "export_traces": [
+    {
+      "peer": "parent",
+      "id": "sim-attack-sdp-fp-confusion-parent"
+    }
+  ]
+}

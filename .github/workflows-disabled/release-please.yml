@@ -1,0 +1,45 @@
+# DISABLED: release-please returns at beta (ADR-020 §10). Alpha releases are manual tags.
+# Move back to .github/workflows/ when re-enabling, and re-check the permissions and SHA pins.
+# Release automation — see ADR-006 and docs/contributing/release-and-changelog.md.
+# Reads Conventional Commits since the last tag, maintains a "release PR" that
+# bumps versions, updates CHANGELOG.md, and (on merge) creates git tags + GitHub Releases.
+#
+# Trigger modes:
+#   - Automatic: push to `main` re-evaluates the open release PR
+#   - Manual:    Actions tab → "Release Please" → "Run workflow"
+#
+# Permissions: needs contents:write (tags, releases, CHANGELOG commit) and
+# pull-requests:write (release PR). Default GITHUB_TOKEN is sufficient.
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      target-branch:
+        description: "Branch to release from (default: main)"
+        required: false
+        default: "main"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-please-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: release-please
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run release-please
+        id: rp
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target-branch: ${{ inputs.target-branch || 'main' }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

@@ -1,0 +1,290 @@
+//! Lint: no public STUN host outside `data/stun-servers.json` in client source or configuration
+//! (AGENTS.md section 7.1, spec `signaling-relay` "Client ICE configuration").
+//!
+//! A STUN host shows up in two shapes: a `stun:` / `stuns:` URL, or a bare host name that starts
+//! with `stun` (`stun.l.google.com`, `stun1.example.org`). Dynamic hosts (`stun:${host}:3478`, the
+//! built-in STUN of a configured relay), reserved documentation and test names, loopback and
+//! private literals are fine: they are not a public service.
+
+use std::collections::BTreeSet;
+use std::path::{Path, PathBuf};
+
+/// Directories scanned below the repository root: the clients, the server defaults, the images and
+/// the scripts. Documentation and OpenSpec text are covered by `scripts/lib/no-google-stun.sh`.
+const ROOTS: &[&str] = &["apps", "crates", "docker", "scripts", ".github"];
+
+/// Directory names never entered (build output, dependencies, generated files).
+const SKIP_DIRS: &[&str] = &[
+    "node_modules",
+    "target",
+    "build",
+    "dist",
+    "dist-e2e",
+    "generated",
+    ".gradle",
+    ".git",
+    "pkg",
+    "pkg-node",
+    "test-results",
+    "playwright-report",
+];
+
+/// This crate holds the self-test sample.
+const SKIP_PATHS: &[&str] = &["crates/public-lists/"];
+
+const MAX_FILE_BYTES: u64 = 2 * 1024 * 1024;
+
+fn host_byte(b: u8) -> bool {
+    b.is_ascii_alphanumeric() || b == b'.' || b == b'-'
+}
+
+/// Reserved or private names that are never a public STUN service. A name without a dot is a
+/// placeholder or a LAN host name, not a public host. A name without a dot is a
+/// placeholder or a LAN host name, not a public host.
+fn exempt(host: &str) -> bool {
+    let h = host.to_ascii_lowercase();
+    let reserved = [
+        "example",
+        "invalid",
+        "test",
+        "localhost",
+        "local",
+        "internal",
+    ];
+    let documentation = ["example.com", "example.org", "example.net"];
+    !h.contains('.')
+        || h.rsplit('.')
+            .next()
+            .is_some_and(|tld| reserved.contains(&tld))
+        || documentation
+            .iter()
+            .any(|d| h == *d || h.ends_with(&format!(".{d}")))
+        || h.starts_with(|c: char| c.is_ascii_digit())
+        || h.starts_with('[')
+}
+
+fn push_once(found: &mut Vec<(usize, String)>, line: usize, host: String) {
+    let key = (line, host);
+    if !found.contains(&key) {
+        found.push(key);
+    }
+}
+
+/// Every STUN host named in `text`, with its 1-based line.
+fn hosts_in(text: &str) -> Vec<(usize, String)> {
+    let mut found = Vec::new();
+    for (idx, line) in text.lines().enumerate() {
+        let bytes = line.as_bytes();
+        let mut i = 0;
+        while i < bytes.len() {
+            let at_word_start = i == 0
+                || !(bytes
+                    .get(i - 1)
+                    .is_some_and(|b| host_byte(*b) || *b == b'_'));
+            if at_word_start
+                && bytes
+                    .get(i..i + 4)
+                    .is_some_and(|w| w.eq_ignore_ascii_case(b"stun"))
+            {
+                let mut j = i + 4;
+                let rest = &line[j..];
+                if rest.starts_with("s:") || rest.starts_with(':') {
+                    // stun: / stuns: URL
+                    j += if rest.starts_with("s:") { 2 } else { 1 };
+                    if line[j..].starts_with("//") {
+                        j += 2;
+                    }
+                    let host: String = line[j..]
+                        .bytes()
+                        .take_while(|b| host_byte(*b) || *b == b'[' || *b == b']' || *b == b':')
+                        .map(char::from)
+                        .collect();
+                    let host = if host.starts_with('[') {
+                        host
+                    } else {
+                        host.split(':').next().unwrap_or("").to_owned()
+                    };
+                    if !host.is_empty() && host.contains(|c: char| c.is_ascii_alphanumeric()) {
+                        push_once(&mut found, idx + 1, host);
+                    }
+                } else {
+                    // stun.example / stun1.example bare host name
+                    let digits = rest.bytes().take_while(u8::is_ascii_digit).count();
+                    if rest.as_bytes().get(digits) == Some(&b'.') {
+                        let host: String = line[i..]
+                            .bytes()
+                            .take_while(|b| host_byte(*b))
+                            .map(char::from)
+                            .collect();
+                        let host = host.trim_end_matches(['.', '-']).to_owned();
+                        // Two dots: `stun.rs` (a file name in a comment) is not a host.
+                        if host.matches('.').count() >= 2 {
+                            push_once(&mut found, idx + 1, host);
+                        }
+                    }
+                }
+                i += 4;
+            } else {
+                i += 1;
+            }
+        }
+    }
+    found
+}
+
+/// Findings in one text: each is `"<path>:<line>: <host>"`.
+pub fn scan_text(path: &str, text: &str, allowed: &BTreeSet<String>) -> Vec<String> {
+    hosts_in(text)
+        .into_iter()
+        .filter(|(_, host)| {
+            let h = host.to_ascii_lowercase();
+            !allowed.contains(&h) && !exempt(&h)
+        })
+        .map(|(line, host)| {
+            format!("{path}:{line}: STUN host {host} is not in data/stun-servers.json")
+        })
+        .collect()
+}
+
+fn walk(dir: &Path, root: &Path, files: &mut Vec<PathBuf>) {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        let name = entry.file_name().to_string_lossy().into_owned();
+        let Ok(kind) = entry.file_type() else {
+            continue;
+        };
+        let rel = path
+            .strip_prefix(root)
+            .unwrap_or(&path)
+            .to_string_lossy()
+            .replace('\\', "/");
+        if kind.is_dir() {
+            if !SKIP_DIRS.contains(&name.as_str())
+                && !SKIP_PATHS.iter().any(|p| format!("{rel}/").starts_with(p))
+            {
+                walk(&path, root, files);
+            }
+        } else if kind.is_file() {
+            files.push(path);
+        }
+    }
+}
+
+/// Scans the client, server, image and script trees below `root`.
+pub fn scan_tree(root: &Path, allowed: &BTreeSet<String>) -> Vec<String> {
+    let mut files = Vec::new();
+    for r in ROOTS {
+        walk(&root.join(r), root, &mut files);
+    }
+    files.sort();
+    let mut findings = Vec::new();
+    for file in files {
+        if std::fs::metadata(&file).is_ok_and(|m| m.len() > MAX_FILE_BYTES) {
+            continue;
+        }
+        let Ok(text) = std::fs::read_to_string(&file) else {
+            continue; // binary
+        };
+        let rel = file.strip_prefix(root).unwrap_or(&file).to_string_lossy();
+        findings.extend(scan_text(&rel, &text, allowed));
+    }
+    findings
+}
+
+/// The check proves itself before it is trusted: the Google STUN host must be caught and a
+/// listed host must pass. Returns an error text when the scanner is broken.
+pub fn self_test() -> Result<(), String> {
+    let allowed: BTreeSet<String> = ["stun.nextcloud.com".to_owned()].into();
+    let caught = scan_text(
+        "self-test",
+        "const s = 'stun:stun.l.google.com:19302'; // and stun1.l.google.com",
+        &allowed,
+    );
+    if caught.len() != 2 {
+        return Err(format!(
+            "self-test: stun.l.google.com was not caught ({caught:?})"
+        ));
+    }
+    let fine = scan_text(
+        "self-test",
+        "urls: ['stun:stun.nextcloud.com:443', `stun:${host}:3478`, 'stun:relay.example:3478']",
+        &allowed,
+    );
+    if !fine.is_empty() {
+        return Err(format!("self-test: false positives ({fine:?})"));
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn allowed() -> BTreeSet<String> {
+        [
+            "stun.nextcloud.com".to_owned(),
+            "stun.t-online.de".to_owned(),
+        ]
+        .into()
+    }
+
+    #[test]
+    fn google_stun_is_caught_in_every_shape() {
+        for text in [
+            "iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]",
+            "stuns://stun.l.google.com",
+            "host = \"stun1.l.google.com\"",
+            "STUN:STUN.L.GOOGLE.COM:19302",
+            "url(\"stun:stun.l.google.com\")",
+        ] {
+            assert!(!scan_text("f", text, &allowed()).is_empty(), "{text}");
+        }
+    }
+
+    #[test]
+    fn the_self_test_passes() {
+        assert_eq!(self_test(), Ok(()));
+    }
+
+    #[test]
+    fn listed_dynamic_and_reserved_hosts_pass() {
+        for text in [
+            "stun:stun.nextcloud.com:443",
+            "'stun:stun.t-online.de:3478'",
+            "`stun:${host}:3478`",
+            "\"stun:$host:$PORT\"",
+            "stun:[$host]:3478",
+            "stun:[::1]:3478",
+            "stun:127.0.0.1:3478",
+            "stun:relay.example.org:3478",
+            "stun:box.example:3478",
+            "a built-in STUN server",
+            "stun: nothing here",
+            "const stunUrls = []",
+            "fn run_stun_server()",
+            "nostun.example.invalid",
+        ] {
+            assert_eq!(
+                scan_text("f", text, &allowed()),
+                Vec::<String>::new(),
+                "{text}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_finding_names_file_line_and_host() {
+        let got = scan_text(
+            "a/b.kt",
+            "x\nval u = \"stun:stun.provider.net:3478\"",
+            &allowed(),
+        );
+        assert_eq!(
+            got,
+            ["a/b.kt:2: STUN host stun.provider.net is not in data/stun-servers.json"]
+        );
+    }
+}

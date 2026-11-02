@@ -1,0 +1,72 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "night-holds-no-mailbox",
+  "description": "Two hours of verified monitoring (three reachability checks): each device joins the room only for its first attempt and holds no mailbox between the checks, which are pings on sockets that never say hello. The mailbox rule is time-independent, so two hours stand for the whole night and keep the suite fast.",
+  "seed": 1,
+  "max_seeds": 2,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 7200000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "joined": true,
+      "within_ms": [0, 20000],
+      "note": "joined for the first attempt"
+    },
+    {
+      "peer": "parent",
+      "joined": true,
+      "within_ms": [0, 20000]
+    },
+    {
+      "peer": "baby",
+      "joined": false,
+      "within_ms": [20001, 7200000]
+    },
+    {
+      "peer": "parent",
+      "joined": false,
+      "within_ms": [20001, 7200000]
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 7100000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 7100000
+    },
+    {
+      "peer": "parent",
+      "never": "hint"
+    },
+    {
+      "peer": "parent",
+      "never": "link_lost"
+    },
+    {
+      "peer": "baby",
+      "preauth": "{\"type\":\"ping\"}"
+    }
+  ]
+}

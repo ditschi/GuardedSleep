@@ -102,7 +102,7 @@ The Critical Reviewer asked: "Why not contribute to an existing open-source proj
 - angel-eyes is Azure-dependent, contradicting our privacy goals
 - None use WebRTC P2P or offer encrypted phone-to-phone communication
 
-Building from scratch is justified because the core architecture (WebRTC P2P + QR pairing + Capacitor) is fundamentally different from any existing project.
+Building from scratch is justified because the core architecture (WebRTC P2P + QR pairing + native Android on a shared Rust core; originally Capacitor, superseded by ADR-015) is fundamentally different from any existing project.
 
 ## Open Source Android Baby Monitors (Usable Today)
 

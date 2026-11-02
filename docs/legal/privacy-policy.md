@@ -1,6 +1,6 @@
 # Privacy Policy
 
-> STATUS: DRAFT -- Must be finalized before Google Play / F-Droid submission.
+> STATUS: DRAFT -- Must be finalized before Google Play / IzzyOnDroid submission (F-Droid main repository is deferred, see [ADR-021](../../openspec/changes/archive/2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md) §3).
 > Language: English (German translation needed for EU compliance).
 
 ## 1. Overview
@@ -40,7 +40,7 @@ If you use Internet mode (signaling server + STUN), the following metadata is vi
 | **Signaling server** | Which devices connect, when, IP addresses | Audio, messages, settings, any content |
 | **STUN server**      | Public IP addresses of both devices       | Audio, messages, connection content    |
 
-**Mitigation:** You can self-host the signaling server for full control. EU-based STUN servers are used by default. In local mode (WiFi/hotspot), no server is involved at all.
+**Mitigation:** You can self-host the signaling server for full control. The Android app uses the STUN service of the signaling server you configured by default; the web client still uses EU-based public STUN servers until it follows. In local mode (WiFi/hotspot), no server is involved at all.
 
 ## 3. Data We Do NOT Collect
 
@@ -77,7 +77,7 @@ We do not collect, store, or transmit personal information of children to any se
 - Cryptographic keys (PSK) are stored in the **Android Keystore** (hardware-backed, not extractable)
 - App settings are stored locally on the device
 - No data is stored on any server
-- **Device lock:** Users should use the **operating system** screen lock (PIN, pattern, biometrics). The MVP app does not add a separate in-app lock (see [ADR-001](../decisions/ADR-001-mvp-scope-poc-gate-and-authentication.md)).
+- **Device lock:** Users should use the **operating system** screen lock (PIN, pattern, biometrics). The MVP app does not add a separate in-app lock (see [ADR-001](../../openspec/changes/archive/2026-04-15-adr-001-mvp-scope-poc-gate-and-authentication/design.md)).
 
 ## 7. Your Rights (GDPR)
 
@@ -90,7 +90,7 @@ Since all data is stored locally on your device:
 
 ## 8. Open Source
 
-The complete source code is available at [GitHub URL]. You can verify all privacy claims by reviewing the code.
+The complete source code is available under the **GNU Affero General Public License v3.0 or later** ([`LICENSE`](../../LICENSE)). You can verify privacy claims by reviewing the code. Third-party forks must comply with AGPL and must not imply they are the official **GuardedSleep** product — see [`trademark.md`](trademark.md).
 
 ## 9. Changes
 

@@ -1,79 +1,223 @@
-# Mobile web (PWA) container image — see ADR-008.
+# Web (PWA) container image — see ADR-008.
 #
 # Triggers:
-#   - push to main, paths under mobile/protocol → publishes :dev + :sha-<short>
-#   - push of tag `mobile-v*` (Release Please) → publishes :latest, :vX.Y.Z, :vX.Y (+ :vX post-1.0)
-#   - pull_request → builds only (no push)
-#   - workflow_dispatch → manual one-off
+#   - push to main, paths under apps/web, packages/core-wasm and the core crates → publishes :dev + :sha-<short>
+#   - push of a manual tag `web-v*` → publishes :latest, :vX.Y.Z, :vX.Y (+ :vX post-1.0)
+#     (releases are manual tags during the alpha; Release Please returns at beta, ADR-020 §10)
+#   - pull_request → build-check job only (read-only token, no registry login, no push), validates the
+#     Dockerfile on both architectures
+#   - workflow_dispatch → manual one-off (publishes :dev unless a tag was pushed too)
 #
-# Note: the published image is built with VITE_SIGNALING_URL="" so the in-app
-# Settings override / localStorage takes effect at runtime. Users who want a
-# baked-in URL build locally with docker/stack/compose.yaml or `docker build`.
-# See ADR-008 "Web image VITE_SIGNALING_URL default".
+# Each architecture builds on a native runner (no QEMU), pushes by digest, and the `merge` job
+# stitches the digests into one multi-arch manifest with `docker buildx imagetools create`.
+# The PWA infers its signaling URL from the page origin, so the image has no build-time signaling URL.
+# Tag semantics and registry decisions are recorded in ADR-008.
 name: docker-web
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
     tags:
-      - "mobile-v*"
+      - "web-v*"
     paths:
-      - "docker/mobile-web/**"
-      - "apps/mobile/**"
-      - "packages/protocol/**"
+      - "docker/web/**"
+      - "apps/web/**"
       - "pnpm-lock.yaml"
+      - "crates/**"
+      - "locales/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "packages/core-wasm/**"
+      - "package.json"
+      - "pnpm-workspace.yaml"
+      - "mise.toml"
       - ".github/workflows/docker-web.yml"
   pull_request:
     paths:
-      - "docker/mobile-web/**"
-      - "apps/mobile/**"
-      - "packages/protocol/**"
+      - "docker/web/**"
+      - "apps/web/**"
       - "pnpm-lock.yaml"
+      - "crates/**"
+      - "locales/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "packages/core-wasm/**"
+      - "package.json"
+      - "pnpm-workspace.yaml"
+      - "mise.toml"
       - ".github/workflows/docker-web.yml"
   workflow_dispatch:
+
+permissions: {}
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: guardedsleep-web
-  TAG_PREFIX: mobile-v
+  TAG_PREFIX: web-v
 
 concurrency:
   group: docker-web-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  build-and-push:
-    name: build + push
-    runs-on: ubuntu-latest
+  # Pull requests only validate the Dockerfile: no registry login, no push, read-only token.
+  build-check:
+    name: build check (${{ matrix.platform }})
+    if: github.event_name == 'pull_request'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build (no push)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: docker/web/Dockerfile
+          build-args: |
+            TLS_EXTRA_SAN=
+          platforms: ${{ matrix.platform }}
+          push: false
+
+  build:
+    name: build (${{ matrix.platform }})
+    if: github.event_name != 'pull_request'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: docker/setup-qemu-action@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          platforms: arm64
+          persist-credentials: false
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Compute lowercased owner (GHCR requires lowercase)
         id: owner
-        run: |
-          o="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
-          echo "value=$o" >> "$GITHUB_OUTPUT"
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: echo "value=${OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Compute platform pair
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: echo "PLATFORM_PAIR=${PLATFORM//\//-}" >> "$GITHUB_ENV"
 
       - name: Log in to GHCR
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Docker metadata (tags + OCI labels)
+      - name: Docker metadata (OCI labels)
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ steps.owner.outputs.value }}/${{ env.IMAGE_NAME }}
+          labels: |
+            org.opencontainers.image.title=GuardedSleep Web (PWA)
+            org.opencontainers.image.description=Static PWA host (nginx) for GuardedSleep – Privacy Baby Monitor.
+            org.opencontainers.image.vendor=GuardedSleep
+            org.opencontainers.image.licenses=AGPL-3.0-or-later
+
+      - name: Build (and push by digest)
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: docker/web/Dockerfile
+          build-args: |
+            TLS_EXTRA_SAN=
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=${{ env.REGISTRY }}/${{ steps.owner.outputs.value }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ env.IMAGE_NAME }}-${{ env.PLATFORM_PAIR }}
+          cache-to: ${{ format('type=gha,mode=max,scope={0}-{1}', env.IMAGE_NAME, env.PLATFORM_PAIR) }}
+
+      - name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/digests"
+          touch "$RUNNER_TEMP/digests/${DIGEST#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: digests-${{ env.IMAGE_NAME }}-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    name: merge manifest
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-${{ env.IMAGE_NAME }}-*
+          merge-multiple: true
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Compute lowercased owner (GHCR requires lowercase)
+        id: owner
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: echo "value=${OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Tags per ADR-008:
+      #   - :latest                      ← only on a `web-v*` tag push
+      #   - :vMAJOR.MINOR.PATCH          ← only on a `web-v*` tag push
+      #   - :vMAJOR.MINOR                ← only on a `web-v*` tag push
+      #   - :vMAJOR                      ← only on a `web-v*` tag push, post-1.0
+      #   - :dev (alias :edge)           ← on every push to main
+      #   - :sha-<short>                 ← every push
+      - name: Docker metadata (tags)
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ${{ env.REGISTRY }}/${{ steps.owner.outputs.value }}/${{ env.IMAGE_NAME }}
           tags: |
@@ -84,32 +228,31 @@ jobs:
             type=raw,value=dev,enable={{is_default_branch}}
             type=raw,value=edge,enable={{is_default_branch}}
             type=sha,prefix=sha-,format=short
-          labels: |
-            org.opencontainers.image.title=GuardedSleep Web (PWA)
-            org.opencontainers.image.description=Static PWA host (nginx) for GuardedSleep – Privacy Baby Monitor.
-            org.opencontainers.image.vendor=GuardedSleep
-            org.opencontainers.image.licenses=NOASSERTION
 
-      - name: Build and push
-        id: build
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/mobile-web/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            VITE_SIGNALING_URL=
-            TLS_EXTRA_SAN=
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ steps.owner.outputs.value }}/${{ env.IMAGE_NAME }}
+        run: |
+          # shellcheck disable=SC2046
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf "$IMAGE@sha256:%s " *)
 
+      - name: Inspect image
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          IMAGE: ${{ env.REGISTRY }}/${{ steps.owner.outputs.value }}/${{ env.IMAGE_NAME }}
+        run: docker buildx imagetools inspect "$IMAGE:$VERSION"
+
+      # Guardrail: on a tag push, fail loudly if no :latest was produced (regex mismatch would
+      # silently publish only :dev, which would be wrong).
       - name: Sanity check tag output
         if: startsWith(github.ref, format('refs/tags/{0}', env.TAG_PREFIX))
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
         run: |
           echo "Produced tags:"
-          printf '  %s\n' ${{ steps.meta.outputs.tags }}
-          echo '${{ steps.meta.outputs.tags }}' | grep -q ':latest' \
-            || (echo "::error::Tag push did not produce :latest — check TAG_PREFIX vs Release Please config"; exit 1)
+          while read -r tag; do echo "  $tag"; done <<< "$TAGS"
+          echo "$TAGS" | grep -q ':latest' \
+            || (echo "::error::Tag push did not produce :latest — check TAG_PREFIX against the pushed tag"; exit 1)

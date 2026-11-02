@@ -1,0 +1,75 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "attack-unsupported-protocol-during-outage",
+  "description": "During a baby outage the relay answers the parent's reconnect hello with UNSUPPORTED_PROTOCOL. A link that verified before never goes terminal on it: link_lost is still raised at 60 s after the last contact and the level keeps rising to 3.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "network_down",
+      "peer": "baby"
+    },
+    {
+      "at": 30000,
+      "do": "signaling_down"
+    },
+    {
+      "at": 30000,
+      "do": "reject_hello"
+    },
+    {
+      "at": 32000,
+      "do": "signaling_up"
+    },
+    {
+      "at": 260000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 15000
+    },
+    {
+      "peer": "parent",
+      "event": "link_lost",
+      "count": 1,
+      "since_last_contact_ms": [60000, 62000]
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "reaches_level": 3
+    },
+    {
+      "peer": "parent",
+      "state": "reconnecting",
+      "at_ms": 250000,
+      "level": 3
+    }
+  ]
+}

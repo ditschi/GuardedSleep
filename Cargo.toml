@@ -1,0 +1,39 @@
+[workspace]
+resolver = "3"
+members = [
+  "crates/guardedsleep-core",
+  "crates/guardedsleep-ffi",
+  "crates/guardedsleep-wasm",
+  "crates/guardedsleep-sim",
+  "crates/guardedsleep-relay",
+  "crates/guardedsleep-server",
+  "crates/uniffi-bindgen",
+  "crates/i18n-gen",
+  "crates/public-lists",
+  "crates/gs-soak",
+]
+
+[workspace.package]
+edition = "2024"
+license = "AGPL-3.0-or-later"
+publish = false
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
+
+# `deny` (not `forbid`) so the facade crates guardedsleep-ffi and guardedsleep-wasm can opt in with a
+# crate-level `#![allow(unsafe_code)]` for generated UniFFI/wasm-bindgen glue. Every other crate adds
+# `#![forbid(unsafe_code)]`; guardedsleep-core must never opt in. New crates inherit `deny`.
+# Docs: https://doc.rust-lang.org/cargo/reference/workspaces.html#the-lints-table
+[workspace.lints.rust]
+unsafe_code = "deny"
+unused_must_use = "deny"
+
+[workspace.lints.clippy]
+dbg_macro = "deny"
+todo = "deny"
+unimplemented = "deny"

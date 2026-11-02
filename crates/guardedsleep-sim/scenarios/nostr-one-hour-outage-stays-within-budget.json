@@ -1,0 +1,100 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "nostr-one-hour-outage-stays-within-budget",
+  "description": "The baby device is off for an hour while the parent monitors over public relays only. The parent escalates as usual, sends no more than 120 events per relay in that hour (presence on a backoff, requests only while the baby was heard recently), and recovers through presence when the baby returns.",
+  "seed": 1,
+  "max_seeds": 3,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby",
+      "mailboxes": [
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-a.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-b.example"
+        }
+      ]
+    },
+    {
+      "id": "parent",
+      "role": "parent",
+      "mailboxes": [
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-a.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-b.example"
+        }
+      ]
+    }
+  ],
+  "nostr": [
+    {
+      "url": "wss://nostr-a.example"
+    },
+    {
+      "url": "wss://nostr-b.example"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "signaling_down"
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 60000,
+      "do": "kill_process",
+      "peer": "baby"
+    },
+    {
+      "at": 3660000,
+      "do": "restart_process",
+      "peer": "baby"
+    },
+    {
+      "at": 3900000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "reaches_level": 3
+    },
+    {
+      "peer": "parent",
+      "event": "link_lost",
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "nostr_sent_max": 120,
+      "within_ms": [60000, 3660000]
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 3890000
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 3890000
+    },
+    {
+      "peer": "parent",
+      "event": "link_restored",
+      "count": 1
+    }
+  ]
+}

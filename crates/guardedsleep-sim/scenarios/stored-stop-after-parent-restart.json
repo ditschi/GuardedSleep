@@ -1,0 +1,92 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "stored-stop-after-parent-restart",
+  "description": "The baby stops on purpose while both devices hold a mailbox (the DataChannel is gone) and the parent honours it; a relay keeps the notice. The parent restarts (a new session) and the baby starts again. When the link is lost later, the relay serves the stored notice to the restarted parent: it names the old parent session and an old baby session, so it is ignored, link_lost is raised and the parent never goes peer_stopped again.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "relay": {},
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 10000,
+      "do": "drop_data"
+    },
+    {
+      "at": 50000,
+      "do": "stop",
+      "peer": "baby"
+    },
+    {
+      "at": 51000,
+      "do": "clear_faults"
+    },
+    {
+      "at": 52000,
+      "do": "restart_process",
+      "peer": "parent"
+    },
+    {
+      "at": 55000,
+      "do": "start",
+      "peer": "baby"
+    },
+    {
+      "at": 100000,
+      "do": "drop_data",
+      "from": "baby"
+    },
+    {
+      "at": 140000,
+      "do": "replay_stop",
+      "peer": "parent"
+    },
+    {
+      "at": 250000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 90000
+    },
+    {
+      "peer": "parent",
+      "event": "peer_stopped",
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "event": "link_lost",
+      "count": 1,
+      "since_last_contact_ms": [60000, 62000]
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "peer_stopped"
+        }
+      },
+      "within_ms": [90000, 250000]
+    },
+    {
+      "peer": "parent",
+      "reaches_level": 2
+    }
+  ]
+}

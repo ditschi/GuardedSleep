@@ -1,0 +1,136 @@
+{
+  "relays": [
+    {
+      "host": "nostr.mikoshi.de",
+      "operator": "mikoshi.de",
+      "hoster": null,
+      "country": "DE",
+      "software": "nostr-rs-relay",
+      "keeps_ephemeral": false,
+      "privacy_policy": null,
+      "last_vetted": "2026-10-23",
+      "status": "active",
+      "notes": "Residential host. Spike: p50 22 ms, p95 30 ms, 20/20 events. Operator not yet contacted about acceptable use and logging (alpha-connection-model task 4.3)."
+    },
+    {
+      "host": "nostr.chaima.info",
+      "operator": "chaima.info",
+      "hoster": "Contabo",
+      "country": "FR",
+      "software": "nostr-rs-relay",
+      "keeps_ephemeral": false,
+      "privacy_policy": null,
+      "last_vetted": "2026-10-23",
+      "status": "active",
+      "notes": "Spike: p50 27 ms, p95 31 ms, 20/20 events. Operator not yet contacted about acceptable use and logging (alpha-connection-model task 4.3)."
+    },
+    {
+      "host": "relay.dwadziesciajeden.pl",
+      "operator": "dwadziesciajeden.pl",
+      "hoster": "Scaleway",
+      "country": "PL",
+      "software": "nostr-rs-relay",
+      "keeps_ephemeral": false,
+      "privacy_policy": null,
+      "last_vetted": "2026-10-23",
+      "status": "active",
+      "notes": "Spike: p50 41 ms, p95 72 ms, 20/20 events. Operator not yet contacted about acceptable use and logging (alpha-connection-model task 4.3)."
+    },
+    {
+      "host": "relay.snort.social",
+      "operator": "Snort",
+      "hoster": "LNVPS",
+      "country": "IE",
+      "software": "memlay",
+      "keeps_ephemeral": false,
+      "privacy_policy": null,
+      "last_vetted": "2026-10-23",
+      "status": "suspended",
+      "notes": "Spike: p50 62 ms, p95 97 ms, 20/20 events. Operator not yet contacted about acceptable use and logging (alpha-connection-model task 4.3). Suspended 2026-10-25: answers REQ with EOSE but never accepts or delivers kind 24861 events (relays-check and gs-soak, 0/20 and 0/53). Re-vet before reactivating."
+    },
+    {
+      "host": "nos.lol",
+      "operator": "nos.lol and nostr.mom",
+      "hoster": "Hetzner",
+      "country": "DE",
+      "software": "strfry",
+      "keeps_ephemeral": true,
+      "privacy_policy": null,
+      "last_vetted": "2026-10-23",
+      "status": "active",
+      "notes": "One operator runs nos.lol and nostr.mom; only nos.lol is listed (one entry per operator). Spike: p50 128-231 ms, p95 132-565 ms, 20/20 events. Operator not yet contacted about acceptable use and logging (alpha-connection-model task 4.3)."
+    },
+    {
+      "host": "nostr.sathoarder.com",
+      "operator": "sathoarder.com",
+      "hoster": null,
+      "country": "FR",
+      "software": "strfry",
+      "keeps_ephemeral": true,
+      "privacy_policy": null,
+      "last_vetted": "2026-10-23",
+      "status": "active",
+      "notes": "Hoster not identified in the spike. Spike: p50 128 ms, p95 141 ms, 20/20 events. Operator not yet contacted about acceptable use and logging (alpha-connection-model task 4.3)."
+    },
+    {
+      "host": "nostr.data.haus",
+      "operator": "data.haus",
+      "hoster": "Hetzner",
+      "country": "DE",
+      "software": "strfry",
+      "keeps_ephemeral": true,
+      "privacy_policy": null,
+      "last_vetted": "2026-10-23",
+      "status": "active",
+      "notes": "Spike: p50 131 ms, p95 227 ms, 20/20 events. Operator not yet contacted about acceptable use and logging (alpha-connection-model task 4.3)."
+    },
+    {
+      "host": "nostr.hifish.org",
+      "operator": "hifish.org",
+      "hoster": "Init7",
+      "country": "CH",
+      "software": "strfry",
+      "keeps_ephemeral": true,
+      "privacy_policy": null,
+      "last_vetted": "2026-10-23",
+      "status": "active",
+      "notes": "Spike: p50 133 ms, p95 144 ms, 20/20 events. Operator not yet contacted about acceptable use and logging (alpha-connection-model task 4.3)."
+    },
+    {
+      "host": "relay.angor.io",
+      "operator": "Angor",
+      "hoster": "Contabo",
+      "country": "FR",
+      "software": "strfry",
+      "keeps_ephemeral": true,
+      "privacy_policy": null,
+      "last_vetted": "2026-10-23",
+      "status": "active",
+      "notes": "Spike: p50 134 ms, p95 350 ms, 20/20 events. Operator not yet contacted about acceptable use and logging (alpha-connection-model task 4.3)."
+    },
+    {
+      "host": "nostr.21crypto.ch",
+      "operator": "21crypto.ch",
+      "hoster": "Init7",
+      "country": "CH",
+      "software": "strfry",
+      "keeps_ephemeral": true,
+      "privacy_policy": null,
+      "last_vetted": "2026-10-23",
+      "status": "active",
+      "notes": "Publishes a privacy policy (link to be added when the operator is contacted). Spike: p50 143 ms, p95 152 ms, 20/20 events. Operator not yet contacted about acceptable use and logging (alpha-connection-model task 4.3)."
+    },
+    {
+      "host": "nostr.azzamo.net",
+      "operator": "Azzamo",
+      "hoster": "OVH",
+      "country": "PL",
+      "software": "strfry",
+      "keeps_ephemeral": true,
+      "privacy_policy": null,
+      "last_vetted": "2026-10-23",
+      "status": "active",
+      "notes": "Spike: p50 144 ms, p95 150 ms, 20/20 events. Operator not yet contacted about acceptable use and logging (alpha-connection-model task 4.3)."
+    }
+  ]
+}

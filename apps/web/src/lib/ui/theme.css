@@ -1,0 +1,230 @@
+/*
+ * Design tokens and base styles. Hand-written for now; `add-quality-gates` generates the custom
+ * properties from tokens.json. The values mirror the Compose theme (Theme.kt) so both clients read
+ * as one product.
+ *
+ * Themes are selected with <html data-theme="dark|light|dim">; theme-boot.js sets it before first
+ * paint. `dark` is the default, `dim` is the baby device while monitoring (near-black, low contrast
+ * on purpose, no saturated fills). light-dark() picks the value for the active color-scheme:
+ * https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/light-dark
+ */
+@layer reset, tokens, base, components;
+
+@layer reset {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  body,
+  h1,
+  h2,
+  h3,
+  p,
+  figure,
+  dl,
+  dd {
+    margin: 0;
+  }
+  ul[role="list"],
+  ol[role="list"] {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+  [hidden] {
+    display: none !important;
+  }
+}
+
+@layer tokens {
+  :root {
+    color-scheme: dark;
+
+    /* Surfaces and text (Material-3-like roles). */
+    --gs-bg: light-dark(#f7f7f4, #0e1013);
+    --gs-surface: light-dark(#ffffff, #16191e);
+    --gs-surface-variant: light-dark(#e8eaee, #22262c);
+    --gs-on-bg: light-dark(#14181c, #e6e8eb);
+    --gs-on-surface-variant: light-dark(#454c55, #b4bac2);
+    --gs-outline: light-dark(#6b727b, #7d858f);
+    --gs-scrim: rgb(0 0 0 / 0.6);
+
+    /* Actions. */
+    --gs-primary: light-dark(#1f4fa3, #8fb8ff);
+    --gs-on-primary: light-dark(#ffffff, #00214d);
+    --gs-primary-container: light-dark(#d6e3ff, #1e3a66);
+    --gs-on-primary-container: light-dark(#001b3e, #ffffff);
+    --gs-error: light-dark(#b3261e, #ff8a80);
+    --gs-on-error: light-dark(#ffffff, #3b0000);
+
+    /* Text-level status colours (on the page background). */
+    --gs-ok: light-dark(#136b3a, #63d18b);
+    --gs-warn: light-dark(#7a5200, #ffc94d);
+    --gs-bad: light-dark(#b3261e, #ff8a80);
+    --gs-chip: light-dark(#e3e6eb, #262b32);
+    --gs-on-chip: light-dark(#14181c, #e6e8eb);
+
+    /* State fills: the same in every theme so a colour always means the same. */
+    --gs-state-green: #1b5e3a;
+    --gs-state-yellow: #7a5c00;
+    --gs-state-orange: #8a3f00;
+    --gs-state-red: #8e1b1b;
+    --gs-state-grey: #3a3f47;
+    --gs-state-amber: #6b4e00;
+    --gs-on-state: #ffffff;
+    --gs-alert-bg: #2a0a0a;
+    --gs-alert-surface: #3d1212;
+
+    /* Full-screen alerts (noise alert, link alarm): dark red, never white. */
+    --gs-alarm-bg: #1f0a0a;
+    --gs-on-alert: #ffe4e4;
+    --gs-on-alert-muted: #ffc9c9;
+    --gs-alert-panel: rgb(0 0 0 / 0.28);
+    --gs-alert-action: #ffd9d9;
+    --gs-on-alert-action: #3a0d0d;
+    --gs-alert-border: rgb(255 217 217 / 0.4);
+
+    /* Borders, role cards, camera box and the pairing code. */
+    --gs-border: light-dark(#c7ccd4, #2c343f);
+    --gs-role-baby-bg: light-dark(#f6e9c9, #2a2417);
+    --gs-role-baby-fg: light-dark(#7a5200, #f2c66d);
+    --gs-role-parent-bg: var(--gs-primary-container);
+    --gs-role-parent-fg: var(--gs-primary);
+    --gs-camera-bg: light-dark(#0b0d11, #07090c);
+    --gs-on-camera: #e8ecf1;
+    /* The code is shown light on dark ("inverted") at about 45 % brightness; "Make code
+       brighter" switches to the bright value. */
+    --gs-qr-ground: #000000;
+    --gs-qr-module: #7a7468;
+    --gs-qr-module-bright: #cfc6b6;
+
+    /* Shape, spacing, type. Sizes are rem so 200 % text zoom grows the layout. */
+    --gs-radius-s: 0.5rem;
+    --gs-radius-m: 0.75rem;
+    --gs-radius-l: 1.25rem;
+    --gs-radius-full: 62.5rem;
+    --gs-space-1: 0.25rem;
+    --gs-space-2: 0.5rem;
+    --gs-space-3: 0.75rem;
+    --gs-space-4: 1rem;
+    --gs-space-5: 1.5rem;
+    --gs-space-6: 2rem;
+    --gs-target: 3rem; /* 48 dp */
+    --gs-target-large: 4.5rem; /* 72 dp, primary actions */
+    --gs-focus: light-dark(#1f4fa3, #8fb8ff);
+    --gs-font:
+      system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    --gs-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --gs-duration: 160ms;
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+  }
+
+  /* Baby device: pure black with warm, dim text (the owner-approved mockup), state fills at
+     kiosk strength. Used on the pairing screen and while monitoring. */
+  :root[data-theme="dim"] {
+    color-scheme: dark;
+    --gs-bg: #000000;
+    --gs-surface: #14120e;
+    --gs-surface-variant: #1c1912;
+    --gs-on-bg: #cfc6b6;
+    --gs-on-surface-variant: #9c927f;
+    --gs-outline: #6b6252;
+    --gs-border: #2a2620;
+    --gs-primary: #c9b48a;
+    --gs-on-primary: #1a1408;
+    --gs-primary-container: #2a2417;
+    --gs-on-primary-container: #e0cfa8;
+    --gs-role-baby-bg: #2a2417;
+    --gs-role-baby-fg: #c9b48a;
+    --gs-error: #c46a64;
+    --gs-ok: #a8d5b5;
+    --gs-warn: #c9a85a;
+    --gs-bad: #c46a64;
+    --gs-chip: #14120e;
+    --gs-on-chip: #b5aa95;
+    --gs-state-green: #0e4a28;
+    --gs-state-yellow: #4a3a00;
+    --gs-state-orange: #4f2400;
+    --gs-state-red: #330000;
+    --gs-state-grey: #30333a;
+    --gs-state-amber: #3f3000;
+    --gs-on-state: #cfc6b6;
+    --gs-focus: #c9b48a;
+    --gs-scrim: rgb(0 0 0 / 0.8);
+  }
+}
+
+@layer base {
+  html {
+    background: var(--gs-bg);
+    color: var(--gs-on-bg);
+    font-family: var(--gs-font);
+    font-size: 100%;
+    line-height: 1.45;
+  }
+  body {
+    min-height: 100dvh;
+    background: var(--gs-bg);
+    color: var(--gs-on-bg);
+  }
+  h1,
+  h2,
+  h3 {
+    /* Long words (German "Einstellungen") wrap at 200 % text and 320 px instead of overflowing. */
+    overflow-wrap: anywhere;
+  }
+  h1 {
+    font-size: 1.5rem;
+    line-height: 1.25;
+    font-weight: 600;
+  }
+  h2 {
+    font-size: 1.25rem;
+    line-height: 1.3;
+    font-weight: 600;
+  }
+  a {
+    color: var(--gs-primary);
+  }
+  :focus-visible {
+    outline: 0.1875rem solid var(--gs-focus);
+    outline-offset: 0.125rem;
+  }
+  /* The route heading takes focus programmatically; it needs no ring of its own. */
+  [data-route-heading]:focus {
+    outline: none;
+  }
+  ::selection {
+    background: var(--gs-primary-container);
+    color: var(--gs-on-primary-container);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

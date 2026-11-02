@@ -3,6 +3,10 @@
   "version": "0.2",
   "import": ["./cspell-i18n-terms.json", "@cspell/dict-de-de/cspell-ext.json"],
   "language": "de,en",
-  "files": ["apps/mobile/src/lib/i18n/messages/de.json"],
-  "ignoreRegExpList": ["/{{[^}]+}}/g"]
+  "files": ["locales/de.json"],
+  "ignoreRegExpList": [
+    "/\"\\$meta\"\\s*:\\s*\\{[^}]*\\}/g",
+    "/\\{[^}]+\\}/g",
+    "/\"[A-Za-z0-9_.]+\"\\s*:/g"
+  ]
 }

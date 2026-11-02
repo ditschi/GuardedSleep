@@ -1,0 +1,547 @@
+{
+  "$meta": {
+    "default": "machineTranslated",
+    "reviewed": []
+  },
+  "meta": {
+    "appTitle": "GuardedSleep"
+  },
+  "layout": {
+    "settingsAria": "Indstillinger",
+    "backAria": "Tilbage til forrige skærm"
+  },
+  "core": {
+    "pairingKeyMismatch": "Disse enheder er ikke længere parret. Par dem igen for at fortsætte overvågningen.",
+    "updateRequired": "Én af enhederne har brug for en GuardedSleep-opdatering for at fortsætte overvågningen.",
+    "serverUnreachable": "Denne enhed kan ikke nå forbindelsesserveren. Tjek dens internetforbindelse.",
+    "peerAbsent": "Babyenheden svarer ikke. Tjek, at den er tændt og viser GuardedSleep.",
+    "mediaBlocked": "Enhederne fandt hinanden, men lyden kommer ikke igennem. Prøv det samme wifi på begge.",
+    "wrongKeyAttempt": "Nogen forsøgte at oprette forbindelse med en forkert nøgle. Overvågningen fortsætter.",
+    "unknownParentAttempt": "En enhed, der ikke er din parrede forældreenhed, forsøgte at oprette forbindelse. Overvågningen fortsætter.",
+    "pairAgain": "Denne enhed kender ikke længere nogen forældreenhed. Tryk på Vis ny kode, og par igen.",
+    "babyUnrecognised": "Babyenheden genkender ikke denne enhed. Tryk på Vis ny kode på babyenheden, og par igen."
+  },
+  "native": {
+    "appName": "GuardedSleep Alpha",
+    "notif": {
+      "appTitle": "GuardedSleep",
+      "silenceRuleName": "GuardedSleep",
+      "channelNoise": "Lydalarmer",
+      "channelNoiseDesc": "Høje alarmer, når babyenheden hører en lyd.",
+      "channelLink": "Forbindelsesalarmer",
+      "channelLinkDesc": "Alarmer, når forbindelsen til babyenheden afbrydes.",
+      "channelStatus": "Overvågningsstatus",
+      "channelStatusDesc": "Viser, at overvågningen kører.",
+      "channelNotice": "Advarsler",
+      "channelNoticeDesc": "Advarsler om batteri og sikkerhed.",
+      "channelInfo": "Information",
+      "channelInfoDesc": "Stille beskeder, for eksempel når forbindelsen er tilbage.",
+      "channelBaby": "Overvågning",
+      "channelBabyDesc": "Stille besked om, at denne enhed overvåger.",
+      "babyMonitoring": "GuardedSleep overvåger",
+      "babyResume": "Tryk for at genoptage overvågningen",
+      "statusConnected": "Forbundet til babyenheden",
+      "statusConnecting": "Opretter forbindelse til babyenheden…",
+      "statusReconnecting": "Opretter forbindelse til babyenheden igen…",
+      "statusTrouble": "Kan ikke nå babyenheden, prøver stadig",
+      "statusAlarm": "Ingen forbindelse til babyenheden",
+      "statusPeerStopped": "Babyenheden er holdt op med at overvåge",
+      "statusFailed": "Disse enheder er ikke længere parret",
+      "noiseTitle": "Lyd registreret",
+      "noiseText": "Babyenheden hører en lyd.",
+      "noiseTestTitle": "Testalarm",
+      "noiseTestText": "Det her er en test. Babyenheden forbliver stille.",
+      "actionStopSound": "Stop lyden",
+      "actionSnooze10": "Udsæt 10 min",
+      "actionChecking": "Jeg tjekker",
+      "linkLostTitle": "Forbindelsen blev afbrudt",
+      "linkLostText": "Ingen forbindelse til babyenheden. Tjek til dit barn nu.",
+      "peerStoppedTitle": "Overvågning stoppet",
+      "peerStoppedText": "Overvågningen blev stoppet på babyenheden. Du hører ingenting, før den startes igen.",
+      "restoredTitle": "Forbundet igen",
+      "restoredText": "Ikke overvåget i {duration}.",
+      "missedTitle": "Under afbrydelsen",
+      "missedCount": "Lyde under afbrydelsen: {count} (ikke overvåget i {duration}).",
+      "missedNone": "Ingen lyde under afbrydelsen (ikke overvåget i {duration}).",
+      "missedUnknown": "Vi ved ikke, hvad der skete under afbrydelsen (ikke overvåget i {duration}).",
+      "batteryLowTitle": "Lavt batteri i babyenheden",
+      "batteryLowText": "Babyenhedens batteri {percent}%: sæt den i opladeren.",
+      "batteryCriticalTitle": "Babyenhedens batteri er næsten tomt",
+      "batteryCriticalText": "Babyenhedens batteri {percent}%: sæt den i opladeren nu.",
+      "chargerTitle": "Babyenheden oplader ikke længere",
+      "chargerText": "Sæt babyenheden i opladeren, så den holder natten ud.",
+      "securityTitle": "Forkert nøgle",
+      "publicTitle": "GuardedSleep-alarm",
+      "fgsMissingTitle": "Overvåger ikke i baggrunden",
+      "fgsMissingText": "Åbn GuardedSleep for at slå overvågning i baggrunden til igen."
+    },
+    "ui": {
+      "common": {
+        "appName": "GuardedSleep",
+        "allow": "Tillad",
+        "continue": "Fortsæt",
+        "later": "Senere",
+        "ok": "OK",
+        "cancel": "Annuller",
+        "more": "Mere",
+        "moreCount": "+{count}",
+        "settings": "Indstillinger",
+        "tryAgain": "Prøv igen",
+        "yes": "Ja",
+        "no": "Nej",
+        "add": "Tilføj",
+        "remove": "Fjern",
+        "save": "Gem",
+        "change": "Skift",
+        "durationSec": "{seconds} s",
+        "durationMin": "{minutes} min",
+        "durationHour": "{hours} t",
+        "durationHourMin": "{hours} t {minutes} min",
+        "secondsShort": "{seconds} s",
+        "state": {
+          "done": "Færdig",
+          "todo": "Mangler",
+          "blocked": "Blokeret",
+          "checking": "Tjekker"
+        },
+        "babyUnitDefault": "Babyenhed",
+        "parentUnitDefault": "Forældreenhed"
+      },
+      "role": {
+        "title": "Hvilken enhed er det her?",
+        "baby": {
+          "title": "Babyenhed",
+          "hint": "Bliver hos dit barn og lytter."
+        },
+        "parent": {
+          "title": "Forældreenhed",
+          "hint": "Bliver hos dig og giver dig besked."
+        },
+        "orderHint": "Sæt babyenheden op først."
+      },
+      "setup": {
+        "title": "Gør denne enhed klar",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Nødvendig for at høre dit barn.",
+          "required": "Tillad mikrofonen for at fortsætte."
+        },
+        "background": {
+          "title": "Fortsæt i baggrunden",
+          "why": "Ellers kan denne enhed holde op med at overvåge for at spare batteri."
+        },
+        "silence": {
+          "title": "Stille tilstand under overvågning",
+          "why": "Ingen lyde, ringetoner eller lys på babyenheden. Vækkeure virker stadig."
+        },
+        "safety": {
+          "body": "Lad denne enhed sidde i opladeren på et stabilt underlag, uden for dit barns rækkevidde. Brug ikke en enhed med et opsvulmet eller beskadiget batteri."
+        },
+        "chargingTip": "Tip: hvis denne enhed har \"væk skærmen ved opladning\", så slå den fra, så skærmen forbliver mørk.",
+        "deviceCheck": {
+          "checking": "Tjekker denne enhed…",
+          "ok": "Denne enhed fungerer godt som babyenhed.",
+          "limited": "Denne enhed kan en gang imellem miste forbindelsen. Den virker stadig.",
+          "notRecommended": "Denne enhed overvåger muligvis ikke pålideligt. Brug en anden, hvis du kan."
+        },
+        "notifications": {
+          "title": "Alarmer",
+          "why": "Nødvendige, så du hører det, når dit barn larmer.",
+          "required": "GuardedSleep kan ikke give dig besked uden dette."
+        },
+        "lockScreen": {
+          "title": "Alarmer på låseskærmen",
+          "why": "Så alarmer vises, selv når skærmen er låst."
+        },
+        "dndBypass": {
+          "title": "Alarmer under Forstyr ikke",
+          "why": "Så alarmer kommer igennem, selv når Forstyr ikke er slået til."
+        },
+        "limits": {
+          "body": "GuardedSleep kan kun give dig besked, så længe denne enhed er tændt og opladet. Lad den sidde i opladeren om natten. Hvis begge enheder slukker, får ingen besked."
+        },
+        "skipped": "Springet over for nu"
+      },
+      "pair": {
+        "baby": {
+          "title": "Tilslut forældreenheden",
+          "qrAlt": "Parringskode",
+          "instruction": "Åbn GuardedSleep på den anden enhed, vælg Forældreenhed og scan denne kode.",
+          "validFor": "Koden er gyldig i {duration}",
+          "expired": "Denne kode er udløbet.",
+          "newCode": "Vis ny kode",
+          "copy": "Kopiér kode",
+          "copied": "Kopieret",
+          "brighter": "Gør koden lysere",
+          "waiting": "Venter på forældreenheden…",
+          "privacy": "Alle med denne kode kan lytte med. Vis den kun til folk, du stoler på.",
+          "parentFound": "Forældreenhed fundet. Opretter forbindelse…",
+          "failed": "Parringen virkede ikke. Vis en ny kode og prøv igen.",
+          "showText": "Vis koden som tekst",
+          "hideText": "Skjul tekst"
+        },
+        "parent": {
+          "title": "Scan koden på babyenheden",
+          "cameraWhy": "GuardedSleep bruger kameraet kun til at læse koden.",
+          "pasteLabel": "Eller indsæt koden",
+          "pasteSubmit": "Forbind",
+          "connecting": "Opretter forbindelse til babyenheden…"
+        },
+        "error": {
+          "cameraDenied": "Kamera ikke tilladt.",
+          "allowCamera": "Tillad kamera",
+          "pasteInstead": "Indsæt kode i stedet",
+          "notOurs": "Det her er ikke en GuardedSleep-kode. Scan koden på babyenheden.",
+          "expired": "Koden er udløbet. Tryk på Vis ny kode på babyenheden, og scan igen.",
+          "mismatch": "Koden passer ikke. Scan den kode, der vises på babyenheden lige nu.",
+          "alreadyPaired": "Denne babyenhed er allerede parret med en anden enhed.",
+          "unreachable": "Kan ikke finde babyenheden endnu. Tjek, at begge enheder er online.",
+          "incomplete": "Koden er ufuldstændig. Kopiér hele koden fra babyenheden."
+        }
+      },
+      "home": {
+        "parent": {
+          "cardTitle": "Forbind til {name}",
+          "cardTitleDefault": "Forbind til babyenheden"
+        },
+        "baby": {
+          "cardTitle": "Start overvågning"
+        },
+        "lastUsed": "Sidst brugt {time}",
+        "newPairing": "Sæt nye enheder op",
+        "empty": "Ingen enheder parret endnu."
+      },
+      "baby": {
+        "status": {
+          "connected": "Forbundet til forældreenheden",
+          "waiting": "Venter på forældreenheden…",
+          "reconnecting": "Opretter forbindelse til forældreenheden igen…",
+          "notResponding": "Forældreenheden svarer ikke, prøver stadig",
+          "parentStopped": "Forældreenheden er holdt op med at overvåge"
+        },
+        "forDuration": "i {duration}",
+        "monitoring": "Overvåger",
+        "parentListening": "Forælderen lytter",
+        "battery": "Denne enhed: batteri {percent}%",
+        "batteryCharging": "Denne enhed: oplader · {percent}%",
+        "silence": {
+          "on": "Stille tilstand er slået til",
+          "off": "Stille tilstand er slået fra: denne enhed kan ringe",
+          "everydayPhone": "Stille tilstand er slået til. Opkald og beskeder på denne enhed forbliver stille, indtil du stopper overvågningen.",
+          "restored": "Denne enhed var blevet i stille tilstand. Lydene er slået til igen.",
+          "noAccess": "Adgang til stille tilstand er slået fra. Slå den til i Indstillinger, så opkald og beskeder forbliver stille."
+        },
+        "lock": "Lås skærmen",
+        "autolockHint": "Skærmen bliver mørk om {seconds} s",
+        "stop": "Stop overvågning",
+        "micLevel": "Lydniveau her",
+        "micSilent": "Mikrofonen opfanger ingen lyd. Genstart overvågningen, eller tjek mikrofonen."
+      },
+      "kiosk": {
+        "a11yLabel": "Overvåger. Skærmen er låst.",
+        "unlockHint": "Hold og stryg opad for at låse op",
+        "unlockZone": "Stryg her",
+        "unlockAction": "Lås op"
+      },
+      "link": {
+        "connected": "Forbundet til {name}",
+        "connecting": "Opretter forbindelse til {name}…",
+        "reconnecting": "Opretter forbindelse igen…",
+        "cantReach": "Kan ikke nå {name}, prøver stadig",
+        "lostFor": "Ingen forbindelse i {duration}",
+        "babyStopped": "{name} er holdt op med at overvåge",
+        "idle": "Overvåger ikke",
+        "weak": "Svag forbindelse: lyden kan hakke",
+        "restoredAfter": "Forbundet igen efter {duration}. Du kan høre dit barn igen.",
+        "tryNow": "Prøv nu",
+        "pairAgain": "Par igen",
+        "connectedDefault": "Forbundet til babyenheden",
+        "connectingDefault": "Opretter forbindelse til babyenheden…",
+        "cantReachDefault": "Kan ikke nå babyenheden, prøver stadig",
+        "babyStoppedDefault": "Babyenheden er holdt op med at overvåge",
+        "stalePairingHint": "Hvis du har parret babyenheden igen, så scan dens nye kode."
+      },
+      "linkAlarm": {
+        "lost": {
+          "title": "Ingen forbindelse til {name}",
+          "titleUrgent": "Ingen forbindelse til {name}!",
+          "body": "Du kan ikke høre dit barn, før enhederne har forbindelse igen.",
+          "titleDefault": "Ingen forbindelse til babyenheden",
+          "titleUrgentDefault": "Ingen forbindelse til babyenheden!"
+        },
+        "stopped": {
+          "title": "{name} er holdt op med at overvåge",
+          "body": "Nogen har stoppet overvågningen på babyenheden. Du får ingen alarmer.",
+          "titleDefault": "Babyenheden er holdt op med at overvåge"
+        },
+        "battery": {
+          "title": "Babyenhedens batteri er næsten tomt",
+          "body": "Sæt babyenheden i opladeren nu, ellers stopper overvågningen."
+        },
+        "needsPairing": {
+          "title": "Enhederne er ikke længere parret"
+        },
+        "restored": {
+          "title": "Forbundet igen"
+        },
+        "ack": "Jeg tjekker",
+        "ackNote": "Lyden er slået fra i {time}. Vi giver dig besked igen, hvis der stadig ikke er forbindelse.",
+        "soundNote": "En blid alarmtone gentages, indtil du tjekker.",
+        "soundNoteUrgent": "Alarmen lyder, indtil du tjekker."
+      },
+      "parent": {
+        "allQuietSince": "Stille siden {time}",
+        "soundSince": "Lyd registreret · siden {time}",
+        "soundAt": "Lyd kl. {time} · varede {duration}",
+        "soundSnoozed": "Lyd kl. {time} · alarmer udsat",
+        "lastHeard": "Sidste kontakt {time}",
+        "noContactYet": "Ingen kontakt endnu",
+        "monitoringNow": "Overvåger",
+        "meterA11y": "Lydniveau: {level}",
+        "level": {
+          "quiet": "stille",
+          "some": "noget lyd",
+          "loud": "højt"
+        },
+        "stop": "Stop overvågning",
+        "securityTitle": "Sikkerhedsadvarsel",
+        "securityBody": "Forbindelsen kunne ikke verificeres. Hvis du ikke lige har parret enhederne igen, så par dem igen nu.",
+        "staleSuffix": "· kl. {time}",
+        "unitWarning": {
+          "pageHidden": "Babyenheden holder muligvis pause: dens side er skjult",
+          "wakeLockOff": "Babyenheden falder muligvis i søvn: skærmen holdes ikke tændt",
+          "resumedFromSleep": "Babyenheden vågnede af dvale: lyde kan være gået tabt",
+          "notCharging": "Babyenheden oplader ikke længere",
+          "micPermissionLost": "Babyenheden mistede adgangen til mikrofonen"
+        }
+      },
+      "battery": {
+        "baby": "Babyenhed {percent}%",
+        "babyLow": "Babyenhedens batteri {percent}%: sæt den i opladeren",
+        "parentLow": "Denne enhed har {percent}%: sæt den i opladeren for at fortsætte overvågningen",
+        "parentLowGeneric": "Denne enheds batteri er lavt: sæt den i opladeren for at fortsætte overvågningen"
+      },
+      "listen": {
+        "idle": "Hold for at lytte",
+        "holding": "Lytter…",
+        "locked": "Lytter · tryk for at stoppe",
+        "lockHint": "Stryg opad for at blive ved med at lytte",
+        "disabled": "Lyt, når der er forbindelse",
+        "a11yLocked": "Lytter. Tryk to gange for at stoppe."
+      },
+      "snooze": {
+        "button": "Udsæt",
+        "title": "Udsæt lydalarmer",
+        "help": "Du får stadig alarmer, hvis forbindelsen afbrydes, eller et batteri er ved at løbe tør.",
+        "minutes": "Udsæt {minutes} min",
+        "end": "Afslut udsættelse",
+        "active": "Udsat · {minutes} min tilbage"
+      },
+      "probe": {
+        "button": "Testalarm",
+        "title": "Test dine alarmer",
+        "body": "Afspiller en testlyd på denne enhed. Babyenheden forbliver stille.",
+        "output": "Alarmer afspilles på: {output}",
+        "run": "Kør test",
+        "running": "Kører testen…",
+        "question": "Hørte og mærkede du den?",
+        "localOnly": "Kun denne enhed blev testet: babyenheden er ikke forbundet."
+      },
+      "readiness": {
+        "title": "Når alarmerne frem til dig?",
+        "notificationsOff": "Alarmer er slået fra for GuardedSleep",
+        "alarmVolumeZero": "Din alarmlydstyrke er slået fra: du hører ikke alarmerne",
+        "lockScreen": "Alarmer kan ikke vises på låseskærmen",
+        "dnd": "Forstyr ikke kan gøre alarmerne lydløse",
+        "battery": "Denne enhed kan stoppe GuardedSleep i baggrunden",
+        "headphones": "Alarmerne afspilles i dine hovedtelefoner",
+        "neverTested": "Test dine alarmer",
+        "ok": "Alt er klart: alarmerne når frem til dig",
+        "fix": {
+          "notifications": "Slå alarmer til",
+          "dnd": "Tillad alarmer under Forstyr ikke",
+          "battery": "Tillad brug i baggrunden"
+        }
+      },
+      "silence": {
+        "silent": "Babyenheden er i stille tilstand",
+        "alarmsStillRing": "Vækkeure på den kan stadig ringe.",
+        "screenMayLight": "Babyenheden er i stille tilstand, men skærmen kan lyse op",
+        "mayVibrate": "Babyenheden kan vibrere",
+        "mayRing": "Babyenheden kan ringe",
+        "unknown": "Stille tilstand: ukendt, kan ikke tjekke babyenheden",
+        "manual": "Slå Forstyr ikke til på babyenheden, og skru ned for lysstyrken.",
+        "noAccess": "For at slå stille tilstand til herfra skal du åbne Indstillinger på babyenheden og slå \"Stille tilstand under overvågning\" til.",
+        "apply": "Slå stille tilstand til",
+        "applyFull": "Slå stille tilstand helt til",
+        "pending": "Slår stille tilstand til…",
+        "failed": "Kunne ikke slå stille tilstand til på babyenheden.",
+        "webUnknown": "Ukendt: slå stille tilstand til på babyenheden selv",
+        "webHint": "Hvis babyenheden er en bærbar, så lad den sidde i opladeren med låget oppe og skærmen tændt."
+      },
+      "help": {
+        "reconnect": {
+          "open": "Hvad kan jeg gøre?",
+          "title": "Få forbindelse igen",
+          "step1": "Er babyenheden tændt og viser GuardedSleep?",
+          "step2": "Sidder begge enheder på samme wifi, eller bruger begge mobildata?",
+          "step3": "Virker det stadig ikke? Luk og åbn GuardedSleep igen på babyenheden."
+        }
+      },
+      "stop": {
+        "title": "Stop overvågning?",
+        "parentBody": "Du får ingen alarmer fra {name}.",
+        "babyBody": "Forældreenheden får ikke længere alarmer.",
+        "confirm": "Stop",
+        "cancel": "Fortsæt overvågning",
+        "parentBodyDefault": "Du får ingen alarmer fra babyenheden."
+      },
+      "forget": {
+        "title": "Glem {name}?",
+        "body": "Overvågningen stopper, og du skal scanne en ny kode for at oprette forbindelse igen.",
+        "confirm": "Glem",
+        "titleBabyDefault": "Glem babyenheden?",
+        "titleParentDefault": "Glem forældreenheden?"
+      },
+      "missed": {
+        "some": "Under afbrydelsen: {count, plural, one {1 lyd} other {# lyde}} mellem {start} og {end}. Højeste: {level}.",
+        "none": "Ingen lyde under afbrydelsen.",
+        "unknown": "Vi ved ikke, hvad der skete mellem {start} og {end}."
+      },
+      "coach": {
+        "bar": "Grøn betyder, at du overvåger. Hvis den bliver rød eller forsvinder, overvåger du ikke.",
+        "listen": "Hold for at lytte. Stryg opad for at blive ved med at lytte.",
+        "test": "Kør en testalarm, så du ved, hvordan en alarm føles.",
+        "runTest": "Kør testalarm nu"
+      },
+      "alert": {
+        "title": "Lyd registreret",
+        "since": "Siden {time}",
+        "ended": "Lyden er stoppet.",
+        "testBadge": "TEST",
+        "stopSound": "Stop lyden",
+        "soundStopped": "Lyden er stoppet",
+        "openApp": "Åbn GuardedSleep"
+      },
+      "settings": {
+        "group": {
+          "soundDetection": "Lydregistrering",
+          "silence": "Stille tilstand",
+          "alerts": "Alarmer",
+          "screen": "Skærm",
+          "paired": "Parret enhed",
+          "thisPhone": "Denne enhed",
+          "language": "Sprog",
+          "about": "Om og begrænsninger",
+          "advanced": "Avanceret"
+        },
+        "sensitivity": "Følsomhed",
+        "moreSensitive": "Mere følsom",
+        "lessSensitive": "Mindre følsom",
+        "holdLabel": "Støj skal vare mindst",
+        "silenceAccessOk": "Adgang til stille tilstand er slået til.",
+        "outputLabel": "Alarmlyden afspilles på",
+        "output": {
+          "default": "Hovedtelefoner hvis tilsluttet, ellers højttaler",
+          "speaker": "Kun højttaler"
+        },
+        "gain": "Ekstra høje alarmer: {percent}%",
+        "lastTest": "Sidste test: {time}",
+        "neverTested": "Ikke testet endnu",
+        "theme": {
+          "dark": "Mørk (standard)",
+          "light": "Lys",
+          "system": "Følg systemet"
+        },
+        "forgetParent": "Glem denne forældreenhed",
+        "forgetBaby": "Glem denne babyenhed",
+        "checkPhone": "Tjek denne enheds opsætning",
+        "lang": {
+          "system": "Følg systemet"
+        },
+        "advanced": {
+          "toggle": "Vis avancerede indstillinger",
+          "warning": {
+            "title": "Ændre avancerede indstillinger?",
+            "body": "Forkerte værdier her kan forhindre enhederne i at få forbindelse. Ændr dem kun, hvis du ved, hvad du laver."
+          },
+          "confirm": "Vis avancerede indstillinger",
+          "cancel": "Ikke nu"
+        },
+        "urlsLabel": "Forbindelsesserverens adresser (prøves i rækkefølge)",
+        "url": {
+          "new": "Ny adresse (wss://…)",
+          "invalid": "Adressen skal starte med wss:// eller ws://."
+        },
+        "turn": {
+          "label": "Relæserver (TURN), valgfri",
+          "invalid": "Relæadressen skal starte med turn: eller turns:."
+        },
+        "heartbeat": "Forbindelsestjek hvert {seconds} s"
+      },
+      "fgsMissing": {
+        "bar": "Overvåger ikke i baggrunden: åbn appen",
+        "body": "Android har stoppet GuardedSleeps baggrundstjeneste. Alarmer når muligvis ikke frem, mens skærmen er slukket.",
+        "fix": "Slå overvågning i baggrunden til igen"
+      }
+    }
+  },
+  "webShell": {
+    "route": {
+      "role": "Hvilken enhed er det her?",
+      "babyPair": "Par babyenheden",
+      "baby": "Babyenhed",
+      "parentPair": "Par forældreenheden",
+      "parent": "Forældreenhed",
+      "settings": "Indstillinger"
+    },
+    "skipToContent": "Gå til indhold",
+    "dismiss": "Luk"
+  },
+  "webScreens": {
+    "role": {
+      "title": "Brug denne enhed som",
+      "subtitle": "Telefon, tablet eller bærbar. Sæt babyenheden op først.",
+      "navLabel": "Vælg en rolle",
+      "privacyNote": "Lyden går direkte mellem dine to enheder og bliver aldrig optaget."
+    },
+    "pair": {
+      "copyHint": "Indsæt den på forældreenheden inden for 5 minutter. Send den ikke i en chat.",
+      "or": "eller",
+      "cameraUnavailable": "Der er intet kamera her. Indsæt koden i stedet.",
+      "cameraView": "Kamerabillede"
+    },
+    "baby": {
+      "failMicDenied": "Mikrofonen er blokeret, så denne enhed kan ikke høre dit barn. Tillad den i browserens webstedsindstillinger.",
+      "failMicUnavailable": "Der blev ikke fundet nogen mikrofon, så denne enhed kan ikke høre dit barn.",
+      "quietUnknown": "Stille tilstand: ukendt",
+      "keepAwake": "Hold denne enhed vågen: i opladeren, låget oppe, denne fane synlig.",
+      "keepSilent": "Slå Forstyr ikke til, og skru ned for lysstyrken på denne enhed."
+    },
+    "parent": {
+      "quietUnknownWeb": "Stille tilstand ukendt · slå den til på babyenheden",
+      "keepOpen": "Hold denne side åben og skærmen tændt. Ellers kan din browser ikke give dig besked.",
+      "soundGate": "Tryk for at slå alarmlyd til"
+    },
+    "settings": {
+      "urlHint": "Babyenheden skriver disse adresser i sin kode, så forældreenheden bruger dem også.",
+      "sensitivityBabyOnly": "Følsomheden indstilles på babyenheden."
+    },
+    "guard": {
+      "wakeLockHeld": "Skærmen holdes tændt",
+      "wakeLockLost": "Skærmen holdes ikke længere tændt, så denne enhed kan falde i søvn og holde op med at overvåge.",
+      "wakeLockUnsupported": "Denne browser kan ikke holde skærmen tændt. Slå skærmdvale fra i denne enheds indstillinger.",
+      "wakeLockRetry": "Hold skærmen tændt",
+      "hiddenTitle": "GuardedSleep holder muligvis op med at overvåge",
+      "hiddenBody": "Denne side ligger i baggrunden. Åbn den igen for at fortsætte overvågningen.",
+      "awayBackground": "Denne side lå i baggrunden i {duration}. Alarmer kan være gået tabt.",
+      "awaySleep": "Denne enhed sov i {duration}. Alarmer kan være gået tabt."
+    },
+    "night": {
+      "open": "Natskærm",
+      "label": "Natskærm. Overvåger stadig. Tryk for at vise status.",
+      "monitoring": "Overvåger stadig",
+      "leave": "Tryk igen for at forlade natskærmen"
+    }
+  }
+}

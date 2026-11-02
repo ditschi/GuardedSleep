@@ -1,0 +1,547 @@
+{
+  "$meta": {
+    "default": "machineTranslated",
+    "reviewed": []
+  },
+  "meta": {
+    "appTitle": "GuardedSleep"
+  },
+  "layout": {
+    "settingsAria": "Impostazioni",
+    "backAria": "Torna alla schermata precedente"
+  },
+  "core": {
+    "pairingKeyMismatch": "Questi dispositivi non sono più associati. Associali di nuovo per continuare a monitorare.",
+    "updateRequired": "Uno dei dispositivi ha bisogno di un aggiornamento di GuardedSleep per continuare a monitorare.",
+    "serverUnreachable": "Questo dispositivo non raggiunge il server di connessione. Controlla la sua connessione a internet.",
+    "peerAbsent": "Il dispositivo del bambino non risponde. Controlla che sia acceso e che mostri GuardedSleep.",
+    "mediaBlocked": "I dispositivi si sono trovati, ma l'audio non passa. Prova con lo stesso Wi-Fi su entrambi.",
+    "wrongKeyAttempt": "Qualcuno ha provato a connettersi con una chiave errata. Il monitoraggio continua.",
+    "unknownParentAttempt": "Un dispositivo che non è il tuo dispositivo genitore associato ha provato a connettersi. Il monitoraggio continua.",
+    "pairAgain": "Questo dispositivo non conosce più alcun dispositivo del genitore. Tocca Mostra nuovo codice e associa di nuovo.",
+    "babyUnrecognised": "Il dispositivo del bambino non riconosce questo dispositivo. Tocca Mostra nuovo codice sul dispositivo del bambino e associa di nuovo."
+  },
+  "native": {
+    "appName": "GuardedSleep Alpha",
+    "notif": {
+      "appTitle": "GuardedSleep",
+      "silenceRuleName": "GuardedSleep",
+      "channelNoise": "Avvisi sonori",
+      "channelNoiseDesc": "Avvisi forti quando il dispositivo del bambino sente un suono.",
+      "channelLink": "Allarmi di connessione",
+      "channelLinkDesc": "Allarmi quando si perde la connessione con il dispositivo del bambino.",
+      "channelStatus": "Stato del monitoraggio",
+      "channelStatusDesc": "Mostra che il monitoraggio è attivo.",
+      "channelNotice": "Avvertenze",
+      "channelNoticeDesc": "Avvertenze su batteria e sicurezza.",
+      "channelInfo": "Informazioni",
+      "channelInfoDesc": "Note discrete, ad esempio quando la connessione torna.",
+      "channelBaby": "Monitoraggio",
+      "channelBabyDesc": "Nota silenziosa: questo dispositivo sta monitorando.",
+      "babyMonitoring": "GuardedSleep sta monitorando",
+      "babyResume": "Tocca per riprendere il monitoraggio",
+      "statusConnected": "Connesso al dispositivo del bambino",
+      "statusConnecting": "Connessione al dispositivo del bambino…",
+      "statusReconnecting": "Riconnessione al dispositivo del bambino…",
+      "statusTrouble": "Dispositivo del bambino non raggiungibile: riprovo",
+      "statusAlarm": "Nessuna connessione al dispositivo del bambino",
+      "statusPeerStopped": "Il dispositivo del bambino ha interrotto il monitoraggio",
+      "statusFailed": "Questi dispositivi non sono più associati",
+      "noiseTitle": "Suono rilevato",
+      "noiseText": "Il dispositivo del bambino sente un suono.",
+      "noiseTestTitle": "Avviso di prova",
+      "noiseTestText": "Questa è una prova. Il dispositivo del bambino resta in silenzio.",
+      "actionStopSound": "Ferma il suono",
+      "actionSnooze10": "Posticipa 10 min",
+      "actionChecking": "Sto controllando",
+      "linkLostTitle": "Connessione persa",
+      "linkLostText": "Nessuna connessione al dispositivo del bambino. Controlla subito il tuo bambino.",
+      "peerStoppedTitle": "Monitoraggio interrotto",
+      "peerStoppedText": "Il monitoraggio è stato interrotto sul dispositivo del bambino. Non sentirai nulla finché non viene riavviato.",
+      "restoredTitle": "Di nuovo connesso",
+      "restoredText": "Non monitorato per {duration}.",
+      "missedTitle": "Durante la disconnessione",
+      "missedCount": "Suoni durante la disconnessione: {count} (non monitorato per {duration}).",
+      "missedNone": "Nessun suono durante la disconnessione (non monitorato per {duration}).",
+      "missedUnknown": "Non sappiamo cosa sia successo durante la disconnessione (non monitorato per {duration}).",
+      "batteryLowTitle": "Batteria del dispositivo del bambino scarica",
+      "batteryLowText": "Batteria del dispositivo del bambino al {percent}%: collegalo alla corrente.",
+      "batteryCriticalTitle": "Batteria del dispositivo del bambino quasi a zero",
+      "batteryCriticalText": "Batteria del dispositivo del bambino al {percent}%: collegalo subito.",
+      "chargerTitle": "Il dispositivo del bambino non è più in carica",
+      "chargerText": "Collega il dispositivo del bambino per farlo durare tutta la notte.",
+      "securityTitle": "Chiave errata",
+      "publicTitle": "Allarme GuardedSleep",
+      "fgsMissingTitle": "Nessun monitoraggio in background",
+      "fgsMissingText": "Apri GuardedSleep per riattivare il monitoraggio in background."
+    },
+    "ui": {
+      "common": {
+        "appName": "GuardedSleep",
+        "allow": "Consenti",
+        "continue": "Continua",
+        "later": "Più tardi",
+        "ok": "OK",
+        "cancel": "Annulla",
+        "more": "Altro",
+        "moreCount": "+{count}",
+        "settings": "Impostazioni",
+        "tryAgain": "Riprova",
+        "yes": "Sì",
+        "no": "No",
+        "add": "Aggiungi",
+        "remove": "Rimuovi",
+        "save": "Salva",
+        "change": "Cambia",
+        "durationSec": "{seconds} s",
+        "durationMin": "{minutes} min",
+        "durationHour": "{hours} h",
+        "durationHourMin": "{hours} h {minutes} min",
+        "secondsShort": "{seconds} s",
+        "state": {
+          "done": "Fatto",
+          "todo": "Da fare",
+          "blocked": "Bloccato",
+          "checking": "Verifica"
+        },
+        "babyUnitDefault": "Dispositivo del bambino",
+        "parentUnitDefault": "Dispositivo del genitore"
+      },
+      "role": {
+        "title": "Che dispositivo è questo?",
+        "baby": {
+          "title": "Dispositivo del bambino",
+          "hint": "Resta con il tuo bambino e ascolta."
+        },
+        "parent": {
+          "title": "Dispositivo del genitore",
+          "hint": "Resta con te e ti avvisa."
+        },
+        "orderHint": "Configura prima il dispositivo del bambino."
+      },
+      "setup": {
+        "title": "Prepara questo dispositivo",
+        "mic": {
+          "title": "Microfono",
+          "why": "Serve per sentire il tuo bambino.",
+          "required": "Consenti il microfono per continuare."
+        },
+        "background": {
+          "title": "Resta attivo in background",
+          "why": "Altrimenti questo dispositivo potrebbe interrompere il monitoraggio per risparmiare batteria."
+        },
+        "silence": {
+          "title": "Modalità silenziosa durante il monitoraggio",
+          "why": "Niente suoni, squilli o luci sul dispositivo del bambino. Le sveglie funzionano comunque."
+        },
+        "safety": {
+          "body": "Tieni questo dispositivo in carica, su una superficie stabile, fuori dalla portata del bambino. Non usare un dispositivo con la batteria gonfia o danneggiata."
+        },
+        "chargingTip": "Suggerimento: se questo dispositivo ha \"attiva schermo in carica\", disattivalo così lo schermo resta buio.",
+        "deviceCheck": {
+          "checking": "Controllo di questo dispositivo…",
+          "ok": "Questo dispositivo funziona bene come dispositivo del bambino.",
+          "limited": "Ogni tanto questo dispositivo potrebbe perdere la connessione. Funziona comunque.",
+          "notRecommended": "Questo dispositivo potrebbe non monitorare in modo affidabile. Se puoi, usane un altro."
+        },
+        "notifications": {
+          "title": "Avvisi",
+          "why": "Servono per sentire quando il tuo bambino fa rumore.",
+          "required": "Senza questo GuardedSleep non può avvisarti."
+        },
+        "lockScreen": {
+          "title": "Avvisi nella schermata di blocco",
+          "why": "Così gli avvisi compaiono anche con lo schermo bloccato."
+        },
+        "dndBypass": {
+          "title": "Avvisi con Non disturbare",
+          "why": "Così gli avvisi arrivano anche con Non disturbare attivo."
+        },
+        "limits": {
+          "body": "GuardedSleep può avvisarti solo finché questo dispositivo è acceso e carico. Tienilo in carica di notte. Se entrambi i dispositivi si spengono, nessuno viene avvisato."
+        },
+        "skipped": "Saltato per ora"
+      },
+      "pair": {
+        "baby": {
+          "title": "Collega il dispositivo del genitore",
+          "qrAlt": "Codice di associazione",
+          "instruction": "Sull'altro dispositivo apri GuardedSleep, scegli Dispositivo del genitore e inquadra questo codice.",
+          "validFor": "Codice valido per {duration}",
+          "expired": "Questo codice è scaduto.",
+          "newCode": "Mostra nuovo codice",
+          "copy": "Copia codice",
+          "copied": "Copiato",
+          "brighter": "Rendi il codice più luminoso",
+          "waiting": "In attesa del dispositivo del genitore…",
+          "privacy": "Chiunque abbia questo codice può ascoltare. Mostralo solo a persone di cui ti fidi.",
+          "parentFound": "Dispositivo del genitore trovato. Connessione…",
+          "failed": "L'associazione non è riuscita. Mostra un nuovo codice e riprova.",
+          "showText": "Mostra il codice come testo",
+          "hideText": "Nascondi testo"
+        },
+        "parent": {
+          "title": "Inquadra il codice sul dispositivo del bambino",
+          "cameraWhy": "GuardedSleep usa la fotocamera solo per leggere il codice.",
+          "pasteLabel": "Oppure incolla il codice",
+          "pasteSubmit": "Connetti",
+          "connecting": "Connessione al dispositivo del bambino…"
+        },
+        "error": {
+          "cameraDenied": "Fotocamera non consentita.",
+          "allowCamera": "Consenti la fotocamera",
+          "pasteInstead": "Incolla il codice",
+          "notOurs": "Questo non è un codice GuardedSleep. Inquadra il codice sul dispositivo del bambino.",
+          "expired": "Questo codice è scaduto. Tocca Mostra nuovo codice sul dispositivo del bambino, poi inquadra di nuovo.",
+          "mismatch": "Il codice non corrisponde. Inquadra il codice che è sul dispositivo del bambino in questo momento.",
+          "alreadyPaired": "Questo dispositivo del bambino è già associato a un altro dispositivo.",
+          "unreachable": "Il dispositivo del bambino non si trova ancora. Controlla che entrambi i dispositivi siano online.",
+          "incomplete": "Questo codice è incompleto. Copia l'intero codice dal dispositivo del bambino."
+        }
+      },
+      "home": {
+        "parent": {
+          "cardTitle": "Connettiti a {name}",
+          "cardTitleDefault": "Connettiti al dispositivo del bambino"
+        },
+        "baby": {
+          "cardTitle": "Avvia il monitoraggio"
+        },
+        "lastUsed": "Ultimo uso {time}",
+        "newPairing": "Configura nuovi dispositivi",
+        "empty": "Ancora nessun dispositivo associato."
+      },
+      "baby": {
+        "status": {
+          "connected": "Connesso al dispositivo del genitore",
+          "waiting": "In attesa del dispositivo del genitore…",
+          "reconnecting": "Riconnessione al dispositivo del genitore…",
+          "notResponding": "Il dispositivo del genitore non risponde: riprovo",
+          "parentStopped": "Il dispositivo del genitore ha interrotto il monitoraggio"
+        },
+        "forDuration": "da {duration}",
+        "monitoring": "Monitoraggio",
+        "parentListening": "Il genitore sta ascoltando",
+        "battery": "Questo dispositivo: batteria {percent}%",
+        "batteryCharging": "Questo dispositivo: in carica · {percent}%",
+        "silence": {
+          "on": "Modalità silenziosa attiva",
+          "off": "Modalità silenziosa non attiva: questo dispositivo potrebbe squillare",
+          "everydayPhone": "Modalità silenziosa attiva. Chiamate e messaggi su questo dispositivo restano silenziosi finché non interrompi il monitoraggio.",
+          "restored": "Questo dispositivo era rimasto in modalità silenziosa. I suoni sono di nuovo attivi.",
+          "noAccess": "L'accesso alla modalità silenziosa è disattivato. Attivalo nelle Impostazioni per tenere silenziosi chiamate e messaggi."
+        },
+        "lock": "Blocca schermo",
+        "autolockHint": "Lo schermo si spegne tra {seconds} s",
+        "stop": "Interrompi il monitoraggio",
+        "micLevel": "Livello sonoro qui",
+        "micSilent": "Il microfono non rileva alcun suono. Riavvia il monitoraggio o controlla il microfono."
+      },
+      "kiosk": {
+        "a11yLabel": "Monitoraggio in corso. Schermo bloccato.",
+        "unlockHint": "Tieni premuto e scorri verso l'alto per sbloccare",
+        "unlockZone": "Scorri qui",
+        "unlockAction": "Sblocca"
+      },
+      "link": {
+        "connected": "Connesso a {name}",
+        "connecting": "Connessione a {name}…",
+        "reconnecting": "Riconnessione…",
+        "cantReach": "{name} non raggiungibile: riprovo",
+        "lostFor": "Nessuna connessione da {duration}",
+        "babyStopped": "{name} ha interrotto il monitoraggio",
+        "idle": "Nessun monitoraggio",
+        "weak": "Connessione debole: l'audio potrebbe interrompersi",
+        "restoredAfter": "Di nuovo connesso dopo {duration}. Puoi sentire di nuovo il tuo bambino.",
+        "tryNow": "Riprova ora",
+        "pairAgain": "Associa di nuovo",
+        "connectedDefault": "Connesso al dispositivo del bambino",
+        "connectingDefault": "Connessione al dispositivo del bambino…",
+        "cantReachDefault": "Dispositivo del bambino non raggiungibile: riprovo",
+        "babyStoppedDefault": "Il dispositivo del bambino ha interrotto il monitoraggio",
+        "stalePairingHint": "Se hai associato di nuovo il dispositivo del bambino, inquadra il suo nuovo codice."
+      },
+      "linkAlarm": {
+        "lost": {
+          "title": "Nessuna connessione a {name}",
+          "titleUrgent": "Nessuna connessione a {name}!",
+          "body": "Non sentirai il tuo bambino finché i dispositivi non si riconnettono.",
+          "titleDefault": "Nessuna connessione al dispositivo del bambino",
+          "titleUrgentDefault": "Nessuna connessione al dispositivo del bambino!"
+        },
+        "stopped": {
+          "title": "{name} ha interrotto il monitoraggio",
+          "body": "Qualcuno ha interrotto il monitoraggio sul dispositivo del bambino. Non riceverai avvisi.",
+          "titleDefault": "Il dispositivo del bambino ha interrotto il monitoraggio"
+        },
+        "battery": {
+          "title": "Batteria del dispositivo del bambino quasi esaurita",
+          "body": "Collega subito il dispositivo del bambino, o il monitoraggio si fermerà."
+        },
+        "needsPairing": {
+          "title": "Dispositivi non più associati"
+        },
+        "restored": {
+          "title": "Di nuovo connesso"
+        },
+        "ack": "Sto controllando",
+        "ackNote": "Suono disattivato per {time}. Ti avviseremo di nuovo se non è ancora connesso.",
+        "soundNote": "Un tono di allarme leggero si ripete finché non controlli.",
+        "soundNoteUrgent": "L'allarme suona finché non controlli."
+      },
+      "parent": {
+        "allQuietSince": "Tutto tranquillo da {time}",
+        "soundSince": "Suono rilevato · da {time}",
+        "soundAt": "Suono alle {time} · durata {duration}",
+        "soundSnoozed": "Suono alle {time} · avvisi posticipati",
+        "lastHeard": "Ultimo contatto {time}",
+        "noContactYet": "Ancora nessun contatto",
+        "monitoringNow": "Monitoraggio",
+        "meterA11y": "Livello sonoro: {level}",
+        "level": {
+          "quiet": "silenzio",
+          "some": "qualche suono",
+          "loud": "forte"
+        },
+        "stop": "Interrompi il monitoraggio",
+        "securityTitle": "Avviso di sicurezza",
+        "securityBody": "Non è stato possibile verificare la connessione. Se non hai appena associato di nuovo i dispositivi, associali di nuovo ora.",
+        "staleSuffix": "· alle {time}",
+        "unitWarning": {
+          "pageHidden": "Il dispositivo del bambino potrebbe fermarsi: la sua pagina è nascosta",
+          "wakeLockOff": "Il dispositivo del bambino potrebbe addormentarsi: lo schermo non resta acceso",
+          "resumedFromSleep": "Il dispositivo del bambino si è riattivato: potresti aver perso dei suoni",
+          "notCharging": "Il dispositivo del bambino non è più in carica",
+          "micPermissionLost": "Il dispositivo del bambino ha perso l'accesso al microfono"
+        }
+      },
+      "battery": {
+        "baby": "Dispositivo del bambino {percent}%",
+        "babyLow": "Batteria del dispositivo del bambino al {percent}%: collegalo alla corrente",
+        "parentLow": "Questo dispositivo è al {percent}%: collegalo per continuare a monitorare",
+        "parentLowGeneric": "La batteria di questo dispositivo è scarica: collegalo per continuare a monitorare"
+      },
+      "listen": {
+        "idle": "Tieni premuto per ascoltare",
+        "holding": "In ascolto…",
+        "locked": "In ascolto · tocca per fermare",
+        "lockHint": "Scorri verso l'alto per continuare ad ascoltare",
+        "disabled": "Ascolta quando sei connesso",
+        "a11yLocked": "In ascolto. Tocca due volte per fermare."
+      },
+      "snooze": {
+        "button": "Posticipa",
+        "title": "Posticipa gli avvisi sonori",
+        "help": "Ricevi comunque gli avvisi se la connessione cade o una batteria sta per esaurirsi.",
+        "minutes": "Posticipa {minutes} min",
+        "end": "Termina posticipo",
+        "active": "Posticipato · restano {minutes} min"
+      },
+      "probe": {
+        "button": "Avviso di prova",
+        "title": "Prova i tuoi avvisi",
+        "body": "Riproduce un suono di prova su questo dispositivo. Il dispositivo del bambino resta in silenzio.",
+        "output": "Gli avvisi suonano su: {output}",
+        "run": "Avvia la prova",
+        "running": "Prova in corso…",
+        "question": "Hai sentito e percepito l'avviso?",
+        "localOnly": "Provato solo questo dispositivo: il dispositivo del bambino non è connesso."
+      },
+      "readiness": {
+        "title": "Gli avvisi ti raggiungono?",
+        "notificationsOff": "Gli avvisi di GuardedSleep sono disattivati",
+        "alarmVolumeZero": "Il volume della sveglia è azzerato: non sentirai gli avvisi",
+        "lockScreen": "Gli avvisi non possono comparire nella schermata di blocco",
+        "dnd": "Non disturbare potrebbe silenziare gli avvisi",
+        "battery": "Questo dispositivo potrebbe fermare GuardedSleep in background",
+        "headphones": "Gli avvisi suoneranno nelle cuffie",
+        "neverTested": "Prova i tuoi avvisi",
+        "ok": "Tutto pronto: gli avvisi ti raggiungono",
+        "fix": {
+          "notifications": "Attiva gli avvisi",
+          "dnd": "Consenti gli avvisi con Non disturbare",
+          "battery": "Consenti l'uso in background"
+        }
+      },
+      "silence": {
+        "silent": "Il dispositivo del bambino è in modalità silenziosa",
+        "alarmsStillRing": "Le sveglie su di esso possono ancora suonare.",
+        "screenMayLight": "Il dispositivo del bambino è in modalità silenziosa, ma lo schermo potrebbe accendersi",
+        "mayVibrate": "Il dispositivo del bambino potrebbe vibrare",
+        "mayRing": "Il dispositivo del bambino potrebbe squillare",
+        "unknown": "Modalità silenziosa: sconosciuta, impossibile controllare il dispositivo del bambino",
+        "manual": "Sul dispositivo del bambino attiva Non disturbare e abbassa la luminosità.",
+        "noAccess": "Per attivare la modalità silenziosa da qui, apri le Impostazioni sul dispositivo del bambino e attiva \"Modalità silenziosa durante il monitoraggio\".",
+        "apply": "Attiva la modalità silenziosa",
+        "applyFull": "Attiva completamente la modalità silenziosa",
+        "pending": "Attivazione della modalità silenziosa…",
+        "failed": "Impossibile attivare la modalità silenziosa sul dispositivo del bambino.",
+        "webUnknown": "Sconosciuta: attiva tu la modalità silenziosa sul dispositivo del bambino",
+        "webHint": "Se il dispositivo del bambino è un portatile, tienilo in carica, con il coperchio aperto e lo schermo acceso."
+      },
+      "help": {
+        "reconnect": {
+          "open": "Cosa posso fare?",
+          "title": "Riconnettersi",
+          "step1": "Il dispositivo del bambino è acceso e mostra GuardedSleep?",
+          "step2": "Entrambi i dispositivi sono sullo stesso Wi-Fi, o entrambi usano i dati mobili?",
+          "step3": "Ancora bloccato? Chiudi e riapri GuardedSleep sul dispositivo del bambino."
+        }
+      },
+      "stop": {
+        "title": "Interrompere il monitoraggio?",
+        "parentBody": "Non riceverai più avvisi da {name}.",
+        "babyBody": "Il dispositivo del genitore non riceverà più avvisi.",
+        "confirm": "Interrompi",
+        "cancel": "Continua a monitorare",
+        "parentBodyDefault": "Non riceverai più avvisi dal dispositivo del bambino."
+      },
+      "forget": {
+        "title": "Dimenticare {name}?",
+        "body": "Il monitoraggio si ferma e dovrai inquadrare un nuovo codice per connetterti di nuovo.",
+        "confirm": "Dimentica",
+        "titleBabyDefault": "Dimenticare il dispositivo del bambino?",
+        "titleParentDefault": "Dimenticare il dispositivo del genitore?"
+      },
+      "missed": {
+        "some": "Durante la disconnessione: {count, plural, one {1 suono} many {# di suoni} other {# suoni}} tra le {start} e le {end}. Il più forte: {level}.",
+        "none": "Nessun suono durante la disconnessione.",
+        "unknown": "Non sappiamo cosa sia successo tra le {start} e le {end}."
+      },
+      "coach": {
+        "bar": "Verde significa che stai monitorando. Se diventa rosso o sparisce, non stai monitorando.",
+        "listen": "Tieni premuto per ascoltare. Scorri verso l'alto per continuare ad ascoltare.",
+        "test": "Avvia un avviso di prova per sapere come si presenta un avviso.",
+        "runTest": "Avvia ora l'avviso di prova"
+      },
+      "alert": {
+        "title": "Suono rilevato",
+        "since": "Da {time}",
+        "ended": "Il suono è terminato.",
+        "testBadge": "PROVA",
+        "stopSound": "Ferma il suono",
+        "soundStopped": "Suono fermato",
+        "openApp": "Apri GuardedSleep"
+      },
+      "settings": {
+        "group": {
+          "soundDetection": "Rilevamento dei suoni",
+          "silence": "Modalità silenziosa",
+          "alerts": "Avvisi",
+          "screen": "Schermo",
+          "paired": "Dispositivo associato",
+          "thisPhone": "Questo dispositivo",
+          "language": "Lingua",
+          "about": "Informazioni e limiti",
+          "advanced": "Avanzate"
+        },
+        "sensitivity": "Sensibilità",
+        "moreSensitive": "Più sensibile",
+        "lessSensitive": "Meno sensibile",
+        "holdLabel": "Il rumore deve durare almeno",
+        "silenceAccessOk": "L'accesso alla modalità silenziosa è attivo.",
+        "outputLabel": "Il suono dell'avviso esce da",
+        "output": {
+          "default": "Cuffie se collegate, altrimenti altoparlante",
+          "speaker": "Solo altoparlante"
+        },
+        "gain": "Avvisi extra forti: {percent}%",
+        "lastTest": "Ultima prova: {time}",
+        "neverTested": "Non ancora provato",
+        "theme": {
+          "dark": "Scuro (predefinito)",
+          "light": "Chiaro",
+          "system": "Come il sistema"
+        },
+        "forgetParent": "Dimentica questo dispositivo del genitore",
+        "forgetBaby": "Dimentica questo dispositivo del bambino",
+        "checkPhone": "Controlla la configurazione di questo dispositivo",
+        "lang": {
+          "system": "Come il sistema"
+        },
+        "advanced": {
+          "toggle": "Mostra le impostazioni avanzate",
+          "warning": {
+            "title": "Modificare le impostazioni avanzate?",
+            "body": "Valori errati possono impedire ai dispositivi di connettersi. Modificali solo se sai cosa stai facendo."
+          },
+          "confirm": "Mostra le impostazioni avanzate",
+          "cancel": "Non ora"
+        },
+        "urlsLabel": "Indirizzi del server di connessione (provati in ordine)",
+        "url": {
+          "new": "Nuovo indirizzo (wss://…)",
+          "invalid": "L'indirizzo deve iniziare con wss:// o ws://."
+        },
+        "turn": {
+          "label": "Server di inoltro (TURN), facoltativo",
+          "invalid": "L'indirizzo di inoltro deve iniziare con turn: o turns:."
+        },
+        "heartbeat": "Controllo della connessione ogni {seconds} s"
+      },
+      "fgsMissing": {
+        "bar": "Nessun monitoraggio in background: apri l'app",
+        "body": "Android ha fermato il servizio in background di GuardedSleep. Gli avvisi potrebbero non raggiungerti con lo schermo spento.",
+        "fix": "Riattiva il monitoraggio in background"
+      }
+    }
+  },
+  "webShell": {
+    "route": {
+      "role": "Che dispositivo è questo?",
+      "babyPair": "Associa il dispositivo del bambino",
+      "baby": "Dispositivo del bambino",
+      "parentPair": "Associa il dispositivo del genitore",
+      "parent": "Dispositivo del genitore",
+      "settings": "Impostazioni"
+    },
+    "skipToContent": "Vai al contenuto",
+    "dismiss": "Chiudi"
+  },
+  "webScreens": {
+    "role": {
+      "title": "Usa questo dispositivo come",
+      "subtitle": "Telefono, tablet o portatile. Configura prima il dispositivo del bambino.",
+      "navLabel": "Scegli un ruolo",
+      "privacyNote": "L'audio passa direttamente tra i tuoi due dispositivi e non viene mai registrato."
+    },
+    "pair": {
+      "copyHint": "Incollalo sul dispositivo del genitore entro 5 minuti. Non inviarlo in una chat.",
+      "or": "oppure",
+      "cameraUnavailable": "Nessuna fotocamera disponibile qui. Incolla invece il codice.",
+      "cameraView": "Vista della fotocamera"
+    },
+    "baby": {
+      "failMicDenied": "Il microfono è bloccato, quindi questo dispositivo non può sentire il tuo bambino. Consentilo nelle impostazioni del sito del browser.",
+      "failMicUnavailable": "Nessun microfono trovato: questo dispositivo non può sentire il tuo bambino.",
+      "quietUnknown": "Modalità silenziosa: sconosciuta",
+      "keepAwake": "Tieni questo dispositivo attivo: in carica, coperchio aperto, questa scheda visibile.",
+      "keepSilent": "Attiva Non disturbare e abbassa la luminosità su questo dispositivo."
+    },
+    "parent": {
+      "quietUnknownWeb": "Modalità silenziosa sconosciuta · attivala sul dispositivo del bambino",
+      "keepOpen": "Tieni aperta questa pagina e lo schermo acceso. Altrimenti il browser non può avvisarti.",
+      "soundGate": "Tocca per attivare il suono degli avvisi"
+    },
+    "settings": {
+      "urlHint": "Il dispositivo del bambino scrive questi indirizzi nel suo codice, quindi li usa anche il dispositivo del genitore.",
+      "sensitivityBabyOnly": "La sensibilità si imposta sul dispositivo del bambino."
+    },
+    "guard": {
+      "wakeLockHeld": "Lo schermo resta acceso",
+      "wakeLockLost": "Lo schermo non resta più acceso: questo dispositivo potrebbe addormentarsi e interrompere il monitoraggio.",
+      "wakeLockUnsupported": "Questo browser non può tenere acceso lo schermo. Disattiva la sospensione dello schermo nelle impostazioni del dispositivo.",
+      "wakeLockRetry": "Tieni lo schermo acceso",
+      "hiddenTitle": "GuardedSleep potrebbe fermarsi",
+      "hiddenBody": "Questa pagina è in background. Riaprila per continuare a monitorare.",
+      "awayBackground": "Questa pagina è rimasta in background per {duration}. Alcuni avvisi potrebbero essere andati persi.",
+      "awaySleep": "Questo dispositivo è rimasto in sospensione per {duration}. Alcuni avvisi potrebbero essere andati persi."
+    },
+    "night": {
+      "open": "Schermo notturno",
+      "label": "Schermo notturno. Monitoraggio in corso. Tocca per vedere lo stato.",
+      "monitoring": "Monitoraggio in corso",
+      "leave": "Tocca di nuovo per uscire dallo schermo notturno"
+    }
+  }
+}

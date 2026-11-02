@@ -8,7 +8,7 @@ name: guardedsleep
 # the project directory for `.devcontainer/.env`):
 #   docker compose --project-directory .devcontainer -f .devcontainer/docker-compose.yml build
 #   ./scripts/devcontainer-run.sh pnpm install
-#   ./scripts/devcontainer-run.sh bash -lc './.devcontainer/post-create.sh && pnpm run lint'
+#   ./scripts/devcontainer-run.sh bash -lc './.devcontainer/post-create.sh && just lint'
 #
 # Long-running shell (same mount as IDE dev container):
 #   ./scripts/devcontainer-run.sh bash
@@ -27,6 +27,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # Named context for rust-toolchain.toml (see the Dockerfile header).
+      additional_contexts:
+        repo: ..
     image: guardedsleep-dev:local
     volumes:
       # Compose file lives in .devcontainer/ → parent directory is the repo root

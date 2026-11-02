@@ -1,0 +1,7 @@
+# AC-1a: with different PSKs the parent never meets the baby; the troubleshooter names the cause.
+appId: org.guardedsleep.app.alpha
+---
+- extendedWaitUntil:
+    visible:
+      id: "link_alarm_cause"
+    timeout: 15000

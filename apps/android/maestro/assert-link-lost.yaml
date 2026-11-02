@@ -1,0 +1,7 @@
+# AC-4 / AC-10: losing the baby unit raises the connection alarm.
+appId: org.guardedsleep.app.alpha
+---
+- extendedWaitUntil:
+    visible:
+      id: "link_alarm_title"
+    timeout: 10000

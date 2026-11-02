@@ -2,7 +2,7 @@
 
 > This document preserves the original brainstorm and raw ideas that started the project.
 > It serves as a reference for the thought process behind the concept.
-> Refined versions of these ideas are tracked in the [feature documents](../features/README.md).
+> Refined versions of these ideas are tracked in the [feature documents](../backlog.md).
 
 ## Original Brainstorm
 

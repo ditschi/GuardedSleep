@@ -1,0 +1,7 @@
+# AC-1 baby: the monitoring screen (or its dark kiosk edge indicator) is shown after verification.
+appId: org.guardedsleep.app.alpha
+---
+- extendedWaitUntil:
+    visible:
+      id: "baby_status|baby_kiosk_edge"
+    timeout: 15000

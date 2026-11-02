@@ -1,0 +1,61 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "attack-ghost-baby",
+  "description": "A ghost baby socket holds the baby slot; the real baby is refused with BABY_TAKEN and retries until the ghost is evicted.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "ghost_join",
+      "role": "baby"
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 90000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 85000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 85000
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    }
+  ]
+}

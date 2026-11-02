@@ -1,6 +1,6 @@
 # Use Cases
 
-> STATUS: PROPOSED -- companion document to [personas.md](personas.md) and [failure-model.md](failure-model.md); finalized via [ADR-009](../decisions/ADR-009-personas-and-failure-model.md).
+> STATUS: PROPOSED -- companion document to [personas.md](personas.md) and [failure-model.md](failure-model.md); finalized via [ADR-009](../../openspec/changes/archive/2026-10-21-adr-009-personas-and-failure-model/design.md).
 >
 > **Why this document exists**: features should be designed against concrete situations, not against an abstract "user". The [concept review 2026-05](../reviews/concept-review-2026-05.md) (finding CRIT-1) called out the lack of a use-case catalogue as a root cause for blind spots like the captive-WLAN problem (CRIT-2) and the parent-device-dead case (CRIT-5).
 
@@ -11,7 +11,7 @@ Each use case is described by:
 - **Persona** -- primary user(s) from [personas.md](personas.md)
 - **Pre-conditions** -- what is already set up
 - **Setup steps** -- what the user does at the start of the session
-- **Expected connectivity path** -- which of the three connectivity modes from [connectivity-pairing.md](../features/connectivity-pairing.md) the app should pick
+- **Expected connectivity path** -- which of the three connectivity modes from [pairing spec](../../openspec/specs/pairing/spec.md) the app should pick
 - **Data volume** -- realistic data usage per hour
 - **Failure behavior** -- which failure cases from [failure-model.md](failure-model.md) are most relevant here
 
@@ -33,7 +33,7 @@ Each use case is described by:
 1. Baby device: app is **already running** (Auto-Resume after reboot, or never closed since last evening).
 2. Parent device: tap the saved-connection card on the home screen. One tap, reconnect within ~5 s.
 
-**Expected connectivity path**: Local WiFi (Path 1 in [connectivity-pairing.md](../features/connectivity-pairing.md)).
+**Expected connectivity path**: Local WiFi (Path 1 in [pairing spec](../../openspec/specs/pairing/spec.md)).
 
 **Data volume**: negligible. Heartbeat ~0.05 MB/h + Opus DTX silence ~0.5 MB/h. Listen-mode bursts ~10-18 MB/h, used rarely.
 
@@ -66,7 +66,7 @@ Each use case is described by:
 
 1. Phase 2: parent device taps "Add device for tonight" -> shows QR with **time-limited Babysitter Pairing** (SUG-4: e.g. 12-hour validity).
 2. Babysitter's phone scans the QR -> joins the cluster.
-3. After expiry, babysitter's saved connection is automatically invalidated (re-keying behavior to be specified in [connectivity-pairing.md](../features/connectivity-pairing.md)).
+3. After expiry, babysitter's saved connection is automatically invalidated (re-keying behavior to be specified in [pairing spec](../../openspec/specs/pairing/spec.md)).
 
 **Expected connectivity path**: same as UC-1; babysitter is on the home WLAN.
 
@@ -140,7 +140,7 @@ Each use case is described by:
    - QR pairing then proceeds normally.
 3. **Range warning**: hotspot range is typically 10-30 m. Parents must remain within reach.
 
-**Expected connectivity path**: Hotspot (Path 1 with one device as AP).
+**Expected connectivity path**: Hotspot (Path 1 with one device as AP). (Offline topologies target beta, ADR-021 §1.)
 
 **Data volume**: zero -- no internet involved.
 
@@ -151,7 +151,7 @@ Each use case is described by:
 
 **Key UX requirements**:
 
-- Guided Hotspot wizard with OS-specific screenshots (already DECIDED MVP in [connectivity-pairing.md](../features/connectivity-pairing.md)).
+- Guided Hotspot wizard with OS-specific screenshots (already DECIDED MVP in [pairing spec](../../openspec/specs/pairing/spec.md)).
 - Range estimation -- not technically measurable, but the app should set expectations via the Hardware-vs-Software FAQ (SUG-5).
 
 ---
@@ -172,7 +172,7 @@ Each use case is described by:
 
 **Expected connectivity path**: same as UC-1 per baby device.
 
-**Why deferred**: the MVP cap is 1+1 ([connectivity-pairing.md](../features/connectivity-pairing.md)). Phase 2 expands to 1+4 (one baby + four parents), not 2+1. Multi-baby is a structurally different problem (audio mixing, alert prioritization, UI density) and is **Phase 3+**.
+**Why deferred**: the MVP cap is 1+1 ([pairing spec](../../openspec/specs/pairing/spec.md)). Phase 2 expands to 1+4 (one baby + four parents), not 2+1. Multi-baby is a structurally different problem (audio mixing, alert prioritization, UI density) and is **Phase 3+**.
 
 **Open questions**:
 
@@ -188,14 +188,14 @@ These belong in a future ADR when multi-baby is committed.
 
 For each use case, this matrix shows which feature areas are _primarily exercised_. Helps identify which features are critical for which use case.
 
-| Feature area                                                    | UC-1 Daily           | UC-2 Babysitter    | UC-3 Wedding          | UC-4 Holiday                  | UC-5 Siblings             |
-| --------------------------------------------------------------- | -------------------- | ------------------ | --------------------- | ----------------------------- | ------------------------- |
-| [Audio Monitoring](../features/audio-monitoring.md)             | Primary              | Primary            | Primary               | Primary                       | Primary x2                |
-| [Communication](../features/communication.md)                   | Primary              | Primary            | Primary (Cellular!)   | Primary                       | Primary x2                |
-| [Notifications and Alerts](../features/notifications-alerts.md) | Primary              | Primary            | Primary (headphones!) | Primary                       | Primary (priority needed) |
-| [Connectivity and Pairing](../features/connectivity-pairing.md) | Local                | Local + Babysitter | Internet/Cellular     | Hotspot                       | Local x2                  |
-| [Device Management](../features/device-management.md)           | Auto-resume critical | Same               | Battery-critical      | Battery-critical              | Battery x2                |
-| [User Interface](../features/user-interface.md)                 | 3-AM single-hand     | Same               | Daytime + headphones  | Daytime, possibly outdoor sun | Multi-baby view           |
+| Feature area                                                           | UC-1 Daily           | UC-2 Babysitter    | UC-3 Wedding          | UC-4 Holiday                  | UC-5 Siblings             |
+| ---------------------------------------------------------------------- | -------------------- | ------------------ | --------------------- | ----------------------------- | ------------------------- |
+| [Audio Monitoring](../../openspec/specs/audio-monitoring/spec.md)      | Primary              | Primary            | Primary               | Primary                       | Primary x2                |
+| [Communication](../../openspec/specs/audio-monitoring/spec.md)         | Primary              | Primary            | Primary (Cellular!)   | Primary                       | Primary x2                |
+| [Notifications and Alerts](../../openspec/specs/parent-alerts/spec.md) | Primary              | Primary            | Primary (headphones!) | Primary                       | Primary (priority needed) |
+| [Connectivity and Pairing](../../openspec/specs/pairing/spec.md)       | Local                | Local + Babysitter | Internet/Cellular     | Hotspot                       | Local x2                  |
+| [Device Management](../../openspec/specs/device-setup/spec.md)         | Auto-resume critical | Same               | Battery-critical      | Battery-critical              | Battery x2                |
+| [User Interface](../../openspec/specs/device-setup/spec.md)            | 3-AM single-hand     | Same               | Daytime + headphones  | Daytime, possibly outdoor sun | Multi-baby view           |
 
 ## Discarded use-case candidates
 

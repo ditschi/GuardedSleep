@@ -1,0 +1,92 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "parent-pin-and-name",
+  "description": "At the first verification the parent persists its secret (the parent_pinned event, before the message that carries it), then sends it with its device name over the DataChannel; the baby pins the secret and shows the name, and the parent records the acknowledgement with a second parent_pinned event. A restart of either side later passes the proof and shows the name again; a restarted parent without the secret is refused.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent",
+      "device_name": "Pixel 8"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 60000,
+      "do": "restart_process",
+      "peer": "baby"
+    },
+    {
+      "at": 150000,
+      "do": "restart_process",
+      "peer": "parent"
+    },
+    {
+      "at": 260000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "event": "parent_pinned",
+      "count": 1,
+      "within_ms": [0, 30000]
+    },
+    {
+      "peer": "parent",
+      "event": "parent_pinned",
+      "count": 2,
+      "within_ms": [0, 30000]
+    },
+    {
+      "peer": "baby",
+      "event": "parent_connected",
+      "where": {
+        "name": "Pixel 8"
+      },
+      "within_ms": [0, 30000],
+      "count": 1
+    },
+    {
+      "peer": "baby",
+      "event": "parent_connected",
+      "where": {
+        "name": "Pixel 8"
+      },
+      "within_ms": [60000, 140000],
+      "count": 1
+    },
+    {
+      "peer": "baby",
+      "event": "parent_connected",
+      "where": {
+        "name": "Pixel 8"
+      },
+      "within_ms": [150000, 260000],
+      "count": 1
+    },
+    {
+      "peer": "baby",
+      "never": "security_warning"
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 255000
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 255000
+    }
+  ]
+}

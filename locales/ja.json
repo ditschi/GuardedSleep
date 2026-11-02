@@ -1,0 +1,547 @@
+{
+  "$meta": {
+    "default": "machineTranslated",
+    "reviewed": []
+  },
+  "meta": {
+    "appTitle": "GuardedSleep"
+  },
+  "layout": {
+    "settingsAria": "設定",
+    "backAria": "前の画面に戻る"
+  },
+  "core": {
+    "pairingKeyMismatch": "これらの端末のペアリングが解除されました。見守りを続けるには、もう一度ペアリングしてください。",
+    "updateRequired": "見守りを続けるには、いずれかの端末で GuardedSleep のアップデートが必要です。",
+    "serverUnreachable": "この端末は接続サーバーに届きません。インターネット接続を確認してください。",
+    "peerAbsent": "赤ちゃん用端末から応答がありません。電源が入り、GuardedSleep が表示されているか確認してください。",
+    "mediaBlocked": "端末同士は見つかりましたが、音が届きません。両方を同じ Wi-Fi につないでみてください。",
+    "wrongKeyAttempt": "誰かが誤ったキーで接続しようとしました。見守りは続いています。",
+    "unknownParentAttempt": "ペアリングした保護者用の端末ではない端末が接続しようとしました。見守りは続いています。",
+    "pairAgain": "この端末は保護者用端末を認識できなくなりました。「新しいコードを表示」をタップして、もう一度ペアリングしてください。",
+    "babyUnrecognised": "赤ちゃん用端末がこの端末を認識していません。赤ちゃん用端末で「新しいコードを表示」をタップして、もう一度ペアリングしてください。"
+  },
+  "native": {
+    "appName": "GuardedSleep Alpha",
+    "notif": {
+      "appTitle": "GuardedSleep",
+      "silenceRuleName": "GuardedSleep",
+      "channelNoise": "音のアラート",
+      "channelNoiseDesc": "赤ちゃん用端末が音を検知したときの大きなアラートです。",
+      "channelLink": "接続アラーム",
+      "channelLinkDesc": "赤ちゃん用端末との接続が切れたときのアラームです。",
+      "channelStatus": "見守りの状態",
+      "channelStatusDesc": "見守りが動作中であることを表示します。",
+      "channelNotice": "警告",
+      "channelNoticeDesc": "バッテリーとセキュリティの警告です。",
+      "channelInfo": "お知らせ",
+      "channelInfoDesc": "接続が戻ったときなどの静かな通知です。",
+      "channelBaby": "見守り中",
+      "channelBabyDesc": "この端末が見守り中であることを示す無音の通知です。",
+      "babyMonitoring": "GuardedSleep が見守り中です",
+      "babyResume": "タップして見守りを再開",
+      "statusConnected": "赤ちゃん用端末に接続中",
+      "statusConnecting": "赤ちゃん用端末に接続しています…",
+      "statusReconnecting": "赤ちゃん用端末に再接続しています…",
+      "statusTrouble": "赤ちゃん用端末に届きません。再試行中です",
+      "statusAlarm": "赤ちゃん用端末に接続できません",
+      "statusPeerStopped": "赤ちゃん用端末が見守りを停止しました",
+      "statusFailed": "これらの端末のペアリングが解除されました",
+      "noiseTitle": "音を検知しました",
+      "noiseText": "赤ちゃん用端末が音を検知しました。",
+      "noiseTestTitle": "テストアラート",
+      "noiseTestText": "これはテストです。赤ちゃん用端末は鳴りません。",
+      "actionStopSound": "音を止める",
+      "actionSnooze10": "10分スヌーズ",
+      "actionChecking": "確認中です",
+      "linkLostTitle": "接続が切れました",
+      "linkLostText": "赤ちゃん用端末に接続できません。今すぐ赤ちゃんの様子を見てください。",
+      "peerStoppedTitle": "赤ちゃん用端末が見守りを停止しました",
+      "peerStoppedText": "赤ちゃん用端末で見守りが停止されました。再開されるまで音は聞こえません。",
+      "restoredTitle": "再接続しました",
+      "restoredText": "{duration}の間、見守りができていませんでした。",
+      "missedTitle": "接続が切れていた間",
+      "missedCount": "接続が切れていた間の音：{count}回（{duration}の間、見守りができていませんでした）。",
+      "missedNone": "接続が切れていた間、音はありませんでした（{duration}の間、見守りができていませんでした）。",
+      "missedUnknown": "接続が切れていた間の様子は分かりません（{duration}の間、見守りができていませんでした）。",
+      "batteryLowTitle": "赤ちゃん用端末のバッテリー残量が低下",
+      "batteryLowText": "赤ちゃん用端末のバッテリーは{percent}%です。充電してください。",
+      "batteryCriticalTitle": "赤ちゃん用端末のバッテリーがほぼ空です",
+      "batteryCriticalText": "赤ちゃん用端末のバッテリーは{percent}%です。今すぐ充電してください。",
+      "chargerTitle": "赤ちゃん用端末が充電されていません",
+      "chargerText": "夜通しもつよう、赤ちゃん用端末を充電してください。",
+      "securityTitle": "キーが違います",
+      "publicTitle": "GuardedSleep アラーム",
+      "fgsMissingTitle": "バックグラウンドで見守っていません",
+      "fgsMissingText": "GuardedSleep を開いて、バックグラウンドの見守りを再開してください。"
+    },
+    "ui": {
+      "common": {
+        "appName": "GuardedSleep",
+        "allow": "許可",
+        "continue": "続ける",
+        "later": "あとで",
+        "ok": "OK",
+        "cancel": "キャンセル",
+        "more": "その他",
+        "moreCount": "+{count}",
+        "settings": "設定",
+        "tryAgain": "もう一度試す",
+        "yes": "はい",
+        "no": "いいえ",
+        "add": "追加",
+        "remove": "削除",
+        "save": "保存",
+        "change": "変更",
+        "durationSec": "{seconds}秒",
+        "durationMin": "{minutes}分",
+        "durationHour": "{hours}時間",
+        "durationHourMin": "{hours}時間{minutes}分",
+        "secondsShort": "{seconds}秒",
+        "state": {
+          "done": "完了",
+          "todo": "未完了",
+          "blocked": "ブロック中",
+          "checking": "確認中"
+        },
+        "babyUnitDefault": "赤ちゃん用端末",
+        "parentUnitDefault": "保護者用端末"
+      },
+      "role": {
+        "title": "この端末はどちらですか？",
+        "baby": {
+          "title": "赤ちゃん用端末",
+          "hint": "お子さんのそばに置いて、音を聞きます。"
+        },
+        "parent": {
+          "title": "保護者用端末",
+          "hint": "あなたのそばに置いて、アラートを受け取ります。"
+        },
+        "orderHint": "先に赤ちゃん用端末を設定してください。"
+      },
+      "setup": {
+        "title": "この端末を準備する",
+        "mic": {
+          "title": "マイク",
+          "why": "お子さんの声や音を聞くために必要です。",
+          "required": "続けるにはマイクを許可してください。"
+        },
+        "background": {
+          "title": "バックグラウンドで動作を続ける",
+          "why": "許可しないと、節電のためにこの端末が見守りを停止することがあります。"
+        },
+        "silence": {
+          "title": "見守り中は静音モード",
+          "why": "赤ちゃん用端末で音、着信音、光が出なくなります。目覚まし時計は鳴ります。"
+        },
+        "safety": {
+          "body": "この端末は充電器につないだまま、安定した場所に、お子さんの手が届かないように置いてください。バッテリーが膨らんだり傷んだりした端末は使わないでください。"
+        },
+        "chargingTip": "ヒント：この端末に「充電時に画面を点灯」の設定がある場合は、画面が暗いままになるようオフにしてください。",
+        "deviceCheck": {
+          "checking": "この端末を確認しています…",
+          "ok": "この端末は赤ちゃん用端末として問題なく使えます。",
+          "limited": "この端末は、ときどき接続が切れることがあります。使うことはできます。",
+          "notRecommended": "この端末では確実に見守れない可能性があります。できれば別の端末をお使いください。"
+        },
+        "notifications": {
+          "title": "アラート",
+          "why": "お子さんが音を立てたときに気づくために必要です。",
+          "required": "これがないと、GuardedSleep はアラートを出せません。"
+        },
+        "lockScreen": {
+          "title": "ロック画面のアラート",
+          "why": "画面がロックされていてもアラートが表示されます。"
+        },
+        "dndBypass": {
+          "title": "サイレントモード中のアラート",
+          "why": "サイレントモード中でもアラートが届くようになります。"
+        },
+        "limits": {
+          "body": "GuardedSleep がアラートを出せるのは、この端末の電源が入っていて充電が残っている間だけです。夜は充電したままにしてください。両方の端末の電源が切れると、誰にもアラートは届きません。"
+        },
+        "skipped": "今はスキップ"
+      },
+      "pair": {
+        "baby": {
+          "title": "保護者用端末をつなぐ",
+          "qrAlt": "ペアリングコード",
+          "instruction": "もう一方の端末で GuardedSleep を開き、「保護者用端末」を選んで、このコードをスキャンしてください。",
+          "validFor": "コードの有効時間：{duration}",
+          "expired": "このコードは期限切れです。",
+          "newCode": "新しいコードを表示",
+          "copy": "コードをコピー",
+          "copied": "コピーしました",
+          "brighter": "コードを明るくする",
+          "waiting": "保護者用端末を待っています…",
+          "privacy": "このコードを持っている人は誰でも音を聞けます。信頼できる人にだけ見せてください。",
+          "parentFound": "保護者用端末が見つかりました。接続しています…",
+          "failed": "ペアリングできませんでした。新しいコードを表示して、もう一度お試しください。",
+          "showText": "コードをテキストで表示",
+          "hideText": "テキストを隠す"
+        },
+        "parent": {
+          "title": "赤ちゃん用端末のコードをスキャン",
+          "cameraWhy": "GuardedSleep はコードの読み取りにだけカメラを使います。",
+          "pasteLabel": "またはコードを貼り付け",
+          "pasteSubmit": "接続",
+          "connecting": "赤ちゃん用端末に接続しています…"
+        },
+        "error": {
+          "cameraDenied": "カメラが許可されていません。",
+          "allowCamera": "カメラを許可",
+          "pasteInstead": "代わりにコードを貼り付け",
+          "notOurs": "GuardedSleep のコードではありません。赤ちゃん用端末のコードをスキャンしてください。",
+          "expired": "このコードは期限切れです。赤ちゃん用端末で「新しいコードを表示」をタップし、もう一度スキャンしてください。",
+          "mismatch": "コードが一致しません。赤ちゃん用端末に今表示されているコードをスキャンしてください。",
+          "alreadyPaired": "この赤ちゃん用端末はすでに別の端末とペアリングされています。",
+          "unreachable": "赤ちゃん用端末がまだ見つかりません。両方の端末がオンラインか確認してください。",
+          "incomplete": "このコードは不完全です。赤ちゃん用端末からコード全体をコピーしてください。"
+        }
+      },
+      "home": {
+        "parent": {
+          "cardTitle": "{name}に接続",
+          "cardTitleDefault": "赤ちゃん用端末に接続"
+        },
+        "baby": {
+          "cardTitle": "見守りを開始"
+        },
+        "lastUsed": "最終使用：{time}",
+        "newPairing": "新しい端末を設定",
+        "empty": "ペアリングされた端末はまだありません。"
+      },
+      "baby": {
+        "status": {
+          "connected": "保護者用端末に接続中",
+          "waiting": "保護者用端末を待っています…",
+          "reconnecting": "保護者用端末に再接続しています…",
+          "notResponding": "保護者用端末から応答がありません。再試行中です",
+          "parentStopped": "保護者用端末が見守りを停止しました"
+        },
+        "forDuration": "{duration}間",
+        "monitoring": "見守り中",
+        "parentListening": "保護者が聞いています",
+        "battery": "この端末：バッテリー{percent}%",
+        "batteryCharging": "この端末：充電中 · {percent}%",
+        "silence": {
+          "on": "静音モードはオンです",
+          "off": "静音モードはオフです。この端末が鳴ることがあります",
+          "everydayPhone": "静音モードはオンです。見守りを止めるまで、この端末の通話やメッセージは鳴りません。",
+          "restored": "この端末は静音モードのままになっていました。音を元に戻しました。",
+          "noAccess": "静音モードへのアクセスがオフです。通話やメッセージを鳴らさないよう、設定でオンにしてください。"
+        },
+        "lock": "画面をロック",
+        "autolockHint": "{seconds}秒後に画面が暗くなります",
+        "stop": "見守りを停止",
+        "micLevel": "ここでの音量",
+        "micSilent": "マイクが音を拾っていません。見守りを再開するか、マイクを確認してください。"
+      },
+      "kiosk": {
+        "a11yLabel": "見守り中。画面はロックされています。",
+        "unlockHint": "長押しして上にスライドするとロック解除",
+        "unlockZone": "ここをスライド",
+        "unlockAction": "ロック解除"
+      },
+      "link": {
+        "connected": "{name}に接続中",
+        "connecting": "{name}に接続しています…",
+        "reconnecting": "再接続しています…",
+        "cantReach": "{name}に届きません。再試行中です",
+        "lostFor": "{duration}間、接続できていません",
+        "babyStopped": "{name}が見守りを停止しました",
+        "idle": "見守っていません",
+        "weak": "接続が弱く、音が途切れることがあります",
+        "restoredAfter": "{duration}ぶりに再接続しました。またお子さんの音が聞こえます。",
+        "tryNow": "今すぐ試す",
+        "pairAgain": "もう一度ペアリング",
+        "connectedDefault": "赤ちゃん用端末に接続中",
+        "connectingDefault": "赤ちゃん用端末に接続しています…",
+        "cantReachDefault": "赤ちゃん用端末に届きません。再試行中です",
+        "babyStoppedDefault": "赤ちゃん用端末が見守りを停止しました",
+        "stalePairingHint": "赤ちゃん用端末を再ペアリングした場合は、新しいコードをスキャンしてください。"
+      },
+      "linkAlarm": {
+        "lost": {
+          "title": "{name}に接続できません",
+          "titleUrgent": "{name}に接続できません！",
+          "body": "端末が再接続するまで、お子さんの音は聞こえません。",
+          "titleDefault": "赤ちゃん用端末に接続できません",
+          "titleUrgentDefault": "赤ちゃん用端末に接続できません！"
+        },
+        "stopped": {
+          "title": "{name}が見守りを停止しました",
+          "body": "誰かが赤ちゃん用端末で見守りを停止しました。アラートは届きません。",
+          "titleDefault": "赤ちゃん用端末が見守りを停止しました"
+        },
+        "battery": {
+          "title": "赤ちゃん用端末のバッテリーがほぼ空です",
+          "body": "今すぐ赤ちゃん用端末を充電してください。そうしないと見守りが止まります。"
+        },
+        "needsPairing": {
+          "title": "端末のペアリングが解除されました"
+        },
+        "restored": {
+          "title": "再接続しました"
+        },
+        "ack": "確認中です",
+        "ackNote": "{time}の間、音を止めます。それでも接続されていなければ、もう一度お知らせします。",
+        "soundNote": "確認するまで、やわらかなアラーム音が繰り返されます。",
+        "soundNoteUrgent": "確認するまでアラームが鳴り続けます。"
+      },
+      "parent": {
+        "allQuietSince": "{time}からずっと静かです",
+        "soundSince": "音を検知 · {time}から",
+        "soundAt": "{time}に音 · {duration}続きました",
+        "soundSnoozed": "{time}に音 · アラートはスヌーズ中",
+        "lastHeard": "最終接続：{time}",
+        "noContactYet": "まだ接続していません",
+        "monitoringNow": "見守り中",
+        "meterA11y": "音量：{level}",
+        "level": {
+          "quiet": "静か",
+          "some": "少し音あり",
+          "loud": "大きい"
+        },
+        "stop": "見守りを停止",
+        "securityTitle": "セキュリティ警告",
+        "securityBody": "接続を確認できませんでした。端末を再ペアリングした覚えがない場合は、今すぐもう一度ペアリングしてください。",
+        "staleSuffix": "· {time}",
+        "unitWarning": {
+          "pageHidden": "赤ちゃん用端末が一時停止している可能性があります（ページが非表示）",
+          "wakeLockOff": "赤ちゃん用端末がスリープする可能性があります（画面が点灯したままではありません）",
+          "resumedFromSleep": "赤ちゃん用端末がスリープから復帰しました。音を聞き逃した可能性があります",
+          "notCharging": "赤ちゃん用端末が充電されていません",
+          "micPermissionLost": "赤ちゃん用端末がマイクへのアクセスを失いました"
+        }
+      },
+      "battery": {
+        "baby": "赤ちゃん用端末 {percent}%",
+        "babyLow": "赤ちゃん用端末のバッテリー{percent}%。充電してください",
+        "parentLow": "この端末は{percent}%です。見守りを続けるには充電してください",
+        "parentLowGeneric": "この端末のバッテリーが少なくなっています。見守りを続けるには充電してください"
+      },
+      "listen": {
+        "idle": "長押しで聞く",
+        "holding": "聞いています…",
+        "locked": "聞いています · タップで停止",
+        "lockHint": "上にスライドして聞き続ける",
+        "disabled": "接続すると聞けます",
+        "a11yLocked": "聞いています。ダブルタップで停止します。"
+      },
+      "snooze": {
+        "button": "スヌーズ",
+        "title": "音のアラートをスヌーズ",
+        "help": "接続が切れたときやバッテリーが少なくなったときは、引き続きアラートが届きます。",
+        "minutes": "{minutes}分スヌーズ",
+        "end": "スヌーズを終了",
+        "active": "スヌーズ中 · 残り{minutes}分"
+      },
+      "probe": {
+        "button": "テストアラート",
+        "title": "アラートをテスト",
+        "body": "この端末でテスト音を鳴らします。赤ちゃん用端末は鳴りません。",
+        "output": "アラートの再生先：{output}",
+        "run": "テストを実行",
+        "running": "テストを実行しています…",
+        "question": "音と振動を感じましたか？",
+        "localOnly": "この端末だけをテストしました。赤ちゃん用端末は接続されていません。"
+      },
+      "readiness": {
+        "title": "アラートは届きますか？",
+        "notificationsOff": "GuardedSleep のアラートがオフになっています",
+        "alarmVolumeZero": "アラームの音量がオフです。アラートが聞こえません",
+        "lockScreen": "アラートがロック画面に表示されません",
+        "dnd": "サイレントモードでアラートが鳴らない可能性があります",
+        "battery": "この端末がバックグラウンドで GuardedSleep を停止する可能性があります",
+        "headphones": "アラートはヘッドホンで再生されます",
+        "neverTested": "アラートをテストしてください",
+        "ok": "準備完了です。アラートは届きます",
+        "fix": {
+          "notifications": "アラートをオンにする",
+          "dnd": "サイレントモード中のアラートを許可",
+          "battery": "バックグラウンドでの使用を許可"
+        }
+      },
+      "silence": {
+        "silent": "赤ちゃん用端末は静音モードです",
+        "alarmsStillRing": "目覚まし時計は鳴ります。",
+        "screenMayLight": "赤ちゃん用端末は静音モードですが、画面が点灯することがあります",
+        "mayVibrate": "赤ちゃん用端末が振動することがあります",
+        "mayRing": "赤ちゃん用端末が鳴ることがあります",
+        "unknown": "静音モード：不明。赤ちゃん用端末を確認できません",
+        "manual": "赤ちゃん用端末でサイレントモードをオンにして、明るさを下げてください。",
+        "noAccess": "ここから静音モードをオンにするには、赤ちゃん用端末で設定を開き、「見守り中は静音モード」をオンにしてください。",
+        "apply": "静音モードをオンにする",
+        "applyFull": "静音モードを完全にオンにする",
+        "pending": "静音モードをオンにしています…",
+        "failed": "赤ちゃん用端末で静音モードをオンにできませんでした。",
+        "webUnknown": "不明。赤ちゃん用端末で静音モードを自分でオンにしてください",
+        "webHint": "赤ちゃん用端末がノートパソコンの場合は、充電したまま、蓋を開けて画面を点けておいてください。"
+      },
+      "help": {
+        "reconnect": {
+          "open": "どうすればいい？",
+          "title": "もう一度つなぐには",
+          "step1": "赤ちゃん用端末の電源が入り、GuardedSleep が表示されていますか？",
+          "step2": "両方の端末が同じ Wi-Fi、または両方がモバイルデータを使っていますか？",
+          "step3": "それでもだめなら、赤ちゃん用端末で GuardedSleep を閉じてもう一度開いてください。"
+        }
+      },
+      "stop": {
+        "title": "見守りを停止しますか？",
+        "parentBody": "{name}からのアラートが届かなくなります。",
+        "babyBody": "保護者用端末にアラートが届かなくなります。",
+        "confirm": "停止",
+        "cancel": "見守りを続ける",
+        "parentBodyDefault": "赤ちゃん用端末からのアラートが届かなくなります。"
+      },
+      "forget": {
+        "title": "{name}を削除しますか？",
+        "body": "見守りが止まり、もう一度接続するには新しいコードのスキャンが必要です。",
+        "confirm": "削除",
+        "titleBabyDefault": "赤ちゃん用端末を削除しますか？",
+        "titleParentDefault": "保護者用端末を削除しますか？"
+      },
+      "missed": {
+        "some": "接続が切れていた間：{start}から{end}の間に{count, plural, other {#回の音}}。最も大きい音：{level}。",
+        "none": "接続が切れていた間、音はありませんでした。",
+        "unknown": "{start}から{end}の間の様子は分かりません。"
+      },
+      "coach": {
+        "bar": "緑は見守り中です。赤に変わるか表示が消えたら、見守りはできていません。",
+        "listen": "長押しで聞きます。上にスライドすると聞き続けます。",
+        "test": "テストアラートを実行して、アラートの感じを確かめましょう。",
+        "runTest": "今すぐテストアラートを実行"
+      },
+      "alert": {
+        "title": "音を検知しました",
+        "since": "{time}から",
+        "ended": "音は止まりました。",
+        "testBadge": "テスト",
+        "stopSound": "音を止める",
+        "soundStopped": "音を止めました",
+        "openApp": "GuardedSleep を開く"
+      },
+      "settings": {
+        "group": {
+          "soundDetection": "音の検知",
+          "silence": "静音モード",
+          "alerts": "アラート",
+          "screen": "画面",
+          "paired": "ペアリング済みの端末",
+          "thisPhone": "この端末",
+          "language": "言語",
+          "about": "概要と制限",
+          "advanced": "詳細設定"
+        },
+        "sensitivity": "感度",
+        "moreSensitive": "高くする",
+        "lessSensitive": "低くする",
+        "holdLabel": "音が続く最短時間",
+        "silenceAccessOk": "静音モードへのアクセスはオンです。",
+        "outputLabel": "アラート音の再生先",
+        "output": {
+          "default": "ヘッドホン接続時はヘッドホン、それ以外はスピーカー",
+          "speaker": "スピーカーのみ"
+        },
+        "gain": "アラートを大きくする：{percent}%",
+        "lastTest": "最終テスト：{time}",
+        "neverTested": "まだテストしていません",
+        "theme": {
+          "dark": "ダーク（デフォルト）",
+          "light": "ライト",
+          "system": "システムに合わせる"
+        },
+        "forgetParent": "この保護者用端末を削除",
+        "forgetBaby": "この赤ちゃん用端末を削除",
+        "checkPhone": "この端末の設定を確認",
+        "lang": {
+          "system": "システムに合わせる"
+        },
+        "advanced": {
+          "toggle": "詳細設定を表示",
+          "warning": {
+            "title": "詳細設定を変更しますか？",
+            "body": "ここで値を間違えると、端末同士が接続できなくなることがあります。内容を理解している場合のみ変更してください。"
+          },
+          "confirm": "詳細設定を表示",
+          "cancel": "今はしない"
+        },
+        "urlsLabel": "接続サーバーのアドレス（順に試行）",
+        "url": {
+          "new": "新しいアドレス (wss://…)",
+          "invalid": "アドレスは wss:// または ws:// で始まる必要があります。"
+        },
+        "turn": {
+          "label": "中継サーバー (TURN)（任意）",
+          "invalid": "中継アドレスは turn: または turns: で始まる必要があります。"
+        },
+        "heartbeat": "{seconds}秒ごとに接続を確認"
+      },
+      "fgsMissing": {
+        "bar": "バックグラウンドで見守っていません。アプリを開いてください",
+        "body": "Android が GuardedSleep のバックグラウンドサービスを停止しました。画面が消えている間は、アラートが届かない可能性があります。",
+        "fix": "バックグラウンドの見守りを再開"
+      }
+    }
+  },
+  "webShell": {
+    "route": {
+      "role": "この端末はどちらですか？",
+      "babyPair": "赤ちゃん用端末をペアリング",
+      "baby": "赤ちゃん用端末",
+      "parentPair": "保護者用端末をペアリング",
+      "parent": "保護者用端末",
+      "settings": "設定"
+    },
+    "skipToContent": "コンテンツへスキップ",
+    "dismiss": "閉じる"
+  },
+  "webScreens": {
+    "role": {
+      "title": "この端末の役割",
+      "subtitle": "スマートフォン、タブレット、ノートパソコンが使えます。先に赤ちゃん用端末を設定してください。",
+      "navLabel": "役割を選択",
+      "privacyNote": "音は2台の端末の間で直接やり取りされ、録音されることはありません。"
+    },
+    "pair": {
+      "copyHint": "5分以内に保護者用端末に貼り付けてください。チャットでは送らないでください。",
+      "or": "または",
+      "cameraUnavailable": "ここではカメラを使えません。代わりにコードを貼り付けてください。",
+      "cameraView": "カメラ映像"
+    },
+    "baby": {
+      "failMicDenied": "マイクがブロックされているため、この端末ではお子さんの音を聞けません。ブラウザのサイト設定で許可してください。",
+      "failMicUnavailable": "マイクが見つからないため、この端末ではお子さんの音を聞けません。",
+      "quietUnknown": "静音モード：不明",
+      "keepAwake": "この端末を起こしたままにしてください：充電し、蓋を開け、このタブを表示したままにします。",
+      "keepSilent": "この端末でサイレントモードをオンにして、明るさを下げてください。"
+    },
+    "parent": {
+      "quietUnknownWeb": "静音モードは不明 · 赤ちゃん用端末でオンにしてください",
+      "keepOpen": "このページを開き、画面を点けたままにしてください。そうしないと、ブラウザからアラートを出せません。",
+      "soundGate": "タップしてアラート音をオン"
+    },
+    "settings": {
+      "urlHint": "赤ちゃん用端末がこれらのアドレスをコードに書き込むため、保護者用端末も同じものを使います。",
+      "sensitivityBabyOnly": "感度は赤ちゃん用端末で設定します。"
+    },
+    "guard": {
+      "wakeLockHeld": "画面を点灯したままにしています",
+      "wakeLockLost": "画面が点灯したままではなくなったため、この端末がスリープして見守りを停止する可能性があります。",
+      "wakeLockUnsupported": "このブラウザでは画面を点灯したままにできません。この端末の設定で画面のスリープをオフにしてください。",
+      "wakeLockRetry": "画面を点灯したままにする",
+      "hiddenTitle": "GuardedSleep が見守りを停止する可能性があります",
+      "hiddenBody": "このページはバックグラウンドにあります。見守りを続けるには、もう一度開いてください。",
+      "awayBackground": "このページは{duration}の間バックグラウンドにありました。アラートを逃した可能性があります。",
+      "awaySleep": "この端末は{duration}の間スリープしていました。アラートを逃した可能性があります。"
+    },
+    "night": {
+      "open": "夜間画面",
+      "label": "夜間画面。見守りは続いています。タップで状態を表示します。",
+      "monitoring": "見守り中",
+      "leave": "もう一度タップすると夜間画面を閉じます"
+    }
+  }
+}

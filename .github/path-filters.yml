@@ -1,0 +1,108 @@
+# The one path map: ci.yml (dorny/paths-filter) and `just test-affected` (scripts/lib/affected.mjs)
+# both read it. Top-level keys are filter names, values are glob lists.
+# dorny/paths-filter accepts a file path for `filters`:
+# https://github.com/dorny/paths-filter#usage
+#
+# Why both ci.yml steps read the whole file: dorny applies the step's `predicate-quantifier` to every
+# filter of that step. `code` needs `every` (it is "everything except documentation": a catch-all
+# plus negations), the area filters need the default `some`. Each step therefore reads this file but
+# uses only its own output (`code` resp. `android`); the other outputs of a step are computed
+# with the wrong quantifier and must be ignored.
+#
+# Semantics for `just test-affected`: a path belongs to an area if it matches any non-negated glob
+# of that area. The `gate` list mirrors on.pull_request.paths of android-native.yml (workflow
+# `on.paths` cannot read a file); scripts/lib/affected.test.mjs fails when the two differ.
+
+# Everything except documentation, so docs-only changes skip the heavy CI jobs. Used with
+# predicate-quantifier: every.
+code:
+  - "**"
+  - "!docs/**"
+  - "!**/*.md"
+  - "!LICENSE"
+
+# Inputs of the Android build (ABI libs, Kotlin bindings, JVM tests, APKs). The emulator gate has
+# its own, wider filter (gate).
+android:
+  - "crates/**"
+  - "Cargo.toml"
+  - "Cargo.lock"
+  - "rust-toolchain.toml"
+  - "mise.toml"
+  - "justfile"
+  - "apps/android/**"
+  - "locales/**"
+  - "data/**"
+  - "scripts/core-build.sh"
+  - "scripts/gradle.sh"
+  - "scripts/lib/**"
+  - "scripts/poc/release-check.sh"
+  - "scripts/poc/size-check.sh"
+  - "docker/android-native-build/**"
+  - ".github/actions/**"
+  - ".github/workflows/ci.yml"
+
+# Rust workspace.
+rust:
+  - "crates/**"
+  - "Cargo.toml"
+  - "Cargo.lock"
+
+# JavaScript packages and the UI catalogue.
+web:
+  - "apps/web/**"
+  - "packages/**"
+  - "locales/**"
+  - "data/**"
+
+# Browser E2E inputs.
+e2e:
+  - "apps/e2e/**"
+  - "data/**"
+  - "apps/web/**"
+  - "crates/guardedsleep-relay/**"
+  - "crates/guardedsleep-server/**"
+
+# Emulator gate: mirrors on.pull_request.paths of .github/workflows/android-native.yml.
+gate:
+  - "crates/**"
+  - "Cargo.toml"
+  - "Cargo.lock"
+  - "rust-toolchain.toml"
+  - "mise.toml"
+  - "justfile"
+  - "package.json"
+  - "pnpm-lock.yaml"
+  - "pnpm-workspace.yaml"
+  - "apps/android/**"
+  - "locales/**"
+  - "data/**"
+  - "scripts/core-build.sh"
+  - "scripts/gradle.sh"
+  - "scripts/lib/**"
+  - "scripts/poc/**"
+  - "docker/android-native-build/**"
+  - "docker/android-emulator/**"
+  - "docker/signaling-server/**"
+  - ".github/actions/**"
+  - ".github/workflows/android-native.yml"
+
+# Tooling and toolchain pins: a change here can affect every area, so test-affected runs everything.
+global:
+  - "justfile"
+  - "mise.toml"
+  - "mise.lock"
+  - "rust-toolchain.toml"
+  - "pnpm-lock.yaml"
+  - "package.json"
+  - "pnpm-workspace.yaml"
+  - "scripts/lib/**"
+  - "docker/android-native-build/**"
+  - ".github/**"
+
+# Documentation: covered by lint-text, nothing to test.
+docs:
+  - "docs/**"
+  - "**/*.md"
+  - "openspec/**"
+  - "LICENSE"

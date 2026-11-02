@@ -1,0 +1,72 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "path-switch-parent",
+  "description": "Wi-Fi to mobile data on the parent (new address, old socket and media path silently dead); the link recovers by itself.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "path_switch",
+      "peer": "parent",
+      "gap_ms": 1500
+    },
+    {
+      "at": 140000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 15000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 15000
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 140000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 140000
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    }
+  ]
+}

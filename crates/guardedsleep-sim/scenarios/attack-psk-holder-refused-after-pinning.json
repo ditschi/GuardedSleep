@@ -1,0 +1,111 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "attack-psk-holder-refused-after-pinning",
+  "description": "After a successful pairing the baby unit has pinned the parent. Someone who photographed the invite and records every envelope joins the room as a parent while the real parent unit is offline. Every envelope it sends lacks the parent tag, so the baby unit refuses each one before it looks at the message: no session is confirmed, no attempt is made, no microphone path opens, and the baby warns once. The real parent unit returns afterwards and connects.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 15000,
+      "do": "stop",
+      "peer": "parent"
+    },
+    {
+      "at": 17000,
+      "do": "stranger_join",
+      "mode": "wrong_psk",
+      "id": "stranger"
+    },
+    {
+      "at": 140000,
+      "do": "stranger_leave",
+      "peer": "stranger"
+    },
+    {
+      "at": 141000,
+      "do": "start",
+      "peer": "parent"
+    },
+    {
+      "at": 220000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "event": "security_warning",
+      "where": {
+        "key": "unknown_parent_attempt"
+      },
+      "within_ms": [17000, 140000],
+      "count_min": 1,
+      "count_max": 2
+    },
+    {
+      "peer": "baby",
+      "never": "security_warning",
+      "where": {
+        "key": "wrong_key_attempt"
+      }
+    },
+    {
+      "peer": "baby",
+      "never": "failed",
+      "within_ms": [17000, 140000]
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "connected"
+        }
+      },
+      "within_ms": [16000, 140000]
+    },
+    {
+      "peer": "baby",
+      "never": "parent_connected",
+      "within_ms": [16000, 140000]
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 220000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 220000
+    }
+  ],
+  "export_traces": [
+    {
+      "peer": "baby",
+      "id": "sim-attack-psk-holder-pinned-baby"
+    }
+  ]
+}

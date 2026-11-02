@@ -1,0 +1,87 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "nostr-relay-closes-right-after-eose",
+  "description": "One of two public relays closes every socket right after it answered the subscription. The retry backoff only resets after a socket stayed open for a minute, the opening presence goes to a relay at most every three minutes and presence beyond the hourly cap is limited, so a flapping relay costs under 40 events an hour while the other relay carries the recovery.",
+  "seed": 1,
+  "max_seeds": 3,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby",
+      "mailboxes": [
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-a.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-b.example"
+        }
+      ]
+    },
+    {
+      "id": "parent",
+      "role": "parent",
+      "mailboxes": [
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-a.example"
+        },
+        {
+          "kind": "nostr",
+          "url": "wss://nostr-b.example"
+        }
+      ]
+    }
+  ],
+  "nostr": [
+    {
+      "url": "wss://nostr-a.example",
+      "close_after_eose": true
+    },
+    {
+      "url": "wss://nostr-b.example"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "signaling_down"
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 60000,
+      "do": "kill_process",
+      "peer": "baby"
+    },
+    {
+      "at": 3660000,
+      "do": "restart_process",
+      "peer": "baby"
+    },
+    {
+      "at": 3900000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "nostr_sent_max": 40,
+      "within_ms": [60000, 3660000]
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 3890000
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 3890000
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Review: signaling server, mobile WebRTC, Docker, CI (rolling)
 
-**Scope:** `apps/signaling-server`, `apps/mobile` (signaling + WebRTC), `docker/signaling-server`, `.github/workflows` (incl. `ci.yml`, `docker-signaling.yml`), root `package.json` (`pnpm.overrides`, `audit`), tests, smoke scripts.
+**Scope:** `apps/signaling-server`, the legacy mobile web client (signaling + WebRTC), `docker/signaling-server`, `.github/workflows` (incl. `ci.yml`, `docker-signaling.yml`), root `package.json` (`pnpm.overrides`, `audit`), tests, smoke scripts.
 
 **Purpose:** Structured checklist so each **role** from [docs/roles/](../roles/README.md) can review the same areas consistently. Fill findings under each section; link PRs or commits when closing items.
 

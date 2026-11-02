@@ -1,0 +1,76 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "stale-baby-socket-rejoin",
+  "description": "The baby phone loses Wi-Fi, its process restarts, and the new socket meets BABY_TAKEN until the server liveness sweep evicts the stale one (<= 20 s).",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "network_down",
+      "peer": "baby"
+    },
+    {
+      "at": 22000,
+      "do": "restart_process",
+      "peer": "baby"
+    },
+    {
+      "at": 26000,
+      "do": "network_up",
+      "peer": "baby"
+    },
+    {
+      "at": 100000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 100000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 100000
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "baby",
+      "joined": true,
+      "within_ms": [26000, 60000]
+    }
+  ]
+}

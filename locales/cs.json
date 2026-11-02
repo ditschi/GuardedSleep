@@ -1,0 +1,547 @@
+{
+  "$meta": {
+    "default": "machineTranslated",
+    "reviewed": []
+  },
+  "meta": {
+    "appTitle": "GuardedSleep"
+  },
+  "layout": {
+    "settingsAria": "Nastavení",
+    "backAria": "Zpět na předchozí obrazovku"
+  },
+  "core": {
+    "pairingKeyMismatch": "Tato zařízení už nejsou spárovaná. Spárujte je znovu, aby sledování pokračovalo.",
+    "updateRequired": "Jedno ze zařízení potřebuje aktualizaci GuardedSleep, aby sledování pokračovalo.",
+    "serverUnreachable": "Toto zařízení se nemůže připojit k serveru. Zkontrolujte jeho připojení k internetu.",
+    "peerAbsent": "Zařízení dítěte neodpovídá. Zkontrolujte, zda je zapnuté a zobrazuje GuardedSleep.",
+    "mediaBlocked": "Zařízení se našla, ale zvuk neprochází. Zkuste na obou stejnou síť Wi-Fi.",
+    "wrongKeyAttempt": "Někdo se zkusil připojit s chybným klíčem. Sledování pokračuje.",
+    "unknownParentAttempt": "Zařízení, které není vaše spárované rodičovské zařízení, se pokusilo připojit. Sledování pokračuje.",
+    "pairAgain": "Toto zařízení už nezná žádné zařízení rodiče. Klepněte na Zobrazit nový kód a spárujte je znovu.",
+    "babyUnrecognised": "Zařízení dítěte toto zařízení nepoznává. Na zařízení dítěte klepněte na Zobrazit nový kód a spárujte je znovu."
+  },
+  "native": {
+    "appName": "GuardedSleep Alpha",
+    "notif": {
+      "appTitle": "GuardedSleep",
+      "silenceRuleName": "GuardedSleep",
+      "channelNoise": "Zvukové výstrahy",
+      "channelNoiseDesc": "Hlasité výstrahy, když zařízení dítěte zachytí zvuk.",
+      "channelLink": "Alarmy připojení",
+      "channelLinkDesc": "Alarmy při ztrátě spojení se zařízením dítěte.",
+      "channelStatus": "Stav sledování",
+      "channelStatusDesc": "Ukazuje, že sledování běží.",
+      "channelNotice": "Upozornění",
+      "channelNoticeDesc": "Upozornění na baterii a zabezpečení.",
+      "channelInfo": "Informace",
+      "channelInfoDesc": "Tichá oznámení, například po obnovení spojení.",
+      "channelBaby": "Sledování",
+      "channelBabyDesc": "Tiché oznámení, že toto zařízení sleduje.",
+      "babyMonitoring": "GuardedSleep sleduje",
+      "babyResume": "Klepnutím obnovíte sledování",
+      "statusConnected": "Připojeno k zařízení dítěte",
+      "statusConnecting": "Připojování k zařízení dítěte…",
+      "statusReconnecting": "Opětovné připojování k zařízení dítěte…",
+      "statusTrouble": "Zařízení dítěte je nedostupné, zkouším dál",
+      "statusAlarm": "Žádné spojení se zařízením dítěte",
+      "statusPeerStopped": "Zařízení dítěte přestalo sledovat",
+      "statusFailed": "Tato zařízení už nejsou spárovaná",
+      "noiseTitle": "Zachycen zvuk",
+      "noiseText": "Zařízení dítěte slyší zvuk.",
+      "noiseTestTitle": "Zkušební výstraha",
+      "noiseTestText": "Toto je zkouška. Zařízení dítěte zůstává tiché.",
+      "actionStopSound": "Vypnout zvuk",
+      "actionSnooze10": "Odložit o 10 min",
+      "actionChecking": "Jdu se podívat",
+      "linkLostTitle": "Spojení ztraceno",
+      "linkLostText": "Žádné spojení se zařízením dítěte. Jděte se hned podívat na dítě.",
+      "peerStoppedTitle": "Sledování zastaveno",
+      "peerStoppedText": "Sledování bylo zastaveno na zařízení dítěte. Nic neuslyšíte, dokud se znovu nespustí.",
+      "restoredTitle": "Opět připojeno",
+      "restoredText": "Nesledováno {duration}.",
+      "missedTitle": "Během výpadku",
+      "missedCount": "Zvuky během výpadku: {count} (nesledováno {duration}).",
+      "missedNone": "Žádné zvuky během výpadku (nesledováno {duration}).",
+      "missedUnknown": "Nevíme, co se dělo během výpadku (nesledováno {duration}).",
+      "batteryLowTitle": "Slabá baterie zařízení dítěte",
+      "batteryLowText": "Baterie zařízení dítěte {percent} %: připojte nabíječku.",
+      "batteryCriticalTitle": "Baterie zařízení dítěte je téměř vybitá",
+      "batteryCriticalText": "Baterie zařízení dítěte {percent} %: připojte nabíječku hned.",
+      "chargerTitle": "Zařízení dítěte se už nenabíjí",
+      "chargerText": "Připojte zařízení dítěte k nabíječce, aby vydrželo celou noc.",
+      "securityTitle": "Chybný klíč",
+      "publicTitle": "Alarm GuardedSleep",
+      "fgsMissingTitle": "Sledování na pozadí neběží",
+      "fgsMissingText": "Otevřete GuardedSleep a znovu zapněte sledování na pozadí."
+    },
+    "ui": {
+      "common": {
+        "appName": "GuardedSleep",
+        "allow": "Povolit",
+        "continue": "Pokračovat",
+        "later": "Později",
+        "ok": "OK",
+        "cancel": "Zrušit",
+        "more": "Více",
+        "moreCount": "+{count}",
+        "settings": "Nastavení",
+        "tryAgain": "Zkusit znovu",
+        "yes": "Ano",
+        "no": "Ne",
+        "add": "Přidat",
+        "remove": "Odebrat",
+        "save": "Uložit",
+        "change": "Změnit",
+        "durationSec": "{seconds} s",
+        "durationMin": "{minutes} min",
+        "durationHour": "{hours} h",
+        "durationHourMin": "{hours} h {minutes} min",
+        "secondsShort": "{seconds} s",
+        "state": {
+          "done": "Hotovo",
+          "todo": "K dokončení",
+          "blocked": "Zablokováno",
+          "checking": "Kontroluje se"
+        },
+        "babyUnitDefault": "Zařízení dítěte",
+        "parentUnitDefault": "Zařízení rodiče"
+      },
+      "role": {
+        "title": "Které zařízení to je?",
+        "baby": {
+          "title": "Zařízení dítěte",
+          "hint": "Zůstává u dítěte a poslouchá."
+        },
+        "parent": {
+          "title": "Zařízení rodiče",
+          "hint": "Zůstává u vás a upozorňuje vás."
+        },
+        "orderHint": "Nejdřív nastavte zařízení dítěte."
+      },
+      "setup": {
+        "title": "Příprava tohoto zařízení",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Potřebný, aby bylo slyšet vaše dítě.",
+          "required": "Pro pokračování povolte mikrofon."
+        },
+        "background": {
+          "title": "Běh na pozadí",
+          "why": "Jinak může toto zařízení kvůli úspoře baterie přestat sledovat."
+        },
+        "silence": {
+          "title": "Tichý režim během sledování",
+          "why": "Žádné zvuky, vyzvánění ani světla na zařízení dítěte. Budíky fungují dál."
+        },
+        "safety": {
+          "body": "Nechte toto zařízení na nabíječce, na stabilním místě, mimo dosah dítěte. Nepoužívejte zařízení s vyboulenou nebo poškozenou baterií."
+        },
+        "chargingTip": "Tip: pokud má toto zařízení volbu „probudit displej při nabíjení“, vypněte ji, aby displej zůstal tmavý.",
+        "deviceCheck": {
+          "checking": "Kontrola tohoto zařízení…",
+          "ok": "Toto zařízení se jako zařízení dítěte hodí.",
+          "limited": "Toto zařízení může občas ztratit spojení. Přesto funguje.",
+          "notRecommended": "Toto zařízení nemusí sledovat spolehlivě. Pokud můžete, použijte jiné."
+        },
+        "notifications": {
+          "title": "Výstrahy",
+          "why": "Potřebné, abyste slyšeli, když dítě vydá zvuk.",
+          "required": "Bez toho vás GuardedSleep nemůže upozornit."
+        },
+        "lockScreen": {
+          "title": "Výstrahy na zamčené obrazovce",
+          "why": "Aby se výstrahy zobrazily i při zamčené obrazovce."
+        },
+        "dndBypass": {
+          "title": "Výstrahy v režimu Nerušit",
+          "why": "Aby výstrahy dorazily i při zapnutém režimu Nerušit."
+        },
+        "limits": {
+          "body": "GuardedSleep vás může upozornit, jen dokud je toto zařízení zapnuté a nabité. V noci ho nechte na nabíječce. Pokud se vypnou obě zařízení, nikdo upozorněn nebude."
+        },
+        "skipped": "Zatím přeskočeno"
+      },
+      "pair": {
+        "baby": {
+          "title": "Připojení zařízení rodiče",
+          "qrAlt": "Párovací kód",
+          "instruction": "Na druhém zařízení otevřete GuardedSleep, zvolte Zařízení rodiče a naskenujte tento kód.",
+          "validFor": "Kód platí {duration}",
+          "expired": "Platnost tohoto kódu vypršela.",
+          "newCode": "Zobrazit nový kód",
+          "copy": "Kopírovat kód",
+          "copied": "Zkopírováno",
+          "brighter": "Zesvětlit kód",
+          "waiting": "Čekání na zařízení rodiče…",
+          "privacy": "Kdokoli s tímto kódem může poslouchat. Ukazujte ho jen lidem, kterým věříte.",
+          "parentFound": "Zařízení rodiče nalezeno. Připojování…",
+          "failed": "Párování se nepovedlo. Zobrazte nový kód a zkuste to znovu.",
+          "showText": "Zobrazit kód jako text",
+          "hideText": "Skrýt text"
+        },
+        "parent": {
+          "title": "Naskenujte kód na zařízení dítěte",
+          "cameraWhy": "GuardedSleep používá fotoaparát jen ke čtení kódu.",
+          "pasteLabel": "Nebo kód vložte",
+          "pasteSubmit": "Připojit",
+          "connecting": "Připojování k zařízení dítěte…"
+        },
+        "error": {
+          "cameraDenied": "Fotoaparát není povolen.",
+          "allowCamera": "Povolit fotoaparát",
+          "pasteInstead": "Vložit kód",
+          "notOurs": "Toto není kód GuardedSleep. Naskenujte kód na zařízení dítěte.",
+          "expired": "Platnost kódu vypršela. Na zařízení dítěte klepněte na Zobrazit nový kód a naskenujte znovu.",
+          "mismatch": "Kód nesedí. Naskenujte kód, který je právě na zařízení dítěte.",
+          "alreadyPaired": "Toto zařízení dítěte je už spárované s jiným zařízením.",
+          "unreachable": "Zařízení dítěte se zatím nepodařilo najít. Ověřte, že jsou obě zařízení online.",
+          "incomplete": "Tento kód je neúplný. Zkopírujte celý kód ze zařízení dítěte."
+        }
+      },
+      "home": {
+        "parent": {
+          "cardTitle": "Připojit k: {name}",
+          "cardTitleDefault": "Připojit k zařízení dítěte"
+        },
+        "baby": {
+          "cardTitle": "Spustit sledování"
+        },
+        "lastUsed": "Naposledy použito {time}",
+        "newPairing": "Nastavit nová zařízení",
+        "empty": "Zatím žádná spárovaná zařízení."
+      },
+      "baby": {
+        "status": {
+          "connected": "Připojeno k zařízení rodiče",
+          "waiting": "Čekání na zařízení rodiče…",
+          "reconnecting": "Opětovné připojování k zařízení rodiče…",
+          "notResponding": "Zařízení rodiče neodpovídá, zkouším dál",
+          "parentStopped": "Zařízení rodiče přestalo sledovat"
+        },
+        "forDuration": "již {duration}",
+        "monitoring": "Sledování",
+        "parentListening": "Rodič poslouchá",
+        "battery": "Toto zařízení: baterie {percent} %",
+        "batteryCharging": "Toto zařízení: nabíjí se · {percent} %",
+        "silence": {
+          "on": "Tichý režim je zapnutý",
+          "off": "Tichý režim je vypnutý: zařízení může vyzvánět",
+          "everydayPhone": "Tichý režim je zapnutý. Hovory a zprávy na tomto zařízení zůstanou tiché, dokud sledování nezastavíte.",
+          "restored": "Toto zařízení zůstalo v tichém režimu. Zvuky jsou zase zapnuté.",
+          "noAccess": "Přístup k tichému režimu je vypnutý. Zapněte ho v Nastavení, aby hovory a zprávy zůstaly tiché."
+        },
+        "lock": "Zamknout obrazovku",
+        "autolockHint": "Displej potemní za {seconds} s",
+        "stop": "Zastavit sledování",
+        "micLevel": "Úroveň zvuku zde",
+        "micSilent": "Mikrofon nezachytává žádný zvuk. Spusťte sledování znovu nebo zkontrolujte mikrofon."
+      },
+      "kiosk": {
+        "a11yLabel": "Sledování. Obrazovka zamčena.",
+        "unlockHint": "Podržte a přejeďte nahoru pro odemknutí",
+        "unlockZone": "Přejeďte sem",
+        "unlockAction": "Odemknout"
+      },
+      "link": {
+        "connected": "Připojeno k: {name}",
+        "connecting": "Připojování k: {name}…",
+        "reconnecting": "Opětovné připojování…",
+        "cantReach": "{name} je nedostupné, zkouším dál",
+        "lostFor": "Bez spojení již {duration}",
+        "babyStopped": "{name} přestalo sledovat",
+        "idle": "Nesleduje se",
+        "weak": "Slabé spojení: zvuk může vypadávat",
+        "restoredAfter": "Opět připojeno po {duration}. Dítě zase uslyšíte.",
+        "tryNow": "Zkusit hned",
+        "pairAgain": "Spárovat znovu",
+        "connectedDefault": "Připojeno k zařízení dítěte",
+        "connectingDefault": "Připojování k zařízení dítěte…",
+        "cantReachDefault": "Zařízení dítěte je nedostupné, zkouším dál",
+        "babyStoppedDefault": "Zařízení dítěte přestalo sledovat",
+        "stalePairingHint": "Pokud jste zařízení dítěte spárovali znovu, naskenujte jeho nový kód."
+      },
+      "linkAlarm": {
+        "lost": {
+          "title": "Žádné spojení s: {name}",
+          "titleUrgent": "Žádné spojení s: {name}!",
+          "body": "Dítě neuslyšíte, dokud se zařízení znovu nepřipojí.",
+          "titleDefault": "Žádné spojení se zařízením dítěte",
+          "titleUrgentDefault": "Žádné spojení se zařízením dítěte!"
+        },
+        "stopped": {
+          "title": "{name} přestalo sledovat",
+          "body": "Někdo zastavil sledování na zařízení dítěte. Výstrahy nepřijdou.",
+          "titleDefault": "Zařízení dítěte přestalo sledovat"
+        },
+        "battery": {
+          "title": "Baterie zařízení dítěte je téměř vybitá",
+          "body": "Připojte zařízení dítěte k nabíječce hned, jinak se sledování zastaví."
+        },
+        "needsPairing": {
+          "title": "Zařízení už nejsou spárovaná"
+        },
+        "restored": {
+          "title": "Opět připojeno"
+        },
+        "ack": "Jdu se podívat",
+        "ackNote": "Zvuk vypnut na {time}. Pokud spojení stále chybí, upozorníme vás znovu.",
+        "soundNote": "Jemný alarmový tón se opakuje, dokud se nepodíváte.",
+        "soundNoteUrgent": "Alarm zní, dokud se nepodíváte."
+      },
+      "parent": {
+        "allQuietSince": "Klid od {time}",
+        "soundSince": "Zachycen zvuk · od {time}",
+        "soundAt": "Zvuk v {time} · trval {duration}",
+        "soundSnoozed": "Zvuk v {time} · výstrahy odloženy",
+        "lastHeard": "Poslední kontakt {time}",
+        "noContactYet": "Zatím bez kontaktu",
+        "monitoringNow": "Sledování",
+        "meterA11y": "Úroveň zvuku: {level}",
+        "level": {
+          "quiet": "ticho",
+          "some": "nějaký zvuk",
+          "loud": "hlasitě"
+        },
+        "stop": "Zastavit sledování",
+        "securityTitle": "Bezpečnostní varování",
+        "securityBody": "Spojení se nepodařilo ověřit. Pokud jste zařízení právě nepárovali znovu, spárujte je znovu hned.",
+        "staleSuffix": "· v {time}",
+        "unitWarning": {
+          "pageHidden": "Zařízení dítěte se může zastavit: jeho stránka je skrytá",
+          "wakeLockOff": "Zařízení dítěte může usnout: displej se neudržuje zapnutý",
+          "resumedFromSleep": "Zařízení dítěte se probudilo ze spánku: zvuky mohly uniknout",
+          "notCharging": "Zařízení dítěte se už nenabíjí",
+          "micPermissionLost": "Zařízení dítěte ztratilo přístup k mikrofonu"
+        }
+      },
+      "battery": {
+        "baby": "Zařízení dítěte {percent} %",
+        "babyLow": "Baterie zařízení dítěte {percent} %: připojte nabíječku",
+        "parentLow": "Toto zařízení má {percent} %: připojte nabíječku, aby sledování pokračovalo",
+        "parentLowGeneric": "Baterie tohoto zařízení je slabá: připojte nabíječku, aby sledování pokračovalo"
+      },
+      "listen": {
+        "idle": "Podržením poslouchejte",
+        "holding": "Poslech…",
+        "locked": "Poslech · klepnutím zastavíte",
+        "lockHint": "Přejetím nahoru poslech udržíte",
+        "disabled": "Poslech po připojení",
+        "a11yLocked": "Poslech. Dvojitým klepnutím zastavíte."
+      },
+      "snooze": {
+        "button": "Odložit",
+        "title": "Odložit zvukové výstrahy",
+        "help": "Výstrahy při výpadku spojení nebo slabé baterii vám dál přijdou.",
+        "minutes": "Odložit o {minutes} min",
+        "end": "Ukončit odložení",
+        "active": "Odloženo · zbývá {minutes} min"
+      },
+      "probe": {
+        "button": "Zkušební výstraha",
+        "title": "Vyzkoušejte své výstrahy",
+        "body": "Přehraje zkušební zvuk na tomto zařízení. Zařízení dítěte zůstane tiché.",
+        "output": "Výstrahy hrají na: {output}",
+        "run": "Spustit zkoušku",
+        "running": "Zkouška běží…",
+        "question": "Slyšeli a cítili jste ji?",
+        "localOnly": "Vyzkoušeno jen toto zařízení: zařízení dítěte není připojeno."
+      },
+      "readiness": {
+        "title": "Dorazí k vám výstrahy?",
+        "notificationsOff": "Výstrahy GuardedSleep jsou vypnuté",
+        "alarmVolumeZero": "Hlasitost budíku je vypnutá: výstrahy neuslyšíte",
+        "lockScreen": "Výstrahy se nemohou zobrazit na zamčené obrazovce",
+        "dnd": "Režim Nerušit může výstrahy ztlumit",
+        "battery": "Toto zařízení může GuardedSleep na pozadí zastavit",
+        "headphones": "Výstrahy se přehrají ve sluchátkách",
+        "neverTested": "Vyzkoušejte své výstrahy",
+        "ok": "Vše připraveno: výstrahy k vám dorazí",
+        "fix": {
+          "notifications": "Zapnout výstrahy",
+          "dnd": "Povolit výstrahy v režimu Nerušit",
+          "battery": "Povolit běh na pozadí"
+        }
+      },
+      "silence": {
+        "silent": "Zařízení dítěte je v tichém režimu",
+        "alarmsStillRing": "Budíky na něm mohou stále zvonit.",
+        "screenMayLight": "Zařízení dítěte je v tichém režimu, ale displej se může rozsvítit",
+        "mayVibrate": "Zařízení dítěte může vibrovat",
+        "mayRing": "Zařízení dítěte může vyzvánět",
+        "unknown": "Tichý režim: neznámý, zařízení dítěte nelze zkontrolovat",
+        "manual": "Na zařízení dítěte zapněte Nerušit a snižte jas.",
+        "noAccess": "Chcete-li tichý režim zapnout odsud, otevřete Nastavení na zařízení dítěte a zapněte „Tichý režim během sledování“.",
+        "apply": "Zapnout tichý režim",
+        "applyFull": "Zapnout tichý režim úplně",
+        "pending": "Zapínání tichého režimu…",
+        "failed": "Tichý režim se na zařízení dítěte nepodařilo zapnout.",
+        "webUnknown": "Neznámé: zapněte tichý režim na zařízení dítěte sami",
+        "webHint": "Pokud je zařízením dítěte notebook, nechte ho na nabíječce s otevřeným víkem a zapnutým displejem."
+      },
+      "help": {
+        "reconnect": {
+          "open": "Co mohu udělat?",
+          "title": "Obnovení spojení",
+          "step1": "Je zařízení dítěte zapnuté a zobrazuje GuardedSleep?",
+          "step2": "Jsou obě zařízení ve stejné síti Wi-Fi, nebo obě používají mobilní data?",
+          "step3": "Stále nic? Zavřete GuardedSleep na zařízení dítěte a otevřete ho znovu."
+        }
+      },
+      "stop": {
+        "title": "Zastavit sledování?",
+        "parentBody": "Výstrahy z: {name} nepřijdou.",
+        "babyBody": "Zařízení rodiče přestane dostávat výstrahy.",
+        "confirm": "Zastavit",
+        "cancel": "Dál sledovat",
+        "parentBodyDefault": "Výstrahy ze zařízení dítěte nepřijdou."
+      },
+      "forget": {
+        "title": "Zapomenout: {name}?",
+        "body": "Sledování se zastaví a pro nové připojení budete muset naskenovat nový kód.",
+        "confirm": "Zapomenout",
+        "titleBabyDefault": "Zapomenout zařízení dítěte?",
+        "titleParentDefault": "Zapomenout zařízení rodiče?"
+      },
+      "missed": {
+        "some": "Během výpadku: {count, plural, one {1 zvuk} few {# zvuky} many {# zvuku} other {# zvuků}} mezi {start} a {end}. Nejhlasitější: {level}.",
+        "none": "Během výpadku žádné zvuky.",
+        "unknown": "Nevíme, co se dělo mezi {start} a {end}."
+      },
+      "coach": {
+        "bar": "Zelená znamená, že sledujete. Pokud zčervená nebo zmizí, nesledujete.",
+        "listen": "Podržením poslouchejte. Přejetím nahoru poslech udržíte.",
+        "test": "Spusťte zkušební výstrahu, abyste věděli, jak výstraha působí.",
+        "runTest": "Spustit zkušební výstrahu hned"
+      },
+      "alert": {
+        "title": "Zachycen zvuk",
+        "since": "Od {time}",
+        "ended": "Zvuk utichl.",
+        "testBadge": "TEST",
+        "stopSound": "Vypnout zvuk",
+        "soundStopped": "Zvuk vypnut",
+        "openApp": "Otevřít GuardedSleep"
+      },
+      "settings": {
+        "group": {
+          "soundDetection": "Detekce zvuku",
+          "silence": "Tichý režim",
+          "alerts": "Výstrahy",
+          "screen": "Obrazovka",
+          "paired": "Spárované zařízení",
+          "thisPhone": "Toto zařízení",
+          "language": "Jazyk",
+          "about": "O aplikaci a omezení",
+          "advanced": "Pokročilé"
+        },
+        "sensitivity": "Citlivost",
+        "moreSensitive": "Citlivější",
+        "lessSensitive": "Méně citlivé",
+        "holdLabel": "Hluk musí trvat alespoň",
+        "silenceAccessOk": "Přístup k tichému režimu je zapnutý.",
+        "outputLabel": "Zvuk výstrahy hraje na",
+        "output": {
+          "default": "Sluchátka, pokud jsou připojená, jinak reproduktor",
+          "speaker": "Jen reproduktor"
+        },
+        "gain": "Extra hlasité výstrahy: {percent} %",
+        "lastTest": "Poslední zkouška: {time}",
+        "neverTested": "Zatím nevyzkoušeno",
+        "theme": {
+          "dark": "Tmavý (výchozí)",
+          "light": "Světlý",
+          "system": "Podle systému"
+        },
+        "forgetParent": "Zapomenout toto zařízení rodiče",
+        "forgetBaby": "Zapomenout toto zařízení dítěte",
+        "checkPhone": "Zkontrolovat nastavení tohoto zařízení",
+        "lang": {
+          "system": "Podle systému"
+        },
+        "advanced": {
+          "toggle": "Zobrazit pokročilá nastavení",
+          "warning": {
+            "title": "Změnit pokročilá nastavení?",
+            "body": "Chybné hodnoty mohou zařízením zabránit v připojení. Měňte je jen tehdy, když víte, co děláte."
+          },
+          "confirm": "Zobrazit pokročilá nastavení",
+          "cancel": "Teď ne"
+        },
+        "urlsLabel": "Adresy serveru pro připojení (zkoušejí se popořadě)",
+        "url": {
+          "new": "Nová adresa (wss://…)",
+          "invalid": "Adresa musí začínat wss:// nebo ws://."
+        },
+        "turn": {
+          "label": "Předávací server (TURN), volitelný",
+          "invalid": "Adresa předávacího serveru musí začínat turn: nebo turns:."
+        },
+        "heartbeat": "Kontrola spojení každých {seconds} s"
+      },
+      "fgsMissing": {
+        "bar": "Sledování na pozadí neběží: otevřete aplikaci",
+        "body": "Android zastavil službu GuardedSleep na pozadí. Výstrahy k vám nemusí dorazit, dokud je displej vypnutý.",
+        "fix": "Znovu zapnout sledování na pozadí"
+      }
+    }
+  },
+  "webShell": {
+    "route": {
+      "role": "Které zařízení to je?",
+      "babyPair": "Spárovat zařízení dítěte",
+      "baby": "Zařízení dítěte",
+      "parentPair": "Spárovat zařízení rodiče",
+      "parent": "Zařízení rodiče",
+      "settings": "Nastavení"
+    },
+    "skipToContent": "Přeskočit na obsah",
+    "dismiss": "Zavřít"
+  },
+  "webScreens": {
+    "role": {
+      "title": "Použít toto zařízení jako",
+      "subtitle": "Telefon, tablet nebo notebook. Nejdřív nastavte zařízení dítěte.",
+      "navLabel": "Zvolte roli",
+      "privacyNote": "Zvuk jde přímo mezi vašimi dvěma zařízeními a nikdy se nenahrává."
+    },
+    "pair": {
+      "copyHint": "Vložte ho na zařízení rodiče do 5 minut. Neposílejte ho v chatu.",
+      "or": "nebo",
+      "cameraUnavailable": "Fotoaparát tu není k dispozici. Vložte kód.",
+      "cameraView": "Obraz z fotoaparátu"
+    },
+    "baby": {
+      "failMicDenied": "Mikrofon je zablokovaný, takže toto zařízení dítě neslyší. Povolte ho v nastavení webu v prohlížeči.",
+      "failMicUnavailable": "Nenalezen žádný mikrofon, takže toto zařízení dítě neslyší.",
+      "quietUnknown": "Tichý režim: neznámý",
+      "keepAwake": "Udržujte toto zařízení vzhůru: na nabíječce, otevřené víko, tato karta viditelná.",
+      "keepSilent": "Na tomto zařízení zapněte Nerušit a snižte jas."
+    },
+    "parent": {
+      "quietUnknownWeb": "Tichý režim neznámý · zapněte ho na zařízení dítěte",
+      "keepOpen": "Nechte tuto stránku otevřenou a displej zapnutý. Jinak vás prohlížeč nemůže upozornit.",
+      "soundGate": "Klepnutím zapnete zvuk výstrah"
+    },
+    "settings": {
+      "urlHint": "Zařízení dítěte tyto adresy zapíše do svého kódu, takže je používá i zařízení rodiče.",
+      "sensitivityBabyOnly": "Citlivost se nastavuje na zařízení dítěte."
+    },
+    "guard": {
+      "wakeLockHeld": "Displej zůstává zapnutý",
+      "wakeLockLost": "Displej se už neudržuje zapnutý, takže toto zařízení může usnout a přestat sledovat.",
+      "wakeLockUnsupported": "Tento prohlížeč neumí udržet displej zapnutý. Vypněte uspávání displeje v nastavení zařízení.",
+      "wakeLockRetry": "Udržet displej zapnutý",
+      "hiddenTitle": "GuardedSleep může přestat sledovat",
+      "hiddenBody": "Tato stránka je na pozadí. Otevřete ji znovu, aby sledování pokračovalo.",
+      "awayBackground": "Tato stránka byla na pozadí {duration}. Výstrahy mohly uniknout.",
+      "awaySleep": "Toto zařízení spalo {duration}. Výstrahy mohly uniknout."
+    },
+    "night": {
+      "open": "Noční obrazovka",
+      "label": "Noční obrazovka. Stále sleduje. Klepnutím zobrazíte stav.",
+      "monitoring": "Stále sleduje",
+      "leave": "Klepnutím znovu noční obrazovku opustíte"
+    }
+  }
+}

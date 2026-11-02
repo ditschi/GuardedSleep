@@ -1,0 +1,549 @@
+{
+  "meta": {
+    "appTitle": "GuardedSleep"
+  },
+  "layout": {
+    "settingsAria": "Settings",
+    "backAria": "Back to previous screen"
+  },
+  "core": {
+    "pairingKeyMismatch": "These devices are no longer paired. Pair them again to keep monitoring.",
+    "updateRequired": "One of the devices needs a GuardedSleep update to keep monitoring.",
+    "serverUnreachable": "This device can't reach the connection server. Check its internet connection.",
+    "peerAbsent": "The baby device isn't answering. Check that it is on and showing GuardedSleep.",
+    "mediaBlocked": "The devices found each other, but sound can't get through. Try the same Wi-Fi on both.",
+    "wrongKeyAttempt": "Someone tried to connect with a wrong key. Monitoring continues.",
+    "unknownParentAttempt": "A device that is not your paired parent device tried to connect. Monitoring continues.",
+    "pairAgain": "This device no longer knows a parent device. Tap Show new code and pair again.",
+    "babyUnrecognised": "The baby device does not recognise this device. Tap Show new code on the baby device and pair again.",
+    "clockSkew": "The clocks of the two devices differ by more than 10 minutes. Check the date and time on both.",
+    "recoveryPathUnavailable": "If the connection drops, the devices may not find each other again right now. Monitoring continues."
+  },
+  "native": {
+    "appName": "GuardedSleep Alpha",
+    "notif": {
+      "appTitle": "GuardedSleep",
+      "silenceRuleName": "GuardedSleep",
+      "channelNoise": "Sound alerts",
+      "channelNoiseDesc": "Loud alerts when the baby device hears a sound.",
+      "channelLink": "Connection alarms",
+      "channelLinkDesc": "Alarms when the connection to the baby device is lost.",
+      "channelStatus": "Monitoring status",
+      "channelStatusDesc": "Shows that monitoring is running.",
+      "channelNotice": "Warnings",
+      "channelNoticeDesc": "Battery and security warnings.",
+      "channelInfo": "Information",
+      "channelInfoDesc": "Quiet notes, for example after the connection returns.",
+      "channelBaby": "Monitoring",
+      "channelBabyDesc": "Silent note that this device is monitoring.",
+      "babyMonitoring": "GuardedSleep is monitoring",
+      "babyResume": "Tap to resume monitoring",
+      "statusConnected": "Connected to the baby device",
+      "statusConnecting": "Connecting to the baby device…",
+      "statusReconnecting": "Reconnecting to the baby device…",
+      "statusTrouble": "Can't reach the baby device — still trying",
+      "statusAlarm": "No connection to the baby device",
+      "statusPeerStopped": "Baby device stopped monitoring",
+      "statusFailed": "These devices are no longer paired",
+      "noiseTitle": "Sound detected",
+      "noiseText": "The baby device hears a sound.",
+      "noiseTestTitle": "Test alert",
+      "noiseTestText": "This is a test. The baby device stays silent.",
+      "actionStopSound": "Stop sound",
+      "actionSnooze10": "Snooze 10 min",
+      "actionChecking": "I'm checking",
+      "linkLostTitle": "Connection lost",
+      "linkLostText": "No connection to the baby device. Check on your baby now.",
+      "peerStoppedTitle": "Baby device stopped monitoring",
+      "peerStoppedText": "Monitoring was stopped on the baby device. You will not hear anything until it is started again.",
+      "restoredTitle": "Connected again",
+      "restoredText": "Not monitored for {duration}.",
+      "missedTitle": "While disconnected",
+      "missedCount": "Sounds while disconnected: {count} (not monitored for {duration}).",
+      "missedNone": "No sounds while disconnected (not monitored for {duration}).",
+      "missedUnknown": "We don't know what happened while disconnected (not monitored for {duration}).",
+      "batteryLowTitle": "Baby device battery low",
+      "batteryLowText": "Baby device battery {percent}% — plug it in.",
+      "batteryCriticalTitle": "Baby device battery almost empty",
+      "batteryCriticalText": "Baby device battery {percent}% — plug it in now.",
+      "chargerTitle": "Baby device is no longer charging",
+      "chargerText": "Plug the baby device in so it lasts the night.",
+      "securityTitle": "Wrong key",
+      "publicTitle": "GuardedSleep alarm",
+      "fgsMissingTitle": "Not monitoring in the background",
+      "fgsMissingText": "Open GuardedSleep to turn background monitoring back on."
+    },
+    "ui": {
+      "common": {
+        "appName": "GuardedSleep",
+        "allow": "Allow",
+        "continue": "Continue",
+        "later": "Later",
+        "ok": "OK",
+        "cancel": "Cancel",
+        "more": "More",
+        "moreCount": "+{count}",
+        "settings": "Settings",
+        "tryAgain": "Try again",
+        "yes": "Yes",
+        "no": "No",
+        "add": "Add",
+        "remove": "Remove",
+        "save": "Save",
+        "change": "Change",
+        "durationSec": "{seconds} s",
+        "durationMin": "{minutes} min",
+        "durationHour": "{hours} h",
+        "durationHourMin": "{hours} h {minutes} min",
+        "secondsShort": "{seconds} s",
+        "state": {
+          "done": "Done",
+          "todo": "To do",
+          "blocked": "Blocked",
+          "checking": "Checking"
+        },
+        "babyUnitDefault": "Baby device",
+        "parentUnitDefault": "Parent device"
+      },
+      "role": {
+        "title": "Which device is this?",
+        "baby": {
+          "title": "Baby device",
+          "hint": "Stays with your child and listens."
+        },
+        "parent": {
+          "title": "Parent device",
+          "hint": "Stays with you and alerts you."
+        },
+        "orderHint": "Set up the baby device first."
+      },
+      "setup": {
+        "title": "Get this device ready",
+        "mic": {
+          "title": "Microphone",
+          "why": "Needed to hear your child.",
+          "required": "Allow the microphone to continue."
+        },
+        "background": {
+          "title": "Keep running in the background",
+          "why": "Otherwise this device may stop monitoring to save battery."
+        },
+        "silence": {
+          "title": "Quiet mode while monitoring",
+          "why": "No sounds, rings or lights on the baby device. Alarm clocks still work."
+        },
+        "safety": {
+          "body": "Keep this device on the charger, on a stable surface, out of your child's reach. Don't use a device with a swollen or damaged battery."
+        },
+        "chargingTip": "Tip: if this device has \"wake screen when plugged in\", turn it off so the screen stays dark.",
+        "deviceCheck": {
+          "checking": "Checking this device…",
+          "ok": "This device works well as a baby device.",
+          "limited": "This device may lose the connection now and then. It still works.",
+          "notRecommended": "This device may not monitor reliably. Use another device if you can."
+        },
+        "notifications": {
+          "title": "Alerts",
+          "why": "Needed so you hear when your child makes noise.",
+          "required": "GuardedSleep can't alert you without this."
+        },
+        "lockScreen": {
+          "title": "Alerts on the lock screen",
+          "why": "So alerts appear even when the screen is locked."
+        },
+        "dndBypass": {
+          "title": "Alerts during Do Not Disturb",
+          "why": "So alerts still get through when Do Not Disturb is on."
+        },
+        "limits": {
+          "body": "GuardedSleep can only alert you while this device is on and charged. Keep it plugged in at night. If both devices turn off, nobody is alerted."
+        },
+        "skipped": "Skipped for now"
+      },
+      "pair": {
+        "baby": {
+          "title": "Connect the parent device",
+          "qrAlt": "Pairing code",
+          "instruction": "On the other device, open GuardedSleep, choose Parent device and scan this code.",
+          "validFor": "Code valid for {duration}",
+          "expired": "This code has expired.",
+          "newCode": "Show new code",
+          "copy": "Copy code",
+          "copied": "Copied",
+          "brighter": "Make code brighter",
+          "waiting": "Waiting for parent device…",
+          "privacy": "Anyone with this code can listen. Only show it to people you trust.",
+          "parentFound": "Parent device found. Connecting…",
+          "failed": "Pairing didn't work. Show a new code and try again.",
+          "showText": "Show code as text",
+          "hideText": "Hide text"
+        },
+        "parent": {
+          "title": "Scan the code on the baby device",
+          "cameraWhy": "GuardedSleep uses the camera only to read the code.",
+          "pasteLabel": "Or paste the code",
+          "pasteSubmit": "Connect",
+          "connecting": "Connecting to the baby device…"
+        },
+        "error": {
+          "cameraDenied": "Camera not allowed.",
+          "allowCamera": "Allow camera",
+          "pasteInstead": "Paste code instead",
+          "notOurs": "This isn't a GuardedSleep code. Scan the code on the baby device.",
+          "expired": "This code has expired. Tap Show new code on the baby device, then scan again.",
+          "mismatch": "The code doesn't match. Scan the code that is on the baby device right now.",
+          "alreadyPaired": "This baby device is already paired with another device.",
+          "unreachable": "Can't find the baby device yet. Make sure both devices are online.",
+          "incomplete": "This code is incomplete. Copy the whole code from the baby device."
+        }
+      },
+      "home": {
+        "parent": {
+          "cardTitle": "Connect to {name}",
+          "cardTitleDefault": "Connect to the baby device"
+        },
+        "baby": {
+          "cardTitle": "Start monitoring"
+        },
+        "lastUsed": "Last used {time}",
+        "newPairing": "Set up new devices",
+        "empty": "No devices paired yet."
+      },
+      "baby": {
+        "status": {
+          "connected": "Connected to parent device",
+          "waiting": "Waiting for parent device…",
+          "reconnecting": "Reconnecting to parent device…",
+          "notResponding": "Parent device not responding — still trying",
+          "parentStopped": "Parent device stopped monitoring"
+        },
+        "forDuration": "for {duration}",
+        "monitoring": "Monitoring",
+        "parentListening": "Parent is listening",
+        "battery": "This device: battery {percent}%",
+        "batteryCharging": "This device: charging · {percent}%",
+        "silence": {
+          "on": "Quiet mode is on",
+          "off": "Quiet mode is off — this device may ring",
+          "everydayPhone": "Quiet mode is on. Calls and messages on this device stay silent until you stop monitoring.",
+          "restored": "This device was left in Quiet mode. Sounds are back on.",
+          "noAccess": "Quiet mode access is off. Turn it on in Settings so calls and messages stay quiet."
+        },
+        "lock": "Lock screen",
+        "autolockHint": "The screen goes dark in {seconds} s",
+        "stop": "Stop monitoring",
+        "micLevel": "Sound level here",
+        "micSilent": "The microphone isn't picking up any sound. Restart monitoring or check the microphone."
+      },
+      "kiosk": {
+        "a11yLabel": "Monitoring. Screen locked.",
+        "unlockHint": "Hold and slide up to unlock",
+        "unlockZone": "Slide here",
+        "unlockAction": "Unlock"
+      },
+      "link": {
+        "connected": "Connected to {name}",
+        "connecting": "Connecting to {name}…",
+        "reconnecting": "Reconnecting…",
+        "cantReach": "Can't reach {name} — still trying",
+        "lostFor": "No connection for {duration}",
+        "babyStopped": "{name} stopped monitoring",
+        "idle": "Not monitoring",
+        "weak": "Weak connection — sound may break up",
+        "restoredAfter": "Connected again after {duration}. You can hear your child again.",
+        "tryNow": "Try now",
+        "pairAgain": "Pair again",
+        "connectedDefault": "Connected to the baby device",
+        "connectingDefault": "Connecting to the baby device…",
+        "cantReachDefault": "Can't reach the baby device — still trying",
+        "babyStoppedDefault": "The baby device stopped monitoring",
+        "stalePairingHint": "If you paired the baby device again, scan its new code."
+      },
+      "linkAlarm": {
+        "lost": {
+          "title": "No connection to {name}",
+          "titleUrgent": "No connection to {name}!",
+          "body": "You won't hear your child until the devices reconnect.",
+          "titleDefault": "No connection to the baby device",
+          "titleUrgentDefault": "No connection to the baby device!"
+        },
+        "stopped": {
+          "title": "{name} stopped monitoring",
+          "body": "Someone stopped monitoring on the baby device. You won't get alerts.",
+          "titleDefault": "The baby device stopped monitoring"
+        },
+        "battery": {
+          "title": "Baby device battery almost empty",
+          "body": "Plug in the baby device now, or monitoring will stop."
+        },
+        "needsPairing": {
+          "title": "Devices no longer paired"
+        },
+        "restored": {
+          "title": "Connected again"
+        },
+        "ack": "I'm checking",
+        "ackNote": "Sound off for {time}. We'll alert you again if it's still not connected.",
+        "soundNote": "A soft alarm tone repeats until you check.",
+        "soundNoteUrgent": "The alarm keeps sounding until you check."
+      },
+      "parent": {
+        "allQuietSince": "All quiet since {time}",
+        "soundSince": "Sound detected · since {time}",
+        "soundAt": "Sound at {time} · lasted {duration}",
+        "soundSnoozed": "Sound at {time} · alerts snoozed",
+        "lastHeard": "Last contact {time}",
+        "noContactYet": "No contact yet",
+        "monitoringNow": "Monitoring",
+        "meterA11y": "Sound level: {level}",
+        "level": {
+          "quiet": "quiet",
+          "some": "some sound",
+          "loud": "loud"
+        },
+        "stop": "Stop monitoring",
+        "securityTitle": "Security warning",
+        "securityBody": "The connection could not be verified. If you didn't just pair the devices again, pair them again now.",
+        "staleSuffix": "· at {time}",
+        "unitWarning": {
+          "pageHidden": "Baby device may pause — its page is hidden",
+          "wakeLockOff": "Baby device may fall asleep — its screen isn't kept on",
+          "resumedFromSleep": "Baby device woke from sleep — sounds may have been missed",
+          "notCharging": "Baby device is no longer charging",
+          "micPermissionLost": "Baby device lost microphone access"
+        }
+      },
+      "battery": {
+        "baby": "Baby device {percent}%",
+        "babyLow": "Baby device battery {percent}% — plug it in",
+        "parentLow": "This device is at {percent}% — plug it in to keep monitoring",
+        "parentLowGeneric": "This device's battery is low — plug it in to keep monitoring"
+      },
+      "listen": {
+        "idle": "Hold to listen",
+        "holding": "Listening…",
+        "locked": "Listening · tap to stop",
+        "lockHint": "Slide up to keep listening",
+        "disabled": "Listen when connected",
+        "a11yLocked": "Listening. Double-tap to stop."
+      },
+      "snooze": {
+        "button": "Snooze",
+        "title": "Snooze noise alerts",
+        "help": "You still get alerts if the connection drops or a battery runs low.",
+        "minutes": "Snooze {minutes} min",
+        "end": "End snooze",
+        "active": "Snoozed · {minutes} min left"
+      },
+      "probe": {
+        "button": "Test alert",
+        "title": "Test your alerts",
+        "body": "This plays a test sound on this device. The baby device stays silent.",
+        "output": "Alerts play on: {output}",
+        "run": "Run test",
+        "running": "Running the test…",
+        "question": "Did you hear and feel it?",
+        "localOnly": "Tested this device only — the baby device is not connected."
+      },
+      "readiness": {
+        "title": "Can alerts reach you?",
+        "notificationsOff": "Alerts are turned off for GuardedSleep",
+        "alarmVolumeZero": "Your alarm volume is off — you won't hear alerts",
+        "lockScreen": "Alerts can't appear on the lock screen",
+        "dnd": "Do Not Disturb may silence alerts",
+        "battery": "This device may stop GuardedSleep in the background",
+        "headphones": "Alerts will play in your headphones",
+        "neverTested": "Test your alerts",
+        "ok": "All set — alerts can reach you",
+        "fix": {
+          "notifications": "Turn on alerts",
+          "dnd": "Allow alerts during Do Not Disturb",
+          "battery": "Allow background use"
+        }
+      },
+      "silence": {
+        "silent": "Baby device is in Quiet mode",
+        "alarmsStillRing": "Alarm clocks on it can still ring.",
+        "screenMayLight": "Baby device is in Quiet mode, but its screen may light up",
+        "mayVibrate": "Baby device may buzz",
+        "mayRing": "Baby device may ring",
+        "unknown": "Quiet mode: unknown — can't check the baby device",
+        "manual": "On the baby device, turn on Do Not Disturb and turn the brightness down.",
+        "noAccess": "To turn on Quiet mode from here, open Settings on the baby device and turn on \"Quiet mode while monitoring\".",
+        "apply": "Turn on Quiet mode",
+        "applyFull": "Turn on Quiet mode fully",
+        "pending": "Turning on Quiet mode…",
+        "failed": "Couldn't turn on Quiet mode on the baby device.",
+        "webUnknown": "Unknown — turn on Quiet mode on the baby device yourself",
+        "webHint": "If the baby device is a laptop, keep it plugged in, lid open and screen on."
+      },
+      "help": {
+        "reconnect": {
+          "open": "What can I do?",
+          "title": "Getting connected again",
+          "step1": "Is the baby device on and showing GuardedSleep?",
+          "step2": "Are both devices on the same Wi-Fi, or both using mobile data?",
+          "step3": "Still stuck? Close and reopen GuardedSleep on the baby device."
+        }
+      },
+      "stop": {
+        "title": "Stop monitoring?",
+        "parentBody": "You won't get alerts from {name}.",
+        "babyBody": "The parent device will stop getting alerts.",
+        "confirm": "Stop",
+        "cancel": "Keep monitoring",
+        "parentBodyDefault": "You won't get alerts from the baby device."
+      },
+      "forget": {
+        "title": "Forget {name}?",
+        "body": "Monitoring stops and you'll need to scan a new code to connect again.",
+        "confirm": "Forget",
+        "titleBabyDefault": "Forget the baby device?",
+        "titleParentDefault": "Forget the parent device?"
+      },
+      "missed": {
+        "some": "While disconnected: {count, plural, one {1 sound} other {# sounds}} between {start} and {end}. Loudest: {level}.",
+        "none": "No sounds while disconnected.",
+        "unknown": "We don't know what happened between {start} and {end}."
+      },
+      "coach": {
+        "bar": "Green means you're monitoring. If it turns red or disappears, you are not.",
+        "listen": "Hold to listen. Slide up to keep listening.",
+        "test": "Run a test alert so you know what an alert feels like.",
+        "runTest": "Run test alert now"
+      },
+      "alert": {
+        "title": "Sound detected",
+        "since": "Since {time}",
+        "ended": "The sound has stopped.",
+        "testBadge": "TEST",
+        "stopSound": "Stop sound",
+        "soundStopped": "Sound stopped",
+        "openApp": "Open GuardedSleep"
+      },
+      "settings": {
+        "group": {
+          "soundDetection": "Sound detection",
+          "silence": "Quiet mode",
+          "alerts": "Alerts",
+          "screen": "Screen",
+          "paired": "Paired device",
+          "thisPhone": "This device",
+          "language": "Language",
+          "about": "About and limits",
+          "advanced": "Advanced"
+        },
+        "sensitivity": "Sensitivity",
+        "moreSensitive": "More sensitive",
+        "lessSensitive": "Less sensitive",
+        "holdLabel": "Noise must last at least",
+        "silenceAccessOk": "Quiet mode access is on.",
+        "outputLabel": "Alert sound plays on",
+        "output": {
+          "default": "Headphones if connected, otherwise speaker",
+          "speaker": "Speaker only"
+        },
+        "gain": "Extra loud alerts: {percent}%",
+        "lastTest": "Last test: {time}",
+        "neverTested": "Not tested yet",
+        "theme": {
+          "dark": "Dark (default)",
+          "light": "Light",
+          "system": "Match system"
+        },
+        "forgetParent": "Forget this parent device",
+        "forgetBaby": "Forget this baby device",
+        "checkPhone": "Check this device's setup",
+        "lang": {
+          "system": "Match system"
+        },
+        "advanced": {
+          "toggle": "Show advanced settings",
+          "warning": {
+            "title": "Change advanced settings?",
+            "body": "Wrong values here can stop the devices from connecting. Only change them if you know what you are doing."
+          },
+          "confirm": "Show advanced settings",
+          "cancel": "Not now"
+        },
+        "urlsLabel": "Connection server addresses (tried in order)",
+        "url": {
+          "new": "New address (wss://…)",
+          "invalid": "The address must start with wss:// or ws://."
+        },
+        "turn": {
+          "label": "Relay server (TURN), optional",
+          "invalid": "The relay address must start with turn: or turns:.",
+          "username": "User name",
+          "password": "Password",
+          "passwordSaved": "Password saved. Leave empty to keep it.",
+          "credentialsInvalid": "Enter both user name and password (up to 256 characters each), or neither."
+        },
+        "heartbeat": "Connection check every {seconds} s"
+      },
+      "fgsMissing": {
+        "bar": "Not monitoring in the background — open the app",
+        "body": "Android stopped GuardedSleep's background service. Alerts may not reach you while the screen is off.",
+        "fix": "Turn background monitoring back on"
+      }
+    }
+  },
+  "webShell": {
+    "route": {
+      "role": "Which device is this?",
+      "babyPair": "Pair the baby device",
+      "baby": "Baby device",
+      "parentPair": "Pair the parent device",
+      "parent": "Parent device",
+      "settings": "Settings"
+    },
+    "skipToContent": "Skip to content",
+    "dismiss": "Dismiss"
+  },
+  "webScreens": {
+    "role": {
+      "title": "Use this device as",
+      "subtitle": "Phone, tablet or laptop. Set up the baby device first.",
+      "navLabel": "Choose a role",
+      "privacyNote": "Sound goes directly between your two devices and is never recorded."
+    },
+    "pair": {
+      "copyHint": "Paste it on the parent device within 5 minutes. Don't send it in a chat.",
+      "or": "or",
+      "cameraUnavailable": "No camera is available here. Paste the code instead.",
+      "cameraView": "Camera view"
+    },
+    "baby": {
+      "failMicDenied": "The microphone is blocked, so this device can't hear your child. Allow it in the browser's site settings.",
+      "failMicUnavailable": "No microphone was found, so this device can't hear your child.",
+      "quietUnknown": "Quiet mode: unknown",
+      "keepAwake": "Keep this device awake: plugged in, lid open, this tab visible.",
+      "keepSilent": "Turn on Do Not Disturb and lower brightness on this device."
+    },
+    "parent": {
+      "quietUnknownWeb": "Quiet mode unknown · turn it on at the baby device",
+      "keepOpen": "Keep this page open and the screen on. Your browser can't alert you otherwise.",
+      "soundGate": "Tap to turn on alert sound"
+    },
+    "settings": {
+      "urlHint": "The baby device writes these addresses into its code, so the parent device uses them too.",
+      "sensitivityBabyOnly": "Sensitivity is set on the baby device."
+    },
+    "guard": {
+      "wakeLockHeld": "Screen is kept on",
+      "wakeLockLost": "The screen is no longer kept on, so this device may fall asleep and stop monitoring.",
+      "wakeLockUnsupported": "This browser can't keep the screen on. Turn off screen sleep in this device's settings.",
+      "wakeLockRetry": "Keep screen on",
+      "hiddenTitle": "GuardedSleep may stop monitoring",
+      "hiddenBody": "This page is in the background. Open it again to keep monitoring.",
+      "awayBackground": "This page was in the background for {duration}. Alerts may have been missed.",
+      "awaySleep": "This device was asleep for {duration}. Alerts may have been missed."
+    },
+    "night": {
+      "open": "Night screen",
+      "label": "Night screen. Still monitoring. Tap to show status.",
+      "monitoring": "Still monitoring",
+      "leave": "Tap again to leave the night screen"
+    }
+  }
+}

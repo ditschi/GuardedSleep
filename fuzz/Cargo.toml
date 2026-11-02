@@ -1,0 +1,44 @@
+[package]
+name = "guardedsleep-fuzz"
+version = "0.0.0"
+description = "cargo-fuzz targets for the untrusted-input parsers of guardedsleep-core"
+edition = "2024"
+license = "AGPL-3.0-or-later"
+publish = false
+
+# cargo-fuzz marker. Docs: https://rust-fuzz.github.io/book/cargo-fuzz/structure.html
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4.13"
+# The generator type the core takes (same version and features as the core).
+chacha20 = { version = "0.10.2", default-features = false, features = ["rng"] }
+# The fuzz targets need fixed-nonce sealing; the feature is never part of a release build.
+guardedsleep-core = { path = "../crates/guardedsleep-core", features = ["conformance"] }
+arbitrary = { version = "1.5.0", features = ["derive"] }
+
+# Keeps this crate out of the root workspace: it needs a nightly toolchain and sanitizer flags,
+# and its own lockfile. Docs: https://doc.rust-lang.org/cargo/reference/workspaces.html
+[workspace]
+
+[[bin]]
+name = "envelope_open"
+path = "fuzz_targets/envelope_open.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "envelope_session"
+path = "fuzz_targets/envelope_session.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "nostr_frame"
+path = "fuzz_targets/nostr_frame.rs"
+test = false
+doc = false
+bench = false

@@ -1,0 +1,50 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "attack-reflection-first-pairing",
+  "description": "Reflection against a baby that never paired: the proof never matches and two mismatches end the attempt with pairing_key_mismatch.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start",
+      "peer": "baby"
+    },
+    {
+      "at": 1000,
+      "do": "stranger_join",
+      "mode": "reflect",
+      "id": "stranger"
+    },
+    {
+      "at": 60000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "failed_needs_user",
+      "at_ms": 55000,
+      "key": "pairing_key_mismatch"
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "connected"
+        }
+      }
+    }
+  ]
+}

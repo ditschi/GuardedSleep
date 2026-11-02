@@ -25,7 +25,7 @@ Read role definitions from `docs/roles/` before spawning sub-agents. Select role
 | Feature with security implications | + Security/Privacy Architect |
 | Feature with user-facing changes | + UX/Usability Expert |
 | Architecture / technical decision | Technical Architect, Security Architect |
-| Any decision being finalized (ADR) | + Critical Reviewer |
+| Any decision being finalized (OpenSpec change) | + Critical Reviewer |
 | MVP scoping / prioritization | Product Owner, Critical Reviewer |
 
 ## Mandatory Critical Review Gate

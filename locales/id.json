@@ -1,0 +1,547 @@
+{
+  "$meta": {
+    "default": "machineTranslated",
+    "reviewed": []
+  },
+  "meta": {
+    "appTitle": "GuardedSleep"
+  },
+  "layout": {
+    "settingsAria": "Pengaturan",
+    "backAria": "Kembali ke layar sebelumnya"
+  },
+  "core": {
+    "pairingKeyMismatch": "Perangkat ini tidak lagi dipasangkan. Pasangkan lagi untuk terus memantau.",
+    "updateRequired": "Salah satu perangkat perlu memperbarui GuardedSleep agar pemantauan berlanjut.",
+    "serverUnreachable": "Perangkat ini tidak dapat menjangkau server koneksi. Periksa koneksi internetnya.",
+    "peerAbsent": "Perangkat bayi tidak menjawab. Pastikan perangkat menyala dan menampilkan GuardedSleep.",
+    "mediaBlocked": "Kedua perangkat saling menemukan, tetapi suara tidak sampai. Coba gunakan Wi-Fi yang sama di keduanya.",
+    "wrongKeyAttempt": "Seseorang mencoba terhubung dengan kunci yang salah. Pemantauan terus berjalan.",
+    "unknownParentAttempt": "Perangkat yang bukan perangkat orang tua yang Anda pasangkan mencoba terhubung. Pemantauan tetap berjalan.",
+    "pairAgain": "Perangkat ini tidak lagi mengenal perangkat orang tua. Ketuk Tampilkan kode baru lalu pasangkan lagi.",
+    "babyUnrecognised": "Perangkat bayi tidak mengenali perangkat ini. Ketuk Tampilkan kode baru di perangkat bayi lalu pasangkan lagi."
+  },
+  "native": {
+    "appName": "GuardedSleep Alpha",
+    "notif": {
+      "appTitle": "GuardedSleep",
+      "silenceRuleName": "GuardedSleep",
+      "channelNoise": "Peringatan suara",
+      "channelNoiseDesc": "Peringatan keras saat perangkat bayi mendengar suara.",
+      "channelLink": "Alarm koneksi",
+      "channelLinkDesc": "Alarm saat koneksi ke perangkat bayi terputus.",
+      "channelStatus": "Status pemantauan",
+      "channelStatusDesc": "Menunjukkan bahwa pemantauan sedang berjalan.",
+      "channelNotice": "Peringatan",
+      "channelNoticeDesc": "Peringatan baterai dan keamanan.",
+      "channelInfo": "Informasi",
+      "channelInfoDesc": "Catatan senyap, misalnya setelah koneksi pulih.",
+      "channelBaby": "Pemantauan",
+      "channelBabyDesc": "Catatan senyap bahwa perangkat ini sedang memantau.",
+      "babyMonitoring": "GuardedSleep sedang memantau",
+      "babyResume": "Ketuk untuk melanjutkan pemantauan",
+      "statusConnected": "Terhubung ke perangkat bayi",
+      "statusConnecting": "Menghubungkan ke perangkat bayi…",
+      "statusReconnecting": "Menghubungkan ulang ke perangkat bayi…",
+      "statusTrouble": "Tidak dapat menjangkau perangkat bayi — masih mencoba",
+      "statusAlarm": "Tidak ada koneksi ke perangkat bayi",
+      "statusPeerStopped": "Perangkat bayi berhenti memantau",
+      "statusFailed": "Perangkat ini tidak lagi dipasangkan",
+      "noiseTitle": "Suara terdeteksi",
+      "noiseText": "Perangkat bayi mendengar suara.",
+      "noiseTestTitle": "Peringatan uji",
+      "noiseTestText": "Ini hanya uji coba. Perangkat bayi tetap senyap.",
+      "actionStopSound": "Hentikan suara",
+      "actionSnooze10": "Tunda 10 mnt",
+      "actionChecking": "Saya periksa",
+      "linkLostTitle": "Koneksi terputus",
+      "linkLostText": "Tidak ada koneksi ke perangkat bayi. Periksa bayi Anda sekarang.",
+      "peerStoppedTitle": "Perangkat bayi berhenti memantau",
+      "peerStoppedText": "Pemantauan dihentikan di perangkat bayi. Anda tidak akan mendengar apa pun sampai dimulai lagi.",
+      "restoredTitle": "Terhubung kembali",
+      "restoredText": "Tidak dipantau selama {duration}.",
+      "missedTitle": "Saat terputus",
+      "missedCount": "Suara saat terputus: {count} (tidak dipantau selama {duration}).",
+      "missedNone": "Tidak ada suara saat terputus (tidak dipantau selama {duration}).",
+      "missedUnknown": "Kami tidak tahu apa yang terjadi saat terputus (tidak dipantau selama {duration}).",
+      "batteryLowTitle": "Baterai perangkat bayi menipis",
+      "batteryLowText": "Baterai perangkat bayi {percent}% — colokkan ke pengisi daya.",
+      "batteryCriticalTitle": "Baterai perangkat bayi hampir kosong",
+      "batteryCriticalText": "Baterai perangkat bayi {percent}% — segera colokkan ke pengisi daya.",
+      "chargerTitle": "Perangkat bayi tidak lagi mengisi daya",
+      "chargerText": "Colokkan perangkat bayi agar bertahan semalaman.",
+      "securityTitle": "Kunci salah",
+      "publicTitle": "Alarm GuardedSleep",
+      "fgsMissingTitle": "Tidak memantau di latar belakang",
+      "fgsMissingText": "Buka GuardedSleep untuk menyalakan kembali pemantauan di latar belakang."
+    },
+    "ui": {
+      "common": {
+        "appName": "GuardedSleep",
+        "allow": "Izinkan",
+        "continue": "Lanjutkan",
+        "later": "Nanti",
+        "ok": "OK",
+        "cancel": "Batal",
+        "more": "Lainnya",
+        "moreCount": "+{count}",
+        "settings": "Pengaturan",
+        "tryAgain": "Coba lagi",
+        "yes": "Ya",
+        "no": "Tidak",
+        "add": "Tambah",
+        "remove": "Hapus",
+        "save": "Simpan",
+        "change": "Ubah",
+        "durationSec": "{seconds} dtk",
+        "durationMin": "{minutes} mnt",
+        "durationHour": "{hours} jam",
+        "durationHourMin": "{hours} jam {minutes} mnt",
+        "secondsShort": "{seconds} dtk",
+        "state": {
+          "done": "Selesai",
+          "todo": "Belum",
+          "blocked": "Terblokir",
+          "checking": "Memeriksa"
+        },
+        "babyUnitDefault": "Perangkat bayi",
+        "parentUnitDefault": "Perangkat orang tua"
+      },
+      "role": {
+        "title": "Perangkat apa ini?",
+        "baby": {
+          "title": "Perangkat bayi",
+          "hint": "Tetap di dekat anak Anda dan mendengarkan."
+        },
+        "parent": {
+          "title": "Perangkat orang tua",
+          "hint": "Tetap bersama Anda dan memberi peringatan."
+        },
+        "orderHint": "Siapkan perangkat bayi terlebih dahulu."
+      },
+      "setup": {
+        "title": "Siapkan perangkat ini",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Diperlukan untuk mendengar anak Anda.",
+          "required": "Izinkan mikrofon untuk melanjutkan."
+        },
+        "background": {
+          "title": "Tetap berjalan di latar belakang",
+          "why": "Jika tidak, perangkat ini dapat berhenti memantau untuk menghemat baterai."
+        },
+        "silence": {
+          "title": "Mode tenang saat memantau",
+          "why": "Tidak ada suara, dering, atau lampu di perangkat bayi. Jam alarm tetap berbunyi."
+        },
+        "safety": {
+          "body": "Biarkan perangkat ini terus diisi daya, di permukaan yang stabil, di luar jangkauan anak Anda. Jangan gunakan perangkat dengan baterai yang menggembung atau rusak."
+        },
+        "chargingTip": "Tips: jika perangkat ini punya opsi \"nyalakan layar saat dicolokkan\", matikan agar layar tetap gelap.",
+        "deviceCheck": {
+          "checking": "Memeriksa perangkat ini…",
+          "ok": "Perangkat ini berfungsi baik sebagai perangkat bayi.",
+          "limited": "Perangkat ini kadang dapat kehilangan koneksi. Namun masih berfungsi.",
+          "notRecommended": "Perangkat ini mungkin tidak memantau dengan andal. Gunakan perangkat lain jika bisa."
+        },
+        "notifications": {
+          "title": "Peringatan",
+          "why": "Diperlukan agar Anda tahu saat anak Anda bersuara.",
+          "required": "GuardedSleep tidak dapat memberi peringatan tanpa ini."
+        },
+        "lockScreen": {
+          "title": "Peringatan di layar kunci",
+          "why": "Agar peringatan muncul meski layar terkunci."
+        },
+        "dndBypass": {
+          "title": "Peringatan saat Jangan Ganggu",
+          "why": "Agar peringatan tetap sampai saat Jangan Ganggu menyala."
+        },
+        "limits": {
+          "body": "GuardedSleep hanya dapat memberi peringatan saat perangkat ini menyala dan terisi daya. Biarkan tercolok di malam hari. Jika kedua perangkat mati, tidak ada yang mendapat peringatan."
+        },
+        "skipped": "Dilewati dulu"
+      },
+      "pair": {
+        "baby": {
+          "title": "Hubungkan perangkat orang tua",
+          "qrAlt": "Kode pemasangan",
+          "instruction": "Di perangkat lain, buka GuardedSleep, pilih Perangkat orang tua, lalu pindai kode ini.",
+          "validFor": "Kode berlaku {duration}",
+          "expired": "Kode ini sudah kedaluwarsa.",
+          "newCode": "Tampilkan kode baru",
+          "copy": "Salin kode",
+          "copied": "Tersalin",
+          "brighter": "Terangkan kode",
+          "waiting": "Menunggu perangkat orang tua…",
+          "privacy": "Siapa pun yang memiliki kode ini dapat mendengarkan. Tunjukkan hanya kepada orang yang Anda percaya.",
+          "parentFound": "Perangkat orang tua ditemukan. Menghubungkan…",
+          "failed": "Pemasangan gagal. Tampilkan kode baru dan coba lagi.",
+          "showText": "Tampilkan kode sebagai teks",
+          "hideText": "Sembunyikan teks"
+        },
+        "parent": {
+          "title": "Pindai kode di perangkat bayi",
+          "cameraWhy": "GuardedSleep hanya memakai kamera untuk membaca kode.",
+          "pasteLabel": "Atau tempel kode",
+          "pasteSubmit": "Hubungkan",
+          "connecting": "Menghubungkan ke perangkat bayi…"
+        },
+        "error": {
+          "cameraDenied": "Kamera tidak diizinkan.",
+          "allowCamera": "Izinkan kamera",
+          "pasteInstead": "Tempel kode saja",
+          "notOurs": "Ini bukan kode GuardedSleep. Pindai kode di perangkat bayi.",
+          "expired": "Kode ini sudah kedaluwarsa. Ketuk Tampilkan kode baru di perangkat bayi, lalu pindai lagi.",
+          "mismatch": "Kode tidak cocok. Pindai kode yang sedang tampil di perangkat bayi.",
+          "alreadyPaired": "Perangkat bayi ini sudah dipasangkan dengan perangkat lain.",
+          "unreachable": "Perangkat bayi belum ditemukan. Pastikan kedua perangkat online.",
+          "incomplete": "Kode ini tidak lengkap. Salin seluruh kode dari perangkat bayi."
+        }
+      },
+      "home": {
+        "parent": {
+          "cardTitle": "Hubungkan ke {name}",
+          "cardTitleDefault": "Hubungkan ke perangkat bayi"
+        },
+        "baby": {
+          "cardTitle": "Mulai memantau"
+        },
+        "lastUsed": "Terakhir dipakai {time}",
+        "newPairing": "Siapkan perangkat baru",
+        "empty": "Belum ada perangkat yang dipasangkan."
+      },
+      "baby": {
+        "status": {
+          "connected": "Terhubung ke perangkat orang tua",
+          "waiting": "Menunggu perangkat orang tua…",
+          "reconnecting": "Menghubungkan ulang ke perangkat orang tua…",
+          "notResponding": "Perangkat orang tua tidak merespons — masih mencoba",
+          "parentStopped": "Perangkat orang tua berhenti memantau"
+        },
+        "forDuration": "selama {duration}",
+        "monitoring": "Memantau",
+        "parentListening": "Orang tua sedang mendengarkan",
+        "battery": "Perangkat ini: baterai {percent}%",
+        "batteryCharging": "Perangkat ini: mengisi daya · {percent}%",
+        "silence": {
+          "on": "Mode tenang aktif",
+          "off": "Mode tenang mati — perangkat ini dapat berdering",
+          "everydayPhone": "Mode tenang aktif. Panggilan dan pesan di perangkat ini tetap senyap sampai Anda berhenti memantau.",
+          "restored": "Perangkat ini tertinggal dalam mode tenang. Suara sudah dikembalikan.",
+          "noAccess": "Akses mode tenang mati. Nyalakan di Pengaturan agar panggilan dan pesan tetap senyap."
+        },
+        "lock": "Kunci layar",
+        "autolockHint": "Layar akan gelap dalam {seconds} dtk",
+        "stop": "Hentikan pemantauan",
+        "micLevel": "Tingkat suara di sini",
+        "micSilent": "Mikrofon tidak menangkap suara apa pun. Mulai ulang pemantauan atau periksa mikrofon."
+      },
+      "kiosk": {
+        "a11yLabel": "Memantau. Layar terkunci.",
+        "unlockHint": "Tahan dan geser ke atas untuk membuka kunci",
+        "unlockZone": "Geser di sini",
+        "unlockAction": "Buka kunci"
+      },
+      "link": {
+        "connected": "Terhubung ke {name}",
+        "connecting": "Menghubungkan ke {name}…",
+        "reconnecting": "Menghubungkan ulang…",
+        "cantReach": "Tidak dapat menjangkau {name} — masih mencoba",
+        "lostFor": "Tidak ada koneksi selama {duration}",
+        "babyStopped": "{name} berhenti memantau",
+        "idle": "Tidak memantau",
+        "weak": "Koneksi lemah — suara dapat terputus-putus",
+        "restoredAfter": "Terhubung kembali setelah {duration}. Anda dapat mendengar anak Anda lagi.",
+        "tryNow": "Coba sekarang",
+        "pairAgain": "Pasangkan lagi",
+        "connectedDefault": "Terhubung ke perangkat bayi",
+        "connectingDefault": "Menghubungkan ke perangkat bayi…",
+        "cantReachDefault": "Tidak dapat menjangkau perangkat bayi — masih mencoba",
+        "babyStoppedDefault": "Perangkat bayi berhenti memantau",
+        "stalePairingHint": "Jika Anda memasangkan ulang perangkat bayi, pindai kode barunya."
+      },
+      "linkAlarm": {
+        "lost": {
+          "title": "Tidak ada koneksi ke {name}",
+          "titleUrgent": "Tidak ada koneksi ke {name}!",
+          "body": "Anda tidak akan mendengar anak Anda sampai perangkat terhubung kembali.",
+          "titleDefault": "Tidak ada koneksi ke perangkat bayi",
+          "titleUrgentDefault": "Tidak ada koneksi ke perangkat bayi!"
+        },
+        "stopped": {
+          "title": "{name} berhenti memantau",
+          "body": "Seseorang menghentikan pemantauan di perangkat bayi. Anda tidak akan menerima peringatan.",
+          "titleDefault": "Perangkat bayi berhenti memantau"
+        },
+        "battery": {
+          "title": "Baterai perangkat bayi hampir kosong",
+          "body": "Segera colokkan perangkat bayi, atau pemantauan akan berhenti."
+        },
+        "needsPairing": {
+          "title": "Perangkat tidak lagi dipasangkan"
+        },
+        "restored": {
+          "title": "Terhubung kembali"
+        },
+        "ack": "Saya periksa",
+        "ackNote": "Suara dimatikan selama {time}. Kami akan memperingatkan lagi jika masih belum terhubung.",
+        "soundNote": "Nada alarm lembut berulang sampai Anda memeriksa.",
+        "soundNoteUrgent": "Alarm terus berbunyi sampai Anda memeriksa."
+      },
+      "parent": {
+        "allQuietSince": "Tenang sejak {time}",
+        "soundSince": "Suara terdeteksi · sejak {time}",
+        "soundAt": "Suara pada {time} · berlangsung {duration}",
+        "soundSnoozed": "Suara pada {time} · peringatan ditunda",
+        "lastHeard": "Kontak terakhir {time}",
+        "noContactYet": "Belum ada kontak",
+        "monitoringNow": "Memantau",
+        "meterA11y": "Tingkat suara: {level}",
+        "level": {
+          "quiet": "tenang",
+          "some": "ada suara",
+          "loud": "keras"
+        },
+        "stop": "Hentikan pemantauan",
+        "securityTitle": "Peringatan keamanan",
+        "securityBody": "Koneksi tidak dapat diverifikasi. Jika Anda tidak baru saja memasangkan ulang perangkat, pasangkan ulang sekarang.",
+        "staleSuffix": "· pukul {time}",
+        "unitWarning": {
+          "pageHidden": "Perangkat bayi mungkin berhenti sementara — halamannya tersembunyi",
+          "wakeLockOff": "Perangkat bayi mungkin tertidur — layarnya tidak dijaga tetap menyala",
+          "resumedFromSleep": "Perangkat bayi bangun dari tidur — mungkin ada suara yang terlewat",
+          "notCharging": "Perangkat bayi tidak lagi mengisi daya",
+          "micPermissionLost": "Perangkat bayi kehilangan akses mikrofon"
+        }
+      },
+      "battery": {
+        "baby": "Perangkat bayi {percent}%",
+        "babyLow": "Baterai perangkat bayi {percent}% — colokkan ke pengisi daya",
+        "parentLow": "Perangkat ini {percent}% — colokkan agar pemantauan berlanjut",
+        "parentLowGeneric": "Baterai perangkat ini hampir habis — colokkan agar pemantauan berlanjut"
+      },
+      "listen": {
+        "idle": "Tahan untuk mendengarkan",
+        "holding": "Mendengarkan…",
+        "locked": "Mendengarkan · ketuk untuk berhenti",
+        "lockHint": "Geser ke atas untuk terus mendengarkan",
+        "disabled": "Dengarkan saat terhubung",
+        "a11yLocked": "Mendengarkan. Ketuk dua kali untuk berhenti."
+      },
+      "snooze": {
+        "button": "Tunda",
+        "title": "Tunda peringatan kebisingan",
+        "help": "Anda tetap mendapat peringatan jika koneksi terputus atau baterai hampir habis.",
+        "minutes": "Tunda {minutes} mnt",
+        "end": "Akhiri penundaan",
+        "active": "Ditunda · sisa {minutes} mnt"
+      },
+      "probe": {
+        "button": "Peringatan uji",
+        "title": "Uji peringatan Anda",
+        "body": "Ini memutar suara uji di perangkat ini. Perangkat bayi tetap senyap.",
+        "output": "Peringatan diputar di: {output}",
+        "run": "Jalankan uji",
+        "running": "Menjalankan uji…",
+        "question": "Apakah Anda mendengar dan merasakannya?",
+        "localOnly": "Hanya perangkat ini yang diuji — perangkat bayi tidak terhubung."
+      },
+      "readiness": {
+        "title": "Apakah peringatan bisa sampai ke Anda?",
+        "notificationsOff": "Peringatan GuardedSleep dimatikan",
+        "alarmVolumeZero": "Volume alarm mati — Anda tidak akan mendengar peringatan",
+        "lockScreen": "Peringatan tidak dapat muncul di layar kunci",
+        "dnd": "Jangan Ganggu dapat membisukan peringatan",
+        "battery": "Perangkat ini dapat menghentikan GuardedSleep di latar belakang",
+        "headphones": "Peringatan akan diputar di headphone Anda",
+        "neverTested": "Uji peringatan Anda",
+        "ok": "Siap — peringatan dapat sampai ke Anda",
+        "fix": {
+          "notifications": "Nyalakan peringatan",
+          "dnd": "Izinkan peringatan saat Jangan Ganggu",
+          "battery": "Izinkan penggunaan di latar belakang"
+        }
+      },
+      "silence": {
+        "silent": "Perangkat bayi dalam mode tenang",
+        "alarmsStillRing": "Jam alarm di perangkat itu tetap dapat berbunyi.",
+        "screenMayLight": "Perangkat bayi dalam mode tenang, tetapi layarnya dapat menyala",
+        "mayVibrate": "Perangkat bayi dapat bergetar",
+        "mayRing": "Perangkat bayi dapat berdering",
+        "unknown": "Mode tenang: tidak diketahui — perangkat bayi tidak dapat diperiksa",
+        "manual": "Di perangkat bayi, nyalakan Jangan Ganggu dan turunkan kecerahan.",
+        "noAccess": "Untuk menyalakan mode tenang dari sini, buka Pengaturan di perangkat bayi dan nyalakan \"Mode tenang saat memantau\".",
+        "apply": "Nyalakan mode tenang",
+        "applyFull": "Nyalakan mode tenang sepenuhnya",
+        "pending": "Menyalakan mode tenang…",
+        "failed": "Tidak dapat menyalakan mode tenang di perangkat bayi.",
+        "webUnknown": "Tidak diketahui — nyalakan sendiri mode tenang di perangkat bayi",
+        "webHint": "Jika perangkat bayi adalah laptop, biarkan tercolok, penutup terbuka, dan layar menyala."
+      },
+      "help": {
+        "reconnect": {
+          "open": "Apa yang bisa saya lakukan?",
+          "title": "Menghubungkan kembali",
+          "step1": "Apakah perangkat bayi menyala dan menampilkan GuardedSleep?",
+          "step2": "Apakah kedua perangkat memakai Wi-Fi yang sama, atau keduanya memakai data seluler?",
+          "step3": "Masih belum berhasil? Tutup dan buka lagi GuardedSleep di perangkat bayi."
+        }
+      },
+      "stop": {
+        "title": "Hentikan pemantauan?",
+        "parentBody": "Anda tidak akan menerima peringatan dari {name}.",
+        "babyBody": "Perangkat orang tua tidak akan lagi menerima peringatan.",
+        "confirm": "Hentikan",
+        "cancel": "Tetap memantau",
+        "parentBodyDefault": "Anda tidak akan menerima peringatan dari perangkat bayi."
+      },
+      "forget": {
+        "title": "Lupakan {name}?",
+        "body": "Pemantauan berhenti dan Anda perlu memindai kode baru untuk terhubung lagi.",
+        "confirm": "Lupakan",
+        "titleBabyDefault": "Lupakan perangkat bayi?",
+        "titleParentDefault": "Lupakan perangkat orang tua?"
+      },
+      "missed": {
+        "some": "Saat terputus: {count, plural, other {# suara}} antara {start} dan {end}. Terkeras: {level}.",
+        "none": "Tidak ada suara saat terputus.",
+        "unknown": "Kami tidak tahu apa yang terjadi antara {start} dan {end}."
+      },
+      "coach": {
+        "bar": "Hijau berarti Anda sedang memantau. Jika berubah merah atau hilang, berarti tidak memantau.",
+        "listen": "Tahan untuk mendengarkan. Geser ke atas untuk terus mendengarkan.",
+        "test": "Jalankan peringatan uji agar Anda tahu seperti apa rasanya.",
+        "runTest": "Jalankan peringatan uji sekarang"
+      },
+      "alert": {
+        "title": "Suara terdeteksi",
+        "since": "Sejak {time}",
+        "ended": "Suara telah berhenti.",
+        "testBadge": "UJI",
+        "stopSound": "Hentikan suara",
+        "soundStopped": "Suara dihentikan",
+        "openApp": "Buka GuardedSleep"
+      },
+      "settings": {
+        "group": {
+          "soundDetection": "Deteksi suara",
+          "silence": "Mode tenang",
+          "alerts": "Peringatan",
+          "screen": "Layar",
+          "paired": "Perangkat yang dipasangkan",
+          "thisPhone": "Perangkat ini",
+          "language": "Bahasa",
+          "about": "Tentang dan batasan",
+          "advanced": "Lanjutan"
+        },
+        "sensitivity": "Sensitivitas",
+        "moreSensitive": "Lebih sensitif",
+        "lessSensitive": "Kurang sensitif",
+        "holdLabel": "Kebisingan harus berlangsung minimal",
+        "silenceAccessOk": "Akses mode tenang aktif.",
+        "outputLabel": "Suara peringatan diputar di",
+        "output": {
+          "default": "Headphone jika terhubung, jika tidak speaker",
+          "speaker": "Hanya speaker"
+        },
+        "gain": "Peringatan ekstra keras: {percent}%",
+        "lastTest": "Uji terakhir: {time}",
+        "neverTested": "Belum diuji",
+        "theme": {
+          "dark": "Gelap (default)",
+          "light": "Terang",
+          "system": "Ikuti sistem"
+        },
+        "forgetParent": "Lupakan perangkat orang tua ini",
+        "forgetBaby": "Lupakan perangkat bayi ini",
+        "checkPhone": "Periksa pengaturan perangkat ini",
+        "lang": {
+          "system": "Ikuti sistem"
+        },
+        "advanced": {
+          "toggle": "Tampilkan pengaturan lanjutan",
+          "warning": {
+            "title": "Ubah pengaturan lanjutan?",
+            "body": "Nilai yang salah di sini dapat membuat perangkat tidak bisa terhubung. Ubah hanya jika Anda tahu apa yang Anda lakukan."
+          },
+          "confirm": "Tampilkan pengaturan lanjutan",
+          "cancel": "Jangan sekarang"
+        },
+        "urlsLabel": "Alamat server koneksi (dicoba berurutan)",
+        "url": {
+          "new": "Alamat baru (wss://…)",
+          "invalid": "Alamat harus diawali dengan wss:// atau ws://."
+        },
+        "turn": {
+          "label": "Server relai (TURN), opsional",
+          "invalid": "Alamat relai harus diawali dengan turn: atau turns:."
+        },
+        "heartbeat": "Pemeriksaan koneksi setiap {seconds} dtk"
+      },
+      "fgsMissing": {
+        "bar": "Tidak memantau di latar belakang — buka aplikasi",
+        "body": "Android menghentikan layanan latar belakang GuardedSleep. Peringatan mungkin tidak sampai saat layar mati.",
+        "fix": "Nyalakan kembali pemantauan di latar belakang"
+      }
+    }
+  },
+  "webShell": {
+    "route": {
+      "role": "Perangkat apa ini?",
+      "babyPair": "Pasangkan perangkat bayi",
+      "baby": "Perangkat bayi",
+      "parentPair": "Pasangkan perangkat orang tua",
+      "parent": "Perangkat orang tua",
+      "settings": "Pengaturan"
+    },
+    "skipToContent": "Lompat ke konten",
+    "dismiss": "Tutup"
+  },
+  "webScreens": {
+    "role": {
+      "title": "Gunakan perangkat ini sebagai",
+      "subtitle": "Ponsel, tablet, atau laptop. Siapkan perangkat bayi terlebih dahulu.",
+      "navLabel": "Pilih peran",
+      "privacyNote": "Suara langsung berpindah antara kedua perangkat Anda dan tidak pernah direkam."
+    },
+    "pair": {
+      "copyHint": "Tempel di perangkat orang tua dalam 5 menit. Jangan kirim lewat obrolan.",
+      "or": "atau",
+      "cameraUnavailable": "Tidak ada kamera di sini. Tempel kode saja.",
+      "cameraView": "Tampilan kamera"
+    },
+    "baby": {
+      "failMicDenied": "Mikrofon diblokir, sehingga perangkat ini tidak dapat mendengar anak Anda. Izinkan di pengaturan situs browser.",
+      "failMicUnavailable": "Mikrofon tidak ditemukan, sehingga perangkat ini tidak dapat mendengar anak Anda.",
+      "quietUnknown": "Mode tenang: tidak diketahui",
+      "keepAwake": "Jaga perangkat ini tetap aktif: tercolok, penutup terbuka, tab ini terlihat.",
+      "keepSilent": "Nyalakan Jangan Ganggu dan turunkan kecerahan di perangkat ini."
+    },
+    "parent": {
+      "quietUnknownWeb": "Mode tenang tidak diketahui · nyalakan di perangkat bayi",
+      "keepOpen": "Biarkan halaman ini terbuka dan layar menyala. Jika tidak, browser tidak dapat memberi peringatan.",
+      "soundGate": "Ketuk untuk menyalakan suara peringatan"
+    },
+    "settings": {
+      "urlHint": "Perangkat bayi menulis alamat ini ke dalam kodenya, jadi perangkat orang tua juga memakainya.",
+      "sensitivityBabyOnly": "Sensitivitas diatur di perangkat bayi."
+    },
+    "guard": {
+      "wakeLockHeld": "Layar dijaga tetap menyala",
+      "wakeLockLost": "Layar tidak lagi dijaga tetap menyala, sehingga perangkat ini dapat tertidur dan berhenti memantau.",
+      "wakeLockUnsupported": "Browser ini tidak dapat menjaga layar tetap menyala. Matikan tidur layar di pengaturan perangkat ini.",
+      "wakeLockRetry": "Jaga layar tetap menyala",
+      "hiddenTitle": "GuardedSleep dapat berhenti memantau",
+      "hiddenBody": "Halaman ini ada di latar belakang. Buka lagi agar pemantauan berlanjut.",
+      "awayBackground": "Halaman ini berada di latar belakang selama {duration}. Peringatan mungkin terlewat.",
+      "awaySleep": "Perangkat ini tertidur selama {duration}. Peringatan mungkin terlewat."
+    },
+    "night": {
+      "open": "Layar malam",
+      "label": "Layar malam. Masih memantau. Ketuk untuk menampilkan status.",
+      "monitoring": "Masih memantau",
+      "leave": "Ketuk lagi untuk keluar dari layar malam"
+    }
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "parent-restart",
+  "description": "The parent process restarts. The baby holds no mailbox while its attempt is verified, so it notices only when its liveness timeout (<= 25 s) fires, reopens the mailbox and offers as soon as the restarted parent's new session confirmed. No side reaches level 2.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "restart_process",
+      "peer": "parent"
+    },
+    {
+      "at": 90000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 85000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 85000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 60000
+    },
+    {
+      "peer": "parent",
+      "max_level": 1,
+      "within_ms": [20000, 90000]
+    },
+    {
+      "peer": "baby",
+      "max_level": 1,
+      "within_ms": [15000, 90000]
+    },
+    {
+      "peer": "baby",
+      "never": "link_lost"
+    },
+    {
+      "peer": "parent",
+      "never": "link_lost"
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    }
+  ],
+  "export_traces": [
+    {
+      "peer": "parent",
+      "instance": 1,
+      "id": "sim-parent-restart-parent-1"
+    }
+  ]
+}

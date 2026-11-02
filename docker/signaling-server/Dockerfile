@@ -1,42 +1,71 @@
 # syntax=docker/dockerfile:1
-# Build from repository root: docker build -f docker/signaling-server/Dockerfile .
-FROM node:22-alpine AS builder
+# Build from the repository root: docker build -f docker/signaling-server/Dockerfile .
+# The Rust server (crates/guardedsleep-server) on a distroless runtime. Multi-arch: build with
+# `docker buildx build --platform linux/amd64,linux/arm64`; each platform compiles natively.
+# Dockerfile reference: https://docs.docker.com/reference/dockerfile/
+
+# --- toolchain: the channel comes from rust-toolchain.toml, the single source (ADR-020 section 1) ---
+FROM debian:trixie-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad AS chef
+ENV RUSTUP_HOME=/opt/rustup CARGO_HOME=/opt/cargo PATH=/opt/cargo/bin:${PATH}
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends build-essential ca-certificates curl \
+	&& rm -rf /var/lib/apt/lists/*
+COPY rust-toolchain.toml /tmp/rust-toolchain.toml
+# Only the channel is installed here. The file itself is not copied into /app, so rustup does not pull
+# the Android, iOS and WASM targets that the workspace toolchain file lists.
+# rustup-init is downloaded for the build platform and checked against a pinned SHA-256 before it
+# runs; no piped installer script. Bump RUSTUP_VERSION and both digests together, taking the digests
+# from https://static.rust-lang.org/rustup/archive/<version>/<target>/rustup-init.sha256
+ARG TARGETARCH
+ARG RUSTUP_VERSION=1.29.2
+ARG RUSTUP_SHA256_AMD64=5be191e8c70a5007074254cb74d78dbfdd25cd5a61c27de7b8e5410122ec24f4
+ARG RUSTUP_SHA256_ARM64=a9c168dbea81a84671c6b7a5c1795cb0eb699020110d107ddfca427bd797e697
+RUN case "$TARGETARCH" in \
+		amd64) TRIPLE=x86_64-unknown-linux-gnu; SHA="$RUSTUP_SHA256_AMD64" ;; \
+		arm64) TRIPLE=aarch64-unknown-linux-gnu; SHA="$RUSTUP_SHA256_ARM64" ;; \
+		*) echo "unsupported architecture: $TARGETARCH" >&2; exit 1 ;; \
+	esac \
+	&& CHANNEL="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' /tmp/rust-toolchain.toml)" \
+	&& test -n "$CHANNEL" \
+	&& curl -sSfo /tmp/rustup-init "https://static.rust-lang.org/rustup/archive/${RUSTUP_VERSION}/${TRIPLE}/rustup-init" \
+	&& echo "${SHA}  /tmp/rustup-init" | sha256sum -c - \
+	&& chmod +x /tmp/rustup-init \
+	&& /tmp/rustup-init -y --profile minimal --default-toolchain "$CHANNEL" \
+	&& rm /tmp/rustup-init \
+	&& cargo install --locked cargo-chef@0.1.78 \
+	&& rm -rf /opt/cargo/registry /opt/cargo/git /tmp/rust-toolchain.toml
 WORKDIR /app
 
-ENV HUSKY=0 CI=true
-RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+# --- planner: the dependency recipe, stable while only crate sources change ---
+FROM chef AS planner
+COPY Cargo.toml Cargo.lock ./
+COPY crates crates
+RUN cargo chef prepare --recipe-path recipe.json
 
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
-COPY packages/protocol/package.json packages/protocol/
-COPY apps/signaling-server/package.json apps/signaling-server/
+# --- builder: dependencies first (cached layer), then the server ---
+FROM chef AS builder
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --release --locked --recipe-path recipe.json -p guardedsleep-server
+COPY Cargo.toml Cargo.lock ./
+COPY crates crates
+RUN cargo build --release --locked -p guardedsleep-server
 
-RUN pnpm install --frozen-lockfile --ignore-scripts
+# --- runtime: no shell, no package manager, non-root (uid 65532) ---
+FROM gcr.io/distroless/cc-debian13:nonroot@sha256:83b9b50586253821cf63ffcec87d3d94265a093ad30da232039af962dd8f4edf AS runner
+COPY --from=builder /app/target/release/guardedsleep-server /usr/local/bin/guardedsleep-server
 
-COPY packages/protocol/tsconfig.json packages/protocol/tsconfig.build.json packages/protocol/
-COPY packages/protocol/src packages/protocol/src
-COPY apps/signaling-server/tsconfig.json apps/signaling-server/
-COPY apps/signaling-server/src ./apps/signaling-server/src
-
-RUN pnpm --filter @guardedsleep/protocol build \
-	&& pnpm --filter @guardedsleep/signaling-server build
-
-RUN pnpm --filter @guardedsleep/signaling-server deploy /out --prod
-
-FROM node:22-alpine AS runner
-WORKDIR /app
-
-ENV NODE_ENV=production
 ENV PORT=8787
-# Non-empty default so the process passes startup checks; override in real deployments.
+ENV STUN_PORT=3478
+# Non-empty default so the process passes the production startup check; override in real deployments.
+ENV NODE_ENV=production
 ENV SIGNALING_ALLOWED_ORIGINS=http://127.0.0.1,http://localhost
 
-COPY --from=builder --chown=node:node /out/ ./
+USER nonroot
+EXPOSE 8787/tcp 3478/udp
 
-USER node
-
-EXPOSE 8787
-
+# The image has no curl or shell, so the binary probes its own /healthz.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-	CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||8787)).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+	CMD ["/usr/local/bin/guardedsleep-server", "--healthcheck"]
 
-CMD ["node", "dist/index.js"]
+# Run with a read-only root filesystem (`docker run --read-only`): the server writes nothing.
+ENTRYPOINT ["/usr/local/bin/guardedsleep-server"]

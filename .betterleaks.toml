@@ -1,0 +1,114 @@
+# Betterleaks configuration (ADR-020 §11; AGENTS.md §7 rules 2 and 7).
+# Format is the gitleaks-compatible TOML: https://github.com/betterleaks/betterleaks
+# Live validation of findings is OFF (it is opt-in via --validation and must stay off: a validator
+# would send candidate secrets to third-party APIs). Do not pass --validation in scripts or CI.
+# Scans: `just secrets` (full history + working tree), `lefthook` pre-commit (staged only).
+
+title = "GuardedSleep secret scanning"
+
+[extend]
+useDefault = true
+
+# Pairing material. The PSK is 32 random bytes (PairingPolicy.PSK_BYTES), shown as base64url
+# (43 chars) or base32 (52 chars). Rules match from 16 bytes up so truncated or longer values hit too.
+
+[[rules]]
+id = "guardedsleep-pair-uri-psk"
+description = "PSK in a guardedsleep:// pairing or invite URI"
+regex = '''(?i)guardedsleep://[^\s"'<>]*?[?&#](?:psk|k|key)=([A-Za-z0-9_\-]{22,})'''
+keywords = ["guardedsleep://"]
+
+[[rules]]
+id = "guardedsleep-qr-payload-psk"
+description = "PSK in a pairing QR or invite payload: v1 compact invite, v2/v3 payloads and the persisted pairing file, in any field order"
+# Matches the "k" field on its own, so field order and the version number do not matter
+# (the invite codec in crates/guardedsleep-core, PairingStore.kt). The entropy floor keeps short or
+# repetitive values out.
+# The backslashes also match the field escaped inside a string literal or a log line.
+regex = '''\\?"k\\?"\s*:\s*\\?"([A-Za-z0-9_\-]{22,})\\?"'''
+entropy = 3.5
+keywords = ['"k"', 'k\"']
+
+[[rules]]
+id = "guardedsleep-psk-json-field"
+description = "Long value in a JSON field named psk"
+regex = '''(?i)"psk(?:_?b64(?:url)?)?"\s*:\s*"([A-Za-z0-9_\-+/=]{22,})"'''
+keywords = ["psk"]
+
+[[rules]]
+id = "guardedsleep-psk-assignment-base64url"
+description = "base64url PSK assigned to a psk-like name"
+regex = '''(?i)\bpsk\w*["']?\s*[:=]\s*["']([A-Za-z0-9_\-]{43,})["']'''
+keywords = ["psk"]
+
+[[rules]]
+id = "guardedsleep-psk-assignment-base32"
+description = "base32 PSK assigned to a psk-like name"
+regex = '''(?i)\b(?:psk|pairing[_-]?key)\w*["']?\s*[:=]\s*["']([A-Z2-7]{26,}={0,6})["']'''
+keywords = ["psk", "pairing"]
+
+[[rules]]
+id = "guardedsleep-keystore-password"
+description = "Hard-coded Android keystore or key password string"
+# Only quoted literals match: System.getenv(...), project properties and ${...} placeholders do not.
+regex = '''(?i)\b(?:store|key|keystore)[_.-]?pass(?:word|wd)?\b["']?\s*[:=]\s*["']([^\s"'$<>{}()]{6,})["']'''
+keywords = ["storepass", "keypass", "keystore"]
+
+[[rules]]
+id = "guardedsleep-keystore-password-properties"
+description = "Keystore or key password in a .properties or .env style file"
+path = '''(?i)(\.properties|\.env[^/]*)$'''
+regex = '''(?im)^\s*(?:\w+[_.-])?(?:store|key|keystore)[_.-]?pass(?:word|wd)?\s*=\s*([^\s"'$<>{}()#]{6,})\s*$'''
+keywords = ["pass"]
+
+[[rules]]
+id = "guardedsleep-play-service-account"
+description = "Google Play service-account JSON key"
+regex = '''"type"\s*:\s*"service_account"'''
+keywords = ["service_account"]
+
+# Allowlists. Only fixtures that intentionally contain throw-away test material; each entry is a
+# precise path, never a directory wildcard over production code.
+
+[[allowlists]]
+description = "Screenshot fixture: base64url of the ASCII text 'fake-psk-for-screenshots-only'"
+targetRules = ["guardedsleep-pair-uri-psk"]
+paths = ['''^apps/android/app/src/test/kotlin/org/guardedsleep/app/ui/OtherShots\.kt$''']
+
+[[allowlists]]
+description = "Conformance vectors, golden traces and tests with throw-away counting-byte PSKs (00 01 02 ...) and the admission keys and MACs derived from them"
+targetRules = [
+  "generic-api-key",
+  "guardedsleep-psk-json-field",
+  "guardedsleep-psk-assignment-base64url",
+  "guardedsleep-qr-payload-psk",
+]
+paths = [
+  '''^crates/guardedsleep-core/vectors/conformance\.json$''',
+  '''^crates/guardedsleep-core/vectors/traces/[a-z0-9-]+\.json$''',
+  '''^crates/guardedsleep-core/js/conformance\.test\.mjs$''',
+  '''^packages/core-wasm/src/core-wasm\.test\.ts$''',
+  # Deleted with the legacy client; the scan walks the whole history, where the file still exists.
+  '''^apps/mobile/src/lib/link/link-driver\.test\.ts$''',
+]
+
+[[allowlists]]
+description = "Dependency lockfiles carry integrity hashes that look like keys; only the rules that fire on them are skipped, so URL credentials (generic-credential-uri) stay active"
+targetRules = [
+  "generic-api-key",
+  "guardedsleep-psk-json-field",
+  "guardedsleep-psk-assignment-base64url",
+  "guardedsleep-psk-assignment-base32",
+  "guardedsleep-qr-payload-psk",
+]
+paths = ['''(^|/)pnpm-lock\.yaml$''', '''(^|/)Cargo\.lock$''']
+
+[[allowlists]]
+description = "mise npm-backend lockfiles list package names such as '@inquirer/password' with their versions; only generic-password is skipped there"
+targetRules = ["generic-password"]
+paths = ['''^\.mise/locks/.+-lock\.yaml$''']
+
+[[allowlists]]
+description = "UI copy catalogues label the TURN password field (`\"password\": \"Password\"`); only generic-password is skipped there, the PSK and URL-credential rules stay active"
+targetRules = ["generic-password"]
+paths = ['''^locales/[^/]+\.json$''']

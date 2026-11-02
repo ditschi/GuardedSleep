@@ -1,0 +1,96 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "wifi-baby-20s",
+  "description": "ADR-017 section 12: Wi-Fi off for 20 s on the baby; no level 2 on either side, the link is re-verified.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "network_down",
+      "peer": "baby"
+    },
+    {
+      "at": 40000,
+      "do": "network_up",
+      "peer": "baby"
+    },
+    {
+      "at": 100000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 100000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 100000
+    },
+    {
+      "peer": "baby",
+      "max_level": 1,
+      "within_ms": [10000, 100000]
+    },
+    {
+      "peer": "parent",
+      "max_level": 1,
+      "within_ms": [10000, 100000]
+    },
+    {
+      "peer": "baby",
+      "never": "link_lost"
+    },
+    {
+      "peer": "parent",
+      "never": "link_lost"
+    },
+    {
+      "peer": "parent",
+      "event": "peer_heartbeat",
+      "within_ms": [48000, 100000],
+      "count_min": 1
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "failed_needs_user"
+        }
+      }
+    }
+  ],
+  "export_traces": [
+    {
+      "peer": "baby",
+      "id": "sim-wifi-baby-20s-baby"
+    }
+  ]
+}

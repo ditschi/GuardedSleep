@@ -1,154 +1,244 @@
-# Quality gates: same checks as local pre-commit (+ optional PR title for squash)
+# Quality gates. Every job calls a `just` recipe, so CI and local runs share one definition
+# (ADR-020 §9). `ci-ok` is the only check that branch protection requires.
 name: CI
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [main]
   pull_request:
+
+# Granted per job.
+permissions: {}
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Runs on main finish, so every merge gets a result and writes its caches.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # mise.lock must cover every tool; an unlocked bump fails instead of installing unverified binaries.
+  # https://mise.jdx.dev/configuration/settings.html#locked
+  MISE_LOCKED: "1"
+  # A missing Docker/KVM/SDK fails the job instead of printing SKIPPED.
+  GS_STRICT: "1"
+  CORE_BUILD_NATIVE: "1"
+  CARGO_HOME_OVERRIDE: /home/runner/.cargo
 
 jobs:
-  pre-commit:
-    name: pre-commit
-    runs-on: ubuntu-latest
+  changes:
+    name: changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      code: ${{ steps.code.outputs.code }}
+      android: ${{ steps.android.outputs.android }}
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          python-version: "3.12"
-
-      - uses: pnpm/action-setup@v4
+          persist-credentials: false
+      # "code" is everything except documentation, so docs-only changes skip the heavy jobs (the text
+      # lint job still runs for them). The filters live in .github/path-filters.yml (shared with
+      # `just test-affected`); dorny applies one predicate-quantifier to all filters of a step, so each
+      # step reads the whole file and uses only its own output.
+      # https://github.com/dorny/paths-filter#usage
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: code
         with:
-          version: 9
-
-      - uses: actions/setup-node@v4
+          predicate-quantifier: every
+          filters: .github/path-filters.yml
+      # Inputs of the Android build (ABI libs, Kotlin bindings, JVM tests, APKs). The emulator gate has
+      # its own, wider filter in android-native.yml.
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: android
         with:
-          node-version: "22"
-          cache: "pnpm"
+          filters: .github/path-filters.yml
 
-      - name: Install pnpm dependencies (commitlint config resolution)
-        run: pnpm install --frozen-lockfile
-
-      - name: pre-commit
-        uses: pre-commit/action@v3.0.1
-
-  test-and-build:
-    name: test + build (monorepo)
-    runs-on: ubuntu-latest
+  pr-title:
+    name: PR title
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
+      # A squash merge takes the PR title as the commit subject (AGENTS.md section 8).
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          version: 9
+          types: |
+            build
+            chore
+            ci
+            docs
+            feat
+            fix
+            perf
+            refactor
+            revert
+            security
+            style
+            test
+          requireScope: false
 
-      - uses: actions/setup-node@v4
+  # Cheap and unfiltered: runs on every PR, documentation-only ones included.
+  text-lint:
+    name: text lint (format, spelling, REUSE, secrets, workflows)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      # Full history: the secret scan reads every commit, so a PSK that a later commit of the same PR
+      # removes again is still found.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: "22"
-          cache: "pnpm"
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-mise
+        with:
+          cache_save: ${{ github.event_name != 'pull_request' }}
+      - run: just lint-text
+      - run: just lint-workflows
 
-      - run: pnpm install --frozen-lockfile
+  lint:
+    name: lint (code)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-mise
+        with:
+          cache_save: ${{ github.event_name != 'pull_request' }}
+      - uses: ./.github/actions/setup-rust
+        with:
+          wasm-bindgen: "true"
+      - run: just lint-code
 
-      - name: pnpm audit (high or above)
-        run: pnpm audit --audit-level=high
+  # Host Rust, WASM and Android JVM tests. No ABI cross-compile: the JVM tests load the host build of the
+  # core, so this job needs the SDK but neither the NDK nor cargo-ndk.
+  test:
+    name: test
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-mise
+        with:
+          cache_save: ${{ github.event_name != 'pull_request' }}
+      - uses: ./.github/actions/setup-rust
+        with:
+          wasm-bindgen: "true"
+      - uses: ./.github/actions/setup-android
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+      - run: just test
 
-      - name: Prettier (repo-wide)
-        run: pnpm run format:check
+  build:
+    name: build (web)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-mise
+        with:
+          cache_save: ${{ github.event_name != 'pull_request' }}
+      - uses: ./.github/actions/setup-rust
+        with:
+          wasm-bindgen: "true"
+      - run: just build-web
 
-      - name: Unit & integration tests
-        run: pnpm test
+  # ABI cross-compile, JVM tests, Roborazzi, debug and release APKs, release-surface and core-size
+  # checks: one Gradle run (cached). The emulator gate lives in android-native.yml and is not part of ci-ok.
+  android:
+    name: android (core, tests, screenshots, APKs)
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-mise
+        with:
+          cache_save: ${{ github.event_name != 'pull_request' }}
+      - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-android
+        with:
+          ndk: "true"
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+      - run: just verify-android
 
-      - name: Build mobile (SvelteKit static)
-        run: pnpm --filter @guardedsleep/mobile build
-
-      - name: Build signaling-server (TypeScript)
-        run: pnpm --filter @guardedsleep/signaling-server build
-
-      - name: Signaling smoke (WebSocket relay)
-        run: pnpm --filter @guardedsleep/signaling-server smoke
-
-  e2e-browser:
+  e2e:
     name: browser E2E (Playwright)
-    needs: test-and-build
-    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          version: 9
-
-      - uses: actions/setup-node@v4
+          persist-credentials: false
+      - uses: ./.github/actions/setup-mise
         with:
-          node-version: "22"
-          cache: "pnpm"
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Install Playwright Chromium (system deps)
-        run: pnpm --filter @guardedsleep/e2e exec playwright install --with-deps chromium
-
-      - name: Browser E2E tests
-        run: pnpm --filter @guardedsleep/e2e test
-
+          cache_save: ${{ github.event_name != 'pull_request' }}
+      - uses: ./.github/actions/setup-rust
+        with:
+          wasm-bindgen: "true"
+      # The recipe installs Chromium with its system dependencies because GS_STRICT=1.
+      - run: just e2e
       - if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-e2e-artifacts
           path: |
             apps/e2e/test-results/
             apps/e2e/playwright-report/
 
-  commitlint-pr-title:
-    name: commitlint (PR title)
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+  # Single required status check. Skipped jobs (path filters) count as success.
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs: [changes, pr-title, text-lint, lint, test, build, android, e2e]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "pnpm"
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Validate PR title (Conventional Commits)
+      - name: Fail if any needed job failed or was cancelled
         env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-        run: printf '%s\n' "$PR_TITLE" | pnpm exec commitlint
-
-  # Validate every commit in the PR head against the base branch. Husky's commit-msg
-  # hook covers locally created commits, but rebases / amends / GitHub web UI edits
-  # can introduce non-conforming subjects. Release Please depends on conventional
-  # subjects for changelog generation, so this is a pre-condition check (ADR-006).
-  commitlint-pr-commits:
-    name: commitlint (PR commits)
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "pnpm"
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Validate PR commits (Conventional Commits)
-        run: pnpm exec commitlint --from "origin/${{ github.event.pull_request.base.ref }}" --to "HEAD" --verbose
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          if echo "$NEEDS" | jq -e 'any(.[]; .result == "failure" or .result == "cancelled")' >/dev/null; then
+            echo "::error::at least one required job failed or was cancelled"
+            exit 1
+          fi

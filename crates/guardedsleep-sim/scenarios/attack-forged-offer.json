@@ -1,0 +1,88 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "attack-forged-offer",
+  "description": "A stranger parent in the room (relay cap raised to 3) sends a new-aid offer, candidates, request_offer and stop_notice; the verified attempts are untouched.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "relay": {
+    "parent_cap": 3
+  },
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "stranger_join",
+      "mode": "forged_offer",
+      "id": "stranger"
+    },
+    {
+      "at": 80000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 15000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 15000
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 80000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 80000
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "within_ms": [16000, 80000]
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "within_ms": [16000, 80000]
+    },
+    {
+      "peer": "baby",
+      "never": "failed"
+    },
+    {
+      "peer": "parent",
+      "never": "failed"
+    },
+    {
+      "peer": "baby",
+      "never": "peer_stopped"
+    },
+    {
+      "peer": "parent",
+      "never": "peer_stopped"
+    },
+    {
+      "peer": "stranger",
+      "sent_signal": "signal",
+      "count_min": 0
+    }
+  ]
+}

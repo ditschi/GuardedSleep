@@ -1,0 +1,68 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "attack-forged-stop-outage",
+  "description": "While the baby's DataChannel traffic is gone (the parent has no verified attempt), a stranger and a relay that forges `from` send unauthenticated stop notices to the parent. They must not mute escalation: link_lost is still raised and the parent never goes peer_stopped.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "relay": {
+    "parent_cap": 3
+  },
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 20000,
+      "do": "stranger_join",
+      "mode": "forged_offer",
+      "id": "stranger",
+      "spoof_from": true,
+      "act_after_ms": 40000
+    },
+    {
+      "at": 30000,
+      "do": "drop_data",
+      "from": "baby"
+    },
+    {
+      "at": 140000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 25000
+    },
+    {
+      "peer": "parent",
+      "event": "link_lost",
+      "count": 1,
+      "since_last_contact_ms": [60000, 62000]
+    },
+    {
+      "peer": "parent",
+      "never": "peer_stopped"
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "peer_stopped"
+        }
+      }
+    }
+  ]
+}
