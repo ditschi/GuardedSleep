@@ -18,6 +18,14 @@ internal const val COMPILE_SDK = 37
 internal const val MIN_SDK = 26
 internal const val TARGET_SDK = 36
 
+/**
+ * Directory with the host build of the core that the JVM tests load through JNA. Image runs build
+ * into `$CARGO_TARGET_DIR` (`target/container`), native runs into `<repo>/target`; see
+ * docs/contributing/development.md, "Rust execution mode".
+ */
+fun Project.coreHostLibDir(): String =
+    "${System.getenv("CARGO_TARGET_DIR") ?: rootProject.file("../../target").path}/debug"
+
 private fun CommonExtension.configureCommon() {
     compileSdk = COMPILE_SDK
     defaultConfig.minSdk = MIN_SDK
