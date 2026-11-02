@@ -18,7 +18,8 @@ ARG ANDROID_CLI_TOOLS_URL=https://dl.google.com/android/repository/commandlineto
 ARG ANDROID_NDK_VERSION=30.0.16248370
 ENV ANDROID_NDK_HOME=/opt/android-sdk/ndk/${ANDROID_NDK_VERSION}
 ENV RUSTUP_HOME=/opt/rustup CARGO_HOME=/opt/cargo
-# scripts/core-build.sh and scripts/gradle.sh run natively here (no nested Docker).
+# scripts/core-build.sh and scripts/gradle.sh run natively here (no nested Docker), with the host-style
+# target/ and this CARGO_HOME (docs/contributing/development.md, "Rust execution mode").
 ENV CORE_BUILD_NATIVE=1
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \

@@ -33,8 +33,8 @@ gs_missing() {
         || docker info >/dev/null 2>&1 || echo "android-sdk"
       ;;
     cargo)
-      # scripts/cargo.sh falls back to the build image, so docker is an acceptable substitute.
-      command -v cargo >/dev/null 2>&1 || docker info >/dev/null 2>&1 || echo "cargo"
+      # scripts/cargo.sh uses host rustup, else falls back to the build image, so docker is an acceptable substitute.
+      command -v rustup >/dev/null 2>&1 || docker info >/dev/null 2>&1 || echo "cargo"
       ;;
     # The relay tools talk to public hosts; a name that does not resolve means no usable network.
     network) timeout 5 getent hosts github.com >/dev/null 2>&1 || echo "network" ;;

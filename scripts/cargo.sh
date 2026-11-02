@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-# Runs cargo on the host when available, otherwise inside the
-# guardedsleep-android-native-build image (host needs only Docker).
+# Runs cargo on the host when rustup is on PATH (so rust-toolchain.toml applies; a distro cargo would
+# ignore it), otherwise inside the guardedsleep-android-native-build image (host needs only Docker).
+# The image fallback writes target/, not target/container: without host rustup there is no host build
+# whose fingerprints it could invalidate, and scripts/dev.sh, scripts/poc/env-up.sh and the web dev
+# server read target/debug. docs/contributing/development.md, "Rust execution mode".
 # Usage: scripts/cargo.sh run -q -p i18n-gen -- check
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-if command -v cargo >/dev/null 2>&1; then
+if command -v rustup >/dev/null 2>&1; then
 	cd "$ROOT"
 	exec cargo "$@"
 fi

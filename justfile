@@ -155,7 +155,7 @@ test-affected base="origin/main":
 
 # Cargo workspace tests; nextest when installed, doctests through cargo test.
 test-rust:
-    if command -v cargo-nextest >/dev/null 2>&1 && command -v cargo >/dev/null 2>&1; then cargo nextest run --workspace && cargo test --workspace --doc; else scripts/cargo.sh test --workspace; fi
+    if command -v cargo-nextest >/dev/null 2>&1 && command -v rustup >/dev/null 2>&1; then cargo nextest run --workspace && cargo test --workspace --doc; else scripts/cargo.sh test --workspace; fi
 
 # `_js-gen` has already built (or found up to date) the WASM core.
 test-wasm: _js-gen

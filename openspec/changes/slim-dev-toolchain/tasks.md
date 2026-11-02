@@ -22,7 +22,7 @@ Each task is a brief for the `implementer` sub-agent. Work in one branch off `or
 
 ## 3. One Rust execution mode (D5)
 
-- [ ] 3.1 Files: `scripts/core-build.sh`, `scripts/gradle.sh`, `scripts/lib/build-image.sh`, `scripts/lib/require.sh` (comments and the `android-sdk` check only if needed), `apps/android/core-bindings/build.gradle.kts`, `apps/android/platform/build.gradle.kts`, `.devcontainer/Dockerfile` (comment).
+- [x] 3.1 Files: `scripts/core-build.sh`, `scripts/gradle.sh`, `scripts/lib/build-image.sh`, `scripts/lib/require.sh` (comments and the `android-sdk` check only if needed), `apps/android/core-bindings/build.gradle.kts`, `apps/android/platform/build.gradle.kts`, `.devcontainer/Dockerfile` (comment).
   - **Host detection:** `rustup` on `PATH` (not just `cargo`); the same check in `scripts/cargo.sh` and `require.sh`.
   - **Mode selection** in `core-build.sh`, decided per subcommand:
     - `test` and `wasm` run natively with host rustup, otherwise in the image with `target/` (like `cargo.sh`, whose fallback keeps `target/`; say why in its header);
@@ -49,7 +49,7 @@ Each task is a brief for the `implementer` sub-agent. Work in one branch off `or
 
 ## 4. Gate register (D2)
 
-- [ ] 4.1 Rewrite `docs/ci-gates.md`.
+- [x] 4.1 Rewrite `docs/ci-gates.md`.
   - **Keep** the budget rule (12 h/month; six months without a catch → remove or demote), with "The maintainer owns every gate during alpha" stated once.
   - **Table:** columns Gate | Protects | Runbook | Last catch. One row each for `ci-ok` (mentions the `changes` path filter), `pr-title`, `text-lint`, `lint`, `test`, `build`, `android`, `e2e`, emulator gate (`android-native.yml`), images (`docker-signaling.yml` + `docker-web.yml`), `audit` and the relay check (`relays-weekly.yml`).
     - Fold every former per-check row into the Protects cell of its job, and its runbook into the job's Runbook cell, without losing a check name. Use `grep -c` before and after to check the names.
@@ -61,7 +61,7 @@ Each task is a brief for the `implementer` sub-agent. Work in one branch off `or
 
 ## 5. Contributor docs (D1, D4, D5)
 
-- [ ] 5.1 `docs/contributing/development.md` becomes the home of the mechanisms the spec no longer names. Sections:
+- [x] 5.1 `docs/contributing/development.md` becomes the home of the mechanisms the spec no longer names. Sections:
   - **Hooks:** keep the Husky repair text.
   - **Load slots:** defaults 2 and 1 (set `GS_MEDIUM_SLOTS=1` below 8 cores or 12 GB); the `GS_MEDIUM_SLOTS`, `GS_HEAVY_SLOTS`, `GS_SLOT_WAIT` and `GS_RUN_TIMEOUT` variables; exit 75 vs. 124 vs. the test verdict; re-entrancy in one sentence.
   - **Delta tests:** drop the timings paragraph and the prune sentence; keep the `just reap --worktrees` listing and `git worktree remove` as the removal step.
@@ -72,7 +72,7 @@ Each task is a brief for the `implementer` sub-agent. Work in one branch off `or
 
 ## 6. AGENTS.md (§3, §5.2, §8, §10.1-10.3)
 
-- [ ] 6.1 Update AGENTS.md.
+- [x] 6.1 Update AGENTS.md.
   - **§4:** the command table row "Delta tests, timings" becomes "Delta tests" without `just timings`.
   - **§3:** the `docs/` line shows `docs/ci-gates.md` (one row per CI job, runbooks, last-catch dates).
   - **§5.2:** the tooling budget names one row per job.

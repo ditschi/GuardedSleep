@@ -15,11 +15,16 @@ android {
         // Notification text tests (Robolectric) read the contract module's string resources.
         unitTests.isIncludeAndroidResources = true
         unitTests.all {
-            // Host build of the core (scripts/core-build.sh host); JNA loads it for the real
-            // CoreLink in tests. AGP drops .so files from unit-test resources.
+            // Host build of the core (scripts/core-build.sh host, in $CARGO_TARGET_DIR/debug); JNA
+            // loads
+            // it for the real CoreLink in tests. AGP drops .so files from unit-test resources.
             it.systemProperty(
                 "jna.library.path",
-                rootProject.file("../../target/debug").absolutePath,
+                File(
+                        System.getenv("CARGO_TARGET_DIR") ?: rootProject.file("../../target").path,
+                        "debug",
+                    )
+                    .absolutePath,
             )
         }
     }
