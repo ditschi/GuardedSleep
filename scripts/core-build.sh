@@ -52,8 +52,8 @@ if [[ "${CORE_BUILD_NATIVE:-0}" != "1" ]]; then
 fi
 
 cd "$ROOT"
-# Cargo outputs (debug/, wasm32-unknown-unknown/release/) of this run; absolute inside the image.
-TARGET="${CARGO_TARGET_DIR:-target}"
+# Cargo outputs (debug/, wasm32-unknown-unknown/release/) of this run (always absolute).
+TARGET="${CARGO_TARGET_DIR:-$ROOT/target}"
 # CARGO_HOME is the environment's; build-image.sh sets /cache/cargo for image runs.
 export PATH="${CARGO_HOME:-$HOME/.cargo}/bin:/opt/cargo/bin:$PATH"
 
@@ -65,7 +65,8 @@ run_test() {
 
 # Uses a wasm-bindgen from PATH when its version matches the pin (CI caches ~/.cargo/bin); only on a miss
 # it is installed under $TARGET/tools (never over a contributor's global copy) and put first on PATH.
-# $TARGET/tools is target/container/tools in the image, so a host-built binary never runs in the older glibc.
+# In image runs of the Android chain and determinism $TARGET is target/container, so a host-built binary never runs on
+# the image's older glibc.
 wasm_bindgen_ok() {
 	[[ "$(wasm-bindgen --version 2>/dev/null | awk '{print $2}')" == "$WASM_BINDGEN_VERSION" ]]
 }

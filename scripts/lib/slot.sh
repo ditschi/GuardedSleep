@@ -5,8 +5,8 @@
 # Slots are lock files /tmp/guardedsleep-slots/<class>.<i>.lock held with flock; the number of slots
 # per class is GS_MEDIUM_SLOTS (default 2) and GS_HEAVY_SLOTS (default 1), positive integers; set
 # GS_MEDIUM_SLOTS=1 on machines below 8 cores or 12 GB (docs/contributing/development.md, "Load
-# slots"). All worktrees and sessions on the machine share the same pools. The lock is released when the command ends or this script is
-# killed (the flock fd closes).
+# slots"). All worktrees and sessions on the machine share the same pools. The lock is released
+# when the command ends or this script is killed (the flock fd closes).
 #
 # Behaviour: try every slot of the class without blocking. If none is free, print
 # "waiting for a <class> slot (N in use)" once and block on one random slot for at most
