@@ -37,7 +37,7 @@ Only the baby SHALL create offers, and only when it has no live verified attempt
 
 #### Scenario: Clean setup builds one attempt
 
-- **WHEN** a baby and a parent start together over Nostr alone, or over the own relay and Nostr, and nothing fails
+- **WHEN** a baby and a parent start together over the project server alone, or over the project server and an own relay, and nothing fails
 - **THEN** each core creates exactly one attempt and the link verifies without a replaced attempt
 
 ### Requirement: Accepted signaling senders
@@ -65,7 +65,7 @@ Attempts SHALL be identified by a local `u32` handle between core and platform a
 
 ### Requirement: Attempt scheduling
 
-Delays before a new attempt SHALL be 0, 1, 2, 4, 8 s and then 15 s (cap); after 10 minutes without success the cap SHALL rise to 30 s. The backoff SHALL reset after a verified attempt and SHALL reset with an immediate retry on `network_available`, when a mailbox reopens, and when the peer announces a new session. An attempt not verified within 20 s SHALL be abandoned. Over Nostr mailboxes an attempt SHALL additionally wait for a fresh `here` from the peer (`signaling-mailboxes`).
+Delays before a new attempt SHALL be 0, 1, 2, 4, 8 s and then 15 s (cap); after 10 minutes without success the cap SHALL rise to 30 s. The backoff SHALL reset after a verified attempt and SHALL reset with an immediate retry on `network_available`, when a mailbox reopens, and when the peer announces a new session. An attempt not verified within 20 s SHALL be abandoned.
 
 #### Scenario: Wi-Fi returns
 
@@ -74,17 +74,17 @@ Delays before a new attempt SHALL be 0, 1, 2, 4, 8 s and then 15 s (cap); after 
 
 ### Requirement: Error classification
 
-Our relay's errors `BABY_TAKEN`, `PARENT_CAP`, `NOT_JOINED` and `SIGNAL_TARGET_REQUIRED` SHALL be retryable at the mailbox layer. `UNSUPPORTED_PROTOCOL` SHALL be terminal (`failed_needs_user`, key `update_required`) only as the reply to `hello` before `welcome` and only when no other mailbox works; with a verified attempt it SHALL only close that mailbox and set a sticky `update_required` hint. A Nostr relay's refusals SHALL park that relay (`signaling-mailboxes`) and SHALL never be terminal.
+Our relay's errors `BABY_TAKEN`, `PARENT_CAP`, `NOT_JOINED` and `SIGNAL_TARGET_REQUIRED` SHALL be retryable at the mailbox layer. `UNSUPPORTED_PROTOCOL` SHALL be terminal (`failed_needs_user`, key `update_required`) only as the reply to `hello` before `welcome` and only when no other mailbox works; with a verified attempt it SHALL only close that mailbox and set a sticky `update_required` hint.
 
 #### Scenario: Stale baby socket
 
 - **WHEN** a reconnecting baby is refused with `BABY_TAKEN` because its old socket is still registered
 - **THEN** the `Link` retries and joins once server liveness has removed the old socket
 
-#### Scenario: Nostr relay requires authentication
+#### Scenario: Outdated own relay while the project server works
 
-- **WHEN** a Nostr relay answers with an authentication requirement
-- **THEN** that relay is parked and the link continues on the other mailboxes
+- **WHEN** an own relay answers `hello` with `UNSUPPORTED_PROTOCOL` while the project server reaches the peer
+- **THEN** only that mailbox closes, with the sticky `update_required` hint, and the link continues on the project server
 
 ### Requirement: Never give up while monitoring
 
@@ -95,10 +95,10 @@ The `Link` SHALL keep retrying while monitoring is on. From escalation level 2 i
 - **WHEN** mailboxes are open but the other device announces no session past level 2
 - **THEN** the parent sees the troubleshooter with hint `peer_absent` while the link keeps retrying
 
-#### Scenario: Every public relay refuses
+#### Scenario: Project server unreachable
 
-- **WHEN** all Nostr relays of the pairing are parked and no other mailbox exists
-- **THEN** the parent sees the troubleshooter with hint `server_unreachable` and the link keeps retrying the parked relays on their backoff
+- **WHEN** the project server is the only mailbox and it cannot be reached
+- **THEN** the parent sees the troubleshooter with hint `server_unreachable` and the link keeps retrying it on the normal backoff
 
 ### Requirement: Deliberate stop is not an outage
 
@@ -120,7 +120,7 @@ A stop notice sent through a mailbox SHALL be a sealed envelope bound to the rec
 
 #### Scenario: Stored stop after a restart
 
-- **WHEN** a public relay serves an authentic stop notice from an earlier session to a restarted parent
+- **WHEN** a relay serves an authentic stop notice from an earlier session to a restarted parent
 - **THEN** the parent ignores it and escalation continues as normal
 
 #### Scenario: Stored stop from a retired sender session
@@ -130,21 +130,21 @@ A stop notice sent through a mailbox SHALL be a sealed envelope bound to the rec
 
 ### Requirement: Signaling transport liveness
 
-On our relay, clients SHALL send an application `ping` every 15 s and treat a socket without any message for 35 s as dead. On Nostr mailboxes the core SHALL re-issue its subscription every 60 s while not connected and treat a relay that does not answer it within 10 s as closed. Mailbox loss while an attempt is verified SHALL NOT count as monitoring loss.
+On our relay, clients SHALL send an application `ping` every 15 s and treat a socket without any message for 35 s as dead. Mailbox loss while an attempt is verified SHALL NOT count as monitoring loss.
 
 #### Scenario: Signaling drops, media continues
 
 - **WHEN** a mailbox socket dies while the attempt is verified
 - **THEN** the link state stays `connected`
 
-#### Scenario: Half-open Nostr socket in a browser
+#### Scenario: Half-open relay socket in a browser
 
-- **WHEN** a Nostr socket in the browser stops delivering without closing while the link is down
-- **THEN** the next 60-second re-subscription detects it and the core reopens that mailbox
+- **WHEN** a relay socket in the browser stops delivering without closing while the link is down
+- **THEN** after 35 s without any message the core treats it as dead and reopens that mailbox
 
 ### Requirement: Clock and time jumps
 
-The core clock SHALL be monotonic milliseconds that include deep sleep (Android `SystemClock.elapsedRealtime()`; web `Date.now()` clamped never to go backwards), ticked at least every 500 ms while monitoring. Doze gaps SHALL be treated as time jumps. Separately, the platform SHALL report the wall clock in Unix seconds at start, every 60 seconds and after a time change; it SHALL be used only for Nostr epochs and event times, never for liveness or escalation.
+The core clock SHALL be monotonic milliseconds that include deep sleep (Android `SystemClock.elapsedRealtime()`; web `Date.now()` clamped never to go backwards), ticked at least every 500 ms while monitoring. Doze gaps SHALL be treated as time jumps. Separately, the platform SHALL report the wall clock in Unix seconds at start, every 60 seconds and after a time change; it SHALL be used only for the invite expiry, the pin window and the clock comparison with the peer, never for liveness, escalation or any mailbox.
 
 #### Scenario: Ten-minute Doze gap
 
@@ -154,7 +154,7 @@ The core clock SHALL be monotonic milliseconds that include deep sleep (Android 
 #### Scenario: Wall clock jumps by an hour
 
 - **WHEN** the user changes the device time by an hour during monitoring
-- **THEN** liveness and escalation timing are unaffected, and the Nostr subscriptions follow the new epoch if it changed
+- **THEN** liveness and escalation timing are unaffected, and no mailbox is reopened because of it
 
 ### Requirement: Loss detection
 
