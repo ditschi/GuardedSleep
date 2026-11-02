@@ -8,20 +8,16 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 # shellcheck source=require.sh
 source scripts/lib/require.sh
+# shellcheck source=playwright-ready.sh
+source scripts/lib/playwright-ready.sh
 
 playwright() { pnpm --filter @guardedsleep/e2e exec playwright "$@"; }
 
-browser_ready() {
-  pnpm --filter @guardedsleep/e2e exec node --input-type=module -e \
-    "import { chromium } from '@playwright/test'; import { existsSync } from 'node:fs'; process.exit(existsSync(chromium.executablePath()) ? 0 : 1)" \
-    >/dev/null 2>&1
-}
-
-if ! browser_ready; then
+if ! gs_playwright_ready; then
   if [ "${GS_STRICT:-0}" = "1" ]; then
     playwright install ${CI:+--with-deps} chromium
   else
-    echo "SKIPPED: e2e needs playwright-browsers (pnpm --filter @guardedsleep/e2e exec playwright install --with-deps chromium)"
+    gs_skip "e2e needs playwright-browsers (pnpm --filter @guardedsleep/e2e exec playwright install --with-deps chromium)"
     exit 0
   fi
 fi

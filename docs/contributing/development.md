@@ -7,8 +7,9 @@ Setup follows [ADR-020](../../openspec/changes/archive/2026-10-20-adr-020-toolch
 ```bash
 mise install     # node 22, pnpm 11, java 21, just, lefthook, typos, actionlint, zizmor, reuse, cargo-deny, nextest, taplo, ktfmt, betterleaks (versions in mise.toml, checksums in mise.lock)
 just setup       # mise install, rustup toolchain, pnpm install --frozen-lockfile, lefthook install
+just doctor      # what is installed and what is missing (mise tools, rustup, Docker, uv, Playwright, KVM, hooks), with a fix for each
 just --list      # setup fmt lint test gen build e2e gate ci (+ sub-recipes such as lint-text, build-android, dev)
-just ci          # lint + test + build + e2e: the same verdict as CI (minus the PR title check and the emulator gate)
+just ci          # lint + test + build + e2e: the same verdict as CI (minus the PR title check and the emulator gate); ends with a list of every SKIPPED line of the run
 just dev         # Rust signaling server + Vite dev server for apps/web
 ```
 
@@ -152,7 +153,7 @@ Inside it run `just setup` once, then `just dev`, and open `http://localhost:517
 
 ## Local setup (without Dev Container or Docker)
 
-Install [mise](https://mise.jdx.dev/getting-started.html) and, for host cargo, [rustup](https://rustup.rs), then run `just setup` (see Quick start). mise provides Node (≥ 22.18, matches `engines`), pnpm 11 and the other pinned tools; there is no Python or Husky setup.
+Install [mise](https://mise.jdx.dev/getting-started.html) and, for host cargo, [rustup](https://rustup.rs), then run `just setup` (see Quick start). mise provides Node (≥ 22.18, matches `engines`), pnpm 11 and the other pinned tools; `reuse` (the licence lint in `just lint-text`) is a Python tool that mise installs through its pipx backend on the `uv` pinned in `mise.toml` (no host uv needed); there is no Husky setup.
 
 ## Local stack (signaling + web UI)
 

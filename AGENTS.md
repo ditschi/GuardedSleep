@@ -76,21 +76,22 @@ Per-package `AGENTS.md` files may exist later; they inherit this file and docume
 - `just test` builds no Android ABI (host Rust, wasm, Vitest, Android JVM tests against the host build of the core). Cross-compiled ABIs belong to `just build-android`, `just gate` and release builds.
 - The core graph checks (`just deny`, dependency count) run on the all-features graph of `guardedsleep-core`. `just lint` also diffs the binding surface (`just api-check`; regenerate with `just api-snapshot` after an intended change): `crates/guardedsleep-{ffi,wasm}/api.txt` and `packages/core-wasm/api/core.d.ts`, using the nightly pinned in `tools/nightly/rust-toolchain.toml`. Only the façades may allow `unsafe`; the core forbids it and carries no binding attributes (its optional `tsify` feature is enabled by `guardedsleep-wasm` alone).
 
-| Task                       | Command                                                                                                                                          |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Setup (tools, deps, hooks) | `just setup` (mise, rustup toolchain, `pnpm install --frozen-lockfile`, lefthook)                                                                |
-| Format                     | `just fmt` · `just fmt-check`                                                                                                                    |
-| Lint                       | `just lint` (= `lint-text` + `lint-workflows` + `lint-code`; clippy runs with `--all-features`, plus `cargo check` for `aarch64-apple-ios`)      |
-| Test                       | `just test` (cargo workspace, WASM conformance, Vitest, Android JVM tests) · `scripts/cargo.sh test -p guardedsleep-sim` (host simulation)       |
-| Generate                   | `just gen` (i18n output) · `scripts/core-build.sh host` (host core library + Kotlin bindings) · `scripts/core-build.sh wasm`                     |
-| Build                      | `just build` (web + Android) · `just build-web` · `just build-android` · `just verify-android` (adds JVM tests and Roborazzi)                    |
-| Browser E2E                | `just e2e` (Playwright; starts `just dev`)                                                                                                       |
-| Emulator gate (KVM)        | `just gate` (`DOZE_MINUTES=2 just gate` for a quick run; run `just build-android` first)                                                         |
-| Local dev                  | `just dev` (Vite 5173 + Rust signaling server 8787)                                                                                              |
-| Docker stack               | `just stack-lan` · `just stack-up`                                                                                                               |
-| Supply chain, secrets      | `just deny` · `just secrets` · `just audit`                                                                                                      |
-| Server smoke test          | `just smoke` (built `guardedsleep-server` binary, hello + signal relay over a WebSocket)                                                         |
-| Delta tests, timings       | `just test-affected [base]` (tests for the changed paths only; `node scripts/lib/affected.mjs --dry-run` shows the plan) · `just timings [days]` |
+| Task                       | Command                                                                                                                                                                             |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setup (tools, deps, hooks) | `just setup` (mise, rustup toolchain, `pnpm install --frozen-lockfile`, lefthook)                                                                                                   |
+| Format                     | `just fmt` · `just fmt-check`                                                                                                                                                       |
+| Lint                       | `just lint` (= `lint-text` + `lint-workflows` + `lint-code`; clippy runs with `--all-features`, plus `cargo check` for `aarch64-apple-ios`)                                         |
+| Test                       | `just test` (cargo workspace, WASM conformance, Vitest, Android JVM tests) · `scripts/cargo.sh test -p guardedsleep-sim` (host simulation)                                          |
+| Generate                   | `just gen` (i18n output) · `scripts/core-build.sh host` (host core library + Kotlin bindings) · `scripts/core-build.sh wasm`                                                        |
+| Build                      | `just build` (web + Android) · `just build-web` · `just build-android` · `just verify-android` (adds JVM tests and Roborazzi)                                                       |
+| Browser E2E                | `just e2e` (Playwright; starts `just dev`)                                                                                                                                          |
+| Emulator gate (KVM)        | `just gate` (`DOZE_MINUTES=2 just gate` for a quick run; run `just build-android` first)                                                                                            |
+| Local dev                  | `just dev` (Vite 5173 + Rust signaling server 8787)                                                                                                                                 |
+| Docker stack               | `just stack-lan` · `just stack-up`                                                                                                                                                  |
+| Supply chain, secrets      | `just deny` · `just secrets` · `just audit`                                                                                                                                         |
+| Server smoke test          | `just smoke` (built `guardedsleep-server` binary, hello + signal relay over a WebSocket)                                                                                            |
+| Check prerequisites        | `just doctor` (informational: mise tools, rustup, Docker rootless/rootful, uv, Playwright, KVM, hooks, with a fix per missing item) · `just ci` ends with the list of SKIPPED tasks |
+| Delta tests, timings       | `just test-affected [base]` (tests for the changed paths only; `node scripts/lib/affected.mjs --dry-run` shows the plan) · `just timings [days]`                                    |
 
 Before a commit lefthook runs Prettier, cargo fmt, typos, hygiene and Betterleaks on staged files; CI re-runs everything. Never bypass hooks; re-run `just lint` manually before declaring "done".
 

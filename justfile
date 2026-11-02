@@ -34,6 +34,10 @@ setup:
     mise exec -- lefthook install
     scripts/lib/machine-profile.sh
 
+# Lists the prerequisites of the recipes (mise tools, rustup, Docker, uv, Playwright browser, KVM, Android SDK, git hooks) with a fix for each missing one. Informational, always exits 0.
+doctor:
+    scripts/doctor.sh
+
 # Measure cores, RAM and KVM and write .cache/machine-profile.env (AGENTS.md section 10.1). Pass --force to re-detect.
 machine-profile *args:
     scripts/lib/machine-profile.sh {{ args }}
@@ -229,8 +233,10 @@ _gate:
     require gate kvm docker
     scripts/poc/local-gate.sh
 
-# The same verdict as CI (the PR title check and the emulator gate are CI-only).
-ci: lint test build e2e
+# The same verdict as CI (the PR title check and the emulator gate are CI-only): lint, test, build, e2e in order,
+# then a list of every SKIPPED line of the run (a skip is not a pass), also when a step fails.
+ci:
+    scripts/lib/ci.sh {{ just_executable() }}
 
 # Rust signaling server plus the web client, for local development.
 dev:

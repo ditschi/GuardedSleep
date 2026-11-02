@@ -8,9 +8,13 @@
 # All requirements met  -> returns 0.
 # One is missing        -> prints "SKIPPED: <task> needs <x>" and exits 0, so the caller stops here.
 # With GS_STRICT=1 (CI) -> prints "FAILED: <task> needs <x>" and exits 1 instead.
+# A skip is also appended to $GS_SKIP_LOG when set, so `just ci` can list them at the end (skip-log.sh).
 # Requirements: docker, kvm, android-sdk, cargo, cargo-fuzz, network.
 #
 # Sourcing also puts the mise-managed tools on PATH when mise is installed (see gs_mise_env).
+
+# shellcheck source=skip-log.sh
+source "$(dirname "${BASH_SOURCE[0]}")/skip-log.sh"
 
 gs_mise_env() {
   if command -v mise >/dev/null 2>&1; then
@@ -56,7 +60,7 @@ require() {
     echo "FAILED: $task needs $missing (GS_STRICT=1)" >&2
     exit 1
   fi
-  echo "SKIPPED: $task needs $missing"
+  gs_skip "$task needs $missing"
   exit 0
 }
 
