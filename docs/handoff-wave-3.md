@@ -5,7 +5,7 @@
 ## 1. Start here
 
 1. **Branch.** Use `chore/toolchain-wave-2`. Waves 1 and 2 are merged on it; nothing is pushed and no PRs are open. Earlier branches build on each other: `chore/agent-model-routing` → `docs/toolchain-realignment` → `chore/toolchain-wave-1` → `docs/openspec-adoption` → `chore/toolchain-wave-2`. Create `chore/toolchain-wave-3` from the tip of wave 2.
-2. **Setup** (once per checkout): `just setup`. It installs the mise tools, writes the machine profile, and replaces the stale Husky `core.hooksPath` with lefthook. Until this runs, git hooks are off in the main checkout.
+2. **Setup** (once per checkout): `just setup`. It installs the mise tools and replaces the stale Husky `core.hooksPath` with lefthook. Until this runs, git hooks are off in the main checkout.
 3. **Read.** AGENTS.md is binding. §6 covers OpenSpec, §7 the guardrails, §10.1 machine load and parallel agents, §10.2 commands that must finish, and §10.3 agent worktrees, interruptions and hooks. Then read `openspec/specs/`, the active changes in `openspec/changes/`, and `docs/backlog.md`.
 4. **OpenSpec.** Call it only via `mise exec -- openspec …` or `just`, because telemetry and update checks are disabled there. The workflow per change:
    1. Refine the coarse `tasks.md` against the current code.
@@ -23,7 +23,7 @@ All four changes were archived on 2026-10-22 after role reviews, critical gates 
 
 - **`add-core-facades`**
   - Binding-free core with `guardedsleep-ffi` (UniFFI) and `guardedsleep-wasm` (wasm-bindgen + tsify).
-  - API snapshots, a generate-twice determinism check, vectors and trace replay through every binding, and a weekly Swift smoke run.
+  - API snapshots, a generate-twice determinism check, vectors and trace replay through every binding.
 - **`add-rust-signaling-server`**
   - Sans-IO `guardedsleep-relay` and an axum `guardedsleep-server`. The Node server and `packages/protocol` are deleted.
   - Relay admission: `Required` on LAN relays, `Open` on the public server.
@@ -44,7 +44,7 @@ All four changes were archived on 2026-10-22 after role reviews, critical gates 
 
 Tooling added during wave 2:
 
-- `just machine-profile`, `scripts/lib/slot.sh` (medium and heavy slots), `just reap`, and shared Cargo and Gradle caches.
+- `GS_MEDIUM_SLOTS`/`GS_HEAVY_SLOTS` (development.md, "Load slots"), `scripts/lib/slot.sh` (medium and heavy slots), `just reap`, and shared Cargo and Gradle caches.
 - A lint that rejects Google STUN hosts.
 
 ## 3. Wave 3: active changes and order
