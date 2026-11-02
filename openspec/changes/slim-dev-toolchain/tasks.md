@@ -99,5 +99,5 @@ Each task is a brief for the `implementer` sub-agent. Work in one branch off `or
 
 ## 8. Verification
 
-- [ ] 8.1 Planner: run `refactor-scout` in diff mode against `origin/main`, hand accepted findings to the `implementer`, and re-run the checks.
-- [ ] 8.2 Run `just lint` and `just test` (both green). Run `just build-android` once for task 3. Report every SKIPPED. Then run `just reap` and confirm no leftovers.
+- [x] 8.1 (2026-11-03: 5 findings accepted, commits 7bd49430..e2d04137) Planner: run `refactor-scout` in diff mode against `origin/main`, hand accepted findings to the `implementer`, and re-run the checks.
+- [ ] 8.2 (2026-11-03: `just test` and `just build-android` green; host-rustup path SKIPPED, no host rustup; `just lint` blocked by pre-existing failures on `main`: a yanked `crypto-bigint` 0.7.8 fails `just deny`, and shellcheck SC2086 in `scripts/poc/release-check.sh` fails `just fmt-check`; every other lint step green) Run `just lint` and `just test` (both green). Run `just build-android` once for task 3. Report every SKIPPED. Then run `just reap` and confirm no leftovers.
