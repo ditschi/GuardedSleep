@@ -21,9 +21,9 @@ import org.guardedsleep.app.pairing.PairingStore
 import org.guardedsleep.app.pairing.StoredMailbox
 import org.guardedsleep.app.pairing.StoredPairing
 import org.guardedsleep.app.pairing.TurnCredentials
-import org.guardedsleep.app.platform.BuildConfig
 import org.guardedsleep.app.pairing.TurnServerInput
 import org.guardedsleep.app.pairing.TurnStore
+import org.guardedsleep.app.platform.BuildConfig
 import org.guardedsleep.app.readiness.ReadinessChecker
 import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.signaling.SignalingFactory
