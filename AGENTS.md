@@ -130,7 +130,7 @@ Core       Rust, sans-IO (core, relay): no I/O, threads or clocks; emits message
 - **Commit nothing generated** (bindings, generated TS, i18n output). API-surface snapshots (`cargo public-api` on `ffi`/`wasm`, the generated `.d.ts`) are committed instead; CI generates twice and compares hashes.
 - **Never hand-edit screenshot baselines.** They are recorded only in the pinned build image.
 - `svelte-ignore` and `@ts-expect-error` need an inline reason. No `@ts-ignore`, no `any` in production code, no ESLint/Biome (Prettier + `svelte-check --fail-on-warnings`).
-- **Commit messages:** Conventional Commits are checked on the **PR title only**, in CI (squash merges). There is no local commit-msg hook.
+- **Commit messages:** Conventional Commits are checked on the **PR title only**, in CI. There is no local commit-msg hook. Commits that reach `main` by rebase (§8) carry Conventional subjects too.
 - **Dependencies:** Renovate (weekly, grouped, `minimumReleaseAge` 3 days; UniFFI and wasm-bindgen get own PRs; no automerge for runtime/crypto deps). Never invent versions; add via the package manager. Justify new dependencies in the PR. Do not silence audit findings.
 - **Tooling budget:** maintenance ceiling is **12 h/month**. Every gate has an owner, runbook and last-catch date in `docs/ci-gates.md`; do not add a gate without an entry there.
 
@@ -177,7 +177,8 @@ Core       Rust, sans-IO (core, relay): no I/O, threads or clocks; emits message
 ## 8. Git, PRs and releases
 
 - **Conventional Commits** are enforced on the **PR title** in CI (types: `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `security`, `style`, `test`). Breaking changes: `<type>!:` plus a `BREAKING CHANGE: <description>` footer in the PR description.
-- **Branch protection on `main`:** required `ci-ok` status check + linear history, squash merges. **No required reviews, no signed-commit requirement, no separate agent identity** (ADR-020 §9). Target `main`; never push to it directly, never force-push, never `--no-verify`, never `git config` in an agent run.
+- **Integration into `main`:** a branch arrives either with a **clean history** (linear, no merge commits, every commit Conventional, self-contained and green on its own, no fixup noise; tidy it with a rebase first) through **Rebase and merge**, or through **Squash and merge** (the PR title becomes the subject). No merge commits on `main`; the one exception was the wave 1–3 integration (owner, 2026-11-02), which kept its history unchanged.
+- **Branch protection on `main`** (intended: required `ci-ok` status check + linear history; **not enforced while the repository is private on GitHub Free**, so agents check `ci-ok` themselves before merging). **No required reviews, no signed-commit requirement, no separate agent identity** (ADR-020 §9). Target `main`; never push to it directly, never force-push, never `--no-verify`, never `git config` in an agent run.
 - **Releases (ADR-020 §10):** at alpha, a **manual `android-v*` tag**; `versionCode` is derived from `versionName` in `version.properties`, never edited by hand. Release Please is **T1** (beta) with components `app` (one product version for Android and web), `server` and `core`. Do not edit released sections of `CHANGELOG.md`; only `## [Unreleased]`. The old npm-centric components (protocol, signaling-server, mobile) are gone.
 - **Images** ([ADR-008](openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md), amended by ADR-020): `guardedsleep-signaling` and `guardedsleep-web` on GHCR, built on native amd64 and arm64 runners (no QEMU); `:dev` for every `main` push.
 - **PR checklist:** Conventional title; lint/test green via `just ci`; `openspec validate` green; behaviour, architecture, scope or security changes go through an OpenSpec change (link it in the PR).
@@ -245,7 +246,8 @@ Load comes from what an agent runs, not from how many agents run. Budgets are pe
 
 ### 10.3 Agent worktrees, interruptions and hooks
 
-- **Rebase first:** agent worktrees can start from an old base. The first command in every worktree is `git rebase <wave branch>`; the brief names the expected `git log -1`.
+- **Where:** parallel agents work in `.worktrees/<branch-slug>` (git-ignored), one branch each off `main`, and come back through a PR (§8).
+- **Rebase first:** agent worktrees can start from an old base. The first command in every worktree is `git rebase origin/main`; the brief names the expected `git log -1`.
 - **Interrupted agents:** usage limits cut agents off mid-run. Commits survive, uncommitted edits stay in the worktree. Before resuming, check `git -C <worktree> status` and `just reap`, then resume the same agent (it keeps its context) instead of starting a new one.
 - **Hooks must be active:** after `just setup`, `git config --get core.hooksPath` must not point at `.husky`; lefthook runs fmt, typos and the secret scan on staged files. With hooks off, broken commits slip through; `just lint` warns locally (`scripts/lib/hooks-check.sh`), so act on that warning by running `just setup`.
 - **Merge hotspots:** `docs/ci-gates.md` (one large table), `justfile` and AGENTS.md conflict when parallel changes add rows or recipes. Resolve row by row and keep both sides; never take one side wholesale.

@@ -209,7 +209,7 @@ The server's and relay's own tests (the ported Node test cases, admission, STUN,
 
 ## Commits
 
-Conventional Commits are checked on the **PR title** in CI (squash merges); there is no local commit-msg hook. Example: `feat(docs): describe pairing flow in connectivity doc`.
+Conventional Commits are checked on the **PR title** in CI; there is no local commit-msg hook. A PR is rebase-merged when its history is clean, otherwise squashed (AGENTS.md §8). Example: `feat(docs): describe pairing flow in connectivity doc`.
 
 ## Building and testing apps
 

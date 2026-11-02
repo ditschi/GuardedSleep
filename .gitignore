@@ -70,7 +70,8 @@ apps/web/csp/generated/
 packages/core-wasm/pkg/
 packages/core-wasm/pkg-node/
 
-# Agent worktrees (Claude Code)
+# Agent worktrees: .worktrees/ (AGENTS.md section 10.3); .claude/worktrees/ from Claude Code's own isolation
+.worktrees/
 .claude/worktrees/
 
 # Kotlin compiler daemon sessions

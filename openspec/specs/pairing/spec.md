@@ -104,3 +104,12 @@ Release builds SHALL refuse cleartext network traffic, so signaling uses `wss://
 
 - **WHEN** a release build is given a `ws://` signaling URL on the internet
 - **THEN** the connection is refused by the platform
+
+### Requirement: One invite codec in the core
+
+The core SHALL build and parse the invite (the current payload version of "Invite payload"), with the PSK bytes and the current epoch seconds supplied by the platform, and SHALL classify a rejected text as not our code, incomplete paste or expired. Every client SHALL use this codec through its binding, conformance vectors SHALL cover it through every binding, and no platform SHALL parse invite text itself.
+
+#### Scenario: Cut-off paste
+
+- **WHEN** a client passes an invite text that starts with `{` but is not complete JSON
+- **THEN** the core rejects it as an incomplete paste, on Android and in the browser alike
