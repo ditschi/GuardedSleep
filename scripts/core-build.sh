@@ -5,7 +5,6 @@
 #   scripts/core-build.sh wasm            # target/wasm-pkg/node + target/wasm-pkg/web
 #   scripts/core-build.sh host            # host library + Kotlin bindings (what the Android JVM unit tests load; no ABIs)
 #   scripts/core-build.sh android         # host + jniLibs (arm64-v8a, x86_64) for apps/android
-#   scripts/core-build.sh swift           # Swift bindings from the host ffi library into target/swift-bindings (iOS smoke, no Xcode)
 #   scripts/core-build.sh determinism     # build and generate the Kotlin bindings and the wasm package twice (second time after a clean of the workspace crates), fail on differing hashes
 # Inside CI or the image itself, set CORE_BUILD_NATIVE=1 to run without Docker.
 set -euo pipefail
@@ -81,17 +80,6 @@ run_android() {
 	ls -l "$jni"/*/libguardedsleep_ffi.so
 }
 
-# The Swift smoke check (weekly workflow): generation must keep working on Linux although no iOS client exists yet.
-run_swift() {
-	local out=target/swift-bindings
-	cargo build -p guardedsleep-ffi
-	rm -rf "$out"
-	cargo run -q -p uniffi-bindgen -- generate --library target/debug/libguardedsleep_ffi.so \
-		--language swift --out-dir "$out" --no-format
-	ls -l "$out"
-	[[ -n "$(find "$out" -name '*.swift' -print -quit)" ]] || { echo "swift: no .swift file generated" >&2; return 1; }
-}
-
 # Generate-twice check (ADR-020 section 3): the generated Kotlin bindings and the wasm package must be
 # byte-identical across two independent builds. The second round cleans and recompiles the three workspace
 # crates (core, ffi, wasm), so non-determinism in macro expansion or metadata emission (uniffi, tsify,
@@ -137,7 +125,6 @@ for cmd in "${@:-test}"; do
 	# RUSTC_WRAPPER is emptied for this call only (works in the Docker and CORE_BUILD_NATIVE paths): with sccache a
 	# cache hit would make the second build a copy of the first, and the generate-twice check could never fail.
 	determinism) RUSTC_WRAPPER='' run_determinism ;;
-	swift) run_swift ;;
 	*)
 		echo "unknown subcommand: $cmd" >&2
 		exit 2

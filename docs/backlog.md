@@ -160,7 +160,7 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 
 ### platforms
 
-- `DEFERRED` (Phase 2) iOS: no Swift or Xcode code until the iOS gate; only `cargo check --target aarch64-apple-ios` in CI and a weekly bindings smoke test (AGENTS.md §9).
+- `DEFERRED` (Phase 2) iOS: no Swift or Xcode code until the iOS gate; only `cargo check --target aarch64-apple-ios` in CI (AGENTS.md §9).
 - `IDEA` Desktop installable client (Tauri or Electron around the web build): parent station on a PC; open questions are roles, auto-update and code signing. Today the desktop story is the PWA plus local PC mode.
 - `IDEA` (Phase 3+) Video monitoring: motion-triggered video from the baby unit's camera, adaptive frame rate and resolution, night vision where the camera supports it, end-to-end encrypted. No camera capture or video pipeline before it is decided (AGENTS.md §9).
 

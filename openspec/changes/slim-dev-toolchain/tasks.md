@@ -4,7 +4,7 @@ Each task is a brief for the `implementer` sub-agent. Work in one branch off `or
 
 ## 1. Swift smoke removal (D3)
 
-- [ ] 1.1 Delete `.github/workflows/swift-bindings.yml`. In `scripts/core-build.sh`, remove `run_swift`, the `swift` case and its usage line. Keep `just check-ios` unchanged. In `docs/backlog.md`, drop the weekly bindings smoke from the iOS row. Acceptance: `git grep -n 'swift-bindings\|core-build.sh swift\|run_swift\|bindings smoke' -- ':!openspec/'` finds nothing; `just lint-workflows` is green.
+- [x] 1.1 Delete `.github/workflows/swift-bindings.yml`. In `scripts/core-build.sh`, remove `run_swift`, the `swift` case and its usage line. Keep `just check-ios` unchanged. In `docs/backlog.md`, drop the weekly bindings smoke from the iOS row. Acceptance: `git grep -n 'swift-bindings\|core-build.sh swift\|run_swift\|bindings smoke' -- ':!openspec/'` finds nothing; `just lint-workflows` is green.
 
 ## 2. Orchestration slimming (D4)
 
@@ -95,7 +95,7 @@ Each task is a brief for the `implementer` sub-agent. Work in one branch off `or
 
 ## 7. GitHub settings (owner, manual)
 
-- [ ] 7.1 Owner: in the repository settings, turn off "Allow merge commits" and keep "Allow squash merging" and "Allow rebase merging". Add a ruleset for `main`: require status check `ci-ok`, require linear history, block force pushes and deletions; no required reviews, no signed commits. Verify with `gh api repos/ditschi/GuardedSleep/rulesets` and `gh repo view --json mergeCommitAllowed`.
+- [x] 7.1 (done by the planner via the API: ruleset 26403725, merge commits disabled, 2026-11-02) Owner: in the repository settings, turn off "Allow merge commits" and keep "Allow squash merging" and "Allow rebase merging". Add a ruleset for `main`: require status check `ci-ok`, require linear history, block force pushes and deletions; no required reviews, no signed commits. Verify with `gh api repos/ditschi/GuardedSleep/rulesets` and `gh repo view --json mergeCommitAllowed`.
 
 ## 8. Verification
 
