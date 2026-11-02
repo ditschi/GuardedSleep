@@ -378,12 +378,12 @@ No client contacts a third-party STUN server by default any more; the curated EU
 **Gate and abuse bounds (answers review 2026-11-02, I3):** the server cannot see the pairing proof, and relayed media needs TURN **before** the DTLS handshake can verify anything, so issuing "after the pairing proof" (backlog `IDEA`, 2026-10-25) is impossible; it is discarded. The bounds are:
 
 - a room holding at least one baby and one parent, each joined with `hello` and a room id of the derived shape (v3); every member of such a room gets its own credential (the public server allows one parent; a self-hosted relay with `SIGNALING_MAX_PARENTS` > 1 issues per parent, review M22);
-- at most one live credential per member, renewed only while both roles stay joined;
+- one current credential per member, renewed only while both roles stay joined; a renewal supersedes the previous credential in every count;
 - at most `TURN_MAX_LIVE_PER_ADDR` live credentials per client address (IPv4 address or IPv6 /64; default 8, configurable, because many families share one CGNAT address);
 - the existing join and new-room rate limits per address (ADR-020 §6);
-- coturn: `--user-quota=3` (one attempt needs at most a UDP and a TCP allocation plus one spare; every credential has its own user name, so this caps each credential, not each client), `--total-quota` equal to the relay port range (one port per allocation; defaults 200 and 49160–49359), `--max-bps` sized for audio.
+- coturn: `--user-quota=10` with `--max-allocate-lifetime=120` (every credential has its own user name, so the quota caps each credential, not each client; the core reuses one credential for every attempt of its 10-minute life, and each attempt allocates on UDP and TCP, so the quota is sized per credential lifetime, and the short lifetime frees allocations orphaned by a network switch within two minutes; libwebrtc refreshes by the granted lifetime; review 2026-11-02 re-check, B), `--total-quota` equal to the relay port range (one port per allocation; defaults 200 and 49160–49359), `--max-bps` sized for audio.
 
-Residual risk, accepted (owner, 2026-10-25 and 2026-11-02): self-made clients can open rooms with any room id of the right shape and keep credentials alive as long as their two sockets stay joined. Per address that is at most 8 credentials × 3 allocations at 1 Mbit/s each; a botnet with many addresses can still exhaust `total-quota` and deny TURN to relayed families, which then see `media_blocked` while escalation runs. The owner watches coturn's allocation count (§9) and can lower the per-address cap or the quotas.
+Residual risk, accepted (owner, 2026-10-25 and 2026-11-02): self-made clients can open rooms with any room id of the right shape and keep credentials alive as long as their two sockets stay joined. Per address that is at most 8 credentials × 10 allocations at 1 Mbit/s each; a botnet with many addresses can still exhaust `total-quota` and deny TURN to relayed families, which then see `media_blocked` while escalation runs. The owner watches coturn's allocation count (§9) and can lower the per-address cap or the quotas.
 
 **Core (sans-IO):**
 
@@ -492,7 +492,7 @@ Not implementable by an agent; listed in `tasks.md` 10.3 and tracked there. Lega
 
 **Ported, not dropped:** sim scenarios whose subject is generic get a relay-only twin before the Nostr version is deleted: "one of three relays dies during setup" (own relay plus project server), "relay accepts but never delivers", "flapping relay does not stall setup", "all mailboxes dead at a reachability check", "reachability check reveals nothing of the pairing", "mailbox update after relay churn", "single attempt" setups, and the stored-stop replay after a restart. Coverage of each requirement in `specs/signaling-mailboxes` must stay with at least one scenario; task 8.2 lists the mapping.
 
-**Order:** the removal lands first, then several relay mailboxes in the core (task 8.7, §1), then the TURN work, so the TURN tasks touch the smaller core and can bind ICE servers to a relay host the core knows. Task 9.1 (allocation lifetime) is a standalone spike and may run in parallel with group 8. Each task keeps `just test` green on its own.
+**Order:** the core removal (8.1) lands first, then several relay mailboxes in the core (task 8.7, §1), then the simulation port (8.2, whose two-relay twins need 8.7) and the remaining removal tasks, then the TURN work, so the TURN tasks touch the smaller core and can bind ICE servers to a relay host the core knows. Task 9.1 (allocation lifetime) is a standalone spike and may run in parallel with group 8. Each task keeps `just test` green on its own.
 
 ### Discarded alternatives
 
@@ -811,3 +811,5 @@ Critical Reviewer with the Security Architect and Technical Architect perspectiv
 | M20 STUN allowlist policy left to the implementer                               | §6: the file holds `gs.mydata.rocks` only                                                                                        |
 | M21 telecom law, AGPL §13, policy coverage                                      | §10 owner tasks                                                                                                                  |
 | M22 two-member gate with more than one parent                                   | §7: "at least one baby and one parent", one credential per member; `specs/signaling-relay`                                       |
+
+**Re-check (same day):** all CRITICAL and IMPORTANT findings resolved; verdict "approve with changes". Its new findings are applied: task order 8.1 → 8.7 → 8.2 so the two-relay twins can be written (A); coturn `--user-quota=10` with `--max-allocate-lifetime=120` and a gate case for repeated failed relayed attempts (B); the default-configuration requirement distinguishes the official web deployment (C); a renewal supersedes the previous credential in the caps (D); stale references fixed (E); the clock scenario moved to `pairing` with a hint to check the date and time (F).

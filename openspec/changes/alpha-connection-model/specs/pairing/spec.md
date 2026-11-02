@@ -7,6 +7,20 @@
 
 ## MODIFIED Requirements
 
+### Requirement: Invite shown by the baby unit
+
+The baby unit SHALL show the invite as a QR code (inverted, at most 50 % brightness) and as copyable text. The parent unit SHALL accept the invite by scanning it, with the camera permission requested only at that moment, or by pasting the text. The invite SHALL be valid for 5 minutes with a visible countdown and a "Show new code" action, and each new code SHALL carry a fresh PSK.
+
+#### Scenario: Code expires
+
+- **WHEN** the parent scans a code whose expiry has passed
+- **THEN** pairing is rejected as expired and the parent is told to show a new code on the baby unit and to check the date and time of both devices
+
+#### Scenario: Parent clock ahead at the first pairing
+
+- **WHEN** the parent's wall clock is 10 minutes ahead of the baby's and it scans a fresh invite with a 5-minute expiry
+- **THEN** the parent refuses the code as expired, stores nothing, and suggests checking the date and time
+
 ### Requirement: Invite payload v4
 
 The invite SHALL be UTF-8 JSON `{"v":4,"k":<PSK>,"m":[<mailbox>…],"x":<expiry>}` of at most 300 bytes: the PSK as unpadded base64url of 32 random bytes, one to six mailbox strings (`r:<host[:port][/path]>` for a relay, the project server or an own relay, reached over `wss://`, and `l:<address>:<port>` for a LAN mailbox with an RFC 1918 or RFC 4193 address), and the expiry in epoch seconds. It SHALL NOT carry a room id, tag, fingerprint, parent id, device name or any public IP address. A payload with another version (including v3), a PSK of the wrong length, an invalid or unknown mailbox kind (including the removed `n:`), more than six mailboxes or a missing expiry SHALL be rejected as not a GuardedSleep code. When the mailboxes would exceed the size limit, the baby device SHALL drop own relays from the last one backwards, never a LAN mailbox, the project server or the first own relay.

@@ -54,8 +54,8 @@ The Critical Reviewer role is therefore mandatory (AGENTS.md §6). Reviews on 20
 - **Personas:** serves Persona B (daily home use without a server) and Persona C (old phones, no setup), and now Persona A ("Festtags-Eltern" on venue Wi-Fi or mobile ↔ mobile) through the project TURN.
 - **Trade-off:** the project (the owner) learns IP addresses and usage times of every family on default settings, and relays encrypted audio when no direct path exists. This is disclosed with the operator's name, privacy policy and imprint, nothing is logged, and the off switch turns it off. One server is a single point of failure for internet recovery; verified monitoring is unaffected, and an own relay or the LAN path avoids it.
 - **Code:**
-  - core: Nostr removal; `ice` parsing with host binding and expiry; ICE servers attached to attempts;
-  - `guardedsleep-relay` and `guardedsleep-server`: `welcome.ice`, the `ice` message and the credential issuer;
+  - core: Nostr removal; one relay mailbox per `r:` entry (the platforms' URL lists and failover go); `ice_servers` parsing with host binding and expiry; ICE servers attached to attempts;
+  - `guardedsleep-relay` and `guardedsleep-server`: `welcome.iceServers`, the `ice_servers` message, the issuance effect in the relay and the credential signer in the server;
   - Android and web: Nostr removal, ICE servers from the core, project-server flag, settings and disclosure;
   - `locales/*.json`;
   - `data/project-server.json`, `public-lists` reduced, the web CSP;

@@ -161,11 +161,6 @@ The core clock SHALL be monotonic milliseconds that include deep sleep (Android 
 - **WHEN** a `here` of the peer's confirmed session carries a wall clock more than 10 minutes from this device's
 - **THEN** both devices raise the `clock_skew` hint, and signaling and escalation are unaffected
 
-#### Scenario: Parent clock ahead at the first pairing
-
-- **WHEN** the parent's wall clock is 10 minutes ahead of the baby's and it scans a fresh invite with a 5-minute expiry
-- **THEN** the parent refuses the code as expired and stores nothing
-
 ### Requirement: Loss detection
 
 A verified attempt SHALL be considered lost when its peer connection is `failed` or `closed`, its DataChannel closes, or no DataChannel message arrives for `liveness_ms = 2 × interval + 5 s` (25 s default, 35 s maximum). The `disconnected` state alone, absence from a relay room and the closing of mailboxes SHALL NOT count as loss.
