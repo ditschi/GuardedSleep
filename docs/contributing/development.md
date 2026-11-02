@@ -31,7 +31,7 @@ A task that needs Docker, KVM, the Android SDK or Playwright browsers and does n
 
 ### Hooks
 
-`just setup` runs `lefthook install`. A clone that ran the old Husky setup still has `core.hooksPath` pointing at `.husky/_`; `just setup` removes that setting (and says so) before installing lefthook. Without the cleanup the stale Husky hooks do nothing and no pre-commit check runs. Outside CI, `just lint` warns (without failing) when the hooks are off: a stale Husky `core.hooksPath` or no lefthook `pre-commit` hook (`scripts/lib/hooks-check.sh`).
+`just setup` runs `lefthook install`. A clone that ran the old Husky setup still has `core.hooksPath` pointing at `.husky/_`; `just setup` removes that setting (and says so) before installing lefthook. It checks both the `--local` scope and the `--worktree` scope (a linked worktree can carry its own `.git/worktrees/<name>/config.worktree`). Without the cleanup the stale Husky hooks do nothing and no pre-commit check runs. Outside CI, `just lint` warns (without failing) when the hooks are off: a stale Husky `core.hooksPath` (the warning names the scope that sets it) or no lefthook `pre-commit` hook (`scripts/lib/hooks-check.sh`).
 
 `lefthook.yml` runs on staged files only (target: under 5 s): Prettier, `cargo fmt` (when `.rs` files are staged and a host cargo exists), typos, whitespace/JSON hygiene and a Betterleaks secret scan. There is no commit-msg hook: Conventional Commits are checked on the PR title in CI. Hooks are a convenience; `just lint` and CI re-run everything. `lefthook run pre-commit --all-files` runs them on the whole tree.
 
@@ -39,23 +39,43 @@ The hook binary comes from mise. Git clients that do not load your shell profile
 
 ### Load slots
 
-Medium and heavy recipes (`just lint-code`, `just test`, builds, `just e2e`, `just gate`) run through `scripts/lib/slot.sh`, a machine-wide `flock` semaphore shared by all worktrees; `just machine-profile` sizes the pools (AGENTS.md §10.1). `GS_SLOT_WAIT` (default 3600 s) bounds the wait for a slot (exit 75). `GS_RUN_TIMEOUT` (unset: no limit) bounds the run itself and starts only once the slot is held (exit 124), so a queued job is never cut off by its own deadline:
+Medium and heavy recipes (`just lint-code`, `just test`, builds, `just e2e`, `just gate`) run through `scripts/lib/slot.sh`, a machine-wide `flock` semaphore shared by all worktrees and sessions (AGENTS.md §10.1), so parallel runs queue instead of overloading the machine.
+
+- `GS_MEDIUM_SLOTS` (default 2) and `GS_HEAVY_SLOTS` (default 1) set the pool sizes; they must be positive integers (otherwise exit 2). The defaults suit about 8 cores and 15 GB RAM; set `GS_MEDIUM_SLOTS=1` below 8 cores or 12 GB, larger values on bigger machines (for example in your shell profile).
+- `GS_SLOT_WAIT` (default 3600 s) bounds the wait for a slot; the script then exits 75 ("machine busy": rerun or background it, this is not a test verdict). `just reap` lists stuck leftovers.
+- `GS_RUN_TIMEOUT` (unset: no limit; any GNU `timeout` duration) bounds the run itself and starts only once the slot is held, so a queued job is never cut off by its own deadline. Exit 124 means the run exceeded it; any other status is the command's own verdict.
+- Re-entrancy: a nested call for the same or a lighter class runs without acquiring, and `GS_RUN_TIMEOUT` is cleared for the child so no second deadline starts.
 
 ```sh
 GS_SLOT_WAIT=60 GS_RUN_TIMEOUT=15m just test
 ```
 
-### Delta tests and timings
+### Delta tests
 
 `just test-affected [base]` runs only the tests the changed paths need: everything committed since the merge base with `base` (default `origin/main`) plus uncommitted and untracked files. Paths map to areas through `.github/path-filters.yml`, the file CI's path filters read too. Rust changes run the Rust, WASM, web and Android tests (the core feeds all of them); web changes run Vitest with `--changed`; Android changes run the JVM tests (Gradle skips unchanged modules). A global path (justfile, tool pins, lockfiles, `scripts/lib/`, the build image, `.github/`) or a path in no area runs the full `just test`. The output names the heavy checks (`just e2e`, `just gate`, `just build-android`) the change needs before the PR; delta tests do not replace the full sweep. `node scripts/lib/affected.mjs --dry-run [base]` prints the plan without running it.
 
-Every slot-held run is appended to `~/.cache/guardedsleep/timings.tsv` (shared by all worktrees, never uploaded); `just timings [days]` summarises runs, median/p90/max run time, wait time and failures per command.
+Finished agent worktrees: `just reap --worktrees` lists the ones that are clean and whose HEAD is in a pushed branch; remove those with `git worktree remove <path>` (no `--force`).
 
-Finished agent worktrees: `just reap --worktrees` lists the ones that are clean and whose HEAD is in a pushed branch; `just reap --prune-worktrees` removes those (no `--force`, stale locks of dead processes only, `worktree-agent-*` branches deleted with `git branch -d`).
+### Rust execution mode
+
+Rust runs on the host when `rustup` is on `PATH` (so `rust-toolchain.toml` applies; a distro cargo would ignore it), and in the `guardedsleep-android-native-build` image otherwise or where the environment matters. Two output directories keep the modes from invalidating each other: the container has other absolute paths, another `CARGO_HOME` and sccache, so sharing `target/` made each mode rebuild what the other had compiled.
+
+| Command                                                                          | Runs                                                                     | Output                                                     |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| `scripts/cargo.sh`, `core-build.sh test`, `core-build.sh wasm`                   | host with rustup; else the image                                         | `target/` (the image fallback writes it too, see below)    |
+| `core-build.sh host`, `android`, `determinism`; `scripts/gradle.sh` (all Gradle) | the image, unless `CORE_BUILD_NATIVE=1` (CI, devcontainer, inside image) | `target/container` (`CARGO_TARGET_DIR`), native: `target/` |
+
+- **Why the Android chain stays in the image:** the JVM tests load the core library through JNA, so it must be built where Gradle runs. The image is Ubuntu jammy (glibc 2.35), most hosts are newer, so a host-built library may not load there. `jna.library.path` in `apps/android/{core-bindings,platform}/build.gradle.kts` reads `CARGO_TARGET_DIR` (default `<repo>/target`) plus `/debug`; `scripts/gradle.sh` passes `target/container` into its container.
+- **Why the fallback keeps `target/`:** without host rustup there is no host build to protect, and `scripts/dev.sh`, `scripts/poc/env-up.sh` and the web dev server read `target/debug`.
+- **Fixed paths:** only cargo outputs follow `CARGO_TARGET_DIR`. `target/wasm-pkg` (read by `packages/core-wasm/scripts/copy-pkg.mjs`, `crates/guardedsleep-core/js/conformance.test.mjs` and `scripts/lib/api-snapshot.sh`) and `target/determinism` stay where they are.
+- **`CORE_BUILD_NATIVE=1`:** run natively with the current environment (CI sets it; the devcontainer presets it). `CARGO_HOME` is kept unless `CARGO_HOME_OVERRIDE` is set (`scripts/lib/build-image.sh` sets it for image runs).
+- **wasm-bindgen:** taken from `PATH` when its version matches the pin in `Cargo.lock` (CI caches it in `~/.cargo/bin`); on a miss `core-build.sh` installs it under `<target dir>/tools` and puts that `bin` first on `PATH`, never over a global copy.
+- **Mixed invocations:** `core-build.sh test android` runs each subcommand in its own mode.
+- **Disk:** `target/container` is under `target/`, so `cargo clean` or deleting `target/` removes it.
 
 ### Compiler cache
 
-Local container builds (`scripts/cargo.sh`, `scripts/core-build.sh`, `scripts/gradle.sh`) use sccache with a shared cache in `~/.cache/guardedsleep/sccache` (`GS_SHARED_CACHE` moves it). Every worktree compiles at `/workspace`, so a new worktree reuses the dependencies another one already compiled; workspace crates still compile. `GS_SCCACHE_SIZE` caps it (default `10G`), `GS_SCCACHE=0` turns it off. CI and the generate-twice check run without it. Host cargo is not wrapped.
+Container builds (the image runs of `scripts/cargo.sh`, `scripts/core-build.sh` and `scripts/gradle.sh`) use sccache with a shared cache in `~/.cache/guardedsleep/sccache` (`GS_SHARED_CACHE` moves it). `scripts/lib/build-image.sh` mounts it and sets `RUSTC_WRAPPER=sccache`. Every worktree compiles at `/workspace`, so a new worktree reuses the dependencies another one already compiled; workspace crates still compile. `GS_SCCACHE_SIZE` caps it (default `10G`), `GS_SCCACHE=0` turns it off. CI (`CI` set) and `core-build.sh determinism` run without it, so the generate-twice check always compiles twice. Host cargo is not wrapped. A suspected bad cache entry: confirm with `GS_SCCACHE=0`, then delete `~/.cache/guardedsleep/sccache`. The sccache version is pinned in `docker/android-native-build/Dockerfile` (Renovate bumps it; update both checksums in the same PR).
 
 ### Supply-chain and licence checks
 
@@ -68,7 +88,7 @@ The environment is defined by **Docker Compose** (`.devcontainer/docker-compose.
 1. Open the repository in **VS Code** or **Cursor** with the Dev Containers extension.
 2. **Reopen in Container** — on first start the image is built, then `.devcontainer/post-create.sh` runs once: `mise install`, `just setup`, `pnpm install --frozen-lockfile`.
 
-The image carries the native toolchain (ADR-015, ADR-019), mirroring `docker/android-native-build/Dockerfile`: Eclipse Temurin JDK 21 (copied into `/opt/java/openjdk`), Android SDK (platforms 35 and 37.0, build-tools 35.0.0 and 36.0.0), NDK `30.0.16248370`, Rust from `rust-toolchain.toml` (including the Android, WASM and iOS check targets), `cargo-ndk` 4.1.2 and [mise](https://mise.jdx.dev/), which installs the rest (node, pnpm 11, just, lefthook, …) from `mise.toml`. `CORE_BUILD_NATIVE=1` is preset, so `scripts/core-build.sh` and `scripts/gradle.sh` run in place instead of starting the build image (there is no nested Docker).
+The image carries the native toolchain (ADR-015, ADR-019), mirroring `docker/android-native-build/Dockerfile`: Eclipse Temurin JDK 21 (copied into `/opt/java/openjdk`), Android SDK (platforms 35 and 37.0, build-tools 35.0.0 and 36.0.0), NDK `30.0.16248370`, Rust from `rust-toolchain.toml` (including the Android, WASM and iOS check targets), `cargo-ndk` 4.1.2 and [mise](https://mise.jdx.dev/), which installs the rest (node, pnpm 11, just, lefthook, …) from `mise.toml`. `CORE_BUILD_NATIVE=1` is preset (host-style `target/`, see Rust execution mode), so `scripts/core-build.sh` and `scripts/gradle.sh` run in place instead of starting the build image (there is no nested Docker).
 
 - **Trade-off:** the image is larger and the first `docker compose … build` for `.devcontainer/` takes longer (SDK download).
 - **ARM64:** the Temurin stage is amd64-oriented; on Apple Silicon, use **Docker Rosetta** / amd64 platform for this image, or maintain an arm64 JDK variant if needed.
@@ -81,7 +101,7 @@ just build   # web build, Android debug + release APKs, release/size checks
 just gate    # emulator gate (needs KVM and Docker, so run it on the host)
 ```
 
-On a host without the Dev Container only Docker is needed for the Rust and Android tasks: `scripts/cargo.sh`, `scripts/core-build.sh` and `scripts/gradle.sh` fall back to the `guardedsleep-android-native-build:local` image when `cargo` or `CORE_BUILD_NATIVE=1` is missing. `scripts/lib/build-image.sh` builds it on first use and rebuilds it when `rust-toolchain.toml` or the Dockerfile changes. `scripts/gradle.sh` serialises Gradle runs with `flock target/.gradle.lock`.
+On a host without the Dev Container only Docker is needed for the Rust and Android tasks: `scripts/cargo.sh`, `scripts/core-build.sh` and `scripts/gradle.sh` fall back to the `guardedsleep-android-native-build:local` image when host `rustup` or `CORE_BUILD_NATIVE=1` is missing (see Rust execution mode). `scripts/lib/build-image.sh` builds it on first use and rebuilds it when `rust-toolchain.toml` or the Dockerfile changes. `scripts/gradle.sh` serialises Gradle runs with `flock target/.gradle.lock`.
 
 ### Docker Compose without opening the IDE in Dev Container mode
 
