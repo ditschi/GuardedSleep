@@ -4,7 +4,10 @@
 
 An open-source, privacy-first baby monitor application that turns your existing devices into a secure monitoring system.
 
-## Project Status: Concept Phase
+> [!WARNING]
+> **Work in progress: not ready for use.** GuardedSleep is in early alpha development. There is no release, nothing here has been tested on real families, and protocols, data formats and commands change without notice. **Do not rely on it to monitor a child.** Feedback and issues are welcome; pull requests are best discussed in an issue first.
+
+## Project Status: Alpha Build-Out
 
 Alpha build-out: a sans-IO Rust core, a native Android client and a web client on the same core, plus a self-hosted signaling server ([ADR-015](openspec/changes/archive/2026-10-21-adr-015-native-clients-with-shared-rust-core/design.md), [ADR-019](openspec/changes/archive/2026-10-20-adr-019-language-repository-and-client-policy/design.md)). **The toolchain is in transition (ADR-020):** `just` becomes the single entry point (`setup fmt lint test gen build e2e gate ci`), and commands in the docs may change until the three implementation waves land ([ADR-020](openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md), [ADR-021](openspec/changes/archive/2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md)). The web client is `apps/web` (Vite + Svelte 5); the signaling server is the Rust `crates/guardedsleep-server`.
 
