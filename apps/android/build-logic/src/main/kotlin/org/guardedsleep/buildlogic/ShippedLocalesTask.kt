@@ -46,12 +46,6 @@ abstract class ShippedLocalesTask : DefaultTask() {
         val root = repoRoot.get().asFile
         exec.exec {
             workingDir = root
-            // CARGO_HOME stays as the environment has it unless CARGO_HOME_OVERRIDE is set
-            // (build-image.sh).
-            (System.getenv("CARGO_HOME_OVERRIDE") ?: System.getenv("CARGO_HOME"))?.let {
-                environment("CARGO_HOME", it)
-            }
-            environment("CARGO_TARGET_DIR", System.getenv("CARGO_TARGET_DIR") ?: "${root}/target")
             commandLine(
                 "bash",
                 "scripts/cargo.sh",

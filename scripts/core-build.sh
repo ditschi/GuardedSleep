@@ -54,8 +54,7 @@ fi
 cd "$ROOT"
 # Cargo outputs (debug/, wasm32-unknown-unknown/release/) of this run; absolute inside the image.
 TARGET="${CARGO_TARGET_DIR:-target}"
-# CARGO_HOME stays as the environment has it; build-image.sh sets CARGO_HOME_OVERRIDE for image runs.
-if [[ -n "${CARGO_HOME_OVERRIDE:-}" ]]; then export CARGO_HOME="$CARGO_HOME_OVERRIDE"; fi
+# CARGO_HOME is the environment's; build-image.sh sets /cache/cargo for image runs.
 export PATH="${CARGO_HOME:-$HOME/.cargo}/bin:/opt/cargo/bin:$PATH"
 
 run_test() {

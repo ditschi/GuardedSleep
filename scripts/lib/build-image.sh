@@ -12,7 +12,7 @@
 # writable directory under target/ because the uid has no passwd entry in the image.
 # GS_DOCKER_CACHE_ARGS mounts the shared Cargo home (registry, git DBs, installed tools) and Gradle user
 # home from ${GS_SHARED_CACHE:-$HOME/.cache/guardedsleep}/{cargo,gradle} at /cache and sets CARGO_HOME,
-# CARGO_HOME_OVERRIDE (read by core-build.sh) and GRADLE_USER_HOME, so worktrees download dependencies
+# and GRADLE_USER_HOME, so worktrees download dependencies
 # once. Cargo's package-cache lock and Gradle's cross-process cache locks make concurrent runs safe;
 # target/ and the Gradle project cache stay per worktree. Host cargo builds into target/, image runs of
 # the Android chain and determinism into target/container (scripts/core-build.sh), so neither mode
@@ -42,7 +42,7 @@ gs_ensure_build_image() {
   mkdir -p "$cache/cargo" "$cache/gradle"
   GS_DOCKER_CACHE_ARGS=(
     -v "$cache/cargo:/cache/cargo" -v "$cache/gradle:/cache/gradle"
-    -e CARGO_HOME=/cache/cargo -e CARGO_HOME_OVERRIDE=/cache/cargo -e GRADLE_USER_HOME=/cache/gradle
+    -e CARGO_HOME=/cache/cargo -e GRADLE_USER_HOME=/cache/gradle
   )
   if [[ "${GS_SCCACHE:-1}" != "0" && -z "${CI:-}" ]]; then
     mkdir -p "$cache/sccache"
