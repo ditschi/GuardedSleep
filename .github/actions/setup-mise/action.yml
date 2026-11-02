@@ -1,0 +1,22 @@
+name: Setup mise
+description: >
+  jdx/mise-action with the mise binary pinned here, so every workflow runs the same mise as the
+  lock file was written with. An unpinned mise moved to 2026.10.25, which refuses the pipx:reuse
+  entry of mise.lock under MISE_LOCKED ("no uv dependency graph"). Renovate bumps `version`;
+  re-run `mise lock` in the same PR. https://github.com/jdx/mise-action#inputs
+inputs:
+  install_args:
+    description: Tools to install (empty = all of mise.toml)
+    default: ""
+  cache_save:
+    description: Save the mise cache ("true" / "false")
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
+      with:
+        # Renovate: customManagers "mise binary" in renovate.json.
+        version: "2026.10.15"
+        install_args: ${{ inputs.install_args }}
+        cache_save: ${{ inputs.cache_save }}

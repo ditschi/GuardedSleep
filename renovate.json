@@ -19,6 +19,16 @@
   "mise": { "enabled": true },
   "customManagers": [
     {
+      "description": "mise binary pinned in the setup-mise composite action; re-run `mise lock` in the same PR",
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/actions/setup-mise/action\\.yml$/"],
+      "matchStrings": ["version:\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""],
+      "depNameTemplate": "jdx/mise",
+      "packageNameTemplate": "jdx/mise",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
       "description": "Rust toolchain pin in rust-toolchain.toml (no native manager)",
       "customType": "regex",
       "managerFilePatterns": ["/(^|/)rust-toolchain\\.toml$/"],
