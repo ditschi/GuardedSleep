@@ -156,7 +156,7 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 - `IDEA` Kani proof for "alarm within T after link loss".
 - `IDEA` `examples/` folder with PoC reproductions.
 - `IDEA` Open minor items from the `add-core-facades` architecture review (A-F6, A-F7, A-F8, A-F10; see the archived change's design): small binding and snapshot refinements, none blocking.
-- `UNDER DISCUSSION` refactor-scout items: a shared `docker run` helper; YAML anchors for the duplicated CI path filters; one source for the NDK and cargo-ndk pins (Renovate regex manager); whether `stack-up` prints `SKIPPED` without Docker.
+- `UNDER DISCUSSION` refactor-scout items: a shared `docker run` helper; YAML anchors for the duplicated CI path filters; whether `stack-up` prints `SKIPPED` without Docker.
 - `PLANNED` (wave 2/3) The generated Dev Container from ADR-020 §2; complete the ktfmt and uv pins once `reuse` ships a wheel.
 
 ### platforms

@@ -67,14 +67,16 @@ run_host() {
 		--language kotlin --out-dir "$gen" --no-format
 }
 
-# Same NDK as docker/android-native-build/Dockerfile and the setup-android action. Runners ship other
-# NDK versions and export their path as the NDK home, so the pinned one wins when it is installed.
-PINNED_NDK=30.0.16248370
+# Same NDK as docker/android-native-build/Dockerfile and the setup-android action (one pin:
+# tools/android-versions.env). Runners ship other NDK versions and export their path as the NDK home, so
+# the pinned one wins when it is installed.
+# shellcheck source=../tools/android-versions.env
+source "$ROOT/tools/android-versions.env"
 
 run_android() {
 	local jni=apps/android/core-bindings/src/main/jniLibs
-	if [[ -d "${ANDROID_HOME:-}/ndk/$PINNED_NDK" ]]; then
-		export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/$PINNED_NDK"
+	if [[ -d "${ANDROID_HOME:-}/ndk/$ANDROID_NDK_VERSION" ]]; then
+		export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/$ANDROID_NDK_VERSION"
 	fi
 	cargo ndk -t arm64-v8a -t x86_64 -P 26 -o "$jni" build -p guardedsleep-ffi --release
 	run_host

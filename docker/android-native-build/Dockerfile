@@ -1,11 +1,11 @@
 # JDK 21 + Android SDK/NDK + Rust (Android + WASM targets) for the ADR-015 native PoC.
-# Build: scripts/core-build.sh (rebuilds the image when rust-toolchain.toml changes)
+# Build: scripts/core-build.sh (rebuilds the image when rust-toolchain.toml, tools/android-versions.env or this file changes)
 # Use:   scripts/core-build.sh (mounts the repo at /workspace)
 FROM eclipse-temurin:21-jdk-jammy@sha256:742daacb9316be4b6fc60258f6e4ac2a11882f6c597373c92290a57bfad0d2e0
 
 ENV ANDROID_HOME=/opt/android-sdk
-ENV ANDROID_NDK_VERSION=30.0.16248370
-ENV ANDROID_NDK_HOME=/opt/android-sdk/ndk/30.0.16248370
+# The NDK version comes from tools/android-versions.env; the symlink below gives it a stable path.
+ENV ANDROID_NDK_HOME=/opt/android-sdk/ndk/pinned
 ENV RUSTUP_HOME=/opt/rustup CARGO_HOME=/opt/cargo
 ENV PATH="/opt/cargo/bin:${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools"
 
@@ -20,21 +20,24 @@ RUN mkdir -p "${ANDROID_HOME}/cmdline-tools" \
 	&& mv "${ANDROID_HOME}/cmdline-tools/cmdline-tools" "${ANDROID_HOME}/cmdline-tools/latest" \
 	&& rm -f /tmp/cmdline-tools.zip
 
-RUN yes | sdkmanager --licenses >/dev/null \
+# Named build context "repo" = repo root (scripts/lib/build-image.sh passes --build-context repo=<repo root>).
+COPY --from=repo tools/android-versions.env /tmp/android-versions.env
+RUN . /tmp/android-versions.env \
+	&& yes | sdkmanager --licenses >/dev/null \
 	&& sdkmanager --install \
 		"platform-tools" \
 		"platforms;android-37.0" \
 		"build-tools;36.0.0" \
-		"ndk;${ANDROID_NDK_VERSION}"
+		"ndk;${ANDROID_NDK_VERSION}" \
+	&& ln -s "${ANDROID_HOME}/ndk/${ANDROID_NDK_VERSION}" "${ANDROID_HOME}/ndk/pinned"
 
-# The toolchain comes from the repo's rust-toolchain.toml (named build context "repo", scripts/core-build.sh
-# passes --build-context repo=<repo root>).
+# The toolchain comes from the repo's rust-toolchain.toml (named build context "repo").
 COPY --from=repo rust-toolchain.toml /tmp/rust-toolchain/rust-toolchain.toml
 RUN curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain none \
 	&& cd /tmp/rust-toolchain \
 	&& rustup toolchain install \
 	&& rustup default "$(sed -n 's/^channel *= *"\(.*\)"/\1/p' rust-toolchain.toml)" \
-	&& cargo install --locked cargo-ndk@4.1.2 \
+	&& (. /tmp/android-versions.env && cargo install --locked "cargo-ndk@${CARGO_NDK_VERSION}") \
 	&& chmod -R a+rwX /opt/cargo /opt/rustup
 
 WORKDIR /workspace

@@ -2,7 +2,7 @@ name: Setup Android SDK
 description: >
   Installs the Android SDK packages the Gradle build needs (platform and build-tools versions match
   docker/android-native-build/Dockerfile). With ndk=true it also installs the NDK and cargo-ndk, which
-  `scripts/core-build.sh android` needs to cross-compile the ABIs (it points ANDROID_NDK_HOME at this version). The JDK comes from mise (mise.toml).
+  `scripts/core-build.sh android` needs to cross-compile the ABIs (it points ANDROID_NDK_HOME at the version pinned in tools/android-versions.env). The JDK comes from mise (mise.toml).
 inputs:
   ndk:
     description: Install the NDK and cargo-ndk ("true" / "false")
@@ -18,14 +18,18 @@ runs:
       run: |
         yes | sdkmanager --licenses >/dev/null || true
         packages=("platforms;android-37.0" "build-tools;36.0.0")
-        if [ "$WITH_NDK" = "true" ]; then packages+=("ndk;30.0.16248370"); fi
+        if [ "$WITH_NDK" = "true" ]; then
+          . tools/android-versions.env
+          packages+=("ndk;$ANDROID_NDK_VERSION")
+        fi
         sdkmanager --install "${packages[@]}" >/dev/null
     - name: cargo-ndk version and cache key
       if: inputs.ndk == 'true'
       id: ndk-ver
       shell: bash
       run: |
-        version=4.1.2
+        . tools/android-versions.env
+        version=$CARGO_NDK_VERSION
         echo "version=$version" >> "$GITHUB_OUTPUT"
         echo "key=cargo-ndk-$version-${{ runner.os }}-${{ runner.arch }}-rust-${{ hashFiles('rust-toolchain.toml') }}" >> "$GITHUB_OUTPUT"
     - name: Restore cargo-ndk
