@@ -229,7 +229,12 @@ _gate:
     set -euo pipefail
     source scripts/lib/require.sh
     require gate kvm docker
+    scripts/poc/turn-lifetime.sh
     scripts/poc/local-gate.sh
+
+# TURN allocation lifetime spike (task 9.1): a 60 s REST credential keeps relaying for 11+ minutes on coturn. Needs Docker; takes ~12 minutes.
+turn-lifetime:
+    scripts/lib/slot.sh heavy -- scripts/poc/turn-lifetime.sh
 
 # The same verdict as CI (the PR title check and the emulator gate are CI-only): lint, test, build, e2e in order,
 # then a list of every SKIPPED line of the run (a skip is not a pass), also when a step fails.
