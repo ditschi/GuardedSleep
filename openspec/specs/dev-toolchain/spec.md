@@ -33,28 +33,24 @@ Every tool version SHALL be pinned in exactly one place: the Rust toolchain in `
 - **WHEN** `mise.toml` changes a version but `mise.lock` is not updated
 - **THEN** CI fails to install the tools
 
-### Requirement: Git hooks
-
-`just setup` SHALL install lefthook pre-commit hooks that format staged files and run typos, whitespace and JSON hygiene and a secret scan of staged changes. There SHALL be no commit-msg hook; hooks are fast feedback and CI re-runs everything. Outside CI, `just lint` SHALL warn, without failing, when the hooks are not active: a stale Husky `core.hooksPath` or a missing or non-lefthook `pre-commit` hook.
-
-#### Scenario: Unformatted Markdown
-
-- **WHEN** a contributor commits an unformatted Markdown file
-- **THEN** the hook formats it and stages the result
-
-#### Scenario: Stale Husky hooks path
-
-- **WHEN** `core.hooksPath` still points at `.husky/_` and a contributor runs `just lint` locally
-- **THEN** `just lint` prints a warning that names `just setup`, and its verdict is unchanged
-
 ### Requirement: CI and branch protection
 
-The only required status check on `main` SHALL be `ci-ok`, which aggregates the lint, test, build and E2E jobs. Workflows SHALL pin actions by SHA and default to `permissions: {}`. The PR title SHALL follow Conventional Commits, because squash merges use it as the commit subject. `main` SHALL require linear history, without required reviews or signed commits.
+The only required status check on `main` SHALL be `ci-ok`, which aggregates every job of the CI workflow, PR title check included. Actions SHALL be pinned by SHA with default `permissions: {}`. `main` SHALL require `ci-ok` and linear history, without required reviews or signed commits, and SHALL refuse merge commits. The PR title SHALL follow Conventional Commits. The maintainer SHALL rebase-merge only a branch whose every commit is Conventional and green, otherwise squash.
 
 #### Scenario: PR title without a type
 
 - **WHEN** a pull request is titled "update docs"
 - **THEN** the PR title check fails
+
+#### Scenario: Merge commit attempted
+
+- **WHEN** someone tries to merge a pull request into `main` with a merge commit
+- **THEN** GitHub refuses it because linear history is required
+
+#### Scenario: Red required check
+
+- **WHEN** `ci-ok` fails on a pull request
+- **THEN** the pull request cannot be merged into `main`
 
 ### Requirement: Supply chain
 
@@ -126,21 +122,31 @@ A behaviour change SHALL re-bless the affected conformance vectors and traces, a
 
 ### Requirement: Rust rules
 
-Rust crates SHALL use edition 2024 and inherit the workspace lints (checked by a lint), pass `cargo fmt` and `clippy -D warnings`, forbid `unsafe` outside generated FFI glue, and deny `unwrap`, `expect`, `panic` and unchecked indexing in parser modules. The core and `guardedsleep-ffi` SHALL stay buildable for iOS (`cargo check --target aarch64-apple-ios`), and a weekly job SHALL generate the Swift bindings from the ffi library.
+Rust crates SHALL use edition 2024 and inherit the workspace lints (checked by a lint), pass `cargo fmt` and `clippy -D warnings`, forbid `unsafe` outside generated FFI glue, and deny `unwrap`, `expect`, `panic` and unchecked indexing in parser modules. The core, `guardedsleep-relay` and `guardedsleep-ffi` SHALL stay buildable for iOS (`cargo check --target aarch64-apple-ios` in `just lint`).
 
 #### Scenario: New crate without workspace lints
 
 - **WHEN** a new crate does not inherit the workspace lints
 - **THEN** the lint check fails
 
+#### Scenario: Core stops compiling for iOS
+
+- **WHEN** a change makes `guardedsleep-ffi` fail to compile for `aarch64-apple-ios`
+- **THEN** `just lint` fails
+
 ### Requirement: Gate register and budget
 
-Every CI gate SHALL have an owner, a one-line runbook and a last-catch date in `docs/ci-gates.md`, and no gate SHALL be added without an entry. Tooling maintenance SHALL stay within 12 hours per month; a gate without a catch in six months SHALL be removed or demoted to nightly.
+Every workflow, and every job of the CI workflow, SHALL have one row in `docs/ci-gates.md` with what it protects, a one-line runbook and a last-catch date; checks inside a job are named in its row. The maintainer owns every gate during alpha. No such job or workflow SHALL be added without a row. Tooling maintenance SHALL stay within 12 hours per month; a gate without a catch in six months SHALL be removed or demoted to nightly.
 
 #### Scenario: New CI check
 
 - **WHEN** a change adds a new CI job
 - **THEN** the same change adds its row to `docs/ci-gates.md`
+
+#### Scenario: New check inside an existing job
+
+- **WHEN** a change adds a check to the `lint` job
+- **THEN** the same change names it in the `lint` row instead of adding a row
 
 ### Requirement: Spec validation
 
@@ -266,63 +272,31 @@ A unit test SHALL fail if a source file outside `platform` and `core-bindings` i
 
 ### Requirement: Load slots
 
-Medium and heavy recipes SHALL run through a machine-wide slot semaphore shared by all worktrees. When `GS_RUN_TIMEOUT` is set, the run deadline SHALL start only once the slot is held, and a run that exceeds it SHALL end with status 124; a job that gets no slot within `GS_SLOT_WAIT` SHALL end with status 75.
+Medium and heavy recipes SHALL run through a machine-wide slot semaphore shared by all worktrees, with slot counts from documented defaults that the environment can override. The wait for a slot SHALL be bounded, and an optional run deadline SHALL start only once the slot is held; both failures SHALL be distinguishable from a test failure.
 
 #### Scenario: Queued job with a run deadline
 
-- **WHEN** `GS_RUN_TIMEOUT=600 just test` waits 20 minutes for a medium slot and then runs for 5 minutes
+- **WHEN** a recipe with a 10-minute run deadline waits 20 minutes for a medium slot and then runs for 5 minutes
 - **THEN** it completes with the test verdict and is not cut off by the deadline
 
 #### Scenario: Run exceeds the deadline
 
-- **WHEN** a slot-held run takes longer than `GS_RUN_TIMEOUT`
-- **THEN** it is terminated and exits with status 124 and a message naming `GS_RUN_TIMEOUT`
-
-### Requirement: Local compiler cache
-
-Local Rust builds in the build image SHALL use a shared, size-capped sccache directory so a new worktree reuses compiled dependencies. The cache SHALL be off in CI, for the generate-twice check and for release builds, and `GS_SCCACHE=0` SHALL turn it off locally.
-
-#### Scenario: Second worktree builds warm
-
-- **WHEN** one worktree has built the workspace and a new worktree on another branch runs `just test`
-- **THEN** the dependency crates are served from the cache instead of being compiled again
-
-#### Scenario: Determinism check bypasses the cache
-
-- **WHEN** `just check-determinism` runs with a warm cache
-- **THEN** both builds compile without sccache, so a non-deterministic output still fails the check
+- **WHEN** a slot-held run takes longer than its run deadline
+- **THEN** it is terminated with a message that names the deadline, not reported as a test failure
 
 ### Requirement: Delta tests
 
-`just test-affected [base]` SHALL run the test recipes of the areas touched by the changes since the merge base with `base` (default `origin/main`), including uncommitted and untracked files, using the same path map as CI. A change to a global path, or to a path that matches no area, SHALL run the full `just test`. It SHALL name the heavy checks the change needs in the full sweep.
+`just test-affected [base]` SHALL run the tests of the areas touched since the merge base with `base` (default `origin/main`), including uncommitted and untracked files, using the same path map as CI. A global or unmapped path SHALL run the full `just test`. It SHALL name the heavy checks the change needs in the full sweep.
 
 #### Scenario: Web-only change
 
 - **WHEN** only a file under `apps/web/src/` changed
-- **THEN** `just test-affected` runs the affected Vitest tests, skips the Rust and Android tests, and names `just e2e` for the full sweep
+- **THEN** `just test-affected` runs the affected web tests, skips the Rust and Android tests, and names `just e2e` for the full sweep
 
 #### Scenario: Unmapped path
 
 - **WHEN** a file in a new top-level directory changed
 - **THEN** `just test-affected` runs the full `just test` and says why
-
-### Requirement: Run timings
-
-Every slot-held run SHALL append its command, class, wait time, run time and exit status to a timings file shared by all worktrees, and `just timings` SHALL summarise it. Recording SHALL never change a run's exit status.
-
-#### Scenario: Timings file not writable
-
-- **WHEN** the timings file cannot be written
-- **THEN** the run's result is unchanged
-
-### Requirement: Worktree cleanup
-
-`just reap --worktrees` SHALL list worktrees that are clean and whose HEAD is contained in a remote branch, and `just reap --prune-worktrees` SHALL remove only those, never with force and never one locked by a running process.
-
-#### Scenario: Worktree with uncommitted changes
-
-- **WHEN** a worktree has an uncommitted change
-- **THEN** it is listed as kept and is not removed
 
 ### Requirement: Web checks
 
@@ -332,3 +306,36 @@ The web client SHALL pass `svelte-check --fail-on-warnings` (a suppression needs
 
 - **WHEN** a change removes the label of a button on the web parent screen
 - **THEN** the Playwright axe check fails
+
+### Requirement: Rust execution mode
+
+Rust commands SHALL run on the host rustup toolchain from `rust-toolchain.toml` by default, and in the pinned build image only for the Android chain (ABI libraries, the core library the JVM tests load, Gradle), the local determinism check and machines without host rustup. Those image builds SHALL NOT write into the host build output directory. The determinism check and release builds SHALL NOT use a compiler cache.
+
+#### Scenario: Switching between a host test and an ABI build
+
+- **WHEN** a contributor runs `just test`, then `just build-android`, then `just test` again without changing sources
+- **THEN** the second `just test` reuses the host build output and recompiles no workspace crate
+
+#### Scenario: No host cargo
+
+- **WHEN** a machine has Docker but no host rustup
+- **THEN** the Rust recipes run in the build image instead of failing
+
+#### Scenario: Determinism check with a warm cache
+
+- **WHEN** the generate-twice check runs on a machine with a warm compiler cache
+- **THEN** both builds compile without the cache, so non-deterministic output still fails the check
+
+### Requirement: Pre-commit hooks
+
+`just setup` SHALL install lefthook pre-commit hooks that format staged files and run typos, whitespace and JSON hygiene and a secret scan of staged changes. There SHALL be no commit-msg hook; hooks are fast feedback and CI re-runs everything. Outside CI, `just lint` SHALL warn, without failing, when the hooks are not active.
+
+#### Scenario: Unformatted Markdown
+
+- **WHEN** a contributor commits an unformatted Markdown file
+- **THEN** the hook formats it and stages the result
+
+#### Scenario: Hooks not active
+
+- **WHEN** the lefthook pre-commit hook is not installed and a contributor runs `just lint` locally
+- **THEN** `just lint` prints a warning that names `just setup`, and its verdict is unchanged
