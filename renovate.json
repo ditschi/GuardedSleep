@@ -64,6 +64,15 @@
         "image=\"(?<depName>rust):(?<currentValue>[^@\"]+)@(?<currentDigest>sha256:[a-f0-9]+)\""
       ],
       "datasourceTemplate": "docker"
+    },
+    {
+      "description": "Digest-pinned node image in turn-lifetime.sh (same as docker/web/Dockerfile; the docker group keeps both on one digest)",
+      "customType": "regex",
+      "managerFilePatterns": ["/^scripts/poc/turn-lifetime\\.sh$/"],
+      "matchStrings": [
+        "NODE_IMAGE=(?<depName>node):(?<currentValue>[^@\\s]+)@(?<currentDigest>sha256:[a-f0-9]+)"
+      ],
+      "datasourceTemplate": "docker"
     }
   ],
   "packageRules": [
