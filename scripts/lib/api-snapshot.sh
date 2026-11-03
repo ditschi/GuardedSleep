@@ -23,6 +23,12 @@ if [ "${API_SNAPSHOT_NATIVE:-0}" = "1" ]; then
   nightly="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' tools/nightly/rust-toolchain.toml)"
   version="$(sed -n 's/^cargo_public_api *= *"\(.*\)"/\1/p' mise.toml)"
   rustup toolchain install "$nightly" --profile minimal >&2
+  # target/.api is inside CI's restored and pruned target/ cache, so a toolchain can come back without its
+  # manifest ("missing manifest in toolchain"), which rustup reports as installed. Reinstall it then.
+  if ! rustup run "$nightly" rustc --version >/dev/null 2>&1; then
+    rustup toolchain uninstall "$nightly" >&2 || rm -rf "${RUSTUP_HOME:-$HOME/.rustup}/toolchains/$nightly-"*
+    rustup toolchain install "$nightly" --profile minimal >&2
+  fi
   export RUSTUP_TOOLCHAIN="$nightly"
   if ! cargo public-api --version 2>/dev/null | grep -q "$version"; then
     cargo install --locked cargo-public-api --version "$version" >&2
@@ -72,7 +78,7 @@ else
     -e CARGO_TARGET_DIR=/workspace/target/api \
     -e API_SNAPSHOT_NATIVE=1 \
     -v "$ROOT":/workspace -w /workspace \
-    "$image" bash -c 'mkdir -p "$CARGO_HOME/bin" && cp -n /usr/local/cargo/bin/* "$CARGO_HOME/bin/"; export PATH="$CARGO_HOME/bin:$PATH"; exec scripts/lib/api-snapshot.sh /workspace/target/api-out'
+    "$image" bash -c 'mkdir -p "$CARGO_HOME/bin" && cp --remove-destination /usr/local/cargo/bin/* "$CARGO_HOME/bin/"; export PATH="$CARGO_HOME/bin:$PATH"; exec scripts/lib/api-snapshot.sh /workspace/target/api-out'
 fi
 
 declare -A dest=(
