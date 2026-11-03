@@ -8,7 +8,10 @@
 #     directory or command line is inside this repository (the main checkout or any worktree of it);
 #   - stuck agent polls: shells started from ~/.claude/shell-snapshots whose command line is an
 #     until/while loop with sleep, older than 30 minutes;
-#   - Docker containers whose name or image contains "guardedsleep", older than 2 hours.
+#   - Docker containers (running) whose name matches the project pattern (guardedsleep, gs-gate-*,
+#     gs-poc-*, gs-turnlife-*) or whose image contains "guardedsleep", older than 2 hours;
+#   - Docker networks whose name matches the same pattern, older than 2 hours; with --stop they are
+#     removed after the containers (best effort: a network still in use is kept).
 # Nothing outside this repository and no unrelated container is ever touched.
 #
 # Worktrees: every worktree except the main checkout is `removable` when
@@ -120,6 +123,12 @@ dev_re='(just dev|scripts/dev\.sh|vite|guardedsleep-server|tsx)'
 poll_re='(until|while).*sleep'
 found_pids=()
 found_containers=()
+found_networks=()
+
+# Docker names of this project: compose projects (guardedsleep*), the emulator gate
+# (scripts/poc/local-gate.sh: gs-gate-*), the PoC stack (scripts/poc/env-up.sh: gs-poc-*) and the
+# TURN lifetime probe (scripts/poc/turn-lifetime.sh: gs-turnlife-*). Never a bare ^gs-.
+docker_re='guardedsleep|^gs-(gate|poc|turnlife)-'
 
 while read -r p age args; do
   case "$protected" in *" $p "*) continue ;; esac
@@ -136,6 +145,7 @@ if command -v docker >/dev/null 2>&1; then
   now="$(date +%s)"
   while IFS=$'\t' read -r id name image; do
     [ -n "$id" ] || continue
+    [[ "$name" =~ $docker_re ]] || [[ "$image" == *guardedsleep* ]] || continue
     created="$(docker inspect -f '{{.Created}}' "$id" 2>/dev/null || true)"
     [ -n "$created" ] || continue
     age=$((now - $(date -d "$created" +%s)))
@@ -143,12 +153,23 @@ if command -v docker >/dev/null 2>&1; then
       echo "container $id ($name, $image, ${age}s)"
       found_containers+=("$id")
     fi
-  done < <(docker ps --filter name=guardedsleep --format '{{.ID}}\t{{.Names}}\t{{.Image}}' 2>/dev/null
-    docker ps --filter ancestor=guardedsleep --format '{{.ID}}\t{{.Names}}\t{{.Image}}' 2>/dev/null
-    docker ps --format '{{.ID}}\t{{.Names}}\t{{.Image}}' 2>/dev/null | grep -i guardedsleep || true)
+  done < <(docker ps --format '{{.ID}}\t{{.Names}}\t{{.Image}}' 2>/dev/null || true)
+
+  while IFS=$'\t' read -r id name; do
+    [ -n "$id" ] || continue
+    [[ "$name" =~ $docker_re ]] || continue
+    created="$(docker network inspect -f '{{.Created}}' "$id" 2>/dev/null || true)"
+    [ -n "$created" ] || continue
+    age=$((now - $(date -d "$created" +%s)))
+    if [ "$age" -gt 7200 ]; then
+      echo "network $id ($name, ${age}s)"
+      found_networks+=("$id|$name")
+    fi
+  done < <(docker network ls --format '{{.ID}}\t{{.Name}}' 2>/dev/null || true)
 fi
 
-if [ ${#found_pids[@]} -eq 0 ] && [ ${#found_containers[@]} -eq 0 ]; then
+if [ ${#found_pids[@]} -eq 0 ] && [ ${#found_containers[@]} -eq 0 ] \
+  && [ ${#found_networks[@]} -eq 0 ]; then
   echo "nothing to reap"
   exit 0
 fi
@@ -166,4 +187,9 @@ if [ ${#found_containers[@]} -gt 0 ]; then
   mapfile -t found_containers < <(printf '%s\n' "${found_containers[@]}" | sort -u)
   docker stop "${found_containers[@]}" >/dev/null
 fi
+for entry in ${found_networks[@]+"${found_networks[@]}"}; do
+  if ! docker network rm "${entry%%|*}" >/dev/null 2>&1; then
+    echo "network ${entry#*|} still in use; not removed"
+  fi
+done
 echo "stopped"
