@@ -24,11 +24,12 @@ actionlint = "1.7.12"
 zizmor = "1.31.1"
 # Shell script linter (aqua backend). https://www.shellcheck.net/ and https://mise.jdx.dev/dev-tools/backends/aqua.html
 "aqua:koalaman/shellcheck" = "0.11.0"
-# SPDX/REUSE licence compliance (Python tool, installed with the host uvx/pipx). uv is deliberately not
-# pinned: reuse 6.2.0 publishes only an sdist, and mise's locked uv install refuses source builds
-# (--no-build). Pin uv here once reuse ships a wheel.
+# SPDX/REUSE licence compliance (Python tool, pipx backend through the pinned uv; reuse 6.3.0 ships a
+# wheel, so the locked install needs no source build). With MISE_LOCKED the pipx entry also needs its
+# uv graph in .mise/locks/, written by `mise lock`.
 # https://reuse.readthedocs.io/ and https://mise.jdx.dev/dev-tools/backends/pipx.html
-"pipx:reuse" = "6.2.0"
+uv = "0.13.6"
+"pipx:reuse" = "6.3.0"
 
 # Supply chain and secrets. https://embarkstudios.github.io/cargo-deny/ and
 # https://github.com/betterleaks/betterleaks

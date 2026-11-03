@@ -27,6 +27,11 @@
     min-height: var(--gs-target);
   }
   .gs-screen-header__title {
+    /* A long word ("Babygerät" at 200 % text) must wrap instead of pushing the icon buttons out of
+       a 320 px viewport (WCAG 1.4.10 reflow): flex items do not shrink below their longest word. */
+    min-width: 0;
+    overflow-wrap: anywhere;
+    hyphens: auto;
     color: var(--gs-on-surface-variant);
     font-weight: 600;
   }
