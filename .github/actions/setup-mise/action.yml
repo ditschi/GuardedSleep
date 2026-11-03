@@ -1,9 +1,9 @@
 name: Setup mise
 description: >
   jdx/mise-action with the mise binary pinned here, so every workflow runs the same mise as the
-  lock file was written with. An unpinned mise moved to 2026.10.25, which refuses the pipx:reuse
-  entry of mise.lock under MISE_LOCKED ("no uv dependency graph"). Renovate bumps `version`;
-  re-run `mise lock` in the same PR. https://github.com/jdx/mise-action#inputs
+  lock file was written with (one pin, ADR-020). Under MISE_LOCKED, pipx tools also need their uv
+  graph in .mise/locks/ (written by `mise lock`). Renovate bumps `version`; re-run `mise lock` in
+  the same PR. https://github.com/jdx/mise-action#inputs
 inputs:
   install_args:
     description: Tools to install (empty = all of mise.toml)

@@ -185,12 +185,11 @@
     min-height: 100dvh;
     background: var(--gs-bg);
     color: var(--gs-on-bg);
-  }
-  h1,
-  h2,
-  h3 {
-    /* Long words (German "Einstellungen") wrap at 200 % text and 320 px instead of overflowing. */
+    /* Long words (German "Einstellungen", "Geräuscherkennung") wrap at 200 % text and 320 px
+       instead of overflowing (WCAG 1.4.10 reflow). Inherited by every element, so no single title
+       or label can push the page sideways; flex items still need min-width: 0 to shrink. */
     overflow-wrap: anywhere;
+    hyphens: auto;
   }
   h1 {
     font-size: 1.5rem;
