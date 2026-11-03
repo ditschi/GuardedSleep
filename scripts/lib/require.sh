@@ -12,6 +12,9 @@
 #
 # Sourcing also puts the mise-managed tools on PATH when mise is installed (see gs_mise_env).
 
+# shellcheck source=host-rust.sh
+source "$(dirname "${BASH_SOURCE[0]}")/host-rust.sh"
+
 gs_mise_env() {
   if command -v mise >/dev/null 2>&1; then
     # `mise env` prints `export PATH=...` for the tools pinned in mise.toml.
@@ -33,8 +36,8 @@ gs_missing() {
         || docker info >/dev/null 2>&1 || echo "android-sdk"
       ;;
     cargo)
-      # scripts/cargo.sh falls back to the build image, so docker is an acceptable substitute.
-      command -v cargo >/dev/null 2>&1 || docker info >/dev/null 2>&1 || echo "cargo"
+      # scripts/cargo.sh uses host rustup, else falls back to the build image, so docker is an acceptable substitute.
+      gs_host_rust || docker info >/dev/null 2>&1 || echo "cargo"
       ;;
     # The relay tools talk to public hosts; a name that does not resolve means no usable network.
     network) timeout 5 getent hosts github.com >/dev/null 2>&1 || echo "network" ;;

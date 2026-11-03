@@ -46,8 +46,6 @@ abstract class ShippedLocalesTask : DefaultTask() {
         val root = repoRoot.get().asFile
         exec.exec {
             workingDir = root
-            environment("CARGO_HOME", System.getenv("CARGO_HOME") ?: "${root}/target/.cargo-home")
-            environment("CARGO_TARGET_DIR", System.getenv("CARGO_TARGET_DIR") ?: "${root}/target")
             commandLine(
                 "bash",
                 "scripts/cargo.sh",

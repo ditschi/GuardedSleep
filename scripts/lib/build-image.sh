@@ -7,14 +7,16 @@
 # is rebuilt whenever either changes. The repo root is passed as the named build context "repo"
 # (the Dockerfile copies rust-toolchain.toml from it).
 # It also sets GS_DOCKER_USER_ARGS, the array to pass to `docker run`: rootful Docker runs as the caller's
-# uid so files written to target/ stay owned by the caller (host cargo shares that directory); rootless
+# uid so files written to target/ stay owned by the caller; rootless
 # Docker already maps container root to the caller, so nothing is added there. HOME points at a
 # writable directory under target/ because the uid has no passwd entry in the image.
 # GS_DOCKER_CACHE_ARGS mounts the shared Cargo home (registry, git DBs, installed tools) and Gradle user
 # home from ${GS_SHARED_CACHE:-$HOME/.cache/guardedsleep}/{cargo,gradle} at /cache and sets CARGO_HOME,
-# CARGO_HOME_OVERRIDE (read by core-build.sh) and GRADLE_USER_HOME, so worktrees download dependencies
+# and GRADLE_USER_HOME, so worktrees download dependencies
 # once. Cargo's package-cache lock and Gradle's cross-process cache locks make concurrent runs safe;
-# target/ and the Gradle project cache stay per worktree. AGENTS.md section 10.1.
+# target/ and the Gradle project cache stay per worktree. Host cargo builds into target/, image runs of
+# the Android chain and determinism into target/container (scripts/core-build.sh), so neither mode
+# invalidates the other's build output. AGENTS.md section 10.1.
 # Unless GS_SCCACHE=0 or CI is set, it also mounts a shared sccache directory ($cache/sccache, capped by
 # GS_SCCACHE_SIZE, default 10G) and sets RUSTC_WRAPPER=sccache, so worktrees reuse compiled dependencies
 # (every worktree compiles at /workspace, so cache keys match). Off in CI, and core-build.sh determinism
@@ -40,7 +42,7 @@ gs_ensure_build_image() {
   mkdir -p "$cache/cargo" "$cache/gradle"
   GS_DOCKER_CACHE_ARGS=(
     -v "$cache/cargo:/cache/cargo" -v "$cache/gradle:/cache/gradle"
-    -e CARGO_HOME=/cache/cargo -e CARGO_HOME_OVERRIDE=/cache/cargo -e GRADLE_USER_HOME=/cache/gradle
+    -e CARGO_HOME=/cache/cargo -e GRADLE_USER_HOME=/cache/gradle
   )
   if [[ "${GS_SCCACHE:-1}" != "0" && -z "${CI:-}" ]]; then
     mkdir -p "$cache/sccache"

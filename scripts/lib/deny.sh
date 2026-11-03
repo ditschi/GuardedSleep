@@ -10,13 +10,15 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 # shellcheck source=require.sh
 source scripts/lib/require.sh
+# shellcheck source=host-rust.sh
+source scripts/lib/host-rust.sh
 require deny cargo
 
 CHECKS=("$@")
 [ ${#CHECKS[@]} -gt 0 ] || CHECKS=(advisories bans licenses sources)
 
 deny() {
-  if command -v cargo >/dev/null 2>&1; then
+  if gs_host_rust; then
     cargo deny "$@"
     return
   fi
