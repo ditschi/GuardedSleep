@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Task 9.1 (alpha-connection-model, design section 7): an allocation made with a 60-second coturn
 # REST credential keeps relaying (Refresh, CreatePermission, ChannelBind succeed, data flows) for
-# 11+ minutes, past --stale-nonce=600 and long past the credential expiry.
+# 11+ minutes, past --stale-nonce="$STALE_NONCE_S" and long past the credential expiry.
 #
 # Runs the gate's coturn image (tools/poc-images.env, shared with env-up.sh and local-gate.sh) with the
-# flags of the planned project profile (--use-auth-secret, --stale-nonce=600; the gate's own coturn
+# flags of the planned project profile (--use-auth-secret, --stale-nonce; the gate's own coturn
 # uses a static --user instead). Coturn and the client sit on a user-defined bridge network, because
 # rootless Docker's host network is not the real host network. The secret is generated per run.
 #
@@ -22,11 +22,14 @@ source "$ROOT/tools/poc-images.env"
 # Same digest as docker/web/Dockerfile (node 22 LTS, alpine); runs the client script only.
 NODE_IMAGE=node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402
 OUT="${GS_TURN_LIFETIME_OUT:-$ROOT/target/turn-lifetime}"
+# Coturn's --stale-nonce, also read by the client for its thresholds. The run must outlast it by a minute
+# (task 9.1 needs 11+ minutes, hence the 660 s floor at the default).
+STALE_NONCE_S=600
 DURATION_S="${DURATION_S:-700}"
-[[ "$DURATION_S" =~ ^[0-9]{3,4}$ ]] || {
-	echo "turn-lifetime: DURATION_S must be an integer of 3 or 4 digits (got '$DURATION_S')" >&2
+if ! [[ "$DURATION_S" =~ ^[0-9]{1,5}$ ]] || ((DURATION_S < STALE_NONCE_S + 60)); then
+	echo "turn-lifetime: DURATION_S must be an integer of at least $((STALE_NONCE_S + 60)) (got '$DURATION_S')" >&2
 	exit 2
-}
+fi
 SUFFIX="$$"
 NET="gs-turnlife-net-$SUFFIX"
 TURN="gs-turnlife-coturn-$SUFFIX"
@@ -59,7 +62,7 @@ docker logs "$TURN" 2>&1 | grep -i -m1 'coturn-\|version' || true
 
 status=0
 docker run --rm --name "$CLIENT" --network "$NET" -e TURN_SECRET="$SECRET" -e TURN_HOST="$TURN_IP" \
-	-e DURATION_S="$DURATION_S" -v "$ROOT/scripts/poc/turn-lifetime-client.mjs:/client.mjs:ro" \
+	-e DURATION_S="$DURATION_S" -e STALE_NONCE_S="$STALE_NONCE_S" -v "$ROOT/scripts/poc/turn-lifetime-client.mjs:/client.mjs:ro" \
 	"$NODE_IMAGE" node /client.mjs | tee "$OUT/client.log" || status=$?
 
 docker logs "$TURN" >"$OUT/coturn.log" 2>&1 || true

@@ -4,7 +4,7 @@
 // (scripts/poc/turn-lifetime.sh); not part of the shipped product.
 //
 // Plain Node 22 (dgram, crypto), no dependencies. Env: TURN_HOST, TURN_SECRET, DURATION_S (default
-// 700), CRED_TTL_S (60), RENEW_S (90), PING_S (10). Exit 0 = all assertions hold.
+// 700), STALE_NONCE_S (600), CRED_TTL_S (60), RENEW_S (90), PING_S (10). Exit 0 = all assertions hold.
 // Protocol: RFC 8656 (TURN), RFC 8489 (STUN long-term credentials), coturn REST scheme
 // https://github.com/coturn/coturn/blob/master/README.turnserver (--use-auth-secret).
 import { createHash, createHmac, randomBytes } from "node:crypto";
@@ -15,6 +15,8 @@ const env = (k, d) => process.env[k] ?? d;
 const HOST = env("TURN_HOST", "");
 const SECRET = env("TURN_SECRET", "");
 const DURATION_S = Number(env("DURATION_S", "700"));
+// Must equal coturn's --stale-nonce (the shell passes the same value to both).
+const STALE_NONCE_S = Number(env("STALE_NONCE_S", "600"));
 const CRED_TTL_S = Number(env("CRED_TTL_S", "60"));
 const RENEW_S = Number(env("RENEW_S", "90"));
 const PING_S = Number(env("PING_S", "10"));
@@ -39,6 +41,7 @@ const A = {
   transport: 0x0019,
 };
 const CHANNEL = 0x4000;
+const UDP_TRANSPORT = Buffer.from([17, 0, 0, 0]); // REQUESTED-TRANSPORT: protocol 17 (UDP), RFC 8656 section 18.2
 
 const t0 = Date.now();
 const elapsed = () => (Date.now() - t0) / 1000;
@@ -219,7 +222,7 @@ c.onOther = (m) => {
 };
 
 // 1. Allocate (401 round trip happens inside txn).
-const alloc = await c.txn(M.allocate, [attr(A.transport, Buffer.from([17, 0, 0, 0]))], "Allocate");
+const alloc = await c.txn(M.allocate, [attr(A.transport, UDP_TRANSPORT)], "Allocate");
 if (!alloc.ok) {
   fail("allocation failed");
   process.exit(1);
@@ -233,7 +236,7 @@ async function renew(kind, method, attrs) {
   renewals.push({ t: elapsed(), kind, ok: r.ok, error: r.error, retried: r.retried });
   if (!r.ok) fail(`${kind} at t=${elapsed().toFixed(0)}s answered ${r.error}`);
 }
-const renewAll = async () => {
+const renewAllUnguarded = async () => {
   await renew("Refresh", M.refresh, [attr(A.lifetime, u32(600))]);
   await renew("CreatePermission", M.createPermission, [attr(A.xorPeer, xorAddr(peer.ip, 0))]);
   await renew("ChannelBind", M.channelBind, [
@@ -241,6 +244,10 @@ const renewAll = async () => {
     attr(A.xorPeer, xorAddr(peer.ip, peer.port)),
   ]);
 };
+// A STUN timeout must end in the VERDICT FAIL summary, not in an unhandled rejection.
+const guarded = (label, fn) => () =>
+  fn().catch((e) => fail(`${label}: ${e instanceof Error ? e.message : String(e)}`));
+const renewAll = guarded("renewal", renewAllUnguarded);
 await renewAll(); // initial permission and channel (also proves the first Refresh)
 
 // Negative control: the credential must really be expired for a NEW allocation by now.
@@ -250,7 +257,7 @@ async function expiredControl() {
   const c2 = new Client(s2);
   const r = await c2.txn(
     M.allocate,
-    [attr(A.transport, Buffer.from([17, 0, 0, 0]))],
+    [attr(A.transport, UDP_TRANSPORT)],
     "control Allocate with expired credential",
   );
   s2.close();
@@ -284,20 +291,23 @@ function ping() {
   pings.push({ n, t: elapsed(), sMsg, cMsg });
 }
 
-let controlDone = false;
+// One-shot control, once the credential is safely past its expiry.
+const expiredControlRun = guarded("control", expiredControl);
+let controlRun = null;
+const ctlTimer = setTimeout(
+  () => {
+    controlRun = expiredControlRun();
+  },
+  (CRED_TTL_S + 15) * 1000,
+);
 const pingTimer = setInterval(ping, PING_S * 1000);
 const renewTimer = setInterval(() => void renewAll(), RENEW_S * 1000);
-const ctlTimer = setInterval(() => {
-  if (!controlDone && elapsed() > CRED_TTL_S + 15) {
-    controlDone = true;
-    void expiredControl();
-  }
-}, 1000);
 ping();
 await new Promise((r) => setTimeout(r, DURATION_S * 1000));
 clearInterval(pingTimer);
 clearInterval(renewTimer);
-clearInterval(ctlTimer);
+clearTimeout(ctlTimer);
+await controlRun;
 await new Promise((r) => setTimeout(r, 4000)); // last echoes
 
 // Assertions.
@@ -305,25 +315,27 @@ const answered = (p, path) => echoes.has(path === "send" ? p.sMsg : p.cMsg);
 // "send": Send indication out; "channel": ChannelData out.
 for (const path of ["send", "channel"]) {
   const lost = pings.filter((p) => !answered(p, path));
-  const late = pings.filter((p) => p.t >= 620);
+  const late = pings.filter((p) => p.t >= STALE_NONCE_S + 20);
   const lateLost = late.filter((p) => !answered(p, path));
   log(
-    `${path} path: ${pings.length - lost.length}/${pings.length} pings echoed, ${late.length - lateLost.length}/${late.length} after t=620 s`,
+    `${path} path: ${pings.length - lost.length}/${pings.length} pings echoed, ${late.length - lateLost.length}/${late.length} after t=${STALE_NONCE_S + 20} s`,
   );
-  if (late.length < 3) fail(`${path}: too few pings after 620 s (${late.length})`);
-  if (lateLost.length) fail(`${path}: ${lateLost.length} pings lost after 620 s`);
+  if (late.length < 3)
+    fail(`${path}: too few pings after ${STALE_NONCE_S + 20} s (${late.length})`);
+  if (lateLost.length) fail(`${path}: ${lateLost.length} pings lost after ${STALE_NONCE_S + 20} s`);
   if (lost.length > 2) fail(`${path}: ${lost.length} pings lost overall`);
 }
-const post = renewals.filter((r) => r.t >= 600);
+const post = renewals.filter((r) => r.t >= STALE_NONCE_S);
 for (const kind of ["Refresh", "CreatePermission", "ChannelBind"]) {
   const k = post.filter((r) => r.kind === kind);
   log(
-    `${kind}: ${renewals.filter((r) => r.kind === kind && r.ok).length}/${renewals.filter((r) => r.kind === kind).length} succeeded, ${k.length} after t=600 s, recovered 438: ${k.filter((r) => r.retried.includes(438)).length}`,
+    `${kind}: ${renewals.filter((r) => r.kind === kind && r.ok).length}/${renewals.filter((r) => r.kind === kind).length} succeeded, ${k.length} after t=${STALE_NONCE_S} s, recovered 438: ${k.filter((r) => r.retried.includes(438)).length}`,
   );
-  if (!k.length) fail(`${kind}: no renewal after the stale-nonce interval (600 s)`);
+  if (!k.length) fail(`${kind}: no renewal after the stale-nonce interval (${STALE_NONCE_S} s)`);
 }
-if (elapsed() < 660) fail(`run shorter than 11 minutes (${elapsed().toFixed(0)} s)`);
-if (!controlDone) fail("expired-credential control did not run");
+if (elapsed() < STALE_NONCE_S + 60)
+  fail(`run shorter than the stale-nonce interval plus a minute (${elapsed().toFixed(0)} s)`);
+if (!controlRun) fail("expired-credential control did not run");
 
 log(
   failures.length
