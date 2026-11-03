@@ -26,21 +26,19 @@ setup:
     mise exec -- pnpm install --frozen-lockfile
     # Clones that ran the old Husky setup still point core.hooksPath at .husky/_; lefthook refuses to
     # install over it, and the stale Husky hooks do nothing once .husky is gone.
-    hooks_path="$(git config --local --get core.hooksPath || true)"
-    if [ "${hooks_path#*.husky}" != "$hooks_path" ]; then
-      git config --local --unset-all core.hooksPath
-      echo "Removed the stale Husky core.hooksPath ($hooks_path); lefthook replaces it."
-    fi
+    # The setting can live in the repository config (--local) or, in a linked worktree, in its own
+    # config.worktree (--worktree); check and clear both scopes.
+    for scope in local worktree; do
+      hooks_path="$(git config "--$scope" --get core.hooksPath 2>/dev/null || true)"
+      if [ "${hooks_path#*.husky}" != "$hooks_path" ]; then
+        git config "--$scope" --unset-all core.hooksPath
+        echo "Removed the stale Husky core.hooksPath ($hooks_path, $scope scope); lefthook replaces it."
+      fi
+    done
     mise exec -- lefthook install
-    scripts/lib/machine-profile.sh
-
 # Lists the prerequisites of the recipes (mise tools, rustup, Docker, uv, Playwright browser, KVM, Android SDK, git hooks) with a fix for each missing one. Informational, always exits 0.
 doctor:
     scripts/doctor.sh
-
-# Measure cores, RAM and KVM and write .cache/machine-profile.env (AGENTS.md section 10.1). Pass --force to re-detect.
-machine-profile *args:
-    scripts/lib/machine-profile.sh {{ args }}
 
 # Format everything that is formatted automatically (Prettier, rustfmt, taplo, ktfmt).
 fmt:
@@ -160,7 +158,7 @@ test-affected base="origin/main":
 
 # Cargo workspace tests; nextest when installed, doctests through cargo test.
 test-rust:
-    if command -v cargo-nextest >/dev/null 2>&1 && command -v cargo >/dev/null 2>&1; then cargo nextest run --workspace && cargo test --workspace --doc; else scripts/cargo.sh test --workspace; fi
+    if command -v cargo-nextest >/dev/null 2>&1 && command -v rustup >/dev/null 2>&1; then cargo nextest run --workspace && cargo test --workspace --doc; else scripts/cargo.sh test --workspace; fi
 
 # `_js-gen` has already built (or found up to date) the WASM core.
 test-wasm: _js-gen
@@ -319,13 +317,9 @@ audit:
 release-preview:
     npx --yes release-please release-pr --token=$GH_TOKEN --repo-url=$GITHUB_REPOSITORY --config-file=release-please-config.json --manifest-file=.release-please-manifest.json --dry-run --debug
 
-# List leftover dev servers, stuck agent polls and old project containers; --stop ends them; --worktrees / --prune-worktrees list / remove finished agent worktrees (AGENTS.md section 10.2).
+# List leftover dev servers, stuck agent polls and old project containers; --stop ends them; --worktrees lists finished agent worktrees (AGENTS.md section 10.2).
 reap *args:
     scripts/lib/reap.sh {{ args }}
-
-# Per-command run and wait times of the slot-held recipes of the last N days (default 7), from the shared timings.tsv.
-timings *args:
-    scripts/lib/timings.sh {{ args }}
 
 # Generated, uncommitted packages that svelte-check and Vitest import (the WASM core); rebuilt only when its
 # Rust inputs changed (scripts/lib/core-wasm-fresh.mjs). `pnpm --filter @guardedsleep/core-wasm build` forces it.

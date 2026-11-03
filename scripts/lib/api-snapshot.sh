@@ -22,6 +22,11 @@ if [ "${API_SNAPSHOT_NATIVE:-0}" = "1" ]; then
   out="$1"
   nightly="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' tools/nightly/rust-toolchain.toml)"
   version="$(sed -n 's/^cargo_public_api *= *"\(.*\)"/\1/p' mise.toml)"
+  # A cached target/.api can hold a half-written toolchain (rustup reports "missing manifest", and
+  # `toolchain install` leaves it "unchanged"): remove it and install afresh.
+  if rustup toolchain list | grep -q "^$nightly" && ! rustc "+$nightly" --version >/dev/null 2>&1; then
+    rustup toolchain uninstall "$nightly" >&2 || rm -rf "${RUSTUP_HOME:-$HOME/.rustup}/toolchains/$nightly"*
+  fi
   rustup toolchain install "$nightly" --profile minimal >&2
   export RUSTUP_TOOLCHAIN="$nightly"
   if ! cargo public-api --version 2>/dev/null | grep -q "$version"; then
@@ -43,6 +48,8 @@ esac
 
 # shellcheck source=require.sh
 source scripts/lib/require.sh
+# shellcheck source=host-rust.sh
+source scripts/lib/host-rust.sh
 require api-check docker
 
 out="$ROOT/target/api-out"
@@ -54,7 +61,7 @@ scripts/core-build.sh wasm >&2
 cp target/wasm-pkg/web/guardedsleep_wasm.d.ts "$out/core.d.ts"
 
 nightly="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' tools/nightly/rust-toolchain.toml)"
-if command -v cargo >/dev/null 2>&1 && command -v rustup >/dev/null 2>&1 \
+if gs_host_rust \
   && rustup toolchain list | grep -q "^$nightly"; then
   API_SNAPSHOT_NATIVE=1 CARGO_TARGET_DIR="$ROOT/target/api" "$0" "$out"
 else

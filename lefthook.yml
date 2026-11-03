@@ -18,10 +18,10 @@ pre-commit:
 
     - name: cargo-fmt
       glob: "*.rs"
-      # Only runs when .rs files are staged. Host cargo only; the Docker fallback is too slow for a hook.
+      # Only runs when .rs files are staged. Host rustup only; the Docker fallback is too slow for a hook.
       run: >
-        if command -v cargo >/dev/null 2>&1; then cargo fmt --all -- --check;
-        else echo "cargo fmt skipped: no host cargo (CI and 'just lint' run it)"; fi
+        if . scripts/lib/host-rust.sh && gs_host_rust; then cargo fmt --all -- --check;
+        else echo "cargo fmt skipped: no host rustup (CI and 'just lint' run it)"; fi
 
     - name: typos
       run: scripts/lib/hook.sh typos --force-exclude {staged_files}

@@ -13,6 +13,8 @@
 #
 # Sourcing also puts the mise-managed tools on PATH when mise is installed (see gs_mise_env).
 
+# shellcheck source=host-rust.sh
+source "$(dirname "${BASH_SOURCE[0]}")/host-rust.sh"
 # shellcheck source=skip-log.sh
 source "$(dirname "${BASH_SOURCE[0]}")/skip-log.sh"
 
@@ -37,8 +39,8 @@ gs_missing() {
         || docker info >/dev/null 2>&1 || echo "android-sdk"
       ;;
     cargo)
-      # scripts/cargo.sh falls back to the build image, so docker is an acceptable substitute.
-      command -v cargo >/dev/null 2>&1 || docker info >/dev/null 2>&1 || echo "cargo"
+      # scripts/cargo.sh uses host rustup, else falls back to the build image, so docker is an acceptable substitute.
+      gs_host_rust || docker info >/dev/null 2>&1 || echo "cargo"
       ;;
     # cargo-fuzz runs on a rustup-managed nightly (tools/nightly), so both must be on the host.
     cargo-fuzz) { command -v cargo-fuzz >/dev/null 2>&1 && command -v rustup >/dev/null 2>&1; } || echo "cargo-fuzz (and rustup)" ;;

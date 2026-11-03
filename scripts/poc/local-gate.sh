@@ -21,7 +21,9 @@ OUT="${OUT:-$ROOT/target/poc-gate}"
 APK="${APK:-$ROOT/apps/android/app/build/outputs/apk/debug/app-debug.apk}"
 # Not 8787: a dev stack (docker/stack) may already own that port, and a stale server answers every hello.
 SIGNAL_PORT="${SIGNAL_PORT:-18787}"
-ANDROID_HOME_DIR="$OUT/android-home"
+# The emulators' shared ~/.android (adb key, AVD state) lives outside OUT: CI uploads OUT as an artifact,
+# and the files the containers write there are unreadable for the runner (EACCES) and must not be published.
+ANDROID_HOME_DIR="${GATE_ANDROID_HOME:-$ROOT/target/poc-android-home}"
 [[ "${DOZE_MINUTES:-30}" =~ ^[0-9]{1,3}$ ]] || {
 	echo "local-gate: DOZE_MINUTES must be an integer (got '${DOZE_MINUTES}')" >&2
 	exit 2

@@ -3,7 +3,6 @@
 #   scripts/lib/reap.sh          # list only
 #   scripts/lib/reap.sh --stop   # TERM, KILL after 5 s, docker stop
 #   scripts/lib/reap.sh --worktrees         # list the other worktrees as removable or kept (and why)
-#   scripts/lib/reap.sh --prune-worktrees   # remove exactly the removable ones
 # Candidates:
 #   - processes running `just dev`, scripts/dev.sh, vite, guardedsleep-server or tsx whose working
 #     directory or command line is inside this repository (the main checkout or any worktree of it);
@@ -12,27 +11,23 @@
 #   - Docker containers whose name or image contains "guardedsleep", older than 2 hours.
 # Nothing outside this repository and no unrelated container is ever touched.
 #
-# Worktrees (design of add-affected-tests-and-timings, section 4): every worktree except the main
-# checkout is `removable` when
+# Worktrees: every worktree except the main checkout is `removable` when
 #   - `git status --porcelain` is empty,
 #   - its HEAD is an ancestor of some origin/* ref (the first such ref is reported; no git fetch is
 #     run, so the answer reflects the last fetch), and
 #   - it is unlocked, or locked by a pid (`pid NNN` in the lock reason) that no longer runs.
 # Otherwise it is `kept` with the reason (dirty, not pushed, in use by pid N; a lock without a pid
-# counts as in use). Pruning unlocks stale locks, runs `git worktree remove` (never --force), deletes
-# the branch with `git branch -d` only for worktree-agent-* branches, then `git worktree prune`.
+# counts as in use). Nothing is removed here: use `git worktree remove <path>` on the removable ones.
 set -euo pipefail
 
 stop=0
 worktrees=0
-prune=0
 case "${1:-}" in
   "") ;;
   --stop) stop=1 ;;
   --worktrees) worktrees=1 ;;
-  --prune-worktrees) worktrees=1 prune=1 ;;
   *)
-    echo "usage: reap.sh [--stop | --worktrees | --prune-worktrees]" >&2
+    echo "usage: reap.sh [--stop | --worktrees]" >&2
     exit 2
     ;;
 esac
@@ -42,7 +37,7 @@ common="$(git -C "$here" rev-parse --path-format=absolute --git-common-dir 2>/de
 repo="${common%/.git}"
 [ -n "$repo" ] && [ "$repo" != "$common" ] || repo="$here"
 
-# Prints one line per worktree (not the main checkout) and, with prune=1, removes the removable ones.
+# Prints one line per worktree (not the main checkout).
 worktree_report() {
   local path="" head="" branch="" locked="" first=1 count=0 line
   local -a entries=()
@@ -94,21 +89,9 @@ worktree_report() {
       fi
     fi
     echo "$state: $w [${b:-detached}] $reason"
-    if [ "$prune" -eq 1 ] && [ "$state" = removable ]; then
-      [ -z "$l" ] || git -C "$repo" worktree unlock "$w"
-      if git -C "$repo" worktree remove "$w"; then
-        case "$b" in
-          worktree-agent-*) git -C "$repo" branch -d "$b" || echo "  branch $b kept (git branch -d refused)" ;;
-        esac
-        echo "  removed $w"
-      else
-        echo "  could not remove $w" >&2
-      fi
-    fi
   done
   [ "$count" -gt 0 ] || echo "no other worktrees"
-  if [ "$prune" -eq 1 ]; then git -C "$repo" worktree prune; fi
-  if [ "$prune" -eq 0 ] && [ "$count" -gt 0 ]; then echo "listed only; run 'just reap --prune-worktrees' to remove the removable ones"; fi
+  if [ "$count" -gt 0 ]; then echo "listed only; remove the removable ones with 'git worktree remove <path>'"; fi
 }
 
 if [ "$worktrees" -eq 1 ]; then
