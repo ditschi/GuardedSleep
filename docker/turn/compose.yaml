@@ -12,7 +12,7 @@ name: guardedsleep-turn
 
 services:
   coturn:
-    # Same pin as the emulator gate (scripts/poc/env-up.sh); multi-arch, so Ampere A1 (arm64) works.
+    # Same pin as the emulator gate (COTURN_IMAGE in tools/poc-images.env; keep equal); multi-arch, so Ampere A1 (arm64) works.
     image: coturn/coturn:${COTURN_TAG:-4.18.0}
     network_mode: host
     restart: unless-stopped

@@ -3,7 +3,7 @@
 # REST credential keeps relaying (Refresh, CreatePermission, ChannelBind succeed, data flows) for
 # 11+ minutes, past --stale-nonce=600 and long past the credential expiry.
 #
-# Runs the gate's coturn image (coturn/coturn:4.18.0, same pin as env-up.sh and local-gate.sh) with the
+# Runs the gate's coturn image (tools/poc-images.env, shared with env-up.sh and local-gate.sh) with the
 # flags of the planned project profile (--use-auth-secret, --stale-nonce=600; the gate's own coturn
 # uses a static --user instead). Coturn and the client sit on a user-defined bridge network, because
 # rootless Docker's host network is not the real host network. The secret is generated per run.
@@ -17,7 +17,8 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 source "$ROOT/scripts/lib/require.sh"
 require turn-lifetime docker
 
-COTURN_IMAGE=coturn/coturn:4.18.0
+# shellcheck source=tools/poc-images.env
+source "$ROOT/tools/poc-images.env"
 # Same digest as docker/web/Dockerfile (node 22 LTS, alpine); runs the client script only.
 NODE_IMAGE=node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402
 OUT="${GS_TURN_LIFETIME_OUT:-$ROOT/target/turn-lifetime}"

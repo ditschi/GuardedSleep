@@ -15,6 +15,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=tools/poc-images.env
+source "$ROOT/tools/poc-images.env"
 EMU_IMAGE="${EMULATOR_IMAGE:-guardedsleep-android-emulator:local}"
 SIG_IMAGE="${SIGNALING_IMAGE:-guardedsleep-signaling:local}"
 OUT="${OUT:-$ROOT/target/poc-gate}"
@@ -96,7 +98,7 @@ running gs-gate-signaling || {
 }
 if [[ $REUSE == 0 ]]; then
 # Test-only TURN credentials (poc/poc); loopback peers let both relay allocations reach each other.
-docker run -d --name gs-gate-turn --network host coturn/coturn:4.18.0 \
+docker run -d --name gs-gate-turn --network host "$COTURN_IMAGE" \
 	-n --log-file=stdout --no-cli --fingerprint --lt-cred-mech --user=poc:poc --realm=guardedsleep.poc \
 	--listening-port=3478 --listening-ip=0.0.0.0 --relay-ip=127.0.0.1 --allow-loopback-peers \
 	--min-port=49160 --max-port=49260 >/dev/null

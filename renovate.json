@@ -66,6 +66,13 @@
       "datasourceTemplate": "docker"
     },
     {
+      "description": "coturn image tag in tools/poc-images.env (the gate scripts source it)",
+      "customType": "regex",
+      "managerFilePatterns": ["/^tools/poc-images\\.env$/"],
+      "matchStrings": ["COTURN_IMAGE=(?<depName>coturn/coturn):(?<currentValue>\\S+)"],
+      "datasourceTemplate": "docker"
+    },
+    {
       "description": "Digest-pinned node image in turn-lifetime.sh (same as docker/web/Dockerfile; the docker group keeps both on one digest)",
       "customType": "regex",
       "managerFilePatterns": ["/^scripts/poc/turn-lifetime\\.sh$/"],
