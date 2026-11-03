@@ -122,9 +122,10 @@ class LinkRunner(
     }
 
     /**
-     * The wall clock in Unix seconds, for the core's Nostr epochs only (never liveness): sent at
-     * start, every 60 s, and when a tick sees the clock jump (more than 2 s off the elapsed
-     * monotonic time since the last report), which covers a changed device time or time zone.
+     * The wall clock in Unix seconds, for the `here` message and the clock comparison with the peer
+     * (never liveness): sent at start, every 60 s, and when a tick sees the clock jump (more than 2
+     * s off the elapsed monotonic time since the last report), which covers a changed device time
+     * or time zone.
      */
     private fun reportWallClock() {
         val wallMs = System.currentTimeMillis()
@@ -282,8 +283,8 @@ class LinkRunner(
     private class PinNotPersisted : RuntimeException("parent secret not persisted")
 
     /**
-     * The core's `url` is empty for the relay mailbox: its URL list still lives here. A Nostr
-     * mailbox names its relay, and only that address is tried. A failed open comes back as
+     * The core's `url` is empty for the relay mailbox: its URL list still lives here. A mailbox
+     * that names its address gets only that address tried. A failed open comes back as
      * `MailboxClosed`, never as a retry.
      */
     private fun openMailbox(id: UInt, url: String) {

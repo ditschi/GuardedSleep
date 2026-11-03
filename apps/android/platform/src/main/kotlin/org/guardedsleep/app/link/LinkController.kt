@@ -10,7 +10,6 @@ import org.guardedsleep.app.alerts.NoiseKind
 import org.guardedsleep.app.config.AppDefaults
 import org.guardedsleep.app.config.DebugOptions
 import org.guardedsleep.app.config.PairingPolicy
-import org.guardedsleep.app.config.PublicRelays
 import org.guardedsleep.app.config.RelayStun
 import org.guardedsleep.app.diag.PocLog
 import org.guardedsleep.app.media.IceConfig
@@ -81,12 +80,6 @@ class LinkController(
      * or a fingerprint.
      */
     private val deviceName: () -> String = { "" },
-    /**
-     * Baby: the public Nostr relays named in the invite, chosen from the pairing key by the core.
-     * The default is empty in release builds (release gate, [PublicRelays.ENABLED]); tests pass
-     * their own.
-     */
-    private val nostrRelays: (ByteArray) -> List<InviteMailbox> = { PublicRelays.forInvite(it) },
 ) : AppController {
     private val _app = MutableStateFlow(AppState())
     // The sealed TURN entry; the disk copy is written on [turnIo] so the caller never blocks.
@@ -353,8 +346,7 @@ class LinkController(
         }
         val psk = ByteArray(PairingPolicy.PSK_BYTES).also(random::nextBytes)
         val now = clock.elapsedMs()
-        val nostr = nostrRelays(psk)
-        val payload = PairingPayload.create(psk, urls, clock.wallMs(), nostr)
+        val payload = PairingPayload.create(psk, urls, clock.wallMs())
         val inviteText = payload.toInviteText()
         if (inviteText == null) {
             // The core refuses an invite for these addresses (e.g. a public ws:// address).
@@ -368,13 +360,6 @@ class LinkController(
                 null,
                 now,
                 now + PairingPolicy.QR_VALIDITY_MS,
-                // The core opens the picked relays and the baby sends the whole set to the parent.
-                mailboxes =
-                    if (nostr.isEmpty()) emptyList()
-                    else
-                        PairingPayload.mailboxesFor(urls).map {
-                            StoredMailbox(kindName(it.kind), it.url)
-                        } + nostr.map { StoredMailbox("nostr", it.url) },
                 pinUntilS = payload.expiresAtEpochSec,
             )
         _pairing.value =
@@ -414,9 +399,6 @@ class LinkController(
                         null,
                         now,
                         null,
-                        // The invite's public relays: the core opens them from
-                        // LinkConfig.mailboxes.
-                        mailboxes = p.nostr.map { StoredMailbox("nostr", it.url) },
                         pinUntilS = p.expiresAtEpochSec,
                     ),
                     pairedBefore = false,
@@ -485,7 +467,6 @@ class LinkController(
             pending.mailboxes.mapNotNull { m ->
                 when (m.kind) {
                     "relay" -> MailboxKind.RELAY
-                    "nostr" -> MailboxKind.NOSTR
                     "lan" -> MailboxKind.LAN
                     else -> null
                 }?.let { InviteMailbox(it, m.url) }
@@ -598,11 +579,8 @@ class LinkController(
             pinnedParent = pending.parentSecret?.let { ParentSecret(it.copyOf()) },
             pinWindowUntilS = pending.pinUntilS?.toULong(),
             deviceName = if (role == CoreRole.PARENT) deviceName() else "",
-            // The core opens the Nostr relays of the set; the baby sends the whole set to the
-            // parent.
-            mailboxes =
-                if (role == CoreRole.BABY) storedMailboxes(pending)
-                else storedMailboxes(pending).filter { it.kind == MailboxKind.NOSTR },
+            // The baby sends the set of the pairing to the parent after each verification.
+            mailboxes = if (role == CoreRole.BABY) storedMailboxes(pending) else emptyList(),
             allowDevLoopback = BuildConfig.DEBUG,
             pairedBefore = pairedBefore,
             heartbeatIntervalMs = heartbeat.toULong(),
@@ -861,12 +839,11 @@ class LinkController(
     }
 
     private fun signalingUrlsOf(mailboxes: List<StoredMailbox>): List<String> =
-        mailboxes.filter { it.kind != "nostr" }.map { it.url }
+        mailboxes.filter { it.kind == "relay" || it.kind == "lan" }.map { it.url }
 
     private fun kindName(kind: MailboxKind): String =
         when (kind) {
             MailboxKind.RELAY -> "relay"
-            MailboxKind.NOSTR -> "nostr"
             MailboxKind.LAN -> "lan"
         }
 

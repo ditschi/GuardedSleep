@@ -11,7 +11,5 @@ pub fn guardedsleep_wasm::WasmSession::new(&str) -> core::result::Result<guarded
 pub fn guardedsleep_wasm::build_invite(&[u8], &str, f64, bool) -> core::result::Result<alloc::string::String, wasm_bindgen::JsError>
 pub fn guardedsleep_wasm::conformance_eval(&str) -> alloc::string::String
 pub fn guardedsleep_wasm::derive_room_id(&[u8]) -> alloc::string::String
-pub fn guardedsleep_wasm::extra_relays(&[u8], &str, &str, &str, u32) -> alloc::string::String
 pub fn guardedsleep_wasm::message_keys() -> alloc::string::String
 pub fn guardedsleep_wasm::parse_invite(&str, f64, bool) -> alloc::string::String
-pub fn guardedsleep_wasm::pick_relays(&[u8], &str, &str, u32) -> alloc::string::String

@@ -401,7 +401,7 @@ fn the_baby_sends_its_mailbox_set_after_verification_and_the_parent_stores_it() 
     let mut baby = cfg(Role::Baby, &PSK_A);
     let sent = set(&[
         (MailboxKind::Relay, "wss://relay.example"),
-        (MailboxKind::Nostr, "wss://nostr.example"),
+        (MailboxKind::Lan, "ws://192.168.1.5:8787"),
     ]);
     baby.mailboxes = sent.clone();
     w.add_node(baby);
@@ -441,7 +441,7 @@ fn a_received_set_that_breaks_the_invite_rules_is_dropped() {
     w.inject_data(PARENT, &bad);
     let too_many = serde_json::json!({
         "type": "mailboxes", "v": 3,
-        "mailboxes": (0..7).map(|i| serde_json::json!({"kind":"nostr","url":format!("wss://n{i}.example")})).collect::<Vec<_>>()
+        "mailboxes": (0..7).map(|i| serde_json::json!({"kind":"relay","url":format!("wss://r{i}.example")})).collect::<Vec<_>>()
     })
     .to_string();
     w.inject_data(PARENT, &too_many);

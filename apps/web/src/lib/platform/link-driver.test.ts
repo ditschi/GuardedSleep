@@ -220,13 +220,13 @@ describe("LinkDriver with a scripted core", () => {
     expect(FakeWebSocket.instances[0]?.sent).toEqual(["hello"]);
   });
 
-  it("opens a Nostr mailbox at its own address only, next to the relay's list", () => {
+  it("opens a mailbox with its own address at that address only, next to the relay's list", () => {
     const core = new ScriptedCore();
     core.script = (input) =>
       input.type === "start"
         ? [
             { type: "open_mailbox", id: 0, kind: "relay", url: "" },
-            { type: "open_mailbox", id: 1, kind: "nostr", url: "wss://relay-a.example" },
+            { type: "open_mailbox", id: 1, kind: "relay", url: "wss://relay-a.example" },
           ]
         : [];
     const { driver } = setup("parent", core);
@@ -237,10 +237,10 @@ describe("LinkDriver with a scripted core", () => {
     ]);
     // Each socket speaks for its own mailbox id.
     FakeWebSocket.instances[1]?.open();
-    FakeWebSocket.instances[1]?.receive('["EOSE","s"]');
+    FakeWebSocket.instances[1]?.receive("frame");
     expect(core.inputs.slice(1).map((i) => i.input)).toEqual([
       { type: "mailbox_opened", id: 1 },
-      { type: "mailbox_frame", id: 1, bytes: '["EOSE","s"]' },
+      { type: "mailbox_frame", id: 1, bytes: "frame" },
     ]);
   });
 
@@ -248,7 +248,7 @@ describe("LinkDriver with a scripted core", () => {
     const core = new ScriptedCore();
     core.script = (input) =>
       input.type === "start"
-        ? [{ type: "open_mailbox", id: 1, kind: "nostr", url: "wss://relay-a.example" }]
+        ? [{ type: "open_mailbox", id: 1, kind: "relay", url: "wss://relay-a.example" }]
         : [];
     const { driver } = setup("parent", core);
     driver.start();

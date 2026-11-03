@@ -40,17 +40,14 @@ class QrScanTest {
     private fun invite(entries: List<String>) =
         """{"v":4,"k":"$key","m":[${entries.joinToString(",") { "\"$it\"" }}],"x":1900000000}"""
 
-    /**
-     * Five entries as the default invite carries them: own relay, three Nostr relays, a LAN
-     * address.
-     */
+    /** Five entries as a full invite carries them: a relay, three further relays, a LAN address. */
     private val full =
         invite(
             listOf(
                 "r:signaling.gs-operator.example.org:8443/gs/signal",
-                "n:nostr-relay-one.operator-a.example.eu",
-                "n:nostr-relay-two.operator-b.example.ch",
-                "n:nostr-relay-three.operator-c.example.de",
+                "r:relay-one.operator-a.example.eu",
+                "r:relay-two.operator-b.example.ch",
+                "r:relay-three.operator-c.example.de",
                 "l:192.168.178.100:8787",
             )
         )
@@ -63,8 +60,8 @@ class QrScanTest {
 
     /** Exactly the 300 byte limit. */
     private fun atTheLimit(): String {
-        val base = invite(listOf("n:.example")).length
-        return invite(listOf("n:${host(300 - base)}.example"))
+        val base = invite(listOf("r:.example")).length
+        return invite(listOf("r:${host(300 - base)}.example"))
     }
 
     /**

@@ -117,7 +117,5 @@ pub fn guardedsleep_ffi::default_link_config(guardedsleep_core::protocol::Role, 
 pub fn guardedsleep_ffi::default_session_config(guardedsleep_core::protocol::Role, alloc::string::String, core::option::Option<alloc::string::String>) -> guardedsleep_core::session::SessionConfig
 pub fn guardedsleep_ffi::derive_room_id(alloc::vec::Vec<u8>) -> alloc::string::String
 pub fn guardedsleep_ffi::encode_psk(alloc::vec::Vec<u8>) -> alloc::string::String
-pub fn guardedsleep_ffi::extra_relays(alloc::vec::Vec<u8>, alloc::vec::Vec<guardedsleep_core::relay_pick::RelayCandidate>, alloc::vec::Vec<alloc::string::String>, alloc::vec::Vec<alloc::string::String>, u32) -> alloc::vec::Vec<guardedsleep_core::invite::InviteMailbox>
 pub fn guardedsleep_ffi::message_keys() -> alloc::vec::Vec<alloc::string::String>
 pub fn guardedsleep_ffi::parse_invite(alloc::string::String, u64, bool) -> core::result::Result<guardedsleep_ffi::ParsedInvite, guardedsleep_ffi::InviteError>
-pub fn guardedsleep_ffi::pick_relays(alloc::vec::Vec<u8>, alloc::vec::Vec<guardedsleep_core::relay_pick::RelayCandidate>, alloc::vec::Vec<alloc::string::String>, u32) -> alloc::vec::Vec<guardedsleep_core::invite::InviteMailbox>

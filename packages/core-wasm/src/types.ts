@@ -22,7 +22,6 @@ export type {
   LinkStatus,
   MailboxKind,
   Ringer,
-  RelayCandidate,
   Role,
   UnitWarning,
 } from "../pkg/guardedsleep_wasm.js";
@@ -110,7 +109,7 @@ export function isInviteErrorKey(v: unknown): v is InviteErrorKey {
 /** A valid, unexpired invite. `psk` is the pairing key: keep it in memory only, never log it. */
 export interface Invite {
   psk: Uint8Array;
-  /** Kind and URL of each mailbox, in invite order (`relay` = own relay, `nostr`, `lan`). */
+  /** Kind and URL of each mailbox, in invite order (`relay`, `lan`). */
   mailboxes: InviteMailbox[];
   expiresAtEpochS: number;
 }

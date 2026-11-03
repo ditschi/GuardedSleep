@@ -19,10 +19,6 @@ use guardedsleep_core::protocol::{DataMessage, Role, encode_data_message, parse_
 use guardedsleep_core::testing::{decode_message, nonce_of, rewrite_message};
 use serde_json::{Value, json};
 
-mod nostr_sim;
-
-pub use nostr_sim::{NostrRelaySpec, NostrSent, NostrWorld, RateLimit};
-
 use crate::raw::RawState;
 use crate::rng::Rng;
 use crate::scenario::{PeerSpec, RelaySpec, Scenario, Step};
@@ -172,25 +168,6 @@ enum Ev {
     },
     RawAct {
         actor: usize,
-    },
-    NAccept {
-        nsock: usize,
-    },
-    NToRelay {
-        nsock: usize,
-        text: String,
-    },
-    NToClient {
-        actor: usize,
-        nsock: usize,
-        msg: ToClient,
-    },
-    /// A third party re-delivers events it captured from a relay.
-    NReplay {
-        url: String,
-        until: Time,
-        gap: u64,
-        idx: usize,
     },
 }
 
@@ -362,8 +339,6 @@ pub struct World {
     pub recs: Vec<TraceRec>,
     record: bool,
     pub seed: u64,
-    /// The simulated public Nostr relays.
-    pub nostr: NostrWorld,
     /// True wall-clock time (Unix seconds) at virtual time 0.
     pub wall_base: u64,
 }
@@ -399,7 +374,6 @@ impl World {
             recs: Vec::new(),
             record,
             seed,
-            nostr: NostrWorld::new(&sc.nostr),
             wall_base: sc.wall_start_s.unwrap_or(SIM_WALL_BASE_S),
         };
         for spec in &sc.peers {
@@ -568,15 +542,6 @@ impl World {
             }
             Ev::RawTick { actor } => self.raw_tick(actor),
             Ev::RawAct { actor } => self.raw_act(actor),
-            Ev::NAccept { nsock } => self.on_nostr_accept(nsock),
-            Ev::NToRelay { nsock, text } => self.on_nostr_relay_rx(nsock, &text),
-            Ev::NToClient { actor, nsock, msg } => self.on_nostr_client_rx(actor, nsock, msg),
-            Ev::NReplay {
-                url,
-                until,
-                gap,
-                idx,
-            } => self.on_nostr_replay(&url, until, gap, idx),
         }
     }
 
@@ -671,9 +636,6 @@ impl World {
                     let after = st.after_ms.unwrap_or(0);
                     self.push(self.now + after, 2, Ev::Restart { actor: a });
                 }
-            }
-            "nostr_down" | "nostr_up" | "nostr_drop_delivery" | "nostr_replay" => {
-                self.nostr_verb(&st)
             }
             "drop_data" | "delay" | "duplicate" | "reorder" => self.add_fault(&st),
             "clear_faults" => self.faults.clear(),
@@ -902,7 +864,6 @@ impl World {
     /// Process death: sockets and peer connections vanish, nobody is told.
     fn kill_actor(&mut self, a: usize) {
         self.finish_rec(a);
-        self.nostr_kill(a);
         let reachable = {
             let ac = &self.actors[a];
             ac.net_up
@@ -979,13 +940,6 @@ impl World {
     fn exec(&mut self, a: usize, actions: Vec<LinkAction>) {
         for act in actions {
             match act {
-                LinkAction::OpenMailbox { id, url, .. } if id != RELAY_MAILBOX => {
-                    self.nostr_open(a, id, &url);
-                }
-                LinkAction::CloseMailbox { id } if id != RELAY_MAILBOX => self.nostr_close(a, id),
-                LinkAction::MailboxSend { id, frame } if id != RELAY_MAILBOX => {
-                    self.nostr_send(a, id, frame);
-                }
                 LinkAction::OpenMailbox { .. } => self.open_signaling(a),
                 LinkAction::CloseMailbox { .. } => {
                     if let Some(s) = self.actors[a].sock.take() {

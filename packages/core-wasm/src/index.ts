@@ -5,7 +5,6 @@ import type {
   LinkConfig,
   LinkInput,
   ParseInviteResult,
-  RelayCandidate,
 } from "./types.js";
 import { isInviteErrorKey, isLinkAction } from "./types.js";
 
@@ -26,14 +25,6 @@ export interface RawCoreModule {
     mailboxesJson: string,
     expiresAtEpochS: number,
     allowDevLoopback: boolean,
-  ): string;
-  pickRelays(psk: Uint8Array, candidatesJson: string, parkedJson: string, count: number): string;
-  extraRelays(
-    psk: Uint8Array,
-    candidatesJson: string,
-    parkedJson: string,
-    currentJson: string,
-    max: number,
   ): string;
   conformanceEval(caseJson: string): string;
 }
@@ -61,24 +52,6 @@ export interface CoreApi {
     mailboxes: InviteMailbox[],
     expiresAtEpochS: number,
   ): BuildInviteResult;
-  /**
-   * The public Nostr relays a baby adds to its invite: up to `count` entries of the shipped list
-   * from distinct operators, chosen from the pairing key (the core carries no relay data).
-   */
-  pickRelays(
-    psk: Uint8Array,
-    candidates: readonly RelayCandidate[],
-    parked?: readonly string[],
-    count?: number,
-  ): InviteMailbox[];
-  /** Up to `max` more relays from this device's own list on top of the invite's `current` hosts. */
-  extraRelays(
-    psk: Uint8Array,
-    candidates: readonly RelayCandidate[],
-    current: readonly string[],
-    parked?: readonly string[],
-    max?: number,
-  ): InviteMailbox[];
   /** Evaluates one `vectors/conformance.json` case; the result is JSON, `{error}` for a bad case. */
   conformanceEval(caseJson: string): unknown;
 }
@@ -125,20 +98,6 @@ export function createCoreApi(mod: RawCoreModule, options: CoreOptions = {}): Co
         throw e;
       }
     },
-    pickRelays: (psk, candidates, parked = [], count = 3) =>
-      JSON.parse(
-        mod.pickRelays(psk, JSON.stringify(candidates), JSON.stringify(parked), count),
-      ) as InviteMailbox[],
-    extraRelays: (psk, candidates, current, parked = [], max = 2) =>
-      JSON.parse(
-        mod.extraRelays(
-          psk,
-          JSON.stringify(candidates),
-          JSON.stringify(parked),
-          JSON.stringify(current),
-          max,
-        ),
-      ) as InviteMailbox[],
     conformanceEval: (caseJson) => JSON.parse(mod.conformanceEval(caseJson)) as unknown,
   };
 }
@@ -175,9 +134,7 @@ function toParseInviteResult(out: unknown): ParseInviteResult {
 
 function isInviteMailbox(v: unknown): v is InviteMailbox {
   const m = v as Partial<Record<keyof InviteMailbox, unknown>> | null;
-  return (
-    (m?.kind === "relay" || m?.kind === "nostr" || m?.kind === "lan") && typeof m.url === "string"
-  );
+  return (m?.kind === "relay" || m?.kind === "lan") && typeof m.url === "string";
 }
 
 function decodeBase64Url(s: string): Uint8Array {

@@ -41,8 +41,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use zeroize::Zeroize;
 
-mod nostr_link;
-
 use crate::attempt::{Attempt, AttemptConfig, AttemptEvent, DEFAULT_ATTEMPT_TIMEOUT_MS};
 use crate::envelope::{
     CHALLENGE_LEN, CHALLENGE_VALID_MS, MessageClass, OpenError, Purpose, Reply, SealError, Sealed,
@@ -51,7 +49,6 @@ use crate::envelope::{
 use crate::invite::{InviteMailbox, validate_mailboxes};
 use crate::mailbox::{MailboxId, MailboxKind, MailboxSet, MailboxState, RELAY_MAILBOX};
 use crate::noise::{GateChange, NoiseGate};
-use crate::nostr::NostrKeys;
 use crate::pairing::{
     PARENT_SECRET_LEN, ParentSecret, baby_proof_mac, decode_psk, derive_room_id, macs_equal,
     parent_proof_mac,
@@ -62,7 +59,6 @@ use crate::protocol::{
     encode_signal, parse_server_message, parse_signal_payload, signal_payload_json,
 };
 use crate::session::ConfigError;
-use nostr_link::{Day, NOSTR_ORIGIN, NostrClass};
 
 /// Retry delays before the next attempt, indexed by consecutive failures (ADR-017 §6).
 const BACKOFF_MS: [u64; 5] = [0, 1_000, 2_000, 4_000, 8_000];
@@ -113,16 +109,13 @@ const HINT_RECOVERY: &str = "recovery_path_unavailable";
 const RESEND_AFTER_MS: u64 = 6_000;
 /// A baby that sees a ready parent waits this long for the parent's `request_offer` before it
 /// offers unasked (`Offer direction`). Without it the baby's presence-triggered offer and the
-/// parent's request cross and the setup builds two attempts. Longer than the Nostr round trip,
+/// parent's request cross and the setup builds two attempts. Longer than a mailbox round trip,
 /// shorter than [`RESEND_AFTER_MS`], so a lost request costs one grace, not a resend.
 const BABY_OFFER_GRACE_MS: u64 = 2_500;
 /// Local ICE candidates are bundled into one `ice` message: the first batch leaves this long after
 /// the first candidate, a second batch no sooner than [`ICE_SECOND_BATCH_MS`] after the first.
-/// Over Nostr at most [`ICE_NOSTR_BATCHES`] batches go (the event budget); later batches only use
-/// the other mailboxes.
 const ICE_FLUSH_MS: u64 = 400;
 const ICE_SECOND_BATCH_MS: u64 = 2_000;
-const ICE_NOSTR_BATCHES: u32 = 2;
 /// The PSK is 32 random bytes (QR pairing, ADR-004).
 const PSK_LEN: usize = 32;
 /// Longest gap between `audio_level` samples that still counts as "the baby was listening".
@@ -246,18 +239,18 @@ pub struct LinkConfig {
     /// characters, control characters removed). Empty: no name. Never a fingerprint or an id.
     #[serde(default)]
     pub device_name: String,
-    /// The pairing's mailbox set. The core opens its `nostr` entries itself (the platform opens one
-    /// socket per `open_mailbox` and passes text frames); the `relay` and `lan` entries stay in the
-    /// platform's address list for now. Baby: the set is also sent to the parent after each
-    /// verification (the mailbox update); empty: none is sent.
+    /// The pairing's mailbox set: the `relay` and `lan` entries stay in the platform's address list
+    /// for now. Baby: the set is also sent to the parent after each verification (the mailbox
+    /// update); empty: none is sent.
     #[serde(default)]
     pub mailboxes: Vec<InviteMailbox>,
     /// Development builds only: accept loopback `l:` entries in a received mailbox update, like
     /// `parse_invite`'s flag of the same name.
     #[serde(default)]
     pub allow_dev_loopback: bool,
-    /// "Only same Wi-Fi or my own server": the `nostr` entries of the set, of an invite and of a
-    /// mailbox update are ignored, so no public relay is contacted from this device.
+    /// "Only same Wi-Fi or my own server". Reserved for the project-server entries of the set
+    /// (`alpha-connection-model` design section 8); the core does not read it since the Nostr
+    /// mailboxes it used to switch off are gone.
     #[serde(default)]
     pub only_local: bool,
 }
@@ -386,8 +379,8 @@ pub enum LinkInput {
         entropy: u64,
     },
     /// The platform's wall clock in Unix seconds: at start, with ticks and after a time change.
-    /// Stored for the Nostr mailbox only (epoch, event times); never used for liveness or
-    /// escalation, which run on the monotonic clock.
+    /// Read for the `here` message and the `clock_skew` comparison with the peer only; never used
+    /// for liveness or escalation, which run on the monotonic clock.
     WallClock {
         unix_s: u64,
     },
@@ -810,8 +803,8 @@ pub struct Link {
     /// (`alpha-connection-model` tasks 2.2 and 3.2).
     #[allow(dead_code)]
     csprng: Option<ChaCha20Rng>,
-    /// Last `wall_clock` input (Unix seconds) and the monotonic time it arrived: the Nostr mailbox
-    /// (epoch, event times) and the `clock_skew` comparison with the peer read it.
+    /// Last `wall_clock` input (Unix seconds) and the monotonic time it arrived: the `here` message
+    /// and the `clock_skew` comparison with the peer read it.
     wall_unix_s: Option<u64>,
     wall_at: u64,
     started_at: u64,
@@ -844,18 +837,8 @@ pub struct Link {
     probe_next_at: u64,
     probe: Option<Probe>,
 
-    /// The mailbox set (the relay mailbox and the Nostr mailboxes) with the transport state of each.
+    /// The mailbox set with the transport state of each.
     mb: MailboxSet,
-    /// Keys and tags for the public Nostr relays, derived from the PSK.
-    nostr_keys: Option<NostrKeys>,
-    nostr_days: Vec<Day>,
-    /// Unsolicited `here`s sent over Nostr in this stretch, and when the next one is due.
-    nostr_here_sent: u32,
-    nostr_here_next_at: u64,
-    /// When the peer's confirmed session last spoke over Nostr.
-    nostr_peer_heard_at: Option<u64>,
-    /// Setup envelopes sent over Nostr in the current attempt.
-    nostr_attempt_events: u32,
     /// The peer's wall clock differs from ours by more than 10 minutes.
     peer_skew: bool,
     resend: Option<PendingResend>,
@@ -996,7 +979,7 @@ impl Link {
             pin.as_ref().map(|s| s.0.as_slice()),
             role_is_baby && pin_from_config,
         );
-        let mut link = Self {
+        let link = Self {
             pin,
             pin_unacked: pin_from_config && role_is_parent && cfg_window.is_some(),
             window_until: cfg_window,
@@ -1024,12 +1007,6 @@ impl Link {
             wall_unix_s: None,
             started_at: 0,
             mb: MailboxSet::new(),
-            nostr_keys: None,
-            nostr_days: Vec::new(),
-            nostr_here_sent: 0,
-            nostr_here_next_at: 0,
-            nostr_peer_heard_at: None,
-            nostr_attempt_events: 0,
             peer_skew: false,
             resend: None,
             ice: None,
@@ -1085,7 +1062,6 @@ impl Link {
             last_sent_status: None,
             last_quiet_at: None,
         };
-        link.init_nostr();
         Ok(link)
     }
 
@@ -1094,7 +1070,7 @@ impl Link {
         &self.room
     }
 
-    /// Last wall clock the platform reported (Unix seconds), for the Nostr mailbox.
+    /// Last wall clock the platform reported (Unix seconds).
     pub fn wall_clock_unix_s(&self) -> Option<u64> {
         self.wall_unix_s
     }
@@ -1140,21 +1116,15 @@ impl Link {
             LinkInput::MailboxOpened { id } => {
                 if id == RELAY_MAILBOX {
                     self.on_signaling_opened(now, &mut out);
-                } else {
-                    self.on_nostr_opened(id, now, &mut out);
                 }
             }
             LinkInput::MailboxFrame { id, bytes } => {
                 if id == RELAY_MAILBOX {
                     self.on_signaling_text(now, &bytes, &mut out);
-                } else {
-                    self.on_nostr_frame(id, now, &bytes, &mut out);
                 }
             }
             LinkInput::MailboxClosed { id, .. } => {
-                if id != RELAY_MAILBOX {
-                    self.on_nostr_closed(id, now, &mut out);
-                } else if self.mb.relay.state != MailboxState::Closed {
+                if id == RELAY_MAILBOX && self.mb.relay.state != MailboxState::Closed {
                     if self.probing() {
                         // The check failed to connect: no backoff, no reconnect (the mailboxes
                         // stay closed while the attempt is verified). The other mailboxes of the
@@ -1334,15 +1304,13 @@ impl Link {
     /// Attempts and requests need a peer that confirmed a session in this run and that is a room
     /// member right now (`signaling-mailboxes`, "Session confirmation").
     fn peer_ready(&self) -> bool {
-        self.relay_ready() || self.nostr_ready()
+        self.relay_ready()
     }
 
-    /// The route to the confirmed peer: its relay client id, or Nostr.
+    /// The route to the confirmed peer: its relay client id.
     fn peer_route(&self) -> Option<String> {
         if self.relay_ready() {
             self.peer_client.clone()
-        } else if self.nostr_ready() {
-            Some(NOSTR_ORIGIN.to_owned())
         } else {
             None
         }
@@ -1350,21 +1318,7 @@ impl Link {
 
     /// The relay client id a message for route `to` goes to, if the relay mailbox can carry it.
     fn relay_target(&self, to: &str) -> Option<String> {
-        if self.mb.relay.state != MailboxState::Joined {
-            None
-        } else if to != NOSTR_ORIGIN {
-            Some(to.to_owned())
-        } else if self.relay_ready() {
-            self.peer_client.clone()
-        } else {
-            None
-        }
-    }
-
-    /// Whether `a` and `b` can name the same peer. The sealed envelope already proved the sender
-    /// is the confirmed peer session, so a message that came over Nostr matches any route.
-    fn same_route(a: &str, b: &str) -> bool {
-        a == b || a == NOSTR_ORIGIN || b == NOSTR_ORIGIN
+        (self.mb.relay.state == MailboxState::Joined).then(|| to.to_owned())
     }
 
     fn relay_ready(&self) -> bool {
@@ -1419,10 +1373,6 @@ impl Link {
         if self.mode == Mode::Running {
             self.announce_stop(out);
             self.close_live(out);
-            // The stop must leave before the sockets close, whatever the pacing says.
-            let now = self.now;
-            self.nostr_drain(now, true, out);
-            self.nostr_close_all(now, false, out);
             if self.mb.relay.state != MailboxState::Closed {
                 out.push(self.close_action());
                 self.mb.relay.state = MailboxState::Closed;
@@ -1451,8 +1401,7 @@ impl Link {
             .live
             .as_ref()
             .map(|l| l.peer_id.clone())
-            .or_else(|| self.peer_client.clone())
-            .or_else(|| self.nostr_ready().then(|| NOSTR_ORIGIN.to_owned()));
+            .or_else(|| self.peer_client.clone());
         if let Some(to) = target {
             self.send_payload(&to, &SignalPayload::StopNotice, out);
         }
@@ -1465,8 +1414,6 @@ impl Link {
             return;
         }
         self.close_live(out);
-        let now = self.now;
-        self.nostr_close_all(now, false, out);
         if self.mb.relay.state != MailboxState::Closed {
             out.push(self.close_action());
             self.mb.relay.state = MailboxState::Closed;
@@ -1481,14 +1428,6 @@ impl Link {
             self.mb.relay.failures = 0;
             self.mb.relay.next_open_at = now;
         }
-        for b in &mut self.mb.nostr {
-            if b.state == MailboxState::Closed {
-                b.failures = 0;
-                b.next_open_at = now;
-            }
-        }
-        self.nostr_here_sent = 0;
-        self.nostr_here_next_at = now;
         if self.live.as_ref().is_some_and(|l| !self.trusted(l)) {
             self.close_live(out);
         }
@@ -1532,10 +1471,8 @@ impl Link {
         self.mb.relay.last_rx = now;
         self.mb.relay.last_ping = now;
         out.push(Self::send_action(encode_hello(self.cfg.role, &self.room)));
-        // A request already travelling over another mailbox stays valid (`Parallel mailboxes`).
-        let kept = self.outstanding.take().filter(|_| self.nostr_ready());
         self.immediate_retry(now);
-        self.outstanding = kept;
+        self.outstanding = None;
     }
 
     fn signaling_down(&mut self, now: u64, emit_close: bool, out: &mut Vec<LinkAction>) {
@@ -1546,14 +1483,8 @@ impl Link {
         self.mb.relay.client_id = None;
         self.mb.relay.members.clear();
         self.peer_present = false;
-        // Losing one mailbox must not reset the setup while another one still reaches the peer
-        // (`link-supervision`, "Parallel mailboxes"): a flapping relay would otherwise drop the
-        // parent's `request_offer` again and again while the baby's attempt waits for its answer
-        // until the attempt timeout. Only when no mailbox reaches the peer is the state stale.
-        if !self.nostr_ready() {
-            self.outstanding = None;
-            self.pending_request = None;
-        }
+        self.outstanding = None;
+        self.pending_request = None;
         self.known_peers.clear();
         self.peer_client = None;
         self.mb.relay.next_open_at = now + self.delay(now, self.mb.relay.failures);
@@ -1675,37 +1606,14 @@ impl Link {
     /// mailbox. A message that does not fit its class is a sender bug: it is never truncated and
     /// surfaces as a failure reason.
     fn send_payload(&mut self, to: &str, payload: &SignalPayload, out: &mut Vec<LinkAction>) {
-        self.send_payload_via(to, payload, true, out);
-    }
-
-    /// `nostr`: whether the Nostr mailboxes may carry it (a late trickle batch is kept off them to
-    /// stay within the event budget).
-    fn send_payload_via(
-        &mut self,
-        to: &str,
-        payload: &SignalPayload,
-        nostr: bool,
-        out: &mut Vec<LinkAction>,
-    ) {
-        let relay_to = self.relay_target(to);
-        let nostr_class = if !nostr || !self.nostr_any_open() {
-            NostrClass::Skip
-        } else if matches!(payload, SignalPayload::StopNotice) {
-            NostrClass::Presence
-        } else {
-            NostrClass::Setup
-        };
-        if relay_to.is_none() && nostr_class == NostrClass::Skip {
+        let Some(relay_to) = self.relay_target(to) else {
             return;
-        }
+        };
         let class = class_of(payload);
         let message = signal_payload_json(payload).to_string();
         match self.seal_signal(class, message.as_bytes()) {
             Ok(sealed) => {
-                if let Some(target) = relay_to {
-                    out.push(self.envelope_action(&target, &sealed));
-                }
-                self.nostr_publish(&sealed, nostr_class);
+                out.push(self.envelope_action(&relay_to, &sealed));
                 if matches!(
                     payload,
                     SignalPayload::RequestOffer { .. } | SignalPayload::Sdp { .. }
@@ -1730,7 +1638,7 @@ impl Link {
     }
 
     /// An offer, answer or `request_offer` that nobody answered: once more, same envelope id, to
-    /// every open mailbox (a new event on Nostr, because relays drop a known event id).
+    /// every open mailbox.
     fn resend_housekeeping(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         let due = self
             .resend
@@ -1747,7 +1655,6 @@ impl Link {
         if let Some(target) = self.relay_target(&to) {
             out.push(self.envelope_action(&target, &sealed));
         }
-        self.nostr_publish(&sealed, NostrClass::Setup);
     }
 
     /// Local candidates leave in batches (see [`ICE_FLUSH_MS`]).
@@ -1785,19 +1692,18 @@ impl Link {
             return;
         };
         let to = l.peer_id.clone();
-        let nostr = self.ice_batches < ICE_NOSTR_BATCHES;
         let payload = SignalPayload::IceBundle {
             aid: buf.aid,
             candidates: buf.candidates,
         };
-        self.send_payload_via(&to, &payload, nostr, out);
+        self.send_payload(&to, &payload, out);
         self.ice_batches = self.ice_batches.saturating_add(1);
         self.ice_last_flush = Some(now);
     }
 
     /// An unsolicited presence message to the room member `to`; schedules the next repeat.
     fn send_here(&mut self, now: u64, to: &str, out: &mut Vec<LinkAction>) {
-        if self.mb.relay.state != MailboxState::Joined || to == NOSTR_ORIGIN {
+        if self.mb.relay.state != MailboxState::Joined {
             return;
         }
         let here = self.here_message(now);
@@ -1820,10 +1726,6 @@ impl Link {
 
     /// The `here` that answers a candidate or echoes a challenge (`Opened::reply`).
     fn send_reply(&mut self, now: u64, to: &str, reply: &Reply, out: &mut Vec<LinkAction>) {
-        if to == NOSTR_ORIGIN {
-            self.nostr_reply(now, None, reply);
-            return;
-        }
         let here = self.here_message(now);
         let Some(rng) = self.csprng.as_mut() else {
             return;
@@ -1895,30 +1797,14 @@ impl Link {
         let Ok(bytes) = URL_SAFE_NO_PAD.decode(text) else {
             return;
         };
-        self.open_envelope(now, from, &bytes, None, out);
+        self.open_envelope(now, from, &bytes, out);
     }
 
-    /// One inbound sealed envelope, from the relay (`from`: the sender's client id) or from Nostr
-    /// (`from`: [`NOSTR_ORIGIN`]).
-    fn open_envelope(
-        &mut self,
-        now: u64,
-        from: &str,
-        bytes: &[u8],
-        created_at: Option<u64>,
-        out: &mut Vec<LinkAction>,
-    ) {
+    /// One inbound sealed envelope from the relay (`from`: the sender's client id).
+    fn open_envelope(&mut self, now: u64, from: &str, bytes: &[u8], out: &mut Vec<LinkAction>) {
         if bytes.len() > MessageClass::Candidates.wire_len() {
             return;
         }
-        // Whether the signed `created_at` of a Nostr event is recent enough to count as a sign of
-        // life (a stored or replayed event proves nothing about now). A relay frame has no such time.
-        let signed_fresh = match created_at {
-            None => true,
-            Some(c) => self
-                .wall_now(now)
-                .is_some_and(|w| c.saturating_add(nostr_link::HEARD_FRESH_S) >= w),
-        };
         let Some(rng) = self.csprng.as_mut() else {
             return;
         };
@@ -1939,20 +1825,9 @@ impl Link {
         if opened.confirmed {
             // A new session: where the old one was heard says nothing about it.
             self.peer_client = None;
-            self.nostr_peer_heard_at = None;
-            if from == NOSTR_ORIGIN {
-                // The peer restarted (it is a different session): the stop of the old one is over.
-                self.stop_pending_absence = false;
-            }
         }
         if self.sess.peer_session() == Some(opened.sender_session) {
-            if from == NOSTR_ORIGIN {
-                if signed_fresh {
-                    self.nostr_peer_heard_at = Some(now);
-                }
-            } else {
-                self.peer_client = Some(from.to_owned());
-            }
+            self.peer_client = Some(from.to_owned());
         }
         // A parent is there, but this baby holds no secret for it and its invite is over: only a
         // new code on this device can pair them. (Nothing here can connect; the hint is sticky
@@ -1969,7 +1844,7 @@ impl Link {
             self.on_peer_confirmed(now, out);
         }
         if opened.class == MessageClass::Here {
-            if self.sess.peer_session() == Some(opened.sender_session) && signed_fresh {
+            if self.sess.peer_session() == Some(opened.sender_session) {
                 self.check_clock(now, &opened.message, out);
             }
             return;
@@ -2040,7 +1915,7 @@ impl Link {
             SignalPayload::Ice { aid, candidate } => {
                 if let Some(l) = self.live.as_ref() {
                     // A verified attempt is done negotiating; late candidates are only noise.
-                    if Self::same_route(&l.peer_id, from) && l.attempt.accepts_ice(&aid) {
+                    if l.peer_id == from && l.attempt.accepts_ice(&aid) {
                         out.push(LinkAction::AddIceCandidate {
                             attempt: l.attempt.handle(),
                             candidate,
@@ -2050,7 +1925,7 @@ impl Link {
             }
             SignalPayload::IceBundle { aid, candidates } => {
                 if let Some(l) = self.live.as_ref()
-                    && Self::same_route(&l.peer_id, from)
+                    && l.peer_id == from
                     && l.attempt.accepts_ice(&aid)
                 {
                     for candidate in candidates {
@@ -2071,7 +1946,6 @@ impl Link {
     fn on_signal_stop(&mut self, now: u64, sender: SessionId, out: &mut Vec<LinkAction>) {
         self.sess.retire(sender);
         self.peer_client = None;
-        self.nostr_peer_heard_at = None;
         self.stop_peer(now, out);
     }
 
@@ -2109,7 +1983,6 @@ impl Link {
     ) {
         // Close-before-create; there is never more than one live attempt.
         self.close_live(out);
-        self.nostr_attempt_events = 0;
         self.ice_batches = 0;
         self.ice_last_flush = None;
         let handle = self.next_handle;
@@ -2153,20 +2026,21 @@ impl Link {
     }
 
     fn on_request_offer(&mut self, now: u64, from: &str, aid: String, out: &mut Vec<LinkAction>) {
-        let from_parent = from == NOSTR_ORIGIN
-            || self
-                .mb
-                .relay
-                .members
-                .iter()
-                .any(|m| m.client_id == from && m.role == Role::Parent);
+        let from_parent = self
+            .mb
+            .relay
+            .members
+            .iter()
+            .any(|m| m.client_id == from && m.role == Role::Parent);
         if !from_parent || self.live_verified() {
             return;
         }
         // Duplicate of the request the live (unverified) attempt already answers.
-        if self.live.as_ref().is_some_and(|l| {
-            Self::same_route(&l.peer_id, from) && l.attempt.remote_aid() == Some(aid.as_str())
-        }) {
+        if self
+            .live
+            .as_ref()
+            .is_some_and(|l| l.peer_id == from && l.attempt.remote_aid() == Some(aid.as_str()))
+        {
             return;
         }
         if self
@@ -2186,19 +2060,16 @@ impl Link {
     fn start_baby_attempt(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         let (to, remote_aid) = match self.pending_request.take() {
             Some((from, aid))
-                if from == NOSTR_ORIGIN
-                    || self
-                        .mb
-                        .relay
-                        .members
-                        .iter()
-                        .any(|m| m.client_id == from && m.role == Role::Parent) =>
+                if self
+                    .mb
+                    .relay
+                    .members
+                    .iter()
+                    .any(|m| m.client_id == from && m.role == Role::Parent) =>
             {
                 (from, Some(aid))
             }
             _ => match self.peer_member() {
-                Some(m) if self.relay_ready() => (m.client_id.clone(), None),
-                _ if self.nostr_ready() => (NOSTR_ORIGIN.to_owned(), None),
                 Some(m) => (m.client_id.clone(), None),
                 None => return,
             },
@@ -2226,13 +2097,12 @@ impl Link {
         let (aid, sdp_type, sdp, re) =
             (aid.as_str(), sdp_type.as_str(), sdp.as_str(), re.as_deref());
         if self.cfg.role == Role::Parent && sdp_type == "offer" {
-            let from_baby =
-                from == NOSTR_ORIGIN || self.peer_member().is_some_and(|m| m.client_id == from);
+            let from_baby = self.peer_member().is_some_and(|m| m.client_id == from);
             if !from_baby || self.live_verified() {
                 return;
             }
             if let Some(l) = self.live.as_ref()
-                && Self::same_route(&l.peer_id, from)
+                && l.peer_id == from
                 && l.attempt.remote_aid() == Some(aid)
             {
                 return;
@@ -2258,7 +2128,7 @@ impl Link {
         let Some(l) = self.live.as_mut() else {
             return;
         };
-        if !Self::same_route(&l.peer_id, from) {
+        if l.peer_id != from {
             return;
         }
         let handle = l.attempt.handle();
@@ -2355,7 +2225,6 @@ impl Link {
         // The mailboxes were closed while the attempt was verified; the housekeeping reopens them
         // now (every one at once: the peer's new session has to be heard).
         self.probe = None;
-        self.nostr_probe_close(out);
         self.set_hint(HINT_RECOVERY, false, out);
         self.last_alive = Some(last_alive);
         if self.outage_start.is_none() {
@@ -2825,9 +2694,8 @@ impl Link {
     /// Parent: a mailbox set from the baby replaces the stored one (if it is a valid set).
     fn on_mailbox_update(&mut self, mailboxes: &[InviteMailbox], out: &mut Vec<LinkAction>) {
         if let Some(set) = validate_mailboxes(mailboxes, self.cfg.allow_dev_loopback) {
-            // The platform stores the set as sent; the core uses the Nostr entries of it from the
-            // next time its mailboxes open (unless "only same Wi-Fi or my own server" is on).
-            self.adopt_nostr_set(&set, out);
+            // The platform stores the set as sent; the core keeps it for the next mailbox update.
+            self.cfg.mailboxes = set.clone();
             emit(out, LinkEvent::MailboxesUpdated { mailboxes: set });
         }
     }
@@ -2855,14 +2723,12 @@ impl Link {
         self.probe = None;
         self.resend = None;
         self.ice = None;
-        self.nostr_close_all(now, true, out);
         self.probe_next_at = now.saturating_add(PROBE_EVERY_MS);
     }
 
     /// While an attempt is verified: start a check when it is due and give up on one that does not
     /// answer. A check opens every mailbox without sending anything of the pairing: the relay gets
-    /// a connect and an application ping (no `hello`, so no room id), a Nostr relay a connect and a
-    /// `REQ` with a throwaway filter that it must answer with EOSE.
+    /// a connect and an application ping (no `hello`, so no room id).
     fn probe_housekeeping(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         match &self.probe {
             None => {
@@ -2870,11 +2736,9 @@ impl Link {
                     self.mb.relay.state = MailboxState::Opening;
                     self.mb.relay.changed_at = now;
                     out.push(self.open_action());
-                    let mut pending = vec![RELAY_MAILBOX];
-                    pending.extend(self.nostr_probe_open(now, out));
                     self.probe = Some(Probe {
                         started_at: now,
-                        pending,
+                        pending: vec![RELAY_MAILBOX],
                         ok: false,
                     });
                 }
@@ -2895,7 +2759,6 @@ impl Link {
             out.push(self.close_action());
         }
         self.mb.relay.state = MailboxState::Closed;
-        self.nostr_probe_close(out);
         self.probe = None;
         self.probe_next_at = now.saturating_add(PROBE_EVERY_MS);
         self.set_hint(HINT_RECOVERY, !reachable, out);
@@ -2950,7 +2813,12 @@ impl Link {
             return;
         };
         self.peer_skew = own.abs_diff(theirs) > CLOCK_SKEW_S;
-        self.refresh_clock_hint(now, out);
+        self.refresh_clock_hint(out);
+    }
+
+    /// `clock_skew` is up while the peer's clock differs from ours by more than [`CLOCK_SKEW_S`].
+    fn refresh_clock_hint(&mut self, out: &mut Vec<LinkAction>) {
+        self.set_hint(HINT_CLOCK_SKEW, self.peer_skew, out);
     }
 
     fn send_missed_events(
@@ -3275,7 +3143,6 @@ impl Link {
             self.here_housekeeping(now, out);
             self.ice_housekeeping(now, out);
             self.resend_housekeeping(now, out);
-            self.nostr_housekeeping(now, out);
             if self.cfg.role == Role::Baby {
                 // The sound level is not for a parent that has not proven itself: with a pinned
                 // parent it stays out of the heartbeats until the attempt is trusted (the
@@ -3369,7 +3236,6 @@ impl Link {
                 let Some(baby) = self.peer_route() else {
                     return;
                 };
-                self.nostr_attempt_events = 0;
                 let aid = self.fresh_aid();
                 self.send_payload(
                     &baby,
@@ -3423,7 +3289,7 @@ impl Link {
     }
 
     fn cause(&self) -> Option<String> {
-        let c = if self.mb.relay.state != MailboxState::Joined && !self.nostr_any_open() {
+        let c = if self.mb.relay.state != MailboxState::Joined {
             "server_unreachable"
         } else if !self.peer_ready() {
             "peer_absent"
@@ -4136,8 +4002,8 @@ mod tests {
             },
             LinkEvent::MailboxesUpdated {
                 mailboxes: vec![InviteMailbox {
-                    kind: MailboxKind::Nostr,
-                    url: "wss://nostr.example".into(),
+                    kind: MailboxKind::Relay,
+                    url: "wss://relay.example".into(),
                 }],
             },
             LinkEvent::Hint {

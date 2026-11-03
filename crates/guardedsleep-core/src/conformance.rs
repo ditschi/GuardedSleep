@@ -16,7 +16,6 @@ use crate::protocol::{
     Role, parse_challenge, parse_client_message, parse_data_message, parse_data_message_v2_legacy,
     parse_server_message,
 };
-use crate::relay_pick::{RelayCandidate, extra_relays, pick_relays};
 use crate::session::{Input, Session, SessionConfig};
 
 pub fn evaluate(case_json: &str) -> String {
@@ -157,41 +156,11 @@ fn evaluate_value(case_json: &str) -> Result<Value, String> {
                 },
             )
         }
-        // `current` present: the extras a device adds to those hosts; otherwise the invite's picks.
-        "relay_pick" => {
-            let psk = decode_psk(s("psk_b64url")?).ok_or("bad psk")?;
-            let candidates: Vec<RelayCandidate> = serde_json::from_value(
-                case.get("candidates")
-                    .cloned()
-                    .ok_or("missing candidates")?,
-            )
-            .map_err(|e| e.to_string())?;
-            let strings = |name: &str| -> Result<Vec<String>, String> {
-                case.get(name)
-                    .map(|v| serde_json::from_value(v.clone()).map_err(|e| e.to_string()))
-                    .unwrap_or_else(|| Ok(Vec::new()))
-            };
-            let parked = strings("parked")?;
-            let count = case
-                .get("count")
-                .and_then(Value::as_u64)
-                .ok_or("missing count")? as usize;
-            let picked = if case.get("current").is_some() {
-                extra_relays(&psk, &candidates, &parked, &strings("current")?, count)
-            } else {
-                pick_relays(&psk, &candidates, &parked, count)
-            };
-            to_value(picked.into_iter().map(|m| m.url).collect::<Vec<_>>())
-        }
         // Fixed-nonce sealing and key export exist only in test and conformance builds.
         #[cfg(any(test, feature = "conformance"))]
         "envelope_key" | "envelope_seal" | "envelope_open" => {
             crate::conformance_envelope::evaluate(kind, &case)
         }
-        // The Nostr cases sign with a caller-chosen `aux_rand`: test and conformance builds only.
-        #[cfg(any(test, feature = "conformance"))]
-        "nostr_epoch" | "nostr_tag" | "nostr_pubkey" | "nostr_event" | "nostr_verify"
-        | "nostr_frame" => crate::conformance_nostr::evaluate(kind, &case),
         "session" => run_session(&case),
         "link" => run_link(&case),
         other => Err(format!("unknown kind {other}")),

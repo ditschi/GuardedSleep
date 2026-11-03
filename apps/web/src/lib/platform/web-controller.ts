@@ -33,12 +33,7 @@ import type { SoundGate } from "./audio";
 import { BabyModel } from "./baby-model";
 import type { Clock, Timers } from "./clock";
 import { encodeBase64Url } from "./encoding";
-import {
-  mailboxesForUrls,
-  nostrMailboxesForUrls,
-  nostrMailboxesOf,
-  signalingUrlsOf,
-} from "./invite-mailboxes";
+import { mailboxesForUrls, signalingUrlsOf } from "./invite-mailboxes";
 import { LinkDriver, type LinkListener } from "./link-driver";
 import type { InboundAudioStats, MediaEngine } from "./media-engine";
 import { idleWatch, type PageWatch } from "./page-watch";
@@ -86,12 +81,6 @@ export interface ControllerDeps {
   deviceName?: () => string;
   /** Development builds only: the core also accepts loopback mailboxes in a received update. */
   allowDevLoopback?: boolean;
-  /**
-   * Nostr relays a baby names in its invite, chosen from the pairing key: the curated public
-   * relays (behind the release gate `publicRelaysEnabled`) or the local test relay of the dev and
-   * E2E builds.
-   */
-  nostrRelays?: (psk: Uint8Array) => string[];
   /** Wake lock, page visibility and sleep detection; absent in tests that do not need them. */
   page?: PageWatch;
 }
@@ -100,8 +89,6 @@ export interface ControllerDeps {
 interface StoredPairing {
   pskB64Url: string;
   urls: string[];
-  /** The public Nostr relays of the pairing (the core opens them). */
-  nostr: InviteMailbox[];
   pairedBefore: boolean;
   /** The pinned parent secret (64 hex characters): memory only, like the PSK. */
   parentSecret: string | null;
@@ -112,7 +99,6 @@ interface StoredPairing {
 interface PendingPairing {
   pskB64Url: string;
   urls: string[];
-  nostr: InviteMailbox[];
   startedAt: number;
   expiresAtElapsedMs: number | null;
   unreachableShown: boolean;
@@ -124,7 +110,6 @@ interface PendingPairing {
    */
   pinnedSecret: string | null;
   receivedUrls: string[] | null;
-  receivedNostr: InviteMailbox[] | null;
   /**
    * The first-pairing window (Unix seconds): the expiry of the invite, then the last
    * `window_until_s` of `parent_pinned`. Null once the baby acknowledged the secret.
@@ -283,9 +268,8 @@ export class WebController implements AppController {
     const now = this.deps.clock.elapsedMs();
     const psk = this.deps.randomBytes(PSK_BYTES);
     const expiresAtS = Math.floor(this.deps.clock.wallMs() / 1000) + INVITE_VALIDITY_MS / 1000;
-    const nostr = nostrMailboxesForUrls(this.deps.nostrRelays?.(psk) ?? []);
     const invite = urls.length
-      ? this.deps.core.buildInvite(psk, [...mailboxesForUrls(urls), ...nostr], expiresAtS)
+      ? this.deps.core.buildInvite(psk, mailboxesForUrls(urls), expiresAtS)
       : null;
     const pskB64Url = encodeBase64Url(psk);
     psk.fill(0);
@@ -296,14 +280,12 @@ export class WebController implements AppController {
     const pending: PendingPairing = {
       pskB64Url,
       urls,
-      nostr,
       startedAt: now,
       expiresAtElapsedMs: now + INVITE_VALIDITY_MS,
       unreachableShown: false,
       parentSecret: null,
       pinnedSecret: null,
       receivedUrls: null,
-      receivedNostr: null,
       pinUntilS: expiresAtS,
     };
     this.pairingStore.set(
@@ -342,14 +324,12 @@ export class WebController implements AppController {
       {
         pskB64Url,
         urls: signalingUrlsOf(parsed.invite.mailboxes),
-        nostr: nostrMailboxesOf(parsed.invite.mailboxes),
         startedAt: this.deps.clock.elapsedMs(),
         expiresAtElapsedMs: null,
         unreachableShown: false,
         parentSecret: null,
         pinnedSecret: null,
         receivedUrls: null,
-        receivedNostr: null,
         pinUntilS: parsed.invite.expiresAtEpochS,
       },
       false,
@@ -378,14 +358,12 @@ export class WebController implements AppController {
       {
         pskB64Url: stored.pskB64Url,
         urls: stored.urls,
-        nostr: stored.nostr,
         startedAt: this.deps.clock.elapsedMs(),
         expiresAtElapsedMs: null,
         unreachableShown: false,
         parentSecret: stored.parentSecret,
         pinnedSecret: null,
         receivedUrls: null,
-        receivedNostr: null,
         pinUntilS: stored.pinUntilS,
       },
       stored.pairedBefore,
@@ -596,13 +574,8 @@ export class WebController implements AppController {
       ...(pending.parentSecret === null ? {} : { pinned_parent: pending.parentSecret }),
       ...(pending.pinUntilS === null ? {} : { pin_window_until_s: pending.pinUntilS }),
       ...(role === "parent" ? { device_name: this.deps.deviceName?.() ?? "" } : {}),
-      // The set of the pairing: the core opens its Nostr relays, and the baby sends the whole set
-      // to the parent after each verification.
-      ...(role === "baby"
-        ? { mailboxes: [...mailboxesForUrls(pending.urls), ...pending.nostr] }
-        : pending.nostr.length > 0
-          ? { mailboxes: pending.nostr }
-          : {}),
+      // The baby sends the set of the pairing to the parent after each verification.
+      ...(role === "baby" ? { mailboxes: mailboxesForUrls(pending.urls) } : {}),
       allow_dev_loopback: this.deps.allowDevLoopback ?? false,
     };
   }
@@ -674,7 +647,6 @@ export class WebController implements AppController {
     this.stored = {
       pskB64Url: pending.pskB64Url,
       urls: pending.receivedUrls ?? pending.urls,
-      nostr: pending.receivedNostr ?? pending.nostr,
       pairedBefore: true,
       parentSecret: pending.pinnedSecret,
       pinUntilS: pending.pinUntilS,
@@ -705,13 +677,11 @@ export class WebController implements AppController {
   /** The baby's current mailbox set replaces the stored one. */
   private keepMailboxes(r: Run, mailboxes: InviteMailbox[]): void {
     const urls = signalingUrlsOf(mailboxes);
-    const nostr = nostrMailboxesOf(mailboxes);
-    if (urls.length === 0 && nostr.length === 0) return;
+    if (urls.length === 0) return;
     if (r.pending) {
-      if (urls.length > 0) r.pending.receivedUrls = urls;
-      r.pending.receivedNostr = nostr;
+      r.pending.receivedUrls = urls;
     } else if (this.stored) {
-      this.stored = { ...this.stored, urls: urls.length > 0 ? urls : this.stored.urls, nostr };
+      this.stored = { ...this.stored, urls };
     }
   }
 

@@ -254,45 +254,6 @@ fuzz target="envelope_open" *args:
 smoke:
     scripts/cargo.sh test -p guardedsleep-server --test smoke
 
-# Two real Links over three relays picked from data/nostr-relays.json for N hours (default 8), a forced link
-# loss every 10 minutes, a verdict per design section 9 of alpha-connection-model. Extra options go to gs-soak
-# (`--relays`, `--tag-only`, `--loss-every-min`, `--trace`, see scripts/spike/soak --help). The report lands in
-# .cache/relay-soak/. Runbook: docs/contributing/relay-soak.md.
-
-# Go/no-go soak of the public Nostr mailboxes (task 4.2); needs network, exits 0 also for a no-go or inconclusive verdict.
-soak hours="8" *args:
-    scripts/lib/slot.sh heavy -- just _soak {{ hours }} {{ args }}
-
-[private]
-[script("bash")]
-_soak hours *args:
-    set -euo pipefail
-    source scripts/lib/require.sh
-    require soak cargo network
-    rc=0
-    scripts/spike/soak --hours {{ hours }} {{ args }} || rc=$?
-    # gs-soak exits 0 for go, 3 for no-go, 4 for inconclusive: verdicts, not tool failures.
-    case "$rc" in
-      0 | 3 | 4) echo "soak verdict exit code: $rc (0 go, 3 no-go, 4 inconclusive)"; exit 0 ;;
-      *) exit "$rc" ;;
-    esac
-
-# Measures the active relays of data/nostr-relays.json and the STUN servers of data/stun-servers.json (NIP-11,
-# connect, delivery, 2-16 KiB events, retention, created_at tolerance, burst). Report in .cache/relays-check/.
-# Weekly in CI (relays-weekly.yml), not part of `just ci`.
-
-# Measure the listed Nostr relays and STUN servers; needs network, exits 1 when an active entry fails.
-relays-check *args:
-    scripts/lib/slot.sh medium -- just _relays-check {{ args }}
-
-[private]
-[script("bash")]
-_relays-check *args:
-    set -euo pipefail
-    source scripts/lib/require.sh
-    require relays-check cargo network
-    node scripts/spike/relays-check.mjs {{ args }}
-
 # Docker stack with the host LAN IP, for phone tests.
 stack-lan:
     scripts/lib/slot.sh heavy -- just _stack-lan

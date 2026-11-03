@@ -131,21 +131,12 @@ pub const REPLY_BUDGET: usize = 10;
 pub enum Purpose {
     /// The envelope seal key.
     Seal,
-    /// HMAC key of the daily Nostr tag.
-    NostrTag,
-    /// Seed of the daily per-role Nostr signing keys.
-    NostrKey,
-    /// Seed of the deterministic relay choice.
-    RelayPick,
 }
 
 impl Purpose {
     fn info(self) -> &'static [u8] {
         match self {
             Purpose::Seal => b"guardedsleep seal v1",
-            Purpose::NostrTag => b"guardedsleep nostr tag v1",
-            Purpose::NostrKey => b"guardedsleep nostr key v1",
-            Purpose::RelayPick => b"guardedsleep relay pick v1",
         }
     }
 
@@ -154,9 +145,6 @@ impl Purpose {
     pub fn from_name(name: &str) -> Option<Self> {
         Some(match name {
             "seal" => Purpose::Seal,
-            "nostr_tag" => Purpose::NostrTag,
-            "nostr_key" => Purpose::NostrKey,
-            "relay_pick" => Purpose::RelayPick,
             _ => return None,
         })
     }
@@ -166,12 +154,6 @@ impl Purpose {
 pub struct SecretKey([u8; 32]);
 
 impl SecretKey {
-    /// The raw key for the in-crate key schedules (Nostr tag and signing keys): never leaves the
-    /// crate.
-    pub(crate) fn expose(&self) -> &[u8; 32] {
-        &self.0
-    }
-
     /// Exposes the raw key: conformance vectors only, never in a release build.
     #[cfg(any(test, feature = "conformance"))]
     pub fn as_bytes(&self) -> &[u8; 32] {
@@ -1525,21 +1507,10 @@ mod tests {
     }
 
     #[test]
-    fn hkdf_info_strings_give_four_independent_keys() {
-        let keys: Vec<_> = [
-            Purpose::Seal,
-            Purpose::NostrTag,
-            Purpose::NostrKey,
-            Purpose::RelayPick,
-        ]
-        .into_iter()
-        .map(|p| *derive_key(&PSK, p).unwrap().as_bytes())
-        .collect();
-        for (i, a) in keys.iter().enumerate() {
-            for b in keys.iter().skip(i + 1) {
-                assert_ne!(a, b);
-            }
-        }
+    fn the_seal_key_depends_on_the_psk_and_needs_one() {
+        let a = *derive_key(&PSK, Purpose::Seal).unwrap().as_bytes();
+        let b = *derive_key(&[4; 32], Purpose::Seal).unwrap().as_bytes();
+        assert_ne!(a, b);
         assert!(derive_key(&[], Purpose::Seal).is_none());
     }
 
@@ -1663,11 +1634,6 @@ mod tests {
         let other = derive_key(&[4; 32], Purpose::Seal).unwrap();
         assert_eq!(
             p.parent.open(&other, &mut p.rp, 9, &s.bytes),
-            Err(OpenError::BadTag)
-        );
-        let tag_key = derive_key(&PSK, Purpose::NostrTag).unwrap();
-        assert_eq!(
-            p.parent.open(&tag_key, &mut p.rp, 9, &s.bytes),
             Err(OpenError::BadTag)
         );
     }

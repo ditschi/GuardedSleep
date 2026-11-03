@@ -12,9 +12,6 @@ use guardedsleep_core::invite::{
     parse_invite as core_parse_invite,
 };
 use guardedsleep_core::link::{Link, LinkAction, LinkConfig, LinkInput};
-use guardedsleep_core::relay_pick::{
-    RelayCandidate, extra_relays as core_extra_relays, pick_relays as core_pick_relays,
-};
 use guardedsleep_core::session::{Action, ConfigError, Input, Session, SessionConfig};
 
 mod remote_types;
@@ -205,31 +202,6 @@ pub fn build_invite(
         expires_at_epoch_s,
         allow_dev_loopback,
     )?)
-}
-
-/// The public Nostr relays a baby adds to its invite: up to `count` entries of the shipped list,
-/// from distinct operators, chosen deterministically from the pairing key (`relay pick v1`).
-/// `parked` hosts are skipped. The platform owns the list; the core carries no relay data.
-#[uniffi::export]
-pub fn pick_relays(
-    psk: Vec<u8>,
-    candidates: Vec<RelayCandidate>,
-    parked: Vec<String>,
-    count: u32,
-) -> Vec<InviteMailbox> {
-    core_pick_relays(&psk, &candidates, &parked, count as usize)
-}
-
-/// Up to `max` more relays from this device's own list on top of the invite's `current` hosts.
-#[uniffi::export]
-pub fn extra_relays(
-    psk: Vec<u8>,
-    candidates: Vec<RelayCandidate>,
-    parked: Vec<String>,
-    current: Vec<String>,
-    max: u32,
-) -> Vec<InviteMailbox> {
-    core_extra_relays(&psk, &candidates, &parked, &current, max as usize)
 }
 
 #[uniffi::export]

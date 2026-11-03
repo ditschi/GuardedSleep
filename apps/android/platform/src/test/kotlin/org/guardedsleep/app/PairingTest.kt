@@ -16,8 +16,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import uniffi.guardedsleep_core.InviteMailbox
-import uniffi.guardedsleep_core.MailboxKind
 
 class PairingTest {
     @get:Rule val tmp = TemporaryFolder()
@@ -67,34 +65,9 @@ class PairingTest {
     }
 
     @Test
-    fun nostrMailboxesAreNotOpenedAsSignalingUrlsButKeptForTheCore() {
-        val text = payload(m = """["r:a.example","n:relay.example.org","l:192.168.1.5:8787"]""")
-        val parsed = PairingPayload.parse(text, now) as Result.Ok
-        assertEquals(
-            listOf("wss://a.example", "ws://192.168.1.5:8787"),
-            parsed.payload.signalingUrls,
-        )
-        // The core opens the public relays itself, from LinkConfig.mailboxes.
-        assertEquals(
-            listOf(InviteMailbox(MailboxKind.NOSTR, "wss://relay.example.org")),
-            parsed.payload.nostr,
-        )
-    }
-
-    @Test
-    fun anInviteWithNostrRelaysRoundTrips() {
-        val nostr =
-            listOf(
-                InviteMailbox(MailboxKind.NOSTR, "wss://relay-a.example"),
-                InviteMailbox(MailboxKind.NOSTR, "wss://relay-b.example"),
-            )
-        val p = PairingPayload.create(psk, listOf("wss://a.example/sig"), now, nostr)
-        val json = JSONObject(p.toInviteText()!!)
-        assertEquals(
-            """["r:a.example/sig","n:relay-a.example","n:relay-b.example"]""",
-            json.getJSONArray("m").toString(),
-        )
-        assertEquals(p, (PairingPayload.parse(p.toInviteText()!!, now) as Result.Ok).payload)
+    fun anNEntryOfTheRemovedNostrKindIsNotOurCode() {
+        val text = payload(m = """["r:a.example","n:relay.example.org"]""")
+        assertEquals(PairingError.NOT_OUR_CODE, rejected(text))
     }
 
     @Test
@@ -197,7 +170,7 @@ class PairingTest {
         val set =
             listOf(
                 StoredMailbox("relay", "wss://r.example/sig"),
-                StoredMailbox("nostr", "wss://n.example"),
+                StoredMailbox("lan", "ws://192.168.1.5:8787"),
             )
         // Nothing to attach to before the first verification saved the record.
         assertFalse(s.setParentSecret(secret))
@@ -208,8 +181,8 @@ class PairingTest {
         val loaded = s.load()!!
         assertEquals(secret, loaded.parentSecretB64url)
         assertEquals(set, loaded.mailboxes)
-        // The platform opens the relay and LAN mailboxes of the set; Nostr waits for the core.
-        assertEquals(listOf("wss://r.example/sig"), loaded.signalingUrls)
+        // The platform opens the relay and LAN mailboxes of the set.
+        assertEquals(listOf("wss://r.example/sig", "ws://192.168.1.5:8787"), loaded.signalingUrls)
         // Never in the clear on disk, never in the string form.
         val onDisk = File(tmp.root, "pairing.bin").readText()
         assertFalse(onDisk.contains(secret))
@@ -224,6 +197,7 @@ class PairingTest {
     fun aMailboxSetWithoutRelayOrLanKeepsTheCurrentUrls() {
         val (s, _) = store()
         s.save(StoredPairing(PairingPayload.b64(psk), listOf("wss://keep.example"), true))
+        // A record of an earlier alpha may still name a `nostr` entry: it is not a signaling URL.
         s.setMailboxes(listOf(StoredMailbox("nostr", "wss://n.example")))
         assertEquals(listOf("wss://keep.example"), s.load()!!.signalingUrls)
     }

@@ -76,8 +76,6 @@ pub struct Node {
     pub events: Vec<LinkEvent>,
     pub created: Vec<u32>,
     pub open_signaling_calls: u32,
-    /// The URL of every Nostr mailbox this node's link asked to open.
-    pub nostr_opens: Vec<String>,
     pub mic_calls: Vec<bool>,
     pub apply_quiet_calls: u32,
     pub probe_tones: u32,
@@ -204,7 +202,6 @@ impl World {
             events: Vec::new(),
             created: Vec::new(),
             open_signaling_calls: 0,
-            nostr_opens: Vec::new(),
             mic_calls: Vec::new(),
             apply_quiet_calls: 0,
             probe_tones: 0,
@@ -484,9 +481,9 @@ impl World {
     fn exec(&mut self, n: usize, actions: Vec<LinkAction>) {
         for a in actions {
             match a {
-                // Only the relay has a fake server here; Nostr mailboxes are recorded, not served.
+                // Only the relay has a fake server here.
                 LinkAction::OpenMailbox { id: 0, .. } => self.open_signaling(n),
-                LinkAction::OpenMailbox { url, .. } => self.nodes[n].nostr_opens.push(url),
+                LinkAction::OpenMailbox { .. } => {}
                 LinkAction::CloseMailbox { id: 0 } => self.close_signaling(n),
                 LinkAction::CloseMailbox { .. } => {}
                 LinkAction::MailboxSend { id: 0, frame } => self.node_to_server(n, &frame),

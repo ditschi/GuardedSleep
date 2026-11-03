@@ -115,7 +115,7 @@ export class LinkDriver {
   }
 
   /**
-   * The wall clock in Unix seconds, for the core's Nostr epochs only (never liveness): sent at start,
+   * The wall clock in Unix seconds, for the `here` message and the clock comparison with the peer only (never liveness): sent at start,
    * every 60 s, and when a tick sees the clock jump (more than 2 s off the elapsed monotonic time
    * since the last report), which covers a changed device time.
    */
@@ -216,8 +216,8 @@ export class LinkDriver {
   }
 
   /**
-   * The core's `url` is empty for the relay mailbox: its URL list still lives here. A Nostr mailbox
-   * names its relay, and only that address is tried. A failed open comes back as
+   * The core's `url` is empty for the relay mailbox: its URL list still lives here. A mailbox
+   * that names its address gets only that address tried. A failed open comes back as
    * `mailbox_closed`, never as a retry.
    */
   private openMailbox(id: number, url: string): void {
@@ -230,7 +230,7 @@ export class LinkDriver {
         if (current()) this.dispatch({ type: "mailbox_opened", id });
       },
       onMessage: (bytes) => {
-        // A frame over the cap is dropped here (a public relay is untrusted); the core caps too.
+        // A frame over the cap is dropped here (a relay is untrusted); the core caps too.
         if (current() && bytes.length <= MAX_FRAME_CHARS) {
           this.dispatch({ type: "mailbox_frame", id, bytes });
         }

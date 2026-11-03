@@ -96,7 +96,6 @@ function setup(
     micDenied?: boolean;
     core?: ScriptedCore;
     defaultUrls?: string[];
-    nostrRelays?: string[];
   } = {},
 ) {
   FakeWebSocket.instances = [];
@@ -139,7 +138,6 @@ function setup(
     entropy: () => 99,
     defaultSignalingUrls: () => options.defaultUrls ?? [RELAY],
     deviceName: () => "Chrome on Android",
-    ...(options.nostrRelays ? { nostrRelays: () => options.nostrRelays ?? [] } : {}),
   });
   return { controller, time, core, medias, media, ctx, gate, alerts, network };
 }
@@ -933,50 +931,31 @@ describe("WebController: with the real core", () => {
   });
 });
 
-describe("WebController: Nostr mailboxes", () => {
-  const NOSTR_A: InviteMailbox = { kind: "nostr", url: "wss://relay-a.example" };
-  const NOSTR_B: InviteMailbox = { kind: "nostr", url: "wss://relay-b.example" };
+describe("WebController: mailbox set", () => {
+  const RELAY_B: InviteMailbox = { kind: "relay", url: "wss://relay-b.example" };
 
-  it("parent: the Nostr relays of the invite go to the core, not to the signaling addresses", async () => {
+  it("baby: the invite and the config name the configured relay", async () => {
     const t = setup();
-    t.controller.chooseRole("parent");
-    const invite = realCore.buildInvite(
-      new Uint8Array(32).fill(5),
-      [RELAY_MAILBOX, NOSTR_A, NOSTR_B],
-      1e10,
-    );
-    if (!invite.ok) throw new Error("invite");
-    t.controller.submitPairingCode(invite.text);
-    await flush();
-    expect(t.core.configs[0]?.mailboxes).toEqual([NOSTR_A, NOSTR_B]);
-    // Only the own relay is a signaling address (and so the only one the ICE servers come from).
-    expect(t.media.requests[0]?.ice).toEqual([{ urls: ["stun:relay.test:3478"] }]);
-  });
-
-  it("baby: the invite and the config name the configured Nostr relays next to the own relay", async () => {
-    const t = setup({ nostrRelays: ["wss://relay-a.example"] });
     t.controller.chooseRole("baby");
     t.controller.startPairing();
     await flush();
-    expect(t.core.configs[0]?.mailboxes).toEqual([RELAY_MAILBOX, NOSTR_A]);
+    expect(t.core.configs[0]?.mailboxes).toEqual([RELAY_MAILBOX]);
     const code = get(t.controller.pairing)?.codePayload ?? "";
     const parsed = realCore.parseInvite(code, 1);
     if (!parsed.ok) throw new Error("the baby's own invite parses");
-    expect(parsed.invite.mailboxes).toEqual([RELAY_MAILBOX, NOSTR_A]);
+    expect(parsed.invite.mailboxes).toEqual([RELAY_MAILBOX]);
   });
 
-  it("a mailbox update replaces the Nostr relays of the next run as well", async () => {
+  it("parent: a mailbox update replaces the signaling addresses of the next run", async () => {
     const t = setup();
     t.controller.chooseRole("parent");
-    const invite = realCore.buildInvite(new Uint8Array(32).fill(5), [RELAY_MAILBOX, NOSTR_A], 1e10);
+    const invite = realCore.buildInvite(new Uint8Array(32).fill(5), [RELAY_MAILBOX], 1e10);
     if (!invite.ok) throw new Error("invite");
     t.core.script = (input) => (input.type === "start" ? [emitStatus({ state: "connected" })] : []);
     t.controller.submitPairingCode(invite.text);
     await flush();
     t.time.advance(250);
-    t.core.script = () => [
-      emit({ type: "mailboxes_updated", mailboxes: [RELAY_MAILBOX, NOSTR_B] }),
-    ];
+    t.core.script = () => [emit({ type: "mailboxes_updated", mailboxes: [RELAY_B] })];
     t.time.advance(250);
     t.controller.stopMonitoring();
     t.time.advance(600);
@@ -984,7 +963,9 @@ describe("WebController: Nostr mailboxes", () => {
     t.core.script = () => [];
     t.controller.startMonitoring();
     await flush();
-    const last = t.core.configs[t.core.configs.length - 1];
-    expect(last?.mailboxes).toEqual([NOSTR_B]);
+    // The ICE servers come from the signaling addresses, so they show which list the run used.
+    expect(t.media.requests[t.media.requests.length - 1]?.ice).toEqual([
+      { urls: ["stun:relay-b.example:3478"] },
+    ]);
   });
 });

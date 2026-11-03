@@ -10,7 +10,6 @@ members = [
   "crates/uniffi-bindgen",
   "crates/i18n-gen",
   "crates/public-lists",
-  "crates/gs-soak",
 ]
 
 [workspace.package]

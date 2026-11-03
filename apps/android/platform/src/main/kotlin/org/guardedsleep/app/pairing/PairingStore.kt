@@ -9,9 +9,7 @@ data class TurnCredentials(val url: String, val username: String, val credential
     override fun toString(): String = "TurnCredentials(url=<redacted>, credential=<redacted>)"
 }
 
-/**
- * One mailbox of the pairing's set: `kind` is `relay`, `nostr` or `lan` (the core's wire names).
- */
+/** One mailbox of the pairing's set: `kind` is `relay` or `lan` (the core's wire names). */
 data class StoredMailbox(val kind: String, val url: String)
 
 /** The one saved pairing of this phone (ADR-018: 1 baby + 1 parent). */
@@ -130,7 +128,7 @@ class PairingStore(file: File, cipher: PairingCipher) {
     @Synchronized
     fun setMailboxes(mailboxes: List<StoredMailbox>): Boolean {
         val stored = load() ?: return false
-        val urls = mailboxes.filter { it.kind != "nostr" }.map { it.url }
+        val urls = mailboxes.filter { it.kind == "relay" || it.kind == "lan" }.map { it.url }
         save(
             stored.copy(
                 mailboxes = mailboxes,

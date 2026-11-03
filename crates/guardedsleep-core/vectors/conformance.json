@@ -3923,22 +3923,23 @@
     }
   },
   {
-    "name": "invite parse: nostr entry",
+    "name": "invite parse: n entry is not our code (Nostr removed)",
     "kind": "parse_invite",
     "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"n:relay.example.org\"],\"x\":1700000300}",
     "now_epoch_s": 1700000000,
     "expect": {
-      "ok": {
-        "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-        "mailboxes": [
-          {
-            "kind": "nostr",
-            "url": "wss://relay.example.org"
-          }
-        ],
-        "expires_at_epoch_s": 1700000300
-      }
+      "error": "not_our_code"
     }
+  },
+  {
+    "name": "invite parse: n entry stays refused with the dev switch",
+    "kind": "parse_invite",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"n:127.0.0.1:7777\"],\"x\":1700000300}",
+    "now_epoch_s": 1700000000,
+    "expect": {
+      "error": "not_our_code"
+    },
+    "allow_dev_loopback": true
   },
   {
     "name": "invite parse: own relay with port and path",
@@ -4049,9 +4050,9 @@
     }
   },
   {
-    "name": "invite parse: all kinds in order",
+    "name": "invite parse: relay and lan in order",
     "kind": "parse_invite",
-    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com\",\"n:a.example.org\",\"n:b.example.org\",\"l:192.168.1.5:8787\"],\"x\":1700000300}",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com\",\"r:a.example.org\",\"r:b.example.org\",\"l:192.168.1.5:8787\"],\"x\":1700000300}",
     "now_epoch_s": 1700000000,
     "expect": {
       "ok": {
@@ -4062,11 +4063,11 @@
             "url": "wss://gs.example.com"
           },
           {
-            "kind": "nostr",
+            "kind": "relay",
             "url": "wss://a.example.org"
           },
           {
-            "kind": "nostr",
+            "kind": "relay",
             "url": "wss://b.example.org"
           },
           {
@@ -4081,34 +4082,34 @@
   {
     "name": "invite parse: six entries",
     "kind": "parse_invite",
-    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"n:a.example\",\"n:b.example\",\"n:c.example\",\"n:d.example\",\"n:e.example\",\"n:f.example\"],\"x\":1700000300}",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:a.example\",\"r:b.example\",\"r:c.example\",\"r:d.example\",\"r:e.example\",\"r:f.example\"],\"x\":1700000300}",
     "now_epoch_s": 1700000000,
     "expect": {
       "ok": {
         "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
         "mailboxes": [
           {
-            "kind": "nostr",
+            "kind": "relay",
             "url": "wss://a.example"
           },
           {
-            "kind": "nostr",
+            "kind": "relay",
             "url": "wss://b.example"
           },
           {
-            "kind": "nostr",
+            "kind": "relay",
             "url": "wss://c.example"
           },
           {
-            "kind": "nostr",
+            "kind": "relay",
             "url": "wss://d.example"
           },
           {
-            "kind": "nostr",
+            "kind": "relay",
             "url": "wss://e.example"
           },
           {
-            "kind": "nostr",
+            "kind": "relay",
             "url": "wss://f.example"
           }
         ],
@@ -4297,24 +4298,6 @@
     }
   },
   {
-    "name": "invite parse: nostr with port",
-    "kind": "parse_invite",
-    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"n:a.example:443\"],\"x\":1700000300}",
-    "now_epoch_s": 1700000000,
-    "expect": {
-      "error": "not_our_code"
-    }
-  },
-  {
-    "name": "invite parse: nostr with path",
-    "kind": "parse_invite",
-    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"n:a.example/x\"],\"x\":1700000300}",
-    "now_epoch_s": 1700000000,
-    "expect": {
-      "error": "not_our_code"
-    }
-  },
-  {
     "name": "invite parse: relay with query",
     "kind": "parse_invite",
     "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:a.example/x?y=1\"],\"x\":1700000300}",
@@ -4411,14 +4394,14 @@
   {
     "name": "invite parse: exactly 300 bytes",
     "kind": "parse_invite",
-    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"n:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaa.example\"],\"x\":1700000300}",
+    "text": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaa.example\"],\"x\":1700000300}",
     "now_epoch_s": 1700000000,
     "expect": {
       "ok": {
         "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
         "mailboxes": [
           {
-            "kind": "nostr",
+            "kind": "relay",
             "url": "wss://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaa.example"
           }
         ],
@@ -4527,7 +4510,7 @@
         "url": "wss://gs.example.com:8443/sig"
       },
       {
-        "kind": "nostr",
+        "kind": "relay",
         "url": "wss://a.example.org"
       },
       {
@@ -4537,7 +4520,7 @@
     ],
     "expires_at_epoch_s": 1700000300,
     "expect": {
-      "ok": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com:8443/sig\",\"n:a.example.org\",\"l:[fd12:3456::1]:9000\"],\"x\":1700000300}"
+      "ok": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com:8443/sig\",\"r:a.example.org\",\"l:[fd12:3456::1]:9000\"],\"x\":1700000300}"
     }
   },
   {
@@ -4666,15 +4649,15 @@
         "url": "wss://gs.example.com"
       },
       {
-        "kind": "nostr",
+        "kind": "relay",
         "url": "wss://a.example.org"
       },
       {
-        "kind": "nostr",
+        "kind": "relay",
         "url": "wss://b.example.org"
       },
       {
-        "kind": "nostr",
+        "kind": "relay",
         "url": "wss://c.example.org"
       },
       {
@@ -4684,7 +4667,7 @@
     ],
     "expires_at_epoch_s": 1700000300,
     "expect": {
-      "ok": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com\",\"n:a.example.org\",\"n:b.example.org\",\"n:c.example.org\",\"l:192.168.1.5:8787\"],\"x\":1700000300}"
+      "ok": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com\",\"r:a.example.org\",\"r:b.example.org\",\"r:c.example.org\",\"l:192.168.1.5:8787\"],\"x\":1700000300}"
     }
   },
   {
@@ -4693,41 +4676,41 @@
     "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
     "mailboxes": [
       {
-        "kind": "nostr",
+        "kind": "relay",
         "url": "wss://a.example"
       },
       {
-        "kind": "nostr",
+        "kind": "relay",
         "url": "wss://b.example"
       },
       {
-        "kind": "nostr",
+        "kind": "relay",
         "url": "wss://c.example"
       },
       {
-        "kind": "nostr",
+        "kind": "relay",
         "url": "wss://d.example"
       },
       {
-        "kind": "nostr",
+        "kind": "relay",
         "url": "wss://e.example"
       },
       {
-        "kind": "nostr",
+        "kind": "relay",
         "url": "wss://f.example"
       },
       {
-        "kind": "nostr",
+        "kind": "relay",
         "url": "wss://g.example"
       }
     ],
     "expires_at_epoch_s": 1700000300,
     "expect": {
-      "ok": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"n:a.example\",\"n:b.example\",\"n:c.example\",\"n:d.example\",\"n:e.example\",\"n:f.example\"],\"x\":1700000300}"
+      "ok": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:a.example\",\"r:b.example\",\"r:c.example\",\"r:d.example\",\"r:e.example\",\"r:f.example\"],\"x\":1700000300}"
     }
   },
   {
-    "name": "invite build: drop order: extra own relays first, last first",
+    "name": "invite build: drop order: extra relays, last first, keeps lan",
     "kind": "build_invite",
     "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
     "mailboxes": [
@@ -4744,83 +4727,13 @@
         "url": "wss://cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.relay.example.com"
       },
       {
-        "kind": "nostr",
-        "url": "wss://a.example.org"
-      },
-      {
-        "kind": "nostr",
-        "url": "wss://b.example.org"
-      },
-      {
-        "kind": "nostr",
-        "url": "wss://c.example.org"
-      }
-    ],
-    "expires_at_epoch_s": 1700000300,
-    "expect": {
-      "ok": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.relay.example.com\",\"r:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.relay.example.com\",\"n:a.example.org\",\"n:b.example.org\",\"n:c.example.org\"],\"x\":1700000300}"
-    }
-  },
-  {
-    "name": "invite build: drop order: one extra own relay is enough",
-    "kind": "build_invite",
-    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "mailboxes": [
-      {
-        "kind": "relay",
-        "url": "wss://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.relay.example.com"
-      },
-      {
-        "kind": "relay",
-        "url": "wss://bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.relay.example.com"
-      },
-      {
-        "kind": "nostr",
-        "url": "wss://a.example.org"
-      },
-      {
-        "kind": "nostr",
-        "url": "wss://b.example.org"
-      },
-      {
-        "kind": "nostr",
-        "url": "wss://c.example.org"
-      }
-    ],
-    "expires_at_epoch_s": 1700000300,
-    "expect": {
-      "ok": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.relay.example.com\",\"r:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.relay.example.com\",\"n:a.example.org\",\"n:b.example.org\",\"n:c.example.org\"],\"x\":1700000300}"
-    }
-  },
-  {
-    "name": "invite build: drop order: nostr down to two, keeps lan and first relay",
-    "kind": "build_invite",
-    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "mailboxes": [
-      {
-        "kind": "relay",
-        "url": "wss://gs.example.com"
-      },
-      {
-        "kind": "nostr",
-        "url": "wss://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.nostr.example.org"
-      },
-      {
-        "kind": "nostr",
-        "url": "wss://bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.nostr.example.org"
-      },
-      {
-        "kind": "nostr",
-        "url": "wss://cccccccccccccccccccccccccccccccccccccccc.nostr.example.org"
-      },
-      {
         "kind": "lan",
         "url": "ws://192.168.1.5:8787"
       }
     ],
     "expires_at_epoch_s": 1700000300,
     "expect": {
-      "ok": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:gs.example.com\",\"n:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.nostr.example.org\",\"n:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.nostr.example.org\",\"l:192.168.1.5:8787\"],\"x\":1700000300}"
+      "ok": "{\"v\":4,\"k\":\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\",\"m\":[\"r:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.relay.example.com\",\"r:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.relay.example.com\",\"l:192.168.1.5:8787\"],\"x\":1700000300}"
     }
   },
   {
@@ -4860,27 +4773,6 @@
     "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
     "purpose": "seal",
     "expect": "b37ade4fd179f849558983061219877a4a430e267a8ba0ba978cf0f950d16095"
-  },
-  {
-    "name": "envelope: key nostr_tag",
-    "kind": "envelope_key",
-    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "purpose": "nostr_tag",
-    "expect": "6ffe89527155d5801eded2b47ebe30a8259a451d576a65715cf85eda5767cc0b"
-  },
-  {
-    "name": "envelope: key nostr_key",
-    "kind": "envelope_key",
-    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "purpose": "nostr_key",
-    "expect": "ac4dc8875306928cd31944e4bd5140e4f7d7ee52e576c67b3f0f26ce14e93da6"
-  },
-  {
-    "name": "envelope: key relay_pick",
-    "kind": "envelope_key",
-    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "purpose": "relay_pick",
-    "expect": "d5213cba4320cf820a4d9f2c45d1d163dd698e7c6846f3e5605edf533eb7b202"
   },
   {
     "name": "envelope: seal parent here (1 KiB bucket)",
@@ -6328,7 +6220,7 @@
   {
     "name": "data v3: mailboxes",
     "kind": "parse_data_v3",
-    "raw": "{\"type\": \"mailboxes\", \"v\": 3, \"mailboxes\": [{\"kind\": \"relay\", \"url\": \"wss://relay.example\"}, {\"kind\": \"nostr\", \"url\": \"wss://nostr.example\"}]}",
+    "raw": "{\"type\": \"mailboxes\", \"v\": 3, \"mailboxes\": [{\"kind\": \"relay\", \"url\": \"wss://relay.example\"}, {\"kind\": \"lan\", \"url\": \"ws://192.168.1.5:8787\"}]}",
     "expect": {
       "type": "mailboxes",
       "mailboxes": [
@@ -6337,8 +6229,8 @@
           "url": "wss://relay.example"
         },
         {
-          "kind": "nostr",
-          "url": "wss://nostr.example"
+          "kind": "lan",
+          "url": "ws://192.168.1.5:8787"
         }
       ]
     }
@@ -6352,7 +6244,7 @@
   {
     "name": "data v3: mailboxes more than six",
     "kind": "parse_data_v3",
-    "raw": "{\"type\": \"mailboxes\", \"v\": 3, \"mailboxes\": [{\"kind\": \"nostr\", \"url\": \"wss://n0.example\"}, {\"kind\": \"nostr\", \"url\": \"wss://n1.example\"}, {\"kind\": \"nostr\", \"url\": \"wss://n2.example\"}, {\"kind\": \"nostr\", \"url\": \"wss://n3.example\"}, {\"kind\": \"nostr\", \"url\": \"wss://n4.example\"}, {\"kind\": \"nostr\", \"url\": \"wss://n5.example\"}, {\"kind\": \"nostr\", \"url\": \"wss://n6.example\"}]}",
+    "raw": "{\"type\": \"mailboxes\", \"v\": 3, \"mailboxes\": [{\"kind\": \"relay\", \"url\": \"wss://r0.example\"}, {\"kind\": \"relay\", \"url\": \"wss://r1.example\"}, {\"kind\": \"relay\", \"url\": \"wss://r2.example\"}, {\"kind\": \"relay\", \"url\": \"wss://r3.example\"}, {\"kind\": \"relay\", \"url\": \"wss://r4.example\"}, {\"kind\": \"relay\", \"url\": \"wss://r5.example\"}, {\"kind\": \"relay\", \"url\": \"wss://r6.example\"}]}",
     "expect": null
   },
   {
@@ -6467,757 +6359,5 @@
     "class": "control",
     "body": "01010101010101010101010101010101010101010101010101010101010101010101010101010102",
     "expect": "ef43f8a21ed8723fc483a6006cb44c05"
-  },
-  {
-    "name": "nostr: epoch of 0",
-    "kind": "nostr_epoch",
-    "unix_s": 0,
-    "expect": 0
-  },
-  {
-    "name": "nostr: epoch of 43199",
-    "kind": "nostr_epoch",
-    "unix_s": 43199,
-    "expect": 0
-  },
-  {
-    "name": "nostr: epoch of 43200",
-    "kind": "nostr_epoch",
-    "unix_s": 43200,
-    "expect": 0
-  },
-  {
-    "name": "nostr: epoch of 129599",
-    "kind": "nostr_epoch",
-    "unix_s": 129599,
-    "expect": 0
-  },
-  {
-    "name": "nostr: epoch of 129600",
-    "kind": "nostr_epoch",
-    "unix_s": 129600,
-    "expect": 1
-  },
-  {
-    "name": "nostr: epoch of 1792929599",
-    "kind": "nostr_epoch",
-    "unix_s": 1792929599,
-    "expect": 20750
-  },
-  {
-    "name": "nostr: epoch of 1792929600",
-    "kind": "nostr_epoch",
-    "unix_s": 1792929600,
-    "expect": 20751
-  },
-  {
-    "name": "nostr: epoch of 1793015999",
-    "kind": "nostr_epoch",
-    "unix_s": 1793015999,
-    "expect": 20751
-  },
-  {
-    "name": "nostr: epoch of 4000000000000",
-    "kind": "nostr_epoch",
-    "unix_s": 4000000000000,
-    "expect": 46296295
-  },
-  {
-    "name": "nostr: tag of epoch 0",
-    "kind": "nostr_tag",
-    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "epoch": 0,
-    "expect": "lNqyEbslU5n65LG_B6ecGH"
-  },
-  {
-    "name": "nostr: tag of epoch 1",
-    "kind": "nostr_tag",
-    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "epoch": 1,
-    "expect": "Qp_YwFTTY7FkZew9ILatLX"
-  },
-  {
-    "name": "nostr: tag of epoch 7",
-    "kind": "nostr_tag",
-    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "epoch": 7,
-    "expect": "xOWhNXbw5DOBITE7xUUf7y"
-  },
-  {
-    "name": "nostr: tag of epoch 1000",
-    "kind": "nostr_tag",
-    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "epoch": 1000,
-    "expect": "VV3ANl6l5deHPTpH6ebfyl"
-  },
-  {
-    "name": "nostr: tag of epoch 4294967295",
-    "kind": "nostr_tag",
-    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "epoch": 4294967295,
-    "expect": "ZDiH6wKx-lvvQhAq74fsWs"
-  },
-  {
-    "name": "nostr: another key has another tag",
-    "kind": "nostr_tag",
-    "psk_b64url": "ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8",
-    "epoch": 7,
-    "expect": "OoGEYV2DXk2wrJxWVFzPL2"
-  },
-  {
-    "name": "nostr: baby key of epoch 7",
-    "kind": "nostr_pubkey",
-    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "role": "baby",
-    "epoch": 7,
-    "expect": "b2f29a3197c9e7500ea32255573a3bf1e295824dcbdb431f0ae14ca903fe0072"
-  },
-  {
-    "name": "nostr: baby key of epoch 1000",
-    "kind": "nostr_pubkey",
-    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "role": "baby",
-    "epoch": 1000,
-    "expect": "b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d"
-  },
-  {
-    "name": "nostr: parent key of epoch 7",
-    "kind": "nostr_pubkey",
-    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "role": "parent",
-    "epoch": 7,
-    "expect": "97e0e6cccc4765c3bae18d2a46d64d665ace5d26811b1a50c99af7b240d8793e"
-  },
-  {
-    "name": "nostr: parent key of epoch 1000",
-    "kind": "nostr_pubkey",
-    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "role": "parent",
-    "epoch": 1000,
-    "expect": "03326eb405180b14d47e5904cbb624a8c2e9bf815d21602ae1a49551aa920026"
-  },
-  {
-    "name": "nostr: signed event of the baby, epoch 1000",
-    "kind": "nostr_event",
-    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "role": "baby",
-    "epoch": 1000,
-    "created_at": 86443205,
-    "aux": "0101010101010101010101010101010101010101010101010101010101010101",
-    "content": "QUJDREVGRw",
-    "expect": {
-      "id": "32b3740a549479f7bc0d5e2e27d86f088c9450677e9e7fd536ba5f45d01620ed",
-      "pubkey": "b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d",
-      "sig": "edee599b7b2335d6802ddcc03629fd963534610237023610699b23e0c827f9d7c0bcb0d15a7fc173c22add01b0bddec26bfbedbef1889b8bbc11a535823388ba",
-      "tag": "VV3ANl6l5deHPTpH6ebfyl",
-      "json": "{\"id\":\"32b3740a549479f7bc0d5e2e27d86f088c9450677e9e7fd536ba5f45d01620ed\",\"pubkey\":\"b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d\",\"created_at\":86443205,\"kind\":24861,\"tags\":[[\"t\",\"VV3ANl6l5deHPTpH6ebfyl\"]],\"content\":\"QUJDREVGRw\",\"sig\":\"edee599b7b2335d6802ddcc03629fd963534610237023610699b23e0c827f9d7c0bcb0d15a7fc173c22add01b0bddec26bfbedbef1889b8bbc11a535823388ba\"}"
-    }
-  },
-  {
-    "name": "nostr: signed event of the parent, epoch 1000",
-    "kind": "nostr_event",
-    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "role": "parent",
-    "epoch": 1000,
-    "created_at": 86446800,
-    "aux": "0000000000000000000000000000000000000000000000000000000000000000",
-    "content": "AAAA-_bbBB",
-    "expect": {
-      "id": "3c984eb5946ba46ea72b102019e4975f2559b291fc0697cb6c650085416879e7",
-      "pubkey": "03326eb405180b14d47e5904cbb624a8c2e9bf815d21602ae1a49551aa920026",
-      "sig": "4ff18fa3ccaac8f35d37c7da9783df02c19efcf4de223ac6d121d8e4999afcb75a5da10a5b36639c0b89099cdb44cd11e18906a5c2db3c99aff72b40aa463c99",
-      "tag": "VV3ANl6l5deHPTpH6ebfyl",
-      "json": "{\"id\":\"3c984eb5946ba46ea72b102019e4975f2559b291fc0697cb6c650085416879e7\",\"pubkey\":\"03326eb405180b14d47e5904cbb624a8c2e9bf815d21602ae1a49551aa920026\",\"created_at\":86446800,\"kind\":24861,\"tags\":[[\"t\",\"VV3ANl6l5deHPTpH6ebfyl\"]],\"content\":\"AAAA-_bbBB\",\"sig\":\"4ff18fa3ccaac8f35d37c7da9783df02c19efcf4de223ac6d121d8e4999afcb75a5da10a5b36639c0b89099cdb44cd11e18906a5c2db3c99aff72b40aa463c99\"}"
-    }
-  },
-  {
-    "name": "nostr: signed event of the baby, epoch 7",
-    "kind": "nostr_event",
-    "psk_b64url": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
-    "role": "baby",
-    "epoch": 7,
-    "created_at": 648017,
-    "aux": "abababababababababababababababababababababababababababababababab",
-    "content": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    "expect": {
-      "id": "a9d3a7ec64852b358f2a03b91a20d5ef5ca9edfdb389d907c26f74c67fadc77d",
-      "pubkey": "b2f29a3197c9e7500ea32255573a3bf1e295824dcbdb431f0ae14ca903fe0072",
-      "sig": "5a6975a48063664ad1a4d2c9c6ca00b698d03bf1355d356e794975240e3b84c5f38fa573ca8a373178c14f000e0682ed783eebaf0c8af4e7f1e314d660bb9890",
-      "tag": "xOWhNXbw5DOBITE7xUUf7y",
-      "json": "{\"id\":\"a9d3a7ec64852b358f2a03b91a20d5ef5ca9edfdb389d907c26f74c67fadc77d\",\"pubkey\":\"b2f29a3197c9e7500ea32255573a3bf1e295824dcbdb431f0ae14ca903fe0072\",\"created_at\":648017,\"kind\":24861,\"tags\":[[\"t\",\"xOWhNXbw5DOBITE7xUUf7y\"]],\"content\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"sig\":\"5a6975a48063664ad1a4d2c9c6ca00b698d03bf1355d356e794975240e3b84c5f38fa573ca8a373178c14f000e0682ed783eebaf0c8af4e7f1e314d660bb9890\"}"
-    }
-  },
-  {
-    "name": "nostr: a good event verifies",
-    "kind": "nostr_verify",
-    "event": "{\"id\":\"32b3740a549479f7bc0d5e2e27d86f088c9450677e9e7fd536ba5f45d01620ed\",\"pubkey\":\"b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d\",\"created_at\":86443205,\"kind\":24861,\"tags\":[[\"t\",\"VV3ANl6l5deHPTpH6ebfyl\"]],\"content\":\"QUJDREVGRw\",\"sig\":\"edee599b7b2335d6802ddcc03629fd963534610237023610699b23e0c827f9d7c0bcb0d15a7fc173c22add01b0bddec26bfbedbef1889b8bbc11a535823388ba\"}",
-    "expect": true
-  },
-  {
-    "name": "nostr: a changed created_at does not verify",
-    "kind": "nostr_verify",
-    "event": "{\"id\":\"32b3740a549479f7bc0d5e2e27d86f088c9450677e9e7fd536ba5f45d01620ed\",\"pubkey\":\"b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d\",\"created_at\":86443206,\"kind\":24861,\"tags\":[[\"t\",\"VV3ANl6l5deHPTpH6ebfyl\"]],\"content\":\"QUJDREVGRw\",\"sig\":\"edee599b7b2335d6802ddcc03629fd963534610237023610699b23e0c827f9d7c0bcb0d15a7fc173c22add01b0bddec26bfbedbef1889b8bbc11a535823388ba\"}",
-    "expect": false
-  },
-  {
-    "name": "nostr: a changed content does not verify",
-    "kind": "nostr_verify",
-    "event": "{\"id\":\"32b3740a549479f7bc0d5e2e27d86f088c9450677e9e7fd536ba5f45d01620ed\",\"pubkey\":\"b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d\",\"created_at\":86443205,\"kind\":24861,\"tags\":[[\"t\",\"VV3ANl6l5deHPTpH6ebfyl\"]],\"content\":\"QUJDREVGRwA\",\"sig\":\"edee599b7b2335d6802ddcc03629fd963534610237023610699b23e0c827f9d7c0bcb0d15a7fc173c22add01b0bddec26bfbedbef1889b8bbc11a535823388ba\"}",
-    "expect": false
-  },
-  {
-    "name": "nostr: a changed kind does not verify",
-    "kind": "nostr_verify",
-    "event": "{\"id\":\"32b3740a549479f7bc0d5e2e27d86f088c9450677e9e7fd536ba5f45d01620ed\",\"pubkey\":\"b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d\",\"created_at\":86443205,\"kind\":24862,\"tags\":[[\"t\",\"VV3ANl6l5deHPTpH6ebfyl\"]],\"content\":\"QUJDREVGRw\",\"sig\":\"edee599b7b2335d6802ddcc03629fd963534610237023610699b23e0c827f9d7c0bcb0d15a7fc173c22add01b0bddec26bfbedbef1889b8bbc11a535823388ba\"}",
-    "expect": false
-  },
-  {
-    "name": "nostr: a changed tag does not verify",
-    "kind": "nostr_verify",
-    "event": "{\"id\":\"32b3740a549479f7bc0d5e2e27d86f088c9450677e9e7fd536ba5f45d01620ed\",\"pubkey\":\"b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d\",\"created_at\":86443205,\"kind\":24861,\"tags\":[[\"t\",\"xxxxxxxxxxxxxxxxxxxxxx\"]],\"content\":\"QUJDREVGRw\",\"sig\":\"edee599b7b2335d6802ddcc03629fd963534610237023610699b23e0c827f9d7c0bcb0d15a7fc173c22add01b0bddec26bfbedbef1889b8bbc11a535823388ba\"}",
-    "expect": false
-  },
-  {
-    "name": "nostr: a changed signature does not verify",
-    "kind": "nostr_verify",
-    "event": "{\"id\":\"32b3740a549479f7bc0d5e2e27d86f088c9450677e9e7fd536ba5f45d01620ed\",\"pubkey\":\"b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d\",\"created_at\":86443205,\"kind\":24861,\"tags\":[[\"t\",\"VV3ANl6l5deHPTpH6ebfyl\"]],\"content\":\"QUJDREVGRw\",\"sig\":\"00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"}",
-    "expect": false
-  },
-  {
-    "name": "nostr: a changed id does not verify",
-    "kind": "nostr_verify",
-    "event": "{\"id\":\"0000000000000000000000000000000000000000000000000000000000000000\",\"pubkey\":\"b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d\",\"created_at\":86443205,\"kind\":24861,\"tags\":[[\"t\",\"VV3ANl6l5deHPTpH6ebfyl\"]],\"content\":\"QUJDREVGRw\",\"sig\":\"edee599b7b2335d6802ddcc03629fd963534610237023610699b23e0c827f9d7c0bcb0d15a7fc173c22add01b0bddec26bfbedbef1889b8bbc11a535823388ba\"}",
-    "expect": false
-  },
-  {
-    "name": "nostr: another event's signature does not verify",
-    "kind": "nostr_verify",
-    "event": "{\"id\":\"32b3740a549479f7bc0d5e2e27d86f088c9450677e9e7fd536ba5f45d01620ed\",\"pubkey\":\"b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d\",\"created_at\":86443205,\"kind\":24861,\"tags\":[[\"t\",\"VV3ANl6l5deHPTpH6ebfyl\"]],\"content\":\"QUJDREVGRw\",\"sig\":\"4ff18fa3ccaac8f35d37c7da9783df02c19efcf4de223ac6d121d8e4999afcb75a5da10a5b36639c0b89099cdb44cd11e18906a5c2db3c99aff72b40aa463c99\"}",
-    "expect": false
-  },
-  {
-    "name": "nostr: frame event",
-    "kind": "nostr_frame",
-    "raw": "[\"EVENT\",\"sub1\",{\"id\":\"32b3740a549479f7bc0d5e2e27d86f088c9450677e9e7fd536ba5f45d01620ed\",\"pubkey\":\"b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d\",\"created_at\":86443205,\"kind\":24861,\"tags\":[[\"t\",\"VV3ANl6l5deHPTpH6ebfyl\"]],\"content\":\"QUJDREVGRw\",\"sig\":\"edee599b7b2335d6802ddcc03629fd963534610237023610699b23e0c827f9d7c0bcb0d15a7fc173c22add01b0bddec26bfbedbef1889b8bbc11a535823388ba\"}]",
-    "expect": {
-      "type": "event",
-      "sub": "sub1",
-      "event": {
-        "id": "32b3740a549479f7bc0d5e2e27d86f088c9450677e9e7fd536ba5f45d01620ed",
-        "pubkey": "b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d",
-        "created_at": 86443205,
-        "kind": 24861,
-        "tags": [["t", "VV3ANl6l5deHPTpH6ebfyl"]],
-        "content": "QUJDREVGRw",
-        "sig": "edee599b7b2335d6802ddcc03629fd963534610237023610699b23e0c827f9d7c0bcb0d15a7fc173c22add01b0bddec26bfbedbef1889b8bbc11a535823388ba"
-      }
-    }
-  },
-  {
-    "name": "nostr: frame ok true",
-    "kind": "nostr_frame",
-    "raw": "[\"OK\",\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",true,\"\"]",
-    "expect": {
-      "type": "ok",
-      "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "accepted": true,
-      "message": ""
-    }
-  },
-  {
-    "name": "nostr: frame ok false",
-    "kind": "nostr_frame",
-    "raw": "[\"OK\",\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",false,\"blocked: no\"]",
-    "expect": {
-      "type": "ok",
-      "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "accepted": false,
-      "message": "blocked: no"
-    }
-  },
-  {
-    "name": "nostr: frame ok without message",
-    "kind": "nostr_frame",
-    "raw": "[\"OK\",\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",true]",
-    "expect": {
-      "type": "ok",
-      "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "accepted": true,
-      "message": ""
-    }
-  },
-  {
-    "name": "nostr: frame eose",
-    "kind": "nostr_frame",
-    "raw": "[\"EOSE\",\"s-1\"]",
-    "expect": {
-      "type": "eose",
-      "sub": "s-1"
-    }
-  },
-  {
-    "name": "nostr: frame notice",
-    "kind": "nostr_frame",
-    "raw": "[\"NOTICE\",\"hello\"]",
-    "expect": {
-      "type": "notice",
-      "message": "hello"
-    }
-  },
-  {
-    "name": "nostr: frame closed",
-    "kind": "nostr_frame",
-    "raw": "[\"CLOSED\",\"s-1\",\"auth-required: x\"]",
-    "expect": {
-      "type": "closed",
-      "sub": "s-1",
-      "message": "auth-required: x"
-    }
-  },
-  {
-    "name": "nostr: frame auth",
-    "kind": "nostr_frame",
-    "raw": "[\"AUTH\",\"challenge\"]",
-    "expect": {
-      "type": "auth"
-    }
-  },
-  {
-    "name": "nostr: frame unknown verb",
-    "kind": "nostr_frame",
-    "raw": "[\"WHAT\",1]",
-    "expect": null
-  },
-  {
-    "name": "nostr: frame not an array",
-    "kind": "nostr_frame",
-    "raw": "{\"a\":1}",
-    "expect": null
-  },
-  {
-    "name": "nostr: frame empty array",
-    "kind": "nostr_frame",
-    "raw": "[]",
-    "expect": null
-  },
-  {
-    "name": "nostr: frame not json",
-    "kind": "nostr_frame",
-    "raw": "EVENT",
-    "expect": null
-  },
-  {
-    "name": "nostr: frame short ok id",
-    "kind": "nostr_frame",
-    "raw": "[\"OK\",\"abc\",true,\"\"]",
-    "expect": null
-  },
-  {
-    "name": "nostr: frame ok accepted is a number",
-    "kind": "nostr_frame",
-    "raw": "[\"OK\",\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",1,\"\"]",
-    "expect": null
-  },
-  {
-    "name": "nostr: frame sub with a space",
-    "kind": "nostr_frame",
-    "raw": "[\"EOSE\",\"a b\"]",
-    "expect": null
-  },
-  {
-    "name": "nostr: frame event with a space in the content",
-    "kind": "nostr_frame",
-    "raw": "[\"EVENT\",\"s\",{\"id\":\"32b3740a549479f7bc0d5e2e27d86f088c9450677e9e7fd536ba5f45d01620ed\",\"pubkey\":\"b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d\",\"created_at\":86443205,\"kind\":24861,\"tags\":[[\"t\",\"VV3ANl6l5deHPTpH6ebfyl\"]],\"content\":\"AA AA\",\"sig\":\"edee599b7b2335d6802ddcc03629fd963534610237023610699b23e0c827f9d7c0bcb0d15a7fc173c22add01b0bddec26bfbedbef1889b8bbc11a535823388ba\"}]",
-    "expect": null
-  },
-  {
-    "name": "nostr: frame event with non-ascii content",
-    "kind": "nostr_frame",
-    "raw": "[\"EVENT\",\"s\",{\"id\":\"32b3740a549479f7bc0d5e2e27d86f088c9450677e9e7fd536ba5f45d01620ed\",\"pubkey\":\"b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d\",\"created_at\":86443205,\"kind\":24861,\"tags\":[[\"t\",\"VV3ANl6l5deHPTpH6ebfyl\"]],\"content\":\"AAé\",\"sig\":\"edee599b7b2335d6802ddcc03629fd963534610237023610699b23e0c827f9d7c0bcb0d15a7fc173c22add01b0bddec26bfbedbef1889b8bbc11a535823388ba\"}]",
-    "expect": null
-  },
-  {
-    "name": "nostr: frame event with an uppercase id",
-    "kind": "nostr_frame",
-    "raw": "[\"EVENT\",\"s\",{\"id\":\"32B3740A549479F7BC0D5E2E27D86F088C9450677E9E7FD536BA5F45D01620ED\",\"pubkey\":\"b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d\",\"created_at\":86443205,\"kind\":24861,\"tags\":[[\"t\",\"VV3ANl6l5deHPTpH6ebfyl\"]],\"content\":\"QUJDREVGRw\",\"sig\":\"edee599b7b2335d6802ddcc03629fd963534610237023610699b23e0c827f9d7c0bcb0d15a7fc173c22add01b0bddec26bfbedbef1889b8bbc11a535823388ba\"}]",
-    "expect": null
-  },
-  {
-    "name": "nostr: frame event with a short pubkey",
-    "kind": "nostr_frame",
-    "raw": "[\"EVENT\",\"s\",{\"id\":\"32b3740a549479f7bc0d5e2e27d86f088c9450677e9e7fd536ba5f45d01620ed\",\"pubkey\":\"b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce4\",\"created_at\":86443205,\"kind\":24861,\"tags\":[[\"t\",\"VV3ANl6l5deHPTpH6ebfyl\"]],\"content\":\"QUJDREVGRw\",\"sig\":\"edee599b7b2335d6802ddcc03629fd963534610237023610699b23e0c827f9d7c0bcb0d15a7fc173c22add01b0bddec26bfbedbef1889b8bbc11a535823388ba\"}]",
-    "expect": null
-  },
-  {
-    "name": "nostr: frame event with a fifth tag",
-    "kind": "nostr_frame",
-    "raw": "[\"EVENT\",\"s\",{\"id\":\"32b3740a549479f7bc0d5e2e27d86f088c9450677e9e7fd536ba5f45d01620ed\",\"pubkey\":\"b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d\",\"created_at\":86443205,\"kind\":24861,\"tags\":[[\"t\",\"a\"],[\"t\",\"a\"],[\"t\",\"a\"],[\"t\",\"a\"],[\"t\",\"a\"]],\"content\":\"QUJDREVGRw\",\"sig\":\"edee599b7b2335d6802ddcc03629fd963534610237023610699b23e0c827f9d7c0bcb0d15a7fc173c22add01b0bddec26bfbedbef1889b8bbc11a535823388ba\"}]",
-    "expect": null
-  },
-  {
-    "name": "nostr: frame event with a tag containing a quote",
-    "kind": "nostr_frame",
-    "raw": "[\"EVENT\",\"s\",{\"id\":\"32b3740a549479f7bc0d5e2e27d86f088c9450677e9e7fd536ba5f45d01620ed\",\"pubkey\":\"b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d\",\"created_at\":86443205,\"kind\":24861,\"tags\":[[\"t\",\"a\\\"b\"]],\"content\":\"QUJDREVGRw\",\"sig\":\"edee599b7b2335d6802ddcc03629fd963534610237023610699b23e0c827f9d7c0bcb0d15a7fc173c22add01b0bddec26bfbedbef1889b8bbc11a535823388ba\"}]",
-    "expect": null
-  },
-  {
-    "name": "nostr: frame event missing the signature",
-    "kind": "nostr_frame",
-    "raw": "[\"EVENT\",\"s\",{\"id\":\"32b3740a549479f7bc0d5e2e27d86f088c9450677e9e7fd536ba5f45d01620ed\",\"pubkey\":\"b68612af5562fc1db54611e9fa06083430a0780bdb1e03dc6d36f90bf77ce40d\",\"created_at\":86443205,\"kind\":24861,\"tags\":[[\"t\",\"VV3ANl6l5deHPTpH6ebfyl\"]],\"content\":\"QUJDREVGRw\"}]",
-    "expect": null
-  },
-  {
-    "name": "relay pick: three of the shipped list",
-    "kind": "relay_pick",
-    "psk_b64url": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA",
-    "candidates": [
-      {
-        "host": "nostr.mikoshi.de",
-        "operator": "mikoshi.de",
-        "hoster": null
-      },
-      {
-        "host": "nostr.chaima.info",
-        "operator": "chaima.info",
-        "hoster": "Contabo"
-      },
-      {
-        "host": "relay.dwadziesciajeden.pl",
-        "operator": "dwadziesciajeden.pl",
-        "hoster": "Scaleway"
-      },
-      {
-        "host": "relay.snort.social",
-        "operator": "Snort",
-        "hoster": "LNVPS"
-      },
-      {
-        "host": "nos.lol",
-        "operator": "nos.lol and nostr.mom",
-        "hoster": "Hetzner"
-      },
-      {
-        "host": "nostr.sathoarder.com",
-        "operator": "sathoarder.com",
-        "hoster": null
-      },
-      {
-        "host": "nostr.data.haus",
-        "operator": "data.haus",
-        "hoster": "Hetzner"
-      },
-      {
-        "host": "nostr.hifish.org",
-        "operator": "hifish.org",
-        "hoster": "Init7"
-      },
-      {
-        "host": "relay.angor.io",
-        "operator": "Angor",
-        "hoster": "Contabo"
-      },
-      {
-        "host": "nostr.21crypto.ch",
-        "operator": "21crypto.ch",
-        "hoster": "Init7"
-      },
-      {
-        "host": "nostr.azzamo.net",
-        "operator": "Azzamo",
-        "hoster": "OVH"
-      }
-    ],
-    "count": 3,
-    "expect": ["wss://nos.lol", "wss://nostr.hifish.org", "wss://nostr.azzamo.net"]
-  },
-  {
-    "name": "relay pick: another key, another three",
-    "kind": "relay_pick",
-    "psk_b64url": "AgMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4fICE",
-    "candidates": [
-      {
-        "host": "nostr.mikoshi.de",
-        "operator": "mikoshi.de",
-        "hoster": null
-      },
-      {
-        "host": "nostr.chaima.info",
-        "operator": "chaima.info",
-        "hoster": "Contabo"
-      },
-      {
-        "host": "relay.dwadziesciajeden.pl",
-        "operator": "dwadziesciajeden.pl",
-        "hoster": "Scaleway"
-      },
-      {
-        "host": "relay.snort.social",
-        "operator": "Snort",
-        "hoster": "LNVPS"
-      },
-      {
-        "host": "nos.lol",
-        "operator": "nos.lol and nostr.mom",
-        "hoster": "Hetzner"
-      },
-      {
-        "host": "nostr.sathoarder.com",
-        "operator": "sathoarder.com",
-        "hoster": null
-      },
-      {
-        "host": "nostr.data.haus",
-        "operator": "data.haus",
-        "hoster": "Hetzner"
-      },
-      {
-        "host": "nostr.hifish.org",
-        "operator": "hifish.org",
-        "hoster": "Init7"
-      },
-      {
-        "host": "relay.angor.io",
-        "operator": "Angor",
-        "hoster": "Contabo"
-      },
-      {
-        "host": "nostr.21crypto.ch",
-        "operator": "21crypto.ch",
-        "hoster": "Init7"
-      },
-      {
-        "host": "nostr.azzamo.net",
-        "operator": "Azzamo",
-        "hoster": "OVH"
-      }
-    ],
-    "count": 3,
-    "expect": ["wss://relay.snort.social", "wss://nostr.chaima.info", "wss://nostr.hifish.org"]
-  },
-  {
-    "name": "relay pick: parked first pick is skipped",
-    "kind": "relay_pick",
-    "psk_b64url": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA",
-    "candidates": [
-      {
-        "host": "nostr.mikoshi.de",
-        "operator": "mikoshi.de",
-        "hoster": null
-      },
-      {
-        "host": "nostr.chaima.info",
-        "operator": "chaima.info",
-        "hoster": "Contabo"
-      },
-      {
-        "host": "relay.dwadziesciajeden.pl",
-        "operator": "dwadziesciajeden.pl",
-        "hoster": "Scaleway"
-      },
-      {
-        "host": "relay.snort.social",
-        "operator": "Snort",
-        "hoster": "LNVPS"
-      },
-      {
-        "host": "nos.lol",
-        "operator": "nos.lol and nostr.mom",
-        "hoster": "Hetzner"
-      },
-      {
-        "host": "nostr.sathoarder.com",
-        "operator": "sathoarder.com",
-        "hoster": null
-      },
-      {
-        "host": "nostr.data.haus",
-        "operator": "data.haus",
-        "hoster": "Hetzner"
-      },
-      {
-        "host": "nostr.hifish.org",
-        "operator": "hifish.org",
-        "hoster": "Init7"
-      },
-      {
-        "host": "relay.angor.io",
-        "operator": "Angor",
-        "hoster": "Contabo"
-      },
-      {
-        "host": "nostr.21crypto.ch",
-        "operator": "21crypto.ch",
-        "hoster": "Init7"
-      },
-      {
-        "host": "nostr.azzamo.net",
-        "operator": "Azzamo",
-        "hoster": "OVH"
-      }
-    ],
-    "parked": ["nos.lol"],
-    "count": 3,
-    "expect": ["wss://nostr.hifish.org", "wss://nostr.data.haus", "wss://nostr.azzamo.net"]
-  },
-  {
-    "name": "relay pick: two extras on top of the invite",
-    "kind": "relay_pick",
-    "psk_b64url": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA",
-    "candidates": [
-      {
-        "host": "nostr.mikoshi.de",
-        "operator": "mikoshi.de",
-        "hoster": null
-      },
-      {
-        "host": "nostr.chaima.info",
-        "operator": "chaima.info",
-        "hoster": "Contabo"
-      },
-      {
-        "host": "relay.dwadziesciajeden.pl",
-        "operator": "dwadziesciajeden.pl",
-        "hoster": "Scaleway"
-      },
-      {
-        "host": "relay.snort.social",
-        "operator": "Snort",
-        "hoster": "LNVPS"
-      },
-      {
-        "host": "nos.lol",
-        "operator": "nos.lol and nostr.mom",
-        "hoster": "Hetzner"
-      },
-      {
-        "host": "nostr.sathoarder.com",
-        "operator": "sathoarder.com",
-        "hoster": null
-      },
-      {
-        "host": "nostr.data.haus",
-        "operator": "data.haus",
-        "hoster": "Hetzner"
-      },
-      {
-        "host": "nostr.hifish.org",
-        "operator": "hifish.org",
-        "hoster": "Init7"
-      },
-      {
-        "host": "relay.angor.io",
-        "operator": "Angor",
-        "hoster": "Contabo"
-      },
-      {
-        "host": "nostr.21crypto.ch",
-        "operator": "21crypto.ch",
-        "hoster": "Init7"
-      },
-      {
-        "host": "nostr.azzamo.net",
-        "operator": "Azzamo",
-        "hoster": "OVH"
-      }
-    ],
-    "current": ["nos.lol", "nostr.hifish.org", "nostr.azzamo.net"],
-    "count": 2,
-    "expect": ["wss://relay.snort.social", "wss://nostr.mikoshi.de"]
-  },
-  {
-    "name": "relay pick: one operator only fills one slot",
-    "kind": "relay_pick",
-    "psk_b64url": "AwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISI",
-    "candidates": [
-      {
-        "host": "a.example.net",
-        "operator": "Same",
-        "hoster": "X"
-      },
-      {
-        "host": "b.example.net",
-        "operator": "Same",
-        "hoster": "Y"
-      },
-      {
-        "host": "c.example.net",
-        "operator": "Other",
-        "hoster": "X"
-      }
-    ],
-    "count": 3,
-    "expect": ["wss://a.example.net", "wss://c.example.net"]
-  },
-  {
-    "name": "relay pick: empty list",
-    "kind": "relay_pick",
-    "psk_b64url": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA",
-    "candidates": [],
-    "count": 3,
-    "expect": []
-  },
-  {
-    "name": "relay pick: host case is ignored",
-    "kind": "relay_pick",
-    "psk_b64url": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA",
-    "candidates": [
-      {
-        "host": "NOSTR.MIKOSHI.DE",
-        "operator": "mikoshi.de",
-        "hoster": null
-      },
-      {
-        "host": "NOSTR.CHAIMA.INFO",
-        "operator": "chaima.info",
-        "hoster": "Contabo"
-      },
-      {
-        "host": "RELAY.DWADZIESCIAJEDEN.PL",
-        "operator": "dwadziesciajeden.pl",
-        "hoster": "Scaleway"
-      },
-      {
-        "host": "RELAY.SNORT.SOCIAL",
-        "operator": "Snort",
-        "hoster": "LNVPS"
-      },
-      {
-        "host": "NOS.LOL",
-        "operator": "nos.lol and nostr.mom",
-        "hoster": "Hetzner"
-      },
-      {
-        "host": "NOSTR.SATHOARDER.COM",
-        "operator": "sathoarder.com",
-        "hoster": null
-      },
-      {
-        "host": "NOSTR.DATA.HAUS",
-        "operator": "data.haus",
-        "hoster": "Hetzner"
-      },
-      {
-        "host": "NOSTR.HIFISH.ORG",
-        "operator": "hifish.org",
-        "hoster": "Init7"
-      },
-      {
-        "host": "RELAY.ANGOR.IO",
-        "operator": "Angor",
-        "hoster": "Contabo"
-      },
-      {
-        "host": "NOSTR.21CRYPTO.CH",
-        "operator": "21crypto.ch",
-        "hoster": "Init7"
-      },
-      {
-        "host": "NOSTR.AZZAMO.NET",
-        "operator": "Azzamo",
-        "hoster": "OVH"
-      }
-    ],
-    "count": 3,
-    "expect": ["wss://nos.lol", "wss://nostr.hifish.org", "wss://nostr.azzamo.net"]
   }
 ]

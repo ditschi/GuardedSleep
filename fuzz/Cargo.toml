@@ -35,10 +35,3 @@ path = "fuzz_targets/envelope_session.rs"
 test = false
 doc = false
 bench = false
-
-[[bin]]
-name = "nostr_frame"
-path = "fuzz_targets/nostr_frame.rs"
-test = false
-doc = false
-bench = false
