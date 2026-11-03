@@ -1,5 +1,7 @@
 # Spike: community infrastructure for signaling, STUN and TURN
 
+> **Historical (2026-11-02).** The owner replaced the public Nostr relays with one project-run server and removed Nostr completely (`design.md` §3 and "Discarded alternatives"). This spike is kept as the record of why Nostr was chosen and what was measured; its relay and STUN tables are no longer shipped. The TURN numbers below (bandwidth per relayed pair, share of sessions that need it) still size the project TURN.
+
 Measured 2026-10-23 from one residential host in Germany. The probes sent throwaway-key ephemeral Nostr events with random content and one STUN Binding request per server. The scripts and raw data lived in the session scratchpad and are not committed; re-run them before relying on single numbers.
 
 ## Summary
