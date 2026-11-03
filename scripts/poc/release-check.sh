@@ -34,7 +34,7 @@ allowed="$(grep -vE '^\s*(#|$)' "$ALLOWED" | sort -u)"
 extra="$(comm -23 <(printf '%s\n' "$actual") <(printf '%s\n' "$allowed"))"
 if [[ -n "$extra" ]]; then
 	echo "FAIL release-check — permissions not in release-permissions.txt:"
-	printf '  %s\n' $extra
+	printf '%s\n' "$extra" | sed 's/^/  /'
 	found=1
 fi
 [[ $found -eq 0 ]] && echo "PASS release-check — no test-only surfaces, permissions match the allow-list"
