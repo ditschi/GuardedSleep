@@ -36,6 +36,9 @@ setup:
       fi
     done
     mise exec -- lefthook install
+# Lists the prerequisites of the recipes (mise tools, rustup, Docker, uv, Playwright browser, KVM, Android SDK, git hooks) with a fix for each missing one. Informational, always exits 0.
+doctor:
+    scripts/doctor.sh
 
 # Format everything that is formatted automatically (Prettier, rustfmt, taplo, ktfmt).
 fmt:
@@ -228,12 +231,19 @@ _gate:
     require gate kvm docker
     scripts/poc/local-gate.sh
 
-# The same verdict as CI (the PR title check and the emulator gate are CI-only).
-ci: lint test build e2e
+# The same verdict as CI (the PR title check and the emulator gate are CI-only): lint, test, build, e2e in order,
+# then a list of every SKIPPED line of the run (a skip is not a pass), also when a step fails.
+ci:
+    scripts/lib/ci.sh {{ just_executable() }}
 
 # Rust signaling server plus the web client, for local development.
 dev:
     scripts/dev.sh
+
+# Runs one cargo-fuzz target (fuzz/Cargo.toml) on the pinned nightly of tools/nightly; extra args go to libFuzzer,
+# e.g. `just fuzz envelope_open -- -max_total_time=60`. SKIPPED without cargo-fuzz and rustup.
+fuzz target="envelope_open" *args:
+    scripts/lib/fuzz.sh {{target}} {{args}}
 
 # Signaling server smoke: starts the built guardedsleep-server binary and relays hello + signal over a WebSocket.
 smoke:
@@ -299,9 +309,6 @@ diagnose-lan:
 
 check-kvm:
     bash scripts/check-kvm.sh
-
-e2e-docker *args:
-    scripts/lib/slot.sh heavy -- bash scripts/e2e-docker-run.sh {{ args }}
 
 audit:
     pnpm run audit

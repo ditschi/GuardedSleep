@@ -21,6 +21,7 @@ on:
       - "Cargo.toml"
       - "Cargo.lock"
       - "rust-toolchain.toml"
+      - "tools/android-versions.env"
       - "mise.toml"
       - "justfile"
       - "package.json"
@@ -44,6 +45,7 @@ on:
       - "Cargo.toml"
       - "Cargo.lock"
       - "rust-toolchain.toml"
+      - "tools/android-versions.env"
       - "mise.toml"
       - "justfile"
       - "package.json"
@@ -123,7 +125,12 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: poc-gate-results
-          path: target/poc-gate
+          # The emulators' Android home (AVD images, root-owned files written by the containers) is not a
+          # result; reading it fails the upload with EACCES.
+          # https://github.com/actions/upload-artifact#upload-using-multiple-paths-and-exclusions
+          path: |
+            target/poc-gate
+            !target/poc-gate/android-home
           retention-days: 14
       - name: Upload debug APK
         if: always()

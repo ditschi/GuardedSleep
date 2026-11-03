@@ -1,6 +1,6 @@
 # AGENTS.md — GuardedSleep
 
-> **What is this file?** A tool-agnostic briefing for AI coding agents (Claude Code, Cursor, Codex, Cline, Aider, Copilot, …) working in this repository. It holds **rules, conventions and links**, not prose. Human onboarding lives in [`README.md`](README.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md).
+> **What is this file?** A tool-agnostic briefing for AI coding agents (Claude Code, Codex, Cline, Aider, Copilot, …) working in this repository. It holds **rules, conventions and links**, not prose. Human onboarding lives in [`README.md`](README.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md).
 >
 > **Source of truth precedence** (highest first):
 >
@@ -8,7 +8,6 @@
 > 2. Active changes in [`openspec/changes/`](openspec/changes/) — decided work that is not built yet (prepared wave changes, offline LAN, Android release). Binding for that work once applied.
 > 3. This file, then [`docs/backlog.md`](docs/backlog.md) (`PLANNED`, `IDEA`, `DEFERRED`, `REJECTED`).
 > 4. [`docs/concept/`](docs/concept/vision.md) and [`docs/technical/`](docs/technical/sw-architecture.md) — non-normative background (vision, personas, failure model, architecture overview, screens).
-> 5. [`.cursor/rules/`](.cursor/rules/) (Cursor only; mirrors this file).
 >
 > History: the 21 former ADRs and every archived change are in the [decision archive](openspec/changes/archive/README.md); references such as "ADR-017 §6" resolve there. **If this file disagrees with a spec, the spec wins. File a `chore(docs): sync AGENTS.md` change.**
 
@@ -77,21 +76,22 @@ Per-package `AGENTS.md` files may exist later; they inherit this file and docume
 - `just test` builds no Android ABI (host Rust, wasm, Vitest, Android JVM tests against the host build of the core). Cross-compiled ABIs belong to `just build-android`, `just gate` and release builds.
 - The core graph checks (`just deny`, dependency count) run on the all-features graph of `guardedsleep-core`. `just lint` also diffs the binding surface (`just api-check`; regenerate with `just api-snapshot` after an intended change): `crates/guardedsleep-{ffi,wasm}/api.txt` and `packages/core-wasm/api/core.d.ts`, using the nightly pinned in `tools/nightly/rust-toolchain.toml`. Only the façades may allow `unsafe`; the core forbids it and carries no binding attributes (its optional `tsify` feature is enabled by `guardedsleep-wasm` alone).
 
-| Task                       | Command                                                                                                                                     |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Setup (tools, deps, hooks) | `just setup` (mise, rustup toolchain, `pnpm install --frozen-lockfile`, lefthook)                                                           |
-| Format                     | `just fmt` · `just fmt-check`                                                                                                               |
-| Lint                       | `just lint` (= `lint-text` + `lint-workflows` + `lint-code`; clippy runs with `--all-features`, plus `cargo check` for `aarch64-apple-ios`) |
-| Test                       | `just test` (cargo workspace, WASM conformance, Vitest, Android JVM tests) · `scripts/cargo.sh test -p guardedsleep-sim` (host simulation)  |
-| Generate                   | `just gen` (i18n output) · `scripts/core-build.sh host` (host core library + Kotlin bindings) · `scripts/core-build.sh wasm`                |
-| Build                      | `just build` (web + Android) · `just build-web` · `just build-android` · `just verify-android` (adds JVM tests and Roborazzi)               |
-| Browser E2E                | `just e2e` (Playwright; starts `just dev`)                                                                                                  |
-| Emulator gate (KVM)        | `just gate` (`DOZE_MINUTES=2 just gate` for a quick run; run `just build-android` first)                                                    |
-| Local dev                  | `just dev` (Vite 5173 + Rust signaling server 8787)                                                                                         |
-| Docker stack               | `just stack-lan` · `just stack-up`                                                                                                          |
-| Supply chain, secrets      | `just deny` · `just secrets` · `just audit`                                                                                                 |
-| Server smoke test          | `just smoke` (built `guardedsleep-server` binary, hello + signal relay over a WebSocket)                                                    |
-| Delta tests                | `just test-affected [base]` (tests for the changed paths only; `node scripts/lib/affected.mjs --dry-run` shows the plan)                    |
+| Task                       | Command                                                                                                                                                            |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Setup (tools, deps, hooks) | `just setup` (mise, rustup toolchain, `pnpm install --frozen-lockfile`, lefthook)                                                                                  |
+| Format                     | `just fmt` · `just fmt-check`                                                                                                                                      |
+| Lint                       | `just lint` (= `lint-text` + `lint-workflows` + `lint-code`; clippy runs with `--all-features`, plus `cargo check` for `aarch64-apple-ios`)                        |
+| Test                       | `just test` (cargo workspace, WASM conformance, Vitest, Android JVM tests) · `scripts/cargo.sh test -p guardedsleep-sim` (host simulation)                         |
+| Generate                   | `just gen` (i18n output) · `scripts/core-build.sh host` (host core library + Kotlin bindings) · `scripts/core-build.sh wasm`                                       |
+| Build                      | `just build` (web + Android) · `just build-web` · `just build-android` · `just verify-android` (adds JVM tests and Roborazzi)                                      |
+| Browser E2E                | `just e2e` (Playwright; starts `just dev`)                                                                                                                         |
+| Emulator gate (KVM)        | `just gate` (`DOZE_MINUTES=2 just gate` for a quick run; run `just build-android` first)                                                                           |
+| Local dev                  | `just dev` (Vite 5173 + Rust signaling server 8787)                                                                                                                |
+| Docker stack               | `just stack-lan` · `just stack-up`                                                                                                                                 |
+| Supply chain, secrets      | `just deny` · `just secrets` · `just audit`                                                                                                                        |
+| Server smoke test          | `just smoke` (built `guardedsleep-server` binary, hello + signal relay over a WebSocket)                                                                           |
+| Check prerequisites        | `just doctor` (informational: mise tools, rustup, Docker, uv, Playwright, KVM, hooks, with a fix per missing item) · `just ci` ends with the list of SKIPPED tasks |
+| Delta tests                | `just test-affected [base]` (tests for the changed paths only; `node scripts/lib/affected.mjs --dry-run` shows the plan)                                           |
 
 Before a commit lefthook runs Prettier, cargo fmt, typos, hygiene and Betterleaks on staged files; CI re-runs everything. Never bypass hooks; re-run `just lint` manually before declaring "done".
 
@@ -125,7 +125,7 @@ Core       Rust, sans-IO (core, relay): no I/O, threads or clocks; emits message
 ### 5.2 Style and tooling rules
 
 - `.editorconfig`: LF, UTF-8, 2 spaces. Prettier `printWidth: 100`, `proseWrap: preserve`; no per-file overrides. Filenames `kebab-case.ts`/`.svelte` for modules, `PascalCase.svelte` for components. Named exports (default only for Svelte components). Comments explain **why**, not what.
-- **Pins live in one place each:** `rust-toolchain.toml` (exact stable), `mise.toml` + `mise.lock` (node, pnpm 11, java, just, lefthook, typos, ktfmt, …), Gradle version catalog + wrapper. **Do not align the fuzz toolchain** (`fuzz/rust-toolchain.toml`, pinned nightly for cargo-fuzz and `cargo public-api`) **with the main pin.** pnpm comes from mise; no corepack.
+- **Pins live in one place each:** `rust-toolchain.toml` (exact stable), `mise.toml` + `mise.lock` (node, pnpm 11, java, just, lefthook, typos, ktfmt, …), Gradle version catalog + wrapper. **Do not align the nightly** (`tools/nightly/rust-toolchain.toml`, the one pin for cargo-fuzz and `cargo public-api`) **with the main pin.** pnpm comes from mise; no corepack.
 - **Every version-specific config setting carries a comment with a doc link** (settings go stale, e.g. pnpm 11 `allowBuilds`).
 - **Commit nothing generated** (bindings, generated TS, i18n output). API-surface snapshots (`cargo public-api` on `ffi`/`wasm`, the generated `.d.ts`) are committed instead; CI generates twice and compares hashes.
 - **Never hand-edit screenshot baselines.** They are recorded only in the pinned build image.
@@ -156,11 +156,11 @@ Core       Rust, sans-IO (core, relay): no I/O, threads or clocks; emits message
 
 ## 6. Documentation and decision conventions
 
-- **Specs and changes (OpenSpec):** every behaviour, scope, security-model or architecture change is an OpenSpec change: `/opsx:propose` (proposal, design, delta specs, tasks) → review → `/opsx:apply` → `/opsx:archive`, which merges the deltas into `openspec/specs/`. Specs describe what is **built**; decided but unbuilt work lives in a change. Tooling-only changes set `skip_specs: true`. `openspec validate --all --strict` runs in `just lint-text`. Files under `.claude/*/openspec-*`, `.claude/commands/opsx` and `.cursor/*/opsx*` are generated by `openspec update`, never hand-edited.
+- **Specs and changes (OpenSpec):** every behaviour, scope, security-model or architecture change is an OpenSpec change: `/opsx:propose` (proposal, design, delta specs, tasks) → review → `/opsx:apply` → `/opsx:archive`, which merges the deltas into `openspec/specs/`. Specs describe what is **built**; decided but unbuilt work lives in a change. Tooling-only changes set `skip_specs: true`. `openspec validate --all --strict` runs in `just lint-text`. Files under `.claude/*/openspec-*` and `.claude/commands/opsx` are generated by `openspec update`, never hand-edited; OpenSpec detects tools by their existing skill directories, so with no `.cursor/` (or other tool dir) only the Claude files are generated.
 - **Design and rejected options:** a change's `design.md` lists options as Pros / Cons / Recommendation and keeps rejected options under "Discarded alternatives"; never delete them (archived changes keep them).
 - **Backlog and STATUS tags:** [`docs/backlog.md`](docs/backlog.md) holds `PLANNED` (decided, not started, with a target), `IDEA`, `DEFERRED` (reason + target phase) and `REJECTED` (reason) items by capability. User ideas go there as `IDEA`; assign no phase unless the user decides one. Picking an item up means proposing a change and deleting the item. `docs/concept/` and `docs/technical/` keep their STATUS tags but are reference only.
-- **Presenting options:** a checklist with Pros / Cons / Recommendation ([`decision-workflow.mdc`](.cursor/rules/decision-workflow.mdc)); skip it when there is one reasonable approach.
-- **Role coordination** ([`role-coordination.mdc`](.cursor/rules/role-coordination.mdc), [`docs/roles/`](docs/roles/README.md)): for non-trivial work act as Coordinator. New feature: Product Owner + Technical Architect (+ Security/Privacy for security, + UX for user-facing). Architecture decision: Technical Architect + Security Architect. MVP scoping: Product Owner + Critical Reviewer. **Critical Review Gate:** if a role's output changes architecture, scope, security model, a prior decision or a core concept, the Critical Reviewer is mandatory and the originator answers every `CRITICAL`/`IMPORTANT` finding. Unresolved disagreements go to the user as a §6.3-style checklist; the user has final authority. Agents without sub-agents list the role perspectives they applied in the PR description.
+- **Presenting options:** a checklist with Pros / Cons / Recommendation ([details](docs/contributing/decisions-and-roles.md)); skip it when there is one reasonable approach.
+- **Role coordination** ([`docs/roles/`](docs/roles/README.md), [details](docs/contributing/decisions-and-roles.md)): for non-trivial work act as Coordinator. New feature: Product Owner + Technical Architect (+ Security/Privacy for security, + UX for user-facing). Architecture decision: Technical Architect + Security Architect. MVP scoping: Product Owner + Critical Reviewer. **Critical Review Gate:** if a role's output changes architecture, scope, security model, a prior decision or a core concept, the Critical Reviewer is mandatory and the originator answers every `CRITICAL`/`IMPORTANT` finding. Unresolved disagreements go to the user as a §6.3-style checklist; the user has final authority. Agents without sub-agents list the role perspectives they applied in the PR description.
 
 ## 7. Privacy and security guardrails (NON-NEGOTIABLE)
 

@@ -22,6 +22,11 @@ if [ "${API_SNAPSHOT_NATIVE:-0}" = "1" ]; then
   out="$1"
   nightly="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' tools/nightly/rust-toolchain.toml)"
   version="$(sed -n 's/^cargo_public_api *= *"\(.*\)"/\1/p' mise.toml)"
+  # A cached target/.api can hold a half-written toolchain (rustup reports "missing manifest", and
+  # `toolchain install` leaves it "unchanged"): remove it and install afresh.
+  if rustup toolchain list | grep -q "^$nightly" && ! rustc "+$nightly" --version >/dev/null 2>&1; then
+    rustup toolchain uninstall "$nightly" >&2 || rm -rf "${RUSTUP_HOME:-$HOME/.rustup}/toolchains/$nightly"*
+  fi
   rustup toolchain install "$nightly" --profile minimal >&2
   # target/.api is inside CI's restored and pruned target/ cache, so a toolchain can come back without its
   # manifest ("missing manifest in toolchain"), which rustup reports as installed. Reinstall it then.

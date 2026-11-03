@@ -4,7 +4,7 @@ This directory defines the roles used during concept development and decision-ma
 
 ## How Roles Are Used
 
-Roles are invoked by the Cursor agent as sub-agents during concept work. The main agent acts as **Coordinator** and decides which roles are relevant for each task. See the [role-coordination.mdc](../../.cursor/rules/role-coordination.mdc) Cursor rule for the full orchestration logic.
+Roles are invoked by the coding agent as sub-agents during concept work. The main agent acts as **Coordinator** and decides which roles are relevant for each task. See [decisions-and-roles.md](../contributing/decisions-and-roles.md) for the full orchestration logic.
 
 ### Automated Coordination
 

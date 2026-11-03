@@ -1,33 +1,26 @@
 name: guardedsleep
 
-# Used by: VS Code/Cursor Dev Containers (see devcontainer.json) and CLI users.
+# Used by: VS Code Dev Containers (see devcontainer.json) and CLI users.
 # Repo root is mounted at /workspace so edits and node_modules stay on the host.
 #
-# CLI examples (from repository root — prefer ./scripts/devcontainer-run.sh so rootless
-# Docker gets DEV_UID/DEV_GID=0 automatically and Compose always uses this folder as
-# the project directory for `.devcontainer/.env`):
+# CLI examples (from repository root; --project-directory makes Compose read `.devcontainer/.env`):
 #   docker compose --project-directory .devcontainer -f .devcontainer/docker-compose.yml build
-#   ./scripts/devcontainer-run.sh pnpm install
-#   ./scripts/devcontainer-run.sh bash -lc './.devcontainer/post-create.sh && just lint'
-#
-# Long-running shell (same mount as IDE dev container):
-#   ./scripts/devcontainer-run.sh bash
-#   # or explicitly:
+#   docker compose --project-directory .devcontainer -f .devcontainer/docker-compose.yml run --rm dev pnpm install
 #   docker compose --project-directory .devcontainer -f .devcontainer/docker-compose.yml run --rm -it dev bash
 #
-# Dev shell with host ports 5173 + 8787 (no pnpm on host): ./scripts/dev-shell.sh
+# Shell with host ports 5173 + 8787 (no pnpm on host): add --service-ports to the `run` above.
+# More in docs/contributing/development.md.
 #
 # Rootless Docker (`docker info` shows `rootless: true`): the bind-mounted /workspace
 # is owned by a uid that `node` (1000) cannot write. Export DEV_UID=0 DEV_GID=0 (or via
 # `.devcontainer/.env` — see .env.example) so the container user maps back to the host user.
-# `./scripts/devcontainer-run.sh` sets this automatically when the daemon is rootless.
 
 services:
   dev:
     build:
       context: .
       dockerfile: Dockerfile
-      # Named context for rust-toolchain.toml (see the Dockerfile header).
+      # Named context for rust-toolchain.toml and tools/android-versions.env (see the Dockerfile header).
       additional_contexts:
         repo: ..
     image: guardedsleep-dev:local
@@ -36,8 +29,8 @@ services:
       - ..:/workspace:cached
       - ~/.gitconfig:/home/node/.gitconfig:ro
     ports:
-      # For CLI dev (scripts/dev-shell.sh): publish with `docker compose run --service-ports`.
-      # Dev Containers / Cursor usually auto-forward; mapping avoids extra config.
+      # For CLI dev (see the header): publish with `docker compose run --service-ports`.
+      # Dev Containers usually auto-forward; mapping avoids extra config.
       - "5173:5173"
       - "8787:8787"
     working_dir: /workspace

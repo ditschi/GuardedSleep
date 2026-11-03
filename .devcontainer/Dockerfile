@@ -2,7 +2,7 @@
 # pinned tools come from mise.toml (`mise install`, run by post-create.sh); the JDK is Temurin 21.
 # Bookworm often has no OpenJDK 21 in default APT, so we copy Temurin from the official image
 # (the same one docker/android-native-build uses).
-# Build context: .devcontainer/ plus the named context "repo" (repo root, for rust-toolchain.toml):
+# Build context: .devcontainer/ plus the named context "repo" (repo root, for rust-toolchain.toml and tools/android-versions.env):
 #   docker-compose.yml needs build.additional_contexts: { repo: .. }
 FROM eclipse-temurin:21-jdk-jammy@sha256:742daacb9316be4b6fc60258f6e4ac2a11882f6c597373c92290a57bfad0d2e0 AS temurin21
 
@@ -15,14 +15,18 @@ COPY --from=temurin21 /opt/java/openjdk /opt/java/openjdk
 ENV JAVA_HOME=/opt/java/openjdk
 ENV ANDROID_HOME=/opt/android-sdk
 ARG ANDROID_CLI_TOOLS_URL=https://dl.google.com/android/repository/commandlinetools-linux-16111833_latest.zip
-ARG ANDROID_NDK_VERSION=30.0.16248370
-ENV ANDROID_NDK_HOME=/opt/android-sdk/ndk/${ANDROID_NDK_VERSION}
+# NDK and cargo-ndk versions come from tools/android-versions.env (named context "repo"); the symlink
+# below gives the NDK a stable path.
+ENV ANDROID_NDK_HOME=/opt/android-sdk/ndk/pinned
 ENV RUSTUP_HOME=/opt/rustup CARGO_HOME=/opt/cargo
 # scripts/core-build.sh and scripts/gradle.sh run natively here (no nested Docker), with the host-style
 # target/ and this CARGO_HOME (docs/contributing/development.md, "Rust execution mode").
 ENV CORE_BUILD_NATIVE=1
 
-RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+COPY --from=repo tools/android-versions.env /tmp/android-versions.env
+
+RUN . /tmp/android-versions.env \
+	&& apt-get update && export DEBIAN_FRONTEND=noninteractive \
 	&& apt-get install -y --no-install-recommends \
 		gh \
 		unzip \
@@ -41,6 +45,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 		"platforms;android-37.0" \
 		"build-tools;36.0.0" \
 		"ndk;${ANDROID_NDK_VERSION}" \
+	&& ln -s "${ANDROID_HOME}/ndk/${ANDROID_NDK_VERSION}" "${ANDROID_HOME}/ndk/pinned" \
 	&& chown -R node:node "${ANDROID_HOME}" \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
@@ -52,7 +57,7 @@ COPY --from=repo rust-toolchain.toml /tmp/rust-toolchain/rust-toolchain.toml
 RUN curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain none \
 	&& (cd /tmp/rust-toolchain && rustup toolchain install \
 		&& rustup default "$(sed -n 's/^channel *= *"\(.*\)"/\1/p' rust-toolchain.toml)") \
-	&& cargo install --locked cargo-ndk@4.1.2 \
+	&& (. /tmp/android-versions.env && cargo install --locked "cargo-ndk@${CARGO_NDK_VERSION}") \
 	&& chmod -R a+rwX /opt/cargo /opt/rustup \
 	&& rm -rf /opt/cargo/registry /opt/cargo/git
 

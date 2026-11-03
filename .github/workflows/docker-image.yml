@@ -1,0 +1,243 @@
+# Reusable multi-arch container image workflow (ADR-008). Called by docker-signaling.yml and docker-web.yml,
+# which own the triggers, path filters and concurrency group; this file owns the build.
+#
+# What runs depends on the caller's event (github.event_name and github.ref are the caller's):
+#   - pull_request → build-check job only (read-only token, no registry login, no push), validates the
+#     Dockerfile on both architectures
+#   - push to main, a tag matching the prefix, or workflow_dispatch → publishes
+#
+# Each architecture builds on a native runner (no QEMU), pushes by digest, and the `merge` job
+# stitches the digests into one multi-arch manifest with `docker buildx imagetools create`.
+# Tag semantics and registry decisions are recorded in ADR-008. The calling job must grant
+# `contents: read` and `packages: write`; the jobs below then narrow it (a workflow call cannot raise it).
+# Reusable workflows: https://docs.github.com/en/actions/using-workflows/reusing-workflows
+name: docker-image
+
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        description: Image name below ghcr.io/<owner>/, for example guardedsleep-signaling
+        type: string
+        required: true
+      tag-prefix:
+        description: Prefix of the manual release tags, for example signaling-server-v
+        type: string
+        required: true
+      dockerfile:
+        description: Dockerfile path; the build context is the repository root
+        type: string
+        required: true
+      title:
+        description: org.opencontainers.image.title
+        type: string
+        required: true
+      description:
+        description: org.opencontainers.image.description
+        type: string
+        required: true
+      build-args:
+        description: Newline separated KEY=value build arguments
+        type: string
+        default: ""
+
+permissions: {}
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ inputs.image-name }}
+  TAG_PREFIX: ${{ inputs.tag-prefix }}
+
+jobs:
+  # Pull requests only validate the Dockerfile: no registry login, no push, read-only token.
+  build-check:
+    name: build check (${{ matrix.platform }})
+    if: github.event_name == 'pull_request'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build (no push)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: ${{ inputs.dockerfile }}
+          build-args: ${{ inputs.build-args }}
+          platforms: ${{ matrix.platform }}
+          push: false
+
+  build:
+    name: build (${{ matrix.platform }})
+    if: github.event_name != 'pull_request'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Compute lowercased owner (GHCR requires lowercase)
+        id: owner
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: echo "value=${OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Compute platform pair
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: echo "PLATFORM_PAIR=${PLATFORM//\//-}" >> "$GITHUB_ENV"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata (OCI labels)
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ steps.owner.outputs.value }}/${{ env.IMAGE_NAME }}
+          labels: |
+            org.opencontainers.image.title=${{ inputs.title }}
+            org.opencontainers.image.description=${{ inputs.description }}
+            org.opencontainers.image.vendor=GuardedSleep
+            org.opencontainers.image.licenses=AGPL-3.0-or-later
+
+      - name: Build (and push by digest)
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: ${{ inputs.dockerfile }}
+          build-args: ${{ inputs.build-args }}
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=${{ env.REGISTRY }}/${{ steps.owner.outputs.value }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ env.IMAGE_NAME }}-${{ env.PLATFORM_PAIR }}
+          cache-to: ${{ format('type=gha,mode=max,scope={0}-{1}', env.IMAGE_NAME, env.PLATFORM_PAIR) }}
+
+      - name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/digests"
+          touch "$RUNNER_TEMP/digests/${DIGEST#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: digests-${{ env.IMAGE_NAME }}-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    name: merge manifest
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-${{ env.IMAGE_NAME }}-*
+          merge-multiple: true
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Compute lowercased owner (GHCR requires lowercase)
+        id: owner
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: echo "value=${OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Tags per ADR-008:
+      #   - :latest                      ← only on a `<tag-prefix>*` tag push
+      #   - :vMAJOR.MINOR.PATCH          ← only on a `<tag-prefix>*` tag push
+      #   - :vMAJOR.MINOR                ← only on a `<tag-prefix>*` tag push
+      #   - :vMAJOR                      ← only on a `<tag-prefix>*` tag push, post-1.0
+      #   - :dev (alias :edge)           ← on every push to main
+      #   - :sha-<short>                 ← every push
+      - name: Docker metadata (tags)
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ steps.owner.outputs.value }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=match,pattern=${{ env.TAG_PREFIX }}(.*),group=1,value=latest,priority=900,enable=${{ startsWith(github.ref, format('refs/tags/{0}', env.TAG_PREFIX)) }}
+            type=match,pattern=${{ env.TAG_PREFIX }}(\d+\.\d+\.\d+),group=1,prefix=v
+            type=match,pattern=${{ env.TAG_PREFIX }}(\d+\.\d+)\.\d+,group=1,prefix=v
+            type=match,pattern=${{ env.TAG_PREFIX }}(\d+)\.\d+\.\d+,group=1,prefix=v,enable=${{ !startsWith(github.ref, format('refs/tags/{0}0.', env.TAG_PREFIX)) }}
+            type=raw,value=dev,enable={{is_default_branch}}
+            type=raw,value=edge,enable={{is_default_branch}}
+            type=sha,prefix=sha-,format=short
+
+      - name: Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ steps.owner.outputs.value }}/${{ env.IMAGE_NAME }}
+        run: |
+          # shellcheck disable=SC2046
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf "$IMAGE@sha256:%s " *)
+
+      - name: Inspect image
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          IMAGE: ${{ env.REGISTRY }}/${{ steps.owner.outputs.value }}/${{ env.IMAGE_NAME }}
+        run: docker buildx imagetools inspect "$IMAGE:$VERSION"
+
+      # Guardrail: on a tag push, fail loudly if no :latest was produced (regex mismatch would
+      # silently publish only :dev, which would be wrong).
+      - name: Sanity check tag output
+        if: startsWith(github.ref, format('refs/tags/{0}', env.TAG_PREFIX))
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          echo "Produced tags:"
+          while read -r tag; do echo "  $tag"; done <<< "$TAGS"
+          echo "$TAGS" | grep -q ':latest' \
+            || (echo "::error::Tag push did not produce :latest — check TAG_PREFIX against the pushed tag"; exit 1)

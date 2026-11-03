@@ -2,8 +2,8 @@
 //! arbitrary full-bucket plaintext sealed under the real key (so the plaintext parser and the
 //! session rules see fields no honest sender produces), must be refused or opened without a panic;
 //! a state that never issued a challenge must never confirm a session; and any single-byte change
-//! to a sealed message must be refused. Run with: `cargo fuzz run envelope_open` (needs the nightly
-//! pinned in `fuzz/rust-toolchain.toml`).
+//! to a sealed message must be refused. Run with: `cargo fuzz run envelope_open` (or `just fuzz envelope_open`; needs
+//! the nightly pinned in `tools/nightly/rust-toolchain.toml`).
 #![no_main]
 
 use chacha20::ChaCha20Rng;

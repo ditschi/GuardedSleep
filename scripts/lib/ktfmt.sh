@@ -13,7 +13,7 @@ jar="$(compgen -G "$dir/ktfmt-*-with-dependencies.jar" | head -1 || true)"
 if ! command -v java >/dev/null 2>&1; then
 	# A check that skips would let unformatted Kotlin pass, so only formatting may skip.
 	[[ " $* " == *" --set-exit-if-changed "* ]] && { echo "ktfmt needs java (mise install)" >&2; exit 1; }
-	echo "SKIPPED: ktfmt needs java"; exit 0
+	gs_skip "ktfmt needs java"; exit 0
 fi
 mapfile -d '' files < <(find apps/android -type f \( -name '*.kt' -o -name '*.kts' \) -not -path '*/build/*' -not -path '*/kotlin/uniffi/*' -print0)
 [ ${#files[@]} -gt 0 ] || exit 0

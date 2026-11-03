@@ -1,6 +1,7 @@
-# Pinned nightly for tools that need unstable compiler output: cargo-public-api (rustdoc JSON, API
-# snapshots, scripts/lib/api-snapshot.sh) today, cargo-fuzz later. Never used to build the product,
-# which is pinned in the root rust-toolchain.toml.
+# The only pinned nightly, for tools that need unstable compiler output: cargo-public-api (rustdoc JSON,
+# API snapshots, scripts/lib/api-snapshot.sh) and cargo-fuzz (sanitizer flags, `just fuzz`,
+# scripts/lib/fuzz.sh). Never used to build the product, which is pinned in the root rust-toolchain.toml.
+# Do not align it with that stable pin.
 # The rustdoc JSON format changes with the nightly, so it must stay within what the pinned
 # cargo-public-api (mise.toml [vars]) understands; the compatibility table is in
 # https://github.com/cargo-public-api/cargo-public-api#compatibility-matrix

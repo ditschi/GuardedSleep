@@ -36,7 +36,7 @@ One device acts as the **Baby Unit** (placed near the child), another as the **P
 
 ## Contributing
 
-See **[CONTRIBUTING.md](CONTRIBUTING.md)** and **[docs/contributing/development.md](docs/contributing/development.md)** for Dev Container usage, local tool setup (mise, `just`; transitioning from `pnpm`/`pre-commit`), and how to run the same checks as GitHub Actions. For release/changelog automation plans, see **[docs/contributing/release-and-changelog.md](docs/contributing/release-and-changelog.md)**.
+See **[CONTRIBUTING.md](CONTRIBUTING.md)** and **[docs/contributing/development.md](docs/contributing/development.md)** for Dev Container usage, local tool setup (mise, `just`; transitioning from `pnpm`/`pre-commit`), and how to run the same checks as GitHub Actions. For releases and the changelog, see **[docs/contributing/release-and-changelog.md](docs/contributing/release-and-changelog.md)**.
 
 If you want to contribute ideas or review proposals, start with the [Vision](docs/concept/vision.md) and the [Feature Overview](docs/backlog.md).
 

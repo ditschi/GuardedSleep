@@ -49,6 +49,14 @@
       "extractVersionTemplate": "^v(?<version>.*)$"
     },
     {
+      "description": "cargo-ndk pin in tools/android-versions.env (the NDK has no datasource and is bumped by hand)",
+      "customType": "regex",
+      "managerFilePatterns": ["/^tools/android-versions\\.env$/"],
+      "matchStrings": ["CARGO_NDK_VERSION=(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "depNameTemplate": "cargo-ndk",
+      "datasourceTemplate": "crate"
+    },
+    {
       "description": "Digest-pinned image in api-snapshot.sh (same as docker/web/Dockerfile)",
       "customType": "regex",
       "managerFilePatterns": ["/^scripts/lib/api-snapshot\\.sh$/"],

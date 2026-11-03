@@ -7,8 +7,9 @@ Setup follows [ADR-020](../../openspec/changes/archive/2026-10-20-adr-020-toolch
 ```bash
 mise install     # node 22, pnpm 11, java 21, just, lefthook, typos, actionlint, zizmor, reuse, cargo-deny, nextest, taplo, ktfmt, betterleaks (versions in mise.toml, checksums in mise.lock)
 just setup       # mise install, rustup toolchain, pnpm install --frozen-lockfile, lefthook install
+just doctor      # what is installed and what is missing (mise tools, rustup, Docker, uv, Playwright, KVM, hooks), with a fix for each
 just --list      # setup fmt lint test gen build e2e gate ci (+ sub-recipes such as lint-text, build-android, dev)
-just ci          # lint + test + build + e2e: the same verdict as CI (minus the PR title check and the emulator gate)
+just ci          # lint + test + build + e2e: the same verdict as CI (minus the PR title check and the emulator gate); ends with a list of every SKIPPED line of the run
 just dev         # Rust signaling server + Vite dev server for apps/web
 ```
 
@@ -85,10 +86,10 @@ Container builds (the image runs of `scripts/cargo.sh`, `scripts/core-build.sh` 
 
 The environment is defined by **Docker Compose** (`.devcontainer/docker-compose.yml`) and **Dockerfile** (`.devcontainer/Dockerfile`). The workspace is mounted at **`/workspace`** — the same layout is used in the IDE and on the CLI.
 
-1. Open the repository in **VS Code** or **Cursor** with the Dev Containers extension.
+1. Open the repository in **VS Code** (or a compatible editor) with the Dev Containers extension.
 2. **Reopen in Container** — on first start the image is built, then `.devcontainer/post-create.sh` runs once: `mise install`, `just setup`, `pnpm install --frozen-lockfile`.
 
-The image carries the native toolchain (ADR-015, ADR-019), mirroring `docker/android-native-build/Dockerfile`: Eclipse Temurin JDK 21 (copied into `/opt/java/openjdk`), Android SDK (platforms 35 and 37.0, build-tools 35.0.0 and 36.0.0), NDK `30.0.16248370`, Rust from `rust-toolchain.toml` (including the Android, WASM and iOS check targets), `cargo-ndk` 4.1.2 and [mise](https://mise.jdx.dev/), which installs the rest (node, pnpm 11, just, lefthook, …) from `mise.toml`. `CORE_BUILD_NATIVE=1` is preset (host-style `target/`, see Rust execution mode), so `scripts/core-build.sh` and `scripts/gradle.sh` run in place instead of starting the build image (there is no nested Docker).
+The image carries the native toolchain (ADR-015, ADR-019), mirroring `docker/android-native-build/Dockerfile`: Eclipse Temurin JDK 21 (copied into `/opt/java/openjdk`), Android SDK (platforms 35 and 37.0, build-tools 35.0.0 and 36.0.0), the NDK, Rust from `rust-toolchain.toml` (including the Android, WASM and iOS check targets), `cargo-ndk` (both versions pinned once in `tools/android-versions.env`) and [mise](https://mise.jdx.dev/), which installs the rest (node, pnpm 11, just, lefthook, …) from `mise.toml`. `CORE_BUILD_NATIVE=1` is preset (host-style `target/`, see Rust execution mode), so `scripts/core-build.sh` and `scripts/gradle.sh` run in place instead of starting the build image (there is no nested Docker).
 
 - **Trade-off:** the image is larger and the first `docker compose … build` for `.devcontainer/` takes longer (SDK download).
 - **ARM64:** the Temurin stage is amd64-oriented; on Apple Silicon, use **Docker Rosetta** / amd64 platform for this image, or maintain an arm64 JDK variant if needed.
@@ -112,17 +113,19 @@ If you have **Docker** and **Docker Compose** but do not want to attach the edit
 docker compose --project-directory .devcontainer -f .devcontainer/docker-compose.yml build
 
 # Install tools and dependencies, then run the checks
-./scripts/devcontainer-run.sh bash -lc './.devcontainer/post-create.sh && just lint'
+docker compose --project-directory .devcontainer -f .devcontainer/docker-compose.yml run --rm dev bash -lc './.devcontainer/post-create.sh && just lint'
 
 # Later: only what you need
-./scripts/devcontainer-run.sh just test
+docker compose --project-directory .devcontainer -f .devcontainer/docker-compose.yml run --rm dev just test
 ```
 
 Interactive shell with the repo at `/workspace`:
 
 ```bash
-./scripts/devcontainer-run.sh bash
+docker compose --project-directory .devcontainer -f .devcontainer/docker-compose.yml run --rm -it dev bash
 ```
+
+On rootless Docker add `DEV_UID=0 DEV_GID=0` in front (see the rootless section below).
 
 ### Playwright browser E2E in the Dev Container
 
@@ -147,42 +150,30 @@ If `docker info` shows `rootless: true` and `pnpm install` fails with `EACCES: p
 Run as container-root — rootless maps it back to your host user, so files on disk stay owned by you, not by real `root`:
 
 ```bash
-./scripts/devcontainer-run.sh pnpm install
-```
-
-The wrapper pins Compose’s **project directory** to `.devcontainer/` (so `.devcontainer/.env` is always read for interpolation) and exports `DEV_UID` / `DEV_GID` when the daemon is rootless.
-
-Manual equivalent:
-
-```bash
 DEV_UID=0 DEV_GID=0 docker compose --project-directory .devcontainer -f .devcontainer/docker-compose.yml run --rm dev pnpm install
 ```
 
-To make rootless mapping permanent for **Cursor / VS Code Dev Containers** (the IDE does not run the shell wrapper), copy `.devcontainer/.env.example` to `.devcontainer/.env` and uncomment `DEV_UID=0` / `DEV_GID=0`. Rootful Docker users with uid 1000 leave both unset.
+`--project-directory .devcontainer` makes Compose read `.devcontainer/.env` for interpolation.
 
-If you invoke `docker compose` yourself, always pass `--project-directory .devcontainer` (or `run` from inside `.devcontainer/`) so the same `.env` file is used; otherwise Compose may fall back to `user: 1000:1000` and you will see `EACCES` again.
+To make rootless mapping permanent (also for **VS Code Dev Containers**), copy `.devcontainer/.env.example` to `.devcontainer/.env` and uncomment `DEV_UID=0` / `DEV_GID=0`. Rootful Docker users with uid 1000 leave both unset.
 
-If the version control client or `pnpm` still cannot write under `/workspace` (for example an `index.lock` permission denied) even when using `./scripts/devcontainer-run.sh`, your Docker engine probably does not advertise rootless in a way the script recognizes. Force the same uid mapping the rootless case uses:
-
-```bash
-GUARDSLEEP_DEVCONTAINER_UID=0 GUARDSLEEP_DEVCONTAINER_GID=0 ./scripts/devcontainer-run.sh bash
-```
+Always pass `--project-directory .devcontainer` (or `run` from inside `.devcontainer/`) so the same `.env` file is used; otherwise Compose may fall back to `user: 1000:1000` and you will see `EACCES` again. The same `DEV_UID=0 DEV_GID=0` mapping fixes other permission errors on the bind mount (for example an `index.lock` permission denied) when your engine is rootless.
 
 Only use `0` when you understand the trade-off from [AGENTS.md](../../AGENTS.md) (rootless: maps to your host user; classic rootful Docker: container root can create root-owned files on the bind mount).
 
 ### Host without Node/pnpm/mise (CLI only)
 
-If you do **not** want to install Node, pnpm or mise on the host, use Docker only: tools and `node_modules` live in the mounted repo (or in the container’s view of `/workspace`), not as a global host install.
+If you do **not** want to install Node, pnpm or mise on the host, use Docker only: tools and `node_modules` live in the mounted repo, not as a global host install. Open a shell that publishes **Vite (5173)** and **signaling (8787)** to the host:
 
 ```bash
-./scripts/dev-shell.sh
+docker compose --project-directory .devcontainer -f .devcontainer/docker-compose.yml run --rm -it --service-ports dev bash
 ```
 
-This builds the Dev Container image if needed and opens a shell with **`--service-ports`** so **Vite (5173)** and **signaling (8787)** reach your browser on the host. Inside it run `just setup` once, then `just dev`. Open e.g. `http://localhost:5173/`. The Vite dev server binds `0.0.0.0` so port publishing from Docker works.
+Inside it run `just setup` once, then `just dev`, and open `http://localhost:5173/`. The Vite dev server binds `0.0.0.0` so port publishing from Docker works.
 
 ## Local setup (without Dev Container or Docker)
 
-Install [mise](https://mise.jdx.dev/getting-started.html) and, for host cargo, [rustup](https://rustup.rs), then run `just setup` (see Quick start). mise provides Node (≥ 22.18, matches `engines`), pnpm 11 and the other pinned tools; there is no Python or Husky setup.
+Install [mise](https://mise.jdx.dev/getting-started.html) and, for host cargo, [rustup](https://rustup.rs), then run `just setup` (see Quick start). mise provides Node (≥ 22.18, matches `engines`), pnpm 11 and the other pinned tools; `reuse` (the licence lint in `just lint-text`) is a Python tool that mise installs through its pipx backend on the `uv` pinned in `mise.toml` (no host uv needed); there is no Husky setup.
 
 ## Local stack (signaling + web UI)
 
