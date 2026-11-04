@@ -406,7 +406,8 @@
       "missed": {
         "some": "接続が切れていた間：{start}から{end}の間に{count, plural, other {#回の音}}。最も大きい音：{level}。",
         "none": "接続が切れていた間、音はありませんでした。",
-        "unknown": "{start}から{end}の間の様子は分かりません。"
+        "unknown": "{start}から{end}の間の様子は分かりません。",
+        "unknownAt": "{time} に何が起きたかは分かりません。"
       },
       "coach": {
         "bar": "緑は見守り中です。赤に変わるか表示が消えたら、見守りはできていません。",

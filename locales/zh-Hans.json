@@ -406,7 +406,8 @@
       "missed": {
         "some": "断开期间：{start} 至 {end} 之间有 {count, plural, other {# 次声音}}。最响：{level}。",
         "none": "断开期间没有声音。",
-        "unknown": "不清楚 {start} 至 {end} 之间发生了什么。"
+        "unknown": "不清楚 {start} 至 {end} 之间发生了什么。",
+        "unknownAt": "我们不知道 {time} 发生了什么。"
       },
       "coach": {
         "bar": "绿色表示您正在监护。如果变红或消失，则表示没有在监护。",

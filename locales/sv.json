@@ -406,7 +406,8 @@
       "missed": {
         "some": "Under avbrottet: {count, plural, one {1 ljud} other {# ljud}} mellan {start} och {end}. Högst: {level}.",
         "none": "Inga ljud under avbrottet.",
-        "unknown": "Vi vet inte vad som hände mellan {start} och {end}."
+        "unknown": "Vi vet inte vad som hände mellan {start} och {end}.",
+        "unknownAt": "Vi vet inte vad som hände klockan {time}."
       },
       "coach": {
         "bar": "Grönt betyder att du övervakar. Om det blir rött eller försvinner övervakar du inte.",

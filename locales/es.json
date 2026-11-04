@@ -406,7 +406,8 @@
       "missed": {
         "some": "Durante la desconexión: {count, plural, one {1 sonido} many {# de sonidos} other {# sonidos}} entre las {start} y las {end}. El más fuerte: {level}.",
         "none": "Ningún sonido durante la desconexión.",
-        "unknown": "No sabemos qué ocurrió entre las {start} y las {end}."
+        "unknown": "No sabemos qué ocurrió entre las {start} y las {end}.",
+        "unknownAt": "No sabemos qué ocurrió a las {time}."
       },
       "coach": {
         "bar": "Verde significa que está vigilando. Si se pone rojo o desaparece, no lo está.",

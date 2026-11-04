@@ -406,7 +406,8 @@
       "missed": {
         "some": "Bağlantı yokken: {start} ile {end} arasında {count, plural, one {1 ses} other {# ses}}. En yüksek: {level}.",
         "none": "Bağlantı yokken ses olmadı.",
-        "unknown": "{start} ile {end} arasında ne olduğunu bilmiyoruz."
+        "unknown": "{start} ile {end} arasında ne olduğunu bilmiyoruz.",
+        "unknownAt": "Saat {time} sırasında ne olduğunu bilmiyoruz."
       },
       "coach": {
         "bar": "Yeşil, izlediğiniz anlamına gelir. Kırmızıya dönerse veya kaybolursa izlemiyorsunuz.",

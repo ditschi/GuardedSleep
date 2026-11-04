@@ -406,7 +406,8 @@
       "missed": {
         "some": "În timpul deconectării: {count, plural, one {1 sunet} few {# sunete} other {# de sunete}} între {start} și {end}. Cel mai puternic: {level}.",
         "none": "Niciun sunet în timpul deconectării.",
-        "unknown": "Nu știm ce s-a întâmplat între {start} și {end}."
+        "unknown": "Nu știm ce s-a întâmplat între {start} și {end}.",
+        "unknownAt": "Nu știm ce s-a întâmplat la {time}."
       },
       "coach": {
         "bar": "Verde înseamnă că monitorizezi. Dacă devine roșu sau dispare, nu monitorizezi.",

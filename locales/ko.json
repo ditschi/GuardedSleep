@@ -406,7 +406,8 @@
       "missed": {
         "some": "연결이 끊긴 동안: {start}~{end} 사이에 소리 {count, plural, other {#번}}. 가장 큰 소리: {level}.",
         "none": "연결이 끊긴 동안 소리가 없었어요.",
-        "unknown": "{start}~{end} 사이에 무슨 일이 있었는지 알 수 없어요."
+        "unknown": "{start}~{end} 사이에 무슨 일이 있었는지 알 수 없어요.",
+        "unknownAt": "{time}에 무슨 일이 있었는지 알 수 없습니다."
       },
       "coach": {
         "bar": "초록색은 지켜보는 중이라는 뜻이에요. 빨간색으로 바뀌거나 사라지면 지켜보고 있지 않은 거예요.",

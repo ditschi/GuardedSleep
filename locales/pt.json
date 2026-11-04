@@ -406,7 +406,8 @@
       "missed": {
         "some": "Durante a desconexão: {count, plural, one {1 som} many {# de sons} other {# sons}} entre {start} e {end}. Mais alto: {level}.",
         "none": "Nenhum som durante a desconexão.",
-        "unknown": "Não sabemos o que aconteceu entre {start} e {end}."
+        "unknown": "Não sabemos o que aconteceu entre {start} e {end}.",
+        "unknownAt": "Não sabemos o que aconteceu às {time}."
       },
       "coach": {
         "bar": "Verde significa que você está monitorando. Se ficar vermelho ou sumir, você não está.",

@@ -151,7 +151,12 @@
       start: formatClock(end - m.downMs, $locale),
       end: formatClock(end, $locale),
     };
-    if (m.count === null || !m.complete) return $t("native.ui.missed.unknown", args);
+    if (m.count === null || !m.complete) {
+      // A first-trust report has no gap, so both clock times match: name the time once.
+      return args.start === args.end
+        ? $t("native.ui.missed.unknownAt", { time: args.end })
+        : $t("native.ui.missed.unknown", args);
+    }
     if (m.count === 0) return $t("native.ui.missed.none");
     return $t("native.ui.missed.some", {
       ...args,
