@@ -743,12 +743,16 @@ private fun MissedCard(m: MissedEventsUi, wall: Long, onOk: () -> Unit) {
                         }
                     ),
                 )
-            else ->
-                stringResource(
-                    R.string.native_ui_missed_unknown,
-                    formatTime(start),
-                    formatTime(end),
-                )
+            else -> {
+                val startText = formatTime(start)
+                val endText = formatTime(end)
+                // A first-trust report has no gap, so both times match: name the time once.
+                if (startText == endText) {
+                    stringResource(R.string.native_ui_missed_unknown_at, endText)
+                } else {
+                    stringResource(R.string.native_ui_missed_unknown, startText, endText)
+                }
+            }
         }
     AppCard(Modifier.testTag("card_missed_events")) {
         Text(

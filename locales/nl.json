@@ -406,7 +406,8 @@
       "missed": {
         "some": "Tijdens de onderbreking: {count, plural, one {1 geluid} other {# geluiden}} tussen {start} en {end}. Luidst: {level}.",
         "none": "Geen geluiden tijdens de onderbreking.",
-        "unknown": "We weten niet wat er tussen {start} en {end} is gebeurd."
+        "unknown": "We weten niet wat er tussen {start} en {end} is gebeurd.",
+        "unknownAt": "We weten niet wat er om {time} is gebeurd."
       },
       "coach": {
         "bar": "Groen betekent dat je aan het bewaken bent. Als het rood wordt of verdwijnt, bewaak je niet.",

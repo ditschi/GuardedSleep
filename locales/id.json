@@ -406,7 +406,8 @@
       "missed": {
         "some": "Saat terputus: {count, plural, other {# suara}} antara {start} dan {end}. Terkeras: {level}.",
         "none": "Tidak ada suara saat terputus.",
-        "unknown": "Kami tidak tahu apa yang terjadi antara {start} dan {end}."
+        "unknown": "Kami tidak tahu apa yang terjadi antara {start} dan {end}.",
+        "unknownAt": "Kami tidak tahu apa yang terjadi pada {time}."
       },
       "coach": {
         "bar": "Hijau berarti Anda sedang memantau. Jika berubah merah atau hilang, berarti tidak memantau.",

@@ -406,7 +406,8 @@
       "missed": {
         "some": "W czasie braku połączenia: {count, plural, one {1 dźwięk} few {# dźwięki} many {# dźwięków} other {# dźwięku}} między {start} a {end}. Najgłośniej: {level}.",
         "none": "Brak dźwięków w czasie braku połączenia.",
-        "unknown": "Nie wiemy, co działo się między {start} a {end}."
+        "unknown": "Nie wiemy, co działo się między {start} a {end}.",
+        "unknownAt": "Nie wiemy, co wydarzyło się o {time}."
       },
       "coach": {
         "bar": "Zielony oznacza, że monitorujesz. Jeśli zmieni się na czerwony lub zniknie, nie monitorujesz.",

@@ -406,7 +406,8 @@
       "missed": {
         "some": "Během výpadku: {count, plural, one {1 zvuk} few {# zvuky} many {# zvuku} other {# zvuků}} mezi {start} a {end}. Nejhlasitější: {level}.",
         "none": "Během výpadku žádné zvuky.",
-        "unknown": "Nevíme, co se dělo mezi {start} a {end}."
+        "unknown": "Nevíme, co se dělo mezi {start} a {end}.",
+        "unknownAt": "Nevíme, co se stalo v {time}."
       },
       "coach": {
         "bar": "Zelená znamená, že sledujete. Pokud zčervená nebo zmizí, nesledujete.",

@@ -13,7 +13,7 @@ Each task is a brief for the `implementer` sub-agent. Branch `fix/noise-alert-on
 
 ## 3. Copy: missed-events notice for a zero-length gap
 
-- [ ] 3.1 Add `native.ui.missed.unknownAt` ("We don't know what happened at {time}.") to every locale (machine translated, critical key) and use it on web and Android when start and end format to the same time.
+- [x] 3.1 Add `native.ui.missed.unknownAt` ("We don't know what happened at {time}.") to every locale (machine translated, critical key) and use it on web and Android when start and end format to the same time.
 
 ## 4. Checks
 

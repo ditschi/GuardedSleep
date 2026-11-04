@@ -406,7 +406,8 @@
       "missed": {
         "some": "Während der Unterbrechung: {count, plural, one {1 Geräusch} other {# Geräusche}} zwischen {start} und {end}. Am lautesten: {level}.",
         "none": "Keine Geräusche während der Unterbrechung.",
-        "unknown": "Wir wissen nicht, was zwischen {start} und {end} passiert ist."
+        "unknown": "Wir wissen nicht, was zwischen {start} und {end} passiert ist.",
+        "unknownAt": "Wir wissen nicht, was um {time} passiert ist."
       },
       "coach": {
         "bar": "Grün heißt: Sie überwachen. Wird es rot oder verschwindet es, überwachen Sie nicht.",
