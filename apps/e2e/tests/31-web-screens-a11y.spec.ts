@@ -171,9 +171,6 @@ for (const lang of LANGUAGES) {
   });
 
   test(`noise alert screen${suffix}`, async () => {
-    // Quarantined: flaked three times in seven days (AGENTS.md §5.4). The alert path itself stays
-    // covered by 23-web-alerts.spec.ts. https://github.com/ditschi/GuardedSleep/issues/17
-    test.fixme(true, "flaky, https://github.com/ditschi/GuardedSleep/issues/17");
     test.setTimeout(180_000);
     const dual = await launchDualContexts({
       locale: lang.tag,

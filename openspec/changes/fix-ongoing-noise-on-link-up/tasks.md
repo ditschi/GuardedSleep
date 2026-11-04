@@ -9,7 +9,7 @@ Each task is a brief for the `implementer` sub-agent. Branch `fix/noise-alert-on
 
 ## 2. Web E2E
 
-- [ ] 2.1 Remove the `test.fixme` quarantine (and its comment) from "noise alert screen" in `apps/e2e/tests/31-web-screens-a11y.spec.ts`. Acceptance: `--repeat-each 10 -g "noise alert"` passes, and so does the whole spec file.
+- [x] 2.1 Remove the `test.fixme` quarantine (and its comment) from "noise alert screen" in `apps/e2e/tests/31-web-screens-a11y.spec.ts`. Acceptance: `--repeat-each 10 -g "noise alert"` passes, and so does the whole spec file.
 
 ## 3. Copy: missed-events notice for a zero-length gap
 
