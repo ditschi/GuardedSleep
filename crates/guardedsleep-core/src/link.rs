@@ -2459,6 +2459,19 @@ impl Link {
         match self.cfg.role {
             Role::Baby => {
                 self.send_missed_events(first, outage_start, down_ms, out);
+                // The gate reports only the quiet-to-loud change, and `send_app` drops it while
+                // no attempt is trusted. Noise that is still going on when the link comes up (or
+                // comes back) would otherwise never reach the parent, so announce it again.
+                if self.gate.is_loud() {
+                    self.send_app(
+                        &DataMessage::NoiseAlert {
+                            rms: self.gate.last_rms(),
+                            t: now as f64,
+                            probe: false,
+                        },
+                        out,
+                    );
+                }
                 self.last_sent_status = None;
                 self.flush_status(out);
                 self.send_mailbox_update(out);

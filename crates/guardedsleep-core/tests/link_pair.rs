@@ -2357,6 +2357,40 @@ fn noise_alerts(w: &World) -> usize {
 }
 
 #[test]
+fn noise_that_started_before_trust_is_announced_when_the_link_comes_up() {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.start(BABY, 1);
+    // The gate turns loud while no parent is connected: the transition alert has nowhere to go.
+    loud(&mut w, 3_000);
+    assert_eq!(noise_alerts(&w), 0);
+    w.start(PARENT, 2);
+    w.advance(5_000);
+    assert_eq!(w.state(PARENT), LinkState::Connected);
+    assert_eq!(
+        noise_alerts(&w),
+        1,
+        "the parent must hear about noise that is still going on"
+    );
+}
+
+#[test]
+fn noise_during_an_outage_is_announced_when_the_link_recovers() {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    w.set_net(BABY, false);
+    w.advance(45_000);
+    loud(&mut w, 3_000);
+    let before = noise_alerts(&w);
+    w.set_net(BABY, true);
+    w.advance(60_000);
+    assert_eq!(w.state(PARENT), LinkState::Connected);
+    assert!(
+        noise_alerts(&w) > before,
+        "noise that went on through the outage must be announced on recovery"
+    );
+}
+
+#[test]
 fn baby_status_carries_the_live_noise_threshold_to_the_parent() {
     let mut w = World::pair(&PSK_A, &PSK_A);
     w.connect_pair();

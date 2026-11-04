@@ -30,6 +30,12 @@ impl NoiseGate {
         self.last_rms
     }
 
+    /// True while the gate is in its loud state (a change to loud was reported, quiet has not
+    /// followed).
+    pub fn is_loud(&self) -> bool {
+        self.loud
+    }
+
     pub fn threshold(&self) -> f64 {
         self.threshold
     }
@@ -115,6 +121,18 @@ mod tests {
         assert!(matches!(g.sample(0, 0.5), Some(GateChange::Loud { .. })));
         g.set_params(0.1, 1_000);
         assert_eq!(g.sample(100, 0.5), None);
+    }
+
+    #[test]
+    fn is_loud_follows_the_reported_changes() {
+        let mut g = NoiseGate::new(0.2, 100);
+        assert!(!g.is_loud());
+        assert_eq!(g.sample(0, 0.5), None);
+        assert!(!g.is_loud());
+        assert!(matches!(g.sample(100, 0.5), Some(GateChange::Loud { .. })));
+        assert!(g.is_loud());
+        assert_eq!(g.sample(200, 0.0), Some(GateChange::Quiet));
+        assert!(!g.is_loud());
     }
 
     #[test]
