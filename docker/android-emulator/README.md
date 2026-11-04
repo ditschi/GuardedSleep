@@ -36,7 +36,7 @@ The emulator container is **privileged** and mounts `/dev/kvm` — dev-only, not
 
 - **`/dev/kvm` not found** — enable virtualization in BIOS; on Linux: `sudo modprobe kvm` and add your user to group `kvm`.
 - **Boot timeout** — first image build downloads the system image (~1 GB); retry after build completes. Check logs: `docker compose -f docker/android-emulator/compose.yaml logs -f emulator`.
-- **Connection failed** — the emulator reaches host services via `10.0.2.2`, not `127.0.0.1`; make sure the signaling server listens on `0.0.0.0`.
+- **Connection failed** — the emulator reaches host services via `10.0.2.2`, not `127.0.0.1`; make sure the signaling server listens on `0.0.0.0`. Debug builds default to the project server (`wss://gs.mydata.rocks/signaling`); for a local server, enter `ws://10.0.2.2:8787` under Settings → Advanced → signaling URLs.
 
 ## Related
 
