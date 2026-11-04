@@ -4,7 +4,7 @@ Each task is a brief for the `implementer` sub-agent. Branch `fix/noise-alert-on
 
 ## 1. Core: announce an ongoing loud state on trust
 
-- [x] 1.1 Core unit test in `crates/guardedsleep-core/src/link.rs` that reproduces the bug: a baby link whose gate turns loud (continuous loud `AudioLevel` for longer than the hold time) before any trusted attempt, then becomes trusted while still loud; assert the parent receives `noise_alert{probe: false}`. It must fail before 1.2.
+- [x] 1.1 Core test in `crates/guardedsleep-core/tests/link_pair.rs` (two-link `World`) that reproduces the bug: a baby link whose gate turns loud (continuous loud `AudioLevel` for longer than the hold time) before any trusted attempt, then becomes trusted while still loud; assert the parent receives `noise_alert{probe: false}`. It must fail before 1.2.
 - [x] 1.2 In the baby branch of `on_trusted`, after `send_missed_events`, send `noise_alert` when the gate is loud (add `NoiseGate::is_loud` with a unit test). Re-bless `guardedsleep-sim` traces only if they change; review the diff by hand.
 
 ## 2. Web E2E
@@ -17,4 +17,4 @@ Each task is a brief for the `implementer` sub-agent. Branch `fix/noise-alert-on
 
 ## 4. Checks
 
-- [ ] 4.1 `just test-affected`, `just lint`, `just test`, `just e2e` green; `openspec validate --all --strict` green.
+- [x] 4.1 `just test-affected`, `just lint`, `just test`, `just e2e` green; `openspec validate --all --strict` green.
