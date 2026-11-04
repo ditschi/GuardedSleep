@@ -13,8 +13,8 @@ Tier **T0** (alpha). A bug fix in the core's alert path. It does not change the 
 ## What Changes
 
 - **Core (`Link`, baby role):** when an attempt becomes trusted (`on_trusted`, the first link and every recovery) while the noise gate is loud, the baby sends `noise_alert{probe: false}` with the current level right after the missed-events report. No protocol change: the message exists.
-- **Spec:** `audio-monitoring` "Local noise detection" gains a failure scenario for noise that is still going when the link comes up.
-- **Test:** a core unit test reproduces the bug (fails before the fix). The quarantined web E2E test "noise alert screen" is re-enabled.
+- **Spec:** `audio-monitoring` gains the requirement "Ongoing noise when the link comes up", with a failure scenario.
+- **Test:** a core test (`tests/link_pair.rs`) reproduces the bug, for the first link and for a recovery (fails before the fix). The quarantined web E2E test "noise alert screen" is re-enabled.
 - **Copy (side fix):** the "unknown" missed-events notice reads sensibly when start and end are the same minute (a new critical key under `native.ui.missed`, all locales, web and Android).
 
 Out of scope: why CI pairing sometimes takes 20 s (the product handles it; a separate issue if it persists), parent-side changes to the noise event lifecycle, and T1/T2 items.
@@ -27,7 +27,7 @@ None.
 
 ### Modified Capabilities
 
-- `audio-monitoring`: "Local noise detection" gains the scenario "Baby still crying when the link comes up".
+- `audio-monitoring`: new requirement "Ongoing noise when the link comes up" with the scenario "Baby still crying when the link comes up".
 
 ## Impact
 

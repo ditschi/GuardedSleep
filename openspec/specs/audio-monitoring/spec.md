@@ -20,6 +20,15 @@ While monitoring, the baby unit SHALL capture audio continuously and analyse it 
 - **WHEN** the level stays above the threshold for the hold time
 - **THEN** the baby unit sends a noise event with its level to the parent
 
+### Requirement: Ongoing noise when the link comes up
+
+When a link to the parent becomes trusted (the first link or a recovery) while the noise gate is loud, the baby unit SHALL send a noise event at once, in addition to the missed-events report.
+
+#### Scenario: Baby still crying when the link comes up
+
+- **WHEN** the noise gate turned loud while no trusted link existed and the level is still above the threshold when the link becomes trusted
+- **THEN** the baby unit sends a noise event with its level to the parent right away, and the parent alerts
+
 ### Requirement: Sensitivity settings
 
 The baby unit SHALL let the user set the threshold with a slider and a live level preview, and the hold time to 3, 5, 10 or 15 seconds (default 5).
