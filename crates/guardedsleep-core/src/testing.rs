@@ -216,11 +216,3 @@ pub fn handshake(
     }
     all
 }
-
-/// The input that delivers a raw text frame on mailbox `id`.
-pub fn frame_input(id: crate::mailbox::MailboxId, text: &str) -> LinkInput {
-    LinkInput::MailboxFrame {
-        id,
-        bytes: text.to_owned(),
-    }
-}
