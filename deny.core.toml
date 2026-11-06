@@ -27,5 +27,6 @@ deny = [
   { crate = "smol", reason = "sans-IO: no async runtime in core/relay" },
   # wasm-bindgen, js-sys and web-sys are not listed here because the optional tsify feature pulls them
   # in; scripts/lib/core-bindings-check.sh bans them on the default-feature graph.
+  { crate = "sha1", reason = "HMAC-SHA1 only in guardedsleep-server, to sign coturn REST credentials (AGENTS.md section 7.3); it must never reach the core, the relay or a client" },
   { crate = "uniffi", reason = "binding-free core: UniFFI glue belongs in guardedsleep-ffi" },
 ]
