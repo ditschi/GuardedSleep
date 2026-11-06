@@ -22,6 +22,7 @@ import org.guardedsleep.app.pairing.StoredPairing
 import org.guardedsleep.app.pairing.TurnCredentials
 import org.guardedsleep.app.pairing.TurnServerInput
 import org.guardedsleep.app.pairing.TurnStore
+import org.guardedsleep.app.pairing.signalingUrls
 import org.guardedsleep.app.platform.BuildConfig
 import org.guardedsleep.app.readiness.ReadinessChecker
 import org.guardedsleep.app.settings.SettingsRepository
@@ -793,7 +794,7 @@ class LinkController(
             pairingStore.save(
                 StoredPairing(
                     pending.psk,
-                    received?.let(::signalingUrlsOf)?.ifEmpty { null } ?: pending.urls,
+                    received?.signalingUrls()?.ifEmpty { null } ?: pending.urls,
                     true,
                     pending.turn,
                     pending.pinnedSecret?.let { PairingPayload.b64(it) },
@@ -840,9 +841,6 @@ class LinkController(
             babyModel.reset()
         }
     }
-
-    private fun signalingUrlsOf(mailboxes: List<StoredMailbox>): List<String> =
-        mailboxes.filter { it.kind == "relay" || it.kind == "lan" }.map { it.url }
 
     private fun kindName(kind: MailboxKind): String =
         when (kind) {
