@@ -4,15 +4,17 @@ import org.guardedsleep.app.config.PublicLists
 import org.guardedsleep.app.config.RelayStun
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RelayStunTest {
     @Test
-    fun theDefaultIceServersAreTwoListedOperators() {
+    fun theDefaultIceServersAreAtMostTwoListedOperators() {
         val urls = RelayStun.iceUrls(emptyList())
         val operators =
             urls.map { u -> PublicLists.stunServers.single { it.url == u }.operator }.distinct()
-        assertEquals(2, operators.size)
+        // The allowlist holds the project host only since alpha-connection-model 9.2.
+        assertTrue(operators.size in 1..2)
         assertFalse(urls.any { it.contains("google") })
     }
 

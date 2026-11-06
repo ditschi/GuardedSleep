@@ -815,8 +815,8 @@ impl<E: Entropy> Relay<E> {
             event: LogEvent::Joined(role),
         });
         let mut welcome = json!({ "type": "welcome", "clientId": client_id, "roomId": room_id });
-        if !self.cfg.stun_urls.is_empty() {
-            welcome["iceServers"] = json!(self.cfg.stun_urls);
+        if let (false, Some(fields)) = (self.cfg.stun_urls.is_empty(), welcome.as_object_mut()) {
+            fields.insert("iceServers".to_owned(), json!(self.cfg.stun_urls));
         }
         out.push(send(conn, welcome.to_string()));
         // Credentials go out before the `members`/`peer` update that completes the room, so a
