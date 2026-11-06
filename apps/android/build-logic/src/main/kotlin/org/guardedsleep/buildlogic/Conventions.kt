@@ -34,9 +34,9 @@ private fun CommonExtension.configureCommon() {
     // Every finding is fixed or suppressed with a reason; there is no lint-baseline.xml.
     lint.warningsAsErrors = true
     lint.abortOnError = true
-    // Dependency freshness is Renovate's job (weekly, release-age gated); these two checks need
-    // the network and would break a build the day a new release appears.
-    lint.disable += setOf("GradleDependency", "NewerVersionAvailable")
+    // Dependency freshness is Renovate's job (weekly, release-age gated); these checks need the
+    // network and would break a build the day a new release appears (AGP 9.5.1 did, 2026-11-06).
+    lint.disable += setOf("AndroidGradlePluginVersion", "GradleDependency", "NewerVersionAvailable")
 }
 
 /** JDK 21 toolchain compiling to Java 17 bytecode, the same for every module. */
