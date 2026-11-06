@@ -114,9 +114,10 @@ export class LinkDriver {
   }
 
   /**
-   * The wall clock in Unix seconds, for the `here` message and the clock comparison with the peer only (never liveness): sent at start,
-   * every 60 s, and when a tick sees the clock jump (more than 2 s off the elapsed monotonic time
-   * since the last report), which covers a changed device time.
+   * The wall clock in Unix seconds, for the `here` message and the clock comparison with the peer
+   * only (never liveness): sent at start, every 60 s, and when a tick sees the clock jump (more
+   * than 2 s off the elapsed monotonic time since the last report), which covers a changed device
+   * time.
    */
   private reportWallClock(): void {
     const wallMs = Date.now();
@@ -215,8 +216,7 @@ export class LinkDriver {
   }
 
   /**
-   * The core's `url` is empty for the relay mailbox: its URL list still lives here. A mailbox
-   * that names its address gets only that address tried. A failed open comes back as
+   * Opens exactly the address the core named for mailbox `id`. A failed open comes back as
    * `mailbox_closed`, never as a retry.
    */
   private openMailbox(id: number, url: string): void {

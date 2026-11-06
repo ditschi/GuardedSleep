@@ -48,8 +48,8 @@ function isPrivateOrLoopbackLiteral(host: string): boolean {
 }
 
 /**
- * The signaling URLs a parent opens for a received invite: relay and LAN mailboxes both use the
- * relay protocol and stay in the platform's address list.
+ * The signaling URLs of a received invite or mailbox update. They feed the ICE servers and the
+ * stored pairing; the core opens the mailboxes itself (every URL is one relay mailbox).
  */
 export function signalingUrlsOf(mailboxes: readonly InviteMailbox[]): string[] {
   return mailboxes.map((m) => m.url);

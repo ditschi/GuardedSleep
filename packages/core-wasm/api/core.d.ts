@@ -115,9 +115,9 @@ export interface LinkConfig {
      */
     device_name?: string;
     /**
-     * The pairing's mailbox set: the `relay` and `lan` entries stay in the platform's address list
-     * for now. Baby: the set is also sent to the parent after each verification (the mailbox
-     * update); empty: none is sent.
+     * The pairing's mailbox set: every `relay` and `lan` entry is one relay mailbox the core opens
+     * at that address. Baby: the set is also sent to the parent after each verification (the
+     * mailbox update); empty: none is sent.
      */
     mailboxes?: InviteMailbox[];
     /**

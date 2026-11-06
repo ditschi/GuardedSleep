@@ -239,9 +239,9 @@ pub struct LinkConfig {
     /// characters, control characters removed). Empty: no name. Never a fingerprint or an id.
     #[serde(default)]
     pub device_name: String,
-    /// The pairing's mailbox set: the `relay` and `lan` entries stay in the platform's address list
-    /// for now. Baby: the set is also sent to the parent after each verification (the mailbox
-    /// update); empty: none is sent.
+    /// The pairing's mailbox set: every `relay` and `lan` entry is one relay mailbox the core opens
+    /// at that address. Baby: the set is also sent to the parent after each verification (the
+    /// mailbox update); empty: none is sent.
     #[serde(default)]
     pub mailboxes: Vec<InviteMailbox>,
     /// Development builds only: accept loopback `l:` entries in a received mailbox update, like
@@ -474,7 +474,7 @@ pub enum LinkInput {
 #[serde(tag = "type", rename_all = "snake_case")]
 #[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub enum LinkAction {
-    /// Open a socket for mailbox `id`. `url` empty: the platform's configured address for the kind.
+    /// Open a socket to exactly `url` for mailbox `id`.
     /// After `close_mailbox` the platform discards further events of that socket; a failed open is
     /// reported as `mailbox_closed`.
     OpenMailbox {

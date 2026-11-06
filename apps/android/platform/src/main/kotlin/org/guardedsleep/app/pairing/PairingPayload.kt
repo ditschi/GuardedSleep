@@ -15,9 +15,10 @@ import uniffi.guardedsleep_core.parseInvite
  * codec for every client, via the binding); this class only carries the values and maps the core's
  * rejection onto [PairingError].
  *
- * The platform still holds the signaling URL list: a `wss://` URL is shown as an own relay (`r:`),
- * a `ws://` URL as a LAN mailbox (`l:`, which the core accepts only for RFC 1918 and ULA literals),
- * and a received invite's relay and LAN mailboxes are opened as signaling URLs.
+ * The platform holds the signaling URLs for the ICE servers and the stored pairing; the core opens
+ * the mailboxes. A `wss://` URL is an own relay (`r:`), a `ws://` URL a LAN mailbox (`l:`, which
+ * the core accepts only for RFC 1918 and ULA literals), and a received invite's relay and LAN
+ * mailboxes give the URLs back.
  */
 data class PairingPayload(
     val pskB64url: String,
