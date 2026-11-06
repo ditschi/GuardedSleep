@@ -1,0 +1,68 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "two-relays-one-down-for-the-whole-run",
+  "description": "The pairing names two relays and one of them is down for the whole run. The pair meets on the other one alone: presence, the session handshake, the request for an offer, the offer and the answer all travel through it, and the link verifies within the attempt limit without any alarm, with one attempt per side.",
+  "seed": 1,
+  "relay_count": 2,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "signaling_down",
+      "relay": 1
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 40000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 10000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 10000
+    },
+    {
+      "peer": "baby",
+      "attempts": 1
+    },
+    {
+      "peer": "parent",
+      "attempts": 1
+    },
+    {
+      "peer": "baby",
+      "never": "link_lost"
+    },
+    {
+      "peer": "parent",
+      "never": "link_lost"
+    },
+    {
+      "peer": "baby",
+      "max_level": 0
+    },
+    {
+      "peer": "parent",
+      "max_level": 0
+    }
+  ]
+}
