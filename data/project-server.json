@@ -1,0 +1,12 @@
+{
+  "host": "gs.mydata.rocks",
+  "path": "/signaling",
+  "operator": "GuardedSleep project",
+  "country": "DE",
+  "hoster": "Contabo GmbH",
+  "privacy_policy": null,
+  "imprint": null,
+  "last_vetted": "2026-11-06",
+  "status": "pending",
+  "notes": "Pending until the owner publishes the privacy policy and the imprint (alpha-connection-model task 10.3) and sets status to live with both https:// URLs; the generator refuses a live entry without them. Release builds must not enable the project server while this is pending (design section 8)."
+}
