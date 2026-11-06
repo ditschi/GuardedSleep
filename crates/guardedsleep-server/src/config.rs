@@ -78,23 +78,32 @@ pub struct Limits {
     pub production: bool,
 }
 
-fn parse_in<T: std::str::FromStr + PartialOrd>(raw: Option<String>, lo: T, hi: T, default: T) -> T {
+pub(crate) fn parse_in<T: std::str::FromStr + PartialOrd>(
+    raw: Option<String>,
+    lo: T,
+    hi: T,
+    default: T,
+) -> T {
     match raw.and_then(|s| s.trim().parse::<T>().ok()) {
         Some(n) if n >= lo && n <= hi => n,
         _ => default,
     }
 }
 
+/// Comma separated list: entries trimmed, empty ones dropped; unset is empty.
+pub(crate) fn csv_list(raw: Option<String>) -> Vec<String> {
+    raw.map(|r| {
+        r.split(',')
+            .map(|s| s.trim().to_owned())
+            .filter(|s| !s.is_empty())
+            .collect()
+    })
+    .unwrap_or_default()
+}
+
 impl Limits {
     pub fn from_lookup(get: impl Fn(&str) -> Option<String>) -> Self {
-        let allowed_origins = get("SIGNALING_ALLOWED_ORIGINS")
-            .map(|raw| {
-                raw.split(',')
-                    .map(|s| s.trim().to_owned())
-                    .filter(|s| !s.is_empty())
-                    .collect()
-            })
-            .unwrap_or_default();
+        let allowed_origins = csv_list(get("SIGNALING_ALLOWED_ORIGINS"));
         Self {
             hello_timeout_ms: parse_in(get("SIGNALING_HELLO_TIMEOUT_MS"), 1_000, 120_000, 30_000),
             max_parents: parse_in(get("SIGNALING_MAX_PARENTS"), 1, 256, 1),
