@@ -1,5 +1,5 @@
-//! Curated public lists: validates `data/nostr-relays.json` and `data/stun-servers.json`, enforces
-//! the build minimums, and emits the web module, the Android object and the web CSP origins.
+//! Curated public lists: validates `data/stun-servers.json`, enforces the build minimums, and emits
+//! the web module and the Android object.
 
 #![forbid(unsafe_code)]
 
@@ -15,7 +15,7 @@ use lists::{Date, Lists};
 const USAGE: &str = "usage: public-lists <check|stun-sources|web|android> [options]
   check          validate the lists and the build minimums; stale entries only warn
   stun-sources   fail when a STUN host outside data/stun-servers.json appears in client source or config
-  web            write public-lists.ts (--web-out) and relay-origins.json (--csp-out)
+  web            write public-lists.ts to --web-out
   android        write PublicLists.kt to --out
 options: --data <dir> (default: data/)  --root <dir> (stun-sources; default: repository root)
          --today <YYYY-MM-DD> (default: system date)";
@@ -74,13 +74,7 @@ fn run(argv: &[String]) -> Result<(), ExitCode> {
         "check" => {
             let lists = load_checked(&data, argv)?;
             println!(
-                "public-lists: ok ({} relays from {} operators, {} STUN servers)",
-                lists.active_relays().count(),
-                lists
-                    .active_relays()
-                    .map(|r| r.operator.to_lowercase())
-                    .collect::<std::collections::BTreeSet<_>>()
-                    .len(),
+                "public-lists: ok ({} STUN servers)",
                 lists.active_stun().count()
             );
             Ok(())
@@ -113,14 +107,11 @@ fn run(argv: &[String]) -> Result<(), ExitCode> {
             let lists = load_checked(&data, argv)?;
             let web_out = arg(argv, "--web-out")
                 .unwrap_or_else(|| root.join("apps/web/src/lib/public-lists/generated"));
-            let csp_out =
-                arg(argv, "--csp-out").unwrap_or_else(|| root.join("apps/web/csp/generated"));
             let io = |e: std::io::Error| {
                 eprintln!("public-lists: {e}");
                 ExitCode::from(1)
             };
             write(&web_out, "public-lists.ts", &emit::web_module(&lists)).map_err(io)?;
-            write(&csp_out, "relay-origins.json", &emit::csp_origins(&lists)).map_err(io)?;
             Ok(())
         }
         "android" => {

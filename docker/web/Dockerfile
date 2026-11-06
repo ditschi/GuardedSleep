@@ -23,7 +23,7 @@ RUN rustup toolchain install
 COPY Cargo.toml Cargo.lock ./
 COPY crates crates
 COPY data data
-RUN cargo run -q -p public-lists -- web --web-out /out/lists --csp-out /out/csp
+RUN cargo run -q -p public-lists -- web --web-out /out/lists
 
 # WASM core (ADR-017): same steps as `scripts/core-build.sh wasm`, wasm-bindgen-cli pinned to Cargo.lock.
 FROM rust:1-bookworm@sha256:665b6e0a9290a7298236c08c6e4f1e754e3f0d9b70421c434daa3dfba888d63e AS wasm
@@ -61,7 +61,6 @@ COPY --from=wasm /out packages/core-wasm/pkg
 COPY apps/web apps/web
 COPY --from=i18n /out apps/web/src/lib/i18n/generated
 COPY --from=lists /out/lists apps/web/src/lib/public-lists/generated
-COPY --from=lists /out/csp apps/web/csp/generated
 
 # `vite build` directly: the package's `prebuild` hook would run cargo, and the generated inputs
 # (i18n, public lists, WASM core) come from the stages above.

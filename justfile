@@ -147,7 +147,7 @@ _test: _js-deps _js-gen test-rust test-wasm test-web test-android test-tooling
 
 # Unit tests of the repository scripts (delta-test planner and the like).
 test-tooling:
-    node --test scripts/lib/*.test.mjs scripts/spike/*.test.mjs
+    node --test scripts/lib/*.test.mjs
 
 # Runs only the tests the changed paths need (committed since the merge base with <base>, uncommitted and
 # untracked files), mapped by .github/path-filters.yml; global or unmapped paths run the full `just test`.

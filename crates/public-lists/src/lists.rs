@@ -1,16 +1,11 @@
-//! The curated lists (`data/nostr-relays.json`, `data/stun-servers.json`): typed loader, entry
-//! validation and the build check (alpha-connection-model design section 6, spec
-//! `signaling-mailboxes` "Curated public services").
+//! The curated STUN list (`data/stun-servers.json`): typed loader, entry validation and the build
+//! check (alpha-connection-model design section 6). The project server entry joins with task 9.2.
 
 use std::collections::BTreeSet;
 use std::path::Path;
 
 use serde::Deserialize;
 
-/// Fewest usable relays a build needs ...
-pub const MIN_RELAYS: usize = 6;
-/// ... from at least this many operators.
-pub const MIN_RELAY_OPERATORS: usize = 4;
 /// Fewest STUN operators a build needs (the ICE configuration uses two).
 pub const MIN_STUN_OPERATORS: usize = 2;
 /// STUN operators the default ICE configuration uses.
@@ -38,28 +33,6 @@ pub enum Status {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct Relay {
-    /// DNS name; the relay is always `wss://<host>`.
-    pub host: String,
-    pub operator: String,
-    /// Who runs the machine. `None` when unknown or a private host; a pick avoids two relays at
-    /// one hoster when it can.
-    pub hoster: Option<String>,
-    pub country: String,
-    pub software: String,
-    // Vetting data for people reading the file (strfry keeps ephemeral events for ~5 min).
-    #[allow(dead_code)]
-    pub keeps_ephemeral: bool,
-    pub privacy_policy: Option<String>,
-    pub last_vetted: String,
-    pub status: Status,
-    // Vetting notes for people reading the file; not part of any output.
-    #[allow(dead_code)]
-    pub notes: String,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(deny_unknown_fields)]
 pub struct Stun {
     pub host: String,
     pub port: u16,
@@ -75,26 +48,13 @@ pub struct Stun {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct RelayFile {
-    relays: Vec<Relay>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
 struct StunFile {
     servers: Vec<Stun>,
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct Lists {
-    pub relays: Vec<Relay>,
     pub stun: Vec<Stun>,
-}
-
-impl Relay {
-    pub fn url(&self) -> String {
-        format!("wss://{}", self.host)
-    }
 }
 
 impl Stun {
@@ -104,15 +64,10 @@ impl Stun {
 }
 
 impl Lists {
-    pub fn parse(relays_json: &str, stun_json: &str) -> Result<Self, String> {
-        let relays: RelayFile =
-            serde_json::from_str(relays_json).map_err(|e| format!("nostr-relays.json: {e}"))?;
+    pub fn parse(stun_json: &str) -> Result<Self, String> {
         let stun: StunFile =
             serde_json::from_str(stun_json).map_err(|e| format!("stun-servers.json: {e}"))?;
-        Ok(Self {
-            relays: relays.relays,
-            stun: stun.servers,
-        })
+        Ok(Self { stun: stun.servers })
     }
 
     pub fn load(data_dir: &Path) -> Result<Self, String> {
@@ -120,14 +75,10 @@ impl Lists {
             std::fs::read_to_string(data_dir.join(name))
                 .map_err(|e| format!("{}: {e}", data_dir.join(name).display()))
         };
-        Self::parse(&read("nostr-relays.json")?, &read("stun-servers.json")?)
+        Self::parse(&read("stun-servers.json")?)
     }
 
     /// Entries that ship, in file order.
-    pub fn active_relays(&self) -> impl Iterator<Item = &Relay> {
-        self.relays.iter().filter(|r| r.status == Status::Active)
-    }
-
     pub fn active_stun(&self) -> impl Iterator<Item = &Stun> {
         self.stun.iter().filter(|s| s.status == Status::Active)
     }
@@ -304,49 +255,6 @@ fn check_common(c: &Common<'_>, today: Date, report: &mut Report) {
 pub fn validate(lists: &Lists, today: Date) -> Report {
     let mut report = Report::default();
 
-    let mut hosts = BTreeSet::new();
-    let mut operators = BTreeSet::new();
-    for r in &lists.relays {
-        let what = format!("relay {}", r.host);
-        if !valid_host(&r.host) {
-            report
-                .errors
-                .push(format!("{what}: host must be a lower-case DNS name without scheme, port or path (wss:// is implied)"));
-        }
-        if !hosts.insert(r.host.clone()) {
-            report.errors.push(format!("{what}: listed twice"));
-        }
-        if let Some(h) = &r.hoster
-            && !plain_text(h)
-        {
-            report.errors.push(format!(
-                "{what}: hoster must be plain printable text or null"
-            ));
-        }
-        if !plain_text(&r.software) {
-            report
-                .errors
-                .push(format!("{what}: software must be plain printable text"));
-        }
-        check_common(
-            &Common {
-                what: &what,
-                operator: &r.operator,
-                country: &r.country,
-                policy: r.privacy_policy.as_deref(),
-                last_vetted: &r.last_vetted,
-            },
-            today,
-            &mut report,
-        );
-        if r.status == Status::Active && !operators.insert(r.operator.to_lowercase()) {
-            report.errors.push(format!(
-                "{what}: operator {:?} already has an active relay (one entry per operator)",
-                r.operator
-            ));
-        }
-    }
-
     let mut endpoints = BTreeSet::new();
     for s in &lists.stun {
         let what = format!("stun {}:{}", s.host, s.port);
@@ -374,17 +282,6 @@ pub fn validate(lists: &Lists, today: Date) -> Report {
         );
     }
 
-    let relays = lists.active_relays().count();
-    let relay_operators: BTreeSet<_> = lists
-        .active_relays()
-        .map(|r| r.operator.to_lowercase())
-        .collect();
-    if relays < MIN_RELAYS || relay_operators.len() < MIN_RELAY_OPERATORS {
-        report.errors.push(format!(
-            "relay list too small: {relays} usable relays from {} operators, need at least {MIN_RELAYS} from {MIN_RELAY_OPERATORS}",
-            relay_operators.len()
-        ));
-    }
     let stun_operators: BTreeSet<_> = lists
         .active_stun()
         .map(|s| s.operator.to_lowercase())
@@ -401,21 +298,6 @@ pub fn validate(lists: &Lists, today: Date) -> Report {
 #[cfg(test)]
 pub(crate) mod tests {
     use super::*;
-
-    pub fn relay(host: &str, operator: &str) -> Relay {
-        Relay {
-            host: host.into(),
-            operator: operator.into(),
-            hoster: None,
-            country: "DE".into(),
-            software: "strfry".into(),
-            keeps_ephemeral: true,
-            privacy_policy: None,
-            last_vetted: "2026-10-23".into(),
-            status: Status::Active,
-            notes: String::new(),
-        }
-    }
 
     pub fn stun(host: &str, port: u16, operator: &str) -> Stun {
         Stun {
@@ -436,9 +318,6 @@ pub(crate) mod tests {
 
     pub fn good() -> Lists {
         Lists {
-            relays: (1..=6)
-                .map(|i| relay(&format!("r{i}.example.net"), &format!("op{i}")))
-                .collect(),
             stun: vec![
                 stun("a.example.net", 3478, "A"),
                 stun("a.example.net", 443, "A"),
@@ -459,56 +338,7 @@ pub(crate) mod tests {
         let lists = Lists::load(&dir).unwrap();
         let report = validate(&lists, today());
         assert_eq!(report.errors, Vec::<String>::new());
-        assert!(lists.active_relays().count() >= MIN_RELAYS);
-    }
-
-    #[test]
-    fn fewer_than_six_relays_fail_and_name_the_shortfall() {
-        let mut l = good();
-        l.relays.truncate(5);
-        let r = validate(&l, today());
-        assert!(
-            r.errors.iter().any(|e| e.contains("5 usable relays")),
-            "{r:?}"
-        );
-    }
-
-    #[test]
-    fn six_relays_from_three_operators_fail() {
-        let mut l = good();
-        for (i, r) in l.relays.iter_mut().enumerate() {
-            r.operator = format!("op{}", i % 3);
-            // One entry per operator would also trip; this checks the operator count message.
-        }
-        let r = validate(&l, today());
-        assert!(
-            r.errors.iter().any(|e| e.contains("from 3 operators")),
-            "{r:?}"
-        );
-    }
-
-    #[test]
-    fn a_suspended_relay_does_not_count() {
-        let mut l = good();
-        l.relays[0].status = Status::Suspended;
-        let r = validate(&l, today());
-        assert!(
-            r.errors.iter().any(|e| e.contains("5 usable relays")),
-            "{r:?}"
-        );
-    }
-
-    #[test]
-    fn two_active_relays_of_one_operator_fail() {
-        let mut l = good();
-        l.relays[1].operator = "OP1".into();
-        let r = validate(&l, today());
-        assert!(
-            r.errors
-                .iter()
-                .any(|e| e.contains("one entry per operator")),
-            "{r:?}"
-        );
+        assert!(lists.active_stun().count() >= 2);
     }
 
     #[test]
@@ -531,41 +361,34 @@ pub(crate) mod tests {
         let cases: Vec<(&str, Mutation)> = vec![
             (
                 "host",
-                Box::new(|l| l.relays[0].host = "wss://x.example.net".into()),
+                Box::new(|l| l.stun[0].host = "wss://x.example.net".into()),
             ),
             (
                 "host",
-                Box::new(|l| l.relays[0].host = "Relay.Example.net".into()),
+                Box::new(|l| l.stun[0].host = "Stun.Example.net".into()),
             ),
-            ("host", Box::new(|l| l.relays[0].host = "10.0.0.1".into())),
-            ("host", Box::new(|l| l.relays[0].host = "localhost".into())),
-            ("country", Box::new(|l| l.relays[0].country = "US".into())),
+            ("host", Box::new(|l| l.stun[0].host = "10.0.0.1".into())),
+            ("host", Box::new(|l| l.stun[0].host = "localhost".into())),
+            ("country", Box::new(|l| l.stun[0].country = "US".into())),
             ("country", Box::new(|l| l.stun[0].country = "GB".into())),
             (
                 "privacy_policy",
-                Box::new(|l| l.relays[0].privacy_policy = Some("http://x.example/p".into())),
+                Box::new(|l| l.stun[0].privacy_policy = Some("http://x.example/p".into())),
             ),
             (
                 "last_vetted",
-                Box::new(|l| l.relays[0].last_vetted = "2026-13-01".into()),
+                Box::new(|l| l.stun[0].last_vetted = "2026-13-01".into()),
             ),
             (
                 "future",
-                Box::new(|l| l.relays[0].last_vetted = "2026-11-01".into()),
-            ),
-            (
-                "listed twice",
-                Box::new(|l| l.relays[1].host = l.relays[0].host.clone()),
+                Box::new(|l| l.stun[0].last_vetted = "2026-11-01".into()),
             ),
             ("port", Box::new(|l| l.stun[0].port = 0)),
             (
                 "listed twice",
                 Box::new(|l| l.stun[1].port = l.stun[0].port),
             ),
-            (
-                "operator",
-                Box::new(|l| l.relays[0].operator = "a\"b".into()),
-            ),
+            ("operator", Box::new(|l| l.stun[0].operator = "a\"b".into())),
         ];
         for (needle, mutate) in cases {
             let mut l = good();
@@ -581,21 +404,21 @@ pub(crate) mod tests {
     #[test]
     fn a_stale_entry_warns_but_does_not_fail() {
         let mut l = good();
-        l.relays[0].last_vetted = "2025-10-24".into();
+        l.stun[1].last_vetted = "2025-10-24".into();
         l.stun[0].last_vetted = "2024-01-01".into();
         let r = validate(&l, today());
         assert_eq!(r.errors, Vec::<String>::new());
         assert_eq!(r.warnings.len(), 2, "{r:?}");
         // Exactly twelve months is still fresh.
-        l.relays[0].last_vetted = "2025-10-25".into();
+        l.stun[1].last_vetted = "2025-10-25".into();
         l.stun[0].last_vetted = "2025-10-25".into();
         assert_eq!(validate(&l, today()).warnings, Vec::<String>::new());
     }
 
     #[test]
     fn unknown_fields_are_refused() {
-        let bad = r#"{"relays":[{"host":"a.b","extra":1}]}"#;
-        assert!(Lists::parse(bad, r#"{"servers":[]}"#).is_err());
+        let bad = r#"{"servers":[{"host":"a.b","extra":1}]}"#;
+        assert!(Lists::parse(bad).is_err());
     }
 
     #[test]
