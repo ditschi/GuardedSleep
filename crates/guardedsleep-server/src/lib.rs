@@ -26,6 +26,7 @@ pub mod csp;
 pub mod http;
 pub mod hub;
 pub mod stun;
+pub mod turn;
 
 use std::io;
 use std::net::{IpAddr, Ipv6Addr, SocketAddr};
@@ -114,7 +115,11 @@ pub fn healthcheck(port: u16) -> bool {
 
 pub async fn start(cfg: Config) -> io::Result<RunningServer> {
     let cli = &cfg.cli;
-    let hub = Arc::new(Hub::new(cfg.relay_config(), cli.log_events));
+    let hub = Arc::new(Hub::new(
+        cfg.relay_config(),
+        cli.log_events,
+        cfg.ice.issuer(),
+    ));
     let (shutdown_tx, shutdown_rx) = watch::channel(false);
     let relay_cfg = cfg.relay_config();
     let web = match &cli.serve_web {
