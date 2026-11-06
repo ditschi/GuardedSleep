@@ -4071,18 +4071,38 @@ mod tests {
         assert_eq!(fresh.mode, Mode::Failed("update_required".into()));
     }
 
+    fn frame(l: &mut Link, now: u64, id: MailboxId, v: serde_json::Value) {
+        l.handle(
+            now,
+            LinkInput::MailboxFrame {
+                id,
+                bytes: v.to_string(),
+            },
+        );
+    }
+
+    fn join_all(l: &mut Link, now: u64, ids: &[MailboxId]) {
+        let room = l.room_id().to_owned();
+        for id in ids {
+            l.handle(now, LinkInput::MailboxOpened { id: *id });
+            frame(
+                l,
+                now,
+                *id,
+                json!({"type":"welcome","clientId":"x","roomId":room}),
+            );
+        }
+    }
+
     #[test]
     fn wrong_room_in_welcome_is_ignored() {
         let (mut l, _) = started(Role::Baby);
         l.handle(1, LinkInput::MailboxOpened { id: 0 });
-        l.handle(
+        frame(
+            &mut l,
             2,
-            LinkInput::MailboxFrame {
-                id: 0,
-                bytes: json!({"type":"welcome","clientId":"x","roomId":"other",
-                })
-                .to_string(),
-            },
+            0,
+            json!({"type":"welcome","clientId":"x","roomId":"other"}),
         );
         assert_eq!(l.mb.relays[0].state, MailboxState::Open);
     }
@@ -4127,15 +4147,12 @@ mod tests {
         let (mut l, _) = two_relays(Role::Baby);
         l.handle(1, LinkInput::MailboxOpened { id: 0 });
         l.handle(1, LinkInput::MailboxOpened { id: 1 });
-        let welcome =
-            |room: &str| json!({"type":"welcome","clientId":"x","roomId":room}).to_string();
         let room = l.room_id().to_owned();
-        l.handle(
+        frame(
+            &mut l,
             2,
-            LinkInput::MailboxFrame {
-                id: 1,
-                bytes: welcome(&room),
-            },
+            1,
+            json!({"type":"welcome","clientId":"x","roomId":room}),
         );
         assert_eq!(l.mb.relays[1].state, MailboxState::Joined);
         let out = l.handle(
@@ -4172,39 +4189,18 @@ mod tests {
                 reason: "x".into(),
             },
         );
-        let frame = LinkInput::MailboxFrame {
-            id: 7,
-            bytes: json!({"type":"welcome","clientId":"x","roomId": l.room_id()}).to_string(),
-        };
-        l.handle(4, frame);
+        let room = l.room_id().to_owned();
+        frame(
+            &mut l,
+            4,
+            7,
+            json!({"type":"welcome","clientId":"x","roomId":room}),
+        );
         assert_eq!(
             l.mb.relays[0].state,
             MailboxState::Open,
             "only mailbox 0 exists"
         );
-    }
-
-    fn frame(l: &mut Link, now: u64, id: MailboxId, v: serde_json::Value) {
-        l.handle(
-            now,
-            LinkInput::MailboxFrame {
-                id,
-                bytes: v.to_string(),
-            },
-        );
-    }
-
-    fn join_all(l: &mut Link, now: u64, ids: &[MailboxId]) {
-        let room = l.room_id().to_owned();
-        for id in ids {
-            l.handle(now, LinkInput::MailboxOpened { id: *id });
-            frame(
-                l,
-                now,
-                *id,
-                json!({"type":"welcome","clientId":"x","roomId":room}),
-            );
-        }
     }
 
     fn turn(host: &str, user: &str, ttl: u64) -> serde_json::Value {
