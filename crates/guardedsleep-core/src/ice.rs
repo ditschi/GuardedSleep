@@ -65,7 +65,10 @@ impl std::fmt::Debug for IceServer {
 /// scheme), without port, path or query; IPv6 literals lose their brackets.
 fn host_of(rest: &str) -> Option<&str> {
     let host = if let Some(v6) = rest.strip_prefix('[') {
-        v6.split_once(']')?.0
+        // Brackets only wrap an IPv6 literal.
+        v6.split_once(']')
+            .map(|(h, _)| h)
+            .filter(|h| h.contains(':'))?
     } else {
         rest.split([':', '/', '?']).next()?
     };
@@ -175,6 +178,28 @@ impl RelayIce {
     }
 }
 
+/// The ICE servers one raw frame from the relay at `relay_url` would contribute at `now_ms`:
+/// what a fresh `Link` holds after receiving just that frame, without the STUN fallback. Empty
+/// for anything that is not an accepted `welcome.iceServers` or `ice_servers` frame. This is the
+/// entry the fuzz target exercises (`fuzz/fuzz_targets/ice_servers.rs`); the `Link` uses the same
+/// validation.
+pub fn servers_of_frame(relay_url: &str, raw: &str, now_ms: u64) -> Vec<IceServer> {
+    let host = mailbox_host(relay_url);
+    let mut r = RelayIce::default();
+    match crate::protocol::parse_server_message(raw) {
+        Some(crate::protocol::ServerMessage::Welcome { ice_servers, .. }) => {
+            r.on_welcome(host.as_deref(), ice_servers);
+        }
+        Some(crate::protocol::ServerMessage::IceServers(f)) => {
+            r.on_ice_servers(now_ms, host.as_deref(), f);
+        }
+        _ => {}
+    }
+    let mut out: Vec<IceServer> = r.stun.into_iter().collect();
+    out.extend(r.turn.filter(|(_, until)| now_ms <= *until).map(|(s, _)| s));
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -213,6 +238,7 @@ mod tests {
         assert_eq!(mailbox_host("ws://[::1]:8787"), Some("::1".into()));
         assert_eq!(mailbox_host("https://relay.example"), None);
         assert_eq!(mailbox_host("wss://"), None);
+        assert_eq!(mailbox_host("wss://[relay.example]"), None);
     }
 
     #[test]
@@ -343,6 +369,19 @@ mod tests {
         let mut out = Vec::new();
         r.collect(0, "::1", &mut out);
         assert_eq!(out[0].urls, vec!["stun:[::1]:3478"]);
+    }
+
+    #[test]
+    fn servers_of_frame_accepts_only_valid_frames_of_the_relay_host() {
+        let url = "wss://Relay.Example:8443";
+        let ok = r#"{"type":"ice_servers","urls":["turn:relay.example:3478"],"username":"1:a","credential":"x","ttl":600}"#;
+        assert_eq!(servers_of_frame(url, ok, 0).len(), 1);
+        let foreign = ok.replace("relay.example", "other.example");
+        assert!(servers_of_frame(url, &foreign, 0).is_empty());
+        let welcome = r#"{"type":"welcome","clientId":"c","roomId":"r","iceServers":["stun:relay.example:3478"]}"#;
+        assert_eq!(servers_of_frame(url, welcome, 0).len(), 1);
+        assert!(servers_of_frame(url, "not json", 0).is_empty());
+        assert!(servers_of_frame("https://relay.example", ok, 0).is_empty());
     }
 
     #[test]

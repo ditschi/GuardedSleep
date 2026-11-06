@@ -41,6 +41,15 @@ export interface DeviceStatus {
 }
 
 /**
+ * One WebRTC ICE server entry of an attempt. STUN entries carry no user name or credential.
+ */
+export interface IceServer {
+    urls: string[];
+    username?: string;
+    credential?: string;
+}
+
+/**
  * One mailbox of an invite: its kind and the URL the platform opens (`wss://host[:port][/path]` for a relay, `ws://ip:port` for a LAN mailbox).
  */
 export interface InviteMailbox {
@@ -184,7 +193,7 @@ export type Dnd = "off" | "alarms_only" | "priority" | "total" | "unknown";
 
 export type Input = { type: "signaling_open" } | { type: "signaling_message"; text: string } | { type: "signaling_closed" } | { type: "local_description"; sdp_type: string; sdp: string } | { type: "local_ice_candidate"; candidate: IceCandidate } | { type: "data_channel_open" } | { type: "data_channel_message"; text: string } | { type: "data_channel_closed" } | { type: "peer_connection_state"; state: string } | { type: "audio_level"; rms: number } | { type: "set_listen"; enabled: boolean } | { type: "request_probe" } | { type: "tick" } | { type: "close" };
 
-export type LinkAction = { type: "open_mailbox"; id: MailboxId; kind: MailboxKind; url: string } | { type: "mailbox_send"; id: MailboxId; frame: string } | { type: "close_mailbox"; id: MailboxId } | { type: "create_attempt"; attempt: number; offerer: boolean } | { type: "close_attempt"; attempt: number } | { type: "create_offer"; attempt: number } | { type: "set_remote_description"; attempt: number; sdp_type: string; sdp: string } | { type: "create_answer"; attempt: number } | { type: "add_ice_candidate"; attempt: number; candidate: IceCandidate } | { type: "send_data"; attempt: number; text: string } | { type: "set_mic_enabled"; enabled: boolean } | { type: "apply_quiet" } | { type: "send_probe_tone"; duration_ms: number } | { type: "emit"; event: LinkEvent };
+export type LinkAction = { type: "open_mailbox"; id: MailboxId; kind: MailboxKind; url: string } | { type: "mailbox_send"; id: MailboxId; frame: string } | { type: "close_mailbox"; id: MailboxId } | { type: "create_attempt"; attempt: number; offerer: boolean; ice_servers?: IceServer[] } | { type: "close_attempt"; attempt: number } | { type: "create_offer"; attempt: number } | { type: "set_remote_description"; attempt: number; sdp_type: string; sdp: string } | { type: "create_answer"; attempt: number } | { type: "add_ice_candidate"; attempt: number; candidate: IceCandidate } | { type: "send_data"; attempt: number; text: string } | { type: "set_mic_enabled"; enabled: boolean } | { type: "apply_quiet" } | { type: "send_probe_tone"; duration_ms: number } | { type: "emit"; event: LinkEvent };
 
 export type LinkEvent = { type: "status"; status: LinkStatus } | { type: "link_lost"; down_ms: number } | { type: "link_restored"; down_ms: number } | { type: "security_warning"; key: string } | { type: "peer_stopped" } | { type: "alarm_acknowledged"; until_ms: number } | { type: "noise_alert"; rms: number; probe: boolean; snoozed: boolean } | { type: "peer_heartbeat"; seq: number; rms: number | null } | { type: "peer_status"; status: DeviceStatus } | { type: "low_battery"; pct: number; critical: boolean } | { type: "charger_unplugged" } | { type: "missed_events"; count: number; max_rms: number; complete: boolean; down_ms: number } | { type: "noise_gate_changed"; threshold: number; hold_ms: number } | { type: "listen_changed"; enabled: boolean } | { type: "failed"; reason: string } | { type: "parent_pinned"; secret: string; window_until_s?: number } | { type: "parent_connected"; name: string } | { type: "mailboxes_updated"; mailboxes: InviteMailbox[] } | { type: "hint"; key: string; active: boolean };
 
