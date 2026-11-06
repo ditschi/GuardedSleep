@@ -35,13 +35,6 @@ export async function launchDualContexts(opts: {
   signalUrl?: string;
   /** Browser permissions for both contexts (default: the microphone only). */
   permissions?: string[];
-  /**
-   * Local Nostr test relays (`ws://127.0.0.1:port`) the baby device names in its invite. The
-   * development and E2E builds read them from localStorage; a release build reads nothing. Without
-   * this option the list is empty, not unset: an unset list lets a dev or E2E client add the
-   * curated public relays to its invites, and a test must never reach those.
-   */
-  nostrRelays?: string[];
   /** Browser language (`navigator.languages`), so the client follows it: "de", "ar", ... */
   locale?: string;
 }): Promise<DualContexts> {
@@ -87,24 +80,11 @@ export async function launchDualContexts(opts: {
 
   const signalWs = opts.signalUrl ?? process.env.E2E_SIGNALING_URL ?? "ws://127.0.0.1:18787";
   // addInitScript takes exactly one argument: pass an object, extra positional args are dropped.
-  const seedStorage = ({
-    url,
-    prefs,
-    nostr,
-  }: {
-    url: string;
-    prefs: string;
-    nostr: string | null;
-  }) => {
+  const seedStorage = ({ url, prefs }: { url: string; prefs: string }) => {
     localStorage.setItem("guardedsleep:signaling-url", url);
     localStorage.setItem("guardedsleep:app-preferences", prefs);
-    if (nostr !== null) localStorage.setItem("guardedsleep:dev-nostr-relays", nostr);
   };
-  const seed = {
-    url: signalWs,
-    prefs: E2E_APP_PREFERENCES_JSON,
-    nostr: JSON.stringify(opts.nostrRelays ?? []),
-  };
+  const seed = { url: signalWs, prefs: E2E_APP_PREFERENCES_JSON };
   await baby.addInitScript(seedStorage, seed);
   await parent.addInitScript(seedStorage, seed);
 

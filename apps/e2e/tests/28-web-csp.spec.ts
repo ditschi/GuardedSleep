@@ -1,8 +1,6 @@
 import { chromium, expect, test, type Page } from "@playwright/test";
-import { readFileSync } from "node:fs";
 import { createServer, type Server } from "node:http";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { cspProbeStub, cspViolations, wakeLockStub } from "./utils/browser-stubs";
 import { fixturesDir, launchDualContexts, type DualContexts } from "./utils/dual-context";
 import { startProdServer, type ProdServer } from "./utils/prod-server";
@@ -15,10 +13,14 @@ import { CLIPBOARD_PERMISSIONS } from "./utils/web";
  * cross-origin script is blocked however it is injected.
  */
 
+/** A relay origin a deployment lists (GS_CSP_CONNECT_ORIGINS); nothing is ever listed by default. */
+const LISTED_HOST = "allowed-relay.example.org";
+const LISTED_ORIGIN = `wss://${LISTED_HOST}`;
+
 let prod: ProdServer;
 test.beforeAll(async () => {
   test.setTimeout(300_000);
-  prod = await startProdServer();
+  prod = await startProdServer({ connectOrigins: [LISTED_ORIGIN] });
 });
 test.afterAll(() => prod?.stop());
 
@@ -113,15 +115,10 @@ test("the header matches the meta fallback, and no screen violates the policy", 
   }
 });
 
-test("connect-src allows the curated relay origins and blocks an unlisted one", async () => {
+test("connect-src allows the listed origins and blocks an unlisted one", async () => {
   test.setTimeout(120_000);
-  const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../..", "..");
-  const data = JSON.parse(readFileSync(join(repoRoot, "data/nostr-relays.json"), "utf8")) as {
-    relays: { host: string; status: string }[];
-  };
-  const listed = data.relays.filter((r) => r.status === "active").map((r) => r.host);
-  expect(listed.length).toBeGreaterThanOrEqual(6);
-  const unlisted = "unlisted-relay.example.org";
+  const listed = [LISTED_HOST];
+  const unlisted = "other-relay.example.org";
   expect(listed).not.toContain(unlisted);
 
   // Every name except the local server fails to resolve: the sockets below never reach a public
@@ -135,7 +132,7 @@ test("connect-src allows the curated relay origins and blocks an unlisted one", 
     const context = await browser.newContext({ baseURL: prod.baseUrl });
     await context.addInitScript(cspProbeStub);
     const page = await context.newPage();
-    // The header carries each curated origin and no blanket wss:.
+    // The header carries each listed origin and no blanket wss:.
     const response = await page.goto("/");
     await expect(page.getByTestId("role_title")).toBeVisible();
     const header = response?.headers()["content-security-policy"] ?? "";

@@ -9,7 +9,6 @@ import {
   NGINX_CSP_FILE,
   validateConnectOrigins,
 } from "./csp";
-import relayOrigins from "./generated/relay-origins.json";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = join(here, "../../..");
@@ -59,26 +58,18 @@ describe("buildCsp", () => {
     expect(buildCsp()).not.toContain("unsafe-inline");
   });
 
-  it("reads the curated relays, the data file and the build variable", () => {
-    // Without a deployment setting the policy allows exactly the curated public relays.
-    expect(configuredConnectOrigins({})).toEqual(relayOrigins.origins);
+  it("reads the data file and the build variable, and allows no blanket wss:", () => {
+    // Without a deployment setting the policy allows nothing but the serving host.
+    expect(configuredConnectOrigins({})).toEqual([]);
     expect(
       configuredConnectOrigins({ GS_CSP_CONNECT_ORIGINS: "wss://a.example, wss://b.example" }),
-    ).toEqual([...relayOrigins.origins, "wss://a.example", "wss://b.example"]);
+    ).toEqual(["wss://a.example", "wss://b.example"]);
     expect(() => configuredConnectOrigins({ GS_CSP_CONNECT_ORIGINS: "http://x" })).toThrow();
-  });
-
-  it("the curated relays come from data/nostr-relays.json, wss only, no wildcard", () => {
-    const data = JSON.parse(read("data/nostr-relays.json")) as {
-      relays: { host: string; status: string }[];
-    };
-    const active = data.relays.filter((r) => r.status === "active").map((r) => `wss://${r.host}`);
-    expect(relayOrigins.origins).toEqual(active);
-    expect(active.length).toBeGreaterThanOrEqual(6);
-    const connect = buildCsp({ connectOrigins: configuredConnectOrigins({}) });
-    for (const origin of active) expect(connect).toContain(` ${origin}`);
+    const connect = buildCsp({
+      connectOrigins: configuredConnectOrigins({ GS_CSP_CONNECT_ORIGINS: "wss://a.example" }),
+    });
+    expect(connect).toContain(" wss://a.example");
     expect(connect).not.toMatch(/ wss:[ ;]/);
-    expect(connect).not.toContain("unlisted.example");
   });
 });
 

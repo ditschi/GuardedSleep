@@ -54,7 +54,7 @@ test("a code with a wrong key never pairs: the parent says the baby device canno
   }
 });
 
-test("a code whose only server is unreachable says so, and a dead first address is skipped", async () => {
+test("a code whose only server is unreachable says so, and a dead extra address does not matter", async () => {
   test.setTimeout(150_000);
   const dual = await launchDualContexts({
     babyFakeWav: silence,
@@ -69,7 +69,7 @@ test("a code whose only server is unreachable says so, and a dead first address 
     await expect(dual.parentPage.getByTestId("parent_pair_error")).toBeVisible({ timeout: 60_000 });
     await dual.parentPage.getByTestId("parent_pair_back").click();
 
-    // The same code with the dead address in front: the driver moves on to the real one.
+    // The same code with the dead address in front: it is its own mailbox, the real one carries the link.
     await pasteInto(dual.parentPage, JSON.stringify({ ...invite, m: [DEAD_MAILBOX, ...invite.m] }));
     await waitForBarKind(dual.parentPage, "connected", 90_000);
     await expect(dual.babyPage.getByTestId("baby_status")).toHaveAttribute(
