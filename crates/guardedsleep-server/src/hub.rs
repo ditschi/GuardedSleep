@@ -2,7 +2,7 @@
 //! outboxes, so the effects of one call reach a socket in the order the relay produced them.
 
 use std::collections::HashMap;
-use std::net::IpAddr;
+use std::net::{IpAddr, Ipv6Addr};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, MutexGuard};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
@@ -64,13 +64,12 @@ pub fn client_key(ip: IpAddr) -> ClientKey {
 /// Address group for the TURN credential cap: the IPv4 address, or the /64 prefix of an IPv6
 /// address (one customer holds a whole /64). IPv4-mapped IPv6 addresses count as IPv4.
 pub fn net_key(ip: IpAddr) -> ClientKey {
-    let ip = match ip {
-        IpAddr::V6(a) => a.to_ipv4_mapped().map_or(IpAddr::V6(a), IpAddr::V4),
-        v4 => v4,
-    };
-    match ip {
-        IpAddr::V4(a) => ClientKey(u128::from(a.to_ipv6_mapped())),
-        IpAddr::V6(a) => ClientKey(u128::from(a) & !u128::from(u64::MAX)),
+    let key = client_key(ip);
+    // `client_key` maps IPv4 into ::ffff:a.b.c.d, so a mapped address keeps its full value.
+    if Ipv6Addr::from(key.0).to_ipv4_mapped().is_some() {
+        key
+    } else {
+        ClientKey(key.0 & !u128::from(u64::MAX))
     }
 }
 
