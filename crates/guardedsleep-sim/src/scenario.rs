@@ -101,6 +101,20 @@ pub struct RelaySpec {
     /// `c-parent`) instead of a fresh one, so MACs bound to a client id alone would replay.
     #[serde(default)]
     pub reuse_client_ids: bool,
+    /// A relay that issues TURN credentials like `guardedsleep-server` (design section 7 of
+    /// `alpha-connection-model`): an `ice_servers` frame to every member of a room that holds a
+    /// baby and a parent, before the `members` update, and a fresh one at half the TTL while both
+    /// stay joined. Without it the relay sends no ICE servers at all. Hosts are the relay's
+    /// label (`relay-<i>.invalid`); the credentials are made up.
+    #[serde(default)]
+    pub ice: Option<IceSpec>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct IceSpec {
+    /// Credential lifetime in seconds (the core accepts 1 to 600).
+    pub ttl_s: u64,
 }
 
 impl Default for RelaySpec {
@@ -110,6 +124,7 @@ impl Default for RelaySpec {
             parent_cap: 1,
             sdp_rewrite: None,
             reuse_client_ids: false,
+            ice: None,
         }
     }
 }
@@ -201,6 +216,10 @@ pub struct Assertion {
     /// The peer's core asked for exactly this many attempts (`create_attempt`) within `within_ms`:
     /// a clean setup converges on one attempt per side.
     pub attempts: Option<usize>,
+    /// The peer asked for at least one attempt within `within_ms`, and every one of them carried
+    /// a TURN entry whose credential had not expired at that time (the user name starts with the
+    /// expiry in Unix seconds): `true` proves that renewed credentials reached the core.
+    pub attempt_turn_valid: Option<bool>,
 }
 
 impl Scenario {

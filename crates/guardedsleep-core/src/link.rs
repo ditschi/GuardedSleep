@@ -46,6 +46,7 @@ use crate::envelope::{
     CHALLENGE_LEN, CHALLENGE_VALID_MS, MessageClass, OpenError, Purpose, Reply, SealError, Sealed,
     SecretKey, SessionId, SessionState, derive_key,
 };
+use crate::ice::IceServer;
 use crate::invite::{InviteMailbox, validate_mailboxes};
 use crate::mailbox::{Mailbox, MailboxId, MailboxKind, MailboxSet, MailboxState};
 use crate::noise::{GateChange, NoiseGate};
@@ -490,9 +491,14 @@ pub enum LinkAction {
     CloseMailbox {
         id: MailboxId,
     },
+    /// `ice_servers`: the STUN/TURN servers of the pairing's relays for this attempt (design
+    /// section 7); the platform adds a user-entered TURN server. Empty (and then omitted) for a
+    /// pairing without a relay mailbox: host candidates only.
     CreateAttempt {
         attempt: u32,
         offerer: bool,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        ice_servers: Vec<IceServer>,
     },
     CloseAttempt {
         attempt: u32,
@@ -549,10 +555,15 @@ impl std::fmt::Debug for LinkAction {
             LinkAction::CloseMailbox { id } => {
                 f.debug_struct("CloseMailbox").field("id", id).finish()
             }
-            LinkAction::CreateAttempt { attempt, offerer } => f
+            LinkAction::CreateAttempt {
+                attempt,
+                offerer,
+                ice_servers,
+            } => f
                 .debug_struct("CreateAttempt")
                 .field("attempt", attempt)
                 .field("offerer", offerer)
+                .field("ice_servers", ice_servers)
                 .finish(),
             LinkAction::CloseAttempt { attempt } => f
                 .debug_struct("CloseAttempt")
@@ -1573,8 +1584,13 @@ impl Link {
             return;
         };
         match msg {
-            ServerMessage::Welcome { client_id, room_id } => {
+            ServerMessage::Welcome {
+                client_id,
+                room_id,
+                ice_servers,
+            } => {
                 if m.state == MailboxState::Open && room_id == self.room {
+                    m.ice.on_welcome(m.host.as_deref(), ice_servers);
                     m.state = MailboxState::Joined;
                     m.client_id = Some(client_id);
                     m.failures = 0;
@@ -1645,6 +1661,11 @@ impl Link {
                 } else {
                     // Retryable at the signaling layer (BABY_TAKEN, PARENT_CAP, rate limits, ...).
                     self.signaling_down(id, now, true, out);
+                }
+            }
+            ServerMessage::IceServers(frame) => {
+                if m.state == MailboxState::Joined {
+                    m.ice.on_ice_servers(now, m.host.as_deref(), frame);
                 }
             }
             ServerMessage::Peer { .. } | ServerMessage::Pong => {}
@@ -2174,11 +2195,23 @@ impl Link {
         out.push(LinkAction::CreateAttempt {
             attempt: handle,
             offerer,
+            ice_servers: self.ice_servers(now),
         });
         if offerer {
             out.push(LinkAction::CreateOffer { attempt: handle });
         }
         self.live = Some(Live { attempt });
+    }
+
+    /// The attempt's ICE servers: the union over the relay mailboxes (design section 7).
+    fn ice_servers(&mut self, now: u64) -> Vec<IceServer> {
+        let mut list = Vec::new();
+        for m in &mut self.mb.relays {
+            if let Some(host) = m.host.as_deref() {
+                m.ice.collect(now, host, &mut list);
+            }
+        }
+        list
     }
 
     fn close_live(&mut self, out: &mut Vec<LinkAction>) {
@@ -4149,6 +4182,118 @@ mod tests {
             MailboxState::Open,
             "only mailbox 0 exists"
         );
+    }
+
+    fn frame(l: &mut Link, now: u64, id: MailboxId, v: serde_json::Value) {
+        l.handle(
+            now,
+            LinkInput::MailboxFrame {
+                id,
+                bytes: v.to_string(),
+            },
+        );
+    }
+
+    fn join_all(l: &mut Link, now: u64, ids: &[MailboxId]) {
+        let room = l.room_id().to_owned();
+        for id in ids {
+            l.handle(now, LinkInput::MailboxOpened { id: *id });
+            frame(
+                l,
+                now,
+                *id,
+                json!({"type":"welcome","clientId":"x","roomId":room}),
+            );
+        }
+    }
+
+    fn turn(host: &str, user: &str, ttl: u64) -> serde_json::Value {
+        json!({"type":"ice_servers","urls":[format!("stun:{host}:3478"), format!("turn:{host}:3478")],
+            "username":user,"credential":"S3CRET","ttl":ttl})
+    }
+
+    #[test]
+    fn each_relay_without_a_set_gets_its_builtin_stun_and_a_lan_only_pairing_gets_nothing() {
+        let (mut l, _) = two_relays(Role::Baby);
+        let list = l.ice_servers(0);
+        let urls: Vec<_> = list.iter().flat_map(|s| s.urls.clone()).collect();
+        assert_eq!(urls, vec!["stun:one.test:3478", "stun:two.test:3478"]);
+        assert!(list.iter().all(|s| s.credential.is_none()));
+
+        let mut c = cfg(Role::Baby);
+        c.mailboxes = vec![InviteMailbox {
+            kind: MailboxKind::Lan,
+            url: "ws://192.168.1.5:8787".into(),
+        }];
+        let mut lan = Link::new(c).unwrap();
+        lan.handle(0, LinkInput::Start { entropy: 1 });
+        assert!(lan.ice_servers(0).is_empty());
+    }
+
+    #[test]
+    fn the_attempt_list_is_the_union_of_the_valid_sets_with_a_fallback_per_relay() {
+        let (mut l, _) = two_relays(Role::Baby);
+        join_all(&mut l, 1_000, &[0, 1]);
+        frame(&mut l, 1_000, 0, turn("one.test", "100:a", 600));
+        let list = l.ice_servers(2_000);
+        // Relay one: its TURN set; relay two: no set, so its STUN fallback.
+        assert_eq!(list.len(), 2);
+        assert_eq!(list[0].username.as_deref(), Some("100:a"));
+        assert_eq!(list[1].urls, vec!["stun:two.test:3478"]);
+        frame(&mut l, 3_000, 1, turn("two.test", "200:b", 600));
+        let list = l.ice_servers(4_000);
+        let users: Vec<_> = list.iter().map(|s| s.username.as_deref()).collect();
+        assert_eq!(users, vec![Some("100:a"), Some("200:b")]);
+        // The CreateAttempt action carries it and prints no credential.
+        let act = LinkAction::CreateAttempt {
+            attempt: 1,
+            offerer: true,
+            ice_servers: list,
+        };
+        let shown = format!("{act:?}");
+        assert!(
+            !shown.contains("S3CRET") && !shown.contains("100:a"),
+            "{shown}"
+        );
+    }
+
+    #[test]
+    fn a_foreign_host_set_is_dropped_whole_and_an_expired_set_is_not_attached() {
+        let (mut l, _) = started(Role::Baby);
+        join_all(&mut l, 1_000, &[0]);
+        let mut f = turn("relay.test", "100:a", 600);
+        f["urls"] = json!(["turn:relay.test:3478", "turn:other.test:3478"]);
+        frame(&mut l, 1_000, 0, f);
+        let list = l.ice_servers(1_001);
+        assert_eq!(list.len(), 1);
+        assert!(list[0].credential.is_none(), "fallback only");
+        // A 60 s set received at 10 s is offered until 40 s (receipt + ttl - 30 s).
+        frame(&mut l, 10_000, 0, turn("relay.test", "100:a", 60));
+        assert!(l.ice_servers(40_000)[0].credential.is_some());
+        let late = l.ice_servers(40_001);
+        assert!(late.iter().all(|s| s.credential.is_none()));
+        assert_eq!(late[0].urls, vec!["stun:relay.test:3478"]);
+    }
+
+    #[test]
+    fn a_set_survives_a_reconnect_and_ice_servers_before_the_welcome_are_ignored() {
+        let (mut l, _) = started(Role::Baby);
+        l.handle(1_000, LinkInput::MailboxOpened { id: 0 });
+        frame(&mut l, 1_000, 0, turn("relay.test", "100:a", 600));
+        assert!(
+            l.ice_servers(1_001)[0].credential.is_none(),
+            "not joined yet"
+        );
+        join_all(&mut l, 1_000, &[0]);
+        frame(&mut l, 1_000, 0, turn("relay.test", "100:a", 600));
+        l.handle(
+            2_000,
+            LinkInput::MailboxClosed {
+                id: 0,
+                reason: "x".into(),
+            },
+        );
+        assert!(l.ice_servers(3_000)[0].credential.is_some());
     }
 
     #[test]

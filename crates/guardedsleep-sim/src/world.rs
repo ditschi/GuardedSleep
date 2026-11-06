@@ -4,8 +4,9 @@
 //! Everything is driven by one event queue ordered by `(time, priority, sequence)`. The only
 //! source of randomness is the seeded [`Rng`], so `(scenario, seed)` fully determines a run.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
+use guardedsleep_core::ice::IceServer;
 use guardedsleep_core::invite::InviteMailbox;
 use guardedsleep_core::link::{
     Link, LinkAction, LinkConfig, LinkEvent, LinkInput, LinkState, LinkStatus,
@@ -164,6 +165,11 @@ enum Ev {
         actor: usize,
     },
     Watch,
+    /// Half-TTL renewal of the ICE servers of the room `key` on relay `srv`.
+    IceRenew {
+        srv: usize,
+        key: String,
+    },
     RawTick {
         actor: usize,
     },
@@ -288,6 +294,8 @@ impl Server {
             next_join: 0,
             last_stop: None,
             reject_hello_until: 0,
+            ice_timers: BTreeSet::new(),
+            ice_seq: 0,
         }
     }
 }
@@ -305,6 +313,9 @@ struct Server {
     last_stop: Option<(String, Value)>,
     /// Every `hello` before this time is answered with `UNSUPPORTED_PROTOCOL`.
     reject_hello_until: Time,
+    /// Rooms with a pending half-TTL renewal (`RelaySpec::ice`).
+    ice_timers: BTreeSet<String>,
+    ice_seq: u64,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -364,6 +375,8 @@ pub struct World {
     pub preauth: Vec<(usize, String)>,
     /// `(actor, time)` of every `create_attempt` the cores asked for (assertion `attempts`).
     pub attempts: Vec<(usize, Time)>,
+    /// `(actor, time, ice servers)` of every `create_attempt` (assertion `attempt_turn_valid`).
+    pub attempt_ice: Vec<(usize, Time, Vec<IceServer>)>,
     pub recs: Vec<TraceRec>,
     record: bool,
     pub seed: u64,
@@ -395,6 +408,7 @@ impl World {
             violations: Vec::new(),
             preauth: Vec::new(),
             attempts: Vec::new(),
+            attempt_ice: Vec::new(),
             recs: Vec::new(),
             record,
             seed,
@@ -529,6 +543,10 @@ impl World {
             Ev::Sweep { r#gen, srv } => {
                 self.select_server(srv);
                 self.on_sweep(r#gen)
+            }
+            Ev::IceRenew { srv, key } => {
+                self.select_server(srv);
+                self.on_ice_renew(key);
             }
             Ev::LocalDesc {
                 actor,
@@ -1046,8 +1064,13 @@ impl World {
                     }
                 }
                 LinkAction::MailboxSend { id, frame } => self.client_send_on(a, id, frame, None),
-                LinkAction::CreateAttempt { attempt, .. } => {
+                LinkAction::CreateAttempt {
+                    attempt,
+                    ice_servers,
+                    ..
+                } => {
                     self.attempts.push((a, self.now));
+                    self.attempt_ice.push((a, self.now, ice_servers));
                     if self.actors[a].pcs.values().any(|p| !p.closed) {
                         self.violations.push(format!(
                             "{}: create_attempt {attempt} while another attempt is live",
@@ -1578,6 +1601,8 @@ impl World {
             sock,
             json!({"type":"welcome","clientId":client_id,"roomId":requested}),
         );
+        // Before the `members` update that completes the room (design section 7).
+        self.issue_ice_servers(&key);
         self.broadcast_members(&key);
         let others: Vec<(usize, String)> = self
             .room_members(&key)
@@ -1593,6 +1618,58 @@ impl World {
             sock,
             json!({"type":"peer","peerId": first.unwrap_or(Value::Null)}),
         );
+    }
+
+    /// A relay with `RelaySpec::ice`: a credential of its own to every member of a room that holds
+    /// a baby and a parent, and the half-TTL renewal timer for that room.
+    fn issue_ice_servers(&mut self, key: &str) {
+        let Some(ttl_s) = self.relay.ice.as_ref().map(|i| i.ttl_s) else {
+            return;
+        };
+        let members = self.room_members(key);
+        let complete = members.iter().any(|(_, c)| c.role == Role::Baby)
+            && members.iter().any(|(_, c)| c.role == Role::Parent);
+        if !complete {
+            return;
+        }
+        let socks: Vec<usize> = members.iter().map(|(s, _)| *s).collect();
+        let host = format!("relay-{}.invalid", self.cur_server);
+        let expiry = self.wall_base + (self.now + ttl_s * 1_000) / 1_000;
+        for s in socks {
+            self.server.ice_seq += 1;
+            let n = self.server.ice_seq;
+            self.server_send(
+                s,
+                json!({
+                    "type": "ice_servers",
+                    "urls": [
+                        format!("stun:{host}:3478"),
+                        format!("turn:{host}:3478?transport=udp"),
+                        format!("turn:{host}:3478?transport=tcp"),
+                    ],
+                    "username": format!("{expiry}:sim{n}"),
+                    "credential": format!("simcred{n}"),
+                    "ttl": ttl_s,
+                }),
+            );
+        }
+        if self.server.ice_timers.insert(key.to_owned()) {
+            self.push(
+                self.now + ttl_s * 500,
+                3,
+                Ev::IceRenew {
+                    srv: self.cur_server,
+                    key: key.to_owned(),
+                },
+            );
+        }
+    }
+
+    fn on_ice_renew(&mut self, key: String) {
+        self.server.ice_timers.remove(&key);
+        if self.server.up {
+            self.issue_ice_servers(&key);
+        }
     }
 
     fn close_after_error(&mut self, sock: usize) {

@@ -60,12 +60,58 @@ impl Role {
 #[derive(Debug, Clone, PartialEq, Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ServerMessage {
-    Welcome { client_id: String, room_id: String },
-    Peer { peer_id: Option<String> },
-    Members { peers: Vec<Member> },
-    Signal { from: String, payload: Value },
-    Error { code: String, message: String },
+    /// `ice_servers`: the optional `iceServers` field (STUN URLs, unvalidated; `ice.rs` binds them
+    /// to the mailbox host). A field of the wrong shape is `None`: it never costs the `welcome`.
+    Welcome {
+        client_id: String,
+        room_id: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        ice_servers: Option<Vec<String>>,
+    },
+    /// TURN (and STUN) URLs with a short-lived credential; only the shape is checked here.
+    IceServers(IceServersFrame),
+    Peer {
+        peer_id: Option<String>,
+    },
+    Members {
+        peers: Vec<Member>,
+    },
+    Signal {
+        from: String,
+        payload: Value,
+    },
+    Error {
+        code: String,
+        message: String,
+    },
     Pong,
+}
+
+/// The relay's `ice_servers` message. Written by hand for `Debug` so the credential never prints.
+#[derive(Clone, PartialEq, Serialize)]
+pub struct IceServersFrame {
+    pub urls: Vec<String>,
+    pub username: String,
+    pub credential: String,
+    pub ttl: u64,
+}
+
+impl std::fmt::Debug for IceServersFrame {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("IceServersFrame")
+            .field("urls", &self.urls)
+            .field("username", &"<redacted>")
+            .field("credential", &"<redacted>")
+            .field("ttl", &self.ttl)
+            .finish()
+    }
+}
+
+fn string_array(v: &Value) -> Option<Vec<String>> {
+    v.as_array()?
+        .iter()
+        .map(|x| x.as_str().map(str::to_owned))
+        .collect()
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -103,7 +149,14 @@ pub fn parse_server_message(raw: &str) -> Option<ServerMessage> {
         "welcome" => Some(ServerMessage::Welcome {
             client_id: o.get("clientId")?.as_str()?.to_owned(),
             room_id: o.get("roomId")?.as_str()?.to_owned(),
+            ice_servers: o.get("iceServers").and_then(string_array),
         }),
+        "ice_servers" => Some(ServerMessage::IceServers(IceServersFrame {
+            urls: string_array(o.get("urls")?)?,
+            username: o.get("username")?.as_str()?.to_owned(),
+            credential: o.get("credential")?.as_str()?.to_owned(),
+            ttl: o.get("ttl")?.as_u64()?,
+        })),
         "peer" => match o.get("peerId")? {
             Value::Null => Some(ServerMessage::Peer { peer_id: None }),
             Value::String(s) => Some(ServerMessage::Peer {
