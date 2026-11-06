@@ -11,6 +11,8 @@ use std::path::PathBuf;
 use clap::Parser;
 use guardedsleep_relay::RelayConfig;
 
+use crate::turn::IceConfig;
+
 #[derive(Parser, Debug, Clone)]
 #[command(name = "guardedsleep-server", version, about)]
 pub struct Cli {
@@ -138,6 +140,8 @@ impl Limits {
 pub struct Config {
     pub cli: Cli,
     pub limits: Limits,
+    /// STUN and TURN settings; the default hands out neither.
+    pub ice: IceConfig,
 }
 
 impl Config {
@@ -148,7 +152,16 @@ impl Config {
         if cli.local && cli.port != 0 && cli.port == cli.ui_port {
             return Err("--port and --ui-port must differ in local mode".into());
         }
-        Ok(Self { cli, limits })
+        Ok(Self {
+            cli,
+            limits,
+            ice: IceConfig::default(),
+        })
+    }
+
+    pub fn with_ice(mut self, ice: IceConfig) -> Self {
+        self.ice = ice;
+        self
     }
 
     pub fn relay_config(&self) -> RelayConfig {
@@ -168,6 +181,9 @@ impl Config {
             max_connections_per_client: l.max_connections_per_ip,
             frame_rate_unjoined_per_min: l.frame_rate_unjoined_per_min,
             frame_rate_per_min: l.frame_rate_per_min,
+            stun_urls: self.ice.stun_urls.clone(),
+            turn_credential_ttl_ms: self.ice.turn_ttl_s().map(|s| u64::from(s) * 1000),
+            turn_max_live_per_addr: self.ice.max_live_per_addr,
             ..RelayConfig::default()
         }
     }

@@ -8,6 +8,7 @@
 
 use clap::Parser;
 use guardedsleep_server::config::{Cli, Config, Limits};
+use guardedsleep_server::turn::IceConfig;
 
 #[tokio::main]
 async fn main() {
@@ -19,13 +20,21 @@ async fn main() {
             1
         });
     }
-    let cfg = match Config::new(cli, Limits::from_env()) {
+    let cfg = match Config::new(cli, Limits::from_env())
+        .and_then(|cfg| IceConfig::from_env().map(|ice| cfg.with_ice(ice)))
+    {
         Ok(cfg) => cfg,
         Err(e) => {
             eprintln!("guardedsleep-server: {e}");
             std::process::exit(1);
         }
     };
+    // Never prints a URL, secret or credential.
+    if cfg.ice.turn_enabled() {
+        println!("turn credentials: enabled");
+    } else {
+        println!("turn credentials: off (set TURN_URLS and TURN_SECRET to enable)");
+    }
     let server = match guardedsleep_server::start(cfg).await {
         Ok(s) => s,
         Err(e) => {

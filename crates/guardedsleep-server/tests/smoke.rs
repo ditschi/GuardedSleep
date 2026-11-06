@@ -29,15 +29,20 @@ fn free_port() -> u16 {
 }
 
 async fn spawn_server() -> (Guard, SocketAddr) {
+    spawn_with(&[], Stdio::null(), Stdio::null()).await
+}
+
+async fn spawn_with(env: &[(&str, &str)], out: Stdio, err: Stdio) -> (Guard, SocketAddr) {
     let port = free_port();
     let child = Command::new(env!("CARGO_BIN_EXE_guardedsleep-server"))
         .env("PORT", port.to_string())
         .env("GS_BIND", "127.0.0.1")
         .env("STUN_DISABLED", "1")
         .env_remove("NODE_ENV")
+        .envs(env.iter().copied())
         .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
+        .stdout(out)
+        .stderr(err)
         .spawn()
         .unwrap();
     let addr: SocketAddr = format!("127.0.0.1:{port}").parse().unwrap();
@@ -96,4 +101,64 @@ async fn hello_and_signal_relay_through_the_built_binary() {
     let mut d = Client::connect(addr, "/").await;
     d.send(hello("parent", v3_room, 2)).await;
     assert_eq!(d.recv().await["code"], "UNSUPPORTED_PROTOCOL");
+}
+
+/// `signaling-relay` "Metadata only, no IP logging": with event logging on and TURN configured, no
+/// TURN user name, password or the secret reaches stdout or stderr.
+#[tokio::test]
+async fn no_turn_user_name_or_password_is_logged() {
+    let secret = "log-test-secret-0123456789";
+    let (mut server, addr) = spawn_with(
+        &[
+            ("GS_LOG_EVENTS", "1"),
+            ("PUBLIC_HOST", "gs.example.org"),
+            ("STUN_URLS", "stun:gs.example.org:3478"),
+            ("TURN_URLS", "turn:gs.example.org:3478?transport=udp"),
+            ("TURN_SECRET", secret),
+        ],
+        Stdio::piped(),
+        Stdio::piped(),
+    )
+    .await;
+
+    let mut baby = Client::connect(addr, "/").await;
+    baby.send(hello("baby", "smokeSmokeSmokeSmoke22", 3)).await;
+    for _ in 0..3 {
+        baby.recv().await;
+    }
+    let mut parent = Client::connect(addr, "/").await;
+    parent
+        .send(hello("parent", "smokeSmokeSmokeSmoke22", 3))
+        .await;
+    let ice = baby.recv().await;
+    assert_eq!(ice["type"], "ice_servers");
+    let user = ice["username"].as_str().unwrap().to_owned();
+    let pass = ice["credential"].as_str().unwrap().to_owned();
+    let mut seen = vec![user.clone(), pass.clone()];
+    for _ in 0..4 {
+        let m = parent.recv().await;
+        if m["type"] == "ice_servers" {
+            seen.push(m["username"].as_str().unwrap().to_owned());
+            seen.push(m["credential"].as_str().unwrap().to_owned());
+        }
+    }
+    assert_eq!(seen.len(), 4, "the parent got one credential too");
+    drop((baby, parent));
+
+    let child = &mut server.0;
+    let _ = child.kill();
+    let output = {
+        use std::io::Read;
+        let (mut out, mut err) = (String::new(), String::new());
+        let _ = child.stdout.take().unwrap().read_to_string(&mut out);
+        let _ = child.stderr.take().unwrap().read_to_string(&mut err);
+        out + &err
+    };
+    assert!(
+        output.contains("joined as baby"),
+        "events were logged: {output}"
+    );
+    for needle in seen.iter().map(String::as_str).chain([secret]) {
+        assert!(!output.contains(needle), "a TURN secret reached the log");
+    }
 }

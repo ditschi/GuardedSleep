@@ -15,10 +15,16 @@ path = "src/main.rs"
 
 [dependencies]
 axum = { version = "0.8.9", features = ["ws"] }
+base64 = "0.23"
 clap = { version = "4.6.7", features = ["derive", "env"] }
 getrandom = "0.4.3"
 guardedsleep-core = { version = "0.0.1", path = "../guardedsleep-core" }
 guardedsleep-relay = { version = "0.0.1", path = "../guardedsleep-relay" }
+# HMAC-SHA1 only here, to sign coturn REST credentials (design alpha-connection-model section 7);
+# `just deny` bans sha1 from the core and relay graphs. Same hmac line as guardedsleep-core.
+hmac = "0.13"
+secrecy = "0.10.3"
+sha1 = "0.11.0"
 tokio = { version = "1.54.0", features = [
   "rt-multi-thread",
   "net",

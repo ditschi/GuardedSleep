@@ -694,3 +694,95 @@ async fn a_flooding_socket_is_closed_with_rate_limited() {
     assert_eq!(last.unwrap()["code"], "RATE_LIMITED");
     srv.shutdown().await;
 }
+
+async fn run_ice(env: &[(&str, &str)]) -> RunningServer {
+    let env: HashMap<String, String> = env
+        .iter()
+        .map(|(k, v)| ((*k).to_owned(), (*v).to_owned()))
+        .collect();
+    let limits = Limits::from_lookup(|k| match k {
+        "SIGNALING_HELLO_RATE_PER_MIN" | "SIGNALING_NEW_ROOM_RATE_PER_MIN" => Some("0".to_owned()),
+        _ => None,
+    });
+    let ice = guardedsleep_server::turn::IceConfig::from_lookup(|k| env.get(k).cloned()).unwrap();
+    let cli = Cli::parse_from([
+        "guardedsleep-server",
+        "--bind",
+        "127.0.0.1",
+        "--port",
+        "0",
+        "--no-stun",
+    ]);
+    start(Config::new(cli, limits).unwrap().with_ice(ice))
+        .await
+        .unwrap()
+}
+
+const ICE_ENV: [(&str, &str); 5] = [
+    ("PUBLIC_HOST", "gs.example.org"),
+    ("STUN_URLS", "stun:gs.example.org:3478"),
+    ("TURN_URLS", "turn:gs.example.org:3478?transport=udp"),
+    ("TURN_SECRET", "integration-test-secret"),
+    ("TURN_TTL_S", "90"),
+];
+
+#[tokio::test]
+async fn turn_credentials_reach_both_members_before_the_room_completes() {
+    let srv = run_ice(&ICE_ENV).await;
+    let addr = srv.signaling_addr;
+    let mut baby = Client::connect(addr, "/").await;
+    baby.send(hello("baby", ROOM_V3, 3)).await;
+    let welcome = baby.recv().await;
+    assert_eq!(welcome["iceServers"], json!(["stun:gs.example.org:3478"]));
+    assert_eq!(baby.recv().await["type"], "members");
+    assert_eq!(baby.recv().await["type"], "peer");
+
+    let mut parent = Client::connect(addr, "/").await;
+    parent.send(hello("parent", ROOM_V3, 3)).await;
+    assert_eq!(parent.recv().await["type"], "welcome");
+    let p = parent.recv().await;
+    assert_eq!(parent.recv().await["type"], "members");
+    let b = baby.recv().await;
+    assert_eq!(baby.recv().await["type"], "members");
+
+    for f in [&p, &b] {
+        assert_eq!(f["type"], "ice_servers");
+        assert_eq!(f["urls"], json!(["turn:gs.example.org:3478?transport=udp"]));
+        assert_eq!(f["ttl"], 90);
+        let user = f["username"].as_str().unwrap();
+        let (expiry, id) = user.split_once(':').unwrap();
+        assert!(expiry.parse::<u64>().is_ok());
+        assert_eq!(id.len(), 22, "16 bytes in base64url without padding");
+        assert_eq!(f["credential"].as_str().unwrap().len(), 28);
+    }
+    assert_ne!(p["username"], b["username"], "a credential of its own each");
+    assert_ne!(p["credential"], b["credential"]);
+    srv.shutdown().await;
+}
+
+#[tokio::test]
+async fn stun_only_sets_the_welcome_field_and_nothing_configured_sets_nothing() {
+    let srv = run_ice(&[
+        ("PUBLIC_HOST", "gs.example.org"),
+        ("STUN_URLS", "stun:gs.example.org:3478"),
+    ])
+    .await;
+    let addr = srv.signaling_addr;
+    let mut baby = Client::connect(addr, "/").await;
+    baby.send(hello("baby", ROOM_V3, 3)).await;
+    assert!(baby.recv().await["iceServers"].is_array());
+    baby.recv().await;
+    baby.recv().await;
+    let mut parent = Client::connect(addr, "/").await;
+    parent.send(hello("parent", ROOM_V3, 3)).await;
+    assert_eq!(parent.recv().await["type"], "welcome");
+    assert_eq!(parent.recv().await["type"], "members");
+    assert_eq!(baby.recv().await["type"], "members");
+    srv.shutdown().await;
+
+    let srv = run_ice(&[]).await;
+    let mut baby = Client::connect(srv.signaling_addr, "/").await;
+    baby.send(hello("baby", ROOM_V3, 3)).await;
+    assert!(baby.recv().await.get("iceServers").is_none());
+    srv.shutdown().await;
+}
