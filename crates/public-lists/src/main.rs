@@ -1,5 +1,6 @@
-//! Curated public lists: validates `data/stun-servers.json`, enforces the build minimums, and emits
-//! the web module and the Android object.
+//! Curated public data: validates `data/stun-servers.json` (the STUN allowlist) and
+//! `data/project-server.json` (the project's signaling server), and emits the web module and the
+//! Android object.
 
 #![forbid(unsafe_code)]
 
@@ -74,8 +75,9 @@ fn run(argv: &[String]) -> Result<(), ExitCode> {
         "check" => {
             let lists = load_checked(&data, argv)?;
             println!(
-                "public-lists: ok ({} STUN servers)",
-                lists.active_stun().count()
+                "public-lists: ok ({} STUN servers, project server {})",
+                lists.active_stun().count(),
+                lists.project.status.as_str()
             );
             Ok(())
         }

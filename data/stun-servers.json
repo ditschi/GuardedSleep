@@ -1,104 +1,14 @@
 {
   "servers": [
     {
-      "host": "stun.nextcloud.com",
-      "port": 443,
-      "operator": "Nextcloud GmbH",
-      "country": "DE",
-      "privacy_policy": "https://nextcloud.com/privacy/",
-      "last_vetted": "2026-10-23",
-      "status": "active",
-      "notes": "Answered a STUN Binding request in the spike. Hosted at Hetzner, Germany."
-    },
-    {
-      "host": "stun.nextcloud.com",
+      "host": "gs.mydata.rocks",
       "port": 3478,
-      "operator": "Nextcloud GmbH",
-      "country": "DE",
-      "privacy_policy": "https://nextcloud.com/privacy/",
-      "last_vetted": "2026-10-23",
-      "status": "active",
-      "notes": "Answered a STUN Binding request in the spike. Same server as port 443."
-    },
-    {
-      "host": "stun.t-online.de",
-      "port": 3478,
-      "operator": "Deutsche Telekom",
-      "country": "DE",
-      "privacy_policy": "https://www.telekom.de/ueber-das-unternehmen/datenschutz",
-      "last_vetted": "2026-10-23",
-      "status": "active",
-      "notes": "Answered a STUN Binding request in the spike."
-    },
-    {
-      "host": "stun.1und1.de",
-      "port": 3478,
-      "operator": "IONOS",
-      "country": "DE",
-      "privacy_policy": "https://www.ionos.de/terms-gtc/datenschutzerklaerung/",
-      "last_vetted": "2026-10-23",
-      "status": "active",
-      "notes": "Answered a STUN Binding request in the spike."
-    },
-    {
-      "host": "stun.easybell.de",
-      "port": 3478,
-      "operator": "easybell",
-      "country": "DE",
-      "privacy_policy": "https://www.easybell.de/datenschutz",
-      "last_vetted": "2026-10-23",
-      "status": "active",
-      "notes": "Answered a STUN Binding request in the spike."
-    },
-    {
-      "host": "stun.sipgate.net",
-      "port": 3478,
-      "operator": "sipgate",
-      "country": "DE",
-      "privacy_policy": "https://www.sipgate.de/datenschutz",
-      "last_vetted": "2026-10-23",
-      "status": "active",
-      "notes": "Answered a STUN Binding request in the spike. Anycast on AWS."
-    },
-    {
-      "host": "stun.ipfire.org",
-      "port": 3478,
-      "operator": "IPFire project",
+      "operator": "GuardedSleep project",
       "country": "DE",
       "privacy_policy": null,
-      "last_vetted": "2026-10-23",
+      "last_vetted": "2026-11-06",
       "status": "active",
-      "notes": "Answered a STUN Binding request in the spike."
-    },
-    {
-      "host": "stun.linphone.org",
-      "port": 3478,
-      "operator": "Belledonne Communications",
-      "country": "FR",
-      "privacy_policy": "https://www.linphone.org/en/privacy-policy/",
-      "last_vetted": "2026-10-23",
-      "status": "active",
-      "notes": "Answered a STUN Binding request in the spike. Hosted at OVH, France."
-    },
-    {
-      "host": "stun.voys.nl",
-      "port": 3478,
-      "operator": "Voys",
-      "country": "NL",
-      "privacy_policy": "https://www.voys.nl/privacy-en-toegankelijkheid/",
-      "last_vetted": "2026-10-23",
-      "status": "active",
-      "notes": "Answered a STUN Binding request in the spike."
-    },
-    {
-      "host": "stun.voipgate.com",
-      "port": 3478,
-      "operator": "VoIPGATE",
-      "country": "LU",
-      "privacy_policy": null,
-      "last_vetted": "2026-10-23",
-      "status": "active",
-      "notes": "Answered a STUN Binding request in the spike."
+      "notes": "The project server's own STUN (coturn on the signaling host, design alpha-connection-model section 7). The third-party EU entries (Nextcloud, Telekom, IONOS) were removed because no client contacts them any more; see data/project-server.json for the operator and policy links."
     }
   ]
 }

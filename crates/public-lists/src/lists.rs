@@ -1,13 +1,12 @@
-//! The curated STUN list (`data/stun-servers.json`): typed loader, entry validation and the build
-//! check (alpha-connection-model design section 6). The project server entry joins with task 9.2.
+//! The STUN allowlist (`data/stun-servers.json`) and the project server entry
+//! (`data/project-server.json`): typed loaders, entry validation and the build check
+//! (alpha-connection-model design section 6).
 
 use std::collections::BTreeSet;
 use std::path::Path;
 
 use serde::Deserialize;
 
-/// Fewest STUN operators a build needs (the ICE configuration uses two).
-pub const MIN_STUN_OPERATORS: usize = 2;
 /// STUN operators the default ICE configuration uses.
 pub const ICE_STUN_OPERATORS: usize = 2;
 /// An entry last vetted longer ago than this many months raises a warning (never a failure).
@@ -52,9 +51,59 @@ struct StunFile {
     servers: Vec<Stun>,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ProjectStatus {
+    /// The owner has not published the privacy policy and imprint yet; release builds keep the
+    /// project server off (design section 8).
+    Pending,
+    /// Both pages exist at stable https:// URLs.
+    Live,
+}
+
+impl ProjectStatus {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            ProjectStatus::Pending => "pending",
+            ProjectStatus::Live => "live",
+        }
+    }
+}
+
+/// The project's own signaling server, default mailbox of both clients.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ProjectServer {
+    pub host: String,
+    /// WebSocket path of the signaling endpoint, e.g. `/signaling`.
+    pub path: String,
+    pub operator: String,
+    pub country: String,
+    pub hoster: String,
+    pub privacy_policy: Option<String>,
+    pub imprint: Option<String>,
+    pub last_vetted: String,
+    pub status: ProjectStatus,
+    // Notes for people reading the file; not part of any output.
+    #[allow(dead_code)]
+    pub notes: String,
+}
+
+impl ProjectServer {
+    /// The mailbox entry of the default relay (`r:<host><path>`).
+    pub fn mailbox(&self) -> String {
+        format!("r:{}{}", self.host, self.path)
+    }
+
+    pub fn is_live(&self) -> bool {
+        self.status == ProjectStatus::Live
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Lists {
     pub stun: Vec<Stun>,
+    pub project: ProjectServer,
 }
 
 impl Stun {
@@ -64,10 +113,15 @@ impl Stun {
 }
 
 impl Lists {
-    pub fn parse(stun_json: &str) -> Result<Self, String> {
+    pub fn parse(stun_json: &str, project_json: &str) -> Result<Self, String> {
         let stun: StunFile =
             serde_json::from_str(stun_json).map_err(|e| format!("stun-servers.json: {e}"))?;
-        Ok(Self { stun: stun.servers })
+        let project: ProjectServer =
+            serde_json::from_str(project_json).map_err(|e| format!("project-server.json: {e}"))?;
+        Ok(Self {
+            stun: stun.servers,
+            project,
+        })
     }
 
     pub fn load(data_dir: &Path) -> Result<Self, String> {
@@ -75,7 +129,7 @@ impl Lists {
             std::fs::read_to_string(data_dir.join(name))
                 .map_err(|e| format!("{}: {e}", data_dir.join(name).display()))
         };
-        Self::parse(&read("stun-servers.json")?)
+        Self::parse(&read("stun-servers.json")?, &read("project-server.json")?)
     }
 
     /// Entries that ship, in file order.
@@ -84,8 +138,8 @@ impl Lists {
     }
 
     /// The STUN servers of the default ICE configuration: every entry of the first
-    /// [`ICE_STUN_OPERATORS`] distinct operators, in file order (design section 7: Nextcloud on 443
-    /// and 3478, then Telekom).
+    /// [`ICE_STUN_OPERATORS`] distinct operators, in file order (the allowlist holds the project
+    /// server only since design section 6, so this is its STUN entry).
     pub fn default_ice_stun(&self) -> Vec<&Stun> {
         let mut operators: Vec<&str> = Vec::new();
         for s in self.active_stun() {
@@ -282,17 +336,69 @@ pub fn validate(lists: &Lists, today: Date) -> Report {
         );
     }
 
-    let stun_operators: BTreeSet<_> = lists
-        .active_stun()
-        .map(|s| s.operator.to_lowercase())
-        .collect();
-    if stun_operators.len() < MIN_STUN_OPERATORS {
+    if lists.active_stun().next().is_none() {
+        report
+            .errors
+            .push("STUN list is empty: it needs at least one active entry".into());
+    }
+    validate_project(&lists.project, today, &mut report);
+    report
+}
+
+/// The project server entry. With `status: pending` the policy links may be null, so the server
+/// can land before the owner has the pages; `live` needs both as https:// links.
+fn validate_project(p: &ProjectServer, today: Date, report: &mut Report) {
+    let what = "project server";
+    if !valid_host(&p.host) {
+        report
+            .errors
+            .push(format!("{what}: host must be a lower-case DNS name"));
+    }
+    let path_ok = p.path.starts_with('/')
+        && p.path.len() > 1
+        && p.path
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"/-_.".contains(&b));
+    if !path_ok {
         report.errors.push(format!(
-            "STUN list too small: {} usable operators, need at least {MIN_STUN_OPERATORS} distinct operators",
-            stun_operators.len()
+            "{what}: path must start with / and use only letters, digits and /-_."
         ));
     }
-    report
+    if !plain_text(&p.hoster) {
+        report
+            .errors
+            .push(format!("{what}: hoster must be plain printable text"));
+    }
+    if let Some(link) = p.imprint.as_deref()
+        && !valid_policy(link)
+    {
+        report
+            .errors
+            .push(format!("{what}: imprint must be an https:// link"));
+    }
+    if p.is_live() {
+        if p.privacy_policy.is_none() {
+            report.errors.push(format!(
+                "{what}: status live needs a privacy_policy https:// link"
+            ));
+        }
+        if p.imprint.is_none() {
+            report.errors.push(format!(
+                "{what}: status live needs an imprint https:// link"
+            ));
+        }
+    }
+    check_common(
+        &Common {
+            what,
+            operator: &p.operator,
+            country: &p.country,
+            policy: p.privacy_policy.as_deref(),
+            last_vetted: &p.last_vetted,
+        },
+        today,
+        report,
+    );
 }
 
 #[cfg(test)]
@@ -316,8 +422,24 @@ pub(crate) mod tests {
         Date::parse("2026-10-25").unwrap()
     }
 
+    pub fn project() -> ProjectServer {
+        ProjectServer {
+            host: "gs.example.net".into(),
+            path: "/signaling".into(),
+            operator: "Project".into(),
+            country: "DE".into(),
+            hoster: "Hoster".into(),
+            privacy_policy: None,
+            imprint: None,
+            last_vetted: "2026-10-23".into(),
+            status: ProjectStatus::Pending,
+            notes: String::new(),
+        }
+    }
+
     pub fn good() -> Lists {
         Lists {
+            project: project(),
             stun: vec![
                 stun("a.example.net", 3478, "A"),
                 stun("a.example.net", 443, "A"),
@@ -336,23 +458,86 @@ pub(crate) mod tests {
     fn the_shipped_files_pass_the_build_check() {
         let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../data");
         let lists = Lists::load(&dir).unwrap();
-        let report = validate(&lists, today());
+        let report = validate(&lists, Date::parse("2026-11-06").unwrap());
         assert_eq!(report.errors, Vec::<String>::new());
-        assert!(lists.active_stun().count() >= 2);
+        let hosts: Vec<&str> = lists.active_stun().map(|s| s.host.as_str()).collect();
+        assert_eq!(
+            hosts,
+            ["gs.mydata.rocks"],
+            "the allowlist is the project host only"
+        );
+        assert_eq!(lists.project.host, "gs.mydata.rocks");
+        assert_eq!(lists.project.mailbox(), "r:gs.mydata.rocks/signaling");
     }
 
     #[test]
-    fn stun_needs_two_distinct_operators() {
+    fn an_empty_stun_list_fails() {
         let mut l = good();
-        l.stun = vec![
-            stun("a.example.net", 3478, "A"),
-            stun("a.example.net", 443, "A"),
-        ];
+        l.stun.clear();
         let r = validate(&l, today());
         assert!(
-            r.errors.iter().any(|e| e.contains("STUN list too small")),
+            r.errors.iter().any(|e| e.contains("STUN list is empty")),
             "{r:?}"
         );
+    }
+
+    #[test]
+    fn one_stun_server_is_enough_since_the_third_party_entries_went() {
+        let mut l = good();
+        l.stun = vec![stun("gs.example.net", 3478, "Project")];
+        assert_eq!(validate(&l, today()), Report::default());
+    }
+
+    #[test]
+    fn a_pending_project_server_may_lack_its_policy_links() {
+        assert_eq!(validate(&good(), today()), Report::default());
+    }
+
+    #[test]
+    fn a_live_project_server_needs_https_policy_and_imprint() {
+        let mut l = good();
+        l.project.status = ProjectStatus::Live;
+        let r = validate(&l, today());
+        assert_eq!(r.errors.len(), 2, "{r:?}");
+        l.project.privacy_policy = Some("https://gs.example.net/privacy".into());
+        l.project.imprint = Some("http://gs.example.net/imprint".into());
+        let r = validate(&l, today());
+        assert!(r.errors.iter().any(|e| e.contains("imprint")), "{r:?}");
+        l.project.imprint = Some("https://gs.example.net/imprint".into());
+        assert_eq!(validate(&l, today()), Report::default());
+    }
+
+    #[test]
+    fn project_server_entry_rules() {
+        type Mutation = Box<dyn Fn(&mut ProjectServer)>;
+        let cases: Vec<(&str, Mutation)> = vec![
+            ("host", Box::new(|p| p.host = "wss://x.example.net".into())),
+            ("path", Box::new(|p| p.path = "signaling".into())),
+            ("path", Box::new(|p| p.path = "/a b".into())),
+            ("country", Box::new(|p| p.country = "US".into())),
+            ("hoster", Box::new(|p| p.hoster = "a\"b".into())),
+            (
+                "privacy_policy",
+                Box::new(|p| p.privacy_policy = Some("http://x.example/p".into())),
+            ),
+            ("future", Box::new(|p| p.last_vetted = "2026-11-01".into())),
+        ];
+        for (needle, mutate) in cases {
+            let mut l = good();
+            mutate(&mut l.project);
+            let r = validate(&l, today());
+            assert!(
+                r.errors.iter().any(|e| e.contains(needle)),
+                "{needle}: {r:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_project_file_with_a_misspelled_field_is_refused() {
+        let stun = r#"{"servers":[]}"#;
+        let bad = r#"{"host":"a.b","extra":1}"#;
+        assert!(Lists::parse(stun, bad).is_err());
     }
 
     #[test]
@@ -418,7 +603,8 @@ pub(crate) mod tests {
     #[test]
     fn unknown_fields_are_refused() {
         let bad = r#"{"servers":[{"host":"a.b","extra":1}]}"#;
-        assert!(Lists::parse(bad).is_err());
+        let project = r#"{"host":"a.b"}"#;
+        assert!(Lists::parse(bad, project).is_err());
     }
 
     #[test]

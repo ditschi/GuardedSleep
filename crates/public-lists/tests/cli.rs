@@ -14,6 +14,8 @@ fn stun(host: &str, operator: &str) -> String {
     )
 }
 
+const PROJECT: &str = r#"{"host":"gs.listed.net","path":"/signaling","operator":"Project","country":"DE","hoster":"Hoster","privacy_policy":null,"imprint":null,"last_vetted":"2026-10-23","status":"pending","notes":""}"#;
+
 fn data_dir(name: &str, stun_entries: &[(&str, &str)]) -> PathBuf {
     let dir = std::env::temp_dir().join(format!("public-lists-{name}-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
@@ -23,6 +25,7 @@ fn data_dir(name: &str, stun_entries: &[(&str, &str)]) -> PathBuf {
         format!(r#"{{"servers":[{}]}}"#, s.join(",")),
     )
     .unwrap();
+    std::fs::write(dir.join("project-server.json"), PROJECT).unwrap();
     dir
 }
 
@@ -55,16 +58,41 @@ fn a_big_enough_list_passes() {
 }
 
 #[test]
-fn one_stun_operator_fails() {
+fn an_empty_stun_list_fails() {
+    let o = run(&["check"], &data_dir("stun0", &[]));
+    assert_eq!(o.status.code(), Some(1));
+    assert!(stderr(&o).contains("STUN list is empty"), "{}", stderr(&o));
+}
+
+#[test]
+fn a_single_stun_server_passes() {
     let o = run(
         &["check"],
-        &data_dir(
-            "stun1",
-            &[("stun.a.listed.net", "A"), ("stun2.a.listed.net", "A")],
-        ),
+        &data_dir("stun1", &[("stun.a.listed.net", "A")]),
     );
+    assert!(o.status.success(), "{}", stderr(&o));
+}
+
+#[test]
+fn a_live_project_server_without_policy_links_fails_the_build_check() {
+    let dir = data_dir("live", TWO_STUN);
+    let path = dir.join("project-server.json");
+    let text = std::fs::read_to_string(&path)
+        .unwrap()
+        .replace("\"pending\"", "\"live\"");
+    std::fs::write(&path, text).unwrap();
+    let o = run(&["check"], &dir);
     assert_eq!(o.status.code(), Some(1));
-    assert!(stderr(&o).contains("STUN list too small"), "{}", stderr(&o));
+    assert!(stderr(&o).contains("status live needs"), "{}", stderr(&o));
+}
+
+#[test]
+fn a_missing_project_server_file_fails() {
+    let dir = data_dir("noproject", TWO_STUN);
+    std::fs::remove_file(dir.join("project-server.json")).unwrap();
+    let o = run(&["check"], &dir);
+    assert_eq!(o.status.code(), Some(1));
+    assert!(stderr(&o).contains("project-server.json"), "{}", stderr(&o));
 }
 
 #[test]
