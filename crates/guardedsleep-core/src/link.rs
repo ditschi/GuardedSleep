@@ -47,7 +47,7 @@ use crate::envelope::{
     SecretKey, SessionId, SessionState, derive_key,
 };
 use crate::invite::{InviteMailbox, validate_mailboxes};
-use crate::mailbox::{MailboxId, MailboxKind, MailboxSet, MailboxState};
+use crate::mailbox::{Mailbox, MailboxId, MailboxKind, MailboxSet, MailboxState};
 use crate::noise::{GateChange, NoiseGate};
 use crate::pairing::{
     PARENT_SECRET_LEN, ParentSecret, baby_proof_mac, decode_psk, derive_room_id, macs_equal,
@@ -1128,7 +1128,7 @@ impl Link {
                         // The check failed to connect: no backoff, no reconnect (the mailboxes
                         // stay closed while the attempt is verified). The other mailboxes of the
                         // check may still answer.
-                        if let Some(m) = self.mb.relays.get_mut(id as usize) {
+                        if let Some(m) = self.mb.get_mut(id) {
                             m.state = MailboxState::Closed;
                         }
                         if let Some(p) = self.probe.as_mut() {
@@ -1316,8 +1316,11 @@ impl Link {
     /// The room member of relay `i` that speaks for the peer: the one the confirmed session last
     /// spoke from there, otherwise the first member with the peer's role.
     fn peer_member(&self, i: usize) -> Option<&Member> {
+        self.peer_member_of(self.mb.relays.get(i)?)
+    }
+
+    fn peer_member_of<'a>(&self, relay: &'a Mailbox) -> Option<&'a Member> {
         let other = self.other_role();
-        let relay = self.mb.relays.get(i)?;
         let mut others = relay.members.iter().filter(|m| m.role == other);
         match relay.peer_client.as_deref() {
             Some(id) => relay
@@ -1359,13 +1362,14 @@ impl Link {
     /// with the peer's role exists. The same envelope id goes everywhere; the receiver processes
     /// the first copy.
     fn envelope_actions(&self, sealed: &Sealed) -> Vec<LinkAction> {
-        (0..self.mb.relays.len())
-            .filter_map(|i| {
-                let m = self.mb.relays.get(i)?;
+        self.mb
+            .relays
+            .iter()
+            .filter_map(|m| {
                 if m.state != MailboxState::Joined {
                     return None;
                 }
-                let to = self.peer_member(i)?.client_id.clone();
+                let to = self.peer_member_of(m)?.client_id.clone();
                 Some(self.envelope_action(m.id, &to, sealed))
             })
             .collect()
@@ -1485,7 +1489,6 @@ impl Link {
     // ---- signaling transport ---------------------------------------------------------------
 
     fn on_signaling_opened(&mut self, id: MailboxId, now: u64, out: &mut Vec<LinkAction>) {
-        let i = id as usize;
         if self
             .mb
             .get(id)
@@ -1499,7 +1502,7 @@ impl Link {
             self.finish_probe(now, true, out);
             return;
         }
-        if let Some(m) = self.mb.relays.get_mut(i) {
+        if let Some(m) = self.mb.get_mut(id) {
             m.state = MailboxState::Open;
             m.last_rx = now;
             m.last_ping = now;
@@ -1522,7 +1525,7 @@ impl Link {
         out: &mut Vec<LinkAction>,
     ) {
         let i = id as usize;
-        if !emit_close && let Some(m) = self.mb.relays.get_mut(i) {
+        if !emit_close && let Some(m) = self.mb.get_mut(id) {
             // The platform already closed it: no `close_mailbox` to emit.
             m.state = MailboxState::Closed;
         }
@@ -1537,7 +1540,7 @@ impl Link {
         }
         let failures = self.mb.get(id).map_or(0, |m| m.failures);
         let wait = self.delay(now, failures);
-        if let Some(m) = self.mb.relays.get_mut(i) {
+        if let Some(m) = self.mb.get_mut(id) {
             m.next_open_at = now + wait;
             m.failures += 1;
         }
@@ -2034,7 +2037,7 @@ impl Link {
         {
             return;
         }
-        if let Some(m) = self.mb.relays.get_mut(id as usize) {
+        if let Some(m) = self.mb.get_mut(id) {
             m.unsupported = true;
         }
         // One relay of several that is too old or too new says nothing about the others: the
@@ -2045,7 +2048,7 @@ impl Link {
                 self.update_required = true;
             }
             self.signaling_down(id, now, true, out);
-            if let Some(m) = self.mb.relays.get_mut(id as usize) {
+            if let Some(m) = self.mb.get_mut(id) {
                 m.next_open_at = now + LONG_CAP_MS;
             }
         } else {
@@ -2856,12 +2859,7 @@ impl Link {
             // The platform stores the set as sent; the core keeps it for the next mailbox update.
             self.cfg.mailboxes = set.clone();
             // The mailboxes are held closed while verified; the next reopening uses the new set.
-            if self
-                .mb
-                .relays
-                .iter()
-                .all(|m| m.state == MailboxState::Closed)
-            {
+            if self.mb.all_closed() {
                 self.mb = MailboxSet::new(&relay_entries(&set, self.cfg.allow_dev_loopback));
             }
             emit(out, LinkEvent::MailboxesUpdated { mailboxes: set });
@@ -2894,14 +2892,7 @@ impl Link {
     fn probe_housekeeping(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         match &self.probe {
             None => {
-                if now >= self.probe_next_at
-                    && !self.mb.relays.is_empty()
-                    && self
-                        .mb
-                        .relays
-                        .iter()
-                        .all(|m| m.state == MailboxState::Closed)
-                {
+                if now >= self.probe_next_at && !self.mb.relays.is_empty() && self.mb.all_closed() {
                     let ids: Vec<MailboxId> = self.mb.relays.iter().map(|m| m.id).collect();
                     for i in 0..self.mb.relays.len() {
                         self.open_relay(i, now, out);

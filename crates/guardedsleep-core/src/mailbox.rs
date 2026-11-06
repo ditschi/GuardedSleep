@@ -117,4 +117,51 @@ impl MailboxSet {
     pub fn get(&self, id: MailboxId) -> Option<&Mailbox> {
         self.relays.get(id as usize)
     }
+
+    pub fn get_mut(&mut self, id: MailboxId) -> Option<&mut Mailbox> {
+        self.relays.get_mut(id as usize)
+    }
+
+    /// No mailbox holds a socket (also true for an empty set).
+    pub fn all_closed(&self) -> bool {
+        self.relays.iter().all(|m| m.state == MailboxState::Closed)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn set() -> MailboxSet {
+        MailboxSet::new(&[
+            (MailboxKind::Relay, "wss://a.test".into()),
+            (MailboxKind::Lan, "ws://10.0.0.1:1".into()),
+            (MailboxKind::Relay, "wss://a.test".into()),
+        ])
+    }
+
+    #[test]
+    fn ids_are_positions_and_duplicates_collapse() {
+        let s = set();
+        assert_eq!(s.relays.len(), 2);
+        assert_eq!(s.get(1).map(|m| m.url.as_str()), Some("ws://10.0.0.1:1"));
+        assert!(s.get(2).is_none());
+    }
+
+    #[test]
+    fn get_mut_addresses_by_id() {
+        let mut s = set();
+        s.get_mut(1).unwrap().state = MailboxState::Open;
+        assert_eq!(s.relays[1].state, MailboxState::Open);
+        assert!(s.get_mut(9).is_none());
+    }
+
+    #[test]
+    fn all_closed_follows_the_states() {
+        let mut s = set();
+        assert!(s.all_closed());
+        s.get_mut(0).unwrap().state = MailboxState::Opening;
+        assert!(!s.all_closed());
+        assert!(MailboxSet::new(&[]).all_closed());
+    }
 }
