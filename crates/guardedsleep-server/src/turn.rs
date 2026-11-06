@@ -13,6 +13,8 @@ use secrecy::{ExposeSecret, SecretString};
 use serde_json::json;
 use sha1::Sha1;
 
+use crate::config::{csv_list, parse_in};
+
 /// Longest credential lifetime (`signaling-relay` "Short-lived TURN credentials"). The only way to
 /// raise it is the 12-hour fallback of task 9.1, which did not apply.
 pub const MAX_TTL_S: u32 = 600;
@@ -112,16 +114,6 @@ fn url_host(url: &str, schemes: &[&str]) -> Option<String> {
     (!host.is_empty()).then(|| host.to_ascii_lowercase())
 }
 
-fn list(raw: Option<String>) -> Vec<String> {
-    raw.map(|r| {
-        r.split(',')
-            .map(|s| s.trim().to_owned())
-            .filter(|s| !s.is_empty())
-            .collect()
-    })
-    .unwrap_or_default()
-}
-
 fn check_urls(
     name: &str,
     urls: &[String],
@@ -154,8 +146,8 @@ impl IceConfig {
         let public_host = get("PUBLIC_HOST")
             .map(|h| h.trim().to_ascii_lowercase())
             .filter(|h| !h.is_empty());
-        let stun_urls = list(get("STUN_URLS"));
-        let turn_urls = list(get("TURN_URLS"));
+        let stun_urls = csv_list(get("STUN_URLS"));
+        let turn_urls = csv_list(get("TURN_URLS"));
         check_urls("STUN_URLS", &stun_urls, &["stun:"], public_host.as_deref())?;
         check_urls(
             "TURN_URLS",
@@ -175,10 +167,12 @@ impl IceConfig {
             .map_or(DEFAULT_TTL_S, |n| n.clamp(1, MAX_TTL_S));
         // Live credentials per client address (IPv4, IPv6 /64); many families can share one CGNAT
         // address, so it is configurable. Default 8, as in design section 7 "Gate and abuse bounds".
-        let max_live_per_addr = get("TURN_MAX_LIVE_PER_ADDR")
-            .and_then(|s| s.trim().parse::<usize>().ok())
-            .filter(|n| (1..=10_000).contains(n))
-            .unwrap_or(DEFAULT_MAX_LIVE_PER_ADDR);
+        let max_live_per_addr = parse_in(
+            get("TURN_MAX_LIVE_PER_ADDR"),
+            1,
+            10_000,
+            DEFAULT_MAX_LIVE_PER_ADDR,
+        );
         let turn = match (secret, turn_urls.is_empty()) {
             (Some(secret), false) => Some(TurnSettings {
                 urls: turn_urls,
