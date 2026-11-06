@@ -1,0 +1,98 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "two-relays-a-flapping-relay-does-not-stall-setup",
+  "description": "One relay accepts connections and drops them again every two seconds while the other works. Losing one mailbox must not reset the setup while another one reaches the peer: the parent's request for an offer stays valid, the baby answers it, and the attempt verifies in seconds instead of after the 20 s attempt timeout, with one attempt per side.",
+  "seed": 1,
+  "relay_count": 2,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "signaling_down",
+      "relay": 0
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 2000,
+      "do": "signaling_up",
+      "relay": 0
+    },
+    {
+      "at": 4000,
+      "do": "signaling_down",
+      "relay": 0
+    },
+    {
+      "at": 6000,
+      "do": "signaling_up",
+      "relay": 0
+    },
+    {
+      "at": 8000,
+      "do": "signaling_down",
+      "relay": 0
+    },
+    {
+      "at": 10000,
+      "do": "signaling_up",
+      "relay": 0
+    },
+    {
+      "at": 12000,
+      "do": "signaling_down",
+      "relay": 0
+    },
+    {
+      "at": 40000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 10000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 10000
+    },
+    {
+      "peer": "baby",
+      "attempts": 1
+    },
+    {
+      "peer": "parent",
+      "attempts": 1
+    },
+    {
+      "peer": "baby",
+      "max_level": 0
+    },
+    {
+      "peer": "parent",
+      "max_level": 0
+    },
+    {
+      "peer": "baby",
+      "never": "link_lost"
+    },
+    {
+      "peer": "parent",
+      "never": "link_lost"
+    }
+  ]
+}

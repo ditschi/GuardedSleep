@@ -105,7 +105,6 @@ function setup(role: LinkConfig["role"] = "parent", core: ScriptedCore = new Scr
   const listener = new Recorder();
   const driver = new LinkDriver({
     config: config(role),
-    signalingUrls: ["ws://relay.test:8787"],
     core,
     signaling: createWebSocketSignaling(FakeWebSocket),
     media,
@@ -168,7 +167,7 @@ describe("LinkDriver with a scripted core", () => {
     core.script = (input) =>
       input.type === "start"
         ? [
-            { type: "open_mailbox", id: 0, kind: "relay", url: "" },
+            { type: "open_mailbox", id: 0, kind: "relay", url: "ws://relay.test:8787" },
             { type: "emit", event: { type: "status", status: status("connecting") } },
           ]
         : [];
@@ -183,7 +182,9 @@ describe("LinkDriver with a scripted core", () => {
   it("feeds signaling events to the core and ignores a replaced socket", () => {
     const core = new ScriptedCore();
     core.script = (input) =>
-      input.type === "start" ? [{ type: "open_mailbox", id: 0, kind: "relay", url: "" }] : [];
+      input.type === "start"
+        ? [{ type: "open_mailbox", id: 0, kind: "relay", url: "ws://relay.test:8787" }]
+        : [];
     const { driver } = setup("parent", core);
     driver.start();
     const first = FakeWebSocket.instances[0];
@@ -196,7 +197,7 @@ describe("LinkDriver with a scripted core", () => {
     // The core asks for a new socket; late events of the old one no longer reach it.
     core.script = (input) =>
       input.type === "mailbox_closed"
-        ? [{ type: "open_mailbox", id: 0, kind: "relay", url: "" }]
+        ? [{ type: "open_mailbox", id: 0, kind: "relay", url: "ws://relay.test:8787" }]
         : [];
     first?.drop();
     expect(FakeWebSocket.instances).toHaveLength(2);
@@ -210,7 +211,8 @@ describe("LinkDriver with a scripted core", () => {
   it("sends the core's signaling text through the open socket", () => {
     const core = new ScriptedCore();
     core.script = (input) => {
-      if (input.type === "start") return [{ type: "open_mailbox", id: 0, kind: "relay", url: "" }];
+      if (input.type === "start")
+        return [{ type: "open_mailbox", id: 0, kind: "relay", url: "ws://relay.test:8787" }];
       if (input.type === "mailbox_opened") return [{ type: "mailbox_send", id: 0, frame: "hello" }];
       return [];
     };
@@ -225,7 +227,7 @@ describe("LinkDriver with a scripted core", () => {
     core.script = (input) =>
       input.type === "start"
         ? [
-            { type: "open_mailbox", id: 0, kind: "relay", url: "" },
+            { type: "open_mailbox", id: 0, kind: "relay", url: "ws://relay.test:8787" },
             { type: "open_mailbox", id: 1, kind: "relay", url: "wss://relay-a.example" },
           ]
         : [];
@@ -391,7 +393,6 @@ describe("LinkDriver with a scripted core", () => {
     const wall = { now: 1_700_000_000_000 };
     const driver = new LinkDriver({
       config: config("parent"),
-      signalingUrls: ["ws://relay.test:8787"],
       core,
       signaling: createWebSocketSignaling(FakeWebSocket),
       media: new FakeMedia(),
@@ -440,7 +441,6 @@ describe("LinkDriver with a scripted core", () => {
     let battery = 80;
     const driver = new LinkDriver({
       config: config("baby"),
-      signalingUrls: [],
       core,
       signaling: createWebSocketSignaling(FakeWebSocket),
       media: new FakeMedia(),
@@ -473,7 +473,6 @@ describe("LinkDriver with a scripted core", () => {
     const time = new FakeTime();
     const driver = new LinkDriver({
       config: config("baby"),
-      signalingUrls: [],
       core,
       signaling: createWebSocketSignaling(FakeWebSocket),
       media: new FakeMedia(),
@@ -498,7 +497,7 @@ describe("LinkDriver with a scripted core", () => {
     core.script = (input) => {
       order.push(input.type);
       return input.type === "start"
-        ? [{ type: "open_mailbox", id: 0, kind: "relay", url: "" }]
+        ? [{ type: "open_mailbox", id: 0, kind: "relay", url: "ws://relay.test:8787" }]
         : [];
     };
     const { driver } = setup("parent", core);
@@ -571,8 +570,7 @@ describe("LinkDriver with the real core", () => {
     const time = new FakeTime();
     const listener = new Recorder();
     const driver = new LinkDriver({
-      config: config("parent"),
-      signalingUrls: ["ws://relay.test:8787"],
+      config: { ...config("parent"), mailboxes: [{ kind: "relay", url: "wss://relay.test:8787" }] },
       core,
       signaling: createWebSocketSignaling(FakeWebSocket),
       media: new FakeMedia(),
@@ -598,7 +596,7 @@ describe("LinkDriver with the real core", () => {
     first?.drop();
     expect(listener.statuses.at(-1)?.state).toBe("connecting");
     expect(FakeWebSocket.instances).toHaveLength(2);
-    expect(FakeWebSocket.instances[1]?.url).toBe("ws://relay.test:8787");
+    expect(FakeWebSocket.instances[1]?.url).toBe("wss://relay.test:8787");
 
     // Long without contact, the core escalates and the driver only reports it.
     time.advance(70_000);

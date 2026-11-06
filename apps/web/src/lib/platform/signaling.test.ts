@@ -19,7 +19,7 @@ describe("WebSocket signaling", () => {
 
   it("opens the first URL, delivers text frames and sends only while open", () => {
     const { log, l } = listener();
-    const socket = createWebSocketSignaling(FakeWebSocket)(["ws://a", "ws://b"], l);
+    const socket = createWebSocketSignaling(FakeWebSocket)("ws://a", l);
     const ws = FakeWebSocket.instances[0];
     socket.send("too early");
     ws?.open();
@@ -32,51 +32,29 @@ describe("WebSocket signaling", () => {
     expect(log.at(-1)).toBe("close");
   });
 
-  it("falls through to the next URL when one cannot be reached", () => {
+  it("reports one close when the URL cannot be opened, and never retries on its own", () => {
     const { log, l } = listener();
-    createWebSocketSignaling(FakeWebSocket)(["ws://dead", "ws://alive"], l);
+    createWebSocketSignaling(FakeWebSocket)("ws://a", l);
     FakeWebSocket.instances[0]?.drop();
-    expect(FakeWebSocket.instances.map((w) => w.url)).toEqual(["ws://dead", "ws://alive"]);
-    FakeWebSocket.instances[1]?.open();
-    expect(log).toEqual(["open"]);
-  });
-
-  it("reports one close when no URL opens, and never retries on its own", () => {
-    const { log, l } = listener();
-    createWebSocketSignaling(FakeWebSocket)(["ws://a", "ws://b"], l);
-    FakeWebSocket.instances[0]?.drop();
-    FakeWebSocket.instances[1]?.drop();
     expect(log).toEqual(["close"]);
-    expect(FakeWebSocket.instances).toHaveLength(2);
-  });
-
-  it("starts the next connection at the URL that worked last", () => {
-    const factory = createWebSocketSignaling(FakeWebSocket);
-    const first = listener();
-    factory(["ws://dead", "ws://alive"], first.l);
-    FakeWebSocket.instances[0]?.drop();
-    FakeWebSocket.instances[1]?.open();
-    FakeWebSocket.instances[1]?.drop();
-    factory(["ws://dead", "ws://alive"], listener().l);
-    expect(FakeWebSocket.instances.at(-1)?.url).toBe("ws://alive");
+    expect(FakeWebSocket.instances).toHaveLength(1);
   });
 
   it("treats a constructor that throws as an unreachable URL", () => {
     class Throwing extends FakeWebSocket {
       constructor(url: string) {
         super(url);
-        if (url === "ws://bad") throw new Error("blocked");
+        throw new Error("blocked");
       }
     }
     const { log, l } = listener();
-    createWebSocketSignaling(Throwing)(["ws://bad", "ws://good"], l);
-    FakeWebSocket.instances.at(-1)?.open();
-    expect(log).toEqual(["open"]);
+    createWebSocketSignaling(Throwing)("ws://bad", l);
+    expect(log).toEqual(["close"]);
   });
 
   it("close silences the callbacks and closes the socket", () => {
     const { log, l } = listener();
-    const socket = createWebSocketSignaling(FakeWebSocket)(["ws://a"], l);
+    const socket = createWebSocketSignaling(FakeWebSocket)("ws://a", l);
     const ws = FakeWebSocket.instances[0];
     ws?.open();
     socket.close();

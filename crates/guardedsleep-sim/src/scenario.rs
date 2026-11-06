@@ -24,6 +24,10 @@ pub struct Scenario {
     pub peers: Vec<PeerSpec>,
     #[serde(default)]
     pub relay: RelaySpec,
+    /// How many simulated relays the peers' default mailbox set names (default 1). Mailbox `i`
+    /// of a peer talks to relay `i`; a peer's own `mailboxes` replace the default.
+    #[serde(default = "one_usize")]
+    pub relay_count: usize,
     /// True wall-clock time (Unix seconds) at virtual time 0; default a synthetic value.
     #[serde(default)]
     pub wall_start_s: Option<u64>,
@@ -155,6 +159,10 @@ pub struct Step {
     /// `restart_process`: the mailbox set the restarted process is configured with (an app update
     /// that ships a new list).
     pub mailboxes: Option<Vec<InviteMailbox>>,
+    /// The relay (mailbox index) a verb addresses; `signaling_down`, `signaling_up`,
+    /// `reject_hello` and `relay_drop_signals` default to every relay, `replay_stop` and
+    /// `ghost_join` to relay 0.
+    pub relay: Option<usize>,
     /// `input`: any `LinkInput` in its serde form.
     pub input: Option<Value>,
 }

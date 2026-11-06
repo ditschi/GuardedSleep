@@ -44,7 +44,6 @@ const WALL_CLOCK_JUMP_MS = 2_000;
 
 export interface LinkDriverOptions {
   config: LinkConfig;
-  signalingUrls: readonly string[];
   core: Pick<CoreApi, "createLink">;
   signaling: SignalingFactory;
   media: MediaEngine;
@@ -225,7 +224,7 @@ export class LinkDriver {
     const gen = ++this.socketGen;
     // Callbacks of a replaced socket are dropped; the core only hears about the current one.
     const current = (): boolean => this.sockets.get(id)?.gen === gen;
-    const socket = this.o.signaling(url === "" ? this.o.signalingUrls : [url], {
+    const socket = this.o.signaling(url, {
       onOpen: () => {
         if (current()) this.dispatch({ type: "mailbox_opened", id });
       },

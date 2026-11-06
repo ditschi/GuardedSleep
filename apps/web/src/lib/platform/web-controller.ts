@@ -490,7 +490,6 @@ export class WebController implements AppController {
     const settings = this.settingsState;
     const driver = new LinkDriver({
       config: this.buildConfig(role, pending, pairedBefore, settings),
-      signalingUrls,
       core: this.deps.core,
       signaling: this.deps.signaling,
       media,
@@ -574,8 +573,9 @@ export class WebController implements AppController {
       ...(pending.parentSecret === null ? {} : { pinned_parent: pending.parentSecret }),
       ...(pending.pinUntilS === null ? {} : { pin_window_until_s: pending.pinUntilS }),
       ...(role === "parent" ? { device_name: this.deps.deviceName?.() ?? "" } : {}),
-      // The baby sends the set of the pairing to the parent after each verification.
-      ...(role === "baby" ? { mailboxes: mailboxesForUrls(pending.urls) } : {}),
+      // The relay mailboxes of the pairing: the core opens each at its own address. The baby also
+      // sends the set to the parent after each verification.
+      mailboxes: mailboxesForUrls(this.effectiveUrls(pending.urls)),
       allow_dev_loopback: this.deps.allowDevLoopback ?? false,
     };
   }

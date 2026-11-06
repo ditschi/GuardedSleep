@@ -10,7 +10,7 @@ use guardedsleep_core::invite::InviteMailbox;
 use guardedsleep_core::link::{
     Link, LinkAction, LinkConfig, LinkEvent, LinkInput, LinkState, LinkStatus,
 };
-use guardedsleep_core::mailbox::RELAY_MAILBOX;
+use guardedsleep_core::mailbox::{MailboxId, MailboxKind};
 use guardedsleep_core::pairing::{
     decode_psk, derive_room_id, encode_psk, extract_sha256_fingerprint,
     extract_sha256_fingerprint_v2_legacy, pair_proof_mac_v3,
@@ -127,6 +127,7 @@ enum Ev {
     },
     Sweep {
         r#gen: u32,
+        srv: usize,
     },
     LocalDesc {
         actor: usize,
@@ -209,7 +210,8 @@ pub struct Actor {
     pub net_up: bool,
     pub path_epoch: u32,
     pub alive: bool,
-    pub sock: Option<usize>,
+    /// The socket of each mailbox (a mailbox id is also the index of the simulated relay).
+    pub socks: BTreeMap<MailboxId, usize>,
     pub pcs: BTreeMap<u32, Pc>,
     held_up: Vec<(usize, String)>,
     held_down: Vec<(usize, ToClient)>,
@@ -243,7 +245,7 @@ impl Actor {
             net_up: true,
             path_epoch: 0,
             alive: true,
-            sock: None,
+            socks: BTreeMap::new(),
             pcs: BTreeMap::new(),
             held_up: Vec::new(),
             held_down: Vec::new(),
@@ -275,7 +277,24 @@ pub struct Conn {
     pub join_seq: u64,
 }
 
+impl Server {
+    fn new() -> Self {
+        Server {
+            drop_signals: false,
+            up: true,
+            conns: BTreeMap::new(),
+            sweep_gen: 0,
+            next_client: 0,
+            next_join: 0,
+            last_stop: None,
+            reject_hello_until: 0,
+        }
+    }
+}
+
 struct Server {
+    /// Accepts and acknowledges frames but delivers no `signal` (a relay that is up and mute).
+    drop_signals: bool,
     up: bool,
     conns: BTreeMap<usize, Conn>,
     sweep_gen: u32,
@@ -324,7 +343,16 @@ pub struct World {
     pub rng: Rng,
     pub relay: RelaySpec,
     pub actors: Vec<Actor>,
+    /// The simulated relay that is selected: `servers` are swapped in and out of this slot by
+    /// [`World::select_server`], so the relay code below handles one relay at a time.
     server: Server,
+    cur_server: usize,
+    /// How many relays the scenario's default mailbox set names.
+    relay_count: usize,
+    /// The other relays (the selected one's slot is empty), indexed by mailbox id.
+    stash: Vec<Option<Server>>,
+    /// The relay a socket belongs to.
+    sock_server: BTreeMap<usize, usize>,
     fp_seq: u64,
     next_sock: usize,
     socks: BTreeMap<usize, (usize, u32)>,
@@ -353,15 +381,11 @@ impl World {
             rng: Rng::new(seed),
             relay: sc.relay.clone(),
             actors: Vec::new(),
-            server: Server {
-                up: true,
-                conns: BTreeMap::new(),
-                sweep_gen: 0,
-                next_client: 0,
-                next_join: 0,
-                last_stop: None,
-                reject_hello_until: 0,
-            },
+            server: Server::new(),
+            cur_server: 0,
+            relay_count: sc.relay_count.max(1),
+            stash: vec![None],
+            sock_server: BTreeMap::new(),
             fp_seq: 0,
             next_sock: 0,
             socks: BTreeMap::new(),
@@ -383,7 +407,7 @@ impl World {
             w.push(st.at, 1, Ev::Timeline(i));
         }
         w.push(1_000, 4, Ev::Watch);
-        w.push(SWEEP_MS, 3, Ev::Sweep { r#gen: 0 });
+        w.push(SWEEP_MS, 3, Ev::Sweep { r#gen: 0, srv: 0 });
         Ok(w)
     }
 
@@ -392,7 +416,17 @@ impl World {
         let seed = link_seed(self.seed, &spec.id, 0);
         let mut cfg = LinkConfig::with_defaults(spec.role, encode_psk(&psk), &seed);
         cfg.paired_before = spec.paired_before;
-        cfg.mailboxes = spec.mailboxes.clone();
+        cfg.mailboxes = if spec.mailboxes.is_empty() {
+            // The URLs are labels: mailbox `i` talks to simulated relay `i`.
+            (0..self.relay_count)
+                .map(|i| InviteMailbox {
+                    kind: MailboxKind::Relay,
+                    url: format!("wss://relay-{i}.invalid"),
+                })
+                .collect()
+        } else {
+            spec.mailboxes.clone()
+        };
         cfg.pin_window_until_s = spec.pin_window_s.map(|s| self.wall_base + s);
         cfg.only_local = spec.only_local;
         if let Some(n) = &spec.device_name {
@@ -475,17 +509,27 @@ impl World {
         match ev {
             Ev::Timeline(i) => self.run_step(i),
             Ev::Tick { actor, chain } => self.on_tick(actor, chain),
-            Ev::Accept { sock } => self.on_accept(sock),
-            Ev::SigToServer { sock, text, spoof } => self.on_server_rx(sock, &text, spoof),
+            Ev::Accept { sock } => {
+                self.select_sock(sock);
+                self.on_accept(sock)
+            }
+            Ev::SigToServer { sock, text, spoof } => {
+                self.select_sock(sock);
+                self.on_server_rx(sock, &text, spoof)
+            }
             Ev::SigToClient { actor, sock, msg } => self.on_client_rx(actor, sock, msg),
             Ev::Pong { sock } => {
+                self.select_sock(sock);
                 if let Some(c) = self.server.conns.get(&sock)
                     && self.responsive(c)
                 {
                     self.server.conns.get_mut(&sock).expect("exists").alive = true;
                 }
             }
-            Ev::Sweep { r#gen } => self.on_sweep(r#gen),
+            Ev::Sweep { r#gen, srv } => {
+                self.select_server(srv);
+                self.on_sweep(r#gen)
+            }
             Ev::LocalDesc {
                 actor,
                 handle,
@@ -530,7 +574,10 @@ impl World {
                 }
             }
             Ev::Input { actor, input } => self.deliver(actor, input),
-            Ev::ServerClose { sock } => self.server_terminate(sock),
+            Ev::ServerClose { sock } => {
+                self.select_sock(sock);
+                self.server_terminate(sock)
+            }
             Ev::PathBack { actor } => {
                 self.actors[actor].net_up = true;
                 self.flush_after_up(actor, true);
@@ -617,12 +664,28 @@ impl World {
                     self.push(self.now + gap, 3, Ev::PathBack { actor: a });
                 }
             }
-            "signaling_down" => self.signaling_down(),
+            "signaling_down" => {
+                for srv in self.targeted_servers(&st) {
+                    self.select_server(srv);
+                    self.signaling_down();
+                }
+            }
             "signaling_up" => {
-                self.server.up = true;
-                self.server.sweep_gen += 1;
-                let r#gen = self.server.sweep_gen;
-                self.push(self.now + SWEEP_MS, 3, Ev::Sweep { r#gen });
+                for srv in self.targeted_servers(&st) {
+                    self.select_server(srv);
+                    self.server.up = true;
+                    self.server.sweep_gen += 1;
+                    let r#gen = self.server.sweep_gen;
+                    self.push(self.now + SWEEP_MS, 3, Ev::Sweep { r#gen, srv });
+                }
+            }
+            // A relay that stays up, answers pings and takes frames, but delivers no `signal`.
+            "relay_drop_signals" => {
+                let on = st.mode.as_deref() != Some("off");
+                for srv in self.targeted_servers(&st) {
+                    self.select_server(srv);
+                    self.server.drop_signals = on;
+                }
             }
             "kill_process" => {
                 if let Some(a) = self.peer_ix(&st) {
@@ -653,11 +716,43 @@ impl World {
             "relay_rewrite" => self.relay.sdp_rewrite = st.mode.clone(),
             "reject_hello" => {
                 let for_ms = st.for_ms.unwrap_or(u64::MAX - self.now);
-                self.server.reject_hello_until = self.now.saturating_add(for_ms);
+                for srv in self.targeted_servers(&st) {
+                    self.select_server(srv);
+                    self.server.reject_hello_until = self.now.saturating_add(for_ms);
+                }
             }
             other => self
                 .violations
                 .push(format!("unknown timeline verb `{other}`")),
+        }
+    }
+
+    /// Makes relay `idx` the selected one (creating it on first use).
+    fn select_server(&mut self, idx: usize) {
+        if idx == self.cur_server {
+            return;
+        }
+        while self.stash.len() <= idx {
+            self.stash.push(Some(Server::new()));
+        }
+        let next = self.stash[idx].take().unwrap_or_else(Server::new);
+        let prev = std::mem::replace(&mut self.server, next);
+        self.stash[self.cur_server] = Some(prev);
+        self.cur_server = idx;
+    }
+
+    /// Selects the relay a socket is connected to.
+    fn select_sock(&mut self, sock: usize) {
+        if let Some(&srv) = self.sock_server.get(&sock) {
+            self.select_server(srv);
+        }
+    }
+
+    /// The relays a timeline step addresses: its `relay` index, otherwise every relay.
+    fn targeted_servers(&self, st: &Step) -> Vec<usize> {
+        match st.relay {
+            Some(i) => vec![i],
+            None => (0..self.stash.len().max(self.relay_count)).collect(),
         }
     }
 
@@ -868,12 +963,12 @@ impl World {
             let ac = &self.actors[a];
             ac.net_up
         };
-        let sock = self.actors[a].sock.take();
-        if let Some(s) = sock
-            && reachable
-        {
-            let t = self.fifo_time(1, s, 0, self.now + 20, false);
-            self.push(t, 2, Ev::ServerClose { sock: s });
+        let socks = std::mem::take(&mut self.actors[a].socks);
+        for s in socks.into_values() {
+            if reachable {
+                let t = self.fifo_time(1, s, 0, self.now + 20, false);
+                self.push(t, 2, Ev::ServerClose { sock: s });
+            }
         }
         let ac = &mut self.actors[a];
         ac.alive = false;
@@ -940,9 +1035,9 @@ impl World {
     fn exec(&mut self, a: usize, actions: Vec<LinkAction>) {
         for act in actions {
             match act {
-                LinkAction::OpenMailbox { .. } => self.open_signaling(a),
-                LinkAction::CloseMailbox { .. } => {
-                    if let Some(s) = self.actors[a].sock.take() {
+                LinkAction::OpenMailbox { id, .. } => self.open_mailbox(a, id),
+                LinkAction::CloseMailbox { id } => {
+                    if let Some(s) = self.actors[a].socks.remove(&id) {
                         let epoch = self.socks[&s].1;
                         if self.reach(a, epoch) {
                             let t = self.fifo_time(1, s, 0, self.now + 20, false);
@@ -950,7 +1045,7 @@ impl World {
                         }
                     }
                 }
-                LinkAction::MailboxSend { frame, .. } => self.client_send(a, frame, None),
+                LinkAction::MailboxSend { id, frame } => self.client_send_on(a, id, frame, None),
                 LinkAction::CreateAttempt { attempt, .. } => {
                     self.attempts.push((a, self.now));
                     if self.actors[a].pcs.values().any(|p| !p.closed) {
@@ -1066,6 +1161,7 @@ impl World {
         }
         let downs = std::mem::take(&mut self.actors[a].held_down);
         for (sock, msg) in downs {
+            self.select_sock(sock);
             if self.server.conns.contains_key(&sock) {
                 let lat = self.rng.range(5, 40);
                 let t = self.fifo_time(0, sock, 0, self.now + lat, false);
@@ -1096,11 +1192,18 @@ impl World {
     // ---- signaling: client side ------------------------------------------------------------
 
     pub fn open_signaling(&mut self, a: usize) {
+        self.open_mailbox(a, 0);
+    }
+
+    /// Opens mailbox `id` of actor `a`: a socket to simulated relay `id`.
+    pub fn open_mailbox(&mut self, a: usize, id: MailboxId) {
         let sock = self.next_sock;
         self.next_sock += 1;
         let epoch = self.actors[a].path_epoch;
         self.socks.insert(sock, (a, epoch));
-        self.actors[a].sock = Some(sock);
+        self.sock_server.insert(sock, id as usize);
+        self.actors[a].socks.insert(id, sock);
+        self.select_server(id as usize);
         let (up, reach) = (self.server.up, self.reach(a, epoch));
         if !reach {
             let d = 3_000 + self.rng.range(0, 500);
@@ -1131,7 +1234,11 @@ impl World {
     }
 
     pub fn client_send(&mut self, a: usize, text: String, spoof: Option<String>) {
-        let Some(sock) = self.actors[a].sock else {
+        self.client_send_on(a, 0, text, spoof);
+    }
+
+    pub fn client_send_on(&mut self, a: usize, id: MailboxId, text: String, spoof: Option<String>) {
+        let Some(sock) = self.actors[a].socks.get(&id).copied() else {
             return;
         };
         if let Some(t) = self.signal_type_for(a, &text) {
@@ -1159,7 +1266,8 @@ impl World {
     }
 
     fn on_client_rx(&mut self, a: usize, sock: usize, msg: ToClient) {
-        if self.actors[a].sock != Some(sock) || !self.actors[a].alive {
+        let id = self.sock_server.get(&sock).copied().unwrap_or(0) as MailboxId;
+        if self.actors[a].socks.get(&id) != Some(&sock) || !self.actors[a].alive {
             return;
         }
         let epoch = self.socks[&sock].1;
@@ -1179,20 +1287,17 @@ impl World {
             self.actors[a].welcomes.push(now);
         }
         if matches!(msg, ToClient::Closed) {
-            self.actors[a].sock = None;
+            self.actors[a].socks.remove(&id);
         }
         if self.actors[a].raw.is_some() {
             self.raw_on_signaling(a, msg);
             return;
         }
         let input = match msg {
-            ToClient::Opened => LinkInput::MailboxOpened { id: RELAY_MAILBOX },
-            ToClient::Text(bytes) => LinkInput::MailboxFrame {
-                id: RELAY_MAILBOX,
-                bytes,
-            },
+            ToClient::Opened => LinkInput::MailboxOpened { id },
+            ToClient::Text(bytes) => LinkInput::MailboxFrame { id, bytes },
             ToClient::Closed => LinkInput::MailboxClosed {
-                id: RELAY_MAILBOX,
+                id,
                 reason: "closed".into(),
             },
         };
@@ -1236,7 +1341,7 @@ impl World {
         let Some(&(a, epoch)) = self.socks.get(&sock) else {
             return;
         };
-        if self.actors[a].sock != Some(sock) {
+        if !self.actors[a].socks.values().any(|s| *s == sock) {
             return;
         }
         if !self.server.up || !self.reach(a, epoch) {
@@ -1348,7 +1453,7 @@ impl World {
         }
         if let Some(a) = c.actor
             && self.reach(a, c.epoch)
-            && self.actors[a].sock == Some(sock)
+            && self.actors[a].socks.values().any(|s| *s == sock)
         {
             let lat = self.rng.range(5, 40);
             let t = self.fifo_time(0, sock, 0, self.now + lat, false);
@@ -1372,7 +1477,7 @@ impl World {
             // TCP reset: the server has no such connection (evicted or restarted).
             if let Some(&(a, epoch)) = self.socks.get(&sock)
                 && self.reach(a, epoch)
-                && self.actors[a].sock == Some(sock)
+                && self.actors[a].socks.values().any(|s| *s == sock)
             {
                 let lat = self.rng.range(5, 40);
                 self.push(
@@ -1529,6 +1634,9 @@ impl World {
             self.server_error(sock, "SIGNAL_TARGET_REQUIRED");
             return;
         };
+        if self.server.drop_signals {
+            return;
+        }
         let mut payload = msg["payload"].clone();
         // The recording and rewriting relays below read sealed payloads: the simulation stands in
         // for a relay that holds the PSK (a compromised one that was handed the invite).
@@ -1600,7 +1708,14 @@ impl World {
                 self.push(self.now + rtt, 2, Ev::Pong { sock: s });
             }
         }
-        self.push(self.now + SWEEP_MS, 3, Ev::Sweep { r#gen });
+        self.push(
+            self.now + SWEEP_MS,
+            3,
+            Ev::Sweep {
+                r#gen,
+                srv: self.cur_server,
+            },
+        );
     }
 
     /// A man in the middle that holds the PSK and sits between two DTLS sessions
@@ -1641,6 +1756,7 @@ impl World {
         let Some(a) = self.peer_ix(st) else {
             return;
         };
+        self.select_server(st.relay.unwrap_or(0));
         let Some((from, payload)) = self.server.last_stop.clone() else {
             self.violations
                 .push("replay_stop: no stop notice was recorded".into());
@@ -1678,8 +1794,10 @@ impl World {
         {
             return;
         }
+        self.select_server(st.relay.unwrap_or(0));
         let sock = self.next_sock;
         self.next_sock += 1;
+        self.sock_server.insert(sock, self.cur_server);
         self.server.next_client += 1;
         self.server.next_join += 1;
         let client_id = format!("c{}", self.server.next_client);

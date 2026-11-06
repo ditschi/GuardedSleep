@@ -18,6 +18,7 @@ const config = (role: LinkConfig["role"]): LinkConfig => ({
   alarm_after_ms: 60_000,
   noise_threshold: 0.12,
   noise_hold_ms: 800,
+  mailboxes: [{ kind: "relay", url: "wss://relay.test" }],
 });
 
 /** Recorded from the real core (parent, entropy 42): start, open, close, 60 s without contact. */
@@ -26,7 +27,7 @@ const RECORDED: { at: number; input: object; actions: LinkAction[] }[] = [
     at: 1000,
     input: { type: "start", entropy: 42 },
     actions: [
-      { type: "open_mailbox", id: 0, kind: "relay", url: "" },
+      { type: "open_mailbox", id: 0, kind: "relay", url: "wss://relay.test" },
       {
         type: "emit",
         event: {
@@ -58,7 +59,7 @@ const RECORDED: { at: number; input: object; actions: LinkAction[] }[] = [
   {
     at: 2000,
     input: { type: "mailbox_closed", id: 0, reason: "closed" },
-    actions: [{ type: "open_mailbox", id: 0, kind: "relay", url: "" }],
+    actions: [{ type: "open_mailbox", id: 0, kind: "relay", url: "wss://relay.test" }],
   },
   {
     at: 62_000,

@@ -40,6 +40,8 @@ reports the remote DTLS fingerprint (`attempt_dtls_fingerprint`) like the platfo
 
 Peers take `mailboxes` (baby: the set it sends after each verification) and `device_name` (parent). A scenario may cap its seeds with `max_seeds` (for many simulated hours).
 
+`relay_count` (default 1) is the number of simulated relays the peers' default mailbox set names; mailbox `i` of a peer talks to relay `i` (a peer's own `mailboxes` replace the default, the URLs are labels). The verbs `signaling_down`, `signaling_up` and `reject_hello` take an optional `relay` index (default: every relay), `replay_stop` and `ghost_join` use `relay` too (default 0), and `relay_drop_signals` (`mode: on|off`, default on) makes a relay accept frames but deliver no `signal`. Trace configs carry the labels `wss://relay-<n>.invalid`, which the shareable lint allows.
+
 `wall_start_s` sets the true wall clock at time 0 (default a synthetic value), `wall_offset_s` puts one device's clock off, and `only_local` is "Only same Wi-Fi or my own server". A socket whose path is dead drops frames silently, like a half-open connection.
 
 Assertions per `peer`: `event` (+`where` subset match, `within_ms`, `count`/`count_min`/

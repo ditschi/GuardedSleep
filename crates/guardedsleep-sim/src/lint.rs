@@ -106,7 +106,35 @@ fn walk(v: &Value, psk: &str, errs: &mut Vec<String>) {
     }
 }
 
+/// The simulation's own mailbox addresses (`wss://relay-<n>.invalid`, a reserved name that no real
+/// server has) are labels, not endpoints: they may stay in a shareable trace.
+fn strip_synthetic_urls(s: &str) -> String {
+    const HEAD: &str = "wss://relay-";
+    const TAIL: &str = ".invalid";
+    let mut out = String::new();
+    let mut rest = s;
+    while let Some(i) = rest.find(HEAD) {
+        let after = &rest[i + HEAD.len()..];
+        let digits = after.bytes().take_while(u8::is_ascii_digit).count();
+        out.push_str(&rest[..i]);
+        let tail = &after[digits..];
+        // The label ends the host name: `.invalid.example.org` is a real host.
+        let ends = tail.strip_prefix(TAIL).filter(|t| {
+            !t.starts_with(|c: char| c.is_ascii_alphanumeric() || c == '.' || c == '-')
+        });
+        if let (true, Some(t)) = (digits > 0, ends) {
+            rest = t;
+        } else {
+            out.push_str(HEAD);
+            rest = after;
+        }
+    }
+    out.push_str(rest);
+    out
+}
+
 fn lint_string(s: &str, psk: &str, errs: &mut Vec<String>) {
+    let s = &strip_synthetic_urls(s);
     for b in BANNED {
         if s.contains(b) {
             errs.push(format!("contains `{b}`"));
@@ -254,6 +282,14 @@ mod tests {
     }
 
     #[test]
+    fn the_simulations_own_mailbox_labels_pass() {
+        assert_eq!(
+            lint_trace(&trace("wss://relay-0.invalid")),
+            Vec::<String>::new()
+        );
+    }
+
+    #[test]
     fn rejects_the_forbidden_material() {
         for (bad, why) in [
             ("host 192.168.1.20 here", "IPv4"),
@@ -263,6 +299,8 @@ mod tests {
             ("a=candidate:1 1 udp", "candidate"),
             ("ice-pwd:xyz", "ice"),
             ("wss://example.org/ws", "URL"),
+            ("wss://relay-0.invalid.example.org/ws", "URL"),
+            ("wss://relay-x.invalid", "URL"),
             ("phone.local", "mDNS"),
             ("2026-10-19T10:00:00Z", "date"),
             ("1790000000000", "timestamp"),

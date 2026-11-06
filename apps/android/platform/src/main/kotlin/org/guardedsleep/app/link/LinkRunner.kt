@@ -54,7 +54,6 @@ interface LinkListener {
  */
 class LinkRunner(
     private val config: LinkConfig,
-    private val signalingUrls: List<String>,
     private val signaling: SignalingFactory,
     private val mediaFactory: () -> MediaEngine,
     private val clock: Clock,
@@ -283,8 +282,7 @@ class LinkRunner(
     private class PinNotPersisted : RuntimeException("parent secret not persisted")
 
     /**
-     * The core's `url` is empty for the relay mailbox: its URL list still lives here. A mailbox
-     * that names its address gets only that address tried. A failed open comes back as
+     * Opens exactly the address the core named for mailbox [id]. A failed open comes back as
      * `MailboxClosed`, never as a retry.
      */
     private fun openMailbox(id: UInt, url: String) {
@@ -292,7 +290,7 @@ class LinkRunner(
         val gen = ++mailboxGen
         val transport =
             signaling.create(
-                if (url.isEmpty()) signalingUrls else listOf(url),
+                url,
                 object : SignalingListener {
                     override fun onOpened() = post {
                         if (isCurrent(id, gen)) dispatch(LinkInput.MailboxOpened(id))

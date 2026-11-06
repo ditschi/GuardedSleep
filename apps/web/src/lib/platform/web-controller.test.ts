@@ -439,14 +439,14 @@ const emit = (event: Extract<LinkAction, { type: "emit" }>["event"]): LinkAction
 });
 
 describe("WebController: the parent pin", () => {
-  it("parent: the config carries the device name, the baby's carries its mailbox set", async () => {
+  it("parent: the config carries the device name; both configs carry the relay mailboxes", async () => {
     const parent = setup();
     await pairedParent(parent);
     expect(parent.core.configs[0]).toMatchObject({
       device_name: "Chrome on Android",
       allow_dev_loopback: false,
     });
-    expect(parent.core.configs[0]?.mailboxes).toBeUndefined();
+    expect(parent.core.configs[0]?.mailboxes).toEqual([RELAY_MAILBOX]);
     expect(parent.core.configs[0]?.pinned_parent).toBeUndefined();
 
     const baby = setup();
@@ -580,13 +580,11 @@ describe("WebController: the parent pin", () => {
     t.controller.stopMonitoring();
     t.time.advance(600);
     await flush();
-    FakeWebSocket.instances = [];
-    // The core asks for its relay mailbox when it starts; the platform opens the stored address.
-    t.core.script = (input) =>
-      input.type === "start" ? [{ type: "open_mailbox", id: 0, kind: "relay", url: "" }] : [];
+    t.core.script = () => [];
     t.controller.startMonitoring();
     await flush();
-    expect(FakeWebSocket.instances.map((w) => w.url)).toEqual(["wss://new-relay.test/sig"]);
+    const last = t.core.configs[t.core.configs.length - 1];
+    expect(last?.mailboxes).toEqual([{ kind: "relay", url: "wss://new-relay.test/sig" }]);
   });
 
   it("baby: the parent's name shows while connected; warnings and hints reach the store", async () => {
@@ -946,7 +944,7 @@ describe("WebController: mailbox set", () => {
     expect(parsed.invite.mailboxes).toEqual([RELAY_MAILBOX]);
   });
 
-  it("parent: a mailbox update replaces the signaling addresses of the next run", async () => {
+  it("parent: a mailbox update replaces the relay mailboxes of the next run", async () => {
     const t = setup();
     t.controller.chooseRole("parent");
     const invite = realCore.buildInvite(new Uint8Array(32).fill(5), [RELAY_MAILBOX], 1e10);
@@ -963,9 +961,7 @@ describe("WebController: mailbox set", () => {
     t.core.script = () => [];
     t.controller.startMonitoring();
     await flush();
-    // The ICE servers come from the signaling addresses, so they show which list the run used.
-    expect(t.media.requests[t.media.requests.length - 1]?.ice).toEqual([
-      { urls: ["stun:relay-b.example:3478"] },
-    ]);
+    const last = t.core.configs[t.core.configs.length - 1];
+    expect(last?.mailboxes).toEqual([RELAY_B]);
   });
 });

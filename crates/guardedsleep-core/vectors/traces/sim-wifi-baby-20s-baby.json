@@ -18,7 +18,7 @@
     "pinned_parent": null,
     "pin_window_until_s": null,
     "device_name": "",
-    "mailboxes": [],
+    "mailboxes": [{ "kind": "relay", "url": "wss://relay-0.invalid" }],
     "allow_dev_loopback": false,
     "only_local": false
   },
@@ -145,7 +145,7 @@
     },
     {
       "n": 19,
-      "now": 702,
+      "now": 726,
       "input": {
         "type": "attempt_data_message",
         "attempt": 1,
@@ -154,7 +154,7 @@
     },
     {
       "n": 20,
-      "now": 726,
+      "now": 731,
       "input": {
         "type": "attempt_data_message",
         "attempt": 1,
@@ -188,11 +188,11 @@
     { "n": 45, "now": 10750, "input": { "type": "tick" } },
     {
       "n": 46,
-      "now": 10786,
+      "now": 10810,
       "input": {
         "type": "attempt_data_message",
         "attempt": 1,
-        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":10767,\"seq\":2}"
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":10750,\"seq\":2}"
       }
     },
     { "n": 47, "now": 11250, "input": { "type": "tick" } },
@@ -256,10 +256,10 @@
     { "n": 105, "now": 38500, "input": { "type": "tick" } },
     { "n": 106, "now": 39000, "input": { "type": "tick" } },
     { "n": 107, "now": 39500, "input": { "type": "tick" } },
-    { "n": 108, "now": 39577, "input": { "type": "mailbox_closed", "id": 0, "reason": "closed" } },
+    { "n": 108, "now": 39972, "input": { "type": "mailbox_closed", "id": 0, "reason": "closed" } },
     { "n": 109, "now": 40000, "input": { "type": "tick" } },
     { "n": 110, "now": 40250, "input": { "type": "tick" } },
-    { "n": 111, "now": 40272, "input": { "type": "network_available" } },
+    { "n": 111, "now": 40356, "input": { "type": "network_available" } },
     { "n": 112, "now": 40500, "input": { "type": "tick" } },
     { "n": 113, "now": 40750, "input": { "type": "tick" } },
     { "n": 114, "now": 41000, "input": { "type": "tick" } },
@@ -269,15 +269,17 @@
     { "n": 118, "now": 42000, "input": { "type": "tick" } },
     { "n": 119, "now": 42250, "input": { "type": "tick" } },
     { "n": 120, "now": 42500, "input": { "type": "tick" } },
-    { "n": 121, "now": 42623, "input": { "type": "mailbox_closed", "id": 0, "reason": "closed" } },
-    { "n": 122, "now": 43000, "input": { "type": "tick" } },
-    { "n": 123, "now": 43250, "input": { "type": "tick" } },
-    { "n": 124, "now": 43500, "input": { "type": "tick" } },
-    { "n": 125, "now": 43750, "input": { "type": "tick" } },
-    { "n": 126, "now": 43800, "input": { "type": "mailbox_opened", "id": 0 } },
+    { "n": 121, "now": 43000, "input": { "type": "tick" } },
+    { "n": 122, "now": 43365, "input": { "type": "mailbox_closed", "id": 0, "reason": "closed" } },
+    { "n": 123, "now": 43500, "input": { "type": "tick" } },
+    { "n": 124, "now": 43750, "input": { "type": "tick" } },
+    { "n": 125, "now": 44000, "input": { "type": "tick" } },
+    { "n": 126, "now": 44250, "input": { "type": "tick" } },
+    { "n": 127, "now": 44500, "input": { "type": "tick" } },
+    { "n": 128, "now": 44541, "input": { "type": "mailbox_opened", "id": 0 } },
     {
-      "n": 127,
-      "now": 43814,
+      "n": 129,
+      "now": 44584,
       "input": {
         "type": "mailbox_frame",
         "id": 0,
@@ -285,8 +287,8 @@
       }
     },
     {
-      "n": 128,
-      "now": 43843,
+      "n": 130,
+      "now": 44585,
       "input": {
         "type": "mailbox_frame",
         "id": 0,
@@ -294,8 +296,8 @@
       }
     },
     {
-      "n": 129,
-      "now": 43843,
+      "n": 131,
+      "now": 44585,
       "input": {
         "type": "mailbox_frame",
         "id": 0,
@@ -303,17 +305,17 @@
       }
     },
     {
-      "n": 130,
-      "now": 43895,
+      "n": 132,
+      "now": 44632,
       "input": {
         "type": "mailbox_frame",
         "id": 0,
-        "bytes": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"env\":\"AQEBWegKDvCeaEs49ee-DiJHrZpx67QHXKsi5KPAefEO57CODmb730QdjjoFIaMOUVEGuDqI13N2W8TIpRGVPGZLatgCzBN0Sx9bt5Nq8lVahG7_1sWAD9enH8DJLCP5PwFhpujo3KcH_awjK6RwwcYjx4iW-A4-YsKWIElQGxrzt6GQ4GgaWyISKb_vTDHS1t-UXZ0spPtuyxDu_02BUCxirmfSArFfAaFdjdpsppwwhQe-1u_eRrwB0l0TL9qjsHgTbAbrqN7b0QTaqczz7WC_tTZsZiFDeNOB4H4EJoDOWhuX0gljYlkzhaHDECEI8EZLJTz6F84r8TVurUnrhIgDSRAckPAEb5i9YDJygBoHwwmCdSSInF_QI7_zargglCAgL9w956XoNEbEC4CzvimCLFUGP7ZWbJVgrABDUp4gNh4rM7NJl7xGCkXm4-hDt08N2Yx96IYT1PfvTRGvrx0I0OxMoUp_t-ma2HFMIjztiCfyYeygazu7C7TDiI74HseJ4OQrQCt49845QBP1xMwIdv6yWVXxMTgbIDTEAZQ5n1VtpANMcQK-ut5XwgvzfoAZCnrsT17Sria7HorwgRycYoQnLB2PSzJQnO1qDSL4xTyV-5YK8iC1k1eXO5X8IqcNXifxC4_AItm6TgruUCeULW9lY_Rp35BCm6RGUsLnjZVXvIBPsW4lInU9AWeZZO8MI23I5L0UXPbAXT4BOhWRCmtsurI1Gi9PsTo5BcbqFFlyfhi9XciVd9ZHkxsdfyTydVZwSGJXVWKZHxFYsuVwXWYNSWItnwkCz7rLb9RfJpJOMKYntzIN_LGgkGBGZFijjwV5C_sbOIxTKhzqk8igOu1IBa-tHvtXZktTb4jtTakp8bGh_ImwBibnr-8BqrBd_TGGr8wDkv6yqMEmQh3RoxIaYZrag9M4-dq2UfMb4NwssjLUB3nsabXeZTu0pJt9BuOnQfT_9F-IG4Ys2856aeRRsdyHrgp8S8ujSNNlBWVglShc0lVmLF3998dFNR_fGhoU9Elu2g-tFoyx_91vhGZTvxFwuDjMA0FviaOKUCoO99E4hNTqUC-YkSmxvho4ikhPanfE14s9c2zW_Yri7HpYDbnA3tRs6myGsUFHhxAMjtzXJPhyQT29K-YRjTb90E-tZlCr4OesTjao_J5UAMB688N4KgFhnvPEEKWfdTp54j9RvZQ4Mc30fI91REyrGUGLpQhPv5CIljAo1NtauZd1npzW7aWwHPLAlhjwKMn1IrYwZKXvTZyeVaBWw18jDqqiJ16EEMhboKAmg0QTdZcLv5V5hk-RIr09x2xJfIsB5nvXResOAF8ZCKHZ6x8Izabiiwi0NIPnxBFUBlNrRG77htLOKjLtZknGg_lrmEpC3_jNo5ZmDfgZWiKn0xxs1eC904sjyzQ\"}}"
+        "bytes": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"env\":\"AQEBWegKDvCeaEs49ee-DiJHrZpx67QHXKsi5KPAefEO57CODmb730QdjjoFIaMOUVEGuDqI13N2W8TIpRGVPGZLatgCzBN0Sx9bt5Nq8lVahG7_1sWAD9enH8DJLCP5PwFhpujo3KcH_awjK6RwwcYjx4iW-A4-YsKRIElQGxrzt6GQ4GgaWyISKb_vTDHS1t-UXZ0spPtuyxDu_02BUCxirmfSArFfAaFdjdpsppwwhQe-1u_eRrwB0l0TL9qjsHgTbAbrqN7b0QTaqczz7WC_tTZsZiFDeNOB4H4EJoDOWhuX0gljYlkzhaHDECEI8EZLJTz6F84r8TVurUnrhIgDSRAckPAEb5i9YDJygBoHwwmCdSSInF_QI7_zargglCAgL9w956XoNEbEC4CzvimCLFUGP7ZWbJVgrABDUp4gNh4rM7NJl7xGCkXm4-hDt08N2Yx96IYT1PfvTRGvrx0I0OxMoUp_t-ma2HFMIjztiCfyYeygazu7C7TDiI74HseJ4OQrQCt49845QBP1xMwIdv6yWVXxMTgbIDTEAZQ5n1VtpANMcQK-ut5XwgvzfoAZCnrsT17Sria7HorwgRycYoQnLB2PSzJQnO1qDSL4xTyV-5YK8iC1k1eXO5X8IqcNXifxC4_AItm6TgruUCeULW9lY_Rp35BCm6RGUsLnjZVXvIBPsW4lInU9AWeZZO8MI23I5L0UXPbAXT4BOhWRCmtsurI1Gi9PsTo5BcbqFFlyfhi9XciVd9ZHkxsdfyTydVZwSGJXVWKZHxFYsuVwXWYNSWItnwkCz7rLb9RfJpJOMKYntzIN_LGgkGBGZFijjwV5C_sbOIxTKhzqk8igOu1IBa-tHvtXZktTb4jtTakp8bGh_ImwBibnr-8BqrBd_TGGr8wDkv6yqMEmQh3RoxIaYZrag9M4-dq2UfMb4NwssjLUB3nsabXeZTu0pJt9BuOnQfT_9F-IG4Ys2856aeRRsdyHrgp8S8ujSNNlBWVglShc0lVmLF3998dFNR_fGhoU9Elu2g-tFoyx_91vhGZTvxFwuDjMA0FviaOKUCoO99E4hNTqUC-YkSmxvho4ikhPanfE14s9c2zW_Yri7HpYDbnA3tRs6myGsUFHhxAMjtzXJPhyQT29K-YRjTb90E-tZlCr4OesTjao_J5UAMB688N4KgFhnvPEEKWfdTp54j9RvZQ4Mc30fI91REyrGUGLpQhPv5CIljAo1NtauZd1npzW7aWwHPLAlhjwKMn1IrYwZKXvTZyeVaBWw18jDqqiJ16EEMhboKAmg0QTdZcLv5V5hk-RIr09x2xJfIsB5nvXResOAF8ZCKHZ6x8Izabiiwi0NIPnxBFUBlNrRG77htLOKjLtcbHVuWzfMGwLwjwbqcy79VDmapPM0GRGCGhJ4oRkT7c\"}}"
       }
     },
     {
-      "n": 131,
-      "now": 43939,
+      "n": 133,
+      "now": 44682,
       "input": {
         "type": "mailbox_frame",
         "id": 0,
@@ -321,8 +323,8 @@
       }
     },
     {
-      "n": 132,
-      "now": 43953,
+      "n": 134,
+      "now": 44702,
       "input": {
         "type": "attempt_local_description",
         "attempt": 2,
@@ -330,28 +332,26 @@
         "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:03\r\n"
       }
     },
-    { "n": 133, "now": 44000, "input": { "type": "tick" } },
+    { "n": 135, "now": 44750, "input": { "type": "tick" } },
     {
-      "n": 134,
-      "now": 44036,
+      "n": 136,
+      "now": 44786,
       "input": {
         "type": "mailbox_frame",
         "id": 0,
         "bytes": "{\"type\":\"signal\",\"from\":\"c3\",\"payload\":{\"env\":\"AQEDLc7Mpafqju_4otgTJzY4q6kzwsP8C7MgJewLVltUSvTuUOC6vxkeYcsuwdEv7z3KvI2AzBTVaT9_2i7P0hZxhHj1E43APuB7ISCn3V2iGa-Ktez8bISFmzK3C298LHcdGBf1QXvw_1L4wZ5k_imSQprK9TTcvJclDfj3wPaqIS3gAoV9x9avLbAPzLH28Sda7Sem_vGoiD4J_FB_mnAjiOLYS7Ll8wJlD9TdFi2tMqUQKa2Bq_4f1IzLlR-JgeUOoGQwHMlJLhTTFiRCrhKPogE0vwcGck7Zxt4YqnQR33dHGTE0vc3ILlnVbe00o419AFwdZXvkV-Je2JrRxjDKSN8TtrAMOkEOtBjDM786rABGd44lntTAZwk0SYASNZ_yCVxXDWDuYIv2y1oCNvR-trvZefRPObSgOg01BK3fu0c3KAnl3hrHGpuG8CmIJgveHfs7W6--mCtVOis797_dei0EHUqX_5U8X1ksAhWcpotPlsagMGD-aG9vtkLehc2vAQw-dc6KvdtqvRqbQ6z74h13UUc6oYUt2qL6kv3COuvObgcOD91qBW-1x-IN-6vULZ7kjwKNkd6vIn9nXo-Nz56VXgpGEkSwmlOg3VhrQ5EYiA0KETQplVkB-I0gIg0bQoRWZ1AnsInpQAfYYmr6IJAntSEWL5RqbGEss1HPzb706Iaiw0wRREPumdpuxt0QgSpdGVBm4rkRAtPtz-QoQAGyonK59kllJbZkfAyiBD4wCWCoB4HAJ9NsX7WLKcYpclWJu9EnuxyXq-5kGqgeuU11A2rBIMtxQMH4VityLD5BsxZUD9HjMuBF8kr3ZLTSjXxkeftMQ_v1335rI_uYA-zx47Oyfc5e7QfXRGk66S0kVzi9nftrcbmVXCgYxkrGy42wJS3exQWQbtmJx0wLRhQxSSdEww905F-3Wpn5FtLmDh9jArqTuP1F9nlmipxdi_Th1PLVPfJE_sf4ZOPNHACfqWuK8Jk-ODSU-qgBblgBCIxGp5fLRnND40XkTn6e3d-Un5ns95PoWK3e8XQbdjkGaVPzM4ocdrxBcS29RXjXE2bygYaAmpuKyhy1R0O7UFXBjXp7dB0FowZBAtBI3oSDyS_OW8BIcgqnesWS06Ki5OTQqh2QEMroF8iIhVMjs21R39i2TmUvveqssfKdQd25Dz9oAYQG5B3bMY9iKSwAQy6mHpemriguBf2R3LI2SkdHBT3BUimQpOghmXJbRz6eI2_Hbej-3A65CPDTmkcGgGTWhdbBD92BaPM7fLttsw3AjlbKHMcQ2IRscG_4VjwTPF5FgeKprAJAxj4m8jAe01j9MjVnpIWcKHtiDYos80smxWauY53bVgCsukV92bOgDaWHUzb4mSMlgJ90nXtb6G3Mxnek4njevhcJ8dPuQ9ZE0sHwNRCAsN-mmLr_7choapYpr9trOcxKBPA6XJSr54LOUNSKo2RY1rFd0mAeav6vdxUIy7rPQlODtkxYZ_4aoFfEtS5w0bFKUPsB-d47P_9EZw_G-BLYtf5eeJMVzFexSL2I2P_ShQbTq61pe2sB7Yq7vrj_J70oLQBkqqmILIKZhL0cCPYhBH-GF6Nl_iEiZAQPtu3PKPA5fsqLMTJcnphOuwzyr6ZZRtAfmAiUpKDu8H5d8n_mAqm3rbFmSwqv5TcoADrEbsEu2CYxZkwdiyATiDPC9T8Z0tduqs-yTst4z5DtiN60USwOSiYIJ612PHjgMeoRDhDpiLjJPlTZKP5XoCZRAmOdo0domppP1UAO3fge3gFzJhMbok_79AVLdkYbcXyXaHuDYphWZkDr4ghPyta1vXCE-RgtrXkjBPrltMYzDjfWdc9CnNTokGF5O5j5xhUI7jOwS-XZm082pWfoSfzgVZXo4Zk3xdubiTMZBe1SNSTKG92B_aDyrLrvpJQhyjIcGis1ucBgxPdH_rBGaIUWCT6qWK-ANn4377SvXyLhEpEHkwAazf2xLGHk0lH04HbOw9VXqk5zbP-qZACrt7cb5qdkkCTcV-z8j1ivrAJr8wbubQqSoJdCvp4Np2UviRPyiZHU16ooq8w0kGR1CvDr2NvuVAvZ4Xu1CiaYHuoUDaiOWuWxXYb_nT1_5VECmSku-hEpTWQAx8Xy_qre1h3KCs8hLEUVaXgswQPVlpevqHp-blwXw1KrsJQpkQXIAOxsqReygx8zlOYAKfP5aivUvS_ZUWhuhC9nTAFYjo45vHD6VuUpjWjzikeoH6GHvKGgItYu--e_ovInFw-fcgpvUih4Qx1nnuMYT4gtoVsQwN8DWMOUr_foDnEIc_4eAS1rsx_xSP6sBqL3Qeg7iwN6U_1Mmls-aGumN45Zez_euXiXYT_kZKhMHgWIvmMit0l5S2vnuHfhyGT2TSgmLMlfRD7Gec_MNxmTv7354uHXq4OutOjGY193RcQPYqyVU5Oerqqio9QZ0xfR0O8cC4gqRyllSdle3iPFzGjwi_9M_acqsn2OZHZUYImJFpGbF7w6GXrnPyzzX4KNekqq49P0_b8QTet1Hd6o2I7CAfmzsTV61YkLKh-ZoAqDyL25O4jCyxVST0zjisKQW56GNSsAhBvShKYPo_x2Q5b5mZCsI5vdzaUCfgJm10XpOqn3l7pH02M5lb4kr7aN891L004XPSXZMochV1eoSFaHGhTpW7TOkNrxlE60O2J0NfwXvxjR1JtZnhFhpwaRU-MwJg8Cro5A8tki-pVfMmpdZ_oFh7bEaqL62dmPPKqlkcSFLHYfDJa5Slqh4WDxiLmtbKAS8AgpMXbnag-DJ5b2_nsOujaIWToQwJAuBTDe_CY9kD9smsEl-yEXkg604Io8c14hAv-9679G9fQTeN2cqrC3U0PLDj-ajF2Cmwf-ZIWfmLxXaFGp7XEflx1KA1kOR_pTZ-B2eBdkJr4ucnqJMYkgxo24yAE-ZckcNsvrFJyC3idCSjicDMw6IEsu4fbieeLnS5ZfamyN7tcnyMVnad17FTo6cnhb9RjdC5w2kmd9lbFOB8jJ2kfbCURWFKZ_iA8wSJaN_JmMe9sM9GUeCv7BzWAnVX-VQ2cASgqf6F_Yw1OfdxAhckfUFp0H8cLBpjOYgfWKlN4F4SA_vD7oKoBoifBX6SMfWBpEU1BcJv93BmLGc6YiEl-81aoS0GVSixLR5nX-__RUbkhtIDymRDmRh7C_GMR4xpnUHLZiqzaKyBnJqEhaF5s06QP_k7J26LMLUXhDGzF-8GHRlvJhMT0AZqYXYSuzi8xWNOIE4NVF_kC-dmdImnhDnJV33A55r9zw8arnVy8pjpYhuEPEH3e5Zzm365pQP_vIA_rStO1IvyxcVR40Wn7ji78bgkf40zbm8_q23GlTK4nPIXESx5rxZYLzovnhzNhxm8o7UNdmSLkoiOzmgOcFf2mBKxc4W-cO0Rffco0lD_60ZqkKweYhznSJu2njjjOHj21SHTJq4DWgy4z4m75J8CFlvmkQaCxePfGzFHS4xuzifOD9fcRtlbQZNkKZ03JHJDB5W9ICFJFmb3Ln41vPi1tHQnxY3w5n-dn5vdDsLCNjyWTN881OTuGGAPBigTCN5ptIDBUjGnQRIiYf2ZjH-0SsSzKvSqzX0huiZ_i2lnZ4pMhU5Y2pmZ6QwvLe85N8_Pt3p1k17x4u3wzySsTRPqAu-xxLk77Js0jSVeT6501yFC4ykG28SUMRLWfHO-Z9Ihv6HaoFJFJIJTO1id7Q4IwrhCK0EFPhMiL9OFcKS9ToUoClSt7KZ7mR_9uES77Wz8kgy9vs72zdUF_4VS4iWNBYSXi3Y5v_qJy5y9izAd-XM6DYvMyKBsoxZ06IbxK3-xab8oBXMRc8GUjtQvL5LI6WJgDrxNgUvjl6FVQn7MOKZ5vJzgn2b_pkyzHOcrGLYFjeV6l9RfDJ6in4ezBVxCbZ_gkFk9hafD-knVkvDLpy8m0TMImfcZKnqgEtXLzFIxB3-rqScJaR_fStukSKvdm080vHbFPASt3BxogjBD2gDhRR8WKhc9BVot4KJ8r-dedxwke54oIkfo1JRFtysdRCZ8La4kZ_NE6SwfbbS6DQKRn40MVwstJzTQtvx0KXWQ3TY1TfiABXS5r6nMBjyH_MP2QAI97VS6shbCt_QaNFxBxD1cOPNwLh1feQ5_DQ0N5QQuXNSnMkhu-zJEWqT7cNBNuviaEh6YYNPwvtAqIN_zuprzbIv5W_ADMs2MOZJ4DqjqvWrD23eLwQsI5EVt6NZ56XyQi3_YpV22U7d8OiWnXzKhElC7Ko5gEfg824cS1l7ub4by-SUtnovOYovef8K6PBsYzX048wjGmCOiiu4LO2AApIVMG3bdImOyVOPjsMZHES_1lkIjgDSiD6_tiVwYdMl4-CjjrDge7vrU4r3ytut31BIATHCC-ybNKPXcF-aGnGNqt_PWuXJVtE3VhkeGGyd3oGy4Z1xomLOPqGmfTzBOH0ln_0JUvCtmBdxWEBlD4-Zf4IaWi1xmCRJiLWxT3I2wxIKQ0UhckgQx2QFvrqJg12TaIoxoumkXBGjDFdV2VpdXg3IHEruI2onplkXGV29jmRtYTGItW_S2ZG9lQCDrWgmAc-AL1Arv2CfbIAsK2yLd1esKhBBWFK-Cq2XyrHpGStDKPij-GA1Z_2mYLj9Qqkqz77P1vTV_IzYNNUDGl4v5juz_o_YO6J2TtjvG9fp6DSb-KcMW1SWGhA-lQ9FOAj_hyKJEfFgcG8w0CkynCQNRtn80GlmkSrM8b2LiUsgRSUcvbD6BPAWS5otrIQqnkXYYFZOxdHy3MNpRjZdK0JPG1e3-oQ0uzRdI2c4c409HqP3sQH3cpIyEB9GZf8Ub0mzPmsSihv-A0xukX3BeLDmDXEHygQ6EqBPKrGYvK6s0dlWtNnD2iBxBXDBe_zPyoQ8MmhDdgQfac8aCRrWIbCjgINNfQnJw9YHdByTKBIjmj0Z05LqAaaXc305rpphhkQ-WErfJZyia58-DSZ_G-9gSalloEeaHrEcUJjxebqvIcTZpbwhHhR1SZZzsOwAqcQgrqK7_qqQdN-yieMEWu_JNTTTIU3Mn0e5g3GvOpfxqr7Eu0ceLAz1c7Xj0UFDRjfbR_6OkRVj9MBBQIRwxvN7t76bEP7eDRDwzV4FIXSNHvtbJKB6dmxl54obhodycDFpozBV9q5bG96OJ2aU2zLTQKxabGiM62KdZ4QynchhpWViGiu_8hIEEsYdcIjGPwRn6jjcWjvftcDJq0JY_cDGmSXYZ2UStHKQD9ps_v3JFkMfXWZ61FXZeoyVrc1wbk5ZKGFS-u3cV_N_dr6OEa3YldF2jI4cgAAoJSEJc6IoVghlUI11riJRXSG7L29vhd1yqTWJxsIKcPhjjT0TLSBDWI4YBEco12NKfUWid7Jigkbe586wZUtRHl-LqADcT1w-bv84Wq6JpeTbjc-wsuUmDBFJAxX-GzH5vRSFW8llnb5DJFFNKVQqhtGV5KDKxAHw-YqzQtyOjgl5uxXRJO76ig\"}}"
       }
     },
-    { "n": 135, "now": 44250, "input": { "type": "tick" } },
-    { "n": 136, "now": 44500, "input": { "type": "tick" } },
-    { "n": 137, "now": 44750, "input": { "type": "tick" } },
+    { "n": 137, "now": 45000, "input": { "type": "tick" } },
     {
       "n": 138,
-      "now": 44769,
+      "now": 45102,
       "input": { "type": "attempt_pc_state", "attempt": 2, "state": "connected" }
     },
-    { "n": 139, "now": 44769, "input": { "type": "attempt_data_open", "attempt": 2 } },
+    { "n": 139, "now": 45102, "input": { "type": "attempt_data_open", "attempt": 2 } },
     {
       "n": 140,
-      "now": 44769,
+      "now": 45102,
       "input": {
         "type": "attempt_dtls_fingerprint",
         "attempt": 2,
@@ -360,7 +360,7 @@
     },
     {
       "n": 141,
-      "now": 44790,
+      "now": 45139,
       "input": {
         "type": "attempt_data_message",
         "attempt": 2,
@@ -369,7 +369,7 @@
     },
     {
       "n": 142,
-      "now": 44858,
+      "now": 45169,
       "input": {
         "type": "attempt_data_message",
         "attempt": 2,
@@ -378,195 +378,195 @@
     },
     {
       "n": 143,
-      "now": 44872,
+      "now": 45183,
       "input": {
         "type": "attempt_data_message",
         "attempt": 2,
-        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":44812,\"seq\":1}"
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":45123,\"seq\":1}"
       }
     },
-    { "n": 144, "now": 45000, "input": { "type": "tick" } },
-    { "n": 145, "now": 45250, "input": { "type": "tick" } },
-    { "n": 146, "now": 45500, "input": { "type": "tick" } },
-    { "n": 147, "now": 45750, "input": { "type": "tick" } },
-    { "n": 148, "now": 46000, "input": { "type": "tick" } },
-    { "n": 149, "now": 46250, "input": { "type": "tick" } },
-    { "n": 150, "now": 46500, "input": { "type": "tick" } },
-    { "n": 151, "now": 46750, "input": { "type": "tick" } },
-    { "n": 152, "now": 47000, "input": { "type": "tick" } },
-    { "n": 153, "now": 47500, "input": { "type": "tick" } },
-    { "n": 154, "now": 48000, "input": { "type": "tick" } },
-    { "n": 155, "now": 48500, "input": { "type": "tick" } },
-    { "n": 156, "now": 49000, "input": { "type": "tick" } },
-    { "n": 157, "now": 49500, "input": { "type": "tick" } },
-    { "n": 158, "now": 50000, "input": { "type": "tick" } },
-    { "n": 159, "now": 50500, "input": { "type": "tick" } },
-    { "n": 160, "now": 51000, "input": { "type": "tick" } },
-    { "n": 161, "now": 51500, "input": { "type": "tick" } },
-    { "n": 162, "now": 52000, "input": { "type": "tick" } },
-    { "n": 163, "now": 52500, "input": { "type": "tick" } },
-    { "n": 164, "now": 53000, "input": { "type": "tick" } },
-    { "n": 165, "now": 53500, "input": { "type": "tick" } },
-    { "n": 166, "now": 54000, "input": { "type": "tick" } },
-    { "n": 167, "now": 54500, "input": { "type": "tick" } },
-    { "n": 168, "now": 55000, "input": { "type": "tick" } },
+    { "n": 144, "now": 45250, "input": { "type": "tick" } },
+    { "n": 145, "now": 45500, "input": { "type": "tick" } },
+    { "n": 146, "now": 45750, "input": { "type": "tick" } },
+    { "n": 147, "now": 46000, "input": { "type": "tick" } },
+    { "n": 148, "now": 46250, "input": { "type": "tick" } },
+    { "n": 149, "now": 46500, "input": { "type": "tick" } },
+    { "n": 150, "now": 46750, "input": { "type": "tick" } },
+    { "n": 151, "now": 47000, "input": { "type": "tick" } },
+    { "n": 152, "now": 47250, "input": { "type": "tick" } },
+    { "n": 153, "now": 47750, "input": { "type": "tick" } },
+    { "n": 154, "now": 48250, "input": { "type": "tick" } },
+    { "n": 155, "now": 48750, "input": { "type": "tick" } },
+    { "n": 156, "now": 49250, "input": { "type": "tick" } },
+    { "n": 157, "now": 49750, "input": { "type": "tick" } },
+    { "n": 158, "now": 50250, "input": { "type": "tick" } },
+    { "n": 159, "now": 50750, "input": { "type": "tick" } },
+    { "n": 160, "now": 51250, "input": { "type": "tick" } },
+    { "n": 161, "now": 51750, "input": { "type": "tick" } },
+    { "n": 162, "now": 52250, "input": { "type": "tick" } },
+    { "n": 163, "now": 52750, "input": { "type": "tick" } },
+    { "n": 164, "now": 53250, "input": { "type": "tick" } },
+    { "n": 165, "now": 53750, "input": { "type": "tick" } },
+    { "n": 166, "now": 54250, "input": { "type": "tick" } },
+    { "n": 167, "now": 54750, "input": { "type": "tick" } },
+    { "n": 168, "now": 55250, "input": { "type": "tick" } },
     {
       "n": 169,
-      "now": 55016,
+      "now": 55278,
       "input": {
         "type": "attempt_data_message",
         "attempt": 2,
-        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":55000,\"seq\":2}"
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":55250,\"seq\":2}"
       }
     },
-    { "n": 170, "now": 55500, "input": { "type": "tick" } },
-    { "n": 171, "now": 55750, "input": { "type": "tick" } },
-    { "n": 172, "now": 56000, "input": { "type": "tick" } },
-    { "n": 173, "now": 56250, "input": { "type": "tick" } },
-    { "n": 174, "now": 56500, "input": { "type": "tick" } },
-    { "n": 175, "now": 56750, "input": { "type": "tick" } },
-    { "n": 176, "now": 57000, "input": { "type": "tick" } },
-    { "n": 177, "now": 57250, "input": { "type": "tick" } },
-    { "n": 178, "now": 57750, "input": { "type": "tick" } },
-    { "n": 179, "now": 58250, "input": { "type": "tick" } },
-    { "n": 180, "now": 58750, "input": { "type": "tick" } },
-    { "n": 181, "now": 59250, "input": { "type": "tick" } },
-    { "n": 182, "now": 59750, "input": { "type": "tick" } },
-    { "n": 183, "now": 60250, "input": { "type": "tick" } },
-    { "n": 184, "now": 60250, "input": { "type": "wall_clock", "unix_s": 1000060 } },
-    { "n": 185, "now": 60750, "input": { "type": "tick" } },
-    { "n": 186, "now": 61250, "input": { "type": "tick" } },
-    { "n": 187, "now": 61750, "input": { "type": "tick" } },
-    { "n": 188, "now": 62250, "input": { "type": "tick" } },
-    { "n": 189, "now": 62750, "input": { "type": "tick" } },
-    { "n": 190, "now": 63250, "input": { "type": "tick" } },
-    { "n": 191, "now": 63750, "input": { "type": "tick" } },
-    { "n": 192, "now": 64250, "input": { "type": "tick" } },
-    { "n": 193, "now": 64750, "input": { "type": "tick" } },
-    { "n": 194, "now": 65250, "input": { "type": "tick" } },
+    { "n": 170, "now": 55750, "input": { "type": "tick" } },
+    { "n": 171, "now": 56000, "input": { "type": "tick" } },
+    { "n": 172, "now": 56250, "input": { "type": "tick" } },
+    { "n": 173, "now": 56500, "input": { "type": "tick" } },
+    { "n": 174, "now": 56750, "input": { "type": "tick" } },
+    { "n": 175, "now": 57000, "input": { "type": "tick" } },
+    { "n": 176, "now": 57250, "input": { "type": "tick" } },
+    { "n": 177, "now": 57500, "input": { "type": "tick" } },
+    { "n": 178, "now": 58000, "input": { "type": "tick" } },
+    { "n": 179, "now": 58500, "input": { "type": "tick" } },
+    { "n": 180, "now": 59000, "input": { "type": "tick" } },
+    { "n": 181, "now": 59500, "input": { "type": "tick" } },
+    { "n": 182, "now": 60000, "input": { "type": "tick" } },
+    { "n": 183, "now": 60000, "input": { "type": "wall_clock", "unix_s": 1000060 } },
+    { "n": 184, "now": 60500, "input": { "type": "tick" } },
+    { "n": 185, "now": 61000, "input": { "type": "tick" } },
+    { "n": 186, "now": 61500, "input": { "type": "tick" } },
+    { "n": 187, "now": 62000, "input": { "type": "tick" } },
+    { "n": 188, "now": 62500, "input": { "type": "tick" } },
+    { "n": 189, "now": 63000, "input": { "type": "tick" } },
+    { "n": 190, "now": 63500, "input": { "type": "tick" } },
+    { "n": 191, "now": 64000, "input": { "type": "tick" } },
+    { "n": 192, "now": 64500, "input": { "type": "tick" } },
+    { "n": 193, "now": 65000, "input": { "type": "tick" } },
+    { "n": 194, "now": 65500, "input": { "type": "tick" } },
     {
       "n": 195,
-      "now": 65278,
+      "now": 65559,
       "input": {
         "type": "attempt_data_message",
         "attempt": 2,
-        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":65250,\"seq\":3}"
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":65500,\"seq\":3}"
       }
     },
-    { "n": 196, "now": 65750, "input": { "type": "tick" } },
-    { "n": 197, "now": 66000, "input": { "type": "tick" } },
-    { "n": 198, "now": 66250, "input": { "type": "tick" } },
-    { "n": 199, "now": 66500, "input": { "type": "tick" } },
-    { "n": 200, "now": 66750, "input": { "type": "tick" } },
-    { "n": 201, "now": 67000, "input": { "type": "tick" } },
-    { "n": 202, "now": 67250, "input": { "type": "tick" } },
-    { "n": 203, "now": 67500, "input": { "type": "tick" } },
-    { "n": 204, "now": 68000, "input": { "type": "tick" } },
-    { "n": 205, "now": 68500, "input": { "type": "tick" } },
-    { "n": 206, "now": 69000, "input": { "type": "tick" } },
-    { "n": 207, "now": 69500, "input": { "type": "tick" } },
-    { "n": 208, "now": 70000, "input": { "type": "tick" } },
-    { "n": 209, "now": 70500, "input": { "type": "tick" } },
-    { "n": 210, "now": 71000, "input": { "type": "tick" } },
-    { "n": 211, "now": 71500, "input": { "type": "tick" } },
-    { "n": 212, "now": 72000, "input": { "type": "tick" } },
-    { "n": 213, "now": 72500, "input": { "type": "tick" } },
-    { "n": 214, "now": 73000, "input": { "type": "tick" } },
-    { "n": 215, "now": 73500, "input": { "type": "tick" } },
-    { "n": 216, "now": 74000, "input": { "type": "tick" } },
-    { "n": 217, "now": 74500, "input": { "type": "tick" } },
-    { "n": 218, "now": 75000, "input": { "type": "tick" } },
-    { "n": 219, "now": 75500, "input": { "type": "tick" } },
+    { "n": 196, "now": 66000, "input": { "type": "tick" } },
+    { "n": 197, "now": 66250, "input": { "type": "tick" } },
+    { "n": 198, "now": 66500, "input": { "type": "tick" } },
+    { "n": 199, "now": 66750, "input": { "type": "tick" } },
+    { "n": 200, "now": 67000, "input": { "type": "tick" } },
+    { "n": 201, "now": 67250, "input": { "type": "tick" } },
+    { "n": 202, "now": 67500, "input": { "type": "tick" } },
+    { "n": 203, "now": 67750, "input": { "type": "tick" } },
+    { "n": 204, "now": 68250, "input": { "type": "tick" } },
+    { "n": 205, "now": 68750, "input": { "type": "tick" } },
+    { "n": 206, "now": 69250, "input": { "type": "tick" } },
+    { "n": 207, "now": 69750, "input": { "type": "tick" } },
+    { "n": 208, "now": 70250, "input": { "type": "tick" } },
+    { "n": 209, "now": 70750, "input": { "type": "tick" } },
+    { "n": 210, "now": 71250, "input": { "type": "tick" } },
+    { "n": 211, "now": 71750, "input": { "type": "tick" } },
+    { "n": 212, "now": 72250, "input": { "type": "tick" } },
+    { "n": 213, "now": 72750, "input": { "type": "tick" } },
+    { "n": 214, "now": 73250, "input": { "type": "tick" } },
+    { "n": 215, "now": 73750, "input": { "type": "tick" } },
+    { "n": 216, "now": 74250, "input": { "type": "tick" } },
+    { "n": 217, "now": 74750, "input": { "type": "tick" } },
+    { "n": 218, "now": 75250, "input": { "type": "tick" } },
+    { "n": 219, "now": 75750, "input": { "type": "tick" } },
     {
       "n": 220,
-      "now": 75559,
+      "now": 75792,
       "input": {
         "type": "attempt_data_message",
         "attempt": 2,
-        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":75500,\"seq\":4}"
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":75750,\"seq\":4}"
       }
     },
-    { "n": 221, "now": 76000, "input": { "type": "tick" } },
-    { "n": 222, "now": 76250, "input": { "type": "tick" } },
-    { "n": 223, "now": 76500, "input": { "type": "tick" } },
-    { "n": 224, "now": 76750, "input": { "type": "tick" } },
-    { "n": 225, "now": 77000, "input": { "type": "tick" } },
-    { "n": 226, "now": 77250, "input": { "type": "tick" } },
-    { "n": 227, "now": 77500, "input": { "type": "tick" } },
-    { "n": 228, "now": 77750, "input": { "type": "tick" } },
-    { "n": 229, "now": 78250, "input": { "type": "tick" } },
-    { "n": 230, "now": 78750, "input": { "type": "tick" } },
-    { "n": 231, "now": 79250, "input": { "type": "tick" } },
-    { "n": 232, "now": 79750, "input": { "type": "tick" } },
-    { "n": 233, "now": 80250, "input": { "type": "tick" } },
-    { "n": 234, "now": 80750, "input": { "type": "tick" } },
-    { "n": 235, "now": 81250, "input": { "type": "tick" } },
-    { "n": 236, "now": 81750, "input": { "type": "tick" } },
-    { "n": 237, "now": 82250, "input": { "type": "tick" } },
-    { "n": 238, "now": 82750, "input": { "type": "tick" } },
-    { "n": 239, "now": 83250, "input": { "type": "tick" } },
-    { "n": 240, "now": 83750, "input": { "type": "tick" } },
-    { "n": 241, "now": 84250, "input": { "type": "tick" } },
-    { "n": 242, "now": 84750, "input": { "type": "tick" } },
-    { "n": 243, "now": 85250, "input": { "type": "tick" } },
-    { "n": 244, "now": 85750, "input": { "type": "tick" } },
+    { "n": 221, "now": 76250, "input": { "type": "tick" } },
+    { "n": 222, "now": 76500, "input": { "type": "tick" } },
+    { "n": 223, "now": 76750, "input": { "type": "tick" } },
+    { "n": 224, "now": 77000, "input": { "type": "tick" } },
+    { "n": 225, "now": 77250, "input": { "type": "tick" } },
+    { "n": 226, "now": 77500, "input": { "type": "tick" } },
+    { "n": 227, "now": 77750, "input": { "type": "tick" } },
+    { "n": 228, "now": 78000, "input": { "type": "tick" } },
+    { "n": 229, "now": 78500, "input": { "type": "tick" } },
+    { "n": 230, "now": 79000, "input": { "type": "tick" } },
+    { "n": 231, "now": 79500, "input": { "type": "tick" } },
+    { "n": 232, "now": 80000, "input": { "type": "tick" } },
+    { "n": 233, "now": 80500, "input": { "type": "tick" } },
+    { "n": 234, "now": 81000, "input": { "type": "tick" } },
+    { "n": 235, "now": 81500, "input": { "type": "tick" } },
+    { "n": 236, "now": 82000, "input": { "type": "tick" } },
+    { "n": 237, "now": 82500, "input": { "type": "tick" } },
+    { "n": 238, "now": 83000, "input": { "type": "tick" } },
+    { "n": 239, "now": 83500, "input": { "type": "tick" } },
+    { "n": 240, "now": 84000, "input": { "type": "tick" } },
+    { "n": 241, "now": 84500, "input": { "type": "tick" } },
+    { "n": 242, "now": 85000, "input": { "type": "tick" } },
+    { "n": 243, "now": 85500, "input": { "type": "tick" } },
+    { "n": 244, "now": 86000, "input": { "type": "tick" } },
     {
       "n": 245,
-      "now": 85792,
+      "now": 86051,
       "input": {
         "type": "attempt_data_message",
         "attempt": 2,
-        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":85750,\"seq\":5}"
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":86000,\"seq\":5}"
       }
     },
-    { "n": 246, "now": 86250, "input": { "type": "tick" } },
-    { "n": 247, "now": 86500, "input": { "type": "tick" } },
-    { "n": 248, "now": 86750, "input": { "type": "tick" } },
-    { "n": 249, "now": 87000, "input": { "type": "tick" } },
-    { "n": 250, "now": 87250, "input": { "type": "tick" } },
-    { "n": 251, "now": 87500, "input": { "type": "tick" } },
-    { "n": 252, "now": 87750, "input": { "type": "tick" } },
-    { "n": 253, "now": 88000, "input": { "type": "tick" } },
-    { "n": 254, "now": 88500, "input": { "type": "tick" } },
-    { "n": 255, "now": 89000, "input": { "type": "tick" } },
-    { "n": 256, "now": 89500, "input": { "type": "tick" } },
-    { "n": 257, "now": 90000, "input": { "type": "tick" } },
-    { "n": 258, "now": 90500, "input": { "type": "tick" } },
-    { "n": 259, "now": 91000, "input": { "type": "tick" } },
-    { "n": 260, "now": 91500, "input": { "type": "tick" } },
-    { "n": 261, "now": 92000, "input": { "type": "tick" } },
-    { "n": 262, "now": 92500, "input": { "type": "tick" } },
-    { "n": 263, "now": 93000, "input": { "type": "tick" } },
-    { "n": 264, "now": 93500, "input": { "type": "tick" } },
-    { "n": 265, "now": 94000, "input": { "type": "tick" } },
-    { "n": 266, "now": 94500, "input": { "type": "tick" } },
-    { "n": 267, "now": 95000, "input": { "type": "tick" } },
-    { "n": 268, "now": 95500, "input": { "type": "tick" } },
-    { "n": 269, "now": 96000, "input": { "type": "tick" } },
+    { "n": 246, "now": 86500, "input": { "type": "tick" } },
+    { "n": 247, "now": 86750, "input": { "type": "tick" } },
+    { "n": 248, "now": 87000, "input": { "type": "tick" } },
+    { "n": 249, "now": 87250, "input": { "type": "tick" } },
+    { "n": 250, "now": 87500, "input": { "type": "tick" } },
+    { "n": 251, "now": 87750, "input": { "type": "tick" } },
+    { "n": 252, "now": 88000, "input": { "type": "tick" } },
+    { "n": 253, "now": 88250, "input": { "type": "tick" } },
+    { "n": 254, "now": 88750, "input": { "type": "tick" } },
+    { "n": 255, "now": 89250, "input": { "type": "tick" } },
+    { "n": 256, "now": 89750, "input": { "type": "tick" } },
+    { "n": 257, "now": 90250, "input": { "type": "tick" } },
+    { "n": 258, "now": 90750, "input": { "type": "tick" } },
+    { "n": 259, "now": 91250, "input": { "type": "tick" } },
+    { "n": 260, "now": 91750, "input": { "type": "tick" } },
+    { "n": 261, "now": 92250, "input": { "type": "tick" } },
+    { "n": 262, "now": 92750, "input": { "type": "tick" } },
+    { "n": 263, "now": 93250, "input": { "type": "tick" } },
+    { "n": 264, "now": 93750, "input": { "type": "tick" } },
+    { "n": 265, "now": 94250, "input": { "type": "tick" } },
+    { "n": 266, "now": 94750, "input": { "type": "tick" } },
+    { "n": 267, "now": 95250, "input": { "type": "tick" } },
+    { "n": 268, "now": 95750, "input": { "type": "tick" } },
+    { "n": 269, "now": 96250, "input": { "type": "tick" } },
     {
       "n": 270,
-      "now": 96051,
+      "now": 96287,
       "input": {
         "type": "attempt_data_message",
         "attempt": 2,
-        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":96000,\"seq\":6}"
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":96250,\"seq\":6}"
       }
     },
-    { "n": 271, "now": 96500, "input": { "type": "tick" } },
-    { "n": 272, "now": 96750, "input": { "type": "tick" } },
-    { "n": 273, "now": 97000, "input": { "type": "tick" } },
-    { "n": 274, "now": 97250, "input": { "type": "tick" } },
-    { "n": 275, "now": 97500, "input": { "type": "tick" } },
-    { "n": 276, "now": 97750, "input": { "type": "tick" } },
-    { "n": 277, "now": 98000, "input": { "type": "tick" } },
-    { "n": 278, "now": 98250, "input": { "type": "tick" } },
-    { "n": 279, "now": 98750, "input": { "type": "tick" } },
-    { "n": 280, "now": 99250, "input": { "type": "tick" } },
-    { "n": 281, "now": 99750, "input": { "type": "tick" } }
+    { "n": 271, "now": 96750, "input": { "type": "tick" } },
+    { "n": 272, "now": 97000, "input": { "type": "tick" } },
+    { "n": 273, "now": 97250, "input": { "type": "tick" } },
+    { "n": 274, "now": 97500, "input": { "type": "tick" } },
+    { "n": 275, "now": 97750, "input": { "type": "tick" } },
+    { "n": 276, "now": 98000, "input": { "type": "tick" } },
+    { "n": 277, "now": 98250, "input": { "type": "tick" } },
+    { "n": 278, "now": 98500, "input": { "type": "tick" } },
+    { "n": 279, "now": 99000, "input": { "type": "tick" } },
+    { "n": 280, "now": 99500, "input": { "type": "tick" } },
+    { "n": 281, "now": 100000, "input": { "type": "tick" } }
   ],
   "expect": [
     [
-      { "type": "open_mailbox", "id": 0, "kind": "relay", "url": "" },
+      { "type": "open_mailbox", "id": 0, "kind": "relay", "url": "wss://relay-0.invalid" },
       {
         "type": "emit",
         "event": {
@@ -657,6 +657,11 @@
         "type": "send_data",
         "attempt": 1,
         "text": "{\"type\":\"device_status\",\"v\":3,\"noise_threshold\":0.12}"
+      },
+      {
+        "type": "send_data",
+        "attempt": 1,
+        "text": "{\"type\":\"mailboxes\",\"v\":3,\"mailboxes\":[{\"kind\":\"relay\",\"url\":\"wss://relay-0.invalid\"}]}"
       },
       {
         "type": "send_data",
@@ -801,26 +806,19 @@
             "key": null,
             "cause": null,
             "acknowledged_until": null,
-            "last_alive_ms": 10786
+            "last_alive_ms": 10810
           }
         }
       }
     ],
-    [{ "type": "open_mailbox", "id": 0, "kind": "relay", "url": "" }],
+    [{ "type": "open_mailbox", "id": 0, "kind": "relay", "url": "wss://relay-0.invalid" }],
     [],
     [],
     [],
     [],
     [],
     [],
-    [{ "type": "open_mailbox", "id": 0, "kind": "relay", "url": "" }],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
+    [{ "type": "open_mailbox", "id": 0, "kind": "relay", "url": "wss://relay-0.invalid" }],
     [],
     [],
     [],
@@ -830,7 +828,16 @@
     [],
     [],
     [],
-    [{ "type": "open_mailbox", "id": 0, "kind": "relay", "url": "" }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [{ "type": "open_mailbox", "id": 0, "kind": "relay", "url": "wss://relay-0.invalid" }],
     [
       {
         "type": "mailbox_send",
@@ -843,7 +850,7 @@
       {
         "type": "mailbox_send",
         "id": 0,
-        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"env\":\"AQABPoDiTHd1J8XV-d37xAy00mWm7OWx3gK6gRXKlmOSWQy9xoearZ0malOejAhTp7yv2ItEzPAQNRjVCVYz5QtQM8oScuEhk2wrb0uc4yiU_p4k_VfRdlscmhf_2OxDXx14HjoUt9xcBtgiFdERylTFthMN49flJ8zCL71uEx9-SY-XmV_hP_8SvkAv3yXnmOBxaULmJs6fQ3lNgc3OOJBzeDmZ-W6IYSqduk7XkJZOtTwO3i97NnkK62dydbBhsVliFnGmUiczWwjhsAknEQExeKCkda8cQ0acEMYnCIFQH_6U1kXfaEkcRRdq5AepqaebmidrQvcL8O952Pm8N-PImjN5lPoJG0ebXfjQ0WluhvL7GDMUjfNzrsTftBf_wvLGgD6WetHK-lqFr4GBlkpk5GNANmniCckw-MkBZdBjCxMjCv-vAgFOurM-X5FOsa3I_r4nitc6Ujcr1qvZLAlaGLXLFAa_RTvwNQIY_dnb9j-cgsKiNjybU0RQ5GbFf4EaW14P0gy6hLcXdK6oqrvmXcLUO5HJPf1ZWedChSS8HvwgwUJgKeqhHKiNDeRLUlMeJ3WryGZnFRTOGGSAFWRGl6drT9pkmRD5tOGHyEKE0-wQ_7BnqMClIVCO9KZFvlHMHUH7YdOZXgy7nt3YBItJrO9Nb7CM4vvbYNLkckfOCIR5qnafw9Sg5JpbJ5yOE2h6HrsyTHRcr_CKCl7LFj7Go7YneLeDkpEGa28d8MAN3BCrd0CXRVAYg6QtHJex4WPCzWnxKV7ZVFIqh5TDq2wBIWrSQ_4ETUOO0aio0LFo_RgVW1jA4kNkbHTeFkAMs_vP4t8VTyUqnlnqOGfZiBd8p7WETaiA2DMdLqSISFfi1qlhTV-Nm3YKgWbferS11DGZcSwI_eik0bAx81uLdRt0WjBC90tqOVWOPPtxJdmAJSSJ7BS0uq8CRhBmJrQYRkm05qT_-6IOb7jCR6pQEuL0Eq7tzK_hKhfOM37cXUsc4Di6txnYEvnIw9fHzRrWUdpdL23f2W8fm5ZM0hMUlTvRj1rRhyUmsOFGbMHZ_ViwTmyOOhHq2eIQhBq2D60DOKpXnSt47MjyiCWjRCbgI_HcK0n8CEoLCi7wxG53s7lGHCLA8ZoPgztyBe8zn2wC7hKwh3d1NJlrrjWpWm1gEHFelQpiNmWPOCv4aRYGQldiis1drqcCmNdTiVoL74W5h9erTsdwtHRkWnsqEt_2nXWbunn-bDKjBm8dR0JL_zVOWT3X1qWeDZ8RF8OA2i64EYO9sfbXPjYK5t09yg39ZBDVMwlMaRSkU4MwSqOL9WpDIbGqmEotuLHhfXX8omZTW9qAyaVLiGxjtEyjEIadHgUJ6b__O1vFHxn0ivLBcr9dUJ4I_T9Gijixw29RUPsjVfsE6FUu3aF-81M\"}}"
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c3\",\"payload\":{\"env\":\"AQABPoDiTHd1J8XV-d37xAy00mWm7OWx3gK6gRXKlmOSWQy9xoearZ0malOejAhTp7yv2ItEzPAQNRjVCVYz5QtQM8oScuEhk2wrb0uc4yiU_p4k_VfRdlscmhf_2OxDXx14HjoUt9xcBtgiFdERylTFthMN49flJ8zFL71uEx9-SY-XmV_hP_8SvkAv3yXnmOBxaULmJs6fQ3lNgc3OOJBzeDmZ-W6IYSqduk7XkJZOtTwO3i97NnkK62dydbBhsVliFnGmUiczWwjhsAknEQExeKCkda8cQ0acEMYnCIFQH_6U1kXfaEkcRRdq5AepqaebmidrQvcL8O952Pm8N-PImjN5lPoJG0ebXfjQ0WluhvL7GDMUjfNzrsTftBf_wvLGgD6WetHK-lqFr4GBlkpk5GNANmniCckw-MkBZdBjCxMjCv-vAgFOurM-X5FOsa3I_r4nitc6Ujcr1qvZLAlaGLXLFAa_RTvwNQIY_dnb9j-cgsKiNjybU0RQ5GbFf4EaW14P0gy6hLcXdK6oqrvmXcLUO5HJPf1ZWedChSS8HvwgwUJgKeqhHKiNDeRLUlMeJ3WryGZnFRTOGGSAFWRGl6drT9pkmRD5tOGHyEKE0-wQ_7BnqMClIVCO9KZFvlHMHUH7YdOZXgy7nt3YBItJrO9Nb7CM4vvbYNLkckfOCIR5qnafw9Sg5JpbJ5yOE2h6HrsyTHRcr_CKCl7LFj7Go7YneLeDkpEGa28d8MAN3BCrd0CXRVAYg6QtHJex4WPCzWnxKV7ZVFIqh5TDq2wBIWrSQ_4ETUOO0aio0LFo_RgVW1jA4kNkbHTeFkAMs_vP4t8VTyUqnlnqOGfZiBd8p7WETaiA2DMdLqSISFfi1qlhTV-Nm3YKgWbferS11DGZcSwI_eik0bAx81uLdRt0WjBC90tqOVWOPPtxJdmAJSSJ7BS0uq8CRhBmJrQYRkm05qT_-6IOb7jCR6pQEuL0Eq7tzK_hKhfOM37cXUsc4Di6txnYEvnIw9fHzRrWUdpdL23f2W8fm5ZM0hMUlTvRj1rRhyUmsOFGbMHZ_ViwTmyOOhHq2eIQhBq2D60DOKpXnSt47MjyiCWjRCbgI_HcK0n8CEoLCi7wxG53s7lGHCLA8ZoPgztyBe8zn2wC7hKwh3d1NJlrrjWpWm1gEHFelQpiNmWPOCv4aRYGQldiis1drqcCmNdTiVoL74W5h9erTsdwtHRkWnsqEt_2nXWbunn-bDKjBm8dR0JL_zVOWT3X1qWeDZ8RF8OA2i64EYO9sfbXPjYK5t09yg39ZBDVMwlMaRSkU4MwSqOL9WpDIbGqmEotuLHhfXX8omZTW9qAyaVLiGxjtEyjEIadHgUJ6b__O1vFHxn01b1PMPtmkXUFMBQkLGiYw494hssEo0-NyIFaUzo3lKU\"}}"
       }
     ],
     [],
@@ -870,8 +877,6 @@
     ],
     [],
     [],
-    [],
-    [],
     [
       {
         "type": "send_data",
@@ -884,7 +889,7 @@
       {
         "type": "send_data",
         "attempt": 2,
-        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":44790,\"seq\":1}"
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":45139,\"seq\":1}"
       }
     ],
     [
@@ -895,16 +900,21 @@
       },
       { "type": "emit", "event": { "type": "parent_connected", "name": "" } },
       { "type": "close_mailbox", "id": 0 },
-      { "type": "emit", "event": { "type": "link_restored", "down_ms": 34072 } },
+      { "type": "emit", "event": { "type": "link_restored", "down_ms": 34359 } },
       {
         "type": "send_data",
         "attempt": 2,
-        "text": "{\"type\":\"missed_events\",\"v\":3,\"count\":0,\"max_rms\":0,\"complete\":false,\"down_ms\":34072}"
+        "text": "{\"type\":\"missed_events\",\"v\":3,\"count\":0,\"max_rms\":0,\"complete\":false,\"down_ms\":34359}"
       },
       {
         "type": "send_data",
         "attempt": 2,
         "text": "{\"type\":\"device_status\",\"v\":3,\"noise_threshold\":0.12}"
+      },
+      {
+        "type": "send_data",
+        "attempt": 2,
+        "text": "{\"type\":\"mailboxes\",\"v\":3,\"mailboxes\":[{\"kind\":\"relay\",\"url\":\"wss://relay-0.invalid\"}]}"
       },
       {
         "type": "emit",
@@ -950,7 +960,7 @@
       {
         "type": "send_data",
         "attempt": 2,
-        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":55000,\"seq\":2,\"rms\":0}"
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":55250,\"seq\":2,\"rms\":0}"
       }
     ],
     [],
@@ -982,7 +992,7 @@
       {
         "type": "send_data",
         "attempt": 2,
-        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":65250,\"seq\":3,\"rms\":0}"
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":65500,\"seq\":3,\"rms\":0}"
       }
     ],
     [],
@@ -1013,7 +1023,7 @@
       {
         "type": "send_data",
         "attempt": 2,
-        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":75500,\"seq\":4,\"rms\":0}"
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":75750,\"seq\":4,\"rms\":0}"
       }
     ],
     [],
@@ -1044,7 +1054,7 @@
       {
         "type": "send_data",
         "attempt": 2,
-        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":85750,\"seq\":5,\"rms\":0}"
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":86000,\"seq\":5,\"rms\":0}"
       }
     ],
     [],
@@ -1075,7 +1085,7 @@
       {
         "type": "send_data",
         "attempt": 2,
-        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":96000,\"seq\":6,\"rms\":0}"
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":96250,\"seq\":6,\"rms\":0}"
       }
     ],
     [],

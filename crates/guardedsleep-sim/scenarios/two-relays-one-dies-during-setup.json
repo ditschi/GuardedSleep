@@ -1,0 +1,68 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "two-relays-one-dies-during-setup",
+  "description": "The pairing names two relays (the project server and an own relay). One of them goes away while the pair is still setting up. Envelopes go to every relay where the peer is a member, so the offer and the answer still arrive through the other one and the attempt verifies within the 20 s attempt limit, with one attempt per side.",
+  "seed": 1,
+  "relay_count": 2,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 300,
+      "do": "signaling_down",
+      "relay": 1
+    },
+    {
+      "at": 40000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 10000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 10000
+    },
+    {
+      "peer": "baby",
+      "max_level": 0
+    },
+    {
+      "peer": "parent",
+      "max_level": 0
+    },
+    {
+      "peer": "baby",
+      "never": "link_lost"
+    },
+    {
+      "peer": "parent",
+      "never": "link_lost"
+    },
+    {
+      "peer": "baby",
+      "attempts": 1
+    },
+    {
+      "peer": "parent",
+      "attempts": 1
+    }
+  ]
+}

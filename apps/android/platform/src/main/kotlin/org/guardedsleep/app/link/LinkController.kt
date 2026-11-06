@@ -498,7 +498,6 @@ class LinkController(
         val runner =
             LinkRunner(
                 config = config,
-                signalingUrls = signalingUrls,
                 signaling = signaling,
                 mediaFactory = { mediaFactory(role, ice) },
                 clock = clock,
@@ -579,8 +578,12 @@ class LinkController(
             pinnedParent = pending.parentSecret?.let { ParentSecret(it.copyOf()) },
             pinWindowUntilS = pending.pinUntilS?.toULong(),
             deviceName = if (role == CoreRole.PARENT) deviceName() else "",
-            // The baby sends the set of the pairing to the parent after each verification.
-            mailboxes = if (role == CoreRole.BABY) storedMailboxes(pending) else emptyList(),
+            // The relay mailboxes of the pairing: the core opens each at its own address. The baby
+            // also sends the set to the parent after each verification.
+            mailboxes =
+                if (s.advancedEnabled && s.signalingUrls.isNotEmpty())
+                    PairingPayload.mailboxesFor(s.signalingUrls)
+                else storedMailboxes(pending),
             allowDevLoopback = BuildConfig.DEBUG,
             pairedBefore = pairedBefore,
             heartbeatIntervalMs = heartbeat.toULong(),

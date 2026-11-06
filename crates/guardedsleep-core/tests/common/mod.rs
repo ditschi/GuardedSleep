@@ -5,9 +5,11 @@
 use std::collections::{HashMap, VecDeque};
 
 use guardedsleep_core::envelope::MessageClass;
+use guardedsleep_core::invite::InviteMailbox;
 use guardedsleep_core::link::{
     Link, LinkAction, LinkConfig, LinkEvent, LinkInput, LinkState, LinkStatus,
 };
+use guardedsleep_core::mailbox::MailboxKind;
 use guardedsleep_core::pairing::{decode_psk, encode_psk};
 use guardedsleep_core::protocol::{DeviceStatus, Role};
 use serde_json::{Value, json};
@@ -34,6 +36,10 @@ pub fn cfg(role: Role, psk: &[u8]) -> LinkConfig {
         Role::Parent => 6u8,
     };
     let mut c = LinkConfig::with_defaults(role, encode_psk(psk), &[seed_byte; 32]);
+    c.mailboxes = vec![InviteMailbox {
+        kind: MailboxKind::Relay,
+        url: "wss://relay.test".into(),
+    }];
     c.noise_threshold = 0.2;
     c.noise_hold_ms = 300;
     c

@@ -251,7 +251,7 @@ impl World {
         if !self.actors[a].alive || self.actors[a].raw.is_none() {
             return;
         }
-        if self.actors[a].sock.is_some() {
+        if !self.actors[a].socks.is_empty() {
             self.raw_maybe_request(a);
             self.raw_psk_stop(a);
         }
