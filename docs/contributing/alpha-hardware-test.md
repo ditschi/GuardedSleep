@@ -8,7 +8,7 @@
 - **Connection-loss alarms come after 60 s.** Between 20 s and 60 s the parent unit only shows orange/red; sound starts at 60 s (soft tone every 10 s), continuous from 3 min.
 - **The parent unit is a single point of failure.** If it dies or the app is killed, nobody is alerted; the baby unit only shows a dim pulse.
 - **A browser parent works only while its page is open and the screen is on.** Never use a browser as the only parent unit overnight.
-- **Round 1 runs on home Wi-Fi.** With `alpha-connection-model` the default setup needs no server (curated EU Nostr relays); a self-hosted relay remains possible. Mobile-data rounds run without TURN: pairs without a direct path must fail visibly with the `media_blocked` troubleshooter, never silently.
+- **Round 1 runs on home Wi-Fi.** With `alpha-connection-model` the default setup signals through the project server (`gs.mydata.rocks`); an own relay remains possible in addition. Mobile-data rounds run through the project server and its TURN: a pair with no direct path must connect through the relay, and when the server is unreachable it must fail visibly with the `server_unreachable` or `media_blocked` troubleshooter, never silently.
 - **Record every run:** device, Android version, OEM skin, network type. Nothing counts as "protected" on a device until the soak passed on it; otherwise label results "not soak-tested".
 
 ## 0. Before any hardware round
@@ -85,10 +85,11 @@ Chromium-based browsers only for the alpha (Chrome, Edge): Firefox does not expo
 
 | ID                  | Setup                                                                         | Pass criterion                                                                                                               |
 | ------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| S-nostr-cross       | Baby on home Wi-Fi, parent on mobile data, default settings                   | pairs from the QR code without input; note the connection type in Settings → Connection → Details                            |
+| S-server-cross      | Baby on home Wi-Fi, parent on mobile data, default settings (project server)  | pairs from the QR code without input; note the connection type (direct or relayed) in Settings → Connection → Details        |
+| S-turn (Persona A)  | Both devices on mobile data or behind a venue NAT with no direct path         | pairs and monitors through the project TURN; the relay shows in the connection type; recovery after a 2 minute outage works  |
 | S-net-switch        | Parent walks out of Wi-Fi coverage onto mobile data during monitoring         | recovers before escalation level 2 where a direct path exists; otherwise the troubleshooter appears and the alarm still runs |
 | S-offline-lan       | Router without uplink, Android ↔ Android and Android ↔ PC local mode          | pairs and monitors without internet; uplink loss during monitoring raises no alarm                                           |
-| S-venue (Persona A) | Both devices on a venue or hotel Wi-Fi, then one on mobile data               | record success, connection type and any captive-portal or isolation effect (input for the beta TURN decision)                |
+| S-venue (Persona A) | Both devices on a venue or hotel Wi-Fi, then one on mobile data               | record success, connection type and any captive-portal or isolation effect                                                   |
 | S-not-my-device     | Pair, then check the baby shows the parent device's name; tap "Not my device" | the pairing is forgotten on the baby and a new code can be shown                                                             |
 
 ## 6. Reporting

@@ -5,9 +5,11 @@
 use std::collections::{HashMap, VecDeque};
 
 use guardedsleep_core::envelope::MessageClass;
+use guardedsleep_core::invite::InviteMailbox;
 use guardedsleep_core::link::{
     Link, LinkAction, LinkConfig, LinkEvent, LinkInput, LinkState, LinkStatus,
 };
+use guardedsleep_core::mailbox::MailboxKind;
 use guardedsleep_core::pairing::{decode_psk, encode_psk};
 use guardedsleep_core::protocol::{DeviceStatus, Role};
 use serde_json::{Value, json};
@@ -34,6 +36,10 @@ pub fn cfg(role: Role, psk: &[u8]) -> LinkConfig {
         Role::Parent => 6u8,
     };
     let mut c = LinkConfig::with_defaults(role, encode_psk(psk), &[seed_byte; 32]);
+    c.mailboxes = vec![InviteMailbox {
+        kind: MailboxKind::Relay,
+        url: "wss://relay.test".into(),
+    }];
     c.noise_threshold = 0.2;
     c.noise_hold_ms = 300;
     c
@@ -76,8 +82,6 @@ pub struct Node {
     pub events: Vec<LinkEvent>,
     pub created: Vec<u32>,
     pub open_signaling_calls: u32,
-    /// The URL of every Nostr mailbox this node's link asked to open.
-    pub nostr_opens: Vec<String>,
     pub mic_calls: Vec<bool>,
     pub apply_quiet_calls: u32,
     pub probe_tones: u32,
@@ -204,7 +208,6 @@ impl World {
             events: Vec::new(),
             created: Vec::new(),
             open_signaling_calls: 0,
-            nostr_opens: Vec::new(),
             mic_calls: Vec::new(),
             apply_quiet_calls: 0,
             probe_tones: 0,
@@ -484,9 +487,9 @@ impl World {
     fn exec(&mut self, n: usize, actions: Vec<LinkAction>) {
         for a in actions {
             match a {
-                // Only the relay has a fake server here; Nostr mailboxes are recorded, not served.
+                // Only the relay has a fake server here.
                 LinkAction::OpenMailbox { id: 0, .. } => self.open_signaling(n),
-                LinkAction::OpenMailbox { url, .. } => self.nodes[n].nostr_opens.push(url),
+                LinkAction::OpenMailbox { .. } => {}
                 LinkAction::CloseMailbox { id: 0 } => self.close_signaling(n),
                 LinkAction::CloseMailbox { .. } => {}
                 LinkAction::MailboxSend { id: 0, frame } => self.node_to_server(n, &frame),

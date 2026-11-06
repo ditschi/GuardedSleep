@@ -49,7 +49,7 @@ The ADR → OpenSpec migration, one change per capability:
 
 ## Context notes
 
-- **ADR-018 (2026-10-23):** the alpha tester setup changes with `alpha-connection-model` and `add-offline-lan`: internet signaling through curated EU Nostr relays and own relays (no default server), automatic disclosed EU STUN, no TURN configured by default, and offline LAN in the alpha. Mobile-data rounds no longer require a TURN server; pairs without a direct path are expected to fail with the `media_blocked` troubleshooter.
+- **ADR-018 (2026-10-23):** the alpha tester setup changes with `alpha-connection-model` and `add-offline-lan`. Revised 2026-11-02: internet signaling goes through the project server (`gs.mydata.rocks`) and own relays in parallel, with the project TURN on the same host and a disclosed off switch; the public Nostr relays of the first revision (2026-10-23) were dropped, and offline LAN stays in the alpha. Mobile-data rounds therefore run through the project server and its TURN; a pair fails visibly with the `server_unreachable` or `media_blocked` troubleshooter only when the server or every path is unreachable.
 
 ## Withdrawn changes
 

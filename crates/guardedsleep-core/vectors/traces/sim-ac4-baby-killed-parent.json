@@ -18,7 +18,7 @@
     "pinned_parent": null,
     "pin_window_until_s": null,
     "device_name": "",
-    "mailboxes": [],
+    "mailboxes": [{ "kind": "relay", "url": "wss://relay-0.invalid" }],
     "allow_dev_loopback": false,
     "only_local": false
   },
@@ -163,53 +163,61 @@
       "input": {
         "type": "attempt_data_message",
         "attempt": 1,
+        "text": "{\"type\":\"mailboxes\",\"v\":3,\"mailboxes\":[{\"kind\":\"relay\",\"url\":\"wss://relay-0.invalid\"}]}"
+      }
+    },
+    {
+      "n": 22,
+      "now": 683,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
         "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":652,\"seq\":1,\"rms\":0}"
       }
     },
-    { "n": 22, "now": 750, "input": { "type": "tick" } },
     {
       "n": 23,
-      "now": 754,
+      "now": 743,
       "input": {
         "type": "attempt_data_message",
         "attempt": 1,
         "text": "{\"type\":\"pin_ack\",\"v\":3}"
       }
     },
-    { "n": 24, "now": 1000, "input": { "type": "tick" } },
-    { "n": 25, "now": 1250, "input": { "type": "tick" } },
-    { "n": 26, "now": 1500, "input": { "type": "tick" } },
-    { "n": 27, "now": 1750, "input": { "type": "tick" } },
-    { "n": 28, "now": 2000, "input": { "type": "tick" } },
-    { "n": 29, "now": 2250, "input": { "type": "tick" } },
-    { "n": 30, "now": 2500, "input": { "type": "tick" } },
-    { "n": 31, "now": 2750, "input": { "type": "tick" } },
-    { "n": 32, "now": 3000, "input": { "type": "tick" } },
-    { "n": 33, "now": 3500, "input": { "type": "tick" } },
-    { "n": 34, "now": 4000, "input": { "type": "tick" } },
-    { "n": 35, "now": 4500, "input": { "type": "tick" } },
-    { "n": 36, "now": 5000, "input": { "type": "tick" } },
-    { "n": 37, "now": 5500, "input": { "type": "tick" } },
-    { "n": 38, "now": 6000, "input": { "type": "tick" } },
-    { "n": 39, "now": 6500, "input": { "type": "tick" } },
-    { "n": 40, "now": 7000, "input": { "type": "tick" } },
-    { "n": 41, "now": 7500, "input": { "type": "tick" } },
-    { "n": 42, "now": 8000, "input": { "type": "tick" } },
-    { "n": 43, "now": 8500, "input": { "type": "tick" } },
-    { "n": 44, "now": 9000, "input": { "type": "tick" } },
-    { "n": 45, "now": 9500, "input": { "type": "tick" } },
-    { "n": 46, "now": 10000, "input": { "type": "tick" } },
-    { "n": 47, "now": 10500, "input": { "type": "tick" } },
+    { "n": 24, "now": 750, "input": { "type": "tick" } },
+    { "n": 25, "now": 1000, "input": { "type": "tick" } },
+    { "n": 26, "now": 1250, "input": { "type": "tick" } },
+    { "n": 27, "now": 1500, "input": { "type": "tick" } },
+    { "n": 28, "now": 1750, "input": { "type": "tick" } },
+    { "n": 29, "now": 2000, "input": { "type": "tick" } },
+    { "n": 30, "now": 2250, "input": { "type": "tick" } },
+    { "n": 31, "now": 2500, "input": { "type": "tick" } },
+    { "n": 32, "now": 2750, "input": { "type": "tick" } },
+    { "n": 33, "now": 3250, "input": { "type": "tick" } },
+    { "n": 34, "now": 3750, "input": { "type": "tick" } },
+    { "n": 35, "now": 4250, "input": { "type": "tick" } },
+    { "n": 36, "now": 4750, "input": { "type": "tick" } },
+    { "n": 37, "now": 5250, "input": { "type": "tick" } },
+    { "n": 38, "now": 5750, "input": { "type": "tick" } },
+    { "n": 39, "now": 6250, "input": { "type": "tick" } },
+    { "n": 40, "now": 6750, "input": { "type": "tick" } },
+    { "n": 41, "now": 7250, "input": { "type": "tick" } },
+    { "n": 42, "now": 7750, "input": { "type": "tick" } },
+    { "n": 43, "now": 8250, "input": { "type": "tick" } },
+    { "n": 44, "now": 8750, "input": { "type": "tick" } },
+    { "n": 45, "now": 9250, "input": { "type": "tick" } },
+    { "n": 46, "now": 9750, "input": { "type": "tick" } },
+    { "n": 47, "now": 10250, "input": { "type": "tick" } },
+    { "n": 48, "now": 10750, "input": { "type": "tick" } },
     {
-      "n": 48,
-      "now": 10767,
+      "n": 49,
+      "now": 10769,
       "input": {
         "type": "attempt_data_message",
         "attempt": 1,
         "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":10750,\"seq\":2,\"rms\":0}"
       }
     },
-    { "n": 49, "now": 11000, "input": { "type": "tick" } },
     { "n": 50, "now": 11250, "input": { "type": "tick" } },
     { "n": 51, "now": 11500, "input": { "type": "tick" } },
     { "n": 52, "now": 11750, "input": { "type": "tick" } },
@@ -265,10 +273,10 @@
     { "n": 102, "now": 35500, "input": { "type": "tick" } },
     { "n": 103, "now": 36000, "input": { "type": "tick" } },
     { "n": 104, "now": 36500, "input": { "type": "tick" } },
-    { "n": 105, "now": 36570, "input": { "type": "mailbox_opened", "id": 0 } },
+    { "n": 105, "now": 36550, "input": { "type": "mailbox_opened", "id": 0 } },
     {
       "n": 106,
-      "now": 36601,
+      "now": 36584,
       "input": {
         "type": "mailbox_frame",
         "id": 0,
@@ -277,7 +285,7 @@
     },
     {
       "n": 107,
-      "now": 36601,
+      "now": 36598,
       "input": {
         "type": "mailbox_frame",
         "id": 0,
@@ -286,7 +294,7 @@
     },
     {
       "n": 108,
-      "now": 36609,
+      "now": 36598,
       "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"peer\",\"peerId\":null}" }
     },
     { "n": 109, "now": 37000, "input": { "type": "tick" } },
@@ -325,7 +333,7 @@
     { "n": 142, "now": 51750, "input": { "type": "tick" } },
     {
       "n": 143,
-      "now": 51793,
+      "now": 51781,
       "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 144, "now": 52250, "input": { "type": "tick" } },
@@ -365,7 +373,7 @@
     { "n": 178, "now": 67000, "input": { "type": "tick" } },
     {
       "n": 179,
-      "now": 67041,
+      "now": 67014,
       "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 180, "now": 67500, "input": { "type": "tick" } },
@@ -404,7 +412,7 @@
     { "n": 213, "now": 82250, "input": { "type": "tick" } },
     {
       "n": 214,
-      "now": 82323,
+      "now": 82308,
       "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 215, "now": 82750, "input": { "type": "tick" } },
@@ -443,7 +451,7 @@
     { "n": 248, "now": 97500, "input": { "type": "tick" } },
     {
       "n": 249,
-      "now": 97550,
+      "now": 97566,
       "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 250, "now": 98000, "input": { "type": "tick" } },
@@ -482,7 +490,7 @@
     { "n": 283, "now": 112750, "input": { "type": "tick" } },
     {
       "n": 284,
-      "now": 112796,
+      "now": 112789,
       "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 285, "now": 113250, "input": { "type": "tick" } },
@@ -522,7 +530,7 @@
     { "n": 319, "now": 128000, "input": { "type": "tick" } },
     {
       "n": 320,
-      "now": 128046,
+      "now": 128044,
       "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"pong\"}" }
     },
     { "n": 321, "now": 128500, "input": { "type": "tick" } },
@@ -535,7 +543,7 @@
   ],
   "expect": [
     [
-      { "type": "open_mailbox", "id": 0, "kind": "relay", "url": "" },
+      { "type": "open_mailbox", "id": 0, "kind": "relay", "url": "wss://relay-0.invalid" },
       {
         "type": "emit",
         "event": {
@@ -661,8 +669,16 @@
       }
     ],
     [{ "type": "emit", "event": { "type": "peer_status", "status": { "noise_threshold": 0.12 } } }],
+    [
+      {
+        "type": "emit",
+        "event": {
+          "type": "mailboxes_updated",
+          "mailboxes": [{ "kind": "relay", "url": "wss://relay-0.invalid" }]
+        }
+      }
+    ],
     [{ "type": "emit", "event": { "type": "peer_heartbeat", "seq": 1, "rms": 0.0 } }],
-    [],
     [
       {
         "type": "emit",
@@ -698,14 +714,13 @@
     [],
     [],
     [
-      { "type": "emit", "event": { "type": "peer_heartbeat", "seq": 2, "rms": 0.0 } },
       {
         "type": "send_data",
         "attempt": 1,
-        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":10767,\"seq\":2}"
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":10750,\"seq\":2}"
       }
     ],
-    [],
+    [{ "type": "emit", "event": { "type": "peer_heartbeat", "seq": 2, "rms": 0.0 } }],
     [],
     [],
     [],
@@ -784,12 +799,12 @@
             "key": null,
             "cause": null,
             "acknowledged_until": null,
-            "last_alive_ms": 10767
+            "last_alive_ms": 10769
           }
         }
       }
     ],
-    [{ "type": "open_mailbox", "id": 0, "kind": "relay", "url": "" }],
+    [{ "type": "open_mailbox", "id": 0, "kind": "relay", "url": "wss://relay-0.invalid" }],
     [
       {
         "type": "mailbox_send",
@@ -883,7 +898,7 @@
     [],
     [],
     [
-      { "type": "emit", "event": { "type": "link_lost", "down_ms": 60483 } },
+      { "type": "emit", "event": { "type": "link_lost", "down_ms": 60481 } },
       {
         "type": "emit",
         "event": {
@@ -894,7 +909,7 @@
             "key": null,
             "cause": "peer_absent",
             "acknowledged_until": null,
-            "last_alive_ms": 10767
+            "last_alive_ms": 10769
           }
         }
       }

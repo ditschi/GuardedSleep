@@ -1,15 +1,12 @@
 //! Delivery rules that hold for every mailbox kind (`alpha-connection-model` task 3.5): ICE
 //! candidates are bundled, an unanswered offer, answer or `request_offer` is sent once more with
-//! the same envelope id, and a mailbox update brings the parent its Nostr relays (unless it only
-//! wants the same Wi-Fi or its own server). Driven through the relay mailbox of `common`.
+//! the same envelope id. Driven through the relay mailbox of `common`.
 
 mod common;
 
 use common::*;
 use guardedsleep_core::envelope::MessageClass;
-use guardedsleep_core::invite::InviteMailbox;
-use guardedsleep_core::link::{LinkEvent, LinkInput};
-use guardedsleep_core::mailbox::MailboxKind;
+use guardedsleep_core::link::LinkInput;
 use guardedsleep_core::protocol::{IceCandidate, Role};
 
 fn candidate(n: u32) -> IceCandidate {
@@ -91,92 +88,6 @@ fn an_answered_request_is_not_repeated() {
     let mut unique = envs.clone();
     unique.dedup();
     assert_eq!(envs, unique, "no copy of an answered request");
-}
-
-fn nostr(host: &str) -> InviteMailbox {
-    InviteMailbox {
-        kind: MailboxKind::Nostr,
-        url: format!("wss://{host}"),
-    }
-}
-
-/// A pair whose baby names one own relay (`r:`) and a Nostr relay, with the parent configured by
-/// `edit`, connected, then split so that the parent's mailboxes open again.
-fn pair_after_update(edit: impl FnOnce(&mut guardedsleep_core::link::LinkConfig)) -> World {
-    let mut w = World::empty();
-    let mut baby = cfg(Role::Baby, &PSK_A);
-    baby.mailboxes = vec![
-        InviteMailbox {
-            kind: MailboxKind::Relay,
-            url: "wss://own.example/sig".into(),
-        },
-        nostr("relay-a.example"),
-    ];
-    w.add_node(baby);
-    let mut parent = cfg(Role::Parent, &PSK_A);
-    edit(&mut parent);
-    w.add_node(parent);
-    w.start(BABY, 1);
-    w.start(PARENT, 2);
-    w.input(
-        PARENT,
-        LinkInput::WallClock {
-            unix_s: 1_800_000_000,
-        },
-    );
-    w.input(
-        BABY,
-        LinkInput::WallClock {
-            unix_s: 1_800_000_000,
-        },
-    );
-    w.advance(5_000);
-    assert_eq!(
-        w.state(PARENT),
-        guardedsleep_core::link::LinkState::Connected
-    );
-    w
-}
-
-#[test]
-fn the_parent_uses_the_nostr_relays_of_a_mailbox_update() {
-    let mut w = pair_after_update(|_| {});
-    assert!(
-        w.count_events(PARENT, 0, |e| matches!(
-            e,
-            LinkEvent::MailboxesUpdated { .. }
-        )) >= 1,
-        "the update reached the parent"
-    );
-    assert!(
-        w.nodes[PARENT].nostr_opens.is_empty(),
-        "closed while verified"
-    );
-    // The path breaks: the parent reopens everything, the relay it just learned about included.
-    w.set_net(BABY, false);
-    w.advance(60_000);
-    assert!(
-        w.nodes[PARENT]
-            .nostr_opens
-            .contains(&"wss://relay-a.example".to_owned()),
-        "{:?}",
-        w.nodes[PARENT].nostr_opens
-    );
-}
-
-#[test]
-fn only_same_wifi_or_my_own_server_ignores_the_nostr_relays_of_an_update() {
-    let mut w = pair_after_update(|c| c.only_local = true);
-    assert!(
-        w.count_events(PARENT, 0, |e| matches!(
-            e,
-            LinkEvent::MailboxesUpdated { .. }
-        )) >= 1,
-        "the set is still stored for later"
-    );
-    w.set_net(BABY, false);
-    w.advance(120_000);
-    assert!(w.nodes[PARENT].nostr_opens.is_empty());
 }
 
 #[test]

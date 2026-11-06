@@ -34,7 +34,9 @@ async function freePort(): Promise<number> {
 }
 
 /** Builds apps/web (once per call) and starts the server on a free loopback port. */
-export async function startProdServer(): Promise<ProdServer> {
+export async function startProdServer(
+  options: { connectOrigins?: readonly string[] } = {},
+): Promise<ProdServer> {
   if (!existsSync(binary)) throw new Error(`${binary} is missing: run \`just dev\` once`);
   // `--mode e2e`: the only production-style build that accepts loopback mailboxes (the server
   // runs on 127.0.0.1); the release and the image build in production mode. `--outDir dist-e2e`
@@ -46,6 +48,11 @@ export async function startProdServer(): Promise<ProdServer> {
       cwd: repoRoot,
       stdio: "pipe",
       timeout: 240_000,
+      // The origins a deployment adds to `connect-src` (apps/web/csp/csp.ts).
+      env: {
+        ...process.env,
+        GS_CSP_CONNECT_ORIGINS: (options.connectOrigins ?? []).join(","),
+      },
     },
   );
   const port = await freePort();

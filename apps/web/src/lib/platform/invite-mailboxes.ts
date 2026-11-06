@@ -2,10 +2,9 @@ import type { InviteMailbox } from "@guardedsleep/core-wasm";
 
 /**
  * The configured signaling URLs as invite mailboxes. Every configured address speaks the relay
- * protocol (the Nostr relays are named separately, see {@link nostrMailboxesForUrls}):
- * `wss://` is an own relay (`r:`), `ws://` can only be a LAN address (`l:`, the core accepts
- * RFC 1918 and ULA literals and, in dev builds, loopback). Other schemes are skipped, so the core
- * reports an empty invite as not valid.
+ * protocol: `wss://` is an own relay (`r:`), `ws://` can only be a LAN address (`l:`, the core
+ * accepts RFC 1918 and ULA literals and, in dev builds, loopback). Other schemes are skipped, so
+ * the core reports an empty invite as not valid.
  */
 export function mailboxesForUrls(urls: readonly string[]): InviteMailbox[] {
   const out: InviteMailbox[] = [];
@@ -49,25 +48,9 @@ function isPrivateOrLoopbackLiteral(host: string): boolean {
 }
 
 /**
- * The signaling URLs a parent opens for a received invite: relay and LAN mailboxes both use the
- * relay protocol and stay in the platform's address list. The Nostr mailboxes are not in it; the
- * core opens them itself (see {@link nostrMailboxesOf}).
+ * The signaling URLs of a received invite or mailbox update. They feed the ICE servers and the
+ * stored pairing; the core opens the mailboxes itself (every URL is one relay mailbox).
  */
 export function signalingUrlsOf(mailboxes: readonly InviteMailbox[]): string[] {
-  return mailboxes.filter((m) => m.kind !== "nostr").map((m) => m.url);
-}
-
-/** The public Nostr relays of an invite or a mailbox update, for the core's `mailboxes` setting. */
-export function nostrMailboxesOf(mailboxes: readonly InviteMailbox[]): InviteMailbox[] {
-  return mailboxes.filter((m) => m.kind === "nostr");
-}
-
-/**
- * Nostr relays as invite mailboxes. `wss://host` is a public relay; `ws://` is accepted only for a
- * loopback relay of a development or E2E build (the core's invite codec decides, this only maps).
- */
-export function nostrMailboxesForUrls(urls: readonly string[]): InviteMailbox[] {
-  return urls
-    .filter((url) => url.startsWith("wss://") || url.startsWith("ws://"))
-    .map((url) => ({ kind: "nostr" as const, url }));
+  return mailboxes.map((m) => m.url);
 }

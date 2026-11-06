@@ -6,7 +6,6 @@
 //! bytes>,"m":[<mailbox>, ...],"x":<expiry, epoch seconds>}`. One to [`MAX_MAILBOXES`] compact mailbox
 //! entries, each `<kind>:<address>`:
 //!
-//! - `n:<host>`: a Nostr relay, always `wss://<host>`;
 //! - `r:<host[:port][/path]>`: an own relay, always `wss://`;
 //! - `l:<ip>:<port>`: a LAN mailbox, always `ws://`; the address is RFC 1918 or RFC 4193 (ULA, written
 //!   `[fd00::1]:port`). Link-local, public, CGNAT (100.64/10) and host names are refused.
@@ -53,8 +52,6 @@ pub const INVITE_VERSION: u64 = 4;
 pub const MAX_MAILBOXES: usize = 6;
 /// Largest encoded invite in bytes (about QR version 13 at level M).
 pub const MAX_INVITE_BYTES: usize = 300;
-/// The drop order keeps at least this many Nostr relays.
-const MIN_NOSTR: usize = 2;
 
 /// Why a text is not an acceptable invite. The platform maps each variant to its own copy.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -87,8 +84,7 @@ impl std::fmt::Display for InviteError {
 
 impl std::error::Error for InviteError {}
 
-/// One mailbox of an invite: its kind and the URL the platform opens (`wss://host` for Nostr,
-/// `wss://host[:port][/path]` for an own relay, `ws://ip:port` for a LAN mailbox).
+/// One mailbox of an invite: its kind and the URL the platform opens (`wss://host[:port][/path]` for a relay, `ws://ip:port` for a LAN mailbox).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub struct InviteMailbox {
@@ -133,9 +129,9 @@ impl std::fmt::Debug for Invite {
 
 /// Builds the invite text. Rejects a key that is not 32 bytes, an empty mailbox list, a mailbox the
 /// grammar refuses and a zero expiry (`NotOurCode`), so the output always parses back. When the
-/// list exceeds the budget (6 entries, 300 bytes) entries are dropped in this order: extra own
-/// relays (last first), then Nostr relays (last first) down to two. A LAN mailbox and the first own
-/// relay are never dropped; if the invite is still over budget the build fails (`NotOurCode`).
+/// list exceeds the budget (6 entries, 300 bytes) extra relays are dropped (last first). A LAN
+/// mailbox and the first relay are never dropped; if the invite is still over budget the build
+/// fails (`NotOurCode`).
 pub fn build_invite(
     psk: &[u8],
     mailboxes: &[InviteMailbox],
@@ -191,27 +187,12 @@ pub fn validate_mailboxes(
 /// Index of the entry the budget drops next, or `None` when only protected entries remain.
 fn drop_candidate(kinds: &[MailboxKind]) -> Option<usize> {
     let first_relay = kinds.iter().position(|k| *k == MailboxKind::Relay);
-    let extra_relay = kinds
+    kinds
         .iter()
         .enumerate()
         .rev()
         .find(|(i, k)| **k == MailboxKind::Relay && Some(*i) != first_relay)
-        .map(|(i, _)| i);
-    if extra_relay.is_some() {
-        return extra_relay;
-    }
-    // "Nostr beyond 3, then down to 2" is one rule: the last Nostr entry goes while more than two
-    // remain; the invite stops shrinking as soon as it fits.
-    let nostr = kinds.iter().filter(|k| **k == MailboxKind::Nostr).count();
-    if nostr > MIN_NOSTR {
-        return kinds
-            .iter()
-            .enumerate()
-            .rev()
-            .find(|(_, k)| **k == MailboxKind::Nostr)
-            .map(|(i, _)| i);
-    }
-    None
+        .map(|(i, _)| i)
 }
 
 /// Parses a scanned QR text or a pasted code. Surrounding whitespace is ignored. `now_epoch_s` is
@@ -277,15 +258,6 @@ pub fn parse_invite(
 /// address itself is validated by [`parse_entry`].
 fn entry_text(m: &InviteMailbox) -> Option<String> {
     let (prefix, scheme) = match m.kind {
-        // A development `n:` entry names a loopback relay over `ws://` (see `parse_entry`).
-        MailboxKind::Nostr if m.url.starts_with("ws://") => {
-            return m
-                .url
-                .strip_prefix("ws://")
-                .filter(|rest| is_loopback_authority(rest))
-                .map(|rest| format!("n:{rest}"));
-        }
-        MailboxKind::Nostr => ("n:", "wss://"),
         MailboxKind::Relay => ("r:", "wss://"),
         MailboxKind::Lan => ("l:", "ws://"),
     };
@@ -298,23 +270,6 @@ fn entry_text(m: &InviteMailbox) -> Option<String> {
 fn parse_entry(entry: &str, allow_dev_loopback: bool) -> Option<InviteMailbox> {
     let (kind, rest) = entry.split_once(':')?;
     match kind {
-        "n" => is_hostname(rest)
-            .then(|| InviteMailbox {
-                kind: MailboxKind::Nostr,
-                url: format!("wss://{rest}"),
-            })
-            // Development only (the browser E2E runs a local Nostr relay): a loopback relay is
-            // reached over plain `ws://`, with a port.
-            .or_else(|| {
-                allow_dev_loopback
-                    .then(|| lan_authority(rest, true))
-                    .flatten()
-                    .filter(|authority| is_loopback_authority(authority))
-                    .map(|authority| InviteMailbox {
-                        kind: MailboxKind::Nostr,
-                        url: format!("ws://{authority}"),
-                    })
-            }),
         "r" => is_relay_address(rest).then(|| InviteMailbox {
             kind: MailboxKind::Relay,
             url: format!("wss://{rest}"),
@@ -325,13 +280,6 @@ fn parse_entry(entry: &str, allow_dev_loopback: bool) -> Option<InviteMailbox> {
         }),
         _ => None,
     }
-}
-
-/// `localhost:port`, `127.x.x.x:port` or `[::1]:port`.
-fn is_loopback_authority(authority: &str) -> bool {
-    authority.starts_with("localhost:")
-        || authority.starts_with("127.")
-        || authority.starts_with("[::1]:")
 }
 
 /// An ASCII DNS name: dot-separated labels of letters, digits and inner hyphens (an IPv4 literal
@@ -417,10 +365,6 @@ mod tests {
         mb(MailboxKind::Relay, &format!("wss://{host}"))
     }
 
-    fn nostr(host: &str) -> InviteMailbox {
-        mb(MailboxKind::Nostr, &format!("wss://{host}"))
-    }
-
     fn lan(authority: &str) -> InviteMailbox {
         mb(MailboxKind::Lan, &format!("ws://{authority}"))
     }
@@ -465,11 +409,11 @@ mod tests {
 
     #[test]
     fn build_emits_the_documented_shape() {
-        let text = build_invite(&psk(), &[nostr("relay.example.org")], 42, false).unwrap();
+        let text = build_invite(&psk(), &[relay("relay.example.org")], 42, false).unwrap();
         assert_eq!(
             text,
             format!(
-                r#"{{"v":4,"k":"{}","m":["n:relay.example.org"],"x":42}}"#,
+                r#"{{"v":4,"k":"{}","m":["r:relay.example.org"],"x":42}}"#,
                 good_key()
             )
         );
@@ -478,13 +422,13 @@ mod tests {
     #[test]
     fn every_kind_parses() {
         let inv = parse_m(
-            r#"["n:relay.example.org","r:gs.example.com:8443/sig","l:192.168.1.5:8787","l:[fd12:3456::1]:9000"]"#,
+            r#"["r:relay.example.org","r:gs.example.com:8443/sig","l:192.168.1.5:8787","l:[fd12:3456::1]:9000"]"#,
         )
         .unwrap();
         assert_eq!(
             inv.mailboxes,
             vec![
-                nostr("relay.example.org"),
+                relay("relay.example.org"),
                 relay("gs.example.com:8443/sig"),
                 lan("192.168.1.5:8787"),
                 lan("[fd12:3456::1]:9000"),
@@ -539,33 +483,30 @@ mod tests {
     }
 
     #[test]
-    fn a_loopback_nostr_relay_is_a_development_entry() {
-        let ok = payload(
+    fn the_removed_nostr_kind_is_not_our_code() {
+        // `n:` was the Nostr relay of an earlier alpha invite; it is no kind any more, in
+        // production and in development alike.
+        for entry in [
+            "n:relay.example.org",
+            "n:127.0.0.1:7777",
+            "n:localhost:7778",
+            "n:192.168.1.5:80",
+        ] {
+            let text = payload("4", &good_key(), &format!(r#"["{entry}"]"#), "4000000000");
+            assert_eq!(
+                parse_invite(&text, NOW, false),
+                Err(InviteError::NotOurCode)
+            );
+            assert_eq!(parse_invite(&text, NOW, true), Err(InviteError::NotOurCode));
+        }
+        // One `n:` entry spoils an otherwise valid invite.
+        let mixed = payload(
             "4",
             &good_key(),
-            r#"["n:127.0.0.1:7777","n:localhost:7778","n:[::1]:7779","n:relay.example.org"]"#,
+            r#"["r:a.example","n:relay.example.org"]"#,
             "4000000000",
         );
-        assert!(parse_invite(&ok, NOW, false).is_err());
-        let inv = parse_invite(&ok, NOW, true).unwrap();
-        assert_eq!(
-            inv.mailboxes,
-            vec![
-                mb(MailboxKind::Nostr, "ws://127.0.0.1:7777"),
-                mb(MailboxKind::Nostr, "ws://localhost:7778"),
-                mb(MailboxKind::Nostr, "ws://[::1]:7779"),
-                nostr("relay.example.org"),
-            ]
-        );
-        // A private LAN address is not a Nostr relay, even in development.
-        let lan_ip = payload("4", &good_key(), r#"["n:192.168.1.5:80"]"#, "4000000000");
-        assert!(parse_invite(&lan_ip, NOW, true).is_err());
-        let set = [mb(MailboxKind::Nostr, "ws://127.0.0.1:7777")];
-        let text = build_invite(&psk(), &set, NOW + 300, true).unwrap();
-        assert!(text.contains(r#""n:127.0.0.1:7777""#));
-        assert!(build_invite(&psk(), &set, NOW + 300, false).is_err());
-        assert!(validate_mailboxes(&set, true).is_some());
-        assert!(validate_mailboxes(&set, false).is_none());
+        assert_eq!(parse(&mixed), Err(InviteError::NotOurCode));
     }
 
     #[test]
@@ -599,7 +540,7 @@ mod tests {
     }
 
     #[test]
-    fn nostr_and_relay_entries_are_strict() {
+    fn relay_entries_are_strict() {
         for bad in [
             "n:",
             "n:host:443",
@@ -638,10 +579,8 @@ mod tests {
     fn schemes_must_match_the_kind() {
         let bad = [
             mb(MailboxKind::Relay, "ws://a.example"),
-            mb(MailboxKind::Nostr, "ws://a.example"),
             mb(MailboxKind::Lan, "wss://10.0.0.1:80"),
             mb(MailboxKind::Relay, "http://a.example"),
-            mb(MailboxKind::Nostr, "wss://a.example:443"),
             mb(MailboxKind::Lan, "ws://8.8.8.8:80"),
             mb(MailboxKind::Lan, "ws://[fe80::1]:80"),
             mb(MailboxKind::Lan, "ws://gs.local:80"),
@@ -658,13 +597,13 @@ mod tests {
     #[test]
     fn entry_count_is_one_to_six() {
         assert_eq!(parse_m("[]"), Err(InviteError::NotOurCode));
-        let six = r#"["n:a.example","n:b.example","n:c.example","n:d.example","n:e.example","n:f.example"]"#;
+        let six = r#"["r:a.example","r:b.example","r:c.example","r:d.example","r:e.example","r:f.example"]"#;
         assert!(parse_m(six).is_ok());
-        let seven = r#"["n:a.example","n:b.example","n:c.example","n:d.example","n:e.example","n:f.example","n:g.example"]"#;
+        let seven = r#"["r:a.example","r:b.example","r:c.example","r:d.example","r:e.example","r:f.example","r:g.example"]"#;
         assert_eq!(parse_m(seven), Err(InviteError::NotOurCode));
-        assert_eq!(parse_m(r#""n:a.example""#), Err(InviteError::NotOurCode));
+        assert_eq!(parse_m(r#""r:a.example""#), Err(InviteError::NotOurCode));
         assert_eq!(
-            parse_m(r#"["n:a.example",5]"#),
+            parse_m(r#"["r:a.example",5]"#),
             Err(InviteError::NotOurCode)
         );
     }
@@ -679,7 +618,7 @@ mod tests {
         };
         let make = |len: usize| {
             let host = format!("{}.example", pad(len));
-            payload("4", &good_key(), &format!(r#"["n:{host}"]"#), "4000000000")
+            payload("4", &good_key(), &format!(r#"["r:{host}"]"#), "4000000000")
         };
         let base = make(1).len();
         let at_limit = make(1 + MAX_INVITE_BYTES - base);
@@ -721,9 +660,9 @@ mod tests {
     fn fitting_lists_are_kept_whole() {
         let list = vec![
             relay("gs.example.com"),
-            nostr("a.example.org"),
-            nostr("b.example.org"),
-            nostr("c.example.org"),
+            relay("a.example.org"),
+            relay("b.example.org"),
+            relay("c.example.org"),
             lan("192.168.1.5:8787"),
         ];
         assert_eq!(built(&list), list);
@@ -733,56 +672,17 @@ mod tests {
     fn more_than_six_entries_are_dropped_to_six() {
         let list: Vec<_> = ["a", "b", "c", "d", "e", "f", "g"]
             .iter()
-            .map(|h| nostr(&format!("{h}.example.org")))
+            .map(|h| relay(&format!("{h}.example.org")))
             .collect();
         assert_eq!(built(&list), list[..6].to_vec());
     }
 
     #[test]
-    fn drops_extra_own_relays_before_nostr() {
+    fn drops_extra_relays_last_first_but_never_lan_or_the_first_relay() {
         let long = |c: &str| relay(&format!("{}.relay.example.com", c.repeat(61)));
-        let list = vec![
-            long("a"),
-            long("b"),
-            long("c"),
-            nostr("n1.example.org"),
-            nostr("n2.example.org"),
-            nostr("n3.example.org"),
-        ];
+        let list = vec![long("a"), long("b"), long("c"), lan("192.168.1.5:8787")];
         let kept = built(&list);
-        // Both extra own relays go (last first); every Nostr relay survives while it fits.
-        assert_eq!(
-            kept,
-            vec![
-                long("a"),
-                nostr("n1.example.org"),
-                nostr("n2.example.org"),
-                nostr("n3.example.org")
-            ]
-        );
-    }
-
-    #[test]
-    fn drops_nostr_down_to_two_but_never_lan_or_first_relay() {
-        let long = |c: &str| nostr(&format!("{}.nostr.example.org", c.repeat(45)));
-        let list = vec![
-            relay("gs.example.com"),
-            long("a"),
-            long("b"),
-            long("c"),
-            lan("192.168.1.5:8787"),
-        ];
-        let kept = built(&list);
-        assert!(kept.contains(&relay("gs.example.com")));
-        assert!(kept.contains(&lan("192.168.1.5:8787")));
-        let nostrs: Vec<_> = kept
-            .iter()
-            .filter(|m| m.kind == MailboxKind::Nostr)
-            .collect();
-        assert_eq!(nostrs.len(), 2);
-        // The earlier Nostr entries survive, the last goes first.
-        assert_eq!(nostrs[0], &long("a"));
-        assert_eq!(nostrs[1], &long("b"));
+        assert_eq!(kept, vec![long("a"), long("b"), lan("192.168.1.5:8787")]);
     }
 
     #[test]
@@ -796,22 +696,6 @@ mod tests {
             lan("[fd12:3456:789a:bcde:f012:3456:789a:bcdf]:65535"),
             lan("[fd12:3456:789a:bcde:f012:3456:789a:bcd0]:65535"),
         ];
-        assert_eq!(
-            build_invite(&psk(), &list, 4_000_000_000, false),
-            Err(InviteError::NotOurCode)
-        );
-    }
-
-    #[test]
-    fn two_nostr_floor_is_not_crossed() {
-        let long = |c: &str| {
-            nostr(&format!(
-                "{}.{}.nostr.example.org",
-                c.repeat(60),
-                c.repeat(60)
-            ))
-        };
-        let list = vec![long("a"), long("b")];
         assert_eq!(
             build_invite(&psk(), &list, 4_000_000_000, false),
             Err(InviteError::NotOurCode)
@@ -902,7 +786,6 @@ mod tests {
 
     fn mailbox_strategy() -> impl Strategy<Value = InviteMailbox> {
         prop_oneof![
-            host_strategy().prop_map(|h| nostr(&h)),
             (
                 host_strategy(),
                 proptest::option::of(1u16..),

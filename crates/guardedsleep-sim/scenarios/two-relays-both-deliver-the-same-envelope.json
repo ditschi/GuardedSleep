@@ -1,0 +1,69 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "two-relays-both-deliver-the-same-envelope",
+  "description": "Both relays are up and deliver every envelope. The receiver processes the first copy and drops the second after authentication, so the setup builds exactly one attempt per side and nothing is acted on twice.",
+  "seed": 1,
+  "relay_count": 2,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 40000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 10000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 10000
+    },
+    {
+      "peer": "baby",
+      "attempts": 1
+    },
+    {
+      "peer": "parent",
+      "attempts": 1
+    },
+    {
+      "peer": "baby",
+      "max_level": 0
+    },
+    {
+      "peer": "parent",
+      "max_level": 0
+    },
+    {
+      "peer": "baby",
+      "never": "link_lost"
+    },
+    {
+      "peer": "parent",
+      "never": "link_lost"
+    },
+    {
+      "peer": "parent",
+      "event": "peer_heartbeat",
+      "within_ms": [1000, 40000],
+      "count_min": 3
+    }
+  ]
+}

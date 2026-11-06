@@ -10,11 +10,8 @@ export interface SignalingListener {
   onClose(): void;
 }
 
-/** Opens a connection to the first reachable URL of the list. */
-export type SignalingFactory = (
-  urls: readonly string[],
-  listener: SignalingListener,
-) => SignalingSocket;
+/** Opens a connection to exactly `url`: the core names the address of every mailbox. */
+export type SignalingFactory = (url: string, listener: SignalingListener) => SignalingSocket;
 
 /** The subset of `WebSocket` the transport uses (a fake in tests). */
 export interface WebSocketLike {
@@ -32,15 +29,12 @@ export type WebSocketCtor = new (url: string) => WebSocketLike;
 const OPEN = 1;
 
 /**
- * Tries the URLs in order until one opens, starting at the URL that worked last (so a dead first
- * entry does not delay every reconnect the core asks for). When none opens the listener gets
- * `onClose` and the core schedules the next `open_mailbox` itself; the transport never retries.
+ * One WebSocket to the address the core named in `open_mailbox`. When it cannot be opened the
+ * listener gets `onClose` and the core schedules the next `open_mailbox` itself (backoff, failover
+ * to another relay mailbox); the transport never retries or tries another address.
  */
 export function createWebSocketSignaling(ctor: WebSocketCtor): SignalingFactory {
-  let start = 0;
-  return (urls, listener) => {
-    const list = urls.filter((u) => u.trim() !== "");
-    let index = 0;
+  return (url, listener) => {
     let socket: WebSocketLike | null = null;
     let opened = false;
     let done = false;
@@ -51,24 +45,12 @@ export function createWebSocketSignaling(ctor: WebSocketCtor): SignalingFactory 
       listener.onClose();
     };
 
-    const tryNext = (): void => {
-      if (done) return;
-      if (index >= list.length) return finish();
-      const slot = (start + index) % list.length;
-      const url = list[slot] ?? "";
-      index++;
-      let ws: WebSocketLike;
-      try {
-        ws = new ctor(url);
-      } catch {
-        // A malformed or blocked URL (for example ws: from an https page) counts as unreachable.
-        return tryNext();
-      }
+    try {
+      const ws = new ctor(url);
       socket = ws;
       ws.onopen = () => {
         if (done || socket !== ws) return;
         opened = true;
-        start = slot;
         listener.onOpen();
       };
       ws.onmessage = (ev) => {
@@ -81,12 +63,12 @@ export function createWebSocketSignaling(ctor: WebSocketCtor): SignalingFactory 
       };
       ws.onclose = () => {
         if (done || socket !== ws) return;
-        if (opened) finish();
-        else tryNext();
+        finish();
       };
-    };
-
-    tryNext();
+    } catch {
+      // A malformed or blocked URL (for example ws: from an https page) counts as unreachable.
+      finish();
+    }
 
     return {
       send(text) {

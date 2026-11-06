@@ -41,23 +41,7 @@ export interface DeviceStatus {
 }
 
 /**
- * One entry of a shipped relay list, as far as the choice needs it.
- */
-export interface RelayCandidate {
-    /**
-     * DNS name; the relay is `wss://<host>`.
-     */
-    host: string;
-    operator: string;
-    /**
-     * Who runs the machine; `None` when unknown or private (no hoster constraint).
-     */
-    hoster: string | null;
-}
-
-/**
- * One mailbox of an invite: its kind and the URL the platform opens (`wss://host` for Nostr,
- * `wss://host[:port][/path]` for an own relay, `ws://ip:port` for a LAN mailbox).
+ * One mailbox of an invite: its kind and the URL the platform opens (`wss://host[:port][/path]` for a relay, `ws://ip:port` for a LAN mailbox).
  */
 export interface InviteMailbox {
     kind: MailboxKind;
@@ -131,10 +115,9 @@ export interface LinkConfig {
      */
     device_name?: string;
     /**
-     * The pairing's mailbox set. The core opens its `nostr` entries itself (the platform opens one
-     * socket per `open_mailbox` and passes text frames); the `relay` and `lan` entries stay in the
-     * platform's address list for now. Baby: the set is also sent to the parent after each
-     * verification (the mailbox update); empty: none is sent.
+     * The pairing's mailbox set: every `relay` and `lan` entry is one relay mailbox the core opens
+     * at that address. Baby: the set is also sent to the parent after each verification (the
+     * mailbox update); empty: none is sent.
      */
     mailboxes?: InviteMailbox[];
     /**
@@ -143,8 +126,9 @@ export interface LinkConfig {
      */
     allow_dev_loopback?: boolean;
     /**
-     * "Only same Wi-Fi or my own server": the `nostr` entries of the set, of an invite and of a
-     * mailbox update are ignored, so no public relay is contacted from this device.
+     * "Only same Wi-Fi or my own server". Reserved for the project-server entries of the set
+     * (`alpha-connection-model` design section 8); the core does not read it since the Nostr
+     * mailboxes it used to switch off are gone.
      */
     only_local?: boolean;
 }
@@ -208,7 +192,7 @@ export type LinkInput = { type: "start"; entropy: number } | { type: "wall_clock
 
 export type LinkState = "connecting" | "connected" | "reconnecting" | "peer_stopped" | "failed_needs_user" | "stopped";
 
-export type MailboxKind = "relay" | "nostr" | "lan";
+export type MailboxKind = "relay" | "lan";
 
 export type Ringer = "normal" | "vibrate" | "silent" | "unknown";
 
@@ -255,30 +239,17 @@ export function conformanceEval(case_json: string): string;
 export function deriveRoomId(psk: Uint8Array): string;
 
 /**
- * Up to `max` more relays from this device's own list on top of the invite's `current` hosts
- * (a JSON array of host names); same shapes as [`pick_relays`].
- */
-export function extraRelays(psk: Uint8Array, candidates_json: string, parked_json: string, current_json: string, max: number): string;
-
-/**
  * JSON array of every UI key the core can emit.
  */
 export function messageKeys(): string;
 
 /**
  * Parses a scanned or pasted v4 invite. Returns JSON, `{"type":"ok","psk_b64url":..,"mailboxes":
- * [{"kind":"relay"|"nostr"|"lan","url":..}],"expires_at_epoch_s":..}` or `{"type":"error","error":
+ * [{"kind":"relay"|"lan","url":..}],"expires_at_epoch_s":..}` or `{"type":"error","error":
  * "not_our_code"|"incomplete_paste"|"expired"}`; the `packages/core-wasm` wrapper turns it into a
  * typed result. `now_epoch_s` is wall-clock seconds; `allow_dev_loopback` is for dev builds only.
  */
 export function parseInvite(text: string, now_epoch_s: number, allow_dev_loopback: boolean): string;
-
-/**
- * The public Nostr relays a baby adds to its invite, as a JSON array of `{"kind","url"}`.
- * `candidates_json` is the shipped list (`{"host","operator","hoster"}`), `parked_json` an array
- * of hosts to skip. Empty array for bad input.
- */
-export function pickRelays(psk: Uint8Array, candidates_json: string, parked_json: string, count: number): string;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
@@ -289,10 +260,8 @@ export interface InitOutput {
     readonly buildInvite: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
     readonly conformanceEval: (a: number, b: number, c: number) => void;
     readonly deriveRoomId: (a: number, b: number, c: number) => void;
-    readonly extraRelays: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => void;
     readonly messageKeys: (a: number) => void;
     readonly parseInvite: (a: number, b: number, c: number, d: number, e: number) => void;
-    readonly pickRelays: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
     readonly wasmlink_handle: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmlink_new: (a: number, b: number, c: number) => void;
     readonly wasmlink_roomId: (a: number, b: number) => void;

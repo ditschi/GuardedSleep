@@ -74,7 +74,7 @@ pub fn derive_room_id(psk: &[u8]) -> String {
 }
 
 /// Parses a scanned or pasted v4 invite. Returns JSON, `{"type":"ok","psk_b64url":..,"mailboxes":
-/// [{"kind":"relay"|"nostr"|"lan","url":..}],"expires_at_epoch_s":..}` or `{"type":"error","error":
+/// [{"kind":"relay"|"lan","url":..}],"expires_at_epoch_s":..}` or `{"type":"error","error":
 /// "not_our_code"|"incomplete_paste"|"expired"}`; the `packages/core-wasm` wrapper turns it into a
 /// typed result. `now_epoch_s` is wall-clock seconds; `allow_dev_loopback` is for dev builds only.
 #[wasm_bindgen(js_name = parseInvite)]
@@ -114,49 +114,6 @@ pub fn build_invite(
         allow_dev_loopback,
     )
     .map_err(|e| JsError::new(e.as_str()))
-}
-
-/// The public Nostr relays a baby adds to its invite, as a JSON array of `{"kind","url"}`.
-/// `candidates_json` is the shipped list (`{"host","operator","hoster"}`), `parked_json` an array
-/// of hosts to skip. Empty array for bad input.
-#[wasm_bindgen(js_name = pickRelays)]
-pub fn pick_relays(psk: &[u8], candidates_json: &str, parked_json: &str, count: u32) -> String {
-    let (Ok(candidates), Ok(parked)) = (
-        serde_json::from_str::<Vec<guardedsleep_core::relay_pick::RelayCandidate>>(candidates_json),
-        serde_json::from_str::<Vec<String>>(parked_json),
-    ) else {
-        return "[]".into();
-    };
-    let picked =
-        guardedsleep_core::relay_pick::pick_relays(psk, &candidates, &parked, count as usize);
-    serde_json::to_string(&picked).unwrap_or_else(|_| "[]".into())
-}
-
-/// Up to `max` more relays from this device's own list on top of the invite's `current` hosts
-/// (a JSON array of host names); same shapes as [`pick_relays`].
-#[wasm_bindgen(js_name = extraRelays)]
-pub fn extra_relays(
-    psk: &[u8],
-    candidates_json: &str,
-    parked_json: &str,
-    current_json: &str,
-    max: u32,
-) -> String {
-    let (Ok(candidates), Ok(parked), Ok(current)) = (
-        serde_json::from_str::<Vec<guardedsleep_core::relay_pick::RelayCandidate>>(candidates_json),
-        serde_json::from_str::<Vec<String>>(parked_json),
-        serde_json::from_str::<Vec<String>>(current_json),
-    ) else {
-        return "[]".into();
-    };
-    let picked = guardedsleep_core::relay_pick::extra_relays(
-        psk,
-        &candidates,
-        &parked,
-        &current,
-        max as usize,
-    );
-    serde_json::to_string(&picked).unwrap_or_else(|_| "[]".into())
 }
 
 #[wasm_bindgen(js_name = conformanceEval)]

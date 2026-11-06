@@ -10,7 +10,6 @@ use guardedsleep_core::link::{
 use guardedsleep_core::mailbox::MailboxKind;
 use guardedsleep_core::pairing::ParentSecret;
 use guardedsleep_core::protocol::{DeviceStatus, Dnd, IceCandidate, Ringer, Role, UnitWarning};
-use guardedsleep_core::relay_pick::RelayCandidate;
 use guardedsleep_core::session::{Action, Input, SessionConfig, SessionEvent, SessionState};
 
 #[uniffi::remote(Enum)]
@@ -113,12 +112,13 @@ pub struct LinkConfig {
     /// Parent: this device's name, sent to the baby over the verified DataChannel only (at most 64
     /// characters). Empty: no name.
     pub device_name: String,
-    /// The pairing's mailbox set; the core opens its `nostr` entries. Baby: also sent to the parent
-    /// after each verification. Empty: none is sent.
+    /// The pairing's mailbox set. Baby: also sent to the parent after each verification. Empty:
+    /// none is sent.
     pub mailboxes: Vec<InviteMailbox>,
     /// Development builds only: accept loopback `l:` entries in a received mailbox update.
     pub allow_dev_loopback: bool,
-    /// "Only same Wi-Fi or my own server": ignore the `nostr` entries of the set and of updates.
+    /// "Only same Wi-Fi or my own server". Reserved for the project-server entries; the core does
+    /// not read it at present.
     pub only_local: bool,
 }
 
@@ -130,28 +130,18 @@ pub struct ParentSecret {
     pub bytes: Vec<u8>,
 }
 
-/// One mailbox of an invite or of a mailbox update: its kind and the URL to open (`wss://host` for
-/// Nostr, `wss://host[:port][/path]` for an own relay, `ws://ip:port` for a LAN mailbox).
+/// One mailbox of an invite or of a mailbox update: its kind and the URL to open
+/// (`wss://host[:port][/path]` for a relay, `ws://ip:port` for a LAN mailbox).
 #[uniffi::remote(Record)]
 pub struct InviteMailbox {
     pub kind: MailboxKind,
     pub url: String,
 }
 
-/// One entry of the shipped relay list, as far as the deterministic pick needs it.
-#[uniffi::remote(Record)]
-pub struct RelayCandidate {
-    pub host: String,
-    pub operator: String,
-    pub hoster: Option<String>,
-}
-
 #[uniffi::remote(Enum)]
 pub enum MailboxKind {
     /// Our signaling relay (`signaling-relay`).
     Relay,
-    /// A Nostr relay (`n:` in an invite).
-    Nostr,
     /// A LAN mailbox (`l:` in an invite).
     Lan,
 }
@@ -192,8 +182,8 @@ pub enum LinkInput {
         entropy: u64,
     },
     /// The platform's wall clock in Unix seconds: at start, with ticks and after a time change.
-    /// Stored for the Nostr mailbox only (epoch, event times); never used for liveness or
-    /// escalation, which run on the monotonic clock.
+    /// Read for the `here` message and the `clock_skew` comparison with the peer only; never used
+    /// for liveness or escalation, which run on the monotonic clock.
     WallClock {
         unix_s: u64,
     },

@@ -4,12 +4,11 @@ import wasmUrl from "@guardedsleep/core-wasm/pkg/guardedsleep_wasm_bg.wasm?url";
 import type { AppController, CodeScanner } from "../contract";
 import { AlertPlayer, createSoundGate } from "./audio";
 import { watchBattery, type BatteryManagerLike } from "./battery";
-import { loopbackAllowed, publicRelaysEnabled } from "./build-mode";
+import { loopbackAllowed } from "./build-mode";
 import { createClock, createTimers } from "./clock";
 import { browserDeviceName } from "./device-name";
 import { createPageWatch, type WakeLockApi } from "./page-watch";
 import { createQrScanner, type BarcodeDetectorCtor } from "./qr-scanner";
-import { nostrRelayUrls } from "./public-relays";
 import { defaultSignalingUrls } from "./relay-stun";
 import { createWebSocketSignaling, type WebSocketCtor } from "./signaling";
 import { createWebMediaEngine } from "./web-media";
@@ -101,35 +100,7 @@ export async function createWebApp(): Promise<AppController> {
     defaultSignalingUrls: () => defaultSignalingUrls(window.location, import.meta.env.DEV),
     deviceName: () => browserDeviceName(navigator),
     allowDevLoopback,
-    nostrRelays: (psk) =>
-      nostrRelayUrls({
-        core,
-        psk,
-        devRelays: devNostrRelays(allowDevLoopback),
-        publicEnabled: publicRelaysEnabled(import.meta.env),
-      }),
   });
-}
-
-/**
- * A local Nostr test relay for `just dev` and the browser E2E (a JSON list of `ws://127.0.0.1:port`
- * under this key). A list that is set, even an empty one, replaces the curated public relays, so a
- * test that names its relays never reaches a public one. Release builds read nothing here. The
- * value is not secret and never pairing material.
- */
-const DEV_NOSTR_KEY = "guardedsleep:dev-nostr-relays";
-
-/** `null`: not set (or not a dev build). */
-function devNostrRelays(allowDevLoopback: boolean): string[] | null {
-  if (!allowDevLoopback) return null;
-  try {
-    const raw = localStorage.getItem(DEV_NOSTR_KEY);
-    if (raw === null) return null;
-    const list: unknown = JSON.parse(raw);
-    return Array.isArray(list) ? list.filter((u): u is string => typeof u === "string") : [];
-  } catch {
-    return [];
-  }
 }
 
 /** The camera scanner of the parent pairing screen (native `BarcodeDetector`, zxing otherwise). */

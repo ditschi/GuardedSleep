@@ -1,0 +1,54 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "single-attempt-setup",
+  "description": "A clean setup over one relay builds exactly one attempt per side: the baby waits briefly for the parent's request for an offer instead of offering at the same moment, so the two do not cross and nobody builds an attempt that the other side replaces.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 40000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 10000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 10000
+    },
+    {
+      "peer": "baby",
+      "attempts": 1
+    },
+    {
+      "peer": "parent",
+      "attempts": 1
+    },
+    {
+      "peer": "baby",
+      "never": "link_lost"
+    },
+    {
+      "peer": "parent",
+      "never": "link_lost"
+    }
+  ]
+}

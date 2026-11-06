@@ -1,30 +1,36 @@
 package org.guardedsleep.app
 
+import org.guardedsleep.app.config.PublicLists
 import org.guardedsleep.app.config.RelayStun
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class RelayStunTest {
     @Test
-    fun usesTheRelayHostOnTheStunPort() {
+    fun theDefaultIceServersAreTwoListedOperators() {
+        val urls = RelayStun.iceUrls(emptyList())
+        val operators =
+            urls.map { u -> PublicLists.stunServers.single { it.url == u }.operator }.distinct()
+        assertEquals(2, operators.size)
+        assertFalse(urls.any { it.contains("google") })
+    }
+
+    @Test
+    fun anOwnRelayUsesOnlyItsOwnStun() {
         assertEquals(
             listOf("stun:relay.example.org:3478"),
-            RelayStun.urls(listOf("wss://relay.example.org/ws")),
+            RelayStun.iceUrls(listOf("wss://relay.example.org/ws")),
         )
-        assertEquals(listOf("stun:10.0.2.2:3478"), RelayStun.urls(listOf("ws://10.0.2.2:8787")))
     }
 
     @Test
-    fun deduplicatesHostsAndBracketsIpv6() {
+    fun onlySameWifiAllowsNoPublicStun() {
+        assertEquals(emptyList<String>(), RelayStun.iceUrls(emptyList(), onlyLocal = true))
+        // An own relay's STUN is still its own.
         assertEquals(
-            listOf("stun:a.example:3478", "stun:[::1]:3478"),
-            RelayStun.urls(listOf("wss://a.example/x", "ws://a.example:8787", "ws://[::1]:8787")),
+            listOf("stun:10.0.2.2:3478"),
+            RelayStun.iceUrls(listOf("ws://10.0.2.2:8787"), onlyLocal = true),
         )
-    }
-
-    @Test
-    fun noRelayMeansNoStunAndNeverAPublicDefault() {
-        assertEquals(emptyList<String>(), RelayStun.urls(emptyList()))
-        assertEquals(emptyList<String>(), RelayStun.urls(listOf("not a url", "")))
     }
 }

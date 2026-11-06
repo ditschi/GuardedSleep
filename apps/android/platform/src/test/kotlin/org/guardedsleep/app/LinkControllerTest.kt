@@ -40,8 +40,6 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import uniffi.guardedsleep_core.DeviceStatus
 import uniffi.guardedsleep_core.IceCandidate
-import uniffi.guardedsleep_core.InviteMailbox
-import uniffi.guardedsleep_core.MailboxKind
 
 /**
  * In-memory signaling relay (the v3 server protocol) and fake WebRTC, so two real cores talk to
@@ -310,8 +308,6 @@ class LinkControllerTest {
         role: Role,
         hostThrows: Boolean = false,
         deviceName: String = "",
-        // Hermetic by default: a debug build would otherwise add the curated public relays.
-        nostrRelays: (ByteArray) -> List<InviteMailbox> = { emptyList() },
     ): Unit2 {
         val dir = tmp.newFolder(name)
         val settings = testSettings(dir)
@@ -349,7 +345,6 @@ class LinkControllerTest {
                 clock = RealClock(),
                 random = SecureRandom(),
                 deviceName = { deviceName },
-                nostrRelays = nostrRelays,
             )
         controller.updateSettings { it.copy(signalingUrls = listOf("wss://fake.example")) }
         controller.chooseRole(role)
@@ -494,32 +489,6 @@ class LinkControllerTest {
         )
         assertEquals(emptyList<StoredMailbox>(), baby.store.load()!!.mailboxes)
         assertTrue(!baby.store.load().toString().contains(baby.store.load()!!.parentSecretB64url!!))
-    }
-
-    @Test
-    fun theBabyNamesThePickedPublicRelaysInItsInvite() {
-        val picked =
-            listOf(
-                InviteMailbox(MailboxKind.NOSTR, "wss://one.example.net"),
-                InviteMailbox(MailboxKind.NOSTR, "wss://two.example.net"),
-            )
-        var seenPsk: ByteArray? = null
-        val baby =
-            unit(
-                "baby",
-                Role.BABY,
-                nostrRelays = {
-                    seenPsk = it
-                    picked
-                },
-            )
-        baby.controller.startPairing()
-        val invite = baby.controller.pairing.value!!.codePayload!!
-        // The own relay first, then the picked relays, as compact `n:` entries.
-        assertTrue(invite, invite.contains("\"n:one.example.net\""))
-        assertTrue(invite, invite.contains("\"n:two.example.net\""))
-        assertEquals(32, seenPsk?.size)
-        baby.controller.cancelPairing()
     }
 
     @Test

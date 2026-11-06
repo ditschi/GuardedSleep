@@ -168,11 +168,17 @@ This is the **only privacy-conformant software backup** for the parent-dead case
 
 ### F-8: Untrusted signaling infrastructure (`alpha-connection-model`)
 
-**Trigger**: a public Nostr relay, our relay, a LAN relay or a STUN operator misbehaves (drops, delays, replays, floods) or simply observes.
+**Trigger**: the project server, an own relay, a LAN relay, the project TURN or a STUN operator misbehaves (drops, delays, replays, floods), is operated badly, or simply observes.
 
-**What it learns**: IP addresses and the times the devices set up or recover a connection; on Nostr also the daily tag and public keys, and, because GuardedSleep uses one fixed event kind, anyone can count GuardedSleep setups on relays that retain ephemeral events. The three relays of a pairing stay the same across days until a mailbox update. Because the event kind is fixed, everything in the events (daily public keys, tag, `created_at`, role and class from the envelope header, presence cadence) is visible to anyone who subscribes on that relay, not only to its operator. The listening window around the 12:00 UTC epoch change links one day's keys to the next for an operator, and the 6 s resend shows a relay that an envelope went unanswered; both are inherent and accepted. Envelopes are sealed (no SDP, candidates, fingerprints or names), but there is no forward secrecy: a later PSK compromise (F-7) decrypts retained envelopes (SDP and IPs, never audio).
+**What it learns**: the project operator sees the IP address and the timing of every default family: when each device sets up or recovers a connection, and, while a call is relayed, when it runs and how much traffic it carries. A relayed call also reveals the peers' LAN addresses to the operator (the ICE candidates of the call), and TURN relays the encrypted media (DTLS-SRTP, so never audio in the clear). Signaling envelopes are sealed (no SDP, candidates, fingerprints or names), but there is no forward secrecy: a later PSK compromise (F-7) decrypts retained envelopes (SDP and IPs, never audio). The 6 s resend shows a relay that an envelope went unanswered; this is inherent and accepted. An own relay or a LAN relay sees the same connection metadata for its own families.
 
-**What it cannot do**: hear the baby, fake "monitored" (liveness runs on the DataChannel), mute escalation (stops are bound to confirmed sessions), or take over the baby after the first pairing (parent secret over DTLS). A PSK holder can still squat the single parent slot on an own relay or a LAN relay: denial of service only, escalation still runs.
+**What it cannot do**: hear the baby, fake "monitored" (liveness runs on the DataChannel), mute escalation (stops are bound to confirmed sessions), or take over the baby after the first pairing (parent secret over DTLS). A PSK holder can still squat the single parent slot on a relay: denial of service only, escalation still runs.
+
+**Operator-side risks that stay** (`alpha-connection-model`, project server):
+
+- **Single point of failure:** one project server carries every default family. It is down for all of them at once; a family with an own relay or LAN keeps its other mailboxes, and a verified link does not need any mailbox.
+- **Domain lapse or DNS account takeover:** whoever controls `gs.mydata.rocks` receives the signaling and the TURN traffic of every default family until the apps ship another address. Sealed envelopes and DTLS limit this to metadata and denial of service; it is a reason to keep the domain and DNS accounts under strong authentication and long renewal.
+- **TURN exhaustion by many addresses:** an attacker with many source addresses can use up relay bandwidth or allocations; credentials are short-lived, issued per room member and capped per address, which limits but does not remove this.
 
 **Residual risk**: at the first pairing, whoever verifies first within the 5-minute invite is pinned; the baby shows the parent device's name with "Not my device".
 

@@ -18,6 +18,7 @@ const config = (role: LinkConfig["role"]): LinkConfig => ({
   alarm_after_ms: 60_000,
   noise_threshold: 0.12,
   noise_hold_ms: 800,
+  mailboxes: [{ kind: "relay", url: "wss://relay.test" }],
 });
 
 /** Recorded from the real core (parent, entropy 42): start, open, close, 60 s without contact. */
@@ -26,7 +27,7 @@ const RECORDED: { at: number; input: object; actions: LinkAction[] }[] = [
     at: 1000,
     input: { type: "start", entropy: 42 },
     actions: [
-      { type: "open_mailbox", id: 0, kind: "relay", url: "" },
+      { type: "open_mailbox", id: 0, kind: "relay", url: "wss://relay.test" },
       {
         type: "emit",
         event: {
@@ -58,7 +59,7 @@ const RECORDED: { at: number; input: object; actions: LinkAction[] }[] = [
   {
     at: 2000,
     input: { type: "mailbox_closed", id: 0, reason: "closed" },
-    actions: [{ type: "open_mailbox", id: 0, kind: "relay", url: "" }],
+    actions: [{ type: "open_mailbox", id: 0, kind: "relay", url: "wss://relay.test" }],
   },
   {
     at: 62_000,
@@ -119,7 +120,7 @@ describe("core-wasm wrapper", () => {
     const psk = Uint8Array.from({ length: 32 }, (_, i) => i);
     const mailboxes: InviteMailbox[] = [
       { kind: "relay", url: "wss://gs.example.com:8443/sig" },
-      { kind: "nostr", url: "wss://relay.example.org" },
+      { kind: "relay", url: "wss://relay.example.org" },
       { kind: "lan", url: "ws://10.0.2.2:8787" },
     ];
     const now = 1_700_000_000;
@@ -130,7 +131,7 @@ describe("core-wasm wrapper", () => {
       expect(JSON.parse(built.text)).toEqual({
         v: 4,
         k: PSK,
-        m: ["r:gs.example.com:8443/sig", "n:relay.example.org", "l:10.0.2.2:8787"],
+        m: ["r:gs.example.com:8443/sig", "r:relay.example.org", "l:10.0.2.2:8787"],
         x: now + 300,
       });
       const parsed = core.parseInvite(` ${built.text}\n`, now);
@@ -187,30 +188,9 @@ describe("core-wasm wrapper", () => {
     });
   });
 
-  describe("relay pick", () => {
-    const psk = Uint8Array.from({ length: 32 }, (_, i) => i);
-    const list = ["a", "b", "c", "d", "e", "f"].map((id) => ({
-      host: `${id}.example.net`,
-      operator: id.toUpperCase(),
-      hoster: null,
-    }));
-
-    it("picks three nostr mailboxes from distinct operators, the same way every time", () => {
-      const picked = core.pickRelays(psk, list);
-      expect(picked).toHaveLength(3);
-      expect(picked.every((m) => m.kind === "nostr" && m.url.startsWith("wss://"))).toBe(true);
-      expect(core.pickRelays(psk, list)).toEqual(picked);
-    });
-
-    it("skips parked relays and builds extras beside the invite's hosts", () => {
-      const picked = core.pickRelays(psk, list);
-      const first = (picked[0]?.url ?? "").replace("wss://", "");
-      expect(core.pickRelays(psk, list, [first]).map((m) => m.url)).not.toContain(`wss://${first}`);
-      const current = picked.map((m) => m.url.replace("wss://", ""));
-      const extra = core.extraRelays(psk, list, current);
-      expect(extra).toHaveLength(2);
-      for (const m of extra) expect(picked.map((p) => p.url)).not.toContain(m.url);
-    });
+  it("refuses an n: invite entry of the removed Nostr kind", () => {
+    const text = JSON.stringify({ v: 4, k: PSK, m: ["n:relay.example.org"], x: 1_700_000_300 });
+    expect(core.parseInvite(text, 1_700_000_000)).toEqual({ ok: false, error: "not_our_code" });
   });
 
   it("fails loudly when the core returns an unknown action", () => {
@@ -228,8 +208,6 @@ describe("core-wasm wrapper", () => {
       deriveRoomId: () => "",
       parseInvite: () => "{}",
       buildInvite: () => "",
-      pickRelays: () => "[]",
-      extraRelays: () => "[]",
       conformanceEval: () => "{}",
     });
     expect(() => fake.createLink(config("baby")).handle(0, { type: "tick" })).toThrow(

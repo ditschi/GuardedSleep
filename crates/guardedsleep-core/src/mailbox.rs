@@ -5,11 +5,8 @@
 //! `mailbox_opened`, `mailbox_closed` and `mailbox_frame` back. A platform never reconnects, fails
 //! over or retries a mailbox on its own.
 //!
-//! The set holds the `relay` mailbox (our signaling server, JSON text frames of the relay protocol,
-//! id [`RELAY_MAILBOX`]) and one `nostr` mailbox per Nostr entry of the pairing (public relays,
-//! NIP-01 frames, ids from 1). The `lan` kind joins with `add-offline-lan`.
-
-use std::collections::VecDeque;
+//! The set holds one mailbox per `relay` entry of the pairing (JSON text frames of the relay
+//! protocol; the mailbox id is its position). The LAN listener joins with `add-offline-lan`.
 
 use serde::{Deserialize, Serialize};
 
@@ -20,17 +17,12 @@ use crate::protocol::Member;
 /// are the platform's to discard).
 pub type MailboxId = u32;
 
-/// The only mailbox of the first stage: our relay.
-pub const RELAY_MAILBOX: MailboxId = 0;
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub enum MailboxKind {
     /// Our signaling relay (`signaling-relay`): `hello`/`welcome`/`members`/`peer`/`signal`.
     Relay,
-    /// A Nostr relay (`n:` in an invite); its wire protocol joins with task 3.5.
-    Nostr,
     /// A LAN mailbox (`l:` in an invite); the listener joins with `add-offline-lan`.
     Lan,
 }
@@ -45,14 +37,13 @@ pub enum MailboxState {
     Joined,
 }
 
-/// One mailbox with the state its kind's protocol needs. The relay fields (`client_id`,
-/// `members`) are meaningful for the `relay` kind only.
+/// One relay-protocol mailbox with the state its protocol needs: transport state, backoff, room
+/// membership on this relay and what the core learned from the peer on it.
 #[derive(Debug)]
 pub(crate) struct Mailbox {
     pub id: MailboxId,
     pub kind: MailboxKind,
-    /// The address to open. Empty means "the platform's configured address" (the first stage keeps
-    /// the URL list on the platform; invite v4, task 3.3, moves it into the core).
+    /// The address the platform opens for this mailbox (one `r:` or `l:` entry of the pairing).
     pub url: String,
     pub state: MailboxState,
     pub changed_at: u64,
@@ -62,14 +53,24 @@ pub(crate) struct Mailbox {
     pub last_ping: u64,
     pub client_id: Option<String>,
     pub members: Vec<Member>,
+    /// Relay client ids of the members that carry the peer's role, as of the last `members`.
+    pub known_peers: Vec<String>,
+    /// The client id the peer's confirmed session last spoke from on this relay. A confirmed
+    /// session counts as reachable here only while a member with this id exists.
+    pub peer_client: Option<String>,
+    /// Unsolicited `here`s sent since a peer member appeared on this relay, and the next repeat.
+    pub here_sent: u32,
+    pub here_next_at: u64,
+    /// This relay answered `hello` with `UNSUPPORTED_PROTOCOL` (cleared by a `welcome`).
+    pub unsupported: bool,
 }
 
 impl Mailbox {
-    fn relay() -> Self {
+    fn new(id: MailboxId, kind: MailboxKind, url: String) -> Self {
         Self {
-            id: RELAY_MAILBOX,
-            kind: MailboxKind::Relay,
-            url: String::new(),
+            id,
+            kind,
+            url,
             state: MailboxState::Closed,
             changed_at: 0,
             failures: 0,
@@ -78,142 +79,89 @@ impl Mailbox {
             last_ping: 0,
             client_id: None,
             members: Vec::new(),
-        }
-    }
-}
-
-/// A sealed envelope waiting for its turn on a Nostr relay. It is wrapped in a freshly signed
-/// event at the moment it is sent, so a resend of the same envelope is a new event.
-#[derive(Debug, Clone)]
-pub(crate) struct Outgoing {
-    pub sealed: Vec<u8>,
-    /// Presence (`here`) still goes when the hourly budget is used up.
-    pub presence: bool,
-}
-
-/// One Nostr mailbox: a public relay and the per-relay policy state (pacing, budget, parking).
-#[derive(Debug)]
-pub(crate) struct NostrBox {
-    pub id: MailboxId,
-    pub url: String,
-    /// `Closed`, `Opening` (waiting for the socket) or `Open` (socket up, subscribed or subscribing).
-    pub state: MailboxState,
-    pub changed_at: u64,
-    pub failures: u32,
-    pub next_open_at: u64,
-    /// The relay is left out until this time (a refusal, forged events or a flood).
-    pub parked_until: u64,
-    pub park_level: u32,
-    pub last_park_at: Option<u64>,
-    /// The id of our one subscription on this relay (random per socket).
-    pub sub_id: String,
-    /// The epochs of the last `REQ`, to notice a rollover.
-    pub sub_epochs: Vec<u32>,
-    pub sub_sent_at: u64,
-    /// The relay must answer the `REQ` (EOSE or CLOSED) before this time.
-    pub eose_deadline: Option<u64>,
-    pub outbox: VecDeque<Outgoing>,
-    pub last_send_at: Option<u64>,
-    pub hour_start: u64,
-    pub hour_sent: u32,
-    pub rx_start: u64,
-    pub rx_count: u32,
-    pub bad_start: u64,
-    pub bad_count: u32,
-    /// A reachability check is waiting for EOSE on this subscription id.
-    pub probe_sub: Option<String>,
-    /// Ids of the most recent verified events: a relay that serves the same event again (strfry
-    /// retention, a re-subscription, a replaying third party) is dropped before it is counted.
-    pub seen: VecDeque<String>,
-    /// The newest `created_at` of a verified event, for the next `since`.
-    pub newest_seen: Option<u64>,
-    pub frames_start: u64,
-    pub frames_count: u32,
-    /// When the opening `here` last went to this relay.
-    pub opened_here_at: Option<u64>,
-    /// Presence events sent beyond the hourly cap in this hour window.
-    pub presence_over: u32,
-    /// When this relay refused an event for its creation time (last 30 minutes).
-    pub clock_refusals: Vec<u64>,
-    /// When this relay last accepted an event with `OK true`.
-    pub ok_at: Option<u64>,
-}
-
-impl NostrBox {
-    pub fn new(id: MailboxId, url: String) -> Self {
-        Self {
-            id,
-            url,
-            state: MailboxState::Closed,
-            changed_at: 0,
-            failures: 0,
-            next_open_at: 0,
-            parked_until: 0,
-            park_level: 0,
-            last_park_at: None,
-            sub_id: String::new(),
-            sub_epochs: Vec::new(),
-            sub_sent_at: 0,
-            eose_deadline: None,
-            outbox: VecDeque::new(),
-            last_send_at: None,
-            hour_start: 0,
-            hour_sent: 0,
-            rx_start: 0,
-            rx_count: 0,
-            bad_start: 0,
-            bad_count: 0,
-            probe_sub: None,
-            seen: VecDeque::new(),
-            newest_seen: None,
-            frames_start: 0,
-            frames_count: 0,
-            opened_here_at: None,
-            presence_over: 0,
-            clock_refusals: Vec::new(),
-            ok_at: None,
+            known_peers: Vec::new(),
+            peer_client: None,
+            here_sent: 0,
+            here_next_at: 0,
+            unsupported: false,
         }
     }
 
-    /// Socket up and the relay is in use (not a reachability check).
-    pub fn is_open(&self) -> bool {
-        self.state == MailboxState::Open && self.probe_sub.is_none()
-    }
-
-    pub fn reset_connection(&mut self) {
-        self.state = MailboxState::Closed;
-        self.sub_epochs.clear();
-        self.eose_deadline = None;
-        self.outbox.clear();
-        self.last_send_at = None;
-        self.probe_sub = None;
+    pub fn peer_present(&self) -> bool {
+        !self.known_peers.is_empty()
     }
 }
 
-/// The set: the relay mailbox and the Nostr mailboxes of the pairing.
+/// The set: one mailbox per `relay` or `lan` entry of the pairing (a LAN signaling server speaks
+/// the relay protocol too), with ids 0, 1, ... in the order of the entries. The LAN listener of
+/// `add-offline-lan` joins later.
 #[derive(Debug)]
 pub(crate) struct MailboxSet {
-    pub relay: Mailbox,
-    pub nostr: Vec<NostrBox>,
-    next_id: MailboxId,
+    pub relays: Vec<Mailbox>,
 }
 
 impl MailboxSet {
-    pub fn new() -> Self {
-        Self {
-            relay: Mailbox::relay(),
-            nostr: Vec::new(),
-            next_id: RELAY_MAILBOX + 1,
+    /// `entries` are the validated `(kind, url)` pairs; duplicates by URL are dropped.
+    pub fn new(entries: &[(MailboxKind, String)]) -> Self {
+        let mut relays: Vec<Mailbox> = Vec::new();
+        for (kind, url) in entries {
+            if relays.iter().any(|m| m.url == *url) {
+                continue;
+            }
+            let id = u32::try_from(relays.len()).unwrap_or(u32::MAX);
+            relays.push(Mailbox::new(id, *kind, url.clone()));
         }
+        Self { relays }
     }
 
-    /// A Nostr mailbox for `url` (an existing one keeps its id and state).
-    pub fn add_nostr(&mut self, url: &str) {
-        if self.nostr.iter().any(|b| b.url == url) {
-            return;
-        }
-        let id = self.next_id;
-        self.next_id = self.next_id.saturating_add(1);
-        self.nostr.push(NostrBox::new(id, url.to_owned()));
+    pub fn get(&self, id: MailboxId) -> Option<&Mailbox> {
+        self.relays.get(id as usize)
+    }
+
+    pub fn get_mut(&mut self, id: MailboxId) -> Option<&mut Mailbox> {
+        self.relays.get_mut(id as usize)
+    }
+
+    /// No mailbox holds a socket (also true for an empty set).
+    pub fn all_closed(&self) -> bool {
+        self.relays.iter().all(|m| m.state == MailboxState::Closed)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn set() -> MailboxSet {
+        MailboxSet::new(&[
+            (MailboxKind::Relay, "wss://a.test".into()),
+            (MailboxKind::Lan, "ws://10.0.0.1:1".into()),
+            (MailboxKind::Relay, "wss://a.test".into()),
+        ])
+    }
+
+    #[test]
+    fn ids_are_positions_and_duplicates_collapse() {
+        let s = set();
+        assert_eq!(s.relays.len(), 2);
+        assert_eq!(s.get(1).map(|m| m.url.as_str()), Some("ws://10.0.0.1:1"));
+        assert!(s.get(2).is_none());
+    }
+
+    #[test]
+    fn get_mut_addresses_by_id() {
+        let mut s = set();
+        s.get_mut(1).unwrap().state = MailboxState::Open;
+        assert_eq!(s.relays[1].state, MailboxState::Open);
+        assert!(s.get_mut(9).is_none());
+    }
+
+    #[test]
+    fn all_closed_follows_the_states() {
+        let mut s = set();
+        assert!(s.all_closed());
+        s.get_mut(0).unwrap().state = MailboxState::Opening;
+        assert!(!s.all_closed());
+        assert!(MailboxSet::new(&[]).all_closed());
     }
 }

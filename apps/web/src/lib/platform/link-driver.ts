@@ -44,7 +44,6 @@ const WALL_CLOCK_JUMP_MS = 2_000;
 
 export interface LinkDriverOptions {
   config: LinkConfig;
-  signalingUrls: readonly string[];
   core: Pick<CoreApi, "createLink">;
   signaling: SignalingFactory;
   media: MediaEngine;
@@ -115,9 +114,10 @@ export class LinkDriver {
   }
 
   /**
-   * The wall clock in Unix seconds, for the core's Nostr epochs only (never liveness): sent at start,
-   * every 60 s, and when a tick sees the clock jump (more than 2 s off the elapsed monotonic time
-   * since the last report), which covers a changed device time.
+   * The wall clock in Unix seconds, for the `here` message and the clock comparison with the peer
+   * only (never liveness): sent at start, every 60 s, and when a tick sees the clock jump (more
+   * than 2 s off the elapsed monotonic time since the last report), which covers a changed device
+   * time.
    */
   private reportWallClock(): void {
     const wallMs = Date.now();
@@ -216,8 +216,7 @@ export class LinkDriver {
   }
 
   /**
-   * The core's `url` is empty for the relay mailbox: its URL list still lives here. A Nostr mailbox
-   * names its relay, and only that address is tried. A failed open comes back as
+   * Opens exactly the address the core named for mailbox `id`. A failed open comes back as
    * `mailbox_closed`, never as a retry.
    */
   private openMailbox(id: number, url: string): void {
@@ -225,12 +224,12 @@ export class LinkDriver {
     const gen = ++this.socketGen;
     // Callbacks of a replaced socket are dropped; the core only hears about the current one.
     const current = (): boolean => this.sockets.get(id)?.gen === gen;
-    const socket = this.o.signaling(url === "" ? this.o.signalingUrls : [url], {
+    const socket = this.o.signaling(url, {
       onOpen: () => {
         if (current()) this.dispatch({ type: "mailbox_opened", id });
       },
       onMessage: (bytes) => {
-        // A frame over the cap is dropped here (a public relay is untrusted); the core caps too.
+        // A frame over the cap is dropped here (a relay is untrusted); the core caps too.
         if (current() && bytes.length <= MAX_FRAME_CHARS) {
           this.dispatch({ type: "mailbox_frame", id, bytes });
         }

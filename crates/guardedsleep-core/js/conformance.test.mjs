@@ -107,12 +107,14 @@ test("wasm link: parent joins, announces itself sealed and exposes the PSK-deriv
       alarm_after_ms: 60000,
       noise_threshold: 0.2,
       noise_hold_ms: 300,
+      mailboxes: [{ kind: "relay", url: "wss://relay.test" }],
     }),
   );
   assert.equal(link.roomId(), "J8uOkdP8JbRE_-Q9zX1rxA");
   const step = (now, input) => JSON.parse(link.handle(now, JSON.stringify(input)));
   const first = step(0, { type: "start", entropy: 1 });
   assert.equal(first[0].type, "open_mailbox");
+  assert.equal(first[0].url, "wss://relay.test");
   step(1, { type: "mailbox_opened", id: 0 });
   step(2, {
     type: "mailbox_frame",

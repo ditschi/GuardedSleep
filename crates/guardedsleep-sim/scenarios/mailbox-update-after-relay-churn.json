@@ -13,12 +13,12 @@
           "url": "wss://old-relay.example"
         },
         {
-          "kind": "nostr",
-          "url": "wss://nostr-a.example"
+          "kind": "relay",
+          "url": "wss://relay-a.example"
         },
         {
-          "kind": "nostr",
-          "url": "wss://nostr-b.example"
+          "kind": "relay",
+          "url": "wss://relay-b.example"
         }
       ]
     },
@@ -50,12 +50,12 @@
           "url": "wss://new-relay.example"
         },
         {
-          "kind": "nostr",
-          "url": "wss://nostr-a.example"
+          "kind": "relay",
+          "url": "wss://relay-a.example"
         },
         {
-          "kind": "nostr",
-          "url": "wss://nostr-c.example"
+          "kind": "relay",
+          "url": "wss://relay-c.example"
         }
       ]
     },
@@ -75,12 +75,12 @@
             "url": "wss://old-relay.example"
           },
           {
-            "kind": "nostr",
-            "url": "wss://nostr-a.example"
+            "kind": "relay",
+            "url": "wss://relay-a.example"
           },
           {
-            "kind": "nostr",
-            "url": "wss://nostr-b.example"
+            "kind": "relay",
+            "url": "wss://relay-b.example"
           }
         ]
       },
@@ -97,12 +97,12 @@
             "url": "wss://new-relay.example"
           },
           {
-            "kind": "nostr",
-            "url": "wss://nostr-a.example"
+            "kind": "relay",
+            "url": "wss://relay-a.example"
           },
           {
-            "kind": "nostr",
-            "url": "wss://nostr-c.example"
+            "kind": "relay",
+            "url": "wss://relay-c.example"
           }
         ]
       },

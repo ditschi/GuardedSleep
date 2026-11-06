@@ -401,7 +401,7 @@ fn the_baby_sends_its_mailbox_set_after_verification_and_the_parent_stores_it() 
     let mut baby = cfg(Role::Baby, &PSK_A);
     let sent = set(&[
         (MailboxKind::Relay, "wss://relay.example"),
-        (MailboxKind::Nostr, "wss://nostr.example"),
+        (MailboxKind::Lan, "ws://192.168.1.5:8787"),
     ]);
     baby.mailboxes = sent.clone();
     w.add_node(baby);
@@ -422,7 +422,10 @@ fn an_invalid_mailbox_set_is_never_sent_or_stored() {
     let mut w = World::empty();
     let mut baby = cfg(Role::Baby, &PSK_A);
     // A LAN mailbox must be a private address; this one is public.
-    baby.mailboxes = set(&[(MailboxKind::Lan, "ws://8.8.8.8:1234")]);
+    baby.mailboxes = set(&[
+        (MailboxKind::Relay, "wss://relay.test"),
+        (MailboxKind::Lan, "ws://8.8.8.8:1234"),
+    ]);
     w.add_node(baby);
     w.add_node(cfg(Role::Parent, &PSK_A));
     w.connect_pair();
@@ -433,6 +436,8 @@ fn an_invalid_mailbox_set_is_never_sent_or_stored() {
 fn a_received_set_that_breaks_the_invite_rules_is_dropped() {
     let mut w = World::pair(&PSK_A, &PSK_A);
     w.connect_pair();
+    // The baby's own (valid) set arrived with the verification; only what follows is counted.
+    let before = updates(&w, PARENT).len();
     let bad = serde_json::json!({
         "type": "mailboxes", "v": 3,
         "mailboxes": [{"kind": "lan", "url": "ws://8.8.8.8:1234"}]
@@ -441,11 +446,11 @@ fn a_received_set_that_breaks_the_invite_rules_is_dropped() {
     w.inject_data(PARENT, &bad);
     let too_many = serde_json::json!({
         "type": "mailboxes", "v": 3,
-        "mailboxes": (0..7).map(|i| serde_json::json!({"kind":"nostr","url":format!("wss://n{i}.example")})).collect::<Vec<_>>()
+        "mailboxes": (0..7).map(|i| serde_json::json!({"kind":"relay","url":format!("wss://r{i}.example")})).collect::<Vec<_>>()
     })
     .to_string();
     w.inject_data(PARENT, &too_many);
-    assert!(updates(&w, PARENT).is_empty());
+    assert_eq!(updates(&w, PARENT).len(), before);
 }
 
 #[test]

@@ -22,7 +22,7 @@
     "pinned_parent": null,
     "pin_window_until_s": null,
     "device_name": "",
-    "mailboxes": [],
+    "mailboxes": [{ "kind": "relay", "url": "wss://relay-0.invalid" }],
     "allow_dev_loopback": false,
     "only_local": false
   },
@@ -212,7 +212,7 @@
   ],
   "expect": [
     [
-      { "type": "open_mailbox", "id": 0, "kind": "relay", "url": "" },
+      { "type": "open_mailbox", "id": 0, "kind": "relay", "url": "wss://relay-0.invalid" },
       {
         "type": "emit",
         "event": {

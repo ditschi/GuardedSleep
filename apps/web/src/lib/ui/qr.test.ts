@@ -12,15 +12,15 @@ import { QR_MARGIN, qrShape, type QrShape } from "./qr";
 const core = loadCoreNode();
 const psk = Uint8Array.from({ length: 32 }, (_, i) => i + 7);
 
-/** A fully used invite: own relay, three Nostr relays and a LAN mailbox, close to the 300 byte limit. */
+/** A fully used invite: a relay, three further relays and a LAN mailbox, close to the 300 byte limit. */
 function maxInvite(): string {
   const built = core.buildInvite(
     psk,
     [
       { kind: "relay", url: "wss://signaling.gs-operator.example.org:8443/gs/signal" },
-      { kind: "nostr", url: "wss://nostr-relay-one.operator-a.example.eu" },
-      { kind: "nostr", url: "wss://nostr-relay-two.operator-b.example.ch" },
-      { kind: "nostr", url: "wss://nostr-relay-three.operator-c.example.de" },
+      { kind: "relay", url: "wss://relay-one.operator-a.example.eu" },
+      { kind: "relay", url: "wss://relay-two.operator-b.example.ch" },
+      { kind: "relay", url: "wss://relay-three.operator-c.example.de" },
       { kind: "lan", url: "ws://192.168.178.100:8787" },
     ],
     1_900_000_000,

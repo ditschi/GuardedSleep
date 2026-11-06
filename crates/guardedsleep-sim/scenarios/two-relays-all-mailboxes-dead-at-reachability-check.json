@@ -1,0 +1,99 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "two-relays-all-mailboxes-dead-at-reachability-check",
+  "description": "A verified pair names two relays and holds no mailbox. Both relays are down when the 30-minute reachability check runs: nothing is reachable, both devices raise the calm hint recovery_path_unavailable and monitoring continues. The next check finds the relays again and clears the hint. A check is a connect and a ping on each socket that never says hello, so it carries no pairing identifier.",
+  "seed": 1,
+  "max_seeds": 3,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 1700000,
+      "do": "signaling_down"
+    },
+    {
+      "at": 1900000,
+      "do": "signaling_up"
+    },
+    {
+      "at": 3700000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 3690000
+    },
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 3690000
+    },
+    {
+      "peer": "parent",
+      "event": "hint",
+      "where": {
+        "key": "recovery_path_unavailable",
+        "active": true
+      },
+      "within_ms": [1800000, 1830000],
+      "count": 1
+    },
+    {
+      "peer": "baby",
+      "event": "hint",
+      "where": {
+        "key": "recovery_path_unavailable",
+        "active": true
+      },
+      "within_ms": [1800000, 1830000],
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "event": "hint",
+      "where": {
+        "key": "recovery_path_unavailable",
+        "active": false
+      },
+      "within_ms": [3600000, 3650000],
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "reconnecting"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "link_lost"
+    },
+    {
+      "peer": "parent",
+      "preauth": "{\"type\":\"ping\"}"
+    },
+    {
+      "peer": "baby",
+      "preauth": "{\"type\":\"ping\"}"
+    }
+  ],
+  "relay_count": 2
+}

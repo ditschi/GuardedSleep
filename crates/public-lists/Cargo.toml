@@ -1,7 +1,7 @@
 [package]
 name = "public-lists"
 version = "0.0.1"
-description = "Curated public Nostr relay and STUN lists (data/*.json): validator, build check and generator (web TypeScript, Android Kotlin, web CSP origins)"
+description = "Curated STUN list (data/*.json): validator, build check and generator (web TypeScript, Android Kotlin)"
 edition.workspace = true
 license.workspace = true
 publish.workspace = true

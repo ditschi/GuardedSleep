@@ -18,7 +18,7 @@
     "pinned_parent": null,
     "pin_window_until_s": 1003600,
     "device_name": "",
-    "mailboxes": [],
+    "mailboxes": [{ "kind": "relay", "url": "wss://relay-0.invalid" }],
     "allow_dev_loopback": false,
     "only_local": false
   },
@@ -650,7 +650,7 @@
     { "n": 267, "now": 79500, "input": { "type": "tick" } },
     {
       "n": 268,
-      "now": 79521,
+      "now": 79519,
       "input": {
         "type": "attempt_data_message",
         "attempt": 5,
@@ -683,7 +683,7 @@
     { "n": 292, "now": 89750, "input": { "type": "tick" } },
     {
       "n": 293,
-      "now": 89799,
+      "now": 89802,
       "input": {
         "type": "attempt_data_message",
         "attempt": 5,
@@ -716,7 +716,7 @@
     { "n": 317, "now": 100000, "input": { "type": "tick" } },
     {
       "n": 318,
-      "now": 100013,
+      "now": 100028,
       "input": {
         "type": "attempt_data_message",
         "attempt": 5,
@@ -749,7 +749,7 @@
     { "n": 342, "now": 110250, "input": { "type": "tick" } },
     {
       "n": 343,
-      "now": 110285,
+      "now": 110287,
       "input": {
         "type": "attempt_data_message",
         "attempt": 5,
@@ -783,7 +783,7 @@
     { "n": 368, "now": 120500, "input": { "type": "wall_clock", "unix_s": 1000120 } },
     {
       "n": 369,
-      "now": 120518,
+      "now": 120521,
       "input": {
         "type": "attempt_data_message",
         "attempt": 5,
@@ -816,7 +816,7 @@
     { "n": 393, "now": 130750, "input": { "type": "tick" } },
     {
       "n": 394,
-      "now": 130799,
+      "now": 130779,
       "input": {
         "type": "attempt_data_message",
         "attempt": 5,
@@ -849,7 +849,7 @@
     { "n": 418, "now": 141000, "input": { "type": "tick" } },
     {
       "n": 419,
-      "now": 141036,
+      "now": 141014,
       "input": {
         "type": "attempt_data_message",
         "attempt": 5,
@@ -880,7 +880,7 @@
   ],
   "expect": [
     [
-      { "type": "open_mailbox", "id": 0, "kind": "relay", "url": "" },
+      { "type": "open_mailbox", "id": 0, "kind": "relay", "url": "wss://relay-0.invalid" },
       {
         "type": "emit",
         "event": {
@@ -1366,6 +1366,11 @@
         "type": "send_data",
         "attempt": 5,
         "text": "{\"type\":\"device_status\",\"v\":3,\"noise_threshold\":0.12}"
+      },
+      {
+        "type": "send_data",
+        "attempt": 5,
+        "text": "{\"type\":\"mailboxes\",\"v\":3,\"mailboxes\":[{\"kind\":\"relay\",\"url\":\"wss://relay-0.invalid\"}]}"
       },
       {
         "type": "send_data",

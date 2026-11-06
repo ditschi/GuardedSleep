@@ -30,7 +30,7 @@ interface SignalingTransport {
 }
 
 fun interface SignalingFactory {
-    fun create(urls: List<String>, listener: SignalingListener): SignalingTransport
+    fun create(url: String, listener: SignalingListener): SignalingTransport
 }
 
 class OkHttpSignalingFactory(
@@ -40,18 +40,18 @@ class OkHttpSignalingFactory(
             .readTimeout(0, TimeUnit.SECONDS)
             .build()
 ) : SignalingFactory {
-    override fun create(urls: List<String>, listener: SignalingListener): SignalingTransport =
-        OkHttpSignalingTransport(client, urls, listener)
+    override fun create(url: String, listener: SignalingListener): SignalingTransport =
+        OkHttpSignalingTransport(client, url, listener)
 }
 
 /**
- * Tries the configured URLs in order each time the core opens signaling (the first is the primary,
- * so a recovered primary is preferred again). A URL that fails before it opened moves on to the
- * next; when all fail, the core is told once and applies its own backoff.
+ * One WebSocket to exactly the address the core named in `open_mailbox`. A failure before it opened
+ * is reported once as closed; the core applies its backoff and decides whether to open this or
+ * another relay mailbox. The transport never retries or tries another address.
  */
 class OkHttpSignalingTransport(
     private val client: OkHttpClient,
-    private val urls: List<String>,
+    private val url: String,
     private val listener: SignalingListener,
 ) : SignalingTransport {
     @Volatile private var socket: WebSocket? = null
@@ -60,7 +60,7 @@ class OkHttpSignalingTransport(
     private var generation = 0
 
     override fun open() {
-        connect(0, synchronized(lock) { ++generation })
+        connect(synchronized(lock) { ++generation })
     }
 
     override fun send(text: String): Boolean = socket?.send(text) ?: false
@@ -72,18 +72,16 @@ class OkHttpSignalingTransport(
         socket = null
     }
 
-    private fun connect(index: Int, gen: Int) {
-        if (closedByUs || index >= urls.size) return
-        val request = runCatching { Request.Builder().url(urls[index]).build() }.getOrNull()
-        if (request == null) return advance(index, gen)
-        var opened = false
+    private fun connect(gen: Int) {
+        if (closedByUs) return
+        val request = runCatching { Request.Builder().url(url).build() }.getOrNull()
+        if (request == null) return ended(gen)
         socket =
             client.newWebSocket(
                 request,
                 object : WebSocketListener() {
                     override fun onOpen(webSocket: WebSocket, response: Response) {
                         if (!current(gen)) return webSocket.cancel()
-                        opened = true
                         listener.onOpened()
                     }
 
@@ -95,25 +93,20 @@ class OkHttpSignalingTransport(
                         webSocket.close(1000, null)
                     }
 
-                    override fun onClosed(webSocket: WebSocket, code: Int, reason: String) = ended()
+                    override fun onClosed(webSocket: WebSocket, code: Int, reason: String) =
+                        ended(gen)
 
                     override fun onFailure(
                         webSocket: WebSocket,
                         t: Throwable,
                         response: Response?,
-                    ) = ended()
-
-                    private fun ended() {
-                        if (!current(gen)) return
-                        if (opened) listener.onClosed() else advance(index, gen)
-                    }
+                    ) = ended(gen)
                 },
             )
     }
 
-    private fun advance(index: Int, gen: Int) {
-        if (!current(gen)) return
-        if (index + 1 < urls.size) connect(index + 1, gen) else listener.onClosed()
+    private fun ended(gen: Int) {
+        if (current(gen)) listener.onClosed()
     }
 
     private fun current(gen: Int) = !closedByUs && synchronized(lock) { generation == gen }

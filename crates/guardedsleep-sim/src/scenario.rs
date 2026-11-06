@@ -1,7 +1,6 @@
 //! `gs-scenario/1` (docs/technical/test-schemas.md section 2): peers, relay settings, a timeline of
 //! fault verbs and assertions. Unknown fields are errors so typos cannot silently disable a check.
 
-use crate::world::NostrRelaySpec;
 use guardedsleep_core::invite::InviteMailbox;
 use guardedsleep_core::protocol::Role;
 use serde::Deserialize;
@@ -25,9 +24,10 @@ pub struct Scenario {
     pub peers: Vec<PeerSpec>,
     #[serde(default)]
     pub relay: RelaySpec,
-    /// The simulated public Nostr relays the peers' `n:` entries name.
-    #[serde(default)]
-    pub nostr: Vec<NostrRelaySpec>,
+    /// How many simulated relays the peers' default mailbox set names (default 1). Mailbox `i`
+    /// of a peer talks to relay `i`; a peer's own `mailboxes` replace the default.
+    #[serde(default = "one_usize")]
+    pub relay_count: usize,
     /// True wall-clock time (Unix seconds) at virtual time 0; default a synthetic value.
     #[serde(default)]
     pub wall_start_s: Option<u64>,
@@ -159,6 +159,10 @@ pub struct Step {
     /// `restart_process`: the mailbox set the restarted process is configured with (an app update
     /// that ships a new list).
     pub mailboxes: Option<Vec<InviteMailbox>>,
+    /// The relay (mailbox index) a verb addresses; `signaling_down`, `signaling_up`,
+    /// `reject_hello` and `relay_drop_signals` default to every relay, `replay_stop` and
+    /// `ghost_join` to relay 0.
+    pub relay: Option<usize>,
     /// `input`: any `LinkInput` in its serde form.
     pub input: Option<Value>,
 }
@@ -194,18 +198,6 @@ pub struct Assertion {
     /// The exact text of every frame this peer sent on a socket that never said `hello` (the
     /// reachability probes of a verified link): at least one, and no other text.
     pub preauth: Option<String>,
-    /// At most this many `EVENT`s per Nostr relay sent by the peer within `within_ms` (and at least
-    /// one in total, so the check cannot pass on a silent run).
-    pub nostr_sent_max: Option<usize>,
-    /// The reachability checks of a verified link reveal nothing of the pairing: every frame the
-    /// peer sent on a Nostr socket while connected is the throwaway `REQ` or a `CLOSE`, without an
-    /// author or any daily tag, and at least one such frame exists.
-    pub nostr_probe: Option<bool>,
-    /// The peer sent at least one frame to each of these Nostr relays (all of them).
-    pub nostr_used: Option<Vec<String>>,
-    /// The peer closed at most this many Nostr sockets within `within_ms` (a relay it parked or
-    /// found unusable shows up as a close; 0 proves it never left a relay).
-    pub nostr_closes_max: Option<usize>,
     /// The peer's core asked for exactly this many attempts (`create_attempt`) within `within_ms`:
     /// a clean setup converges on one attempt per side.
     pub attempts: Option<usize>,
