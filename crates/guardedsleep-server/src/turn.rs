@@ -17,7 +17,7 @@ use crate::config::{csv_list, parse_in};
 
 /// Longest credential lifetime (`signaling-relay` "Short-lived TURN credentials"). The only way to
 /// raise it is the 12-hour fallback of task 9.1, which did not apply.
-pub const MAX_TTL_S: u32 = 600;
+const MAX_TTL_S: u32 = 600;
 const DEFAULT_TTL_S: u32 = 600;
 const DEFAULT_MAX_LIVE_PER_ADDR: usize = 8;
 
@@ -48,10 +48,6 @@ impl TurnIssuer {
             urls,
             ttl_s: ttl_s.clamp(1, MAX_TTL_S),
         }
-    }
-
-    pub fn ttl_s(&self) -> u32 {
-        self.ttl_s
     }
 
     /// User name `<expiry unix s>:<16 random bytes base64url>`, password
