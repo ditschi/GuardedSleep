@@ -83,6 +83,7 @@ gate:
   - "scripts/gradle.sh"
   - "scripts/lib/**"
   - "scripts/poc/**"
+  - "tools/poc-images.env"
   - "docker/android-native-build/**"
   - "docker/android-emulator/**"
   - "docker/signaling-server/**"

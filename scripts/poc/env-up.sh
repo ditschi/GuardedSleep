@@ -7,6 +7,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=tools/poc-images.env
+source "$ROOT/tools/poc-images.env"
 API_LEVEL="${API_LEVEL:-35}"
 SYSTEM_IMAGE="${SYSTEM_IMAGE:-system-images;android-${API_LEVEL};google_apis;x86_64}"
 OUT="${OUT:-$ROOT/target/poc-gate}"
@@ -40,7 +42,7 @@ STUN_DISABLED=1 PORT=8787 nohup "$ROOT/target/debug/guardedsleep-server" >"$OUT/
 
 # Test-only TURN credentials (poc/poc); loopback peers let both relay allocations reach each other.
 docker rm -f gs-poc-turn >/dev/null 2>&1 || true
-docker run -d --name gs-poc-turn --network host coturn/coturn:4.18.0 \
+docker run -d --name gs-poc-turn --network host "$COTURN_IMAGE" \
 	-n --log-file=stdout --no-cli --fingerprint --lt-cred-mech --user=poc:poc --realm=guardedsleep.poc \
 	--listening-port=3478 --listening-ip=0.0.0.0 --relay-ip=127.0.0.1 --allow-loopback-peers \
 	--min-port=49160 --max-port=49260 >/dev/null

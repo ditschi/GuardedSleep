@@ -34,6 +34,7 @@ on:
       - "scripts/gradle.sh"
       - "scripts/lib/**"
       - "scripts/poc/**"
+      - "tools/poc-images.env"
       - "docker/android-native-build/**"
       - "docker/android-emulator/**"
       - "docker/signaling-server/**"
@@ -58,6 +59,7 @@ on:
       - "scripts/gradle.sh"
       - "scripts/lib/**"
       - "scripts/poc/**"
+      - "tools/poc-images.env"
       - "docker/android-native-build/**"
       - "docker/android-emulator/**"
       - "docker/signaling-server/**"
@@ -130,6 +132,7 @@ jobs:
           # https://github.com/actions/upload-artifact#upload-using-multiple-paths-and-exclusions
           path: |
             target/poc-gate
+            target/turn-lifetime
             !target/poc-gate/android-home
           retention-days: 14
       - name: Upload debug APK
