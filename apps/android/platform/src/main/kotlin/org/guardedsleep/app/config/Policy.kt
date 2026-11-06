@@ -48,9 +48,14 @@ object PairingPolicy {
 }
 
 object AppDefaults {
-    /** The alpha has no public server; builds without one start with an empty list (Advanced). */
+    /**
+     * Debug builds point at the project server so a CI debug APK pairs two real phones without
+     * setup; the emulator gate passes its own URL as `signal_urls`, and a local emulator setup
+     * enters `ws://10.0.2.2:8787` in Advanced. Release builds stay empty until the disclosure and
+     * off switch exist (alpha-connection-model task 5.3).
+     */
     val signalingUrls: List<String> =
-        if (BuildConfig.DEBUG) listOf("ws://10.0.2.2:8787") else emptyList()
+        if (BuildConfig.DEBUG) listOf("wss://gs.mydata.rocks/signaling") else emptyList()
 
     const val ALARM_AFTER_MS = 60_000L
     const val TICK_MS = 250L
