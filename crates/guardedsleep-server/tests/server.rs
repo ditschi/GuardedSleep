@@ -9,6 +9,7 @@ use common::{Client, ROOM_V3, hello, http_get, http_request};
 use guardedsleep_core::pairing::{admission_mac, derive_admission_key};
 use guardedsleep_core::protocol::Role;
 use guardedsleep_server::config::{Cli, Config, Limits};
+use guardedsleep_server::turn::IceConfig;
 use guardedsleep_server::{RunningServer, start};
 use serde_json::json;
 use tokio::net::UdpSocket;
@@ -29,7 +30,10 @@ async fn run(args: &[&str], env: &[(&str, &str)]) -> RunningServer {
         .map(|(k, v)| ((*k).to_owned(), (*v).to_owned()))
         .collect();
     let limits = Limits::from_lookup(|k| env.get(k).cloned());
-    let cfg = Config::new(Cli::parse_from(argv), limits).unwrap();
+    let ice = IceConfig::from_lookup(|k| env.get(k).cloned()).unwrap();
+    let cfg = Config::new(Cli::parse_from(argv), limits)
+        .unwrap()
+        .with_ice(ice);
     start(cfg).await.unwrap()
 }
 
@@ -695,29 +699,6 @@ async fn a_flooding_socket_is_closed_with_rate_limited() {
     srv.shutdown().await;
 }
 
-async fn run_ice(env: &[(&str, &str)]) -> RunningServer {
-    let env: HashMap<String, String> = env
-        .iter()
-        .map(|(k, v)| ((*k).to_owned(), (*v).to_owned()))
-        .collect();
-    let limits = Limits::from_lookup(|k| match k {
-        "SIGNALING_HELLO_RATE_PER_MIN" | "SIGNALING_NEW_ROOM_RATE_PER_MIN" => Some("0".to_owned()),
-        _ => None,
-    });
-    let ice = guardedsleep_server::turn::IceConfig::from_lookup(|k| env.get(k).cloned()).unwrap();
-    let cli = Cli::parse_from([
-        "guardedsleep-server",
-        "--bind",
-        "127.0.0.1",
-        "--port",
-        "0",
-        "--no-stun",
-    ]);
-    start(Config::new(cli, limits).unwrap().with_ice(ice))
-        .await
-        .unwrap()
-}
-
 const ICE_ENV: [(&str, &str); 5] = [
     ("PUBLIC_HOST", "gs.example.org"),
     ("STUN_URLS", "stun:gs.example.org:3478"),
@@ -728,7 +709,7 @@ const ICE_ENV: [(&str, &str); 5] = [
 
 #[tokio::test]
 async fn turn_credentials_reach_both_members_before_the_room_completes() {
-    let srv = run_ice(&ICE_ENV).await;
+    let srv = run(&[], &[ICE_ENV.as_slice(), NO_LIMITS.as_slice()].concat()).await;
     let addr = srv.signaling_addr;
     let mut baby = Client::connect(addr, "/").await;
     baby.send(hello("baby", ROOM_V3, 3)).await;
@@ -762,10 +743,15 @@ async fn turn_credentials_reach_both_members_before_the_room_completes() {
 
 #[tokio::test]
 async fn stun_only_sets_the_welcome_field_and_nothing_configured_sets_nothing() {
-    let srv = run_ice(&[
-        ("PUBLIC_HOST", "gs.example.org"),
-        ("STUN_URLS", "stun:gs.example.org:3478"),
-    ])
+    let srv = run(
+        &[],
+        &[
+            ("PUBLIC_HOST", "gs.example.org"),
+            ("STUN_URLS", "stun:gs.example.org:3478"),
+            NO_LIMITS[0],
+            NO_LIMITS[1],
+        ],
+    )
     .await;
     let addr = srv.signaling_addr;
     let mut baby = Client::connect(addr, "/").await;
@@ -780,7 +766,7 @@ async fn stun_only_sets_the_welcome_field_and_nothing_configured_sets_nothing() 
     assert_eq!(baby.recv().await["type"], "members");
     srv.shutdown().await;
 
-    let srv = run_ice(&[]).await;
+    let srv = run(&[], &NO_LIMITS).await;
     let mut baby = Client::connect(srv.signaling_addr, "/").await;
     baby.send(hello("baby", ROOM_V3, 3)).await;
     assert!(baby.recv().await.get("iceServers").is_none());
