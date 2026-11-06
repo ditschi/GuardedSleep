@@ -10,6 +10,9 @@
 //! - Perform effects in order. A `Send` before a `Close` for the same connection must be flushed
 //!   before the socket is closed. The relay forgets a connection as soon as it emits `Close` for
 //!   it, so a later `on_close` for that connection is a no-op.
+//! - [`RelayEffect::IssueIceServers`] asks the platform to sign and send a TURN credential
+//!   (`ice_servers`); the relay itself holds no secret, hash or wall clock for it. Pass the address
+//!   group of the client (IPv4, or IPv6 /64) to [`Relay::on_connect_in_net`] for the per-address cap.
 //! - `now` is a monotonic millisecond clock supplied by the caller.
 
 #![forbid(unsafe_code)]

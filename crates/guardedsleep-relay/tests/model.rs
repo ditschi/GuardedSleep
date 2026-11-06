@@ -137,7 +137,9 @@ impl Sut {
                     }
                 }
                 RelayEffect::Close { conn, .. } => closed.push(conn.0),
-                RelayEffect::Ping { .. } | RelayEffect::Log { .. } => {}
+                RelayEffect::Ping { .. }
+                | RelayEffect::Log { .. }
+                | RelayEffect::IssueIceServers { .. } => {}
             }
         }
         for c in closed {

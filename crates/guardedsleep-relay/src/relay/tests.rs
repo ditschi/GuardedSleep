@@ -51,6 +51,7 @@ impl H {
                     self.closed.insert(conn.0, reason);
                 }
                 RelayEffect::Log { event } => self.logs.push(event),
+                RelayEffect::IssueIceServers { .. } => {}
             }
         }
     }
