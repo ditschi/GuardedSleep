@@ -10,6 +10,7 @@ pub mod conformance;
 #[cfg(any(test, feature = "conformance"))]
 mod conformance_envelope;
 pub mod envelope;
+pub mod ice;
 pub mod invite;
 pub mod link;
 pub mod mailbox;

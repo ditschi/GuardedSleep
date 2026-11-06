@@ -10,6 +10,7 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::ice::{RelayIce, mailbox_host};
 use crate::protocol::Member;
 
 /// Identifies one mailbox of the set for the lifetime of a `Link`. A mailbox keeps its id across
@@ -63,6 +64,10 @@ pub(crate) struct Mailbox {
     pub here_next_at: u64,
     /// This relay answered `hello` with `UNSUPPORTED_PROTOCOL` (cleared by a `welcome`).
     pub unsupported: bool,
+    /// Lower-case host of a relay mailbox's URL: the only host its ICE servers may name.
+    pub host: Option<String>,
+    /// The ICE servers this relay supplied (design section 7); survive a reconnect.
+    pub ice: RelayIce,
 }
 
 impl Mailbox {
@@ -70,6 +75,12 @@ impl Mailbox {
         Self {
             id,
             kind,
+            host: if kind == MailboxKind::Relay {
+                mailbox_host(&url)
+            } else {
+                None
+            },
+            ice: RelayIce::default(),
             url,
             state: MailboxState::Closed,
             changed_at: 0,

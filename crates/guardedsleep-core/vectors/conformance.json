@@ -10,6 +10,45 @@
     }
   },
   {
+    "name": "server: welcome with iceServers",
+    "kind": "parse_server",
+    "raw": "{\"type\":\"welcome\",\"clientId\":\"c1\",\"roomId\":\"r1\",\"iceServers\":[\"stun:h.test:3478\"]}",
+    "expect": {
+      "type": "welcome",
+      "client_id": "c1",
+      "room_id": "r1",
+      "ice_servers": ["stun:h.test:3478"]
+    }
+  },
+  {
+    "name": "server: welcome with malformed iceServers keeps the welcome",
+    "kind": "parse_server",
+    "raw": "{\"type\":\"welcome\",\"clientId\":\"c1\",\"roomId\":\"r1\",\"iceServers\":[1]}",
+    "expect": {
+      "type": "welcome",
+      "client_id": "c1",
+      "room_id": "r1"
+    }
+  },
+  {
+    "name": "server: ice_servers",
+    "kind": "parse_server",
+    "raw": "{\"type\":\"ice_servers\",\"urls\":[\"turn:h.test:3478\"],\"username\":\"1:a\",\"credential\":\"c2VjcmV0\",\"ttl\":600}",
+    "expect": {
+      "type": "ice_servers",
+      "urls": ["turn:h.test:3478"],
+      "username": "1:a",
+      "credential": "c2VjcmV0",
+      "ttl": 600
+    }
+  },
+  {
+    "name": "server: ice_servers with a non-numeric ttl is dropped",
+    "kind": "parse_server",
+    "raw": "{\"type\":\"ice_servers\",\"urls\":[\"turn:h.test:3478\"],\"username\":\"1:a\",\"credential\":\"c2VjcmV0\",\"ttl\":\"600\"}",
+    "expect": null
+  },
+  {
     "name": "server: peer null",
     "kind": "parse_server",
     "raw": "{\"type\":\"peer\",\"peerId\":null}",
@@ -683,7 +722,12 @@
         {
           "type": "create_attempt",
           "attempt": 1,
-          "offerer": true
+          "offerer": true,
+          "ice_servers": [
+            {
+              "urls": ["stun:relay.test:3478"]
+            }
+          ]
         },
         {
           "type": "create_offer",
@@ -728,7 +772,12 @@
         {
           "type": "create_attempt",
           "attempt": 2,
-          "offerer": true
+          "offerer": true,
+          "ice_servers": [
+            {
+              "urls": ["stun:relay.test:3478"]
+            }
+          ]
         },
         {
           "type": "create_offer",
@@ -1001,7 +1050,12 @@
         {
           "type": "create_attempt",
           "attempt": 1,
-          "offerer": false
+          "offerer": false,
+          "ice_servers": [
+            {
+              "urls": ["stun:relay.test:3478"]
+            }
+          ]
         },
         {
           "type": "set_remote_description",
@@ -1340,7 +1394,12 @@
         {
           "type": "create_attempt",
           "attempt": 1,
-          "offerer": false
+          "offerer": false,
+          "ice_servers": [
+            {
+              "urls": ["stun:relay.test:3478"]
+            }
+          ]
         },
         {
           "type": "set_remote_description",
@@ -1630,7 +1689,12 @@
         {
           "type": "create_attempt",
           "attempt": 1,
-          "offerer": false
+          "offerer": false,
+          "ice_servers": [
+            {
+              "urls": ["stun:relay.test:3478"]
+            }
+          ]
         },
         {
           "type": "set_remote_description",
@@ -2178,7 +2242,12 @@
         {
           "type": "create_attempt",
           "attempt": 1,
-          "offerer": false
+          "offerer": false,
+          "ice_servers": [
+            {
+              "urls": ["stun:relay.test:3478"]
+            }
+          ]
         },
         {
           "type": "set_remote_description",
@@ -2374,7 +2443,12 @@
         {
           "type": "create_attempt",
           "attempt": 1,
-          "offerer": false
+          "offerer": false,
+          "ice_servers": [
+            {
+              "urls": ["stun:relay.test:3478"]
+            }
+          ]
         },
         {
           "type": "set_remote_description",
@@ -2594,7 +2668,12 @@
         {
           "type": "create_attempt",
           "attempt": 1,
-          "offerer": false
+          "offerer": false,
+          "ice_servers": [
+            {
+              "urls": ["stun:relay.test:3478"]
+            }
+          ]
         },
         {
           "type": "set_remote_description",
@@ -2815,7 +2894,12 @@
         {
           "type": "create_attempt",
           "attempt": 1,
-          "offerer": false
+          "offerer": false,
+          "ice_servers": [
+            {
+              "urls": ["stun:relay.test:3478"]
+            }
+          ]
         },
         {
           "type": "set_remote_description",
@@ -3053,7 +3137,12 @@
         {
           "type": "create_attempt",
           "attempt": 1,
-          "offerer": false
+          "offerer": false,
+          "ice_servers": [
+            {
+              "urls": ["stun:relay.test:3478"]
+            }
+          ]
         },
         {
           "type": "set_remote_description",
@@ -3285,7 +3374,12 @@
         {
           "type": "create_attempt",
           "attempt": 1,
-          "offerer": false
+          "offerer": false,
+          "ice_servers": [
+            {
+              "urls": ["stun:relay.test:3478"]
+            }
+          ]
         },
         {
           "type": "set_remote_description",

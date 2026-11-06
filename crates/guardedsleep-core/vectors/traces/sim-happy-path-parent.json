@@ -372,7 +372,12 @@
     ],
     [],
     [
-      { "type": "create_attempt", "attempt": 1, "offerer": false },
+      {
+        "type": "create_attempt",
+        "attempt": 1,
+        "offerer": false,
+        "ice_servers": [{ "urls": ["stun:relay-0.invalid:3478"] }]
+      },
       {
         "type": "set_remote_description",
         "attempt": 1,

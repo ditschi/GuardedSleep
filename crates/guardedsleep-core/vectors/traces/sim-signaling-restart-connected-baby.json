@@ -509,7 +509,12 @@
     [],
     [],
     [
-      { "type": "create_attempt", "attempt": 1, "offerer": true },
+      {
+        "type": "create_attempt",
+        "attempt": 1,
+        "offerer": true,
+        "ice_servers": [{ "urls": ["stun:relay-0.invalid:3478"] }]
+      },
       { "type": "create_offer", "attempt": 1 }
     ],
     [

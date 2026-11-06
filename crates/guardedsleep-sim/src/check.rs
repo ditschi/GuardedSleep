@@ -187,6 +187,34 @@ fn check_one(world: &World, a: &Assertion) -> (bool, String) {
             .count();
         return (n == want, format!("{n} attempt(s) created (want {want})"));
     }
+    if let Some(want) = a.attempt_turn_valid {
+        let mine: Vec<_> = world
+            .attempt_ice
+            .iter()
+            .filter(|(actor, t, _)| *actor == ix && in_window(*t))
+            .collect();
+        let stale = mine
+            .iter()
+            .filter(|(_, t, list)| {
+                let wall_s = world.wall_base + *t / 1_000;
+                !list.iter().any(|e| {
+                    e.username
+                        .as_deref()
+                        .and_then(|u| u.split(':').next())
+                        .and_then(|x| x.parse::<u64>().ok())
+                        .is_some_and(|expiry| expiry > wall_s)
+                })
+            })
+            .count();
+        let ok = !mine.is_empty() && (stale == 0) == want;
+        return (
+            ok,
+            format!(
+                "{} attempt(s), {stale} without a live TURN credential",
+                mine.len()
+            ),
+        );
+    }
     if let Some(want) = a.joined {
         let n = actor.welcomes.iter().filter(|t| in_window(**t)).count();
         return ((n > 0) == want, format!("{n} welcome(s)"));

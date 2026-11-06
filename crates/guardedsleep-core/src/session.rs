@@ -386,7 +386,7 @@ impl Session {
                 }
             }
             ServerMessage::Error { code, .. } => self.fail(&format!("signaling_error:{code}"), out),
-            ServerMessage::Members { .. } | ServerMessage::Pong => {}
+            ServerMessage::Members { .. } | ServerMessage::IceServers(_) | ServerMessage::Pong => {}
         }
     }
 

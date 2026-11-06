@@ -1344,7 +1344,12 @@
     [],
     [],
     [
-      { "type": "create_attempt", "attempt": 1, "offerer": true },
+      {
+        "type": "create_attempt",
+        "attempt": 1,
+        "offerer": true,
+        "ice_servers": [{ "urls": ["stun:relay-0.invalid:3478"] }]
+      },
       { "type": "create_offer", "attempt": 1 }
     ],
     [
@@ -1431,7 +1436,12 @@
       }
     ],
     [
-      { "type": "create_attempt", "attempt": 2, "offerer": true },
+      {
+        "type": "create_attempt",
+        "attempt": 2,
+        "offerer": true,
+        "ice_servers": [{ "urls": ["stun:relay-0.invalid:3478"] }]
+      },
       { "type": "create_offer", "attempt": 2 }
     ],
     [
@@ -1504,7 +1514,12 @@
     [],
     [],
     [
-      { "type": "create_attempt", "attempt": 3, "offerer": true },
+      {
+        "type": "create_attempt",
+        "attempt": 3,
+        "offerer": true,
+        "ice_servers": [{ "urls": ["stun:relay-0.invalid:3478"] }]
+      },
       { "type": "create_offer", "attempt": 3 }
     ],
     [
@@ -1579,7 +1594,12 @@
     [],
     [],
     [
-      { "type": "create_attempt", "attempt": 4, "offerer": true },
+      {
+        "type": "create_attempt",
+        "attempt": 4,
+        "offerer": true,
+        "ice_servers": [{ "urls": ["stun:relay-0.invalid:3478"] }]
+      },
       { "type": "create_offer", "attempt": 4 }
     ],
     [
@@ -1672,7 +1692,12 @@
     [],
     [],
     [
-      { "type": "create_attempt", "attempt": 5, "offerer": true },
+      {
+        "type": "create_attempt",
+        "attempt": 5,
+        "offerer": true,
+        "ice_servers": [{ "urls": ["stun:relay-0.invalid:3478"] }]
+      },
       { "type": "create_offer", "attempt": 5 }
     ],
     [
@@ -1746,7 +1771,12 @@
     [],
     [],
     [
-      { "type": "create_attempt", "attempt": 6, "offerer": true },
+      {
+        "type": "create_attempt",
+        "attempt": 6,
+        "offerer": true,
+        "ice_servers": [{ "urls": ["stun:relay-0.invalid:3478"] }]
+      },
       { "type": "create_offer", "attempt": 6 }
     ],
     [
@@ -1819,7 +1849,12 @@
     [],
     [],
     [
-      { "type": "create_attempt", "attempt": 7, "offerer": true },
+      {
+        "type": "create_attempt",
+        "attempt": 7,
+        "offerer": true,
+        "ice_servers": [{ "urls": ["stun:relay-0.invalid:3478"] }]
+      },
       { "type": "create_offer", "attempt": 7 }
     ],
     [
@@ -1892,7 +1927,12 @@
     [],
     [],
     [
-      { "type": "create_attempt", "attempt": 8, "offerer": true },
+      {
+        "type": "create_attempt",
+        "attempt": 8,
+        "offerer": true,
+        "ice_servers": [{ "urls": ["stun:relay-0.invalid:3478"] }]
+      },
       { "type": "create_offer", "attempt": 8 }
     ],
     [
@@ -2036,7 +2076,12 @@
     [],
     [],
     [
-      { "type": "create_attempt", "attempt": 9, "offerer": true },
+      {
+        "type": "create_attempt",
+        "attempt": 9,
+        "offerer": true,
+        "ice_servers": [{ "urls": ["stun:relay-0.invalid:3478"] }]
+      },
       { "type": "create_offer", "attempt": 9 }
     ],
     [

@@ -3,6 +3,7 @@
 //! field and variant lists must match the core definitions exactly; a mismatch fails to compile.
 //! Docs: <https://mozilla.github.io/uniffi-rs/latest/proc_macro/index.html#the-uniffiremote-attribute>
 
+use guardedsleep_core::ice::IceServer;
 use guardedsleep_core::invite::InviteMailbox;
 use guardedsleep_core::link::{
     LinkAction, LinkConfig, LinkEvent, LinkInput, LinkState, LinkStatus,
@@ -23,6 +24,13 @@ pub struct IceCandidate {
     pub candidate: String,
     pub sdp_mid: Option<String>,
     pub sdp_m_line_index: Option<u32>,
+}
+
+#[uniffi::remote(Record)]
+pub struct IceServer {
+    pub urls: Vec<String>,
+    pub username: Option<String>,
+    pub credential: Option<String>,
 }
 
 #[uniffi::remote(Enum)]
@@ -294,6 +302,7 @@ pub enum LinkAction {
     CreateAttempt {
         attempt: u32,
         offerer: bool,
+        ice_servers: Vec<IceServer>,
     },
     CloseAttempt {
         attempt: u32,

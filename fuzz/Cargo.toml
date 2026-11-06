@@ -17,6 +17,7 @@ chacha20 = { version = "0.10.2", default-features = false, features = ["rng"] }
 # The fuzz targets need fixed-nonce sealing; the feature is never part of a release build.
 guardedsleep-core = { path = "../crates/guardedsleep-core", features = ["conformance"] }
 arbitrary = { version = "1.5.0", features = ["derive"] }
+serde_json = "1"
 
 # Keeps this crate out of the root workspace: it needs a nightly toolchain and sanitizer flags,
 # and its own lockfile. Docs: https://doc.rust-lang.org/cargo/reference/workspaces.html
@@ -32,6 +33,13 @@ bench = false
 [[bin]]
 name = "envelope_session"
 path = "fuzz_targets/envelope_session.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "ice_servers"
+path = "fuzz_targets/ice_servers.rs"
 test = false
 doc = false
 bench = false
