@@ -163,15 +163,20 @@ impl RelayIce {
         ));
     }
 
-    /// Appends this relay's contribution at `now`: its still-valid sets, or the STUN fallback
-    /// when it has none. Expired sets are dropped.
-    pub fn collect(&mut self, now: u64, host: &str, out: &mut Vec<IceServer>) {
+    /// Appends the still-valid sets at `now` (STUN, then TURN); an expired TURN set is dropped.
+    fn valid_sets(&mut self, now: u64, out: &mut Vec<IceServer>) {
         if self.turn.as_ref().is_some_and(|(_, until)| now > *until) {
             self.turn = None;
         }
-        let before = out.len();
         out.extend(self.stun.iter().cloned());
         out.extend(self.turn.iter().map(|(s, _)| s.clone()));
+    }
+
+    /// Appends this relay's contribution at `now`: its still-valid sets, or the STUN fallback
+    /// when it has none. Expired sets are dropped.
+    pub fn collect(&mut self, now: u64, host: &str, out: &mut Vec<IceServer>) {
+        let before = out.len();
+        self.valid_sets(now, out);
         if out.len() == before {
             out.push(fallback_stun(host));
         }
@@ -195,8 +200,8 @@ pub fn servers_of_frame(relay_url: &str, raw: &str, now_ms: u64) -> Vec<IceServe
         }
         _ => {}
     }
-    let mut out: Vec<IceServer> = r.stun.into_iter().collect();
-    out.extend(r.turn.filter(|(_, until)| now_ms <= *until).map(|(s, _)| s));
+    let mut out = Vec::new();
+    r.valid_sets(now_ms, &mut out);
     out
 }
 
