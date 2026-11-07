@@ -46,7 +46,7 @@ import {
   PAIRING_UNREACHABLE_AFTER_MS,
   PSK_BYTES,
 } from "./policy";
-import { iceServersFor } from "./relay-stun";
+import { allowedMailboxes } from "./mailbox-policy";
 import type { SignalingFactory } from "./signaling";
 
 /** Tells the controller when the network came back (the core then retries at once). */
@@ -60,16 +60,30 @@ export interface ControllerDeps {
   clock: Clock;
   timers: Timers;
   signaling: SignalingFactory;
-  /** Opens the microphone (baby) or builds the playout chain (parent); rejects on a refusal. */
-  createMedia(role: Role, iceServers: RTCIceServer[]): Promise<MediaEngine>;
+  /**
+   * Opens the microphone (baby) or builds the playout chain (parent); rejects on a refusal.
+   * `userIceServers` is the user-entered TURN (credentials included, memory only); the engine
+   * appends it to the core's ICE list of every attempt.
+   */
+  createMedia(role: Role, userIceServers: RTCIceServer[]): Promise<MediaEngine>;
   gate: SoundGate;
   alerts: AlertSink;
   network: NetworkWatcher;
   randomBytes(length: number): Uint8Array;
   /** 53 random bits for the core's jitter. */
   entropy(): number;
-  /** Where to connect when neither the settings nor an invite name a relay. */
-  defaultSignalingUrls(): string[];
+  /** Where the invite of a NEW pairing points when this build does not offer the project server. */
+  defaultMailboxUrls(): string[];
+  /**
+   * The project server (generated `PROJECT_SERVER`): `mailboxUrl` is its relay address, `enabled`
+   * the build flag (`projectServerEnabled`, design section 8). Absent in tests without one.
+   */
+  projectServer?: { mailboxUrl: string; enabled: boolean };
+  /**
+   * Whether the deployment CSP `connect-src` lets the page open this address; an address it does
+   * not list is ignored in invites and updates (design section 5, version skew). Absent: all pass.
+   */
+  connectAllowed?: (url: string) => boolean;
   /** Baby: the browser's own state (battery, page visibility, ...). A browser reports no ringer. */
   deviceStatus?: () => DeviceStatus;
   /** The device's battery for the baby screen; absent where the browser has no Battery API. */
@@ -88,6 +102,7 @@ export interface ControllerDeps {
 /** Pairing material of this page. In memory only: never storage, URLs, logs or the DOM. */
 interface StoredPairing {
   pskB64Url: string;
+  /** The pairing's mailbox set (invite, then mailbox updates): the only source for the core. */
   urls: string[];
   pairedBefore: boolean;
   /** The pinned parent secret (64 hex characters): memory only, like the PSK. */
@@ -169,6 +184,13 @@ export class WebController implements AppController {
   private turn: TurnEntry | null = null;
   private run: Run | null = null;
   private runCounter = 0;
+  /**
+   * "Only same Wi-Fi or my own server" (design section 8). Kept here, not in `SettingsState`, until
+   * task 6.2 adds the setting to the UI contract together with Android's (5.3). On: the baby keeps
+   * the project server out of new invites and the core ignores project-server entries (passed as
+   * `only_local`). Takes effect from the next run; memory only like every web setting (no secret).
+   */
+  private onlyLocal = false;
 
   constructor(private readonly deps: ControllerDeps) {
     this.deviceBattery = deps.battery ?? readable<DeviceBattery | null>(null);
@@ -229,6 +251,10 @@ export class WebController implements AppController {
     }
   }
 
+  setOnlyLocal(onlyLocal: boolean): void {
+    this.onlyLocal = onlyLocal;
+  }
+
   setTurnServer(url: string, username: string, password: string): TurnSaveResult {
     const { result, entry } = resolveTurnSave(this.turn, url, username, password);
     this.turn = entry;
@@ -264,12 +290,12 @@ export class WebController implements AppController {
     this.deps.gate.unlock().catch(() => undefined);
     this.cancelPairing();
     this.stopRun(true);
-    const urls = this.effectiveUrls(null);
+    const urls = this.newPairingUrls();
     const now = this.deps.clock.elapsedMs();
     const psk = this.deps.randomBytes(PSK_BYTES);
     const expiresAtS = Math.floor(this.deps.clock.wallMs() / 1000) + INVITE_VALIDITY_MS / 1000;
     const invite = urls.length
-      ? this.deps.core.buildInvite(psk, mailboxesForUrls(urls), expiresAtS)
+      ? this.deps.core.buildInvite(psk, this.withOnlyLocal(mailboxesForUrls(urls)), expiresAtS)
       : null;
     const pskB64Url = encodeBase64Url(psk);
     psk.fill(0);
@@ -473,10 +499,9 @@ export class WebController implements AppController {
     this.parentModel.reset();
     this.babyModel.reset();
 
-    const signalingUrls = this.effectiveUrls(pending.urls);
     let media: MediaEngine;
     try {
-      media = await this.deps.createMedia(role, iceServersFor(signalingUrls, { turn: this.turn }));
+      media = await this.deps.createMedia(role, userTurnServers(this.turn));
     } catch (e) {
       if (this.run === run) this.onMediaFailed(run, e);
       return;
@@ -497,6 +522,7 @@ export class WebController implements AppController {
       timers: this.deps.timers,
       listener: this.listenerFor(run),
       entropy: this.deps.entropy(),
+      mailboxAllowed: this.mailboxAllowed,
       deviceStatus: role === "baby" ? (this.deps.deviceStatus ?? (() => ({}))) : undefined,
       // A browser cannot silence its device; the parent then sees "unknown", never a promise.
       applyQuiet: role === "baby" ? (this.deps.deviceStatus ?? (() => ({}))) : undefined,
@@ -573,19 +599,43 @@ export class WebController implements AppController {
       ...(pending.parentSecret === null ? {} : { pinned_parent: pending.parentSecret }),
       ...(pending.pinUntilS === null ? {} : { pin_window_until_s: pending.pinUntilS }),
       ...(role === "parent" ? { device_name: this.deps.deviceName?.() ?? "" } : {}),
-      // The relay mailboxes of the pairing: the core opens each at its own address. The baby also
-      // sends the set to the parent after each verification.
-      mailboxes: mailboxesForUrls(this.effectiveUrls(pending.urls)),
+      // The relay mailboxes of the pairing record: the core opens each at its own address, and a
+      // record without any works LAN-only (no fallback to a default or a setting; the owner
+      // decision of 2026-11-07). The baby also sends the set to the parent after each verification.
+      mailboxes: allowedMailboxes(
+        this.withOnlyLocal(mailboxesForUrls(pending.urls)),
+        this.mailboxAllowed,
+      ),
       allow_dev_loopback: this.deps.allowDevLoopback ?? false,
+      only_local: this.onlyLocal,
     };
   }
 
-  /** The advanced list overrides the invite's list; otherwise the invite's, then the settings'. */
-  private effectiveUrls(inviteUrls: string[] | null): string[] {
+  /**
+   * The mailboxes of a NEW pairing (baby only): the advanced list when set, else the project server
+   * when the build offers it and "Only same Wi-Fi or my own server" is off, else the deployment's
+   * own `/signaling`. Existing records never consult this.
+   */
+  private newPairingUrls(): string[] {
     const s = this.settingsState;
     if (s.advancedEnabled && s.signalingUrls.length > 0) return s.signalingUrls;
-    if (inviteUrls && inviteUrls.length > 0) return inviteUrls;
-    return s.signalingUrls.length > 0 ? s.signalingUrls : this.deps.defaultSignalingUrls();
+    const project = this.deps.projectServer;
+    if (project?.enabled && !this.onlyLocal) return [project.mailboxUrl];
+    return this.deps.defaultMailboxUrls();
+  }
+
+  /** The deployment CSP as the page's own check (version skew); used for the config and the driver. */
+  private readonly mailboxAllowed = (url: string): boolean =>
+    this.deps.connectAllowed?.(url) ?? true;
+
+  /**
+   * The ONE place where the off switch will filter project-server entries out of a mailbox set
+   * (a new invite, an invite or update received here). The core owns that rule
+   * (`only_local` plus the project host in the link config, and a pure helper for invites): when
+   * its API lands, pass `PROJECT_SERVER.host` here and call the helper. Identity until then.
+   */
+  private withOnlyLocal(mailboxes: InviteMailbox[]): InviteMailbox[] {
+    return mailboxes;
   }
 
   // ---- core callbacks ----------------------------------------------------------------------
@@ -717,4 +767,13 @@ export class WebController implements AppController {
     this.settingsState = { ...this.settingsState, ...patch };
     this.settingsStore.set(this.settingsState);
   }
+}
+
+/** The user-entered TURN entry as the browser takes it; the credentials stay in this array. */
+function userTurnServers(turn: TurnEntry | null): RTCIceServer[] {
+  if (turn === null) return [];
+  const entry: RTCIceServer = { urls: [turn.url] };
+  if (turn.username !== "") entry.username = turn.username;
+  if (turn.password !== "") entry.credential = turn.password;
+  return [entry];
 }

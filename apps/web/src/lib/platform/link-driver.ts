@@ -2,6 +2,7 @@ import type {
   CoreApi,
   CoreLink,
   DeviceStatus,
+  IceServer,
   LinkAction,
   LinkConfig,
   LinkEvent,
@@ -52,6 +53,11 @@ export interface LinkDriverOptions {
   listener: LinkListener;
   /** Random 53-bit seed for the core's jitter; the core has no entropy source of its own. */
   entropy: number;
+  /**
+   * Whether the page may open this mailbox address (the deployment CSP and the off switch,
+   * `mailbox-policy.ts`). A refused address is reported to the core as closed, never opened.
+   */
+  mailboxAllowed?: (url: string) => boolean;
   /** Baby: current device state; absent on the parent. */
   deviceStatus?: () => DeviceStatus;
   /** Baby: apply the silence rule, return the fresh state. */
@@ -188,7 +194,7 @@ export class LinkDriver {
       case "mailbox_send":
         return this.sockets.get(action.id)?.socket.send(action.frame);
       case "create_attempt":
-        return this.createAttempt(action.attempt, action.offerer);
+        return this.createAttempt(action.attempt, action.offerer, action.ice_servers ?? []);
       case "close_attempt":
         return this.closeAttempt(action.attempt);
       case "create_offer":
@@ -221,6 +227,11 @@ export class LinkDriver {
    */
   private openMailbox(id: number, url: string): void {
     this.closeMailbox(id);
+    if (this.o.mailboxAllowed && !this.o.mailboxAllowed(url)) {
+      // The core backs off and tries its other mailboxes; nothing leaves the page for this host.
+      this.after(() => this.dispatch({ type: "mailbox_closed", id, reason: "blocked" }), 0);
+      return;
+    }
     const gen = ++this.socketGen;
     // Callbacks of a replaced socket are dropped; the core only hears about the current one.
     const current = (): boolean => this.sockets.get(id)?.gen === gen;
@@ -246,32 +257,36 @@ export class LinkDriver {
     this.sockets.delete(id);
   }
 
-  private createAttempt(handle: number, offerer: boolean): void {
+  private createAttempt(handle: number, offerer: boolean, iceServers: IceServer[]): void {
     try {
-      const port = this.o.media.createAttempt(offerer, {
-        onLocalDescription: (sdp_type, sdp) =>
-          this.whenKnown(handle, {
-            type: "attempt_local_description",
-            attempt: handle,
-            sdp_type,
-            sdp,
-          }),
-        onLocalIce: (candidate) =>
-          this.whenKnown(handle, { type: "attempt_local_ice", attempt: handle, candidate }),
-        onDataOpen: () => this.whenKnown(handle, { type: "attempt_data_open", attempt: handle }),
-        onDataMessage: (text) =>
-          this.whenKnown(handle, { type: "attempt_data_message", attempt: handle, text }),
-        onDataClosed: () =>
-          this.whenKnown(handle, { type: "attempt_data_closed", attempt: handle }),
-        onDtlsFingerprint: (fingerprint) =>
-          this.whenKnown(handle, {
-            type: "attempt_dtls_fingerprint",
-            attempt: handle,
-            fingerprint,
-          }),
-        onConnectionState: (state) =>
-          this.whenKnown(handle, { type: "attempt_pc_state", attempt: handle, state }),
-      });
+      const port = this.o.media.createAttempt(
+        offerer,
+        {
+          onLocalDescription: (sdp_type, sdp) =>
+            this.whenKnown(handle, {
+              type: "attempt_local_description",
+              attempt: handle,
+              sdp_type,
+              sdp,
+            }),
+          onLocalIce: (candidate) =>
+            this.whenKnown(handle, { type: "attempt_local_ice", attempt: handle, candidate }),
+          onDataOpen: () => this.whenKnown(handle, { type: "attempt_data_open", attempt: handle }),
+          onDataMessage: (text) =>
+            this.whenKnown(handle, { type: "attempt_data_message", attempt: handle, text }),
+          onDataClosed: () =>
+            this.whenKnown(handle, { type: "attempt_data_closed", attempt: handle }),
+          onDtlsFingerprint: (fingerprint) =>
+            this.whenKnown(handle, {
+              type: "attempt_dtls_fingerprint",
+              attempt: handle,
+              fingerprint,
+            }),
+          onConnectionState: (state) =>
+            this.whenKnown(handle, { type: "attempt_pc_state", attempt: handle, state }),
+        },
+        iceServers,
+      );
       this.attempts.set(handle, port);
       this.liveAttempt = handle;
     } catch {

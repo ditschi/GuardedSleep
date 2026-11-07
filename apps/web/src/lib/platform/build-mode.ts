@@ -9,3 +9,27 @@
 export function loopbackAllowed(env: { DEV: boolean; MODE: string }): boolean {
   return env.DEV || env.MODE === "e2e";
 }
+
+/**
+ * Whether this web build is the project's official deployment (`VITE_GS_OFFICIAL_DEPLOYMENT=true`
+ * at build time). Only such a build lists the project server in its CSP and can use it
+ * (alpha-connection-model design section 6).
+ */
+export function officialDeployment(env: { VITE_GS_OFFICIAL_DEPLOYMENT?: string }): boolean {
+  return env.VITE_GS_OFFICIAL_DEPLOYMENT === "true";
+}
+
+/**
+ * Whether new invites of this build may carry the project server (design section 8). Release
+ * builds keep it off until task 6.2's release gate flips it: the disclosure and the user's off
+ * switch must exist first, and `data/project-server.json` must be live. Dev and E2E builds can
+ * turn it on, but only together with the official-deployment flag; they never reach the public
+ * server otherwise.
+ */
+export function projectServerEnabled(env: {
+  DEV: boolean;
+  MODE: string;
+  VITE_GS_OFFICIAL_DEPLOYMENT?: string;
+}): boolean {
+  return officialDeployment(env) && (env.DEV || env.MODE === "e2e");
+}

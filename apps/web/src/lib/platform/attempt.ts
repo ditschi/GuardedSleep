@@ -8,7 +8,7 @@ export type PeerConnectionCtor = new (config: RTCConfiguration) => RTCPeerConnec
 
 export interface AttemptDeps {
   PeerConnection: PeerConnectionCtor;
-  /** The relay's built-in STUN only (see `relay-stun.ts`). */
+  /** The core's ICE servers of this attempt plus the user-entered TURN, in that order. */
   iceServers: RTCIceServer[];
   timers: Timers;
   /** Baby: the outgoing microphone stream; the m-line is `sendonly` (the core refuses others). */

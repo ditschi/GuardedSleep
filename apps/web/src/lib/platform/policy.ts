@@ -19,9 +19,6 @@ export const FLUSH_MS = 300;
 export const FINGERPRINT_TRIES = 10;
 export const FINGERPRINT_RETRY_MS = 300;
 
-/** Relay STUN port (add-rust-signaling-server). */
-export const RELAY_STUN_PORT = 3478;
-
 export const PSK_BYTES = 32;
 /** QR / invite validity, single use (ADR-018 section 2). */
 export const INVITE_VALIDITY_MS = 5 * 60_000;

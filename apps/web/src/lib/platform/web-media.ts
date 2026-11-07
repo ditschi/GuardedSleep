@@ -1,3 +1,4 @@
+import type { IceServer } from "@guardedsleep/core-wasm";
 import type { Role } from "../contract";
 import { createRtcAttempt, type PeerConnectionCtor } from "./attempt";
 import {
@@ -13,8 +14,8 @@ import type { MediaEngine } from "./media-engine";
 
 export interface WebMediaDeps {
   PeerConnection: PeerConnectionCtor;
-  /** The relay's built-in STUN only. */
-  iceServers: RTCIceServer[];
+  /** The user-entered TURN entry (with its credentials, memory only); appended to every attempt. */
+  userIceServers: RTCIceServer[];
   timers: Timers;
   gate: SoundGate;
   getUserMedia(constraints: MediaStreamConstraints): Promise<MediaStream>;
@@ -45,11 +46,11 @@ export async function createWebMediaEngine(role: Role, deps: WebMediaDeps): Prom
   }
 
   return {
-    createAttempt(offerer, listener) {
+    createAttempt(offerer, listener, coreIceServers) {
       return createRtcAttempt(
         {
           PeerConnection: deps.PeerConnection,
-          iceServers: deps.iceServers,
+          iceServers: [...coreIceServers.map(toRtcIceServer), ...deps.userIceServers],
           timers: deps.timers,
           send: mic ? { track: mic.track, stream: mic.stream } : null,
           onRemoteAudio: (track, stream) => playback?.play(stream ?? deps.createStream(track)),
@@ -69,4 +70,12 @@ export async function createWebMediaEngine(role: Role, deps: WebMediaDeps): Prom
       playback?.release();
     },
   };
+}
+
+/** The core's entry as the browser takes it: the three fields, nothing added or dropped. */
+function toRtcIceServer(server: IceServer): RTCIceServer {
+  const entry: RTCIceServer = { urls: [...server.urls] };
+  if (server.username !== undefined) entry.username = server.username;
+  if (server.credential !== undefined) entry.credential = server.credential;
+  return entry;
 }
