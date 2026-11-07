@@ -4,6 +4,7 @@
 
 #![forbid(unsafe_code)]
 
+pub mod canary;
 pub mod check;
 pub mod lint;
 pub mod raw;
@@ -65,6 +66,21 @@ impl RunResult {
 
 pub fn run_scenario(sc: &Scenario, seed: u64, record: bool) -> Result<RunResult, String> {
     let mut world = World::new(sc, seed, record)?;
+    world.run();
+    let checks = check::evaluate(&world, sc);
+    Ok(RunResult {
+        scenario: sc.id.clone(),
+        seed,
+        world,
+        checks,
+    })
+}
+
+/// Like [`run_scenario`] with the log canary on: a leak of a secret into anything a platform
+/// could log is a violation of the run.
+pub fn run_scenario_with_canary(sc: &Scenario, seed: u64) -> Result<RunResult, String> {
+    let mut world = World::new(sc, seed, false)?;
+    world.enable_log_canary();
     world.run();
     let checks = check::evaluate(&world, sc);
     Ok(RunResult {

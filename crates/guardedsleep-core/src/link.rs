@@ -372,7 +372,7 @@ pub struct LinkStatus {
     pub last_alive_ms: Option<u64>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 #[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub enum LinkInput {
@@ -534,6 +534,24 @@ pub enum LinkAction {
     Emit {
         event: LinkEvent,
     },
+}
+
+// Written by hand, like the one of `LinkAction`: the baby receives the parent secret as the text of
+// an `AttemptDataMessage` (`parent_pin`), which a derived `Debug` would print (found by the log
+// canary, AGENTS.md section 7.6). Prints the serialized form, with that text redacted.
+impl std::fmt::Debug for LinkInput {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Ok(mut value) = serde_json::to_value(self) else {
+            return f.write_str("LinkInput(<unprintable>)");
+        };
+        if let LinkInput::AttemptDataMessage { text, .. } = self
+            && text.contains("\"parent_pin\"")
+            && let Some(slot) = value.get_mut("text")
+        {
+            *slot = serde_json::Value::from("<parent_pin redacted>");
+        }
+        write!(f, "{value}")
+    }
 }
 
 // Written by hand so that the one action that carries the parent secret (`parent_pin`) never
@@ -3615,6 +3633,24 @@ mod tests {
             text: r#"{"type":"ping"}"#.to_owned(),
         };
         assert!(format!("{other:?}").contains("ping"));
+    }
+
+    #[test]
+    fn debug_of_the_input_that_delivers_the_parent_secret_hides_it() {
+        let secret = "ab".repeat(32);
+        let pin = LinkInput::AttemptDataMessage {
+            attempt: 1,
+            text: format!(r#"{{"type":"parent_pin","v":3,"secret":"{secret}","name":"x"}}"#),
+        };
+        let shown = format!("{pin:?}");
+        assert!(!shown.contains(&secret), "{shown}");
+        assert!(shown.contains("redacted"));
+        let other = LinkInput::AttemptDataMessage {
+            attempt: 1,
+            text: r#"{"type":"ping"}"#.to_owned(),
+        };
+        assert!(format!("{other:?}").contains("ping"));
+        assert!(format!("{:?}", LinkInput::Tick).contains("tick"));
     }
 
     #[test]

@@ -20,6 +20,7 @@ use guardedsleep_core::protocol::{DataMessage, Role, encode_data_message, parse_
 use guardedsleep_core::testing::{decode_message, nonce_of, rewrite_message};
 use serde_json::{Value, json};
 
+use crate::canary::CanarySet;
 use crate::raw::RawState;
 use crate::rng::Rng;
 use crate::scenario::{PeerSpec, RelaySpec, Scenario, Step};
@@ -382,6 +383,18 @@ pub struct World {
     pub seed: u64,
     /// True wall-clock time (Unix seconds) at virtual time 0.
     pub wall_base: u64,
+    /// The log canary, when a run asks for it (see [`World::enable_log_canary`]).
+    canary: Option<CanaryRun>,
+}
+
+/// State of the log canary of one run: the known values plus the ones the run draws.
+struct CanaryRun {
+    set: CanarySet,
+    /// `(canary, encoding, kind)` already reported, so one leak is one violation.
+    reported: BTreeSet<(String, String, String)>,
+    /// The parent secret of the first simulated pairing (the core draws it at run time).
+    parent_secret: Option<Vec<u8>>,
+    lines: u64,
 }
 
 impl World {
@@ -413,6 +426,7 @@ impl World {
             record,
             seed,
             wall_base: sc.wall_start_s.unwrap_or(SIM_WALL_BASE_S),
+            canary: None,
         };
         for spec in &sc.peers {
             w.add_link_actor(spec)?;
@@ -1005,6 +1019,16 @@ impl World {
         cfg.paired_before = true;
         // A restart is a new run: a new seed, as the platforms draw one per run.
         cfg.seed = link_seed(self.seed, &self.actors[a].name, self.actors[a].instance + 1);
+        if let Some(c) = self.canary.as_mut() {
+            c.set.add_seed(
+                &format!(
+                    "seed_{}_run{}",
+                    self.actors[a].name,
+                    self.actors[a].instance + 1
+                ),
+                &cfg.seed,
+            );
+        }
         if let Some(m) = self.actors[a].pending_mailboxes.take() {
             cfg.mailboxes = m;
         }
@@ -1018,6 +1042,127 @@ impl World {
         ac.instance += 1;
         ac.rec = None;
         self.start_actor(a);
+    }
+
+    // ---- log canary ------------------------------------------------------------------------
+
+    /// Turns the log canary on (AGENTS.md section 7.6): from now on everything a platform could
+    /// log is scanned for the PSKs of the run (known), the seeds, the keys derived from them, the
+    /// room ids, plaintext SDP and, once the first pairing has drawn it, the parent secret.
+    ///
+    /// "Log" here is the `{:?}` text of every input the core receives, of every action and event
+    /// it returns and of every config: the worst a careless driver could print. Wire payloads (a
+    /// mailbox frame, an SDP in transit) may carry the room id and SDP by design, so for those
+    /// lines only the secrets are checked. Call before [`World::run`].
+    pub fn enable_log_canary(&mut self) {
+        let mut set = CanarySet::new();
+        set.add_pairing("", &synthetic_psk("A"));
+        set.add_pairing("_other", &synthetic_psk("B"));
+        for ac in &self.actors {
+            // The two synthetic PSKs are in already; a scenario may name another one.
+            if let Some(psk) = decode_psk(&ac.cfg.psk_b64url)
+                && psk != synthetic_psk("A")
+                && psk != synthetic_psk("B")
+            {
+                set.add_pairing(&format!("_{}", ac.name), &psk);
+            }
+            set.add_seed(&format!("seed_{}_run0", ac.name), &ac.cfg.seed);
+        }
+        set.add_sdp_markers();
+        self.canary = Some(CanaryRun {
+            set,
+            reported: BTreeSet::new(),
+            parent_secret: None,
+            lines: 0,
+        });
+        let configs: Vec<(usize, String)> = self
+            .actors
+            .iter()
+            .enumerate()
+            .map(|(i, ac)| (i, format!("{:?}", ac.cfg)))
+            .collect();
+        for (i, text) in configs {
+            self.log_line(i, "config", &text, false);
+        }
+    }
+
+    /// The canary list of the run (names only matter to callers and tests).
+    pub fn canary_set(&self) -> Option<&CanarySet> {
+        self.canary.as_ref().map(|c| &c.set)
+    }
+
+    /// The parent secret of the first pairing, once the run has drawn it.
+    pub fn canary_parent_secret(&self) -> Option<&[u8]> {
+        self.canary
+            .as_ref()
+            .and_then(|c| c.parent_secret.as_deref())
+    }
+
+    /// How many log lines the canary has scanned.
+    pub fn canary_lines(&self) -> u64 {
+        self.canary.as_ref().map_or(0, |c| c.lines)
+    }
+
+    /// One log line of actor `a`; a leak becomes a violation (the canary name and encoding, never
+    /// the value). Public so a test can plant a leak through the very same path.
+    pub fn log_line(&mut self, a: usize, kind: &str, text: &str, wire: bool) {
+        let name = self
+            .actors
+            .get(a)
+            .map_or("?", |ac| ac.name.as_str())
+            .to_owned();
+        let now = self.now;
+        let Some(c) = self.canary.as_mut() else {
+            return;
+        };
+        c.lines += 1;
+        let place = format!("sim log of {name} at t={now} ({kind})");
+        let hits = c.set.scan(&place, text.as_bytes(), wire);
+        for h in hits {
+            let key = (h.canary.clone(), h.encoding.clone(), kind.to_owned());
+            if c.reported.insert(key) {
+                self.violations.push(format!(
+                    "log canary: {} ({}) in {place}",
+                    h.canary, h.encoding
+                ));
+            }
+        }
+    }
+
+    fn log_actions(&mut self, a: usize, actions: &[LinkAction]) {
+        // Learn the run-time values first: the parent secret comes out in `ParentPinned`, before
+        // the action that sends it, in the very same list.
+        if let Some(c) = self.canary.as_mut() {
+            for act in actions {
+                match act {
+                    LinkAction::Emit {
+                        event: LinkEvent::ParentPinned { secret, .. },
+                    } if c.parent_secret.is_none() => {
+                        c.parent_secret = Some(secret.bytes.clone());
+                        c.set.add_parent_secret(&secret.bytes);
+                    }
+                    LinkAction::SendData { text, .. } if text.contains("\"parent_pin\"") => {
+                        c.set.add_pin_message(text);
+                    }
+                    LinkAction::CreateAttempt { ice_servers, .. } => {
+                        for cred in ice_servers.iter().filter_map(|s| s.credential.as_deref()) {
+                            c.set.add_turn_password(cred);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+        for act in actions {
+            let wire = matches!(
+                act,
+                LinkAction::MailboxSend { .. }
+                    | LinkAction::SendData { .. }
+                    | LinkAction::SetRemoteDescription { .. }
+                    | LinkAction::AddIceCandidate { .. }
+            );
+            self.log_line(a, "action", &format!("{act:?}"), wire);
+        }
     }
 
     // ---- driving a Link --------------------------------------------------------------------
@@ -1040,10 +1185,23 @@ impl World {
             self.actors[a].rec = Some(ix);
         }
         let recorded = self.actors[a].rec.map(|_| input.clone());
+        if self.canary.is_some() && !is_tick {
+            let wire = matches!(
+                input,
+                LinkInput::MailboxFrame { .. }
+                    | LinkInput::AttemptLocalDescription { .. }
+                    | LinkInput::AttemptLocalIce { .. }
+                    | LinkInput::AttemptDataMessage { .. }
+            );
+            self.log_line(a, "input", &format!("{input:?}"), wire);
+        }
         let Some(link) = self.actors[a].link.as_mut() else {
             return;
         };
         let actions = link.handle(now, input);
+        if self.canary.is_some() {
+            self.log_actions(a, &actions);
+        }
         if let (Some(r), Some(inp)) = (self.actors[a].rec, recorded) {
             self.recs[r].push(now, inp, &actions);
         }
