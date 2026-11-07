@@ -184,6 +184,28 @@ pub fn validate_mailboxes(
         .collect()
 }
 
+/// "Only same Wi-Fi or my own server": the set without every `relay` entry whose host is
+/// `project_host` (compared lower-case). `None` or an empty host keeps the set unchanged. This is
+/// the one rule for a new invite, for the core's own mailbox set (`LinkConfig::only_local`) and for
+/// a received mailbox update; callers pass it the switch only when it is on.
+pub fn filter_only_local(
+    mailboxes: &[InviteMailbox],
+    project_host: Option<&str>,
+) -> Vec<InviteMailbox> {
+    let host = project_host
+        .map(str::to_ascii_lowercase)
+        .filter(|h| !h.is_empty());
+    mailboxes
+        .iter()
+        .filter(|m| {
+            !(m.kind == MailboxKind::Relay
+                && host.is_some()
+                && crate::ice::mailbox_host(&m.url) == host)
+        })
+        .cloned()
+        .collect()
+}
+
 /// Index of the entry the budget drops next, or `None` when only protected entries remain.
 fn drop_candidate(kinds: &[MailboxKind]) -> Option<usize> {
     let first_relay = kinds.iter().position(|k| *k == MailboxKind::Relay);
@@ -345,6 +367,40 @@ fn lan_authority(rest: &str, allow_dev_loopback: bool) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn filter_only_local_removes_exactly_the_project_relay_entries() {
+        let set = vec![
+            InviteMailbox {
+                kind: MailboxKind::Relay,
+                url: "wss://GS.Project.test/signaling".into(),
+            },
+            InviteMailbox {
+                kind: MailboxKind::Relay,
+                url: "wss://gs.project.test.evil.example".into(),
+            },
+            InviteMailbox {
+                kind: MailboxKind::Lan,
+                url: "ws://192.168.1.5:8787".into(),
+            },
+            InviteMailbox {
+                kind: MailboxKind::Relay,
+                url: "wss://own.test:8443/x".into(),
+            },
+        ];
+        let kept = filter_only_local(&set, Some("gs.project.test"));
+        let urls: Vec<&str> = kept.iter().map(|m| m.url.as_str()).collect();
+        assert_eq!(
+            urls,
+            [
+                "wss://gs.project.test.evil.example",
+                "ws://192.168.1.5:8787",
+                "wss://own.test:8443/x"
+            ]
+        );
+        assert_eq!(filter_only_local(&set, None), set);
+        assert_eq!(filter_only_local(&set, Some("")), set);
+    }
+
     use super::*;
     use proptest::prelude::*;
 

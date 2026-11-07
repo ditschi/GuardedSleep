@@ -204,6 +204,16 @@ pub fn build_invite(
     )?)
 }
 
+/// "Only same Wi-Fi or my own server" for a new invite: the mailbox set without the relay entries
+/// whose host is `project_host`. The same rule the core applies to its own set and to updates.
+#[uniffi::export]
+pub fn filter_only_local(
+    mailboxes: Vec<InviteMailbox>,
+    project_host: String,
+) -> Vec<InviteMailbox> {
+    guardedsleep_core::invite::filter_only_local(&mailboxes, Some(&project_host))
+}
+
 #[uniffi::export]
 pub fn conformance_eval(case_json: String) -> String {
     guardedsleep_core::conformance::evaluate(&case_json)

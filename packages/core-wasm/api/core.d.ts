@@ -135,11 +135,18 @@ export interface LinkConfig {
      */
     allow_dev_loopback?: boolean;
     /**
-     * "Only same Wi-Fi or my own server". Reserved for the project-server entries of the set
-     * (`alpha-connection-model` design section 8); the core does not read it since the Nostr
-     * mailboxes it used to switch off are gone.
+     * "Only same Wi-Fi or my own server" (`alpha-connection-model` design section 8). With it on
+     * the core drops every `relay` entry whose host is `project_host`: from `mailboxes` at start
+     * and from every received mailbox update (an update left empty is ignored). It never opens or
+     * retries such a mailbox, so it asks for no project STUN or TURN either, and the set the baby
+     * sends to the parent leaves it out. Without a `project_host` it filters nothing.
      */
     only_local?: boolean;
+    /**
+     * The project server's host (`data/project-server.json`), lower-case DNS name, for
+     * `only_local`. `Link::new` rejects anything else (`InvalidProjectHost`).
+     */
+    project_host?: string;
 }
 
 export interface LinkStatus {
@@ -248,6 +255,12 @@ export function conformanceEval(case_json: string): string;
 export function deriveRoomId(psk: Uint8Array): string;
 
 /**
+ * "Only same Wi-Fi or my own server" for a new invite: a JSON array of `{"kind","url"}` mailboxes
+ * without the relay entries whose host is `project_host`. Throws `not_our_code` for bad JSON.
+ */
+export function filterOnlyLocal(mailboxes_json: string, project_host: string): string;
+
+/**
  * JSON array of every UI key the core can emit.
  */
 export function messageKeys(): string;
@@ -269,6 +282,7 @@ export interface InitOutput {
     readonly buildInvite: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
     readonly conformanceEval: (a: number, b: number, c: number) => void;
     readonly deriveRoomId: (a: number, b: number, c: number) => void;
+    readonly filterOnlyLocal: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly messageKeys: (a: number) => void;
     readonly parseInvite: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmlink_handle: (a: number, b: number, c: number, d: number, e: number) => void;

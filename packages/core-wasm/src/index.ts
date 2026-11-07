@@ -26,6 +26,7 @@ export interface RawCoreModule {
     expiresAtEpochS: number,
     allowDevLoopback: boolean,
   ): string;
+  filterOnlyLocal(mailboxesJson: string, projectHost: string): string;
   conformanceEval(caseJson: string): string;
 }
 
@@ -52,6 +53,12 @@ export interface CoreApi {
     mailboxes: InviteMailbox[],
     expiresAtEpochS: number,
   ): BuildInviteResult;
+  /**
+   * "Only same Wi-Fi or my own server" for a new invite: the mailboxes without the relay entries
+   * whose host is `projectHost` (lower-case host). The core applies the same rule to its own set
+   * and to received updates when `LinkConfig.only_local` is on.
+   */
+  filterOnlyLocal(mailboxes: InviteMailbox[], projectHost: string): InviteMailbox[];
   /** Evaluates one `vectors/conformance.json` case; the result is JSON, `{error}` for a bad case. */
   conformanceEval(caseJson: string): unknown;
 }
@@ -97,6 +104,10 @@ export function createCoreApi(mod: RawCoreModule, options: CoreOptions = {}): Co
         if (isInviteErrorKey(key)) return { ok: false, error: key };
         throw e;
       }
+    },
+    filterOnlyLocal(mailboxes, projectHost) {
+      const out: unknown = JSON.parse(mod.filterOnlyLocal(JSON.stringify(mailboxes), projectHost));
+      return out as InviteMailbox[];
     },
     conformanceEval: (caseJson) => JSON.parse(mod.conformanceEval(caseJson)) as unknown,
   };
