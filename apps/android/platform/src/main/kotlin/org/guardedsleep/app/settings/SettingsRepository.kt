@@ -117,6 +117,7 @@ class SettingsRepository(
                 advancedEnabled = p[ADVANCED] ?: defaults.advancedEnabled,
                 signalingUrls =
                     p[URLS]?.split('\n')?.filter { it.isNotBlank() } ?: defaults.signalingUrls,
+                onlyLocal = p[ONLY_LOCAL] ?: defaults.onlyLocal,
                 heartbeatSeconds = p[HEARTBEAT] ?: defaults.heartbeatSeconds,
             )
         return PersistedState(
@@ -148,6 +149,7 @@ class SettingsRepository(
         set(SILENCE, c.silenceWhileMonitoring)
         set(ADVANCED, c.advancedEnabled)
         set(URLS, c.signalingUrls.joinToString("\n"))
+        set(ONLY_LOCAL, c.onlyLocal)
         set(HEARTBEAT, c.heartbeatSeconds)
         set(ROLE, s.role?.name)
         set(ONBOARDING, s.onboardingDone)
@@ -170,6 +172,7 @@ class SettingsRepository(
         val SILENCE = booleanPreferencesKey("silence_while_monitoring")
         val ADVANCED = booleanPreferencesKey("advanced")
         val URLS = stringPreferencesKey("signaling_urls")
+        val ONLY_LOCAL = booleanPreferencesKey("only_local")
         val TURN = stringPreferencesKey("turn_url")
         val HEARTBEAT = intPreferencesKey("heartbeat_seconds")
         val ROLE = stringPreferencesKey("role")

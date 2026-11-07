@@ -249,6 +249,11 @@ data class SettingsState(
     val silenceWhileMonitoring: Boolean = true,
     val advancedEnabled: Boolean = false,
     val signalingUrls: List<String> = emptyList(),
+    /**
+     * "Only same Wi-Fi or my own server": this device contacts no project server (no mailbox, STUN
+     * or TURN) and keeps it out of the invites it builds. Task 5.3 adds the control.
+     */
+    val onlyLocal: Boolean = false,
     /** Mirrors the sealed TURN entry; never persisted by `updateSettings`. */
     val turnUrl: String? = null,
     val turnUsername: String? = null,

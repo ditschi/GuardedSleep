@@ -49,7 +49,15 @@ interface AttemptPort {
 
 /** Microphone/playout side of a link: one factory and audio device module per monitoring run. */
 interface MediaEngine {
-    fun createAttempt(offerer: Boolean, listener: AttemptListener): AttemptPort
+    /**
+     * [iceServers] is the core's list for this attempt (`CreateAttempt.ice_servers`), used as is;
+     * the engine adds only the user-entered TURN of its [IceConfig].
+     */
+    fun createAttempt(
+        offerer: Boolean,
+        listener: AttemptListener,
+        iceServers: List<IceServerEntry>,
+    ): AttemptPort
 
     /** Baby: gate the outgoing track (the core opens it for noise, listen and probe). */
     fun setMicEnabled(enabled: Boolean)
@@ -74,8 +82,21 @@ interface MediaEngine {
     fun release()
 }
 
+/**
+ * One ICE server entry of an attempt, exactly as the core handed it over. The credential is
+ * short-lived, never logged and never persisted.
+ */
+data class IceServerEntry(
+    val urls: List<String>,
+    val username: String? = null,
+    val credential: String? = null,
+) {
+    override fun toString(): String =
+        "IceServerEntry(urls=$urls, userSet=${username != null}, credential=<redacted>)"
+}
+
+/** Engine-wide ICE settings: the user-entered TURN server and the debug relay-only gate. */
 data class IceConfig(
-    val stunUrls: List<String>,
     val turnUrl: String? = null,
     val turnUser: String? = null,
     val turnCredential: String? = null,
@@ -84,6 +105,6 @@ data class IceConfig(
 ) {
     // The TURN password must never reach logs through string templates.
     override fun toString(): String =
-        "IceConfig(stunUrls=$stunUrls, relayOnly=$relayOnly, turnUrlSet=${turnUrl != null}, " +
+        "IceConfig(relayOnly=$relayOnly, turnUrlSet=${turnUrl != null}, " +
             "turnUserSet=${turnUser != null}, turnCredential=<redacted>)"
 }

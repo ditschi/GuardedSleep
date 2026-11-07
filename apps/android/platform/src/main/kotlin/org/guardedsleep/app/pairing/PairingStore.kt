@@ -130,9 +130,9 @@ class PairingStore(file: File, cipher: PairingCipher) {
     }
 
     /**
-     * Replaces the stored mailbox set (the baby's update) and the signaling URL list derived from
-     * it: the relay and LAN mailboxes, which the platform still opens until the core takes over the
-     * mailbox set (tasks 3.5 and 3.6). False when there is no pairing yet.
+     * Replaces the stored mailbox set (the baby's update). The URL list derived from it is kept for
+     * the record format only; the platform opens the set, never the list. False when there is no
+     * pairing yet.
      */
     @Synchronized
     fun setMailboxes(mailboxes: List<StoredMailbox>): Boolean {
