@@ -85,7 +85,7 @@ Alpha (T0). Builds on `rebuild-web-client` (archived); `add-offline-lan` follows
 
 ## 5. Server and Android
 
-- [ ] 5.1 `guardedsleep-relay` and the server carry sealed envelopes opaquely; protocol docs, including `welcome.iceServers` and the `ice_servers` message of task 9.2. Verify: `scripts/cargo.sh test -p guardedsleep-relay -p guardedsleep-server`, `just smoke`.
+- [x] 5.1 `guardedsleep-relay` and the server carry sealed envelopes opaquely; protocol docs, including `welcome.iceServers` and the `ice_servers` message of task 9.2. Verify: `scripts/cargo.sh test -p guardedsleep-relay -p guardedsleep-server`, `just smoke`.
 - [ ] 5.2 Android platform:
   - mailbox clients, one WebSocket per mailbox (one per relay since task 8.7), opened and closed only on core actions; no URL list or failover in the platform;
   - the seed from `SecureRandom` and wall-clock reporting;
