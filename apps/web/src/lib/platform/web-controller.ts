@@ -1,6 +1,7 @@
 import type {
   CoreApi,
   DeviceStatus,
+  IceServer,
   InviteMailbox,
   LinkConfig,
   LinkEvent,
@@ -33,6 +34,7 @@ import type { SoundGate } from "./audio";
 import { BabyModel } from "./baby-model";
 import type { Clock, Timers } from "./clock";
 import { encodeBase64Url } from "./encoding";
+import { toRtcIceServer } from "./ice-servers";
 import { mailboxesForUrls, signalingUrlsOf } from "./invite-mailboxes";
 import { LinkDriver, type LinkListener } from "./link-driver";
 import type { InboundAudioStats, MediaEngine } from "./media-engine";
@@ -772,8 +774,8 @@ export class WebController implements AppController {
 /** The user-entered TURN entry as the browser takes it; the credentials stay in this array. */
 function userTurnServers(turn: TurnEntry | null): RTCIceServer[] {
   if (turn === null) return [];
-  const entry: RTCIceServer = { urls: [turn.url] };
+  const entry: IceServer = { urls: [turn.url] };
   if (turn.username !== "") entry.username = turn.username;
   if (turn.password !== "") entry.credential = turn.password;
-  return [entry];
+  return [toRtcIceServer(entry)];
 }

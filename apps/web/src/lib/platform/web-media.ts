@@ -10,6 +10,7 @@ import {
   type SoundGate,
 } from "./audio";
 import type { Timers } from "./clock";
+import { toRtcIceServer } from "./ice-servers";
 import type { MediaEngine } from "./media-engine";
 
 export interface WebMediaDeps {
@@ -70,12 +71,4 @@ export async function createWebMediaEngine(role: Role, deps: WebMediaDeps): Prom
       playback?.release();
     },
   };
-}
-
-/** The core's entry as the browser takes it: the three fields, nothing added or dropped. */
-function toRtcIceServer(server: IceServer): RTCIceServer {
-  const entry: RTCIceServer = { urls: [...server.urls] };
-  if (server.username !== undefined) entry.username = server.username;
-  if (server.credential !== undefined) entry.credential = server.credential;
-  return entry;
 }
