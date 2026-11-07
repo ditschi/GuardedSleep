@@ -49,37 +49,23 @@ TURN_V6=fd00:5eed:a::10
 DENIED_PEER=10.9.9.9
 HEX_CLIENT="$(printf '%02x%02x%02x%02x' 198 51 100 77)"
 
-compose() {
-	GS_TEST_SIGNALING_IMAGE="$SIGNALING_IMAGE" GS_TEST_NET="$NET" docker compose -p "$PROJECT" \
-		--env-file "$WORK/.env" -f "$SRC/compose.yaml" -f "$ROOT/scripts/poc/public-server-logs.compose.yaml" "$@"
-}
+TAG=public-server-logs
+# shellcheck source=scripts/poc/lib/public-server.sh
+source "$ROOT/scripts/poc/lib/public-server.sh"
 cleanup() {
-	compose logs --no-color >"$OUT/stack.log" 2>&1 || true
-	compose down --remove-orphans >/dev/null 2>&1 || true
 	docker rm -f "$CTL" >/dev/null 2>&1 || true
-	docker network rm "$NET" >/dev/null 2>&1 || true
-	rm -rf "$WORK"
+	ps_cleanup --volumes
 }
 trap cleanup EXIT
 
 SECRET="$(openssl rand -hex 32)"
-# The template, filled with test values (the real file is what compose.yaml documents).
-sed -e "s|^TURN_SECRET=.*|TURN_SECRET=$SECRET|" \
-	-e "s|^SIGNALING_TAG=.*|SIGNALING_TAG=test|" \
-	-e "s|^TURN_IPV4=.*|TURN_IPV4=$TURN_V4|" \
-	-e "s|^TURN_IPV6=.*|TURN_IPV6=$TURN_V6|" "$SRC/.env.template" >"$WORK/.env"
+ps_fill_env "$SECRET"
 
 docker network create --subnet 198.51.100.0/24 --ipv6 --subnet fd00:5eed:a::/64 "$NET" >/dev/null
 compose up -d --no-build --pull never signaling coturn
 sleep 3
 compose ps --format '{{.Service}} {{.State}}'
-for s in signaling coturn; do
-	[[ "$(compose ps --format '{{.State}}' "$s")" == running && "$(docker inspect -f '{{.RestartCount}}' "$(compose ps -q "$s")")" == 0 ]] || {
-		echo "public-server-logs: $s is not running:" >&2
-		compose logs --no-color "$s" >&2 || true
-		exit 1
-	}
-done
+ps_require_running 1 signaling coturn
 SIGNALING_IP="$(docker inspect -f "{{(index .NetworkSettings.Networks \"$NET\").IPAddress}}" "$(compose ps -q signaling)")"
 
 run_client() { # <coturn ip>
@@ -121,7 +107,7 @@ echo "== monitoring check (docker/public-server/check-turn.sh): fine with the sh
 # check-turn.sh runs from the stack directory with the test project through COMPOSE; the compose wrapper's
 # variables are exported for it.
 export GS_TEST_SIGNALING_IMAGE="$SIGNALING_IMAGE" GS_TEST_NET="$NET"
-CHECK_COMPOSE="docker compose -p $PROJECT --env-file $WORK/.env -f $SRC/compose.yaml -f $ROOT/scripts/poc/public-server-logs.compose.yaml"
+CHECK_COMPOSE="docker compose ${COMPOSE_ARGS[*]}"
 COMPOSE="$CHECK_COMPOSE" TURN_HOST="$TURN_V4" "$SRC/check-turn.sh"
 # Mismatch: a coturn with another secret next to the signaling server's own secret (the control container
 # is coturn with a different --static-auth-secret; the check reads the signaling container's secret).

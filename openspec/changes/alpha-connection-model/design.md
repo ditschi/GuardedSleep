@@ -451,6 +451,19 @@ The 2026-10-23 text ("Signaling may use the vetted EU/EEA/CH mailboxes and STUN 
 
 **`turns:` on 5349:** coturn needs the certificate as files. Task 10.2 prefers a dedicated certificate for `gs.mydata.rocks` from a separate, pinned ACME client (HTTP-01 through a Traefik route, or DNS-01 with a Cloudflare token scoped to that zone) over exporting Traefik's `acme.json`, because an exporter would read every private key on the host (review 2026-11-02, M19). Until then the server hands out `turn:` only. `turns:` on 443 through Traefik's TCP router with SNI is an `IDEA`.
 
+**`turns:` on 5349, as built (task 10.2, 2026-11-07).** `docker/public-server/compose.yaml` gains an `acme` service (lego `v5.6.0`, tag from Docker Hub, Renovate regex manager) and a `turn-certs` volume; coturn reads `crt.pem` and `key.pem` from it read-only and listens on 5349 with TLS only (`--dtls` stays absent, TLS 1.1 is refused by the 4.18.0 defaults, proven locally). Options for the challenge:
+
+- **HTTP-01 through a Traefik route (chosen).** Pros: no DNS token on the host (a zone-scoped Cloudflare token can still rewrite every record of the zone, including `gs`); works with the owner's Traefik unchanged apart from one router on the HTTP entrypoint; lego's server runs only during a challenge. Cons: needs port 80 reachable and no global redirect swallowing `/.well-known/acme-challenge/`; **it cannot coexist with a Traefik resolver that uses `httpChallenge` on the same entrypoint** (Traefik's internal challenge router matches that path for every host and answers 404 for unknown tokens), which the owner must rule out in 10.3 (a `tlsChallenge` or `dnsChallenge` resolver is fine).
+- **DNS-01 with a zone-scoped Cloudflare token.** Pros: no inbound port or router, immune to the Traefik coexistence problem, works behind any redirect. Cons: a long-lived secret on the host that can alter DNS (mail, other records) for the zone; adds a provider dependency. Fallback if the HTTP-01 prerequisite fails: one flag (`--dns cloudflare`) and a token file in the `acme` service.
+
+Reload without the Docker socket: coturn re-reads `--cert` and `--pkey` on **SIGUSR2** (`reload_ssl_certs` in `src/apps/relay/mainrelay.c`, from 4.5.0.8; the local test shows the pinned 4.18.0 image serving the new certificate with the same container start time). Options:
+
+- **Host cron `reload-turn-cert.sh` (chosen).** Compares the installed certificate's SHA-256 with the last applied one; restarts coturn once for the first certificate (a coturn started without a certificate has no TLS listener and a reload does not create one), SIGUSR2 for every renewal. Pros: the ACME container gets no signalling rights at all; the host already runs `check-turn.sh` this way. Cons: one more cron entry that must exist (the README checklist and a certificate-expiry monitor cover it).
+- **Shared PID namespace (`pid: service:coturn`).** Pros: no host piece. Cons: coturn's command line (with `TURN_SECRET`) becomes readable to the container that talks to the internet. Discarded.
+- **Docker socket in the ACME container.** Root on the host. Discarded.
+
+The live HTTP-01 issuance cannot run locally; `just public-server-turns` proves everything after it (hook, volume permissions, restart, SIGUSR2, TLS allocation with relayed data, no-certificate start) with a test CA made at run time.
+
 **Logs and IP addresses (review 2026-11-02, I6):**
 
 - Traefik access log off (homelab repository); Traefik's own log at `ERROR` level.

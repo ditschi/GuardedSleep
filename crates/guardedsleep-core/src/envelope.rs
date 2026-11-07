@@ -154,8 +154,9 @@ impl Purpose {
 pub struct SecretKey([u8; 32]);
 
 impl SecretKey {
-    /// Exposes the raw key: conformance vectors only, never in a release build.
-    #[cfg(any(test, feature = "conformance"))]
+    /// Exposes the raw key: conformance vectors and the log canary (`testing`) only, never in a
+    /// release build.
+    #[cfg(any(test, feature = "conformance", feature = "testing"))]
     pub fn as_bytes(&self) -> &[u8; 32] {
         &self.0
     }

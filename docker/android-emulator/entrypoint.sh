@@ -5,10 +5,10 @@ AVD_NAME="${EMULATOR_AVD:-guardedsleep_e2e}"
 EMULATOR_PORT="${EMULATOR_PORT:-5554}"
 ADB_PORT="${ADB_PORT:-5555}"
 
-ACCEL_FLAG="-accel on"
+ACCEL_FLAG=(-accel on)
 if [[ ! -e /dev/kvm ]]; then
 	echo "WARN: /dev/kvm not available — emulator will run without hardware acceleration (very slow)." >&2
-	ACCEL_FLAG="-accel off"
+	ACCEL_FLAG=(-accel off)
 fi
 
 echo "Starting AVD ${AVD_NAME} (adb port ${ADB_PORT})..."
@@ -18,7 +18,7 @@ echo "Starting AVD ${AVD_NAME} (adb port ${ADB_PORT})..."
 	-no-audio \
 	-no-boot-anim \
 	-gpu swiftshader_indirect \
-	${ACCEL_FLAG} \
+	"${ACCEL_FLAG[@]}" \
 	-ports "${EMULATOR_PORT},${ADB_PORT}" \
 	>&2 &
 

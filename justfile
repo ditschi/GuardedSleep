@@ -55,7 +55,7 @@ fmt-check:
     scripts/lib/ktfmt.sh --dry-run --set-exit-if-changed
     scripts/lib/hygiene.sh
     scripts/lib/workspace-lints.sh
-    git ls-files -z 'scripts/*.sh' | xargs -0 shellcheck -x -P SCRIPTDIR
+    git ls-files -z 'scripts/*.sh' 'docker/*.sh' | xargs -0 shellcheck -x -P SCRIPTDIR
 
 # ktfmt over apps/android (also part of fmt and fmt-check).
 fmt-kotlin *args:
@@ -239,6 +239,10 @@ turn-lifetime:
 # Public-server stack (task 10.1): no client address in any container log after a relayed test call, coturn's Binding size, check-turn.sh. Needs Docker; builds the signaling image on the first run.
 public-server-logs:
     scripts/lib/slot.sh heavy -- scripts/poc/public-server-logs.sh
+
+# turns: on 5349 (task 10.2): coturn without and with a TEST certificate (made at run time), the acme deploy hook, reload-turn-cert.sh (restart, then SIGUSR2), a TLS allocation with relayed data. Needs Docker.
+public-server-turns:
+    scripts/lib/slot.sh heavy -- scripts/poc/public-server-turns.sh
 
 # The same verdict as CI (the PR title check and the emulator gate are CI-only): lint, test, build, e2e in order,
 # then a list of every SKIPPED line of the run (a skip is not a pass), also when a step fails.

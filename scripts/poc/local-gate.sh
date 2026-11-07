@@ -55,14 +55,18 @@ docker image inspect "$EMU_IMAGE" >/dev/null 2>&1 || docker build -t "$EMU_IMAGE
 docker build -q -t "$SIG_IMAGE" -f "$ROOT/docker/signaling-server/Dockerfile" "$ROOT" >/dev/null
 
 CONTAINERS=(gs-gate-baby gs-gate-parent gs-gate-signaling gs-gate-turn)
+# The canary scans these too: the signaling server must not log a key, room id or SDP.
+save_logs() {
+	for c in "${CONTAINERS[@]}"; do docker logs "$c" >"$OUT/$c.log" 2>&1 || true; done
+}
 cleanup() {
-	for c in gs-gate-baby gs-gate-parent; do docker logs "$c" >"$OUT/$c.log" 2>&1 || true; done
+	save_logs
 	docker rm -f "${CONTAINERS[@]}" >/dev/null 2>&1 || true
 }
 KEEP_ENV="${KEEP_ENV:-0}"
 running() { [[ "$(docker inspect -f '{{.State.Running}}' "$1" 2>/dev/null)" == "true" ]]; }
 if [[ "$KEEP_ENV" == "1" ]]; then
-	trap 'for c in gs-gate-baby gs-gate-parent; do docker logs "$c" >"$OUT/$c.log" 2>&1 || true; done' EXIT
+	trap save_logs EXIT
 else
 	trap cleanup EXIT
 fi
@@ -125,3 +129,13 @@ docker run --rm --network host -v "$ROOT:/workspace" -v "$ANDROID_HOME_DIR:/root
 		curl -sf http://127.0.0.1:$SIGNAL_PORT/healthz >/dev/null && echo "local-gate: signaling healthy"
 		/workspace/scripts/poc/gate.sh
 	'
+
+# Log canary (AGENTS.md section 7.6): the gate paired with known keys; none of them, nothing derived
+# from them and no plaintext SDP may be in any log of the run. Runs on the host (the runner container
+# above has no Rust toolchain) over everything the gate wrote to OUT.
+save_logs
+log_dir="${OUT#"$ROOT"/}"
+"$ROOT/scripts/poc/canary-scan.sh" "$log_dir" || {
+	echo "local-gate: LOG CANARY FAILED: a secret or plaintext SDP is in a gate log (names above, files in $log_dir)" >&2
+	exit 1
+}

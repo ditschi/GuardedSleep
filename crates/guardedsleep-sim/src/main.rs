@@ -6,16 +6,22 @@
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
+use guardedsleep_sim::canary::CanarySet;
 use guardedsleep_sim::lint::lint_trace;
 use guardedsleep_sim::scenario::Scenario;
-use guardedsleep_sim::{Verdict, load_scenarios, run_scenario, scenarios_dir, traces_dir};
+use guardedsleep_sim::{
+    Verdict, load_scenarios, run_scenario, run_scenario_with_canary, scenarios_dir, traces_dir,
+};
 
 const USAGE: &str = "usage:
   gs-sim list
   gs-sim run <scenario-name|path.json> [--seed N] [--trace-out DIR]
   gs-sim check [--seeds N]               run every scenario with seeds 1..=N (default 20)
   gs-sim bless-traces [--out DIR]        regenerate the curated traces (default: core vectors/traces)
-  gs-sim lint-trace <file|dir>...";
+  gs-sim lint-trace <file|dir>...
+  gs-sim canary-scan --psk-b64url K [--psk-b64url K2 ...] [--parent-secret-hex H] [--turn-password P] <file|dir>...
+                                         log canary: fail if a secret or plaintext SDP is in any file
+  gs-sim canary-scan --self-check        plant every value in every encoding, expect the scanner to find it";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -25,6 +31,7 @@ fn main() -> ExitCode {
         Some("check") => check(&args[1..]),
         Some("bless-traces") => bless(&args[1..]),
         Some("lint-trace") => lint(&args[1..]),
+        Some("canary-scan") => canary_scan(&args[1..]),
         _ => Err(USAGE.to_owned()),
     };
     match result {
@@ -112,7 +119,7 @@ fn check(args: &[String]) -> Result<bool, String> {
     for sc in load_scenarios()? {
         let mut bad = Vec::new();
         for seed in 1..=sc.max_seeds.map_or(seeds, |m| m.min(seeds)) {
-            let res = run_scenario(&sc, seed, false)?;
+            let res = run_scenario_with_canary(&sc, seed)?;
             if !matches!(res.verdict(&sc), Verdict::Pass | Verdict::ExpectedFail) {
                 bad.push(seed);
             }
@@ -209,4 +216,137 @@ fn lint(args: &[String]) -> Result<bool, String> {
         }
     }
     Ok(ok)
+}
+
+/// 64 hex digits to 32 bytes; any other text (non-ASCII included) is an error, never a panic.
+fn parse_hex_secret(h: &str) -> Result<Vec<u8>, String> {
+    const ERR: &str = "canary-scan: --parent-secret-hex is not 64 hex digits";
+    if h.len() != 64 {
+        return Err(ERR.to_owned());
+    }
+    let digit = |b: u8| char::from(b).to_digit(16);
+    h.as_bytes()
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|[hi, lo]| {
+            digit(*hi)
+                .zip(digit(*lo))
+                .and_then(|(h, l)| u8::try_from(h * 16 + l).ok())
+        })
+        .collect::<Option<Vec<u8>>>()
+        .ok_or_else(|| ERR.to_owned())
+}
+
+/// Every value of `--flag` (the flag may repeat).
+fn opts(args: &[String], name: &str) -> Vec<String> {
+    args.iter()
+        .enumerate()
+        .filter(|(_, a)| *a == name)
+        .filter_map(|(i, _)| args.get(i + 1).cloned())
+        .collect()
+}
+
+fn files_under(path: &Path, out: &mut Vec<PathBuf>) -> Result<(), String> {
+    if path.is_dir() {
+        let mut entries: Vec<_> = std::fs::read_dir(path)
+            .map_err(|e| format!("{}: {e}", path.display()))?
+            .filter_map(Result::ok)
+            .map(|e| e.path())
+            .collect();
+        entries.sort();
+        for e in entries {
+            files_under(&e, out)?;
+        }
+    } else {
+        out.push(path.to_owned());
+    }
+    Ok(())
+}
+
+/// The log canary over files (the emulator gate's logcat dumps, container logs and result files).
+/// Prints canary names, encodings and places, never a value. Exit 1 on a leak, 2 on a bad call.
+fn canary_scan(args: &[String]) -> Result<bool, String> {
+    let psks = opts(args, "--psk-b64url");
+    let mut set = CanarySet::new();
+    for (i, k) in psks.iter().enumerate() {
+        let psk = guardedsleep_core::pairing::decode_psk(k)
+            .filter(|p| p.len() == 32)
+            .ok_or("canary-scan: --psk-b64url is not a 32-byte base64url key")?;
+        set.add_pairing(
+            &if i == 0 {
+                String::new()
+            } else {
+                format!("_{i}")
+            },
+            &psk,
+        );
+    }
+    if args.iter().any(|a| a == "--self-check") {
+        if psks.is_empty() {
+            set.add_pairing("", &guardedsleep_sim::world::synthetic_psk("A"));
+        }
+        set.add_seed("seed", &[0x33; 32]);
+        set.add_parent_secret(&[0x5C; 32]);
+        set.add_pin_message(r#"{"type":"parent_pin","secret":"x","name":"y"}"#);
+        set.add_turn_password("turn-password-for-the-self-check");
+        set.add_sdp_markers();
+        set.self_check()?;
+        println!("canary self-check ok ({} canaries)", set.names().len());
+        return Ok(true);
+    }
+    if psks.is_empty() {
+        return Err(USAGE.to_owned());
+    }
+    if let Some(h) = opt(args, "--parent-secret-hex") {
+        set.add_parent_secret(&parse_hex_secret(&h)?);
+    }
+    for p in opts(args, "--turn-password") {
+        set.add_turn_password(&p);
+    }
+    set.add_sdp_markers();
+    // The scanner must prove itself before its silence means anything.
+    set.self_check()?;
+    let flags = ["--psk-b64url", "--parent-secret-hex", "--turn-password"];
+    let mut paths = Vec::new();
+    let mut skip = false;
+    for a in args {
+        if skip {
+            skip = false;
+        } else if flags.contains(&a.as_str()) {
+            skip = true;
+        } else {
+            files_under(Path::new(a), &mut paths)?;
+        }
+    }
+    if paths.is_empty() {
+        return Err("canary-scan: no files to scan".to_owned());
+    }
+    let mut leaks = 0;
+    for f in &paths {
+        let data = std::fs::read(f).map_err(|e| format!("{}: {e}", f.display()))?;
+        for hit in set.scan(&f.display().to_string(), &data, false) {
+            leaks += 1;
+            println!("LEAK  {hit}");
+        }
+    }
+    println!("canary scanned {} files, {leaks} leak(s)", paths.len());
+    Ok(leaks == 0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_hex_secret;
+
+    #[test]
+    fn the_parent_secret_hex_is_validated_without_panicking() {
+        assert_eq!(parse_hex_secret(&"5c".repeat(32)).unwrap(), vec![0x5c; 32]);
+        assert_eq!(parse_hex_secret(&"5C".repeat(32)).unwrap(), vec![0x5c; 32]);
+        // 64 bytes of non-ASCII: a byte-index slice at 2 would split a character.
+        let bad = "\u{e9}".repeat(32);
+        assert_eq!(bad.len(), 64);
+        assert!(parse_hex_secret(&bad).is_err());
+        assert!(parse_hex_secret("zz").is_err());
+        assert!(parse_hex_secret(&"g1".repeat(32)).is_err());
+    }
 }

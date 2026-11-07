@@ -386,7 +386,7 @@ pub struct LinkStatus {
     pub last_alive_ms: Option<u64>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 #[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub enum LinkInput {
@@ -550,6 +550,49 @@ pub enum LinkAction {
     },
 }
 
+/// What a `Debug` prints instead of a `parent_pin` message.
+pub const PARENT_PIN_REDACTED: &str = "<parent_pin redacted>";
+
+/// True for the DataChannel text of a `parent_pin` message (it carries the parent secret). One
+/// test for both `Debug` impls and for the log canary of the simulation, so what is redacted and
+/// what the canary treats as the pin message cannot drift apart.
+pub fn carries_parent_pin(text: &str) -> bool {
+    text.contains("\"parent_pin\"")
+}
+
+// Written by hand, like the one of `LinkAction`: the baby receives the parent secret as the text of
+// an `AttemptDataMessage` (`parent_pin`), which a derived `Debug` would print (found by the log
+// canary, AGENTS.md section 7.6). Prints the serialized form, with that text redacted.
+impl std::fmt::Debug for LinkInput {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Ok(mut value) = serde_json::to_value(self) else {
+            return f.write_str("LinkInput(<unprintable>)");
+        };
+        if let LinkInput::AttemptDataMessage { text, .. } = self
+            && carries_parent_pin(text)
+            && let Some(slot) = value.get_mut("text")
+        {
+            *slot = serde_json::Value::from(PARENT_PIN_REDACTED);
+        }
+        // An `ice_servers` frame carries the TURN credential (design section 7: never logged).
+        if let LinkInput::MailboxFrame { bytes, .. } = self
+            && let Ok(mut frame) = serde_json::from_str::<serde_json::Value>(bytes)
+            && frame.get("type").and_then(serde_json::Value::as_str) == Some("ice_servers")
+            && let Some(obj) = frame.as_object_mut()
+        {
+            for field in ["username", "credential"] {
+                if let Some(v) = obj.get_mut(field) {
+                    *v = serde_json::Value::from("<redacted>");
+                }
+            }
+            if let Some(slot) = value.get_mut("bytes") {
+                *slot = serde_json::Value::from(frame.to_string());
+            }
+        }
+        write!(f, "{value}")
+    }
+}
+
 // Written by hand so that the one action that carries the parent secret (`parent_pin`) never
 // prints it, whatever logs a `{:?}` of an action list.
 impl std::fmt::Debug for LinkAction {
@@ -607,8 +650,8 @@ impl std::fmt::Debug for LinkAction {
                 .field("candidate", candidate)
                 .finish(),
             LinkAction::SendData { attempt, text } => {
-                let shown: &dyn std::fmt::Debug = if text.contains("\"parent_pin\"") {
-                    &"<parent_pin redacted>"
+                let shown: &dyn std::fmt::Debug = if carries_parent_pin(text) {
+                    &PARENT_PIN_REDACTED
                 } else {
                     text
                 };
@@ -3761,6 +3804,44 @@ mod tests {
             text: r#"{"type":"ping"}"#.to_owned(),
         };
         assert!(format!("{other:?}").contains("ping"));
+    }
+
+    #[test]
+    fn debug_of_the_input_that_delivers_the_parent_secret_hides_it() {
+        let secret = "ab".repeat(32);
+        let pin = LinkInput::AttemptDataMessage {
+            attempt: 1,
+            text: format!(r#"{{"type":"parent_pin","v":3,"secret":"{secret}","name":"x"}}"#),
+        };
+        let shown = format!("{pin:?}");
+        assert!(!shown.contains(&secret), "{shown}");
+        assert!(shown.contains("redacted"));
+        let other = LinkInput::AttemptDataMessage {
+            attempt: 1,
+            text: r#"{"type":"ping"}"#.to_owned(),
+        };
+        assert!(format!("{other:?}").contains("ping"));
+        assert!(format!("{:?}", LinkInput::Tick).contains("tick"));
+    }
+
+    #[test]
+    fn debug_of_an_ice_servers_frame_hides_the_turn_credential() {
+        let frame = LinkInput::MailboxFrame {
+            id: 0,
+            bytes: r#"{"type":"ice_servers","urls":["turn:r.invalid:3478"],"username":"123:u-secret","credential":"c-secret","ttl":600}"#
+                .to_owned(),
+        };
+        let shown = format!("{frame:?}");
+        assert!(
+            !shown.contains("c-secret") && !shown.contains("u-secret"),
+            "{shown}"
+        );
+        assert!(shown.contains("redacted") && shown.contains("turn:r.invalid:3478"));
+        let other = LinkInput::MailboxFrame {
+            id: 0,
+            bytes: r#"{"type":"members"}"#.to_owned(),
+        };
+        assert!(format!("{other:?}").contains("members"));
     }
 
     #[test]
