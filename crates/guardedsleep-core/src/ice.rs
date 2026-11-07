@@ -265,7 +265,7 @@ mod tests {
         assert_eq!(list(&mut r, 1)[0].urls, vec!["stun:relay.example:3478"]);
         assert!(list(&mut r, 1)[0].credential.is_none());
         // A host that merely starts with the relay host is foreign too, as is a different case.
-        for u in ["turn:relay.example.evil:3478", "turn:RELAY.example:3478"] {
+        for u in ["turn:relay.example.invalid:3478", "turn:RELAY.example:3478"] {
             r.on_ice_servers(0, Some(H), frame(&[u], 600));
             assert!(list(&mut r, 1)[0].credential.is_none(), "{u}");
         }

@@ -8,6 +8,7 @@ mod emit;
 mod lists;
 mod stun_scan;
 
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
@@ -15,7 +16,8 @@ use lists::{Date, Lists};
 
 const USAGE: &str = "usage: public-lists <check|stun-sources|web|android> [options]
   check          validate the lists and the build minimums; stale entries only warn
-  stun-sources   fail when a STUN host outside data/stun-servers.json appears in client source or config
+  stun-sources   fail when a STUN or TURN host outside data/stun-servers.json and the project server
+                 appears in client source or config (TURN test paths are exempt)
   web            write public-lists.ts to --web-out
   android        write PublicLists.kt to --out
 options: --data <dir> (default: data/)  --root <dir> (stun-sources; default: repository root)
@@ -87,21 +89,23 @@ fn run(argv: &[String]) -> Result<(), ExitCode> {
                 return Err(ExitCode::from(1));
             }
             let lists = load_checked(&data, argv)?;
-            let allowed = lists.active_stun().map(|s| s.host.to_lowercase()).collect();
+            let mut allowed: BTreeSet<String> =
+                lists.active_stun().map(|s| s.host.to_lowercase()).collect();
+            allowed.insert(lists.project.host.to_lowercase());
             let scan_root = arg(argv, "--root").unwrap_or(root);
             let findings = stun_scan::scan_tree(&scan_root, &allowed);
             if findings.is_empty() {
                 return Ok(());
             }
             eprintln!(
-                "public-lists: {} unlisted STUN host(s) in client source or config",
+                "public-lists: {} unlisted STUN or TURN host(s) in client source or config",
                 findings.len()
             );
             for f in &findings {
                 eprintln!("  - {f}");
             }
             eprintln!(
-                "public-lists: use a server from data/stun-servers.json (AGENTS.md section 7.1)"
+                "public-lists: use the project server or a host from data/stun-servers.json (AGENTS.md section 7.1)"
             );
             Err(ExitCode::from(1))
         }
