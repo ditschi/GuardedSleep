@@ -85,7 +85,7 @@ SIGNALING_IP="$(docker inspect -f "{{(index .NetworkSettings.Networks \"$NET\").
 run_client() { # <coturn ip>
 	docker run --rm --network "$NET" --ip "$CLIENT_IP" -e TURN_SECRET="$SECRET" -e TURN_HOST="$1" -e DENIED_HOST="$TURN_V4" \
 		-e SIGNALING_URL="http://$SIGNALING_IP:8787" -e PUBLIC_HOST=gs.mydata.rocks \
-		-v "$ROOT/scripts/poc/public-server-logs-client.mjs:/client.mjs:ro" "$NODE_IMAGE" node /client.mjs
+		-v "$ROOT/scripts/poc:/poc:ro" "$NODE_IMAGE" node /poc/public-server-logs-client.mjs
 }
 echo "== relayed test call against the stack (coturn logging to /dev/null)"
 run_client "$TURN_V4" | tee "$OUT/client.log"

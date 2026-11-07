@@ -10,9 +10,20 @@
 // CRED_TTL_S (60).
 // Prints "BINDING_RESPONSE_BYTES <n>" and "VERDICT PASS" (exit 0) or "VERDICT FAIL" (exit 1).
 // Protocol: RFC 8656 (TURN), RFC 8489 (STUN); coturn REST scheme https://github.com/coturn/coturn/blob/master/README.turnserver
-import { createHash, createHmac, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import dgram from "node:dgram";
-import { networkInterfaces } from "node:os";
+import {
+  A,
+  M,
+  UDP_TRANSPORT as UDP,
+  attr,
+  build,
+  ownIPv4,
+  parse,
+  restCredential,
+  u32,
+  xorAddr,
+} from "./lib/stun.mjs";
 
 const HOST = process.env.TURN_HOST ?? "";
 const SECRET = process.env.TURN_SECRET ?? "";
@@ -26,20 +37,6 @@ if (!HOST || !SECRET) {
   process.exit(2);
 }
 
-const MAGIC = 0x2112a442;
-const M = { binding: 0x001, allocate: 0x003, refresh: 0x004, createPermission: 0x008 };
-const A = {
-  username: 0x0006,
-  integrity: 0x0008,
-  errorCode: 0x0009,
-  lifetime: 0x000d,
-  xorPeer: 0x0012,
-  data: 0x0013,
-  realm: 0x0014,
-  nonce: 0x0015,
-  xorRelayed: 0x0016,
-  transport: 0x0019,
-};
 const failures = [];
 const fail = (m) => {
   failures.push(m);
@@ -47,71 +44,12 @@ const fail = (m) => {
 };
 const log = (m) => console.log(m);
 
-const pad4 = (n) => (4 - (n % 4)) % 4;
-const attr = (type, value) => {
-  const h = Buffer.alloc(4);
-  h.writeUInt16BE(type, 0);
-  h.writeUInt16BE(value.length, 2);
-  return Buffer.concat([h, value, Buffer.alloc(pad4(value.length))]);
-};
-const xorAddr = (ip, port) => {
-  const b = Buffer.alloc(8);
-  b[1] = 1;
-  b.writeUInt16BE(port ^ (MAGIC >>> 16), 2);
-  b.writeUInt32BE((ip.split(".").reduce((a, o) => (a << 8) | Number(o), 0) ^ MAGIC) >>> 0, 4);
-  return b;
-};
-const header = (type, len, txid) => {
-  const h = Buffer.alloc(20);
-  h.writeUInt16BE(type, 0);
-  h.writeUInt16BE(len, 2);
-  h.writeUInt32BE(MAGIC, 4);
-  txid.copy(h, 8);
-  return h;
-};
-function build(type, attrs, auth) {
-  const txid = randomBytes(12);
-  let body = Buffer.concat(attrs);
-  if (auth) {
-    const key = createHash("md5").update(`${auth.user}:${auth.realm}:${auth.pass}`).digest();
-    const pre = Buffer.concat([header(type, body.length + 24, txid), body]);
-    body = Buffer.concat([body, attr(A.integrity, createHmac("sha1", key).update(pre).digest())]);
-  }
-  return { txid, msg: Buffer.concat([header(type, body.length, txid), body]) };
-}
-function parse(msg) {
-  if (msg.length < 20 || msg.readUInt32BE(4) !== MAGIC) return null;
-  const attrs = new Map();
-  let off = 20;
-  const end = 20 + msg.readUInt16BE(2);
-  while (off + 4 <= end) {
-    const t = msg.readUInt16BE(off);
-    const l = msg.readUInt16BE(off + 2);
-    attrs.set(t, msg.subarray(off + 4, off + 4 + l));
-    off += 4 + l + pad4(l);
-  }
-  const ec = attrs.get(A.errorCode);
-  return {
-    type: msg.readUInt16BE(0),
-    txid: msg.subarray(8, 20).toString("hex"),
-    attrs,
-    error: ec ? ec[2] * 100 + ec[3] : 0,
-  };
-}
-
-const myIp = Object.values(networkInterfaces())
-  .flat()
-  .find((i) => i && i.family === "IPv4" && !i.internal)?.address;
+const myIp = ownIPv4();
 if (!myIp) {
   console.error("public-server-logs-client: no non-loopback IPv4 address");
   process.exit(2);
 }
 console.log(`CLIENT_ADDRESS ${myIp}`);
-
-const credential = (ttl, secret) => {
-  const user = `${Math.floor(Date.now() / 1000) + ttl}:${randomBytes(16).toString("base64url")}`;
-  return { user, pass: createHmac("sha1", secret).update(user).digest("base64") };
-};
 
 class Client {
   constructor(sock, cred) {
@@ -174,7 +112,6 @@ const open = async () => {
   return s;
 };
 const ok = (r) => !r.error && (r.type & 0x0110) === 0x0100;
-const UDP = Buffer.from([17, 0, 0, 0]);
 
 // 1. Binding: a bare 20-byte request (design section 7, STUN without amplification).
 {
@@ -190,8 +127,8 @@ const UDP = Buffer.from([17, 0, 0, 0]);
 
 // 2. A rejected credential (wrong secret) and an expired one: the log lines of a failed auth.
 for (const [label, cred] of [
-  ["wrong secret", credential(CRED_TTL_S, randomBytes(8).toString("hex"))],
-  ["expired", credential(-30, SECRET)],
+  ["wrong secret", restCredential(CRED_TTL_S, randomBytes(8).toString("hex"))],
+  ["expired", restCredential(-30, SECRET)],
 ]) {
   const s = await open();
   const r = await new Client(s, cred).txn(M.allocate, [attr(A.transport, UDP)]);
@@ -297,9 +234,9 @@ if (!ok(alloc)) {
   const got = [0, 1, 2, 3, 4].filter((i) => echoes.has(`ping-${i}`)).length;
   log(`relayed data echoed ${got}/5`);
   if (got < 4) fail(`only ${got}/5 relayed echoes`);
-  const rf = await c.txn(M.refresh, [attr(A.lifetime, Buffer.from([0, 0, 0, 60]))]);
+  const rf = await c.txn(M.refresh, [attr(A.lifetime, u32(60))]);
   if (!ok(rf)) fail(`refresh refused (${rf.error})`);
-  const rel = await c.txn(M.refresh, [attr(A.lifetime, Buffer.from([0, 0, 0, 0]))]);
+  const rel = await c.txn(M.refresh, [attr(A.lifetime, u32(0))]);
   if (!ok(rel)) fail(`release refused (${rel.error})`);
 }
 sock.close();
