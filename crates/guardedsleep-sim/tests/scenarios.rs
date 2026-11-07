@@ -166,3 +166,31 @@ fn a_leak_in_a_wire_payload_is_caught_for_secrets_but_not_for_room_ids() {
     world.log_line(0, "wire", &format!("{{\"room\":\"{room}\"}}"), false);
     assert!(!world.violations.is_empty());
 }
+
+#[test]
+fn issued_turn_credentials_are_canaries_and_the_wire_exemption_does_not_cover_them() {
+    let sc = scenario("turn-credentials-renewed-across-a-long-outage");
+    let res = run_scenario_with_canary(&sc, 1).unwrap();
+    assert!(res.clean(), "{}", res.report());
+    let set = res.world.canary_set().unwrap();
+    assert!(
+        set.has("turn_password") && set.has("turn_password_1"),
+        "{:?}",
+        set.names()
+    );
+    // What an unredacted Debug of the frame would print, as wire text and as log text.
+    let mut world = guardedsleep_sim::world::World::new(&sc, 1, false).unwrap();
+    world.enable_log_canary();
+    world.run();
+    assert!(world.violations.is_empty(), "{:?}", world.violations);
+    let leak = r#"MailboxFrame { id: 0, bytes: "{\"type\":\"ice_servers\",\"credential\":\"simcred1\"}" }"#;
+    world.log_line(0, "planted", leak, true);
+    assert!(
+        world
+            .violations
+            .iter()
+            .any(|v| v.contains("canary: turn_password ")),
+        "{:?}",
+        world.violations
+    );
+}
