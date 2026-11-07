@@ -9,7 +9,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use guardedsleep_core::ice::IceServer;
 use guardedsleep_core::invite::InviteMailbox;
 use guardedsleep_core::link::{
-    Link, LinkAction, LinkConfig, LinkEvent, LinkInput, LinkState, LinkStatus,
+    Link, LinkAction, LinkConfig, LinkEvent, LinkInput, LinkState, LinkStatus, carries_parent_pin,
 };
 use guardedsleep_core::mailbox::{MailboxId, MailboxKind};
 use guardedsleep_core::pairing::{
@@ -1141,7 +1141,7 @@ impl World {
                         c.parent_secret = Some(secret.bytes.clone());
                         c.set.add_parent_secret(&secret.bytes);
                     }
-                    LinkAction::SendData { text, .. } if text.contains("\"parent_pin\"") => {
+                    LinkAction::SendData { text, .. } if carries_parent_pin(text) => {
                         c.set.add_pin_message(text);
                     }
                     LinkAction::CreateAttempt { ice_servers, .. } => {
