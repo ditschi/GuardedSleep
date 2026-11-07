@@ -20,6 +20,29 @@ cargo run -p guardedsleep-sim --bin gs-sim -- bless-traces      # rewrite the cu
 cargo run -p guardedsleep-sim --bin gs-sim -- lint-trace crates/guardedsleep-core/vectors/traces
 ```
 
+## Log canary (AGENTS.md section 7.6)
+
+`cargo test -p guardedsleep-sim` (and `gs-sim check`) run every scenario with the log canary on
+(`run_scenario_with_canary`). The simulation pairs with the known synthetic PSKs; `canary.rs` builds
+the list of every value a log must never contain: the PSK (raw, base64url, standard base64), the
+envelope key, the relay admission key, the room id, the invite text, each run's seed, the parent
+secret with its four HKDF subkeys and the `parent_pin` message text (both learned from the first
+pairing, because the parent's core draws the secret at run time), an issued TURN password and, by
+markers (`v=0`, `a=fingerprint:`, `a=ice-ufrag:`, `a=ice-pwd:`, `m=audio`), plaintext SDP. Each value is
+searched raw, as lowercase and uppercase hex, as standard and URL-safe base64 at every alignment
+(padded or not) and as percent-escaped standard base64.
+
+"The log" is the `{:?}` text of every input the core receives, of every action and event it
+returns and of every config: the worst a careless driver could print. Wire payloads (mailbox frames,
+SDP in transit) may carry the room id and SDP by design, so for them only the secrets count. A leak
+becomes a violation of the run that names the canary, the encoding, the actor and the time, never
+the value. The scanner proves itself first (`CanarySet::self_check`, `gs-sim canary-scan
+--self-check`), and the tests plant a leak per encoding.
+
+Committed traces are recordings, not logs: they contain the synthetic test PSK and seed by design
+and are guarded by the shareable lint instead (`lint_trace`: only synthetic keys, no real material).
+The same scanner serves the emulator gate (`scripts/poc/canary-scan.sh`, `gs-sim canary-scan`).
+
 ## Scenarios (`scenarios/*.json`, `gs-scenario/1`)
 
 Verbs (`at` in simulated ms): `start`, `stop`, `end`, `acknowledge`, `input` (any `LinkInput`),
