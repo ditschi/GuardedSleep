@@ -1,3 +1,5 @@
+import { PROJECT_SERVER } from "../public-lists/generated/public-lists";
+
 /**
  * Whether this build lets the core accept loopback mailboxes (`l:127.0.0.1:...`, `localhost`).
  * Only the Vite dev server (`just dev`) and the browser E2E build (`vite build --mode e2e`, see
@@ -7,6 +9,11 @@
  * Vite modes: https://vite.dev/guide/env-and-mode#modes
  */
 export function loopbackAllowed(env: { DEV: boolean; MODE: string }): boolean {
+  return devOrE2e(env);
+}
+
+/** The Vite dev server and the `e2e` mode: the builds that are never a release. */
+function devOrE2e(env: { DEV: boolean; MODE: string }): boolean {
   return env.DEV || env.MODE === "e2e";
 }
 
@@ -31,5 +38,15 @@ export function projectServerEnabled(env: {
   MODE: string;
   VITE_GS_OFFICIAL_DEPLOYMENT?: string;
 }): boolean {
-  return officialDeployment(env) && (env.DEV || env.MODE === "e2e");
+  return officialDeployment(env) && devOrE2e(env);
+}
+
+/** The project server's origin, as it goes into a CSP `connect-src`. */
+export function projectServerOrigin(): string {
+  return `wss://${PROJECT_SERVER.host}`;
+}
+
+/** The project server's relay address, as a mailbox URL. */
+export function projectServerMailboxUrl(): string {
+  return `${projectServerOrigin()}${PROJECT_SERVER.path}`;
 }

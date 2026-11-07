@@ -15,7 +15,7 @@
  */
 import type { Plugin } from "vite";
 // Generated from data/project-server.json by `lists:gen` (also in the image build, which has no data/).
-import { PROJECT_SERVER } from "../src/lib/public-lists/generated/public-lists";
+import { officialDeployment, projectServerOrigin } from "../src/lib/platform/build-mode";
 import fileOrigins from "./connect-origins.json";
 
 /** The Trusted Types policies the page may create: ours, and the one Svelte creates itself. */
@@ -68,8 +68,7 @@ export function configuredConnectOrigins(env: Record<string, string | undefined>
     .split(",")
     .map((s) => s.trim())
     .filter((s) => s !== "");
-  const official =
-    env.VITE_GS_OFFICIAL_DEPLOYMENT === "true" ? [`wss://${PROJECT_SERVER.host}`] : [];
+  const official = officialDeployment(env) ? [projectServerOrigin()] : [];
   return validateConnectOrigins([...new Set([...fileOrigins.origins, ...fromEnv, ...official])]);
 }
 

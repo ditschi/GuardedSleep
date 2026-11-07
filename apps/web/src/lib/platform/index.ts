@@ -2,10 +2,9 @@ import { loadCore } from "@guardedsleep/core-wasm/web";
 // Vite emits the wasm file and hands over its URL; the glue code would otherwise guess it.
 import wasmUrl from "@guardedsleep/core-wasm/pkg/guardedsleep_wasm_bg.wasm?url";
 import type { AppController, CodeScanner } from "../contract";
-import { PROJECT_SERVER } from "../public-lists/generated/public-lists";
 import { AlertPlayer, createSoundGate } from "./audio";
 import { watchBattery, type BatteryManagerLike } from "./battery";
-import { loopbackAllowed, projectServerEnabled } from "./build-mode";
+import { loopbackAllowed, projectServerEnabled, projectServerMailboxUrl } from "./build-mode";
 import { createClock, createTimers } from "./clock";
 import { browserDeviceName } from "./device-name";
 import { createPageWatch, type WakeLockApi } from "./page-watch";
@@ -102,7 +101,7 @@ export async function createWebApp(): Promise<AppController> {
     },
     defaultMailboxUrls: () => defaultMailboxUrls(window.location, import.meta.env.DEV),
     projectServer: {
-      mailboxUrl: `wss://${PROJECT_SERVER.host}${PROJECT_SERVER.path}`,
+      mailboxUrl: projectServerMailboxUrl(),
       enabled: projectServerEnabled(import.meta.env),
     },
     connectAllowed: (url) =>
