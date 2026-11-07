@@ -8,7 +8,7 @@ The PWA has no build-time signaling URL. A page without configured signaling URL
 
 ## PWA installation and HTTPS
 
-Browsers generally require **HTTPS** (or `localhost`) for service workers and for a reliable **“Install app”** / add-to-home-screen flow. For internet-facing deployments, terminate TLS with **Traefik** (or another reverse proxy) as in [signaling-traefik.md](signaling-traefik.md).
+Browsers generally require **HTTPS** (or `localhost`) for service workers and for a reliable **“Install app”** / add-to-home-screen flow. For internet-facing deployments, terminate TLS with **Traefik** (or another reverse proxy) as in [docker/public-server/README.md](../../docker/public-server/README.md).
 
 ## Build the web image only
 
@@ -38,11 +38,9 @@ Defaults are set in the Compose file (`${VAR:-…}`); no `.env` is required. For
 
 Then open `http://127.0.0.1:8080/` (or your host LAN IP on port `8080`).
 
-## Compose: PWA + signaling behind Traefik
+## Compose: signaling behind Traefik
 
-Ready-to-use file, configured via `.env` only: [docker/stack/compose.traefik.yaml](../../docker/stack/compose.traefik.yaml) + [traefik.env.example](../../docker/stack/traefik.env.example). It serves the app at `https://<APP_DOMAIN>/` and signaling at `wss://<APP_DOMAIN>/signaling` (the PWA connects to its own origin).
-
-Details, variables, and Caddy / nginx equivalents: [signaling-traefik.md](signaling-traefik.md).
+The one Traefik example of the repository is [docker/public-server/](../../docker/public-server/README.md) (signaling and coturn behind an existing Traefik). Its optional `web` profile serves this PWA on its **own origin**, never on the signaling origin (README, "Self-hosting variants"); Caddy and nginx equivalents for the signaling route are in the same README.
 
 ## CI: publish to GHCR
 

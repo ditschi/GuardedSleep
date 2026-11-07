@@ -3,4 +3,4 @@
 Documentation:
 
 - [Signaling server (Docker / Compose)](../../docs/contributing/signaling-server-docker.md)
-- [Reverse proxy: Traefik, Caddy, nginx](../../docs/contributing/signaling-traefik.md)
+- [Public server: Traefik, coturn, Caddy and nginx variants](../public-server/README.md)

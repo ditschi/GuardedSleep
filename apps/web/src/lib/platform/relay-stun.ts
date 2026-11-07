@@ -68,7 +68,7 @@ export function defaultSignalingUrls(
   dev: boolean,
 ): string[] {
   if (dev) return [`ws://${location.hostname}:8787`];
-  // `/signaling` matches the one-domain reverse-proxy layout (docs/contributing/signaling-traefik.md);
+  // `/signaling` matches the one-domain reverse-proxy layout (docker/public-server/README.md);
   // the server and the bundled nginx image accept the upgrade on any path.
   return [`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/signaling`];
 }

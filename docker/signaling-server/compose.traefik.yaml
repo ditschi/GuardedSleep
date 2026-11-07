@@ -6,7 +6,7 @@
 #
 # Clients then use wss://<SIGNALING_DOMAIN><SIGNALING_PATH_PREFIX>. No host port is published:
 # Traefik reaches the container over the shared proxy network, TLS terminates in Traefik on 443.
-# Docs: docs/contributing/signaling-traefik.md
+# Docs: docker/public-server/README.md (the maintained Traefik example)
 name: ${COMPOSE_PROJECT_NAME:-guardedsleep-signaling}
 
 services:

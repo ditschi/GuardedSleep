@@ -2,11 +2,11 @@
 
 Two ways to run the full GuardedSleep stack: **build from source** (this repo) or **pull pre-built images from GHCR** (no clone needed).
 
-| Mode                                 | Compose file                                                                                    | When to use                                                                                                                                                                                                            |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A. Build from source** (this repo) | [`compose.yaml`](compose.yaml) (+ optional [`.env.example`](.env.example))                      | Development and testing local code changes.                                                                                                                                                                            |
-| **B. Pre-built images (GHCR)**       | [`compose.ghcr.yaml`](compose.ghcr.yaml) (+ [`.env.ghcr.example`](.env.ghcr.example))           | Deployments / self-hosting. **No repo clone required** — download just the two files. Tag strategy: see [ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md). |
-| **C. Pre-built images + Traefik**    | [`compose.traefik.yaml`](compose.traefik.yaml) (+ [`traefik.env.example`](traefik.env.example)) | Behind an existing Traefik on 443. One domain: app at `/`, signaling at `/signaling`. Configure via `.env` only — see [signaling-traefik.md](../../docs/contributing/signaling-traefik.md).                            |
+| Mode                                 | Compose file                                                                          | When to use                                                                                                                                                                                                            |
+| ------------------------------------ | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A. Build from source** (this repo) | [`compose.yaml`](compose.yaml) (+ optional [`.env.example`](.env.example))            | Development and testing local code changes.                                                                                                                                                                            |
+| **B. Pre-built images (GHCR)**       | [`compose.ghcr.yaml`](compose.ghcr.yaml) (+ [`.env.ghcr.example`](.env.ghcr.example)) | Deployments / self-hosting. **No repo clone required** — download just the two files. Tag strategy: see [ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md). |
+| **C. Public server behind Traefik**  | [`../public-server/`](../public-server/README.md)                                     | Signaling + coturn behind an existing Traefik, the one Traefik example of the repository (`gs.mydata.rocks` deployment; the optional `web` profile needs its own origin).                                              |
 
 ## Requirements
 
@@ -108,7 +108,6 @@ If you **cannot load the UI at all** from the phone, check: same Wi‑Fi, use **
 | [`scripts/stack-lan-env.sh`](../../scripts/stack-lan-env.sh) | Auto-write `.env` with host LAN IP (`bash scripts/stack-lan-env.sh`) |
 | [compose.ghcr.yaml](compose.ghcr.yaml)                       | **Mode B** — pull pre-built images from GHCR (no repo clone needed)  |
 | [.env.ghcr.example](.env.ghcr.example)                       | Mode B defaults — owner, tags, origins                               |
-| [compose.traefik.yaml](compose.traefik.yaml)                 | **Mode C** — GHCR images behind an existing Traefik (one domain)     |
-| [traefik.env.example](traefik.env.example)                   | Mode C defaults — domain, Traefik network/entrypoint/resolver        |
+| [../public-server/](../public-server/README.md)              | **Mode C** — signaling + coturn behind an existing Traefik           |
 
 More detail: [docs/contributing/web-docker.md](../../docs/contributing/web-docker.md). Tag strategy: [ADR-008](../../openspec/changes/archive/2026-05-13-adr-008-container-image-build-and-distribution/design.md).

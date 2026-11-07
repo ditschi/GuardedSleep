@@ -32,6 +32,7 @@ venv/
 .env.*
 !.env.example
 !.env.test
+!docker/public-server/.env.template
 credentials.json
 *.key
 # Signing material (Android release keystores, Play service accounts, certificates)

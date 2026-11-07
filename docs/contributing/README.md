@@ -2,7 +2,7 @@
 
 - [Development environment](development.md) — Dev Container, local setup, lint/format, hooks
 - [Signaling server (Docker / Compose)](signaling-server-docker.md) — image build, local Compose, GHCR
-- [Signaling behind a reverse proxy (Traefik, Caddy, nginx)](signaling-traefik.md) — `wss://` on 443, ready-to-use Traefik Compose, path routing, checklist
+- [Public server: signaling and coturn behind Traefik (Caddy and nginx variants)](../../docker/public-server/README.md) — `wss://` on 443, ready-to-use Compose, firewall, monitoring
 - [Own TURN server on a VPS (coturn, Compose)](turn-server-vps.md) — Oracle Cloud walk-through, firewall, verification, known app gaps
 - [Static PWA + full stack (Docker)](web-docker.md) — nginx image, Compose with/without Traefik
 - [Decisions, roles and documentation conventions](decisions-and-roles.md) — options checklists, role coordination, Critical Review Gate, status tags

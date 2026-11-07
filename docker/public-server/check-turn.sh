@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# TURN monitoring check (design section 9, "Monitoring"): one authenticated allocation against the coturn of
+# this stack with a credential signed by the secret the SIGNALING SERVER actually runs with. A STUN or TCP
+# check on 3478 cannot notice a TURN_SECRET mismatch between the two containers (for example after a
+# half-finished rotation); this one fails then, because coturn answers the allocation with an error.
+#
+# Run it from this directory by cron on the host, for example every 5 minutes:
+#   */5 * * * * cd /opt/guardedsleep/docker/public-server && ./check-turn.sh
+# With KUMA_PUSH_URL (env or .env) it reports to an Uptime Kuma push monitor (status up or down) with
+# https://github.com/louislam/uptime-kuma/wiki/Push-monitor ; set the monitor's heartbeat to 10 minutes so a
+# silent host also turns it red. Without it the script only exits 0 (allocation works) or 1.
+# The push URL carries a token: it is never printed. No client data is involved; the allocation comes from
+# the host itself and logs nothing (coturn logs to /dev/null).
+#
+# Env: COMPOSE (default "docker compose"), TURN_HOST (default TURN_IPV4 of .env), KUMA_PUSH_URL.
+set -euo pipefail
+cd "$(dirname "$0")"
+
+COMPOSE="${COMPOSE:-docker compose}"
+dotenv() { # <name>: the value of NAME= in .env, empty when absent
+	[[ -f .env ]] && sed -n "s/^$1=//p" .env | tail -n1 || true
+}
+TURN_HOST="${TURN_HOST:-$(dotenv TURN_IPV4)}"
+KUMA_PUSH_URL="${KUMA_PUSH_URL:-$(dotenv KUMA_PUSH_URL)}"
+
+push() { # <up|down> <message>
+	[[ -n "$KUMA_PUSH_URL" ]] || return 0
+	curl -fsS --max-time 10 --get --data-urlencode "status=$1" --data-urlencode "msg=$2" "$KUMA_PUSH_URL" >/dev/null || true
+}
+fail() {
+	echo "check-turn: FAILED: $1" >&2
+	push down "$1"
+	exit 1
+}
+
+[[ -n "$TURN_HOST" ]] || fail "no TURN_HOST and no TURN_IPV4 in .env"
+SIGNALING="$($COMPOSE ps -q signaling)"
+COTURN="$($COMPOSE ps -q coturn)"
+[[ -n "$SIGNALING" && -n "$COTURN" ]] || fail "signaling or coturn container is not running"
+# The secret the signaling server signs with (its container environment), not the one in .env.
+SECRET="$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$SIGNALING" | sed -n 's/^TURN_SECRET=//p')"
+[[ -n "$SECRET" ]] || fail "the signaling container has no TURN_SECRET"
+
+# turnutils_uclient builds the REST user name (expiry:name) itself with -W; -n 1 -c sends one packet and no RTCP.
+# Its exit status is 0 even when the allocation fails, so the verdict is its output: a failed allocation prints
+# "Cannot complete Allocation". The secret is passed on the command line inside the container only.
+OUT="$(docker exec "$COTURN" timeout 30 turnutils_uclient -n 1 -c -W "$SECRET" -u gs-monitor -e 192.0.2.1 "$TURN_HOST" 2>&1)" || true
+if grep -q 'Cannot complete Allocation' <<<"$OUT"; then
+	fail "TURN allocation refused (TURN_SECRET mismatch between signaling and coturn, or coturn down)"
+fi
+grep -q 'start_mclient' <<<"$OUT" || fail "TURN allocation check produced no result"
+echo "check-turn: OK"
+push up OK
