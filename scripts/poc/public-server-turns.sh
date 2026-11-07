@@ -98,6 +98,14 @@ client nocert | tee "$OUT/client-nocert.log"
 grep -q 'VERDICT PASS' "$OUT/client-nocert.log"
 reload | tee "$OUT/reload-0.log"
 grep -q 'no certificate' "$OUT/reload-0.log"
+# A container error is not "no certificate": with acme stopped the script must fail (cron mails it).
+compose stop acme >/dev/null
+if reload >"$OUT/reload-err.log" 2>&1; then
+	echo "public-server-turns: reload-turn-cert.sh exited 0 with the acme container stopped" >&2
+	exit 1
+fi
+grep -q 'FAILED: cannot query the acme container' "$OUT/reload-err.log"
+compose start acme >/dev/null
 
 echo "== 2. certificate A (serial 11): hook, first-certificate restart, TLS allocation"
 install_cert a
