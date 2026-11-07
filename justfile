@@ -240,6 +240,10 @@ turn-lifetime:
 public-server-logs:
     scripts/lib/slot.sh heavy -- scripts/poc/public-server-logs.sh
 
+# turns: on 5349 (task 10.2): coturn without and with a TEST certificate (made at run time), the acme deploy hook, reload-turn-cert.sh (restart, then SIGUSR2), a TLS allocation with relayed data. Needs Docker.
+public-server-turns:
+    scripts/lib/slot.sh heavy -- scripts/poc/public-server-turns.sh
+
 # The same verdict as CI (the PR title check and the emulator gate are CI-only): lint, test, build, e2e in order,
 # then a list of every SKIPPED line of the run (a skip is not a pass), also when a step fails.
 ci:
