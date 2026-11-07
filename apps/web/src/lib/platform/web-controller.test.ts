@@ -96,6 +96,8 @@ function setup(
     micDenied?: boolean;
     core?: ScriptedCore;
     defaultUrls?: string[];
+    projectServer?: { mailboxUrl: string; enabled: boolean };
+    connectAllowed?: (url: string) => boolean;
   } = {},
 ) {
   FakeWebSocket.instances = [];
@@ -136,7 +138,9 @@ function setup(
     network: watcher,
     randomBytes: (n) => Uint8Array.from({ length: n }, () => ++counter % 251),
     entropy: () => 99,
-    defaultSignalingUrls: () => options.defaultUrls ?? [RELAY],
+    defaultMailboxUrls: () => options.defaultUrls ?? [RELAY],
+    projectServer: options.projectServer,
+    connectAllowed: options.connectAllowed,
     deviceName: () => "Chrome on Android",
   });
   return { controller, time, core, medias, media, ctx, gate, alerts, network };
@@ -171,8 +175,8 @@ describe("WebController: pairing", () => {
       Math.floor(t.time.wallMs() / 1000) + 300,
     );
     await flush();
-    // One microphone request, the relay's STUN and nothing else, one core link, one socket.
-    expect(t.media.requests).toEqual([{ role: "baby", ice: [{ urls: ["stun:relay.test:3478"] }] }]);
+    // One microphone request with no user TURN (the ICE list comes per attempt from the core), one core link.
+    expect(t.media.requests).toEqual([{ role: "baby", ice: [] }]);
     expect(t.core.configs).toHaveLength(1);
     expect(t.core.configs[0]).toMatchObject({ role: "baby", paired_before: false });
     expect(FakeWebSocket.instances).toHaveLength(0); // the scripted core did not ask yet
@@ -271,10 +275,8 @@ describe("WebController: pairing", () => {
     t.controller.submitPairingCode(invite.text);
     expect(get(t.controller.pairing)?.phase).toBe("connecting");
     await flush();
-    expect(t.media.requests[0]).toEqual({
-      role: "parent",
-      ice: [{ urls: ["stun:other.example:3478"] }],
-    });
+    expect(t.media.requests[0]).toEqual({ role: "parent", ice: [] });
+    expect(t.core.configs[0]?.mailboxes).toEqual([{ kind: "relay", url: "wss://other.example" }]);
     t.time.advance(19_000);
     expect(get(t.controller.pairing)?.error).toBeNull();
     t.time.advance(2_000);
@@ -415,7 +417,7 @@ describe("WebController: monitoring", () => {
     expect(low.core.configs[0]?.heartbeat_interval_ms).toBe(5_000);
   });
 
-  it("an explicit relay list in advanced settings overrides the invite's", async () => {
+  it("the pairing record is the only mailbox source: the advanced list never overrides an invite", async () => {
     const t = setup();
     t.controller.updateSettings((s) => ({
       ...s,
@@ -427,7 +429,87 @@ describe("WebController: monitoring", () => {
     if (!invite.ok) throw new Error("invite");
     t.controller.submitPairingCode(invite.text);
     await flush();
-    expect(t.media.requests[0]?.ice).toEqual([{ urls: ["stun:mine.example:3478"] }]);
+    expect(t.core.configs[0]?.mailboxes).toEqual([RELAY_MAILBOX]);
+  });
+
+  it("a stored record without mailboxes starts with none: no fallback to a default or a setting", async () => {
+    const t = setup({ defaultUrls: ["wss://default.example"] });
+    t.controller.updateSettings((s) => ({ ...s, signalingUrls: ["wss://mine.example"] }));
+    t.controller.chooseRole("parent");
+    // An invite whose only mailbox is unusable here yields an empty record.
+    t.core.parseInvite = (text, now) => {
+      const parsed = realCore.parseInvite(text, now);
+      return parsed.ok ? { ...parsed, invite: { ...parsed.invite, mailboxes: [] } } : parsed;
+    };
+    const invite = realCore.buildInvite(new Uint8Array(32).fill(5), [RELAY_MAILBOX], 1e10);
+    if (!invite.ok) throw new Error("invite");
+    t.controller.submitPairingCode(invite.text);
+    await flush();
+    expect(t.core.configs[0]?.mailboxes).toEqual([]);
+  });
+
+  it("ignores invite hosts outside the deployment CSP connect-src", async () => {
+    const t = setup({ connectAllowed: (url) => url.startsWith("wss://relay.test") });
+    t.controller.chooseRole("parent");
+    const invite = realCore.buildInvite(
+      new Uint8Array(32).fill(6),
+      [RELAY_MAILBOX, { kind: "relay", url: "wss://elsewhere.example/x" }],
+      1e10,
+    );
+    if (!invite.ok) throw new Error("invite");
+    t.controller.submitPairingCode(invite.text);
+    await flush();
+    expect(t.core.configs[0]?.mailboxes).toEqual([RELAY_MAILBOX]);
+  });
+
+  describe("the project server and its off switch", () => {
+    const PROJECT = "wss://gs.project.test/signaling";
+    const projectServer = { mailboxUrl: PROJECT, enabled: true };
+
+    it("a build that offers it puts it into new invites, the own /signaling otherwise", () => {
+      const on = setup({ projectServer });
+      on.controller.chooseRole("baby");
+      on.controller.startPairing();
+      const p = realCore.parseInvite(
+        get(on.controller.pairing)?.codePayload ?? "",
+        on.time.wallMs() / 1000,
+      );
+      expect(p.ok && p.invite.mailboxes.map((m) => m.url)).toEqual([PROJECT]);
+
+      const off = setup({ projectServer: { ...projectServer, enabled: false } });
+      off.controller.chooseRole("baby");
+      off.controller.startPairing();
+      const q = realCore.parseInvite(
+        get(off.controller.pairing)?.codePayload ?? "",
+        off.time.wallMs() / 1000,
+      );
+      expect(q.ok && q.invite.mailboxes.map((m) => m.url)).toEqual([RELAY]);
+    });
+
+    it("on: new invites leave it out and the switch reaches the core as only_local", async () => {
+      const baby = setup({ projectServer });
+      baby.controller.setOnlyLocal(true);
+      baby.controller.chooseRole("baby");
+      baby.controller.startPairing();
+      await flush();
+      expect(baby.core.configs[0]?.mailboxes).toEqual([RELAY_MAILBOX]);
+      expect(baby.core.configs[0]?.only_local).toBe(true);
+    });
+
+    it("off: a project-server entry in an invite is used", async () => {
+      const parent = setup({ projectServer });
+      parent.controller.chooseRole("parent");
+      const invite = realCore.buildInvite(
+        new Uint8Array(32).fill(8),
+        [{ kind: "relay", url: PROJECT }],
+        1e10,
+      );
+      if (!invite.ok) throw new Error("invite");
+      parent.controller.submitPairingCode(invite.text);
+      await flush();
+      expect(parent.core.configs[0]?.mailboxes).toEqual([{ kind: "relay", url: PROJECT }]);
+      expect(parent.core.configs[0]?.only_local).toBe(false);
+    });
   });
 });
 
@@ -801,21 +883,18 @@ describe("WebController: TURN server", () => {
     return t.media.requests[0]?.ice ?? [];
   }
 
-  it("offers the relay STUN first, then the TURN server with its credentials", async () => {
+  it("hands the media engine the TURN server with its credentials", async () => {
     const t = setup();
     expect(t.controller.setTurnServer(TURN, "test-only", "pw")).toBe("saved");
-    expect(await babyRun(t)).toEqual([
-      { urls: ["stun:relay.test:3478"] },
-      { urls: [TURN], username: "test-only", credential: "pw" },
-    ]);
+    expect(await babyRun(t)).toEqual([{ urls: [TURN], username: "test-only", credential: "pw" }]);
   });
 
   it("leaves out the credential keys when the entry has none", async () => {
     const t = setup();
     expect(t.controller.setTurnServer("turn:203.0.113.10:3478", "", "")).toBe("saved");
     const ice = await babyRun(t);
-    expect(ice[1]).toEqual({ urls: ["turn:203.0.113.10:3478"] });
-    expect(Object.keys(ice[1] ?? {})).toEqual(["urls"]);
+    expect(ice[0]).toEqual({ urls: ["turn:203.0.113.10:3478"] });
+    expect(Object.keys(ice[0] ?? {})).toEqual(["urls"]);
   });
 
   it("takes effect for the next attempt and stops after clearing", async () => {
@@ -827,7 +906,7 @@ describe("WebController: TURN server", () => {
       turnUsername: null,
       turnPasswordSaved: false,
     });
-    expect(await babyRun(t)).toEqual([{ urls: ["stun:relay.test:3478"] }]);
+    expect(await babyRun(t)).toEqual([]);
   });
 
   it("reports the entry without the password and keeps it on an empty field", async () => {
@@ -841,7 +920,7 @@ describe("WebController: TURN server", () => {
     expect(JSON.stringify(get(t.controller.settings))).not.toContain("turn-pw-test-only");
     expect(t.controller.setTurnServer(TURN, "test-only", "")).toBe("saved");
     const ice = await babyRun(t);
-    expect(ice[1]).toMatchObject({ credential: "turn-pw-test-only" });
+    expect(ice[0]).toMatchObject({ credential: "turn-pw-test-only" });
   });
 
   it("rejects bad input and keeps the previous entry", () => {

@@ -179,6 +179,62 @@ describe("LinkDriver with a scripted core", () => {
     expect(listener.log).toEqual(["status:connecting"]);
   });
 
+  it("passes the attempt's ICE servers to the media engine unchanged", () => {
+    const ice = [
+      { urls: ["stun:gs.test:3478"] },
+      { urls: ["turn:gs.test:3478", "turns:gs.test:5349"], username: "1:abc", credential: "pw" },
+    ];
+    const core = new ScriptedCore();
+    core.script = (input) =>
+      input.type === "start"
+        ? [{ type: "create_attempt", attempt: 1, offerer: true, ice_servers: ice }]
+        : [];
+    const { driver, media } = setup("parent", core);
+    driver.start();
+    expect(media.iceServers).toEqual([ice]);
+  });
+
+  it("an attempt without an ICE list gets an empty one", () => {
+    const core = new ScriptedCore();
+    core.script = (input) =>
+      input.type === "start" ? [{ type: "create_attempt", attempt: 1, offerer: true }] : [];
+    const { driver, media } = setup("parent", core);
+    driver.start();
+    expect(media.iceServers).toEqual([[]]);
+  });
+
+  it("never opens a mailbox the policy refuses and reports it closed", () => {
+    const core = new ScriptedCore();
+    core.script = (input) =>
+      input.type === "start"
+        ? [
+            { type: "open_mailbox", id: 0, kind: "relay", url: "wss://blocked.example" },
+            { type: "open_mailbox", id: 1, kind: "relay", url: "wss://ok.example" },
+          ]
+        : [];
+    const time = new FakeTime();
+    FakeWebSocket.instances = [];
+    const driver = new LinkDriver({
+      config: config("parent"),
+      core,
+      signaling: createWebSocketSignaling(FakeWebSocket),
+      media: new FakeMedia(),
+      clock: time,
+      timers: time,
+      listener: new Recorder(),
+      entropy: 7,
+      mailboxAllowed: (url) => url === "wss://ok.example",
+    });
+    driver.start();
+    expect(FakeWebSocket.instances.map((w) => w.url)).toEqual(["wss://ok.example"]);
+    time.advance(1);
+    expect(core.inputs.map((i) => i.input)).toContainEqual({
+      type: "mailbox_closed",
+      id: 0,
+      reason: "blocked",
+    });
+  });
+
   it("feeds signaling events to the core and ignores a replaced socket", () => {
     const core = new ScriptedCore();
     core.script = (input) =>

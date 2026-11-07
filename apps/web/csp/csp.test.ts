@@ -9,6 +9,7 @@ import {
   NGINX_CSP_FILE,
   validateConnectOrigins,
 } from "./csp";
+import { PROJECT_SERVER } from "../src/lib/public-lists/generated/public-lists";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = join(here, "../../..");
@@ -133,5 +134,17 @@ describe("the three places that carry the policy agree", () => {
       `content="${buildCsp({ connectOrigins: configuredConnectOrigins(process.env), meta: true })}"`,
     );
     expect(built).not.toMatch(/<script(?![^>]*\bsrc=)[^>]*>/);
+  });
+});
+
+describe("the project server origin", () => {
+  it("is in connect-src only for a build with the official-deployment flag", () => {
+    expect(configuredConnectOrigins({})).not.toContain(`wss://${PROJECT_SERVER.host}`);
+    expect(configuredConnectOrigins({ VITE_GS_OFFICIAL_DEPLOYMENT: "false" })).toEqual(
+      configuredConnectOrigins({}),
+    );
+    expect(configuredConnectOrigins({ VITE_GS_OFFICIAL_DEPLOYMENT: "true" })).toContain(
+      `wss://${PROJECT_SERVER.host}`,
+    );
   });
 });
