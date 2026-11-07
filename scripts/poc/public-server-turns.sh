@@ -37,24 +37,14 @@ TURN_V4=203.0.113.10
 TURN_V6=fd00:5eed:b::10
 HOST_NAME=gs.mydata.rocks
 
-compose() {
-	GS_TEST_SIGNALING_IMAGE=unused GS_TEST_NET="$NET" docker compose -p "$PROJECT" \
-		--env-file "$WORK/.env" -f "$SRC/compose.yaml" -f "$ROOT/scripts/poc/public-server-logs.compose.yaml" "$@"
-}
-cleanup() {
-	compose logs --no-color >"$OUT/stack.log" 2>&1 || true
-	compose down --remove-orphans --volumes >/dev/null 2>&1 || true
-	docker network rm "$NET" >/dev/null 2>&1 || true
-	rm -rf "$WORK"
-}
+TAG=public-server-turns
+# shellcheck source=scripts/poc/lib/public-server.sh
+source "$ROOT/scripts/poc/lib/public-server.sh"
+cleanup() { ps_cleanup --volumes; }
 trap cleanup EXIT
 
 SECRET="$(openssl rand -hex 32)"
-sed -e "s|^TURN_SECRET=.*|TURN_SECRET=$SECRET|" \
-	-e "s|^SIGNALING_TAG=.*|SIGNALING_TAG=test|" \
-	-e "s|^ACME_EMAIL=.*|ACME_EMAIL=test@example.invalid|" \
-	-e "s|^TURN_IPV4=.*|TURN_IPV4=$TURN_V4|" \
-	-e "s|^TURN_IPV6=.*|TURN_IPV6=$TURN_V6|" "$SRC/.env.template" >"$WORK/.env"
+ps_fill_env "$SECRET"
 echo "ACME_SERVER=https://acme.invalid/directory" >>"$WORK/.env"
 
 echo "== docker compose config with the template"
@@ -94,21 +84,15 @@ install_cert() { # <a|b>: the real hook, in the real acme container, fed fake le
 		-e LEGO_HOOK_CERT_PATH="/fake/$1.crt" -e LEGO_HOOK_CERT_KEY_PATH="/fake/$1.key" acme /acme-deploy-hook.sh
 }
 reload() {
-	GS_CERT_STATE="$WORK/state" COMPOSE="docker compose -p $PROJECT --env-file $WORK/.env -f $SRC/compose.yaml -f $ROOT/scripts/poc/public-server-logs.compose.yaml" \
-		GS_TEST_SIGNALING_IMAGE=unused GS_TEST_NET="$NET" "$SRC/reload-turn-cert.sh"
+	GS_CERT_STATE="$WORK/state" COMPOSE="docker compose ${COMPOSE_ARGS[*]}" GS_TEST_SIGNALING_IMAGE=unused GS_TEST_NET="$NET" \
+		"$SRC/reload-turn-cert.sh"
 }
 started() { docker inspect -f '{{.State.StartedAt}}' "$(compose ps -q coturn)"; }
 
 echo "== 1. no certificate yet"
 compose up -d --no-build --pull never coturn acme
 sleep 4
-for s in coturn acme; do
-	[[ "$(compose ps --format '{{.State}}' "$s")" == running ]] || {
-		echo "public-server-turns: $s is not running:" >&2
-		compose logs --no-color "$s" >&2 || true
-		exit 1
-	}
-done
+ps_require_running 0 coturn acme
 compose logs --no-color acme 2>&1 | grep -q 'retrying in 6 hours' || { echo "public-server-turns: acme did not reach its failure branch" >&2; compose logs --no-color acme >&2; exit 1; }
 client nocert | tee "$OUT/client-nocert.log"
 grep -q 'VERDICT PASS' "$OUT/client-nocert.log"

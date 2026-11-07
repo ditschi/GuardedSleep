@@ -1,4 +1,4 @@
-# Local overrides for scripts/poc/public-server-logs.sh: the real docker/public-server/compose.yaml on a
+# Local overrides for scripts/poc/public-server-logs.sh and public-server-turns.sh (shared plumbing in lib/public-server.sh): the real docker/public-server/compose.yaml on a
 # user-defined bridge instead of Traefik's network and the host network (rootless Docker's host network is
 # not the real host network). Everything else, coturn's whole command line included, is the production file.
 services:
