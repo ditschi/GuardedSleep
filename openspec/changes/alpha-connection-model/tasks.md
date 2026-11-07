@@ -91,6 +91,7 @@ Alpha (T0). Builds on `rebuild-web-client` (archived); `add-offline-lan` follows
   - the seed from `SecureRandom` and wall-clock reporting;
   - the ICE configuration from the attempt's ICE servers (task 9.3) plus the user-entered TURN; no client-side STUN default (`RelayStun` goes; the core computes the relay-STUN fallback);
   - the off switch;
+  - the core's mailbox set comes only from the pairing record (invite plus mailbox updates); no silent fallback to default or settings URLs when the record holds none (owner, 2026-11-07: a fallback would bypass the off switch; old alpha pairings without a stored set re-pair for internet use);
   - the parent id and mailbox set in the encrypted pairing record.
 
   Verify: JVM tests with fake sockets (the attempt's ICE list reaches the media engine unchanged); `just verify-android`.
@@ -111,7 +112,7 @@ Alpha (T0). Builds on `rebuild-web-client` (archived); `add-offline-lan` follows
 
 ## 6. Web
 
-- [ ] 6.1 Web link driver (also: ignore invite and update hosts outside the deployment CSP `connect-src`, design §5 version skew): mailbox WebSockets; the seed from `crypto.getRandomValues`; the wall clock; one WebSocket per relay mailbox (task 8.7); the ICE configuration from the attempt's ICE servers plus the user-entered TURN; the off switch; the CSP `connect-src` and the default mailbox from the generated project server origin only with the official-deployment flag (design §6), otherwise the deployment's own `/signaling`. Verify: Vitest with fake sockets; the storage test still finds no PSK, derived value, parent id or TURN credential.
+- [ ] 6.1 Web link driver (also: ignore invite and update hosts outside the deployment CSP `connect-src`, design §5 version skew): mailbox WebSockets; the seed from `crypto.getRandomValues`; the wall clock; one WebSocket per relay mailbox (task 8.7); the ICE configuration from the attempt's ICE servers plus the user-entered TURN; the off switch; the mailbox set only from the pairing record, no fallback to default or settings URLs (owner, 2026-11-07, as in 5.2); the CSP `connect-src` and the default mailbox from the generated project server origin only with the official-deployment flag (design §6), otherwise the deployment's own `/signaling`. Verify: Vitest with fake sockets; the storage test still finds no PSK, derived value, parent id or TURN credential.
 - [ ] 6.2 Web settings and copy as in 5.3 (same blocker and release gate as 5.3; this task flips `projectServerEnabled` to on for production builds of the official deployment only), plus the QR scan test in Playwright (inverted, 50 %). Verify: Vitest, Playwright with axe, `just lint-text`.
 - [ ] 6.3 Playwright on the local stack (no public server in CI): two contexts pair through the local server; a mailbox drop during setup still verifies with a second local relay; the `ice_servers` message reaches both contexts and a forced-relay run (`iceTransportPolicy: "relay"` in a test-only build) connects through the E2E coturn; a CSP check that only listed origins connect. Verify: `just e2e`.
 
