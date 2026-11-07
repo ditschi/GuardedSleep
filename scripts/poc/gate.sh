@@ -34,8 +34,11 @@ TURN_URL="${TURN_URL:-turn:10.0.2.2:3478}"
 
 mkdir -p "$OUT"
 : >"$OUT/summary.txt"
+rm -f "$OUT"/logcat-history-*.txt
 
-new_psk() { head -c 32 /dev/urandom | base64 | tr '+/' '-_' | tr -d '=\n'; }
+# Known test keys, so the log canary (scripts/poc/canary-scan.sh) can look for them in every log.
+# shellcheck source=lib/canary.env
+source "$ROOT/scripts/poc/lib/canary.env"
 log() { echo "[gate] $*"; }
 pass() { echo "PASS $1 — $2" | tee -a "$OUT/summary.txt"; }
 fail() {
@@ -103,6 +106,8 @@ wait_event_after() {
 
 reset_app() {
 	adb -s "$1" shell am force-stop "$PKG"
+	# Keep what is about to be cleared: the log canary scans every phase, not only the last one.
+	adb -s "$1" logcat -d >>"$OUT/logcat-history-$1.txt" 2>&1 || true
 	adb -s "$1" logcat -c
 }
 
@@ -128,10 +133,10 @@ for s in "$BABY" "$PARENT"; do
 done
 
 # --- AC-1: pairing through the core; a different PSK never meets the peer (v3: PSK-derived rooms) ---
-PSK="$(new_psk)"
+PSK="$GATE_PSK"
 log "AC-1a different PSKs derive different rooms"
 launch "$BABY" baby "$PSK"
-launch "$PARENT" parent "$(new_psk)"
+launch "$PARENT" parent "$GATE_PSK_OTHER"
 sleep 60
 if adb -s "$BABY" logcat -d -s GS_POC:I | grep -q 'pairing_verified' || adb -s "$PARENT" logcat -d -s GS_POC:I | grep -q 'pairing_verified'; then
 	fail AC-1 "devices with different PSKs verified"
