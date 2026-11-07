@@ -9,6 +9,7 @@ import org.guardedsleep.app.graph
 import org.guardedsleep.app.pairing.PairingPayload
 import org.guardedsleep.app.pairing.StoredPairing
 import org.guardedsleep.app.pairing.TurnCredentials
+import org.guardedsleep.app.pairing.toStored
 import org.guardedsleep.app.ui.model.Role
 
 /**
@@ -74,7 +75,12 @@ class DebugLaunchActivity : Activity() {
         controller.stopMonitoring()
         controller.chooseRole(role)
         controller.completeOnboarding()
-        graph.pairingStore.save(StoredPairing(psk, urls, pairedBefore = false, turn = turn))
+        // The mailbox set of the record, as an invite would have put it there: the core opens
+        // nothing that the record does not hold.
+        val mailboxes = PairingPayload.mailboxesFor(urls).map { it.toStored() }
+        graph.pairingStore.save(
+            StoredPairing(psk, urls, pairedBefore = false, turn = turn, mailboxes = mailboxes)
+        )
         controller.startMonitoring()
         finish()
     }
