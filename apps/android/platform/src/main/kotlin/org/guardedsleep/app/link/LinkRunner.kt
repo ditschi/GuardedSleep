@@ -8,6 +8,7 @@ import org.guardedsleep.app.config.AppDefaults
 import org.guardedsleep.app.diag.PocLog
 import org.guardedsleep.app.media.AttemptListener
 import org.guardedsleep.app.media.AttemptPort
+import org.guardedsleep.app.media.IceServerEntry
 import org.guardedsleep.app.media.InboundAudioStats
 import org.guardedsleep.app.media.InjectedAudio
 import org.guardedsleep.app.media.MediaEngine
@@ -17,6 +18,7 @@ import org.guardedsleep.app.signaling.SignalingTransport
 import uniffi.guardedsleep_core.CoreLink
 import uniffi.guardedsleep_core.DeviceStatus
 import uniffi.guardedsleep_core.IceCandidate
+import uniffi.guardedsleep_core.IceServer
 import uniffi.guardedsleep_core.LinkAction
 import uniffi.guardedsleep_core.LinkConfig
 import uniffi.guardedsleep_core.LinkEvent
@@ -217,7 +219,8 @@ class LinkRunner(
             is LinkAction.OpenMailbox -> openMailbox(action.id, action.url)
             is LinkAction.CloseMailbox -> closeMailbox(action.id)
             is LinkAction.MailboxSend -> mailboxes[action.id]?.transport?.send(action.frame)
-            is LinkAction.CreateAttempt -> createAttempt(action.attempt, action.offerer)
+            is LinkAction.CreateAttempt ->
+                createAttempt(action.attempt, action.offerer, action.iceServers)
             is LinkAction.CloseAttempt -> closeAttempt(action.attempt)
             is LinkAction.CreateOffer -> attempts[action.attempt]?.createOffer()
             is LinkAction.SetRemoteDescription ->
@@ -320,7 +323,7 @@ class LinkRunner(
         mailboxes.remove(id)?.transport?.close()
     }
 
-    private fun createAttempt(handle: UInt, offerer: Boolean) {
+    private fun createAttempt(handle: UInt, offerer: Boolean, iceServers: List<IceServer>) {
         val m = media ?: return
         val l =
             object : AttemptListener {
@@ -351,7 +354,11 @@ class LinkRunner(
             }
         attempts[handle] =
             try {
-                m.createAttempt(offerer, l)
+                m.createAttempt(
+                    offerer,
+                    l,
+                    iceServers.map { IceServerEntry(it.urls, it.username, it.credential) },
+                )
             } catch (e: Exception) {
                 PocLog.event("failed", "reason" to "create_attempt_${e.javaClass.simpleName}")
                 // The core sees a failed attempt and schedules the next one.

@@ -222,6 +222,8 @@ export interface SettingsState {
   silenceWhileMonitoring: boolean;
   advancedEnabled: boolean;
   signalingUrls: string[];
+  /** "Only same Wi-Fi or my own server": no project server contacted from this device. */
+  onlyLocal: boolean;
   turnUrl: string | null;
   turnUsername: string | null;
   /** Only the fact: the password itself is never part of any state. */
@@ -328,6 +330,7 @@ export function defaultSettings(): SettingsState {
     silenceWhileMonitoring: true,
     advancedEnabled: false,
     signalingUrls: [],
+    onlyLocal: false,
     turnUrl: null,
     turnUsername: null,
     turnPasswordSaved: false,

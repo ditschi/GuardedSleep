@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
+import org.guardedsleep.app.config.PublicLists
 import org.guardedsleep.app.link.Clock
 import org.guardedsleep.app.link.LinkController
 import org.guardedsleep.app.link.MonitorHost
@@ -13,10 +14,13 @@ import org.guardedsleep.app.link.NetworkWatcher
 import org.guardedsleep.app.link.buildIceConfig
 import org.guardedsleep.app.media.AttemptListener
 import org.guardedsleep.app.media.AttemptPort
+import org.guardedsleep.app.media.IceServerEntry
 import org.guardedsleep.app.media.InboundAudioStats
 import org.guardedsleep.app.media.MediaEngine
+import org.guardedsleep.app.pairing.PairingPayload
 import org.guardedsleep.app.pairing.PairingStore
 import org.guardedsleep.app.pairing.StoredMailbox
+import org.guardedsleep.app.pairing.StoredPairing
 import org.guardedsleep.app.pairing.TurnCredentials
 import org.guardedsleep.app.pairing.TurnStore
 import org.guardedsleep.app.signaling.SignalingFactory
@@ -54,6 +58,12 @@ private class FakeNet {
     /** Sees every DataChannel text before it is delivered (on the sender's thread). */
     @Volatile var onSend: ((text: String) -> Unit)? = null
     val attemptsCreated = AtomicInteger()
+    /** The ICE list of every attempt the cores asked the media engine for. */
+    val attemptIce = CopyOnWriteArrayList<List<IceServerEntry>>()
+    /** Every address a mailbox socket was opened at. */
+    val openedUrls = CopyOnWriteArrayList<String>()
+    /** A relay `ice_servers` frame sent to each member right after the welcome. */
+    @Volatile var iceFrame: String? = null
     val liveAttempts = CopyOnWriteArrayList<FakeAttempt>()
 
     fun later(block: () -> Unit) = delivery.execute { runCatching(block) }
@@ -72,6 +82,7 @@ private class FakeNet {
                     .put("roomId", room)
                     .toString()
             )
+            iceFrame?.let { t.deliver(it) }
             broadcastMembers(room)
         }
 
@@ -224,7 +235,12 @@ private class FakeAttempt(val net: FakeNet, val listener: AttemptListener, val b
 private class FakeMedia(val net: FakeNet, val baby: Boolean) : MediaEngine {
     val mic = CopyOnWriteArrayList<Boolean>()
 
-    override fun createAttempt(offerer: Boolean, listener: AttemptListener): AttemptPort {
+    override fun createAttempt(
+        offerer: Boolean,
+        listener: AttemptListener,
+        iceServers: List<IceServerEntry>,
+    ): AttemptPort {
+        net.attemptIce += iceServers
         net.attemptsCreated.incrementAndGet()
         return FakeAttempt(net, listener, baby)
     }
@@ -288,6 +304,8 @@ private class RealClock : Clock {
     override fun wallMs() = System.currentTimeMillis()
 }
 
+private val projectUrl = "wss://${PublicLists.projectServer.host}/signaling"
+
 private const val PIN_TYPE = "\"parent_pin\""
 
 class LinkControllerTest {
@@ -330,7 +348,11 @@ class LinkControllerTest {
                 settingsRepo = settings,
                 pairingStore = store,
                 turnStore = turnStore,
-                signaling = SignalingFactory { _, l -> FakeTransport(net, l) },
+                signaling =
+                    SignalingFactory { url, l ->
+                        net.openedUrls += url
+                        FakeTransport(net, l)
+                    },
                 mediaFactory = { r, _ -> FakeMedia(net, r == Role.BABY) },
                 silence = silence,
                 alerts = sink,
@@ -397,16 +419,135 @@ class LinkControllerTest {
     fun iceConfigPrefersDebugLaunchEntryOverStoredOne() {
         val stored = TurnCredentials("turn:stored", "su", "stored-secret-test-only")
         val pending = TurnCredentials("turn:debug", "du", "dp")
-        val fromStore = buildIceConfig(listOf("stun:a"), null, stored, false)
+        val fromStore = buildIceConfig(null, stored, false)
         assertEquals("turn:stored", fromStore.turnUrl)
         assertEquals("su", fromStore.turnUser)
         assertEquals("stored-secret-test-only", fromStore.turnCredential)
         assertFalse(fromStore.toString().contains("stored-secret-test-only"))
-        assertEquals("turn:debug", buildIceConfig(emptyList(), pending, stored, true).turnUrl)
-        val bare = buildIceConfig(emptyList(), null, TurnCredentials("turn:h", "", ""), false)
+        assertEquals("turn:debug", buildIceConfig(pending, stored, true).turnUrl)
+        val bare = buildIceConfig(null, TurnCredentials("turn:h", "", ""), false)
         assertNull(bare.turnUser)
         assertNull(bare.turnCredential)
-        assertNull(buildIceConfig(emptyList(), null, null, false).turnUrl)
+        assertNull(buildIceConfig(null, null, false).turnUrl)
+    }
+
+    @Test
+    fun theAttemptsIceListReachesTheMediaEngineUnchanged() {
+        net.iceFrame =
+            """{"type":"ice_servers","urls":["turn:fake.example:3478?transport=udp"],""" +
+                """"username":"1999999999:abc","credential":"turn-cred-test-only","ttl":600}"""
+        pair()
+        await("an attempt was created") { net.attemptIce.isNotEmpty() }
+        val turn = net.attemptIce.flatten().firstOrNull { it.credential != null }
+        assertNotNull("the relay's TURN set reaches the engine", turn)
+        assertEquals(listOf("turn:fake.example:3478?transport=udp"), turn!!.urls)
+        assertEquals("1999999999:abc", turn.username)
+        assertEquals("turn-cred-test-only", turn.credential)
+        assertFalse(turn.toString().contains("turn-cred-test-only"))
+        // The core adds the relay's built-in STUN for a mailbox that sent none; a credential never
+        // belongs to a STUN entry.
+        assertTrue(net.attemptIce.flatten().all { e -> e.credential != null || e.username == null })
+    }
+
+    private fun seedRecord(u: Unit2, mailboxes: List<StoredMailbox>) {
+        u.store.save(
+            StoredPairing(
+                PairingPayload.b64(ByteArray(32) { 7 }),
+                // A legacy URL list that must never be opened without a stored set.
+                listOf("wss://legacy.example"),
+                true,
+                null,
+                null,
+                mailboxes,
+                null,
+            )
+        )
+    }
+
+    @Test
+    fun aRecordWithoutAMailboxSetOpensNoMailboxAndFallsBackToNothing() {
+        val parent = unit("nofb", Role.PARENT)
+        // Settings and defaults name relays; the record does not, so none is opened.
+        parent.controller.updateSettings {
+            it.copy(advancedEnabled = true, signalingUrls = listOf("wss://settings.example"))
+        }
+        seedRecord(parent, emptyList())
+        parent.controller.startMonitoring()
+        await("the run started") { parent.controller.app.value.monitoring }
+        Thread.sleep(600)
+        assertEquals(emptyList<String>(), net.openedUrls.toList())
+    }
+
+    @Test
+    fun theOffSwitchKeepsTheProjectServerOutOfTheOpenedMailboxes() {
+        val parent = unit("onlylocal", Role.PARENT)
+        parent.controller.updateSettings { it.copy(onlyLocal = true) }
+        seedRecord(
+            parent,
+            listOf(StoredMailbox("relay", projectUrl), StoredMailbox("relay", "wss://own.example")),
+        )
+        parent.controller.startMonitoring()
+        await("the own relay was opened") { net.openedUrls.contains("wss://own.example") }
+        Thread.sleep(300)
+        assertEquals(listOf("wss://own.example"), net.openedUrls.toList())
+    }
+
+    @Test
+    fun theOffSwitchOffOpensTheWholeSet() {
+        val parent = unit("switchoff", Role.PARENT)
+        seedRecord(
+            parent,
+            listOf(StoredMailbox("relay", projectUrl), StoredMailbox("relay", "wss://own.example")),
+        )
+        parent.controller.startMonitoring()
+        await("both opened") { net.openedUrls.containsAll(listOf(projectUrl, "wss://own.example")) }
+    }
+
+    @Test
+    fun aProjectEntryInTheInviteAndInTheMailboxUpdateIsIgnoredWithTheOffSwitch() {
+        val baby = unit("upd-baby", Role.BABY)
+        val parent = unit("upd-parent", Role.PARENT)
+        baby.controller.updateSettings {
+            it.copy(signalingUrls = listOf(projectUrl, "wss://fake.example"))
+        }
+        parent.controller.updateSettings { it.copy(onlyLocal = true) }
+        baby.controller.startPairing()
+        parent.controller.submitPairingCode(baby.controller.pairing.value!!.codePayload!!)
+        await("both paired", 8_000) {
+            baby.controller.pairing.value?.phase == PairingPhase.PAIRED &&
+                parent.controller.pairing.value?.phase == PairingPhase.PAIRED
+        }
+        await("the parent stores the update") { parent.store.load()!!.mailboxes.isNotEmpty() }
+        assertEquals(
+            listOf(StoredMailbox("relay", "wss://fake.example")),
+            parent.store.load()!!.mailboxes,
+        )
+        // The baby (switch off) opened the projectUrl mailbox; the parent never did: one open of
+        // the
+        // projectUrl address is the baby's.
+        assertEquals(1, net.openedUrls.count { it == projectUrl })
+    }
+
+    @Test
+    fun theOffSwitchLeavesTheProjectServerOutOfANewInvite() {
+        val baby = unit("invite", Role.BABY)
+        baby.controller.updateSettings {
+            it.copy(signalingUrls = listOf(projectUrl, "wss://own.example"), onlyLocal = true)
+        }
+        baby.controller.startPairing()
+        val code = baby.controller.pairing.value!!.codePayload!!
+        val parsed =
+            PairingPayload.parse(code, System.currentTimeMillis())
+                as PairingPayload.Companion.Result.Ok
+        assertEquals(listOf("wss://own.example"), parsed.payload.signalingUrls)
+        baby.controller.updateSettings { it.copy(onlyLocal = false) }
+        baby.controller.startPairing()
+        val all =
+            PairingPayload.parse(
+                baby.controller.pairing.value!!.codePayload!!,
+                System.currentTimeMillis(),
+            ) as PairingPayload.Companion.Result.Ok
+        assertEquals(listOf(projectUrl, "wss://own.example"), all.payload.signalingUrls)
     }
 
     @After
@@ -487,7 +628,10 @@ class LinkControllerTest {
             listOf(StoredMailbox("relay", "wss://fake.example")),
             parent.store.load()!!.mailboxes,
         )
-        assertEquals(emptyList<StoredMailbox>(), baby.store.load()!!.mailboxes)
+        assertEquals(
+            listOf(StoredMailbox("relay", "wss://fake.example")),
+            baby.store.load()!!.mailboxes,
+        )
         assertTrue(!baby.store.load().toString().contains(baby.store.load()!!.parentSecretB64url!!))
     }
 

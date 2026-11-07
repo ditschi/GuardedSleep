@@ -102,10 +102,6 @@ object PublicLists {{\n    /** Curated STUN servers. */\n    val stunServers: Li
             kotlin_string(&s.last_vetted),
         ));
     }
-    out.push_str("        )\n\n    /** The STUN URLs of a default install: every entry of the first two distinct operators. */\n    val defaultStunUrls: List<String> =\n        listOf(\n");
-    for s in lists.default_ice_stun() {
-        out.push_str(&format!("            {},\n", kotlin_string(&s.url())));
-    }
     out.push_str("        )\n\n");
     let p = &lists.project;
     out.push_str(&format!(
@@ -150,7 +146,7 @@ mod tests {
         assert!(kt.contains("package org.guardedsleep.app.config"));
         assert!(kt.contains("val stunServers: List<PublicStun>"));
         assert!(!kt.contains("PublicRelay"));
-        assert!(kt.contains("val defaultStunUrls: List<String>"));
+        assert!(!kt.contains("defaultStunUrls"));
         assert!(kt.contains("val projectServer: ProjectServer"));
         assert!(kt.contains("\"r:gs.example.net/signaling\""));
         assert!(kt.contains("            false,\n        )\n}\n"));

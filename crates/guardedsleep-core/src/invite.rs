@@ -184,6 +184,28 @@ pub fn validate_mailboxes(
         .collect()
 }
 
+/// "Only same Wi-Fi or my own server": the set without every `relay` entry whose host is
+/// `project_host` (compared lower-case). `None` or an empty host keeps the set unchanged. This is
+/// the one rule for a new invite, for the core's own mailbox set (`LinkConfig::only_local`) and for
+/// a received mailbox update; callers pass it the switch only when it is on.
+pub fn filter_only_local(
+    mailboxes: &[InviteMailbox],
+    project_host: Option<&str>,
+) -> Vec<InviteMailbox> {
+    let host = project_host
+        .map(str::to_ascii_lowercase)
+        .filter(|h| !h.is_empty());
+    mailboxes
+        .iter()
+        .filter(|m| {
+            !(m.kind == MailboxKind::Relay
+                && host.is_some()
+                && crate::ice::mailbox_host(&m.url) == host)
+        })
+        .cloned()
+        .collect()
+}
+
 /// Index of the entry the budget drops next, or `None` when only protected entries remain.
 fn drop_candidate(kinds: &[MailboxKind]) -> Option<usize> {
     let first_relay = kinds.iter().position(|k| *k == MailboxKind::Relay);
@@ -284,7 +306,7 @@ fn parse_entry(entry: &str, allow_dev_loopback: bool) -> Option<InviteMailbox> {
 
 /// An ASCII DNS name: dot-separated labels of letters, digits and inner hyphens (an IPv4 literal
 /// passes as such a name, which is fine for a public host).
-fn is_hostname(host: &str) -> bool {
+pub(crate) fn is_hostname(host: &str) -> bool {
     !host.is_empty()
         && host.len() <= 253
         && host.split('.').all(|label| {
@@ -371,6 +393,28 @@ mod tests {
 
     fn mailboxes() -> Vec<InviteMailbox> {
         vec![lan("10.0.2.2:8787"), relay("a.example/sig")]
+    }
+
+    #[test]
+    fn filter_only_local_removes_exactly_the_project_relay_entries() {
+        let set = vec![
+            relay("GS.Project.test/signaling"),
+            relay("gs.project.test.evil.example"),
+            lan("192.168.1.5:8787"),
+            relay("own.test:8443/x"),
+        ];
+        let kept = filter_only_local(&set, Some("gs.project.test"));
+        let urls: Vec<&str> = kept.iter().map(|m| m.url.as_str()).collect();
+        assert_eq!(
+            urls,
+            [
+                "wss://gs.project.test.evil.example",
+                "ws://192.168.1.5:8787",
+                "wss://own.test:8443/x"
+            ]
+        );
+        assert_eq!(filter_only_local(&set, None), set);
+        assert_eq!(filter_only_local(&set, Some("")), set);
     }
 
     fn payload(v: &str, k: &str, m: &str, x: &str) -> String {

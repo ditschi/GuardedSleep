@@ -116,6 +116,16 @@ pub fn build_invite(
     .map_err(|e| JsError::new(e.as_str()))
 }
 
+/// "Only same Wi-Fi or my own server" for a new invite: a JSON array of `{"kind","url"}` mailboxes
+/// without the relay entries whose host is `project_host`. Throws `not_our_code` for bad JSON.
+#[wasm_bindgen(js_name = filterOnlyLocal)]
+pub fn filter_only_local(mailboxes_json: &str, project_host: &str) -> Result<String, JsError> {
+    let mailboxes: Vec<guardedsleep_core::invite::InviteMailbox> =
+        serde_json::from_str(mailboxes_json).map_err(|_| JsError::new("not_our_code"))?;
+    let kept = guardedsleep_core::invite::filter_only_local(&mailboxes, Some(project_host));
+    serde_json::to_string(&kept).map_err(|_| JsError::new("not_our_code"))
+}
+
 #[wasm_bindgen(js_name = conformanceEval)]
 pub fn conformance_eval(case_json: &str) -> String {
     guardedsleep_core::conformance::evaluate(case_json)

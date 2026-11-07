@@ -164,6 +164,7 @@ pub enum ConfigError {
     InvalidTiming,
     InvalidSeed,
     InvalidParentSecret,
+    InvalidProjectHost,
 }
 
 impl std::fmt::Display for ConfigError {
@@ -174,6 +175,7 @@ impl std::fmt::Display for ConfigError {
             ConfigError::InvalidTiming => "intervals and timeouts must be > 0",
             ConfigError::InvalidSeed => "seed must be exactly 32 bytes",
             ConfigError::InvalidParentSecret => "parent secret must be exactly 32 bytes",
+            ConfigError::InvalidProjectHost => "project host must be a lower-case DNS name",
         })
     }
 }

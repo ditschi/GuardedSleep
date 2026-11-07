@@ -9,6 +9,7 @@ import org.guardedsleep.app.media.AttemptListener
 import org.guardedsleep.app.media.AttemptPort
 import org.guardedsleep.app.media.CaptureTap
 import org.guardedsleep.app.media.IceConfig
+import org.guardedsleep.app.media.IceServerEntry
 import org.guardedsleep.app.media.MediaEngine
 import org.guardedsleep.app.media.Pcm
 import org.guardedsleep.app.media.ProbeTone
@@ -101,8 +102,19 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
         }
     }
 
-    override fun createAttempt(offerer: Boolean, listener: AttemptListener): AttemptPort =
-        LibWebRtcAttemptPeer(factory, rtcConfig(), track, offerer, listener, ::onRemoteAudio)
+    override fun createAttempt(
+        offerer: Boolean,
+        listener: AttemptListener,
+        iceServers: List<IceServerEntry>,
+    ): AttemptPort =
+        LibWebRtcAttemptPeer(
+            factory,
+            rtcConfig(iceServers),
+            track,
+            offerer,
+            listener,
+            ::onRemoteAudio,
+        )
 
     override fun setMicEnabled(enabled: Boolean) {
         track?.setEnabled(enabled)
@@ -151,8 +163,8 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
         PocLog.event("audio_track_error", "message" to message?.replace(' ', '_'))
     }
 
-    private fun rtcConfig(): PeerConnection.RTCConfiguration =
-        PeerConnection.RTCConfiguration(iceServers()).apply {
+    private fun rtcConfig(attemptServers: List<IceServerEntry>): PeerConnection.RTCConfiguration =
+        PeerConnection.RTCConfiguration(iceServers(attemptServers)).apply {
             sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
             continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY
             iceTransportsType =
@@ -160,17 +172,24 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
                 else PeerConnection.IceTransportsType.ALL
         }
 
-    private fun iceServers(): List<PeerConnection.IceServer> = buildList {
-        ice.stunUrls.forEach { add(PeerConnection.IceServer.builder(it).createIceServer()) }
-        ice.turnUrl?.let { url ->
-            add(
-                PeerConnection.IceServer.builder(url)
-                    .setUsername(ice.turnUser ?: "")
-                    .setPassword(ice.turnCredential ?: "")
-                    .createIceServer()
-            )
+    private fun iceServers(attemptServers: List<IceServerEntry>): List<PeerConnection.IceServer> =
+        buildList {
+            // The core's list, unchanged: URLs, user name and credential as it computed them.
+            attemptServers.forEach { e ->
+                val b = PeerConnection.IceServer.builder(e.urls)
+                e.username?.let(b::setUsername)
+                e.credential?.let(b::setPassword)
+                add(b.createIceServer())
+            }
+            ice.turnUrl?.let { url ->
+                add(
+                    PeerConnection.IceServer.builder(url)
+                        .setUsername(ice.turnUser ?: "")
+                        .setPassword(ice.turnCredential ?: "")
+                        .createIceServer()
+                )
+            }
         }
-    }
 
     private companion object {
         @Volatile private var initialized = false

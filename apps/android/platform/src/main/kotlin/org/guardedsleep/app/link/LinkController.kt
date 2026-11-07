@@ -10,7 +10,7 @@ import org.guardedsleep.app.alerts.NoiseKind
 import org.guardedsleep.app.config.AppDefaults
 import org.guardedsleep.app.config.DebugOptions
 import org.guardedsleep.app.config.PairingPolicy
-import org.guardedsleep.app.config.RelayStun
+import org.guardedsleep.app.config.PublicLists
 import org.guardedsleep.app.diag.PocLog
 import org.guardedsleep.app.media.IceConfig
 import org.guardedsleep.app.media.InboundAudioStats
@@ -23,6 +23,8 @@ import org.guardedsleep.app.pairing.TurnCredentials
 import org.guardedsleep.app.pairing.TurnServerInput
 import org.guardedsleep.app.pairing.TurnStore
 import org.guardedsleep.app.pairing.signalingUrls
+import org.guardedsleep.app.pairing.storedMailboxesFor
+import org.guardedsleep.app.pairing.toStored
 import org.guardedsleep.app.platform.BuildConfig
 import org.guardedsleep.app.readiness.ReadinessChecker
 import org.guardedsleep.app.settings.SettingsRepository
@@ -48,10 +50,10 @@ import uniffi.guardedsleep_core.LinkEvent
 import uniffi.guardedsleep_core.LinkInput
 import uniffi.guardedsleep_core.LinkState
 import uniffi.guardedsleep_core.LinkStatus
-import uniffi.guardedsleep_core.MailboxKind
 import uniffi.guardedsleep_core.ParentSecret
 import uniffi.guardedsleep_core.Role as CoreRole
 import uniffi.guardedsleep_core.defaultLinkConfig
+import uniffi.guardedsleep_core.filterOnlyLocal
 
 /**
  * The platform layer's single entry point for the UI. Owns at most one [LinkRunner] (one
@@ -125,14 +127,16 @@ class LinkController(
 
     private class PendingPairing(
         val psk: String,
-        val urls: List<String>,
         val turn: TurnCredentials?,
         val startedAt: Long,
         val expiresAtElapsedMs: Long?,
         var unreachableShown: Boolean = false,
         /** The parent secret of a stored pairing (a pending first pairing has none yet). */
         val parentSecret: ByteArray? = null,
-        /** The stored mailbox set (empty: derive it from [urls]). */
+        /**
+         * The pairing's mailbox set: the invite's (baby: the one it built) or the stored record's.
+         * Empty opens no relay mailbox; there is no fallback to settings or defaults.
+         */
         val mailboxes: List<StoredMailbox> = emptyList(),
         /**
          * Secret and mailbox set the core reported before the first verification saved the record
@@ -198,6 +202,7 @@ class LinkController(
         _settings.value = after
         babyModel.setSettings(after.threshold, after.holdSeconds)
         val r = run
+        if (r != null && after.onlyLocal != before.onlyLocal) restartForOnlyLocal(r)
         if (r != null) {
             if (
                 r.role == Role.BABY &&
@@ -223,6 +228,18 @@ class LinkController(
                 applySilence(after.silenceWhileMonitoring)
             }
         }
+    }
+
+    /**
+     * The switch changes the mailbox set the core is given, so a running run starts again from the
+     * stored pairing (a pairing in progress is cancelled; the screen starts a fresh invite).
+     */
+    private fun restartForOnlyLocal(r: Run) {
+        if (r.pending != null) {
+            cancelPairing()
+            return
+        }
+        pairingStore.load()?.let { resumeRun(r.role, it, monitoring = r.monitoring) }
     }
 
     @Synchronized
@@ -340,7 +357,9 @@ class LinkController(
         if (settingsRepo.current.role != Role.BABY) return
         cancelPairing()
         stopRun(userStop = true)
-        val urls = effectiveUrls(null)
+        // The baby's own choice for a NEW invite: the settings list (Advanced or the build
+        // default); with the off switch on the core's rule leaves the project server out.
+        val urls = inviteUrls(_settings.value)
         if (urls.isEmpty()) {
             _pairing.value = PairingState(PairingPhase.FAILED, error = PairingError.UNREACHABLE)
             return
@@ -357,11 +376,11 @@ class LinkController(
         val pending =
             PendingPairing(
                 payload.pskB64url,
-                urls,
                 null,
                 now,
                 now + PairingPolicy.QR_VALIDITY_MS,
                 pinUntilS = payload.expiresAtEpochSec,
+                mailboxes = urls.toStoredMailboxes(),
             )
         _pairing.value =
             PairingState(
@@ -396,11 +415,11 @@ class LinkController(
                     Role.PARENT,
                     PendingPairing(
                         p.pskB64url,
-                        p.signalingUrls,
                         null,
                         now,
                         null,
                         pinUntilS = p.expiresAtEpochSec,
+                        mailboxes = p.signalingUrls.toStoredMailboxes(),
                     ),
                     pairedBefore = false,
                     monitoring = false,
@@ -445,12 +464,11 @@ class LinkController(
         host.stop()
     }
 
-    private fun resumeRun(role: Role, stored: StoredPairing) =
+    private fun resumeRun(role: Role, stored: StoredPairing, monitoring: Boolean = true) =
         startRun(
             role,
             PendingPairing(
                 stored.pskB64url,
-                stored.signalingUrls,
                 stored.turn,
                 clock.elapsedMs(),
                 null,
@@ -459,22 +477,18 @@ class LinkController(
                 pinUntilS = stored.pinUntilS,
             ),
             stored.pairedBefore,
-            monitoring = true,
+            monitoring = monitoring,
             isPending = false,
         )
 
-    private fun storedMailboxes(pending: PendingPairing): List<InviteMailbox> =
-        if (pending.mailboxes.isNotEmpty()) {
-            pending.mailboxes.mapNotNull { m ->
-                when (m.kind) {
-                    "relay" -> MailboxKind.RELAY
-                    "lan" -> MailboxKind.LAN
-                    else -> null
-                }?.let { InviteMailbox(it, m.url) }
-            }
-        } else {
-            PairingPayload.mailboxesFor(pending.urls)
-        }
+    /** The URLs of a new invite: the core's `only_local` rule applied to the settings list. */
+    private fun inviteUrls(s: SettingsState): List<String> {
+        val set = PairingPayload.mailboxesFor(s.signalingUrls)
+        val kept = if (s.onlyLocal) filterOnlyLocal(set, PROJECT_HOST) else set
+        return kept.map { it.url }
+    }
+
+    private fun List<String>.toStoredMailboxes(): List<StoredMailbox> = storedMailboxesFor(this)
 
     private fun startRun(
         role: Role,
@@ -488,14 +502,7 @@ class LinkController(
         val coreRole = if (role == Role.BABY) CoreRole.BABY else CoreRole.PARENT
         val config = buildConfig(coreRole, pending.psk, pairedBefore, s, pending)
         val r = Run(++runCounter, role, if (isPending) pending else null, monitoring)
-        val signalingUrls = effectiveUrls(pending.urls)
-        val ice =
-            buildIceConfig(
-                RelayStun.iceUrls(signalingUrls),
-                pending.turn,
-                turn,
-                DebugOptions.relayOnly,
-            )
+        val ice = buildIceConfig(pending.turn, turn, DebugOptions.relayOnly)
         val runner =
             LinkRunner(
                 config = config,
@@ -579,12 +586,14 @@ class LinkController(
             pinnedParent = pending.parentSecret?.let { ParentSecret(it.copyOf()) },
             pinWindowUntilS = pending.pinUntilS?.toULong(),
             deviceName = if (role == CoreRole.PARENT) deviceName() else "",
-            // The relay mailboxes of the pairing: the core opens each at its own address. The baby
-            // also sends the set to the parent after each verification.
-            mailboxes =
-                if (s.advancedEnabled && s.signalingUrls.isNotEmpty())
-                    PairingPayload.mailboxesFor(s.signalingUrls)
-                else storedMailboxes(pending),
+            // The mailbox set comes from the pairing record only (owner decision 2026-11-07): the
+            // core opens each entry at its own address and the baby also sends the set to the
+            // parent after each verification. No fallback to settings or defaults.
+            mailboxes = pending.mailboxes.mapNotNull { it.toInviteMailbox() },
+            // With the switch on the core itself drops the project server's entries, from this
+            // set and from every update.
+            onlyLocal = s.onlyLocal,
+            projectHost = PROJECT_HOST,
             allowDevLoopback = BuildConfig.DEBUG,
             pairedBefore = pairedBefore,
             heartbeatIntervalMs = heartbeat.toULong(),
@@ -592,16 +601,6 @@ class LinkController(
             noiseThreshold = s.threshold.toDouble(),
             noiseHoldMs = (DebugOptions.noiseHoldMs ?: (s.holdSeconds * 1000L)).toULong(),
         )
-    }
-
-    /** Advanced list overrides the pairing's list; otherwise the QR's list (or the defaults). */
-    private fun effectiveUrls(pairingUrls: List<String>?): List<String> {
-        val s = _settings.value
-        return when {
-            s.advancedEnabled && s.signalingUrls.isNotEmpty() -> s.signalingUrls
-            !pairingUrls.isNullOrEmpty() -> pairingUrls
-            else -> s.signalingUrls
-        }
     }
 
     // ---- parent intents ----------------------------------------------------------------------
@@ -794,7 +793,7 @@ class LinkController(
             pairingStore.save(
                 StoredPairing(
                     pending.psk,
-                    received?.signalingUrls()?.ifEmpty { null } ?: pending.urls,
+                    (received ?: pending.mailboxes).signalingUrls(),
                     true,
                     pending.turn,
                     pending.pinnedSecret?.let { PairingPayload.b64(it) },
@@ -806,7 +805,8 @@ class LinkController(
 
         /** The baby's current mailbox set replaces the stored one. */
         private fun persistMailboxes(r: Run, mailboxes: List<InviteMailbox>) {
-            val set = mailboxes.map { StoredMailbox(kindName(it.kind), it.url) }
+            // The core already left the project server out while the off switch is on.
+            val set = mailboxes.map { it.toStored() }
             val pending = r.pending
             if (pending != null) pending.receivedMailboxes = set else pairingStore.setMailboxes(set)
         }
@@ -842,14 +842,11 @@ class LinkController(
         }
     }
 
-    private fun kindName(kind: MailboxKind): String =
-        when (kind) {
-            MailboxKind.RELAY -> "relay"
-            MailboxKind.LAN -> "lan"
-        }
-
     private companion object {
         const val UNREACHABLE_AFTER_MS = 20_000L
+
+        /** The project server's host as the core's `only_local` rule compares it. */
+        val PROJECT_HOST: String = PublicLists.projectServer.host.lowercase()
 
         /** Length of the core CSPRNG seed (`LinkConfig.seed`). */
         const val CORE_SEED_BYTES = 32
@@ -863,16 +860,18 @@ private fun withTurn(s: SettingsState, turn: TurnCredentials?): SettingsState =
         turnPasswordSaved = turn?.credential?.isNotEmpty() == true,
     )
 
-/** The debug launch entry (`pending`) wins over the one saved in the settings. */
+/**
+ * The engine-wide part of the ICE configuration: the user-entered TURN. The debug launch entry
+ * (`pending`) wins over the one saved in the settings. The STUN and relay TURN servers come per
+ * attempt from the core.
+ */
 internal fun buildIceConfig(
-    stunUrls: List<String>,
     pending: TurnCredentials?,
     stored: TurnCredentials?,
     relayOnly: Boolean,
 ): IceConfig {
     val t = pending ?: stored
     return IceConfig(
-        stunUrls = stunUrls,
         turnUrl = t?.url,
         turnUser = t?.username?.takeIf { it.isNotEmpty() },
         turnCredential = t?.credential?.takeIf { it.isNotEmpty() },

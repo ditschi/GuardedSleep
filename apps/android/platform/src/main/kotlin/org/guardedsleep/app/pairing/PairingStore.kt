@@ -3,6 +3,8 @@ package org.guardedsleep.app.pairing
 import java.io.File
 import org.json.JSONArray
 import org.json.JSONObject
+import uniffi.guardedsleep_core.InviteMailbox
+import uniffi.guardedsleep_core.MailboxKind
 
 data class TurnCredentials(val url: String, val username: String, val credential: String) {
     // The password must never reach logs through string templates.
@@ -10,7 +12,30 @@ data class TurnCredentials(val url: String, val username: String, val credential
 }
 
 /** One mailbox of the pairing's set: `kind` is `relay` or `lan` (the core's wire names). */
-data class StoredMailbox(val kind: String, val url: String)
+data class StoredMailbox(val kind: String, val url: String) {
+    /** The core's entry. A kind this build does not know is no address. */
+    fun toInviteMailbox(): InviteMailbox? =
+        when (kind) {
+            "relay" -> MailboxKind.RELAY
+            "lan" -> MailboxKind.LAN
+            else -> null
+        }?.let { InviteMailbox(it, url) }
+}
+
+/**
+ * The set a URL list stands for (`wss://` a relay, `ws://` a LAN mailbox), as an invite carries it.
+ */
+fun storedMailboxesFor(urls: List<String>): List<StoredMailbox> =
+    PairingPayload.mailboxesFor(urls).map { it.toStored() }
+
+fun InviteMailbox.toStored(): StoredMailbox =
+    StoredMailbox(
+        when (kind) {
+            MailboxKind.RELAY -> "relay"
+            MailboxKind.LAN -> "lan"
+        },
+        url,
+    )
 
 /**
  * The signaling URLs of a stored set: the relay and LAN entries only. An earlier alpha record may
@@ -130,9 +155,9 @@ class PairingStore(file: File, cipher: PairingCipher) {
     }
 
     /**
-     * Replaces the stored mailbox set (the baby's update) and the signaling URL list derived from
-     * it: the relay and LAN mailboxes, which the platform still opens until the core takes over the
-     * mailbox set (tasks 3.5 and 3.6). False when there is no pairing yet.
+     * Replaces the stored mailbox set (the baby's update). The URL list derived from it is kept for
+     * the record format only; the platform opens the set, never the list. False when there is no
+     * pairing yet.
      */
     @Synchronized
     fun setMailboxes(mailboxes: List<StoredMailbox>): Boolean {

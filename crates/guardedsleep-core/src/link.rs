@@ -47,7 +47,7 @@ use crate::envelope::{
     SecretKey, SessionId, SessionState, derive_key,
 };
 use crate::ice::IceServer;
-use crate::invite::{InviteMailbox, validate_mailboxes};
+use crate::invite::{InviteMailbox, filter_only_local, validate_mailboxes};
 use crate::mailbox::{Mailbox, MailboxId, MailboxKind, MailboxSet, MailboxState};
 use crate::noise::{GateChange, NoiseGate};
 use crate::pairing::{
@@ -249,11 +249,18 @@ pub struct LinkConfig {
     /// `parse_invite`'s flag of the same name.
     #[serde(default)]
     pub allow_dev_loopback: bool,
-    /// "Only same Wi-Fi or my own server". Reserved for the project-server entries of the set
-    /// (`alpha-connection-model` design section 8); the core does not read it since the Nostr
-    /// mailboxes it used to switch off are gone.
+    /// "Only same Wi-Fi or my own server" (`alpha-connection-model` design section 8). With it on
+    /// the core drops every `relay` entry whose host is `project_host`: from `mailboxes` at start
+    /// and from every received mailbox update (an update left empty is ignored). It never opens or
+    /// retries such a mailbox, so it asks for no project STUN or TURN either, and the set the baby
+    /// sends to the parent leaves it out. Without a `project_host` it filters nothing.
     #[serde(default)]
     pub only_local: bool,
+    /// The project server's host (`data/project-server.json`), lower-case DNS name, for
+    /// `only_local`. `Link::new` rejects anything else (`InvalidProjectHost`).
+    #[serde(default)]
+    #[cfg_attr(feature = "tsify", tsify(optional))]
+    pub project_host: Option<String>,
 }
 
 fn default_true() -> bool {
@@ -282,6 +289,7 @@ impl std::fmt::Debug for LinkConfig {
             .field("mailboxes", &self.mailboxes)
             .field("allow_dev_loopback", &self.allow_dev_loopback)
             .field("only_local", &self.only_local)
+            .field("project_host", &self.project_host)
             .finish()
     }
 }
@@ -306,6 +314,7 @@ impl LinkConfig {
             mailboxes: Vec::new(),
             allow_dev_loopback: false,
             only_local: false,
+            project_host: None,
         }
     }
 
@@ -334,6 +343,11 @@ impl LinkConfig {
             .is_some_and(|p| p.bytes.len() != PARENT_SECRET_LEN)
         {
             return Err(ConfigError::InvalidParentSecret);
+        }
+        if let Some(h) = &self.project_host
+            && !(crate::invite::is_hostname(h) && !h.bytes().any(|b| b.is_ascii_uppercase()))
+        {
+            return Err(ConfigError::InvalidProjectHost);
         }
         Ok(psk)
     }
@@ -1038,6 +1052,9 @@ impl Link {
             pin.as_ref().map(|s| s.0.as_slice()),
             role_is_baby && pin_from_config,
         );
+        if cfg.only_local {
+            cfg.mailboxes = filter_only_local(&cfg.mailboxes, cfg.project_host.as_deref());
+        }
         let mb = MailboxSet::new(&relay_entries(&cfg.mailboxes, cfg.allow_dev_loopback));
         let link = Self {
             pin,
@@ -2932,6 +2949,15 @@ impl Link {
     /// Parent: a mailbox set from the baby replaces the stored one (if it is a valid set).
     fn on_mailbox_update(&mut self, mailboxes: &[InviteMailbox], out: &mut Vec<LinkAction>) {
         if let Some(set) = validate_mailboxes(mailboxes, self.cfg.allow_dev_loopback) {
+            let set = if self.cfg.only_local {
+                filter_only_local(&set, self.cfg.project_host.as_deref())
+            } else {
+                set
+            };
+            // Only project entries left: nothing this device may use, keep the current set.
+            if set.is_empty() {
+                return;
+            }
             // The platform stores the set as sent; the core keeps it for the next mailbox update.
             self.cfg.mailboxes = set.clone();
             // The mailboxes are held closed while verified; the next reopening uses the new set.
@@ -3641,6 +3667,126 @@ mod tests {
         let mut l = Link::new(cfg(role)).unwrap();
         let a = l.handle(0, LinkInput::Start { entropy: 42 });
         (l, a)
+    }
+
+    fn relay(url: &str) -> InviteMailbox {
+        InviteMailbox {
+            kind: MailboxKind::Relay,
+            url: url.into(),
+        }
+    }
+
+    fn only_local_cfg(role: Role) -> LinkConfig {
+        let mut c = cfg(role);
+        c.mailboxes = vec![
+            relay("wss://gs.project.test/signaling"),
+            relay("wss://own.test"),
+        ];
+        c.only_local = true;
+        c.project_host = Some("gs.project.test".into());
+        c
+    }
+
+    fn opened(actions: &[LinkAction]) -> Vec<String> {
+        actions
+            .iter()
+            .filter_map(|a| match a {
+                LinkAction::OpenMailbox { url, .. } => Some(url.clone()),
+                _ => None,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn only_local_never_opens_the_project_mailbox() {
+        let mut l = Link::new(only_local_cfg(Role::Parent)).unwrap();
+        let a = l.handle(0, LinkInput::Start { entropy: 42 });
+        assert_eq!(opened(&a), vec!["wss://own.test".to_owned()]);
+        // Later ticks never reach for it either.
+        let mut all = Vec::new();
+        for t in 1..200u64 {
+            all.extend(l.handle(t * 1_000, LinkInput::Tick));
+        }
+        assert!(
+            opened(&all).iter().all(|u| u == "wss://own.test"),
+            "{:?}",
+            opened(&all)
+        );
+        // With the switch off the whole set opens.
+        let mut c = only_local_cfg(Role::Parent);
+        c.only_local = false;
+        let mut l = Link::new(c).unwrap();
+        let a = l.handle(0, LinkInput::Start { entropy: 42 });
+        assert_eq!(opened(&a).len(), 2);
+    }
+
+    #[test]
+    fn only_local_ignores_a_project_entry_in_a_mailbox_update() {
+        let mut l = Link::new(only_local_cfg(Role::Parent)).unwrap();
+        let mut out = Vec::new();
+        l.on_mailbox_update(
+            &[
+                relay("wss://gs.PROJECT.test/signaling"),
+                relay("wss://new.test"),
+            ],
+            &mut out,
+        );
+        assert_eq!(l.cfg.mailboxes, vec![relay("wss://new.test")]);
+        assert!(out.iter().any(|a| matches!(
+            a,
+            LinkAction::Emit {
+                event: LinkEvent::MailboxesUpdated { mailboxes }
+            } if *mailboxes == vec![relay("wss://new.test")]
+        )));
+        // An update with only the project server is dropped whole; the set stays.
+        let mut out = Vec::new();
+        l.on_mailbox_update(&[relay("wss://gs.project.test/x")], &mut out);
+        assert!(out.is_empty());
+        assert_eq!(l.cfg.mailboxes, vec![relay("wss://new.test")]);
+        // The next start opens the new set, not the project server.
+        let a = l.handle(0, LinkInput::Start { entropy: 1 });
+        assert_eq!(opened(&a), vec!["wss://new.test".to_owned()]);
+    }
+
+    #[test]
+    fn without_the_switch_an_update_with_the_project_entry_is_kept() {
+        let mut c = only_local_cfg(Role::Parent);
+        c.only_local = false;
+        let mut l = Link::new(c).unwrap();
+        let mut out = Vec::new();
+        l.on_mailbox_update(&[relay("wss://gs.project.test/signaling")], &mut out);
+        assert_eq!(
+            l.cfg.mailboxes,
+            vec![relay("wss://gs.project.test/signaling")]
+        );
+    }
+
+    #[test]
+    fn the_baby_does_not_send_the_project_entry_to_the_parent() {
+        let l = Link::new(only_local_cfg(Role::Baby)).unwrap();
+        assert_eq!(l.cfg.mailboxes, vec![relay("wss://own.test")]);
+    }
+
+    #[test]
+    fn a_project_host_must_be_a_lower_case_dns_name() {
+        for bad in [
+            "",
+            "GS.example",
+            "gs.example/x",
+            "gs example",
+            "gs.example:443",
+        ] {
+            let mut c = cfg(Role::Baby);
+            c.project_host = Some(bad.into());
+            assert_eq!(
+                Link::new(c).err(),
+                Some(ConfigError::InvalidProjectHost),
+                "{bad}"
+            );
+        }
+        let mut c = cfg(Role::Baby);
+        c.project_host = Some("gs.example-1.org".into());
+        assert!(Link::new(c).is_ok());
     }
 
     #[test]

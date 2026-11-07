@@ -125,9 +125,11 @@ pub struct LinkConfig {
     pub mailboxes: Vec<InviteMailbox>,
     /// Development builds only: accept loopback `l:` entries in a received mailbox update.
     pub allow_dev_loopback: bool,
-    /// "Only same Wi-Fi or my own server". Reserved for the project-server entries; the core does
-    /// not read it at present.
+    /// "Only same Wi-Fi or my own server": the core drops every relay mailbox whose host is
+    /// `project_host` from the set at start and from received updates.
     pub only_local: bool,
+    /// The project server's host (lower-case DNS name) for `only_local`; `None` filters nothing.
+    pub project_host: Option<String>,
 }
 
 /// The parent secret (32 bytes) as it crosses the boundary: in `LinkConfig::pinned_parent` and in
