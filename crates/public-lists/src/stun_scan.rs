@@ -46,7 +46,6 @@ fn host_byte(b: u8) -> bool {
 }
 
 /// Reserved or private names that are never a public STUN service. A name without a dot is a
-/// placeholder or a LAN host name, not a public host. A name without a dot is a
 /// placeholder or a LAN host name, not a public host.
 fn exempt(host: &str) -> bool {
     let h = host.to_ascii_lowercase();
@@ -275,7 +274,7 @@ pub fn self_test() -> Result<(), String> {
     }
     let turn_fine = scan_text(
         "self-test",
-        "'turn:stun.nextcloud.com:3478' 'turns:gs.project.test' `turn:${host}:3478`",
+        "'turn:stun.nextcloud.com:3478' 'turns:relay.example.org:5349' `turn:${host}:3478`",
         &allowed,
     );
     let turn_test_path = scan_text("apps/e2e/x.ts", "'turn:turn.other.net:3478'", &allowed);
