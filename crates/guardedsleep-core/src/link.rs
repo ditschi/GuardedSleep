@@ -536,6 +536,16 @@ pub enum LinkAction {
     },
 }
 
+/// What a `Debug` prints instead of a `parent_pin` message.
+pub const PARENT_PIN_REDACTED: &str = "<parent_pin redacted>";
+
+/// True for the DataChannel text of a `parent_pin` message (it carries the parent secret). One
+/// test for both `Debug` impls and for the log canary of the simulation, so what is redacted and
+/// what the canary treats as the pin message cannot drift apart.
+pub fn carries_parent_pin(text: &str) -> bool {
+    text.contains("\"parent_pin\"")
+}
+
 // Written by hand, like the one of `LinkAction`: the baby receives the parent secret as the text of
 // an `AttemptDataMessage` (`parent_pin`), which a derived `Debug` would print (found by the log
 // canary, AGENTS.md section 7.6). Prints the serialized form, with that text redacted.
@@ -545,10 +555,10 @@ impl std::fmt::Debug for LinkInput {
             return f.write_str("LinkInput(<unprintable>)");
         };
         if let LinkInput::AttemptDataMessage { text, .. } = self
-            && text.contains("\"parent_pin\"")
+            && carries_parent_pin(text)
             && let Some(slot) = value.get_mut("text")
         {
-            *slot = serde_json::Value::from("<parent_pin redacted>");
+            *slot = serde_json::Value::from(PARENT_PIN_REDACTED);
         }
         // An `ice_servers` frame carries the TURN credential (design section 7: never logged).
         if let LinkInput::MailboxFrame { bytes, .. } = self
@@ -626,8 +636,8 @@ impl std::fmt::Debug for LinkAction {
                 .field("candidate", candidate)
                 .finish(),
             LinkAction::SendData { attempt, text } => {
-                let shown: &dyn std::fmt::Debug = if text.contains("\"parent_pin\"") {
-                    &"<parent_pin redacted>"
+                let shown: &dyn std::fmt::Debug = if carries_parent_pin(text) {
+                    &PARENT_PIN_REDACTED
                 } else {
                     text
                 };
