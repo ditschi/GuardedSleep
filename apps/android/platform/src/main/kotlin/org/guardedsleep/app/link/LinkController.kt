@@ -23,6 +23,7 @@ import org.guardedsleep.app.pairing.TurnCredentials
 import org.guardedsleep.app.pairing.TurnServerInput
 import org.guardedsleep.app.pairing.TurnStore
 import org.guardedsleep.app.pairing.signalingUrls
+import org.guardedsleep.app.pairing.toStored
 import org.guardedsleep.app.platform.BuildConfig
 import org.guardedsleep.app.readiness.ReadinessChecker
 import org.guardedsleep.app.settings.SettingsRepository
@@ -48,7 +49,6 @@ import uniffi.guardedsleep_core.LinkEvent
 import uniffi.guardedsleep_core.LinkInput
 import uniffi.guardedsleep_core.LinkState
 import uniffi.guardedsleep_core.LinkStatus
-import uniffi.guardedsleep_core.MailboxKind
 import uniffi.guardedsleep_core.ParentSecret
 import uniffi.guardedsleep_core.Role as CoreRole
 import uniffi.guardedsleep_core.defaultLinkConfig
@@ -483,23 +483,12 @@ class LinkController(
     /** The URLs of a new invite: the core's `only_local` rule applied to the settings list. */
     private fun inviteUrls(s: SettingsState): List<String> {
         val set = PairingPayload.mailboxesFor(s.signalingUrls)
-        val kept =
-            if (s.onlyLocal) filterOnlyLocal(set, PublicLists.projectServer.host.lowercase())
-            else set
+        val kept = if (s.onlyLocal) filterOnlyLocal(set, PROJECT_HOST) else set
         return kept.map { it.url }
     }
 
-    /** The core's mailbox entries of a set. A kind this build does not know is no address. */
-    private fun coreMailboxes(set: List<StoredMailbox>): List<InviteMailbox> = set.mapNotNull { m ->
-        when (m.kind) {
-            "relay" -> MailboxKind.RELAY
-            "lan" -> MailboxKind.LAN
-            else -> null
-        }?.let { InviteMailbox(it, m.url) }
-    }
-
     private fun List<String>.toStoredMailboxes(): List<StoredMailbox> =
-        PairingPayload.mailboxesFor(this).map { StoredMailbox(kindName(it.kind), it.url) }
+        PairingPayload.mailboxesFor(this).map { it.toStored() }
 
     private fun startRun(
         role: Role,
@@ -600,11 +589,11 @@ class LinkController(
             // The mailbox set comes from the pairing record only (owner decision 2026-11-07): the
             // core opens each entry at its own address and the baby also sends the set to the
             // parent after each verification. No fallback to settings or defaults.
-            mailboxes = coreMailboxes(pending.mailboxes),
+            mailboxes = pending.mailboxes.mapNotNull { it.toInviteMailbox() },
             // With the switch on the core itself drops the project server's entries, from this
             // set and from every update.
             onlyLocal = s.onlyLocal,
-            projectHost = PublicLists.projectServer.host.lowercase(),
+            projectHost = PROJECT_HOST,
             allowDevLoopback = BuildConfig.DEBUG,
             pairedBefore = pairedBefore,
             heartbeatIntervalMs = heartbeat.toULong(),
@@ -817,7 +806,7 @@ class LinkController(
         /** The baby's current mailbox set replaces the stored one. */
         private fun persistMailboxes(r: Run, mailboxes: List<InviteMailbox>) {
             // The core already left the project server out while the off switch is on.
-            val set = mailboxes.map { StoredMailbox(kindName(it.kind), it.url) }
+            val set = mailboxes.map { it.toStored() }
             val pending = r.pending
             if (pending != null) pending.receivedMailboxes = set else pairingStore.setMailboxes(set)
         }
@@ -853,14 +842,11 @@ class LinkController(
         }
     }
 
-    private fun kindName(kind: MailboxKind): String =
-        when (kind) {
-            MailboxKind.RELAY -> "relay"
-            MailboxKind.LAN -> "lan"
-        }
-
     private companion object {
         const val UNREACHABLE_AFTER_MS = 20_000L
+
+        /** The project server's host as the core's `only_local` rule compares it. */
+        val PROJECT_HOST: String = PublicLists.projectServer.host.lowercase()
 
         /** Length of the core CSPRNG seed (`LinkConfig.seed`). */
         const val CORE_SEED_BYTES = 32

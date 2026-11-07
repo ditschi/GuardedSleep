@@ -3,6 +3,8 @@ package org.guardedsleep.app.pairing
 import java.io.File
 import org.json.JSONArray
 import org.json.JSONObject
+import uniffi.guardedsleep_core.InviteMailbox
+import uniffi.guardedsleep_core.MailboxKind
 
 data class TurnCredentials(val url: String, val username: String, val credential: String) {
     // The password must never reach logs through string templates.
@@ -10,7 +12,24 @@ data class TurnCredentials(val url: String, val username: String, val credential
 }
 
 /** One mailbox of the pairing's set: `kind` is `relay` or `lan` (the core's wire names). */
-data class StoredMailbox(val kind: String, val url: String)
+data class StoredMailbox(val kind: String, val url: String) {
+    /** The core's entry. A kind this build does not know is no address. */
+    fun toInviteMailbox(): InviteMailbox? =
+        when (kind) {
+            "relay" -> MailboxKind.RELAY
+            "lan" -> MailboxKind.LAN
+            else -> null
+        }?.let { InviteMailbox(it, url) }
+}
+
+fun InviteMailbox.toStored(): StoredMailbox =
+    StoredMailbox(
+        when (kind) {
+            MailboxKind.RELAY -> "relay"
+            MailboxKind.LAN -> "lan"
+        },
+        url,
+    )
 
 /**
  * The signaling URLs of a stored set: the relay and LAN entries only. An earlier alpha record may

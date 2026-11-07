@@ -304,6 +304,8 @@ private class RealClock : Clock {
     override fun wallMs() = System.currentTimeMillis()
 }
 
+private val projectUrl = "wss://${PublicLists.projectServer.host}/signaling"
+
 private const val PIN_TYPE = "\"parent_pin\""
 
 class LinkControllerTest {
@@ -478,12 +480,11 @@ class LinkControllerTest {
 
     @Test
     fun theOffSwitchKeepsTheProjectServerOutOfTheOpenedMailboxes() {
-        val project = "wss://${PublicLists.projectServer.host}/signaling"
         val parent = unit("onlylocal", Role.PARENT)
         parent.controller.updateSettings { it.copy(onlyLocal = true) }
         seedRecord(
             parent,
-            listOf(StoredMailbox("relay", project), StoredMailbox("relay", "wss://own.example")),
+            listOf(StoredMailbox("relay", projectUrl), StoredMailbox("relay", "wss://own.example")),
         )
         parent.controller.startMonitoring()
         await("the own relay was opened") { net.openedUrls.contains("wss://own.example") }
@@ -493,23 +494,21 @@ class LinkControllerTest {
 
     @Test
     fun theOffSwitchOffOpensTheWholeSet() {
-        val project = "wss://${PublicLists.projectServer.host}/signaling"
         val parent = unit("switchoff", Role.PARENT)
         seedRecord(
             parent,
-            listOf(StoredMailbox("relay", project), StoredMailbox("relay", "wss://own.example")),
+            listOf(StoredMailbox("relay", projectUrl), StoredMailbox("relay", "wss://own.example")),
         )
         parent.controller.startMonitoring()
-        await("both opened") { net.openedUrls.containsAll(listOf(project, "wss://own.example")) }
+        await("both opened") { net.openedUrls.containsAll(listOf(projectUrl, "wss://own.example")) }
     }
 
     @Test
     fun aProjectEntryInTheInviteAndInTheMailboxUpdateIsIgnoredWithTheOffSwitch() {
-        val project = "wss://${PublicLists.projectServer.host}/signaling"
         val baby = unit("upd-baby", Role.BABY)
         val parent = unit("upd-parent", Role.PARENT)
         baby.controller.updateSettings {
-            it.copy(signalingUrls = listOf(project, "wss://fake.example"))
+            it.copy(signalingUrls = listOf(projectUrl, "wss://fake.example"))
         }
         parent.controller.updateSettings { it.copy(onlyLocal = true) }
         baby.controller.startPairing()
@@ -523,17 +522,17 @@ class LinkControllerTest {
             listOf(StoredMailbox("relay", "wss://fake.example")),
             parent.store.load()!!.mailboxes,
         )
-        // The baby (switch off) opened the project mailbox; the parent never did: one open of the
-        // project address is the baby's.
-        assertEquals(1, net.openedUrls.count { it == project })
+        // The baby (switch off) opened the projectUrl mailbox; the parent never did: one open of
+        // the
+        // projectUrl address is the baby's.
+        assertEquals(1, net.openedUrls.count { it == projectUrl })
     }
 
     @Test
     fun theOffSwitchLeavesTheProjectServerOutOfANewInvite() {
         val baby = unit("invite", Role.BABY)
-        val project = "wss://${PublicLists.projectServer.host}/signaling"
         baby.controller.updateSettings {
-            it.copy(signalingUrls = listOf(project, "wss://own.example"), onlyLocal = true)
+            it.copy(signalingUrls = listOf(projectUrl, "wss://own.example"), onlyLocal = true)
         }
         baby.controller.startPairing()
         val code = baby.controller.pairing.value!!.codePayload!!
@@ -548,7 +547,7 @@ class LinkControllerTest {
                 baby.controller.pairing.value!!.codePayload!!,
                 System.currentTimeMillis(),
             ) as PairingPayload.Companion.Result.Ok
-        assertEquals(listOf(project, "wss://own.example"), all.payload.signalingUrls)
+        assertEquals(listOf(projectUrl, "wss://own.example"), all.payload.signalingUrls)
     }
 
     @After
