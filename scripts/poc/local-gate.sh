@@ -57,7 +57,7 @@ docker build -q -t "$SIG_IMAGE" -f "$ROOT/docker/signaling-server/Dockerfile" "$
 CONTAINERS=(gs-gate-baby gs-gate-parent gs-gate-signaling gs-gate-turn)
 # The canary scans these too: the signaling server must not log a key, room id or SDP.
 save_logs() {
-	for c in gs-gate-baby gs-gate-parent gs-gate-signaling gs-gate-turn; do docker logs "$c" >"$OUT/$c.log" 2>&1 || true; done
+	for c in "${CONTAINERS[@]}"; do docker logs "$c" >"$OUT/$c.log" 2>&1 || true; done
 }
 cleanup() {
 	save_logs
