@@ -1,0 +1,15 @@
+# Local overrides for scripts/poc/public-server-logs.sh: the real docker/public-server/compose.yaml on a
+# user-defined bridge instead of Traefik's network and the host network (rootless Docker's host network is
+# not the real host network). Everything else, coturn's whole command line included, is the production file.
+services:
+  signaling:
+    image: ${GS_TEST_SIGNALING_IMAGE:?}
+  coturn:
+    network_mode: !reset null
+    networks:
+      traefik:
+        ipv4_address: ${TURN_IPV4:?}
+        ipv6_address: ${TURN_IPV6:?}
+networks:
+  traefik:
+    name: ${GS_TEST_NET:?}
