@@ -1,5 +1,5 @@
-//! The command line the build and `just lint` run: minimums fail, staleness warns, unlisted STUN
-//! hosts fail (and `stun.l.google.com` is caught).
+//! The command line the build and `just lint` run: minimums fail, staleness warns, unlisted STUN or
+//! TURN hosts fail (and `stun.l.google.com` is caught).
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
@@ -15,6 +15,8 @@ fn stun(host: &str, operator: &str) -> String {
 }
 
 const PROJECT: &str = r#"{"host":"gs.listed.net","path":"/signaling","operator":"Project","country":"DE","hoster":"Hoster","privacy_policy":null,"imprint":null,"last_vetted":"2026-10-23","status":"pending","notes":""}"#;
+
+const PROJECT_HOST: &str = "gs.listed.net";
 
 fn data_dir(name: &str, stun_entries: &[(&str, &str)]) -> PathBuf {
     let dir = std::env::temp_dir().join(format!("public-lists-{name}-{}", std::process::id()));
@@ -177,12 +179,11 @@ fn project_listed_and_test_path_turn_hosts_pass_the_lint() {
         assert!(o.status.success(), "{file} {url}: {}", stderr(&o));
     };
     // the project host of the data dir
-    let project = std::fs::read_to_string(data.join("project-server.json")).unwrap();
-    let host = project.split('"').nth(3).unwrap().to_owned();
+    assert!(PROJECT.contains(PROJECT_HOST));
     ok(
         "t-project",
         "apps/web/src/ice.ts",
-        &format!("turn:{host}:3478"),
+        &format!("turn:{PROJECT_HOST}:3478"),
     );
     ok(
         "t-listed",
