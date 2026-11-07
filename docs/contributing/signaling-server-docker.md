@@ -33,7 +33,7 @@ When **`NODE_ENV=production`**, **`SIGNALING_ALLOWED_ORIGINS` must be non-empty*
 
 Use **TLS** (reverse proxy or `wss://`) in production; the container alone speaks plain HTTP/WebSocket.
 
-**Reverse proxy (Traefik, Caddy, nginx):** see **[docker/public-server/README.md](../../docker/public-server/README.md)** (the maintained Traefik example, Caddy and nginx variants). Signaling-only Traefik file: [compose.traefik.yaml](../../docker/signaling-server/compose.traefik.yaml) + [traefik.env.example](../../docker/signaling-server/traefik.env.example) — only port 443 on the proxy, no published host port. Health endpoint: `GET /healthz`.
+**Reverse proxy (Traefik, Caddy, nginx):** see **[docker/public-server/README.md](../../docker/public-server/README.md)** (the maintained Traefik example, Caddy and nginx variants). Only port 443 on the proxy, no published host port. Health endpoint: `GET /healthz`.
 
 **Static PWA + signaling (full stack):** see **[web-docker.md](web-docker.md)** for the `docker/web` image and Compose examples under [docker/stack/](../../docker/stack/).
 
