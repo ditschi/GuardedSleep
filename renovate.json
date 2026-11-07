@@ -73,11 +73,20 @@
       "datasourceTemplate": "docker"
     },
     {
-      "description": "Digest-pinned node image in turn-lifetime.sh (same as docker/web/Dockerfile; the docker group keeps both on one digest)",
+      "description": "Digest-pinned node image in turn-lifetime.sh and public-server-logs.sh (same as docker/web/Dockerfile; the docker group keeps both on one digest)",
       "customType": "regex",
-      "managerFilePatterns": ["/^scripts/poc/turn-lifetime\\.sh$/"],
+      "managerFilePatterns": ["/^scripts/poc/(turn-lifetime|public-server-logs)\\.sh$/"],
       "matchStrings": [
         "NODE_IMAGE=(?<depName>node):(?<currentValue>[^@\\s]+)@(?<currentDigest>sha256:[a-f0-9]+)"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "description": "coturn default tag in the public-server compose file (keep equal to tools/poc-images.env)",
+      "customType": "regex",
+      "managerFilePatterns": ["/^docker/public-server/compose\\.yaml$/"],
+      "matchStrings": [
+        "image: (?<depName>coturn/coturn):\\$\\{COTURN_TAG:-(?<currentValue>[^}]+)\\}"
       ],
       "datasourceTemplate": "docker"
     }

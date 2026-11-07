@@ -68,4 +68,4 @@ services:
 # Reverse proxy / TLS:
 #   The published web image generates a self-signed TLS cert at build time covering
 #   localhost + 127.0.0.1 only. For real domains use Traefik or another reverse proxy
-#   in front of this stack — compose.traefik.yaml is the ready-to-use Traefik variant.
+#   in front of this stack — docker/public-server/ is the ready-to-use Traefik example.
