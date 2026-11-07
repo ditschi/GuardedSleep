@@ -55,7 +55,7 @@ fmt-check:
     scripts/lib/ktfmt.sh --dry-run --set-exit-if-changed
     scripts/lib/hygiene.sh
     scripts/lib/workspace-lints.sh
-    git ls-files -z 'scripts/*.sh' | xargs -0 shellcheck -x -P SCRIPTDIR
+    git ls-files -z 'scripts/*.sh' 'docker/*.sh' | xargs -0 shellcheck -x -P SCRIPTDIR
 
 # ktfmt over apps/android (also part of fmt and fmt-check).
 fmt-kotlin *args:
