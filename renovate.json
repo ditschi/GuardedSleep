@@ -89,6 +89,13 @@
         "image: (?<depName>coturn/coturn):\\$\\{COTURN_TAG:-(?<currentValue>[^}]+)\\}"
       ],
       "datasourceTemplate": "docker"
+    },
+    {
+      "description": "lego (ACME client) default tag (LEGO_TAG) in docker/public-server/compose.yaml; lego majors change flags and hook variables, so read the release notes",
+      "customType": "regex",
+      "managerFilePatterns": ["/^docker/public-server/compose\\.yaml$/"],
+      "matchStrings": ["image: (?<depName>goacme/lego):\\$\\{LEGO_TAG:-(?<currentValue>[^}]+)\\}"],
+      "datasourceTemplate": "docker"
     }
   ],
   "packageRules": [

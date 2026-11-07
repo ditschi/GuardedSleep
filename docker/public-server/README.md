@@ -2,11 +2,13 @@
 
 The deployment of the project server `gs.mydata.rocks`, and the working example for anyone who runs their own: the Rust signaling server behind an existing Traefik, plus coturn for STUN and TURN on host networking. Design and rationale: [`design.md` section 9](../../openspec/changes/alpha-connection-model/design.md) and section 7 of the change `alpha-connection-model`. Files:
 
-| File                             | Purpose                                                                            |
-| -------------------------------- | ---------------------------------------------------------------------------------- |
-| [`compose.yaml`](compose.yaml)   | `signaling`, `coturn` and the optional `web` profile (off)                         |
-| [`.env.template`](.env.template) | every variable with its comment; copy to `.env` (git-ignored, holds `TURN_SECRET`) |
-| [`check-turn.sh`](check-turn.sh) | the TURN allocation check for monitoring                                           |
+| File                                                                         | Purpose                                                                            |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| [`compose.yaml`](compose.yaml)                                               | `signaling`, `coturn`, `acme` and the optional `web` profile (off)                 |
+| [`.env.template`](.env.template)                                             | every variable with its comment; copy to `.env` (git-ignored, holds `TURN_SECRET`) |
+| [`check-turn.sh`](check-turn.sh)                                             | the TURN allocation check for monitoring                                           |
+| [`acme-loop.sh`](acme-loop.sh), [`acme-deploy-hook.sh`](acme-deploy-hook.sh) | the `acme` service: certificate for `turns:` (issue, daily renewal check, install) |
+| [`reload-turn-cert.sh`](reload-turn-cert.sh)                                 | host cron: make coturn use a new certificate (restart once, then SIGUSR2)          |
 
 ## What this stack assumes
 
@@ -22,6 +24,7 @@ The deployment of the project server `gs.mydata.rocks`, and the working example 
 3. Set `SIGNALING_TAG` to a `signaling-server-vX.Y.Z` release, without the prefix (`vX.Y.Z`). **No such release exists until the owner cuts the first one after group 9 of `alpha-connection-model`**; the template's `vX.Y.Z` fails to pull on purpose, and the compose file never accepts `latest` or `dev`. The images must be readable by the host: a public GHCR package, or `docker login ghcr.io` with a read-only token.
 4. Open the firewall (below).
 5. `docker compose up -d`, then run the checks of [Monitoring](#monitoring) once by hand.
+6. Issue the certificate for `turns:` ([next section](#certificate-for-turns)); until then clients get `turn:` only.
 
 ## Update
 
@@ -40,18 +43,46 @@ Inbound, IPv4 and IPv6 alike, everything else dropped:
 | 22          | tcp      | SSH                                                                  |
 | 80, 443     | tcp      | Traefik (ACME HTTP-01 and the WebSocket)                             |
 | 3478        | udp, tcp | STUN and TURN                                                        |
-| 5349        | tcp      | `turns:`, once task 10.2 lands                                       |
+| 5349        | tcp      | `turns:` (TLS; needs the certificate below)                          |
 | 49160-49359 | udp      | relay ports (`TURN_MIN_PORT` to `TURN_MAX_PORT`; one per allocation) |
 
 ```bash
 ufw default deny incoming
 ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp
-ufw allow 3478 && ufw allow 49160:49359/udp
+ufw allow 3478 && ufw allow 5349/tcp && ufw allow 49160:49359/udp
 ufw logging off   # the default writes blocked source addresses to the kernel log
 ufw enable
 ```
 
 **Docker's published ports bypass `ufw`.** This stack publishes none: `signaling` joins only the `traefik` network, and `coturn` uses host networking, so its sockets are reachable exactly where `ufw` allows. Keep it that way (a `ports:` entry would open the port regardless of the rules above). Keep `TURN_TOTAL_QUOTA` equal to the relay range (200 ports).
+
+## Certificate for `turns:`
+
+`turns:` (TURN over TLS on 5349) helps behind firewalls that pass only TLS-looking traffic. coturn needs a certificate as files, so the `acme` service obtains a **dedicated certificate for `PUBLIC_HOST`** with [lego](https://go-acme.github.io/lego/) (pinned tag, Renovate bumps it) instead of exporting Traefik's `acme.json` (an exporter would read every private key on the host). The service has no Docker socket, only `CHOWN` as a capability, a read-only root file system, and its own volume `acme-state` for lego's account key; coturn mounts only the `turn-certs` volume (`crt.pem` chain, `key.pem` key, mode 0600 for coturn's user) read-only.
+
+**How it validates (HTTP-01 through Traefik).** Let's Encrypt fetches `http://PUBLIC_HOST/.well-known/acme-challenge/<token>` on port 80. The `acme` service carries a Traefik router for exactly that host and path on the **plain HTTP entrypoint** (`TRAEFIK_HTTP_ENTRYPOINT`, default `web`); lego's built-in server answers on 8080 only while a challenge runs. Prerequisites in your Traefik (CHECK against the owner's files, task 10.3): port 80 is open and reaches that entrypoint over IPv4 and IPv6; a global HTTP-to-HTTPS redirect on that entrypoint does not swallow the path (Let's Encrypt would follow it to a router that does not exist); and **Traefik's own resolver is not an HTTP-01 resolver on the same entrypoint** (its internal challenge router matches the same path for every host and answers 404 for tokens it does not know, which would shadow ours). If Traefik uses `httpChallenge` there, switch the `acme` service to DNS-01 with a zone-scoped token (design section 9, discarded alternative) or move Traefik's resolver to `tlsChallenge`.
+
+**First issuance.**
+
+1. Set `ACME_EMAIL` in `.env` (expiry notices only). Optional dry run first: `ACME_SERVER=letsencrypt-staging` (untrusted chain, no rate limits), `docker compose up -d acme`, `docker compose logs acme`, then remove the line and `docker compose down acme && docker volume rm guardedsleep-public_acme-state guardedsleep-public_turn-certs` before the real issuance.
+2. `docker compose up -d` starts `acme`; it runs `lego run` at once (a few seconds). `docker compose logs acme` ends with `acme: certificate installed for coturn`. A failure (DNS, the route, a rate limit) is logged and retried every 6 hours.
+3. Run `./reload-turn-cert.sh` once: it sees the first certificate and **restarts coturn once** (a coturn started without a certificate has no TLS listener; a reload does not create one). Running allocations drop and clients reconnect.
+4. Check: `openssl s_client -connect gs.mydata.rocks:5349 -servername gs.mydata.rocks </dev/null | openssl x509 -noout -subject -issuer -dates`, and a `turns:` allocation (`turnutils_uclient -S` inside the coturn container with the REST secret, as `check-turn.sh` does for UDP).
+5. Add the `turns:` URL to `TURN_URLS` in `.env` (the commented line in `.env.template`) and `docker compose up -d` (recreates `signaling` only).
+
+**Before a certificate exists** coturn starts normally and logs `cannot start TLS and DTLS listeners because certificate file is not set properly` (a warning without client data): it serves STUN and `turn:` on 3478, nothing listens on 5349, and `signaling` does not advertise `turns:` (step 5 not done yet).
+
+**Renewal.** `acme` runs `lego run` once a day; lego renews only when the certificate is due (a third of its lifetime left, or when the CA's renewal information says so), installs the new files through the deploy hook (temporary name, then rename, key first) and logs it. Host cron applies it to coturn:
+
+```cron
+17 4 * * * cd /opt/guardedsleep/docker/public-server && ./reload-turn-cert.sh
+```
+
+[`reload-turn-cert.sh`](reload-turn-cert.sh) compares the SHA-256 of `crt.pem` with the one it applied last (`~/.local/state/guardedsleep/turn-cert.sha256`) and, on a change, sends **SIGUSR2** to coturn (`docker compose kill -s USR2 coturn`), which re-reads `--cert` and `--pkey` without dropping allocations (handler `reload_ssl_certs` in coturn's `src/apps/relay/mainrelay.c`, added in 4.5.0.8; the local test proves the 4.18.0 image serves the new certificate afterwards without a restart). The signal comes from the host and not from the `acme` container because that would need the Docker socket (root on the host) or a shared PID namespace (which exposes coturn's command line, with `TURN_SECRET`, to the container that talks to the internet). Alert on expiry as well: an Uptime Kuma "TLS certificate expiry" option on a TCP/TLS monitor of `gs.mydata.rocks:5349` turns red before a broken renewal matters (with a 90-day certificate and renewal at 30 days left, the script has weeks of margin).
+
+**Rotation / replacing the certificate.** After a suspected key leak or a host name change, start over: `docker compose down acme coturn`, `docker volume rm guardedsleep-public_turn-certs guardedsleep-public_acme-state`, `rm ~/.local/state/guardedsleep/turn-cert.sha256`, then repeat the first issuance (new account key, new certificate key). The old certificate stays valid until it expires; if its key leaked, revoke it as well (lego's `revoke` command; see `docker run --rm goacme/lego:v5.6.0 --help` for the pinned version).
+
+**Local proof.** `just public-server-turns` runs the stack parts with a test CA made at run time: coturn with no certificate (UDP `turn:` works, 5349 refused), the real deploy hook in the real `acme` container, `reload-turn-cert.sh` (restart on the first certificate, SIGUSR2 on the second), a TLS allocation with relayed data both ways, and a refused TLS 1.1 handshake. The live HTTP-01 issuance against Let's Encrypt is the owner's task 10.3.
 
 ## Logs and IP addresses
 
@@ -137,6 +168,7 @@ For every proxy: keep idle WebSockets open for more than 35 s; set `SIGNALING_TR
 - [ ] `docker compose config` passes with your `.env`; `docker compose ps` shows both services running.
 - [ ] `https://gs.mydata.rocks/signaling/healthz` answers `ok` through Traefik.
 - [ ] `./check-turn.sh` prints `check-turn: OK`.
+- [ ] Certificate issued (`docker compose logs acme`), `./reload-turn-cert.sh` ran once and is in cron, `turns:` handshake and allocation work, `TURN_URLS` lists the `turns:` URL.
 - [ ] Firewall as above, `ufw logging off`; no `ports:` anywhere.
 - [ ] The log search after a relayed test call finds no test client address in `docker compose logs`, Traefik's log or `journalctl`.
 - [ ] Uptime Kuma monitors for both checks are green.
