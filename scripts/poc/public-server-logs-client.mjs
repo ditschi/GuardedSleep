@@ -15,12 +15,13 @@ import dgram from "node:dgram";
 import {
   A,
   M,
+  StunSession,
   UDP_TRANSPORT as UDP,
   attr,
   build,
+  ok,
   ownIPv4,
   pad4,
-  parse,
   restCredential,
   u32,
   xorAddr,
@@ -52,72 +53,21 @@ if (!myIp) {
 }
 console.log(`CLIENT_ADDRESS ${myIp}`);
 
-class Client {
-  constructor(sock, cred) {
-    this.sock = sock;
-    this.cred = cred;
-    this.realm = "";
-    this.nonce = "";
-    this.pending = new Map();
-    this.onOther = () => {};
-    sock.on("message", (m) => {
-      const p = parse(m);
-      if (p && this.pending.has(p.txid)) this.pending.get(p.txid)(p, m);
-      else this.onOther(m, p);
-    });
-  }
-  once(type, attrs, auth) {
-    const extra = auth
-      ? [
-          attr(A.username, Buffer.from(this.cred.user)),
-          attr(A.realm, Buffer.from(this.realm)),
-          attr(A.nonce, Buffer.from(this.nonce)),
-        ]
-      : [];
-    const { txid, msg } = build(
-      type,
-      [...attrs, ...extra],
-      auth ? { ...this.cred, realm: this.realm } : null,
-    );
-    return new Promise((res, rej) => {
-      let tries = 0;
-      const tx = txid.toString("hex");
-      const timer = setInterval(() => {
-        if (++tries >= 3) {
-          clearInterval(timer);
-          this.pending.delete(tx);
-          rej(new Error("no response"));
-        } else this.sock.send(msg, 3478, HOST);
-      }, 1500);
-      this.pending.set(tx, (p, raw) => {
-        clearInterval(timer);
-        this.pending.delete(tx);
-        res({ ...p, raw });
-      });
-      this.sock.send(msg, 3478, HOST);
-    });
-  }
-  async txn(type, attrs) {
-    let r = await this.once(type, attrs, !!this.nonce);
-    if (r.error === 401 && !this.nonce) {
-      this.realm = r.attrs.get(A.realm).toString();
-      this.nonce = r.attrs.get(A.nonce).toString();
-      r = await this.once(type, attrs, true);
-    }
-    return r;
-  }
-}
+// UDP transport to coturn's 3478 for a StunSession; `sock` stays available for non-STUN datagrams (ChannelData).
+const udp = (sock) => ({
+  send: (b) => sock.send(b, 3478, HOST),
+  on: (cb) => sock.on("message", cb),
+});
 const open = async () => {
   const s = dgram.createSocket("udp4");
   await new Promise((r) => s.bind(0, "0.0.0.0", r));
   return s;
 };
-const ok = (r) => !r.error && (r.type & 0x0110) === 0x0100;
 
 // 1. Binding: a bare 20-byte request (design section 7, STUN without amplification).
 {
   const s = await open();
-  const c = new Client(s, null);
+  const c = new StunSession(udp(s), null);
   const r = await c.once(M.binding, [], false);
   const size = r.raw.length;
   log(`BINDING_RESPONSE_BYTES ${size}`);
@@ -132,7 +82,7 @@ for (const [label, cred] of [
   ["expired", restCredential(-30, SECRET)],
 ]) {
   const s = await open();
-  const r = await new Client(s, cred).txn(M.allocate, [attr(A.transport, UDP)]);
+  const r = await new StunSession(udp(s), cred).txn(M.allocate, [attr(A.transport, UDP)]);
   if (ok(r)) fail(`allocation with a ${label} credential succeeded`);
   else log(`allocation with a ${label} credential refused (${r.error}), as expected`);
   s.close();
@@ -199,7 +149,7 @@ const peerSock = await open();
 const peer = { ip: myIp, port: peerSock.address().port };
 peerSock.on("message", (m, r) => peerSock.send(m, r.port, r.address)); // echo
 const sock = await open();
-const c = new Client(sock, issued);
+const c = new StunSession(udp(sock), issued);
 const echoes = new Set();
 const channelEchoes = new Set();
 const CHANNEL = 0x4000;
@@ -209,7 +159,8 @@ c.onOther = (m, p) => {
     channelEchoes.add(m.subarray(4, 4 + m.readUInt16BE(2)).toString());
     return;
   }
-  if (p && p.type === 0x0017 && p.attrs.get(A.data)) echoes.add(p.attrs.get(A.data).toString());
+  if (p && p.type === M.dataIndication && p.attrs.get(A.data))
+    echoes.add(p.attrs.get(A.data).toString());
 };
 const alloc = await c.txn(M.allocate, [attr(A.transport, UDP)]);
 if (!ok(alloc)) {
@@ -228,7 +179,7 @@ if (!ok(alloc)) {
   }
   const send = (text) => {
     const { msg } = build(
-      0x0016,
+      M.sendIndication,
       [attr(A.xorPeer, xorAddr(peer.ip, peer.port)), attr(A.data, Buffer.from(text))],
       null,
     );

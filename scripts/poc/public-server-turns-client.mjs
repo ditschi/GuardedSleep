@@ -15,12 +15,14 @@ import tls from "node:tls";
 import {
   A,
   M,
+  StunSession,
   UDP_TRANSPORT,
   attr,
   build,
+  ok,
   ownIPv4,
-  parse,
   restCredential,
+  u32,
   xorAddr,
   parseXorAddr,
 } from "./lib/stun.mjs";
@@ -40,7 +42,6 @@ const fail = (m) => {
 };
 const log = (m) => console.log(m);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const ok = (r) => !r.error && (r.type & 0x0110) === 0x0100;
 
 // A STUN transport: send(buf) and "message" events with whole STUN messages.
 function udpTransport(port) {
@@ -73,54 +74,6 @@ function tlsTransport(opts) {
   });
 }
 
-class Session {
-  constructor(t, cred) {
-    this.t = t;
-    this.cred = cred;
-    this.realm = "";
-    this.nonce = "";
-    this.pending = new Map();
-    this.indications = [];
-    t.on((m) => {
-      const p = parse(m);
-      if (p && this.pending.has(p.txid)) this.pending.get(p.txid)(p);
-      else if (p) this.indications.push(p);
-    });
-  }
-  async once(type, attrs, auth) {
-    const extra = auth
-      ? [
-          attr(A.username, Buffer.from(this.cred.user)),
-          attr(A.realm, Buffer.from(this.realm)),
-          attr(A.nonce, Buffer.from(this.nonce)),
-        ]
-      : [];
-    const { txid, msg } = build(
-      type,
-      [...attrs, ...extra],
-      auth ? { ...this.cred, realm: this.realm } : null,
-    );
-    return new Promise((res, rej) => {
-      const tx = txid.toString("hex");
-      const timer = setTimeout(() => rej(new Error("no response")), 5000);
-      this.pending.set(tx, (p) => {
-        clearTimeout(timer);
-        res(p);
-      });
-      this.t.send(msg);
-    });
-  }
-  async txn(type, attrs) {
-    let r = await this.once(type, attrs, !!this.nonce);
-    if (r.error === 401 && !this.nonce) {
-      this.realm = r.attrs.get(A.realm).toString();
-      this.nonce = r.attrs.get(A.nonce).toString();
-      r = await this.once(type, attrs, true);
-    }
-    return r;
-  }
-}
-
 if (MODE === "nocert") {
   try {
     await tlsTransport({ rejectUnauthorized: false });
@@ -128,7 +81,7 @@ if (MODE === "nocert") {
   } catch (e) {
     log(`TLS on 5349 refused without a certificate (${e.code ?? e.message}), as expected`);
   }
-  const s = new Session(await udpTransport(3478), restCredential(60, SECRET));
+  const s = new StunSession(await udpTransport(3478), restCredential(60, SECRET));
   const r = await s.txn(M.allocate, [attr(A.transport, UDP_TRANSPORT)]);
   if (ok(r)) log("turn: allocation over UDP works without a certificate");
   else fail(`turn: allocation over UDP failed without a certificate (${r.error})`);
@@ -160,7 +113,9 @@ if (MODE === "nocert") {
   );
   if (serial !== (process.env.EXPECT_SERIAL ?? "").toLowerCase().replace(/^0+/, ""))
     fail(`served serial ${serial}, expected ${process.env.EXPECT_SERIAL}`);
-  const s = new Session(tt, restCredential(60, SECRET));
+  const s = new StunSession(tt, restCredential(60, SECRET), { tries: 1, intervalMs: 5000 });
+  const indications = [];
+  s.onOther = (_raw, p) => p && indications.push(p);
   const peerSock = dgram.createSocket("udp4");
   await new Promise((r) => peerSock.bind(0, "0.0.0.0", r));
   const peerGot = new Set();
@@ -177,7 +132,7 @@ if (MODE === "nocert") {
     for (let i = 0; i < 3; i++) {
       tt.send(
         build(
-          0x0016,
+          M.sendIndication,
           [attr(A.xorPeer, xorAddr(peer.ip, peer.port)), attr(A.data, Buffer.from(`out-${i}`))],
           null,
         ).msg,
@@ -192,12 +147,12 @@ if (MODE === "nocert") {
     }
     await sleep(500);
     const outN = [0, 1, 2].filter((i) => peerGot.has(`out-${i}`)).length;
-    const inN = s.indications.filter(
-      (p) => p.type === 0x0017 && /^in-\d$/.test(String(p.attrs.get(A.data))),
+    const inN = indications.filter(
+      (p) => p.type === M.dataIndication && /^in-\d$/.test(String(p.attrs.get(A.data))),
     ).length;
     log(`relayed through TLS: client to peer ${outN}/3, peer to client ${inN}/3`);
     if (outN < 2 || inN < 2) fail("relayed data through the TLS stream is incomplete");
-    const rel = await s.txn(M.refresh, [attr(0x000d, Buffer.from([0, 0, 0, 0]))]);
+    const rel = await s.txn(M.refresh, [attr(A.lifetime, u32(0))]);
     if (!ok(rel)) fail(`release refused (${rel.error})`);
   }
   tt.close();

@@ -1,5 +1,7 @@
-// STUN/TURN wire helpers shared by the PoC clients (scripts/poc/turn-lifetime-client.mjs and
-// public-server-logs-client.mjs). Plain Node 22 ESM (crypto, os), no dependencies; not part of the shipped product.
+// STUN/TURN wire helpers shared by the PoC clients (scripts/poc/turn-lifetime-client.mjs,
+// public-server-logs-client.mjs and public-server-turns-client.mjs); StunSession is the request/response
+// session over any transport (UDP socket or TLS stream) used by the last two.
+// Plain Node 22 ESM (crypto, os), no dependencies; not part of the shipped product.
 // Protocol: RFC 8489 (STUN, long-term credentials), RFC 8656 (TURN); coturn REST credentials
 // https://github.com/coturn/coturn/blob/master/README.turnserver (--use-auth-secret).
 import { createHash, createHmac, randomBytes } from "node:crypto";
@@ -12,6 +14,8 @@ export const M = {
   refresh: 0x004,
   createPermission: 0x008,
   channelBind: 0x009,
+  sendIndication: 0x016,
+  dataIndication: 0x017,
 };
 export const A = {
   username: 0x0006,
@@ -90,6 +94,71 @@ export function parse(msg) {
     attrs,
     error: ec ? ec[2] * 100 + ec[3] : 0,
   };
+}
+
+export const ok = (r) => !r.error && (r.type & 0x0110) === 0x0100; // a success response class
+
+// One STUN client session over a transport {send(buf), on(cb)}: cb receives every whole STUN message (the caller
+// frames a stream). Requests are retransmitted `tries` times `intervalMs` apart (UDP defaults; a reliable stream
+// passes tries 1 and a longer interval), a 401 with realm and nonce is answered once with long-term credentials
+// (RFC 8489 section 9.2), and anything that matches no pending request (indications, ChannelData) goes to
+// onOther(raw, parsed-or-null).
+export class StunSession {
+  constructor(transport, cred, { tries = 3, intervalMs = 1500 } = {}) {
+    this.t = transport;
+    this.cred = cred;
+    this.tries = tries;
+    this.intervalMs = intervalMs;
+    this.realm = "";
+    this.nonce = "";
+    this.pending = new Map();
+    this.onOther = () => {};
+    transport.on((m) => {
+      const p = parse(m);
+      if (p && this.pending.has(p.txid)) this.pending.get(p.txid)(p, m);
+      else this.onOther(m, p);
+    });
+  }
+  once(type, attrs, auth) {
+    const extra = auth
+      ? [
+          attr(A.username, Buffer.from(this.cred.user)),
+          attr(A.realm, Buffer.from(this.realm)),
+          attr(A.nonce, Buffer.from(this.nonce)),
+        ]
+      : [];
+    const { txid, msg } = build(
+      type,
+      [...attrs, ...extra],
+      auth ? { ...this.cred, realm: this.realm } : null,
+    );
+    return new Promise((res, rej) => {
+      let sent = 0;
+      const tx = txid.toString("hex");
+      const timer = setInterval(() => {
+        if (++sent >= this.tries) {
+          clearInterval(timer);
+          this.pending.delete(tx);
+          rej(new Error("no response"));
+        } else this.t.send(msg);
+      }, this.intervalMs);
+      this.pending.set(tx, (p, raw) => {
+        clearInterval(timer);
+        this.pending.delete(tx);
+        res({ ...p, raw });
+      });
+      this.t.send(msg);
+    });
+  }
+  async txn(type, attrs) {
+    let r = await this.once(type, attrs, !!this.nonce);
+    if (r.error === 401 && !this.nonce) {
+      this.realm = r.attrs.get(A.realm).toString();
+      this.nonce = r.attrs.get(A.nonce).toString();
+      r = await this.once(type, attrs, true);
+    }
+    return r;
+  }
 }
 
 // REST credential: <expiry unix s>:<16 random bytes base64url>, password base64(HMAC-SHA1(secret, name)).
