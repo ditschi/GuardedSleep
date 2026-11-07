@@ -118,7 +118,7 @@ Alpha (T0). Builds on `rebuild-web-client` (archived); `add-offline-lan` follows
 
 ## 7. Integration
 
-- [ ] 7.1 Add the log canary (AGENTS.md §7.6): the simulation and gate runs pair with a known PSK, and CI fails if the PSK, a derived key, the seed, the parent secret (raw, its four HKDF subkeys and the `parent_pin` message text, which carries it), the room id, plaintext SDP or an issued TURN password appears in any log in any encoding. The canary list needs the parent secret from the first simulated pairing, because that secret is drawn at run time (security review of 3.4, M3). Verify: the canary test fails on a planted leak and passes otherwise.
+- [x] 7.1 Add the log canary (AGENTS.md §7.6): the simulation and gate runs pair with a known PSK, and CI fails if the PSK, a derived key, the seed, the parent secret (raw, its four HKDF subkeys and the `parent_pin` message text, which carries it), the room id, plaintext SDP or an issued TURN password appears in any log in any encoding. The canary list needs the parent secret from the first simulated pairing, because that secret is drawn at run time (security review of 3.4, M3). Verify: the canary test fails on a planted leak and passes otherwise.
 - [ ] 7.2 `GS_STRICT=1 just ci` green on the wave branch.
 
 ## 8. Nostr removal (owner, 2026-11-02; design §11)
