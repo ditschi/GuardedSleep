@@ -550,6 +550,21 @@ impl std::fmt::Debug for LinkInput {
         {
             *slot = serde_json::Value::from("<parent_pin redacted>");
         }
+        // An `ice_servers` frame carries the TURN credential (design section 7: never logged).
+        if let LinkInput::MailboxFrame { bytes, .. } = self
+            && let Ok(mut frame) = serde_json::from_str::<serde_json::Value>(bytes)
+            && frame.get("type").and_then(serde_json::Value::as_str) == Some("ice_servers")
+            && let Some(obj) = frame.as_object_mut()
+        {
+            for field in ["username", "credential"] {
+                if let Some(v) = obj.get_mut(field) {
+                    *v = serde_json::Value::from("<redacted>");
+                }
+            }
+            if let Some(slot) = value.get_mut("bytes") {
+                *slot = serde_json::Value::from(frame.to_string());
+            }
+        }
         write!(f, "{value}")
     }
 }
@@ -3651,6 +3666,23 @@ mod tests {
         };
         assert!(format!("{other:?}").contains("ping"));
         assert!(format!("{:?}", LinkInput::Tick).contains("tick"));
+    }
+
+    #[test]
+    fn debug_of_an_ice_servers_frame_hides_the_turn_credential() {
+        let frame = LinkInput::MailboxFrame {
+            id: 0,
+            bytes: r#"{"type":"ice_servers","urls":["turn:r.invalid:3478"],"username":"123:u-secret","credential":"c-secret","ttl":600}"#
+                .to_owned(),
+        };
+        let shown = format!("{frame:?}");
+        assert!(!shown.contains("c-secret") && !shown.contains("u-secret"), "{shown}");
+        assert!(shown.contains("redacted") && shown.contains("turn:r.invalid:3478"));
+        let other = LinkInput::MailboxFrame {
+            id: 0,
+            bytes: r#"{"type":"members"}"#.to_owned(),
+        };
+        assert!(format!("{other:?}").contains("members"));
     }
 
     #[test]
