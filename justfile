@@ -236,6 +236,10 @@ _gate:
 turn-lifetime:
     scripts/lib/slot.sh heavy -- scripts/poc/turn-lifetime.sh
 
+# Public-server stack (task 10.1): no client address in any container log after a relayed test call, coturn's Binding size, check-turn.sh. Needs Docker; builds the signaling image on the first run.
+public-server-logs:
+    scripts/lib/slot.sh heavy -- scripts/poc/public-server-logs.sh
+
 # The same verdict as CI (the PR title check and the emulator gate are CI-only): lint, test, build, e2e in order,
 # then a list of every SKIPPED line of the run (a skip is not a pass), also when a step fails.
 ci:
