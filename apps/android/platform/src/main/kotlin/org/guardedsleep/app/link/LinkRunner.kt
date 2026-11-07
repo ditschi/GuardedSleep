@@ -58,11 +58,6 @@ class LinkRunner(
     private val config: LinkConfig,
     private val signaling: SignalingFactory,
     private val mediaFactory: () -> MediaEngine,
-    /**
-     * The "Only same Wi-Fi or my own server" gate: a socket to a refused address is never opened
-     * and comes back to the core as closed. It never picks another address.
-     */
-    private val mailboxAllowed: (String) -> Boolean = { true },
     private val clock: Clock,
     private val executor: ScheduledExecutorService,
     private val listener: LinkListener,
@@ -296,11 +291,6 @@ class LinkRunner(
     private fun openMailbox(id: UInt, url: String) {
         closeMailbox(id)
         val gen = ++mailboxGen
-        if (!mailboxAllowed(url)) {
-            // Not a socket at all; the core applies its own backoff.
-            post { dispatch(LinkInput.MailboxClosed(id, "blocked")) }
-            return
-        }
         val transport =
             signaling.create(
                 url,

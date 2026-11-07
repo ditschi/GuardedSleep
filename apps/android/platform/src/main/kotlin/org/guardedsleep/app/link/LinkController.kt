@@ -9,8 +9,8 @@ import org.guardedsleep.app.alerts.AlertSink
 import org.guardedsleep.app.alerts.NoiseKind
 import org.guardedsleep.app.config.AppDefaults
 import org.guardedsleep.app.config.DebugOptions
-import org.guardedsleep.app.config.OnlyLocal
 import org.guardedsleep.app.config.PairingPolicy
+import org.guardedsleep.app.config.PublicLists
 import org.guardedsleep.app.diag.PocLog
 import org.guardedsleep.app.media.IceConfig
 import org.guardedsleep.app.media.InboundAudioStats
@@ -52,6 +52,7 @@ import uniffi.guardedsleep_core.MailboxKind
 import uniffi.guardedsleep_core.ParentSecret
 import uniffi.guardedsleep_core.Role as CoreRole
 import uniffi.guardedsleep_core.defaultLinkConfig
+import uniffi.guardedsleep_core.filterOnlyLocal
 
 /**
  * The platform layer's single entry point for the UI. Owns at most one [LinkRunner] (one
@@ -370,9 +371,9 @@ class LinkController(
         if (settingsRepo.current.role != Role.BABY) return
         cancelPairing()
         stopRun(userStop = true)
-        // The baby's own choice for a NEW invite: the settings list (Advanced or the build default)
-        // without the project server when the off switch is on.
-        val urls = OnlyLocal.urls(_settings.value.signalingUrls, _settings.value.onlyLocal)
+        // The baby's own choice for a NEW invite: the settings list (Advanced or the build
+        // default); with the off switch on the core's rule leaves the project server out.
+        val urls = inviteUrls(_settings.value)
         if (urls.isEmpty()) {
             _pairing.value = PairingState(PairingPhase.FAILED, error = PairingError.UNREACHABLE)
             return
@@ -494,6 +495,15 @@ class LinkController(
             isPending = false,
         )
 
+    /** The URLs of a new invite: the core's `only_local` rule applied to the settings list. */
+    private fun inviteUrls(s: SettingsState): List<String> {
+        val set = PairingPayload.mailboxesFor(s.signalingUrls)
+        val kept =
+            if (s.onlyLocal) filterOnlyLocal(set, PublicLists.projectServer.host.lowercase())
+            else set
+        return kept.map { it.url }
+    }
+
     /** The core's mailbox entries of a set. A kind this build does not know is no address. */
     private fun coreMailboxes(set: List<StoredMailbox>): List<InviteMailbox> = set.mapNotNull { m ->
         when (m.kind) {
@@ -519,13 +529,11 @@ class LinkController(
         val config = buildConfig(coreRole, pending.psk, pairedBefore, s, pending)
         val r = Run(++runCounter, role, if (isPending) pending else null, monitoring)
         val ice = buildIceConfig(pending.turn, turn, DebugOptions.relayOnly)
-        val onlyLocal = s.onlyLocal
         val runner =
             LinkRunner(
                 config = config,
                 signaling = signaling,
                 mediaFactory = { mediaFactory(role, ice) },
-                mailboxAllowed = { url -> !onlyLocal || !OnlyLocal.isProjectUrl(url) },
                 clock = clock,
                 executor = newExecutor(),
                 listener = RunListener(r),
@@ -607,8 +615,11 @@ class LinkController(
             // The mailbox set comes from the pairing record only (owner decision 2026-11-07): the
             // core opens each entry at its own address and the baby also sends the set to the
             // parent after each verification. No fallback to settings or defaults.
-            mailboxes = coreMailboxes(OnlyLocal.mailboxes(pending.mailboxes, s.onlyLocal)),
+            mailboxes = coreMailboxes(pending.mailboxes),
+            // With the switch on the core itself drops the project server's entries, from this
+            // set and from every update.
             onlyLocal = s.onlyLocal,
+            projectHost = PublicLists.projectServer.host.lowercase(),
             allowDevLoopback = BuildConfig.DEBUG,
             pairedBefore = pairedBefore,
             heartbeatIntervalMs = heartbeat.toULong(),
@@ -820,12 +831,8 @@ class LinkController(
 
         /** The baby's current mailbox set replaces the stored one. */
         private fun persistMailboxes(r: Run, mailboxes: List<InviteMailbox>) {
-            // A project-server entry is not kept while the off switch is on.
-            val set =
-                OnlyLocal.mailboxes(
-                    mailboxes.map { StoredMailbox(kindName(it.kind), it.url) },
-                    _settings.value.onlyLocal,
-                )
+            // The core already left the project server out while the off switch is on.
+            val set = mailboxes.map { StoredMailbox(kindName(it.kind), it.url) }
             val pending = r.pending
             if (pending != null) pending.receivedMailboxes = set else pairingStore.setMailboxes(set)
         }

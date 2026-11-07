@@ -504,6 +504,31 @@ class LinkControllerTest {
     }
 
     @Test
+    fun aProjectEntryInTheInviteAndInTheMailboxUpdateIsIgnoredWithTheOffSwitch() {
+        val project = "wss://${PublicLists.projectServer.host}/signaling"
+        val baby = unit("upd-baby", Role.BABY)
+        val parent = unit("upd-parent", Role.PARENT)
+        baby.controller.updateSettings {
+            it.copy(signalingUrls = listOf(project, "wss://fake.example"))
+        }
+        parent.controller.updateSettings { it.copy(onlyLocal = true) }
+        baby.controller.startPairing()
+        parent.controller.submitPairingCode(baby.controller.pairing.value!!.codePayload!!)
+        await("both paired", 8_000) {
+            baby.controller.pairing.value?.phase == PairingPhase.PAIRED &&
+                parent.controller.pairing.value?.phase == PairingPhase.PAIRED
+        }
+        await("the parent stores the update") { parent.store.load()!!.mailboxes.isNotEmpty() }
+        assertEquals(
+            listOf(StoredMailbox("relay", "wss://fake.example")),
+            parent.store.load()!!.mailboxes,
+        )
+        // The baby (switch off) opened the project mailbox; the parent never did: one open of the
+        // project address is the baby's.
+        assertEquals(1, net.openedUrls.count { it == project })
+    }
+
+    @Test
     fun theOffSwitchLeavesTheProjectServerOutOfANewInvite() {
         val baby = unit("invite", Role.BABY)
         val project = "wss://${PublicLists.projectServer.host}/signaling"
