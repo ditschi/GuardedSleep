@@ -48,7 +48,6 @@ import {
   PAIRING_UNREACHABLE_AFTER_MS,
   PSK_BYTES,
 } from "./policy";
-import { allowedMailboxes } from "./mailbox-policy";
 import type { SignalingFactory } from "./signaling";
 
 /** Tells the controller when the network came back (the core then retries at once). */
@@ -604,9 +603,8 @@ export class WebController implements AppController {
       // The relay mailboxes of the pairing record: the core opens each at its own address, and a
       // record without any works LAN-only (no fallback to a default or a setting; the owner
       // decision of 2026-11-07). The baby also sends the set to the parent after each verification.
-      mailboxes: allowedMailboxes(
-        this.withOnlyLocal(mailboxesForUrls(pending.urls)),
-        this.mailboxAllowed,
+      mailboxes: this.withOnlyLocal(mailboxesForUrls(pending.urls)).filter((m) =>
+        this.mailboxAllowed(m.url),
       ),
       allow_dev_loopback: this.deps.allowDevLoopback ?? false,
       only_local: this.onlyLocal,

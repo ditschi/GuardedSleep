@@ -1,5 +1,3 @@
-import type { InviteMailbox } from "@guardedsleep/core-wasm";
-
 /**
  * Which mailbox addresses this page may use. The pairing record is the only source of the set
  * (invite and mailbox updates); this module only decides what the page lets through:
@@ -68,14 +66,6 @@ export function deploymentConnectSources(doc: {
   const meta = doc.querySelector('meta[http-equiv="Content-Security-Policy"]');
   const content = meta?.getAttribute("content");
   return content ? connectSources(content) : null;
-}
-
-/** Keeps the entries of a record the page may use. */
-export function allowedMailboxes(
-  mailboxes: readonly InviteMailbox[],
-  allowed: (url: string) => boolean,
-): InviteMailbox[] {
-  return mailboxes.filter((m) => allowed(m.url));
 }
 
 /**

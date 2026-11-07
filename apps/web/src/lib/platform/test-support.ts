@@ -148,11 +148,7 @@ export class FakeMedia implements MediaEngine {
   /** The ICE list each attempt was created with, as the core named it. */
   readonly iceServers: IceServer[][] = [];
 
-  createAttempt(
-    offerer: boolean,
-    listener: AttemptListener,
-    iceServers: IceServer[] = [],
-  ): AttemptPort {
+  createAttempt(offerer: boolean, listener: AttemptListener, iceServers: IceServer[]): AttemptPort {
     this.iceServers.push(iceServers);
     if (this.throwOnCreate) throw new Error("no peer connection");
     const attempt = new FakeAttempt(offerer, listener);

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  allowedMailboxes,
   connectSources,
   cspAllows,
   defaultMailboxUrls,
@@ -49,17 +48,6 @@ describe("connectSources and cspAllows", () => {
     });
     expect(deploymentConnectSources(doc(buildCsp({ meta: true })))).toEqual(["'self'"]);
     expect(deploymentConnectSources(doc(null))).toBeNull();
-  });
-});
-
-describe("allowedMailboxes", () => {
-  it("filters a mailbox list by the CSP check", () => {
-    const sources = connectSources(buildCsp());
-    const list = [
-      { kind: "relay" as const, url: "wss://web.test/signaling" },
-      { kind: "relay" as const, url: "wss://x.example" },
-    ];
-    expect(allowedMailboxes(list, (url) => cspAllows(sources, https, url))).toEqual([list[0]]);
   });
 });
 
