@@ -19,8 +19,6 @@ require turn-lifetime docker
 
 # shellcheck source=tools/poc-images.env
 source "$ROOT/tools/poc-images.env"
-# Same digest as docker/web/Dockerfile (node 22 LTS, alpine); runs the client script only.
-NODE_IMAGE=node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402
 OUT="${GS_TURN_LIFETIME_OUT:-$ROOT/target/turn-lifetime}"
 # Coturn's --stale-nonce, also read by the client for its thresholds. The run must outlast it by a minute
 # (task 9.1 needs 11+ minutes, hence the 660 s floor at the default).
