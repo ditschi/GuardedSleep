@@ -23,6 +23,7 @@ import org.guardedsleep.app.pairing.TurnCredentials
 import org.guardedsleep.app.pairing.TurnServerInput
 import org.guardedsleep.app.pairing.TurnStore
 import org.guardedsleep.app.pairing.signalingUrls
+import org.guardedsleep.app.pairing.storedMailboxesFor
 import org.guardedsleep.app.pairing.toStored
 import org.guardedsleep.app.platform.BuildConfig
 import org.guardedsleep.app.readiness.ReadinessChecker
@@ -487,8 +488,7 @@ class LinkController(
         return kept.map { it.url }
     }
 
-    private fun List<String>.toStoredMailboxes(): List<StoredMailbox> =
-        PairingPayload.mailboxesFor(this).map { it.toStored() }
+    private fun List<String>.toStoredMailboxes(): List<StoredMailbox> = storedMailboxesFor(this)
 
     private fun startRun(
         role: Role,

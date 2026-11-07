@@ -22,6 +22,12 @@ data class StoredMailbox(val kind: String, val url: String) {
         }?.let { InviteMailbox(it, url) }
 }
 
+/**
+ * The set a URL list stands for (`wss://` a relay, `ws://` a LAN mailbox), as an invite carries it.
+ */
+fun storedMailboxesFor(urls: List<String>): List<StoredMailbox> =
+    PairingPayload.mailboxesFor(urls).map { it.toStored() }
+
 fun InviteMailbox.toStored(): StoredMailbox =
     StoredMailbox(
         when (kind) {
