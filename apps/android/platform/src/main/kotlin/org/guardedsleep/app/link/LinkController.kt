@@ -238,22 +238,7 @@ class LinkController(
             cancelPairing()
             return
         }
-        val stored = pairingStore.load() ?: return
-        startRun(
-            r.role,
-            PendingPairing(
-                stored.pskB64url,
-                stored.turn,
-                clock.elapsedMs(),
-                null,
-                parentSecret = stored.parentSecretB64url?.let { PairingPayload.decodePsk(it) },
-                mailboxes = stored.mailboxes,
-                pinUntilS = stored.pinUntilS,
-            ),
-            stored.pairedBefore,
-            monitoring = r.monitoring,
-            isPending = false,
-        )
+        pairingStore.load()?.let { resumeRun(r.role, it, monitoring = r.monitoring) }
     }
 
     @Synchronized
@@ -478,7 +463,7 @@ class LinkController(
         host.stop()
     }
 
-    private fun resumeRun(role: Role, stored: StoredPairing) =
+    private fun resumeRun(role: Role, stored: StoredPairing, monitoring: Boolean = true) =
         startRun(
             role,
             PendingPairing(
@@ -491,7 +476,7 @@ class LinkController(
                 pinUntilS = stored.pinUntilS,
             ),
             stored.pairedBefore,
-            monitoring = true,
+            monitoring = monitoring,
             isPending = false,
         )
 
