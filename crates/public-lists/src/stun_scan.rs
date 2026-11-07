@@ -77,6 +77,33 @@ fn push_once(found: &mut Vec<(usize, String)>, line: usize, host: String) {
     }
 }
 
+/// True when byte `i` starts a word (not preceded by a host character or `_`).
+fn at_word_start(bytes: &[u8], i: usize) -> bool {
+    i == 0
+        || !bytes
+            .get(i - 1)
+            .is_some_and(|b| host_byte(*b) || *b == b'_')
+}
+
+/// The host of a URL whose scheme name ended just before `rest`: `rest` starts with `:` or `s:`
+/// (`stun:` / `stuns:`, `turn:` / `turns:`), then an optional `//`, then host and port. Returns
+/// `None` when `rest` is not the URL shape (the caller may then try other shapes). The host is
+/// not validated here; an IPv6 literal keeps its brackets.
+fn scheme_url_host(rest: &str) -> Option<String> {
+    let after = rest.strip_prefix("s:").or_else(|| rest.strip_prefix(':'))?;
+    let after = after.strip_prefix("//").unwrap_or(after);
+    let host: String = after
+        .bytes()
+        .take_while(|b| host_byte(*b) || *b == b'[' || *b == b']' || *b == b':')
+        .map(char::from)
+        .collect();
+    Some(if host.starts_with('[') {
+        host
+    } else {
+        host.split(':').next().unwrap_or("").to_owned()
+    })
+}
+
 /// Every STUN host named in `text`, with its 1-based line.
 fn hosts_in(text: &str) -> Vec<(usize, String)> {
     let mut found = Vec::new();
@@ -84,33 +111,14 @@ fn hosts_in(text: &str) -> Vec<(usize, String)> {
         let bytes = line.as_bytes();
         let mut i = 0;
         while i < bytes.len() {
-            let at_word_start = i == 0
-                || !(bytes
-                    .get(i - 1)
-                    .is_some_and(|b| host_byte(*b) || *b == b'_'));
-            if at_word_start
+            if at_word_start(bytes, i)
                 && bytes
                     .get(i..i + 4)
                     .is_some_and(|w| w.eq_ignore_ascii_case(b"stun"))
             {
-                let mut j = i + 4;
-                let rest = &line[j..];
-                if rest.starts_with("s:") || rest.starts_with(':') {
+                let rest = line.get(i + 4..).unwrap_or("");
+                if let Some(host) = scheme_url_host(rest) {
                     // stun: / stuns: URL
-                    j += if rest.starts_with("s:") { 2 } else { 1 };
-                    if line[j..].starts_with("//") {
-                        j += 2;
-                    }
-                    let host: String = line[j..]
-                        .bytes()
-                        .take_while(|b| host_byte(*b) || *b == b'[' || *b == b']' || *b == b':')
-                        .map(char::from)
-                        .collect();
-                    let host = if host.starts_with('[') {
-                        host
-                    } else {
-                        host.split(':').next().unwrap_or("").to_owned()
-                    };
                     if !host.is_empty() && host.contains(|c: char| c.is_ascii_alphanumeric()) {
                         push_once(&mut found, idx + 1, host);
                     }
@@ -118,7 +126,9 @@ fn hosts_in(text: &str) -> Vec<(usize, String)> {
                     // stun.example / stun1.example bare host name
                     let digits = rest.bytes().take_while(u8::is_ascii_digit).count();
                     if rest.as_bytes().get(digits) == Some(&b'.') {
-                        let host: String = line[i..]
+                        let host: String = line
+                            .get(i..)
+                            .unwrap_or("")
                             .bytes()
                             .take_while(|b| host_byte(*b))
                             .map(char::from)
@@ -143,35 +153,17 @@ fn hosts_in(text: &str) -> Vec<(usize, String)> {
 fn turn_hosts_in(text: &str) -> Vec<(usize, String)> {
     let mut found = Vec::new();
     for (idx, line) in text.lines().enumerate() {
-        let lower = line.to_ascii_lowercase();
-        let bytes = lower.as_bytes();
-        for i in (0..bytes.len()).filter(|i| lower.is_char_boundary(*i)) {
-            let at_word_start = i == 0
+        let bytes = line.as_bytes();
+        for i in 0..bytes.len() {
+            if !at_word_start(bytes, i)
                 || !bytes
-                    .get(i - 1)
-                    .is_some_and(|b| host_byte(*b) || *b == b'_');
-            if !at_word_start || !lower[i..].starts_with("turn") {
+                    .get(i..i + 4)
+                    .is_some_and(|w| w.eq_ignore_ascii_case(b"turn"))
+            {
                 continue;
             }
-            let rest = &lower[i + 4..];
-            let skip = if rest.starts_with("s:") {
-                2
-            } else if rest.starts_with(':') {
-                1
-            } else {
+            let Some(host) = scheme_url_host(line.get(i + 4..).unwrap_or("")) else {
                 continue;
-            };
-            let mut url = &line[i + 4 + skip..];
-            url = url.strip_prefix("//").unwrap_or(url);
-            let host: String = url
-                .bytes()
-                .take_while(|b| host_byte(*b) || *b == b'[' || *b == b']' || *b == b':')
-                .map(char::from)
-                .collect();
-            let host = if host.starts_with('[') {
-                host
-            } else {
-                host.split(':').next().unwrap_or("").to_owned()
             };
             // A name that does not start like a host (`turn:.host`, a malformed-input fixture) is
             // not one.
