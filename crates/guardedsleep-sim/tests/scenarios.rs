@@ -138,18 +138,25 @@ fn a_planted_leak_fails_the_run_and_the_message_hides_the_value() {
             "offer v=0\r\no=- 1 2 IN IP4 0.0.0.0".to_owned(),
         ),
     ];
-    for (name, text) in planted {
-        let mut world = guardedsleep_sim::world::World::new(&sc, 1, false).unwrap();
-        world.enable_log_canary();
-        world.run();
-        assert!(world.violations.is_empty(), "{:?}", world.violations);
-        // The run-time parent secret is known now; plant the leak into a later log line.
-        world.log_line(0, "planted", &format!("INFO value={text}"), false);
-        let violation = world
-            .violations
+    // One world for every plant: the run-time parent secret is known after the run, and each
+    // plant is a distinct (canary, encoding, kind) so none hides behind another.
+    let mut world = guardedsleep_sim::world::World::new(&sc, 1, false).unwrap();
+    world.enable_log_canary();
+    world.run();
+    assert!(world.violations.is_empty(), "{:?}", world.violations);
+    for (n, (name, text)) in planted.into_iter().enumerate() {
+        let before = world.violations.len();
+        world.log_line(
+            0,
+            &format!("planted{n}"),
+            &format!("INFO value={text}"),
+            false,
+        );
+        let new = &world.violations[before..];
+        let violation = new
             .iter()
             .find(|v| v.contains(&format!("canary: {name} ")))
-            .unwrap_or_else(|| panic!("planted `{name}` leak not caught: {:?}", world.violations));
+            .unwrap_or_else(|| panic!("planted `{name}` leak not caught: {new:?}"));
         assert!(!violation.contains(&text), "the violation prints the value");
     }
 }
