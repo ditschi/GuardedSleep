@@ -60,8 +60,8 @@ docker logs "$TURN" 2>&1 | grep -i -m1 'coturn-\|version' || true
 
 status=0
 docker run --rm --name "$CLIENT" --network "$NET" -e TURN_SECRET="$SECRET" -e TURN_HOST="$TURN_IP" \
-	-e DURATION_S="$DURATION_S" -e STALE_NONCE_S="$STALE_NONCE_S" -v "$ROOT/scripts/poc/turn-lifetime-client.mjs:/client.mjs:ro" \
-	"$NODE_IMAGE" node /client.mjs | tee "$OUT/client.log" || status=$?
+	-e DURATION_S="$DURATION_S" -e STALE_NONCE_S="$STALE_NONCE_S" -v "$ROOT/scripts/poc:/poc:ro" \
+	"$NODE_IMAGE" node /poc/turn-lifetime-client.mjs | tee "$OUT/client.log" || status=$?
 
 docker logs "$TURN" >"$OUT/coturn.log" 2>&1 || true
 echo "turn-lifetime: coturn lines relevant to the verdict (full log: $OUT/coturn.log)"
