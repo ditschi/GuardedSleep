@@ -6,7 +6,7 @@
 // and a WebSocket probe of the signaling server. Plain Node 22 (dgram, crypto, fetch, WebSocket), no dependencies.
 //
 // Env: TURN_HOST, TURN_SECRET (required; signs only the negative controls), PUBLIC_HOST (the host the issued URLs
-// must name, default gs.mydata.rocks), SIGNALING_URL (required unless NO_SIGNALING=1, http://host:8787), DENIED_HOST (TURN_HOST),
+// must name, default gs.mydata.rocks), SIGNALING_URL (required, http://host:8787), DENIED_HOST (TURN_HOST),
 // CRED_TTL_S (60).
 // Prints "BINDING_RESPONSE_BYTES <n>" and "VERDICT PASS" (exit 0) or "VERDICT FAIL" (exit 1).
 // Protocol: RFC 8656 (TURN), RFC 8489 (STUN); coturn REST scheme https://github.com/coturn/coturn/blob/master/README.turnserver
@@ -19,6 +19,7 @@ import {
   attr,
   build,
   ownIPv4,
+  pad4,
   parse,
   restCredential,
   u32,
@@ -200,7 +201,14 @@ peerSock.on("message", (m, r) => peerSock.send(m, r.port, r.address)); // echo
 const sock = await open();
 const c = new Client(sock, issued);
 const echoes = new Set();
+const channelEchoes = new Set();
+const CHANNEL = 0x4000;
 c.onOther = (m, p) => {
+  // ChannelData (first byte 0x40-0x7f): coturn frames the peer's replies that way once a channel is bound.
+  if ((m[0] & 0xc0) === 0x40) {
+    channelEchoes.add(m.subarray(4, 4 + m.readUInt16BE(2)).toString());
+    return;
+  }
   if (p && p.type === 0x0017 && p.attrs.get(A.data)) echoes.add(p.attrs.get(A.data).toString());
 };
 const alloc = await c.txn(M.allocate, [attr(A.transport, UDP)]);
@@ -234,6 +242,30 @@ if (!ok(alloc)) {
   const got = [0, 1, 2, 3, 4].filter((i) => echoes.has(`ping-${i}`)).length;
   log(`relayed data echoed ${got}/5`);
   if (got < 4) fail(`only ${got}/5 relayed echoes`);
+  // Channel path: bind a channel to the echo peer, send ChannelData, expect the echo back as ChannelData.
+  const cb = await c.txn(M.channelBind, [
+    attr(A.channelNumber, Buffer.from([CHANNEL >> 8, CHANNEL & 255, 0, 0])),
+    attr(A.xorPeer, xorAddr(peer.ip, peer.port)),
+  ]);
+  if (!ok(cb)) fail(`channel bind refused (${cb.error})`);
+  else {
+    for (let i = 0; i < 3; i++) {
+      const text = `chan-${i}`;
+      const cd = Buffer.alloc(4);
+      cd.writeUInt16BE(CHANNEL, 0);
+      cd.writeUInt16BE(text.length, 2);
+      sock.send(
+        Buffer.concat([cd, Buffer.from(text), Buffer.alloc(pad4(text.length))]),
+        3478,
+        HOST,
+      );
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    await new Promise((r) => setTimeout(r, 1000));
+    const n = [0, 1, 2].filter((i) => channelEchoes.has(`chan-${i}`)).length;
+    log(`channel bound, ChannelData echoed ${n}/3`);
+    if (n < 2) fail(`only ${n}/3 ChannelData echoes`);
+  }
   const rf = await c.txn(M.refresh, [attr(A.lifetime, u32(60))]);
   if (!ok(rf)) fail(`refresh refused (${rf.error})`);
   const rel = await c.txn(M.refresh, [attr(A.lifetime, u32(0))]);
