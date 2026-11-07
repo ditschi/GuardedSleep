@@ -1796,6 +1796,10 @@ impl World {
         for s in socks {
             self.server.ice_seq += 1;
             let n = self.server.ice_seq;
+            // Learned at issuance, before the frame is delivered and scanned. Not wire-exempt.
+            if let Some(c) = self.canary.as_mut() {
+                c.set.add_turn_password(&format!("simcred{n}"));
+            }
             self.server_send(
                 s,
                 json!({

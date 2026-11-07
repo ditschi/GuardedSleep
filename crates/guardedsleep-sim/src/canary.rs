@@ -271,8 +271,20 @@ impl CanarySet {
         self.add_text("parent_pin_message", text);
     }
 
+    /// An issued TURN credential. Every one is its own canary (the first keeps the plain name), so
+    /// a renewed credential is covered as well as the first.
     pub fn add_turn_password(&mut self, password: &str) {
-        self.add_text("turn_password", password);
+        let n = self
+            .canaries
+            .iter()
+            .filter(|c| c.name.starts_with("turn_password"))
+            .count();
+        let name = if n == 0 {
+            "turn_password".to_owned()
+        } else {
+            format!("turn_password_{n}")
+        };
+        self.add_text(&name, password);
     }
 
     /// Plaintext SDP has no known value: its markers are searched instead. SDP legitimately

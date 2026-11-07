@@ -3676,7 +3676,10 @@ mod tests {
                 .to_owned(),
         };
         let shown = format!("{frame:?}");
-        assert!(!shown.contains("c-secret") && !shown.contains("u-secret"), "{shown}");
+        assert!(
+            !shown.contains("c-secret") && !shown.contains("u-secret"),
+            "{shown}"
+        );
         assert!(shown.contains("redacted") && shown.contains("turn:r.invalid:3478"));
         let other = LinkInput::MailboxFrame {
             id: 0,
