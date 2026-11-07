@@ -218,6 +218,26 @@ fn lint(args: &[String]) -> Result<bool, String> {
     Ok(ok)
 }
 
+/// 64 hex digits to 32 bytes; any other text (non-ASCII included) is an error, never a panic.
+fn parse_hex_secret(h: &str) -> Result<Vec<u8>, String> {
+    const ERR: &str = "canary-scan: --parent-secret-hex is not 64 hex digits";
+    if h.len() != 64 {
+        return Err(ERR.to_owned());
+    }
+    let digit = |b: u8| char::from(b).to_digit(16);
+    h.as_bytes()
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|[hi, lo]| {
+            digit(*hi)
+                .zip(digit(*lo))
+                .and_then(|(h, l)| u8::try_from(h * 16 + l).ok())
+        })
+        .collect::<Option<Vec<u8>>>()
+        .ok_or_else(|| ERR.to_owned())
+}
+
 /// Every value of `--flag` (the flag may repeat).
 fn opts(args: &[String], name: &str) -> Vec<String> {
     args.iter()
@@ -279,17 +299,7 @@ fn canary_scan(args: &[String]) -> Result<bool, String> {
         return Err(USAGE.to_owned());
     }
     if let Some(h) = opt(args, "--parent-secret-hex") {
-        let bytes: Option<Vec<u8>> = (h.len() == 64)
-            .then(|| {
-                (0..h.len())
-                    .step_by(2)
-                    .map(|i| u8::from_str_radix(&h[i..i + 2], 16).ok())
-                    .collect()
-            })
-            .flatten();
-        set.add_parent_secret(
-            &bytes.ok_or("canary-scan: --parent-secret-hex is not 64 hex digits")?,
-        );
+        set.add_parent_secret(&parse_hex_secret(&h)?);
     }
     for p in opts(args, "--turn-password") {
         set.add_turn_password(&p);
@@ -322,4 +332,21 @@ fn canary_scan(args: &[String]) -> Result<bool, String> {
     }
     println!("canary scanned {} files, {leaks} leak(s)", paths.len());
     Ok(leaks == 0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_hex_secret;
+
+    #[test]
+    fn the_parent_secret_hex_is_validated_without_panicking() {
+        assert_eq!(parse_hex_secret(&"5c".repeat(32)).unwrap(), vec![0x5c; 32]);
+        assert_eq!(parse_hex_secret(&"5C".repeat(32)).unwrap(), vec![0x5c; 32]);
+        // 64 bytes of non-ASCII: a byte-index slice at 2 would split a character.
+        let bad = "\u{e9}".repeat(32);
+        assert_eq!(bad.len(), 64);
+        assert!(parse_hex_secret(&bad).is_err());
+        assert!(parse_hex_secret("zz").is_err());
+        assert!(parse_hex_secret(&"g1".repeat(32)).is_err());
+    }
 }
