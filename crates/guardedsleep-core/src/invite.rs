@@ -306,7 +306,7 @@ fn parse_entry(entry: &str, allow_dev_loopback: bool) -> Option<InviteMailbox> {
 
 /// An ASCII DNS name: dot-separated labels of letters, digits and inner hyphens (an IPv4 literal
 /// passes as such a name, which is fine for a public host).
-fn is_hostname(host: &str) -> bool {
+pub(crate) fn is_hostname(host: &str) -> bool {
     !host.is_empty()
         && host.len() <= 253
         && host.split('.').all(|label| {
@@ -367,40 +367,6 @@ fn lan_authority(rest: &str, allow_dev_loopback: bool) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn filter_only_local_removes_exactly_the_project_relay_entries() {
-        let set = vec![
-            InviteMailbox {
-                kind: MailboxKind::Relay,
-                url: "wss://GS.Project.test/signaling".into(),
-            },
-            InviteMailbox {
-                kind: MailboxKind::Relay,
-                url: "wss://gs.project.test.evil.example".into(),
-            },
-            InviteMailbox {
-                kind: MailboxKind::Lan,
-                url: "ws://192.168.1.5:8787".into(),
-            },
-            InviteMailbox {
-                kind: MailboxKind::Relay,
-                url: "wss://own.test:8443/x".into(),
-            },
-        ];
-        let kept = filter_only_local(&set, Some("gs.project.test"));
-        let urls: Vec<&str> = kept.iter().map(|m| m.url.as_str()).collect();
-        assert_eq!(
-            urls,
-            [
-                "wss://gs.project.test.evil.example",
-                "ws://192.168.1.5:8787",
-                "wss://own.test:8443/x"
-            ]
-        );
-        assert_eq!(filter_only_local(&set, None), set);
-        assert_eq!(filter_only_local(&set, Some("")), set);
-    }
-
     use super::*;
     use proptest::prelude::*;
 
@@ -427,6 +393,28 @@ mod tests {
 
     fn mailboxes() -> Vec<InviteMailbox> {
         vec![lan("10.0.2.2:8787"), relay("a.example/sig")]
+    }
+
+    #[test]
+    fn filter_only_local_removes_exactly_the_project_relay_entries() {
+        let set = vec![
+            relay("GS.Project.test/signaling"),
+            relay("gs.project.test.evil.example"),
+            lan("192.168.1.5:8787"),
+            relay("own.test:8443/x"),
+        ];
+        let kept = filter_only_local(&set, Some("gs.project.test"));
+        let urls: Vec<&str> = kept.iter().map(|m| m.url.as_str()).collect();
+        assert_eq!(
+            urls,
+            [
+                "wss://gs.project.test.evil.example",
+                "ws://192.168.1.5:8787",
+                "wss://own.test:8443/x"
+            ]
+        );
+        assert_eq!(filter_only_local(&set, None), set);
+        assert_eq!(filter_only_local(&set, Some("")), set);
     }
 
     fn payload(v: &str, k: &str, m: &str, x: &str) -> String {

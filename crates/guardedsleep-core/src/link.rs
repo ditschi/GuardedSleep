@@ -344,15 +344,10 @@ impl LinkConfig {
         {
             return Err(ConfigError::InvalidParentSecret);
         }
-        if let Some(h) = &self.project_host {
-            let ok = !h.is_empty()
-                && h.len() <= 253
-                && h.bytes().all(|b| {
-                    b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-' || b == b'.'
-                });
-            if !ok {
-                return Err(ConfigError::InvalidProjectHost);
-            }
+        if let Some(h) = &self.project_host
+            && !(crate::invite::is_hostname(h) && !h.bytes().any(|b| b.is_ascii_uppercase()))
+        {
+            return Err(ConfigError::InvalidProjectHost);
         }
         Ok(psk)
     }
