@@ -147,6 +147,58 @@ fn a_listed_stun_host_passes_the_lint() {
 }
 
 #[test]
+fn a_foreign_turn_host_in_client_source_fails_the_lint() {
+    let data = data_dir("scan-turn", TWO_STUN);
+    for (name, url) in [
+        ("turn", "turn:turn.other.net:3478"),
+        ("turns", "turns:turn.other.net:5349"),
+    ] {
+        let root = scan_root(
+            name,
+            "apps/web/src/ice.ts",
+            &format!("const u = '{url}';\n"),
+        );
+        let o = run(&["stun-sources", "--root", root.to_str().unwrap()], &data);
+        assert_eq!(o.status.code(), Some(1), "{url}");
+        assert!(
+            stderr(&o).contains("TURN host turn.other.net"),
+            "{}",
+            stderr(&o)
+        );
+    }
+}
+
+#[test]
+fn project_listed_and_test_path_turn_hosts_pass_the_lint() {
+    let data = data_dir("scan-turn-ok", TWO_STUN);
+    let ok = |name: &str, file: &str, url: &str| {
+        let root = scan_root(name, file, &format!("x = '{url}'\n"));
+        let o = run(&["stun-sources", "--root", root.to_str().unwrap()], &data);
+        assert!(o.status.success(), "{file} {url}: {}", stderr(&o));
+    };
+    // the project host of the data dir
+    let project = std::fs::read_to_string(data.join("project-server.json")).unwrap();
+    let host = project.split('"').nth(3).unwrap().to_owned();
+    ok(
+        "t-project",
+        "apps/web/src/ice.ts",
+        &format!("turn:{host}:3478"),
+    );
+    ok(
+        "t-listed",
+        "apps/web/src/ice.ts",
+        "turns:stun.a.listed.net:5349",
+    );
+    ok("t-e2e", "apps/e2e/tests/x.ts", "turn:turn.other.net:3478");
+    ok(
+        "t-docker",
+        "docker/turn/compose.yaml",
+        "turn:turn.other.net:3478",
+    );
+    ok("t-poc", "scripts/poc/gate.sh", "turns:turn.other.net:5349");
+}
+
+#[test]
 fn the_repository_has_no_unlisted_stun_host() {
     let o = bin().arg("stun-sources").output().unwrap();
     assert!(o.status.success(), "{}", stderr(&o));

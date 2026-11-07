@@ -1,5 +1,9 @@
-//! Lint: no public STUN host outside `data/stun-servers.json` in client source or configuration
-//! (AGENTS.md section 7.1, spec `signaling-relay` "Client ICE configuration").
+//! Lint: no public STUN or TURN host outside `data/stun-servers.json` and the project server in
+//! client source or configuration (AGENTS.md section 7.1, spec `signaling-relay` "Client ICE
+//! configuration").
+//!
+//! A TURN host shows up only as a `turn:` / `turns:` URL. Test hosts under `apps/e2e`, `docker/`
+//! and `scripts/poc/` may name any TURN host (the gate and the e2e suite run their own coturn).
 //!
 //! A STUN host shows up in two shapes: a `stun:` / `stuns:` URL, or a bare host name that starts
 //! with `stun` (`stun.l.google.com`, `stun1.example.org`). Dynamic hosts (`stun:${host}:3478`, the
@@ -31,6 +35,9 @@ const SKIP_DIRS: &[&str] = &[
 
 /// This crate holds the self-test sample.
 const SKIP_PATHS: &[&str] = &["crates/public-lists/"];
+
+/// Paths where `turn:` / `turns:` URLs may name any host (test fixtures and the gate stack).
+const TURN_TEST_PATHS: &[&str] = &["apps/e2e/", "docker/", "scripts/poc/"];
 
 const MAX_FILE_BYTES: u64 = 2 * 1024 * 1024;
 
@@ -132,18 +139,74 @@ fn hosts_in(text: &str) -> Vec<(usize, String)> {
     found
 }
 
+/// Every host of a `turn:` / `turns:` URL in `text`, with its 1-based line.
+fn turn_hosts_in(text: &str) -> Vec<(usize, String)> {
+    let mut found = Vec::new();
+    for (idx, line) in text.lines().enumerate() {
+        let lower = line.to_ascii_lowercase();
+        let bytes = lower.as_bytes();
+        for i in (0..bytes.len()).filter(|i| lower.is_char_boundary(*i)) {
+            let at_word_start = i == 0
+                || !bytes
+                    .get(i - 1)
+                    .is_some_and(|b| host_byte(*b) || *b == b'_');
+            if !at_word_start || !lower[i..].starts_with("turn") {
+                continue;
+            }
+            let rest = &lower[i + 4..];
+            let skip = if rest.starts_with("s:") {
+                2
+            } else if rest.starts_with(':') {
+                1
+            } else {
+                continue;
+            };
+            let mut url = &line[i + 4 + skip..];
+            url = url.strip_prefix("//").unwrap_or(url);
+            let host: String = url
+                .bytes()
+                .take_while(|b| host_byte(*b) || *b == b'[' || *b == b']' || *b == b':')
+                .map(char::from)
+                .collect();
+            let host = if host.starts_with('[') {
+                host
+            } else {
+                host.split(':').next().unwrap_or("").to_owned()
+            };
+            // A name that does not start like a host (`turn:.host`, a malformed-input fixture) is
+            // not one.
+            if host.starts_with(|c: char| c.is_ascii_alphanumeric() || c == '[') {
+                push_once(&mut found, idx + 1, host);
+            }
+        }
+    }
+    found
+}
+
 /// Findings in one text: each is `"<path>:<line>: <host>"`.
+/// `allowed` holds the `data/stun-servers.json` hosts and the project server host.
 pub fn scan_text(path: &str, text: &str, allowed: &BTreeSet<String>) -> Vec<String> {
-    hosts_in(text)
+    let unlisted = |(line, host): (usize, String)| {
+        let h = host.to_ascii_lowercase();
+        (!allowed.contains(&h) && !exempt(&h)).then_some((line, host))
+    };
+    let mut out: Vec<String> = hosts_in(text)
         .into_iter()
-        .filter(|(_, host)| {
-            let h = host.to_ascii_lowercase();
-            !allowed.contains(&h) && !exempt(&h)
-        })
+        .filter_map(unlisted)
         .map(|(line, host)| {
             format!("{path}:{line}: STUN host {host} is not in data/stun-servers.json")
         })
-        .collect()
+        .collect();
+    if !TURN_TEST_PATHS.iter().any(|p| path.starts_with(p)) {
+        out.extend(turn_hosts_in(text).into_iter().filter_map(unlisted).map(
+            |(line, host)| {
+                format!(
+                    "{path}:{line}: TURN host {host} is not the project server or in data/stun-servers.json"
+                )
+            },
+        ));
+    }
+    out
 }
 
 fn walk(dir: &Path, root: &Path, files: &mut Vec<PathBuf>) {
@@ -206,6 +269,27 @@ pub fn self_test() -> Result<(), String> {
     if caught.len() != 2 {
         return Err(format!(
             "self-test: stun.l.google.com was not caught ({caught:?})"
+        ));
+    }
+    let turn = scan_text(
+        "self-test",
+        "urls: ['turn:turn.other.net:3478', \"turns://TURN.Other.net:5349?transport=tcp\"]",
+        &allowed,
+    );
+    if turn.len() != 2 {
+        return Err(format!(
+            "self-test: a foreign turn: URL was not caught ({turn:?})"
+        ));
+    }
+    let turn_fine = scan_text(
+        "self-test",
+        "'turn:stun.nextcloud.com:3478' 'turns:gs.project.test' `turn:${host}:3478`",
+        &allowed,
+    );
+    let turn_test_path = scan_text("apps/e2e/x.ts", "'turn:turn.other.net:3478'", &allowed);
+    if !turn_fine.is_empty() || !turn_test_path.is_empty() {
+        return Err(format!(
+            "self-test: turn: false positives ({turn_fine:?} {turn_test_path:?})"
         ));
     }
     let fine = scan_text(
@@ -272,6 +356,33 @@ mod tests {
                 Vec::<String>::new(),
                 "{text}"
             );
+        }
+    }
+
+    #[test]
+    fn foreign_turn_hosts_are_caught_listed_and_test_paths_pass() {
+        for text in [
+            "urls: 'turn:turn.other.net:3478'",
+            "turns:turn.other.net:5349?transport=tcp",
+            "TURN://turn.other.net",
+            "turns://[2001:db8::1]:5349",
+        ] {
+            let got = scan_text("a.ts", text, &allowed());
+            // the IPv6 literal is exempt like for STUN; the rest is caught
+            assert_eq!(got.len(), usize::from(!text.contains('[')), "{text}");
+        }
+        assert!(scan_text("a.ts", "turn:turn.other.net:3478", &allowed())[0].contains("TURN host"));
+        for text in [
+            "turn:stun.nextcloud.com:3478",
+            "turn:${host}:3478",
+            "turns:relay.example.org:5349",
+            "turn: nothing, turnstile, return turn:",
+            "turn_credentials",
+        ] {
+            assert!(scan_text("a.ts", text, &allowed()).is_empty(), "{text}");
+        }
+        for path in ["apps/e2e/t.ts", "docker/turn/c.yaml", "scripts/poc/g.sh"] {
+            assert!(scan_text(path, "turn:turn.other.net:3478", &allowed()).is_empty());
         }
     }
 
