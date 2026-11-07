@@ -157,6 +157,12 @@ describe("core-wasm wrapper", () => {
       expect(core.parseInvite(v3, now)).toEqual({ ok: false, error: "not_our_code" });
     });
 
+    it("filterOnlyLocal drops exactly the project host's relay entries", () => {
+      const project: InviteMailbox = { kind: "relay", url: "wss://GS.example.com/signaling" };
+      const own: InviteMailbox = { kind: "relay", url: "wss://own.example.org" };
+      expect(core.filterOnlyLocal([project, own], "gs.example.com")).toEqual([own]);
+    });
+
     it("refuses to build an invalid invite", () => {
       const relay: InviteMailbox = { kind: "relay", url: "wss://gs.example.com" };
       expect(core.buildInvite(psk.slice(0, 16), [relay], now)).toEqual({
@@ -208,6 +214,7 @@ describe("core-wasm wrapper", () => {
       deriveRoomId: () => "",
       parseInvite: () => "{}",
       buildInvite: () => "",
+      filterOnlyLocal: () => "[]",
       conformanceEval: () => "{}",
     });
     expect(() => fake.createLink(config("baby")).handle(0, { type: "tick" })).toThrow(
