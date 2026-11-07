@@ -5,8 +5,10 @@
 # Runs docker/public-server/compose.yaml (the template filled with test values, a local override for the
 # network) with a signaling image and coturn on a user-defined bridge, makes one relayed test call from a
 # client at a known address (allocation, permissions including a denied private peer and a denied host
-# address, data both ways, a rejected credential, plus an HTTP and a WebSocket probe of the signaling
-# server), then searches every container log for the client's address (dotted and hex) and the denied peer.
+# address, data both ways, a rejected credential; the credential is issued by the signaling server to a v3 room
+# of one baby and one parent, who must both receive ice_servers; plus HTTP and WebSocket probes), then searches
+# every container log for the client's address (dotted and hex), the denied peer, the secret and the issued
+# user name and password.
 # A positive control repeats the call against coturn logging verbosely to stdout and must FIND the address,
 # otherwise the search proves nothing. Also prints coturn's Binding response size for a bare 20-byte request.
 #
@@ -84,11 +86,14 @@ SIGNALING_IP="$(docker inspect -f "{{(index .NetworkSettings.Networks \"$NET\").
 
 run_client() { # <coturn ip>
 	docker run --rm --network "$NET" --ip "$CLIENT_IP" -e TURN_SECRET="$SECRET" -e TURN_HOST="$1" -e DENIED_HOST="$TURN_V4" \
-		-e SIGNALING_URL="http://$SIGNALING_IP:8787" \
+		-e SIGNALING_URL="http://$SIGNALING_IP:8787" -e PUBLIC_HOST=gs.mydata.rocks \
 		-v "$ROOT/scripts/poc/public-server-logs-client.mjs:/client.mjs:ro" "$NODE_IMAGE" node /client.mjs
 }
 echo "== relayed test call against the stack (coturn logging to /dev/null)"
 run_client "$TURN_V4" | tee "$OUT/client.log"
+ISSUED_USER="$(sed -n 's/^ISSUED_USERNAME //p' "$OUT/client.log")"
+ISSUED_PASS="$(sed -n 's/^ISSUED_CREDENTIAL //p' "$OUT/client.log")"
+[[ -n "$ISSUED_USER" && -n "$ISSUED_PASS" ]] || { echo "public-server-logs: no issued credential" >&2; exit 1; }
 grep -q 'VERDICT PASS' "$OUT/client.log" || { echo "public-server-logs: the test call failed" >&2; exit 1; }
 sleep 2
 
@@ -150,7 +155,7 @@ for svc in coturn signaling; do
 	echo "$svc: $(wc -l <"$OUT/$svc.log") log lines"
 done
 for f in "$OUT/stack.log" "$OUT/coturn.log" "$OUT/signaling.log"; do
-	for pat in "$CLIENT_IP" "$HEX_CLIENT" "$DENIED_PEER" "$SECRET"; do
+	for pat in "$CLIENT_IP" "$HEX_CLIENT" "$DENIED_PEER" "$SECRET" "$ISSUED_USER" "$ISSUED_PASS"; do
 		if search "stack (must be absent)" "$f" "$pat"; then status=1; fi
 	done
 done
