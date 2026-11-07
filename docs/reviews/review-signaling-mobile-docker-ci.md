@@ -73,7 +73,7 @@ _(Add notes.)_
 
 - [ ] `docker-signaling.yml` pushes to GHCR with lowercase owner; tags sensible for deploy.
 - [ ] `compose.build.yaml` / `compose.ghcr.yaml` pass through env vars needed for security tuning.
-- [ ] Traefik example compose matches [signaling-traefik.md](../contributing/signaling-traefik.md).
+- [ ] Traefik example compose (`docker/public-server/compose.yaml`) matches its [README](../../docker/public-server/README.md).
 
 ### Findings
 
