@@ -1,5 +1,6 @@
 package org.guardedsleep.app.ui
 
+import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.LinkQuality
@@ -9,6 +10,7 @@ import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.PeerStatusUi
 import org.guardedsleep.app.ui.model.ReadinessIssue
 import org.guardedsleep.app.ui.model.Role
+import org.guardedsleep.app.ui.model.SettingsState
 import org.guardedsleep.app.ui.model.SilenceRequest
 import org.guardedsleep.app.ui.model.SilenceStatus
 import org.guardedsleep.app.ui.model.SoundEventUi
@@ -32,6 +34,7 @@ class ParentMonitorShots : ShotBase() {
         locale: String = "en",
         sheet: ParentSheet? = null,
         app: AppState? = null,
+        settings: SettingsState = SettingsState(),
         fontScale: Float = 1f,
     ) {
         val c =
@@ -46,6 +49,7 @@ class ParentMonitorShots : ShotBase() {
                             peerName = null,
                         ),
                 parent = state,
+                settings = settings,
             )
         shot("parent_monitor/$name", locale, fontScale = fontScale) {
             ParentMonitorScreen(c, onSettings = {}, initialSheet = sheet)
@@ -53,6 +57,14 @@ class ParentMonitorShots : ShotBase() {
     }
 
     @Test fun connectedQuiet() = shoot("connected_quiet", base)
+
+    @Test
+    fun discreetIndicator() =
+        shoot(
+            "discreet_quiet",
+            base,
+            settings = SettingsState(alertStyle = AlertStyle.DISCREET),
+        )
 
     @Test
     fun connectedNoise() =
