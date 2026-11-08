@@ -10,6 +10,9 @@
 # Flake quarantine (ADR-020 §9): a test that flakes twice in seven days is quarantined with a
 # tracking issue. Jobs are never retried as a whole, so do not add retry wrappers here.
 #
+# The `dev-apk` job (main only, after the gate passed) re-signs the gate-tested debug APK with a fixed
+# dev key and publishes it to the rolling `android-dev` pre-release (add-dev-apk-prerelease).
+#
 # Path-filtered workflows cannot be required checks, so this workflow is not part of `ci-ok`.
 name: android-native
 
@@ -143,3 +146,110 @@ jobs:
           path: apps/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
           if-no-files-found: ignore
+
+  dev-apk:
+    name: publish dev APK (rolling pre-release)
+    needs: gate
+    # The gate also runs on PRs and nightly; only main (push or manual dispatch) publishes.
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: dev-apk
+    # contents: write moves the android-dev tag and edits the release. Downloading an artifact of the
+    # same run needs no actions: read (only cross-run downloads do).
+    # https://github.com/actions/download-artifact#download-artifacts-from-other-workflow-runs-or-repositories
+    permissions:
+      contents: write
+    # Two pushes publish in order; a running publish is never cancelled half-way.
+    # https://docs.github.com/en/actions/using-jobs/using-concurrency
+    concurrency:
+      group: dev-apk
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      APK_NAME: guardedsleep-alpha-dev.apk
+    steps:
+      - name: Check the dev-apk environment secrets
+        env:
+          KEYSTORE_B64: ${{ secrets.GS_DEV_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.GS_DEV_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.GS_DEV_KEY_ALIAS }}
+        run: |
+          missing=0
+          for pair in "GS_DEV_KEYSTORE_B64:$KEYSTORE_B64" "GS_DEV_KEYSTORE_PASSWORD:$KEYSTORE_PASSWORD" "GS_DEV_KEY_ALIAS:$KEY_ALIAS"; do
+            if [ -z "${pair#*:}" ]; then
+              echo "::error::Secret ${pair%%:*} is missing in the GitHub environment dev-apk (see docs/contributing/development.md, Dev APK)"
+              missing=1
+            fi
+          done
+          exit "$missing"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: guardedsleep-alpha-debug-apk
+          path: ${{ runner.temp }}/in
+      - uses: ./.github/actions/setup-android
+      - name: Re-sign and verify
+        env:
+          KEYSTORE_B64: ${{ secrets.GS_DEV_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.GS_DEV_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.GS_DEV_KEY_ALIAS }}
+          WORK: ${{ runner.temp }}
+        run: |
+          set -euo pipefail
+          apksigner="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          printf '%s' "$KEYSTORE_B64" | base64 -d > "$WORK/dev.p12"
+          mkdir -p "$WORK/out"
+          # The password goes through the environment, not the command line (visible in ps).
+          export KS_PASS="$KEYSTORE_PASSWORD"
+          "$apksigner" sign --ks "$WORK/dev.p12" --ks-type PKCS12 --ks-key-alias "$KEY_ALIAS" \
+            --ks-pass env:KS_PASS --key-pass env:KS_PASS \
+            --out "$WORK/out/$APK_NAME" "$WORK/in/app-debug.apk"
+          "$apksigner" verify --print-certs "$WORK/out/$APK_NAME"
+          (cd "$WORK/out" && sha256sum "$APK_NAME" > "$APK_NAME.sha256")
+      - name: Release notes
+        env:
+          WORK: ${{ runner.temp }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          short="${SHA:0:7}"
+          digest="$(cut -d' ' -f1 "$WORK/out/$APK_NAME.sha256")"
+          {
+            echo "Dev build of commit [$short](https://github.com/$REPO/commit/$SHA), $(date -u +'%Y-%m-%d %H:%M UTC')."
+            echo
+            echo "**Unreviewed, debuggable test build from main for testers. This is not a release.**"
+            echo "It passed the emulator gate, then was re-signed with the project dev key. It updates in place over"
+            echo "earlier dev builds, but not over a Play or release build (different signing key): uninstall first,"
+            echo "which deletes the pairing."
+            echo
+            echo "SHA-256: \`$digest\`"
+          } > "$WORK/notes.md"
+          echo "$short" > "$WORK/short"
+      - name: Publish to the android-dev pre-release
+        env:
+          WORK: ${{ runner.temp }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          short="$(cat "$WORK/short")"
+          # Move the tag to the tested commit; create it on the first run.
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/android-dev" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/android-dev" -f sha="$SHA" -F force=true >/dev/null
+          else
+            gh api -X POST "repos/$GITHUB_REPOSITORY/git/refs" -f ref=refs/tags/android-dev -f sha="$SHA" >/dev/null
+          fi
+          if gh release view android-dev --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit android-dev --repo "$GITHUB_REPOSITORY" --prerelease --latest=false \
+              --title "Dev build $short" --notes-file "$WORK/notes.md"
+          else
+            gh release create android-dev --repo "$GITHUB_REPOSITORY" --prerelease --latest=false \
+              --verify-tag --title "Dev build $short" --notes-file "$WORK/notes.md"
+          fi
+          gh release upload android-dev --repo "$GITHUB_REPOSITORY" --clobber \
+            "$WORK/out/$APK_NAME" "$WORK/out/$APK_NAME.sha256"
+      - name: Remove the dev keystore
+        if: always()
+        env:
+          WORK: ${{ runner.temp }}
+        run: rm -f "$WORK/dev.p12"
