@@ -313,6 +313,9 @@
           "resumedFromSleep": "宝宝设备刚从睡眠中唤醒，可能漏掉了声音",
           "notCharging": "宝宝设备已不在充电",
           "micPermissionLost": "宝宝设备失去了麦克风权限"
+        },
+        "discreet": {
+          "indicator": "静音提醒：不播放声音"
         }
       },
       "battery": {
@@ -345,7 +348,10 @@
         "run": "开始测试",
         "running": "正在测试…",
         "question": "您听到并感觉到了吗？",
-        "localOnly": "只测试了此设备，宝宝设备未连接。"
+        "localOnly": "只测试了此设备，宝宝设备未连接。",
+        "styleSound": "提醒方式：声音",
+        "styleDiscreet": "提醒方式：静音",
+        "bodyDiscreet": "此设备会振动并显示提醒，但不播放声音。宝宝设备保持安静。"
       },
       "readiness": {
         "title": "提醒能送达您吗？",
@@ -422,7 +428,11 @@
         "testBadge": "测试",
         "stopSound": "停止声音",
         "soundStopped": "声音已停止",
-        "openApp": "打开 GuardedSleep"
+        "openApp": "打开 GuardedSleep",
+        "stopVibration": "停止振动",
+        "vibrationStopped": "振动已停止",
+        "dismiss": "关闭",
+        "discreetHint": "开始收听前不播放声音"
       },
       "settings": {
         "group": {
@@ -478,7 +488,12 @@
           "label": "中继服务器 (TURN)，可选",
           "invalid": "中继地址必须以 turn: 或 turns: 开头。"
         },
-        "heartbeat": "每 {seconds} 秒检查一次连接"
+        "heartbeat": "每 {seconds} 秒检查一次连接",
+        "alertStyle": {
+          "label": "提醒方式",
+          "sound": "声音：每次提醒都播放宝宝的声音",
+          "discreet": "静音：仅振动和屏幕提示，不播放声音"
+        }
       },
       "fgsMissing": {
         "bar": "后台未在监护，请打开应用",

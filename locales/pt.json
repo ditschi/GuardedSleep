@@ -313,6 +313,9 @@
           "resumedFromSleep": "O dispositivo do bebê acordou: sons podem ter passado despercebidos",
           "notCharging": "O dispositivo do bebê não está mais carregando",
           "micPermissionLost": "O dispositivo do bebê perdeu o acesso ao microfone"
+        },
+        "discreet": {
+          "indicator": "Alertas discretos: sem som"
         }
       },
       "battery": {
@@ -345,7 +348,10 @@
         "run": "Executar teste",
         "running": "Executando o teste…",
         "question": "Você ouviu e sentiu o alerta?",
-        "localOnly": "Só este dispositivo foi testado: o dispositivo do bebê não está conectado."
+        "localOnly": "Só este dispositivo foi testado: o dispositivo do bebê não está conectado.",
+        "styleSound": "Tipo de alerta: som",
+        "styleDiscreet": "Tipo de alerta: discreto",
+        "bodyDiscreet": "Este dispositivo vibra e mostra o alerta sem som. O dispositivo do bebê fica em silêncio."
       },
       "readiness": {
         "title": "Os alertas chegam até você?",
@@ -422,7 +428,11 @@
         "testBadge": "TESTE",
         "stopSound": "Parar o som",
         "soundStopped": "Som parado",
-        "openApp": "Abrir o GuardedSleep"
+        "openApp": "Abrir o GuardedSleep",
+        "stopVibration": "Parar vibração",
+        "vibrationStopped": "Vibração parada",
+        "dismiss": "Fechar",
+        "discreetHint": "Sem som até você ouvir"
       },
       "settings": {
         "group": {
@@ -478,7 +488,12 @@
           "label": "Servidor de retransmissão (TURN), opcional",
           "invalid": "O endereço de retransmissão deve começar com turn: ou turns:."
         },
-        "heartbeat": "Verificação da conexão a cada {seconds} s"
+        "heartbeat": "Verificação da conexão a cada {seconds} s",
+        "alertStyle": {
+          "label": "Tipo de alerta",
+          "sound": "Som: o som do bebê toca a cada alerta",
+          "discreet": "Discreto: vibração e ecrã, sem som"
+        }
       },
       "fgsMissing": {
         "bar": "Sem monitoramento em segundo plano: abra o app",

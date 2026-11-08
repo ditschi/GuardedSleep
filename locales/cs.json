@@ -313,6 +313,9 @@
           "resumedFromSleep": "Zařízení dítěte se probudilo ze spánku: zvuky mohly uniknout",
           "notCharging": "Zařízení dítěte se už nenabíjí",
           "micPermissionLost": "Zařízení dítěte ztratilo přístup k mikrofonu"
+        },
+        "discreet": {
+          "indicator": "Diskrétní upozornění: bez zvuku"
         }
       },
       "battery": {
@@ -345,7 +348,10 @@
         "run": "Spustit zkoušku",
         "running": "Zkouška běží…",
         "question": "Slyšeli a cítili jste ji?",
-        "localOnly": "Vyzkoušeno jen toto zařízení: zařízení dítěte není připojeno."
+        "localOnly": "Vyzkoušeno jen toto zařízení: zařízení dítěte není připojeno.",
+        "styleSound": "Typ upozornění: zvuk",
+        "styleDiscreet": "Typ upozornění: diskrétní",
+        "bodyDiscreet": "Toto zařízení vibruje a zobrazí upozornění bez zvuku. Zařízení dítěte zůstane tiché."
       },
       "readiness": {
         "title": "Dorazí k vám výstrahy?",
@@ -422,7 +428,11 @@
         "testBadge": "TEST",
         "stopSound": "Vypnout zvuk",
         "soundStopped": "Zvuk vypnut",
-        "openApp": "Otevřít GuardedSleep"
+        "openApp": "Otevřít GuardedSleep",
+        "stopVibration": "Zastavit vibrace",
+        "vibrationStopped": "Vibrace zastaveny",
+        "dismiss": "Zavřít",
+        "discreetHint": "Bez zvuku, dokud nezačnete poslouchat"
       },
       "settings": {
         "group": {
@@ -478,7 +488,12 @@
           "label": "Předávací server (TURN), volitelný",
           "invalid": "Adresa předávacího serveru musí začínat turn: nebo turns:."
         },
-        "heartbeat": "Kontrola spojení každých {seconds} s"
+        "heartbeat": "Kontrola spojení každých {seconds} s",
+        "alertStyle": {
+          "label": "Typ upozornění",
+          "sound": "Zvuk: zvuk dítěte se přehraje při každém upozornění",
+          "discreet": "Diskrétní: vibrace a displej, bez zvuku"
+        }
       },
       "fgsMissing": {
         "bar": "Sledování na pozadí neběží: otevřete aplikaci",

@@ -313,6 +313,9 @@
           "resumedFromSleep": "Dispozitivul bebelușului s-a trezit din repaus: unele sunete pot fi ratate",
           "notCharging": "Dispozitivul bebelușului nu se mai încarcă",
           "micPermissionLost": "Dispozitivul bebelușului a pierdut accesul la microfon"
+        },
+        "discreet": {
+          "indicator": "Alerte discrete: fără sunet"
         }
       },
       "battery": {
@@ -345,7 +348,10 @@
         "run": "Rulează testul",
         "running": "Se rulează testul…",
         "question": "Ai auzit și ai simțit alerta?",
-        "localOnly": "S-a testat doar acest dispozitiv: dispozitivul bebelușului nu este conectat."
+        "localOnly": "S-a testat doar acest dispozitiv: dispozitivul bebelușului nu este conectat.",
+        "styleSound": "Tip de alertă: sunet",
+        "styleDiscreet": "Tip de alertă: discret",
+        "bodyDiscreet": "Acest dispozitiv vibrează și arată alerta fără sunet. Dispozitivul bebelușului rămâne tăcut."
       },
       "readiness": {
         "title": "Ajung alertele la tine?",
@@ -422,7 +428,11 @@
         "testBadge": "TEST",
         "stopSound": "Oprește sunetul",
         "soundStopped": "Sunet oprit",
-        "openApp": "Deschide GuardedSleep"
+        "openApp": "Deschide GuardedSleep",
+        "stopVibration": "Oprește vibrația",
+        "vibrationStopped": "Vibrația a fost oprită",
+        "dismiss": "Închide",
+        "discreetHint": "Fără sunet până când asculți"
       },
       "settings": {
         "group": {
@@ -478,7 +488,12 @@
           "label": "Server releu (TURN), opțional",
           "invalid": "Adresa releului trebuie să înceapă cu turn: sau turns:."
         },
-        "heartbeat": "Verificarea conexiunii la fiecare {seconds} s"
+        "heartbeat": "Verificarea conexiunii la fiecare {seconds} s",
+        "alertStyle": {
+          "label": "Tip de alertă",
+          "sound": "Sunet: sunetul bebelușului se aude la fiecare alertă",
+          "discreet": "Discret: vibrație și ecran, fără sunet"
+        }
       },
       "fgsMissing": {
         "bar": "Nu se monitorizează în fundal: deschide aplicația",

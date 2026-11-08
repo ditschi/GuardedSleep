@@ -313,6 +313,9 @@
           "resumedFromSleep": "El dispositivo del bebé salió de la suspensión — pudo perderse algún sonido",
           "notCharging": "El dispositivo del bebé ya no se está cargando",
           "micPermissionLost": "El dispositivo del bebé perdió el acceso al micrófono"
+        },
+        "discreet": {
+          "indicator": "Alertas discretas: sin sonido"
         }
       },
       "battery": {
@@ -345,7 +348,10 @@
         "run": "Iniciar prueba",
         "running": "Realizando la prueba…",
         "question": "¿Lo oyó y lo sintió?",
-        "localOnly": "Solo se probó este dispositivo — el dispositivo del bebé no está conectado."
+        "localOnly": "Solo se probó este dispositivo — el dispositivo del bebé no está conectado.",
+        "styleSound": "Tipo de alerta: sonido",
+        "styleDiscreet": "Tipo de alerta: discreto",
+        "bodyDiscreet": "Este dispositivo vibra y muestra la alerta sin sonido. El dispositivo del bebé permanece en silencio."
       },
       "readiness": {
         "title": "¿Le llegarán las alertas?",
@@ -422,7 +428,11 @@
         "testBadge": "PRUEBA",
         "stopSound": "Detener sonido",
         "soundStopped": "Sonido detenido",
-        "openApp": "Abrir GuardedSleep"
+        "openApp": "Abrir GuardedSleep",
+        "stopVibration": "Detener vibración",
+        "vibrationStopped": "Vibración detenida",
+        "dismiss": "Cerrar",
+        "discreetHint": "Sin sonido hasta que escuches"
       },
       "settings": {
         "group": {
@@ -482,7 +492,12 @@
           "passwordSaved": "Contraseña guardada. Déjalo vacío para conservarla.",
           "credentialsInvalid": "Introduce el nombre de usuario y la contraseña (hasta 256 caracteres cada uno), o ninguno."
         },
-        "heartbeat": "Comprobación de la conexión cada {seconds} s"
+        "heartbeat": "Comprobación de la conexión cada {seconds} s",
+        "alertStyle": {
+          "label": "Tipo de alerta",
+          "sound": "Sonido: se oye el sonido del bebé en cada alerta",
+          "discreet": "Discreto: vibración y pantalla, sin sonido"
+        }
       },
       "fgsMissing": {
         "bar": "Sin vigilancia en segundo plano — abre la aplicación",

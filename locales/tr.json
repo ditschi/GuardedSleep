@@ -313,6 +313,9 @@
           "resumedFromSleep": "Bebek cihazı uykudan uyandı — sesler kaçırılmış olabilir",
           "notCharging": "Bebek cihazı şarj olmuyor",
           "micPermissionLost": "Bebek cihazı mikrofon erişimini kaybetti"
+        },
+        "discreet": {
+          "indicator": "Sessiz uyarılar: ses yok"
         }
       },
       "battery": {
@@ -345,7 +348,10 @@
         "run": "Testi başlat",
         "running": "Test çalışıyor…",
         "question": "Duydunuz ve hissettiniz mi?",
-        "localOnly": "Yalnızca bu cihaz test edildi — bebek cihazı bağlı değil."
+        "localOnly": "Yalnızca bu cihaz test edildi — bebek cihazı bağlı değil.",
+        "styleSound": "Uyarı biçimi: ses",
+        "styleDiscreet": "Uyarı biçimi: sessiz",
+        "bodyDiscreet": "Bu cihaz sessizce titreşir ve uyarıyı gösterir. Bebek cihazı sessiz kalır."
       },
       "readiness": {
         "title": "Uyarılar size ulaşır mı?",
@@ -422,7 +428,11 @@
         "testBadge": "TEST",
         "stopSound": "Sesi durdur",
         "soundStopped": "Ses durduruldu",
-        "openApp": "GuardedSleep'i aç"
+        "openApp": "GuardedSleep'i aç",
+        "stopVibration": "Titreşimi durdur",
+        "vibrationStopped": "Titreşim durduruldu",
+        "dismiss": "Kapat",
+        "discreetHint": "Dinleyene kadar ses yok"
       },
       "settings": {
         "group": {
@@ -478,7 +488,12 @@
           "label": "Aktarma sunucusu (TURN), isteğe bağlı",
           "invalid": "Aktarma adresi turn: veya turns: ile başlamalıdır."
         },
-        "heartbeat": "Her {seconds} sn'de bir bağlantı kontrolü"
+        "heartbeat": "Her {seconds} sn'de bir bağlantı kontrolü",
+        "alertStyle": {
+          "label": "Uyarı biçimi",
+          "sound": "Ses: her uyarıda bebeğin sesi çalınır",
+          "discreet": "Sessiz: titreşim ve ekran, ses yok"
+        }
       },
       "fgsMissing": {
         "bar": "Arka planda izlenmiyor — uygulamayı açın",

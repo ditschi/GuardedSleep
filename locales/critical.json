@@ -35,6 +35,7 @@
     { "pattern": "native.notif.fgsMissingTitle", "budget": 50 },
     { "pattern": "native.notif.fgsMissingText", "budget": 110 },
     { "pattern": "native.ui.alert.*", "budget": 40 },
+    { "pattern": "native.ui.parent.discreet.*", "budget": 60 },
     { "pattern": "native.ui.linkAlarm.*", "budget": 150 },
     { "pattern": "native.ui.link.*", "budget": 120 },
     { "pattern": "core.pairingKeyMismatch", "budget": 120 },
