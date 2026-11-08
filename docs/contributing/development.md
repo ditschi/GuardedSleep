@@ -218,6 +218,19 @@ just smoke
 
 The server's and relay's own tests (the ported Node test cases, admission, STUN, local mode) run with `just test`.
 
+## Dev APK (rolling pre-release)
+
+Every push to `main` that passes the emulator gate (`android-native` workflow) publishes the gate-tested debug APK, re-signed with a fixed dev key, to the pre-release [`android-dev`](https://github.com/ditschi/GuardedSleep/releases/tag/android-dev): `guardedsleep-alpha-dev.apk` plus its `.sha256`. It is an unreviewed, debuggable test build, not a release.
+
+Install it with `adb install -r guardedsleep-alpha-dev.apk` or open the link on the phone (allow installs from the browser). Check the download with `sha256sum -c guardedsleep-alpha-dev.apk.sha256`. A newer dev build installs over an older one and keeps the pairing. It does **not** install over a Play or release build (different signing key, same app id `org.guardedsleep.app.alpha`): uninstall that first, which deletes the pairing.
+
+Owner setup (once; the key is never committed, AGENTS.md §7.7):
+
+1. Create the keystore offline: `keytool -genkeypair -storetype PKCS12 -keyalg EC -groupname secp256r1 -validity 3650 -alias guardedsleep-dev -keystore dev.p12` (one password for store and key).
+2. Encode it: `base64 -w0 dev.p12`.
+3. In the repository settings create the environment `dev-apk` with deployment branches limited to `main`, and add the secrets `GS_DEV_KEYSTORE_B64` (the base64 text), `GS_DEV_KEYSTORE_PASSWORD` and `GS_DEV_KEY_ALIAS` (`guardedsleep-dev` above).
+4. Keep `dev.p12` offline. Losing or replacing it means every tester uninstalls once.
+
 ## Commits
 
 Conventional Commits are checked on the **PR title** in CI; there is no local commit-msg hook. A PR is rebase-merged when its history is clean, otherwise squashed (AGENTS.md §8). Example: `feat(docs): describe pairing flow in connectivity doc`.
