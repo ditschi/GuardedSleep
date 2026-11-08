@@ -7,6 +7,20 @@ An open-source, privacy-first baby monitor application that turns your existing 
 > [!WARNING]
 > **Work in progress: not ready for use.** GuardedSleep is in early alpha development. There is no release, nothing here has been tested on real families, and protocols, data formats and commands change without notice. **Do not rely on it to monitor a child.** Feedback and issues are welcome; pull requests are best discussed in an issue first.
 
+## Who It Is For
+
+Parents who want to **enjoy the evening** -- at a party, in the garden, at a wedding or across town -- while their child sleeps, **without holding a phone call to their ear** and without buying a baby monitor.
+
+| Problem today                                       | GuardedSleep                                                     |
+| --------------------------------------------------- | ---------------------------------------------------------------- |
+| A phone call means listening all evening            | Your phone buzzes and lights up only when your child makes noise |
+| A dropped call sounds exactly like a sleeping child | A lost connection raises an alarm; silence really means quiet    |
+| A baby monitor ends after a few rooms               | Unlimited distance over the internet, or local Wi-Fi offline     |
+| A baby monitor is one more device to buy and charge | Runs on the phones you already have                              |
+| A muted phone misses everything                     | Alerts get through silent mode and Do Not Disturb                |
+
+And it does all this privately: end-to-end encrypted, no cloud, no account. Full comparison: [Why GuardedSleep?](docs/concept/why-guardedsleep.md)
+
 ## Project Status: Alpha Build-Out
 
 Alpha build-out: a sans-IO Rust core, a native Android client and a web client on the same core, plus a self-hosted signaling server ([ADR-015](openspec/changes/archive/2026-10-21-adr-015-native-clients-with-shared-rust-core/design.md), [ADR-019](openspec/changes/archive/2026-10-20-adr-019-language-repository-and-client-policy/design.md)). **The toolchain is in transition (ADR-020):** `just` becomes the single entry point (`setup fmt lint test gen build e2e gate ci`), and commands in the docs may change until the three implementation waves land ([ADR-020](openspec/changes/archive/2026-10-20-adr-020-toolchain-and-development-setup/design.md), [ADR-021](openspec/changes/archive/2026-10-20-adr-021-offline-lan-topologies-locales-and-distribution/design.md)). The web client is `apps/web` (Vite + Svelte 5); the signaling server is the Rust `crates/guardedsleep-server`.
@@ -28,6 +42,7 @@ One device acts as the **Baby Unit** (placed near the child), another as the **P
 - [Prepared changes (`openspec/changes/`)](openspec/changes/) and the [backlog](docs/backlog.md) -- decided work and ideas
 - [Decision archive](openspec/changes/archive/README.md) -- history, including the former ADRs
 - [Vision and Goals](docs/concept/vision.md)
+- [Why GuardedSleep?](docs/concept/why-guardedsleep.md) -- benefits over a phone call and a dedicated baby monitor
 - [Initial Ideas and Brainstorm](docs/concept/initial-ideas.md)
 - [Technical Analysis](docs/technical/analysis.md)
 - [Development Roles](docs/roles/README.md)
