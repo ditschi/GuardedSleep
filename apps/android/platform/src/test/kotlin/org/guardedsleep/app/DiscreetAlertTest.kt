@@ -13,7 +13,9 @@ import org.junit.Test
 import uniffi.guardedsleep_core.LinkEvent
 import uniffi.guardedsleep_core.LinkState
 
-/** Alert style "Discreet": noise vibrates and shows, but plays no audio until the parent listens. */
+/**
+ * Alert style "Discreet": noise vibrates and shows, but plays no audio until the parent listens.
+ */
 class DiscreetAlertTest {
     private val clock = FakeClock()
     private val sink = RecordingSink()

@@ -66,6 +66,7 @@ import org.guardedsleep.app.ui.common.formatTime
 import org.guardedsleep.app.ui.common.rememberElapsedNow
 import org.guardedsleep.app.ui.common.rememberWallNow
 import org.guardedsleep.app.ui.model.AlertOutput
+import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.MissedEventsUi
@@ -219,6 +220,16 @@ fun ParentMonitorScreen(
             }
         }
         p.missed?.let { MissedCard(it, wall) { controller.dismissMissedEvents() } }
+        if (settings.alertStyle == AlertStyle.DISCREET) {
+            // Never hidden behind "more": a forgotten discreet style is a missed-alarm risk.
+            StatusChip(
+                Glyph.ZZ,
+                stringResource(R.string.native_ui_parent_discreet_indicator),
+                Tone.WARN,
+                "discreet_indicator",
+                onClick = { sheet = ParentSheet.MORE },
+            )
+        }
         Headline(p, elapsed, wall, snoozed)
         SoundMeter(
             p.level,
@@ -375,6 +386,7 @@ fun ParentMonitorScreen(
                     controller,
                     connected,
                     settings.alertOutput,
+                    settings.alertStyle,
                     onReadiness = { sheet = ParentSheet.READINESS },
                 ) {
                     sheet = null
@@ -390,6 +402,10 @@ fun ParentMonitorScreen(
                     stringResource(R.string.native_ui_common_more),
                     { sheet = null },
                 ) {
+                    AlertStyleChoice(settings.alertStyle) { style ->
+                        controller.updateSettings { it.copy(alertStyle = style) }
+                    }
+                    Spacer(Modifier.height(8.dp))
                     SecondaryButton(
                         stringResource(R.string.native_ui_common_settings),
                         {
@@ -918,6 +934,7 @@ private fun ProbeSheet(
     controller: AppController,
     connected: Boolean,
     output: AlertOutput,
+    style: AlertStyle,
     onReadiness: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -931,7 +948,20 @@ private fun ProbeSheet(
     SheetOverlay("sheet_probe", stringResource(R.string.native_ui_probe_title), onDismiss) {
         when (stage) {
             0 -> {
-                Body(stringResource(R.string.native_ui_probe_body))
+                val discreet = style == AlertStyle.DISCREET
+                Body(
+                    stringResource(
+                        if (discreet) R.string.native_ui_probe_body_discreet
+                        else R.string.native_ui_probe_body
+                    )
+                )
+                Body(
+                    stringResource(
+                        if (discreet) R.string.native_ui_probe_style_discreet
+                        else R.string.native_ui_probe_style_sound
+                    ),
+                    tag = "sheet_probe_style",
+                )
                 Body(
                     stringResource(
                         R.string.native_ui_probe_output,

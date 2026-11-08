@@ -48,6 +48,7 @@ import org.guardedsleep.app.ui.common.SecondaryButton
 import org.guardedsleep.app.ui.common.formatTime
 import org.guardedsleep.app.ui.common.rememberLanguageChoices
 import org.guardedsleep.app.ui.model.AlertOutput
+import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.Theme
@@ -157,6 +158,9 @@ fun SettingsScreen(
                 }
             } else {
                 Section(R.string.native_ui_settings_group_alerts, "settings_group_alerts") {
+                    AlertStyleChoice(s.alertStyle) { style ->
+                        controller.updateSettings { st -> st.copy(alertStyle = style) }
+                    }
                     Body(
                         stringResource(R.string.native_ui_settings_output_label),
                         color = MaterialTheme.colorScheme.onSurface,
@@ -516,7 +520,7 @@ private fun Section(title: Int, tag: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun ChoiceRow(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
+internal fun ChoiceRow(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth()
             .heightIn(min = 48.dp)
@@ -571,5 +575,28 @@ private fun SwitchRow(label: String, checked: Boolean, tag: String, onChange: (B
             color = MaterialTheme.colorScheme.onSurface,
         )
         Switch(checked, onCheckedChange = null)
+    }
+}
+
+/** The two alert styles with the ids shared with the web client; used in Settings and More. */
+@Composable
+internal fun AlertStyleChoice(style: AlertStyle, onChoose: (AlertStyle) -> Unit) {
+    Body(
+        stringResource(R.string.native_ui_settings_alert_style_label),
+        color = MaterialTheme.colorScheme.onSurface,
+    )
+    ChoiceRow(
+        stringResource(R.string.native_ui_settings_alert_style_sound),
+        style == AlertStyle.SOUND,
+        "alert_style_sound",
+    ) {
+        onChoose(AlertStyle.SOUND)
+    }
+    ChoiceRow(
+        stringResource(R.string.native_ui_settings_alert_style_discreet),
+        style == AlertStyle.DISCREET,
+        "alert_style_discreet",
+    ) {
+        onChoose(AlertStyle.DISCREET)
     }
 }
