@@ -18,6 +18,7 @@ import org.guardedsleep.app.config.AppDefaults
 import org.guardedsleep.app.pairing.TurnCredentials
 import org.guardedsleep.app.pairing.TurnStore
 import org.guardedsleep.app.ui.model.AlertOutput
+import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.SettingsState
 import org.guardedsleep.app.ui.model.Theme
@@ -112,6 +113,9 @@ class SettingsRepository(
                 alertOutput =
                     p[OUTPUT]?.let { runCatching { AlertOutput.valueOf(it) }.getOrNull() }
                         ?: defaults.alertOutput,
+                alertStyle =
+                    p[STYLE]?.let { runCatching { AlertStyle.valueOf(it) }.getOrNull() }
+                        ?: defaults.alertStyle,
                 alertGainPct = p[GAIN] ?: defaults.alertGainPct,
                 silenceWhileMonitoring = p[SILENCE] ?: defaults.silenceWhileMonitoring,
                 advancedEnabled = p[ADVANCED] ?: defaults.advancedEnabled,
@@ -145,6 +149,7 @@ class SettingsRepository(
         set(THRESHOLD, c.threshold)
         set(HOLD, c.holdSeconds)
         set(OUTPUT, c.alertOutput.name)
+        set(STYLE, c.alertStyle.name)
         set(GAIN, c.alertGainPct)
         set(SILENCE, c.silenceWhileMonitoring)
         set(ADVANCED, c.advancedEnabled)
@@ -168,6 +173,7 @@ class SettingsRepository(
         val THRESHOLD = floatPreferencesKey("threshold")
         val HOLD = intPreferencesKey("hold_seconds")
         val OUTPUT = stringPreferencesKey("alert_output")
+        val STYLE = stringPreferencesKey("alert_style")
         val GAIN = intPreferencesKey("alert_gain_pct")
         val SILENCE = booleanPreferencesKey("silence_while_monitoring")
         val ADVANCED = booleanPreferencesKey("advanced")

@@ -3,6 +3,7 @@ package org.guardedsleep.app.link
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.guardedsleep.app.alerts.AlertSink
+import org.guardedsleep.app.alerts.FeedbackPlans
 import org.guardedsleep.app.alerts.LinkSnapshot
 import org.guardedsleep.app.alerts.NoiseKind
 import org.guardedsleep.app.alerts.Notice
@@ -45,6 +46,8 @@ class ParentModel(
     private val clock: Clock,
     private val sink: AlertSink,
     private val effects: ParentEffects,
+    /** The discreet alert style is on: noise alerts play no audio until the parent listens. */
+    private val discreet: () -> Boolean = { false },
     private val threshold: () -> Double,
 ) {
     private val _state = MutableStateFlow(ParentMonitorState())
@@ -325,7 +328,9 @@ class ParentModel(
                 effects.snoozeEnded()
                 // Noise that is still going at the end of the snooze alerts immediately.
                 if (tracker.active && now - lastLoudLevelAt < 3_000) {
-                    effects.muteRemote(false)
+                    effects.muteRemote(
+                        !playsAudio(NoiseKind.NEW, snoozed = false) && listen == ListenMode.OFF
+                    )
                     sink.noiseAlert(NoiseKind.NEW, probe = false, snoozed = false)
                 }
             }
@@ -341,8 +346,16 @@ class ParentModel(
         if (mode == ListenMode.LOCKED && listen != ListenMode.LOCKED) listenSince = now
         listen = mode
         if (mode != ListenMode.OFF) effects.muteRemote(false)
+        // Discreet: ending Listen must not let a running event's audio leak back in.
+        else if (discreet()) effects.muteRemote(true)
         publish(now)
         return true
+    }
+
+    /** The alert style changed: switching to discreet silences playout at once unless listening. */
+    @Synchronized
+    fun onAlertStyleChanged() {
+        if (discreet() && listen == ListenMode.OFF) effects.muteRemote(true)
     }
 
     @Synchronized
@@ -377,10 +390,14 @@ class ParentModel(
         noiseLastWall = wall
         quietSinceWall = null
         if (e.probe) effects.testAlertArrived(wall)
-        // Snoozed noise stays visual: the baby still streams, but nothing plays.
-        effects.muteRemote(e.snoozed && listen == ListenMode.OFF)
+        // Snoozed or discreet noise stays visual: the baby still streams, but nothing plays until
+        // the parent listens.
+        effects.muteRemote(!playsAudio(kind, e.snoozed) && listen == ListenMode.OFF)
         sink.noiseAlert(kind, e.probe, e.snoozed)
     }
+
+    private fun playsAudio(kind: NoiseKind, snoozed: Boolean): Boolean =
+        FeedbackPlans.forNoise(kind, snoozed, discreet()).playAudio
 
     private fun onPeerStatus(s: DeviceStatus, now: Long) {
         peerStatus = s

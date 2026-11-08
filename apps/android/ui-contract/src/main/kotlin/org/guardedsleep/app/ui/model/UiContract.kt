@@ -238,6 +238,15 @@ enum class AlertOutput {
     SPEAKER_ONLY,
 }
 
+/**
+ * How a noise alert reaches the parent (alert style setting): "Sound" plays the child's audio with
+ * every alert, "Discreet" vibrates and shows the alert but plays no audio until the parent listens.
+ */
+enum class AlertStyle {
+    SOUND,
+    DISCREET,
+}
+
 data class SettingsState(
     val theme: Theme = Theme.DARK,
     /** null = follow system; else "en", "de", "fr", "es". */
@@ -245,6 +254,7 @@ data class SettingsState(
     val threshold: Float = 0.12f,
     val holdSeconds: Int = 5,
     val alertOutput: AlertOutput = AlertOutput.DEFAULT,
+    val alertStyle: AlertStyle = AlertStyle.SOUND,
     val alertGainPct: Int = 100,
     val silenceWhileMonitoring: Boolean = true,
     val advancedEnabled: Boolean = false,

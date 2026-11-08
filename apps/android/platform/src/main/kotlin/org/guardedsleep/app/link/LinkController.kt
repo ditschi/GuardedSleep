@@ -31,6 +31,7 @@ import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.signaling.SignalingFactory
 import org.guardedsleep.app.silence.SilenceGateway
 import org.guardedsleep.app.ui.model.AlertOutput
+import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
@@ -122,7 +123,14 @@ class LinkController(
         }
 
     private val parentModel =
-        ParentModel(clock, alerts, parentEffects) { _settings.value.threshold.toDouble() }
+        ParentModel(
+            clock,
+            alerts,
+            parentEffects,
+            discreet = { _settings.value.alertStyle == AlertStyle.DISCREET },
+        ) {
+            _settings.value.threshold.toDouble()
+        }
     private val babyModel = BabyModel(clock)
 
     private class PendingPairing(
@@ -201,6 +209,7 @@ class LinkController(
         settingsRepo.update { it.copy(settings = after) }
         _settings.value = after
         babyModel.setSettings(after.threshold, after.holdSeconds)
+        if (after.alertStyle != before.alertStyle) parentModel.onAlertStyleChanged()
         val r = run
         if (r != null && after.onlyLocal != before.onlyLocal) restartForOnlyLocal(r)
         if (r != null) {

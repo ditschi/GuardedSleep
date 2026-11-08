@@ -31,6 +31,11 @@ data class NoiseFeedbackPlan(
     val fullScreen: Boolean = false,
     val repeatingHaptic: Boolean = false,
     val shortHaptic: Boolean = false,
+    /**
+     * Whether the child's audio plays for this event. False while snoozed and in the discreet alert
+     * style; a parent who listens overrides it (the model unmutes on Listen).
+     */
+    val playAudio: Boolean = false,
 )
 
 object FeedbackPlans {
@@ -74,13 +79,19 @@ object FeedbackPlans {
 
     /**
      * Snoozed noise is visual only; a continuing event gets one short haptic and no new full
-     * screen.
+     * screen. The discreet style keeps the haptic, notification and full screen of a sounding alert
+     * and only withholds the child's audio (alert style setting).
      */
-    fun forNoise(kind: NoiseKind, snoozed: Boolean): NoiseFeedbackPlan =
+    fun forNoise(kind: NoiseKind, snoozed: Boolean, discreet: Boolean = false): NoiseFeedbackPlan =
         when {
             snoozed -> NoiseFeedbackPlan()
             kind == NoiseKind.NEW ->
-                NoiseFeedbackPlan(notify = true, fullScreen = true, repeatingHaptic = true)
-            else -> NoiseFeedbackPlan(notify = true, shortHaptic = true)
+                NoiseFeedbackPlan(
+                    notify = true,
+                    fullScreen = true,
+                    repeatingHaptic = true,
+                    playAudio = !discreet,
+                )
+            else -> NoiseFeedbackPlan(notify = true, shortHaptic = true, playAudio = !discreet)
         }
 }
