@@ -7,4 +7,4 @@ Briefs for the implementer. Layers: UI renders contract models; platform decides
 - [x] 2.2 Android UI: `discreet_indicator` card, alert style choice in the More sheet and in Settings (`alert_style_sound`, `alert_style_discreet`), alert screen variant (stop vibration, hint), probe sheet names the style; interaction tests
 - [x] 3.1 Web contract and platform: `AlertStyle` in `models.ts`, `defaultSettings`, fake controller; `ParentModel` playout gate; `AlertPlayer` plays no test tone in discreet; Vitest
 - [x] 3.2 Web UI: indicator, style choice in the monitor screen and Settings, alert screen variant, test dialog names the style; Vitest and e2e ids
-- [ ] 4.1 `just lint`, `just test`; Roborazzi baselines for the indicator and the alert variant recorded only in the pinned build image
+- [x] 4.1 `just lint`, `just test`; Roborazzi baselines for the indicator and the alert variant recorded only in the pinned build image
