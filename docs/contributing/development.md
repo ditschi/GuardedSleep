@@ -218,6 +218,18 @@ just smoke
 
 The server's and relay's own tests (the ported Node test cases, admission, STUN, local mode) run with `just test`.
 
+## Dev APK (rolling pre-release)
+
+Every push to `main` that passes the emulator gate (`android-native` workflow) publishes the gate-tested debug APK, re-signed with a fixed dev key, to the pre-release [`android-dev`](https://github.com/ditschi/GuardedSleep/releases/tag/android-dev): `guardedsleep-alpha-dev.apk` plus its `.sha256`. It is an unreviewed, debuggable test build, not a release.
+
+Install it with `adb install -r guardedsleep-alpha-dev.apk` or open the link on the phone (allow installs from the browser). Check the download with `sha256sum -c guardedsleep-alpha-dev.apk.sha256`. A newer dev build installs over an older one and keeps the pairing. It does **not** install over a Play or release build (different signing key, same app id `org.guardedsleep.app.alpha`): uninstall that first, which deletes the pairing.
+
+Owner setup (once; the key is never committed, AGENTS.md §7.7): run `scripts/dev-apk-key.sh` from the repository root. It generates a random password and a PKCS12 EC key, creates the environment `dev-apk` with deployment branches limited to `main`, stores the secrets `GS_DEV_KEYSTORE_B64`, `GS_DEV_KEYSTORE_PASSWORD` and `GS_DEV_KEY_ALIAS`, and saves key and password as the Bitwarden item "GuardedSleep dev APK key" when `BW_SESSION` is set (environment or `.env.local`); without it, it leaves both files in `~/guardedsleep-dev-key` for your password manager. It prints no secret.
+
+- Environments and environment secrets need admin rights on the repository. A personal access token without them fails with HTTP 403: log in through the browser once with `env -u GH_TOKEN -u GITHUB_TOKEN gh auth login --web` and run the script with the same `env -u GH_TOKEN -u GITHUB_TOKEN` prefix. Alternatively create the environment in the repository settings first; the script then only stores the secrets.
+- A run that stopped half-way reuses the key in the output directory. Once the secrets exist, the script refuses to create another key; `GS_ROTATE_DEV_KEY=1` replaces it on purpose.
+- Replacing or losing the key means every tester uninstalls once (which deletes the pairing); delete the old Bitwarden item after a rotation.
+
 ## Commits
 
 Conventional Commits are checked on the **PR title** in CI; there is no local commit-msg hook. A PR is rebase-merged when its history is clean, otherwise squashed (AGENTS.md §8). Example: `feat(docs): describe pairing flow in connectivity doc`.
