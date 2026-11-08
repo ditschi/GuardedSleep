@@ -10,4 +10,4 @@ Briefs for the implementer. Layers: UI renders contract models; the platform dec
 - [x] 4.2 Android: map the core event and send the inputs (delay only while discreet and not Off, `AcknowledgeNoise` from Stop sound, resend on a new run); `discreetEscalation` setting with four choices and the Off warning (`discreet_escalation_1m`, `_2m`, `_5m`, `_off`); escalated alert text; JVM tests for the mapping
 - [x] 4.3 Android review fixes: Discreet to Sound unmutes at once unless snoozed; "Listen" action on the noise notification while discreet
 - [x] 5.1 Web: remove the style choice, indicator, discreet gating, web-only copy and tests; ignore `noise_escalated`; backlog `IDEA` for the browser
-- [ ] 6.1 `just lint`, `just test`; Roborazzi baselines re-recorded only in the pinned build image
+- [x] 6.1 `just lint`, `just test`; Roborazzi baselines re-recorded only in the pinned build image
