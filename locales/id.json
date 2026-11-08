@@ -313,6 +313,9 @@
           "resumedFromSleep": "Perangkat bayi bangun dari tidur — mungkin ada suara yang terlewat",
           "notCharging": "Perangkat bayi tidak lagi mengisi daya",
           "micPermissionLost": "Perangkat bayi kehilangan akses mikrofon"
+        },
+        "discreet": {
+          "indicator": "Peringatan senyap: tanpa suara"
         }
       },
       "battery": {
@@ -345,7 +348,10 @@
         "run": "Jalankan uji",
         "running": "Menjalankan uji…",
         "question": "Apakah Anda mendengar dan merasakannya?",
-        "localOnly": "Hanya perangkat ini yang diuji — perangkat bayi tidak terhubung."
+        "localOnly": "Hanya perangkat ini yang diuji — perangkat bayi tidak terhubung.",
+        "styleSound": "Gaya peringatan: suara",
+        "styleDiscreet": "Gaya peringatan: senyap",
+        "bodyDiscreet": "Perangkat ini bergetar dan menampilkan peringatan tanpa suara. Perangkat bayi tetap senyap."
       },
       "readiness": {
         "title": "Apakah peringatan bisa sampai ke Anda?",
@@ -422,7 +428,11 @@
         "testBadge": "UJI",
         "stopSound": "Hentikan suara",
         "soundStopped": "Suara dihentikan",
-        "openApp": "Buka GuardedSleep"
+        "openApp": "Buka GuardedSleep",
+        "stopVibration": "Hentikan getaran",
+        "vibrationStopped": "Getaran dihentikan",
+        "dismiss": "Tutup",
+        "discreetHint": "Tanpa suara sampai Anda mendengarkan"
       },
       "settings": {
         "group": {
@@ -478,7 +488,12 @@
           "label": "Server relai (TURN), opsional",
           "invalid": "Alamat relai harus diawali dengan turn: atau turns:."
         },
-        "heartbeat": "Pemeriksaan koneksi setiap {seconds} dtk"
+        "heartbeat": "Pemeriksaan koneksi setiap {seconds} dtk",
+        "alertStyle": {
+          "label": "Gaya peringatan",
+          "sound": "Suara: suara bayi diputar pada setiap peringatan",
+          "discreet": "Senyap: getar dan layar, tanpa suara"
+        }
       },
       "fgsMissing": {
         "bar": "Tidak memantau di latar belakang — buka aplikasi",

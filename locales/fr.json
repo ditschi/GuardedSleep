@@ -313,6 +313,9 @@
           "resumedFromSleep": "L'appareil bébé sort de veille — des sons ont pu être manqués",
           "notCharging": "L'appareil bébé n'est plus en charge",
           "micPermissionLost": "L'appareil bébé a perdu l'accès au microphone"
+        },
+        "discreet": {
+          "indicator": "Alertes discrètes : pas de son"
         }
       },
       "battery": {
@@ -345,7 +348,10 @@
         "run": "Lancer le test",
         "running": "Test en cours…",
         "question": "L'avez-vous entendu et senti ?",
-        "localOnly": "Seul cet appareil a été testé — l'appareil bébé n'est pas connecté."
+        "localOnly": "Seul cet appareil a été testé — l'appareil bébé n'est pas connecté.",
+        "styleSound": "Type d'alerte : son",
+        "styleDiscreet": "Type d'alerte : discret",
+        "bodyDiscreet": "Cet appareil vibre et affiche l'alerte sans son. L'appareil du bébé reste silencieux."
       },
       "readiness": {
         "title": "Les alertes peuvent-elles vous atteindre ?",
@@ -422,7 +428,11 @@
         "testBadge": "TEST",
         "stopSound": "Couper le son",
         "soundStopped": "Son coupé",
-        "openApp": "Ouvrir GuardedSleep"
+        "openApp": "Ouvrir GuardedSleep",
+        "stopVibration": "Arrêter la vibration",
+        "vibrationStopped": "Vibration arrêtée",
+        "dismiss": "Fermer",
+        "discreetHint": "Pas de son tant que vous n'écoutez pas"
       },
       "settings": {
         "group": {
@@ -482,7 +492,12 @@
           "passwordSaved": "Mot de passe enregistré. Laissez vide pour le conserver.",
           "credentialsInvalid": "Saisissez le nom d’utilisateur et le mot de passe (256 caractères maximum chacun), ou aucun des deux."
         },
-        "heartbeat": "Vérification de la connexion toutes les {seconds} s"
+        "heartbeat": "Vérification de la connexion toutes les {seconds} s",
+        "alertStyle": {
+          "label": "Type d'alerte",
+          "sound": "Son : le son du bébé est diffusé à chaque alerte",
+          "discreet": "Discret : vibration et écran, sans son"
+        }
       },
       "fgsMissing": {
         "bar": "Pas de surveillance en arrière-plan — ouvrez l'application",

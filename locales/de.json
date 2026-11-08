@@ -313,6 +313,9 @@
           "resumedFromSleep": "Babygerät war im Ruhezustand – Geräusche könnten verpasst worden sein",
           "notCharging": "Babygerät lädt nicht mehr",
           "micPermissionLost": "Babygerät hat den Mikrofonzugriff verloren"
+        },
+        "discreet": {
+          "indicator": "Diskrete Alarme: kein Ton"
         }
       },
       "battery": {
@@ -345,7 +348,10 @@
         "run": "Test starten",
         "running": "Test läuft …",
         "question": "Haben Sie es gehört und gespürt?",
-        "localOnly": "Nur dieses Gerät getestet — das Babygerät ist nicht verbunden."
+        "localOnly": "Nur dieses Gerät getestet — das Babygerät ist nicht verbunden.",
+        "styleSound": "Alarmart: Ton",
+        "styleDiscreet": "Alarmart: Diskret",
+        "bodyDiscreet": "Dieses Gerät vibriert und zeigt den Alarm ohne Ton an. Das Babygerät bleibt stumm."
       },
       "readiness": {
         "title": "Erreichen Sie die Alarme?",
@@ -422,7 +428,11 @@
         "testBadge": "TEST",
         "stopSound": "Ton stoppen",
         "soundStopped": "Ton gestoppt",
-        "openApp": "GuardedSleep öffnen"
+        "openApp": "GuardedSleep öffnen",
+        "stopVibration": "Vibration beenden",
+        "vibrationStopped": "Vibration beendet",
+        "dismiss": "Schließen",
+        "discreetHint": "Kein Ton, bis Sie zuhören"
       },
       "settings": {
         "group": {
@@ -482,7 +492,12 @@
           "passwordSaved": "Passwort gespeichert. Leer lassen, um es zu behalten.",
           "credentialsInvalid": "Gib Benutzername und Passwort ein (je bis zu 256 Zeichen) oder keins von beiden."
         },
-        "heartbeat": "Verbindungsprüfung alle {seconds} s"
+        "heartbeat": "Verbindungsprüfung alle {seconds} s",
+        "alertStyle": {
+          "label": "Alarmart",
+          "sound": "Ton: Der Ton des Babys wird bei jedem Alarm abgespielt",
+          "discreet": "Diskret: Vibration und Bildschirm, kein Ton"
+        }
       },
       "fgsMissing": {
         "bar": "Keine Überwachung im Hintergrund — App öffnen",

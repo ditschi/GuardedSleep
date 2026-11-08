@@ -313,6 +313,9 @@
           "resumedFromSleep": "Babyapparaat werd wakker uit slaap: geluiden zijn mogelijk gemist",
           "notCharging": "Babyapparaat laadt niet meer",
           "micPermissionLost": "Babyapparaat heeft geen microfoontoegang meer"
+        },
+        "discreet": {
+          "indicator": "Discrete meldingen: geen geluid"
         }
       },
       "battery": {
@@ -345,7 +348,10 @@
         "run": "Test uitvoeren",
         "running": "Test wordt uitgevoerd…",
         "question": "Heb je het gehoord en gevoeld?",
-        "localOnly": "Alleen dit apparaat is getest: het babyapparaat is niet verbonden."
+        "localOnly": "Alleen dit apparaat is getest: het babyapparaat is niet verbonden.",
+        "styleSound": "Meldingstype: geluid",
+        "styleDiscreet": "Meldingstype: discreet",
+        "bodyDiscreet": "Dit apparaat trilt en toont de melding zonder geluid. Het babyapparaat blijft stil."
       },
       "readiness": {
         "title": "Komen meldingen bij je aan?",
@@ -422,7 +428,11 @@
         "testBadge": "TEST",
         "stopSound": "Geluid stoppen",
         "soundStopped": "Geluid gestopt",
-        "openApp": "GuardedSleep openen"
+        "openApp": "GuardedSleep openen",
+        "stopVibration": "Trilling stoppen",
+        "vibrationStopped": "Trilling gestopt",
+        "dismiss": "Sluiten",
+        "discreetHint": "Geen geluid tot je luistert"
       },
       "settings": {
         "group": {
@@ -478,7 +488,12 @@
           "label": "Relayserver (TURN), optioneel",
           "invalid": "Het relayadres moet beginnen met turn: of turns:."
         },
-        "heartbeat": "Verbindingscontrole elke {seconds} s"
+        "heartbeat": "Verbindingscontrole elke {seconds} s",
+        "alertStyle": {
+          "label": "Meldingstype",
+          "sound": "Geluid: het geluid van de baby wordt bij elke melding afgespeeld",
+          "discreet": "Discreet: trillen en scherm, geen geluid"
+        }
       },
       "fgsMissing": {
         "bar": "Geen bewaking op de achtergrond: open de app",

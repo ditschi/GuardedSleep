@@ -311,6 +311,9 @@
           "resumedFromSleep": "Baby device woke from sleep — sounds may have been missed",
           "notCharging": "Baby device is no longer charging",
           "micPermissionLost": "Baby device lost microphone access"
+        },
+        "discreet": {
+          "indicator": "Discreet alerts: no sound"
         }
       },
       "battery": {
@@ -343,7 +346,10 @@
         "run": "Run test",
         "running": "Running the test…",
         "question": "Did you hear and feel it?",
-        "localOnly": "Tested this device only — the baby device is not connected."
+        "localOnly": "Tested this device only — the baby device is not connected.",
+        "styleSound": "Alert style: Sound",
+        "styleDiscreet": "Alert style: Discreet",
+        "bodyDiscreet": "This vibrates and shows the alert on this device without sound. The baby device stays silent."
       },
       "readiness": {
         "title": "Can alerts reach you?",
@@ -420,7 +426,11 @@
         "testBadge": "TEST",
         "stopSound": "Stop sound",
         "soundStopped": "Sound stopped",
-        "openApp": "Open GuardedSleep"
+        "openApp": "Open GuardedSleep",
+        "stopVibration": "Stop vibration",
+        "vibrationStopped": "Vibration stopped",
+        "dismiss": "Dismiss",
+        "discreetHint": "No sound until you listen"
       },
       "settings": {
         "group": {
@@ -480,7 +490,12 @@
           "passwordSaved": "Password saved. Leave empty to keep it.",
           "credentialsInvalid": "Enter both user name and password (up to 256 characters each), or neither."
         },
-        "heartbeat": "Connection check every {seconds} s"
+        "heartbeat": "Connection check every {seconds} s",
+        "alertStyle": {
+          "label": "Alert style",
+          "sound": "Sound: the baby's sound plays with each alert",
+          "discreet": "Discreet: vibration and screen, no sound"
+        }
       },
       "fgsMissing": {
         "bar": "Not monitoring in the background — open the app",
