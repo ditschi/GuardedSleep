@@ -227,4 +227,35 @@ class DiscreetAlertTest {
         noise()
         assertEquals(false, sink.noiseDiscreet.last())
     }
+
+    @Test
+    fun endingListenDoesNotRemuteAnEscalatedEvent() {
+        connect()
+        noise()
+        model.setListen(ListenMode.HOLD, clock.elapsed)
+        model.onEvent(LinkEvent.NoiseEscalated(120_000UL), clock.elapsed)
+        val before = effects.muted.size
+        model.setListen(ListenMode.OFF, clock.elapsed)
+        assertEquals(before, effects.muted.size)
+        assertEquals(false, effects.muted.last())
+    }
+
+    @Test
+    fun afterEscalationTheSinkGetsTheSoundPlan() {
+        connect()
+        noise()
+        assertEquals(true, sink.noiseDiscreet.last())
+        model.onEvent(LinkEvent.NoiseEscalated(120_000UL), clock.elapsed)
+        clock.advance(10_000)
+        noise()
+        assertEquals(false, sink.noiseDiscreet.last())
+    }
+
+    @Test
+    fun escalationOutsideARunningEventIsIgnored() {
+        connect()
+        model.onEvent(LinkEvent.NoiseEscalated(120_000UL), clock.elapsed)
+        assertEquals(null, model.state.value.noiseEscalatedAfterMin)
+        assertEquals(0, effects.muted.size)
+    }
 }

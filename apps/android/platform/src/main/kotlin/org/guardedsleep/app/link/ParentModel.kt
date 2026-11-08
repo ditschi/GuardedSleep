@@ -117,8 +117,7 @@ class ParentModel(
         noiseSinceWall = null
         noiseLastWall = null
         noiseIsTest = false
-        escalatedAfterMin = null
-        soundStopped = false
+        clearNoiseEventFlags()
         remoteLevel = 0.0
         heartbeatRms = 0.0
         heartbeatAt = Long.MIN_VALUE
@@ -298,8 +297,7 @@ class ParentModel(
             val wall = clock.wallMs()
             quietSinceWall =
                 if (phase == LinkPhase.CONNECTED) wall - (now - tracker.lastLoudElapsedMs) else null
-            escalatedAfterMin = null
-            soundStopped = false
+            clearNoiseEventFlags()
             sink.noiseEnded()
         }
         restoredUntil
@@ -338,14 +336,14 @@ class ParentModel(
                 effects.snoozeEnded()
                 // Noise that is still going at the end of the snooze alerts immediately.
                 if (tracker.active && now - lastLoudLevelAt < 3_000) {
-                    effects.muteRemote(
-                        !playsAudio(NoiseKind.NEW, snoozed = false) && listen == ListenMode.OFF
-                    )
+                    // A new event: the core restarts its count too, so a past escalation is over.
+                    escalatedAfterMin = null
+                    applyNoisePlayout(NoiseKind.NEW, snoozed = false)
                     sink.noiseAlert(
                         NoiseKind.NEW,
                         probe = false,
                         snoozed = false,
-                        discreet = discreet(),
+                        discreet = sinkDiscreet(),
                     )
                 }
             }
@@ -362,7 +360,7 @@ class ParentModel(
         listen = mode
         if (mode != ListenMode.OFF) effects.muteRemote(false)
         // Discreet: ending Listen must not let a running event's audio leak back in.
-        else if (discreet()) effects.muteRemote(true)
+        else if (discreet() && escalatedAfterMin == null) effects.muteRemote(true)
         publish(now)
         return true
     }
@@ -417,15 +415,31 @@ class ParentModel(
         if (e.probe) effects.testAlertArrived(wall)
         // Snoozed or discreet noise stays visual: the baby still streams, but nothing plays until
         // the parent listens.
-        effects.muteRemote(!playsAudio(kind, e.snoozed) && listen == ListenMode.OFF)
-        sink.noiseAlert(kind, e.probe, e.snoozed, discreet())
+        applyNoisePlayout(kind, e.snoozed)
+        sink.noiseAlert(kind, e.probe, e.snoozed, sinkDiscreet())
     }
 
+    /** Discreet and not yet switched to sound by the core's escalation. */
+    private fun sinkDiscreet(): Boolean = discreet() && escalatedAfterMin == null
+
     private fun playsAudio(kind: NoiseKind, snoozed: Boolean): Boolean =
-        FeedbackPlans.forNoise(kind, snoozed, discreet() && escalatedAfterMin == null).playAudio
+        FeedbackPlans.forNoise(kind, snoozed, sinkDiscreet()).playAudio
+
+    /** Mutes the received audio unless the plan plays it or the parent is listening. */
+    private fun applyNoisePlayout(kind: NoiseKind, snoozed: Boolean) {
+        effects.muteRemote(!playsAudio(kind, snoozed) && listen == ListenMode.OFF)
+    }
+
+    private fun clearNoiseEventFlags() {
+        escalatedAfterMin = null
+        soundStopped = false
+    }
 
     /** The core's escalation timer fired: the audio plays as in the sound style. */
     private fun onEscalated(afterMs: Long) {
+        // The core's event and the platform's can differ at the edges: only a running event of
+        // this unit switches.
+        if (!tracker.active) return
         escalatedAfterMin = (afterMs / 60_000L).toInt().coerceAtLeast(1)
         effects.muteRemote(false)
     }
