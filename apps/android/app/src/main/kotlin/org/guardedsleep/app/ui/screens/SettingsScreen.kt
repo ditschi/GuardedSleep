@@ -591,19 +591,21 @@ internal fun AlertStyleChoice(style: AlertStyle, onChoose: (AlertStyle) -> Unit)
         stringResource(R.string.native_ui_settings_alert_style_label),
         color = MaterialTheme.colorScheme.onSurface,
     )
-    ChoiceRow(
-        stringResource(R.string.native_ui_settings_alert_style_sound),
-        style == AlertStyle.SOUND,
-        "alert_style_sound",
-    ) {
-        onChoose(AlertStyle.SOUND)
-    }
-    ChoiceRow(
-        stringResource(R.string.native_ui_settings_alert_style_discreet),
-        style == AlertStyle.DISCREET,
-        "alert_style_discreet",
-    ) {
-        onChoose(AlertStyle.DISCREET)
+    val options =
+        listOf(
+            Triple(
+                AlertStyle.SOUND,
+                R.string.native_ui_settings_alert_style_sound,
+                "alert_style_sound",
+            ),
+            Triple(
+                AlertStyle.DISCREET,
+                R.string.native_ui_settings_alert_style_discreet,
+                "alert_style_discreet",
+            ),
+        )
+    for ((value, label, tag) in options) {
+        ChoiceRow(stringResource(label), style == value, tag) { onChoose(value) }
     }
 }
 
@@ -617,33 +619,31 @@ private fun DiscreetEscalationChoice(
         stringResource(R.string.native_ui_settings_discreet_escalation_label),
         color = MaterialTheme.colorScheme.onSurface,
     )
-    ChoiceRow(
-        stringResource(R.string.native_ui_settings_discreet_escalation_m1),
-        choice == DiscreetEscalation.ONE_MINUTE,
-        "discreet_escalation_1m",
-    ) {
-        onChoose(DiscreetEscalation.ONE_MINUTE)
-    }
-    ChoiceRow(
-        stringResource(R.string.native_ui_settings_discreet_escalation_m2),
-        choice == DiscreetEscalation.TWO_MINUTES,
-        "discreet_escalation_2m",
-    ) {
-        onChoose(DiscreetEscalation.TWO_MINUTES)
-    }
-    ChoiceRow(
-        stringResource(R.string.native_ui_settings_discreet_escalation_m5),
-        choice == DiscreetEscalation.FIVE_MINUTES,
-        "discreet_escalation_5m",
-    ) {
-        onChoose(DiscreetEscalation.FIVE_MINUTES)
-    }
-    ChoiceRow(
-        stringResource(R.string.native_ui_settings_discreet_escalation_off),
-        choice == DiscreetEscalation.OFF,
-        "discreet_escalation_off",
-    ) {
-        onChoose(DiscreetEscalation.OFF)
+    val options =
+        listOf(
+            Triple(
+                DiscreetEscalation.ONE_MINUTE,
+                R.string.native_ui_settings_discreet_escalation_m1,
+                "discreet_escalation_1m",
+            ),
+            Triple(
+                DiscreetEscalation.TWO_MINUTES,
+                R.string.native_ui_settings_discreet_escalation_m2,
+                "discreet_escalation_2m",
+            ),
+            Triple(
+                DiscreetEscalation.FIVE_MINUTES,
+                R.string.native_ui_settings_discreet_escalation_m5,
+                "discreet_escalation_5m",
+            ),
+            Triple(
+                DiscreetEscalation.OFF,
+                R.string.native_ui_settings_discreet_escalation_off,
+                "discreet_escalation_off",
+            ),
+        )
+    for ((value, label, tag) in options) {
+        ChoiceRow(stringResource(label), choice == value, tag) { onChoose(value) }
     }
     if (choice == DiscreetEscalation.OFF) {
         Body(

@@ -101,26 +101,23 @@ class SettingsRepository(
         if (kept) store.edit { it.remove(TURN) }
     }
 
+    /** A stored enum name, or null when absent or from an unknown (older or newer) version. */
+    private inline fun <reified E : Enum<E>> enumOrNull(name: String?): E? = name?.let { n ->
+        runCatching { enumValueOf<E>(n) }.getOrNull()
+    }
+
     private fun read(p: Preferences): PersistedState {
         val defaults = SettingsState(signalingUrls = AppDefaults.signalingUrls)
         val settings =
             SettingsState(
-                theme =
-                    p[THEME]?.let { runCatching { Theme.valueOf(it) }.getOrNull() }
-                        ?: defaults.theme,
+                theme = enumOrNull<Theme>(p[THEME]) ?: defaults.theme,
                 language = p[LANGUAGE],
                 threshold = p[THRESHOLD] ?: defaults.threshold,
                 holdSeconds = p[HOLD] ?: defaults.holdSeconds,
-                alertOutput =
-                    p[OUTPUT]?.let { runCatching { AlertOutput.valueOf(it) }.getOrNull() }
-                        ?: defaults.alertOutput,
-                alertStyle =
-                    p[STYLE]?.let { runCatching { AlertStyle.valueOf(it) }.getOrNull() }
-                        ?: defaults.alertStyle,
+                alertOutput = enumOrNull<AlertOutput>(p[OUTPUT]) ?: defaults.alertOutput,
+                alertStyle = enumOrNull<AlertStyle>(p[STYLE]) ?: defaults.alertStyle,
                 discreetEscalation =
-                    p[ESCALATION]?.let {
-                        runCatching { DiscreetEscalation.valueOf(it) }.getOrNull()
-                    } ?: defaults.discreetEscalation,
+                    enumOrNull<DiscreetEscalation>(p[ESCALATION]) ?: defaults.discreetEscalation,
                 alertGainPct = p[GAIN] ?: defaults.alertGainPct,
                 silenceWhileMonitoring = p[SILENCE] ?: defaults.silenceWhileMonitoring,
                 advancedEnabled = p[ADVANCED] ?: defaults.advancedEnabled,
@@ -131,7 +128,7 @@ class SettingsRepository(
             )
         return PersistedState(
             settings = settings,
-            role = p[ROLE]?.let { runCatching { Role.valueOf(it) }.getOrNull() },
+            role = enumOrNull<Role>(p[ROLE]),
             onboardingDone = p[ONBOARDING] ?: false,
             monitoringActive = p[MONITORING] ?: false,
             peerName = p[PEER_NAME],

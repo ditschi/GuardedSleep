@@ -123,12 +123,14 @@ class LinkController(
             }
         }
 
+    private fun isDiscreet() = _settings.value.alertStyle == AlertStyle.DISCREET
+
     private val parentModel =
         ParentModel(
             clock,
             alerts,
             parentEffects,
-            discreet = { _settings.value.alertStyle == AlertStyle.DISCREET },
+            discreet = ::isDiscreet,
         ) {
             _settings.value.threshold.toDouble()
         }
@@ -645,7 +647,7 @@ class LinkController(
                 NoiseKind.NEW,
                 probe = true,
                 snoozed = false,
-                discreet = _settings.value.alertStyle == AlertStyle.DISCREET,
+                discreet = isDiscreet(),
             )
             settingsRepo.update { it.copy(lastTestWallMs = clock.wallMs()) }
         }
