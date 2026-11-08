@@ -244,6 +244,10 @@ public-server-logs:
 public-server-turns:
     scripts/lib/slot.sh heavy -- scripts/poc/public-server-turns.sh
 
+# turns: on 5349 terminated by Traefik (task 10.4, the default of docker/public-server): coturn without a certificate behind a Traefik with the owner's TCP router and readTimeout 0 (and one without, as control), a TLS allocation with relayed data, 75 s of keep-alive, no-SNI default certificate, TLS 1.1 refused, wrong credential rejected. Needs Docker.
+public-server-turns-traefik:
+    scripts/lib/slot.sh heavy -- scripts/poc/public-server-turns-traefik.sh
+
 # The same verdict as CI (the PR title check and the emulator gate are CI-only): lint, test, build, e2e in order,
 # then a list of every SKIPPED line of the run (a skip is not a pass), also when a step fails.
 ci:

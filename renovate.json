@@ -73,6 +73,13 @@
       "datasourceTemplate": "docker"
     },
     {
+      "description": "Traefik image tag in tools/poc-images.env (scripts/poc/public-server-turns-traefik.sh; keep the minor the owner's Traefik runs)",
+      "customType": "regex",
+      "managerFilePatterns": ["/^tools/poc-images\\.env$/"],
+      "matchStrings": ["TRAEFIK_IMAGE=(?<depName>traefik):(?<currentValue>\\S+)"],
+      "datasourceTemplate": "docker"
+    },
+    {
       "description": "Digest-pinned node image in tools/poc-images.env for the PoC clients (same as docker/web/Dockerfile; the docker group keeps both on one digest)",
       "customType": "regex",
       "managerFilePatterns": ["/^tools/poc-images\\.env$/"],
@@ -91,9 +98,9 @@
       "datasourceTemplate": "docker"
     },
     {
-      "description": "lego (ACME client) default tag (LEGO_TAG) in docker/public-server/compose.yaml; lego majors change flags and hook variables, so read the release notes",
+      "description": "lego (ACME client) default tag (LEGO_TAG) in docker/public-server/compose.lego.yaml; lego majors change flags and hook variables, so read the release notes",
       "customType": "regex",
-      "managerFilePatterns": ["/^docker/public-server/compose\\.yaml$/"],
+      "managerFilePatterns": ["/^docker/public-server/compose\\.lego\\.yaml$/"],
       "matchStrings": ["image: (?<depName>goacme/lego):\\$\\{LEGO_TAG:-(?<currentValue>[^}]+)\\}"],
       "datasourceTemplate": "docker"
     }

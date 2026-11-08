@@ -1,0 +1,74 @@
+# Alternative to terminating turns: in the reverse proxy: coturn terminates TLS itself with a dedicated
+# certificate for PUBLIC_HOST that the `acme` service (lego, HTTP-01 through Traefik) obtains. For proxies that
+# cannot terminate TCP/TLS. README "Alternative: own certificate with lego"; design section 9 (task 10.2).
+#
+#   docker compose -f compose.yaml -f compose.lego.yaml up -d      # or COMPOSE_FILE=compose.yaml:compose.lego.yaml in .env
+#
+# Also set TURN_TLS_ARG_1 and TURN_TLS_ARG_2 in .env (see .env.template): coturn's flags cannot be added by an
+# override, see the comment on them in compose.yaml. Merge rules: https://docs.docker.com/reference/compose-file/merge/
+services:
+  coturn:
+    # The certificate (written by the acme service, read-only here). Absent files are fine: coturn then starts
+    # without the TLS listener and serves turn: only (the first issuance needs one restart).
+    volumes:
+      - turn-certs:/certs:ro
+
+  # Certificate for turns: on 5349 (design section 9, task 10.2): a dedicated certificate for PUBLIC_HOST from
+  # lego, an ACME client of its own, instead of exporting Traefik's acme.json (an exporter would read every
+  # private key on the host). HTTP-01: Let's Encrypt asks PUBLIC_HOST on port 80 for
+  # /.well-known/acme-challenge/<token>; Traefik forwards exactly that path to lego's built-in server, which
+  # listens on 8080 only while a challenge runs. No DNS token, no Docker socket. `lego run` obtains the
+  # certificate the first time and renews it only when it is due (ARI, else a third of its lifetime left),
+  # so the daily loop is cheap. The deploy hook copies crt.pem and key.pem into the turn-certs volume that
+  # coturn mounts; coturn reloads them through reload-turn-cert.sh (host cron, README).
+  # Client reference: https://go-acme.github.io/lego/ (v5 CLI; hook variables LEGO_HOOK_CERT_PATH and
+  # LEGO_HOOK_CERT_KEY_PATH from cmd/internal/hook/metadata.go).
+  acme:
+    # Pin: same convention as coturn (Renovate regex manager in renovate.json). v5 changed flags and hook
+    # variables against v4; read the release notes before moving the major version.
+    image: goacme/lego:${LEGO_TAG:-v5.6.0}
+    restart: unless-stopped
+    # Root inside the container, but without capabilities except CHOWN (the hook hands the key to coturn's
+    # user, nobody, with mode 0600): no DAC override, no network admin, no Docker socket.
+    entrypoint: ["/bin/sh", "/acme-loop.sh"]
+    command: []
+    environment:
+      PUBLIC_HOST: "${PUBLIC_HOST:?set PUBLIC_HOST}"
+      ACME_EMAIL: "${ACME_EMAIL:?set ACME_EMAIL, the contact address for Let's Encrypt expiry notices}"
+      # Empty means Let's Encrypt production; `letsencrypt-staging` for a dry run (README).
+      ACME_SERVER: "${ACME_SERVER:-letsencrypt}"
+    volumes:
+      - ./acme-loop.sh:/acme-loop.sh:ro
+      - ./acme-deploy-hook.sh:/acme-deploy-hook.sh:ro
+      - acme-state:/data
+      - turn-certs:/certs
+    networks:
+      - traefik
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      # Plain HTTP on the HTTP entrypoint, only this path: no TLS, no secure-headers middleware.
+      - "traefik.http.routers.guardedsleep-acme.rule=Host(`${PUBLIC_HOST}`) && PathPrefix(`/.well-known/acme-challenge/`)"
+      - "traefik.http.routers.guardedsleep-acme.entrypoints=${TRAEFIK_HTTP_ENTRYPOINT:-web}"
+      - "traefik.http.routers.guardedsleep-acme.service=guardedsleep-acme"
+      - "traefik.http.services.guardedsleep-acme.loadbalancer.server.port=8080"
+
+volumes:
+  # lego's account key and certificate store: only the acme service.
+  acme-state:
+  # crt.pem (chain) and key.pem for coturn: written by acme, read-only in coturn.
+  turn-certs:

@@ -4,15 +4,16 @@ The deployment of the project server `gs.mydata.rocks`, and the working example 
 
 | File                                                                         | Purpose                                                                            |
 | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| [`compose.yaml`](compose.yaml)                                               | `signaling`, `coturn`, `acme` and the optional `web` profile (off)                 |
+| [`compose.yaml`](compose.yaml)                                               | `signaling`, `coturn` and the optional `web` profile (off)                         |
+| [`compose.lego.yaml`](compose.lego.yaml)                                     | override for the lego alternative: the `acme` service and coturn's certificate     |
 | [`.env.template`](.env.template)                                             | every variable with its comment; copy to `.env` (git-ignored, holds `TURN_SECRET`) |
 | [`check-turn.sh`](check-turn.sh)                                             | the TURN allocation check for monitoring                                           |
-| [`acme-loop.sh`](acme-loop.sh), [`acme-deploy-hook.sh`](acme-deploy-hook.sh) | the `acme` service: certificate for `turns:` (issue, daily renewal check, install) |
-| [`reload-turn-cert.sh`](reload-turn-cert.sh)                                 | host cron: make coturn use a new certificate (restart once, then SIGUSR2)          |
+| [`acme-loop.sh`](acme-loop.sh), [`acme-deploy-hook.sh`](acme-deploy-hook.sh) | lego alternative: the `acme` service (issue, daily renewal check, install)         |
+| [`reload-turn-cert.sh`](reload-turn-cert.sh)                                 | lego alternative, host cron: make coturn use a new certificate (restart, SIGUSR2)  |
 
 ## What this stack assumes
 
-- **Traefik runs outside this repository** (the owner's homelab repository, `compose/contabo/traefik`): a Docker network named `traefik`, an HTTPS entrypoint (its name goes into `TRAEFIK_ENTRYPOINT`), the certificate resolver `letsencrypt`, the file middleware `secure-headers@file`, **access log off**, and idle timeouts of at least 35 s for WebSockets.
+- **Traefik runs outside this repository** (the owner's homelab repository, `compose/contabo/traefik`): a Docker network named `traefik`, an HTTPS entrypoint (its name goes into `TRAEFIK_ENTRYPOINT`), the certificate resolver `letsencrypt`, the file middleware `secure-headers@file`, **access log off**, idle timeouts of at least 35 s for WebSockets, and the `turns` entrypoint and TCP router of [turns: through Traefik](#turns-through-traefik-default) (Traefik v3).
 - **Real client addresses at Traefik.** The signaling server takes the client address from the last `X-Forwarded-For` hop (`SIGNALING_TRUST_PROXY=1`, one hop). Traefik must therefore see real IPv6 client addresses (an IPv6-enabled `traefik` network or host-mode ports); behind docker-proxy all IPv6 clients would share one address and every per-address limit would be wrong.
 - **The host has its public IPv4 and IPv6 on the interface** (no 1:1 NAT, as on Contabo), so coturn listens and relays on them directly and no `--external-ip` mapping is needed. On a provider with NAT, see [Self-hosting variants](#self-hosting-variants).
 - **DNS:** `gs.mydata.rocks` points at the host, DNS only (no proxying CDN, which would see the traffic).
@@ -24,7 +25,7 @@ The deployment of the project server `gs.mydata.rocks`, and the working example 
 3. Set `SIGNALING_TAG` to a `signaling-server-vX.Y.Z` release, without the prefix (`vX.Y.Z`). **No such release exists until the owner cuts the first one after group 9 of `alpha-connection-model`**; the template's `vX.Y.Z` fails to pull on purpose, and the compose file never accepts `latest` or `dev`. The images must be readable by the host: a public GHCR package, or `docker login ghcr.io` with a read-only token.
 4. Open the firewall (below).
 5. `docker compose up -d`, then run the checks of [Monitoring](#monitoring) once by hand.
-6. Issue the certificate for `turns:` ([next section](#certificate-for-turns)); until then clients get `turn:` only.
+6. Add the `turns` entrypoint and the TCP router to Traefik ([next section](#turns-through-traefik-default)) before or together with step 5; `TURN_URLS` in the template already lists the `turns:` URL.
 
 ## Update
 
@@ -41,9 +42,9 @@ Inbound, IPv4 and IPv6 alike, everything else dropped:
 | Port        | Protocol | Why                                                                  |
 | ----------- | -------- | -------------------------------------------------------------------- |
 | 22          | tcp      | SSH                                                                  |
-| 80, 443     | tcp      | Traefik (ACME HTTP-01 and the WebSocket)                             |
+| 80, 443     | tcp      | Traefik (ACME and the WebSocket)                                     |
 | 3478        | udp, tcp | STUN and TURN                                                        |
-| 5349        | tcp      | `turns:` (TLS; needs the certificate below)                          |
+| 5349        | tcp      | `turns:` (TLS, terminated by Traefik; with lego by coturn itself)    |
 | 49160-49359 | udp      | relay ports (`TURN_MIN_PORT` to `TURN_MAX_PORT`; one per allocation) |
 
 ```bash
@@ -56,7 +57,71 @@ ufw enable
 
 **Docker's published ports bypass `ufw`.** This stack publishes none: `signaling` joins only the `traefik` network, and `coturn` uses host networking, so its sockets are reachable exactly where `ufw` allows. Keep it that way (a `ports:` entry would open the port regardless of the rules above). Keep `TURN_TOTAL_QUOTA` equal to the relay range (200 ports).
 
-## Certificate for `turns:`
+## `turns:` through Traefik (default)
+
+`turns:` (TURN over TLS on 5349) helps behind firewalls that pass only TLS-looking traffic. By default **Traefik terminates the TLS** with the Let's Encrypt certificate it already holds for `PUBLIC_HOST` and forwards the decrypted stream as plain TURN-over-TCP to coturn's 3478. coturn runs with `--no-tls` (DTLS is off without `--dtls`; coturn 4.18 has no `--no-dtls` option) and has no certificate.
+
+Why: no certificate files in coturn, no reload job, no second ACME client, and no HTTP-01 coexistence constraint with Traefik's own resolver. The local proof is `just public-server-turns-traefik`.
+
+**Static configuration** (an entrypoint of its own; [entryPoints reference](https://doc.traefik.io/traefik/routing/entrypoints/#respondingtimeouts)). Publish `5349:5349` on the Traefik container as well.
+
+```yaml
+entryPoints:
+  turns:
+    address: ":5349"
+    transport:
+      respondingTimeouts:
+        readTimeout: 0 # Traefik v3 defaults to 60 s; a TURN-over-TCP connection is long-lived
+```
+
+**Dynamic configuration** (file provider; [TCP routers](https://doc.traefik.io/traefik/routing/routers/#configuring-tcp-routers), [TLS stores and `defaultGeneratedCert`](https://doc.traefik.io/traefik/https/tls/#certificates-stores)):
+
+```yaml
+tcp:
+  routers:
+    guardedsleep-turns:
+      entryPoints: [turns]
+      rule: HostSNI(`*`)
+      service: guardedsleep-coturn
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: gs.mydata.rocks
+  services:
+    guardedsleep-coturn:
+      loadBalancer:
+        servers:
+          - address: "<host public IPv4>:3478" # coturn uses host networking
+tls:
+  stores:
+    default:
+      defaultGeneratedCert:
+        resolver: letsencrypt
+        domain:
+          main: gs.mydata.rocks
+```
+
+- `HostSNI(`*`)` matches every client, also one without SNI (some TURN stacks send none); the default store's `defaultGeneratedCert` gives such a client the certificate for `PUBLIC_HOST` instead of Traefik's self-signed default.
+- The service address is the host's public IPv4 because coturn listens on `TURN_IPV4` and `TURN_IPV6` only (not on `127.0.0.1` or the Docker bridge). A Traefik inside Docker reaches the host through that address; the firewall rule for 3478 already allows it.
+- TLS versions: Traefik's default minimum is TLS 1.2 (the local test confirms a TLS 1.1 handshake fails); enforce it explicitly with your TLS options if you want it independent of Traefik's defaults ([TLS options](https://doc.traefik.io/traefik/https/tls/#tls-options)).
+- **`readTimeout: 0`.** Traefik v3.7.17 in the local test kept an idle and an active TURN-over-TCP connection open for 75 s also with its default 60 s `readTimeout` (TCP routers do not apply it), so the setting is defensive; keep it, because the default is documented for the entrypoint and a later release may enforce it on TCP.
+
+**Only `turns:` goes through Traefik; coturn stays on host networking.** STUN, TURN over UDP and TCP on 3478 and the relay ports reach coturn directly, for four reasons:
+
+- STUN answers "which public address do you see me at"; behind a proxy coturn would see the proxy and hand out a wrong server-reflexive address, which breaks direct internet paths. For `turns:` this does not matter, because only relayed traffic uses it.
+- The relay ports (49160–49359/udp) are allocated per allocation on coturn's public address and announced to the peer, which then sends there directly; a proxy cannot route ports it does not know in advance, and Traefik's UDP routing has no notion of an allocation.
+- Publishing 200 UDP ports through Docker is slow and can lose the client address; coturn's own image documentation recommends host networking.
+- With its public addresses on the interface, coturn listens and relays on them without `--external-ip` and can deny them as relay peers, so TURN never reaches services on the host.
+
+**A file route, not Docker labels.** For a container on host networking, Traefik's Docker provider targets the host as Traefik sees it (`host.docker.internal` or the bridge gateway), and a TCP service label can set only the port, not the address. coturn would then have to listen on the Docker bridge too, which ties it to Docker internals and adds an address only for routing. The default store's `defaultGeneratedCert` exists only in the file provider anyway, and the `turns` entrypoint and its published port live in the Traefik configuration, so the router sits next to them.
+
+**Trade-offs.** coturn sees the proxy as the client address for `turns:` (harmless: coturn logs nothing, and the per-address limits live in the signaling server, which sees the real client). One more hop for relayed TLS traffic. The proxy terminates the TLS, but the media inside is DTLS-SRTP end to end between the two devices, so the proxy sees only the TURN framing and encrypted payloads. The firewall is unchanged (5349/tcp, Traefik listens there).
+
+**Check.** `openssl s_client -connect gs.mydata.rocks:5349 -servername gs.mydata.rocks </dev/null | openssl x509 -noout -subject -issuer -dates`, and a `turns:` allocation (`turnutils_uclient -S` inside the coturn container with the REST secret, as `check-turn.sh` does for UDP, aimed at `gs.mydata.rocks:5349`). Alert on expiry with an Uptime Kuma "TLS certificate expiry" option on a TCP/TLS monitor of `gs.mydata.rocks:5349`.
+
+## Alternative: own certificate with lego
+
+For a proxy that cannot terminate TCP/TLS (a pure HTTP proxy, or a Traefik you do not want to open a TCP entrypoint on), coturn terminates TLS itself. Add `compose.lego.yaml` (`docker compose -f compose.yaml -f compose.lego.yaml up -d`, or `COMPOSE_FILE=compose.yaml:compose.lego.yaml` in `.env`, which also lets the cron job below run without flags) and set `ACME_EMAIL`, `TURN_TLS_ARG_1=--cert=/certs/crt.pem` and `TURN_TLS_ARG_2=--pkey=/certs/key.pem` in `.env` (the commented block of the template). Do not route 5349 through Traefik in this variant. `just public-server-turns` proves it locally.
 
 `turns:` (TURN over TLS on 5349) helps behind firewalls that pass only TLS-looking traffic. coturn needs a certificate as files, so the `acme` service obtains a **dedicated certificate for `PUBLIC_HOST`** with [lego](https://go-acme.github.io/lego/) (pinned tag, Renovate bumps it) instead of exporting Traefik's `acme.json` (an exporter would read every private key on the host). The service has no Docker socket, only `CHOWN` as a capability, a read-only root file system, and its own volume `acme-state` for lego's account key; coturn mounts only the `turn-certs` volume (`crt.pem` chain, `key.pem` key, mode 0600 for coturn's user) read-only.
 
@@ -68,9 +133,9 @@ ufw enable
 2. `docker compose up -d` starts `acme`; it runs `lego run` at once (a few seconds). `docker compose logs acme` ends with `acme: certificate installed for coturn`. A failure (DNS, the route, a rate limit) is logged and retried every 6 hours.
 3. Run `./reload-turn-cert.sh` once: it sees the first certificate and **restarts coturn once** (a coturn started without a certificate has no TLS listener; a reload does not create one). Running allocations drop and clients reconnect.
 4. Check: `openssl s_client -connect gs.mydata.rocks:5349 -servername gs.mydata.rocks </dev/null | openssl x509 -noout -subject -issuer -dates`, and a `turns:` allocation (`turnutils_uclient -S` inside the coturn container with the REST secret, as `check-turn.sh` does for UDP).
-5. Add the `turns:` URL to `TURN_URLS` in `.env` (the commented line in `.env.template`) and `docker compose up -d` (recreates `signaling` only).
+5. Keep the `turns:` URL out of `TURN_URLS` until now (the template lists it; remove it for the first start, or clients try it and wait for a timeout before falling back), then add it and `docker compose up -d` (recreates `signaling` only).
 
-**Before a certificate exists** coturn starts normally and logs `cannot start TLS and DTLS listeners because certificate file is not set properly` (a warning without client data): it serves STUN and `turn:` on 3478, nothing listens on 5349, and `signaling` does not advertise `turns:` (step 5 not done yet).
+**Before a certificate exists** (lego variant) coturn starts normally and logs `cannot start TLS and DTLS listeners because certificate file is not set properly` (a warning without client data): it serves STUN and `turn:` on 3478, nothing listens on 5349, and `signaling` does not advertise `turns:` (step 5 not done yet).
 
 **Renewal.** `acme` runs `lego run` once a day; lego renews only when the certificate is due (a third of its lifetime left, or when the CA's renewal information says so), installs the new files through the deploy hook (temporary name, then rename, key first) and logs it. Host cron applies it to coturn:
 
@@ -168,7 +233,7 @@ For every proxy: keep idle WebSockets open for more than 35 s; set `SIGNALING_TR
 - [ ] `docker compose config` passes with your `.env`; `docker compose ps` shows both services running.
 - [ ] `https://gs.mydata.rocks/signaling/healthz` answers `ok` through Traefik.
 - [ ] `./check-turn.sh` prints `check-turn: OK`.
-- [ ] Certificate issued (`docker compose logs acme`), `./reload-turn-cert.sh` ran once and is in cron, `turns:` handshake and allocation work, `TURN_URLS` lists the `turns:` URL.
+- [ ] `turns:` works: Traefik has the `turns` entrypoint (port 5349 published, `readTimeout: 0`) and the TCP router, the `openssl s_client` check shows the certificate for `PUBLIC_HOST`, a `turns:` allocation succeeds, `TURN_URLS` lists the `turns:` URL. (Lego variant instead: certificate issued, `docker compose logs acme`, `./reload-turn-cert.sh` ran once and is in cron.)
 - [ ] Firewall as above, `ufw logging off`; no `ports:` anywhere.
 - [ ] The log search after a relayed test call finds no test client address in `docker compose logs`, Traefik's log or `journalctl`.
 - [ ] Uptime Kuma monitors for both checks are green.
