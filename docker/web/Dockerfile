@@ -64,9 +64,18 @@ COPY --from=lists /out/lists apps/web/src/lib/public-lists/generated
 
 # `vite build` directly: the package's `prebuild` hook would run cargo, and the generated inputs
 # (i18n, public lists, WASM core) come from the stages above.
-# `--mode production` is explicit on purpose: a release build must never use the `e2e` mode, which
-# lets the invite codec accept loopback mailboxes (https://vite.dev/guide/env-and-mode#modes).
-RUN pnpm --filter @guardedsleep/web exec vite build --mode production
+# The mode is explicit on purpose and limited to `production` (the release default) and `staging`
+# (the test deployment image, built with VITE_GS_OFFICIAL_DEPLOYMENT=true, see
+# docs/contributing/web-docker.md). `e2e` and `development` let the invite codec accept loopback
+# mailboxes, so they never reach the image. https://vite.dev/guide/env-and-mode#modes
+ARG WEB_BUILD_MODE=production
+ARG VITE_GS_OFFICIAL_DEPLOYMENT=false
+# Exported for `vite build` and for the CSP plugin, which reads process.env at build time.
+ENV VITE_GS_OFFICIAL_DEPLOYMENT=${VITE_GS_OFFICIAL_DEPLOYMENT}
+RUN case "$WEB_BUILD_MODE" in production|staging) ;; \
+		*) echo "WEB_BUILD_MODE must be production or staging, got: $WEB_BUILD_MODE" >&2; exit 1 ;; \
+	esac \
+	&& pnpm --filter @guardedsleep/web exec vite build --mode "$WEB_BUILD_MODE"
 
 FROM nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10 AS runner
 

@@ -64,6 +64,16 @@ The image contains no signaling URL and no per-deployment setting, so one publis
 
 The build-time TLS certificate (self-signed) is also generated with `localhost` + `127.0.0.1` only in the published images; LAN-IP coverage requires a local rebuild with `TLS_EXTRA_SAN=IP:192.168.x.y`.
 
+## Staging image (test deployment)
+
+`ghcr.io/<owner-lowercase>/guardedsleep-web-staging` is published by the second job of `docker-web.yml` from `main` (`:dev`, `:edge`, `:sha-<short>`), never for pull requests and never on release tags. It is the owner's test deployment of the official origin (`https://app.gs.mydata.rocks`), the web analogue of an Android debug build:
+
+- built with `--build-arg WEB_BUILD_MODE=staging --build-arg VITE_GS_OFFICIAL_DEPLOYMENT=true` ([Vite modes](https://vite.dev/guide/env-and-mode#modes)), so new invites carry the project server and the CSP `connect-src` lists `wss://gs.mydata.rocks`;
+- loopback mailboxes stay refused, as in the release image;
+- the Dockerfile accepts only `production` (default) and `staging` as `WEB_BUILD_MODE`.
+
+It is not a release: do not offer it to the public as the web client. The signaling server must list the web origin in `SIGNALING_ALLOWED_ORIGINS`, and `/signaling` must not be routed to this image on its host (the browser talks to `wss://gs.mydata.rocks/signaling` directly). Release builds (`guardedsleep-web`, mode `production`) are unchanged and keep the project server off until task 6.2 of `alpha-connection-model`.
+
 ## End-user deployment from GHCR
 
 Drop-in self-hosting of **web + signaling** together without cloning this repo: see [docker/stack/README.md](../../docker/stack/README.md) Mode B, which pulls both `guardedsleep-signaling` and `guardedsleep-web` from GHCR using a single compose file.

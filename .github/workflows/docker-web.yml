@@ -5,6 +5,8 @@
 #   - push to main, paths under apps/web, packages/core-wasm and the core crates → publishes :dev + :sha-<short>
 #   - push of a manual tag `web-v*` → publishes :latest, :vX.Y.Z, :vX.Y (+ :vX post-1.0)
 #     (releases are manual tags during the alpha; Release Please returns at beta, ADR-020 §10)
+#   - the same push to main and workflow_dispatch also publish guardedsleep-web-staging (:dev, :sha-<short>;
+#     test deployment build, never on tags)
 #   - pull_request → build check only (read-only token, no registry login, no push)
 #   - workflow_dispatch → manual one-off (publishes :dev unless a tag was pushed too)
 #
@@ -70,3 +72,24 @@ jobs:
       description: Static PWA host (nginx) for GuardedSleep – Privacy Baby Monitor.
       build-args: |
         TLS_EXTRA_SAN=
+
+  image-staging:
+    # The test deployment build (project server in new invites, not a release): published from main
+    # and manual runs only, never for a pull request (the job above already builds the Dockerfile)
+    # and never for a tag. The tag prefix matches no real tag, so no release tag derives
+    # :latest/:vX.Y.Z from it.
+    if: github.event_name != 'pull_request' && !startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/docker-image.yml
+    with:
+      image-name: guardedsleep-web-staging
+      tag-prefix: web-staging-never-v
+      dockerfile: docker/web/Dockerfile
+      title: GuardedSleep Web (staging, test deployment)
+      description: Test-deployment build of the GuardedSleep web client with the project server in new invites. Not a release.
+      build-args: |
+        TLS_EXTRA_SAN=
+        WEB_BUILD_MODE=staging
+        VITE_GS_OFFICIAL_DEPLOYMENT=true
