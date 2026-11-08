@@ -4,13 +4,13 @@ Branch `ci/dev-apk-prerelease`. Tooling only (`skip_specs: true`).
 
 ## 1. Workflow
 
-- [ ] 1.1 `dev-apk` job in `.github/workflows/android-native.yml` as design §5: download `guardedsleep-alpha-debug-apk`, re-sign with the dev key (design §1, §3), verify, write notes with commit, date, test-build warning and SHA-256, publish to the rolling `android-dev` pre-release (design §2), delete the key in an `always()` step. SHA-pinned actions, `permissions` on the job only, secrets passed through `env:` (never interpolated into `run:`). Verify: `just lint-workflows`.
-- [ ] 1.2 Fail with a clear message naming the missing secret when the `dev-apk` environment is not set up. Verify: read the step; `just lint-workflows`.
+- [x] 1.1 `dev-apk` job in `.github/workflows/android-native.yml` as design §5: download `guardedsleep-alpha-debug-apk`, re-sign with the dev key (design §1, §3), verify, write notes with commit, date, test-build warning and SHA-256, publish to the rolling `android-dev` pre-release (design §2), delete the key in an `always()` step. SHA-pinned actions, `permissions` on the job only, secrets passed through `env:` (never interpolated into `run:`). Verify: `just lint-workflows`.
+- [x] 1.2 Fail with a clear message naming the missing secret when the `dev-apk` environment is not set up. Verify: read the step; `just lint-workflows`.
 
 ## 2. Docs
 
-- [ ] 2.1 `docs/ci-gates.md`: one row for `android-native` / `dev-apk` (protects: testers get the gate-tested build at a stable link that updates in place; runbook: missing secret, re-run from the `gate` artifact, key rotation means one uninstall). Verify: `just lint-text`.
-- [ ] 2.2 `docs/contributing/` (the page that covers Android installs): link to the `android-dev` pre-release, install steps, the dev-versus-release key note, and the owner steps to create the keystore and the `dev-apk` environment. Verify: `just lint-text`.
+- [x] 2.1 `docs/ci-gates.md`: one row for `android-native` / `dev-apk` (protects: testers get the gate-tested build at a stable link that updates in place; runbook: missing secret, re-run from the `gate` artifact, key rotation means one uninstall). Verify: `just lint-text`.
+- [x] 2.2 `docs/contributing/` (the page that covers Android installs): link to the `android-dev` pre-release, install steps, the dev-versus-release key note, and the owner steps to create the keystore and the `dev-apk` environment. Verify: `just lint-text`.
 
 ## 3. Owner
 
