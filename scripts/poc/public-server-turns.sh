@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Task 10.2 (alpha-connection-model, design section 9): turns: on 5349 of the public-server stack.
+# Task 10.2 (alpha-connection-model, design section 9): turns: on 5349 of the public-server stack, LEGO variant (the
+# alternative since task 10.4; the default, TLS at Traefik, is scripts/poc/public-server-turns-traefik.sh).
 #
-# Runs docker/public-server/compose.yaml (the template filled with test values, the bridge override of
+# Runs docker/public-server/compose.yaml plus compose.lego.yaml (the template filled with test values, the bridge override of
 # public-server-logs.compose.yaml) with coturn and the acme service, and proves, with TEST certificates made at run
 # time (a throw-away CA and two leaf certificates, never committed, deleted by the trap):
 #   1. coturn starts with NO certificate: no TLS listener, but turn: over UDP still allocates;
@@ -38,6 +39,7 @@ TURN_V6=fd00:5eed:b::10
 HOST_NAME=gs.mydata.rocks
 
 TAG=public-server-turns
+PS_LEGO=1 # the lego variant (compose.lego.yaml); the default, Traefik, is scripts/poc/public-server-turns-traefik.sh
 # shellcheck source=scripts/poc/lib/public-server.sh
 source "$ROOT/scripts/poc/lib/public-server.sh"
 cleanup() { ps_cleanup --volumes; }
@@ -49,11 +51,11 @@ echo "ACME_SERVER=https://acme.invalid/directory" >>"$WORK/.env"
 
 echo "== docker compose config with the template"
 CONFIG="$(compose config)"
-for needle in '--tls-listening-port=5349' '--cert=/certs/crt.pem' '--pkey=/certs/key.pem' 'goacme/lego:v'; do
+for needle in '--cert=/certs/crt.pem' '--pkey=/certs/key.pem' 'goacme/lego:v'; do
 	grep -q -- "$needle" <<<"$CONFIG" || { echo "public-server-turns: compose config lacks $needle" >&2; exit 1; }
 done
-if grep -q -e '--no-tls$' -e '--dtls' -e '--no-dtls' <<<"$CONFIG"; then
-	echo "public-server-turns: coturn must not carry --no-tls, --dtls or --no-dtls" >&2
+if grep -q -e '--no-tls$' -e '--dtls' <<<"$CONFIG"; then
+	echo "public-server-turns: coturn must not carry --no-tls or --dtls" >&2
 	exit 1
 fi
 

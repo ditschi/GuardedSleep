@@ -5,10 +5,12 @@
 #
 # Source it after setting: ROOT SRC (docker/public-server) PROJECT NET WORK (a mktemp -d) OUT TAG (script name for
 # messages), and for ps_fill_env TURN_V4 TURN_V6; SIGNALING_IMAGE is optional (an unused service gets a dummy).
+# PS_LEGO=1 (set before sourcing) adds docker/public-server/compose.lego.yaml and its .env values (the lego variant of turns:).
 # Provides: COMPOSE_ARGS (array, everything after `docker compose`), compose, ps_fill_env, ps_cleanup, ps_require_running.
 # shellcheck shell=bash
 
 COMPOSE_ARGS=(-p "$PROJECT" --env-file "$WORK/.env" -f "$SRC/compose.yaml" -f "$ROOT/scripts/poc/public-server-logs.compose.yaml")
+if [[ "${PS_LEGO:-0}" == 1 ]]; then COMPOSE_ARGS+=(-f "$SRC/compose.lego.yaml"); fi
 
 compose() {
 	GS_TEST_SIGNALING_IMAGE="${SIGNALING_IMAGE:-unused}" GS_TEST_NET="$NET" docker compose "${COMPOSE_ARGS[@]}" "$@"
@@ -18,9 +20,11 @@ compose() {
 ps_fill_env() {
 	sed -e "s|^TURN_SECRET=.*|TURN_SECRET=$1|" \
 		-e "s|^SIGNALING_TAG=.*|SIGNALING_TAG=test|" \
-		-e "s|^ACME_EMAIL=.*|ACME_EMAIL=test@example.invalid|" \
 		-e "s|^TURN_IPV4=.*|TURN_IPV4=$TURN_V4|" \
 		-e "s|^TURN_IPV6=.*|TURN_IPV6=$TURN_V6|" "$SRC/.env.template" >"$WORK/.env"
+	if [[ "${PS_LEGO:-0}" == 1 ]]; then
+		printf '%s\n' "ACME_EMAIL=test@example.invalid" "TURN_TLS_ARG_1=--cert=/certs/crt.pem" "TURN_TLS_ARG_2=--pkey=/certs/key.pem" >>"$WORK/.env"
+	fi
 }
 
 # ps_cleanup [--volumes]: keep the stack log, remove the project (and its volumes), the network and $WORK.
