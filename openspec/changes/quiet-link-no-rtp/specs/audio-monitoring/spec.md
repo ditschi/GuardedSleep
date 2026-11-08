@@ -4,17 +4,36 @@
 
 ### Requirement: Audio only on demand
 
-The baby unit SHALL send audio only while the noise gate is loud, the parent is listening, or a test alert runs. Otherwise it SHALL detach the microphone track from the audio sender, so no RTP packets are sent, and SHALL keep the track disabled as well, so a failed detach can only send silence. Audio SHALL flow only from the baby unit to the parent unit, encrypted by DTLS-SRTP.
+The baby unit SHALL send audio only while the noise gate is loud, the parent is listening, or a test alert runs. Otherwise it SHALL detach the microphone track from the audio sender, so no RTP packets are sent, and SHALL keep the track disabled as well, so a failed detach can only send silence. Capture SHALL keep running while the track is detached, so the noise gate keeps hearing the room. Audio SHALL flow only from the baby unit to the parent unit, encrypted by DTLS-SRTP.
 
 #### Scenario: Quiet night
 
 - **WHEN** the room is quiet and the parent is not listening
-- **THEN** the baby unit sends no RTP packets
+- **THEN** the baby unit sends no RTP packets, and the noise gate keeps receiving microphone buffers
 
-#### Scenario: Noise after a quiet hour
+#### Scenario: Noise after a quiet hour is detected
+
+- **WHEN** the room was quiet for an hour with the track detached and a baby cries
+- **THEN** the core raises the noise event within the hold time
+
+#### Scenario: Audio starts quickly after a quiet hour
 
 - **WHEN** the noise gate turns loud after an hour without audio
-- **THEN** the first audio packet leaves the baby unit within 100 ms of the gate change
+- **THEN** the first audio packet leaves the baby unit within 250 ms of the gate change
+
+### Requirement: Microphone health
+
+The core SHALL report `mic_silent` when the baby unit has received only digital silence, or no capture buffers at all, for 30 seconds while monitoring, and the parent SHALL show it.
+
+#### Scenario: Microphone blocked by another app
+
+- **WHEN** the baby phone delivers only digital silence for 30 seconds
+- **THEN** the parent sees that the baby unit's microphone hears nothing
+
+#### Scenario: Capture stopped
+
+- **WHEN** no capture buffers reach the core for 30 seconds while monitoring
+- **THEN** the parent sees that the baby unit's microphone hears nothing
 
 ## ADDED Requirements
 
@@ -27,14 +46,23 @@ After muting, the baby unit SHALL check that its audio sender stops sending pack
 - **WHEN** the sender's packet count still grows 10 s after muting
 - **THEN** the baby unit shows the notice with the estimated megabytes per night
 
+### Requirement: Audio resume check
+
+After unmuting, the baby unit SHALL check that packets flow within 1 s. Otherwise the core SHALL retry the attach once and then tell the parent that no sound arrives from the baby device; noise events SHALL still reach the parent.
+
+#### Scenario: Audio does not resume
+
+- **WHEN** the sender's packet count does not grow within 1 s after unmuting, also after one retry
+- **THEN** the parent shows that no sound arrives from the baby device, and noise events still reach it
+
 ### Requirement: Speech-grade audio profile
 
-Both clients SHALL negotiate Opus mono with an audio bandwidth up to 8 kHz, in-band FEC on, DTX off, 60 ms packets, and an average bitrate of 16, 24 or 32 kbit/s from the parent's audio quality setting (default 24). The profile SHALL be written into the session description by the core.
+Both clients SHALL negotiate Opus mono with an audio bandwidth up to 8 kHz, in-band FEC on, DTX off, 60 ms packets and an average bitrate of 24 kbit/s. The profile SHALL be written into the session description by the core, which SHALL change only the Opus parameters and packet time.
 
 #### Scenario: Default profile
 
-- **WHEN** the devices connect with the default setting
-- **THEN** the negotiated Opus parameters are mono, 16 kHz playback rate, FEC on, 60 ms packets and 24 kbit/s
+- **WHEN** the devices connect
+- **THEN** the negotiated Opus parameters are mono, 16 kHz playback rate, FEC on, 60 ms packets and 24 kbit/s, and the DTLS fingerprint is unchanged
 
 ### Requirement: Raw microphone capture
 
