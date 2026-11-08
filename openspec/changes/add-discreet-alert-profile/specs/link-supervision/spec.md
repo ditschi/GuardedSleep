@@ -16,6 +16,11 @@ The parent core SHALL accept an optional escalation delay (`None` switches the t
 - **WHEN** the parent starts Listen 30 seconds after the alert
 - **THEN** no `noise_escalated` event follows for that event
 
+#### Scenario: Already listening
+
+- **WHEN** Listen is on when a noise event starts
+- **THEN** the event counts as acknowledged and no `noise_escalated` event follows
+
 #### Scenario: Timer off (failure)
 
 - **WHEN** the delay is `None` and noise continues for 10 minutes

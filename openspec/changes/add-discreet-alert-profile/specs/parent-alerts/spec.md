@@ -33,6 +33,11 @@ The parent MAY choose escalation "Off", and choosing it SHALL show a warning tha
 
 Listen, Stop sound or Stop vibration, and Snooze SHALL acknowledge a discreet noise event, and a new event after the 2-minute quiet rule SHALL restart the count.
 
+#### Scenario: Escalated event ends listening
+
+- **WHEN** the event switched to sound and the parent then ends Listen
+- **THEN** the audio keeps playing until the event ends
+
 #### Scenario: Parent reacts in time
 
 - **WHEN** the parent taps Stop vibration after 1 minute

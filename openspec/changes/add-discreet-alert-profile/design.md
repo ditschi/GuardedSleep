@@ -23,7 +23,8 @@ Discarded alternative: the whole profile in the core (a `SetAlertStyle` input). 
 - New event `NoiseEscalated { after_ms }`, emitted once per core noise event when the delay passes without acknowledgment.
 - The core's noise event: a non-probe `noise_alert` starts one when none is active or the previous event's last loud signal is 2 minutes old; a loud signal (a non-probe `noise_alert`, or a peer heartbeat whose level is at or above the baby's noise threshold) continues it; 2 minutes without a loud signal end it, so the next noise starts a new event and the count restarts. The core follows alerts and heartbeats, not the parent's audio levels (the parent unit's `NoiseTracker` stays presentation).
 - The delay counts from the event start, or from the moment the delay was armed if that is later: switching to discreet in the middle of a running event never escalates at once.
-- A snoozed `noise_alert` counts as acknowledged; when the snooze ends or is cancelled during noise the event restarts unacknowledged (the full alert starts then, as the snooze requirement says).
+- An event that starts while Listen is already on counts as acknowledged (the parent is on it).
+- A snoozed `noise_alert` counts as acknowledged; when the snooze ends or is cancelled during noise the event restarts unacknowledged (the full alert starts then, as the snooze requirement says) "Still loud" uses the platforms' 3 s window plus one heartbeat interval, because the core sees the level only through alerts and heartbeats (a bare 3 s would drop nearly every sustained event).
 
 ### Who passes the delay: only while discreet (the platform sends `None` otherwise)
 
@@ -65,6 +66,8 @@ Configurable, default 2 minutes; choices 1, 2 (default), 5 minutes and Off. Opti
 - Discarded: **fixed 5 minutes.** A longer unheard period for every user.
 
 ## Risks / Trade-offs
+
+- **Duplicated noise event tracking (known limitation):** the platforms keep the event for the alert screen (2-minute quiet rule, snooze-end restart) and the core keeps its own copy for the escalation timer; the two can differ at the edges, so the platform ignores `noise_escalated` outside a running platform event. Moving the tracking into the core and reporting it to the platforms is a backlog `IDEA`.
 
 - The core's event rule follows alerts and heartbeats, not audio levels, so in rare cases (a gap of 2 minutes between two alerts during sustained noise) the count restarts. Accepted: it can only add a switch to sound, never remove one.
 - Android screenshot baselines for the new indicator and alert variant can be recorded only in the pinned build image; if it is unavailable the baselines are recorded later and the tests that need them are not added until then.
