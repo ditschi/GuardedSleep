@@ -106,6 +106,15 @@ tls:
 - TLS versions: Traefik's default minimum is TLS 1.2 (the local test confirms a TLS 1.1 handshake fails); enforce it explicitly with your TLS options if you want it independent of Traefik's defaults ([TLS options](https://doc.traefik.io/traefik/https/tls/#tls-options)).
 - **`readTimeout: 0`.** Traefik v3.7.17 in the local test kept an idle and an active TURN-over-TCP connection open for 75 s also with its default 60 s `readTimeout` (TCP routers do not apply it), so the setting is defensive; keep it, because the default is documented for the entrypoint and a later release may enforce it on TCP.
 
+**Only `turns:` goes through Traefik; coturn stays on host networking.** STUN, TURN over UDP and TCP on 3478 and the relay ports reach coturn directly, for four reasons:
+
+- STUN answers "which public address do you see me at"; behind a proxy coturn would see the proxy and hand out a wrong server-reflexive address, which breaks direct internet paths. For `turns:` this does not matter, because only relayed traffic uses it.
+- The relay ports (49160–49359/udp) are allocated per allocation on coturn's public address and announced to the peer, which then sends there directly; a proxy cannot route ports it does not know in advance, and Traefik's UDP routing has no notion of an allocation.
+- Publishing 200 UDP ports through Docker is slow and can lose the client address; coturn's own image documentation recommends host networking.
+- With its public addresses on the interface, coturn listens and relays on them without `--external-ip` and can deny them as relay peers, so TURN never reaches services on the host.
+
+**A file route, not Docker labels.** For a container on host networking, Traefik's Docker provider targets the host as Traefik sees it (`host.docker.internal` or the bridge gateway), and a TCP service label can set only the port, not the address. coturn would then have to listen on the Docker bridge too, which ties it to Docker internals and adds an address only for routing. The default store's `defaultGeneratedCert` exists only in the file provider anyway, and the `turns` entrypoint and its published port live in the Traefik configuration, so the router sits next to them.
+
 **Trade-offs.** coturn sees the proxy as the client address for `turns:` (harmless: coturn logs nothing, and the per-address limits live in the signaling server, which sees the real client). One more hop for relayed TLS traffic. The proxy terminates the TLS, but the media inside is DTLS-SRTP end to end between the two devices, so the proxy sees only the TURN framing and encrypted payloads. The firewall is unchanged (5349/tcp, Traefik listens there).
 
 **Check.** `openssl s_client -connect gs.mydata.rocks:5349 -servername gs.mydata.rocks </dev/null | openssl x509 -noout -subject -issuer -dates`, and a `turns:` allocation (`turnutils_uclient -S` inside the coturn container with the REST secret, as `check-turn.sh` does for UDP, aimed at `gs.mydata.rocks:5349`). Alert on expiry with an Uptime Kuma "TLS certificate expiry" option on a TCP/TLS monitor of `gs.mydata.rocks:5349`.
