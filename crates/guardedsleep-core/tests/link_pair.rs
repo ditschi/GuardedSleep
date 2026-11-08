@@ -1175,6 +1175,16 @@ fn escalation_delay(w: &mut World, after_ms: Option<u64>) {
     w.input(PARENT, LinkInput::SetNoiseEscalation { after_ms });
 }
 
+fn snooze_for(w: &mut World, ms: u64) {
+    let until = w.now + ms;
+    w.input(
+        PARENT,
+        LinkInput::SetSnooze {
+            until_ms: Some(until),
+        },
+    );
+}
+
 #[test]
 fn unacknowledged_noise_escalates_once_after_the_delay() {
     let mut w = World::pair(&PSK_A, &PSK_A);
@@ -1206,19 +1216,22 @@ fn listen_stop_and_snooze_acknowledge_the_event() {
         match ack {
             0 => w.input(PARENT, LinkInput::SetListen { enabled: true }),
             1 => w.input(PARENT, LinkInput::AcknowledgeNoise),
-            _ => {
-                let until = w.now + 600_000;
-                w.input(
-                    PARENT,
-                    LinkInput::SetSnooze {
-                        until_ms: Some(until),
-                    },
-                );
-            }
+            _ => snooze_for(&mut w, 600_000),
         }
         loud(&mut w, 90_000);
         assert_eq!(escalations(&w, m), 0, "acknowledgment kind {ack}");
     }
+}
+
+#[test]
+fn an_event_that_starts_while_listening_is_acknowledged() {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    escalation_delay(&mut w, Some(30_000));
+    w.input(PARENT, LinkInput::SetListen { enabled: true });
+    let m = w.mark(PARENT);
+    loud(&mut w, 90_000);
+    assert_eq!(escalations(&w, m), 0, "the parent was already listening");
 }
 
 #[test]
@@ -1265,13 +1278,7 @@ fn a_snooze_that_ends_in_noise_starts_the_count_over() {
     let mut w = World::pair(&PSK_A, &PSK_A);
     w.connect_pair();
     escalation_delay(&mut w, Some(30_000));
-    let until = w.now + 20_000;
-    w.input(
-        PARENT,
-        LinkInput::SetSnooze {
-            until_ms: Some(until),
-        },
-    );
+    snooze_for(&mut w, 20_000);
     let m = w.mark(PARENT);
     loud(&mut w, 40_000);
     assert_eq!(

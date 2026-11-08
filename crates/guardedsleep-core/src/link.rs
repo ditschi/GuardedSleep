@@ -76,8 +76,11 @@ const ACK_MS: u64 = 300_000;
 const LISTEN_RESUME_MS: u64 = 60_000;
 /// A parent noise event ends after this long without a loud signal (the 2-minute quiet rule).
 const NOISE_EVENT_QUIET_MS: u64 = 120_000;
-/// A snoozed event restarts when the snooze ends only if the noise was loud this recently.
-const NOISE_RECENT_MS: u64 = 30_000;
+/// A snoozed event restarts when the snooze ends only if the noise was loud this recently: the
+/// same "still loud at snooze end" window as the platforms' `ParentModel` (3 s). The core sees
+/// the level only through noise alerts and heartbeats, so one heartbeat interval is added (see
+/// `noise_recent_ms`); a bare 3 s would drop nearly every sustained event at snooze end.
+const NOISE_RECENT_MS: u64 = 3_000;
 /// Smallest accepted noise escalation delay.
 const MIN_NOISE_ESCALATION_MS: u64 = 1_000;
 const QUIET_RATE_MS: u64 = 10_000;
@@ -3238,7 +3241,7 @@ impl Link {
                 }
             }
             (Role::Parent, DataMessage::NoiseAlert { rms, probe, .. }) => {
-                let snoozed = !probe && self.snooze_until.is_some_and(|u| now < u);
+                let snoozed = !probe && self.snooze_active(now);
                 if !probe {
                     self.on_noise_alert(now, snoozed);
                 }
@@ -3485,7 +3488,8 @@ impl Link {
                 self.noise_event = Some(NoiseEvent {
                     started: now,
                     last_loud: now,
-                    acked: false,
+                    // Already listening: the parent is on it.
+                    acked: self.listen_intent,
                     snooze_acked: snoozed,
                     escalated: false,
                 });
@@ -3496,17 +3500,18 @@ impl Link {
     /// The snooze ended or was cleared during a noise event: a still loud event starts over
     /// unacknowledged (the full alert starts then), a quiet one is over.
     fn restart_snoozed_noise_event(&mut self, now: u64) {
+        let recent = NOISE_RECENT_MS + self.cfg.heartbeat_interval_ms;
         let Some(e) = self.noise_event.as_mut() else {
             return;
         };
         if !e.snooze_acked {
             return;
         }
-        if now.saturating_sub(e.last_loud) <= NOISE_RECENT_MS {
+        if now.saturating_sub(e.last_loud) <= recent {
             *e = NoiseEvent {
                 started: now,
                 last_loud: e.last_loud,
-                acked: false,
+                acked: self.listen_intent,
                 snooze_acked: false,
                 escalated: false,
             };
@@ -3515,25 +3520,27 @@ impl Link {
         }
     }
 
+    fn snooze_active(&self, now: u64) -> bool {
+        self.snooze_until.is_some_and(|u| now < u)
+    }
+
     fn noise_housekeeping(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         if self.cfg.role != Role::Parent {
             return;
         }
-        let Some(e) = self.noise_event.as_ref() else {
+        let snooze_active = self.snooze_active(now);
+        let Some(e) = self.noise_event.as_mut() else {
             return;
         };
         if now.saturating_sub(e.last_loud) >= NOISE_EVENT_QUIET_MS {
             self.noise_event = None;
             return;
         }
-        if e.snooze_acked && !self.snooze_until.is_some_and(|u| now < u) {
+        if e.snooze_acked && !snooze_active {
             self.restart_snoozed_noise_event(now);
             return;
         }
         let Some(after) = self.noise_escalate_after else {
-            return;
-        };
-        let Some(e) = self.noise_event.as_mut() else {
             return;
         };
         if !e.acked
@@ -4445,6 +4452,28 @@ mod tests {
         );
         assert_eq!(p.noise_escalate_after, Some(60_000));
         assert_eq!(p.noise_armed_at, 2);
+    }
+
+    #[test]
+    fn listening_acknowledges_a_starting_event_and_the_snooze_restart_window() {
+        let (mut p, _) = started(Role::Parent);
+        p.handle(1, LinkInput::SetListen { enabled: true });
+        p.on_noise_alert(10, false);
+        assert!(p.noise_event.as_ref().unwrap().acked);
+        // Snooze restart: loud within the window restarts (acknowledged only by listening),
+        // an older event is over.
+        let (mut p, _) = started(Role::Parent);
+        let hb = p.cfg.heartbeat_interval_ms;
+        p.on_noise_alert(10, true);
+        p.restart_snoozed_noise_event(10 + NOISE_RECENT_MS + hb);
+        let e = p.noise_event.as_ref().unwrap();
+        assert_eq!(
+            (e.started, e.snooze_acked, e.acked),
+            (10 + NOISE_RECENT_MS + hb, false, false)
+        );
+        p.on_noise_alert(100_000, true);
+        p.restart_snoozed_noise_event(100_000 + NOISE_RECENT_MS + hb + 1);
+        assert!(p.noise_event.is_none());
     }
 
     #[test]
