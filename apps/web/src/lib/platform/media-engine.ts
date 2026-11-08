@@ -1,4 +1,4 @@
-import type { IceCandidate } from "@guardedsleep/core-wasm";
+import type { IceCandidate, IceServer } from "@guardedsleep/core-wasm";
 
 /**
  * Callbacks of one peer connection (one "attempt" of the core). They may fire at any time after
@@ -36,7 +36,11 @@ export interface AttemptPort {
 
 /** Microphone/playout side of a link: one engine per monitoring run. */
 export interface MediaEngine {
-  createAttempt(offerer: boolean, listener: AttemptListener): AttemptPort;
+  /**
+   * `iceServers` is the core's list for this attempt (`create_attempt.ice_servers`), passed on
+   * unchanged. Credentials in it live only as long as the attempt: never logged, never stored.
+   */
+  createAttempt(offerer: boolean, listener: AttemptListener, iceServers: IceServer[]): AttemptPort;
   /** Baby: gate the outgoing track (the core opens it for noise, listen and probe). */
   setMicEnabled(enabled: boolean): void;
   /** Baby: mix a synthetic test tone into the outgoing stream; never played locally. */

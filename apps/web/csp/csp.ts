@@ -5,10 +5,17 @@
  * module builds the <meta> value, and `csp.test.ts` fails when either header drifts from it.
  *
  * `connect-src` is 'self' plus the origins listed in `connect-origins.json` and the build-time
- * variable GS_CSP_CONNECT_ORIGINS (comma separated, the own relays of a deployment). A page may only open WebSockets to those origins: a signaling address that is
- * neither the serving host nor listed here is blocked. A blanket `wss:` is never used.
+ * variable GS_CSP_CONNECT_ORIGINS (comma separated, the own relays of a deployment), plus the
+ * project server origin (`PROJECT_SERVER`, generated from `data/project-server.json`) only when the build sets the
+ * official-deployment flag `VITE_GS_OFFICIAL_DEPLOYMENT=true` (alpha-connection-model design
+ * section 6: the public server accepts browser origins only from the official deployment). A page
+ * may only open WebSockets to those origins: a signaling address that is neither the serving host
+ * nor listed here is blocked, and the client ignores such addresses in invites and updates. A
+ * blanket `wss:` is never used.
  */
 import type { Plugin } from "vite";
+// Generated from data/project-server.json by `lists:gen` (also in the image build, which has no data/).
+import { officialDeployment, projectServerOrigin } from "../src/lib/platform/build-mode";
 import fileOrigins from "./connect-origins.json";
 
 /** The Trusted Types policies the page may create: ours, and the one Svelte creates itself. */
@@ -61,7 +68,8 @@ export function configuredConnectOrigins(env: Record<string, string | undefined>
     .split(",")
     .map((s) => s.trim())
     .filter((s) => s !== "");
-  return validateConnectOrigins([...new Set([...fileOrigins.origins, ...fromEnv])]);
+  const official = officialDeployment(env) ? [projectServerOrigin()] : [];
+  return validateConnectOrigins([...new Set([...fileOrigins.origins, ...fromEnv, ...official])]);
 }
 
 /**

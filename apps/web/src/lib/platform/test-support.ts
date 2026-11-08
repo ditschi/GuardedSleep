@@ -3,7 +3,7 @@
  * RTCPeerConnection and a recording media engine. Test-only; production code never imports it
  * (the bundle only contains what `main.ts` reaches).
  */
-import type { IceCandidate } from "@guardedsleep/core-wasm";
+import type { IceCandidate, IceServer } from "@guardedsleep/core-wasm";
 import type { Cancel, Clock, Timers } from "./clock";
 import type { AttemptListener, AttemptPort, InboundAudioStats, MediaEngine } from "./media-engine";
 import type { WebSocketLike } from "./signaling";
@@ -145,7 +145,11 @@ export class FakeMedia implements MediaEngine {
   throwOnCreate = false;
   released = false;
 
-  createAttempt(offerer: boolean, listener: AttemptListener): AttemptPort {
+  /** The ICE list each attempt was created with, as the core named it. */
+  readonly iceServers: IceServer[][] = [];
+
+  createAttempt(offerer: boolean, listener: AttemptListener, iceServers: IceServer[]): AttemptPort {
+    this.iceServers.push(iceServers);
     if (this.throwOnCreate) throw new Error("no peer connection");
     const attempt = new FakeAttempt(offerer, listener);
     this.attempts.push(attempt);

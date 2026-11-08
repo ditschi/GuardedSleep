@@ -13,6 +13,7 @@ export type {
   DeviceStatus,
   Dnd,
   IceCandidate,
+  IceServer,
   LinkAction,
   LinkConfig,
   InviteMailbox,

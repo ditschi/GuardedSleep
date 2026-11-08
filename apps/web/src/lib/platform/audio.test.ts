@@ -359,7 +359,7 @@ describe("web media engine", () => {
 
   const base = (ctx: FakeAudioContext, getUserMedia: () => Promise<MediaStream>) => ({
     PeerConnection: MiniPc as unknown as PeerConnectionCtor,
-    iceServers: [{ urls: ["stun:relay.test:3478"] }],
+    userIceServers: [{ urls: ["turn:own.test:3478"], username: "u", credential: "p" }],
     timers: new FakeTime(),
     gate: gateOf(ctx),
     getUserMedia,
@@ -367,22 +367,36 @@ describe("web media engine", () => {
     createStream: () => asStream(new FakeStream()),
   });
 
-  it("baby: opens the microphone and sends it sendonly with the relay STUN", async () => {
+  it("baby: opens the microphone and sends it sendonly with the core ICE list and the own TURN", async () => {
     const ctx = new FakeAudioContext();
     const engine = await createWebMediaEngine(
       "baby",
       base(ctx, () => Promise.resolve(asStream(new FakeStream()))),
     );
-    engine.createAttempt(true, {
-      onLocalDescription() {},
-      onLocalIce() {},
-      onDataOpen() {},
-      onDataMessage() {},
-      onDataClosed() {},
-      onConnectionState() {},
-      onDtlsFingerprint() {},
+    engine.createAttempt(
+      true,
+      {
+        onLocalDescription() {},
+        onLocalIce() {},
+        onDataOpen() {},
+        onDataMessage() {},
+        onDataClosed() {},
+        onConnectionState() {},
+        onDtlsFingerprint() {},
+      },
+      [
+        { urls: ["stun:gs.test:3478"] },
+        { urls: ["turn:gs.test:3478"], username: "1700000000:x", credential: "secret" },
+      ],
+    );
+    // The core's entries unchanged and in order, the user's TURN after them.
+    expect(MiniPc.lastConfig).toEqual({
+      iceServers: [
+        { urls: ["stun:gs.test:3478"] },
+        { urls: ["turn:gs.test:3478"], username: "1700000000:x", credential: "secret" },
+        { urls: ["turn:own.test:3478"], username: "u", credential: "p" },
+      ],
     });
-    expect(MiniPc.lastConfig).toEqual({ iceServers: [{ urls: ["stun:relay.test:3478"] }] });
     engine.setMicEnabled(true);
     expect(ctx.gains[0]?.gain.value).toBe(1);
     expect(engine.drainRemoteRms()).toBeNull();

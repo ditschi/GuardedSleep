@@ -4,12 +4,12 @@ import wasmUrl from "@guardedsleep/core-wasm/pkg/guardedsleep_wasm_bg.wasm?url";
 import type { AppController, CodeScanner } from "../contract";
 import { AlertPlayer, createSoundGate } from "./audio";
 import { watchBattery, type BatteryManagerLike } from "./battery";
-import { loopbackAllowed } from "./build-mode";
+import { loopbackAllowed, projectServerEnabled, projectServerMailboxUrl } from "./build-mode";
 import { createClock, createTimers } from "./clock";
 import { browserDeviceName } from "./device-name";
 import { createPageWatch, type WakeLockApi } from "./page-watch";
 import { createQrScanner, type BarcodeDetectorCtor } from "./qr-scanner";
-import { defaultSignalingUrls } from "./relay-stun";
+import { cspAllows, defaultMailboxUrls, deploymentConnectSources } from "./mailbox-policy";
 import { createWebSocketSignaling, type WebSocketCtor } from "./signaling";
 import { createWebMediaEngine } from "./web-media";
 import { WebController, type NetworkWatcher } from "./web-controller";
@@ -65,16 +65,18 @@ export async function createWebApp(): Promise<AppController> {
     clock,
     timers,
   });
+  // The policy the page was served with: addresses it does not list are ignored, not tried.
+  const connectSources = deploymentConnectSources(document);
   return new WebController({
     core,
     clock,
     page,
     timers,
     signaling: createWebSocketSignaling(WebSocket as unknown as WebSocketCtor),
-    createMedia: (role, iceServers) =>
+    createMedia: (role, userIceServers) =>
       createWebMediaEngine(role, {
         PeerConnection: RTCPeerConnection,
-        iceServers,
+        userIceServers,
         timers,
         gate,
         getUserMedia: (constraints) => {
@@ -97,7 +99,13 @@ export async function createWebApp(): Promise<AppController> {
       const unit_warnings = page.unitWarnings();
       return { ...battery.deviceStatus(), ...(unit_warnings.length > 0 ? { unit_warnings } : {}) };
     },
-    defaultSignalingUrls: () => defaultSignalingUrls(window.location, import.meta.env.DEV),
+    defaultMailboxUrls: () => defaultMailboxUrls(window.location, import.meta.env.DEV),
+    projectServer: {
+      mailboxUrl: projectServerMailboxUrl(),
+      enabled: projectServerEnabled(import.meta.env),
+    },
+    connectAllowed: (url) =>
+      connectSources === null || cspAllows(connectSources, window.location, url),
     deviceName: () => browserDeviceName(navigator),
     allowDevLoopback,
   });
