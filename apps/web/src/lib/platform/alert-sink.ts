@@ -32,8 +32,7 @@ export interface AlertSink {
   linkState(snapshot: LinkSnapshot): void;
   /** `link_lost`: escalation reached level 2 (once per outage). */
   linkLost(downMs: number): void;
-  /** `discreet`: the alert style withholds audio, so no test tone either. */
-  noiseAlert(kind: NoiseKind, probe: boolean, snoozed: boolean, discreet: boolean): void;
+  noiseAlert(kind: NoiseKind, probe: boolean, snoozed: boolean): void;
   noiseEnded(): void;
   /** "Stop sound": ends the sound of the current noise event. */
   stopNoiseSound(): void;

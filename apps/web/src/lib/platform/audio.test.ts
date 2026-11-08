@@ -274,7 +274,7 @@ describe("AlertPlayer", () => {
   it("makes no sound before the unlock gesture", () => {
     const { ctx, time, player } = make();
     player.linkState(snapshot({ level: 3 }));
-    player.noiseAlert("new", true, false, false);
+    player.noiseAlert("new", true, false);
     player.notice({ type: "peer_stopped" });
     time.advance(30_000);
     expect(ctx.oscillators).toHaveLength(0);
@@ -317,18 +317,11 @@ describe("AlertPlayer", () => {
   it("noise adds no tone (the baby's audio is the alert); a test alert plays the test tone", async () => {
     const { ctx, gate, player } = make();
     await gate.unlock();
-    player.noiseAlert("new", false, false, false);
-    player.noiseAlert("continue", false, false, false);
+    player.noiseAlert("new", false, false);
+    player.noiseAlert("continue", false, false);
     expect(ctx.oscillators).toHaveLength(0);
-    player.noiseAlert("new", true, false, false);
+    player.noiseAlert("new", true, false);
     expect(freqs(ctx)).toEqual([1000]);
-  });
-
-  it("a discreet test alert plays no tone", async () => {
-    const { ctx, gate, player } = make();
-    await gate.unlock();
-    player.noiseAlert("new", true, false, true);
-    expect(ctx.oscillators).toHaveLength(0);
   });
 
   it("a stopped baby device gets one soft tone, no loop", async () => {

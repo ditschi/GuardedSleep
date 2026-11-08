@@ -6,7 +6,6 @@
   import { t } from "../lib/i18n/store";
   import { useRouter } from "../lib/router-context";
   import { storeThemeSetting } from "../lib/theme";
-  import AlertStyleChoice from "../lib/ui/AlertStyleChoice.svelte";
   import Banner from "../lib/ui/Banner.svelte";
   import Button from "../lib/ui/Button.svelte";
   import Dialog from "../lib/ui/Dialog.svelte";
@@ -180,10 +179,6 @@
       {/each}
     </select>
   </div>
-
-  {#if $app.role === "parent"}
-    <AlertStyleChoice />
-  {/if}
 
   {#if $app.role === "baby"}
     <div class="gs-group" data-testid="settings_sound">

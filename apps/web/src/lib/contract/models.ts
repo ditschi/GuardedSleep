@@ -211,12 +211,6 @@ export type Theme = "dark" | "light" | "system";
 
 export type AlertOutput = "default" | "speaker_only";
 
-/**
- * How a noise alert reaches the parent: "sound" plays the child's audio with every alert,
- * "discreet" shows the alert but plays no audio until the parent listens.
- */
-export type AlertStyle = "sound" | "discreet";
-
 export interface SettingsState {
   theme: Theme;
   /** null = follow the browser language. */
@@ -224,7 +218,6 @@ export interface SettingsState {
   threshold: number;
   holdSeconds: number;
   alertOutput: AlertOutput;
-  alertStyle: AlertStyle;
   alertGainPct: number;
   silenceWhileMonitoring: boolean;
   advancedEnabled: boolean;
@@ -333,7 +326,6 @@ export function defaultSettings(): SettingsState {
     threshold: 0.12,
     holdSeconds: 5,
     alertOutput: "default",
-    alertStyle: "sound",
     alertGainPct: 100,
     silenceWhileMonitoring: true,
     advancedEnabled: false,

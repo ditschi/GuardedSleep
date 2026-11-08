@@ -340,10 +340,10 @@ export class AlertPlayer implements AlertSink {
 
   linkLost(): void {}
 
-  noiseAlert(_kind: NoiseKind, probe: boolean, _snoozed: boolean, discreet: boolean): void {
+  noiseAlert(_kind: NoiseKind, probe: boolean, _snoozed: boolean): void {
     // The baby's audio is the alert. A test alert without a link has no audio: play the bundled
-    // test tone so the chain can still be heard on this device, unless the style is discreet.
-    if (probe && !discreet) this.testTone();
+    // test tone so the chain can still be heard on this device.
+    if (probe) this.testTone();
   }
 
   noiseEnded(): void {}
