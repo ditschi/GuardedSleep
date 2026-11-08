@@ -4,7 +4,7 @@
 
 ### Requirement: Weak connection
 
-When the link is connected but rated `poor`, the parent SHALL show a "Weak connection — sound may break up" chip without changing the bar's connected state. When it is rated `slow`, the parent SHALL show "Slow connection — alerts may arrive up to {seconds} s later" with the cause when known (mobile data, relay server), also without changing the connected state.
+When the link is connected but rated `poor`, the parent SHALL show a "Weak connection — sound may break up" chip without changing the bar's connected state. When it is rated `slow`, the parent SHALL show "Slow connection — alerts may be delayed by about {seconds} s" with the cause when known (mobile data, relayed through TURN), also without changing the connected state.
 
 #### Scenario: Poor quality while connected
 
@@ -14,7 +14,7 @@ When the link is connected but rated `poor`, the parent SHALL show a "Weak conne
 #### Scenario: Slow link
 
 - **WHEN** the link is rated `slow` with an expected delay of 3 s over mobile data
-- **THEN** the parent shows that alerts may arrive up to 3 s later over mobile data, and the bar stays green
+- **THEN** the parent shows that alerts may be delayed by about 3 s over mobile data, and the bar stays green
 
 ## ADDED Requirements
 
