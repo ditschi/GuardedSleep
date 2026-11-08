@@ -188,6 +188,7 @@ export class WebController implements AppController {
       },
       () => this.settingsState.threshold,
       (state) => this.parentStore.set(state),
+      () => this.settingsState.alertStyle === "discreet",
     );
     this.babyModel = new BabyModel(deps.clock, (state) => this.babyStore.set(state));
     this.babyModel.setSettings(this.settingsState.threshold, this.settingsState.holdSeconds);
@@ -212,6 +213,7 @@ export class WebController implements AppController {
     this.settingsState = after;
     this.settingsStore.set(after);
     this.babyModel.setSettings(after.threshold, after.holdSeconds);
+    if (after.alertStyle !== before.alertStyle) this.parentModel.onAlertStyleChanged();
     const r = this.run;
     if (!r?.driver) return;
     if (
@@ -392,7 +394,7 @@ export class WebController implements AppController {
       driver.input({ type: "request_probe" });
     } else {
       // Tested this device only: the chain runs locally with the baby device not involved.
-      this.deps.alerts.noiseAlert("new", true, false);
+      this.deps.alerts.noiseAlert("new", true, false, this.settingsState.alertStyle === "discreet");
       this.updateSettingsState({ lastTestWallMs: this.deps.clock.wallMs() });
     }
   }
