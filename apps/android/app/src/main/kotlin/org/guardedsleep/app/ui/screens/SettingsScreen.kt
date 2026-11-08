@@ -48,7 +48,9 @@ import org.guardedsleep.app.ui.common.SecondaryButton
 import org.guardedsleep.app.ui.common.formatTime
 import org.guardedsleep.app.ui.common.rememberLanguageChoices
 import org.guardedsleep.app.ui.model.AlertOutput
+import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
+import org.guardedsleep.app.ui.model.DiscreetEscalation
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.Theme
 import org.guardedsleep.app.ui.model.TurnSaveResult
@@ -157,6 +159,14 @@ fun SettingsScreen(
                 }
             } else {
                 Section(R.string.native_ui_settings_group_alerts, "settings_group_alerts") {
+                    AlertStyleChoice(s.alertStyle) { style ->
+                        controller.updateSettings { st -> st.copy(alertStyle = style) }
+                    }
+                    if (s.alertStyle == AlertStyle.DISCREET) {
+                        DiscreetEscalationChoice(s.discreetEscalation) { choice ->
+                            controller.updateSettings { st -> st.copy(discreetEscalation = choice) }
+                        }
+                    }
                     Body(
                         stringResource(R.string.native_ui_settings_output_label),
                         color = MaterialTheme.colorScheme.onSurface,
@@ -516,7 +526,7 @@ private fun Section(title: Int, tag: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun ChoiceRow(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
+internal fun ChoiceRow(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth()
             .heightIn(min = 48.dp)
@@ -571,5 +581,75 @@ private fun SwitchRow(label: String, checked: Boolean, tag: String, onChange: (B
             color = MaterialTheme.colorScheme.onSurface,
         )
         Switch(checked, onCheckedChange = null)
+    }
+}
+
+/** The two alert styles with the ids shared with the web client; used in Settings and More. */
+@Composable
+internal fun AlertStyleChoice(style: AlertStyle, onChoose: (AlertStyle) -> Unit) {
+    Body(
+        stringResource(R.string.native_ui_settings_alert_style_label),
+        color = MaterialTheme.colorScheme.onSurface,
+    )
+    val options =
+        listOf(
+            Triple(
+                AlertStyle.SOUND,
+                R.string.native_ui_settings_alert_style_sound,
+                "alert_style_sound",
+            ),
+            Triple(
+                AlertStyle.DISCREET,
+                R.string.native_ui_settings_alert_style_discreet,
+                "alert_style_discreet",
+            ),
+        )
+    for ((value, label, tag) in options) {
+        ChoiceRow(stringResource(label), style == value, tag) { onChoose(value) }
+    }
+}
+
+/** After how long an unacknowledged discreet noise event switches to sound; Off warns. */
+@Composable
+private fun DiscreetEscalationChoice(
+    choice: DiscreetEscalation,
+    onChoose: (DiscreetEscalation) -> Unit,
+) {
+    Body(
+        stringResource(R.string.native_ui_settings_discreet_escalation_label),
+        color = MaterialTheme.colorScheme.onSurface,
+    )
+    val options =
+        listOf(
+            Triple(
+                DiscreetEscalation.ONE_MINUTE,
+                R.string.native_ui_settings_discreet_escalation_m1,
+                "discreet_escalation_1m",
+            ),
+            Triple(
+                DiscreetEscalation.TWO_MINUTES,
+                R.string.native_ui_settings_discreet_escalation_m2,
+                "discreet_escalation_2m",
+            ),
+            Triple(
+                DiscreetEscalation.FIVE_MINUTES,
+                R.string.native_ui_settings_discreet_escalation_m5,
+                "discreet_escalation_5m",
+            ),
+            Triple(
+                DiscreetEscalation.OFF,
+                R.string.native_ui_settings_discreet_escalation_off,
+                "discreet_escalation_off",
+            ),
+        )
+    for ((value, label, tag) in options) {
+        ChoiceRow(stringResource(label), choice == value, tag) { onChoose(value) }
+    }
+    if (choice == DiscreetEscalation.OFF) {
+        Body(
+            stringResource(R.string.native_ui_parent_discreet_off_warning),
+            tag = "discreet_escalation_off_warning",
+            color = LocalAppColors.current.warn,
+        )
     }
 }

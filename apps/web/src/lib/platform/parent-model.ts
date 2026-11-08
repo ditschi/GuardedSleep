@@ -244,6 +244,9 @@ export class ParentModel {
         break;
       // Baby-side gate echo; the parent learns the real threshold from peer_status.
       // The pin and the mailbox set are kept by the controller, not shown.
+      // The discreet style is not offered in the browser, so the delay is never set and the
+      // core's escalation event never comes; the browser always plays the child's audio.
+      case "noise_escalated":
       case "noise_gate_changed":
       case "status":
       case "failed":

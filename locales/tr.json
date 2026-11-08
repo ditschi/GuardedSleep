@@ -73,7 +73,8 @@
       "securityTitle": "Yanlış anahtar",
       "publicTitle": "GuardedSleep alarmı",
       "fgsMissingTitle": "Arka planda izlenmiyor",
-      "fgsMissingText": "Arka planda izlemeyi yeniden açmak için GuardedSleep'i açın."
+      "fgsMissingText": "Arka planda izlemeyi yeniden açmak için GuardedSleep'i açın.",
+      "actionListen": "Dinle"
     },
     "ui": {
       "common": {
@@ -313,6 +314,11 @@
           "resumedFromSleep": "Bebek cihazı uykudan uyandı — sesler kaçırılmış olabilir",
           "notCharging": "Bebek cihazı şarj olmuyor",
           "micPermissionLost": "Bebek cihazı mikrofon erişimini kaybetti"
+        },
+        "discreet": {
+          "indicator": "Sessiz uyarılar: ses yok",
+          "escalated": "Sese geçildi: {minutes} dk tepki yok",
+          "offWarning": "Kapalı: unutulan sessiz mod bütün gece sessiz kalabilir."
         }
       },
       "battery": {
@@ -345,7 +351,10 @@
         "run": "Testi başlat",
         "running": "Test çalışıyor…",
         "question": "Duydunuz ve hissettiniz mi?",
-        "localOnly": "Yalnızca bu cihaz test edildi — bebek cihazı bağlı değil."
+        "localOnly": "Yalnızca bu cihaz test edildi — bebek cihazı bağlı değil.",
+        "styleSound": "Uyarı biçimi: ses",
+        "styleDiscreet": "Uyarı biçimi: sessiz",
+        "bodyDiscreet": "Bu cihaz sessizce titreşir ve uyarıyı gösterir. Bebek cihazı sessiz kalır."
       },
       "readiness": {
         "title": "Uyarılar size ulaşır mı?",
@@ -422,7 +431,10 @@
         "testBadge": "TEST",
         "stopSound": "Sesi durdur",
         "soundStopped": "Ses durduruldu",
-        "openApp": "GuardedSleep'i aç"
+        "openApp": "GuardedSleep'i aç",
+        "stopVibration": "Titreşimi durdur",
+        "vibrationStopped": "Titreşim durduruldu",
+        "discreetHint": "Dinleyene kadar ses yok"
       },
       "settings": {
         "group": {
@@ -478,7 +490,19 @@
           "label": "Aktarma sunucusu (TURN), isteğe bağlı",
           "invalid": "Aktarma adresi turn: veya turns: ile başlamalıdır."
         },
-        "heartbeat": "Her {seconds} sn'de bir bağlantı kontrolü"
+        "heartbeat": "Her {seconds} sn'de bir bağlantı kontrolü",
+        "alertStyle": {
+          "label": "Uyarı biçimi",
+          "sound": "Ses: her uyarıda bebeğin sesi çalınır",
+          "discreet": "Sessiz: titreşim ve ekran, ses yok"
+        },
+        "discreetEscalation": {
+          "label": "Kimse tepki vermezse sese geç",
+          "m1": "1 dakika sonra",
+          "m2": "2 dakika sonra (önerilen)",
+          "m5": "5 dakika sonra",
+          "off": "Kapalı"
+        }
       },
       "fgsMissing": {
         "bar": "Arka planda izlenmiyor — uygulamayı açın",

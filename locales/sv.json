@@ -73,7 +73,8 @@
       "securityTitle": "Fel nyckel",
       "publicTitle": "GuardedSleep-larm",
       "fgsMissingTitle": "Övervakar inte i bakgrunden",
-      "fgsMissingText": "Öppna GuardedSleep för att slå på bakgrundsövervakningen igen."
+      "fgsMissingText": "Öppna GuardedSleep för att slå på bakgrundsövervakningen igen.",
+      "actionListen": "Lyssna"
     },
     "ui": {
       "common": {
@@ -313,6 +314,11 @@
           "resumedFromSleep": "Babyenheten vaknade ur viloläge: ljud kan ha missats",
           "notCharging": "Babyenheten laddas inte längre",
           "micPermissionLost": "Babyenheten förlorade åtkomst till mikrofonen"
+        },
+        "discreet": {
+          "indicator": "Diskreta larm: inget ljud",
+          "escalated": "Bytt till ljud: ingen reaktion på {minutes} min",
+          "offWarning": "Av: ett bortglömt diskret läge kan vara tyst hela natten."
         }
       },
       "battery": {
@@ -345,7 +351,10 @@
         "run": "Kör test",
         "running": "Kör testet…",
         "question": "Hörde och kände du det?",
-        "localOnly": "Bara den här enheten testades: babyenheten är inte ansluten."
+        "localOnly": "Bara den här enheten testades: babyenheten är inte ansluten.",
+        "styleSound": "Larmtyp: ljud",
+        "styleDiscreet": "Larmtyp: diskret",
+        "bodyDiscreet": "Den här enheten vibrerar och visar larmet utan ljud. Barnenheten förblir tyst."
       },
       "readiness": {
         "title": "Når larmen fram till dig?",
@@ -422,7 +431,10 @@
         "testBadge": "TEST",
         "stopSound": "Stoppa ljudet",
         "soundStopped": "Ljudet stoppat",
-        "openApp": "Öppna GuardedSleep"
+        "openApp": "Öppna GuardedSleep",
+        "stopVibration": "Stoppa vibrationen",
+        "vibrationStopped": "Vibrationen stoppad",
+        "discreetHint": "Inget ljud förrän du lyssnar"
       },
       "settings": {
         "group": {
@@ -478,7 +490,19 @@
           "label": "Reläserver (TURN), valfritt",
           "invalid": "Reläadressen måste börja med turn: eller turns:."
         },
-        "heartbeat": "Anslutningskontroll var {seconds} s"
+        "heartbeat": "Anslutningskontroll var {seconds} s",
+        "alertStyle": {
+          "label": "Larmtyp",
+          "sound": "Ljud: barnets ljud spelas upp vid varje larm",
+          "discreet": "Diskret: vibration och skärm, inget ljud"
+        },
+        "discreetEscalation": {
+          "label": "Byt till ljud om ingen reagerar",
+          "m1": "Efter 1 minut",
+          "m2": "Efter 2 minuter (rekommenderas)",
+          "m5": "Efter 5 minuter",
+          "off": "Av"
+        }
       },
       "fgsMissing": {
         "bar": "Övervakar inte i bakgrunden: öppna appen",

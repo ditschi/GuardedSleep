@@ -73,7 +73,8 @@
       "securityTitle": "Chybný klíč",
       "publicTitle": "Alarm GuardedSleep",
       "fgsMissingTitle": "Sledování na pozadí neběží",
-      "fgsMissingText": "Otevřete GuardedSleep a znovu zapněte sledování na pozadí."
+      "fgsMissingText": "Otevřete GuardedSleep a znovu zapněte sledování na pozadí.",
+      "actionListen": "Poslouchat"
     },
     "ui": {
       "common": {
@@ -313,6 +314,11 @@
           "resumedFromSleep": "Zařízení dítěte se probudilo ze spánku: zvuky mohly uniknout",
           "notCharging": "Zařízení dítěte se už nenabíjí",
           "micPermissionLost": "Zařízení dítěte ztratilo přístup k mikrofonu"
+        },
+        "discreet": {
+          "indicator": "Diskrétní upozornění: bez zvuku",
+          "escalated": "Přepnuto na zvuk: žádná reakce {minutes} min",
+          "offWarning": "Vypnuto: zapomenutý diskrétní režim může zůstat tichý celou noc."
         }
       },
       "battery": {
@@ -345,7 +351,10 @@
         "run": "Spustit zkoušku",
         "running": "Zkouška běží…",
         "question": "Slyšeli a cítili jste ji?",
-        "localOnly": "Vyzkoušeno jen toto zařízení: zařízení dítěte není připojeno."
+        "localOnly": "Vyzkoušeno jen toto zařízení: zařízení dítěte není připojeno.",
+        "styleSound": "Typ upozornění: zvuk",
+        "styleDiscreet": "Typ upozornění: diskrétní",
+        "bodyDiscreet": "Toto zařízení vibruje a zobrazí upozornění bez zvuku. Zařízení dítěte zůstane tiché."
       },
       "readiness": {
         "title": "Dorazí k vám výstrahy?",
@@ -422,7 +431,10 @@
         "testBadge": "TEST",
         "stopSound": "Vypnout zvuk",
         "soundStopped": "Zvuk vypnut",
-        "openApp": "Otevřít GuardedSleep"
+        "openApp": "Otevřít GuardedSleep",
+        "stopVibration": "Zastavit vibrace",
+        "vibrationStopped": "Vibrace zastaveny",
+        "discreetHint": "Bez zvuku, dokud nezačnete poslouchat"
       },
       "settings": {
         "group": {
@@ -478,7 +490,19 @@
           "label": "Předávací server (TURN), volitelný",
           "invalid": "Adresa předávacího serveru musí začínat turn: nebo turns:."
         },
-        "heartbeat": "Kontrola spojení každých {seconds} s"
+        "heartbeat": "Kontrola spojení každých {seconds} s",
+        "alertStyle": {
+          "label": "Typ upozornění",
+          "sound": "Zvuk: zvuk dítěte se přehraje při každém upozornění",
+          "discreet": "Diskrétní: vibrace a displej, bez zvuku"
+        },
+        "discreetEscalation": {
+          "label": "Přepnout na zvuk, pokud nikdo nereaguje",
+          "m1": "Po 1 minutě",
+          "m2": "Po 2 minutách (doporučeno)",
+          "m5": "Po 5 minutách",
+          "off": "Vypnuto"
+        }
       },
       "fgsMissing": {
         "bar": "Sledování na pozadí neběží: otevřete aplikaci",

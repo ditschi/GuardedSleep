@@ -72,6 +72,7 @@ export const LINK_EVENT_TYPES = {
   peer_stopped: true,
   alarm_acknowledged: true,
   noise_alert: true,
+  noise_escalated: true,
   peer_heartbeat: true,
   peer_status: true,
   low_battery: true,

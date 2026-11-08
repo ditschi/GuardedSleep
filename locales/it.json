@@ -73,7 +73,8 @@
       "securityTitle": "Chiave errata",
       "publicTitle": "Allarme GuardedSleep",
       "fgsMissingTitle": "Nessun monitoraggio in background",
-      "fgsMissingText": "Apri GuardedSleep per riattivare il monitoraggio in background."
+      "fgsMissingText": "Apri GuardedSleep per riattivare il monitoraggio in background.",
+      "actionListen": "Ascolta"
     },
     "ui": {
       "common": {
@@ -313,6 +314,11 @@
           "resumedFromSleep": "Il dispositivo del bambino si è riattivato: potresti aver perso dei suoni",
           "notCharging": "Il dispositivo del bambino non è più in carica",
           "micPermissionLost": "Il dispositivo del bambino ha perso l'accesso al microfono"
+        },
+        "discreet": {
+          "indicator": "Avvisi discreti: nessun suono",
+          "escalated": "Passato al suono: nessuna reazione da {minutes} min",
+          "offWarning": "Disattivato: una modalità discreta dimenticata può restare muta tutta la notte."
         }
       },
       "battery": {
@@ -345,7 +351,10 @@
         "run": "Avvia la prova",
         "running": "Prova in corso…",
         "question": "Hai sentito e percepito l'avviso?",
-        "localOnly": "Provato solo questo dispositivo: il dispositivo del bambino non è connesso."
+        "localOnly": "Provato solo questo dispositivo: il dispositivo del bambino non è connesso.",
+        "styleSound": "Tipo di avviso: suono",
+        "styleDiscreet": "Tipo di avviso: discreto",
+        "bodyDiscreet": "Questo dispositivo vibra e mostra l'avviso senza suono. Il dispositivo del bambino resta in silenzio."
       },
       "readiness": {
         "title": "Gli avvisi ti raggiungono?",
@@ -422,7 +431,10 @@
         "testBadge": "PROVA",
         "stopSound": "Ferma il suono",
         "soundStopped": "Suono fermato",
-        "openApp": "Apri GuardedSleep"
+        "openApp": "Apri GuardedSleep",
+        "stopVibration": "Interrompi vibrazione",
+        "vibrationStopped": "Vibrazione interrotta",
+        "discreetHint": "Nessun suono finché non ascolti"
       },
       "settings": {
         "group": {
@@ -478,7 +490,19 @@
           "label": "Server di inoltro (TURN), facoltativo",
           "invalid": "L'indirizzo di inoltro deve iniziare con turn: o turns:."
         },
-        "heartbeat": "Controllo della connessione ogni {seconds} s"
+        "heartbeat": "Controllo della connessione ogni {seconds} s",
+        "alertStyle": {
+          "label": "Tipo di avviso",
+          "sound": "Suono: il suono del bambino viene riprodotto a ogni avviso",
+          "discreet": "Discreto: vibrazione e schermo, senza suono"
+        },
+        "discreetEscalation": {
+          "label": "Passa al suono se nessuno reagisce",
+          "m1": "Dopo 1 minuto",
+          "m2": "Dopo 2 minuti (consigliato)",
+          "m5": "Dopo 5 minuti",
+          "off": "Disattivato"
+        }
       },
       "fgsMissing": {
         "bar": "Nessun monitoraggio in background: apri l'app",

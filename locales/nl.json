@@ -73,7 +73,8 @@
       "securityTitle": "Verkeerde sleutel",
       "publicTitle": "GuardedSleep-alarm",
       "fgsMissingTitle": "Geen bewaking op de achtergrond",
-      "fgsMissingText": "Open GuardedSleep om de bewaking op de achtergrond weer aan te zetten."
+      "fgsMissingText": "Open GuardedSleep om de bewaking op de achtergrond weer aan te zetten.",
+      "actionListen": "Luisteren"
     },
     "ui": {
       "common": {
@@ -313,6 +314,11 @@
           "resumedFromSleep": "Babyapparaat werd wakker uit slaap: geluiden zijn mogelijk gemist",
           "notCharging": "Babyapparaat laadt niet meer",
           "micPermissionLost": "Babyapparaat heeft geen microfoontoegang meer"
+        },
+        "discreet": {
+          "indicator": "Discrete meldingen: geen geluid",
+          "escalated": "Overgeschakeld op geluid: al {minutes} min geen reactie",
+          "offWarning": "Uit: een vergeten discrete modus kan de hele nacht stil blijven."
         }
       },
       "battery": {
@@ -345,7 +351,10 @@
         "run": "Test uitvoeren",
         "running": "Test wordt uitgevoerd…",
         "question": "Heb je het gehoord en gevoeld?",
-        "localOnly": "Alleen dit apparaat is getest: het babyapparaat is niet verbonden."
+        "localOnly": "Alleen dit apparaat is getest: het babyapparaat is niet verbonden.",
+        "styleSound": "Meldingstype: geluid",
+        "styleDiscreet": "Meldingstype: discreet",
+        "bodyDiscreet": "Dit apparaat trilt en toont de melding zonder geluid. Het babyapparaat blijft stil."
       },
       "readiness": {
         "title": "Komen meldingen bij je aan?",
@@ -422,7 +431,10 @@
         "testBadge": "TEST",
         "stopSound": "Geluid stoppen",
         "soundStopped": "Geluid gestopt",
-        "openApp": "GuardedSleep openen"
+        "openApp": "GuardedSleep openen",
+        "stopVibration": "Trilling stoppen",
+        "vibrationStopped": "Trilling gestopt",
+        "discreetHint": "Geen geluid tot je luistert"
       },
       "settings": {
         "group": {
@@ -478,7 +490,19 @@
           "label": "Relayserver (TURN), optioneel",
           "invalid": "Het relayadres moet beginnen met turn: of turns:."
         },
-        "heartbeat": "Verbindingscontrole elke {seconds} s"
+        "heartbeat": "Verbindingscontrole elke {seconds} s",
+        "alertStyle": {
+          "label": "Meldingstype",
+          "sound": "Geluid: het geluid van de baby wordt bij elke melding afgespeeld",
+          "discreet": "Discreet: trillen en scherm, geen geluid"
+        },
+        "discreetEscalation": {
+          "label": "Op geluid overschakelen als niemand reageert",
+          "m1": "Na 1 minuut",
+          "m2": "Na 2 minuten (aanbevolen)",
+          "m5": "Na 5 minuten",
+          "off": "Uit"
+        }
       },
       "fgsMissing": {
         "bar": "Geen bewaking op de achtergrond: open de app",

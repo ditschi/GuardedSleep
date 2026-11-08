@@ -73,7 +73,8 @@
       "securityTitle": "Błędny klucz",
       "publicTitle": "Alarm GuardedSleep",
       "fgsMissingTitle": "Brak monitorowania w tle",
-      "fgsMissingText": "Otwórz GuardedSleep, aby włączyć monitorowanie w tle."
+      "fgsMissingText": "Otwórz GuardedSleep, aby włączyć monitorowanie w tle.",
+      "actionListen": "Słuchaj"
     },
     "ui": {
       "common": {
@@ -313,6 +314,11 @@
           "resumedFromSleep": "Urządzenie dziecka obudziło się: mogły umknąć dźwięki",
           "notCharging": "Urządzenie dziecka już się nie ładuje",
           "micPermissionLost": "Urządzenie dziecka utraciło dostęp do mikrofonu"
+        },
+        "discreet": {
+          "indicator": "Dyskretne alerty: bez dźwięku",
+          "escalated": "Przełączono na dźwięk: brak reakcji od {minutes} min",
+          "offWarning": "Wyłączone: zapomniany tryb dyskretny może milczeć przez całą noc."
         }
       },
       "battery": {
@@ -345,7 +351,10 @@
         "run": "Uruchom test",
         "running": "Trwa test…",
         "question": "Czy go słyszysz i czujesz?",
-        "localOnly": "Przetestowano tylko to urządzenie: urządzenie dziecka nie jest połączone."
+        "localOnly": "Przetestowano tylko to urządzenie: urządzenie dziecka nie jest połączone.",
+        "styleSound": "Rodzaj alertu: dźwięk",
+        "styleDiscreet": "Rodzaj alertu: dyskretny",
+        "bodyDiscreet": "To urządzenie wibruje i pokazuje alert bez dźwięku. Urządzenie dziecka pozostaje ciche."
       },
       "readiness": {
         "title": "Czy alerty do Ciebie dotrą?",
@@ -422,7 +431,10 @@
         "testBadge": "TEST",
         "stopSound": "Wyłącz dźwięk",
         "soundStopped": "Dźwięk wyłączony",
-        "openApp": "Otwórz GuardedSleep"
+        "openApp": "Otwórz GuardedSleep",
+        "stopVibration": "Zatrzymaj wibracje",
+        "vibrationStopped": "Wibracje zatrzymane",
+        "discreetHint": "Bez dźwięku, dopóki nie posłuchasz"
       },
       "settings": {
         "group": {
@@ -478,7 +490,19 @@
           "label": "Serwer przekazujący (TURN), opcjonalnie",
           "invalid": "Adres serwera przekazującego musi zaczynać się od turn: lub turns:."
         },
-        "heartbeat": "Sprawdzanie połączenia co {seconds} s"
+        "heartbeat": "Sprawdzanie połączenia co {seconds} s",
+        "alertStyle": {
+          "label": "Rodzaj alertu",
+          "sound": "Dźwięk: dźwięk dziecka jest odtwarzany przy każdym alercie",
+          "discreet": "Dyskretny: wibracje i ekran, bez dźwięku"
+        },
+        "discreetEscalation": {
+          "label": "Przełącz na dźwięk, jeśli nikt nie reaguje",
+          "m1": "Po 1 minucie",
+          "m2": "Po 2 minutach (zalecane)",
+          "m5": "Po 5 minutach",
+          "off": "Wyłączone"
+        }
       },
       "fgsMissing": {
         "bar": "Brak monitorowania w tle: otwórz aplikację",

@@ -114,6 +114,7 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 - `IDEA` Opt-out of the Do Not Disturb override with a clear warning that alerts will be silent when the phone is muted.
 - `IDEA` Change the baby unit's sensitivity remotely from the parent (ADR-018 T2).
 - `IDEA` Re-prompt the test alert after an app update and before the first use on mobile data (alpha-ux-flows §3.9; built: readiness warns after 30 days).
+- `IDEA` Noise event tracking (2-minute quiet rule, snooze-end restart) once in the core and reported to the platforms; today the core keeps its own copy for the escalation timer (`add-discreet-alert-profile` design.md).
 
 ### device-setup
 
@@ -139,6 +140,10 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 - `IDEA` Show "Secure local mode" when media stays on the local network (part of the connection-status UI review).
 
 - `IDEA` Chrome Local Network Access as a way for an HTTPS page to reach a LAN relay (ADR-021 §1 keeps HTTPS web ↔ phone listener `REJECTED`).
+
+### web-client
+
+- `IDEA` Discreet alert style in the browser once the browser can vibrate (today a browser parent always plays the child's audio; `add-discreet-alert-profile` offers the style on Android only).
 
 ### i18n
 

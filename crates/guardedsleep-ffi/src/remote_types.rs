@@ -274,6 +274,15 @@ pub enum LinkInput {
     SetSnooze {
         until_ms: Option<u64>,
     },
+    /// Parent: the delay after which a noise event nobody acknowledged raises `noise_escalated`;
+    /// `None` (or a delay under 1 s) switches the timer off. The core does not know why the
+    /// platform sets it. A delay set in the middle of an event counts from that moment.
+    SetNoiseEscalation {
+        after_ms: Option<u64>,
+    },
+    /// Parent: the user reacted to the current noise event (Stop sound, Stop vibration). Listen
+    /// and snooze acknowledge through their own inputs.
+    AcknowledgeNoise,
     /// Parent: ask the baby phone to go silent. There is no remote "off".
     RequestQuiet,
     /// Baby: result of `apply_quiet` (fresh phone state).
@@ -370,6 +379,11 @@ pub enum LinkEvent {
         rms: f64,
         probe: bool,
         snoozed: bool,
+    },
+    /// Parent: the current noise event stayed unacknowledged for the configured delay
+    /// (`SetNoiseEscalation`). Emitted once per event.
+    NoiseEscalated {
+        after_ms: u64,
     },
     PeerHeartbeat {
         seq: u64,

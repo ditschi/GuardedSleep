@@ -73,7 +73,8 @@
       "securityTitle": "잘못된 키",
       "publicTitle": "GuardedSleep 경보",
       "fgsMissingTitle": "백그라운드에서 지켜보지 않아요",
-      "fgsMissingText": "GuardedSleep을 열어 백그라운드 지켜보기를 다시 켜세요."
+      "fgsMissingText": "GuardedSleep을 열어 백그라운드 지켜보기를 다시 켜세요.",
+      "actionListen": "듣기"
     },
     "ui": {
       "common": {
@@ -313,6 +314,11 @@
           "resumedFromSleep": "아기 기기가 절전에서 깨어났어요. 소리를 놓쳤을 수 있어요",
           "notCharging": "아기 기기가 충전되지 않아요",
           "micPermissionLost": "아기 기기의 마이크 접근 권한이 사라졌어요"
+        },
+        "discreet": {
+          "indicator": "조용한 알림: 소리 없음",
+          "escalated": "소리로 전환됨: {minutes}분 동안 반응 없음",
+          "offWarning": "끔: 조용한 모드를 잊으면 밤새 소리가 나지 않을 수 있습니다."
         }
       },
       "battery": {
@@ -345,7 +351,10 @@
         "run": "테스트 실행",
         "running": "테스트하는 중…",
         "question": "소리가 들리고 진동이 느껴졌나요?",
-        "localOnly": "이 기기만 테스트했어요. 아기 기기는 연결되어 있지 않아요."
+        "localOnly": "이 기기만 테스트했어요. 아기 기기는 연결되어 있지 않아요.",
+        "styleSound": "알림 방식: 소리",
+        "styleDiscreet": "알림 방식: 조용히",
+        "bodyDiscreet": "이 기기는 소리 없이 진동하고 알림을 표시합니다. 아기 기기는 조용히 유지됩니다."
       },
       "readiness": {
         "title": "알림이 잘 전달될까요?",
@@ -422,7 +431,10 @@
         "testBadge": "테스트",
         "stopSound": "소리 끄기",
         "soundStopped": "소리를 껐어요",
-        "openApp": "GuardedSleep 열기"
+        "openApp": "GuardedSleep 열기",
+        "stopVibration": "진동 중지",
+        "vibrationStopped": "진동이 중지됨",
+        "discreetHint": "듣기 전까지 소리 없음"
       },
       "settings": {
         "group": {
@@ -478,7 +490,19 @@
           "label": "중계 서버 (TURN), 선택 사항",
           "invalid": "중계 주소는 turn: 또는 turns:로 시작해야 해요."
         },
-        "heartbeat": "{seconds}초마다 연결 확인"
+        "heartbeat": "{seconds}초마다 연결 확인",
+        "alertStyle": {
+          "label": "알림 방식",
+          "sound": "소리: 알림마다 아기의 소리를 재생",
+          "discreet": "조용히: 진동과 화면만, 소리 없음"
+        },
+        "discreetEscalation": {
+          "label": "아무도 반응하지 않으면 소리로 전환",
+          "m1": "1분 후",
+          "m2": "2분 후(권장)",
+          "m5": "5분 후",
+          "off": "끔"
+        }
       },
       "fgsMissing": {
         "bar": "백그라운드에서 지켜보지 않아요 — 앱을 여세요",

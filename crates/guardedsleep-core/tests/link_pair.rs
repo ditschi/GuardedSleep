@@ -1165,6 +1165,142 @@ fn probe_before_verification_does_nothing() {
     assert_eq!(w.nodes[BABY].apply_quiet_calls, 0);
 }
 
+// ---- noise escalation (discreet alert style) ---------------------------------------------------
+
+fn escalations(w: &World, m: usize) -> usize {
+    w.count_events(PARENT, m, |e| matches!(e, LinkEvent::NoiseEscalated { .. }))
+}
+
+fn escalation_delay(w: &mut World, after_ms: Option<u64>) {
+    w.input(PARENT, LinkInput::SetNoiseEscalation { after_ms });
+}
+
+fn snooze_for(w: &mut World, ms: u64) {
+    let until = w.now + ms;
+    w.input(
+        PARENT,
+        LinkInput::SetSnooze {
+            until_ms: Some(until),
+        },
+    );
+}
+
+#[test]
+fn unacknowledged_noise_escalates_once_after_the_delay() {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    escalation_delay(&mut w, Some(60_000));
+    let m = w.mark(PARENT);
+    loud(&mut w, 50_000);
+    assert_eq!(escalations(&w, m), 0, "not before the delay");
+    loud(&mut w, 20_000);
+    assert_eq!(escalations(&w, m), 1);
+    assert!(matches!(
+        w.events_since(PARENT, m)
+            .iter()
+            .find(|e| matches!(e, LinkEvent::NoiseEscalated { .. })),
+        Some(LinkEvent::NoiseEscalated { after_ms: 60_000 })
+    ));
+    loud(&mut w, 60_000);
+    assert_eq!(escalations(&w, m), 1, "once per event");
+}
+
+#[test]
+fn listen_stop_and_snooze_acknowledge_the_event() {
+    for ack in 0..3 {
+        let mut w = World::pair(&PSK_A, &PSK_A);
+        w.connect_pair();
+        escalation_delay(&mut w, Some(60_000));
+        let m = w.mark(PARENT);
+        loud(&mut w, 20_000);
+        match ack {
+            0 => w.input(PARENT, LinkInput::SetListen { enabled: true }),
+            1 => w.input(PARENT, LinkInput::AcknowledgeNoise),
+            _ => snooze_for(&mut w, 600_000),
+        }
+        loud(&mut w, 90_000);
+        assert_eq!(escalations(&w, m), 0, "acknowledgment kind {ack}");
+    }
+}
+
+#[test]
+fn an_event_that_starts_while_listening_is_acknowledged() {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    escalation_delay(&mut w, Some(30_000));
+    w.input(PARENT, LinkInput::SetListen { enabled: true });
+    let m = w.mark(PARENT);
+    loud(&mut w, 90_000);
+    assert_eq!(escalations(&w, m), 0, "the parent was already listening");
+}
+
+#[test]
+fn escalation_off_never_fires() {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    escalation_delay(&mut w, None);
+    let m = w.mark(PARENT);
+    loud(&mut w, 150_000);
+    assert_eq!(escalations(&w, m), 0);
+}
+
+#[test]
+fn a_delay_set_during_an_event_counts_from_then() {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    let m = w.mark(PARENT);
+    loud(&mut w, 90_000);
+    escalation_delay(&mut w, Some(60_000));
+    loud(&mut w, 30_000);
+    assert_eq!(escalations(&w, m), 0, "armed late: no immediate switch");
+    loud(&mut w, 40_000);
+    assert_eq!(escalations(&w, m), 1);
+}
+
+#[test]
+fn a_new_event_after_two_quiet_minutes_restarts_the_count() {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    escalation_delay(&mut w, Some(30_000));
+    let m = w.mark(PARENT);
+    loud(&mut w, 40_000);
+    assert_eq!(escalations(&w, m), 1);
+    quiet(&mut w, 130_000);
+    let m2 = w.mark(PARENT);
+    loud(&mut w, 20_000);
+    assert_eq!(escalations(&w, m2), 0, "fresh count");
+    loud(&mut w, 20_000);
+    assert_eq!(escalations(&w, m2), 1);
+}
+
+#[test]
+fn a_snooze_that_ends_in_noise_starts_the_count_over() {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    escalation_delay(&mut w, Some(30_000));
+    snooze_for(&mut w, 20_000);
+    let m = w.mark(PARENT);
+    loud(&mut w, 40_000);
+    assert_eq!(
+        escalations(&w, m),
+        0,
+        "the snooze acknowledged it until it ended"
+    );
+    loud(&mut w, 40_000);
+    assert_eq!(escalations(&w, m), 1);
+}
+
+#[test]
+fn a_test_alert_never_escalates() {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    escalation_delay(&mut w, Some(5_000));
+    let m = w.mark(PARENT);
+    w.input(PARENT, LinkInput::RequestProbe);
+    w.advance(60_000);
+    assert_eq!(escalations(&w, m), 0);
+}
+
 #[test]
 fn quiet_request_needs_a_verified_attempt_and_is_rate_limited() {
     let mut w = World::pair(&PSK_A, &PSK_A);

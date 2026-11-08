@@ -73,7 +73,8 @@
       "securityTitle": "Forkert nøgle",
       "publicTitle": "GuardedSleep-alarm",
       "fgsMissingTitle": "Overvåger ikke i baggrunden",
-      "fgsMissingText": "Åbn GuardedSleep for at slå overvågning i baggrunden til igen."
+      "fgsMissingText": "Åbn GuardedSleep for at slå overvågning i baggrunden til igen.",
+      "actionListen": "Lyt"
     },
     "ui": {
       "common": {
@@ -313,6 +314,11 @@
           "resumedFromSleep": "Babyenheden vågnede af dvale: lyde kan være gået tabt",
           "notCharging": "Babyenheden oplader ikke længere",
           "micPermissionLost": "Babyenheden mistede adgangen til mikrofonen"
+        },
+        "discreet": {
+          "indicator": "Diskrete alarmer: ingen lyd",
+          "escalated": "Skiftet til lyd: ingen reaktion i {minutes} min",
+          "offWarning": "Fra: en glemt diskret tilstand kan forblive lydløs hele natten."
         }
       },
       "battery": {
@@ -345,7 +351,10 @@
         "run": "Kør test",
         "running": "Kører testen…",
         "question": "Hørte og mærkede du den?",
-        "localOnly": "Kun denne enhed blev testet: babyenheden er ikke forbundet."
+        "localOnly": "Kun denne enhed blev testet: babyenheden er ikke forbundet.",
+        "styleSound": "Alarmtype: lyd",
+        "styleDiscreet": "Alarmtype: diskret",
+        "bodyDiscreet": "Denne enhed vibrerer og viser alarmen uden lyd. Babyenheden forbliver stille."
       },
       "readiness": {
         "title": "Når alarmerne frem til dig?",
@@ -422,7 +431,10 @@
         "testBadge": "TEST",
         "stopSound": "Stop lyden",
         "soundStopped": "Lyden er stoppet",
-        "openApp": "Åbn GuardedSleep"
+        "openApp": "Åbn GuardedSleep",
+        "stopVibration": "Stop vibration",
+        "vibrationStopped": "Vibration stoppet",
+        "discreetHint": "Ingen lyd, før du lytter"
       },
       "settings": {
         "group": {
@@ -478,7 +490,19 @@
           "label": "Relæserver (TURN), valgfri",
           "invalid": "Relæadressen skal starte med turn: eller turns:."
         },
-        "heartbeat": "Forbindelsestjek hvert {seconds} s"
+        "heartbeat": "Forbindelsestjek hvert {seconds} s",
+        "alertStyle": {
+          "label": "Alarmtype",
+          "sound": "Lyd: barnets lyd afspilles ved hver alarm",
+          "discreet": "Diskret: vibration og skærm, ingen lyd"
+        },
+        "discreetEscalation": {
+          "label": "Skift til lyd, hvis ingen reagerer",
+          "m1": "Efter 1 minut",
+          "m2": "Efter 2 minutter (anbefalet)",
+          "m5": "Efter 5 minutter",
+          "off": "Fra"
+        }
       },
       "fgsMissing": {
         "bar": "Overvåger ikke i baggrunden: åbn appen",

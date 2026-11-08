@@ -73,7 +73,8 @@
       "securityTitle": "キーが違います",
       "publicTitle": "GuardedSleep アラーム",
       "fgsMissingTitle": "バックグラウンドで見守っていません",
-      "fgsMissingText": "GuardedSleep を開いて、バックグラウンドの見守りを再開してください。"
+      "fgsMissingText": "GuardedSleep を開いて、バックグラウンドの見守りを再開してください。",
+      "actionListen": "聞く"
     },
     "ui": {
       "common": {
@@ -313,6 +314,11 @@
           "resumedFromSleep": "赤ちゃん用端末がスリープから復帰しました。音を聞き逃した可能性があります",
           "notCharging": "赤ちゃん用端末が充電されていません",
           "micPermissionLost": "赤ちゃん用端末がマイクへのアクセスを失いました"
+        },
+        "discreet": {
+          "indicator": "控えめな通知：音なし",
+          "escalated": "音に切り替えました：{minutes} 分間反応がありません",
+          "offWarning": "オフ：控えめモードを戻し忘れると、一晩中音が出ないことがあります。"
         }
       },
       "battery": {
@@ -345,7 +351,10 @@
         "run": "テストを実行",
         "running": "テストを実行しています…",
         "question": "音と振動を感じましたか？",
-        "localOnly": "この端末だけをテストしました。赤ちゃん用端末は接続されていません。"
+        "localOnly": "この端末だけをテストしました。赤ちゃん用端末は接続されていません。",
+        "styleSound": "通知方法：音",
+        "styleDiscreet": "通知方法：控えめ",
+        "bodyDiscreet": "この端末は音を出さずに振動して通知を表示します。赤ちゃん側の端末は無音のままです。"
       },
       "readiness": {
         "title": "アラートは届きますか？",
@@ -422,7 +431,10 @@
         "testBadge": "テスト",
         "stopSound": "音を止める",
         "soundStopped": "音を止めました",
-        "openApp": "GuardedSleep を開く"
+        "openApp": "GuardedSleep を開く",
+        "stopVibration": "振動を止める",
+        "vibrationStopped": "振動を止めました",
+        "discreetHint": "聞くまで音は出ません"
       },
       "settings": {
         "group": {
@@ -478,7 +490,19 @@
           "label": "中継サーバー (TURN)（任意）",
           "invalid": "中継アドレスは turn: または turns: で始まる必要があります。"
         },
-        "heartbeat": "{seconds}秒ごとに接続を確認"
+        "heartbeat": "{seconds}秒ごとに接続を確認",
+        "alertStyle": {
+          "label": "通知方法",
+          "sound": "音：通知のたびに赤ちゃんの音を再生",
+          "discreet": "控えめ：振動と画面のみ、音なし"
+        },
+        "discreetEscalation": {
+          "label": "誰も反応しないときは音に切り替える",
+          "m1": "1分後",
+          "m2": "2分後（推奨）",
+          "m5": "5分後",
+          "off": "オフ"
+        }
       },
       "fgsMissing": {
         "bar": "バックグラウンドで見守っていません。アプリを開いてください",

@@ -128,6 +128,8 @@ export interface ParentMonitorState {
   lastSound: SoundEventUi | null;
   /** The parent device's own battery percent, for "Your device is at {percent}". */
   ownBatteryPct: number | null;
+  /** Android only: the core switched a discreet event to sound; always null in the browser. */
+  noiseEscalatedAfterMin: number | null;
 }
 
 export interface BabyMonitorState {
@@ -211,6 +213,13 @@ export type Theme = "dark" | "light" | "system";
 
 export type AlertOutput = "default" | "speaker_only";
 
+/**
+ * Mirrors `AlertStyle` and `DiscreetEscalation` of UiContract.kt. The browser does not offer the
+ * discreet style (it cannot vibrate), so it always keeps "sound" and never reads these values.
+ */
+export type AlertStyle = "sound" | "discreet";
+export type DiscreetEscalation = "one_minute" | "two_minutes" | "five_minutes" | "off";
+
 export interface SettingsState {
   theme: Theme;
   /** null = follow the browser language. */
@@ -218,6 +227,8 @@ export interface SettingsState {
   threshold: number;
   holdSeconds: number;
   alertOutput: AlertOutput;
+  alertStyle: AlertStyle;
+  discreetEscalation: DiscreetEscalation;
   alertGainPct: number;
   silenceWhileMonitoring: boolean;
   advancedEnabled: boolean;
@@ -299,6 +310,7 @@ export function defaultParentMonitor(): ParentMonitorState {
     babyThreshold: null,
     lastSound: null,
     ownBatteryPct: null,
+    noiseEscalatedAfterMin: null,
   };
 }
 
@@ -326,6 +338,8 @@ export function defaultSettings(): SettingsState {
     threshold: 0.12,
     holdSeconds: 5,
     alertOutput: "default",
+    alertStyle: "sound",
+    discreetEscalation: "two_minutes",
     alertGainPct: 100,
     silenceWhileMonitoring: true,
     advancedEnabled: false,

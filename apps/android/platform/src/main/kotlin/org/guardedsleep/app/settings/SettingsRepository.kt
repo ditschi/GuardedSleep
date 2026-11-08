@@ -18,6 +18,8 @@ import org.guardedsleep.app.config.AppDefaults
 import org.guardedsleep.app.pairing.TurnCredentials
 import org.guardedsleep.app.pairing.TurnStore
 import org.guardedsleep.app.ui.model.AlertOutput
+import org.guardedsleep.app.ui.model.AlertStyle
+import org.guardedsleep.app.ui.model.DiscreetEscalation
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.SettingsState
 import org.guardedsleep.app.ui.model.Theme
@@ -99,19 +101,23 @@ class SettingsRepository(
         if (kept) store.edit { it.remove(TURN) }
     }
 
+    /** A stored enum name, or null when absent or from an unknown (older or newer) version. */
+    private inline fun <reified E : Enum<E>> enumOrNull(name: String?): E? = name?.let { n ->
+        runCatching { enumValueOf<E>(n) }.getOrNull()
+    }
+
     private fun read(p: Preferences): PersistedState {
         val defaults = SettingsState(signalingUrls = AppDefaults.signalingUrls)
         val settings =
             SettingsState(
-                theme =
-                    p[THEME]?.let { runCatching { Theme.valueOf(it) }.getOrNull() }
-                        ?: defaults.theme,
+                theme = enumOrNull<Theme>(p[THEME]) ?: defaults.theme,
                 language = p[LANGUAGE],
                 threshold = p[THRESHOLD] ?: defaults.threshold,
                 holdSeconds = p[HOLD] ?: defaults.holdSeconds,
-                alertOutput =
-                    p[OUTPUT]?.let { runCatching { AlertOutput.valueOf(it) }.getOrNull() }
-                        ?: defaults.alertOutput,
+                alertOutput = enumOrNull<AlertOutput>(p[OUTPUT]) ?: defaults.alertOutput,
+                alertStyle = enumOrNull<AlertStyle>(p[STYLE]) ?: defaults.alertStyle,
+                discreetEscalation =
+                    enumOrNull<DiscreetEscalation>(p[ESCALATION]) ?: defaults.discreetEscalation,
                 alertGainPct = p[GAIN] ?: defaults.alertGainPct,
                 silenceWhileMonitoring = p[SILENCE] ?: defaults.silenceWhileMonitoring,
                 advancedEnabled = p[ADVANCED] ?: defaults.advancedEnabled,
@@ -122,7 +128,7 @@ class SettingsRepository(
             )
         return PersistedState(
             settings = settings,
-            role = p[ROLE]?.let { runCatching { Role.valueOf(it) }.getOrNull() },
+            role = enumOrNull<Role>(p[ROLE]),
             onboardingDone = p[ONBOARDING] ?: false,
             monitoringActive = p[MONITORING] ?: false,
             peerName = p[PEER_NAME],
@@ -145,6 +151,8 @@ class SettingsRepository(
         set(THRESHOLD, c.threshold)
         set(HOLD, c.holdSeconds)
         set(OUTPUT, c.alertOutput.name)
+        set(STYLE, c.alertStyle.name)
+        set(ESCALATION, c.discreetEscalation.name)
         set(GAIN, c.alertGainPct)
         set(SILENCE, c.silenceWhileMonitoring)
         set(ADVANCED, c.advancedEnabled)
@@ -168,6 +176,8 @@ class SettingsRepository(
         val THRESHOLD = floatPreferencesKey("threshold")
         val HOLD = intPreferencesKey("hold_seconds")
         val OUTPUT = stringPreferencesKey("alert_output")
+        val STYLE = stringPreferencesKey("alert_style")
+        val ESCALATION = stringPreferencesKey("discreet_escalation")
         val GAIN = intPreferencesKey("alert_gain_pct")
         val SILENCE = booleanPreferencesKey("silence_while_monitoring")
         val ADVANCED = booleanPreferencesKey("advanced")

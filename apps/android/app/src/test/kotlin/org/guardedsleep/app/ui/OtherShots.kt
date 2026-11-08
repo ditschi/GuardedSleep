@@ -4,6 +4,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.focus.FocusRequester
 import org.guardedsleep.app.ui.common.RowState
 import org.guardedsleep.app.ui.model.AlertOutput
+import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
 import org.guardedsleep.app.ui.model.CauseHint
@@ -346,6 +347,24 @@ class AlertShots : ShotBase() {
         noise("sounding", base)
         noise("test", base.copy(noiseIsTest = true))
         noise("ended", base.copy(noiseAlertActive = false, level = 0.02f))
+        shot("alert/escalated", "en") {
+            NoiseAlertScreen(
+                FakeAppController(
+                    parent = base.copy(noiseEscalatedAfterMin = 2),
+                    settings = SettingsState(alertStyle = AlertStyle.DISCREET),
+                ),
+                {},
+            )
+        }
+        shot("alert/discreet", "en") {
+            NoiseAlertScreen(
+                FakeAppController(
+                    parent = base,
+                    settings = SettingsState(alertStyle = AlertStyle.DISCREET),
+                ),
+                {},
+            )
+        }
         noise("sounding", base, "de")
     }
 

@@ -73,7 +73,8 @@
       "securityTitle": "مفتاح خاطئ",
       "publicTitle": "إنذار GuardedSleep",
       "fgsMissingTitle": "لا مراقبة في الخلفية",
-      "fgsMissingText": "افتح GuardedSleep لإعادة تشغيل المراقبة في الخلفية."
+      "fgsMissingText": "افتح GuardedSleep لإعادة تشغيل المراقبة في الخلفية.",
+      "actionListen": "استماع"
     },
     "ui": {
       "common": {
@@ -313,6 +314,11 @@
           "resumedFromSleep": "استيقظ جهاز الطفل من النوم — قد تكون أصوات قد فاتتك",
           "notCharging": "جهاز الطفل لا يشحن",
           "micPermissionLost": "فقد جهاز الطفل إذن الميكروفون"
+        },
+        "discreet": {
+          "indicator": "تنبيهات هادئة: بلا صوت",
+          "escalated": "تم التحويل إلى الصوت: لا استجابة منذ {minutes} د",
+          "offWarning": "إيقاف: قد يبقى الوضع الهادئ المنسي صامتًا طوال الليل."
         }
       },
       "battery": {
@@ -345,7 +351,10 @@
         "run": "تشغيل الاختبار",
         "running": "جارٍ تشغيل الاختبار…",
         "question": "هل سمعته وشعرت به؟",
-        "localOnly": "تم اختبار هذا الجهاز فقط — جهاز الطفل غير متصل."
+        "localOnly": "تم اختبار هذا الجهاز فقط — جهاز الطفل غير متصل.",
+        "styleSound": "نمط التنبيه: صوت",
+        "styleDiscreet": "نمط التنبيه: هادئ",
+        "bodyDiscreet": "يهتز هذا الجهاز ويعرض التنبيه بلا صوت. يبقى جهاز الطفل صامتًا."
       },
       "readiness": {
         "title": "هل تصلك التنبيهات؟",
@@ -422,7 +431,10 @@
         "testBadge": "تجريبي",
         "stopSound": "إيقاف الصوت",
         "soundStopped": "تم إيقاف الصوت",
-        "openApp": "فتح GuardedSleep"
+        "openApp": "فتح GuardedSleep",
+        "stopVibration": "إيقاف الاهتزاز",
+        "vibrationStopped": "تم إيقاف الاهتزاز",
+        "discreetHint": "لا صوت حتى تستمع"
       },
       "settings": {
         "group": {
@@ -478,7 +490,19 @@
           "label": "خادم الترحيل (TURN)، اختياري",
           "invalid": "يجب أن يبدأ عنوان الترحيل بـ turn: أو turns:."
         },
-        "heartbeat": "فحص الاتصال كل {seconds} ث"
+        "heartbeat": "فحص الاتصال كل {seconds} ث",
+        "alertStyle": {
+          "label": "نمط التنبيه",
+          "sound": "صوت: يُشغَّل صوت الطفل مع كل تنبيه",
+          "discreet": "هادئ: اهتزاز وشاشة بلا صوت"
+        },
+        "discreetEscalation": {
+          "label": "التحويل إلى الصوت إذا لم يستجب أحد",
+          "m1": "بعد دقيقة",
+          "m2": "بعد دقيقتين (موصى به)",
+          "m5": "بعد 5 دقائق",
+          "off": "إيقاف"
+        }
       },
       "fgsMissing": {
         "bar": "لا مراقبة في الخلفية — افتح التطبيق",

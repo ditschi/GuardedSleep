@@ -140,6 +140,9 @@ fn input() -> impl Strategy<Value = LinkInput> {
         Just(LinkInput::RequestProbe),
         Just(LinkInput::RequestQuiet),
         prop::option::of(0u64..500_000).prop_map(|until_ms| LinkInput::SetSnooze { until_ms }),
+        prop::option::of(0u64..500_000)
+            .prop_map(|after_ms| LinkInput::SetNoiseEscalation { after_ms }),
+        Just(LinkInput::AcknowledgeNoise),
         Just(LinkInput::QuietApplied {
             state: DeviceStatus::default()
         }),
