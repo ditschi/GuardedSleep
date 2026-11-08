@@ -80,7 +80,13 @@ function tlsTransport(opts) {
     });
     sock.once("error", reject);
     sock.once("secureConnect", () => {
-      const t = { sock, closedAt: 0, send: (b) => sock.write(b), close: () => sock.end(), on: (f) => (cb = f) };
+      const t = {
+        sock,
+        closedAt: 0,
+        send: (b) => sock.write(b),
+        close: () => sock.end(),
+        on: (f) => (cb = f),
+      };
       // After the handshake an error (a reset by the proxy) must not crash the client; the close is the signal.
       sock.on("error", () => {});
       sock.on("close", () => (t.closedAt ||= Date.now()));
@@ -160,7 +166,10 @@ if (MODE === "nocert") {
         tt.send(
           build(
             M.sendIndication,
-            [attr(A.xorPeer, xorAddr(peer.ip, peer.port)), attr(A.data, Buffer.from(`out-${r}-${i}`))],
+            [
+              attr(A.xorPeer, xorAddr(peer.ip, peer.port)),
+              attr(A.data, Buffer.from(`out-${r}-${i}`)),
+            ],
             null,
           ).msg,
         );
@@ -174,8 +183,7 @@ if (MODE === "nocert") {
       await sleep(500);
       const outN = [0, 1, 2].filter((i) => peerGot.has(`out-${r}-${i}`)).length;
       const inN = indications.filter(
-        (p) =>
-          p.type === M.dataIndication && String(p.attrs.get(A.data)).startsWith(`in-${r}-`),
+        (p) => p.type === M.dataIndication && String(p.attrs.get(A.data)).startsWith(`in-${r}-`),
       ).length;
       log(`relayed through TLS (round ${r}): client to peer ${outN}/3, peer to client ${inN}/3`);
       return outN >= 2 && inN >= 2;
@@ -188,11 +196,14 @@ if (MODE === "nocert") {
         await sleep(Math.min(15000, HOLD_S * 1000 - (Date.now() - t0)));
         if (tt.closedAt) break;
         if (HOLD_IDLE) continue;
-        const rf = await s.txn(M.refresh, [attr(A.lifetime, u32(120))]).catch((e) => ({ error: e.message }));
+        const rf = await s
+          .txn(M.refresh, [attr(A.lifetime, u32(120))])
+          .catch((e) => ({ error: e.message }));
         log(`t+${Math.round((Date.now() - t0) / 1000)}s refresh: ${ok(rf) ? "ok" : rf.error}`);
       }
       const held = Math.round(((tt.closedAt || Date.now()) - t0) / 1000);
-      if (tt.closedAt) log(`HOLD connection closed by the peer side after ${held}s (asked for ${HOLD_S}s)`);
+      if (tt.closedAt)
+        log(`HOLD connection closed by the peer side after ${held}s (asked for ${HOLD_S}s)`);
       else log(`HOLD connection still open after ${held}s`);
       if (EXPECT_BREAK) {
         if (!tt.closedAt) fail(`the connection survived ${held}s although a break was expected`);
