@@ -205,6 +205,8 @@ services:
   # serves the web client controls the client completely (PSK, parent secret, microphone), so the
   # web client is never co-hosted on gs.mydata.rocks. Enable only on a separate origin of your own:
   #   docker compose --profile web up -d
+  # A test deployment (app.gs.mydata.rocks) uses the guardedsleep-web-staging image instead; /signaling on
+  # that web host must not be routed (Traefik rule Host(web) && !PathPrefix(`/signaling`)).
   web:
     profiles: ["web"]
     image: ghcr.io/${GUARDEDSLEEP_OWNER}/guardedsleep-web:${WEB_TAG:-unset}

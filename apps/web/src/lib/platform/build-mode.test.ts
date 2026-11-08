@@ -15,8 +15,15 @@ describe("loopbackAllowed", () => {
     expect(loopbackAllowed({ DEV: false, MODE: "production" })).toBe(false);
   });
 
+  it("is never on in staging mode", () => {
+    expect(loopbackAllowed({ DEV: false, MODE: "staging" })).toBe(false);
+  });
+
   it("the web image builds in production mode and only the E2E server builds in e2e mode", () => {
-    expect(dockerfile).toMatch(/vite build --mode production/);
+    expect(dockerfile).toMatch(/ARG WEB_BUILD_MODE=production/);
+    expect(dockerfile).toMatch(/vite build --mode "\$WEB_BUILD_MODE"/);
+    // Only production and staging pass the Dockerfile's mode check; e2e and development never do.
+    expect(dockerfile).toMatch(/production\|staging\)/);
     expect(dockerfile).not.toMatch(/--mode e2e/);
     expect(prodServer).toMatch(/"--mode",\s*"e2e"/);
     // The E2E bundle never lands in the directory a release or the image ships.
@@ -51,6 +58,13 @@ describe("projectServerEnabled", () => {
       projectServerEnabled({ DEV: false, MODE: "e2e", VITE_GS_OFFICIAL_DEPLOYMENT: official }),
     ).toBe(true);
     expect(projectServerEnabled({ DEV: true, MODE: "development" })).toBe(false);
+  });
+
+  it("is on for a staging build only together with the official-deployment flag", () => {
+    expect(
+      projectServerEnabled({ DEV: false, MODE: "staging", VITE_GS_OFFICIAL_DEPLOYMENT: official }),
+    ).toBe(true);
+    expect(projectServerEnabled({ DEV: false, MODE: "staging" })).toBe(false);
   });
 
   it("the release value cannot be on while the data entry is pending", () => {
