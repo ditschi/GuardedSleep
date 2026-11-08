@@ -41,7 +41,7 @@ A call is a **pipe**: it carries sound for as long as it lasts, and the parent h
 
 - **Call:** you hold the phone to your ear or wear a headset all evening, or you miss the crying. At a party, a dinner or in the garden that does not work.
 - **GuardedSleep:** the baby unit runs the noise detection. The parent phone stays in your pocket or on the table and reacts only when the child makes noise: vibration, screen on, full-screen alert over the lock screen, live level meter (**built**, [parent-alerts](../../openspec/specs/parent-alerts/spec.md)). The visual alert stays until the room has been quiet for 2 minutes, so a glance at the screen is enough to see that something happened (**built**). You then decide whether to listen or go and check.
-- **Gap:** today every noise alert also plays the child's audio. A **discreet profile** (vibration and screen only, audio on demand) and **alerts on a smartwatch** complete the party use case (**idea**, backlog `parent-alerts`).
+- **Discreet profile:** vibration and screen only, the child's audio only when you tap Listen (**decided**, `add-discreet-alert-profile`, target alpha). Alerts on a smartwatch would complete the party use case (**idea**, backlog `parent-alerts`).
 
 ### A2. Silence is not mistaken for "all quiet"
 

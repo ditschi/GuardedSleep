@@ -108,7 +108,6 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 ### parent-alerts
 
 - `DEFERRED` (Phase 2) With multi-parent: failover banner and escalation to another parent when the primary parent stops acknowledging heartbeats.
-- `IDEA` Discreet alert profile for events and parties: a noise alert vibrates, wakes the screen and shows the full-screen alert and level meter, but does not play the child's audio until the parent taps listen. Today the child's audio is always part of the noise alert. Connection levels 2 and 3 stay unchanged. Positioning: [why-guardedsleep.md](concept/why-guardedsleep.md) A1.
 - `IDEA` Alerts on a paired smartwatch (vibration and a short "noise" or "connection lost" notice on the wrist), so the parent notices a noise event with the phone in a bag or pocket.
 - `IDEA` Configurable alert behaviour beyond the built chain (which combination of sound, vibration and screen per alert type), vibration strength or pattern, and a cool-down between repeated alerts.
 - `IDEA` Connection-context alert policy: full alert chain on unmetered Wi-Fi, a lighter chain on metered or cellular data.
