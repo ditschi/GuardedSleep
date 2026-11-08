@@ -187,6 +187,10 @@ jobs:
         with:
           name: guardedsleep-alpha-debug-apk
           path: ${{ runner.temp }}/in
+      # The local setup-android action needs the repository on the runner.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-android
       - name: Re-sign and verify
         env:
