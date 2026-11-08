@@ -10,7 +10,7 @@ What exists today: the core raises `noise_alert { rms, probe, snoozed }` and onl
 
 **Platform (presentation), once per platform behind the existing contract models. Not the core.**
 
-- Pros: the core never decides sound, vibration or screen (it emits `snoozed` and nothing else); snooze is a core input only because the *core* must hold the end time across reconnects for the event flag. An alert style has no safety semantics the core must enforce (no timer, no escalation); it only chooses what the parent device plays. No wire change, no vectors, no `api.txt` change.
+- Pros: the core never decides sound, vibration or screen (it emits `snoozed` and nothing else); snooze is a core input only because the _core_ must hold the end time across reconnects for the event flag. An alert style has no safety semantics the core must enforce (no timer, no escalation); it only chooses what the parent device plays. No wire change, no vectors, no `api.txt` change.
 - Cons: the rule "discreet means no playout until Listen" exists twice (Kotlin and TypeScript), like the snooze presentation does today. Mitigation: it is one pure function per platform with the same tests, and the setting itself is part of the mirrored contract models.
 - Recommendation: platform. Safety logic that lives once in the core (pairing, link supervision, escalation, noise gate) is untouched.
 

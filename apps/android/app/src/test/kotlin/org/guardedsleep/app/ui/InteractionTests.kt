@@ -23,6 +23,7 @@ import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.text.AnnotatedString
 import org.guardedsleep.app.ui.common.LocalUiEnv
+import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
 import org.guardedsleep.app.ui.model.LinkPhase
@@ -202,6 +203,57 @@ class InteractionTests : ShotBase() {
         show { NoiseAlertScreen(c, {}) }
         onNodeWithTag("alert_stop_sound").performClick()
         assertTrue(c.calls.contains("stopAlertSound"))
+    }
+
+    @Test
+    fun discreetIndicatorIsAbsentInSoundStyle() = runComposeUiTest {
+        val c = connectedController()
+        show { ParentMonitorScreen(c, {}) }
+        onNodeWithTag("discreet_indicator").assertDoesNotExist()
+    }
+
+    @Test
+    fun alertStyleIsChangeableFromMonitorInTwoTaps() = runComposeUiTest {
+        val c = connectedController()
+        show { ParentMonitorScreen(c, {}) }
+        onNodeWithTag("parent_overflow").performClick()
+        onNodeWithTag("alert_style_discreet").performClick()
+        waitForIdle()
+        assertEquals(AlertStyle.DISCREET, c.settingsFlow.value.alertStyle)
+        onNodeWithTag("discreet_indicator").assertIsDisplayed()
+    }
+
+    @Test
+    fun discreetIndicatorStaysVisibleAndOpensTheChoice() = runComposeUiTest {
+        val c =
+            FakeAppController(
+                app = monitoring,
+                parent = ParentMonitorState(link = Connected),
+                settings = SettingsState(alertStyle = AlertStyle.DISCREET),
+            )
+        show { ParentMonitorScreen(c, {}) }
+        onNodeWithTag("discreet_indicator").assertIsDisplayed().performClick()
+        onNodeWithTag("alert_style_sound").performClick()
+        waitForIdle()
+        assertEquals(AlertStyle.SOUND, c.settingsFlow.value.alertStyle)
+        onNodeWithTag("discreet_indicator").assertDoesNotExist()
+    }
+
+    @Test
+    fun discreetAlertOffersStopVibrationAndListen() = runComposeUiTest {
+        val c =
+            FakeAppController(
+                app = monitoring,
+                parent =
+                    ParentMonitorState(link = Connected, noiseAlertActive = true, level = 0.8f),
+                settings = SettingsState(alertStyle = AlertStyle.DISCREET),
+            )
+        show { NoiseAlertScreen(c, {}) }
+        onNodeWithTag("alert_discreet_hint").assertIsDisplayed()
+        onNodeWithTag("alert_listen").assertIsDisplayed()
+        onNodeWithTag("alert_stop_sound").performClick()
+        assertTrue(c.calls.contains("stopAlertSound"))
+        onNodeWithTag("alert_sound_stopped").assertIsDisplayed()
     }
 
     @Test
