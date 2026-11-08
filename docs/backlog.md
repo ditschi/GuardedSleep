@@ -139,6 +139,10 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 
 - `IDEA` Chrome Local Network Access as a way for an HTTPS page to reach a LAN relay (ADR-021 §1 keeps HTTPS web ↔ phone listener `REJECTED`).
 
+### web-client
+
+- `IDEA` Discreet alert style in the browser once the browser can vibrate (today a browser parent always plays the child's audio; `add-discreet-alert-profile` offers the style on Android only).
+
 ### i18n
 
 - `PLANNED` (T1) Weblate for volunteer translators (ADR-021 §2).
