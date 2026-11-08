@@ -224,12 +224,11 @@ Every push to `main` that passes the emulator gate (`android-native` workflow) p
 
 Install it with `adb install -r guardedsleep-alpha-dev.apk` or open the link on the phone (allow installs from the browser). Check the download with `sha256sum -c guardedsleep-alpha-dev.apk.sha256`. A newer dev build installs over an older one and keeps the pairing. It does **not** install over a Play or release build (different signing key, same app id `org.guardedsleep.app.alpha`): uninstall that first, which deletes the pairing.
 
-Owner setup (once; the key is never committed, AGENTS.md §7.7):
+Owner setup (once; the key is never committed, AGENTS.md §7.7): run `scripts/dev-apk-key.sh` from the repository root. It generates a random password and a PKCS12 EC key, creates the environment `dev-apk` with deployment branches limited to `main`, stores the secrets `GS_DEV_KEYSTORE_B64`, `GS_DEV_KEYSTORE_PASSWORD` and `GS_DEV_KEY_ALIAS`, and saves key and password as the Bitwarden item "GuardedSleep dev APK key" when `BW_SESSION` is set (environment or `.env.local`); without it, it leaves both files in `~/guardedsleep-dev-key` for your password manager. It prints no secret.
 
-1. Create the keystore offline: `keytool -genkeypair -storetype PKCS12 -keyalg EC -groupname secp256r1 -validity 3650 -alias guardedsleep-dev -keystore dev.p12` (one password for store and key).
-2. Encode it: `base64 -w0 dev.p12`.
-3. In the repository settings create the environment `dev-apk` with deployment branches limited to `main`, and add the secrets `GS_DEV_KEYSTORE_B64` (the base64 text), `GS_DEV_KEYSTORE_PASSWORD` and `GS_DEV_KEY_ALIAS` (`guardedsleep-dev` above).
-4. Keep `dev.p12` offline. Losing or replacing it means every tester uninstalls once.
+- Environments and environment secrets need admin rights on the repository. A personal access token without them fails with HTTP 403: log in through the browser once with `env -u GH_TOKEN -u GITHUB_TOKEN gh auth login --web` and run the script with the same `env -u GH_TOKEN -u GITHUB_TOKEN` prefix. Alternatively create the environment in the repository settings first; the script then only stores the secrets.
+- A run that stopped half-way reuses the key in the output directory. Once the secrets exist, the script refuses to create another key; `GS_ROTATE_DEV_KEY=1` replaces it on purpose.
+- Replacing or losing the key means every tester uninstalls once (which deletes the pairing); delete the old Bitwarden item after a rotation.
 
 ## Commits
 
