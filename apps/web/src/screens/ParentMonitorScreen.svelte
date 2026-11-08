@@ -18,6 +18,7 @@
   import Dialog from "../lib/ui/Dialog.svelte";
   import { formatClock, formatDuration, levelWordKey } from "../lib/ui/format";
   import Glyph from "../lib/ui/Glyph.svelte";
+  import AlertStyleChoice from "../lib/ui/AlertStyleChoice.svelte";
   import AwayNotice from "../lib/ui/AwayNotice.svelte";
   import KeepAwakeNotice from "../lib/ui/KeepAwakeNotice.svelte";
   import ListenButton from "../lib/ui/ListenButton.svelte";
@@ -39,7 +40,7 @@
 
   const controller = useController();
   const router = useRouter();
-  const { app, parent, soundUnlocked } = controller;
+  const { app, parent, settings, soundUnlocked } = controller;
 
   // ---- full screens ----------------------------------------------------------------------
 
@@ -274,6 +275,14 @@
       </Button>
     {/if}
 
+    {#if $settings.alertStyle === "discreet"}
+      <!-- Never hidden behind "more": a forgotten discreet style is a missed-alarm risk. -->
+      <Button variant="tonal" testid="discreet_indicator" onclick={() => (moreOpen = true)}>
+        <Glyph name="moon" />
+        {$t("native.ui.parent.discreet.indicator")}
+      </Button>
+    {/if}
+
     <h1 tabindex="-1" data-route-heading class="gs-headline" data-testid="parent_headline">
       {headlineText}
     </h1>
@@ -384,7 +393,18 @@
 </Dialog>
 
 <Dialog bind:open={probeOpen} title={$t("native.ui.probe.title")} testid="sheet_probe">
-  <p>{$t("native.ui.probe.body")}</p>
+  <p>
+    {$t(
+      $settings.alertStyle === "discreet" ? "native.ui.probe.bodyDiscreet" : "native.ui.probe.body",
+    )}
+  </p>
+  <p data-testid="sheet_probe_style">
+    {$t(
+      $settings.alertStyle === "discreet"
+        ? "native.ui.probe.styleDiscreet"
+        : "native.ui.probe.styleSound",
+    )}
+  </p>
   {#snippet actions()}
     <Button variant="text" onclick={() => (probeOpen = false)}>
       {$t("native.ui.common.cancel")}
@@ -426,6 +446,7 @@
 
 <Dialog bind:open={moreOpen} title={$t("native.ui.common.more")} testid="sheet_more">
   <div class="gs-stack gs-stack--tight">
+    <AlertStyleChoice />
     <Button
       variant="outline"
       block

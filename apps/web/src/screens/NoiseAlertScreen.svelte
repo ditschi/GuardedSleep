@@ -13,7 +13,8 @@
   let { onclose }: { onclose: () => void } = $props();
 
   const controller = useController();
-  const { parent } = controller;
+  const { parent, settings } = controller;
+  const discreet = $derived($settings.alertStyle === "discreet");
 
   let heading: HTMLElement | undefined = $state();
   // The alert takes the focus so a screen reader announces it and Enter reaches "Stop sound".
@@ -70,11 +71,16 @@
       />
     </div>
 
+    {#if discreet}
+      <p class="gs-hint" data-testid="alert_discreet_hint">{$t("native.ui.alert.discreetHint")}</p>
+    {/if}
+
     <div class="gs-fill"></div>
 
+    <!-- The web client has no vibration, so discreet only offers to dismiss. -->
     <Button variant="alert" size="large" block testid="alert_stop_sound" onclick={stopSound}>
       <Glyph name="stop" />
-      {$t("native.ui.alert.stopSound")}
+      {$t(discreet ? "native.ui.alert.dismiss" : "native.ui.alert.stopSound")}
     </Button>
     <div class="gs-action-row">
       <Button variant="alert-outline" testid="alert_snooze_10" onclick={() => snooze(10)}>

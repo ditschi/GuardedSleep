@@ -14,6 +14,7 @@ import {
 import type { AlertSink, LinkSnapshot } from "./alert-sink";
 import type { Clock } from "./clock";
 import type { InboundAudioStats } from "./media-engine";
+import { noisePlaysAudio } from "./noise-feedback";
 import { NoiseTracker } from "./noise-tracker";
 import { LISTEN_MAX_MS, MISSED_EVENTS_GRACE_MS, RESTORED_NOTICE_MS } from "./policy";
 import {
@@ -99,6 +100,8 @@ export class ParentModel {
     private readonly effects: ParentEffects,
     private readonly threshold: () => number,
     private readonly onChange: (state: ParentMonitorState) => void,
+    /** The discreet alert style is on: noise alerts play no audio until the parent listens. */
+    private readonly discreet: () => boolean = () => false,
   ) {}
 
   /** Forget the run (keeps readiness and an active snooze, which belong to the device). */
@@ -316,8 +319,8 @@ export class ParentModel {
       this.effects.snoozeEnded();
       // Noise that is still going at the end of the snooze alerts immediately.
       if (this.tracker.active && now - this.lastLoudLevelAt < LOUD_RECENT_MS) {
-        this.effects.muteRemote(false);
-        this.sink.noiseAlert("new", false, false);
+        this.effects.muteRemote(!noisePlaysAudio(false, this.discreet()) && this.listen === "off");
+        this.sink.noiseAlert("new", false, false, this.discreet());
       }
     }
     this.publish(now);
@@ -331,8 +334,15 @@ export class ParentModel {
     if (mode === "locked" && this.listen !== "locked") this.listenSince = now;
     this.listen = mode;
     if (mode !== "off") this.effects.muteRemote(false);
+    // Discreet: ending Listen must not let a running event's audio leak back in.
+    else if (this.discreet()) this.effects.muteRemote(true);
     this.publish(now);
     return true;
+  }
+
+  /** The alert style changed: switching to discreet silences playout at once unless listening. */
+  onAlertStyleChanged(): void {
+    if (this.discreet() && this.listen === "off") this.effects.muteRemote(true);
   }
 
   stopAlertSound(): void {
@@ -365,9 +375,11 @@ export class ParentModel {
     this.noiseLastWall = wall;
     this.quietSinceWall = null;
     if (probe) this.effects.testAlertArrived(wall);
-    // Snoozed noise stays visual: the baby still streams, but nothing plays.
-    this.effects.muteRemote(snoozed && this.listen === "off");
-    this.sink.noiseAlert(kind, probe, snoozed);
+    // Snoozed or discreet noise stays visual: the baby still streams, but nothing plays until the
+    // parent listens.
+    const discreet = this.discreet();
+    this.effects.muteRemote(!noisePlaysAudio(snoozed, discreet) && this.listen === "off");
+    this.sink.noiseAlert(kind, probe, snoozed, discreet);
   }
 
   private onPeerStatus(s: DeviceStatus, now: number): void {
