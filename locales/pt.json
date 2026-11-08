@@ -73,7 +73,8 @@
       "securityTitle": "Chave errada",
       "publicTitle": "Alarme do GuardedSleep",
       "fgsMissingTitle": "Sem monitoramento em segundo plano",
-      "fgsMissingText": "Abra o GuardedSleep para reativar o monitoramento em segundo plano."
+      "fgsMissingText": "Abra o GuardedSleep para reativar o monitoramento em segundo plano.",
+      "actionListen": "Ouvir"
     },
     "ui": {
       "common": {
@@ -315,7 +316,9 @@
           "micPermissionLost": "O dispositivo do bebê perdeu o acesso ao microfone"
         },
         "discreet": {
-          "indicator": "Alertas discretos: sem som"
+          "indicator": "Alertas discretos: sem som",
+          "escalated": "Mudou para som: sem reação há {minutes} min",
+          "offWarning": "Desligado: um modo discreto esquecido pode ficar em silêncio a noite toda."
         }
       },
       "battery": {
@@ -431,7 +434,6 @@
         "openApp": "Abrir o GuardedSleep",
         "stopVibration": "Parar vibração",
         "vibrationStopped": "Vibração parada",
-        "dismiss": "Fechar",
         "discreetHint": "Sem som até você ouvir"
       },
       "settings": {
@@ -493,6 +495,13 @@
           "label": "Tipo de alerta",
           "sound": "Som: o som do bebê toca a cada alerta",
           "discreet": "Discreto: vibração e ecrã, sem som"
+        },
+        "discreetEscalation": {
+          "label": "Mudar para som se ninguém reagir",
+          "m1": "Após 1 minuto",
+          "m2": "Após 2 minutos (recomendado)",
+          "m5": "Após 5 minutos",
+          "off": "Desligado"
         }
       },
       "fgsMissing": {

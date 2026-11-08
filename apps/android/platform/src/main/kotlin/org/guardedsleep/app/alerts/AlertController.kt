@@ -166,17 +166,20 @@ class AlertController(
         )
     }
 
-    override fun noiseAlert(kind: NoiseKind, probe: Boolean, snoozed: Boolean) = onMain {
-        val plan = FeedbackPlans.forNoise(kind, snoozed)
-        if (!plan.notify) return@onMain
-        val title =
-            if (probe) R.string.native_notif_noise_test_title else R.string.native_notif_noise_title
-        val text =
-            if (probe) R.string.native_notif_noise_test_text else R.string.native_notif_noise_text
-        nm.notify(ID_NOISE, noiseNotification(title, text, plan.fullScreen))
-        if (plan.repeatingHaptic) startNoiseHaptics()
-        else if (plan.shortHaptic) haptics.play(HapticPattern.SHORT)
-    }
+    override fun noiseAlert(kind: NoiseKind, probe: Boolean, snoozed: Boolean, discreet: Boolean) =
+        onMain {
+            val plan = FeedbackPlans.forNoise(kind, snoozed, discreet)
+            if (!plan.notify) return@onMain
+            val title =
+                if (probe) R.string.native_notif_noise_test_title
+                else R.string.native_notif_noise_title
+            val text =
+                if (probe) R.string.native_notif_noise_test_text
+                else R.string.native_notif_noise_text
+            nm.notify(ID_NOISE, noiseNotification(title, text, plan.fullScreen, discreet))
+            if (plan.repeatingHaptic) startNoiseHaptics()
+            else if (plan.shortHaptic) haptics.play(HapticPattern.SHORT)
+        }
 
     override fun noiseEnded() = onMain {
         stopNoiseHaptics()
@@ -375,7 +378,12 @@ class AlertController(
     private fun canFullScreen(): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || nm.canUseFullScreenIntent()
 
-    private fun noiseNotification(title: Int, text: Int, fullScreen: Boolean): Notification {
+    private fun noiseNotification(
+        title: Int,
+        text: Int,
+        fullScreen: Boolean,
+        discreet: Boolean,
+    ): Notification {
         val builder =
             NotificationCompat.Builder(context, AlertChannels.ALARM_NOISE)
                 .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
@@ -397,6 +405,14 @@ class AlertController(
                     context.getString(R.string.native_notif_action_snooze10),
                     receiver(AlertIntents.ACTION_SNOOZE_10),
                 )
+        // Discreet: the child's audio is off, so the notification offers to listen (Android shows
+        // at most three actions).
+        if (discreet)
+            builder.addAction(
+                0,
+                context.getString(R.string.native_notif_action_listen),
+                receiver(AlertIntents.ACTION_LISTEN),
+            )
         // Without the permission (Android 14+) the notification still appears as a heads-up.
         if (fullScreen && canFullScreen())
             builder.setFullScreenIntent(activity(AlertIntents.KIND_NOISE, ID_NOISE), true)

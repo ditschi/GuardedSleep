@@ -71,7 +71,8 @@
       "securityTitle": "Wrong key",
       "publicTitle": "GuardedSleep alarm",
       "fgsMissingTitle": "Not monitoring in the background",
-      "fgsMissingText": "Open GuardedSleep to turn background monitoring back on."
+      "fgsMissingText": "Open GuardedSleep to turn background monitoring back on.",
+      "actionListen": "Listen"
     },
     "ui": {
       "common": {
@@ -313,7 +314,9 @@
           "micPermissionLost": "Baby device lost microphone access"
         },
         "discreet": {
-          "indicator": "Discreet alerts: no sound"
+          "indicator": "Discreet alerts: no sound",
+          "escalated": "Switched to sound: no reaction for {minutes} min",
+          "offWarning": "Off: a forgotten discreet mode can stay silent all night."
         }
       },
       "battery": {
@@ -429,7 +432,6 @@
         "openApp": "Open GuardedSleep",
         "stopVibration": "Stop vibration",
         "vibrationStopped": "Vibration stopped",
-        "dismiss": "Dismiss",
         "discreetHint": "No sound until you listen"
       },
       "settings": {
@@ -495,6 +497,13 @@
           "label": "Alert style",
           "sound": "Sound: the baby's sound plays with each alert",
           "discreet": "Discreet: vibration and screen, no sound"
+        },
+        "discreetEscalation": {
+          "label": "Switch to sound if nobody reacts",
+          "m1": "After 1 minute",
+          "m2": "After 2 minutes (recommended)",
+          "m5": "After 5 minutes",
+          "off": "Off"
         }
       },
       "fgsMissing": {

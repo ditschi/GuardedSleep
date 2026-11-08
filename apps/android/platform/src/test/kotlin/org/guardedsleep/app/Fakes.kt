@@ -39,6 +39,7 @@ class RecordingSink : AlertSink {
     val snapshots = mutableListOf<LinkSnapshot>()
     val lost = mutableListOf<Long>()
     val noise = mutableListOf<Triple<NoiseKind, Boolean, Boolean>>()
+    val noiseDiscreet = mutableListOf<Boolean>()
     val notices = mutableListOf<Notice>()
     val fgsLost = mutableListOf<Boolean>()
     var ended = 0
@@ -53,8 +54,9 @@ class RecordingSink : AlertSink {
         lost += downMs
     }
 
-    override fun noiseAlert(kind: NoiseKind, probe: Boolean, snoozed: Boolean) {
+    override fun noiseAlert(kind: NoiseKind, probe: Boolean, snoozed: Boolean, discreet: Boolean) {
         noise += Triple(kind, probe, snoozed)
+        noiseDiscreet += discreet
     }
 
     override fun noiseEnded() {

@@ -73,7 +73,8 @@
       "securityTitle": "Fel nyckel",
       "publicTitle": "GuardedSleep-larm",
       "fgsMissingTitle": "Övervakar inte i bakgrunden",
-      "fgsMissingText": "Öppna GuardedSleep för att slå på bakgrundsövervakningen igen."
+      "fgsMissingText": "Öppna GuardedSleep för att slå på bakgrundsövervakningen igen.",
+      "actionListen": "Lyssna"
     },
     "ui": {
       "common": {
@@ -315,7 +316,9 @@
           "micPermissionLost": "Babyenheten förlorade åtkomst till mikrofonen"
         },
         "discreet": {
-          "indicator": "Diskreta larm: inget ljud"
+          "indicator": "Diskreta larm: inget ljud",
+          "escalated": "Bytt till ljud: ingen reaktion på {minutes} min",
+          "offWarning": "Av: ett bortglömt diskret läge kan vara tyst hela natten."
         }
       },
       "battery": {
@@ -431,7 +434,6 @@
         "openApp": "Öppna GuardedSleep",
         "stopVibration": "Stoppa vibrationen",
         "vibrationStopped": "Vibrationen stoppad",
-        "dismiss": "Stäng",
         "discreetHint": "Inget ljud förrän du lyssnar"
       },
       "settings": {
@@ -493,6 +495,13 @@
           "label": "Larmtyp",
           "sound": "Ljud: barnets ljud spelas upp vid varje larm",
           "discreet": "Diskret: vibration och skärm, inget ljud"
+        },
+        "discreetEscalation": {
+          "label": "Byt till ljud om ingen reagerar",
+          "m1": "Efter 1 minut",
+          "m2": "Efter 2 minuter (rekommenderas)",
+          "m5": "Efter 5 minuter",
+          "off": "Av"
         }
       },
       "fgsMissing": {

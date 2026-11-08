@@ -73,7 +73,8 @@
       "securityTitle": "Yanlış anahtar",
       "publicTitle": "GuardedSleep alarmı",
       "fgsMissingTitle": "Arka planda izlenmiyor",
-      "fgsMissingText": "Arka planda izlemeyi yeniden açmak için GuardedSleep'i açın."
+      "fgsMissingText": "Arka planda izlemeyi yeniden açmak için GuardedSleep'i açın.",
+      "actionListen": "Dinle"
     },
     "ui": {
       "common": {
@@ -315,7 +316,9 @@
           "micPermissionLost": "Bebek cihazı mikrofon erişimini kaybetti"
         },
         "discreet": {
-          "indicator": "Sessiz uyarılar: ses yok"
+          "indicator": "Sessiz uyarılar: ses yok",
+          "escalated": "Sese geçildi: {minutes} dk tepki yok",
+          "offWarning": "Kapalı: unutulan sessiz mod bütün gece sessiz kalabilir."
         }
       },
       "battery": {
@@ -431,7 +434,6 @@
         "openApp": "GuardedSleep'i aç",
         "stopVibration": "Titreşimi durdur",
         "vibrationStopped": "Titreşim durduruldu",
-        "dismiss": "Kapat",
         "discreetHint": "Dinleyene kadar ses yok"
       },
       "settings": {
@@ -493,6 +495,13 @@
           "label": "Uyarı biçimi",
           "sound": "Ses: her uyarıda bebeğin sesi çalınır",
           "discreet": "Sessiz: titreşim ve ekran, ses yok"
+        },
+        "discreetEscalation": {
+          "label": "Kimse tepki vermezse sese geç",
+          "m1": "1 dakika sonra",
+          "m2": "2 dakika sonra (önerilen)",
+          "m5": "5 dakika sonra",
+          "off": "Kapalı"
         }
       },
       "fgsMissing": {

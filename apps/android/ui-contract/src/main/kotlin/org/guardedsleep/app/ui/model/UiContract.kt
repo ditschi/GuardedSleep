@@ -172,6 +172,11 @@ data class ParentMonitorState(
     val lastSound: SoundEventUi? = null,
     /** Parent phone's own battery percent, for "Your phone is at {percent}". */
     val ownBatteryPct: Int? = null,
+    /**
+     * The running noise event switched from discreet to sound after this many minutes without a
+     * reaction (the core's `noise_escalated`); null otherwise.
+     */
+    val noiseEscalatedAfterMin: Int? = null,
 )
 
 data class BabyMonitorState(
@@ -247,6 +252,17 @@ enum class AlertStyle {
     DISCREET,
 }
 
+/**
+ * After how many minutes an unacknowledged discreet noise event switches to sound; [OFF] never does
+ * (the settings warn that a forgotten discreet mode can then stay silent all night).
+ */
+enum class DiscreetEscalation(val minutes: Int?) {
+    ONE_MINUTE(1),
+    TWO_MINUTES(2),
+    FIVE_MINUTES(5),
+    OFF(null),
+}
+
 data class SettingsState(
     val theme: Theme = Theme.DARK,
     /** null = follow system; else "en", "de", "fr", "es". */
@@ -255,6 +271,7 @@ data class SettingsState(
     val holdSeconds: Int = 5,
     val alertOutput: AlertOutput = AlertOutput.DEFAULT,
     val alertStyle: AlertStyle = AlertStyle.SOUND,
+    val discreetEscalation: DiscreetEscalation = DiscreetEscalation.TWO_MINUTES,
     val alertGainPct: Int = 100,
     val silenceWhileMonitoring: Boolean = true,
     val advancedEnabled: Boolean = false,

@@ -75,6 +75,11 @@ class ParentModel(
     private var heartbeatAt = Long.MIN_VALUE
     private var lastLoudLevelAt = Long.MIN_VALUE
 
+    /** The running event switched to sound after this many minutes (the core's escalation). */
+    private var escalatedAfterMin: Int? = null
+    /** "Stop sound" or "Stop vibration" was used since the last noise alert. */
+    private var soundStopped = false
+
     private var listen = ListenMode.OFF
     private var listenSince = 0L
     private var snoozeUntilWall: Long? = null
@@ -112,6 +117,8 @@ class ParentModel(
         noiseSinceWall = null
         noiseLastWall = null
         noiseIsTest = false
+        escalatedAfterMin = null
+        soundStopped = false
         remoteLevel = 0.0
         heartbeatRms = 0.0
         heartbeatAt = Long.MIN_VALUE
@@ -224,6 +231,7 @@ class ParentModel(
             LinkEvent.PeerStopped -> sink.notice(Notice.PeerStopped)
             is LinkEvent.AlarmAcknowledged -> publishLink(now)
             is LinkEvent.NoiseAlert -> onNoise(event, now)
+            is LinkEvent.NoiseEscalated -> onEscalated(event.afterMs.toLong())
             is LinkEvent.PeerHeartbeat -> {
                 heartbeatRms = event.rms ?: 0.0
                 heartbeatAt = now
@@ -290,6 +298,8 @@ class ParentModel(
             val wall = clock.wallMs()
             quietSinceWall =
                 if (phase == LinkPhase.CONNECTED) wall - (now - tracker.lastLoudElapsedMs) else null
+            escalatedAfterMin = null
+            soundStopped = false
             sink.noiseEnded()
         }
         restoredUntil
@@ -331,7 +341,12 @@ class ParentModel(
                     effects.muteRemote(
                         !playsAudio(NoiseKind.NEW, snoozed = false) && listen == ListenMode.OFF
                     )
-                    sink.noiseAlert(NoiseKind.NEW, probe = false, snoozed = false)
+                    sink.noiseAlert(
+                        NoiseKind.NEW,
+                        probe = false,
+                        snoozed = false,
+                        discreet = discreet(),
+                    )
                 }
             }
         publish(now)
@@ -355,11 +370,19 @@ class ParentModel(
     /** The alert style changed: switching to discreet silences playout at once unless listening. */
     @Synchronized
     fun onAlertStyleChanged() {
-        if (discreet() && listen == ListenMode.OFF) effects.muteRemote(true)
+        if (discreet()) {
+            if (listen == ListenMode.OFF && escalatedAfterMin == null) effects.muteRemote(true)
+        } else if (tracker.active && !soundStopped && !snoozeActive()) {
+            // Back to sound during a running event: the audio starts at once.
+            effects.muteRemote(false)
+        }
     }
+
+    private fun snoozeActive(): Boolean = snoozeUntilElapsed?.let { clock.elapsedMs() < it } == true
 
     @Synchronized
     fun stopAlertSound() {
+        soundStopped = true
         effects.muteRemote(true)
         sink.stopNoiseSound()
     }
@@ -387,17 +410,25 @@ class ParentModel(
             noiseSinceWall = wall
             noiseIsTest = e.probe
         }
+        if (kind == NoiseKind.NEW) escalatedAfterMin = null
+        soundStopped = false
         noiseLastWall = wall
         quietSinceWall = null
         if (e.probe) effects.testAlertArrived(wall)
         // Snoozed or discreet noise stays visual: the baby still streams, but nothing plays until
         // the parent listens.
         effects.muteRemote(!playsAudio(kind, e.snoozed) && listen == ListenMode.OFF)
-        sink.noiseAlert(kind, e.probe, e.snoozed)
+        sink.noiseAlert(kind, e.probe, e.snoozed, discreet())
     }
 
     private fun playsAudio(kind: NoiseKind, snoozed: Boolean): Boolean =
-        FeedbackPlans.forNoise(kind, snoozed, discreet()).playAudio
+        FeedbackPlans.forNoise(kind, snoozed, discreet() && escalatedAfterMin == null).playAudio
+
+    /** The core's escalation timer fired: the audio plays as in the sound style. */
+    private fun onEscalated(afterMs: Long) {
+        escalatedAfterMin = (afterMs / 60_000L).toInt().coerceAtLeast(1)
+        effects.muteRemote(false)
+    }
 
     private fun onPeerStatus(s: DeviceStatus, now: Long) {
         peerStatus = s
@@ -471,6 +502,7 @@ class ParentModel(
                     },
                 ownBatteryPct = ownBatteryPct,
                 noiseIsTest = noiseIsTest && tracker.active,
+                noiseEscalatedAfterMin = escalatedAfterMin.takeIf { tracker.active },
             )
     }
 

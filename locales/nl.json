@@ -73,7 +73,8 @@
       "securityTitle": "Verkeerde sleutel",
       "publicTitle": "GuardedSleep-alarm",
       "fgsMissingTitle": "Geen bewaking op de achtergrond",
-      "fgsMissingText": "Open GuardedSleep om de bewaking op de achtergrond weer aan te zetten."
+      "fgsMissingText": "Open GuardedSleep om de bewaking op de achtergrond weer aan te zetten.",
+      "actionListen": "Luisteren"
     },
     "ui": {
       "common": {
@@ -315,7 +316,9 @@
           "micPermissionLost": "Babyapparaat heeft geen microfoontoegang meer"
         },
         "discreet": {
-          "indicator": "Discrete meldingen: geen geluid"
+          "indicator": "Discrete meldingen: geen geluid",
+          "escalated": "Overgeschakeld op geluid: al {minutes} min geen reactie",
+          "offWarning": "Uit: een vergeten discrete modus kan de hele nacht stil blijven."
         }
       },
       "battery": {
@@ -431,7 +434,6 @@
         "openApp": "GuardedSleep openen",
         "stopVibration": "Trilling stoppen",
         "vibrationStopped": "Trilling gestopt",
-        "dismiss": "Sluiten",
         "discreetHint": "Geen geluid tot je luistert"
       },
       "settings": {
@@ -493,6 +495,13 @@
           "label": "Meldingstype",
           "sound": "Geluid: het geluid van de baby wordt bij elke melding afgespeeld",
           "discreet": "Discreet: trillen en scherm, geen geluid"
+        },
+        "discreetEscalation": {
+          "label": "Op geluid overschakelen als niemand reageert",
+          "m1": "Na 1 minuut",
+          "m2": "Na 2 minuten (aanbevolen)",
+          "m5": "Na 5 minuten",
+          "off": "Uit"
         }
       },
       "fgsMissing": {

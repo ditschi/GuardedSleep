@@ -50,6 +50,7 @@ import org.guardedsleep.app.ui.common.rememberLanguageChoices
 import org.guardedsleep.app.ui.model.AlertOutput
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
+import org.guardedsleep.app.ui.model.DiscreetEscalation
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.Theme
 import org.guardedsleep.app.ui.model.TurnSaveResult
@@ -160,6 +161,11 @@ fun SettingsScreen(
                 Section(R.string.native_ui_settings_group_alerts, "settings_group_alerts") {
                     AlertStyleChoice(s.alertStyle) { style ->
                         controller.updateSettings { st -> st.copy(alertStyle = style) }
+                    }
+                    if (s.alertStyle == AlertStyle.DISCREET) {
+                        DiscreetEscalationChoice(s.discreetEscalation) { choice ->
+                            controller.updateSettings { st -> st.copy(discreetEscalation = choice) }
+                        }
                     }
                     Body(
                         stringResource(R.string.native_ui_settings_output_label),
@@ -598,5 +604,52 @@ internal fun AlertStyleChoice(style: AlertStyle, onChoose: (AlertStyle) -> Unit)
         "alert_style_discreet",
     ) {
         onChoose(AlertStyle.DISCREET)
+    }
+}
+
+/** After how long an unacknowledged discreet noise event switches to sound; Off warns. */
+@Composable
+private fun DiscreetEscalationChoice(
+    choice: DiscreetEscalation,
+    onChoose: (DiscreetEscalation) -> Unit,
+) {
+    Body(
+        stringResource(R.string.native_ui_settings_discreet_escalation_label),
+        color = MaterialTheme.colorScheme.onSurface,
+    )
+    ChoiceRow(
+        stringResource(R.string.native_ui_settings_discreet_escalation_m1),
+        choice == DiscreetEscalation.ONE_MINUTE,
+        "discreet_escalation_1m",
+    ) {
+        onChoose(DiscreetEscalation.ONE_MINUTE)
+    }
+    ChoiceRow(
+        stringResource(R.string.native_ui_settings_discreet_escalation_m2),
+        choice == DiscreetEscalation.TWO_MINUTES,
+        "discreet_escalation_2m",
+    ) {
+        onChoose(DiscreetEscalation.TWO_MINUTES)
+    }
+    ChoiceRow(
+        stringResource(R.string.native_ui_settings_discreet_escalation_m5),
+        choice == DiscreetEscalation.FIVE_MINUTES,
+        "discreet_escalation_5m",
+    ) {
+        onChoose(DiscreetEscalation.FIVE_MINUTES)
+    }
+    ChoiceRow(
+        stringResource(R.string.native_ui_settings_discreet_escalation_off),
+        choice == DiscreetEscalation.OFF,
+        "discreet_escalation_off",
+    ) {
+        onChoose(DiscreetEscalation.OFF)
+    }
+    if (choice == DiscreetEscalation.OFF) {
+        Body(
+            stringResource(R.string.native_ui_parent_discreet_off_warning),
+            tag = "discreet_escalation_off_warning",
+            color = LocalAppColors.current.warn,
+        )
     }
 }

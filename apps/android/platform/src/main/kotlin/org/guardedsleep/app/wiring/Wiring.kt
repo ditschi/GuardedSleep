@@ -25,6 +25,7 @@ object AlertIntents {
     const val ACTION_STOP_SOUND = "org.guardedsleep.app.action.STOP_SOUND"
     const val ACTION_SNOOZE_10 = "org.guardedsleep.app.action.SNOOZE_10"
     const val ACTION_ACK = "org.guardedsleep.app.action.ACK"
+    const val ACTION_LISTEN = "org.guardedsleep.app.action.LISTEN"
 }
 
 /** What the platform components (monitor service) need from the process-wide object graph. */

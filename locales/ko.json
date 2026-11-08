@@ -73,7 +73,8 @@
       "securityTitle": "잘못된 키",
       "publicTitle": "GuardedSleep 경보",
       "fgsMissingTitle": "백그라운드에서 지켜보지 않아요",
-      "fgsMissingText": "GuardedSleep을 열어 백그라운드 지켜보기를 다시 켜세요."
+      "fgsMissingText": "GuardedSleep을 열어 백그라운드 지켜보기를 다시 켜세요.",
+      "actionListen": "듣기"
     },
     "ui": {
       "common": {
@@ -315,7 +316,9 @@
           "micPermissionLost": "아기 기기의 마이크 접근 권한이 사라졌어요"
         },
         "discreet": {
-          "indicator": "조용한 알림: 소리 없음"
+          "indicator": "조용한 알림: 소리 없음",
+          "escalated": "소리로 전환됨: {minutes}분 동안 반응 없음",
+          "offWarning": "끔: 조용한 모드를 잊으면 밤새 소리가 나지 않을 수 있습니다."
         }
       },
       "battery": {
@@ -431,7 +434,6 @@
         "openApp": "GuardedSleep 열기",
         "stopVibration": "진동 중지",
         "vibrationStopped": "진동이 중지됨",
-        "dismiss": "닫기",
         "discreetHint": "듣기 전까지 소리 없음"
       },
       "settings": {
@@ -493,6 +495,13 @@
           "label": "알림 방식",
           "sound": "소리: 알림마다 아기의 소리를 재생",
           "discreet": "조용히: 진동과 화면만, 소리 없음"
+        },
+        "discreetEscalation": {
+          "label": "아무도 반응하지 않으면 소리로 전환",
+          "m1": "1분 후",
+          "m2": "2분 후(권장)",
+          "m5": "5분 후",
+          "off": "끔"
         }
       },
       "fgsMissing": {

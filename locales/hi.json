@@ -73,7 +73,8 @@
       "securityTitle": "ग़लत कुंजी",
       "publicTitle": "GuardedSleep अलार्म",
       "fgsMissingTitle": "बैकग्राउंड में निगरानी नहीं हो रही",
-      "fgsMissingText": "बैकग्राउंड निगरानी फिर चालू करने के लिए GuardedSleep खोलें।"
+      "fgsMissingText": "बैकग्राउंड निगरानी फिर चालू करने के लिए GuardedSleep खोलें।",
+      "actionListen": "सुनें"
     },
     "ui": {
       "common": {
@@ -315,7 +316,9 @@
           "micPermissionLost": "बच्चे के डिवाइस की माइक्रोफ़ोन अनुमति चली गई"
         },
         "discreet": {
-          "indicator": "शांत अलर्ट: कोई आवाज़ नहीं"
+          "indicator": "शांत अलर्ट: कोई आवाज़ नहीं",
+          "escalated": "आवाज़ पर बदला गया: {minutes} मिनट से कोई प्रतिक्रिया नहीं",
+          "offWarning": "बंद: भूला हुआ शांत मोड पूरी रात चुप रह सकता है।"
         }
       },
       "battery": {
@@ -431,7 +434,6 @@
         "openApp": "GuardedSleep खोलें",
         "stopVibration": "कंपन रोकें",
         "vibrationStopped": "कंपन रोका गया",
-        "dismiss": "बंद करें",
         "discreetHint": "सुनने तक कोई आवाज़ नहीं"
       },
       "settings": {
@@ -493,6 +495,13 @@
           "label": "अलर्ट का तरीका",
           "sound": "आवाज़: हर अलर्ट पर बच्चे की आवाज़ चलती है",
           "discreet": "शांत: कंपन और स्क्रीन, कोई आवाज़ नहीं"
+        },
+        "discreetEscalation": {
+          "label": "कोई प्रतिक्रिया न होने पर आवाज़ पर बदलें",
+          "m1": "1 मिनट बाद",
+          "m2": "2 मिनट बाद (अनुशंसित)",
+          "m5": "5 मिनट बाद",
+          "off": "बंद"
         }
       },
       "fgsMissing": {

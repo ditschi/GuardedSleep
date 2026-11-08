@@ -73,7 +73,8 @@
       "securityTitle": "Cheie greșită",
       "publicTitle": "Alarmă GuardedSleep",
       "fgsMissingTitle": "Nu se monitorizează în fundal",
-      "fgsMissingText": "Deschide GuardedSleep pentru a reactiva monitorizarea în fundal."
+      "fgsMissingText": "Deschide GuardedSleep pentru a reactiva monitorizarea în fundal.",
+      "actionListen": "Ascultă"
     },
     "ui": {
       "common": {
@@ -315,7 +316,9 @@
           "micPermissionLost": "Dispozitivul bebelușului a pierdut accesul la microfon"
         },
         "discreet": {
-          "indicator": "Alerte discrete: fără sunet"
+          "indicator": "Alerte discrete: fără sunet",
+          "escalated": "Trecut pe sunet: nicio reacție de {minutes} min",
+          "offWarning": "Dezactivat: un mod discret uitat poate rămâne mut toată noaptea."
         }
       },
       "battery": {
@@ -431,7 +434,6 @@
         "openApp": "Deschide GuardedSleep",
         "stopVibration": "Oprește vibrația",
         "vibrationStopped": "Vibrația a fost oprită",
-        "dismiss": "Închide",
         "discreetHint": "Fără sunet până când asculți"
       },
       "settings": {
@@ -493,6 +495,13 @@
           "label": "Tip de alertă",
           "sound": "Sunet: sunetul bebelușului se aude la fiecare alertă",
           "discreet": "Discret: vibrație și ecran, fără sunet"
+        },
+        "discreetEscalation": {
+          "label": "Treci pe sunet dacă nimeni nu reacționează",
+          "m1": "După 1 minut",
+          "m2": "După 2 minute (recomandat)",
+          "m5": "După 5 minute",
+          "off": "Dezactivat"
         }
       },
       "fgsMissing": {

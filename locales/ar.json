@@ -73,7 +73,8 @@
       "securityTitle": "مفتاح خاطئ",
       "publicTitle": "إنذار GuardedSleep",
       "fgsMissingTitle": "لا مراقبة في الخلفية",
-      "fgsMissingText": "افتح GuardedSleep لإعادة تشغيل المراقبة في الخلفية."
+      "fgsMissingText": "افتح GuardedSleep لإعادة تشغيل المراقبة في الخلفية.",
+      "actionListen": "استماع"
     },
     "ui": {
       "common": {
@@ -315,7 +316,9 @@
           "micPermissionLost": "فقد جهاز الطفل إذن الميكروفون"
         },
         "discreet": {
-          "indicator": "تنبيهات هادئة: بلا صوت"
+          "indicator": "تنبيهات هادئة: بلا صوت",
+          "escalated": "تم التحويل إلى الصوت: لا استجابة منذ {minutes} د",
+          "offWarning": "إيقاف: قد يبقى الوضع الهادئ المنسي صامتًا طوال الليل."
         }
       },
       "battery": {
@@ -431,7 +434,6 @@
         "openApp": "فتح GuardedSleep",
         "stopVibration": "إيقاف الاهتزاز",
         "vibrationStopped": "تم إيقاف الاهتزاز",
-        "dismiss": "إغلاق",
         "discreetHint": "لا صوت حتى تستمع"
       },
       "settings": {
@@ -493,6 +495,13 @@
           "label": "نمط التنبيه",
           "sound": "صوت: يُشغَّل صوت الطفل مع كل تنبيه",
           "discreet": "هادئ: اهتزاز وشاشة بلا صوت"
+        },
+        "discreetEscalation": {
+          "label": "التحويل إلى الصوت إذا لم يستجب أحد",
+          "m1": "بعد دقيقة",
+          "m2": "بعد دقيقتين (موصى به)",
+          "m5": "بعد 5 دقائق",
+          "off": "إيقاف"
         }
       },
       "fgsMissing": {

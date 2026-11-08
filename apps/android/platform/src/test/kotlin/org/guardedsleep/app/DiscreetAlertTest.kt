@@ -1,9 +1,12 @@
 package org.guardedsleep.app
 
+import org.guardedsleep.app.alerts.EscalationPolicy
 import org.guardedsleep.app.alerts.FeedbackPlans
 import org.guardedsleep.app.alerts.NoiseKind
 import org.guardedsleep.app.config.AlertPolicy
 import org.guardedsleep.app.link.ParentModel
+import org.guardedsleep.app.ui.model.AlertStyle
+import org.guardedsleep.app.ui.model.DiscreetEscalation
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.ListenMode
 import org.junit.Assert.assertEquals
@@ -134,5 +137,94 @@ class DiscreetAlertTest {
         model.onTick(clock.elapsed)
         assertFalse(model.state.value.noiseAlertActive)
         assertEquals(1, sink.ended)
+    }
+
+    @Test
+    fun theDelayReachesTheCoreOnlyWhileDiscreetAndNotOff() {
+        val ms = 60_000L
+        assertEquals(
+            ms,
+            EscalationPolicy.delayMs(AlertStyle.DISCREET, DiscreetEscalation.ONE_MINUTE),
+        )
+        assertEquals(
+            2 * ms,
+            EscalationPolicy.delayMs(AlertStyle.DISCREET, DiscreetEscalation.TWO_MINUTES),
+        )
+        assertEquals(
+            5 * ms,
+            EscalationPolicy.delayMs(AlertStyle.DISCREET, DiscreetEscalation.FIVE_MINUTES),
+        )
+        assertEquals(null, EscalationPolicy.delayMs(AlertStyle.DISCREET, DiscreetEscalation.OFF))
+        for (e in DiscreetEscalation.values()) assertEquals(
+            null,
+            EscalationPolicy.delayMs(AlertStyle.SOUND, e),
+        )
+        assertEquals(
+            DiscreetEscalation.TWO_MINUTES,
+            org.guardedsleep.app.ui.model.SettingsState().discreetEscalation,
+        )
+    }
+
+    @Test
+    fun theCoresEscalationUnmutesAndIsShownUntilTheEventEnds() {
+        connect()
+        noise()
+        assertEquals(true, effects.muted.last())
+        assertEquals(null, model.state.value.noiseEscalatedAfterMin)
+        model.onEvent(LinkEvent.NoiseEscalated(120_000UL), clock.elapsed)
+        assertEquals(false, effects.muted.last())
+        assertEquals(2, model.state.value.noiseEscalatedAfterMin)
+        // Further noise of the same event stays audible.
+        clock.advance(10_000)
+        noise()
+        assertEquals(false, effects.muted.last())
+        // After the quiet rule a new event is discreet again.
+        clock.advance(AlertPolicy.NOISE_QUIET_AFTER_MS)
+        model.onTick(clock.elapsed)
+        assertEquals(null, model.state.value.noiseEscalatedAfterMin)
+        clock.advance(AlertPolicy.NOISE_EVENT_JOIN_MS)
+        noise()
+        assertEquals(true, effects.muted.last())
+    }
+
+    @Test
+    fun backToSoundDuringAnEventUnmutesUnlessSnoozedOrStopped() {
+        connect()
+        noise()
+        discreet = false
+        model.onAlertStyleChanged()
+        assertEquals(false, effects.muted.last())
+
+        // Stop sound was used: switching must not undo it.
+        discreet = true
+        model.onAlertStyleChanged()
+        model.stopAlertSound()
+        discreet = false
+        val before = effects.muted.size
+        model.onAlertStyleChanged()
+        assertEquals(before, effects.muted.size)
+        assertEquals(true, effects.muted.last())
+    }
+
+    @Test
+    fun backToSoundWhileSnoozedStaysMuted() {
+        connect()
+        noise()
+        model.snooze(10)
+        discreet = false
+        val before = effects.muted.size
+        model.onAlertStyleChanged()
+        assertEquals(before, effects.muted.size)
+    }
+
+    @Test
+    fun theSinkLearnsTheStyleForTheNotificationAction() {
+        connect()
+        noise()
+        assertEquals(true, sink.noiseDiscreet.last())
+        discreet = false
+        clock.advance(10_000)
+        noise()
+        assertEquals(false, sink.noiseDiscreet.last())
     }
 }

@@ -73,7 +73,8 @@
       "securityTitle": "Kunci salah",
       "publicTitle": "Alarm GuardedSleep",
       "fgsMissingTitle": "Tidak memantau di latar belakang",
-      "fgsMissingText": "Buka GuardedSleep untuk menyalakan kembali pemantauan di latar belakang."
+      "fgsMissingText": "Buka GuardedSleep untuk menyalakan kembali pemantauan di latar belakang.",
+      "actionListen": "Dengarkan"
     },
     "ui": {
       "common": {
@@ -315,7 +316,9 @@
           "micPermissionLost": "Perangkat bayi kehilangan akses mikrofon"
         },
         "discreet": {
-          "indicator": "Peringatan senyap: tanpa suara"
+          "indicator": "Peringatan senyap: tanpa suara",
+          "escalated": "Beralih ke suara: tidak ada reaksi selama {minutes} mnt",
+          "offWarning": "Mati: mode senyap yang terlupa bisa tetap hening sepanjang malam."
         }
       },
       "battery": {
@@ -431,7 +434,6 @@
         "openApp": "Buka GuardedSleep",
         "stopVibration": "Hentikan getaran",
         "vibrationStopped": "Getaran dihentikan",
-        "dismiss": "Tutup",
         "discreetHint": "Tanpa suara sampai Anda mendengarkan"
       },
       "settings": {
@@ -493,6 +495,13 @@
           "label": "Gaya peringatan",
           "sound": "Suara: suara bayi diputar pada setiap peringatan",
           "discreet": "Senyap: getar dan layar, tanpa suara"
+        },
+        "discreetEscalation": {
+          "label": "Beralih ke suara jika tidak ada yang bereaksi",
+          "m1": "Setelah 1 menit",
+          "m2": "Setelah 2 menit (disarankan)",
+          "m5": "Setelah 5 menit",
+          "off": "Mati"
         }
       },
       "fgsMissing": {

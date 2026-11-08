@@ -26,6 +26,7 @@ import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
+import org.guardedsleep.app.ui.model.DiscreetEscalation
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.ListenMode
 import org.guardedsleep.app.ui.model.ParentMonitorState
@@ -254,6 +255,52 @@ class InteractionTests : ShotBase() {
         onNodeWithTag("alert_stop_sound").performClick()
         assertTrue(c.calls.contains("stopAlertSound"))
         onNodeWithTag("alert_sound_stopped").assertIsDisplayed()
+    }
+
+    @Test
+    fun escalatedAlertSaysItSwitchedToSoundAndOffersStopSound() = runComposeUiTest {
+        val c =
+            FakeAppController(
+                app = monitoring,
+                parent =
+                    ParentMonitorState(
+                        link = Connected,
+                        noiseAlertActive = true,
+                        level = 0.8f,
+                        noiseEscalatedAfterMin = 2,
+                    ),
+                settings = SettingsState(alertStyle = AlertStyle.DISCREET),
+            )
+        show { NoiseAlertScreen(c, {}) }
+        onNodeWithTag("alert_escalated").assertIsDisplayed()
+        onNodeWithTag("alert_discreet_hint").assertDoesNotExist()
+    }
+
+    @Test
+    fun escalationChoicesAreInSettingsWhileDiscreetAndOffWarns() = runComposeUiTest {
+        val c =
+            FakeAppController(
+                app = monitoring,
+                settings = SettingsState(alertStyle = AlertStyle.DISCREET),
+            )
+        show { SettingsScreen(c, {}, {}, {}) }
+        onNodeWithTag("discreet_escalation_2m").performScrollTo().assertIsDisplayed()
+        onNodeWithTag("discreet_escalation_off_warning").assertDoesNotExist()
+        onNodeWithTag("discreet_escalation_5m").performScrollTo().performClick()
+        assertEquals(DiscreetEscalation.FIVE_MINUTES, c.settingsFlow.value.discreetEscalation)
+        onNodeWithTag("discreet_escalation_off").performScrollTo().performClick()
+        assertEquals(DiscreetEscalation.OFF, c.settingsFlow.value.discreetEscalation)
+        onNodeWithTag("discreet_escalation_off_warning").performScrollTo().assertIsDisplayed()
+        onNodeWithTag("discreet_escalation_1m").performScrollTo().performClick()
+        assertEquals(DiscreetEscalation.ONE_MINUTE, c.settingsFlow.value.discreetEscalation)
+    }
+
+    @Test
+    fun noEscalationChoicesInSoundStyle() = runComposeUiTest {
+        val c = FakeAppController(app = monitoring)
+        show { SettingsScreen(c, {}, {}, {}) }
+        onNodeWithTag("alert_style_sound").performScrollTo().assertIsDisplayed()
+        onNodeWithTag("discreet_escalation_2m").assertDoesNotExist()
     }
 
     @Test

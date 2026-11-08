@@ -72,7 +72,9 @@ fun NoiseAlertContent(controller: AppController, onClose: () -> Unit) {
     val ctx = LocalContext.current
     var soundStopped by remember { mutableStateOf(false) }
     val ended = !p.noiseAlertActive
-    val discreet = settings.alertStyle == AlertStyle.DISCREET
+    val escalatedAfter = p.noiseEscalatedAfterMin
+    // Once the core switched the event to sound, the screen speaks of sound again.
+    val discreet = settings.alertStyle == AlertStyle.DISCREET && escalatedAfter == null
     ScreenRoot("parent_noise_alert", background = StateColors.AlertBackground) {
         Column(Modifier.fillMaxSize()) {
             LinkBar(p.link, customPeerName(app.peerName))
@@ -120,6 +122,16 @@ fun NoiseAlertContent(controller: AppController, onClose: () -> Unit) {
                     alarm = true,
                     tag = "alert_meter",
                 )
+                if (escalatedAfter != null && !ended) {
+                    Body(
+                        stringResource(
+                            R.string.native_ui_parent_discreet_escalated,
+                            escalatedAfter.toString(),
+                        ),
+                        tag = "alert_escalated",
+                        color = Color(0xFFFFD9D4),
+                    )
+                }
                 if (discreet && !ended) {
                     Body(
                         stringResource(R.string.native_ui_alert_discreet_hint),

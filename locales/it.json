@@ -73,7 +73,8 @@
       "securityTitle": "Chiave errata",
       "publicTitle": "Allarme GuardedSleep",
       "fgsMissingTitle": "Nessun monitoraggio in background",
-      "fgsMissingText": "Apri GuardedSleep per riattivare il monitoraggio in background."
+      "fgsMissingText": "Apri GuardedSleep per riattivare il monitoraggio in background.",
+      "actionListen": "Ascolta"
     },
     "ui": {
       "common": {
@@ -315,7 +316,9 @@
           "micPermissionLost": "Il dispositivo del bambino ha perso l'accesso al microfono"
         },
         "discreet": {
-          "indicator": "Avvisi discreti: nessun suono"
+          "indicator": "Avvisi discreti: nessun suono",
+          "escalated": "Passato al suono: nessuna reazione da {minutes} min",
+          "offWarning": "Disattivato: una modalità discreta dimenticata può restare muta tutta la notte."
         }
       },
       "battery": {
@@ -431,7 +434,6 @@
         "openApp": "Apri GuardedSleep",
         "stopVibration": "Interrompi vibrazione",
         "vibrationStopped": "Vibrazione interrotta",
-        "dismiss": "Chiudi",
         "discreetHint": "Nessun suono finché non ascolti"
       },
       "settings": {
@@ -493,6 +495,13 @@
           "label": "Tipo di avviso",
           "sound": "Suono: il suono del bambino viene riprodotto a ogni avviso",
           "discreet": "Discreto: vibrazione e schermo, senza suono"
+        },
+        "discreetEscalation": {
+          "label": "Passa al suono se nessuno reagisce",
+          "m1": "Dopo 1 minuto",
+          "m2": "Dopo 2 minuti (consigliato)",
+          "m5": "Dopo 5 minuti",
+          "off": "Disattivato"
         }
       },
       "fgsMissing": {

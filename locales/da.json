@@ -73,7 +73,8 @@
       "securityTitle": "Forkert nøgle",
       "publicTitle": "GuardedSleep-alarm",
       "fgsMissingTitle": "Overvåger ikke i baggrunden",
-      "fgsMissingText": "Åbn GuardedSleep for at slå overvågning i baggrunden til igen."
+      "fgsMissingText": "Åbn GuardedSleep for at slå overvågning i baggrunden til igen.",
+      "actionListen": "Lyt"
     },
     "ui": {
       "common": {
@@ -315,7 +316,9 @@
           "micPermissionLost": "Babyenheden mistede adgangen til mikrofonen"
         },
         "discreet": {
-          "indicator": "Diskrete alarmer: ingen lyd"
+          "indicator": "Diskrete alarmer: ingen lyd",
+          "escalated": "Skiftet til lyd: ingen reaktion i {minutes} min",
+          "offWarning": "Fra: en glemt diskret tilstand kan forblive lydløs hele natten."
         }
       },
       "battery": {
@@ -431,7 +434,6 @@
         "openApp": "Åbn GuardedSleep",
         "stopVibration": "Stop vibration",
         "vibrationStopped": "Vibration stoppet",
-        "dismiss": "Luk",
         "discreetHint": "Ingen lyd, før du lytter"
       },
       "settings": {
@@ -493,6 +495,13 @@
           "label": "Alarmtype",
           "sound": "Lyd: barnets lyd afspilles ved hver alarm",
           "discreet": "Diskret: vibration og skærm, ingen lyd"
+        },
+        "discreetEscalation": {
+          "label": "Skift til lyd, hvis ingen reagerer",
+          "m1": "Efter 1 minut",
+          "m2": "Efter 2 minutter (anbefalet)",
+          "m5": "Efter 5 minutter",
+          "off": "Fra"
         }
       },
       "fgsMissing": {

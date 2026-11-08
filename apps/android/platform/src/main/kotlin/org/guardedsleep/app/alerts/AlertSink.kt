@@ -48,7 +48,7 @@ interface AlertSink {
     /** `LinkLost`: escalation reached level 2 (once per outage). */
     fun linkLost(downMs: Long)
 
-    fun noiseAlert(kind: NoiseKind, probe: Boolean, snoozed: Boolean)
+    fun noiseAlert(kind: NoiseKind, probe: Boolean, snoozed: Boolean, discreet: Boolean = false)
 
     fun noiseEnded()
 

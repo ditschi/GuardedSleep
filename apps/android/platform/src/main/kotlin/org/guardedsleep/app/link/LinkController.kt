@@ -6,6 +6,7 @@ import java.util.concurrent.ScheduledExecutorService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.guardedsleep.app.alerts.AlertSink
+import org.guardedsleep.app.alerts.EscalationPolicy
 import org.guardedsleep.app.alerts.NoiseKind
 import org.guardedsleep.app.config.AppDefaults
 import org.guardedsleep.app.config.DebugOptions
@@ -210,6 +211,12 @@ class LinkController(
         _settings.value = after
         babyModel.setSettings(after.threshold, after.holdSeconds)
         if (after.alertStyle != before.alertStyle) parentModel.onAlertStyleChanged()
+        if (
+            after.alertStyle != before.alertStyle ||
+                after.discreetEscalation != before.discreetEscalation
+        ) {
+            run?.takeIf { it.role == Role.PARENT }?.let { sendEscalation(it.runner, after) }
+        }
         val r = run
         if (r != null && after.onlyLocal != before.onlyLocal) restartForOnlyLocal(r)
         if (r != null) {
@@ -540,10 +547,17 @@ class LinkController(
             parentModel.snoozeUntilElapsedMs()?.let {
                 runner.input(LinkInput.SetSnooze(it.toULong()))
             }
+            sendEscalation(runner, s)
             refreshReadiness()
         } else if (monitoring) {
             applySilence(s.silenceWhileMonitoring)
         }
+    }
+
+    /** The core's escalation delay: set only while discreet and not off, else cleared. */
+    private fun sendEscalation(runner: LinkRunner, s: SettingsState) {
+        val delay = EscalationPolicy.delayMs(s.alertStyle, s.discreetEscalation)
+        runner.input(LinkInput.SetNoiseEscalation(delay?.toULong()))
     }
 
     private fun stopRun(userStop: Boolean) {
@@ -627,7 +641,12 @@ class LinkController(
             r.runner.input(LinkInput.RequestProbe)
         } else {
             // Tested this phone only: the chain runs locally with the baby phone not involved.
-            alerts.noiseAlert(NoiseKind.NEW, probe = true, snoozed = false)
+            alerts.noiseAlert(
+                NoiseKind.NEW,
+                probe = true,
+                snoozed = false,
+                discreet = _settings.value.alertStyle == AlertStyle.DISCREET,
+            )
             settingsRepo.update { it.copy(lastTestWallMs = clock.wallMs()) }
         }
     }
@@ -650,7 +669,11 @@ class LinkController(
         run?.runner?.input(LinkInput.AcknowledgeAlarm)
     }
 
-    override fun stopAlertSound() = parentModel.stopAlertSound()
+    override fun stopAlertSound() {
+        parentModel.stopAlertSound()
+        // The core's escalation timer counts this as the parent's reaction.
+        run?.runner?.input(LinkInput.AcknowledgeNoise)
+    }
 
     override fun requestSilenceBaby() {
         val r = run ?: return

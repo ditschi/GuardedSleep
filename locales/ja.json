@@ -73,7 +73,8 @@
       "securityTitle": "キーが違います",
       "publicTitle": "GuardedSleep アラーム",
       "fgsMissingTitle": "バックグラウンドで見守っていません",
-      "fgsMissingText": "GuardedSleep を開いて、バックグラウンドの見守りを再開してください。"
+      "fgsMissingText": "GuardedSleep を開いて、バックグラウンドの見守りを再開してください。",
+      "actionListen": "聞く"
     },
     "ui": {
       "common": {
@@ -315,7 +316,9 @@
           "micPermissionLost": "赤ちゃん用端末がマイクへのアクセスを失いました"
         },
         "discreet": {
-          "indicator": "控えめな通知：音なし"
+          "indicator": "控えめな通知：音なし",
+          "escalated": "音に切り替えました：{minutes} 分間反応がありません",
+          "offWarning": "オフ：控えめモードを戻し忘れると、一晩中音が出ないことがあります。"
         }
       },
       "battery": {
@@ -431,7 +434,6 @@
         "openApp": "GuardedSleep を開く",
         "stopVibration": "振動を止める",
         "vibrationStopped": "振動を止めました",
-        "dismiss": "閉じる",
         "discreetHint": "聞くまで音は出ません"
       },
       "settings": {
@@ -493,6 +495,13 @@
           "label": "通知方法",
           "sound": "音：通知のたびに赤ちゃんの音を再生",
           "discreet": "控えめ：振動と画面のみ、音なし"
+        },
+        "discreetEscalation": {
+          "label": "誰も反応しないときは音に切り替える",
+          "m1": "1分後",
+          "m2": "2分後（推奨）",
+          "m5": "5分後",
+          "off": "オフ"
         }
       },
       "fgsMissing": {

@@ -73,7 +73,8 @@
       "securityTitle": "Falscher Schlüssel",
       "publicTitle": "GuardedSleep-Alarm",
       "fgsMissingTitle": "Keine Überwachung im Hintergrund",
-      "fgsMissingText": "Öffnen Sie GuardedSleep, um die Überwachung im Hintergrund wieder einzuschalten."
+      "fgsMissingText": "Öffnen Sie GuardedSleep, um die Überwachung im Hintergrund wieder einzuschalten.",
+      "actionListen": "Zuhören"
     },
     "ui": {
       "common": {
@@ -315,7 +316,9 @@
           "micPermissionLost": "Babygerät hat den Mikrofonzugriff verloren"
         },
         "discreet": {
-          "indicator": "Diskrete Alarme: kein Ton"
+          "indicator": "Diskrete Alarme: kein Ton",
+          "escalated": "Auf Ton umgeschaltet: keine Reaktion seit {minutes} Min.",
+          "offWarning": "Aus: Ein vergessener diskreter Modus kann die ganze Nacht stumm bleiben."
         }
       },
       "battery": {
@@ -431,7 +434,6 @@
         "openApp": "GuardedSleep öffnen",
         "stopVibration": "Vibration beenden",
         "vibrationStopped": "Vibration beendet",
-        "dismiss": "Schließen",
         "discreetHint": "Kein Ton, bis Sie zuhören"
       },
       "settings": {
@@ -497,6 +499,13 @@
           "label": "Alarmart",
           "sound": "Ton: Der Ton des Babys wird bei jedem Alarm abgespielt",
           "discreet": "Diskret: Vibration und Bildschirm, kein Ton"
+        },
+        "discreetEscalation": {
+          "label": "Auf Ton umschalten, wenn niemand reagiert",
+          "m1": "Nach 1 Minute",
+          "m2": "Nach 2 Minuten (empfohlen)",
+          "m5": "Nach 5 Minuten",
+          "off": "Aus"
         }
       },
       "fgsMissing": {
