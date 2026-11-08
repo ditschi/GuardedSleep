@@ -13,22 +13,30 @@ The parent SHALL choose an alert style for noise alerts: "Sound" (default) or "D
 
 ### Requirement: Discreet escalation to sound
 
-In "Discreet", a noise event that stays unacknowledged SHALL switch to sound after a configurable delay of 1, 2 (default) or 5 minutes: the child's audio plays as in "Sound" and the alert states "Switched to sound: no reaction for {minutes} min". The parent MAY choose "Off", which SHALL show a warning that a forgotten discreet mode can then stay silent all night. Listen, Stop sound or Stop vibration, and Snooze SHALL acknowledge. A new event after the 2-minute quiet rule SHALL restart the count. The timer SHALL run in the core.
+In "Discreet", a noise event that stays unacknowledged SHALL switch to sound after a configurable delay of 1, 2 (default) or 5 minutes: the child's audio plays as in "Sound" and the alert states "Switched to sound: no reaction for {minutes} min". The timer SHALL run in the core.
 
 #### Scenario: Missed vibration
 
 - **WHEN** the style is "Discreet" with the default delay and the parent does not react to a noise event for 2 minutes
 - **THEN** the child's audio starts playing and the alert shows that it switched to sound
 
-#### Scenario: Parent reacts in time
+### Requirement: Escalation off warning
 
-- **WHEN** the parent taps Stop vibration after 1 minute
-- **THEN** the audio does not start for that event
+The parent MAY choose escalation "Off", and choosing it SHALL show a warning that a forgotten discreet mode can then stay silent all night.
 
 #### Scenario: Escalation off (failure)
 
 - **WHEN** the escalation is "Off" and the noise lasts 10 minutes without a reaction
 - **THEN** no audio plays, and the setting showed the warning when it was chosen
+
+### Requirement: Escalation acknowledgment
+
+Listen, Stop sound or Stop vibration, and Snooze SHALL acknowledge a discreet noise event, and a new event after the 2-minute quiet rule SHALL restart the count.
+
+#### Scenario: Parent reacts in time
+
+- **WHEN** the parent taps Stop vibration after 1 minute
+- **THEN** the audio does not start for that event
 
 ### Requirement: Alert style affects noise alerts only
 
