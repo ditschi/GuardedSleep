@@ -354,8 +354,8 @@ mod tests {
         assert!(b.take(ips[1], 0));
         assert_eq!(b.tracked(), 2);
         assert!(
-            !b.take(ips[2], 0),
-            "table full and nothing has refilled yet"
+            b.take(ips[2], 0),
+            "table full of live entries: the limiter evicts one instead of refusing"
         );
         assert_eq!(b.tracked(), 2, "the table stays bounded");
         // A minute later the old buckets are full again; the third address is answered at once,
