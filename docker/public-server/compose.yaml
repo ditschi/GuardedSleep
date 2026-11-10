@@ -65,6 +65,17 @@ services:
     tmpfs:
       - /var/lib/coturn
       - /tmp
+    # The REST secret comes from a mounted file, not from the command line, where `docker inspect` and `ps`
+    # would show it. The file is created by the operator (README "First deployment"), git-ignored, never
+    # part of an image. create_host_path false: a missing file fails the start instead of docker creating a
+    # directory in its place. Format: https://github.com/coturn/coturn/blob/master/docker/coturn/turnserver.conf
+    volumes:
+      - type: bind
+        source: ${TURN_CONF_FILE:-./turnserver.conf}
+        target: /etc/coturn/turnserver.conf
+        read_only: true
+        bind:
+          create_host_path: false
     cap_drop:
       - ALL
     # /usr/bin/turnserver carries the file capability cap_net_bind_service; without it in the
@@ -93,8 +104,9 @@ services:
       - --realm=${PUBLIC_HOST}
       - --server-name=${PUBLIC_HOST}
       # REST credentials signed by guardedsleep-server with the same secret (design section 7).
+      # The matching static-auth-secret line is in the mounted turnserver.conf.
       - --use-auth-secret
-      - --static-auth-secret=${TURN_SECRET}
+      - --config-file=/etc/coturn/turnserver.conf
       # Public addresses sit on the interface (no 1:1 NAT), so no --external-ip.
       - --listening-ip=${TURN_IPV4}
       - --listening-ip=${TURN_IPV6}

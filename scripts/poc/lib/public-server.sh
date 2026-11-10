@@ -16,12 +16,16 @@ compose() {
 	GS_TEST_SIGNALING_IMAGE="${SIGNALING_IMAGE:-unused}" GS_TEST_NET="$NET" docker compose "${COMPOSE_ARGS[@]}" "$@"
 }
 
-# ps_fill_env <turn secret>: the template, filled with test values, as $WORK/.env.
+# ps_fill_env <turn secret>: the template, filled with test values, as $WORK/.env, and the coturn config file
+# ($WORK/turnserver.conf, mounted through TURN_CONF_FILE; the secret is not on coturn's command line).
 ps_fill_env() {
 	sed -e "s|^TURN_SECRET=.*|TURN_SECRET=$1|" \
 		-e "s|^SIGNALING_TAG=.*|SIGNALING_TAG=test|" \
 		-e "s|^TURN_IPV4=.*|TURN_IPV4=$TURN_V4|" \
 		-e "s|^TURN_IPV6=.*|TURN_IPV6=$TURN_V6|" "$SRC/.env.template" >"$WORK/.env"
+	printf 'static-auth-secret=%s\n' "$1" >"$WORK/turnserver.conf"
+	chmod 644 "$WORK/turnserver.conf" # coturn runs as nobody; $WORK is a throw-away directory
+	echo "TURN_CONF_FILE=$WORK/turnserver.conf" >>"$WORK/.env"
 	if [[ "${PS_LEGO:-0}" == 1 ]]; then
 		printf '%s\n' "ACME_EMAIL=test@example.invalid" "TURN_TLS_ARG_1=--cert=/certs/crt.pem" "TURN_TLS_ARG_2=--pkey=/certs/key.pem" >>"$WORK/.env"
 	fi
