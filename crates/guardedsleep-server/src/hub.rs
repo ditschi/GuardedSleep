@@ -2,7 +2,7 @@
 //! outboxes, so the effects of one call reach a socket in the order the relay produced them.
 
 use std::collections::HashMap;
-use std::net::{IpAddr, Ipv6Addr};
+use std::net::IpAddr;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, MutexGuard};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
@@ -51,25 +51,19 @@ pub struct Hub {
     turn: Option<TurnIssuer>,
 }
 
-/// Opaque rate-limit key of a client address; IPv4 is mapped into IPv6 so both families share one
-/// key space. The relay never logs it.
+/// Opaque key of a client address for every per-address limit (rates, connection and TURN
+/// credential caps): the IPv4 address, or the /64 prefix of an IPv6 address, because one customer
+/// holds a whole /64 and /128 keys would let it bypass the caps. IPv4-mapped IPv6 addresses count
+/// as IPv4. The relay never logs it.
 pub fn client_key(ip: IpAddr) -> ClientKey {
     let v6 = match ip {
         IpAddr::V4(a) => a.to_ipv6_mapped(),
         IpAddr::V6(a) => a,
     };
-    ClientKey(u128::from(v6))
-}
-
-/// Address group for the TURN credential cap: the IPv4 address, or the /64 prefix of an IPv6
-/// address (one customer holds a whole /64). IPv4-mapped IPv6 addresses count as IPv4.
-pub fn net_key(ip: IpAddr) -> ClientKey {
-    let key = client_key(ip);
-    // `client_key` maps IPv4 into ::ffff:a.b.c.d, so a mapped address keeps its full value.
-    if Ipv6Addr::from(key.0).to_ipv4_mapped().is_some() {
-        key
+    if v6.to_ipv4_mapped().is_some() {
+        ClientKey(u128::from(v6))
     } else {
-        ClientKey(key.0 & !u128::from(u64::MAX))
+        ClientKey(u128::from(v6) & !u128::from(u64::MAX))
     }
 }
 
@@ -113,9 +107,8 @@ impl Hub {
         let (tx, rx) = mpsc::channel(OUTBOX);
         let mut g = self.lock();
         g.outboxes.insert(id, tx);
-        let fx = g
-            .relay
-            .on_connect_in_net(id, client_key(ip), net_key(ip), self.now());
+        let key = client_key(ip);
+        let fx = g.relay.on_connect_in_net(id, key, key, self.now());
         self.dispatch(&mut g, fx);
         (id, rx)
     }
@@ -220,16 +213,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn ipv6_addresses_of_one_slash_64_share_a_net_key_and_ipv4_stays_exact() {
+    fn ipv6_addresses_of_one_slash_64_share_a_client_key_and_ipv4_stays_exact() {
         let a: IpAddr = "2001:db8:1:2::1".parse().unwrap();
         let b: IpAddr = "2001:db8:1:2:ffff::9".parse().unwrap();
         let c: IpAddr = "2001:db8:1:3::1".parse().unwrap();
-        assert_eq!(net_key(a), net_key(b));
-        assert_ne!(net_key(a), net_key(c));
+        assert_eq!(client_key(a), client_key(b));
+        assert_ne!(client_key(a), client_key(c));
         let v4: IpAddr = "192.0.2.7".parse().unwrap();
         let v4b: IpAddr = "192.0.2.8".parse().unwrap();
-        assert_ne!(net_key(v4), net_key(v4b));
+        assert_ne!(client_key(v4), client_key(v4b));
         let mapped: IpAddr = "::ffff:192.0.2.7".parse().unwrap();
-        assert_eq!(net_key(v4), net_key(mapped));
+        assert_eq!(client_key(v4), client_key(mapped));
     }
 }

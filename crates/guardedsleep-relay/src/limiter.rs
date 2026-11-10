@@ -7,7 +7,8 @@ use crate::relay::Millis;
 
 /// One token is `PER_TOKEN` units, so a refill of `elapsed_ms * per_minute` units never rounds.
 const PER_TOKEN: u64 = 60_000;
-/// Distinct keys tracked at once; beyond this, unknown keys are refused until `prune` frees room.
+/// Distinct keys tracked at once; beyond this, `take` prunes, and if the table is still full it evicts one entry
+/// instead of refusing the newcomer (memory stays bounded, newcomers are never locked out).
 const DEFAULT_MAX_KEYS: usize = 100_000;
 
 #[derive(Debug)]
@@ -21,6 +22,8 @@ struct Bucket {
 pub struct RateLimiter<K: Eq + Hash> {
     per_minute: u64,
     max_keys: usize,
+    /// Time of the last prune forced by a full table, so a flood cannot make every call scan.
+    last_full_prune: Option<Millis>,
     buckets: HashMap<K, Bucket>,
 }
 
@@ -30,6 +33,7 @@ impl<K: Eq + Hash> RateLimiter<K> {
         Self {
             per_minute: u64::from(per_minute),
             max_keys: DEFAULT_MAX_KEYS,
+            last_full_prune: None,
             buckets: HashMap::new(),
         }
     }
@@ -55,7 +59,7 @@ impl<K: Eq + Hash> RateLimiter<K> {
         }
         let capacity = self.capacity();
         if !self.buckets.contains_key(&key) && self.buckets.len() >= self.max_keys {
-            return false;
+            self.make_room(now);
         }
         let units = match self.buckets.get(&key) {
             Some(b) => self.refilled(b, now),
@@ -70,6 +74,27 @@ impl<K: Eq + Hash> RateLimiter<K> {
             },
         );
         ok
+    }
+
+    /// Frees one slot for a new key: prune refilled buckets (at most once per millisecond), and if
+    /// the table is still full evict an arbitrary entry. A newcomer must never be locked out.
+    fn make_room(&mut self, now: Millis) {
+        if self.last_full_prune != Some(now) {
+            self.last_full_prune = Some(now);
+            self.prune(now);
+        }
+        if self.buckets.len() >= self.max_keys {
+            // No spare key handle without `Clone`, so drop the first entry through `retain`.
+            let mut dropped = false;
+            self.buckets.retain(|_, _| {
+                if dropped {
+                    true
+                } else {
+                    dropped = true;
+                    false
+                }
+            });
+        }
     }
 
     /// Drops buckets that have refilled completely so the map cannot grow without bound.
@@ -146,11 +171,27 @@ mod tests {
     }
 
     #[test]
-    fn refuses_new_keys_beyond_the_cap() {
+    fn full_table_of_live_keys_evicts_instead_of_refusing_or_growing() {
         let mut rl = RateLimiter::new(5).with_max_keys(2);
         assert!(rl.take(1, 0));
         assert!(rl.take(2, 0));
-        assert!(!rl.take(3, 0));
+        assert!(rl.take(3, 0));
+        assert_eq!(rl.len(), 2);
+        for k in 4..100 {
+            assert!(rl.take(k, 0));
+            assert!(rl.len() <= 2);
+        }
+    }
+
+    #[test]
+    fn full_table_with_stale_entries_prunes_before_evicting() {
+        let mut rl = RateLimiter::new(5).with_max_keys(2);
         assert!(rl.take(1, 0));
+        assert!(rl.take(2, 0));
+        // Both buckets are refilled after a minute; the live key 9 must survive the next newcomer.
+        assert!(rl.take(9, 60_000));
+        assert!(rl.take(10, 60_000));
+        assert_eq!(rl.len(), 2);
+        assert!(rl.take(9, 60_000), "live key kept its bucket");
     }
 }
