@@ -2475,6 +2475,35 @@ fn late_callbacks_for_a_closed_attempt_are_dropped() {
     assert!(acts.iter().all(|a| !matches!(a, LinkAction::Emit { .. })));
 }
 
+#[test]
+fn a_late_data_open_for_a_closed_attempt_keeps_the_pending_resend() {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    // Media never opens, so the offer/answer (or request_offer) stays unanswered and armed.
+    w.block_media = true;
+    w.start(BABY, 1);
+    w.start(PARENT, 2);
+    w.advance(3_000);
+    let live: Vec<(usize, u32)> = [BABY, PARENT]
+        .into_iter()
+        .filter_map(|n| w.nodes[n].link.live_attempt().map(|h| (n, h)))
+        .collect();
+    assert!(!live.is_empty());
+    for (n, h) in live {
+        // A handle the link no longer knows: a callback that raced the close.
+        w.input(n, LinkInput::AttemptDataOpen { attempt: h + 1000 });
+    }
+    w.advance(8_000);
+    let mut seen = std::collections::HashSet::new();
+    let resent = w
+        .server_signal_log
+        .iter()
+        .any(|(from, p)| !seen.insert((from.clone(), p.to_string())));
+    assert!(
+        resent,
+        "the unanswered message must still be sent once more"
+    );
+}
+
 // ---- live noise gate ---------------------------------------------------------------------------
 
 fn peer_threshold(w: &World) -> Option<f64> {
