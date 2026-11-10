@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # TURN monitoring check (design section 9, "Monitoring"): one authenticated allocation against the coturn of
-# this stack with a credential signed by the secret the SIGNALING SERVER actually runs with. A STUN or TCP
-# check on 3478 cannot notice a TURN_SECRET mismatch between the two containers (for example after a
-# half-finished rotation); this one fails then, because coturn answers the allocation with an error.
+# this stack with a credential signed by the secret in turnserver.conf (the file coturn verifies with; the
+# secret is not on coturn's command line and `docker inspect` is not used). A STUN or TCP check on 3478
+# cannot notice a TURN_SECRET mismatch between coturn and the signaling server (for example after a
+# half-finished rotation); this one fails then: on a TURN_SECRET in .env that differs from the file, and
+# when coturn refuses the allocation.
 #
 # Run it from this directory by cron on the host, for example every 5 minutes:
 #   */5 * * * * cd /opt/guardedsleep/docker/public-server && ./check-turn.sh
@@ -12,7 +14,8 @@
 # The push URL carries a token: it is never printed. No client data is involved; the allocation comes from
 # the host itself and logs nothing (coturn logs to /dev/null).
 #
-# Env: COMPOSE (default "docker compose"), TURN_HOST (default TURN_IPV4 of .env), KUMA_PUSH_URL.
+# Env: COMPOSE (default "docker compose"), TURN_HOST (default TURN_IPV4 of .env), KUMA_PUSH_URL,
+# TURN_CONF_FILE (default ./turnserver.conf, as in compose.yaml); the script needs read access to that file.
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -22,6 +25,8 @@ dotenv() { # <name>: the value of NAME= in .env, empty when absent
 }
 TURN_HOST="${TURN_HOST:-$(dotenv TURN_IPV4)}"
 KUMA_PUSH_URL="${KUMA_PUSH_URL:-$(dotenv KUMA_PUSH_URL)}"
+TURN_CONF_FILE="${TURN_CONF_FILE:-$(dotenv TURN_CONF_FILE)}"
+TURN_CONF_FILE="${TURN_CONF_FILE:-./turnserver.conf}"
 
 push() { # <up|down> <message>
 	[[ -n "$KUMA_PUSH_URL" ]] || return 0
@@ -37,9 +42,15 @@ fail() {
 SIGNALING="$($COMPOSE ps -q signaling)"
 COTURN="$($COMPOSE ps -q coturn)"
 [[ -n "$SIGNALING" && -n "$COTURN" ]] || fail "signaling or coturn container is not running"
-# The secret the signaling server signs with (its container environment), not the one in .env.
-SECRET="$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$SIGNALING" | sed -n 's/^TURN_SECRET=//p')"
-[[ -n "$SECRET" ]] || fail "the signaling container has no TURN_SECRET"
+# The secret coturn verifies with, from the file it mounts.
+[[ -r "$TURN_CONF_FILE" ]] || fail "cannot read the coturn config file (TURN_CONF_FILE)"
+SECRET="$(sed -n 's/^static-auth-secret=//p' "$TURN_CONF_FILE" | tail -n1)"
+[[ -n "$SECRET" ]] || fail "the coturn config file has no static-auth-secret"
+# The signaling server gets TURN_SECRET from .env: a different value there is a half-finished rotation.
+ENV_SECRET="${TURN_SECRET:-$(dotenv TURN_SECRET)}"
+if [[ -n "$ENV_SECRET" && "$ENV_SECRET" != "$SECRET" ]]; then
+	fail "TURN_SECRET in .env differs from static-auth-secret in the coturn config file"
+fi
 
 # turnutils_uclient builds the REST user name (expiry:name) itself with -W; -n 1 -c sends one packet and no RTCP.
 # Its exit status is 0 even when the allocation fails, so the verdict is its output: a failed allocation prints

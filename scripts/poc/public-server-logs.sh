@@ -96,8 +96,9 @@ for a in "${ARGS[@]}"; do
 	*) CTL_ARGS+=("$a") ;;
 	esac
 done
+# The secret is in the mounted config file, not in the command line: the control mounts the same file.
 docker run -d --name "$CTL" --network "$NET" --ip "$CTL_V4" --ip6 fd00:5eed:a::11 --cap-drop ALL --cap-add NET_BIND_SERVICE \
-	"$COTURN_IMAGE" "${CTL_ARGS[@]}" >/dev/null
+	-v "$WORK/turnserver.conf:/etc/coturn/turnserver.conf:ro" "$COTURN_IMAGE" "${CTL_ARGS[@]}" >/dev/null
 sleep 3
 run_client "$CTL_V4" >"$OUT/control-client.log" || true
 sleep 2
@@ -108,13 +109,15 @@ echo "== monitoring check (docker/public-server/check-turn.sh): fine with the sh
 # variables are exported for it.
 export GS_TEST_SIGNALING_IMAGE="$SIGNALING_IMAGE" GS_TEST_NET="$NET"
 CHECK_COMPOSE="docker compose ${COMPOSE_ARGS[*]}"
+export TURN_CONF_FILE="$WORK/turnserver.conf"
 COMPOSE="$CHECK_COMPOSE" TURN_HOST="$TURN_V4" "$SRC/check-turn.sh"
-# Mismatch: a coturn with another secret next to the signaling server's own secret (the control container
-# is coturn with a different --static-auth-secret; the check reads the signaling container's secret).
-mapfile -t BAD_ARGS < <(printf '%s\n' "${CTL_ARGS[@]}" | sed "s|^--static-auth-secret=.*|--static-auth-secret=$(openssl rand -hex 32)|")
+# Mismatch: a coturn with another secret in its config file (the control container mounts a different
+# static-auth-secret; the check signs with the secret of the stack's own file).
+printf 'static-auth-secret=%s\n' "$(openssl rand -hex 32)" >"$WORK/bad.conf"
+chmod 644 "$WORK/bad.conf"
 docker rm -f "$CTL" >/dev/null
 docker run -d --name "$CTL" --network "$NET" --ip "$CTL_V4" --ip6 fd00:5eed:a::11 --cap-drop ALL --cap-add NET_BIND_SERVICE \
-	"$COTURN_IMAGE" "${BAD_ARGS[@]}" >/dev/null
+	-v "$WORK/bad.conf:/etc/coturn/turnserver.conf:ro" "$COTURN_IMAGE" "${CTL_ARGS[@]}" >/dev/null
 sleep 3
 # Point the check at the mismatching coturn: it execs into the compose service "coturn", so it is told the
 # mismatch by a host that answers with the wrong secret: the control's address.

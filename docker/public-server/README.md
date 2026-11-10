@@ -21,7 +21,7 @@ The deployment of the project server `gs.mydata.rocks`, and the working example 
 ## First deployment
 
 1. On the host: `git clone` the repository (a read-only deploy key while the repository is private) and `cd docker/public-server`.
-2. `cp .env.template .env` and edit it. Set `TURN_SECRET` to the output of `openssl rand -hex 32`, check `TRAEFIK_ENTRYPOINT` against your Traefik, and check `TURN_IPV4` and `TURN_IPV6` against `ip -br addr`.
+2. `cp .env.template .env` and edit it. Set `TURN_SECRET` to the output of `openssl rand -hex 32`, and give coturn the same value through a file (never on its command line, where `docker inspect` would show it): `umask 077; printf 'static-auth-secret=%s\n' "$(sed -n 's/^TURN_SECRET=//p' .env)" > turnserver.conf; sudo chown 65534:"$(id -g)" turnserver.conf; chmod 640 turnserver.conf` (coturn runs as `nobody`, uid 65534; your group keeps `check-turn.sh` able to read it; the file is git-ignored; `TURN_CONF_FILE` in `.env` moves it). Check `TRAEFIK_ENTRYPOINT` against your Traefik, and check `TURN_IPV4` and `TURN_IPV6` against `ip -br addr`.
 3. Set `SIGNALING_TAG` to a `signaling-server-vX.Y.Z` release, without the prefix (`vX.Y.Z`). **No such release exists until the owner cuts the first one after group 9 of `alpha-connection-model`**; the template's `vX.Y.Z` fails to pull on purpose, and the compose file never accepts `latest` or `dev`. The images must be readable by the host: a public GHCR package, or `docker login ghcr.io` with a read-only token.
 4. Open the firewall (below).
 5. `docker compose up -d`, then run the checks of [Monitoring](#monitoring) once by hand.
@@ -175,19 +175,19 @@ The same search runs locally against this compose file on every change, with a p
 Uptime Kuma on the owner's Oracle host. Nothing about users is collected.
 
 1. **Signaling:** an HTTP(s) monitor with a keyword on `https://gs.mydata.rocks/signaling/healthz`. The server answers `200` with the body `ok` under any path prefix; set the keyword to `ok` and the expected status to 200.
-2. **TURN, with an authenticated allocation** (a STUN or TCP check on 3478 would not notice a `TURN_SECRET` mismatch that breaks every relayed call). [`check-turn.sh`](check-turn.sh) runs one allocation with `turnutils_uclient` inside the coturn container, with a credential signed by the secret **the signaling container really runs with**, and fails when coturn refuses it. In Uptime Kuma add a **Push** monitor, copy its push URL into `KUMA_PUSH_URL` in `.env`, set its heartbeat interval to 10 minutes (a silent host turns it red too) and add a cron entry on the host:
+2. **TURN, with an authenticated allocation** (a STUN or TCP check on 3478 would not notice a `TURN_SECRET` mismatch that breaks every relayed call). [`check-turn.sh`](check-turn.sh) runs one allocation with `turnutils_uclient` inside the coturn container, with a credential signed by the secret in `turnserver.conf` (the one coturn verifies with; the script also fails when `.env` holds a different `TURN_SECRET`, which is what the signaling container gets), and fails when coturn refuses it. In Uptime Kuma add a **Push** monitor, copy its push URL into `KUMA_PUSH_URL` in `.env`, set its heartbeat interval to 10 minutes (a silent host turns it red too) and add a cron entry on the host:
 
    ```cron
    */5 * * * * cd /opt/guardedsleep/docker/public-server && ./check-turn.sh
    ```
 
-   The script pushes `up` or `down` itself; its exit status is 0 or 1 for any other scheduler. It reads only `.env` and the container environments; the push URL (a token) is never printed.
+   The script pushes `up` or `down` itself; its exit status is 0 or 1 for any other scheduler. It reads only `.env` and `turnserver.conf` (no `docker inspect`); the push URL (a token) is never printed.
 
 3. **Allocation count (abuse):** coturn logs nothing and has no counter in this profile; one relay port is bound per allocation, so the count of bound relay ports is the allocation count: `ss -H -u -a -n 'sport >= :49160 and sport <= :49359' | wc -l`. Near 200 (`--total-quota`) means exhaustion; lower `TURN_MAX_LIVE_PER_ADDR` or the quotas. `check-turn.sh` does this count and warns at 80 % of the quota.
 
 ## Secret rotation
 
-`TURN_SECRET` is shared by `signaling` (signs credentials) and `coturn` (verifies them). To rotate: put a new `openssl rand -hex 32` value into `.env` and run `docker compose up -d`; both containers are recreated together. Credentials already issued stop working for new allocations; clients get new ones at their next join or renewal (at most 5 minutes later). Run `./check-turn.sh` afterwards. Rotate after anyone who knew it leaves, and after any suspicion.
+`TURN_SECRET` is shared by `signaling` (signs credentials) and `coturn` (verifies them). To rotate: put a new `openssl rand -hex 32` value into `.env`, rewrite `turnserver.conf` with it (First deployment, step 2) and run `docker compose up -d --force-recreate`; both containers are recreated together (coturn reads the file only at start). Credentials already issued stop working for new allocations; clients get new ones at their next join or renewal (at most 5 minutes later). Run `./check-turn.sh` afterwards. Rotate after anyone who knew it leaves, and after any suspicion.
 
 ## Self-hosting variants
 

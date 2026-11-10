@@ -398,7 +398,7 @@ Residual risk, accepted (owner, 2026-10-25 and 2026-11-02): self-made clients ca
 
 **coturn profile (task 10.1; abuse limits carried over from `docker/turn/compose.yaml`):**
 
-- `--use-auth-secret --static-auth-secret=${TURN_SECRET}`, `--realm=gs.mydata.rocks`, `--fingerprint`;
+- `--use-auth-secret` with `static-auth-secret` in a mounted `turnserver.conf` (not on the command line; review 2026-11 R5), `--realm=gs.mydata.rocks`, `--fingerprint`;
 - host networking; on Contabo the public IPv4 and IPv6 sit on the interface (no 1:1 NAT), so `--listening-ip` and `--relay-ip` are the public addresses and no `--external-ip` mapping is needed;
 - `--no-tcp-relay`, `--no-multicast-peers`, `--stale-nonce=600`, the quotas above, `--max-bps` as in `docker/turn/compose.yaml`;
 - the `--denied-peer-ip` ranges of `docker/turn/compose.yaml`, **plus the host's own public IPv4 and IPv6**, so TURN can never relay into Traefik, the signaling server or any other service on the host;
