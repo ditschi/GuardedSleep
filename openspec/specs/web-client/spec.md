@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Offer the full GuardedSleep client in a browser, as baby unit or parent unit, on the same Rust core as Android, and be honest about what a browser cannot guarantee. Decided in ADR-019, ADR-020 §5 and ADR-018 §2/§6; built by this change.
+Offer the full GuardedSleep client in a browser, as baby unit or parent unit, on the same Rust core as Android, and be honest about what a browser cannot guarantee. Decided in ADR-019, ADR-020 §5 and ADR-018 §2/§6; built by `rebuild-web-client` (archived 2026-11-02).
 
 ## Requirements
 
@@ -80,7 +80,7 @@ The web client SHALL keep the PSK and pairing material only in memory, never in 
 
 ### Requirement: Browser security
 
-The web client SHALL use a strict Content Security Policy with Trusted Types, without inline scripts. It SHALL load scripts, styles, fonts and images only from its own origin, and SHALL connect only to its own origin, configured signaling origins and the origins of curated public services shipped with the build.
+The web client SHALL use a strict Content Security Policy with Trusted Types, without inline scripts. It SHALL load scripts, styles, fonts and images only from its own origin, and SHALL connect only to its own origin, the signaling origins configured for the deployment and, only in a build of the official deployment, the project signaling server's origin; a blanket `wss:` SHALL NOT be allowed.
 
 #### Scenario: Injected script
 
