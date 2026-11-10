@@ -8,7 +8,7 @@ Keep one monitoring relationship between a baby unit and a parent unit alive fro
 
 ### Requirement: Supervision lives only in the core Link
 
-The Rust core `Link` SHALL own the signaling-transport state, attempts, liveness, escalation, listen intent, snooze, peer status and the missed-event buffer. Platforms SHALL talk only to the `Link` and SHALL NOT run their own reconnect loops or timer-based alarms. A `Link` SHALL NOT be constructed without a PSK.
+The Rust core `Link` SHALL own the state of every mailbox, attempts, liveness, escalation, listen intent, snooze, peer status and the missed-event buffer. Platforms SHALL talk only to the `Link` and SHALL NOT run their own reconnect loops, mailbox failover or timer-based alarms; they open, close and feed the mailboxes the `Link` asks for. A `Link` SHALL NOT be constructed without a PSK.
 
 #### Scenario: Link without a PSK
 
@@ -19,6 +19,16 @@ The Rust core `Link` SHALL own the signaling-transport state, attempts, liveness
 
 - **WHEN** the platform observes a network change
 - **THEN** it only reports `network_available` to the `Link` and performs whatever actions the `Link` returns
+
+#### Scenario: Wi-Fi to mobile data
+
+- **WHEN** the parent device switches from Wi-Fi to mobile data during verified monitoring
+- **THEN** the `Link` detects the loss on the DataChannel, reopens the mailboxes, and verifies a new attempt before escalation level 2 when the networks allow a direct path
+
+#### Scenario: Parent process restarts while the baby is verified
+
+- **WHEN** the parent restarts and sends `request_offer` while the baby still holds a verified attempt
+- **THEN** the baby ignores the request until its liveness timeout (25 s by default) closes the old attempt, and recovery completes below escalation level 2
 
 ### Requirement: Recovery is a new attempt, at most one live
 
@@ -45,30 +55,53 @@ A verified attempt SHALL be closed only when its peer connection reports `failed
 
 ### Requirement: Offer direction
 
-Only the baby SHALL create offers, and only when it has no live verified attempt and a parent is present. The parent SHALL send `request_offer` to the baby's client id when it joins or recovers without a live attempt. An offer answering a request SHALL carry `re` set to that request's id, and the parent SHALL adopt an offer only for its current request.
+Only the baby SHALL create offers, and only when it has no live verified attempt and a parent is present: the pinned parent (or, before pinning, any parent) has a confirmed current session (announced with `here` on any mailbox) and, for a relay mailbox, is a member of that relay's room with the client id the session last spoke from.
+
+#### Scenario: Parent session not confirmed yet
+
+- **WHEN** a parent's `here` has arrived but its session has not confirmed the baby's challenge
+- **THEN** the baby creates no offer for it
+
+### Requirement: Offer request
+
+The parent SHALL send `request_offer` to the baby's current session when it starts or recovers without a live attempt. An offer answering a request SHALL carry `re` set to that request's id, and the parent SHALL adopt an offer only for its current request.
 
 #### Scenario: Both sides start at the same time
 
 - **WHEN** the parent and the baby start within the same tick and the parent's request crosses an earlier offer
 - **THEN** the parent adopts only the offer whose `re` matches its request, and the two devices converge on one verified attempt
 
+### Requirement: Offer grace period
+
+A baby that sees a parent present SHALL wait a short grace period (2.5 s) for that parent's `request_offer` before it offers unasked, so that a clean setup builds one attempt per side.
+
+#### Scenario: Clean setup builds one attempt
+
+- **WHEN** a baby and a parent start together over the project server alone, or over the project server and an own relay, and nothing fails
+- **THEN** each core creates exactly one attempt and the link verifies without a replaced attempt
+
 ### Requirement: Accepted signaling senders
 
-Offers and candidates SHALL be accepted only from the client id that `members` lists as the room's baby (on the parent) or from the parent of the most recent `request_offer` (on the baby), always addressed with `to`. The wire `aid` SHALL only filter stale candidates and SHALL never be a trust decision.
+Offers and candidates SHALL be accepted only from envelopes that authenticate under the pairing's envelope key, carry the peer's role and the receiver's current session, and, once the pairing is pinned, a valid pin tag of the peer role. The wire `aid` SHALL only filter stale candidates and SHALL never be a trust decision.
 
 #### Scenario: Stranger in the room
 
-- **WHEN** a client that is not the listed baby sends an offer to the parent
+- **WHEN** a client without the pairing key sends an offer to the parent through any mailbox
 - **THEN** the parent ignores it
 
 ### Requirement: Deterministic attempt identity
 
-Attempts SHALL be identified by a local `u32` handle between core and platform and by a 128-bit wire `aid` drawn from a PRNG seeded by `start{entropy}`, so that recorded traces replay deterministically.
+Attempts SHALL be identified by a local `u32` handle between core and platform and by a 128-bit wire `aid` drawn from a PRNG seeded by `start{entropy}`, so that recorded traces replay deterministically. Envelope nonces, session nonces and the parent secret SHALL come from a separate cryptographic generator seeded by 32 random bytes in the `Link` configuration, freshly drawn by the platform for every run; only simulation traces with test keys SHALL record that seed.
 
 #### Scenario: Trace replay
 
-- **WHEN** a recorded trace is replayed with its recorded `start` entropy
-- **THEN** the replay produces the same `aid` values and the same actions
+- **WHEN** a simulation trace is replayed with its recorded `start` entropy and seed
+- **THEN** the replay produces the same `aid` values, envelope nonces and actions
+
+#### Scenario: Missing seed
+
+- **WHEN** a platform constructs a `Link` without a 32-byte seed
+- **THEN** construction fails with a configuration error
 
 ### Requirement: Bidirectional heartbeat
 
@@ -81,7 +114,7 @@ Both sides SHALL send `heartbeat` over the DataChannel every `heartbeat_interval
 
 ### Requirement: Loss detection
 
-A verified attempt SHALL be considered lost when its peer connection is `failed` or `closed`, its DataChannel closes, or no DataChannel message arrives for `liveness_ms = 2 × interval + 5 s` (25 s default, 35 s maximum). The `disconnected` state alone and absence from `members` SHALL NOT count as loss.
+A verified attempt SHALL be considered lost when its peer connection is `failed` or `closed`, its DataChannel closes, or no DataChannel message arrives for `liveness_ms = 2 × interval + 5 s` (25 s default, 35 s maximum). The `disconnected` state alone, absence from a relay room and the closing of mailboxes SHALL NOT count as loss.
 
 #### Scenario: Peer goes silent
 
@@ -104,7 +137,7 @@ The `Link` SHALL reject a configuration where `heartbeat_interval_ms` is outside
 
 ### Requirement: Attempt scheduling
 
-Delays before a new attempt SHALL be 0, 1, 2, 4, 8 s and then 15 s (cap); after 10 minutes without success the cap SHALL rise to 30 s. The backoff SHALL reset after a verified attempt and SHALL reset with an immediate retry on `network_available`, on signaling reopening, and when the peer reappears in `members`. An attempt not verified within 20 s SHALL be abandoned.
+Delays before a new attempt SHALL be 0, 1, 2, 4, 8 s and then 15 s (cap); after 10 minutes without success the cap SHALL rise to 30 s. The backoff SHALL reset after a verified attempt and SHALL reset with an immediate retry on `network_available`, when a mailbox reopens, and when the peer announces a new session. An attempt not verified within 20 s SHALL be abandoned.
 
 #### Scenario: Wi-Fi returns
 
@@ -113,12 +146,17 @@ Delays before a new attempt SHALL be 0, 1, 2, 4, 8 s and then 15 s (cap); after 
 
 ### Requirement: Error classification
 
-Server errors `BABY_TAKEN`, `PARENT_CAP`, `NOT_JOINED` and `SIGNAL_TARGET_REQUIRED` SHALL be retryable at the signaling layer. `UNSUPPORTED_PROTOCOL` SHALL be terminal (`failed_needs_user`, key `update_required`) only as the reply to `hello` before `welcome`; with a verified attempt it SHALL only close signaling and set a sticky `update_required` hint.
+A relay's errors `BABY_TAKEN`, `PARENT_CAP`, `NOT_JOINED` and `SIGNAL_TARGET_REQUIRED` SHALL be retryable at the mailbox layer. `UNSUPPORTED_PROTOCOL` SHALL be terminal (`failed_needs_user`, key `update_required`) only as the reply to `hello` before `welcome` and only when no other mailbox works; with a verified attempt it SHALL only close that mailbox and set a sticky `update_required` hint.
 
 #### Scenario: Stale baby socket
 
 - **WHEN** a reconnecting baby is refused with `BABY_TAKEN` because its old socket is still registered
 - **THEN** the `Link` retries and joins once server liveness has removed the old socket
+
+#### Scenario: Outdated own relay while the project server works
+
+- **WHEN** an own relay answers `hello` with `UNSUPPORTED_PROTOCOL` while the project server reaches the peer
+- **THEN** only that mailbox closes, with the sticky `update_required` hint, and the link continues on the project server
 
 ### Requirement: Pairing mismatch handling
 
@@ -136,12 +174,17 @@ On a first pairing (the PSK never verified, `paired_before = false`) two consecu
 
 ### Requirement: Never give up while monitoring
 
-The `Link` SHALL keep retrying while monitoring is on. From escalation level 2 it SHALL surface a troubleshooter while retrying, with the cause hint `server_unreachable` (signaling never opens), `peer_absent` (signaling open, peer not in the room) or `media_blocked` (offer and answer done, no verification after 3 attempts). "Try now" SHALL reset the backoff.
+The `Link` SHALL keep retrying while monitoring is on. From escalation level 2 it SHALL surface a troubleshooter while retrying, with the cause hint `server_unreachable` (no mailbox opens), `peer_absent` (at least one mailbox open, no current `here` or room membership of the peer), or `media_blocked` (offer and answer done, no verification after 3 attempts). "Try now" SHALL reset the backoff.
 
 #### Scenario: Peer never arrives
 
-- **WHEN** signaling is open but the other device stays absent past level 2
+- **WHEN** mailboxes are open but the other device announces no session past level 2
 - **THEN** the parent sees the troubleshooter with hint `peer_absent` while the link keeps retrying
+
+#### Scenario: Project server unreachable
+
+- **WHEN** the project server is the only mailbox and it cannot be reached
+- **THEN** the parent sees the troubleshooter with hint `server_unreachable` and the link keeps retrying it on the normal backoff
 
 ### Requirement: Link states
 
@@ -182,7 +225,7 @@ The parent SHALL render level 0 yellow and silent; level 1 orange, visual only, 
 
 ### Requirement: Deliberate stop is not an outage
 
-`stop` SHALL send a stop notice over the DataChannel and over signaling before closing. On an authenticated stop notice the peer link SHALL close the verified attempt and go to `peer_stopped`: the parent raises one non-repeating alert, the baby shows a calm grey state, and no escalation runs. The link SHALL then wait until the peer leaves and rejoins the room.
+`stop` SHALL send a stop notice over the DataChannel and over every open mailbox before closing. On an authenticated stop notice for the current session the peer link SHALL close the verified attempt and go to `peer_stopped`: the parent raises one non-repeating alert, the baby shows a calm grey state, and no escalation runs. The link SHALL then reopen its mailboxes and wait until the peer announces a new session that confirms.
 
 #### Scenario: Baby is stopped on purpose
 
@@ -191,11 +234,21 @@ The parent SHALL render level 0 yellow and silent; level 1 orange, visual only, 
 
 ### Requirement: Authenticated signaling stop
 
-A stop notice sent over signaling SHALL carry `mac = HMAC(PSK, "gs-stop/3|role|room|receiver_client_id|nonce")` with a fresh nonce. Stop notices without a valid MAC, or with a nonce already seen on this signaling connection, SHALL be ignored, so a relay cannot mute escalation.
+A stop notice sent through a mailbox SHALL be a sealed envelope bound to the receiver's current session (`signaling-mailboxes`). Stop notices that fail authentication, name another recipient session, come from a sender session that is not the peer's current confirmed session, or repeat an envelope id SHALL be ignored, so a mailbox cannot mute escalation, including by replaying a stored stop after a restart.
 
 #### Scenario: Relay forges a stop
 
-- **WHEN** the signaling relay injects a stop notice without a valid MAC
+- **WHEN** a mailbox injects a stop notice that does not authenticate
+- **THEN** the parent ignores it and escalation continues as normal
+
+#### Scenario: Stored stop after a restart
+
+- **WHEN** a relay serves an authentic stop notice from an earlier session to a restarted parent
+- **THEN** the parent ignores it and escalation continues as normal
+
+#### Scenario: Stored stop from a retired sender session
+
+- **WHEN** a mailbox injects an authentic stop from a baby session that has since been replaced by a new one
 - **THEN** the parent ignores it and escalation continues as normal
 
 ### Requirement: Acknowledge and snooze
@@ -227,12 +280,17 @@ The baby SHALL buffer noise events while not connected (count, maximum level, re
 
 ### Requirement: Signaling transport liveness
 
-Clients SHALL send an application `ping` every 15 s and treat a socket without any message for 35 s as dead. Signaling loss while an attempt is verified SHALL NOT count as monitoring loss; the `Link` SHALL reconnect signaling in the background.
+On a relay mailbox, clients SHALL send an application `ping` every 15 s and treat a socket without any message for 35 s as dead. Mailbox loss while an attempt is verified SHALL NOT count as monitoring loss.
 
 #### Scenario: Signaling drops, media continues
 
-- **WHEN** the signaling socket dies while the attempt is verified
-- **THEN** the link state stays `connected` and signaling reconnects in the background
+- **WHEN** a mailbox socket dies while the attempt is verified
+- **THEN** the link state stays `connected`
+
+#### Scenario: Half-open relay socket in a browser
+
+- **WHEN** a relay socket in the browser stops delivering without closing while the link is down
+- **THEN** after 35 s without any message the core treats it as dead and reopens that mailbox
 
 ### Requirement: Clock and time jumps
 
@@ -242,6 +300,20 @@ The core clock SHALL be monotonic milliseconds that include deep sleep (Android 
 
 - **WHEN** the next tick arrives 10 minutes after the previous one and the peer is still alive
 - **THEN** the link stays connected once the peer's next message arrives within the liveness window, and escalates as normal if it does not
+
+### Requirement: Wall clock input
+
+The platform SHALL report the wall clock in Unix seconds at start, every 60 seconds and after a time change. The core SHALL use it only for the invite expiry, the pin window and the clock comparison with the peer, never for liveness, escalation or any mailbox.
+
+#### Scenario: Wall clock jumps by an hour
+
+- **WHEN** the user changes the device time by an hour during monitoring
+- **THEN** liveness and escalation timing are unaffected, and no mailbox is reopened because of it
+
+#### Scenario: Clocks of the two devices disagree
+
+- **WHEN** a `here` of the peer's confirmed session carries a wall clock more than 10 minutes from this device's
+- **THEN** both devices raise the `clock_skew` hint, and signaling and escalation are unaffected
 
 ### Requirement: Process death
 

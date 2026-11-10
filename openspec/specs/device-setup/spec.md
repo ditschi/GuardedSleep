@@ -71,7 +71,7 @@ On the parent unit, "Stop monitoring" SHALL be reachable only from the menu and 
 
 ### Requirement: TURN server entry
 
-Advanced settings on Android and web SHALL let the user enter one TURN server with an address, a user name and a password. The address SHALL start with `turn:` or `turns:` and name a host, with an optional port and `transport=udp` or `transport=tcp`; user name and password SHALL be both set or both empty. Both clients SHALL offer the entry to WebRTC as one ICE server next to the relay STUN servers.
+Advanced settings on Android and web SHALL let the user enter one own TURN server: an address that starts with `turn:` or `turns:` and names a host, with an optional port and `transport=udp` or `transport=tcp`, and a user name and password that are both set or both empty. Both clients SHALL offer it to WebRTC as one ICE server next to the ICE servers of the pairing's relays (`signaling-relay` "Client ICE configuration"), also when the project server supplies its own TURN.
 
 #### Scenario: Incomplete credentials
 
@@ -81,7 +81,7 @@ Advanced settings on Android and web SHALL let the user enter one TURN server wi
 #### Scenario: Used for the next attempt
 
 - **WHEN** a TURN server is saved and a new attempt starts
-- **THEN** the media engine is configured with the relay STUN servers and the TURN server with its user name and password
+- **THEN** the media engine is configured with the relay's ICE servers and the TURN server with its user name and password
 
 ### Requirement: TURN credential protection
 

@@ -24,6 +24,15 @@ The project SHALL publish `guardedsleep-signaling` and `guardedsleep-web` to GHC
 - **WHEN** a self-hoster pulls `guardedsleep-signaling` on an arm64 machine
 - **THEN** the manifest provides a native arm64 image
 
+### Requirement: Staging web image
+
+The project SHALL publish a non-release `guardedsleep-web-staging` image for the owner's test deployment: the same web client built with Vite mode `staging` and the official-deployment flag, so that new invites carry the project server. It SHALL be built like the release images, published only from `main` and manual runs (`:dev`, `:edge`, `:sha-<short>`), never for pull requests and never on a release tag, and SHALL NOT enable loopback mailboxes.
+
+#### Scenario: Staging image and release tag
+
+- **WHEN** a maintainer pushes the tag `web-v0.1.0` and later a commit lands on `main`
+- **THEN** no `guardedsleep-web-staging` image is published for the tag, and the commit publishes it as `:dev`, `:edge` and `:sha-<short>`
+
 ### Requirement: Image tags
 
 A push to `main` SHALL publish `:dev` and `:sha-<short>`. A release tag (`signaling-server-v*` for signaling, `web-v*` for the web image built from `apps/web`) SHALL publish `:latest`, `:vX.Y.Z` and `:vX.Y`. Pull requests SHALL only build, with a read-only token and no registry login or push.
