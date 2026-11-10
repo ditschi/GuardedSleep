@@ -49,5 +49,23 @@ if grep -q 'Cannot complete Allocation' <<<"$OUT"; then
 	fail "TURN allocation refused (TURN_SECRET mismatch between signaling and coturn, or coturn down)"
 fi
 grep -q 'start_mclient' <<<"$OUT" || fail "TURN allocation check produced no result"
+
+# Allocation count (abuse alarm, review 2026-11 R2): coturn binds one relay port per allocation and keeps
+# no counter with logging off, so count the bound UDP ports of the relay range (coturn runs on the host
+# network). WARN at 80 % of --total-quota; the check still passes, the allocation itself works.
+MIN_PORT="${TURN_MIN_PORT:-$(dotenv TURN_MIN_PORT)}"; MIN_PORT="${MIN_PORT:-49160}"
+MAX_PORT="${TURN_MAX_PORT:-$(dotenv TURN_MAX_PORT)}"; MAX_PORT="${MAX_PORT:-49359}"
+QUOTA="${TURN_TOTAL_QUOTA:-$(dotenv TURN_TOTAL_QUOTA)}"; QUOTA="${QUOTA:-200}"
+if command -v ss >/dev/null 2>&1; then
+	LIVE="$(ss -H -u -a -n "sport >= :$MIN_PORT and sport <= :$MAX_PORT" | wc -l)"
+	if (( LIVE * 100 >= QUOTA * 80 )); then
+		MSG="WARN: $LIVE of $QUOTA TURN allocations in use (80 % threshold); lower TURN_MAX_LIVE_PER_ADDR or the quotas"
+		echo "check-turn: $MSG" >&2
+		push up "$MSG"
+		exit 0
+	fi
+else
+	echo "check-turn: ss not found, allocation count skipped" >&2
+fi
 echo "check-turn: OK"
 push up OK

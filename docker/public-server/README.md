@@ -183,7 +183,7 @@ Uptime Kuma on the owner's Oracle host. Nothing about users is collected.
 
    The script pushes `up` or `down` itself; its exit status is 0 or 1 for any other scheduler. It reads only `.env` and the container environments; the push URL (a token) is never printed.
 
-3. **Allocation count (abuse):** coturn logs nothing and has no counter in this profile; one relay port is bound per allocation, so the count of bound relay ports is the allocation count: `ss -H -u -a -n 'sport >= :49160 and sport <= :49359' | wc -l`. Near 200 (`--total-quota`) means exhaustion; lower `TURN_MAX_LIVE_PER_ADDR` or the quotas.
+3. **Allocation count (abuse):** coturn logs nothing and has no counter in this profile; one relay port is bound per allocation, so the count of bound relay ports is the allocation count: `ss -H -u -a -n 'sport >= :49160 and sport <= :49359' | wc -l`. Near 200 (`--total-quota`) means exhaustion; lower `TURN_MAX_LIVE_PER_ADDR` or the quotas. `check-turn.sh` does this count and warns at 80 % of the quota.
 
 ## Secret rotation
 
