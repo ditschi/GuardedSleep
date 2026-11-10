@@ -1,5 +1,7 @@
 # Tasks
 
+> **Spec base, 2026-11-10 (review 2026-11, finding D7).** `alpha-connection-model`'s `link-supervision` deltas were synced into `openspec/specs/`, so the MODIFIED blocks "Supervision lives only in the core Link" and "Loss detection" now quote the main text and differ from it only in this change's edits (15 s liveness, the quality rating, measurements from the platform). The archive order no longer matters for the specs; the code dependency on alpha 5.2 and 6.1 below stays.
+
 Branch from `origin/main`. Commit after each task; `just test-affected` after each task. Group 1 can start now; groups 2 and 3 start after `alpha-connection-model` 5.2 and 6.1 have landed and depend on group 1; **task 2.1 blocks the rest of group 2 and group 5.** Archive after `alpha-connection-model`.
 
 ## 1. Core
