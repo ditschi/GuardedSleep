@@ -19,7 +19,7 @@ use crate::config::{csv_list, parse_in};
 /// raise it is the 12-hour fallback of task 9.1, which did not apply.
 const MAX_TTL_S: u32 = 600;
 const DEFAULT_TTL_S: u32 = 600;
-const DEFAULT_MAX_LIVE_PER_ADDR: usize = 8;
+const DEFAULT_MAX_LIVE_PER_ADDR: usize = 3;
 
 /// A signed TURN credential. Never printed: `Debug` hides both fields.
 pub struct Credential {
@@ -280,12 +280,12 @@ mod tests {
 
     #[test]
     fn defaults_and_the_per_address_cap() {
-        assert_eq!(cfg(&FULL).unwrap().max_live_per_addr, 8);
+        assert_eq!(cfg(&FULL).unwrap().max_live_per_addr, 3);
         let mut p = FULL.to_vec();
         p.push(("TURN_MAX_LIVE_PER_ADDR", "3"));
         assert_eq!(cfg(&p).unwrap().max_live_per_addr, 3);
         p.push(("TURN_MAX_LIVE_PER_ADDR", "0"));
-        assert_eq!(cfg(&p).unwrap().max_live_per_addr, 8);
+        assert_eq!(cfg(&p).unwrap().max_live_per_addr, 3);
     }
 
     #[test]

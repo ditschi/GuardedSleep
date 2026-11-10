@@ -127,7 +127,7 @@ impl Default for RelayConfig {
             max_admission_keys: 16,
             stun_urls: Vec::new(),
             turn_credential_ttl_ms: None,
-            turn_max_live_per_addr: 8,
+            turn_max_live_per_addr: 3,
         }
     }
 }

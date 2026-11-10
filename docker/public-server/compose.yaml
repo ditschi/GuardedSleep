@@ -119,7 +119,7 @@ services:
       - --no-tcp-relay
       # Abuse limits (design section 7): the quota is per credential (every credential has its own
       # user name), allocations die after two minutes without a refresh, one relay port per allocation.
-      - --user-quota=10
+      - --user-quota=5
       - --max-allocate-lifetime=120
       - --total-quota=${TURN_TOTAL_QUOTA:-200}
       # Bytes per second per session (125000 = 1 Mbit/s); audio needs far less.
