@@ -4,6 +4,7 @@ import wasmUrl from "@guardedsleep/core-wasm/pkg/guardedsleep_wasm_bg.wasm?url";
 import type { AppController, CodeScanner } from "../contract";
 import { AlertPlayer, createSoundGate } from "./audio";
 import { watchBattery, type BatteryManagerLike } from "./battery";
+import { PROJECT_SERVER } from "../public-lists/generated/public-lists";
 import { loopbackAllowed, projectServerEnabled, projectServerMailboxUrl } from "./build-mode";
 import { createClock, createTimers } from "./clock";
 import { browserDeviceName } from "./device-name";
@@ -102,6 +103,7 @@ export async function createWebApp(): Promise<AppController> {
     defaultMailboxUrls: () => defaultMailboxUrls(window.location, import.meta.env.DEV),
     projectServer: {
       mailboxUrl: projectServerMailboxUrl(),
+      host: PROJECT_SERVER.host,
       enabled: projectServerEnabled(import.meta.env),
     },
     connectAllowed: (url) =>
