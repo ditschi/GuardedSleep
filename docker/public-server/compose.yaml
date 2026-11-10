@@ -156,6 +156,7 @@ services:
     restart: unless-stopped
     # No read_only/cap_drop: nginx needs its cache directories and a privilege drop; harden when this
     # profile is first used.
+    # The image logs no client addresses (nginx access log off, http error log discarded; README "Logs").
     networks:
       - traefik
     logging:

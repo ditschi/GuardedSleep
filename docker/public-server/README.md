@@ -156,6 +156,7 @@ The project server logs no client IP addresses (AGENTS.md section 7, guardrails 
 - **Traefik:** access log off, its own log at `ERROR` (homelab repository).
 - **signaling:** logs no addresses or room ids; the per-address limits live in memory only.
 - **coturn: logs nothing** (`--log-file=/dev/null --no-stdout-log`). coturn writes client and peer addresses at several levels, and a denied peer is an `ERROR` line with the peer's address (for example `A peer IP 10.x.x.x denied in the range ...`), and `--log-min-level` cannot go above `error`, so no level keeps addresses out; discarding the log does. Restarts and crash loops stay visible through `docker compose ps` and the monitoring below. To debug, put `TURN_LOG_FILE=stdout` into `.env`, run `docker compose up -d`, reproduce, then **remove it and run `docker compose up -d` again**: while it is set the logs contain addresses.
+- **web** (profile `web`, a separate origin only): the image's nginx runs with `access_log off` and its http error log on `/dev/null` (`docker/web/nginx.default.conf`), since nginx appends `client: <address>` to connection errors at every level. Only startup and worker messages reach stderr. Check: `docker logs <web container> 2>&1 | grep -cE '([0-9]{1,3}\.){3}[0-9]{1,3}|[0-9a-f]*:[0-9a-f]*:[0-9a-f:]+'` after a few requests with an `X-Forwarded-For` header, expect 0.
 - **Docker:** `json-file` logs capped at 10 MB times 3 files per container.
 - **Host:** `ufw logging off`.
 
