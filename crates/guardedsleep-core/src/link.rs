@@ -1276,9 +1276,11 @@ impl Link {
                 }
             }
             LinkInput::AttemptDataOpen { attempt } => {
-                self.resend = None;
                 if let Some(l) = self.live_mut(attempt) {
                     let ev = l.attempt.on_data_open(now);
+                    // Only the live handle counts: a stale callback must not disarm the resend
+                    // of the new attempt (`link-supervision`, late callbacks).
+                    self.resend = None;
                     self.process(now, ev, &mut out);
                 }
             }
