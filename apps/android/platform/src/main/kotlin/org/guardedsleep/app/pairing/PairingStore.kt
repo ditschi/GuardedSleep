@@ -77,6 +77,17 @@ data class StoredPairing(
             "pinned=${parentSecretB64url != null}, mailboxes=${mailboxes.size})"
 }
 
+/** The outcome of [PairingStore.loadResult]. */
+sealed interface PairingLoad {
+    /** No pairing (never saved, or unrecoverable and deleted). */
+    data object Absent : PairingLoad
+
+    /** The record is kept but cannot be read right now (Keystore busy, device still locked). */
+    data object Unreadable : PairingLoad
+
+    class Loaded(val pairing: StoredPairing) : PairingLoad
+}
+
 /**
  * PSK, server list and TURN credentials sealed with [PairingCipher] in an app-private file. Plain
  * preferences never hold pairing material (guardrail 7.2).
@@ -84,33 +95,49 @@ data class StoredPairing(
 class PairingStore(file: File, cipher: PairingCipher) {
     private val sealed = SealedJsonFile(file, cipher)
 
+    /** The pairing, or null when there is none or it cannot be read right now (never cleared). */
+    @Synchronized fun load(): StoredPairing? = (loadResult() as? PairingLoad.Loaded)?.pairing
+
+    /**
+     * Like [load] but tells "none" from "temporarily unreadable": an unrecoverable record is
+     * deleted ([PairingLoad.Absent]); a transient failure keeps it ([PairingLoad.Unreadable]).
+     */
     @Synchronized
-    fun load(): StoredPairing? {
-        val o = sealed.read() ?: return null
+    fun loadResult(): PairingLoad {
+        val o =
+            when (val r = sealed.read()) {
+                SealedRead.Absent,
+                SealedRead.Cleared -> return PairingLoad.Absent
+                is SealedRead.Unreadable -> return PairingLoad.Unreadable
+                is SealedRead.Value -> r.json
+            }
         // A well-formed file with missing fields is treated like an unreadable one.
-        return runCatching {
-            val urls = o.getJSONArray("s").let { a -> (0 until a.length()).map { a.getString(it) } }
-            val turn = o.optJSONObject("t")?.let(::turnCredentialsFromJson)
-            val mailboxes =
-                o.optJSONArray("m")?.let { a ->
-                    (0 until a.length()).map {
-                        val m = a.getJSONObject(it)
-                        StoredMailbox(m.getString("k"), m.getString("u"))
-                    }
-                } ?: emptyList()
-            StoredPairing(
-                o.getString("k"),
-                urls,
-                o.optBoolean("p", false),
-                turn,
-                o.optString("ps").ifEmpty { null },
-                mailboxes,
-                o.optLong("pu", -1L).takeIf { it >= 0 },
-            )
-        }
+        return runCatching<PairingLoad> {
+                val urls =
+                    o.getJSONArray("s").let { a -> (0 until a.length()).map { a.getString(it) } }
+                val turn = o.optJSONObject("t")?.let(::turnCredentialsFromJson)
+                val mailboxes =
+                    o.optJSONArray("m")?.let { a ->
+                        (0 until a.length()).map {
+                            val m = a.getJSONObject(it)
+                            StoredMailbox(m.getString("k"), m.getString("u"))
+                        }
+                    } ?: emptyList()
+                PairingLoad.Loaded(
+                    StoredPairing(
+                        o.getString("k"),
+                        urls,
+                        o.optBoolean("p", false),
+                        turn,
+                        o.optString("ps").ifEmpty { null },
+                        mailboxes,
+                        o.optLong("pu", -1L).takeIf { it >= 0 },
+                    )
+                )
+            }
             .getOrElse {
                 sealed.clear()
-                null
+                PairingLoad.Absent
             }
     }
 

@@ -12,7 +12,7 @@ class TurnStore(file: File, cipher: PairingCipher) {
 
     @Synchronized
     fun load(): TurnCredentials? {
-        val o = sealed.read() ?: return null
+        val o = (sealed.read() as? SealedRead.Value)?.json ?: return null
         return runCatching { turnCredentialsFromJson(o) }
             .getOrElse {
                 sealed.clear()

@@ -35,6 +35,23 @@ class FakeCipher : PairingCipher {
     }
 }
 
+/** Fails [failures] decrypts with [error], then behaves like [FakeCipher]. */
+class FlakyCipher(var failures: Int, private val error: () -> Exception) : PairingCipher {
+    private val inner = FakeCipher()
+
+    override fun encrypt(plain: ByteArray) = inner.encrypt(plain)
+
+    override fun decrypt(sealed: ByteArray): ByteArray {
+        if (failures > 0) {
+            failures--
+            throw error()
+        }
+        return inner.decrypt(sealed)
+    }
+
+    override fun deleteKey() = inner.deleteKey()
+}
+
 class RecordingSink : AlertSink {
     val snapshots = mutableListOf<LinkSnapshot>()
     val lost = mutableListOf<Long>()
