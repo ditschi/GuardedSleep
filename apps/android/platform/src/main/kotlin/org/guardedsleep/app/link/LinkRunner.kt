@@ -5,6 +5,7 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import org.guardedsleep.app.config.AppDefaults
+import org.guardedsleep.app.config.TalkPolicy
 import org.guardedsleep.app.diag.PocLog
 import org.guardedsleep.app.media.AttemptListener
 import org.guardedsleep.app.media.AttemptPort
@@ -12,6 +13,8 @@ import org.guardedsleep.app.media.IceServerEntry
 import org.guardedsleep.app.media.InboundAudioStats
 import org.guardedsleep.app.media.InjectedAudio
 import org.guardedsleep.app.media.MediaEngine
+import org.guardedsleep.app.media.TalkPlayout
+import org.guardedsleep.app.media.TalkSpeaker
 import org.guardedsleep.app.signaling.SignalingFactory
 import org.guardedsleep.app.signaling.SignalingListener
 import org.guardedsleep.app.signaling.SignalingTransport
@@ -90,6 +93,11 @@ class LinkRunner(
 
     private val isBaby = config.role == Role.BABY
 
+    /** Baby: the lease on the loudspeaker; null while the engine cannot play a talk. */
+    private var playout: TalkPlayout? = null
+    private var leasedAttempt: UInt? = null
+    private var outsidePollAt = 0L
+
     /** Builds the core and the media engine, opens signaling and starts the timers. */
     fun start() = post {
         // One run per runner: a second start would hand the core the same (wiped) seed.
@@ -108,6 +116,7 @@ class LinkRunner(
                 config.pinnedParent?.bytes?.fill(0)
             }
         media = mediaFactory()
+        media?.let { setUpTalk(it) }
         PocLog.event("session_start", "role" to config.role.name.lowercase())
         dispatch(LinkInput.Start(entropy.toULong()))
         reportWallClock()
@@ -152,7 +161,55 @@ class LinkRunner(
     /** Immediate teardown without telling the peer (process shutdown paths). */
     fun abort() = post { teardown() }
 
-    fun input(input: LinkInput) = post { if (!closing) dispatch(input) }
+    fun input(input: LinkInput) = post {
+        if (closing) return@post
+        // Warm capture: the talk microphone is created at the press, attached only at the grant.
+        if (input is LinkInput.SetTalk && input.pressed) media?.prepareTalkCapture()
+        dispatch(input)
+    }
+
+    /** Talk-back wiring of one engine: the parent's mic failures, the baby's lease. */
+    private fun setUpTalk(m: MediaEngine) {
+        if (!isBaby) {
+            m.setTalkMicFailureListener { post { dispatch(LinkInput.TalkMicFailed) } }
+            return
+        }
+        val volume = m.talkVolume()
+        if (volume == null) {
+            dispatch(LinkInput.SetTalkMuted(true))
+            return
+        }
+        val speaker =
+            object : TalkSpeaker {
+                override fun setReceiverEnabled(attempt: UInt, enabled: Boolean) {
+                    // Exactly one attempt's receiver is ever enabled; all others stay disabled.
+                    for ((h, p) in attempts) p.setTalkReceiverEnabled(enabled && h == attempt)
+                    leasedAttempt = if (enabled) attempt else null
+                }
+
+                override fun setReceiverGain(attempt: UInt, gain: Double) {
+                    attempts[attempt]?.setTalkReceiverGain(gain)
+                }
+
+                override fun setSpeakerMuted(muted: Boolean) = m.setTalkSpeakerMuted(muted)
+
+                override fun playChime(gain: Double, onDone: () -> Unit) =
+                    m.playTalkChime(gain, onDone)
+
+                override fun stopChime() = m.stopTalkChime()
+            }
+        playout =
+            TalkPlayout(
+                speaker,
+                volume,
+                onChimeDone = { a -> post { dispatch(LinkInput.TalkChimeDone(a)) } },
+                onMuted = { muted -> dispatch(LinkInput.SetTalkMuted(muted)) },
+                onOutsideGrant = { a -> dispatch(LinkInput.TalkRtpOutsideGrant(a)) },
+            )
+        playout?.start()
+        // Raw capture is `quiet-link-no-rtp`'s task and not built: the playback check says unknown.
+        dispatch(LinkInput.SetRawCapture(false))
+    }
 
     fun media(action: (MediaEngine) -> Unit) = post { media?.let(action) }
 
@@ -164,6 +221,7 @@ class LinkRunner(
     private fun sampleAudio() {
         val m = media ?: return
         val now = clock.elapsedMs()
+        if (isBaby) samplePlayout(now)
         if (isBaby) {
             val rms = m.drainMicRms() ?: InjectedAudio.level()
             if (rms != null) {
@@ -172,6 +230,28 @@ class LinkRunner(
             }
         } else {
             m.drainRemoteRms()?.let { listener.onRemoteLevel(it, now) }
+        }
+    }
+
+    /** Lease expiry, the level control and the outside-a-grant check of the talk line. */
+    private fun samplePlayout(now: Long) {
+        val p = playout ?: return
+        p.tick(now)
+        val leased = leasedAttempt
+        if (leased != null) {
+            attempts[leased]?.talkReceiverStats { s ->
+                if (s != null)
+                    post {
+                        p.onTalkLevel(s.audioLevel, clock.elapsedMs())
+                        dispatch(LinkInput.TalkLevel(s.audioLevel))
+                    }
+            }
+        } else if (now - outsidePollAt >= TalkPolicy.OUTSIDE_POLL_MS) {
+            outsidePollAt = now
+            val h = liveAttempt ?: return
+            attempts[h]?.talkReceiverStats { s ->
+                if (s != null) post { p.onTalkPackets(h, s.packetsReceived, clock.elapsedMs()) }
+            }
         }
     }
 
@@ -232,14 +312,32 @@ class LinkRunner(
             is LinkAction.SetMicEnabled -> media?.setMicEnabled(action.enabled)
             LinkAction.ApplyQuiet -> applyQuietNow()
             is LinkAction.SendProbeTone -> media?.startProbeTone(action.durationMs.toLong())
-            // Talk-back actions: wired to the media layer in the following commits of
-            // `add-talk-back` group 2.
-            is LinkAction.SetTalkMic,
-            is LinkAction.SetPlaybackDucked,
-            is LinkAction.PlayTalkChime,
-            is LinkAction.SetTalkPlayback -> Unit
+            is LinkAction.SetTalkMic -> setTalkMic(action.attempt, action.enabled)
+            is LinkAction.SetPlaybackDucked -> media?.setPlaybackDucked(action.ducked)
+            is LinkAction.PlayTalkChime ->
+                playout?.playChime(action.attempt, action.level)
+                    ?: post { dispatch(LinkInput.TalkChimeDone(action.attempt)) }
+            is LinkAction.SetTalkPlayback ->
+                if (action.enabled) {
+                    playout?.open(
+                        action.attempt,
+                        action.level,
+                        action.fadeInMs.toLong(),
+                        action.untilMs.toLong(),
+                        now,
+                    )
+                } else {
+                    playout?.close(now)
+                }
             is LinkAction.Emit -> emit(action.event, now)
         }
+    }
+
+    /** Parent: attach or detach the microphone; the answer is a separate input, never inline. */
+    private fun setTalkMic(attempt: UInt, enabled: Boolean) {
+        val ok = attempts[attempt]?.setTalkMic(enabled) ?: false
+        if (!enabled) return
+        post { dispatch(if (ok) LinkInput.TalkMicAttached else LinkInput.TalkMicFailed) }
     }
 
     private fun emit(event: LinkEvent, now: Long) {
@@ -377,6 +475,8 @@ class LinkRunner(
     private fun closeAttempt(handle: UInt) {
         val peer = attempts[handle] ?: return
         if (liveAttempt == handle) liveAttempt = null
+        if (leasedAttempt == handle) playout?.close(clock.elapsedMs())
+        playout?.attemptClosed(handle)
         if (closing) {
             // A stop_notice was just written to the DataChannel; let it leave before the close.
             schedule(FLUSH_MS) {
@@ -408,6 +508,8 @@ class LinkRunner(
         tasks.clear()
         mailboxes.values.forEach { it.transport.close() }
         mailboxes.clear()
+        runCatching { playout?.close(clock.elapsedMs()) }
+        playout = null
         attempts.values.forEach { runCatching { it.close() } }
         attempts.clear()
         runCatching { media?.release() }

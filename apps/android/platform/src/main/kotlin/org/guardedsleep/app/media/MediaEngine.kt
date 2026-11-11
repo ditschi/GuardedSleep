@@ -28,6 +28,9 @@ interface AttemptListener {
 
 data class InboundAudioStats(val packetsReceived: Long, val packetsLost: Long)
 
+/** Baby: the talk receiver's inbound counters and decoded level (stats; no audio sink). */
+data class TalkReceiverStats(val packetsReceived: Long, val audioLevel: Double)
+
 /** One RTCPeerConnection + DataChannel lifetime (an "attempt" of the core). */
 interface AttemptPort {
     fun createOffer()
@@ -43,6 +46,21 @@ interface AttemptPort {
 
     /** Parent: inbound audio counters; null when no audio receiver exists yet. */
     fun inboundAudioStats(callback: (InboundAudioStats?) -> Unit)
+
+    /**
+     * Parent: attach the talk microphone to the talk sender (`true`) or detach and dispose it
+     * (`false`). False when there is no talk sender or no capture could be opened.
+     */
+    fun setTalkMic(attached: Boolean): Boolean = false
+
+    /** Baby: enable or disable the talk receiver's track (disabled before any frame by default). */
+    fun setTalkReceiverEnabled(enabled: Boolean) {}
+
+    /** Baby: gain of the talk receiver's track (`AudioTrack.setVolume`). */
+    fun setTalkReceiverGain(gain: Double) {}
+
+    /** Baby: counters and level of the talk receiver; null while no receiver exists. */
+    fun talkReceiverStats(callback: (TalkReceiverStats?) -> Unit) = callback(null)
 
     fun close()
 }
@@ -72,6 +90,26 @@ interface MediaEngine {
     fun setPlaybackGainPct(pct: Int)
 
     fun setSpeakerOnly(speakerOnly: Boolean)
+
+    /** Parent: mute only the baby's audio while the talk button is held (half duplex). */
+    fun setPlaybackDucked(ducked: Boolean) {}
+
+    /** Parent: open the capture locally at the press (not yet attached to the sender). */
+    fun prepareTalkCapture() {}
+
+    /** Parent: called when the microphone fails while a talk may run. */
+    fun setTalkMicFailureListener(listener: () -> Unit) {}
+
+    /** Baby: the ADM speaker; the engine starts muted and the lease opens it. */
+    fun setTalkSpeakerMuted(muted: Boolean) {}
+
+    /** Baby: plays the generated chime on its own alarm-stream track. */
+    fun playTalkChime(gain: Double, onDone: () -> Unit) = onDone()
+
+    fun stopTalkChime() {}
+
+    /** Baby: the alarm stream volume control; null when the engine cannot play a talk. */
+    fun talkVolume(): AlarmVolume? = null
 
     /** RMS of the microphone since the previous call; null when no audio was recorded (baby). */
     fun drainMicRms(): Double?
