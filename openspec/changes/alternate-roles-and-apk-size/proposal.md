@@ -4,7 +4,7 @@
 
 Owner feedback from the first dev APK (2026-11-11):
 
-1. The APK shows no launcher icon. The app declares a plain vector drawable as `android:icon`; there is no adaptive icon (`mipmap-anydpi-v26`) and no `roundIcon`.
+1. The APK shows no launcher icon. The app declares a plain vector drawable as `android:icon`; there is no adaptive icon (`mipmap-anydpi`) and no `roundIcon`.
 2. The dev APK is 53 MB. It carries the `x86_64` libraries the emulator gate needs (about 18 MB) that no phone uses, and AGP stores native libraries uncompressed (35 MB stored as-is).
 3. Parents take turns putting the child to bed, so each phone is sometimes the baby unit and sometimes the parent unit. Today the role is chosen once and choosing the other role deletes the pairing, so every swap means re-pairing and there is no switch in the UI. The owner wants the mode chosen at every start (or a default), a way to switch whenever monitoring is not active, and each mode's state kept across restarts.
 

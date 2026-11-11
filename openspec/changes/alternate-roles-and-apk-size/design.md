@@ -33,7 +33,7 @@ On the first read after the update: if `role` is set and `defaultRole` absent, s
 
 ## 5. Launcher icon
 
-`res/mipmap-anydpi-v26/ic_launcher.xml` (adaptive: `@color` background, vector foreground inside the 72 dp safe zone, the same vector as `monochrome`) and `ic_launcher_round.xml`; manifest `android:icon="@mipmap/ic_launcher"`, `android:roundIcon="@mipmap/ic_launcher_round"`. minSdk is 26, so no PNG fallbacks are needed. Verify with `aapt2 dump badging`.
+`res/mipmap-anydpi/ic_launcher.xml` (adaptive: `@color` background, vector foreground inside the 72 dp safe zone, the same vector as `monochrome`) and `ic_launcher_round.xml`; manifest `android:icon="@mipmap/ic_launcher"`, `android:roundIcon="@mipmap/ic_launcher_round"`. minSdk is 26, so no PNG fallbacks are needed. Verify with `aapt2 dump badging`.
 
 ## 6. APK size
 
