@@ -7460,5 +7460,207 @@
         }
       ]
     ]
+  },
+  {
+    "name": "parse_data_v3: talk_request: valid",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_request\",\"v\":3,\"id\":7}",
+    "expect": {
+      "type": "talk_request",
+      "id": 7
+    }
+  },
+  {
+    "name": "parse_data_v3: talk_request: missing id",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_request\",\"v\":3}",
+    "expect": null
+  },
+  {
+    "name": "parse_data_v3: talk_request: id is not a number",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_request\",\"v\":3,\"id\":\"7\"}",
+    "expect": null
+  },
+  {
+    "name": "parse_data_v3: talk_request: negative id",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_request\",\"v\":3,\"id\":-1}",
+    "expect": null
+  },
+  {
+    "name": "parse_data_v3: talk_request: protocol v2 has no talk",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_request\",\"v\":2,\"id\":7}",
+    "expect": null
+  },
+  {
+    "name": "parse_data_v3: talk_request: extra settings fields are ignored and change nothing",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_request\",\"v\":3,\"id\":7,\"enabled\":true,\"level\":\"high\",\"chime\":false}",
+    "expect": {
+      "type": "talk_request",
+      "id": 7
+    }
+  },
+  {
+    "name": "parse_data_v3: talk_grant: valid",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_grant\",\"v\":3,\"id\":7,\"max_ms\":30000}",
+    "expect": {
+      "type": "talk_grant",
+      "id": 7,
+      "max_ms": 30000
+    }
+  },
+  {
+    "name": "parse_data_v3: talk_grant: missing max_ms",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_grant\",\"v\":3,\"id\":7}",
+    "expect": null
+  },
+  {
+    "name": "parse_data_v3: talk_deny: busy",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_deny\",\"v\":3,\"id\":7,\"reason\":\"busy\"}",
+    "expect": {
+      "type": "talk_deny",
+      "id": 7,
+      "reason": {
+        "kind": "busy"
+      }
+    }
+  },
+  {
+    "name": "parse_data_v3: talk_deny: cooldown with its retry hint",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_deny\",\"v\":3,\"id\":7,\"reason\":\"cooldown\",\"retry_in_ms\":12000}",
+    "expect": {
+      "type": "talk_deny",
+      "id": 7,
+      "reason": {
+        "kind": "cooldown",
+        "retry_in_ms": 12000
+      }
+    }
+  },
+  {
+    "name": "parse_data_v3: talk_deny: budget with its retry hint",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_deny\",\"v\":3,\"id\":7,\"reason\":\"budget\",\"retry_in_ms\":240000}",
+    "expect": {
+      "type": "talk_deny",
+      "id": 7,
+      "reason": {
+        "kind": "budget",
+        "retry_in_ms": 240000
+      }
+    }
+  },
+  {
+    "name": "parse_data_v3: talk_deny: unknown reason parses as no reason",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_deny\",\"v\":3,\"id\":7,\"reason\":\"too_loud\"}",
+    "expect": {
+      "type": "talk_deny",
+      "id": 7,
+      "reason": null
+    }
+  },
+  {
+    "name": "parse_data_v3: talk_deny: cooldown without a hint has no usable reason",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_deny\",\"v\":3,\"id\":7,\"reason\":\"cooldown\"}",
+    "expect": {
+      "type": "talk_deny",
+      "id": 7,
+      "reason": null
+    }
+  },
+  {
+    "name": "parse_data_v3: talk_deny: missing id",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_deny\",\"v\":3,\"reason\":\"off\"}",
+    "expect": null
+  },
+  {
+    "name": "parse_data_v3: talk_end: valid, extra field ignored",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_end\",\"v\":3,\"id\":7,\"future\":1}",
+    "expect": {
+      "type": "talk_end",
+      "id": 7
+    }
+  },
+  {
+    "name": "parse_data_v3: talk_end: missing id",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_end\",\"v\":3}",
+    "expect": null
+  },
+  {
+    "name": "parse_data_v3: talk_playback: heard",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_playback\",\"v\":3,\"id\":7,\"result\":\"heard\"}",
+    "expect": {
+      "type": "talk_playback",
+      "id": 7,
+      "result": "heard"
+    }
+  },
+  {
+    "name": "parse_data_v3: talk_playback: unconfirmed",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_playback\",\"v\":3,\"id\":7,\"result\":\"unconfirmed\"}",
+    "expect": {
+      "type": "talk_playback",
+      "id": 7,
+      "result": "unconfirmed"
+    }
+  },
+  {
+    "name": "parse_data_v3: talk_playback: unknown result word is refused",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_playback\",\"v\":3,\"id\":7,\"result\":\"loud\"}",
+    "expect": null
+  },
+  {
+    "name": "parse_data_v3: a message that tries to change the talk-back settings is unknown and has no effect",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"set_talk_back\",\"v\":3,\"enabled\":true,\"level\":\"high\",\"chime\":false}",
+    "expect": null
+  },
+  {
+    "name": "parse_data_v3: device_status: talk fields",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"device_status\",\"v\":3,\"talk\":\"muted\",\"talker\":\"other\",\"noise_paused\":true,\"talk_retry_in_ms\":12000,\"talk_audible\":\"uncertain\"}",
+    "expect": {
+      "type": "device_status",
+      "talk": "muted",
+      "talker": "other",
+      "noise_paused": true,
+      "talk_retry_in_ms": 12000,
+      "talk_audible": "uncertain"
+    }
+  },
+  {
+    "name": "parse_data_v3: device_status: unknown talk words are no value",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"device_status\",\"v\":3,\"talk\":\"loud\",\"talker\":\"nobody\",\"talk_audible\":\"maybe\"}",
+    "expect": {
+      "type": "device_status"
+    }
+  },
+  {
+    "name": "parse_data_v3: device_status: talk of the wrong type is refused",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"device_status\",\"v\":3,\"talk\":1}",
+    "expect": null
+  },
+  {
+    "name": "parse_data_v3: device_status: retry hint out of range is refused",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"device_status\",\"v\":3,\"talk_retry_in_ms\":3600001}",
+    "expect": null
   }
 ]

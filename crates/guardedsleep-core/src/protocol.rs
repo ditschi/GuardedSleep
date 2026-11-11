@@ -426,6 +426,72 @@ pub enum UnitWarning {
 /// Maximum entries accepted in `unit_warnings` on the wire.
 pub const MAX_UNIT_WARNINGS: usize = 8;
 
+/// Whether the baby unit lets this parent talk (`device_status.talk`, `talk-back` "Honest
+/// playability").
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
+pub enum TalkStatus {
+    On,
+    /// Switched off for this pairing on the baby unit.
+    Off,
+    /// The baby unit would not make a talk audible right now.
+    Muted,
+    /// This parent's answer has no talk line.
+    Unsupported,
+}
+
+/// Who talks to the child right now, from the recipient's point of view
+/// (`device_status.talker`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
+pub enum Talker {
+    None,
+    /// The recipient itself.
+    You,
+    /// Another parent device.
+    Other,
+}
+
+/// `device_status.talk_audible`: the baby unit's own microphone could not hear three talks in a
+/// row, so the voice may not be audible there. A warning only, never a denial.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
+pub enum TalkAudible {
+    Ok,
+    Uncertain,
+}
+
+/// The baby unit's playback check of one talk (`talk_playback`, `talk-back` "Playback check").
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
+pub enum PlaybackResult {
+    Heard,
+    Unconfirmed,
+    /// The check could not decide; it counts for nothing and shows no warning.
+    Unknown,
+}
+
+/// Why the baby unit denied a `talk_request`. The retry hints are milliseconds from the denial.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
+pub enum TalkDenyReason {
+    Off,
+    Unsupported,
+    Muted,
+    Busy,
+    Cooldown { retry_in_ms: u64 },
+    Budget { retry_in_ms: u64 },
+    Rate,
+}
+
+/// Largest `talk_retry_in_ms` and `retry_in_ms` accepted on the wire (one hour).
+pub const MAX_TALK_RETRY_MS: u64 = 3_600_000;
+
 /// Coarse baby-phone state shown to the parent (ADR-018). Every field may be unknown (`None`).
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -462,6 +528,22 @@ pub struct DeviceStatus {
     /// [`DeviceStatus::normalized`] and the parser, omitted on the wire when empty.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub unit_warnings: Vec<UnitWarning>,
+    /// Talk-back as this recipient sees it (set by the core of the baby, never by the platform).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub talk: Option<TalkStatus>,
+    /// Who talks right now, from this recipient's point of view (set by the core).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub talker: Option<Talker>,
+    /// Noise detection is paused while a talk plays (set by the core; omitted when not paused).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub noise_paused: Option<bool>,
+    /// While a talk is denied for the cooldown or the budget: milliseconds until the next request
+    /// can pass, counted from when this status was sent (set by the core).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub talk_retry_in_ms: Option<u64>,
+    /// `uncertain` after three talks in a row that the playback check could not confirm.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub talk_audible: Option<TalkAudible>,
 }
 
 fn sort_dedup_warnings(w: &mut Vec<UnitWarning>) {
@@ -507,6 +589,71 @@ fn opt_uint(o: &Map<String, Value>, key: &str, max: u64) -> Result<Option<u64>, 
             Some(n) if n <= max => Ok(Some(n)),
             _ => Err(()),
         },
+    }
+}
+
+/// A string-valued optional field with a fixed vocabulary: absent or an unknown word is `None` (a
+/// newer peer may add words), a value that is not a string is an error.
+fn opt_word<T>(
+    o: &Map<String, Value>,
+    key: &str,
+    word: fn(&str) -> Option<T>,
+) -> Result<Option<T>, ()> {
+    match o.get(key) {
+        None => Ok(None),
+        Some(v) => v.as_str().map(word).ok_or(()),
+    }
+}
+
+fn talk_status_word(w: &str) -> Option<TalkStatus> {
+    match w {
+        "on" => Some(TalkStatus::On),
+        "off" => Some(TalkStatus::Off),
+        "muted" => Some(TalkStatus::Muted),
+        "unsupported" => Some(TalkStatus::Unsupported),
+        _ => None,
+    }
+}
+
+fn talker_word(w: &str) -> Option<Talker> {
+    match w {
+        "none" => Some(Talker::None),
+        "you" => Some(Talker::You),
+        "other" => Some(Talker::Other),
+        _ => None,
+    }
+}
+
+fn talk_audible_word(w: &str) -> Option<TalkAudible> {
+    match w {
+        "ok" => Some(TalkAudible::Ok),
+        "uncertain" => Some(TalkAudible::Uncertain),
+        _ => None,
+    }
+}
+
+fn playback_word(w: &str) -> Option<PlaybackResult> {
+    match w {
+        "heard" => Some(PlaybackResult::Heard),
+        "unconfirmed" => Some(PlaybackResult::Unconfirmed),
+        "unknown" => Some(PlaybackResult::Unknown),
+        _ => None,
+    }
+}
+
+/// The reason of a `talk_deny`: an unknown reason, or a cooldown or budget without its retry hint,
+/// is `None` (the denial still counts, only its cause is unknown).
+fn talk_deny_reason(o: &Map<String, Value>) -> Option<TalkDenyReason> {
+    let retry = || as_uint(o.get("retry_in_ms")?).filter(|n| *n <= MAX_TALK_RETRY_MS);
+    match o.get("reason")?.as_str()? {
+        "off" => Some(TalkDenyReason::Off),
+        "unsupported" => Some(TalkDenyReason::Unsupported),
+        "muted" => Some(TalkDenyReason::Muted),
+        "busy" => Some(TalkDenyReason::Busy),
+        "cooldown" => retry().map(|retry_in_ms| TalkDenyReason::Cooldown { retry_in_ms }),
+        "budget" => retry().map(|retry_in_ms| TalkDenyReason::Budget { retry_in_ms }),
+        "rate" => Some(TalkDenyReason::Rate),
+        _ => None,
     }
 }
 
@@ -568,6 +715,11 @@ fn parse_device_status(o: &Map<String, Value>) -> Option<DeviceStatus> {
             Some(v) => Some(v.as_f64().filter(|t| (0.01..=1.0).contains(t))?),
         },
         unit_warnings,
+        talk: opt_word(o, "talk", talk_status_word).ok()?,
+        talker: opt_word(o, "talker", talker_word).ok()?,
+        noise_paused: opt_bool(o, "noise_paused").ok()?,
+        talk_retry_in_ms: opt_uint(o, "talk_retry_in_ms", MAX_TALK_RETRY_MS).ok()?,
+        talk_audible: opt_word(o, "talk_audible", talk_audible_word).ok()?,
     })
 }
 
@@ -631,6 +783,30 @@ pub enum DataMessage {
     /// Baby to parent after verification: the mailbox set the parent stores for later recoveries.
     Mailboxes {
         mailboxes: Vec<InviteMailbox>,
+    },
+    /// Parent to baby: the parent holds the talk button. `id` is the parent's own counter; every
+    /// other talk message names it, and a message with another id than the current talk is stale.
+    TalkRequest {
+        id: u64,
+    },
+    /// Baby to parent: the talk may start; the baby ends it itself `max_ms` after this message.
+    TalkGrant {
+        id: u64,
+        max_ms: u64,
+    },
+    /// Baby to parent: no talk. An unknown `reason` parses as `None`.
+    TalkDeny {
+        id: u64,
+        reason: Option<TalkDenyReason>,
+    },
+    /// Either side ends the talk `id` (the parent released, the baby's deadline or switch).
+    TalkEnd {
+        id: u64,
+    },
+    /// Baby to parent, once per talk: the result of the playback check.
+    TalkPlayback {
+        id: u64,
+        result: PlaybackResult,
     },
 }
 
@@ -770,6 +946,24 @@ fn parse_data_versioned(raw: &str, version: u32) -> Option<DataMessage> {
                 name: device_name_field(&o),
             })
         }
+        "talk_request" if v3 => Some(DataMessage::TalkRequest {
+            id: as_uint(o.get("id")?)?,
+        }),
+        "talk_grant" if v3 => Some(DataMessage::TalkGrant {
+            id: as_uint(o.get("id")?)?,
+            max_ms: as_uint(o.get("max_ms")?)?,
+        }),
+        "talk_deny" if v3 => Some(DataMessage::TalkDeny {
+            id: as_uint(o.get("id")?)?,
+            reason: talk_deny_reason(&o),
+        }),
+        "talk_end" if v3 => Some(DataMessage::TalkEnd {
+            id: as_uint(o.get("id")?)?,
+        }),
+        "talk_playback" if v3 => Some(DataMessage::TalkPlayback {
+            id: as_uint(o.get("id")?)?,
+            result: playback_word(o.get("result")?.as_str()?)?,
+        }),
         "mailboxes" if v3 => {
             let list = o.get("mailboxes")?.as_array()?;
             if list.is_empty() || list.len() > crate::invite::MAX_MAILBOXES {
@@ -871,6 +1065,30 @@ pub fn encode_data_message(m: &DataMessage) -> String {
         .to_string(),
         DataMessage::Mailboxes { mailboxes } => {
             json!({ "type": "mailboxes", "v": v, "mailboxes": mailboxes }).to_string()
+        }
+        DataMessage::TalkRequest { id } => {
+            json!({ "type": "talk_request", "v": v, "id": id }).to_string()
+        }
+        DataMessage::TalkGrant { id, max_ms } => {
+            json!({ "type": "talk_grant", "v": v, "id": id, "max_ms": max_ms }).to_string()
+        }
+        DataMessage::TalkDeny { id, reason } => {
+            let mut o = Map::new();
+            o.insert("type".into(), "talk_deny".into());
+            o.insert("v".into(), v.into());
+            o.insert("id".into(), (*id).into());
+            // `{ "kind": "cooldown", "retry_in_ms": n }` flattens into `reason` and `retry_in_ms`.
+            if let Some(Value::Object(mut r)) = reason.and_then(|r| serde_json::to_value(r).ok()) {
+                if let Some(kind) = r.remove("kind") {
+                    o.insert("reason".into(), kind);
+                }
+                o.extend(r);
+            }
+            Value::Object(o).to_string()
+        }
+        DataMessage::TalkEnd { id } => json!({ "type": "talk_end", "v": v, "id": id }).to_string(),
+        DataMessage::TalkPlayback { id, result } => {
+            json!({ "type": "talk_playback", "v": v, "id": id, "result": result }).to_string()
         }
     }
 }
@@ -1168,6 +1386,11 @@ mod tests {
                 mic_silent: Some(false),
                 noise_threshold: Some(0.12),
                 unit_warnings: vec![UnitWarning::PageHidden, UnitWarning::MicPermissionLost],
+                talk: Some(TalkStatus::On),
+                talker: Some(Talker::You),
+                noise_paused: Some(true),
+                talk_retry_in_ms: Some(10_000),
+                talk_audible: Some(TalkAudible::Ok),
             }),
             DataMessage::DeviceStatus(DeviceStatus::default()),
             DataMessage::MissedEvents {
@@ -1255,6 +1478,184 @@ mod tests {
                 UnitWarning::WakeLockOff
             ]),
             r#"{"type":"device_status","v":3,"unit_warnings":["wake_lock_off","mic_permission_lost"]}"#
+        );
+    }
+
+    fn talk(raw: &str) -> Option<DataMessage> {
+        parse_data_message(raw)
+    }
+
+    #[test]
+    fn talk_messages_round_trip_and_keep_their_wire_shape() {
+        let msgs = [
+            (
+                DataMessage::TalkRequest { id: 7 },
+                r#"{"type":"talk_request","v":3,"id":7}"#,
+            ),
+            (
+                DataMessage::TalkGrant {
+                    id: 7,
+                    max_ms: 30_000,
+                },
+                r#"{"type":"talk_grant","v":3,"id":7,"max_ms":30000}"#,
+            ),
+            (
+                DataMessage::TalkDeny {
+                    id: 7,
+                    reason: Some(TalkDenyReason::Busy),
+                },
+                r#"{"type":"talk_deny","v":3,"id":7,"reason":"busy"}"#,
+            ),
+            (
+                DataMessage::TalkDeny {
+                    id: 7,
+                    reason: Some(TalkDenyReason::Cooldown {
+                        retry_in_ms: 12_000,
+                    }),
+                },
+                r#"{"type":"talk_deny","v":3,"id":7,"reason":"cooldown","retry_in_ms":12000}"#,
+            ),
+            (
+                DataMessage::TalkDeny {
+                    id: 7,
+                    reason: Some(TalkDenyReason::Budget { retry_in_ms: 1 }),
+                },
+                r#"{"type":"talk_deny","v":3,"id":7,"reason":"budget","retry_in_ms":1}"#,
+            ),
+            (
+                DataMessage::TalkDeny {
+                    id: 7,
+                    reason: None,
+                },
+                r#"{"type":"talk_deny","v":3,"id":7}"#,
+            ),
+            (
+                DataMessage::TalkEnd { id: 7 },
+                r#"{"type":"talk_end","v":3,"id":7}"#,
+            ),
+            (
+                DataMessage::TalkPlayback {
+                    id: 7,
+                    result: PlaybackResult::Unconfirmed,
+                },
+                r#"{"type":"talk_playback","v":3,"id":7,"result":"unconfirmed"}"#,
+            ),
+        ];
+        for (m, wire) in msgs {
+            assert_eq!(encode_data_message(&m), wire);
+            assert_eq!(parse_data_message(wire), Some(m));
+        }
+        for reason in ["off", "unsupported", "muted", "busy", "rate"] {
+            let raw = format!(r#"{{"type":"talk_deny","v":3,"id":1,"reason":"{reason}"}}"#);
+            assert!(matches!(
+                talk(&raw),
+                Some(DataMessage::TalkDeny {
+                    reason: Some(_),
+                    ..
+                })
+            ));
+        }
+    }
+
+    #[test]
+    fn talk_messages_need_a_valid_id_and_protocol_v3() {
+        for raw in [
+            r#"{"type":"talk_request","v":3}"#,
+            r#"{"type":"talk_request","v":3,"id":"1"}"#,
+            r#"{"type":"talk_request","v":3,"id":-1}"#,
+            r#"{"type":"talk_request","v":3,"id":1.5}"#,
+            r#"{"type":"talk_request","v":3,"id":null}"#,
+            r#"{"type":"talk_request","v":2,"id":1}"#,
+            r#"{"type":"talk_request","id":1}"#,
+            r#"{"type":"talk_grant","v":3,"id":1}"#,
+            r#"{"type":"talk_grant","v":3,"max_ms":1}"#,
+            r#"{"type":"talk_grant","v":3,"id":1,"max_ms":-5}"#,
+            r#"{"type":"talk_end","v":3}"#,
+            r#"{"type":"talk_deny","v":3,"reason":"busy"}"#,
+            r#"{"type":"talk_playback","v":3,"id":1}"#,
+            r#"{"type":"talk_playback","v":3,"id":1,"result":"loud"}"#,
+            r#"{"type":"talk_playback","v":3,"id":1,"result":7}"#,
+        ] {
+            assert_eq!(talk(raw), None, "{raw}");
+        }
+        assert_eq!(
+            parse_data_message_v2_legacy(r#"{"type":"talk_request","v":2,"id":1}"#),
+            None
+        );
+    }
+
+    #[test]
+    fn an_unknown_deny_reason_parses_as_none_and_extra_fields_are_ignored() {
+        for raw in [
+            r#"{"type":"talk_deny","v":3,"id":4,"reason":"too_loud"}"#,
+            r#"{"type":"talk_deny","v":3,"id":4,"reason":7}"#,
+            // a cooldown without its hint, or with an absurd one, has no usable reason
+            r#"{"type":"talk_deny","v":3,"id":4,"reason":"cooldown"}"#,
+            r#"{"type":"talk_deny","v":3,"id":4,"reason":"budget","retry_in_ms":99999999}"#,
+        ] {
+            assert_eq!(
+                talk(raw),
+                Some(DataMessage::TalkDeny {
+                    id: 4,
+                    reason: None
+                }),
+                "{raw}"
+            );
+        }
+        assert_eq!(
+            talk(r#"{"type":"talk_end","v":3,"id":9,"future":true}"#),
+            Some(DataMessage::TalkEnd { id: 9 })
+        );
+    }
+
+    #[test]
+    fn no_message_can_change_the_talk_back_settings() {
+        // Settings are a local input of the baby platform; nothing on the wire maps to them.
+        for raw in [
+            r#"{"type":"set_talk_back","v":3,"enabled":true,"level":"high","chime":false}"#,
+            r#"{"type":"talk_settings","v":3,"enabled":true}"#,
+        ] {
+            assert_eq!(talk(raw), None, "{raw}");
+        }
+        // A request that carries settings fields is still only a request.
+        assert_eq!(
+            talk(r#"{"type":"talk_request","v":3,"id":2,"enabled":true,"level":"high"}"#),
+            Some(DataMessage::TalkRequest { id: 2 })
+        );
+    }
+
+    #[test]
+    fn talk_status_fields_parse_encode_and_stay_optional() {
+        let raw = r#"{"type":"device_status","v":3,"talk":"muted","talker":"other","noise_paused":true,"talk_retry_in_ms":12000,"talk_audible":"uncertain"}"#;
+        let Some(DataMessage::DeviceStatus(s)) = talk(raw) else {
+            panic!("status");
+        };
+        assert_eq!(s.talk, Some(TalkStatus::Muted));
+        assert_eq!(s.talker, Some(Talker::Other));
+        assert_eq!(s.noise_paused, Some(true));
+        assert_eq!(s.talk_retry_in_ms, Some(12_000));
+        assert_eq!(s.talk_audible, Some(TalkAudible::Uncertain));
+        assert_eq!(encode_data_message(&DataMessage::DeviceStatus(s)), raw);
+        // Unknown words are no value, not an error; wrong types are errors.
+        let Some(DataMessage::DeviceStatus(s)) =
+            talk(r#"{"type":"device_status","v":3,"talk":"loud","talker":"nobody"}"#)
+        else {
+            panic!("status");
+        };
+        assert_eq!((s.talk, s.talker), (None, None));
+        for raw in [
+            r#"{"type":"device_status","v":3,"talk":1}"#,
+            r#"{"type":"device_status","v":3,"noise_paused":"yes"}"#,
+            r#"{"type":"device_status","v":3,"talk_retry_in_ms":-1}"#,
+            r#"{"type":"device_status","v":3,"talk_retry_in_ms":3600001}"#,
+            r#"{"type":"device_status","v":3,"talk_audible":false}"#,
+        ] {
+            assert_eq!(talk(raw), None, "{raw}");
+        }
+        // Fields that are not set stay off the wire.
+        assert_eq!(
+            encode_data_message(&DataMessage::DeviceStatus(DeviceStatus::default())),
+            r#"{"type":"device_status","v":3}"#
         );
     }
 
