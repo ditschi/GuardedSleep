@@ -187,6 +187,24 @@ describe("parent playback", () => {
     return { ctx, time, sinks, playback, gate };
   }
 
+  it("ducks only the baby's audio and keeps the meter live, apart from the mute", () => {
+    const { ctx, playback, time } = make();
+    playback.play(asStream(new FakeStream()));
+    const [mute, duck] = ctx.gains;
+    playback.setDucked(true);
+    expect(duck?.gain.value).toBe(0);
+    expect(mute?.gain.value).toBe(1);
+    // The analyser sits in front of the duck: the level meter stays live while talking.
+    expect(ctx.analysers[0]?.to).toContain(duck);
+    ctx.analysers[0]!.samples = [0.2, -0.2];
+    time.advance(20);
+    expect(playback.drainRms()).toBeCloseTo(0.2, 6);
+    playback.setMuted(true);
+    playback.setDucked(false);
+    expect(mute?.gain.value).toBe(0);
+    expect(duck?.gain.value).toBe(1);
+  });
+
   it("plays through Web Audio and keeps the stream alive in a muted element", () => {
     const { ctx, sinks, playback, time } = make();
     const stream = new FakeStream();
