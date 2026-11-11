@@ -22,7 +22,7 @@
     "babyUnrecognised": "Babyenheten känner inte igen den här enheten. Tryck på Visa ny kod på babyenheten och parkoppla igen."
   },
   "native": {
-    "appName": "GuardedSleep Alpha",
+    "appName": "GuardedSleep",
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
@@ -462,6 +462,7 @@
           "speaker": "Endast högtalare"
         },
         "gain": "Extra höga larm: {percent}%",
+        "version": "Version {version} ({commit}, {date})",
         "lastTest": "Senaste test: {time}",
         "neverTested": "Inte testat än",
         "theme": {

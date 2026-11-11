@@ -22,7 +22,7 @@
     "babyUnrecognised": "Dispozitivul bebelușului nu recunoaște acest dispozitiv. Atinge Arată un cod nou pe dispozitivul bebelușului și asociază din nou."
   },
   "native": {
-    "appName": "GuardedSleep Alpha",
+    "appName": "GuardedSleep",
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
@@ -462,6 +462,7 @@
           "speaker": "Doar difuzor"
         },
         "gain": "Alerte extra puternice: {percent}%",
+        "version": "Versiunea {version} ({commit}, {date})",
         "lastTest": "Ultimul test: {time}",
         "neverTested": "Netestat încă",
         "theme": {

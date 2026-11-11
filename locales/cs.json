@@ -22,7 +22,7 @@
     "babyUnrecognised": "Zařízení dítěte toto zařízení nepoznává. Na zařízení dítěte klepněte na Zobrazit nový kód a spárujte je znovu."
   },
   "native": {
-    "appName": "GuardedSleep Alpha",
+    "appName": "GuardedSleep",
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
@@ -462,6 +462,7 @@
           "speaker": "Jen reproduktor"
         },
         "gain": "Extra hlasité výstrahy: {percent} %",
+        "version": "Verze {version} ({commit}, {date})",
         "lastTest": "Poslední zkouška: {time}",
         "neverTested": "Zatím nevyzkoušeno",
         "theme": {

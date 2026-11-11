@@ -22,7 +22,7 @@
     "babyUnrecognised": "宝宝设备无法识别此设备。请在宝宝设备上点按“显示新码”，然后重新配对。"
   },
   "native": {
-    "appName": "GuardedSleep Alpha",
+    "appName": "GuardedSleep",
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
@@ -462,6 +462,7 @@
           "speaker": "仅扬声器"
         },
         "gain": "加强提醒音量：{percent}%",
+        "version": "版本 {version}（{commit}，{date}）",
         "lastTest": "上次测试：{time}",
         "neverTested": "尚未测试",
         "theme": {

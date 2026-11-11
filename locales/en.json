@@ -20,7 +20,7 @@
     "recoveryPathUnavailable": "If the connection drops, the devices may not find each other again right now. Monitoring continues."
   },
   "native": {
-    "appName": "GuardedSleep Alpha",
+    "appName": "GuardedSleep",
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
@@ -460,6 +460,7 @@
           "speaker": "Speaker only"
         },
         "gain": "Extra loud alerts: {percent}%",
+        "version": "Version {version} ({commit}, {date})",
         "lastTest": "Last test: {time}",
         "neverTested": "Not tested yet",
         "theme": {

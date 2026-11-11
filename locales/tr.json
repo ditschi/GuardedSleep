@@ -22,7 +22,7 @@
     "babyUnrecognised": "Bebek cihazı bu cihazı tanımıyor. Bebek cihazında Yeni kod göster'e dokunun ve yeniden eşleştirin."
   },
   "native": {
-    "appName": "GuardedSleep Alpha",
+    "appName": "GuardedSleep",
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
@@ -462,6 +462,7 @@
           "speaker": "Yalnızca hoparlör"
         },
         "gain": "Ekstra yüksek uyarılar: %{percent}",
+        "version": "Sürüm {version} ({commit}, {date})",
         "lastTest": "Son test: {time}",
         "neverTested": "Henüz test edilmedi",
         "theme": {

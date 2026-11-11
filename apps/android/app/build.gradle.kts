@@ -15,7 +15,21 @@ android {
         // Must match the ABIs scripts/core-build.sh builds; libwebrtc alone would ship more,
         // and the app would then crash on devices without a matching core library.
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
+        // Commit identity comes from scripts/gradle.sh (host git), never from the build time, so
+        // builds stay reproducible.
+        fun gitField(name: String, env: String) =
+            buildConfigField(
+                "String",
+                name,
+                "\"${providers.environmentVariable(env).orNull?.takeIf { it.isNotBlank() } ?: "unknown"}\"",
+            )
+        gitField("GIT_COMMIT", "GS_GIT_COMMIT")
+        gitField("GIT_COMMIT_TIME", "GS_GIT_COMMIT_TIME")
     }
+
+    // BuildConfig carries the commit shown in Settings. Doc:
+    // https://developer.android.com/build/gradle-tips#share-custom-fields-and-resource-values-with-your-app-code
+    buildFeatures { buildConfig = true }
 
     buildTypes {
         debug {
