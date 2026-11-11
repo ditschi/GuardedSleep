@@ -29,7 +29,7 @@ use crate::protocol::{
 /// An attempt that is not verified within this time is abandoned (ADR-017 §6).
 pub const DEFAULT_ATTEMPT_TIMEOUT_MS: u64 = 20_000;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct AttemptConfig {
     pub role: Role,
     /// `None` is the development bypass of the legacy `Session`; a `Link` always has a PSK.
@@ -50,6 +50,26 @@ pub struct AttemptConfig {
     /// fingerprint (`on_dtls_fingerprint`) and it must equal the remote SDP fingerprint the proof
     /// was computed over. The legacy `Session` has no such report and sets this to `false`.
     pub require_dtls_fingerprint: bool,
+}
+
+// Hand-written so the PSK can never reach a log through `{:?}` (also via `Attempt`'s Debug).
+impl std::fmt::Debug for AttemptConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AttemptConfig")
+            .field("role", &self.role)
+            .field("psk", &self.psk.as_ref().map(|_| "<redacted>"))
+            .field("room", &self.room)
+            .field("handle", &self.handle)
+            .field("own_aid", &self.own_aid)
+            .field("remote_aid", &self.remote_aid)
+            .field("reply_to", &self.reply_to)
+            .field("heartbeat_interval_ms", &self.heartbeat_interval_ms)
+            .field("liveness_ms", &self.liveness_ms)
+            .field("attempt_timeout_ms", &self.attempt_timeout_ms)
+            .field("require_sendonly", &self.require_sendonly)
+            .field("require_dtls_fingerprint", &self.require_dtls_fingerprint)
+            .finish()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -1145,5 +1165,14 @@ mod tests {
                 a.tick(i as u64 * 1000);
             }
         });
+    }
+
+    #[test]
+    fn debug_of_the_config_and_the_attempt_never_shows_the_psk() {
+        let c = cfg(Role::Baby, &PSK);
+        let shown = format!("{c:?} {:?}", Attempt::new(c.clone(), 0));
+        assert!(shown.contains("<redacted>"));
+        // The PSK bytes (nine, repeated) in the decimal list form of a derived Debug.
+        assert!(!shown.contains("9, 9"), "{shown}");
     }
 }

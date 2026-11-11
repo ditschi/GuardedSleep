@@ -31,7 +31,7 @@ use crate::protocol::{
     parse_server_message, parse_signal_payload, signal_payload_json, valid_room_id,
 };
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
 pub struct SessionConfig {
     pub role: Role,
@@ -45,6 +45,25 @@ pub struct SessionConfig {
     pub pairing_timeout_ms: u64,
     pub noise_threshold: f64,
     pub noise_hold_ms: u64,
+}
+
+// Hand-written so the PSK can never reach a log through `{:?}`.
+impl std::fmt::Debug for SessionConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SessionConfig")
+            .field("role", &self.role)
+            .field("room_id", &self.room_id)
+            .field(
+                "psk_b64url",
+                &self.psk_b64url.as_ref().map(|_| "<redacted>"),
+            )
+            .field("heartbeat_interval_ms", &self.heartbeat_interval_ms)
+            .field("heartbeat_stale_ms", &self.heartbeat_stale_ms)
+            .field("pairing_timeout_ms", &self.pairing_timeout_ms)
+            .field("noise_threshold", &self.noise_threshold)
+            .field("noise_hold_ms", &self.noise_hold_ms)
+            .finish()
+    }
 }
 
 impl SessionConfig {
@@ -837,5 +856,14 @@ mod tests {
                 s.handle(i as u64, Input::DataChannelMessage { text: t });
             }
         });
+    }
+
+    #[test]
+    fn debug_of_the_config_never_shows_the_psk() {
+        let c = cfg(Role::Baby, &[7u8; 32]);
+        let psk = c.psk_b64url.clone().unwrap();
+        let shown = format!("{c:?}");
+        assert!(shown.contains("<redacted>"));
+        assert!(!shown.contains(&psk), "{shown}");
     }
 }
