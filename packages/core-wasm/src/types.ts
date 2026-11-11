@@ -61,6 +61,10 @@ export const LINK_ACTION_TYPES = {
   set_mic_enabled: true,
   apply_quiet: true,
   send_probe_tone: true,
+  set_talk_mic: true,
+  set_playback_ducked: true,
+  play_talk_chime: true,
+  set_talk_playback: true,
   emit: true,
 } as const satisfies Record<LinkAction["type"], true>;
 
@@ -85,6 +89,10 @@ export const LINK_EVENT_TYPES = {
   parent_connected: true,
   mailboxes_updated: true,
   hint: true,
+  talk_changed: true,
+  talk_active: true,
+  noise_paused: true,
+  talk_playback: true,
 } as const satisfies Record<LinkEvent["type"], true>;
 
 export function isLinkAction(v: unknown): v is LinkAction {
