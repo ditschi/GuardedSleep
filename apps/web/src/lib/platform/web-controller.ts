@@ -57,7 +57,7 @@ export interface NetworkWatcher {
 }
 
 export interface ControllerDeps {
-  core: Pick<CoreApi, "createLink" | "buildInvite" | "parseInvite">;
+  core: Pick<CoreApi, "createLink" | "buildInvite" | "parseInvite" | "filterOnlyLocal">;
   clock: Clock;
   timers: Timers;
   signaling: SignalingFactory;
@@ -76,10 +76,11 @@ export interface ControllerDeps {
   /** Where the invite of a NEW pairing points when this build does not offer the project server. */
   defaultMailboxUrls(): string[];
   /**
-   * The project server (generated `PROJECT_SERVER`): `mailboxUrl` is its relay address, `enabled`
-   * the build flag (`projectServerEnabled`, design section 8). Absent in tests without one.
+   * The project server (generated `PROJECT_SERVER`): `mailboxUrl` is its relay address, `host` its
+   * lower-case DNS name (what the core matches for `only_local`), `enabled` the build flag
+   * (`projectServerEnabled`, design section 8). Absent in tests without one.
    */
-  projectServer?: { mailboxUrl: string; enabled: boolean };
+  projectServer?: { mailboxUrl: string; host: string; enabled: boolean };
   /**
    * Whether the deployment CSP `connect-src` lets the page open this address; an address it does
    * not list is ignored in invites and updates (design section 5, version skew). Absent: all pass.
@@ -185,13 +186,6 @@ export class WebController implements AppController {
   private turn: TurnEntry | null = null;
   private run: Run | null = null;
   private runCounter = 0;
-  /**
-   * "Only same Wi-Fi or my own server" (design section 8). Kept here, not in `SettingsState`, until
-   * task 6.2 adds the setting to the UI contract together with Android's (5.3). On: the baby keeps
-   * the project server out of new invites and the core ignores project-server entries (passed as
-   * `only_local`). Takes effect from the next run; memory only like every web setting (no secret).
-   */
-  private onlyLocal = false;
 
   constructor(private readonly deps: ControllerDeps) {
     this.deviceBattery = deps.battery ?? readable<DeviceBattery | null>(null);
@@ -250,10 +244,6 @@ export class WebController implements AppController {
     if (after.alertGainPct !== before.alertGainPct) {
       r.driver.media((m) => m.setPlaybackGainPct(after.alertGainPct));
     }
-  }
-
-  setOnlyLocal(onlyLocal: boolean): void {
-    this.onlyLocal = onlyLocal;
   }
 
   setTurnServer(url: string, username: string, password: string): TurnSaveResult {
@@ -607,7 +597,12 @@ export class WebController implements AppController {
         this.mailboxAllowed(m.url),
       ),
       allow_dev_loopback: this.deps.allowDevLoopback ?? false,
-      only_local: this.onlyLocal,
+      // The core drops the relay entries of `project_host` only when it gets the host: `only_local`
+      // alone filters nothing. Takes effect from the next run.
+      only_local: s.onlyLocal,
+      ...(s.onlyLocal && this.deps.projectServer
+        ? { project_host: this.deps.projectServer.host }
+        : {}),
     };
   }
 
@@ -620,7 +615,7 @@ export class WebController implements AppController {
     const s = this.settingsState;
     if (s.advancedEnabled && s.signalingUrls.length > 0) return s.signalingUrls;
     const project = this.deps.projectServer;
-    if (project?.enabled && !this.onlyLocal) return [project.mailboxUrl];
+    if (project?.enabled && !s.onlyLocal) return [project.mailboxUrl];
     return this.deps.defaultMailboxUrls();
   }
 
@@ -629,13 +624,14 @@ export class WebController implements AppController {
     this.deps.connectAllowed?.(url) ?? true;
 
   /**
-   * The ONE place where the off switch will filter project-server entries out of a mailbox set
-   * (a new invite, an invite or update received here). The core owns that rule
-   * (`only_local` plus the project host in the link config, and a pure helper for invites): when
-   * its API lands, pass `PROJECT_SERVER.host` here and call the helper. Identity until then.
+   * The ONE place where "Only same Wi-Fi or my own server" (`SettingsState.onlyLocal`) filters the
+   * project server out of a mailbox set (a new invite, an invite received here); the core owns the
+   * rule. Without a project server (a build or test that has none) there is nothing to drop.
    */
   private withOnlyLocal(mailboxes: InviteMailbox[]): InviteMailbox[] {
-    return mailboxes;
+    const project = this.deps.projectServer;
+    if (!this.settingsState.onlyLocal || !project) return mailboxes;
+    return this.deps.core.filterOnlyLocal(mailboxes, project.host);
   }
 
   // ---- core callbacks ----------------------------------------------------------------------

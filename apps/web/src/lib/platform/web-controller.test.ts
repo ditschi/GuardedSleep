@@ -48,6 +48,8 @@ class ScriptedCore {
   }
   buildInvite: CoreApi["buildInvite"] = (psk, mailboxes, exp) =>
     realCore.buildInvite(psk, mailboxes, exp);
+  filterOnlyLocal: CoreApi["filterOnlyLocal"] = (mailboxes, host) =>
+    realCore.filterOnlyLocal(mailboxes, host);
   parseInvite: CoreApi["parseInvite"] = (text, now) => realCore.parseInvite(text, now);
   types(): string[] {
     return this.inputs.map((i) => i.type);
@@ -96,7 +98,7 @@ function setup(
     micDenied?: boolean;
     core?: ScriptedCore;
     defaultUrls?: string[];
-    projectServer?: { mailboxUrl: string; enabled: boolean };
+    projectServer?: { mailboxUrl: string; host: string; enabled: boolean };
     connectAllowed?: (url: string) => boolean;
   } = {},
 ) {
@@ -464,7 +466,7 @@ describe("WebController: monitoring", () => {
 
   describe("the project server and its off switch", () => {
     const PROJECT = "wss://gs.project.test/signaling";
-    const projectServer = { mailboxUrl: PROJECT, enabled: true };
+    const projectServer = { mailboxUrl: PROJECT, host: "gs.project.test", enabled: true };
 
     it("a build that offers it puts it into new invites, the own /signaling otherwise", () => {
       const on = setup({ projectServer });
@@ -488,12 +490,30 @@ describe("WebController: monitoring", () => {
 
     it("on: new invites leave it out and the switch reaches the core as only_local", async () => {
       const baby = setup({ projectServer });
-      baby.controller.setOnlyLocal(true);
+      baby.controller.updateSettings((x) => ({ ...x, onlyLocal: true }));
       baby.controller.chooseRole("baby");
       baby.controller.startPairing();
       await flush();
       expect(baby.core.configs[0]?.mailboxes).toEqual([RELAY_MAILBOX]);
       expect(baby.core.configs[0]?.only_local).toBe(true);
+      expect(baby.core.configs[0]?.project_host).toBe("gs.project.test");
+    });
+
+    it("on: an invite built with the project server in the advanced list is filtered", () => {
+      const baby = setup({ projectServer });
+      baby.controller.updateSettings((x) => ({
+        ...x,
+        onlyLocal: true,
+        advancedEnabled: true,
+        signalingUrls: [PROJECT, RELAY],
+      }));
+      baby.controller.chooseRole("baby");
+      baby.controller.startPairing();
+      const p = realCore.parseInvite(
+        get(baby.controller.pairing)?.codePayload ?? "",
+        baby.time.wallMs() / 1000,
+      );
+      expect(p.ok && p.invite.mailboxes.map((m) => m.url)).toEqual([RELAY]);
     });
 
     it("off: a project-server entry in an invite is used", async () => {
@@ -509,6 +529,7 @@ describe("WebController: monitoring", () => {
       await flush();
       expect(parent.core.configs[0]?.mailboxes).toEqual([{ kind: "relay", url: PROJECT }]);
       expect(parent.core.configs[0]?.only_local).toBe(false);
+      expect(parent.core.configs[0]?.project_host).toBeUndefined();
     });
   });
 });
