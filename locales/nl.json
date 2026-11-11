@@ -18,6 +18,7 @@
     "mediaBlocked": "De apparaten hebben elkaar gevonden, maar het geluid komt niet door. Probeer hetzelfde wifi-netwerk op beide.",
     "wrongKeyAttempt": "Iemand probeerde verbinding te maken met een verkeerde sleutel. De bewaking gaat door.",
     "unknownParentAttempt": "Een apparaat dat niet je gekoppelde ouderapparaat is, probeerde verbinding te maken. De bewaking gaat door.",
+    "talkAudioOutsideGrant": "Het babyapparaat kreeg geluid van een ouderapparaat zonder dat er gesproken werd. Het heeft dit niet afgespeeld.",
     "pairAgain": "Dit apparaat kent geen ouderapparaat meer. Tik op Nieuwe code tonen en koppel opnieuw.",
     "babyUnrecognised": "Het babyapparaat herkent dit apparaat niet. Tik op het babyapparaat op Nieuwe code tonen en koppel opnieuw."
   },

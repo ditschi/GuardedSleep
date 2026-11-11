@@ -46,6 +46,7 @@
     { "pattern": "core.mediaBlocked", "budget": 150 },
     { "pattern": "core.wrongKeyAttempt", "budget": 130 },
     { "pattern": "core.unknownParentAttempt", "budget": 130 },
+    { "pattern": "core.talkAudioOutsideGrant", "budget": 130 },
     { "pattern": "core.pairAgain", "budget": 160 },
     { "pattern": "core.babyUnrecognised", "budget": 170 },
     { "pattern": "native.ui.baby.status.*", "budget": 80 },

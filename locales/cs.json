@@ -18,6 +18,7 @@
     "mediaBlocked": "Zařízení se našla, ale zvuk neprochází. Zkuste na obou stejnou síť Wi-Fi.",
     "wrongKeyAttempt": "Někdo se zkusil připojit s chybným klíčem. Sledování pokračuje.",
     "unknownParentAttempt": "Zařízení, které není vaše spárované rodičovské zařízení, se pokusilo připojit. Sledování pokračuje.",
+    "talkAudioOutsideGrant": "Dětské zařízení přijalo zvuk z rodičovského zařízení bez hovoru. Nepřehrálo ho.",
     "pairAgain": "Toto zařízení už nezná žádné zařízení rodiče. Klepněte na Zobrazit nový kód a spárujte je znovu.",
     "babyUnrecognised": "Zařízení dítěte toto zařízení nepoznává. Na zařízení dítěte klepněte na Zobrazit nový kód a spárujte je znovu."
   },

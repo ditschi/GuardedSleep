@@ -18,6 +18,7 @@
     "mediaBlocked": "Enhederne fandt hinanden, men lyden kommer ikke igennem. Prøv det samme wifi på begge.",
     "wrongKeyAttempt": "Nogen forsøgte at oprette forbindelse med en forkert nøgle. Overvågningen fortsætter.",
     "unknownParentAttempt": "En enhed, der ikke er din parrede forældreenhed, forsøgte at oprette forbindelse. Overvågningen fortsætter.",
+    "talkAudioOutsideGrant": "Babyenheden modtog lyd fra en forælderenhed uden en samtale. Den afspillede den ikke.",
     "pairAgain": "Denne enhed kender ikke længere nogen forældreenhed. Tryk på Vis ny kode, og par igen.",
     "babyUnrecognised": "Babyenheden genkender ikke denne enhed. Tryk på Vis ny kode på babyenheden, og par igen."
   },

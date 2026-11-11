@@ -18,6 +18,7 @@
     "mediaBlocked": "Urządzenia się znalazły, ale dźwięk nie przechodzi. Spróbuj użyć tej samej sieci Wi-Fi na obu.",
     "wrongKeyAttempt": "Ktoś próbował się połączyć z błędnym kluczem. Monitorowanie trwa.",
     "unknownParentAttempt": "Urządzenie, które nie jest Twoim sparowanym urządzeniem rodzica, próbowało się połączyć. Monitorowanie trwa.",
+    "talkAudioOutsideGrant": "Urządzenie dziecka odebrało dźwięk z urządzenia rodzica bez rozmowy. Nie odtworzyło go.",
     "pairAgain": "To urządzenie nie zna już urządzenia rodzica. Dotknij Pokaż nowy kod i sparuj ponownie.",
     "babyUnrecognised": "Urządzenie dziecka nie rozpoznaje tego urządzenia. Dotknij Pokaż nowy kod na urządzeniu dziecka i sparuj ponownie."
   },

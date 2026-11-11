@@ -18,6 +18,7 @@
     "mediaBlocked": "Os dispositivos se encontraram, mas o som não passa. Tente usar o mesmo Wi-Fi nos dois.",
     "wrongKeyAttempt": "Alguém tentou se conectar com uma chave errada. O monitoramento continua.",
     "unknownParentAttempt": "Um dispositivo que não é o seu dispositivo dos pais emparelhado tentou ligar-se. A monitorização continua.",
+    "talkAudioOutsideGrant": "O dispositivo do bebé recebeu som de um dispositivo dos pais sem uma conversa. Não o reproduziu.",
     "pairAgain": "Este dispositivo não conhece mais nenhum dispositivo dos pais. Toque em Mostrar novo código e pareie de novo.",
     "babyUnrecognised": "O dispositivo do bebê não reconhece este dispositivo. Toque em Mostrar novo código no dispositivo do bebê e pareie de novo."
   },

@@ -18,6 +18,7 @@
     "mediaBlocked": "I dispositivi si sono trovati, ma l'audio non passa. Prova con lo stesso Wi-Fi su entrambi.",
     "wrongKeyAttempt": "Qualcuno ha provato a connettersi con una chiave errata. Il monitoraggio continua.",
     "unknownParentAttempt": "Un dispositivo che non è il tuo dispositivo genitore associato ha provato a connettersi. Il monitoraggio continua.",
+    "talkAudioOutsideGrant": "Il dispositivo del bambino ha ricevuto audio da un dispositivo genitore senza una conversazione. Non l'ha riprodotto.",
     "pairAgain": "Questo dispositivo non conosce più alcun dispositivo del genitore. Tocca Mostra nuovo codice e associa di nuovo.",
     "babyUnrecognised": "Il dispositivo del bambino non riconosce questo dispositivo. Tocca Mostra nuovo codice sul dispositivo del bambino e associa di nuovo."
   },

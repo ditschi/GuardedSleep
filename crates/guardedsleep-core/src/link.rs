@@ -157,6 +157,7 @@ pub fn message_keys() -> &'static [&'static str] {
         // security_warning keys
         "wrong_key_attempt",
         "unknown_parent_attempt",
+        "talk_audio_outside_grant",
         // sticky causes (`LinkStatus::cause`) that tell the user to pair again
         "pair_again",
         "baby_unrecognised",
@@ -5166,6 +5167,7 @@ mod tests {
         let keys = message_keys();
         for k in [
             "unknown_parent_attempt",
+            "talk_audio_outside_grant",
             "clock_skew",
             "recovery_path_unavailable",
         ] {

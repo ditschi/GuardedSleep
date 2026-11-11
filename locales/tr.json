@@ -18,6 +18,7 @@
     "mediaBlocked": "Cihazlar birbirini buldu ama ses geçemiyor. İkisini de aynı Wi-Fi'ye bağlamayı deneyin.",
     "wrongKeyAttempt": "Biri yanlış anahtarla bağlanmaya çalıştı. İzleme sürüyor.",
     "unknownParentAttempt": "Eşleştirdiğiniz ebeveyn cihazı olmayan bir cihaz bağlanmaya çalıştı. İzleme sürüyor.",
+    "talkAudioOutsideGrant": "Bebek cihazı, konuşma olmadan ebeveyn cihazından ses aldı. Sesi çalmadı.",
     "pairAgain": "Bu cihaz artık bir ebeveyn cihazı tanımıyor. Yeni kod göster'e dokunun ve yeniden eşleştirin.",
     "babyUnrecognised": "Bebek cihazı bu cihazı tanımıyor. Bebek cihazında Yeni kod göster'e dokunun ve yeniden eşleştirin."
   },

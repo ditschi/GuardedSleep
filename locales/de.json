@@ -18,6 +18,7 @@
     "mediaBlocked": "Die Geräte haben sich gefunden, aber der Ton kommt nicht durch. Versuchen Sie dasselbe WLAN auf beiden.",
     "wrongKeyAttempt": "Jemand hat versucht, sich mit einem falschen Schlüssel zu verbinden. Die Überwachung läuft weiter.",
     "unknownParentAttempt": "Ein Gerät, das nicht Ihr gekoppeltes Elterngerät ist, hat versucht, sich zu verbinden. Die Überwachung läuft weiter.",
+    "talkAudioOutsideGrant": "Das Babygerät hat von einem Elterngerät Ton ohne Sprechen erhalten. Es hat ihn nicht abgespielt.",
     "pairAgain": "Dieses Gerät kennt kein Elterngerät mehr. Tippen Sie auf Neuen Code anzeigen und koppeln Sie erneut.",
     "babyUnrecognised": "Das Babygerät erkennt dieses Gerät nicht. Tippen Sie am Babygerät auf Neuen Code anzeigen und koppeln Sie erneut."
   },

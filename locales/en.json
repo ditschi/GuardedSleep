@@ -14,6 +14,7 @@
     "mediaBlocked": "The devices found each other, but sound can't get through. Try the same Wi-Fi on both.",
     "wrongKeyAttempt": "Someone tried to connect with a wrong key. Monitoring continues.",
     "unknownParentAttempt": "A device that is not your paired parent device tried to connect. Monitoring continues.",
+    "talkAudioOutsideGrant": "The baby device received sound from a parent device without a talk. It did not play it.",
     "pairAgain": "This device no longer knows a parent device. Tap Show new code and pair again.",
     "babyUnrecognised": "The baby device does not recognise this device. Tap Show new code on the baby device and pair again.",
     "clockSkew": "The clocks of the two devices differ by more than 10 minutes. Check the date and time on both.",
