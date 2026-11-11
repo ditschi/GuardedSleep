@@ -1,0 +1,121 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "talk-off",
+  "description": "Talk-back is switched off on the baby unit: a press is denied as off, nothing plays and the noise gate is never paused.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "input",
+      "peer": "baby",
+      "input": {
+        "type": "set_raw_capture",
+        "raw": true
+      }
+    },
+    {
+      "at": 0,
+      "do": "input",
+      "peer": "baby",
+      "input": {
+        "type": "set_talk_back",
+        "enabled": false,
+        "level": "low",
+        "chime": true
+      }
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 14000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 6000
+    },
+    {
+      "at": 20000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 20000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 10000
+    },
+    {
+      "at": 40000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "event": "talk_changed",
+      "where": {
+        "state": {
+          "state": "denied",
+          "reason": {
+            "kind": "off"
+          }
+        }
+      },
+      "count": 1
+    },
+    {
+      "peer": "baby",
+      "never": "talk_active"
+    },
+    {
+      "peer": "baby",
+      "never": "noise_paused"
+    },
+    {
+      "peer": "parent",
+      "never": "talk_changed",
+      "where": {
+        "state": {
+          "state": "talking"
+        }
+      }
+    }
+  ],
+  "export_traces": [
+    {
+      "peer": "parent",
+      "id": "sim-talk-off-parent"
+    },
+    {
+      "peer": "baby",
+      "id": "sim-talk-off-baby"
+    }
+  ]
+}

@@ -1,0 +1,220 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "talk-happy-path",
+  "description": "A parent holds the talk button for about 6 s: chime, grant, voice, release; the baby's microphone hears the speaker (heard), no noise alert, a 10 s listen follows and ends.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "input",
+      "peer": "baby",
+      "input": {
+        "type": "set_raw_capture",
+        "raw": true
+      }
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 14000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 6000
+    },
+    {
+      "at": 20000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 20000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 150
+    },
+    {
+      "at": 20150,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.05,
+      "for_ms": 450
+    },
+    {
+      "at": 20600,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.05,
+      "for_ms": 6000
+    },
+    {
+      "at": 20650,
+      "do": "talk_levels",
+      "peer": "baby",
+      "rms": 0.3,
+      "for_ms": 6000
+    },
+    {
+      "at": 26700,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 27000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 25000
+    },
+    {
+      "at": 50000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "event": "talk_changed",
+      "where": {
+        "state": {
+          "state": "requesting"
+        }
+      },
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "event": "talk_changed",
+      "where": {
+        "state": {
+          "state": "talking"
+        }
+      },
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "event": "talk_changed",
+      "where": {
+        "state": {
+          "state": "ended",
+          "reason": "released"
+        }
+      },
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "event": "talk_playback",
+      "where": {
+        "result": "heard"
+      },
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "event": "listen_changed",
+      "where": {
+        "enabled": true
+      },
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "event": "listen_changed",
+      "where": {
+        "enabled": false
+      },
+      "count": 1,
+      "within_ms": [34000, 40000]
+    },
+    {
+      "peer": "baby",
+      "event": "talk_active",
+      "where": {
+        "active": true
+      },
+      "count": 1
+    },
+    {
+      "peer": "baby",
+      "event": "talk_active",
+      "where": {
+        "active": false
+      },
+      "count": 1
+    },
+    {
+      "peer": "baby",
+      "event": "noise_paused",
+      "where": {
+        "paused": true
+      },
+      "count": 1
+    },
+    {
+      "peer": "baby",
+      "event": "noise_paused",
+      "where": {
+        "paused": false
+      },
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "never": "noise_alert",
+      "where": {
+        "probe": false
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "link_lost"
+    },
+    {
+      "peer": "baby",
+      "never": "link_lost"
+    }
+  ],
+  "export_traces": [
+    {
+      "peer": "baby",
+      "id": "sim-talk-happy-path-baby"
+    },
+    {
+      "peer": "parent",
+      "id": "sim-talk-happy-path-parent"
+    }
+  ]
+}

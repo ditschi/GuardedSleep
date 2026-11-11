@@ -1,0 +1,5219 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "talk-chained-presses",
+  "description": "One parent presses and releases the talk button every 2 s for ten minutes; the child starts crying at 190 s. The cooldown and the budget keep the gate running: the alert reaches the parent within one talk limit plus the tail plus the cooldown plus the hold time.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "input",
+      "peer": "baby",
+      "input": {
+        "type": "set_raw_capture",
+        "raw": true
+      }
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 14000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 176000
+    },
+    {
+      "at": 20000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 21200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 22000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 23200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 24000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 25200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 26000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 27200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 28000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 29200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 30000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 31200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 32000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 33200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 34000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 35200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 36000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 37200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 38000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 39200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 40000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 41200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 42000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 43200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 44000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 45200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 46000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 47200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 48000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 49200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 50000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 51200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 52000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 53200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 54000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 55200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 56000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 57200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 58000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 59200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 60000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 61200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 62000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 63200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 64000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 65200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 66000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 67200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 68000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 69200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 70000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 71200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 72000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 73200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 74000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 75200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 76000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 77200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 78000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 79200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 80000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 81200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 82000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 83200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 84000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 85200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 86000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 87200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 88000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 89200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 90000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 91200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 92000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 93200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 94000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 95200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 96000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 97200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 98000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 99200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 100000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 101200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 102000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 103200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 104000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 105200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 106000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 107200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 108000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 109200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 110000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 111200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 112000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 113200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 114000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 115200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 116000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 117200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 118000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 119200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 120000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 121200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 122000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 123200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 124000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 125200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 126000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 127200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 128000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 129200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 130000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 131200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 132000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 133200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 134000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 135200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 136000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 137200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 138000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 139200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 140000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 141200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 142000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 143200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 144000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 145200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 146000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 147200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 148000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 149200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 150000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 151200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 152000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 153200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 154000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 155200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 156000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 157200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 158000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 159200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 160000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 161200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 162000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 163200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 164000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 165200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 166000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 167200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 168000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 169200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 170000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 171200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 172000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 173200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 174000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 175200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 176000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 177200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 178000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 179200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 180000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 181200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 182000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 183200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 184000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 185200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 186000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 187200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 188000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 189200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 190000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.6,
+      "for_ms": 410000
+    },
+    {
+      "at": 190000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 191200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 192000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 193200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 194000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 195200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 196000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 197200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 198000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 199200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 200000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 201200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 202000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 203200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 204000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 205200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 206000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 207200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 208000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 209200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 210000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 211200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 212000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 213200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 214000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 215200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 216000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 217200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 218000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 219200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 220000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 221200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 222000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 223200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 224000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 225200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 226000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 227200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 228000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 229200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 230000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 231200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 232000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 233200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 234000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 235200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 236000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 237200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 238000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 239200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 240000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 241200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 242000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 243200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 244000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 245200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 246000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 247200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 248000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 249200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 250000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 251200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 252000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 253200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 254000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 255200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 256000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 257200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 258000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 259200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 260000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 261200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 262000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 263200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 264000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 265200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 266000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 267200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 268000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 269200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 270000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 271200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 272000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 273200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 274000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 275200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 276000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 277200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 278000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 279200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 280000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 281200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 282000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 283200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 284000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 285200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 286000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 287200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 288000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 289200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 290000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 291200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 292000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 293200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 294000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 295200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 296000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 297200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 298000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 299200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 300000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 301200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 302000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 303200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 304000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 305200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 306000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 307200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 308000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 309200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 310000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 311200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 312000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 313200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 314000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 315200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 316000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 317200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 318000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 319200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 320000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 321200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 322000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 323200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 324000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 325200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 326000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 327200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 328000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 329200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 330000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 331200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 332000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 333200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 334000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 335200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 336000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 337200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 338000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 339200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 340000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 341200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 342000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 343200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 344000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 345200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 346000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 347200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 348000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 349200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 350000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 351200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 352000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 353200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 354000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 355200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 356000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 357200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 358000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 359200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 360000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 361200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 362000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 363200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 364000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 365200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 366000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 367200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 368000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 369200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 370000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 371200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 372000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 373200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 374000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 375200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 376000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 377200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 378000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 379200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 380000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 381200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 382000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 383200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 384000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 385200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 386000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 387200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 388000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 389200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 390000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 391200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 392000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 393200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 394000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 395200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 396000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 397200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 398000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 399200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 400000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 401200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 402000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 403200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 404000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 405200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 406000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 407200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 408000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 409200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 410000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 411200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 412000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 413200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 414000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 415200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 416000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 417200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 418000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 419200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 420000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 421200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 422000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 423200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 424000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 425200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 426000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 427200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 428000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 429200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 430000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 431200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 432000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 433200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 434000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 435200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 436000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 437200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 438000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 439200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 440000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 441200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 442000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 443200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 444000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 445200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 446000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 447200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 448000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 449200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 450000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 451200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 452000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 453200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 454000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 455200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 456000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 457200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 458000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 459200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 460000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 461200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 462000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 463200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 464000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 465200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 466000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 467200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 468000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 469200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 470000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 471200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 472000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 473200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 474000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 475200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 476000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 477200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 478000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 479200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 480000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 481200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 482000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 483200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 484000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 485200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 486000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 487200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 488000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 489200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 490000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 491200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 492000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 493200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 494000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 495200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 496000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 497200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 498000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 499200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 500000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 501200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 502000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 503200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 504000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 505200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 506000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 507200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 508000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 509200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 510000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 511200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 512000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 513200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 514000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 515200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 516000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 517200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 518000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 519200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 520000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 521200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 522000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 523200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 524000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 525200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 526000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 527200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 528000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 529200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 530000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 531200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 532000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 533200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 534000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 535200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 536000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 537200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 538000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 539200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 540000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 541200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 542000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 543200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 544000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 545200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 546000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 547200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 548000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 549200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 550000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 551200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 552000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 553200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 554000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 555200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 556000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 557200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 558000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 559200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 560000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 561200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 562000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 563200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 564000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 565200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 566000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 567200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 568000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 569200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 570000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 571200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 572000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 573200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 574000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 575200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 576000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 577200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 578000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 579200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 580000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 581200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 582000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 583200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 584000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 585200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 586000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 587200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 588000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 589200,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 600000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "never": "noise_alert",
+      "where": {
+        "probe": false
+      },
+      "within_ms": [0, 189000]
+    },
+    {
+      "peer": "parent",
+      "event": "noise_alert",
+      "where": {
+        "probe": false
+      },
+      "within_ms": [190000, 234800],
+      "count_min": 1
+    },
+    {
+      "peer": "parent",
+      "event": "talk_changed",
+      "where": {
+        "state": {
+          "state": "denied"
+        }
+      },
+      "count_min": 10
+    }
+  ],
+  "max_seeds": 3
+}

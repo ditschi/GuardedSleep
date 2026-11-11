@@ -62,7 +62,7 @@ kept` delivers one heartbeat per link at wake-up), `stranger_join` (`mode`: `wro
 core's fingerprint parsing and DTLS binding keep the link from verifying). The fake media layer
 reports the remote DTLS fingerprint (`attempt_dtls_fingerprint`) like the platforms do.
 
-Peers take `mailboxes` (baby: the set it sends after each verification) and `device_name` (parent). A scenario may cap its seeds with `max_seeds` (for many simulated hours).
+Peers take `sdp_direction` and `sdp_talk_direction` (the directions of the first and second audio m-line in their local descriptions, to break the direction rule) and `mailboxes` (baby: the set it sends after each verification) and `device_name` (parent). A scenario may cap its seeds with `max_seeds` (for many simulated hours).
 
 `relay_count` (default 1) is the number of simulated relays the peers' default mailbox set names; mailbox `i` of a peer talks to relay `i` (a peer's own `mailboxes` replace the default, the URLs are labels). The verbs `signaling_down`, `signaling_up` and `reject_hello` take an optional `relay` index (default: every relay), `replay_stop` and `ghost_join` use `relay` too (default 0), and `relay_drop_signals` (`mode: on|off`, default on) makes a relay accept frames but deliver no `signal`. Trace configs carry the labels `wss://relay-<n>.invalid`, which the shareable lint allows.
 

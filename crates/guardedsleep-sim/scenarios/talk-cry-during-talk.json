@@ -1,0 +1,109 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "talk-cry-during-talk",
+  "description": "The child starts crying during a talk the parent never ends: the alert reaches the parent at the latest the talk limit plus the 2 s tail plus the hold time after the cry started, not before the talk ended.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "input",
+      "peer": "baby",
+      "input": {
+        "type": "set_raw_capture",
+        "raw": true
+      }
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 14000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 6000
+    },
+    {
+      "at": 20000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 20000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.05,
+      "for_ms": 5000
+    },
+    {
+      "at": 20650,
+      "do": "talk_levels",
+      "peer": "baby",
+      "rms": 0.3,
+      "for_ms": 45000
+    },
+    {
+      "at": 25000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.6,
+      "for_ms": 45000
+    },
+    {
+      "at": 80000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "never": "noise_alert",
+      "where": {
+        "probe": false
+      },
+      "within_ms": [0, 50000]
+    },
+    {
+      "peer": "parent",
+      "event": "noise_alert",
+      "where": {
+        "probe": false
+      },
+      "within_ms": [50000, 55500],
+      "count_min": 1
+    },
+    {
+      "peer": "parent",
+      "event": "noise_paused",
+      "where": {
+        "paused": true
+      },
+      "count": 1
+    }
+  ]
+}

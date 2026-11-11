@@ -1,0 +1,95 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "talk-unpinned-ignored",
+  "description": "The baby's attempt verified but the parent's secret never reached it: the baby ignores a talk request, plays nothing and pauses nothing; the parent gives up after 3 s.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "input",
+      "peer": "baby",
+      "input": {
+        "type": "set_raw_capture",
+        "raw": true
+      }
+    },
+    {
+      "at": 0,
+      "do": "drop_data",
+      "from": "parent",
+      "message": "parent_pin"
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 14000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 6000
+    },
+    {
+      "at": 20000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 20000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 10000
+    },
+    {
+      "at": 40000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "event": "talk_changed",
+      "where": {
+        "state": {
+          "state": "ended",
+          "reason": "no_answer"
+        }
+      },
+      "count": 1,
+      "within_ms": [22500, 24500]
+    },
+    {
+      "peer": "baby",
+      "never": "talk_active"
+    },
+    {
+      "peer": "baby",
+      "never": "noise_paused"
+    },
+    {
+      "peer": "parent",
+      "never": "talk_changed",
+      "where": {
+        "state": {
+          "state": "talking"
+        }
+      }
+    }
+  ]
+}

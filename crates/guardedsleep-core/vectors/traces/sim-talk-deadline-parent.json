@@ -1,0 +1,963 @@
+{
+  "schema": "gs-trace/1",
+  "id": "sim-talk-deadline-parent",
+  "class": "simulated",
+  "privacy": "shareable",
+  "origin": { "core_version": "0.0.1", "harness": "sim/1", "scenario": "talk-deadline" },
+  "seed": 1,
+  "config": {
+    "role": "parent",
+    "psk_b64url": "R1MtU1lOVEhFVElDLVBTS6GhoaGhoaGhoaGhoaGhoaE",
+    "seed": "47532d53594e54482d534545442d76314c96662a5d858bc0824c258ee97cc98c",
+    "paired_before": false,
+    "heartbeat_interval_ms": 10000,
+    "alarm_after_ms": 60000,
+    "noise_threshold": 0.12,
+    "noise_hold_ms": 800,
+    "require_dtls_fingerprint": true,
+    "pinned_parent": null,
+    "pin_window_until_s": null,
+    "device_name": "",
+    "mailboxes": [{ "kind": "relay", "url": "wss://relay-0.invalid" }],
+    "allow_dev_loopback": false,
+    "only_local": false,
+    "project_host": null
+  },
+  "steps": [
+    { "n": 0, "now": 0, "input": { "type": "start", "entropy": 569173874 } },
+    { "n": 1, "now": 0, "input": { "type": "wall_clock", "unix_s": 1000000 } },
+    { "n": 2, "now": 45, "input": { "type": "mailbox_opened", "id": 0 } },
+    {
+      "n": 3,
+      "now": 93,
+      "input": {
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"welcome\",\"clientId\":\"c1\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\"}"
+      }
+    },
+    {
+      "n": 4,
+      "now": 93,
+      "input": {
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c1\",\"role\":\"parent\"}]}"
+      }
+    },
+    {
+      "n": 5,
+      "now": 93,
+      "input": { "type": "mailbox_frame", "id": 0, "bytes": "{\"type\":\"peer\",\"peerId\":null}" }
+    },
+    {
+      "n": 6,
+      "now": 93,
+      "input": {
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"members\",\"peers\":[{\"clientId\":\"c1\",\"role\":\"parent\"},{\"clientId\":\"c2\",\"role\":\"baby\"}]}"
+      }
+    },
+    {
+      "n": 7,
+      "now": 93,
+      "input": {
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"peer\",\"peerId\":\"c2\"}"
+      }
+    },
+    {
+      "n": 8,
+      "now": 151,
+      "input": {
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c2\",\"payload\":{\"env\":\"AQABVOEItmlrGnqBET-84gtp9O-H4N74DbfSF0CqTvHiNFNWlV7d_vyR47O-BydynotQEYXJq7zbY0cvUYkrCLoqCQob2p3okQ10kEjRbqd_zN5wSbjmdJEcJ0NF4_FBsVqysBJsJcX-houatCV-gRMnTJXnp1VkqnxKN8RhydBHm8aQH-PgqN7Ss2Q8ScViZc3xO039qADth8VzogA22LX5od_z1QGm5z7qZO5cn2mDjdkXuXxps26OHRUgMJWWNoIfUY9JAZVYOa4JxWLp3kK2O8IUdV2Rc4n72Hdwf3qD_M09jsCbGpzYsKRkUe-BxIYCDCcmpbINV_DNc-QSkbx-8Y6diy6qRGi_hnZhpbbNiDiC7sPown7RX9JnAcW7P9S7hrLz3DdgwROZHlSx_0P3F3PuL7Db_3B9aKFja_NeHLrZEKMawGwCXAAUJPLicr7Y5iS-wOA7naK3nrXdRWoiDR1EDUS_fnLerbwSWyXUj3xd2T_gjPu0hA5YwFbaRDVrv5WLqGeGqaPS06E7x3NE1Vx-GKUqirUnenbIBa115Aatc4T_KHOsVOvLEJsyByDxyPooNEUdHZOf7R4xiHvZdy6y_TkRaexAZRTZhBIP162Z5SuaHNvCoyPp_IGHeU_NhCbl6pe_ZqZCg6P5WT7hPLkO6_7ap5F4hp9LnBV7F2IphItf0CXChHBeA6dtRjnLoYgOEPC06ahLX14YE5idsK5GqTbqKBOm_GrLXWWDn1wOR048ynhj_YogvFd6kIvQZbCOYA_3HWCN6qhkLaRPOHzSwcxiLZMGXkPLaSS_KD0FuEi5dGVDbB7KSSNMf-0WpGV4gLE29meMPGaEd0x0YyfO_Q3Zij2Rean7czUWLbpC5p_ih5vsOpJBMIxW_an2tCFbsBuDaf1Q5cLUjFJZYq27Mf_dOfWVsD0NrWPFf5NyrPGgU_mizxKg1STu7jKK5NDAIxRUMlhisGtEyDdamxdU64abhfykrisi9IpDviHt740_Ysm9r4EW_hSQgIi4gxeisfZ8tGP0yqCLr0MaMuKyMTquK5TmkqzWbgWga0_otKFYwg67RwbcMfLXN4y-hFDl-IlH1YSGV2q9R0cm9tkkwFP7E8-WnABO84RN_04JM30iupf3pRNvBwn2ohuP5ISKcAJ93WoJpJGtCc0Lzg4tcKZDH4PFbRPXxQAGJUs5Gtbf7aOq7V0DK0u8_oaEjBbUfwK0s1I3VI7UMwz_rC5SfXc_ye6hvVE84I-Nm5xXHVqzGCsmNNvlw223O9qrGdLjsISk_9IAkkU0ITYYis-y3kN7nR7uwJTgLqONnNyrBDIrzn5QQcIenTcWlocsj9a9ClIsfGj0VPem06PBJ9qoOW2ccehHEeDJKaLNKN54DhIjqs9O_qAS-4EMnRJB64CfeG_ZWhI\"}}"
+      }
+    },
+    {
+      "n": 9,
+      "now": 165,
+      "input": {
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c2\",\"payload\":{\"env\":\"AQABlzqIWtj3H5z39IEnRjXNnV9JQHnTTahv5_TL0zw3TTbZM33ItFx2mw8Uy81LpDKp8QEDjeaAJb7q2Ue73gjfhSapv5KQHq1ptivugo6UTOhqwhcIvkMNAOS1RafMALE2QkGtusQgWEOMdb5GdyegH4gpbfJz9WaxZHFUS5NrHRTYn7XciW4wEQk2tnuv-INGGFwpxzsW7YneNH4G2MAwlQ4Nu7SiPSufdccyI1SVNqwf43iv6wDNqYZGn9GWNu_DtymrNXM7-v6zHzRSDsVbBqHEp51P4adzX3RjFYE6ZszG8dW0jpf0np5czDORZ37qEPSXUfOybHZfAn2W2oAwkIiRHxvAsFAQPTQ1nb_IqhS9sBY4Xtpp295njCodhUROUa8F2kXe-vfTTEe8HbLo9lbpMrlFyYQk3MwSYh1sXx2Hqbo05D979e32wuMlo-Cm2ZNRccPBcDNWi934fT3Hfw06Et4xJoobMAz1lWS8dYi8ueu7qatuDswkzIJ7Y1_Mwi3O4IdcCHvpRx5JA4Djb2r_iowBvBaYQgssJMliyfweimASCampefiemT6o2mVjt4OEF-RPliUIALRxcYNSEP8Xw5CDG5P3Y7YusBM9bfSFHNZdMTZB_BhFWMdanzAwWoKBst87cRPHnmpvW30frLDmaIS5smGgk2Ur3K4dERclg_GFTyanTS-_Nupfo9Wyh_9tSN6F-6gydy9AeO2ytaNnf9_WGtxy1Wpo0RcNI_Opmfga63KdP-nRPvYp09ifBJXa8cAkjfRlIRvau8iRuvy7ChUYTwxPRvcAwqat8okHtyV7mAknbq2dkw2174O9m6kl_hjmg5FY6Xlfz8z4ZRoh6b3YmYXU_4pa1C8btW5yyCNPAahYuGodTo7A4zZ8ecalk_j8_evsYPRDUljAloVDZe_ZJKb1GkGLDPdh7v0VRPaYMXpHivagb3vmRRk4v4NYea24nDSS6PW0a0hNhhW9smsxYN70IveSTAe4y7bBjBBg-xoYzAetFVQwx6YuSWXOJ7CBPwriOGcnfNopsUcrp1F8GCVK8_QpIURq5J9XSmnt_YaqhnGOuShoIb68BCJg5Lr3ilIMajKbZLjHW_csvnC4BUAKu7okq__fvpHNi2x7XYF1KAxIg_MGqaGYVq2e2udTan5XZ8d5VzkkNQkQkkAY_ZnLyncW7svuuSh3AmU5Sh6F_l0X4d1M2Ef3imwabzlicblNHLRUXulusNm5ySIf0cY9C2Q43WXG3EkYD8THr9SvH5S2szVk_7GMo0MCYaoBoDs9gFX8f34J92zjZ8D2u41aH9fV-q29pOhE3WzNCZCDMR1eKeQkncjvfhxcPJSAEWVbjyu6QPBXifHOXdy6Zb0Mce28fmE8A9JAR6B9kxh251GqjOCu_7--z-_TSR5vmV8\"}}"
+      }
+    },
+    { "n": 10, "now": 250, "input": { "type": "tick" } },
+    {
+      "n": 11,
+      "now": 256,
+      "input": {
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c2\",\"payload\":{\"env\":\"AQABJCfvswIMyBuqk_soYW_OlTANTGL-xEs2TmSjMd9LIJsdF97Ss3LKEyOOyGWDXGsgser1pRM0caOnI9gi1y5gDoHv7gq8mS4IS_F2sN57g16fVidCNLEhZXNZhhgTFDMMTArOCrfHrZoOC-ksySQar344gdqmCzkr6FIBOKnmNOBglHdLaDDccLGq636UwPCRBXlHix65ePXTQvmoKreNK6QJBg1XNJV3fr5VipBPmzX1lOWI8aqatuih8kUU_mqYaiZU_MosJRGHUs5zr_Qc2CC7Gsb4TfgYGmhtUTAAgL5aSfRCVNpWwvK2ZRASGiaT1e1iNhZGXJnuAWhZ2_vYEAI_atdSVY6jI3JdyVqW-npcfZwCkCrOC0MFMySBsjoWh-JxStpb9VmLcjraVLevLLsKzdEZx856anlhIECKx1lujft51sTqujCZMmOz3-oIDeYqoAcHhSM28H-n4opfJUiTJ-Df8AXMYxIBmlu1AwYX6AdKztKDs3LOG0IeVIWiZdi_Bbs0zwzFtk8VsT97CsO9v5AVBWCV0xda-iOw2ZfqtXbp1a9uVmR9V5r-meI8q3eJd6REvM-MkzrIaJh_C8YkbHePkW4ARP_W1NZYJQ2flBQ9ZjVvfvAFFCquBvTyobb2ucDCbePt6UNrLZ9VeiCB3F9cNchBPHwDlqG5lV-avihRvmKxBMUuBjpe8hcMOX0ttVN_slnv-utMTMlbS59cUwzFXYrGazM2N-3htVMkwf4jU19tJALlp3eua-FL6oIqaCJwQ5CHIp4Z7BJ8yciOMcKO3Sp4ftYKoc_xOWR34O_lkwJGszuLHraP1AM3Aob3SYyNy05d_PdrgDFdp4q54TWCihf2LMwrjegGsCCsCX5s_1tW8ekK6_wqmIcTquR50mtnBN_5dmFEfseIavDk-aRj_OHtui9_Q_h1W9VZDkFeKir5F8ld3OmHvq_K6Oa2WnZLAEXh6VgPaj7T1b4Ut-an1DPDZaqTPyDYVApukzaZBTvtlg3MC9ktEP6ZkvSzb6wEercDG_njt_OfInUHM-D4Uj_Hr7qtuMHC2oJRqsH0XhINnrq9d0X9E8RE-hhk4FMDQybroTADeweJ_A4H2QFPZQIR0ZSJiEGrLeqytADxHLqM1EGFvVsfQeeAcVPcNs1rX91ZnpiC0FPEGLzX_88eV5xPOIroHsffT33vMalJEMOREkL4pt6OLG6y1OuUdQuU7vG99OfG3PkGoINZu4Tbs-qWvYbsHpJ2OCqCvSb7eqA0Egl_TrCMmG_e62mrFSDuwXAXHWlELKAXXJJOlaXKgjv2ImxmZehZI6ekfLifIS12zvJHyL4bYNC5334hlLOnRwEWzkNgeOvcPg1vAVOLlXCpQedQLTCkKg6GQXdWLnCBGID89TD6dUGOsFe9ot1w2iw\"}}"
+      }
+    },
+    {
+      "n": 12,
+      "now": 271,
+      "input": {
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c2\",\"payload\":{\"env\":\"AQAB3t8PpYruvWiDgEBhiW-Oj58A2psv4ziXaXwqtcMCigF6KrqJua1h4RuytOBSwwmBoZyru_IUTNZJKRYnLPJg7tV4lsGOehphVyfew_iisIFH1X9g5mF7RSqpLs7p4WoqEgQFVubE9wDFQt1tA784D0HrsORiixPqp-UD25cQD_XOV8_Gvjld2g1RlPbgiKkB0hxWUFmwAqp3cgVyqCrDuHvxoQedcfDXGIBAbODf2MGrxH0Qq28f1hmAjTdeiNYK6fgNfI-RSJVeNqlL3jqU13BT0eGOsNdascEupfILLx_yaZxPFXVU7ahJUdeeSP5c527bJx5cdjd9P2LQGunVK4ndWw43RBJFxoZeJOed4FsKa_6EE9t3JEBXuYPdgTacWXbfWN7NDl6kvqAEDzp8BOl451sSL0GbkgCTjTDrQ0JCJ_z9kqb3s6rx9TBKO5tldYI2P5w1flSiOhcuRXA6ytYq5TV6eIRTNbOT9HlW7T3gJvZUf8Bev7gvcbqcFs9GVV20bY2teNytKsXMtU14p3pmrhApr4eChV7HOUb3Oi9z_I8yW1Bz4dII0v0S2D9v9_GEIh3QSnRVLkEDflJhWQXNzA-PqjR1EQhUDn51eDxC7yFsk3WnMvi-2jJ3HWVX_D8n3-96MFoxz0EqaqbZpDJ3wpjU2FIw0cWu8dU_D1ygfwc_i7pQ2fVaFJPabc_zMyioqg-0cr27OXiek_5_ONRrgucGWEvb4dJzig3euvvAKwF9hlbG0RTfA6osty9bp95TNcDTnqQqj4oQikQyLzrf9yoX8WojINIDmM1vtqD09Mo_AlrWqBpXBXIudKpYfQ_NADskwxo3dbFCzYirTMD6TDy-F3QXk19o6WyZ_9PVwlYaw7JksLJsEZd4JG7q1x7VKxifgUcUQA6a_e9P5rr4fIbEKx5UUCdO1MciZTVGIA-3yuGPMiyF04dparK1pYVuKBEdobkJ7qCbA9l_S1fC6M7TsMw7-UBEQx7pJAe3gPslho3J-e6yyxnQO1hOIVlfjlvQua4BCPxff_ABrwIg1iFuZstjV41EUNeo0d3pDjs9o4EEP4J5zKNMgYfDFThQhtinj2r2QNDhRwOOXsw8ioJN9BRve-u2AFyZX2FqnpZJX-d0zzDJvXbm1bMep8FG4V2VSYUn-wsf4mkyC4C0a7GJDKHZnlSjc2-zCAHImxp67bwVpBZm5ck-dR0KJxYPyujFP1c3uhlz_TjOWXxsHFQEG9j4Q_oWYURHAvU9Md0WLDPXIf42GDQFi905r6HrkccmFvXgrow5dgsqVAyuiwBFNPkU9kp1x_SPVixyliOYE0z2xubS8ZbJdh5hgxCELWuCq-m3gcIx37EmegakjKcvN_KxagJTayen3ehdzpwJdnjk_WLcukpH-ZhL_xc7GPcFtgo\"}}"
+      }
+    },
+    {
+      "n": 13,
+      "now": 329,
+      "input": {
+        "type": "mailbox_frame",
+        "id": 0,
+        "bytes": "{\"type\":\"signal\",\"from\":\"c2\",\"payload\":{\"env\":\"AQADRmhT0pklRd90bUzwLWT3btY5dF2rWkTTjja0TSt_1Xd4Z1oOmacO2YtwAkILV1ZY3Vb9H7LqIzU1MvV6kr6dSkQuQkWQd7eJ55s3WZhjUwJ67AbWIU9uJC8pJ_hrpxvJ0jTm8ylvFFMQewvLux5zkx-jwSnhe1sCfojkXDB4QZxhqcTBZ-23EIS_gL7cbwDh9QA48LYl3qcrZmUn-AKQ72SoJFa7T_RzPSQUO279zwuW4L7eM_q0rsMyvhgCvSdhHv3z5cqxEqKqUYvh9_tyJY1hkz76tafYgXTfnTFy_fLrV93lJ0XOmFsZde2DvgauQ_Cf0U15Nsq7MVMxwnUb4EMFqabYDqBcw-IzvDCMOlUtQZr4x56uYFxEIDY4aCjQYIwtEzzx8UCnEZ-UPoNl-hgSMjl95GVd9MZjq9K69gbR4KuarqExUPhEjxXroifi6-QIVCiDdUMLAzmUcfOUr01FiuekKT6CAbAXZESUMLIKB3prpn9zGe3w2l0RIEeBczhnGxcMxi8ScFDt_qEb5ozW9ptNVqTMkifddIKf-PvvHOjcVtKeIeGSd-2FaPkBha24N-7H5AWGKuz1IFIHa_M5Wvw6tR-I0NQ9_x8-vajLUAFkdw67UCkCuUseelQFJz2THAfkihy46KXGltihbNTsZOsTRiLBkb8JNOUekLdd3-eVzfOB3msfpWLEla5gqSt51Q9PuATL1qRc7dKL2yHeU0rN-5mbtHJYHlFYpJ3_f7UmbUhkGmXv7J6-blTTG-iR2uIX6-3ldyLdpBdvDukwV1NQpefbjHTVfc-W1frgptYA-UMzHAbwIXsXpHKjxLmicPTTRCg0UzBz12DodQukzelh5YPF_E1ZuZD2HwmjwtgCN_ukcMiU6J8VkFLzdRxQxeA-I5q9LW2Vz7CgmZEXtPOi5RNbBNyphw7SYWVWxVXWY1Xg8vbVlo6xpPUiIW9RkEvE8P3ShOTyms1sejqmfDjB20qCMy9bVfz3ieNqZi8zjQd46doQ6Y9PKOaxnHyUGYVXUJi2jcfGZoxW9VGAvy98bkM_jN412bK4nvZvna-yhjoyXU8lBo_7pSN5iIix3QIeL4otlyPgly3u2EE679cLCQAdvQWnJCOhdzEcWXPcWahW2ckm5pwopj4Cx23meGlbqNYumuP0XlEcknSvXwk3Qhrcd66rROUI_Z2mmVG00XkF1izHy6GPHXH5MvaS9xMaoAZIiave0-LCjxNoNxrzffAlynpIV52oJUBCTToaFmYQ0jBmbbN8gUU8X8VZPBEswzyrQvS0E_SybP08Y1ORpY2zbqyuP1Vw7syZ2cwmZoOF63LE88_M0XOLvOH318urmPkZeJL3dX6hz6upNABcQCbRXPa1UW0Vu71o3oE4Tnc4sv4V9XEa76hl-YwJlw8AZIkhqSlZuuv9_ixOR_67J5NCI1HN4MDklEWolvZRQQ3aamjsHVzvmvWOHR9ocq3ViZGbS84mJMWEfm2EP63W81ll-7GUv92OSRPnHYipItVqDQKqsUaATNu1cJ2t-RvNF0a3AGXctNJAFrAZBju38AcxMq8KVwkwCiZDjFw6Fpxf2MJnoeyRWj6mxvEcceSoZ0L0gkb_HFyAQ_K-JaQ_nBjuGY2X-9P1EZXAne-LWTuJqW-LG-tdNxVRS1lm3D9nPs289AFwMLH7sCesg1VcvJi_qKWL7z7DaztRY9aGaflXef1YkGP0SjAE-BGbt03qJg1iyIB9pQ6NqJp7Xc_qIq6Gmu-EweCLqrrevSv2zOlFSjggQs_YWSWYlsk0x-tVkyQdbySGSnOYjqwIf4td4KXmaN2mHuw71Q0NCXg23dCJl73rPeSPK6iCcVr30uEhsjqsEYfNNK-6LEAOGLgi5VoKBYgzu5y5RMF9w7Vb_c2kRhxZhy-q9-u8o0QbFGFABhCOc4VFK-g8-opDI1qZXf--t772KYHQOXlgLOiajdUSUkxbtoVnv20hhtvtBLJponiEJUYZLhcDmGFpDO_FPZ939k0i6w7W6bmu6XYACntSKk5EU9XiRQ_ROcuEj6ADDIJsAw-BC13NZ1Sm7ZEe1FuBBzgqZZTz8kCaDQPDRSFwecPd_HcZFoSq37IeP0PLRTw-N4b7lSk2Go1KaAbRq6Nxwm7SZWspq68HCmByWGIUXal-N6HYMwU9nihoB4q210DxDomHK0yrniBdYGlUBauA5dCQqVUWTFnxoeKuKRKaExiUJuW-7LN7pWLU3t-9ux9V1dyLmwvS4xuobVfnhe6AN7Gkh1nYvx72c9wTnc6u_8Jlb3nDKiYrkl8fRcYB1fuIw_X5bXDfFmveGtM0y5i_LEPBtB60YkraM-4I_3C3sxFlZNEU2kSyOpJ1HOPeNiSFH0gGBKe3uyrHZPhhsfAzQvzxrJt2MN7sZ43t71WgKGx1Kc9AEejIPB9VVccQAfL-eaGXfvm9sIxPovdnSUr0tmmiKtGW5rKZIOhZP-O39G-IOh5pAH7bPKc_je0IJqtILm-kDrNdWckpbKjMV-ZVVzqZlU1ZdYrTNW6ZLghata29dG4tHrhMnZ0URLV_kfS2FYLbGNIEIsdewnjw9rRv5rMHfWSbnrVqK_1lUlTp4kqSV_UjjyL2OZaT_R43S7V7e47kAgn-XTdX0ARfl1oeqviINGhhr8YhG7Bzs53h7V24AvkeV8vY31KYxswYJPDYONvNaUHSQHG8mbOb1LbzicXvYBLWeW0n2oIF1L6JoX61XZ1Ce8GeQ8X--0wT4qgDqekpCFHeypUnaT7Bgksnl4Dye09hKWQFLApxqprohsmnBrnUaeZPE4dCBjse-MQrUhj7PRWDYYcchFbRA8QarJb2MNND4j3eDMxQjV8_7fXmvXcOWHNAoCnTvZWhuOKVRbHSSbSmT7pMPUuukqHys8hZdwaoQnUfzjSrZTp7f6U1UlCLHd_dBLELA9VB3q1lrAaI6S9O7xxrsN1yuhgaP1kSPMz4lVJZEOoq_zS9APTnoPRxIbw_MSTxaWx8QbV8TDf7sY_jCv0Uay70fthMSidfOwErNuaOPIBJldjH0bgvayMTyGgyKUndn8kb-I3BID02hktvcBdjuqlqOkHdvbpEJLA-_pwi-IyFR6GqXBP4lhk5GKKQ1zptUgDkAzMJ9HSXP_gkxaFkHbRfn18K3GRNth1TCvAO7WGUu4rc0Aya3HUdIYTnJ5RG-NAWzK1YSKXHn7HlQ4ngBo7ROqn2X72yyIi4huTd4dp8hQiSB2Y_T4JK3nlP7oU6NjC19yWPtf6KmKIOmtboS1nxPR6EUqN1Y8rx8eFofsgMi1RmpvkrymhyvMxmVsOujjpEgY_xYknIelRENm-f4gm8XQIZYSRg8TNAojRgX8iOvFNSiTiKVfMx5wzaAnxoQs6qJWeVR82vbSS0cTEmgiPG6P2QHYkSehuB48h4VU7NMaoF_twRNXAhK1gqXw377kwG96UwfTX-xbEPv6qFS286ZtAKuco6peL-Fvi8o7TALTDhMUz9iy9Dvo_oeIHMR7vvC4oBVNr0xk5M7SFNs6jJu0bN-9e_THmlQR4AR81UGNGGAKMRrdk-UCtNdWxMd-nu29dUE-Y1xo0UknOSsn71Bn6BxBtx_dB1IbDh4xK8TsAJzVRJB0JoQMG_7WQCWSP8To1Mnq7cfWbPI8uRDQgMl1lOnql5nRViTR1FwuQkLze9oRZytvd9ny6oeYDkpGIYbvNhxgaG4f6bdFEWcQpAlz1Kceq6XubvMjlDG5Tyqsenwub5WLoF12JF19SsmnElCO7SEIyr1NYlctFqzhyLdXpPBFnJ0Oa30MyjiPoajq31eZEdl-5jEfXDuHY8BkIGCud4t-kbjEb9bSELmJgOkunoC7CQcAcCOHEdwRsXgw9iuA8DRoDek3r_SZxyhXHycod0Jkmzxw35Cn_3ibugN3dpFgVjoAOZOsE3UzOHIT7oELQ0K0hBs9GzN3unfnpM4wVX5MjD-A_Bk11J7XguLnyCufam2EMmvWZ9kXhpBtdllFnTbzJyZZEwBO-wBpdALNaTHqS0CAfOOAO89M-VEOR2abPY8co0TgUf_TI0S2bH9EY14IIohncEHgFNHrLpFfL_me8lZrwroklbZcIhahQbAX3icP_CZGQ8EbL_OdC0lyTYYipvFdRdte1-_lab3Qz0YGeIOjDSzRGhscE51Pw1VzvT4b9NXaCHITxQLqYrESVxq9QD-mPdaf9p_yllOKDkbPxYIxR8fw2igIJUdcC_qcsia4OkKOB2rnHoMsfGYj5q8Vq6d7Gftec7TviO1rOHkcFWeJtEs3fTwURjeiZUyW4Kp1BHOWO5HkMxGkozzRFce3Ul7jR3f97avLMWBPkwF60tdJMOTylQ8s7-cyW1Yf0SMRmNhq7oJp0JbfGBr6C9uoV3WGpQbBRwBPeVVVqKlmfMXXC3i8Wy16qQ6jMhNZwbMg5v929xaBPDYpTYjIGP1o-qRuwNVohMLzafRSxzFdU293kDBjXHD12pBQxg7rQtDMmEy22OHbEZmCrvRNK8lkrww-NDCZvs4XQCInFuMZGeWOsj6xan9nm0KORnnH-q4pmlk2m-ng73ZM_RUAkKthSfOc0sxoexZTgpP0n2NI71XwDzSVYwT2nIFg9EB1v4wlW6mGF_795i5npOzEBSyHekKChkkJ7clgkvgdxrLcDBbJ99nieLFKcvrNQ9Yi6Exm1yV0Y6n-KEl1UFzHk19yVyai_bBtMR4FO1dwEbOckBeD3YxGtzn08mK99PvnwVSmKrm0Un6mYYn5qvFyel7agdsUP524qHL9_xqfB_B_orR5Mfh8sfncQ0S2-_a-n58lM5uhcHpltaBwD_Rp4xlSwgLA_x4b_gUVBmuNfplWLb6Z1tlmqz2Br7ZqgsBamRX0laAfjj2xCvAF0P1AG_1Ubv65pCv_veVRmTs-0qkDMa_8I1Qm9VhDCGv7mTvdN8ONFpPLPrZMxlnvp1PHod1eWaHGiR-wfEHncYB-jSLNus4PVMbWPqQ7kZu6kPO01fDputk2VI9LAQRsaqPIjy8IFSwJ4TCftTAtLrXh9K-2K6XoUjVnt0rhL7oXn14WtF6GNXrPwdXjLCsOImDwtF6CSubwFfT72g3iN6YWZsmjbhSSD2MF8iluBIoBTnTD9yp1HB89XdNbauohobXOzaeXGKVwYmWyApZ2Lte03MBGs1_ilFXO5YaZyY2dYRtJiIgh26gESH9ArH3xXxX9-Xir6DTQ_wmM1hFfaQ031hystTQbLDCrY-nYW94YulVQYoaOQLBt432fm4LyArYkY2npOm0vL91saEb0kXsfQ5610kXPM8x3xQlfbJZUHQ2R4tVn_zksWz1MRUkTX1JcuGjlpKE4DGWp_hyi1PibX_ldbcO6VyI-EhenY3bi2qy390eU2XNwBWzVDdiQj7Uls3CjZVzuJOOLLDxfrF3xsMlY0aYRgzdjYQ5oNFcN5R4Pn2An3tldgaO21vGUIwQyWeUIDnOhvCfmVWSFk_ixI\"}}"
+      }
+    },
+    {
+      "n": 14,
+      "now": 338,
+      "input": {
+        "type": "attempt_local_description",
+        "attempt": 1,
+        "sdp_type": "answer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:02\r\n"
+      }
+    },
+    { "n": 15, "now": 500, "input": { "type": "tick" } },
+    {
+      "n": 16,
+      "now": 623,
+      "input": { "type": "attempt_pc_state", "attempt": 1, "state": "connected" }
+    },
+    { "n": 17, "now": 623, "input": { "type": "attempt_data_open", "attempt": 1 } },
+    {
+      "n": 18,
+      "now": 623,
+      "input": {
+        "type": "attempt_dtls_fingerprint",
+        "attempt": 1,
+        "fingerprint": "53594e5400000000000000000000000000000000000000000000000000000001"
+      }
+    },
+    {
+      "n": 19,
+      "now": 679,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
+        "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"fddc8ef9569c127e8952379a11cde2f43fd8b32a06b8c3ee3bc2bcbfbe147888\"}"
+      }
+    },
+    {
+      "n": 20,
+      "now": 679,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
+        "text": "{\"type\":\"device_status\",\"v\":3,\"noise_threshold\":0.12,\"talk\":\"on\",\"talker\":\"none\"}"
+      }
+    },
+    {
+      "n": 21,
+      "now": 679,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
+        "text": "{\"type\":\"mailboxes\",\"v\":3,\"mailboxes\":[{\"kind\":\"relay\",\"url\":\"wss://relay-0.invalid\"}]}"
+      }
+    },
+    {
+      "n": 22,
+      "now": 683,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":652,\"seq\":1,\"rms\":0}"
+      }
+    },
+    {
+      "n": 23,
+      "now": 743,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
+        "text": "{\"type\":\"pin_ack\",\"v\":3}"
+      }
+    },
+    { "n": 24, "now": 750, "input": { "type": "tick" } },
+    { "n": 25, "now": 1000, "input": { "type": "tick" } },
+    { "n": 26, "now": 1250, "input": { "type": "tick" } },
+    { "n": 27, "now": 1500, "input": { "type": "tick" } },
+    { "n": 28, "now": 1750, "input": { "type": "tick" } },
+    { "n": 29, "now": 2000, "input": { "type": "tick" } },
+    { "n": 30, "now": 2250, "input": { "type": "tick" } },
+    { "n": 31, "now": 2500, "input": { "type": "tick" } },
+    { "n": 32, "now": 2750, "input": { "type": "tick" } },
+    { "n": 33, "now": 3250, "input": { "type": "tick" } },
+    { "n": 34, "now": 3750, "input": { "type": "tick" } },
+    { "n": 35, "now": 4250, "input": { "type": "tick" } },
+    { "n": 36, "now": 4750, "input": { "type": "tick" } },
+    { "n": 37, "now": 5250, "input": { "type": "tick" } },
+    { "n": 38, "now": 5750, "input": { "type": "tick" } },
+    { "n": 39, "now": 6250, "input": { "type": "tick" } },
+    { "n": 40, "now": 6750, "input": { "type": "tick" } },
+    { "n": 41, "now": 7250, "input": { "type": "tick" } },
+    { "n": 42, "now": 7750, "input": { "type": "tick" } },
+    { "n": 43, "now": 8250, "input": { "type": "tick" } },
+    { "n": 44, "now": 8750, "input": { "type": "tick" } },
+    { "n": 45, "now": 9250, "input": { "type": "tick" } },
+    { "n": 46, "now": 9750, "input": { "type": "tick" } },
+    { "n": 47, "now": 10250, "input": { "type": "tick" } },
+    { "n": 48, "now": 10750, "input": { "type": "tick" } },
+    {
+      "n": 49,
+      "now": 10769,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":10750,\"seq\":2,\"rms\":0}"
+      }
+    },
+    { "n": 50, "now": 11250, "input": { "type": "tick" } },
+    { "n": 51, "now": 11500, "input": { "type": "tick" } },
+    { "n": 52, "now": 11750, "input": { "type": "tick" } },
+    { "n": 53, "now": 12000, "input": { "type": "tick" } },
+    { "n": 54, "now": 12250, "input": { "type": "tick" } },
+    { "n": 55, "now": 12500, "input": { "type": "tick" } },
+    { "n": 56, "now": 12750, "input": { "type": "tick" } },
+    { "n": 57, "now": 13000, "input": { "type": "tick" } },
+    { "n": 58, "now": 13500, "input": { "type": "tick" } },
+    { "n": 59, "now": 14000, "input": { "type": "tick" } },
+    { "n": 60, "now": 14500, "input": { "type": "tick" } },
+    { "n": 61, "now": 15000, "input": { "type": "tick" } },
+    { "n": 62, "now": 15500, "input": { "type": "tick" } },
+    { "n": 63, "now": 16000, "input": { "type": "tick" } },
+    { "n": 64, "now": 16500, "input": { "type": "tick" } },
+    { "n": 65, "now": 17000, "input": { "type": "tick" } },
+    { "n": 66, "now": 17500, "input": { "type": "tick" } },
+    { "n": 67, "now": 18000, "input": { "type": "tick" } },
+    { "n": 68, "now": 18500, "input": { "type": "tick" } },
+    { "n": 69, "now": 19000, "input": { "type": "tick" } },
+    { "n": 70, "now": 19500, "input": { "type": "tick" } },
+    { "n": 71, "now": 20000, "input": { "type": "set_talk", "pressed": true } },
+    { "n": 72, "now": 20000, "input": { "type": "tick" } },
+    {
+      "n": 73,
+      "now": 20063,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
+        "text": "{\"type\":\"device_status\",\"v\":3,\"mic_silent\":false,\"noise_threshold\":0.12,\"talk\":\"on\",\"talker\":\"you\",\"noise_paused\":true}"
+      }
+    },
+    { "n": 74, "now": 20250, "input": { "type": "tick" } },
+    { "n": 75, "now": 20500, "input": { "type": "tick" } },
+    {
+      "n": 76,
+      "now": 20654,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
+        "text": "{\"type\":\"talk_grant\",\"v\":3,\"id\":1,\"max_ms\":30000}"
+      }
+    },
+    { "n": 77, "now": 20684, "input": { "type": "talk_mic_attached" } },
+    { "n": 78, "now": 20750, "input": { "type": "tick" } },
+    {
+      "n": 79,
+      "now": 20799,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":20750,\"seq\":3}"
+      }
+    },
+    { "n": 80, "now": 21000, "input": { "type": "tick" } },
+    { "n": 81, "now": 21250, "input": { "type": "tick" } },
+    { "n": 82, "now": 21500, "input": { "type": "tick" } },
+    { "n": 83, "now": 21750, "input": { "type": "tick" } },
+    { "n": 84, "now": 22000, "input": { "type": "tick" } },
+    { "n": 85, "now": 22250, "input": { "type": "tick" } },
+    { "n": 86, "now": 22500, "input": { "type": "tick" } },
+    { "n": 87, "now": 22750, "input": { "type": "tick" } },
+    { "n": 88, "now": 23000, "input": { "type": "tick" } },
+    { "n": 89, "now": 23500, "input": { "type": "tick" } },
+    {
+      "n": 90,
+      "now": 23696,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
+        "text": "{\"type\":\"talk_playback\",\"v\":3,\"id\":1,\"result\":\"unknown\"}"
+      }
+    },
+    { "n": 91, "now": 24000, "input": { "type": "tick" } },
+    { "n": 92, "now": 24250, "input": { "type": "tick" } },
+    { "n": 93, "now": 24500, "input": { "type": "tick" } },
+    { "n": 94, "now": 24750, "input": { "type": "tick" } },
+    { "n": 95, "now": 25000, "input": { "type": "tick" } },
+    { "n": 96, "now": 25250, "input": { "type": "tick" } },
+    { "n": 97, "now": 25500, "input": { "type": "tick" } },
+    { "n": 98, "now": 25750, "input": { "type": "tick" } },
+    { "n": 99, "now": 26250, "input": { "type": "tick" } },
+    { "n": 100, "now": 26750, "input": { "type": "tick" } },
+    { "n": 101, "now": 27250, "input": { "type": "tick" } },
+    { "n": 102, "now": 27750, "input": { "type": "tick" } },
+    { "n": 103, "now": 28250, "input": { "type": "tick" } },
+    { "n": 104, "now": 28750, "input": { "type": "tick" } },
+    { "n": 105, "now": 29250, "input": { "type": "tick" } },
+    { "n": 106, "now": 29750, "input": { "type": "tick" } },
+    { "n": 107, "now": 30250, "input": { "type": "tick" } },
+    { "n": 108, "now": 30750, "input": { "type": "tick" } },
+    {
+      "n": 109,
+      "now": 30803,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":30750,\"seq\":4}"
+      }
+    },
+    { "n": 110, "now": 31250, "input": { "type": "tick" } },
+    { "n": 111, "now": 31500, "input": { "type": "tick" } },
+    { "n": 112, "now": 31750, "input": { "type": "tick" } },
+    { "n": 113, "now": 32000, "input": { "type": "tick" } },
+    { "n": 114, "now": 32250, "input": { "type": "tick" } },
+    { "n": 115, "now": 32500, "input": { "type": "tick" } },
+    { "n": 116, "now": 32750, "input": { "type": "tick" } },
+    { "n": 117, "now": 33000, "input": { "type": "tick" } },
+    { "n": 118, "now": 33500, "input": { "type": "tick" } },
+    { "n": 119, "now": 34000, "input": { "type": "tick" } },
+    { "n": 120, "now": 34500, "input": { "type": "tick" } },
+    { "n": 121, "now": 35000, "input": { "type": "tick" } },
+    { "n": 122, "now": 35500, "input": { "type": "tick" } },
+    { "n": 123, "now": 36000, "input": { "type": "tick" } },
+    { "n": 124, "now": 36500, "input": { "type": "tick" } },
+    { "n": 125, "now": 37000, "input": { "type": "tick" } },
+    { "n": 126, "now": 37500, "input": { "type": "tick" } },
+    { "n": 127, "now": 38000, "input": { "type": "tick" } },
+    { "n": 128, "now": 38500, "input": { "type": "tick" } },
+    { "n": 129, "now": 39000, "input": { "type": "tick" } },
+    { "n": 130, "now": 39500, "input": { "type": "tick" } },
+    { "n": 131, "now": 40000, "input": { "type": "tick" } },
+    { "n": 132, "now": 40500, "input": { "type": "tick" } },
+    {
+      "n": 133,
+      "now": 40784,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":40750,\"seq\":5}"
+      }
+    },
+    { "n": 134, "now": 41000, "input": { "type": "tick" } },
+    { "n": 135, "now": 41250, "input": { "type": "tick" } },
+    { "n": 136, "now": 41500, "input": { "type": "tick" } },
+    { "n": 137, "now": 41750, "input": { "type": "tick" } },
+    { "n": 138, "now": 42000, "input": { "type": "tick" } },
+    { "n": 139, "now": 42250, "input": { "type": "tick" } },
+    { "n": 140, "now": 42500, "input": { "type": "tick" } },
+    { "n": 141, "now": 42750, "input": { "type": "tick" } },
+    { "n": 142, "now": 43000, "input": { "type": "tick" } },
+    { "n": 143, "now": 43500, "input": { "type": "tick" } },
+    { "n": 144, "now": 44000, "input": { "type": "tick" } },
+    { "n": 145, "now": 44500, "input": { "type": "tick" } },
+    { "n": 146, "now": 45000, "input": { "type": "tick" } },
+    { "n": 147, "now": 45500, "input": { "type": "tick" } },
+    { "n": 148, "now": 46000, "input": { "type": "tick" } },
+    { "n": 149, "now": 46500, "input": { "type": "tick" } },
+    { "n": 150, "now": 47000, "input": { "type": "tick" } },
+    { "n": 151, "now": 47500, "input": { "type": "tick" } },
+    { "n": 152, "now": 48000, "input": { "type": "tick" } },
+    { "n": 153, "now": 48500, "input": { "type": "tick" } },
+    { "n": 154, "now": 49000, "input": { "type": "tick" } },
+    { "n": 155, "now": 49500, "input": { "type": "tick" } },
+    { "n": 156, "now": 50000, "input": { "type": "tick" } },
+    { "n": 157, "now": 50500, "input": { "type": "tick" } },
+    {
+      "n": 158,
+      "now": 50703,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
+        "text": "{\"type\":\"talk_end\",\"v\":3,\"id\":1}"
+      }
+    },
+    {
+      "n": 159,
+      "now": 50703,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
+        "text": "{\"type\":\"device_status\",\"v\":3,\"mic_silent\":false,\"noise_threshold\":0.12,\"talk\":\"on\",\"talker\":\"none\",\"noise_paused\":true,\"talk_retry_in_ms\":12000}"
+      }
+    },
+    {
+      "n": 160,
+      "now": 50783,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":50750,\"seq\":6}"
+      }
+    },
+    { "n": 161, "now": 51000, "input": { "type": "tick" } },
+    { "n": 162, "now": 51250, "input": { "type": "tick" } },
+    { "n": 163, "now": 51500, "input": { "type": "tick" } },
+    { "n": 164, "now": 51750, "input": { "type": "tick" } },
+    { "n": 165, "now": 52000, "input": { "type": "tick" } },
+    { "n": 166, "now": 52250, "input": { "type": "tick" } },
+    { "n": 167, "now": 52500, "input": { "type": "tick" } },
+    {
+      "n": 168,
+      "now": 52666,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
+        "text": "{\"type\":\"device_status\",\"v\":3,\"mic_silent\":false,\"noise_threshold\":0.12,\"talk\":\"on\",\"talker\":\"none\",\"talk_retry_in_ms\":10000}"
+      }
+    },
+    { "n": 169, "now": 52750, "input": { "type": "tick" } },
+    { "n": 170, "now": 53000, "input": { "type": "tick" } },
+    { "n": 171, "now": 53250, "input": { "type": "tick" } },
+    { "n": 172, "now": 53500, "input": { "type": "tick" } },
+    { "n": 173, "now": 53750, "input": { "type": "tick" } },
+    { "n": 174, "now": 54000, "input": { "type": "tick" } },
+    { "n": 175, "now": 54250, "input": { "type": "tick" } },
+    { "n": 176, "now": 54500, "input": { "type": "tick" } },
+    { "n": 177, "now": 54750, "input": { "type": "tick" } },
+    { "n": 178, "now": 55250, "input": { "type": "tick" } },
+    { "n": 179, "now": 55750, "input": { "type": "tick" } },
+    { "n": 180, "now": 56250, "input": { "type": "tick" } },
+    { "n": 181, "now": 56750, "input": { "type": "tick" } },
+    { "n": 182, "now": 57250, "input": { "type": "tick" } },
+    { "n": 183, "now": 57750, "input": { "type": "tick" } },
+    { "n": 184, "now": 58250, "input": { "type": "tick" } },
+    { "n": 185, "now": 58750, "input": { "type": "tick" } },
+    { "n": 186, "now": 59250, "input": { "type": "tick" } },
+    { "n": 187, "now": 59750, "input": { "type": "tick" } },
+    { "n": 188, "now": 60250, "input": { "type": "tick" } },
+    { "n": 189, "now": 60250, "input": { "type": "wall_clock", "unix_s": 1000060 } },
+    { "n": 190, "now": 60750, "input": { "type": "tick" } },
+    {
+      "n": 191,
+      "now": 60781,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":60750,\"seq\":7,\"rms\":0.05}"
+      }
+    },
+    { "n": 192, "now": 61250, "input": { "type": "tick" } },
+    { "n": 193, "now": 61500, "input": { "type": "tick" } },
+    { "n": 194, "now": 61750, "input": { "type": "tick" } },
+    { "n": 195, "now": 62000, "input": { "type": "tick" } },
+    { "n": 196, "now": 62250, "input": { "type": "tick" } },
+    { "n": 197, "now": 62500, "input": { "type": "tick" } },
+    {
+      "n": 198,
+      "now": 62697,
+      "input": {
+        "type": "attempt_data_message",
+        "attempt": 1,
+        "text": "{\"type\":\"device_status\",\"v\":3,\"mic_silent\":false,\"noise_threshold\":0.12,\"talk\":\"on\",\"talker\":\"none\"}"
+      }
+    },
+    { "n": 199, "now": 62750, "input": { "type": "tick" } },
+    { "n": 200, "now": 63000, "input": { "type": "tick" } },
+    { "n": 201, "now": 63250, "input": { "type": "tick" } },
+    { "n": 202, "now": 63500, "input": { "type": "tick" } },
+    { "n": 203, "now": 63750, "input": { "type": "tick" } },
+    { "n": 204, "now": 64000, "input": { "type": "tick" } },
+    { "n": 205, "now": 64250, "input": { "type": "tick" } },
+    { "n": 206, "now": 64500, "input": { "type": "tick" } },
+    { "n": 207, "now": 64750, "input": { "type": "tick" } },
+    { "n": 208, "now": 65250, "input": { "type": "tick" } },
+    { "n": 209, "now": 65750, "input": { "type": "tick" } },
+    { "n": 210, "now": 66250, "input": { "type": "tick" } },
+    { "n": 211, "now": 66750, "input": { "type": "tick" } },
+    { "n": 212, "now": 67250, "input": { "type": "tick" } },
+    { "n": 213, "now": 67750, "input": { "type": "tick" } },
+    { "n": 214, "now": 68250, "input": { "type": "tick" } },
+    { "n": 215, "now": 68750, "input": { "type": "tick" } },
+    { "n": 216, "now": 69250, "input": { "type": "tick" } },
+    { "n": 217, "now": 69750, "input": { "type": "tick" } }
+  ],
+  "expect": [
+    [
+      { "type": "open_mailbox", "id": 0, "kind": "relay", "url": "wss://relay-0.invalid" },
+      {
+        "type": "emit",
+        "event": {
+          "type": "status",
+          "status": {
+            "state": "connecting",
+            "level": 0,
+            "key": null,
+            "cause": null,
+            "acknowledged_until": null,
+            "last_alive_ms": null
+          }
+        }
+      }
+    ],
+    [],
+    [
+      {
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"hello\",\"role\":\"parent\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"protocolVersion\":3}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c2\",\"payload\":{\"env\":\"AQEBv8bMdujW6aQE1bA3R6nGoaBdNuPuqgQZGIM2Lbg3tT5OGxXy009RNyWrFU8UKqxH7ux78LGDAKPTniIxMuFO_haaKtL0r1tHwn4U3z9cjvjgU0BPFijhN8B8T6yq_nTnmyQJ-0Ud2S6-URd2NoUsykE7-YadU3uqL7v6CUd6PCwWnv8YqBLfWxNqa9ITDP5hpqQ27LpdpM0nrtUJ8pygVEDu8FuSkY2i4I8m0k6gzC29jQDVuTGZ38DyjGEcHt4WDfg6AI3CJlalJDQmyOpvSr7RXxGPPFhxQwjoxTfykCsepCKPmQ3nXr9VsyLeX8kSzKIgJ6i-8UVW2cU4BZYowTdUSFWJrqi22miwu8BcbcPhDLiJH4oQcdzolT6QXZfzo3EszUDC2Q6lhMNztJKCchh2ShiZorZyGBJ888Dm0Xso9ndu3z6P3ZJAF122LeR1ipzzpTvf2Wc6CRlV_3Rp9fwxDOBbQ1Cjakfx0xY86nUxKg3pxiIx7qGTm58Y1uonGEm47W8a4DWlrvSAMkoMt3KNQM7E2uEDzjboAVhkpe7ew4VF_Ldh4JDZB_NF9-ExOQeBD79lLnvZ1P73B74W4M0fgUgc1MtGh3ks5zSutFzixwGtsvroY5YzHwmJKr4IYfBK9C76zWau1sWDPQV5cb874rZx53OGigc6DPXp4x2MuLWqxl_CCTsc82G2IgaTkKNUKBJXrYfZow3R-J131P6Sj6WeTwZGdd7y1WQVD2sMb5j-PHsCGmRBqBxO_A1ssJ0MKUyqscU4yUBeyH4LPlpAA4VMd4CyhrgT-pMz0qFap1yapQju1A3wBxFlVF6cUA2pHeTDiRLr9ETihpsTHoMCnSDym_hatTEniWZcH5HH8_ynPQhPntA6IvtFUiybssOgmzq30V9UrznefukORXUBtMdgRB0hs42qc5P7RtYlScK8Ck0qRs25_y-q2-I1_YWuR8cU5R5Ab2GZ2qB3KhHfMxLZJYILrOH-xL8eVGHEUwnrQN6rzBtFWpMJNK2seHa_wPDkpPjCmKTvFbmtIPtPcXbmJ_AixijDvaMxdvaxkXLdkDkxX1tl1kdVmJNfbNHwiN6lkTavJMxv28N7IsVdWDrXbZH-RJLnFnoBMbxKOk3RWeRKLuSYaUL64q6xEu0lxkGSIQHJ9p7RbOrdUqhbiCk1Mok11zlgfkr6wrcr3878I9JrS3olb9uPY7mZhP5fO2j_6gATjnxkejavwfe8m7Oqo8oeHB7nSY7KuTikson-cZnRzU475Eiixl9kDVwguaZDKYAL3uiYXCDae4BChdwhExYyEypM_ffKhOnNxJtUkLIOOAI_gEhRKmi1jc5Jl2ZbbCF78hEjQIcyAgWJAGVIvBKJAVXx_ws7LgO3bSolB34Id5sSH8kwBgCI1di1tHV2GdQ\"}}"
+      }
+    ],
+    [],
+    [
+      {
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c2\",\"payload\":{\"env\":\"AQEBA_UwbLy_yU0liB4e36DPv904WGBnIsa5qRodvweRea2nTBJvEG-YqNmzk1xRWI37l7i1-1LXCfpaf5s5J4-xrLR0dUdDxlbIs0Rx5aX-Jv3VE_TcwFNCTTP9ldehNlaFEp3bBcit7Spt1L-VKot1Dkect27bHeudorWvmJ1A8IjYUxUSLXPqCJGe6Ytxpb2K-TkLrM55p3rYm05opgjmLgGQ9DnnfZDJAWiGXvrWuiU8sEs2h_89S1AKF-eAnaWtiDl9tK9IwezsyVVYCbsKhH37Wieaf3NQAefb1ksUeB-D9dCB-pCvuc_MOoqVVj_awecYrbcANjxxbKl1WC5F3fG2RmfHr7DKw58nNZHWSdbREWYhso-d_AK31axmDzI0_VkoFRMdS-TCgeEvAf4reiqcDDGtIeefTAL00-vuvI3Jg6uqXY7W2fYdCSJUE1DB3yWfO8_cT7nhkLFud-1QdUVa7d_ZHZtn7YTU4GKSq-dikYiO1C6m98SPIIQfWAGF3369G38LSQjRPz3c4-1TBuEW3rZjeGpIjk9rMewN8sew5wLQOBDbEgHkvPOPxvDZgx9CbJMIde7t1T24qY_kZs-LaZK9BjxGT_bEKCEL1tlNupMFG_YaWpZ0tpbGhsuTFYcuxAf7fezlmLwWsUX2-q8dw5KiUWYh3XJ0KlBdZ7buYkqB11vaoZF7r2G2v96MNP6805lC7Cbyf7KBEeSq5qowM5nxoIsJSNKt-_j9RD57ntNroEpeqF86oHC10MiDTQkLqib83BqMOq2Lou6iXQzsuifZ0OWivudHFQh6Lwf3POiDNlfqd7r6J9rd2IEjg2MMhMcS4LGn0oAzoG4VNBRLsqX3ax-Z0CleNlxZPytzbua39JGhlhYsEGKtzmMNsSILRqm9R6eSlwPUnYF-wLVhEZqVD9iSMxEsIavRuvE_GusAfgnxMLUtsU8X9-cy4dpoBTCJa7KlFUxdMdvbYRHZCqAazMRMtNesyDHBuTemrDgmbuI1rFUXy-PcsoFPE03TMugSRxG-LW833uQ4yNRNkXaqBS8dODOL9LDXC4-UR686U1dDox9BZS6NhWoSKK9r4Lb0YbTRzW9UgnalJEcFuqodqMzNyDaju34bENmm6HwQcQia1r8Wt_CI6aidUvDJv0Xru3rPfyA-eezbYzMn_2dIm8k70DRhBWgBfsMlSaFg7dhtBGvqjc3pPXjnnBCdildFP3sEQfHAmPUKI5uWucfIJa_fR7WHeIKynFp6Ebcc4xIgICn-1KGa8hQnEk5Fr4aheaTkd0qqGhycPYLPYMcm37WVm7oOc9AoZ30ApAjnjDFSVKVFIRC_XJ0xJ9_D3gnNKXqBvFnLhqvjErwCa2t4mKGd7G38a99zejmrRLZQqqdCKHi4szBzU_ITq0JiNN5RbYQ\"}}"
+      }
+    ],
+    [
+      {
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c2\",\"payload\":{\"env\":\"AQEBhRWpP5drrmoczutU0za8OdP-mA1bpYtk5RM6JBtn9tCi5N4ZaKDxX3dl8lfKXshTT9rtA30D5zh8F8QbHnTwix-jY0hJXji9jTaYwIzZyDaFsQV7MSFdHiWbOG_8imk51ZG_m57vlcz9j-O8IXBeAdpRVLZtg8wtcFVyGhhdV351ktPAomNcZZPWjflstVpVGHSH23co6vuY7EwsSpYo68z-sTUdpp9Rt2uQxZJMTHGGiyKMwCkbNBz9kJUNYxvofdKq1sTWKsas4uT6lR2v26xSMOu30peFm8Nyu0fATG8krfnj1Eq1-2gsW-anlrM3eCEc1nrbQf9oe9DS_6k-g9DvmvgxVCBd6A7AblcHWFZikUsiEmXYpH57YoqXz2pOL_EWcXQZDLn0ywOdEfSW4k7qL016nXQ9QQUutiptXpyOqP2K4p888SivqAeXpNp3VC8_3R5PDfKs-UQebU8r5u5hVkqbgmjgtcJrQSCrf-qWdRMX1wiJmXBHDXdzfBqtEUJ8pXdnZLgUShttzBK2nqo3FJjqDbP0X7cSPdBh7nhawDmVWz07Zc8hGmQ5j_gmVcbNl0n1wLXZgu7kScRKVfSERaAmXLrQo2wAOdvFTQgb0vVOrMNzRZWgOQdmUOzKNcebMpa_omq-U2BoPP6aR7tV1BtLfJFmoroUYVOLDriswndVoMbgBvGOcv6d8Otv72QZWghCUsp5JAL_CVZkMhpQy1--7pQncS8jHPWi58Ms4K_ru2iHvdNzC6tYp-utSdLALV1O6kLExh8zzd5tIdl9uelUq_mcUE_nY_6GArI8x77_3JhTu3tFuV88qzu431eEduksbeASkv1LvoscLYM4AENXdrJNRJs77P9MULlevXtRiS_uipIb-k4pgCQC71679nNFf-9a9IyvClc_huKlozhAHF92U4a5ugEgZBupBrxi0mc1zu9Kk7L2oL9oVCuMG_TGl-ddiAGks8M46OAyAeLyv6_07CDarUrGqCbWH1-8zwGn_K404mB7X_GDWHljCoYCzD6Lhd3yxIewISzGTHukfB0u_6WW9gBZsWRVfbP_tS6hSpMzLjOhl_AsVJcMSfmTK4Lt341SEgeX6GI6jGit6ZeZ5f7SLYYSyUZAGOxNf-VfGWNHHmV0mOp7js5rUyfs2-R4cRbh_q3P9l1-bm4ZOmbL5DdywNM9WAlKXe2Ac_9E21p62Vsu3HtypriL9oyS30L9kZYmTsYr9ha84rzxV7LbI47ghv2KX4C-J0nl8Nj5WGwM0ZyQno5l5Dc4TQnbvq18xqe9fD0k80emzPcGRweV2BKUDh_x9wCT26eS5Q5HDp-dX7bc6-51SkQ7isgifmmAYtU6ZetqQ830VDePbfsjfeP9gRCRD5gXI4RpAsBj0ZlT0fm4Wfj2mxgjHZozoF4\"}}"
+      }
+    ],
+    [],
+    [
+      {
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c2\",\"payload\":{\"env\":\"AQEBrO_V6aVxUWxXawLDVqCZEkIGpa4PtgihEFug6qwkfiX4fok-G187SUDZGFxl-oBezvk0JGINVeQ2-u-xEF056vnUr8hPPUVCHMO47gEmW0jlM_CmaSckAE7hby-S69rboiGpnthELe7A2XRPJ6BBd3GeOR4m4EpiG6O-vDVB7ITTfQz7IKtWq8bB_Gi6SQcqKwhPA6Dwb8GXWKNhrffzmMrHDL2QiTAu2bC3oc3ZHPu6RGm0TE83z6vZOBHVlRfxKDEGI0CTSbb1UbJgA7QDTgS-WC8wc8Qfh7sVaxx4h28GBSzrXvlEytSYPhRQAHrwFr4lkAzg-l9XGW06_hhj-cE7-7-C2DK38skZlDQUqu6TIYsG_7c9dY23IAoG24Qpbbn06IBLG340ZQG977E_hbUhL5ZCeCsO_d7PcLKw7v_SPuivyslGScIZ1FHyDHTsNQkGYSiKWGk9fi5TLi_swxecMMZLJsC5NTv2eYgDvmB7qQBJBZjBVFPpNQI9Eukj-Xr7G-Duvl-0a7sIMLOqDrnurYx3ULbliBvhfJq6wlWXlqY6epagIupXw01AmP8d-BdoxLw1V-MHUcaKgyRq3eQ17LJP72I-ilH6fd08NDr7AWH68l7FG3GO068qfPab-Cdp5u6TOAuQnxu_1MTbAXICBa0eO01JaAnqMMG-_kWiNaJH1uBzFce4OglQdYSmiWIIMa44_Bh8chUteNbabKz553RMNRCVtNilHer1bJkWKJDj217Bct6F6adBhUECGlfOi6AEmjgj6YpyGM1DPoKsXF6S-9m5ueCr7Irl7ULUAyj5E8oURh6pswWQgPgoftWdegFb_bMFvqsWhkB2_2-A1-walSNxLrS4NUbuE-R25ECy8cqBxm9yixv2N52BJAUYfysjT7QrdZTIAriJ9wws_mM8ndKHYRK3z6FtW7WB4zRKx94t2ySn3pnwH2tv2xcZd2t2bl80k6pbwkpmDiFUVyInlO8kgGjcf_GWA2mruIOhRN1Fu9M0B6Fu14U31D6BnmNXtAvdwYZvfoi4Bc4baOzcNgYJvWbD7VUq6JyVR96vpJfpt5r1BM5sKXdYZWVhZ5vPgWY9zyOPS_QFk9GxdG5eKH5CZtWGV6JFULrfiv2a7i-6NXg3G6NTNReWMvH3_-sJvwlpDz-Rdp92WLziNUxgcng6Z66oralZPiIT7VWDBXc6b3KHNo0BDoiTdex9WDPaFXVFs6VKcvMu8dwNL0uydmk7-IvUxeMqoa5NzzO9hDq2PWe2qDM9lVsD5zcICgMj5Lb7fKKJF4zWzsxTX01As3ZNEmKgFu4Vi6yv-7q_KZU7_ZbeYYa0kIjsr5CpKyPH5Ji_WEd3xo41L4YbCCDKwTdtze1o0Z4kXg40UcMSeX5or46yQ49woJBJOh4c4vwnUPc\"}}"
+      },
+      {
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c2\",\"payload\":{\"env\":\"AQECIX5A8NM83Qzca2kU7LWSosIFXqiLPgDVyFl7_iscxo9vCNleRbzjc_ZElcThaV2mO-rhZUOKNyWpk-gwFB2CPutdcXrvVBCVveRWgC16nvCjeVUqWqXRisQdhZpqpgtykCiUXAOcANcYVOzWbmSePUinNHJjiepsa2235TrFz8xGiI_-GelcLiScttylQB_v3oxGc2CcPdWoz3Zl74c2IbBdp56lWTyx2ankKBHTCWkP7dudqiihN5w8InhwuAkRK9gAZ1Cr1URRs1T5B4V2CoLYMB9QUiNN9crwbbDfXUiEoSG_6hYsRsffVP1fHR76qjcNd9VpM9Nq2hhCSqsMFeq-GdwMD3V9VUuej9o_q9OM0z3fh_BbI14UbdypW0y6uwuCaJXrI2-VCVbYhkN18vG9RRYrXlkjlWYjNLur3fAl9PFPQo19FW9SR9elHVcuGboU1sEHXrQ0K_AVHpFz0M3sZtV7JdVczMCP6XtO_2cVxfH-R_BJ6N0m_dfdcox_hUjXGBnFNogi0HZk79qfrGhYTj7hYy94im7uDWjjwTGXcFiCyZcO_jDyA3b6xjt3a4J_-X_BY-0nTDShiVncSVpiJk4Fg4TSMV2Va7cSqB-TdIFNbxgqXNZlTEe6MyEiA-iilHC6H7hokfedtrLibh8ByWXBOSELMrRxekVQa6SVTwid-wEYa8-ETm_IPsDjiuZhwgxL-n-DXbzlmWhunVb1RJJFMrJsuQA8NAgz4D-WfJqgITDr_XGia-JkiPX_5eG5MehbKs2Qk-5Kn_Z2v83HhB0FEHMCGin3qn9OKc3Wb5Tl_7aeEoM3E-URNHkDz0SR4ZtbX6hN8KL0hUWVwk2r9_G-Ahzz4KmxrdTf3QG6MsMUwfNwZHo80SJO9BfGp1f4WOHUSR_JIj_Aw3tnHtfCkP7O6kplELaApCmurf4Pde8tZKHuEHZXYnEla_oZbM4aVJALVjpRZiX-Ppdu3F8k-t3iSAhOnMZPSXYSxK3hc3lPoRoux5VPiY_kO-NGf0e097YBpk0xap4yx1v5QMs5IFFV2ZaHQwB8K8X4hpORnfcHcqcqh24lRLXwLMpLGMMQbXelq6EJgbPqoCNCeolufADFrnnhchUHXqA5iXqr9rGNfIS9UosdaotSlJFtYuuiWAwjgM4AWJBTdLdZ_P1s142BYmffsbdhCEhpMYm7Du14bzQiiKNC9XaDNjEI9BxWf74IsK-uMzJxTYUX_xV1K9z7edUNVq3G3MMdoVUHpmvg1e9pr3yeoKtOiUXHAe6NYn9QaruqyljLsi5ejli0xLAwIM1PHQMCDsJ4ayIAD-oLrOR_Ajgm-MXM9tsfgwWZM6sox2Ztj8n1TGchx3AuDjg5PyYgx96IuZsKK5CTb5P0mAg54hSYSHx46sXNiyMoWRUZSGQ\"}}"
+      }
+    ],
+    [],
+    [
+      {
+        "type": "create_attempt",
+        "attempt": 1,
+        "offerer": false,
+        "ice_servers": [{ "urls": ["stun:relay-0.invalid:3478"] }]
+      },
+      {
+        "type": "set_remote_description",
+        "attempt": 1,
+        "sdp_type": "offer",
+        "sdp": "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 53:59:4E:54:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:01\r\n"
+      },
+      { "type": "create_answer", "attempt": 1 }
+    ],
+    [
+      {
+        "type": "mailbox_send",
+        "id": 0,
+        "frame": "{\"type\":\"signal\",\"roomId\":\"8O80_f_TFwE-n4Eo3g4LMw\",\"to\":\"c2\",\"payload\":{\"env\":\"AQEDN-AS5GznoCFHKilo-XDjNey4lv9uUQcJZX1NEzJ1rgBphc6tMd6CMhdeDqvt5UoCAcRq2SNPhwWG7Km7C8hFYCiTdw55eUdH8_N9ffQWEtFXTAaPDAmOymizf007e7vpgX5hJdUSdTfw5SApRdSZWjVvGDddD5MbFWWO98QYA3HoqLJxrUw6zzDhva5_vQwPcJAOmPsQdd3nPaSSBQKj0oNTNdNvqZze_cHynDQJBctOOtLKPTsp00xx44kLHGZBc4j85CA0w_onO7sRRo10p9WoEJsXdSpaB3IlL8-e1JdPqng3r0h33p0yfb5VJj-tVCMKg7pGZggoRVf-u2jWPz7cMCnen9r5k20DkoQ5ogPfoNnK8xMRPgNEZSAOgb16bAAV1tRGeXl3CHUXeQXWVOs0jJ3QwzlNkMxZBAGrf3DYfND1K0y4APBhQE5ijbWglYTAXN2Cn3CH9OTT5fQYipYMdwRtlOUMCEJtoTPASjjNeY4bN6o3cDTQhnoA1oDSHKFLB3_g3lReq8xfltcesNr4uXpUOYfW1Ab3suT-kULpUFTKzQluWwUDgf1p-4_mm2javf5g3u3CGJXHbxISHCZSqBCamUDzjHN-GGKwvPsTSv3e6UDhuAzQUl9blntSrki8IMxAeOdjCRl11AfDv1naN3vEkyENwzPM9hm6SxueXeDsbOpKXCSKBDCsqryAE8EBlqCQqr2cUx5mYSS13_AIk8yV8mrJRUPxiFBRqVTkPZ-AsWuyMeuJEch6HBCm2b1FJqu8k4M6i5iJWUMEdJdzWdYwn10l0lEJs0-zXh6aw76UXejcZdU9jWc-Q4BoFwxfGoJjJECHOdsA4iYapLuKp-5nX-uS-5ue2wITKJ1nxcjIoNcTIDA0DbRGyequh7ez8kp_5VwxODKS6KlPsmrCuI5AOFjCbx0Rpkt_iyMRXXee6YZtHCEsJ7RBrYHDizR_NIo1bkiDwFTWJF4wU3pCHYgnhokA7aso8zC7UNi-A_sDDALb4XC_bW5OZICDsLUYDwdTmNk7e_09Y01aownDZkMd9KiPtGwTYWgwG7FiJCQpVOuKdeI9wvEyctz3d6fenXoZb365U8E2iwlOSAbETjntp6bW35pqsS8_bnPcPpm9Lj-TjcdyhFdHfsd1R9h6GGyng8gBVPOYLDTDQyWmBe1fwfdWPdIhFpEjQaXTgjvpjwq2YUKLAz0eD_PJRQWWwp1BVrzP_lYK2vdm0nMVcsEWqp_f71eNSG7ZUxTUsq_v6vtLzi07XpW86o0KXh3H2Lx0nSA9Ltfyp-CO4OXR5vkiuXvntwlTf9-myvJYTgJX7NWRFLhx_VlXkp0E0MEzdKtO-I8wv0Bd6eWnlhNvcoCh3gyzl-vh3Bt_H2OOXF4OlLhbE2yEN9GrLUvHBoPM0iFw-d-mTZ4lu61U-gSW_1GVdzxI1CWWbRSo5iQDtDwYqvSYpRL0IoiEdSv9HeHbkI-nHA08epIl7dOA4lr5bz5HfWYZTx1TPwXG08Hmpe6PPJRrfkYiyklaFSwX2yxYS6miUBUNAGp74NvAd50ikFwELBXBgM7uMFmjL3gfpkE5toXiIcm8DKi-_wMqxnZa-wtRGh837_vDwBfNwl3LggoIswoPuz1hoVfrQF13SHCTOKXHsXNv_0BTR5YaSM0A8adCyA93mbBpruxPZ_rakcIdOoQWct2zQsjXn8Ji5OHMRc19HSKeNkT-r2xGcfr17Ja-wOWlqmnboW9tRdZnBZH_ttUacIKswiYzNT2AUOU7p_0xdQhCgaN_btgzNeH1iHJsuOgcR8rwALGslVWaKe93Q8szXLXn9CCfafxIyS773ZW4sDIo5z4JQUNP7eht8cehlslvx6N5NrRUrUZPESj4htHCWV2q_5WuIObrFbPQTSOHCgrs3rm6OWS24uNB05GICxyvtAj1lN8cG01mzKMh-_smfFFBq1IlLU6wXPX6eAEl3Xt18gdadm7Siy2kb1iDR3JgefbO1jxHwxuk5FYjMo-geRDKBAUR0tQW203BfhcGAlyPNwTEIBis5pLLAYuYVA9FOEZafj-d0gElTlL3tKuEVNtP3HO4uTzo0Rw0d1xWkhst7u3COWer5LE11y1SPIdPUGftlLnNU07LRVe1rEsvwHam3r_ADjVZZXuo9LlNxskyLM0yIRmhj5QB1zAh-H74LukLuSEkXqDk7pc9M1-2-NiXyjVuZvcNp3v7D7Gz0-QXgOyWZFCrByOi7URqq5l095pwdW-wjc6ZNPYRYEnUbGw-p_KrohYy8grncqGN6cvLe47Od46-avP61X4tdFEhupIY_00iZCke1iAAmWnlwe0JwZqaaOgSL7c19wTRRHOx5XWAml_oNBZC1E-9s-RTbfWFO20UrwNBcp_FpD9SURYI9HMAcFG7WwVAfuyZ3xu1E0TNXGE8DYt0mjOivzXymUyOkJKzmBJt7moIJgI2jcMyg66G3im8Ky8YLhoR5I5U5pJXMaip6fvtPLAHl_ug0vUAgumTtIEYkVU_uuNxYGyilG6_u93jKrYk-twyBdNVPLjDLdIFJB33IJO95OtrICXRVHQLPra3u1VdAIiCIguvPeqCeqqALMyz34NovNynEwozBK8w_4vrvK03KWYsjZOThKG-bmUdQxEd_mhDLSnlwK4nxAWTKrzM7MaBsnERbbjw1Hbh3XrG0ggjxcGKjMqpP5R1lswlcBCj70owi5_M9cEG7Zm4_UAjLcQa8Jq_ZCUmalyOz0Wzuzjola0qKE7V2uh6WHwK6SamTWAw6R4R8f9XvrP2oAdPADBJKPzj5Vpax0qJ2RHoc128vr-FJEfdxpPE532bfHJwBeaenAixgF3H5mXSEJsDkWU2llG_fhhWvlUpgZ1CktXK6kqbp4ehs0kQrH3MrCp0w4w3Ak277CVHvYsHLfKbQQiD5waD6Cx1-TnZWbNnuV1yIWOanJzf5SnupGldsDoB8U9AUi_eF_GU7RmE2wguS5G60cgTiw7My2AmR7WzhLKzMq_JQx_rUOFGjeqY68QVii_oThU7RepRIUh6QxVwDYj7F6tejpjUx1-YYlndQt5DtAVPrQsVHtD5eQvGb5IF4h4-CQ-g4A0nTposYyo23HmE6ASvRKpgddO7USZew41J_zUztYeIeZDZCKcffgHv3Za3u_sLV9bYVwt_GlYPK9g03xRttwMVTSdFb7jHHfoApsCGzxxoddUNyPGOyshFj0AC2P1mOcobaHi7TLwjtocFPqIsTXREvRlc3Bd6lFexSCFRbKGcahgMRIVnJJWIAdPqF0nszRNfC6KD7Ni8ncvJ7-BDK83HUG6a7RsUcn3TelyE5Lh4PvwyMPZPY9uk-IC81LIs8ZZ8GhWa5G1LQVz1i_yyqFjabY-CBL0fZWqVUwAGdsxF6WMb6W2YJ8ePZx6Tp7wwzei8YDmbJSO5w0E5nX05J3D2YRQsP8qWk4PNGk1vik13eYO6e-QCAvDXUVXn4LVBPu74pAGFdHSLUeYeOVhJeSnsEZgyJM4oLd7rAUCY5rFGeWk2p--857Vh3TUDVaVrIKbZ_HSP2wx4PebVdwWZRKSfGnzVv0sn-ruVRVpZ7uycvGSUGuD2botz9emaxEakvgb4loC-ADRUxcG5L0UcZChMN70IeERMS2QdHb7--3_kw6VycTn8LTXPmYnu1OcnGYdHcDuXmivrIRF_GHzPoo3Gj0HEXsTp3SziQFMDv9adXQt0O4RtCQlrMQ95VJiSmdXDA8bkosIbTyEUa9EE2bj3HKHDSe5QFFMO015sjy5McLKIq7KHsMEUDWBcVXZgzX0DmSJbXrUp-x9yJWN1Ymo_u7LJcKTe_nUHepzkMtMEX6DnX6MKDQo2iFYYF80cicEPIuKnCu-NOZ32bp9EfaqkHYBWrkR6moygsc3ASW7hbdLAGljXLuJE9uNDQpedwAKtUz-2-oa3CyGLF_aOo41zfHKilRhmw7NG2L7hqfBnL7fJkzS9F_2medrmKfID3jrBhKuE55HIr2LFmF9gUkxhw38P_ecxhvP6-0tpsoeA00N5usQdTG5mcSgyZN7INvzRAzG81_2xUYfT6TkD_1veEDqIRqzf21nB4qdAZf_tLUs-o1bNf4OhyAltGCSiwCH_Src55meZqC1SUmRKA2UcVi6zkh0KWhDvlkWl3cLPaOxE__1NKyQd8bAGEjXkua1eEF5gMQW3slxq5rJMjPgOcf5yQOYYixZ4587VkdOVMnAdGKcvNglPtv8g2QskLR-2tOv4XbLsIFNydLPNhfNaClx8eITzrK12P-XzSbLDc2MPMYWLRXlyfi4Xahj7Fy6pc8UXucUCCTDFfuP47xX7jW9mN4RLhgUrPfXGogNJSHnWF15jSreXFngpDyhqWBFGKMxN-mXMhMpvrbbmP5mFpWrhO5vS-zfWyz37Hh4j7fWPoFRtZf6BUnK-JjrP8B5ZA2pJOnjq_gASnNM33XlfzA-WEZiSGmvkpR_3ifj-A2DT-lKmlr10Ew10s3WIOja1Qxv4RA6w9IdIvEf9HerEnaYpsnxlcDbKkmnO6OfKiY4ZUx33WUlB6hgmwLKlEcx-LIgf3Jlppr0jLOi3UeGdGLVRT23y1vxUG5bNG2IyNuwnKiJSZ3EV3YBp1wxF6J0cxejpElhA7G5wcrpHHOWjPxigfF_VWJnCykjPV8og-YzAZVUVRG3HRjfR4brQMrJ_LcIFnS4uKALMprLBbStzEHm7F9JlYEkvKrldfUZ7FEMIO5nS54ft4HBdhxwzfXVLW30pCBizVTtiA_voXCV4tSNjZ577MU6lEL76onc_ZrYs9p22Wr0beyVBh44p9TM-U1OZicFf4p0-A1l1TP2HMLRM4gY0clCWItb8_kST2w0mPertjNkVTPcGVcs_TSKXKYz-OyIv2d4zDuOB40cFAjlaZ5zVSDqCIPGc0jlWFs4Bou8geMBNDfl6nVyuzIlV_FwHD9jMSXSqiz5V4tOH_ISzMeXIjWDau5bGoZDFs2xRsUhfW_x-axjuzoA1FYVUDYThsmU002V3maBsG28azU99Rj2MzBwbnGHsqgYDb55h73O5eQgHrvqFVSVkUXLqYpm01oYEHiYU0qwqEs88woUSlVw3iCvcMpcllYVJZkeYq2QOGYE_kMEcsnki_qnla_qrJSg8GS7tN2pXoBxT8rYdcWC_y3xhFndUAC9caoPcZ-lSnlMJIZb1eK2Zhu0JCuafu3811EmroBNnTHt5gMJQerWPAN5uC1WBEsStEr2i8vLgACifxvcCJJ9mRvF0cDV_p-rdxQ1gxgYmShEVgkUpFTwRTmdQ9MfUcohWEqeotLIiYAW3HmVZfTcmWGfN-iPhBwuTLm-ZLyAX07s1Cmo6F1rhvMGHPtSO_I1veGMzADc8CE19wxy0j1gKGlYey5iRgXVUNRUv_fsuDSd-xp3ogLNcTnWLd2Dci8i-haCBAUv3hojQdc9XIXRTbc-iWju8134-3vOQJzAiuQrHUZhrU9__7nXKTCg\"}}"
+      }
+    ],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 1,
+        "text": "{\"type\":\"pair_proof\",\"v\":3,\"mac\":\"270490165f01cf56d04f87c7bad807ce4c4555ec238d9f2cae812c06f1dd416c\"}"
+      }
+    ],
+    [],
+    [
+      { "type": "close_mailbox", "id": 0 },
+      {
+        "type": "emit",
+        "event": {
+          "type": "parent_pinned",
+          "secret": "924fe32394ab7f231c1e9e0968706639017d47e376f4044e53e40754b3429281",
+          "window_until_s": null
+        }
+      },
+      {
+        "type": "send_data",
+        "attempt": 1,
+        "text": "{\"type\":\"parent_pin\",\"v\":3,\"secret\":\"924fe32394ab7f231c1e9e0968706639017d47e376f4044e53e40754b3429281\",\"name\":\"\"}"
+      },
+      {
+        "type": "send_data",
+        "attempt": 1,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":679,\"seq\":1}"
+      },
+      {
+        "type": "emit",
+        "event": {
+          "type": "status",
+          "status": {
+            "state": "connected",
+            "level": 0,
+            "key": null,
+            "cause": null,
+            "acknowledged_until": null,
+            "last_alive_ms": null
+          }
+        }
+      }
+    ],
+    [
+      {
+        "type": "emit",
+        "event": {
+          "type": "peer_status",
+          "status": { "noise_threshold": 0.12, "talk": "on", "talker": "none" }
+        }
+      }
+    ],
+    [
+      {
+        "type": "emit",
+        "event": {
+          "type": "mailboxes_updated",
+          "mailboxes": [{ "kind": "relay", "url": "wss://relay-0.invalid" }]
+        }
+      }
+    ],
+    [{ "type": "emit", "event": { "type": "peer_heartbeat", "seq": 1, "rms": 0.0 } }],
+    [
+      {
+        "type": "emit",
+        "event": {
+          "type": "parent_pinned",
+          "secret": "924fe32394ab7f231c1e9e0968706639017d47e376f4044e53e40754b3429281",
+          "window_until_s": null
+        }
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 1,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":10750,\"seq\":2}"
+      }
+    ],
+    [{ "type": "emit", "event": { "type": "peer_heartbeat", "seq": 2, "rms": 0.0 } }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      { "type": "set_playback_ducked", "attempt": 1, "ducked": true },
+      { "type": "send_data", "attempt": 1, "text": "{\"type\":\"talk_request\",\"v\":3,\"id\":1}" },
+      { "type": "emit", "event": { "type": "talk_changed", "state": { "state": "requesting" } } }
+    ],
+    [],
+    [
+      {
+        "type": "emit",
+        "event": {
+          "type": "peer_status",
+          "status": {
+            "mic_silent": false,
+            "noise_threshold": 0.12,
+            "talk": "on",
+            "talker": "you",
+            "noise_paused": true
+          }
+        }
+      },
+      { "type": "emit", "event": { "type": "noise_paused", "paused": true } }
+    ],
+    [],
+    [],
+    [{ "type": "set_talk_mic", "attempt": 1, "enabled": true }],
+    [
+      {
+        "type": "emit",
+        "event": { "type": "talk_changed", "state": { "state": "talking", "until_ms": 50654 } }
+      }
+    ],
+    [
+      {
+        "type": "send_data",
+        "attempt": 1,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":20750,\"seq\":3}"
+      }
+    ],
+    [{ "type": "emit", "event": { "type": "peer_heartbeat", "seq": 3, "rms": null } }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [{ "type": "emit", "event": { "type": "talk_playback", "result": "unknown" } }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 1,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":30750,\"seq\":4}"
+      }
+    ],
+    [{ "type": "emit", "event": { "type": "peer_heartbeat", "seq": 4, "rms": null } }],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      { "type": "emit", "event": { "type": "peer_heartbeat", "seq": 5, "rms": null } },
+      {
+        "type": "send_data",
+        "attempt": 1,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":40784,\"seq\":5}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      { "type": "set_talk_mic", "attempt": 1, "enabled": false },
+      { "type": "set_playback_ducked", "attempt": 1, "ducked": false },
+      {
+        "type": "send_data",
+        "attempt": 1,
+        "text": "{\"type\":\"listen\",\"v\":3,\"enabled\":true}"
+      },
+      { "type": "emit", "event": { "type": "listen_changed", "enabled": true } },
+      {
+        "type": "emit",
+        "event": { "type": "talk_changed", "state": { "state": "ended", "reason": "limit" } }
+      }
+    ],
+    [
+      {
+        "type": "emit",
+        "event": {
+          "type": "peer_status",
+          "status": {
+            "mic_silent": false,
+            "noise_threshold": 0.12,
+            "talk": "on",
+            "talker": "none",
+            "noise_paused": true,
+            "talk_retry_in_ms": 12000
+          }
+        }
+      }
+    ],
+    [{ "type": "emit", "event": { "type": "peer_heartbeat", "seq": 6, "rms": null } }],
+    [
+      {
+        "type": "send_data",
+        "attempt": 1,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":51000,\"seq\":6}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "emit",
+        "event": {
+          "type": "peer_status",
+          "status": {
+            "mic_silent": false,
+            "noise_threshold": 0.12,
+            "talk": "on",
+            "talker": "none",
+            "talk_retry_in_ms": 10000
+          }
+        }
+      },
+      { "type": "emit", "event": { "type": "noise_paused", "paused": false } }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "send_data",
+        "attempt": 1,
+        "text": "{\"type\":\"listen\",\"v\":3,\"enabled\":false}"
+      },
+      { "type": "emit", "event": { "type": "listen_changed", "enabled": false } }
+    ],
+    [{ "type": "emit", "event": { "type": "peer_heartbeat", "seq": 7, "rms": 0.05 } }],
+    [
+      {
+        "type": "send_data",
+        "attempt": 1,
+        "text": "{\"type\":\"heartbeat\",\"v\":3,\"t\":61250,\"seq\":7}"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      {
+        "type": "emit",
+        "event": {
+          "type": "peer_status",
+          "status": { "mic_silent": false, "noise_threshold": 0.12, "talk": "on", "talker": "none" }
+        }
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+  ],
+  "final": { "state": "connected" }
+}
