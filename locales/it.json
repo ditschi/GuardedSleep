@@ -118,7 +118,8 @@
           "title": "Dispositivo del genitore",
           "hint": "Resta con te e ti avvisa."
         },
-        "orderHint": "Configura prima il dispositivo del bambino."
+        "orderHint": "Configura prima il dispositivo del bambino.",
+        "defaultToggle": "Usa come predefinito"
       },
       "setup": {
         "title": "Prepara questo dispositivo",
@@ -210,7 +211,8 @@
         },
         "lastUsed": "Ultimo uso {time}",
         "newPairing": "Configura nuovi dispositivi",
-        "empty": "Ancora nessun dispositivo associato."
+        "empty": "Ancora nessun dispositivo associato.",
+        "switchMode": "Cambia modalità"
       },
       "baby": {
         "status": {
@@ -446,7 +448,8 @@
           "thisPhone": "Questo dispositivo",
           "language": "Lingua",
           "about": "Informazioni e limiti",
-          "advanced": "Avanzate"
+          "advanced": "Avanzate",
+          "startMode": "Modalità di avvio"
         },
         "sensitivity": "Sensibilità",
         "moreSensitive": "Più sensibile",
@@ -502,6 +505,9 @@
           "m2": "Dopo 2 minuti (consigliato)",
           "m5": "Dopo 5 minuti",
           "off": "Disattivato"
+        },
+        "startMode": {
+          "ask": "Chiedi ogni volta"
         }
       },
       "fgsMissing": {

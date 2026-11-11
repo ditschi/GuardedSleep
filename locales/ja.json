@@ -118,7 +118,8 @@
           "title": "保護者用端末",
           "hint": "あなたのそばに置いて、アラートを受け取ります。"
         },
-        "orderHint": "先に赤ちゃん用端末を設定してください。"
+        "orderHint": "先に赤ちゃん用端末を設定してください。",
+        "defaultToggle": "デフォルトにする"
       },
       "setup": {
         "title": "この端末を準備する",
@@ -210,7 +211,8 @@
         },
         "lastUsed": "最終使用：{time}",
         "newPairing": "新しい端末を設定",
-        "empty": "ペアリングされた端末はまだありません。"
+        "empty": "ペアリングされた端末はまだありません。",
+        "switchMode": "モードを切り替える"
       },
       "baby": {
         "status": {
@@ -446,7 +448,8 @@
           "thisPhone": "この端末",
           "language": "言語",
           "about": "概要と制限",
-          "advanced": "詳細設定"
+          "advanced": "詳細設定",
+          "startMode": "起動時のモード"
         },
         "sensitivity": "感度",
         "moreSensitive": "高くする",
@@ -502,6 +505,9 @@
           "m2": "2分後（推奨）",
           "m5": "5分後",
           "off": "オフ"
+        },
+        "startMode": {
+          "ask": "毎回確認する"
         }
       },
       "fgsMissing": {

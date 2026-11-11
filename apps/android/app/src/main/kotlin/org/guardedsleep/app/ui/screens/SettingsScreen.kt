@@ -271,6 +271,30 @@ fun SettingsScreen(
                     Modifier.fillMaxWidth(),
                 )
             }
+            Section(R.string.native_ui_settings_group_start_mode, "settings_group_start_mode") {
+                // Which role a start without running monitoring opens in; null asks every time.
+                ChoiceRow(
+                    stringResource(R.string.native_ui_settings_start_mode_ask),
+                    app.defaultRole == null,
+                    "start_mode_ask",
+                ) {
+                    controller.setDefaultRole(null)
+                }
+                ChoiceRow(
+                    stringResource(R.string.native_ui_role_baby_title),
+                    app.defaultRole == Role.BABY,
+                    "start_mode_baby",
+                ) {
+                    controller.setDefaultRole(Role.BABY)
+                }
+                ChoiceRow(
+                    stringResource(R.string.native_ui_role_parent_title),
+                    app.defaultRole == Role.PARENT,
+                    "start_mode_parent",
+                ) {
+                    controller.setDefaultRole(Role.PARENT)
+                }
+            }
             Section(R.string.native_ui_settings_group_language, "settings_group_language") {
                 // "Match system" is translated; the languages are shown by endonym (generated).
                 val langs = rememberLanguageChoices().map { it.tag to it.endonym }
@@ -565,7 +589,7 @@ private fun Modifier.androidxBg(c: androidx.compose.ui.graphics.Color): Modifier
     this.then(Modifier.background(c, androidx.compose.foundation.shape.RoundedCornerShape(24.dp)))
 
 @Composable
-private fun SwitchRow(label: String, checked: Boolean, tag: String, onChange: (Boolean) -> Unit) {
+internal fun SwitchRow(label: String, checked: Boolean, tag: String, onChange: (Boolean) -> Unit) {
     Row(
         Modifier.fillMaxWidth()
             .heightIn(min = 48.dp)

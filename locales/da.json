@@ -118,7 +118,8 @@
           "title": "Forældreenhed",
           "hint": "Bliver hos dig og giver dig besked."
         },
-        "orderHint": "Sæt babyenheden op først."
+        "orderHint": "Sæt babyenheden op først.",
+        "defaultToggle": "Brug som standard"
       },
       "setup": {
         "title": "Gør denne enhed klar",
@@ -210,7 +211,8 @@
         },
         "lastUsed": "Sidst brugt {time}",
         "newPairing": "Sæt nye enheder op",
-        "empty": "Ingen enheder parret endnu."
+        "empty": "Ingen enheder parret endnu.",
+        "switchMode": "Skift tilstand"
       },
       "baby": {
         "status": {
@@ -446,7 +448,8 @@
           "thisPhone": "Denne enhed",
           "language": "Sprog",
           "about": "Om og begrænsninger",
-          "advanced": "Avanceret"
+          "advanced": "Avanceret",
+          "startMode": "Starttilstand"
         },
         "sensitivity": "Følsomhed",
         "moreSensitive": "Mere følsom",
@@ -502,6 +505,9 @@
           "m2": "Efter 2 minutter (anbefalet)",
           "m5": "Efter 5 minutter",
           "off": "Fra"
+        },
+        "startMode": {
+          "ask": "Spørg hver gang"
         }
       },
       "fgsMissing": {

@@ -118,7 +118,8 @@
           "title": "Ouderapparaat",
           "hint": "Blijft bij jou en waarschuwt je."
         },
-        "orderHint": "Stel eerst het babyapparaat in."
+        "orderHint": "Stel eerst het babyapparaat in.",
+        "defaultToggle": "Als standaard gebruiken"
       },
       "setup": {
         "title": "Dit apparaat voorbereiden",
@@ -210,7 +211,8 @@
         },
         "lastUsed": "Laatst gebruikt {time}",
         "newPairing": "Nieuwe apparaten instellen",
-        "empty": "Nog geen apparaten gekoppeld."
+        "empty": "Nog geen apparaten gekoppeld.",
+        "switchMode": "Modus wisselen"
       },
       "baby": {
         "status": {
@@ -446,7 +448,8 @@
           "thisPhone": "Dit apparaat",
           "language": "Taal",
           "about": "Over en beperkingen",
-          "advanced": "Geavanceerd"
+          "advanced": "Geavanceerd",
+          "startMode": "Startmodus"
         },
         "sensitivity": "Gevoeligheid",
         "moreSensitive": "Gevoeliger",
@@ -502,6 +505,9 @@
           "m2": "Na 2 minuten (aanbevolen)",
           "m5": "Na 5 minuten",
           "off": "Uit"
+        },
+        "startMode": {
+          "ask": "Elke keer vragen"
         }
       },
       "fgsMissing": {

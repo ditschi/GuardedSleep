@@ -116,7 +116,8 @@
           "title": "Parent device",
           "hint": "Stays with you and alerts you."
         },
-        "orderHint": "Set up the baby device first."
+        "orderHint": "Set up the baby device first.",
+        "defaultToggle": "Use as default"
       },
       "setup": {
         "title": "Get this device ready",
@@ -208,7 +209,8 @@
         },
         "lastUsed": "Last used {time}",
         "newPairing": "Set up new devices",
-        "empty": "No devices paired yet."
+        "empty": "No devices paired yet.",
+        "switchMode": "Switch mode"
       },
       "baby": {
         "status": {
@@ -444,7 +446,8 @@
           "thisPhone": "This device",
           "language": "Language",
           "about": "About and limits",
-          "advanced": "Advanced"
+          "advanced": "Advanced",
+          "startMode": "Start mode"
         },
         "sensitivity": "Sensitivity",
         "moreSensitive": "More sensitive",
@@ -504,6 +507,9 @@
           "m2": "After 2 minutes (recommended)",
           "m5": "After 5 minutes",
           "off": "Off"
+        },
+        "startMode": {
+          "ask": "Ask every time"
         }
       },
       "fgsMissing": {

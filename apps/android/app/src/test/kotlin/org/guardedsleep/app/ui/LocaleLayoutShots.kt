@@ -84,7 +84,20 @@ class LocaleLayoutShots : ShotBase() {
         }
         shot("locale_layout/pair_parent", locale) {
             val focus = remember { FocusRequester() }
-            ParentPairContent(PairingPhase.SCANNING, null, true, "", {}, focus, {}, {}, {}, {}, {})
+            ParentPairContent(
+                PairingPhase.SCANNING,
+                null,
+                true,
+                "",
+                {},
+                focus,
+                {},
+                {},
+                {},
+                {},
+                {},
+                {},
+            )
         }
         shot("locale_layout/baby_monitor", locale, Role.BABY) {
             BabyMonitorScreen(FakeAppController(app = babyApp, baby = calm), onSettings = {})

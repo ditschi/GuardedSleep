@@ -118,7 +118,8 @@
           "title": "Zařízení rodiče",
           "hint": "Zůstává u vás a upozorňuje vás."
         },
-        "orderHint": "Nejdřív nastavte zařízení dítěte."
+        "orderHint": "Nejdřív nastavte zařízení dítěte.",
+        "defaultToggle": "Použít jako výchozí"
       },
       "setup": {
         "title": "Příprava tohoto zařízení",
@@ -210,7 +211,8 @@
         },
         "lastUsed": "Naposledy použito {time}",
         "newPairing": "Nastavit nová zařízení",
-        "empty": "Zatím žádná spárovaná zařízení."
+        "empty": "Zatím žádná spárovaná zařízení.",
+        "switchMode": "Přepnout režim"
       },
       "baby": {
         "status": {
@@ -446,7 +448,8 @@
           "thisPhone": "Toto zařízení",
           "language": "Jazyk",
           "about": "O aplikaci a omezení",
-          "advanced": "Pokročilé"
+          "advanced": "Pokročilé",
+          "startMode": "Režim po spuštění"
         },
         "sensitivity": "Citlivost",
         "moreSensitive": "Citlivější",
@@ -502,6 +505,9 @@
           "m2": "Po 2 minutách (doporučeno)",
           "m5": "Po 5 minutách",
           "off": "Vypnuto"
+        },
+        "startMode": {
+          "ask": "Ptát se pokaždé"
         }
       },
       "fgsMissing": {

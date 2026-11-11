@@ -118,7 +118,8 @@
           "title": "Ebeveyn cihazı",
           "hint": "Sizinle birlikte durur ve sizi uyarır."
         },
-        "orderHint": "Önce bebek cihazını kurun."
+        "orderHint": "Önce bebek cihazını kurun.",
+        "defaultToggle": "Varsayılan olarak kullan"
       },
       "setup": {
         "title": "Bu cihazı hazırlayın",
@@ -210,7 +211,8 @@
         },
         "lastUsed": "Son kullanım: {time}",
         "newPairing": "Yeni cihazlar kur",
-        "empty": "Henüz eşleşmiş cihaz yok."
+        "empty": "Henüz eşleşmiş cihaz yok.",
+        "switchMode": "Modu değiştir"
       },
       "baby": {
         "status": {
@@ -446,7 +448,8 @@
           "thisPhone": "Bu cihaz",
           "language": "Dil",
           "about": "Hakkında ve sınırlar",
-          "advanced": "Gelişmiş"
+          "advanced": "Gelişmiş",
+          "startMode": "Başlangıç modu"
         },
         "sensitivity": "Hassasiyet",
         "moreSensitive": "Daha hassas",
@@ -502,6 +505,9 @@
           "m2": "2 dakika sonra (önerilen)",
           "m5": "5 dakika sonra",
           "off": "Kapalı"
+        },
+        "startMode": {
+          "ask": "Her seferinde sor"
         }
       },
       "fgsMissing": {

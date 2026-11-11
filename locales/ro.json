@@ -118,7 +118,8 @@
           "title": "Dispozitivul părintelui",
           "hint": "Rămâne lângă tine și te alertează."
         },
-        "orderHint": "Configurează mai întâi dispozitivul bebelușului."
+        "orderHint": "Configurează mai întâi dispozitivul bebelușului.",
+        "defaultToggle": "Folosește ca implicit"
       },
       "setup": {
         "title": "Pregătește acest dispozitiv",
@@ -210,7 +211,8 @@
         },
         "lastUsed": "Folosit ultima dată {time}",
         "newPairing": "Configurează dispozitive noi",
-        "empty": "Niciun dispozitiv asociat încă."
+        "empty": "Niciun dispozitiv asociat încă.",
+        "switchMode": "Schimbă modul"
       },
       "baby": {
         "status": {
@@ -446,7 +448,8 @@
           "thisPhone": "Acest dispozitiv",
           "language": "Limbă",
           "about": "Despre și limite",
-          "advanced": "Avansat"
+          "advanced": "Avansat",
+          "startMode": "Modul de pornire"
         },
         "sensitivity": "Sensibilitate",
         "moreSensitive": "Mai sensibil",
@@ -502,6 +505,9 @@
           "m2": "După 2 minute (recomandat)",
           "m5": "După 5 minute",
           "off": "Dezactivat"
+        },
+        "startMode": {
+          "ask": "Întreabă de fiecare dată"
         }
       },
       "fgsMissing": {

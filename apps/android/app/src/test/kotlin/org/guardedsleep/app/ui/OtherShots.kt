@@ -123,7 +123,7 @@ class PairShots : ShotBase() {
     ) =
         shot("pair_parent/$name", locale) {
             val focus = remember { FocusRequester() }
-            ParentPairContent(phase, err, granted, "", {}, focus, {}, {}, {}, {}, {})
+            ParentPairContent(phase, err, granted, "", {}, focus, {}, {}, {}, {}, {}, {})
         }
 
     @Test

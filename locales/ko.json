@@ -118,7 +118,8 @@
           "title": "부모 기기",
           "hint": "내 곁에 두고 알림을 받아요."
         },
-        "orderHint": "아기 기기부터 설정하세요."
+        "orderHint": "아기 기기부터 설정하세요.",
+        "defaultToggle": "기본값으로 사용"
       },
       "setup": {
         "title": "이 기기 준비하기",
@@ -210,7 +211,8 @@
         },
         "lastUsed": "마지막 사용: {time}",
         "newPairing": "새 기기 설정",
-        "empty": "아직 페어링된 기기가 없어요."
+        "empty": "아직 페어링된 기기가 없어요.",
+        "switchMode": "모드 전환"
       },
       "baby": {
         "status": {
@@ -446,7 +448,8 @@
           "thisPhone": "이 기기",
           "language": "언어",
           "about": "정보 및 한계",
-          "advanced": "고급"
+          "advanced": "고급",
+          "startMode": "시작 모드"
         },
         "sensitivity": "민감도",
         "moreSensitive": "더 민감하게",
@@ -502,6 +505,9 @@
           "m2": "2분 후(권장)",
           "m5": "5분 후",
           "off": "끔"
+        },
+        "startMode": {
+          "ask": "매번 묻기"
         }
       },
       "fgsMissing": {

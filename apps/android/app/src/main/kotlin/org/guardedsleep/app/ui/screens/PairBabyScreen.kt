@@ -253,6 +253,12 @@ fun PairBabyScreen(controller: AppController) {
                     "baby_pair_cancel",
                     Modifier.heightIn(min = 48.dp),
                 )
+                QuietButton(
+                    stringResource(R.string.native_ui_home_switch_mode),
+                    { controller.switchMode() },
+                    "switch_mode",
+                    Modifier.heightIn(min = 48.dp),
+                )
             }
         }
     }
