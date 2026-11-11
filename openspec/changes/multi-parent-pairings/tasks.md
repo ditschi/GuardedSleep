@@ -5,7 +5,7 @@ Branch from `origin/main`. Commit after each task; `just test-affected` after ea
 ## 0. Prerequisites
 
 - [ ] 0.1 Archive `alternate-roles-and-apk-size` (after the owner's hardware test). Then rebase this change: its `pairing` requirement "One stored pairing per role" becomes a MODIFIED or REMOVED delta here, superseded by "Saved pairings and connection names"; `openspec validate --strict`.
-- [ ] 0.2 Owner confirms design §9 I1 (released links open 60 s every 10 min; a dropped parent escalates while not monitored).
+- [x] 0.2 Owner confirmed (2026-11-11) design §9 I1 (released links open 60 s every 10 min; a dropped parent escalates while not monitored).
 - [ ] 0.3 After `quiet-link-no-rtp` is archived: reword "Supervision lives only in the core Link" (Link or baby hub) and "Audio only on demand" (per link) as MODIFIED deltas here; `openspec validate --strict`.
 
 ## 1. Core
