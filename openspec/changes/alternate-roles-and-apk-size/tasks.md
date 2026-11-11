@@ -4,9 +4,9 @@ Branch `feat/alternate-roles-apk-size` from `origin/main`. Commit after each gro
 
 ## 1. Launcher icon and APK size
 
-- [ ] 1.1 Adaptive icon (`mipmap-anydpi-v26/ic_launcher.xml`, `ic_launcher_round.xml`, background colour, foreground and monochrome vectors in the safe zone) from the current crescent artwork; manifest `icon` and `roundIcon`; remove the old drawable. Verify: `aapt2 dump badging` on the debug APK names the icon.
-- [ ] 1.2 `packaging.jniLibs.useLegacyPackaging = true` in `app/build.gradle.kts` with a doc-link comment. Verify: libraries are deflated in the APK (`unzip -v`), `scripts/poc/release-check.sh` still passes.
-- [ ] 1.3 `dev-apk` job: delete `lib/x86_64/*` from the downloaded APK, `zipalign -P 16 -f 4`, then sign; the release notes say "arm64 phones only". Verify: actionlint (`just lint-workflows`).
+- [x] 1.1 Adaptive icon (`mipmap-anydpi-v26/ic_launcher.xml`, `ic_launcher_round.xml`, background colour, foreground and monochrome vectors in the safe zone) from the current crescent artwork; manifest `icon` and `roundIcon`; remove the old drawable. Verify: `aapt2 dump badging` on the debug APK names the icon.
+- [x] 1.2 `packaging.jniLibs.useLegacyPackaging = true` in `app/build.gradle.kts` with a doc-link comment. Verify: libraries are deflated in the APK (`unzip -v`), `scripts/poc/release-check.sh` still passes.
+- [x] 1.3 `dev-apk` job: delete `lib/x86_64/*` from the downloaded APK, `zipalign -P 16 -f 4`, then sign; the release notes say "arm64 phones only". Verify: actionlint (`just lint-workflows`).
 
 ## 2. Per-role state (platform, contract)
 
