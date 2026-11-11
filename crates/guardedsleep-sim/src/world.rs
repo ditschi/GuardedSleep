@@ -689,6 +689,21 @@ impl World {
                     }
                 }
             }
+            // What the baby's microphone hears (`levels`) and the level of the incoming talk audio
+            // (`talk_levels`): one sample every 100 ms for `for_ms`, like the platform's ~10 Hz.
+            "levels" | "talk_levels" => {
+                if let Some(a) = self.peer_ix(&st) {
+                    let rms = st.rms.unwrap_or(0.0);
+                    for i in 0..st.for_ms.unwrap_or(100) / 100 {
+                        let input = if st.verb == "levels" {
+                            LinkInput::AudioLevel { rms }
+                        } else {
+                            LinkInput::TalkLevel { rms }
+                        };
+                        self.push(self.now + i * 100, 2, Ev::Input { actor: a, input });
+                    }
+                }
+            }
             "network_down" => {
                 if let Some(a) = self.peer_ix(&st) {
                     self.actors[a].net_up = false;
@@ -1281,7 +1296,29 @@ impl World {
                     self.set_remote(a, attempt, &sdp);
                 }
                 LinkAction::SendData { attempt, text } => self.send_data(a, attempt, text),
-                LinkAction::AddIceCandidate { .. }
+                // The fake platform of talk-back: a healthy one. The chime takes 600 ms, the
+                // microphone attaches 30 ms after it was asked to; what the baby's microphone
+                // hears (`levels`, `talk_levels` verbs) is up to the scenario.
+                LinkAction::PlayTalkChime { attempt, .. } => self.push(
+                    self.now + 600,
+                    2,
+                    Ev::Input {
+                        actor: a,
+                        input: LinkInput::TalkChimeDone { attempt },
+                    },
+                ),
+                LinkAction::SetTalkMic { enabled: true, .. } => self.push(
+                    self.now + 30,
+                    2,
+                    Ev::Input {
+                        actor: a,
+                        input: LinkInput::TalkMicAttached,
+                    },
+                ),
+                LinkAction::SetTalkMic { .. }
+                | LinkAction::SetPlaybackDucked { .. }
+                | LinkAction::SetTalkPlayback { .. }
+                | LinkAction::AddIceCandidate { .. }
                 | LinkAction::SetMicEnabled { .. }
                 | LinkAction::ApplyQuiet
                 | LinkAction::SendProbeTone { .. } => {}

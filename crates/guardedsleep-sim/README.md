@@ -46,6 +46,7 @@ The same scanner serves the emulator gate (`scripts/poc/canary-scan.sh`, `gs-sim
 ## Scenarios (`scenarios/*.json`, `gs-scenario/1`)
 
 Verbs (`at` in simulated ms): `start`, `stop`, `end`, `acknowledge`, `input` (any `LinkInput`),
+`levels` and `talk_levels` (`peer`, `rms`, `for_ms`: the baby microphone's level and the incoming talk level, one `audio_level` / `talk_level` input every 100 ms; the fake platform answers `play_talk_chime` with `talk_chime_done` after 600 ms and `set_talk_mic` with `talk_mic_attached` after 30 ms),
 `network_down` / `network_up` (per `peer`; the platform emits `network_available` on up),
 `path_switch` (new address: old socket and media path stay dead), `signaling_down` /
 `signaling_up` (server restart), `kill_process`, `restart_process` (fresh `Link`,

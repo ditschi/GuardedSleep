@@ -184,6 +184,8 @@ pub struct Step {
     pub relay: Option<usize>,
     /// `input`: any `LinkInput` in its serde form.
     pub input: Option<Value>,
+    /// `levels`, `talk_levels`: the RMS (0..1) fed every 100 ms for `for_ms`.
+    pub rms: Option<f64>,
 }
 
 /// One check. The discriminating field is `event`, `never`, `state`, `max_level`,

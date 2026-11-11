@@ -381,7 +381,7 @@
       {
         "type": "send_data",
         "attempt": 1,
-        "text": "{\"type\":\"device_status\",\"v\":3,\"noise_threshold\":0.12}"
+        "text": "{\"type\":\"device_status\",\"v\":3,\"noise_threshold\":0.12,\"talk\":\"on\",\"talker\":\"none\"}"
       },
       {
         "type": "send_data",

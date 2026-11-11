@@ -155,7 +155,7 @@
       "input": {
         "type": "attempt_data_message",
         "attempt": 1,
-        "text": "{\"type\":\"device_status\",\"v\":3,\"noise_threshold\":0.12}"
+        "text": "{\"type\":\"device_status\",\"v\":3,\"noise_threshold\":0.12,\"talk\":\"on\",\"talker\":\"none\"}"
       }
     },
     {
@@ -439,7 +439,15 @@
         }
       }
     ],
-    [{ "type": "emit", "event": { "type": "peer_status", "status": { "noise_threshold": 0.12 } } }],
+    [
+      {
+        "type": "emit",
+        "event": {
+          "type": "peer_status",
+          "status": { "noise_threshold": 0.12, "talk": "on", "talker": "none" }
+        }
+      }
+    ],
     [
       {
         "type": "emit",

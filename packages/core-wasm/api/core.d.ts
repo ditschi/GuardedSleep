@@ -38,6 +38,27 @@ export interface DeviceStatus {
      * [`DeviceStatus::normalized`] and the parser, omitted on the wire when empty.
      */
     unit_warnings?: UnitWarning[];
+    /**
+     * Talk-back as this recipient sees it (set by the core of the baby, never by the platform).
+     */
+    talk?: TalkStatus;
+    /**
+     * Who talks right now, from this recipient's point of view (set by the core).
+     */
+    talker?: Talker;
+    /**
+     * Noise detection is paused while a talk plays (set by the core; omitted when not paused).
+     */
+    noise_paused?: boolean;
+    /**
+     * While a talk is denied for the cooldown or the budget: milliseconds until the next request
+     * can pass, counted from when this status was sent (set by the core).
+     */
+    talk_retry_in_ms?: number;
+    /**
+     * `uncertain` after three talks in a row that the playback check could not confirm.
+     */
+    talk_audible?: TalkAudible;
 }
 
 /**
@@ -58,10 +79,53 @@ export interface InviteMailbox {
 }
 
 /**
+ * Talk-back volume of the baby unit, a setting of the baby platform (`set_talk_back`).
+ */
+export type TalkLevel = "low" | "medium" | "high";
+
+/**
+ * The baby unit's playback check of one talk (`talk_playback`, `talk-back` "Playback check").
+ */
+export type PlaybackResult = "heard" | "unconfirmed" | "unknown";
+
+/**
+ * The talk state a parent UI shows (`LinkEvent::TalkChanged`).
+ */
+export type TalkState = { state: "requesting" } | { state: "talking"; until_ms: number } | { state: "ended"; reason: TalkEndReason } | { state: "denied"; reason: TalkDenyReason | null };
+
+/**
+ * Whether the baby unit lets this parent talk (`device_status.talk`, `talk-back` "Honest
+ * playability").
+ */
+export type TalkStatus = "on" | "off" | "muted" | "unsupported";
+
+/**
+ * Who talks to the child right now, from the recipient's point of view
+ * (`device_status.talker`).
+ */
+export type Talker = "none" | "you" | "other";
+
+/**
  * Why a baby unit may stop monitoring reliably (mainly a web/laptop baby). Variant order is the
  * stable wire order.
  */
 export type UnitWarning = "page_hidden" | "wake_lock_off" | "resumed_from_sleep" | "not_charging" | "mic_permission_lost";
+
+/**
+ * Why a talk ended on the parent (`TalkState::Ended`).
+ */
+export type TalkEndReason = "released" | "limit" | "no_answer" | "link_lost" | "mic_failed" | "alert" | "switched_off" | "stopped";
+
+/**
+ * Why the baby unit denied a `talk_request`. The retry hints are milliseconds from the denial.
+ */
+export type TalkDenyReason = { kind: "off" } | { kind: "unsupported" } | { kind: "muted" } | { kind: "busy" } | { kind: "cooldown"; retry_in_ms: number } | { kind: "budget"; retry_in_ms: number } | { kind: "rate" };
+
+/**
+ * `device_status.talk_audible`: the baby unit's own microphone could not hear three talks in a
+ * row, so the voice may not be audible there. A warning only, never a denial.
+ */
+export type TalkAudible = "ok" | "uncertain";
 
 export interface IceCandidate {
     candidate: string;
@@ -200,11 +264,11 @@ export type Dnd = "off" | "alarms_only" | "priority" | "total" | "unknown";
 
 export type Input = { type: "signaling_open" } | { type: "signaling_message"; text: string } | { type: "signaling_closed" } | { type: "local_description"; sdp_type: string; sdp: string } | { type: "local_ice_candidate"; candidate: IceCandidate } | { type: "data_channel_open" } | { type: "data_channel_message"; text: string } | { type: "data_channel_closed" } | { type: "peer_connection_state"; state: string } | { type: "audio_level"; rms: number } | { type: "set_listen"; enabled: boolean } | { type: "request_probe" } | { type: "tick" } | { type: "close" };
 
-export type LinkAction = { type: "open_mailbox"; id: MailboxId; kind: MailboxKind; url: string } | { type: "mailbox_send"; id: MailboxId; frame: string } | { type: "close_mailbox"; id: MailboxId } | { type: "create_attempt"; attempt: number; offerer: boolean; ice_servers?: IceServer[] } | { type: "close_attempt"; attempt: number } | { type: "create_offer"; attempt: number } | { type: "set_remote_description"; attempt: number; sdp_type: string; sdp: string } | { type: "create_answer"; attempt: number } | { type: "add_ice_candidate"; attempt: number; candidate: IceCandidate } | { type: "send_data"; attempt: number; text: string } | { type: "set_mic_enabled"; enabled: boolean } | { type: "apply_quiet" } | { type: "send_probe_tone"; duration_ms: number } | { type: "emit"; event: LinkEvent };
+export type LinkAction = { type: "open_mailbox"; id: MailboxId; kind: MailboxKind; url: string } | { type: "mailbox_send"; id: MailboxId; frame: string } | { type: "close_mailbox"; id: MailboxId } | { type: "create_attempt"; attempt: number; offerer: boolean; ice_servers?: IceServer[] } | { type: "close_attempt"; attempt: number } | { type: "create_offer"; attempt: number } | { type: "set_remote_description"; attempt: number; sdp_type: string; sdp: string } | { type: "create_answer"; attempt: number } | { type: "add_ice_candidate"; attempt: number; candidate: IceCandidate } | { type: "send_data"; attempt: number; text: string } | { type: "set_mic_enabled"; enabled: boolean } | { type: "apply_quiet" } | { type: "send_probe_tone"; duration_ms: number } | { type: "set_talk_mic"; attempt: number; enabled: boolean } | { type: "set_playback_ducked"; attempt: number; ducked: boolean } | { type: "play_talk_chime"; attempt: number; level: TalkLevel } | { type: "set_talk_playback"; attempt: number; enabled: boolean; level: TalkLevel; fade_in_ms: number; until_ms: number } | { type: "emit"; event: LinkEvent };
 
-export type LinkEvent = { type: "status"; status: LinkStatus } | { type: "link_lost"; down_ms: number } | { type: "link_restored"; down_ms: number } | { type: "security_warning"; key: string } | { type: "peer_stopped" } | { type: "alarm_acknowledged"; until_ms: number } | { type: "noise_alert"; rms: number; probe: boolean; snoozed: boolean } | { type: "noise_escalated"; after_ms: number } | { type: "peer_heartbeat"; seq: number; rms: number | null } | { type: "peer_status"; status: DeviceStatus } | { type: "low_battery"; pct: number; critical: boolean } | { type: "charger_unplugged" } | { type: "missed_events"; count: number; max_rms: number; complete: boolean; down_ms: number } | { type: "noise_gate_changed"; threshold: number; hold_ms: number } | { type: "listen_changed"; enabled: boolean } | { type: "failed"; reason: string } | { type: "parent_pinned"; secret: string; window_until_s?: number } | { type: "parent_connected"; name: string } | { type: "mailboxes_updated"; mailboxes: InviteMailbox[] } | { type: "hint"; key: string; active: boolean };
+export type LinkEvent = { type: "status"; status: LinkStatus } | { type: "link_lost"; down_ms: number } | { type: "link_restored"; down_ms: number } | { type: "security_warning"; key: string } | { type: "peer_stopped" } | { type: "alarm_acknowledged"; until_ms: number } | { type: "noise_alert"; rms: number; probe: boolean; snoozed: boolean } | { type: "noise_escalated"; after_ms: number } | { type: "peer_heartbeat"; seq: number; rms: number | null } | { type: "peer_status"; status: DeviceStatus } | { type: "low_battery"; pct: number; critical: boolean } | { type: "charger_unplugged" } | { type: "missed_events"; count: number; max_rms: number; complete: boolean; down_ms: number } | { type: "noise_gate_changed"; threshold: number; hold_ms: number } | { type: "listen_changed"; enabled: boolean } | { type: "failed"; reason: string } | { type: "parent_pinned"; secret: string; window_until_s?: number } | { type: "parent_connected"; name: string } | { type: "mailboxes_updated"; mailboxes: InviteMailbox[] } | { type: "hint"; key: string; active: boolean } | { type: "talk_changed"; state: TalkState } | { type: "talk_active"; active: boolean; duration_ms: number } | { type: "noise_paused"; paused: boolean } | { type: "talk_playback"; result: PlaybackResult };
 
-export type LinkInput = { type: "start"; entropy: number } | { type: "wall_clock"; unix_s: number } | { type: "stop" } | { type: "acknowledge_alarm" } | { type: "network_available" } | { type: "mailbox_opened"; id: MailboxId } | { type: "mailbox_closed"; id: MailboxId; reason: string } | { type: "mailbox_frame"; id: MailboxId; bytes: string } | { type: "attempt_local_description"; attempt: number; sdp_type: string; sdp: string } | { type: "attempt_local_ice"; attempt: number; candidate: IceCandidate } | { type: "attempt_data_open"; attempt: number } | { type: "attempt_data_message"; attempt: number; text: string } | { type: "attempt_data_closed"; attempt: number } | { type: "attempt_dtls_fingerprint"; attempt: number; fingerprint: string } | { type: "attempt_pc_state"; attempt: number; state: string } | { type: "audio_level"; rms: number } | { type: "device_status"; status: DeviceStatus } | { type: "set_noise_gate"; threshold: number; hold_ms: number } | { type: "set_listen"; enabled: boolean } | { type: "request_probe" } | { type: "set_snooze"; until_ms: number | null } | { type: "set_noise_escalation"; after_ms: number | null } | { type: "acknowledge_noise" } | { type: "request_quiet" } | { type: "quiet_applied"; state: DeviceStatus } | { type: "tick" };
+export type LinkInput = { type: "start"; entropy: number } | { type: "wall_clock"; unix_s: number } | { type: "stop" } | { type: "acknowledge_alarm" } | { type: "network_available" } | { type: "mailbox_opened"; id: MailboxId } | { type: "mailbox_closed"; id: MailboxId; reason: string } | { type: "mailbox_frame"; id: MailboxId; bytes: string } | { type: "attempt_local_description"; attempt: number; sdp_type: string; sdp: string } | { type: "attempt_local_ice"; attempt: number; candidate: IceCandidate } | { type: "attempt_data_open"; attempt: number } | { type: "attempt_data_message"; attempt: number; text: string } | { type: "attempt_data_closed"; attempt: number } | { type: "attempt_dtls_fingerprint"; attempt: number; fingerprint: string } | { type: "attempt_pc_state"; attempt: number; state: string } | { type: "audio_level"; rms: number } | { type: "device_status"; status: DeviceStatus } | { type: "set_noise_gate"; threshold: number; hold_ms: number } | { type: "set_listen"; enabled: boolean } | { type: "request_probe" } | { type: "set_snooze"; until_ms: number | null } | { type: "set_noise_escalation"; after_ms: number | null } | { type: "acknowledge_noise" } | { type: "request_quiet" } | { type: "quiet_applied"; state: DeviceStatus } | { type: "set_talk"; pressed: boolean } | { type: "talk_mic_attached" } | { type: "talk_mic_failed" } | { type: "alert_preempts_talk" } | { type: "talk_chime_done"; attempt: number } | { type: "set_talk_back"; enabled: boolean; level: TalkLevel; chime: boolean } | { type: "talk_settings_opened" } | { type: "set_talk_muted"; muted: boolean } | { type: "set_raw_capture"; raw: boolean } | { type: "talk_rtp_outside_grant"; attempt: number } | { type: "talk_level"; rms: number } | { type: "tick" };
 
 export type LinkState = "connecting" | "connected" | "reconnecting" | "peer_stopped" | "failed_needs_user" | "stopped";
 
