@@ -89,6 +89,8 @@ enum BabyPhase {
 struct BabyTalk {
     attempt: u32,
     id: u64,
+    /// The talk's length limit: 30 s, or less when the budget of the noise pauses is nearly used.
+    max_ms: u64,
     phase: BabyPhase,
     /// When the voice started (the grant), for the duration the baby unit shows.
     voice_at: Option<u64>,
@@ -586,18 +588,21 @@ impl Link {
             return;
         }
         let verdict = self.talk_verdict(now);
-        if let Err(reason) = verdict {
-            self.send_app(
-                &DataMessage::TalkDeny {
-                    id,
-                    reason: Some(reason),
-                },
-                out,
-            );
-            // The cooldown or budget wait just changed what the parents may see.
-            self.flush_status(out);
-            return;
-        }
+        let max_ms = match verdict {
+            Ok(max_ms) => max_ms,
+            Err(reason) => {
+                self.send_app(
+                    &DataMessage::TalkDeny {
+                        id,
+                        reason: Some(reason),
+                    },
+                    out,
+                );
+                // The cooldown or budget wait just changed what the parents may see.
+                self.flush_status(out);
+                return;
+            }
+        };
         // Accepted: the noise gate pauses from the chime on. The room before the talk is the
         // baseline of the playback check; the `mic_silent` count starts over.
         self.talk.arb.begin_pause(now);
@@ -615,6 +620,7 @@ impl Link {
         self.talk.baby = Some(BabyTalk {
             attempt,
             id,
+            max_ms,
             phase: BabyPhase::Chime {
                 deadline: now + TALK_CHIME_TIMEOUT_MS,
             },
@@ -636,7 +642,7 @@ impl Link {
 
     /// The baby's answer to a request, in this order: the per-link rate, a parent without a talk
     /// line, the switch, honest playability, then the arbitration (one talker, cooldown, budget).
-    fn talk_verdict(&mut self, now: u64) -> Result<(), TalkDenyReason> {
+    fn talk_verdict(&mut self, now: u64) -> Result<u64, TalkDenyReason> {
         self.talk.arb.rate(now)?;
         if !self.talk_line_ok() {
             return Err(TalkDenyReason::Unsupported);
@@ -656,7 +662,8 @@ impl Link {
         let Some(t) = self.talk.baby.as_mut() else {
             return;
         };
-        let until = now + TALK_MAX_MS;
+        let max_ms = t.max_ms;
+        let until = now + max_ms;
         t.phase = BabyPhase::Playing {
             until,
             drain_until: None,
@@ -671,13 +678,7 @@ impl Link {
             fade_in_ms: TALK_FADE_IN_MS,
             until_ms: until,
         });
-        self.send_app(
-            &DataMessage::TalkGrant {
-                id,
-                max_ms: TALK_MAX_MS,
-            },
-            out,
-        );
+        self.send_app(&DataMessage::TalkGrant { id, max_ms }, out);
         emit(
             out,
             LinkEvent::TalkActive {

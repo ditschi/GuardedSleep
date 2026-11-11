@@ -1401,3 +1401,89 @@ fn what_each_side_sends_as_the_reason() {
     w.stop(PARENT);
     assert_eq!(reasons(&w, PARENT), vec![json!("link")]);
 }
+
+// ---- the budget clamps the grant --------------------------------------------------------------------------
+
+#[test]
+fn a_nearly_used_budget_shortens_the_grant_and_its_deadline_ends_the_talk_with_limit() {
+    let mut w = talk_world();
+    // Two full talks: about 0.6 + 30 + 2 s of pause each.
+    for _ in 0..2 {
+        start_talk(&mut w, 0.01);
+        level(&mut w, 31_000, 0.01, Some(0.3));
+        room(&mut w, 14_000, 0.01);
+    }
+    let grants_before = data(&w, BABY, "talk_grant").len();
+    let granted = start_talk(&mut w, 0.01);
+    let grants = data(&w, BABY, "talk_grant");
+    assert_eq!(grants.len(), grants_before + 1);
+    let max_ms = grants.last().unwrap().1["max_ms"].as_u64().unwrap();
+    // 90 s minus about 65 s used minus the chime timeout and the tail: well under 30 s.
+    assert!((18_000..=22_500).contains(&max_ms), "{max_ms}");
+    // The lease ends at the clamped deadline, and the parent sees the limit.
+    let lease = playback_calls(&w).into_iter().rev().find(|c| c.1).unwrap();
+    assert_eq!(lease.2, granted + max_ms);
+    level(&mut w, max_ms - 500, 0.01, Some(0.3));
+    assert!(!matches!(last_state(&w), Some(TalkState::Ended { .. })));
+    level(&mut w, 1_000, 0.01, Some(0.3));
+    assert_eq!(
+        last_state(&w),
+        Some(TalkState::Ended {
+            reason: TalkEndReason::Limit
+        })
+    );
+    assert!(!playback_calls(&w).last().unwrap().1);
+}
+
+#[test]
+fn chained_talks_never_pause_the_gate_for_more_than_ninety_seconds_in_ten_minutes() {
+    let mut w = talk_world();
+    let mut pauses: Vec<(u64, Option<u64>)> = Vec::new();
+    let mut paused_since: Option<u64> = None;
+    // The parent holds every talk to its end, as often as the baby lets it.
+    let end = w.now + 900_000;
+    while w.now < end {
+        press(&mut w);
+        for _ in 0..400 {
+            level(&mut w, 100, 0.01, Some(0.3));
+            if w.nodes[PARENT]
+                .talk_actions
+                .iter()
+                .any(|(_, a)| matches!(a, LinkAction::SetTalkMic { enabled: true, .. }))
+                && matches!(last_state(&w), Some(TalkState::Talking { .. }) | None)
+            {
+                w.input(PARENT, LinkInput::TalkMicAttached);
+            }
+            let paused = last_peer_status(&w).noise_paused == Some(true);
+            match (paused, paused_since) {
+                (true, None) => paused_since = Some(w.now),
+                (false, Some(s)) => {
+                    pauses.push((s, Some(w.now)));
+                    paused_since = None;
+                }
+                _ => {}
+            }
+            if matches!(
+                last_state(&w),
+                Some(TalkState::Ended { .. } | TalkState::Denied { .. })
+            ) {
+                break;
+            }
+        }
+        release(&mut w);
+        level(&mut w, 1_000, 0.01, None);
+    }
+    assert!(pauses.len() >= 8, "{} pauses", pauses.len());
+    for (start, _) in &pauses {
+        let used: u64 = pauses
+            .iter()
+            .filter_map(|(s, e)| Some((*s, (*e)?)))
+            .map(|(s, e)| e.min(start + 600_000).saturating_sub(s.max(*start)))
+            .sum();
+        // The status shows the pause with the tick of the platform feed: allow its 100 ms steps.
+        assert!(
+            used <= 90_000 + 100 * pauses.len() as u64,
+            "{used} ms from {start}"
+        );
+    }
+}

@@ -45,6 +45,9 @@ pub const TALK_COOLDOWN_MIN_MS: u64 = 10_000;
 pub const TALK_BUDGET_MS: u64 = 90_000;
 /// ... in any window of this length.
 pub const TALK_BUDGET_WINDOW_MS: u64 = 600_000;
+/// A grant is clamped to what is left of the budget after the chime and the tail; with less than
+/// this left, the request is denied as `budget` instead.
+pub const TALK_MIN_GRANT_MS: u64 = 5_000;
 /// A parent that was not listening listens this long after releasing the talk button.
 pub const TALK_AFTER_LISTEN_MS: u64 = 10_000;
 /// The voice fades in over this long on the baby unit.
@@ -169,8 +172,14 @@ impl TalkArbiter {
         }
     }
 
-    /// One talker, then the cooldown, then the budget. `Ok` means the request may start a pause.
-    pub fn admit(&mut self, now: u64, hold_ms: u64) -> Result<(), TalkDenyReason> {
+    /// What a pause costs besides the talk itself: the chime (at most its timeout) and the tail.
+    const PAUSE_OVERHEAD_MS: u64 = TALK_CHIME_TIMEOUT_MS + TALK_NOISE_TAIL_MS;
+
+    /// One talker, then the cooldown, then the budget. `Ok(max_ms)` means the request may start a
+    /// pause, and the talk may last `max_ms` at most: [`TALK_MAX_MS`], or less when that would
+    /// take the pauses of the window over [`TALK_BUDGET_MS`] (chime and tail included). With less
+    /// than [`TALK_MIN_GRANT_MS`] left the request is denied as `budget`.
+    pub fn admit(&mut self, now: u64, hold_ms: u64) -> Result<u64, TalkDenyReason> {
         self.prune(now);
         match self.pause {
             Some(Pause { end_at: None, .. }) => return Err(TalkDenyReason::Busy),
@@ -189,12 +198,15 @@ impl TalkArbiter {
                 retry_in_ms: self.cooldown_until - now,
             });
         }
-        if self.used_ms(now) >= TALK_BUDGET_MS {
+        let left = TALK_BUDGET_MS
+            .saturating_sub(self.used_ms(now))
+            .saturating_sub(Self::PAUSE_OVERHEAD_MS);
+        if left < TALK_MIN_GRANT_MS {
             return Err(TalkDenyReason::Budget {
                 retry_in_ms: self.budget_retry_ms(now),
             });
         }
-        Ok(())
+        Ok(left.min(TALK_MAX_MS))
     }
 
     /// Why a request would not pass right now, ignoring the rate and a running talk: the status the
@@ -202,7 +214,7 @@ impl TalkArbiter {
     pub fn blocked(&self, now: u64, hold_ms: u64) -> Option<TalkDenyReason> {
         let mut probe = self.clone();
         match probe.admit(now, hold_ms) {
-            Err(TalkDenyReason::Busy) | Ok(()) => None,
+            Err(TalkDenyReason::Busy) | Ok(_) => None,
             Err(reason) => Some(reason),
         }
     }
@@ -266,14 +278,12 @@ impl TalkArbiter {
             .fold(running, |sum, (s, e)| sum.saturating_add(overlap(*s, *e)))
     }
 
-    /// How long until the used budget drops below [`TALK_BUDGET_MS`] as old pauses age out of the
-    /// window.
+    /// How long until a grant of at least [`TALK_MIN_GRANT_MS`] fits again as old pauses age out
+    /// of the window.
     fn budget_retry_ms(&self, now: u64) -> u64 {
         let from = now.saturating_sub(TALK_BUDGET_WINDOW_MS);
-        let mut excess = self
-            .used_ms(now)
-            .saturating_sub(TALK_BUDGET_MS)
-            .saturating_add(1);
+        let fits = TALK_BUDGET_MS - Self::PAUSE_OVERHEAD_MS - TALK_MIN_GRANT_MS;
+        let mut excess = self.used_ms(now).saturating_sub(fits);
         for (s, e) in &self.done {
             let start = (*s).max(from);
             let len = (*e).saturating_sub(start);
@@ -484,7 +494,7 @@ mod tests {
     #[test]
     fn one_talker_a_tail_then_the_cooldown() {
         let mut a = TalkArbiter::default();
-        assert_eq!(a.admit(0, HOLD), Ok(()));
+        assert_eq!(a.admit(0, HOLD), Ok(TALK_MAX_MS));
         a.begin_pause(0);
         assert!(a.is_paused() && a.talk_running());
         assert_eq!(a.admit(1_000, HOLD), Err(TalkDenyReason::Busy));
@@ -505,7 +515,7 @@ mod tests {
             a.admit(8_000, HOLD),
             Err(TalkDenyReason::Cooldown { retry_in_ms: 9_000 })
         );
-        assert_eq!(a.admit(17_000, HOLD), Ok(()));
+        assert_eq!(a.admit(17_000, HOLD), Ok(TALK_MAX_MS));
     }
 
     #[test]
@@ -520,7 +530,7 @@ mod tests {
                 retry_in_ms: 16_000
             })
         );
-        assert_eq!(a.admit(18_000, 15_000), Ok(()));
+        assert_eq!(a.admit(18_000, 15_000), Ok(TALK_MAX_MS));
     }
 
     #[test]
@@ -534,30 +544,65 @@ mod tests {
         assert_eq!(a.used_ms(60_000), 2_000);
     }
 
+    /// A pause as the baby makes it: a chime of `chime` ms, a talk of `talk` ms, the tail.
+    fn pause(a: &mut TalkArbiter, start: u64, chime: u64, talk: u64) -> u64 {
+        a.begin_pause(start);
+        a.playback_ended(start + chime + talk);
+        let end = start + chime + talk + TALK_NOISE_TAIL_MS;
+        assert!(a.tick(end, HOLD));
+        end
+    }
+
     #[test]
-    fn the_budget_denies_after_ninety_seconds_and_says_when_it_frees_up() {
+    fn the_budget_clamps_the_third_talk_then_denies_and_says_when_it_frees_up() {
         let mut a = TalkArbiter::default();
-        // Three 30 s pauses (28 s of talk plus the 2 s tail), 20 s apart: 90 s at 100 s.
-        let mut t = 0;
-        for _ in 0..3 {
-            assert_eq!(a.admit(t, HOLD), Ok(()));
-            a.begin_pause(t);
-            a.playback_ended(t + 28_000);
-            assert!(a.tick(t + 30_000, HOLD));
-            t += 50_000;
-        }
-        // Now = 150 s; used 90 s: the oldest pause (0..30 s) frees up first.
+        // Two full talks (1.5 s chime, 30 s, 2 s tail = 33.5 s each), 50 s apart.
+        assert_eq!(a.admit(0, HOLD), Ok(TALK_MAX_MS));
+        pause(&mut a, 0, 1_500, 30_000);
+        assert_eq!(a.admit(50_000, HOLD), Ok(TALK_MAX_MS));
+        pause(&mut a, 50_000, 1_500, 30_000);
+        // 67 s used: 90 - 67 - 3.5 = 19.5 s are left for the voice.
+        assert_eq!(a.used_ms(100_000), 67_000);
+        let max = a.admit(100_000, HOLD).unwrap();
+        assert_eq!(max, 19_500);
+        // The worst case (full chime, the whole clamped talk, tail) fills the budget exactly.
+        pause(&mut a, 100_000, 1_500, max);
         let now = 150_000;
-        assert_eq!(a.used_ms(now), 90_000);
+        assert_eq!(a.used_ms(now), TALK_BUDGET_MS);
         let Err(TalkDenyReason::Budget { retry_in_ms }) = a.admit(now, HOLD) else {
             panic!("budget")
         };
-        // One millisecond below the budget is reached 1 ms after the window passed the start
-        // of the oldest pause.
-        assert_eq!(retry_in_ms, 600_000 + 1 - now);
-        assert!(a.used_ms(now + retry_in_ms) < TALK_BUDGET_MS);
-        assert_eq!(a.admit(now + retry_in_ms, HOLD), Ok(()));
-        assert!(a.used_ms(now + retry_in_ms - 1) >= TALK_BUDGET_MS);
+        // 8.5 s too much for a 5 s grant: the oldest pause (0..33.5 s) frees up first.
+        assert_eq!(retry_in_ms, 600_000 + 8_500 - now);
+        assert_eq!(a.admit(now + retry_in_ms, HOLD), Ok(TALK_MIN_GRANT_MS));
+        assert!(matches!(
+            a.admit(now + retry_in_ms - 1, HOLD),
+            Err(TalkDenyReason::Budget { .. })
+        ));
+    }
+
+    #[test]
+    fn the_boundary_is_a_grant_of_exactly_five_seconds() {
+        // 81 500 ms used leave 90 000 - 81 500 - 3 500 = 5 000 ms: granted, clamped to 5 s.
+        let mut a = TalkArbiter::default();
+        pause(&mut a, 0, 0, 79_500);
+        assert_eq!(a.used_ms(100_000), 81_500);
+        assert_eq!(a.admit(100_000, HOLD), Ok(5_000));
+        // One millisecond more and it is denied, with a hint of one millisecond of ageing.
+        let mut a = TalkArbiter::default();
+        pause(&mut a, 0, 0, 79_501);
+        assert_eq!(
+            a.admit(100_000, HOLD),
+            Err(TalkDenyReason::Budget {
+                retry_in_ms: 600_000 + 1 - 100_000
+            })
+        );
+        assert_eq!(a.admit(600_001, HOLD), Ok(5_000));
+        // The blocked status says the same.
+        assert!(matches!(
+            a.blocked(100_000, HOLD),
+            Some(TalkDenyReason::Budget { .. })
+        ));
     }
 
     #[test]
@@ -565,21 +610,58 @@ mod tests {
         let mut a = TalkArbiter::default();
         // 23 pauses of 4 s (2 s of talk and the tail), 20 s apart: 92 s in the window.
         for i in 0..23 {
-            let t = i * 20_000;
-            a.begin_pause(t);
-            a.playback_ended(t + 2_000);
-            assert!(a.tick(t + 4_000, HOLD));
+            pause(&mut a, i * 20_000, 0, 2_000);
         }
         let now = 460_000;
         let Err(TalkDenyReason::Budget { retry_in_ms }) = a.admit(now, HOLD) else {
             panic!("budget");
         };
-        // 2 s over the budget (92 s used): the first pause leaves the window one millisecond per
-        // millisecond from `start + window` on, so it takes 2 001 ms of it to get below.
+        // 92 s used, 81.5 s fit: 10.5 s have to age out, 4 s from each of the first two pauses
+        // and 2.5 s of the third (it starts at 40 s).
         assert_eq!(a.used_ms(now), 92_000);
-        assert_eq!(retry_in_ms, 600_000 + 2_001 - now);
-        assert!(a.used_ms(now + retry_in_ms) < TALK_BUDGET_MS);
-        assert!(a.used_ms(now + retry_in_ms - 1) >= TALK_BUDGET_MS);
+        assert_eq!(retry_in_ms, 600_000 + 40_000 + 2_500 - now);
+        assert!(a.admit(now + retry_in_ms, HOLD).is_ok());
+        assert!(a.admit(now + retry_in_ms - 1, HOLD).is_err());
+    }
+
+    mod chained {
+        use super::*;
+        use proptest::prelude::*;
+
+        proptest! {
+            /// Whatever the presses do (any gaps, any holds, chimes of any length up to the
+            /// timeout), the pauses of every 10-minute window stay within the budget.
+            #[test]
+            fn pauses_never_exceed_the_budget_in_any_window(
+                presses in proptest::collection::vec((0u64..60_000, 0u64..40_000, 0u64..=1_500), 1..120),
+                hold in 800u64..15_000,
+            ) {
+                let mut a = TalkArbiter::default();
+                let mut now = 0u64;
+                let mut pauses: Vec<(u64, u64)> = Vec::new();
+                for (gap, wanted, chime) in presses {
+                    now += gap;
+                    if a.rate(now).is_err() {
+                        continue;
+                    }
+                    if let Ok(max) = a.admit(now, hold) {
+                        prop_assert!((TALK_MIN_GRANT_MS..=TALK_MAX_MS).contains(&max));
+                        let talk = wanted.min(max);
+                        let end = pause(&mut a, now, chime, talk);
+                        pauses.push((now, end));
+                        now = end;
+                    }
+                }
+                // Every window that starts at a pause start (the worst ones) holds at most 90 s.
+                for (start, _) in &pauses {
+                    let used: u64 = pauses
+                        .iter()
+                        .map(|(s, e)| (*e).min(start + TALK_BUDGET_WINDOW_MS).saturating_sub((*s).max(*start)))
+                        .sum();
+                    prop_assert!(used <= TALK_BUDGET_MS, "{used} ms in the window from {start}");
+                }
+            }
+        }
     }
 
     #[test]
@@ -590,7 +672,7 @@ mod tests {
         assert!(a.tick(30_000, HOLD));
         assert_eq!(a.used_ms(30_000), 30_000);
         assert_eq!(a.used_ms(630_000), 0);
-        assert_eq!(a.admit(630_000, HOLD), Ok(()));
+        assert_eq!(a.admit(630_000, HOLD), Ok(TALK_MAX_MS));
         assert!(a.done.is_empty(), "pruned");
     }
 
