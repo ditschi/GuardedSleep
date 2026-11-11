@@ -205,9 +205,15 @@ jobs:
           mkdir -p "$WORK/out"
           # The password goes through the environment, not the command line (visible in ps).
           export KS_PASS="$KEYSTORE_PASSWORD"
+          # Phones run arm64 only: drop the x86_64 libraries (emulator gate only) from a copy, align
+          # (16 KB pages for the stored entries) and sign last, since alignment breaks signatures.
+          # https://developer.android.com/guide/practices/page-sizes
+          cp "$WORK/in/app-debug.apk" "$WORK/arm64.apk"
+          zip -q -d "$WORK/arm64.apk" 'lib/x86_64/*'
+          "$ANDROID_HOME/build-tools/36.0.0/zipalign" -P 16 -f 4 "$WORK/arm64.apk" "$WORK/aligned.apk"
           "$apksigner" sign --ks "$WORK/dev.p12" --ks-type PKCS12 --ks-key-alias "$KEY_ALIAS" \
             --ks-pass env:KS_PASS --key-pass env:KS_PASS \
-            --out "$WORK/out/$APK_NAME" "$WORK/in/app-debug.apk"
+            --out "$WORK/out/$APK_NAME" "$WORK/aligned.apk"
           "$apksigner" verify --print-certs "$WORK/out/$APK_NAME"
           (cd "$WORK/out" && sha256sum "$APK_NAME" > "$APK_NAME.sha256")
       - name: Release notes
@@ -226,6 +232,8 @@ jobs:
             echo "It passed the emulator gate, then was re-signed with the project dev key. It updates in place over"
             echo "earlier dev builds, but not over a Play or release build (different signing key): uninstall first,"
             echo "which deletes the pairing."
+            echo
+            echo "The APK holds the arm64-v8a libraries only: it installs on arm64 phones, not on x86_64 emulators."
             echo
             echo "SHA-256: \`$digest\`"
           } > "$WORK/notes.md"

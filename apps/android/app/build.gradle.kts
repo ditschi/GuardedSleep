@@ -39,6 +39,12 @@ android {
     // https://developer.android.com/guide/app-bundle/configure-base#handle_language_changes
     bundle { language { enableSplit = false } }
 
+    // Store native libraries compressed in the APK (about 40 % of their size); the installer
+    // extracts them, so the installed size grows by the library size. AGP 8+ defaults to
+    // uncompressed (page-aligned, mapped from the APK). Doc:
+    // https://developer.android.com/build/releases/past-releases/agp-4-2-0-release-notes#compress-native-libs-dsl
+    packaging { jniLibs { useLegacyPackaging = true } }
+
     testOptions { unitTests.isIncludeAndroidResources = true }
 }
 

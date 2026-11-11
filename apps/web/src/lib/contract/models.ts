@@ -248,7 +248,10 @@ export interface SettingsState {
 export type DeviceCheck = "unknown" | "ok" | "limited" | "not_recommended";
 
 export interface AppState {
+  /** The session role; null shows the role screen. */
   role: Role | null;
+  /** "Start mode": the role a start without monitoring opens in; null asks every time. */
+  defaultRole: Role | null;
   onboardingDone: boolean;
   /** A saved pairing exists (home screen shows one-tap start). */
   paired: boolean;
@@ -356,6 +359,7 @@ export function defaultSettings(): SettingsState {
 export function defaultAppState(): AppState {
   return {
     role: null,
+    defaultRole: null,
     onboardingDone: false,
     paired: false,
     peerName: null,

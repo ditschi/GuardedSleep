@@ -39,7 +39,12 @@ export interface AppController {
    */
   readonly pageGuard: Readable<PageGuardState>;
 
-  chooseRole(role: Role): void;
+  /** Sets the session role; `makeDefault` also stores it as the start mode. */
+  chooseRole(role: Role, makeDefault?: boolean): void;
+  /** Back to the role screen without changing the start mode; no-op while monitoring. */
+  switchMode(): void;
+  /** Sets the start mode: a role, or null for "Ask every time". */
+  setDefaultRole(role: Role | null): void;
   completeOnboarding(): void;
   startPairing(): void;
   cancelPairing(): void;

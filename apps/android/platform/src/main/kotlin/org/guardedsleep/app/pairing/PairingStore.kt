@@ -1,6 +1,7 @@
 package org.guardedsleep.app.pairing
 
 import java.io.File
+import org.guardedsleep.app.ui.model.Role
 import org.json.JSONArray
 import org.json.JSONObject
 import uniffi.guardedsleep_core.InviteMailbox
@@ -203,4 +204,37 @@ class PairingStore(file: File, cipher: PairingCipher) {
 
     /** Deletes the file and the key alias. */
     @Synchronized fun clear() = sealed.clear()
+}
+
+/**
+ * The stored pairings of this phone: at most one as baby unit and one as parent unit, each in its
+ * own sealed file under its own Keystore key, so forgetting one never touches the other. Only the
+ * pairing of the session role is used.
+ */
+class RolePairings(
+    private val stores: Map<Role, PairingStore>,
+    /** The single-role file of the previous layout; null when there is none to migrate. */
+    private val legacy: PairingStore? = null,
+) {
+    operator fun get(role: Role): PairingStore =
+        checkNotNull(stores[role]) { "no pairing slot for $role" }
+
+    /**
+     * Moves the legacy single pairing into the slot of [role] (the role the install had chosen),
+     * once. The pairing is sealed again under the slot's key, then the legacy file and key are
+     * deleted. A failure or an unreadable legacy file keeps it, so the next start retries.
+     */
+    @Synchronized
+    fun migrateLegacy(role: Role?) {
+        val legacy = legacy ?: return
+        if (role == null || !legacy.exists()) return
+        val target = this[role]
+        if (target.exists()) {
+            // An earlier run copied it and only the cleanup is missing.
+            legacy.clear()
+            return
+        }
+        val loaded = legacy.loadResult() as? PairingLoad.Loaded ?: return
+        if (runCatching { target.save(loaded.pairing) }.isSuccess) legacy.clear()
+    }
 }

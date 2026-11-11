@@ -118,7 +118,6 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 
 ### device-setup
 
-- `IDEA` Role switching in the UI: switching to baby mode warns that the microphone will be active and asks for confirmation; switching to parent is immediate; "Start as [last role]?" on start. Today the role is chosen once (a different role deletes the pairing) and there is no switch UI.
 - `DEFERRED` Auto-resume baby monitoring after a reboot: Android 14+ does not let a microphone foreground service start from the background (ADR-017 §9, ADR-018); "baby phone reboots overnight" stays a must-pass hardware scenario where the parent reaches level 2. `IDEA` (Phase 2) the same for the parent, more conservative.
 - `IDEA` Tell the parent when the baby kiosk is unlocked ("Baby unit was unlocked"); with multi-parent, show "Add device" on the baby unit only after kiosk unlock and confirmation.
 - `IDEA` OEM check: count heartbeats for about 30 minutes after battery-optimisation setup and warn if the OS seems to kill the app (ADR-018 T2 "30-minute heartbeat self-check").
@@ -144,6 +143,7 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 ### web-client
 
 - `IDEA` Discreet alert style in the browser once the browser can vibrate (today a browser parent always plays the child's audio; `add-discreet-alert-profile` offers the style on Android only).
+- `IDEA` Web-client parity for the Android role model (`alternate-roles-and-apk-size`): session role with "Start mode" and "Switch mode", and one pairing per role. The web client keeps its current role flow and holds pairings in memory only.
 
 ### i18n
 

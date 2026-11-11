@@ -213,9 +213,21 @@ export class WebController implements AppController {
 
   // ---- app ---------------------------------------------------------------------------------
 
-  chooseRole(role: Role): void {
+  // The web client keeps one in-memory pairing, so a role change still forgets it; per-role
+  // pairings and a stored start mode are the web-parity IDEA in docs/backlog.md.
+  chooseRole(role: Role, makeDefault = false): void {
     if (this.appState.role !== null && this.appState.role !== role) this.forgetPairing();
-    this.setApp({ role });
+    this.setApp({ role, defaultRole: makeDefault ? role : this.appState.defaultRole });
+  }
+
+  switchMode(): void {
+    if (this.appState.monitoring) return;
+    this.cancelPairing();
+    this.setApp({ role: null });
+  }
+
+  setDefaultRole(role: Role | null): void {
+    this.setApp({ defaultRole: role });
   }
 
   completeOnboarding(): void {

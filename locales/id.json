@@ -118,7 +118,8 @@
           "title": "Perangkat orang tua",
           "hint": "Tetap bersama Anda dan memberi peringatan."
         },
-        "orderHint": "Siapkan perangkat bayi terlebih dahulu."
+        "orderHint": "Siapkan perangkat bayi terlebih dahulu.",
+        "defaultToggle": "Gunakan sebagai default"
       },
       "setup": {
         "title": "Siapkan perangkat ini",
@@ -210,7 +211,8 @@
         },
         "lastUsed": "Terakhir dipakai {time}",
         "newPairing": "Siapkan perangkat baru",
-        "empty": "Belum ada perangkat yang dipasangkan."
+        "empty": "Belum ada perangkat yang dipasangkan.",
+        "switchMode": "Ganti mode"
       },
       "baby": {
         "status": {
@@ -446,7 +448,8 @@
           "thisPhone": "Perangkat ini",
           "language": "Bahasa",
           "about": "Tentang dan batasan",
-          "advanced": "Lanjutan"
+          "advanced": "Lanjutan",
+          "startMode": "Mode awal"
         },
         "sensitivity": "Sensitivitas",
         "moreSensitive": "Lebih sensitif",
@@ -502,6 +505,9 @@
           "m2": "Setelah 2 menit (disarankan)",
           "m5": "Setelah 5 menit",
           "off": "Mati"
+        },
+        "startMode": {
+          "ask": "Tanya setiap kali"
         }
       },
       "fgsMissing": {

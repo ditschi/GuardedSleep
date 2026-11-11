@@ -9,6 +9,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -32,6 +36,8 @@ import org.guardedsleep.app.ui.model.Role
 /** S01: first run only. Two large cards (120 dp each). */
 @Composable
 fun RoleScreen(controller: AppController) {
+    // Off for every start; "Use as default" sets the start mode together with the choice.
+    var makeDefault by remember { mutableStateOf(false) }
     ScreenRoot("role") {
         ScrollColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Title(stringResource(R.string.native_ui_role_title), "role_title")
@@ -41,7 +47,7 @@ fun RoleScreen(controller: AppController) {
                 R.string.native_ui_role_baby_title,
                 R.string.native_ui_role_baby_hint,
             ) {
-                controller.chooseRole(Role.BABY)
+                controller.chooseRole(Role.BABY, makeDefault)
             }
             RoleCard(
                 "role_parent",
@@ -49,7 +55,14 @@ fun RoleScreen(controller: AppController) {
                 R.string.native_ui_role_parent_title,
                 R.string.native_ui_role_parent_hint,
             ) {
-                controller.chooseRole(Role.PARENT)
+                controller.chooseRole(Role.PARENT, makeDefault)
+            }
+            SwitchRow(
+                stringResource(R.string.native_ui_role_default_toggle),
+                makeDefault,
+                "role_default_toggle",
+            ) {
+                makeDefault = it
             }
             Body(stringResource(R.string.native_ui_role_order_hint), tag = "role_order_hint")
         }
@@ -76,6 +89,17 @@ private fun RoleCard(tag: String, glyph: Glyph, title: Int, hint: Int, onClick: 
             }
         }
     }
+}
+
+/** "Switch mode": back to the role screen; the caller shows it only while not monitoring. */
+@Composable
+internal fun SwitchModeButton(controller: AppController, modifier: Modifier = Modifier) {
+    SecondaryButton(
+        stringResource(R.string.native_ui_home_switch_mode),
+        { controller.switchMode() },
+        "switch_mode",
+        modifier,
+    )
 }
 
 /** S06: saved pairing → one-tap start; otherwise the empty state. */
@@ -155,6 +179,7 @@ fun HomeScreen(controller: AppController, onSettings: () -> Unit) {
                     "home_new_pairing",
                 )
             }
+            SwitchModeButton(controller, Modifier.fillMaxWidth())
             SecondaryButton(
                 stringResource(R.string.native_ui_common_settings),
                 onSettings,

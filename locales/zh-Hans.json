@@ -118,7 +118,8 @@
           "title": "家长设备",
           "hint": "留在您身边，负责提醒您。"
         },
-        "orderHint": "请先设置宝宝设备。"
+        "orderHint": "请先设置宝宝设备。",
+        "defaultToggle": "设为默认"
       },
       "setup": {
         "title": "准备好此设备",
@@ -210,7 +211,8 @@
         },
         "lastUsed": "上次使用：{time}",
         "newPairing": "设置新设备",
-        "empty": "尚未配对任何设备。"
+        "empty": "尚未配对任何设备。",
+        "switchMode": "切换模式"
       },
       "baby": {
         "status": {
@@ -446,7 +448,8 @@
           "thisPhone": "此设备",
           "language": "语言",
           "about": "关于与限制",
-          "advanced": "高级"
+          "advanced": "高级",
+          "startMode": "启动模式"
         },
         "sensitivity": "灵敏度",
         "moreSensitive": "更灵敏",
@@ -502,6 +505,9 @@
           "m2": "2 分钟后（推荐）",
           "m5": "5 分钟后",
           "off": "关闭"
+        },
+        "startMode": {
+          "ask": "每次询问"
         }
       },
       "fgsMissing": {

@@ -78,7 +78,7 @@ class DebugLaunchActivity : Activity() {
         // The mailbox set of the record, as an invite would have put it there: the core opens
         // nothing that the record does not hold.
         val mailboxes = storedMailboxesFor(urls)
-        graph.pairingStore.save(
+        graph.pairings[role].save(
             StoredPairing(psk, urls, pairedBefore = false, turn = turn, mailboxes = mailboxes)
         )
         controller.startMonitoring()

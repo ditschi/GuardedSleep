@@ -118,7 +118,8 @@
           "title": "Föräldraenhet",
           "hint": "Stannar hos dig och larmar dig."
         },
-        "orderHint": "Ställ in babyenheten först."
+        "orderHint": "Ställ in babyenheten först.",
+        "defaultToggle": "Använd som standard"
       },
       "setup": {
         "title": "Gör den här enheten redo",
@@ -210,7 +211,8 @@
         },
         "lastUsed": "Senast använd {time}",
         "newPairing": "Ställ in nya enheter",
-        "empty": "Inga enheter parkopplade än."
+        "empty": "Inga enheter parkopplade än.",
+        "switchMode": "Byt läge"
       },
       "baby": {
         "status": {
@@ -446,7 +448,8 @@
           "thisPhone": "Den här enheten",
           "language": "Språk",
           "about": "Om och begränsningar",
-          "advanced": "Avancerat"
+          "advanced": "Avancerat",
+          "startMode": "Startläge"
         },
         "sensitivity": "Känslighet",
         "moreSensitive": "Känsligare",
@@ -502,6 +505,9 @@
           "m2": "Efter 2 minuter (rekommenderas)",
           "m5": "Efter 5 minuter",
           "off": "Av"
+        },
+        "startMode": {
+          "ask": "Fråga varje gång"
         }
       },
       "fgsMissing": {

@@ -18,6 +18,7 @@ import org.guardedsleep.app.link.SystemClockSource
 import org.guardedsleep.app.media.libwebrtc.LibWebRtcMediaEngine
 import org.guardedsleep.app.pairing.KeystorePairingCipher
 import org.guardedsleep.app.pairing.PairingStore
+import org.guardedsleep.app.pairing.RolePairings
 import org.guardedsleep.app.pairing.TurnStore
 import org.guardedsleep.app.readiness.AndroidReadinessEnv
 import org.guardedsleep.app.readiness.ReadinessChecker
@@ -26,6 +27,7 @@ import org.guardedsleep.app.service.ServiceLauncher
 import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.signaling.OkHttpSignalingFactory
 import org.guardedsleep.app.silence.SilenceController
+import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.wiring.EntryPoints
 import org.guardedsleep.app.wiring.PlatformServices
 
@@ -49,7 +51,19 @@ class AppGraph(context: Context) : PlatformServices {
             ioScope,
             turnStore,
         )
-    val pairingStore = PairingStore(File(app.filesDir, "pairing.bin"), KeystorePairingCipher())
+    // One sealed file and one Keystore key per role, so forgetting one never deletes the other.
+    // The legacy single file (pairing.bin) moves into the slot of the persisted role on start.
+    val pairings =
+        RolePairings(
+            Role.entries.associateWith {
+                val name = it.name.lowercase()
+                PairingStore(
+                    File(app.filesDir, "pairing-$name.bin"),
+                    KeystorePairingCipher("${KeystorePairingCipher.KEY_ALIAS}_$name"),
+                )
+            },
+            legacy = PairingStore(File(app.filesDir, "pairing.bin"), KeystorePairingCipher()),
+        )
     override val entryPoints: EntryPoints = AppEntryPoints
     val silence = SilenceController(app, settings, entryPoints)
     val alerts = AlertController(app, entryPoints) { settings.current.settings.language }
@@ -69,7 +83,7 @@ class AppGraph(context: Context) : PlatformServices {
     override val controller =
         LinkController(
             settingsRepo = settings,
-            pairingStore = pairingStore,
+            pairings = pairings,
             turnStore = turnStore,
             signaling = OkHttpSignalingFactory(),
             mediaFactory = { role, ice -> LibWebRtcMediaEngine(app, role, ice) },

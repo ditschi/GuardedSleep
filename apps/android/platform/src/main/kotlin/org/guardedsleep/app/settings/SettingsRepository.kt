@@ -37,18 +37,34 @@ data class SilenceMarker(
  * Everything that survives a process restart and is not secret (pairing material is in
  * PairingStore).
  */
+/** The per-role values of a role that is not the session role (see [PersistedState.parked]). */
+data class RoleLocal(
+    val peerName: String? = null,
+    val snoozeUntilWallMs: Long? = null,
+    val lastTestWallMs: Long? = null,
+)
+
 data class PersistedState(
     val settings: SettingsState,
+    /** The session role: what the app runs as now (MonitorService resumes it while monitoring). */
     val role: Role? = null,
+    /** "Start mode": the role a cold start opens in; null asks every time. */
+    val defaultRole: Role? = null,
     val onboardingDone: Boolean = false,
     /** "Monitoring is on": the parent service resumes it, the baby offers "Tap to resume". */
     val monitoringActive: Boolean = false,
+    // peerName, snoozeUntilWallMs and lastTestWallMs belong to the session role. The repository
+    // moves them to [parked] and back when `role` changes, and persists each under its role.
     val peerName: String? = null,
     /** Snooze end as wall clock; converted to the monotonic clock when a run starts. */
     val snoozeUntilWallMs: Long? = null,
     val lastTestWallMs: Long? = null,
+    /** The per-role values of the roles other than [role] (set by the repository only). */
+    val parked: Map<Role, RoleLocal> = emptyMap(),
     val silence: SilenceMarker = SilenceMarker(),
-)
+) {
+    internal fun local() = RoleLocal(peerName, snoozeUntilWallMs, lastTestWallMs)
+}
 
 /**
  * DataStore-backed preferences with an in-memory mirror: reads are synchronous, writes are applied
@@ -74,8 +90,25 @@ class SettingsRepository(
         get() = state.value
 
     fun update(transform: (PersistedState) -> PersistedState) {
-        val next = state.updateAndGet(transform)
+        val next = state.updateAndGet { switchRoleLocals(it, transform(it)) }
         scope.launch { store.edit { write(it, next) } }
+    }
+
+    /**
+     * A role change swaps the per-role values: the old role's go to `parked`, the new role's come
+     * back. Callers copy `role` without touching the three fields.
+     */
+    private fun switchRoleLocals(prev: PersistedState, next: PersistedState): PersistedState {
+        if (prev.role == next.role) return next
+        val parked = next.parked.toMutableMap()
+        prev.role?.let { parked[it] = prev.local() }
+        val incoming = next.role?.let { parked.remove(it) } ?: RoleLocal()
+        return next.copy(
+            peerName = incoming.peerName,
+            snoozeUntilWallMs = incoming.snoozeUntilWallMs,
+            lastTestWallMs = incoming.lastTestWallMs,
+            parked = parked,
+        )
     }
 
     private inline fun <T> MutableStateFlow<T>.updateAndGet(f: (T) -> T): T {
@@ -126,14 +159,32 @@ class SettingsRepository(
                 onlyLocal = p[ONLY_LOCAL] ?: defaults.onlyLocal,
                 heartbeatSeconds = p[HEARTBEAT] ?: defaults.heartbeatSeconds,
             )
+        val role = enumOrNull<Role>(p[ROLE])
+        // Update from a single-role install: the stored role becomes the start mode, and its
+        // unsuffixed per-role values become that role's. The next write stores the new layout.
+        val defaultRole =
+            when (val d = p[DEFAULT_ROLE]) {
+                null -> role
+                ASK -> null
+                else -> enumOrNull<Role>(d)
+            }
+        fun local(r: Role) =
+            RoleLocal(
+                peerName = p[peerKey(r)] ?: PEER_NAME.takeIf { r == role }?.let { p[it] },
+                snoozeUntilWallMs = p[snoozeKey(r)] ?: SNOOZE.takeIf { r == role }?.let { p[it] },
+                lastTestWallMs = p[lastTestKey(r)] ?: LAST_TEST.takeIf { r == role }?.let { p[it] },
+            )
+        val active = role?.let(::local) ?: RoleLocal()
         return PersistedState(
             settings = settings,
-            role = enumOrNull<Role>(p[ROLE]),
+            role = role,
+            defaultRole = defaultRole,
             onboardingDone = p[ONBOARDING] ?: false,
             monitoringActive = p[MONITORING] ?: false,
-            peerName = p[PEER_NAME],
-            snoozeUntilWallMs = p[SNOOZE],
-            lastTestWallMs = p[LAST_TEST],
+            peerName = active.peerName,
+            snoozeUntilWallMs = active.snoozeUntilWallMs,
+            lastTestWallMs = active.lastTestWallMs,
+            parked = Role.entries.filter { it != role }.associateWith(::local),
             silence = SilenceMarker(p[SILENCE_ACTIVE] ?: false, p[SILENCE_RULE], p[SILENCE_PREV]),
         )
     }
@@ -162,9 +213,19 @@ class SettingsRepository(
         set(ROLE, s.role?.name)
         set(ONBOARDING, s.onboardingDone)
         set(MONITORING, s.monitoringActive)
-        set(PEER_NAME, s.peerName)
-        set(SNOOZE, s.snoozeUntilWallMs)
-        set(LAST_TEST, s.lastTestWallMs)
+        set(DEFAULT_ROLE, s.defaultRole?.name ?: ASK)
+        // The unsuffixed keys are the pre-roles layout; they are dropped once the new one is
+        // stored.
+        p.remove(PEER_NAME)
+        p.remove(SNOOZE)
+        p.remove(LAST_TEST)
+        val locals = s.parked + (s.role?.let { mapOf(it to s.local()) } ?: emptyMap())
+        for (r in Role.entries) {
+            val l = locals[r] ?: RoleLocal()
+            set(peerKey(r), l.peerName)
+            set(snoozeKey(r), l.snoozeUntilWallMs)
+            set(lastTestKey(r), l.lastTestWallMs)
+        }
         set(SILENCE_ACTIVE, s.silence.active)
         set(SILENCE_RULE, s.silence.ruleId)
         set(SILENCE_PREV, s.silence.previousFilter)
@@ -186,11 +247,21 @@ class SettingsRepository(
         val TURN = stringPreferencesKey("turn_url")
         val HEARTBEAT = intPreferencesKey("heartbeat_seconds")
         val ROLE = stringPreferencesKey("role")
+        val DEFAULT_ROLE = stringPreferencesKey("default_role")
+        // Stored for "Ask every time", so an absent key still means "update from a single role".
+        const val ASK = "ask"
         val ONBOARDING = booleanPreferencesKey("onboarding_done")
         val MONITORING = booleanPreferencesKey("monitoring_active")
         val PEER_NAME = stringPreferencesKey("peer_name")
         val SNOOZE = longPreferencesKey("snooze_until_wall")
         val LAST_TEST = longPreferencesKey("last_test_wall")
+
+        fun peerKey(r: Role) = stringPreferencesKey("peer_name_${r.name.lowercase()}")
+
+        fun snoozeKey(r: Role) = longPreferencesKey("snooze_until_wall_${r.name.lowercase()}")
+
+        fun lastTestKey(r: Role) = longPreferencesKey("last_test_wall_${r.name.lowercase()}")
+
         val SILENCE_ACTIVE = booleanPreferencesKey("silence_active")
         val SILENCE_RULE = stringPreferencesKey("silence_rule_id")
         val SILENCE_PREV = intPreferencesKey("silence_prev_filter")

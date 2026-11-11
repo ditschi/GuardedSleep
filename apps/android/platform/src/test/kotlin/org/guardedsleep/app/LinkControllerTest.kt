@@ -20,10 +20,12 @@ import org.guardedsleep.app.media.MediaEngine
 import org.guardedsleep.app.pairing.PairingCipher
 import org.guardedsleep.app.pairing.PairingPayload
 import org.guardedsleep.app.pairing.PairingStore
+import org.guardedsleep.app.pairing.RolePairings
 import org.guardedsleep.app.pairing.StoredMailbox
 import org.guardedsleep.app.pairing.StoredPairing
 import org.guardedsleep.app.pairing.TurnCredentials
 import org.guardedsleep.app.pairing.TurnStore
+import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.signaling.SignalingFactory
 import org.guardedsleep.app.signaling.SignalingListener
 import org.guardedsleep.app.signaling.SignalingTransport
@@ -307,6 +309,23 @@ private class RealClock : Clock {
 
 private val projectUrl = "wss://${PublicLists.projectServer.host}/signaling"
 
+/** Both slots in [dir]; [cipher] seals the slot of [role], the other one uses a fake. */
+private fun rolePairings(
+    dir: java.io.File,
+    role: Role,
+    cipher: PairingCipher = FakeCipher(),
+    legacy: PairingStore? = null,
+) =
+    RolePairings(
+        Role.entries.associateWith {
+            PairingStore(
+                java.io.File(dir, "pairing-${it.name.lowercase()}.bin"),
+                if (it == role) cipher else FakeCipher(),
+            )
+        },
+        legacy,
+    )
+
 private const val PIN_TYPE = "\"parent_pin\""
 
 class LinkControllerTest {
@@ -317,21 +336,30 @@ class LinkControllerTest {
     private class Unit2(
         val controller: LinkController,
         val store: PairingStore,
+        val settings: SettingsRepository,
+        val pairings: RolePairings,
         val sink: RecordingSink,
         val silence: FakeSilence,
         val turn: TurnStore,
     )
 
+    /**
+     * A phone that chose [role]; with a null role the app starts as it would after a restart
+     * ([settings] and [pairings] of an earlier [Unit2] simulate that).
+     */
     private fun unit(
         name: String,
-        role: Role,
+        role: Role?,
         hostThrows: Boolean = false,
         deviceName: String = "",
         pairingCipher: PairingCipher = FakeCipher(),
+        settings: SettingsRepository? = null,
+        pairings: RolePairings? = null,
     ): Unit2 {
         val dir = tmp.newFolder(name)
-        val settings = testSettings(dir)
-        val store = PairingStore(java.io.File(dir, "pairing.bin"), pairingCipher)
+        val settings = settings ?: testSettings(dir)
+        val pairings = pairings ?: rolePairings(dir, role ?: Role.BABY, pairingCipher)
+        val store = pairings[role ?: Role.BABY]
         val turnStore = TurnStore(java.io.File(dir, "turn.bin"), FakeCipher())
         val sink = RecordingSink()
         val silence = FakeSilence()
@@ -348,7 +376,7 @@ class LinkControllerTest {
         controller =
             LinkController(
                 settingsRepo = settings,
-                pairingStore = store,
+                pairings = pairings,
                 turnStore = turnStore,
                 signaling =
                     SignalingFactory { url, l ->
@@ -371,9 +399,9 @@ class LinkControllerTest {
                 deviceName = { deviceName },
             )
         controller.updateSettings { it.copy(signalingUrls = listOf("wss://fake.example")) }
-        controller.chooseRole(role)
+        if (role != null) controller.chooseRole(role)
         controllers += controller
-        return Unit2(controller, store, sink, silence, turnStore)
+        return Unit2(controller, store, settings, pairings, sink, silence, turnStore)
     }
 
     @Test
@@ -558,6 +586,106 @@ class LinkControllerTest {
         net.delivery.shutdownNow()
     }
 
+    // ---- session role, start mode and per-role pairings --------------------------------------
+
+    private fun pairing(psk: String) = StoredPairing(psk, listOf("wss://fake.example"), false)
+
+    @Test
+    fun startWithoutADefaultShowsTheRoleScreen() {
+        val u = unit("nodefault", null)
+        assertNull(u.controller.app.value.role)
+        assertNull(u.controller.app.value.defaultRole)
+    }
+
+    @Test
+    fun startWithADefaultOpensThatRole() {
+        val first = unit("withdefault1", Role.PARENT)
+        first.controller.chooseRole(Role.PARENT, makeDefault = true)
+        // A second start of the same phone (same stores), role screen state left behind.
+        first.controller.switchMode()
+        val second =
+            unit("withdefault2", null, settings = first.settings, pairings = first.pairings)
+        assertEquals(Role.PARENT, second.controller.app.value.role)
+        assertEquals(Role.PARENT, second.controller.app.value.defaultRole)
+    }
+
+    @Test
+    fun restartDuringMonitoringResumesTheSessionRole() {
+        val first = unit("resume1", Role.BABY)
+        first.controller.setDefaultRole(Role.PARENT)
+        first.settings.update { it.copy(monitoringActive = true) }
+        val second = unit("resume2", null, settings = first.settings, pairings = first.pairings)
+        assertEquals(Role.BABY, second.controller.app.value.role)
+        assertEquals(Role.PARENT, second.controller.app.value.defaultRole)
+        assertTrue(second.controller.app.value.monitoring)
+    }
+
+    @Test
+    fun switchingKeepsBothPairingsAndTheDefault() {
+        val u = unit("switch", Role.PARENT)
+        val c = u.controller
+        u.pairings[Role.PARENT].save(pairing("parent-psk"))
+        c.chooseRole(Role.PARENT, makeDefault = true)
+        assertTrue(c.app.value.paired)
+
+        c.switchMode()
+        assertNull(c.app.value.role)
+        assertEquals(Role.PARENT, c.app.value.defaultRole)
+        assertFalse(c.app.value.paired)
+
+        c.chooseRole(Role.BABY)
+        assertEquals(Role.BABY, c.app.value.role)
+        assertEquals(Role.PARENT, c.app.value.defaultRole)
+        assertFalse("the baby slot is empty", c.app.value.paired)
+        u.pairings[Role.BABY].save(pairing("baby-psk"))
+        c.switchMode()
+
+        c.chooseRole(Role.PARENT)
+        assertTrue(c.app.value.paired)
+        assertEquals("parent-psk", u.pairings[Role.PARENT].load()?.pskB64url)
+        assertEquals("baby-psk", u.pairings[Role.BABY].load()?.pskB64url)
+    }
+
+    @Test
+    fun forgetDeletesOnlyThePairingOfTheCurrentRole() {
+        val u = unit("forget", Role.PARENT)
+        u.pairings[Role.PARENT].save(pairing("parent-psk"))
+        u.pairings[Role.BABY].save(pairing("baby-psk"))
+        u.controller.forgetPairing()
+        assertNull(u.pairings[Role.PARENT].load())
+        assertEquals("baby-psk", u.pairings[Role.BABY].load()?.pskB64url)
+        assertFalse(u.controller.app.value.paired)
+    }
+
+    @Test
+    fun switchModeCancelsAnOpenInviteAndIsIgnoredWhileMonitoring() {
+        val u = unit("invite", Role.BABY)
+        val c = u.controller
+        c.startPairing()
+        assertNotNull(c.pairing.value)
+        c.switchMode()
+        assertNull(c.pairing.value)
+        assertNull(c.app.value.role)
+
+        c.chooseRole(Role.BABY)
+        u.settings.update { it.copy(monitoringActive = true) }
+        c.switchMode()
+        assertEquals(Role.BABY, c.app.value.role)
+    }
+
+    @Test
+    fun theSnoozeAndPeerNameBelongToTheirRole() {
+        val u = unit("perrole", Role.PARENT)
+        u.settings.update { it.copy(peerName = "Lena", snoozeUntilWallMs = 42L) }
+        u.controller.switchMode()
+        u.controller.chooseRole(Role.BABY)
+        assertNull(u.controller.app.value.peerName)
+        u.controller.switchMode()
+        u.controller.chooseRole(Role.PARENT)
+        assertEquals("Lena", u.controller.app.value.peerName)
+        assertEquals(42L, u.settings.current.snoozeUntilWallMs)
+    }
+
     private fun await(what: String, timeoutMs: Long = 15_000, cond: () -> Boolean) {
         val end = System.currentTimeMillis() + timeoutMs
         while (System.currentTimeMillis() < end) {
@@ -676,7 +804,7 @@ class LinkControllerTest {
         val sent = CopyOnWriteArrayList<String>()
         net.onSend = { text -> if (text.contains(PIN_TYPE)) sent += text }
         // The first-pairing record cannot be written: a directory sits where the temp file goes.
-        java.io.File(tmp.root, "parent/pairing.bin.tmp").mkdirs()
+        java.io.File(tmp.root, "parent/pairing-parent.bin.tmp").mkdirs()
         baby.controller.startPairing()
         parent.controller.submitPairingCode(baby.controller.pairing.value!!.codePayload!!)
         Thread.sleep(3_000)

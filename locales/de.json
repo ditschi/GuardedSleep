@@ -118,7 +118,8 @@
           "title": "Elterngerät",
           "hint": "Bleibt bei Ihnen und alarmiert Sie."
         },
-        "orderHint": "Richten Sie zuerst das Babygerät ein."
+        "orderHint": "Richten Sie zuerst das Babygerät ein.",
+        "defaultToggle": "Als Standard verwenden"
       },
       "setup": {
         "title": "Dieses Gerät vorbereiten",
@@ -210,7 +211,8 @@
         },
         "lastUsed": "Zuletzt genutzt um {time}",
         "newPairing": "Neue Geräte einrichten",
-        "empty": "Noch keine Geräte gekoppelt."
+        "empty": "Noch keine Geräte gekoppelt.",
+        "switchMode": "Modus wechseln"
       },
       "baby": {
         "status": {
@@ -446,7 +448,8 @@
           "thisPhone": "Dieses Gerät",
           "language": "Sprache",
           "about": "Info und Grenzen",
-          "advanced": "Erweitert"
+          "advanced": "Erweitert",
+          "startMode": "Startmodus"
         },
         "sensitivity": "Empfindlichkeit",
         "moreSensitive": "Empfindlicher",
@@ -506,6 +509,9 @@
           "m2": "Nach 2 Minuten (empfohlen)",
           "m5": "Nach 5 Minuten",
           "off": "Aus"
+        },
+        "startMode": {
+          "ask": "Jedes Mal fragen"
         }
       },
       "fgsMissing": {
