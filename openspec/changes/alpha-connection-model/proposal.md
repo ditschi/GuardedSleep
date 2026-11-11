@@ -1,5 +1,7 @@
 # Proposal
 
+> **Partial sync, 2026-11-10 (review 2026-11, finding D2).** The built part of this change was merged into `openspec/specs/` ahead of the archive, so the main specs describe the tree again: `signaling-mailboxes` (new; every requirement except "Project signaling server" and "Disclosure and off switch"), all `link-supervision` deltas, `distribution` "Container images" (with "Staging web image"), `device-setup` "TURN server entry", `pairing` "Encrypted storage of pairing material" and the built parts of the parent pin and invite v4, and `signaling-relay` "Client ICE configuration", "Metadata only, no IP logging" and the five TURN/ICE requirements. The delta specs now hold only the unbuilt rest: the release default and the disclosure with the off switch (tasks 5.3, 6.2 and the release gate of design §8), the Connection section, diagnostics and the mailbox check in the device check, the "Not my device" UI on the baby, the expiry copy, and the protection of the first own relay in the invite size limit. Design, tasks and Discarded alternatives are unchanged.
+
 ## Why
 
 Parents with little technical knowledge must be able to pair and monitor without typing a server address or running a server, already in the alpha. Before this change, release builds shipped without a default signaling URL, and the only signaling path was a relay the user configured.

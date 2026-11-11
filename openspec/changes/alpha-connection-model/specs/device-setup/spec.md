@@ -29,17 +29,3 @@ The baby unit SHALL check its microphone level, battery, the reachability of its
 
 - **WHEN** the device check reaches none of the pairing's mailboxes
 - **THEN** it shows "not recommended" with the reason that the devices could not find each other again after a disconnection
-
-### Requirement: TURN server entry
-
-Advanced settings on Android and web SHALL let the user enter one own TURN server with an address, a user name and a password. The address SHALL start with `turn:` or `turns:` and name a host, with an optional port and `transport=udp` or `transport=tcp`; user name and password SHALL be both set or both empty. Both clients SHALL offer the entry to WebRTC as one ICE server next to the ICE servers of the pairing's relays (`signaling-relay` "Client ICE configuration"), also when the project server supplies its own TURN.
-
-#### Scenario: Incomplete credentials
-
-- **WHEN** the user saves a TURN address with a user name but no password
-- **THEN** the entry is rejected with an error and not saved
-
-#### Scenario: Used for the next attempt
-
-- **WHEN** a TURN server is saved and a new attempt starts
-- **THEN** the media engine is configured with the relay's ICE servers and the TURN server with its user name and password

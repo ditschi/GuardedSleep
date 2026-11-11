@@ -148,6 +148,7 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 ### i18n
 
 - `PLANNED` (T1) Weblate for volunteer translators (ADR-021 §2).
+- `PLANNED` (owner, no date) Owner review of the German catalogue: reviewed keys go into `de.json` `$meta.reviewed`, and the catalogue check accepts the list. Review improves a locale and does not gate shipping (ADR-021). Moved from `expand-locales` task 4.3 on 2026-11-10 so the change could archive (review 2026-11, finding D2).
 - `IDEA` A "translation feedback" link next to machine-translated copy.
 
 ### distribution
