@@ -19,6 +19,7 @@ import org.guardedsleep.app.media.MediaEngine
 import org.guardedsleep.app.pairing.PairingLoad
 import org.guardedsleep.app.pairing.PairingPayload
 import org.guardedsleep.app.pairing.PairingStore
+import org.guardedsleep.app.pairing.RolePairings
 import org.guardedsleep.app.pairing.StoredMailbox
 import org.guardedsleep.app.pairing.StoredPairing
 import org.guardedsleep.app.pairing.TurnCredentials
@@ -66,7 +67,7 @@ import uniffi.guardedsleep_core.filterOnlyLocal
  */
 class LinkController(
     private val settingsRepo: SettingsRepository,
-    private val pairingStore: PairingStore,
+    private val pairings: RolePairings,
     private val turnStore: TurnStore,
     private val signaling: SignalingFactory,
     private val mediaFactory: (Role, IceConfig) -> MediaEngine,
@@ -88,6 +89,15 @@ class LinkController(
     private val deviceName: () -> String = { "" },
 ) : AppController {
     private val _app = MutableStateFlow(AppState())
+
+    /** The pairing slot of the session role; callers inside a run or after a role check. */
+    private val pairingStore: PairingStore
+        get() = pairings[checkNotNull(settingsRepo.current.role) { "no session role" }]
+
+    /** Like [pairingStore], null on the role screen. */
+    private val pairingStoreOrNull: PairingStore?
+        get() = settingsRepo.current.role?.let { pairings[it] }
+
     // The sealed TURN entry; the disk copy is written on [turnIo] so the caller never blocks.
     @Volatile private var turn: TurnCredentials? = turnStore.load()
     private val turnIo = Executors.newSingleThreadExecutor { r ->
@@ -178,6 +188,13 @@ class LinkController(
     private var runCounter = 0
 
     init {
+        // The pre-roles single pairing belongs to the role that install had chosen.
+        pairings.migrateLegacy(settingsRepo.current.role)
+        // Cold start: a running monitoring keeps its role (the service resumes it); otherwise the
+        // start mode decides, and null shows the role screen.
+        if (!settingsRepo.current.monitoringActive) {
+            settingsRepo.update { it.copy(role = it.defaultRole) }
+        }
         refreshApp()
         babyModel.setSettings(_settings.value.threshold, _settings.value.holdSeconds)
         babyModel.setSilence(null, silence.hasAccess())
@@ -187,10 +204,26 @@ class LinkController(
 
     // ---- app ---------------------------------------------------------------------------------
 
-    override fun chooseRole(role: Role) {
-        val persisted = settingsRepo.current
-        if (persisted.role != null && persisted.role != role) forgetPairing()
-        settingsRepo.update { it.copy(role = role) }
+    override fun chooseRole(role: Role, makeDefault: Boolean) {
+        // Both pairings are kept: a role change never forgets one.
+        settingsRepo.update {
+            it.copy(role = role, defaultRole = if (makeDefault) role else it.defaultRole)
+        }
+        parentModel.restoreSnooze(settingsRepo.current.snoozeUntilWallMs)
+        refreshApp()
+    }
+
+    override fun switchMode() {
+        if (settingsRepo.current.monitoringActive) return
+        cancelPairing()
+        stopRun(userStop = true)
+        settingsRepo.update { it.copy(role = null) }
+        parentModel.cancelSnooze()
+        refreshApp()
+    }
+
+    override fun setDefaultRole(role: Role?) {
+        settingsRepo.update { it.copy(defaultRole = role) }
         refreshApp()
     }
 
@@ -295,7 +328,7 @@ class LinkController(
         cancelPairing()
         silence.deactivate()
         babyModel.setSilence(null, silence.hasAccess())
-        pairingStore.clear()
+        pairingStoreOrNull?.clear()
         settingsRepo.update { it.copy(peerName = null, snoozeUntilWallMs = null) }
         parentModel.cancelSnooze()
         refreshApp()
@@ -309,7 +342,7 @@ class LinkController(
         if (
             settingsRepo.current.monitoringActive &&
                 (run == null || fgs == Fgs.LOST) &&
-                pairingStore.exists()
+                pairingStoreOrNull?.exists() == true
         )
             startHost()
         refreshReadiness()
@@ -362,8 +395,9 @@ class LinkController(
         _app.value =
             AppState(
                 role = p.role,
+                defaultRole = p.defaultRole,
                 onboardingDone = p.onboardingDone,
-                paired = pairingStore.exists(),
+                paired = pairingStoreOrNull?.exists() == true,
                 peerName = p.peerName,
                 monitoring = p.monitoringActive,
                 backgroundProtection = !(p.monitoringActive && fgs == Fgs.LOST),

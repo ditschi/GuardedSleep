@@ -48,9 +48,23 @@ class FakeAppController(
     override val pairing: StateFlow<PairingState?>
         get() = pairingFlow
 
-    override fun chooseRole(role: Role) {
-        calls += "chooseRole:$role"
-        appFlow.value = appFlow.value.copy(role = role)
+    override fun chooseRole(role: Role, makeDefault: Boolean) {
+        calls += "chooseRole:$role:$makeDefault"
+        appFlow.value =
+            appFlow.value.copy(
+                role = role,
+                defaultRole = if (makeDefault) role else appFlow.value.defaultRole,
+            )
+    }
+
+    override fun switchMode() {
+        calls += "switchMode"
+        appFlow.value = appFlow.value.copy(role = null)
+    }
+
+    override fun setDefaultRole(role: Role?) {
+        calls += "setDefaultRole:$role"
+        appFlow.value = appFlow.value.copy(defaultRole = role)
     }
 
     override fun completeOnboarding() {

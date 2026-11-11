@@ -300,7 +300,10 @@ enum class TurnSaveResult {
 }
 
 data class AppState(
+    /** The session role; null shows the role screen. */
     val role: Role? = null,
+    /** "Start mode": the role a start without monitoring opens in; null asks every time. */
+    val defaultRole: Role? = null,
     val onboardingDone: Boolean = false,
     /** A saved pairing exists (home screen shows one-tap start). */
     val paired: Boolean = false,
@@ -333,7 +336,20 @@ interface AppController {
     val baby: StateFlow<BabyMonitorState>
     val pairing: StateFlow<PairingState?>
 
-    fun chooseRole(role: Role)
+    /**
+     * Sets the session role (the pairing of each role is kept). [makeDefault] also stores it as the
+     * start mode.
+     */
+    fun chooseRole(role: Role, makeDefault: Boolean = false)
+
+    /**
+     * Back to the role screen without changing the start mode or any pairing; cancels an open
+     * invite. Does nothing while monitoring is active.
+     */
+    fun switchMode()
+
+    /** Sets the start mode: a role, or null for "Ask every time". */
+    fun setDefaultRole(role: Role?)
 
     fun completeOnboarding()
 
