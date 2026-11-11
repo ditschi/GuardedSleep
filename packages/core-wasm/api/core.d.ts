@@ -117,6 +117,12 @@ export type UnitWarning = "page_hidden" | "wake_lock_off" | "resumed_from_sleep"
 export type TalkEndReason = "released" | "limit" | "no_answer" | "link_lost" | "mic_failed" | "alert" | "switched_off" | "stopped";
 
 /**
+ * Why a talk ended, as the optional `reason` of `talk_end` says. A peer that does not send it
+ * leaves the receiver to infer the reason.
+ */
+export type TalkEndWire = "released" | "limit" | "switched_off" | "link";
+
+/**
  * Why the baby unit denied a `talk_request`. The retry hints are milliseconds from the denial.
  */
 export type TalkDenyReason = { kind: "off" } | { kind: "unsupported" } | { kind: "muted" } | { kind: "busy" } | { kind: "cooldown"; retry_in_ms: number } | { kind: "budget"; retry_in_ms: number } | { kind: "rate" };
