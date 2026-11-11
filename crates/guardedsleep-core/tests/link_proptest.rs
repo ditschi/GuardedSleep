@@ -39,7 +39,7 @@ fn server_text() -> impl Strategy<Value = String> {
             .prop_map(|c| json!({"type":"error","code":c,"message":"x"}).to_string()),
         (id.clone(), aid.clone(), sdp_type).prop_map(|(from, aid, t)| json!({
             "type":"signal","from":from,
-            "payload":{"type":"sdp","aid":aid,"sdp":{"type":t,"sdp":"v=0\r\nm=audio 9 X 1\r\na=sendonly\r\na=fingerprint:sha-256 AA:BB:CC:DD:AA:BB:CC:DD:AA:BB:CC:DD:AA:BB:CC:DD:AA:BB:CC:DD:AA:BB:CC:DD:AA:BB:CC:DD:AA:BB:CC:DD\r\n"}}
+            "payload":{"type":"sdp","aid":aid,"sdp":{"type":t,"sdp":"v=0\r\nm=audio 9 X 1\r\na=sendonly\r\nm=audio 9 X 1\r\na=recvonly\r\na=fingerprint:sha-256 AA:BB:CC:DD:AA:BB:CC:DD:AA:BB:CC:DD:AA:BB:CC:DD:AA:BB:CC:DD:AA:BB:CC:DD:AA:BB:CC:DD:AA:BB:CC:DD\r\n"}}
         }).to_string()),
         (id.clone(), aid.clone()).prop_map(|(from, aid)| json!({
             "type":"signal","from":from,"payload":{"type":"ice","aid":aid,"candidate":{"candidate":"c","sdpMid":"0","sdpMLineIndex":0}}
@@ -85,7 +85,7 @@ fn input() -> impl Strategy<Value = LinkInput> {
                 LinkInput::AttemptLocalDescription {
                     attempt,
                     sdp_type: t.into(),
-                    sdp: "v=0\r\nm=audio 9 X 1\r\na=sendonly\r\na=fingerprint:sha-256 CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD\r\n"
+                    sdp: "v=0\r\nm=audio 9 X 1\r\na=sendonly\r\nm=audio 9 X 1\r\na=recvonly\r\na=fingerprint:sha-256 CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD:CC:DD\r\n"
                         .into(),
                 }
             }),
@@ -229,7 +229,9 @@ fn hostile_signaling_text() -> impl Strategy<Value = String> {
         "BAD_JSON",
     ]);
     let fp = "AA:BB:CC:DD:AA:BB:CC:DD:AA:BB:CC:DD:AA:BB:CC:DD:AA:BB:CC:DD:AA:BB:CC:DD:AA:BB:CC:DD:AA:BB:CC:DD";
-    let sdp = format!("v=0\r\nm=audio 9 X 1\r\na=sendonly\r\na=fingerprint:sha-256 {fp}\r\n");
+    let sdp = format!(
+        "v=0\r\nm=audio 9 X 1\r\na=sendonly\r\nm=audio 9 X 1\r\na=recvonly\r\na=fingerprint:sha-256 {fp}\r\n"
+    );
     prop_oneof![
         code.prop_map(|c| json!({"type":"error","code":c,"message":"x"}).to_string()),
         Just(json!({"type":"welcome","clientId":"c9","roomId":room()}).to_string()),

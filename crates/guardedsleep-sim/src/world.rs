@@ -213,7 +213,10 @@ pub struct Actor {
     pending_mailboxes: Option<Vec<InviteMailbox>>,
     /// Room id this client asks the relay for.
     pub room: String,
+    /// Direction of the monitoring line (first audio m-line) and of the talk line (second) in this
+    /// device's local descriptions; the defaults follow the direction rule of `link-supervision`.
     pub sdp_dir: String,
+    pub talk_dir: String,
     pub net_up: bool,
     pub path_epoch: u32,
     pub alive: bool,
@@ -248,7 +251,16 @@ impl Actor {
             raw: None,
             pending_mailboxes: None,
             room,
-            sdp_dir: "sendonly".into(),
+            sdp_dir: match role {
+                Role::Baby => "sendonly",
+                Role::Parent => "recvonly",
+            }
+            .into(),
+            talk_dir: match role {
+                Role::Baby => "recvonly",
+                Role::Parent => "sendonly",
+            }
+            .into(),
             net_up: true,
             path_epoch: 0,
             alive: true,
@@ -472,6 +484,9 @@ impl World {
         a.link = Some(link);
         if let Some(d) = &spec.sdp_direction {
             a.sdp_dir = d.clone();
+        }
+        if let Some(d) = &spec.sdp_talk_direction {
+            a.talk_dir = d.clone();
         }
         self.actors.push(a);
         Ok(())
@@ -2086,14 +2101,11 @@ impl World {
 
     pub fn sdp_for(&self, a: usize, fp: &str) -> String {
         let ac = &self.actors[a];
-        let dir = match ac.role {
-            Role::Baby => ac.sdp_dir.as_str(),
-            Role::Parent => "recvonly",
-        };
+        let (monitor, talk) = (ac.sdp_dir.as_str(), ac.talk_dir.as_str());
         // The fingerprint line stays last: the core's extractor reads hex until the first
         // non-hex character.
         format!(
-            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na={dir}\r\na=fingerprint:sha-256 {}\r\n",
+            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na={monitor}\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na={talk}\r\na=fingerprint:sha-256 {}\r\n",
             colon_upper(fp)
         )
     }

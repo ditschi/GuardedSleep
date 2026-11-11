@@ -255,7 +255,7 @@ fn reflected_proof_never_verifies_and_baby_stays_unverified() {
     w.advance(100);
     // The baby's offer has been given the fake local description by the harness; answer it.
     let answer_sdp = format!(
-        "v=0\r\nm=audio 9 X 1\r\na=recvonly\r\na=fingerprint:sha-256 {}\r\n",
+        "v=0\r\nm=audio 9 X 1\r\na=recvonly\r\nm=audio 9 X 1\r\na=sendonly\r\na=fingerprint:sha-256 {}\r\n",
         colon_fp(&"ab".repeat(32))
     );
     let answer = json!({"type":"sdp","aid":"66666666666666666666666666666666","sdp":{"type":"answer","sdp":answer_sdp}});
@@ -444,7 +444,7 @@ fn paired_before_makes_the_first_mismatch_non_terminal() {
 }
 
 #[test]
-fn baby_sdp_that_is_not_sendonly_fails_the_attempt_and_no_offer_leaves_the_device() {
+fn baby_sdp_that_does_not_send_on_the_monitoring_line_fails_and_no_offer_leaves_the_device() {
     let mut w = World::pair(&PSK_A, &PSK_A);
     w.nodes[BABY].baby_direction = "sendrecv";
     w.start(BABY, 1);
@@ -454,7 +454,7 @@ fn baby_sdp_that_is_not_sendonly_fails_the_attempt_and_no_offer_leaves_the_devic
         w.count_events(
             BABY,
             0,
-            |e| matches!(e, LinkEvent::Failed { reason } if reason == "baby_sdp_not_sendonly")
+            |e| matches!(e, LinkEvent::Failed { reason } if reason == "baby_sdp_bad_direction")
         ) >= 1
     );
     assert!(!w.nodes[BABY].sent_signal_types.iter().any(|t| t == "sdp"));
@@ -2191,7 +2191,7 @@ fn parent_with_offer(offer_sdp: &str, answer_sdp: &str) -> (Link, Vec<LinkAction
 
 fn sdp_with_lines(lines: &[String]) -> String {
     format!(
-        "v=0\r\n{}\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\n",
+        "v=0\r\n{}\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\n",
         lines.join("\r\n")
     )
 }
@@ -2215,16 +2215,16 @@ fn failed_reason(acts: &[LinkAction]) -> Option<String> {
 #[test]
 fn ambiguous_or_hidden_sdp_fingerprints_fail_the_attempt_as_fingerprint_invalid() {
     let good_answer = format!(
-        "v=0\r\nm=audio 9 X 1\r\na=recvonly\r\n{}\r\n",
+        "v=0\r\nm=audio 9 X 1\r\na=recvonly\r\nm=audio 9 X 1\r\na=sendonly\r\n{}\r\n",
         fp_line(0x40)
     );
     let hidden = format!(
-        "v=0\r\ns={}\r\nm=audio 9 X 1\r\na=sendonly\r\n{}\r\n",
+        "v=0\r\ns={}\r\nm=audio 9 X 1\r\na=sendonly\r\nm=audio 9 X 1\r\na=recvonly\r\n{}\r\n",
         fp_line(0x10),
         fp_line(0x20)
     );
     let hidden_only = format!(
-        "v=0\r\ns={}\r\nm=audio 9 X 1\r\na=sendonly\r\n",
+        "v=0\r\ns={}\r\nm=audio 9 X 1\r\na=sendonly\r\nm=audio 9 X 1\r\na=recvonly\r\n",
         fp_line(0x10)
     );
     let two = sdp_with_lines(&[fp_line(0x10), fp_line(0x20)]);
@@ -2248,7 +2248,7 @@ fn ambiguous_or_hidden_sdp_fingerprints_fail_the_attempt_as_fingerprint_invalid(
     // A bad local SDP is held to the same rule.
     let (_, acts) = parent_with_offer(
         &sdp_with_lines(&[fp_line(0x10)]),
-        "v=0\r\nm=audio 9 X 1\r\n",
+        "v=0\r\nm=audio 9 X 1\r\na=recvonly\r\nm=audio 9 X 1\r\na=sendonly\r\n",
     );
     assert_eq!(failed_reason(&acts).as_deref(), Some("fingerprint_invalid"));
 }
@@ -2258,7 +2258,7 @@ fn a_matching_proof_with_a_dtls_fingerprint_that_differs_from_the_sdp_does_not_v
     // The parent sees a valid-looking offer; the platform reports another certificate.
     let offer = sdp_with_lines(&[fp_line(0x10)]);
     let answer = format!(
-        "v=0\r\nm=audio 9 X 1\r\na=recvonly\r\n{}\r\n",
+        "v=0\r\nm=audio 9 X 1\r\na=recvonly\r\nm=audio 9 X 1\r\na=sendonly\r\n{}\r\n",
         fp_line(0x40)
     );
     let (mut link, _) = parent_with_offer(&offer, &answer);

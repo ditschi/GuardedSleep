@@ -760,16 +760,18 @@ impl World {
     }
 
     fn sdp(&self, n: usize, fp: &str) -> String {
-        let dir = match self.nodes[n].role {
-            Role::Baby => self.nodes[n].baby_direction,
-            Role::Parent => "recvonly",
+        // The monitoring line first, the talk line second (`link-supervision`, "Sans-IO interface
+        // contract"). `baby_direction` is the baby's monitoring direction, so a test can break it.
+        let (monitor, talk) = match self.nodes[n].role {
+            Role::Baby => (self.nodes[n].baby_direction, "recvonly"),
+            Role::Parent => ("recvonly", "sendonly"),
         };
         let pad = match self.nodes[n].sdp_pad {
             0 => String::new(),
             k => format!("a=x-pad:{}\r\n", "x".repeat(k)),
         };
         format!(
-            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na={dir}\r\n{pad}a=fingerprint:sha-256 {}\r\n",
+            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na={monitor}\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na={talk}\r\n{pad}a=fingerprint:sha-256 {}\r\n",
             colon_fp(fp)
         )
     }

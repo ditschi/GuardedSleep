@@ -2317,7 +2317,7 @@ impl Link {
                 heartbeat_interval_ms: self.cfg.heartbeat_interval_ms,
                 liveness_ms: self.liveness_ms,
                 attempt_timeout_ms: DEFAULT_ATTEMPT_TIMEOUT_MS,
-                require_sendonly: self.cfg.role == Role::Baby,
+                check_audio_directions: true,
                 require_dtls_fingerprint: self.cfg.require_dtls_fingerprint,
             },
             now,
@@ -2460,11 +2460,14 @@ impl Link {
         let handle = l.attempt.handle();
         match l.attempt.on_remote_description(now, aid, sdp_type, sdp) {
             Some(ev) => {
-                out.push(LinkAction::SetRemoteDescription {
-                    attempt: handle,
-                    sdp_type: sdp_type.to_owned(),
-                    sdp: sdp.to_owned(),
-                });
+                // An answer with a bad direction finished the attempt: it is never applied.
+                if !l.attempt.is_finished() {
+                    out.push(LinkAction::SetRemoteDescription {
+                        attempt: handle,
+                        sdp_type: sdp_type.to_owned(),
+                        sdp: sdp.to_owned(),
+                    });
+                }
                 if self.cfg.role == Role::Parent {
                     out.push(LinkAction::CreateAnswer { attempt: handle });
                 }

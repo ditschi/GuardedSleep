@@ -1,0 +1,60 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "parent-sdp-sends-monitoring",
+  "description": "A parent whose answer would send on the monitoring line never lets an answer leave the device, so audio from the parent never flows on the monitoring line.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent",
+      "sdp_direction": "sendonly"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 40000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "parent",
+      "event": "failed",
+      "where": {
+        "reason": "parent_sdp_bad_direction"
+      },
+      "count_min": 1
+    },
+    {
+      "peer": "parent",
+      "sent_signal": "sdp",
+      "count_max": 0
+    },
+    {
+      "peer": "baby",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "connected"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "status",
+      "where": {
+        "status": {
+          "state": "connected"
+        }
+      }
+    }
+  ]
+}

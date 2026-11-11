@@ -1,7 +1,7 @@
 {
   "schema": "gs-scenario/1",
   "id": "baby-sdp-not-sendonly",
-  "description": "A baby whose offer is not sendonly never lets an offer leave the device (child-side silence).",
+  "description": "A baby whose offer does not send on the monitoring line or receives on the talk line never lets an offer leave the device (child-side silence).",
   "seed": 1,
   "peers": [
     {
@@ -29,7 +29,7 @@
       "peer": "baby",
       "event": "failed",
       "where": {
-        "reason": "baby_sdp_not_sendonly"
+        "reason": "baby_sdp_bad_direction"
       },
       "count_min": 1
     },
