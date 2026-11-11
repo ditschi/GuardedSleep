@@ -190,7 +190,7 @@ The baby unit SHALL restore any system volume it changed for a talk when the tal
 
 ### Requirement: Honest playability
 
-The baby unit SHALL report talk-back to every trusted parent as on, off, muted or not supported, and SHALL report muted, and deny requests as muted, when the device would not make the talk audible (alarm sounds blocked by the user's own Do Not Disturb, the volume could not be set, or the playback check failed three times in a row). Before a press, the parent unit SHALL show the talk button as unavailable with the reason whenever talk-back is not on.
+The baby unit SHALL report talk-back to every trusted parent as on, off, muted or not supported, and SHALL report muted, and deny requests as muted, when the device would not make the talk audible (alarm sounds blocked by the user's own Do Not Disturb, or the volume could not be set). Before a press, the parent unit SHALL show the talk button as unavailable with the reason whenever talk-back is not on.
 
 #### Scenario: Baby phone in total silence
 
@@ -208,7 +208,7 @@ The baby unit SHALL check with its own microphone whether each talk was audible,
 
 #### Scenario: Headphones on the baby device (failure)
 
-- **WHEN** talk audio plays into headphones connected to the baby device
+- **WHEN** talk audio plays only into headphones connected to the baby device
 - **THEN** the talk is reported as unconfirmed
 
 #### Scenario: Normal talk
@@ -216,14 +216,28 @@ The baby unit SHALL check with its own microphone whether each talk was audible,
 - **WHEN** the chime and the voice play from the baby unit's loudspeaker
 - **THEN** the talk is reported as heard and the parent sees no warning
 
+### Requirement: Playback check only where it can decide
+
+The playback check SHALL report unknown instead of unconfirmed when the level before the talk is at or above the noise threshold, a noise event is running, the level before the talk is unstable, or the baby unit does not capture raw; an unknown result SHALL count neither as heard nor as unconfirmed and SHALL show no warning.
+
+#### Scenario: White-noise machine in the room
+
+- **WHEN** a steady white-noise machine keeps the level at the noise threshold and a parent talks
+- **THEN** the check reports unknown and the parent sees no warning
+
 ### Requirement: Repeated unconfirmed talks
 
-After three unconfirmed talks in a row the baby unit SHALL report talk-back as muted until a later talk is heard or an adult opens its talk-back settings.
+After three unconfirmed talks in a row the baby unit SHALL report that talk-back may not be audible, and the parent SHALL show this before the next press, until a talk is heard or an adult opens the talk-back settings on the baby unit. This warning SHALL NOT deny talk requests.
 
 #### Scenario: Baby device output stays off
 
 - **WHEN** three talks in a row are unconfirmed
-- **THEN** the parent's talk button says that the baby device cannot play sound right now
+- **THEN** the parent's talk button warns that the voice may not be audible on the baby device, and talking stays possible
+
+#### Scenario: Crying child (failure)
+
+- **WHEN** the baby is crying and a parent talks three times
+- **THEN** the checks report unknown, talk-back stays available without a warning, and no talk is denied for audibility
 
 ### Requirement: Alerts take precedence over talk
 
