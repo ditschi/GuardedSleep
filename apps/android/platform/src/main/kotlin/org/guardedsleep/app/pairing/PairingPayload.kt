@@ -25,6 +25,11 @@ data class PairingPayload(
     val signalingUrls: List<String>,
     val expiresAtEpochSec: Long,
 ) {
+    /** A data class would print the PSK; this never does (it ends up in logs and crash text). */
+    override fun toString(): String =
+        "PairingPayload(pskB64url=<redacted>, signalingUrls=$signalingUrls, " +
+            "expiresAtEpochSec=$expiresAtEpochSec)"
+
     /**
      * The invite text, or null when the core refuses the URL list (for example a `ws://` address
      * that is not a private LAN address). Contains the PSK: never log, never put into an Intent or
