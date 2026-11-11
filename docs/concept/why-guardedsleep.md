@@ -13,21 +13,21 @@ Each benefit is tagged **built** (in a spec today), **decided** (in an active ch
 
 ## At a glance
 
-| What parents need                | Phone call               | Baby monitor (DECT/radio) | GuardedSleep                            |
-| -------------------------------- | ------------------------ | ------------------------- | --------------------------------------- |
-| Notice noise without listening   | ✗ headset all evening    | ✓                         | ✓ vibration, screen, level meter        |
-| Know when the connection is lost | ✗ sounds like silence    | ~ beep when out of range  | ✓ escalating alarm, missed-noise report |
-| Distance                         | unlimited                | ✗ a few rooms             | ✓ unlimited over the internet           |
-| Works without internet           | ✗                        | ✓                         | ✓ local Wi-Fi (planned for alpha)       |
-| Alerts through silent mode / DND | ✗                        | – own device              | ✓                                       |
-| Silent next to the child         | ✗ rings, two-way audio   | ✓                         | ✓ one-way, never makes a sound          |
-| Check before you leave the room  | ✗                        | ~                         | ✓ test alert, battery, mic check        |
-| Your phone stays free            | ✗ line busy              | ✓                         | ✓                                       |
-| Extra hardware                   | none                     | ✗ two devices to charge   | none, an old phone will do              |
-| Mobile data                      | continuous stream        | –                         | audio only on noise                     |
-| Setup                            | ✓ none                   | ✓ switch on               | install twice, scan a QR code           |
-| Talk back to the child           | ✓                        | often ✓                   | ✗ (Phase 2)                             |
-| Privacy                          | depends on the messenger | radio can be overheard    | end-to-end encrypted, no cloud          |
+| What parents need                | Phone call               | Baby monitor (DECT/radio) | GuardedSleep                             |
+| -------------------------------- | ------------------------ | ------------------------- | ---------------------------------------- |
+| Notice noise without listening   | ✗ headset all evening    | ✓                         | ✓ vibration, screen, level meter         |
+| Know when the connection is lost | ✗ sounds like silence    | ~ beep when out of range  | ✓ escalating alarm, missed-noise report  |
+| Distance                         | unlimited                | ✗ a few rooms             | ✓ unlimited over the internet            |
+| Works without internet           | ✗                        | ✓                         | ✓ local Wi-Fi (planned for alpha)        |
+| Alerts through silent mode / DND | ✗                        | – own device              | ✓                                        |
+| Silent next to the child         | ✗ rings, two-way audio   | ✓                         | ✓ one-way, never makes a sound           |
+| Check before you leave the room  | ✗                        | ~                         | ✓ test alert, battery, mic check         |
+| Your phone stays free            | ✗ line busy              | ✓                         | ✓                                        |
+| Extra hardware                   | none                     | ✗ two devices to charge   | none, an old phone will do               |
+| Mobile data                      | continuous stream        | –                         | audio only on noise                      |
+| Setup                            | ✓ none                   | ✓ switch on               | install twice, scan a QR code            |
+| Talk back to the child           | ✓                        | often ✓                   | ✗ (Phase 2)                              |
+| Privacy                          | depends on the messenger | radio can be overheard    | end-to-end encrypted, no server hears it |
 
 ✓ yes · ~ partly · ✗ no · – not applicable. Details and the honest downsides follow below.
 
@@ -124,4 +124,4 @@ Honest positioning matters for trust:
 
 ## Message for the store listing and website (draft)
 
-> Put your phone in your pocket and enjoy the evening -- in the next room or across town. GuardedSleep listens for you, only buzzes when your child makes noise, and warns you if the connection is lost, so silence really means quiet. No extra hardware, no phone line, no account, no cloud.
+> Put your phone in your pocket and enjoy the evening -- in the next room or across town. GuardedSleep listens for you, only buzzes when your child makes noise, and warns you if the connection is lost, so silence really means quiet. No extra hardware, no phone line, no account, no tracking.

@@ -38,4 +38,4 @@ For each picked finding with slug `<slug>`:
 
 ## 5. Clean up and report
 
-Remove the scout worktree. Report briefly: PRs opened (links), findings dropped or failed with reason, and the "Needs decision" items formatted as an AGENTS.md §6.3 options checklist where a choice is involved. Never merge PRs and never push to `main`.
+Remove the scout worktree. Report briefly: PRs opened (links), findings dropped or failed with reason, and the "Needs decision" items formatted as an options checklist (`docs/contributing/decisions-and-roles.md`, "Presenting options") where a choice is involved. Never merge PRs and never push to `main`.

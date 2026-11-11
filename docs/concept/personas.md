@@ -15,7 +15,7 @@
 ## How to use this document
 
 - Every OpenSpec change proposal should state the **persona impact** that names which persona(s) the feature primarily serves and which persona(s) it might trade off against.
-- When a feature decision splits the personas (e.g. CRIT-7 audio routing: Persona A wants headphones, Persona B wants speaker), an ADR is required ([AGENTS.md §6.2](../../AGENTS.md)).
+- When a feature decision splits the personas (e.g. CRIT-7 audio routing: Persona A wants headphones, Persona B wants speaker), an ADR is required ([decisions and roles](../contributing/decisions-and-roles.md); AGENTS.md §6).
 - Personas are advisors, not gates. The user remains the final decision-maker on scope.
 
 ## Schema

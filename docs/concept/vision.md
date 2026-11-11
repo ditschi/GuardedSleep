@@ -15,8 +15,9 @@ The application must work on Android and iOS phones and tablets. Desktop support
 ### Security and Privacy First
 
 - All communication between devices must be end-to-end encrypted
-- No audio, video, or metadata is sent to third-party servers
-- The system must work without any cloud dependency
+- Nobody but the two paired devices can hear the audio or read the alerts: no third-party service is in the media or alert path
+- Servers see as little as possible: by default the devices find each other through the GuardedSleep project server, which sees network addresses and usage times but never the sound, the alerts or the pairing key, and keeps no IP logs ([AGENTS.md §7.1](../../AGENTS.md))
+- The system must work without the project server: each device has an off switch for it, and an own server or the same Wi-Fi works instead
 - Users must have full control over their data at all times
 
 ### Open Source and Community-Driven
@@ -58,6 +59,6 @@ The application must work on Android and iOS phones and tablets. Desktop support
 
 - A commercial product with subscription fees
 - A system that requires proprietary hardware
-- A cloud-dependent service where audio/video passes through external servers
+- A cloud-dependent service, or one in which anyone but the paired devices can hear the audio (a TURN relay forwards it only end-to-end encrypted)
 - A general-purpose surveillance tool -- this is specifically for child monitoring by parents/caregivers
 - **Guaranteed alarm delivery when the parent receiver device is off, crashed, or out of battery** -- GuardedSleep follows the same contract as classic hardware baby monitors: the caregiver must notice the **missing receiver-side status** (see [failure-model.md](failure-model.md) and [ADR-009](../../openspec/changes/archive/2026-10-21-adr-009-personas-and-failure-model/design.md)). Mitigations are: persistent parent-side indicators, one-tap reconnect without touching the baby unit, and Phase 2 multi-parent failover -- not acoustic alarms on the baby unit and not cloud/SMS/VoIP alarm paths.

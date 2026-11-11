@@ -19,7 +19,7 @@ Parents who want to **enjoy the evening** -- at a party, in the garden, at a wed
 | A baby monitor is one more device to buy and charge | Runs on the phones you already have                              |
 | A muted phone misses everything                     | Alerts get through silent mode and Do Not Disturb                |
 
-And it does all this privately: end-to-end encrypted, no cloud, no account. Full comparison: [Why GuardedSleep?](docs/concept/why-guardedsleep.md)
+And it does all this privately: end-to-end encrypted, no account, no ads, no tracking. By default the devices find each other through the GuardedSleep project server; it sees network addresses and usage times, never your baby's sound, and keeps no IP logs. You can switch it off and run your own server instead; same-Wi-Fi use without any server is planned for the alpha. Full comparison: [Why GuardedSleep?](docs/concept/why-guardedsleep.md)
 
 ## Project Status: Alpha Build-Out
 
@@ -27,7 +27,7 @@ Alpha build-out: a sans-IO Rust core, a native Android client and a web client o
 
 ## Core Principles
 
-- **Privacy First** -- End-to-end encryption, no cloud dependency, your data stays yours
+- **Privacy First** -- End-to-end encryption, the project server is optional and sees no content, your data stays yours
 - **Cross-Platform** -- Works on Android, iOS, tablets; optionally desktop (Windows, Linux, macOS)
 - **Open Source** -- Community-driven development, transparent and auditable
 - **User-Friendly** -- Usable by non-technical people, easy setup and daily operation
