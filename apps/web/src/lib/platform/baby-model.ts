@@ -29,6 +29,11 @@ export class BabyModel {
     private readonly onChange: (state: BabyMonitorState) => void,
   ) {}
 
+  /** The name the pinned parent device sent ("" when none), for the "last talk" line. */
+  get parentDisplayName(): string {
+    return this.parentName;
+  }
+
   /** Forget the run; only the gate settings survive a restart of the link. */
   reset(): void {
     this.last = null;

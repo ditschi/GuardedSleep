@@ -12,6 +12,7 @@ import { createPageWatch, type WakeLockApi } from "./page-watch";
 import { createQrScanner, type BarcodeDetectorCtor } from "./qr-scanner";
 import { cspAllows, defaultMailboxUrls, deploymentConnectSources } from "./mailbox-policy";
 import { createWebSocketSignaling, type WebSocketCtor } from "./signaling";
+import { browserTalkSupported, microphonePermission, requestMicrophone } from "./talk-audio";
 import { createWebMediaEngine } from "./web-media";
 import { WebController, type NetworkWatcher } from "./web-controller";
 
@@ -68,6 +69,15 @@ export async function createWebApp(): Promise<AppController> {
   });
   // The policy the page was served with: addresses it does not list are ignored, not tried.
   const connectSources = deploymentConnectSources(document);
+  const getUserMedia = (constraints: MediaStreamConstraints): Promise<MediaStream> => {
+    // Absent on a page that is not a secure context (plain http on a LAN address).
+    if (!navigator.mediaDevices) {
+      return Promise.reject(new DOMException("no media devices", "NotSupportedError"));
+    }
+    return navigator.mediaDevices.getUserMedia(constraints);
+  };
+  // iOS Safari cannot talk: alert audio after getUserMedia is not proven there (spec `web-client`).
+  const talkSupported = browserTalkSupported(navigator);
   return new WebController({
     core,
     clock,
@@ -80,16 +90,16 @@ export async function createWebApp(): Promise<AppController> {
         userIceServers,
         timers,
         gate,
-        getUserMedia: (constraints) => {
-          // Absent on a page that is not a secure context (plain http on a LAN address).
-          if (!navigator.mediaDevices) {
-            return Promise.reject(new DOMException("no media devices", "NotSupportedError"));
-          }
-          return navigator.mediaDevices.getUserMedia(constraints);
-        },
+        getUserMedia,
         createSink: () => new Audio(),
         createStream: (track) => new MediaStream([track]),
+        talkSend: talkSupported,
       }),
+    talkMic: {
+      supported: talkSupported,
+      query: () => microphonePermission(navigator),
+      request: () => requestMicrophone(getUserMedia),
+    },
     gate,
     alerts: new AlertPlayer({ gate, timers }),
     network: browserNetwork(),

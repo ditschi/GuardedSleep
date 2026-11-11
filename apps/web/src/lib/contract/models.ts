@@ -209,6 +209,118 @@ export interface PageGuardState {
   away: AwayReport | null;
 }
 
+/*
+ * Web only (no counterpart in UiContract.kt yet): talk-back (`add-talk-back`). The Android contract
+ * carries the same facts in its own models; until both are reconciled the web side keeps them in
+ * their own stores so the drift test stays about the shared models.
+ */
+
+/** Why the talk button cannot be used before a press (design section 9, "Unavailable before the press"). */
+export type TalkUnavailable =
+  | "not_connected"
+  | "browser_unsupported"
+  | "off"
+  | "other_talker"
+  | "unsupported"
+  | "muted"
+  | "cooldown";
+
+export type TalkPhase = "idle" | "requesting" | "talking" | "ended" | "denied";
+
+/** Wire names of the core's `TalkEndReason`. */
+export type TalkEndedReason =
+  | "released"
+  | "limit"
+  | "no_answer"
+  | "link_lost"
+  | "mic_failed"
+  | "alert"
+  | "switched_off"
+  | "stopped";
+
+/** Wire names of the core's `TalkDenyReason.kind`. */
+export type TalkDeniedReason =
+  "off" | "unsupported" | "muted" | "busy" | "cooldown" | "budget" | "rate" | "unknown";
+
+/**
+ * The microphone permission step. `sheet` = the explanation sheet is open (a first press), `done`
+ * = granted a moment ago ("Done. Now hold to talk."), `refused` = the browser refused it.
+ */
+export type TalkPermission = "unknown" | "granted" | "sheet" | "done" | "refused";
+
+export type TalkNoisePause = "none" | "self" | "other";
+
+export interface ParentTalkUi {
+  phase: TalkPhase;
+  /** While talking: the end of the limit (monotonic ms, the core's clock). */
+  untilElapsedMs: number | null;
+  endedReason: TalkEndedReason | null;
+  deniedReason: TalkDeniedReason | null;
+  /** The earliest next request after a cooldown, budget or limit (monotonic ms); null = unknown. */
+  retryAtElapsedMs: number | null;
+  /** Set when the button cannot be used right now. */
+  unavailable: TalkUnavailable | null;
+  permission: TalkPermission;
+  noisePause: TalkNoisePause;
+  /** The baby unit's playback check could not confirm the last voice. */
+  unconfirmed: boolean;
+  /** Three talks in a row were not confirmed: shown before the next press, never a denial. */
+  audibleUncertain: boolean;
+  /** The 10 s listen after a talk runs ("Listening for 10 s · tap to keep listening"). */
+  afterListen: boolean;
+}
+
+export interface TalkBackSettings {
+  enabled: boolean;
+  level: "low" | "medium" | "high";
+  chime: boolean;
+}
+
+export interface LastTalkUi {
+  /** The parent's name on the baby unit; empty when it sent none. */
+  name: string;
+  atWallMs: number;
+  durationMs: number;
+}
+
+export interface BabyTalkUi {
+  /** A parent's voice plays right now. */
+  talking: boolean;
+  lastTalk: LastTalkUi | null;
+  settings: TalkBackSettings;
+  /** The browser suspended this device's audio: talk-back is muted until a tap. */
+  soundSuspended: boolean;
+}
+
+export function defaultParentTalk(): ParentTalkUi {
+  return {
+    phase: "idle",
+    untilElapsedMs: null,
+    endedReason: null,
+    deniedReason: null,
+    retryAtElapsedMs: null,
+    unavailable: "not_connected",
+    permission: "unknown",
+    noisePause: "none",
+    unconfirmed: false,
+    audibleUncertain: false,
+    afterListen: false,
+  };
+}
+
+export function defaultTalkBackSettings(): TalkBackSettings {
+  return { enabled: true, level: "low", chime: true };
+}
+
+export function defaultBabyTalk(): BabyTalkUi {
+  return {
+    talking: false,
+    lastTalk: null,
+    settings: defaultTalkBackSettings(),
+    soundSuspended: false,
+  };
+}
+
 export type Theme = "dark" | "light" | "system";
 
 export type AlertOutput = "default" | "speaker_only";

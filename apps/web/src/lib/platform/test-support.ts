@@ -5,7 +5,14 @@
  */
 import type { IceCandidate, IceServer } from "@guardedsleep/core-wasm";
 import type { Cancel, Clock, Timers } from "./clock";
-import type { AttemptListener, AttemptPort, InboundAudioStats, MediaEngine } from "./media-engine";
+import type {
+  AttemptListener,
+  AttemptPort,
+  InboundAudioStats,
+  MediaEngine,
+  TalkLevel,
+  TalkMicResult,
+} from "./media-engine";
 import type { WebSocketLike } from "./signaling";
 
 /** Manual time: `advance` runs due timers in order. The clock reads the same time. */
@@ -132,6 +139,11 @@ export class FakeAttempt implements AttemptPort {
   inboundAudioStats(): Promise<InboundAudioStats | null> {
     return Promise.resolve(this.stats);
   }
+  talkTracks: Array<MediaStreamTrack | null> = [];
+  setTalkTrack(track: MediaStreamTrack | null): Promise<boolean> {
+    this.talkTracks.push(track);
+    return Promise.resolve(true);
+  }
   close(): void {
     this.closed = true;
   }
@@ -166,6 +178,42 @@ export class FakeMedia implements MediaEngine {
   }
   setPlaybackGainPct(pct: number): void {
     this.calls.push(`gain:${pct}`);
+  }
+  setPlaybackDucked(ducked: boolean): void {
+    this.calls.push(`ducked:${ducked}`);
+  }
+  /** What `setTalkMic` resolves with; a test sets it to play a failing browser. */
+  talkMicResult: TalkMicResult = "attached";
+  warmTalkMic(): Promise<boolean> {
+    this.calls.push("warm");
+    return Promise.resolve(true);
+  }
+  setTalkMic(_port: AttemptPort, enabled: boolean): Promise<TalkMicResult> {
+    this.calls.push(`talkmic:${enabled}`);
+    return Promise.resolve(enabled ? this.talkMicResult : "detached");
+  }
+  discardTalkMic(): void {
+    this.calls.push("discard");
+  }
+  /** Baby: the end of the chime a test plays by hand. */
+  chimeDone: (() => void) | null = null;
+  leaseOpen = false;
+  talkRms: number | null = null;
+  setTalkPlayback(enabled: boolean, level: TalkLevel, fadeInMs: number, remainingMs: number): void {
+    this.calls.push(`talkplay:${enabled}:${level}:${fadeInMs}:${remainingMs}`);
+    this.leaseOpen = enabled;
+  }
+  playTalkChime(level: TalkLevel, done: () => void): void {
+    this.calls.push(`chime:${level}`);
+    this.chimeDone = done;
+  }
+  talkLeaseOpen(): boolean {
+    return this.leaseOpen;
+  }
+  drainTalkLevel(): number | null {
+    const v = this.talkRms;
+    this.talkRms = null;
+    return v;
   }
   drainMicRms(): number | null {
     const v = this.micRms;

@@ -214,6 +214,18 @@ describe("AppController mirrors UiContract.kt", () => {
       "pageGuard",
       "retryKeepAwake",
       "dismissAwayReport",
+      // Talk-back (add-talk-back group 4): the Android contract's counterparts are reconciled
+      // when its models land; until then the web side keeps its own stores and calls.
+      "talk",
+      "babyTalk",
+      "talkPress",
+      "talkRelease",
+      "talkInterrupt",
+      "requestTalkPermission",
+      "closeTalkPermission",
+      "setTalkBack",
+      "playTalkChimeSample",
+      "talkSettingsOpened",
     ];
     const own = Object.keys(fake).filter(
       (k) => !stores.includes(k) && k !== "calls" && !webOnly.includes(k),

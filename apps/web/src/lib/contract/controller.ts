@@ -2,13 +2,16 @@ import type { Readable } from "svelte/store";
 import type {
   AppState,
   BabyMonitorState,
+  BabyTalkUi,
   DeviceBattery,
   ListenMode,
   PageGuardState,
   PairingState,
   ParentMonitorState,
+  ParentTalkUi,
   Role,
   SettingsState,
+  TalkBackSettings,
 } from "./models";
 import type { TurnSaveResult } from "./turn";
 
@@ -38,6 +41,11 @@ export interface AppController {
    * or freeze a page that is not in front; the screens warn about it).
    */
   readonly pageGuard: Readable<PageGuardState>;
+
+  /** Web only: talk-back on the parent monitoring screen (`add-talk-back`). */
+  readonly talk: Readable<ParentTalkUi>;
+  /** Web only: talk-back on the baby device (indicator, last talk, settings, suspended audio). */
+  readonly babyTalk: Readable<BabyTalkUi>;
 
   /** Sets the session role; `makeDefault` also stores it as the start mode. */
   chooseRole(role: Role, makeDefault?: boolean): void;
@@ -74,9 +82,28 @@ export interface AppController {
   tryReconnectNow(): void;
   dismissMissedEvents(): void;
 
+  /**
+   * Web only. The talk button went down (after its hold time). Without microphone permission this
+   * opens the permission step and sends nothing.
+   */
+  talkPress(): void;
+  /** Web only. The button was released or the touch was cancelled; also ends a talk in progress. */
+  talkRelease(): void;
+  /** Web only. The page left the front (hidden, blur): ends the talk and closes the microphone. */
+  talkInterrupt(): void;
+  /** Web only. "Allow microphone" in the permission step (a click handler: it may prompt). */
+  requestTalkPermission(): void;
+  closeTalkPermission(): void;
+
   // Baby
   setKioskLocked(locked: boolean): void;
   dismissSilenceRestoredNotice(): void;
+  /** Web only. Talk-back settings of this baby device (switch, volume, chime); memory only. */
+  setTalkBack(update: Partial<TalkBackSettings>): void;
+  /** Web only. "Play chime": the chime at the chosen volume, to set the computer's volume by. */
+  playTalkChimeSample(): void;
+  /** Web only. The settings screen was opened by an adult (clears "may not be audible"). */
+  talkSettingsOpened(): void;
 
   /** Web only. Call it from a click handler ("Tap to turn on alert sound"); it unlocks audio. */
   unlockSound(): void;

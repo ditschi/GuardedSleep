@@ -53,3 +53,33 @@ export const GAP_CHECK_MS = 1_000;
 export const SLEEP_GAP_MS = 10_000;
 /** A hidden page's timers run at most once a minute; only a clearly longer silence counts. */
 export const BACKGROUND_GAP_MS = 150_000;
+
+// ---- talk-back (add-talk-back design sections 7 and 8) ----------------------------------------
+// Platform-side only: when a talk may play, how long and how often is decided in the Rust core.
+
+/** Baby: how often the talk receiver's packet counter is compared with the lease. */
+export const TALK_RTP_POLL_MS = 1_000;
+/** Packets this soon after a lease ended are the parent's last frames in flight, not a breach. */
+export const TALK_RTP_GRACE_MS = 2_000;
+/**
+ * Baby output gains per talk level, as linear factors of the computer's own volume (which a
+ * browser cannot see). High is lower than the Android share on purpose (design section 8).
+ */
+export const TALK_LEVEL_GAIN = { low: 0.2, medium: 0.4, high: 0.6 } as const;
+/** The limiter's hard clip, as a linear amplitude in front of the system volume. */
+export const TALK_LIMITER_CEILING = 0.5;
+/** The compressor of the limiter: threshold in dB, ratio, attack and release in seconds. */
+export const TALK_LIMITER_THRESHOLD_DB = -18;
+export const TALK_LIMITER_RATIO = 20;
+export const TALK_LIMITER_ATTACK_S = 0.001;
+export const TALK_LIMITER_RELEASE_S = 0.1;
+/** The chime sits this far below the voice level (about 12 dB) but never below the floor. */
+export const TALK_CHIME_RATIO = 0.25;
+export const TALK_CHIME_FLOOR = 0.05;
+/** Two notes of the chime and how long each rings (seconds). */
+export const TALK_CHIME_NOTES_HZ = [660, 880] as const;
+export const TALK_CHIME_NOTE_S = 0.3;
+/** An end reason or denial stays on the parent's screen this long. */
+export const TALK_RESULT_VISIBLE_MS = 6_000;
+/** "Your voice may not be audible" stays this long. */
+export const TALK_UNCONFIRMED_VISIBLE_MS = 15_000;

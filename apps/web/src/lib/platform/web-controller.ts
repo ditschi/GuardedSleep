@@ -12,20 +12,25 @@ import { readable, writable, type Readable } from "svelte/store";
 import {
   defaultAppState,
   defaultBabyMonitor,
+  defaultBabyTalk,
   defaultParentMonitor,
+  defaultParentTalk,
   defaultSettings,
   makePairingState,
   type AppController,
   type AppState,
   type BabyMonitorState,
+  type BabyTalkUi,
   type DeviceBattery,
   type ListenMode,
   type PageGuardState,
   type PairingError,
   type PairingState,
   type ParentMonitorState,
+  type ParentTalkUi,
   type Role,
   type SettingsState,
+  type TalkBackSettings,
   type TurnSaveResult,
 } from "../contract";
 import { resolveTurnSave, turnSettings, type TurnEntry } from "../contract/turn";
@@ -39,6 +44,8 @@ import { mailboxesForUrls, signalingUrlsOf } from "./invite-mailboxes";
 import { LinkDriver, type LinkListener } from "./link-driver";
 import type { InboundAudioStats, MediaEngine } from "./media-engine";
 import { idleWatch, type PageWatch } from "./page-watch";
+import { BabyTalkModel, ParentTalkModel, preemptingAlerts } from "./talk-model";
+import type { MicrophonePermission } from "./talk-audio";
 import { ParentModel } from "./parent-model";
 import {
   ALARM_AFTER_MS,
@@ -49,11 +56,21 @@ import {
   PSK_BYTES,
 } from "./policy";
 import type { SignalingFactory } from "./signaling";
+import { phaseOf } from "./status-mapping";
 
 /** Tells the controller when the network came back (the core then retries at once). */
 export interface NetworkWatcher {
   start(onAvailable: () => void): void;
   stop(): void;
+}
+
+/** The browser's microphone for talk-back (parent): the support check, the permission, the prompt. */
+export interface TalkMicPort {
+  /** False in iOS Safari and on a page without media devices: the button says "not supported". */
+  supported: boolean;
+  query(): Promise<MicrophonePermission>;
+  /** The permission step: asks once and closes the microphone again at once. */
+  request(): Promise<"granted" | "refused">;
 }
 
 export interface ControllerDeps {
@@ -97,6 +114,8 @@ export interface ControllerDeps {
   deviceName?: () => string;
   /** Development builds only: the core also accepts loopback mailboxes in a received update. */
   allowDevLoopback?: boolean;
+  /** Parent: talk-back's microphone permission; absent = talk-back is "not supported" here. */
+  talkMic?: TalkMicPort;
   /** Wake lock, page visibility and sleep detection; absent in tests that do not need them. */
   page?: PageWatch;
 }
@@ -168,6 +187,11 @@ export class WebController implements AppController {
   private readonly babyModel: BabyModel;
   private readonly parentStore = writable<ParentMonitorState>(defaultParentMonitor());
   private readonly babyStore = writable<BabyMonitorState>(defaultBabyMonitor());
+  private readonly talkStore = writable<ParentTalkUi>(defaultParentTalk());
+  private readonly babyTalkStore = writable<BabyTalkUi>(defaultBabyTalk());
+  private readonly talkModel: ParentTalkModel;
+  private readonly babyTalkModel: BabyTalkModel;
+  private readonly alerts: AlertSink;
 
   readonly app: Readable<AppState> = this.appStore;
   readonly settings: Readable<SettingsState> = this.settingsStore;
@@ -175,6 +199,8 @@ export class WebController implements AppController {
   readonly soundUnlocked: Readable<boolean> = this.soundStore;
   readonly parent: Readable<ParentMonitorState> = this.parentStore;
   readonly baby: Readable<BabyMonitorState> = this.babyStore;
+  readonly talk: Readable<ParentTalkUi> = this.talkStore;
+  readonly babyTalk: Readable<BabyTalkUi> = this.babyTalkStore;
   readonly deviceBattery: Readable<DeviceBattery | null>;
   readonly pageGuard: Readable<PageGuardState>;
 
@@ -194,9 +220,10 @@ export class WebController implements AppController {
     // After a sleep or a return from the background the sockets are likely dead: the core retries
     // at once on this existing input and decides everything else itself.
     this.page.onResumed(() => this.run?.driver?.input({ type: "network_available" }));
+    this.alerts = preemptingAlerts(deps.alerts, () => this.preemptTalk());
     this.parentModel = new ParentModel(
       deps.clock,
-      deps.alerts,
+      this.alerts,
       {
         muteRemote: (muted) => this.run?.driver?.media((m) => m.setPlaybackMuted(muted)),
         listenStopped: () => this.run?.driver?.input({ type: "set_listen", enabled: false }),
@@ -207,8 +234,22 @@ export class WebController implements AppController {
       (state) => this.parentStore.set(state),
     );
     this.babyModel = new BabyModel(deps.clock, (state) => this.babyStore.set(state));
+    this.talkModel = new ParentTalkModel(deps.clock, (state) => this.talkStore.set(state));
+    this.talkModel.setBrowserSupported(deps.talkMic?.supported ?? false);
+    this.babyTalkModel = new BabyTalkModel(
+      deps.clock,
+      () => this.babyModel.parentDisplayName,
+      (state) => this.babyTalkStore.set(state),
+    );
+    // A page that leaves the front must not keep the microphone: the talk ends at once.
+    this.page.state.subscribe((guard) => {
+      if (guard.hidden) this.talkInterrupt();
+    });
     this.babyModel.setSettings(this.settingsState.threshold, this.settingsState.holdSeconds);
-    deps.gate.onChange((unlocked) => this.soundStore.set(unlocked));
+    deps.gate.onChange((unlocked) => {
+      this.soundStore.set(unlocked);
+      this.onSoundState(unlocked);
+    });
   }
 
   // ---- app ---------------------------------------------------------------------------------
@@ -411,6 +452,7 @@ export class WebController implements AppController {
     const r = this.run;
     if (!r?.driver) return;
     if (this.parentModel.setListen(mode, this.deps.clock.elapsedMs())) {
+      if (mode !== "off") this.talkModel.clearAfterListen();
       r.driver.input({ type: "set_listen", enabled: mode !== "off" });
     }
   }
@@ -421,7 +463,7 @@ export class WebController implements AppController {
       driver.input({ type: "request_probe" });
     } else {
       // Tested this device only: the chain runs locally with the baby device not involved.
-      this.deps.alerts.noiseAlert("new", true, false);
+      this.alerts.noiseAlert("new", true, false);
       this.updateSettingsState({ lastTestWallMs: this.deps.clock.wallMs() });
     }
   }
@@ -472,6 +514,96 @@ export class WebController implements AppController {
     if (heardAndFelt) this.updateSettingsState({ lastTestWallMs: this.deps.clock.wallMs() });
   }
 
+  // ---- talk-back (parent) ------------------------------------------------------------------
+
+  talkPress(): void {
+    const driver = this.run?.driver;
+    if (!driver || this.run?.role !== "parent") return;
+    if (this.talkModel.busy || !this.talkModel.available) return;
+    const permission = this.talkModel.permission;
+    if (permission !== "granted" && permission !== "done") {
+      // The permission step comes before the first talk, never during a hold: nothing is sent.
+      this.talkModel.setPermission("sheet");
+      return;
+    }
+    // Warm start: the browser opens the microphone now; it is attached only at the grant.
+    driver.media((m) => void m.warmTalkMic());
+    driver.input({ type: "set_talk", pressed: true });
+  }
+
+  talkRelease(): void {
+    const driver = this.run?.driver;
+    if (!driver || this.run?.role !== "parent" || !this.talkModel.busy) return;
+    driver.input({ type: "set_talk", pressed: false });
+    // Released before the grant: the warm microphone was never attached; close it now.
+    driver.media((m) => m.discardTalkMic());
+  }
+
+  talkInterrupt(): void {
+    this.talkRelease();
+  }
+
+  requestTalkPermission(): void {
+    const port = this.deps.talkMic;
+    if (!port) return;
+    void port.request().then((result) => {
+      this.talkModel.setPermission(result === "granted" ? "done" : "refused");
+    });
+  }
+
+  closeTalkPermission(): void {
+    const permission = this.talkModel.permission;
+    this.talkModel.setPermission(permission === "done" ? "granted" : "unknown");
+  }
+
+  /** An alert is about to sound on this device: a talk in progress ends first. */
+  private preemptTalk(): void {
+    if (this.talkModel.busy) this.run?.driver?.input({ type: "alert_preempts_talk" });
+  }
+
+  private refreshTalkPermission(run: Run): void {
+    const port = this.deps.talkMic;
+    if (!port?.supported) return;
+    void port.query().then((state) => {
+      if (this.run === run && state === "granted") this.talkModel.setPermission("granted");
+    });
+  }
+
+  // ---- talk-back (baby) --------------------------------------------------------------------
+
+  setTalkBack(update: Partial<TalkBackSettings>): void {
+    this.babyTalkModel.setSettings(update);
+    this.sendTalkSettings();
+  }
+
+  playTalkChimeSample(): void {
+    this.deps.gate.unlock().catch(() => undefined);
+    const level = this.babyTalkModel.settings.level;
+    this.run?.driver?.media((m) => m.playTalkChime(level, () => undefined));
+  }
+
+  talkSettingsOpened(): void {
+    this.run?.driver?.input({ type: "talk_settings_opened" });
+  }
+
+  private sendTalkSettings(): void {
+    const driver = this.run?.driver;
+    if (!driver || this.run?.role !== "baby") return;
+    const { enabled, level, chime } = this.babyTalkModel.settings;
+    driver.input({ type: "set_talk_back", enabled, level, chime });
+  }
+
+  /**
+   * The browser suspended or resumed this device's audio. A suspended baby cannot play a talk, so
+   * the core reports `muted` and the night screen shows how to turn sound back on.
+   */
+  private onSoundState(unlocked: boolean): void {
+    const r = this.run;
+    if (r?.role !== "baby") return;
+    this.babyTalkModel.setSoundSuspended(!unlocked);
+    r.driver?.input({ type: "set_talk_muted", muted: !unlocked });
+  }
+
   // ---- baby intents ------------------------------------------------------------------------
 
   setKioskLocked(locked: boolean): void {
@@ -501,6 +633,9 @@ export class WebController implements AppController {
     this.run = run;
     this.parentModel.reset();
     this.babyModel.reset();
+    this.talkModel.reset();
+    this.babyTalkModel.reset();
+    this.babyTalkModel.setSoundSuspended(false);
 
     let media: MediaEngine;
     try {
@@ -533,6 +668,16 @@ export class WebController implements AppController {
     run.driver = driver;
     this.deps.network.start(() => driver.input({ type: "network_available" }));
     driver.start();
+    if (role === "baby") {
+      // A browser captures raw (no echo cancellation), which the playback check needs; the
+      // settings are this page's; a suspended audio context cannot play a talk.
+      driver.input({ type: "set_raw_capture", raw: true });
+      this.sendTalkSettings();
+      this.babyTalkModel.setSoundSuspended(!this.deps.gate.unlocked);
+      driver.input({ type: "set_talk_muted", muted: !this.deps.gate.unlocked });
+    } else {
+      this.refreshTalkPermission(run);
+    }
     if (role === "parent") {
       driver.media((m) => m.setPlaybackGainPct(settings.alertGainPct));
       const snoozeUntil = this.parentModel.snoozeUntilElapsedMs();
@@ -542,7 +687,7 @@ export class WebController implements AppController {
 
   private onMediaFailed(run: Run, error: unknown): void {
     this.run = null;
-    this.deps.alerts.clear();
+    this.alerts.clear();
     if (run.role === "baby") {
       const name = error instanceof DOMException ? error.name : "";
       this.babyModel.fail(
@@ -564,7 +709,9 @@ export class WebController implements AppController {
     else r.driver?.abort();
     this.parentModel.reset();
     this.babyModel.reset();
-    this.deps.alerts.clear();
+    this.talkModel.reset();
+    this.babyTalkModel.reset();
+    this.alerts.clear();
   }
 
   private endPendingRun(r: Run): void {
@@ -574,6 +721,8 @@ export class WebController implements AppController {
     r.driver?.stop();
     this.parentModel.reset();
     this.babyModel.reset();
+    this.talkModel.reset();
+    this.babyTalkModel.reset();
   }
 
   private buildConfig(
@@ -653,8 +802,10 @@ export class WebController implements AppController {
     return {
       onStatus: (status: LinkStatus, now: number) => {
         if (!current()) return;
-        if (r.role === "parent") this.parentModel.onStatus(status, now);
-        else this.babyModel.onStatus(status);
+        if (r.role === "parent") {
+          this.parentModel.onStatus(status, now);
+          this.talkModel.setConnected(phaseOf(status.state) === "connected");
+        } else this.babyModel.onStatus(status);
         this.onPairingStatus(r, status);
       },
       onEvent: (event: LinkEvent, now: number) => {
@@ -663,12 +814,29 @@ export class WebController implements AppController {
         if (event.type === "parent_pinned")
           this.keepParentSecret(r, event.secret, event.window_until_s ?? null);
         else if (event.type === "mailboxes_updated") this.keepMailboxes(r, event.mailboxes);
-        if (r.role === "parent") this.parentModel.onEvent(event, now);
-        else this.babyModel.onEvent(event);
+        if (r.role === "parent") {
+          this.parentModel.onEvent(event, now);
+          this.talkModel.onEvent(event, now);
+          // A microphone that failed may have lost its permission: ask again before the next talk.
+          if (
+            event.type === "talk_changed" &&
+            event.state.state === "ended" &&
+            event.state.reason === "mic_failed"
+          ) {
+            this.talkModel.setPermission("unknown");
+            this.refreshTalkPermission(r);
+          }
+        } else {
+          this.babyModel.onEvent(event);
+          this.babyTalkModel.onEvent(event);
+        }
       },
       onTick: (now: number) => {
         if (!current()) return;
-        if (r.role === "parent") this.parentModel.onTick(now);
+        if (r.role === "parent") {
+          this.parentModel.onTick(now);
+          this.talkModel.onTick(now);
+        }
         this.checkPairingTimers(r, now);
       },
       onMicLevel: (rms: number, now: number) => {
