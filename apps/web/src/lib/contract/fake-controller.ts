@@ -63,9 +63,17 @@ export function createFakeController(): FakeController {
     deviceBattery,
     pageGuard,
     calls,
-    chooseRole(role) {
+    chooseRole(role, makeDefault = false) {
       calls.push(["chooseRole", role]);
-      app.update((s) => ({ ...s, role }));
+      app.update((s) => ({ ...s, role, defaultRole: makeDefault ? role : s.defaultRole }));
+    },
+    switchMode() {
+      calls.push(["switchMode"]);
+      app.update((s) => (s.monitoring ? s : { ...s, role: null }));
+    },
+    setDefaultRole(role) {
+      calls.push(["setDefaultRole", role]);
+      app.update((s) => ({ ...s, defaultRole: role }));
     },
     completeOnboarding() {
       calls.push(["completeOnboarding"]);
