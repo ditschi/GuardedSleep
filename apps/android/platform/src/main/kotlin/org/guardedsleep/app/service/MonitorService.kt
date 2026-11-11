@@ -8,7 +8,9 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.PowerManager
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
@@ -21,6 +23,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.guardedsleep.app.alerts.StatusNotifier
 import org.guardedsleep.app.diag.PocLog
+import org.guardedsleep.app.link.LinkController
 import org.guardedsleep.app.link.MonitorHost
 import org.guardedsleep.app.ui.model.LinkUi
 import org.guardedsleep.app.ui.model.Role
@@ -41,6 +44,7 @@ class MonitorService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        stopping = false
         val graph = platformServices()
         val persisted = graph.settings.current
         val role = persisted.role
@@ -79,10 +83,48 @@ class MonitorService : Service() {
                     // night.
                     .apply { @SuppressLint("WakelockTimeout") acquire() }
         }
-        graph.controller.ensureRun()
-        graph.controller.onServiceRunning(true)
+        when (graph.controller.ensureRun()) {
+            LinkController.EnsureRun.RUNNING -> started(role, notifier)
+            LinkController.EnsureRun.NO_PAIRING -> pairingUnavailable(role, notifier)
+            // One bounded retry: the Keystore may still be busy right after boot or unlock.
+            LinkController.EnsureRun.UNREADABLE ->
+                retry.postDelayed(
+                    {
+                        if (
+                            platformServices().controller.ensureRun() ==
+                                LinkController.EnsureRun.RUNNING
+                        )
+                            started(role, notifier)
+                        else pairingUnavailable(role, notifier)
+                    },
+                    PAIRING_RETRY_MS,
+                )
+        }
+        return if (stopping) START_NOT_STICKY else START_STICKY
+    }
+
+    private var stopping = false
+    private val retry = Handler(Looper.getMainLooper())
+
+    private fun started(role: Role, notifier: StatusNotifier) {
+        platformServices().controller.onServiceRunning(true)
         observe(role, notifier)
-        return START_STICKY
+    }
+
+    /**
+     * Monitoring is on but there is no pairing to run: the same visible outcome as a refused
+     * foreground service (parent alarm, baby resume prompt), then the service ends instead of
+     * holding a notification that claims to monitor.
+     */
+    private fun pairingUnavailable(role: Role, notifier: StatusNotifier) {
+        PocLog.event("failed", "reason" to "pairing_unavailable")
+        if (role == Role.BABY) {
+            getSystemService(NotificationManager::class.java)
+                .notify(StatusNotifier.ID_RESUME, notifier.resumePrompt())
+        }
+        platformServices().controller.onServiceRunning(false)
+        stopping = true
+        stopSelf()
     }
 
     // The constants are compile-time ints and the manifest declares the same bits, so the API 29
@@ -135,6 +177,7 @@ class MonitorService : Service() {
     }
 
     override fun onDestroy() {
+        retry.removeCallbacksAndMessages(null)
         scope?.cancel()
         scope = null
         wakeLock?.takeIf { it.isHeld }?.release()
@@ -150,6 +193,7 @@ class MonitorService : Service() {
 
     companion object {
         const val ACTION_STOP = "org.guardedsleep.app.STOP"
+        private const val PAIRING_RETRY_MS = 5_000L
     }
 }
 

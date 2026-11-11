@@ -16,6 +16,7 @@ import org.guardedsleep.app.diag.PocLog
 import org.guardedsleep.app.media.IceConfig
 import org.guardedsleep.app.media.InboundAudioStats
 import org.guardedsleep.app.media.MediaEngine
+import org.guardedsleep.app.pairing.PairingLoad
 import org.guardedsleep.app.pairing.PairingPayload
 import org.guardedsleep.app.pairing.PairingStore
 import org.guardedsleep.app.pairing.StoredMailbox
@@ -455,16 +456,38 @@ class LinkController(
         startHost()
     }
 
-    /** Called by the service once it is in the foreground: starts (or adopts) the run. */
-    fun ensureRun() {
+    /** What [ensureRun] found. */
+    enum class EnsureRun {
+        /** A run exists. */
+        RUNNING,
+
+        /** No role or no pairing: monitoring cannot run. */
+        NO_PAIRING,
+
+        /** The pairing is kept but unreadable right now; the caller retries once. */
+        UNREADABLE,
+    }
+
+    /**
+     * Called by the service once it is in the foreground: starts (or adopts) the run. Anything but
+     * [EnsureRun.RUNNING] while monitoring is persisted active must not leave the service up: the
+     * service reports it through [onServiceRunning] (platform fact, same path as a lost service).
+     */
+    fun ensureRun(): EnsureRun {
         val existing = run
         if (existing != null) {
             promote(existing)
-            return
+            return EnsureRun.RUNNING
         }
-        val role = settingsRepo.current.role ?: return
-        val stored = pairingStore.load() ?: return
-        resumeRun(role, stored)
+        val role = settingsRepo.current.role ?: return EnsureRun.NO_PAIRING
+        return when (val r = pairingStore.loadResult()) {
+            PairingLoad.Absent -> EnsureRun.NO_PAIRING
+            PairingLoad.Unreadable -> EnsureRun.UNREADABLE
+            is PairingLoad.Loaded -> {
+                resumeRun(role, r.pairing)
+                EnsureRun.RUNNING
+            }
+        }
     }
 
     private fun promote(r: Run) {

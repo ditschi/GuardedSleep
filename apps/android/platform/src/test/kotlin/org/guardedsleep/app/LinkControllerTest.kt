@@ -17,6 +17,7 @@ import org.guardedsleep.app.media.AttemptPort
 import org.guardedsleep.app.media.IceServerEntry
 import org.guardedsleep.app.media.InboundAudioStats
 import org.guardedsleep.app.media.MediaEngine
+import org.guardedsleep.app.pairing.PairingCipher
 import org.guardedsleep.app.pairing.PairingPayload
 import org.guardedsleep.app.pairing.PairingStore
 import org.guardedsleep.app.pairing.StoredMailbox
@@ -326,10 +327,11 @@ class LinkControllerTest {
         role: Role,
         hostThrows: Boolean = false,
         deviceName: String = "",
+        pairingCipher: PairingCipher = FakeCipher(),
     ): Unit2 {
         val dir = tmp.newFolder(name)
         val settings = testSettings(dir)
-        val store = PairingStore(java.io.File(dir, "pairing.bin"), FakeCipher())
+        val store = PairingStore(java.io.File(dir, "pairing.bin"), pairingCipher)
         val turnStore = TurnStore(java.io.File(dir, "turn.bin"), FakeCipher())
         val sink = RecordingSink()
         val silence = FakeSilence()
@@ -784,5 +786,42 @@ class LinkControllerTest {
         assertTrue(baby.sink.fgsLost.isEmpty())
         parent.controller.stopMonitoring()
         assertTrue(parent.controller.app.value.backgroundProtection)
+    }
+
+    private fun storedPairing() =
+        org.guardedsleep.app.pairing.StoredPairing(
+            org.guardedsleep.app.pairing.PairingPayload.b64(ByteArray(32) { 3 }),
+            listOf("wss://fake.example"),
+            true,
+        )
+
+    @Test
+    fun missingPairingWhileMonitoringIsReportedNotSilentlySkipped() {
+        val parent = unit("parent", Role.PARENT)
+        parent.controller.startMonitoring()
+        assertEquals(LinkController.EnsureRun.NO_PAIRING, parent.controller.ensureRun())
+        // The service reports it through the same platform path as a lost foreground service.
+        parent.controller.onServiceRunning(false)
+        assertEquals(false, parent.controller.app.value.backgroundProtection)
+        assertEquals(true, parent.sink.fgsLost.last())
+    }
+
+    @Test
+    fun transientlyUnreadablePairingIsKeptAndTheRetryResumesTheRun() {
+        val cipher = FlakyCipher(1) { java.security.KeyStoreException("keystore busy") }
+        val parent = unit("parent", Role.PARENT, pairingCipher = cipher)
+        parent.store.save(storedPairing())
+        assertEquals(LinkController.EnsureRun.UNREADABLE, parent.controller.ensureRun())
+        assertTrue(parent.store.exists())
+        assertEquals(LinkController.EnsureRun.RUNNING, parent.controller.ensureRun())
+    }
+
+    @Test
+    fun unrecoverablePairingIsClearedAndReportedAsMissing() {
+        val cipher = FlakyCipher(1) { javax.crypto.AEADBadTagException() }
+        val parent = unit("parent", Role.PARENT, pairingCipher = cipher)
+        parent.store.save(storedPairing())
+        assertEquals(LinkController.EnsureRun.NO_PAIRING, parent.controller.ensureRun())
+        assertFalse(parent.store.exists())
     }
 }
