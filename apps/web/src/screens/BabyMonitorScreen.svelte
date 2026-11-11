@@ -1,14 +1,14 @@
 <script lang="ts">
   import { useController, type LinkUi } from "../lib/contract";
   import type { MessageKey } from "../lib/i18n/keys";
-  import { t } from "../lib/i18n/store";
+  import { locale, t } from "../lib/i18n/store";
   import { link } from "../lib/router";
   import { useRouter } from "../lib/router-context";
   import Banner from "../lib/ui/Banner.svelte";
   import Button from "../lib/ui/Button.svelte";
   import Chip from "../lib/ui/Chip.svelte";
   import Dialog from "../lib/ui/Dialog.svelte";
-  import { levelWordKey } from "../lib/ui/format";
+  import { formatClock, formatDuration, levelWordKey } from "../lib/ui/format";
   import Glyph from "../lib/ui/Glyph.svelte";
   import AwayNotice from "../lib/ui/AwayNotice.svelte";
   import { askForNotifications, browserNotifications } from "../lib/ui/attention";
@@ -21,7 +21,7 @@
 
   const controller = useController();
   const router = useRouter();
-  const { baby, deviceBattery, pageGuard } = controller;
+  const { baby, deviceBattery, pageGuard, babyTalk } = controller;
 
   let stopOpen = $state(false);
   let nightOpen = $state(false);
@@ -76,6 +76,16 @@
       : $t("native.ui.baby.battery", { percent: b.pct });
   });
 
+  const lastTalkText = $derived.by(() => {
+    const last = $babyTalk.lastTalk;
+    if (last === null) return null;
+    return $t("webScreens.talk.babyLastTalk", {
+      name: last.name === "" ? $t("native.ui.common.parentUnitDefault") : last.name,
+      time: formatClock(last.atWallMs, $locale),
+      duration: formatDuration($t, last.durationMs),
+    });
+  });
+
   function openNight(): void {
     nightOpen = true;
     // A tap is the moment to ask for notifications; nothing changes if the user declines.
@@ -116,6 +126,22 @@
       <p class="gs-muted" data-testid="baby_listening">{$t("native.ui.baby.parentListening")}</p>
     {/if}
   </section>
+
+  {#if $babyTalk.talking}
+    <p class="gs-muted" role="status" data-testid="baby_talking">
+      <Glyph name="mic" />
+      {$t("webScreens.talk.babyTalking")}
+    </p>
+  {/if}
+  {#if $babyTalk.soundSuspended}
+    <Button variant="tonal" testid="baby_sound_off" onclick={() => controller.unlockSound()}>
+      <Glyph name="sound" />
+      {$t("webScreens.talk.babySoundOff")}
+    </Button>
+  {/if}
+  {#if lastTalkText}
+    <p class="gs-muted" data-testid="baby_last_talk">{lastTalkText}</p>
+  {/if}
 
   {#if failureText}
     <div class="gs-stack gs-stack--tight">
@@ -168,6 +194,16 @@
       <Glyph name="info" />
       <span>{$t("webScreens.baby.keepSilent")}</span>
     </div>
+    <div>
+      <Glyph name="sound" />
+      <span data-testid="baby_talk_volume_hint">{$t("webScreens.talk.babyVolumeHint")}</span>
+    </div>
+    {#if $babyTalk.settings.enabled}
+      <div>
+        <Glyph name="mic" />
+        <span data-testid="baby_talk_checklist">{$t("webScreens.talk.babyChecklist")}</span>
+      </div>
+    {/if}
   </div>
 
   <div class="gs-fill"></div>
@@ -182,7 +218,14 @@
   </Button>
 </div>
 
-<NightScreen bind:open={nightOpen} statusText={$t(status.key)} />
+<NightScreen
+  bind:open={nightOpen}
+  statusText={$t(status.key)}
+  talkingText={$babyTalk.talking ? $t("webScreens.talk.babyTalking") : null}
+  {lastTalkText}
+  soundOffText={$babyTalk.soundSuspended ? $t("webScreens.talk.babySoundOff") : null}
+  onsoundon={() => controller.unlockSound()}
+/>
 
 <Dialog bind:open={stopOpen} title={$t("native.ui.stop.title")} testid="dialog_stop">
   <p>{$t("native.ui.stop.babyBody")}</p>

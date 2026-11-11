@@ -76,6 +76,25 @@
     { "pattern": "webScreens.guard.hiddenTitle", "budget": 50 },
     { "pattern": "webScreens.guard.hiddenBody", "budget": 100 },
     { "pattern": "webScreens.guard.awayBackground", "budget": 110 },
-    { "pattern": "webScreens.guard.awaySleep", "budget": 110 }
+    { "pattern": "webScreens.guard.awaySleep", "budget": 110 },
+    { "pattern": "webScreens.talk.endLimit", "budget": 100 },
+    { "pattern": "webScreens.talk.endNoAnswer", "budget": 120 },
+    { "pattern": "webScreens.talk.endLinkLost", "budget": 130 },
+    { "pattern": "webScreens.talk.endMicFailed", "budget": 130 },
+    { "pattern": "webScreens.talk.endAlert", "budget": 130 },
+    { "pattern": "webScreens.talk.deniedOther", "budget": 110 },
+    { "pattern": "webScreens.talk.unavailableOff", "budget": 160 },
+    { "pattern": "webScreens.talk.unavailableOther", "budget": 120 },
+    { "pattern": "webScreens.talk.unavailableUnsupported", "budget": 110 },
+    { "pattern": "webScreens.talk.unavailableMuted", "budget": 110 },
+    { "pattern": "webScreens.talk.unavailableNotConnected", "budget": 100 },
+    { "pattern": "webScreens.talk.unavailableCooldown", "budget": 90 },
+    { "pattern": "webScreens.talk.unavailableBrowser", "budget": 110 },
+    { "pattern": "webScreens.talk.noisePausedSelf", "budget": 100 },
+    { "pattern": "webScreens.talk.noisePausedOther", "budget": 150 },
+    { "pattern": "webScreens.talk.unconfirmed", "budget": 120 },
+    { "pattern": "webScreens.talk.audibleUncertain", "budget": 170 },
+    { "pattern": "webScreens.talk.babySoundOff", "budget": 150 },
+    { "pattern": "webScreens.talk.permissionRefused", "budget": 170 }
   ]
 }

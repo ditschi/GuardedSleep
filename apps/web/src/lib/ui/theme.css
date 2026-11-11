@@ -66,6 +66,11 @@
     --gs-on-primary: light-dark(#ffffff, #00214d);
     --gs-primary-container: light-dark(#d6e3ff, #1e3a66);
     --gs-on-primary-container: light-dark(#001b3e, #ffffff);
+    /* Talk-back: its own colour, neither listen's primary nor an alarm red (design section 9). */
+    --gs-tertiary: light-dark(#00695c, #6fd8c8);
+    --gs-on-tertiary: light-dark(#ffffff, #00201b);
+    --gs-tertiary-container: light-dark(#bdece3, #0a3a33);
+    --gs-on-tertiary-container: light-dark(#00201b, #ffffff);
     --gs-error: light-dark(#b3261e, #ff8a80);
     --gs-on-error: light-dark(#ffffff, #3b0000);
 
@@ -169,6 +174,10 @@
     --gs-state-amber: #3f3000;
     --gs-on-state: #cfc6b6;
     --gs-focus: #c9b48a;
+    --gs-tertiary: #7fb5aa;
+    --gs-on-tertiary: #08201b;
+    --gs-tertiary-container: #11302b;
+    --gs-on-tertiary-container: #bfe0d8;
     --gs-scrim: rgb(0 0 0 / 0.8);
   }
 }

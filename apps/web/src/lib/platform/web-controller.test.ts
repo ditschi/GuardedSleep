@@ -182,7 +182,8 @@ describe("WebController: pairing", () => {
     expect(t.core.configs).toHaveLength(1);
     expect(t.core.configs[0]).toMatchObject({ role: "baby", paired_before: false });
     expect(FakeWebSocket.instances).toHaveLength(0); // the scripted core did not ask yet
-    expect(t.core.types()).toEqual(["start"]);
+    // The web baby captures raw and says so; its talk-back settings and audio state follow.
+    expect(t.core.types()).toEqual(["start", "set_raw_capture", "set_talk_back", "set_talk_muted"]);
   });
 
   it("baby: the invite is single use: a new one gets a new key", async () => {
