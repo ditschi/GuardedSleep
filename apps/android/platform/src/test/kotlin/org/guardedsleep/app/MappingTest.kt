@@ -26,7 +26,25 @@ class MappingTest {
         dnd: Dnd? = Dnd.OFF,
         access: Boolean? = true,
         quiet: Boolean? = false,
-    ) = DeviceStatus(null, null, ringer, dnd, true, access, quiet, null, null, null, emptyList())
+    ) =
+        DeviceStatus(
+            null,
+            null,
+            ringer,
+            dnd,
+            true,
+            access,
+            quiet,
+            null,
+            null,
+            null,
+            emptyList(),
+            null,
+            null,
+            null,
+            null,
+            null,
+        )
 
     @Test
     fun calmHintsMapAndUnknownKeysAreIgnored() {

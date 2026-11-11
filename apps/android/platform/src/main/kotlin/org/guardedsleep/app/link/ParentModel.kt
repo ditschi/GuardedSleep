@@ -258,6 +258,11 @@ class ParentModel(
             is LinkEvent.ParentPinned,
             is LinkEvent.ParentConnected,
             is LinkEvent.MailboxesUpdated,
+            // Talk-back events: mapped in a following commit of `add-talk-back` (group 3).
+            is LinkEvent.TalkChanged,
+            is LinkEvent.TalkActive,
+            is LinkEvent.NoisePaused,
+            is LinkEvent.TalkPlayback,
             is LinkEvent.Failed -> Unit
         }
         publish(now)

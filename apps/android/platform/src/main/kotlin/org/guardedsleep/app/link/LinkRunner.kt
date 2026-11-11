@@ -232,6 +232,12 @@ class LinkRunner(
             is LinkAction.SetMicEnabled -> media?.setMicEnabled(action.enabled)
             LinkAction.ApplyQuiet -> applyQuietNow()
             is LinkAction.SendProbeTone -> media?.startProbeTone(action.durationMs.toLong())
+            // Talk-back actions: wired to the media layer in the following commits of
+            // `add-talk-back` group 2.
+            is LinkAction.SetTalkMic,
+            is LinkAction.SetPlaybackDucked,
+            is LinkAction.PlayTalkChime,
+            is LinkAction.SetTalkPlayback -> Unit
             is LinkAction.Emit -> emit(action.event, now)
         }
     }

@@ -200,7 +200,7 @@ private class FakeAttempt(val net: FakeNet, val listener: AttemptListener, val b
         token = UUID.randomUUID().toString()
         net.registerOffer(token!!, this)
         val sdp =
-            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\n$fingerprint\r\na=gs-token:$token\r\n"
+            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\n$fingerprint\r\na=gs-token:$token\r\n"
         net.later { listener.onLocalDescription("offer", sdp) }
     }
 
@@ -212,7 +212,7 @@ private class FakeAttempt(val net: FakeNet, val listener: AttemptListener, val b
 
     override fun createAnswer() {
         val sdp =
-            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\n$fingerprint\r\na=gs-token:$token\r\n"
+            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\n$fingerprint\r\na=gs-token:$token\r\n"
         net.later { listener.onLocalDescription("answer", sdp) }
     }
 
@@ -296,6 +296,11 @@ private class FakeSilence : SilenceGateway {
             null,
             null,
             emptyList(),
+            null,
+            null,
+            null,
+            null,
+            null,
         )
 }
 
