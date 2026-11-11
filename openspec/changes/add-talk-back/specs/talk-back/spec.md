@@ -156,14 +156,18 @@ The baby unit SHALL run at most one talk at a time. A talk request from another 
 - **WHEN** parent A is talking and parent B presses the talk button
 - **THEN** B is denied, B's screen says that the other parent device is talking, and A's talk continues
 
-### Requirement: Gentle start and safe loudness
+### Requirement: Gentle start
 
-Before the parent's voice, the baby unit SHALL play a soft chime and then fade the voice in, at the talk-back volume set on the baby unit and independent of the ringer mode. The baby unit SHALL cap the loudness of talk audio by itself, independent of the sender: it SHALL lower the gain within 200 ms when the talk level exceeds a fixed ceiling, and its highest volume level SHALL stay below the device's maximum alarm volume. The parent unit SHALL NOT change the baby unit's volume.
+Before the parent's voice, the baby unit SHALL play a soft chime, unless the chime is switched off on the baby unit, and then fade the voice in, at the talk-back volume set on the baby unit and independent of the ringer mode. The parent unit SHALL NOT change the baby unit's volume.
 
 #### Scenario: Baby phone ringer off
 
 - **WHEN** the baby phone's ringer is off and a talk is granted
 - **THEN** the chime and the voice play at the talk-back volume, and the ringer stays off
+
+### Requirement: Loudness cap on the baby unit
+
+The baby unit SHALL cap the loudness of talk audio by itself, independent of the sender: it SHALL lower the gain within 200 ms when the talk level exceeds a fixed ceiling, and its highest volume level SHALL stay below the device's maximum alarm volume.
 
 #### Scenario: Sender sends full-scale audio (failure)
 
@@ -186,12 +190,40 @@ The baby unit SHALL restore any system volume it changed for a talk when the tal
 
 ### Requirement: Honest playability
 
-The baby unit SHALL report talk-back to every trusted parent as on, off, muted or not supported, and SHALL report muted, and deny requests as muted, when the device would not make the talk audible (alarm sounds blocked by the user's own Do Not Disturb, or the volume could not be set). Before a press, the parent unit SHALL show the talk button as unavailable with the reason whenever talk-back is not on.
+The baby unit SHALL report talk-back to every trusted parent as on, off, muted or not supported, and SHALL report muted, and deny requests as muted, when the device would not make the talk audible (alarm sounds blocked by the user's own Do Not Disturb, the volume could not be set, or the playback check failed three times in a row). Before a press, the parent unit SHALL show the talk button as unavailable with the reason whenever talk-back is not on.
 
 #### Scenario: Baby phone in total silence
 
 - **WHEN** the baby phone's own Do Not Disturb blocks alarm sounds
 - **THEN** the parent's talk button says that the baby device cannot play sound right now, and no talk is granted
+
+### Requirement: Playback check
+
+The baby unit SHALL check with its own microphone whether each talk was audible, by comparing the room level during the chime (or the voice, with the chime off) with the level just before, and SHALL report the talk as heard or unconfirmed to the talking parent. After an unconfirmed talk the parent unit SHALL say that the voice may not be audible on the baby device; it SHALL never claim the child heard it. The check SHALL use level numbers only and SHALL keep and send no audio.
+
+#### Scenario: Laptop baby unit with the sound off (failure)
+
+- **WHEN** a browser baby unit's system output is muted and a parent talks
+- **THEN** the parent sees that the voice may not be audible on the baby device
+
+#### Scenario: Headphones on the baby device (failure)
+
+- **WHEN** talk audio plays into headphones connected to the baby device
+- **THEN** the talk is reported as unconfirmed
+
+#### Scenario: Normal talk
+
+- **WHEN** the chime and the voice play from the baby unit's loudspeaker
+- **THEN** the talk is reported as heard and the parent sees no warning
+
+### Requirement: Repeated unconfirmed talks
+
+After three unconfirmed talks in a row the baby unit SHALL report talk-back as muted until a later talk is heard or an adult opens its talk-back settings.
+
+#### Scenario: Baby device output stays off
+
+- **WHEN** three talks in a row are unconfirmed
+- **THEN** the parent's talk button says that the baby device cannot play sound right now
 
 ### Requirement: Alerts take precedence over talk
 
@@ -227,7 +259,7 @@ While its microphone is open, the parent unit SHALL make no spoken screen-reader
 
 ### Requirement: Talk-back settings
 
-The baby unit's Basic settings SHALL let an adult switch talk-back off and on for each saved parent pairing and choose its volume (low, medium or high), with a button that plays the chime at the chosen volume. These settings SHALL be changeable only on the baby unit; no message from a parent SHALL change them. Switching talk-back off during a talk SHALL end it at once.
+The baby unit's Basic settings SHALL let an adult switch talk-back off and on for each saved parent pairing (on by default), choose its volume (low, medium or high; low by default) with a button that plays the chime at the chosen volume, and switch the chime off and on (on by default). These settings SHALL be changeable only on the baby unit; no message from a parent SHALL change them. Switching talk-back off during a talk SHALL end it at once.
 
 #### Scenario: Silent baby unit wanted
 

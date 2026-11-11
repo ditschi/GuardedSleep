@@ -15,7 +15,8 @@ Talk-back breaks a core concept and a prior decision: the baby unit was "always 
 - **Noise gate paused during talk-back.** The core ignores the baby's level while talk audio plays and for a short tail after it, so the speaker never raises a noise alert or escalation; the pause is bounded by the press limit and shown to the parents.
 - **Indicators.** The baby unit shows a dim "Parent is talking" indicator while it plays; the talking parent sees the state of the press (waiting, talking, time left); with two parents (`multi-parent-pairings`), the other parent sees "Other parent device is talking" and cannot talk meanwhile.
 - **No recording.** Talk audio is never stored, buffered beyond the media pipeline or logged on either device.
-- **Web client:** scope per the owner decision in design §8 (open decision).
+- **Web client:** full support: the browser parent talks, the browser baby plays (owner, 2026-11-11).
+- **Playback check:** the baby unit hears its own loudspeaker through its raw microphone and tells the parent whether the talk was audible (owner proposal, 2026-11-11).
 - **Copy** in all locales; stable test tags shared by Android and web.
 - **Out of scope:** full duplex, talking to several baby units at once, a parent-side volume control for the baby speaker, pre-recorded messages, lullabies and white noise (`REJECTED`), video.
 

@@ -15,7 +15,7 @@ See proposal.md for the motivation. State on `origin/main` (2026-11-11, after `a
 
 **Goals:** a parent can say a short sentence to the child with a hardware-monitor-like push-to-talk; the decision when talk audio may play lives in the core and is enforced by the baby; the baby unit stays silent in every other situation; talk-back can neither raise a false noise alert nor hide the child's crying for long; it fits one or two parents.
 
-**Non-Goals:** full duplex calls, video, talking to several baby units, pre-recorded or scheduled messages, remote volume control, echo cancellation on the baby's monitoring capture, a web baby unit that plays talk audio (§8, owner decision pending).
+**Non-Goals:** full duplex calls, video, talking to several baby units, pre-recorded or scheduled messages, remote volume control, echo cancellation on the baby's monitoring capture, guaranteeing a system volume on a browser baby unit (§8: the playback check reports instead).
 
 ## Decisions
 
@@ -31,7 +31,7 @@ See proposal.md for the motivation. State on `origin/main` (2026-11-11, after `a
   - Pros: natural conversation.
   - Cons: needs echo cancellation on both devices, contradicting raw capture for the noise gate; the gate would be blind for the whole call (the cooldown and budget of §5 would forbid it anyway); an open speaker next to the child for minutes; difficult Android routing.
 
-Recommendation: A; A+ is a reasonable owner choice for accessibility.
+Recommendation: A. **Decided: A (owner, 2026-11-11).** A+ and B move to Discarded alternatives.
 
 ### 2. Media: a second, pre-negotiated audio m-line
 
@@ -63,7 +63,7 @@ Talk state lives in the core `Link`; arbitration (one talker, cooldown, budget, 
 
 **Constants** (core, with configuration tests): `TALK_MAX_MS = 30_000`, `TALK_RATE_MS = 1_000`, `TALK_ANSWER_TIMEOUT_MS = 3_000`, `TALK_CHIME_TIMEOUT_MS = 1_500`, `TALK_DRAIN_MS = 300`, `TALK_NOISE_TAIL_MS = 2_000`, `TALK_COOLDOWN_MIN_MS = 10_000` (and at least `hold_ms + 1_000`), `TALK_BUDGET_MS = 90_000` per `TALK_BUDGET_WINDOW_MS = 600_000`, `TALK_AFTER_LISTEN_MS = 10_000`.
 
-Vectors: `parse_data_v3` cases for the four messages and the status fields (valid, missing id, unknown reason, extra field, stale id, a message that tries to set talk-back); `link` vectors for grant, each deny reason, deadline, loss, cooldown and budget; sim traces. Envelope, invite and proofs are unchanged.
+Vectors: `parse_data_v3` cases for the five messages (with `talk_playback { id, result }`, §7a) and the status fields (valid, missing id, unknown reason, extra field, stale id, a message that tries to set talk-back); `link` vectors for grant, each deny reason, deadline, loss, cooldown and budget; sim traces. Envelope, invite and proofs are unchanged.
 
 ### 4. Echo, capture and audio processing
 
@@ -96,10 +96,21 @@ Recommendation: A.
 - **Default muted.** The engine starts with the ADM speaker muted and talk receivers disabled in the track callback before any frame plays; playback opens only inside a lease.
 - **Volume.** Levels low, medium, high map to fractions of the alarm maximum, with high capped at about 70 % (Critical Review S16). During a talk the platform raises the alarm stream only as far as needed and attenuates the talk track with `setVolume`; it restores the previous index only if the current index is still the one it set (Critical Review I12); after a crash the remembered value is restored at the next start under the same condition.
 - **Loudness cap on the baby (Security I3).** libwebrtc on Android has no per-track limiter, so the baby runs a slow automatic level control on the talk gain: it reads the talk track's level (the existing remote-RMS path) and steps `setVolume` down within 200 ms when it exceeds a fixed ceiling; the fade-in also steps `setVolume`. Test with a full-scale step input.
-- **Chime.** A soft two-note chime (about 600 ms, two sine tones with slow attack and release, generated, no asset), about 12 dB below the talk level but never below an audible floor, played by the platform on `play_talk_chime`, reported by `talk_chime_done`. Settings offer "Play chime" at the chosen level.
+- **Chime.** A soft two-note chime (about 600 ms, two sine tones with slow attack and release, generated, no asset), about 12 dB below the talk level but never below an audible floor, played by the platform on `play_talk_chime`, reported by `talk_chime_done`. Settings offer "Play chime" at the chosen level. **The chime is on by default and can be switched off on the baby unit (owner, 2026-11-11)**; without it the voice still fades in, and the playback check (§7a) uses the voice instead of the chime.
+- **Default level: low (owner, 2026-11-11).**
 - **Routing.** Loudspeaker; never the earpiece; no `MODE_IN_COMMUNICATION`. Bluetooth output on the baby phone is checked in the spike (item d).
-- **Honest playability (Critical Review I4).** The baby reports `talk: muted` and denies `muted` when its `device_status` shows alarms not allowed (the user's own Do Not Disturb, "total silence") or the volume could not be set; the parent says the baby device cannot play sound right now.
+- **Honest playability (Critical Review I4).** The baby reports `talk: muted` and denies `muted` when its `device_status` shows alarms not allowed (the user's own Do Not Disturb, "total silence") or the volume could not be set; the parent says the baby device cannot play sound right now. Where the platform cannot know this in advance (browser), the playback check (§7a) reports after the fact.
 - **Indicator and accountability.** A static, dim microphone glyph with "Parent is talking" just under the edge, outside the faded info column, at edge brightness, no pulse; after the talk, touch-wake shows "Last talk: {connection name}, {time}, {duration}" (local only).
+
+### 7a. Playback check: the baby hears itself (owner proposal, 2026-11-11)
+
+The baby captures raw, without echo cancellation, on every platform (`quiet-link-no-rtp` "Raw microphone capture"; the web already captures with AEC/NS/AGC off), so its own microphone hears its loudspeaker. The core uses the level samples it already receives and, during the noise pause, does not feed to the gate:
+
+- **Baseline:** the median level over the last 2 s before `play_talk_chime`.
+- **Check window:** the chime; with the chime off, the samples of the first 5 s of playback in which the incoming talk level (reported by the baby platform as `talk_level { rms }` from the talk receiver, the existing remote-RMS path) is above a silence floor, so a parent who says nothing is not judged.
+- **Result:** `heard` when the level in the window exceeds the baseline by at least 6 dB (constant `TALK_HEARD_MIN_DB`, tuned in the hardware round), otherwise `unconfirmed`. The baby sends `talk_playback { id, result }` once per talk; the parent shows "Speak now" either way, and after an `unconfirmed` result adds "Your voice may not be audible on the baby device" (critical copy). Three `unconfirmed` talks in a row set the baby's `talk` status to `muted` until a later talk is `heard` or an adult opens the talk-back settings on the baby unit.
+- **What it catches:** a muted laptop or system output, headphones or Bluetooth output on the baby device, an alarm stream too low, a broken speaker, a browser that blocked autoplay. **What it does not prove:** that the child heard it (distance, crying over it); the copy says "may not be audible", never "the child heard you".
+- **Layer and privacy:** a decision in the core from level numbers only; no audio is kept, the levels are not logged and not sent (only the one-word result). The sim covers both results; the hardware round tunes the threshold (task 2.1 (f)).
 
 ### 8. Web client
 
@@ -114,22 +125,22 @@ Recommendation: A.
   - Cons: until then the web parent shows talk-back as unavailable; the web baby must still negotiate the talk line (core rule), so the web attempt code changes anyway.
 - **Option C — Android only, web later without a decision.** Cons: as B2 without a plan.
 
-Recommendation: B (B2 if the owner wants a smaller first PR). In every option the web baby negotiates the talk line `recvonly` and never plays it.
+Recommendation was B. **Decided: A, full web support (owner, 2026-11-11)**, made honest by the playback check (§7a), which answers the main con of A: the parent learns when the browser baby's sound was probably not audible. The web baby plays talk audio through Web Audio (a `GainNode` for the level, the fade-in and a `DynamicsCompressorNode` as the loudness cap), opens playback only inside the lease (`until_ms` enforced by a timer in the platform), keeps the talk receiver's output disconnected otherwise, and reports `talk: muted` only after three `unconfirmed` checks (it cannot see the system volume). The audio context is unlocked by the gesture that starts monitoring; if it is suspended, the web baby reports `muted`. The volume levels map to gain values; there is no system-volume change on the web. iOS Safari as parent stays `unsupported` until alert audio is proven unchanged after `getUserMedia` (Critical Review I9); iOS Safari as baby unit follows the existing web-client limits. B, B2 and C move to Discarded alternatives.
 
 ### 9. UX on the parent monitoring screen
 
 - **Placement (UX C1).** Listen stays the full-width primary bar. Talk is its own row below it, 24 dp away, about 64 dp tall and at least 60 % wide, microphone glyph, label "Hold to talk", tertiary colour (not listen's primary/green, not alarm red). Never above listen, so the slide-to-lock path and lock hint never cross it; a press that starts on listen never activates talk.
 - **Deliberate hold.** Talk starts after a 300 ms hold (listen: 150 ms); a tap shows "Hold the button to talk"; sliding up shows "Talk-back can't be locked"; release ends the talk even if the finger slid off.
-- **States (UX C2).** "One moment…" (requesting), "Speak now" with a strong colour flip, filled ring and a distinct haptic once the microphone is attached, "Release to stop · {n} s" for the last 5 s with a haptic at 5 s and at the cut, ended/denied reasons: "30-second limit reached. You can talk again in {n} s.", "No answer from the baby device. Try again.", "Talk stopped: connection to the baby device lost.", "Your microphone isn't picking up sound." (own level near zero for 2 s). A `rate` deny while still held retries once after 1 s silently.
+- **States (UX C2).** "One moment…" (requesting), "Speak now" with a strong colour flip, filled ring and a distinct haptic once the microphone is attached, "Release to stop · {n} s" for the last 5 s with a haptic at 5 s and at the cut, ended/denied reasons: "30-second limit reached. You can talk again in {n} s.", "No answer from the baby device. Try again.", "Talk stopped: connection to the baby device lost.", "Your microphone isn't picking up sound." (own level near zero for 2 s), "Your voice may not be audible on the baby device." (playback check `unconfirmed`, §7a). A `rate` deny while still held retries once after 1 s silently.
 - **Unavailable before the press (UX I11).** Disabled with a reason line from `device_status`: "Talk-back is off on the baby device. Turn it on there in Settings.", "The other parent device is talking to your child.", "This baby device can't play your voice.", "The baby device can't play sound right now.", "Not connected to the baby device.", "You can talk again in {n} s."
 - **Screen reader (UX C3).** Accessible state changes before the microphone opens; while it is open no live-region or TalkBack announcements and no parent sounds; haptics for grant, 5 s left and end; the result is announced after release. Reduced motion: static thick ring instead of the pulse.
 - **Permission (UX I4).** A first press without permission opens a sheet ("To speak to your child, GuardedSleep needs the microphone while you hold the button." [Allow microphone]) and sends nothing; after granting: "Done. Now hold to talk."; refused: "Talk-back needs the microphone. You can allow it in the device settings." with a settings button. Same on web.
 - **Noise paused (UX S12).** Talking parent: "Noise alerts paused while you talk."; other parent: "The other parent device is talking. Noise alerts resume when it ends."
 - **After release.** A 10 s listen with "Listening for 10 s · tap to keep listening".
 - **Teaching.** A one-time coach mark "New: hold to talk to your child."; an optional "Try talk-back" step in setup while both devices are in hand.
-- **Baby unit.** Settings rows: talk-back switch per parent pairing, volume (low, medium, high) with "Play chime"; setup checklist row "Parents can speak through this device. You can turn this off in Settings." with the switch.
+- **Baby unit.** Settings rows: talk-back switch per parent pairing (default on), volume (low, medium, high; default low) with "Play chime", chime switch (default on); setup checklist row "Parents can speak through this device. You can turn this off in Settings." with the switch.
 - **Copy.** All locales, machine translated; `critical` tags on denial and end reasons, the muted/unavailable lines and the noise-paused lines (they explain why a message did not arrive or why alerts are paused). Short labels for German and French at 64 dp; "·" instead of dashes.
-- **Test tags (Android and web):** `parent_talk`, `parent_talk_state`, `parent_talk_unavailable_reason`, `parent_noise_paused`, `parent_talk_permission_sheet`, `baby_talking`, `baby_last_talk`, `baby_talk_toggle`, `baby_talk_volume`, `baby_talk_play_chime`.
+- **Test tags (Android and web):** `parent_talk`, `parent_talk_state`, `parent_talk_unavailable_reason`, `parent_noise_paused`, `parent_talk_permission_sheet`, `baby_talking`, `baby_last_talk`, `baby_talk_toggle`, `baby_talk_volume`, `baby_talk_play_chime`, `baby_talk_chime_toggle`, `parent_talk_unconfirmed`.
 
 ### 10. Security and privacy
 
@@ -144,7 +155,12 @@ Recommendation: B (B2 if the owner wants a smaller first PR). In every option th
 
 ### 11. Owner decisions
 
-Pending (asked 2026-11-11): duplex mode (§1: A or A+), chime and default volume (§7), web scope (§8), default of the baby's talk-back switch (on with the checklist row, or off until turned on). Recorded here once answered.
+Decided by the owner on 2026-11-11:
+
+- **Duplex:** half duplex push-to-talk (§1 A).
+- **Chime and volume:** chime on by default and switchable on the baby unit; default level low (§7).
+- **Web:** full support, parent and baby, with the owner's proposal of a playback check by the baby's own microphone (§7a, §8 A).
+- **Default of the talk-back switch:** on, with the setup checklist row "Parents can speak through this device. You can turn this off in Settings." (UX recommendation; Security and the Critical Reviewer preferred off, answered by the per-pairing switch, the visible checklist row, the indicator and the touch-wake accountability line).
 
 ### 12. Critical review
 
@@ -204,4 +220,9 @@ No installed base; both devices update together. A peer without the talk line fa
 - Parent-side volume control for the baby speaker: lets a remote party make loud sound next to the child; the adult at the baby unit decides.
 - Text-to-speech or pre-recorded messages: out of scope; "no text-to-speech" stays.
 - Changing the parent's foreground-service type for capture: unnecessary with the activity in front (CR S15).
-- §1, §7 and §8 alternatives move here after the owner decision.
+- §1 Option A+ (tap to talk as an accessibility setting): accidental taps would make sound in the baby room; not chosen by the owner (2026-11-11). TalkBack double-tap-and-hold remains the accessible path.
+- §1 Option B (full duplex): needs echo cancellation against raw capture, blinds the gate for the whole call.
+- Mandatory chime: the owner chose a switchable chime; the default stays on.
+- Default level medium: higher startle risk at night.
+- §8 Option B (web baby `unsupported`), B2 (web parent in a follow-up change) and C (Android only): the playback check makes a browser baby unit honest enough (owner, 2026-11-11).
+- Default switch off: discoverability; the checklist row asks the adult in the baby room instead.
