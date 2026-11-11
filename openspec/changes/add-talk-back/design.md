@@ -1,19 +1,19 @@
 # Design
 
-Roles applied: Product Owner, Technical Architect, Security/Privacy Architect, UX; Critical Reviewer findings and answers in §12. Owner decisions in §11.
+Roles applied: Product Owner, Technical Architect, Security/Privacy Architect, UX; Critical Reviewer, Security/Privacy and UX findings and answers in §12. Owner decisions in §11.
 
 ## Context
 
 See proposal.md for the motivation. State on `origin/main` (2026-11-11, after `alternate-roles-and-apk-size`):
 
-- **Core.** `Link` (`crates/guardedsleep-core/src/link.rs`) owns listen intent and the microphone decision: the baby's `apply_mic` emits `SetMicEnabled` when `(parent_listen || noise_streaming || probing) && live_verified()`. "Trusted" is `attempt.is_verified() && proof_due.is_none()` (pin proof done). The noise gate (`noise.rs`) is fed by `LinkInput::AudioLevel` (about 10 Hz) and has no pause input. The baby refuses a local SDP unless every audio m-line is `sendonly` (`attempt.rs` `audio_is_sendonly`, failure key `baby_sdp_not_sendonly`); the parent's SDP is not checked. DataChannel protocol v3 (`protocol.rs` `DataMessage`) ignores unknown `type`s and unknown fields, so new messages are additive. `QuietRequest` shows the rate-limit pattern (`last_quiet_at`, `QUIET_RATE_MS`).
-- **Android.** `LibWebRtcMediaEngine` builds one `JavaAudioDeviceModule` with playout `USAGE_ALARM`; the baby mutes the ADM speaker (`setSpeakerMute(true)`) and adds one `SEND_ONLY` transceiver; the parent adds no transceiver and has no microphone track. The baby's noise level comes from the ADM record callback (`CaptureTap`). The baby's Do Not Disturb rule (`SilenceController`) allows alarms only (`allowAlarms(true)`, `allowMedia(false)`). The parent never asks for `RECORD_AUDIO`; `MonitorService` runs as `mediaPlayback` on the parent and `microphone` on the baby. The 60-minute listen lock limit lives in the platform models.
+- **Core.** `Link` (`crates/guardedsleep-core/src/link.rs`) owns listen intent and the microphone decision: the baby's `apply_mic` emits `SetMicEnabled` when `(parent_listen || noise_streaming || probing) && live_verified()`. `trusted()` is `attempt.is_verified() && proof_due.is_none()`; on a baby inside the first-pairing window `proof_due` stays `None` without any pin (`on_verified`), so "trusted" alone does not mean "pinned". The noise gate (`noise.rs`) is fed by `LinkInput::AudioLevel` (about 10 Hz) and has no pause input; the parent also extends a running noise event from heartbeat `rms` (`on_peer_message`, `Heartbeat`). The baby refuses a local SDP unless every audio m-line is `sendonly` (`attempt.rs` `audio_is_sendonly`, key `baby_sdp_not_sendonly`); the parent's SDP and the remote answer are not checked. DataChannel protocol v3 ignores unknown `type`s and fields, so new messages are additive; app messages reach the `Link` only from verified attempts and only after the pin proof (`proof_due` gate). `close_live()` is the one place every attempt teardown passes through. `QuietRequest` shows the rate-limit pattern.
+- **Android.** `LibWebRtcMediaEngine` builds one `JavaAudioDeviceModule` with playout `USAGE_ALARM`; the baby mutes the ADM speaker and adds one `SEND_ONLY` transceiver; the parent adds no transceiver and has no microphone track; remote gain is `AudioTrack.setVolume` (no per-track limiter in libwebrtc). The baby's noise level comes from the ADM record callback (`CaptureTap`). The baby's Do Not Disturb rule (`SilenceController`) allows alarms only. The parent never asks for `RECORD_AUDIO`; `MonitorService` declares `microphone|mediaPlayback`. The audio processing module is per factory, so the parent factory may differ from the baby's (raw).
 - **Web.** Both roles; the baby adds a `sendonly` transceiver; the parent has no `getUserMedia`.
-- **Active changes:** `quiet-link-no-rtp` (sender detach while muted, raw capture without AEC/NS/AGC on the baby, Opus profile from the core, capture spike), `multi-parent-pairings` (PR ditschi/GuardedSleep#54: `BabyHub` with up to 2 parent links, one shared noise gate, `set_mic { link }`), `add-offline-lan` (media path unchanged).
+- **Active changes:** `quiet-link-no-rtp` (sender detach, raw capture without AEC/NS/AGC on the baby, Opus profile written into the SDP by the core, capture spike), `multi-parent-pairings` (PR ditschi/GuardedSleep#54: `BabyHub` with up to 2 parent links, one shared noise gate, `set_mic { link }`), `add-offline-lan` (media path unchanged).
 
 ## Goals / Non-Goals
 
-**Goals:** a parent can say a short sentence to the child with a hardware-monitor-like push-to-talk; the decision when talk audio may play lives in the core; the baby unit stays silent in every other situation; talk-back never raises a false noise alert or escalation; it fits one or two parents.
+**Goals:** a parent can say a short sentence to the child with a hardware-monitor-like push-to-talk; the decision when talk audio may play lives in the core and is enforced by the baby; the baby unit stays silent in every other situation; talk-back can neither raise a false noise alert nor hide the child's crying for long; it fits one or two parents.
 
 **Non-Goals:** full duplex calls, video, talking to several baby units, pre-recorded or scheduled messages, remote volume control, echo cancellation on the baby's monitoring capture, a web baby unit that plays talk audio (§8, owner decision pending).
 
@@ -21,137 +21,187 @@ See proposal.md for the motivation. State on `origin/main` (2026-11-11, after `a
 
 ### 1. Duplex mode
 
-- **Option A — half duplex push-to-talk (recommended).** Hold to talk, release to stop; the parent mutes the baby's audio while holding.
-  - Pros: matches hardware monitors and walkie-talkies; no acoustic echo loop without echo cancellation (the talking parent does not play the room, so its own voice coming back from the baby's speaker is never heard); the baby keeps raw capture (`quiet-link-no-rtp` §4); an open speaker next to the child is impossible by construction (no hold, no sound); short, bounded noise-gate pauses.
-  - Cons: the parent cannot hear the child's reaction while speaking (only after release); a hold gesture is harder for some motor impairments (TalkBack double-tap-and-hold works).
+- **Option A — half duplex push-to-talk (recommended).** Hold to talk, release to stop; the parent mutes the baby's audio while holding and listens 10 s after release.
+  - Pros: matches hardware monitors (Philips Avent, VTech: press-and-hold, half duplex, talk light); no acoustic echo loop without echo cancellation (the talking parent does not play the room); the baby keeps raw capture (`quiet-link-no-rtp` §4); no hold, no sound; short, bounded noise-gate pauses.
+  - Cons: the parent hears the reaction only after release (mitigated by the 10 s listen); holding is hard with tremor or switch access.
+- **Option A+ — A plus an accessibility setting "Tap to talk"** (off by default; tap starts, tap or the 30 s limit stops; a visible stop control).
+  - Pros: usable for parents who cannot hold; the forgotten-open-channel risk is capped by the baby-enforced 30 s limit and the cooldown.
+  - Cons: accidental taps make sound in the baby room; one more setting and state.
 - **Option B — full duplex (a call).**
-  - Pros: natural conversation; hears the reaction at once.
-  - Cons: needs echo cancellation on both devices, which contradicts raw capture for the noise gate; the noise gate is blind for the whole call; an open speaker channel next to the child for minutes; much harder audio routing on Android (communication mode, earpiece/speaker switching).
-- **Option C — half duplex, tap to start and tap to stop with an auto-timeout.**
-  - Pros: no holding.
-  - Cons: a forgotten open channel (the same failure the 60-minute listen limit exists for, but next to the child and audible); accidental taps make sound in the baby room.
+  - Pros: natural conversation.
+  - Cons: needs echo cancellation on both devices, contradicting raw capture for the noise gate; the gate would be blind for the whole call (the cooldown and budget of §5 would forbid it anyway); an open speaker next to the child for minutes; difficult Android routing.
 
-Recommendation: A. B and C are kept under Discarded alternatives once the owner confirms.
+Recommendation: A; A+ is a reasonable owner choice for accessibility.
 
 ### 2. Media: a second, pre-negotiated audio m-line
 
-- **Option A — two transceivers (recommended).** The baby's offer carries the monitoring line (`sendonly`, unchanged) and a talk line (`recvonly`). The parent answers `recvonly` / `sendonly`. The parent's talk sender carries no track outside a talk, so it sends no RTP (with `quiet-link-no-rtp` the same detach rule applies to it).
-  - Pros: no renegotiation per press (no signaling round trip, works while a mailbox is down); the core can check each direction separately and keep the strong rule "the baby never sends on a receiving line and never receives on the monitoring line"; the Opus profile can differ per line; the monitoring line and its mute/detach logic stay untouched.
-  - Cons: two transceivers per attempt; an older peer with one m-line is not compatible (no installed base, acceptable).
-- **Option B — one `sendrecv` line.**
-  - Pros: one transceiver.
-  - Cons: loses the SDP-level guarantee that the baby's monitoring line never receives; playout gating would be the only barrier; the monitoring mute and the talk sender share one transceiver.
-- **Option C — renegotiate a talk line on every press.**
-  - Pros: no receiving line exists outside a talk.
-  - Cons: a signaling round trip per press (seconds over the project server, impossible while mailboxes are closed on a verified link); renegotiation is a new failure path on a verified attempt, which the link rules forbid touching.
+- **Option A — two transceivers (recommended).** The baby's offer carries the monitoring line (`sendonly`, unchanged) and a talk line (`recvonly`). The parent answers `recvonly` / `sendonly`. The parent's talk sender carries no track outside a talk (the `quiet-link-no-rtp` detach rule applies to it).
+  - Pros: no renegotiation per press (no signaling round trip, works while mailboxes are closed on a verified link); the core checks each direction separately; the monitoring line and its mute/detach logic stay untouched.
+  - Cons: two transceivers per attempt; libwebrtc may start the baby's playout at connect (Critical Review I8, spike item (e)); older peers are incompatible (no installed base).
+- **Option B — one `sendrecv` line.** Pros: one transceiver. Cons: loses the SDP-level guarantee that the monitoring line never receives; playout gating would be the only barrier.
+- **Option C — renegotiate a talk line on every press.** Pros: no receiving line outside a talk; no idle playout. Cons: a signaling round trip per press (seconds over the project server, impossible while mailboxes are closed on a verified link); renegotiation is a new failure path on a verified attempt.
 
-Recommendation: A. The SDP rule in the core changes from "every audio m-line `sendonly`" to "exactly two audio m-lines; baby: `sendonly`, `recvonly`; parent: `recvonly`, `sendonly`|`inactive`" (spec "Sans-IO interface contract"). Order identifies the lines (monitoring first). A parent that answers the talk line `inactive` or rejects it (port 0) cannot talk on that attempt; the baby reports `talk: unsupported` to it.
+Recommendation: A. If spike item (e) shows that an idle receiving line keeps the baby's `AudioTrack` running all night at a measurable battery cost or shifts gate levels, the fallback is a talk line negotiated `inactive` and switched by one renegotiation over the DataChannel when talk-back is first used in a session (task 2.1 records it).
 
-Playout on the baby is gated twice, below the core's decision: the remote talk track is disabled and the ADM speaker muted outside a granted talk (Android); on the parent, no microphone track exists outside a talk.
+The core rule (spec "Sans-IO interface contract"): exactly two audio m-lines in every local description, monitoring first; baby `sendonly`/`recvonly`; parent `recvonly`/`sendonly`|`inactive`. The baby core also parses the accepted remote answer: talk line `sendonly` allows talk; `inactive`, port 0 or missing means `unsupported`; a monitoring line that is not `recvonly` fails the attempt. The rule applies on the `Link` path unconditionally; the legacy `Session` keeps its flag and gets no talk messages. `quiet-link-no-rtp`'s Opus profile function applies the same profile to both lines (task 6.2).
 
 ### 3. Core: talk state and protocol (additive v3)
 
-Talk state lives in the core `Link` (and, once `multi-parent-pairings` lands, its arbitration in `BabyHub`, §6). Platforms only do I/O.
+Talk state lives in the core `Link`; arbitration (one talker, cooldown, budget, noise pause) lives where the noise gate lives (`Link` today, `BabyHub` after `multi-parent-pairings`, §6). Platforms only do I/O.
 
-**Parent side.** Input `set_talk { pressed }`. On press, if the link is trusted and the talk line is usable, the core sends `talk_request { id }` (id: per-run counter) and emits `talk_changed { state: requesting }`. On `talk_grant { id, max_ms }` for the current id, it emits `set_talk_mic { enabled: true }` and `talk_changed { state: talking, until_ms }`, plus `set_playback_ducked { ducked: true }` from the press on (half duplex). On release, deadline (`max_ms`), `talk_deny`, attempt loss or stop, it sends `talk_end { id }` (if requested), emits `set_talk_mic { enabled: false }`, `set_playback_ducked { ducked: false }` and `talk_changed { state: idle | denied { reason } }`. The parent's own deadline is a backstop; the baby's is binding.
+**Trust gate (Critical Review I6).** The baby accepts `talk_request` only when `live_verified()` and a parent secret is pinned (`pin.is_some()`) and its proof passed on this attempt (or the pin was received on it). A verified attempt inside the first-pairing window without a pin gets no talk.
 
-**Baby side.** On `talk_request { id }` from a trusted attempt (the `proof_due` gate already blocks it before the pin proof): deny with `talk_deny { id, reason }` when `reason ∈ { off, unsupported, busy, rate }`; else emit `play_talk_chime { level }`, pause the noise gate (§5) and remember `talk = { id, granted_at: None }`. On the platform's `talk_chime_done` (or 1.5 s after the chime action, whichever comes first, so a failed chime never blocks) the core emits `set_talk_playback { enabled: true, level, fade_in_ms: 800 }`, sends `talk_grant { id, max_ms: 30000 }` and sets the deadline. It ends the talk on `talk_end { id }` (after a 300 ms drain so the jitter buffer can play out the last syllable), at the deadline, on attempt loss, on stop, on release of the link (multi-parent) and when talk-back is switched off: `set_talk_playback { enabled: false }`, `talk_end` to the parent if the baby ended it, and the noise pause continues for the 2 s tail. At most one request per link per second (`TALK_RATE_MS = 1000`), else `rate`.
+**Parent side.** The platform feeds `set_talk { pressed: true }` only after the microphone permission exists and the device is unlocked; it may open the capture locally on press (warm start) but attaches it to the sender only on `set_talk_mic { enabled: true }`. On press the core acknowledges the running noise event (like Listen), emits `set_playback_ducked { ducked: true }`, sends `talk_request { id }` and emits `talk_changed { state: requesting }`. On `talk_grant { id, max_ms }` for the current id: `set_talk_mic { enabled: true }`, then `talk_changed { state: talking, until_ms }` once the platform reports `talk_mic_attached` (so the "Speak now" haptic never precedes an open microphone). No grant or deny within 3 s (`TALK_ANSWER_TIMEOUT_MS`): `talk_changed { state: ended { reason: no_answer } }`. On release, deadline, deny, `talk_mic_failed`, attempt loss, stop, or any alert sound on the parent (input `alert_preempts_talk`), it sends `talk_end { id }` if requested, emits `set_talk_mic { false }`, `set_playback_ducked { false }`, starts a 10 s listen if the parent was not listening (`TALK_AFTER_LISTEN_MS`, a normal listen intent), and emits `talk_changed { state: ended { reason } | denied { reason } }`. Stale ids never have an effect (vector).
 
-**Status.** The baby's `device_status` gains `talk: on | off | unsupported` and `talker: none | you | other` (additive, omitted when unknown), sent when they change, so the parent can render the button before a press and show "Other parent device is talking". The baby emits `talk_active { active }` for its own indicator, and parents emit `noise_paused { paused }` from `talker != none` plus the tail flag in the status.
+**Baby side.** On a request that passes the trust gate: deny with `talk_deny { id, reason }` for `off` (switch off for this pairing), `unsupported` (parent talk line not `sendonly`, or web baby), `muted` (§7 honest playability), `busy` (another link talks), `cooldown { retry_in_ms }`, `budget { retry_in_ms }` or `rate`. Otherwise it pauses the noise gate (§5), emits `play_talk_chime { attempt, level }`, records `talk = { link, attempt, id }`, and on `talk_chime_done` (or after `TALK_CHIME_TIMEOUT_MS`) emits `set_talk_playback { attempt, enabled: true, level, fade_in_ms: 800, until_ms }` (a lease: the platform mutes by itself at `until_ms`), sends `talk_grant { id, max_ms: 30000 }` and starts the deadline. It ends the talk on `talk_end { id }` (after `TALK_DRAIN_MS`), at the deadline, when talk-back is switched off, and inside `close_live()` for every teardown (loss, mismatch, stop, release, re-pair): `set_talk_playback { attempt, enabled: false }` (this also cancels a running chime), `talk_end` to the parent if the baby ended it, then the 2 s tail. A core test asserts that every path that drops `live` emits the stop.
 
-**Constants** (core, covered by configuration tests): `TALK_MAX_MS = 30_000`, `TALK_RATE_MS = 1_000`, `TALK_CHIME_TIMEOUT_MS = 1_500`, `TALK_DRAIN_MS = 300`, `TALK_NOISE_TAIL_MS = 2_000`.
+**Talk audio outside a grant.** The platform reports `talk_rtp_outside_grant { attempt }` from the inbound `packetsReceived` of a talk receiver outside a lease; the core emits `security_warning` once per attempt (content never leaves the media layer).
 
-Vectors: `parse_data_v3` cases for the four messages and the two status fields (valid, missing id, unknown reason, extra field); `link` vectors for grant, deny, deadline and loss; new sim traces. Envelope, invite and proofs are unchanged.
+**Status (additive `device_status` fields, sent on change).** `talk: on | off | muted | unsupported` (per recipient link), `talker: none | you | other`, `noise_paused: bool`, `talk_retry_in_ms` (cooldown or budget). During the pause the baby's heartbeats omit `rms`, and the parent ignores heartbeat `rms` for noise-event bookkeeping while `noise_paused` is set (Critical Review I2).
+
+**Settings stay local.** `set_talk_back { link, enabled, level }` is a baby platform input only; no DataChannel message maps to it (negative vector, Security S3).
+
+**Constants** (core, with configuration tests): `TALK_MAX_MS = 30_000`, `TALK_RATE_MS = 1_000`, `TALK_ANSWER_TIMEOUT_MS = 3_000`, `TALK_CHIME_TIMEOUT_MS = 1_500`, `TALK_DRAIN_MS = 300`, `TALK_NOISE_TAIL_MS = 2_000`, `TALK_COOLDOWN_MIN_MS = 10_000` (and at least `hold_ms + 1_000`), `TALK_BUDGET_MS = 90_000` per `TALK_BUDGET_WINDOW_MS = 600_000`, `TALK_AFTER_LISTEN_MS = 10_000`.
+
+Vectors: `parse_data_v3` cases for the four messages and the status fields (valid, missing id, unknown reason, extra field, stale id, a message that tries to set talk-back); `link` vectors for grant, each deny reason, deadline, loss, cooldown and budget; sim traces. Envelope, invite and proofs are unchanged.
 
 ### 4. Echo, capture and audio processing
 
-- The baby keeps raw capture without echo cancellation (`quiet-link-no-rtp` §4). Its reason changes from "the baby only sends" to "half duplex: the talking parent does not play the room, so there is no echo loop"; that change's design gets the corrected sentence (task 6.2).
-- While a parent talks, the baby's room audio still reaches a listening other parent, including the talking parent's voice from the speaker. That is intended (it is what is happening in the room) and needs no cancellation.
-- The parent captures with voice processing on (echo cancellation, noise suppression, auto gain), because its microphone is a voice microphone: auto gain evens out loudness, so a parent who shouts does not startle the child. Android: a parent-only `AudioSource` with processing constraints; web: `getUserMedia` with the three flags on.
-- The baby's level samples during playback are ignored by the core (§5); the platform does not try to subtract the playout.
+- The baby keeps raw capture without echo cancellation (`quiet-link-no-rtp` §4). Its reason changes from "the baby only sends" to "half duplex: the talking parent does not play the room, so there is no echo loop"; that change's design and its "Raw microphone capture" rationale get the corrected sentence (task 6.2).
+- While a parent talks, a listening other parent hears the room including the talking parent's voice from the speaker: intended, no cancellation.
+- The parent captures with voice processing on (echo cancellation, noise suppression, auto gain with its limiter): a parent who shouts is evened out before sending. This helps but is not trusted: the baby caps loudness itself (§7). Android: the parent factory has processing on, the baby factory raw; a role switch (`alternate-roles-and-apk-size`) rebuilds the engine. Web: `getUserMedia` with the three flags on.
+- No record callback is registered on the parent ADM, and no sink is attached to talk tracks (§10).
 
 ### 5. Noise gate during and after playback
 
-- **Option A — pause the gate in the core from the chime until 2 s after playback (recommended).** The core drops `AudioLevel` samples for the gate (and the `mic_silent` timer) while `talk` or the tail is active; a running noise event continues, no event starts or ends, and a fresh hold time starts afterwards.
-  - Pros: simple, deterministic, testable in the sim; no false alert ever; bounded by `TALK_MAX_MS + TALK_NOISE_TAIL_MS` per press.
-  - Cons: a cry that starts during a talk is detected up to about 32 s + hold time later. Mitigations: the talking parent is attending at that moment; the other parent sees "Noise detection paused"; the rate limit allows a new press only after the previous ended, so pauses do not chain silently (each press is visible on both parents).
-- **Option B — compensate: raise the threshold by the playout level.** Pros: detection continues. Cons: speaker-to-microphone coupling differs per device and position; under-compensation fires false alerts, over-compensation hides crying; not testable without hardware.
-- **Option C — reference-based echo cancellation for the level only.** Pros: keeps detection. Cons: needs an AEC on the gate path, which `quiet-link-no-rtp` removed for good reasons; device-dependent.
+- **Option A — pause the gate in the core, bounded by a cooldown and a budget (recommended).** The core drops `AudioLevel` samples for the gate and the `mic_silent` timer from the chime until 2 s after playback; a running noise event continues, no event starts or ends, a fresh hold time starts afterwards. After every pause, new talks are denied hub-wide until the gate has run unpaused for `max(10 s, hold_ms + 1 s)`; all pauses together stay within 90 s per 10 min; a press released before the grant counts.
+  - Pros: no false alert; deterministic and testable in the sim; a cry is detected at the latest after one talk limit + tail + cooldown + hold, however often the parents press (both reviewers' CRITICAL finding).
+  - Cons: a cry that starts during a talk is detected up to about 32 s + hold later; the cooldown blocks a quick second sentence (the parent sees when it is available).
+- **Option B — compensate: raise the threshold by the playout level.** Cons: device- and position-dependent coupling; under-compensation fires false alerts, over-compensation hides crying.
+- **Option C — reference-based echo cancellation for the level only.** Cons: an AEC on the gate path, which `quiet-link-no-rtp` removed; device-dependent.
 
-Recommendation: A. Repeated presses: each press pauses at most 32 s; between presses the gate runs again with a fresh hold time. A parent who talks in a loop for minutes keeps the gate mostly paused; this is visible to both parents and is the parent's own action. (Critical review may tighten this, §12.)
+Recommendation: A.
 
 ### 6. Multi-parent compatibility
 
-- Talk is per link: one `talk_request` belongs to one parent link, the talk line of that link's attempt carries the audio, and the baby plays only that link's remote talk track.
-- One talker: the arbitration sits where the noise gate sits. On `origin/main` (one `Link`) it is trivially one talker. With `BabyHub` the hub holds `talker: Option<LinkId>`; a request from another link is denied with `busy`, and every other trusted link's status gets `talker: other`. The noise-gate pause is the hub's (one gate).
-- Microphone per link (`multi-parent-pairings` "Audio per parent link") is unchanged: a talk does not open the baby's microphone to any link; listening, noise and tests do, as before.
-- Order: whichever change lands second carries the integration (task 0.2). If talk-back lands first, `multi-parent-pairings` gets a task to move talker arbitration and the noise pause into the hub; if multi-parent lands first, talk-back implements them in the hub directly.
+- Talk is per link: the request, the attempt handle in every playback action and the talk line belong to one parent link; the baby enables exactly that receiver and keeps every other talk receiver disabled.
+- One talker, cooldown, budget and the noise pause belong to the hub (one gate). Every other trusted link's status gets `talker: other` and `noise_paused`.
+- The talk-back switch is per saved parent pairing (Security I5); with one pairing it is one switch.
+- The baby's microphone per link (`multi-parent-pairings` "Audio per parent link") is unchanged by a talk.
+- Order: whichever change lands second carries the integration (task 0.2).
 
-### 7. Baby playback: chime, volume, routing, Do Not Disturb
+### 7. Baby playback: chime, volume, routing, Do Not Disturb, honesty
 
-- **Stream.** Playout stays on the alarm stream (`USAGE_ALARM`, as the parent's ADM already does). The baby's automatic Do Not Disturb rule allows alarms, so talk-back stays audible while calls, messages and media of other apps stay silent; the ringer mode does not affect the alarm stream. `allowMedia` stays false.
-- **Volume.** A talk-back level on the baby unit (§11 decision): during a talk the platform sets the alarm stream to the level's fraction of its maximum and restores the previous index afterwards (also after a crash: the previous index is remembered with the monitoring session, like the DND rule); the voice gets an 800 ms fade-in and a peak limiter on the remote track gain. The parent cannot change the volume.
-- **Chime.** A soft two-note chime (about 600 ms, two sine tones with a slow attack and release, generated, no asset) at about 12 dB below the talk level, played by the platform on `play_talk_chime`, reported done by `talk_chime_done`.
-- **Routing.** Loudspeaker; never the earpiece; no `MODE_IN_COMMUNICATION`. Bluetooth headsets connected to the baby phone are an edge case: the alarm stream also plays on the speaker on most devices (verified in the spike, task 2.1).
-- **Indicator.** A dim "Parent is talking" chip in the kiosk at the existing edge-indicator brightness; the screen does not wake.
+- **Stream.** Playout on the alarm stream (`USAGE_ALARM`): the app's Do Not Disturb rule allows alarms, so talk-back stays audible while calls, messages and other apps stay silent; the ringer mode does not affect it. `allowMedia` stays false.
+- **Default muted.** The engine starts with the ADM speaker muted and talk receivers disabled in the track callback before any frame plays; playback opens only inside a lease.
+- **Volume.** Levels low, medium, high map to fractions of the alarm maximum, with high capped at about 70 % (Critical Review S16). During a talk the platform raises the alarm stream only as far as needed and attenuates the talk track with `setVolume`; it restores the previous index only if the current index is still the one it set (Critical Review I12); after a crash the remembered value is restored at the next start under the same condition.
+- **Loudness cap on the baby (Security I3).** libwebrtc on Android has no per-track limiter, so the baby runs a slow automatic level control on the talk gain: it reads the talk track's level (the existing remote-RMS path) and steps `setVolume` down within 200 ms when it exceeds a fixed ceiling; the fade-in also steps `setVolume`. Test with a full-scale step input.
+- **Chime.** A soft two-note chime (about 600 ms, two sine tones with slow attack and release, generated, no asset), about 12 dB below the talk level but never below an audible floor, played by the platform on `play_talk_chime`, reported by `talk_chime_done`. Settings offer "Play chime" at the chosen level.
+- **Routing.** Loudspeaker; never the earpiece; no `MODE_IN_COMMUNICATION`. Bluetooth output on the baby phone is checked in the spike (item d).
+- **Honest playability (Critical Review I4).** The baby reports `talk: muted` and denies `muted` when its `device_status` shows alarms not allowed (the user's own Do Not Disturb, "total silence") or the volume could not be set; the parent says the baby device cannot play sound right now.
+- **Indicator and accountability.** A static, dim microphone glyph with "Parent is talking" just under the edge, outside the faded info column, at edge brightness, no pulse; after the talk, touch-wake shows "Last talk: {connection name}, {time}, {duration}" (local only).
 
 ### 8. Web client
 
 - **Option A — full web support:** web parent talks; web baby plays.
-  - Pros: parity, "full client in both roles".
-  - Cons: a browser cannot set or read the system volume or detect a muted output, so the parent may believe the child heard a message that never played; autoplay and output device vary; the chime, fade and alarm-stream behaviour cannot be guaranteed; more test surface (Firefox, Safari).
-- **Option B — web parent talks; web baby reports `unsupported` (recommended).**
-  - Pros: the common case (laptop or tablet as parent) is covered; a browser parent captures with `getUserMedia` on press and releases it on release; honest about what a browser baby unit cannot guarantee.
-  - Cons: no talk-back with a laptop as baby unit; a backlog `IDEA` keeps it.
-- **Option C — Android only in this change, web later.**
-  - Pros: smallest change.
-  - Cons: the web parent shows an unexplained gap; the web SDP must still carry the talk line (core rule), so most of the plumbing is needed anyway.
+  - Pros: parity.
+  - Cons: a browser cannot set or read the system volume or detect a muted output, so the parent may believe the child heard a message that never played; autoplay and output devices vary; more test surface.
+- **Option B — web parent talks in this change; web baby reports `unsupported` (recommended).**
+  - Pros: the common case (laptop or tablet as parent) is covered; honest about the browser baby unit.
+  - Cons: no talk-back with a laptop as baby unit (backlog `IDEA`); iOS Safari parent stays `unsupported` until alert audio is proven unchanged after `getUserMedia` (Critical Review I9).
+- **Option B2 — as B, but the web parent in a follow-up change** (Critical Review S18: phase the work).
+  - Pros: this change stays core + Android; smaller review and test surface.
+  - Cons: until then the web parent shows talk-back as unavailable; the web baby must still negotiate the talk line (core rule), so the web attempt code changes anyway.
+- **Option C — Android only, web later without a decision.** Cons: as B2 without a plan.
 
-Recommendation: B. Even with B the web baby negotiates the talk line `recvonly` (the core rule is uniform) and never plays it.
+Recommendation: B (B2 if the owner wants a smaller first PR). In every option the web baby negotiates the talk line `recvonly` and never plays it.
 
 ### 9. UX on the parent monitoring screen
 
-- A round talk button next to the listen button, same size, microphone symbol, label "Hold to talk"; testTag/id `parent_talk`. States: idle; requesting ("Wait…", button pressed); talking ("Talking — release to stop", pulsing ring, countdown from 5 s before the limit); denied (snackbar with the reason: off, other parent talking, baby device cannot play talk-back); unavailable (disabled with a reason line: not connected, talk-back off on the baby device, not supported).
-- On grant the parent vibrates once briefly (a haptic "speak now"); no sound on the parent.
-- First press asks for microphone permission with a plain reason ("To speak to your child, GuardedSleep needs the microphone while you hold the button"); a refusal shows how to allow it later.
-- "Noise detection paused while you talk" under the level meter while paused; the other parent sees "Other parent device is talking — noise detection paused".
-- Accessibility: TalkBack double-tap-and-hold talks; a long-press custom action is not offered (no latching). The button is never placed where the listen slide-to-lock gesture could reach it.
-- Baby unit: a settings row "Talk-back: parents can speak through this device" (switch) and "Talk-back volume" (low, medium, high); the baby setup checklist shows one informational line about talk-back and the switch (§11 default).
-- Copy in all locales (machine translated, `critical` tags for the talk denial reasons and the noise-paused line, because they explain why the parent's message did not arrive or why alerts are paused).
-- Test tags (shared Android/web): `parent_talk`, `parent_talk_state`, `parent_talk_unavailable_reason`, `parent_noise_paused`, `baby_talking`, `baby_talk_toggle`, `baby_talk_volume`.
+- **Placement (UX C1).** Listen stays the full-width primary bar. Talk is its own row below it, 24 dp away, about 64 dp tall and at least 60 % wide, microphone glyph, label "Hold to talk", tertiary colour (not listen's primary/green, not alarm red). Never above listen, so the slide-to-lock path and lock hint never cross it; a press that starts on listen never activates talk.
+- **Deliberate hold.** Talk starts after a 300 ms hold (listen: 150 ms); a tap shows "Hold the button to talk"; sliding up shows "Talk-back can't be locked"; release ends the talk even if the finger slid off.
+- **States (UX C2).** "One moment…" (requesting), "Speak now" with a strong colour flip, filled ring and a distinct haptic once the microphone is attached, "Release to stop · {n} s" for the last 5 s with a haptic at 5 s and at the cut, ended/denied reasons: "30-second limit reached. You can talk again in {n} s.", "No answer from the baby device. Try again.", "Talk stopped: connection to the baby device lost.", "Your microphone isn't picking up sound." (own level near zero for 2 s). A `rate` deny while still held retries once after 1 s silently.
+- **Unavailable before the press (UX I11).** Disabled with a reason line from `device_status`: "Talk-back is off on the baby device. Turn it on there in Settings.", "The other parent device is talking to your child.", "This baby device can't play your voice.", "The baby device can't play sound right now.", "Not connected to the baby device.", "You can talk again in {n} s."
+- **Screen reader (UX C3).** Accessible state changes before the microphone opens; while it is open no live-region or TalkBack announcements and no parent sounds; haptics for grant, 5 s left and end; the result is announced after release. Reduced motion: static thick ring instead of the pulse.
+- **Permission (UX I4).** A first press without permission opens a sheet ("To speak to your child, GuardedSleep needs the microphone while you hold the button." [Allow microphone]) and sends nothing; after granting: "Done. Now hold to talk."; refused: "Talk-back needs the microphone. You can allow it in the device settings." with a settings button. Same on web.
+- **Noise paused (UX S12).** Talking parent: "Noise alerts paused while you talk."; other parent: "The other parent device is talking. Noise alerts resume when it ends."
+- **After release.** A 10 s listen with "Listening for 10 s · tap to keep listening".
+- **Teaching.** A one-time coach mark "New: hold to talk to your child."; an optional "Try talk-back" step in setup while both devices are in hand.
+- **Baby unit.** Settings rows: talk-back switch per parent pairing, volume (low, medium, high) with "Play chime"; setup checklist row "Parents can speak through this device. You can turn this off in Settings." with the switch.
+- **Copy.** All locales, machine translated; `critical` tags on denial and end reasons, the muted/unavailable lines and the noise-paused lines (they explain why a message did not arrive or why alerts are paused). Short labels for German and French at 64 dp; "·" instead of dashes.
+- **Test tags (Android and web):** `parent_talk`, `parent_talk_state`, `parent_talk_unavailable_reason`, `parent_noise_paused`, `parent_talk_permission_sheet`, `baby_talking`, `baby_last_talk`, `baby_talk_toggle`, `baby_talk_volume`, `baby_talk_play_chime`.
 
 ### 10. Security and privacy
 
-- **Who can talk:** only a trusted link (verified attempt, pin proof done, alive). Requests through mailboxes are impossible (DataChannel only); the relay sees nothing new. Talk audio rides the attempt's DTLS-SRTP, bound to the pairing proof.
-- **Abuse by a paired parent:** a paired parent is trusted by definition; the limits (30 s, rate, visible indicator, off switch on the baby unit) bound what a stolen or misused parent phone can do: it can speak, for at most 30 s per press, while an indicator shows it.
-- **No recording:** no talk buffer, no file, no log of audio or levels of the talk line; the log canary runs in the talk sim scenarios; a JVM/Vitest check that no talk audio sink writes to storage.
-- **Microphone indicator on the parent:** Android shows the system microphone indicator while the parent captures; the parent's microphone track exists only between grant and release.
-- **No guardrail change:** no third party in the media path (§7.1 unchanged), no new crypto, no telemetry. Layers: decisions in the core (§3, §5), I/O in the platforms (§7), UI renders contract models only.
+- **Who can make sound:** only a trusted, pinned link (verified attempt, pin proof passed, alive). Talk messages exist only on the DataChannel (DTLS, SCTP ordering; no replay across or within attempts); mailboxes and relays cannot carry them; stale attempt handles are dropped. Talk audio rides the attempt's DTLS-SRTP, bound to the pairing proof.
+- **Baby-side enforcement:** deadline (lease in the media layer), one talker, cooldown, budget, rate, loudness cap, per-pairing switch, default-muted receivers. A hostile or modified parent can at most play up to 30 s at a capped level, then must wait the cooldown, within a 90 s per 10 min budget, while an indicator shows it and the touch-wake status names it.
+- **Stolen parent phone (Security I4):** talk only while the parent device is unlocked (not over the keyguard). Residual risk: a thief with an unlocked phone can speak to the child within the limits until talk-back is switched off for that pairing or the pairing is forgotten. App-Lock stays `DEFERRED`.
+- **No recording (Security I7):** no record callback on the parent ADM; no `addSink`, `MediaRecorder`, `AudioRecord`, `startAecDump` or `RtcEventLog` on talk paths (a check in the Android and web tests); no talk level or device name in logs; the log canary runs in every talk sim scenario and the gate scenario.
+- **Parent microphone:** open only while held (warm start at press, attached at grant); closed on release, cancel, background, screen off, call, permission revoke; Android shows the system microphone indicator. The parent's foreground-service type does not change (Critical Review S15): capture happens only with the activity in front, and the talk ends on `onStop`.
+- **Metadata (Security S4):** `talk`, `talker`, `noise_paused` travel inside DTLS; relays learn nothing new. A TURN relay can see a parent→baby burst (when and how long a parent spoke), like the existing "timing and volume" in `signaling-mailboxes` "Relay-visible data".
+- **Web parent permission (Security S5):** a persistent microphone grant to the web origin is a new asset; the browser parent prefers one-time permission where offered, and the threat model names it.
+- **Guardrails:** no third party in the media path, no new crypto, no telemetry. Layers: decisions in the core (§3, §5), I/O and the defensive lease in the platforms (§7), UI renders contract models only.
 
 ### 11. Owner decisions
 
-Pending (asked 2026-11-11): duplex mode (§1), chime and volume (§7), web scope (§8), default of the baby's talk-back switch. Recorded here once answered.
+Pending (asked 2026-11-11): duplex mode (§1: A or A+), chime and default volume (§7), web scope (§8), default of the baby's talk-back switch (on with the checklist row, or off until turned on). Recorded here once answered.
 
 ### 12. Critical review
 
-Pending: Critical Reviewer, Security/Privacy and UX perspectives (2026-11-11).
+Critical Reviewer verdict on the first draft: NEEDS REWORK. Security/Privacy: changes requested. UX: approved with concerns. Every CRITICAL and IMPORTANT finding is answered below (CR = Critical Reviewer, SEC = Security/Privacy, UX).
+
+| #                  | Finding                                                                         | Answer                                                                                                                                                                                                                                        |
+| ------------------ | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CR C1, SEC C1      | Chained presses (per-link 1 s rate, two parents alternating) blind the gate     | **Fixed.** Hub-wide cooldown `max(10 s, hold + 1 s)` after every pause, budget 90 s per 10 min, pre-grant releases count (§5; spec "Talk cooldown and budget" with failure scenario; sim `talk-chained-presses`).                             |
+| CR I2              | Parent extends noise events from heartbeat `rms` raised by the speaker          | **Fixed.** Heartbeats omit `rms` during the pause; parent ignores it while `noise_paused` (spec "Paused levels do not reach the parent").                                                                                                     |
+| CR I3              | Parent alerts during a talk undefined (ducked ADM, discreet escalation)         | **Fixed.** Talk press acknowledges the noise event; any parent alert sound ends the talk first; no test alert while talking; alert output unchanged after a talk (spec "Alerts take precedence over talk", `parent-alerts` and timer deltas). |
+| CR I4              | "Granted" does not mean audible (DND total silence, alarm volume)               | **Fixed.** `talk: muted` and deny `muted` (§7; spec "Honest playability").                                                                                                                                                                    |
+| CR I5              | Stuck speaker if one action is lost                                             | **Fixed.** Playback is a lease with `until_ms` enforced by the media layer; engine starts muted (spec "Talk ends with the link").                                                                                                             |
+| CR I6              | `live_verified()` trusts an unpinned first-pairing attempt                      | **Fixed.** Trust gate requires a pinned parent whose proof passed (§3; spec scenario "Verified attempt before the pin").                                                                                                                      |
+| CR I7              | Core cannot see the parent's `inactive` talk line                               | **Fixed.** Baby core parses the accepted remote answer (§2; `link-supervision` delta).                                                                                                                                                        |
+| CR I8              | Idle receiving line may run the baby's playout all night; no track limiter      | **Answered.** Spike item (e) measures it, with a recorded renegotiation fallback (§2); loudness cap on the baby via `setVolume` level control, AGC limiter on the parent (§4, §7).                                                            |
+| CR I9              | Parent alert audio may change output after capture                              | **Fixed.** Requirement "after a talk, alert audio plays on the same output at the same level"; gate check; iOS Safari parent `unsupported` until proven (web delta).                                                                          |
+| CR I10, UX I4      | Permission prompt during a hold; web prompt after the grant                     | **Fixed.** Separate permission step before the first talk; `set_talk` fed only with permission; warm capture at press, attach at grant, haptic after attach; `talk_mic_failed` ends the talk.                                                 |
+| CR I11             | MODIFIED "Audio only on demand" overwrites `quiet-link-no-rtp`; Opus per line   | **Fixed.** Block rewritten on `quiet-link-no-rtp`'s text; task 6.2 makes the Opus profile apply to both lines and corrects its capture rationale.                                                                                             |
+| CR I12             | Blind alarm-volume restore overwrites the user                                  | **Fixed.** Restore only if unchanged; raise only as needed and attenuate per track (spec "Volume restored after a talk").                                                                                                                     |
+| CR I13             | Missing failure scenarios                                                       | **Fixed.** Baby killed mid-talk, call/background/cancel mid-hold, switched off during a talk, permission revoked, lost stop, Bluetooth in spike (d); "at once" reworded to "closes or is declared lost, at the latest at the deadline".       |
+| SEC I1             | Actions name no attempt; no single teardown point                               | **Fixed.** Playback actions carry `attempt` (and `link` in the hub); teardown inside `close_live()` with a test over every path (§3).                                                                                                         |
+| SEC I2             | RTP before the platform disables the track                                      | **Fixed.** Receivers disabled in the track callback before any frame; outside-grant packets → `security_warning` (spec "Playback only for the granted link").                                                                                 |
+| SEC I3             | No baby-side loudness cap                                                       | **Fixed.** Level control on the baby within 200 ms; high below the alarm maximum (spec "Gentle start and safe loudness").                                                                                                                     |
+| SEC I4             | Stolen or locked parent phone                                                   | **Fixed.** Talk only while unlocked; residual risk named (§10).                                                                                                                                                                               |
+| SEC I5             | Low-trust second parent; no record of talks                                     | **Fixed.** Switch per parent pairing; touch-wake "Last talk" with name, time, duration (local).                                                                                                                                               |
+| SEC I6             | Parent microphone lifecycle; FGS type                                           | **Fixed.** Spec "Talk ends when the hold is interrupted"; no FGS type change at all (CR S15), talk ends on `onStop`.                                                                                                                          |
+| SEC I7             | "No recording" unverifiable                                                     | **Fixed.** Concrete assertions (§10, tasks 2.2, 2.3, 4.1).                                                                                                                                                                                    |
+| UX C1              | Round button next to the full-width listen bar does not fit; accidental talk    | **Fixed.** Own row below listen, tertiary colour, 300 ms hold, never in the lock path (§9).                                                                                                                                                   |
+| UX C2              | Parents speak before audio flows                                                | **Fixed.** "One moment…" → "Speak now" after the microphone is attached; 3 s answer timeout; warm capture (§3, §9).                                                                                                                           |
+| UX C3              | Screen reader speech goes into the open microphone                              | **Fixed.** Spec "No speech into the open microphone".                                                                                                                                                                                         |
+| UX I5              | Parent cannot tell the message probably did not play                            | **Fixed.** `muted` before the press; end reasons; own-microphone-silent hint.                                                                                                                                                                 |
+| UX I6              | Reaction after release lost                                                     | **Fixed.** 10 s listen after release; level meter stays live while talking.                                                                                                                                                                   |
+| UX I7              | Limit not felt; `rate` copy                                                     | **Fixed.** Haptics at 5 s and the cut; `rate` retried silently.                                                                                                                                                                               |
+| UX I8              | Default volume and startle risk                                                 | **Answered.** Chime mandatory, fade-in, cap, "Play chime"; default level is an owner decision (§11), UX recommends low.                                                                                                                       |
+| UX I9              | Baby indicator invisible in the faded info column                               | **Fixed.** Under the edge, outside the faded column, static (§7).                                                                                                                                                                             |
+| UX I10             | People who cannot hold                                                          | **Answered.** Option A+ "Tap to talk" put to the owner (§1).                                                                                                                                                                                  |
+| UX I11             | Unavailable states only after a press                                           | **Fixed.** Status-driven reason line before the press (§9).                                                                                                                                                                                   |
+| CR S14–S18, SEC S* | Status `noise_paused`, chime cancel, checklist delta, defaults, phasing, others | Taken: `noise_paused` status field, `set_talk_playback{false}` cancels the chime, checklist MODIFIED, settings stay local (negative vector), metadata and web permission named; defaults and phasing go to the owner (§11, §8 B2).            |
 
 ## Risks / Trade-offs
 
-- [Alarm-stream volume changes are visible to the user and may fail on some OEMs] → spike task 2.1 on the emulator and a real device; fallback: software gain on the remote track only, with the parent told the level is not guaranteed.
-- [Hardware AEC defaults on the baby ADM differ per device] → `quiet-link-no-rtp` disables them; until then, talk-back works with whatever the device does, and the noise pause covers the gate.
-- [A cry during a talk is detected late] → bounded pause (§5), indicator on both parents.
-- [Parent `RECORD_AUDIO` on Android 14+ needs the `microphone` foreground-service type while capturing] → the parent service adds the type only while a talk runs, which always starts from the foreground (button held on screen); verified in task 2.2.
-- [Chrome's SDP munging deprecation] → no munging needed: directions come from `addTransceiver`.
+- [Alarm-stream volume changes may fail on some OEMs] → spike 2.1 (c); `talk: muted` when the level cannot be set.
+- [Idle receiving line costs battery or shifts gate levels] → spike 2.1 (e); renegotiation fallback (§2).
+- [Hardware AEC defaults on the baby ADM differ per device until `quiet-link-no-rtp` lands] → the noise pause covers the gate; the spike records levels with and without playout.
+- [A cry during a talk is detected late] → bounded by one talk + tail + cooldown + hold; shown to both parents.
+- [Scope for one developer: core, sim, two Android media paths, two UIs, web, gate, 20 locales] → task groups ship in order (core first, then Android, then web); §8 B2 splits the web parent out if the owner prefers.
 
 ## Migration Plan
 
-No installed base; both devices update together. A peer without the talk line fails the new SDP rule, as an `update_required`-class mismatch would. Rollback: revert the change; the monitoring line is unchanged.
+No installed base; both devices update together. A peer without the talk line fails the new SDP rule. Rollback: revert the change; the monitoring line is unchanged.
 
 ## Discarded alternatives
 
-- §2 Option B (one `sendrecv` line) and Option C (renegotiation per press).
+- §2 Option B (one `sendrecv` line) and Option C (renegotiation per press; kept only as the spike fallback for the first use per session).
 - §5 Options B and C (compensation, reference AEC).
+- Rate limit alone as the protection against pause chaining (first draft): two parents or a fast presser kept the gate blind (CR C1, SEC C1).
 - Parent-side volume control for the baby speaker: lets a remote party make loud sound next to the child; the adult at the baby unit decides.
 - Text-to-speech or pre-recorded messages: out of scope; "no text-to-speech" stays.
+- Changing the parent's foreground-service type for capture: unnecessary with the activity in front (CR S15).
 - §1, §7 and §8 alternatives move here after the owner decision.

@@ -4,12 +4,22 @@
 
 ### Requirement: Audio only on demand
 
-The baby unit SHALL send audio only while the noise gate is loud, the parent is listening, or a test alert runs; otherwise the pre-negotiated audio track SHALL stay muted. Audio from the baby unit SHALL flow only to the parent unit. Audio from the parent unit SHALL flow to the baby unit only while a talk granted by the baby unit runs (`talk-back`); otherwise the parent unit SHALL send no audio. Both directions SHALL be encrypted by DTLS-SRTP.
+The baby unit SHALL send audio only while the noise gate is loud, the parent is listening, or a test alert runs. Otherwise it SHALL detach the microphone track from the audio sender, so no RTP packets are sent, and SHALL keep the track disabled as well, so a failed detach can only send silence. Capture SHALL keep running while the track is detached, so the noise gate keeps hearing the room. Audio from the baby unit SHALL flow only to the parent unit. Audio from the parent unit SHALL flow to the baby unit only while a talk granted by the baby unit runs (`talk-back`); otherwise the parent unit SHALL send no audio and keep its microphone closed. Both directions SHALL be encrypted by DTLS-SRTP.
 
 #### Scenario: Quiet night
 
 - **WHEN** the room is quiet and the parent is not listening
-- **THEN** no audio from the baby unit is sent
+- **THEN** the baby unit sends no RTP packets, and the noise gate keeps receiving microphone buffers
+
+#### Scenario: Noise after a quiet hour is detected
+
+- **WHEN** the room was quiet for an hour with the track detached and a baby cries
+- **THEN** the core raises the noise event within the hold time
+
+#### Scenario: Audio starts quickly after a quiet hour
+
+- **WHEN** the noise gate turns loud after an hour without audio
+- **THEN** the first audio packet leaves the baby unit within 250 ms of the gate change
 
 #### Scenario: Parent not talking
 
@@ -65,9 +75,18 @@ The core SHALL NOT feed the baby unit's level into the noise gate from the start
 - **WHEN** a noise event is running and a parent starts talking
 - **THEN** the noise event continues without a new alert, and audio to the parents keeps flowing as before
 
+### Requirement: Paused levels do not reach the parent
+
+During a talk's noise pause the baby unit SHALL send heartbeats without a level and mark the pause in its status, and the parent SHALL NOT let levels from the pause extend or restart a noise event.
+
+#### Scenario: Talk does not keep a noise event alive (failure)
+
+- **WHEN** a noise event is running, the baby falls quiet and a parent then talks loudly for 30 seconds
+- **THEN** the levels during the talk neither extend the event nor restart its alert after a snooze ends
+
 ### Requirement: Noise pause is bounded and shown
 
-The noise-detection pause of a talk SHALL never last longer than the talk limit plus the tail, and every trusted parent SHALL see that noise detection is paused while it lasts.
+The noise-detection pause of a talk SHALL never last longer than the talk limit plus the tail, all talk pauses together SHALL stay within the budget of `talk-back` "Talk cooldown and budget", and every trusted parent SHALL see that noise detection is paused while it lasts.
 
 #### Scenario: Other parent during a talk
 
