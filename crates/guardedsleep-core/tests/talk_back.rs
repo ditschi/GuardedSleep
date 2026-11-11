@@ -1330,3 +1330,74 @@ fn a_crying_child_who_is_talked_to_three_times_gets_no_warning() {
     }
     assert_eq!(last_peer_status(&w).talk_audible, None);
 }
+
+// ---- the reason of talk_end -----------------------------------------------------------------------------
+
+#[test]
+fn talk_end_carries_its_reason_and_the_parent_reads_it_before_guessing() {
+    let ended_by = |msg: Value| {
+        let mut w = talk_world();
+        start_talk(&mut w, 0.01);
+        level(&mut w, 2_000, 0.01, Some(0.3));
+        let id = data(&w, PARENT, "talk_request")[0].1["id"].clone();
+        let mut m = msg;
+        m["id"] = id;
+        w.inject_data(PARENT, &raw(m));
+        last_state(&w)
+    };
+    let end = |reason: Option<&str>| {
+        let mut m = json!({"type":"talk_end","v":3});
+        if let Some(r) = reason {
+            m["reason"] = json!(r);
+        }
+        m
+    };
+    let state = |reason| Some(TalkState::Ended { reason });
+    // Without a reason the clock decides: 2 s into a 30 s talk is an early stop.
+    assert_eq!(ended_by(end(None)), state(TalkEndReason::SwitchedOff));
+    // With one, it is used even where the clock would say otherwise.
+    assert_eq!(ended_by(end(Some("limit"))), state(TalkEndReason::Limit));
+    assert_eq!(
+        ended_by(end(Some("switched_off"))),
+        state(TalkEndReason::SwitchedOff)
+    );
+    assert_eq!(ended_by(end(Some("link"))), state(TalkEndReason::Stopped));
+    assert_eq!(
+        ended_by(end(Some("released"))),
+        state(TalkEndReason::Released)
+    );
+    assert_eq!(
+        ended_by(end(Some("bored"))),
+        state(TalkEndReason::SwitchedOff)
+    );
+}
+
+#[test]
+fn what_each_side_sends_as_the_reason() {
+    let reasons = |w: &World, n| -> Vec<Value> {
+        data(w, n, "talk_end")
+            .iter()
+            .map(|(_, m)| m["reason"].clone())
+            .collect()
+    };
+    // Release by the parent.
+    let mut w = talk_world();
+    start_talk(&mut w, 0.01);
+    release(&mut w);
+    assert_eq!(reasons(&w, PARENT), vec![json!("released")]);
+    // The baby's deadline.
+    let mut w = talk_world();
+    start_talk(&mut w, 0.01);
+    level(&mut w, 31_000, 0.01, Some(0.3));
+    assert_eq!(reasons(&w, BABY), vec![json!("limit")]);
+    // Switched off on the baby.
+    let mut w = talk_world();
+    start_talk(&mut w, 0.01);
+    settings(&mut w, false, true);
+    assert_eq!(reasons(&w, BABY), vec![json!("switched_off")]);
+    // A stop on purpose.
+    let mut w = talk_world();
+    start_talk(&mut w, 0.01);
+    w.stop(PARENT);
+    assert_eq!(reasons(&w, PARENT), vec![json!("link")]);
+}

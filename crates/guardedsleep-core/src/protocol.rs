@@ -489,6 +489,22 @@ pub enum TalkDenyReason {
     Rate,
 }
 
+/// Why a talk ended, as the optional `reason` of `talk_end` says. A peer that does not send it
+/// leaves the receiver to infer the reason.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
+pub enum TalkEndWire {
+    /// The parent let go (or gave up).
+    Released,
+    /// The baby's 30 second limit (or the clamped limit of the budget).
+    Limit,
+    /// Talk-back was switched off on the baby unit.
+    SwitchedOff,
+    /// The link is being stopped on purpose.
+    Link,
+}
+
 /// Largest `talk_retry_in_ms` and `retry_in_ms` accepted on the wire (one hour).
 pub const MAX_TALK_RETRY_MS: u64 = 3_600_000;
 
@@ -628,6 +644,16 @@ fn talk_audible_word(w: &str) -> Option<TalkAudible> {
     match w {
         "ok" => Some(TalkAudible::Ok),
         "uncertain" => Some(TalkAudible::Uncertain),
+        _ => None,
+    }
+}
+
+fn talk_end_word(w: &str) -> Option<TalkEndWire> {
+    match w {
+        "released" => Some(TalkEndWire::Released),
+        "limit" => Some(TalkEndWire::Limit),
+        "switched_off" => Some(TalkEndWire::SwitchedOff),
+        "link" => Some(TalkEndWire::Link),
         _ => None,
     }
 }
@@ -802,6 +828,8 @@ pub enum DataMessage {
     /// Either side ends the talk `id` (the parent released, the baby's deadline or switch).
     TalkEnd {
         id: u64,
+        /// Additive and optional; an unknown word parses as `None`.
+        reason: Option<TalkEndWire>,
     },
     /// Baby to parent, once per talk: the result of the playback check.
     TalkPlayback {
@@ -959,6 +987,10 @@ fn parse_data_versioned(raw: &str, version: u32) -> Option<DataMessage> {
         }),
         "talk_end" if v3 => Some(DataMessage::TalkEnd {
             id: as_uint(o.get("id")?)?,
+            reason: o
+                .get("reason")
+                .and_then(Value::as_str)
+                .and_then(talk_end_word),
         }),
         "talk_playback" if v3 => Some(DataMessage::TalkPlayback {
             id: as_uint(o.get("id")?)?,
@@ -1086,7 +1118,16 @@ pub fn encode_data_message(m: &DataMessage) -> String {
             }
             Value::Object(o).to_string()
         }
-        DataMessage::TalkEnd { id } => json!({ "type": "talk_end", "v": v, "id": id }).to_string(),
+        DataMessage::TalkEnd { id, reason } => {
+            let mut o = Map::new();
+            o.insert("type".into(), "talk_end".into());
+            o.insert("v".into(), v.into());
+            o.insert("id".into(), (*id).into());
+            if let Some(r) = reason.and_then(|r| serde_json::to_value(r).ok()) {
+                o.insert("reason".into(), r);
+            }
+            Value::Object(o).to_string()
+        }
         DataMessage::TalkPlayback { id, result } => {
             json!({ "type": "talk_playback", "v": v, "id": id, "result": result }).to_string()
         }
@@ -1530,8 +1571,18 @@ mod tests {
                 r#"{"type":"talk_deny","v":3,"id":7}"#,
             ),
             (
-                DataMessage::TalkEnd { id: 7 },
+                DataMessage::TalkEnd {
+                    id: 7,
+                    reason: None,
+                },
                 r#"{"type":"talk_end","v":3,"id":7}"#,
+            ),
+            (
+                DataMessage::TalkEnd {
+                    id: 7,
+                    reason: Some(TalkEndWire::SwitchedOff),
+                },
+                r#"{"type":"talk_end","v":3,"id":7,"reason":"switched_off"}"#,
             ),
             (
                 DataMessage::TalkPlayback {
@@ -1604,8 +1655,44 @@ mod tests {
         }
         assert_eq!(
             talk(r#"{"type":"talk_end","v":3,"id":9,"future":true}"#),
-            Some(DataMessage::TalkEnd { id: 9 })
+            Some(DataMessage::TalkEnd {
+                id: 9,
+                reason: None
+            })
         );
+    }
+
+    #[test]
+    fn talk_end_reason_is_optional_and_unknown_words_are_no_reason() {
+        for (word, want) in [
+            ("released", TalkEndWire::Released),
+            ("limit", TalkEndWire::Limit),
+            ("switched_off", TalkEndWire::SwitchedOff),
+            ("link", TalkEndWire::Link),
+        ] {
+            let raw = format!(r#"{{"type":"talk_end","v":3,"id":3,"reason":"{word}"}}"#);
+            assert_eq!(
+                talk(&raw),
+                Some(DataMessage::TalkEnd {
+                    id: 3,
+                    reason: Some(want)
+                })
+            );
+        }
+        for raw in [
+            r#"{"type":"talk_end","v":3,"id":3}"#,
+            r#"{"type":"talk_end","v":3,"id":3,"reason":"bored"}"#,
+            r#"{"type":"talk_end","v":3,"id":3,"reason":4}"#,
+        ] {
+            assert_eq!(
+                talk(raw),
+                Some(DataMessage::TalkEnd {
+                    id: 3,
+                    reason: None
+                }),
+                "{raw}"
+            );
+        }
     }
 
     #[test]

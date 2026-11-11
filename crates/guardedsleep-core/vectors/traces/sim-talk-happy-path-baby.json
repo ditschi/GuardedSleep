@@ -468,7 +468,7 @@
       "input": {
         "type": "attempt_data_message",
         "attempt": 1,
-        "text": "{\"type\":\"talk_end\",\"v\":3,\"id\":1}"
+        "text": "{\"type\":\"talk_end\",\"v\":3,\"id\":1,\"reason\":\"released\"}"
       }
     },
     {

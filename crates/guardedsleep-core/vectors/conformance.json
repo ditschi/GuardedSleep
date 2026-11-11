@@ -7589,7 +7589,8 @@
     "raw": "{\"type\":\"talk_end\",\"v\":3,\"id\":7,\"future\":1}",
     "expect": {
       "type": "talk_end",
-      "id": 7
+      "id": 7,
+      "reason": null
     }
   },
   {
@@ -7662,5 +7663,65 @@
     "kind": "parse_data_v3",
     "raw": "{\"type\":\"device_status\",\"v\":3,\"talk_retry_in_ms\":3600001}",
     "expect": null
+  },
+  {
+    "name": "parse_data_v3: talk_end: with the reason limit",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_end\",\"v\":3,\"id\":7,\"reason\":\"limit\"}",
+    "expect": {
+      "type": "talk_end",
+      "id": 7,
+      "reason": "limit"
+    }
+  },
+  {
+    "name": "parse_data_v3: talk_end: with the reason switched_off",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_end\",\"v\":3,\"id\":7,\"reason\":\"switched_off\"}",
+    "expect": {
+      "type": "talk_end",
+      "id": 7,
+      "reason": "switched_off"
+    }
+  },
+  {
+    "name": "parse_data_v3: talk_end: with the reason link",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_end\",\"v\":3,\"id\":7,\"reason\":\"link\"}",
+    "expect": {
+      "type": "talk_end",
+      "id": 7,
+      "reason": "link"
+    }
+  },
+  {
+    "name": "parse_data_v3: talk_end: with the reason released",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_end\",\"v\":3,\"id\":7,\"reason\":\"released\"}",
+    "expect": {
+      "type": "talk_end",
+      "id": 7,
+      "reason": "released"
+    }
+  },
+  {
+    "name": "parse_data_v3: talk_end: without a reason",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_end\",\"v\":3,\"id\":7}",
+    "expect": {
+      "type": "talk_end",
+      "id": 7,
+      "reason": null
+    }
+  },
+  {
+    "name": "parse_data_v3: talk_end: unknown reason word is no reason",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"talk_end\",\"v\":3,\"id\":7,\"reason\":\"bored\"}",
+    "expect": {
+      "type": "talk_end",
+      "id": 7,
+      "reason": null
+    }
   }
 ]

@@ -3461,14 +3461,16 @@ impl Link {
             }
             (Role::Parent, DataMessage::DeviceStatus(s)) => self.on_peer_status(s, out),
             (Role::Baby, DataMessage::TalkRequest { id }) => self.on_talk_request(now, id, out),
-            (Role::Baby, DataMessage::TalkEnd { id }) => self.on_baby_talk_end(now, id, out),
+            (Role::Baby, DataMessage::TalkEnd { id, .. }) => self.on_baby_talk_end(now, id, out),
             (Role::Parent, DataMessage::TalkGrant { id, max_ms }) => {
                 self.on_talk_grant(now, id, max_ms, out)
             }
             (Role::Parent, DataMessage::TalkDeny { id, reason }) => {
                 self.on_talk_deny(now, id, reason, out)
             }
-            (Role::Parent, DataMessage::TalkEnd { id }) => self.on_parent_talk_end(now, id, out),
+            (Role::Parent, DataMessage::TalkEnd { id, reason }) => {
+                self.on_parent_talk_end(now, id, reason, out)
+            }
             (Role::Parent, DataMessage::TalkPlayback { id, result }) => {
                 self.on_talk_playback(id, result, out)
             }

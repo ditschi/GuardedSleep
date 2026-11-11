@@ -689,7 +689,11 @@
     [],
     [],
     [
-      { "type": "send_data", "attempt": 1, "text": "{\"type\":\"talk_end\",\"v\":3,\"id\":1}" },
+      {
+        "type": "send_data",
+        "attempt": 1,
+        "text": "{\"type\":\"talk_end\",\"v\":3,\"id\":1,\"reason\":\"released\"}"
+      },
       { "type": "set_talk_mic", "attempt": 1, "enabled": false },
       { "type": "set_playback_ducked", "attempt": 1, "ducked": false },
       {

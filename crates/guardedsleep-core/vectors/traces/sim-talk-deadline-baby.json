@@ -2515,7 +2515,11 @@
         "fade_in_ms": 0,
         "until_ms": 50650
       },
-      { "type": "send_data", "attempt": 1, "text": "{\"type\":\"talk_end\",\"v\":3,\"id\":1}" },
+      {
+        "type": "send_data",
+        "attempt": 1,
+        "text": "{\"type\":\"talk_end\",\"v\":3,\"id\":1,\"reason\":\"limit\"}"
+      },
       { "type": "emit", "event": { "type": "talk_active", "active": false, "duration_ms": 30039 } },
       {
         "type": "send_data",

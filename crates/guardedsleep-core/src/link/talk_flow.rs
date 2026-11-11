@@ -11,7 +11,9 @@
 use std::collections::VecDeque;
 
 use super::*;
-use crate::protocol::{PlaybackResult, TalkAudible, TalkDenyReason, TalkStatus, Talker};
+use crate::protocol::{
+    PlaybackResult, TalkAudible, TalkDenyReason, TalkEndWire, TalkStatus, Talker,
+};
 use crate::talk::{
     PlaybackCheck, TALK_AFTER_LISTEN_MS, TALK_ANSWER_TIMEOUT_MS, TALK_BASELINE_MS,
     TALK_CHIME_TIMEOUT_MS, TALK_DRAIN_MS, TALK_FADE_IN_MS, TALK_MAX_MS, TALK_RATE_MS,
@@ -346,7 +348,7 @@ impl Link {
         // An adult is at the settings: the warning about three unconfirmed talks has done its job.
         self.talk.unconfirmed_streak = 0;
         if !settings.enabled && self.talk.baby.is_some() {
-            self.stop_baby_talk(now, true, true, out);
+            self.stop_baby_talk(now, true, Some(TalkEndWire::SwitchedOff), out);
         }
         self.flush_status(out);
     }
@@ -450,20 +452,34 @@ impl Link {
     }
 
     /// The baby ended the talk (its limit, or talk-back was switched off there).
-    pub(super) fn on_parent_talk_end(&mut self, now: u64, id: u64, out: &mut Vec<LinkAction>) {
+    pub(super) fn on_parent_talk_end(
+        &mut self,
+        now: u64,
+        id: u64,
+        wire: Option<TalkEndWire>,
+        out: &mut Vec<LinkAction>,
+    ) {
         let Some(t) = self.talk.parent else {
             return;
         };
         if t.id != id {
             return;
         }
-        let reason = match t.phase {
-            ParentPhase::Granted { until } | ParentPhase::Talking { until }
-                if now + TALK_LIMIT_SLACK_MS >= until =>
-            {
-                TalkEndReason::Limit
-            }
-            _ => TalkEndReason::SwitchedOff,
+        // The baby says why; a peer that does not is read by the clock: an end within a second of
+        // the deadline is the limit, anything earlier an early stop.
+        let reason = match wire {
+            Some(TalkEndWire::Limit) => TalkEndReason::Limit,
+            Some(TalkEndWire::SwitchedOff) => TalkEndReason::SwitchedOff,
+            Some(TalkEndWire::Link) => TalkEndReason::Stopped,
+            Some(TalkEndWire::Released) => TalkEndReason::Released,
+            None => match t.phase {
+                ParentPhase::Granted { until } | ParentPhase::Talking { until }
+                    if now + TALK_LIMIT_SLACK_MS >= until =>
+                {
+                    TalkEndReason::Limit
+                }
+                _ => TalkEndReason::SwitchedOff,
+            },
         };
         self.end_parent_talk(now, Outcome::Ended(reason), false, true, out);
     }
@@ -500,7 +516,20 @@ impl Link {
             return;
         };
         if send_end {
-            self.send_app(&DataMessage::TalkEnd { id: t.id }, out);
+            let reason = match outcome {
+                Outcome::Ended(TalkEndReason::Limit) => TalkEndWire::Limit,
+                Outcome::Ended(TalkEndReason::Stopped | TalkEndReason::LinkLost) => {
+                    TalkEndWire::Link
+                }
+                _ => TalkEndWire::Released,
+            };
+            self.send_app(
+                &DataMessage::TalkEnd {
+                    id: t.id,
+                    reason: Some(reason),
+                },
+                out,
+            );
         }
         out.push(LinkAction::SetTalkMic {
             attempt,
@@ -669,12 +698,13 @@ impl Link {
         }
         match t.phase {
             // Released before the grant: the chime stops, nothing else plays.
-            BabyPhase::Chime { .. } => self.stop_baby_talk(now, true, false, out),
+            BabyPhase::Chime { .. } => self.stop_baby_talk(now, true, None, out),
             BabyPhase::Playing { until, drain_until } => {
                 if drain_until.is_none() {
                     t.phase = BabyPhase::Playing {
                         until,
-                        drain_until: Some(now + TALK_DRAIN_MS),
+                        // The drain never reaches past the deadline (the budget clamp).
+                        drain_until: Some((now + TALK_DRAIN_MS).min(until)),
                     };
                 }
             }
@@ -684,7 +714,13 @@ impl Link {
     /// Stops the baby's talk: playback off (this also cancels a running chime), `talk_end` to the
     /// parent when asked and the link is up, the playback result, the indicator, and the 2 s tail
     /// of the noise pause.
-    fn stop_baby_talk(&mut self, now: u64, live: bool, send_end: bool, out: &mut Vec<LinkAction>) {
+    fn stop_baby_talk(
+        &mut self,
+        now: u64,
+        live: bool,
+        end: Option<TalkEndWire>,
+        out: &mut Vec<LinkAction>,
+    ) {
         let Some(mut t) = self.talk.baby.take() else {
             return;
         };
@@ -696,8 +732,14 @@ impl Link {
             until_ms: now,
         });
         if live {
-            if send_end {
-                self.send_app(&DataMessage::TalkEnd { id: t.id }, out);
+            if let Some(reason) = end {
+                self.send_app(
+                    &DataMessage::TalkEnd {
+                        id: t.id,
+                        reason: Some(reason),
+                    },
+                    out,
+                );
             }
             if t.voice_at.is_some() && !t.result_sent {
                 let result = t.check.finish();
@@ -824,12 +866,12 @@ impl Link {
                 }
                 BabyPhase::Playing { until, .. } if now >= until => {
                     // The deadline: the parent's `talk_end` may never come.
-                    self.stop_baby_talk(now, live, true, out);
+                    self.stop_baby_talk(now, live, Some(TalkEndWire::Limit), out);
                 }
                 BabyPhase::Playing {
                     drain_until: Some(d),
                     ..
-                } if now >= d => self.stop_baby_talk(now, live, false, out),
+                } if now >= d => self.stop_baby_talk(now, live, None, out),
                 _ if !result_sent => {
                     // The result of the check comes once its window is over, not at the end.
                     let result = self
@@ -873,7 +915,7 @@ impl Link {
             ),
             Role::Baby => {
                 let live = self.live_verified();
-                self.stop_baby_talk(now, live, true, out);
+                self.stop_baby_talk(now, live, Some(TalkEndWire::Link), out);
             }
         }
     }
@@ -884,7 +926,7 @@ impl Link {
     pub(super) fn teardown_talk(&mut self, out: &mut Vec<LinkAction>) {
         let now = self.now;
         if self.talk.baby.is_some() {
-            self.stop_baby_talk(now, false, false, out);
+            self.stop_baby_talk(now, false, None, out);
         }
         if self.talk.parent.is_some() {
             self.end_parent_talk(
