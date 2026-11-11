@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import org.guardedsleep.app.BuildConfig
 import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.common.systemReduceMotion
 import org.guardedsleep.app.ui.model.AppController
@@ -16,6 +17,7 @@ import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.Theme
 import org.guardedsleep.app.ui.screens.BabyKioskScreen
 import org.guardedsleep.app.ui.screens.BabyMonitorScreen
+import org.guardedsleep.app.ui.screens.BuildInfo
 import org.guardedsleep.app.ui.screens.HomeScreen
 import org.guardedsleep.app.ui.screens.LinkAlarmContent
 import org.guardedsleep.app.ui.screens.NoiseAlertContent
@@ -84,6 +86,12 @@ private fun AppNavigator(controller: AppController) {
                     openProbe = true
                     overlay = Overlay.NONE
                 },
+                buildInfo =
+                    BuildInfo(
+                        BuildConfig.VERSION_NAME,
+                        BuildConfig.GIT_COMMIT,
+                        BuildConfig.GIT_COMMIT_TIME,
+                    ),
             )
         app.monitoring && role == Role.PARENT -> {
             val sheet = if (openProbe) ParentSheet.PROBE else null

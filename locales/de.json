@@ -22,7 +22,7 @@
     "babyUnrecognised": "Das Babygerät erkennt dieses Gerät nicht. Tippen Sie am Babygerät auf Neuen Code anzeigen und koppeln Sie erneut."
   },
   "native": {
-    "appName": "GuardedSleep Alpha",
+    "appName": "GuardedSleep",
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
@@ -462,6 +462,7 @@
           "speaker": "Nur Lautsprecher"
         },
         "gain": "Alarme extra laut: {percent} %",
+        "version": "Version {version} ({commit}, {date})",
         "lastTest": "Letzter Test: {time}",
         "neverTested": "Noch nicht getestet",
         "theme": {

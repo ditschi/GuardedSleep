@@ -22,7 +22,7 @@
     "babyUnrecognised": "Пристрій дитини не впізнає цей пристрій. На пристрої дитини торкніться «Показати новий код» і з’єднайте їх знову."
   },
   "native": {
-    "appName": "GuardedSleep Alpha",
+    "appName": "GuardedSleep",
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
@@ -462,6 +462,7 @@
           "speaker": "Лише динамік"
         },
         "gain": "Додаткова гучність сповіщень: {percent}%",
+        "version": "Версія {version} ({commit}, {date})",
         "lastTest": "Останній тест: {time}",
         "neverTested": "Ще не перевірялося",
         "theme": {

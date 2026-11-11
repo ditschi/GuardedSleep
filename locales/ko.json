@@ -22,7 +22,7 @@
     "babyUnrecognised": "아기 기기가 이 기기를 알아보지 못해요. 아기 기기에서 새 코드 표시를 눌러 다시 페어링하세요."
   },
   "native": {
-    "appName": "GuardedSleep Alpha",
+    "appName": "GuardedSleep",
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
@@ -462,6 +462,7 @@
           "speaker": "스피커만"
         },
         "gain": "알림 음량 추가 확대: {percent}%",
+        "version": "버전 {version} ({commit}, {date})",
         "lastTest": "마지막 테스트: {time}",
         "neverTested": "아직 테스트하지 않았어요",
         "theme": {

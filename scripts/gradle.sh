@@ -14,6 +14,16 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 mkdir -p "$ROOT/target"
 
+# Commit identity for BuildConfig (Settings -> About). Computed on the host: in a git worktree .git is
+# a file pointing outside the /workspace mount, so git inside the container is unreliable.
+if [[ -z "${GS_GIT_COMMIT:-}" ]]; then
+	GS_GIT_COMMIT="$(git -C "$ROOT" rev-parse --short=8 HEAD 2>/dev/null || true)"
+fi
+if [[ -z "${GS_GIT_COMMIT_TIME:-}" ]]; then
+	GS_GIT_COMMIT_TIME="$(TZ=UTC git -C "$ROOT" log -1 --format=%cd --date=format-local:'%Y-%m-%d %H:%M UTC' 2>/dev/null || true)"
+fi
+export GS_GIT_COMMIT GS_GIT_COMMIT_TIME
+
 if [[ "${CORE_BUILD_NATIVE:-0}" != "1" ]]; then
 	# shellcheck source=lib/build-image.sh
 	source "$ROOT/scripts/lib/build-image.sh"
@@ -21,6 +31,7 @@ if [[ "${CORE_BUILD_NATIVE:-0}" != "1" ]]; then
 	exec flock "$ROOT/target/.gradle.lock" docker run --rm \
 		"${GS_DOCKER_USER_ARGS[@]}" "${GS_DOCKER_CACHE_ARGS[@]}" \
 		-e CORE_BUILD_NATIVE=1 \
+		-e GS_GIT_COMMIT -e GS_GIT_COMMIT_TIME \
 		-e CARGO_TARGET_DIR=/workspace/target/container \
 		-v "$ROOT":/workspace -w /workspace \
 		"$GS_BUILD_IMAGE" bash scripts/gradle.sh "$@"

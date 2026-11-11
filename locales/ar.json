@@ -22,7 +22,7 @@
     "babyUnrecognised": "جهاز الطفل لا يتعرّف على هذا الجهاز. اضغط على عرض رمز جديد على جهاز الطفل ثم أعد الاقتران."
   },
   "native": {
-    "appName": "GuardedSleep Alpha",
+    "appName": "GuardedSleep",
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
@@ -462,6 +462,7 @@
           "speaker": "السماعة الخارجية فقط"
         },
         "gain": "تنبيهات أعلى صوتًا: {percent}%",
+        "version": "الإصدار {version} ({commit}، {date})",
         "lastTest": "آخر اختبار: {time}",
         "neverTested": "لم يُختبر بعد",
         "theme": {

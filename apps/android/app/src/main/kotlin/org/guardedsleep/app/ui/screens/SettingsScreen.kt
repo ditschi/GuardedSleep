@@ -58,6 +58,16 @@ import org.guardedsleep.app.ui.theme.LocalAppColors
 
 private val HoldOptions = listOf(3, 5, 10, 15)
 
+/**
+ * Build identity shown in Settings. Passed in from the wiring (Entry.kt) so screenshots and tests
+ * use a fixed value instead of the commit of the build under test.
+ */
+data class BuildInfo(val version: String, val commit: String, val commitTime: String) {
+    companion object {
+        val Preview = BuildInfo("0.1.0-alpha.1", "0123abcd", "2026-01-01 12:00 UTC")
+    }
+}
+
 /** S12: Basic settings per role; Advanced only behind a warning. */
 @Composable
 fun SettingsScreen(
@@ -65,6 +75,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOpenSetup: () -> Unit,
     onTestAlert: () -> Unit,
+    buildInfo: BuildInfo = BuildInfo.Preview,
 ) {
     val s = controller.settings.collectAsState().value
     val app = controller.app.collectAsState().value
@@ -313,6 +324,15 @@ fun SettingsScreen(
             }
             Section(R.string.native_ui_settings_group_about, "settings_group_about") {
                 Body(stringResource(R.string.native_ui_setup_limits_body), tag = "settings_limits")
+                Body(
+                    stringResource(
+                        R.string.native_ui_settings_version,
+                        buildInfo.version,
+                        buildInfo.commit,
+                        buildInfo.commitTime,
+                    ),
+                    tag = "settings_version",
+                )
             }
 
             Section(R.string.native_ui_settings_group_advanced, "settings_group_advanced") {

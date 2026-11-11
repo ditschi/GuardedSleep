@@ -22,7 +22,7 @@
     "babyUnrecognised": "Het babyapparaat herkent dit apparaat niet. Tik op het babyapparaat op Nieuwe code tonen en koppel opnieuw."
   },
   "native": {
-    "appName": "GuardedSleep Alpha",
+    "appName": "GuardedSleep",
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
@@ -462,6 +462,7 @@
           "speaker": "Alleen luidspreker"
         },
         "gain": "Extra luide meldingen: {percent}%",
+        "version": "Versie {version} ({commit}, {date})",
         "lastTest": "Laatste test: {time}",
         "neverTested": "Nog niet getest",
         "theme": {

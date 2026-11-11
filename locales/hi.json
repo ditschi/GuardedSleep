@@ -22,7 +22,7 @@
     "babyUnrecognised": "बच्चे का डिवाइस इस डिवाइस को नहीं पहचानता। बच्चे के डिवाइस पर नया कोड दिखाएँ पर टैप करें और फिर से पेयर करें।"
   },
   "native": {
-    "appName": "GuardedSleep Alpha",
+    "appName": "GuardedSleep",
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
@@ -462,6 +462,7 @@
           "speaker": "सिर्फ़ स्पीकर"
         },
         "gain": "सूचनाओं की अतिरिक्त तेज़ आवाज़: {percent}%",
+        "version": "संस्करण {version} ({commit}, {date})",
         "lastTest": "आखिरी टेस्ट: {time}",
         "neverTested": "अभी जाँचा नहीं गया",
         "theme": {
