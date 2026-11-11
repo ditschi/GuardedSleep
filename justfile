@@ -181,12 +181,13 @@ gen:
     pnpm run i18n:gen
     pnpm --filter @guardedsleep/web run lists:gen
 
-# Everything: web, Android debug + release APKs, release-surface and core-size checks.
+# Everything: web, Android debug + release APKs, Android Lint, JVM tests, Roborazzi, release-surface and
+# core-size checks. Runs verify-android (not build-android) so `just ci` gives CI's android verdict.
 build:
     scripts/lib/slot.sh medium -- just _build
 
 [private]
-_build: _js-deps build-web build-android
+_build: _js-deps build-web verify-android
 
 build-web:
     pnpm run build
