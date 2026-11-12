@@ -45,8 +45,8 @@ Branch `feat/talk-back` from `origin/main`. Commit after each task; `just test-a
 
 ## 7. Checks
 
-- [ ] 7.1 refactor-scout cleanup pass in diff mode against `origin/main`; accepted findings implemented. Verify: re-run affected tests.
-- [ ] 7.2 `just lint`, `just test`, `just verify-android`. Verify: all green; SKIPPED tasks reported.
+- [x] 7.1 refactor-scout cleanup pass in diff mode against `origin/main`; accepted findings implemented. Verify: re-run affected tests.
+- [x] 7.2 `just lint`, `just test`, `just verify-android`. Verify: all green; SKIPPED tasks reported.
 
 ## Workflow follow-up
 
