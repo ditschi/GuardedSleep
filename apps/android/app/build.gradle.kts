@@ -62,6 +62,11 @@ android {
     testOptions { unitTests.isIncludeAndroidResources = true }
 }
 
+// APK files are named guardedsleep-<variant>.apk instead of app-<variant>.apk. AGP takes the file
+// name from the Gradle base plugin's archivesName. Doc:
+// https://docs.gradle.org/current/dsl/org.gradle.api.plugins.BasePluginExtension.html
+base { archivesName = "guardedsleep" }
+
 dependencies {
     implementation(project(":ui-contract"))
     implementation(project(":platform"))
