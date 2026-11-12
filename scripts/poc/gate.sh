@@ -13,7 +13,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 BABY="${BABY_SERIAL:-emulator-5554}"
 PARENT="${PARENT_SERIAL:-emulator-5556}"
-APK="${APK:-$ROOT/apps/android/app/build/outputs/apk/debug/app-debug.apk}"
+APK="${APK:-$ROOT/apps/android/app/build/outputs/apk/debug/guardedsleep-debug.apk}"
 PKG=org.guardedsleep.app.alpha
 DEBUG_LAUNCH=org.guardedsleep.app.debug.DebugLaunchActivity
 DEBUG_INJECT=org.guardedsleep.app.debug.DebugInjectReceiver
@@ -72,7 +72,8 @@ wait_event() {
 	return 1
 }
 
-# Emulator clocks follow the host clock; Android's toybox date has no %N, so read it here.
+# The HOST clock (Android's toybox date has no %N). The emulators' clocks can differ from it by
+# about a second, so never compare it with a device log time; use device log times for that (AC-11).
 device_now_ms() { date +%s%3N; }
 
 maestro_assert() {
@@ -181,21 +182,26 @@ ac11() {
 	log "AC-11 talk-back: a 5 s talk at the highest level"
 	audio_state "$PARENT" before
 	audio_state "$BABY" before
-	T_PRESS="$(device_now_ms "$PARENT")"
+	# Press and release are timed by the parent's own log (`talk_button`), so parent-side windows use
+	# the parent clock; baby-side windows get SKEW_MS of slack for the clock difference between the units.
+	local PREV
+	PREV="$(adb -s "$PARENT" logcat -d -s GS_POC:I | { grep -E 'talk_button t=[0-9]+ pressed=' || true; } | tail -1 | grep -oE 't=[0-9]+' | cut -d= -f2 || true)"
 	talk_press true
+	wait_event_after "$PARENT" 'talk_button t=[0-9]+ pressed=true' "${PREV:-0}" 10 || fail AC-11 "the press did not reach the parent"
+	T_PRESS="$(event_after "$PARENT" 'talk_button t=[0-9]+ pressed=true' "${PREV:-0}")"
 	wait_event_after "$PARENT" 'talk t=[0-9]+ state=talking' "$((T_PRESS - SKEW_MS))" 20 || fail AC-11 "parent never reached 'talking' (denied, no answer or no microphone)"
 	wait_event_after "$BABY" 'talk_playback t=[0-9]+ enabled=true' "$((T_PRESS - SKEW_MS))" 10 || fail AC-11 "baby did not open the playback lease"
 	T_ON="$(event_after "$BABY" 'talk_playback t=[0-9]+ enabled=true' "$((T_PRESS - SKEW_MS))")"
 	T_GRANTED="$(event_after "$PARENT" 'talk t=[0-9]+ state=talking' "$((T_PRESS - SKEW_MS))")"
 	sleep 5
-	T_RELEASE="$(device_now_ms "$PARENT")"
 	talk_press false
-	wait_event_after "$PARENT" 'talk t=[0-9]+ state=ended' "$((T_RELEASE - SKEW_MS))" 10 || fail AC-11 "parent did not report the end of the talk"
+	wait_event_after "$PARENT" 'talk_button t=[0-9]+ pressed=false' "$T_PRESS" 10 || fail AC-11 "the release did not reach the parent"
+	T_RELEASE="$(event_after "$PARENT" 'talk_button t=[0-9]+ pressed=false' "$T_PRESS")"
+	wait_event_after "$PARENT" 'talk t=[0-9]+ state=ended' "$((T_RELEASE - 1))" 10 || fail AC-11 "parent did not report the end of the talk"
 	wait_event_after "$BABY" 'talk_playback t=[0-9]+ enabled=false' "$((T_RELEASE - SKEW_MS))" 10 || fail AC-11 "baby did not close the playback lease"
 	T_OFF="$(event_after "$BABY" 'talk_playback t=[0-9]+ enabled=false' "$((T_RELEASE - SKEW_MS))")"
 	# The noise window runs to 5 s after the talk; the last packet counts need a few polls after the grace.
-	WAIT_MS=$((T_RELEASE + 9000 - $(device_now_ms "$PARENT")))
-	[[ $WAIT_MS -le 0 ]] || sleep $((WAIT_MS / 1000 + 1))
+	sleep 9
 	audio_state "$PARENT" after
 	audio_state "$BABY" after
 

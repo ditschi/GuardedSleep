@@ -236,8 +236,9 @@ internal class LibWebRtcAttemptPeer(
      */
     private fun idleTalkLine(report: Boolean = false) {
         val ok = talkSend?.idle() ?: return
-        // Before the answer exists the sender may refuse the parameters; the connect-time call
-        // is the one that must work.
+        // Before the local description is set the sender has no encodings and refuses the
+        // parameters; the call after SetLocalDescription is the one that must work (the call
+        // from prepareTalkLine is best effort).
         if (!ok && report) PocLog.event("talk_idle_failed")
     }
 
@@ -403,6 +404,10 @@ internal class LibWebRtcAttemptPeer(
             object : SdpAdapter("setLocal") {
                 override fun onSetSuccess() {
                     if (closed.get()) return
+                    // The sender has its ssrc and encoding only after SetLocalDescription; this is
+                    // the first point where the line can be made idle, and it precedes the
+                    // transport becoming writable (which starts the send stream and the recording).
+                    if (!talkMicAttached) idleTalkLine(report = true)
                     val local = pc.localDescription ?: desc
                     listener.onLocalDescription(local.type.canonicalForm(), local.description)
                 }

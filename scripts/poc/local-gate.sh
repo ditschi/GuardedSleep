@@ -20,7 +20,7 @@ source "$ROOT/tools/poc-images.env"
 EMU_IMAGE="${EMULATOR_IMAGE:-guardedsleep-android-emulator:local}"
 SIG_IMAGE="${SIGNALING_IMAGE:-guardedsleep-signaling:local}"
 OUT="${OUT:-$ROOT/target/poc-gate}"
-APK="${APK:-$ROOT/apps/android/app/build/outputs/apk/debug/app-debug.apk}"
+APK="${APK:-$ROOT/apps/android/app/build/outputs/apk/debug/guardedsleep-debug.apk}"
 # Not 8787: a dev stack (docker/stack) may already own that port, and a stale server answers every hello.
 SIGNAL_PORT="${SIGNAL_PORT:-18787}"
 # The emulators' shared ~/.android (adb key, AVD state) lives outside OUT: CI uploads OUT as an artifact,
