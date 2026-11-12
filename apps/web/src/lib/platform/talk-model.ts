@@ -18,7 +18,6 @@ import {
   TALK_MIC_SILENT_BELOW,
   TALK_MIC_SILENT_MS,
   TALK_RESULT_VISIBLE_MS,
-  TALK_UNCONFIRMED_VISIBLE_MS,
 } from "./policy";
 
 /** The microphone step as the controller knows it; the contract shows `none` for the first two. */
@@ -56,8 +55,6 @@ export class ParentTalkModel {
   private paused = false;
   private resultUntil: number | null = null;
   private retryAt: number | null = null;
-  private unconfirmedPending = false;
-  private unconfirmedUntil: number | null = null;
   private endedAt: number | null = null;
   private lastJson = "";
 
@@ -85,8 +82,6 @@ export class ParentTalkModel {
     this.paused = false;
     this.resultUntil = null;
     this.retryAt = null;
-    this.unconfirmedPending = false;
-    this.unconfirmedUntil = null;
     this.endedAt = null;
     this.publish(this.clock.elapsedMs());
   }
@@ -154,7 +149,7 @@ export class ParentTalkModel {
         this.paused = event.paused;
         break;
       case "talk_playback":
-        this.onPlayback(event.result, now);
+        this.onPlayback(event.result);
         break;
       case "peer_status":
         this.onPeerStatus(event.status, now);
@@ -182,11 +177,6 @@ export class ParentTalkModel {
       this.ended = null;
       this.denied = null;
     }
-    if (this.unconfirmedUntil !== null && now >= this.unconfirmedUntil) {
-      this.unconfirmedUntil = null;
-      this.unconfirmedPending = false;
-      this.unconfirmed = false;
-    }
     this.publish(now);
   }
 
@@ -197,8 +187,6 @@ export class ParentTalkModel {
     switch (state.state) {
       case "requesting":
         this.resultUntil = null;
-        this.unconfirmedPending = false;
-        this.unconfirmedUntil = null;
         this.phase = "requesting";
         this.until = null;
         this.ended = null;
@@ -214,7 +202,6 @@ export class ParentTalkModel {
       case "ended": {
         const reason: TalkEnd = state.reason;
         this.endedAt = now;
-        this.releaseUnconfirmed(now);
         this.phase = "idle";
         this.until = null;
         this.clearMicSilent();
@@ -242,23 +229,9 @@ export class ParentTalkModel {
     }
   }
 
-  private onPlayback(result: "heard" | "unconfirmed" | "unknown", now: number): void {
-    if (result === "unconfirmed") {
-      this.unconfirmedPending = true;
-      this.unconfirmedUntil = this.busy ? null : now + TALK_UNCONFIRMED_VISIBLE_MS;
-      this.unconfirmed = true;
-    } else if (result === "heard") {
-      this.unconfirmedPending = false;
-      this.unconfirmedUntil = null;
-      this.unconfirmed = false;
-    }
-  }
-
-  /** The "may not be audible" line counts from the end of the talk, not from the check. */
-  private releaseUnconfirmed(now: number): void {
-    if (this.unconfirmedPending && this.unconfirmedUntil === null) {
-      this.unconfirmedUntil = now + TALK_UNCONFIRMED_VISIBLE_MS;
-    }
+  /** "May not be audible" stays until the next press (`requesting` clears it), like Android. */
+  private onPlayback(result: "heard" | "unconfirmed" | "unknown"): void {
+    this.unconfirmed = result === "unconfirmed";
   }
 
   private onPeerStatus(status: DeviceStatus, now: number): void {

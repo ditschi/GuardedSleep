@@ -546,7 +546,9 @@ class ParentModel(
                 talkUi = TalkUi.Idle
                 clearMicSilent()
                 talkEnd = TalkMapping.end(state.reason)
-                talkNoticeAt = now
+                // A release or a stop needs no message, so it starts no timer (as on the web).
+                talkNoticeAt =
+                    if (talkEnd == TalkEnd.RELEASED || talkEnd == TalkEnd.STOPPED) 0L else now
             }
             is TalkState.Denied -> {
                 val (reason, retry) = TalkMapping.deny(state.reason)

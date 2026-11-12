@@ -101,6 +101,66 @@ describe("ParentTalkModel: own microphone hint", () => {
   });
 });
 
+describe("ParentTalkModel: result notices", () => {
+  function model() {
+    const time = new FakeTime();
+    const m = new ParentTalkModel(time, () => undefined);
+    m.setConnected(true);
+    return { time, m };
+  }
+  const ended = (m: ParentTalkModel, now: number, reason: "no_answer" | "released" | "stopped") =>
+    m.onEvent({ type: "talk_changed", state: { state: "ended", reason } }, now);
+
+  it("shows an end reason for 8 s", () => {
+    const { time, m } = model();
+    ended(m, time.now, "no_answer");
+    time.advance(7_999);
+    m.onTick(time.now);
+    expect(m.state.talkEnd).toBe("no_answer");
+    time.advance(1);
+    m.onTick(time.now);
+    expect(m.state.talkEnd).toBeNull();
+  });
+
+  it("shows a denial for 8 s", () => {
+    const { time, m } = model();
+    m.onEvent(
+      { type: "talk_changed", state: { state: "denied", reason: { kind: "off" } } },
+      time.now,
+    );
+    time.advance(7_999);
+    m.onTick(time.now);
+    expect(m.state.talk.kind).toBe("denied");
+    time.advance(1);
+    m.onTick(time.now);
+    expect(m.state.talk.kind).not.toBe("denied");
+  });
+
+  it("starts no timer for a release or a stop", () => {
+    const { time, m } = model();
+    ended(m, time.now, "released");
+    time.advance(60_000);
+    m.onTick(time.now);
+    // Nothing is shown for these reasons (the screen maps them to no line); the value stays.
+    expect(m.state.talkEnd).toBe("released");
+    ended(m, time.now, "stopped");
+    time.advance(60_000);
+    m.onTick(time.now);
+    expect(m.state.talkEnd).toBe("stopped");
+  });
+
+  it("keeps 'may not be audible' until the next press", () => {
+    const { time, m } = model();
+    m.onEvent({ type: "talk_playback", result: "unconfirmed" }, time.now);
+    ended(m, time.now, "released");
+    time.advance(10 * 60_000);
+    m.onTick(time.now);
+    expect(m.state.talkUnconfirmed).toBe(true);
+    m.onEvent({ type: "talk_changed", state: { state: "requesting" } }, time.now);
+    expect(m.state.talkUnconfirmed).toBe(false);
+  });
+});
+
 describe("BabyTalkModel", () => {
   it("keeps the last talk with the parent's name across runs", () => {
     const time = new FakeTime();

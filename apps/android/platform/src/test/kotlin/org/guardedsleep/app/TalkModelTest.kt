@@ -121,6 +121,51 @@ class TalkModelTest {
     }
 
     @Test
+    fun anEndReasonAndADenialStayForEightSeconds() {
+        connected()
+        talk(TalkState.Ended(TalkEndReason.NO_ANSWER))
+        clock.advance(7_999)
+        model.onTick(clock.elapsed)
+        assertEquals(TalkEnd.NO_ANSWER, ui.talkEnd)
+        clock.advance(1)
+        model.onTick(clock.elapsed)
+        assertNull(ui.talkEnd)
+        talk(TalkState.Denied(TalkDenyReason.Off))
+        clock.advance(7_999)
+        model.onTick(clock.elapsed)
+        assertEquals(TalkUi.Denied(TalkDeny.OFF), ui.talk)
+        clock.advance(1)
+        model.onTick(clock.elapsed)
+        assertEquals(TalkUi.Idle, ui.talk)
+    }
+
+    @Test
+    fun aReleaseOrAStopStartsNoNoticeTimer() {
+        connected()
+        // The screen words neither reason; the value stays until the next press, as on the web.
+        talk(TalkState.Ended(TalkEndReason.RELEASED))
+        clock.advance(60_000)
+        model.onTick(clock.elapsed)
+        assertEquals(TalkEnd.RELEASED, ui.talkEnd)
+        talk(TalkState.Ended(TalkEndReason.STOPPED))
+        clock.advance(60_000)
+        model.onTick(clock.elapsed)
+        assertEquals(TalkEnd.STOPPED, ui.talkEnd)
+    }
+
+    @Test
+    fun theUnconfirmedLineStaysUntilTheNextPress() {
+        connected()
+        model.onEvent(LinkEvent.TalkPlayback(PlaybackResult.UNCONFIRMED), clock.elapsed)
+        talk(TalkState.Ended(TalkEndReason.RELEASED))
+        clock.advance(10 * 60_000)
+        model.onTick(clock.elapsed)
+        assertTrue(ui.talkUnconfirmed)
+        talk(TalkState.Requesting)
+        assertFalse(ui.talkUnconfirmed)
+    }
+
+    @Test
     fun theButtonIsUnavailableBeforeThePressWithTheReason() {
         model.onStatus(status(LinkState.CONNECTING), clock.elapsed)
         assertEquals(TalkUi.Unavailable(TalkUnavailable.NOT_CONNECTED), ui.talk)

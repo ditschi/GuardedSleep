@@ -89,7 +89,8 @@ export const TALK_MIC_POLL_MS = 500;
 export const TALK_MIC_SILENT_MS = 2_000;
 /** Below this level (0..1) the parent's own microphone counts as silent. */
 export const TALK_MIC_SILENT_BELOW = 0.002;
-/** An end reason or denial stays on the parent's screen this long. */
-export const TALK_RESULT_VISIBLE_MS = 6_000;
-/** "Your voice may not be audible" stays this long. */
-export const TALK_UNCONFIRMED_VISIBLE_MS = 15_000;
+/**
+ * An end reason or denial stays on the parent's screen this long (a release or a stop shows none).
+ * "Your voice may not be audible" has no timer: it stays until the next press.
+ */
+export const TALK_RESULT_VISIBLE_MS = 8_000;
