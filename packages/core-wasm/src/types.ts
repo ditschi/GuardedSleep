@@ -39,6 +39,7 @@ export const LINK_MESSAGE_KEYS = [
   "media_blocked",
   "wrong_key_attempt",
   "unknown_parent_attempt",
+  "talk_audio_outside_grant",
   "clock_skew",
   "recovery_path_unavailable",
   "pair_again",
