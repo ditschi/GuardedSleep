@@ -43,6 +43,8 @@ Recommendation: A. **Decided: A (owner, 2026-11-11).** A+ and B move to Discarde
 
 Recommendation: A. If spike item (e) shows that an idle receiving line keeps the baby's `AudioTrack` running all night at a measurable battery cost or shifts gate levels, the fallback is a talk line negotiated `inactive` and switched by one renegotiation over the DataChannel when talk-back is first used in a session (task 2.1 records it).
 
+**As built (gate AC-11, 2026-11-12):** libwebrtc on Android starts an `AudioSendStream` for every negotiated `sendonly` line, with or without a track, so the audio device module records and the stream sends about 50 packets/s. The parent's talk sender is therefore kept idle with `encodings[0].active = false` and no track outside a talk (attach: track first, then `active = true`; detach: `active = false` first, then remove the track; `TalkSendControl`). Unlike the Firefox case in `quiet-link-no-rtp` §1, native libwebrtc honours `active` for audio, and the gate proves 0 packets and no `AudioRecord` outside a talk. Chromium with a null track already sends nothing (spec 32 asserts it).
+
 The core rule (spec "Sans-IO interface contract"): exactly two audio m-lines in every local description, monitoring first; baby `sendonly`/`recvonly`; parent `recvonly`/`sendonly`|`inactive`. The baby core also parses the accepted remote answer: talk line `sendonly` allows talk; `inactive`, port 0 or missing means `unsupported`; a monitoring line that is not `recvonly` fails the attempt. The rule applies on the `Link` path unconditionally; the legacy `Session` keeps its flag and gets no talk messages. `quiet-link-no-rtp`'s Opus profile function applies the same profile to both lines (task 6.2).
 
 ### 3. Core: talk state and protocol (additive v3)
