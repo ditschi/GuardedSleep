@@ -472,8 +472,11 @@
     align-items: center;
     justify-content: center;
     gap: var(--gs-space-3);
+    box-sizing: border-box;
     width: 60%;
-    min-width: 12rem;
+    /* At 200 % text on a 320 px screen 12rem would not fit: never wider than the screen. */
+    min-width: min(12rem, 100%);
+    max-width: 100%;
     min-height: 4rem;
     padding: var(--gs-space-2) var(--gs-space-4);
     border: 0.1875rem solid transparent;
