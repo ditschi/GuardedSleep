@@ -1,6 +1,9 @@
 package org.guardedsleep.app
 
+import android.Manifest
+import android.app.KeyguardManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import java.io.File
@@ -15,6 +18,8 @@ import org.guardedsleep.app.alerts.AlertChannels
 import org.guardedsleep.app.alerts.AlertController
 import org.guardedsleep.app.link.LinkController
 import org.guardedsleep.app.link.SystemClockSource
+import org.guardedsleep.app.link.TalkGate
+import org.guardedsleep.app.media.AndroidTalkChimePreview
 import org.guardedsleep.app.media.libwebrtc.LibWebRtcMediaEngine
 import org.guardedsleep.app.pairing.KeystorePairingCipher
 import org.guardedsleep.app.pairing.PairingStore
@@ -94,6 +99,17 @@ class AppGraph(context: Context) : PlatformServices {
             network = AndroidNetworkWatcher(app),
             // The model name the user knows the phone by, shown on the baby device; no identifier.
             deviceName = { Build.MODEL.orEmpty() },
+            talkGate =
+                object : TalkGate {
+                    override fun micPermission() =
+                        app.checkSelfPermission(Manifest.permission.RECORD_AUDIO) ==
+                            PackageManager.PERMISSION_GRANTED
+
+                    // Over the keyguard nobody may talk to the child (stolen or locked phone).
+                    override fun deviceUnlocked() =
+                        app.getSystemService(KeyguardManager::class.java)?.isKeyguardLocked != true
+                },
+            chimePreview = AndroidTalkChimePreview(app),
         )
 }
 

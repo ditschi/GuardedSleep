@@ -200,6 +200,34 @@ class FakeAppController(
         calls += "reportTestResult:$heardAndFelt"
     }
 
+    override fun setTalk(pressed: Boolean) {
+        calls += "setTalk:$pressed"
+    }
+
+    override fun interruptTalk() {
+        calls += "interruptTalk"
+    }
+
+    override fun talkPermissionResult(granted: Boolean) {
+        calls += "talkPermissionResult:$granted"
+    }
+
+    override fun dismissTalkPermission() {
+        calls += "dismissTalkPermission"
+    }
+
+    override fun dismissTalkCoach() {
+        calls += "dismissTalkCoach"
+    }
+
+    override fun playTalkChimeSample() {
+        calls += "playTalkChimeSample"
+    }
+
+    override fun talkSettingsOpened() {
+        calls += "talkSettingsOpened"
+    }
+
     override fun dismissCoach() {
         calls += "dismissCoach"
     }

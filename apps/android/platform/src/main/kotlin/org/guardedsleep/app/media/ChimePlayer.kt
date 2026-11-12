@@ -102,3 +102,23 @@ class PrefsVolumeMemory(context: Context) : VolumeMemory {
         prefs.edit().clear().commit()
     }
 }
+
+/** The settings' "Play chime": the chime at the chosen level, the volume restored afterwards. */
+class AndroidTalkChimePreview(context: Context) : org.guardedsleep.app.link.TalkChimePreview {
+    private val volume = AlarmVolume(AndroidStreamVolume(context), PrefsVolumeMemory(context))
+    private val player = ChimePlayer()
+
+    override fun play(level: org.guardedsleep.app.ui.model.TalkVolume) {
+        val core =
+            when (level) {
+                org.guardedsleep.app.ui.model.TalkVolume.LOW ->
+                    uniffi.guardedsleep_core.TalkLevel.LOW
+                org.guardedsleep.app.ui.model.TalkVolume.MEDIUM ->
+                    uniffi.guardedsleep_core.TalkLevel.MEDIUM
+                org.guardedsleep.app.ui.model.TalkVolume.HIGH ->
+                    uniffi.guardedsleep_core.TalkLevel.HIGH
+            }
+        val gain = volume.prepare(core) ?: return
+        player.play(gain) { volume.restore() }
+    }
+}
