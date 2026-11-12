@@ -158,6 +158,125 @@ maestro_assert "$BABY" assert-verified-baby.yaml || fail AC-1 "baby UI not verif
 maestro_assert "$PARENT" assert-verified.yaml || fail AC-1 "parent UI not verified"
 pass AC-1 "pairing verified with shared PSK; different PSKs never meet (parent reports peer_absent)"
 
+# --- AC-11: talk-back (add-talk-back task 5.1) ------------------------------------------------------
+# The baby unit plays at its highest talk level (`talk_volume high`, see `launch`). The parent holds
+# the talk for 5 s; the baby's talk receiver counts RTP packets (GS_POC `talk_rtp`, ~1 Hz) and logs the
+# lease (`talk_playback`) and the alarm stream (`alarm_volume`). The emulators have no acoustic path
+# from the speaker back to the microphone, so "no noise alert" proves the noise pause and the
+# acknowledgement, not the room; the injected cry of AC-3 is the only sound source.
+audio_state() { # serial tag: asks the debug receiver to log the device's audio facts
+	adb -s "$1" shell am broadcast -a "$AUDIO_STATE_ACTION" -n "$PKG/$DEBUG_TALK" --es tag "$2" >/dev/null
+	sleep 1
+}
+audio_line() { # serial tag: that log line without the time stamp
+	adb -s "$1" logcat -d -s GS_POC:I | grep -E "audio_state t=[0-9]+ tag=$2( |$)" | tail -1 | sed -E 's/^.*audio_state t=[0-9]+ tag=[A-Za-z0-9_]+ ?//'
+}
+talk_press() { # pressed (true|false)
+	adb -s "$PARENT" shell am broadcast -a "$TALK_ACTION" -n "$PKG/$DEBUG_TALK" --ez pressed "$1" >/dev/null
+}
+
+ac11() {
+	# The emulators' clocks and this host's differ by up to a few hundred ms: event windows get slack.
+	local SKEW_MS=1000
+	log "AC-11 talk-back: a 5 s talk at the highest level"
+	audio_state "$PARENT" before
+	audio_state "$BABY" before
+	T_PRESS="$(device_now_ms "$PARENT")"
+	talk_press true
+	wait_event_after "$PARENT" 'talk t=[0-9]+ state=talking' "$((T_PRESS - SKEW_MS))" 20 || fail AC-11 "parent never reached 'talking' (denied, no answer or no microphone)"
+	wait_event_after "$BABY" 'talk_playback t=[0-9]+ enabled=true' "$((T_PRESS - SKEW_MS))" 10 || fail AC-11 "baby did not open the playback lease"
+	T_ON="$(event_after "$BABY" 'talk_playback t=[0-9]+ enabled=true' "$((T_PRESS - SKEW_MS))")"
+	T_GRANTED="$(event_after "$PARENT" 'talk t=[0-9]+ state=talking' "$((T_PRESS - SKEW_MS))")"
+	sleep 5
+	T_RELEASE="$(device_now_ms "$PARENT")"
+	talk_press false
+	wait_event_after "$PARENT" 'talk t=[0-9]+ state=ended' "$((T_RELEASE - SKEW_MS))" 10 || fail AC-11 "parent did not report the end of the talk"
+	wait_event_after "$BABY" 'talk_playback t=[0-9]+ enabled=false' "$((T_RELEASE - SKEW_MS))" 10 || fail AC-11 "baby did not close the playback lease"
+	T_OFF="$(event_after "$BABY" 'talk_playback t=[0-9]+ enabled=false' "$((T_RELEASE - SKEW_MS))")"
+	# The noise window runs to 5 s after the talk; the last packet counts need a few polls after the grace.
+	WAIT_MS=$((T_RELEASE + 9000 - $(device_now_ms "$PARENT")))
+	[[ $WAIT_MS -le 0 ]] || sleep $((WAIT_MS / 1000 + 1))
+	audio_state "$PARENT" after
+	audio_state "$BABY" after
+
+	HELD=$((T_RELEASE - T_GRANTED))
+	LEASE=$((T_OFF - T_ON))
+	log "AC-11 held ${HELD} ms after the grant, lease ${LEASE} ms (grant→lease $((T_ON - T_GRANTED)) ms)"
+	[[ $LEASE -le 30000 ]] || fail AC-11 "the playback lease lasted ${LEASE} ms (limit 30000)"
+
+	# RTP only inside the grant: packet growth of the baby's talk receiver between two polls is a
+	# violation when both polls lie before the lease opened or after its grace ended (1.5 s).
+	SERIES="$(adb -s "$BABY" logcat -d -s GS_POC:I | grep 'talk_rtp ' | sed -E 's/.*t=([0-9]+) packets=([0-9]+).*/\1 \2/')"
+	read -r OUTSIDE INSIDE < <(echo "$SERIES" | awk -v on="$T_ON" -v off="$T_OFF" -v lo=$((T_PRESS - 8000)) -v hi=$((T_RELEASE + 9000)) '
+		$1 < lo || $1 > hi { next }
+		{ if (have && $2 > pp) { if ($1 <= on || pt >= off + 1500) bad += $2 - pp; else ins += $2 - pp }
+		  pp = $2; pt = $1; have = 1 }
+		END { printf "%d %d\n", bad + 0, ins + 0 }')
+	log "AC-11 talk RTP packets: ${INSIDE} inside the grant, ${OUTSIDE} outside"
+	[[ $OUTSIDE -eq 0 ]] || fail AC-11 "talk RTP reached the baby outside the grant (${OUTSIDE} packets)"
+	[[ $INSIDE -ge 10 ]] || fail AC-11 "almost no talk RTP inside the grant (${INSIDE} packets)"
+
+	# The baby's own warning for talk audio without a grant must stay quiet (the poll that raises it
+	# is what the packet counts above are read from).
+	if [[ -n "$(event_after "$BABY" 'security_warning t=[0-9]+ key=talk_audio_outside_grant' 0)" ]]; then
+		fail AC-11 "the baby raised talk_audio_outside_grant"
+	fi
+
+	# The parent's talk sender sends nothing outside a talk: its packet counter (GS_POC talk_out, every
+	# 5 s) grows only between the press and the release plus a short tail, and the line is inactive.
+	OUT_SERIES="$(adb -s "$PARENT" logcat -d -s GS_POC:I | grep 'talk_out ' | sed -E 's/.*t=([0-9]+) .*packets_sent=([0-9]+).*/\1 \2/')"
+	SENT_OUTSIDE="$(echo "$OUT_SERIES" | awk -v lo="$T_PRESS" -v hi="$T_RELEASE" '
+		{ if (have && $2 > pp && ($1 <= lo || pt >= hi + 2000)) bad += $2 - pp; pp = $2; pt = $1; have = 1 }
+		END { print bad + 0 }')"
+	log "AC-11 parent talk sender: ${SENT_OUTSIDE} packets sent outside a talk"
+	[[ $SENT_OUTSIDE -eq 0 ]] || fail AC-11 "the parent sent talk RTP outside a talk (${SENT_OUTSIDE} packets)"
+	if adb -s "$PARENT" logcat -d -s GS_POC:I | grep 'talk_out ' | grep -q 'active=true' ; then
+		log "AC-11 note: the talk line was active at a poll (inside the talk window)"
+	fi
+
+	# No recording outside a talk: the parent's AudioRecord starts after the press and has stopped
+	# after the release (logcat with epoch time stamps, ms).
+	REC="$(adb -s "$PARENT" logcat -d -v epoch | grep 'doAudioRecordStateCallback' | sed -E 's/^ *([0-9]+)\.([0-9]{3}).*(START|STOP).*/\1\2 \3/')"
+	REC_EARLY="$(echo "$REC" | awk -v t="$T_PRESS" '$2 == "START" && $1 < t - 500 { n++ } END { print n + 0 }')"
+	REC_LATE="$(echo "$REC" | awk -v t="$T_RELEASE" '$2 == "STOP" && $1 >= t - 500 { n++ } END { print n + 0 }')"
+	REC_OPEN="$(echo "$REC" | awk '{ s = $2 } END { print s }')"
+	log "AC-11 parent AudioRecord: ${REC_EARLY} start(s) before the press, ${REC_LATE} stop(s) after the release, last event ${REC_OPEN:-none}"
+	[[ $REC_EARLY -eq 0 ]] || fail AC-11 "the parent's AudioRecord started before the press"
+	[[ $REC_LATE -ge 1 && "$REC_OPEN" == STOP ]] || fail AC-11 "the parent's AudioRecord was not stopped after the talk"
+
+	# No noise alert on the parent from the press to 5 s after the release.
+	T_NOISE="$(event_after "$PARENT" 'alert .*kind=noise' "$T_PRESS")"
+	if [[ -n "$T_NOISE" && $T_NOISE -le $((T_RELEASE + 5000)) ]]; then
+		fail AC-11 "a noise alert reached the parent during or within 5 s after the talk"
+	fi
+
+	# The alarm stream: every raise has its restore, and the index is the one from before the talk.
+	RAISED="$(adb -s "$BABY" logcat -d -s GS_POC:I | grep 'alarm_volume .*phase=raised' | grep -oE 't=[0-9]+' | cut -d= -f2 | awk -v t="$T_PRESS" '$1 > t' | wc -l || true)"
+	RESTORED_BAD="$(adb -s "$BABY" logcat -d -s GS_POC:I | { grep 'alarm_volume .*phase=restored' || true; } | awk -v t="$T_PRESS" '{ match($0, /t=[0-9]+/); if (substr($0, RSTART + 2, RLENGTH - 2) > t) { match($0, /previous=[0-9-]+/); p = substr($0, RSTART + 9, RLENGTH - 9); match($0, /now=[0-9-]+/); n = substr($0, RSTART + 4, RLENGTH - 4); if (p != n) bad++ } } END { print bad + 0 }')"
+	RESTORED="$(adb -s "$BABY" logcat -d -s GS_POC:I | grep 'alarm_volume .*phase=restored' | grep -oE 't=[0-9]+' | cut -d= -f2 | awk -v t="$T_PRESS" '$1 > t' | wc -l || true)"
+	log "AC-11 alarm stream: ${RAISED} raise(s), ${RESTORED} restore(s), ${RESTORED_BAD} restored to another index"
+	[[ $RAISED -eq $RESTORED && $RESTORED_BAD -eq 0 ]] || fail AC-11 "the alarm stream was not restored after the talk"
+	B_BEFORE="$(audio_line "$BABY" before)"
+	B_AFTER="$(audio_line "$BABY" after)"
+	log "AC-11 baby audio before: ${B_BEFORE}; after: ${B_AFTER}"
+	[[ -n "$B_BEFORE" && "$B_BEFORE" == "$B_AFTER" ]] || fail AC-11 "the baby's audio state changed over the talk"
+
+	# The parent's alert output and level are unchanged (audio mode, alarm index, speaker route).
+	P_BEFORE="$(audio_line "$PARENT" before)"
+	P_AFTER="$(audio_line "$PARENT" after)"
+	log "AC-11 parent audio before: ${P_BEFORE}; after: ${P_AFTER}"
+	[[ -n "$P_BEFORE" && "$P_BEFORE" == "$P_AFTER" ]] || fail AC-11 "the parent's alert output or level changed over the talk"
+	pass AC-11 "talk of ${HELD} ms: ${INSIDE} RTP packets inside the grant and none outside, no noise alert within 5 s, alarm stream restored, parent audio unchanged"
+}
+
+# GATE_ONLY=talk runs the pairing and the talk-back scenario only (fast loop for KEEP_ENV=1).
+if [[ "${GATE_ONLY:-}" == talk ]]; then
+	sleep 12
+	ac11
+	cat "$OUT/summary.txt"
+	exit 0
+fi
+
 # --- AC-2: 30 min forced Doze, screen off, unplugged -----------------------------------------
 sleep 12 # let a few stats samples arrive
 P0="$(last_value "$PARENT" 'stats ' packets_received)"
@@ -245,84 +364,8 @@ ac10_side() {
 ac10_side a "$BABY" "baby Wi-Fi flap"
 ac10_side b "$PARENT" "parent Wi-Fi flap"
 
-# --- AC-11: talk-back (add-talk-back task 5.1) ------------------------------------------------------
-# The baby unit plays at its highest talk level (`talk_volume high`, see `launch`). The parent holds
-# the talk for 5 s; the baby's talk receiver counts RTP packets (GS_POC `talk_rtp`, ~1 Hz) and logs the
-# lease (`talk_playback`) and the alarm stream (`alarm_volume`). The emulators have no acoustic path
-# from the speaker back to the microphone, so "no noise alert" proves the noise pause and the
-# acknowledgement, not the room; the injected cry of AC-3 is the only sound source.
-audio_state() { # serial tag: asks the debug receiver to log the device's audio facts
-	adb -s "$1" shell am broadcast -a "$AUDIO_STATE_ACTION" -n "$PKG/$DEBUG_TALK" --es tag "$2" >/dev/null
-	sleep 1
-}
-audio_line() { # serial tag: that log line without the time stamp
-	adb -s "$1" logcat -d -s GS_POC:I | grep -E "audio_state t=[0-9]+ tag=$2( |$)" | tail -1 | sed -E 's/^.*audio_state t=[0-9]+ //'
-}
-talk_press() { # pressed (true|false)
-	adb -s "$PARENT" shell am broadcast -a "$TALK_ACTION" -n "$PKG/$DEBUG_TALK" --ez pressed "$1" >/dev/null
-}
-
-log "AC-11 talk-back: a 5 s talk at the highest level"
-audio_state "$PARENT" before
-audio_state "$BABY" before
-T_PRESS="$(device_now_ms "$PARENT")"
-talk_press true
-wait_event_after "$PARENT" 'talk t=[0-9]+ state=talking' "$T_PRESS" 20 || fail AC-11 "parent never reached 'talking' (denied, no answer or no microphone)"
-wait_event_after "$BABY" 'talk_playback t=[0-9]+ enabled=true' "$T_PRESS" 10 || fail AC-11 "baby did not open the playback lease"
-T_ON="$(event_after "$BABY" 'talk_playback t=[0-9]+ enabled=true' "$T_PRESS")"
-T_GRANTED="$(event_after "$PARENT" 'talk t=[0-9]+ state=talking' "$T_PRESS")"
-sleep 5
-T_RELEASE="$(device_now_ms "$PARENT")"
-talk_press false
-wait_event_after "$PARENT" 'talk t=[0-9]+ state=ended' "$T_RELEASE" 10 || fail AC-11 "parent did not report the end of the talk"
-wait_event_after "$BABY" 'talk_playback t=[0-9]+ enabled=false' "$T_RELEASE" 10 || fail AC-11 "baby did not close the playback lease"
-T_OFF="$(event_after "$BABY" 'talk_playback t=[0-9]+ enabled=false' "$T_RELEASE")"
-# The noise window runs to 5 s after the talk; the last packet counts need a few polls after the grace.
-WAIT_MS=$((T_RELEASE + 9000 - $(device_now_ms "$PARENT")))
-[[ $WAIT_MS -le 0 ]] || sleep $((WAIT_MS / 1000 + 1))
-audio_state "$PARENT" after
-audio_state "$BABY" after
-
-HELD=$((T_RELEASE - T_GRANTED))
-LEASE=$((T_OFF - T_ON))
-log "AC-11 held ${HELD} ms after the grant, lease ${LEASE} ms (grant→lease $((T_ON - T_GRANTED)) ms)"
-[[ $LEASE -le 30000 ]] || fail AC-11 "the playback lease lasted ${LEASE} ms (limit 30000)"
-
-# RTP only inside the grant: packet growth of the baby's talk receiver between two polls is a
-# violation when both polls lie before the lease opened or after its grace ended (1.5 s).
-SERIES="$(adb -s "$BABY" logcat -d -s GS_POC:I | grep 'talk_rtp ' | sed -E 's/.*t=([0-9]+) packets=([0-9]+).*/\1 \2/')"
-read -r OUTSIDE INSIDE < <(echo "$SERIES" | awk -v on="$T_ON" -v off="$T_OFF" -v lo=$((T_PRESS - 8000)) -v hi=$((T_RELEASE + 9000)) '
-	$1 < lo || $1 > hi { next }
-	{ if (have && $2 > pp) { if ($1 <= on || pt >= off + 1500) bad += $2 - pp; else ins += $2 - pp }
-	  pp = $2; pt = $1; have = 1 }
-	END { printf "%d %d\n", bad + 0, ins + 0 }')
-log "AC-11 talk RTP packets: ${INSIDE} inside the grant, ${OUTSIDE} outside"
-[[ $OUTSIDE -eq 0 ]] || fail AC-11 "talk RTP reached the baby outside the grant (${OUTSIDE} packets)"
-[[ $INSIDE -ge 10 ]] || fail AC-11 "almost no talk RTP inside the grant (${INSIDE} packets)"
-
-# No noise alert on the parent from the press to 5 s after the release.
-T_NOISE="$(event_after "$PARENT" 'alert .*kind=noise' "$T_PRESS")"
-if [[ -n "$T_NOISE" && $T_NOISE -le $((T_RELEASE + 5000)) ]]; then
-	fail AC-11 "a noise alert reached the parent during or within 5 s after the talk"
-fi
-
-# The alarm stream: every raise has its restore, and the index is the one from before the talk.
-RAISED="$(adb -s "$BABY" logcat -d -s GS_POC:I | grep 'alarm_volume .*phase=raised' | grep -oE 't=[0-9]+' | cut -d= -f2 | awk -v t="$T_PRESS" '$1 > t' | wc -l)"
-RESTORED_BAD="$(adb -s "$BABY" logcat -d -s GS_POC:I | grep 'alarm_volume .*phase=restored' | awk -v t="$T_PRESS" '{ match($0, /t=[0-9]+/); if (substr($0, RSTART + 2, RLENGTH - 2) > t) { match($0, /previous=[0-9-]+/); p = substr($0, RSTART + 9, RLENGTH - 9); match($0, /now=[0-9-]+/); n = substr($0, RSTART + 4, RLENGTH - 4); if (p != n) bad++ } } END { print bad + 0 }')"
-RESTORED="$(adb -s "$BABY" logcat -d -s GS_POC:I | grep 'alarm_volume .*phase=restored' | grep -oE 't=[0-9]+' | cut -d= -f2 | awk -v t="$T_PRESS" '$1 > t' | wc -l)"
-log "AC-11 alarm stream: ${RAISED} raise(s), ${RESTORED} restore(s), ${RESTORED_BAD} restored to another index"
-[[ $RAISED -eq $RESTORED && $RESTORED_BAD -eq 0 ]] || fail AC-11 "the alarm stream was not restored after the talk"
-B_BEFORE="$(audio_line "$BABY" before)"
-B_AFTER="$(audio_line "$BABY" after)"
-log "AC-11 baby audio before: ${B_BEFORE}; after: ${B_AFTER}"
-[[ -n "$B_BEFORE" && "$B_BEFORE" == "$B_AFTER" ]] || fail AC-11 "the baby's audio state changed over the talk"
-
-# The parent's alert output and level are unchanged (audio mode, alarm index, speaker route).
-P_BEFORE="$(audio_line "$PARENT" before)"
-P_AFTER="$(audio_line "$PARENT" after)"
-log "AC-11 parent audio before: ${P_BEFORE}; after: ${P_AFTER}"
-[[ -n "$P_BEFORE" && "$P_BEFORE" == "$P_AFTER" ]] || fail AC-11 "the parent's alert output or level changed over the talk"
-pass AC-11 "talk of ${HELD} ms: ${INSIDE} RTP packets inside the grant and none outside, no noise alert within 5 s, alarm stream restored, parent audio unchanged"
+# --- AC-11: talk-back, see ac11 above ---
+ac11
 
 # --- AC-4: killing the baby process raises "connection lost" ---------------------------------
 T_KILL="$(device_now_ms "$BABY")"
