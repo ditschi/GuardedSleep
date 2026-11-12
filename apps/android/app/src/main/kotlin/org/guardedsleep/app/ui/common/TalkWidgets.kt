@@ -407,23 +407,33 @@ fun TalkInterruptEffect(onInterrupt: () -> Unit) {
             android.content.IntentFilter(android.content.Intent.ACTION_SCREEN_OFF),
             androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED,
         )
-        val am = ctx.getSystemService(android.media.AudioManager::class.java)
-        val mode =
-            if (android.os.Build.VERSION.SDK_INT >= 31 && am != null) {
-                android.media.AudioManager.OnModeChangedListener { m ->
-                    if (
-                        m == android.media.AudioManager.MODE_IN_CALL ||
-                            m == android.media.AudioManager.MODE_RINGTONE ||
-                            m == android.media.AudioManager.MODE_CALL_SCREENING
-                    )
-                        interrupt.value()
-                }
-            } else null
-        if (mode != null && am != null) am.addOnModeChangedListener(ctx.mainExecutor, mode)
+        val stopCallWatch: () -> Unit =
+            if (android.os.Build.VERSION.SDK_INT >= 31) watchCalls(ctx) { interrupt.value() }
+            else {
+                // Before Android 12 the call screen takes the foreground, so `onStop` covers it.
+                {}
+            }
         onDispose {
             owner.lifecycle.removeObserver(observer)
             runCatching { ctx.unregisterReceiver(off) }
-            if (mode != null && am != null) am.removeOnModeChangedListener(mode)
+            stopCallWatch()
         }
     }
+}
+
+/** A call (or a ringing phone) changes the audio mode; returns the function that stops watching. */
+@androidx.annotation.RequiresApi(31)
+private fun watchCalls(ctx: android.content.Context, onCall: () -> Unit): () -> Unit {
+    val am = ctx.getSystemService(android.media.AudioManager::class.java) ?: return {}
+    val listener =
+        android.media.AudioManager.OnModeChangedListener { m ->
+            if (
+                m == android.media.AudioManager.MODE_IN_CALL ||
+                    m == android.media.AudioManager.MODE_RINGTONE ||
+                    m == android.media.AudioManager.MODE_CALL_SCREENING
+            )
+                onCall()
+        }
+    am.addOnModeChangedListener(androidx.core.content.ContextCompat.getMainExecutor(ctx), listener)
+    return { am.removeOnModeChangedListener(listener) }
 }

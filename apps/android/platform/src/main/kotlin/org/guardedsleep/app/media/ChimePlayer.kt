@@ -6,6 +6,7 @@ import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
+import androidx.core.content.edit
 
 /** The generated chime on its own alarm-stream track (never the ADM, never a file). */
 class ChimePlayer {
@@ -90,8 +91,13 @@ class PrefsVolumeMemory(context: Context) : VolumeMemory {
     private val prefs: SharedPreferences =
         context.getSharedPreferences("talk_volume", Context.MODE_PRIVATE)
 
+    // `commit = true` on purpose: the remembered raise must be on disk before the volume is
+    // raised, or a crash right after would leave it unknown.
     override fun save(previous: Int, set: Int) {
-        prefs.edit().putInt("previous", previous).putInt("set", set).commit()
+        prefs.edit(commit = true) {
+            putInt("previous", previous)
+            putInt("set", set)
+        }
     }
 
     override fun load(): Pair<Int, Int>? =
@@ -99,7 +105,7 @@ class PrefsVolumeMemory(context: Context) : VolumeMemory {
         else null
 
     override fun clear() {
-        prefs.edit().clear().commit()
+        prefs.edit(commit = true) { clear() }
     }
 }
 
