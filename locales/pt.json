@@ -421,7 +421,7 @@
         "defaultParent": "Dispositivo dos pais {n}",
         "current": "Conexão: {name}",
         "change": "Alterar",
-        "default": "Padrão",
+        "labelDefault": "{name} (padrão)",
         "makeDefault": "Definir como padrão",
         "rename": "Renomear",
         "renameTitle": "Renomear conexão",

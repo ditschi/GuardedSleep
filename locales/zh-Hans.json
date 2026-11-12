@@ -421,7 +421,7 @@
         "defaultParent": "家长设备 {n}",
         "current": "连接：{name}",
         "change": "更改",
-        "default": "默认",
+        "labelDefault": "{name}（默认）",
         "makeDefault": "设为默认",
         "rename": "重命名",
         "renameTitle": "重命名连接",

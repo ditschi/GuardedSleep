@@ -421,7 +421,7 @@
         "defaultParent": "保護者用端末 {n}",
         "current": "接続：{name}",
         "change": "変更",
-        "default": "デフォルト",
+        "labelDefault": "{name}（デフォルト）",
         "makeDefault": "デフォルトにする",
         "rename": "名前を変更",
         "renameTitle": "接続の名前を変更",

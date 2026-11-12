@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
 import org.guardedsleep.app.ui.common.LocalUiEnv
+import org.guardedsleep.app.ui.common.limitName
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.ConnectionUi
 import org.guardedsleep.app.ui.model.Role
@@ -110,5 +111,13 @@ class ConnectionTests : ShotBase() {
         onNodeWithTag("rename_connection_save").performClick()
         onNodeWithTag("dialog_rename_connection").assertIsDisplayed()
         onNodeWithTag("settings_forget").assertExists()
+    }
+
+    @Test
+    fun theNameLimitCountsCodePointsNotChars() {
+        val emoji = "\uD83D\uDE34" // two chars, one code point
+        assertEquals(emoji.repeat(30), limitName(emoji.repeat(30)))
+        assertEquals(emoji.repeat(30), limitName(emoji.repeat(40)))
+        assertEquals("a".repeat(30), limitName("a".repeat(31)))
     }
 }

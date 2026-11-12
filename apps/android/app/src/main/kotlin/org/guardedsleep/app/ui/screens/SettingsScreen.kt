@@ -49,6 +49,7 @@ import org.guardedsleep.app.ui.common.ScreenRoot
 import org.guardedsleep.app.ui.common.ScrollColumn
 import org.guardedsleep.app.ui.common.SecondaryButton
 import org.guardedsleep.app.ui.common.connectionLabel
+import org.guardedsleep.app.ui.common.connectionListLabel
 import org.guardedsleep.app.ui.common.formatTime
 import org.guardedsleep.app.ui.common.rememberLanguageChoices
 import org.guardedsleep.app.ui.model.AlertOutput
@@ -324,12 +325,7 @@ fun SettingsScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Body(
-                                connectionLabel(c, app.connections, app.role) +
-                                    if (c.isDefault)
-                                        " (" +
-                                            stringResource(R.string.native_ui_connections_default) +
-                                            ")"
-                                    else "",
+                                connectionListLabel(c, app.connections, app.role),
                                 tag = "settings_connection_name_${c.id}",
                                 color = MaterialTheme.colorScheme.onSurface,
                             )

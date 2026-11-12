@@ -1,6 +1,7 @@
 package org.guardedsleep.app.pairing
 
 import java.io.File
+import org.guardedsleep.app.ui.model.ConnectionUi
 import org.guardedsleep.app.ui.model.Role
 import org.json.JSONArray
 import org.json.JSONObject
@@ -86,7 +87,7 @@ data class StoredPairing(
 
 /** The rules of a local connection name: free text of 1 to 30 characters. */
 object ConnectionName {
-    const val MAX_LENGTH = 30
+    const val MAX_LENGTH = ConnectionUi.MAX_NAME_LENGTH
 
     /** The trimmed name, or null when it is empty or longer than [MAX_LENGTH] characters. */
     fun normalize(text: String): String? {

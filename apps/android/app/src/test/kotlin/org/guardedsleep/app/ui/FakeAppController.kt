@@ -7,6 +7,7 @@ import org.guardedsleep.app.pairing.TurnServerInput
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
+import org.guardedsleep.app.ui.model.ConnectionUi
 import org.guardedsleep.app.ui.model.ListenMode
 import org.guardedsleep.app.ui.model.PairingState
 import org.guardedsleep.app.ui.model.ParentMonitorState
@@ -113,7 +114,8 @@ class FakeAppController(
 
     override fun renameConnection(id: String, name: String): Boolean {
         calls += "renameConnection:$id"
-        val ok = name.trim().length in 1..30
+        val ok =
+            name.trim().codePointCount(0, name.trim().length) in 1..ConnectionUi.MAX_NAME_LENGTH
         if (ok) {
             appFlow.value =
                 appFlow.value.copy(

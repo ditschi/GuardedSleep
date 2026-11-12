@@ -421,7 +421,7 @@
         "defaultParent": "Perangkat orang tua {n}",
         "current": "Koneksi: {name}",
         "change": "Ubah",
-        "default": "Bawaan",
+        "labelDefault": "{name} (bawaan)",
         "makeDefault": "Jadikan bawaan",
         "rename": "Ganti nama",
         "renameTitle": "Ganti nama koneksi",

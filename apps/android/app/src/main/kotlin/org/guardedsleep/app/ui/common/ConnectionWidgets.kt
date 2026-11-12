@@ -34,9 +34,6 @@ import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.model.ConnectionUi
 import org.guardedsleep.app.ui.model.Role
 
-/** The longest connection name (`pairing` spec: 1 to 30 characters). */
-private const val MAX_NAME = 30
-
 /** The name the user chose, else a numbered default so two unnamed connections differ. */
 @Composable
 internal fun connectionLabel(c: ConnectionUi, all: List<ConnectionUi>, role: Role?): String =
@@ -46,6 +43,19 @@ internal fun connectionLabel(c: ConnectionUi, all: List<ConnectionUi>, role: Rol
             else R.string.native_ui_connections_default_baby,
             all.indexOfFirst { it.id == c.id } + 1,
         )
+
+/** The label of a connection in a list: its name, marked when it is the default. */
+@Composable
+internal fun connectionListLabel(c: ConnectionUi, all: List<ConnectionUi>, role: Role?): String {
+    val label = connectionLabel(c, all, role)
+    return if (c.isDefault) stringResource(R.string.native_ui_connections_label_default, label)
+    else label
+}
+
+/** [text] cut to [ConnectionUi.MAX_NAME_LENGTH] code points (never inside a surrogate pair). */
+internal fun limitName(text: String): String =
+    if (text.codePointCount(0, text.length) <= ConnectionUi.MAX_NAME_LENGTH) text
+    else text.substring(0, text.offsetByCodePoints(0, ConnectionUi.MAX_NAME_LENGTH))
 
 /** Asks for a new local connection name; the name never leaves this phone. */
 @Composable
@@ -86,7 +96,8 @@ internal fun RenameConnectionDialog(
                 OutlinedTextField(
                     value = text,
                     onValueChange = {
-                        text = it.take(MAX_NAME)
+                        // Counted in code points like the store, so an emoji is not cut early.
+                        text = limitName(it)
                         invalid = false
                     },
                     label = { Text(stringResource(R.string.native_ui_connections_name_label)) },

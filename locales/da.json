@@ -421,7 +421,7 @@
         "defaultParent": "Forældreenhed {n}",
         "current": "Forbindelse: {name}",
         "change": "Skift",
-        "default": "Standard",
+        "labelDefault": "{name} (standard)",
         "makeDefault": "Gør til standard",
         "rename": "Omdøb",
         "renameTitle": "Omdøb forbindelsen",

@@ -419,7 +419,7 @@
         "defaultParent": "Parent device {n}",
         "current": "Connection: {name}",
         "change": "Change",
-        "default": "Default",
+        "labelDefault": "{name} (default)",
         "makeDefault": "Make default",
         "rename": "Rename",
         "renameTitle": "Rename connection",

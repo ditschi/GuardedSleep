@@ -440,8 +440,8 @@ class LinkController(
         val role = settingsRepo.current.role ?: return
         if (id !in pairings.savedIds(role)) return
         if (id == activeId(role)) {
-            // The existing "Forget pairing" path: stops monitoring first, then deletes it.
-            forgetPairing()
+            // Stops monitoring first, then deletes it (the "Forget pairing" requirement).
+            forgetPairing(role, id)
             return
         }
         pairings.forget(role, id)
@@ -622,10 +622,8 @@ class LinkController(
 
     override fun startMonitoring() {
         // The session's connection stays fixed while monitoring runs, also over a restart.
-        settingsRepo.current.role?.let { role ->
-            val id = activeId(role)
-            settingsRepo.update { it.copy(monitoringActive = true, pairingId = id) }
-        } ?: settingsRepo.update { it.copy(monitoringActive = true) }
+        val id = settingsRepo.current.role?.let(::activeId)
+        settingsRepo.update { it.copy(monitoringActive = true, pairingId = id ?: it.pairingId) }
         refreshApp()
         startHost()
     }

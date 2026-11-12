@@ -421,7 +421,7 @@
         "defaultParent": "Ouderapparaat {n}",
         "current": "Verbinding: {name}",
         "change": "Wijzigen",
-        "default": "Standaard",
+        "labelDefault": "{name} (standaard)",
         "makeDefault": "Als standaard instellen",
         "rename": "Hernoemen",
         "renameTitle": "Verbinding hernoemen",

@@ -421,7 +421,7 @@
         "defaultParent": "부모 기기 {n}",
         "current": "연결: {name}",
         "change": "변경",
-        "default": "기본",
+        "labelDefault": "{name}(기본)",
         "makeDefault": "기본으로 설정",
         "rename": "이름 변경",
         "renameTitle": "연결 이름 변경",

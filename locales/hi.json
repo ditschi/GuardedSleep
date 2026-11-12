@@ -421,7 +421,7 @@
         "defaultParent": "माता-पिता का डिवाइस {n}",
         "current": "कनेक्शन: {name}",
         "change": "बदलें",
-        "default": "डिफ़ॉल्ट",
+        "labelDefault": "{name} (डिफ़ॉल्ट)",
         "makeDefault": "डिफ़ॉल्ट बनाएँ",
         "rename": "नाम बदलें",
         "renameTitle": "कनेक्शन का नाम बदलें",

@@ -421,7 +421,7 @@
         "defaultParent": "Urządzenie rodzica {n}",
         "current": "Połączenie: {name}",
         "change": "Zmień",
-        "default": "Domyślne",
+        "labelDefault": "{name} (domyślne)",
         "makeDefault": "Ustaw jako domyślne",
         "rename": "Zmień nazwę",
         "renameTitle": "Zmień nazwę połączenia",

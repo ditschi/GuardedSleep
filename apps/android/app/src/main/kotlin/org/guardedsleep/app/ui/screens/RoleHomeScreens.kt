@@ -30,6 +30,7 @@ import org.guardedsleep.app.ui.common.ScrollColumn
 import org.guardedsleep.app.ui.common.SecondaryButton
 import org.guardedsleep.app.ui.common.Title
 import org.guardedsleep.app.ui.common.connectionLabel
+import org.guardedsleep.app.ui.common.connectionListLabel
 import org.guardedsleep.app.ui.common.formatTime
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.Role
@@ -192,14 +193,7 @@ fun HomeScreen(controller: AppController, onSettings: () -> Unit) {
                             AppCard(Modifier.testTag("home_connection_list")) {
                                 app.connections.forEach { c ->
                                     ChoiceRow(
-                                        connectionLabel(c, app.connections, app.role) +
-                                            if (c.isDefault)
-                                                " (" +
-                                                    stringResource(
-                                                        R.string.native_ui_connections_default
-                                                    ) +
-                                                    ")"
-                                            else "",
+                                        connectionListLabel(c, app.connections, app.role),
                                         c.selected,
                                         "connection_choice_${c.id}",
                                     ) {

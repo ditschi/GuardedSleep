@@ -421,7 +421,7 @@
         "defaultParent": "Zařízení rodiče {n}",
         "current": "Připojení: {name}",
         "change": "Změnit",
-        "default": "Výchozí",
+        "labelDefault": "{name} (výchozí)",
         "makeDefault": "Nastavit jako výchozí",
         "rename": "Přejmenovat",
         "renameTitle": "Přejmenovat připojení",

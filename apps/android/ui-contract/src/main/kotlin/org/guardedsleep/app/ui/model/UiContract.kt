@@ -420,6 +420,11 @@ data class ConnectionUi(
 ) {
     override fun toString(): String =
         "ConnectionUi(id=$id, isDefault=$isDefault, selected=$selected)"
+
+    companion object {
+        /** The longest connection name, counted in code points (`pairing` spec: 1 to 30). */
+        const val MAX_NAME_LENGTH = 30
+    }
 }
 
 data class AppState(
@@ -499,17 +504,17 @@ interface AppController {
     /** Forgets the pairing this session uses (the selected connection). */
     fun forgetPairing()
 
-    // Named connections (`multi-parent-pairings`); defaults keep other implementations compiling.
+    // Named connections (`multi-parent-pairings`).
     /** Picks the connection of this session (not while monitoring); the default is not changed. */
-    fun selectConnection(id: String) {}
+    fun selectConnection(id: String)
 
     /** Renames a connection; false when the name is not 1 to 30 characters. */
-    fun renameConnection(id: String, name: String): Boolean = false
+    fun renameConnection(id: String, name: String): Boolean
 
-    fun setDefaultConnection(id: String) {}
+    fun setDefaultConnection(id: String)
 
     /** Forgets exactly one connection; monitoring stops first when it is the one in use. */
-    fun forgetConnection(id: String) {}
+    fun forgetConnection(id: String)
 
     fun updateSettings(transform: (SettingsState) -> SettingsState)
 

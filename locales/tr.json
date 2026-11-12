@@ -421,7 +421,7 @@
         "defaultParent": "Ebeveyn cihazı {n}",
         "current": "Bağlantı: {name}",
         "change": "Değiştir",
-        "default": "Varsayılan",
+        "labelDefault": "{name} (varsayılan)",
         "makeDefault": "Varsayılan yap",
         "rename": "Yeniden adlandır",
         "renameTitle": "Bağlantıyı yeniden adlandır",

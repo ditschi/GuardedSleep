@@ -421,7 +421,7 @@
         "defaultParent": "Dispositivo del genitore {n}",
         "current": "Connessione: {name}",
         "change": "Cambia",
-        "default": "Predefinita",
+        "labelDefault": "{name} (predefinita)",
         "makeDefault": "Imposta come predefinita",
         "rename": "Rinomina",
         "renameTitle": "Rinomina la connessione",

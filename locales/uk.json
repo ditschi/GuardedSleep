@@ -421,7 +421,7 @@
         "defaultParent": "Пристрій батьків {n}",
         "current": "З’єднання: {name}",
         "change": "Змінити",
-        "default": "Типове",
+        "labelDefault": "{name} (типове)",
         "makeDefault": "Зробити типовим",
         "rename": "Перейменувати",
         "renameTitle": "Перейменувати з’єднання",

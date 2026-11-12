@@ -421,7 +421,7 @@
         "defaultParent": "Föräldraenhet {n}",
         "current": "Anslutning: {name}",
         "change": "Ändra",
-        "default": "Standard",
+        "labelDefault": "{name} (standard)",
         "makeDefault": "Gör till standard",
         "rename": "Byt namn",
         "renameTitle": "Byt namn på anslutningen",

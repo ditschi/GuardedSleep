@@ -421,7 +421,7 @@
         "defaultParent": "Elterngerät {n}",
         "current": "Verbindung: {name}",
         "change": "Ändern",
-        "default": "Standard",
+        "labelDefault": "{name} (Standard)",
         "makeDefault": "Als Standard festlegen",
         "rename": "Umbenennen",
         "renameTitle": "Verbindung umbenennen",

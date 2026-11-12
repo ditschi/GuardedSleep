@@ -421,7 +421,7 @@
         "defaultParent": "Dispozitivul părintelui {n}",
         "current": "Conexiune: {name}",
         "change": "Schimbă",
-        "default": "Implicită",
+        "labelDefault": "{name} (implicită)",
         "makeDefault": "Setează ca implicită",
         "rename": "Redenumește",
         "renameTitle": "Redenumește conexiunea",
