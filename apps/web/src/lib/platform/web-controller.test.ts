@@ -1237,9 +1237,12 @@ describe("WebController: talk-back, parent", () => {
     });
     t.core.script = () => [];
     t.time.advance(6_000);
+    expect(get(t.controller.parent).talkEnd).toBe("limit");
+    t.time.advance(2_500);
     expect(get(t.controller.parent).talkEnd).toBeNull();
+    // The "may not be audible" line stays until the next press, as on Android.
     t.time.advance(16_000);
-    expect(get(t.controller.parent).talkUnconfirmed).toBe(false);
+    expect(get(t.controller.parent).talkUnconfirmed).toBe(true);
   });
 });
 
