@@ -1,10 +1,6 @@
-import type { IceCandidate, IceServer } from "@guardedsleep/core-wasm";
+import type { IceCandidate, IceServer, TalkLevel } from "@guardedsleep/core-wasm";
 
-/**
- * The talk volume of the baby unit. The same three words as the core's `TalkLevel`; a variant
- * added there no longer type-checks where the driver passes the core's value on.
- */
-export type TalkLevel = "low" | "medium" | "high";
+export type { TalkLevel };
 
 /**
  * Callbacks of one peer connection (one "attempt" of the core). They may fire at any time after
