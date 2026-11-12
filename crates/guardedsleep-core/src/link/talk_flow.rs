@@ -27,6 +27,9 @@ const WARN_TALK_AUDIO_OUTSIDE_GRANT: &str = "talk_audio_outside_grant";
 const TALK_LEVEL_FRESH_MS: u64 = 1_000;
 /// A `talk_end` this close before the deadline is the baby's limit, not an early stop.
 const TALK_LIMIT_SLACK_MS: u64 = 1_000;
+/// The gate levels kept for a baseline: the window plus a margin, so a talk that starts a moment
+/// late still finds its whole window.
+const TALK_BASELINE_KEEP_MS: u64 = TALK_BASELINE_MS + 500;
 
 /// The baby's talk-back settings (`set_talk_back`): local to the baby, no message changes them.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -787,7 +790,7 @@ impl Link {
             .talk
             .levels
             .front()
-            .is_some_and(|(t, _)| now.saturating_sub(*t) > TALK_BASELINE_MS + 500)
+            .is_some_and(|(t, _)| now.saturating_sub(*t) > TALK_BASELINE_KEEP_MS)
         {
             self.talk.levels.pop_front();
         }

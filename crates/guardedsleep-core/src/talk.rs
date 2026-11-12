@@ -395,11 +395,7 @@ impl PlaybackCheck {
                 }
             }
             Some(at) => {
-                let window = if self.chime {
-                    TALK_CHECK_VOICE_MS
-                } else {
-                    TALK_CHECK_NO_CHIME_MS
-                };
+                let window = self.window_ms();
                 // A sample after the window belongs to nobody; `poll` decides.
                 if now.saturating_sub(at) <= window
                     && talk_level.is_some_and(|l| l.is_finite() && l > TALK_VOICE_FLOOR)
@@ -410,16 +406,21 @@ impl PlaybackCheck {
         }
     }
 
+    /// How long the voice is judged: shorter when no chime preceded it.
+    fn window_ms(&self) -> u64 {
+        if self.chime {
+            TALK_CHECK_VOICE_MS
+        } else {
+            TALK_CHECK_NO_CHIME_MS
+        }
+    }
+
     /// The result once the window is over; `None` before. Decides at most once.
     pub fn poll(&mut self, now: u64) -> Option<PlaybackResult> {
         if self.result.is_none()
             && let Some(at) = self.voice_at
         {
-            let window = if self.chime {
-                TALK_CHECK_VOICE_MS
-            } else {
-                TALK_CHECK_NO_CHIME_MS
-            };
+            let window = self.window_ms();
             if now.saturating_sub(at) >= window {
                 self.result = Some(self.decide());
             }
@@ -438,10 +439,11 @@ impl PlaybackCheck {
         let Some(baseline) = self.baseline_db else {
             return PlaybackResult::Unknown;
         };
-        let peak = match (self.chime_peak_db, self.voice_peak_db) {
-            (Some(a), Some(b)) => Some(a.max(b)),
-            (a, b) => a.or(b),
-        };
+        let peak = self
+            .chime_peak_db
+            .into_iter()
+            .chain(self.voice_peak_db)
+            .reduce(f64::max);
         match peak {
             // A parent who said nothing (no chime either) is not judged.
             None => PlaybackResult::Unknown,
