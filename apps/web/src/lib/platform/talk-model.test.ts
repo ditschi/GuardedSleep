@@ -57,22 +57,20 @@ describe("preemptingAlerts", () => {
 });
 
 describe("BabyTalkModel", () => {
-  it("keeps the last talk with the parent's name and the settings across runs", () => {
+  it("keeps the last talk with the parent's name across runs", () => {
     const time = new FakeTime();
     const model = new BabyTalkModel(
       time,
       () => "Chrome on Android",
       () => undefined,
     );
-    model.setSettings({ level: "high" });
     model.onEvent({ type: "talk_active", active: true, duration_ms: 0 });
-    expect(model.state.talking).toBe(true);
+    expect(model.state.parentTalking).toBe(true);
     time.advance(5_000);
     model.onEvent({ type: "talk_active", active: false, duration_ms: 5_000 });
     expect(model.state.lastTalk).toMatchObject({ name: "Chrome on Android", durationMs: 5_000 });
     model.reset();
-    expect(model.state.talking).toBe(false);
+    expect(model.state.parentTalking).toBe(false);
     expect(model.state.lastTalk).not.toBeNull();
-    expect(model.settings.level).toBe("high");
   });
 });

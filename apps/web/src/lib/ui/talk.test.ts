@@ -1,29 +1,51 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { defaultParentTalk, type ParentTalkUi } from "../contract";
+import {
+  defaultParentTalkFields,
+  defaultWebTalk,
+  type TalkDeny,
+  type TalkEnd,
+  type TalkUi,
+  type TalkUnavailable,
+  type WebTalkState,
+} from "../contract";
 import TalkButton from "./TalkButton.svelte";
-import { mayAnnounce, noiseLine, stateLine, unavailableLine } from "./talk-view";
+import { mayAnnounce, noiseLine, stateLine, unavailableLine, type TalkView } from "./talk-view";
 
-const talk = (over: Partial<ParentTalkUi> = {}): ParentTalkUi => ({
-  ...defaultParentTalk(),
-  unavailable: null,
+const talk = (over: Partial<TalkView> = {}): TalkView => ({
+  ...defaultParentTalkFields(),
   ...over,
 });
+const unavailable = (reason: TalkUnavailable, retryAtElapsedMs: number | null = null): TalkUi => ({
+  kind: "unavailable",
+  reason,
+  retryAtElapsedMs,
+});
+const denied = (reason: TalkDeny): TalkUi => ({ kind: "denied", reason, retryAtElapsedMs: null });
+const web = (over: Partial<WebTalkState> = {}): WebTalkState => ({ ...defaultWebTalk(), ...over });
+const ended = (talkEnd: TalkEnd): Partial<TalkView> => ({ talkEnd });
 
 describe("talk view lines", () => {
   it("says why the button is unavailable before a press", () => {
-    expect(unavailableLine(talk(), 0)).toBeNull();
-    expect(unavailableLine(talk({ unavailable: "off" }), 0)?.key).toBe(
+    expect(unavailableLine(talk(), web(), 0)).toBeNull();
+    expect(unavailableLine(talk({ talk: unavailable("off") }), web(), 0)?.key).toBe(
       "webScreens.talk.unavailableOff",
     );
+    expect(unavailableLine(talk({ talk: unavailable("cooldown", 9_500) }), web(), 1_000)).toEqual({
+      key: "webScreens.talk.unavailableCooldown",
+      args: { seconds: 9 },
+    });
     expect(
-      unavailableLine(talk({ unavailable: "cooldown", retryAtElapsedMs: 9_500 }), 1_000),
-    ).toEqual({ key: "webScreens.talk.unavailableCooldown", args: { seconds: 9 } });
+      unavailableLine(talk({ talk: unavailable("unsupported") }), web({ micUnsupported: true }), 0)
+        ?.key,
+    ).toBe("webScreens.talk.unavailableBrowser");
   });
 
   it("one moment, speak now, then a countdown for the last 5 s", () => {
-    expect(stateLine(talk({ phase: "requesting" }), 0)?.key).toBe("webScreens.talk.requesting");
-    const talking = talk({ phase: "talking", untilElapsedMs: 30_000 });
+    expect(stateLine(talk({ talk: { kind: "requesting" } }), 0)?.key).toBe(
+      "webScreens.talk.requesting",
+    );
+    const talking = talk({ talk: { kind: "talking", untilElapsedMs: 30_000 } });
     expect(stateLine(talking, 10_000)?.key).toBe("webScreens.talk.speakNow");
     expect(stateLine(talking, 26_200)).toEqual({
       key: "webScreens.talk.releaseIn",
@@ -32,28 +54,24 @@ describe("talk view lines", () => {
   });
 
   it("names the end reasons and denials, and stays quiet after a plain release", () => {
-    expect(stateLine(talk({ phase: "ended", endedReason: "no_answer" }), 0)?.key).toBe(
-      "webScreens.talk.endNoAnswer",
-    );
-    expect(stateLine(talk({ phase: "ended", endedReason: "link_lost" }), 0)?.key).toBe(
-      "webScreens.talk.endLinkLost",
-    );
-    expect(stateLine(talk({ phase: "denied", deniedReason: "muted" }), 0)?.key).toBe(
+    expect(stateLine(talk(ended("no_answer")), 0)?.key).toBe("webScreens.talk.endNoAnswer");
+    expect(stateLine(talk(ended("link_lost")), 0)?.key).toBe("webScreens.talk.endLinkLost");
+    expect(stateLine(talk({ talk: denied("muted") }), 0)?.key).toBe(
       "webScreens.talk.unavailableMuted",
     );
-    expect(stateLine(talk({ phase: "idle", endedReason: "released" }), 0)).toBeNull();
+    expect(stateLine(talk(ended("released")), 0)).toBeNull();
   });
 
   it("says the noise pause for the talking and for the other parent", () => {
-    expect(noiseLine(talk({ noisePause: "self" }))?.key).toBe("webScreens.talk.noisePausedSelf");
+    expect(noiseLine(talk({ noisePause: "you" }))?.key).toBe("webScreens.talk.noisePausedSelf");
     expect(noiseLine(talk({ noisePause: "other" }))?.key).toBe("webScreens.talk.noisePausedOther");
     expect(noiseLine(talk())).toBeNull();
   });
 
   it("announces nothing while the microphone is open", () => {
-    expect(mayAnnounce(talk({ phase: "talking" }))).toBe(false);
-    expect(mayAnnounce(talk({ phase: "requesting" }))).toBe(true);
-    expect(mayAnnounce(talk({ phase: "ended" }))).toBe(true);
+    expect(mayAnnounce(talk({ talk: { kind: "talking", untilElapsedMs: 1 } }))).toBe(false);
+    expect(mayAnnounce(talk({ talk: { kind: "requesting" } }))).toBe(true);
+    expect(mayAnnounce(talk(ended("limit")))).toBe(true);
   });
 });
 
@@ -64,11 +82,12 @@ describe("TalkButton", () => {
   const press = (button: HTMLElement, pointerId = 1) =>
     fireEvent.pointerDown(button, { pointerId, button: 0, clientY: 100 });
 
-  function mount(over: Partial<ParentTalkUi> = {}) {
+  function mount(over: Partial<TalkView> = {}, webState: WebTalkState = web()) {
     const onpress = vi.fn();
     const onrelease = vi.fn();
     render(TalkButton, {
       talk: talk(over),
+      web: webState,
       nowMs: 0,
       onpress,
       onrelease,
@@ -126,7 +145,7 @@ describe("TalkButton", () => {
   });
 
   it("is disabled with a reason line when unavailable, and a press does nothing", async () => {
-    const { onpress, button } = mount({ unavailable: "not_connected" });
+    const { onpress, button } = mount({ talk: unavailable("not_connected") });
     expect(button).toBeDisabled();
     expect(screen.getByTestId("parent_talk_unavailable_reason")).toHaveTextContent(
       "Not connected to the baby device.",
@@ -137,24 +156,24 @@ describe("TalkButton", () => {
   });
 
   it("keeps the state line out of any live region while the microphone is open", () => {
-    mount({ phase: "talking", untilElapsedMs: 30_000 });
+    mount({ talk: { kind: "talking", untilElapsedMs: 30_000 } });
     expect(screen.getByTestId("parent_talk_state")).toHaveAttribute("aria-live", "off");
     expect(screen.queryByRole("status")).toBeNull();
   });
 
   it("announces the result after the release, with the unconfirmed line", () => {
-    mount({ phase: "ended", endedReason: "limit", unconfirmed: true });
+    mount({ talkEnd: "limit", talkUnconfirmed: true });
     expect(screen.getByTestId("parent_talk_state")).toHaveAttribute("aria-live", "polite");
     expect(screen.getByTestId("parent_talk_unconfirmed")).toBeInTheDocument();
   });
 
   it("holds the unconfirmed line back while talking", () => {
-    mount({ phase: "talking", unconfirmed: true, untilElapsedMs: 30_000 });
+    mount({ talk: { kind: "talking", untilElapsedMs: 30_000 }, talkUnconfirmed: true });
     expect(screen.queryByTestId("parent_talk_unconfirmed")).toBeNull();
   });
 
   it("shows the noise pause line", () => {
-    mount({ noisePause: "self" });
+    mount({ noisePause: "you" });
     expect(screen.getByTestId("parent_noise_paused")).toBeInTheDocument();
   });
 });

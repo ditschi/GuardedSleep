@@ -15,7 +15,7 @@
 
   const controller = useController();
   const router = useRouter();
-  const { app, settings, babyTalk } = controller;
+  const { app, settings } = controller;
 
   // An adult opening the settings of the baby device ends the "may not be audible" warning.
   $effect(() => {
@@ -31,7 +31,7 @@
   function chooseTalkLevel(event: Event): void {
     const value = (event.currentTarget as HTMLSelectElement).value;
     const level = TALK_LEVELS.find((l) => l.value === value);
-    if (level) controller.setTalkBack({ level: level.value });
+    if (level) controller.updateSettings((s) => ({ ...s, talkVolume: level.value }));
   }
 
   const THEMES: ReadonlyArray<{ value: Theme; label: MessageKey }> = [
@@ -221,17 +221,18 @@
       <span class="gs-group__title">{$t("webScreens.talk.settingsTitle")}</span>
       <Switch
         label={$t("webScreens.talk.settingsToggle")}
-        checked={$babyTalk.settings.enabled}
+        checked={$settings.talkBackEnabled}
         testid="baby_talk_toggle"
-        onchange={(enabled) => controller.setTalkBack({ enabled })}
+        onchange={(enabled) =>
+          controller.updateSettings((s) => ({ ...s, talkBackEnabled: enabled }))}
       />
       <label for="settings-talk-volume">{$t("webScreens.talk.settingsVolume")}</label>
       <select
         id="settings-talk-volume"
         class="gs-select"
         data-testid="baby_talk_volume"
-        value={$babyTalk.settings.level}
-        disabled={!$babyTalk.settings.enabled}
+        value={$settings.talkVolume}
+        disabled={!$settings.talkBackEnabled}
         onchange={chooseTalkLevel}
       >
         {#each TALK_LEVELS as level (level.value)}
@@ -240,15 +241,15 @@
       </select>
       <Switch
         label={$t("webScreens.talk.settingsChime")}
-        checked={$babyTalk.settings.chime}
-        disabled={!$babyTalk.settings.enabled}
+        checked={$settings.talkChime}
+        disabled={!$settings.talkBackEnabled}
         testid="baby_talk_chime_toggle"
-        onchange={(chime) => controller.setTalkBack({ chime })}
+        onchange={(chime) => controller.updateSettings((s) => ({ ...s, talkChime: chime }))}
       />
       <Button
         variant="outline"
         testid="baby_talk_play_chime"
-        disabled={!$babyTalk.settings.enabled}
+        disabled={!$settings.talkBackEnabled}
         onclick={() => controller.playTalkChimeSample()}
       >
         {$t("webScreens.talk.settingsPlayChime")}

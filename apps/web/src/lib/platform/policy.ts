@@ -79,6 +79,8 @@ export const TALK_CHIME_FLOOR = 0.05;
 /** Two notes of the chime and how long each rings (seconds). */
 export const TALK_CHIME_NOTES_HZ = [660, 880] as const;
 export const TALK_CHIME_NOTE_S = 0.3;
+/** The core's listen after a talk; the screen counts it with the core's own `listen_changed`. */
+export const TALK_AFTER_LISTEN_MS = 10_000;
 /** An end reason or denial stays on the parent's screen this long. */
 export const TALK_RESULT_VISIBLE_MS = 6_000;
 /** "Your voice may not be audible" stays this long. */

@@ -130,6 +130,14 @@ export interface ParentMonitorState {
   ownBatteryPct: number | null;
   /** Android only: the core switched a discreet event to sound; always null in the browser. */
   noiseEscalatedAfterMin: number | null;
+  /** Talk-back (`add-talk-back`). */
+  talk: TalkUi;
+  talkEnd: TalkEnd | null;
+  talkPermission: TalkPermission;
+  noisePause: NoisePause | null;
+  talkUnconfirmed: boolean;
+  talkAudibleUncertain: boolean;
+  afterTalkListenUntilElapsedMs: number | null;
 }
 
 export interface BabyMonitorState {
@@ -152,6 +160,10 @@ export interface BabyMonitorState {
   parentName: string | null;
   /** A device that is not the paired parent tried to connect (the core refused it). */
   securityWarning: boolean;
+  /** A parent's voice plays now (static indicator under the edge). */
+  parentTalking: boolean;
+  /** The last finished talk of this run, local only. */
+  lastTalk: LastTalkUi | null;
 }
 
 export type PairingPhase =
@@ -210,25 +222,15 @@ export interface PageGuardState {
 }
 
 /*
- * Web only (no counterpart in UiContract.kt yet): talk-back (`add-talk-back`). The Android contract
- * carries the same facts in its own models; until both are reconciled the web side keeps them in
- * their own stores so the drift test stays about the shared models.
+ * Talk-back (`add-talk-back`), mirroring the talk models of UiContract.kt: the same names and
+ * shapes, lower-snake enum members and `kind`-tagged unions for the sealed `TalkUi`.
  */
 
-/** Why the talk button cannot be used before a press (design section 9, "Unavailable before the press"). */
-export type TalkUnavailable =
-  | "not_connected"
-  | "browser_unsupported"
-  | "off"
-  | "other_talker"
-  | "unsupported"
-  | "muted"
-  | "cooldown";
+/** Talk-back volume of the baby device (a baby setting). */
+export type TalkVolume = "low" | "medium" | "high";
 
-export type TalkPhase = "idle" | "requesting" | "talking" | "ended" | "denied";
-
-/** Wire names of the core's `TalkEndReason`. */
-export type TalkEndedReason =
+/** Why a talk ended on the parent device (core `TalkEndReason`). */
+export type TalkEnd =
   | "released"
   | "limit"
   | "no_answer"
@@ -238,44 +240,31 @@ export type TalkEndedReason =
   | "switched_off"
   | "stopped";
 
-/** Wire names of the core's `TalkDenyReason.kind`. */
-export type TalkDeniedReason =
+/** Why the baby device refused a talk (core `TalkDenyReason`; `unknown` for a newer reason). */
+export type TalkDeny =
   "off" | "unsupported" | "muted" | "busy" | "cooldown" | "budget" | "rate" | "unknown";
 
-/**
- * The microphone permission step. `sheet` = the explanation sheet is open (a first press), `done`
- * = granted a moment ago ("Done. Now hold to talk."), `refused` = the browser refused it.
- */
-export type TalkPermission = "unknown" | "granted" | "sheet" | "done" | "refused";
+/** Why the talk button is disabled before a press. */
+export type TalkUnavailable =
+  "off" | "other_talking" | "unsupported" | "muted" | "not_connected" | "cooldown";
 
-export type TalkNoisePause = "none" | "self" | "other";
+/** The talk button's state; times are on the elapsed clock. */
+export type TalkUi =
+  | { kind: "idle" }
+  /** "One moment...": the request is on its way. */
+  | { kind: "requesting" }
+  /** "Speak now": the microphone is attached; the baby device ends the talk at `untilElapsedMs`. */
+  | { kind: "talking"; untilElapsedMs: number }
+  | { kind: "denied"; reason: TalkDeny; retryAtElapsedMs: number | null }
+  | { kind: "unavailable"; reason: TalkUnavailable; retryAtElapsedMs: number | null };
 
-export interface ParentTalkUi {
-  phase: TalkPhase;
-  /** While talking: the end of the limit (monotonic ms, the core's clock). */
-  untilElapsedMs: number | null;
-  endedReason: TalkEndedReason | null;
-  deniedReason: TalkDeniedReason | null;
-  /** The earliest next request after a cooldown, budget or limit (monotonic ms); null = unknown. */
-  retryAtElapsedMs: number | null;
-  /** Set when the button cannot be used right now. */
-  unavailable: TalkUnavailable | null;
-  permission: TalkPermission;
-  noisePause: TalkNoisePause;
-  /** The baby unit's playback check could not confirm the last voice. */
-  unconfirmed: boolean;
-  /** Three talks in a row were not confirmed: shown before the next press, never a denial. */
-  audibleUncertain: boolean;
-  /** The 10 s listen after a talk runs ("Listening for 10 s · tap to keep listening"). */
-  afterListen: boolean;
-}
+/** Microphone permission step of the talk button (a press without permission sends nothing). */
+export type TalkPermission = "none" | "needed" | "just_granted" | "refused";
 
-export interface TalkBackSettings {
-  enabled: boolean;
-  level: "low" | "medium" | "high";
-  chime: boolean;
-}
+/** Who pauses noise detection: this device's own talk, or the other parent device's. */
+export type NoisePause = "you" | "other";
 
+/** Baby: the last talk, local only ("Last talk: {name}, {time}, {duration}"). */
 export interface LastTalkUi {
   /** The parent's name on the baby unit; empty when it sent none. */
   name: string;
@@ -283,42 +272,54 @@ export interface LastTalkUi {
   durationMs: number;
 }
 
-export interface BabyTalkUi {
-  /** A parent's voice plays right now. */
-  talking: boolean;
+/** The talk fields of `ParentMonitorState`, kept apart so the talk model can own them. */
+export interface ParentTalkFields {
+  talk: TalkUi;
+  /** How the last talk ended; null before the first and after the next press. */
+  talkEnd: TalkEnd | null;
+  talkPermission: TalkPermission;
+  noisePause: NoisePause | null;
+  /** The baby device's playback check could not hear the last voice ("may not be audible"). */
+  talkUnconfirmed: boolean;
+  /** Three unconfirmed talks in a row: shown before the next press, never a denial. */
+  talkAudibleUncertain: boolean;
+  /** The 10 s listen after a talk runs until then ("tap to keep listening"). */
+  afterTalkListenUntilElapsedMs: number | null;
+}
+
+export function defaultParentTalkFields(): ParentTalkFields {
+  return {
+    talk: { kind: "idle" },
+    talkEnd: null,
+    talkPermission: "none",
+    noisePause: null,
+    talkUnconfirmed: false,
+    talkAudibleUncertain: false,
+    afterTalkListenUntilElapsedMs: null,
+  };
+}
+
+/** The talk fields of `BabyMonitorState`. */
+export interface BabyTalkFields {
+  /** A parent's voice plays now (static indicator under the edge). */
+  parentTalking: boolean;
+  /** The last finished talk of this run, local only. */
   lastTalk: LastTalkUi | null;
-  settings: TalkBackSettings;
-  /** The browser suspended this device's audio: talk-back is muted until a tap. */
+}
+
+/**
+ * Web only (no counterpart in UiContract.kt): what the browser adds to the talk-back models.
+ * `micUnsupported` = this browser cannot capture for a talk (parent); `soundSuspended` = the
+ * browser suspended this device's audio, so talk-back is muted until a tap (baby). Android has
+ * neither: its parent always has a microphone and its baby plays through the alarm stream.
+ */
+export interface WebTalkState {
+  micUnsupported: boolean;
   soundSuspended: boolean;
 }
 
-export function defaultParentTalk(): ParentTalkUi {
-  return {
-    phase: "idle",
-    untilElapsedMs: null,
-    endedReason: null,
-    deniedReason: null,
-    retryAtElapsedMs: null,
-    unavailable: "not_connected",
-    permission: "unknown",
-    noisePause: "none",
-    unconfirmed: false,
-    audibleUncertain: false,
-    afterListen: false,
-  };
-}
-
-export function defaultTalkBackSettings(): TalkBackSettings {
-  return { enabled: true, level: "low", chime: true };
-}
-
-export function defaultBabyTalk(): BabyTalkUi {
-  return {
-    talking: false,
-    lastTalk: null,
-    settings: defaultTalkBackSettings(),
-    soundSuspended: false,
-  };
+export function defaultWebTalk(): WebTalkState {
+  return { micUnsupported: false, soundSuspended: false };
 }
 
 export type Theme = "dark" | "light" | "system";
@@ -354,6 +355,13 @@ export interface SettingsState {
   heartbeatSeconds: number;
   /** Last successful test alert (settings line "Last test"). */
   lastTestWallMs: number | null;
+  /** Baby: parents may talk through this device (switch of the single pairing; default on). */
+  talkBackEnabled: boolean;
+  talkVolume: TalkVolume;
+  /** Baby: a soft chime announces a talk. */
+  talkChime: boolean;
+  /** Parent: the one-time "hold to talk" coach mark was shown. */
+  talkCoachSeen: boolean;
 }
 
 /** Baby self-test result (ADR-010) shown on the setup checklist. */
@@ -426,6 +434,7 @@ export function defaultParentMonitor(): ParentMonitorState {
     lastSound: null,
     ownBatteryPct: null,
     noiseEscalatedAfterMin: null,
+    ...defaultParentTalkFields(),
   };
 }
 
@@ -443,6 +452,8 @@ export function defaultBabyMonitor(): BabyMonitorState {
     parentListening: false,
     parentName: null,
     securityWarning: false,
+    parentTalking: false,
+    lastTalk: null,
   };
 }
 
@@ -465,6 +476,10 @@ export function defaultSettings(): SettingsState {
     turnPasswordSaved: false,
     heartbeatSeconds: 10,
     lastTestWallMs: null,
+    talkBackEnabled: true,
+    talkVolume: "low",
+    talkChime: true,
+    talkCoachSeen: false,
   };
 }
 

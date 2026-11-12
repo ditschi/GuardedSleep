@@ -21,7 +21,7 @@
 
   const controller = useController();
   const router = useRouter();
-  const { baby, deviceBattery, pageGuard, babyTalk } = controller;
+  const { baby, deviceBattery, pageGuard, settings, webTalk } = controller;
 
   let stopOpen = $state(false);
   let nightOpen = $state(false);
@@ -77,7 +77,7 @@
   });
 
   const lastTalkText = $derived.by(() => {
-    const last = $babyTalk.lastTalk;
+    const last = $baby.lastTalk;
     if (last === null) return null;
     return $t("webScreens.talk.babyLastTalk", {
       name: last.name === "" ? $t("native.ui.common.parentUnitDefault") : last.name,
@@ -127,13 +127,13 @@
     {/if}
   </section>
 
-  {#if $babyTalk.talking}
+  {#if $baby.parentTalking}
     <p class="gs-muted" role="status" data-testid="baby_talking">
       <Glyph name="mic" />
       {$t("webScreens.talk.babyTalking")}
     </p>
   {/if}
-  {#if $babyTalk.soundSuspended}
+  {#if $webTalk.soundSuspended}
     <Button variant="tonal" testid="baby_sound_off" onclick={() => controller.unlockSound()}>
       <Glyph name="sound" />
       {$t("webScreens.talk.babySoundOff")}
@@ -198,7 +198,7 @@
       <Glyph name="sound" />
       <span data-testid="baby_talk_volume_hint">{$t("webScreens.talk.babyVolumeHint")}</span>
     </div>
-    {#if $babyTalk.settings.enabled}
+    {#if $settings.talkBackEnabled}
       <div>
         <Glyph name="mic" />
         <span data-testid="baby_talk_checklist">{$t("webScreens.talk.babyChecklist")}</span>
@@ -221,9 +221,9 @@
 <NightScreen
   bind:open={nightOpen}
   statusText={$t(status.key)}
-  talkingText={$babyTalk.talking ? $t("webScreens.talk.babyTalking") : null}
+  talkingText={$baby.parentTalking ? $t("webScreens.talk.babyTalking") : null}
   {lastTalkText}
-  soundOffText={$babyTalk.soundSuspended ? $t("webScreens.talk.babySoundOff") : null}
+  soundOffText={$webTalk.soundSuspended ? $t("webScreens.talk.babySoundOff") : null}
   onsoundon={() => controller.unlockSound()}
 />
 

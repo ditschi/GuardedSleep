@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ParentTalkUi } from "../contract";
+  import type { WebTalkState } from "../contract";
   import { t } from "../i18n/store";
   import Button from "./Button.svelte";
   import Glyph from "./Glyph.svelte";
@@ -9,10 +9,12 @@
     TALK_HOLD_MS,
     TALK_LOCK_DISTANCE,
   } from "./talk-constants";
-  import { mayAnnounce, noiseLine, stateLine, unavailableLine } from "./talk-view";
+  import { mayAnnounce, noiseLine, stateLine, unavailableLine, type TalkView } from "./talk-view";
 
   type Props = {
-    talk: ParentTalkUi;
+    talk: TalkView;
+    /** What the browser adds: no microphone support here. */
+    web: WebTalkState;
     /** The monotonic clock of the page (countdowns). */
     nowMs: number;
     /** The hold time passed: start the talk. */
@@ -22,7 +24,7 @@
     onkeeplisten: () => void;
   };
 
-  let { talk, nowMs, onpress, onrelease, onkeeplisten }: Props = $props();
+  let { talk, web, nowMs, onpress, onrelease, onkeeplisten }: Props = $props();
 
   let holdTimer: ReturnType<typeof setTimeout> | null = null;
   let hintTimer: ReturnType<typeof setTimeout> | null = null;
@@ -32,13 +34,13 @@
   let started = false;
   let hint = $state<"hold" | "no_lock" | null>(null);
 
-  const unavailable = $derived(unavailableLine(talk, nowMs));
+  const unavailable = $derived(unavailableLine(talk, web, nowMs));
   const stateText = $derived(stateLine(talk, nowMs));
   const noise = $derived(noiseLine(talk));
   const disabled = $derived(unavailable !== null);
-  const busy = $derived(talk.phase === "requesting" || talk.phase === "talking");
+  const busy = $derived(talk.talk.kind === "requesting" || talk.talk.kind === "talking");
   // A line the user must read after the talk; never while the microphone is open.
-  const showUnconfirmed = $derived(talk.unconfirmed && talk.phase !== "talking");
+  const showUnconfirmed = $derived(talk.talkUnconfirmed && talk.talk.kind !== "talking");
 
   function showHint(kind: "hold" | "no_lock"): void {
     hint = kind;
@@ -109,13 +111,13 @@
   }
 
   // Haptics: a distinct pulse once the microphone is attached, two at 5 s left, one at the end.
-  let lastPhase: ParentTalkUi["phase"] = "idle";
+  let lastPhase: TalkView["talk"]["kind"] = "idle";
   let countdownBuzzed = false;
   function vibrate(pattern: number | number[]): void {
     if (typeof navigator.vibrate === "function") navigator.vibrate(pattern);
   }
   $effect(() => {
-    const phase = talk.phase;
+    const phase = talk.talk.kind;
     if (phase === lastPhase) return;
     if (phase === "talking") {
       countdownBuzzed = false;
@@ -126,8 +128,9 @@
     lastPhase = phase;
   });
   $effect(() => {
-    if (talk.phase !== "talking" || talk.untilElapsedMs === null || countdownBuzzed) return;
-    if (talk.untilElapsedMs - nowMs <= TALK_COUNTDOWN_FROM_MS) {
+    const state = talk.talk;
+    if (state.kind !== "talking" || countdownBuzzed) return;
+    if (state.untilElapsedMs - nowMs <= TALK_COUNTDOWN_FROM_MS) {
       countdownBuzzed = true;
       vibrate([80, 80, 80]);
     }
@@ -142,7 +145,7 @@
     type="button"
     class="gs-talk__btn"
     data-testid="parent_talk"
-    data-phase={talk.phase}
+    data-phase={talk.talk.kind}
     {disabled}
     aria-pressed={busy}
     aria-describedby="gs-talk-state gs-talk-reason"
@@ -163,7 +166,7 @@
     id="gs-talk-state"
     class="gs-talk__line"
     data-testid="parent_talk_state"
-    data-phase={talk.phase}
+    data-phase={talk.talk.kind}
     aria-live={mayAnnounce(talk) ? "polite" : "off"}
   >
     {#if hint === "hold"}
@@ -187,13 +190,13 @@
     <p class="gs-talk__line" data-tone="warn" role="status" data-testid="parent_talk_unconfirmed">
       {$t("webScreens.talk.unconfirmed")}
     </p>
-  {:else if talk.audibleUncertain && talk.phase === "idle"}
+  {:else if talk.talkAudibleUncertain && talk.talk.kind === "idle"}
     <p class="gs-talk__line" data-tone="warn" data-testid="parent_talk_uncertain">
       {$t("webScreens.talk.audibleUncertain")}
     </p>
   {/if}
 
-  {#if talk.afterListen && !busy}
+  {#if talk.afterTalkListenUntilElapsedMs !== null && !busy}
     <Button variant="text" testid="parent_talk_after_listen" onclick={onkeeplisten}>
       {$t("webScreens.talk.afterListen")}
     </Button>

@@ -1,28 +1,51 @@
 import type { DeviceStatus, LinkEvent } from "@guardedsleep/core-wasm";
 import {
-  defaultBabyTalk,
-  defaultParentTalk,
-  type BabyTalkUi,
-  type ParentTalkUi,
-  type TalkBackSettings,
-  type TalkDeniedReason,
-  type TalkEndedReason,
+  defaultParentTalkFields,
+  type BabyTalkFields,
+  type NoisePause,
+  type ParentTalkFields,
+  type TalkDeny,
+  type TalkEnd,
   type TalkPermission,
+  type TalkUi,
   type TalkUnavailable,
 } from "../contract";
 import type { AlertSink } from "./alert-sink";
 import { tonePlanForLink } from "./audio";
 import type { Clock } from "./clock";
-import { TALK_RESULT_VISIBLE_MS, TALK_UNCONFIRMED_VISIBLE_MS } from "./policy";
+import {
+  TALK_AFTER_LISTEN_MS,
+  TALK_RESULT_VISIBLE_MS,
+  TALK_UNCONFIRMED_VISIBLE_MS,
+} from "./policy";
+
+/** The microphone step as the controller knows it; the contract shows `none` for the first two. */
+export type MicStep = "unknown" | "granted" | "sheet" | "done" | "refused";
+
+const PERMISSION_FOR_STEP: Record<MicStep, TalkPermission> = {
+  unknown: "none",
+  granted: "none",
+  sheet: "needed",
+  done: "just_granted",
+  refused: "refused",
+};
+
+type TalkPhase = "idle" | "requesting" | "talking" | "denied";
 
 /**
- * Maps the core's talk events and the baby's status onto what the parent's talk button shows. It
- * decides nothing: whether a talk may start, how long it runs and why it ended are the core's
- * (`talk_changed`, `peer_status`); this only turns them into one UI model. Every change that
- * differs from the last one is pushed to `onChange`.
+ * Maps the core's talk events and the baby's status onto what the parent's talk button shows (the
+ * talk fields of `ParentMonitorState`). It decides nothing: whether a talk may start, how long it
+ * runs and why it ended are the core's (`talk_changed`, `peer_status`); this only turns them into
+ * one UI model. Every change that differs from the last one is pushed to `onChange`.
  */
 export class ParentTalkModel {
-  private ui: ParentTalkUi = defaultParentTalk();
+  private phase: TalkPhase = "idle";
+  private until: number | null = null;
+  private ended: TalkEnd | null = null;
+  private denied: TalkDeny | null = null;
+  private step: MicStep = "unknown";
+  private unconfirmed = false;
+  private afterListenUntil: number | null = null;
   private connected = false;
   private browserSupported = true;
   private peer: DeviceStatus | null = null;
@@ -36,19 +59,22 @@ export class ParentTalkModel {
 
   constructor(
     private readonly clock: Clock,
-    private readonly onChange: (state: ParentTalkUi) => void,
+    private readonly onChange: (fields: ParentTalkFields) => void,
   ) {}
 
-  get state(): ParentTalkUi {
+  get state(): ParentTalkFields {
     return this.build(this.clock.elapsedMs());
   }
 
   /** The run ended: forget the talk, keep what belongs to the browser (support, permission). */
   reset(): void {
-    this.ui = {
-      ...defaultParentTalk(),
-      permission: this.ui.permission === "sheet" ? "unknown" : this.ui.permission,
-    };
+    this.phase = "idle";
+    this.until = null;
+    this.ended = null;
+    this.denied = null;
+    this.step = this.step === "sheet" ? "unknown" : this.step;
+    this.unconfirmed = false;
+    this.afterListenUntil = null;
     this.connected = false;
     this.peer = null;
     this.paused = false;
@@ -70,27 +96,27 @@ export class ParentTalkModel {
     this.publish(this.clock.elapsedMs());
   }
 
-  setPermission(permission: TalkPermission): void {
-    this.ui = { ...this.ui, permission };
+  setPermission(step: MicStep): void {
+    this.step = step;
     this.publish(this.clock.elapsedMs());
   }
 
-  get permission(): TalkPermission {
-    return this.ui.permission;
+  get permission(): MicStep {
+    return this.step;
   }
 
   /** The talk button can be pressed right now (the same rule the screen uses to enable it). */
   get available(): boolean {
-    return this.build(this.clock.elapsedMs()).unavailable === null;
+    return this.build(this.clock.elapsedMs()).talk.kind !== "unavailable";
   }
 
   get busy(): boolean {
-    return this.ui.phase === "requesting" || this.ui.phase === "talking";
+    return this.phase === "requesting" || this.phase === "talking";
   }
 
   /** The parent chose "keep listening": the after-talk line is no longer needed. */
   clearAfterListen(): void {
-    this.ui = { ...this.ui, afterListen: false };
+    this.afterListenUntil = null;
     this.publish(this.clock.elapsedMs());
   }
 
@@ -109,11 +135,14 @@ export class ParentTalkModel {
         this.onPeerStatus(event.status, now);
         break;
       case "listen_changed":
-        // The after-talk listen starts in the same step in which the talk ended.
-        this.ui = {
-          ...this.ui,
-          afterListen: event.enabled && this.endedAt === now && !this.busy,
-        };
+        // The after-talk listen starts in the same step in which the talk ended; its end arrives
+        // as `enabled: false`.
+        if (event.enabled) {
+          if (this.endedAt === now && !this.busy)
+            this.afterListenUntil = now + TALK_AFTER_LISTEN_MS;
+        } else {
+          this.afterListenUntil = null;
+        }
         break;
       default:
         break;
@@ -124,12 +153,14 @@ export class ParentTalkModel {
   onTick(now: number): void {
     if (this.resultUntil !== null && now >= this.resultUntil) {
       this.resultUntil = null;
-      this.ui = { ...this.ui, phase: "idle", endedReason: null, deniedReason: null };
+      this.phase = "idle";
+      this.ended = null;
+      this.denied = null;
     }
     if (this.unconfirmedUntil !== null && now >= this.unconfirmedUntil) {
       this.unconfirmedUntil = null;
       this.unconfirmedPending = false;
-      this.ui = { ...this.ui, unconfirmed: false };
+      this.unconfirmed = false;
     }
     this.publish(now);
   }
@@ -143,35 +174,31 @@ export class ParentTalkModel {
         this.resultUntil = null;
         this.unconfirmedPending = false;
         this.unconfirmedUntil = null;
-        this.ui = {
-          ...this.ui,
-          phase: "requesting",
-          untilElapsedMs: null,
-          endedReason: null,
-          deniedReason: null,
-          unconfirmed: false,
-          afterListen: false,
-        };
+        this.phase = "requesting";
+        this.until = null;
+        this.ended = null;
+        this.denied = null;
+        this.unconfirmed = false;
+        this.afterListenUntil = null;
         break;
       case "talking":
-        this.ui = { ...this.ui, phase: "talking", untilElapsedMs: state.until_ms };
+        this.phase = "talking";
+        this.until = state.until_ms;
         break;
       case "ended": {
-        const reason: TalkEndedReason = state.reason;
+        const reason: TalkEnd = state.reason;
         this.endedAt = now;
         this.releaseUnconfirmed(now);
-        if (reason === "released" || reason === "stopped") {
-          // A plain release needs no message; the result of the playback check may follow.
-          this.resultUntil = null;
-          this.ui = { ...this.ui, phase: "idle", untilElapsedMs: null, endedReason: reason };
-        } else {
-          this.resultUntil = now + TALK_RESULT_VISIBLE_MS;
-          this.ui = { ...this.ui, phase: "ended", untilElapsedMs: null, endedReason: reason };
-        }
+        this.phase = "idle";
+        this.until = null;
+        this.ended = reason;
+        // A plain release needs no message; the result of the playback check may follow.
+        this.resultUntil =
+          reason === "released" || reason === "stopped" ? null : now + TALK_RESULT_VISIBLE_MS;
         break;
       }
       case "denied": {
-        const denied: TalkDeniedReason = state.reason?.kind ?? "unknown";
+        const denied: TalkDeny = state.reason?.kind ?? "unknown";
         if (
           state.reason !== null &&
           (state.reason.kind === "cooldown" || state.reason.kind === "budget")
@@ -180,12 +207,9 @@ export class ParentTalkModel {
         }
         this.endedAt = null;
         this.resultUntil = now + TALK_RESULT_VISIBLE_MS;
-        this.ui = {
-          ...this.ui,
-          phase: "denied",
-          untilElapsedMs: null,
-          deniedReason: denied,
-        };
+        this.phase = "denied";
+        this.until = null;
+        this.denied = denied;
         break;
       }
     }
@@ -195,11 +219,11 @@ export class ParentTalkModel {
     if (result === "unconfirmed") {
       this.unconfirmedPending = true;
       this.unconfirmedUntil = this.busy ? null : now + TALK_UNCONFIRMED_VISIBLE_MS;
-      this.ui = { ...this.ui, unconfirmed: true };
+      this.unconfirmed = true;
     } else if (result === "heard") {
       this.unconfirmedPending = false;
       this.unconfirmedUntil = null;
-      this.ui = { ...this.ui, unconfirmed: false };
+      this.unconfirmed = false;
     }
   }
 
@@ -221,27 +245,55 @@ export class ParentTalkModel {
   }
 
   private unavailable(now: number): TalkUnavailable | null {
-    if (this.busy) return null;
-    if (!this.browserSupported) return "browser_unsupported";
+    // A browser that cannot capture reads as "this device can't talk"; the screen words it.
+    if (!this.browserSupported) return "unsupported";
     if (!this.connected) return "not_connected";
     const peer = this.peer;
     if (peer?.talk === "off") return "off";
     if (peer?.talk === "unsupported") return "unsupported";
     if (peer?.talk === "muted") return "muted";
-    if (peer?.talker === "other") return "other_talker";
+    if (peer?.talker === "other") return "other_talking";
     if (this.retryAt !== null && now < this.retryAt) return "cooldown";
     return null;
   }
 
-  private build(now: number): ParentTalkUi {
-    const busy = this.busy;
-    const self = busy || this.peer?.talker === "you";
+  private talkUi(now: number): TalkUi {
+    const pending = this.retryAt !== null && now < this.retryAt ? this.retryAt : null;
+    switch (this.phase) {
+      case "requesting":
+        return { kind: "requesting" };
+      case "talking":
+        return { kind: "talking", untilElapsedMs: this.until ?? now };
+      case "denied": {
+        const reason = this.denied ?? "unknown";
+        const waits = reason === "cooldown" || reason === "budget";
+        return { kind: "denied", reason, retryAtElapsedMs: waits ? pending : null };
+      }
+      case "idle": {
+        const reason = this.unavailable(now);
+        return reason === null
+          ? { kind: "idle" }
+          : {
+              kind: "unavailable",
+              reason,
+              retryAtElapsedMs: reason === "cooldown" ? pending : null,
+            };
+      }
+    }
+  }
+
+  private build(now: number): ParentTalkFields {
+    const self = this.busy || this.peer?.talker === "you";
+    const noisePause: NoisePause | null = this.paused ? (self ? "you" : "other") : null;
     return {
-      ...this.ui,
-      unavailable: this.unavailable(now),
-      retryAtElapsedMs: this.retryAt !== null && now < this.retryAt ? this.retryAt : null,
-      noisePause: this.paused ? (self ? "self" : "other") : "none",
-      audibleUncertain: this.peer?.talk_audible === "uncertain",
+      ...defaultParentTalkFields(),
+      talk: this.talkUi(now),
+      talkEnd: this.ended,
+      talkPermission: PERMISSION_FOR_STEP[this.step],
+      noisePause,
+      talkUnconfirmed: this.unconfirmed,
+      talkAudibleUncertain: this.peer?.talk_audible === "uncertain",
+      afterTalkListenUntilElapsedMs: this.afterListenUntil,
     };
   }
 
@@ -255,40 +307,36 @@ export class ParentTalkModel {
 }
 
 /**
- * The baby device's talk-back view: the indicator while a parent's voice plays, the "last talk"
- * line (local only), the settings and whether the browser suspended its audio.
+ * The baby device's talk-back view: the indicator while a parent's voice plays and the "last talk"
+ * line (local only), merged into `BabyMonitorState` by the controller.
  */
 export class BabyTalkModel {
-  private ui: BabyTalkUi = defaultBabyTalk();
+  private fields: BabyTalkFields = { parentTalking: false, lastTalk: null };
 
   constructor(
     private readonly clock: Clock,
     private readonly parentName: () => string,
-    private readonly onChange: (state: BabyTalkUi) => void,
+    private readonly onChange: (fields: BabyTalkFields) => void,
   ) {}
 
-  get state(): BabyTalkUi {
-    return this.ui;
+  get state(): BabyTalkFields {
+    return this.fields;
   }
 
-  get settings(): TalkBackSettings {
-    return this.ui.settings;
-  }
-
-  /** A new run: no talk plays, the settings and the last talk of the page stay. */
+  /** A new run: no talk plays, the last talk of the page stays. */
   reset(): void {
-    this.update({ talking: false });
+    this.update({ parentTalking: false });
   }
 
   onEvent(event: LinkEvent): void {
     if (event.type !== "talk_active") return;
     if (event.active) {
-      this.update({ talking: true });
+      this.update({ parentTalking: true });
       return;
     }
     const endWall = this.clock.wallMs();
     this.update({
-      talking: false,
+      parentTalking: false,
       lastTalk: {
         name: this.parentName(),
         atWallMs: endWall - event.duration_ms,
@@ -297,17 +345,9 @@ export class BabyTalkModel {
     });
   }
 
-  setSettings(update: Partial<TalkBackSettings>): void {
-    this.update({ settings: { ...this.ui.settings, ...update } });
-  }
-
-  setSoundSuspended(suspended: boolean): void {
-    this.update({ soundSuspended: suspended });
-  }
-
-  private update(patch: Partial<BabyTalkUi>): void {
-    this.ui = { ...this.ui, ...patch };
-    this.onChange(this.ui);
+  private update(patch: Partial<BabyTalkFields>): void {
+    this.fields = { ...this.fields, ...patch };
+    this.onChange(this.fields);
   }
 }
 

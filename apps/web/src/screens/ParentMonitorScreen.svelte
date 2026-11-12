@@ -40,7 +40,7 @@
 
   const controller = useController();
   const router = useRouter();
-  const { app, parent, soundUnlocked, talk } = controller;
+  const { app, parent, soundUnlocked, webTalk } = controller;
 
   // ---- full screens ----------------------------------------------------------------------
 
@@ -177,8 +177,7 @@
   // The microphone is asked for in a step of its own before the first talk, never during a hold.
   let permissionOpen = $state(false);
   $effect(() => {
-    const p = $talk.permission;
-    permissionOpen = p === "sheet" || p === "done" || p === "refused";
+    permissionOpen = $parent.talkPermission !== "none";
   });
 
   // ---- sheets ----------------------------------------------------------------------------
@@ -344,10 +343,11 @@
     />
 
     <TalkButton
-      talk={$talk}
+      talk={$parent}
+      web={$webTalk}
       nowMs={$everySecond.elapsedMs}
-      onpress={() => controller.talkPress()}
-      onrelease={() => controller.talkRelease()}
+      onpress={() => controller.setTalk(true)}
+      onrelease={() => controller.setTalk(false)}
       onkeeplisten={() => controller.setListen("locked")}
     />
 
@@ -378,21 +378,21 @@
   bind:open={permissionOpen}
   title={$t("webScreens.talk.permissionTitle")}
   testid="parent_talk_permission_sheet"
-  onclose={() => controller.closeTalkPermission()}
+  onclose={() => controller.dismissTalkPermission()}
 >
-  {#if $talk.permission === "done"}
+  {#if $parent.talkPermission === "just_granted"}
     <p>{$t("webScreens.talk.permissionDone")}</p>
-  {:else if $talk.permission === "refused"}
+  {:else if $parent.talkPermission === "refused"}
     <p>{$t("webScreens.talk.permissionRefused")}</p>
   {:else}
     <p>{$t("webScreens.talk.permissionBody")}</p>
   {/if}
   {#snippet actions()}
-    {#if $talk.permission === "sheet"}
+    {#if $parent.talkPermission === "needed"}
       <Button
         variant="text"
         testid="parent_talk_permission_cancel"
-        onclick={() => controller.closeTalkPermission()}
+        onclick={() => controller.dismissTalkPermission()}
       >
         {$t("native.ui.common.cancel")}
       </Button>
@@ -403,7 +403,7 @@
         {$t("webScreens.talk.permissionAllow")}
       </Button>
     {:else}
-      <Button testid="parent_talk_permission_ok" onclick={() => controller.closeTalkPermission()}>
+      <Button testid="parent_talk_permission_ok" onclick={() => controller.dismissTalkPermission()}>
         {$t("native.ui.common.ok")}
       </Button>
     {/if}

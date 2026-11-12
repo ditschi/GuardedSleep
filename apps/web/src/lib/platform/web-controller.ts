@@ -12,25 +12,25 @@ import { readable, writable, type Readable } from "svelte/store";
 import {
   defaultAppState,
   defaultBabyMonitor,
-  defaultBabyTalk,
   defaultParentMonitor,
-  defaultParentTalk,
+  defaultParentTalkFields,
+  defaultWebTalk,
   defaultSettings,
   makePairingState,
   type AppController,
   type AppState,
   type BabyMonitorState,
-  type BabyTalkUi,
+  type BabyTalkFields,
   type DeviceBattery,
   type ListenMode,
   type PageGuardState,
   type PairingError,
   type PairingState,
   type ParentMonitorState,
-  type ParentTalkUi,
+  type ParentTalkFields,
   type Role,
   type SettingsState,
-  type TalkBackSettings,
+  type WebTalkState,
   type TurnSaveResult,
 } from "../contract";
 import { resolveTurnSave, turnSettings, type TurnEntry } from "../contract/turn";
@@ -187,8 +187,12 @@ export class WebController implements AppController {
   private readonly babyModel: BabyModel;
   private readonly parentStore = writable<ParentMonitorState>(defaultParentMonitor());
   private readonly babyStore = writable<BabyMonitorState>(defaultBabyMonitor());
-  private readonly talkStore = writable<ParentTalkUi>(defaultParentTalk());
-  private readonly babyTalkStore = writable<BabyTalkUi>(defaultBabyTalk());
+  private readonly webTalkStore = writable<WebTalkState>(defaultWebTalk());
+  // The models publish their own part; the stores always carry the merged state.
+  private parentBase: ParentMonitorState = defaultParentMonitor();
+  private parentTalk: ParentTalkFields = defaultParentTalkFields();
+  private babyBase: BabyMonitorState = defaultBabyMonitor();
+  private babyTalk: BabyTalkFields = { parentTalking: false, lastTalk: null };
   private readonly talkModel: ParentTalkModel;
   private readonly babyTalkModel: BabyTalkModel;
   private readonly alerts: AlertSink;
@@ -199,8 +203,7 @@ export class WebController implements AppController {
   readonly soundUnlocked: Readable<boolean> = this.soundStore;
   readonly parent: Readable<ParentMonitorState> = this.parentStore;
   readonly baby: Readable<BabyMonitorState> = this.babyStore;
-  readonly talk: Readable<ParentTalkUi> = this.talkStore;
-  readonly babyTalk: Readable<BabyTalkUi> = this.babyTalkStore;
+  readonly webTalk: Readable<WebTalkState> = this.webTalkStore;
   readonly deviceBattery: Readable<DeviceBattery | null>;
   readonly pageGuard: Readable<PageGuardState>;
 
@@ -231,19 +234,35 @@ export class WebController implements AppController {
         snoozeEnded: () => undefined,
       },
       () => this.settingsState.threshold,
-      (state) => this.parentStore.set(state),
+      (state) => {
+        this.parentBase = state;
+        this.publishParent();
+      },
     );
-    this.babyModel = new BabyModel(deps.clock, (state) => this.babyStore.set(state));
-    this.talkModel = new ParentTalkModel(deps.clock, (state) => this.talkStore.set(state));
+    this.babyModel = new BabyModel(deps.clock, (state) => {
+      this.babyBase = state;
+      this.publishBaby();
+    });
+    this.talkModel = new ParentTalkModel(deps.clock, (fields) => {
+      this.parentTalk = fields;
+      this.publishParent();
+    });
     this.talkModel.setBrowserSupported(deps.talkMic?.supported ?? false);
+    this.webTalkStore.set({
+      ...defaultWebTalk(),
+      micUnsupported: !(deps.talkMic?.supported ?? false),
+    });
     this.babyTalkModel = new BabyTalkModel(
       deps.clock,
       () => this.babyModel.parentDisplayName,
-      (state) => this.babyTalkStore.set(state),
+      (fields) => {
+        this.babyTalk = fields;
+        this.publishBaby();
+      },
     );
     // A page that leaves the front must not keep the microphone: the talk ends at once.
     this.page.state.subscribe((guard) => {
-      if (guard.hidden) this.talkInterrupt();
+      if (guard.hidden) this.interruptTalk();
     });
     this.babyModel.setSettings(this.settingsState.threshold, this.settingsState.holdSeconds);
     deps.gate.onChange((unlocked) => {
@@ -296,6 +315,13 @@ export class WebController implements AppController {
     }
     if (after.alertGainPct !== before.alertGainPct) {
       r.driver.media((m) => m.setPlaybackGainPct(after.alertGainPct));
+    }
+    if (
+      after.talkBackEnabled !== before.talkBackEnabled ||
+      after.talkVolume !== before.talkVolume ||
+      after.talkChime !== before.talkChime
+    ) {
+      this.sendTalkSettings();
     }
   }
 
@@ -516,7 +542,12 @@ export class WebController implements AppController {
 
   // ---- talk-back (parent) ------------------------------------------------------------------
 
-  talkPress(): void {
+  setTalk(pressed: boolean): void {
+    if (pressed) this.talkPressed();
+    else this.talkReleased();
+  }
+
+  private talkPressed(): void {
     const driver = this.run?.driver;
     if (!driver || this.run?.role !== "parent") return;
     if (this.talkModel.busy || !this.talkModel.available) return;
@@ -531,7 +562,7 @@ export class WebController implements AppController {
     driver.input({ type: "set_talk", pressed: true });
   }
 
-  talkRelease(): void {
+  private talkReleased(): void {
     const driver = this.run?.driver;
     if (!driver || this.run?.role !== "parent" || !this.talkModel.busy) return;
     driver.input({ type: "set_talk", pressed: false });
@@ -539,21 +570,27 @@ export class WebController implements AppController {
     driver.media((m) => m.discardTalkMic());
   }
 
-  talkInterrupt(): void {
-    this.talkRelease();
+  interruptTalk(): void {
+    this.talkReleased();
   }
 
   requestTalkPermission(): void {
     const port = this.deps.talkMic;
     if (!port) return;
-    void port.request().then((result) => {
-      this.talkModel.setPermission(result === "granted" ? "done" : "refused");
-    });
+    void port.request().then((result) => this.talkPermissionResult(result === "granted"));
   }
 
-  closeTalkPermission(): void {
+  talkPermissionResult(granted: boolean): void {
+    this.talkModel.setPermission(granted ? "done" : "refused");
+  }
+
+  dismissTalkPermission(): void {
     const permission = this.talkModel.permission;
     this.talkModel.setPermission(permission === "done" ? "granted" : "unknown");
+  }
+
+  dismissTalkCoach(): void {
+    this.updateSettingsState({ talkCoachSeen: true });
   }
 
   /** An alert is about to sound on this device: a talk in progress ends first. */
@@ -571,14 +608,9 @@ export class WebController implements AppController {
 
   // ---- talk-back (baby) --------------------------------------------------------------------
 
-  setTalkBack(update: Partial<TalkBackSettings>): void {
-    this.babyTalkModel.setSettings(update);
-    this.sendTalkSettings();
-  }
-
   playTalkChimeSample(): void {
     this.deps.gate.unlock().catch(() => undefined);
-    const level = this.babyTalkModel.settings.level;
+    const level = this.settingsState.talkVolume;
     this.run?.driver?.media((m) => m.playTalkChime(level, () => undefined));
   }
 
@@ -589,7 +621,7 @@ export class WebController implements AppController {
   private sendTalkSettings(): void {
     const driver = this.run?.driver;
     if (!driver || this.run?.role !== "baby") return;
-    const { enabled, level, chime } = this.babyTalkModel.settings;
+    const { talkBackEnabled: enabled, talkVolume: level, talkChime: chime } = this.settingsState;
     driver.input({ type: "set_talk_back", enabled, level, chime });
   }
 
@@ -600,7 +632,7 @@ export class WebController implements AppController {
   private onSoundState(unlocked: boolean): void {
     const r = this.run;
     if (r?.role !== "baby") return;
-    this.babyTalkModel.setSoundSuspended(!unlocked);
+    this.webTalkStore.update((w) => ({ ...w, soundSuspended: !unlocked }));
     r.driver?.input({ type: "set_talk_muted", muted: !unlocked });
   }
 
@@ -635,7 +667,7 @@ export class WebController implements AppController {
     this.babyModel.reset();
     this.talkModel.reset();
     this.babyTalkModel.reset();
-    this.babyTalkModel.setSoundSuspended(false);
+    this.webTalkStore.update((w) => ({ ...w, soundSuspended: false }));
 
     let media: MediaEngine;
     try {
@@ -673,7 +705,7 @@ export class WebController implements AppController {
       // settings are this page's; a suspended audio context cannot play a talk.
       driver.input({ type: "set_raw_capture", raw: true });
       this.sendTalkSettings();
-      this.babyTalkModel.setSoundSuspended(!this.deps.gate.unlocked);
+      this.webTalkStore.update((w) => ({ ...w, soundSuspended: !this.deps.gate.unlocked }));
       driver.input({ type: "set_talk_muted", muted: !this.deps.gate.unlocked });
     } else {
       this.refreshTalkPermission(run);
@@ -937,6 +969,14 @@ export class WebController implements AppController {
     this.appState = { ...this.appState, ...patch };
     this.appStore.set(this.appState);
     if (patch.monitoring !== undefined) this.page.setMonitoring(patch.monitoring);
+  }
+
+  private publishParent(): void {
+    this.parentStore.set({ ...this.parentBase, ...this.parentTalk });
+  }
+
+  private publishBaby(): void {
+    this.babyStore.set({ ...this.babyBase, ...this.babyTalk });
   }
 
   private updateSettingsState(patch: Partial<SettingsState>): void {

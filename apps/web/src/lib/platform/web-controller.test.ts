@@ -1099,55 +1099,55 @@ describe("WebController: talk-back, parent", () => {
 
   it("a first press opens the permission step and sends nothing", async () => {
     const t = await talkReady();
-    t.controller.talkPress();
-    expect(get(t.controller.talk).permission).toBe("sheet");
+    t.controller.setTalk(true);
+    expect(get(t.controller.parent).talkPermission).toBe("needed");
     expect(talkInputs(t)).toEqual([]);
     expect(t.medias[0]?.calls).not.toContain("warm");
   });
 
   it("the permission step grants, then a press warms the microphone and asks the core", async () => {
     const t = await talkReady();
-    t.controller.talkPress();
+    t.controller.setTalk(true);
     t.controller.requestTalkPermission();
     await flush();
-    expect(get(t.controller.talk).permission).toBe("done");
-    t.controller.closeTalkPermission();
-    expect(get(t.controller.talk).permission).toBe("granted");
-    t.controller.talkPress();
+    expect(get(t.controller.parent).talkPermission).toBe("just_granted");
+    t.controller.dismissTalkPermission();
+    expect(get(t.controller.parent).talkPermission).toBe("none");
+    t.controller.setTalk(true);
     expect(t.medias[0]?.calls).toContain("warm");
     expect(talkInputs(t)).toEqual([{ type: "set_talk", pressed: true }]);
-    expect(get(t.controller.talk).phase).toBe("requesting");
+    expect(get(t.controller.parent).talk.kind).toBe("requesting");
   });
 
   it("a refused permission sends no request and says so", async () => {
     const t = await talkReady({ talkMic: mic({ request: () => Promise.resolve("refused") }) });
-    t.controller.talkPress();
+    t.controller.setTalk(true);
     t.controller.requestTalkPermission();
     await flush();
-    expect(get(t.controller.talk).permission).toBe("refused");
+    expect(get(t.controller.parent).talkPermission).toBe("refused");
     expect(talkInputs(t)).toEqual([]);
   });
 
   it("an already granted browser permission skips the step", async () => {
     const t = await talkReady({ talkMic: mic({ query: () => Promise.resolve("granted") }) });
     await flush();
-    t.controller.talkPress();
+    t.controller.setTalk(true);
     expect(talkInputs(t)).toEqual([{ type: "set_talk", pressed: true }]);
   });
 
   it("release ends the talk and closes a microphone that was never attached", async () => {
     const t = await talkReady({ talkMic: mic({ query: () => Promise.resolve("granted") }) });
     await flush();
-    t.controller.talkPress();
-    t.controller.talkRelease();
+    t.controller.setTalk(true);
+    t.controller.setTalk(false);
     expect(talkInputs(t).at(-1)).toEqual({ type: "set_talk", pressed: false });
     expect(t.medias[0]?.calls.at(-1)).toBe("discard");
   });
 
   it("a release without a press does nothing", async () => {
     const t = await talkReady();
-    t.controller.talkRelease();
-    t.controller.talkInterrupt();
+    t.controller.setTalk(false);
+    t.controller.interruptTalk();
     expect(talkInputs(t)).toEqual([]);
   });
 
@@ -1156,7 +1156,7 @@ describe("WebController: talk-back, parent", () => {
     const page: PageWatch = { ...idleWatch(), state: guard };
     const t = await talkReady({ talkMic: mic({ query: () => Promise.resolve("granted") }), page });
     await flush();
-    t.controller.talkPress();
+    t.controller.setTalk(true);
     guard.set({ wakeLock: "off", hidden: true, away: null });
     expect(talkInputs(t).at(-1)).toEqual({ type: "set_talk", pressed: false });
   });
@@ -1164,7 +1164,7 @@ describe("WebController: talk-back, parent", () => {
   it("an alert sound ends the talk first", async () => {
     const t = await talkReady({ talkMic: mic({ query: () => Promise.resolve("granted") }) });
     await flush();
-    t.controller.talkPress();
+    t.controller.setTalk(true);
     t.core.script = (input) =>
       input.type === "tick"
         ? [
@@ -1180,10 +1180,14 @@ describe("WebController: talk-back, parent", () => {
 
   it("iOS-like browsers: the button is unavailable and a press does nothing", async () => {
     const t = await talkReady({ talkMic: mic({ supported: false }) });
-    expect(get(t.controller.talk).unavailable).toBe("browser_unsupported");
-    t.controller.talkPress();
+    expect(get(t.controller.parent).talk).toMatchObject({
+      kind: "unavailable",
+      reason: "unsupported",
+    });
+    expect(get(t.controller.webTalk).micUnsupported).toBe(true);
+    t.controller.setTalk(true);
     expect(talkInputs(t)).toEqual([]);
-    expect(get(t.controller.talk).permission).toBe("unknown");
+    expect(get(t.controller.parent).talkPermission).toBe("none");
   });
 
   it("shows the baby's reasons before the press, from its device status", async () => {
@@ -1194,19 +1198,22 @@ describe("WebController: talk-back, parent", () => {
     });
     t.core.script = () => [status({ talk: "off" })];
     t.time.advance(250);
-    expect(get(t.controller.talk).unavailable).toBe("off");
+    expect(get(t.controller.parent).talk).toMatchObject({ kind: "unavailable", reason: "off" });
     t.core.script = () => [status({ talk: "on", talker: "other", noise_paused: true })];
     t.time.advance(250);
-    expect(get(t.controller.talk)).toMatchObject({
-      unavailable: "other_talker",
+    expect(get(t.controller.parent)).toMatchObject({
+      talk: { kind: "unavailable", reason: "other_talking" },
       noisePause: "other",
     });
     t.core.script = () => [status({ talk: "on", talk_retry_in_ms: 8_000 })];
     t.time.advance(250);
-    expect(get(t.controller.talk).unavailable).toBe("cooldown");
+    expect(get(t.controller.parent).talk).toMatchObject({
+      kind: "unavailable",
+      reason: "cooldown",
+    });
     t.core.script = () => [status({ talk: "on" })];
     t.time.advance(250);
-    expect(get(t.controller.talk).unavailable).toBeNull();
+    expect(get(t.controller.parent).talk.kind).toBe("idle");
   });
 
   it("maps the core's talk states and the playback check", async () => {
@@ -1217,22 +1224,22 @@ describe("WebController: talk-back, parent", () => {
     });
     t.core.script = () => [talk({ state: "talking", until_ms: 40_000 })];
     t.time.advance(250);
-    expect(get(t.controller.talk)).toMatchObject({ phase: "talking", untilElapsedMs: 40_000 });
+    expect(get(t.controller.parent).talk).toEqual({ kind: "talking", untilElapsedMs: 40_000 });
     t.core.script = () => [
       talk({ state: "ended", reason: "limit" }),
       { type: "emit", event: { type: "talk_playback", result: "unconfirmed" } },
     ];
     t.time.advance(250);
-    expect(get(t.controller.talk)).toMatchObject({
-      phase: "ended",
-      endedReason: "limit",
-      unconfirmed: true,
+    expect(get(t.controller.parent)).toMatchObject({
+      talk: { kind: "idle" },
+      talkEnd: "limit",
+      talkUnconfirmed: true,
     });
     t.core.script = () => [];
     t.time.advance(6_000);
-    expect(get(t.controller.talk).phase).toBe("idle");
+    expect(get(t.controller.parent).talkEnd).toBeNull();
     t.time.advance(16_000);
-    expect(get(t.controller.talk).unconfirmed).toBe(false);
+    expect(get(t.controller.parent).talkUnconfirmed).toBe(false);
   });
 });
 
@@ -1250,34 +1257,34 @@ describe("WebController: talk-back, baby", () => {
     expect(t.core.inputs).toContainEqual({ type: "set_raw_capture", raw: true });
     // Starting pairing is the gesture that unlocks the audio context.
     expect(t.core.inputs).toContainEqual({ type: "set_talk_muted", muted: false });
-    expect(get(t.controller.babyTalk).soundSuspended).toBe(false);
+    expect(get(t.controller.webTalk).soundSuspended).toBe(false);
   });
 
   it("a suspended audio context reports muted, a tap turns it back on", async () => {
     const t = await babyRun();
     t.ctx.setState("suspended");
     expect(t.core.inputs.at(-1)).toEqual({ type: "set_talk_muted", muted: true });
-    expect(get(t.controller.babyTalk).soundSuspended).toBe(true);
+    expect(get(t.controller.webTalk).soundSuspended).toBe(true);
     t.controller.unlockSound();
     await flush();
     expect(t.core.inputs.at(-1)).toEqual({ type: "set_talk_muted", muted: false });
-    expect(get(t.controller.babyTalk).soundSuspended).toBe(false);
+    expect(get(t.controller.webTalk).soundSuspended).toBe(false);
   });
 
   it("settings stay on this page and reach the core as set_talk_back", async () => {
     const t = await babyRun();
-    t.controller.setTalkBack({ level: "high", chime: false });
+    t.controller.updateSettings((s) => ({ ...s, talkVolume: "high", talkChime: false }));
     expect(t.core.inputs.at(-1)).toEqual({
       type: "set_talk_back",
       enabled: true,
       level: "high",
       chime: false,
     });
-    t.controller.setTalkBack({ enabled: false });
-    expect(get(t.controller.babyTalk).settings).toEqual({
-      enabled: false,
-      level: "high",
-      chime: false,
+    t.controller.updateSettings((s) => ({ ...s, talkBackEnabled: false }));
+    expect(get(t.controller.settings)).toMatchObject({
+      talkBackEnabled: false,
+      talkVolume: "high",
+      talkChime: false,
     });
     t.controller.talkSettingsOpened();
     expect(t.core.inputs.at(-1)).toEqual({ type: "talk_settings_opened" });
@@ -1291,17 +1298,17 @@ describe("WebController: talk-back, baby", () => {
     });
     t.core.script = () => [active(true, 0)];
     t.time.advance(250);
-    expect(get(t.controller.babyTalk).talking).toBe(true);
+    expect(get(t.controller.baby).parentTalking).toBe(true);
     t.core.script = () => [active(false, 12_000)];
     t.time.advance(250);
-    const ui = get(t.controller.babyTalk);
-    expect(ui.talking).toBe(false);
+    const ui = get(t.controller.baby);
+    expect(ui.parentTalking).toBe(false);
     expect(ui.lastTalk?.durationMs).toBe(12_000);
   });
 
   it("plays the sample chime at the chosen level", async () => {
     const t = await babyRun();
-    t.controller.setTalkBack({ level: "medium" });
+    t.controller.updateSettings((s) => ({ ...s, talkVolume: "medium" }));
     t.controller.playTalkChimeSample();
     expect(t.medias[0]?.calls).toContain("chime:medium");
   });

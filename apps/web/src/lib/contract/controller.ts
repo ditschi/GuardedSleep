@@ -2,16 +2,14 @@ import type { Readable } from "svelte/store";
 import type {
   AppState,
   BabyMonitorState,
-  BabyTalkUi,
   DeviceBattery,
   ListenMode,
   PageGuardState,
   PairingState,
   ParentMonitorState,
-  ParentTalkUi,
   Role,
   SettingsState,
-  TalkBackSettings,
+  WebTalkState,
 } from "./models";
 import type { TurnSaveResult } from "./turn";
 
@@ -42,10 +40,11 @@ export interface AppController {
    */
   readonly pageGuard: Readable<PageGuardState>;
 
-  /** Web only: talk-back on the parent monitoring screen (`add-talk-back`). */
-  readonly talk: Readable<ParentTalkUi>;
-  /** Web only: talk-back on the baby device (indicator, last talk, settings, suspended audio). */
-  readonly babyTalk: Readable<BabyTalkUi>;
+  /**
+   * Web only: what the browser adds to talk-back (no microphone support here, audio suspended on
+   * the baby device); the talk models themselves are in `parent` and `baby`.
+   */
+  readonly webTalk: Readable<WebTalkState>;
 
   /** Sets the session role; `makeDefault` also stores it as the start mode. */
   chooseRole(role: Role, makeDefault?: boolean): void;
@@ -82,27 +81,32 @@ export interface AppController {
   tryReconnectNow(): void;
   dismissMissedEvents(): void;
 
+  // Talk-back (`add-talk-back`), the same intents as UiContract.kt.
   /**
-   * Web only. The talk button went down (after its hold time). Without microphone permission this
-   * opens the permission step and sends nothing.
+   * Parent: the talk button went down (after its hold time) or up; also ends a talk when the
+   * touch is cancelled. Without microphone permission a press opens the permission step and
+   * sends nothing.
    */
-  talkPress(): void;
-  /** Web only. The button was released or the touch was cancelled; also ends a talk in progress. */
-  talkRelease(): void;
-  /** Web only. The page left the front (hidden, blur): ends the talk and closes the microphone. */
-  talkInterrupt(): void;
-  /** Web only. "Allow microphone" in the permission step (a click handler: it may prompt). */
+  setTalk(pressed: boolean): void;
+  /** Parent: the page left the front (hidden, blur): ends the talk and closes the microphone. */
+  interruptTalk(): void;
+  /** Parent: the answer of the browser's microphone prompt. */
+  talkPermissionResult(granted: boolean): void;
+  /**
+   * Web only: "Allow microphone" in the permission step. The browser's prompt is page I/O, so the
+   * controller runs it and reports through `talkPermissionResult`; on Android the screen hosts the
+   * system dialog and calls `talkPermissionResult` itself.
+   */
   requestTalkPermission(): void;
-  closeTalkPermission(): void;
+  dismissTalkPermission(): void;
+  dismissTalkCoach(): void;
 
   // Baby
   setKioskLocked(locked: boolean): void;
   dismissSilenceRestoredNotice(): void;
-  /** Web only. Talk-back settings of this baby device (switch, volume, chime); memory only. */
-  setTalkBack(update: Partial<TalkBackSettings>): void;
-  /** Web only. "Play chime": the chime at the chosen volume, to set the computer's volume by. */
+  /** Baby: "Play chime" in the settings, at the chosen level. */
   playTalkChimeSample(): void;
-  /** Web only. The settings screen was opened by an adult (clears "may not be audible"). */
+  /** Baby: an adult opened the talk-back settings (ends the "may not be audible" warning). */
   talkSettingsOpened(): void;
 
   /** Web only. Call it from a click handler ("Tap to turn on alert sound"); it unlocks audio. */
