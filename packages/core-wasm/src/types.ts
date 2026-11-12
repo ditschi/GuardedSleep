@@ -24,6 +24,7 @@ export type {
   MailboxKind,
   Ringer,
   Role,
+  TalkLevel,
   UnitWarning,
 } from "../pkg/guardedsleep_wasm.js";
 
