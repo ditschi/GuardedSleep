@@ -627,7 +627,7 @@
       "endMicFailed": "Hablar se detuvo: el micrófono dejó de funcionar.",
       "endAlert": "Hablar se detuvo: una alerta necesita tu atención.",
       "deniedOther": "El dispositivo del bebé no aceptó hablar. Inténtalo de nuevo.",
-      "unavailableOff": "Hablar está desactivado en el dispositivo del bebé. Actívalo allí en Ajustes.",
+      "unavailableOff": "Hablar está desactivado en el dispositivo del bebé. Activa esa opción allí, en Ajustes.",
       "unavailableOther": "El otro dispositivo de padres está hablando con tu hijo.",
       "unavailableUnsupported": "Este dispositivo del bebé no puede reproducir tu voz.",
       "unavailableMuted": "El dispositivo del bebé no puede reproducir sonido ahora.",
