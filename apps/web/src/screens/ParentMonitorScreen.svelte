@@ -40,7 +40,7 @@
 
   const controller = useController();
   const router = useRouter();
-  const { app, parent, soundUnlocked, webTalk } = controller;
+  const { app, parent, settings, soundUnlocked, webTalk } = controller;
 
   // ---- full screens ----------------------------------------------------------------------
 
@@ -341,6 +341,19 @@
       onchange={(mode) => controller.setListen(mode)}
       testid="parent_listen"
     />
+
+    {#if connected && !$settings.talkCoachSeen && !$app.coachPending}
+      <Card tone="variant" testid="coach_talk">
+        <p>{$t("webScreens.talk.coach")}</p>
+        <Button
+          variant="text"
+          testid="coach_talk_dismiss"
+          onclick={() => controller.dismissTalkCoach()}
+        >
+          {$t("native.ui.common.ok")}
+        </Button>
+      </Card>
+    {/if}
 
     <TalkButton
       talk={$parent}

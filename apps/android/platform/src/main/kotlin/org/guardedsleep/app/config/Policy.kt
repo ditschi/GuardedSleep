@@ -40,6 +40,12 @@ object AlertPolicy {
     /** The listen the core starts after a talk (`TALK_AFTER_LISTEN_MS`), for the countdown line. */
     const val TALK_AFTER_LISTEN_MS = 10_000L
 
+    /** The own-microphone hint appears after this long without sound while talking. */
+    const val TALK_MIC_SILENT_MS = 2_000L
+
+    /** Below this level (0..1) the parent's own microphone counts as silent. */
+    const val TALK_MIC_SILENT_BELOW = 0.002
+
     /** Without a `missed_events` summary the parent restarts "quiet since" at the reconnect. */
     const val MISSED_EVENTS_GRACE_MS = 5_000L
 }

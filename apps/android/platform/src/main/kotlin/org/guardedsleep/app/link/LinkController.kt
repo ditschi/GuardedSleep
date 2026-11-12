@@ -904,6 +904,10 @@ class LinkController(
             if (current()) parentModel.onRemoteLevel(rms, nowMs)
         }
 
+        override fun onTalkMicLevel(rms: Double, nowMs: Long) {
+            if (current()) parentModel.onTalkMicLevel(rms, nowMs)
+        }
+
         override fun onInboundStats(stats: InboundAudioStats, nowMs: Long) {
             if (!current()) return
             PocLog.event("stats", "packets_received" to stats.packetsReceived)

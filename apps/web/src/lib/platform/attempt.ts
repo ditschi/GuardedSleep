@@ -48,6 +48,7 @@ export function createRtcAttempt(
   let channel: RTCDataChannel | null = null;
   /** Parent: the second audio transceiver, the talk line. */
   let talkTransceiver: RTCRtpTransceiver | null = null;
+  let talkTrackAttached = false;
   const pendingIce: RTCIceCandidateInit[] = [];
   const cancels = new Set<() => void>();
 
@@ -198,10 +199,22 @@ export function createRtcAttempt(
       if (closed || !sender) return false;
       try {
         await sender.replaceTrack(track);
+        talkTrackAttached = track !== null;
         return true;
       } catch {
         return false;
       }
+    },
+    async talkMicLevel(): Promise<number | null> {
+      if (closed || !talkTrackAttached) return null;
+      const report = await pc.getStats();
+      let level: number | null = null;
+      report.forEach((s: Record<string, unknown>) => {
+        if (level === null && s.type === "media-source" && (s.kind ?? s.mediaType) === "audio") {
+          level = typeof s.audioLevel === "number" ? s.audioLevel : null;
+        }
+      });
+      return level;
     },
     async inboundAudioStats(): Promise<InboundAudioStats | null> {
       if (closed || !hasAudioReceiver) return null;

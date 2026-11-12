@@ -11,6 +11,7 @@ export type TalkView = Pick<
   | "noisePause"
   | "talkUnconfirmed"
   | "talkAudibleUncertain"
+  | "talkMicSilent"
   | "afterTalkListenUntilElapsedMs"
 >;
 

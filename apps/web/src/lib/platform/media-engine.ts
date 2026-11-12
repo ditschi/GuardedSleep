@@ -42,6 +42,11 @@ export interface AttemptPort {
    * false when the browser refused or this attempt has no talk sender.
    */
   setTalkTrack(track: MediaStreamTrack | null): Promise<boolean>;
+  /**
+   * Parent: level 0..1 of the microphone feeding the talk sender, from the connection's stats (no
+   * node, no sink on the track). Null while no track is attached.
+   */
+  talkMicLevel(): Promise<number | null>;
   close(): void;
 }
 

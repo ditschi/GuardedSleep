@@ -186,6 +186,13 @@
     <p class="gs-talk__line gs-hint" data-testid="parent_noise_paused">{$t(noise.key)}</p>
   {/if}
 
+  <!-- A visible hint only: no live region, so nothing is spoken into the open microphone. -->
+  {#if talk.talkMicSilent && talk.talk.kind === "talking"}
+    <p class="gs-talk__line" data-tone="warn" data-testid="parent_talk_mic_silent">
+      {$t("webScreens.talk.micSilent")}
+    </p>
+  {/if}
+
   {#if showUnconfirmed}
     <p class="gs-talk__line" data-tone="warn" role="status" data-testid="parent_talk_unconfirmed">
       {$t("webScreens.talk.unconfirmed")}

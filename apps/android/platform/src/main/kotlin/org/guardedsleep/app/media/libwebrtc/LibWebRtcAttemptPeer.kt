@@ -228,6 +228,17 @@ internal class LibWebRtcAttemptPeer(
         talkReceiver?.setVolume(gain)
     }
 
+    override fun talkMicLevel(callback: (Double?) -> Unit) {
+        if (closed.get() || talkTransceiver?.sender?.track() == null) return callback(null)
+        pc.getStats { report ->
+            val source =
+                report.statsMap.values.firstOrNull {
+                    it.type == "media-source" && it.members["kind"] == "audio"
+                }
+            callback((source?.members?.get("audioLevel") as? Number)?.toDouble())
+        }
+    }
+
     override fun talkReceiverStats(callback: (TalkReceiverStats?) -> Unit) {
         if (closed.get() || talkReceiver == null) return callback(null)
         pc.getStats { report ->

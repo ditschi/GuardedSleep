@@ -15,6 +15,8 @@ import { tonePlanForLink } from "./audio";
 import type { Clock } from "./clock";
 import {
   TALK_AFTER_LISTEN_MS,
+  TALK_MIC_SILENT_BELOW,
+  TALK_MIC_SILENT_MS,
   TALK_RESULT_VISIBLE_MS,
   TALK_UNCONFIRMED_VISIBLE_MS,
 } from "./policy";
@@ -45,6 +47,8 @@ export class ParentTalkModel {
   private denied: TalkDeny | null = null;
   private step: MicStep = "unknown";
   private unconfirmed = false;
+  private micQuietSince: number | null = null;
+  private micSilent = false;
   private afterListenUntil: number | null = null;
   private connected = false;
   private browserSupported = true;
@@ -74,6 +78,7 @@ export class ParentTalkModel {
     this.denied = null;
     this.step = this.step === "sheet" ? "unknown" : this.step;
     this.unconfirmed = false;
+    this.clearMicSilent();
     this.afterListenUntil = null;
     this.connected = false;
     this.peer = null;
@@ -118,6 +123,26 @@ export class ParentTalkModel {
   clearAfterListen(): void {
     this.afterListenUntil = null;
     this.publish(this.clock.elapsedMs());
+  }
+
+  /**
+   * The level of the parent's own microphone while a talk has it attached. Presentation only:
+   * nothing here reaches the core, and the line stays visual (the screen never speaks it).
+   */
+  onMicLevel(rms: number, now: number): void {
+    if (this.phase !== "talking") return;
+    if (rms >= TALK_MIC_SILENT_BELOW) {
+      this.clearMicSilent();
+    } else {
+      this.micQuietSince ??= now;
+      this.micSilent = now - this.micQuietSince >= TALK_MIC_SILENT_MS;
+    }
+    this.publish(now);
+  }
+
+  private clearMicSilent(): void {
+    this.micQuietSince = null;
+    this.micSilent = false;
   }
 
   onEvent(event: LinkEvent, now: number): void {
@@ -179,6 +204,7 @@ export class ParentTalkModel {
         this.ended = null;
         this.denied = null;
         this.unconfirmed = false;
+        this.clearMicSilent();
         this.afterListenUntil = null;
         break;
       case "talking":
@@ -191,6 +217,7 @@ export class ParentTalkModel {
         this.releaseUnconfirmed(now);
         this.phase = "idle";
         this.until = null;
+        this.clearMicSilent();
         this.ended = reason;
         // A plain release needs no message; the result of the playback check may follow.
         this.resultUntil =
@@ -293,6 +320,7 @@ export class ParentTalkModel {
       noisePause,
       talkUnconfirmed: this.unconfirmed,
       talkAudibleUncertain: this.peer?.talk_audible === "uncertain",
+      talkMicSilent: this.micSilent,
       afterTalkListenUntilElapsedMs: this.afterListenUntil,
     };
   }

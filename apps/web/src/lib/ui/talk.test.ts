@@ -172,6 +172,19 @@ describe("TalkButton", () => {
     expect(screen.queryByTestId("parent_talk_unconfirmed")).toBeNull();
   });
 
+  it("shows the silent-microphone hint only while talking, outside any live region", () => {
+    mount({ talk: { kind: "talking", untilElapsedMs: 30_000 }, talkMicSilent: true });
+    const hint = screen.getByTestId("parent_talk_mic_silent");
+    expect(hint).toHaveTextContent("Your microphone isn't picking up sound.");
+    expect(hint.closest("[aria-live]")?.getAttribute("aria-live") ?? "off").toBe("off");
+    expect(hint).not.toHaveAttribute("role", "status");
+  });
+
+  it("hides the silent-microphone hint once the talk is over", () => {
+    mount({ talkMicSilent: true });
+    expect(screen.queryByTestId("parent_talk_mic_silent")).toBeNull();
+  });
+
   it("shows the noise pause line", () => {
     mount({ noisePause: "you" });
     expect(screen.getByTestId("parent_noise_paused")).toBeInTheDocument();

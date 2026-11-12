@@ -137,6 +137,7 @@ export interface ParentMonitorState {
   noisePause: NoisePause | null;
   talkUnconfirmed: boolean;
   talkAudibleUncertain: boolean;
+  talkMicSilent: boolean;
   afterTalkListenUntilElapsedMs: number | null;
 }
 
@@ -283,6 +284,11 @@ export interface ParentTalkFields {
   talkUnconfirmed: boolean;
   /** Three unconfirmed talks in a row: shown before the next press, never a denial. */
   talkAudibleUncertain: boolean;
+  /**
+   * Your own microphone has picked up (almost) no sound for a while during the talk: shown
+   * as a line, never spoken while the microphone is open.
+   */
+  talkMicSilent: boolean;
   /** The 10 s listen after a talk runs until then ("tap to keep listening"). */
   afterTalkListenUntilElapsedMs: number | null;
 }
@@ -295,6 +301,7 @@ export function defaultParentTalkFields(): ParentTalkFields {
     noisePause: null,
     talkUnconfirmed: false,
     talkAudibleUncertain: false,
+    talkMicSilent: false,
     afterTalkListenUntilElapsedMs: null,
   };
 }

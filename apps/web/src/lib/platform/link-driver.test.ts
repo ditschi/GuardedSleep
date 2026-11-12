@@ -93,6 +93,10 @@ class Recorder implements LinkListener {
   onInboundStats(): void {
     this.log.push("stats");
   }
+  talkMicLevels: number[] = [];
+  onTalkMicLevel(rms: number): void {
+    this.talkMicLevels.push(rms);
+  }
   onTornDown(): void {
     this.torn = true;
   }
@@ -709,6 +713,24 @@ describe("LinkDriver talk-back actions", () => {
     driver.input({ type: "request_probe" });
     await flushPromises();
     expect(core.types().filter((t) => t.startsWith("talk_mic"))).toEqual([]);
+  });
+
+  it("parent: polls its own microphone level only once the talk microphone was asked for", async () => {
+    const { driver, media, listener, time } = withActions("parent", [
+      { type: "set_talk_mic", attempt: 1, enabled: true },
+    ]);
+    const attempt = media.attempts[0];
+    if (attempt) attempt.micLevel = 0.2;
+    time.advance(1_000);
+    await flushPromises();
+    expect(listener.talkMicLevels).toEqual([]);
+    driver.input({ type: "request_probe" });
+    await flushPromises();
+    time.advance(1_000);
+    await flushPromises();
+    expect(listener.talkMicLevels.length).toBeGreaterThan(0);
+    expect(listener.talkMicLevels[0]).toBe(0.2);
+    driver.abort();
   });
 
   it("parent: set_talk_mic for an attempt that is gone leaves no microphone open", async () => {

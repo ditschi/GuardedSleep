@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AlertSink } from "./alert-sink";
-import { BabyTalkModel, preemptingAlerts } from "./talk-model";
+import { BabyTalkModel, ParentTalkModel, preemptingAlerts } from "./talk-model";
 import { FakeTime } from "./test-support";
 
 const sink = (): AlertSink => ({
@@ -53,6 +53,51 @@ describe("preemptingAlerts", () => {
       wasConnected: true,
     });
     expect(onSound).not.toHaveBeenCalled();
+  });
+});
+
+describe("ParentTalkModel: own microphone hint", () => {
+  function talking() {
+    const time = new FakeTime();
+    const model = new ParentTalkModel(time, () => undefined);
+    model.setConnected(true);
+    model.onEvent(
+      { type: "talk_changed", state: { state: "talking", until_ms: time.now + 30_000 } },
+      time.now,
+    );
+    return { time, model };
+  }
+
+  it("shows after 2 s without sound while talking, and clears with sound or the end", () => {
+    const { time, model } = talking();
+    model.onMicLevel(0, time.now);
+    time.advance(1_900);
+    model.onMicLevel(0.001, time.now);
+    expect(model.state.talkMicSilent).toBe(false);
+    time.advance(200);
+    model.onMicLevel(0, time.now);
+    expect(model.state.talkMicSilent).toBe(true);
+    model.onMicLevel(0.3, time.now);
+    expect(model.state.talkMicSilent).toBe(false);
+    time.advance(2_000);
+    model.onMicLevel(0, time.now);
+    time.advance(2_000);
+    model.onMicLevel(0, time.now);
+    expect(model.state.talkMicSilent).toBe(true);
+    model.onEvent(
+      { type: "talk_changed", state: { state: "ended", reason: "released" } },
+      time.now,
+    );
+    expect(model.state.talkMicSilent).toBe(false);
+  });
+
+  it("ignores levels outside a talk", () => {
+    const time = new FakeTime();
+    const model = new ParentTalkModel(time, () => undefined);
+    model.onMicLevel(0, time.now);
+    time.advance(5_000);
+    model.onMicLevel(0, time.now);
+    expect(model.state.talkMicSilent).toBe(false);
   });
 });
 

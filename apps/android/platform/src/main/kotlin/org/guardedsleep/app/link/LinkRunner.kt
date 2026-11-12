@@ -44,6 +44,9 @@ interface LinkListener {
     /** Parent: level of the received audio, ~10 Hz while audio flows. */
     fun onRemoteLevel(rms: Double, nowMs: Long)
 
+    /** Parent: level of its own microphone while a talk has it attached, ~2 Hz. */
+    fun onTalkMicLevel(rms: Double, nowMs: Long)
+
     /** Parent: inbound audio counters every few seconds. */
     fun onInboundStats(stats: InboundAudioStats, nowMs: Long)
 
@@ -89,6 +92,9 @@ class LinkRunner(
     private var lastSentStatus: DeviceStatus? = null
     private var lastSentStatusAt = 0L
     private var lastWallMs = -1L
+    /** Parent: the attempt whose talk sender carries the microphone, for the level poll. */
+    private var talkMicAttempt: UInt? = null
+    private var lastTalkMicPollAt = 0L
     private var lastWallElapsedMs = 0L
 
     private val isBaby = config.role == Role.BABY
@@ -230,6 +236,17 @@ class LinkRunner(
             }
         } else {
             m.drainRemoteRms()?.let { listener.onRemoteLevel(it, now) }
+            pollTalkMic(now)
+        }
+    }
+
+    /** Parent: the level of the open talk microphone, for the "isn't picking up sound" hint. */
+    private fun pollTalkMic(now: Long) {
+        val attempt = talkMicAttempt ?: return
+        if (now - lastTalkMicPollAt < TALK_MIC_POLL_MS) return
+        lastTalkMicPollAt = now
+        attempts[attempt]?.talkMicLevel { level ->
+            if (level != null) post { listener.onTalkMicLevel(level, clock.elapsedMs()) }
         }
     }
 
@@ -336,6 +353,7 @@ class LinkRunner(
     /** Parent: attach or detach the microphone; the answer is a separate input, never inline. */
     private fun setTalkMic(attempt: UInt, enabled: Boolean) {
         val ok = attempts[attempt]?.setTalkMic(enabled) ?: false
+        talkMicAttempt = if (enabled && ok) attempt else null
         if (!enabled) return
         post { dispatch(if (ok) LinkInput.TalkMicAttached else LinkInput.TalkMicFailed) }
     }
@@ -555,6 +573,7 @@ class LinkRunner(
     private companion object {
         const val FLUSH_MS = 300L
         const val STATS_MS = 5_000L
+        const val TALK_MIC_POLL_MS = 500L
 
         /** The longest mailbox frame passed on to the core (`signaling-mailboxes`: 64 KiB). */
         const val MAX_FRAME_CHARS = 64 * 1024

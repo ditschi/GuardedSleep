@@ -877,6 +877,9 @@ export class WebController implements AppController {
       onRemoteLevel: (rms: number, now: number) => {
         if (current()) this.parentModel.onRemoteLevel(rms, now);
       },
+      onTalkMicLevel: (rms: number, now: number) => {
+        if (current()) this.talkModel.onMicLevel(rms, now);
+      },
       onInboundStats: (stats: InboundAudioStats, now: number) => {
         if (current()) this.parentModel.onInboundStats(stats, now);
       },

@@ -17,6 +17,7 @@ import {
   DEVICE_STATUS_RESEND_MS,
   FLUSH_MS,
   STATS_MS,
+  TALK_MIC_POLL_MS,
   TALK_RTP_POLL_MS,
   TICK_MS,
 } from "./policy";
@@ -32,6 +33,8 @@ export interface LinkListener {
   onMicLevel(rms: number, nowMs: number): void;
   /** Parent: level of the received audio, about 10 Hz while audio flows. */
   onRemoteLevel(rms: number, nowMs: number): void;
+  /** Parent: level of its own microphone while a talk has it attached, about 2 Hz. */
+  onTalkMicLevel(rms: number, nowMs: number): void;
   /** Parent: inbound audio counters every few seconds. */
   onInboundStats(stats: InboundAudioStats, nowMs: number): void;
   /** The run is fully torn down. */
@@ -81,6 +84,8 @@ export class LinkDriver {
   private socketGen = 0;
   private readonly attempts = new Map<number, AttemptPort>();
   private liveAttempt: number | null = null;
+  /** Parent: the attempt whose talk sender has (or is getting) the microphone. */
+  private talkMicAttempt: number | null = null;
   private readonly cancels = new Set<Cancel>();
   private readonly queue: LinkInput[] = [];
   private draining = false;
@@ -121,7 +126,10 @@ export class LinkDriver {
     if (this.isBaby) {
       this.every(() => this.sendDeviceStatus(false), DEVICE_STATUS_CHECK_MS);
       this.every(() => this.pollTalkRtp(), TALK_RTP_POLL_MS);
-    } else this.every(() => this.pollStats(), STATS_MS);
+    } else {
+      this.every(() => this.pollStats(), STATS_MS);
+      this.every(() => this.pollTalkMic(), TALK_MIC_POLL_MS);
+    }
   }
 
   /**
@@ -345,6 +353,7 @@ export class LinkDriver {
    */
   private setTalkMic(handle: number, enabled: boolean): void {
     const port = this.attempts.get(handle);
+    this.talkMicAttempt = enabled ? handle : null;
     if (!port) {
       // The attempt is already gone: nothing to attach to, and no microphone may stay open.
       this.o.media.discardTalkMic();
@@ -410,6 +419,21 @@ export class LinkDriver {
       (stats) => {
         if (stats && !this.tornDown)
           this.o.listener.onInboundStats(stats, this.o.clock.elapsedMs());
+      },
+      () => undefined,
+    );
+  }
+
+  /** Parent: the level of the open talk microphone, for the "isn't picking up sound" hint. */
+  private pollTalkMic(): void {
+    const handle = this.talkMicAttempt;
+    const port = handle === null ? undefined : this.attempts.get(handle);
+    if (!port) return;
+    port.talkMicLevel().then(
+      (level) => {
+        if (level !== null && !this.tornDown && this.talkMicAttempt === handle) {
+          this.o.listener.onTalkMicLevel(level, this.o.clock.elapsedMs());
+        }
       },
       () => undefined,
     );

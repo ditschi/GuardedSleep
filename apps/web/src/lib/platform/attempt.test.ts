@@ -326,6 +326,18 @@ describe("createRtcAttempt", () => {
       ]);
     });
 
+    it("parent: reads its own microphone level from the stats only while a track is attached", async () => {
+      const { attempt, pc } = make(false);
+      attempt.setRemoteDescription("offer", "remote");
+      await flush();
+      expect(await attempt.talkMicLevel()).toBeNull();
+      await attempt.setTalkTrack({} as MediaStreamTrack);
+      pc.statsQueue = [report({ s: { type: "media-source", kind: "audio", audioLevel: 0.25 } })];
+      expect(await attempt.talkMicLevel()).toBe(0.25);
+      await attempt.setTalkTrack(null);
+      expect(await attempt.talkMicLevel()).toBeNull();
+    });
+
     it("parent: puts a track on the talk sender only on request and takes it off again", async () => {
       const { attempt, pc } = make(false);
       attempt.setRemoteDescription("offer", "remote");

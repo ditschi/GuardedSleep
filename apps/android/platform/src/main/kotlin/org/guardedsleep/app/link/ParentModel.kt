@@ -105,6 +105,8 @@ class ParentModel(
     private var talkPermission = TalkPermission.NONE
     private var noisePaused = false
     private var talkUnconfirmed = false
+    private var micQuietSince: Long? = null
+    private var talkMicSilent = false
     private var afterTalkListenUntil: Long? = null
     private var silenceRequest = SilenceRequest.IDLE
     private var silenceRequestedAt = 0L
@@ -147,6 +149,7 @@ class ParentModel(
         talkEnd = null
         noisePaused = false
         talkUnconfirmed = false
+        clearMicSilent()
         afterTalkListenUntil = null
         silenceRequest = SilenceRequest.IDLE
         missed = null
@@ -312,6 +315,27 @@ class ParentModel(
             if (tracker.active) noiseLastWall = clock.wallMs()
         }
         publish(now)
+    }
+
+    /**
+     * The level of the parent's own microphone while a talk has it attached. Presentation only:
+     * nothing here reaches the core, and the line stays visual (never spoken).
+     */
+    @Synchronized
+    fun onTalkMicLevel(rms: Double, now: Long) {
+        if (talkUi !is TalkUi.Talking) return
+        if (rms >= AlertPolicy.TALK_MIC_SILENT_BELOW) {
+            clearMicSilent()
+        } else {
+            val since = micQuietSince ?: now.also { micQuietSince = it }
+            talkMicSilent = now - since >= AlertPolicy.TALK_MIC_SILENT_MS
+        }
+        publish(now)
+    }
+
+    private fun clearMicSilent() {
+        micQuietSince = null
+        talkMicSilent = false
     }
 
     @Synchronized
@@ -515,10 +539,12 @@ class ParentModel(
                 talkUi = TalkUi.Requesting
                 talkEnd = null
                 talkUnconfirmed = false
+                clearMicSilent()
             }
             is TalkState.Talking -> talkUi = TalkUi.Talking(state.untilMs.toLong())
             is TalkState.Ended -> {
                 talkUi = TalkUi.Idle
+                clearMicSilent()
                 talkEnd = TalkMapping.end(state.reason)
                 talkNoticeAt = now
             }
@@ -635,6 +661,7 @@ class ParentModel(
                 noisePause = noisePause(),
                 talkUnconfirmed = talkUnconfirmed,
                 talkAudibleUncertain = peerStatus?.talkAudible == TalkAudible.UNCERTAIN,
+                talkMicSilent = talkMicSilent,
                 afterTalkListenUntilElapsedMs = afterTalkListenUntil,
             )
     }

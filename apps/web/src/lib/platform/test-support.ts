@@ -139,6 +139,11 @@ export class FakeAttempt implements AttemptPort {
   inboundAudioStats(): Promise<InboundAudioStats | null> {
     return Promise.resolve(this.stats);
   }
+  /** What the next `talkMicLevel` reports (a test sets it; null = nothing attached). */
+  micLevel: number | null = null;
+  talkMicLevel(): Promise<number | null> {
+    return Promise.resolve(this.micLevel);
+  }
   talkTracks: Array<MediaStreamTrack | null> = [];
   setTalkTrack(track: MediaStreamTrack | null): Promise<boolean> {
     this.talkTracks.push(track);

@@ -82,6 +82,12 @@ export const TALK_CHIME_NOTE_S = 0.3;
 /** The core's listen after a talk; the screen counts it with the core's own `listen_changed`. */
 export const TALK_AFTER_LISTEN_MS = 10_000;
 /** An end reason or denial stays on the parent's screen this long. */
+/** How often the parent's own microphone level is read while a talk runs (stats, no sink). */
+export const TALK_MIC_POLL_MS = 500;
+/** The own-microphone hint appears after this long without sound while talking. */
+export const TALK_MIC_SILENT_MS = 2_000;
+/** Below this level (0..1) the parent's own microphone counts as silent. */
+export const TALK_MIC_SILENT_BELOW = 0.002;
 export const TALK_RESULT_VISIBLE_MS = 6_000;
 /** "Your voice may not be audible" stays this long. */
 export const TALK_UNCONFIRMED_VISIBLE_MS = 15_000;

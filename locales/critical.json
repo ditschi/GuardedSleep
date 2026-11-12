@@ -81,6 +81,7 @@
     { "pattern": "webScreens.talk.endNoAnswer", "budget": 120 },
     { "pattern": "webScreens.talk.endLinkLost", "budget": 130 },
     { "pattern": "webScreens.talk.endMicFailed", "budget": 130 },
+    { "pattern": "webScreens.talk.micSilent", "budget": 110 },
     { "pattern": "webScreens.talk.endAlert", "budget": 130 },
     { "pattern": "webScreens.talk.deniedOther", "budget": 110 },
     { "pattern": "webScreens.talk.unavailableOff", "budget": 160 },

@@ -293,6 +293,12 @@ fun TalkSection(
                 )
             null -> Unit
         }
+        // A visible hint only: no live region, so nothing is spoken into the open microphone.
+        if (p.talkMicSilent && talk is TalkUi.Talking)
+            Body(
+                stringResource(R.string.native_ui_talk_msg_mic_silent),
+                tag = "parent_talk_mic_silent",
+            )
         if (p.talkUnconfirmed)
             Body(
                 stringResource(R.string.native_ui_talk_msg_unconfirmed),

@@ -82,6 +82,33 @@ class TalkModelTest {
     }
 
     @Test
+    fun anOwnMicrophoneThatStaysSilentForTwoSecondsRaisesTheHintUntilSoundOrTheEnd() {
+        connected()
+        model.onTalkMicLevel(0.0, clock.elapsed)
+        assertFalse(ui.talkMicSilent)
+        talk(TalkState.Talking(clock.elapsed.toULong() + 30_000u))
+        model.onTalkMicLevel(0.0, clock.elapsed)
+        clock.advance(1_900)
+        model.onTalkMicLevel(0.001, clock.elapsed)
+        assertFalse(ui.talkMicSilent)
+        clock.advance(100)
+        model.onTalkMicLevel(0.001, clock.elapsed)
+        assertTrue(ui.talkMicSilent)
+        // Sound clears it and the count starts over.
+        model.onTalkMicLevel(0.2, clock.elapsed)
+        assertFalse(ui.talkMicSilent)
+        clock.advance(2_000)
+        model.onTalkMicLevel(0.0, clock.elapsed)
+        assertFalse(ui.talkMicSilent)
+        clock.advance(2_000)
+        model.onTalkMicLevel(0.0, clock.elapsed)
+        assertTrue(ui.talkMicSilent)
+        // The end of the talk drops the hint.
+        talk(TalkState.Ended(TalkEndReason.RELEASED))
+        assertFalse(ui.talkMicSilent)
+    }
+
+    @Test
     fun aDenialCarriesItsReasonAndRetryAndFadesAfterAWhile() {
         connected()
         talk(TalkState.Denied(TalkDenyReason.Cooldown(12_000u)))

@@ -142,6 +142,21 @@ class TalkTests : ShotBase() {
     }
 
     @Test
+    fun theSilentMicrophoneHintShowsOnlyWhileTalking() = runComposeUiTest {
+        val talking = TalkUi.Talking(untilElapsedMs = 30_000)
+        val parent = ParentMonitorState(link = Connected, talk = talking)
+        val c = controller(parent)
+        show { ParentMonitorScreen(c, {}) }
+        onNodeWithTag("parent_talk_mic_silent").assertDoesNotExist()
+        c.parentFlow.value = parent.copy(talkMicSilent = true)
+        waitForIdle()
+        onNodeWithTag("parent_talk_mic_silent").assertIsDisplayed()
+        c.parentFlow.value = parent.copy(talk = TalkUi.Idle, talkMicSilent = true)
+        waitForIdle()
+        onNodeWithTag("parent_talk_mic_silent").assertDoesNotExist()
+    }
+
+    @Test
     fun theCoachMarkShowsOnceAndGoesOnTheFirstPress() = runComposeUiTest {
         val c =
             FakeAppController(

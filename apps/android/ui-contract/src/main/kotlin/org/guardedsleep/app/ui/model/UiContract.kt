@@ -262,6 +262,11 @@ data class ParentMonitorState(
     val talkUnconfirmed: Boolean = false,
     /** Three unconfirmed talks in a row: shown before the next press, never a denial. */
     val talkAudibleUncertain: Boolean = false,
+    /**
+     * Your own microphone has picked up (almost) no sound for a while during the talk: shown as a
+     * line, never spoken while the microphone is open.
+     */
+    val talkMicSilent: Boolean = false,
     /** The 10 s listen after a talk runs until then ("tap to keep listening"). */
     val afterTalkListenUntilElapsedMs: Long? = null,
 )
