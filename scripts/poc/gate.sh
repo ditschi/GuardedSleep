@@ -13,7 +13,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 BABY="${BABY_SERIAL:-emulator-5554}"
 PARENT="${PARENT_SERIAL:-emulator-5556}"
-APK="${APK:-$ROOT/apps/android/app/build/outputs/apk/debug/app-debug.apk}"
+APK="${APK:-$ROOT/apps/android/app/build/outputs/apk/debug/guardedsleep-debug.apk}"
 PKG=org.guardedsleep.app.alpha
 DEBUG_LAUNCH=org.guardedsleep.app.debug.DebugLaunchActivity
 DEBUG_INJECT=org.guardedsleep.app.debug.DebugInjectReceiver

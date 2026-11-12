@@ -5,7 +5,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-APK="${RELEASE_APK:-$ROOT/apps/android/app/build/outputs/apk/release/app-release-unsigned.apk}"
+APK="${RELEASE_APK:-$ROOT/apps/android/app/build/outputs/apk/release/guardedsleep-release-unsigned.apk}"
 FORBIDDEN=("DebugLaunchActivity" "DebugInjectReceiver" "org.guardedsleep.app.alpha.debug.INJECT_AUDIO")
 
 [[ -f "$APK" ]] || {

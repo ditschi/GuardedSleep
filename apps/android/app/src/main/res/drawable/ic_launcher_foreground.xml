@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Placeholder crescent until the brand asset exists. Kept inside the 72dp safe zone of the 108dp
-     adaptive canvas (centre 54,54; the crescent spans about x 36..68, y 28..80). -->
+<!-- Placeholder crescent until the brand asset exists: a disc (centre 54.5,54, r 22) cut by a
+     second disc (centre 65.5,45, r 19). Inside the 72dp safe zone of the 108dp adaptive canvas. An arc
+     radius below half its chord is scaled up to it, so the earlier path collapsed to zero area. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
@@ -8,5 +9,5 @@
     android:viewportHeight="108">
     <path
         android:fillColor="#F4E9C8"
-        android:pathData="M62,28a26,26 0,1 0,0 52a21,21 0,1 1,0 -52z" />
+        android:pathData="M51.45,32.21A22,22 0,1 0 75.25,61.31A19,19 0,0 1 51.45,32.21Z" />
 </vector>
