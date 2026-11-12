@@ -171,8 +171,9 @@ impl Link {
         self.cfg.role == Role::Baby
             && self.live_verified()
             && self.pin.is_some()
-            && self.live_handle().is_some()
-            && self.live_handle() == self.talk.pinned_attempt
+            && self
+                .live_handle()
+                .is_some_and(|h| self.talk.pinned_attempt == Some(h))
     }
 
     fn talk_line_ok(&self) -> bool {
@@ -224,16 +225,23 @@ impl Link {
         }
         if pressed {
             self.press_talk(now, out);
-        } else if let Some(t) = self.talk.parent {
+        } else {
+            self.end_parent_talk_locally(now, TalkEndReason::Released, true, out);
+        }
+    }
+
+    /// Parent: a local cause (release, microphone failure, alert) ends the running talk, if any.
+    fn end_parent_talk_locally(
+        &mut self,
+        now: u64,
+        reason: TalkEndReason,
+        listen: bool,
+        out: &mut Vec<LinkAction>,
+    ) {
+        if let Some(t) = self.talk.parent {
             // A request that the baby already denied has nothing to end on its side.
             let send_end = !matches!(t.phase, ParentPhase::RateWait { .. });
-            self.end_parent_talk(
-                now,
-                Outcome::Ended(TalkEndReason::Released),
-                send_end,
-                true,
-                out,
-            );
+            self.end_parent_talk(now, Outcome::Ended(reason), send_end, listen, out);
         }
     }
 
@@ -288,30 +296,12 @@ impl Link {
 
     /// Parent: the microphone failed or its permission was revoked.
     pub(super) fn on_talk_mic_failed(&mut self, now: u64, out: &mut Vec<LinkAction>) {
-        if let Some(t) = self.talk.parent {
-            let send_end = !matches!(t.phase, ParentPhase::RateWait { .. });
-            self.end_parent_talk(
-                now,
-                Outcome::Ended(TalkEndReason::MicFailed),
-                send_end,
-                true,
-                out,
-            );
-        }
+        self.end_parent_talk_locally(now, TalkEndReason::MicFailed, true, out);
     }
 
     /// Parent: an alert sound or vibration is due; the talk ends first.
     pub(super) fn on_alert_preempts_talk(&mut self, now: u64, out: &mut Vec<LinkAction>) {
-        if let Some(t) = self.talk.parent {
-            let send_end = !matches!(t.phase, ParentPhase::RateWait { .. });
-            self.end_parent_talk(
-                now,
-                Outcome::Ended(TalkEndReason::Alert),
-                send_end,
-                false,
-                out,
-            );
-        }
+        self.end_parent_talk_locally(now, TalkEndReason::Alert, false, out);
     }
 
     /// Whether a parent talk runs (a test alert is unavailable meanwhile).
