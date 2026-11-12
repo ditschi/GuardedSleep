@@ -37,6 +37,9 @@ object AlertPolicy {
     /** "Connected again after m:ss" stays visible this long. */
     const val RESTORED_NOTICE_MS = 10_000L
 
+    /** The listen the core starts after a talk (`TALK_AFTER_LISTEN_MS`), for the countdown line. */
+    const val TALK_AFTER_LISTEN_MS = 10_000L
+
     /** Without a `missed_events` summary the parent restarts "quiet since" at the reconnect. */
     const val MISSED_EVENTS_GRACE_MS = 5_000L
 }

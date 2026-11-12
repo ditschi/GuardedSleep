@@ -142,6 +142,81 @@ data class MissedEventsUi(
 /** UI-pass addition: the last finished noise event, for "Sound at {time} · lasted {duration}". */
 data class SoundEventUi(val atWallMs: Long, val durationMs: Long)
 
+/** Talk-back volume of the baby device (a baby setting; `add-talk-back` design §7). */
+enum class TalkVolume {
+    LOW,
+    MEDIUM,
+    HIGH,
+}
+
+/** Why a talk ended on the parent device (core `TalkEndReason`). */
+enum class TalkEnd {
+    RELEASED,
+    LIMIT,
+    NO_ANSWER,
+    LINK_LOST,
+    MIC_FAILED,
+    ALERT,
+    SWITCHED_OFF,
+    STOPPED,
+}
+
+/** Why the baby device refused a talk (core `TalkDenyReason`; UNKNOWN for a newer reason). */
+enum class TalkDeny {
+    OFF,
+    UNSUPPORTED,
+    MUTED,
+    BUSY,
+    COOLDOWN,
+    BUDGET,
+    RATE,
+    UNKNOWN,
+}
+
+/** Why the talk button is disabled before a press. */
+enum class TalkUnavailable {
+    OFF,
+    OTHER_TALKING,
+    UNSUPPORTED,
+    MUTED,
+    NOT_CONNECTED,
+    COOLDOWN,
+}
+
+/** The talk button's state; times are on the elapsed clock. */
+sealed interface TalkUi {
+    data object Idle : TalkUi
+
+    /** "One moment…": the request is on its way. */
+    data object Requesting : TalkUi
+
+    /**
+     * "Speak now": the microphone is attached; the baby device ends the talk at [untilElapsedMs].
+     */
+    data class Talking(val untilElapsedMs: Long) : TalkUi
+
+    data class Denied(val reason: TalkDeny, val retryAtElapsedMs: Long? = null) : TalkUi
+
+    data class Unavailable(val reason: TalkUnavailable, val retryAtElapsedMs: Long? = null) : TalkUi
+}
+
+/** Microphone permission step of the talk button (a press without permission sends nothing). */
+enum class TalkPermission {
+    NONE,
+    NEEDED,
+    JUST_GRANTED,
+    REFUSED,
+}
+
+/** Who pauses noise detection: this device's own talk, or the other parent device's. */
+enum class NoisePause {
+    YOU,
+    OTHER,
+}
+
+/** Baby: the last talk, local only ("Last talk: {name}, {time}, {duration}"). */
+data class LastTalkUi(val name: String, val atWallMs: Long, val durationMs: Long)
+
 data class ParentMonitorState(
     val link: LinkUi = LinkUi(),
     val peer: PeerStatusUi = PeerStatusUi(),
@@ -177,6 +252,18 @@ data class ParentMonitorState(
      * reaction (the core's `noise_escalated`); null otherwise.
      */
     val noiseEscalatedAfterMin: Int? = null,
+    /** Talk-back (`add-talk-back`). */
+    val talk: TalkUi = TalkUi.Idle,
+    /** How the last talk ended; null before the first and after the next press. */
+    val talkEnd: TalkEnd? = null,
+    val talkPermission: TalkPermission = TalkPermission.NONE,
+    val noisePause: NoisePause? = null,
+    /** The baby device's playback check could not hear the last voice ("may not be audible"). */
+    val talkUnconfirmed: Boolean = false,
+    /** Three unconfirmed talks in a row: shown before the next press, never a denial. */
+    val talkAudibleUncertain: Boolean = false,
+    /** The 10 s listen after a talk runs until then ("tap to keep listening"). */
+    val afterTalkListenUntilElapsedMs: Long? = null,
 )
 
 data class BabyMonitorState(
@@ -199,6 +286,10 @@ data class BabyMonitorState(
     val parentName: String? = null,
     /** A device that is not the paired parent tried to connect (the core refused it). */
     val securityWarning: Boolean = false,
+    /** A parent's voice plays now (static indicator under the edge). */
+    val parentTalking: Boolean = false,
+    /** The last finished talk of this run, local only. */
+    val lastTalk: LastTalkUi? = null,
 )
 
 enum class PairingPhase {
@@ -289,6 +380,13 @@ data class SettingsState(
     val heartbeatSeconds: Int = 10,
     /** UI-pass addition: last successful test alert (settings line "Last test"). */
     val lastTestWallMs: Long? = null,
+    /** Baby: parents may talk through this device (switch of the single pairing; default on). */
+    val talkBackEnabled: Boolean = true,
+    val talkVolume: TalkVolume = TalkVolume.LOW,
+    /** Baby: a soft chime announces a talk. */
+    val talkChime: Boolean = true,
+    /** Parent: the one-time "hold to talk" coach mark was shown. */
+    val talkCoachSeen: Boolean = false,
 )
 
 /** Outcome of [AppController.setTurnServer]. */
@@ -407,4 +505,24 @@ interface AppController {
     fun reportTestResult(heardAndFelt: Boolean) {}
 
     fun dismissCoach() {}
+
+    // Talk-back (`add-talk-back`); defaults keep other implementations compiling.
+    /** Parent: the talk button went down or up (a press without permission sends nothing). */
+    fun setTalk(pressed: Boolean) {}
+
+    /** Parent: the app left the foreground, the screen turned off or a call started. */
+    fun interruptTalk() {}
+
+    /** Parent: the answer of the system microphone permission dialog. */
+    fun talkPermissionResult(granted: Boolean) {}
+
+    fun dismissTalkPermission() {}
+
+    fun dismissTalkCoach() {}
+
+    /** Baby: "Play chime" in the settings, at the chosen level. */
+    fun playTalkChimeSample() {}
+
+    /** Baby: an adult opened the talk-back settings (ends the "may not be audible" warning). */
+    fun talkSettingsOpened() {}
 }

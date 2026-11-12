@@ -11,6 +11,7 @@ import org.guardedsleep.app.link.Clock
 import org.guardedsleep.app.link.LinkController
 import org.guardedsleep.app.link.MonitorHost
 import org.guardedsleep.app.link.NetworkWatcher
+import org.guardedsleep.app.link.TalkGate
 import org.guardedsleep.app.link.buildIceConfig
 import org.guardedsleep.app.media.AttemptListener
 import org.guardedsleep.app.media.AttemptPort
@@ -33,6 +34,9 @@ import org.guardedsleep.app.silence.SilenceGateway
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.PairingPhase
 import org.guardedsleep.app.ui.model.Role
+import org.guardedsleep.app.ui.model.TalkPermission
+import org.guardedsleep.app.ui.model.TalkUi
+import org.guardedsleep.app.ui.model.TalkUnavailable
 import org.guardedsleep.app.ui.model.TurnSaveResult
 import org.json.JSONArray
 import org.json.JSONObject
@@ -130,6 +134,7 @@ private class FakeNet {
         }
 
     private val answerers = ConcurrentHashMap<String, FakeAttempt>()
+    val fakeAttempts = CopyOnWriteArrayList<FakeAttempt>()
 
     fun registerOffer(token: String, a: FakeAttempt) {
         offers[token] = a
@@ -228,6 +233,13 @@ private class FakeAttempt(val net: FakeNet, val listener: AttemptListener, val b
 
     override fun inboundAudioStats(callback: (InboundAudioStats?) -> Unit) = callback(null)
 
+    val talkMic = CopyOnWriteArrayList<Boolean>()
+
+    override fun setTalkMic(attached: Boolean): Boolean {
+        talkMic += attached
+        return true
+    }
+
     override fun close() {
         closed = true
         peer?.let { p -> net.later { if (!p.closed) p.listener.onDataClosed() } }
@@ -245,7 +257,7 @@ private class FakeMedia(val net: FakeNet, val baby: Boolean) : MediaEngine {
     ): AttemptPort {
         net.attemptIce += iceServers
         net.attemptsCreated.incrementAndGet()
-        return FakeAttempt(net, listener, baby)
+        return FakeAttempt(net, listener, baby).also { net.fakeAttempts += it }
     }
 
     override fun setMicEnabled(enabled: Boolean) {
@@ -360,6 +372,7 @@ class LinkControllerTest {
         pairingCipher: PairingCipher = FakeCipher(),
         settings: SettingsRepository? = null,
         pairings: RolePairings? = null,
+        talkGate: TalkGate = TalkGate.Open,
     ): Unit2 {
         val dir = tmp.newFolder(name)
         val settings = settings ?: testSettings(dir)
@@ -402,6 +415,7 @@ class LinkControllerTest {
                 clock = RealClock(),
                 random = SecureRandom(),
                 deviceName = { deviceName },
+                talkGate = talkGate,
             )
         controller.updateSettings { it.copy(signalingUrls = listOf("wss://fake.example")) }
         if (role != null) controller.chooseRole(role)
@@ -700,9 +714,12 @@ class LinkControllerTest {
         throw AssertionError("timeout waiting for $what")
     }
 
-    private fun pair(parentName: String = ""): Pair<Unit2, Unit2> {
+    private fun pair(
+        parentName: String = "",
+        parentGate: TalkGate = TalkGate.Open,
+    ): Pair<Unit2, Unit2> {
         val baby = unit("baby", Role.BABY)
-        val parent = unit("parent", Role.PARENT, deviceName = parentName)
+        val parent = unit("parent", Role.PARENT, deviceName = parentName, talkGate = parentGate)
         baby.controller.startPairing()
         val payload = baby.controller.pairing.value!!.codePayload!!
         parent.controller.submitPairingCode(payload)
@@ -723,6 +740,51 @@ class LinkControllerTest {
         }
         await("baby connected") { baby.controller.baby.value.link.phase == LinkPhase.CONNECTED }
         return baby to parent
+    }
+
+    @Test
+    fun aPressWithoutPermissionSendsNothingAndOffersTheStep() {
+        val gate =
+            object : TalkGate {
+                override fun micPermission() = false
+
+                override fun deviceUnlocked() = true
+            }
+        val (_, parent) = pair(parentGate = gate)
+        val sent = CopyOnWriteArrayList<String>()
+        net.onSend = { sent += it }
+        parent.controller.setTalk(true)
+        assertEquals(TalkPermission.NEEDED, parent.controller.parent.value.talkPermission)
+        Thread.sleep(300)
+        assertTrue(sent.none { it.contains("talk_request") })
+        parent.controller.talkPermissionResult(false)
+        assertEquals(TalkPermission.REFUSED, parent.controller.parent.value.talkPermission)
+        assertTrue(net.fakeAttempts.all { it.talkMic.isEmpty() })
+    }
+
+    @Test
+    fun aLockedDeviceSendsNothing() {
+        val gate =
+            object : TalkGate {
+                override fun micPermission() = true
+
+                override fun deviceUnlocked() = false
+            }
+        val (_, parent) = pair(parentGate = gate)
+        val sent = CopyOnWriteArrayList<String>()
+        net.onSend = { sent += it }
+        parent.controller.setTalk(true)
+        Thread.sleep(300)
+        assertTrue(sent.none { it.contains("talk_request") })
+    }
+
+    @Test
+    fun aBabyThatCannotSetTheVolumeSaysMutedAndTheParentShowsItBeforeAPress() {
+        val (_, parent) = pair()
+        await("the parent learns the baby cannot play") {
+            parent.controller.parent.value.talk == TalkUi.Unavailable(TalkUnavailable.MUTED)
+        }
+        assertTrue(net.fakeAttempts.all { it.talkMic.isEmpty() })
     }
 
     @Test

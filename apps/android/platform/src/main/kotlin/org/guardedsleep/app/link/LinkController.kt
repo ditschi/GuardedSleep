@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.guardedsleep.app.alerts.AlertSink
 import org.guardedsleep.app.alerts.EscalationPolicy
+import org.guardedsleep.app.alerts.LinkSnapshot
 import org.guardedsleep.app.alerts.NoiseKind
 import org.guardedsleep.app.config.AppDefaults
 import org.guardedsleep.app.config.DebugOptions
@@ -46,6 +47,7 @@ import org.guardedsleep.app.ui.model.PairingState
 import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.SettingsState
+import org.guardedsleep.app.ui.model.TalkPermission
 import org.guardedsleep.app.ui.model.TurnSaveResult
 import uniffi.guardedsleep_core.DeviceStatus
 import uniffi.guardedsleep_core.InviteMailbox
@@ -87,6 +89,9 @@ class LinkController(
      * or a fingerprint.
      */
     private val deviceName: () -> String = { "" },
+    /** Parent: microphone permission and unlocked device, asked before every `set_talk`. */
+    private val talkGate: TalkGate = TalkGate.Open,
+    private val chimePreview: TalkChimePreview = TalkChimePreview {},
 ) : AppController {
     private val _app = MutableStateFlow(AppState())
 
@@ -136,10 +141,43 @@ class LinkController(
 
     private fun isDiscreet() = _settings.value.alertStyle == AlertStyle.DISCREET
 
+    /**
+     * A parent alert sound ends a running talk first (`alert_preempts_talk`): the sink asks the
+     * core before it sounds anything.
+     */
+    private val preemptingAlerts: AlertSink =
+        object : AlertSink by alerts {
+            private fun preempt() {
+                run?.takeIf { it.role == Role.PARENT && parentModel.talkActive() }
+                    ?.runner
+                    ?.input(LinkInput.AlertPreemptsTalk)
+            }
+
+            override fun linkState(snapshot: LinkSnapshot) {
+                if (snapshot.level >= 2) preempt()
+                alerts.linkState(snapshot)
+            }
+
+            override fun linkLost(downMs: Long) {
+                preempt()
+                alerts.linkLost(downMs)
+            }
+
+            override fun noiseAlert(
+                kind: NoiseKind,
+                probe: Boolean,
+                snoozed: Boolean,
+                discreet: Boolean,
+            ) {
+                preempt()
+                alerts.noiseAlert(kind, probe, snoozed, discreet)
+            }
+        }
+
     private val parentModel =
         ParentModel(
             clock,
-            alerts,
+            preemptingAlerts,
             parentEffects,
             discreet = ::isDiscreet,
         ) {
@@ -266,6 +304,14 @@ class LinkController(
                         (after.holdSeconds * 1000L).toULong(),
                     )
                 )
+            }
+            if (
+                r.role == Role.BABY &&
+                    (after.talkBackEnabled != before.talkBackEnabled ||
+                        after.talkVolume != before.talkVolume ||
+                        after.talkChime != before.talkChime)
+            ) {
+                sendTalkBack(r.runner, after)
             }
             if (after.alertGainPct != before.alertGainPct)
                 r.runner.media { it.setPlaybackGainPct(after.alertGainPct) }
@@ -608,8 +654,9 @@ class LinkController(
             }
             sendEscalation(runner, s)
             refreshReadiness()
-        } else if (monitoring) {
-            applySilence(s.silenceWhileMonitoring)
+        } else {
+            sendTalkBack(runner, s)
+            if (monitoring) applySilence(s.silenceWhileMonitoring)
         }
     }
 
@@ -746,7 +793,52 @@ class LinkController(
 
     override fun dismissMissedEvents() = parentModel.dismissMissed()
 
+    override fun setTalk(pressed: Boolean) {
+        val r = run?.takeIf { it.role == Role.PARENT } ?: return
+        if (!pressed) {
+            r.runner.input(LinkInput.SetTalk(false))
+            return
+        }
+        // No permission, no request: the sheet asks first (never during a hold).
+        if (!talkGate.micPermission()) {
+            parentModel.setTalkPermission(TalkPermission.NEEDED)
+            return
+        }
+        // Over the keyguard nothing may talk to the child.
+        if (!talkGate.deviceUnlocked()) return
+        parentModel.talkPressed()
+        r.runner.input(LinkInput.SetTalk(true))
+    }
+
+    override fun interruptTalk() {
+        val r = run?.takeIf { it.role == Role.PARENT } ?: return
+        if (parentModel.talkActive()) r.runner.input(LinkInput.SetTalk(false))
+    }
+
+    override fun talkPermissionResult(granted: Boolean) =
+        parentModel.setTalkPermission(
+            if (granted) TalkPermission.JUST_GRANTED else TalkPermission.REFUSED
+        )
+
+    override fun dismissTalkPermission() = parentModel.setTalkPermission(TalkPermission.NONE)
+
+    override fun dismissTalkCoach() {
+        updateSettings { it.copy(talkCoachSeen = true) }
+    }
+
     // ---- baby intents ------------------------------------------------------------------------
+
+    override fun playTalkChimeSample() = chimePreview.play(_settings.value.talkVolume)
+
+    override fun talkSettingsOpened() {
+        run?.takeIf { it.role == Role.BABY }?.runner?.input(LinkInput.TalkSettingsOpened)
+    }
+
+    private fun sendTalkBack(runner: LinkRunner, s: SettingsState) {
+        runner.input(
+            LinkInput.SetTalkBack(s.talkBackEnabled, TalkMapping.level(s.talkVolume), s.talkChime)
+        )
+    }
 
     override fun setKioskLocked(locked: Boolean) = babyModel.setKioskLocked(locked)
 

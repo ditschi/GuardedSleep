@@ -22,6 +22,7 @@ import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.DiscreetEscalation
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.SettingsState
+import org.guardedsleep.app.ui.model.TalkVolume
 import org.guardedsleep.app.ui.model.Theme
 
 /**
@@ -158,6 +159,10 @@ class SettingsRepository(
                     p[URLS]?.split('\n')?.filter { it.isNotBlank() } ?: defaults.signalingUrls,
                 onlyLocal = p[ONLY_LOCAL] ?: defaults.onlyLocal,
                 heartbeatSeconds = p[HEARTBEAT] ?: defaults.heartbeatSeconds,
+                talkBackEnabled = p[TALK_ENABLED] ?: defaults.talkBackEnabled,
+                talkVolume = enumOrNull<TalkVolume>(p[TALK_VOLUME]) ?: defaults.talkVolume,
+                talkChime = p[TALK_CHIME] ?: defaults.talkChime,
+                talkCoachSeen = p[TALK_COACH] ?: defaults.talkCoachSeen,
             )
         val role = enumOrNull<Role>(p[ROLE])
         // Update from a single-role install: the stored role becomes the start mode, and its
@@ -210,6 +215,10 @@ class SettingsRepository(
         set(URLS, c.signalingUrls.joinToString("\n"))
         set(ONLY_LOCAL, c.onlyLocal)
         set(HEARTBEAT, c.heartbeatSeconds)
+        set(TALK_ENABLED, c.talkBackEnabled)
+        set(TALK_VOLUME, c.talkVolume.name)
+        set(TALK_CHIME, c.talkChime)
+        set(TALK_COACH, c.talkCoachSeen)
         set(ROLE, s.role?.name)
         set(ONBOARDING, s.onboardingDone)
         set(MONITORING, s.monitoringActive)
@@ -246,6 +255,10 @@ class SettingsRepository(
         val ONLY_LOCAL = booleanPreferencesKey("only_local")
         val TURN = stringPreferencesKey("turn_url")
         val HEARTBEAT = intPreferencesKey("heartbeat_seconds")
+        val TALK_ENABLED = booleanPreferencesKey("talk_back_enabled")
+        val TALK_VOLUME = stringPreferencesKey("talk_volume")
+        val TALK_CHIME = booleanPreferencesKey("talk_chime")
+        val TALK_COACH = booleanPreferencesKey("talk_coach_seen")
         val ROLE = stringPreferencesKey("role")
         val DEFAULT_ROLE = stringPreferencesKey("default_role")
         // Stored for "Ask every time", so an absent key still means "update from a single role".
