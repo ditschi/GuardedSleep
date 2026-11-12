@@ -396,6 +396,7 @@ class LinkRunner(
                         "probe" to event.probe,
                     )
             is LinkEvent.TalkChanged -> pocTalk(event.state)
+            is LinkEvent.SecurityWarning -> PocLog.event("security_warning", "key" to event.key)
             is LinkEvent.LinkLost ->
                 PocLog.event("alert", "kind" to "link_lost", "down_ms" to event.downMs)
             is LinkEvent.LinkRestored -> PocLog.event("link_restored", "down_ms" to event.downMs)
