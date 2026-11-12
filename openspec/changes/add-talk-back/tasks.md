@@ -36,7 +36,7 @@ Branch `feat/talk-back` from `origin/main`. Commit after each task; `just test-a
 
 ## 5. Gate (`scripts/poc`)
 
-- [ ] 5.1 Gate scenario: parent holds talk for 5 s; assert the baby receives talk RTP only inside the grant, no noise alert reaches the parent during and 5 s after the talk at high volume, the alarm-stream index is restored, no talk RTP is sent outside a talk, the parent's alert output and level are unchanged after the talk, and the log canary passes. Update `docs/ci-gates.md`. Verify: `just gate` (report `SKIPPED` without KVM).
+- [x] 5.1 Gate scenario: parent holds talk for 5 s; assert the baby receives talk RTP only inside the grant, no noise alert reaches the parent during and 5 s after the talk at high volume, the alarm-stream index is restored, no talk RTP is sent outside a talk, the parent's alert output and level are unchanged after the talk, and the log canary passes. Update `docs/ci-gates.md`. Verify: `just gate` (report `SKIPPED` without KVM).
 
 ## 6. Docs and guardrails
 
