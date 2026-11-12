@@ -40,8 +40,8 @@ Branch `feat/talk-back` from `origin/main`. Commit after each task; `just test-a
 
 ## 6. Docs and guardrails
 
-- [ ] 6.1 AGENTS.md §9: replace the Talk-back row (built by this change; constraints: half duplex, trusted link, baby-side limits). `docs/backlog.md`: delete the `DEFERRED` item; add `IDEA`s for what stays out (full duplex, talking to several baby units, tap to talk as an accessibility setting). Verify: `just lint-text`.
-- [ ] 6.2 `quiet-link-no-rtp`: correct the echo-cancellation reason in design §4 (half duplex instead of "talk-back is deferred") and state that its Opus profile function applies to both audio m-lines (design §3, spec "Speech-grade audio profile", task 1.2). Verify: `openspec validate --all --strict`.
+- [x] 6.1 AGENTS.md §9: replace the Talk-back row (built by this change; constraints: half duplex, trusted link, baby-side limits). `docs/backlog.md`: delete the `DEFERRED` item; add `IDEA`s for what stays out (full duplex, talking to several baby units, tap to talk as an accessibility setting). Verify: `just lint-text`.
+- [x] 6.2 `quiet-link-no-rtp`: correct the echo-cancellation reason in design §4 (half duplex instead of "talk-back is deferred") and state that its Opus profile function applies to both audio m-lines (design §3, spec "Speech-grade audio profile", task 1.2). Verify: `openspec validate --all --strict`.
 
 ## 7. Checks
 

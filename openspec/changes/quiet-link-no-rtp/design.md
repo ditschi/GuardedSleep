@@ -46,7 +46,7 @@ After every attach the platform checks that `packetsSent` grows within 1 s. If n
 
 ### 3. Opus profile from the core
 
-The core already parses the SDP (`sendonly` check). A new pure function sets the Opus `fmtp` and `ptime` for both offer and answer: `stereo=0; sprop-stereo=0; maxplaybackrate=16000; useinbandfec=1; usedtx=0; maxaveragebitrate=24000`, `a=ptime:60`, `a=maxptime:60`. It touches only the Opus `fmtp` and `ptime` lines, never the DTLS fingerprint or ICE lines (golden vector). Check Chrome's deprecation of local-description SDP munging before task 1.2; if it applies, the web client sets the remote description values instead (the receiver's values bind the sender).
+The core already parses the SDP (`sendonly` check). A new pure function sets the Opus `fmtp` and `ptime` for both offer and answer: `stereo=0; sprop-stereo=0; maxplaybackrate=16000; useinbandfec=1; usedtx=0; maxaveragebitrate=24000`, `a=ptime:60`, `a=maxptime:60`. It applies the same profile to both audio m-lines (the monitoring line and the talk line of `add-talk-back`) and touches only the Opus `fmtp` and `ptime` lines, never the DTLS fingerprint or ICE lines (golden vector). Check Chrome's deprecation of local-description SDP munging before task 1.2; if it applies, the web client sets the remote description values instead (the receiver's values bind the sender).
 
 **Fixed level at alpha (split, owner 2026-11-08):** 24 kbit/s. The table below is the basis for the later audio quality setting (backlog `IDEA`), which waits for the listening test (task 6.1). If it comes, the parent's value decides, because the receiver's values bind the sender, and a change applies from the next attempt.
 
@@ -62,7 +62,7 @@ Wideband (up to 8 kHz) keeps crying, babbling, coughing and rustling clear; a li
 
 ### 4. Raw capture
 
-- **Echo cancellation off:** the baby only sends (talk-back is `DEFERRED`), so there is no far-end signal to cancel; it can only distort.
+- **Echo cancellation off:** talk-back (`add-talk-back`) is half duplex: the talking parent does not play the room, so there is no echo loop to cancel, and the playback check of `add-talk-back` needs the baby's microphone to hear its own speaker; echo cancellation could only distort.
 - **Noise suppression off:** it is tuned for speech; it removes steady sounds (a white-noise machine, a fan) and can damp whimpering, breathing and rustling, so "is it really quiet?" would mislead and the gate would see a different level.
 - **Auto gain off:** it raises the level in a quiet room over time, so a fixed threshold would fire at different loudness; loudness for listening is the parent's playback gain.
 - **Android:** `JavaAudioDeviceModule.builder().setUseHardwareAcousticEchoCanceler(false).setUseHardwareNoiseSuppressor(false)`, audio source `UNPROCESSED` where `AudioManager.PROPERTY_SUPPORT_AUDIO_SOURCE_UNPROCESSED` is true, else `MIC`; software processing off through the audio options of the pinned webrtc-sdk (verify the exact API in task 2.3). The default threshold is re-checked on hardware because raw levels differ from processed ones (task 6.2).

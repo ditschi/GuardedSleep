@@ -57,7 +57,7 @@ After unmuting, the baby unit SHALL check that packets flow within 1 s. Otherwis
 
 ### Requirement: Speech-grade audio profile
 
-Both clients SHALL negotiate Opus mono with an audio bandwidth up to 8 kHz, in-band FEC on, DTX off, 60 ms packets and an average bitrate of 24 kbit/s. The profile SHALL be written into the session description by the core, which SHALL change only the Opus parameters and packet time.
+Both clients SHALL negotiate Opus mono with an audio bandwidth up to 8 kHz, in-band FEC on, DTX off, 60 ms packets and an average bitrate of 24 kbit/s. The profile SHALL be written into the session description by the core for every audio m-line, and the core SHALL change only the Opus parameters and packet time.
 
 #### Scenario: Default profile
 

@@ -94,7 +94,9 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 
 ### audio-monitoring
 
-- `DEFERRED` (Phase 2) Talk-back: the parent speaks through the baby unit's speaker (high parent expectation compared to hardware monitors); open: full or half duplex; only one child device at a time with several children. Until then the track stays muted and there is no UI (AGENTS.md §9).
+- `IDEA` Talk-back in full duplex (a call), left out of `add-talk-back`: needs echo cancellation against the raw capture of the noise gate.
+- `IDEA` Talk-back to several baby devices at once (a parent with two children), left out of `add-talk-back`.
+- `IDEA` "Tap to talk" as an accessibility setting for talk-back (tap starts, tap or the 30 s limit stops), not chosen by the owner on 2026-11-11 because accidental taps make sound in the baby room.
 - `IDEA` (Phase 3+) Sound categorisation on the device (crying, coughing, babbling, environmental noise, silence) for smarter alerts. Research notes (2026-04): YAMNet transfer learning with a compact classifier reaches about 95 % on cry detection with under 0.8 s latency; quantised TFLite models are 1–5 MB; MFCC or mel-spectrogram features with EMA smoothing; run only while charging or duty-cycled; risks are false positives from TV, pets and appliances. No TFLite, YAMNet or MFCC code before this is decided (AGENTS.md §9).
 - `IDEA` (Phase 3+) Community data contribution for model training; privacy and legal questions first.
 - `IDEA` Several alert levels (soft alert at a low threshold, urgent alert at a high one).
