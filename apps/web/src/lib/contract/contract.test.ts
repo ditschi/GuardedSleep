@@ -227,6 +227,7 @@ describe("data classes mirror UiContract.kt", () => {
     PairingState: pairing,
     SettingsState: defaultSettings(),
     AppState: defaultAppState(),
+    ConnectionUi: { id: "1", name: null, isDefault: true, selected: true },
   };
 
   for (const [name, sample] of Object.entries(classes)) {
