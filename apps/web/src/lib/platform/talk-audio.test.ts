@@ -247,22 +247,34 @@ describe("microphone permission step", () => {
 });
 
 describe("TalkRtpWatch", () => {
-  it("reports packets outside a lease, not inside one or just after", () => {
+  it("reports packets outside a lease once, not inside one or just after", () => {
     const w = new TalkRtpWatch();
     expect(w.observe(0, false, 0)).toBe(false);
     expect(w.observe(0, false, 1_000)).toBe(false);
     expect(w.observe(50, true, 2_000)).toBe(false);
-    // The parent's last frames after the lease closed are inside the grace.
+    // The parent's last frames after the lease closed are inside the grace (1.5 s).
     expect(w.observe(60, false, 3_000)).toBe(false);
-    expect(w.observe(70, false, 3_500)).toBe(false);
-    expect(w.observe(80, false, 6_000)).toBe(true);
-    expect(w.observe(80, false, 7_000)).toBe(false);
+    expect(w.observe(70, false, 3_499)).toBe(false);
+    // The grace is over: the baseline is 70, and 5 more packets are still not a breach.
+    expect(w.observe(75, false, 3_500)).toBe(false);
+    expect(w.observe(76, false, 4_500)).toBe(true);
+    expect(w.observe(90, false, 5_500)).toBe(false);
   });
 
-  it("reports packets on a line that never had a lease", () => {
+  it("needs more than five packets since the baseline on a line that never had a lease", () => {
     const w = new TalkRtpWatch();
     w.observe(0, false, 0);
-    expect(w.observe(5, false, 1_000)).toBe(true);
+    expect(w.observe(5, false, 1_000)).toBe(false);
+    expect(w.observe(6, false, 2_000)).toBe(true);
+  });
+
+  it("starts again after a reset", () => {
+    const w = new TalkRtpWatch();
+    w.observe(0, false, 0);
+    expect(w.observe(10, false, 1_000)).toBe(true);
+    w.reset();
+    w.observe(0, false, 2_000);
+    expect(w.observe(10, false, 3_000)).toBe(true);
   });
 });
 

@@ -1,4 +1,4 @@
-import { TALK_RTP_GRACE_MS } from "./policy";
+import { TALK_RTP_GRACE_MS, TALK_RTP_OUTSIDE_PACKETS } from "./policy";
 
 /**
  * Baby: notices talk RTP that arrives while no playback lease is open (`talk_rtp_outside_grant`).
@@ -7,22 +7,33 @@ import { TALK_RTP_GRACE_MS } from "./policy";
  * a short grace after the lease closed.
  */
 export class TalkRtpWatch {
-  private last: number | null = null;
+  private baseline: number | null = null;
   private leaseSeenAt: number | null = null;
+  private warned = false;
 
-  /** True when packets arrived since the previous call although no lease was open (or just was). */
+  /**
+   * True once per attempt, when more than `TALK_RTP_OUTSIDE_PACKETS` packets arrived since the
+   * baseline although no lease was open (or just was). The baseline follows the counter inside a
+   * lease and its grace. Same rule as Android's `TalkPlayout.onTalkPackets`.
+   */
   observe(packetsReceived: number, leaseOpen: boolean, nowMs: number): boolean {
     if (leaseOpen) this.leaseSeenAt = nowMs;
-    const previous = this.last;
-    this.last = packetsReceived;
-    if (previous === null || packetsReceived <= previous) return false;
-    if (leaseOpen) return false;
-    return this.leaseSeenAt === null || nowMs - this.leaseSeenAt > TALK_RTP_GRACE_MS;
+    const inGrace = this.leaseSeenAt !== null && nowMs - this.leaseSeenAt < TALK_RTP_GRACE_MS;
+    if (leaseOpen || inGrace || this.baseline === null) {
+      this.baseline = packetsReceived;
+      return false;
+    }
+    if (packetsReceived - this.baseline > TALK_RTP_OUTSIDE_PACKETS && !this.warned) {
+      this.warned = true;
+      return true;
+    }
+    return false;
   }
 
   /** A new attempt starts counting from zero. */
   reset(): void {
-    this.last = null;
+    this.baseline = null;
     this.leaseSeenAt = null;
+    this.warned = false;
   }
 }

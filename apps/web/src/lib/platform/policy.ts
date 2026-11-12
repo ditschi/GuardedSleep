@@ -60,7 +60,9 @@ export const BACKGROUND_GAP_MS = 150_000;
 /** Baby: how often the talk receiver's packet counter is compared with the lease. */
 export const TALK_RTP_POLL_MS = 1_000;
 /** Packets this soon after a lease ended are the parent's last frames in flight, not a breach. */
-export const TALK_RTP_GRACE_MS = 2_000;
+export const TALK_RTP_GRACE_MS = 1_500;
+/** More packets than this outside a lease and its grace count as audio without a grant. */
+export const TALK_RTP_OUTSIDE_PACKETS = 5;
 /**
  * Baby output gains per talk level, as linear factors of the computer's own volume (which a
  * browser cannot see). High is lower than the Android share on purpose (design section 8).
