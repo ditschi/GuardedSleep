@@ -1,0 +1,137 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "talk-deadline",
+  "description": "The parent never lets go of the button: the baby ends the talk 30 s after the grant and stops playing; the parent ends with the limit.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "input",
+      "peer": "baby",
+      "input": {
+        "type": "set_raw_capture",
+        "raw": true
+      }
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 14000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 6000
+    },
+    {
+      "at": 20000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 20000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.05,
+      "for_ms": 45000
+    },
+    {
+      "at": 20650,
+      "do": "talk_levels",
+      "peer": "baby",
+      "rms": 0.3,
+      "for_ms": 45000
+    },
+    {
+      "at": 70000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "baby",
+      "event": "talk_active",
+      "where": {
+        "active": true
+      },
+      "count": 1
+    },
+    {
+      "peer": "baby",
+      "event": "talk_active",
+      "where": {
+        "active": false
+      },
+      "count": 1,
+      "within_ms": [50000, 53500]
+    },
+    {
+      "peer": "parent",
+      "event": "talk_changed",
+      "where": {
+        "state": {
+          "state": "ended",
+          "reason": "limit"
+        }
+      },
+      "count": 1,
+      "within_ms": [50000, 53500]
+    },
+    {
+      "peer": "parent",
+      "never": "talk_changed",
+      "where": {
+        "state": {
+          "state": "ended",
+          "reason": "released"
+        }
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "noise_alert",
+      "where": {
+        "probe": false
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "link_lost"
+    }
+  ],
+  "export_traces": [
+    {
+      "peer": "baby",
+      "id": "sim-talk-deadline-baby"
+    },
+    {
+      "peer": "parent",
+      "id": "sim-talk-deadline-parent"
+    }
+  ]
+}

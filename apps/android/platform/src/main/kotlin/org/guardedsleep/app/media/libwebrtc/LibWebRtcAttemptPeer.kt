@@ -6,10 +6,14 @@ import org.guardedsleep.app.diag.PocLog
 import org.guardedsleep.app.media.AttemptListener
 import org.guardedsleep.app.media.AttemptPort
 import org.guardedsleep.app.media.InboundAudioStats
+import org.guardedsleep.app.media.TalkReceiverStats
+import org.guardedsleep.app.media.TalkSendControl
+import org.guardedsleep.app.media.TalkSendPort
 import org.webrtc.AudioTrack
 import org.webrtc.DataChannel
 import org.webrtc.MediaConstraints
 import org.webrtc.MediaStream
+import org.webrtc.MediaStreamTrack
 import org.webrtc.PeerConnection
 import org.webrtc.PeerConnectionFactory
 import org.webrtc.RtpReceiver
@@ -18,10 +22,18 @@ import org.webrtc.SdpObserver
 import org.webrtc.SessionDescription
 import uniffi.guardedsleep_core.IceCandidate as CoreIce
 
+/** The parent's talk microphone: opened on attach, disposed on detach (never kept idle). */
+internal interface TalkCapture {
+    fun open(): AudioTrack?
+
+    fun close()
+}
+
 /**
- * One PeerConnection + DataChannel for one core attempt handle. The baby sends a `sendonly` audio
- * m-line (the core refuses anything else) and creates the "guardedsleep" channel; the parent only
- * receives.
+ * One PeerConnection + DataChannel for one core attempt handle. The baby sends a `sendonly`
+ * monitoring m-line and offers a `recvonly` talk line (the core refuses anything else) and creates
+ * the "guardedsleep" channel; the parent receives the first and may send on the second only while
+ * it talks.
  */
 internal class LibWebRtcAttemptPeer(
     factory: PeerConnectionFactory,
@@ -30,6 +42,8 @@ internal class LibWebRtcAttemptPeer(
     private val offerer: Boolean,
     private val listener: AttemptListener,
     private val onRemoteAudio: (AudioTrack) -> Unit,
+    /** Parent: opens and closes the talk microphone track; null on the baby. */
+    private val talkCapture: TalkCapture? = null,
 ) : AttemptPort {
     private val lock = Any()
     private val closed = AtomicBoolean(false)
@@ -40,6 +54,16 @@ internal class LibWebRtcAttemptPeer(
     private val fingerprintSent = AtomicBoolean(false)
     @Volatile private var channel: DataChannel? = null
     @Volatile private var hasAudioReceiver = false
+
+    /** Baby: the talk line's receiver track, disabled from creation (design §7). */
+    @Volatile private var talkReceiver: AudioTrack? = null
+
+    /** Parent: the talk line's transceiver, found by order once the offer is applied. */
+    @Volatile private var talkTransceiver: RtpTransceiver? = null
+
+    /** Parent: keeps that line inactive and trackless outside a talk. */
+    @Volatile private var talkSend: TalkSendControl<AudioTrack>? = null
+    @Volatile private var talkMicAttached = false
 
     private val observer =
         object : PeerConnection.Observer {
@@ -68,9 +92,16 @@ internal class LibWebRtcAttemptPeer(
             override fun onRenegotiationNeeded() = Unit
 
             override fun onAddTrack(receiver: RtpReceiver, streams: Array<out MediaStream>) {
-                (receiver.track() as? AudioTrack)?.let {
+                val audio = receiver.track() as? AudioTrack ?: return
+                if (sendTrack != null) {
+                    // Baby: the only inbound track is the talk line; no frame may play until a
+                    // lease enables it.
+                    audio.setEnabled(false)
+                    talkReceiver = audio
                     hasAudioReceiver = true
-                    onRemoteAudio(it)
+                } else if (receiver !== talkTransceiver?.receiver) {
+                    hasAudioReceiver = true
+                    onRemoteAudio(audio)
                 }
             }
 
@@ -79,8 +110,11 @@ internal class LibWebRtcAttemptPeer(
             override fun onConnectionChange(newState: PeerConnection.PeerConnectionState) {
                 if (closed.get()) return
                 listener.onConnectionState(newState.name.lowercase())
-                if (newState == PeerConnection.PeerConnectionState.CONNECTED)
+                if (newState == PeerConnection.PeerConnectionState.CONNECTED) {
                     reportFingerprint(tries = FP_TRIES)
+                    // Belt and braces: the line must be idle when the media starts to flow.
+                    if (!talkMicAttached) idleTalkLine(report = true)
+                }
             }
         }
 
@@ -98,6 +132,20 @@ internal class LibWebRtcAttemptPeer(
                     listOf("gs-stream"),
                 ),
             )
+        }
+        if (sendTrack != null) {
+            // The talk line: monitoring stays first, `sendonly`; this one only receives.
+            val talk =
+                pc.addTransceiver(
+                    MediaStreamTrack.MediaType.MEDIA_TYPE_AUDIO,
+                    RtpTransceiver.RtpTransceiverInit(
+                        RtpTransceiver.RtpTransceiverDirection.RECV_ONLY
+                    ),
+                )
+            (talk.receiver.track() as? AudioTrack)?.let {
+                it.setEnabled(false)
+                talkReceiver = it
+            }
         }
         if (offerer) {
             attachChannel(
@@ -143,12 +191,110 @@ internal class LibWebRtcAttemptPeer(
                             q to answerRequested.also { answerRequested = false }
                         }
                     if (closed.get()) return
+                    if (talkCapture != null) prepareTalkLine()
                     queued.forEach { pc.addIceCandidate(it) }
                     if (answer) createAnswer()
                 }
             },
             desc,
         )
+    }
+
+    /**
+     * Parent: the offer carries the monitoring line first and the talk line second. The talk
+     * transceiver answers `sendonly` (it carries no track outside a talk); the direction must be
+     * set before `createAnswer`.
+     */
+    private fun prepareTalkLine() {
+        val audio =
+            pc.transceivers.filter {
+                it.mediaType == MediaStreamTrack.MediaType.MEDIA_TYPE_AUDIO
+            }
+        val talk = audio.getOrNull(1) ?: return
+        talk.direction = RtpTransceiver.RtpTransceiverDirection.SEND_ONLY
+        talkTransceiver = talk
+        val sender = talk.sender
+        talkSend =
+            TalkSendControl(
+                object : TalkSendPort<AudioTrack> {
+                    override fun setTrack(track: AudioTrack?) = sender.setTrack(track, false)
+
+                    override fun setActive(active: Boolean): Boolean {
+                        val params = sender.parameters
+                        val encoding = params.encodings.firstOrNull() ?: return false
+                        encoding.active = active
+                        return sender.setParameters(params)
+                    }
+                }
+            )
+        idleTalkLine()
+    }
+
+    /**
+     * A negotiated `sendonly` line streams from the connect on (and starts the recording) unless
+     * its encoding is inactive: the line is idle until a talk attaches the microphone.
+     */
+    private fun idleTalkLine(report: Boolean = false) {
+        val ok = talkSend?.idle() ?: return
+        // Before the local description is set the sender has no encodings and refuses the
+        // parameters; the call after SetLocalDescription is the one that must work (the call
+        // from prepareTalkLine is best effort).
+        if (!ok && report) PocLog.event("talk_idle_failed")
+    }
+
+    override fun setTalkMic(attached: Boolean): Boolean {
+        val capture = talkCapture ?: return false
+        val send = talkSend ?: return false
+        if (closed.get()) return false
+        return if (attached) {
+            val track = capture.open() ?: return false
+            send.attach(track).also {
+                talkMicAttached = it
+                if (!it) capture.close()
+            }
+        } else {
+            talkMicAttached = false
+            val ok = send.detach()
+            capture.close()
+            ok
+        }
+    }
+
+    override fun setTalkReceiverEnabled(enabled: Boolean) {
+        talkReceiver?.setEnabled(enabled)
+    }
+
+    override fun setTalkReceiverGain(gain: Double) {
+        talkReceiver?.setVolume(gain)
+    }
+
+    override fun talkMicLevel(callback: (Double?) -> Unit) {
+        if (closed.get() || talkTransceiver?.sender?.track() == null) return callback(null)
+        pc.getStats { report ->
+            val source =
+                report.statsMap.values.firstOrNull {
+                    it.type == "media-source" && it.members["kind"] == "audio"
+                }
+            callback((source?.members?.get("audioLevel") as? Number)?.toDouble())
+        }
+    }
+
+    override fun talkReceiverStats(callback: (TalkReceiverStats?) -> Unit) {
+        if (closed.get() || talkReceiver == null) return callback(null)
+        pc.getStats { report ->
+            val audio =
+                report.statsMap.values.firstOrNull {
+                    it.type == "inbound-rtp" && it.members["kind"] == "audio"
+                }
+            callback(
+                audio?.let {
+                    TalkReceiverStats(
+                        (it.members["packetsReceived"] as? Number)?.toLong() ?: 0L,
+                        (it.members["audioLevel"] as? Number)?.toDouble() ?: 0.0,
+                    )
+                }
+            )
+        }
     }
 
     override fun addRemoteIce(candidate: CoreIce) {
@@ -180,6 +326,7 @@ internal class LibWebRtcAttemptPeer(
                 report.statsMap.values.firstOrNull {
                     it.type == "inbound-rtp" && it.members["kind"] == "audio"
                 }
+            if (talkCapture != null) logTalkSender(report)
             callback(
                 audio?.let {
                     InboundAudioStats(
@@ -191,8 +338,22 @@ internal class LibWebRtcAttemptPeer(
         }
     }
 
+    /** Gate evidence (debug builds): does the parent's talk sender send outside a talk? */
+    private fun logTalkSender(report: org.webrtc.RTCStatsReport) {
+        val out = report.statsMap.values.filter { it.type == "outbound-rtp" }
+        PocLog.event(
+            "talk_out",
+            "streams" to out.size,
+            "packets_sent" to out.sumOf { (it.members["packetsSent"] as? Number)?.toLong() ?: 0L },
+            "sender_track" to (talkTransceiver?.sender?.track() != null),
+            "direction" to talkTransceiver?.currentDirection,
+            "active" to talkTransceiver?.sender?.parameters?.encodings?.firstOrNull()?.active,
+        )
+    }
+
     override fun close() {
         if (!closed.compareAndSet(false, true)) return
+        runCatching { if (talkCapture != null) setTalkMicClosed() }
         runCatching {
             channel?.let {
                 it.unregisterObserver()
@@ -232,11 +393,21 @@ internal class LibWebRtcAttemptPeer(
         }
     }
 
+    private fun setTalkMicClosed() {
+        talkMicAttached = false
+        talkSend?.detach()
+        talkCapture?.close()
+    }
+
     private fun setLocal(desc: SessionDescription) {
         pc.setLocalDescription(
             object : SdpAdapter("setLocal") {
                 override fun onSetSuccess() {
                     if (closed.get()) return
+                    // The sender has its ssrc and encoding only after SetLocalDescription; this is
+                    // the first point where the line can be made idle, and it precedes the
+                    // transport becoming writable (which starts the send stream and the recording).
+                    if (!talkMicAttached) idleTalkLine(report = true)
                     val local = pc.localDescription ?: desc
                     listener.onLocalDescription(local.type.canonicalForm(), local.description)
                 }

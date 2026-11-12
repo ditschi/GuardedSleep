@@ -9,6 +9,7 @@ import type {
   ParentMonitorState,
   Role,
   SettingsState,
+  WebTalkState,
 } from "./models";
 import type { TurnSaveResult } from "./turn";
 
@@ -38,6 +39,12 @@ export interface AppController {
    * or freeze a page that is not in front; the screens warn about it).
    */
   readonly pageGuard: Readable<PageGuardState>;
+
+  /**
+   * Web only: what the browser adds to talk-back (no microphone support here, audio suspended on
+   * the baby device); the talk models themselves are in `parent` and `baby`.
+   */
+  readonly webTalk: Readable<WebTalkState>;
 
   /** Sets the session role; `makeDefault` also stores it as the start mode. */
   chooseRole(role: Role, makeDefault?: boolean): void;
@@ -74,9 +81,33 @@ export interface AppController {
   tryReconnectNow(): void;
   dismissMissedEvents(): void;
 
+  // Talk-back (`add-talk-back`), the same intents as UiContract.kt.
+  /**
+   * Parent: the talk button went down (after its hold time) or up; also ends a talk when the
+   * touch is cancelled. Without microphone permission a press opens the permission step and
+   * sends nothing.
+   */
+  setTalk(pressed: boolean): void;
+  /** Parent: the page left the front (hidden, blur): ends the talk and closes the microphone. */
+  interruptTalk(): void;
+  /** Parent: the answer of the browser's microphone prompt. */
+  talkPermissionResult(granted: boolean): void;
+  /**
+   * Web only: "Allow microphone" in the permission step. The browser's prompt is page I/O, so the
+   * controller runs it and reports through `talkPermissionResult`; on Android the screen hosts the
+   * system dialog and calls `talkPermissionResult` itself.
+   */
+  requestTalkPermission(): void;
+  dismissTalkPermission(): void;
+  dismissTalkCoach(): void;
+
   // Baby
   setKioskLocked(locked: boolean): void;
   dismissSilenceRestoredNotice(): void;
+  /** Baby: "Play chime" in the settings, at the chosen level. */
+  playTalkChimeSample(): void;
+  /** Baby: an adult opened the talk-back settings (ends the "may not be audible" warning). */
+  talkSettingsOpened(): void;
 
   /** Web only. Call it from a click handler ("Tap to turn on alert sound"); it unlocks audio. */
   unlockSound(): void;

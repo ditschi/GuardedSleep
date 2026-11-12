@@ -206,6 +206,11 @@ class ParentModelTest {
                 null,
                 null,
                 emptyList(),
+                null,
+                null,
+                null,
+                null,
+                null,
             )
         model.onEvent(LinkEvent.PeerStatus(web), clock.elapsed)
         assertTrue(model.state.value.peer.isWebClient)

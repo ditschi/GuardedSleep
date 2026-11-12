@@ -44,8 +44,10 @@ pub struct AttemptConfig {
     pub heartbeat_interval_ms: u64,
     pub liveness_ms: u64,
     pub attempt_timeout_ms: u64,
-    /// Baby only: refuse a local SDP whose audio m-line is not `a=sendonly` (ADR-018 silence).
-    pub require_sendonly: bool,
+    /// Check the audio directions of every local description and (baby) of the accepted remote
+    /// answer: two audio m-lines, the monitoring line first and the talk line second (see
+    /// [`check_local_audio_lines`]). The legacy `Session` has no talk line and sets this to `false`.
+    pub check_audio_directions: bool,
     /// Verification additionally needs the platform to report the remote DTLS certificate
     /// fingerprint (`on_dtls_fingerprint`) and it must equal the remote SDP fingerprint the proof
     /// was computed over. The legacy `Session` has no such report and sets this to `false`.
@@ -66,7 +68,7 @@ impl std::fmt::Debug for AttemptConfig {
             .field("heartbeat_interval_ms", &self.heartbeat_interval_ms)
             .field("liveness_ms", &self.liveness_ms)
             .field("attempt_timeout_ms", &self.attempt_timeout_ms)
-            .field("require_sendonly", &self.require_sendonly)
+            .field("check_audio_directions", &self.check_audio_directions)
             .field("require_dtls_fingerprint", &self.require_dtls_fingerprint)
             .finish()
     }
@@ -109,6 +111,9 @@ pub struct Attempt {
     early_parent: Option<DataMessage>,
     /// Remote SDP fingerprint the proofs were computed over.
     remote_fp: Option<String>,
+    /// Baby: the accepted remote answer's talk line is `sendonly` (the parent can talk on this
+    /// attempt). `None` until an answer was read, and when the direction check is off.
+    talk_line: Option<bool>,
     /// Our own SDP fingerprint the proofs were computed over.
     local_fp: Option<String>,
     /// First DTLS certificate fingerprint reported by the platform (normalized).
@@ -137,6 +142,7 @@ impl Attempt {
             early_peer_mac: None,
             early_parent: None,
             remote_fp: None,
+            talk_line: None,
             local_fp: None,
             dtls_fp: None,
             proof_matched: false,
@@ -195,6 +201,12 @@ impl Attempt {
         Some((self.local_fp.as_deref()?, self.remote_fp.as_deref()?))
     }
 
+    /// Baby: whether the accepted remote answer lets the parent talk (its talk line is `sendonly`);
+    /// `None` before the answer.
+    pub fn talk_line_accepted(&self) -> Option<bool> {
+        self.talk_line
+    }
+
     /// Baby: RMS to put into outgoing heartbeats.
     pub fn set_heartbeat_rms(&mut self, rms: Option<f64>) {
         self.heartbeat_rms = rms;
@@ -220,8 +232,10 @@ impl Attempt {
         if self.finished || self.local_sdp.is_some() || sdp_type != expected {
             return out;
         }
-        if self.cfg.role == Role::Baby && self.cfg.require_sendonly && !audio_is_sendonly(sdp) {
-            self.fail("baby_sdp_not_sendonly", &mut out);
+        if self.cfg.check_audio_directions
+            && let Err(key) = check_local_audio_lines(self.cfg.role, sdp)
+        {
+            self.fail(key, &mut out);
             return out;
         }
         self.local_sdp = Some(sdp.to_owned());
@@ -270,9 +284,20 @@ impl Attempt {
         {
             return None;
         }
+        let mut out = Vec::new();
+        if self.cfg.check_audio_directions && self.cfg.role == Role::Baby {
+            // The accepted answer decides whether this parent can talk, and it must not let the
+            // parent send on the monitoring line. A bad answer ends the attempt before it is applied.
+            match read_remote_answer(sdp) {
+                Ok(talk) => self.talk_line = Some(talk),
+                Err(key) => {
+                    self.fail(key, &mut out);
+                    return Some(out);
+                }
+            }
+        }
         self.remote_aid = Some(aid.to_owned());
         self.remote_sdp = Some(sdp.to_owned());
-        let mut out = Vec::new();
         self.try_start_pairing(now, &mut out);
         Some(out)
     }
@@ -514,56 +539,138 @@ impl Attempt {
     }
 }
 
-fn section_is_sendonly(dir: Option<&str>, conflicting: bool) -> bool {
-    !conflicting && dir == Some("sendonly")
+/// Direction of an audio m-line as the peer wrote it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Dir {
+    SendOnly,
+    RecvOnly,
+    SendRecv,
+    Inactive,
 }
 
-/// Minimal SDP check: at least one audio m-line and every audio m-line is `a=sendonly` (its own
-/// direction attribute, or the session-level one when it has none). Anything ambiguous fails.
-pub fn audio_is_sendonly(sdp: &str) -> bool {
-    let mut session_dir: Option<&str> = None;
-    let mut in_audio = false;
+/// One `m=audio` section of an SDP, reduced to what the direction rule needs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct AudioLine {
+    /// Own direction attribute, else the session-level one; `None` when there is neither or the
+    /// section contradicts itself (anything ambiguous fails).
+    dir: Option<Dir>,
+    /// Port 0: the line was rejected, which counts as `inactive`.
+    rejected: bool,
+}
+
+impl AudioLine {
+    fn effective(self) -> Option<Dir> {
+        if self.rejected {
+            Some(Dir::Inactive)
+        } else {
+            self.dir
+        }
+    }
+
+    /// Exactly this direction on a line that was not rejected.
+    fn is(self, dir: Dir) -> bool {
+        !self.rejected && self.dir == Some(dir)
+    }
+}
+
+fn direction_attribute(line: &str) -> Option<Dir> {
+    match line {
+        "a=sendonly" => Some(Dir::SendOnly),
+        "a=recvonly" => Some(Dir::RecvOnly),
+        "a=sendrecv" => Some(Dir::SendRecv),
+        "a=inactive" => Some(Dir::Inactive),
+        _ => None,
+    }
+}
+
+/// The audio m-lines of `sdp` in order. A section's direction is its own `a=` attribute, or the
+/// session-level one when it has none. Other media (video, application) are not our concern.
+fn audio_lines(sdp: &str) -> Vec<AudioLine> {
+    struct Open {
+        rejected: bool,
+        dir: Option<Dir>,
+        conflicting: bool,
+    }
+    fn close(open: Option<Open>, session_dir: Option<Dir>, lines: &mut Vec<AudioLine>) {
+        if let Some(o) = open {
+            lines.push(AudioLine {
+                dir: if o.conflicting {
+                    None
+                } else {
+                    o.dir.or(session_dir)
+                },
+                rejected: o.rejected,
+            });
+        }
+    }
+    let mut lines = Vec::new();
+    let mut session_dir: Option<Dir> = None;
     let mut in_media = false;
-    let mut section_dir: Option<&str> = None;
-    let mut conflicting = false;
-    let mut audio_sections = 0usize;
-    let mut bad = false;
+    let mut open: Option<Open> = None;
     for raw in sdp.split('\n') {
         let line = raw.trim_end_matches('\r');
-        if line.starts_with("m=") {
-            if in_audio {
-                bad |= !section_is_sendonly(section_dir.or(session_dir), conflicting);
-            }
+        if let Some(rest) = line.strip_prefix("m=") {
+            close(open.take(), session_dir, &mut lines);
             in_media = true;
-            in_audio = line.starts_with("m=audio ");
-            if in_audio {
-                audio_sections += 1;
+            if let Some(fields) = rest.strip_prefix("audio ") {
+                open = Some(Open {
+                    rejected: fields.split(' ').next() == Some("0"),
+                    dir: None,
+                    conflicting: false,
+                });
             }
-            section_dir = None;
-            conflicting = false;
             continue;
         }
-        let dir = match line {
-            "a=sendonly" => Some("sendonly"),
-            "a=recvonly" => Some("recvonly"),
-            "a=sendrecv" => Some("sendrecv"),
-            "a=inactive" => Some("inactive"),
-            _ => None,
+        let Some(dir) = direction_attribute(line) else {
+            continue;
         };
-        let Some(dir) = dir else { continue };
         if !in_media {
             session_dir = Some(dir);
-        } else if in_audio {
-            if section_dir.is_some_and(|d| d != dir) {
-                conflicting = true;
+        } else if let Some(o) = open.as_mut() {
+            if o.dir.is_some_and(|d| d != dir) {
+                o.conflicting = true;
             }
-            section_dir = Some(dir);
+            o.dir = Some(dir);
         }
     }
-    if in_audio {
-        bad |= !section_is_sendonly(section_dir.or(session_dir), conflicting);
+    close(open.take(), session_dir, &mut lines);
+    lines
+}
+
+/// The audio-direction rule of every local description on the `Link` path: exactly two audio
+/// m-lines, the monitoring line first and the talk line second. Baby: `sendonly` and `recvonly`.
+/// Parent: `recvonly` and `sendonly` or `inactive` (port 0 counts as `inactive`). Returns the
+/// failure key (`baby_sdp_bad_direction`, `parent_sdp_bad_direction`) for anything else.
+pub fn check_local_audio_lines(role: Role, sdp: &str) -> Result<(), &'static str> {
+    let lines = audio_lines(sdp);
+    let ok = match (role, lines.as_slice()) {
+        (Role::Baby, [monitor, talk]) => monitor.is(Dir::SendOnly) && talk.is(Dir::RecvOnly),
+        (Role::Parent, [monitor, talk]) => {
+            monitor.is(Dir::RecvOnly)
+                && matches!(talk.effective(), Some(Dir::SendOnly | Dir::Inactive))
+        }
+        _ => false,
+    };
+    if ok {
+        Ok(())
+    } else {
+        Err(match role {
+            Role::Baby => "baby_sdp_bad_direction",
+            Role::Parent => "parent_sdp_bad_direction",
+        })
     }
-    audio_sections > 0 && !bad
+}
+
+/// Baby: reads the parent's answer. `Ok(true)` when the talk line is `sendonly` (the parent can
+/// talk), `Ok(false)` when it is `inactive`, rejected or missing, `Err` when the monitoring line is
+/// not `recvonly` (the parent would send on it) or the answer has more lines than the offer.
+fn read_remote_answer(sdp: &str) -> Result<bool, &'static str> {
+    const BAD: &str = "parent_sdp_bad_direction";
+    match audio_lines(sdp).as_slice() {
+        [monitor] if monitor.is(Dir::RecvOnly) => Ok(false),
+        [monitor, talk] if monitor.is(Dir::RecvOnly) => Ok(talk.is(Dir::SendOnly)),
+        _ => Err(BAD),
+    }
 }
 
 #[cfg(test)]
@@ -588,9 +695,17 @@ mod tests {
         fpc(seed).replace(':', "").to_ascii_lowercase()
     }
 
-    fn sdp(fp: &str) -> String {
+    /// The baby's offer: monitoring line `sendonly`, talk line `recvonly`.
+    fn offer_sdp(fp: &str) -> String {
         format!(
-            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 {fp}\r\n"
+            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 {fp}\r\n"
+        )
+    }
+
+    /// The parent's answer: monitoring line `recvonly`, talk line `sendonly`.
+    fn answer_sdp(fp: &str) -> String {
+        format!(
+            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 {fp}\r\n"
         )
     }
 
@@ -609,7 +724,7 @@ mod tests {
             heartbeat_interval_ms: 5_000,
             liveness_ms: 15_000,
             attempt_timeout_ms: 20_000,
-            require_sendonly: true,
+            check_audio_directions: true,
             require_dtls_fingerprint: false,
         }
     }
@@ -631,7 +746,7 @@ mod tests {
     fn open_pair(baby_psk: &[u8], parent_psk: &[u8]) -> (Attempt, Attempt, String, String) {
         let mut baby = Attempt::new(cfg(Role::Baby, baby_psk), 0);
         let mut parent = Attempt::new(cfg(Role::Parent, parent_psk), 0);
-        let (bs, ps) = (sdp(&fpc(0xaa)), sdp(&fpc(0xcc)));
+        let (bs, ps) = (offer_sdp(&fpc(0xaa)), answer_sdp(&fpc(0xcc)));
         baby.on_local_description(1, "offer", &bs);
         parent
             .on_remote_description(2, BABY_AID, "offer", &bs)
@@ -690,7 +805,7 @@ mod tests {
     fn early_peer_proof_is_buffered_until_own_proof_can_be_computed() {
         let mut baby = Attempt::new(cfg(Role::Baby, &PSK), 0);
         let mut parent = Attempt::new(cfg(Role::Parent, &PSK), 0);
-        let (bs, ps) = (sdp(&fpc(0xaa)), sdp(&fpc(0xcc)));
+        let (bs, ps) = (offer_sdp(&fpc(0xaa)), answer_sdp(&fpc(0xcc)));
         baby.on_local_description(1, "offer", &bs);
         parent
             .on_remote_description(1, BABY_AID, "offer", &bs)
@@ -709,7 +824,7 @@ mod tests {
     #[test]
     fn only_the_first_early_proof_is_kept() {
         let mut baby = Attempt::new(cfg(Role::Baby, &PSK), 0);
-        let (bs, ps) = (sdp(&fpc(0xaa)), sdp(&fpc(0xcc)));
+        let (bs, ps) = (offer_sdp(&fpc(0xaa)), answer_sdp(&fpc(0xcc)));
         baby.on_local_description(1, "offer", &bs);
         baby.on_data_open(1);
         let good = pair_proof_mac_v3(&PSK, Role::Parent, "room", &fph(0xcc), &fph(0xaa)).unwrap();
@@ -798,7 +913,7 @@ mod tests {
     #[test]
     fn remote_description_filters_type_aid_and_duplicates() {
         let mut parent = Attempt::new(cfg(Role::Parent, &PSK), 0);
-        let s = sdp(&fpc(0xaa));
+        let s = offer_sdp(&fpc(0xaa));
         assert!(
             parent
                 .on_remote_description(0, BABY_AID, "answer", &s)
@@ -837,7 +952,7 @@ mod tests {
         let mut parent = Attempt::new(cfg(Role::Parent, &PSK), 0);
         assert!(!parent.accepts_ice(BABY_AID));
         parent
-            .on_remote_description(0, BABY_AID, "offer", &sdp(&fpc(0xaa)))
+            .on_remote_description(0, BABY_AID, "offer", &offer_sdp(&fpc(0xaa)))
             .unwrap();
         assert!(parent.accepts_ice(BABY_AID));
         assert!(!parent.accepts_ice("cccccccccccccccccccccccccccccccc"));
@@ -857,13 +972,13 @@ mod tests {
     #[test]
     fn local_sdp_is_signalled_with_own_aid() {
         let mut baby = Attempt::new(cfg(Role::Baby, &PSK), 0);
-        let ev = baby.on_local_description(0, "offer", &sdp(&fpc(0xaa)));
+        let ev = baby.on_local_description(0, "offer", &offer_sdp(&fpc(0xaa)));
         assert!(matches!(
             ev.as_slice(),
             [AttemptEvent::Signal(SignalPayload::Sdp { aid, .. })] if aid == BABY_AID
         ));
         assert!(
-            baby.on_local_description(0, "offer", &sdp(&fpc(0xaa)))
+            baby.on_local_description(0, "offer", &offer_sdp(&fpc(0xaa)))
                 .is_empty()
         );
         let ice = baby.on_local_ice(IceCandidate {
@@ -877,58 +992,209 @@ mod tests {
         ));
     }
 
+    const M: &str = "m=audio 9 UDP/TLS/RTP/SAVPF 111\r\n";
+
+    /// Two audio m-lines with the given directions, then a fingerprint.
+    fn two_lines(monitor: &str, talk: &str, fp: &str) -> String {
+        format!("v=0\r\n{M}a={monitor}\r\n{M}a={talk}\r\na=fingerprint:sha-256 {fp}\r\n")
+    }
+
+    fn local_fails(role: Role, sdp_type: &str, body: &str, key: &str) {
+        let mut a = Attempt::new(cfg(role, &PSK), 0);
+        let ev = a.on_local_description(0, sdp_type, body);
+        assert_eq!(ev, vec![AttemptEvent::Failed(key.into())], "{body}");
+        assert!(a.is_finished());
+    }
+
     #[test]
-    fn baby_refuses_local_sdp_that_is_not_sendonly() {
+    fn baby_refuses_a_local_offer_that_breaks_the_direction_rule() {
         let fp = fpc(0xaa);
         for body in [
-            format!(
-                "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendrecv\r\na=fingerprint:sha-256 {fp}\r\n"
-            ),
-            format!("v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=fingerprint:sha-256 {fp}\r\n"),
+            // first line not sendonly
+            two_lines("sendrecv", "recvonly", &fp),
+            two_lines("recvonly", "recvonly", &fp),
+            two_lines("inactive", "recvonly", &fp),
+            // talk line not recvonly (the baby would send on it)
+            two_lines("sendonly", "sendonly", &fp),
+            two_lines("sendonly", "sendrecv", &fp),
+            two_lines("sendonly", "inactive", &fp),
+            // a single line, no direction, no audio, a third line
+            format!("v=0\r\n{M}a=sendonly\r\na=fingerprint:sha-256 {fp}\r\n"),
+            format!("v=0\r\n{M}{M}a=fingerprint:sha-256 {fp}\r\n"),
             format!("v=0\r\na=fingerprint:sha-256 {fp}\r\n"),
+            format!("v=0\r\n{M}a=sendonly\r\n{M}a=recvonly\r\n{M}a=recvonly\r\n"),
+            // a rejected talk line
+            format!("v=0\r\n{M}a=sendonly\r\nm=audio 0 X 1\r\na=recvonly\r\n"),
         ] {
-            let mut baby = Attempt::new(cfg(Role::Baby, &PSK), 0);
-            let ev = baby.on_local_description(0, "offer", &body);
-            assert_eq!(
-                ev,
-                vec![AttemptEvent::Failed("baby_sdp_not_sendonly".into())]
-            );
-            assert!(baby.is_finished());
+            local_fails(Role::Baby, "offer", &body, "baby_sdp_bad_direction");
         }
     }
 
     #[test]
-    fn sendonly_check_can_be_disabled_for_the_legacy_session() {
-        let mut c = cfg(Role::Baby, &PSK);
-        c.require_sendonly = false;
-        let mut baby = Attempt::new(c, 0);
-        let ev = baby.on_local_description(0, "offer", "v=0\r\n");
-        assert!(matches!(ev.as_slice(), [AttemptEvent::Signal(_)]));
+    fn parent_refuses_a_local_answer_that_breaks_the_direction_rule() {
+        let fp = fpc(0xcc);
+        for body in [
+            // would send on the monitoring line
+            two_lines("sendonly", "sendonly", &fp),
+            two_lines("sendrecv", "sendonly", &fp),
+            two_lines("inactive", "sendonly", &fp),
+            // talk line that would receive
+            two_lines("recvonly", "recvonly", &fp),
+            two_lines("recvonly", "sendrecv", &fp),
+            // one line, none
+            format!("v=0\r\n{M}a=recvonly\r\na=fingerprint:sha-256 {fp}\r\n"),
+            format!("v=0\r\na=fingerprint:sha-256 {fp}\r\n"),
+        ] {
+            local_fails(Role::Parent, "answer", &body, "parent_sdp_bad_direction");
+        }
     }
 
     #[test]
-    fn sendonly_parser_handles_sections_and_session_level_direction() {
-        let m = "m=audio 9 UDP/TLS/RTP/SAVPF 111\r\n";
-        assert!(audio_is_sendonly(&format!("v=0\r\n{m}a=sendonly\r\n")));
-        assert!(audio_is_sendonly(&format!("v=0\r\na=sendonly\r\n{m}")));
-        assert!(!audio_is_sendonly(&format!(
-            "v=0\r\na=sendonly\r\n{m}a=sendrecv\r\n"
-        )));
-        assert!(!audio_is_sendonly(&format!(
-            "v=0\r\n{m}a=sendonly\r\na=recvonly\r\n"
-        )));
-        assert!(!audio_is_sendonly(&format!("v=0\r\n{m}a=inactive\r\n")));
-        assert!(!audio_is_sendonly("v=0\r\n"));
-        // A second audio section that is not sendonly poisons the whole SDP.
-        assert!(!audio_is_sendonly(&format!(
-            "v=0\r\n{m}a=sendonly\r\n{m}a=sendrecv\r\n"
-        )));
-        // A video section is not our concern; the audio section still decides.
-        assert!(audio_is_sendonly(&format!(
-            "v=0\r\n{m}a=sendonly\r\nm=video 9 X 96\r\na=sendrecv\r\n"
-        )));
+    fn both_roles_accept_the_documented_directions() {
+        let fp = fpc(0xaa);
+        for (role, ty, body) in [
+            (Role::Baby, "offer", two_lines("sendonly", "recvonly", &fp)),
+            (
+                Role::Parent,
+                "answer",
+                two_lines("recvonly", "sendonly", &fp),
+            ),
+            // an `inactive` talk line: this parent cannot talk
+            (
+                Role::Parent,
+                "answer",
+                two_lines("recvonly", "inactive", &fp),
+            ),
+            // port 0 counts as inactive, whatever the attribute says
+            (
+                Role::Parent,
+                "answer",
+                format!("v=0\r\n{M}a=recvonly\r\nm=audio 0 X 1\r\na=sendonly\r\n"),
+            ),
+        ] {
+            let mut a = Attempt::new(cfg(role, &PSK), 0);
+            let ev = a.on_local_description(0, ty, &body);
+            assert!(matches!(ev.as_slice(), [AttemptEvent::Signal(_)]), "{body}");
+        }
+    }
+
+    #[test]
+    fn the_direction_check_can_be_disabled_for_the_legacy_session() {
+        for role in [Role::Baby, Role::Parent] {
+            let mut c = cfg(role, &PSK);
+            c.check_audio_directions = false;
+            let ty = if role == Role::Baby {
+                "offer"
+            } else {
+                "answer"
+            };
+            let mut a = Attempt::new(c, 0);
+            let ev = a.on_local_description(0, ty, "v=0\r\n");
+            assert!(matches!(ev.as_slice(), [AttemptEvent::Signal(_)]));
+            // and the remote answer is not read either
+            assert_eq!(a.talk_line_accepted(), None);
+        }
+    }
+
+    #[test]
+    fn audio_lines_handles_sections_session_level_direction_and_ports() {
+        use Dir::*;
+        let line = |dir, rejected| AudioLine { dir, rejected };
+        // Session-level direction applies to a section without its own.
+        assert_eq!(
+            audio_lines(&format!("v=0\r\na=sendonly\r\n{M}")),
+            vec![line(Some(SendOnly), false)]
+        );
+        // A section's own attribute wins over the session-level one.
+        assert_eq!(
+            audio_lines(&format!("v=0\r\na=sendonly\r\n{M}a=recvonly\r\n")),
+            vec![line(Some(RecvOnly), false)]
+        );
+        // Contradicting attributes in one section: no direction.
+        assert_eq!(
+            audio_lines(&format!("v=0\r\n{M}a=sendonly\r\na=recvonly\r\n")),
+            vec![line(None, false)]
+        );
+        // No attribute at all: no direction (the default `sendrecv` is never assumed).
+        assert_eq!(audio_lines(&format!("v=0\r\n{M}")), vec![line(None, false)]);
+        assert_eq!(audio_lines("v=0\r\n"), vec![]);
+        // Other media are skipped and do not leak their direction into the audio line.
+        assert_eq!(
+            audio_lines(&format!(
+                "v=0\r\n{M}a=sendonly\r\nm=video 9 X 96\r\na=sendrecv\r\nm=application 9 X webrtc-datachannel\r\n"
+            )),
+            vec![line(Some(SendOnly), false)]
+        );
+        // Port 0 is rejected.
+        assert_eq!(
+            audio_lines("v=0\r\nm=audio 0 X 1\r\na=sendonly\r\n"),
+            vec![line(Some(SendOnly), true)]
+        );
         // LF-only line endings are accepted too.
-        assert!(audio_is_sendonly("v=0\nm=audio 9 X 1\na=sendonly\n"));
+        assert_eq!(
+            audio_lines("v=0\nm=audio 9 X 1\na=sendonly\nm=audio 9 X 1\na=recvonly\n"),
+            vec![line(Some(SendOnly), false), line(Some(RecvOnly), false)]
+        );
+    }
+
+    /// A baby that has made its offer and takes `answer` as the parent's reply.
+    fn baby_takes_answer(answer: &str) -> (Attempt, Option<Vec<AttemptEvent>>) {
+        let mut baby = Attempt::new(cfg(Role::Baby, &PSK), 0);
+        baby.on_local_description(0, "offer", &offer_sdp(&fpc(0xaa)));
+        let ev = baby.on_remote_description(1, PARENT_AID, "answer", answer);
+        (baby, ev)
+    }
+
+    #[test]
+    fn baby_reads_the_talk_line_of_the_accepted_answer() {
+        let fp = fpc(0xcc);
+        let (baby, ev) = baby_takes_answer(&two_lines("recvonly", "sendonly", &fp));
+        assert!(ev.is_some());
+        assert_eq!(baby.talk_line_accepted(), Some(true));
+        for talk in ["inactive", "recvonly", "sendrecv"] {
+            let (baby, ev) = baby_takes_answer(&two_lines("recvonly", talk, &fp));
+            assert!(ev.is_some_and(|e| e.is_empty()), "{talk}");
+            assert_eq!(baby.talk_line_accepted(), Some(false), "{talk}");
+        }
+        // A rejected talk line and a missing one both mean no talk.
+        let rejected = format!("v=0\r\n{M}a=recvonly\r\nm=audio 0 X 1\r\na=sendonly\r\n");
+        assert_eq!(
+            baby_takes_answer(&rejected).0.talk_line_accepted(),
+            Some(false)
+        );
+        let missing = format!("v=0\r\n{M}a=recvonly\r\na=fingerprint:sha-256 {fp}\r\n");
+        assert_eq!(
+            baby_takes_answer(&missing).0.talk_line_accepted(),
+            Some(false)
+        );
+        // Before an answer there is nothing to know.
+        let baby = Attempt::new(cfg(Role::Baby, &PSK), 0);
+        assert_eq!(baby.talk_line_accepted(), None);
+    }
+
+    #[test]
+    fn baby_fails_the_attempt_on_an_answer_that_sends_on_the_monitoring_line() {
+        let fp = fpc(0xcc);
+        for answer in [
+            two_lines("sendrecv", "sendonly", &fp),
+            two_lines("sendonly", "sendonly", &fp),
+            two_lines("inactive", "sendonly", &fp),
+            // monitoring line rejected, no audio at all, a third line
+            format!("v=0\r\nm=audio 0 X 1\r\na=recvonly\r\n{M}a=sendonly\r\n"),
+            format!("v=0\r\na=fingerprint:sha-256 {fp}\r\n"),
+            format!("v=0\r\n{M}a=recvonly\r\n{M}a=sendonly\r\n{M}a=sendonly\r\n"),
+        ] {
+            let (baby, ev) = baby_takes_answer(&answer);
+            assert_eq!(
+                ev,
+                Some(vec![AttemptEvent::Failed(
+                    "parent_sdp_bad_direction".into()
+                )]),
+                "{answer}"
+            );
+            assert!(baby.is_finished());
+            assert!(!baby.sdp_exchanged());
+        }
     }
 
     #[test]
@@ -951,7 +1217,11 @@ mod tests {
 
     #[test]
     fn missing_or_ambiguous_fingerprints_fail_the_attempt() {
-        let two = format!("{}a=fingerprint:sha-256 {}\r\n", sdp(&fpc(0xaa)), fpc(0xbb));
+        let two = format!(
+            "{}a=fingerprint:sha-256 {}\r\n",
+            offer_sdp(&fpc(0xaa)),
+            fpc(0xbb)
+        );
         let hidden = format!(
             "v=0\r\ns=a=fingerprint:sha-256 {}\r\nm=audio 9 X 1\r\na=sendonly\r\n",
             fpc(0xaa)
@@ -961,16 +1231,20 @@ mod tests {
             parent
                 .on_remote_description(0, BABY_AID, "offer", &remote)
                 .unwrap();
-            parent.on_local_description(0, "answer", &sdp(&fpc(0xcc)));
+            parent.on_local_description(0, "answer", &answer_sdp(&fpc(0xcc)));
             let ev = parent.on_data_open(1);
             assert_eq!(ev, vec![AttemptEvent::Failed("fingerprint_invalid".into())]);
         }
         // The local SDP is held to the same rule.
         let mut parent = Attempt::new(cfg(Role::Parent, &PSK), 0);
         parent
-            .on_remote_description(0, BABY_AID, "offer", &sdp(&fpc(0xaa)))
+            .on_remote_description(0, BABY_AID, "offer", &offer_sdp(&fpc(0xaa)))
             .unwrap();
-        parent.on_local_description(0, "answer", "v=0\r\n");
+        parent.on_local_description(
+            0,
+            "answer",
+            &format!("v=0\r\n{M}a=recvonly\r\n{M}a=sendonly\r\n"),
+        );
         assert_eq!(
             parent.on_data_open(1),
             vec![AttemptEvent::Failed("fingerprint_invalid".into())]
@@ -996,7 +1270,7 @@ mod tests {
     fn open_dtls_pair() -> (Attempt, Attempt, String, String) {
         let mut baby = Attempt::new(dtls_cfg(Role::Baby), 0);
         let mut parent = Attempt::new(dtls_cfg(Role::Parent), 0);
-        let (bs, ps) = (sdp(&fpc(0xaa)), sdp(&fpc(0xcc)));
+        let (bs, ps) = (offer_sdp(&fpc(0xaa)), answer_sdp(&fpc(0xcc)));
         baby.on_local_description(1, "offer", &bs);
         parent
             .on_remote_description(2, BABY_AID, "offer", &bs)
@@ -1053,7 +1327,7 @@ mod tests {
     #[test]
     fn dtls_report_before_the_sdps_are_complete_is_kept() {
         let mut baby = Attempt::new(dtls_cfg(Role::Baby), 0);
-        let (bs, ps) = (sdp(&fpc(0xaa)), sdp(&fpc(0xcc)));
+        let (bs, ps) = (offer_sdp(&fpc(0xaa)), answer_sdp(&fpc(0xcc)));
         baby.on_local_description(1, "offer", &bs);
         assert!(baby.on_dtls_fingerprint(2, &fpc(0xcc)).is_empty());
         baby.on_data_open(3);
@@ -1132,21 +1406,31 @@ mod tests {
         // real line; both ends relay the proofs through it. Proofs bind the real lines, so they
         // cannot match, and the DTLS certificate is the relay's.
         let mitm = fpc(0x77);
-        let hidden = |real: &str| {
+        let hidden = |real: &str, monitor: &str, talk: &str| {
             format!(
-                "v=0\r\ns=a=fingerprint:sha-256 {real}\r\nm=audio 9 X 1\r\na=sendonly\r\na=fingerprint:sha-256 {mitm}\r\n"
+                "v=0\r\ns=a=fingerprint:sha-256 {real}\r\nm=audio 9 X 1\r\na={monitor}\r\nm=audio 9 X 1\r\na={talk}\r\na=fingerprint:sha-256 {mitm}\r\n"
             )
         };
         let mut baby = Attempt::new(dtls_cfg(Role::Baby), 0);
         let mut parent = Attempt::new(dtls_cfg(Role::Parent), 0);
-        let (bs, ps) = (sdp(&fpc(0xaa)), sdp(&fpc(0xcc)));
+        let (bs, ps) = (offer_sdp(&fpc(0xaa)), answer_sdp(&fpc(0xcc)));
         baby.on_local_description(1, "offer", &bs);
         parent
-            .on_remote_description(2, BABY_AID, "offer", &hidden(&fpc(0xaa)))
+            .on_remote_description(
+                2,
+                BABY_AID,
+                "offer",
+                &hidden(&fpc(0xaa), "sendonly", "recvonly"),
+            )
             .unwrap();
         parent.on_local_description(3, "answer", &ps);
-        baby.on_remote_description(4, PARENT_AID, "answer", &hidden(&fpc(0xcc)))
-            .unwrap();
+        baby.on_remote_description(
+            4,
+            PARENT_AID,
+            "answer",
+            &hidden(&fpc(0xcc), "recvonly", "sendonly"),
+        )
+        .unwrap();
         let bp = texts(&baby.on_data_open(5)).pop().unwrap();
         let pp = texts(&parent.on_data_open(5)).pop().unwrap();
         assert_eq!(parent.on_data_message(6, &bp), vec![AttemptEvent::Mismatch]);

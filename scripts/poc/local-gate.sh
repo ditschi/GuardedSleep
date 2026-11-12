@@ -111,7 +111,7 @@ fi
 APK_IN="/workspace/${APK#"$ROOT"/}"
 OUT_IN="/workspace/${OUT#"$ROOT"/}"
 docker run --rm --network host -v "$ROOT:/workspace" -v "$ANDROID_HOME_DIR:/root/.android" \
-	-e DOZE_MINUTES -e ALERT_MAX_MS -e HB_INTERVAL_MS -e ALARM_AFTER_MS \
+	-e GATE_ONLY -e DOZE_MINUTES -e ALERT_MAX_MS -e HB_INTERVAL_MS -e ALARM_AFTER_MS \
 	-e SIGNAL="ws://10.0.2.2:$SIGNAL_PORT" -e SIGNAL_PORT="$SIGNAL_PORT" -e APK="$APK_IN" -e OUT="$OUT_IN" -e BABY_SERIAL=emulator-5554 -e PARENT_SERIAL=emulator-5556 \
 	--entrypoint bash "$EMU_IMAGE" -c '
 		set -euo pipefail

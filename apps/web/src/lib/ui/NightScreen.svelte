@@ -7,9 +7,24 @@
     /** What the first tap shows for a moment: the connection in words, already translated. */
     statusText: string;
     testid?: string;
+    /** Baby: "Parent is talking", shown at once (static, no pulse) while a voice plays. */
+    talkingText?: string | null;
+    /** Baby: "Last talk: ..." on the first tap, with the status. */
+    lastTalkText?: string | null;
+    /** Baby: the browser suspended the audio; the line and its action turn sound back on. */
+    soundOffText?: string | null;
+    onsoundon?: () => void;
   };
 
-  let { open = $bindable(), statusText, testid = "night_screen" }: Props = $props();
+  let {
+    open = $bindable(),
+    statusText,
+    testid = "night_screen",
+    talkingText = null,
+    lastTalkText = null,
+    soundOffText = null,
+    onsoundon,
+  }: Props = $props();
 
   /** How long the status stays up after the first tap, then the screen goes dark again. */
   const STATUS_MS = 6_000;
@@ -74,10 +89,28 @@
           {$t("webScreens.night.monitoring")}
         </span>
         <span>{statusText}</span>
+        {#if lastTalkText}<span data-testid="{testid}_last_talk">{lastTalkText}</span>{/if}
         <span class="gs-night__hint">{$t("webScreens.night.leave")}</span>
       </span>
     {:else}
       <span class="gs-sr-only">{$t("webScreens.night.label")}</span>
     {/if}
   </button>
+  {#if talkingText}
+    <p class="gs-night__talking" data-testid="{testid}_talking" role="status">
+      <Glyph name="mic" />
+      {talkingText}
+    </p>
+  {/if}
+  {#if soundOffText}
+    <button
+      type="button"
+      class="gs-night__sound"
+      data-testid="{testid}_sound_off"
+      onclick={() => onsoundon?.()}
+    >
+      <Glyph name="sound" />
+      {soundOffText}
+    </button>
+  {/if}
 </dialog>

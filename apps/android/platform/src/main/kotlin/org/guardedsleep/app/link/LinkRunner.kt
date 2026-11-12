@@ -5,6 +5,7 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import org.guardedsleep.app.config.AppDefaults
+import org.guardedsleep.app.config.TalkPolicy
 import org.guardedsleep.app.diag.PocLog
 import org.guardedsleep.app.media.AttemptListener
 import org.guardedsleep.app.media.AttemptPort
@@ -12,6 +13,8 @@ import org.guardedsleep.app.media.IceServerEntry
 import org.guardedsleep.app.media.InboundAudioStats
 import org.guardedsleep.app.media.InjectedAudio
 import org.guardedsleep.app.media.MediaEngine
+import org.guardedsleep.app.media.TalkPlayout
+import org.guardedsleep.app.media.TalkSpeaker
 import org.guardedsleep.app.signaling.SignalingFactory
 import org.guardedsleep.app.signaling.SignalingListener
 import org.guardedsleep.app.signaling.SignalingTransport
@@ -26,6 +29,7 @@ import uniffi.guardedsleep_core.LinkInput
 import uniffi.guardedsleep_core.LinkState
 import uniffi.guardedsleep_core.LinkStatus
 import uniffi.guardedsleep_core.Role
+import uniffi.guardedsleep_core.TalkState
 
 /** Called on the `gs-core` thread. */
 interface LinkListener {
@@ -40,6 +44,9 @@ interface LinkListener {
 
     /** Parent: level of the received audio, ~10 Hz while audio flows. */
     fun onRemoteLevel(rms: Double, nowMs: Long)
+
+    /** Parent: level of its own microphone while a talk has it attached, ~2 Hz. */
+    fun onTalkMicLevel(rms: Double, nowMs: Long)
 
     /** Parent: inbound audio counters every few seconds. */
     fun onInboundStats(stats: InboundAudioStats, nowMs: Long)
@@ -86,9 +93,18 @@ class LinkRunner(
     private var lastSentStatus: DeviceStatus? = null
     private var lastSentStatusAt = 0L
     private var lastWallMs = -1L
+    /** Parent: the attempt whose talk sender carries the microphone, for the level poll. */
+    private var talkMicAttempt: UInt? = null
+    private var lastTalkMicPollAt = 0L
+    private var lastTalkRtpLogAt = 0L
     private var lastWallElapsedMs = 0L
 
     private val isBaby = config.role == Role.BABY
+
+    /** Baby: the lease on the loudspeaker; null while the engine cannot play a talk. */
+    private var playout: TalkPlayout? = null
+    private var leasedAttempt: UInt? = null
+    private var outsidePollAt = 0L
 
     /** Builds the core and the media engine, opens signaling and starts the timers. */
     fun start() = post {
@@ -108,6 +124,7 @@ class LinkRunner(
                 config.pinnedParent?.bytes?.fill(0)
             }
         media = mediaFactory()
+        media?.let { setUpTalk(it) }
         PocLog.event("session_start", "role" to config.role.name.lowercase())
         dispatch(LinkInput.Start(entropy.toULong()))
         reportWallClock()
@@ -152,7 +169,55 @@ class LinkRunner(
     /** Immediate teardown without telling the peer (process shutdown paths). */
     fun abort() = post { teardown() }
 
-    fun input(input: LinkInput) = post { if (!closing) dispatch(input) }
+    fun input(input: LinkInput) = post {
+        if (closing) return@post
+        // Warm capture: the talk microphone is created at the press, attached only at the grant.
+        if (input is LinkInput.SetTalk && input.pressed) media?.prepareTalkCapture()
+        dispatch(input)
+    }
+
+    /** Talk-back wiring of one engine: the parent's mic failures, the baby's lease. */
+    private fun setUpTalk(m: MediaEngine) {
+        if (!isBaby) {
+            m.setTalkMicFailureListener { post { dispatch(LinkInput.TalkMicFailed) } }
+            return
+        }
+        val volume = m.talkVolume()
+        if (volume == null) {
+            dispatch(LinkInput.SetTalkMuted(true))
+            return
+        }
+        val speaker =
+            object : TalkSpeaker {
+                override fun setReceiverEnabled(attempt: UInt, enabled: Boolean) {
+                    // Exactly one attempt's receiver is ever enabled; all others stay disabled.
+                    for ((h, p) in attempts) p.setTalkReceiverEnabled(enabled && h == attempt)
+                    leasedAttempt = if (enabled) attempt else null
+                }
+
+                override fun setReceiverGain(attempt: UInt, gain: Double) {
+                    attempts[attempt]?.setTalkReceiverGain(gain)
+                }
+
+                override fun setSpeakerMuted(muted: Boolean) = m.setTalkSpeakerMuted(muted)
+
+                override fun playChime(gain: Double, onDone: () -> Unit) =
+                    m.playTalkChime(gain, onDone)
+
+                override fun stopChime() = m.stopTalkChime()
+            }
+        playout =
+            TalkPlayout(
+                speaker,
+                volume,
+                onChimeDone = { a -> post { dispatch(LinkInput.TalkChimeDone(a)) } },
+                onMuted = { muted -> dispatch(LinkInput.SetTalkMuted(muted)) },
+                onOutsideGrant = { a -> dispatch(LinkInput.TalkRtpOutsideGrant(a)) },
+            )
+        playout?.start()
+        // Raw capture is `quiet-link-no-rtp`'s task and not built: the playback check says unknown.
+        dispatch(LinkInput.SetRawCapture(false))
+    }
 
     fun media(action: (MediaEngine) -> Unit) = post { media?.let(action) }
 
@@ -164,6 +229,7 @@ class LinkRunner(
     private fun sampleAudio() {
         val m = media ?: return
         val now = clock.elapsedMs()
+        if (isBaby) samplePlayout(now)
         if (isBaby) {
             val rms = m.drainMicRms() ?: InjectedAudio.level()
             if (rms != null) {
@@ -172,6 +238,44 @@ class LinkRunner(
             }
         } else {
             m.drainRemoteRms()?.let { listener.onRemoteLevel(it, now) }
+            pollTalkMic(now)
+        }
+    }
+
+    /** Parent: the level of the open talk microphone, for the "isn't picking up sound" hint. */
+    private fun pollTalkMic(now: Long) {
+        val attempt = talkMicAttempt ?: return
+        if (now - lastTalkMicPollAt < TALK_MIC_POLL_MS) return
+        lastTalkMicPollAt = now
+        attempts[attempt]?.talkMicLevel { level ->
+            if (level != null) post { listener.onTalkMicLevel(level, clock.elapsedMs()) }
+        }
+    }
+
+    /** Lease expiry, the level control and the outside-a-grant check of the talk line. */
+    private fun samplePlayout(now: Long) {
+        val p = playout ?: return
+        p.tick(now)
+        val leased = leasedAttempt
+        if (leased != null) {
+            attempts[leased]?.talkReceiverStats { s ->
+                if (s != null)
+                    post {
+                        p.onTalkLevel(s.audioLevel, clock.elapsedMs())
+                        dispatch(LinkInput.TalkLevel(s.audioLevel))
+                        pocTalkRtp(s.packetsReceived, true)
+                    }
+            }
+        } else if (now - outsidePollAt >= TalkPolicy.OUTSIDE_POLL_MS) {
+            outsidePollAt = now
+            val h = liveAttempt ?: return
+            attempts[h]?.talkReceiverStats { s ->
+                if (s != null)
+                    post {
+                        p.onTalkPackets(h, s.packetsReceived, clock.elapsedMs())
+                        pocTalkRtp(s.packetsReceived, false)
+                    }
+            }
         }
     }
 
@@ -232,8 +336,33 @@ class LinkRunner(
             is LinkAction.SetMicEnabled -> media?.setMicEnabled(action.enabled)
             LinkAction.ApplyQuiet -> applyQuietNow()
             is LinkAction.SendProbeTone -> media?.startProbeTone(action.durationMs.toLong())
+            is LinkAction.SetTalkMic -> setTalkMic(action.attempt, action.enabled)
+            is LinkAction.SetPlaybackDucked -> media?.setPlaybackDucked(action.ducked)
+            is LinkAction.PlayTalkChime ->
+                playout?.playChime(action.attempt, action.level)
+                    ?: post { dispatch(LinkInput.TalkChimeDone(action.attempt)) }
+            is LinkAction.SetTalkPlayback ->
+                if (action.enabled) {
+                    playout?.open(
+                        action.attempt,
+                        action.level,
+                        action.fadeInMs.toLong(),
+                        action.untilMs.toLong(),
+                        now,
+                    )
+                } else {
+                    playout?.close(now)
+                }
             is LinkAction.Emit -> emit(action.event, now)
         }
+    }
+
+    /** Parent: attach or detach the microphone; the answer is a separate input, never inline. */
+    private fun setTalkMic(attempt: UInt, enabled: Boolean) {
+        val ok = attempts[attempt]?.setTalkMic(enabled) ?: false
+        talkMicAttempt = if (enabled && ok) attempt else null
+        if (!enabled) return
+        post { dispatch(if (ok) LinkInput.TalkMicAttached else LinkInput.TalkMicFailed) }
     }
 
     private fun emit(event: LinkEvent, now: Long) {
@@ -266,6 +395,8 @@ class LinkRunner(
                         "rms" to event.rms,
                         "probe" to event.probe,
                     )
+            is LinkEvent.TalkChanged -> pocTalk(event.state)
+            is LinkEvent.SecurityWarning -> PocLog.event("security_warning", "key" to event.key)
             is LinkEvent.LinkLost ->
                 PocLog.event("alert", "kind" to "link_lost", "down_ms" to event.downMs)
             is LinkEvent.LinkRestored -> PocLog.event("link_restored", "down_ms" to event.downMs)
@@ -278,6 +409,24 @@ class LinkRunner(
             } catch (e: Exception) {
                 if (event is LinkEvent.ParentPinned) throw PinNotPersisted() else throw e
             }
+        }
+    }
+
+    /** Gate evidence for the baby: the talk receiver's packet counter, about once a second. */
+    private fun pocTalkRtp(packets: Long, leased: Boolean) {
+        val now = clock.elapsedMs()
+        if (now - lastTalkRtpLogAt < TalkPolicy.OUTSIDE_POLL_MS - 100) return
+        lastTalkRtpLogAt = now
+        PocLog.event("talk_rtp", "packets" to packets, "leased" to leased)
+    }
+
+    /** Gate evidence for the parent's talk: state names only, never audio or names. */
+    private fun pocTalk(state: TalkState) {
+        when (state) {
+            TalkState.Requesting -> PocLog.event("talk", "state" to "requesting")
+            is TalkState.Talking -> PocLog.event("talk", "state" to "talking")
+            is TalkState.Ended -> PocLog.event("talk", "state" to "ended", "reason" to state.reason)
+            is TalkState.Denied -> PocLog.event("talk", "state" to "denied")
         }
     }
 
@@ -371,6 +520,8 @@ class LinkRunner(
     private fun closeAttempt(handle: UInt) {
         val peer = attempts[handle] ?: return
         if (liveAttempt == handle) liveAttempt = null
+        if (leasedAttempt == handle) playout?.close(clock.elapsedMs())
+        playout?.attemptClosed(handle)
         if (closing) {
             // A stop_notice was just written to the DataChannel; let it leave before the close.
             schedule(FLUSH_MS) {
@@ -402,6 +553,8 @@ class LinkRunner(
         tasks.clear()
         mailboxes.values.forEach { it.transport.close() }
         mailboxes.clear()
+        runCatching { playout?.close(clock.elapsedMs()) }
+        playout = null
         attempts.values.forEach { runCatching { it.close() } }
         attempts.clear()
         runCatching { media?.release() }
@@ -447,6 +600,7 @@ class LinkRunner(
     private companion object {
         const val FLUSH_MS = 300L
         const val STATS_MS = 5_000L
+        const val TALK_MIC_POLL_MS = 500L
 
         /** The longest mailbox frame passed on to the core (`signaling-mailboxes`: 64 KiB). */
         const val MAX_FRAME_CHARS = 64 * 1024

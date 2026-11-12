@@ -3,6 +3,7 @@ package org.guardedsleep.app.link
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.guardedsleep.app.ui.model.BabyMonitorState
+import org.guardedsleep.app.ui.model.LastTalkUi
 import org.guardedsleep.app.ui.model.LinkHint
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.LinkQuality
@@ -37,6 +38,8 @@ class BabyModel(private val clock: Clock) {
                 dndAccess = _state.value.dndAccess,
                 kioskLocked = false,
                 silenceRestoredNotice = keepNotice && _state.value.silenceRestoredNotice,
+                // "Last talk" is local to the baby device and outlives a link, not the process.
+                lastTalk = _state.value.lastTalk,
             )
     }
 
@@ -59,6 +62,22 @@ class BabyModel(private val clock: Clock) {
             is LinkEvent.ParentConnected -> {
                 parentName = event.name
                 publish()
+            }
+            is LinkEvent.TalkActive -> {
+                val talk = _state.value
+                _state.value =
+                    if (event.active) talk.copy(parentTalking = true)
+                    else
+                        talk.copy(
+                            parentTalking = false,
+                            lastTalk =
+                                LastTalkUi(
+                                    parentName.orEmpty(),
+                                    // The talk's start, like the web client.
+                                    clock.wallMs() - event.durationMs.toLong(),
+                                    event.durationMs.toLong(),
+                                ),
+                        )
             }
             is LinkEvent.SecurityWarning -> {
                 security = true

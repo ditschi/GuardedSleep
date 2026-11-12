@@ -81,6 +81,7 @@ import org.guardedsleep.app.ui.common.SecondaryButton
 import org.guardedsleep.app.ui.common.Tone
 import org.guardedsleep.app.ui.common.WindowBrightness
 import org.guardedsleep.app.ui.common.formatDuration
+import org.guardedsleep.app.ui.common.formatTime
 import org.guardedsleep.app.ui.common.rememberElapsedNow
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.LinkPhase
@@ -456,6 +457,24 @@ fun BabyKioskScreen(controller: AppController) {
                     .background(edgeColor(b.link))
                     .testTag("baby_kiosk_edge")
             )
+            if (b.parentTalking) {
+                // Static and dim, under the edge and outside the faded column: it never wakes
+                // the screen, pulses or animates (`talk-back` "Baby device shows who talks").
+                Row(
+                    Modifier.align(Alignment.TopCenter)
+                        .padding(top = 12.dp)
+                        .testTag("baby_talking"),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    GlyphIcon(Glyph.MIC, StateColors.KioskText.copy(alpha = 0.6f), size = 14.dp)
+                    Text(
+                        stringResource(R.string.native_ui_talk_baby_talking),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = StateColors.KioskText.copy(alpha = 0.6f),
+                    )
+                }
+            }
             Column(
                 Modifier.fillMaxSize().alpha(infoAlpha).padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
@@ -505,6 +524,29 @@ fun BabyKioskScreen(controller: AppController) {
                         Modifier.testTag("baby_listening"),
                         style = MaterialTheme.typography.bodyMedium,
                         color = StateColors.KioskText,
+                    )
+                }
+                b.lastTalk?.let { last ->
+                    val time = formatTime(last.atWallMs)
+                    val length = formatDuration(last.durationMs)
+                    Text(
+                        if (last.name.isEmpty())
+                            stringResource(
+                                R.string.native_ui_talk_baby_last_talk_anon,
+                                time,
+                                length,
+                            )
+                        else
+                            stringResource(
+                                R.string.native_ui_talk_baby_last_talk,
+                                last.name,
+                                time,
+                                length,
+                            ),
+                        Modifier.testTag("baby_last_talk"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = StateColors.KioskText,
+                        textAlign = TextAlign.Center,
                     )
                 }
                 Text(

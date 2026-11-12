@@ -1,0 +1,126 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "talk-noise-pause-quiet",
+  "description": "A parent talks for 11 s at high volume in a quiet room: the speaker never raises a noise alert, during or after the talk.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "input",
+      "peer": "baby",
+      "input": {
+        "type": "set_raw_capture",
+        "raw": true
+      }
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 14000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 6000
+    },
+    {
+      "at": 20000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 20000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.6,
+      "for_ms": 12500
+    },
+    {
+      "at": 20650,
+      "do": "talk_levels",
+      "peer": "baby",
+      "rms": 0.6,
+      "for_ms": 12000
+    },
+    {
+      "at": 31000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 32500,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 40000
+    },
+    {
+      "at": 80000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "event": "talk_changed",
+      "where": {
+        "state": {
+          "state": "talking"
+        }
+      },
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "never": "noise_alert",
+      "where": {
+        "probe": false
+      }
+    },
+    {
+      "peer": "parent",
+      "event": "noise_paused",
+      "where": {
+        "paused": true
+      },
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "event": "noise_paused",
+      "where": {
+        "paused": false
+      },
+      "count": 1
+    }
+  ]
+}

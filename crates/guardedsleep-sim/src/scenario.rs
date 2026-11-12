@@ -59,8 +59,12 @@ pub struct PeerSpec {
     pub paired_before: bool,
     pub heartbeat_interval_ms: Option<u64>,
     pub alarm_after_ms: Option<u64>,
-    /// Direction attribute of the baby's offer (default `sendonly`).
+    /// Direction of the monitoring line (first audio m-line) of this peer's local descriptions
+    /// (default: baby `sendonly`, parent `recvonly`).
     pub sdp_direction: Option<String>,
+    /// Direction of the talk line (second audio m-line; default: baby `recvonly`, parent
+    /// `sendonly`).
+    pub sdp_talk_direction: Option<String>,
     /// Baby: the mailbox set it sends the parent after each verification (`LinkConfig::mailboxes`).
     #[serde(default)]
     pub mailboxes: Vec<InviteMailbox>,
@@ -180,6 +184,8 @@ pub struct Step {
     pub relay: Option<usize>,
     /// `input`: any `LinkInput` in its serde form.
     pub input: Option<Value>,
+    /// `levels`, `talk_levels`: the RMS (0..1) fed every 100 ms for `for_ms`.
+    pub rms: Option<f64>,
 }
 
 /// One check. The discriminating field is `event`, `never`, `state`, `max_level`,

@@ -94,6 +94,7 @@ class BabyShots : ShotBase() {
         kiosk("pulse_level3", calm.copy(link = link(LinkPhase.RECONNECTING, 3, 200_000)))
         kiosk("parent_stopped", calm.copy(link = link(LinkPhase.PEER_STOPPED, 0, 4_000)))
         kiosk("reconnecting_edge", calm.copy(link = link(LinkPhase.RECONNECTING, 1, 40_000)))
+        kiosk("parent_talking", calm.copy(parentTalking = true))
     }
 }
 

@@ -10,8 +10,12 @@ use guardedsleep_core::link::{
 };
 use guardedsleep_core::mailbox::MailboxKind;
 use guardedsleep_core::pairing::ParentSecret;
-use guardedsleep_core::protocol::{DeviceStatus, Dnd, IceCandidate, Ringer, Role, UnitWarning};
+use guardedsleep_core::protocol::{
+    DeviceStatus, Dnd, IceCandidate, PlaybackResult, Ringer, Role, TalkAudible, TalkDenyReason,
+    TalkStatus, Talker, UnitWarning,
+};
 use guardedsleep_core::session::{Action, Input, SessionConfig, SessionEvent, SessionState};
+use guardedsleep_core::talk::{TalkEndReason, TalkLevel, TalkState};
 
 #[uniffi::remote(Enum)]
 pub enum Role {
@@ -61,6 +65,80 @@ pub enum UnitWarning {
     MicPermissionLost,
 }
 
+/// Whether the baby unit lets this parent talk (`device_status.talk`).
+#[uniffi::remote(Enum)]
+pub enum TalkStatus {
+    On,
+    Off,
+    Muted,
+    Unsupported,
+}
+
+/// Who talks to the child right now, from the recipient's point of view.
+#[uniffi::remote(Enum)]
+pub enum Talker {
+    None,
+    You,
+    Other,
+}
+
+/// `uncertain` after three talks in a row that the playback check could not confirm.
+#[uniffi::remote(Enum)]
+pub enum TalkAudible {
+    Ok,
+    Uncertain,
+}
+
+/// The baby unit's playback check of one talk.
+#[uniffi::remote(Enum)]
+pub enum PlaybackResult {
+    Heard,
+    Unconfirmed,
+    Unknown,
+}
+
+/// Why the baby unit denied a talk request.
+#[uniffi::remote(Enum)]
+pub enum TalkDenyReason {
+    Off,
+    Unsupported,
+    Muted,
+    Busy,
+    Cooldown { retry_in_ms: u64 },
+    Budget { retry_in_ms: u64 },
+    Rate,
+}
+
+/// Talk-back volume of the baby unit.
+#[uniffi::remote(Enum)]
+pub enum TalkLevel {
+    Low,
+    Medium,
+    High,
+}
+
+/// Why a talk ended on the parent.
+#[uniffi::remote(Enum)]
+pub enum TalkEndReason {
+    Released,
+    Limit,
+    NoAnswer,
+    LinkLost,
+    MicFailed,
+    Alert,
+    SwitchedOff,
+    Stopped,
+}
+
+/// The talk state a parent UI shows.
+#[uniffi::remote(Enum)]
+pub enum TalkState {
+    Requesting,
+    Talking { until_ms: u64 },
+    Ended { reason: TalkEndReason },
+    Denied { reason: Option<TalkDenyReason> },
+}
+
 /// Coarse baby-phone state shown to the parent (ADR-018). Every field may be unknown (`None`).
 #[uniffi::remote(Record)]
 pub struct DeviceStatus {
@@ -84,6 +162,16 @@ pub struct DeviceStatus {
     /// Reliability warnings reported by the baby platform; sorted and deduplicated by
     /// [`DeviceStatus::normalized`] and the parser, omitted on the wire when empty.
     pub unit_warnings: Vec<UnitWarning>,
+    /// Talk-back as this recipient sees it (set by the core of the baby).
+    pub talk: Option<TalkStatus>,
+    /// Who talks right now, from this recipient's point of view (set by the core).
+    pub talker: Option<Talker>,
+    /// Noise detection is paused while a talk plays (set by the core).
+    pub noise_paused: Option<bool>,
+    /// Milliseconds until the next talk request can pass, while denied for the cooldown or budget.
+    pub talk_retry_in_ms: Option<u64>,
+    /// `uncertain` after three talks in a row that the playback check could not confirm.
+    pub talk_audible: Option<TalkAudible>,
 }
 
 #[uniffi::remote(Record)]
@@ -289,6 +377,44 @@ pub enum LinkInput {
     QuietApplied {
         state: DeviceStatus,
     },
+    /// Parent: the talk button went down (`pressed: true`) or up.
+    SetTalk {
+        pressed: bool,
+    },
+    /// Parent: the microphone is attached to the talk sender.
+    TalkMicAttached,
+    /// Parent: the microphone failed or its permission was revoked; the talk ends.
+    TalkMicFailed,
+    /// Parent: an alert sound or vibration is due; a running talk ends first.
+    AlertPreemptsTalk,
+    /// Baby: the chime of `play_talk_chime` ended.
+    TalkChimeDone {
+        attempt: u32,
+    },
+    /// Baby: the talk-back settings of this pairing (local only).
+    SetTalkBack {
+        enabled: bool,
+        level: TalkLevel,
+        chime: bool,
+    },
+    /// Baby: an adult opened the talk-back settings.
+    TalkSettingsOpened,
+    /// Baby: the platform cannot make a talk audible right now.
+    SetTalkMuted {
+        muted: bool,
+    },
+    /// Baby: the platform captures without echo cancellation.
+    SetRawCapture {
+        raw: bool,
+    },
+    /// Baby: the media layer received talk RTP on `attempt` outside a playback lease.
+    TalkRtpOutsideGrant {
+        attempt: u32,
+    },
+    /// Baby: RMS 0..1 of the incoming talk audio while it plays.
+    TalkLevel {
+        rms: f64,
+    },
     Tick,
 }
 
@@ -345,6 +471,29 @@ pub enum LinkAction {
     /// Baby: mix a synthetic tone into the outgoing stream; never play it on the baby phone.
     SendProbeTone {
         duration_ms: u64,
+    },
+    /// Parent: attach (`enabled`) or detach and dispose the microphone on the talk sender.
+    SetTalkMic {
+        attempt: u32,
+        enabled: bool,
+    },
+    /// Parent: mute (`ducked`) or resume the baby's audio while the button is held.
+    SetPlaybackDucked {
+        attempt: u32,
+        ducked: bool,
+    },
+    /// Baby: play the talk chime at `level`, then report `talk_chime_done`.
+    PlayTalkChime {
+        attempt: u32,
+        level: TalkLevel,
+    },
+    /// Baby: open (a lease that ends by itself at `until_ms`) or close the talk playback.
+    SetTalkPlayback {
+        attempt: u32,
+        enabled: bool,
+        level: TalkLevel,
+        fade_in_ms: u64,
+        until_ms: u64,
     },
     Emit {
         event: LinkEvent,
@@ -443,6 +592,23 @@ pub enum LinkEvent {
     Hint {
         key: String,
         active: bool,
+    },
+    /// Parent: the talk state for the UI.
+    TalkChanged {
+        state: TalkState,
+    },
+    /// Baby: a parent's voice plays (`active`) or stopped, with how long it played.
+    TalkActive {
+        active: bool,
+        duration_ms: u64,
+    },
+    /// Noise detection is paused or runs again.
+    NoisePaused {
+        paused: bool,
+    },
+    /// Parent: the result of the baby unit's playback check.
+    TalkPlayback {
+        result: PlaybackResult,
     },
 }
 

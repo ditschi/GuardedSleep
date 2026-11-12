@@ -22,6 +22,7 @@
   import KeepAwakeNotice from "../lib/ui/KeepAwakeNotice.svelte";
   import ListenButton from "../lib/ui/ListenButton.svelte";
   import Meter from "../lib/ui/Meter.svelte";
+  import TalkButton from "../lib/ui/TalkButton.svelte";
   import NightScreen from "../lib/ui/NightScreen.svelte";
   import {
     canRequestSilence,
@@ -39,7 +40,7 @@
 
   const controller = useController();
   const router = useRouter();
-  const { app, parent, soundUnlocked } = controller;
+  const { app, parent, settings, soundUnlocked, webTalk } = controller;
 
   // ---- full screens ----------------------------------------------------------------------
 
@@ -170,6 +171,14 @@
     // The same tap is the moment to ask for notifications; nothing changes if the user declines.
     void askForNotifications(browserNotifications(window));
   }
+
+  // ---- talk-back permission step ---------------------------------------------------------
+
+  // The microphone is asked for in a step of its own before the first talk, never during a hold.
+  let permissionOpen = $state(false);
+  $effect(() => {
+    permissionOpen = $parent.talkPermission !== "none";
+  });
 
   // ---- sheets ----------------------------------------------------------------------------
 
@@ -333,6 +342,28 @@
       testid="parent_listen"
     />
 
+    {#if connected && !$settings.talkCoachSeen && !$app.coachPending}
+      <Card tone="variant" testid="coach_talk">
+        <p>{$t("webScreens.talk.coach")}</p>
+        <Button
+          variant="text"
+          testid="coach_talk_dismiss"
+          onclick={() => controller.dismissTalkCoach()}
+        >
+          {$t("native.ui.common.ok")}
+        </Button>
+      </Card>
+    {/if}
+
+    <TalkButton
+      talk={$parent}
+      web={$webTalk}
+      nowMs={$everySecond.elapsedMs}
+      onpress={() => controller.setTalk(true)}
+      onrelease={() => controller.setTalk(false)}
+      onkeeplisten={() => controller.setListen("locked")}
+    />
+
     <div class="gs-action-row">
       <Button variant="outline" testid="parent_snooze" onclick={() => (snoozeOpen = true)}>
         {$t("native.ui.snooze.button")}
@@ -355,6 +386,42 @@
     <NightScreen bind:open={nightOpen} statusText={headlineText} />
   </div>
 {/if}
+
+<Dialog
+  bind:open={permissionOpen}
+  title={$t("webScreens.talk.permissionTitle")}
+  testid="parent_talk_permission_sheet"
+  onclose={() => controller.dismissTalkPermission()}
+>
+  {#if $parent.talkPermission === "just_granted"}
+    <p>{$t("webScreens.talk.permissionDone")}</p>
+  {:else if $parent.talkPermission === "refused"}
+    <p>{$t("webScreens.talk.permissionRefused")}</p>
+  {:else}
+    <p>{$t("webScreens.talk.permissionBody")}</p>
+  {/if}
+  {#snippet actions()}
+    {#if $parent.talkPermission === "needed"}
+      <Button
+        variant="text"
+        testid="parent_talk_permission_cancel"
+        onclick={() => controller.dismissTalkPermission()}
+      >
+        {$t("native.ui.common.cancel")}
+      </Button>
+      <Button
+        testid="parent_talk_permission_allow"
+        onclick={() => controller.requestTalkPermission()}
+      >
+        {$t("webScreens.talk.permissionAllow")}
+      </Button>
+    {:else}
+      <Button testid="parent_talk_permission_ok" onclick={() => controller.dismissTalkPermission()}>
+        {$t("native.ui.common.ok")}
+      </Button>
+    {/if}
+  {/snippet}
+</Dialog>
 
 <Dialog bind:open={snoozeOpen} title={$t("native.ui.snooze.title")} testid="sheet_snooze">
   <p>{$t("native.ui.snooze.help")}</p>

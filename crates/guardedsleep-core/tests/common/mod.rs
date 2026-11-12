@@ -93,6 +93,9 @@ pub struct Node {
     pub sdp_pad: usize,
     pub max_level: u8,
     pub baby_direction: &'static str,
+    /// Direction of the parent's talk line in its answer (`sendonly`, or `inactive` for a parent
+    /// without talk support).
+    pub parent_talk_direction: &'static str,
     pub dtls: Dtls,
     pub down_since: Option<u64>,
     pub create_times: Vec<u64>,
@@ -103,6 +106,13 @@ pub struct Node {
     pub baby_proof: ProofFault,
     /// This node never sends its `pin_ack` (a lost acknowledgement).
     pub drop_pin_ack: bool,
+    /// This node never sends its `parent_pin`: the baby stays unpinned on a verified attempt.
+    pub drop_parent_pin: bool,
+    /// The talk-back actions this node executed, with the time, in order; a `close_attempt` is
+    /// logged too so tests can see what came before it.
+    pub talk_actions: Vec<(u64, LinkAction)>,
+    /// The DataChannel messages this node sent that reached the peer, with the time.
+    pub data_sent: Vec<(u64, Value)>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -217,12 +227,16 @@ impl World {
             sdp_pad: 0,
             max_level: 0,
             baby_direction: "sendonly",
+            parent_talk_direction: "sendonly",
             dtls: Dtls::Honest,
             down_since: None,
             create_times: Vec::new(),
             parent_proof: ProofFault::None,
             baby_proof: ProofFault::None,
             drop_pin_ack: false,
+            drop_parent_pin: false,
+            talk_actions: Vec::new(),
+            data_sent: Vec::new(),
         });
         self.nodes.len() - 1
     }
@@ -517,7 +531,18 @@ impl World {
                         },
                     );
                 }
-                LinkAction::CloseAttempt { attempt } => self.close_attempt(n, attempt),
+                LinkAction::CloseAttempt { attempt } => {
+                    self.nodes[n]
+                        .talk_actions
+                        .push((self.now, LinkAction::CloseAttempt { attempt }));
+                    self.close_attempt(n, attempt)
+                }
+                a @ (LinkAction::SetTalkMic { .. }
+                | LinkAction::SetPlaybackDucked { .. }
+                | LinkAction::PlayTalkChime { .. }
+                | LinkAction::SetTalkPlayback { .. }) => {
+                    self.nodes[n].talk_actions.push((self.now, a));
+                }
                 LinkAction::CreateOffer { attempt } => self.local_description(n, attempt, "offer"),
                 LinkAction::CreateAnswer { attempt } => {
                     self.local_description(n, attempt, "answer")
@@ -760,16 +785,18 @@ impl World {
     }
 
     fn sdp(&self, n: usize, fp: &str) -> String {
-        let dir = match self.nodes[n].role {
-            Role::Baby => self.nodes[n].baby_direction,
-            Role::Parent => "recvonly",
+        // The monitoring line first, the talk line second (`link-supervision`, "Sans-IO interface
+        // contract"). `baby_direction` is the baby's monitoring direction, so a test can break it.
+        let (monitor, talk) = match self.nodes[n].role {
+            Role::Baby => (self.nodes[n].baby_direction, "recvonly"),
+            Role::Parent => ("recvonly", self.nodes[n].parent_talk_direction),
         };
         let pad = match self.nodes[n].sdp_pad {
             0 => String::new(),
             k => format!("a=x-pad:{}\r\n", "x".repeat(k)),
         };
         format!(
-            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na={dir}\r\n{pad}a=fingerprint:sha-256 {}\r\n",
+            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na={monitor}\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na={talk}\r\n{pad}a=fingerprint:sha-256 {}\r\n",
             colon_fp(fp)
         )
     }
@@ -949,6 +976,9 @@ impl World {
         if text.contains("\"pin_ack\"") && self.nodes[n].drop_pin_ack {
             return;
         }
+        if text.contains("\"parent_pin\"") && self.nodes[n].drop_parent_pin {
+            return;
+        }
         for (marker, fault) in [
             ("\"parent_proof\"", self.nodes[n].parent_proof),
             ("\"baby_proof\"", self.nodes[n].baby_proof),
@@ -967,6 +997,9 @@ impl World {
                     text = v.to_string();
                 }
             }
+        }
+        if let Ok(v) = serde_json::from_str::<Value>(&text) {
+            self.nodes[n].data_sent.push((self.now, v));
         }
         self.queue.push_back(Item::Input(
             m,

@@ -387,7 +387,7 @@ impl World {
             aid: self.rng.aid(),
             sdp_type: "offer".into(),
             sdp: format!(
-                "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\na=fingerprint:sha-256 {}\r\n",
+                "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\na=fingerprint:sha-256 {}\r\n",
                 colon_upper(&fp)
             ),
             re: None,

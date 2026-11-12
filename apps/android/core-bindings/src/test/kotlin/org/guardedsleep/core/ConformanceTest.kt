@@ -18,6 +18,7 @@ import uniffi.guardedsleep_core.MailboxKind
 import uniffi.guardedsleep_core.ParentSecret
 import uniffi.guardedsleep_core.Role
 import uniffi.guardedsleep_core.SessionEvent
+import uniffi.guardedsleep_core.TalkLevel
 import uniffi.guardedsleep_core.conformanceEval
 import uniffi.guardedsleep_core.defaultSessionConfig
 
@@ -150,6 +151,23 @@ class ConformanceTest {
             "attempt_dtls_fingerprint" ->
                 LinkInput.AttemptDtlsFingerprint(attempt, i.getString("fingerprint"))
             "attempt_pc_state" -> LinkInput.AttemptPcState(attempt, i.getString("state"))
+            "audio_level" -> LinkInput.AudioLevel(i.getDouble("rms"))
+            "set_talk" -> LinkInput.SetTalk(i.getBoolean("pressed"))
+            "talk_mic_attached" -> LinkInput.TalkMicAttached
+            "talk_mic_failed" -> LinkInput.TalkMicFailed
+            "alert_preempts_talk" -> LinkInput.AlertPreemptsTalk
+            "talk_chime_done" -> LinkInput.TalkChimeDone(attempt)
+            "talk_level" -> LinkInput.TalkLevel(i.getDouble("rms"))
+            "talk_settings_opened" -> LinkInput.TalkSettingsOpened
+            "talk_rtp_outside_grant" -> LinkInput.TalkRtpOutsideGrant(attempt)
+            "set_raw_capture" -> LinkInput.SetRawCapture(i.getBoolean("raw"))
+            "set_talk_muted" -> LinkInput.SetTalkMuted(i.getBoolean("muted"))
+            "set_talk_back" ->
+                LinkInput.SetTalkBack(
+                    i.getBoolean("enabled"),
+                    TalkLevel.valueOf(i.getString("level").uppercase()),
+                    i.getBoolean("chime"),
+                )
             else -> error("trace input $type has no typed mapping")
         }
     }
@@ -176,6 +194,10 @@ class ConformanceTest {
             is LinkAction.CreateAnswer -> "$kind:attempt=${a.attempt}"
             is LinkAction.SetRemoteDescription -> "$kind:attempt=${a.attempt},sdp=${a.sdp}"
             is LinkAction.SendData -> "$kind:attempt=${a.attempt},text=${a.text}"
+            is LinkAction.SetTalkMic -> "$kind:attempt=${a.attempt}"
+            is LinkAction.SetPlaybackDucked -> "$kind:attempt=${a.attempt}"
+            is LinkAction.PlayTalkChime -> "$kind:attempt=${a.attempt}"
+            is LinkAction.SetTalkPlayback -> "$kind:attempt=${a.attempt}"
             else -> "$kind:"
         }
     }

@@ -15,6 +15,16 @@ export interface AttemptDeps {
   send: { track: MediaStreamTrack; stream: MediaStream } | null;
   /** Parent: the received baby audio. */
   onRemoteAudio(track: MediaStreamTrack, stream: MediaStream | undefined): void;
+  /**
+   * Baby: the receiver of the talk line. It arrives disabled (its `enabled` is false before this
+   * call); only the playback lease turns it on.
+   */
+  onTalkAudio?(track: MediaStreamTrack, stream: MediaStream | undefined): void;
+  /**
+   * Parent: whether this browser may answer the talk line `sendonly`. False (iOS Safari) leaves it
+   * `recvonly`, which the baby's core reads as "unsupported".
+   */
+  talkSend?: boolean;
 }
 
 const CHANNEL_LABEL = "guardedsleep";
@@ -36,6 +46,9 @@ export function createRtcAttempt(
   let fingerprintSent = false;
   let hasAudioReceiver = false;
   let channel: RTCDataChannel | null = null;
+  /** Parent: the second audio transceiver, the talk line. */
+  let talkTransceiver: RTCRtpTransceiver | null = null;
+  let talkTrackAttached = false;
   const pendingIce: RTCIceCandidateInit[] = [];
   const cancels = new Set<() => void>();
 
@@ -95,6 +108,12 @@ export function createRtcAttempt(
   pc.ontrack = (ev) => {
     if (ev.track.kind !== "audio") return;
     hasAudioReceiver = true;
+    if (deps.send) {
+      // The baby only receives on the talk line. Silent until a lease opens it (design section 3).
+      ev.track.enabled = false;
+      deps.onTalkAudio?.(ev.track, ev.streams[0]);
+      return;
+    }
     deps.onRemoteAudio(ev.track, ev.streams[0]);
   };
   pc.onconnectionstatechange = () => {
@@ -105,6 +124,9 @@ export function createRtcAttempt(
 
   if (deps.send) {
     pc.addTransceiver(deps.send.track, { direction: "sendonly", streams: [deps.send.stream] });
+    // The talk line: the baby only receives on it, and nothing flows until a parent talks. It is
+    // always the second audio line (the core requires exactly two, monitoring first).
+    pc.addTransceiver("audio", { direction: "recvonly" });
   }
   if (offerer) attachChannel(pc.createDataChannel(CHANNEL_LABEL, { ordered: true }));
 
@@ -113,6 +135,19 @@ export function createRtcAttempt(
     if (closed) return;
     const local = pc.localDescription;
     if (local) listener.onLocalDescription(local.type, local.sdp);
+  };
+
+  /**
+   * The parent answers the talk line `sendonly` with no track: nothing is sent until a talk
+   * attaches the microphone. Must run after the remote offer is applied and before the answer.
+   */
+  const armTalkLine = (): void => {
+    if (deps.send || deps.talkSend === false || talkTransceiver) return;
+    const audio = pc.getTransceivers().filter((t) => t.receiver.track.kind === "audio");
+    const line = audio[1];
+    if (!line) return;
+    line.direction = "sendonly";
+    talkTransceiver = line;
   };
 
   const answerNow = (): void => {
@@ -127,6 +162,7 @@ export function createRtcAttempt(
       pc.setRemoteDescription({ type: type as RTCSdpType, sdp }).then(async () => {
         if (closed) return;
         remoteSet = true;
+        armTalkLine();
         for (const c of pendingIce.splice(0)) await pc.addIceCandidate(c).catch(() => undefined);
         if (answerRequested) {
           answerRequested = false;
@@ -157,6 +193,28 @@ export function createRtcAttempt(
       if (closed || channel?.readyState !== "open") return false;
       channel.send(text);
       return true;
+    },
+    async setTalkTrack(track) {
+      const sender = talkTransceiver?.sender;
+      if (closed || !sender) return false;
+      try {
+        await sender.replaceTrack(track);
+        talkTrackAttached = track !== null;
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    async talkMicLevel(): Promise<number | null> {
+      if (closed || !talkTrackAttached) return null;
+      const report = await pc.getStats();
+      let level: number | null = null;
+      report.forEach((s: Record<string, unknown>) => {
+        if (level === null && s.type === "media-source" && (s.kind ?? s.mediaType) === "audio") {
+          level = typeof s.audioLevel === "number" ? s.audioLevel : null;
+        }
+      });
+      return level;
     },
     async inboundAudioStats(): Promise<InboundAudioStats | null> {
       if (closed || !hasAudioReceiver) return null;

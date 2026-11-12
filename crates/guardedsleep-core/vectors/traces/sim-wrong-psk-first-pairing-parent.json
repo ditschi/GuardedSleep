@@ -20,7 +20,8 @@
     "device_name": "",
     "mailboxes": [{ "kind": "relay", "url": "wss://relay-0.invalid" }],
     "allow_dev_loopback": false,
-    "only_local": false
+    "only_local": false,
+    "project_host": null
   },
   "steps": [
     { "n": 0, "now": 0, "input": { "type": "start", "entropy": 569173874 } },

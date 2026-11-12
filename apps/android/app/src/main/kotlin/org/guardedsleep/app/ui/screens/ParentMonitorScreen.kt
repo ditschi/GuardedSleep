@@ -58,6 +58,8 @@ import org.guardedsleep.app.ui.common.SheetOverlay
 import org.guardedsleep.app.ui.common.SoundMeter
 import org.guardedsleep.app.ui.common.StatusChip
 import org.guardedsleep.app.ui.common.SystemSettings
+import org.guardedsleep.app.ui.common.TalkInterruptEffect
+import org.guardedsleep.app.ui.common.TalkSection
 import org.guardedsleep.app.ui.common.Tone
 import org.guardedsleep.app.ui.common.ceilMinutes
 import org.guardedsleep.app.ui.common.formatClock
@@ -69,6 +71,7 @@ import org.guardedsleep.app.ui.model.AlertOutput
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.LinkPhase
+import org.guardedsleep.app.ui.model.ListenMode
 import org.guardedsleep.app.ui.model.MissedEventsUi
 import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.ReadinessIssue
@@ -316,6 +319,21 @@ fun ParentMonitorScreen(
             }
         }
         ListenButton(p.listen, connected, { controller.setListen(it) })
+        // Talk is its own row below Listen, so the slide-to-lock path never crosses it.
+        Spacer(Modifier.height(24.dp))
+        TalkSection(
+            p,
+            elapsed,
+            coachVisible = connected && !settings.talkCoachSeen && !app.coachPending,
+            onPress = { pressed ->
+                if (pressed) controller.dismissTalkCoach()
+                controller.setTalk(pressed)
+            },
+            onKeepListening = { controller.setListen(ListenMode.LOCKED) },
+            onPermissionResult = { controller.talkPermissionResult(it) },
+            onPermissionDismiss = { controller.dismissTalkPermission() },
+            onCoachDismiss = { controller.dismissTalkCoach() },
+        )
         Spacer(Modifier.height(24.dp))
         AdaptiveButtonRow {
             SecondaryButton(
@@ -336,6 +354,7 @@ fun ParentMonitorScreen(
         }
     }
 
+    TalkInterruptEffect { controller.interruptTalk() }
     ScreenRoot("parent_monitor") {
         Column(Modifier.fillMaxSize()) {
             LinkBar(p.link, name, backgroundProtection = app.backgroundProtection)

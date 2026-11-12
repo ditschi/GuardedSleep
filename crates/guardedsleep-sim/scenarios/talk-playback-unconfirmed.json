@@ -1,0 +1,115 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "talk-playback-unconfirmed",
+  "description": "The baby's microphone does not hear the talk (a muted output): the parent is told that the voice may not be audible.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "input",
+      "peer": "baby",
+      "input": {
+        "type": "set_raw_capture",
+        "raw": true
+      }
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 14000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 6000
+    },
+    {
+      "at": 20000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 20000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.011,
+      "for_ms": 7000
+    },
+    {
+      "at": 20650,
+      "do": "talk_levels",
+      "peer": "baby",
+      "rms": 0.3,
+      "for_ms": 6000
+    },
+    {
+      "at": 26700,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": false
+      }
+    },
+    {
+      "at": 27000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 25000
+    },
+    {
+      "at": 50000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "event": "talk_playback",
+      "where": {
+        "result": "unconfirmed"
+      },
+      "count": 1
+    },
+    {
+      "peer": "parent",
+      "never": "talk_playback",
+      "where": {
+        "result": "heard"
+      }
+    },
+    {
+      "peer": "parent",
+      "never": "noise_alert",
+      "where": {
+        "probe": false
+      }
+    }
+  ]
+}

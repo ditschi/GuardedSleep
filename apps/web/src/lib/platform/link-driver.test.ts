@@ -93,6 +93,10 @@ class Recorder implements LinkListener {
   onInboundStats(): void {
     this.log.push("stats");
   }
+  talkMicLevels: number[] = [];
+  onTalkMicLevel(rms: number): void {
+    this.talkMicLevels.push(rms);
+  }
   onTornDown(): void {
     this.torn = true;
   }
@@ -660,5 +664,150 @@ describe("LinkDriver with the real core", () => {
     expect(last?.level).toBeGreaterThanOrEqual(2);
     expect(last?.cause).toBe("server_unreachable");
     driver.abort();
+  });
+});
+
+describe("LinkDriver talk-back actions", () => {
+  const flushPromises = async (): Promise<void> => {
+    for (let i = 0; i < 10; i++) await Promise.resolve();
+  };
+  /** A core that opens attempt 1 at start and answers `request_probe` with the given actions. */
+  function withActions(role: LinkConfig["role"], actions: LinkAction[]) {
+    const core = new ScriptedCore();
+    core.script = (input) => {
+      if (input.type === "start") return [{ type: "create_attempt", attempt: 1, offerer: false }];
+      if (input.type === "request_probe") return actions;
+      return [];
+    };
+    const t = setup(role, core);
+    t.driver.start();
+    return { ...t, core };
+  }
+
+  it("parent: attaches the microphone at set_talk_mic and tells the core when it is attached", async () => {
+    const { driver, media, core } = withActions("parent", [
+      { type: "set_talk_mic", attempt: 1, enabled: true },
+    ]);
+    driver.input({ type: "request_probe" });
+    await flushPromises();
+    expect(media.calls).toContain("talkmic:true");
+    expect(core.types()).toContain("talk_mic_attached");
+  });
+
+  it("parent: a microphone that cannot attach ends the talk through the core", async () => {
+    const { driver, media, core } = withActions("parent", [
+      { type: "set_talk_mic", attempt: 1, enabled: true },
+    ]);
+    media.talkMicResult = "failed";
+    driver.input({ type: "request_probe" });
+    await flushPromises();
+    expect(core.types()).toContain("talk_mic_failed");
+    expect(core.types()).not.toContain("talk_mic_attached");
+  });
+
+  it("parent: a stale attach result is dropped and detaching tells the core nothing", async () => {
+    const { driver, media, core } = withActions("parent", [
+      { type: "set_talk_mic", attempt: 1, enabled: true },
+    ]);
+    media.talkMicResult = "stale";
+    driver.input({ type: "request_probe" });
+    await flushPromises();
+    expect(core.types().filter((t) => t.startsWith("talk_mic"))).toEqual([]);
+  });
+
+  it("parent: polls its own microphone level only once the talk microphone was asked for", async () => {
+    const { driver, media, listener, time } = withActions("parent", [
+      { type: "set_talk_mic", attempt: 1, enabled: true },
+    ]);
+    const attempt = media.attempts[0];
+    if (attempt) attempt.micLevel = 0.2;
+    time.advance(1_000);
+    await flushPromises();
+    expect(listener.talkMicLevels).toEqual([]);
+    driver.input({ type: "request_probe" });
+    await flushPromises();
+    time.advance(1_000);
+    await flushPromises();
+    expect(listener.talkMicLevels.length).toBeGreaterThan(0);
+    expect(listener.talkMicLevels[0]).toBe(0.2);
+    driver.abort();
+  });
+
+  it("parent: set_talk_mic for an attempt that is gone leaves no microphone open", async () => {
+    const { driver, media, core } = withActions("parent", [
+      { type: "set_talk_mic", attempt: 9, enabled: false },
+    ]);
+    driver.input({ type: "request_probe" });
+    await flushPromises();
+    expect(media.calls).toContain("discard");
+    expect(core.types()).not.toContain("talk_mic_attached");
+  });
+
+  it("parent: ducks the baby's audio on set_playback_ducked", () => {
+    const { driver, media } = withActions("parent", [
+      { type: "set_playback_ducked", attempt: 1, ducked: true },
+    ]);
+    driver.input({ type: "request_probe" });
+    expect(media.calls).toContain("ducked:true");
+  });
+
+  it("baby: plays the chime and reports its end as talk_chime_done", () => {
+    const { driver, media, core } = withActions("baby", [
+      { type: "play_talk_chime", attempt: 1, level: "low" },
+    ]);
+    driver.input({ type: "request_probe" });
+    expect(media.calls).toContain("chime:low");
+    media.chimeDone?.();
+    expect(core.inputs.some((i) => i.input.type === "talk_chime_done")).toBe(true);
+  });
+
+  it("baby: opens the lease with the time left to the core's deadline", () => {
+    const { driver, media, time } = withActions("baby", [
+      {
+        type: "set_talk_playback",
+        attempt: 1,
+        enabled: true,
+        level: "medium",
+        fade_in_ms: 800,
+        until_ms: 31_000,
+      },
+    ]);
+    time.advance(1_000);
+    driver.input({ type: "request_probe" });
+    expect(media.calls).toContain("talkplay:true:medium:800:30000");
+  });
+
+  it("baby: feeds the incoming voice level to the core while it plays", () => {
+    const { driver, media, core, time } = withActions("baby", []);
+    void driver;
+    media.talkRms = 0.3;
+    time.advance(100);
+    const level = core.inputs.find((i) => i.input.type === "talk_level");
+    expect(level?.input).toEqual({ type: "talk_level", rms: 0.3 });
+  });
+
+  it("baby: reports talk packets outside a lease once, without content", async () => {
+    const { media, core, time } = withActions("baby", []);
+    media.attempts[0]!.stats = { packetsReceived: 0, packetsLost: 0 };
+    time.advance(1_000);
+    await flushPromises();
+    media.attempts[0]!.stats = { packetsReceived: 40, packetsLost: 0 };
+    time.advance(1_000);
+    await flushPromises();
+    const warnings = core.inputs.filter((i) => i.input.type === "talk_rtp_outside_grant");
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]?.input).toEqual({ type: "talk_rtp_outside_grant", attempt: 1 });
+  });
+
+  it("baby: packets inside a lease are not a warning", async () => {
+    const { media, core, time } = withActions("baby", []);
+    media.attempts[0]!.stats = { packetsReceived: 0, packetsLost: 0 };
+    time.advance(1_000);
+    await flushPromises();
+    media.leaseOpen = true;
+    media.attempts[0]!.stats = { packetsReceived: 40, packetsLost: 0 };
+    time.advance(1_000);
+    await flushPromises();
+    expect(core.types()).not.toContain("talk_rtp_outside_grant");
   });
 });

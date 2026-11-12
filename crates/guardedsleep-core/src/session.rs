@@ -249,7 +249,7 @@ impl Session {
                 heartbeat_interval_ms: cfg.heartbeat_interval_ms,
                 liveness_ms: cfg.heartbeat_stale_ms,
                 attempt_timeout_ms: cfg.pairing_timeout_ms,
-                require_sendonly: false,
+                check_audio_directions: false,
                 require_dtls_fingerprint: false,
             },
             0,

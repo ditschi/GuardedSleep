@@ -19,6 +19,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -52,6 +53,7 @@ import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.DiscreetEscalation
 import org.guardedsleep.app.ui.model.Role
+import org.guardedsleep.app.ui.model.TalkVolume
 import org.guardedsleep.app.ui.model.Theme
 import org.guardedsleep.app.ui.model.TurnSaveResult
 import org.guardedsleep.app.ui.theme.LocalAppColors
@@ -167,6 +169,57 @@ fun SettingsScreen(
                         ),
                         tag = "settings_silence_status",
                     )
+                }
+                Section(R.string.native_ui_talk_baby_title, "settings_group_talk") {
+                    // An adult opened the talk-back settings: the "may not be audible" warning
+                    // ends.
+                    LaunchedEffect(Unit) { controller.talkSettingsOpened() }
+                    SwitchRow(
+                        stringResource(R.string.native_ui_talk_baby_switch),
+                        s.talkBackEnabled,
+                        "baby_talk_toggle",
+                    ) { on ->
+                        controller.updateSettings { st -> st.copy(talkBackEnabled = on) }
+                    }
+                    Body(stringResource(R.string.native_ui_talk_baby_switch_hint))
+                    if (s.talkBackEnabled) {
+                        Body(
+                            stringResource(R.string.native_ui_talk_baby_volume),
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Row(
+                            Modifier.testTag("baby_talk_volume"),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            TalkVolume.entries.forEach { v ->
+                                ChoiceChip(
+                                    stringResource(
+                                        when (v) {
+                                            TalkVolume.LOW -> R.string.native_ui_talk_baby_low
+                                            TalkVolume.MEDIUM -> R.string.native_ui_talk_baby_medium
+                                            TalkVolume.HIGH -> R.string.native_ui_talk_baby_high
+                                        }
+                                    ),
+                                    s.talkVolume == v,
+                                    "baby_talk_volume_" + v.name.lowercase(),
+                                ) {
+                                    controller.updateSettings { st -> st.copy(talkVolume = v) }
+                                }
+                            }
+                        }
+                        SecondaryButton(
+                            stringResource(R.string.native_ui_talk_baby_play_chime),
+                            { controller.playTalkChimeSample() },
+                            "baby_talk_play_chime",
+                        )
+                        SwitchRow(
+                            stringResource(R.string.native_ui_talk_baby_chime),
+                            s.talkChime,
+                            "baby_talk_chime_toggle",
+                        ) { on ->
+                            controller.updateSettings { st -> st.copy(talkChime = on) }
+                        }
+                    }
                 }
             } else {
                 Section(R.string.native_ui_settings_group_alerts, "settings_group_alerts") {

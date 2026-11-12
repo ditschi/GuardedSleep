@@ -16,13 +16,23 @@ import org.guardedsleep.app.ui.model.LinkQuality
 import org.guardedsleep.app.ui.model.LinkUi
 import org.guardedsleep.app.ui.model.ListenMode
 import org.guardedsleep.app.ui.model.MissedEventsUi
+import org.guardedsleep.app.ui.model.NoisePause
 import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.ReadinessIssue
 import org.guardedsleep.app.ui.model.SilenceRequest
 import org.guardedsleep.app.ui.model.SoundEventUi
+import org.guardedsleep.app.ui.model.TalkEnd
+import org.guardedsleep.app.ui.model.TalkPermission
+import org.guardedsleep.app.ui.model.TalkUi
+import org.guardedsleep.app.ui.model.TalkUnavailable
 import uniffi.guardedsleep_core.DeviceStatus
 import uniffi.guardedsleep_core.LinkEvent
 import uniffi.guardedsleep_core.LinkStatus
+import uniffi.guardedsleep_core.PlaybackResult
+import uniffi.guardedsleep_core.TalkAudible
+import uniffi.guardedsleep_core.TalkState
+import uniffi.guardedsleep_core.TalkStatus
+import uniffi.guardedsleep_core.Talker
 
 /** Side effects of the parent model that are not alerts. */
 interface ParentEffects {
@@ -86,6 +96,18 @@ class ParentModel(
     private var snoozeUntilElapsed: Long? = null
 
     private var peerStatus: DeviceStatus? = null
+    private var peerStatusAt = 0L
+
+    // Talk-back: the core's state for the button, how the last talk ended, the permission step.
+    private var talkUi: TalkUi = TalkUi.Idle
+    private var talkEnd: TalkEnd? = null
+    private var talkNoticeAt = 0L
+    private var talkPermission = TalkPermission.NONE
+    private var noisePaused = false
+    private var talkUnconfirmed = false
+    private var micQuietSince: Long? = null
+    private var talkMicSilent = false
+    private var afterTalkListenUntil: Long? = null
     private var silenceRequest = SilenceRequest.IDLE
     private var silenceRequestedAt = 0L
     private var silenceDoneAt = 0L
@@ -123,6 +145,12 @@ class ParentModel(
         heartbeatAt = Long.MIN_VALUE
         listen = ListenMode.OFF
         peerStatus = null
+        talkUi = TalkUi.Idle
+        talkEnd = null
+        noisePaused = false
+        talkUnconfirmed = false
+        clearMicSilent()
+        afterTalkListenUntil = null
         silenceRequest = SilenceRequest.IDLE
         missed = null
         security = false
@@ -246,7 +274,21 @@ class ParentModel(
                     listen = ListenMode.OFF
                     effects.listenStopped()
                 }
+                // The core starts a 10 s listen after a talk; its end arrives as `false`.
+                if (event.enabled && listen == ListenMode.OFF) {
+                    afterTalkListenUntil = now + AlertPolicy.TALK_AFTER_LISTEN_MS
+                    effects.muteRemote(false)
+                } else if (!event.enabled && afterTalkListenUntil != null) {
+                    afterTalkListenUntil = null
+                    if (listen == ListenMode.OFF) applyNoisePlayout(NoiseKind.CONTINUE, true)
+                }
             }
+            is LinkEvent.TalkChanged -> onTalkChanged(event.state, now)
+            is LinkEvent.NoisePaused -> noisePaused = event.paused
+            is LinkEvent.TalkPlayback ->
+                talkUnconfirmed = event.result == PlaybackResult.UNCONFIRMED
+            // Baby-side only.
+            is LinkEvent.TalkActive -> Unit
             is LinkEvent.Hint ->
                 LinkMapping.linkHint(event.key)?.let { hint ->
                     hints = if (event.active) hints + hint else hints - hint
@@ -273,6 +315,27 @@ class ParentModel(
             if (tracker.active) noiseLastWall = clock.wallMs()
         }
         publish(now)
+    }
+
+    /**
+     * The level of the parent's own microphone while a talk has it attached. Presentation only:
+     * nothing here reaches the core, and the line stays visual (never spoken).
+     */
+    @Synchronized
+    fun onTalkMicLevel(rms: Double, now: Long) {
+        if (talkUi !is TalkUi.Talking) return
+        if (rms >= AlertPolicy.TALK_MIC_SILENT_BELOW) {
+            clearMicSilent()
+        } else {
+            val since = micQuietSince ?: now.also { micQuietSince = it }
+            talkMicSilent = now - since >= AlertPolicy.TALK_MIC_SILENT_MS
+        }
+        publish(now)
+    }
+
+    private fun clearMicSilent() {
+        micQuietSince = null
+        talkMicSilent = false
     }
 
     @Synchronized
@@ -314,6 +377,11 @@ class ParentModel(
                 awaitingMissedUntil = null
                 quietSinceWall = reconnectWall
             }
+        if (talkNoticeAt != 0L && now - talkNoticeAt >= TALK_NOTICE_MS) {
+            talkNoticeAt = 0L
+            talkEnd = null
+            if (talkUi is TalkUi.Denied) talkUi = TalkUi.Idle
+        }
         if (listen == ListenMode.LOCKED && now - listenSince >= AlertPolicy.LISTEN_MAX_MS) {
             listen = ListenMode.OFF
             effects.listenStopped()
@@ -358,6 +426,7 @@ class ParentModel(
         if (phase != LinkPhase.CONNECTED && mode != ListenMode.OFF) return false
         if (mode == ListenMode.LOCKED && listen != ListenMode.LOCKED) listenSince = now
         listen = mode
+        if (mode != ListenMode.OFF) afterTalkListenUntil = null
         if (mode != ListenMode.OFF) effects.muteRemote(false)
         // Discreet: ending Listen must not let a running event's audio leak back in.
         else if (discreet() && escalatedAfterMin == null) effects.muteRemote(true)
@@ -384,6 +453,26 @@ class ParentModel(
         effects.muteRemote(true)
         sink.stopNoiseSound()
     }
+
+    /** The talk button went down: the last result is stale now. */
+    @Synchronized
+    fun talkPressed() {
+        talkEnd = null
+        talkUnconfirmed = false
+        talkNoticeAt = 0L
+        if (talkUi is TalkUi.Denied) talkUi = TalkUi.Idle
+        publish(clock.elapsedMs())
+    }
+
+    @Synchronized
+    fun setTalkPermission(p: TalkPermission) {
+        talkPermission = p
+        publish(clock.elapsedMs())
+    }
+
+    /** True while a request or a talk runs (the platform interrupts only then). */
+    @Synchronized
+    fun talkActive(): Boolean = talkUi is TalkUi.Requesting || talkUi is TalkUi.Talking
 
     @Synchronized
     fun requestSilence(now: Long) {
@@ -444,8 +533,59 @@ class ParentModel(
         effects.muteRemote(false)
     }
 
+    private fun onTalkChanged(state: TalkState, now: Long) {
+        when (state) {
+            TalkState.Requesting -> {
+                talkUi = TalkUi.Requesting
+                talkEnd = null
+                talkUnconfirmed = false
+                clearMicSilent()
+            }
+            is TalkState.Talking -> talkUi = TalkUi.Talking(state.untilMs.toLong())
+            is TalkState.Ended -> {
+                talkUi = TalkUi.Idle
+                clearMicSilent()
+                talkEnd = TalkMapping.end(state.reason)
+                // A release or a stop needs no message, so it starts no timer (as on the web).
+                talkNoticeAt =
+                    if (talkEnd == TalkEnd.RELEASED || talkEnd == TalkEnd.STOPPED) 0L else now
+            }
+            is TalkState.Denied -> {
+                val (reason, retry) = TalkMapping.deny(state.reason)
+                talkUi = TalkUi.Denied(reason, retry?.let { now + it })
+                talkNoticeAt = now
+            }
+        }
+    }
+
+    /** What the baby device's status says about talking, while no talk runs. */
+    private fun talkAvailability(now: Long): TalkUi {
+        if (talkUi != TalkUi.Idle) return talkUi
+        if (phase != LinkPhase.CONNECTED) return TalkUi.Unavailable(TalkUnavailable.NOT_CONNECTED)
+        val s = peerStatus ?: return TalkUi.Idle
+        val retry = s.talkRetryInMs?.toLong()?.takeIf { it > 0 }?.let { peerStatusAt + it }
+        return when {
+            s.talk == TalkStatus.OFF -> TalkUi.Unavailable(TalkUnavailable.OFF)
+            s.talk == TalkStatus.UNSUPPORTED -> TalkUi.Unavailable(TalkUnavailable.UNSUPPORTED)
+            s.talk == TalkStatus.MUTED -> TalkUi.Unavailable(TalkUnavailable.MUTED)
+            s.talker == Talker.OTHER -> TalkUi.Unavailable(TalkUnavailable.OTHER_TALKING)
+            retry != null && retry > now -> TalkUi.Unavailable(TalkUnavailable.COOLDOWN, retry)
+            else -> TalkUi.Idle
+        }
+    }
+
+    private fun noisePause(): NoisePause? =
+        when {
+            !noisePaused -> null
+            talkUi is TalkUi.Requesting ||
+                talkUi is TalkUi.Talking ||
+                peerStatus?.talker == Talker.YOU -> NoisePause.YOU
+            else -> NoisePause.OTHER
+        }
+
     private fun onPeerStatus(s: DeviceStatus, now: Long) {
         peerStatus = s
+        peerStatusAt = now
         if (silenceRequest == SilenceRequest.PENDING && s.quietActive == true) {
             silenceRequest = SilenceRequest.APPLIED
             silenceDoneAt = now
@@ -517,6 +657,14 @@ class ParentModel(
                 ownBatteryPct = ownBatteryPct,
                 noiseIsTest = noiseIsTest && tracker.active,
                 noiseEscalatedAfterMin = escalatedAfterMin.takeIf { tracker.active },
+                talk = talkAvailability(now),
+                talkEnd = talkEnd,
+                talkPermission = talkPermission,
+                noisePause = noisePause(),
+                talkUnconfirmed = talkUnconfirmed,
+                talkAudibleUncertain = peerStatus?.talkAudible == TalkAudible.UNCERTAIN,
+                talkMicSilent = talkMicSilent,
+                afterTalkListenUntilElapsedMs = afterTalkListenUntil,
             )
     }
 
@@ -527,5 +675,6 @@ class ParentModel(
         const val HEARTBEAT_VISIBLE_MS = 12_000L
         const val SILENCE_TIMEOUT_MS = 10_000L
         const val APPLIED_VISIBLE_MS = 6_000L
+        const val TALK_NOTICE_MS = 8_000L
     }
 }

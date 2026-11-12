@@ -217,6 +217,11 @@ export interface RemotePlayback {
   /** Attach the received stream (once per attempt; a new attempt replaces the old one). */
   play(stream: MediaStream): void;
   setMuted(muted: boolean): void;
+  /**
+   * Half duplex: silence only the baby's audio while the talk button is held. Separate from
+   * `setMuted` so the two never undo each other; the meter stays live and alerts are not affected.
+   */
+  setDucked(ducked: boolean): void;
   /** Gain in percent for everything this device plays (25..150). */
   setGainPct(pct: number): void;
   drainRms(): number | null;
@@ -235,7 +240,10 @@ export function createRemotePlayback(deps: PlaybackDeps): RemotePlayback {
   const analyser = ctx.createAnalyser();
   const meter = new RmsMeter(analyser, deps.timers);
   const mute = ctx.createGain();
-  analyser.connect(mute);
+  const duck = ctx.createGain();
+  // The analyser sits in front of both gains: the level meter stays live while talking.
+  analyser.connect(duck);
+  duck.connect(mute);
   mute.connect(deps.gate.master());
   let current: {
     source: MediaStreamAudioSourceNode;
@@ -263,6 +271,9 @@ export function createRemotePlayback(deps: PlaybackDeps): RemotePlayback {
     setMuted(value) {
       mute.gain.value = value ? 0 : 1;
     },
+    setDucked(value) {
+      duck.gain.value = value ? 0 : 1;
+    },
     setGainPct(pct) {
       deps.gate.master().gain.value = Math.min(150, Math.max(25, pct)) / 100;
     },
@@ -270,6 +281,7 @@ export function createRemotePlayback(deps: PlaybackDeps): RemotePlayback {
     release() {
       detach();
       meter.stop();
+      duck.disconnect();
       mute.disconnect();
     },
   };

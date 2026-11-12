@@ -1,0 +1,98 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "talk-parent-inactive-line",
+  "description": "The parent's answer marks the talk line inactive: the attempt verifies as usual and the baby denies talk requests as unsupported.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent",
+      "sdp_talk_direction": "inactive"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "input",
+      "peer": "baby",
+      "input": {
+        "type": "set_raw_capture",
+        "raw": true
+      }
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 14000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 6000
+    },
+    {
+      "at": 20000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 20000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 10000
+    },
+    {
+      "at": 40000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 30000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 30000
+    },
+    {
+      "peer": "parent",
+      "event": "talk_changed",
+      "where": {
+        "state": {
+          "state": "denied",
+          "reason": {
+            "kind": "unsupported"
+          }
+        }
+      },
+      "count": 1
+    },
+    {
+      "peer": "baby",
+      "never": "talk_active"
+    }
+  ],
+  "export_traces": [
+    {
+      "peer": "parent",
+      "id": "sim-talk-parent-inactive-line-parent"
+    },
+    {
+      "peer": "baby",
+      "id": "sim-talk-parent-inactive-line-baby"
+    }
+  ]
+}

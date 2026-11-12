@@ -36,6 +36,7 @@ The pairing key lives in page memory only, so tests navigate client-side after p
 - **28:** Content-Security-Policy on the production build served by `guardedsleep-server --serve-web`.
 - **29:** audio: the gate opens for Listen and for a noise alert, and closes again.
 - **30:** link: wrong key, unreachable server, dead extra address (its own mailbox), dropped DataChannel, outages of the parent (20 s and 90 s).
+- **32:** talk-back: a web parent talks to a web baby (loopback room and output stub from outside); heard, and unconfirmed with the baby's output muted.
 - **31:** accessibility: axe on every screen and sheet of both devices; text-overflow check at 320 px width and 200 % text size (`utils/layout.ts`: no sideways scroll, no clipped text, nothing out of reach in a fixed layer, measured from bounding boxes and computed styles).
 
 The signaling server runs with `SIGNALING_HELLO_RATE_PER_MIN=0` and `SIGNALING_NEW_ROOM_RATE_PER_MIN=0` (see `playwright.config.ts`); it caps rooms at one baby and one parent.

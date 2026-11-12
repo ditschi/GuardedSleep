@@ -129,6 +129,8 @@ fun SetupScreen(controller: AppController, role: Role, onboarding: Boolean, onBa
         role = role,
         checks = checks,
         deviceCheck = app.deviceCheck,
+        talkBack = controller.settings.collectAsState().value.talkBackEnabled,
+        onTalkBack = { on -> controller.updateSettings { it.copy(talkBackEnabled = on) } },
         onAction = onAction,
         onContinue = {
             if (onboarding) {
@@ -165,6 +167,9 @@ fun SetupContent(
     deviceCheck: DeviceCheck,
     onAction: (SetupRow) -> Unit,
     onContinue: () -> Unit,
+    /** Baby: the talk-back switch of the checklist row; null hides the row (previews). */
+    talkBack: Boolean? = null,
+    onTalkBack: (Boolean) -> Unit = {},
 ) {
     val required = if (role == Role.BABY) SetupRow.MIC else SetupRow.NOTIFICATIONS
     var skipped by rememberSaveable { mutableStateOf(setOf<String>()) }
@@ -206,6 +211,17 @@ fun SetupContent(
                     onAction,
                 ) {
                     skipped = skipped + it.name
+                }
+                if (talkBack != null) {
+                    AppCard(Modifier.testTag("setup_row_talk")) {
+                        Body(stringResource(R.string.native_ui_talk_baby_checklist))
+                        SwitchRow(
+                            stringResource(R.string.native_ui_talk_baby_switch),
+                            talkBack,
+                            "setup_talk_toggle",
+                            onTalkBack,
+                        )
+                    }
                 }
                 AppCard(Modifier.testTag("setup_row_safety")) {
                     Row(

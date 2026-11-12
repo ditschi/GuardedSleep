@@ -16,6 +16,7 @@ import {
   type DeviceCheck,
   type LinkHint,
   type LinkPhase,
+  type LastTalkUi,
   type LinkQuality,
   type ListenMode,
   type MissedEventsUi,
@@ -27,6 +28,13 @@ import {
   type SilenceRequest,
   type SilenceStatus,
   type SoundEventUi,
+  type NoisePause,
+  type TalkDeny,
+  type TalkEnd,
+  type TalkPermission,
+  type TalkUi,
+  type TalkUnavailable,
+  type TalkVolume,
   type Theme,
 } from "./models";
 
@@ -132,6 +140,37 @@ describe("enums mirror UiContract.kt", () => {
     Theme: ["dark", "light", "system"] satisfies Theme[],
     AlertOutput: ["default", "speaker_only"] satisfies AlertOutput[],
     DeviceCheck: ["unknown", "ok", "limited", "not_recommended"] satisfies DeviceCheck[],
+    TalkVolume: ["low", "medium", "high"] satisfies TalkVolume[],
+    TalkEnd: [
+      "released",
+      "limit",
+      "no_answer",
+      "link_lost",
+      "mic_failed",
+      "alert",
+      "switched_off",
+      "stopped",
+    ] satisfies TalkEnd[],
+    TalkDeny: [
+      "off",
+      "unsupported",
+      "muted",
+      "busy",
+      "cooldown",
+      "budget",
+      "rate",
+      "unknown",
+    ] satisfies TalkDeny[],
+    TalkUnavailable: [
+      "off",
+      "other_talking",
+      "unsupported",
+      "muted",
+      "not_connected",
+      "cooldown",
+    ] satisfies TalkUnavailable[],
+    TalkPermission: ["none", "needed", "just_granted", "refused"] satisfies TalkPermission[],
+    NoisePause: ["you", "other"] satisfies NoisePause[],
   };
 
   for (const [name, members] of Object.entries(enums)) {
@@ -139,6 +178,30 @@ describe("enums mirror UiContract.kt", () => {
       expect(sorted(members)).toEqual(sorted(kotlinEnum(name)));
     });
   }
+});
+
+describe("TalkUi mirrors the sealed interface of UiContract.kt", () => {
+  it("has the same variants with the same fields", () => {
+    const at = kotlin.indexOf("sealed interface TalkUi {");
+    const body = block(kotlin, kotlin.indexOf("{", at), "{", "}");
+    const variants = [...body.matchAll(/data (?:object (\w+)|class (\w+)\(([^)]*)\))/g)].map(
+      (m) => ({
+        name: (m[1] ?? m[2] ?? "").replace(/^./, (c) => c.toLowerCase()),
+        fields: [...(m[3] ?? "").matchAll(/\bval (\w+)\s*:/g)].map((f) => f[1] ?? ""),
+      }),
+    );
+    const web = {
+      idle: [],
+      requesting: [],
+      talking: ["untilElapsedMs"],
+      denied: ["reason", "retryAtElapsedMs"],
+      unavailable: ["reason", "retryAtElapsedMs"],
+    } satisfies Record<TalkUi["kind"], string[]>;
+    expect(sorted(variants.map((v) => v.name))).toEqual(sorted(Object.keys(web)));
+    for (const v of variants) {
+      expect(v.fields, v.name).toEqual(web[v.name as TalkUi["kind"]]);
+    }
+  });
 });
 
 describe("data classes mirror UiContract.kt", () => {
@@ -150,6 +213,7 @@ describe("data classes mirror UiContract.kt", () => {
     loudest: null,
   };
   const sound: SoundEventUi = { atWallMs: 0, durationMs: 0 };
+  const lastTalk: LastTalkUi = { name: "", atWallMs: 0, durationMs: 0 };
   const pairing: PairingState = makePairingState("paired");
 
   const classes: Record<string, object> = {
@@ -157,6 +221,7 @@ describe("data classes mirror UiContract.kt", () => {
     PeerStatusUi: defaultPeerStatus(),
     MissedEventsUi: missed,
     SoundEventUi: sound,
+    LastTalkUi: lastTalk,
     ParentMonitorState: defaultParentMonitor(),
     BabyMonitorState: defaultBabyMonitor(),
     PairingState: pairing,
@@ -214,6 +279,10 @@ describe("AppController mirrors UiContract.kt", () => {
       "pageGuard",
       "retryKeepAwake",
       "dismissAwayReport",
+      // Talk-back: the browser's microphone support and suspended audio, and the permission
+      // prompt that the Android screen hosts itself (`talkPermissionResult` is the shared answer).
+      "webTalk",
+      "requestTalkPermission",
     ];
     const own = Object.keys(fake).filter(
       (k) => !stores.includes(k) && k !== "calls" && !webOnly.includes(k),

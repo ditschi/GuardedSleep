@@ -17,6 +17,23 @@
   const router = useRouter();
   const { app, settings } = controller;
 
+  // An adult opening the settings of the baby device ends the "may not be audible" warning.
+  $effect(() => {
+    if ($app.role === "baby") controller.talkSettingsOpened();
+  });
+
+  const TALK_LEVELS = [
+    { value: "low", label: "webScreens.talk.levelLow" },
+    { value: "medium", label: "webScreens.talk.levelMedium" },
+    { value: "high", label: "webScreens.talk.levelHigh" },
+  ] as const satisfies ReadonlyArray<{ value: string; label: MessageKey }>;
+
+  function chooseTalkLevel(event: Event): void {
+    const value = (event.currentTarget as HTMLSelectElement).value;
+    const level = TALK_LEVELS.find((l) => l.value === value);
+    if (level) controller.updateSettings((s) => ({ ...s, talkVolume: level.value }));
+  }
+
   const THEMES: ReadonlyArray<{ value: Theme; label: MessageKey }> = [
     { value: "dark", label: "native.ui.settings.theme.dark" },
     { value: "light", label: "native.ui.settings.theme.light" },
@@ -199,6 +216,44 @@
         <span>{$t("native.ui.settings.lessSensitive")}</span>
         <span>{$t("native.ui.settings.moreSensitive")}</span>
       </div>
+    </div>
+    <div class="gs-group" data-testid="settings_talk_back">
+      <span class="gs-group__title">{$t("webScreens.talk.settingsTitle")}</span>
+      <Switch
+        label={$t("webScreens.talk.settingsToggle")}
+        checked={$settings.talkBackEnabled}
+        testid="baby_talk_toggle"
+        onchange={(enabled) =>
+          controller.updateSettings((s) => ({ ...s, talkBackEnabled: enabled }))}
+      />
+      <label for="settings-talk-volume">{$t("webScreens.talk.settingsVolume")}</label>
+      <select
+        id="settings-talk-volume"
+        class="gs-select"
+        data-testid="baby_talk_volume"
+        value={$settings.talkVolume}
+        disabled={!$settings.talkBackEnabled}
+        onchange={chooseTalkLevel}
+      >
+        {#each TALK_LEVELS as level (level.value)}
+          <option value={level.value}>{$t(level.label)}</option>
+        {/each}
+      </select>
+      <Switch
+        label={$t("webScreens.talk.settingsChime")}
+        checked={$settings.talkChime}
+        disabled={!$settings.talkBackEnabled}
+        testid="baby_talk_chime_toggle"
+        onchange={(chime) => controller.updateSettings((s) => ({ ...s, talkChime: chime }))}
+      />
+      <Button
+        variant="outline"
+        testid="baby_talk_play_chime"
+        disabled={!$settings.talkBackEnabled}
+        onclick={() => controller.playTalkChimeSample()}
+      >
+        {$t("webScreens.talk.settingsPlayChime")}
+      </Button>
     </div>
   {:else if $app.role === "parent"}
     <p class="gs-muted" data-testid="settings_sensitivity_note">

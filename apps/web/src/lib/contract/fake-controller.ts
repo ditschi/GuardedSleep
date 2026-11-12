@@ -5,6 +5,7 @@ import {
   defaultAppState,
   defaultBabyMonitor,
   defaultParentMonitor,
+  defaultWebTalk,
   defaultSettings,
   makePairingState,
   type AppState,
@@ -13,6 +14,7 @@ import {
   type PageGuardState,
   type PairingState,
   type ParentMonitorState,
+  type WebTalkState,
   type SettingsState,
 } from "./models";
 import { resolveTurnSave, turnSettings, type TurnEntry } from "./turn";
@@ -27,6 +29,7 @@ export interface FakeController extends AppController {
   readonly soundUnlocked: Writable<boolean>;
   readonly deviceBattery: Writable<DeviceBattery | null>;
   readonly pageGuard: Writable<PageGuardState>;
+  readonly webTalk: Writable<WebTalkState>;
   /** Every action call as `[method, ...args]`, oldest first. */
   readonly calls: Array<[string, ...unknown[]]>;
 }
@@ -45,6 +48,7 @@ export function createFakeController(): FakeController {
   const soundUnlocked = writable(false);
   const deviceBattery = writable<DeviceBattery | null>(null);
   const pageGuard = writable<PageGuardState>({ wakeLock: "off", hidden: false, away: null });
+  const webTalk = writable(defaultWebTalk());
   const calls: Array<[string, ...unknown[]]> = [];
   let turn: TurnEntry | null = null;
   const record =
@@ -62,6 +66,7 @@ export function createFakeController(): FakeController {
     soundUnlocked,
     deviceBattery,
     pageGuard,
+    webTalk,
     calls,
     chooseRole(role, makeDefault = false) {
       calls.push(["chooseRole", role]);
@@ -159,6 +164,26 @@ export function createFakeController(): FakeController {
       pageGuard.update((s) => ({ ...s, away: null }));
     },
     reportTestResult: record("reportTestResult"),
+    setTalk: record("setTalk"),
+    interruptTalk: record("interruptTalk"),
+    talkPermissionResult(granted) {
+      calls.push(["talkPermissionResult", granted]);
+      parent.update((s) => ({ ...s, talkPermission: granted ? "just_granted" : "refused" }));
+    },
+    requestTalkPermission() {
+      calls.push(["requestTalkPermission"]);
+      parent.update((s) => ({ ...s, talkPermission: "just_granted" }));
+    },
+    dismissTalkPermission() {
+      calls.push(["dismissTalkPermission"]);
+      parent.update((s) => ({ ...s, talkPermission: "none" }));
+    },
+    dismissTalkCoach() {
+      calls.push(["dismissTalkCoach"]);
+      settings.update((s) => ({ ...s, talkCoachSeen: true }));
+    },
+    playTalkChimeSample: record("playTalkChimeSample"),
+    talkSettingsOpened: record("talkSettingsOpened"),
     dismissCoach() {
       calls.push(["dismissCoach"]);
       app.update((s) => ({ ...s, coachPending: false }));

@@ -213,7 +213,10 @@ pub struct Actor {
     pending_mailboxes: Option<Vec<InviteMailbox>>,
     /// Room id this client asks the relay for.
     pub room: String,
+    /// Direction of the monitoring line (first audio m-line) and of the talk line (second) in this
+    /// device's local descriptions; the defaults follow the direction rule of `link-supervision`.
     pub sdp_dir: String,
+    pub talk_dir: String,
     pub net_up: bool,
     pub path_epoch: u32,
     pub alive: bool,
@@ -248,7 +251,16 @@ impl Actor {
             raw: None,
             pending_mailboxes: None,
             room,
-            sdp_dir: "sendonly".into(),
+            sdp_dir: match role {
+                Role::Baby => "sendonly",
+                Role::Parent => "recvonly",
+            }
+            .into(),
+            talk_dir: match role {
+                Role::Baby => "recvonly",
+                Role::Parent => "sendonly",
+            }
+            .into(),
             net_up: true,
             path_epoch: 0,
             alive: true,
@@ -473,6 +485,9 @@ impl World {
         if let Some(d) = &spec.sdp_direction {
             a.sdp_dir = d.clone();
         }
+        if let Some(d) = &spec.sdp_talk_direction {
+            a.talk_dir = d.clone();
+        }
         self.actors.push(a);
         Ok(())
     }
@@ -671,6 +686,21 @@ impl World {
                     {
                         Ok(input) => self.deliver(a, input),
                         Err(e) => self.violations.push(format!("bad input: {e}")),
+                    }
+                }
+            }
+            // What the baby's microphone hears (`levels`) and the level of the incoming talk audio
+            // (`talk_levels`): one sample every 100 ms for `for_ms`, like the platform's ~10 Hz.
+            "levels" | "talk_levels" => {
+                if let Some(a) = self.peer_ix(&st) {
+                    let rms = st.rms.unwrap_or(0.0);
+                    for i in 0..st.for_ms.unwrap_or(100) / 100 {
+                        let input = if st.verb == "levels" {
+                            LinkInput::AudioLevel { rms }
+                        } else {
+                            LinkInput::TalkLevel { rms }
+                        };
+                        self.push(self.now + i * 100, 2, Ev::Input { actor: a, input });
                     }
                 }
             }
@@ -1266,7 +1296,29 @@ impl World {
                     self.set_remote(a, attempt, &sdp);
                 }
                 LinkAction::SendData { attempt, text } => self.send_data(a, attempt, text),
-                LinkAction::AddIceCandidate { .. }
+                // The fake platform of talk-back: a healthy one. The chime takes 600 ms, the
+                // microphone attaches 30 ms after it was asked to; what the baby's microphone
+                // hears (`levels`, `talk_levels` verbs) is up to the scenario.
+                LinkAction::PlayTalkChime { attempt, .. } => self.push(
+                    self.now + 600,
+                    2,
+                    Ev::Input {
+                        actor: a,
+                        input: LinkInput::TalkChimeDone { attempt },
+                    },
+                ),
+                LinkAction::SetTalkMic { enabled: true, .. } => self.push(
+                    self.now + 30,
+                    2,
+                    Ev::Input {
+                        actor: a,
+                        input: LinkInput::TalkMicAttached,
+                    },
+                ),
+                LinkAction::SetTalkMic { .. }
+                | LinkAction::SetPlaybackDucked { .. }
+                | LinkAction::SetTalkPlayback { .. }
+                | LinkAction::AddIceCandidate { .. }
                 | LinkAction::SetMicEnabled { .. }
                 | LinkAction::ApplyQuiet
                 | LinkAction::SendProbeTone { .. } => {}
@@ -2086,14 +2138,11 @@ impl World {
 
     pub fn sdp_for(&self, a: usize, fp: &str) -> String {
         let ac = &self.actors[a];
-        let dir = match ac.role {
-            Role::Baby => ac.sdp_dir.as_str(),
-            Role::Parent => "recvonly",
-        };
+        let (monitor, talk) = (ac.sdp_dir.as_str(), ac.talk_dir.as_str());
         // The fingerprint line stays last: the core's extractor reads hex until the first
         // non-hex character.
         format!(
-            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na={dir}\r\na=fingerprint:sha-256 {}\r\n",
+            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na={monitor}\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na={talk}\r\na=fingerprint:sha-256 {}\r\n",
             colon_upper(fp)
         )
     }

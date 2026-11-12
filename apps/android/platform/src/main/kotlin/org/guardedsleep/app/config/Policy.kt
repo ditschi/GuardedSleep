@@ -37,6 +37,15 @@ object AlertPolicy {
     /** "Connected again after m:ss" stays visible this long. */
     const val RESTORED_NOTICE_MS = 10_000L
 
+    /** The listen the core starts after a talk (`TALK_AFTER_LISTEN_MS`), for the countdown line. */
+    const val TALK_AFTER_LISTEN_MS = 10_000L
+
+    /** The own-microphone hint appears after this long without sound while talking. */
+    const val TALK_MIC_SILENT_MS = 2_000L
+
+    /** Below this level (0..1) the parent's own microphone counts as silent. */
+    const val TALK_MIC_SILENT_BELOW = 0.002
+
     /** Without a `missed_events` summary the parent restarts "quiet since" at the reconnect. */
     const val MISSED_EVENTS_GRACE_MS = 5_000L
 }
@@ -62,4 +71,38 @@ object AppDefaults {
     const val AUDIO_LEVEL_MS = 100L
     const val DEVICE_STATUS_CHECK_MS = 2_000L
     const val DEVICE_STATUS_RESEND_MS = 10_000L
+}
+
+/**
+ * Talk-back playout on the baby unit (`add-talk-back` design §7). The numbers marked provisional
+ * are tuned in the hardware round (task 2.1 (f)); the emulator cannot measure a loudspeaker.
+ */
+object TalkPolicy {
+    /** Fraction of the alarm stream's maximum per level; high stays at or below about 70 %. */
+    const val LOW_FRACTION = 0.25
+    const val MEDIUM_FRACTION = 0.45
+    const val HIGH_FRACTION = 0.70
+
+    /** Ceiling of the received voice's RMS after the gain (0..1 of full scale), provisional. */
+    const val CEILING_RMS = 0.30
+
+    /** The level control gives the gain back by this much per level sample (about 10 Hz). */
+    const val LIMITER_RELEASE_PER_TICK = 0.02
+
+    /** Chime peak amplitude relative to full scale: about 12 dB under a loud voice. */
+    const val CHIME_PEAK = 0.35
+
+    /** The chime is never quieter than this (audible floor), provisional. */
+    const val CHIME_FLOOR = 0.08
+    const val CHIME_MS = 600
+
+    /** Talk RTP inside this long after a lease ended is the sender's tail, not a violation. */
+    const val RTP_GRACE_MS = 1_500L
+
+    /** More packets than this outside a lease and its grace count as audio without a grant. */
+    const val RTP_OUTSIDE_PACKETS = 5L
+
+    /** Level samples of the talk receiver and the outside-grant check use this period. */
+    const val TALK_POLL_MS = 100L
+    const val OUTSIDE_POLL_MS = 1_000L
 }

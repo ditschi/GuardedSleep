@@ -17,8 +17,11 @@ import {
   DEVICE_STATUS_RESEND_MS,
   FLUSH_MS,
   STATS_MS,
+  TALK_MIC_POLL_MS,
+  TALK_RTP_POLL_MS,
   TICK_MS,
 } from "./policy";
+import { TalkRtpWatch } from "./talk-rtp-watch";
 import type { SignalingFactory, SignalingSocket } from "./signaling";
 
 /** What the controller wants to hear from one run. Called synchronously from the driver. */
@@ -30,6 +33,8 @@ export interface LinkListener {
   onMicLevel(rms: number, nowMs: number): void;
   /** Parent: level of the received audio, about 10 Hz while audio flows. */
   onRemoteLevel(rms: number, nowMs: number): void;
+  /** Parent: level of its own microphone while a talk has it attached, about 2 Hz. */
+  onTalkMicLevel(rms: number, nowMs: number): void;
   /** Parent: inbound audio counters every few seconds. */
   onInboundStats(stats: InboundAudioStats, nowMs: number): void;
   /** The run is fully torn down. */
@@ -79,6 +84,8 @@ export class LinkDriver {
   private socketGen = 0;
   private readonly attempts = new Map<number, AttemptPort>();
   private liveAttempt: number | null = null;
+  /** Parent: the attempt whose talk sender has (or is getting) the microphone. */
+  private talkMicAttempt: number | null = null;
   private readonly cancels = new Set<Cancel>();
   private readonly queue: LinkInput[] = [];
   private draining = false;
@@ -87,6 +94,7 @@ export class LinkDriver {
   private lastSentStatus: DeviceStatus | null = null;
   private lastSentStatusAt = 0;
   private lastWall: { wallMs: number; elapsedMs: number } | null = null;
+  private readonly talkRtp = new TalkRtpWatch();
   private readonly isBaby: boolean;
 
   constructor(options: LinkDriverOptions) {
@@ -115,8 +123,13 @@ export class LinkDriver {
       this.o.listener.onTick(this.o.clock.elapsedMs());
     }, TICK_MS);
     this.every(() => this.sampleAudio(), AUDIO_LEVEL_MS);
-    if (this.isBaby) this.every(() => this.sendDeviceStatus(false), DEVICE_STATUS_CHECK_MS);
-    else this.every(() => this.pollStats(), STATS_MS);
+    if (this.isBaby) {
+      this.every(() => this.sendDeviceStatus(false), DEVICE_STATUS_CHECK_MS);
+      this.every(() => this.pollTalkRtp(), TALK_RTP_POLL_MS);
+    } else {
+      this.every(() => this.pollStats(), STATS_MS);
+      this.every(() => this.pollTalkMic(), TALK_MIC_POLL_MS);
+    }
   }
 
   /**
@@ -214,6 +227,21 @@ export class LinkDriver {
         return this.applyQuietNow();
       case "send_probe_tone":
         return this.o.media.startProbeTone(action.duration_ms);
+      case "set_talk_mic":
+        return this.setTalkMic(action.attempt, action.enabled);
+      case "set_playback_ducked":
+        return this.o.media.setPlaybackDucked(action.ducked);
+      case "play_talk_chime":
+        return this.o.media.playTalkChime(action.level, () =>
+          this.dispatch({ type: "talk_chime_done", attempt: action.attempt }),
+        );
+      case "set_talk_playback":
+        return this.o.media.setTalkPlayback(
+          action.enabled,
+          action.level,
+          action.fade_in_ms,
+          Math.max(0, action.until_ms - now),
+        );
       case "emit":
         if (action.event.type === "status") this.o.listener.onStatus(action.event.status, now);
         else this.o.listener.onEvent(action.event, now);
@@ -289,6 +317,7 @@ export class LinkDriver {
       );
       this.attempts.set(handle, port);
       this.liveAttempt = handle;
+      this.talkRtp.reset();
     } catch {
       // The core sees a failed attempt and schedules the next one.
       this.after(
@@ -318,6 +347,31 @@ export class LinkDriver {
     }
   }
 
+  /**
+   * Attaches or detaches the parent's microphone on the talk sender of `handle`; the core hears
+   * the outcome as an input. A result that a later call overtook is dropped.
+   */
+  private setTalkMic(handle: number, enabled: boolean): void {
+    const port = this.attempts.get(handle);
+    this.talkMicAttempt = enabled ? handle : null;
+    if (!port) {
+      // The attempt is already gone: nothing to attach to, and no microphone may stay open.
+      this.o.media.discardTalkMic();
+      if (enabled) this.after(() => this.dispatch({ type: "talk_mic_failed" }), 0);
+      return;
+    }
+    this.o.media.setTalkMic(port, enabled).then(
+      (result) => {
+        if (this.tornDown) return;
+        if (result === "attached") this.dispatch({ type: "talk_mic_attached" });
+        else if (result === "failed") this.dispatch({ type: "talk_mic_failed" });
+      },
+      () => {
+        if (!this.tornDown && enabled) this.dispatch({ type: "talk_mic_failed" });
+      },
+    );
+  }
+
   private applyQuietNow(): void {
     const apply = this.o.applyQuiet;
     if (!apply) return;
@@ -335,6 +389,9 @@ export class LinkDriver {
         this.o.listener.onMicLevel(rms, now);
         this.dispatch({ type: "audio_level", rms });
       }
+      // The incoming voice while it plays (null outside a lease): the playback check's evidence.
+      const voice = this.o.media.drainTalkLevel();
+      if (voice !== null) this.dispatch({ type: "talk_level", rms: voice });
     } else {
       const rms = this.o.media.drainRemoteRms();
       if (rms !== null) this.o.listener.onRemoteLevel(rms, now);
@@ -362,6 +419,38 @@ export class LinkDriver {
       (stats) => {
         if (stats && !this.tornDown)
           this.o.listener.onInboundStats(stats, this.o.clock.elapsedMs());
+      },
+      () => undefined,
+    );
+  }
+
+  /** Parent: the level of the open talk microphone, for the "isn't picking up sound" hint. */
+  private pollTalkMic(): void {
+    const handle = this.talkMicAttempt;
+    const port = handle === null ? undefined : this.attempts.get(handle);
+    if (!port) return;
+    port.talkMicLevel().then(
+      (level) => {
+        if (level !== null && !this.tornDown && this.talkMicAttempt === handle) {
+          this.o.listener.onTalkMicLevel(level, this.o.clock.elapsedMs());
+        }
+      },
+      () => undefined,
+    );
+  }
+
+  /** Baby: talk RTP on the live attempt outside a lease is reported to the core (a warning). */
+  private pollTalkRtp(): void {
+    const handle = this.liveAttempt;
+    const port = handle === null ? undefined : this.attempts.get(handle);
+    if (!port || handle === null) return;
+    port.inboundAudioStats().then(
+      (stats) => {
+        if (this.tornDown || this.liveAttempt !== handle) return;
+        const now = this.o.clock.elapsedMs();
+        if (this.talkRtp.observe(stats?.packetsReceived ?? 0, this.o.media.talkLeaseOpen(), now)) {
+          this.dispatch({ type: "talk_rtp_outside_grant", attempt: handle });
+        }
       },
       () => undefined,
     );

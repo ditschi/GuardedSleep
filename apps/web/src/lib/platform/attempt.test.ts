@@ -37,6 +37,20 @@ class FakeChannel {
   }
 }
 
+class FakeLine {
+  direction = "recvonly";
+  replaced: Array<unknown> = [];
+  failReplace = false;
+  receiver = { track: { kind: "audio" } };
+  sender = {
+    replaceTrack: (track: unknown): Promise<void> => {
+      if (this.failReplace) return Promise.reject(new Error("no"));
+      this.replaced.push(track);
+      return Promise.resolve();
+    },
+  };
+}
+
 class FakePc {
   static last: FakePc | null = null;
   config: RTCConfiguration;
@@ -45,6 +59,8 @@ class FakePc {
   remote: { type: string; sdp: string } | null = null;
   added: RTCIceCandidateInit[] = [];
   transceivers: Array<{ direction?: string }> = [];
+  /** The audio transceivers a remote offer created (answerer side). */
+  remoteLines: FakeLine[] = [new FakeLine(), new FakeLine()];
   channel: FakeChannel | null = null;
   closed = false;
   statsQueue: RTCStatsReport[] = [];
@@ -61,6 +77,9 @@ class FakePc {
   }
   addTransceiver(_track: unknown, init: { direction?: string }): void {
     this.transceivers.push(init);
+  }
+  getTransceivers(): FakeLine[] {
+    return this.remoteLines;
   }
   createDataChannel(label: string): FakeChannel {
     this.channel = new FakeChannel(label);
@@ -142,6 +161,8 @@ function make(offerer: boolean, send: boolean = false) {
   return { attempt, pc, listener, time, remoteAudio };
 }
 
+let attempt_: ReturnType<typeof createRtcAttempt>;
+
 describe("createRtcAttempt", () => {
   it("uses only the given ICE servers", () => {
     const { pc } = make(true);
@@ -151,7 +172,11 @@ describe("createRtcAttempt", () => {
   it("offerer: creates the channel, the offer and reports the local description", async () => {
     const { attempt, pc, listener } = make(true, true);
     expect(pc.channel?.label).toBe("guardedsleep");
-    expect(pc.transceivers).toEqual([{ direction: "sendonly", streams: expect.anything() }]);
+    // The monitoring line first, then the talk line the baby only receives on.
+    expect(pc.transceivers).toEqual([
+      { direction: "sendonly", streams: expect.anything() },
+      { direction: "recvonly" },
+    ]);
     attempt.createOffer();
     await flush();
     expect(listener.log).toEqual(["desc:offer:offer-sdp"]);
@@ -268,6 +293,89 @@ describe("createRtcAttempt", () => {
       report({ r: { type: "inbound-rtp", kind: "audio", packetsReceived: 100, packetsLost: 3 } }),
     ];
     expect(await attempt.inboundAudioStats()).toEqual({ packetsReceived: 100, packetsLost: 3 });
+  });
+
+  describe("talk line", () => {
+    it("parent: answers the second audio line sendonly, before the answer is created", async () => {
+      const { attempt, pc } = make(false);
+      attempt.setRemoteDescription("offer", "remote");
+      attempt.createAnswer();
+      await flush();
+      expect(pc.remoteLines.map((l) => l.direction)).toEqual(["recvonly", "sendonly"]);
+    });
+
+    it("parent: leaves the talk line recvonly where talk-back is not supported (iOS)", async () => {
+      const time = new FakeTime();
+      attempt_ = createRtcAttempt(
+        {
+          PeerConnection: FakePc as unknown as PeerConnectionCtor,
+          iceServers: [],
+          timers: time,
+          send: null,
+          onRemoteAudio: () => undefined,
+          talkSend: false,
+        },
+        false,
+        new Recorder(),
+      );
+      attempt_.setRemoteDescription("offer", "remote");
+      await flush();
+      expect((FakePc.last as FakePc).remoteLines.map((l) => l.direction)).toEqual([
+        "recvonly",
+        "recvonly",
+      ]);
+    });
+
+    it("parent: reads its own microphone level from the stats only while a track is attached", async () => {
+      const { attempt, pc } = make(false);
+      attempt.setRemoteDescription("offer", "remote");
+      await flush();
+      expect(await attempt.talkMicLevel()).toBeNull();
+      await attempt.setTalkTrack({} as MediaStreamTrack);
+      pc.statsQueue = [report({ s: { type: "media-source", kind: "audio", audioLevel: 0.25 } })];
+      expect(await attempt.talkMicLevel()).toBe(0.25);
+      await attempt.setTalkTrack(null);
+      expect(await attempt.talkMicLevel()).toBeNull();
+    });
+
+    it("parent: puts a track on the talk sender only on request and takes it off again", async () => {
+      const { attempt, pc } = make(false);
+      attempt.setRemoteDescription("offer", "remote");
+      await flush();
+      const track = {} as MediaStreamTrack;
+      expect(await attempt.setTalkTrack(track)).toBe(true);
+      expect(await attempt.setTalkTrack(null)).toBe(true);
+      expect(pc.remoteLines[1]?.replaced).toEqual([track, null]);
+      expect(pc.remoteLines[0]?.replaced).toEqual([]);
+      pc.remoteLines[1]!.failReplace = true;
+      expect(await attempt.setTalkTrack(track)).toBe(false);
+    });
+
+    it("parent: no talk sender before the offer is applied", async () => {
+      const { attempt } = make(false);
+      expect(await attempt.setTalkTrack({} as MediaStreamTrack)).toBe(false);
+    });
+
+    it("baby: hands the receiver of the talk line over disabled, never as monitoring audio", () => {
+      const talk: Array<boolean> = [];
+      const time = new FakeTime();
+      const a = createRtcAttempt(
+        {
+          PeerConnection: FakePc as unknown as PeerConnectionCtor,
+          iceServers: [],
+          timers: time,
+          send: { track: {} as MediaStreamTrack, stream: {} as MediaStream },
+          onRemoteAudio: () => talk.push(true),
+          onTalkAudio: (track) => talk.push(track.enabled),
+        },
+        true,
+        new Recorder(),
+      );
+      void a;
+      const track = { kind: "audio", enabled: true };
+      (FakePc.last as FakePc).ontrack?.({ track, streams: [{}] });
+      expect(talk).toEqual([false]);
+    });
   });
 
   it("close releases everything and silences late events", async () => {

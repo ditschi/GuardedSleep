@@ -1,0 +1,117 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "talk-link-loss",
+  "description": "The parent's network dies in the middle of a talk: the baby's speaker stops when its attempt is declared lost, the parent's talk ends with link_lost.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "input",
+      "peer": "baby",
+      "input": {
+        "type": "set_raw_capture",
+        "raw": true
+      }
+    },
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 14000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 6000
+    },
+    {
+      "at": 20000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_talk",
+        "pressed": true
+      }
+    },
+    {
+      "at": 20000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.05,
+      "for_ms": 70000
+    },
+    {
+      "at": 20650,
+      "do": "talk_levels",
+      "peer": "baby",
+      "rms": 0.3,
+      "for_ms": 70000
+    },
+    {
+      "at": 26000,
+      "do": "network_down",
+      "peer": "parent"
+    },
+    {
+      "at": 100000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "event": "talk_active",
+      "where": {
+        "active": true
+      },
+      "count": 1
+    },
+    {
+      "peer": "baby",
+      "event": "talk_active",
+      "where": {
+        "active": false
+      },
+      "count": 1,
+      "within_ms": [26000, 65000]
+    },
+    {
+      "peer": "parent",
+      "event": "talk_changed",
+      "where": {
+        "state": {
+          "state": "ended",
+          "reason": "link_lost"
+        }
+      },
+      "count": 1,
+      "within_ms": [26000, 65000]
+    },
+    {
+      "peer": "parent",
+      "never": "talk_changed",
+      "where": {
+        "state": {
+          "state": "ended",
+          "reason": "limit"
+        }
+      }
+    }
+  ],
+  "export_traces": [
+    {
+      "peer": "baby",
+      "id": "sim-talk-link-loss-baby"
+    }
+  ]
+}

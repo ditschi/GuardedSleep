@@ -3,9 +3,13 @@
  * and parameters; analysers return samples a test queues; oscillators log what was started.
  */
 
-class FakeParam {
+export class FakeParam {
   value = 1;
   ramps: Array<[string, number, number]> = [];
+  cancelled: number[] = [];
+  cancelScheduledValues(t: number): void {
+    this.cancelled.push(t);
+  }
   setValueAtTime(v: number, t: number): void {
     this.ramps.push(["set", v, t]);
   }
@@ -21,9 +25,23 @@ export class FakeNode {
     this.to.push(node);
     return node;
   }
+  /** Without an argument every connection goes, like `AudioNode.disconnect()`. */
   disconnect(): void {
     this.disconnected = true;
+    this.to.length = 0;
   }
+}
+
+export class FakeCompressor extends FakeNode {
+  threshold = new FakeParam();
+  knee = new FakeParam();
+  ratio = new FakeParam();
+  attack = new FakeParam();
+  release = new FakeParam();
+}
+
+export class FakeShaper extends FakeNode {
+  curve: Float32Array | null = null;
 }
 
 export class FakeGain extends FakeNode {
@@ -90,6 +108,8 @@ export class FakeAudioContext {
   readonly analysers: FakeAnalyser[] = [];
   readonly oscillators: FakeOscillator[] = [];
   readonly gains: FakeGain[] = [];
+  readonly compressors: FakeCompressor[] = [];
+  readonly shapers: FakeShaper[] = [];
   readonly sources: FakeSource[] = [];
   readonly destinations: FakeDestination[] = [];
   private readonly listeners: Array<() => void> = [];
@@ -114,6 +134,16 @@ export class FakeAudioContext {
   createGain(): FakeGain {
     const n = new FakeGain();
     this.gains.push(n);
+    return n;
+  }
+  createDynamicsCompressor(): FakeCompressor {
+    const n = new FakeCompressor();
+    this.compressors.push(n);
+    return n;
+  }
+  createWaveShaper(): FakeShaper {
+    const n = new FakeShaper();
+    this.shapers.push(n);
     return n;
   }
   createOscillator(): FakeOscillator {

@@ -5,13 +5,17 @@ import android.media.AudioAttributes
 import android.media.AudioManager
 import java.util.concurrent.CopyOnWriteArrayList
 import org.guardedsleep.app.diag.PocLog
+import org.guardedsleep.app.media.AlarmVolume
+import org.guardedsleep.app.media.AndroidStreamVolume
 import org.guardedsleep.app.media.AttemptListener
 import org.guardedsleep.app.media.AttemptPort
 import org.guardedsleep.app.media.CaptureTap
+import org.guardedsleep.app.media.ChimePlayer
 import org.guardedsleep.app.media.IceConfig
 import org.guardedsleep.app.media.IceServerEntry
 import org.guardedsleep.app.media.MediaEngine
 import org.guardedsleep.app.media.Pcm
+import org.guardedsleep.app.media.PrefsVolumeMemory
 import org.guardedsleep.app.media.ProbeTone
 import org.guardedsleep.app.media.RmsWindow
 import org.guardedsleep.app.ui.model.Role
@@ -40,6 +44,14 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
     private val remoteTracks = CopyOnWriteArrayList<AudioTrack>()
     @Volatile private var gain = 1.0
     @Volatile private var speakerMuted = false
+    @Volatile private var ducked = false
+    @Volatile private var talkMicFailed: () -> Unit = {}
+    private val chime = ChimePlayer()
+    private val talkVolume: AlarmVolume? =
+        if (role == Role.BABY) AlarmVolume(AndroidStreamVolume(context), PrefsVolumeMemory(context))
+        else null
+    private var talkSource: AudioSource? = null
+    private var talkTrack: AudioTrack? = null
     private val adm: JavaAudioDeviceModule
     private val factory: PeerConnectionFactory
     private var source: AudioSource? = null
@@ -90,6 +102,27 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
                     }
                 )
         if (role == Role.BABY) builder.setAudioBufferCallback(recordCallback)
+        else {
+            // The parent's capture is the talk microphone: voice processing on (design §4), and
+            // no record callback, so nothing can read the PCM. A capture error ends the talk.
+            builder
+                .setUseHardwareAcousticEchoCanceler(true)
+                .setUseHardwareNoiseSuppressor(true)
+                .setAudioRecordErrorCallback(
+                    object : JavaAudioDeviceModule.AudioRecordErrorCallback {
+                        override fun onWebRtcAudioRecordInitError(errorMessage: String?) =
+                            talkMicFailed()
+
+                        override fun onWebRtcAudioRecordStartError(
+                            errorCode: JavaAudioDeviceModule.AudioRecordStartErrorCode?,
+                            errorMessage: String?,
+                        ) = talkMicFailed()
+
+                        override fun onWebRtcAudioRecordError(errorMessage: String?) =
+                            talkMicFailed()
+                    }
+                )
+        }
         adm = builder.createAudioDeviceModule()
         // The baby never plays audio (ADR-018 §3): belt and braces on top of the sendonly SDP.
         if (role == Role.BABY) adm.setSpeakerMute(true)
@@ -114,7 +147,79 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
             offerer,
             listener,
             ::onRemoteAudio,
+            if (role == Role.PARENT) talkCapture else null,
         )
+
+    /** Opened at the press (warm) or at the attach, disposed on every detach. */
+    private val talkCapture =
+        object : TalkCapture {
+            override fun open(): AudioTrack? = openTalkTrack()
+
+            override fun close() = disposeTalkTrack()
+        }
+
+    @Synchronized
+    private fun openTalkTrack(): AudioTrack? {
+        talkTrack?.let {
+            it.setEnabled(true)
+            return it
+        }
+        return runCatching {
+            // Voice processing on: echo cancellation, noise suppression, auto gain.
+            val constraints =
+                MediaConstraints().apply {
+                    for (k in
+                        listOf(
+                            "googEchoCancellation",
+                            "googNoiseSuppression",
+                            "googAutoGainControl",
+                        )) {
+                        mandatory.add(MediaConstraints.KeyValuePair(k, "true"))
+                    }
+                }
+            val src = factory.createAudioSource(constraints)
+            val t = factory.createAudioTrack("gs-talk", src)
+            talkSource = src
+            talkTrack = t
+            t
+        }
+            .getOrNull()
+    }
+
+    @Synchronized
+    private fun disposeTalkTrack() {
+        runCatching {
+            talkTrack?.setEnabled(false)
+            talkTrack?.dispose()
+            talkSource?.dispose()
+        }
+        talkTrack = null
+        talkSource = null
+    }
+
+    override fun prepareTalkCapture() {
+        // Created but not attached: nothing is sent and the track is disabled until the attach.
+        openTalkTrack()?.setEnabled(false)
+    }
+
+    override fun setTalkMicFailureListener(listener: () -> Unit) {
+        talkMicFailed = listener
+    }
+
+    override fun setPlaybackDucked(ducked: Boolean) {
+        this.ducked = ducked
+        if (role == Role.PARENT) adm.setSpeakerMute(speakerMuted || ducked)
+    }
+
+    override fun setTalkSpeakerMuted(muted: Boolean) {
+        if (role == Role.BABY) adm.setSpeakerMute(muted)
+    }
+
+    override fun playTalkChime(gain: Double, onDone: () -> Unit) = chime.play(gain, onDone)
+
+    override fun stopTalkChime() = chime.stop()
+
+    override fun talkVolume(): AlarmVolume? = talkVolume
 
     override fun setMicEnabled(enabled: Boolean) {
         track?.setEnabled(enabled)
@@ -124,7 +229,7 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
 
     override fun setPlaybackMuted(muted: Boolean) {
         speakerMuted = muted
-        if (role == Role.PARENT) adm.setSpeakerMute(muted)
+        if (role == Role.PARENT) adm.setSpeakerMute(muted || ducked)
     }
 
     override fun setPlaybackGainPct(pct: Int) {
@@ -143,9 +248,11 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
     override fun drainRemoteRms(): Double? = remoteWindow.drain()
 
     override fun release() {
+        chime.stop()
         runCatching {
             remoteTracks.forEach { it.removeSink(remoteSink) }
             remoteTracks.clear()
+            disposeTalkTrack()
             track?.dispose()
             source?.dispose()
             factory.dispose()

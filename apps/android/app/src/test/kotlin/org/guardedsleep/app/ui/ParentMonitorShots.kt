@@ -6,6 +6,7 @@ import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.LinkQuality
 import org.guardedsleep.app.ui.model.ListenMode
 import org.guardedsleep.app.ui.model.MissedEventsUi
+import org.guardedsleep.app.ui.model.NoisePause
 import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.PeerStatusUi
 import org.guardedsleep.app.ui.model.ReadinessIssue
@@ -14,6 +15,10 @@ import org.guardedsleep.app.ui.model.SettingsState
 import org.guardedsleep.app.ui.model.SilenceRequest
 import org.guardedsleep.app.ui.model.SilenceStatus
 import org.guardedsleep.app.ui.model.SoundEventUi
+import org.guardedsleep.app.ui.model.TalkEnd
+import org.guardedsleep.app.ui.model.TalkPermission
+import org.guardedsleep.app.ui.model.TalkUi
+import org.guardedsleep.app.ui.model.TalkUnavailable
 import org.guardedsleep.app.ui.screens.ParentMonitorScreen
 import org.guardedsleep.app.ui.screens.ParentSheet
 import org.junit.Test
@@ -57,6 +62,39 @@ class ParentMonitorShots : ShotBase() {
     }
 
     @Test fun connectedQuiet() = shoot("connected_quiet", base)
+
+    @Test
+    fun talkStates() {
+        val s = SettingsState(talkCoachSeen = true)
+        shoot("talk_requesting", base.copy(talk = TalkUi.Requesting), settings = s)
+        shoot(
+            "talk_speaking",
+            base.copy(talk = TalkUi.Talking(ELAPSED + 20_000), noisePause = NoisePause.YOU),
+            settings = s,
+        )
+        shoot(
+            "talk_last_seconds",
+            base.copy(talk = TalkUi.Talking(ELAPSED + 3_000), noisePause = NoisePause.YOU),
+            settings = s,
+        )
+        shoot(
+            "talk_unavailable_off",
+            base.copy(talk = TalkUi.Unavailable(TalkUnavailable.OFF)),
+            settings = s,
+        )
+        shoot(
+            "talk_ended_unconfirmed",
+            base.copy(talkEnd = TalkEnd.NO_ANSWER, talkUnconfirmed = true),
+            settings = s,
+        )
+        shoot("talk_coach", base)
+        shoot(
+            "talk_permission_sheet",
+            base.copy(talkPermission = TalkPermission.NEEDED),
+            settings = s,
+        )
+        shoot("talk_de", base.copy(talk = TalkUi.Requesting), "de", settings = s)
+    }
 
     @Test
     fun discreetIndicator() =

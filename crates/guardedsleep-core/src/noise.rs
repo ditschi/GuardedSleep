@@ -53,6 +53,12 @@ impl NoiseGate {
         self.hold_ms = hold_ms;
     }
 
+    /// Forgets the running hold time and keeps the loud/quiet state: the gate was not fed for a while
+    /// (a talk paused it) and the next loud sample starts a fresh hold time.
+    pub fn restart_hold(&mut self) {
+        self.above_since = None;
+    }
+
     /// Feed one RMS sample (0..1). Returns a change only on transitions.
     pub fn sample(&mut self, now_ms: u64, rms: f64) -> Option<GateChange> {
         let rms = if rms.is_finite() {
@@ -133,6 +139,21 @@ mod tests {
         assert!(g.is_loud());
         assert_eq!(g.sample(200, 0.0), Some(GateChange::Quiet));
         assert!(!g.is_loud());
+    }
+
+    #[test]
+    fn restarting_the_hold_keeps_the_state_and_needs_a_fresh_hold() {
+        let mut g = NoiseGate::new(0.2, 300);
+        g.sample(0, 0.5);
+        g.restart_hold();
+        // 400 ms after the first loud sample, but the hold starts over at the restart.
+        assert_eq!(g.sample(400, 0.5), None);
+        assert_eq!(g.sample(600, 0.5), None);
+        assert!(matches!(g.sample(700, 0.5), Some(GateChange::Loud { .. })));
+        // A loud state survives the restart and ends with the first quiet sample.
+        g.restart_hold();
+        assert!(g.is_loud());
+        assert_eq!(g.sample(800, 0.0), Some(GateChange::Quiet));
     }
 
     #[test]

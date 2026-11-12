@@ -55,11 +55,15 @@ use crate::pairing::{
     parent_proof_mac,
 };
 use crate::protocol::{
-    DataMessage, DeviceStatus, IceCandidate, MAX_BUNDLED_CANDIDATES, Member, Role, ServerMessage,
-    SignalPayload, clean_device_name, encode_data_message, encode_hello, encode_ping,
-    encode_signal, parse_server_message, parse_signal_payload, signal_payload_json,
+    DataMessage, DeviceStatus, IceCandidate, MAX_BUNDLED_CANDIDATES, Member, PlaybackResult, Role,
+    ServerMessage, SignalPayload, clean_device_name, encode_data_message, encode_hello,
+    encode_ping, encode_signal, parse_server_message, parse_signal_payload, signal_payload_json,
 };
 use crate::session::ConfigError;
+use crate::talk::{TalkLevel, TalkState};
+
+mod talk_flow;
+use talk_flow::{TalkCore, TalkSettings};
 
 /// Retry delays before the next attempt, indexed by consecutive failures (ADR-017 §6).
 const BACKOFF_MS: [u64; 5] = [0, 1_000, 2_000, 4_000, 8_000];
@@ -153,6 +157,7 @@ pub fn message_keys() -> &'static [&'static str] {
         // security_warning keys
         "wrong_key_attempt",
         "unknown_parent_attempt",
+        "talk_audio_outside_grant",
         // sticky causes (`LinkStatus::cause`) that tell the user to pair again
         "pair_again",
         "baby_unrecognised",
@@ -500,6 +505,52 @@ pub enum LinkInput {
     QuietApplied {
         state: DeviceStatus,
     },
+    /// Parent: the talk button went down (`pressed: true`) or up. The platform feeds it only with
+    /// the microphone permission and an unlocked device (`talk-back` "Push-to-talk"); the core
+    /// ignores a press without a verified link.
+    SetTalk {
+        pressed: bool,
+    },
+    /// Parent: the microphone is attached to the talk sender (the answer to
+    /// `set_talk_mic { enabled: true }`). "Speak now" shows only after this.
+    TalkMicAttached,
+    /// Parent: the microphone failed or its permission was revoked; the talk ends.
+    TalkMicFailed,
+    /// Parent: an alert sound or vibration is due; a running talk ends first.
+    AlertPreemptsTalk,
+    /// Baby: the chime of `play_talk_chime` ended.
+    TalkChimeDone {
+        attempt: u32,
+    },
+    /// Baby: the talk-back settings of this pairing (local only; no message changes them). They
+    /// are kept across `stop` and `start`, and also accepted before `start`.
+    SetTalkBack {
+        enabled: bool,
+        level: TalkLevel,
+        chime: bool,
+    },
+    /// Baby: an adult opened the talk-back settings (ends the "may not be audible" warning).
+    TalkSettingsOpened,
+    /// Baby: the platform cannot make a talk audible right now (the volume could not be set, the
+    /// output is unavailable); the core then reports `muted` and denies requests as muted. Alarms
+    /// blocked by Do Not Disturb are read from the device status. Kept across `stop`.
+    SetTalkMuted {
+        muted: bool,
+    },
+    /// Baby: the platform captures without echo cancellation (`quiet-link-no-rtp`). Until it says
+    /// so, the playback check reports `unknown`. Kept across `stop`.
+    SetRawCapture {
+        raw: bool,
+    },
+    /// Baby: the media layer received talk RTP on `attempt` outside a playback lease.
+    TalkRtpOutsideGrant {
+        attempt: u32,
+    },
+    /// Baby: RMS 0..1 of the incoming talk audio while it plays (the remote level of the talk
+    /// receiver), about 10 Hz.
+    TalkLevel {
+        rms: f64,
+    },
     Tick,
 }
 
@@ -562,6 +613,35 @@ pub enum LinkAction {
     /// Baby: mix a synthetic tone into the outgoing stream; never play it on the baby phone.
     SendProbeTone {
         duration_ms: u64,
+    },
+    /// Parent: attach (`enabled`) or detach and dispose the microphone on the talk sender of
+    /// `attempt`. Always `false` when a talk ends, whatever the reason.
+    SetTalkMic {
+        attempt: u32,
+        enabled: bool,
+    },
+    /// Parent: mute (`ducked`) or resume the baby's audio of `attempt` while the button is held
+    /// (half duplex). Alerts are not affected.
+    SetPlaybackDucked {
+        attempt: u32,
+        ducked: bool,
+    },
+    /// Baby: play the talk chime at `level`, then report `talk_chime_done`. A later
+    /// `set_talk_playback { enabled: false }` cancels it.
+    PlayTalkChime {
+        attempt: u32,
+        level: TalkLevel,
+    },
+    /// Baby: open (`enabled`) or close the playback of the talk line of `attempt`. Opening is a
+    /// lease: the media layer closes it by itself at `until_ms` (the core's clock), so a lost stop
+    /// cannot leave the speaker on. Every other attempt's talk receiver stays disabled. Closing
+    /// also cancels a running chime; `level`, `fade_in_ms` and `until_ms` then carry no meaning.
+    SetTalkPlayback {
+        attempt: u32,
+        enabled: bool,
+        level: TalkLevel,
+        fade_in_ms: u64,
+        until_ms: u64,
     },
     Emit {
         event: LinkEvent,
@@ -687,6 +767,35 @@ impl std::fmt::Debug for LinkAction {
                 .debug_struct("SendProbeTone")
                 .field("duration_ms", duration_ms)
                 .finish(),
+            LinkAction::SetTalkMic { attempt, enabled } => f
+                .debug_struct("SetTalkMic")
+                .field("attempt", attempt)
+                .field("enabled", enabled)
+                .finish(),
+            LinkAction::SetPlaybackDucked { attempt, ducked } => f
+                .debug_struct("SetPlaybackDucked")
+                .field("attempt", attempt)
+                .field("ducked", ducked)
+                .finish(),
+            LinkAction::PlayTalkChime { attempt, level } => f
+                .debug_struct("PlayTalkChime")
+                .field("attempt", attempt)
+                .field("level", level)
+                .finish(),
+            LinkAction::SetTalkPlayback {
+                attempt,
+                enabled,
+                level,
+                fade_in_ms,
+                until_ms,
+            } => f
+                .debug_struct("SetTalkPlayback")
+                .field("attempt", attempt)
+                .field("enabled", enabled)
+                .field("level", level)
+                .field("fade_in_ms", fade_in_ms)
+                .field("until_ms", until_ms)
+                .finish(),
             LinkAction::Emit { event } => f.debug_struct("Emit").field("event", event).finish(),
         }
     }
@@ -791,6 +900,26 @@ pub enum LinkEvent {
     Hint {
         key: String,
         active: bool,
+    },
+    /// Parent: the talk state for the UI (one moment, speak now, ended, denied).
+    TalkChanged {
+        state: TalkState,
+    },
+    /// Baby: a parent's voice plays (`active`) or stopped, with how long it played. The baby unit
+    /// shows its indicator and the "last talk" line from this.
+    TalkActive {
+        active: bool,
+        duration_ms: u64,
+    },
+    /// Noise detection is paused (`paused`) or runs again: the baby's own gate, or the parent's
+    /// reading of the baby's status. Every trusted parent shows it.
+    NoisePaused {
+        paused: bool,
+    },
+    /// Parent: the result of the baby unit's playback check of a talk. `unconfirmed` means the
+    /// voice may not have been audible there.
+    TalkPlayback {
+        result: PlaybackResult,
     },
 }
 
@@ -1029,6 +1158,8 @@ pub struct Link {
     platform_status: DeviceStatus,
     last_sent_status: Option<DeviceStatus>,
     last_quiet_at: Option<u64>,
+    /// Talk-back, both roles (`talk_flow.rs`).
+    talk: TalkCore,
 }
 
 /// The envelope class of a signaling payload: it fixes the padded size on the wire.
@@ -1175,6 +1306,7 @@ impl Link {
             platform_status: DeviceStatus::default(),
             last_sent_status: None,
             last_quiet_at: None,
+            talk: TalkCore::default(),
         };
         Ok(link)
     }
@@ -1208,6 +1340,28 @@ impl Link {
         let now = now_ms.max(self.now);
         self.now = now;
         let mut out = Vec::new();
+        // Talk-back settings are the baby platform's and outlive a run: accepted before `start`.
+        if self.mode == Mode::Idle {
+            match input {
+                LinkInput::SetTalkBack {
+                    enabled,
+                    level,
+                    chime,
+                } => {
+                    self.on_set_talk_back(now, TalkSettings::new(enabled, level, chime), &mut out);
+                    return out;
+                }
+                LinkInput::SetTalkMuted { muted } => {
+                    self.on_set_talk_muted(muted, &mut out);
+                    return out;
+                }
+                LinkInput::SetRawCapture { raw } => {
+                    self.on_set_raw_capture(raw);
+                    return out;
+                }
+                _ => {}
+            }
+        }
         match (&self.mode, &input) {
             (Mode::Idle, LinkInput::Start { .. }) => {}
             (Mode::Idle, _) => return out,
@@ -1324,6 +1478,7 @@ impl Link {
             LinkInput::SetListen { enabled } => {
                 if self.cfg.role == Role::Parent {
                     self.listen_intent = enabled;
+                    self.talk_listen_taken_over();
                     if enabled && let Some(e) = self.noise_event.as_mut() {
                         e.acked = true;
                     }
@@ -1331,7 +1486,8 @@ impl Link {
                 }
             }
             LinkInput::RequestProbe => {
-                if self.cfg.role == Role::Parent {
+                // A test alert is unavailable while a talk runs.
+                if self.cfg.role == Role::Parent && !self.parent_talking() {
                     self.send_app(&DataMessage::ProbeTest { t: now as f64 }, &mut out);
                 }
             }
@@ -1368,6 +1524,23 @@ impl Link {
                     self.send_app(&DataMessage::QuietRequest, &mut out);
                 }
             }
+            LinkInput::SetTalk { pressed } => self.on_set_talk(now, pressed, &mut out),
+            LinkInput::TalkMicAttached => self.on_talk_mic_attached(&mut out),
+            LinkInput::TalkMicFailed => self.on_talk_mic_failed(now, &mut out),
+            LinkInput::AlertPreemptsTalk => self.on_alert_preempts_talk(now, &mut out),
+            LinkInput::TalkChimeDone { attempt } => self.on_talk_chime_done(now, attempt, &mut out),
+            LinkInput::SetTalkBack {
+                enabled,
+                level,
+                chime,
+            } => self.on_set_talk_back(now, TalkSettings::new(enabled, level, chime), &mut out),
+            LinkInput::TalkSettingsOpened => self.on_talk_settings_opened(&mut out),
+            LinkInput::SetTalkMuted { muted } => self.on_set_talk_muted(muted, &mut out),
+            LinkInput::SetRawCapture { raw } => self.on_set_raw_capture(raw),
+            LinkInput::TalkRtpOutsideGrant { attempt } => {
+                self.on_talk_rtp_outside_grant(attempt, &mut out)
+            }
+            LinkInput::TalkLevel { rms } => self.on_talk_level(now, rms),
             LinkInput::Tick => {}
         }
         self.pump(now, &mut out);
@@ -1545,6 +1718,7 @@ impl Link {
         fresh.window_until = self.window_until;
         fresh.drawn_in_run = self.drawn_in_run;
         fresh.last_parent_warn = self.last_parent_warn;
+        fresh.talk = self.talk.carry_over();
         fresh.sync_session_pin(now);
         *self = fresh;
         for i in 0..self.mb.relays.len() {
@@ -1554,6 +1728,7 @@ impl Link {
 
     fn on_stop(&mut self, out: &mut Vec<LinkAction>) {
         if self.mode == Mode::Running {
+            self.end_talk_for_stop(out);
             self.announce_stop(out);
             self.close_live(out);
             self.close_all_relays(out);
@@ -2317,7 +2492,7 @@ impl Link {
                 heartbeat_interval_ms: self.cfg.heartbeat_interval_ms,
                 liveness_ms: self.liveness_ms,
                 attempt_timeout_ms: DEFAULT_ATTEMPT_TIMEOUT_MS,
-                require_sendonly: self.cfg.role == Role::Baby,
+                check_audio_directions: true,
                 require_dtls_fingerprint: self.cfg.require_dtls_fingerprint,
             },
             now,
@@ -2345,6 +2520,9 @@ impl Link {
     }
 
     fn close_live(&mut self, out: &mut Vec<LinkAction>) {
+        // Talk-back first: the speaker stops and the microphone closes on every path that drops
+        // the live attempt (loss, mismatch, stop, release, re-pair, the close before a create).
+        self.teardown_talk(out);
         self.proof_due = None;
         self.resend = None;
         self.ice = None;
@@ -2460,11 +2638,14 @@ impl Link {
         let handle = l.attempt.handle();
         match l.attempt.on_remote_description(now, aid, sdp_type, sdp) {
             Some(ev) => {
-                out.push(LinkAction::SetRemoteDescription {
-                    attempt: handle,
-                    sdp_type: sdp_type.to_owned(),
-                    sdp: sdp.to_owned(),
-                });
+                // An answer with a bad direction finished the attempt: it is never applied.
+                if !l.attempt.is_finished() {
+                    out.push(LinkAction::SetRemoteDescription {
+                        attempt: handle,
+                        sdp_type: sdp_type.to_owned(),
+                        sdp: sdp.to_owned(),
+                    });
+                }
                 if self.cfg.role == Role::Parent {
                     out.push(LinkAction::CreateAnswer { attempt: handle });
                 }
@@ -2849,11 +3030,13 @@ impl Link {
                     },
                 );
                 self.pin = Some(pinned);
+                self.mark_talk_trusted();
                 self.sync_session_pin(now);
                 emit(out, LinkEvent::ParentConnected { name });
                 self.send_app(&DataMessage::PinAck, out);
             }
             Some(pin) if pin.same(&secret.bytes) => {
+                self.mark_talk_trusted();
                 if self.proof_due.is_some() {
                     self.trust_parent(now, name, out);
                 }
@@ -2866,6 +3049,7 @@ impl Link {
     /// Baby: the parent proved the secret; the attempt becomes a link.
     fn trust_parent(&mut self, now: u64, name: String, out: &mut Vec<LinkAction>) {
         self.proof_due = None;
+        self.mark_talk_trusted();
         // The pinned parent trusts this attempt only after this proof, so it goes first: whatever
         // the baby sends next would be ignored by a parent that is still waiting for it.
         if let (Some(pin), Some((fp_parent, fp_baby))) =
@@ -3262,7 +3446,14 @@ impl Link {
                     .as_ref()
                     .and_then(|s| s.noise_threshold)
                     .unwrap_or(self.cfg.noise_threshold);
-                if rms.is_some_and(|r| r >= threshold)
+                // The speaker's own sound must not keep a noise event alive: the levels of a talk's
+                // noise pause are not the room's.
+                let paused = self
+                    .peer_status
+                    .as_ref()
+                    .is_some_and(|s| s.noise_paused == Some(true));
+                if !paused
+                    && rms.is_some_and(|r| r >= threshold)
                     && let Some(e) = self.noise_event.as_mut()
                 {
                     e.last_loud = now;
@@ -3270,6 +3461,20 @@ impl Link {
                 emit(out, LinkEvent::PeerHeartbeat { seq, rms });
             }
             (Role::Parent, DataMessage::DeviceStatus(s)) => self.on_peer_status(s, out),
+            (Role::Baby, DataMessage::TalkRequest { id }) => self.on_talk_request(now, id, out),
+            (Role::Baby, DataMessage::TalkEnd { id, .. }) => self.on_baby_talk_end(now, id, out),
+            (Role::Parent, DataMessage::TalkGrant { id, max_ms }) => {
+                self.on_talk_grant(now, id, max_ms, out)
+            }
+            (Role::Parent, DataMessage::TalkDeny { id, reason }) => {
+                self.on_talk_deny(now, id, reason, out)
+            }
+            (Role::Parent, DataMessage::TalkEnd { id, reason }) => {
+                self.on_parent_talk_end(now, id, reason, out)
+            }
+            (Role::Parent, DataMessage::TalkPlayback { id, result }) => {
+                self.on_talk_playback(id, result, out)
+            }
             (Role::Baby, DataMessage::ParentPin { secret, name }) => {
                 self.on_parent_pin(now, &secret, name, out)
             }
@@ -3317,6 +3522,11 @@ impl Link {
         let prev = self.peer_status.replace(s.clone());
         if prev.as_ref() != Some(&s) {
             emit(out, LinkEvent::PeerStatus { status: s.clone() });
+        }
+        let was_paused = prev.as_ref().is_some_and(|p| p.noise_paused == Some(true));
+        let is_paused = s.noise_paused == Some(true);
+        if was_paused != is_paused {
+            emit(out, LinkEvent::NoisePaused { paused: is_paused });
         }
         if prev.as_ref().and_then(|p| p.charging) == Some(true) && s.charging == Some(false) {
             emit(out, LinkEvent::ChargerUnplugged);
@@ -3369,6 +3579,11 @@ impl Link {
         }
         self.last_audio_at = Some(now);
         self.audio_seen = true;
+        // During a talk's noise pause the level is the baby's own speaker: it reaches the playback
+        // check only, never the gate or the `mic_silent` count.
+        if self.talk_audio_level(now, rms) {
+            return;
+        }
         if silent_sample {
             self.zero_since.get_or_insert(now);
         } else {
@@ -3440,6 +3655,7 @@ impl Link {
         let mut s = self.platform_status.normalized();
         s.mic_silent = self.audio_seen.then_some(self.mic_silent);
         s.noise_threshold = Some(round4(self.gate.threshold()));
+        self.talk_status_fields(&mut s);
         s
     }
 
@@ -3560,6 +3776,7 @@ impl Link {
     fn pump(&mut self, now: u64, out: &mut Vec<LinkAction>) {
         if self.mode == Mode::Running {
             self.noise_housekeeping(now, out);
+            self.talk_housekeeping(now, out);
             if self.pin.is_some() && self.requires_peer_tag(now) != self.sess_require {
                 self.sync_session_pin(now);
             }
@@ -3571,8 +3788,10 @@ impl Link {
                 // The sound level is not for a parent that has not proven itself: with a pinned
                 // parent it stays out of the heartbeats until the attempt is trusted (the
                 // heartbeat sent at verification included).
+                // During a talk's noise pause the level is the baby's own speaker: no level at all.
                 let rms = (self.pin.is_none() || self.live_verified())
-                    .then(|| round4(self.gate.last_rms()));
+                    .then(|| round4(self.gate.last_rms()))
+                    .filter(|_| !self.talk.paused());
                 if let Some(l) = self.live.as_mut() {
                     l.attempt.set_heartbeat_rms(rms);
                 }
@@ -3679,6 +3898,7 @@ impl Link {
         }
         self.apply_mic(now, out);
         if !self.mic_silent
+            && !self.talk.paused()
             && self
                 .zero_since
                 .is_some_and(|z| now.saturating_sub(z) >= MIC_SILENT_MS)
@@ -4386,6 +4606,125 @@ mod tests {
     }
 
     #[test]
+    fn talk_back_inputs_actions_and_events_round_trip_and_print() {
+        let inputs = vec![
+            LinkInput::SetTalk { pressed: true },
+            LinkInput::TalkMicAttached,
+            LinkInput::TalkMicFailed,
+            LinkInput::AlertPreemptsTalk,
+            LinkInput::TalkChimeDone { attempt: 3 },
+            LinkInput::SetTalkBack {
+                enabled: true,
+                level: TalkLevel::High,
+                chime: false,
+            },
+            LinkInput::TalkSettingsOpened,
+            LinkInput::SetTalkMuted { muted: true },
+            LinkInput::SetRawCapture { raw: true },
+            LinkInput::TalkRtpOutsideGrant { attempt: 3 },
+            LinkInput::TalkLevel { rms: 0.25 },
+        ];
+        for i in inputs {
+            let v = serde_json::to_value(&i).unwrap();
+            assert_eq!(serde_json::from_value::<LinkInput>(v).unwrap(), i);
+        }
+        assert_eq!(
+            serde_json::to_value(LinkInput::SetTalk { pressed: true }).unwrap(),
+            json!({"type": "set_talk", "pressed": true})
+        );
+        assert_eq!(
+            serde_json::to_value(LinkInput::SetTalkBack {
+                enabled: true,
+                level: TalkLevel::Low,
+                chime: true
+            })
+            .unwrap(),
+            json!({"type": "set_talk_back", "enabled": true, "level": "low", "chime": true})
+        );
+        let actions = vec![
+            LinkAction::SetTalkMic {
+                attempt: 1,
+                enabled: true,
+            },
+            LinkAction::SetPlaybackDucked {
+                attempt: 1,
+                ducked: true,
+            },
+            LinkAction::PlayTalkChime {
+                attempt: 1,
+                level: TalkLevel::Medium,
+            },
+            LinkAction::SetTalkPlayback {
+                attempt: 1,
+                enabled: true,
+                level: TalkLevel::Low,
+                fade_in_ms: 800,
+                until_ms: 30_000,
+            },
+        ];
+        for a in &actions {
+            let v = serde_json::to_value(a).unwrap();
+            assert_eq!(&serde_json::from_value::<LinkAction>(v).unwrap(), a);
+        }
+        // The hand-written Debug names every new variant with its fields.
+        let shown: Vec<String> = actions.iter().map(|a| format!("{a:?}")).collect();
+        assert!(shown[0].starts_with("SetTalkMic") && shown[0].contains("enabled: true"));
+        assert!(shown[1].starts_with("SetPlaybackDucked") && shown[1].contains("ducked: true"));
+        assert!(shown[2].starts_with("PlayTalkChime") && shown[2].contains("Medium"));
+        assert!(shown[3].starts_with("SetTalkPlayback") && shown[3].contains("until_ms: 30000"));
+        let events = vec![
+            LinkEvent::TalkChanged {
+                state: TalkState::Requesting,
+            },
+            LinkEvent::TalkActive {
+                active: false,
+                duration_ms: 4_000,
+            },
+            LinkEvent::NoisePaused { paused: true },
+            LinkEvent::TalkPlayback {
+                result: PlaybackResult::Unconfirmed,
+            },
+        ];
+        for e in events {
+            let v = serde_json::to_value(&e).unwrap();
+            assert_eq!(serde_json::from_value::<LinkEvent>(v).unwrap(), e);
+        }
+    }
+
+    #[test]
+    fn talk_inputs_belong_to_their_role_and_need_a_link() {
+        let (mut baby, _) = started(Role::Baby);
+        assert!(
+            baby.handle(1, LinkInput::SetTalk { pressed: true })
+                .is_empty()
+        );
+        assert!(baby.handle(2, LinkInput::TalkMicAttached).is_empty());
+        let (mut parent, _) = started(Role::Parent);
+        for input in [
+            LinkInput::SetTalk { pressed: true },
+            LinkInput::AlertPreemptsTalk,
+            LinkInput::TalkMicFailed,
+            LinkInput::TalkChimeDone { attempt: 1 },
+            LinkInput::TalkRtpOutsideGrant { attempt: 1 },
+            LinkInput::SetTalkMuted { muted: true },
+        ] {
+            let out = parent.handle(3, input);
+            assert!(
+                !out.iter().any(|a| matches!(
+                    a,
+                    LinkAction::SetTalkMic { .. }
+                        | LinkAction::PlayTalkChime { .. }
+                        | LinkAction::SetTalkPlayback { .. }
+                        | LinkAction::SetPlaybackDucked { .. }
+                )),
+                "{out:?}"
+            );
+        }
+        // A parent without a verified attempt has no talk and sends nothing.
+        assert!(!parent.parent_talking());
+    }
+
+    #[test]
     fn message_keys_lists_every_ui_key() {
         let keys = message_keys();
         for k in [
@@ -4828,6 +5167,7 @@ mod tests {
         let keys = message_keys();
         for k in [
             "unknown_parent_attempt",
+            "talk_audio_outside_grant",
             "clock_skew",
             "recovery_path_unavailable",
         ] {

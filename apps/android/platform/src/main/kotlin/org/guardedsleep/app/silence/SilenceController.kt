@@ -156,6 +156,12 @@ class SilenceController(
             micSilent = null,
             noiseThreshold = null,
             unitWarnings = warnings(status, battery),
+            // The core fills the talk-back fields itself.
+            talk = null,
+            talker = null,
+            noisePaused = null,
+            talkRetryInMs = null,
+            talkAudible = null,
         )
     }
 
