@@ -290,6 +290,18 @@ export class WebController implements AppController {
     this.setApp({ defaultRole: role });
   }
 
+  // Named connections need saved pairings; the web keeps one in-memory pairing and an empty
+  // connection list, so these are no-ops (web parity is the IDEA in docs/backlog.md).
+  selectConnection(_id: string): void {}
+
+  renameConnection(_id: string, _name: string): boolean {
+    return false;
+  }
+
+  setDefaultConnection(_id: string): void {}
+
+  forgetConnection(_id: string): void {}
+
   completeOnboarding(): void {
     this.setApp({ onboardingDone: true });
   }

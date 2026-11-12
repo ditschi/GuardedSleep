@@ -52,6 +52,13 @@ export interface AppController {
   switchMode(): void;
   /** Sets the start mode: a role, or null for "Ask every time". */
   setDefaultRole(role: Role | null): void;
+  /** Named connections (`multi-parent-pairings`): picks the connection of this session. */
+  selectConnection(id: string): void;
+  /** Renames a connection; false when the name is not 1 to 30 characters. */
+  renameConnection(id: string, name: string): boolean;
+  setDefaultConnection(id: string): void;
+  /** Forgets exactly one connection; monitoring stops first when it is the one in use. */
+  forgetConnection(id: string): void;
   completeOnboarding(): void;
   startPairing(): void;
   cancelPairing(): void;

@@ -17,6 +17,7 @@ import org.guardedsleep.app.diag.PocLog
 import org.guardedsleep.app.media.IceConfig
 import org.guardedsleep.app.media.InboundAudioStats
 import org.guardedsleep.app.media.MediaEngine
+import org.guardedsleep.app.pairing.ConnectionName
 import org.guardedsleep.app.pairing.PairingLoad
 import org.guardedsleep.app.pairing.PairingPayload
 import org.guardedsleep.app.pairing.PairingStore
@@ -39,6 +40,7 @@ import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
+import org.guardedsleep.app.ui.model.ConnectionUi
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.ListenMode
 import org.guardedsleep.app.ui.model.PairingError
@@ -95,13 +97,25 @@ class LinkController(
 ) : AppController {
     private val _app = MutableStateFlow(AppState())
 
-    /** The pairing slot of the session role; callers inside a run or after a role check. */
-    private val pairingStore: PairingStore
-        get() = pairings[checkNotNull(settingsRepo.current.role) { "no session role" }]
+    /**
+     * The pairing this session uses: the user's choice while it still exists, else the default
+     * pairing, else slot 1 (nothing saved yet). The baby unit runs only one link in this version,
+     * so with several saved parent pairings it uses the default one.
+     */
+    private fun activeId(role: Role): String {
+        val chosen = settingsRepo.current.pairingId
+        return chosen?.takeIf { it in pairings.savedIds(role) }
+            ?: pairings.defaultId(role)
+            ?: pairings.ids(role).first()
+    }
 
-    /** Like [pairingStore], null on the role screen. */
+    /** The slot a new pairing is saved to: the parent takes a free one, the baby replaces. */
+    private fun newPairingId(role: Role): String? =
+        if (role == Role.PARENT) pairings.freeId(role) else activeId(role)
+
+    /** The store of the pairing this session uses; null on the role screen. */
     private val pairingStoreOrNull: PairingStore?
-        get() = settingsRepo.current.role?.let { pairings[it] }
+        get() = settingsRepo.current.role?.let { pairings.store(it, activeId(it)) }
 
     // The sealed TURN entry; the disk copy is written on [turnIo] so the caller never blocks.
     @Volatile private var turn: TurnCredentials? = turnStore.load()
@@ -209,14 +223,21 @@ class LinkController(
          * `window_until_s` of `ParentPinned`. Null once the baby acknowledged the secret.
          */
         var pinUntilS: Long? = null,
+        /** The peer's device name once known: the default connection name. Never logged. */
+        var peerDeviceName: String? = null,
     )
 
     private inner class Run(
         val id: Int,
         val role: Role,
+        /** The pairing slot this run reads and writes. */
+        val slot: String,
         var pending: PendingPairing?,
         var monitoring: Boolean,
     ) {
+        val store: PairingStore
+            get() = pairings.store(role, slot)
+
         lateinit var runner: LinkRunner
         var autoListenDone = false
     }
@@ -231,7 +252,14 @@ class LinkController(
         // Cold start: a running monitoring keeps its role (the service resumes it); otherwise the
         // start mode decides, and null shows the role screen.
         if (!settingsRepo.current.monitoringActive) {
-            settingsRepo.update { it.copy(role = it.defaultRole) }
+            // The connection choice is per session: a cold start preselects the default again.
+            settingsRepo.update {
+                it.copy(
+                    role = it.defaultRole,
+                    pairingId = null,
+                    parked = it.parked.mapValues { (_, l) -> l.copy(pairingId = null) },
+                )
+            }
         }
         refreshApp()
         babyModel.setSettings(_settings.value.threshold, _settings.value.holdSeconds)
@@ -337,7 +365,7 @@ class LinkController(
             cancelPairing()
             return
         }
-        pairingStore.load()?.let { resumeRun(r.role, it, monitoring = r.monitoring) }
+        r.store.load()?.let { resumeRun(r.role, r.slot, it, monitoring = r.monitoring) }
     }
 
     @Synchronized
@@ -370,13 +398,53 @@ class LinkController(
     }
 
     override fun forgetPairing() {
+        // Taken first: stopping clears the session's choice, and this deletes the one in use.
+        settingsRepo.current.role?.let { forgetPairing(it, activeId(it)) }
+    }
+
+    private fun forgetPairing(role: Role, id: String) {
         stopMonitoring()
         cancelPairing()
         silence.deactivate()
         babyModel.setSilence(null, silence.hasAccess())
-        pairingStoreOrNull?.clear()
-        settingsRepo.update { it.copy(peerName = null, snoozeUntilWallMs = null) }
+        pairings.forget(role, id)
+        settingsRepo.update {
+            it.copy(peerName = null, snoozeUntilWallMs = null, pairingId = null)
+        }
         parentModel.cancelSnooze()
+        refreshApp()
+    }
+
+    override fun selectConnection(id: String) {
+        val role = settingsRepo.current.role ?: return
+        // The choice is per session: it does not change while monitoring runs.
+        if (settingsRepo.current.monitoringActive || id !in pairings.savedIds(role)) return
+        settingsRepo.update { it.copy(pairingId = id) }
+        refreshApp()
+    }
+
+    override fun renameConnection(id: String, name: String): Boolean {
+        val role = settingsRepo.current.role ?: return false
+        if (id !in pairings.savedIds(role)) return false
+        val ok = pairings.rename(role, id, name)
+        refreshApp()
+        return ok
+    }
+
+    override fun setDefaultConnection(id: String) {
+        val role = settingsRepo.current.role ?: return
+        if (pairings.setDefault(role, id)) refreshApp()
+    }
+
+    override fun forgetConnection(id: String) {
+        val role = settingsRepo.current.role ?: return
+        if (id !in pairings.savedIds(role)) return
+        if (id == activeId(role)) {
+            // Stops monitoring first, then deletes it (the "Forget pairing" requirement).
+            forgetPairing(role, id)
+            return
+        }
+        pairings.forget(role, id)
         refreshApp()
     }
 
@@ -438,13 +506,23 @@ class LinkController(
 
     private fun refreshApp() {
         val p = settingsRepo.current
+        val connections =
+            p.role?.let { role ->
+                val active = activeId(role)
+                pairings.list(role).map {
+                    ConnectionUi(it.id, it.name, it.isDefault, it.id == active)
+                }
+            } ?: emptyList()
         _app.value =
             AppState(
                 role = p.role,
                 defaultRole = p.defaultRole,
                 onboardingDone = p.onboardingDone,
                 paired = pairingStoreOrNull?.exists() == true,
-                peerName = p.peerName,
+                peerName = connections.firstOrNull { it.selected }?.name ?: p.peerName,
+                connections = connections,
+                // The baby unit replaces its pairing; only the parent adds one, up to the cap.
+                canAddPairing = p.role != Role.PARENT || pairings.freeId(Role.PARENT) != null,
                 monitoring = p.monitoringActive,
                 backgroundProtection = !(p.monitoringActive && fgs == Fgs.LOST),
             )
@@ -454,6 +532,8 @@ class LinkController(
 
     override fun startPairing() {
         if (settingsRepo.current.role != Role.BABY) return
+        // The baby unit replaces its active pairing; "Add parent device" waits for the baby hub.
+        val slot = newPairingId(Role.BABY) ?: return
         cancelPairing()
         stopRun(userStop = true)
         // The baby's own choice for a NEW invite: the settings list (Advanced or the build
@@ -487,7 +567,14 @@ class LinkController(
                 codePayload = inviteText,
                 expiresAtElapsedMs = pending.expiresAtElapsedMs,
             )
-        startRun(Role.BABY, pending, pairedBefore = false, monitoring = false, isPending = true)
+        startRun(
+            Role.BABY,
+            slot,
+            pending,
+            pairedBefore = false,
+            monitoring = false,
+            isPending = true,
+        )
     }
 
     override fun refreshPairingCode() = startPairing()
@@ -500,6 +587,8 @@ class LinkController(
 
     override fun submitPairingCode(payload: String) {
         if (settingsRepo.current.role != Role.PARENT) return
+        // At the cap nothing is added until one pairing is forgotten (the screens hide the button).
+        val slot = newPairingId(Role.PARENT) ?: return
         when (val parsed = PairingPayload.parse(payload, clock.wallMs())) {
             is PairingPayload.Companion.Result.Rejected ->
                 _pairing.value = PairingState(PairingPhase.FAILED, error = parsed.error)
@@ -512,6 +601,7 @@ class LinkController(
                 // pairing.
                 startRun(
                     Role.PARENT,
+                    slot,
                     PendingPairing(
                         p.pskB64url,
                         null,
@@ -531,7 +621,9 @@ class LinkController(
     // ---- monitoring --------------------------------------------------------------------------
 
     override fun startMonitoring() {
-        settingsRepo.update { it.copy(monitoringActive = true) }
+        // The session's connection stays fixed while monitoring runs, also over a restart.
+        val id = settingsRepo.current.role?.let(::activeId)
+        settingsRepo.update { it.copy(monitoringActive = true, pairingId = id ?: it.pairingId) }
         refreshApp()
         startHost()
     }
@@ -560,11 +652,12 @@ class LinkController(
             return EnsureRun.RUNNING
         }
         val role = settingsRepo.current.role ?: return EnsureRun.NO_PAIRING
-        return when (val r = pairingStore.loadResult()) {
+        val slot = activeId(role)
+        return when (val r = pairings.store(role, slot).loadResult()) {
             PairingLoad.Absent -> EnsureRun.NO_PAIRING
             PairingLoad.Unreadable -> EnsureRun.UNREADABLE
             is PairingLoad.Loaded -> {
-                resumeRun(role, r.pairing)
+                resumeRun(role, slot, r.pairing)
                 EnsureRun.RUNNING
             }
         }
@@ -577,7 +670,8 @@ class LinkController(
     }
 
     override fun stopMonitoring() {
-        settingsRepo.update { it.copy(monitoringActive = false) }
+        // The next start preselects the default connection again.
+        settingsRepo.update { it.copy(monitoringActive = false, pairingId = null) }
         stopRun(userStop = true)
         fgs = Fgs.UNKNOWN
         refreshApp()
@@ -585,9 +679,15 @@ class LinkController(
         host.stop()
     }
 
-    private fun resumeRun(role: Role, stored: StoredPairing, monitoring: Boolean = true) =
+    private fun resumeRun(
+        role: Role,
+        slot: String,
+        stored: StoredPairing,
+        monitoring: Boolean = true,
+    ) =
         startRun(
             role,
+            slot,
             PendingPairing(
                 stored.pskB64url,
                 stored.turn,
@@ -613,6 +713,7 @@ class LinkController(
 
     private fun startRun(
         role: Role,
+        slot: String,
         pending: PendingPairing,
         pairedBefore: Boolean,
         monitoring: Boolean,
@@ -622,7 +723,7 @@ class LinkController(
         val s = _settings.value
         val coreRole = if (role == Role.BABY) CoreRole.BABY else CoreRole.PARENT
         val config = buildConfig(coreRole, pending.psk, pairedBefore, s, pending)
-        val r = Run(++runCounter, role, if (isPending) pending else null, monitoring)
+        val r = Run(++runCounter, role, slot, if (isPending) pending else null, monitoring)
         val ice = buildIceConfig(pending.turn, turn, DebugOptions.relayOnly)
         val runner =
             LinkRunner(
@@ -878,6 +979,7 @@ class LinkController(
                         event.secret.bytes.fill(0)
                     }
                 is LinkEvent.MailboxesUpdated -> persistMailboxes(r, event.mailboxes)
+                is LinkEvent.ParentConnected -> nameFromPeer(r, event.name)
                 else -> Unit
             }
             if (r.role == Role.PARENT) parentModel.onEvent(event, nowMs)
@@ -942,7 +1044,7 @@ class LinkController(
             r.pending = null
             PocLog.event("pairing_saved")
             // The pairing link becomes the monitoring run; the other phone never sees a gap.
-            settingsRepo.update { it.copy(monitoringActive = true) }
+            settingsRepo.update { it.copy(monitoringActive = true, pairingId = r.slot) }
             refreshApp()
             startHost()
             // Last, so a UI that reacts to PAIRED already sees a consistent monitoring state.
@@ -961,7 +1063,7 @@ class LinkController(
         private fun persistParentSecret(r: Run, secret: ByteArray, untilS: Long?) {
             val pending = r.pending
             if (pending == null) {
-                check(pairingStore.setParentSecret(PairingPayload.b64(secret), untilS)) {
+                check(r.store.setParentSecret(PairingPayload.b64(secret), untilS)) {
                     "no pairing record to hold the parent secret"
                 }
                 return
@@ -977,7 +1079,7 @@ class LinkController(
         /** Writes the pending pairing as the stored record (the first verification happened). */
         private fun savePending(pending: PendingPairing) {
             val received = pending.receivedMailboxes
-            pairingStore.save(
+            r.store.save(
                 StoredPairing(
                     pending.psk,
                     (received ?: pending.mailboxes).signalingUrls(),
@@ -986,8 +1088,17 @@ class LinkController(
                     pending.pinnedSecret?.let { PairingPayload.b64(it) },
                     received ?: pending.mailboxes,
                     pending.pinUntilS,
+                    // A new pairing has no name of the user's yet.
+                    connectionName = pending.peerDeviceName?.let(ConnectionName::fromPeerDevice),
                 )
             )
+        }
+
+        /** The peer's device name becomes the connection name while the user chose none. */
+        private fun nameFromPeer(r: Run, name: String) {
+            val pending = r.pending
+            if (pending != null) pending.peerDeviceName = name
+            else pairings.nameIfUnset(r.role, r.slot, name).also { refreshApp() }
         }
 
         /** The baby's current mailbox set replaces the stored one. */
@@ -995,7 +1106,7 @@ class LinkController(
             // The core already left the project server out while the off switch is on.
             val set = mailboxes.map { it.toStored() }
             val pending = r.pending
-            if (pending != null) pending.receivedMailboxes = set else pairingStore.setMailboxes(set)
+            if (pending != null) pending.receivedMailboxes = set else r.store.setMailboxes(set)
         }
 
         private fun checkPairingTimers(now: Long) {

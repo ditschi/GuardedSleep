@@ -415,6 +415,20 @@
         "titleBabyDefault": "Ștergi dispozitivul bebelușului?",
         "titleParentDefault": "Ștergi dispozitivul părintelui?"
       },
+      "connections": {
+        "title": "Conexiuni",
+        "defaultBaby": "Dispozitivul bebelușului {n}",
+        "defaultParent": "Dispozitivul părintelui {n}",
+        "current": "Conexiune: {name}",
+        "change": "Schimbă",
+        "labelDefault": "{name} (implicită)",
+        "makeDefault": "Setează ca implicită",
+        "rename": "Redenumește",
+        "renameTitle": "Redenumește conexiunea",
+        "nameLabel": "Nume (1–30 de caractere, rămâne pe acest telefon)",
+        "nameInvalid": "Folosește între 1 și 30 de caractere.",
+        "save": "Salvează"
+      },
       "missed": {
         "some": "În timpul deconectării: {count, plural, one {1 sunet} few {# sunete} other {# de sunete}} între {start} și {end}. Cel mai puternic: {level}.",
         "none": "Niciun sunet în timpul deconectării.",

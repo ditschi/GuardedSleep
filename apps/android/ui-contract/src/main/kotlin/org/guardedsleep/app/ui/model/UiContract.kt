@@ -405,6 +405,28 @@ enum class TurnSaveResult {
     INVALID_CREDENTIALS,
 }
 
+/**
+ * One saved connection (pairing) of the session role. The name is local and private: it is not part
+ * of [toString], so it never reaches a log.
+ */
+data class ConnectionUi(
+    /** The stable local id of the pairing. */
+    val id: String,
+    /** The connection name; null while there is none (the UI shows a numbered default). */
+    val name: String?,
+    val isDefault: Boolean,
+    /** This is the connection monitoring uses (or will use) in this session. */
+    val selected: Boolean,
+) {
+    override fun toString(): String =
+        "ConnectionUi(id=$id, isDefault=$isDefault, selected=$selected)"
+
+    companion object {
+        /** The longest connection name, counted in code points (`pairing` spec: 1 to 30). */
+        const val MAX_NAME_LENGTH = 30
+    }
+}
+
 data class AppState(
     /** The session role; null shows the role screen. */
     val role: Role? = null,
@@ -414,6 +436,13 @@ data class AppState(
     /** A saved pairing exists (home screen shows one-tap start). */
     val paired: Boolean = false,
     val peerName: String? = null,
+    /**
+     * The saved pairings of the session role, in slot order. The list is shown only with more than
+     * one entry.
+     */
+    val connections: List<ConnectionUi> = emptyList(),
+    /** Fewer than the cap of pairings are saved: a further one can be added. */
+    val canAddPairing: Boolean = true,
     val monitoring: Boolean = false,
     /**
      * False while monitoring is on but Android is not running the foreground service: show red,
@@ -472,7 +501,20 @@ interface AppController {
 
     fun stopMonitoring()
 
+    /** Forgets the pairing this session uses (the selected connection). */
     fun forgetPairing()
+
+    // Named connections (`multi-parent-pairings`).
+    /** Picks the connection of this session (not while monitoring); the default is not changed. */
+    fun selectConnection(id: String)
+
+    /** Renames a connection; false when the name is not 1 to 30 characters. */
+    fun renameConnection(id: String, name: String): Boolean
+
+    fun setDefaultConnection(id: String)
+
+    /** Forgets exactly one connection; monitoring stops first when it is the one in use. */
+    fun forgetConnection(id: String)
 
     fun updateSettings(transform: (SettingsState) -> SettingsState)
 

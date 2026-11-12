@@ -118,9 +118,15 @@ class RoleStateTest {
         val pairings =
             RolePairings(
                 Role.entries.associateWith {
-                    PairingStore(
-                        File(dir, "pairing-${it.name.lowercase()}.bin"),
-                        ciphers.getValue(it),
+                    listOf(
+                        PairingStore(
+                            File(dir, "pairing-${it.name.lowercase()}.bin"),
+                            ciphers.getValue(it),
+                        ),
+                        PairingStore(
+                            File(dir, "pairing-${it.name.lowercase()}-2.bin"),
+                            FakeCipher(),
+                        ),
                     )
                 },
                 legacy,
@@ -170,7 +176,16 @@ class RoleStateTest {
         PairingStore(legacyFile, FakeCipher()).save(pairing("legacy"))
         val slots =
             Role.entries.associateWith {
-                PairingStore(File(tmp.root, "pairing-${it.name.lowercase()}.bin"), FakeCipher())
+                listOf(
+                    PairingStore(
+                        File(tmp.root, "pairing-${it.name.lowercase()}.bin"),
+                        FakeCipher(),
+                    ),
+                    PairingStore(
+                        File(tmp.root, "pairing-${it.name.lowercase()}-2.bin"),
+                        FakeCipher(),
+                    ),
+                )
             }
         val pairings = RolePairings(slots, PairingStore(legacyFile, flaky))
 
@@ -198,10 +213,13 @@ class RoleStateTest {
             }
         val slots =
             Role.entries.associateWith {
-                PairingStore(File(tmp.root, "pairing-${it.name.lowercase()}.bin"), failing)
+                listOf(
+                    PairingStore(File(tmp.root, "pairing-${it.name.lowercase()}.bin"), failing),
+                    PairingStore(File(tmp.root, "pairing-${it.name.lowercase()}-2.bin"), failing),
+                )
             }
         RolePairings(slots, legacy).migrateLegacy(Role.BABY)
         assertTrue(legacyFile.exists())
-        assertNull(slots.getValue(Role.BABY).load())
+        assertNull(slots.getValue(Role.BABY).first().load())
     }
 }

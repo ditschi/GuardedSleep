@@ -413,6 +413,20 @@
         "titleBabyDefault": "Forget the baby device?",
         "titleParentDefault": "Forget the parent device?"
       },
+      "connections": {
+        "title": "Connections",
+        "defaultBaby": "Baby unit {n}",
+        "defaultParent": "Parent device {n}",
+        "current": "Connection: {name}",
+        "change": "Change",
+        "labelDefault": "{name} (default)",
+        "makeDefault": "Make default",
+        "rename": "Rename",
+        "renameTitle": "Rename connection",
+        "nameLabel": "Name (1–30 characters, stays on this phone)",
+        "nameInvalid": "Use 1 to 30 characters.",
+        "save": "Save"
+      },
       "missed": {
         "some": "While disconnected: {count, plural, one {1 sound} other {# sounds}} between {start} and {end}. Loudest: {level}.",
         "none": "No sounds while disconnected.",

@@ -415,6 +415,20 @@
         "titleBabyDefault": "Oublier l'appareil bébé ?",
         "titleParentDefault": "Oublier l'appareil parent ?"
       },
+      "connections": {
+        "title": "Connexions",
+        "defaultBaby": "Appareil bébé {n}",
+        "defaultParent": "Appareil parent {n}",
+        "current": "Connexion : {name}",
+        "change": "Changer",
+        "labelDefault": "{name} (par défaut)",
+        "makeDefault": "Définir par défaut",
+        "rename": "Renommer",
+        "renameTitle": "Renommer la connexion",
+        "nameLabel": "Nom (1 à 30 caractères, reste sur ce téléphone)",
+        "nameInvalid": "Utilisez de 1 à 30 caractères.",
+        "save": "Enregistrer"
+      },
       "missed": {
         "some": "Pendant la déconnexion : {count, plural, one {1 son} many {# de sons} other {# sons}} entre {start} et {end}. Le plus fort : {level}.",
         "none": "Aucun son pendant la déconnexion.",

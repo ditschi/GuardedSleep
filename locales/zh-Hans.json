@@ -415,6 +415,20 @@
         "titleBabyDefault": "忘记宝宝设备？",
         "titleParentDefault": "忘记家长设备？"
       },
+      "connections": {
+        "title": "连接",
+        "defaultBaby": "宝宝设备 {n}",
+        "defaultParent": "家长设备 {n}",
+        "current": "连接：{name}",
+        "change": "更改",
+        "labelDefault": "{name}（默认）",
+        "makeDefault": "设为默认",
+        "rename": "重命名",
+        "renameTitle": "重命名连接",
+        "nameLabel": "名称（1–30 个字符，仅保存在本机）",
+        "nameInvalid": "请使用 1 到 30 个字符。",
+        "save": "保存"
+      },
       "missed": {
         "some": "断开期间：{start} 至 {end} 之间有 {count, plural, other {# 次声音}}。最响：{level}。",
         "none": "断开期间没有声音。",

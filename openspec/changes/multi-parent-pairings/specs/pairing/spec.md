@@ -20,7 +20,7 @@ A pairing SHALL connect exactly one baby unit and one parent unit. The invite SH
 
 ### Requirement: Saved pairings and connection names
 
-A device SHALL keep at most 2 saved pairings per role, each stored and encrypted as an independent pairing. Every saved pairing SHALL have a local connection name of 1 to 30 characters, by default the peer's device name, that the user can change. The name SHALL be stored encrypted with its pairing and SHALL NOT be sent to any peer, relay or log. Forgetting SHALL delete exactly one saved pairing.
+A device SHALL keep at most 2 saved pairings per role, each stored and encrypted as an independent pairing. Every saved pairing SHALL have a local connection name of 1 to 30 characters, by default the peer's device name where the device learns one, that the user can change. The name SHALL be stored encrypted with its pairing and SHALL NOT be sent to any peer, relay or log. Forgetting SHALL delete exactly one saved pairing.
 
 #### Scenario: Third pairing
 
@@ -31,6 +31,11 @@ A device SHALL keep at most 2 saved pairings per role, each stored and encrypted
 
 - **WHEN** the user forgets one of two parent pairings on the baby unit
 - **THEN** that pairing is deleted and the other parent still connects without a new scan
+
+#### Scenario: Default name on the parent unit
+
+- **WHEN** a parent unit saves a pairing, whose protocol carries no baby device name
+- **THEN** the connection shows a numbered default such as "Baby unit 1" until the user renames it
 
 #### Scenario: Renamed connection
 

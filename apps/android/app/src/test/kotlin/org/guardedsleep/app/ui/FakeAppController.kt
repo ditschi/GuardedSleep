@@ -7,6 +7,7 @@ import org.guardedsleep.app.pairing.TurnServerInput
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
+import org.guardedsleep.app.ui.model.ConnectionUi
 import org.guardedsleep.app.ui.model.ListenMode
 import org.guardedsleep.app.ui.model.PairingState
 import org.guardedsleep.app.ui.model.ParentMonitorState
@@ -101,6 +102,44 @@ class FakeAppController(
 
     override fun forgetPairing() {
         calls += "forgetPairing"
+    }
+
+    override fun selectConnection(id: String) {
+        calls += "selectConnection:$id"
+        appFlow.value =
+            appFlow.value.copy(
+                connections = appFlow.value.connections.map { it.copy(selected = it.id == id) }
+            )
+    }
+
+    override fun renameConnection(id: String, name: String): Boolean {
+        calls += "renameConnection:$id"
+        val ok =
+            name.trim().codePointCount(0, name.trim().length) in 1..ConnectionUi.MAX_NAME_LENGTH
+        if (ok) {
+            appFlow.value =
+                appFlow.value.copy(
+                    connections =
+                        appFlow.value.connections.map {
+                            if (it.id == id) it.copy(name = name.trim()) else it
+                        }
+                )
+        }
+        return ok
+    }
+
+    override fun setDefaultConnection(id: String) {
+        calls += "setDefaultConnection:$id"
+        appFlow.value =
+            appFlow.value.copy(
+                connections = appFlow.value.connections.map { it.copy(isDefault = it.id == id) }
+            )
+    }
+
+    override fun forgetConnection(id: String) {
+        calls += "forgetConnection:$id"
+        appFlow.value =
+            appFlow.value.copy(connections = appFlow.value.connections.filter { it.id != id })
     }
 
     override fun updateSettings(transform: (SettingsState) -> SettingsState) {

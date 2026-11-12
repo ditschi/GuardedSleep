@@ -377,6 +377,20 @@ export interface SettingsState {
 /** Baby self-test result (ADR-010) shown on the setup checklist. */
 export type DeviceCheck = "unknown" | "ok" | "limited" | "not_recommended";
 
+/**
+ * One saved connection (pairing) of the session role (`multi-parent-pairings`). The web client
+ * keeps one in-memory pairing and shows no list, so `AppState.connections` stays empty here.
+ */
+export interface ConnectionUi {
+  /** The stable local id of the pairing. */
+  id: string;
+  /** The local connection name; null while there is none (a numbered default is shown). */
+  name: string | null;
+  isDefault: boolean;
+  /** The connection monitoring uses (or will use) in this session. */
+  selected: boolean;
+}
+
 export interface AppState {
   /** The session role; null shows the role screen. */
   role: Role | null;
@@ -386,6 +400,10 @@ export interface AppState {
   /** A saved pairing exists (home screen shows one-tap start). */
   paired: boolean;
   peerName: string | null;
+  /** The saved connections of the session role; empty on the web (one in-memory pairing). */
+  connections: ConnectionUi[];
+  /** Fewer than the cap of pairings are saved: a further one can be added. */
+  canAddPairing: boolean;
   monitoring: boolean;
   /** False while monitoring is on but nothing keeps the page alive: show red, never green. */
   backgroundProtection: boolean;
@@ -500,6 +518,8 @@ export function defaultAppState(): AppState {
     onboardingDone: false,
     paired: false,
     peerName: null,
+    connections: [],
+    canAddPairing: true,
     monitoring: false,
     backgroundProtection: true,
     lastUsedWallMs: null,

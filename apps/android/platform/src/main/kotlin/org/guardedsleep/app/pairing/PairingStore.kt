@@ -1,6 +1,7 @@
 package org.guardedsleep.app.pairing
 
 import java.io.File
+import org.guardedsleep.app.ui.model.ConnectionUi
 import org.guardedsleep.app.ui.model.Role
 import org.json.JSONArray
 import org.json.JSONObject
@@ -47,7 +48,7 @@ internal fun List<StoredMailbox>.signalingUrls(): List<String> = filter {
 }
     .map { it.url }
 
-/** The one saved pairing of this phone (ADR-018: 1 baby + 1 parent). */
+/** One saved pairing (1 baby + 1 parent); a phone keeps up to [RolePairings.MAX_PER_ROLE]. */
 data class StoredPairing(
     val pskB64url: String,
     val signalingUrls: List<String>,
@@ -71,11 +72,38 @@ data class StoredPairing(
      * acknowledged (and on the baby).
      */
     val pinUntilS: Long? = null,
+    /**
+     * The local connection name the user chose (or the peer's device name): null until there is
+     * one. Sealed with the record, never sent to a peer or relay, never logged.
+     */
+    val connectionName: String? = null,
 ) {
-    // The PSK and the parent secret must never reach logs through string templates.
+    // The PSK, the parent secret and the connection name must never reach logs through string
+    // templates.
     override fun toString(): String =
         "StoredPairing(pairedBefore=$pairedBefore, urls=${signalingUrls.size}, " +
             "pinned=${parentSecretB64url != null}, mailboxes=${mailboxes.size})"
+}
+
+/** The rules of a local connection name: free text of 1 to 30 characters. */
+object ConnectionName {
+    const val MAX_LENGTH = ConnectionUi.MAX_NAME_LENGTH
+
+    /** The trimmed name, or null when it is empty or longer than [MAX_LENGTH] characters. */
+    fun normalize(text: String): String? {
+        val t = text.trim()
+        return t.takeIf { it.isNotEmpty() && it.codePointCount(0, it.length) <= MAX_LENGTH }
+    }
+
+    /** A peer's device name as a default name: trimmed and cut to [MAX_LENGTH], null if blank. */
+    fun fromPeerDevice(text: String): String? {
+        val t = text.trim()
+        if (t.isEmpty()) return null
+        val end =
+            if (t.codePointCount(0, t.length) <= MAX_LENGTH) t.length
+            else t.offsetByCodePoints(0, MAX_LENGTH)
+        return t.substring(0, end).trim().ifEmpty { null }
+    }
 }
 
 /** The outcome of [PairingStore.loadResult]. */
@@ -133,6 +161,7 @@ class PairingStore(file: File, cipher: PairingCipher) {
                         o.optString("ps").ifEmpty { null },
                         mailboxes,
                         o.optLong("pu", -1L).takeIf { it >= 0 },
+                        o.optString("n").ifEmpty { null },
                     )
                 )
             }
@@ -152,6 +181,7 @@ class PairingStore(file: File, cipher: PairingCipher) {
         pairing.turn?.let { o.put("t", it.toJson()) }
         pairing.parentSecretB64url?.let { o.put("ps", it) }
         pairing.pinUntilS?.let { o.put("pu", it) }
+        pairing.connectionName?.let { o.put("n", it) }
         if (pairing.mailboxes.isNotEmpty()) {
             o.put(
                 "m",
@@ -165,9 +195,22 @@ class PairingStore(file: File, cipher: PairingCipher) {
         sealed.write(o)
     }
 
+    /**
+     * Load, change and save under one hold of the store lock, so a concurrent write of the core
+     * thread (parent secret, mailbox set) is never overwritten with stale data. [change] returns
+     * the record to save, or null to leave it alone. False when there is no readable record or
+     * nothing was saved.
+     */
+    @Synchronized
+    fun update(change: (StoredPairing) -> StoredPairing?): Boolean {
+        val stored = load() ?: return false
+        save(change(stored) ?: return false)
+        return true
+    }
+
     @Synchronized
     fun markPairedBefore() {
-        load()?.takeIf { !it.pairedBefore }?.let { save(it.copy(pairedBefore = true)) }
+        update { if (it.pairedBefore) null else it.copy(pairedBefore = true) }
     }
 
     /**
@@ -177,9 +220,7 @@ class PairingStore(file: File, cipher: PairingCipher) {
      */
     @Synchronized
     fun setParentSecret(secretB64url: String, pinUntilS: Long? = null): Boolean {
-        val stored = load() ?: return false
-        save(stored.copy(parentSecretB64url = secretB64url, pinUntilS = pinUntilS))
-        return true
+        return update { it.copy(parentSecretB64url = secretB64url, pinUntilS = pinUntilS) }
     }
 
     /**
@@ -189,15 +230,10 @@ class PairingStore(file: File, cipher: PairingCipher) {
      */
     @Synchronized
     fun setMailboxes(mailboxes: List<StoredMailbox>): Boolean {
-        val stored = load() ?: return false
         val urls = mailboxes.signalingUrls()
-        save(
-            stored.copy(
-                mailboxes = mailboxes,
-                signalingUrls = urls.ifEmpty { stored.signalingUrls },
-            )
-        )
-        return true
+        return update {
+            it.copy(mailboxes = mailboxes, signalingUrls = urls.ifEmpty { it.signalingUrls })
+        }
     }
 
     @Synchronized fun exists(): Boolean = sealed.exists()
@@ -207,28 +243,151 @@ class PairingStore(file: File, cipher: PairingCipher) {
 }
 
 /**
- * The stored pairings of this phone: at most one as baby unit and one as parent unit, each in its
- * own sealed file under its own Keystore key, so forgetting one never touches the other. Only the
- * pairing of the session role is used.
+ * Which pairing is the default of a role: a local id, no secret, so it is read without the Keystore
+ * (a busy Keystore must never change which pairing a start uses).
+ */
+interface DefaultPairingMarker {
+    fun get(role: Role): String?
+
+    fun set(role: Role, id: String?)
+
+    /** Kept in memory only (tests). */
+    class InMemory : DefaultPairingMarker {
+        private val ids = mutableMapOf<Role, String>()
+
+        override fun get(role: Role): String? = ids[role]
+
+        override fun set(role: Role, id: String?) {
+            if (id == null) ids.remove(role) else ids[role] = id
+        }
+    }
+
+    /** One small plain file per role under [dir]. */
+    class Files(private val dir: File) : DefaultPairingMarker {
+        private fun file(role: Role) = File(dir, "pairing-default-${role.name.lowercase()}")
+
+        override fun get(role: Role): String? = runCatching {
+            file(role).takeIf { it.exists() }?.readText()?.trim()
+        }
+            .getOrNull()
+            ?.ifEmpty { null }
+
+        override fun set(role: Role, id: String?) {
+            runCatching { if (id == null) file(role).delete() else file(role).writeText(id) }
+        }
+    }
+}
+
+/** One saved pairing of a role as the lists show it. The name is never part of [toString]. */
+class SavedPairing(
+    /** The stable local id: the slot the record lives in. */
+    val id: String,
+    /** The connection name, null while there is none (the UI shows a numbered default). */
+    val name: String?,
+    val isDefault: Boolean,
+) {
+    override fun toString(): String = "SavedPairing(id=$id, isDefault=$isDefault)"
+}
+
+/**
+ * The saved pairings of this phone: up to [MAX_PER_ROLE] per role, each in its own sealed file
+ * under its own Keystore key, so forgetting one never touches another. The slot index is the stable
+ * local id ("1", "2"). The first slot is the file of the one-pairing layout, so an update keeps it
+ * as the first entry. Only the pairings of the session role are used.
  */
 class RolePairings(
-    private val stores: Map<Role, PairingStore>,
-    /** The single-role file of the previous layout; null when there is none to migrate. */
+    private val slots: Map<Role, List<PairingStore>>,
+    /** The single-role file of the oldest layout; null when there is none to migrate. */
     private val legacy: PairingStore? = null,
+    private val defaults: DefaultPairingMarker = DefaultPairingMarker.InMemory(),
 ) {
-    operator fun get(role: Role): PairingStore =
-        checkNotNull(stores[role]) { "no pairing slot for $role" }
+    init {
+        require(slots.values.all { it.size == MAX_PER_ROLE }) { "$MAX_PER_ROLE slots per role" }
+    }
+
+    /** The store of [role]'s default pairing, or the first slot while there is none. */
+    operator fun get(role: Role): PairingStore = store(role, defaultId(role) ?: ids(role).first())
+
+    /** The ids of all slots of [role], in slot order. */
+    fun ids(role: Role): List<String> = slotsOf(role).indices.map { (it + 1).toString() }
+
+    fun store(role: Role, id: String): PairingStore {
+        val list = slotsOf(role)
+        val index = id.toIntOrNull()?.minus(1)
+        return requireNotNull(index?.let { list.getOrNull(it) }) { "no pairing slot $id" }
+    }
+
+    /** The ids of the slots that hold a pairing (readable or not), in slot order. */
+    @Synchronized
+    fun savedIds(role: Role): List<String> = ids(role).filter { store(role, it).exists() }
+
+    /** The first free slot, null at the cap. */
+    @Synchronized
+    fun freeId(role: Role): String? = ids(role).firstOrNull { !store(role, it).exists() }
+
+    /** The pairings of [role] that are saved, with their names (null while unreadable or unset). */
+    @Synchronized
+    fun list(role: Role): List<SavedPairing> {
+        val default = defaultId(role)
+        return savedIds(role).map {
+            SavedPairing(it, store(role, it).load()?.connectionName, it == default)
+        }
+    }
 
     /**
-     * Moves the legacy single pairing into the slot of [role] (the role the install had chosen),
-     * once. The pairing is sealed again under the slot's key, then the legacy file and key are
-     * deleted. A failure or an unreadable legacy file keeps it, so the next start retries.
+     * The default pairing of [role]: the one the user marked while it is still saved, else the
+     * first saved one. Null when there is no pairing. Reads no sealed record.
+     */
+    @Synchronized
+    fun defaultId(role: Role): String? {
+        val saved = savedIds(role)
+        return defaults.get(role)?.takeIf { it in saved } ?: saved.firstOrNull()
+    }
+
+    /** Makes [id] the default of [role]; false when nothing is saved there. */
+    @Synchronized
+    fun setDefault(role: Role, id: String): Boolean {
+        if (id !in savedIds(role)) return false
+        defaults.set(role, id)
+        return true
+    }
+
+    /** Renames a connection; false when [name] breaks [ConnectionName] or the pairing is gone. */
+    @Synchronized
+    fun rename(role: Role, id: String, name: String): Boolean {
+        val normalized = ConnectionName.normalize(name) ?: return false
+        return store(role, id).update { it.copy(connectionName = normalized) }
+    }
+
+    /** Sets the name only while there is none (the peer's device name as the default). */
+    @Synchronized
+    fun nameIfUnset(role: Role, id: String, name: String) {
+        val device = ConnectionName.fromPeerDevice(name) ?: return
+        store(role, id).update {
+            if (it.connectionName == null) it.copy(connectionName = device) else null
+        }
+    }
+
+    /** Deletes exactly one pairing with its file and Keystore key. */
+    @Synchronized
+    fun forget(role: Role, id: String) {
+        store(role, id).clear()
+        if (defaults.get(role) == id) defaults.set(role, null)
+    }
+
+    private fun slotsOf(role: Role): List<PairingStore> =
+        checkNotNull(slots[role]) { "no pairing slots for $role" }
+
+    /**
+     * Moves the legacy single pairing into the first slot of [role] (the role the install had
+     * chosen), once. The pairing is sealed again under the slot's key, then the legacy file and key
+     * are deleted. A failure or an unreadable legacy file keeps it, so the next start retries.
      */
     @Synchronized
     fun migrateLegacy(role: Role?) {
         val legacy = legacy ?: return
         if (role == null || !legacy.exists()) return
-        val target = this[role]
+        val target = store(role, ids(role).first())
         if (target.exists()) {
             // An earlier run copied it and only the cleanup is missing.
             legacy.clear()
@@ -236,5 +395,10 @@ class RolePairings(
         }
         val loaded = legacy.loadResult() as? PairingLoad.Loaded ?: return
         if (runCatching { target.save(loaded.pairing) }.isSuccess) legacy.clear()
+    }
+
+    companion object {
+        /** The cap of saved pairings per role (`multi-parent-pairings`). */
+        const val MAX_PER_ROLE = 2
     }
 }

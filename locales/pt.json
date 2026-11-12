@@ -415,6 +415,20 @@
         "titleBabyDefault": "Esquecer o dispositivo do bebê?",
         "titleParentDefault": "Esquecer o dispositivo dos pais?"
       },
+      "connections": {
+        "title": "Conexões",
+        "defaultBaby": "Dispositivo do bebê {n}",
+        "defaultParent": "Dispositivo dos pais {n}",
+        "current": "Conexão: {name}",
+        "change": "Alterar",
+        "labelDefault": "{name} (padrão)",
+        "makeDefault": "Definir como padrão",
+        "rename": "Renomear",
+        "renameTitle": "Renomear conexão",
+        "nameLabel": "Nome (1 a 30 caracteres, fica neste telefone)",
+        "nameInvalid": "Use de 1 a 30 caracteres.",
+        "save": "Salvar"
+      },
       "missed": {
         "some": "Durante a desconexão: {count, plural, one {1 som} many {# de sons} other {# sons}} entre {start} e {end}. Mais alto: {level}.",
         "none": "Nenhum som durante a desconexão.",

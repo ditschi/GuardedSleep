@@ -335,10 +335,12 @@ private fun rolePairings(
 ) =
     RolePairings(
         Role.entries.associateWith {
-            PairingStore(
-                java.io.File(dir, "pairing-${it.name.lowercase()}.bin"),
-                if (it == role) cipher else FakeCipher(),
-            )
+            listOf("", "-2").map { suffix ->
+                PairingStore(
+                    java.io.File(dir, "pairing-${it.name.lowercase()}$suffix.bin"),
+                    if (it == role && suffix.isEmpty()) cipher else FakeCipher(),
+                )
+            }
         },
         legacy,
     )
@@ -674,6 +676,107 @@ class LinkControllerTest {
         assertNull(u.pairings[Role.PARENT].load())
         assertEquals("baby-psk", u.pairings[Role.BABY].load()?.pskB64url)
         assertFalse(u.controller.app.value.paired)
+    }
+
+    @Test
+    fun twoSavedPairingsListTheDefaultPreselectedAndOneChoicePerSession() {
+        val u = unit("choice", Role.PARENT)
+        val c = u.controller
+        u.pairings.store(Role.PARENT, "1").save(pairing("home-psk"))
+        u.pairings.store(Role.PARENT, "2").save(pairing("travel-psk"))
+        u.pairings.rename(Role.PARENT, "1", "Home")
+        u.pairings.rename(Role.PARENT, "2", "Travel")
+        c.chooseRole(Role.PARENT)
+
+        val app = c.app.value
+        assertEquals(listOf("1", "2"), app.connections.map { it.id })
+        assertEquals("1", app.connections.single { it.selected }.id)
+        assertEquals("Home", app.peerName)
+        assertFalse("at the cap", app.canAddPairing)
+
+        c.selectConnection("2")
+        assertEquals("Travel", c.app.value.peerName)
+        assertTrue(u.pairings.store(Role.PARENT, "1").exists())
+        assertEquals("the default is unchanged", "1", u.pairings.defaultId(Role.PARENT))
+
+        c.startMonitoring()
+        c.selectConnection("1")
+        assertEquals("not while monitoring", "2", c.app.value.connections.single { it.selected }.id)
+        c.stopMonitoring()
+        assertEquals(
+            "the next start preselects the default",
+            "1",
+            c.app.value.connections.single { it.selected }.id,
+        )
+    }
+
+    @Test
+    fun aRestartWhileMonitoringKeepsTheChosenConnection() {
+        val first = unit("resume-choice", Role.PARENT)
+        first.pairings.store(Role.PARENT, "1").save(pairing("home-psk"))
+        first.pairings.store(Role.PARENT, "2").save(pairing("travel-psk"))
+        first.controller.chooseRole(Role.PARENT, makeDefault = true)
+        first.controller.selectConnection("2")
+        first.controller.startMonitoring()
+
+        val second =
+            unit("resume-choice2", null, settings = first.settings, pairings = first.pairings)
+        assertEquals("2", second.controller.app.value.connections.single { it.selected }.id)
+        second.controller.stopMonitoring()
+
+        val third =
+            unit("resume-choice3", null, settings = first.settings, pairings = first.pairings)
+        assertEquals("1", third.controller.app.value.connections.single { it.selected }.id)
+    }
+
+    @Test
+    fun renameAndDefaultAndForgetWorkPerPairing() {
+        val u = unit("manage", Role.PARENT)
+        val c = u.controller
+        u.pairings.store(Role.PARENT, "1").save(pairing("one"))
+        u.pairings.store(Role.PARENT, "2").save(pairing("two"))
+        c.chooseRole(Role.PARENT)
+
+        assertTrue(c.renameConnection("2", "Travel"))
+        assertFalse(c.renameConnection("2", ""))
+        c.setDefaultConnection("2")
+        assertEquals("2", c.app.value.connections.single { it.isDefault }.id)
+
+        // The selected one is the default now; forgetting the other keeps monitoring untouched.
+        c.forgetConnection("1")
+        assertEquals(listOf("2"), c.app.value.connections.map { it.id })
+        assertEquals("two", u.pairings.store(Role.PARENT, "2").load()?.pskB64url)
+        assertTrue(c.app.value.canAddPairing)
+
+        c.forgetConnection("2")
+        assertFalse(c.app.value.paired)
+    }
+
+    @Test
+    fun forgettingTheActiveConnectionStopsMonitoringFirst() {
+        val u = unit("forget-active", Role.PARENT)
+        val c = u.controller
+        u.pairings.store(Role.PARENT, "1").save(pairing("one"))
+        u.pairings.store(Role.PARENT, "2").save(pairing("two"))
+        c.chooseRole(Role.PARENT)
+        // Not the default: the one in use is deleted, never the default by mistake.
+        c.selectConnection("2")
+        c.startMonitoring()
+        c.forgetConnection("2")
+        assertFalse(c.app.value.monitoring)
+        assertEquals(listOf("1"), c.app.value.connections.map { it.id })
+        assertEquals("one", u.pairings.store(Role.PARENT, "1").load()?.pskB64url)
+    }
+
+    @Test
+    fun aBabyWithTwoParentPairingsUsesTheDefaultOne() {
+        val u = unit("baby-two", Role.BABY)
+        u.pairings.store(Role.BABY, "1").save(pairing("one"))
+        u.pairings.store(Role.BABY, "2").save(pairing("two"))
+        u.pairings.setDefault(Role.BABY, "2")
+        u.controller.chooseRole(Role.BABY)
+        assertEquals("2", u.controller.app.value.connections.single { it.selected }.id)
+        assertEquals(LinkController.EnsureRun.RUNNING, u.controller.ensureRun())
     }
 
     @Test

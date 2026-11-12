@@ -415,6 +415,20 @@
         "titleBabyDefault": "Glöm babyenheten?",
         "titleParentDefault": "Glöm föräldraenheten?"
       },
+      "connections": {
+        "title": "Anslutningar",
+        "defaultBaby": "Babyenhet {n}",
+        "defaultParent": "Föräldraenhet {n}",
+        "current": "Anslutning: {name}",
+        "change": "Ändra",
+        "labelDefault": "{name} (standard)",
+        "makeDefault": "Gör till standard",
+        "rename": "Byt namn",
+        "renameTitle": "Byt namn på anslutningen",
+        "nameLabel": "Namn (1–30 tecken, stannar på den här telefonen)",
+        "nameInvalid": "Använd 1 till 30 tecken.",
+        "save": "Spara"
+      },
       "missed": {
         "some": "Under avbrottet: {count, plural, one {1 ljud} other {# ljud}} mellan {start} och {end}. Högst: {level}.",
         "none": "Inga ljud under avbrottet.",

@@ -415,6 +415,20 @@
         "titleBabyDefault": "Bebek cihazı unutulsun mu?",
         "titleParentDefault": "Ebeveyn cihazı unutulsun mu?"
       },
+      "connections": {
+        "title": "Bağlantılar",
+        "defaultBaby": "Bebek cihazı {n}",
+        "defaultParent": "Ebeveyn cihazı {n}",
+        "current": "Bağlantı: {name}",
+        "change": "Değiştir",
+        "labelDefault": "{name} (varsayılan)",
+        "makeDefault": "Varsayılan yap",
+        "rename": "Yeniden adlandır",
+        "renameTitle": "Bağlantıyı yeniden adlandır",
+        "nameLabel": "Ad (1–30 karakter, bu telefonda kalır)",
+        "nameInvalid": "1 ile 30 karakter kullanın.",
+        "save": "Kaydet"
+      },
       "missed": {
         "some": "Bağlantı yokken: {start} ile {end} arasında {count, plural, one {1 ses} other {# ses}}. En yüksek: {level}.",
         "none": "Bağlantı yokken ses olmadı.",

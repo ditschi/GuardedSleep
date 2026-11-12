@@ -21,6 +21,7 @@ import org.guardedsleep.app.link.SystemClockSource
 import org.guardedsleep.app.link.TalkGate
 import org.guardedsleep.app.media.AndroidTalkChimePreview
 import org.guardedsleep.app.media.libwebrtc.LibWebRtcMediaEngine
+import org.guardedsleep.app.pairing.DefaultPairingMarker
 import org.guardedsleep.app.pairing.KeystorePairingCipher
 import org.guardedsleep.app.pairing.PairingStore
 import org.guardedsleep.app.pairing.RolePairings
@@ -56,18 +57,24 @@ class AppGraph(context: Context) : PlatformServices {
             ioScope,
             turnStore,
         )
-    // One sealed file and one Keystore key per role, so forgetting one never deletes the other.
-    // The legacy single file (pairing.bin) moves into the slot of the persisted role on start.
+    // One sealed file and one Keystore key per saved pairing (two slots per role), so forgetting
+    // one never deletes another. Slot 1 keeps the file and key of the one-pairing layout. The
+    // legacy single file (pairing.bin) moves into slot 1 of the persisted role on start.
     val pairings =
         RolePairings(
             Role.entries.associateWith {
                 val name = it.name.lowercase()
-                PairingStore(
-                    File(app.filesDir, "pairing-$name.bin"),
-                    KeystorePairingCipher("${KeystorePairingCipher.KEY_ALIAS}_$name"),
-                )
+                listOf("", "-2").map { suffix ->
+                    PairingStore(
+                        File(app.filesDir, "pairing-$name$suffix.bin"),
+                        KeystorePairingCipher(
+                            "${KeystorePairingCipher.KEY_ALIAS}_$name${suffix.replace('-', '_')}"
+                        ),
+                    )
+                }
             },
             legacy = PairingStore(File(app.filesDir, "pairing.bin"), KeystorePairingCipher()),
+            defaults = DefaultPairingMarker.Files(app.filesDir),
         )
     override val entryPoints: EntryPoints = AppEntryPoints
     val silence = SilenceController(app, settings, entryPoints)
