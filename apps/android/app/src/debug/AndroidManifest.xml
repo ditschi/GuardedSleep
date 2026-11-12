@@ -17,5 +17,14 @@
                 <action android:name="org.guardedsleep.app.alpha.debug.INJECT_AUDIO" />
             </intent-filter>
         </receiver>
+        <receiver
+            android:name=".debug.DebugTalkReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="org.guardedsleep.app.alpha.debug.TALK" />
+                <action android:name="org.guardedsleep.app.alpha.debug.AUDIO_STATE" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

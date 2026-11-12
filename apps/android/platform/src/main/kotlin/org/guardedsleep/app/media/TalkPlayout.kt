@@ -1,6 +1,7 @@
 package org.guardedsleep.app.media
 
 import org.guardedsleep.app.config.TalkPolicy
+import org.guardedsleep.app.diag.PocLog
 import uniffi.guardedsleep_core.TalkLevel
 
 /** The baby unit's loudspeaker side of talk-back, one method per physical effect. */
@@ -73,6 +74,7 @@ class TalkPlayout(
         speaker.setReceiverEnabled(attempt, true)
         speaker.setSpeakerMuted(false)
         baseline.remove(attempt)
+        PocLog.event("talk_playback", "enabled" to true)
     }
 
     /** `set_talk_playback { false }`, the deadline, teardown: mute, disable, restore the volume. */
@@ -83,6 +85,7 @@ class TalkPlayout(
         if (l != null) {
             speaker.setReceiverEnabled(l.attempt, false)
             leaseEndedMs = nowMs
+            PocLog.event("talk_playback", "enabled" to false)
         }
         speaker.setSpeakerMuted(true)
         volume.restore()

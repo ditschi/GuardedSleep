@@ -2,6 +2,7 @@ package org.guardedsleep.app.media
 
 import kotlin.math.ceil
 import org.guardedsleep.app.config.TalkPolicy
+import org.guardedsleep.app.diag.PocLog
 import uniffi.guardedsleep_core.TalkLevel
 
 /** The alarm stream as the platform sees it (`AudioManager`, STREAM_ALARM); fake in tests. */
@@ -53,6 +54,7 @@ class AlarmVolume(private val stream: StreamVolume, private val memory: VolumeMe
         raisedTo = target
         attenuation = 1.0
         memory.save(now, target)
+        PocLog.event("alarm_volume", "phase" to "raised", "previous" to now, "set" to target)
         return attenuation
     }
 
@@ -74,6 +76,13 @@ class AlarmVolume(private val stream: StreamVolume, private val memory: VolumeMe
 
     private fun restoreIfUnchanged(prev: Int, set: Int) {
         if (runCatching { stream.index }.getOrNull() == set) runCatching { stream.index = prev }
+        PocLog.event(
+            "alarm_volume",
+            "phase" to "restored",
+            "previous" to prev,
+            "set" to set,
+            "now" to runCatching { stream.index }.getOrNull(),
+        )
         memory.clear()
     }
 

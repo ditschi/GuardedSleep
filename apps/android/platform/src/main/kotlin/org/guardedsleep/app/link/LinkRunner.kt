@@ -29,6 +29,7 @@ import uniffi.guardedsleep_core.LinkInput
 import uniffi.guardedsleep_core.LinkState
 import uniffi.guardedsleep_core.LinkStatus
 import uniffi.guardedsleep_core.Role
+import uniffi.guardedsleep_core.TalkState
 
 /** Called on the `gs-core` thread. */
 interface LinkListener {
@@ -95,6 +96,7 @@ class LinkRunner(
     /** Parent: the attempt whose talk sender carries the microphone, for the level poll. */
     private var talkMicAttempt: UInt? = null
     private var lastTalkMicPollAt = 0L
+    private var lastTalkRtpLogAt = 0L
     private var lastWallElapsedMs = 0L
 
     private val isBaby = config.role == Role.BABY
@@ -261,13 +263,18 @@ class LinkRunner(
                     post {
                         p.onTalkLevel(s.audioLevel, clock.elapsedMs())
                         dispatch(LinkInput.TalkLevel(s.audioLevel))
+                        pocTalkRtp(s.packetsReceived, true)
                     }
             }
         } else if (now - outsidePollAt >= TalkPolicy.OUTSIDE_POLL_MS) {
             outsidePollAt = now
             val h = liveAttempt ?: return
             attempts[h]?.talkReceiverStats { s ->
-                if (s != null) post { p.onTalkPackets(h, s.packetsReceived, clock.elapsedMs()) }
+                if (s != null)
+                    post {
+                        p.onTalkPackets(h, s.packetsReceived, clock.elapsedMs())
+                        pocTalkRtp(s.packetsReceived, false)
+                    }
             }
         }
     }
@@ -388,6 +395,7 @@ class LinkRunner(
                         "rms" to event.rms,
                         "probe" to event.probe,
                     )
+            is LinkEvent.TalkChanged -> pocTalk(event.state)
             is LinkEvent.LinkLost ->
                 PocLog.event("alert", "kind" to "link_lost", "down_ms" to event.downMs)
             is LinkEvent.LinkRestored -> PocLog.event("link_restored", "down_ms" to event.downMs)
@@ -400,6 +408,24 @@ class LinkRunner(
             } catch (e: Exception) {
                 if (event is LinkEvent.ParentPinned) throw PinNotPersisted() else throw e
             }
+        }
+    }
+
+    /** Gate evidence for the baby: the talk receiver's packet counter, about once a second. */
+    private fun pocTalkRtp(packets: Long, leased: Boolean) {
+        val now = clock.elapsedMs()
+        if (now - lastTalkRtpLogAt < TalkPolicy.OUTSIDE_POLL_MS - 100) return
+        lastTalkRtpLogAt = now
+        PocLog.event("talk_rtp", "packets" to packets, "leased" to leased)
+    }
+
+    /** Gate evidence for the parent's talk: state names only, never audio or names. */
+    private fun pocTalk(state: TalkState) {
+        when (state) {
+            TalkState.Requesting -> PocLog.event("talk", "state" to "requesting")
+            is TalkState.Talking -> PocLog.event("talk", "state" to "talking")
+            is TalkState.Ended -> PocLog.event("talk", "state" to "ended", "reason" to state.reason)
+            is TalkState.Denied -> PocLog.event("talk", "state" to "denied")
         }
     }
 

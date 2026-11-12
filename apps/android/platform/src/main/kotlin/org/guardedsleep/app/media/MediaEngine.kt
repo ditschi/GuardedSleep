@@ -54,8 +54,8 @@ interface AttemptPort {
     fun setTalkMic(attached: Boolean): Boolean = false
 
     /**
-     * Parent: level 0..1 of the microphone feeding the talk sender, from the connection's stats
-     * (no sink on the track); null while no track is attached.
+     * Parent: level 0..1 of the microphone feeding the talk sender, from the connection's stats (no
+     * sink on the track); null while no track is attached.
      */
     fun talkMicLevel(callback: (Double?) -> Unit) = callback(null)
 
