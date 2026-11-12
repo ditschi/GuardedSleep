@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -43,9 +44,11 @@ import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.ConfirmDialog
 import org.guardedsleep.app.ui.common.Glyph
 import org.guardedsleep.app.ui.common.GlyphIcon
+import org.guardedsleep.app.ui.common.RenameConnectionDialog
 import org.guardedsleep.app.ui.common.ScreenRoot
 import org.guardedsleep.app.ui.common.ScrollColumn
 import org.guardedsleep.app.ui.common.SecondaryButton
+import org.guardedsleep.app.ui.common.connectionLabel
 import org.guardedsleep.app.ui.common.formatTime
 import org.guardedsleep.app.ui.common.rememberLanguageChoices
 import org.guardedsleep.app.ui.model.AlertOutput
@@ -85,6 +88,9 @@ fun SettingsScreen(
     val isBaby = app.role == Role.BABY
     var confirmAdvanced by remember { mutableStateOf(false) }
     var confirmForget by remember { mutableStateOf(false) }
+    // The connection a rename or forget dialog is about (several saved pairings).
+    var renaming by remember { mutableStateOf<String?>(null) }
+    var forgetting by remember { mutableStateOf<String?>(null) }
     val peer = peerDisplayName(app.peerName, parentSide = !isBaby)
     BackHandler(onBack = onBack)
     ScreenRoot("settings") {
@@ -306,13 +312,66 @@ fun SettingsScreen(
                 }
             }
 
-            Section(R.string.native_ui_settings_group_paired, "settings_group_paired") {
-                if (app.paired) {
+            Section(
+                if (app.connections.size > 1) R.string.native_ui_connections_title
+                else R.string.native_ui_settings_group_paired,
+                "settings_group_paired",
+            ) {
+                if (app.connections.size > 1) {
+                    app.connections.forEach { c ->
+                        Column(
+                            Modifier.testTag("settings_connection_${c.id}"),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Body(
+                                connectionLabel(c, app.connections, app.role) +
+                                    if (c.isDefault)
+                                        " (" +
+                                            stringResource(R.string.native_ui_connections_default) +
+                                            ")"
+                                    else "",
+                                tag = "settings_connection_name_${c.id}",
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                SecondaryButton(
+                                    stringResource(R.string.native_ui_connections_rename),
+                                    { renaming = c.id },
+                                    "settings_connection_rename_${c.id}",
+                                    Modifier.weight(1f),
+                                )
+                                if (!c.isDefault) {
+                                    SecondaryButton(
+                                        stringResource(R.string.native_ui_connections_make_default),
+                                        { controller.setDefaultConnection(c.id) },
+                                        "settings_connection_default_${c.id}",
+                                        Modifier.weight(1f),
+                                    )
+                                }
+                                SecondaryButton(
+                                    stringResource(R.string.native_ui_forget_confirm),
+                                    { forgetting = c.id },
+                                    "settings_connection_forget_${c.id}",
+                                    Modifier.weight(1f),
+                                    destructive = true,
+                                )
+                            }
+                        }
+                    }
+                } else if (app.paired) {
                     Body(
                         peer,
                         tag = "settings_peer_name",
                         color = MaterialTheme.colorScheme.onSurface,
                     )
+                    app.connections.firstOrNull()?.let { c ->
+                        SecondaryButton(
+                            stringResource(R.string.native_ui_connections_rename),
+                            { renaming = c.id },
+                            "settings_connection_rename_${c.id}",
+                            Modifier.fillMaxWidth(),
+                        )
+                    }
                     SecondaryButton(
                         stringResource(
                             if (isBaby) R.string.native_ui_settings_forget_parent
@@ -423,6 +482,35 @@ fun SettingsScreen(
                 },
                 onDismiss = { confirmAdvanced = false },
                 destructive = false,
+            )
+        }
+        renaming?.let { id ->
+            val c = app.connections.firstOrNull { it.id == id }
+            RenameConnectionDialog(
+                initial = c?.name.orEmpty(),
+                onSave = { controller.renameConnection(id, it) },
+                onDismiss = { renaming = null },
+            )
+        }
+        forgetting?.let { id ->
+            val c = app.connections.firstOrNull { it.id == id }
+            ConfirmDialog(
+                tag = "dialog_forget",
+                title =
+                    stringResource(
+                        R.string.native_ui_forget_title,
+                        c?.let { connectionLabel(it, app.connections, app.role) }.orEmpty(),
+                    ),
+                body = stringResource(R.string.native_ui_forget_body),
+                confirmText = stringResource(R.string.native_ui_forget_confirm),
+                cancelText = stringResource(R.string.native_ui_common_cancel),
+                confirmTag = "dialog_forget_confirm",
+                cancelTag = "dialog_forget_cancel",
+                onConfirm = {
+                    forgetting = null
+                    controller.forgetConnection(id)
+                },
+                onDismiss = { forgetting = null },
             )
         }
         if (confirmForget) {

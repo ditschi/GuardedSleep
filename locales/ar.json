@@ -415,6 +415,20 @@
         "titleBabyDefault": "إزالة جهاز الطفل؟",
         "titleParentDefault": "إزالة جهاز الأهل؟"
       },
+      "connections": {
+        "title": "الاتصالات",
+        "defaultBaby": "جهاز الطفل {n}",
+        "defaultParent": "جهاز الأهل {n}",
+        "current": "الاتصال: {name}",
+        "change": "تغيير",
+        "default": "افتراضي",
+        "makeDefault": "تعيين كافتراضي",
+        "rename": "إعادة تسمية",
+        "renameTitle": "إعادة تسمية الاتصال",
+        "nameLabel": "الاسم (من 1 إلى 30 حرفًا، يبقى على هذا الهاتف)",
+        "nameInvalid": "استخدم من 1 إلى 30 حرفًا.",
+        "save": "حفظ"
+      },
       "missed": {
         "some": "أثناء انقطاع الاتصال: {count, plural, zero {لا أصوات} one {صوت واحد} two {صوتان} few {# أصوات} many {# صوتًا} other {# صوت}} بين {start} و{end}. الأعلى: {level}.",
         "none": "لا أصوات أثناء انقطاع الاتصال.",

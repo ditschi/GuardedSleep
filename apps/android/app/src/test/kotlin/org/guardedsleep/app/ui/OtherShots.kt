@@ -8,6 +8,7 @@ import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
 import org.guardedsleep.app.ui.model.CauseHint
+import org.guardedsleep.app.ui.model.ConnectionUi
 import org.guardedsleep.app.ui.model.DeviceCheck
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.PairingError
@@ -221,7 +222,21 @@ class SetupHomeSettingsShots : ShotBase() {
         }
         shot("home/empty") { HomeScreen(FakeAppController(app = saved.copy(paired = false)), {}) }
         shot("home/parent_saved", "de") { HomeScreen(FakeAppController(app = saved), {}) }
+        shot("home/parent_two_connections") {
+            HomeScreen(FakeAppController(app = twoConnections(saved)), {})
+        }
     }
+
+    private fun twoConnections(app: AppState) =
+        app.copy(
+            peerName = "Home – old phone",
+            connections =
+                listOf(
+                    ConnectionUi("1", "Home – old phone", isDefault = true, selected = true),
+                    ConnectionUi("2", null, isDefault = false, selected = false),
+                ),
+            canAddPairing = false,
+        )
 
     @Test
     fun settings() {
@@ -271,6 +286,9 @@ class SetupHomeSettingsShots : ShotBase() {
                 {},
                 {},
             )
+        }
+        shot("settings/parent_two_connections") {
+            SettingsScreen(FakeAppController(app = twoConnections(parentApp)), {}, {}, {})
         }
         shot("settings/parent_basic", "de") {
             SettingsScreen(FakeAppController(app = parentApp), {}, {}, {})

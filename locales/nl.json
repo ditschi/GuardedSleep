@@ -415,6 +415,20 @@
         "titleBabyDefault": "Het babyapparaat vergeten?",
         "titleParentDefault": "Het ouderapparaat vergeten?"
       },
+      "connections": {
+        "title": "Verbindingen",
+        "defaultBaby": "Babyapparaat {n}",
+        "defaultParent": "Ouderapparaat {n}",
+        "current": "Verbinding: {name}",
+        "change": "Wijzigen",
+        "default": "Standaard",
+        "makeDefault": "Als standaard instellen",
+        "rename": "Hernoemen",
+        "renameTitle": "Verbinding hernoemen",
+        "nameLabel": "Naam (1–30 tekens, blijft op deze telefoon)",
+        "nameInvalid": "Gebruik 1 tot 30 tekens.",
+        "save": "Opslaan"
+      },
       "missed": {
         "some": "Tijdens de onderbreking: {count, plural, one {1 geluid} other {# geluiden}} tussen {start} en {end}. Luidst: {level}.",
         "none": "Geen geluiden tijdens de onderbreking.",

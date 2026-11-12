@@ -415,6 +415,20 @@
         "titleBabyDefault": "बच्चे के डिवाइस को भूल जाएँ?",
         "titleParentDefault": "माता-पिता के डिवाइस को भूल जाएँ?"
       },
+      "connections": {
+        "title": "कनेक्शन",
+        "defaultBaby": "बच्चे का डिवाइस {n}",
+        "defaultParent": "माता-पिता का डिवाइस {n}",
+        "current": "कनेक्शन: {name}",
+        "change": "बदलें",
+        "default": "डिफ़ॉल्ट",
+        "makeDefault": "डिफ़ॉल्ट बनाएँ",
+        "rename": "नाम बदलें",
+        "renameTitle": "कनेक्शन का नाम बदलें",
+        "nameLabel": "नाम (1–30 अक्षर, इसी फ़ोन पर रहता है)",
+        "nameInvalid": "1 से 30 अक्षर इस्तेमाल करें।",
+        "save": "सहेजें"
+      },
       "missed": {
         "some": "कनेक्शन टूटने के दौरान: {start} और {end} के बीच {count, plural, one {# आवाज़} other {# आवाज़ें}}। सबसे तेज़: {level}।",
         "none": "कनेक्शन टूटने के दौरान कोई आवाज़ नहीं।",

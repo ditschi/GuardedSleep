@@ -29,6 +29,7 @@ import org.guardedsleep.app.ui.common.ScreenRoot
 import org.guardedsleep.app.ui.common.ScrollColumn
 import org.guardedsleep.app.ui.common.SecondaryButton
 import org.guardedsleep.app.ui.common.Title
+import org.guardedsleep.app.ui.common.connectionLabel
 import org.guardedsleep.app.ui.common.formatTime
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.Role
@@ -108,6 +109,7 @@ fun HomeScreen(controller: AppController, onSettings: () -> Unit) {
     val app = controller.app.collectAsState().value
     val isParent = app.role == Role.PARENT
     val name = customPeerName(app.peerName)
+    var choosing by remember { mutableStateOf(false) }
     ScreenRoot("home") {
         ScrollColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -165,12 +167,58 @@ fun HomeScreen(controller: AppController, onSettings: () -> Unit) {
                         }
                     }
                 }
-                SecondaryButton(
-                    stringResource(R.string.native_ui_home_new_pairing),
-                    { controller.startPairing() },
-                    "home_new_pairing",
-                    Modifier.fillMaxWidth(),
-                )
+                // Only with more than one saved baby unit: the default is preselected for this
+                // session, "Change" opens the list. One saved pairing shows no list.
+                if (isParent && app.connections.size > 1) {
+                    val current = app.connections.firstOrNull { it.selected }
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (current != null) {
+                            Body(
+                                stringResource(
+                                    R.string.native_ui_connections_current,
+                                    connectionLabel(current, app.connections, app.role),
+                                ),
+                                tag = "home_connection_current",
+                                color = MaterialTheme.colorScheme.onBackground,
+                            )
+                        }
+                        SecondaryButton(
+                            stringResource(R.string.native_ui_connections_change),
+                            { choosing = !choosing },
+                            "home_connection_change",
+                            Modifier.fillMaxWidth(),
+                        )
+                        if (choosing) {
+                            AppCard(Modifier.testTag("home_connection_list")) {
+                                app.connections.forEach { c ->
+                                    ChoiceRow(
+                                        connectionLabel(c, app.connections, app.role) +
+                                            if (c.isDefault)
+                                                " (" +
+                                                    stringResource(
+                                                        R.string.native_ui_connections_default
+                                                    ) +
+                                                    ")"
+                                            else "",
+                                        c.selected,
+                                        "connection_choice_${c.id}",
+                                    ) {
+                                        controller.selectConnection(c.id)
+                                        choosing = false
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (app.canAddPairing) {
+                    SecondaryButton(
+                        stringResource(R.string.native_ui_home_new_pairing),
+                        { controller.startPairing() },
+                        "home_new_pairing",
+                        Modifier.fillMaxWidth(),
+                    )
+                }
             } else {
                 Body(stringResource(R.string.native_ui_home_empty), tag = "home_empty")
                 PrimaryButton(

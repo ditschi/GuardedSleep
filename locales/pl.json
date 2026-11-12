@@ -415,6 +415,20 @@
         "titleBabyDefault": "Zapomnieć urządzenie dziecka?",
         "titleParentDefault": "Zapomnieć urządzenie rodzica?"
       },
+      "connections": {
+        "title": "Połączenia",
+        "defaultBaby": "Urządzenie dziecka {n}",
+        "defaultParent": "Urządzenie rodzica {n}",
+        "current": "Połączenie: {name}",
+        "change": "Zmień",
+        "default": "Domyślne",
+        "makeDefault": "Ustaw jako domyślne",
+        "rename": "Zmień nazwę",
+        "renameTitle": "Zmień nazwę połączenia",
+        "nameLabel": "Nazwa (1–30 znaków, zostaje na tym telefonie)",
+        "nameInvalid": "Użyj od 1 do 30 znaków.",
+        "save": "Zapisz"
+      },
       "missed": {
         "some": "W czasie braku połączenia: {count, plural, one {1 dźwięk} few {# dźwięki} many {# dźwięków} other {# dźwięku}} między {start} a {end}. Najgłośniej: {level}.",
         "none": "Brak dźwięków w czasie braku połączenia.",

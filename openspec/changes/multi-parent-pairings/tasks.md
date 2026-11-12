@@ -26,7 +26,7 @@ Branch from `origin/main` (built on `feat/talk-back`, ditschi/GuardedSleep#55, u
 
 Group 3.1 with the connection parts of 4.1 (names, list, default, Settings → Connections) is independent of the hub and ships first as its own PR.
 
-- [ ] 3.1 `PairingStore`: up to 2 sealed records per role with own Keystore alias, local id and connection name; migration of the single slot; default pairing per role. Verify: JVM tests (cap, migration, forget one, name never in `toString`).
+- [x] 3.1 `PairingStore`: up to 2 sealed records per role with own Keystore alias, local id and connection name; migration of the single slot; default pairing per role. Verify: JVM tests (cap, migration, forget one, name never in `toString`).
 - [ ] 3.2 Baby `LinkController`: one `BabyHub`, one `LinkRunner` per saved pairing, one foreground service, persisted resume flags; parent: chosen pairing for the session, resumed after process death. Verify: `LinkController` JVM tests per scenario.
 - [ ] 3.3 Update `add-offline-lan` (design and listener delta): the Android listener tries up to 2 admission keys, one per saved parent pairing. Verify: `openspec validate --strict`; JVM tests when built.
 - [ ] 3.4 Server: raise `DEFAULT_MAX_LIVE_PER_ADDR` to 6 with a test; note the setting for the homelab deployment. Verify: `cargo test -p guardedsleep-server`.
@@ -34,8 +34,10 @@ Group 3.1 with the connection parts of 4.1 (names, list, default, Settings → C
 ## 4. UI and copy
 
 - [ ] 4.1 Android: connection list and choice, Settings → Connections (rename, default, forget), "Add parent device", touch-wake status with count and names, other-parent line, "acknowledged on the other parent device", "Let the other parent device rejoin" (baby after unlock, parent menu). Stable test tags. Verify: Robolectric tests; Roborazzi baselines re-recorded in the pinned image.
+  - Connection subset done in the `named-connections` PR: connection list and choice on the parent home, Settings → Connections (rename, default, forget), test tags, Robolectric tests and baselines. Remaining: "Add parent device", touch-wake status, other-parent line, shared-acknowledgment line, rejoin. Until `BabyHub` lands the baby runs one link and uses its default parent pairing.
 - [ ] 4.2 Web parent: other-parent line and shared acknowledgment from the core models. Verify: Vitest; contract mirror test.
 - [ ] 4.3 Copy in all locales (`machineTranslated` markers); the shared-acknowledgment and other-parent keys are `critical`. Verify: `just gen`, `just lint-text`.
+  - Connection copy (`native.ui.connections.*`, all 20 locales) is done in the same PR; the shared-acknowledgment and other-parent keys remain.
 
 ## 5. Gate
 

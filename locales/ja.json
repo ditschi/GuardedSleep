@@ -415,6 +415,20 @@
         "titleBabyDefault": "赤ちゃん用端末を削除しますか？",
         "titleParentDefault": "保護者用端末を削除しますか？"
       },
+      "connections": {
+        "title": "接続",
+        "defaultBaby": "赤ちゃん用端末 {n}",
+        "defaultParent": "保護者用端末 {n}",
+        "current": "接続：{name}",
+        "change": "変更",
+        "default": "デフォルト",
+        "makeDefault": "デフォルトにする",
+        "rename": "名前を変更",
+        "renameTitle": "接続の名前を変更",
+        "nameLabel": "名前（1～30文字、この端末内だけに保存されます）",
+        "nameInvalid": "1～30文字で入力してください。",
+        "save": "保存"
+      },
       "missed": {
         "some": "接続が切れていた間：{start}から{end}の間に{count, plural, other {#回の音}}。最も大きい音：{level}。",
         "none": "接続が切れていた間、音はありませんでした。",

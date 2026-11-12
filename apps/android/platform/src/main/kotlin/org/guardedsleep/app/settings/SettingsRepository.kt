@@ -43,6 +43,7 @@ data class RoleLocal(
     val peerName: String? = null,
     val snoozeUntilWallMs: Long? = null,
     val lastTestWallMs: Long? = null,
+    val pairingId: String? = null,
 )
 
 data class PersistedState(
@@ -60,11 +61,17 @@ data class PersistedState(
     /** Snooze end as wall clock; converted to the monotonic clock when a run starts. */
     val snoozeUntilWallMs: Long? = null,
     val lastTestWallMs: Long? = null,
+    /**
+     * The saved pairing this session uses (a local id, not secret): chosen by the user, kept while
+     * monitoring so a restart resumes the same one, cleared when monitoring stops. Null means the
+     * default pairing.
+     */
+    val pairingId: String? = null,
     /** The per-role values of the roles other than [role] (set by the repository only). */
     val parked: Map<Role, RoleLocal> = emptyMap(),
     val silence: SilenceMarker = SilenceMarker(),
 ) {
-    internal fun local() = RoleLocal(peerName, snoozeUntilWallMs, lastTestWallMs)
+    internal fun local() = RoleLocal(peerName, snoozeUntilWallMs, lastTestWallMs, pairingId)
 }
 
 /**
@@ -108,6 +115,7 @@ class SettingsRepository(
             peerName = incoming.peerName,
             snoozeUntilWallMs = incoming.snoozeUntilWallMs,
             lastTestWallMs = incoming.lastTestWallMs,
+            pairingId = incoming.pairingId,
             parked = parked,
         )
     }
@@ -178,6 +186,7 @@ class SettingsRepository(
                 peerName = p[peerKey(r)] ?: PEER_NAME.takeIf { r == role }?.let { p[it] },
                 snoozeUntilWallMs = p[snoozeKey(r)] ?: SNOOZE.takeIf { r == role }?.let { p[it] },
                 lastTestWallMs = p[lastTestKey(r)] ?: LAST_TEST.takeIf { r == role }?.let { p[it] },
+                pairingId = p[pairingKey(r)],
             )
         val active = role?.let(::local) ?: RoleLocal()
         return PersistedState(
@@ -189,6 +198,7 @@ class SettingsRepository(
             peerName = active.peerName,
             snoozeUntilWallMs = active.snoozeUntilWallMs,
             lastTestWallMs = active.lastTestWallMs,
+            pairingId = active.pairingId,
             parked = Role.entries.filter { it != role }.associateWith(::local),
             silence = SilenceMarker(p[SILENCE_ACTIVE] ?: false, p[SILENCE_RULE], p[SILENCE_PREV]),
         )
@@ -234,6 +244,7 @@ class SettingsRepository(
             set(peerKey(r), l.peerName)
             set(snoozeKey(r), l.snoozeUntilWallMs)
             set(lastTestKey(r), l.lastTestWallMs)
+            set(pairingKey(r), l.pairingId)
         }
         set(SILENCE_ACTIVE, s.silence.active)
         set(SILENCE_RULE, s.silence.ruleId)
@@ -274,6 +285,8 @@ class SettingsRepository(
         fun snoozeKey(r: Role) = longPreferencesKey("snooze_until_wall_${r.name.lowercase()}")
 
         fun lastTestKey(r: Role) = longPreferencesKey("last_test_wall_${r.name.lowercase()}")
+
+        fun pairingKey(r: Role) = stringPreferencesKey("pairing_id_${r.name.lowercase()}")
 
         val SILENCE_ACTIVE = booleanPreferencesKey("silence_active")
         val SILENCE_RULE = stringPreferencesKey("silence_rule_id")

@@ -415,6 +415,20 @@
         "titleBabyDefault": "Lupakan perangkat bayi?",
         "titleParentDefault": "Lupakan perangkat orang tua?"
       },
+      "connections": {
+        "title": "Koneksi",
+        "defaultBaby": "Perangkat bayi {n}",
+        "defaultParent": "Perangkat orang tua {n}",
+        "current": "Koneksi: {name}",
+        "change": "Ubah",
+        "default": "Bawaan",
+        "makeDefault": "Jadikan bawaan",
+        "rename": "Ganti nama",
+        "renameTitle": "Ganti nama koneksi",
+        "nameLabel": "Nama (1–30 karakter, tetap di ponsel ini)",
+        "nameInvalid": "Gunakan 1 sampai 30 karakter.",
+        "save": "Simpan"
+      },
       "missed": {
         "some": "Saat terputus: {count, plural, other {# suara}} antara {start} dan {end}. Terkeras: {level}.",
         "none": "Tidak ada suara saat terputus.",

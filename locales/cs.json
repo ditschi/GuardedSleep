@@ -415,6 +415,20 @@
         "titleBabyDefault": "Zapomenout zařízení dítěte?",
         "titleParentDefault": "Zapomenout zařízení rodiče?"
       },
+      "connections": {
+        "title": "Připojení",
+        "defaultBaby": "Zařízení dítěte {n}",
+        "defaultParent": "Zařízení rodiče {n}",
+        "current": "Připojení: {name}",
+        "change": "Změnit",
+        "default": "Výchozí",
+        "makeDefault": "Nastavit jako výchozí",
+        "rename": "Přejmenovat",
+        "renameTitle": "Přejmenovat připojení",
+        "nameLabel": "Název (1–30 znaků, zůstává v tomto telefonu)",
+        "nameInvalid": "Použijte 1 až 30 znaků.",
+        "save": "Uložit"
+      },
       "missed": {
         "some": "Během výpadku: {count, plural, one {1 zvuk} few {# zvuky} many {# zvuku} other {# zvuků}} mezi {start} a {end}. Nejhlasitější: {level}.",
         "none": "Během výpadku žádné zvuky.",

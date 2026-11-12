@@ -415,6 +415,20 @@
         "titleBabyDefault": "아기 기기를 삭제할까요?",
         "titleParentDefault": "부모 기기를 삭제할까요?"
       },
+      "connections": {
+        "title": "연결",
+        "defaultBaby": "아기 기기 {n}",
+        "defaultParent": "부모 기기 {n}",
+        "current": "연결: {name}",
+        "change": "변경",
+        "default": "기본",
+        "makeDefault": "기본으로 설정",
+        "rename": "이름 변경",
+        "renameTitle": "연결 이름 변경",
+        "nameLabel": "이름(1~30자, 이 휴대폰에만 저장됨)",
+        "nameInvalid": "1~30자로 입력하세요.",
+        "save": "저장"
+      },
       "missed": {
         "some": "연결이 끊긴 동안: {start}~{end} 사이에 소리 {count, plural, other {#번}}. 가장 큰 소리: {level}.",
         "none": "연결이 끊긴 동안 소리가 없었어요.",

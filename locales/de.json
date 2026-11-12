@@ -415,6 +415,20 @@
         "titleBabyDefault": "Babygerät vergessen?",
         "titleParentDefault": "Elterngerät vergessen?"
       },
+      "connections": {
+        "title": "Verbindungen",
+        "defaultBaby": "Babygerät {n}",
+        "defaultParent": "Elterngerät {n}",
+        "current": "Verbindung: {name}",
+        "change": "Ändern",
+        "default": "Standard",
+        "makeDefault": "Als Standard festlegen",
+        "rename": "Umbenennen",
+        "renameTitle": "Verbindung umbenennen",
+        "nameLabel": "Name (1–30 Zeichen, bleibt auf diesem Telefon)",
+        "nameInvalid": "Bitte 1 bis 30 Zeichen verwenden.",
+        "save": "Speichern"
+      },
       "missed": {
         "some": "Während der Unterbrechung: {count, plural, one {1 Geräusch} other {# Geräusche}} zwischen {start} und {end}. Am lautesten: {level}.",
         "none": "Keine Geräusche während der Unterbrechung.",

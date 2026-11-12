@@ -415,6 +415,20 @@
         "titleBabyDefault": "Glem babyenheden?",
         "titleParentDefault": "Glem forældreenheden?"
       },
+      "connections": {
+        "title": "Forbindelser",
+        "defaultBaby": "Babyenhed {n}",
+        "defaultParent": "Forældreenhed {n}",
+        "current": "Forbindelse: {name}",
+        "change": "Skift",
+        "default": "Standard",
+        "makeDefault": "Gør til standard",
+        "rename": "Omdøb",
+        "renameTitle": "Omdøb forbindelsen",
+        "nameLabel": "Navn (1–30 tegn, bliver på denne telefon)",
+        "nameInvalid": "Brug 1 til 30 tegn.",
+        "save": "Gem"
+      },
       "missed": {
         "some": "Under afbrydelsen: {count, plural, one {1 lyd} other {# lyde}} mellem {start} og {end}. Højeste: {level}.",
         "none": "Ingen lyde under afbrydelsen.",
