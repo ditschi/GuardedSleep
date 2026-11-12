@@ -79,6 +79,33 @@ const loopbackRoom = (): void => {
   };
 };
 
+/** Runs inside the parent page before the app: remembers its peer connections for the stats read. */
+const trackPeerConnections = (): void => {
+  const w = window as unknown as { __pcs: RTCPeerConnection[] };
+  w.__pcs = [];
+  const Native = window.RTCPeerConnection;
+  window.RTCPeerConnection = function (...args: ConstructorParameters<typeof Native>) {
+    const pc = new Native(...args);
+    w.__pcs.push(pc);
+    return pc;
+  } as unknown as typeof RTCPeerConnection;
+  window.RTCPeerConnection.prototype = Native.prototype;
+};
+
+/** Audio packets the parent page has sent: its only sender is the talk line (monitoring is receive-only). */
+const packetsSent = (page: Page): Promise<number> =>
+  page.evaluate(async () => {
+    const pcs = (window as unknown as { __pcs: RTCPeerConnection[] }).__pcs;
+    let sent = 0;
+    for (const pc of pcs) {
+      const report = await pc.getStats();
+      report.forEach((stat: { type: string; kind?: string; packetsSent?: number }) => {
+        if (stat.type === "outbound-rtp" && stat.kind === "audio") sent += stat.packetsSent ?? 0;
+      });
+    }
+    return sent;
+  });
+
 async function connectedPair(muteOutput: boolean) {
   const dual = await launchDualContexts({
     babyFakeWav: silence,
@@ -86,6 +113,7 @@ async function connectedPair(muteOutput: boolean) {
     permissions: CLIPBOARD_PERMISSIONS,
   });
   await dual.baby.addInitScript(loopbackRoom);
+  await dual.parent.addInitScript(trackPeerConnections);
   await pairWeb(dual);
   if (muteOutput) {
     await dual.babyPage.evaluate(() => {
@@ -129,6 +157,9 @@ test("the web parent talks to the web baby and hears that it was audible", async
   try {
     // Nothing reaches the loudspeaker outside a lease.
     expect(await destinationCount(baby)).toBe(0);
+    // The talk sender sends nothing before a talk (no track on the line).
+    await parent.waitForTimeout(2_000);
+    expect(await packetsSent(parent)).toBe(0);
 
     await holdToTalk(parent, 5_000, async () => {
       await expect(baby.getByTestId("baby_talking")).toBeVisible({ timeout: 10_000 });
@@ -141,6 +172,12 @@ test("the web parent talks to the web baby and hears that it was audible", async
     await expect(baby.getByTestId("baby_last_talk")).toBeVisible();
     // The output is cut again after the talk.
     await expect.poll(() => destinationCount(baby), { timeout: 10_000 }).toBe(0);
+    // ...and nothing again after it: the counter stops with the release.
+    await parent.waitForTimeout(1_500);
+    const afterTalk = await packetsSent(parent);
+    expect(afterTalk).toBeGreaterThan(0);
+    await parent.waitForTimeout(3_000);
+    expect(await packetsSent(parent)).toBe(afterTalk);
     // The baby heard itself: the parent is never told the voice may be inaudible.
     await parent.waitForTimeout(6_000);
     await expect(parent.getByTestId("parent_talk_unconfirmed")).toHaveCount(0);
