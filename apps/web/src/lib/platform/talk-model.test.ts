@@ -113,7 +113,12 @@ describe("BabyTalkModel", () => {
     expect(model.state.parentTalking).toBe(true);
     time.advance(5_000);
     model.onEvent({ type: "talk_active", active: false, duration_ms: 5_000 });
-    expect(model.state.lastTalk).toMatchObject({ name: "Chrome on Android", durationMs: 5_000 });
+    expect(model.state.lastTalk).toMatchObject({
+      name: "Chrome on Android",
+      durationMs: 5_000,
+      // The time is the talk's start, not its end.
+      atWallMs: time.wallMs() - 5_000,
+    });
     model.reset();
     expect(model.state.parentTalking).toBe(false);
     expect(model.state.lastTalk).not.toBeNull();

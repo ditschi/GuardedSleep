@@ -214,7 +214,10 @@ enum class NoisePause {
     OTHER,
 }
 
-/** Baby: the last talk, local only ("Last talk: {name}, {time}, {duration}"). */
+/**
+ * Baby: the last talk, local only ("Last talk: {name}, {time}, {duration}"). [atWallMs] is the wall
+ * time at which the talk started (its end minus [durationMs]), the same on every client.
+ */
 data class LastTalkUi(val name: String, val atWallMs: Long, val durationMs: Long)
 
 data class ParentMonitorState(

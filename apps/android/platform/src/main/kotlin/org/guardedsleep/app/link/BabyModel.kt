@@ -73,7 +73,8 @@ class BabyModel(private val clock: Clock) {
                             lastTalk =
                                 LastTalkUi(
                                     parentName.orEmpty(),
-                                    clock.wallMs(),
+                                    // The talk's start, like the web client.
+                                    clock.wallMs() - event.durationMs.toLong(),
                                     event.durationMs.toLong(),
                                 ),
                         )

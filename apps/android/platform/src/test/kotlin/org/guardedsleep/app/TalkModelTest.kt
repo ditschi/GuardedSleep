@@ -190,10 +190,14 @@ class TalkModelTest {
         baby.onEvent(LinkEvent.ParentConnected("Pixel 8"), clock.elapsed)
         baby.onEvent(LinkEvent.TalkActive(true, 0u), clock.elapsed)
         assertTrue(baby.state.value.parentTalking)
+        clock.advance(12_000)
+        val endWall = clock.wall
         baby.onEvent(LinkEvent.TalkActive(false, 12_000u), clock.elapsed)
         assertFalse(baby.state.value.parentTalking)
         val last = baby.state.value.lastTalk!!
         assertEquals("Pixel 8", last.name)
         assertEquals(12_000, last.durationMs)
+        // The time is the talk's start, not its end.
+        assertEquals(endWall - 12_000, last.atWallMs)
     }
 }

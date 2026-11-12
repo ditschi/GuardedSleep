@@ -265,7 +265,10 @@ export type TalkPermission = "none" | "needed" | "just_granted" | "refused";
 /** Who pauses noise detection: this device's own talk, or the other parent device's. */
 export type NoisePause = "you" | "other";
 
-/** Baby: the last talk, local only ("Last talk: {name}, {time}, {duration}"). */
+/**
+ * Baby: the last talk, local only ("Last talk: {name}, {time}, {duration}"). `atWallMs` is the wall
+ * time at which the talk started (its end minus `durationMs`), the same on every client.
+ */
 export interface LastTalkUi {
   /** The parent's name on the baby unit; empty when it sent none. */
   name: string;
