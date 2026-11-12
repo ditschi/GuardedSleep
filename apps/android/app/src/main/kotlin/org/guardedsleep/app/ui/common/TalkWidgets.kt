@@ -196,7 +196,7 @@ fun TalkSection(
             }
         }
         Box(
-            Modifier.fillMaxWidth(0.7f)
+            Modifier.fillMaxWidth(0.85f)
                 .heightIn(min = 64.dp)
                 .background(container, RoundedCornerShape(32.dp))
                 .then(
