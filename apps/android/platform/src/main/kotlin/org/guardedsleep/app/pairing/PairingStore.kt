@@ -195,9 +195,22 @@ class PairingStore(file: File, cipher: PairingCipher) {
         sealed.write(o)
     }
 
+    /**
+     * Load, change and save under one hold of the store lock, so a concurrent write of the core
+     * thread (parent secret, mailbox set) is never overwritten with stale data. [change] returns
+     * the record to save, or null to leave it alone. False when there is no readable record or
+     * nothing was saved.
+     */
+    @Synchronized
+    fun update(change: (StoredPairing) -> StoredPairing?): Boolean {
+        val stored = load() ?: return false
+        save(change(stored) ?: return false)
+        return true
+    }
+
     @Synchronized
     fun markPairedBefore() {
-        load()?.takeIf { !it.pairedBefore }?.let { save(it.copy(pairedBefore = true)) }
+        update { if (it.pairedBefore) null else it.copy(pairedBefore = true) }
     }
 
     /**
@@ -207,9 +220,7 @@ class PairingStore(file: File, cipher: PairingCipher) {
      */
     @Synchronized
     fun setParentSecret(secretB64url: String, pinUntilS: Long? = null): Boolean {
-        val stored = load() ?: return false
-        save(stored.copy(parentSecretB64url = secretB64url, pinUntilS = pinUntilS))
-        return true
+        return update { it.copy(parentSecretB64url = secretB64url, pinUntilS = pinUntilS) }
     }
 
     /**
@@ -219,15 +230,10 @@ class PairingStore(file: File, cipher: PairingCipher) {
      */
     @Synchronized
     fun setMailboxes(mailboxes: List<StoredMailbox>): Boolean {
-        val stored = load() ?: return false
         val urls = mailboxes.signalingUrls()
-        save(
-            stored.copy(
-                mailboxes = mailboxes,
-                signalingUrls = urls.ifEmpty { stored.signalingUrls },
-            )
-        )
-        return true
+        return update {
+            it.copy(mailboxes = mailboxes, signalingUrls = urls.ifEmpty { it.signalingUrls })
+        }
     }
 
     @Synchronized fun exists(): Boolean = sealed.exists()
@@ -350,18 +356,16 @@ class RolePairings(
     @Synchronized
     fun rename(role: Role, id: String, name: String): Boolean {
         val normalized = ConnectionName.normalize(name) ?: return false
-        val s = store(role, id)
-        val stored = s.load() ?: return false
-        s.save(stored.copy(connectionName = normalized))
-        return true
+        return store(role, id).update { it.copy(connectionName = normalized) }
     }
 
     /** Sets the name only while there is none (the peer's device name as the default). */
     @Synchronized
     fun nameIfUnset(role: Role, id: String, name: String) {
-        val s = store(role, id)
-        val stored = s.load()?.takeIf { it.connectionName == null } ?: return
-        s.save(stored.copy(connectionName = ConnectionName.fromPeerDevice(name) ?: return))
+        val device = ConnectionName.fromPeerDevice(name) ?: return
+        store(role, id).update {
+            if (it.connectionName == null) it.copy(connectionName = device) else null
+        }
     }
 
     /** Deletes exactly one pairing with its file and Keystore key. */

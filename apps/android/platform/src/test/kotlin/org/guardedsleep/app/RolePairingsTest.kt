@@ -156,4 +156,70 @@ class RolePairingsTest {
         val busy = build(FlakyCipher(100) { IllegalStateException("keystore busy") })
         assertEquals("2", busy.defaultId(Role.PARENT))
     }
+
+    /** Holds the first decrypt after [arm] until [release], so a second writer can interleave. */
+    private class GateCipher : org.guardedsleep.app.pairing.PairingCipher {
+        private val inner = FakeCipher()
+        private val armed = java.util.concurrent.atomic.AtomicBoolean(false)
+        val inLoad = java.util.concurrent.CountDownLatch(1)
+        val release = java.util.concurrent.CountDownLatch(1)
+
+        fun arm() = armed.set(true)
+
+        override fun encrypt(plain: ByteArray) = inner.encrypt(plain)
+
+        override fun decrypt(sealed: ByteArray): ByteArray {
+            val plain = inner.decrypt(sealed)
+            if (armed.compareAndSet(true, false)) {
+                inLoad.countDown()
+                check(release.await(10, java.util.concurrent.TimeUnit.SECONDS))
+            }
+            return plain
+        }
+
+        override fun deleteKey() = inner.deleteKey()
+    }
+
+    @Test
+    fun aRenameNeverOverwritesAConcurrentParentSecret() {
+        val cipher = GateCipher()
+        val rp =
+            RolePairings(
+                Role.entries.associateWith { role ->
+                    listOf("a", "b").map {
+                        PairingStore(
+                            File(tmp.root, "race-${role.name.lowercase()}-$it.bin"),
+                            cipher,
+                        )
+                    }
+                }
+            )
+        val store = rp.store(Role.PARENT, "1")
+        store.save(pairing("one"))
+
+        cipher.arm()
+        val renamer = Thread { rp.rename(Role.PARENT, "1", "Home") }
+        renamer.start()
+        assertTrue(cipher.inLoad.await(10, java.util.concurrent.TimeUnit.SECONDS))
+        // The core thread writes the secret while the rename sits between its load and its save.
+        val writer = Thread { store.setParentSecret("secret-b64", 123L) }
+        writer.start()
+        Thread.sleep(200)
+        cipher.release.countDown()
+        renamer.join(10_000)
+        writer.join(10_000)
+
+        val after = store.load()
+        assertEquals("Home", after?.connectionName)
+        assertEquals("secret-b64", after?.parentSecretB64url)
+        assertEquals(123L, after?.pinUntilS)
+    }
+
+    @Test
+    fun theDeviceNameNeverReplacesAChosenName() {
+        pairings.store(Role.BABY, "1").save(pairing("one"))
+        pairings.rename(Role.BABY, "1", "Mine")
+        pairings.nameIfUnset(Role.BABY, "1", "Pixel")
+        assertEquals("Mine", pairings.list(Role.BABY)[0].name)
+    }
 }
