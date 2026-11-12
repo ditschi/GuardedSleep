@@ -1,6 +1,6 @@
 # Tasks
 
-Branch from `origin/main`. Commit after each task; `just test-affected` after each task.
+Branch from `origin/main` (built on `feat/talk-back`, ditschi/GuardedSleep#55, until it merges; then rebase onto `origin/main`). Commit after each task; `just test-affected` after each task.
 
 ## 0. Prerequisites
 
@@ -13,13 +13,14 @@ Branch from `origin/main`. Commit after each task; `just test-affected` after ea
 - [ ] 1.1 Protocol v3 additions: `noise_ack`, `reopen_join`, `noise_acked_elsewhere`, status field `other_parent` (optional when parsing). Verify: protocol unit tests, conformance vectors blessed and reviewed, `just api-check` after `just api-snapshot`.
 - [ ] 1.2 `Link` release operation (no stop notice) and released-link probe openings. Verify: unit test that release emits no stop notice and the parent escalates.
 - [ ] 1.3 `BabyHub`: link-tagged inputs and actions, one noise gate and alert log with per-session event ids, join window, grace, last-parent rule with new window, rejoin (rate-limited), resume flags, `set_mic` per link incl. probe exclusivity, noise-ack forwarding for the current event only, `other_parent` status. Verify: unit tests per spec scenario; configuration-invariant tests.
+- [ ] 1.3a Talk-back integration (`add-talk-back` design §6, this change lands second): move the baby-side `TalkCore` (`src/link/talk_flow.rs`: talker, cooldown, 90 s / 10 min budget, noise pause) into `BabyHub`, one per hub with one noise pause for the shared gate; the talk-back switch per saved parent pairing; every other trusted link's status gets `talker: other` and `noise_paused`; talk playback actions carry `link` next to the attempt handle; the baby enables exactly the talking link's receiver. Verify: unit tests (second parent denied while one talks, budget and cooldown hub-wide, switch per pairing), the existing talk tests still pass.
 - [ ] 1.4 Parent `Link`: send `noise_ack` only on stop sound/vibration; on `noise_acked_elsewhere` stop ringing for that event without counting it as acknowledgment; `other_parent` in the parent model, hidden while the own link is down. Verify: unit tests.
 - [ ] 1.5 Façades: `BabyHub` through `ffi` and `wasm`. Verify: `just api-check`, WASM conformance.
 - [ ] 1.6 Sim scenarios: both join, one never joins, late joiner via probe opening, one drops 3 min / 6 min, release without stop notice, last parent drops, remote rejoin, shared noise ack incl. stale ack and continuing noise, snooze not shared, test during noise, resume with two parents, unverified second attempt gets no audio; log canary with two PSKs. Verify: `scripts/cargo.sh test -p guardedsleep-sim`, traces reviewed.
 
 ## 2. Android media
 
-- [ ] 2.1 One `AudioDeviceModule` and `AudioSource`, one `AudioTrack` per `PeerConnection`, `set_mic` per link (other links closed while a probe runs). Coordinate with `quiet-link-no-rtp` 2.2 (per-sender detach). Verify: JVM tests with fake senders; gate.
+- [ ] 2.1 One `AudioDeviceModule` and `AudioSource`, one `AudioTrack` per `PeerConnection`, `set_mic` per link (other links closed while a probe runs). Coordinate with `quiet-link-no-rtp` 2.2 (per-sender detach). Talk-back: one talk receiver per parent link, only the talking link's receiver enabled; the parent's talk line stays `encodings.active=false` outside a talk (`TalkSendControl`, gate AC-11). Verify: JVM tests with fake senders; gate.
 
 ## 3. Android platform
 

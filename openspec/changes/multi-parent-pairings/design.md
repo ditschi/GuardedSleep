@@ -35,6 +35,8 @@ Rules (all timers on the core's monotonic clock input; "trusted" = pin-proven at
 | Noise ack   | Only "stop sound" / "stop vibration" send `noise_ack { event }`; forwarded only for the current event as `noise_acked_elsewhere { event }`; it stops the other parent's ringing but is not its acknowledgment (its noise escalation timer keeps running). Never for connection alarms, tests, snooze or listen. |
 | Status      | Each baby status carries `other_parent: none                                                                                                                                                                                                                                                                    | connected | absent` for that recipient; the parent hides it while its own link is down. |
 
+Talk-back (`add-talk-back` design §6): the hub owns the single talk arbitration (`TalkCore`: one talker, cooldown, budget, noise pause) next to the single noise gate; the talk-back switch is per saved parent pairing; other trusted links see `talker: other`; talk playback actions carry `link`.
+
 Constants: `JOIN_WINDOW = 120 s`, `PARENT_GRACE = 300 s`, `RELEASED_PROBE = 60 s every 600 s`, `REJOIN_MIN_INTERVAL = 10 s`, `MAX_PARENT_LINKS = 2`, checked by the configuration-invariant tests.
 
 ## 3. Protocol (additive, v3)
