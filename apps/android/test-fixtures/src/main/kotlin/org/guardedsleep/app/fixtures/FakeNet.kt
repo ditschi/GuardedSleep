@@ -1,6 +1,5 @@
 package org.guardedsleep.app.fixtures
 
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
@@ -26,7 +25,19 @@ import uniffi.guardedsleep_core.IceCandidate
  * In-memory signaling relay (the v3 server protocol) and fake WebRTC, so two real cores talk to
  * each other.
  */
-class FakeNet(private val scheduler: ManualScheduler) {
+class FakeNet(private val scheduler: ManualScheduler, seed: Long = DEFAULT_SEED) {
+    // Ids, tokens and fingerprints are counted or seeded, so a failing run replays the same way.
+    private val ids = AtomicInteger()
+    private val random = java.util.Random(seed)
+
+    fun nextClientId(): String = "c%07d".format(ids.incrementAndGet())
+
+    fun nextToken(): String = "t${ids.incrementAndGet()}"
+
+    @Synchronized
+    fun nextFingerprint(): String =
+        (0 until 32).joinToString(":") { "%02X".format(random.nextInt(256)) }
+
     val lock = Any()
     val members = LinkedHashMap<String, Pair<String, FakeTransport>>() // clientId -> role
     val rooms = HashMap<String, MutableList<String>>()
@@ -47,7 +58,7 @@ class FakeNet(private val scheduler: ManualScheduler) {
 
     fun join(t: FakeTransport, role: String, room: String) =
         synchronized(lock) {
-            val id = UUID.randomUUID().toString().take(8)
+            val id = nextClientId()
             members[id] = role to t
             t.clientId = id
             t.room = room
@@ -177,13 +188,13 @@ class FakeTransport(val net: FakeNet, val listener: SignalingListener) : Signali
 class FakeAttempt(val net: FakeNet, val listener: AttemptListener, val baby: Boolean) :
     AttemptPort {
     var token: String? = null
-    val fpValue = (0 until 32).joinToString(":") { "%02X".format(java.util.Random().nextInt(256)) }
+    val fpValue = net.nextFingerprint()
     val fingerprint = "a=fingerprint:sha-256 $fpValue"
     var peer: FakeAttempt? = null
     @Volatile var closed = false
 
     override fun createOffer() {
-        token = UUID.randomUUID().toString()
+        token = net.nextToken()
         net.registerOffer(token!!, this)
         val sdp =
             "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\n$fingerprint\r\na=gs-token:$token\r\n"
@@ -323,3 +334,5 @@ fun rolePairings(
         legacy,
         defaults,
     )
+
+private const val DEFAULT_SEED = 0x6e65_7400L
