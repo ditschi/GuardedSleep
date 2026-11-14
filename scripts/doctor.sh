@@ -88,6 +88,13 @@ else
   note adb "not found; just install-android prints SKIPPED (install Android platform-tools or add \$ANDROID_HOME/platform-tools to PATH)"
 fi
 
+# Maestro drives the UI journeys of the emulator gate (just gate); mise installs the pinned version.
+if have maestro; then
+  ok maestro "$(timeout 60 maestro --version 2>/dev/null | tail -1) (just gate UI journeys)"
+else
+  missing maestro "not on PATH; the gate skips its UI journeys (a failure under GS_STRICT=1)" "mise install   (or: just setup)"
+fi
+
 hooks="$(scripts/lib/hooks-check.sh 2>&1 || true)"
 if [ -z "$hooks" ]; then
   ok hooks "lefthook pre-commit hook active"
