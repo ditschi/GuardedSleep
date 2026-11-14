@@ -57,7 +57,7 @@ class DeviceCheckTest {
 
     @Test
     fun aQuietRoomOnALowNoiseMicIsNotSilent() {
-        // One LSB of 16-bit PCM (about -90 dBFS): far below any noise floor, but not digital silence.
+        // One LSB of 16-bit PCM (about -90 dBFS) is still not digital silence.
         assertEquals(DeviceCheck.OK, eval(good.copy(micRms = 1.0 / 32768)).check)
         assertEquals(DeviceCheck.OK, eval(good.copy(micRms = Double.MIN_VALUE)).check)
     }
