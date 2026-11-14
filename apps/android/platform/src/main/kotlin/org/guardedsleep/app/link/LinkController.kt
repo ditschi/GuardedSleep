@@ -38,6 +38,8 @@ import org.guardedsleep.app.readiness.ReadinessChecker
 import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.signaling.SignalingFactory
 import org.guardedsleep.app.silence.SilenceGateway
+import org.guardedsleep.app.ui.model.AlarmTonePlayback
+import org.guardedsleep.app.ui.model.AlarmTones
 import org.guardedsleep.app.ui.model.AlertOutput
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
@@ -333,10 +335,12 @@ class LinkController(
                     turnUsername = before.turnUsername,
                     turnPasswordSaved = before.turnPasswordSaved,
                 )
+                .let { it.copy(connectionAlarmTone = AlarmTones.normalize(it.connectionAlarmTone)) }
         if (after == before) return
         settingsRepo.update { it.copy(settings = after) }
         _settings.value = after
         babyModel.setSettings(after.threshold, after.holdSeconds)
+        if (after.connectionAlarmTone != before.connectionAlarmTone) alerts.alarmToneChanged()
         if (after.alertStyle != before.alertStyle) parentModel.onAlertStyleChanged()
         if (
             after.alertStyle != before.alertStyle ||
@@ -1112,6 +1116,15 @@ class LinkController(
     }
 
     // ---- baby intents ------------------------------------------------------------------------
+
+    override val alarmTonePlayback: StateFlow<AlarmTonePlayback>
+        get() = alerts.alarmTonePlayback
+
+    override fun previewAlarmTone(id: String) = alerts.previewAlarmTone(id)
+
+    override fun testAlarmTone(id: String) = alerts.testAlarmTone(id)
+
+    override fun stopAlarmTone() = alerts.stopAlarmTone()
 
     override fun playTalkChimeSample() = chimePreview.play(_settings.value.talkVolume)
 

@@ -17,6 +17,7 @@ import kotlinx.coroutines.runBlocking
 import org.guardedsleep.app.config.AppDefaults
 import org.guardedsleep.app.pairing.TurnCredentials
 import org.guardedsleep.app.pairing.TurnStore
+import org.guardedsleep.app.ui.model.AlarmTones
 import org.guardedsleep.app.ui.model.AlertOutput
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.DiscreetEscalation
@@ -171,6 +172,11 @@ class SettingsRepository(
                 talkVolume = enumOrNull<TalkVolume>(p[TALK_VOLUME]) ?: defaults.talkVolume,
                 talkChime = p[TALK_CHIME] ?: defaults.talkChime,
                 talkCoachSeen = p[TALK_COACH] ?: defaults.talkCoachSeen,
+                // Unknown or missing is the default tone. No core call here: the repository is
+                // built
+                // at app start, where the JVM tests of the app module have no native library; the
+                // sound is resolved through the core when it plays.
+                connectionAlarmTone = AlarmTones.normalize(p[ALARM_TONE]),
             )
         val role = enumOrNull<Role>(p[ROLE])
         // Update from a single-role install: the stored role becomes the start mode, and its
@@ -229,6 +235,7 @@ class SettingsRepository(
         set(TALK_VOLUME, c.talkVolume.name)
         set(TALK_CHIME, c.talkChime)
         set(TALK_COACH, c.talkCoachSeen)
+        set(ALARM_TONE, AlarmTones.normalize(c.connectionAlarmTone))
         set(ROLE, s.role?.name)
         set(ONBOARDING, s.onboardingDone)
         set(MONITORING, s.monitoringActive)
@@ -270,6 +277,7 @@ class SettingsRepository(
         val TALK_VOLUME = stringPreferencesKey("talk_volume")
         val TALK_CHIME = booleanPreferencesKey("talk_chime")
         val TALK_COACH = booleanPreferencesKey("talk_coach_seen")
+        val ALARM_TONE = stringPreferencesKey("connection_alarm_tone")
         val ROLE = stringPreferencesKey("role")
         val DEFAULT_ROLE = stringPreferencesKey("default_role")
         // Stored for "Ask every time", so an absent key still means "update from a single role".
