@@ -47,10 +47,10 @@ fun formatDuration(ms: Long): String {
 @Composable
 fun formatDurationWords(ms: Long): String {
     val total = (ms.coerceAtLeast(0) / 1000).toInt()
-    if (total < 60) return stringResource(R.string.native_ui_common_duration_sec, total)
-    val min = stringResource(R.string.native_ui_common_duration_min, total / 60)
+    if (total < 60) return stringResource(R.string.native_ui_common_duration_sec, total.toString())
+    val min = stringResource(R.string.native_ui_common_duration_min, (total / 60).toString())
     return if (total % 60 == 0) min
-    else min + " " + stringResource(R.string.native_ui_common_duration_sec, total % 60)
+    else min + " " + stringResource(R.string.native_ui_common_duration_sec, (total % 60).toString())
 }
 
 /** "1 minute 12 seconds" for the screen reader; the visible counter stays digits. */

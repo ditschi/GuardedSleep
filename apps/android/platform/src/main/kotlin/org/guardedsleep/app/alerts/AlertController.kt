@@ -517,12 +517,12 @@ class AlertController(
         val min = total / 60
         val sec = total % 60
         return when {
-            min == 0 -> context.getString(R.string.native_ui_common_duration_sec, sec)
-            sec == 0 -> context.getString(R.string.native_ui_common_duration_min, min)
+            min == 0 -> context.getString(R.string.native_ui_common_duration_sec, sec.toString())
+            sec == 0 -> context.getString(R.string.native_ui_common_duration_min, min.toString())
             else ->
-                context.getString(R.string.native_ui_common_duration_min, min) +
+                context.getString(R.string.native_ui_common_duration_min, min.toString()) +
                     " " +
-                    context.getString(R.string.native_ui_common_duration_sec, sec)
+                    context.getString(R.string.native_ui_common_duration_sec, sec.toString())
         }
     }
 
