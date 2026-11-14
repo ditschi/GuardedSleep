@@ -3,12 +3,15 @@ package org.guardedsleep.app.ui.common
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
 import org.guardedsleep.app.contract.R
+import org.guardedsleep.app.ui.model.durationStrings
+import org.guardedsleep.app.ui.model.durationWords
 
 /** `{time}`: short clock time in the user's locale (formatting stays native, ADR-015). */
 @Composable
@@ -46,11 +49,9 @@ fun formatDuration(ms: Long): String {
  */
 @Composable
 fun formatDurationWords(ms: Long): String {
-    val total = (ms.coerceAtLeast(0) / 1000).toInt()
-    if (total < 60) return stringResource(R.string.native_ui_common_duration_sec, total.toString())
-    val min = stringResource(R.string.native_ui_common_duration_min, (total / 60).toString())
-    return if (total % 60 == 0) min
-    else min + " " + stringResource(R.string.native_ui_common_duration_sec, (total % 60).toString())
+    // Reading the configuration recomposes the text when the locale changes.
+    LocalConfiguration.current
+    return durationWords(ms, LocalContext.current.resources.durationStrings())
 }
 
 /** "1 minute 12 seconds" for the screen reader; the visible counter stays digits. */
