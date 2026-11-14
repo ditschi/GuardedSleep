@@ -29,4 +29,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "guardedsleep-native"
 
-include(":app", ":ui-contract", ":platform", ":core-bindings")
+include(":app", ":ui-contract", ":platform", ":core-bindings", ":test-fixtures")

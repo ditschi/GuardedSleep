@@ -493,6 +493,7 @@
         },
         "gain": "Ekstra høje alarmer: {percent}%",
         "version": "Version {version} ({commit}, {date})",
+        "fontCredit": "Skrifttype: Plus Jakarta Sans, SIL Open Font License 1.1",
         "lastTest": "Sidste test: {time}",
         "neverTested": "Ikke testet endnu",
         "theme": {

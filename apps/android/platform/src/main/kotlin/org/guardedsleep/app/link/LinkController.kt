@@ -1,6 +1,7 @@
 package org.guardedsleep.app.link
 
 import java.security.SecureRandom
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -99,6 +100,15 @@ class LinkController(
     private val chimePreview: TalkChimePreview = TalkChimePreview {},
     /** Baby: the device check of the setup screen; null (previews, tests) leaves it unknown. */
     private val deviceChecker: DeviceChecker? = null,
+    // Executor seams: production keeps one daemon thread each; the journey tests pass the virtual
+    // scheduler so no work runs outside the test thread.
+    private val deviceCheckIo: ExecutorService = Executors.newSingleThreadExecutor { r ->
+        Thread(r, "gs-device-check").apply { isDaemon = true }
+    },
+    /** The sealed TURN entry is written here so the caller never blocks. */
+    private val turnIo: ExecutorService = Executors.newSingleThreadExecutor { r ->
+        Thread(r, "gs-turn-io").apply { isDaemon = true }
+    },
 ) : AppController {
     private val _app = MutableStateFlow(AppState())
 
@@ -111,9 +121,6 @@ class LinkController(
     private var deviceCheckInFlight = false
     private var deviceCheckAtMs = 0L
     private val appLock = Any()
-    private val deviceCheckIo = Executors.newSingleThreadExecutor { r ->
-        Thread(r, "gs-device-check").apply { isDaemon = true }
-    }
 
     /**
      * The pairing this session uses: the user's choice while it still exists, else the default
@@ -135,11 +142,8 @@ class LinkController(
     private val pairingStoreOrNull: PairingStore?
         get() = settingsRepo.current.role?.let { pairings.store(it, activeId(it)) }
 
-    // The sealed TURN entry; the disk copy is written on [turnIo] so the caller never blocks.
+    // The sealed TURN entry; the disk copy is written on [turnIo].
     @Volatile private var turn: TurnCredentials? = turnStore.load()
-    private val turnIo = Executors.newSingleThreadExecutor { r ->
-        Thread(r, "gs-turn-io").apply { isDaemon = true }
-    }
     private val _settings = MutableStateFlow(withTurn(settingsRepo.current.settings, turn))
     private val _pairing = MutableStateFlow<PairingState?>(null)
 
@@ -695,6 +699,9 @@ class LinkController(
         if (settingsRepo.current.role != Role.BABY) return
         // The baby unit replaces its active pairing; "Add parent device" waits for the baby hub.
         val slot = newPairingId(Role.BABY) ?: return
+        // "Pair again" from the monitor screen: the monitoring flag must go first, or the monitor
+        // screen stays up over the invite (found by the UI journeys).
+        if (settingsRepo.current.monitoringActive) stopMonitoring()
         cancelPairing()
         stopRun(userStop = true)
         // The baby's own choice for a NEW invite: the settings list (Advanced or the build
@@ -835,6 +842,9 @@ class LinkController(
         autoStarted = false
         settingsRepo.update { it.copy(monitoringActive = false, pairingId = null) }
         stopRun(userStop = true)
+        // PAIRED outlives the pairing it reports: left in place, the next screen after "Stop" would
+        // be the pairing screen again instead of the home (found by the UI journeys).
+        if (_pairing.value?.phase == PairingPhase.PAIRED) _pairing.value = null
         fgs = Fgs.UNKNOWN
         refreshApp()
         publishFgsAlert()
@@ -1088,6 +1098,14 @@ class LinkController(
         )
 
     override fun dismissTalkPermission() = parentModel.setTalkPermission(TalkPermission.NONE)
+
+    // Deliberate no-op: what the parent's answer to "Did you hear and feel it?" does is not
+    // specified yet. See the docs/backlog.md IDEA entries added by ui-journey-tests task 4.1.
+    override fun reportTestResult(heardAndFelt: Boolean) = Unit
+
+    // Deliberate no-op: the first-run coach is not specified yet. See the docs/backlog.md IDEA
+    // entries added by ui-journey-tests task 4.1.
+    override fun dismissCoach() = Unit
 
     override fun dismissTalkCoach() {
         updateSettings { it.copy(talkCoachSeen = true) }

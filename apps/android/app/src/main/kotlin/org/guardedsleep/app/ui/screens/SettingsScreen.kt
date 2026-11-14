@@ -450,6 +450,10 @@ fun SettingsScreen(
                     ),
                     tag = "settings_version",
                 )
+                Body(
+                    stringResource(R.string.native_ui_settings_font_credit),
+                    tag = "settings_font_credit",
+                )
             }
 
             Section(R.string.native_ui_settings_group_advanced, "settings_group_advanced") {

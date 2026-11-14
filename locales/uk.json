@@ -493,6 +493,7 @@
         },
         "gain": "Додаткова гучність сповіщень: {percent}%",
         "version": "Версія {version} ({commit}, {date})",
+        "fontCredit": "Шрифт: Plus Jakarta Sans, ліцензія SIL Open Font License 1.1",
         "lastTest": "Останній тест: {time}",
         "neverTested": "Ще не перевірялося",
         "theme": {

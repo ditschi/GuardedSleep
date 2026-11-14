@@ -493,6 +493,7 @@
         },
         "gain": "تنبيهات أعلى صوتًا: {percent}%",
         "version": "الإصدار {version} ({commit}، {date})",
+        "fontCredit": "الخط: Plus Jakarta Sans، رخصة SIL Open Font License 1.1",
         "lastTest": "آخر اختبار: {time}",
         "neverTested": "لم يُختبر بعد",
         "theme": {

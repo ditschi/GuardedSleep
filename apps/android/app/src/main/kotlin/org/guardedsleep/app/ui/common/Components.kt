@@ -31,6 +31,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -48,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.guardedsleep.app.ui.theme.LocalAppColors
+import org.guardedsleep.app.ui.theme.LocalSafetyColors
 import org.guardedsleep.app.ui.theme.StateColors
 
 /** Inside [AdaptiveButtonRow] labels stay on one line (no mid-word wrapping). */
@@ -284,15 +286,23 @@ enum class Tone {
     SNOOZE,
 }
 
+@Composable
+@ReadOnlyComposable
 fun Tone.container(): Color =
     when (this) {
         Tone.OK -> StateColors.Green
-        Tone.INFO -> StateColors.Yellow
+        Tone.INFO -> LocalSafetyColors.current.info
         Tone.WARN -> StateColors.Orange
         Tone.BAD -> StateColors.Red
         Tone.NEUTRAL -> StateColors.Grey
         Tone.SNOOZE -> StateColors.Amber
     }
+
+/** Text and glyph colour that reads on [container]; the light info blue needs dark content. */
+@Composable
+@ReadOnlyComposable
+fun Tone.onContainer(): Color =
+    if (this == Tone.INFO) LocalSafetyColors.current.onInfo else StateColors.OnState
 
 /** Full-width ambient bar: colour + glyph + text, a live region for screen readers. */
 @Composable
@@ -319,20 +329,20 @@ fun AmbientBar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        GlyphIcon(glyph, StateColors.OnState, size = 28.dp)
-        if (extra != null) GlyphIcon(extra, StateColors.OnState, size = 22.dp)
+        GlyphIcon(glyph, tone.onContainer(), size = 28.dp)
+        if (extra != null) GlyphIcon(extra, tone.onContainer(), size = 22.dp)
         Column(Modifier.weight(1f)) {
             Text(
                 text,
                 style = MaterialTheme.typography.titleLarge,
-                color = StateColors.OnState,
+                color = tone.onContainer(),
                 fontWeight = FontWeight.SemiBold,
             )
             if (subText != null)
                 Text(
                     subText,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = StateColors.OnState,
+                    color = tone.onContainer(),
                 )
         }
     }
@@ -354,7 +364,7 @@ fun StatusChip(
     val (bg, fg) =
         when (tone) {
             Tone.NEUTRAL -> colors.neutralChip to colors.onNeutralChip
-            else -> tone.container() to StateColors.OnState
+            else -> tone.container() to tone.onContainer()
         }
     val base =
         modifier

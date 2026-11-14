@@ -1,9 +1,6 @@
 package org.guardedsleep.app
 
-import org.guardedsleep.app.alerts.AlertSink
-import org.guardedsleep.app.alerts.LinkSnapshot
-import org.guardedsleep.app.alerts.NoiseKind
-import org.guardedsleep.app.alerts.Notice
+import org.guardedsleep.app.fixtures.FakeCipher
 import org.guardedsleep.app.link.Clock
 import org.guardedsleep.app.link.ParentEffects
 import org.guardedsleep.app.pairing.PairingCipher
@@ -18,20 +15,6 @@ class FakeClock(var elapsed: Long = 1_000, var wall: Long = 1_700_000_000_000) :
     fun advance(ms: Long) {
         elapsed += ms
         wall += ms
-    }
-}
-
-/** Reversible, not secure: only for tests of the file handling. */
-class FakeCipher : PairingCipher {
-    var keyDeleted = false
-
-    override fun encrypt(plain: ByteArray) =
-        plain.map { (it.toInt() xor 0x5a).toByte() }.toByteArray()
-
-    override fun decrypt(sealed: ByteArray) = encrypt(sealed)
-
-    override fun deleteKey() {
-        keyDeleted = true
     }
 }
 
@@ -50,51 +33,6 @@ class FlakyCipher(var failures: Int, private val error: () -> Exception) : Pairi
     }
 
     override fun deleteKey() = inner.deleteKey()
-}
-
-class RecordingSink : AlertSink {
-    val snapshots = mutableListOf<LinkSnapshot>()
-    val lost = mutableListOf<Long>()
-    val noise = mutableListOf<Triple<NoiseKind, Boolean, Boolean>>()
-    val noiseDiscreet = mutableListOf<Boolean>()
-    val notices = mutableListOf<Notice>()
-    val fgsLost = mutableListOf<Boolean>()
-    var ended = 0
-    var soundStopped = 0
-    var cleared = 0
-
-    override fun linkState(snapshot: LinkSnapshot) {
-        snapshots += snapshot
-    }
-
-    override fun linkLost(downMs: Long) {
-        lost += downMs
-    }
-
-    override fun noiseAlert(kind: NoiseKind, probe: Boolean, snoozed: Boolean, discreet: Boolean) {
-        noise += Triple(kind, probe, snoozed)
-        noiseDiscreet += discreet
-    }
-
-    override fun noiseEnded() {
-        ended++
-    }
-
-    override fun stopNoiseSound() {
-        soundStopped++
-    }
-
-    override fun notice(notice: Notice) {
-        notices += notice
-    }
-
-    override fun backgroundProtection(lost: Boolean) {
-        fgsLost += lost
-    }
-
-    override fun clear() {
-        cleared++
-    }
 }
 
 class RecordingEffects : ParentEffects {

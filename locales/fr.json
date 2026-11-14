@@ -493,6 +493,7 @@
         },
         "gain": "Alarmes extra fortes : {percent} %",
         "version": "Version {version} ({commit}, {date})",
+        "fontCredit": "Police : Plus Jakarta Sans, licence SIL Open Font License 1.1",
         "lastTest": "Dernier test : {time}",
         "neverTested": "Pas encore testé",
         "theme": {

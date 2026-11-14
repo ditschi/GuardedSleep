@@ -1,6 +1,7 @@
 package org.guardedsleep.app
 
 import java.io.File
+import org.guardedsleep.app.fixtures.FakeCipher
 import org.guardedsleep.app.pairing.ConnectionName
 import org.guardedsleep.app.pairing.PairingStore
 import org.guardedsleep.app.pairing.RolePairings

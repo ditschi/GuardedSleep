@@ -493,6 +493,7 @@
         },
         "gain": "알림 음량 추가 확대: {percent}%",
         "version": "버전 {version} ({commit}, {date})",
+        "fontCredit": "서체: Plus Jakarta Sans, SIL Open Font License 1.1",
         "lastTest": "마지막 테스트: {time}",
         "neverTested": "아직 테스트하지 않았어요",
         "theme": {

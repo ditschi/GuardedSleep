@@ -1,5 +1,7 @@
 // UI (Compose screens), navigation and the manual dependency wiring. Depends on `ui-contract` and
 // `platform` only: UniFFI types are not on this module's compile classpath.
+import org.guardedsleep.buildlogic.coreHostLibDir
+
 plugins {
     id("guardedsleep.android-application")
     id("guardedsleep.compose")
@@ -59,7 +61,15 @@ android {
     // https://developer.android.com/build/releases/past-releases/agp-4-2-0-release-notes#compress-native-libs-dsl
     packaging { jniLibs { useLegacyPackaging = true } }
 
-    testOptions { unitTests.isIncludeAndroidResources = true }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            // The journey tests run two real cores (through :test-fixtures); JNA loads the host
+            // build (scripts/core-build.sh host). AGP drops .so files from unit-test resources,
+            // so JNA gets the directory directly, as in :platform.
+            it.systemProperty("jna.library.path", coreHostLibDir())
+        }
+    }
 }
 
 // APK files are named guardedsleep-<variant>.apk instead of app-<variant>.apk. AGP takes the file
@@ -85,6 +95,10 @@ dependencies {
     implementation(libs.datastore.preferences)
     implementation(libs.coroutines.android)
 
+    testImplementation(project(":test-fixtures"))
+    // The desktop JNA jar for the real core in tests (core-bindings ships the Android aar); a
+    // runtime dependency only, so no UniFFI or JNA type is on the test compile classpath.
+    testRuntimeOnly(libs.jna)
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
     testImplementation(libs.roborazzi)

@@ -493,6 +493,7 @@
         },
         "gain": "Alarme extra laut: {percent} %",
         "version": "Version {version} ({commit}, {date})",
+        "fontCredit": "Schriftart: Plus Jakarta Sans, SIL Open Font License 1.1",
         "lastTest": "Letzter Test: {time}",
         "neverTested": "Noch nicht getestet",
         "theme": {

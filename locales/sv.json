@@ -493,6 +493,7 @@
         },
         "gain": "Extra höga larm: {percent}%",
         "version": "Version {version} ({commit}, {date})",
+        "fontCredit": "Typsnitt: Plus Jakarta Sans, SIL Open Font License 1.1",
         "lastTest": "Senaste test: {time}",
         "neverTested": "Inte testat än",
         "theme": {

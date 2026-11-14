@@ -4,6 +4,7 @@ import org.guardedsleep.app.alerts.EscalationPolicy
 import org.guardedsleep.app.alerts.FeedbackPlans
 import org.guardedsleep.app.alerts.NoiseKind
 import org.guardedsleep.app.config.AlertPolicy
+import org.guardedsleep.app.fixtures.RecordingSink
 import org.guardedsleep.app.link.ParentModel
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.DiscreetEscalation

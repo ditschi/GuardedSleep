@@ -145,7 +145,7 @@ private fun edgeColor(link: LinkUi): Color =
             when {
                 link.level >= 2 -> Color(0xFF4A0A0A)
                 link.level == 1 -> StateColors.KioskOrange
-                else -> StateColors.KioskYellow
+                else -> StateColors.KioskInfo
             }
     }
 

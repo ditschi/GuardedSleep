@@ -106,7 +106,10 @@
     background: var(--gs-state-green);
   }
   .gs-status-bar[data-tone="warn"] {
-    background: var(--gs-state-yellow);
+    /* Level 0 is info blue (redesign-calm-ui design section 10); the tone keeps its old name until
+       the status bar is rebuilt in group 2. */
+    background: var(--safety-info);
+    color: var(--safety-on-info);
   }
   .gs-status-bar[data-tone="orange"] {
     background: var(--gs-state-orange);

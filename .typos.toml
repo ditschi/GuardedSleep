@@ -62,6 +62,8 @@ extend-exclude = [
   "mise.lock",
   "LICENSES/**",
   "LICENSE",
+  # Design mockups carry the German copy table next to the English one.
+  "openspec/changes/**/mockup/**",
   "locales/de.json",
   "locales/fr.json",
   "locales/es.json",
