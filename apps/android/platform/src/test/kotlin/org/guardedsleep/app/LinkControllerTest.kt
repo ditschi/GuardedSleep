@@ -1024,6 +1024,34 @@ class LinkControllerTest {
     }
 
     @Test
+    fun stoppingAfterPairingLeavesNoPairedStateAndNoMonitoring() {
+        val (baby, parent) = pair()
+        assertEquals(PairingPhase.PAIRED, baby.controller.pairing.value?.phase)
+        assertEquals(PairingPhase.PAIRED, parent.controller.pairing.value?.phase)
+        baby.controller.stopMonitoring()
+        parent.controller.stopMonitoring()
+        scheduler.runUntilIdle()
+        // PAIRED must not outlive the pairing: the UI would show the pairing screen after "Stop".
+        assertNull(baby.controller.pairing.value)
+        assertNull(parent.controller.pairing.value)
+        assertFalse(baby.controller.app.value.monitoring)
+        assertFalse(parent.controller.app.value.monitoring)
+    }
+
+    @Test
+    fun pairAgainOnAMonitoringBabyStopsMonitoringAndShowsAnInviteForTheSameSlot() {
+        val (baby, _) = pair()
+        val slot = baby.controller.app.value.connections.single { it.selected }.id
+        assertTrue(baby.controller.app.value.monitoring)
+        baby.controller.startPairing()
+        scheduler.runUntilIdle()
+        // The monitoring flag must be gone, or the monitor screen stays up over the invite.
+        assertFalse(baby.controller.app.value.monitoring)
+        assertEquals(PairingPhase.SHOWING_CODE, baby.controller.pairing.value?.phase)
+        assertEquals(slot, baby.controller.app.value.connections.single { it.selected }.id)
+    }
+
+    @Test
     fun happyPathPairsAndMonitors() {
         val (baby, parent) = pair()
         assertTrue(baby.store.load()!!.pairedBefore)
