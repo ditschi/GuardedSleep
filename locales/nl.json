@@ -235,7 +235,6 @@
           "notResponding": "Ouderapparaat reageert niet, we blijven proberen",
           "parentStopped": "Ouderapparaat is gestopt met bewaken"
         },
-        "forDuration": "al {duration}",
         "monitoring": "Bewaken",
         "parentListening": "Ouder luistert mee",
         "battery": "Dit apparaat: batterij {percent}%",
@@ -633,8 +632,6 @@
         "permSettings": "Instellingen openen",
         "baby": {
           "talking": "Ouder praat",
-          "lastTalk": "Laatste gesprek: {name}, {time}, {duration}",
-          "lastTalkAnon": "Laatste gesprek: {time}, {duration}",
           "title": "Praten",
           "switch": "Ouders kunnen via dit apparaat praten",
           "switchHint": "Als dit uit staat, wordt er nooit iets via dit apparaat afgespeeld.",

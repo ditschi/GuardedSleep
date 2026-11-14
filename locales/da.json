@@ -235,7 +235,6 @@
           "notResponding": "Forældreenheden svarer ikke, prøver stadig",
           "parentStopped": "Forældreenheden er holdt op med at overvåge"
         },
-        "forDuration": "i {duration}",
         "monitoring": "Overvåger",
         "parentListening": "Forælderen lytter",
         "battery": "Denne enhed: batteri {percent}%",
@@ -633,8 +632,6 @@
         "permSettings": "Åbn indstillinger",
         "baby": {
           "talking": "Forælder taler",
-          "lastTalk": "Seneste tale: {name}, {time}, {duration}",
-          "lastTalkAnon": "Seneste tale: {time}, {duration}",
           "title": "Tale",
           "switch": "Forældre kan tale via denne enhed",
           "switchHint": "Når det er slået fra, afspilles der aldrig noget via denne enhed.",

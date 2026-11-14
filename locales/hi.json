@@ -235,7 +235,6 @@
           "notResponding": "माता-पिता का डिवाइस जवाब नहीं दे रहा — कोशिश जारी है",
           "parentStopped": "माता-पिता के डिवाइस ने निगरानी रोक दी"
         },
-        "forDuration": "{duration} से",
         "monitoring": "निगरानी जारी है",
         "parentListening": "माता-पिता सुन रहे हैं",
         "battery": "यह डिवाइस: बैटरी {percent}%",
@@ -633,8 +632,6 @@
         "permSettings": "सेटिंग खोलें",
         "baby": {
           "talking": "पैरेंट बोल रहे हैं",
-          "lastTalk": "आखिरी बातचीत: {name}, {time}, {duration}",
-          "lastTalkAnon": "आखिरी बातचीत: {time}, {duration}",
           "title": "बोलना",
           "switch": "पैरेंट इस डिवाइस से बोल सकते हैं",
           "switchHint": "बंद होने पर इस डिवाइस पर कुछ भी नहीं चलाया जाता।",

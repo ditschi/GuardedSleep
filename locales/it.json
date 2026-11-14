@@ -235,7 +235,6 @@
           "notResponding": "Il dispositivo del genitore non risponde: riprovo",
           "parentStopped": "Il dispositivo del genitore ha interrotto il monitoraggio"
         },
-        "forDuration": "da {duration}",
         "monitoring": "Monitoraggio",
         "parentListening": "Il genitore sta ascoltando",
         "battery": "Questo dispositivo: batteria {percent}%",
@@ -633,8 +632,6 @@
         "permSettings": "Apri impostazioni",
         "baby": {
           "talking": "Un genitore sta parlando",
-          "lastTalk": "Ultimo intervento: {name}, {time}, {duration}",
-          "lastTalkAnon": "Ultimo intervento: {time}, {duration}",
           "title": "Parlare",
           "switch": "I genitori possono parlare tramite questo dispositivo",
           "switchHint": "Se disattivato, questo dispositivo non riproduce mai nulla.",

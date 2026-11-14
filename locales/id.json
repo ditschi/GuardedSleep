@@ -235,7 +235,6 @@
           "notResponding": "Perangkat orang tua tidak merespons — masih mencoba",
           "parentStopped": "Perangkat orang tua berhenti memantau"
         },
-        "forDuration": "selama {duration}",
         "monitoring": "Memantau",
         "parentListening": "Orang tua sedang mendengarkan",
         "battery": "Perangkat ini: baterai {percent}%",
@@ -633,8 +632,6 @@
         "permSettings": "Buka pengaturan",
         "baby": {
           "talking": "Orang tua sedang berbicara",
-          "lastTalk": "Bicara terakhir: {name}, {time}, {duration}",
-          "lastTalkAnon": "Bicara terakhir: {time}, {duration}",
           "title": "Bicara",
           "switch": "Orang tua dapat berbicara lewat perangkat ini",
           "switchHint": "Saat mati, tidak ada suara yang diputar lewat perangkat ini.",

@@ -235,7 +235,6 @@
           "notResponding": "Dispozitivul părintelui nu răspunde, încerc în continuare",
           "parentStopped": "Dispozitivul părintelui a oprit monitorizarea"
         },
-        "forDuration": "de {duration}",
         "monitoring": "Monitorizare",
         "parentListening": "Părintele ascultă",
         "battery": "Acest dispozitiv: baterie {percent}%",
@@ -633,8 +632,6 @@
         "permSettings": "Deschide setările",
         "baby": {
           "talking": "Un părinte vorbește",
-          "lastTalk": "Ultima vorbire: {name}, {time}, {duration}",
-          "lastTalkAnon": "Ultima vorbire: {time}, {duration}",
           "title": "Vorbire",
           "switch": "Părinții pot vorbi prin acest dispozitiv",
           "switchHint": "Când este oprit, prin acest dispozitiv nu se redă niciodată nimic.",

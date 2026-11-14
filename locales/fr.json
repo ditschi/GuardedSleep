@@ -235,7 +235,6 @@
           "notResponding": "L'appareil parent ne répond pas — nouvelle tentative en cours",
           "parentStopped": "L'appareil parent a arrêté la surveillance"
         },
-        "forDuration": "depuis {duration}",
         "monitoring": "Surveillance en cours",
         "parentListening": "Un parent écoute",
         "battery": "Cet appareil : batterie {percent} %",
@@ -637,8 +636,6 @@
         "permSettings": "Ouvrir les réglages",
         "baby": {
           "talking": "Un parent parle",
-          "lastTalk": "Dernière parole : {name}, {time}, {duration}",
-          "lastTalkAnon": "Dernière parole : {time}, {duration}",
           "title": "Parler à l'enfant",
           "switch": "Les parents peuvent parler via cet appareil",
           "switchHint": "Désactivé, rien n'est jamais diffusé par cet appareil.",

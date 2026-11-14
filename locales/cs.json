@@ -235,7 +235,6 @@
           "notResponding": "Zařízení rodiče neodpovídá, zkouším dál",
           "parentStopped": "Zařízení rodiče přestalo sledovat"
         },
-        "forDuration": "již {duration}",
         "monitoring": "Sledování",
         "parentListening": "Rodič poslouchá",
         "battery": "Toto zařízení: baterie {percent} %",
@@ -633,8 +632,6 @@
         "permSettings": "Otevřít nastavení",
         "baby": {
           "talking": "Rodič mluví",
-          "lastTalk": "Poslední mluvení: {name}, {time}, {duration}",
-          "lastTalkAnon": "Poslední mluvení: {time}, {duration}",
           "title": "Mluvení",
           "switch": "Rodiče mohou mluvit přes toto zařízení",
           "switchHint": "Když je vypnuto, toto zařízení nikdy nic nepřehraje.",

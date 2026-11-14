@@ -235,7 +235,6 @@
           "notResponding": "Föräldraenheten svarar inte, försöker fortfarande",
           "parentStopped": "Föräldraenheten slutade övervaka"
         },
-        "forDuration": "i {duration}",
         "monitoring": "Övervakar",
         "parentListening": "Föräldern lyssnar",
         "battery": "Den här enheten: batteri {percent}%",
@@ -633,8 +632,6 @@
         "permSettings": "Öppna inställningar",
         "baby": {
           "talking": "Förälder pratar",
-          "lastTalk": "Senaste samtal: {name}, {time}, {duration}",
-          "lastTalkAnon": "Senaste samtal: {time}, {duration}",
           "title": "Tala",
           "switch": "Föräldrar kan tala via den här enheten",
           "switchHint": "När det är av spelas inget upp via den här enheten.",

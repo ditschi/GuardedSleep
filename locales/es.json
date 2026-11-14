@@ -235,7 +235,6 @@
           "notResponding": "El dispositivo de los padres no responde — sigue intentándolo",
           "parentStopped": "El dispositivo de los padres dejó de vigilar"
         },
-        "forDuration": "desde hace {duration}",
         "monitoring": "Vigilando",
         "parentListening": "Los padres están escuchando",
         "battery": "Este dispositivo: batería {percent} %",
@@ -637,8 +636,6 @@
         "permSettings": "Abrir ajustes",
         "baby": {
           "talking": "Un padre está hablando",
-          "lastTalk": "Última conversación: {name}, {time}, {duration}",
-          "lastTalkAnon": "Última conversación: {time}, {duration}",
           "title": "Hablar",
           "switch": "Los padres pueden hablar a través de este dispositivo",
           "switchHint": "Si está desactivado, nunca se reproduce nada en este dispositivo.",

@@ -235,7 +235,6 @@
           "notResponding": "Elterngerät antwortet nicht — es wird weiter versucht",
           "parentStopped": "Elterngerät hat die Überwachung beendet"
         },
-        "forDuration": "seit {duration}",
         "monitoring": "Überwachung läuft",
         "parentListening": "Elternteil hört zu",
         "battery": "Dieses Gerät: Akku {percent} %",
@@ -637,8 +636,6 @@
         "permSettings": "Einstellungen öffnen",
         "baby": {
           "talking": "Elternteil spricht",
-          "lastTalk": "Letzte Ansprache: {name}, {time}, {duration}",
-          "lastTalkAnon": "Letzte Ansprache: {time}, {duration}",
           "title": "Sprechen",
           "switch": "Eltern können über dieses Gerät sprechen",
           "switchHint": "Wenn aus, wird über dieses Gerät nie etwas abgespielt.",

@@ -233,7 +233,6 @@
           "notResponding": "Parent device not responding — still trying",
           "parentStopped": "Parent device stopped monitoring"
         },
-        "forDuration": "for {duration}",
         "monitoring": "Monitoring",
         "parentListening": "Parent is listening",
         "battery": "This device: battery {percent}%",
@@ -635,8 +634,6 @@
         "permSettings": "Open settings",
         "baby": {
           "talking": "Parent is talking",
-          "lastTalk": "Last talk: {name}, {time}, {duration}",
-          "lastTalkAnon": "Last talk: {time}, {duration}",
           "title": "Talk-back",
           "switch": "Parents can speak through this device",
           "switchHint": "When off, nothing is ever played through this device.",

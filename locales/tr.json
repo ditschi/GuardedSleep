@@ -235,7 +235,6 @@
           "notResponding": "Ebeveyn cihazı yanıt vermiyor — denemeye devam ediliyor",
           "parentStopped": "Ebeveyn cihazı izlemeyi durdurdu"
         },
-        "forDuration": "{duration} süredir",
         "monitoring": "İzleniyor",
         "parentListening": "Ebeveyn dinliyor",
         "battery": "Bu cihaz: pil %{percent}",
@@ -633,8 +632,6 @@
         "permSettings": "Ayarları aç",
         "baby": {
           "talking": "Ebeveyn konuşuyor",
-          "lastTalk": "Son konuşma: {name}, {time}, {duration}",
-          "lastTalkAnon": "Son konuşma: {time}, {duration}",
           "title": "Konuşma",
           "switch": "Ebeveynler bu cihazdan konuşabilir",
           "switchHint": "Kapalıyken bu cihazdan hiçbir şey çalınmaz.",

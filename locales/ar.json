@@ -235,7 +235,6 @@
           "notResponding": "جهاز الأهل لا يستجيب — ما زالت المحاولة جارية",
           "parentStopped": "أوقف جهاز الأهل المراقبة"
         },
-        "forDuration": "منذ {duration}",
         "monitoring": "المراقبة جارية",
         "parentListening": "الأهل يستمعون",
         "battery": "هذا الجهاز: البطارية {percent}%",
@@ -633,8 +632,6 @@
         "permSettings": "فتح الإعدادات",
         "baby": {
           "talking": "أحد الوالدين يتحدث",
-          "lastTalk": "آخر حديث: {name}، {time}، {duration}",
-          "lastTalkAnon": "آخر حديث: {time}، {duration}",
           "title": "التحدث",
           "switch": "يمكن للوالدين التحدث عبر هذا الجهاز",
           "switchHint": "عند الإيقاف لا يُشغَّل أي شيء عبر هذا الجهاز.",

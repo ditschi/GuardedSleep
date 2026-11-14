@@ -235,7 +235,6 @@
           "notResponding": "保護者用端末から応答がありません。再試行中です",
           "parentStopped": "保護者用端末が見守りを停止しました"
         },
-        "forDuration": "{duration}間",
         "monitoring": "見守り中",
         "parentListening": "保護者が聞いています",
         "battery": "この端末：バッテリー{percent}%",
@@ -633,8 +632,6 @@
         "permSettings": "設定を開く",
         "baby": {
           "talking": "保護者が話しています",
-          "lastTalk": "前回のトーク：{name}、{time}、{duration}",
-          "lastTalkAnon": "前回のトーク：{time}、{duration}",
           "title": "トーク",
           "switch": "保護者がこの端末を通して話せる",
           "switchHint": "オフの間は、この端末から音は一切再生されません。",

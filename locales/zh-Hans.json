@@ -235,7 +235,6 @@
           "notResponding": "家长设备没有响应，仍在重试",
           "parentStopped": "家长设备已停止监护"
         },
-        "forDuration": "已持续 {duration}",
         "monitoring": "监护中",
         "parentListening": "家长正在收听",
         "battery": "此设备：电量 {percent}%",
@@ -633,8 +632,6 @@
         "permSettings": "打开设置",
         "baby": {
           "talking": "家长正在说话",
-          "lastTalk": "上次说话：{name}，{time}，{duration}",
-          "lastTalkAnon": "上次说话：{time}，{duration}",
           "title": "对讲",
           "switch": "家长可以通过此设备说话",
           "switchHint": "关闭后，此设备绝不会播放任何声音。",

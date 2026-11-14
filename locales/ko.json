@@ -235,7 +235,6 @@
           "notResponding": "부모 기기가 응답하지 않아요. 계속 시도 중이에요",
           "parentStopped": "부모 기기가 지켜보기를 멈췄어요"
         },
-        "forDuration": "{duration} 동안",
         "monitoring": "지켜보는 중",
         "parentListening": "부모가 듣고 있어요",
         "battery": "이 기기: 배터리 {percent}%",
@@ -633,8 +632,6 @@
         "permSettings": "설정 열기",
         "baby": {
           "talking": "부모가 말하는 중",
-          "lastTalk": "마지막 말하기: {name}, {time}, {duration}",
-          "lastTalkAnon": "마지막 말하기: {time}, {duration}",
           "title": "말하기",
           "switch": "부모가 이 기기를 통해 말할 수 있음",
           "switchHint": "꺼 두면 이 기기에서는 아무 소리도 재생되지 않습니다.",
