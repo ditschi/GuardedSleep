@@ -46,6 +46,7 @@ Medium and heavy recipes (`just lint-code`, `just test`, builds, `just e2e`, `ju
 - `GS_SLOT_WAIT` (default 3600 s) bounds the wait for a slot; the script then exits 75 ("machine busy": rerun or background it, this is not a test verdict). `just reap` lists stuck leftovers.
 - `GS_RUN_TIMEOUT` (unset: no limit; any GNU `timeout` duration) bounds the run itself and starts only once the slot is held, so a queued job is never cut off by its own deadline. Exit 124 means the run exceeded it; any other status is the command's own verdict.
 - Re-entrancy: a nested call for the same or a lighter class runs without acquiring, and `GS_RUN_TIMEOUT` is cleared for the child so no second deadline starts.
+- Container Gradle runs (`scripts/gradle.sh`, so `just test-android`, `just build-android`, `just verify-android`, `just install-android --build`) also take turns on the shared Gradle user home, whatever their slot class: a machine-wide `flock` on `$GS_SHARED_CACHE/gradle/.gs-container.lock` (default `~/.cache/guardedsleep`), after the per-worktree `target/.gradle.lock`. Gradle's own cache locks cannot hand over between containers (separate PID and network namespaces), so two containers on one Gradle home failed with "Timeout waiting to lock journal cache". A queued run prints `waiting for the shared Gradle home …`; the wait is bounded by `GS_SLOT_WAIT` (exit 75). Native runs (`CORE_BUILD_NATIVE=1`) take neither lock.
 
 ```sh
 GS_SLOT_WAIT=60 GS_RUN_TIMEOUT=15m just test
@@ -229,6 +230,14 @@ Owner setup (once; the key is never committed, AGENTS.md §7.7): run `scripts/de
 - Environments and environment secrets need admin rights on the repository. A personal access token without them fails with HTTP 403: log in through the browser once with `env -u GH_TOKEN -u GITHUB_TOKEN gh auth login --web` and run the script with the same `env -u GH_TOKEN -u GITHUB_TOKEN` prefix. Alternatively create the environment in the repository settings first; the script then only stores the secrets.
 - A run that stopped half-way reuses the key in the output directory. Once the secrets exist, the script refuses to create another key; `GS_ROTATE_DEV_KEY=1` replaces it on purpose.
 - Replacing or losing the key means every tester uninstalls once (which deletes the pairing); delete the old Bitwarden item after a rotation.
+
+### Install on phones
+
+`just install-android` installs the local debug APK (`just build-android` first, or pass `--build`) on every connected phone in one go and launches the app (`--no-launch` skips that). It installs once per physical phone even when it shows up over USB and Wi-Fi, and it never uninstalls anything.
+
+- Enable Developer options and USB debugging on each phone. Xiaomi/MIUI/HyperOS also needs "Install via USB" (and "USB debugging (Security settings)") in the developer options, otherwise the install is refused.
+- Wi-Fi adb: connect over USB once, run `adb tcpip 5555`, unplug, then `adb connect <phone-ip>:5555`. Or list the phones explicitly: `GS_DEVICES="R5CT123 192.168.1.20:5555" just install-android` (comma or space separated; `host:port` entries are connected for you). Without `GS_DEVICES` every device in state `device` is used.
+- `INSTALL_FAILED_UPDATE_INCOMPATIBLE` means the installed app has another signature (for example the GitHub dev APK). Uninstall it yourself with `adb -s <serial> uninstall org.guardedsleep.app.alpha`, which deletes the pairings, then run the recipe again. The script continues with the other phones and exits non-zero if any failed.
 
 ## Commits
 

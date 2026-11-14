@@ -52,7 +52,19 @@ test("listen: audio reaches the parent only while Listen is on", async () => {
     await expect
       .poll(async () => (await inboundAudio(parent)).packets, { timeout: 30_000 })
       .toBeGreaterThan(0);
-    expect(await energyRate(baby, 2_000)).toBeLessThan(GATE_CLOSED_ENERGY_PER_S);
+    // Sensitivity can only be set once paired, so an alert may already have been raised before
+    // it took effect (seen in CI); stop it, and wait until the gate is closed for good.
+    const alertStop = parent.getByTestId("alert_stop_sound");
+    await expect
+      .poll(
+        async () => {
+          if (await alertStop.isVisible()) await alertStop.click();
+          return energyRate(baby, 2_000);
+        },
+        { timeout: 30_000 },
+      )
+      .toBeLessThan(GATE_CLOSED_ENERGY_PER_S);
+    await expect(parent.getByTestId("alert_title")).toHaveCount(0);
     const quietFrames = await bytesPerPacket(parent, 2_000);
 
     const listen = parent.getByTestId("parent_listen");

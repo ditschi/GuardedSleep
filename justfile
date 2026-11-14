@@ -167,9 +167,13 @@ test-wasm: _js-gen
 test-web:
     pnpm test
 
-# Android JVM unit tests (core + app) against the host build of the core, no ABI cross-compile.
-[script("bash")]
+# Android JVM unit tests (core + app) against the host build of the core, no ABI cross-compile (medium slot).
 test-android:
+    scripts/lib/slot.sh medium -- just _test-android
+
+[private]
+[script("bash")]
+_test-android:
     set -euo pipefail
     source scripts/lib/require.sh
     require test-android android-sdk
@@ -207,6 +211,10 @@ _build-android *gradle_tasks:
     scripts/gradle.sh {{ gradle_tasks }} :app:assembleDebug :app:assembleRelease
     scripts/poc/release-check.sh
     scripts/poc/size-check.sh
+
+# Install the local debug APK on every connected phone (USB or Wi-Fi adb) and launch it. Options: --build, --no-launch; env GS_DEVICES, GS_APK (scripts/android-install.sh).
+install-android *args:
+    scripts/android-install.sh {{ args }}
 
 # What the CI android job runs: build-android plus Android Lint (warnings are errors), the JVM tests and Roborazzi screenshot verification.
 verify-android:

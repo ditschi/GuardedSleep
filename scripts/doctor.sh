@@ -82,6 +82,12 @@ else
   missing android-sdk "no host SDK and no Docker for the build image" "install Docker, or point ANDROID_HOME at an SDK (see docs/contributing/development.md)"
 fi
 
+if [ -z "$(gs_missing adb)" ]; then
+  ok adb "$(command -v adb) (just install-android)"
+else
+  note adb "not found; just install-android prints SKIPPED (install Android platform-tools or add \$ANDROID_HOME/platform-tools to PATH)"
+fi
+
 hooks="$(scripts/lib/hooks-check.sh 2>&1 || true)"
 if [ -z "$hooks" ]; then
   ok hooks "lefthook pre-commit hook active"

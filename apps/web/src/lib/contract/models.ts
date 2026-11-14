@@ -377,6 +377,24 @@ export interface SettingsState {
 /** Baby self-test result (ADR-010) shown on the setup checklist. */
 export type DeviceCheck = "unknown" | "ok" | "limited" | "not_recommended";
 
+/** Why a device check is not OK (one plain line each; worst first in `AppState`). */
+export type DeviceCheckReason =
+  | "mic_permission_missing"
+  | "mic_silent"
+  | "battery_unhealthy"
+  | "battery_low_not_charging"
+  | "no_mailbox_reachable"
+  | "not_charging"
+  | "battery_optimized"
+  | "dnd_access_missing"
+  | "some_mailboxes_unreachable";
+
+/** Whether one mailbox answered the device check's connect probe (host only). */
+export interface MailboxReach {
+  host: string;
+  reachable: boolean;
+}
+
 /**
  * One saved connection (pairing) of the session role (`multi-parent-pairings`). The web client
  * keeps one in-memory pairing and shows no list, so `AppState.connections` stays empty here.
@@ -413,6 +431,10 @@ export interface AppState {
   /** Show the first-run coach marks on the parent monitoring screen once. */
   coachPending: boolean;
   deviceCheck: DeviceCheck;
+  /** Why the device check is not OK, worst first; empty while unknown or OK. */
+  deviceCheckReasons: DeviceCheckReason[];
+  /** The device check's mailbox probes (host only). */
+  deviceCheckMailboxes: MailboxReach[];
 }
 
 // Defaults equal the Kotlin constructor defaults.
@@ -528,6 +550,8 @@ export function defaultAppState(): AppState {
     lastUsedWallMs: null,
     coachPending: false,
     deviceCheck: "unknown",
+    deviceCheckReasons: [],
+    deviceCheckMailboxes: [],
   };
 }
 

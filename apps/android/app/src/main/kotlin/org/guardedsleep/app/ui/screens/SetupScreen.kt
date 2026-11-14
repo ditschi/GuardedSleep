@@ -53,6 +53,8 @@ import org.guardedsleep.app.ui.common.Title
 import org.guardedsleep.app.ui.common.findActivity
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.DeviceCheck
+import org.guardedsleep.app.ui.model.DeviceCheckReason
+import org.guardedsleep.app.ui.model.MailboxReach
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.theme.LocalAppColors
 import org.guardedsleep.app.ui.theme.StateColors
@@ -78,6 +80,8 @@ fun SetupScreen(controller: AppController, role: Role, onboarding: Boolean, onBa
     var refresh by remember { mutableIntStateOf(0) }
     LifecycleResumeEffect(Unit) {
         refresh++
+        // The baby device check runs in the background and never blocks the checklist.
+        if (role == Role.BABY) controller.runDeviceCheck()
         onPauseOrDispose {}
     }
     val checks = remember(refresh) { readSetupChecks(ctx, role) }
@@ -129,6 +133,9 @@ fun SetupScreen(controller: AppController, role: Role, onboarding: Boolean, onBa
         role = role,
         checks = checks,
         deviceCheck = app.deviceCheck,
+        deviceCheckReasons = app.deviceCheckReasons,
+        deviceCheckMailboxes = app.deviceCheckMailboxes,
+        onDeviceCheckAgain = { controller.runDeviceCheck(force = true) },
         talkBack = controller.settings.collectAsState().value.talkBackEnabled,
         onTalkBack = { on -> controller.updateSettings { it.copy(talkBackEnabled = on) } },
         onAction = onAction,
@@ -170,6 +177,11 @@ fun SetupContent(
     /** Baby: the talk-back switch of the checklist row; null hides the row (previews). */
     talkBack: Boolean? = null,
     onTalkBack: (Boolean) -> Unit = {},
+    /** Baby: why the device check is not OK, worst first. */
+    deviceCheckReasons: List<DeviceCheckReason> = emptyList(),
+    deviceCheckMailboxes: List<MailboxReach> = emptyList(),
+    /** Shows "Check again" next to a finished device check; null hides it (previews). */
+    onDeviceCheckAgain: (() -> Unit)? = null,
 ) {
     val required = if (role == Role.BABY) SetupRow.MIC else SetupRow.NOTIFICATIONS
     var skipped by rememberSaveable { mutableStateOf(setOf<String>()) }
@@ -238,7 +250,12 @@ fun SetupContent(
                         }
                     }
                 }
-                DeviceCheckRow(deviceCheck)
+                DeviceCheckRow(
+                    deviceCheck,
+                    deviceCheckReasons,
+                    deviceCheckMailboxes,
+                    onDeviceCheckAgain,
+                )
             } else {
                 CheckRow(
                     "setup_row_notifications",
@@ -367,7 +384,12 @@ private fun CheckRow(
 }
 
 @Composable
-private fun DeviceCheckRow(check: DeviceCheck) {
+private fun DeviceCheckRow(
+    check: DeviceCheck,
+    reasons: List<DeviceCheckReason>,
+    mailboxes: List<MailboxReach>,
+    onAgain: (() -> Unit)?,
+) {
     val (state, text) =
         when (check) {
             DeviceCheck.UNKNOWN ->
@@ -383,14 +405,61 @@ private fun DeviceCheckRow(check: DeviceCheck) {
             verticalAlignment = Alignment.Top,
         ) {
             StateBadge(state)
-            Body(
-                stringResource(text),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
-            )
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Body(
+                    stringResource(text),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                for (reason in reasons) {
+                    Body(
+                        stringResource(reasonText(reason)),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier =
+                            Modifier.testTag(
+                                "setup_device_check_reason_" + reason.name.lowercase()
+                            ),
+                    )
+                }
+                for (m in mailboxes) {
+                    Body(
+                        stringResource(
+                            if (m.reachable) R.string.native_ui_setup_device_check_mailbox_reachable
+                            else R.string.native_ui_setup_device_check_mailbox_unreachable,
+                            m.host,
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (onAgain != null && check != DeviceCheck.UNKNOWN)
+                    QuietButton(
+                        stringResource(R.string.native_ui_setup_device_check_again),
+                        onAgain,
+                        "setup_device_check_again",
+                    )
+            }
         }
     }
 }
+
+private fun reasonText(reason: DeviceCheckReason): Int =
+    when (reason) {
+        DeviceCheckReason.MIC_PERMISSION_MISSING ->
+            R.string.native_ui_setup_device_check_mic_permission_missing
+        DeviceCheckReason.MIC_SILENT -> R.string.native_ui_setup_device_check_mic_silent
+        DeviceCheckReason.BATTERY_UNHEALTHY ->
+            R.string.native_ui_setup_device_check_battery_unhealthy
+        DeviceCheckReason.BATTERY_LOW_NOT_CHARGING ->
+            R.string.native_ui_setup_device_check_battery_low_not_charging
+        DeviceCheckReason.NO_MAILBOX_REACHABLE ->
+            R.string.native_ui_setup_device_check_no_mailbox_reachable
+        DeviceCheckReason.NOT_CHARGING -> R.string.native_ui_setup_device_check_not_charging
+        DeviceCheckReason.BATTERY_OPTIMIZED ->
+            R.string.native_ui_setup_device_check_battery_optimized
+        DeviceCheckReason.DND_ACCESS_MISSING ->
+            R.string.native_ui_setup_device_check_dnd_access_missing
+        DeviceCheckReason.SOME_MAILBOXES_UNREACHABLE ->
+            R.string.native_ui_setup_device_check_some_mailboxes_unreachable
+    }
 
 @Composable
 private fun stateText(state: RowState) =

@@ -10,7 +10,9 @@ import org.guardedsleep.app.ui.model.BabyMonitorState
 import org.guardedsleep.app.ui.model.CauseHint
 import org.guardedsleep.app.ui.model.ConnectionUi
 import org.guardedsleep.app.ui.model.DeviceCheck
+import org.guardedsleep.app.ui.model.DeviceCheckReason
 import org.guardedsleep.app.ui.model.LinkPhase
+import org.guardedsleep.app.ui.model.MailboxReach
 import org.guardedsleep.app.ui.model.PairingError
 import org.guardedsleep.app.ui.model.PairingPhase
 import org.guardedsleep.app.ui.model.PairingState
@@ -149,6 +151,32 @@ class SetupHomeSettingsShots : ShotBase() {
         check: DeviceCheck = DeviceCheck.OK,
         locale: String = "en",
     ) = shot("setup/$name", locale, role) { SetupContent(role, SetupChecks(states), check, {}, {}) }
+
+    @Test
+    fun deviceCheckWithReasons() {
+        val states =
+            mapOf(
+                SetupRow.MIC to RowState.DONE,
+                SetupRow.BACKGROUND to RowState.DONE,
+                SetupRow.SILENCE to RowState.DONE,
+            )
+        shot("setup/baby_check_reasons", "en", Role.BABY) {
+            SetupContent(
+                Role.BABY,
+                SetupChecks(states),
+                DeviceCheck.NOT_RECOMMENDED,
+                {},
+                {},
+                deviceCheckReasons =
+                    listOf(
+                        DeviceCheckReason.BATTERY_LOW_NOT_CHARGING,
+                        DeviceCheckReason.NO_MAILBOX_REACHABLE,
+                    ),
+                deviceCheckMailboxes = listOf(MailboxReach("gs.mydata.rocks", false)),
+                onDeviceCheckAgain = {},
+            )
+        }
+    }
 
     @Test
     fun roleScreen() {

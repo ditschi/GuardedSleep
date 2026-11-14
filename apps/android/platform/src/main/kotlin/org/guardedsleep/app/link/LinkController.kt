@@ -31,6 +31,8 @@ import org.guardedsleep.app.pairing.signalingUrls
 import org.guardedsleep.app.pairing.storedMailboxesFor
 import org.guardedsleep.app.pairing.toStored
 import org.guardedsleep.app.platform.BuildConfig
+import org.guardedsleep.app.readiness.DeviceCheckResult
+import org.guardedsleep.app.readiness.DeviceChecker
 import org.guardedsleep.app.readiness.ReadinessChecker
 import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.signaling.SignalingFactory
@@ -41,6 +43,7 @@ import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
 import org.guardedsleep.app.ui.model.ConnectionUi
+import org.guardedsleep.app.ui.model.DeviceCheck
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.ListenMode
 import org.guardedsleep.app.ui.model.PairingError
@@ -94,8 +97,23 @@ class LinkController(
     /** Parent: microphone permission and unlocked device, asked before every `set_talk`. */
     private val talkGate: TalkGate = TalkGate.Open,
     private val chimePreview: TalkChimePreview = TalkChimePreview {},
+    /** Baby: the device check of the setup screen; null (previews, tests) leaves it unknown. */
+    private val deviceChecker: DeviceChecker? = null,
 ) : AppController {
     private val _app = MutableStateFlow(AppState())
+
+    // Declared before `init`, which already publishes the app state.
+    private val deviceCheckLock = Any()
+    // Guarded by deviceCheckLock: the generation, the published result (null = still unknown) and
+    // whether a check of the current generation is in flight.
+    private var deviceCheckGen = 0
+    private var deviceCheckResult: DeviceCheckResult? = null
+    private var deviceCheckInFlight = false
+    private var deviceCheckAtMs = 0L
+    private val appLock = Any()
+    private val deviceCheckIo = Executors.newSingleThreadExecutor { r ->
+        Thread(r, "gs-device-check").apply { isDaemon = true }
+    }
 
     /**
      * The pairing this session uses: the user's choice while it still exists, else the default
@@ -276,6 +294,7 @@ class LinkController(
             it.copy(role = role, defaultRole = if (makeDefault) role else it.defaultRole)
         }
         parentModel.restoreSnooze(settingsRepo.current.snoozeUntilWallMs)
+        invalidateDeviceCheck()
         refreshApp()
         if (role == Role.PARENT) autoStartOnce()
     }
@@ -286,6 +305,7 @@ class LinkController(
         stopRun(userStop = true)
         settingsRepo.update { it.copy(role = null) }
         parentModel.cancelSnooze()
+        invalidateDeviceCheck()
         refreshApp()
     }
 
@@ -413,6 +433,7 @@ class LinkController(
             it.copy(peerName = null, snoozeUntilWallMs = null, pairingId = null)
         }
         parentModel.cancelSnooze()
+        invalidateDeviceCheck()
         refreshApp()
     }
 
@@ -550,30 +571,112 @@ class LinkController(
         if (settingsRepo.current.role == Role.PARENT) alerts.backgroundProtection(lost)
     }
 
-    private fun refreshApp() {
-        val p = settingsRepo.current
-        val connections =
-            p.role?.let { role ->
-                val active = activeId(role)
-                pairings.list(role).map {
-                    ConnectionUi(it.id, it.name, it.isDefault, it.id == active)
-                }
-            } ?: emptyList()
-        _app.value =
-            AppState(
-                role = p.role,
-                defaultRole = p.defaultRole,
-                onboardingDone = p.onboardingDone,
-                paired = pairingStoreOrNull?.exists() == true,
-                peerName = connections.firstOrNull { it.selected }?.name ?: p.peerName,
-                connections = connections,
-                // The baby unit replaces its pairing; only the parent adds one, up to the cap.
-                canAddPairing = p.role != Role.PARENT || pairings.freeId(Role.PARENT) != null,
-                monitoring = p.monitoringActive,
-                autoStarted = autoStarted && p.monitoringActive,
-                backgroundProtection = !(p.monitoringActive && fgs == Fgs.LOST),
-            )
+    // ---- device check ------------------------------------------------------------------------
+
+    /**
+     * The relay mailboxes the check probes: the active pairing's stored set, else the set a new
+     * invite would carry. LAN mailboxes are not probed (they exist only while a session runs).
+     */
+    private fun deviceCheckMailboxUrls(): List<String> {
+        val store = pairingStoreOrNull
+        val stored = store?.load()
+        val set =
+            when {
+                stored != null -> stored.mailboxes
+                // A saved record that cannot be read now has a set we cannot know: probe nothing.
+                store?.exists() == true -> emptyList()
+                else -> storedMailboxesFor(inviteUrls(_settings.value))
+            }
+        return set.filter { it.kind == "relay" }.map { it.url }
     }
+
+    /** Drops a running check and its result (role, pairing or run changed). */
+    private fun invalidateDeviceCheck() {
+        synchronized(deviceCheckLock) {
+            deviceCheckGen++
+            deviceCheckResult = null
+            deviceCheckInFlight = false
+        }
+    }
+
+    override fun runDeviceCheck(force: Boolean) {
+        val checker = deviceChecker ?: return
+        if (settingsRepo.current.role != Role.BABY) return
+        val gen =
+            synchronized(deviceCheckLock) {
+                // Resuming the screen must not restart a check or flicker "Checking...".
+                if (!force) {
+                    val fresh =
+                        deviceCheckResult != null &&
+                            clock.elapsedMs() - deviceCheckAtMs < DEVICE_CHECK_REUSE_MS
+                    if (fresh || deviceCheckInFlight) return
+                }
+                deviceCheckGen++
+                deviceCheckResult = null
+                deviceCheckInFlight = true
+                deviceCheckGen
+            }
+        refreshApp()
+        // WebRTC holds the microphone while a run is active: the sample would fail or steal it.
+        val sampleMic = run == null
+        val urls = deviceCheckMailboxUrls()
+        val stale = { synchronized(deviceCheckLock) { deviceCheckGen != gen } }
+        deviceCheckIo.execute {
+            val result = checker.check(urls, sampleMic, stale)
+            // Compare and publish under one lock: an invalidation can never be overwritten.
+            val fresh =
+                synchronized(deviceCheckLock) {
+                    (deviceCheckGen == gen).also {
+                        if (it) {
+                            deviceCheckResult = result
+                            deviceCheckAtMs = clock.elapsedMs()
+                            deviceCheckInFlight = false
+                        }
+                    }
+                }
+            if (!fresh) return@execute
+            PocLog.event(
+                "device_check",
+                "result" to result.check,
+                "reasons" to result.reasons.size,
+                "mailboxes" to result.mailboxes.size,
+                "reachable" to result.mailboxes.count { it.reachable },
+            )
+            refreshApp()
+        }
+    }
+
+    // One build-and-set at a time (the device-check thread calls it too): every build reads the
+    // live state inside the lock, so an older snapshot never overwrites a newer one.
+    private fun refreshApp() =
+        synchronized(appLock) {
+            val check = synchronized(deviceCheckLock) { deviceCheckResult }
+            val p = settingsRepo.current
+            val connections =
+                p.role?.let { role ->
+                    val active = activeId(role)
+                    pairings.list(role).map {
+                        ConnectionUi(it.id, it.name, it.isDefault, it.id == active)
+                    }
+                } ?: emptyList()
+            _app.value =
+                AppState(
+                    role = p.role,
+                    defaultRole = p.defaultRole,
+                    onboardingDone = p.onboardingDone,
+                    paired = pairingStoreOrNull?.exists() == true,
+                    peerName = connections.firstOrNull { it.selected }?.name ?: p.peerName,
+                    connections = connections,
+                    // The baby unit replaces its pairing; only the parent adds one, up to the cap.
+                    canAddPairing = p.role != Role.PARENT || pairings.freeId(Role.PARENT) != null,
+                    monitoring = p.monitoringActive,
+                    autoStarted = autoStarted && p.monitoringActive,
+                    backgroundProtection = !(p.monitoringActive && fgs == Fgs.LOST),
+                    deviceCheck = check?.check ?: DeviceCheck.UNKNOWN,
+                    deviceCheckReasons = check?.reasons ?: emptyList(),
+                    deviceCheckMailboxes = check?.mailboxes ?: emptyList(),
+                )
+        }
 
     // ---- pairing -----------------------------------------------------------------------------
 
@@ -781,6 +884,8 @@ class LinkController(
         // The baby unit ran or showed an invite in this app start: no automatic parent start.
         if (role == Role.BABY) autoStartPending = false
         stopRun(userStop = false)
+        // The run takes the microphone: a running device check stops sampling and is dropped.
+        invalidateDeviceCheck()
         val s = _settings.value
         val coreRole = if (role == Role.BABY) CoreRole.BABY else CoreRole.PARENT
         val config = buildConfig(coreRole, pending.psk, pairedBefore, s, pending)
@@ -1203,6 +1308,9 @@ class LinkController(
 
     private companion object {
         const val UNREACHABLE_AFTER_MS = 20_000L
+
+        /** A device check result this young is shown again instead of probing anew. */
+        const val DEVICE_CHECK_REUSE_MS = 60_000L
 
         /** The project server's host as the core's `only_local` rule compares it. */
         val PROJECT_HOST: String = PublicLists.projectServer.host.lowercase()

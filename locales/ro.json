@@ -145,7 +145,19 @@
           "checking": "Se verifică acest dispozitiv…",
           "ok": "Acest dispozitiv funcționează bine ca dispozitiv al bebelușului.",
           "limited": "Acest dispozitiv poate pierde conexiunea din când în când. Funcționează totuși.",
-          "notRecommended": "Acest dispozitiv poate să nu monitorizeze fiabil. Folosește altul dacă poți."
+          "notRecommended": "Acest dispozitiv poate să nu monitorizeze fiabil. Folosește altul dacă poți.",
+          "again": "Verifică din nou",
+          "micPermissionMissing": "Microfonul nu este permis, deci acest dispozitiv nu poate asculta.",
+          "micSilent": "Microfonul transmite doar liniște. Poate fi dezactivat, oprit în setările de confidențialitate sau folosit de altă aplicație.",
+          "batteryUnhealthy": "Bateria raportează o problemă. Nu lăsa acest dispozitiv să funcționeze nesupravegheat.",
+          "batteryLowNotCharging": "Bateria este slabă și nu se încarcă. Conectează acest dispozitiv la încărcător.",
+          "noMailboxReachable": "Niciun server nu a putut fi contactat. După o deconectare, dispozitivele nu s-ar mai putea regăsi.",
+          "notCharging": "Acest dispozitiv nu se încarcă. Lasă-l la încărcător.",
+          "batteryOptimized": "Economisirea bateriei poate opri monitorizarea în fundal.",
+          "dndAccessMissing": "Modul liniștit nu poate fi pornit fără acces la Nu deranja.",
+          "someMailboxesUnreachable": "Unele servere nu au putut fi contactate. Dispozitivele se pot regăsi totuși prin celelalte.",
+          "mailboxReachable": "{host}: accesibil",
+          "mailboxUnreachable": "{host}: inaccesibil"
         },
         "notifications": {
           "title": "Alerte",

@@ -4,6 +4,7 @@ import java.security.SecureRandom
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import org.guardedsleep.app.config.PublicLists
@@ -26,12 +27,18 @@ import org.guardedsleep.app.pairing.StoredMailbox
 import org.guardedsleep.app.pairing.StoredPairing
 import org.guardedsleep.app.pairing.TurnCredentials
 import org.guardedsleep.app.pairing.TurnStore
+import org.guardedsleep.app.readiness.BatterySnapshot
+import org.guardedsleep.app.readiness.DeviceCheckEnv
+import org.guardedsleep.app.readiness.DeviceChecker
 import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.signaling.SignalingFactory
 import org.guardedsleep.app.signaling.SignalingListener
 import org.guardedsleep.app.signaling.SignalingTransport
 import org.guardedsleep.app.silence.SilenceGateway
+import org.guardedsleep.app.ui.model.DeviceCheck
+import org.guardedsleep.app.ui.model.DeviceCheckReason
 import org.guardedsleep.app.ui.model.LinkPhase
+import org.guardedsleep.app.ui.model.MailboxReach
 import org.guardedsleep.app.ui.model.PairingPhase
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.TalkPermission
@@ -279,6 +286,51 @@ private class FakeMedia(val net: FakeNet, val baby: Boolean) : MediaEngine {
     override fun release() = Unit
 }
 
+/** A healthy, charging phone with a microphone that hears something; tests change one fact. */
+private class FakeDeviceEnv : DeviceCheckEnv {
+    var reachable = true
+    var reachableByCall: List<Boolean>? = null
+    var gate: CountDownLatch? = null
+    val probed = CopyOnWriteArrayList<String>()
+    val micSamples = AtomicInteger()
+
+    override fun micGranted() = true
+
+    override fun battery() = BatterySnapshot(80, charging = true, unhealthy = false)
+
+    override fun batteryOptimizationIgnored() = true
+
+    override fun dndAccessGranted() = true
+
+    /** Blocks in the sample until cancelled when set, like a long AudioRecord read loop. */
+    var micBlocks = false
+    val micStarted = CountDownLatch(1)
+    val micCancelled = CountDownLatch(1)
+
+    override fun sampleMicRms(ms: Long, cancelled: () -> Boolean): Double? {
+        micSamples.incrementAndGet()
+        micStarted.countDown()
+        if (micBlocks) {
+            val end = System.currentTimeMillis() + 10_000
+            while (System.currentTimeMillis() < end) {
+                if (cancelled()) {
+                    micCancelled.countDown()
+                    return null
+                }
+                Thread.sleep(10)
+            }
+        }
+        return 0.01
+    }
+
+    override fun probeMailbox(url: String, timeoutMs: Long): Boolean {
+        val call = probed.size
+        probed += url
+        gate?.await()
+        return reachableByCall?.getOrNull(call) ?: reachable
+    }
+}
+
 private class FakeSilence : SilenceGateway {
     var active = false
 
@@ -376,6 +428,8 @@ class LinkControllerTest {
         pairings: RolePairings? = null,
         talkGate: TalkGate = TalkGate.Open,
         hostStarts: java.util.concurrent.atomic.AtomicInteger? = null,
+        deviceChecker: DeviceChecker? = null,
+        clock: Clock = RealClock(),
     ): Unit2 {
         val dir = tmp.newFolder(name)
         val settings = settings ?: testSettings(dir)
@@ -416,10 +470,11 @@ class LinkControllerTest {
 
                         override fun stop() = Unit
                     },
-                clock = RealClock(),
+                clock = clock,
                 random = SecureRandom(),
                 deviceName = { deviceName },
                 talkGate = talkGate,
+                deviceChecker = deviceChecker,
             )
         controller.updateSettings { it.copy(signalingUrls = listOf("wss://fake.example")) }
         if (role != null) controller.chooseRole(role)
@@ -1017,6 +1072,145 @@ class LinkControllerTest {
         u.controller.chooseRole(Role.PARENT)
         assertEquals("Lena", u.controller.app.value.peerName)
         assertEquals(42L, u.settings.current.snoozeUntilWallMs)
+    }
+
+    // ---- baby device check ---------------------------------------------------------------------
+
+    @Test
+    fun theDeviceCheckIsUnknownWhileRunningThenPublishesTheResult() {
+        val env = FakeDeviceEnv().apply { gate = CountDownLatch(1) }
+        val baby = unit("dc-run", Role.BABY, deviceChecker = DeviceChecker(env))
+        baby.controller.runDeviceCheck()
+        assertEquals(DeviceCheck.UNKNOWN, baby.controller.app.value.deviceCheck)
+        env.gate!!.countDown()
+        await("the result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+        val app = baby.controller.app.value
+        assertEquals(DeviceCheck.OK, app.deviceCheck)
+        // The invite set (settings list) is probed; only the host reaches the state.
+        assertEquals(listOf("wss://fake.example"), env.probed.toList())
+        assertEquals(listOf(MailboxReach("fake.example", true)), app.deviceCheckMailboxes)
+    }
+
+    @Test
+    fun anUnreachableMailboxIsNotRecommendedAndStillAllowsMonitoring() {
+        val env = FakeDeviceEnv().apply { reachable = false }
+        val baby = unit("dc-none", Role.BABY, deviceChecker = DeviceChecker(env))
+        baby.controller.runDeviceCheck()
+        await("the result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+        assertEquals(DeviceCheck.NOT_RECOMMENDED, baby.controller.app.value.deviceCheck)
+        assertEquals(
+            listOf(DeviceCheckReason.NO_MAILBOX_REACHABLE),
+            baby.controller.app.value.deviceCheckReasons,
+        )
+    }
+
+    @Test
+    fun aStaleDeviceCheckResultIsDropped() {
+        val env = FakeDeviceEnv().apply { gate = CountDownLatch(1) }
+        val baby = unit("dc-stale", Role.BABY, deviceChecker = DeviceChecker(env))
+        // The first run blocks on the gate and would say "unreachable"; the second is newer.
+        env.reachableByCall = listOf(false, true)
+        baby.controller.runDeviceCheck()
+        await("first probe started") { env.probed.size == 1 }
+        baby.controller.runDeviceCheck(force = true)
+        env.gate!!.countDown()
+        // The one worker ran the dropped first check before the second, so this is the second's.
+        await("the newer result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+        assertEquals(DeviceCheck.OK, baby.controller.app.value.deviceCheck)
+        assertEquals(
+            listOf(true),
+            baby.controller.app.value.deviceCheckMailboxes.map { it.reachable },
+        )
+    }
+
+    @Test
+    fun theParentDoesNotRunADeviceCheck() {
+        val env = FakeDeviceEnv()
+        val parent = unit("dc-parent", Role.PARENT, deviceChecker = DeviceChecker(env))
+        parent.controller.runDeviceCheck()
+        assertEquals(0, env.probed.size)
+        assertEquals(DeviceCheck.UNKNOWN, parent.controller.app.value.deviceCheck)
+    }
+
+    @Test
+    fun theMicrophoneIsNotSampledWhileARunHoldsIt() {
+        val env = FakeDeviceEnv()
+        val baby = unit("dc-mic", Role.BABY, deviceChecker = DeviceChecker(env))
+        baby.controller.runDeviceCheck()
+        await("idle result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+        assertEquals(1, env.micSamples.get())
+
+        // A saved record: its stored relay set is probed, not the settings list.
+        seedRecord(baby, listOf(StoredMailbox("relay", "wss://own.example")))
+        baby.controller.startMonitoring()
+        await("the run started") { baby.controller.app.value.monitoring }
+        env.probed.clear()
+        baby.controller.runDeviceCheck()
+        await("running result") { env.probed.isNotEmpty() }
+        await("published") { baby.controller.app.value.deviceCheckMailboxes.size == 1 }
+        assertEquals(1, env.micSamples.get())
+        assertEquals(listOf("wss://own.example"), env.probed.toList())
+        assertEquals("own.example", baby.controller.app.value.deviceCheckMailboxes[0].host)
+    }
+
+    @Test
+    fun aFreshResultIsReusedAndCheckAgainForcesANewOne() {
+        val env = FakeDeviceEnv()
+        val clock = FakeClock()
+        val baby = unit("dc-reuse", Role.BABY, deviceChecker = DeviceChecker(env), clock = clock)
+        baby.controller.runDeviceCheck()
+        await("the result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+        assertEquals(1, env.probed.size)
+
+        // A resume right after: no new probes and no "Checking..." state.
+        clock.advance(59_000)
+        baby.controller.runDeviceCheck()
+        assertEquals(DeviceCheck.OK, baby.controller.app.value.deviceCheck)
+        assertEquals(1, env.probed.size)
+
+        // "Check again" forces one.
+        baby.controller.runDeviceCheck(force = true)
+        await("the forced probe") { env.probed.size == 2 }
+        await("the forced result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+
+        // An old result is checked anew; an invalidation (role change) clears it.
+        clock.advance(61_000)
+        baby.controller.runDeviceCheck()
+        await("the aged probe") { env.probed.size == 3 }
+        await("the aged result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+        baby.controller.chooseRole(Role.PARENT)
+        baby.controller.chooseRole(Role.BABY)
+        assertEquals(DeviceCheck.UNKNOWN, baby.controller.app.value.deviceCheck)
+        baby.controller.runDeviceCheck()
+        await("the check after the invalidation") { env.probed.size == 4 }
+    }
+
+    @Test
+    fun startingARunCancelsTheMicSampleAndDropsTheResult() {
+        val env =
+            FakeDeviceEnv().apply {
+                micBlocks = true
+                reachable = false
+            }
+        val baby = unit("dc-cancel", Role.BABY, deviceChecker = DeviceChecker(env))
+        seedRecord(baby, listOf(StoredMailbox("relay", "wss://own.example")))
+        baby.controller.runDeviceCheck()
+        await("the sample started") { env.micStarted.count == 0L }
+        baby.controller.startMonitoring()
+        await("the sample was cancelled") { env.micCancelled.count == 0L }
+        // The start dropped the check's state at once; its late result must not come back.
+        assertEquals(DeviceCheck.UNKNOWN, baby.controller.app.value.deviceCheck)
+        // A later check (the run holds the mic, so it skips the sample) runs after the cancelled
+        // one on the same worker and publishes its own result.
+        env.reachable = true
+        env.probed.clear()
+        baby.controller.runDeviceCheck()
+        await("the next result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+        assertEquals(1, env.micSamples.get())
+        assertEquals(
+            listOf(true),
+            baby.controller.app.value.deviceCheckMailboxes.map { it.reachable },
+        )
     }
 
     private fun await(what: String, timeoutMs: Long = 15_000, cond: () -> Boolean) {
