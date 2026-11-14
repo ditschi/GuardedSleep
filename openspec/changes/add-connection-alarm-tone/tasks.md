@@ -9,9 +9,9 @@ Branch `feat/connection-alarm-tone` from `origin/main`. Commit after each task; 
 
 ## 2. Android (`apps/android`)
 
-- [ ] 2.1 `PcmSynth.render(segments, rate)` replaces `softTone`/`alarmCycle`; `TonePlayer` takes the resolved `AlarmTone` (soft once, alarm loop) and adds `preview(tone)` and `test(tone)` with a stop; a running alarm switches recipe at the next cycle. Verify: JVM tests (sample counts per recipe, `classic` renders the same samples as the old functions, preview stops on `stop()`, an alert stops a preview).
+- [ ] 2.1 `PcmSynth.render(segments, rate)` replaces `softTone`/`alarmCycle`; `TonePlayer` takes the resolved `AlarmTone` (soft once, alarm loop) and adds `preview(tone)` and `test(tone)` with a stop; a running alarm switches recipe at the next cycle. Verify: JVM tests (sample counts per recipe, `classic` renders the same samples as the old functions, preview plays at reduced gain and stops on `stop()`, an alert stops a preview).
 - [ ] 2.2 `SettingsRepository.connectionAlarmTone` (string id, read through `resolve_alarm_tone`), contract field on the parent settings model and the monitor's tone source. Verify: JVM test with an unknown stored value.
-- [ ] 2.3 UI: Settings › Alerts row `settings_alarm_tone` with the current name; picker screen `alarm_tone_picker` (radio rows `alarm_tone_<id>`, play buttons `alarm_tone_preview_<id>`, explanation, `alarm_tone_test` / stop). Parent role only. Verify: Robolectric tests; Roborazzi baselines recorded in the pinned image (report `SKIPPED` without it).
+- [ ] 2.3 UI: Settings › Alerts row `settings_alarm_tone` with the current name; picker screen `alarm_tone_picker` (radio rows `alarm_tone_<id>` in the order of design §3, Low with the hearing tag and hint, play buttons `alarm_tone_preview_<id>`, explanation, `alarm_tone_test` / stop). Parent role only. Verify: Robolectric tests; Roborazzi baselines recorded in the pinned image (report `SKIPPED` without it).
 
 ## 3. Web (`apps/web`)
 

@@ -32,7 +32,7 @@ The tone recipes and the resolution of a stored choice SHALL live in the core. A
 
 ### Requirement: Connection alarm tone preview and test
 
-Each tone SHALL be playable as a preview, and a "Test connection alarm" action SHALL play the chosen tone on the alarm stream through the chosen alert output. The picker SHALL state that noise alerts still play the child's own sound. A real alert SHALL stop any preview or test at once.
+Each tone SHALL be playable as a preview at reduced volume, and a "Test connection alarm" action SHALL play the chosen tone at full alarm volume on the alarm stream through the chosen alert output, and SHALL say so before it plays. The picker SHALL state that noise alerts still play the child's own sound. A real alert SHALL stop any preview or test at once.
 
 #### Scenario: Preview at the real volume
 
@@ -43,3 +43,8 @@ Each tone SHALL be playable as a preview, and a "Test connection alarm" action S
 
 - **WHEN** a noise event or a connection stage with sound starts while a preview or test plays
 - **THEN** the preview or test stops at once and the alert sounds as specified
+
+#### Scenario: Preview at night
+
+- **WHEN** the parent taps the play button of "Low"
+- **THEN** the Low soft tone and alarm play at reduced volume, and the button turns into Stop until the preview ends

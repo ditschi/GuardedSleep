@@ -40,9 +40,9 @@ Exact values may be tuned during implementation within the stated limits; the li
 
 ### 3. Setting, preview and test (UX)
 
-- Settings › Alerts › "Connection alarm tone" shows the current tone name. The picker lists the five tones as radio rows with a play button each, and states above the list: "For a lost connection. Noise alerts always play your child's own sound."
-- Preview: soft once, then one alarm cycle twice, on the alarm stream through the chosen alert output. Only one preview at a time; leaving the screen stops it.
-- "Test connection alarm" plays the soft tone, then the alarm for about 8 s; a Stop button ends it. A real alert stops any preview or test at once.
+- Settings › Alerts › "Connection alarm tone" shows the current tone name. The picker lists the five tones as radio rows in the order Classic, Low, Beacon, Rising, Chime, each with a plain description of how it sounds and a play button; Low carries a "Hard of hearing" tag. Above the list: "For a lost connection. Noise alerts always play the child's own sound." Below Low's row: "Hard of hearing? Choose Low." (design review 2026-11-14, `redesign-calm-ui`).
+- Preview: soft once, then one alarm cycle twice, at reduced volume (about half of the alarm volume) so a preview at night does not wake others; the play button turns into Stop while it plays. Only one preview at a time; leaving the screen stops it.
+- "Test connection alarm" states that it plays at full alarm volume, then plays the soft tone and the alarm for about 8 s on the alarm stream; a Stop button ends it. A real alert stops any preview or test at once.
 - Available only on the parent role. The browser parent needs the sound gate (one tap) as for every tone.
 - While monitoring, the setting is reachable from the monitor via Settings; a change takes effect at the next tone (a running alarm switches at its next cycle).
 
