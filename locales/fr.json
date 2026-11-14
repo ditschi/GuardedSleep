@@ -525,6 +525,31 @@
         },
         "startMode": {
           "ask": "Demander à chaque fois"
+        },
+        "alarmTone": {
+          "label": "Sonnerie d'alarme de connexion",
+          "explanation": "Pour une connexion perdue. Les alertes sonores diffusent toujours le son de l'enfant.",
+          "tagHardOfHearing": "Malentendant",
+          "hintHardOfHearing": "Malentendant ? Choisissez Grave.",
+          "name": {
+            "classic": "Classique",
+            "low": "Grave",
+            "beacon": "Balise",
+            "rising": "Montante",
+            "chime": "Carillon"
+          },
+          "desc": {
+            "classic": "Deux bips alternés. Le son habituel.",
+            "low": "Deux notes chaudes et graves, plus faciles à entendre quand les aigus s'atténuent.",
+            "beacon": "Trois bips aigus courts, puis une pause.",
+            "rising": "Quatre notes qui montent.",
+            "chime": "Trois notes douces, semblables à une cloche."
+          },
+          "play": "Écouter",
+          "playNamed": "Écouter {name}",
+          "stop": "Arrêter",
+          "test": "Tester l'alarme de connexion",
+          "testWarning": "Le test joue à pleine puissance d'alarme pendant environ 8 secondes."
         }
       },
       "fgsMissing": {

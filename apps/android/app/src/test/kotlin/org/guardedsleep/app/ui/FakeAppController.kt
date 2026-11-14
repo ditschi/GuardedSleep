@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.guardedsleep.app.pairing.TurnCredentials
 import org.guardedsleep.app.pairing.TurnServerInput
+import org.guardedsleep.app.ui.model.AlarmTonePlayback
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
@@ -295,5 +296,25 @@ class FakeAppController(
 
     override fun dismissCoach() {
         calls += "dismissCoach"
+    }
+
+    val playbackFlow = MutableStateFlow<AlarmTonePlayback>(AlarmTonePlayback.Idle)
+
+    override val alarmTonePlayback: StateFlow<AlarmTonePlayback>
+        get() = playbackFlow
+
+    override fun previewAlarmTone(id: String) {
+        calls += "previewAlarmTone:$id"
+        playbackFlow.value = AlarmTonePlayback.Preview(id)
+    }
+
+    override fun testAlarmTone(id: String) {
+        calls += "testAlarmTone:$id"
+        playbackFlow.value = AlarmTonePlayback.Test(id)
+    }
+
+    override fun stopAlarmTone() {
+        calls += "stopAlarmTone"
+        playbackFlow.value = AlarmTonePlayback.Idle
     }
 }

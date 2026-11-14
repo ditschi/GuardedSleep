@@ -525,6 +525,31 @@
         },
         "startMode": {
           "ask": "Preguntar cada vez"
+        },
+        "alarmTone": {
+          "label": "Tono de alarma de conexión",
+          "explanation": "Para una conexión perdida. Las alertas de ruido siempre reproducen el sonido del niño.",
+          "tagHardOfHearing": "Mala audición",
+          "hintHardOfHearing": "¿Mala audición? Elija Grave.",
+          "name": {
+            "classic": "Clásico",
+            "low": "Grave",
+            "beacon": "Baliza",
+            "rising": "Ascendente",
+            "chime": "Campanilla"
+          },
+          "desc": {
+            "classic": "Dos pitidos alternos. El sonido de siempre.",
+            "low": "Dos notas cálidas y graves, más fáciles de oír si se pierden los tonos agudos.",
+            "beacon": "Tres pitidos agudos cortos y una pausa.",
+            "rising": "Cuatro notas que suben.",
+            "chime": "Tres notas suaves, como de campana."
+          },
+          "play": "Reproducir",
+          "playNamed": "Reproducir {name}",
+          "stop": "Detener",
+          "test": "Probar la alarma de conexión",
+          "testWarning": "La prueba suena con el volumen máximo de alarma durante unos 8 segundos."
         }
       },
       "fgsMissing": {

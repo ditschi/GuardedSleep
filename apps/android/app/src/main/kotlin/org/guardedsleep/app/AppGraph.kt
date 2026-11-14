@@ -80,7 +80,13 @@ class AppGraph(context: Context) : PlatformServices {
         )
     override val entryPoints: EntryPoints = AppEntryPoints
     val silence = SilenceController(app, settings, entryPoints)
-    val alerts = AlertController(app, entryPoints) { settings.current.settings.language }
+    val alerts =
+        AlertController(
+            app,
+            entryPoints,
+            toneId = { settings.current.settings.connectionAlarmTone },
+            language = { settings.current.settings.language },
+        )
     val readiness = ReadinessChecker(AndroidReadinessEnv(app), settings, SystemClockSource)
 
     init {

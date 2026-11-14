@@ -28,6 +28,7 @@ import org.guardedsleep.app.ui.common.systemReduceMotion
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.Theme
+import org.guardedsleep.app.ui.screens.AlarmTonePickerScreen
 import org.guardedsleep.app.ui.screens.BabyKioskScreen
 import org.guardedsleep.app.ui.screens.BabyMonitorScreen
 import org.guardedsleep.app.ui.screens.BuildInfo
@@ -64,6 +65,7 @@ fun GuardedSleepRoot(controller: AppController) {
 private enum class Overlay {
     NONE,
     SETTINGS,
+    ALARM_TONE,
     SETUP,
 }
 
@@ -101,10 +103,15 @@ private fun AppNavigator(controller: AppController) {
                     onBack = { overlay = Overlay.SETTINGS },
                 )
             }
+        overlay == Overlay.ALARM_TONE ->
+            WithStatusBar(controller) {
+                AlarmTonePickerScreen(controller, onBack = { overlay = Overlay.SETTINGS })
+            }
         overlay == Overlay.SETTINGS ->
             WithStatusBar(controller) {
                 SettingsScreen(
                     controller,
+                    onOpenAlarmTone = { overlay = Overlay.ALARM_TONE },
                     onBack = { overlay = Overlay.NONE },
                     onOpenSetup = { overlay = Overlay.SETUP },
                     onTestAlert = {

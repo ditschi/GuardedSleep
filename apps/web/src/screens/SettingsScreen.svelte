@@ -1,9 +1,11 @@
 <script lang="ts">
   import { get } from "svelte/store";
-  import { useController, type Theme, type TurnSaveError } from "../lib/contract";
+  import { useController, type AlarmToneId, type Theme, type TurnSaveError } from "../lib/contract";
+  import { ALARM_TONE_COPY } from "../lib/alarm-tone";
   import { ENDONYMS, isLocale, LOCALES } from "../lib/i18n/bundles";
   import type { MessageKey } from "../lib/i18n/keys";
   import { t } from "../lib/i18n/store";
+  import { link } from "../lib/router";
   import { useRouter } from "../lib/router-context";
   import { storeThemeSetting } from "../lib/theme";
   import Banner from "../lib/ui/Banner.svelte";
@@ -259,6 +261,25 @@
     <p class="gs-muted" data-testid="settings_sensitivity_note">
       {$t("webScreens.settings.sensitivityBabyOnly")}
     </p>
+    <div class="gs-group" data-testid="settings_alerts">
+      <span class="gs-group__title">{$t("native.ui.settings.group.alerts")}</span>
+      <a
+        class="gs-link-row"
+        href="/settings/alarm-tone"
+        use:link={router}
+        data-testid="settings_alarm_tone"
+      >
+        <span>{$t("native.ui.settings.alarmTone.label")}</span>
+        <span class="gs-hint" data-testid="settings_alarm_tone_name">
+          {$t(
+            (
+              ALARM_TONE_COPY[$settings.connectionAlarmTone as AlarmToneId] ??
+              ALARM_TONE_COPY.classic
+            ).name,
+          )}
+        </span>
+      </a>
+    </div>
   {/if}
 
   <div class="gs-group" data-testid="settings_about">

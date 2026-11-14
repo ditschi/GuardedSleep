@@ -521,6 +521,31 @@
         },
         "startMode": {
           "ask": "Spørg hver gang"
+        },
+        "alarmTone": {
+          "label": "Alarmlyd ved mistet forbindelse",
+          "explanation": "Ved mistet forbindelse. Lydalarmer afspiller altid barnets egen lyd.",
+          "tagHardOfHearing": "Nedsat hørelse",
+          "hintHardOfHearing": "Nedsat hørelse? Vælg Lav.",
+          "name": {
+            "classic": "Klassisk",
+            "low": "Lav",
+            "beacon": "Fyrtårn",
+            "rising": "Stigende",
+            "chime": "Klokkespil"
+          },
+          "desc": {
+            "classic": "To skiftende bip. Den velkendte lyd.",
+            "low": "To varme, lave toner, som er nemmere at høre, hvis de høje toner forsvinder.",
+            "beacon": "Tre korte høje bip og en pause.",
+            "rising": "Fire toner, der stiger opad.",
+            "chime": "Tre bløde, klokkelignende toner."
+          },
+          "play": "Afspil",
+          "playNamed": "Afspil {name}",
+          "stop": "Stop",
+          "test": "Test forbindelsesalarmen",
+          "testWarning": "Testen afspilles med fuld alarmlydstyrke i cirka 8 sekunder."
         }
       },
       "fgsMissing": {

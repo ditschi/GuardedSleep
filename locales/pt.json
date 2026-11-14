@@ -521,6 +521,31 @@
         },
         "startMode": {
           "ask": "Perguntar sempre"
+        },
+        "alarmTone": {
+          "label": "Toque do alarme de ligação",
+          "explanation": "Para uma ligação perdida. Os alertas de ruído tocam sempre o som da criança.",
+          "tagHardOfHearing": "Dificuldade de audição",
+          "hintHardOfHearing": "Dificuldade de audição? Escolha Grave.",
+          "name": {
+            "classic": "Clássico",
+            "low": "Grave",
+            "beacon": "Farol",
+            "rising": "Ascendente",
+            "chime": "Sino"
+          },
+          "desc": {
+            "classic": "Dois bipes alternados. O som habitual.",
+            "low": "Duas notas quentes e graves, mais fáceis de ouvir quando os agudos se perdem.",
+            "beacon": "Três bipes agudos curtos e uma pausa.",
+            "rising": "Quatro notas que sobem.",
+            "chime": "Três notas suaves, como um sino."
+          },
+          "play": "Ouvir",
+          "playNamed": "Ouvir {name}",
+          "stop": "Parar",
+          "test": "Testar o alarme de ligação",
+          "testWarning": "O teste toca com o volume máximo do alarme durante cerca de 8 segundos."
         }
       },
       "fgsMissing": {

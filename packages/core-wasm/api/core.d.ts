@@ -1,6 +1,31 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
+ * A stretch of sound, or of silence when `partials` is empty.
+ */
+export interface ToneSegment {
+    partials: TonePartial[];
+    ms: number;
+    /**
+     * Fade in and fade out, so a tone never clicks.
+     */
+    fade_ms: number;
+}
+
+/**
+ * A tone: a soft reminder (level 2, every 10 s, and a baby device stopped on purpose) and one
+ * cycle of the looping alarm (level 3). The alarm cycle includes its trailing pause.
+ */
+export interface AlarmTone {
+    /**
+     * One of the stable ids (`AlarmToneId::as_str`).
+     */
+    id: string;
+    soft: ToneSegment[];
+    alarm: ToneSegment[];
+}
+
+/**
  * Coarse baby-phone state shown to the parent (ADR-018). Every field may be unknown (`None`).
  */
 export interface DeviceStatus {
@@ -79,6 +104,17 @@ export interface InviteMailbox {
 }
 
 /**
+ * One sine component of a segment.
+ */
+export interface TonePartial {
+    freq_hz: number;
+    /**
+     * Linear amplitude, 0..1 of full scale. The peak of a segment is the sum of its partials.
+     */
+    amplitude: number;
+}
+
+/**
  * Talk-back volume of the baby unit, a setting of the baby platform (`set_talk_back`).
  */
 export type TalkLevel = "low" | "medium" | "high";
@@ -94,10 +130,27 @@ export type PlaybackResult = "heard" | "unconfirmed" | "unknown";
 export type TalkState = { state: "requesting" } | { state: "talking"; until_ms: number } | { state: "ended"; reason: TalkEndReason } | { state: "denied"; reason: TalkDenyReason | null };
 
 /**
+ * What the picker plays: segments one after another, each partial scaled by `gain`.
+ */
+export interface AlarmToneDemo {
+    /**
+     * The resolved tone id.
+     */
+    id: string;
+    segments: ToneSegment[];
+    gain: number;
+}
+
+/**
  * Whether the baby unit lets this parent talk (`device_status.talk`, `talk-back` "Honest
  * playability").
  */
 export type TalkStatus = "on" | "off" | "muted" | "unsupported";
+
+/**
+ * Which sequence the tone picker plays.
+ */
+export type AlarmToneDemoKind = "preview" | "test";
 
 /**
  * Who talks to the child right now, from the recipient's point of view
@@ -326,6 +379,18 @@ export class WasmSession {
 }
 
 /**
+ * JSON of the `AlarmToneDemo` (segments and gain) for a stored id and `kind` (`"preview"` or
+ * `"test"`). Throws `not_our_code` for any other kind.
+ */
+export function alarmToneDemo(id: string, kind: string): string;
+
+/**
+ * JSON array of the built-in connection alarm tones (`AlarmTone[]`) in picker order. Throws
+ * `not_our_code` if serialization fails (it cannot for these types).
+ */
+export function alarmTones(): string;
+
+/**
  * Builds the v4 invite text from a JSON array of `{"kind","url"}` mailboxes (the
  * `packages/core-wasm` wrapper passes typed values). Throws the snake_case error key if the inputs
  * are not a valid invite or the protected entries alone exceed the size budget.
@@ -355,18 +420,27 @@ export function messageKeys(): string;
  */
 export function parseInvite(text: string, now_epoch_s: number, allow_dev_loopback: boolean): string;
 
+/**
+ * JSON of the `AlarmTone` for a stored id; an unknown, empty or overlong value gives `classic`.
+ * Throws `not_our_code` if serialization fails (it cannot for these types).
+ */
+export function resolveAlarmTone(id: string): string;
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_wasmlink_free: (a: number, b: number) => void;
     readonly __wbg_wasmsession_free: (a: number, b: number) => void;
+    readonly alarmToneDemo: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly alarmTones: (a: number) => void;
     readonly buildInvite: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
     readonly conformanceEval: (a: number, b: number, c: number) => void;
     readonly deriveRoomId: (a: number, b: number, c: number) => void;
     readonly filterOnlyLocal: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly messageKeys: (a: number) => void;
     readonly parseInvite: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly resolveAlarmTone: (a: number, b: number, c: number) => void;
     readonly wasmlink_handle: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmlink_new: (a: number, b: number, c: number) => void;
     readonly wasmlink_roomId: (a: number, b: number) => void;

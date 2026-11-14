@@ -521,6 +521,31 @@
         },
         "startMode": {
           "ask": "Chiedi ogni volta"
+        },
+        "alarmTone": {
+          "label": "Suono dell'allarme di connessione",
+          "explanation": "Per una connessione persa. Gli avvisi di rumore riproducono sempre il suono del bambino.",
+          "tagHardOfHearing": "Udito debole",
+          "hintHardOfHearing": "Udito debole? Scegli Basso.",
+          "name": {
+            "classic": "Classico",
+            "low": "Basso",
+            "beacon": "Faro",
+            "rising": "Crescente",
+            "chime": "Campanello"
+          },
+          "desc": {
+            "classic": "Due bip alternati. Il suono di sempre.",
+            "low": "Due note calde e basse, più facili da sentire se i toni acuti si attenuano.",
+            "beacon": "Tre bip acuti brevi, poi una pausa.",
+            "rising": "Quattro note che salgono.",
+            "chime": "Tre note morbide, simili a una campana."
+          },
+          "play": "Riproduci",
+          "playNamed": "Riproduci {name}",
+          "stop": "Interrompi",
+          "test": "Prova l'allarme di connessione",
+          "testWarning": "La prova suona al volume massimo dell'allarme per circa 8 secondi."
         }
       },
       "fgsMissing": {

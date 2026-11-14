@@ -525,6 +525,31 @@
         },
         "startMode": {
           "ask": "Jedes Mal fragen"
+        },
+        "alarmTone": {
+          "label": "Alarmton bei Verbindungsverlust",
+          "explanation": "Für eine verlorene Verbindung. Geräuschalarme spielen immer den Ton des Kindes ab.",
+          "tagHardOfHearing": "Schwerhörig",
+          "hintHardOfHearing": "Schwerhörig? Wählen Sie „Tief“.",
+          "name": {
+            "classic": "Klassisch",
+            "low": "Tief",
+            "beacon": "Leuchtfeuer",
+            "rising": "Aufsteigend",
+            "chime": "Glockenspiel"
+          },
+          "desc": {
+            "classic": "Zwei abwechselnde Pieptöne. Der vertraute Klang.",
+            "low": "Zwei warme, tiefe Töne, die auch bei nachlassendem Hörvermögen für hohe Töne gut zu hören sind.",
+            "beacon": "Drei kurze hohe Pieptöne, dann eine Pause.",
+            "rising": "Vier Töne, die nach oben steigen.",
+            "chime": "Drei weiche, glockenartige Töne."
+          },
+          "play": "Abspielen",
+          "playNamed": "{name} abspielen",
+          "stop": "Stopp",
+          "test": "Verbindungsalarm testen",
+          "testWarning": "Der Test spielt etwa 8 Sekunden lang mit voller Alarmlautstärke."
         }
       },
       "fgsMissing": {

@@ -6,6 +6,7 @@ import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.math.sqrt
 import org.guardedsleep.app.platform.BuildConfig
+import uniffi.guardedsleep_core.ToneSegment
 
 /** Little-endian PCM16 helpers; buffers are the ones libwebrtc hands to the record callback. */
 object Pcm {
@@ -81,36 +82,33 @@ class RmsWindow {
     }
 }
 
-/** Sine bursts with a short fade so tones never click. */
+/**
+ * Synthesizes the tone recipes of the core (`alarm_tone`): sine partials with a short fade in and
+ * out so a tone never clicks. A segment without partials is silence.
+ */
 object PcmSynth {
-    fun sine(
-        freqHz: Double,
-        durationMs: Int,
-        sampleRate: Int,
-        amplitude: Double,
-        fadeMs: Int = 20,
-    ): ShortArray {
-        val n = sampleRate * durationMs / 1000
-        val fade = (sampleRate * fadeMs / 1000).coerceAtLeast(1)
+    /** Renders [segments] one after another into 16-bit mono samples. */
+    fun render(segments: List<ToneSegment>, sampleRate: Int): ShortArray =
+        segments.map { segment(it, sampleRate) }.fold(ShortArray(0)) { all, part -> all + part }
+
+    /** The same samples as [render], scaled by [gain] (0..1); used by the quiet preview. */
+    fun render(segments: List<ToneSegment>, sampleRate: Int, gain: Double): ShortArray =
+        render(segments, sampleRate).also { samples ->
+            for (i in samples.indices) samples[i] = (samples[i] * gain).toInt().toShort()
+        }
+
+    private fun segment(seg: ToneSegment, sampleRate: Int): ShortArray {
+        val n = sampleRate * seg.ms.toInt() / 1000
+        if (seg.partials.isEmpty()) return ShortArray(n)
+        val fade = (sampleRate * seg.fadeMs.toInt() / 1000).coerceAtLeast(1)
         return ShortArray(n) { i ->
             val env =
                 minOf(1.0, i / fade.toDouble(), (n - 1 - i) / fade.toDouble()).coerceAtLeast(0.0)
-            (sin(2 * PI * freqHz * i / sampleRate) * amplitude * env * Short.MAX_VALUE)
-                .toInt()
-                .toShort()
+            var sum = 0.0
+            for (p in seg.partials) sum += sin(2 * PI * p.freqHz * i / sampleRate) * p.amplitude
+            (sum * env * Short.MAX_VALUE).toInt().coerceIn(-32768, 32767).toShort()
         }
     }
-
-    /** Two alternating tones, one second per cycle: the level-3 "connection lost" alarm. */
-    fun alarmCycle(sampleRate: Int): ShortArray {
-        val a = sine(880.0, 400, sampleRate, 0.8)
-        val b = sine(660.0, 400, sampleRate, 0.8)
-        val gap = ShortArray(sampleRate * 200 / 1000)
-        return a + gap + b + gap
-    }
-
-    /** The soft level-2 tone: short, low amplitude. */
-    fun softTone(sampleRate: Int): ShortArray = sine(660.0, 450, sampleRate, 0.35, fadeMs = 80)
 }
 
 /**

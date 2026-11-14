@@ -1,4 +1,5 @@
-import type { CauseHint, LinkPhase } from "../contract";
+import type { Readable } from "svelte/store";
+import type { AlarmTonePlayback, CauseHint, LinkPhase } from "../contract";
 
 export type NoiseKind = "new" | "continue";
 
@@ -39,4 +40,18 @@ export interface AlertSink {
   notice(notice: Notice): void;
   /** Monitoring ended: cancel every loop. */
   clear(): void;
+}
+
+/**
+ * The connection alarm tone side of the web alert player (`add-connection-alarm-tone`): which tone
+ * is chosen and the preview and test of the picker. Previews need the sound gate; a real alert
+ * always stops them.
+ */
+export interface AlarmToneControl {
+  /** The stored choice; a running alarm switches at its next cycle. */
+  setAlarmTone(id: string): void;
+  preview(id: string): void;
+  test(id: string): void;
+  stopDemo(): void;
+  readonly playback: Readable<AlarmTonePlayback>;
 }

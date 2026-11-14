@@ -111,7 +111,7 @@ Concept and goals of ADR-013 are decided. The UX review of the ambient bar, the 
 
 - `DEFERRED` (Phase 2) With multi-parent: failover banner and escalation to another parent when the primary parent stops acknowledging heartbeats.
 - `IDEA` Alerts on a paired smartwatch (vibration and a short "noise" or "connection lost" notice on the wrist), so the parent notices a noise event with the phone in a bag or pocket.
-- `IDEA` Configurable alert behaviour beyond the built chain (which combination of sound, vibration and screen per alert type), vibration strength or pattern, and a cool-down between repeated alerts.
+- `IDEA` Configurable alert behaviour beyond the built chain (which combination of sound, vibration and screen per alert type), vibration strength or pattern, and a cool-down between repeated alerts. Built (`add-connection-alarm-tone`): the choice of the connection alarm tone; open here: a separate noise-alert sound, per-alert-type choice of sound, vibration pattern and cool-down.
 - `IDEA` Connection-context alert policy: full alert chain on unmetered Wi-Fi, a lighter chain on metered or cellular data.
 - `IDEA` Opt-out of the Do Not Disturb override with a clear warning that alerts will be silent when the phone is muted.
 - `IDEA` Change the baby unit's sensitivity remotely from the parent (ADR-018 T2).

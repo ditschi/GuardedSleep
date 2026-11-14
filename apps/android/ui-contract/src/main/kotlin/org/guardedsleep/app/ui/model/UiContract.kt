@@ -409,7 +409,40 @@ data class SettingsState(
     val talkChime: Boolean = true,
     /** Parent: the one-time "hold to talk" coach mark was shown. */
     val talkCoachSeen: Boolean = false,
+    /**
+     * Parent: the connection alarm tone, always one of [AlarmTones.IDS] ([AlarmTones.normalize]
+     * keeps an unknown stored value from reaching the UI; the core resolves it again for sound).
+     */
+    val connectionAlarmTone: String = AlarmTones.DEFAULT,
 )
+
+/**
+ * The connection alarm tones the picker offers, in picker order. The recipes and the fallback live
+ * in the core (`alarm_tones()`); a platform test keeps this list equal to it.
+ */
+object AlarmTones {
+    const val DEFAULT = "classic"
+    val IDS = listOf("classic", "low", "beacon", "rising", "chime")
+
+    /** The tone that carries best for people who hear high tones poorly (picker tag and hint). */
+    const val HARD_OF_HEARING = "low"
+
+    /**
+     * A stored or chosen id as the UI may show it: a known id, otherwise the default. The sound
+     * itself always goes through the core's `resolve_alarm_tone` (platform `AlertController`), so
+     * this check can never make an alarm silent.
+     */
+    fun normalize(id: String?): String = id?.takeIf { it in IDS } ?: DEFAULT
+}
+
+/** What the alarm tone picker plays right now (a preview or the full-volume test). */
+sealed interface AlarmTonePlayback {
+    data object Idle : AlarmTonePlayback
+
+    data class Preview(val id: String) : AlarmTonePlayback
+
+    data class Test(val id: String) : AlarmTonePlayback
+}
 
 /** Outcome of [AppController.setTurnServer]. */
 enum class TurnSaveResult {
@@ -631,4 +664,17 @@ interface AppController {
 
     /** Baby: an adult opened the talk-back settings (ends the "may not be audible" warning). */
     fun talkSettingsOpened()
+
+    // Connection alarm tone (`add-connection-alarm-tone`).
+    /** Parent: what the picker plays now. */
+    val alarmTonePlayback: StateFlow<AlarmTonePlayback>
+
+    /** Parent: plays the soft tone and two alarm cycles of tone [id] at reduced volume. */
+    fun previewAlarmTone(id: String)
+
+    /** Parent: plays tone [id] at full alarm volume on the alarm stream for about 8 seconds. */
+    fun testAlarmTone(id: String)
+
+    /** Parent: ends a running preview or test. */
+    fun stopAlarmTone()
 }

@@ -1,5 +1,13 @@
 import type { Cancel, Timers } from "./clock";
-import type { AlertSink, LinkSnapshot, NoiseKind, Notice } from "./alert-sink";
+import type {
+  AlarmTone,
+  AlarmToneDemo,
+  AlarmToneDemoKind,
+  ToneSegment,
+} from "@guardedsleep/core-wasm";
+import { writable, type Readable } from "svelte/store";
+import { DEFAULT_ALARM_TONE, type AlarmTonePlayback } from "../contract";
+import type { AlarmToneControl, AlertSink, LinkSnapshot, NoiseKind, Notice } from "./alert-sink";
 import { LEVEL2_TONE_INTERVAL_MS } from "./policy";
 
 /** How often the analysers are read; shorter than their window so no audio is skipped. */
@@ -7,8 +15,6 @@ const METER_SAMPLE_MS = 20;
 const METER_FFT_SIZE = 1024;
 const PROBE_FREQ_HZ = 1000;
 const PROBE_AMPLITUDE = 0.4;
-/** One cycle of the level-3 alarm: two 400 ms tones with gaps. */
-const ALARM_CYCLE_MS = 1_200;
 
 /**
  * RMS over everything seen since the last `drain` (0..1). An `AnalyserNode` only exposes its latest
@@ -314,20 +320,40 @@ export function tonePlanForLink(snapshot: LinkSnapshot): TonePlan {
 export interface AlertPlayerDeps {
   gate: SoundGate;
   timers: Timers;
+  /** The core's `resolve_alarm_tone`: an unknown id gives the default tone, never silence. */
+  resolveTone(id: string): AlarmTone;
+  /** The core's `alarm_tone_demo`: the preview or test sequence of a tone. */
+  alarmToneDemo(id: string, kind: AlarmToneDemoKind): AlarmToneDemo;
 }
+
+const segmentsMs = (segments: readonly ToneSegment[]): number =>
+  segments.reduce((sum, s) => sum + s.ms, 0);
 
 /**
  * Parent alert tones. The baby's own audio is the noise alert (parent-alerts spec), so a noise
  * event adds no tone; tones are for the connection levels, a stopped baby device and the local
  * test. Nothing sounds before the unlock gesture; a loop that began before it starts sounding at
- * its next beat after the unlock.
+ * its next beat after the unlock. The recipes come from the core (`alarm_tone`); this class only
+ * schedules their sine segments. A real tone always stops a preview or test first.
  */
-export class AlertPlayer implements AlertSink {
+export class AlertPlayer implements AlertSink, AlarmToneControl {
   private plan: TonePlan = { toneEveryMs: null, continuousAlarm: false };
   private toneLoop: Cancel | null = null;
   private alarmLoop: Cancel | null = null;
+  private tone: AlarmTone;
+  private demo: { stop: Cancel; nodes: Array<{ osc: OscillatorNode; env: GainNode }> } | null =
+    null;
+  private readonly playbackStore = writable<AlarmTonePlayback>({ kind: "idle" });
+  readonly playback: Readable<AlarmTonePlayback> = this.playbackStore;
 
-  constructor(private readonly deps: AlertPlayerDeps) {}
+  constructor(private readonly deps: AlertPlayerDeps) {
+    this.tone = deps.resolveTone(DEFAULT_ALARM_TONE);
+  }
+
+  /** The stored choice changed; a running alarm switches at the start of its next cycle. */
+  setAlarmTone(id: string): void {
+    this.tone = this.deps.resolveTone(id);
+  }
 
   linkState(snapshot: LinkSnapshot): void {
     const next = tonePlanForLink(snapshot);
@@ -342,10 +368,7 @@ export class AlertPlayer implements AlertSink {
     if (next.continuousAlarm !== this.plan.continuousAlarm) {
       this.alarmLoop?.();
       this.alarmLoop = null;
-      if (next.continuousAlarm) {
-        this.alarmCycle();
-        this.alarmLoop = this.deps.timers.every(() => this.alarmCycle(), ALARM_CYCLE_MS);
-      }
+      if (next.continuousAlarm) this.alarmBeat();
     }
     this.plan = next;
   }
@@ -376,19 +399,98 @@ export class AlertPlayer implements AlertSink {
 
   /** The test tone of a local test alert. */
   testTone(): void {
-    this.tone(PROBE_FREQ_HZ, 0.4, 0.8, 0.05);
+    this.stopDemo();
+    this.sine(PROBE_FREQ_HZ, 0.4, 0.8, 0.05);
+  }
+
+  /** Preview: the soft tone, then two alarm cycles, at reduced volume. Needs the sound gate. */
+  preview(id: string): void {
+    this.startDemo("preview", this.deps.alarmToneDemo(id, "preview"));
+  }
+
+  /** Test: the soft tone, then the alarm for about 8 seconds, at full volume. Needs the gate. */
+  test(id: string): void {
+    this.startDemo("test", this.deps.alarmToneDemo(id, "test"));
+  }
+
+  /** Stops a running preview or test at once. */
+  stopDemo(): void {
+    const demo = this.demo;
+    if (!demo) return;
+    this.demo = null;
+    demo.stop();
+    for (const { osc, env } of demo.nodes) {
+      try {
+        osc.stop();
+      } catch {
+        // Already ended.
+      }
+      osc.disconnect();
+      env.disconnect();
+    }
+    this.playbackStore.set({ kind: "idle" });
+  }
+
+  private startDemo(kind: "preview" | "test", demo: AlarmToneDemo): void {
+    const { id, segments, gain } = demo;
+    // Silent before the unlock gesture, and never over a real alarm.
+    if (!this.deps.gate.unlocked || this.alarmLoop) return;
+    this.stopDemo();
+    const nodes: Array<{ osc: OscillatorNode; env: GainNode }> = [];
+    this.schedule(segments, gain, nodes);
+    const stop = this.deps.timers.after(() => {
+      if (this.demo?.nodes === nodes) this.stopDemo();
+    }, segmentsMs(segments));
+    this.demo = { stop, nodes };
+    this.playbackStore.set({ kind, id });
   }
 
   private softTone(): void {
-    this.tone(660, 0.35, 0.45, 0.08);
+    this.stopDemo();
+    this.schedule(this.tone.soft, 1);
   }
 
-  private alarmCycle(): void {
-    this.tone(880, 0.8, 0.4, 0.02, 0);
-    this.tone(660, 0.8, 0.4, 0.02, 0.6);
+  /** One alarm cycle now; the next one is planned with the then-current tone's length. */
+  private alarmBeat(): void {
+    this.stopDemo();
+    this.schedule(this.tone.alarm, 1);
+    this.alarmLoop = this.deps.timers.after(
+      () => this.alarmBeat(),
+      Math.max(1, segmentsMs(this.tone.alarm)),
+    );
   }
 
-  private tone(freq: number, amplitude: number, seconds: number, fade: number, delay = 0): void {
+  /** Schedules the segments one after another, starting now. */
+  private schedule(
+    segments: readonly ToneSegment[],
+    gain: number,
+    track?: Array<{ osc: OscillatorNode; env: GainNode }>,
+  ): void {
+    let at = 0;
+    for (const segment of segments) {
+      const seconds = segment.ms / 1000;
+      for (const partial of segment.partials) {
+        this.sine(
+          partial.freq_hz,
+          partial.amplitude * gain,
+          seconds,
+          segment.fade_ms / 1000,
+          at,
+          track,
+        );
+      }
+      at += seconds;
+    }
+  }
+
+  private sine(
+    freq: number,
+    amplitude: number,
+    seconds: number,
+    fade: number,
+    delay = 0,
+    track?: Array<{ osc: OscillatorNode; env: GainNode }>,
+  ): void {
     if (!this.deps.gate.unlocked) return;
     const ctx = this.deps.gate.context();
     const osc = ctx.createOscillator();
@@ -404,6 +506,7 @@ export class AlertPlayer implements AlertSink {
     env.connect(this.deps.gate.master());
     osc.start(t0);
     osc.stop(t0 + seconds);
+    track?.push({ osc, env });
     osc.onended = () => {
       osc.disconnect();
       env.disconnect();

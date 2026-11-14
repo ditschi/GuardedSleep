@@ -521,6 +521,31 @@
         },
         "startMode": {
           "ask": "Fråga varje gång"
+        },
+        "alarmTone": {
+          "label": "Larmsignal vid förlorad anslutning",
+          "explanation": "För en förlorad anslutning. Ljudlarm spelar alltid upp barnets egna ljud.",
+          "tagHardOfHearing": "Hörselnedsättning",
+          "hintHardOfHearing": "Hörselnedsättning? Välj Låg.",
+          "name": {
+            "classic": "Klassisk",
+            "low": "Låg",
+            "beacon": "Fyr",
+            "rising": "Stigande",
+            "chime": "Klockspel"
+          },
+          "desc": {
+            "classic": "Två växlande pip. Det välbekanta ljudet.",
+            "low": "Två varma, låga toner som är lättare att höra när höga toner försvinner.",
+            "beacon": "Tre korta höga pip, sedan en paus.",
+            "rising": "Fyra toner som stiger uppåt.",
+            "chime": "Tre mjuka, klockliknande toner."
+          },
+          "play": "Spela",
+          "playNamed": "Spela {name}",
+          "stop": "Stoppa",
+          "test": "Testa anslutningslarmet",
+          "testWarning": "Testet spelas med full larmvolym i cirka 8 sekunder."
         }
       },
       "fgsMissing": {

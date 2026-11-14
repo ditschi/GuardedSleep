@@ -521,6 +521,31 @@
         },
         "startMode": {
           "ask": "Her seferinde sor"
+        },
+        "alarmTone": {
+          "label": "Bağlantı alarmı sesi",
+          "explanation": "Kaybolan bağlantı için. Gürültü uyarıları her zaman çocuğun kendi sesini çalar.",
+          "tagHardOfHearing": "İşitme güçlüğü",
+          "hintHardOfHearing": "İşitme güçlüğü mü var? Alçak'ı seçin.",
+          "name": {
+            "classic": "Klasik",
+            "low": "Alçak",
+            "beacon": "Fener",
+            "rising": "Yükselen",
+            "chime": "Çan"
+          },
+          "desc": {
+            "classic": "Dönüşümlü iki bip. Bildik ses.",
+            "low": "Yüksek sesler azaldığında bile daha kolay duyulan iki sıcak, alçak nota.",
+            "beacon": "Üç kısa yüksek bip, ardından bir duraklama.",
+            "rising": "Yukarı doğru çıkan dört nota.",
+            "chime": "Çan gibi üç yumuşak nota."
+          },
+          "play": "Çal",
+          "playNamed": "{name} çal",
+          "stop": "Durdur",
+          "test": "Bağlantı alarmını dene",
+          "testWarning": "Deneme yaklaşık 8 saniye boyunca tam alarm ses düzeyinde çalar."
         }
       },
       "fgsMissing": {

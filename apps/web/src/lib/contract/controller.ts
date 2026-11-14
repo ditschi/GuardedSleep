@@ -1,5 +1,6 @@
 import type { Readable } from "svelte/store";
 import type {
+  AlarmTonePlayback,
   AppState,
   BabyMonitorState,
   DeviceBattery,
@@ -45,6 +46,9 @@ export interface AppController {
    * the baby device); the talk models themselves are in `parent` and `baby`.
    */
   readonly webTalk: Readable<WebTalkState>;
+
+  /** Parent: what the alarm tone picker plays now (`add-connection-alarm-tone`). */
+  readonly alarmTonePlayback: Readable<AlarmTonePlayback>;
 
   /** Sets the session role; `makeDefault` also stores it as the start mode. */
   chooseRole(role: Role, makeDefault?: boolean): void;
@@ -120,6 +124,15 @@ export interface AppController {
   // Baby
   setKioskLocked(locked: boolean): void;
   dismissSilenceRestoredNotice(): void;
+  /**
+   * Parent: previews the tone with this id (soft once, then two alarm cycles) at reduced volume.
+   * Call it from a click handler: it unlocks the sound first.
+   */
+  previewAlarmTone(id: string): void;
+  /** Parent: plays tone `id` at full volume for about 8 seconds. Call it from a click handler. */
+  testAlarmTone(id: string): void;
+  /** Parent: ends a running preview or test. */
+  stopAlarmTone(): void;
   /** Baby: "Play chime" in the settings, at the chosen level. */
   playTalkChimeSample(): void;
   /** Baby: an adult opened the talk-back settings (ends the "may not be audible" warning). */

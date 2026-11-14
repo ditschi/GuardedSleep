@@ -521,6 +521,31 @@
         },
         "startMode": {
           "ask": "Ptát se pokaždé"
+        },
+        "alarmTone": {
+          "label": "Tón alarmu ztráty spojení",
+          "explanation": "Pro ztracené spojení. Zvukové výstrahy vždy přehrají zvuk dítěte.",
+          "tagHardOfHearing": "Nedoslýchavost",
+          "hintHardOfHearing": "Nedoslýcháte? Zvolte Hluboký.",
+          "name": {
+            "classic": "Klasický",
+            "low": "Hluboký",
+            "beacon": "Maják",
+            "rising": "Stoupající",
+            "chime": "Zvonkohra"
+          },
+          "desc": {
+            "classic": "Dvě střídající se pípnutí. Známý zvuk.",
+            "low": "Dva teplé, hluboké tóny, které jsou lépe slyšet, když ubývají vysoké tóny.",
+            "beacon": "Tři krátká vysoká pípnutí a pauza.",
+            "rising": "Čtyři tóny stoupající nahoru.",
+            "chime": "Tři jemné tóny podobné zvonku."
+          },
+          "play": "Přehrát",
+          "playNamed": "Přehrát: {name}",
+          "stop": "Zastavit",
+          "test": "Vyzkoušet alarm spojení",
+          "testWarning": "Test hraje s plnou hlasitostí alarmu asi 8 sekund."
         }
       },
       "fgsMissing": {
