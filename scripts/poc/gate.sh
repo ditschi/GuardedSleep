@@ -192,13 +192,6 @@ ac12() {
 		log "AC-12 skipped: no maestro"
 		return 0
 	}
-	# Blocked (gate-ui-journeys design §7): both emulators are 10.0.2.15, so ICE only connects with
-	# relay-only media, which the UI cannot switch and the design forbids adding a debug seam for. The
-	# journey is therefore off until that is decided; GATE_UI_JOURNEY=1 (or GATE_ONLY=ui) runs it anyway.
-	if [[ "${GATE_UI_JOURNEY:-0}" != 1 && "${GATE_ONLY:-}" != ui ]]; then
-		echo "NOTE AC-12 — UI journey disabled: blocked on relay-only media (design §7); GATE_UI_JOURNEY=1 runs it" | tee -a "$OUT/summary.txt"
-		return 0
-	fi
 	local t_start code
 	t_start="$(date +%s)"
 	log "AC-12 UI journey: onboarding, own relay and TURN, pairing by pasted code"
@@ -209,6 +202,13 @@ ac12() {
 	local turn_env=("RELAY=$SIGNAL" "TURN=$TURN_URL" TURN_USER=poc TURN_PASS=poc)
 	maestro_run "$BABY" journey-setup.yaml ROLE_TAG=role_baby "${turn_env[@]}" || fail AC-12 "baby onboarding or Settings failed"
 	maestro_run "$PARENT" journey-setup.yaml ROLE_TAG=role_parent "${turn_env[@]}" || fail AC-12 "parent onboarding or Settings failed"
+	# Owner exception (gate-ui-journeys design §2): both emulators are 10.0.2.15, so ICE only connects through
+	# the gate's TURN, which the journey set in Settings. The UI has no relay-only switch; this debug-only
+	# extra of DebugLaunchActivity sets that one network knob in the running app process (no URL, TURN,
+	# key or pairing), nothing else of the journey bypasses the UI.
+	for s in "$BABY" "$PARENT"; do
+		adb -s "$s" shell am start -n "$PKG/$DEBUG_LAUNCH" --es relay_only true >/dev/null
+	done
 	maestro_run "$BABY" journey-baby-code.yaml || fail AC-12 "baby did not show its code as text"
 	code="$(read_baby_code)" || code=""
 	[[ "$code" == \{* ]] || fail AC-12 "the baby's code could not be read from the screen"

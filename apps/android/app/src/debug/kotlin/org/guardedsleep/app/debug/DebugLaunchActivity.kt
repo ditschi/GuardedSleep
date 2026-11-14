@@ -17,6 +17,8 @@ import org.guardedsleep.app.ui.model.TalkVolume
  * Starts monitoring as if the phones were paired, for the emulator gate. Extras: role
  * (baby|parent), psk_b64url, signal_urls (comma separated), turn_url/turn_user/turn_pass,
  * relay_only, auto_listen, heartbeat_interval_ms, alarm_after_ms, noise_hold_ms, talk_volume.
+ * With only `relay_only` set (no role, psk or signal_urls) it changes that one knob and does nothing
+ * else: the UI journey (AC-12) pairs through the real screens and needs relay-only media on emulators.
  * Protected by the DUMP permission (adb shell only). The PSK is read from the extras and never
  * logged.
  */
@@ -27,6 +29,19 @@ class DebugLaunchActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val e = intent.extras
+        if (
+            e != null &&
+                e.containsKey("relay_only") &&
+                !e.containsKey("role") &&
+                !e.containsKey("psk_b64url") &&
+                !e.containsKey("signal_urls")
+        ) {
+            DebugOptions.setRelayOnly(
+                e.getString("relay_only")?.toBooleanStrictOrNull() ?: e.getBoolean("relay_only")
+            )
+            finish()
+            return
+        }
         val role =
             when (e?.getString("role")) {
                 "baby" -> Role.BABY
