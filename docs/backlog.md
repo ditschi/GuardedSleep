@@ -134,6 +134,7 @@ Concept and goals of ADR-013 are decided. The UX review of the ambient bar, the 
 - `IDEA` About/FAQ: hardware vs software baby monitors and range expectations (Wi-Fi, hotspot, internet).
 - `IDEA` Responsive layout for tablets.
 - `IDEA` First-run coach marks on the parent monitoring screen (alpha-ux-flows §3.2 step 4): designed and screenshotted, never wired (`coachPending` is never set, `dismissCoach` is an explicit no-op; found by `ui-journey-tests`, 2026-11-14). Owner to decide: build or remove.
+- `IDEA` "Last used" line on the home card: the screen renders `AppState.lastUsedWallMs`, but `LinkController` never sets it, so the line never shows (found by `ui-journey-tests`, 2026-11-14); owner to decide whether to write it (when monitoring last stopped) or drop the line.
 
 ### ui-appearance
 
