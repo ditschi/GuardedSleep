@@ -1,6 +1,7 @@
 package org.guardedsleep.app.link
 
 import java.security.SecureRandom
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -99,6 +100,15 @@ class LinkController(
     private val chimePreview: TalkChimePreview = TalkChimePreview {},
     /** Baby: the device check of the setup screen; null (previews, tests) leaves it unknown. */
     private val deviceChecker: DeviceChecker? = null,
+    // Executor seams: production keeps one daemon thread each; the journey tests pass the virtual
+    // scheduler so no work runs outside the test thread.
+    private val deviceCheckIo: ExecutorService = Executors.newSingleThreadExecutor { r ->
+        Thread(r, "gs-device-check").apply { isDaemon = true }
+    },
+    /** The sealed TURN entry is written here so the caller never blocks. */
+    private val turnIo: ExecutorService = Executors.newSingleThreadExecutor { r ->
+        Thread(r, "gs-turn-io").apply { isDaemon = true }
+    },
 ) : AppController {
     private val _app = MutableStateFlow(AppState())
 
@@ -111,9 +121,6 @@ class LinkController(
     private var deviceCheckInFlight = false
     private var deviceCheckAtMs = 0L
     private val appLock = Any()
-    private val deviceCheckIo = Executors.newSingleThreadExecutor { r ->
-        Thread(r, "gs-device-check").apply { isDaemon = true }
-    }
 
     /**
      * The pairing this session uses: the user's choice while it still exists, else the default
@@ -135,11 +142,8 @@ class LinkController(
     private val pairingStoreOrNull: PairingStore?
         get() = settingsRepo.current.role?.let { pairings.store(it, activeId(it)) }
 
-    // The sealed TURN entry; the disk copy is written on [turnIo] so the caller never blocks.
+    // The sealed TURN entry; the disk copy is written on [turnIo].
     @Volatile private var turn: TurnCredentials? = turnStore.load()
-    private val turnIo = Executors.newSingleThreadExecutor { r ->
-        Thread(r, "gs-turn-io").apply { isDaemon = true }
-    }
     private val _settings = MutableStateFlow(withTurn(settingsRepo.current.settings, turn))
     private val _pairing = MutableStateFlow<PairingState?>(null)
 
