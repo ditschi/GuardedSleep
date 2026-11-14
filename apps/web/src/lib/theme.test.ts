@@ -132,9 +132,9 @@ function tokens(selector: string): Map<string, string> {
   const out = new Map<string, string>();
   const css = themeCss.replace(/\/\*[\s\S]*?\*\//g, "");
   const rules = css.matchAll(/([^{}]+)\{([^{}]*)\}/g);
-  for (const [, sel, body] of rules) {
+  for (const [, sel = "", body = ""] of rules) {
     if (!sel.split(",").some((part) => part.trim() === selector)) continue;
-    for (const [, name, value] of body.matchAll(/(--[\w-]+):\s*([^;]+);/g)) {
+    for (const [, name = "", value = ""] of body.matchAll(/(--[\w-]+):\s*([^;]+);/g)) {
       out.set(name, value.trim());
     }
   }
@@ -150,8 +150,9 @@ function luminance(hex: string): number {
 }
 
 function contrast(a: string, b: string): number {
-  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
-  return (hi + 0.05) / (lo + 0.05);
+  const la = luminance(a);
+  const lb = luminance(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
 }
 
 describe("colour scheme tokens", () => {
