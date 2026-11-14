@@ -1,5 +1,10 @@
 import type { Cancel, Timers } from "./clock";
-import type { AlarmTone, ToneSegment } from "@guardedsleep/core-wasm";
+import type {
+  AlarmTone,
+  AlarmToneDemo,
+  AlarmToneDemoKind,
+  ToneSegment,
+} from "@guardedsleep/core-wasm";
 import { writable, type Readable } from "svelte/store";
 import { DEFAULT_ALARM_TONE, type AlarmTonePlayback } from "../contract";
 import type { AlarmToneControl, AlertSink, LinkSnapshot, NoiseKind, Notice } from "./alert-sink";
@@ -317,14 +322,9 @@ export interface AlertPlayerDeps {
   timers: Timers;
   /** The core's `resolve_alarm_tone`: an unknown id gives the default tone, never silence. */
   resolveTone(id: string): AlarmTone;
+  /** The core's `alarm_tone_demo`: the preview or test sequence of a tone. */
+  alarmToneDemo(id: string, kind: AlarmToneDemoKind): AlarmToneDemo;
 }
-
-/** Gap between the soft tone and the alarm in a preview or test. */
-const DEMO_PAUSE_MS = 300;
-/** The preview plays at about half of the alarm volume so it does not wake the house. */
-const PREVIEW_GAIN = 0.5;
-const PREVIEW_CYCLES = 2;
-const TEST_MS = 8_000;
 
 const segmentsMs = (segments: readonly ToneSegment[]): number =>
   segments.reduce((sum, s) => sum + s.ms, 0);
@@ -405,27 +405,12 @@ export class AlertPlayer implements AlertSink, AlarmToneControl {
 
   /** Preview: the soft tone, then two alarm cycles, at reduced volume. Needs the sound gate. */
   preview(id: string): void {
-    const tone = this.deps.resolveTone(id);
-    const segments = [
-      ...tone.soft,
-      pause(),
-      ...Array.from({ length: PREVIEW_CYCLES }, () => tone.alarm).flat(),
-    ];
-    this.startDemo(tone.id, "preview", segments, PREVIEW_GAIN);
+    this.startDemo("preview", this.deps.alarmToneDemo(id, "preview"));
   }
 
   /** Test: the soft tone, then the alarm for about 8 seconds, at full volume. Needs the gate. */
   test(id: string): void {
-    const tone = this.deps.resolveTone(id);
-    const cycleMs = Math.max(1, segmentsMs(tone.alarm));
-    const lead = segmentsMs(tone.soft) + DEMO_PAUSE_MS;
-    const cycles = Math.max(1, Math.ceil((TEST_MS - lead) / cycleMs));
-    const segments = [
-      ...tone.soft,
-      pause(),
-      ...Array.from({ length: cycles }, () => tone.alarm).flat(),
-    ];
-    this.startDemo(tone.id, "test", segments, 1);
+    this.startDemo("test", this.deps.alarmToneDemo(id, "test"));
   }
 
   /** Stops a running preview or test at once. */
@@ -446,12 +431,8 @@ export class AlertPlayer implements AlertSink, AlarmToneControl {
     this.playbackStore.set({ kind: "idle" });
   }
 
-  private startDemo(
-    id: string,
-    kind: "preview" | "test",
-    segments: readonly ToneSegment[],
-    gain: number,
-  ): void {
+  private startDemo(kind: "preview" | "test", demo: AlarmToneDemo): void {
+    const { id, segments, gain } = demo;
     // Silent before the unlock gesture, and never over a real alarm.
     if (!this.deps.gate.unlocked || this.alarmLoop) return;
     this.stopDemo();
@@ -531,8 +512,4 @@ export class AlertPlayer implements AlertSink, AlarmToneControl {
       env.disconnect();
     };
   }
-}
-
-function pause(): ToneSegment {
-  return { partials: [], ms: DEMO_PAUSE_MS, fade_ms: 0 };
 }

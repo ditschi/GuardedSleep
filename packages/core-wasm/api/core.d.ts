@@ -130,10 +130,27 @@ export type PlaybackResult = "heard" | "unconfirmed" | "unknown";
 export type TalkState = { state: "requesting" } | { state: "talking"; until_ms: number } | { state: "ended"; reason: TalkEndReason } | { state: "denied"; reason: TalkDenyReason | null };
 
 /**
+ * What the picker plays: segments one after another, each partial scaled by `gain`.
+ */
+export interface AlarmToneDemo {
+    /**
+     * The resolved tone id.
+     */
+    id: string;
+    segments: ToneSegment[];
+    gain: number;
+}
+
+/**
  * Whether the baby unit lets this parent talk (`device_status.talk`, `talk-back` "Honest
  * playability").
  */
 export type TalkStatus = "on" | "off" | "muted" | "unsupported";
+
+/**
+ * Which sequence the tone picker plays.
+ */
+export type AlarmToneDemoKind = "preview" | "test";
 
 /**
  * Who talks to the child right now, from the recipient's point of view
@@ -350,6 +367,12 @@ export class WasmSession {
 }
 
 /**
+ * JSON of the `AlarmToneDemo` (segments and gain) for a stored id and `kind` (`"preview"` or
+ * `"test"`). Throws `not_our_code` for any other kind.
+ */
+export function alarmToneDemo(id: string, kind: string): string;
+
+/**
  * JSON array of the built-in connection alarm tones (`AlarmTone[]`) in picker order.
  */
 export function alarmTones(): string;
@@ -395,6 +418,7 @@ export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_wasmlink_free: (a: number, b: number) => void;
     readonly __wbg_wasmsession_free: (a: number, b: number) => void;
+    readonly alarmToneDemo: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly alarmTones: (a: number) => void;
     readonly buildInvite: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
     readonly conformanceEval: (a: number, b: number, c: number) => void;
@@ -409,9 +433,9 @@ export interface InitOutput {
     readonly wasmsession_handle: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmsession_new: (a: number, b: number, c: number) => void;
     readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
-    readonly __wbindgen_export: (a: number, b: number, c: number) => void;
-    readonly __wbindgen_export2: (a: number, b: number) => number;
-    readonly __wbindgen_export3: (a: number, b: number, c: number, d: number) => number;
+    readonly __wbindgen_export: (a: number, b: number) => number;
+    readonly __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
+    readonly __wbindgen_export3: (a: number, b: number, c: number) => void;
 }
 
 export type SyncInitInput = BufferSource | WebAssembly.Module;

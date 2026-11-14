@@ -1,5 +1,7 @@
 import type {
   AlarmTone,
+  AlarmToneDemo,
+  AlarmToneDemoKind,
   BuildInviteResult,
   InviteMailbox,
   LinkAction,
@@ -30,6 +32,7 @@ export interface RawCoreModule {
   filterOnlyLocal(mailboxesJson: string, projectHost: string): string;
   alarmTones(): string;
   resolveAlarmTone(id: string): string;
+  alarmToneDemo(id: string, kind: string): string;
   conformanceEval(caseJson: string): string;
 }
 
@@ -66,6 +69,8 @@ export interface CoreApi {
   alarmTones(): AlarmTone[];
   /** The tone for a stored id; an unknown, empty or overlong value gives `classic` (never silent). */
   resolveAlarmTone(id: string): AlarmTone;
+  /** What the picker plays for tone `id`: segments in order and the gain (preview 0.5, test 1). */
+  alarmToneDemo(id: string, kind: AlarmToneDemoKind): AlarmToneDemo;
   /** Evaluates one `vectors/conformance.json` case; the result is JSON, `{error}` for a bad case. */
   conformanceEval(caseJson: string): unknown;
 }
@@ -118,6 +123,7 @@ export function createCoreApi(mod: RawCoreModule, options: CoreOptions = {}): Co
     },
     alarmTones: () => JSON.parse(mod.alarmTones()) as AlarmTone[],
     resolveAlarmTone: (id) => JSON.parse(mod.resolveAlarmTone(id)) as AlarmTone,
+    alarmToneDemo: (id, kind) => JSON.parse(mod.alarmToneDemo(id, kind)) as AlarmToneDemo,
     conformanceEval: (caseJson) => JSON.parse(mod.conformanceEval(caseJson)) as unknown,
   };
 }

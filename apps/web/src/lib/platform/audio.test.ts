@@ -289,7 +289,12 @@ describe("AlertPlayer", () => {
     const ctx = new FakeAudioContext();
     const gate = gateOf(ctx);
     const time = new FakeTime();
-    const player = new AlertPlayer({ gate, timers: time, resolveTone: core.resolveAlarmTone });
+    const player = new AlertPlayer({
+      gate,
+      timers: time,
+      resolveTone: core.resolveAlarmTone,
+      alarmToneDemo: core.alarmToneDemo,
+    });
     return { ctx, gate, time, player };
   }
   const freqs = (ctx: FakeAudioContext): number[] => ctx.oscillators.map((o) => o.frequency.value);
@@ -369,7 +374,12 @@ describe("AlertPlayer connection alarm tone", () => {
     const ctx = new FakeAudioContext();
     const gate = gateOf(ctx);
     const time = new FakeTime();
-    const player = new AlertPlayer({ gate, timers: time, resolveTone: core.resolveAlarmTone });
+    const player = new AlertPlayer({
+      gate,
+      timers: time,
+      resolveTone: core.resolveAlarmTone,
+      alarmToneDemo: core.alarmToneDemo,
+    });
     return { ctx, gate, time, player };
   }
   const flat = (segments: AlarmTone["soft"]): number[] =>

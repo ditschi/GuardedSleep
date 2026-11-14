@@ -11,6 +11,8 @@ import type { InviteMailbox, LinkAction, LinkEvent } from "../pkg/guardedsleep_w
 
 export type {
   AlarmTone,
+  AlarmToneDemo,
+  AlarmToneDemoKind,
   DeviceStatus,
   Dnd,
   IceCandidate,

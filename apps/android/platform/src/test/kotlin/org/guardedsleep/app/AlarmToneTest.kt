@@ -137,7 +137,7 @@ class AlarmToneTest {
         val voices = FakeVoices()
         val player = TonePlayer(rate, voices)
         val low = resolveAlarmTone("low")
-        player.preview(low)
+        player.preview("low")
         assertEquals(AlarmTonePlayback.Preview("low"), player.playback.value)
         val voice = voices.made.single()
         assertTrue(voice.started && !voice.loop)
@@ -155,7 +155,7 @@ class AlarmToneTest {
     fun aPreviewEndsByItself() {
         val voices = FakeVoices()
         val player = TonePlayer(rate, voices)
-        player.preview(resolveAlarmTone("beacon"))
+        player.preview("beacon")
         voices.made.single().end()
         assertEquals(AlarmTonePlayback.Idle, player.playback.value)
     }
@@ -165,13 +165,13 @@ class AlarmToneTest {
         val voices = FakeVoices()
         val player = TonePlayer(rate, voices)
         val tone = resolveAlarmTone("rising")
-        player.test(tone)
+        player.test("rising")
         assertEquals(AlarmTonePlayback.Test("rising"), player.playback.value)
         val samples = voices.made.single().samples
         assertTrue("${samples.size}", samples.size in 8 * rate..(9.7 * rate).toInt())
         assertEquals(peak(PcmSynth.render(tone.alarm, rate)), peak(samples))
         // Only one at a time: a new preview replaces the test.
-        player.preview(resolveAlarmTone("chime"))
+        player.preview("chime")
         assertTrue(voices.made[0].stopped)
         assertEquals(AlarmTonePlayback.Preview("chime"), player.playback.value)
     }
@@ -180,19 +180,19 @@ class AlarmToneTest {
     fun aRealToneStopsAPreviewAndNoPreviewStartsOverARunningAlarm() {
         val voices = FakeVoices()
         val player = TonePlayer(rate, voices)
-        player.preview(resolveAlarmTone("rising"))
+        player.preview("rising")
         player.playSoft(resolveAlarmTone("classic"))
         assertEquals(AlarmTonePlayback.Idle, player.playback.value)
         assertTrue(voices.made[0].stopped)
 
-        player.preview(resolveAlarmTone("rising"))
+        player.preview("rising")
         player.startAlarm(resolveAlarmTone("classic"))
         assertEquals(AlarmTonePlayback.Idle, player.playback.value)
         val alarm = voices.made.last()
         assertTrue(alarm.loop)
         // While the alarm loops a preview is not started over it.
         val before = voices.made.size
-        player.preview(resolveAlarmTone("rising"))
+        player.preview("rising")
         assertEquals(before, voices.made.size)
         assertEquals(AlarmTonePlayback.Idle, player.playback.value)
         player.stop()

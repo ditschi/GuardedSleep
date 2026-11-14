@@ -10,8 +10,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.guardedsleep.app.media.PcmSynth
 import org.guardedsleep.app.ui.model.AlarmTonePlayback
+import org.guardedsleep.app.ui.model.AlarmTonePlayback.Preview
+import org.guardedsleep.app.ui.model.AlarmTonePlayback.Test
 import uniffi.guardedsleep_core.AlarmTone
-import uniffi.guardedsleep_core.ToneSegment
+import uniffi.guardedsleep_core.AlarmToneDemo
+import uniffi.guardedsleep_core.AlarmToneDemoKind
+import uniffi.guardedsleep_core.alarmToneDemo
 
 /**
  * One buffer of samples being played. A seam so the JVM tests need no audio device; the real one is
@@ -150,26 +154,18 @@ class TonePlayer(
         once.clear()
     }
 
-    /** Preview: the soft tone, then two alarm cycles, at reduced volume (about half). */
+    /** Preview: the soft tone, then two alarm cycles, at reduced volume (the core's sequence). */
     @Synchronized
-    fun preview(tone: AlarmTone) {
+    fun preview(id: String) {
         if (loop != null) return
-        val samples =
-            PcmSynth.render(demoSegments(tone, cycles = PREVIEW_CYCLES), rate, PREVIEW_GAIN)
-        startDemo(samples, AlarmTonePlayback.Preview(tone.id))
+        startDemo(alarmToneDemo(id, AlarmToneDemoKind.PREVIEW), ::Preview)
     }
 
     /** Test: the soft tone, then the alarm for about 8 seconds, at full volume. */
     @Synchronized
-    fun test(tone: AlarmTone) {
+    fun test(id: String) {
         if (loop != null) return
-        val cycleMs = tone.alarm.sumOf { it.ms.toInt() }.coerceAtLeast(1)
-        val soft = tone.soft.sumOf { it.ms.toInt() } + DEMO_PAUSE_MS
-        val cycles = ((TEST_MS - soft + cycleMs - 1) / cycleMs).coerceAtLeast(1)
-        startDemo(
-            PcmSynth.render(demoSegments(tone, cycles), rate),
-            AlarmTonePlayback.Test(tone.id),
-        )
+        startDemo(alarmToneDemo(id, AlarmToneDemoKind.TEST), ::Test)
     }
 
     /** Stops a running preview or test at once. */
@@ -179,11 +175,6 @@ class TonePlayer(
         demo = null
         _playback.value = AlarmTonePlayback.Idle
     }
-
-    private fun demoSegments(tone: AlarmTone, cycles: Int) =
-        tone.soft +
-            ToneSegment(emptyList(), DEMO_PAUSE_MS.toUInt(), 0u) +
-            List(cycles) { tone.alarm }.flatten()
 
     private fun startLoop(tone: AlarmTone) {
         val voice = voices.create(PcmSynth.render(tone.alarm, rate), rate)
@@ -206,15 +197,16 @@ class TonePlayer(
         startLoop(next)
     }
 
-    private fun startDemo(samples: ShortArray, state: AlarmTonePlayback) {
+    private fun startDemo(demo: AlarmToneDemo, state: (String) -> AlarmTonePlayback) {
         stopDemo()
+        val samples = PcmSynth.render(demo.segments, rate, demo.gain)
         val voice = voices.create(samples, rate) ?: return
-        demo = voice
-        _playback.value = state
+        this.demo = voice
+        _playback.value = state(demo.id)
         voice.start(loop = false) {
             synchronized(this) {
-                if (demo === voice) {
-                    demo = null
+                if (this.demo === voice) {
+                    this.demo = null
                     _playback.value = AlarmTonePlayback.Idle
                 }
             }
@@ -223,11 +215,5 @@ class TonePlayer(
 
     companion object {
         const val SAMPLE_RATE = 16_000
-
-        /** The preview plays at about half of the alarm volume so it does not wake the house. */
-        const val PREVIEW_GAIN = 0.5
-        const val PREVIEW_CYCLES = 2
-        const val TEST_MS = 8_000
-        private const val DEMO_PAUSE_MS = 300
     }
 }

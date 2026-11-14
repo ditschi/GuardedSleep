@@ -174,6 +174,19 @@ describe("core-wasm wrapper", () => {
       for (const tone of core.alarmTones()) expect(core.resolveAlarmTone(tone.id)).toEqual(tone);
     });
 
+    it("builds the preview and test sequences of a tone", () => {
+      const tone = core.resolveAlarmTone("chime");
+      const ms = (segments: { ms: number }[]): number => segments.reduce((n, s) => n + s.ms, 0);
+      const cycle = ms(tone.alarm);
+      const preview = core.alarmToneDemo("chime", "preview");
+      expect(preview.gain).toBe(0.5);
+      expect(ms(preview.segments)).toBe(ms(tone.soft) + 300 + 2 * cycle);
+      const test = core.alarmToneDemo("chime", "test");
+      expect(test.gain).toBe(1);
+      expect(ms(test.segments)).toBeGreaterThanOrEqual(8_000);
+      expect(core.alarmToneDemo("silent", "preview").id).toBe("classic");
+    });
+
     it("resolves an unknown, empty or overlong alarm tone id to classic (never silent)", () => {
       for (const bad of ["", "none", "Classic", "x".repeat(1024)]) {
         const tone = core.resolveAlarmTone(bad);
@@ -237,6 +250,7 @@ describe("core-wasm wrapper", () => {
       filterOnlyLocal: () => "[]",
       alarmTones: () => "[]",
       resolveAlarmTone: () => "{}",
+      alarmToneDemo: () => "{}",
       conformanceEval: () => "{}",
     });
     expect(() => fake.createLink(config("baby")).handle(0, { type: "tick" })).toThrow(

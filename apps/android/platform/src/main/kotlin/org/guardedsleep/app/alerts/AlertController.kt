@@ -67,9 +67,9 @@ class AlertController(
         if (linkPlan.continuousAlarm) tones.startAlarm(tone())
     }
 
-    override fun previewAlarmTone(id: String) = onMain { tones.preview(resolveAlarmTone(id)) }
+    override fun previewAlarmTone(id: String) = onMain { tones.preview(id) }
 
-    override fun testAlarmTone(id: String) = onMain { tones.test(resolveAlarmTone(id)) }
+    override fun testAlarmTone(id: String) = onMain { tones.test(id) }
 
     override fun stopAlarmTone() = onMain { tones.stopDemo() }
 

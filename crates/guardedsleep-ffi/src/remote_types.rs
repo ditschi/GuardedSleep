@@ -3,7 +3,9 @@
 //! field and variant lists must match the core definitions exactly; a mismatch fails to compile.
 //! Docs: <https://mozilla.github.io/uniffi-rs/latest/proc_macro/index.html#the-uniffiremote-attribute>
 
-use guardedsleep_core::alarm_tone::{AlarmTone, TonePartial, ToneSegment};
+use guardedsleep_core::alarm_tone::{
+    AlarmTone, AlarmToneDemo, AlarmToneDemoKind, TonePartial, ToneSegment,
+};
 use guardedsleep_core::ice::IceServer;
 use guardedsleep_core::invite::InviteMailbox;
 use guardedsleep_core::link::{
@@ -735,4 +737,19 @@ pub struct AlarmTone {
     pub id: String,
     pub soft: Vec<ToneSegment>,
     pub alarm: Vec<ToneSegment>,
+}
+
+/// Which sequence the tone picker plays.
+#[uniffi::remote(Enum)]
+pub enum AlarmToneDemoKind {
+    Preview,
+    Test,
+}
+
+/// What the picker plays: segments one after another, each partial scaled by `gain`.
+#[uniffi::remote(Record)]
+pub struct AlarmToneDemo {
+    pub id: String,
+    pub segments: Vec<ToneSegment>,
+    pub gain: f64,
 }

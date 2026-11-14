@@ -196,6 +196,62 @@ fn recipe(id: AlarmToneId) -> AlarmTone {
     }
 }
 
+/// Pause between the soft tone and the alarm in a preview or test.
+pub const DEMO_PAUSE_MS: u32 = 300;
+/// A preview plays at about half of the alarm volume so it does not wake the house.
+pub const PREVIEW_GAIN: f64 = 0.5;
+/// Alarm cycles in a preview.
+pub const PREVIEW_CYCLES: u32 = 2;
+/// Length of the full-volume test in ms; whole alarm cycles are played until it is reached.
+pub const TEST_MS: u32 = 8_000;
+
+/// Which sequence the tone picker plays.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
+pub enum AlarmToneDemoKind {
+    /// Soft tone, then two alarm cycles, at reduced volume.
+    Preview,
+    /// Soft tone, then the alarm for about 8 seconds, at full volume.
+    Test,
+}
+
+/// What the picker plays: segments one after another, each partial scaled by `gain`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
+pub struct AlarmToneDemo {
+    /// The resolved tone id.
+    pub id: String,
+    pub segments: Vec<ToneSegment>,
+    pub gain: f64,
+}
+
+/// The preview or test sequence of the tone with this stored id (unknown gives `classic`).
+pub fn alarm_tone_demo(id: &str, kind: AlarmToneDemoKind) -> AlarmToneDemo {
+    let tone = resolve_alarm_tone(id);
+    let cycle_ms = tone.alarm_cycle_ms().max(1);
+    let (cycles, gain) = match kind {
+        AlarmToneDemoKind::Preview => (PREVIEW_CYCLES, PREVIEW_GAIN),
+        AlarmToneDemoKind::Test => {
+            let lead = tone.soft_ms() + DEMO_PAUSE_MS;
+            (
+                (TEST_MS.saturating_sub(lead)).div_ceil(cycle_ms).max(1),
+                1.0,
+            )
+        }
+    };
+    let mut segments = tone.soft.clone();
+    segments.push(gap(DEMO_PAUSE_MS));
+    for _ in 0..cycles {
+        segments.extend(tone.alarm.iter().cloned());
+    }
+    AlarmToneDemo {
+        id: tone.id,
+        segments,
+        gain,
+    }
+}
+
 /// All tones in picker order (Classic, Low, Beacon, Rising, Chime).
 pub fn alarm_tones() -> Vec<AlarmTone> {
     AlarmToneId::ALL.into_iter().map(recipe).collect()
@@ -310,6 +366,50 @@ mod tests {
         for t in alarm_tones() {
             assert!(t.alarm.iter().any(|s| s.partials.is_empty()), "{}", t.id);
         }
+    }
+
+    fn total_ms(d: &AlarmToneDemo) -> u32 {
+        d.segments.iter().map(|s| s.ms).sum()
+    }
+
+    #[test]
+    fn preview_is_soft_pause_and_two_cycles_at_half_gain() {
+        for tone in alarm_tones() {
+            let d = alarm_tone_demo(&tone.id, AlarmToneDemoKind::Preview);
+            assert_eq!(d.id, tone.id);
+            assert_eq!(d.gain, 0.5);
+            assert_eq!(
+                total_ms(&d),
+                tone.soft_ms() + 300 + 2 * tone.alarm_cycle_ms()
+            );
+            assert_eq!(d.segments[..tone.soft.len()], tone.soft[..]);
+            assert!(d.segments[tone.soft.len()].partials.is_empty());
+            assert_eq!(d.segments[tone.soft.len()].ms, 300);
+        }
+    }
+
+    #[test]
+    fn test_runs_about_eight_seconds_at_full_gain() {
+        for tone in alarm_tones() {
+            let d = alarm_tone_demo(&tone.id, AlarmToneDemoKind::Test);
+            assert_eq!(d.gain, 1.0);
+            let ms = total_ms(&d);
+            // Whole cycles, reaching 8 s but not overshooting by a full cycle.
+            assert!(ms >= 8_000, "{} {ms}", tone.id);
+            assert!(ms < 8_000 + tone.alarm_cycle_ms(), "{} {ms}", tone.id);
+            let cycles = (ms - tone.soft_ms() - 300) / tone.alarm_cycle_ms();
+            // The formula the platforms used before: max(1, ceil((8000 - soft - 300) / cycle)).
+            let lead = tone.soft_ms() + 300;
+            let expected = (8_000 - lead).div_ceil(tone.alarm_cycle_ms()).max(1);
+            assert_eq!(cycles, expected, "{}", tone.id);
+        }
+    }
+
+    #[test]
+    fn an_unknown_id_demos_classic() {
+        let d = alarm_tone_demo("silent", AlarmToneDemoKind::Preview);
+        assert_eq!(d.id, "classic");
+        assert!(!d.segments.is_empty());
     }
 
     #[test]

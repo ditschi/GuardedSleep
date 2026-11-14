@@ -8,6 +8,7 @@ pub struct guardedsleep_wasm::WasmSession
 impl guardedsleep_wasm::WasmSession
 pub fn guardedsleep_wasm::WasmSession::handle(&mut self, f64, &str) -> core::result::Result<alloc::string::String, wasm_bindgen::JsError>
 pub fn guardedsleep_wasm::WasmSession::new(&str) -> core::result::Result<guardedsleep_wasm::WasmSession, wasm_bindgen::JsError>
+pub fn guardedsleep_wasm::alarm_tone_demo(&str, &str) -> core::result::Result<alloc::string::String, wasm_bindgen::JsError>
 pub fn guardedsleep_wasm::alarm_tones() -> alloc::string::String
 pub fn guardedsleep_wasm::build_invite(&[u8], &str, f64, bool) -> core::result::Result<alloc::string::String, wasm_bindgen::JsError>
 pub fn guardedsleep_wasm::conformance_eval(&str) -> alloc::string::String

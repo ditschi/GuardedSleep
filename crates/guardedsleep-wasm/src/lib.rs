@@ -140,6 +140,20 @@ pub fn resolve_alarm_tone(id: &str) -> String {
         .unwrap_or_else(|_| "{}".into())
 }
 
+/// JSON of the `AlarmToneDemo` (segments and gain) for a stored id and `kind` (`"preview"` or
+/// `"test"`). Throws `not_our_code` for any other kind.
+#[wasm_bindgen(js_name = alarmToneDemo)]
+pub fn alarm_tone_demo(id: &str, kind: &str) -> Result<String, JsError> {
+    use guardedsleep_core::alarm_tone::AlarmToneDemoKind;
+    let kind = match kind {
+        "preview" => AlarmToneDemoKind::Preview,
+        "test" => AlarmToneDemoKind::Test,
+        _ => return Err(JsError::new("not_our_code")),
+    };
+    serde_json::to_string(&guardedsleep_core::alarm_tone::alarm_tone_demo(id, kind))
+        .map_err(|_| JsError::new("not_our_code"))
+}
+
 #[wasm_bindgen(js_name = conformanceEval)]
 pub fn conformance_eval(case_json: &str) -> String {
     guardedsleep_core::conformance::evaluate(case_json)

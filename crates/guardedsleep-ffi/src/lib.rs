@@ -226,6 +226,15 @@ pub fn resolve_alarm_tone(id: String) -> guardedsleep_core::alarm_tone::AlarmTon
     guardedsleep_core::alarm_tone::resolve_alarm_tone(&id)
 }
 
+/// The preview or test sequence of the tone with this stored id (unknown gives `classic`).
+#[uniffi::export]
+pub fn alarm_tone_demo(
+    id: String,
+    kind: guardedsleep_core::alarm_tone::AlarmToneDemoKind,
+) -> guardedsleep_core::alarm_tone::AlarmToneDemo {
+    guardedsleep_core::alarm_tone::alarm_tone_demo(&id, kind)
+}
+
 #[uniffi::export]
 pub fn conformance_eval(case_json: String) -> String {
     guardedsleep_core::conformance::evaluate(&case_json)
