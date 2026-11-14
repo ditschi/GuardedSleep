@@ -31,6 +31,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -48,7 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.guardedsleep.app.ui.theme.LocalAppColors
-import org.guardedsleep.app.ui.theme.SafetyColors
+import org.guardedsleep.app.ui.theme.LocalSafetyColors
 import org.guardedsleep.app.ui.theme.StateColors
 
 /** Inside [AdaptiveButtonRow] labels stay on one line (no mid-word wrapping). */
@@ -285,10 +286,12 @@ enum class Tone {
     SNOOZE,
 }
 
+@Composable
+@ReadOnlyComposable
 fun Tone.container(): Color =
     when (this) {
         Tone.OK -> StateColors.Green
-        Tone.INFO -> SafetyColors.info
+        Tone.INFO -> LocalSafetyColors.current.info
         Tone.WARN -> StateColors.Orange
         Tone.BAD -> StateColors.Red
         Tone.NEUTRAL -> StateColors.Grey
@@ -296,7 +299,10 @@ fun Tone.container(): Color =
     }
 
 /** Text and glyph colour that reads on [container]; the light info blue needs dark content. */
-fun Tone.onContainer(): Color = if (this == Tone.INFO) SafetyColors.onInfo else StateColors.OnState
+@Composable
+@ReadOnlyComposable
+fun Tone.onContainer(): Color =
+    if (this == Tone.INFO) LocalSafetyColors.current.onInfo else StateColors.OnState
 
 /** Full-width ambient bar: colour + glyph + text, a live region for screen readers. */
 @Composable

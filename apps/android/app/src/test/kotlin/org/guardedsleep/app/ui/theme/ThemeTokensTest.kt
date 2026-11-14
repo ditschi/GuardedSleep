@@ -3,11 +3,16 @@
 package org.guardedsleep.app.ui.theme
 
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.runComposeUiTest
+import org.guardedsleep.app.ui.common.Tone
+import org.guardedsleep.app.ui.common.container
+import org.guardedsleep.app.ui.common.onContainer
 import org.guardedsleep.app.ui.model.Theme
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -29,18 +34,31 @@ class ThemeTokensTest {
 
     @Test
     fun everySchemeProvidesTheSameSafetyColors() {
+        val primaries = mutableSetOf<Color>()
         for (scheme in AppScheme.entries) {
-            var seen: SafetyColors? = null
+            var provided: SafetyColors? = null
+            var infoFill: Color? = null
+            var infoContent: Color? = null
+            var primary: Color? = null
             runComposeUiTest {
                 setContent {
                     GuardedSleepTheme(Theme.DARK, scheme = scheme) {
-                        seen = LocalSafetyColors.current
+                        provided = LocalSafetyColors.current
+                        // Components read the provided value, not the object.
+                        infoFill = Tone.INFO.container()
+                        infoContent = Tone.INFO.onContainer()
+                        primary = MaterialTheme.colorScheme.primary
                     }
                 }
                 waitForIdle()
             }
-            assertSame("$scheme", SafetyColors, seen)
+            assertSame("$scheme provides SafetyColors", SafetyColors, provided)
+            assertEquals("$scheme info fill", SafetyColors.info, infoFill)
+            assertEquals("$scheme info content", SafetyColors.onInfo, infoContent)
+            primaries += primary!!
         }
+        // The scheme did change what the composition provides; only the safety colours did not.
+        assertEquals(AppScheme.entries.size, primaries.size)
     }
 
     @Test
