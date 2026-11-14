@@ -11,6 +11,20 @@ Behaviour SHALL be proven locally first, then on emulators, then on hardware. Th
 - **WHEN** a change touches link recovery
 - **THEN** the host simulation scenarios pass before the emulator gate runs it on devices
 
+### Requirement: Android module boundaries
+
+The Android app SHALL consist of the modules `app`, `ui-contract`, `platform` and `core-bindings`, plus the test-only module `test-fixtures`. Only `platform` and `test-fixtures` SHALL depend on `core-bindings`, neither SHALL export it, and `app` and its tests SHALL see no binding type, so UI code that imports a binding type does not compile.
+
+#### Scenario: Compose screen imports an FFI type
+
+- **WHEN** a screen in `app` imports a type from `core-bindings`
+- **THEN** the build fails
+
+#### Scenario: Journey test imports an FFI type
+
+- **WHEN** a test in `app/src/test` imports a `uniffi` type
+- **THEN** the boundary check fails
+
 ## ADDED Requirements
 
 ### Requirement: Android UI journeys through the real controller
