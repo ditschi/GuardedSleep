@@ -643,7 +643,9 @@
           "none": "O dispositivo do bebé não ouviu nenhum som nesse período.",
           "some": "{count, plural, one {Ouviu 1 som} many {Ouviu # de sons} other {Ouviu # sons}}.",
           "unknown": "Não sabemos se houve sons."
-        }
+        },
+        "labelAlerting": "Este dispositivo está a emitir um alerta",
+        "progressAlerting": "Alerta a tocar agora"
       }
     }
   },

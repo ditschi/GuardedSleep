@@ -643,7 +643,9 @@
           "none": "Urządzenie dziecka nie usłyszało w tym czasie żadnego dźwięku.",
           "some": "{count, plural, one {Usłyszało 1 dźwięk} few {Usłyszało # dźwięki} many {Usłyszało # dźwięków} other {Usłyszało # dźwięku}}.",
           "unknown": "Nie wiemy, czy były jakieś dźwięki."
-        }
+        },
+        "labelAlerting": "To urządzenie wydaje alert",
+        "progressAlerting": "Alert dzwoni teraz"
       }
     }
   },

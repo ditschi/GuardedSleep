@@ -643,7 +643,9 @@
           "none": "这段时间里宝宝设备没有听到任何声音。",
           "some": "{count, plural, other {听到了 # 次声音}}。",
           "unknown": "我们不知道是否有声音。"
-        }
+        },
+        "labelAlerting": "此设备正在发出警报",
+        "progressAlerting": "警报正在响起"
       }
     }
   },

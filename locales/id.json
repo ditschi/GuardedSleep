@@ -643,7 +643,9 @@
           "none": "Perangkat bayi tidak mendengar suara apa pun selama itu.",
           "some": "{count, plural, other {Terdengar # suara}}.",
           "unknown": "Kami tidak tahu apakah ada suara."
-        }
+        },
+        "labelAlerting": "Perangkat ini membunyikan peringatan",
+        "progressAlerting": "Peringatan berbunyi sekarang"
       }
     }
   },

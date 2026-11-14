@@ -643,7 +643,9 @@
           "none": "Dětské zařízení za tu dobu neslyšelo žádný zvuk.",
           "some": "{count, plural, one {Zaznamenalo 1 zvuk} few {Zaznamenalo # zvuky} many {Zaznamenalo # zvuku} other {Zaznamenalo # zvuků}}.",
           "unknown": "Nevíme, zda se nějaké zvuky ozvaly."
-        }
+        },
+        "labelAlerting": "Toto zařízení vydává upozornění",
+        "progressAlerting": "Upozornění zní právě teď"
       }
     }
   },

@@ -647,7 +647,9 @@
           "none": "L'appareil bébé n'a entendu aucun son pendant ce temps.",
           "some": "{count, plural, one {Il a entendu 1 son} many {Il a entendu # de sons} other {Il a entendu # sons}}.",
           "unknown": "Nous ne savons pas s'il y a eu des sons."
-        }
+        },
+        "labelAlerting": "Cet appareil émet une alerte",
+        "progressAlerting": "Alerte en cours"
       }
     }
   },

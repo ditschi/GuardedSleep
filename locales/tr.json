@@ -643,7 +643,9 @@
           "none": "Bebek cihazı bu sürede hiç ses duymadı.",
           "some": "{count, plural, one {1 ses duydu} other {# ses duydu}}.",
           "unknown": "Ses olup olmadığını bilmiyoruz."
-        }
+        },
+        "labelAlerting": "Bu cihaz uyarı veriyor",
+        "progressAlerting": "Uyarı şimdi çalıyor"
       }
     }
   },

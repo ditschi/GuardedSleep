@@ -643,7 +643,9 @@
           "none": "Babyenheden hørte ingen lyde i den tid.",
           "some": "{count, plural, one {Den hørte 1 lyd} other {Den hørte # lyde}}.",
           "unknown": "Vi ved ikke, om der var lyde."
-        }
+        },
+        "labelAlerting": "Denne enhed afspiller en advarsel",
+        "progressAlerting": "Advarsel lyder nu"
       }
     }
   },

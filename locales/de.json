@@ -647,7 +647,9 @@
           "none": "Das Babygerät hat in dieser Zeit nichts gehört.",
           "some": "{count, plural, one {Es hat 1 Geräusch gehört} other {Es hat # Geräusche gehört}}.",
           "unknown": "Ob es Geräusche gab, wissen wir nicht."
-        }
+        },
+        "labelAlerting": "Dieses Gerät schlägt Alarm",
+        "progressAlerting": "Alarm ertönt jetzt"
       }
     }
   },

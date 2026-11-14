@@ -91,7 +91,7 @@
       ? { active: 4, steps: 4, words: $t("native.ui.connAlert.progressLoud") }
       : stage === "paused"
         ? { active: 3, steps: 4, words: $t("native.ui.connAlert.progressPaused") }
-        : { active: 3, steps: 4, words: $t("native.ui.connAlert.progressVibrating") },
+        : { active: 3, steps: 4, words: $t("native.ui.connAlert.progressAlerting") },
   );
   const label = $derived(
     $t(
@@ -99,7 +99,7 @@
         ? "native.ui.connAlert.labelLoud"
         : stage === "paused"
           ? "native.ui.connAlert.labelPaused"
-          : "native.ui.connAlert.labelVibrating",
+          : "native.ui.connAlert.labelAlerting",
     ),
   );
   const stripText = $derived(withName($t(STATUS_KEY[statusKindOf(link)])));

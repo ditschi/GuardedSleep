@@ -643,7 +643,9 @@
           "none": "Bebisenheten hörde inget ljud under den tiden.",
           "some": "{count, plural, one {Den hörde 1 ljud} other {Den hörde # ljud}}.",
           "unknown": "Vi vet inte om det fanns ljud."
-        }
+        },
+        "labelAlerting": "Den här enheten ljuder en varning",
+        "progressAlerting": "Varning ljuder nu"
       }
     }
   },

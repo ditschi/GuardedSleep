@@ -645,7 +645,9 @@
           "none": "The baby device heard no sound during that time.",
           "some": "{count, plural, one {It heard 1 sound} other {It heard # sounds}}.",
           "unknown": "We don't know whether there were sounds."
-        }
+        },
+        "labelAlerting": "This device is sounding an alert",
+        "progressAlerting": "Alert sounding now"
       }
     }
   },

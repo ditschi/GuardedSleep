@@ -643,7 +643,9 @@
           "none": "그동안 아기 기기에는 아무 소리도 들리지 않았습니다.",
           "some": "{count, plural, other {소리가 #번 들렸습니다}}.",
           "unknown": "소리가 있었는지는 알 수 없습니다."
-        }
+        },
+        "labelAlerting": "이 기기에서 알림이 울리는 중입니다",
+        "progressAlerting": "알림 울리는 중"
       }
     }
   },

@@ -643,7 +643,9 @@
           "none": "Het babyapparaat heeft in die tijd niets gehoord.",
           "some": "{count, plural, one {Het hoorde 1 geluid} other {Het hoorde # geluiden}}.",
           "unknown": "We weten niet of er geluiden waren."
-        }
+        },
+        "labelAlerting": "Dit apparaat geeft een melding",
+        "progressAlerting": "Melding klinkt nu"
       }
     }
   },

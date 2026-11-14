@@ -643,7 +643,9 @@
           "none": "Il dispositivo del bambino non ha sentito suoni in quel periodo.",
           "some": "{count, plural, one {Ha sentito 1 suono} many {Ha sentito # di suoni} other {Ha sentito # suoni}}.",
           "unknown": "Non sappiamo se ci siano stati suoni."
-        }
+        },
+        "labelAlerting": "Questo dispositivo sta emettendo un avviso",
+        "progressAlerting": "Avviso in corso"
       }
     }
   },

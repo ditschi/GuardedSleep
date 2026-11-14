@@ -643,7 +643,9 @@
           "none": "その間、赤ちゃん用端末は音を検知しませんでした。",
           "some": "{count, plural, other {#回の音を検知しました}}。",
           "unknown": "音があったかどうかは分かりません。"
-        }
+        },
+        "labelAlerting": "この端末がアラートを鳴らしています",
+        "progressAlerting": "アラート鳴動中"
       }
     }
   },

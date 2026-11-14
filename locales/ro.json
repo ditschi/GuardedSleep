@@ -643,7 +643,9 @@
           "none": "Dispozitivul bebelușului nu a auzit niciun sunet în acest timp.",
           "some": "{count, plural, one {A auzit 1 sunet} few {A auzit # sunete} other {A auzit # de sunete}}.",
           "unknown": "Nu știm dacă au existat sunete."
-        }
+        },
+        "labelAlerting": "Acest dispozitiv emite o alertă",
+        "progressAlerting": "Alertă sunând acum"
       }
     }
   },
