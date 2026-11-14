@@ -56,7 +56,7 @@ User-facing status copy SHALL NOT contain IP addresses, port numbers, protocol t
 
 ### Requirement: Restored notice
 
-After recovery from level 1 or above, the parent SHALL show a card that the link is connected again, how long the baby was not monitored (duration in words) and the missed-sound result, until the parent taps OK, and SHALL post a notification with the same duration. The card SHALL NOT dismiss itself.
+After recovery from level 1 or above, the parent SHALL show a card that the link is connected again, how long the baby was not monitored (duration in words) and the missed-sound result, until the parent taps OK, and SHALL post a notification with the same duration. The card SHALL NOT dismiss itself; a new outage SHALL replace it.
 
 #### Scenario: Recovery after 90 seconds
 
@@ -68,9 +68,14 @@ After recovery from level 1 or above, the parent SHALL show a card that the link
 - **WHEN** the link recovers and the missed-events report is not complete
 - **THEN** the card says it is not known whether there were sounds, and shows no count
 
+#### Scenario: New drop while the card is shown
+
+- **WHEN** the "Connected again" card is shown and the link drops again
+- **THEN** the card disappears and the bar shows the new outage
+
 ### Requirement: Baby unit edge indicator
 
-The baby unit SHALL code the link state by shape, not hue alone: a short solid bar when connected, no mark at level 0, a dashed top edge at level 1, and a full frame with a slow pulse (static with reduced motion) from level 2. At minimum brightness no mark SHALL emit more than `#5A1414` does at normal brightness, and the baby unit SHALL never use sound or vibration for any connection state.
+The baby unit SHALL code the link state by shape, not hue alone: a short solid bar when connected, no mark at level 0, a dashed top edge at level 1, and a full frame with a slow pulse (static with reduced motion) from level 2. Every kiosk mark colour SHALL have a relative luminance at most that of `#5A1414`, and the baby unit SHALL never use sound or vibration for any connection state.
 
 #### Scenario: Parent phone goes away at night
 
@@ -81,6 +86,15 @@ The baby unit SHALL code the link state by shape, not hue alone: a short solid b
 
 - **WHEN** the parent device has been unreachable for 30 seconds
 - **THEN** the baby unit shows a dashed top edge, distinguishable from the fine and the lost marks without colour
+
+### Requirement: Status is never colour alone
+
+Every status SHALL combine colour with a symbol and a text label. Pulsing SHALL become static when the system asks for reduced motion. Screen-reader announcements of status changes SHALL follow "State announcements".
+
+#### Scenario: Colour-blind parent
+
+- **WHEN** a parent who cannot tell red from green looks at the bar
+- **THEN** the symbol and text alone tell whether the link is connected or lost
 
 ## ADDED Requirements
 
@@ -109,16 +123,21 @@ When the baby unit's battery is low or critical or its charger was pulled while 
 
 ### Requirement: Baby set-up confirmation
 
-For 60 seconds after monitoring starts and on every touch-wake, the baby kiosk SHALL show a larger confirmation at wake brightness that names the parent connection and that it is listening ("Connected to the parent device" when no name is known), and then dim back to the status line.
+From the first verified contact with a parent device, for at most 60 seconds, and on every touch-wake, the baby kiosk SHALL show a larger confirmation at the touch-wake brightness that names the parent connection and that it is listening ("Connected to the parent device" when no name is known), and then dim back to the status line.
 
 #### Scenario: Grandparent sets up the tablet
 
 - **WHEN** a user starts monitoring on the baby device and the parent device connects
-- **THEN** the kiosk shows "Connected to Anna's phone · Listening" for 60 seconds before it dims
+- **THEN** the kiosk shows "Connected to Anna's phone · Listening" from that moment for 60 seconds before it dims
+
+#### Scenario: Parent not there yet
+
+- **WHEN** monitoring starts on the baby device and no parent device has connected
+- **THEN** no confirmation is shown and the kiosk stays at minimum brightness with its status line
 
 ### Requirement: Full-screen connection alert
 
-From level 2 the parent SHALL show the shared full-screen alert template (`parent-alerts`) with a label of what the phone does, a headline, the outage counter, one sentence with the next stage and its clock time, and "I'm checking" as the only filled, pinned action. While acknowledged it SHALL stay red, say "Alarm paused" and show when sound returns.
+From level 2 the parent SHALL show the shared full-screen alert template (`parent-alerts`) with a label of what the phone does, a headline, the outage counter, one sentence with the next stage and its clock time, and, until acknowledged, "I'm checking" as the only filled, pinned action. While acknowledged it SHALL stay red, say "Alarm paused", show when sound returns and have no filled action.
 
 #### Scenario: One minute without connection
 
@@ -132,7 +151,7 @@ From level 2 the parent SHALL show the shared full-screen alert template (`paren
 
 ### Requirement: Troubleshooter presentation
 
-The connection alert SHALL render the core's cause hint as one plain cause line with the first step visible, "Try now" and further steps folded behind "More steps". Before the first connection of a run it SHALL also ask "Wrong connection?" and offer the way back to the saved connections. "Stop monitoring" SHALL be a quiet text button at the end of the content.
+The connection alert SHALL render the core's cause hint as one plain cause line with the first step visible, "Try now" and further steps folded behind "More steps". Before the first connection of a run it SHALL also offer "Wrong connection?", the way back to the saved connections. "Stop monitoring" SHALL be a quiet text button at the end of the content.
 
 #### Scenario: Baby device offline
 
@@ -143,6 +162,20 @@ The connection alert SHALL render the core's cause hint as one plain cause line 
 
 - **WHEN** the cause hint is `media_blocked`
 - **THEN** the card says the connection is blocked on this network and suggests mobile data
+
+### Requirement: Leaving from the alarm needs confirmation
+
+From level 2, "Wrong connection?" and "Stop monitoring" SHALL both open the stop confirmation of `device-setup` "Stopping monitoring on the parent", which silences and acknowledges nothing. Only at levels 0 and 1 MAY "Wrong connection?" stop monitoring with one tap.
+
+#### Scenario: Wrong connection on the red screen (failure)
+
+- **WHEN** a link that never connected reaches level 2 and the parent taps "Wrong connection?"
+- **THEN** the stop confirmation opens, vibration and the soft tone continue, and monitoring stops only after the confirmation
+
+#### Scenario: Wrong connection while still blue
+
+- **WHEN** a link that never connected has run for 10 seconds and the parent taps "Wrong connection?"
+- **THEN** monitoring stops and the saved connections are shown, without a confirmation
 
 ### Requirement: State announcements
 

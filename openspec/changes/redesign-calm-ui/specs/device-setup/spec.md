@@ -16,6 +16,25 @@ On the parent unit, "Stop monitoring" SHALL be reachable from the monitor's More
 - **WHEN** the loud alarm sounds and the parent opens the stop confirmation and then taps "Keep monitoring"
 - **THEN** the alarm kept sounding the whole time and the alert screen is unchanged
 
+### Requirement: Baby kiosk
+
+While monitoring, the baby unit SHALL show a dark kiosk at minimum brightness that locks 30 s after the last touch; only the set-up confirmation and a touch-wake MAY raise it to low brightness (about 10 %), and the status line and marks SHALL stay within the kiosk luminance cap (`connection-status`). Unlocking SHALL need hold-and-slide. The kiosk SHALL never use vibration or haptics, and sound only for a granted talk (`talk-back`).
+
+#### Scenario: Toddler taps the baby phone
+
+- **WHEN** someone taps the locked baby unit
+- **THEN** the screen wakes dimly and shows the status, and only hold-and-slide unlocks it
+
+#### Scenario: Parent talks while the kiosk is dark
+
+- **WHEN** a parent talks while the kiosk screen is dark
+- **THEN** the dim talk indicator appears and the screen stays at minimum brightness
+
+#### Scenario: Status line at night
+
+- **WHEN** the kiosk has been untouched for 10 minutes while connected
+- **THEN** the screen is at minimum brightness and only the dim status line and the short bar are visible
+
 ## ADDED Requirements
 
 ### Requirement: Settings structure

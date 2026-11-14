@@ -13,12 +13,17 @@ Android and web SHALL offer the colour schemes Dusk (dark, default) and Day (lig
 
 ### Requirement: Fixed safety colours
 
-The safety colours (info blue, warning orange, alert red, caution yellow, ok green) and the full-screen alert palettes SHALL be defined outside the colour schemes and SHALL NOT change with Dusk, Day or night mode. No other element SHALL use a hue within 20° of a safety hue.
+The safety colours (info blue, warning orange, alert red, caution yellow, ok green) and the full-screen alert palettes SHALL be defined outside the colour schemes and SHALL NOT change with Dusk, Day or night mode. In Dusk and Day, no non-alert element other than the logo SHALL use a hue within 20° of a safety hue; night mode is covered by "Night mode never hides safety signals".
 
 #### Scenario: Day scheme at the orange stage
 
 - **WHEN** the Day scheme is active and the link reaches level 1
 - **THEN** the status bar uses the same orange safety colour, outline, symbol and words as in Dusk
+
+#### Scenario: Token check
+
+- **WHEN** the token test runs over the Dusk and Day schemes
+- **THEN** no scheme colour except the logo lies within 20° of the hue of info, warning, alert, caution or ok
 
 ### Requirement: Night mode
 
@@ -40,7 +45,7 @@ With Automatic, night mode SHALL be on inside a user-set daily time window and o
 
 ### Requirement: Night mode never hides safety signals
 
-Night mode SHALL NOT apply to full-screen alerts, to the status bar from level 1 on and in the grey and red states, to warning banners or to safety chips; they SHALL keep their fixed safety colours.
+Night mode SHALL NOT apply to full-screen alerts, to the status bar from level 1 on and in the grey and red states, to warning banners or to safety chips; they SHALL take their colours from the fixed safety colours, never from the night-mode scheme.
 
 #### Scenario: Orange stage at night (failure)
 

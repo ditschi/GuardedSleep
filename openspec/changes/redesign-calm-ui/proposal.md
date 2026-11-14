@@ -39,10 +39,10 @@ This change alters core UX concepts and prior decisions: the colour and wording 
 ### Modified Capabilities
 
 - `connection-status`: neutral connected bar on every parent screen, plain stage wording, restored notice until OK, shape-coded baby marks, baby status line and set-up confirmation, full-screen connection alert and troubleshooter presentation, screen-reader announcements.
-- `link-supervision`: level 0 renders blue (not yellow); baby marks by shape.
+- `link-supervision`: level 0 renders blue (not yellow); baby marks by shape; two read-only outage timing fields in the link status.
 - `parent-alerts`: "Vibrate only" and "Pause noise alerts" renames, banner priority, alert template, readiness on the monitor, Vibrate-only reminder, Undo.
 - `audio-monitoring`: Listen as a tap toggle; "All quiet" hidden whenever nothing is monitored.
-- `device-setup`: Stop monitoring from the More sheet and the alert screens, Settings structure, read-only connections while monitoring.
+- `device-setup`: Stop monitoring from the More sheet and the alert screens, Settings structure, read-only connections while monitoring, the baby kiosk's brightness exceptions for the status line and set-up confirmation.
 - `web-client`: "Black screen", same monitor and dock as Android, colour scheme before first paint, "Vibrate only" wording.
 - `i18n`: copy conventions (neutral person, formal German, no name splicing, durations in words).
 

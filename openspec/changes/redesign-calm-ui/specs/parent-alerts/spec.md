@@ -50,7 +50,7 @@ The parent unit SHALL check at start, on resume and every 5 minutes, in this ord
 
 ### Requirement: Pause noise alerts
 
-The parent SHALL be able to pause noise alerts for 10 or 30 minutes, end a pause early and undo a new pause for 8 seconds. A pause SHALL silence noise sound, vibration and full-screen alerts only; it SHALL NOT silence connection levels, a stopped baby unit, battery or readiness warnings. A pause SHALL be stored as an end time that survives reconnects and app restarts. When a pause ends while noise is above the threshold, a full alert SHALL start immediately.
+The parent SHALL be able to pause noise alerts for 10 or 30 minutes and end a pause early; a pause started while no noise event runs SHALL offer Undo for 8 seconds. A pause SHALL silence noise sound, vibration and full-screen alerts only; it SHALL NOT silence connection levels, a stopped baby unit, battery or readiness warnings. A pause SHALL be stored as an end time that survives reconnects and app restarts. When a pause ends while noise is above the threshold, a full alert SHALL start immediately.
 
 #### Scenario: Snooze ends during crying
 
@@ -59,12 +59,17 @@ The parent SHALL be able to pause noise alerts for 10 or 30 minutes, end a pause
 
 #### Scenario: Paused by mistake
 
-- **WHEN** the parent taps "Pause noise alerts" and then "Undo" within 8 seconds
-- **THEN** noise alerts are active again as before the tap
+- **WHEN** no noise event runs and the parent taps "Pause noise alerts" on the monitor and then "Undo" within 8 seconds
+- **THEN** the pause ends and noise alerts are active again
+
+#### Scenario: Pause from a running alert
+
+- **WHEN** the parent pauses noise alerts from a running vibrate-only alert
+- **THEN** no Undo is offered, because the pause has acknowledged that event
 
 ### Requirement: Alert style
 
-The parent SHALL choose an alert style for noise alerts: "Sound" (default) or "Vibrate only". The style SHALL be stored on the parent device, SHALL NOT be part of any pairing material, and SHALL be changeable from the parent monitor screen in at most two taps. While "Vibrate only" is active, the monitor SHALL show a "Vibrate only" banner, or, while that banner is folded, the labelled chip "Alert: Vibrate only".
+The parent SHALL choose an alert style for noise alerts: "Sound" (default) or "Vibrate only". The style SHALL be stored on the parent device, SHALL NOT be part of any pairing material, and SHALL be changeable from the parent monitor screen in at most two taps. While "Vibrate only" is active, the monitor SHALL show a persistent "Vibrate only" banner, or, while it is folded, the labelled chip "Alert: Vibrate only"; its text SHALL say that noise alerts make no sound, or with escalation Off never do.
 
 #### Scenario: Switching to discreet before an event
 
@@ -126,7 +131,7 @@ The alert style SHALL affect noise alerts only: connection levels 1 to 3, a stop
 
 ### Requirement: Full-screen alert template
 
-Every full-screen alert (noise, connection from level 2, baby battery critical) SHALL use one template: a label saying what the phone does, a headline, a counter or figure, one sentence on what happens next, and one filled action pinned at the bottom while the body scrolls. Each kind SHALL keep a fixed dark palette that no colour scheme changes; red SHALL be used only when the child cannot be heard.
+Every full-screen alert (noise, connection from level 2, baby battery critical) SHALL use one template: a label saying what the phone does, a headline, a counter or figure, one sentence on what happens next, and one filled action pinned while the body scrolls. Each kind SHALL keep a fixed dark palette; the red palettes (`alert`, `noConnection`, `loudAlarm`) SHALL be used only when the child cannot be heard. Sound and vibration stay as built.
 
 #### Scenario: Large text
 
@@ -140,7 +145,7 @@ Every full-screen alert (noise, connection from level 2, baby battery critical) 
 
 ### Requirement: Banner priority on the monitor
 
-The parent monitor SHALL order its banners as: security warning, microphone silent, readiness, baby battery critical or unplugged, weak connection, noise alerts paused, Vibrate only. It SHALL show at most two banners and fold the rest into one "+N more" row that lists them. Each new banner of warning level or higher SHALL be announced once.
+The parent monitor SHALL order its banners as: security warning, microphone silent, readiness, baby battery low or unplugged, baby device may ring (silence status), weak connection, noise alerts paused, Vibrate only. It SHALL show at most two banners and fold the rest into one "+N more" row that lists them. Each new banner of warning level or higher SHALL be announced once.
 
 #### Scenario: Four notices at once
 
