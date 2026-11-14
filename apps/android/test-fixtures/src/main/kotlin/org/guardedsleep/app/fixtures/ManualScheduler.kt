@@ -43,6 +43,7 @@ class ManualScheduler(startElapsedMs: Long = 1_000, startWallMs: Long = 1_700_00
     /** Runs everything due now (and whatever it adds for now), not the future. */
     fun runUntilIdle() {
         drain(nowMs)
+        rethrow()
     }
 
     /** Moves time forward by [ms], running every job in due order on the way. */
@@ -57,7 +58,6 @@ class ManualScheduler(startElapsedMs: Long = 1_000, startWallMs: Long = 1_700_00
     /** Steps by [stepMs] until [cond] holds, at most [timeoutMs] of virtual time. */
     fun runUntil(what: String, timeoutMs: Long = 15_000, stepMs: Long = 25, cond: () -> Boolean) {
         runUntilIdle()
-        rethrow()
         var waited = 0L
         while (!cond()) {
             if (waited >= timeoutMs) throw AssertionError("timeout waiting for $what")

@@ -43,7 +43,7 @@ class FakeNet(private val scheduler: ManualScheduler) {
     val liveAttempts = CopyOnWriteArrayList<FakeAttempt>()
 
     /** Delivery is a task on the virtual scheduler, in order, at the current time. */
-    fun later(block: () -> Unit) = scheduler.post { runCatching(block) }
+    fun later(block: () -> Unit) = scheduler.post(block)
 
     fun join(t: FakeTransport, role: String, room: String) =
         synchronized(lock) {
