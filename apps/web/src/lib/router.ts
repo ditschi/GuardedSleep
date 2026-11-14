@@ -8,7 +8,8 @@ import type { MessageKey } from "./i18n/keys";
  * paired screen shows the start screen: the path is only a hint for where the user was.
  */
 
-export type RouteId = "role" | "babyPair" | "baby" | "parentPair" | "parent" | "settings";
+export type RouteId =
+  "role" | "babyPair" | "baby" | "parentPair" | "parent" | "settings" | "alarmTone";
 
 export interface Route {
   readonly id: RouteId;
@@ -24,6 +25,11 @@ export const ROUTES: readonly Route[] = [
   { id: "parentPair", path: "/parent/pair", titleKey: "webShell.route.parentPair" },
   { id: "parent", path: "/parent", titleKey: "webShell.route.parent" },
   { id: "settings", path: "/settings", titleKey: "webShell.route.settings" },
+  {
+    id: "alarmTone",
+    path: "/settings/alarm-tone",
+    titleKey: "native.ui.settings.alarmTone.label",
+  },
 ];
 
 const FALLBACK: Route = { id: "role", path: "/", titleKey: "webShell.route.role" };

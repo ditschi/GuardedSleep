@@ -294,4 +294,69 @@ describe("S12 settings", () => {
     await fireEvent.click(await screen.findByTestId("settings_back"));
     await waitFor(() => expect(window.location.pathname).toBe("/"));
   });
+
+  describe("connection alarm tone", () => {
+    function openParent(controller: FakeController, path = "/settings") {
+      controller.app.update((a) => ({ ...a, role: "parent" }));
+      window.history.replaceState(null, "", path);
+      return render(App, { controller });
+    }
+
+    it("has a row with the current tone name on the parent device only", async () => {
+      const baby = createFakeController();
+      baby.app.update((a) => ({ ...a, role: "baby" }));
+      const first = open(baby);
+      await screen.findByTestId("settings_title");
+      expect(screen.queryByTestId("settings_alarm_tone")).toBeNull();
+      first.unmount();
+
+      openParent(c);
+      expect(await screen.findByTestId("settings_alarm_tone")).toHaveAttribute(
+        "href",
+        "/settings/alarm-tone",
+      );
+      expect(screen.getByTestId("settings_alarm_tone_name")).toHaveTextContent("Classic");
+    });
+
+    it("opens the picker with the five tones in order, Low tagged, none silent", async () => {
+      openParent(c);
+      await fireEvent.click(await screen.findByTestId("settings_alarm_tone"));
+      expect(await screen.findByTestId("alarm_tone_picker")).toBeInTheDocument();
+      const ids = screen
+        .getAllByRole("radio")
+        .map((r) => r.getAttribute("data-testid")?.replace("alarm_tone_", ""));
+      expect(ids).toEqual(["classic", "low", "beacon", "rising", "chime"]);
+      expect(screen.getByTestId("alarm_tone_classic")).toBeChecked();
+      expect(screen.getByTestId("alarm_tone_tag_low")).toHaveTextContent("Hard of hearing");
+      expect(screen.getByTestId("alarm_tone_hint")).toHaveTextContent("Choose Low");
+      expect(screen.getByTestId("alarm_tone_explanation")).toHaveTextContent("child's own sound");
+      expect(screen.getByTestId("alarm_tone_test_warning")).toHaveTextContent("full alarm volume");
+    });
+
+    it("stores a choice next to the theme and previews, tests and stops", async () => {
+      openParent(c, "/settings/alarm-tone");
+      await fireEvent.click(await screen.findByTestId("alarm_tone_rising"));
+      expect(get(c.settings).connectionAlarmTone).toBe("rising");
+      expect(localStorage.getItem("guardedsleep.alarmTone")).toBe("rising");
+
+      await fireEvent.click(screen.getByTestId("alarm_tone_preview_low"));
+      expect(c.calls).toContainEqual(["previewAlarmTone", "low"]);
+      expect(screen.getByTestId("alarm_tone_preview_low")).toHaveAttribute("aria-pressed", "true");
+      await fireEvent.click(screen.getByTestId("alarm_tone_preview_low"));
+      expect(c.calls).toContainEqual(["stopAlarmTone"]);
+
+      await fireEvent.click(screen.getByTestId("alarm_tone_test"));
+      expect(c.calls).toContainEqual(["testAlarmTone", "rising"]);
+      await fireEvent.click(await screen.findByTestId("alarm_tone_test_stop"));
+      expect(await screen.findByTestId("alarm_tone_test")).toBeInTheDocument();
+    });
+
+    it("sends other roles back to the settings", async () => {
+      c.app.update((a) => ({ ...a, role: "baby" }));
+      window.history.replaceState(null, "", "/settings/alarm-tone");
+      render(App, { controller: c });
+      expect(await screen.findByTestId("settings_title")).toBeInTheDocument();
+      expect(window.location.pathname).toBe("/settings");
+    });
+  });
 });

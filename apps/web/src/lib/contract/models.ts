@@ -230,6 +230,20 @@ export interface PageGuardState {
 /** Talk-back volume of the baby device (a baby setting). */
 export type TalkVolume = "low" | "medium" | "high";
 
+/**
+ * The connection alarm tones the picker offers, in picker order. The recipes and the fallback live
+ * in the core (`alarm_tones()`); `alarm-tone.test.ts` keeps this list equal to it.
+ */
+export const ALARM_TONE_IDS = ["classic", "low", "beacon", "rising", "chime"] as const;
+export type AlarmToneId = (typeof ALARM_TONE_IDS)[number];
+export const DEFAULT_ALARM_TONE: AlarmToneId = "classic";
+/** The tone that carries best for people who hear high tones poorly (picker tag and hint). */
+export const HARD_OF_HEARING_TONE: AlarmToneId = "low";
+
+/** What the alarm tone picker plays right now (a preview or the full-volume test). */
+export type AlarmTonePlayback =
+  { kind: "idle" } | { kind: "preview"; id: string } | { kind: "test"; id: string };
+
 /** Why a talk ended on the parent device (core `TalkEndReason`). */
 export type TalkEnd =
   | "released"
@@ -372,6 +386,8 @@ export interface SettingsState {
   talkChime: boolean;
   /** Parent: the one-time "hold to talk" coach mark was shown. */
   talkCoachSeen: boolean;
+  /** Parent: the connection alarm tone, always one of `ALARM_TONE_IDS` (the core resolves it). */
+  connectionAlarmTone: string;
 }
 
 /** Baby self-test result (ADR-010) shown on the setup checklist. */
@@ -532,6 +548,7 @@ export function defaultSettings(): SettingsState {
     talkVolume: "low",
     talkChime: true,
     talkCoachSeen: false,
+    connectionAlarmTone: DEFAULT_ALARM_TONE,
   };
 }
 
