@@ -26,6 +26,7 @@
   import NightScreen from "../lib/ui/NightScreen.svelte";
   import {
     canRequestSilence,
+    connectionName,
     downForMs,
     extraChips,
     fixedChips,
@@ -537,5 +538,5 @@
 
 <!-- One stop dialog on screen at a time: the connection alert brings its own. -->
 {#if fullScreen === null}
-  <StopDialog bind:open={stopOpen} name={$app.peerName?.trim() || null} onconfirm={stop} />
+  <StopDialog bind:open={stopOpen} name={connectionName($app.peerName)} onconfirm={stop} />
 {/if}

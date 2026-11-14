@@ -3,8 +3,14 @@
   import { t } from "../i18n/store";
   import { formatDurationWords, spokenDuration } from "./format";
   import Glyph from "./Glyph.svelte";
-  import { coreMessageKey } from "./messages";
-  import { STATUS_KEY, STATUS_LOOK, STATUS_SUB_KEY, downForMs, statusKindOf } from "./parent-view";
+  import {
+    STATUS_LOOK,
+    STATUS_SUB_KEY,
+    connectionName,
+    downForMs,
+    statusHeadline,
+    statusKindOf,
+  } from "./parent-view";
   import { everySecond } from "./ticker";
 
   /**
@@ -21,17 +27,8 @@
 
   const kind = $derived(statusKindOf($parent.link));
   const look = $derived(STATUS_LOOK[kind]);
-  // A connection name is shown as "State · Name"; it is never spliced into a sentence.
-  const name = $derived($app.peerName?.trim() || null);
-  const headline = $derived.by(() => {
-    if (kind === "needs_pairing") {
-      return $t(coreMessageKey($parent.link.failureKey) ?? STATUS_KEY.needs_pairing);
-    }
-    const state = $t(STATUS_KEY[kind]);
-    return name === null || kind === "idle"
-      ? state
-      : $t("native.ui.status.withName", { state, name });
-  });
+  const name = $derived(connectionName($app.peerName));
+  const headline = $derived(statusHeadline($t, kind, $parent.link, name));
   const subKey = $derived(STATUS_SUB_KEY[kind]);
   const downMs = $derived(downForMs($parent.link, $everySecond.elapsedMs));
 </script>

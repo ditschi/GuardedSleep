@@ -10,7 +10,8 @@
   import Glyph from "../lib/ui/Glyph.svelte";
   import { coreMessageKey } from "../lib/ui/messages";
   import {
-    STATUS_KEY,
+    connectionName,
+    statusHeadline,
     alertStageOf,
     downForMs,
     elapsedToWall,
@@ -45,17 +46,12 @@
   let stopOpen = $state(false);
   let wrongOpen = $state(false);
 
-  const name = $derived($app.peerName?.trim() || null);
+  const name = $derived(connectionName($app.peerName));
   const link = $derived($parent.link);
   const stage = $derived(alertStageOf(link, $everySecond.elapsedMs));
   const firstConnection = $derived(link.phase === "connecting");
   const clock = (atElapsedMs: number): string =>
     formatClock(elapsedToWall(atElapsedMs, $everySecond.elapsedMs, $everySecond.wallMs), $locale);
-
-  /** "State · Name": the name is never spliced into a sentence. */
-  function withName(state: string): string {
-    return name === null ? state : $t("native.ui.status.withName", { state, name });
-  }
 
   const headline = $derived.by(() => {
     if (stage === "paused") {
@@ -63,9 +59,9 @@
         time: clock(link.acknowledgedUntilElapsedMs ?? $everySecond.elapsedMs),
       });
     }
-    if (stage === "loud") return withName($t(STATUS_KEY.still_no_connection));
+    if (stage === "loud") return statusHeadline($t, "still_no_connection", link, name);
     return firstConnection
-      ? withName($t(STATUS_KEY.couldnt_connect))
+      ? statusHeadline($t, "couldnt_connect", link, name)
       : $t("native.ui.connAlert.headlineCheck");
   });
 
@@ -102,7 +98,7 @@
           : "native.ui.connAlert.labelAlerting",
     ),
   );
-  const stripText = $derived(withName($t(STATUS_KEY[statusKindOf(link)])));
+  const stripText = $derived(statusHeadline($t, statusKindOf(link), link, name));
 
   // The other full screens keep their own title and text.
   const title = $derived.by(() => {

@@ -1,6 +1,8 @@
 import type { LinkUi, MissedEventsUi, ParentMonitorState, SilenceStatus } from "../contract";
 import type { MessageKey } from "../i18n/keys";
+import type { Translate } from "../i18n/translate";
 import type { GlyphName, Tone } from "./glyphs";
+import { coreMessageKey } from "./messages";
 
 /*
  * What the parent screens show, derived from the contract model: the ambient bar, the headline,
@@ -88,6 +90,27 @@ export const STATUS_KEY: Readonly<Record<StatusKind, MessageKey>> = {
   needs_pairing: "core.pairingKeyMismatch",
   idle: "native.ui.link.idle",
 };
+
+/** The connection's own name, or null when it has none (blank counts as none). */
+export function connectionName(peerName: string | null): string | null {
+  return peerName?.trim() || null;
+}
+
+/**
+ * The stage in words, "State · Name" when the connection has a name; the name is never spliced into
+ * a sentence. A link that needs the user says the core's own message, an idle bar carries no name.
+ */
+export function statusHeadline(
+  t: Translate,
+  kind: StatusKind,
+  link: LinkUi,
+  name: string | null,
+): string {
+  if (kind === "needs_pairing")
+    return t(coreMessageKey(link.failureKey) ?? STATUS_KEY.needs_pairing);
+  const state = t(STATUS_KEY[kind]);
+  return name === null || kind === "idle" ? state : t("native.ui.status.withName", { state, name });
+}
 
 /** The one sub-line a stage has, if any. */
 export const STATUS_SUB_KEY: Readonly<Partial<Record<StatusKind, MessageKey>>> = {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createTranslator } from "../i18n/translate";
 import {
   defaultLinkUi,
   defaultParentMonitor,
@@ -8,6 +9,8 @@ import {
 } from "../contract";
 import {
   STATUS_LOOK,
+  connectionName,
+  statusHeadline,
   alertStageOf,
   canRequestSilence,
   downForMs,
@@ -334,5 +337,37 @@ describe("canRequestSilence", () => {
         state({ link: link({ phase: "reconnecting" }), peer: { ...peer, silence: "may_ring" } }),
       ),
     ).toBe(false);
+  });
+});
+
+describe("connectionName", () => {
+  it("is the trimmed name, or null for none and blank", () => {
+    expect(connectionName("  Nursery ")).toBe("Nursery");
+    expect(connectionName("   ")).toBeNull();
+    expect(connectionName("")).toBeNull();
+    expect(connectionName(null)).toBeNull();
+  });
+});
+
+describe("statusHeadline", () => {
+  const t = createTranslator("en");
+  const l = link({});
+  it("composes 'State · Name' and leaves the bare state without a name", () => {
+    expect(statusHeadline(t, "connected", l, "Nursery")).toBe("Connected · Nursery");
+    expect(statusHeadline(t, "connected", l, null)).toBe("Connected");
+    expect(statusHeadline(t, "still_no_connection", l, "Nursery")).toBe(
+      "Still no connection · Nursery",
+    );
+  });
+  it("never names an idle bar, and a link that needs the user says the core's message", () => {
+    expect(statusHeadline(t, "idle", l, "Nursery")).toBe("Not monitoring");
+    expect(
+      statusHeadline(
+        t,
+        "needs_pairing",
+        link({ phase: "failed_needs_user", failureKey: "update_required" }),
+        "Nursery",
+      ),
+    ).toContain("update");
   });
 });
