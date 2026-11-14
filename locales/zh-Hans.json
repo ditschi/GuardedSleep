@@ -540,6 +540,31 @@
         },
         "startMode": {
           "ask": "每次询问"
+        },
+        "alarmTone": {
+          "label": "连接警报音",
+          "explanation": "用于连接中断。噪音提醒始终播放孩子自己的声音。",
+          "tagHardOfHearing": "听力不佳",
+          "hintHardOfHearing": "听力不佳？请选择“低沉”。",
+          "name": {
+            "classic": "经典",
+            "low": "低沉",
+            "beacon": "灯塔",
+            "rising": "渐升",
+            "chime": "钟声"
+          },
+          "desc": {
+            "classic": "两个交替的哔声，熟悉的声音。",
+            "low": "两个温暖低沉的音，高音听不清时更容易听到。",
+            "beacon": "三声短促的高音哔声，然后停顿。",
+            "rising": "四个向上攀升的音。",
+            "chime": "三个柔和、如钟声般的音。"
+          },
+          "play": "播放",
+          "playNamed": "播放{name}",
+          "stop": "停止",
+          "test": "测试连接警报",
+          "testWarning": "测试会以完整的警报音量播放约 8 秒。"
         }
       },
       "fgsMissing": {

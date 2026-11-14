@@ -540,6 +540,31 @@
         },
         "startMode": {
           "ask": "Tanya setiap kali"
+        },
+        "alarmTone": {
+          "label": "Nada alarm koneksi",
+          "explanation": "Untuk koneksi yang terputus. Peringatan suara selalu memutar suara anak itu sendiri.",
+          "tagHardOfHearing": "Kurang pendengaran",
+          "hintHardOfHearing": "Kurang pendengaran? Pilih Rendah.",
+          "name": {
+            "classic": "Klasik",
+            "low": "Rendah",
+            "beacon": "Suar",
+            "rising": "Menanjak",
+            "chime": "Lonceng"
+          },
+          "desc": {
+            "classic": "Dua bip bergantian. Suara yang familier.",
+            "low": "Dua nada rendah yang hangat, lebih mudah terdengar jika nada tinggi mulai sulit didengar.",
+            "beacon": "Tiga bip tinggi pendek, lalu jeda.",
+            "rising": "Empat nada yang naik.",
+            "chime": "Tiga nada lembut seperti lonceng."
+          },
+          "play": "Putar",
+          "playNamed": "Putar {name}",
+          "stop": "Berhenti",
+          "test": "Uji alarm koneksi",
+          "testWarning": "Pengujian diputar dengan volume alarm penuh selama sekitar 8 detik."
         }
       },
       "fgsMissing": {

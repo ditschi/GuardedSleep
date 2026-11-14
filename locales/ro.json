@@ -540,6 +540,31 @@
         },
         "startMode": {
           "ask": "Întreabă de fiecare dată"
+        },
+        "alarmTone": {
+          "label": "Sunetul alarmei de conexiune",
+          "explanation": "Pentru o conexiune pierdută. Alertele de zgomot redau întotdeauna sunetul copilului.",
+          "tagHardOfHearing": "Auz slab",
+          "hintHardOfHearing": "Auz slab? Alegeți Grav.",
+          "name": {
+            "classic": "Clasic",
+            "low": "Grav",
+            "beacon": "Far",
+            "rising": "Ascendent",
+            "chime": "Clopoțel"
+          },
+          "desc": {
+            "classic": "Două bipuri alternante. Sunetul familiar.",
+            "low": "Două note calde și grave, mai ușor de auzit când tonurile înalte slăbesc.",
+            "beacon": "Trei bipuri înalte scurte, apoi o pauză.",
+            "rising": "Patru note care urcă.",
+            "chime": "Trei note moi, ca de clopoțel."
+          },
+          "play": "Redă",
+          "playNamed": "Redă {name}",
+          "stop": "Oprește",
+          "test": "Testează alarma de conexiune",
+          "testWarning": "Testul se aude la volumul maxim al alarmei timp de aproximativ 8 secunde."
         }
       },
       "fgsMissing": {

@@ -15,13 +15,13 @@ Branch `feat/connection-alarm-tone` from `origin/main`. Commit after each task; 
 
 ## 3. Web (`apps/web`)
 
-- [ ] 3.1 `AlertPlayer` plays segments of the resolved recipe (soft every 10 s, alarm loop, peer-stopped soft tone, preview, test); the stored id lives in `localStorage` next to the theme setting and is read through `resolve_alarm_tone`. Verify: Vitest (segments scheduled per recipe, garbage stored value → `classic`, nothing sounds before the sound gate).
-- [ ] 3.2 Settings row and picker with the same test ids as Android. Verify: `svelte-check --fail-on-warnings`, Vitest; Playwright spec selecting a tone and running a preview after the gate (`just e2e`).
+- [x] 3.1 `AlertPlayer` plays segments of the resolved recipe (soft every 10 s, alarm loop, peer-stopped soft tone, preview, test); the stored id lives in `localStorage` next to the theme setting and is read through `resolve_alarm_tone`. Verify: Vitest (segments scheduled per recipe, garbage stored value → `classic`, nothing sounds before the sound gate).
+- [x] 3.2 Settings row and picker with the same test ids as Android. Verify: `svelte-check --fail-on-warnings`, Vitest; Playwright spec selecting a tone and running a preview after the gate (`just e2e`).
 
 ## 4. Copy and docs
 
-- [ ] 4.1 Copy keys (setting label, five tone names, explanation, preview, test, stop) in `locales/en.json` and all locales with `machineTranslated` markers. Verify: `just gen`, `just lint-text`, literal lint.
-- [ ] 4.2 `docs/backlog.md`: note in the "configurable alert behaviour" idea that the connection alarm tone choice is built. Verify: `just lint-text`.
+- [x] 4.1 Copy keys (setting label, five tone names, explanation, preview, test, stop) in `locales/en.json` and all locales with `machineTranslated` markers. Verify: `just gen`, `just lint-text`, literal lint.
+- [x] 4.2 `docs/backlog.md`: note in the "configurable alert behaviour" idea that the connection alarm tone choice is built. Verify: `just lint-text`.
 
 ## 5. Verification
 

@@ -540,6 +540,31 @@
         },
         "startMode": {
           "ask": "Pytaj za każdym razem"
+        },
+        "alarmTone": {
+          "label": "Dźwięk alarmu utraty połączenia",
+          "explanation": "Dla utraty połączenia. Alerty o hałasie zawsze odtwarzają dźwięk dziecka.",
+          "tagHardOfHearing": "Niedosłyszący",
+          "hintHardOfHearing": "Słabo słyszysz? Wybierz Niski.",
+          "name": {
+            "classic": "Klasyczny",
+            "low": "Niski",
+            "beacon": "Latarnia",
+            "rising": "Narastający",
+            "chime": "Dzwonek"
+          },
+          "desc": {
+            "classic": "Dwa naprzemienne sygnały. Znany dźwięk.",
+            "low": "Dwa ciepłe, niskie dźwięki, łatwiejsze do usłyszenia, gdy wysokie tony słabną.",
+            "beacon": "Trzy krótkie wysokie sygnały, potem przerwa.",
+            "rising": "Cztery dźwięki idące w górę.",
+            "chime": "Trzy miękkie dźwięki przypominające dzwonek."
+          },
+          "play": "Odtwórz",
+          "playNamed": "Odtwórz: {name}",
+          "stop": "Zatrzymaj",
+          "test": "Testuj alarm połączenia",
+          "testWarning": "Test gra z pełną głośnością alarmu przez około 8 sekund."
         }
       },
       "fgsMissing": {

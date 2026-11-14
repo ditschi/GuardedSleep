@@ -542,6 +542,31 @@
         },
         "startMode": {
           "ask": "Ask every time"
+        },
+        "alarmTone": {
+          "label": "Connection alarm tone",
+          "explanation": "For a lost connection. Noise alerts always play the child's own sound.",
+          "tagHardOfHearing": "Hard of hearing",
+          "hintHardOfHearing": "Hard of hearing? Choose Low.",
+          "name": {
+            "classic": "Classic",
+            "low": "Low",
+            "beacon": "Beacon",
+            "rising": "Rising",
+            "chime": "Chime"
+          },
+          "desc": {
+            "classic": "Two alternating beeps. The familiar sound.",
+            "low": "Two warm, low notes that are easier to hear if high tones fade.",
+            "beacon": "Three short high beeps, then a pause.",
+            "rising": "Four notes climbing upward.",
+            "chime": "Three soft, bell-like notes."
+          },
+          "play": "Play",
+          "playNamed": "Play {name}",
+          "stop": "Stop",
+          "test": "Test connection alarm",
+          "testWarning": "This plays at full alarm volume for about 8 seconds."
         }
       },
       "fgsMissing": {

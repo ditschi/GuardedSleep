@@ -540,6 +540,31 @@
         },
         "startMode": {
           "ask": "Elke keer vragen"
+        },
+        "alarmTone": {
+          "label": "Alarmtoon bij verbroken verbinding",
+          "explanation": "Voor een verbroken verbinding. Geluidsmeldingen spelen altijd het geluid van het kind af.",
+          "tagHardOfHearing": "Slechthorend",
+          "hintHardOfHearing": "Slechthorend? Kies Laag.",
+          "name": {
+            "classic": "Klassiek",
+            "low": "Laag",
+            "beacon": "Baken",
+            "rising": "Stijgend",
+            "chime": "Klokkenspel"
+          },
+          "desc": {
+            "classic": "Twee afwisselende pieptonen. Het vertrouwde geluid.",
+            "low": "Twee warme, lage tonen die beter te horen zijn als hoge tonen wegvallen.",
+            "beacon": "Drie korte hoge pieptonen, dan een pauze.",
+            "rising": "Vier tonen die omhoog gaan.",
+            "chime": "Drie zachte, klokachtige tonen."
+          },
+          "play": "Afspelen",
+          "playNamed": "{name} afspelen",
+          "stop": "Stop",
+          "test": "Verbindingsalarm testen",
+          "testWarning": "De test speelt ongeveer 8 seconden op volle alarmvolume."
         }
       },
       "fgsMissing": {
