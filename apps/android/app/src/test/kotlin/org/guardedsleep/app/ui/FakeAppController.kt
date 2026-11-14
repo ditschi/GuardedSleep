@@ -140,6 +140,11 @@ class FakeAppController(
             )
     }
 
+    override fun chooseAnotherConnection() {
+        calls += "chooseAnotherConnection"
+        appFlow.value = appFlow.value.copy(monitoring = false, autoStarted = false)
+    }
+
     override fun clearDefaultConnection() {
         calls += "clearDefaultConnection"
         appFlow.value =

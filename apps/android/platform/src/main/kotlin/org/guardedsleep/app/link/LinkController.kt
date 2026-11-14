@@ -277,12 +277,10 @@ class LinkController(
         }
         parentModel.restoreSnooze(settingsRepo.current.snoozeUntilWallMs)
         refreshApp()
-        // The first role choice of this app start may be the "app opens in parent mode".
-        if (role == Role.PARENT) autoStartOnce() else autoStartPending = false
+        if (role == Role.PARENT) autoStartOnce()
     }
 
     override fun switchMode() {
-        autoStartPending = false
         if (settingsRepo.current.monitoringActive) return
         cancelPairing()
         stopRun(userStop = true)
@@ -439,6 +437,11 @@ class LinkController(
         if (pairings.setDefault(role, id)) refreshApp()
     }
 
+    override fun chooseAnotherConnection() {
+        // A user stop; the home then lists the saved connections (a UI concern).
+        stopMonitoring()
+    }
+
     override fun clearDefaultConnection() {
         val role = settingsRepo.current.role ?: return
         pairings.clearDefault(role)
@@ -474,29 +477,33 @@ class LinkController(
     }
 
     /**
-     * "When the app opens in parent mode": set once per process (this construction) and cleared by
-     * the first thing that settles it, so rotation, returning from the background or a later role
-     * change never starts monitoring mid-session. Touched on the main thread only (lifecycle
-     * callbacks and UI actions).
+     * "The first time the parent role is entered in this app start": set once per process (this
+     * construction) and consumed by that entry (first [onForeground] with the parent role, first
+     * [chooseRole] of the parent, so also a switch from the baby home through the role screen). The
+     * start mode and the parent default are independent. The baby unit monitoring or showing an
+     * invite first clears it ([startRun]). Touched on the main thread only (lifecycle callbacks and
+     * UI actions).
      */
     private var autoStartPending = true
 
+    /** True for the monitoring session the automatic start began, until monitoring stops. */
+    private var autoStarted = false
+
     /**
      * Parent only (`device-setup`, "Automatic start with the default connection"): a connection the
-     * user marked as default starts monitoring when the app opens. The first [onForeground] with a
-     * role settles it (the baby clears it); on the role screen it stays pending for the first
-     * [chooseRole]. A running or resumable monitoring flag, an open pairing, unfinished onboarding
-     * or a missing marker act on nothing. Returns true when it started monitoring.
+     * user marked as default starts monitoring on the first entry into the parent role. A running
+     * or resumable monitoring flag, an open pairing, unfinished onboarding or a missing marker act
+     * on nothing, but the entry is used up. Returns true when it started monitoring.
      */
     private fun autoStartOnce(): Boolean {
         if (!autoStartPending) return false
         val p = settingsRepo.current
-        val role = p.role ?: return false
+        if (p.role != Role.PARENT) return false
         autoStartPending = false
-        if (role != Role.PARENT || !p.onboardingDone) return false
-        if (p.monitoringActive || _pairing.value != null) return false
+        if (!p.onboardingDone || p.monitoringActive || _pairing.value != null) return false
         val id = pairings.markedDefaultId(Role.PARENT) ?: return false
         selectConnection(id)
+        autoStarted = true
         startMonitoring()
         return true
     }
@@ -563,6 +570,7 @@ class LinkController(
                 // The baby unit replaces its pairing; only the parent adds one, up to the cap.
                 canAddPairing = p.role != Role.PARENT || pairings.freeId(Role.PARENT) != null,
                 monitoring = p.monitoringActive,
+                autoStarted = autoStarted && p.monitoringActive,
                 backgroundProtection = !(p.monitoringActive && fgs == Fgs.LOST),
             )
     }
@@ -721,6 +729,7 @@ class LinkController(
 
     override fun stopMonitoring() {
         // The next start preselects the default connection again.
+        autoStarted = false
         settingsRepo.update { it.copy(monitoringActive = false, pairingId = null) }
         stopRun(userStop = true)
         fgs = Fgs.UNKNOWN
@@ -769,6 +778,8 @@ class LinkController(
         monitoring: Boolean,
         isPending: Boolean,
     ) {
+        // The baby unit ran or showed an invite in this app start: no automatic parent start.
+        if (role == Role.BABY) autoStartPending = false
         stopRun(userStop = false)
         val s = _settings.value
         val coreRole = if (role == Role.BABY) CoreRole.BABY else CoreRole.PARENT

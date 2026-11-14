@@ -20,5 +20,5 @@ Branch `fix/parent-pairing-entry` from `origin/main`. Commit after each task; `j
 
 ## 4. Owner amendment 2026-11-14
 
-- [ ] 4.1 Automatic start on the first entry into the parent role per app start, also through `switchMode()` from the baby home; cleared when the baby monitored or showed an invite first (design §3). Verify: `LinkControllerTest` (start mode baby → switch to parent → starts once; baby monitored first → no start; existing once-only tests stay green).
+- [x] 4.1 Automatic start on the first entry into the parent role per app start, also through `switchMode()` from the baby home; cleared when the baby monitored or showed an invite first (design §3). Verify: `LinkControllerTest` (start mode baby → switch to parent → starts once; baby monitored first → no start; existing once-only tests stay green).
 - [ ] 4.2 "Choose another connection" after an automatic start: `AppState.autoStarted`, `chooseAnotherConnection()` (+ fakes, web mirror), button while not verified, menu entry with confirmation afterwards, home opens with the connection list shown. Copy in all locales. Verify: `LinkControllerTest`, Robolectric (button before verify, menu after, lands on the list), Roborazzi recorded in the pinned image.

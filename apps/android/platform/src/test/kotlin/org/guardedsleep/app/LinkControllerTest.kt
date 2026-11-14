@@ -816,14 +816,58 @@ class LinkControllerTest {
     }
 
     @Test
-    fun aBabyChoiceOrASwitchBackToParentNeverStarts() {
-        val first = autoStartParent("ask-baby", startsAsParent = false)
-        val c = restart("ask-baby2", first, java.util.concurrent.atomic.AtomicInteger()).controller
-        c.chooseRole(Role.BABY)
+    fun aBabyStartModeSwitchedToParentWithoutABabyRunStartsOnce() {
+        val first = autoStartParent("baby-mode", startsAsParent = false)
+        first.controller.setDefaultRole(Role.BABY)
+        val starts = java.util.concurrent.atomic.AtomicInteger()
+        val c = restart("baby-mode2", first, starts).controller
+        c.onForeground()
+        assertEquals(Role.BABY, c.app.value.role)
+        assertFalse(c.app.value.monitoring)
+        c.switchMode()
+        c.chooseRole(Role.PARENT)
+        assertTrue(c.app.value.monitoring)
+        assertTrue(c.app.value.autoStarted)
+        assertEquals(1, starts.get())
+        c.stopMonitoring()
+        assertFalse(c.app.value.autoStarted)
         c.switchMode()
         c.chooseRole(Role.PARENT)
         c.onForeground()
+        assertFalse("once per process", c.app.value.monitoring)
+        assertEquals(1, starts.get())
+    }
+
+    @Test
+    fun anInviteShownByTheBabyFirstUsesUpTheAutomaticStart() {
+        val first = autoStartParent("baby-first", startsAsParent = false)
+        first.controller.setDefaultRole(Role.BABY)
+        val starts = java.util.concurrent.atomic.AtomicInteger()
+        val c = restart("baby-first2", first, starts).controller
+        c.onForeground()
+        c.startPairing()
+        assertNotNull(c.pairing.value)
+        c.cancelPairing()
+        c.switchMode()
+        c.chooseRole(Role.PARENT)
         assertFalse(c.app.value.monitoring)
+        assertEquals(0, starts.get())
+    }
+
+    @Test
+    fun chooseAnotherConnectionStopsAnAutomaticStart() {
+        val first = autoStartParent("choose-other")
+        val c =
+            restart("choose-other2", first, java.util.concurrent.atomic.AtomicInteger()).controller
+        c.onForeground()
+        assertTrue(c.app.value.autoStarted)
+        c.chooseAnotherConnection()
+        assertFalse(c.app.value.monitoring)
+        assertFalse(c.app.value.autoStarted)
+        c.selectConnection("1")
+        c.startMonitoring()
+        assertTrue(c.app.value.monitoring)
+        assertFalse("a manual start is not automatic", c.app.value.autoStarted)
     }
 
     @Test

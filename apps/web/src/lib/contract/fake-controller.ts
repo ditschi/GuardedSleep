@@ -87,6 +87,7 @@ export function createFakeController(): FakeController {
     },
     setDefaultConnection: record("setDefaultConnection"),
     clearDefaultConnection: record("clearDefaultConnection"),
+    chooseAnotherConnection: record("chooseAnotherConnection"),
     forgetConnection: record("forgetConnection"),
     completeOnboarding() {
       calls.push(["completeOnboarding"]);
