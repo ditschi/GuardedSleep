@@ -671,6 +671,36 @@
     height: 1.25rem;
     accent-color: var(--gs-primary);
   }
+  /* Connection alarm tone: the settings row and the picker rows with their preview buttons. */
+  .gs-link-row {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: var(--gs-target);
+    color: inherit;
+    text-decoration: none;
+  }
+  .gs-tone-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gs-space-3);
+  }
+  .gs-tone-row .gs-choice {
+    flex: 1;
+    min-width: 0;
+  }
+  .gs-tone-row .gs-choice > span {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .gs-tone-tag {
+    color: var(--gs-primary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
   .gs-range {
     width: 100%;
     min-height: var(--gs-target);

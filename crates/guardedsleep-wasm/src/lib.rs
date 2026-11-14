@@ -126,6 +126,36 @@ pub fn filter_only_local(mailboxes_json: &str, project_host: &str) -> Result<Str
     serde_json::to_string(&kept).map_err(|_| JsError::new("not_our_code"))
 }
 
+/// JSON array of the built-in connection alarm tones (`AlarmTone[]`) in picker order. Throws
+/// `not_our_code` if serialization fails (it cannot for these types).
+#[wasm_bindgen(js_name = alarmTones)]
+pub fn alarm_tones() -> Result<String, JsError> {
+    serde_json::to_string(&guardedsleep_core::alarm_tone::alarm_tones())
+        .map_err(|_| JsError::new("not_our_code"))
+}
+
+/// JSON of the `AlarmTone` for a stored id; an unknown, empty or overlong value gives `classic`.
+/// Throws `not_our_code` if serialization fails (it cannot for these types).
+#[wasm_bindgen(js_name = resolveAlarmTone)]
+pub fn resolve_alarm_tone(id: &str) -> Result<String, JsError> {
+    serde_json::to_string(&guardedsleep_core::alarm_tone::resolve_alarm_tone(id))
+        .map_err(|_| JsError::new("not_our_code"))
+}
+
+/// JSON of the `AlarmToneDemo` (segments and gain) for a stored id and `kind` (`"preview"` or
+/// `"test"`). Throws `not_our_code` for any other kind.
+#[wasm_bindgen(js_name = alarmToneDemo)]
+pub fn alarm_tone_demo(id: &str, kind: &str) -> Result<String, JsError> {
+    use guardedsleep_core::alarm_tone::AlarmToneDemoKind;
+    let kind = match kind {
+        "preview" => AlarmToneDemoKind::Preview,
+        "test" => AlarmToneDemoKind::Test,
+        _ => return Err(JsError::new("not_our_code")),
+    };
+    serde_json::to_string(&guardedsleep_core::alarm_tone::alarm_tone_demo(id, kind))
+        .map_err(|_| JsError::new("not_our_code"))
+}
+
 #[wasm_bindgen(js_name = conformanceEval)]
 pub fn conformance_eval(case_json: &str) -> String {
     guardedsleep_core::conformance::evaluate(case_json)

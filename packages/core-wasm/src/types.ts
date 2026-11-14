@@ -10,6 +10,9 @@
 import type { InviteMailbox, LinkAction, LinkEvent } from "../pkg/guardedsleep_wasm.js";
 
 export type {
+  AlarmTone,
+  AlarmToneDemo,
+  AlarmToneDemoKind,
   DeviceStatus,
   Dnd,
   IceCandidate,
@@ -25,6 +28,8 @@ export type {
   Ringer,
   Role,
   TalkLevel,
+  TonePartial,
+  ToneSegment,
   UnitWarning,
 } from "../pkg/guardedsleep_wasm.js";
 

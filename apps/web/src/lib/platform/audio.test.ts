@@ -1,3 +1,6 @@
+import { loadCoreNode } from "@guardedsleep/core-wasm/node";
+import type { AlarmTone } from "@guardedsleep/core-wasm";
+import { get } from "svelte/store";
 import { describe, expect, it } from "vitest";
 import {
   AlertPlayer,
@@ -12,6 +15,8 @@ import type { PeerConnectionCtor } from "./attempt";
 import { FakeTime } from "./test-support";
 import { asContext, asStream, FakeAudioContext, FakeStream, type FakeAnalyser } from "./test-audio";
 import { createWebMediaEngine } from "./web-media";
+
+const core = loadCoreNode();
 
 function gateOf(ctx: FakeAudioContext) {
   return createSoundGate(() => asContext(ctx));
@@ -284,7 +289,12 @@ describe("AlertPlayer", () => {
     const ctx = new FakeAudioContext();
     const gate = gateOf(ctx);
     const time = new FakeTime();
-    const player = new AlertPlayer({ gate, timers: time });
+    const player = new AlertPlayer({
+      gate,
+      timers: time,
+      resolveTone: core.resolveAlarmTone,
+      alarmToneDemo: core.alarmToneDemo,
+    });
     return { ctx, gate, time, player };
   }
   const freqs = (ctx: FakeAudioContext): number[] => ctx.oscillators.map((o) => o.frequency.value);
@@ -356,6 +366,147 @@ describe("AlertPlayer", () => {
     player.linkState(snapshot({ level: 3 }));
     player.clear();
     expect(time.pending()).toBe(0);
+  });
+});
+
+describe("AlertPlayer connection alarm tone", () => {
+  function make() {
+    const ctx = new FakeAudioContext();
+    const gate = gateOf(ctx);
+    const time = new FakeTime();
+    const player = new AlertPlayer({
+      gate,
+      timers: time,
+      resolveTone: core.resolveAlarmTone,
+      alarmToneDemo: core.alarmToneDemo,
+    });
+    return { ctx, gate, time, player };
+  }
+  const flat = (segments: AlarmTone["soft"]): number[] =>
+    segments.flatMap((s) => s.partials.map((p) => p.freq_hz));
+  const cycleMs = (tone: AlarmTone): number => tone.alarm.reduce((sum, s) => sum + s.ms, 0);
+  const lastStop = (ctx: FakeAudioContext): number =>
+    Math.max(...ctx.oscillators.map((o) => o.stopped ?? 0));
+
+  for (const tone of core.alarmTones()) {
+    it(`${tone.id}: schedules the soft tone every 10 s and loops the alarm cycle`, async () => {
+      const { ctx, gate, time, player } = make();
+      await gate.unlock();
+      player.setAlarmTone(tone.id);
+      player.linkState(snapshot({ level: 2 }));
+      expect(ctx.oscillators.map((o) => o.frequency.value)).toEqual(flat(tone.soft));
+      time.advance(10_000);
+      expect(ctx.oscillators).toHaveLength(flat(tone.soft).length * 2);
+      player.linkState(snapshot({ phase: "connected", level: 0 }));
+
+      const alarm = make();
+      await alarm.gate.unlock();
+      alarm.player.setAlarmTone(tone.id);
+      alarm.player.linkState(snapshot({ level: 3 }));
+      expect(alarm.ctx.oscillators.map((o) => o.frequency.value)).toEqual(flat(tone.alarm));
+      alarm.time.advance(cycleMs(tone));
+      expect(alarm.ctx.oscillators).toHaveLength(flat(tone.alarm).length * 2);
+      // The cycle ends where its trailing pause ends: nothing sounds beyond the recipe.
+      expect(lastStop(alarm.ctx)).toBeLessThanOrEqual(cycleMs(tone) / 1000);
+    });
+  }
+
+  it("a garbage stored value sounds the classic tone", async () => {
+    const { ctx, gate, player } = make();
+    await gate.unlock();
+    player.setAlarmTone("not-a-tone");
+    player.linkState(snapshot({ level: 2 }));
+    expect(ctx.oscillators.map((o) => o.frequency.value)).toEqual([660]);
+  });
+
+  it("a running alarm switches recipe at its next cycle", async () => {
+    const { ctx, gate, time, player } = make();
+    await gate.unlock();
+    player.linkState(snapshot({ level: 3 }));
+    player.setAlarmTone("beacon");
+    // Still the classic cycle until it ends, then the Beacon pulses.
+    expect(ctx.oscillators).toHaveLength(2);
+    time.advance(1_200);
+    expect(ctx.oscillators.map((o) => o.frequency.value)).toEqual([880, 660, 1000, 1000, 1000]);
+    player.clear();
+    expect(time.pending()).toBe(0);
+  });
+
+  it("the peer-stopped notice uses the chosen soft tone", async () => {
+    const { ctx, gate, player } = make();
+    await gate.unlock();
+    player.setAlarmTone("chime");
+    player.notice({ type: "peer_stopped" });
+    expect(ctx.oscillators.map((o) => o.frequency.value)).toEqual(
+      flat(core.resolveAlarmTone("chime").soft),
+    );
+  });
+
+  it("nothing sounds before the sound gate, not even a preview or test", () => {
+    const { ctx, player } = make();
+    player.preview("low");
+    player.test("low");
+    expect(ctx.oscillators).toHaveLength(0);
+    expect(get(player.playback)).toEqual({ kind: "idle" });
+  });
+
+  it("a preview plays at reduced gain, reports its state and ends by itself", async () => {
+    const { ctx, gate, time, player } = make();
+    await gate.unlock();
+    const tone = core.resolveAlarmTone("low");
+    player.preview("low");
+    expect(get(player.playback)).toEqual({ kind: "preview", id: "low" });
+    const peak = Math.max(
+      ...ctx.gains.flatMap((g) => g.gain.ramps.filter((r) => r[0] === "ramp").map((r) => r[1])),
+    );
+    const full = Math.max(...tone.alarm.flatMap((s) => s.partials.map((p) => p.amplitude)));
+    expect(peak).toBeCloseTo(full * 0.5, 6);
+    const total =
+      tone.soft.reduce((n, s) => n + s.ms, 0) + 300 + 2 * tone.alarm.reduce((n, s) => n + s.ms, 0);
+    time.advance(total - 1);
+    expect(get(player.playback).kind).toBe("preview");
+    time.advance(1);
+    expect(get(player.playback)).toEqual({ kind: "idle" });
+  });
+
+  it("stop ends a preview at once", async () => {
+    const { ctx, gate, time, player } = make();
+    await gate.unlock();
+    player.preview("beacon");
+    player.stopDemo();
+    expect(get(player.playback)).toEqual({ kind: "idle" });
+    expect(ctx.oscillators.every((o) => o.stopped === 0)).toBe(true);
+    expect(time.pending()).toBe(0);
+  });
+
+  it("the test plays at full gain for about 8 seconds", async () => {
+    const { ctx, gate, time, player } = make();
+    await gate.unlock();
+    player.test("rising");
+    expect(get(player.playback)).toEqual({ kind: "test", id: "rising" });
+    expect(lastStop(ctx)).toBeGreaterThan(7);
+    expect(lastStop(ctx)).toBeLessThan(10);
+    const peak = Math.max(
+      ...ctx.gains.flatMap((g) => g.gain.ramps.filter((r) => r[0] === "ramp").map((r) => r[1])),
+    );
+    expect(peak).toBeCloseTo(0.8, 6);
+    time.advance(10_000);
+    expect(get(player.playback)).toEqual({ kind: "idle" });
+  });
+
+  it("a real alert stops a preview, and a preview never starts over a running alarm", async () => {
+    const { gate, player } = make();
+    await gate.unlock();
+    player.preview("chime");
+    player.notice({ type: "peer_stopped" });
+    expect(get(player.playback)).toEqual({ kind: "idle" });
+    player.preview("chime");
+    player.noiseAlert("new", true, false);
+    expect(get(player.playback)).toEqual({ kind: "idle" });
+
+    player.linkState(snapshot({ level: 3 }));
+    player.preview("chime");
+    expect(get(player.playback)).toEqual({ kind: "idle" });
   });
 });
 

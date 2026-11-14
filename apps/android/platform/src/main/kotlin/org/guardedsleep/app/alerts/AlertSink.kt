@@ -1,5 +1,8 @@
 package org.guardedsleep.app.alerts
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.guardedsleep.app.ui.model.AlarmTonePlayback
 import org.guardedsleep.app.ui.model.CauseHint
 import org.guardedsleep.app.ui.model.LinkPhase
 
@@ -65,4 +68,23 @@ interface AlertSink {
 
     /** Monitoring ended: cancel every loop and notification. */
     fun clear()
+
+    // Connection alarm tone (`add-connection-alarm-tone`); defaults keep other sinks compiling.
+    /** What the tone picker plays now (a preview or the full-volume test). */
+    val alarmTonePlayback: StateFlow<AlarmTonePlayback>
+        get() = IDLE_PLAYBACK
+
+    /** The stored tone changed: a running alarm switches to it at its next cycle. */
+    fun alarmToneChanged() {}
+
+    /** Preview of the tone with this stored id, at reduced volume. */
+    fun previewAlarmTone(id: String) {}
+
+    /** Test of the tone with this stored id, at full alarm volume. */
+    fun testAlarmTone(id: String) {}
+
+    fun stopAlarmTone() {}
 }
+
+private val IDLE_PLAYBACK: StateFlow<AlarmTonePlayback> =
+    MutableStateFlow<AlarmTonePlayback>(AlarmTonePlayback.Idle)

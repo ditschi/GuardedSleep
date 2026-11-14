@@ -1,0 +1,333 @@
+---
+source: crates/guardedsleep-core/src/alarm_tone.rs
+expression: json
+---
+[
+  {
+    "id": "classic",
+    "soft": [
+      {
+        "partials": [
+          {
+            "freq_hz": 660.0,
+            "amplitude": 0.35
+          }
+        ],
+        "ms": 450,
+        "fade_ms": 80
+      }
+    ],
+    "alarm": [
+      {
+        "partials": [
+          {
+            "freq_hz": 880.0,
+            "amplitude": 0.8
+          }
+        ],
+        "ms": 400,
+        "fade_ms": 20
+      },
+      {
+        "partials": [],
+        "ms": 200,
+        "fade_ms": 0
+      },
+      {
+        "partials": [
+          {
+            "freq_hz": 660.0,
+            "amplitude": 0.8
+          }
+        ],
+        "ms": 400,
+        "fade_ms": 20
+      },
+      {
+        "partials": [],
+        "ms": 200,
+        "fade_ms": 0
+      }
+    ]
+  },
+  {
+    "id": "low",
+    "soft": [
+      {
+        "partials": [
+          {
+            "freq_hz": 440.0,
+            "amplitude": 0.28
+          },
+          {
+            "freq_hz": 880.0,
+            "amplitude": 0.1
+          }
+        ],
+        "ms": 200,
+        "fade_ms": 40
+      },
+      {
+        "partials": [],
+        "ms": 100,
+        "fade_ms": 0
+      },
+      {
+        "partials": [
+          {
+            "freq_hz": 440.0,
+            "amplitude": 0.28
+          },
+          {
+            "freq_hz": 880.0,
+            "amplitude": 0.1
+          }
+        ],
+        "ms": 200,
+        "fade_ms": 40
+      }
+    ],
+    "alarm": [
+      {
+        "partials": [
+          {
+            "freq_hz": 440.0,
+            "amplitude": 0.55
+          },
+          {
+            "freq_hz": 880.0,
+            "amplitude": 0.25
+          }
+        ],
+        "ms": 300,
+        "fade_ms": 30
+      },
+      {
+        "partials": [],
+        "ms": 150,
+        "fade_ms": 0
+      },
+      {
+        "partials": [
+          {
+            "freq_hz": 523.0,
+            "amplitude": 0.55
+          },
+          {
+            "freq_hz": 1046.0,
+            "amplitude": 0.25
+          }
+        ],
+        "ms": 300,
+        "fade_ms": 30
+      },
+      {
+        "partials": [],
+        "ms": 150,
+        "fade_ms": 0
+      }
+    ]
+  },
+  {
+    "id": "beacon",
+    "soft": [
+      {
+        "partials": [
+          {
+            "freq_hz": 523.0,
+            "amplitude": 0.35
+          }
+        ],
+        "ms": 600,
+        "fade_ms": 200
+      }
+    ],
+    "alarm": [
+      {
+        "partials": [
+          {
+            "freq_hz": 1000.0,
+            "amplitude": 0.8
+          }
+        ],
+        "ms": 150,
+        "fade_ms": 15
+      },
+      {
+        "partials": [],
+        "ms": 100,
+        "fade_ms": 0
+      },
+      {
+        "partials": [
+          {
+            "freq_hz": 1000.0,
+            "amplitude": 0.8
+          }
+        ],
+        "ms": 150,
+        "fade_ms": 15
+      },
+      {
+        "partials": [],
+        "ms": 100,
+        "fade_ms": 0
+      },
+      {
+        "partials": [
+          {
+            "freq_hz": 1000.0,
+            "amplitude": 0.8
+          }
+        ],
+        "ms": 150,
+        "fade_ms": 15
+      },
+      {
+        "partials": [],
+        "ms": 400,
+        "fade_ms": 0
+      }
+    ]
+  },
+  {
+    "id": "rising",
+    "soft": [
+      {
+        "partials": [
+          {
+            "freq_hz": 440.0,
+            "amplitude": 0.35
+          }
+        ],
+        "ms": 250,
+        "fade_ms": 40
+      },
+      {
+        "partials": [
+          {
+            "freq_hz": 660.0,
+            "amplitude": 0.35
+          }
+        ],
+        "ms": 250,
+        "fade_ms": 40
+      }
+    ],
+    "alarm": [
+      {
+        "partials": [
+          {
+            "freq_hz": 523.0,
+            "amplitude": 0.8
+          }
+        ],
+        "ms": 200,
+        "fade_ms": 20
+      },
+      {
+        "partials": [
+          {
+            "freq_hz": 659.0,
+            "amplitude": 0.8
+          }
+        ],
+        "ms": 200,
+        "fade_ms": 20
+      },
+      {
+        "partials": [
+          {
+            "freq_hz": 784.0,
+            "amplitude": 0.8
+          }
+        ],
+        "ms": 200,
+        "fade_ms": 20
+      },
+      {
+        "partials": [
+          {
+            "freq_hz": 1047.0,
+            "amplitude": 0.8
+          }
+        ],
+        "ms": 200,
+        "fade_ms": 20
+      },
+      {
+        "partials": [],
+        "ms": 400,
+        "fade_ms": 0
+      }
+    ]
+  },
+  {
+    "id": "chime",
+    "soft": [
+      {
+        "partials": [
+          {
+            "freq_hz": 784.0,
+            "amplitude": 0.28
+          },
+          {
+            "freq_hz": 1175.0,
+            "amplitude": 0.1
+          }
+        ],
+        "ms": 700,
+        "fade_ms": 250
+      }
+    ],
+    "alarm": [
+      {
+        "partials": [
+          {
+            "freq_hz": 784.0,
+            "amplitude": 0.55
+          },
+          {
+            "freq_hz": 1175.0,
+            "amplitude": 0.25
+          }
+        ],
+        "ms": 250,
+        "fade_ms": 100
+      },
+      {
+        "partials": [
+          {
+            "freq_hz": 988.0,
+            "amplitude": 0.55
+          },
+          {
+            "freq_hz": 1175.0,
+            "amplitude": 0.25
+          }
+        ],
+        "ms": 250,
+        "fade_ms": 100
+      },
+      {
+        "partials": [
+          {
+            "freq_hz": 1175.0,
+            "amplitude": 0.55
+          },
+          {
+            "freq_hz": 784.0,
+            "amplitude": 0.25
+          }
+        ],
+        "ms": 250,
+        "fade_ms": 100
+      },
+      {
+        "partials": [],
+        "ms": 450,
+        "fade_ms": 0
+      }
+    ]
+  }
+]

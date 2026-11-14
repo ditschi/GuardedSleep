@@ -9,13 +9,18 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import androidx.core.app.NotificationCompat
+import kotlinx.coroutines.flow.StateFlow
 import org.guardedsleep.app.config.AlertPolicy
 import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.diag.PocLog
 import org.guardedsleep.app.locale.localizedContext
+import org.guardedsleep.app.ui.model.AlarmTonePlayback
+import org.guardedsleep.app.ui.model.AlarmTones
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.wiring.AlertIntents
 import org.guardedsleep.app.wiring.EntryPoints
+import uniffi.guardedsleep_core.AlarmTone
+import uniffi.guardedsleep_core.resolveAlarmTone
 
 /**
  * Parent-side feedback: turns [AlertSink] calls into notifications, vibration and tones using the
@@ -26,6 +31,9 @@ import org.guardedsleep.app.wiring.EntryPoints
 class AlertController(
     private val baseContext: Context,
     private val entryPoints: EntryPoints,
+    /** The stored connection alarm tone id (`SettingsState.connectionAlarmTone`), read per tone. */
+    private val toneId: () -> String = { AlarmTones.DEFAULT },
+    private val tones: TonePlayer = TonePlayer(),
     /** The stored app language (`SettingsState.language`), read when a notification is built. */
     private val language: () -> String? = { null },
 ) : AlertSink {
@@ -48,7 +56,22 @@ class AlertController(
     private val nm = baseContext.getSystemService(NotificationManager::class.java)
     private val handler = Handler(Looper.getMainLooper())
     private val haptics = Haptics(baseContext)
-    private val tones = TonePlayer()
+
+    /** The core resolves the stored id; an unknown value is the default tone, never silence. */
+    private fun tone(): AlarmTone = resolveAlarmTone(toneId())
+
+    override val alarmTonePlayback: StateFlow<AlarmTonePlayback>
+        get() = tones.playback
+
+    override fun alarmToneChanged() = onMain {
+        if (linkPlan.continuousAlarm) tones.startAlarm(tone())
+    }
+
+    override fun previewAlarmTone(id: String) = onMain { tones.preview(id) }
+
+    override fun testAlarmTone(id: String) = onMain { tones.test(id) }
+
+    override fun stopAlarmTone() = onMain { tones.stopDemo() }
 
     private var linkPlan = LinkFeedbackPlan()
     private var lastLink: LinkSnapshot? = null
@@ -170,6 +193,8 @@ class AlertController(
         onMain {
             val plan = FeedbackPlans.forNoise(kind, snoozed, discreet)
             if (!plan.notify) return@onMain
+            // The child's audio is the alert; a preview must not run over it.
+            tones.stopDemo()
             val title =
                 if (probe) R.string.native_notif_noise_test_title
                 else R.string.native_notif_noise_title
@@ -196,7 +221,7 @@ class AlertController(
             Notice.PeerStopped -> {
                 // One connection haptic and one soft tone, no loop (alpha-ux-flows §3.4).
                 haptics.play(HapticPattern.CONNECTION)
-                tones.playSoft()
+                tones.playSoft(tone())
                 nm.notify(
                     ID_PEER_STOPPED,
                     linkNotification(
@@ -225,7 +250,7 @@ class AlertController(
                 val pct = notice.pct.toString()
                 if (notice.critical) {
                     haptics.play(HapticPattern.CONNECTION)
-                    tones.playSoft()
+                    tones.playSoft(tone())
                     nm.notify(
                         ID_BATTERY,
                         simple(
@@ -330,9 +355,10 @@ class AlertController(
         ) {
             toneLoop?.let(handler::removeCallbacks)
             toneLoop = null
-            plan.toneEveryMs?.let { every -> toneLoop = repeat(every) { tones.playSoft() } }
+            plan.toneEveryMs?.let { every -> toneLoop = repeat(every) { tones.playSoft(tone()) } }
         }
-        if (plan.continuousAlarm) tones.startAlarm() else if (linkPlan.continuousAlarm) tones.stop()
+        if (plan.continuousAlarm) tones.startAlarm(tone())
+        else if (linkPlan.continuousAlarm) tones.stop()
         if (plan.silent) haptics.cancel()
     }
 

@@ -11,7 +11,7 @@ import type {
 import { loadCoreNode } from "@guardedsleep/core-wasm/node";
 import { get } from "svelte/store";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { AlertSink, LinkSnapshot, NoiseKind, Notice } from "./alert-sink";
+import type { AlarmToneControl, AlertSink, LinkSnapshot, NoiseKind, Notice } from "./alert-sink";
 import { createSoundGate } from "./audio";
 import { createWebSocketSignaling } from "./signaling";
 import { FakeMedia, FakeTime, FakeWebSocket } from "./test-support";
@@ -54,6 +54,7 @@ class ScriptedCore {
   filterOnlyLocal: CoreApi["filterOnlyLocal"] = (mailboxes, host) =>
     realCore.filterOnlyLocal(mailboxes, host);
   parseInvite: CoreApi["parseInvite"] = (text, now) => realCore.parseInvite(text, now);
+  resolveAlarmTone: CoreApi["resolveAlarmTone"] = (id) => realCore.resolveAlarmTone(id);
   types(): string[] {
     return this.inputs.map((i) => i.type);
   }
@@ -105,6 +106,7 @@ function setup(
     connectAllowed?: (url: string) => boolean;
     talkMic?: TalkMicPort;
     page?: PageWatch;
+    tones?: AlarmToneControl;
   } = {},
 ) {
   FakeWebSocket.instances = [];
@@ -151,6 +153,7 @@ function setup(
     deviceName: () => "Chrome on Android",
     talkMic: options.talkMic,
     page: options.page,
+    tones: options.tones,
   });
   return { controller, time, core, medias, media, ctx, gate, alerts, network };
 }
@@ -1314,5 +1317,53 @@ describe("WebController: talk-back, baby", () => {
     t.controller.updateSettings((s) => ({ ...s, talkVolume: "medium" }));
     t.controller.playTalkChimeSample();
     expect(t.medias[0]?.calls).toContain("chime:medium");
+  });
+});
+
+describe("WebController: connection alarm tone", () => {
+  function fakeTones() {
+    const calls: string[] = [];
+    const tones: AlarmToneControl = {
+      setAlarmTone: (id) => calls.push(`set:${id}`),
+      preview: (id) => calls.push(`preview:${id}`),
+      test: (id) => calls.push(`test:${id}`),
+      stopDemo: () => calls.push("stop"),
+      playback: writable({ kind: "idle" as const }),
+    };
+    return { calls, tones };
+  }
+
+  it("starts with the classic tone and hands a choice to the player", () => {
+    const { calls, tones } = fakeTones();
+    const t = setup({ tones });
+    expect(get(t.controller.settings).connectionAlarmTone).toBe("classic");
+    t.controller.updateSettings((s) => ({ ...s, connectionAlarmTone: "beacon" }));
+    expect(get(t.controller.settings).connectionAlarmTone).toBe("beacon");
+    expect(calls).toEqual(["set:beacon"]);
+  });
+
+  it("resolves an unknown stored value through the core to classic", () => {
+    const { calls, tones } = fakeTones();
+    const t = setup({ tones });
+    t.controller.updateSettings((s) => ({ ...s, connectionAlarmTone: "silent" }));
+    expect(get(t.controller.settings).connectionAlarmTone).toBe("classic");
+    expect(calls).toEqual([]);
+    t.controller.updateSettings((s) => ({ ...s, connectionAlarmTone: "chime" }));
+    t.controller.updateSettings((s) => ({ ...s, connectionAlarmTone: "x".repeat(1024) }));
+    expect(get(t.controller.settings).connectionAlarmTone).toBe("classic");
+    expect(calls).toEqual(["set:chime", "set:classic"]);
+  });
+
+  it("a preview or test unlocks the sound first, then plays; stop ends it", async () => {
+    const { calls, tones } = fakeTones();
+    const t = setup({ tones });
+    t.controller.previewAlarmTone("low");
+    expect(calls).toEqual([]);
+    await flush();
+    expect(t.gate.unlocked).toBe(true);
+    t.controller.testAlarmTone("low");
+    await flush();
+    t.controller.stopAlarmTone();
+    expect(calls).toEqual(["preview:low", "test:low", "stop"]);
   });
 });

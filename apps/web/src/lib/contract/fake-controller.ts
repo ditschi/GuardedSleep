@@ -8,6 +8,7 @@ import {
   defaultWebTalk,
   defaultSettings,
   makePairingState,
+  type AlarmTonePlayback,
   type AppState,
   type BabyMonitorState,
   type DeviceBattery,
@@ -30,6 +31,7 @@ export interface FakeController extends AppController {
   readonly deviceBattery: Writable<DeviceBattery | null>;
   readonly pageGuard: Writable<PageGuardState>;
   readonly webTalk: Writable<WebTalkState>;
+  readonly alarmTonePlayback: Writable<AlarmTonePlayback>;
   /** Every action call as `[method, ...args]`, oldest first. */
   readonly calls: Array<[string, ...unknown[]]>;
 }
@@ -49,6 +51,7 @@ export function createFakeController(): FakeController {
   const deviceBattery = writable<DeviceBattery | null>(null);
   const pageGuard = writable<PageGuardState>({ wakeLock: "off", hidden: false, away: null });
   const webTalk = writable(defaultWebTalk());
+  const alarmTonePlayback = writable<AlarmTonePlayback>({ kind: "idle" });
   const calls: Array<[string, ...unknown[]]> = [];
   let turn: TurnEntry | null = null;
   const record =
@@ -67,6 +70,7 @@ export function createFakeController(): FakeController {
     deviceBattery,
     pageGuard,
     webTalk,
+    alarmTonePlayback,
     calls,
     chooseRole(role, makeDefault = false) {
       calls.push(["chooseRole", role]);
@@ -191,6 +195,18 @@ export function createFakeController(): FakeController {
     dismissTalkCoach() {
       calls.push(["dismissTalkCoach"]);
       settings.update((s) => ({ ...s, talkCoachSeen: true }));
+    },
+    previewAlarmTone(id) {
+      calls.push(["previewAlarmTone", id]);
+      alarmTonePlayback.set({ kind: "preview", id });
+    },
+    testAlarmTone(id) {
+      calls.push(["testAlarmTone", id]);
+      alarmTonePlayback.set({ kind: "test", id });
+    },
+    stopAlarmTone() {
+      calls.push(["stopAlarmTone"]);
+      alarmTonePlayback.set({ kind: "idle" });
     },
     playTalkChimeSample: record("playTalkChimeSample"),
     talkSettingsOpened: record("talkSettingsOpened"),

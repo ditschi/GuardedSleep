@@ -4,6 +4,7 @@
 
 #![forbid(unsafe_code)]
 
+pub mod alarm_tone;
 pub mod attempt;
 pub mod conformance;
 // Envelope vector evaluation needs fixed-nonce sealing: never part of a release build.

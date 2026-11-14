@@ -82,6 +82,7 @@ fun SettingsScreen(
     onOpenSetup: () -> Unit,
     onTestAlert: () -> Unit,
     buildInfo: BuildInfo = BuildInfo.Preview,
+    onOpenAlarmTone: () -> Unit = {},
 ) {
     val s = controller.settings.collectAsState().value
     val app = controller.app.collectAsState().value
@@ -236,6 +237,27 @@ fun SettingsScreen(
                     if (s.alertStyle == AlertStyle.DISCREET) {
                         DiscreetEscalationChoice(s.discreetEscalation) { choice ->
                             controller.updateSettings { st -> st.copy(discreetEscalation = choice) }
+                        }
+                    }
+                    // The tone of the connection alarm (parent only); the picker is its own screen.
+                    Row(
+                        Modifier.fillMaxWidth()
+                            .heightIn(min = 56.dp)
+                            .clickable(role = SemRole.Button, onClick = onOpenAlarmTone)
+                            .testTag("settings_alarm_tone"),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                stringResource(R.string.native_ui_settings_alarm_tone_label),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Body(
+                                alarmToneName(s.connectionAlarmTone),
+                                tag = "settings_alarm_tone_name",
+                            )
                         }
                     }
                     Body(

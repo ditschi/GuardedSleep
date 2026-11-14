@@ -17,6 +17,7 @@ import {
   defaultWebTalk,
   defaultSettings,
   makePairingState,
+  type AlarmTonePlayback,
   type AppController,
   type AppState,
   type BabyMonitorState,
@@ -34,7 +35,7 @@ import {
   type TurnSaveResult,
 } from "../contract";
 import { resolveTurnSave, turnSettings, type TurnEntry } from "../contract/turn";
-import type { AlertSink } from "./alert-sink";
+import type { AlarmToneControl, AlertSink } from "./alert-sink";
 import type { SoundGate } from "./audio";
 import { BabyModel } from "./baby-model";
 import type { Clock, Timers } from "./clock";
@@ -74,7 +75,10 @@ export interface TalkMicPort {
 }
 
 export interface ControllerDeps {
-  core: Pick<CoreApi, "createLink" | "buildInvite" | "parseInvite" | "filterOnlyLocal">;
+  core: Pick<
+    CoreApi,
+    "createLink" | "buildInvite" | "parseInvite" | "filterOnlyLocal" | "resolveAlarmTone"
+  >;
   clock: Clock;
   timers: Timers;
   signaling: SignalingFactory;
@@ -86,6 +90,8 @@ export interface ControllerDeps {
   createMedia(role: Role, userIceServers: RTCIceServer[]): Promise<MediaEngine>;
   gate: SoundGate;
   alerts: AlertSink;
+  /** The connection alarm tone choice, preview and test (the `AlertPlayer`); absent in tests. */
+  tones?: AlarmToneControl;
   network: NetworkWatcher;
   randomBytes(length: number): Uint8Array;
   /** 53 random bits for the core's jitter. */
@@ -204,6 +210,7 @@ export class WebController implements AppController {
   readonly parent: Readable<ParentMonitorState> = this.parentStore;
   readonly baby: Readable<BabyMonitorState> = this.babyStore;
   readonly webTalk: Readable<WebTalkState> = this.webTalkStore;
+  readonly alarmTonePlayback: Readable<AlarmTonePlayback>;
   readonly deviceBattery: Readable<DeviceBattery | null>;
   readonly pageGuard: Readable<PageGuardState>;
 
@@ -218,6 +225,7 @@ export class WebController implements AppController {
 
   constructor(private readonly deps: ControllerDeps) {
     this.deviceBattery = deps.battery ?? readable<DeviceBattery | null>(null);
+    this.alarmTonePlayback = deps.tones?.playback ?? readable<AlarmTonePlayback>({ kind: "idle" });
     this.page = deps.page ?? idleWatch();
     this.pageGuard = this.page.state;
     // After a sleep or a return from the background the sockets are likely dead: the core retries
@@ -318,10 +326,18 @@ export class WebController implements AppController {
 
   updateSettings(transform: (settings: SettingsState) => SettingsState): void {
     const before = this.settingsState;
-    const after = { ...transform(before), ...turnSettings(this.turn) };
+    const changed = { ...transform(before), ...turnSettings(this.turn) };
+    // The core decides: an unknown stored or chosen tone is the default tone, never silence.
+    const after = {
+      ...changed,
+      connectionAlarmTone: this.deps.core.resolveAlarmTone(changed.connectionAlarmTone).id,
+    };
     if (JSON.stringify(after) === JSON.stringify(before)) return;
     this.settingsState = after;
     this.settingsStore.set(after);
+    if (after.connectionAlarmTone !== before.connectionAlarmTone) {
+      this.deps.tones?.setAlarmTone(after.connectionAlarmTone);
+    }
     this.babyModel.setSettings(after.threshold, after.holdSeconds);
     const r = this.run;
     if (!r?.driver) return;
@@ -629,6 +645,21 @@ export class WebController implements AppController {
   }
 
   // ---- talk-back (baby) --------------------------------------------------------------------
+
+  // ---- connection alarm tone (parent) --------------------------------------------------------
+
+  previewAlarmTone(id: string): void {
+    // The click is the gesture that unlocks the sound; nothing plays when the browser refuses.
+    void this.deps.gate.unlock().then(() => this.deps.tones?.preview(id));
+  }
+
+  testAlarmTone(id: string): void {
+    void this.deps.gate.unlock().then(() => this.deps.tones?.test(id));
+  }
+
+  stopAlarmTone(): void {
+    this.deps.tones?.stopDemo();
+  }
 
   playTalkChimeSample(): void {
     this.deps.gate.unlock().catch(() => undefined);

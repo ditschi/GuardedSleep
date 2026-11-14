@@ -78,6 +78,13 @@ export async function createWebApp(): Promise<AppController> {
   };
   // iOS Safari cannot talk: alert audio after getUserMedia is not proven there (spec `web-client`).
   const talkSupported = browserTalkSupported(navigator);
+  // One player for the alert tones and the picker's preview; the core resolves the stored tone.
+  const alerts = new AlertPlayer({
+    gate,
+    timers,
+    resolveTone: core.resolveAlarmTone,
+    alarmToneDemo: core.alarmToneDemo,
+  });
   return new WebController({
     core,
     clock,
@@ -101,7 +108,8 @@ export async function createWebApp(): Promise<AppController> {
       request: () => requestMicrophone(getUserMedia),
     },
     gate,
-    alerts: new AlertPlayer({ gate, timers }),
+    alerts,
+    tones: alerts,
     network: browserNetwork(),
     randomBytes: (length) => crypto.getRandomValues(new Uint8Array(length)),
     entropy: entropy53,

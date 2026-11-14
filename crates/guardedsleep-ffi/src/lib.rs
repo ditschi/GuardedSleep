@@ -214,6 +214,27 @@ pub fn filter_only_local(
     guardedsleep_core::invite::filter_only_local(&mailboxes, Some(&project_host))
 }
 
+/// The built-in connection alarm tones in picker order (Classic, Low, Beacon, Rising, Chime).
+#[uniffi::export]
+pub fn alarm_tones() -> Vec<guardedsleep_core::alarm_tone::AlarmTone> {
+    guardedsleep_core::alarm_tone::alarm_tones()
+}
+
+/// The tone for a stored id; an unknown, empty or overlong value gives `classic` (never silent).
+#[uniffi::export]
+pub fn resolve_alarm_tone(id: String) -> guardedsleep_core::alarm_tone::AlarmTone {
+    guardedsleep_core::alarm_tone::resolve_alarm_tone(&id)
+}
+
+/// The preview or test sequence of the tone with this stored id (unknown gives `classic`).
+#[uniffi::export]
+pub fn alarm_tone_demo(
+    id: String,
+    kind: guardedsleep_core::alarm_tone::AlarmToneDemoKind,
+) -> guardedsleep_core::alarm_tone::AlarmToneDemo {
+    guardedsleep_core::alarm_tone::alarm_tone_demo(&id, kind)
+}
+
 #[uniffi::export]
 pub fn conformance_eval(case_json: String) -> String {
     guardedsleep_core::conformance::evaluate(&case_json)

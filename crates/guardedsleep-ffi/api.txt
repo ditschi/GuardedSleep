@@ -111,6 +111,8 @@ pub type guardedsleep_ffi::ParsedInvite::ReturnType = <guardedsleep_ffi::ParsedI
 pub fn guardedsleep_ffi::ParsedInvite::lower_return(Self) -> anyhow::Result<Self::ReturnType, uniffi_core::ffi::rustcalls::RustCallError>
 impl<UT> uniffi_core::ffi_converter_traits::TypeId<UT> for guardedsleep_ffi::ParsedInvite
 pub const guardedsleep_ffi::ParsedInvite::TYPE_ID_META: uniffi_core::metadata::MetadataBuffer
+pub fn guardedsleep_ffi::alarm_tone_demo(alloc::string::String, guardedsleep_core::alarm_tone::AlarmToneDemoKind) -> guardedsleep_core::alarm_tone::AlarmToneDemo
+pub fn guardedsleep_ffi::alarm_tones() -> alloc::vec::Vec<guardedsleep_core::alarm_tone::AlarmTone>
 pub fn guardedsleep_ffi::build_invite(alloc::vec::Vec<u8>, alloc::vec::Vec<guardedsleep_core::invite::InviteMailbox>, u64, bool) -> core::result::Result<alloc::string::String, guardedsleep_ffi::InviteError>
 pub fn guardedsleep_ffi::conformance_eval(alloc::string::String) -> alloc::string::String
 pub fn guardedsleep_ffi::default_link_config(guardedsleep_core::protocol::Role, alloc::string::String, alloc::vec::Vec<u8>) -> guardedsleep_core::link::LinkConfig
@@ -120,3 +122,4 @@ pub fn guardedsleep_ffi::encode_psk(alloc::vec::Vec<u8>) -> alloc::string::Strin
 pub fn guardedsleep_ffi::filter_only_local(alloc::vec::Vec<guardedsleep_core::invite::InviteMailbox>, alloc::string::String) -> alloc::vec::Vec<guardedsleep_core::invite::InviteMailbox>
 pub fn guardedsleep_ffi::message_keys() -> alloc::vec::Vec<alloc::string::String>
 pub fn guardedsleep_ffi::parse_invite(alloc::string::String, u64, bool) -> core::result::Result<guardedsleep_ffi::ParsedInvite, guardedsleep_ffi::InviteError>
+pub fn guardedsleep_ffi::resolve_alarm_tone(alloc::string::String) -> guardedsleep_core::alarm_tone::AlarmTone

@@ -163,6 +163,39 @@ describe("core-wasm wrapper", () => {
       expect(core.filterOnlyLocal([project, own], "gs.example.com")).toEqual([own]);
     });
 
+    it("lists the five alarm tones in picker order and resolves a stored id", () => {
+      expect(core.alarmTones().map((t) => t.id)).toEqual([
+        "classic",
+        "low",
+        "beacon",
+        "rising",
+        "chime",
+      ]);
+      for (const tone of core.alarmTones()) expect(core.resolveAlarmTone(tone.id)).toEqual(tone);
+    });
+
+    it("builds the preview and test sequences of a tone", () => {
+      const tone = core.resolveAlarmTone("chime");
+      const ms = (segments: { ms: number }[]): number => segments.reduce((n, s) => n + s.ms, 0);
+      const cycle = ms(tone.alarm);
+      const preview = core.alarmToneDemo("chime", "preview");
+      expect(preview.gain).toBe(0.5);
+      expect(ms(preview.segments)).toBe(ms(tone.soft) + 300 + 2 * cycle);
+      const test = core.alarmToneDemo("chime", "test");
+      expect(test.gain).toBe(1);
+      expect(ms(test.segments)).toBeGreaterThanOrEqual(8_000);
+      expect(core.alarmToneDemo("silent", "preview").id).toBe("classic");
+    });
+
+    it("resolves an unknown, empty or overlong alarm tone id to classic (never silent)", () => {
+      for (const bad of ["", "none", "Classic", "x".repeat(1024)]) {
+        const tone = core.resolveAlarmTone(bad);
+        expect(tone.id).toBe("classic");
+        expect(tone.soft.length).toBeGreaterThan(0);
+        expect(tone.alarm.length).toBeGreaterThan(0);
+      }
+    });
+
     it("refuses to build an invalid invite", () => {
       const relay: InviteMailbox = { kind: "relay", url: "wss://gs.example.com" };
       expect(core.buildInvite(psk.slice(0, 16), [relay], now)).toEqual({
@@ -215,6 +248,9 @@ describe("core-wasm wrapper", () => {
       parseInvite: () => "{}",
       buildInvite: () => "",
       filterOnlyLocal: () => "[]",
+      alarmTones: () => "[]",
+      resolveAlarmTone: () => "{}",
+      alarmToneDemo: () => "{}",
       conformanceEval: () => "{}",
     });
     expect(() => fake.createLink(config("baby")).handle(0, { type: "tick" })).toThrow(

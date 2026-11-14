@@ -12,6 +12,7 @@
   import { createRouter, focusRouteHeading, formatDocumentTitle, type RouteId } from "./lib/router";
   import { provideRouter } from "./lib/router-context";
   import { applyTheme, resolveTheme } from "./lib/theme";
+  import AlarmToneScreen from "./screens/AlarmToneScreen.svelte";
   import BabyMonitorScreen from "./screens/BabyMonitorScreen.svelte";
   import BabyPairScreen from "./screens/BabyPairScreen.svelte";
   import ParentMonitorScreen from "./screens/ParentMonitorScreen.svelte";
@@ -91,6 +92,8 @@
     <ParentPairScreen />
   {:else if $route.id === "parent"}
     <ParentMonitorScreen />
+  {:else if $route.id === "alarmTone"}
+    <AlarmToneScreen />
   {:else}
     <SettingsScreen />
   {/if}
