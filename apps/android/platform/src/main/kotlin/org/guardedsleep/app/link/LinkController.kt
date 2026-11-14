@@ -699,6 +699,9 @@ class LinkController(
         if (settingsRepo.current.role != Role.BABY) return
         // The baby unit replaces its active pairing; "Add parent device" waits for the baby hub.
         val slot = newPairingId(Role.BABY) ?: return
+        // "Pair again" from the monitor screen: the monitoring flag must go first, or the monitor
+        // screen stays up over the invite (found by the UI journeys).
+        if (settingsRepo.current.monitoringActive) stopMonitoring()
         cancelPairing()
         stopRun(userStop = true)
         // The baby's own choice for a NEW invite: the settings list (Advanced or the build
@@ -839,6 +842,9 @@ class LinkController(
         autoStarted = false
         settingsRepo.update { it.copy(monitoringActive = false, pairingId = null) }
         stopRun(userStop = true)
+        // PAIRED outlives the pairing it reports: left in place, the next screen after "Stop" would
+        // be the pairing screen again instead of the home (found by the UI journeys).
+        if (_pairing.value?.phase == PairingPhase.PAIRED) _pairing.value = null
         fgs = Fgs.UNKNOWN
         refreshApp()
         publishFgsAlert()
