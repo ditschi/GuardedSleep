@@ -599,7 +599,7 @@ interface AppController {
     fun dismissMissedEvents()
 
     /** Parent: OK on the "Connected again" card; it never goes away on its own. */
-    fun dismissRestored() {}
+    fun dismissRestored()
 
     // Baby
     fun setKioskLocked(locked: Boolean)
