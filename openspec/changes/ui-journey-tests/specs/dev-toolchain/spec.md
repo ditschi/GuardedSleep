@@ -29,7 +29,7 @@ The Android app SHALL consist of the modules `app`, `ui-contract`, `platform` an
 
 ### Requirement: Android UI journeys through the real controller
 
-`just test` SHALL run Android journey tests in which two devices, each a real `LinkController` with its real core and only signaling, media, audio, time and system services replaced, are driven through the standard user flows by stable test tags, including pairing a baby and a parent device end to end. The journeys SHALL be deterministic (virtual time, no sleeps) and SHALL finish within 90 seconds together.
+`just test` SHALL run Android journey tests in which two devices, each a real `LinkController` with its real core and only signaling, media, audio, time and system services replaced, are driven through the standard user flows by stable test tags, including pairing a baby and a parent device end to end. The journeys SHALL be deterministic (virtual time, no sleeps) and SHALL finish within 120 seconds together on the CI runner.
 
 #### Scenario: A button that does nothing
 

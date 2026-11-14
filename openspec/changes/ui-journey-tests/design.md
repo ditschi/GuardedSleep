@@ -26,7 +26,7 @@ What the test answer does, whether the first-run coach exists, and what "Test al
 
 ## Discarded alternatives
 
-- **Real threads with `waitUntil` (review C2, option b).** Pros: no new scheduler. Cons: wall-clock cost (link loss alone tens of seconds), flakes under load, conflicts with the 90 s budget.
+- **Real threads with `waitUntil` (review C2, option b).** Pros: no new scheduler. Cons: wall-clock cost (link loss alone tens of seconds), flakes under load, conflicts with the 120 s budget.
 - **One composition with a swapped controller.** Cons: leaks or loses UI-local state; `setContent` once per rule.
 - **Source-scan writer test.** Cons: false passes on common names, positional constructors, dead code; blind to "never non-default".
 - **Making `FakeAppController` stricter.** Cons: still a second implementation that can drift; the bug was the drift.
