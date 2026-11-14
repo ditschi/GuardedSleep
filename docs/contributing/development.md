@@ -46,6 +46,7 @@ Medium and heavy recipes (`just lint-code`, `just test`, builds, `just e2e`, `ju
 - `GS_SLOT_WAIT` (default 3600 s) bounds the wait for a slot; the script then exits 75 ("machine busy": rerun or background it, this is not a test verdict). `just reap` lists stuck leftovers.
 - `GS_RUN_TIMEOUT` (unset: no limit; any GNU `timeout` duration) bounds the run itself and starts only once the slot is held, so a queued job is never cut off by its own deadline. Exit 124 means the run exceeded it; any other status is the command's own verdict.
 - Re-entrancy: a nested call for the same or a lighter class runs without acquiring, and `GS_RUN_TIMEOUT` is cleared for the child so no second deadline starts.
+- Container Gradle runs (`scripts/gradle.sh`, so `just test-android`, `just build-android`, `just verify-android`, `just install-android --build`) also take turns on the shared Gradle user home, whatever their slot class: a machine-wide `flock` on `$GS_SHARED_CACHE/gradle/.gs-container.lock` (default `~/.cache/guardedsleep`), after the per-worktree `target/.gradle.lock`. Gradle's own cache locks cannot hand over between containers (separate PID and network namespaces), so two containers on one Gradle home failed with "Timeout waiting to lock journal cache". A queued run prints `waiting for the shared Gradle home …`; the wait is bounded by `GS_SLOT_WAIT` (exit 75). Native runs (`CORE_BUILD_NATIVE=1`) take neither lock.
 
 ```sh
 GS_SLOT_WAIT=60 GS_RUN_TIMEOUT=15m just test

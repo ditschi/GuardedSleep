@@ -167,9 +167,13 @@ test-wasm: _js-gen
 test-web:
     pnpm test
 
-# Android JVM unit tests (core + app) against the host build of the core, no ABI cross-compile.
-[script("bash")]
+# Android JVM unit tests (core + app) against the host build of the core, no ABI cross-compile (medium slot).
 test-android:
+    scripts/lib/slot.sh medium -- just _test-android
+
+[private]
+[script("bash")]
+_test-android:
     set -euo pipefail
     source scripts/lib/require.sh
     require test-android android-sdk
