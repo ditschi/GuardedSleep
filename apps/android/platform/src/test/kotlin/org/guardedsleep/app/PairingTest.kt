@@ -1,6 +1,7 @@
 package org.guardedsleep.app
 
 import java.io.File
+import org.guardedsleep.app.fixtures.FakeCipher
 import org.guardedsleep.app.pairing.PairingPayload
 import org.guardedsleep.app.pairing.PairingPayload.Companion.Result
 import org.guardedsleep.app.pairing.PairingStore

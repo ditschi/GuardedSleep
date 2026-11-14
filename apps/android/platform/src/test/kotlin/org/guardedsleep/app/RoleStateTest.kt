@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import org.guardedsleep.app.fixtures.FakeCipher
 import org.guardedsleep.app.pairing.PairingCipher
 import org.guardedsleep.app.pairing.PairingStore
 import org.guardedsleep.app.pairing.RolePairings

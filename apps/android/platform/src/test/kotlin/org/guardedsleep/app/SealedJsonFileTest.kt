@@ -2,6 +2,7 @@ package org.guardedsleep.app
 
 import java.io.File
 import javax.crypto.AEADBadTagException
+import org.guardedsleep.app.fixtures.FakeCipher
 import org.guardedsleep.app.pairing.PairingCipher
 import org.guardedsleep.app.pairing.SealedJsonFile
 import org.guardedsleep.app.pairing.SealedRead

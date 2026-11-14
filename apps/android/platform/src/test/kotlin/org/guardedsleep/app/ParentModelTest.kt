@@ -3,6 +3,7 @@ package org.guardedsleep.app
 import org.guardedsleep.app.alerts.NoiseKind
 import org.guardedsleep.app.alerts.Notice
 import org.guardedsleep.app.config.AlertPolicy
+import org.guardedsleep.app.fixtures.RecordingSink
 import org.guardedsleep.app.link.ParentModel
 import org.guardedsleep.app.ui.model.LinkHint
 import org.guardedsleep.app.ui.model.LinkPhase
