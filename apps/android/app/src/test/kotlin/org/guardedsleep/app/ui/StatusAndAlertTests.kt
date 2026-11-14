@@ -163,12 +163,10 @@ class StatusAndAlertTests : ShotBase() {
     @Test
     fun oneMinuteWithoutConnectionVibratesAndSaysWhenTheLoudAlarmStarts() = runComposeUiTest {
         val c = alarmController(outage(LinkPhase.RECONNECTING, 2, 72_000, CauseHint.PEER_ABSENT))
+        val nextAt = c.parentFlow.value.link.nextLevelAtElapsedMs!!
         var loudAt = ""
         show {
-            loudAt =
-                formatTime(
-                    elapsedToWall(c.parentFlow.value.link.nextLevelAtElapsedMs!!, ELAPSED, WALL)
-                )
+            loudAt = formatTime(elapsedToWall(nextAt, ELAPSED, WALL))
             LinkAlarmScreen(c, {})
         }
         onNodeWithTag("alert_label").assertTextContains("YOUR PHONE IS VIBRATING")
