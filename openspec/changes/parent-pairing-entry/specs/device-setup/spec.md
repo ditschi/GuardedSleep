@@ -18,7 +18,7 @@ The parent unit SHALL open the scan screen from "Set up new devices" whenever fe
 
 ### Requirement: Automatic start with the default connection
 
-On the parent unit the default connection SHALL be a user choice: a new pairing SHALL NOT become the default by itself, and the user SHALL be able to set and remove it on the home screen and in Settings → Connections. When the app starts in the parent role with monitoring not active and a default connection that is still saved, it SHALL start monitoring with that connection, at most once per app start. Without a default it SHALL show the home menu with the saved connections and "Set up new devices".
+On the parent unit the default connection SHALL be a user choice that can be set and removed on the home screen and in Settings → Connections; a new pairing SHALL NOT become the default by itself. At app start in the parent role, with monitoring not active, a saved default connection SHALL start monitoring at most once per app start; without one the home menu SHALL be shown.
 
 #### Scenario: Default marked
 
