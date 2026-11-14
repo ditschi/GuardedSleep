@@ -65,10 +65,7 @@ SPDX-License-Identifier = "MIT"
 # Bundled typeface: Plus Jakarta Sans (SIL OFL 1.1), subsets and instances of the upstream variable
 # font. Provenance, URLs, commit and hashes: apps/web/src/assets/fonts/README.md.
 [[annotations]]
-path = [
-  "apps/web/src/assets/fonts/*.woff2",
-  "apps/android/app/src/main/res/font/*.ttf",
-]
+path = ["apps/web/src/assets/fonts/*.woff2", "apps/android/app/src/main/res/font/*.ttf"]
 precedence = "override"
 SPDX-FileCopyrightText = "2020 The Plus Jakarta Sans Project Authors (https://github.com/tokotype/PlusJakartaSans)"
 SPDX-License-Identifier = "OFL-1.1"
