@@ -12,6 +12,9 @@
 # KEEP_ENV=1 leaves emulators, signaling and TURN running afterwards and reuses them when present
 # (fast loop; scripts/poc/adb.sh talks to them, `docker rm -f gs-gate-baby gs-gate-parent gs-gate-signaling gs-gate-turn` ends it).
 # Audio stays enabled in the emulators: AC-2 measures received audio packets.
+# Maestro (UI assertions and the AC-12 journey): the mise-pinned install is mounted read-only into the
+# runner; without it the gate prints "SKIPPED: gate-ui needs maestro", and under GS_STRICT=1 it fails.
+# GATE_ONLY=ui runs the install and the AC-12 journey only, GATE_ONLY=ac1 stops after AC-1.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -30,7 +33,27 @@ ANDROID_HOME_DIR="${GATE_ANDROID_HOME:-$ROOT/target/poc-android-home}"
 	echo "local-gate: DOZE_MINUTES must be an integer (got '${DOZE_MINUTES}')" >&2
 	exit 2
 }
+# The AC-12 pairing code (a pairing secret of the throwaway emulators) lives here for the canary only:
+# outside OUT, which CI uploads, and deleted on every exit path after the canary.
+SECRET_DIR="${GATE_SECRET_DIR:-$ROOT/target/poc-gate-secret}"
+case "$SECRET_DIR" in "$ROOT"/target/*) ;; *)
+	echo "local-gate: GATE_SECRET_DIR must be inside $ROOT/target (mounted at /workspace)" >&2
+	exit 2
+	;;
+esac
 mkdir -p "$OUT" "$ANDROID_HOME_DIR"
+rm -rf "$SECRET_DIR"
+
+# Pinned Maestro from mise (docs: mise.toml). `mise where` prints the install dir of the pinned version.
+MAESTRO_HOME="${MAESTRO_HOME:-}"
+if [[ -z "$MAESTRO_HOME" ]] && command -v mise >/dev/null 2>&1; then
+	MAESTRO_HOME="$(cd "$ROOT" && mise where maestro 2>/dev/null || true)"
+fi
+if [[ -n "$MAESTRO_HOME" && ! -x "$MAESTRO_HOME/bin/maestro" ]]; then MAESTRO_HOME=""; fi
+if [[ -z "$MAESTRO_HOME" && "${GS_STRICT:-0}" == 1 ]]; then
+	echo "local-gate: Maestro is not installed and GS_STRICT=1 (mise install maestro)" >&2
+	exit 1
+fi
 
 [[ -r /dev/kvm && -w /dev/kvm ]] || {
 	echo "local-gate: /dev/kvm missing or not accessible (run scripts/check-kvm.sh)" >&2
@@ -59,14 +82,20 @@ CONTAINERS=(gs-gate-baby gs-gate-parent gs-gate-signaling gs-gate-turn)
 save_logs() {
 	for c in "${CONTAINERS[@]}"; do docker logs "$c" >"$OUT/$c.log" 2>&1 || true; done
 }
+drop_secret() { rm -rf "$SECRET_DIR"; }
 cleanup() {
 	save_logs
+	drop_secret
 	docker rm -f "${CONTAINERS[@]}" >/dev/null 2>&1 || true
+}
+keep_cleanup() {
+	save_logs
+	drop_secret
 }
 KEEP_ENV="${KEEP_ENV:-0}"
 running() { [[ "$(docker inspect -f '{{.State.Running}}' "$1" 2>/dev/null)" == "true" ]]; }
 if [[ "$KEEP_ENV" == "1" ]]; then
-	trap save_logs EXIT
+	trap keep_cleanup EXIT
 else
 	trap cleanup EXIT
 fi
@@ -93,7 +122,7 @@ if [[ $REUSE == 0 ]]; then
 fi
 
 docker run -d --name gs-gate-signaling --network host \
-	-e NODE_ENV=development -e STUN_DISABLED=1 -e PORT="$SIGNAL_PORT" -e SIGNALING_ALLOWED_ORIGINS=http://localhost "$SIG_IMAGE" >/dev/null
+	-e NODE_ENV=development -e STUN_DISABLED=1 -e GS_LOG_EVENTS=1 -e PORT="$SIGNAL_PORT" -e SIGNALING_ALLOWED_ORIGINS=http://localhost "$SIG_IMAGE" >/dev/null
 sleep 2
 running gs-gate-signaling || {
 	echo "local-gate: signaling container exited (port $SIGNAL_PORT busy?):" >&2
@@ -110,11 +139,20 @@ fi
 
 APK_IN="/workspace/${APK#"$ROOT"/}"
 OUT_IN="/workspace/${OUT#"$ROOT"/}"
-docker run --rm --network host -v "$ROOT:/workspace" -v "$ANDROID_HOME_DIR:/root/.android" \
-	-e GATE_ONLY -e DOZE_MINUTES -e ALERT_MAX_MS -e HB_INTERVAL_MS -e ALARM_AFTER_MS \
+MAESTRO_MOUNT=()
+if [[ -n "$MAESTRO_HOME" ]]; then MAESTRO_MOUNT=(-v "$MAESTRO_HOME:/opt/maestro:ro"); fi
+# Maestro: no analytics, no update check (AGENTS.md §7.5; the same names as mise.toml [env]); a 1 GB
+# heap (gate-ui-journeys design §6). Its debug output stays inside this --rm container.
+docker run --rm --network host -v "$ROOT:/workspace" -v "$ANDROID_HOME_DIR:/root/.android" "${MAESTRO_MOUNT[@]}" \
+	-e GATE_ONLY -e DOZE_MINUTES -e ALERT_MAX_MS -e HB_INTERVAL_MS -e ALARM_AFTER_MS -e GS_STRICT -e GATE_SECRET_DIR="/workspace/${SECRET_DIR#"$ROOT"/}" \
+	-e MAESTRO_CLI_NO_ANALYTICS="${MAESTRO_CLI_NO_ANALYTICS:-1}" \
+	-e MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED="${MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED:-true}" \
+	-e MAESTRO_DISABLE_UPDATE_CHECK="${MAESTRO_DISABLE_UPDATE_CHECK:-true}" \
+	-e MAESTRO_OPTS="${GATE_MAESTRO_OPTS:--Xmx1g}" \
 	-e SIGNAL="ws://10.0.2.2:$SIGNAL_PORT" -e SIGNAL_PORT="$SIGNAL_PORT" -e APK="$APK_IN" -e OUT="$OUT_IN" -e BABY_SERIAL=emulator-5554 -e PARENT_SERIAL=emulator-5556 \
 	--entrypoint bash "$EMU_IMAGE" -c '
 		set -euo pipefail
+		[[ -x /opt/maestro/bin/maestro ]] && export PATH="/opt/maestro/bin:$PATH"
 		for serial in emulator-5554 emulator-5556; do
 			timeout 300 adb -s "$serial" wait-for-device
 			for _ in $(seq 1 150); do
@@ -130,12 +168,31 @@ docker run --rm --network host -v "$ROOT:/workspace" -v "$ANDROID_HOME_DIR:/root
 		/workspace/scripts/poc/gate.sh
 	'
 
+# AC-12 hermetic check: the journey only counts if both devices met on THIS gate's signaling server in
+# its time window (a silent fallback to another server would pair nothing here). The relay event log
+# (GS_LOG_EVENTS) names roles only, never an address, a room or a key. docker owns the logs, so the
+# check lives here and not in gate.sh.
+if [[ -f "$OUT/ac12-window.txt" ]]; then
+	read -r w_from w_to <"$OUT/ac12-window.txt"
+	joined="$(docker logs --since "$w_from" --until "$((w_to + 1))" gs-gate-signaling 2>&1 | grep -c 'joined as' || true)"
+	babies="$(docker logs --since "$w_from" --until "$((w_to + 1))" gs-gate-signaling 2>&1 | grep -c 'joined as baby' || true)"
+	if [[ "$joined" -ge 2 && "$babies" -ge 1 ]]; then
+		echo "PASS AC-12b — $joined members joined on the gate's own signaling server during the UI journey" | tee -a "$OUT/summary.txt"
+	else
+		echo "FAIL AC-12b — only $joined member join(s) on the gate's signaling server during the UI journey (did a device use another relay?)" | tee -a "$OUT/summary.txt" >&2
+		exit 1
+	fi
+fi
+
 # Log canary (AGENTS.md section 7.6): the gate paired with known keys; none of them, nothing derived
 # from them and no plaintext SDP may be in any log of the run. Runs on the host (the runner container
 # above has no Rust toolchain) over everything the gate wrote to OUT.
 save_logs
 log_dir="${OUT#"$ROOT"/}"
-"$ROOT/scripts/poc/canary-scan.sh" "$log_dir" || {
+canary_extra=()
+if [[ -f "$SECRET_DIR/code" ]]; then canary_extra=(--extra-canary-file "${SECRET_DIR#"$ROOT"/}/code"); fi
+"$ROOT/scripts/poc/canary-scan.sh" "${canary_extra[@]}" "$log_dir" || {
 	echo "local-gate: LOG CANARY FAILED: a secret or plaintext SDP is in a gate log (names above, files in $log_dir)" >&2
 	exit 1
 }
+drop_secret

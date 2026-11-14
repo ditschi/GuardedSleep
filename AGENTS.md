@@ -84,7 +84,7 @@ Per-package `AGENTS.md` files may exist later; they inherit this file and docume
 | Build                      | `just build` (web + Android) · `just build-web` · `just build-android` · `just verify-android` (adds JVM tests and Roborazzi)                                      |
 | Install on phones          | `just install-android` (local debug APK on all USB/Wi-Fi adb phones; `GS_DEVICES`, `--build`, `--no-launch`)                                                       |
 | Browser E2E                | `just e2e` (Playwright; starts `just dev`)                                                                                                                         |
-| Emulator gate (KVM)        | `just gate` (`DOZE_MINUTES=2 just gate` for a quick run; run `just build-android` first)                                                                           |
+| Emulator gate (KVM)        | `just gate` (`DOZE_MINUTES=2 just gate` for a quick run; run `just build-android` first; includes the Maestro UI journey AC-12, `GATE_ONLY=ui` runs it alone)      |
 | Local dev                  | `just dev` (Vite 5173 + Rust signaling server 8787)                                                                                                                |
 | Docker stack               | `just stack-lan` · `just stack-up`                                                                                                                                 |
 | Supply chain, secrets      | `just deny` · `just secrets` · `just audit`                                                                                                                        |
@@ -140,7 +140,7 @@ Core       Rust, sans-IO (core, relay): no I/O, threads or clocks; emits message
 - **Locale set:** about 20 AI-translated locales (en, de, fr, es, it, pt, nl, pl, sv, da, cs, ro, zh-Hans, ja, ko, hi, ar, tr, uk, id). **Adding locales is allowed** the same way, without a policy change.
 - **Critical-key completeness:** a locale is generated only if every key tagged `critical` (alerts, link loss, connection, safety) is present, so alarms are never mixed-language. Other keys may fall back to English.
 - Each non-English value carries a `machineTranslated` or `reviewed` marker. Review improves a locale; it does not gate shipping. Keep placeholders and plural categories intact; the generator validates them.
-- Spellcheck: `typos` (English), CSpell for non-English catalogues. Maestro flows (`apps/android/maestro`, run by the gate when Maestro is installed; Maestro in CI is T1) and Playwright select by stable ids, never by copy text.
+- Spellcheck: `typos` (English), CSpell for non-English catalogues. Maestro flows (`apps/android/maestro`, run by the gate; Maestro is pinned in `mise.toml` and runs in CI in the gate job only: T0, owner 2026-11-14, `gate-ui-journeys`) and Playwright select by stable ids, never by copy text.
 
 ### 5.3 Language rules
 

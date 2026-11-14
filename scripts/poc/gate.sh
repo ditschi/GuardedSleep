@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
-# ADR-015/018 alpha gate, device part (AC-1 … AC-4, AC-10, AC-11 talk-back) on two Android emulators.
+# ADR-015/018 alpha gate, device part (AC-1 … AC-4, AC-10, AC-11 talk-back, AC-12 UI journey) on two Android emulators.
 #
 # Prerequisites (see scripts/poc/README.md; the CI workflow android-native.yml sets these up):
 #   - two booted emulators (BABY_SERIAL, PARENT_SERIAL), debug APK at APK
 #   - signaling server on host :8787, TURN (coturn) on host :3478 with user poc/poc
 #     (two emulators cannot reach each other's 10.0.2.15 directly; media relays via the host)
-#   - maestro on PATH (UI assertions); without it only the log-based assertions run
+#   - maestro on PATH (UI assertions and the AC-12 journey; mise pins it, local-gate.sh mounts it). Without
+#     it only the log-based assertions run and the summary says "SKIPPED: gate-ui needs maestro"; under
+#     GS_STRICT=1 (CI) a missing Maestro fails the gate.
 #
-# Env: DOZE_MINUTES (30), ALERT_MAX_MS (5000), HB_INTERVAL_MS (5000), ALARM_AFTER_MS (60000)
+# Env: DOZE_MINUTES (30), ALERT_MAX_MS (5000), HB_INTERVAL_MS (5000), ALARM_AFTER_MS (60000),
+#      GATE_ONLY (ac1 | talk | ui: stop after that phase; ui = install + the AC-12 journey only),
+#      GATE_SECRET_DIR (where the AC-12 code lives for the canary, see ac12)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -32,7 +36,7 @@ DOZE_MINUTES="${DOZE_MINUTES:-30}"
 ALERT_MAX_MS="${ALERT_MAX_MS:-5000}"
 HB_INTERVAL_MS="${HB_INTERVAL_MS:-5000}"
 ALARM_AFTER_MS="${ALARM_AFTER_MS:-60000}"
-SIGNAL="${SIGNAL:-ws://10.0.2.2:8787}"
+SIGNAL="${SIGNAL:-ws://10.0.2.2:${SIGNAL_PORT:-8787}}"
 TURN_URL="${TURN_URL:-turn:10.0.2.2:3478}"
 
 mkdir -p "$OUT"
@@ -76,13 +80,35 @@ wait_event() {
 # about a second, so never compare it with a device log time; use device log times for that (AC-11).
 device_now_ms() { date +%s%3N; }
 
+# Strict runs (CI) fail without Maestro, local runs print SKIPPED and go on with the log assertions.
+if command -v maestro >/dev/null; then
+	HAVE_MAESTRO=1
+elif [[ "${GS_STRICT:-0}" == 1 ]]; then
+	echo "FAIL gate-ui — maestro is not on PATH and GS_STRICT=1 (mise install maestro; local-gate.sh mounts it)" | tee -a "$OUT/summary.txt"
+	exit 1
+else
+	HAVE_MAESTRO=0
+	echo "SKIPPED: gate-ui needs maestro (mise install maestro); AC-12 and the UI assertions do not run" | tee -a "$OUT/summary.txt"
+fi
+
+# maestro_run serial flow [KEY=VALUE...]: junit report next to the other gate output. Values go to the
+# flow as -e; the flows never log them. --debug-output is deliberately not used (it would land in OUT).
+maestro_run() {
+	local serial=$1 flow=$2
+	shift 2
+	local envs=() kv
+	for kv in "$@"; do envs+=(-e "$kv"); done
+	maestro --device "$serial" test "${envs[@]}" --format junit \
+		--output "$OUT/maestro-$(basename "$flow" .yaml)-$serial.xml" "$FLOWS/$flow"
+}
+
 maestro_assert() {
 	local serial=$1 flow=$2
-	if ! command -v maestro >/dev/null; then
+	if [[ "$HAVE_MAESTRO" != 1 ]]; then
 		log "maestro not installed — skipping UI assertion $flow"
 		return 0
 	fi
-	maestro --device "$serial" test --format junit --output "$OUT/maestro-$(basename "$flow" .yaml)-$serial.xml" "$FLOWS/$flow"
+	maestro_run "$serial" "$flow"
 }
 
 # Starts monitoring as if paired (debug-only activity, DUMP permission: adb shell only).
@@ -123,6 +149,76 @@ restore_power() {
 }
 trap 'restore_power; dump_logs' EXIT
 
+# --- AC-12: UI journey on two emulators (gate-ui-journeys) ---------------------------------------
+# Both devices go through onboarding in the real UI, take the gate's own relay and TURN from Settings ->
+# Advanced, the baby shows its code as text, the parent pastes it, then a test alert and a stop. The
+# code is a pairing secret of throwaway emulators: it is read from the baby's screen into a shell
+# variable (uiautomator over adb, no dump file), reaches the parent flow as a Maestro env value and
+# the host log canary through a mode-0600 file in $GATE_SECRET_DIR, which is NOT under $OUT (CI uploads
+# OUT) and which local-gate.sh deletes after the canary. Nothing here prints the code or runs under xtrace.
+SECRET_DIR="${GATE_SECRET_DIR:-$ROOT/target/poc-gate-secret}"
+grant_all() { # serial: what the journey's system dialogs would ask for, so none of them appears
+	local s=$1 perm
+	for perm in RECORD_AUDIO POST_NOTIFICATIONS CAMERA; do
+		adb -s "$s" shell pm grant "$PKG" "android.permission.$perm" >/dev/null 2>&1 || true
+	done
+	adb -s "$s" shell appops set "$PKG" USE_FULL_SCREEN_INTENT allow >/dev/null 2>&1 || true
+	adb -s "$s" shell dumpsys deviceidle whitelist "+$PKG" >/dev/null 2>&1 || true
+	adb -s "$s" shell input keyevent KEYCODE_WAKEUP
+	adb -s "$s" shell wm dismiss-keyguard >/dev/null 2>&1 || true
+}
+ui_clear() { # serial: a clean app, so no saved pairing leaks into the next phase
+	adb -s "$1" shell am force-stop "$PKG"
+	adb -s "$1" logcat -d >>"$OUT/logcat-history-$1.txt" 2>&1 || true
+	adb -s "$1" shell pm clear "$PKG" >/dev/null
+	adb -s "$1" logcat -c
+}
+# Prints the invite shown on the baby's screen (the node tagged baby_pair_code_text), nothing else.
+read_baby_code() {
+	local xml node
+	xml="$(adb -s "$BABY" exec-out uiautomator dump /dev/tty 2>/dev/null)" || return 1
+	node="$(printf '%s' "$xml" | grep -o '<node[^>]*resource-id="baby_pair_code_text"[^>]*>' | head -1)"
+	printf '%s' "$node" | sed -n 's/.* text="\([^"]*\)".*/\1/p' | sed 's/&quot;/"/g; s/&lt;/</g; s/&gt;/>/g; s/&apos;/'"'"'/g; s/&amp;/\&/g'
+}
+ac12() {
+	[[ "$HAVE_MAESTRO" == 1 ]] || {
+		log "AC-12 skipped: no maestro"
+		return 0
+	}
+	local t_start code
+	t_start="$(date +%s)"
+	log "AC-12 UI journey: onboarding, own relay and TURN, pairing by pasted code"
+	for s in "$BABY" "$PARENT"; do
+		ui_clear "$s"
+		grant_all "$s"
+	done
+	local turn_env=("RELAY=$SIGNAL" "TURN=$TURN_URL" TURN_USER=poc TURN_PASS=poc)
+	maestro_run "$BABY" journey-setup.yaml ROLE_TAG=role_baby "${turn_env[@]}" || fail AC-12 "baby onboarding or Settings failed"
+	maestro_run "$PARENT" journey-setup.yaml ROLE_TAG=role_parent "${turn_env[@]}" || fail AC-12 "parent onboarding or Settings failed"
+	maestro_run "$BABY" journey-baby-code.yaml || fail AC-12 "baby did not show its code as text"
+	code="$(read_baby_code)" || code=""
+	[[ "$code" == \{* ]] || fail AC-12 "the baby's code could not be read from the screen"
+	# For the host log canary only; deleted by local-gate.sh after the scan.
+	(umask 077 && mkdir -p -m 700 "$SECRET_DIR" && printf '%s' "$code" >"$SECRET_DIR/code")
+	# Owned by the repository's owner (rootful Docker runs this as root), or the host cannot read or delete it.
+	chown -R "$(stat -c '%u:%g' "$ROOT")" "$SECRET_DIR" 2>/dev/null || true
+	maestro_run "$PARENT" journey-parent-pair.yaml "CODE=$code" || {
+		code=""
+		fail AC-12 "the parent could not paste the code or never showed the monitor"
+	}
+	code=""
+	wait_event "$BABY" 'pairing_verified' 60 || fail AC-12 "baby did not verify pairing"
+	wait_event "$PARENT" 'pairing_verified' 60 || fail AC-12 "parent did not verify pairing"
+	maestro_run "$BABY" assert-verified-baby.yaml || fail AC-12 "baby UI not verified"
+	maestro_run "$PARENT" assert-verified.yaml || fail AC-12 "parent UI not verified"
+	maestro_run "$PARENT" journey-test-alert.yaml || fail AC-12 "test alert did not reach the parent screen"
+	maestro_run "$PARENT" journey-stop-parent.yaml || fail AC-12 "Stop monitoring did not return to the home screen"
+	# The signaling log assertion (two members joined this window) is local-gate.sh's, it owns docker.
+	echo "$t_start $(date +%s)" >"$OUT/ac12-window.txt"
+	for s in "$BABY" "$PARENT"; do ui_clear "$s"; done
+	pass AC-12 "two emulators paired through the UI (own relay and TURN from Settings, pasted code), test alert and stop"
+}
+
 log "installing $APK"
 for s in "$BABY" "$PARENT"; do
 	# A reused emulator (KEEP_ENV=1) may hold a build signed with another debug key.
@@ -135,6 +231,12 @@ for s in "$BABY" "$PARENT"; do
 	adb -s "$s" shell wm dismiss-keyguard || true
 	reset_app "$s"
 done
+
+if [[ "${GATE_ONLY:-}" == ui ]]; then
+	ac12
+	cat "$OUT/summary.txt"
+	exit 0
+fi
 
 # --- AC-1: pairing through the core; a different PSK never meets the peer (v3: PSK-derived rooms) ---
 PSK="$GATE_PSK"
@@ -158,6 +260,12 @@ wait_event "$PARENT" 'pairing_verified' 30 || fail AC-1 "parent did not verify p
 maestro_assert "$BABY" assert-verified-baby.yaml || fail AC-1 "baby UI not verified"
 maestro_assert "$PARENT" assert-verified.yaml || fail AC-1 "parent UI not verified"
 pass AC-1 "pairing verified with shared PSK; different PSKs never meet (parent reports peer_absent)"
+
+# GATE_ONLY=ac1 stops after the pairing scenario and its UI assertions (fast loop for the flows).
+if [[ "${GATE_ONLY:-}" == ac1 ]]; then
+	cat "$OUT/summary.txt"
+	exit 0
+fi
 
 # --- AC-11: talk-back (add-talk-back task 5.1) ------------------------------------------------------
 # The baby unit plays at its highest talk level (`talk_volume high`, see `launch`). The parent holds
@@ -383,6 +491,9 @@ log "AC-4 kill→link_lost $((T_LOST - T_KILL)) ms (limit ${LIMIT})"
 [[ $((T_LOST - T_KILL)) -le $LIMIT ]] || fail AC-4 "link_lost after $((T_LOST - T_KILL)) ms"
 maestro_assert "$PARENT" assert-link-lost.yaml || fail AC-4 "link_lost not visible on parent"
 pass AC-4 "parent alarmed $((T_LOST - T_KILL)) ms after the baby process was killed"
+
+# --- AC-12: the UI journey runs last, with pm clear before and after (design §5) ---
+ac12
 
 log "all device criteria passed"
 cat "$OUT/summary.txt"
