@@ -3,7 +3,7 @@ package org.guardedsleep.app.ui.common
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import java.text.DateFormat
@@ -49,9 +49,8 @@ fun formatDuration(ms: Long): String {
  */
 @Composable
 fun formatDurationWords(ms: Long): String {
-    // Reading the configuration recomposes the text when the locale changes.
-    LocalConfiguration.current
-    return durationWords(ms, LocalContext.current.resources.durationStrings())
+    // LocalResources follows the configuration, so the text updates when the locale changes.
+    return durationWords(ms, LocalResources.current.durationStrings())
 }
 
 /** "1 minute 12 seconds" for the screen reader; the visible counter stays digits. */
