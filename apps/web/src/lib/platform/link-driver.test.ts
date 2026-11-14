@@ -36,6 +36,8 @@ const status = (state: LinkStatus["state"], level = 0): LinkStatus => ({
   cause: null,
   acknowledged_until: null,
   last_alive_ms: null,
+  down_since_ms: null,
+  next_level_at_ms: null,
 });
 
 /** A core whose answer to every input is scripted by the test; records the inputs it got. */

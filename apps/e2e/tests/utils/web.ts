@@ -50,7 +50,7 @@ export async function pasteCode(page: Page, code: string): Promise<void> {
 export async function pairWeb(dual: DualContexts, signalingUrl?: string): Promise<string> {
   const code = await showCode(dual.babyPage, signalingUrl);
   await pasteCode(dual.parentPage, code);
-  await expect(dual.parentPage.getByTestId("parent_ambient_bar")).toHaveAttribute(
+  await expect(dual.parentPage.getByTestId("status_bar")).toHaveAttribute(
     "data-kind",
     "connected",
     { timeout: 60_000 },
@@ -71,7 +71,7 @@ export async function waitForBarKind(
   kind: string | RegExp,
   timeout = 60_000,
 ): Promise<void> {
-  await expect(page.getByTestId("parent_ambient_bar")).toHaveAttribute("data-kind", kind, {
+  await expect(page.getByTestId("status_bar")).toHaveAttribute("data-kind", kind, {
     timeout,
   });
 }

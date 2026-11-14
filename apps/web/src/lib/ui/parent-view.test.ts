@@ -3,18 +3,23 @@ import {
   defaultLinkUi,
   defaultParentMonitor,
   type LinkUi,
+  type MissedEventsUi,
   type ParentMonitorState,
 } from "../contract";
 import {
-  AMBIENT_LOOK,
-  ambientKind,
+  STATUS_LOOK,
+  alertStageOf,
   canRequestSilence,
   downForMs,
+  elapsedToWall,
   extraChips,
   fixedChips,
   fullScreenOf,
   headlineOf,
+  missedResultOf,
+  outageStartElapsedMs,
   pruneDismissed,
+  statusKindOf,
   type FullScreenKind,
 } from "./parent-view";
 
@@ -27,40 +32,105 @@ const connected = (over: Partial<ParentMonitorState> = {}) =>
   state({ link: link({ phase: "connected" }), ...over });
 const none = new Set<FullScreenKind>();
 
-describe("ambientKind", () => {
+describe("statusKindOf", () => {
   const table: Array<[Partial<LinkUi>, string]> = [
     [{ phase: "connected" }, "connected"],
     [{ phase: "connecting", level: 0 }, "connecting"],
-    [{ phase: "connecting", level: 1 }, "reconnecting"],
     [{ phase: "reconnecting", level: 0 }, "reconnecting"],
-    [{ phase: "reconnecting", level: 1 }, "reconnecting"],
-    [{ phase: "reconnecting", level: 2 }, "cant_reach"],
-    [{ phase: "reconnecting", level: 3 }, "lost_for"],
+    // First connection not answered: orange at level 1 while `connecting`, never blue.
+    [{ phase: "connecting", level: 1 }, "not_connected_yet"],
+    [{ phase: "reconnecting", level: 1 }, "cant_reach"],
+    [{ phase: "connecting", level: 2 }, "couldnt_connect"],
+    [{ phase: "reconnecting", level: 2 }, "no_connection"],
+    [{ phase: "reconnecting", level: 3 }, "still_no_connection"],
+    [{ phase: "connecting", level: 3 }, "still_no_connection"],
     [{ phase: "peer_stopped" }, "baby_stopped"],
     [{ phase: "failed_needs_user", failureKey: "pairing_key_mismatch" }, "needs_pairing"],
     [{ phase: "idle" }, "idle"],
     [{ phase: "stopped" }, "idle"],
   ];
   it.each(table)("%j is %s", (over, kind) => {
-    expect(ambientKind(link(over))).toBe(kind);
+    expect(statusKindOf(link(over))).toBe(kind);
   });
 
-  it("gives every state a tone, an icon and (from level 2) an assertive announcement", () => {
-    for (const look of Object.values(AMBIENT_LOOK)) {
-      expect(look.icon).toBeTruthy();
-      expect(look.tone).toBeTruthy();
+  it("colours by stage: neutral, blue, orange, red, grey", () => {
+    expect(STATUS_LOOK.connected.tone).toBe("ok");
+    expect(STATUS_LOOK.connecting.tone).toBe("info");
+    expect(STATUS_LOOK.reconnecting.tone).toBe("info");
+    expect(STATUS_LOOK.not_connected_yet.tone).toBe("orange");
+    expect(STATUS_LOOK.cant_reach.tone).toBe("orange");
+    expect(STATUS_LOOK.no_connection.tone).toBe("bad");
+    expect(STATUS_LOOK.baby_stopped.tone).toBe("neutral");
+  });
+
+  it("announces politely for levels 0 and 1 and assertively from level 2", () => {
+    for (const kind of ["connected", "connecting", "reconnecting", "cant_reach"] as const) {
+      expect(STATUS_LOOK[kind].assertive).toBe(false);
     }
-    expect(AMBIENT_LOOK.connected.tone).toBe("ok");
-    expect(AMBIENT_LOOK.cant_reach.assertive).toBe(true);
-    expect(AMBIENT_LOOK.lost_for.assertive).toBe(true);
-    expect(AMBIENT_LOOK.reconnecting.assertive).toBe(false);
+    for (const kind of [
+      "couldnt_connect",
+      "no_connection",
+      "still_no_connection",
+      "baby_stopped",
+      "needs_pairing",
+    ] as const) {
+      expect(STATUS_LOOK[kind].assertive).toBe(true);
+    }
+  });
+
+  it("gives every stage an icon so colour is never the only signal", () => {
+    for (const look of Object.values(STATUS_LOOK)) expect(look.icon).toBeTruthy();
   });
 });
 
-describe("downForMs", () => {
-  it("counts from the last contact", () => {
+describe("downForMs and the outage timing fields", () => {
+  it("counts from the outage start the core reports", () => {
+    expect(downForMs(link({ downSinceElapsedMs: 1_000 }), 61_000)).toBe(60_000);
     expect(downForMs(link({ lastAliveElapsedMs: 1_000 }), 61_000)).toBe(60_000);
-    expect(downForMs(link({ lastAliveElapsedMs: null }), 61_000)).toBe(0);
+    expect(downForMs(link({}), 61_000)).toBe(0);
+  });
+
+  it("the start before any contact is the run start the core sent", () => {
+    expect(outageStartElapsedMs(link({ downSinceElapsedMs: 500, lastAliveElapsedMs: null }))).toBe(
+      500,
+    );
+  });
+});
+
+describe("alertStageOf", () => {
+  it("is vibrating at level 2, loud at level 3 and paused while acknowledged", () => {
+    expect(alertStageOf(link({ phase: "reconnecting", level: 2 }), 0)).toBe("vibrating");
+    expect(alertStageOf(link({ phase: "reconnecting", level: 3 }), 0)).toBe("loud");
+    const acked = link({ phase: "reconnecting", level: 2, acknowledgedUntilElapsedMs: 300_000 });
+    expect(alertStageOf(acked, 100_000)).toBe("paused");
+    expect(alertStageOf(acked, 300_001)).toBe("vibrating");
+  });
+});
+
+describe("elapsedToWall", () => {
+  it("shows next_level_at_ms with the platform's reading of the core clock", () => {
+    // The core clock is the clamped Date.now(): a time 90 s ahead of now is 90 s ahead on the wall.
+    const wall = 1_800_000_000_000;
+    expect(elapsedToWall(160_000, 70_000, wall)).toBe(wall + 90_000);
+    expect(elapsedToWall(70_000, 70_000, wall)).toBe(wall);
+  });
+});
+
+describe("missedResultOf", () => {
+  const m = (over: Partial<MissedEventsUi>): MissedEventsUi => ({
+    downMs: 60_000,
+    count: 0,
+    complete: true,
+    endWallMs: null,
+    loudest: null,
+    ...over,
+  });
+  it("tells no sound, some sounds and unknown apart", () => {
+    expect(missedResultOf(m({ count: 0 }))).toBe("none");
+    expect(missedResultOf(m({ count: 2 }))).toBe("some");
+    expect(missedResultOf(m({ complete: false, count: 2 }))).toBe("unknown");
+    expect(missedResultOf(m({ count: null }))).toBe("unknown");
+    expect(missedResultOf(null)).toBe("unknown");
   });
 });
 
@@ -119,53 +189,52 @@ describe("fullScreenOf", () => {
   const lost = state({ link: link({ phase: "reconnecting", level: 2 }) });
 
   it("shows nothing for a healthy link", () => {
-    expect(fullScreenOf(connected(), 0, none)).toBeNull();
+    expect(fullScreenOf(connected(), none)).toBeNull();
   });
 
   it("shows the link alarm from level 2 and lets level 1 pass", () => {
-    expect(fullScreenOf(lost, 0, none)).toBe("link_lost");
-    expect(fullScreenOf(state({ link: link({ phase: "reconnecting", level: 1 }) }), 0, none)).toBe(
+    expect(fullScreenOf(lost, none)).toBe("link_lost");
+    expect(fullScreenOf(state({ link: link({ phase: "reconnecting", level: 1 }) }), none)).toBe(
       null,
     );
   });
 
-  it("hides the link alarm while 'I'm checking' mutes it, and brings it back after", () => {
+  it("keeps the link alarm up after 'I'm checking': it stays red as 'Alarm paused'", () => {
     const acked = state({
       link: link({ phase: "reconnecting", level: 2, acknowledgedUntilElapsedMs: 300_000 }),
     });
-    expect(fullScreenOf(acked, 100_000, none)).toBeNull();
-    expect(fullScreenOf(acked, 300_001, none)).toBe("link_lost");
+    expect(fullScreenOf(acked, none)).toBe("link_lost");
   });
 
   it("shows the noise alert, and the link alarm before it", () => {
-    expect(fullScreenOf(connected({ noiseAlertActive: true }), 0, none)).toBe("noise");
-    expect(fullScreenOf({ ...lost, noiseAlertActive: true }, 0, none)).toBe("link_lost");
+    expect(fullScreenOf(connected({ noiseAlertActive: true }), none)).toBe("noise");
+    expect(fullScreenOf({ ...lost, noiseAlertActive: true }, none)).toBe("link_lost");
   });
 
   it("lets 'Stop sound' close the noise alert for the rest of the event", () => {
-    expect(fullScreenOf(connected({ noiseAlertActive: true }), 0, new Set(["noise"]))).toBeNull();
+    expect(fullScreenOf(connected({ noiseAlertActive: true }), new Set(["noise"]))).toBeNull();
   });
 
   it("shows the stopped baby device until OK, then the battery", () => {
     const stopped = state({ link: link({ phase: "peer_stopped" }) });
-    expect(fullScreenOf(stopped, 0, none)).toBe("baby_stopped");
-    expect(fullScreenOf(stopped, 0, new Set(["baby_stopped"]))).toBeNull();
+    expect(fullScreenOf(stopped, none)).toBe("baby_stopped");
+    expect(fullScreenOf(stopped, new Set(["baby_stopped"]))).toBeNull();
     const dying = connected({
       peer: { ...defaultParentMonitor().peer, batteryPct: 3, charging: false },
     });
-    expect(fullScreenOf(dying, 0, none)).toBe("battery_critical");
-    expect(fullScreenOf(dying, 0, new Set(["battery_critical"]))).toBeNull();
+    expect(fullScreenOf(dying, none)).toBe("battery_critical");
+    expect(fullScreenOf(dying, new Set(["battery_critical"]))).toBeNull();
   });
 
   it("ignores a low battery that is charging", () => {
     const charging = connected({
       peer: { ...defaultParentMonitor().peer, batteryPct: 3, charging: true },
     });
-    expect(fullScreenOf(charging, 0, none)).toBeNull();
+    expect(fullScreenOf(charging, none)).toBeNull();
   });
 
   it("asks to pair again when the key no longer matches", () => {
-    expect(fullScreenOf(state({ link: link({ phase: "failed_needs_user" }) }), 0, none)).toBe(
+    expect(fullScreenOf(state({ link: link({ phase: "failed_needs_user" }) }), none)).toBe(
       "needs_pairing",
     );
   });
@@ -176,9 +245,9 @@ describe("fullScreenOf", () => {
       noiseAlertActive: true,
       peer: { ...defaultParentMonitor().peer, batteryPct: 3 },
     });
-    expect(fullScreenOf(everything, 0, none)).toBe("noise");
-    expect(fullScreenOf(everything, 0, new Set(["noise"]))).toBe("baby_stopped");
-    expect(fullScreenOf(everything, 0, new Set(["noise", "baby_stopped"]))).toBeNull();
+    expect(fullScreenOf(everything, none)).toBe("noise");
+    expect(fullScreenOf(everything, new Set(["noise"]))).toBe("baby_stopped");
+    expect(fullScreenOf(everything, new Set(["noise", "baby_stopped"]))).toBeNull();
   });
 });
 

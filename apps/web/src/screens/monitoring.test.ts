@@ -4,6 +4,7 @@ import App from "../App.svelte";
 import { defaultLinkUi, type LinkUi } from "../lib/contract";
 import { createFakeController, type FakeController } from "../lib/contract/fake-controller";
 import { locale } from "../lib/i18n/store";
+import { elapsedToWall } from "../lib/ui/parent-view";
 
 function open(path: string, controller: FakeController) {
   window.history.replaceState(null, "", path);
@@ -140,10 +141,12 @@ describe("S09 parent monitor", () => {
     c = parentController();
   });
 
-  it("shows the ambient bar, the headline and the quiet meter", async () => {
+  it("shows the status bar, the headline and the quiet meter", async () => {
+    c.app.update((s) => ({ ...s, peerName: "Nursery" }));
     open("/parent", c);
-    const bar = await screen.findByTestId("parent_ambient_bar");
-    expect(bar).toHaveTextContent("Connected to Baby device");
+    const bar = await screen.findByTestId("status_bar");
+    // Neutral, with the connection name after the state; colour only ever means a change.
+    expect(bar).toHaveTextContent("Connected · Nursery");
     expect(bar).toHaveAttribute("data-tone", "ok");
     expect(bar.querySelector("svg")).not.toBeNull();
     expect(screen.getByTestId("parent_headline")).toHaveTextContent(/All quiet since \d/);
@@ -305,12 +308,57 @@ describe("S09 parent monitor", () => {
     expect(c.calls).toContainEqual(["dismissMissedEvents"]);
   });
 
-  it("says 'Connected again after' for a few seconds", async () => {
-    c.parent.update((p) => ({ ...p, restoredAfterMs: 125_000 }));
+  it("keeps the 'Connected again' card until OK and shows the sound result", async () => {
+    c.parent.update((p) => ({
+      ...p,
+      restoredAfterMs: 108_000,
+      missed: { downMs: 108_000, count: 0, complete: true, endWallMs: null, loudest: null },
+    }));
     open("/parent", c);
-    expect(await screen.findByTestId("parent_restored_toast")).toHaveTextContent(
-      "Connected again after 2 min",
+    const card = await screen.findByTestId("restored_card");
+    expect(card).toHaveTextContent("Connected again");
+    expect(screen.getByTestId("restored_body")).toHaveTextContent(
+      "Monitoring was interrupted for 1 min 48 s.",
     );
+    expect(screen.getByTestId("restored_result")).toHaveTextContent(
+      "The baby device heard no sound during that time.",
+    );
+    await fireEvent.click(screen.getByTestId("restored_ok"));
+    expect(c.calls).toContainEqual(["dismissRestored"]);
+    await waitFor(() => expect(screen.queryByTestId("restored_card")).toBeNull());
+  });
+
+  it("says sounds were heard, or that it does not know, without a count", async () => {
+    c.parent.update((p) => ({
+      ...p,
+      restoredAfterMs: 90_000,
+      missed: { downMs: 90_000, count: 2, complete: true, endWallMs: null, loudest: 0.7 },
+    }));
+    open("/parent", c);
+    expect(await screen.findByTestId("restored_result")).toHaveTextContent("It heard 2 sounds.");
+    c.parent.update((p) => ({
+      ...p,
+      missed: { downMs: 90_000, count: 2, complete: false, endWallMs: null, loudest: null },
+    }));
+    await waitFor(() =>
+      expect(screen.getByTestId("restored_result")).toHaveTextContent(
+        "We don't know whether there were sounds.",
+      ),
+    );
+    expect(screen.getByTestId("restored_result")).not.toHaveTextContent("2");
+  });
+
+  it("replaces the card when the link drops again", async () => {
+    c.parent.update((p) => ({ ...p, restoredAfterMs: 90_000 }));
+    open("/parent", c);
+    await screen.findByTestId("restored_card");
+    c.parent.update((p) => ({
+      ...p,
+      restoredAfterMs: null,
+      link: link({ phase: "reconnecting", level: 0, downSinceElapsedMs: Date.now() }),
+    }));
+    await waitFor(() => expect(screen.queryByTestId("restored_card")).toBeNull());
+    expect(screen.getByTestId("status_bar")).toHaveAttribute("data-kind", "reconnecting");
   });
 
   it("has no more than two warning chips and counts the rest", async () => {
@@ -319,7 +367,7 @@ describe("S09 parent monitor", () => {
       peer: { ...p.peer, unitWarnings: ["page_hidden", "not_charging", "wake_lock_off"] },
     }));
     open("/parent", c);
-    await screen.findByTestId("parent_ambient_bar");
+    await screen.findByTestId("status_bar");
     expect(screen.getByTestId("parent_more_chip")).toHaveTextContent("+1");
   });
 });
@@ -411,73 +459,163 @@ describe("S10 noise alert", () => {
   });
 });
 
-describe("S11 link alarm", () => {
+describe("S11 connection alert", () => {
   let c: FakeController;
   beforeEach(() => {
     c = parentController();
   });
 
-  function lose(level = 2): void {
+  /** Down for 2 min with the core's timing fields: the next level (loud alarm) is 60 s ahead. */
+  function lose(over: Partial<LinkUi> = {}): void {
+    const now = Date.now();
     c.parent.update((p) => ({
       ...p,
       link: link({
         phase: "reconnecting",
-        level,
-        lastAliveElapsedMs: Date.now() - 120_000,
+        level: 2,
+        lastAliveElapsedMs: now - 120_000,
+        downSinceElapsedMs: now - 120_000,
+        nextLevelAtElapsedMs: now + 60_000,
         causeHint: "peer_absent",
+        ...over,
       }),
       quietSinceWallMs: null,
     }));
   }
 
-  it("takes over the page when the connection is lost for good", async () => {
+  it("takes over the page with label, headline, counter and the next stage", async () => {
     open("/parent", c);
     await screen.findByTestId("parent_headline");
     lose();
     const alarm = await screen.findByRole("alertdialog");
-    expect(alarm).toHaveAccessibleName("No connection to Baby device");
-    expect(screen.getByTestId("link_alarm_duration")).toHaveTextContent("No connection for 2 min");
-    expect(screen.getByTestId("link_alarm_body")).toHaveTextContent(
-      "You won't hear your child until the devices reconnect.",
+    expect(alarm).toHaveAccessibleName("Please check on the child");
+    expect(screen.getByTestId("alert_label")).toHaveTextContent("Your phone is vibrating");
+    expect(screen.getByTestId("link_alarm_since")).toHaveTextContent("2:00");
+    expect(screen.getByTestId("link_alarm_since")).toHaveTextContent("without connection");
+    expect(screen.getByTestId("link_alarm_sentence")).toHaveTextContent(
+      "You can't hear the child. Loud alarm at",
     );
-    expect(screen.getByTestId("link_alarm_cause")).toHaveTextContent("isn't answering");
-    expect(screen.getByTestId("link_alarm_ack_note")).toHaveTextContent("Sound off for 5 min");
-    expect(screen.getByTestId("link_alarm_bar")).toHaveAttribute("role", "alert");
+    expect(screen.getByTestId("link_alarm_cause")).toHaveTextContent(
+      "The baby device isn't online.",
+    );
+    expect(screen.getByTestId("link_alarm_step")).toHaveTextContent("plugged in");
   });
 
-  it("uses the urgent title at level 3", async () => {
+  it("states the counter in words and keeps it out of every live region", async () => {
     open("/parent", c);
-    lose(3);
-    expect(await screen.findByRole("alertdialog")).toHaveAccessibleName(
-      "No connection to Baby device!",
+    lose();
+    const counter = await screen.findByTestId("link_alarm_since");
+    expect(counter).toHaveTextContent("2 minutes");
+    expect(counter.closest("[aria-live], [role=alert], [role=status]")).toBeNull();
+    expect(counter).not.toHaveAttribute("aria-live");
+  });
+
+  it("shows the next-stage time as next_level_at_ms on the wall clock", async () => {
+    open("/parent", c);
+    const at = Date.now() + 90_000;
+    lose({ nextLevelAtElapsedMs: at });
+    const expected = new Intl.DateTimeFormat("en", { hour: "2-digit", minute: "2-digit" }).format(
+      elapsedToWall(at, Date.now(), Date.now()),
+    );
+    expect(await screen.findByTestId("link_alarm_sentence")).toHaveTextContent(expected);
+  });
+
+  it("names the loud alarm at level 3 without a level number", async () => {
+    open("/parent", c);
+    lose({ level: 3, nextLevelAtElapsedMs: null });
+    const alarm = await screen.findByRole("alertdialog");
+    expect(alarm).toHaveAccessibleName("Still no connection");
+    expect(screen.getByTestId("alert_label")).toHaveTextContent("Loud alarm sounding");
+    expect(screen.getByTestId("link_alarm_sentence")).toHaveTextContent("Go to the child now.");
+    expect(alarm).not.toHaveTextContent(/level/i);
+  });
+
+  it("says 'Couldn't connect' when monitoring never started", async () => {
+    open("/parent", c);
+    lose({ phase: "connecting", lastAliveElapsedMs: null });
+    expect(await screen.findByRole("alertdialog")).toHaveAccessibleName("Couldn't connect");
+    expect(screen.getByTestId("link_alarm_sentence")).toHaveTextContent(
+      "Monitoring never started.",
     );
   });
 
-  it("acknowledges with 'I'm checking'", async () => {
+  it("acknowledges with 'I'm checking' and then stays red as 'Alarm paused'", async () => {
     open("/parent", c);
     lose();
     await fireEvent.click(await screen.findByTestId("link_alarm_ack"));
     expect(c.calls).toContainEqual(["acknowledgeAlarm"]);
-  });
-
-  it("leaves the full screen while the acknowledgement mutes it", async () => {
-    open("/parent", c);
-    lose();
-    await screen.findByRole("alertdialog");
     c.parent.update((p) => ({
       ...p,
-      link: { ...p.link, acknowledgedUntilElapsedMs: Date.now() + 300_000 },
+      link: {
+        ...p.link,
+        nextLevelAtElapsedMs: null,
+        acknowledgedUntilElapsedMs: Date.now() + 300_000,
+      },
     }));
-    expect(await screen.findByTestId("parent_headline")).toBeInTheDocument();
-    expect(screen.getByTestId("parent_ambient_bar")).toHaveAttribute("data-kind", "cant_reach");
+    await waitFor(() =>
+      expect(screen.getByTestId("alert_label")).toHaveTextContent("Alarm paused"),
+    );
+    expect(screen.getByTestId("link_alarm_title")).toHaveTextContent("Comes back at");
+    expect(screen.queryByTestId("link_alarm_ack")).toBeNull();
+    expect(screen.getByTestId("parent_link_alarm")).toBeInTheDocument();
   });
 
-  it("stops monitoring from the alarm", async () => {
+  it("folds the further steps behind a disclosure button with an expanded state", async () => {
+    open("/parent", c);
+    lose();
+    const more = await screen.findByTestId("link_alarm_more_steps");
+    expect(more).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByTestId("link_alarm_more_0")).toBeNull();
+    await fireEvent.click(more);
+    expect(more).toHaveAttribute("aria-expanded", "true");
+    expect(await screen.findByTestId("link_alarm_more_0")).toHaveTextContent("Is it on Wi-Fi?");
+    expect(screen.getByTestId("link_alarm_more_0")).toHaveFocus();
+  });
+
+  it("'Try now' resets the backoff through the existing input", async () => {
+    open("/parent", c);
+    lose();
+    await fireEvent.click(await screen.findByTestId("link_alarm_try_now"));
+    expect(c.calls).toContainEqual(["tryReconnectNow"]);
+  });
+
+  it("asks before it stops: the confirmation silences and acknowledges nothing", async () => {
+    open("/parent", c);
+    lose({ level: 3, nextLevelAtElapsedMs: null });
+    await fireEvent.click(await screen.findByTestId("link_alarm_stop"));
+    expect(await screen.findByTestId("dialog_stop")).toBeVisible();
+    // Opening the confirmation did not touch the alarm; "Keep monitoring" returns to it unchanged.
+    expect(c.calls.map((x) => x[0])).not.toContain("acknowledgeAlarm");
+    expect(c.calls.map((x) => x[0])).not.toContain("stopAlertSound");
+    expect(c.calls.map((x) => x[0])).not.toContain("stopMonitoring");
+    await fireEvent.click(screen.getByTestId("dialog_stop_cancel"));
+    expect(screen.getByTestId("parent_link_alarm")).toBeInTheDocument();
+    expect(c.calls.map((x) => x[0])).not.toContain("stopMonitoring");
+  });
+
+  it("stops monitoring from the alarm only after the confirmation", async () => {
     open("/parent", c);
     lose();
     await fireEvent.click(await screen.findByTestId("link_alarm_stop"));
+    await fireEvent.click(await screen.findByTestId("dialog_stop_confirm"));
     expect(c.calls).toContainEqual(["stopMonitoring"]);
     await waitFor(() => expect(window.location.pathname).toBe("/"));
+  });
+
+  it("'Wrong connection?' on the red screen goes through the stop confirmation", async () => {
+    open("/parent", c);
+    lose({ phase: "connecting", lastAliveElapsedMs: null });
+    await fireEvent.click(await screen.findByTestId("link_alarm_wrong_connection"));
+    expect(c.calls.map((x) => x[0])).not.toContain("chooseAnotherConnection");
+    await fireEvent.click(await screen.findByTestId("dialog_choose_other_confirm"));
+    expect(c.calls).toContainEqual(["chooseAnotherConnection"]);
+  });
+
+  it("'Wrong connection?' on the blue monitor stops with one tap", async () => {
+    c.parent.update((p) => ({ ...p, link: link({ phase: "connecting", level: 0 }) }));
+    open("/parent", c);
+    await fireEvent.click(await screen.findByTestId("parent_choose_other_connection"));
+    expect(c.calls).toContainEqual(["chooseAnotherConnection"]);
   });
 
   it("puts the lost connection before a noise alert", async () => {
@@ -498,7 +636,7 @@ describe("S11 link alarm", () => {
     expect(screen.queryByTestId("link_alarm_ack")).toBeNull();
     await fireEvent.click(screen.getByTestId("link_alarm_ok"));
     expect(await screen.findByTestId("parent_headline")).toBeInTheDocument();
-    expect(screen.getByTestId("parent_ambient_bar")).toHaveTextContent("stopped monitoring");
+    expect(screen.getByTestId("status_bar")).toHaveTextContent("Stopped");
   });
 
   it("warns about an almost empty baby device battery", async () => {
@@ -521,17 +659,68 @@ describe("S11 link alarm", () => {
     await waitFor(() => expect(window.location.pathname).toBe("/parent/pair"));
   });
 
-  it("opens the reconnect help from the bar of a monitor that is in trouble", async () => {
+  it("opens the reconnect help from the monitor while the connection is in trouble", async () => {
     open("/parent", c);
-    lose();
-    await fireEvent.click(await screen.findByTestId("link_alarm_ack"));
     c.parent.update((p) => ({
       ...p,
-      link: { ...p.link, acknowledgedUntilElapsedMs: Date.now() + 300_000 },
+      link: link({ phase: "reconnecting", level: 1, lastAliveElapsedMs: Date.now() }),
     }));
     await fireEvent.click(await screen.findByTestId("parent_help_reconnect"));
     expect(screen.getByTestId("sheet_help_reconnect")).toHaveTextContent(
       "Is the baby device on and showing GuardedSleep?",
     );
+  });
+});
+
+describe("status bar per stage", () => {
+  let c: FakeController;
+  beforeEach(() => {
+    c = parentController();
+    c.app.update((s) => ({ ...s, peerName: "Nursery" }));
+  });
+
+  const table: Array<[Partial<LinkUi>, string, string, string]> = [
+    [{ phase: "connecting", level: 0 }, "info", "connecting", "Connecting · Nursery"],
+    [{ phase: "reconnecting", level: 0 }, "info", "reconnecting", "Reconnecting · Nursery"],
+    // First connection not answered: orange at 25 s while connecting, not blue.
+    [{ phase: "connecting", level: 1 }, "orange", "not_connected_yet", "Not connected yet"],
+    [{ phase: "reconnecting", level: 1 }, "orange", "cant_reach", "Can't reach · Nursery"],
+    [{ phase: "reconnecting", level: 2 }, "bad", "no_connection", "No connection · Nursery"],
+    [{ phase: "peer_stopped" }, "neutral", "baby_stopped", "Stopped · Nursery"],
+  ];
+  it.each(table)("%j is %s (%s)", async (over, tone, kind, text) => {
+    open("/settings", c);
+    c.parent.update((p) => ({
+      ...p,
+      link: link({ ...over, downSinceElapsedMs: Date.now() - 25_000 }),
+    }));
+    const bar = await screen.findByTestId("status_bar");
+    expect(bar).toHaveAttribute("data-tone", tone);
+    expect(bar).toHaveAttribute("data-kind", kind);
+    expect(bar).toHaveTextContent(text);
+  });
+
+  it("is shown on Settings while monitoring, and only the stage words are a live region", async () => {
+    open("/settings", c);
+    const bar = await screen.findByTestId("status_bar");
+    expect(bar).toHaveTextContent("Connected · Nursery");
+    expect(screen.getByTestId("status_bar_text")).toHaveAttribute("role", "status");
+    c.parent.update((p) => ({
+      ...p,
+      link: link({ phase: "reconnecting", level: 2, downSinceElapsedMs: Date.now() - 70_000 }),
+    }));
+    await waitFor(() =>
+      expect(screen.getByTestId("status_bar_text")).toHaveAttribute("role", "alert"),
+    );
+    // The ticking duration sits outside the live region.
+    expect(screen.getByTestId("status_bar_duration").closest("[role=alert]")).toBeNull();
+    expect(screen.getByTestId("status_bar_duration")).toHaveTextContent("1 min 10 s");
+  });
+
+  it("has no bar before monitoring", async () => {
+    c.app.update((s) => ({ ...s, monitoring: false }));
+    open("/settings", c);
+    await screen.findByRole("heading", { level: 1 });
+    expect(screen.queryByTestId("status_bar")).toBeNull();
   });
 });

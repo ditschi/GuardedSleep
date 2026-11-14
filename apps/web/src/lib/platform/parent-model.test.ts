@@ -12,6 +12,8 @@ const status = (state: LinkState, over: Partial<LinkStatus> = {}): LinkStatus =>
   cause: null,
   acknowledged_until: null,
   last_alive_ms: null,
+  down_since_ms: null,
+  next_level_at_ms: null,
   ...over,
 });
 
@@ -201,14 +203,23 @@ describe("events", () => {
     expect(t.sink.log).toContain("linkLost:61000");
   });
 
-  it("link_restored shows the restored notice for 10 s", () => {
+  it("link_restored keeps the restored card until OK, with a sound result", () => {
     t.event({ type: "link_restored", down_ms: 75_000 });
     expect(t.state.restoredAfterMs).toBe(75_000);
     expect(t.sink.notices.at(-1)).toEqual({ type: "link_restored", downMs: 75_000 });
-    t.advance(9_500);
+    // The card never dismisses itself.
+    t.advance(60_000);
     expect(t.state.restoredAfterMs).toBe(75_000);
-    t.advance(1_000);
+    t.model.dismissRestored();
     expect(t.state.restoredAfterMs).toBeNull();
+  });
+
+  it("a new outage replaces the restored card", () => {
+    t.model.onStatus(status("connected"), 0);
+    t.event({ type: "link_restored", down_ms: 75_000 });
+    t.model.onStatus(status("reconnecting", { level: 0 }), 10_000);
+    expect(t.state.restoredAfterMs).toBeNull();
+    expect(t.state.missed).toBeNull();
   });
 
   it("security_warning sets the flag and notifies", () => {

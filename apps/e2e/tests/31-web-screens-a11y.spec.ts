@@ -106,11 +106,9 @@ for (const lang of LANGUAGES) {
       await checkScreen(parent, "parent pairing: not our code");
 
       await pasteCode(parent, code);
-      await expect(parent.getByTestId("parent_ambient_bar")).toHaveAttribute(
-        "data-kind",
-        "connected",
-        { timeout: 60_000 },
-      );
+      await expect(parent.getByTestId("status_bar")).toHaveAttribute("data-kind", "connected", {
+        timeout: 60_000,
+      });
       await expect(baby.getByTestId("baby_status")).toHaveAttribute("data-state", "connected", {
         timeout: 60_000,
       });
@@ -205,7 +203,10 @@ for (const lang of LANGUAGES) {
       await dual.babyPage.getByTestId("dialog_stop_confirm").click();
       await expect(parent.getByTestId("link_alarm_title")).toBeVisible({ timeout: 30_000 });
       await checkScreen(parent, "parent: link alarm, baby device stopped");
+      // Stop asks first: the confirmation is part of the alert screen's flow.
       await parent.getByTestId("link_alarm_stop").click();
+      await expect(parent.getByTestId("dialog_stop")).toBeVisible();
+      await parent.getByTestId("dialog_stop_confirm").click();
       await expect(parent.getByTestId("role_title")).toBeVisible();
 
       // Pair again and lose the connection: the parent goes offline.
@@ -214,6 +215,10 @@ for (const lang of LANGUAGES) {
       await closePeerConnections(parent);
       await expect(parent.getByTestId("parent_link_alarm")).toBeVisible({ timeout: 120_000 });
       await checkScreen(parent, "parent: link alarm, connection lost");
+      // The counter is read in words when focused and is never a live region.
+      const counter = parent.getByTestId("link_alarm_since");
+      await expect(counter).not.toHaveAttribute("aria-live", /.+/);
+      await expect(counter.locator("[aria-live]")).toHaveCount(0);
       await dual.parent.setOffline(false);
     } finally {
       await dual.dispose();

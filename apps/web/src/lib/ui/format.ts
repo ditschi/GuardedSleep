@@ -38,3 +38,27 @@ export function levelWordKey(level: number): MessageKey {
   if (level >= 0.12) return "native.ui.parent.level.some";
   return "native.ui.parent.level.quiet";
 }
+
+/**
+ * `{duration}` in running text: "48 s", "1 min 48 s", "2 min" (durations in words, never `m:ss`;
+ * `redesign-calm-ui` design section 8).
+ */
+export function formatDurationWords(t: Translate, ms: number): string {
+  const total = Math.max(0, Math.round(ms / 1000));
+  if (total < 60) return t("native.ui.common.durationSec", { seconds: total });
+  const min = t("native.ui.common.durationMin", { minutes: Math.floor(total / 60) });
+  return total % 60 === 0
+    ? min
+    : `${min} ${t("native.ui.common.durationSec", { seconds: total % 60 })}`;
+}
+
+/** "1 minute 12 seconds" for the screen reader; the visible counter stays digits. */
+export function spokenDuration(t: Translate, ms: number): string {
+  const total = Math.max(0, Math.round(ms / 1000));
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  const sec = t("native.ui.connAlert.spokenSec", { count: seconds });
+  if (minutes === 0) return sec;
+  const min = t("native.ui.connAlert.spokenMin", { count: minutes });
+  return seconds === 0 ? min : `${min} ${sec}`;
+}

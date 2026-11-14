@@ -107,10 +107,11 @@ test("link alarm: baby device stopped, then connection lost", async () => {
 
     await expect(parent.getByTestId("link_alarm_title")).toBeVisible({ timeout: 150_000 });
     await expect(parent.getByTestId("link_alarm_ack")).toBeVisible();
-    await expect(parent.getByTestId("link_alarm_ack_note")).toBeVisible();
     await expectNoAxeViolations(parent);
     await parent.getByTestId("link_alarm_ack").click();
-    await expect(parent.getByTestId("parent_headline")).toBeVisible();
+    // "I'm checking" does not close the alert: it stays red as "Alarm paused" until the link is back.
+    await expect(parent.getByTestId("link_alarm_ack")).toHaveCount(0);
+    await expect(parent.getByTestId("alert_label")).toBeVisible();
   } finally {
     await dual.dispose();
   }
