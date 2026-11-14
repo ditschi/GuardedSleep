@@ -72,3 +72,6 @@ packages/core-wasm/pkg-node/
 
 # Kotlin compiler daemon sessions
 .kotlin/
+
+# Rendered PNGs of OpenSpec design mockups (mockup/render.sh)
+openspec/changes/**/mockup/out/

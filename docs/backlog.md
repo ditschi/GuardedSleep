@@ -54,7 +54,7 @@ The goals of ADR-012 are fixed. During waves 1–3 the current logic stays as im
 
 `PLANNED` — target: after the rework (owner, 2026-10-21; ADR-013).
 
-Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and detailed implementation on Android and the new web client, including a UX review (ambient bar, copy, baby-side indicator, onboarding on indicator loss). Decided but not built yet: the network-mode banner ("Now on mobile data", "Local — no data leaves your network") with a "Show connection details" setting (ADR-013 §4, ADR-018 T2); indicator-loss training in onboarding with the same components as in reality, followed by the test alert, and a reminder once per 30 days (ADR-013 §5, ADR-018 onboarding); a quality indicator with good/medium/poor (built: only a "weak connection" chip); a user-facing diagnostics view for technical details.
+Concept and goals of ADR-013 are decided. The UX review of the ambient bar, the copy and the baby-side indicator is picked up by [`redesign-calm-ui`](../openspec/changes/redesign-calm-ui/proposal.md) (2026-11-14); what remains here is onboarding on indicator loss and the items below. Decided but not built yet: the network-mode banner ("Now on mobile data", "Local — no data leaves your network") with a "Show connection details" setting (ADR-013 §4, ADR-018 T2); indicator-loss training in onboarding with the same components as in reality, followed by the test alert, and a reminder once per 30 days (ADR-013 §5, ADR-018 onboarding); a quality indicator with good/medium/poor (built: only a "weak connection" chip); a user-facing diagnostics view for technical details.
 
 ### Alpha exit criteria
 
@@ -116,6 +116,9 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 - `IDEA` Opt-out of the Do Not Disturb override with a clear warning that alerts will be silent when the phone is muted.
 - `IDEA` Change the baby unit's sensitivity remotely from the parent (ADR-018 T2).
 - `IDEA` Re-prompt the test alert after an app update and before the first use on mobile data (alpha-ux-flows §3.9; built: readiness warns after 30 days).
+- `IDEA` Louder reminders while the connection alert is at the "Your phone is vibrating" stage (from 1 min), for parents who are hard of hearing or sleep deeply; today that stage repeats vibration and a soft tone every 10 s until the loud alarm at 3 min. Left out of `redesign-calm-ui` (owner, 2026-11-14) because it changes alert behaviour, not presentation.
+- `IDEA` "Turn sound back on now" on the acknowledged connection alert: end an "I'm checking" acknowledgment early. Needs a new core input next to `acknowledge_alarm`; left out of `redesign-calm-ui` (mockup frame 26).
+- `IDEA` From the `redesign-calm-ui` reviews (2026-11-14), not in the specs: a 1-hour option for pausing noise alerts, and resetting "Vibrate only" to "Sound" the next morning.
 - `IDEA` Noise event tracking (2-minute quiet rule, snooze-end restart) once in the core and reported to the platforms; today the core keeps its own copy for the escalation timer (`add-discreet-alert-profile` design.md).
 
 ### device-setup
@@ -128,6 +131,10 @@ Concept and goals of ADR-013 are decided. Re-evaluate the UI realisation and det
 - `IDEA` Several baby units (one per child or room) with one parent app switching between them (use case UC-5).
 - `IDEA` About/FAQ: hardware vs software baby monitors and range expectations (Wi-Fi, hotspot, internet).
 - `IDEA` Responsive layout for tablets.
+
+### ui-appearance
+
+- `IDEA` Automatic night mode from the ambient light sensor, in addition to the time window. Left out of `redesign-calm-ui` (owner, 2026-11-14): sensor noise in a dark room can flip the scheme, not every device or browser has the sensor, and it needs more testing. Night mode would still never apply to alerts, warning banners or safety colours.
 
 ### link-supervision
 
