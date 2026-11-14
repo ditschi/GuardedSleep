@@ -1089,6 +1089,14 @@ class LinkController(
 
     override fun dismissTalkPermission() = parentModel.setTalkPermission(TalkPermission.NONE)
 
+    // Deliberate no-op: what the parent's answer to "Did you hear and feel it?" does is not
+    // specified yet. See the docs/backlog.md IDEA entries added by ui-journey-tests task 4.1.
+    override fun reportTestResult(heardAndFelt: Boolean) = Unit
+
+    // Deliberate no-op: the first-run coach is not specified yet. See the docs/backlog.md IDEA
+    // entries added by ui-journey-tests task 4.1.
+    override fun dismissCoach() = Unit
+
     override fun dismissTalkCoach() {
         updateSettings { it.copy(talkCoachSeen = true) }
     }

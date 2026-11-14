@@ -4,7 +4,7 @@ Branch `test/ui-journey-tests` from `origin/main`; the pairing journeys need dit
 
 ## 1. Contract completeness
 
-- [ ] 1.1 Remove the default bodies from the Kotlin `AppController`; implement every method in `LinkController` (`reportTestResult`, `dismissCoach` as explicit, commented no-ops pointing at the backlog entries of task 4.1), `FakeAppController` and previews. Verify: build.
+- [x] 1.1 Remove the default bodies from the Kotlin `AppController`; implement every method in `LinkController` (`reportTestResult`, `dismissCoach` as explicit, commented no-ops pointing at the backlog entries of task 4.1), `FakeAppController` and previews. Verify: build.
 
 ## 2. Journey harness
 

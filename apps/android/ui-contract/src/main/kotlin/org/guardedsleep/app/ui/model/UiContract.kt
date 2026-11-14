@@ -589,29 +589,29 @@ interface AppController {
 
     fun dismissSilenceRestoredNotice()
 
-    // UI-pass additions: default no-ops so existing implementations keep compiling.
+    // No default bodies: every implementation (controller, fakes, previews) states each method.
     /** Parent answered "Did you hear and feel it?" after a test alert. */
-    fun reportTestResult(heardAndFelt: Boolean) {}
+    fun reportTestResult(heardAndFelt: Boolean)
 
-    fun dismissCoach() {}
+    fun dismissCoach()
 
-    // Talk-back (`add-talk-back`); defaults keep other implementations compiling.
+    // Talk-back (`add-talk-back`).
     /** Parent: the talk button went down or up (a press without permission sends nothing). */
-    fun setTalk(pressed: Boolean) {}
+    fun setTalk(pressed: Boolean)
 
     /** Parent: the app left the foreground, the screen turned off or a call started. */
-    fun interruptTalk() {}
+    fun interruptTalk()
 
     /** Parent: the answer of the system microphone permission dialog. */
-    fun talkPermissionResult(granted: Boolean) {}
+    fun talkPermissionResult(granted: Boolean)
 
-    fun dismissTalkPermission() {}
+    fun dismissTalkPermission()
 
-    fun dismissTalkCoach() {}
+    fun dismissTalkCoach()
 
     /** Baby: "Play chime" in the settings, at the chosen level. */
-    fun playTalkChimeSample() {}
+    fun playTalkChimeSample()
 
     /** Baby: an adult opened the talk-back settings (ends the "may not be audible" warning). */
-    fun talkSettingsOpened() {}
+    fun talkSettingsOpened()
 }
