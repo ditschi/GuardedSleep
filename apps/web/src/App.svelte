@@ -81,11 +81,11 @@
 
 <PageAttention />
 <a class="gs-skip" href="#main">{$t("webShell.skipToContent")}</a>
-{#if $app.role === "parent" && $app.monitoring && ($route.id === "parent" || $route.id === "settings")}
-  <!-- Every parent screen shows the status bar while monitoring, Settings and sheets included. -->
-  <div class="gs-statusbar-slot"><StatusBar /></div>
-{/if}
 <main id="main" bind:this={main}>
+  {#if $app.role === "parent" && $app.monitoring && ($route.id === "parent" || $route.id === "settings")}
+    <!-- Every parent screen shows the status bar while monitoring, Settings and sheets included. -->
+    <div class="gs-statusbar-slot"><StatusBar /></div>
+  {/if}
   {#if $route.id === "role"}
     <RoleScreen />
   {:else if $route.id === "babyPair"}
