@@ -16,4 +16,4 @@ Branch `fix/parent-pairing-entry` from `origin/main`. Commit after each task; `j
 ## 3. Specs
 
 - [x] 3.1 Reword the parent part of `multi-parent-pairings` "Connection choice per role" (default preselected → marked default starts automatically, see this change). Verify: `openspec validate --all --strict`.
-- [ ] 3.2 `just lint`, `just verify-android` green.
+- [x] 3.2 `just lint`, `just verify-android` green.
