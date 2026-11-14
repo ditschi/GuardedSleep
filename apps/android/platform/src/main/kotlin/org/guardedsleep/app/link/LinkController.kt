@@ -436,6 +436,12 @@ class LinkController(
         if (pairings.setDefault(role, id)) refreshApp()
     }
 
+    override fun clearDefaultConnection() {
+        val role = settingsRepo.current.role ?: return
+        pairings.clearDefault(role)
+        refreshApp()
+    }
+
     override fun forgetConnection(id: String) {
         val role = settingsRepo.current.role ?: return
         if (id !in pairings.savedIds(role)) return
@@ -453,6 +459,7 @@ class LinkController(
      * readiness.
      */
     fun onForeground() {
+        autoStartOnce()
         if (
             settingsRepo.current.monitoringActive &&
                 (run == null || fgs == Fgs.LOST) &&
@@ -460,6 +467,25 @@ class LinkController(
         )
             startHost()
         refreshReadiness()
+    }
+
+    // Once per process: stopping monitoring afterwards shows the home menu and stays there.
+    private var autoStartDone = false
+
+    /**
+     * Parent only (`device-setup`, "Automatic start with the default connection"): a connection
+     * the user marked as default starts monitoring when the app opens. A running or resumable
+     * monitoring flag, an open pairing or a missing marker leave everything as it is.
+     */
+    private fun autoStartOnce() {
+        if (autoStartDone) return
+        val p = settingsRepo.current
+        if (p.role != Role.PARENT || !p.onboardingDone) return
+        autoStartDone = true
+        if (p.monitoringActive || _pairing.value != null) return
+        val id = pairings.markedDefaultId(Role.PARENT) ?: return
+        selectConnection(id)
+        startMonitoring()
     }
 
     fun refreshReadiness() {
@@ -531,6 +557,14 @@ class LinkController(
     // ---- pairing -----------------------------------------------------------------------------
 
     override fun startPairing() {
+        if (settingsRepo.current.role == Role.PARENT) {
+            // The parent only scans; no run starts until a code is submitted. At the cap nothing
+            // is added (the screens hide the button).
+            if (pairings.freeId(Role.PARENT) == null) return
+            cancelPairing()
+            _pairing.value = PairingState(PairingPhase.SCANNING)
+            return
+        }
         if (settingsRepo.current.role != Role.BABY) return
         // The baby unit replaces its active pairing; "Add parent device" waits for the baby hub.
         val slot = newPairingId(Role.BABY) ?: return

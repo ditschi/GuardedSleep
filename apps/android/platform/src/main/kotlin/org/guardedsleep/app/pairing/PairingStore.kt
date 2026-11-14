@@ -328,7 +328,7 @@ class RolePairings(
     /** The pairings of [role] that are saved, with their names (null while unreadable or unset). */
     @Synchronized
     fun list(role: Role): List<SavedPairing> {
-        val default = defaultId(role)
+        val default = markedDefaultId(role)
         return savedIds(role).map {
             SavedPairing(it, store(role, it).load()?.connectionName, it == default)
         }
@@ -342,6 +342,20 @@ class RolePairings(
     fun defaultId(role: Role): String? {
         val saved = savedIds(role)
         return defaults.get(role)?.takeIf { it in saved } ?: saved.firstOrNull()
+    }
+
+    /**
+     * The pairing the user marked as default while it is still saved; no fallback. The parent's
+     * automatic start and the "default" flag of the lists use this one, never the implied default.
+     */
+    @Synchronized
+    fun markedDefaultId(role: Role): String? =
+        defaults.get(role)?.takeIf { it in savedIds(role) }
+
+    /** Removes the default mark of [role]; the baby keeps falling back to its first pairing. */
+    @Synchronized
+    fun clearDefault(role: Role) {
+        defaults.set(role, null)
     }
 
     /** Makes [id] the default of [role]; false when nothing is saved there. */

@@ -63,6 +63,19 @@ class RolePairingsTest {
     }
 
     @Test
+    fun aSavedPairingIsOnlyListedAsDefaultWhileTheUserMarkedIt() {
+        saveTwo()
+        assertNull(pairings.markedDefaultId(Role.PARENT))
+        assertEquals(listOf(false, false), pairings.list(Role.PARENT).map { it.isDefault })
+        pairings.setDefault(Role.PARENT, "2")
+        assertEquals("2", pairings.markedDefaultId(Role.PARENT))
+        pairings.clearDefault(Role.PARENT)
+        assertNull(pairings.markedDefaultId(Role.PARENT))
+        assertEquals("1", pairings.defaultId(Role.PARENT))
+        assertEquals(listOf(false, false), pairings.list(Role.PARENT).map { it.isDefault })
+    }
+
+    @Test
     fun forgettingTheDefaultLeavesTheOtherAsDefault() {
         saveTwo()
         pairings.setDefault(Role.PARENT, "1")

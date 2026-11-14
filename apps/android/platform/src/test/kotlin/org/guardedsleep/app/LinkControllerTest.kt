@@ -711,6 +711,89 @@ class LinkControllerTest {
     }
 
     @Test
+    fun theParentStartPairingOpensTheScanScreenUntilTheCap() {
+        val u = unit("parent-scan", Role.PARENT)
+        val c = u.controller
+        c.chooseRole(Role.PARENT)
+        c.startPairing()
+        assertEquals(PairingPhase.SCANNING, c.pairing.value?.phase)
+        assertFalse("no run starts before a code", c.app.value.monitoring)
+        c.cancelPairing()
+        assertNull(c.pairing.value)
+
+        u.pairings.store(Role.PARENT, "1").save(pairing("one"))
+        u.pairings.store(Role.PARENT, "2").save(pairing("two"))
+        c.startPairing()
+        assertNull("at the cap nothing opens", c.pairing.value)
+    }
+
+    @Test
+    fun aSubmittedCodeAfterTheScanStillPairs() {
+        val u = unit("parent-scan-submit", Role.PARENT)
+        val c = u.controller
+        c.chooseRole(Role.PARENT)
+        c.startPairing()
+        c.submitPairingCode("not a code")
+        assertEquals(PairingPhase.FAILED, c.pairing.value?.phase)
+    }
+
+    private fun autoStartParent(name: String, mark: Boolean = true, onboarded: Boolean = true): Unit2 {
+        val u = unit(name, Role.PARENT)
+        u.pairings.store(Role.PARENT, "1").save(pairing("one"))
+        u.pairings.store(Role.PARENT, "2").save(pairing("two"))
+        if (mark) u.pairings.setDefault(Role.PARENT, "2")
+        u.controller.chooseRole(Role.PARENT)
+        if (onboarded) u.controller.completeOnboarding()
+        return u
+    }
+
+    @Test
+    fun aMarkedParentDefaultStartsOnceAndNotAgainAfterStop() {
+        val u = autoStartParent("auto-once")
+        val c = u.controller
+        c.onForeground()
+        assertTrue(c.app.value.monitoring)
+        assertEquals("2", c.app.value.connections.single { it.selected }.id)
+        c.stopMonitoring()
+        c.onForeground()
+        assertFalse("not again in the same process", c.app.value.monitoring)
+    }
+
+    @Test
+    fun noAutomaticStartWithoutMarkOnboardingOrForTheBabyOrWhilePairing() {
+        val noMark = autoStartParent("auto-nomark", mark = false)
+        noMark.controller.onForeground()
+        assertFalse(noMark.controller.app.value.monitoring)
+
+        val fresh = autoStartParent("auto-fresh", onboarded = false)
+        fresh.controller.onForeground()
+        assertFalse(fresh.controller.app.value.monitoring)
+
+        val baby = unit("auto-baby", Role.BABY)
+        baby.pairings.store(Role.BABY, "1").save(pairing("one"))
+        baby.pairings.setDefault(Role.BABY, "1")
+        baby.controller.chooseRole(Role.BABY)
+        baby.controller.completeOnboarding()
+        baby.controller.onForeground()
+        assertFalse(baby.controller.app.value.monitoring)
+
+        val pairing = autoStartParent("auto-pairing")
+        pairing.pairings.forget(Role.PARENT, "1")
+        pairing.controller.startPairing()
+        pairing.controller.onForeground()
+        assertFalse(pairing.controller.app.value.monitoring)
+    }
+
+    @Test
+    fun clearingTheDefaultStopsTheAutomaticStart() {
+        val u = autoStartParent("auto-clear")
+        u.controller.clearDefaultConnection()
+        assertTrue(u.controller.app.value.connections.none { it.isDefault })
+        u.controller.onForeground()
+        assertFalse(u.controller.app.value.monitoring)
+    }
+
+    @Test
     fun aRestartWhileMonitoringKeepsTheChosenConnection() {
         val first = unit("resume-choice", Role.PARENT)
         first.pairings.store(Role.PARENT, "1").save(pairing("home-psk"))

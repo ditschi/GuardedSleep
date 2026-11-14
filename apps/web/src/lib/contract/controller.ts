@@ -57,6 +57,7 @@ export interface AppController {
   /** Renames a connection; false when the name is not 1 to 30 characters. */
   renameConnection(id: string, name: string): boolean;
   setDefaultConnection(id: string): void;
+  clearDefaultConnection(): void;
   /** Forgets exactly one connection; monitoring stops first when it is the one in use. */
   forgetConnection(id: string): void;
   completeOnboarding(): void;

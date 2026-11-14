@@ -511,7 +511,11 @@ interface AppController {
     /** Renames a connection; false when the name is not 1 to 30 characters. */
     fun renameConnection(id: String, name: String): Boolean
 
+    /** Marks [id] as the default: on the parent it also starts monitoring when the app opens. */
     fun setDefaultConnection(id: String)
+
+    /** Removes the default mark; the parent home menu is shown at app start again. */
+    fun clearDefaultConnection()
 
     /** Forgets exactly one connection; monitoring stops first when it is the one in use. */
     fun forgetConnection(id: String)
