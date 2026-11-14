@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import org.guardedsleep.app.fixtures.FakeCipher
 import org.guardedsleep.app.pairing.TurnCredentials
 import org.guardedsleep.app.pairing.TurnServerInput
 import org.guardedsleep.app.pairing.TurnServerInput.Result

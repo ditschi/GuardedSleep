@@ -6,9 +6,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * AGENTS.md section 5.1: only `platform` uses the UniFFI bindings. The module graph enforces it at
- * compile time; this test keeps the graph itself from being loosened (an `api(...)` or a second
- * dependency on `core-bindings`) and catches imports in source sets that no Gradle task compiles.
+ * AGENTS.md section 5.1: only `platform` uses the UniFFI bindings, plus `test-fixtures`, the test
+ * harness whose fakes implement ports that carry UniFFI types (`ui-journey-tests`); it exposes only
+ * contract types to the UI tests. The module graph enforces it at compile time; this test keeps the
+ * graph itself from being loosened (an `api(...)` or another dependency on `core-bindings`) and
+ * catches imports in source sets that no Gradle task compiles, `app/src/test` included.
  */
 class BindingSeamTest {
     private val bindingImport = Regex("""^\s*import\s+uniffi\.""", RegexOption.MULTILINE)
@@ -34,6 +36,7 @@ class BindingSeamTest {
                 // The generated bindings are core-bindings' own code.
                 .filterNot { "/core-bindings/" in it }
                 .filterNot { "/platform/" in it }
+                .filterNot { "/test-fixtures/" in it }
                 .sorted()
         assertEquals(emptyList<String>(), offenders)
     }
@@ -46,10 +49,15 @@ class BindingSeamTest {
             builds
                 .filter { bindingDependency.containsMatchIn(it.readText()) }
                 .map { it.parentFile.name }
-        assertEquals(listOf("platform"), dependents)
+        assertEquals(listOf("platform", "test-fixtures"), dependents.sorted())
         assertTrue(
             "platform must not export core-bindings",
             !File("build.gradle.kts").readText().contains("api(project"),
+        )
+        assertTrue(
+            "test-fixtures must not export core-bindings or platform",
+            !Regex("""api\(project\(":(core-bindings|platform)"""")
+                .containsMatchIn(File("../test-fixtures/build.gradle.kts").readText()),
         )
     }
 }
