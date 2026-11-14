@@ -145,7 +145,19 @@
           "checking": "Dit apparaat controleren…",
           "ok": "Dit apparaat werkt goed als babyapparaat.",
           "limited": "Dit apparaat kan de verbinding af en toe verliezen. Het werkt wel.",
-          "notRecommended": "Dit apparaat bewaakt mogelijk niet betrouwbaar. Gebruik een ander apparaat als je kunt."
+          "notRecommended": "Dit apparaat bewaakt mogelijk niet betrouwbaar. Gebruik een ander apparaat als je kunt.",
+          "again": "Opnieuw controleren",
+          "micPermissionMissing": "De microfoon is niet toegestaan, dus dit apparaat kan niet luisteren.",
+          "micSilent": "De microfoon levert alleen stilte. Controleer of hij niet is gedempt of uitgeschakeld in de privacy-instellingen.",
+          "batteryUnhealthy": "De batterij meldt een probleem. Laat dit apparaat niet zonder toezicht draaien.",
+          "batteryLowNotCharging": "De batterij is bijna leeg en wordt niet opgeladen. Sluit dit apparaat aan op de lader.",
+          "noMailboxReachable": "Geen server was bereikbaar. Na een verbreking zouden de apparaten elkaar niet meer vinden.",
+          "notCharging": "Dit apparaat wordt niet opgeladen. Laat het aan de lader.",
+          "batteryOptimized": "Batterijbesparing kan de bewaking op de achtergrond stoppen.",
+          "dndAccessMissing": "Stille modus kan niet worden ingeschakeld zonder toegang tot Niet storen.",
+          "someMailboxesUnreachable": "Sommige servers waren niet bereikbaar. De apparaten kunnen elkaar nog vinden via de andere.",
+          "mailboxReachable": "{host}: bereikbaar",
+          "mailboxUnreachable": "{host}: niet bereikbaar"
         },
         "notifications": {
           "title": "Meldingen",

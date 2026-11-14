@@ -3,13 +3,9 @@ package org.guardedsleep.app.readiness
 import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
-import android.os.BatteryManager
 import android.os.Build
-import android.os.PowerManager
 import androidx.core.app.NotificationManagerCompat
 import org.guardedsleep.app.alerts.AlertChannels
 import org.guardedsleep.app.link.Clock
@@ -93,27 +89,17 @@ class AndroidReadinessEnv(private val context: Context) : ReadinessEnv {
                 nm.getNotificationChannel(it)?.canBypassDnd() == true
             }
 
-    override fun batteryOptimizationIgnored(): Boolean =
-        context
-            .getSystemService(PowerManager::class.java)
-            ?.isIgnoringBatteryOptimizations(context.packageName) == true
+    private val battery = BatteryReader(context)
 
-    override fun ownBatteryPct(): Int? {
-        val i = battery() ?: return null
-        val level = i.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
-        val scale = i.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
-        return if (level >= 0 && scale > 0) level * 100 / scale else null
-    }
+    override fun batteryOptimizationIgnored(): Boolean = battery.optimizationIgnored()
 
-    override fun ownCharging(): Boolean =
-        (battery()?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0
+    override fun ownBatteryPct(): Int? = battery.pct()
+
+    override fun ownCharging(): Boolean = battery.charging()
 
     override fun headphonesConnected(): Boolean =
         audio?.getDevices(AudioManager.GET_DEVICES_OUTPUTS)?.any { it.type in HEADPHONE_TYPES } ==
             true
-
-    private fun battery(): Intent? =
-        context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
     private companion object {
         // TYPE_BLE_HEADSET (API 31) is an inlined int: on older systems no device reports it.

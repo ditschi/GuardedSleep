@@ -145,7 +145,19 @@
           "checking": "Bu cihaz kontrol ediliyor…",
           "ok": "Bu cihaz bebek cihazı olarak iyi çalışıyor.",
           "limited": "Bu cihaz zaman zaman bağlantıyı kaybedebilir. Yine de çalışır.",
-          "notRecommended": "Bu cihaz güvenilir şekilde izleyemeyebilir. Mümkünse başka bir cihaz kullanın."
+          "notRecommended": "Bu cihaz güvenilir şekilde izleyemeyebilir. Mümkünse başka bir cihaz kullanın.",
+          "again": "Yeniden denetle",
+          "micPermissionMissing": "Mikrofona izin verilmediği için bu cihaz dinleyemez.",
+          "micSilent": "Mikrofon yalnızca sessizlik iletiyor. Sessize alınmadığını veya gizlilik ayarlarında kapatılmadığını denetleyin.",
+          "batteryUnhealthy": "Pil bir sorun bildiriyor. Bu cihazı gözetimsiz çalışır durumda bırakmayın.",
+          "batteryLowNotCharging": "Pil zayıf ve şarj olmuyor. Bu cihazı şarja takın.",
+          "noMailboxReachable": "Hiçbir sunucuya ulaşılamadı. Bağlantı kesilirse cihazlar birbirini yeniden bulamaz.",
+          "notCharging": "Bu cihaz şarj olmuyor. Şarj cihazına bağlı bırakın.",
+          "batteryOptimized": "Pil tasarrufu, arka plandaki izlemeyi durdurabilir.",
+          "dndAccessMissing": "Rahatsız Etme erişimi olmadan sessiz mod açılamaz.",
+          "someMailboxesUnreachable": "Bazı sunuculara ulaşılamadı. Cihazlar birbirini diğerleri üzerinden yine bulabilir.",
+          "mailboxReachable": "{host}: ulaşılabilir",
+          "mailboxUnreachable": "{host}: ulaşılamıyor"
         },
         "notifications": {
           "title": "Uyarılar",

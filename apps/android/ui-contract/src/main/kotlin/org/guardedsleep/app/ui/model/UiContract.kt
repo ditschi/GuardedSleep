@@ -454,6 +454,10 @@ data class AppState(
     /** Show the first-run coach marks on the parent monitoring screen once. */
     val coachPending: Boolean = false,
     val deviceCheck: DeviceCheck = DeviceCheck.UNKNOWN,
+    /** Why the device check is not OK, worst first; empty while unknown or OK. */
+    val deviceCheckReasons: List<DeviceCheckReason> = emptyList(),
+    /** The device check's mailbox probes (host only); empty while unknown or none to probe. */
+    val deviceCheckMailboxes: List<MailboxReach> = emptyList(),
 )
 
 /** Baby self-test result (ADR-010) shown on the setup checklist. */
@@ -463,6 +467,26 @@ enum class DeviceCheck {
     LIMITED,
     NOT_RECOMMENDED,
 }
+
+/** One plain reason behind a device check that is not OK (copy in the catalogue). */
+enum class DeviceCheckReason {
+    MIC_PERMISSION_MISSING,
+    MIC_SILENT,
+    BATTERY_UNHEALTHY,
+    BATTERY_LOW_NOT_CHARGING,
+    NO_MAILBOX_REACHABLE,
+    NOT_CHARGING,
+    BATTERY_OPTIMIZED,
+    DND_ACCESS_MISSING,
+    SOME_MAILBOXES_UNREACHABLE,
+}
+
+/** Whether one mailbox of the pairing answered the device check's connect probe. */
+data class MailboxReach(
+    /** The mailbox host only: no path, query or credentials. */
+    val host: String,
+    val reachable: Boolean,
+)
 
 interface AppController {
     val app: StateFlow<AppState>
@@ -487,6 +511,9 @@ interface AppController {
     fun setDefaultRole(role: Role?)
 
     fun completeOnboarding()
+
+    /** Baby: runs the device check in the background; the result lands in [AppState]. */
+    fun runDeviceCheck()
 
     fun startPairing()
 

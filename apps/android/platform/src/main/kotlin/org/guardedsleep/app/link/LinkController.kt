@@ -3,6 +3,7 @@ package org.guardedsleep.app.link
 import java.security.SecureRandom
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.guardedsleep.app.alerts.AlertSink
@@ -31,6 +32,7 @@ import org.guardedsleep.app.pairing.signalingUrls
 import org.guardedsleep.app.pairing.storedMailboxesFor
 import org.guardedsleep.app.pairing.toStored
 import org.guardedsleep.app.platform.BuildConfig
+import org.guardedsleep.app.readiness.DeviceChecker
 import org.guardedsleep.app.readiness.ReadinessChecker
 import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.signaling.SignalingFactory
@@ -41,8 +43,11 @@ import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
 import org.guardedsleep.app.ui.model.ConnectionUi
+import org.guardedsleep.app.ui.model.DeviceCheck
+import org.guardedsleep.app.ui.model.DeviceCheckReason
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.ListenMode
+import org.guardedsleep.app.ui.model.MailboxReach
 import org.guardedsleep.app.ui.model.PairingError
 import org.guardedsleep.app.ui.model.PairingPhase
 import org.guardedsleep.app.ui.model.PairingState
@@ -94,8 +99,23 @@ class LinkController(
     /** Parent: microphone permission and unlocked device, asked before every `set_talk`. */
     private val talkGate: TalkGate = TalkGate.Open,
     private val chimePreview: TalkChimePreview = TalkChimePreview {},
+    /** Baby: the device check of the setup screen; null (previews, tests) leaves it unknown. */
+    private val deviceChecker: DeviceChecker? = null,
 ) : AppController {
     private val _app = MutableStateFlow(AppState())
+
+    // Declared before `init`, which already publishes the app state.
+    private class DeviceCheckUi(
+        val check: DeviceCheck = DeviceCheck.UNKNOWN,
+        val reasons: List<DeviceCheckReason> = emptyList(),
+        val mailboxes: List<MailboxReach> = emptyList(),
+    )
+
+    @Volatile private var deviceCheckUi = DeviceCheckUi()
+    private val deviceCheckGeneration = AtomicInteger()
+    private val deviceCheckIo = Executors.newSingleThreadExecutor { r ->
+        Thread(r, "gs-device-check").apply { isDaemon = true }
+    }
 
     /**
      * The pairing this session uses: the user's choice while it still exists, else the default
@@ -276,6 +296,7 @@ class LinkController(
             it.copy(role = role, defaultRole = if (makeDefault) role else it.defaultRole)
         }
         parentModel.restoreSnooze(settingsRepo.current.snoozeUntilWallMs)
+        invalidateDeviceCheck()
         refreshApp()
     }
 
@@ -285,6 +306,7 @@ class LinkController(
         stopRun(userStop = true)
         settingsRepo.update { it.copy(role = null) }
         parentModel.cancelSnooze()
+        invalidateDeviceCheck()
         refreshApp()
     }
 
@@ -412,6 +434,7 @@ class LinkController(
             it.copy(peerName = null, snoozeUntilWallMs = null, pairingId = null)
         }
         parentModel.cancelSnooze()
+        invalidateDeviceCheck()
         refreshApp()
     }
 
@@ -504,6 +527,56 @@ class LinkController(
         if (settingsRepo.current.role == Role.PARENT) alerts.backgroundProtection(lost)
     }
 
+    // ---- device check ------------------------------------------------------------------------
+
+    /**
+     * The relay mailboxes the check probes: the active pairing's stored set, else the set a new
+     * invite would carry. LAN mailboxes are not probed (they exist only while a session runs).
+     */
+    private fun deviceCheckMailboxUrls(): List<String> {
+        val store = pairingStoreOrNull
+        val stored = store?.load()
+        val set =
+            when {
+                stored != null -> stored.mailboxes
+                // A saved record that cannot be read now has a set we cannot know: probe nothing.
+                store?.exists() == true -> emptyList()
+                else -> storedMailboxesFor(inviteUrls(_settings.value))
+            }
+        return set.filter { it.kind == "relay" }.map { it.url }
+    }
+
+    /** Drops a running check and its result (role or pairing changed). */
+    private fun invalidateDeviceCheck() {
+        deviceCheckGeneration.incrementAndGet()
+        deviceCheckUi = DeviceCheckUi()
+    }
+
+    override fun runDeviceCheck() {
+        val checker = deviceChecker ?: return
+        if (settingsRepo.current.role != Role.BABY) return
+        val gen = deviceCheckGeneration.incrementAndGet()
+        deviceCheckUi = DeviceCheckUi()
+        refreshApp()
+        // WebRTC holds the microphone while a run is active: the sample would fail or steal it.
+        val sampleMic = run == null
+        val urls = deviceCheckMailboxUrls()
+        deviceCheckIo.execute {
+            val result = checker.check(urls, sampleMic)
+            // A newer run, a role change or a stop makes this result stale.
+            if (deviceCheckGeneration.get() != gen) return@execute
+            deviceCheckUi = DeviceCheckUi(result.check, result.reasons, result.mailboxes)
+            PocLog.event(
+                "device_check",
+                "result" to result.check,
+                "reasons" to result.reasons.size,
+                "mailboxes" to result.mailboxes.size,
+                "reachable" to result.mailboxes.count { it.reachable },
+            )
+            refreshApp()
+        }
+    }
+
     private fun refreshApp() {
         val p = settingsRepo.current
         val connections =
@@ -525,6 +598,9 @@ class LinkController(
                 canAddPairing = p.role != Role.PARENT || pairings.freeId(Role.PARENT) != null,
                 monitoring = p.monitoringActive,
                 backgroundProtection = !(p.monitoringActive && fgs == Fgs.LOST),
+                deviceCheck = deviceCheckUi.check,
+                deviceCheckReasons = deviceCheckUi.reasons,
+                deviceCheckMailboxes = deviceCheckUi.mailboxes,
             )
     }
 

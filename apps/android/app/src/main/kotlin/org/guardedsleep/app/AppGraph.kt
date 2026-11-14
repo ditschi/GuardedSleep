@@ -26,7 +26,9 @@ import org.guardedsleep.app.pairing.KeystorePairingCipher
 import org.guardedsleep.app.pairing.PairingStore
 import org.guardedsleep.app.pairing.RolePairings
 import org.guardedsleep.app.pairing.TurnStore
+import org.guardedsleep.app.readiness.AndroidDeviceCheckEnv
 import org.guardedsleep.app.readiness.AndroidReadinessEnv
+import org.guardedsleep.app.readiness.DeviceChecker
 import org.guardedsleep.app.readiness.ReadinessChecker
 import org.guardedsleep.app.service.AndroidNetworkWatcher
 import org.guardedsleep.app.service.ServiceLauncher
@@ -117,6 +119,7 @@ class AppGraph(context: Context) : PlatformServices {
                         app.getSystemService(KeyguardManager::class.java)?.isKeyguardLocked != true
                 },
             chimePreview = AndroidTalkChimePreview(app),
+            deviceChecker = DeviceChecker(AndroidDeviceCheckEnv(app)),
         )
 }
 

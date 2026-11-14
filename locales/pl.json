@@ -145,7 +145,19 @@
           "checking": "Sprawdzanie tego urządzenia…",
           "ok": "To urządzenie dobrze nadaje się jako urządzenie dziecka.",
           "limited": "To urządzenie może czasem tracić połączenie. Nadal działa.",
-          "notRecommended": "To urządzenie może monitorować zawodnie. Jeśli możesz, użyj innego."
+          "notRecommended": "To urządzenie może monitorować zawodnie. Jeśli możesz, użyj innego.",
+          "again": "Sprawdź ponownie",
+          "micPermissionMissing": "Mikrofon nie jest dozwolony, więc to urządzenie nie może nasłuchiwać.",
+          "micSilent": "Mikrofon przekazuje tylko ciszę. Sprawdź, czy nie jest wyciszony ani wyłączony w ustawieniach prywatności.",
+          "batteryUnhealthy": "Bateria zgłasza problem. Nie zostawiaj tego urządzenia włączonego bez nadzoru.",
+          "batteryLowNotCharging": "Bateria jest słaba i nie jest ładowana. Podłącz to urządzenie do ładowarki.",
+          "noMailboxReachable": "Nie udało się połączyć z żadnym serwerem. Po rozłączeniu urządzenia nie mogłyby się ponownie odnaleźć.",
+          "notCharging": "To urządzenie się nie ładuje. Zostaw je na ładowarce.",
+          "batteryOptimized": "Oszczędzanie baterii może zatrzymać monitorowanie w tle.",
+          "dndAccessMissing": "Trybu cichego nie można włączyć bez dostępu do funkcji Nie przeszkadzać.",
+          "someMailboxesUnreachable": "Z niektórymi serwerami nie udało się połączyć. Urządzenia mogą nadal odnaleźć się przez pozostałe.",
+          "mailboxReachable": "{host}: osiągalny",
+          "mailboxUnreachable": "{host}: nieosiągalny"
         },
         "notifications": {
           "title": "Alerty",

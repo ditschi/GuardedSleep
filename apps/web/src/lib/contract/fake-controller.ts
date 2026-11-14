@@ -80,6 +80,7 @@ export function createFakeController(): FakeController {
       calls.push(["setDefaultRole", role]);
       app.update((s) => ({ ...s, defaultRole: role }));
     },
+    runDeviceCheck: record("runDeviceCheck"),
     selectConnection: record("selectConnection"),
     renameConnection(id, name) {
       calls.push(["renameConnection", id, name]);

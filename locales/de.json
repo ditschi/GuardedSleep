@@ -145,7 +145,19 @@
           "checking": "Dieses Gerät wird geprüft …",
           "ok": "Dieses Gerät eignet sich gut als Babygerät.",
           "limited": "Dieses Gerät verliert die Verbindung möglicherweise ab und zu. Es funktioniert trotzdem.",
-          "notRecommended": "Dieses Gerät überwacht möglicherweise nicht zuverlässig. Nutzen Sie nach Möglichkeit ein anderes Gerät."
+          "notRecommended": "Dieses Gerät überwacht möglicherweise nicht zuverlässig. Nutzen Sie nach Möglichkeit ein anderes Gerät.",
+          "again": "Erneut prüfen",
+          "micPermissionMissing": "Das Mikrofon ist nicht erlaubt, deshalb kann dieses Gerät nicht zuhören.",
+          "micSilent": "Das Mikrofon liefert nur Stille. Prüfen Sie, ob es stummgeschaltet oder in den Datenschutzeinstellungen ausgeschaltet ist.",
+          "batteryUnhealthy": "Der Akku meldet ein Problem. Lassen Sie dieses Gerät nicht unbeaufsichtigt laufen.",
+          "batteryLowNotCharging": "Der Akku ist schwach und wird nicht geladen. Schließen Sie dieses Gerät an das Ladegerät an.",
+          "noMailboxReachable": "Kein Server war erreichbar. Nach einer Unterbrechung könnten sich die Geräte nicht wiederfinden.",
+          "notCharging": "Dieses Gerät wird nicht geladen. Lassen Sie es am Ladegerät.",
+          "batteryOptimized": "Der Akkusparmodus kann die Überwachung im Hintergrund beenden.",
+          "dndAccessMissing": "Der Ruhemodus lässt sich ohne Zugriff auf „Nicht stören“ nicht einschalten.",
+          "someMailboxesUnreachable": "Einige Server waren nicht erreichbar. Die Geräte können sich weiterhin über die anderen finden.",
+          "mailboxReachable": "{host}: erreichbar",
+          "mailboxUnreachable": "{host}: nicht erreichbar"
         },
         "notifications": {
           "title": "Benachrichtigungen",

@@ -145,7 +145,19 @@
           "checking": "Kontrollerar den här enheten…",
           "ok": "Den här enheten fungerar bra som babyenhet.",
           "limited": "Den här enheten kan tappa anslutningen då och då. Den fungerar ändå.",
-          "notRecommended": "Den här enheten kanske inte övervakar pålitligt. Använd en annan om du kan."
+          "notRecommended": "Den här enheten kanske inte övervakar pålitligt. Använd en annan om du kan.",
+          "again": "Kontrollera igen",
+          "micPermissionMissing": "Mikrofonen är inte tillåten, så den här enheten kan inte lyssna.",
+          "micSilent": "Mikrofonen levererar bara tystnad. Kontrollera att den inte är avstängd eller stängd av i integritetsinställningarna.",
+          "batteryUnhealthy": "Batteriet rapporterar ett problem. Låt inte den här enheten gå utan tillsyn.",
+          "batteryLowNotCharging": "Batteriet är svagt och laddas inte. Anslut den här enheten till laddaren.",
+          "noMailboxReachable": "Ingen server kunde nås. Efter ett avbrott skulle enheterna inte hitta varandra igen.",
+          "notCharging": "Den här enheten laddas inte. Låt den sitta på laddaren.",
+          "batteryOptimized": "Batterisparläge kan stoppa övervakningen i bakgrunden.",
+          "dndAccessMissing": "Tyst läge kan inte slås på utan åtkomst till Stör ej.",
+          "someMailboxesUnreachable": "Några servrar kunde inte nås. Enheterna kan fortfarande hitta varandra via de andra.",
+          "mailboxReachable": "{host}: nåbar",
+          "mailboxUnreachable": "{host}: inte nåbar"
         },
         "notifications": {
           "title": "Larm",

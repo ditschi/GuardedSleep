@@ -143,7 +143,19 @@
           "checking": "Checking this device…",
           "ok": "This device works well as a baby device.",
           "limited": "This device may lose the connection now and then. It still works.",
-          "notRecommended": "This device may not monitor reliably. Use another device if you can."
+          "notRecommended": "This device may not monitor reliably. Use another device if you can.",
+          "again": "Check again",
+          "micPermissionMissing": "The microphone is not allowed, so this device cannot listen.",
+          "micSilent": "The microphone only delivers silence. Check that it is not muted or switched off in the privacy settings.",
+          "batteryUnhealthy": "The battery reports a problem. Do not leave this device running unattended.",
+          "batteryLowNotCharging": "The battery is low and not charging. Plug this device in.",
+          "noMailboxReachable": "No server could be reached. After a disconnection the devices could not find each other again.",
+          "notCharging": "This device is not charging. Keep it on the charger.",
+          "batteryOptimized": "Battery saving may stop monitoring in the background.",
+          "dndAccessMissing": "Quiet mode cannot be turned on without Do Not Disturb access.",
+          "someMailboxesUnreachable": "Some servers could not be reached. The devices can still find each other through the others.",
+          "mailboxReachable": "{host}: reachable",
+          "mailboxUnreachable": "{host}: not reachable"
         },
         "notifications": {
           "title": "Alerts",
