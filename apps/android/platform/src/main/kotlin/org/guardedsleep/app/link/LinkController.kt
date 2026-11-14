@@ -296,6 +296,7 @@ class LinkController(
         parentModel.restoreSnooze(settingsRepo.current.snoozeUntilWallMs)
         invalidateDeviceCheck()
         refreshApp()
+        if (role == Role.PARENT) autoStartOnce()
     }
 
     override fun switchMode() {
@@ -457,6 +458,17 @@ class LinkController(
         if (pairings.setDefault(role, id)) refreshApp()
     }
 
+    override fun chooseAnotherConnection() {
+        // A user stop; the home then lists the saved connections (a UI concern).
+        stopMonitoring()
+    }
+
+    override fun clearDefaultConnection() {
+        val role = settingsRepo.current.role ?: return
+        pairings.clearDefault(role)
+        refreshApp()
+    }
+
     override fun forgetConnection(id: String) {
         val role = settingsRepo.current.role ?: return
         if (id !in pairings.savedIds(role)) return
@@ -474,13 +486,47 @@ class LinkController(
      * readiness.
      */
     fun onForeground() {
+        val started = autoStartOnce()
         if (
-            settingsRepo.current.monitoringActive &&
+            !started &&
+                settingsRepo.current.monitoringActive &&
                 (run == null || fgs == Fgs.LOST) &&
                 pairingStoreOrNull?.exists() == true
         )
             startHost()
         refreshReadiness()
+    }
+
+    /**
+     * "The first time the parent role is entered in this app start": set once per process (this
+     * construction) and consumed by that entry (first [onForeground] with the parent role, first
+     * [chooseRole] of the parent, so also a switch from the baby home through the role screen). The
+     * start mode and the parent default are independent. The baby unit monitoring or showing an
+     * invite first clears it ([startRun]). Touched on the main thread only (lifecycle callbacks and
+     * UI actions).
+     */
+    private var autoStartPending = true
+
+    /** True for the monitoring session the automatic start began, until monitoring stops. */
+    private var autoStarted = false
+
+    /**
+     * Parent only (`device-setup`, "Automatic start with the default connection"): a connection the
+     * user marked as default starts monitoring on the first entry into the parent role. A running
+     * or resumable monitoring flag, an open pairing, unfinished onboarding or a missing marker act
+     * on nothing, but the entry is used up. Returns true when it started monitoring.
+     */
+    private fun autoStartOnce(): Boolean {
+        if (!autoStartPending) return false
+        val p = settingsRepo.current
+        if (p.role != Role.PARENT) return false
+        autoStartPending = false
+        if (!p.onboardingDone || p.monitoringActive || _pairing.value != null) return false
+        val id = pairings.markedDefaultId(Role.PARENT) ?: return false
+        selectConnection(id)
+        autoStarted = true
+        startMonitoring()
+        return true
     }
 
     fun refreshReadiness() {
@@ -624,6 +670,7 @@ class LinkController(
                     // The baby unit replaces its pairing; only the parent adds one, up to the cap.
                     canAddPairing = p.role != Role.PARENT || pairings.freeId(Role.PARENT) != null,
                     monitoring = p.monitoringActive,
+                    autoStarted = autoStarted && p.monitoringActive,
                     backgroundProtection = !(p.monitoringActive && fgs == Fgs.LOST),
                     deviceCheck = check?.check ?: DeviceCheck.UNKNOWN,
                     deviceCheckReasons = check?.reasons ?: emptyList(),
@@ -634,6 +681,17 @@ class LinkController(
     // ---- pairing -----------------------------------------------------------------------------
 
     override fun startPairing() {
+        if (settingsRepo.current.role == Role.PARENT) {
+            // The parent only scans; no run starts until a code is submitted. At the cap nothing
+            // is added (the screens hide the button).
+            if (pairings.freeId(Role.PARENT) == null) return
+            // "Pair again" from the monitor screen: stop first (user stop), so the scan screen
+            // shows at once instead of waiting behind a running session.
+            if (settingsRepo.current.monitoringActive) stopMonitoring()
+            cancelPairing()
+            _pairing.value = PairingState(PairingPhase.SCANNING)
+            return
+        }
         if (settingsRepo.current.role != Role.BABY) return
         // The baby unit replaces its active pairing; "Add parent device" waits for the baby hub.
         val slot = newPairingId(Role.BABY) ?: return
@@ -774,6 +832,7 @@ class LinkController(
 
     override fun stopMonitoring() {
         // The next start preselects the default connection again.
+        autoStarted = false
         settingsRepo.update { it.copy(monitoringActive = false, pairingId = null) }
         stopRun(userStop = true)
         fgs = Fgs.UNKNOWN
@@ -822,6 +881,8 @@ class LinkController(
         monitoring: Boolean,
         isPending: Boolean,
     ) {
+        // The baby unit ran or showed an invite in this app start: no automatic parent start.
+        if (role == Role.BABY) autoStartPending = false
         stopRun(userStop = false)
         // The run takes the microphone: a running device check stops sampling and is dropped.
         invalidateDeviceCheck()

@@ -9,6 +9,7 @@ import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
 import org.guardedsleep.app.ui.model.ConnectionUi
 import org.guardedsleep.app.ui.model.ListenMode
+import org.guardedsleep.app.ui.model.PairingPhase
 import org.guardedsleep.app.ui.model.PairingState
 import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.Role
@@ -79,6 +80,9 @@ class FakeAppController(
 
     override fun startPairing() {
         calls += "startPairing"
+        // The parent opens the scan screen (not at the cap), as the platform does.
+        if (appFlow.value.role == Role.PARENT && appFlow.value.canAddPairing)
+            pairingFlow.value = PairingState(PairingPhase.SCANNING)
     }
 
     override fun cancelPairing() {
@@ -137,6 +141,19 @@ class FakeAppController(
         appFlow.value =
             appFlow.value.copy(
                 connections = appFlow.value.connections.map { it.copy(isDefault = it.id == id) }
+            )
+    }
+
+    override fun chooseAnotherConnection() {
+        calls += "chooseAnotherConnection"
+        appFlow.value = appFlow.value.copy(monitoring = false, autoStarted = false)
+    }
+
+    override fun clearDefaultConnection() {
+        calls += "clearDefaultConnection"
+        appFlow.value =
+            appFlow.value.copy(
+                connections = appFlow.value.connections.map { it.copy(isDefault = false) }
             )
     }
 

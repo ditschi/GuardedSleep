@@ -423,6 +423,8 @@ export interface AppState {
   /** Fewer than the cap of pairings are saved: a further one can be added. */
   canAddPairing: boolean;
   monitoring: boolean;
+  /** Parent: the running session was started by the automatic start (never on the web). */
+  autoStarted: boolean;
   /** False while monitoring is on but nothing keeps the page alive: show red, never green. */
   backgroundProtection: boolean;
   lastUsedWallMs: number | null;
@@ -543,6 +545,7 @@ export function defaultAppState(): AppState {
     connections: [],
     canAddPairing: true,
     monitoring: false,
+    autoStarted: false,
     backgroundProtection: true,
     lastUsedWallMs: null,
     coachPending: false,

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -106,11 +107,34 @@ internal fun SwitchModeButton(controller: AppController, modifier: Modifier = Mo
 
 /** S06: saved pairing → one-tap start; otherwise the empty state. */
 @Composable
-fun HomeScreen(controller: AppController, onSettings: () -> Unit) {
+fun HomeScreen(
+    controller: AppController,
+    onSettings: () -> Unit,
+    /** True once the parent's empty home opened the scan screen for this entry. */
+    autoScanned: Boolean = true,
+    onAutoScanned: () -> Unit = {},
+    /** "Choose another connection" just stopped monitoring: open with the list expanded. */
+    listRequested: Boolean = false,
+    onListShown: () -> Unit = {},
+) {
     val app = controller.app.collectAsState().value
     val isParent = app.role == Role.PARENT
+    // `device-setup`, "Parent pairing entry": with nothing saved the parent goes straight to the
+    // scan screen, once. Cancelling lands here again; the flag keeps it from reopening.
+    LaunchedEffect(isParent, app.connections.isEmpty(), autoScanned) {
+        if (isParent && app.connections.isEmpty() && app.canAddPairing && !autoScanned) {
+            onAutoScanned()
+            controller.startPairing()
+        }
+    }
     val name = customPeerName(app.peerName)
-    var choosing by remember { mutableStateOf(false) }
+    var choosing by remember { mutableStateOf(listRequested) }
+    LaunchedEffect(listRequested) {
+        if (listRequested) {
+            choosing = true
+            onListShown()
+        }
+    }
     ScreenRoot("home") {
         ScrollColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -203,6 +227,18 @@ fun HomeScreen(controller: AppController, onSettings: () -> Unit) {
                                 }
                             }
                         }
+                    }
+                }
+                // The marked default connects at app start; the switch binds to the selected one.
+                val selected = app.connections.firstOrNull { it.selected }
+                if (isParent && selected != null) {
+                    SwitchRow(
+                        stringResource(R.string.native_ui_connections_auto_connect),
+                        selected.isDefault,
+                        "home_auto_connect",
+                    ) { on ->
+                        if (on) controller.setDefaultConnection(selected.id)
+                        else controller.clearDefaultConnection()
                     }
                 }
                 if (app.canAddPairing) {

@@ -444,6 +444,8 @@ data class AppState(
     /** Fewer than the cap of pairings are saved: a further one can be added. */
     val canAddPairing: Boolean = true,
     val monitoring: Boolean = false,
+    /** Parent: the running monitoring session was started by the automatic start. */
+    val autoStarted: Boolean = false,
     /**
      * False while monitoring is on but Android is not running the foreground service: show red,
      * never green.
@@ -541,7 +543,14 @@ interface AppController {
     /** Renames a connection; false when the name is not 1 to 30 characters. */
     fun renameConnection(id: String, name: String): Boolean
 
+    /** Marks [id] as the default: on the parent it also starts monitoring when the app opens. */
     fun setDefaultConnection(id: String)
+
+    /** Parent: stops monitoring (user stop); the home then lists the connections to choose from. */
+    fun chooseAnotherConnection()
+
+    /** Removes the default mark; the parent home menu is shown at app start again. */
+    fun clearDefaultConnection()
 
     /** Forgets exactly one connection; monitoring stops first when it is the one in use. */
     fun forgetConnection(id: String)

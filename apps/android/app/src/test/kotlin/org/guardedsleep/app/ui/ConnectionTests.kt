@@ -4,6 +4,9 @@ package org.guardedsleep.app.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
@@ -17,6 +20,8 @@ import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.common.limitName
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.ConnectionUi
+import org.guardedsleep.app.ui.model.LinkPhase
+import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.Theme
 import org.guardedsleep.app.ui.screens.HomeScreen
@@ -99,6 +104,113 @@ class ConnectionTests : ShotBase() {
         onNodeWithTag("dialog_forget_confirm").performClick()
         assertEquals("forgetConnection:1", c.calls.last())
         assertEquals(listOf("2"), c.appFlow.value.connections.map { it.id })
+    }
+
+    private val empty = AppState(role = Role.PARENT, onboardingDone = true)
+
+    @Test
+    fun theEmptyParentHomeOpensTheScanScreenOnceAndTheButtonWorks() = runComposeUiTest {
+        val c = FakeAppController(app = empty)
+        var scanned by mutableStateOf(false)
+        show { HomeScreen(c, {}, autoScanned = scanned, onAutoScanned = { scanned = true }) }
+        waitForIdle()
+        assertEquals(listOf("startPairing"), c.calls)
+        onNodeWithTag("home_empty").assertIsDisplayed()
+        onNodeWithTag("home_new_pairing").performClick()
+        assertEquals(listOf("startPairing", "startPairing"), c.calls)
+    }
+
+    @Test
+    fun theEmptyParentGoesThroughTheScanScreenAndBackWithoutRescanning() = runComposeUiTest {
+        val c = FakeAppController(app = empty)
+        setContent {
+            // Camera denied: the paste view, so no native scanner library is needed on the JVM.
+            CompositionLocalProvider(LocalUiEnv provides TestEnv.copy(cameraGranted = false)) {
+                GuardedSleepRoot(c)
+            }
+        }
+        waitForIdle()
+        assertEquals(listOf("startPairing"), c.calls)
+        onNodeWithTag("parent_pair").assertIsDisplayed()
+        c.cancelPairing()
+        waitForIdle()
+        onNodeWithTag("home_empty").assertIsDisplayed()
+        assertEquals(listOf("startPairing", "cancelPairing"), c.calls)
+    }
+
+    private fun autoStartedRoot(parent: ParentMonitorState) =
+        FakeAppController(
+            app = two.copy(monitoring = true, autoStarted = true, canAddPairing = false),
+            parent = parent,
+        )
+
+    @Test
+    fun chooseAnotherIsAButtonBeforeVerifyAndLandsOnTheList() = runComposeUiTest {
+        val c = autoStartedRoot(ParentMonitorState(link = link(LinkPhase.CONNECTING)))
+        setContent { CompositionLocalProvider(LocalUiEnv provides TestEnv) { GuardedSleepRoot(c) } }
+        onNodeWithTag("menu_choose_other_connection").assertDoesNotExist()
+        onNodeWithTag("parent_choose_other_connection").performScrollTo().performClick()
+        assertEquals("chooseAnotherConnection", c.calls.last())
+        waitForIdle()
+        onNodeWithTag("home_connection_list").performScrollTo().assertIsDisplayed()
+        onNodeWithTag("connection_choice_2").assertExists()
+    }
+
+    @Test
+    fun chooseAnotherIsAMenuEntryWithConfirmationAfterVerify() = runComposeUiTest {
+        val c = autoStartedRoot(ParentMonitorState(link = Connected))
+        setContent { CompositionLocalProvider(LocalUiEnv provides TestEnv) { GuardedSleepRoot(c) } }
+        onNodeWithTag("parent_choose_other_connection").assertDoesNotExist()
+        onNodeWithTag("parent_overflow").performClick()
+        onNodeWithTag("menu_choose_other_connection").performClick()
+        onNodeWithTag("dialog_choose_other").assertIsDisplayed()
+        assertEquals(emptyList<String>(), c.calls)
+        onNodeWithTag("dialog_choose_other_confirm").performClick()
+        assertEquals("chooseAnotherConnection", c.calls.last())
+        waitForIdle()
+        onNodeWithTag("home_connection_list").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun aSavedConnectionDoesNotScanOnEntry() = runComposeUiTest {
+        val c = FakeAppController(app = one)
+        show { HomeScreen(c, {}, autoScanned = false) }
+        waitForIdle()
+        assertEquals(emptyList<String>(), c.calls)
+    }
+
+    @Test
+    fun theBabyHomeDoesNotScanOnEntry() = runComposeUiTest {
+        val baby = FakeAppController(app = empty.copy(role = Role.BABY))
+        show { HomeScreen(baby, {}, autoScanned = false) }
+        waitForIdle()
+        assertEquals(emptyList<String>(), baby.calls)
+    }
+
+    @Test
+    fun theAutoConnectSwitchFollowsTheSelectedConnectionAlsoWithOne() = runComposeUiTest {
+        val c =
+            FakeAppController(
+                app =
+                    one.copy(
+                        connections =
+                            listOf(ConnectionUi("1", null, isDefault = false, selected = true))
+                    )
+            )
+        show { HomeScreen(c, {}) }
+        onNodeWithTag("home_auto_connect").performScrollTo().performClick()
+        assertEquals("setDefaultConnection:1", c.calls.last())
+        onNodeWithTag("home_auto_connect").performScrollTo().performClick()
+        assertEquals("clearDefaultConnection", c.calls.last())
+    }
+
+    @Test
+    fun settingsOffersRemoveDefaultOnTheDefaultOnly() = runComposeUiTest {
+        val c = FakeAppController(app = two)
+        show { SettingsScreen(c, {}, {}, {}) }
+        onNodeWithTag("settings_connection_remove_default_2").assertDoesNotExist()
+        onNodeWithTag("settings_connection_remove_default_1").performScrollTo().performClick()
+        assertEquals("clearDefaultConnection", c.calls.last())
     }
 
     @Test

@@ -343,6 +343,15 @@ fun SettingsScreen(
                                         "settings_connection_default_${c.id}",
                                         Modifier.weight(1f),
                                     )
+                                } else if (app.role == Role.PARENT) {
+                                    SecondaryButton(
+                                        stringResource(
+                                            R.string.native_ui_connections_remove_default
+                                        ),
+                                        { controller.clearDefaultConnection() },
+                                        "settings_connection_remove_default_${c.id}",
+                                        Modifier.weight(1f),
+                                    )
                                 }
                                 SecondaryButton(
                                     stringResource(R.string.native_ui_forget_confirm),

@@ -304,6 +304,12 @@ export class WebController implements AppController {
 
   setDefaultConnection(_id: string): void {}
 
+  // The web client keeps no saved pairings, so there is no default to remove.
+  clearDefaultConnection(): void {}
+
+  // No automatic start on the web client, so there is nothing to leave.
+  chooseAnotherConnection(): void {}
+
   forgetConnection(_id: string): void {}
 
   completeOnboarding(): void {

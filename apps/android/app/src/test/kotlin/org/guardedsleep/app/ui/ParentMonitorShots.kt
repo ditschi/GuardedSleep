@@ -64,6 +64,24 @@ class ParentMonitorShots : ShotBase() {
     @Test fun connectedQuiet() = shoot("connected_quiet", base)
 
     @Test
+    fun chooseAnotherConnection() {
+        val auto =
+            AppState(
+                role = Role.PARENT,
+                onboardingDone = true,
+                paired = true,
+                monitoring = true,
+                autoStarted = true,
+            )
+        shoot(
+            "auto_started_connecting",
+            ParentMonitorState(link = link(LinkPhase.CONNECTING)),
+            app = auto,
+        )
+        shoot("sheet_more_auto_started", base, sheet = ParentSheet.MORE, app = auto)
+    }
+
+    @Test
     fun talkStates() {
         val s = SettingsState(talkCoachSeen = true)
         shoot("talk_requesting", base.copy(talk = TalkUi.Requesting), settings = s)

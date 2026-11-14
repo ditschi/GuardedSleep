@@ -65,6 +65,14 @@ private fun AppNavigator(controller: AppController) {
     var overlay by rememberSaveable { mutableStateOf(Overlay.NONE) }
     var openProbe by remember { mutableStateOf(false) }
     val role = app.role
+    // One-shot: "Choose another connection" asks the next home to show its connection list.
+    var listRequested by rememberSaveable { mutableStateOf(false) }
+    // Lives above the home so a cancelled auto-scan does not reopen; a new role or a saved
+    // connection starts a fresh entry.
+    var autoScanned by rememberSaveable(role, app.connections.isEmpty()) { mutableStateOf(false) }
+    // Any open scan screen (the auto-scan itself or the home button) counts as this entry's scan,
+    // so cancelling it does not rescan.
+    LaunchedEffect(pairing != null) { if (pairing != null) autoScanned = true }
 
     when {
         role == null -> RoleScreen(controller)
@@ -100,12 +108,21 @@ private fun AppNavigator(controller: AppController) {
                 controller,
                 onSettings = { overlay = Overlay.SETTINGS },
                 initialSheet = sheet,
+                onChosenOther = { listRequested = true },
             )
         }
         app.monitoring -> BabyMonitorScreen(controller, onSettings = { overlay = Overlay.SETTINGS })
         pairing != null ->
             if (role == Role.BABY) PairBabyScreen(controller) else PairParentScreen(controller)
-        else -> HomeScreen(controller, onSettings = { overlay = Overlay.SETTINGS })
+        else ->
+            HomeScreen(
+                controller,
+                onSettings = { overlay = Overlay.SETTINGS },
+                autoScanned = autoScanned,
+                onAutoScanned = { autoScanned = true },
+                listRequested = listRequested,
+                onListShown = { listRequested = false },
+            )
     }
 }
 
