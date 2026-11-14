@@ -173,9 +173,8 @@ class SettingsRepository(
                 talkChime = p[TALK_CHIME] ?: defaults.talkChime,
                 talkCoachSeen = p[TALK_COACH] ?: defaults.talkCoachSeen,
                 // Unknown or missing is the default tone. No core call here: the repository is
-                // built
-                // at app start, where the JVM tests of the app module have no native library; the
-                // sound is resolved through the core when it plays.
+                // built at app start, where the JVM tests of the app module have no native
+                // library; the sound is resolved through the core when it plays.
                 connectionAlarmTone = AlarmTones.normalize(p[ALARM_TONE]),
             )
         val role = enumOrNull<Role>(p[ROLE])

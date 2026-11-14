@@ -329,13 +329,14 @@ class LinkController(
         val before = _settings.value
         // TURN fields live in the sealed store and change only through [setTurnServer].
         val after =
-            transform(before)
-                .copy(
+            transform(before).let {
+                it.copy(
                     turnUrl = before.turnUrl,
                     turnUsername = before.turnUsername,
                     turnPasswordSaved = before.turnPasswordSaved,
+                    connectionAlarmTone = AlarmTones.normalize(it.connectionAlarmTone),
                 )
-                .let { it.copy(connectionAlarmTone = AlarmTones.normalize(it.connectionAlarmTone)) }
+            }
         if (after == before) return
         settingsRepo.update { it.copy(settings = after) }
         _settings.value = after
