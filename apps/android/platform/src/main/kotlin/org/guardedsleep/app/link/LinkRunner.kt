@@ -146,7 +146,7 @@ class LinkRunner(
      * or time zone.
      */
     private fun reportWallClock() {
-        val wallMs = System.currentTimeMillis()
+        val wallMs = clock.wallMs()
         val elapsed = clock.elapsedMs()
         val sinceMs = elapsed - lastWallElapsedMs
         if (lastWallMs >= 0) {

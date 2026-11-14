@@ -1,24 +1,26 @@
 package org.guardedsleep.app
 
 import java.security.SecureRandom
-import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import org.guardedsleep.app.config.PublicLists
+import org.guardedsleep.app.fixtures.FakeCipher
+import org.guardedsleep.app.fixtures.FakeMedia
+import org.guardedsleep.app.fixtures.FakeNet
+import org.guardedsleep.app.fixtures.FakeSilence
+import org.guardedsleep.app.fixtures.FakeTransport
+import org.guardedsleep.app.fixtures.ManualScheduler
+import org.guardedsleep.app.fixtures.RecordingSink
+import org.guardedsleep.app.fixtures.rolePairings
+import org.guardedsleep.app.fixtures.testSettings
 import org.guardedsleep.app.link.Clock
 import org.guardedsleep.app.link.LinkController
 import org.guardedsleep.app.link.MonitorHost
 import org.guardedsleep.app.link.NetworkWatcher
 import org.guardedsleep.app.link.TalkGate
 import org.guardedsleep.app.link.buildIceConfig
-import org.guardedsleep.app.media.AttemptListener
-import org.guardedsleep.app.media.AttemptPort
-import org.guardedsleep.app.media.IceServerEntry
-import org.guardedsleep.app.media.InboundAudioStats
-import org.guardedsleep.app.media.MediaEngine
 import org.guardedsleep.app.pairing.PairingCipher
 import org.guardedsleep.app.pairing.PairingPayload
 import org.guardedsleep.app.pairing.PairingStore
@@ -32,9 +34,6 @@ import org.guardedsleep.app.readiness.DeviceCheckEnv
 import org.guardedsleep.app.readiness.DeviceChecker
 import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.signaling.SignalingFactory
-import org.guardedsleep.app.signaling.SignalingListener
-import org.guardedsleep.app.signaling.SignalingTransport
-import org.guardedsleep.app.silence.SilenceGateway
 import org.guardedsleep.app.ui.model.DeviceCheck
 import org.guardedsleep.app.ui.model.DeviceCheckReason
 import org.guardedsleep.app.ui.model.LinkPhase
@@ -45,7 +44,6 @@ import org.guardedsleep.app.ui.model.TalkPermission
 import org.guardedsleep.app.ui.model.TalkUi
 import org.guardedsleep.app.ui.model.TalkUnavailable
 import org.guardedsleep.app.ui.model.TurnSaveResult
-import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -56,235 +54,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import uniffi.guardedsleep_core.DeviceStatus
-import uniffi.guardedsleep_core.IceCandidate
-
-/**
- * In-memory signaling relay (the v3 server protocol) and fake WebRTC, so two real cores talk to
- * each other.
- */
-private class FakeNet {
-    val delivery = Executors.newSingleThreadExecutor { Thread(it, "fake-net") }
-    private val lock = Any()
-    private val members = LinkedHashMap<String, Pair<String, FakeTransport>>() // clientId -> role
-    private val rooms = HashMap<String, MutableList<String>>()
-    private val offers = ConcurrentHashMap<String, FakeAttempt>()
-    /** Sees every DataChannel text before it is delivered (on the sender's thread). */
-    @Volatile var onSend: ((text: String) -> Unit)? = null
-    val attemptsCreated = AtomicInteger()
-    /** The ICE list of every attempt the cores asked the media engine for. */
-    val attemptIce = CopyOnWriteArrayList<List<IceServerEntry>>()
-    /** Every address a mailbox socket was opened at. */
-    val openedUrls = CopyOnWriteArrayList<String>()
-    /** A relay `ice_servers` frame sent to each member right after the welcome. */
-    @Volatile var iceFrame: String? = null
-    val liveAttempts = CopyOnWriteArrayList<FakeAttempt>()
-
-    fun later(block: () -> Unit) = delivery.execute { runCatching(block) }
-
-    fun join(t: FakeTransport, role: String, room: String) =
-        synchronized(lock) {
-            val id = UUID.randomUUID().toString().take(8)
-            members[id] = role to t
-            t.clientId = id
-            t.room = room
-            rooms.getOrPut(room) { mutableListOf() } += id
-            t.deliver(
-                JSONObject()
-                    .put("type", "welcome")
-                    .put("clientId", id)
-                    .put("roomId", room)
-                    .toString()
-            )
-            iceFrame?.let { t.deliver(it) }
-            broadcastMembers(room)
-        }
-
-    fun leave(t: FakeTransport) =
-        synchronized(lock) {
-            val id = t.clientId ?: return@synchronized
-            members.remove(id)
-            t.room?.let { r ->
-                rooms[r]?.remove(id)
-                broadcastMembers(r)
-            }
-        }
-
-    private fun broadcastMembers(room: String) {
-        val ids = rooms[room].orEmpty()
-        val peers = JSONArray()
-        ids.forEach { peers.put(JSONObject().put("clientId", it).put("role", members[it]!!.first)) }
-        val msg = JSONObject().put("type", "members").put("peers", peers).toString()
-        ids.forEach { members[it]!!.second.deliver(msg) }
-    }
-
-    fun handle(from: FakeTransport, text: String) =
-        synchronized(lock) {
-            val o = JSONObject(text)
-            when (o.getString("type")) {
-                "hello" -> join(from, o.getString("role"), o.getString("roomId"))
-                "ping" -> from.deliver("""{"type":"pong"}""")
-                "signal" -> {
-                    val to = o.optString("to", "")
-                    val msg =
-                        JSONObject()
-                            .put("type", "signal")
-                            .put("from", from.clientId)
-                            .put("payload", o.get("payload"))
-                            .toString()
-                    rooms[from.room]
-                        .orEmpty()
-                        .filter { it != from.clientId && (to.isEmpty() || it == to) }
-                        .forEach { members[it]!!.second.deliver(msg) }
-                }
-            }
-        }
-
-    private val answerers = ConcurrentHashMap<String, FakeAttempt>()
-    val fakeAttempts = CopyOnWriteArrayList<FakeAttempt>()
-
-    fun registerOffer(token: String, a: FakeAttempt) {
-        offers[token] = a
-    }
-
-    fun registerAnswerer(token: String, a: FakeAttempt) {
-        answerers[token] = a
-    }
-
-    fun connect(token: String) {
-        val offerer = offers[token]
-        val answerer = answerers[token]
-        if (offerer == null || answerer == null) return
-        offerer.peer = answerer
-        answerer.peer = offerer
-        listOf(offerer to answerer, answerer to offerer).forEach { (a, other) ->
-            liveAttempts += a
-            later {
-                a.listener.onConnectionState("connected")
-                a.listener.onDtlsFingerprint(other.fpValue)
-                a.listener.onDataOpen()
-            }
-        }
-    }
-
-    /** Both ends of every live connection fail, like a Wi-Fi outage. */
-    fun breakAll() {
-        liveAttempts.forEach { a ->
-            later {
-                a.listener.onDataClosed()
-                a.listener.onConnectionState("failed")
-            }
-        }
-        liveAttempts.clear()
-    }
-}
-
-private class FakeTransport(private val net: FakeNet, private val listener: SignalingListener) :
-    SignalingTransport {
-    var clientId: String? = null
-    var room: String? = null
-    @Volatile var closed = false
-
-    fun deliver(text: String) = net.later { if (!closed) listener.onMessage(text) }
-
-    override fun open() = net.later { if (!closed) listener.onOpened() }
-
-    override fun send(text: String): Boolean {
-        net.later { if (!closed) net.handle(this, text) }
-        return true
-    }
-
-    override fun close() {
-        closed = true
-        net.leave(this)
-    }
-}
-
-private class FakeAttempt(val net: FakeNet, val listener: AttemptListener, val baby: Boolean) :
-    AttemptPort {
-    var token: String? = null
-    val fpValue = (0 until 32).joinToString(":") { "%02X".format(java.util.Random().nextInt(256)) }
-    private val fingerprint = "a=fingerprint:sha-256 $fpValue"
-    var peer: FakeAttempt? = null
-    @Volatile var closed = false
-
-    override fun createOffer() {
-        token = UUID.randomUUID().toString()
-        net.registerOffer(token!!, this)
-        val sdp =
-            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\n$fingerprint\r\na=gs-token:$token\r\n"
-        net.later { listener.onLocalDescription("offer", sdp) }
-    }
-
-    override fun setRemoteDescription(type: String, sdp: String) {
-        val t = Regex("a=gs-token:(\\S+)").find(sdp)!!.groupValues[1]
-        token = t
-        if (type == "offer") net.registerAnswerer(t, this) else net.connect(t)
-    }
-
-    override fun createAnswer() {
-        val sdp =
-            "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=recvonly\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=sendonly\r\n$fingerprint\r\na=gs-token:$token\r\n"
-        net.later { listener.onLocalDescription("answer", sdp) }
-    }
-
-    override fun addRemoteIce(candidate: IceCandidate) = Unit
-
-    override fun sendData(text: String): Boolean {
-        net.onSend?.invoke(text)
-        val p = peer ?: return false
-        if (closed) return false
-        net.later { if (!p.closed) p.listener.onDataMessage(text) }
-        return true
-    }
-
-    override fun inboundAudioStats(callback: (InboundAudioStats?) -> Unit) = callback(null)
-
-    val talkMic = CopyOnWriteArrayList<Boolean>()
-
-    override fun setTalkMic(attached: Boolean): Boolean {
-        talkMic += attached
-        return true
-    }
-
-    override fun close() {
-        closed = true
-        peer?.let { p -> net.later { if (!p.closed) p.listener.onDataClosed() } }
-        net.liveAttempts.remove(this)
-    }
-}
-
-private class FakeMedia(val net: FakeNet, val baby: Boolean) : MediaEngine {
-    val mic = CopyOnWriteArrayList<Boolean>()
-
-    override fun createAttempt(
-        offerer: Boolean,
-        listener: AttemptListener,
-        iceServers: List<IceServerEntry>,
-    ): AttemptPort {
-        net.attemptIce += iceServers
-        net.attemptsCreated.incrementAndGet()
-        return FakeAttempt(net, listener, baby).also { net.fakeAttempts += it }
-    }
-
-    override fun setMicEnabled(enabled: Boolean) {
-        mic += enabled
-    }
-
-    override fun startProbeTone(durationMs: Long) = Unit
-
-    override fun setPlaybackMuted(muted: Boolean) = Unit
-
-    override fun setPlaybackGainPct(pct: Int) = Unit
-
-    override fun setSpeakerOnly(speakerOnly: Boolean) = Unit
-
-    override fun drainMicRms(): Double? = null
-
-    override fun drainRemoteRms(): Double? = null
-
-    override fun release() = Unit
-}
 
 /** A healthy, charging phone with a microphone that hears something; tests change one fact. */
 private class FakeDeviceEnv : DeviceCheckEnv {
@@ -331,77 +100,14 @@ private class FakeDeviceEnv : DeviceCheckEnv {
     }
 }
 
-private class FakeSilence : SilenceGateway {
-    var active = false
-
-    override fun hasAccess() = true
-
-    override fun activate(): Boolean {
-        active = true
-        return true
-    }
-
-    override fun deactivate() {
-        active = false
-    }
-
-    override fun restoreLeftover() = false
-
-    override fun readDeviceStatus() =
-        DeviceStatus(
-            80u,
-            true,
-            uniffi.guardedsleep_core.Ringer.NORMAL,
-            uniffi.guardedsleep_core.Dnd.OFF,
-            true,
-            true,
-            active,
-            null,
-            null,
-            null,
-            emptyList(),
-            null,
-            null,
-            null,
-            null,
-            null,
-        )
-}
-
-private class RealClock : Clock {
-    private val t0 = System.nanoTime()
-
-    override fun elapsedMs() = 1_000 + (System.nanoTime() - t0) / 1_000_000
-
-    override fun wallMs() = System.currentTimeMillis()
-}
-
 private val projectUrl = "wss://${PublicLists.projectServer.host}/signaling"
-
-/** Both slots in [dir]; [cipher] seals the slot of [role], the other one uses a fake. */
-private fun rolePairings(
-    dir: java.io.File,
-    role: Role,
-    cipher: PairingCipher = FakeCipher(),
-    legacy: PairingStore? = null,
-) =
-    RolePairings(
-        Role.entries.associateWith {
-            listOf("", "-2").map { suffix ->
-                PairingStore(
-                    java.io.File(dir, "pairing-${it.name.lowercase()}$suffix.bin"),
-                    if (it == role && suffix.isEmpty()) cipher else FakeCipher(),
-                )
-            }
-        },
-        legacy,
-    )
 
 private const val PIN_TYPE = "\"parent_pin\""
 
 class LinkControllerTest {
     @get:Rule val tmp = TemporaryFolder()
-    private val net = FakeNet()
+    private val scheduler = ManualScheduler()
+    private val net = FakeNet(scheduler)
     private val controllers = mutableListOf<LinkController>()
 
     private class Unit2(
@@ -429,7 +135,7 @@ class LinkControllerTest {
         talkGate: TalkGate = TalkGate.Open,
         hostStarts: java.util.concurrent.atomic.AtomicInteger? = null,
         deviceChecker: DeviceChecker? = null,
-        clock: Clock = RealClock(),
+        clock: Clock = scheduler,
     ): Unit2 {
         val dir = tmp.newFolder(name)
         val settings = settings ?: testSettings(dir)
@@ -471,6 +177,11 @@ class LinkControllerTest {
                         override fun stop() = Unit
                     },
                 clock = clock,
+                newExecutor = { scheduler.executor() },
+                turnIo = scheduler.executor(),
+                deviceCheckIo =
+                    // The device-check doubles block on real latches: those tests keep a thread.
+                    if (deviceChecker == null) scheduler.executor() else deviceCheckWorker,
                 random = SecureRandom(),
                 deviceName = { deviceName },
                 talkGate = talkGate,
@@ -582,7 +293,7 @@ class LinkControllerTest {
         seedRecord(parent, emptyList())
         parent.controller.startMonitoring()
         await("the run started") { parent.controller.app.value.monitoring }
-        Thread.sleep(600)
+        scheduler.advanceBy(600)
         assertEquals(emptyList<String>(), net.openedUrls.toList())
     }
 
@@ -596,7 +307,7 @@ class LinkControllerTest {
         )
         parent.controller.startMonitoring()
         await("the own relay was opened") { net.openedUrls.contains("wss://own.example") }
-        Thread.sleep(300)
+        scheduler.advanceBy(300)
         assertEquals(listOf("wss://own.example"), net.openedUrls.toList())
     }
 
@@ -645,23 +356,31 @@ class LinkControllerTest {
         baby.controller.startPairing()
         val code = baby.controller.pairing.value!!.codePayload!!
         val parsed =
-            PairingPayload.parse(code, System.currentTimeMillis())
-                as PairingPayload.Companion.Result.Ok
+            PairingPayload.parse(code, scheduler.wallMs()) as PairingPayload.Companion.Result.Ok
         assertEquals(listOf("wss://own.example"), parsed.payload.signalingUrls)
         baby.controller.updateSettings { it.copy(onlyLocal = false) }
         baby.controller.startPairing()
         val all =
             PairingPayload.parse(
                 baby.controller.pairing.value!!.codePayload!!,
-                System.currentTimeMillis(),
+                scheduler.wallMs(),
             ) as PairingPayload.Companion.Result.Ok
         assertEquals(listOf(projectUrl, "wss://own.example"), all.payload.signalingUrls)
     }
 
+    // The device-check doubles block on latches, so those tests use a real worker thread: a
+    // daemon, shut down with the test.
+    private val deviceCheckWorker: java.util.concurrent.ExecutorService by lazy {
+        Executors.newSingleThreadExecutor { r ->
+            Thread(r, "test-device-check").apply { isDaemon = true }
+        }
+    }
+
     @After
     fun tearDown() {
+        deviceCheckWorker.shutdownNow()
         controllers.forEach { it.stopMonitoring() }
-        net.delivery.shutdownNow()
+        scheduler.runUntilIdle()
     }
 
     // ---- session role, start mode and per-role pairings --------------------------------------
@@ -1083,7 +802,7 @@ class LinkControllerTest {
         baby.controller.runDeviceCheck()
         assertEquals(DeviceCheck.UNKNOWN, baby.controller.app.value.deviceCheck)
         env.gate!!.countDown()
-        await("the result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+        awaitReal("the result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
         val app = baby.controller.app.value
         assertEquals(DeviceCheck.OK, app.deviceCheck)
         // The invite set (settings list) is probed; only the host reaches the state.
@@ -1096,7 +815,7 @@ class LinkControllerTest {
         val env = FakeDeviceEnv().apply { reachable = false }
         val baby = unit("dc-none", Role.BABY, deviceChecker = DeviceChecker(env))
         baby.controller.runDeviceCheck()
-        await("the result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+        awaitReal("the result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
         assertEquals(DeviceCheck.NOT_RECOMMENDED, baby.controller.app.value.deviceCheck)
         assertEquals(
             listOf(DeviceCheckReason.NO_MAILBOX_REACHABLE),
@@ -1111,11 +830,13 @@ class LinkControllerTest {
         // The first run blocks on the gate and would say "unreachable"; the second is newer.
         env.reachableByCall = listOf(false, true)
         baby.controller.runDeviceCheck()
-        await("first probe started") { env.probed.size == 1 }
+        awaitReal("first probe started") { env.probed.size == 1 }
         baby.controller.runDeviceCheck(force = true)
         env.gate!!.countDown()
         // The one worker ran the dropped first check before the second, so this is the second's.
-        await("the newer result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+        awaitReal("the newer result") {
+            baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN
+        }
         assertEquals(DeviceCheck.OK, baby.controller.app.value.deviceCheck)
         assertEquals(
             listOf(true),
@@ -1137,17 +858,17 @@ class LinkControllerTest {
         val env = FakeDeviceEnv()
         val baby = unit("dc-mic", Role.BABY, deviceChecker = DeviceChecker(env))
         baby.controller.runDeviceCheck()
-        await("idle result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+        awaitReal("idle result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
         assertEquals(1, env.micSamples.get())
 
         // A saved record: its stored relay set is probed, not the settings list.
         seedRecord(baby, listOf(StoredMailbox("relay", "wss://own.example")))
         baby.controller.startMonitoring()
-        await("the run started") { baby.controller.app.value.monitoring }
+        awaitReal("the run started") { baby.controller.app.value.monitoring }
         env.probed.clear()
         baby.controller.runDeviceCheck()
-        await("running result") { env.probed.isNotEmpty() }
-        await("published") { baby.controller.app.value.deviceCheckMailboxes.size == 1 }
+        awaitReal("running result") { env.probed.isNotEmpty() }
+        awaitReal("published") { baby.controller.app.value.deviceCheckMailboxes.size == 1 }
         assertEquals(1, env.micSamples.get())
         assertEquals(listOf("wss://own.example"), env.probed.toList())
         assertEquals("own.example", baby.controller.app.value.deviceCheckMailboxes[0].host)
@@ -1159,7 +880,7 @@ class LinkControllerTest {
         val clock = FakeClock()
         val baby = unit("dc-reuse", Role.BABY, deviceChecker = DeviceChecker(env), clock = clock)
         baby.controller.runDeviceCheck()
-        await("the result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+        awaitReal("the result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
         assertEquals(1, env.probed.size)
 
         // A resume right after: no new probes and no "Checking..." state.
@@ -1170,19 +891,23 @@ class LinkControllerTest {
 
         // "Check again" forces one.
         baby.controller.runDeviceCheck(force = true)
-        await("the forced probe") { env.probed.size == 2 }
-        await("the forced result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+        awaitReal("the forced probe") { env.probed.size == 2 }
+        awaitReal("the forced result") {
+            baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN
+        }
 
         // An old result is checked anew; an invalidation (role change) clears it.
         clock.advance(61_000)
         baby.controller.runDeviceCheck()
-        await("the aged probe") { env.probed.size == 3 }
-        await("the aged result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+        awaitReal("the aged probe") { env.probed.size == 3 }
+        awaitReal("the aged result") {
+            baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN
+        }
         baby.controller.chooseRole(Role.PARENT)
         baby.controller.chooseRole(Role.BABY)
         assertEquals(DeviceCheck.UNKNOWN, baby.controller.app.value.deviceCheck)
         baby.controller.runDeviceCheck()
-        await("the check after the invalidation") { env.probed.size == 4 }
+        awaitReal("the check after the invalidation") { env.probed.size == 4 }
     }
 
     @Test
@@ -1195,9 +920,9 @@ class LinkControllerTest {
         val baby = unit("dc-cancel", Role.BABY, deviceChecker = DeviceChecker(env))
         seedRecord(baby, listOf(StoredMailbox("relay", "wss://own.example")))
         baby.controller.runDeviceCheck()
-        await("the sample started") { env.micStarted.count == 0L }
+        awaitReal("the sample started") { env.micStarted.count == 0L }
         baby.controller.startMonitoring()
-        await("the sample was cancelled") { env.micCancelled.count == 0L }
+        awaitReal("the sample was cancelled") { env.micCancelled.count == 0L }
         // The start dropped the check's state at once; its late result must not come back.
         assertEquals(DeviceCheck.UNKNOWN, baby.controller.app.value.deviceCheck)
         // A later check (the run holds the mic, so it skips the sample) runs after the cancelled
@@ -1205,7 +930,9 @@ class LinkControllerTest {
         env.reachable = true
         env.probed.clear()
         baby.controller.runDeviceCheck()
-        await("the next result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+        awaitReal("the next result") {
+            baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN
+        }
         assertEquals(1, env.micSamples.get())
         assertEquals(
             listOf(true),
@@ -1213,11 +940,20 @@ class LinkControllerTest {
         )
     }
 
-    private fun await(what: String, timeoutMs: Long = 15_000, cond: () -> Boolean) {
+    /** Steps virtual time until [cond] holds (no sleeping), at most [timeoutMs] of it. */
+    private fun await(what: String, timeoutMs: Long = 15_000, cond: () -> Boolean) =
+        scheduler.runUntil(what, timeoutMs, cond = cond)
+
+    /**
+     * Real-time wait for the device-check tests only: their doubles block on latches on a real
+     * worker thread, so wall time (not the scheduler) has to pass. The scheduler is still pumped.
+     */
+    private fun awaitReal(what: String, timeoutMs: Long = 15_000, cond: () -> Boolean) {
         val end = System.currentTimeMillis() + timeoutMs
         while (System.currentTimeMillis() < end) {
+            scheduler.runUntilIdle()
             if (cond()) return
-            Thread.sleep(25)
+            scheduler.advanceBy(5)
         }
         throw AssertionError("timeout waiting for $what")
     }
@@ -1263,7 +999,7 @@ class LinkControllerTest {
         net.onSend = { sent += it }
         parent.controller.setTalk(true)
         assertEquals(TalkPermission.NEEDED, parent.controller.parent.value.talkPermission)
-        Thread.sleep(300)
+        scheduler.advanceBy(300)
         assertTrue(sent.none { it.contains("talk_request") })
         parent.controller.talkPermissionResult(false)
         assertEquals(TalkPermission.REFUSED, parent.controller.parent.value.talkPermission)
@@ -1282,7 +1018,7 @@ class LinkControllerTest {
         val sent = CopyOnWriteArrayList<String>()
         net.onSend = { sent += it }
         parent.controller.setTalk(true)
-        Thread.sleep(300)
+        scheduler.advanceBy(300)
         assertTrue(sent.none { it.contains("talk_request") })
     }
 
@@ -1293,6 +1029,34 @@ class LinkControllerTest {
             parent.controller.parent.value.talk == TalkUi.Unavailable(TalkUnavailable.MUTED)
         }
         assertTrue(net.fakeAttempts.all { it.talkMic.isEmpty() })
+    }
+
+    @Test
+    fun stoppingAfterPairingLeavesNoPairedStateAndNoMonitoring() {
+        val (baby, parent) = pair()
+        assertEquals(PairingPhase.PAIRED, baby.controller.pairing.value?.phase)
+        assertEquals(PairingPhase.PAIRED, parent.controller.pairing.value?.phase)
+        baby.controller.stopMonitoring()
+        parent.controller.stopMonitoring()
+        scheduler.runUntilIdle()
+        // PAIRED must not outlive the pairing: the UI would show the pairing screen after "Stop".
+        assertNull(baby.controller.pairing.value)
+        assertNull(parent.controller.pairing.value)
+        assertFalse(baby.controller.app.value.monitoring)
+        assertFalse(parent.controller.app.value.monitoring)
+    }
+
+    @Test
+    fun pairAgainOnAMonitoringBabyStopsMonitoringAndShowsAnInviteForTheSameSlot() {
+        val (baby, _) = pair()
+        val slot = baby.controller.app.value.connections.single { it.selected }.id
+        assertTrue(baby.controller.app.value.monitoring)
+        baby.controller.startPairing()
+        scheduler.runUntilIdle()
+        // The monitoring flag must be gone, or the monitor screen stays up over the invite.
+        assertFalse(baby.controller.app.value.monitoring)
+        assertEquals(PairingPhase.SHOWING_CODE, baby.controller.pairing.value?.phase)
+        assertEquals(slot, baby.controller.app.value.connections.single { it.selected }.id)
     }
 
     @Test
@@ -1382,7 +1146,7 @@ class LinkControllerTest {
         java.io.File(tmp.root, "parent/pairing-parent.bin.tmp").mkdirs()
         baby.controller.startPairing()
         parent.controller.submitPairingCode(baby.controller.pairing.value!!.codePayload!!)
-        Thread.sleep(3_000)
+        scheduler.advanceBy(3_000)
         assertTrue("nothing was sent: $sent", sent.isEmpty())
         assertNull(parent.store.load())
         assertNull(baby.store.load())
@@ -1412,7 +1176,7 @@ class LinkControllerTest {
         parent.store.save(parent.store.load()!!.copy(parentSecretB64url = null))
         parent.controller.startMonitoring()
         await("baby warns") { baby.controller.baby.value.securityWarning }
-        Thread.sleep(2_000)
+        scheduler.advanceBy(2_000)
         assertTrue(baby.controller.baby.value.link.phase != LinkPhase.CONNECTED)
         assertNull(baby.controller.baby.value.parentName)
         assertTrue(parent.controller.parent.value.link.phase != LinkPhase.CONNECTED)
@@ -1452,7 +1216,7 @@ class LinkControllerTest {
         other.put("k", org.guardedsleep.app.pairing.PairingPayload.b64(ByteArray(32) { 7 }))
         parent.controller.submitPairingCode(other.toString())
         // Different PSK means a different room: nobody to talk to, nothing saved, nothing verified.
-        Thread.sleep(1500)
+        scheduler.advanceBy(1500)
         assertTrue(!parent.store.exists())
         assertEquals(PairingPhase.CONNECTING, parent.controller.pairing.value?.phase)
     }

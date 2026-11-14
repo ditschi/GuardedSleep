@@ -33,6 +33,7 @@ dependencies {
     implementation(libs.datastore.preferences)
     implementation(libs.coroutines.android)
 
+    testImplementation(project(":test-fixtures"))
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)

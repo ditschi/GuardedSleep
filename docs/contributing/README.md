@@ -1,6 +1,7 @@
 # Contributing documentation
 
 - [Development environment](development.md) — Dev Container, local setup, lint/format, hooks
+- [Testing: which layer catches what](testing.md) — layers, the Android UI journeys, when to run the emulator gate
 - [Signaling server (Docker / Compose)](signaling-server-docker.md) — image build, local Compose, GHCR
 - [Public server: signaling and coturn behind Traefik (Caddy and nginx variants)](../../docker/public-server/README.md) — `wss://` on 443, ready-to-use Compose, firewall, monitoring
 - [Own TURN server on a VPS (coturn, Compose)](turn-server-vps.md) — Oracle Cloud walk-through, firewall, verification, known app gaps

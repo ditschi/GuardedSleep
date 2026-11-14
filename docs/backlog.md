@@ -120,6 +120,8 @@ Concept and goals of ADR-013 are decided. The UX review of the ambient bar, the 
 - `IDEA` "Turn sound back on now" on the acknowledged connection alert: end an "I'm checking" acknowledgment early. Needs a new core input next to `acknowledge_alarm`; left out of `redesign-calm-ui` (mockup frame 26).
 - `IDEA` From the `redesign-calm-ui` reviews (2026-11-14), not in the specs: a 1-hour option for pausing noise alerts, and resetting "Vibrate only" to "Sound" the next morning.
 - `IDEA` Noise event tracking (2-minute quiet rule, snooze-end restart) once in the core and reported to the platforms; today the core keeps its own copy for the escalation timer (`add-discreet-alert-profile` design.md).
+- `IDEA` What the test alert answer does: "Yes" counts the test as passed; "No" leads to the readiness checks (alarm volume, Do Not Disturb, headphones). Today `LinkController.reportTestResult` is an explicit no-op (found by `ui-journey-tests`, 2026-11-14); owner to decide.
+- `IDEA` Settings → "Test alert" while not monitoring: show "Connect to the baby device first" instead of doing nothing (today the probe sheet appears later, when monitoring starts; found by `ui-journey-tests`, 2026-11-14); owner to decide.
 
 ### device-setup
 
@@ -131,6 +133,8 @@ Concept and goals of ADR-013 are decided. The UX review of the ambient bar, the 
 - `IDEA` Several baby units (one per child or room) with one parent app switching between them (use case UC-5).
 - `IDEA` About/FAQ: hardware vs software baby monitors and range expectations (Wi-Fi, hotspot, internet).
 - `IDEA` Responsive layout for tablets.
+- `IDEA` First-run coach marks on the parent monitoring screen (alpha-ux-flows §3.2 step 4): designed and screenshotted, never wired (`coachPending` is never set, `dismissCoach` is an explicit no-op; found by `ui-journey-tests`, 2026-11-14). Owner to decide: build or remove.
+- `IDEA` "Last used" line on the home card: the screen renders `AppState.lastUsedWallMs`, but `LinkController` never sets it, so the line never shows (found by `ui-journey-tests`, 2026-11-14); owner to decide whether to write it (when monitoring last stopped) or drop the line.
 
 ### ui-appearance
 

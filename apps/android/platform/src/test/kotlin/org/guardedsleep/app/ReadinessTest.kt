@@ -1,25 +1,13 @@
 package org.guardedsleep.app
 
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import java.io.File
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import org.guardedsleep.app.fixtures.testSettings
 import org.guardedsleep.app.readiness.ReadinessChecker
 import org.guardedsleep.app.readiness.ReadinessEnv
-import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.ui.model.ReadinessIssue
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-
-fun testSettings(dir: File, name: String = "s"): SettingsRepository {
-    val scope = CoroutineScope(Dispatchers.Unconfined)
-    return SettingsRepository(
-        PreferenceDataStoreFactory.create(scope = scope) { File(dir, "$name.preferences_pb") },
-        scope,
-    )
-}
 
 class ReadinessTest {
     @get:Rule val tmp = TemporaryFolder()

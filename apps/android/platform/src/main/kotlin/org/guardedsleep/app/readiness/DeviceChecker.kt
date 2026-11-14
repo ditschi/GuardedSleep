@@ -110,11 +110,12 @@ object DeviceCheckRules {
  * thread. The mailbox probes run in parallel, so the worst case is the probe timeout plus the mic
  * sample at most.
  */
-class DeviceChecker(private val env: DeviceCheckEnv) {
+class DeviceChecker(
+    private val env: DeviceCheckEnv,
     private val pool: ExecutorService = Executors.newCachedThreadPool { r ->
         Thread(r, "gs-device-probe").apply { isDaemon = true }
-    }
-
+    },
+) {
     /**
      * [mailboxUrls] are the relay URLs to probe; [sampleMic] is false while a run holds the
      * microphone.
