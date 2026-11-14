@@ -121,7 +121,7 @@ class ParentModelTest {
         assertEquals(90_000L, model.state.value.restoredAfterMs)
         assertTrue(sink.notices.any { it is Notice.LinkRestored })
         // The card never dismisses itself, however long the parent takes.
-        clock.advance(AlertPolicy.RESTORED_NOTICE_MS * 10)
+        clock.advance(10 * 60_000L)
         model.onTick(clock.elapsed)
         assertEquals(90_000L, model.state.value.restoredAfterMs)
         model.dismissRestored()
