@@ -19,7 +19,8 @@ const USAGE: &str = "usage:
   gs-sim check [--seeds N]               run every scenario with seeds 1..=N (default 20)
   gs-sim bless-traces [--out DIR]        regenerate the curated traces (default: core vectors/traces)
   gs-sim lint-trace <file|dir>...
-  gs-sim canary-scan --psk-b64url K [--psk-b64url K2 ...] [--parent-secret-hex H] [--turn-password P] <file|dir>...
+  gs-sim canary-scan --psk-b64url K [--psk-b64url K2 ...] [--parent-secret-hex H] [--turn-password P]
+                    [--extra-canary-file F ...] <file|dir>...
                                          log canary: fail if a secret or plaintext SDP is in any file
   gs-sim canary-scan --self-check        plant every value in every encoding, expect the scanner to find it";
 
@@ -238,6 +239,22 @@ fn parse_hex_secret(h: &str) -> Result<Vec<u8>, String> {
         .ok_or_else(|| ERR.to_owned())
 }
 
+/// The 32-byte key of a v4 invite (`{"v":4,"k":...}`) or of a bare base64url key. The expiry is not
+/// checked: the scan runs after the code has expired.
+fn psk_from_invite_text(text: &str) -> Option<Vec<u8>> {
+    let t = text.trim();
+    let key = if t.starts_with('{') {
+        serde_json::from_str::<serde_json::Value>(t)
+            .ok()?
+            .get("k")?
+            .as_str()?
+            .to_owned()
+    } else {
+        t.to_owned()
+    };
+    guardedsleep_core::pairing::decode_psk(&key).filter(|p| p.len() == 32)
+}
+
 /// Every value of `--flag` (the flag may repeat).
 fn opts(args: &[String], name: &str) -> Vec<String> {
     args.iter()
@@ -298,6 +315,14 @@ fn canary_scan(args: &[String]) -> Result<bool, String> {
     if psks.is_empty() {
         return Err(USAGE.to_owned());
     }
+    // Pairing codes read from a device screen during the run (UI journey): the file holds the invite
+    // text or a bare base64url key; the key gets every encoding of a gate PSK. Names only, no value.
+    for (i, f) in opts(args, "--extra-canary-file").iter().enumerate() {
+        let text = std::fs::read_to_string(f).map_err(|e| format!("{f}: {e}"))?;
+        let psk = psk_from_invite_text(&text)
+            .ok_or("canary-scan: --extra-canary-file holds neither an invite nor a 32-byte key")?;
+        set.add_pairing(&format!("_extra{i}"), &psk);
+    }
     if let Some(h) = opt(args, "--parent-secret-hex") {
         set.add_parent_secret(&parse_hex_secret(&h)?);
     }
@@ -307,7 +332,12 @@ fn canary_scan(args: &[String]) -> Result<bool, String> {
     set.add_sdp_markers();
     // The scanner must prove itself before its silence means anything.
     set.self_check()?;
-    let flags = ["--psk-b64url", "--parent-secret-hex", "--turn-password"];
+    let flags = [
+        "--psk-b64url",
+        "--parent-secret-hex",
+        "--turn-password",
+        "--extra-canary-file",
+    ];
     let mut paths = Vec::new();
     let mut skip = false;
     for a in args {
@@ -336,7 +366,22 @@ fn canary_scan(args: &[String]) -> Result<bool, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_hex_secret;
+    use super::{parse_hex_secret, psk_from_invite_text};
+
+    #[test]
+    fn a_psk_is_taken_from_an_invite_or_a_bare_key_and_nothing_else() {
+        let key = base64::Engine::encode(
+            &base64::engine::general_purpose::URL_SAFE_NO_PAD,
+            guardedsleep_sim::world::synthetic_psk("A"),
+        );
+        let invite = format!(r#"{{"v":4,"k":"{key}","m":["l:10.0.2.2:18787"],"x":1}}"#);
+        let from_invite = psk_from_invite_text(&format!("{invite}\n"));
+        assert_eq!(from_invite.as_ref().map(Vec::len), Some(32));
+        assert_eq!(from_invite, psk_from_invite_text(&key));
+        assert_eq!(psk_from_invite_text("{\"v\":4}"), None);
+        assert_eq!(psk_from_invite_text("not a key"), None);
+        assert_eq!(psk_from_invite_text(""), None);
+    }
 
     #[test]
     fn the_parent_secret_hex_is_validated_without_panicking() {

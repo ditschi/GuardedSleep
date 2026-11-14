@@ -41,7 +41,9 @@ the value. The scanner proves itself first (`CanarySet::self_check`, `gs-sim can
 
 Committed traces are recordings, not logs: they contain the synthetic test PSK and seed by design
 and are guarded by the shareable lint instead (`lint_trace`: only synthetic keys, no real material).
-The same scanner serves the emulator gate (`scripts/poc/canary-scan.sh`, `gs-sim canary-scan`).
+The same scanner serves the emulator gate (`scripts/poc/canary-scan.sh`, `gs-sim canary-scan`). `--extra-canary-file F` adds a pairing code that only exists at run time (the
+UI journey reads the baby's code off the screen): F holds the invite or a bare key, every encoding of its key
+is scanned, and F itself stays outside the scanned output.
 
 ## Scenarios (`scenarios/*.json`, `gs-scenario/1`)
 

@@ -1,6 +1,9 @@
 # AC-1 baby: the monitoring screen (or its dark kiosk edge indicator) is shown after verification.
 appId: org.guardedsleep.app.alpha
 ---
+# DebugLaunchActivity only starts the service; bring the app's own screen to the front without restarting it.
+- launchApp:
+    stopApp: false
 - extendedWaitUntil:
     visible:
       id: "baby_status|baby_kiosk_edge"

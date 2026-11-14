@@ -363,6 +363,49 @@ url = "https://github.com/evilmartians/lefthook/releases/download/v2.2.2/lefthoo
 url_api = "https://api.github.com/repos/evilmartians/lefthook/releases/assets/636518867"
 provenance = "github-attestations"
 
+[[tools.maestro]]
+version = "2.12.1"
+backend = "github:mobile-dev-inc/maestro"
+specifiers = ["2.12.1"]
+
+[tools.maestro.options]
+version_prefix = "cli-"
+
+[tools.maestro."platforms.linux-arm64"]
+checksum = "sha256:54dbb0716425626604973cbb374c585ca30272375d9ce15177a1152765ddd9d7"
+url = "https://github.com/mobile-dev-inc/Maestro/releases/download/cli-2.12.1/maestro.zip"
+url_api = "https://api.github.com/repos/mobile-dev-inc/Maestro/releases/assets/700989346"
+
+[tools.maestro."platforms.linux-arm64-musl"]
+checksum = "sha256:54dbb0716425626604973cbb374c585ca30272375d9ce15177a1152765ddd9d7"
+url = "https://github.com/mobile-dev-inc/Maestro/releases/download/cli-2.12.1/maestro.zip"
+url_api = "https://api.github.com/repos/mobile-dev-inc/Maestro/releases/assets/700989346"
+
+[tools.maestro."platforms.linux-x64"]
+checksum = "sha256:54dbb0716425626604973cbb374c585ca30272375d9ce15177a1152765ddd9d7"
+url = "https://github.com/mobile-dev-inc/Maestro/releases/download/cli-2.12.1/maestro.zip"
+url_api = "https://api.github.com/repos/mobile-dev-inc/Maestro/releases/assets/700989346"
+
+[tools.maestro."platforms.linux-x64-musl"]
+checksum = "sha256:54dbb0716425626604973cbb374c585ca30272375d9ce15177a1152765ddd9d7"
+url = "https://github.com/mobile-dev-inc/Maestro/releases/download/cli-2.12.1/maestro.zip"
+url_api = "https://api.github.com/repos/mobile-dev-inc/Maestro/releases/assets/700989346"
+
+[tools.maestro."platforms.macos-arm64"]
+checksum = "sha256:54dbb0716425626604973cbb374c585ca30272375d9ce15177a1152765ddd9d7"
+url = "https://github.com/mobile-dev-inc/Maestro/releases/download/cli-2.12.1/maestro.zip"
+url_api = "https://api.github.com/repos/mobile-dev-inc/Maestro/releases/assets/700989346"
+
+[tools.maestro."platforms.macos-x64"]
+checksum = "sha256:54dbb0716425626604973cbb374c585ca30272375d9ce15177a1152765ddd9d7"
+url = "https://github.com/mobile-dev-inc/Maestro/releases/download/cli-2.12.1/maestro.zip"
+url_api = "https://api.github.com/repos/mobile-dev-inc/Maestro/releases/assets/700989346"
+
+[tools.maestro."platforms.windows-x64"]
+checksum = "sha256:54dbb0716425626604973cbb374c585ca30272375d9ce15177a1152765ddd9d7"
+url = "https://github.com/mobile-dev-inc/Maestro/releases/download/cli-2.12.1/maestro.zip"
+url_api = "https://api.github.com/repos/mobile-dev-inc/Maestro/releases/assets/700989346"
+
 [[tools.node]]
 version = "22.23.3"
 backend = "core:node"

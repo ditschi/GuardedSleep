@@ -153,6 +153,14 @@
       "groupName": "ci and dev tools"
     },
     {
+      "description": "Maestro (UI journeys in the emulator gate, ~350 MB download): monthly, own PR, never automerged; run the gate on the PR (gate-ui-journeys, owner 2026-11-14)",
+      "matchManagers": ["mise"],
+      "matchPackageNames": ["maestro", "mobile-dev-inc/maestro", "github:mobile-dev-inc/maestro"],
+      "groupName": "maestro",
+      "schedule": ["before 6am on the first day of the month"],
+      "automerge": false
+    },
+    {
       "description": "uniffi runtime crate and uniffi-bindgen move together; own PR, never automerged",
       "matchManagers": ["cargo"],
       "matchPackageNames": ["uniffi", "uniffi_*", "uniffi-bindgen*"],

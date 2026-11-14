@@ -5,6 +5,10 @@
 # The scanner proves itself first (a planted value in every encoding must be found) and prints only
 # canary names and file:line, never a value. Paths are relative to the repository root.
 #   scripts/poc/canary-scan.sh target/poc-gate
+#   scripts/poc/canary-scan.sh --extra-canary-file target/poc-gate-secret/code target/poc-gate
+# --extra-canary-file F (repeatable, relative to the repository root) adds a pairing code that is only
+# known at run time, the AC-12 UI journey's: F holds the invite or a bare key and gets the same forms as a
+# gate PSK. F must not lie under the scanned paths.
 # Not covered here: the seed (the platform draws it per run), the parent secret (drawn at run time on
 # the device, in the Keystore) and issued TURN passwords (the gate's coturn uses a static test user);
 # the simulation scans the seed and the parent secret, `just public-server-logs` the TURN password.
@@ -14,7 +18,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 source "$ROOT/scripts/poc/lib/canary.env"
 cd "$ROOT"
 [[ $# -gt 0 ]] || {
-	echo "usage: canary-scan.sh <file|dir>..." >&2
+	echo "usage: canary-scan.sh [--extra-canary-file F]... <file|dir>..." >&2
 	exit 2
 }
 exec scripts/cargo.sh run -q -p guardedsleep-sim --bin gs-sim -- canary-scan \

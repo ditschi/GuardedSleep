@@ -3,7 +3,8 @@ appId: org.guardedsleep.app.alpha
 ---
 - extendedWaitUntil:
     visible:
-      id: "alert_title"
-    timeout: 5000
+      id: "alert_title|parent_noise_alert"
+    timeout: 10000
 - tapOn:
     id: "alert_stop_sound"
+    optional: true

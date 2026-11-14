@@ -1,0 +1,26 @@
+# AC-12 step 3 (parent): paste the baby's code. Env: CODE (never logged by the flow).
+appId: org.guardedsleep.app.alpha
+---
+- runFlow: dismiss-system-dialogs.yaml
+# The parent's empty home may have opened the scan screen on its own.
+- runFlow:
+    when:
+      visible:
+        id: "home_new_pairing"
+    commands:
+      - tapOn:
+          id: "home_new_pairing"
+- extendedWaitUntil:
+    visible:
+      id: "parent_pair_paste_field"
+    timeout: 15000
+- tapOn:
+    id: "parent_pair_paste_field"
+- inputText: "${CODE}"
+- hideKeyboard
+- tapOn:
+    id: "parent_pair_paste_submit"
+- extendedWaitUntil:
+    visible:
+      id: "parent_ambient_bar"
+    timeout: 90000

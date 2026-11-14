@@ -1,7 +1,12 @@
-# AC-1a: with different PSKs the parent never meets the baby; the troubleshooter names the cause.
+# AC-1a: with different PSKs the parent never meets the baby; its screen offers the reconnect help and shows no
+# connected state (the cause key peer_absent itself is asserted from the GS_POC log by gate.sh; the cause hint is only on
+# the full-screen connection alarm, which the notification opens, not the awake parent).
 appId: org.guardedsleep.app.alpha
 ---
+# DebugLaunchActivity only starts the service; bring the app's own screen to the front without restarting it.
+- launchApp:
+    stopApp: false
 - extendedWaitUntil:
     visible:
-      id: "link_alarm_cause"
+      id: "parent_help_reconnect"
     timeout: 15000

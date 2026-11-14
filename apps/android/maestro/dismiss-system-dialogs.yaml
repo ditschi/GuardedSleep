@@ -1,0 +1,12 @@
+# Emulator quirk (design §4): under load System UI or the launcher can raise an "isn't responding"
+# dialog over the app. Only that dialog's own Wait button is tapped (android:id/aerr_wait); no
+# permission or settings dialog is ever answered here.
+appId: org.guardedsleep.app.alpha
+---
+- runFlow:
+    when:
+      visible:
+        id: "android:id/aerr_wait"
+    commands:
+      - tapOn:
+          id: "android:id/aerr_wait"

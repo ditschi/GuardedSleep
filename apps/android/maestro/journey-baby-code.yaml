@@ -1,0 +1,17 @@
+# AC-12 step 2 (baby): open a new pairing and show the code as text; the gate reads that node with
+# uiautomator (the code never goes through a flow output or a file in the gate's output).
+appId: org.guardedsleep.app.alpha
+---
+- runFlow: dismiss-system-dialogs.yaml
+- tapOn:
+    id: "home_new_pairing"
+- extendedWaitUntil:
+    visible:
+      id: "baby_pair_show_text"
+    timeout: 15000
+- tapOn:
+    id: "baby_pair_show_text"
+- extendedWaitUntil:
+    visible:
+      id: "baby_pair_code_text"
+    timeout: 10000

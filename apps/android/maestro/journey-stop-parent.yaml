@@ -1,0 +1,14 @@
+# AC-12 step 5 (parent): "Stop monitoring" with its confirmation, back on the home screen.
+appId: org.guardedsleep.app.alpha
+---
+- runFlow: dismiss-system-dialogs.yaml
+- tapOn:
+    id: "parent_overflow"
+- tapOn:
+    id: "parent_stop"
+- tapOn:
+    id: "dialog_stop_confirm"
+- extendedWaitUntil:
+    visible:
+      id: "home_title"
+    timeout: 15000
