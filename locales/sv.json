@@ -148,7 +148,7 @@
           "notRecommended": "Den här enheten kanske inte övervakar pålitligt. Använd en annan om du kan.",
           "again": "Kontrollera igen",
           "micPermissionMissing": "Mikrofonen är inte tillåten, så den här enheten kan inte lyssna.",
-          "micSilent": "Mikrofonen levererar bara tystnad. Kontrollera att den inte är avstängd eller stängd av i integritetsinställningarna.",
+          "micSilent": "Mikrofonen levererar bara tystnad. Den kan vara avstängd, stängd av i integritetsinställningarna eller används av en annan app.",
           "batteryUnhealthy": "Batteriet rapporterar ett problem. Låt inte den här enheten gå utan tillsyn.",
           "batteryLowNotCharging": "Batteriet är svagt och laddas inte. Anslut den här enheten till laddaren.",
           "noMailboxReachable": "Ingen server kunde nås. Efter ett avbrott skulle enheterna inte hitta varandra igen.",

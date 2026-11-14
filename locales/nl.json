@@ -148,7 +148,7 @@
           "notRecommended": "Dit apparaat bewaakt mogelijk niet betrouwbaar. Gebruik een ander apparaat als je kunt.",
           "again": "Opnieuw controleren",
           "micPermissionMissing": "De microfoon is niet toegestaan, dus dit apparaat kan niet luisteren.",
-          "micSilent": "De microfoon levert alleen stilte. Controleer of hij niet is gedempt of uitgeschakeld in de privacy-instellingen.",
+          "micSilent": "De microfoon levert alleen stilte. Hij is mogelijk gedempt, uitgeschakeld in de privacy-instellingen of in gebruik door een andere app.",
           "batteryUnhealthy": "De batterij meldt een probleem. Laat dit apparaat niet zonder toezicht draaien.",
           "batteryLowNotCharging": "De batterij is bijna leeg en wordt niet opgeladen. Sluit dit apparaat aan op de lader.",
           "noMailboxReachable": "Geen server was bereikbaar. Na een verbreking zouden de apparaten elkaar niet meer vinden.",

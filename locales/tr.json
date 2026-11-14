@@ -148,7 +148,7 @@
           "notRecommended": "Bu cihaz güvenilir şekilde izleyemeyebilir. Mümkünse başka bir cihaz kullanın.",
           "again": "Yeniden denetle",
           "micPermissionMissing": "Mikrofona izin verilmediği için bu cihaz dinleyemez.",
-          "micSilent": "Mikrofon yalnızca sessizlik iletiyor. Sessize alınmadığını veya gizlilik ayarlarında kapatılmadığını denetleyin.",
+          "micSilent": "Mikrofon yalnızca sessizlik iletiyor. Sessize alınmış, gizlilik ayarlarında kapatılmış veya başka bir uygulama tarafından kullanılıyor olabilir.",
           "batteryUnhealthy": "Pil bir sorun bildiriyor. Bu cihazı gözetimsiz çalışır durumda bırakmayın.",
           "batteryLowNotCharging": "Pil zayıf ve şarj olmuyor. Bu cihazı şarja takın.",
           "noMailboxReachable": "Hiçbir sunucuya ulaşılamadı. Bağlantı kesilirse cihazlar birbirini yeniden bulamaz.",

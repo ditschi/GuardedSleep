@@ -148,7 +148,7 @@
           "notRecommended": "Dieses Gerät überwacht möglicherweise nicht zuverlässig. Nutzen Sie nach Möglichkeit ein anderes Gerät.",
           "again": "Erneut prüfen",
           "micPermissionMissing": "Das Mikrofon ist nicht erlaubt, deshalb kann dieses Gerät nicht zuhören.",
-          "micSilent": "Das Mikrofon liefert nur Stille. Prüfen Sie, ob es stummgeschaltet oder in den Datenschutzeinstellungen ausgeschaltet ist.",
+          "micSilent": "Das Mikrofon liefert nur Stille. Es ist möglicherweise stummgeschaltet, in den Datenschutzeinstellungen ausgeschaltet oder von einer anderen App belegt.",
           "batteryUnhealthy": "Der Akku meldet ein Problem. Lassen Sie dieses Gerät nicht unbeaufsichtigt laufen.",
           "batteryLowNotCharging": "Der Akku ist schwach und wird nicht geladen. Schließen Sie dieses Gerät an das Ladegerät an.",
           "noMailboxReachable": "Kein Server war erreichbar. Nach einer Unterbrechung könnten sich die Geräte nicht wiederfinden.",

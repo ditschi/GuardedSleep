@@ -146,7 +146,7 @@
           "notRecommended": "This device may not monitor reliably. Use another device if you can.",
           "again": "Check again",
           "micPermissionMissing": "The microphone is not allowed, so this device cannot listen.",
-          "micSilent": "The microphone only delivers silence. Check that it is not muted or switched off in the privacy settings.",
+          "micSilent": "The microphone only delivers silence. It may be muted, switched off in the privacy settings or in use by another app.",
           "batteryUnhealthy": "The battery reports a problem. Do not leave this device running unattended.",
           "batteryLowNotCharging": "The battery is low and not charging. Plug this device in.",
           "noMailboxReachable": "No server could be reached. After a disconnection the devices could not find each other again.",

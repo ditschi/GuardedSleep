@@ -148,7 +148,7 @@
           "notRecommended": "Denne enhed overvåger muligvis ikke pålideligt. Brug en anden, hvis du kan.",
           "again": "Tjek igen",
           "micPermissionMissing": "Mikrofonen er ikke tilladt, så denne enhed kan ikke lytte.",
-          "micSilent": "Mikrofonen leverer kun stilhed. Tjek, at den ikke er slået fra eller deaktiveret i privatlivsindstillingerne.",
+          "micSilent": "Mikrofonen leverer kun stilhed. Den kan være slået fra, deaktiveret i privatlivsindstillingerne eller i brug af en anden app.",
           "batteryUnhealthy": "Batteriet melder om et problem. Lad ikke denne enhed køre uden opsyn.",
           "batteryLowNotCharging": "Batteriet er lavt og lader ikke. Sæt denne enhed i opladeren.",
           "noMailboxReachable": "Ingen server kunne nås. Efter en afbrydelse ville enhederne ikke kunne finde hinanden igen.",

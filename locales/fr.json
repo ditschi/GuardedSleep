@@ -148,7 +148,7 @@
           "notRecommended": "Cet appareil risque de ne pas surveiller de façon fiable. Utilisez un autre appareil si possible.",
           "again": "Vérifier à nouveau",
           "micPermissionMissing": "Le microphone n'est pas autorisé, donc cet appareil ne peut pas écouter.",
-          "micSilent": "Le microphone ne transmet que du silence. Vérifiez qu'il n'est pas coupé ou désactivé dans les réglages de confidentialité.",
+          "micSilent": "Le microphone ne transmet que du silence. Il est peut-être coupé, désactivé dans les réglages de confidentialité ou utilisé par une autre appli.",
           "batteryUnhealthy": "La batterie signale un problème. Ne laissez pas cet appareil fonctionner sans surveillance.",
           "batteryLowNotCharging": "La batterie est faible et ne charge pas. Branchez cet appareil.",
           "noMailboxReachable": "Aucun serveur n'a pu être joint. Après une déconnexion, les appareils ne pourraient pas se retrouver.",

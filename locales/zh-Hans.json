@@ -148,7 +148,7 @@
           "notRecommended": "此设备可能无法稳定监护。如有可能，请换一台设备。",
           "again": "重新检查",
           "micPermissionMissing": "未允许使用麦克风，因此此设备无法收听。",
-          "micSilent": "麦克风只传来静音。请检查它是否被静音，或在隐私设置中被关闭。",
+          "micSilent": "麦克风只传来静音。它可能被静音、在隐私设置中被关闭，或正被其他应用占用。",
           "batteryUnhealthy": "电池报告有问题。请勿让此设备无人看管地运行。",
           "batteryLowNotCharging": "电量低且未在充电。请将此设备接上充电器。",
           "noMailboxReachable": "无法连接到任何服务器。断线后，设备将无法重新找到彼此。",

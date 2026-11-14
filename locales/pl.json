@@ -148,7 +148,7 @@
           "notRecommended": "To urządzenie może monitorować zawodnie. Jeśli możesz, użyj innego.",
           "again": "Sprawdź ponownie",
           "micPermissionMissing": "Mikrofon nie jest dozwolony, więc to urządzenie nie może nasłuchiwać.",
-          "micSilent": "Mikrofon przekazuje tylko ciszę. Sprawdź, czy nie jest wyciszony ani wyłączony w ustawieniach prywatności.",
+          "micSilent": "Mikrofon przekazuje tylko ciszę. Może być wyciszony, wyłączony w ustawieniach prywatności lub używany przez inną aplikację.",
           "batteryUnhealthy": "Bateria zgłasza problem. Nie zostawiaj tego urządzenia włączonego bez nadzoru.",
           "batteryLowNotCharging": "Bateria jest słaba i nie jest ładowana. Podłącz to urządzenie do ładowarki.",
           "noMailboxReachable": "Nie udało się połączyć z żadnym serwerem. Po rozłączeniu urządzenia nie mogłyby się ponownie odnaleźć.",

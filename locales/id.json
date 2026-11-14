@@ -148,7 +148,7 @@
           "notRecommended": "Perangkat ini mungkin tidak memantau dengan andal. Gunakan perangkat lain jika bisa.",
           "again": "Periksa lagi",
           "micPermissionMissing": "Mikrofon tidak diizinkan, sehingga perangkat ini tidak dapat mendengarkan.",
-          "micSilent": "Mikrofon hanya mengirim keheningan. Periksa apakah mikrofon dibisukan atau dimatikan di pengaturan privasi.",
+          "micSilent": "Mikrofon hanya mengirim keheningan. Mungkin dibisukan, dimatikan di pengaturan privasi, atau sedang dipakai aplikasi lain.",
           "batteryUnhealthy": "Baterai melaporkan masalah. Jangan biarkan perangkat ini berjalan tanpa pengawasan.",
           "batteryLowNotCharging": "Baterai lemah dan tidak mengisi daya. Sambungkan perangkat ini ke pengisi daya.",
           "noMailboxReachable": "Tidak ada server yang dapat dijangkau. Setelah terputus, perangkat tidak dapat saling menemukan lagi.",

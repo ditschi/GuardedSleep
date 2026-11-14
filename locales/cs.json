@@ -148,7 +148,7 @@
           "notRecommended": "Toto zařízení nemusí sledovat spolehlivě. Pokud můžete, použijte jiné.",
           "again": "Zkontrolovat znovu",
           "micPermissionMissing": "Mikrofon není povolen, takže toto zařízení nemůže poslouchat.",
-          "micSilent": "Mikrofon dodává jen ticho. Zkontrolujte, zda není ztlumen nebo vypnut v nastavení soukromí.",
+          "micSilent": "Mikrofon dodává jen ticho. Může být ztlumen, vypnut v nastavení soukromí nebo ho používá jiná aplikace.",
           "batteryUnhealthy": "Baterie hlásí problém. Nenechávejte toto zařízení běžet bez dozoru.",
           "batteryLowNotCharging": "Baterie je slabá a nenabíjí se. Připojte toto zařízení k nabíječce.",
           "noMailboxReachable": "Žádný server nebyl dostupný. Po přerušení spojení by se zařízení už nenašla.",

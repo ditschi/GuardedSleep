@@ -148,7 +148,7 @@
           "notRecommended": "Es posible que este dispositivo no vigile de forma fiable. Use otro dispositivo si puede.",
           "again": "Comprobar de nuevo",
           "micPermissionMissing": "El micrófono no está permitido, así que este dispositivo no puede escuchar.",
-          "micSilent": "El micrófono solo entrega silencio. Comprueba que no esté silenciado ni desactivado en los ajustes de privacidad.",
+          "micSilent": "El micrófono solo entrega silencio. Puede estar silenciado, desactivado en los ajustes de privacidad o en uso por otra aplicación.",
           "batteryUnhealthy": "La batería indica un problema. No dejes este dispositivo funcionando sin vigilancia.",
           "batteryLowNotCharging": "La batería está baja y no se está cargando. Conecta este dispositivo al cargador.",
           "noMailboxReachable": "No se pudo alcanzar ningún servidor. Tras una desconexión, los dispositivos no podrían volver a encontrarse.",
