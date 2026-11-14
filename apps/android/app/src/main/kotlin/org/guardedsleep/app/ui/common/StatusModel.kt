@@ -89,6 +89,26 @@ fun StatusKind.assertive(): Boolean =
         else -> false
     }
 
+/** Red with the outage duration beside the words (level 2 and up). */
+fun StatusKind.loud(): Boolean =
+    when (this) {
+        StatusKind.COULDNT_CONNECT,
+        StatusKind.NO_CONNECTION,
+        StatusKind.STILL_NO_CONNECTION -> true
+        else -> false
+    }
+
+/** The symbol of the stage, so colour is never the only signal. */
+fun StatusKind.glyph(): Glyph =
+    when (this) {
+        StatusKind.CONNECTED -> Glyph.LINK
+        StatusKind.CONNECTING,
+        StatusKind.RECONNECTING -> Glyph.REFRESH
+        StatusKind.STOPPED,
+        StatusKind.IDLE -> Glyph.PAUSE
+        else -> Glyph.BROKEN_LINK
+    }
+
 /** The outage start on the elapsed clock; the last contact when the core sent no start. */
 fun LinkUi.outageStartElapsedMs(): Long? = downSinceElapsedMs ?: lastAliveElapsedMs
 

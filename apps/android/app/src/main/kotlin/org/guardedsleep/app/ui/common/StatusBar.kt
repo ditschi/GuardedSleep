@@ -51,20 +51,8 @@ fun StatusBar(
         if (kind == null) stringResource(R.string.native_ui_fgs_missing_bar)
         else statusHeadlineText(kind, link, name)
     val sub = kind?.let { statusSubLine(it) }
-    val glyph =
-        when (kind) {
-            null -> Glyph.BROKEN_LINK
-            StatusKind.CONNECTED -> Glyph.LINK
-            StatusKind.CONNECTING,
-            StatusKind.RECONNECTING -> Glyph.REFRESH
-            StatusKind.STOPPED,
-            StatusKind.IDLE -> Glyph.PAUSE
-            else -> Glyph.BROKEN_LINK
-        }
-    val loud =
-        kind == StatusKind.COULDNT_CONNECT ||
-            kind == StatusKind.NO_CONNECTION ||
-            kind == StatusKind.STILL_NO_CONNECTION
+    val glyph = kind?.glyph() ?: Glyph.BROKEN_LINK
+    val loud = kind?.loud() == true
     val safety = LocalSafetyColors.current
     val scheme = MaterialTheme.colorScheme
     val (bg, fg) =

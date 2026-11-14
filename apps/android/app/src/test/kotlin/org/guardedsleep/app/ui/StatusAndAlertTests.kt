@@ -21,6 +21,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import org.guardedsleep.app.ui.common.AlertStage
+import org.guardedsleep.app.ui.common.Glyph
 import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.common.MissedResult
 import org.guardedsleep.app.ui.common.RestoredCard
@@ -30,6 +31,8 @@ import org.guardedsleep.app.ui.common.alertStageOf
 import org.guardedsleep.app.ui.common.elapsedToWall
 import org.guardedsleep.app.ui.common.formatTime
 import org.guardedsleep.app.ui.common.missedResultOf
+import org.guardedsleep.app.ui.common.glyph
+import org.guardedsleep.app.ui.common.loud
 import org.guardedsleep.app.ui.common.statusKindOf
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.CauseHint
@@ -101,6 +104,21 @@ class StatusAndAlertTests : ShotBase() {
                 Connected to StatusKind.CONNECTED,
             )
         table.forEach { (l, kind) -> assertEquals(kind, statusKindOf(l)) }
+        // Red with a duration from level 2, and a symbol per stage.
+        val loud =
+            setOf(
+                StatusKind.COULDNT_CONNECT,
+                StatusKind.NO_CONNECTION,
+                StatusKind.STILL_NO_CONNECTION,
+            )
+        StatusKind.entries.forEach { assertEquals(it.toString(), it in loud, it.loud()) }
+        assertEquals(Glyph.LINK, StatusKind.CONNECTED.glyph())
+        assertEquals(Glyph.REFRESH, StatusKind.CONNECTING.glyph())
+        assertEquals(Glyph.REFRESH, StatusKind.RECONNECTING.glyph())
+        assertEquals(Glyph.PAUSE, StatusKind.STOPPED.glyph())
+        assertEquals(Glyph.PAUSE, StatusKind.IDLE.glyph())
+        assertEquals(Glyph.BROKEN_LINK, StatusKind.CANT_REACH.glyph())
+        assertEquals(Glyph.BROKEN_LINK, StatusKind.NO_CONNECTION.glyph())
     }
 
     @Test
