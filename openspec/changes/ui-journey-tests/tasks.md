@@ -11,7 +11,7 @@ Branch `test/ui-journey-tests` from `origin/main`; the pairing journeys need dit
 - [x] 2.0 Spike: a Robolectric test in `app` creates two real cores and pairs them; Gradle wiring for JNA and the host core in `app` tests. Abort criterion in design §1. Verify: the spike test passes in `just test`.
 - [x] 2.1 `ManualScheduler` (executor + clock) and seams for every executor in `LinkController` (core, `turnIo`, device check, any other). Verify: `LinkControllerTest` runs on it without sleeps.
 - [x] 2.2 `:test-fixtures` module: relay fake on the scheduler, fake media, `TestPhones` API with contract types only; `LinkControllerTest` migrated. Verify: `just test`; `app/src/test` imports no `uniffi.*`.
-- [ ] 2.3 Two-device host: two `ComposeView`s with `device_baby`/`device_parent` roots, step helpers advancing scheduler and Compose clock, per-journey timeout, `ShadowLog` PSK check in teardown. Verify: a smoke journey (both roles chosen) passes.
+- [x] 2.3 Two-device host: two `ComposeView`s with `device_baby`/`device_parent` roots, step helpers advancing scheduler and Compose clock, per-journey timeout, `ShadowLog` PSK check in teardown. Verify: a smoke journey (both roles chosen) passes.
 
 ## 3. Journeys and the writer check
 
