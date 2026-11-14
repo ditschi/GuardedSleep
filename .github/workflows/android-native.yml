@@ -1,6 +1,6 @@
 # Emulator gate for the native stack (ADR-015/019/020): `just gate` (scripts/poc/local-gate.sh) starts two
-# emulators, forces Doze and checks the alerts (AC-1 ... AC-4 [+AC-10]), then runs the AC-12 UI journey
-# with Maestro (two emulators pair through the real UI; gate-ui-journeys). It runs on PRs touching Android,
+# emulators, forces Doze and checks the alerts (AC-1 ... AC-4 [+AC-10]), and asserts the UI with Maestro
+# (AC-1/3/4; the AC-12 pairing journey of gate-ui-journeys is built but off, see its design §7). It runs on PRs touching Android,
 # the core, the signaling server or the gate scripts, nightly and on dispatch; it is required on release
 # builds (ADR-020 §9).
 #
@@ -99,7 +99,7 @@ env:
 
 jobs:
   gate:
-    name: emulator gate (AC-1 ... AC-4, AC-12 UI journey)
+    name: emulator gate (AC-1 ... AC-4, Maestro UI assertions)
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     permissions:
