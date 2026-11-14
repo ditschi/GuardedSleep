@@ -68,7 +68,7 @@ class FakeAppController(
         appFlow.value = appFlow.value.copy(defaultRole = role)
     }
 
-    override fun runDeviceCheck() {
+    override fun runDeviceCheck(force: Boolean) {
         calls += "runDeviceCheck"
     }
 

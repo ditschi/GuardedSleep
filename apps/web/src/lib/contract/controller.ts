@@ -50,8 +50,11 @@ export interface AppController {
   chooseRole(role: Role, makeDefault?: boolean): void;
   /** Back to the role screen without changing the start mode; no-op while monitoring. */
   switchMode(): void;
-  /** Baby: runs the device check in the background; the result lands in `AppState`. */
-  runDeviceCheck(): void;
+  /**
+   * Baby: runs the device check in the background; the result lands in `AppState`. A result
+   * younger than a minute is reused unless `force` ("Check again").
+   */
+  runDeviceCheck(force?: boolean): void;
   /** Sets the start mode: a role, or null for "Ask every time". */
   setDefaultRole(role: Role | null): void;
   /** Named connections (`multi-parent-pairings`): picks the connection of this session. */

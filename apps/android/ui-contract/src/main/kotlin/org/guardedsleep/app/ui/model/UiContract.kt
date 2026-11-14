@@ -512,8 +512,11 @@ interface AppController {
 
     fun completeOnboarding()
 
-    /** Baby: runs the device check in the background; the result lands in [AppState]. */
-    fun runDeviceCheck()
+    /**
+     * Baby: runs the device check in the background; the result lands in [AppState]. A result
+     * younger than a minute is reused (no new probes) unless [force] ("Check again").
+     */
+    fun runDeviceCheck(force: Boolean = false)
 
     fun startPairing()
 

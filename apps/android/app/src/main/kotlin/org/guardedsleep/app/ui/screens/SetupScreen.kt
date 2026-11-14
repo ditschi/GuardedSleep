@@ -135,7 +135,7 @@ fun SetupScreen(controller: AppController, role: Role, onboarding: Boolean, onBa
         deviceCheck = app.deviceCheck,
         deviceCheckReasons = app.deviceCheckReasons,
         deviceCheckMailboxes = app.deviceCheckMailboxes,
-        onDeviceCheckAgain = { controller.runDeviceCheck() },
+        onDeviceCheckAgain = { controller.runDeviceCheck(force = true) },
         talkBack = controller.settings.collectAsState().value.talkBackEnabled,
         onTalkBack = { on -> controller.updateSettings { it.copy(talkBackEnabled = on) } },
         onAction = onAction,

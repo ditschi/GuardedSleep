@@ -109,6 +109,7 @@ class LinkController(
     private var deviceCheckGen = 0
     private var deviceCheckResult: DeviceCheckResult? = null
     private var deviceCheckInFlight = false
+    private var deviceCheckAtMs = 0L
     private val appLock = Any()
     private val deviceCheckIo = Executors.newSingleThreadExecutor { r ->
         Thread(r, "gs-device-check").apply { isDaemon = true }
@@ -552,11 +553,18 @@ class LinkController(
         }
     }
 
-    override fun runDeviceCheck() {
+    override fun runDeviceCheck(force: Boolean) {
         val checker = deviceChecker ?: return
         if (settingsRepo.current.role != Role.BABY) return
         val gen =
             synchronized(deviceCheckLock) {
+                // Resuming the screen must not restart a check or flicker "Checking...".
+                if (!force) {
+                    val fresh =
+                        deviceCheckResult != null &&
+                            clock.elapsedMs() - deviceCheckAtMs < DEVICE_CHECK_REUSE_MS
+                    if (fresh || deviceCheckInFlight) return
+                }
                 deviceCheckGen++
                 deviceCheckResult = null
                 deviceCheckInFlight = true
@@ -575,6 +583,7 @@ class LinkController(
                     (deviceCheckGen == gen).also {
                         if (it) {
                             deviceCheckResult = result
+                            deviceCheckAtMs = clock.elapsedMs()
                             deviceCheckInFlight = false
                         }
                     }
@@ -1238,6 +1247,9 @@ class LinkController(
 
     private companion object {
         const val UNREACHABLE_AFTER_MS = 20_000L
+
+        /** A device check result this young is shown again instead of probing anew. */
+        const val DEVICE_CHECK_REUSE_MS = 60_000L
 
         /** The project server's host as the core's `only_local` rule compares it. */
         val PROJECT_HOST: String = PublicLists.projectServer.host.lowercase()

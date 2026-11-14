@@ -429,6 +429,7 @@ class LinkControllerTest {
         pairings: RolePairings? = null,
         talkGate: TalkGate = TalkGate.Open,
         deviceChecker: DeviceChecker? = null,
+        clock: Clock = RealClock(),
     ): Unit2 {
         val dir = tmp.newFolder(name)
         val settings = settings ?: testSettings(dir)
@@ -468,7 +469,7 @@ class LinkControllerTest {
 
                         override fun stop() = Unit
                     },
-                clock = RealClock(),
+                clock = clock,
                 random = SecureRandom(),
                 deviceName = { deviceName },
                 talkGate = talkGate,
@@ -901,7 +902,7 @@ class LinkControllerTest {
         env.reachableByCall = listOf(false, true)
         baby.controller.runDeviceCheck()
         await("first probe started") { env.probed.size == 1 }
-        baby.controller.runDeviceCheck()
+        baby.controller.runDeviceCheck(force = true)
         env.gate!!.countDown()
         await("the newer result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
         Thread.sleep(200)
@@ -941,6 +942,38 @@ class LinkControllerTest {
         assertEquals(1, env.micSamples.get())
         assertEquals(listOf("wss://own.example"), env.probed.toList())
         assertEquals("own.example", baby.controller.app.value.deviceCheckMailboxes[0].host)
+    }
+
+    @Test
+    fun aFreshResultIsReusedAndCheckAgainForcesANewOne() {
+        val env = FakeDeviceEnv()
+        val clock = FakeClock()
+        val baby = unit("dc-reuse", Role.BABY, deviceChecker = DeviceChecker(env), clock = clock)
+        baby.controller.runDeviceCheck()
+        await("the result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+        assertEquals(1, env.probed.size)
+
+        // A resume right after: no new probes and no "Checking..." state.
+        clock.advance(59_000)
+        baby.controller.runDeviceCheck()
+        assertEquals(DeviceCheck.OK, baby.controller.app.value.deviceCheck)
+        assertEquals(1, env.probed.size)
+
+        // "Check again" forces one.
+        baby.controller.runDeviceCheck(force = true)
+        await("the forced probe") { env.probed.size == 2 }
+        await("the forced result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+
+        // An old result is checked anew; an invalidation (role change) clears it.
+        clock.advance(61_000)
+        baby.controller.runDeviceCheck()
+        await("the aged probe") { env.probed.size == 3 }
+        await("the aged result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+        baby.controller.chooseRole(Role.PARENT)
+        baby.controller.chooseRole(Role.BABY)
+        assertEquals(DeviceCheck.UNKNOWN, baby.controller.app.value.deviceCheck)
+        baby.controller.runDeviceCheck()
+        await("the check after the invalidation") { env.probed.size == 4 }
     }
 
     @Test
