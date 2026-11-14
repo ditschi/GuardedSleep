@@ -1,0 +1,22 @@
+# AC-12 step 4 (parent): the test alert chain over the verified link, then back to the monitor.
+appId: org.guardedsleep.app.alpha
+---
+- runFlow: dismiss-system-dialogs.yaml
+- tapOn:
+    id: "parent_probe"
+- tapOn:
+    id: "sheet_probe_run"
+- extendedWaitUntil:
+    visible:
+      id: "alert_test_badge"
+    timeout: 20000
+- tapOn:
+    id: "alert_stop_sound"
+- tapOn:
+    id: "alert_open_app"
+- extendedWaitUntil:
+    visible:
+      id: "sheet_probe_question"
+    timeout: 20000
+- tapOn:
+    id: "sheet_probe_yes"

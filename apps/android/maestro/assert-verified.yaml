@@ -2,6 +2,9 @@
 # Stable IDs only, never copy (ADR-016); ids from docs/technical/alpha-ux-flows.md §4.
 appId: org.guardedsleep.app.alpha
 ---
+# DebugLaunchActivity only starts the service; bring the app's own screen to the front without restarting it.
+- launchApp:
+    stopApp: false
 - extendedWaitUntil:
     visible:
       id: "parent_ambient_bar"

@@ -22,6 +22,9 @@ env:
   # A missing Docker/KVM/SDK fails the job instead of printing SKIPPED.
   GS_STRICT: "1"
   CORE_BUILD_NATIVE: "1"
+  # Maestro (about 350 MB) drives only the emulator gate (android-native.yml); no job here needs it.
+  # https://mise.jdx.dev/configuration/settings.html#disable_tools
+  MISE_DISABLE_TOOLS: maestro
 
 jobs:
   changes:

@@ -20,6 +20,7 @@ Use this checklist when merging a **Release Please** release PR or tagging a mil
 
 ## 1. Preconditions
 
+- [ ] A **strict emulator gate run** (`GS_STRICT=1`, with the Maestro UI assertions; the AC-12 pairing journey once enabled) is green on the tagged commit (`gate-ui-journeys`; automating this check belongs to `add-android-release`).
 - [ ] CI green on the release commit (`pre-commit`, `test-and-build`, `e2e-browser`).
 - [ ] Debug or release APK built from the same commit (`just build-android`).
 - [ ] **Two physical Android devices** (or one phone + one tablet) on the same Wi‑Fi, or phone + laptop browser only for a reduced smoke (see §6).

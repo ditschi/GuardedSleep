@@ -44,6 +44,11 @@ taplo = "0.10.0"
 # https://github.com/Fission-AI/OpenSpec and https://mise.jdx.dev/dev-tools/backends/npm.html
 "npm:@fission-ai/openspec" = "1.14.3"
 
+# Maestro UI flows for the emulator gate (apps/android/maestro, scripts/poc/gate.sh). One platform-independent zip
+# (JVM, needs Java 17+); tags are `cli-<version>`, the `github:` backend strips the prefix when `version_prefix` matches.
+# gate-ui-journeys, owner 2026-11-14. https://docs.maestro.dev/ and https://mise.jdx.dev/dev-tools/backends/github.html
+maestro = { version = "2.12.1", version_prefix = "cli-" }
+
 # ktfmt is a jar, not a binary: the http backend only downloads it, and scripts/lib/ktfmt.sh runs it with
 # `java -jar`. https://mise.jdx.dev/dev-tools/backends/http.html
 # Maven Central: https://repo1.maven.org/maven2/com/facebook/ktfmt/
@@ -55,6 +60,12 @@ taplo = "0.10.0"
 # of @fission-ai/openspec 1.14.3, https://github.com/Fission-AI/OpenSpec#telemetry
 OPENSPEC_TELEMETRY = "0"
 OPENSPEC_NO_UPDATE_CHECK = "1"
+# Maestro sends anonymous analytics and checks for updates by default; both are off (AGENTS.md §7.5).
+# Opt-outs read by maestro-cli 2.12.1: https://docs.maestro.dev/getting-started/installing-maestro
+# (names verified in the maestro-cli-2.12.1 jar). Heap cap for the gate run: scripts/poc/local-gate.sh (MAESTRO_OPTS).
+MAESTRO_CLI_NO_ANALYTICS = "1"
+MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED = "true"
+MAESTRO_DISABLE_UPDATE_CHECK = "true"
 
 [settings]
 # Write mise.lock with checksums. https://mise.jdx.dev/dev-tools/mise-lock.html

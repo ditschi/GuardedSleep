@@ -1,0 +1,112 @@
+# AC-12 step 1 (both devices): fresh app, onboarding, then the gate's own relay and TURN through
+# Settings -> Advanced (design: gate-ui-journeys §2). Env: ROLE_TAG (role_baby|role_parent), RELAY,
+# TURN, TURN_USER, TURN_PASS. Ids only, never copy text (ADR-016).
+# Debug builds start with the project server in the relay list: the flow removes it, so the invite
+# the baby shows carries only the gate's relay.
+appId: org.guardedsleep.app.alpha
+---
+- launchApp:
+    clearState: true
+- runFlow: dismiss-system-dialogs.yaml
+# A slow emulator may raise the dialog while the app starts: look, dismiss, look again.
+- retry:
+    maxRetries: 4
+    commands:
+      - runFlow: dismiss-system-dialogs.yaml
+      - extendedWaitUntil:
+          visible:
+            id: "role_baby|role_parent"
+          timeout: 15000
+- tapOn:
+    id: "${ROLE_TAG}"
+# The checklist scrolls; Continue is below the fold on a phone.
+- scrollUntilVisible:
+    element:
+      id: "setup_continue"
+    visibilityPercentage: 50
+    timeout: 20000
+- tapOn:
+    id: "setup_continue"
+# Finishing onboarding opens the pairing screen with the default relay: leave it before an invite is
+# made (baby) and before the parent starts scanning.
+- extendedWaitUntil:
+    visible:
+      id: "baby_pair_cancel|parent_pair_cancel"
+    timeout: 15000
+- tapOn:
+    id: "baby_pair_cancel|parent_pair_cancel"
+- tapOn:
+    id: "home_settings"
+- scrollUntilVisible:
+    element:
+      id: "settings_advanced_toggle"
+    visibilityPercentage: 50
+- tapOn:
+    id: "settings_advanced_toggle"
+# The in-app warning, not a system dialog.
+- tapOn:
+    id: "dialog_advanced_confirm"
+- scrollUntilVisible:
+    element:
+      id: "settings_url_remove_0"
+    visibilityPercentage: 50
+- tapOn:
+    id: "settings_url_remove_0"
+- tapOn:
+    id: "settings_url_new"
+- inputText: "${RELAY}"
+- hideKeyboard
+- tapOn:
+    id: "settings_url_add"
+- assertVisible:
+    id: "settings_url_0"
+- assertNotVisible:
+    id: "settings_url_1"
+- scrollUntilVisible:
+    element:
+      id: "settings_turn"
+    visibilityPercentage: 50
+- tapOn:
+    id: "settings_turn"
+- inputText: "${TURN}"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "settings_turn_user"
+    visibilityPercentage: 50
+- tapOn:
+    id: "settings_turn_user"
+- inputText: "${TURN_USER}"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "settings_turn_pass"
+    visibilityPercentage: 50
+- tapOn:
+    id: "settings_turn_pass"
+- inputText: "${TURN_PASS}"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "settings_turn_save"
+    visibilityPercentage: 50
+- tapOn:
+    id: "settings_turn_save"
+- scrollUntilVisible:
+    element:
+      id: "settings_back"
+    direction: UP
+    speed: 95
+    timeout: 60000
+    visibilityPercentage: 50
+# The first tap can land while the list still settles; the retry taps again only if Settings is still there.
+- retry:
+    maxRetries: 3
+    commands:
+      - tapOn:
+          id: "settings_back"
+          optional: true
+      - extendedWaitUntil:
+          visible:
+            id: "home_title"
+          timeout: 4000
