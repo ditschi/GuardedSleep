@@ -425,6 +425,7 @@
         "makeDefault": "Gør til standard",
         "autoConnect": "Opret forbindelse automatisk, når appen åbnes",
         "removeDefault": "Fjern standard",
+        "chooseAnother": "Vælg en anden forbindelse",
         "rename": "Omdøb",
         "renameTitle": "Omdøb forbindelsen",
         "nameLabel": "Navn (1–30 tegn, bliver på denne telefon)",

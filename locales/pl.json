@@ -425,6 +425,7 @@
         "makeDefault": "Ustaw jako domyślne",
         "autoConnect": "Łącz automatycznie po otwarciu aplikacji",
         "removeDefault": "Usuń domyślne",
+        "chooseAnother": "Wybierz inne połączenie",
         "rename": "Zmień nazwę",
         "renameTitle": "Zmień nazwę połączenia",
         "nameLabel": "Nazwa (1–30 znaków, zostaje na tym telefonie)",

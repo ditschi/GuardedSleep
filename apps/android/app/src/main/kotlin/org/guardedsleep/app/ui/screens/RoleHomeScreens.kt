@@ -113,6 +113,9 @@ fun HomeScreen(
     /** True once the parent's empty home opened the scan screen for this entry. */
     autoScanned: Boolean = true,
     onAutoScanned: () -> Unit = {},
+    /** "Choose another connection" just stopped monitoring: open with the list expanded. */
+    listRequested: Boolean = false,
+    onListShown: () -> Unit = {},
 ) {
     val app = controller.app.collectAsState().value
     val isParent = app.role == Role.PARENT
@@ -125,7 +128,13 @@ fun HomeScreen(
         }
     }
     val name = customPeerName(app.peerName)
-    var choosing by remember { mutableStateOf(false) }
+    var choosing by remember { mutableStateOf(listRequested) }
+    LaunchedEffect(listRequested) {
+        if (listRequested) {
+            choosing = true
+            onListShown()
+        }
+    }
     ScreenRoot("home") {
         ScrollColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {

@@ -88,6 +88,7 @@ enum class ParentSheet {
     HELP,
     MORE,
     STOP,
+    CHOOSE_OTHER,
 }
 
 private class ChipSpec(
@@ -109,6 +110,8 @@ fun ParentMonitorScreen(
     controller: AppController,
     onSettings: () -> Unit,
     initialSheet: ParentSheet? = null,
+    /** After "Choose another connection": the caller asks the home to list the connections. */
+    onChosenOther: () -> Unit = {},
 ) {
     val p = controller.parent.collectAsState().value
     val app = controller.app.collectAsState().value
@@ -119,6 +122,12 @@ fun ParentMonitorScreen(
     var sheet by remember { mutableStateOf(initialSheet) }
     var expandChips by remember { mutableStateOf(false) }
     val connected = p.link.phase == LinkPhase.CONNECTED
+    // Verified once in this session: the link has had contact with the baby unit.
+    val verified = connected || p.link.lastAliveElapsedMs != null
+    val chooseOther = {
+        controller.chooseAnotherConnection()
+        onChosenOther()
+    }
     val snoozeLeft = (p.snoozedUntilWallMs ?: 0L) - wall
     val snoozed = snoozeLeft > 0
     val acknowledged = (p.link.acknowledgedUntilElapsedMs ?: 0L) > elapsed
@@ -240,6 +249,15 @@ fun ParentMonitorScreen(
             live = connected,
             alarm = p.noiseAlertActive && !snoozed,
         )
+        if (app.autoStarted && !verified) {
+            // Wrong place (travelling): one tap, no confirmation, while nothing is verified yet.
+            SecondaryButton(
+                stringResource(R.string.native_ui_connections_choose_another),
+                chooseOther,
+                "parent_choose_other_connection",
+                Modifier.fillMaxWidth(),
+            )
+        }
         if (p.link.phase == LinkPhase.FAILED_NEEDS_USER) {
             PrimaryButton(
                 stringResource(R.string.native_ui_link_pair_again),
@@ -434,6 +452,15 @@ fun ParentMonitorScreen(
                         "parent_settings",
                         Modifier.fillMaxWidth(),
                     )
+                    if (app.autoStarted && verified) {
+                        Spacer(Modifier.height(8.dp))
+                        SecondaryButton(
+                            stringResource(R.string.native_ui_connections_choose_another),
+                            { sheet = ParentSheet.CHOOSE_OTHER },
+                            "menu_choose_other_connection",
+                            Modifier.fillMaxWidth(),
+                        )
+                    }
                     Spacer(Modifier.height(16.dp))
                     SecondaryButton(
                         stringResource(R.string.native_ui_parent_stop),
@@ -457,6 +484,23 @@ fun ParentMonitorScreen(
                     onConfirm = {
                         sheet = null
                         controller.stopMonitoring()
+                    },
+                    onDismiss = { sheet = null },
+                )
+            ParentSheet.CHOOSE_OTHER ->
+                ConfirmDialog(
+                    tag = "dialog_choose_other",
+                    title = stringResource(R.string.native_ui_stop_title),
+                    body =
+                        if (name != null) stringResource(R.string.native_ui_stop_parent_body, name)
+                        else stringResource(R.string.native_ui_stop_parent_body_default),
+                    confirmText = stringResource(R.string.native_ui_stop_confirm),
+                    cancelText = stringResource(R.string.native_ui_stop_cancel),
+                    confirmTag = "dialog_choose_other_confirm",
+                    cancelTag = "dialog_choose_other_cancel",
+                    onConfirm = {
+                        sheet = null
+                        chooseOther()
                     },
                     onDismiss = { sheet = null },
                 )

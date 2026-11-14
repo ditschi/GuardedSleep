@@ -425,6 +425,7 @@
         "makeDefault": "设为默认",
         "autoConnect": "打开应用时自动连接",
         "removeDefault": "取消默认",
+        "chooseAnother": "选择其他连接",
         "rename": "重命名",
         "renameTitle": "重命名连接",
         "nameLabel": "名称（1–30 个字符，仅保存在本机）",

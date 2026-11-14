@@ -425,6 +425,7 @@
         "makeDefault": "Establecer como predeterminada",
         "autoConnect": "Conectar automáticamente al abrir la app",
         "removeDefault": "Quitar predeterminada",
+        "chooseAnother": "Elegir otra conexión",
         "rename": "Cambiar nombre",
         "renameTitle": "Cambiar nombre de la conexión",
         "nameLabel": "Nombre (de 1 a 30 caracteres, se queda en este teléfono)",

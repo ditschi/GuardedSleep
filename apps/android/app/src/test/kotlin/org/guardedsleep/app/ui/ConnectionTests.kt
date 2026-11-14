@@ -20,6 +20,8 @@ import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.common.limitName
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.ConnectionUi
+import org.guardedsleep.app.ui.model.LinkPhase
+import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.Theme
 import org.guardedsleep.app.ui.screens.HomeScreen
@@ -134,6 +136,39 @@ class ConnectionTests : ShotBase() {
         waitForIdle()
         onNodeWithTag("home_empty").assertIsDisplayed()
         assertEquals(listOf("startPairing", "cancelPairing"), c.calls)
+    }
+
+    private fun autoStartedRoot(parent: ParentMonitorState) =
+        FakeAppController(
+            app = two.copy(monitoring = true, autoStarted = true, canAddPairing = false),
+            parent = parent,
+        )
+
+    @Test
+    fun chooseAnotherIsAButtonBeforeVerifyAndLandsOnTheList() = runComposeUiTest {
+        val c = autoStartedRoot(ParentMonitorState(link = link(LinkPhase.CONNECTING)))
+        setContent { CompositionLocalProvider(LocalUiEnv provides TestEnv) { GuardedSleepRoot(c) } }
+        onNodeWithTag("menu_choose_other_connection").assertDoesNotExist()
+        onNodeWithTag("parent_choose_other_connection").performScrollTo().performClick()
+        assertEquals("chooseAnotherConnection", c.calls.last())
+        waitForIdle()
+        onNodeWithTag("home_connection_list").performScrollTo().assertIsDisplayed()
+        onNodeWithTag("connection_choice_2").assertExists()
+    }
+
+    @Test
+    fun chooseAnotherIsAMenuEntryWithConfirmationAfterVerify() = runComposeUiTest {
+        val c = autoStartedRoot(ParentMonitorState(link = Connected))
+        setContent { CompositionLocalProvider(LocalUiEnv provides TestEnv) { GuardedSleepRoot(c) } }
+        onNodeWithTag("parent_choose_other_connection").assertDoesNotExist()
+        onNodeWithTag("parent_overflow").performClick()
+        onNodeWithTag("menu_choose_other_connection").performClick()
+        onNodeWithTag("dialog_choose_other").assertIsDisplayed()
+        assertEquals(emptyList<String>(), c.calls)
+        onNodeWithTag("dialog_choose_other_confirm").performClick()
+        assertEquals("chooseAnotherConnection", c.calls.last())
+        waitForIdle()
+        onNodeWithTag("home_connection_list").performScrollTo().assertIsDisplayed()
     }
 
     @Test
