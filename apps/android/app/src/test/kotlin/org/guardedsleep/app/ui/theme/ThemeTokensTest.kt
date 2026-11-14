@@ -67,10 +67,7 @@ class ThemeTokensTest {
     fun monitorTextReachesSevenInEveryScheme() {
         for (scheme in AppScheme.entries) {
             val cs = scheme.colorScheme()
-            // Ember text is 6.97:1 on the card surface (mockup values); night mode only promises
-            // 4.5:1 (`ui-appearance` "Night mode"), so it is held to 7:1 on the background only.
-            val surfaces = if (scheme == AppScheme.EMBER) listOf(cs.background) else cs.surfaces()
-            for (surface in surfaces) {
+            for (surface in cs.surfaces()) {
                 assertTrue("$scheme onSurface", contrast(cs.onSurface, surface) >= 7.0)
             }
         }

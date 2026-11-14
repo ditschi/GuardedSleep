@@ -174,13 +174,9 @@ describe("colour scheme tokens", () => {
     expect(contrast(t.get("--gs-primary")!, t.get("--gs-surface")!)).toBeGreaterThan(4.5);
   });
 
-  // Ember's text token is 6.97:1 on the card surface (mockup values); night mode only promises
-  // 4.5:1 (`ui-appearance` "Night mode"), so it is held to 7:1 on the page background only.
   it.each(schemes)("%s: monitor text reaches 7:1", (scheme) => {
     const t = tokens(`:root[data-scheme="${scheme}"]`);
-    const surfaces =
-      scheme === "ember" ? ["--gs-bg"] : ["--gs-bg", "--gs-surface", "--gs-surface-variant"];
-    for (const surface of surfaces) {
+    for (const surface of ["--gs-bg", "--gs-surface", "--gs-surface-variant"]) {
       expect(contrast(t.get("--gs-on-bg")!, t.get(surface)!), surface).toBeGreaterThanOrEqual(7);
     }
   });

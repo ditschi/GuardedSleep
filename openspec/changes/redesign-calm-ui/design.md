@@ -90,7 +90,7 @@ The full EN/DE copy, including every step, is in the mockup's copy table; ★ ma
 
 ### 5. Night mode
 
-- **Option A — Ember, manual, Off by default, Off · On · Automatic with a time window** (frames 05, 07, 21, 35, 49): Ember is a red-shifted scheme on black (text `#C98A7A`, variant `#A87365` at 5.0:1, outline `#9A5E50` at 3.6:1); dimness comes from the backlight, not from low contrast. One control in the monitor's More sheet, the monitor tool row and Settings › Display; a manual change wins until the next automatic change. Alerts, the status bar from the orange stage on, warning banners, grey and red bar states and safety chips keep the fixed Dusk safety palette.
+- **Option A — Ember, manual, Off by default, Off · On · Automatic with a time window** (frames 05, 07, 21, 35, 49): Ember is a red-shifted scheme on black (text `#D19586` at 7.9:1 on cards, variant `#A87365` at 5.0:1, outline `#9A5E50` at 3.6:1); dimness comes from the backlight, not from low contrast. One control in the monitor's More sheet, the monitor tool row and Settings › Display; a manual change wins until the next automatic change. Alerts, the status bar from the orange stage on, warning banners, grey and red bar states and safety chips keep the fixed Dusk safety palette.
   - Pros: owner request; safety signals never blend into the red-tinted UI; no sensor permission; predictable.
   - Cons: the time window needs a platform schedule (presentation only, not safety logic); a third scheme to test.
 - **Option B — Automatic by ambient light sensor.**

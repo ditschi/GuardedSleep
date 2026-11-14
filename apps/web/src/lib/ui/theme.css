@@ -252,7 +252,7 @@
     --gs-surface-low: #0a0505;
     --gs-surface-variant: #180b0a;
     --gs-surface-highest: #200f0d;
-    --gs-on-bg: #c98a7a;
+    --gs-on-bg: #d19586;
     --gs-on-surface-variant: #a87365;
     --gs-outline: #9a5e50;
     --gs-border: #2e1714;
@@ -273,7 +273,7 @@
     --gs-warn: #d07a44;
     --gs-bad: #e06a5e;
     --gs-chip: #180b0a;
-    --gs-on-chip: #c98a7a;
+    --gs-on-chip: #d19586;
     --gs-focus: #d08a6c;
   }
 

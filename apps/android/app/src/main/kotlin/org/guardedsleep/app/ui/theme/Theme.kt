@@ -227,9 +227,9 @@ internal val EmberScheme =
         tertiaryContainer = Color(0xFF2E140D),
         onTertiaryContainer = Color(0xFFE8B19A),
         background = Color(0xFF000000),
-        onBackground = Color(0xFFC98A7A),
+        onBackground = Color(0xFFD19586),
         surface = Color(0xFF000000),
-        onSurface = Color(0xFFC98A7A),
+        onSurface = Color(0xFFD19586),
         surfaceVariant = Color(0xFF180B0A),
         onSurfaceVariant = Color(0xFFA87365),
         surfaceContainerLow = Color(0xFF0A0505),
@@ -269,7 +269,7 @@ private val EmberApp =
         warn = Color(0xFFD07A44),
         bad = Color(0xFFE06A5E),
         neutralChip = Color(0xFF180B0A),
-        onNeutralChip = Color(0xFFC98A7A),
+        onNeutralChip = Color(0xFFD19586),
         secondaryText = Color(0xFFA87365),
     )
 
