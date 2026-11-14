@@ -3,10 +3,12 @@
  * properties from tokens.json. The values mirror the Compose theme (Theme.kt) so both clients read
  * as one product.
  *
- * Themes are selected with <html data-theme="dark|light|dim">; theme-boot.js sets it before first
- * paint. `dark` is the default, `dim` is the baby device while monitoring (near-black, low contrast
- * on purpose, no saturated fills). light-dark() picks the value for the active color-scheme:
- * https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/light-dark
+ * Colour schemes are selected with <html data-scheme="dusk|day|ember"> (redesign-calm-ui design
+ * section 10); theme-boot.js sets it before first paint. Dusk is the default and also applies when
+ * the attribute is missing. data-theme stays as the applied-theme marker (`dim` is the baby device
+ * while monitoring: near-black, low contrast on purpose, no saturated fills) and overrides the scheme
+ * tokens. The `--safety-*` custom properties are defined once on :root and no scheme or theme may
+ * override them. Values mirror the Compose theme (Theme.kt) and mockup/gen_css.py.
  */
 @layer reset, tokens, base, components;
 
@@ -50,40 +52,8 @@
 
 @layer tokens {
   :root {
-    color-scheme: dark;
-
-    /* Surfaces and text (Material-3-like roles). */
-    --gs-bg: light-dark(#f7f7f4, #0e1013);
-    --gs-surface: light-dark(#ffffff, #16191e);
-    --gs-surface-variant: light-dark(#e8eaee, #22262c);
-    --gs-on-bg: light-dark(#14181c, #e6e8eb);
-    --gs-on-surface-variant: light-dark(#454c55, #b4bac2);
-    --gs-outline: light-dark(#6b727b, #7d858f);
-    --gs-scrim: rgb(0 0 0 / 0.6);
-
-    /* Actions. */
-    --gs-primary: light-dark(#1f4fa3, #8fb8ff);
-    --gs-on-primary: light-dark(#ffffff, #00214d);
-    --gs-primary-container: light-dark(#d6e3ff, #1e3a66);
-    --gs-on-primary-container: light-dark(#001b3e, #ffffff);
-    /* Talk-back: its own colour, neither listen's primary nor an alarm red (design section 9). */
-    --gs-tertiary: light-dark(#00695c, #6fd8c8);
-    --gs-on-tertiary: light-dark(#ffffff, #00201b);
-    --gs-tertiary-container: light-dark(#bdece3, #0a3a33);
-    --gs-on-tertiary-container: light-dark(#00201b, #ffffff);
-    --gs-error: light-dark(#b3261e, #ff8a80);
-    --gs-on-error: light-dark(#ffffff, #3b0000);
-
-    /* Text-level status colours (on the page background). */
-    --gs-ok: light-dark(#136b3a, #63d18b);
-    --gs-warn: light-dark(#7a5200, #ffc94d);
-    --gs-bad: light-dark(#b3261e, #ff8a80);
-    --gs-chip: light-dark(#e3e6eb, #262b32);
-    --gs-on-chip: light-dark(#14181c, #e6e8eb);
-
     /* State fills: the same in every theme so a colour always means the same. */
     --gs-state-green: #1b5e3a;
-    --gs-state-yellow: #7a5c00;
     --gs-state-orange: #8a3f00;
     --gs-state-red: #8e1b1b;
     --gs-state-grey: #3a3f47;
@@ -102,12 +72,9 @@
     --gs-alert-border: rgb(255 217 217 / 0.4);
 
     /* Borders, role cards, camera box and the pairing code. */
-    --gs-border: light-dark(#c7ccd4, #2c343f);
-    --gs-role-baby-bg: light-dark(#f6e9c9, #2a2417);
-    --gs-role-baby-fg: light-dark(#7a5200, #f2c66d);
     --gs-role-parent-bg: var(--gs-primary-container);
     --gs-role-parent-fg: var(--gs-primary);
-    --gs-camera-bg: light-dark(#0b0d11, #07090c);
+    --gs-camera-bg: #07090c;
     --gs-on-camera: #e8ecf1;
     /* The code is shown light on dark ("inverted") at about 45 % brightness; "Make code
        brighter" switches to the bright value. */
@@ -128,19 +95,166 @@
     --gs-space-6: 2rem;
     --gs-target: 3rem; /* 48 dp */
     --gs-target-large: 4.5rem; /* 72 dp, primary actions */
-    --gs-focus: light-dark(#1f4fa3, #8fb8ff);
     --gs-font:
       system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
     --gs-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     --gs-duration: 160ms;
   }
 
-  :root[data-theme="light"] {
-    color-scheme: light;
+  /* Safety roles and full-screen alert palettes: fixed, never themed (ui-appearance "Fixed safety
+     colours"). No [data-scheme] or [data-theme] rule below may set a --safety-* property. */
+  :root {
+    --safety-info: #a9c6ea;
+    --safety-info-container: #1e2a38;
+    --safety-on-info: #0f2540;
+    --safety-warn: #f0a774;
+    --safety-warn-container: #3e2719;
+    --safety-alert: #ff948a;
+    --safety-alert-container: #4a1b1c;
+    --safety-caution: #e3c978;
+    --safety-caution-container: #363019;
+    --safety-ok: #86cfa6;
+    --safety-ok-container: #1b2f26;
+
+    --safety-noise-bg: #250a10;
+    --safety-noise-surface: #35111a;
+    --safety-noise-on: #fff0ee;
+    --safety-noise-on-variant: #f2c6c0;
+    --safety-noise-accent: #ff948a;
+    --safety-noise-slab: #7a1e30;
+    --safety-noise-on-slab: #ffeae7;
+    --safety-noise-slab-border: #ff948a;
+
+    --safety-lost-bg: #2a0709;
+    --safety-lost-surface: #3b0b0e;
+    --safety-lost-on: #fff0ee;
+    --safety-lost-on-variant: #f7c6c0;
+    --safety-lost-accent: #ff948a;
+    --safety-lost-slab: #8c1d24;
+    --safety-lost-on-slab: #ffe9e6;
+    --safety-lost-slab-border: #ff948a;
+
+    --safety-alarm-bg: #3a080b;
+    --safety-alarm-surface: #4d0c10;
+    --safety-alarm-on: #fff3f1;
+    --safety-alarm-on-variant: #ffcfc9;
+    --safety-alarm-accent: #ffa198;
+    --safety-alarm-slab: #951e27;
+    --safety-alarm-on-slab: #fff1ef;
+    --safety-alarm-slab-border: #ffb4ab;
+
+    --safety-battery-bg: #1f1209;
+    --safety-battery-surface: #2e1c0f;
+    --safety-battery-on: #fff3ea;
+    --safety-battery-on-variant: #f5d2bb;
+    --safety-battery-accent: #f0a774;
+    --safety-battery-slab: #7a3d12;
+    --safety-battery-on-slab: #ffe9d8;
+    --safety-battery-slab-border: #f0a774;
   }
 
-  :root[data-theme="dark"] {
+  /* Dusk: dark, the default (also without the attribute). */
+  :root,
+  :root[data-scheme="dusk"] {
     color-scheme: dark;
+    --gs-bg: #141218;
+    --gs-surface: #211e27;
+    --gs-surface-low: #1a1820;
+    --gs-surface-variant: #29262f;
+    --gs-surface-highest: #322e39;
+    --gs-on-bg: #ece6ef;
+    --gs-on-surface-variant: #beb6c4;
+    --gs-outline: #8b8393;
+    --gs-border: #3b3642;
+    --gs-scrim: rgb(8 6 12 / 0.62);
+    --gs-primary: #c9bceb;
+    --gs-on-primary: #2a2148;
+    --gs-primary-container: #3a3354;
+    --gs-on-primary-container: #e7e0fa;
+    --gs-secondary-container: #3b3446;
+    --gs-on-secondary-container: #e4dcef;
+    /* Talk-back: its own colour, neither listen's primary nor an alarm red (design section 9). */
+    --gs-tertiary: #6fd8c8;
+    --gs-on-tertiary: #00201b;
+    --gs-tertiary-container: #0a3a33;
+    --gs-on-tertiary-container: #ffffff;
+    --gs-error: #ff948a;
+    --gs-on-error: #3b0000;
+    /* Text-level status colours (on the page background). */
+    --gs-ok: #86cfa6;
+    --gs-warn: #f0a774;
+    --gs-bad: #ff948a;
+    --gs-chip: #29262f;
+    --gs-on-chip: #ece6ef;
+    --gs-role-baby-bg: var(--gs-secondary-container);
+    --gs-role-baby-fg: var(--gs-on-secondary-container);
+    --gs-focus: #c9bceb;
+  }
+
+  :root[data-scheme="day"] {
+    color-scheme: light;
+    --gs-bg: #faf7f4;
+    --gs-surface: #ffffff;
+    --gs-surface-low: #f3eeee;
+    --gs-surface-variant: #efe9ec;
+    --gs-surface-highest: #e5dee4;
+    --gs-on-bg: #1f1b23;
+    --gs-on-surface-variant: #4f4756;
+    --gs-outline: #7f7588;
+    --gs-border: #ddd3dd;
+    --gs-scrim: rgb(31 27 35 / 0.32);
+    --gs-primary: #5a4893;
+    --gs-on-primary: #ffffff;
+    --gs-primary-container: #e6def8;
+    --gs-on-primary-container: #21184a;
+    --gs-secondary-container: #ece6f3;
+    --gs-on-secondary-container: #2e2540;
+    --gs-tertiary: #00695c;
+    --gs-on-tertiary: #ffffff;
+    --gs-tertiary-container: #bdece3;
+    --gs-on-tertiary-container: #00201b;
+    --gs-error: #b3261e;
+    --gs-on-error: #ffffff;
+    --gs-ok: #1c6b45;
+    --gs-warn: #9a4510;
+    --gs-bad: #b3261e;
+    --gs-chip: #efe9ec;
+    --gs-on-chip: #1f1b23;
+    --gs-focus: #5a4893;
+  }
+
+  /* Ember: night mode, red-shifted on black. Its switch arrives in group 6; the scheme exists now
+     so the tokens and tests cover it. */
+  :root[data-scheme="ember"] {
+    color-scheme: dark;
+    --gs-bg: #000000;
+    --gs-surface: #110807;
+    --gs-surface-low: #0a0505;
+    --gs-surface-variant: #180b0a;
+    --gs-surface-highest: #200f0d;
+    --gs-on-bg: #c98a7a;
+    --gs-on-surface-variant: #a87365;
+    --gs-outline: #9a5e50;
+    --gs-border: #2e1714;
+    --gs-scrim: rgb(0 0 0 / 0.7);
+    --gs-primary: #d08a6c;
+    --gs-on-primary: #1a0703;
+    --gs-primary-container: #2e140d;
+    --gs-on-primary-container: #e8b19a;
+    --gs-secondary-container: #22100c;
+    --gs-on-secondary-container: #dda08e;
+    --gs-tertiary: #d08a6c;
+    --gs-on-tertiary: #1a0703;
+    --gs-tertiary-container: #2e140d;
+    --gs-on-tertiary-container: #e8b19a;
+    --gs-error: #e06a5e;
+    --gs-on-error: #1a0703;
+    --gs-ok: #7aa883;
+    --gs-warn: #d07a44;
+    --gs-bad: #e06a5e;
+    --gs-chip: #180b0a;
+    --gs-on-chip: #c98a7a;
+    --gs-focus: #d08a6c;
   }
 
   /* Baby device: pure black with warm, dim text (the owner-approved mockup), state fills at
@@ -167,7 +281,6 @@
     --gs-chip: #14120e;
     --gs-on-chip: #b5aa95;
     --gs-state-green: #0e4a28;
-    --gs-state-yellow: #4a3a00;
     --gs-state-orange: #4f2400;
     --gs-state-red: #330000;
     --gs-state-grey: #30333a;

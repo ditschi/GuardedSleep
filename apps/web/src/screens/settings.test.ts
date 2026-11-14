@@ -25,6 +25,7 @@ describe("S12 settings", () => {
     window.history.replaceState(null, "", "/");
     locale.set("en");
     delete document.documentElement.dataset.theme;
+    delete document.documentElement.dataset.scheme;
   });
 
   it("has a heading, a back button and the theme choices", async () => {
@@ -40,6 +41,8 @@ describe("S12 settings", () => {
     await fireEvent.click(await screen.findByTestId("settings_theme_light"));
     expect(get(c.settings).theme).toBe("light");
     await waitFor(() => expect(document.documentElement.dataset.theme).toBe("light"));
+    // The light setting selects the Day scheme.
+    expect(document.documentElement.dataset.scheme).toBe("day");
     // The theme is no secret; this key is the only one the boot script reads.
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
   });

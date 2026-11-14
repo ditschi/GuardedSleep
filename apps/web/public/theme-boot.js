@@ -1,6 +1,6 @@
 // Applies the theme before first paint. An external classic script (no inline script, CSP
 // script-src 'self'), loaded synchronously from <head>. Keep in sync with src/lib/theme.ts
-// (resolveTheme, THEME_STORAGE_KEY, THEME_COLOR); theme.test.ts runs this file and compares.
+// (resolveTheme, schemeFor, THEME_STORAGE_KEY, THEME_COLOR); theme.test.ts runs this file and compares.
 (function () {
   var theme = "dark";
   try {
@@ -13,6 +13,7 @@
     // Storage can be blocked (private window, site data off): the dark default stays.
   }
   document.documentElement.dataset.theme = theme;
+  document.documentElement.dataset.scheme = theme === "light" ? "day" : "dusk";
   var meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", theme === "light" ? "#f7f7f4" : "#0e1013");
+  if (meta) meta.setAttribute("content", theme === "light" ? "#faf7f4" : "#141218");
 })();
