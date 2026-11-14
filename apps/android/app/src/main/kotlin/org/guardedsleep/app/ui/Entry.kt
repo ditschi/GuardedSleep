@@ -68,7 +68,8 @@ private fun AppNavigator(controller: AppController) {
     // Lives above the home so a cancelled auto-scan does not reopen; a new role or a saved
     // connection starts a fresh entry.
     var autoScanned by rememberSaveable(role, app.connections.isEmpty()) { mutableStateOf(false) }
-    // Any scan screen (also the one after the setup checklist) counts as the entry's scan.
+    // Any open scan screen (the auto-scan itself or the home button) counts as this entry's scan,
+    // so cancelling it does not rescan.
     LaunchedEffect(pairing != null) { if (pairing != null) autoScanned = true }
 
     when {

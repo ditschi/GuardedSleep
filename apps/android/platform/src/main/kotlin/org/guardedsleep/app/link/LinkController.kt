@@ -277,9 +277,12 @@ class LinkController(
         }
         parentModel.restoreSnooze(settingsRepo.current.snoozeUntilWallMs)
         refreshApp()
+        // The first role choice of this app start may be the "app opens in parent mode".
+        if (role == Role.PARENT) autoStartOnce() else autoStartPending = false
     }
 
     override fun switchMode() {
+        autoStartPending = false
         if (settingsRepo.current.monitoringActive) return
         cancelPairing()
         stopRun(userStop = true)
@@ -459,9 +462,10 @@ class LinkController(
      * readiness.
      */
     fun onForeground() {
-        autoStartOnce()
+        val started = autoStartOnce()
         if (
-            settingsRepo.current.monitoringActive &&
+            !started &&
+                settingsRepo.current.monitoringActive &&
                 (run == null || fgs == Fgs.LOST) &&
                 pairingStoreOrNull?.exists() == true
         )
@@ -469,23 +473,32 @@ class LinkController(
         refreshReadiness()
     }
 
-    // Once per process: stopping monitoring afterwards shows the home menu and stays there.
-    private var autoStartDone = false
+    /**
+     * "When the app opens in parent mode": set once per process (this construction) and cleared by
+     * the first thing that settles it, so rotation, returning from the background or a later role
+     * change never starts monitoring mid-session. Touched on the main thread only (lifecycle
+     * callbacks and UI actions).
+     */
+    private var autoStartPending = true
 
     /**
      * Parent only (`device-setup`, "Automatic start with the default connection"): a connection the
-     * user marked as default starts monitoring when the app opens. A running or resumable
-     * monitoring flag, an open pairing or a missing marker leave everything as it is.
+     * user marked as default starts monitoring when the app opens. The first [onForeground] with a
+     * role settles it (the baby clears it); on the role screen it stays pending for the first
+     * [chooseRole]. A running or resumable monitoring flag, an open pairing, unfinished onboarding
+     * or a missing marker act on nothing. Returns true when it started monitoring.
      */
-    private fun autoStartOnce() {
-        if (autoStartDone) return
+    private fun autoStartOnce(): Boolean {
+        if (!autoStartPending) return false
         val p = settingsRepo.current
-        if (p.role != Role.PARENT || !p.onboardingDone) return
-        autoStartDone = true
-        if (p.monitoringActive || _pairing.value != null) return
-        val id = pairings.markedDefaultId(Role.PARENT) ?: return
+        val role = p.role ?: return false
+        autoStartPending = false
+        if (role != Role.PARENT || !p.onboardingDone) return false
+        if (p.monitoringActive || _pairing.value != null) return false
+        val id = pairings.markedDefaultId(Role.PARENT) ?: return false
         selectConnection(id)
         startMonitoring()
+        return true
     }
 
     fun refreshReadiness() {

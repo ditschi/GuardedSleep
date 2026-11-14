@@ -375,6 +375,7 @@ class LinkControllerTest {
         settings: SettingsRepository? = null,
         pairings: RolePairings? = null,
         talkGate: TalkGate = TalkGate.Open,
+        hostStarts: java.util.concurrent.atomic.AtomicInteger? = null,
     ): Unit2 {
         val dir = tmp.newFolder(name)
         val settings = settings ?: testSettings(dir)
@@ -387,6 +388,7 @@ class LinkControllerTest {
         val host =
             object : MonitorHost {
                 override fun start() {
+                    hostStarts?.incrementAndGet()
                     if (hostThrows) throw IllegalStateException("fgs not allowed")
                     controller.ensureRun()
                 }
@@ -737,60 +739,117 @@ class LinkControllerTest {
         assertEquals(PairingPhase.FAILED, c.pairing.value?.phase)
     }
 
+    /**
+     * A parent phone with two pairings, the second marked, onboarding done. [startsAsParent] is the
+     * start mode "Parent"; false is "Ask every time" (a cold start shows the role screen).
+     */
     private fun autoStartParent(
         name: String,
         mark: Boolean = true,
-        onboarded: Boolean = true,
+        startsAsParent: Boolean = true,
     ): Unit2 {
         val u = unit(name, Role.PARENT)
         u.pairings.store(Role.PARENT, "1").save(pairing("one"))
         u.pairings.store(Role.PARENT, "2").save(pairing("two"))
         if (mark) u.pairings.setDefault(Role.PARENT, "2")
-        u.controller.chooseRole(Role.PARENT)
-        if (onboarded) u.controller.completeOnboarding()
+        u.controller.completeOnboarding()
+        if (startsAsParent) u.controller.setDefaultRole(Role.PARENT)
         return u
     }
 
+    /** The same phone after a cold start; [role] null keeps whatever the settings persisted. */
+    private fun restart(
+        name: String,
+        of: Unit2,
+        starts: java.util.concurrent.atomic.AtomicInteger,
+    ) = unit(name, null, settings = of.settings, pairings = of.pairings, hostStarts = starts)
+
     @Test
-    fun aMarkedParentDefaultStartsOnceAndNotAgainAfterStop() {
-        val u = autoStartParent("auto-once")
-        val c = u.controller
+    fun aMarkedParentDefaultStartsOnceAndNotAgainAfterStopOrRotation() {
+        val starts = java.util.concurrent.atomic.AtomicInteger()
+        val c = restart("auto-once2", autoStartParent("auto-once"), starts).controller
         c.onForeground()
         assertTrue(c.app.value.monitoring)
         assertEquals("2", c.app.value.connections.single { it.selected }.id)
+        assertEquals("one host start, no resume start on top", 1, starts.get())
         c.stopMonitoring()
         c.onForeground()
-        assertFalse("not again in the same process", c.app.value.monitoring)
+        assertFalse("rotation or resume after a stop", c.app.value.monitoring)
+        assertEquals(1, starts.get())
     }
 
     @Test
-    fun noAutomaticStartWithoutMarkOnboardingOrForTheBabyOrWhilePairing() {
-        val noMark = autoStartParent("auto-nomark", mark = false)
+    fun askEveryTimeStartsOnTheFirstParentChoiceOnly() {
+        val first = autoStartParent("ask", startsAsParent = false)
+        val starts = java.util.concurrent.atomic.AtomicInteger()
+        val c = restart("ask2", first, starts).controller
+        c.onForeground()
+        assertFalse("the role screen waits", c.app.value.monitoring)
+        c.chooseRole(Role.PARENT)
+        assertTrue(c.app.value.monitoring)
+        assertEquals(1, starts.get())
+        c.stopMonitoring()
+        c.onForeground()
+        assertFalse(c.app.value.monitoring)
+        assertEquals(1, starts.get())
+    }
+
+    @Test
+    fun aBabyChoiceOrASwitchBackToParentNeverStarts() {
+        val first = autoStartParent("ask-baby", startsAsParent = false)
+        val c = restart("ask-baby2", first, java.util.concurrent.atomic.AtomicInteger()).controller
+        c.chooseRole(Role.BABY)
+        c.switchMode()
+        c.chooseRole(Role.PARENT)
+        c.onForeground()
+        assertFalse(c.app.value.monitoring)
+    }
+
+    @Test
+    fun noAutomaticStartWithoutMarkOrOnboardingOrForTheBabyOrWhilePairing() {
+        val noMark =
+            restart(
+                "auto-nomark2",
+                autoStartParent("auto-nomark", mark = false),
+                java.util.concurrent.atomic.AtomicInteger(),
+            )
         noMark.controller.onForeground()
         assertFalse(noMark.controller.app.value.monitoring)
 
-        val fresh = autoStartParent("auto-fresh", onboarded = false)
-        fresh.controller.onForeground()
-        assertFalse(fresh.controller.app.value.monitoring)
+        val fresh = unit("auto-fresh", Role.PARENT)
+        fresh.pairings.store(Role.PARENT, "1").save(pairing("one"))
+        fresh.pairings.setDefault(Role.PARENT, "1")
+        fresh.controller.setDefaultRole(Role.PARENT)
+        val freshRestart =
+            restart("auto-fresh2", fresh, java.util.concurrent.atomic.AtomicInteger())
+        freshRestart.controller.onForeground()
+        assertFalse(freshRestart.controller.app.value.monitoring)
 
         val baby = unit("auto-baby", Role.BABY)
         baby.pairings.store(Role.BABY, "1").save(pairing("one"))
         baby.pairings.setDefault(Role.BABY, "1")
-        baby.controller.chooseRole(Role.BABY)
         baby.controller.completeOnboarding()
-        baby.controller.onForeground()
-        assertFalse(baby.controller.app.value.monitoring)
+        baby.controller.setDefaultRole(Role.BABY)
+        val babyRestart = restart("auto-baby2", baby, java.util.concurrent.atomic.AtomicInteger())
+        babyRestart.controller.onForeground()
+        assertFalse(babyRestart.controller.app.value.monitoring)
 
         val pairing = autoStartParent("auto-pairing")
         pairing.pairings.forget(Role.PARENT, "1")
-        pairing.controller.startPairing()
-        pairing.controller.onForeground()
-        assertFalse(pairing.controller.app.value.monitoring)
+        val pr = restart("auto-pairing2", pairing, java.util.concurrent.atomic.AtomicInteger())
+        pr.controller.startPairing()
+        pr.controller.onForeground()
+        assertFalse(pr.controller.app.value.monitoring)
     }
 
     @Test
     fun clearingTheDefaultStopsTheAutomaticStart() {
-        val u = autoStartParent("auto-clear")
+        val u =
+            restart(
+                "auto-clear2",
+                autoStartParent("auto-clear"),
+                java.util.concurrent.atomic.AtomicInteger(),
+            )
         u.controller.clearDefaultConnection()
         assertTrue(u.controller.app.value.connections.none { it.isDefault })
         u.controller.onForeground()

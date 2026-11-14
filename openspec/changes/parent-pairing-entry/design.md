@@ -12,13 +12,13 @@
 
 ### 2. Scan directly when nothing is saved
 
-The decision belongs to the UI layer as navigation, with a guard against loops: the parent home, on entry with no saved connection and no pairing open, calls `startPairing()` once per entry (a saveable flag). Cancel returns to the empty home and the flag keeps it there. The onboarding path already calls `startPairing()` after `completeOnboarding()`, which now works.
+The decision belongs to the UI layer as navigation, with a guard against loops: the parent home, on entry with no saved connection and no pairing open, calls `startPairing()` once per entry (a saveable flag). Cancel returns to the empty home and the flag keeps it there. After the setup checklist the onboarding path only calls `completeOnboarding()`; the empty parent home is entered and its one-time auto-scan opens the scan screen (any scan screen that opens counts as this entry's scan, so cancelling does not rescan).
 
 ### 3. Explicit default, automatic start once per app start
 
 - `RolePairings` gets `markedDefaultId(role)` (the marker only, no fallback) and `clearDefault(role)`. `defaultId()` keeps its fallback for the baby. `SavedPairing.isDefault` / `ConnectionUi.isDefault` report the marker only.
 - Parent `activeId()` uses the session choice, else the marked default, else the first saved one (unchanged order, minus the implied default).
-- Automatic start lives in `LinkController.onForeground()`, once per process: role PARENT, onboarding done, monitoring not active, no pairing open, a marked default still saved → `selectConnection(default)` + `startMonitoring()`. A process-wide flag makes it once per app start; after "Stop monitoring" the home menu stays. Resume of an active monitoring run after process death keeps its own path and wins.
+- Automatic start lives in `LinkController` and means "when the app opens in parent mode". A pending flag is set once per process (at construction) and settled by the first thing that decides it: the first `onForeground()` with a role (PARENT with onboarding done: act; BABY: clear), or, when that call finds the role screen (start mode "Ask every time"), the first `chooseRole()` (PARENT: act; BABY: clear). `switchMode()` clears it. Acting means: monitoring not active, no pairing open, a marked default still saved → `selectConnection(default)` + `startMonitoring()`. Whether it acted or not, it never fires twice per process, so rotation, returning from the background, a stop followed by a resume, or a baby → switch mode → parent round trip never start monitoring mid-session. When it starts monitoring, `onForeground()` skips its own resume `startHost()`. Resume of an active monitoring run after process death keeps its own path and wins (the automatic start sees monitoring active and does nothing).
 - Existing installs: a marker file exists only where the user pressed "Set default" in #56, so it stays; nobody gets an automatic start they did not choose.
 
 ### 4. UI
