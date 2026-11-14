@@ -34,6 +34,7 @@
   bind:open
   title={name ? $t("native.ui.stop.titleNamed", { name }) : $t("native.ui.stop.title")}
   {testid}
+  status
 >
   <p>
     {name ? $t("native.ui.stop.parentBody", { name }) : $t("native.ui.stop.parentBodyDefault")}

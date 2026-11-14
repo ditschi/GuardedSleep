@@ -489,7 +489,7 @@ describe("S11 connection alert", () => {
     lose();
     const alarm = await screen.findByRole("alertdialog");
     expect(alarm).toHaveAccessibleName("Please check on the child");
-    expect(screen.getByTestId("alert_label")).toHaveTextContent("Your phone is vibrating");
+    expect(screen.getByTestId("alert_label")).toHaveTextContent("This device is sounding an alert");
     expect(screen.getByTestId("link_alarm_since")).toHaveTextContent("2:00");
     expect(screen.getByTestId("link_alarm_since")).toHaveTextContent("without connection");
     expect(screen.getByTestId("link_alarm_sentence")).toHaveTextContent(
@@ -715,6 +715,21 @@ describe("status bar per stage", () => {
     // The ticking duration sits outside the live region.
     expect(screen.getByTestId("status_bar_duration").closest("[role=alert]")).toBeNull();
     expect(screen.getByTestId("status_bar_duration")).toHaveTextContent("1 min 10 s");
+  });
+
+  it("stays visible and announced at the top of an open sheet", async () => {
+    open("/parent", c);
+    await fireEvent.click(await screen.findByTestId("parent_overflow"));
+    const sheet = await screen.findByTestId("sheet_more");
+    const bar = within(sheet).getByTestId("sheet_status_bar");
+    expect(bar).toHaveTextContent("Connected · Nursery");
+    expect(within(sheet).getByTestId("sheet_status_bar_text")).toHaveAttribute("role", "status");
+    // It follows the link while the sheet is open.
+    c.parent.update((p) => ({
+      ...p,
+      link: link({ phase: "reconnecting", level: 1, downSinceElapsedMs: Date.now() - 25_000 }),
+    }));
+    await waitFor(() => expect(bar).toHaveAttribute("data-kind", "cant_reach"));
   });
 
   it("has no bar before monitoring", async () => {

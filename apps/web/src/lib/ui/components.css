@@ -339,6 +339,9 @@
   .gs-dialog::backdrop {
     background: var(--gs-scrim);
   }
+  .gs-dialog__status {
+    margin-block-end: var(--gs-space-3);
+  }
   .gs-dialog__actions {
     display: flex;
     flex-wrap: wrap;

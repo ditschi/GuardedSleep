@@ -162,6 +162,8 @@ for (const lang of LANGUAGES) {
       await parent.getByTestId("parent_overflow").click();
       await parent.getByTestId("parent_stop").click();
       await expect(parent.getByTestId("dialog_stop")).toBeVisible();
+      // The status bar stays visible at the top of the sheet while the page behind is inert.
+      await expect(parent.getByTestId("dialog_stop").getByTestId("sheet_status_bar")).toBeVisible();
       await checkScreen(parent, "parent: stop dialog");
     } finally {
       await dual.dispose();

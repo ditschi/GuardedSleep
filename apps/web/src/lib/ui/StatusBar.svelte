@@ -48,13 +48,13 @@
   <div
     class="gs-status-bar__text"
     role={look.assertive ? "alert" : "status"}
-    data-testid="status_bar_text"
+    data-testid={`${testid}_text`}
   >
     <span>{headline}</span>
     {#if subKey}<span class="gs-status-bar__sub">{$t(subKey)}</span>{/if}
   </div>
   {#if look.loud}
-    <span class="gs-status-bar__duration" data-testid="status_bar_duration">
+    <span class="gs-status-bar__duration" data-testid={`${testid}_duration`}>
       <span class="gs-sr-only">{spokenDuration($t, downMs)}</span>
       <span aria-hidden="true">{formatDurationWords($t, downMs)}</span>
     </span>

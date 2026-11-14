@@ -397,6 +397,7 @@
 {/if}
 
 <Dialog
+  status
   bind:open={permissionOpen}
   title={$t("webScreens.talk.permissionTitle")}
   testid="parent_talk_permission_sheet"
@@ -432,7 +433,7 @@
   {/snippet}
 </Dialog>
 
-<Dialog bind:open={snoozeOpen} title={$t("native.ui.snooze.title")} testid="sheet_snooze">
+<Dialog status bind:open={snoozeOpen} title={$t("native.ui.snooze.title")} testid="sheet_snooze">
   <p>{$t("native.ui.snooze.help")}</p>
   {#snippet actions()}
     <Button variant="text" onclick={() => (snoozeOpen = false)}>
@@ -459,7 +460,7 @@
   {/snippet}
 </Dialog>
 
-<Dialog bind:open={probeOpen} title={$t("native.ui.probe.title")} testid="sheet_probe">
+<Dialog status bind:open={probeOpen} title={$t("native.ui.probe.title")} testid="sheet_probe">
   <p>{$t("native.ui.probe.body")}</p>
   {#snippet actions()}
     <Button variant="text" onclick={() => (probeOpen = false)}>
@@ -470,6 +471,7 @@
 </Dialog>
 
 <Dialog
+  status
   bind:open={questionOpen}
   title={$t("native.ui.probe.question")}
   testid="sheet_probe_question"
@@ -486,6 +488,7 @@
 </Dialog>
 
 <Dialog
+  status
   bind:open={helpOpen}
   title={$t("native.ui.help.reconnect.title")}
   testid="sheet_help_reconnect"
@@ -500,7 +503,7 @@
   {/snippet}
 </Dialog>
 
-<Dialog bind:open={moreOpen} title={$t("native.ui.common.more")} testid="sheet_more">
+<Dialog status bind:open={moreOpen} title={$t("native.ui.common.more")} testid="sheet_more">
   <div class="gs-stack gs-stack--tight">
     <Button
       variant="outline"
