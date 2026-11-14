@@ -140,19 +140,19 @@
     --safety-noise-surface: #35111a;
     --safety-noise-on: #fff0ee;
     --safety-noise-on-variant: #f2c6c0;
-    --safety-noise-accent: #ff948a;
+    --safety-noise-accent: var(--safety-alert);
     --safety-noise-slab: #7a1e30;
     --safety-noise-on-slab: #ffeae7;
-    --safety-noise-slab-border: #ff948a;
+    --safety-noise-slab-border: var(--safety-alert);
 
     --safety-lost-bg: #2a0709;
     --safety-lost-surface: #3b0b0e;
     --safety-lost-on: #fff0ee;
     --safety-lost-on-variant: #f7c6c0;
-    --safety-lost-accent: #ff948a;
+    --safety-lost-accent: var(--safety-alert);
     --safety-lost-slab: #8c1d24;
     --safety-lost-on-slab: #ffe9e6;
-    --safety-lost-slab-border: #ff948a;
+    --safety-lost-slab-border: var(--safety-alert);
 
     --safety-alarm-bg: #3a080b;
     --safety-alarm-surface: #4d0c10;
@@ -167,10 +167,10 @@
     --safety-battery-surface: #2e1c0f;
     --safety-battery-on: #fff3ea;
     --safety-battery-on-variant: #f5d2bb;
-    --safety-battery-accent: #f0a774;
+    --safety-battery-accent: var(--safety-warn);
     --safety-battery-slab: #7a3d12;
     --safety-battery-on-slab: #ffe9d8;
-    --safety-battery-slab-border: #f0a774;
+    --safety-battery-slab-border: var(--safety-warn);
   }
 
   /* Dusk: dark, the default (also without the attribute). */

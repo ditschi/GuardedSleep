@@ -83,10 +83,10 @@ object SafetyColors {
             surface = Color(0xFF35111A),
             onBackground = Color(0xFFFFF0EE),
             onVariant = Color(0xFFF2C6C0),
-            accent = Color(0xFFFF948A),
+            accent = alert,
             slab = Color(0xFF7A1E30),
             onSlab = Color(0xFFFFEAE7),
-            slabBorder = Color(0xFFFF948A),
+            slabBorder = alert,
         )
     val noConnection =
         AlertPalette(
@@ -94,10 +94,10 @@ object SafetyColors {
             surface = Color(0xFF3B0B0E),
             onBackground = Color(0xFFFFF0EE),
             onVariant = Color(0xFFF7C6C0),
-            accent = Color(0xFFFF948A),
+            accent = alert,
             slab = Color(0xFF8C1D24),
             onSlab = Color(0xFFFFE9E6),
-            slabBorder = Color(0xFFFF948A),
+            slabBorder = alert,
         )
     val loudAlarm =
         AlertPalette(
@@ -116,10 +116,10 @@ object SafetyColors {
             surface = Color(0xFF2E1C0F),
             onBackground = Color(0xFFFFF3EA),
             onVariant = Color(0xFFF5D2BB),
-            accent = Color(0xFFF0A774),
+            accent = warn,
             slab = Color(0xFF7A3D12),
             onSlab = Color(0xFFFFE9D8),
-            slabBorder = Color(0xFFF0A774),
+            slabBorder = warn,
         )
 }
 
