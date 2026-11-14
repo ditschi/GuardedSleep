@@ -264,7 +264,7 @@
         "connectedTo": "Conectado a: {name}",
         "connectedToDefault": "Conectado al dispositivo de los padres",
         "dimsIn": "Esta pantalla se atenúa en {seconds} s. Tóquela cuando quiera para verlo de nuevo.",
-        "lostBody": "Sin conexión desde hace {duration}. Este dispositivo permanece en silencio y se reconecta solo.",
+        "lostBody": "Sin conexión desde hace {duration}. Este dispositivo permanece en silencio y vuelve a conectarse solo.",
         "rowConnection": "Conexión",
         "rowParent": "Dispositivo de los padres",
         "rowLastTalk": "Última charla",
@@ -281,7 +281,7 @@
         "unlockConfirmBody": "La supervisión sigue en marcha.",
         "unlockConfirm": "Desbloquear",
         "unlockCancel": "Mantener bloqueada",
-        "unlockedHint": "Para usar este dispositivo como dispositivo de los padres, detenga la supervisión y elíjalo en la pantalla de inicio."
+        "unlockedHint": "Para usar este dispositivo como dispositivo de los padres, detenga la supervisión y selecciónelo en la pantalla de inicio."
       },
       "link": {
         "connected": "Conectado con {name}",

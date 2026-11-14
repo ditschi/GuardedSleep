@@ -263,7 +263,7 @@
         "touchHint": "Für Details berühren",
         "connectedTo": "Verbunden mit: {name}",
         "connectedToDefault": "Mit dem Elterngerät verbunden",
-        "dimsIn": "Dieser Bildschirm dunkelt in {seconds} s ab. Berühren Sie ihn jederzeit, um dies erneut zu sehen.",
+        "dimsIn": "Dieser Bildschirm wird in {seconds} s gedimmt. Berühren Sie ihn jederzeit, um dies erneut zu sehen.",
         "lostBody": "Seit {duration} keine Verbindung. Dieses Gerät bleibt stumm und verbindet sich selbst wieder.",
         "rowConnection": "Verbindung",
         "rowParent": "Elterngerät",
