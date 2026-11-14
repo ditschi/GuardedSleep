@@ -1,5 +1,6 @@
 package org.guardedsleep.app
 
+import org.guardedsleep.app.readiness.BatterySnapshot
 import org.guardedsleep.app.readiness.DeviceCheckEnv
 import org.guardedsleep.app.readiness.DeviceCheckRules
 import org.guardedsleep.app.readiness.DeviceChecker
@@ -147,11 +148,7 @@ class DeviceCheckTest {
 
         override fun micGranted() = true
 
-        override fun batteryPct() = 90
-
-        override fun charging() = true
-
-        override fun batteryUnhealthy() = false
+        override fun battery() = BatterySnapshot(90, charging = true, unhealthy = false)
 
         override fun batteryOptimizationIgnored() = true
 
@@ -184,5 +181,16 @@ class DeviceCheckTest {
         val env = Env(emptyMap())
         DeviceChecker(env).check(emptyList(), sampleMic = false)
         assertEquals(false, env.micSampled)
+    }
+
+    @Test
+    fun anAddressWithoutAHostIsNeitherProbedNorShown() {
+        val env = Env(mapOf("wss://a.example/x" to true))
+        val r =
+            DeviceChecker(env)
+                .check(listOf("not a url", "wss:///nohost", "wss://a.example/x"), false)
+        assertEquals(listOf(MailboxReach("a.example", true)), r.mailboxes)
+        assertEquals(null, DeviceChecker.hostOf("not a url"))
+        assertEquals("a.example", DeviceChecker.hostOf("wss://user@a.example:8443/p?q=1"))
     }
 }

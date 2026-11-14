@@ -28,11 +28,8 @@ import org.guardedsleep.app.ui.model.MailboxReach
 interface DeviceCheckEnv {
     fun micGranted(): Boolean
 
-    fun batteryPct(): Int?
-
-    fun charging(): Boolean
-
-    fun batteryUnhealthy(): Boolean
+    /** One read of the battery per check, so percentage, charging and health agree. */
+    fun battery(): BatterySnapshot
 
     fun batteryOptimizationIgnored(): Boolean
 
@@ -122,32 +119,38 @@ class DeviceChecker(private val env: DeviceCheckEnv) {
         sampleMic: Boolean,
         cancelled: () -> Boolean = { false },
     ): DeviceCheckResult {
+        // An address without a host is no mailbox: it is never probed or shown.
         val probes =
-            mailboxUrls.distinct().map { url ->
-                url to
-                    pool.submit<Boolean> {
-                        runCatching { env.probeMailbox(url, PROBE_TIMEOUT_MS) }.getOrDefault(false)
-                    }
-            }
+            mailboxUrls
+                .distinct()
+                .mapNotNull { url -> hostOf(url)?.let { host -> host to url } }
+                .map { (host, url) ->
+                    host to
+                        pool.submit<Boolean> {
+                            runCatching { env.probeMailbox(url, PROBE_TIMEOUT_MS) }
+                                .getOrDefault(false)
+                        }
+                }
         val granted = env.micGranted()
         val rms =
             if (granted && sampleMic)
                 runCatching { env.sampleMicRms(MIC_SAMPLE_MS, cancelled) }.getOrNull()
             else null
-        val reach = probes.map { (url, f) ->
+        val reach = probes.map { (host, f) ->
             val ok = runCatching {
                 f.get(PROBE_TIMEOUT_MS + 2_000, TimeUnit.MILLISECONDS)
             }
                 .getOrDefault(false)
-            MailboxReach(hostOf(url), ok)
+            MailboxReach(host, ok)
         }
+        val battery = env.battery()
         return DeviceCheckRules.evaluate(
             DeviceFacts(
                 micGranted = granted,
                 micRms = rms,
-                batteryPct = env.batteryPct(),
-                charging = env.charging(),
-                batteryUnhealthy = env.batteryUnhealthy(),
+                batteryPct = battery.pct,
+                charging = battery.charging,
+                batteryUnhealthy = battery.unhealthy,
                 batteryOptimizationIgnored = env.batteryOptimizationIgnored(),
                 dndAccessGranted = env.dndAccessGranted(),
                 mailboxes = reach,
@@ -159,9 +162,12 @@ class DeviceChecker(private val env: DeviceCheckEnv) {
         const val PROBE_TIMEOUT_MS = 10_000L
         const val MIC_SAMPLE_MS = 1_500L
 
-        /** The host only: no path, query or userinfo reaches the UI. */
-        internal fun hostOf(url: String): String =
-            runCatching { URI(url).host }.getOrNull()?.takeIf { it.isNotBlank() } ?: "?"
+        /** The host only (no path, query or userinfo reaches the UI); null when there is none. */
+        internal fun hostOf(url: String): String? = runCatching {
+            URI(url).host
+        }
+            .getOrNull()
+            ?.takeIf { it.isNotBlank() }
     }
 }
 
@@ -176,11 +182,7 @@ class AndroidDeviceCheckEnv(private val context: Context) : DeviceCheckEnv {
         context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) ==
             PackageManager.PERMISSION_GRANTED
 
-    override fun batteryPct(): Int? = battery.pct()
-
-    override fun charging(): Boolean = battery.charging()
-
-    override fun batteryUnhealthy(): Boolean = battery.unhealthy()
+    override fun battery(): BatterySnapshot = battery.snapshot()
 
     override fun batteryOptimizationIgnored(): Boolean = battery.optimizationIgnored()
 

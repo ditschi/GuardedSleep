@@ -69,6 +69,7 @@ class ReadinessChecker(
 class AndroidReadinessEnv(private val context: Context) : ReadinessEnv {
     private val nm = context.getSystemService(NotificationManager::class.java)
     private val audio = context.getSystemService(AudioManager::class.java)
+    private val battery = BatteryReader(context)
 
     override fun notificationsEnabled(): Boolean {
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return false
@@ -88,8 +89,6 @@ class AndroidReadinessEnv(private val context: Context) : ReadinessEnv {
             listOf(AlertChannels.ALARM_NOISE, AlertChannels.ALARM_LINK).all {
                 nm.getNotificationChannel(it)?.canBypassDnd() == true
             }
-
-    private val battery = BatteryReader(context)
 
     override fun batteryOptimizationIgnored(): Boolean = battery.optimizationIgnored()
 

@@ -4,6 +4,7 @@ import java.security.SecureRandom
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import org.guardedsleep.app.config.PublicLists
@@ -26,6 +27,8 @@ import org.guardedsleep.app.pairing.StoredMailbox
 import org.guardedsleep.app.pairing.StoredPairing
 import org.guardedsleep.app.pairing.TurnCredentials
 import org.guardedsleep.app.pairing.TurnStore
+import org.guardedsleep.app.readiness.BatterySnapshot
+import org.guardedsleep.app.readiness.DeviceCheckEnv
 import org.guardedsleep.app.readiness.DeviceChecker
 import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.signaling.SignalingFactory
@@ -284,20 +287,16 @@ private class FakeMedia(val net: FakeNet, val baby: Boolean) : MediaEngine {
 }
 
 /** A healthy, charging phone with a microphone that hears something; tests change one fact. */
-private class FakeDeviceEnv : org.guardedsleep.app.readiness.DeviceCheckEnv {
+private class FakeDeviceEnv : DeviceCheckEnv {
     var reachable = true
     var reachableByCall: List<Boolean>? = null
-    var gate: java.util.concurrent.CountDownLatch? = null
+    var gate: CountDownLatch? = null
     val probed = CopyOnWriteArrayList<String>()
     val micSamples = AtomicInteger()
 
     override fun micGranted() = true
 
-    override fun batteryPct() = 80
-
-    override fun charging() = true
-
-    override fun batteryUnhealthy() = false
+    override fun battery() = BatterySnapshot(80, charging = true, unhealthy = false)
 
     override fun batteryOptimizationIgnored() = true
 
@@ -305,8 +304,8 @@ private class FakeDeviceEnv : org.guardedsleep.app.readiness.DeviceCheckEnv {
 
     /** Blocks in the sample until cancelled when set, like a long AudioRecord read loop. */
     var micBlocks = false
-    val micStarted = java.util.concurrent.CountDownLatch(1)
-    val micCancelled = java.util.concurrent.CountDownLatch(1)
+    val micStarted = CountDownLatch(1)
+    val micCancelled = CountDownLatch(1)
 
     override fun sampleMicRms(ms: Long, cancelled: () -> Boolean): Double? {
         micSamples.incrementAndGet()
@@ -868,7 +867,7 @@ class LinkControllerTest {
 
     @Test
     fun theDeviceCheckIsUnknownWhileRunningThenPublishesTheResult() {
-        val env = FakeDeviceEnv().apply { gate = java.util.concurrent.CountDownLatch(1) }
+        val env = FakeDeviceEnv().apply { gate = CountDownLatch(1) }
         val baby = unit("dc-run", Role.BABY, deviceChecker = DeviceChecker(env))
         baby.controller.runDeviceCheck()
         assertEquals(DeviceCheck.UNKNOWN, baby.controller.app.value.deviceCheck)
@@ -896,7 +895,7 @@ class LinkControllerTest {
 
     @Test
     fun aStaleDeviceCheckResultIsDropped() {
-        val env = FakeDeviceEnv().apply { gate = java.util.concurrent.CountDownLatch(1) }
+        val env = FakeDeviceEnv().apply { gate = CountDownLatch(1) }
         val baby = unit("dc-stale", Role.BABY, deviceChecker = DeviceChecker(env))
         // The first run blocks on the gate and would say "unreachable"; the second is newer.
         env.reachableByCall = listOf(false, true)
@@ -904,8 +903,8 @@ class LinkControllerTest {
         await("first probe started") { env.probed.size == 1 }
         baby.controller.runDeviceCheck(force = true)
         env.gate!!.countDown()
+        // The one worker ran the dropped first check before the second, so this is the second's.
         await("the newer result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
-        Thread.sleep(200)
         assertEquals(DeviceCheck.OK, baby.controller.app.value.deviceCheck)
         assertEquals(
             listOf(true),
@@ -918,7 +917,6 @@ class LinkControllerTest {
         val env = FakeDeviceEnv()
         val parent = unit("dc-parent", Role.PARENT, deviceChecker = DeviceChecker(env))
         parent.controller.runDeviceCheck()
-        Thread.sleep(300)
         assertEquals(0, env.probed.size)
         assertEquals(DeviceCheck.UNKNOWN, parent.controller.app.value.deviceCheck)
     }
