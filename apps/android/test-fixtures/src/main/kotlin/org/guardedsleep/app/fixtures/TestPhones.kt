@@ -29,7 +29,7 @@ import org.guardedsleep.app.ui.model.Role
  * system services are replaced. The public surface is contract types only, so UI tests built on it
  * never see a UniFFI type.
  *
- * Nothing moves until the test thread calls [advance] or [runUntilIdle].
+ * Nothing moves until the test thread calls [advance].
  */
 class TestPhones private constructor(dir: File) {
     private val scheduler = ManualScheduler()
@@ -212,13 +212,6 @@ class TestPhones private constructor(dir: File) {
 
     /** Virtual time moves by [ms]; everything due runs in order. */
     fun advance(ms: Long) = scheduler.advanceBy(ms)
-
-    /** Runs what is due now (deliveries, posted work), without moving time. */
-    fun runUntilIdle() = scheduler.runUntilIdle()
-
-    /** Steps virtual time until [cond] holds; fails after [timeoutMs] of virtual time. */
-    fun runUntil(what: String, timeoutMs: Long = 15_000, cond: () -> Boolean) =
-        scheduler.runUntil(what, timeoutMs, cond = cond)
 
     /** The baby's microphone hears [rms] (0.0 to 1.0) until [stopNoise]. */
     fun injectNoise(rms: Double = NOISE_RMS) {

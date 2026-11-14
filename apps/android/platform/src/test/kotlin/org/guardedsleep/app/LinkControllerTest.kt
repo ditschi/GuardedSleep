@@ -181,8 +181,7 @@ class LinkControllerTest {
                 turnIo = scheduler.executor(),
                 deviceCheckIo =
                     // The device-check doubles block on real latches: those tests keep a thread.
-                    if (deviceChecker == null) scheduler.executor()
-                    else Executors.newSingleThreadExecutor { r -> Thread(r, "test-device-check") },
+                    if (deviceChecker == null) scheduler.executor() else deviceCheckWorker,
                 random = SecureRandom(),
                 deviceName = { deviceName },
                 talkGate = talkGate,
@@ -369,8 +368,17 @@ class LinkControllerTest {
         assertEquals(listOf(projectUrl, "wss://own.example"), all.payload.signalingUrls)
     }
 
+    // The device-check doubles block on latches, so those tests use a real worker thread: a
+    // daemon, shut down with the test.
+    private val deviceCheckWorker: java.util.concurrent.ExecutorService by lazy {
+        Executors.newSingleThreadExecutor { r ->
+            Thread(r, "test-device-check").apply { isDaemon = true }
+        }
+    }
+
     @After
     fun tearDown() {
+        deviceCheckWorker.shutdownNow()
         controllers.forEach { it.stopMonitoring() }
         scheduler.runUntilIdle()
     }

@@ -14,13 +14,11 @@ import java.lang.reflect.Modifier
  */
 object StateRecorder {
     private val seen = mutableSetOf<String>()
-    private val known = sortedSetOf<String>()
 
     @Synchronized
     fun sample(state: Any?) {
         if (state == null) return
         val cls = state.javaClass
-        known += leafPaths(cls, cls.simpleName)
         walk(state, defaultInstance(cls), cls.simpleName)
     }
 

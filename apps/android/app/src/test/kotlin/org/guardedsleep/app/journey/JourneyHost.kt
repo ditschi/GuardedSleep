@@ -351,7 +351,7 @@ abstract class JourneyHost {
     }
 
     companion object {
-        /** Wall-clock budget of one journey (the suite shares 90 s). */
+        /** Wall-clock budget of one journey (the suite shares 120 s, ui-journey-tests spec). */
         const val JOURNEY_LIMIT_MS = 60_000L
         private const val MIN_FRAME_MS = 16L
     }
