@@ -2,37 +2,37 @@
 
 ## Context
 
-See the proposal for the gap. `LinkControllerTest` already has the parts a journey needs: two real cores, `FakeNet` (in-memory relay), fake media and a `unit()` builder. `MainActivity` exposes test tags as resource ids (`testTagsAsResourceId`), so Maestro and `uiautomator` can select by tag. The gate runs its scripts in a runner container inside the emulator image (`scripts/poc/local-gate.sh`).
+`GuardedSleepRoot(controller)` needs only an `AppController`. `LinkController` already runs under plain JUnit with its I/O behind seams; `LinkControllerTest` has `FakeNet` (an in-memory relay on its own thread), fake media and a `unit()` builder, but uses `RealClock`, polling `await` and bare sleeps, and `LinkController` hard-codes `turnIo` (Critical Review C2). No Robolectric test loads the real core yet, and `app` tests have no JNA wiring (I1). `app` must not depend on `core-bindings` (AGENTS.md §5.1, I2).
 
 ## Decisions
 
-### 1. Journeys in Robolectric, not on emulators
+### 1. Two devices side by side on one virtual clock
 
-A journey test composes `GuardedSleepRoot` for one device at a time on that device's real `LinkController`; the two controllers share one `FakeNet`, and the test switches which device it renders (two `ComposeTestRule`s are not needed: the controllers run headless, the UI only reflects one). Time comes from the controllable clock of the fixtures; no sleeps. The fixtures move from `platform/src/test` to a `testFixtures` source set (or a small `:test-fixtures` module) that `app` tests depend on. Pairing by pasted code uses the same path as the user; the camera is out of scope (decoder covered by `QrScanTest`).
+- **Time and threads (review C2, option a):** a `ManualScheduler` implements `ScheduledExecutorService` and `Clock`, single-threaded, driven from the test thread. It is injected as the core executor (`newExecutor`), into the relay fake, and into a new `turnIo` seam (and any other executor `LinkController` creates). Compose runs with `mainClock.autoAdvance = false`; a step advances the scheduler and the Compose clock together until idle. Deterministic, fast; link loss after 60 s costs no wall time.
+- **Two roots (review I3):** the test hosts two `ComposeView`s in one activity, each wrapped in a root tagged `device_baby` / `device_parent`, each on its own controller. Steps select with `hasAnyAncestor(hasTestTag("device_parent"))`. No controller swapping, so UI-local state (overlays, half-typed fields, dialogs) behaves as on two phones.
+- **Fixtures module (review I2):** a `:test-fixtures` module (not AGP `testFixtures`, still experimental) depends on `platform` and `core-bindings`; its public API returns only `AppController` and contract types (`TestPhones.create()`, `phones.baby`, `phones.parent`, `phones.advance(ms)`, `phones.injectNoise()`, `phones.dropNetwork()`), so `app/src/test` never sees uniffi types. `LinkControllerTest` moves onto it too.
+- **Real core under Robolectric (review I1):** task 2.0 is a spike: one Robolectric test in `app` creates two real cores and pairs them, with the Gradle wiring (`jna.library.path` to the host core build, the desktop JNA artifact, as `platform` does). Abort criterion: if JNA cannot load in the Robolectric sandbox within a day, the journeys run as plain JVM tests on the controllers plus Compose checks of the contract state; the design is revisited before continuing.
+- **Pairing path:** the baby's code is read from the code node and typed into the parent's paste field, the path a user takes when not scanning; the camera stays out of scope (decoder: `QrScanTest`).
+- **Log check (review M7):** the fixtures pair with a fixed test PSK and assert in teardown that `ShadowLog` holds no raw, b64url or hex form of it.
 
-### 2. Contract completeness by the compiler
+### 2. Contract completeness
 
-Removing default bodies makes the compiler enforce what TypeScript already enforces on web. Fakes and previews implement the methods explicitly. The writer check is a JVM test over the platform sources: every `AppState`/`ParentMonitorState`/`BabyMonitorState` property must appear as a named argument or `copy(` field in `platform`; an allowlist with a reason covers fields that are intentionally constant.
+- No default bodies in the Kotlin `AppController`; fakes and previews implement every method explicitly.
+- **Behavioural writer check (review I4):** a recorder subscribes to `app`, `parent`, `baby`, `settings` and `pairing` of both devices during every journey and collects which leaf fields (nested types included) ever left their default. A final test fails for any field never seen non-default, unless it is on an allowlist with a reason. This catches "written, but never to a real value", which a source scan cannot.
 
-### 3. Maestro pinned with mise, run in the gate
+### 3. Exposed product gaps (review I5)
 
-`maestro` via mise's `github:mobile-dev-inc/maestro` backend, exact version, with a doc-link comment; Java is already pinned. The gate runner container gets the mise install mounted read-only (or installs from the lock into the shared cache), so local and CI use the same binary. `maestro_assert` fails under `GS_STRICT=1` when Maestro is missing.
-
-### 4. Code transfer between emulators
-
-The baby flow taps "Show code as text"; the gate reads the text node by its test tag through `adb shell uiautomator dump` into a file under the gate's output directory, which is removed after the parent flow pastes it (Maestro `inputText` with an env value). The code is a fresh test PSK: the gate registers it with the log canary (`canary-scan.sh`), which then fails the run if it appears in any log. It is never printed by the gate.
-
-### 5. When the heavy tier runs
-
-Nightly, on dispatch, on the `gate` path filter (2 min Doze) and on the release commit, as the gate does today. It stays outside `ci-ok`; the release checklist requires it green.
+What the test answer does, whether the first-run coach exists, and what "Test alert" in Settings does while not monitoring are not specified (`parent-alerts` only says the parent asks; the coach is only in non-normative `alpha-ux-flows.md`). This change does not invent behaviour: `LinkController` implements them as explicit, commented no-ops pointing at backlog entries, the fields go on the allowlist with that pointer, and the journeys for them are written but `@Ignore`d with the same pointer. A separate fix change specifies and builds them after the owner decides.
 
 ## Discarded alternatives
 
-- **adb taps only, no Maestro.** Pros: nothing to install. Cons: re-implements waits and selectors in shell, brittle; the existing flows stay dead. Rejected by the owner, 2026-11-14 (introduce Maestro properly).
-- **Compose UI tests on emulators for every PR.** Pros: real devices. Cons: minutes per run and KVM on every PR; the Robolectric journeys catch the wiring bugs at a fraction of the cost.
+- **Real threads with `waitUntil` (review C2, option b).** Pros: no new scheduler. Cons: wall-clock cost (link loss alone tens of seconds), flakes under load, conflicts with the 90 s budget.
+- **One composition with a swapped controller.** Cons: leaks or loses UI-local state; `setContent` once per rule.
+- **Source-scan writer test.** Cons: false passes on common names, positional constructors, dead code; blind to "never non-default".
 - **Making `FakeAppController` stricter.** Cons: still a second implementation that can drift; the bug was the drift.
+- **Compose UI tests on emulators for every PR.** Cons: minutes per run and KVM on every PR; covered cheaper here, devices in `gate-ui-journeys`.
 
 ## Risks / Trade-offs
 
-- Robolectric journeys cannot prove Doze, notifications over the lock screen or real audio; those stay in the gate.
-- The two-emulator journeys need about 4 GB free RAM besides the build; they take the heavy slot.
+- Robolectric cannot prove Doze, lock-screen notifications, real audio or the `AppGraph` wiring in `MainActivity`; a Robolectric smoke test builds `AppGraph` with seams faked (review M1); the rest stays in the gate.
+- The virtual scheduler must cover every executor `LinkController` uses; a missed one shows up as a hanging journey, caught by a per-journey timeout.
