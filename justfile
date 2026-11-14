@@ -208,6 +208,10 @@ _build-android *gradle_tasks:
     scripts/poc/release-check.sh
     scripts/poc/size-check.sh
 
+# Install the local debug APK on every connected phone (USB or Wi-Fi adb) and launch it. Options: --build, --no-launch; env GS_DEVICES, GS_APK (scripts/android-install.sh).
+install-android *args:
+    scripts/android-install.sh {{ args }}
+
 # What the CI android job runs: build-android plus Android Lint (warnings are errors), the JVM tests and Roborazzi screenshot verification.
 verify-android:
     just build-android lintDebug buildLogicTest :core-bindings:testDebugUnitTest :platform:testDebugUnitTest :app:testDebugUnitTest :app:verifyRoborazziDebug

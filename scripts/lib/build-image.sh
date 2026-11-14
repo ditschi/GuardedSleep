@@ -11,8 +11,8 @@
 # Docker already maps container root to the caller, so nothing is added there. HOME points at a
 # writable directory under target/ because the uid has no passwd entry in the image.
 # GS_DOCKER_CACHE_ARGS mounts the shared Cargo home (registry, git DBs, installed tools) and Gradle user
-# home from ${GS_SHARED_CACHE:-$HOME/.cache/guardedsleep}/{cargo,gradle} at /cache and sets CARGO_HOME,
-# and GRADLE_USER_HOME, so worktrees download dependencies
+# home from ${GS_SHARED_CACHE:-$HOME/.cache/guardedsleep}/{cargo,gradle,android} at /cache and sets CARGO_HOME,
+# GRADLE_USER_HOME and ANDROID_USER_HOME, so worktrees download dependencies
 # once. Cargo's package-cache lock and Gradle's cross-process cache locks make concurrent runs safe;
 # target/ and the Gradle project cache stay per worktree. Host cargo builds into target/, image runs of
 # the Android chain and determinism into target/container (scripts/core-build.sh), so neither mode
@@ -39,10 +39,13 @@ gs_ensure_build_image() {
     GS_DOCKER_USER_ARGS=(--user "$(id -u):$(id -g)" -e HOME=/workspace/target/.home)
   fi
   local cache="${GS_SHARED_CACHE:-$HOME/.cache/guardedsleep}"
-  mkdir -p "$cache/cargo" "$cache/gradle"
+  mkdir -p "$cache/cargo" "$cache/gradle" "$cache/android"
+  # ANDROID_USER_HOME keeps AGP's debug.keystore across container runs and worktrees, so a new debug
+  # build updates the installed app (`adb install -r`) instead of failing on a changed signature. Doc:
+  # https://developer.android.com/tools/variables#android_user_home
   GS_DOCKER_CACHE_ARGS=(
-    -v "$cache/cargo:/cache/cargo" -v "$cache/gradle:/cache/gradle"
-    -e CARGO_HOME=/cache/cargo -e GRADLE_USER_HOME=/cache/gradle
+    -v "$cache/cargo:/cache/cargo" -v "$cache/gradle:/cache/gradle" -v "$cache/android:/cache/android"
+    -e CARGO_HOME=/cache/cargo -e GRADLE_USER_HOME=/cache/gradle -e ANDROID_USER_HOME=/cache/android
   )
   if [[ "${GS_SCCACHE:-1}" != "0" && -z "${CI:-}" ]]; then
     mkdir -p "$cache/sccache"
