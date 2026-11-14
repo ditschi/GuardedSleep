@@ -161,6 +161,11 @@ export interface BabyMonitorState {
   parentName: string | null;
   /** A device that is not the paired parent tried to connect (the core refused it). */
   securityWarning: boolean;
+  /**
+   * Elapsed-realtime time of the first verified contact with a parent device in this run; the
+   * Android kiosk's set-up confirmation runs from here. The browser baby never sets it.
+   */
+  firstContactElapsedMs: number | null;
   /** A parent's voice plays now (static indicator under the edge). */
   parentTalking: boolean;
   /** The last finished talk of this run, local only. */
@@ -520,6 +525,7 @@ export function defaultBabyMonitor(): BabyMonitorState {
     parentListening: false,
     parentName: null,
     securityWarning: false,
+    firstContactElapsedMs: null,
     parentTalking: false,
     lastTalk: null,
   };
