@@ -145,7 +145,19 @@
           "checking": "Tjekker denne enhed…",
           "ok": "Denne enhed fungerer godt som babyenhed.",
           "limited": "Denne enhed kan en gang imellem miste forbindelsen. Den virker stadig.",
-          "notRecommended": "Denne enhed overvåger muligvis ikke pålideligt. Brug en anden, hvis du kan."
+          "notRecommended": "Denne enhed overvåger muligvis ikke pålideligt. Brug en anden, hvis du kan.",
+          "again": "Tjek igen",
+          "micPermissionMissing": "Mikrofonen er ikke tilladt, så denne enhed kan ikke lytte.",
+          "micSilent": "Mikrofonen leverer kun stilhed. Den kan være slået fra, deaktiveret i privatlivsindstillingerne eller i brug af en anden app.",
+          "batteryUnhealthy": "Batteriet melder om et problem. Lad ikke denne enhed køre uden opsyn.",
+          "batteryLowNotCharging": "Batteriet er lavt og lader ikke. Sæt denne enhed i opladeren.",
+          "noMailboxReachable": "Ingen server kunne nås. Efter en afbrydelse ville enhederne ikke kunne finde hinanden igen.",
+          "notCharging": "Denne enhed lader ikke. Lad den sidde i opladeren.",
+          "batteryOptimized": "Batterisparetilstand kan stoppe overvågningen i baggrunden.",
+          "dndAccessMissing": "Lydløs tilstand kan ikke slås til uden adgang til Forstyr ikke.",
+          "someMailboxesUnreachable": "Nogle servere kunne ikke nås. Enhederne kan stadig finde hinanden via de andre.",
+          "mailboxReachable": "{host}: kan nås",
+          "mailboxUnreachable": "{host}: kan ikke nås"
         },
         "notifications": {
           "title": "Alarmer",

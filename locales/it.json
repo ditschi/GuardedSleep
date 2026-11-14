@@ -145,7 +145,19 @@
           "checking": "Controllo di questo dispositivo…",
           "ok": "Questo dispositivo funziona bene come dispositivo del bambino.",
           "limited": "Ogni tanto questo dispositivo potrebbe perdere la connessione. Funziona comunque.",
-          "notRecommended": "Questo dispositivo potrebbe non monitorare in modo affidabile. Se puoi, usane un altro."
+          "notRecommended": "Questo dispositivo potrebbe non monitorare in modo affidabile. Se puoi, usane un altro.",
+          "again": "Controlla di nuovo",
+          "micPermissionMissing": "Il microfono non è consentito, quindi questo dispositivo non può ascoltare.",
+          "micSilent": "Il microfono fornisce solo silenzio. Potrebbe essere disattivato, spento nelle impostazioni della privacy o usato da un'altra app.",
+          "batteryUnhealthy": "La batteria segnala un problema. Non lasciare questo dispositivo in funzione senza sorveglianza.",
+          "batteryLowNotCharging": "La batteria è scarica e non si sta caricando. Collega questo dispositivo al caricabatterie.",
+          "noMailboxReachable": "Nessun server raggiungibile. Dopo una disconnessione i dispositivi non potrebbero ritrovarsi.",
+          "notCharging": "Questo dispositivo non si sta caricando. Lascialo collegato al caricabatterie.",
+          "batteryOptimized": "Il risparmio energetico può interrompere il monitoraggio in background.",
+          "dndAccessMissing": "La modalità silenziosa non può essere attivata senza l'accesso a Non disturbare.",
+          "someMailboxesUnreachable": "Alcuni server non erano raggiungibili. I dispositivi possono ancora ritrovarsi tramite gli altri.",
+          "mailboxReachable": "{host}: raggiungibile",
+          "mailboxUnreachable": "{host}: non raggiungibile"
         },
         "notifications": {
           "title": "Avvisi",

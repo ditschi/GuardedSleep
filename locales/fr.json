@@ -145,7 +145,19 @@
           "checking": "Vérification de cet appareil…",
           "ok": "Cet appareil convient bien comme appareil bébé.",
           "limited": "Cet appareil peut perdre la connexion de temps en temps. Il fonctionne quand même.",
-          "notRecommended": "Cet appareil risque de ne pas surveiller de façon fiable. Utilisez un autre appareil si possible."
+          "notRecommended": "Cet appareil risque de ne pas surveiller de façon fiable. Utilisez un autre appareil si possible.",
+          "again": "Vérifier à nouveau",
+          "micPermissionMissing": "Le microphone n'est pas autorisé, donc cet appareil ne peut pas écouter.",
+          "micSilent": "Le microphone ne transmet que du silence. Il est peut-être coupé, désactivé dans les réglages de confidentialité ou utilisé par une autre appli.",
+          "batteryUnhealthy": "La batterie signale un problème. Ne laissez pas cet appareil fonctionner sans surveillance.",
+          "batteryLowNotCharging": "La batterie est faible et ne charge pas. Branchez cet appareil.",
+          "noMailboxReachable": "Aucun serveur n'a pu être joint. Après une déconnexion, les appareils ne pourraient pas se retrouver.",
+          "notCharging": "Cet appareil ne charge pas. Laissez-le sur le chargeur.",
+          "batteryOptimized": "L'économie de batterie peut arrêter la surveillance en arrière-plan.",
+          "dndAccessMissing": "Le mode silencieux ne peut pas être activé sans l'accès à Ne pas déranger.",
+          "someMailboxesUnreachable": "Certains serveurs n'ont pas pu être joints. Les appareils peuvent encore se retrouver via les autres.",
+          "mailboxReachable": "{host} : joignable",
+          "mailboxUnreachable": "{host} : injoignable"
         },
         "notifications": {
           "title": "Alertes",

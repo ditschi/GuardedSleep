@@ -290,6 +290,10 @@ export class WebController implements AppController {
     this.setApp({ defaultRole: role });
   }
 
+  // The web client has no baby device check yet (browser facts differ); `deviceCheck` stays
+  // "unknown" and no screen shows it.
+  runDeviceCheck(_force = false): void {}
+
   // Named connections need saved pairings; the web keeps one in-memory pairing and an empty
   // connection list, so these are no-ops (web parity is the IDEA in docs/backlog.md).
   selectConnection(_id: string): void {}

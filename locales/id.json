@@ -145,7 +145,19 @@
           "checking": "Memeriksa perangkat ini…",
           "ok": "Perangkat ini berfungsi baik sebagai perangkat bayi.",
           "limited": "Perangkat ini kadang dapat kehilangan koneksi. Namun masih berfungsi.",
-          "notRecommended": "Perangkat ini mungkin tidak memantau dengan andal. Gunakan perangkat lain jika bisa."
+          "notRecommended": "Perangkat ini mungkin tidak memantau dengan andal. Gunakan perangkat lain jika bisa.",
+          "again": "Periksa lagi",
+          "micPermissionMissing": "Mikrofon tidak diizinkan, sehingga perangkat ini tidak dapat mendengarkan.",
+          "micSilent": "Mikrofon hanya mengirim keheningan. Mungkin dibisukan, dimatikan di pengaturan privasi, atau sedang dipakai aplikasi lain.",
+          "batteryUnhealthy": "Baterai melaporkan masalah. Jangan biarkan perangkat ini berjalan tanpa pengawasan.",
+          "batteryLowNotCharging": "Baterai lemah dan tidak mengisi daya. Sambungkan perangkat ini ke pengisi daya.",
+          "noMailboxReachable": "Tidak ada server yang dapat dijangkau. Setelah terputus, perangkat tidak dapat saling menemukan lagi.",
+          "notCharging": "Perangkat ini tidak mengisi daya. Biarkan tetap terhubung ke pengisi daya.",
+          "batteryOptimized": "Penghemat baterai dapat menghentikan pemantauan di latar belakang.",
+          "dndAccessMissing": "Mode senyap tidak dapat diaktifkan tanpa akses Jangan Ganggu.",
+          "someMailboxesUnreachable": "Beberapa server tidak dapat dijangkau. Perangkat masih dapat saling menemukan lewat server lain.",
+          "mailboxReachable": "{host}: dapat dijangkau",
+          "mailboxUnreachable": "{host}: tidak dapat dijangkau"
         },
         "notifications": {
           "title": "Peringatan",
