@@ -218,6 +218,92 @@ describe("colour scheme tokens", () => {
   });
 });
 
+/*
+ * Cross-check of theme.css against the Compose theme (Theme.kt): the two hand-written token files
+ * must carry the same colours. This test goes away once `add-quality-gates` generates both files
+ * from tokens.json.
+ */
+const themeKt = readFileSync(
+  resolve(process.cwd(), "../android/app/src/main/kotlin/org/guardedsleep/app/ui/theme/Theme.kt"),
+  "utf8",
+);
+
+/** `name = Color(0xFFRRGGBB)` pairs of the Kotlin `val <block> =` declaration, as lowercase #rrggbb. */
+function kotlinColors(block: string): Map<string, string> {
+  const start = themeKt.indexOf(`val ${block} =`);
+  if (start < 0) throw new Error(`Theme.kt has no val ${block}`);
+  const end = themeKt.indexOf("\n    )\n", start);
+  const out = new Map<string, string>();
+  for (const [, name = "", hex = ""] of themeKt
+    .slice(start, end)
+    .matchAll(/(\w+) = Color\(0xFF([0-9A-Fa-f]{6})\)/g)) {
+    out.set(name, `#${hex.toLowerCase()}`);
+  }
+  return out;
+}
+
+describe("theme.css matches Theme.kt", () => {
+  const pairs = [
+    ["dusk", "DuskScheme", "DuskApp"],
+    ["day", "DayScheme", "DayApp"],
+    ["ember", "EmberScheme", "EmberApp"],
+  ] as const;
+  const schemeMap: ReadonlyArray<readonly [string, string]> = [
+    ["--gs-bg", "background"],
+    ["--gs-surface", "surfaceContainer"],
+    ["--gs-surface-low", "surfaceContainerLow"],
+    ["--gs-surface-variant", "surfaceVariant"],
+    ["--gs-surface-highest", "surfaceContainerHighest"],
+    ["--gs-on-bg", "onBackground"],
+    ["--gs-on-surface-variant", "onSurfaceVariant"],
+    ["--gs-outline", "outline"],
+    ["--gs-border", "outlineVariant"],
+    ["--gs-primary-container", "primaryContainer"],
+    ["--gs-secondary-container", "secondaryContainer"],
+    ["--gs-tertiary-container", "tertiaryContainer"],
+    ["--gs-error", "error"],
+    ["--gs-on-error", "onError"],
+  ];
+  const appMap: ReadonlyArray<readonly [string, string]> = [
+    ["--gs-ok", "ok"],
+    ["--gs-warn", "warn"],
+    ["--gs-bad", "bad"],
+    ["--gs-chip", "neutralChip"],
+    ["--gs-on-chip", "onNeutralChip"],
+  ];
+
+  it.each(pairs)("%s: scheme and text-level colours agree", (scheme, schemeBlock, appBlock) => {
+    const css = tokens(`:root[data-scheme="${scheme}"]`);
+    const scheme_ = kotlinColors(schemeBlock);
+    for (const [prop, name] of schemeMap) {
+      expect(scheme_.get(name), `${schemeBlock}.${name} exists`).toMatch(/^#[0-9a-f]{6}$/);
+      expect(css.get(prop), `${prop} vs ${schemeBlock}.${name}`).toBe(scheme_.get(name));
+    }
+    const app = kotlinColors(appBlock);
+    for (const [prop, name] of appMap) {
+      expect(app.get(name), `${appBlock}.${name} exists`).toMatch(/^#[0-9a-f]{6}$/);
+      expect(css.get(prop), `${prop} vs ${appBlock}.${name}`).toBe(app.get(name));
+    }
+  });
+
+  it("the --safety-* colours are the colours of object SafetyColors", () => {
+    const start = themeKt.indexOf("object SafetyColors {");
+    const kotlin = new Set(
+      [
+        ...themeKt.slice(start, themeKt.indexOf("\n}\n", start)).matchAll(/0xFF([0-9A-Fa-f]{6})/g),
+      ].map((m) => `#${(m[1] ?? "").toLowerCase()}`),
+    );
+    // var(...) values reference another safety token and carry no colour of their own.
+    const css = new Set(
+      [...tokens(":root")]
+        .filter(([name, value]) => name.startsWith("--safety-") && value.startsWith("#"))
+        .map(([, value]) => value.toLowerCase()),
+    );
+    expect(kotlin.size).toBeGreaterThan(20);
+    expect([...css].sort()).toEqual([...kotlin].sort());
+  });
+});
+
 describe("storeThemeSetting", () => {
   it("writes the setting under the key the boot script reads", () => {
     const set = vi.fn();
