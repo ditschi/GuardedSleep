@@ -157,7 +157,7 @@ class DeviceCheckTest {
 
         override fun dndAccessGranted() = true
 
-        override fun sampleMicRms(ms: Long): Double? {
+        override fun sampleMicRms(ms: Long, cancelled: () -> Boolean): Double? {
             micSampled = true
             return rms
         }

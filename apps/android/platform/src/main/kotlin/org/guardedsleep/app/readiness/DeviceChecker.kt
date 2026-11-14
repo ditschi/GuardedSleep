@@ -39,9 +39,10 @@ interface DeviceCheckEnv {
     fun dndAccessGranted(): Boolean
 
     /**
-     * The microphone's RMS level (0..1) over about [ms] milliseconds; null when it cannot record.
+     * The microphone's RMS level (0..1) over about [ms] milliseconds; null when it cannot record or
+     * [cancelled] turned true (checked between reads, so the microphone is released at once).
      */
-    fun sampleMicRms(ms: Long): Double?
+    fun sampleMicRms(ms: Long, cancelled: () -> Boolean): Double?
 
     /**
      * True once a connect to [url] opens within [timeoutMs]. No frame is sent: no room id, tag or
@@ -116,7 +117,11 @@ class DeviceChecker(private val env: DeviceCheckEnv) {
      * [mailboxUrls] are the relay URLs to probe; [sampleMic] is false while a run holds the
      * microphone.
      */
-    fun check(mailboxUrls: List<String>, sampleMic: Boolean): DeviceCheckResult {
+    fun check(
+        mailboxUrls: List<String>,
+        sampleMic: Boolean,
+        cancelled: () -> Boolean = { false },
+    ): DeviceCheckResult {
         val probes =
             mailboxUrls.distinct().map { url ->
                 url to
@@ -126,7 +131,8 @@ class DeviceChecker(private val env: DeviceCheckEnv) {
             }
         val granted = env.micGranted()
         val rms =
-            if (granted && sampleMic) runCatching { env.sampleMicRms(MIC_SAMPLE_MS) }.getOrNull()
+            if (granted && sampleMic)
+                runCatching { env.sampleMicRms(MIC_SAMPLE_MS, cancelled) }.getOrNull()
             else null
         val reach = probes.map { (url, f) ->
             val ok = runCatching {
@@ -184,7 +190,7 @@ class AndroidDeviceCheckEnv(private val context: Context) : DeviceCheckEnv {
             ?.isNotificationPolicyAccessGranted == true
 
     @SuppressLint("MissingPermission") // micGranted() is checked by the caller.
-    override fun sampleMicRms(ms: Long): Double? {
+    override fun sampleMicRms(ms: Long, cancelled: () -> Boolean): Double? {
         val rate = SAMPLE_RATE
         val minBuf =
             AudioRecord.getMinBufferSize(
@@ -217,6 +223,8 @@ class AndroidDeviceCheckEnv(private val context: Context) : DeviceCheckEnv {
             var counted = 0L
             var sumSq = 0.0
             while (read < total) {
+                // A run that starts meanwhile needs the microphone: stop at once.
+                if (cancelled()) return null
                 val n = rec.read(buf, 0, buf.size)
                 if (n <= 0) return null
                 for (i in 0 until n) {

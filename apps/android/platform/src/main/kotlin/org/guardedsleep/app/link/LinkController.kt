@@ -3,7 +3,6 @@ package org.guardedsleep.app.link
 import java.security.SecureRandom
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.guardedsleep.app.alerts.AlertSink
@@ -32,6 +31,7 @@ import org.guardedsleep.app.pairing.signalingUrls
 import org.guardedsleep.app.pairing.storedMailboxesFor
 import org.guardedsleep.app.pairing.toStored
 import org.guardedsleep.app.platform.BuildConfig
+import org.guardedsleep.app.readiness.DeviceCheckResult
 import org.guardedsleep.app.readiness.DeviceChecker
 import org.guardedsleep.app.readiness.ReadinessChecker
 import org.guardedsleep.app.settings.SettingsRepository
@@ -44,10 +44,8 @@ import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
 import org.guardedsleep.app.ui.model.ConnectionUi
 import org.guardedsleep.app.ui.model.DeviceCheck
-import org.guardedsleep.app.ui.model.DeviceCheckReason
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.ListenMode
-import org.guardedsleep.app.ui.model.MailboxReach
 import org.guardedsleep.app.ui.model.PairingError
 import org.guardedsleep.app.ui.model.PairingPhase
 import org.guardedsleep.app.ui.model.PairingState
@@ -105,14 +103,13 @@ class LinkController(
     private val _app = MutableStateFlow(AppState())
 
     // Declared before `init`, which already publishes the app state.
-    private class DeviceCheckUi(
-        val check: DeviceCheck = DeviceCheck.UNKNOWN,
-        val reasons: List<DeviceCheckReason> = emptyList(),
-        val mailboxes: List<MailboxReach> = emptyList(),
-    )
-
-    @Volatile private var deviceCheckUi = DeviceCheckUi()
-    private val deviceCheckGeneration = AtomicInteger()
+    private val deviceCheckLock = Any()
+    // Guarded by deviceCheckLock: the generation, the published result (null = still unknown) and
+    // whether a check of the current generation is in flight.
+    private var deviceCheckGen = 0
+    private var deviceCheckResult: DeviceCheckResult? = null
+    private var deviceCheckInFlight = false
+    private val appLock = Any()
     private val deviceCheckIo = Executors.newSingleThreadExecutor { r ->
         Thread(r, "gs-device-check").apply { isDaemon = true }
     }
@@ -546,26 +543,43 @@ class LinkController(
         return set.filter { it.kind == "relay" }.map { it.url }
     }
 
-    /** Drops a running check and its result (role or pairing changed). */
+    /** Drops a running check and its result (role, pairing or run changed). */
     private fun invalidateDeviceCheck() {
-        deviceCheckGeneration.incrementAndGet()
-        deviceCheckUi = DeviceCheckUi()
+        synchronized(deviceCheckLock) {
+            deviceCheckGen++
+            deviceCheckResult = null
+            deviceCheckInFlight = false
+        }
     }
 
     override fun runDeviceCheck() {
         val checker = deviceChecker ?: return
         if (settingsRepo.current.role != Role.BABY) return
-        val gen = deviceCheckGeneration.incrementAndGet()
-        deviceCheckUi = DeviceCheckUi()
+        val gen =
+            synchronized(deviceCheckLock) {
+                deviceCheckGen++
+                deviceCheckResult = null
+                deviceCheckInFlight = true
+                deviceCheckGen
+            }
         refreshApp()
         // WebRTC holds the microphone while a run is active: the sample would fail or steal it.
         val sampleMic = run == null
         val urls = deviceCheckMailboxUrls()
+        val stale = { synchronized(deviceCheckLock) { deviceCheckGen != gen } }
         deviceCheckIo.execute {
-            val result = checker.check(urls, sampleMic)
-            // A newer run, a role change or a stop makes this result stale.
-            if (deviceCheckGeneration.get() != gen) return@execute
-            deviceCheckUi = DeviceCheckUi(result.check, result.reasons, result.mailboxes)
+            val result = checker.check(urls, sampleMic, stale)
+            // Compare and publish under one lock: an invalidation can never be overwritten.
+            val fresh =
+                synchronized(deviceCheckLock) {
+                    (deviceCheckGen == gen).also {
+                        if (it) {
+                            deviceCheckResult = result
+                            deviceCheckInFlight = false
+                        }
+                    }
+                }
+            if (!fresh) return@execute
             PocLog.event(
                 "device_check",
                 "result" to result.check,
@@ -577,32 +591,36 @@ class LinkController(
         }
     }
 
-    private fun refreshApp() {
-        val p = settingsRepo.current
-        val connections =
-            p.role?.let { role ->
-                val active = activeId(role)
-                pairings.list(role).map {
-                    ConnectionUi(it.id, it.name, it.isDefault, it.id == active)
-                }
-            } ?: emptyList()
-        _app.value =
-            AppState(
-                role = p.role,
-                defaultRole = p.defaultRole,
-                onboardingDone = p.onboardingDone,
-                paired = pairingStoreOrNull?.exists() == true,
-                peerName = connections.firstOrNull { it.selected }?.name ?: p.peerName,
-                connections = connections,
-                // The baby unit replaces its pairing; only the parent adds one, up to the cap.
-                canAddPairing = p.role != Role.PARENT || pairings.freeId(Role.PARENT) != null,
-                monitoring = p.monitoringActive,
-                backgroundProtection = !(p.monitoringActive && fgs == Fgs.LOST),
-                deviceCheck = deviceCheckUi.check,
-                deviceCheckReasons = deviceCheckUi.reasons,
-                deviceCheckMailboxes = deviceCheckUi.mailboxes,
-            )
-    }
+    // One build-and-set at a time (the device-check thread calls it too): every build reads the
+    // live state inside the lock, so an older snapshot never overwrites a newer one.
+    private fun refreshApp() =
+        synchronized(appLock) {
+            val check = synchronized(deviceCheckLock) { deviceCheckResult }
+            val p = settingsRepo.current
+            val connections =
+                p.role?.let { role ->
+                    val active = activeId(role)
+                    pairings.list(role).map {
+                        ConnectionUi(it.id, it.name, it.isDefault, it.id == active)
+                    }
+                } ?: emptyList()
+            _app.value =
+                AppState(
+                    role = p.role,
+                    defaultRole = p.defaultRole,
+                    onboardingDone = p.onboardingDone,
+                    paired = pairingStoreOrNull?.exists() == true,
+                    peerName = connections.firstOrNull { it.selected }?.name ?: p.peerName,
+                    connections = connections,
+                    // The baby unit replaces its pairing; only the parent adds one, up to the cap.
+                    canAddPairing = p.role != Role.PARENT || pairings.freeId(Role.PARENT) != null,
+                    monitoring = p.monitoringActive,
+                    backgroundProtection = !(p.monitoringActive && fgs == Fgs.LOST),
+                    deviceCheck = check?.check ?: DeviceCheck.UNKNOWN,
+                    deviceCheckReasons = check?.reasons ?: emptyList(),
+                    deviceCheckMailboxes = check?.mailboxes ?: emptyList(),
+                )
+        }
 
     // ---- pairing -----------------------------------------------------------------------------
 
@@ -796,6 +814,8 @@ class LinkController(
         isPending: Boolean,
     ) {
         stopRun(userStop = false)
+        // The run takes the microphone: a running device check stops sampling and is dropped.
+        invalidateDeviceCheck()
         val s = _settings.value
         val coreRole = if (role == Role.BABY) CoreRole.BABY else CoreRole.PARENT
         val config = buildConfig(coreRole, pending.psk, pairedBefore, s, pending)

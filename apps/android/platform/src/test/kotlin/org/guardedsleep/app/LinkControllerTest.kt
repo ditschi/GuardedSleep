@@ -303,8 +303,24 @@ private class FakeDeviceEnv : org.guardedsleep.app.readiness.DeviceCheckEnv {
 
     override fun dndAccessGranted() = true
 
-    override fun sampleMicRms(ms: Long): Double {
+    /** Blocks in the sample until cancelled when set, like a long AudioRecord read loop. */
+    var micBlocks = false
+    val micStarted = java.util.concurrent.CountDownLatch(1)
+    val micCancelled = java.util.concurrent.CountDownLatch(1)
+
+    override fun sampleMicRms(ms: Long, cancelled: () -> Boolean): Double? {
         micSamples.incrementAndGet()
+        micStarted.countDown()
+        if (micBlocks) {
+            val end = System.currentTimeMillis() + 10_000
+            while (System.currentTimeMillis() < end) {
+                if (cancelled()) {
+                    micCancelled.countDown()
+                    return null
+                }
+                Thread.sleep(10)
+            }
+        }
         return 0.01
     }
 
@@ -925,6 +941,34 @@ class LinkControllerTest {
         assertEquals(1, env.micSamples.get())
         assertEquals(listOf("wss://own.example"), env.probed.toList())
         assertEquals("own.example", baby.controller.app.value.deviceCheckMailboxes[0].host)
+    }
+
+    @Test
+    fun startingARunCancelsTheMicSampleAndDropsTheResult() {
+        val env =
+            FakeDeviceEnv().apply {
+                micBlocks = true
+                reachable = false
+            }
+        val baby = unit("dc-cancel", Role.BABY, deviceChecker = DeviceChecker(env))
+        seedRecord(baby, listOf(StoredMailbox("relay", "wss://own.example")))
+        baby.controller.runDeviceCheck()
+        await("the sample started") { env.micStarted.count == 0L }
+        baby.controller.startMonitoring()
+        await("the sample was cancelled") { env.micCancelled.count == 0L }
+        // The start dropped the check's state at once; its late result must not come back.
+        assertEquals(DeviceCheck.UNKNOWN, baby.controller.app.value.deviceCheck)
+        // A later check (the run holds the mic, so it skips the sample) runs after the cancelled
+        // one on the same worker and publishes its own result.
+        env.reachable = true
+        env.probed.clear()
+        baby.controller.runDeviceCheck()
+        await("the next result") { baby.controller.app.value.deviceCheck != DeviceCheck.UNKNOWN }
+        assertEquals(1, env.micSamples.get())
+        assertEquals(
+            listOf(true),
+            baby.controller.app.value.deviceCheckMailboxes.map { it.reachable },
+        )
     }
 
     private fun await(what: String, timeoutMs: Long = 15_000, cond: () -> Boolean) {
