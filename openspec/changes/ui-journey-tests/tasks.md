@@ -15,11 +15,11 @@ Branch `test/ui-journey-tests` from `origin/main`; the pairing journeys need dit
 
 ## 3. Journeys and the writer check
 
-- [ ] 3.1 Journeys: first run baby and parent with pairing by pasted code; start and stop on both sides; saved connections, default and automatic start, "Choose another connection"; "Pair again"; noise alert with stop sound, snooze and acknowledge; kiosk lock and unlock; link loss and recovery; device check result; switch mode. Verify: `just test`, total under 90 s; each journey fails when its controller method is stubbed out (checked once by hand, noted in the PR).
-- [ ] 3.2 Test answer, coach and Settings test alert journeys written and `@Ignore`d with the backlog pointer.
-- [ ] 3.3 State recorder and the final writer check with allowlist. Verify: fails on a planted unwritten field.
-- [ ] 3.4 `AppGraph` smoke test with seams faked. Verify: `just test`.
+- [x] 3.1 Journeys: first run baby and parent with pairing by pasted code; start and stop on both sides; saved connections, default and automatic start, "Choose another connection"; "Pair again"; noise alert with stop sound, snooze and acknowledge; kiosk lock and unlock; link loss and recovery; device check result; switch mode. Verify: `just test`, total under 90 s; each journey fails when its controller method is stubbed out (checked once by hand, noted in the PR).
+- [x] 3.2 Test answer, coach and Settings test alert journeys written and `@Ignore`d with the backlog pointer.
+- [x] 3.3 State recorder and the final writer check with allowlist. Verify: fails on a planted unwritten field.
+- [x] 3.4 `AppGraph` smoke test with seams faked. Verify: `just test`.
 
 ## 4. Docs
 
-- [ ] 4.1 `docs/backlog.md`: `IDEA` entries for the test answer, the first-run coach and the Settings test alert while not monitoring (owner to decide). `docs/ci-gates.md` test job row (journeys, contract check). `docs/contributing` test guide: which layer catches what. Verify: `just lint-text`.
+- [x] 4.1 `docs/backlog.md`: `IDEA` entries for the test answer, the first-run coach and the Settings test alert while not monitoring (owner to decide). `docs/ci-gates.md` test job row (journeys, contract check). `docs/contributing` test guide: which layer catches what. Verify: `just lint-text`.

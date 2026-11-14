@@ -9,6 +9,7 @@ import org.guardedsleep.app.media.AttemptPort
 import org.guardedsleep.app.media.IceServerEntry
 import org.guardedsleep.app.media.InboundAudioStats
 import org.guardedsleep.app.media.MediaEngine
+import org.guardedsleep.app.pairing.DefaultPairingMarker
 import org.guardedsleep.app.pairing.PairingCipher
 import org.guardedsleep.app.pairing.PairingStore
 import org.guardedsleep.app.pairing.RolePairings
@@ -84,7 +85,12 @@ class FakeNet(private val scheduler: ManualScheduler) {
         synchronized(lock) {
             val o = JSONObject(text)
             when (o.getString("type")) {
-                "hello" -> join(from, o.getString("role"), o.getString("roomId"))
+                "hello" ->
+                    if (rejectProtocol)
+                        from.deliver(
+                            """{"type":"error","code":"UNSUPPORTED_PROTOCOL","message":"test"}"""
+                        )
+                    else join(from, o.getString("role"), o.getString("roomId"))
                 "ping" -> from.deliver("""{"type":"pong"}""")
                 "signal" -> {
                     val to = o.optString("to", "")
@@ -113,7 +119,14 @@ class FakeNet(private val scheduler: ManualScheduler) {
         answerers[token] = a
     }
 
+    /** While true the relay answers a hello with the protocol-not-supported error. */
+    @Volatile var rejectProtocol = false
+
+    /** While true no new connection is made (a long outage); see [breakAll]. */
+    @Volatile var outage = false
+
     fun connect(token: String) {
+        if (outage) return
         val offerer = offers[token]
         val answerer = answerers[token]
         if (offerer == null || answerer == null) return
@@ -221,6 +234,9 @@ class FakeMedia(val net: FakeNet, val baby: Boolean) : MediaEngine {
     /** What the microphone hears next ([TestPhones.injectNoise] sets it); null is silence. */
     @Volatile var micRms: Double? = null
 
+    /** What the parent's playback measures of the baby's audio ([TestPhones.injectNoise]). */
+    @Volatile var remoteRms: Double? = null
+
     override fun createAttempt(
         offerer: Boolean,
         listener: AttemptListener,
@@ -245,7 +261,7 @@ class FakeMedia(val net: FakeNet, val baby: Boolean) : MediaEngine {
 
     override fun drainMicRms(): Double? = micRms
 
-    override fun drainRemoteRms(): Double? = null
+    override fun drainRemoteRms(): Double? = remoteRms
 
     override fun release() = Unit
 }
@@ -293,6 +309,7 @@ fun rolePairings(
     role: Role,
     cipher: PairingCipher = FakeCipher(),
     legacy: PairingStore? = null,
+    defaults: DefaultPairingMarker = DefaultPairingMarker.InMemory(),
 ) =
     RolePairings(
         Role.entries.associateWith {
@@ -304,4 +321,5 @@ fun rolePairings(
             }
         },
         legacy,
+        defaults,
     )

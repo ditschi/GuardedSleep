@@ -12,8 +12,11 @@ import org.guardedsleep.app.pairing.PairingCipher
 import org.guardedsleep.app.settings.SettingsRepository
 
 /** Settings on a DataStore file in [dir]; writes complete on the caller's thread. */
-fun testSettings(dir: File, name: String = "s"): SettingsRepository {
-    val scope = CoroutineScope(Dispatchers.Unconfined)
+fun testSettings(
+    dir: File,
+    name: String = "s",
+    scope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined),
+): SettingsRepository {
     return SettingsRepository(
         PreferenceDataStoreFactory.create(scope = scope) { File(dir, "$name.preferences_pb") },
         scope,
@@ -77,4 +80,52 @@ class RecordingSink : AlertSink {
     override fun clear() {
         cleared++
     }
+}
+
+/** A healthy, charging phone whose microphone hears something; a journey changes one fact. */
+class FakeDeviceCheckEnv : org.guardedsleep.app.readiness.DeviceCheckEnv {
+    @Volatile var reachable = true
+    @Volatile var micRms: Double? = 0.01
+    val probed = java.util.concurrent.CopyOnWriteArrayList<String>()
+
+    override fun micGranted() = true
+
+    override fun battery() =
+        org.guardedsleep.app.readiness.BatterySnapshot(80, charging = true, unhealthy = false)
+
+    override fun batteryOptimizationIgnored() = true
+
+    override fun dndAccessGranted() = true
+
+    override fun sampleMicRms(ms: Long, cancelled: () -> Boolean): Double? = micRms
+
+    override fun probeMailbox(url: String, timeoutMs: Long): Boolean {
+        probed += url
+        return reachable
+    }
+}
+
+/**
+ * Runs every task at once on the calling thread. The device checker blocks on its probes, which a
+ * virtual scheduler cannot serve, so its pool is this one.
+ */
+class InlineExecutorService : java.util.concurrent.AbstractExecutorService() {
+    @Volatile private var down = false
+
+    override fun execute(command: Runnable) = command.run()
+
+    override fun shutdown() {
+        down = true
+    }
+
+    override fun shutdownNow(): MutableList<Runnable> {
+        down = true
+        return mutableListOf()
+    }
+
+    override fun isShutdown() = down
+
+    override fun isTerminated() = down
+
+    override fun awaitTermination(timeout: Long, unit: java.util.concurrent.TimeUnit) = down
 }
