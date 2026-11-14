@@ -13,8 +13,10 @@
 # GS_DOCKER_CACHE_ARGS mounts the shared Cargo home (registry, git DBs, installed tools) and Gradle user
 # home from ${GS_SHARED_CACHE:-$HOME/.cache/guardedsleep}/{cargo,gradle,android} at /cache and sets CARGO_HOME,
 # GRADLE_USER_HOME and ANDROID_USER_HOME, so worktrees download dependencies
-# once. Cargo's package-cache lock and Gradle's cross-process cache locks make concurrent runs safe;
-# target/ and the Gradle project cache stay per worktree. Host cargo builds into target/, image runs of
+# once. Cargo's package-cache lock (a plain file lock) makes concurrent cargo runs safe. Gradle's
+# cross-process cache locks do not work across containers (the release request goes over loopback UDP
+# to a PID in another namespace), so scripts/gradle.sh serialises container Gradle runs with a
+# machine-wide flock on the shared Gradle home. target/ and the Gradle project cache stay per worktree. Host cargo builds into target/, image runs of
 # the Android chain and determinism into target/container (scripts/core-build.sh), so neither mode
 # invalidates the other's build output. AGENTS.md section 10.1.
 # Unless GS_SCCACHE=0 or CI is set, it also mounts a shared sccache directory ($cache/sccache, capped by
