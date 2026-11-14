@@ -1,6 +1,7 @@
 /**
- * Theme resolution. `public/theme-boot.js` repeats `resolveTheme` and `schemeFor` in plain JavaScript because it
- * must run before first paint without a bundle; `theme.test.ts` runs the boot script and compares.
+ * Theme resolution. `public/theme-boot.js` repeats `resolveTheme` and `schemeFor` in plain
+ * JavaScript because it must run before first paint without a bundle; `theme.test.ts` runs the
+ * boot script and compares.
  */
 
 /** What the user picks in settings (mirrors `Theme` in UiContract.kt). */
