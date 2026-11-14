@@ -36,8 +36,9 @@ interface DeviceCheckEnv {
     fun dndAccessGranted(): Boolean
 
     /**
-     * The microphone's RMS level (0..1) over about [ms] milliseconds; null when it cannot record or
-     * [cancelled] turned true (checked between reads, so the microphone is released at once).
+     * The microphone's RMS level (0..1) over about [ms] milliseconds, exactly 0.0 only when every
+     * counted sample was zero; null when it cannot record or [cancelled] turned true (checked
+     * between reads, so the microphone is released at once).
      */
     fun sampleMicRms(ms: Long, cancelled: () -> Boolean): Double?
 
@@ -71,14 +72,11 @@ data class DeviceCheckResult(
 object DeviceCheckRules {
     const val LOW_BATTERY_PCT = 20
 
-    /** Below this level the microphone delivers digital silence (muted or privacy toggle). */
-    const val SILENT_RMS = 0.0002
-
     fun evaluate(f: DeviceFacts): DeviceCheckResult {
         val bad = mutableListOf<DeviceCheckReason>()
         val limited = mutableListOf<DeviceCheckReason>()
         if (!f.micGranted) bad += DeviceCheckReason.MIC_PERMISSION_MISSING
-        else if (f.micRms != null && f.micRms < SILENT_RMS) bad += DeviceCheckReason.MIC_SILENT
+        else if (f.micRms != null && isSilent(f.micRms)) bad += DeviceCheckReason.MIC_SILENT
         if (f.batteryUnhealthy) bad += DeviceCheckReason.BATTERY_UNHEALTHY
         val pct = f.batteryPct
         val lowAndUnplugged = pct != null && pct < LOW_BATTERY_PCT && !f.charging
@@ -98,6 +96,13 @@ object DeviceCheckRules {
             }
         return DeviceCheckResult(check, bad + limited, f.mailboxes)
     }
+
+    /**
+     * Digital silence only (muted, privacy toggle, another app holds the microphone): the RMS is
+     * exactly zero only when every sample was zero. The same sample rule as the core's live
+     * `mic_silent`, so a quiet nursery on a low-noise microphone passes here as it does there.
+     */
+    fun isSilent(rms: Double): Boolean = !rms.isFinite() || rms == 0.0
 }
 
 /**
