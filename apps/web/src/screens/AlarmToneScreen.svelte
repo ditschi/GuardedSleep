@@ -6,8 +6,7 @@
     useController,
     type AlarmToneId,
   } from "../lib/contract";
-  import { storeAlarmToneSetting } from "../lib/alarm-tone";
-  import type { MessageKey } from "../lib/i18n/keys";
+  import { ALARM_TONE_COPY, storeAlarmToneSetting } from "../lib/alarm-tone";
   import { t } from "../lib/i18n/store";
   import { useRouter } from "../lib/router-context";
   import Button from "../lib/ui/Button.svelte";
@@ -24,29 +23,6 @@
 
   // Leaving the screen stops any preview or test.
   onDestroy(() => controller.stopAlarmTone());
-
-  const COPY = {
-    classic: {
-      name: "native.ui.settings.alarmTone.name.classic",
-      desc: "native.ui.settings.alarmTone.desc.classic",
-    },
-    low: {
-      name: "native.ui.settings.alarmTone.name.low",
-      desc: "native.ui.settings.alarmTone.desc.low",
-    },
-    beacon: {
-      name: "native.ui.settings.alarmTone.name.beacon",
-      desc: "native.ui.settings.alarmTone.desc.beacon",
-    },
-    rising: {
-      name: "native.ui.settings.alarmTone.name.rising",
-      desc: "native.ui.settings.alarmTone.desc.rising",
-    },
-    chime: {
-      name: "native.ui.settings.alarmTone.name.chime",
-      desc: "native.ui.settings.alarmTone.desc.chime",
-    },
-  } as const satisfies Record<AlarmToneId, { name: MessageKey; desc: MessageKey }>;
 
   function choose(id: AlarmToneId): void {
     controller.updateSettings((s) => ({ ...s, connectionAlarmTone: id }));
@@ -87,13 +63,13 @@
             onchange={() => choose(id)}
           />
           <span>
-            {$t(COPY[id].name)}
+            {$t(ALARM_TONE_COPY[id].name)}
             {#if id === HARD_OF_HEARING_TONE}
               <span class="gs-tone-tag" data-testid={`alarm_tone_tag_${id}`}>
                 {$t("native.ui.settings.alarmTone.tagHardOfHearing")}
               </span>
             {/if}
-            <span class="gs-hint">{$t(COPY[id].desc)}</span>
+            <span class="gs-hint">{$t(ALARM_TONE_COPY[id].desc)}</span>
           </span>
         </label>
         <Button
@@ -101,7 +77,7 @@
           testid={`alarm_tone_preview_${id}`}
           label={previewing(id)
             ? $t("native.ui.settings.alarmTone.stop")
-            : $t("native.ui.settings.alarmTone.playNamed", { name: $t(COPY[id].name) })}
+            : $t("native.ui.settings.alarmTone.playNamed", { name: $t(ALARM_TONE_COPY[id].name) })}
           pressed={previewing(id)}
           onclick={() =>
             previewing(id) ? controller.stopAlarmTone() : controller.previewAlarmTone(id)}

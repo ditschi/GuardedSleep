@@ -39,30 +39,45 @@ import org.guardedsleep.app.ui.model.AlarmTones
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.theme.LocalAppColors
 
-/** The localized name of a connection alarm tone id (an unknown id shows the default's name). */
-@Composable
-internal fun alarmToneName(id: String): String =
-    stringResource(
-        when (id) {
-            "low" -> R.string.native_ui_settings_alarm_tone_name_low
-            "beacon" -> R.string.native_ui_settings_alarm_tone_name_beacon
-            "rising" -> R.string.native_ui_settings_alarm_tone_name_rising
-            "chime" -> R.string.native_ui_settings_alarm_tone_name_chime
-            else -> R.string.native_ui_settings_alarm_tone_name_classic
-        }
+private class ToneCopy(val name: Int, val desc: Int)
+
+/** Name and description strings per tone id, keyed by the contract's [AlarmTones.IDS]. */
+private val ToneStrings: Map<String, ToneCopy> =
+    mapOf(
+        "classic" to
+            ToneCopy(
+                R.string.native_ui_settings_alarm_tone_name_classic,
+                R.string.native_ui_settings_alarm_tone_desc_classic,
+            ),
+        "low" to
+            ToneCopy(
+                R.string.native_ui_settings_alarm_tone_name_low,
+                R.string.native_ui_settings_alarm_tone_desc_low,
+            ),
+        "beacon" to
+            ToneCopy(
+                R.string.native_ui_settings_alarm_tone_name_beacon,
+                R.string.native_ui_settings_alarm_tone_desc_beacon,
+            ),
+        "rising" to
+            ToneCopy(
+                R.string.native_ui_settings_alarm_tone_name_rising,
+                R.string.native_ui_settings_alarm_tone_desc_rising,
+            ),
+        "chime" to
+            ToneCopy(
+                R.string.native_ui_settings_alarm_tone_name_chime,
+                R.string.native_ui_settings_alarm_tone_desc_chime,
+            ),
     )
 
-@Composable
-private fun alarmToneDescription(id: String): String =
-    stringResource(
-        when (id) {
-            "low" -> R.string.native_ui_settings_alarm_tone_desc_low
-            "beacon" -> R.string.native_ui_settings_alarm_tone_desc_beacon
-            "rising" -> R.string.native_ui_settings_alarm_tone_desc_rising
-            "chime" -> R.string.native_ui_settings_alarm_tone_desc_chime
-            else -> R.string.native_ui_settings_alarm_tone_desc_classic
-        }
-    )
+private fun toneCopy(id: String): ToneCopy =
+    ToneStrings[id] ?: checkNotNull(ToneStrings[AlarmTones.DEFAULT])
+
+/** The localized name of a connection alarm tone id (an unknown id shows the default's name). */
+@Composable internal fun alarmToneName(id: String): String = stringResource(toneCopy(id).name)
+
+@Composable private fun alarmToneDescription(id: String): String = stringResource(toneCopy(id).desc)
 
 /**
  * Settings > Alerts > Connection alarm tone (parent only): one radio row per built-in tone with a

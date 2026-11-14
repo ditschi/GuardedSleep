@@ -5,6 +5,33 @@
  * core's `resolve_alarm_tone` (the controller does), so a garbage value is the default tone.
  */
 
+import type { AlarmToneId } from "./contract";
+import type { MessageKey } from "./i18n/keys";
+
+/** Catalogue keys of the tone names and descriptions; used by the settings row and the picker. */
+export const ALARM_TONE_COPY = {
+  classic: {
+    name: "native.ui.settings.alarmTone.name.classic",
+    desc: "native.ui.settings.alarmTone.desc.classic",
+  },
+  low: {
+    name: "native.ui.settings.alarmTone.name.low",
+    desc: "native.ui.settings.alarmTone.desc.low",
+  },
+  beacon: {
+    name: "native.ui.settings.alarmTone.name.beacon",
+    desc: "native.ui.settings.alarmTone.desc.beacon",
+  },
+  rising: {
+    name: "native.ui.settings.alarmTone.name.rising",
+    desc: "native.ui.settings.alarmTone.desc.rising",
+  },
+  chime: {
+    name: "native.ui.settings.alarmTone.name.chime",
+    desc: "native.ui.settings.alarmTone.desc.chime",
+  },
+} as const satisfies Record<AlarmToneId, { name: MessageKey; desc: MessageKey }>;
+
 export const ALARM_TONE_STORAGE_KEY = "guardedsleep.alarmTone";
 
 /** Remembers the chosen tone id for the next visit; storage can be blocked (then this page only). */

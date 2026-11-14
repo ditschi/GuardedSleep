@@ -1,6 +1,7 @@
 <script lang="ts">
   import { get } from "svelte/store";
   import { useController, type AlarmToneId, type Theme, type TurnSaveError } from "../lib/contract";
+  import { ALARM_TONE_COPY } from "../lib/alarm-tone";
   import { ENDONYMS, isLocale, LOCALES } from "../lib/i18n/bundles";
   import type { MessageKey } from "../lib/i18n/keys";
   import { t } from "../lib/i18n/store";
@@ -40,14 +41,6 @@
     { value: "light", label: "native.ui.settings.theme.light" },
     { value: "system", label: "native.ui.settings.theme.system" },
   ];
-
-  const ALARM_TONE_NAMES = {
-    classic: "native.ui.settings.alarmTone.name.classic",
-    low: "native.ui.settings.alarmTone.name.low",
-    beacon: "native.ui.settings.alarmTone.name.beacon",
-    rising: "native.ui.settings.alarmTone.name.rising",
-    chime: "native.ui.settings.alarmTone.name.chime",
-  } as const satisfies Record<AlarmToneId, MessageKey>;
 
   function back(): void {
     const a = $app;
@@ -279,8 +272,10 @@
         <span>{$t("native.ui.settings.alarmTone.label")}</span>
         <span class="gs-hint" data-testid="settings_alarm_tone_name">
           {$t(
-            ALARM_TONE_NAMES[$settings.connectionAlarmTone as AlarmToneId] ??
-              ALARM_TONE_NAMES.classic,
+            (
+              ALARM_TONE_COPY[$settings.connectionAlarmTone as AlarmToneId] ??
+              ALARM_TONE_COPY.classic
+            ).name,
           )}
         </span>
       </a>
