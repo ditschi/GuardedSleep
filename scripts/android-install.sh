@@ -97,7 +97,9 @@ for d in "${devices[@]}"; do
     fi
   else
     failed=1
-    result="FAILED: $(printf '%s' "$out" | tail -n 1)"
+    # adb prints "Performing Streamed Install" after the failure line, so pick the reason explicitly.
+    reason="$(printf '%s\n' "$out" | grep -m1 -E 'Failure|error|failed' || printf '%s' "$out" | tail -n 1)"
+    result="FAILED: $reason"
     if [[ "$out" == *INSTALL_FAILED_UPDATE_INCOMPATIBLE* ]]; then
       echo "hint: $d has $PKG installed with a different signature (e.g. the GitHub dev APK)." >&2
       echo "hint: uninstall it with 'adb -s $d uninstall $PKG' (this deletes the pairings), then retry. Not done automatically." >&2
