@@ -230,6 +230,14 @@ Owner setup (once; the key is never committed, AGENTS.md §7.7): run `scripts/de
 - A run that stopped half-way reuses the key in the output directory. Once the secrets exist, the script refuses to create another key; `GS_ROTATE_DEV_KEY=1` replaces it on purpose.
 - Replacing or losing the key means every tester uninstalls once (which deletes the pairing); delete the old Bitwarden item after a rotation.
 
+### Install on phones
+
+`just install-android` installs the local debug APK (`just build-android` first, or pass `--build`) on every connected phone in one go and launches the app (`--no-launch` skips that). It installs once per physical phone even when it shows up over USB and Wi-Fi, and it never uninstalls anything.
+
+- Enable Developer options and USB debugging on each phone. Xiaomi/MIUI/HyperOS also needs "Install via USB" (and "USB debugging (Security settings)") in the developer options, otherwise the install is refused.
+- Wi-Fi adb: connect over USB once, run `adb tcpip 5555`, unplug, then `adb connect <phone-ip>:5555`. Or list the phones explicitly: `GS_DEVICES="R5CT123 192.168.1.20:5555" just install-android` (comma or space separated; `host:port` entries are connected for you). Without `GS_DEVICES` every device in state `device` is used.
+- `INSTALL_FAILED_UPDATE_INCOMPATIBLE` means the installed app has another signature (for example the GitHub dev APK). Uninstall it yourself with `adb -s <serial> uninstall org.guardedsleep.app.alpha`, which deletes the pairings, then run the recipe again. The script continues with the other phones and exits non-zero if any failed.
+
 ## Commits
 
 Conventional Commits are checked on the **PR title** in CI; there is no local commit-msg hook. A PR is rebase-merged when its history is clean, otherwise squashed (AGENTS.md §8). Example: `feat(docs): describe pairing flow in connectivity doc`.

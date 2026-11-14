@@ -9,7 +9,7 @@
 # One is missing        -> prints "SKIPPED: <task> needs <x>" and exits 0, so the caller stops here.
 # With GS_STRICT=1 (CI) -> prints "FAILED: <task> needs <x>" and exits 1 instead.
 # A skip is also appended to $GS_SKIP_LOG when set, so `just ci` can list them at the end (skip-log.sh).
-# Requirements: docker, kvm, android-sdk, cargo, cargo-fuzz, network.
+# Requirements: docker, kvm, android-sdk, adb, cargo, cargo-fuzz, network.
 #
 # Sourcing also puts the mise-managed tools on PATH when mise is installed (see gs_mise_env).
 
@@ -38,6 +38,7 @@ gs_missing() {
       [ -d "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/nonexistent}}" ] || [ "${CORE_BUILD_NATIVE:-0}" = "1" ] \
         || docker info >/dev/null 2>&1 || echo "android-sdk"
       ;;
+    adb) command -v adb >/dev/null 2>&1 || echo "adb" ;;
     cargo)
       # scripts/cargo.sh uses host rustup, else falls back to the build image, so docker is an acceptable substitute.
       gs_host_rust || docker info >/dev/null 2>&1 || echo "cargo"

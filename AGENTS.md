@@ -82,6 +82,7 @@ Per-package `AGENTS.md` files may exist later; they inherit this file and docume
 | Test                       | `just test` (cargo workspace, WASM conformance, Vitest, Android JVM tests) · `scripts/cargo.sh test -p guardedsleep-sim` (host simulation)                         |
 | Generate                   | `just gen` (i18n output) · `scripts/core-build.sh host` (host core library + Kotlin bindings) · `scripts/core-build.sh wasm`                                       |
 | Build                      | `just build` (web + Android) · `just build-web` · `just build-android` · `just verify-android` (adds JVM tests and Roborazzi)                                      |
+| Install on phones          | `just install-android` (local debug APK on all USB/Wi-Fi adb phones; `GS_DEVICES`, `--build`, `--no-launch`)                                                       |
 | Browser E2E                | `just e2e` (Playwright; starts `just dev`)                                                                                                                         |
 | Emulator gate (KVM)        | `just gate` (`DOZE_MINUTES=2 just gate` for a quick run; run `just build-android` first)                                                                           |
 | Local dev                  | `just dev` (Vite 5173 + Rust signaling server 8787)                                                                                                                |
