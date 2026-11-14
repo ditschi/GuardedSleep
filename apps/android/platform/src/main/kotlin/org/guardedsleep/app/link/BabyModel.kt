@@ -22,6 +22,7 @@ class BabyModel(private val clock: Clock) {
     private var hints: Set<LinkHint> = emptySet()
     private var parentName: String? = null
     private var security = false
+    private var firstContact: Long? = null
 
     @Synchronized
     fun reset(keepNotice: Boolean = true) {
@@ -31,6 +32,7 @@ class BabyModel(private val clock: Clock) {
         hints = emptySet()
         parentName = null
         security = false
+        firstContact = null
         _state.value =
             BabyMonitorState(
                 threshold = _state.value.threshold,
@@ -61,6 +63,8 @@ class BabyModel(private val clock: Clock) {
                 _state.value = _state.value.copy(parentListening = event.enabled)
             is LinkEvent.ParentConnected -> {
                 parentName = event.name
+                // The parent's first verified heartbeat starts the kiosk's set-up confirmation.
+                if (firstContact == null) firstContact = now
                 publish()
             }
             is LinkEvent.TalkActive -> {
@@ -136,6 +140,7 @@ class BabyModel(private val clock: Clock) {
                         s?.let { LinkMapping.phase(it.state) } == LinkPhase.CONNECTED
                     },
                 securityWarning = security,
+                firstContactElapsedMs = firstContact,
             )
     }
 

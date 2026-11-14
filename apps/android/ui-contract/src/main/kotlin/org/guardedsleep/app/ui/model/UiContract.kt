@@ -294,6 +294,11 @@ data class BabyMonitorState(
     val parentName: String? = null,
     /** A device that is not the paired parent tried to connect (the core refused it). */
     val securityWarning: Boolean = false,
+    /**
+     * The elapsed-realtime time of the first verified contact with a parent device in this run;
+     * null until then. The kiosk shows its set-up confirmation for 60 s from here.
+     */
+    val firstContactElapsedMs: Long? = null,
     /** A parent's voice plays now (static indicator under the edge). */
     val parentTalking: Boolean = false,
     /** The last finished talk of this run, local only. */

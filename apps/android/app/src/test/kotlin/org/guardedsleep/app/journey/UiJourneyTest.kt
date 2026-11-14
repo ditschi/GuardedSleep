@@ -168,7 +168,11 @@ class UiJourneyTest : JourneyHost() {
         tap(Device.BABY, "baby_lock")
         awaitShown(Device.BABY, "baby_kiosk")
         assertTrue(phones.baby.baby.value.kioskLocked)
+        // The screen reader's action asks first; only the confirmation unlocks.
         customAction(Device.BABY, "baby_kiosk")
+        awaitShown(Device.BABY, "dialog_unlock")
+        assertTrue(phones.baby.baby.value.kioskLocked)
+        tap(Device.BABY, "dialog_unlock_confirm")
         awaitShown(Device.BABY, "baby_monitor")
         assertFalse(phones.baby.baby.value.kioskLocked)
     }

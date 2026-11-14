@@ -37,6 +37,16 @@ class BabyModelTest {
     }
 
     @Test
+    fun theFirstContactStartsOnceAndResetsWithTheRun() {
+        assertNull(model.state.value.firstContactElapsedMs)
+        model.onEvent(LinkEvent.ParentConnected("Pixel 8"), 5_000)
+        model.onEvent(LinkEvent.ParentConnected("Pixel 8"), 9_000)
+        assertEquals(5_000L, model.state.value.firstContactElapsedMs)
+        model.reset()
+        assertNull(model.state.value.firstContactElapsedMs)
+    }
+
+    @Test
     fun anUnknownParentAttemptSetsTheWarningUntilReset() {
         assertFalse(model.state.value.securityWarning)
         model.onEvent(LinkEvent.SecurityWarning("unknown_parent_attempt"), clock.elapsed)
