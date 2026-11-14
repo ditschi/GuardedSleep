@@ -113,12 +113,27 @@ class ConnectionTests : ShotBase() {
         show { HomeScreen(c, {}, autoScanned = scanned, onAutoScanned = { scanned = true }) }
         waitForIdle()
         assertEquals(listOf("startPairing"), c.calls)
-        // Cancelling lands on the empty home; it does not reopen by itself.
-        waitForIdle()
-        assertEquals(listOf("startPairing"), c.calls)
         onNodeWithTag("home_empty").assertIsDisplayed()
         onNodeWithTag("home_new_pairing").performClick()
         assertEquals(listOf("startPairing", "startPairing"), c.calls)
+    }
+
+    @Test
+    fun theEmptyParentGoesThroughTheScanScreenAndBackWithoutRescanning() = runComposeUiTest {
+        val c = FakeAppController(app = empty)
+        setContent {
+            // Camera denied: the paste view, so no native scanner library is needed on the JVM.
+            CompositionLocalProvider(LocalUiEnv provides TestEnv.copy(cameraGranted = false)) {
+                GuardedSleepRoot(c)
+            }
+        }
+        waitForIdle()
+        assertEquals(listOf("startPairing"), c.calls)
+        onNodeWithTag("parent_pair").assertIsDisplayed()
+        c.cancelPairing()
+        waitForIdle()
+        onNodeWithTag("home_empty").assertIsDisplayed()
+        assertEquals(listOf("startPairing", "cancelPairing"), c.calls)
     }
 
     @Test
