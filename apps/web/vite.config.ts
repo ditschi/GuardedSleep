@@ -33,7 +33,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,wasm,webmanifest}"],
+        // woff2: the bundled typeface must work offline too (local PC mode).
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,wasm,webmanifest,woff2}"],
         // History API routes (/baby, /parent, …) all serve the shell when offline.
         navigateFallback: "/index.html",
         runtimeCaching: [],

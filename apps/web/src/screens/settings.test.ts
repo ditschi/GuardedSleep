@@ -47,6 +47,13 @@ describe("S12 settings", () => {
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
   });
 
+  it("credits the bundled typeface in the About group", async () => {
+    open(c);
+    expect(await screen.findByTestId("settings_font_credit")).toHaveTextContent(
+      "Plus Jakarta Sans, SIL Open Font License 1.1",
+    );
+  });
+
   it("lists the system default first, then every shipped locale by endonym", async () => {
     open(c);
     const select = await screen.findByTestId("settings_language");

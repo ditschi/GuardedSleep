@@ -493,6 +493,7 @@
         },
         "gain": "Alerte extra puternice: {percent}%",
         "version": "Versiunea {version} ({commit}, {date})",
+        "fontCredit": "Font: Plus Jakarta Sans, licența SIL Open Font License 1.1",
         "lastTest": "Ultimul test: {time}",
         "neverTested": "Netestat încă",
         "theme": {

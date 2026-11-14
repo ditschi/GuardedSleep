@@ -493,6 +493,7 @@
         },
         "gain": "アラートを大きくする：{percent}%",
         "version": "バージョン {version}（{commit}、{date}）",
+        "fontCredit": "書体: Plus Jakarta Sans（SIL Open Font License 1.1）",
         "lastTest": "最終テスト：{time}",
         "neverTested": "まだテストしていません",
         "theme": {

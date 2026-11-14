@@ -11,9 +11,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import org.guardedsleep.app.R
 import org.guardedsleep.app.ui.model.Theme
 
 /**
@@ -286,10 +288,23 @@ private fun AppScheme.appColors(): AppColors =
     }
 
 /**
+ * The bundled typeface (SIL OFL 1.1, subset to Latin; `apps/web/src/assets/fonts/README.md` holds
+ * the provenance). Scripts it lacks (Cyrillic, Arabic, Devanagari, CJK) fall back to the system
+ * font.
+ */
+val PlusJakartaSans =
+    FontFamily(
+        Font(R.font.plus_jakarta_sans_regular, FontWeight.Normal),
+        Font(R.font.plus_jakarta_sans_medium, FontWeight.Medium),
+        Font(R.font.plus_jakarta_sans_semibold, FontWeight.SemiBold),
+        Font(R.font.plus_jakarta_sans_bold, FontWeight.Bold),
+    )
+
+/**
  * Type scale of design section 10: 12 (caps labels) / 14 (floor for text) / 15 / 16 / 20 / 28 / 52.
  * Tabular numerals everywhere so counters and times do not jump.
  */
-internal fun appTypography(family: FontFamily = FontFamily.Default): Typography {
+internal fun appTypography(family: FontFamily = PlusJakartaSans): Typography {
     fun style(size: Int, line: Int, weight: FontWeight, caps: Boolean = false) =
         TextStyle(
             fontFamily = family,

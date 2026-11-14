@@ -491,6 +491,7 @@
         },
         "gain": "Extra loud alerts: {percent}%",
         "version": "Version {version} ({commit}, {date})",
+        "fontCredit": "Typeface: Plus Jakarta Sans, SIL Open Font License 1.1",
         "lastTest": "Last test: {time}",
         "neverTested": "Not tested yet",
         "theme": {

@@ -493,6 +493,7 @@
         },
         "gain": "加强提醒音量：{percent}%",
         "version": "版本 {version}（{commit}，{date}）",
+        "fontCredit": "字体：Plus Jakarta Sans，SIL Open Font License 1.1",
         "lastTest": "上次测试：{time}",
         "neverTested": "尚未测试",
         "theme": {

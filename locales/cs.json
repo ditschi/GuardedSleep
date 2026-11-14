@@ -493,6 +493,7 @@
         },
         "gain": "Extra hlasité výstrahy: {percent} %",
         "version": "Verze {version} ({commit}, {date})",
+        "fontCredit": "Písmo: Plus Jakarta Sans, licence SIL Open Font License 1.1",
         "lastTest": "Poslední zkouška: {time}",
         "neverTested": "Zatím nevyzkoušeno",
         "theme": {
