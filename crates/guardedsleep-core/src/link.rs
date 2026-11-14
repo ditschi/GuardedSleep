@@ -398,6 +398,14 @@ pub struct LinkStatus {
     /// `reconnecting` and `peer_stopped`; `None` while `connected` (the contact is "now", and a
     /// moving value would re-emit the status on every message) and before any contact.
     pub last_alive_ms: Option<u64>,
+    /// Core-clock time the outage started: the last verified contact, or the run start before any
+    /// contact. Set while `connecting` and `reconnecting`, otherwise `None`. Read-only, from stored
+    /// times (never from `now`), so it stays constant within a level and adds no re-emission.
+    pub down_since_ms: Option<u64>,
+    /// Core-clock time the next escalation level starts, from the configured thresholds. `None`
+    /// at level 3, while acknowledged, and outside `connecting` / `reconnecting`. Constant within
+    /// a level, like `down_since_ms`.
+    pub next_level_at_ms: Option<u64>,
 }
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
@@ -3967,6 +3975,8 @@ impl Link {
             cause,
             acknowledged_until: None,
             last_alive_ms: None,
+            down_since_ms: None,
+            next_level_at_ms: None,
         };
         let status = match self.mode.clone() {
             Mode::Idle => {
@@ -4000,6 +4010,18 @@ impl Link {
                     } else {
                         natural
                     };
+                    let down_since = self.last_alive.unwrap_or(self.started_at);
+                    let next_level_at = if self.ack_until.is_some() {
+                        None
+                    } else {
+                        match natural {
+                            0 => Some(LEVEL1_MS),
+                            1 => Some(self.cfg.alarm_after_ms),
+                            2 => Some(LEVEL3_MS),
+                            _ => None,
+                        }
+                        .map(|after| down_since.saturating_add(after))
+                    };
                     LinkStatus {
                         state: if self.verified_in_run {
                             LinkState::Reconnecting
@@ -4011,6 +4033,8 @@ impl Link {
                         cause: hint.or_else(|| if level >= 2 { self.cause() } else { None }),
                         acknowledged_until: self.ack_until,
                         last_alive_ms: self.last_alive,
+                        down_since_ms: Some(down_since),
+                        next_level_at_ms: next_level_at,
                     }
                 }
             }
@@ -4453,6 +4477,68 @@ mod tests {
     }
 
     #[test]
+    fn outage_timing_fields_follow_the_thresholds_per_level() {
+        let (mut l, _) = started(Role::Parent);
+        let at = |l: &mut Link, t: u64| {
+            l.handle(t, LinkInput::Tick);
+            let s = l.status().unwrap();
+            (s.level, s.down_since_ms, s.next_level_at_ms)
+        };
+        // Never connected: the run start counts as the outage start.
+        assert_eq!(at(&mut l, 0), (0, Some(0), Some(20_000)));
+        assert_eq!(at(&mut l, 25_000), (1, Some(0), Some(60_000)));
+        assert_eq!(at(&mut l, 60_000), (2, Some(0), Some(180_000)));
+        assert_eq!(at(&mut l, 180_000), (3, Some(0), None));
+    }
+
+    #[test]
+    fn outage_timing_fields_use_a_non_default_alarm_threshold() {
+        let mut c = cfg(Role::Parent);
+        c.alarm_after_ms = 45_000;
+        let mut l = Link::new(c).unwrap();
+        l.handle(0, LinkInput::Start { entropy: 1 });
+        l.handle(25_000, LinkInput::Tick);
+        let s = l.status().unwrap();
+        assert_eq!((s.level, s.next_level_at_ms), (1, Some(45_000)));
+    }
+
+    #[test]
+    fn outage_timing_fields_are_none_when_acknowledged_and_status_stays_quiet_per_tick() {
+        let (mut l, _) = started(Role::Parent);
+        l.handle(61_000, LinkInput::Tick);
+        assert_eq!(l.status().unwrap().next_level_at_ms, Some(180_000));
+        // Constant within a level: ticks do not re-emit the status.
+        for t in [62_000u64, 80_000, 120_000] {
+            let a = l.handle(t, LinkInput::Tick);
+            assert!(
+                a.iter().all(|x| !matches!(
+                    x,
+                    LinkAction::Emit {
+                        event: LinkEvent::Status { .. }
+                    }
+                )),
+                "{a:?}"
+            );
+        }
+        l.handle(121_000, LinkInput::AcknowledgeAlarm);
+        let s = l.status().unwrap();
+        assert_eq!(s.next_level_at_ms, None);
+        assert!(s.acknowledged_until.is_some());
+        assert_eq!(s.down_since_ms, Some(0));
+    }
+
+    #[test]
+    fn outage_timing_fields_are_none_outside_an_outage() {
+        let (mut l, _) = started(Role::Parent);
+        l.handle(0, LinkInput::Stop);
+        let s = l.status().unwrap();
+        assert_eq!(
+            (s.state, s.down_since_ms, s.next_level_at_ms),
+            (LinkState::Stopped, None, None)
+        );
+    }
+
+    #[test]
     fn custom_alarm_threshold_moves_level_2() {
         let mut c = cfg(Role::Parent);
         c.alarm_after_ms = 90_000;
@@ -4582,6 +4668,8 @@ mod tests {
             cause: None,
             acknowledged_until: None,
             last_alive_ms: Some(1_234),
+            down_since_ms: None,
+            next_level_at_ms: None,
         };
         let v = serde_json::to_value(LinkEvent::Status {
             status: status.clone(),
