@@ -328,7 +328,9 @@ class RolePairings(
     /** The pairings of [role] that are saved, with their names (null while unreadable or unset). */
     @Synchronized
     fun list(role: Role): List<SavedPairing> {
-        val default = markedDefaultId(role)
+        // The parent shows only the user's marker (never an implied default); the baby unit keeps
+        // using the first saved pairing when none is marked.
+        val default = if (role == Role.PARENT) markedDefaultId(role) else defaultId(role)
         return savedIds(role).map {
             SavedPairing(it, store(role, it).load()?.connectionName, it == default)
         }

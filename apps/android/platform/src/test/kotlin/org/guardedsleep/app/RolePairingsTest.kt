@@ -76,6 +76,15 @@ class RolePairingsTest {
     }
 
     @Test
+    fun theBabyListKeepsTheImpliedDefault() {
+        pairings.store(Role.BABY, "1").save(pairing("one"))
+        pairings.store(Role.BABY, "2").save(pairing("two"))
+        assertEquals(listOf(true, false), pairings.list(Role.BABY).map { it.isDefault })
+        pairings.setDefault(Role.BABY, "2")
+        assertEquals(listOf(false, true), pairings.list(Role.BABY).map { it.isDefault })
+    }
+
+    @Test
     fun forgettingTheDefaultLeavesTheOtherAsDefault() {
         saveTwo()
         pairings.setDefault(Role.PARENT, "1")
