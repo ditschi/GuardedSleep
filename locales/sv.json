@@ -423,6 +423,8 @@
         "change": "Ändra",
         "labelDefault": "{name} (standard)",
         "makeDefault": "Gör till standard",
+        "autoConnect": "Anslut automatiskt när appen öppnas",
+        "removeDefault": "Ta bort standard",
         "rename": "Byt namn",
         "renameTitle": "Byt namn på anslutningen",
         "nameLabel": "Namn (1–30 tecken, stannar på den här telefonen)",

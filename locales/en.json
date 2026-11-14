@@ -421,6 +421,8 @@
         "change": "Change",
         "labelDefault": "{name} (default)",
         "makeDefault": "Make default",
+        "autoConnect": "Connect automatically when the app opens",
+        "removeDefault": "Remove default",
         "rename": "Rename",
         "renameTitle": "Rename connection",
         "nameLabel": "Name (1–30 characters, stays on this phone)",

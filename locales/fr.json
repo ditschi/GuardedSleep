@@ -423,6 +423,8 @@
         "change": "Changer",
         "labelDefault": "{name} (par défaut)",
         "makeDefault": "Définir par défaut",
+        "autoConnect": "Se connecter automatiquement à l'ouverture de l'application",
+        "removeDefault": "Retirer par défaut",
         "rename": "Renommer",
         "renameTitle": "Renommer la connexion",
         "nameLabel": "Nom (1 à 30 caractères, reste sur ce téléphone)",

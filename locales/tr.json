@@ -423,6 +423,8 @@
         "change": "Değiştir",
         "labelDefault": "{name} (varsayılan)",
         "makeDefault": "Varsayılan yap",
+        "autoConnect": "Uygulama açıldığında otomatik bağlan",
+        "removeDefault": "Varsayılanı kaldır",
         "rename": "Yeniden adlandır",
         "renameTitle": "Bağlantıyı yeniden adlandır",
         "nameLabel": "Ad (1–30 karakter, bu telefonda kalır)",

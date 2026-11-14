@@ -423,6 +423,8 @@
         "change": "Wijzigen",
         "labelDefault": "{name} (standaard)",
         "makeDefault": "Als standaard instellen",
+        "autoConnect": "Automatisch verbinden bij het openen van de app",
+        "removeDefault": "Standaard verwijderen",
         "rename": "Hernoemen",
         "renameTitle": "Verbinding hernoemen",
         "nameLabel": "Naam (1–30 tekens, blijft op deze telefoon)",

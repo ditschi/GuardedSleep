@@ -423,6 +423,8 @@
         "change": "Změnit",
         "labelDefault": "{name} (výchozí)",
         "makeDefault": "Nastavit jako výchozí",
+        "autoConnect": "Připojit automaticky při otevření aplikace",
+        "removeDefault": "Zrušit výchozí",
         "rename": "Přejmenovat",
         "renameTitle": "Přejmenovat připojení",
         "nameLabel": "Název (1–30 znaků, zůstává v tomto telefonu)",

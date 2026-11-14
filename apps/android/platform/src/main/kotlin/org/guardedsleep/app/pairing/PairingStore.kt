@@ -349,8 +349,7 @@ class RolePairings(
      * automatic start and the "default" flag of the lists use this one, never the implied default.
      */
     @Synchronized
-    fun markedDefaultId(role: Role): String? =
-        defaults.get(role)?.takeIf { it in savedIds(role) }
+    fun markedDefaultId(role: Role): String? = defaults.get(role)?.takeIf { it in savedIds(role) }
 
     /** Removes the default mark of [role]; the baby keeps falling back to its first pairing. */
     @Synchronized

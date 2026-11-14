@@ -423,6 +423,8 @@
         "change": "변경",
         "labelDefault": "{name}(기본)",
         "makeDefault": "기본으로 설정",
+        "autoConnect": "앱을 열면 자동으로 연결",
+        "removeDefault": "기본값 해제",
         "rename": "이름 변경",
         "renameTitle": "연결 이름 변경",
         "nameLabel": "이름(1~30자, 이 휴대폰에만 저장됨)",

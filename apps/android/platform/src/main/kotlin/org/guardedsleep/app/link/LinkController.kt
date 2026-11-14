@@ -473,8 +473,8 @@ class LinkController(
     private var autoStartDone = false
 
     /**
-     * Parent only (`device-setup`, "Automatic start with the default connection"): a connection
-     * the user marked as default starts monitoring when the app opens. A running or resumable
+     * Parent only (`device-setup`, "Automatic start with the default connection"): a connection the
+     * user marked as default starts monitoring when the app opens. A running or resumable
      * monitoring flag, an open pairing or a missing marker leave everything as it is.
      */
     private fun autoStartOnce() {

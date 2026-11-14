@@ -423,6 +423,8 @@
         "change": "変更",
         "labelDefault": "{name}（デフォルト）",
         "makeDefault": "デフォルトにする",
+        "autoConnect": "アプリを開いたときに自動で接続する",
+        "removeDefault": "デフォルトを解除",
         "rename": "名前を変更",
         "renameTitle": "接続の名前を変更",
         "nameLabel": "名前（1～30文字、この端末内だけに保存されます）",

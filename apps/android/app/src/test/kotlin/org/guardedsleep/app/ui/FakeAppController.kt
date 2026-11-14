@@ -139,7 +139,9 @@ class FakeAppController(
     override fun clearDefaultConnection() {
         calls += "clearDefaultConnection"
         appFlow.value =
-            appFlow.value.copy(connections = appFlow.value.connections.map { it.copy(isDefault = false) })
+            appFlow.value.copy(
+                connections = appFlow.value.connections.map { it.copy(isDefault = false) }
+            )
     }
 
     override fun forgetConnection(id: String) {

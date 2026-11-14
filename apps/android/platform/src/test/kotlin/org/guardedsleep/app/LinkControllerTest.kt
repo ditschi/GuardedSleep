@@ -737,7 +737,11 @@ class LinkControllerTest {
         assertEquals(PairingPhase.FAILED, c.pairing.value?.phase)
     }
 
-    private fun autoStartParent(name: String, mark: Boolean = true, onboarded: Boolean = true): Unit2 {
+    private fun autoStartParent(
+        name: String,
+        mark: Boolean = true,
+        onboarded: Boolean = true,
+    ): Unit2 {
         val u = unit(name, Role.PARENT)
         u.pairings.store(Role.PARENT, "1").save(pairing("one"))
         u.pairings.store(Role.PARENT, "2").save(pairing("two"))

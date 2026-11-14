@@ -423,6 +423,8 @@
         "change": "Alterar",
         "labelDefault": "{name} (padrão)",
         "makeDefault": "Definir como padrão",
+        "autoConnect": "Ligar automaticamente ao abrir a app",
+        "removeDefault": "Remover predefinida",
         "rename": "Renomear",
         "renameTitle": "Renomear conexão",
         "nameLabel": "Nome (1 a 30 caracteres, fica neste telefone)",

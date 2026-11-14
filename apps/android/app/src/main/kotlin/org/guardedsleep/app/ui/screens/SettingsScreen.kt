@@ -336,7 +336,16 @@ fun SettingsScreen(
                                     "settings_connection_rename_${c.id}",
                                     Modifier.weight(1f),
                                 )
-                                if (!c.isDefault) {
+                                if (c.isDefault && app.role == Role.PARENT) {
+                                    SecondaryButton(
+                                        stringResource(
+                                            R.string.native_ui_connections_remove_default
+                                        ),
+                                        { controller.clearDefaultConnection() },
+                                        "settings_connection_remove_default_${c.id}",
+                                        Modifier.weight(1f),
+                                    )
+                                } else if (!c.isDefault) {
                                     SecondaryButton(
                                         stringResource(R.string.native_ui_connections_make_default),
                                         { controller.setDefaultConnection(c.id) },
