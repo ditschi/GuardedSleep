@@ -6,7 +6,7 @@
   import AlertTemplate from "../lib/ui/AlertTemplate.svelte";
   import Button from "../lib/ui/Button.svelte";
   import CauseCard from "../lib/ui/CauseCard.svelte";
-  import { formatClock, formatCountdown, spokenDuration } from "../lib/ui/format";
+  import { formatClock, formatElapsed, spokenDuration } from "../lib/ui/format";
   import Glyph from "../lib/ui/Glyph.svelte";
   import { coreMessageKey } from "../lib/ui/messages";
   import {
@@ -78,7 +78,7 @@
 
   const down = $derived(downForMs(link, $everySecond.elapsedMs));
   const counter = $derived({
-    text: formatCountdown(down),
+    text: formatElapsed(down),
     label: $t("native.ui.connAlert.counterLabel"),
     spoken: $t("native.ui.connAlert.counterA11y", { duration: spokenDuration($t, down) }),
   });

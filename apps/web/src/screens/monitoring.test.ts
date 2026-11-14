@@ -473,8 +473,8 @@ describe("S11 connection alert", () => {
       link: link({
         phase: "reconnecting",
         level: 2,
-        lastAliveElapsedMs: now - 120_000,
-        downSinceElapsedMs: now - 120_000,
+        lastAliveElapsedMs: now - 120_500,
+        downSinceElapsedMs: now - 120_500,
         nextLevelAtElapsedMs: now + 60_000,
         causeHint: "peer_absent",
         ...over,

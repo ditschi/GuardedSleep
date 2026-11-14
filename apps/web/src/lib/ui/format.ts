@@ -9,6 +9,15 @@ export function formatCountdown(remainingMs: number): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
+/**
+ * "1:12": how long something has been going on, whole seconds truncated like the Android counter
+ * (a count-up never runs ahead of the clock; `formatCountdown` rounds up for a count-down).
+ */
+export function formatElapsed(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  return `${Math.floor(total / 60)}:${(total % 60).toString().padStart(2, "0")}`;
+}
+
 /** Milliseconds left until a monotonic deadline; null when there is none. */
 export function remainingMs(deadlineElapsedMs: number | null, nowElapsedMs: number): number | null {
   return deadlineElapsedMs === null ? null : Math.max(0, deadlineElapsedMs - nowElapsedMs);
@@ -44,7 +53,7 @@ export function levelWordKey(level: number): MessageKey {
  * `redesign-calm-ui` design section 8).
  */
 export function formatDurationWords(t: Translate, ms: number): string {
-  const total = Math.max(0, Math.round(ms / 1000));
+  const total = Math.max(0, Math.floor(ms / 1000));
   if (total < 60) return t("native.ui.common.durationSec", { seconds: total });
   const min = t("native.ui.common.durationMin", { minutes: Math.floor(total / 60) });
   return total % 60 === 0
@@ -54,7 +63,7 @@ export function formatDurationWords(t: Translate, ms: number): string {
 
 /** "1 minute 12 seconds" for the screen reader; the visible counter stays digits. */
 export function spokenDuration(t: Translate, ms: number): string {
-  const total = Math.max(0, Math.round(ms / 1000));
+  const total = Math.max(0, Math.floor(ms / 1000));
   const minutes = Math.floor(total / 60);
   const seconds = total % 60;
   const sec = t("native.ui.connAlert.spokenSec", { count: seconds });

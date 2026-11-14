@@ -5,6 +5,7 @@ import {
   formatCountdown,
   formatDuration,
   formatDurationWords,
+  formatElapsed,
   levelWordKey,
   remainingMs,
   spokenDuration,
@@ -68,6 +69,10 @@ describe("durations in words", () => {
     [48_000, "48 s"],
     [108_000, "1 min 48 s"],
     [120_000, "2 min"],
+    // Whole seconds are truncated, never rounded up.
+    [59_900, "59 s"],
+    [108_900, "1 min 48 s"],
+    [-5_000, "0 s"],
   ])("%d ms reads %s in running text", (ms, text) => {
     expect(formatDurationWords(t, ms)).toBe(text);
   });
@@ -78,6 +83,7 @@ describe("durations in words", () => {
     [60_000, "1 minute"],
     [72_000, "1 minute 12 seconds"],
     [135_000, "2 minutes 15 seconds"],
+    [72_900, "1 minute 12 seconds"],
   ])("the counter at %d ms is spoken as '%s'", (ms, text) => {
     expect(spokenDuration(t, ms)).toBe(text);
   });
@@ -85,5 +91,18 @@ describe("durations in words", () => {
   it("speaks German with the right plural", () => {
     const de = createTranslator("de");
     expect(spokenDuration(de, 62_000)).toBe("1 Minute 2 Sekunden");
+  });
+});
+
+describe("formatElapsed", () => {
+  it.each([
+    [0, "0:00"],
+    [999, "0:00"],
+    [72_900, "1:12"],
+    [120_000, "2:00"],
+    [3_725_000, "62:05"],
+    [-5_000, "0:00"],
+  ])("%d ms counts up as %s, truncating", (ms, text) => {
+    expect(formatElapsed(ms)).toBe(text);
   });
 });
