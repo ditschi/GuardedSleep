@@ -14,6 +14,7 @@ The owner also decided how the parent should enter a session (2026-11-14):
 - **Bug fix:** `startPairing()` on the parent opens the scan screen (`PairingPhase.SCANNING`); the camera permission is asked just in time there (alpha-ux-flows §3.2 step 3). At the cap of saved parent pairings the button stays hidden, as today.
 - **No saved pairing → scan:** after the parent setup checklist, and whenever the parent home would show its empty state on entry, the scan screen opens directly. Cancelling it returns to the empty home with a working "Set up new devices" button; it does not reopen by itself until the parent home is entered again.
 - **Optional default with automatic start (parent only):** the default is a user choice, never implied. Newly saved parent pairings are not default. When the app opens in the parent role with monitoring not active and a marked default that is still saved, it selects that connection and starts monitoring at once; once per app start, so stopping monitoring shows the home menu and does not restart it. The parent home offers a switch "Connect automatically when the app opens" for the selected connection; Settings → Connections offers set and remove default.
+- **Owner amendment (2026-11-14):** the start mode (baby or parent) and the parent default connection are independent; the first entry into parent mode in an app start also counts when the phone started as baby and is switched to parent right away. After an automatic start, "Choose another connection" stops it and shows the saved connections.
 - **Baby unchanged:** the baby keeps using its default parent pairing (marked, else the first saved one).
 - **Supersedes** the parent part of `multi-parent-pairings` "Connection choice per role" ("preselect the default connection"); that delta is reworded to match.
 
@@ -21,7 +22,7 @@ The owner also decided how the parent should enter a session (2026-11-14):
 
 ### Modified Capabilities
 
-- `device-setup`: ADDED "Parent pairing entry" and "Automatic start with the default connection".
+- `device-setup`: ADDED "Parent pairing entry", "Automatic start with the default connection" and "Leaving the automatic start".
 
 ## Impact
 

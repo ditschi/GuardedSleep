@@ -18,7 +18,7 @@ The parent unit SHALL open the scan screen from "Set up new devices" whenever fe
 
 ### Requirement: Automatic start with the default connection
 
-On the parent unit the default connection SHALL be a user choice that can be set and removed on the home screen and in Settings → Connections; a new pairing SHALL NOT become the default by itself. At app start in the parent role, with monitoring not active, a saved default connection SHALL start monitoring at most once per app start; without one the home menu SHALL be shown.
+On the parent unit the default connection SHALL be a user choice, independent of the start mode, that can be set and removed on the home screen and in Settings → Connections; a new pairing SHALL NOT become the default by itself. On the first entry into the parent role in an app start, unless the baby unit monitored or showed an invite before, a saved default SHALL start monitoring, at most once per app start; without one the home menu SHALL be shown.
 
 #### Scenario: Default marked
 
@@ -34,3 +34,22 @@ On the parent unit the default connection SHALL be a user choice that can be set
 
 - **WHEN** the app opens in the parent role with two saved connections and no default
 - **THEN** the home menu shows the connections and "Set up new devices", and nothing starts
+
+#### Scenario: Default role baby, switching to parent
+
+- **WHEN** the start mode is _Baby unit_, "Home" is the parent default connection and the user switches to parent mode on the baby home right after opening the app
+- **THEN** monitoring starts with "Home" without a further tap
+
+#### Scenario: Baby used first
+
+- **WHEN** the baby unit monitored in this app start and the user then switches to parent mode
+- **THEN** nothing starts and the home menu is shown
+
+### Requirement: Leaving the automatic start
+
+After an automatic start the parent unit SHALL offer "Choose another connection", which stops monitoring and shows the home menu with the saved connections listed. While the link has not verified yet it SHALL be a visible button without confirmation; afterwards it SHALL be in the menu and ask for confirmation like "Stop monitoring".
+
+#### Scenario: Wrong place
+
+- **WHEN** the default "Home" starts automatically while the parent is travelling and the link is still connecting
+- **THEN** one tap on "Choose another connection" stops it and shows the list, where "Travel" can be started
