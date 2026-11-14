@@ -574,6 +574,9 @@ class LinkController(
             // The parent only scans; no run starts until a code is submitted. At the cap nothing
             // is added (the screens hide the button).
             if (pairings.freeId(Role.PARENT) == null) return
+            // "Pair again" from the monitor screen: stop first (user stop), so the scan screen
+            // shows at once instead of waiting behind a running session.
+            if (settingsRepo.current.monitoringActive) stopMonitoring()
             cancelPairing()
             _pairing.value = PairingState(PairingPhase.SCANNING)
             return

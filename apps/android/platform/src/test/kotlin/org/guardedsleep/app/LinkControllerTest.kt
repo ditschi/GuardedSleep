@@ -730,6 +730,27 @@ class LinkControllerTest {
     }
 
     @Test
+    fun theParentStartPairingStopsAnActiveMonitoringFirst() {
+        val u = unit("parent-scan-stop", Role.PARENT)
+        val c = u.controller
+        u.pairings.store(Role.PARENT, "1").save(pairing("one"))
+        c.chooseRole(Role.PARENT)
+        c.startMonitoring()
+        assertTrue(c.app.value.monitoring)
+        c.startPairing()
+        assertFalse(c.app.value.monitoring)
+        assertEquals(PairingPhase.SCANNING, c.pairing.value?.phase)
+
+        // At the cap nothing changes, monitoring included.
+        u.pairings.store(Role.PARENT, "2").save(pairing("two"))
+        c.cancelPairing()
+        c.startMonitoring()
+        c.startPairing()
+        assertTrue(c.app.value.monitoring)
+        assertNull(c.pairing.value)
+    }
+
+    @Test
     fun aSubmittedCodeAfterTheScanStillPairs() {
         val u = unit("parent-scan-submit", Role.PARENT)
         val c = u.controller
