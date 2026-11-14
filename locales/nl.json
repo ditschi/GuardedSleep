@@ -418,7 +418,8 @@
         "babyBody": "Het ouderapparaat krijgt geen meldingen meer.",
         "confirm": "Stoppen",
         "cancel": "Blijven bewaken",
-        "parentBodyDefault": "Je krijgt geen meldingen meer van het babyapparaat."
+        "parentBodyDefault": "Je krijgt geen meldingen meer van het babyapparaat.",
+        "titleNamed": "Bewaking ‘{name}’ stoppen?"
       },
       "forget": {
         "title": "{name} vergeten?",
@@ -596,6 +597,72 @@
           "playChime": "Beltoon afspelen",
           "chime": "Beltoon voordat een ouder praat",
           "checklist": "Ouders kunnen via dit apparaat praten. Je kunt dit uitzetten bij Instellingen."
+        }
+      },
+      "status": {
+        "connected": "Verbonden",
+        "connecting": "Verbinden",
+        "reconnecting": "Opnieuw verbinden",
+        "notConnectedYet": "Nog niet verbonden",
+        "cantReach": "Niet bereikbaar",
+        "couldntConnect": "Verbinden mislukt",
+        "noConnection": "Geen verbinding",
+        "stillNoConnection": "Nog steeds geen verbinding",
+        "stopped": "Gestopt",
+        "withName": "{state} · {name}",
+        "subConnecting": "Wachten op het babyapparaat. De bewaking begint zodra het antwoordt.",
+        "subReconnecting": "Korte onderbrekingen zijn normaal.",
+        "subNotAnswered": "Het babyapparaat antwoordt niet. Is de bewaking daarop gestart?",
+        "subStillTrying": "Er wordt opnieuw geprobeerd. Is de verbinding niet snel terug, dan trilt dit apparaat en toont het een melding.",
+        "subStopped": "Controleer op het babyapparaat wie de bewaking heeft gestopt."
+      },
+      "connAlert": {
+        "labelVibrating": "Je telefoon trilt",
+        "labelLoud": "Luide alarm klinkt",
+        "labelPaused": "Alarm gepauzeerd",
+        "headlineCheck": "Ga even naar het kind kijken",
+        "nextLoud": "Luide alarm om {time} als er nog steeds geen verbinding is.",
+        "nextBack": "Komt om {time} terug als er nog steeds geen verbinding is.",
+        "cantHear": "Je hoort het kind niet.",
+        "neverStarted": "De bewaking is nooit begonnen. Je hoort het kind niet.",
+        "goNow": "Ga nu naar het kind. Het alarm klinkt tot je op ‘Ik kijk’ tikt.",
+        "pausedBody": "Je hoort het kind nog steeds niet.",
+        "counterLabel": "zonder verbinding",
+        "counterA11y": "{duration} zonder verbinding",
+        "spokenMin": "{count, plural, one {# minuut} other {# minuten}}",
+        "spokenSec": "{count, plural, one {# seconde} other {# seconden}}",
+        "progressVibrating": "Telefoon trilt nu",
+        "progressLoud": "Luide alarm nu",
+        "progressPaused": "Gepauzeerd terwijl je kijkt",
+        "causeLabel": "Waarschijnlijke oorzaak",
+        "moreSteps": "Meer stappen",
+        "fewerSteps": "Minder stappen",
+        "wrongConnection": "Verkeerde verbinding?",
+        "dndNote": "Het alarm klinkt ook bij Niet storen.",
+        "dndMissing": "Niet storen kan dit alarm blokkeren.",
+        "dndOpen": "Instelling openen",
+        "cause": {
+          "peerAbsent": {
+            "line": "Het babyapparaat is niet online.",
+            "step": "Staat het babyapparaat aan, aan de lader en toont het GuardedSleep?",
+            "more": "Zit het op wifi? Zo niet, open GuardedSleep daar opnieuw."
+          },
+          "serverUnreachable": {
+            "line": "Deze telefoon heeft geen internet.",
+            "step": "Controleer wifi of mobiele data op deze telefoon.",
+            "more": "Zet de vliegtuigmodus uit. Ga dichter bij de router staan."
+          },
+          "mediaBlocked": {
+            "line": "De verbinding wordt op dit netwerk geblokkeerd.",
+            "step": "Gast- of hotelwifi kan dit blokkeren. Schakel deze telefoon over op mobiele data.",
+            "more": "Tik daarna op ‘Nu proberen’."
+          }
+        },
+        "restored": {
+          "body": "De bewaking was {duration} onderbroken.",
+          "none": "Het babyapparaat heeft in die tijd niets gehoord.",
+          "some": "{count, plural, one {Het hoorde 1 geluid} other {Het hoorde # geluiden}}, het luidst om {time}.",
+          "unknown": "We weten niet of er geluiden waren."
         }
       }
     }

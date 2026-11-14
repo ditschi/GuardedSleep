@@ -418,7 +418,8 @@
         "babyBody": "Forældreenheden får ikke længere alarmer.",
         "confirm": "Stop",
         "cancel": "Fortsæt overvågning",
-        "parentBodyDefault": "Du får ingen alarmer fra babyenheden."
+        "parentBodyDefault": "Du får ingen alarmer fra babyenheden.",
+        "titleNamed": "Stop overvågningen ”{name}”?"
       },
       "forget": {
         "title": "Glem {name}?",
@@ -596,6 +597,72 @@
           "playChime": "Afspil signal",
           "chime": "Signal før en forælder taler",
           "checklist": "Forældre kan tale via denne enhed. Du kan slå det fra under Indstillinger."
+        }
+      },
+      "status": {
+        "connected": "Forbundet",
+        "connecting": "Forbinder",
+        "reconnecting": "Forbinder igen",
+        "notConnectedYet": "Endnu ikke forbundet",
+        "cantReach": "Kan ikke nås",
+        "couldntConnect": "Kunne ikke forbinde",
+        "noConnection": "Ingen forbindelse",
+        "stillNoConnection": "Stadig ingen forbindelse",
+        "stopped": "Stoppet",
+        "withName": "{state} · {name}",
+        "subConnecting": "Venter på babyenheden. Overvågningen starter, når den svarer.",
+        "subReconnecting": "Korte afbrydelser er normale.",
+        "subNotAnswered": "Babyenheden svarer ikke. Er overvågningen startet på den?",
+        "subStillTrying": "Prøver stadig. Er forbindelsen ikke tilbage snart, vibrerer denne enhed og viser en advarsel.",
+        "subStopped": "Tjek på babyenheden, hvem der stoppede den."
+      },
+      "connAlert": {
+        "labelVibrating": "Din telefon vibrerer",
+        "labelLoud": "Højt alarm lyder",
+        "labelPaused": "Alarmen er sat på pause",
+        "headlineCheck": "Se til barnet",
+        "nextLoud": "Højt alarm kl. {time}, hvis der stadig ikke er forbindelse.",
+        "nextBack": "Vender tilbage kl. {time}, hvis der stadig ikke er forbindelse.",
+        "cantHear": "Du kan ikke høre barnet.",
+        "neverStarted": "Overvågningen er aldrig startet. Du kan ikke høre barnet.",
+        "goNow": "Gå hen til barnet nu. Alarmen lyder, til du trykker på ”Jeg ser til”.",
+        "pausedBody": "Du kan stadig ikke høre barnet.",
+        "counterLabel": "uden forbindelse",
+        "counterA11y": "{duration} uden forbindelse",
+        "spokenMin": "{count, plural, one {# minut} other {# minutter}}",
+        "spokenSec": "{count, plural, one {# sekund} other {# sekunder}}",
+        "progressVibrating": "Telefonen vibrerer nu",
+        "progressLoud": "Højt alarm nu",
+        "progressPaused": "På pause, mens du ser til",
+        "causeLabel": "Sandsynlig årsag",
+        "moreSteps": "Flere trin",
+        "fewerSteps": "Færre trin",
+        "wrongConnection": "Forkert forbindelse?",
+        "dndNote": "Alarmen lyder også i Forstyr ikke.",
+        "dndMissing": "Forstyr ikke kan blokere denne alarm.",
+        "dndOpen": "Åbn indstilling",
+        "cause": {
+          "peerAbsent": {
+            "line": "Babyenheden er ikke online.",
+            "step": "Er babyenheden tændt, sat til opladning og viser GuardedSleep?",
+            "more": "Er den på Wi-Fi? Hvis ikke, så åbn GuardedSleep på den igen."
+          },
+          "serverUnreachable": {
+            "line": "Denne telefon har ikke internet.",
+            "step": "Tjek Wi-Fi eller mobildata på denne telefon.",
+            "more": "Slå flytilstand fra. Gå tættere på routeren."
+          },
+          "mediaBlocked": {
+            "line": "Forbindelsen er blokeret på dette netværk.",
+            "step": "Gæste- eller hotel-Wi-Fi kan blokere den. Skift denne telefon til mobildata.",
+            "more": "Tryk derefter på ”Prøv nu”."
+          }
+        },
+        "restored": {
+          "body": "Overvågningen var afbrudt i {duration}.",
+          "none": "Babyenheden hørte ingen lyde i den tid.",
+          "some": "{count, plural, one {Den hørte 1 lyd} other {Den hørte # lyde}}, højest kl. {time}.",
+          "unknown": "Vi ved ikke, om der var lyde."
         }
       }
     }

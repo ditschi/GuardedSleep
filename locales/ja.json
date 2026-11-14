@@ -418,7 +418,8 @@
         "babyBody": "保護者用端末にアラートが届かなくなります。",
         "confirm": "停止",
         "cancel": "見守りを続ける",
-        "parentBodyDefault": "赤ちゃん用端末からのアラートが届かなくなります。"
+        "parentBodyDefault": "赤ちゃん用端末からのアラートが届かなくなります。",
+        "titleNamed": "「{name}」の見守りを停止しますか？"
       },
       "forget": {
         "title": "{name}を削除しますか？",
@@ -596,6 +597,72 @@
           "playChime": "チャイムを再生",
           "chime": "保護者が話す前にチャイムを鳴らす",
           "checklist": "保護者がこの端末を通して話せます。設定でオフにできます。"
+        }
+      },
+      "status": {
+        "connected": "接続済み",
+        "connecting": "接続中",
+        "reconnecting": "再接続中",
+        "notConnectedYet": "まだ接続されていません",
+        "cantReach": "接続できません",
+        "couldntConnect": "接続できませんでした",
+        "noConnection": "接続なし",
+        "stillNoConnection": "まだ接続がありません",
+        "stopped": "停止しました",
+        "withName": "{state} · {name}",
+        "subConnecting": "赤ちゃん用端末を待っています。応答すると見守りが始まります。",
+        "subReconnecting": "短い途切れはよくあることです。",
+        "subNotAnswered": "赤ちゃん用端末が応答しません。そちらで見守りは開始されていますか？",
+        "subStillTrying": "再試行しています。まもなく復旧しない場合は、この端末が振動して警告を表示します。",
+        "subStopped": "赤ちゃん用端末で、誰が停止したか確認してください。"
+      },
+      "connAlert": {
+        "labelVibrating": "お使いの端末が振動しています",
+        "labelLoud": "大音量のアラーム作動中",
+        "labelPaused": "アラームを一時停止中",
+        "headlineCheck": "お子さまの様子を見てください",
+        "nextLoud": "接続がないままの場合、{time}に大音量のアラームが鳴ります。",
+        "nextBack": "接続がないままの場合、{time}に再開します。",
+        "cantHear": "お子さまの音が聞こえません。",
+        "neverStarted": "見守りは一度も始まっていません。お子さまの音が聞こえません。",
+        "goNow": "今すぐお子さまのところへ行ってください。「確認中」をタップするまでアラームが鳴ります。",
+        "pausedBody": "お子さまの音は引き続き聞こえません。",
+        "counterLabel": "接続なし",
+        "counterA11y": "{duration}の間接続なし",
+        "spokenMin": "{count, plural, other {#分}}",
+        "spokenSec": "{count, plural, other {#秒}}",
+        "progressVibrating": "端末が振動中",
+        "progressLoud": "大音量アラーム中",
+        "progressPaused": "確認中は一時停止",
+        "causeLabel": "考えられる原因",
+        "moreSteps": "その他の手順",
+        "fewerSteps": "手順を閉じる",
+        "wrongConnection": "接続が違いますか？",
+        "dndNote": "おやすみモードでもアラームが鳴ります。",
+        "dndMissing": "おやすみモードがこのアラームを妨げる場合があります。",
+        "dndOpen": "設定を開く",
+        "cause": {
+          "peerAbsent": {
+            "line": "赤ちゃん用端末がオンラインではありません。",
+            "step": "赤ちゃん用端末は電源が入り、充電中で、GuardedSleep が表示されていますか？",
+            "more": "Wi-Fi に接続されていますか？ いない場合は、そちらで GuardedSleep を開き直してください。"
+          },
+          "serverUnreachable": {
+            "line": "この端末はインターネットに接続されていません。",
+            "step": "この端末の Wi-Fi またはモバイルデータを確認してください。",
+            "more": "機内モードをオフにしてください。ルーターに近づいてください。"
+          },
+          "mediaBlocked": {
+            "line": "このネットワークでは接続がブロックされています。",
+            "step": "ゲストや宿泊施設の Wi-Fi ではブロックされることがあります。この端末をモバイルデータに切り替えてください。",
+            "more": "その後「今すぐ試す」をタップしてください。"
+          }
+        },
+        "restored": {
+          "body": "見守りは{duration}の間中断されていました。",
+          "none": "その間、赤ちゃん用端末は音を検知しませんでした。",
+          "some": "{count, plural, other {#回の音を検知しました}}。最も大きかったのは{time}です。",
+          "unknown": "音があったかどうかは分かりません。"
         }
       }
     }

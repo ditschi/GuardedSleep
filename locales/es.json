@@ -418,7 +418,8 @@
         "babyBody": "El dispositivo de los padres dejará de recibir avisos.",
         "confirm": "Detener",
         "cancel": "Seguir vigilando",
-        "parentBodyDefault": "No recibirá avisos del dispositivo del bebé."
+        "parentBodyDefault": "No recibirá avisos del dispositivo del bebé.",
+        "titleNamed": "¿Detener la vigilancia «{name}»?"
       },
       "forget": {
         "title": "¿Olvidar {name}?",
@@ -600,6 +601,72 @@
           "playChime": "Reproducir el tono",
           "chime": "Tono antes de que hable un padre",
           "checklist": "Los padres pueden hablar a través de este dispositivo. Puedes desactivarlo en Ajustes."
+        }
+      },
+      "status": {
+        "connected": "Conectado",
+        "connecting": "Conectando",
+        "reconnecting": "Reconectando",
+        "notConnectedYet": "Aún sin conexión",
+        "cantReach": "Sin alcance",
+        "couldntConnect": "No se pudo conectar",
+        "noConnection": "Sin conexión",
+        "stillNoConnection": "Sigue sin conexión",
+        "stopped": "Detenido",
+        "withName": "{state} · {name}",
+        "subConnecting": "Esperando al dispositivo del bebé. La vigilancia empieza cuando responda.",
+        "subReconnecting": "Los cortes breves son normales.",
+        "subNotAnswered": "El dispositivo del bebé no responde. ¿Está iniciada la vigilancia en él?",
+        "subStillTrying": "Sigue intentándolo. Si no vuelve pronto, este dispositivo vibra y muestra una alerta.",
+        "subStopped": "Compruebe en el dispositivo del bebé quién la detuvo."
+      },
+      "connAlert": {
+        "labelVibrating": "Su teléfono vibra",
+        "labelLoud": "Alarma fuerte sonando",
+        "labelPaused": "Alarma en pausa",
+        "headlineCheck": "Vaya a ver al niño",
+        "nextLoud": "Alarma fuerte a las {time} si sigue sin conexión.",
+        "nextBack": "Vuelve a las {time} si sigue sin conexión.",
+        "cantHear": "No oye al niño.",
+        "neverStarted": "La vigilancia nunca empezó. No oye al niño.",
+        "goNow": "Vaya ahora con el niño. La alarma suena hasta que toque «Estoy comprobando».",
+        "pausedBody": "Sigue sin oír al niño.",
+        "counterLabel": "sin conexión",
+        "counterA11y": "{duration} sin conexión",
+        "spokenMin": "{count, plural, one {# minuto} many {# de minutos} other {# minutos}}",
+        "spokenSec": "{count, plural, one {# segundo} many {# de segundos} other {# segundos}}",
+        "progressVibrating": "El teléfono vibra ahora",
+        "progressLoud": "Alarma fuerte ahora",
+        "progressPaused": "En pausa mientras comprueba",
+        "causeLabel": "Causa probable",
+        "moreSteps": "Más pasos",
+        "fewerSteps": "Menos pasos",
+        "wrongConnection": "¿Conexión equivocada?",
+        "dndNote": "La alarma suena también en No molestar.",
+        "dndMissing": "No molestar puede bloquear esta alarma.",
+        "dndOpen": "Abrir ajuste",
+        "cause": {
+          "peerAbsent": {
+            "line": "El dispositivo del bebé no está en línea.",
+            "step": "¿Está encendido el dispositivo del bebé, enchufado y mostrando GuardedSleep?",
+            "more": "¿Está en el Wi-Fi? Si no, abra GuardedSleep de nuevo en él."
+          },
+          "serverUnreachable": {
+            "line": "Este teléfono no tiene internet.",
+            "step": "Compruebe el Wi-Fi o los datos móviles de este teléfono.",
+            "more": "Desactive el modo avión. Acérquese al router."
+          },
+          "mediaBlocked": {
+            "line": "La conexión está bloqueada en esta red.",
+            "step": "El Wi-Fi de invitados o de hotel puede bloquearla. Pase este teléfono a datos móviles.",
+            "more": "Después toque «Reintentar ahora»."
+          }
+        },
+        "restored": {
+          "body": "La vigilancia estuvo interrumpida {duration}.",
+          "none": "El dispositivo del bebé no oyó ningún sonido en ese tiempo.",
+          "some": "{count, plural, one {Oyó 1 sonido} many {Oyó # de sonidos} other {Oyó # sonidos}}, el más fuerte a las {time}.",
+          "unknown": "No sabemos si hubo sonidos."
         }
       }
     }

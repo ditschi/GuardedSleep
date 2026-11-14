@@ -418,7 +418,8 @@
         "babyBody": "Urządzenie rodzica przestanie dostawać alerty.",
         "confirm": "Zatrzymaj",
         "cancel": "Monitoruj dalej",
-        "parentBodyDefault": "Nie dostaniesz alertów z urządzenia dziecka."
+        "parentBodyDefault": "Nie dostaniesz alertów z urządzenia dziecka.",
+        "titleNamed": "Zatrzymać nasłuch „{name}”?"
       },
       "forget": {
         "title": "Zapomnieć: {name}?",
@@ -596,6 +597,72 @@
           "playChime": "Odtwórz dźwięk",
           "chime": "Dźwięk przed wypowiedzią rodzica",
           "checklist": "Rodzice mogą mówić przez to urządzenie. Możesz to wyłączyć w Ustawieniach."
+        }
+      },
+      "status": {
+        "connected": "Połączono",
+        "connecting": "Łączenie",
+        "reconnecting": "Ponowne łączenie",
+        "notConnectedYet": "Jeszcze nie połączono",
+        "cantReach": "Brak kontaktu",
+        "couldntConnect": "Nie udało się połączyć",
+        "noConnection": "Brak połączenia",
+        "stillNoConnection": "Nadal brak połączenia",
+        "stopped": "Zatrzymano",
+        "withName": "{state} · {name}",
+        "subConnecting": "Czekam na urządzenie dziecka. Nasłuch zacznie się, gdy odpowie.",
+        "subReconnecting": "Krótkie przerwy są normalne.",
+        "subNotAnswered": "Urządzenie dziecka nie odpowiada. Czy nasłuch jest tam włączony?",
+        "subStillTrying": "Próbuję dalej. Jeśli połączenie nie wróci wkrótce, to urządzenie zawibruje i pokaże alert.",
+        "subStopped": "Sprawdź na urządzeniu dziecka, kto to zatrzymał."
+      },
+      "connAlert": {
+        "labelVibrating": "Telefon wibruje",
+        "labelLoud": "Głośny alarm dzwoni",
+        "labelPaused": "Alarm wstrzymany",
+        "headlineCheck": "Sprawdź, co z dzieckiem",
+        "nextLoud": "Głośny alarm o {time}, jeśli nadal nie będzie połączenia.",
+        "nextBack": "Wraca o {time}, jeśli nadal nie będzie połączenia.",
+        "cantHear": "Nie słyszysz dziecka.",
+        "neverStarted": "Nasłuch nigdy się nie zaczął. Nie słyszysz dziecka.",
+        "goNow": "Idź teraz do dziecka. Alarm dzwoni, dopóki nie dotkniesz „Sprawdzam”.",
+        "pausedBody": "Nadal nie słyszysz dziecka.",
+        "counterLabel": "bez połączenia",
+        "counterA11y": "{duration} bez połączenia",
+        "spokenMin": "{count, plural, one {# minuta} few {# minuty} many {# minut} other {# minuty}}",
+        "spokenSec": "{count, plural, one {# sekunda} few {# sekundy} many {# sekund} other {# sekundy}}",
+        "progressVibrating": "Telefon wibruje teraz",
+        "progressLoud": "Głośny alarm teraz",
+        "progressPaused": "Wstrzymano, gdy sprawdzasz",
+        "causeLabel": "Prawdopodobna przyczyna",
+        "moreSteps": "Więcej kroków",
+        "fewerSteps": "Mniej kroków",
+        "wrongConnection": "Złe połączenie?",
+        "dndNote": "Alarm dzwoni także w trybie Nie przeszkadzać.",
+        "dndMissing": "Tryb Nie przeszkadzać może zablokować ten alarm.",
+        "dndOpen": "Otwórz ustawienie",
+        "cause": {
+          "peerAbsent": {
+            "line": "Urządzenie dziecka nie jest online.",
+            "step": "Czy urządzenie dziecka jest włączone, podłączone do ładowarki i pokazuje GuardedSleep?",
+            "more": "Czy jest w Wi-Fi? Jeśli nie, otwórz tam GuardedSleep ponownie."
+          },
+          "serverUnreachable": {
+            "line": "Ten telefon nie ma internetu.",
+            "step": "Sprawdź Wi-Fi lub dane mobilne w tym telefonie.",
+            "more": "Wyłącz tryb samolotowy. Podejdź bliżej routera."
+          },
+          "mediaBlocked": {
+            "line": "Połączenie jest zablokowane w tej sieci.",
+            "step": "Wi-Fi gościnne lub hotelowe może to blokować. Przełącz ten telefon na dane mobilne.",
+            "more": "Potem dotknij „Spróbuj teraz”."
+          }
+        },
+        "restored": {
+          "body": "Nasłuch był przerwany przez {duration}.",
+          "none": "Urządzenie dziecka nie usłyszało w tym czasie żadnego dźwięku.",
+          "some": "{count, plural, one {Usłyszało 1 dźwięk} few {Usłyszało # dźwięki} many {Usłyszało # dźwięków} other {Usłyszało # dźwięku}}, najgłośniej o {time}.",
+          "unknown": "Nie wiemy, czy były jakieś dźwięki."
         }
       }
     }
