@@ -53,6 +53,11 @@ Task 3 measures one local run (peak RSS, duration) and records it here. A 14 GB 
 
 Recorded while implementing tasks 1 to 5; they change what the change delivers today.
 
+### 6a. Measurements (local, 2026-11-14, 8 cores, 15 GB, another agent building in parallel)
+
+- Strict `DOZE_MINUTES=2 GS_STRICT=1 just gate` with Maestro 2.12.1 (`-Xmx1g`) running the AC-1, AC-3 and AC-4 assertion flows: green; turn-lifetime 704 s, then about 13 min for the device part (AC-1 .. AC-4, AC-10, AC-11) and the canary (0 leaks).
+- Peak container memory (`docker stats`, 10 s samples, both emulators, signaling, coturn, runner with Maestro): about 6.1 GB, in line with the estimate. The shortcut journey of §7 (two emulators, Maestro, no Doze) ran about 8 min per attempt, of which the two Settings flows took about 2 min each on a busy host.
+
 ### 7. Blocker: the UI journey cannot pair on two emulators without relay-only media
 
 - **What works through the real UI** (Maestro 2.12.1, local runs on two emulators): fresh app, role choice, onboarding, Settings -> Advanced (the project server entry is removed with its Remove button, there is no "off" switch in this build; own relay `ws://10.0.2.2:$SIGNAL_PORT` added; TURN `turn:10.0.2.2:3478` poc/poc saved), the baby's code shown as text and read with `uiautomator` into a shell variable, pasted into the parent. The `gs-gate-signaling` log showed `joined as baby` and `joined as parent`, so signaling met on the gate's own server (hermetic, no project server).
