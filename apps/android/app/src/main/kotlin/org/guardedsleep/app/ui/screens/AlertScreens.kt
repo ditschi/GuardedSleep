@@ -72,6 +72,12 @@ import org.guardedsleep.app.ui.model.ReadinessIssue
 import org.guardedsleep.app.ui.theme.LocalSafetyColors
 import org.guardedsleep.app.ui.theme.StateColors
 
+/**
+ * Below this the baby device is about to switch off: a full-screen alert (the web client's
+ * `BATTERY_CRITICAL_PCT`).
+ */
+private const val BATTERY_CRITICAL_PCT = 5
+
 private val AlertRed = Color(0xFFB3261E)
 
 /** S10: full-screen noise alert. Dark red, never white; the connection bar stays on top. */
@@ -250,7 +256,7 @@ fun LinkAlarmContent(controller: AppController, onClose: () -> Unit) {
             link.phase != LinkPhase.CONNECTED && link.level >= 2 -> AlarmVariant.LOST
             link.phase == LinkPhase.CONNECTED &&
                 battery != null &&
-                battery < 5 &&
+                battery < BATTERY_CRITICAL_PCT &&
                 p.peer.charging != true -> AlarmVariant.BATTERY
             link.phase == LinkPhase.CONNECTED -> AlarmVariant.RESTORED
             else -> AlarmVariant.LOST

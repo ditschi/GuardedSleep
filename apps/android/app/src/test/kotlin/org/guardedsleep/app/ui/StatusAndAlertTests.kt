@@ -30,9 +30,9 @@ import org.guardedsleep.app.ui.common.StatusKind
 import org.guardedsleep.app.ui.common.alertStageOf
 import org.guardedsleep.app.ui.common.elapsedToWall
 import org.guardedsleep.app.ui.common.formatTime
-import org.guardedsleep.app.ui.common.missedResultOf
 import org.guardedsleep.app.ui.common.glyph
 import org.guardedsleep.app.ui.common.loud
+import org.guardedsleep.app.ui.common.missedResultOf
 import org.guardedsleep.app.ui.common.statusKindOf
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.CauseHint
