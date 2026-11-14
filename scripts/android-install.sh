@@ -46,10 +46,11 @@ list_ready() { adbq devices 2>/dev/null | awk 'NR>1 && $2=="device" {print $1}';
 declare -a candidates=()
 if [ -n "${GS_DEVICES:-}" ]; then
   read -r -a wanted <<<"${GS_DEVICES//,/ }"
-  ready=" $(list_ready | tr '\n' ' ') "
   for d in "${wanted[@]}"; do
-    if [[ "$d" == *:* && "$ready" != *" $d "* ]]; then
-      timeout 15 adb connect "$d" >/dev/null 2>&1 || echo "warning: adb connect $d failed" >&2
+    if [[ "$d" == *:* ]]; then
+      # "connected to" also covers "already connected to"; failures read "failed to connect to".
+      out="$(timeout 15 adb connect "$d" 2>&1 || true)"
+      [[ "$out" == *"connected to"* ]] || echo "warning: adb connect $d failed: $out" >&2
     fi
     candidates+=("$d")
   done
@@ -57,14 +58,7 @@ else
   while IFS= read -r d; do [ -n "$d" ] && candidates+=("$d"); done < <(list_ready)
 fi
 
-if [ "${#candidates[@]}" -eq 0 ]; then
-  if [ "${GS_STRICT:-0}" = "1" ]; then
-    echo "FAILED: install-android needs a connected device (GS_STRICT=1)" >&2
-    exit 1
-  fi
-  gs_skip "install-android needs a connected adb device"
-  exit 0
-fi
+[ "${#candidates[@]}" -gt 0 ] || gs_unmet install-android "a connected adb device"
 
 # Deduplicate by hardware serial; USB serials (no ':') sort before host:port entries.
 declare -a sorted=()

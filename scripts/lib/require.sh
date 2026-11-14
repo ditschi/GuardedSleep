@@ -9,6 +9,7 @@
 # One is missing        -> prints "SKIPPED: <task> needs <x>" and exits 0, so the caller stops here.
 # With GS_STRICT=1 (CI) -> prints "FAILED: <task> needs <x>" and exits 1 instead.
 # A skip is also appended to $GS_SKIP_LOG when set, so `just ci` can list them at the end (skip-log.sh).
+# For a prerequisite only known later (e.g. a connected device): gs_unmet <task> <what> does the same skip/fail.
 # Requirements: docker, kvm, android-sdk, adb, cargo, cargo-fuzz, network.
 #
 # Sourcing also puts the mise-managed tools on PATH when mise is installed (see gs_mise_env).
@@ -51,6 +52,17 @@ gs_missing() {
   esac
 }
 
+# Unmet prerequisite found at run time: SKIPPED (exit 0), or FAILED (exit 1) under GS_STRICT=1.
+gs_unmet() {
+  local task="$1" what="$2"
+  if [ "${GS_STRICT:-0}" = "1" ]; then
+    echo "FAILED: $task needs $what (GS_STRICT=1)" >&2
+    exit 1
+  fi
+  gs_skip "$task needs $what"
+  exit 0
+}
+
 require() {
   local task="$1" missing="" m req
   shift
@@ -59,12 +71,7 @@ require() {
     [ -n "$m" ] && missing="${missing:+$missing, }$m"
   done
   [ -z "$missing" ] && return 0
-  if [ "${GS_STRICT:-0}" = "1" ]; then
-    echo "FAILED: $task needs $missing (GS_STRICT=1)" >&2
-    exit 1
-  fi
-  gs_skip "$task needs $missing"
-  exit 0
+  gs_unmet "$task" "$missing"
 }
 
 gs_mise_env
