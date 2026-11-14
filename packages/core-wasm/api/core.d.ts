@@ -373,7 +373,8 @@ export class WasmSession {
 export function alarmToneDemo(id: string, kind: string): string;
 
 /**
- * JSON array of the built-in connection alarm tones (`AlarmTone[]`) in picker order.
+ * JSON array of the built-in connection alarm tones (`AlarmTone[]`) in picker order. Throws
+ * `not_our_code` if serialization fails (it cannot for these types).
  */
 export function alarmTones(): string;
 
@@ -409,6 +410,7 @@ export function parseInvite(text: string, now_epoch_s: number, allow_dev_loopbac
 
 /**
  * JSON of the `AlarmTone` for a stored id; an unknown, empty or overlong value gives `classic`.
+ * Throws `not_our_code` if serialization fails (it cannot for these types).
  */
 export function resolveAlarmTone(id: string): string;
 
