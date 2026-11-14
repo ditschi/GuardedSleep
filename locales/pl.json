@@ -260,31 +260,13 @@
         "unlockAction": "Odblokuj"
       },
       "link": {
-        "connected": "Połączono z: {name}",
-        "connecting": "Łączenie z: {name}…",
-        "reconnecting": "Ponowne łączenie…",
-        "cantReach": "Brak kontaktu z: {name}, próbuję dalej",
-        "lostFor": "Brak połączenia od {duration}",
-        "babyStopped": "{name} przestało monitorować",
         "idle": "Brak monitorowania",
         "weak": "Słabe połączenie: dźwięk może się urywać",
-        "restoredAfter": "Połączono ponownie po {duration}. Znowu słyszysz dziecko.",
         "tryNow": "Spróbuj teraz",
         "pairAgain": "Sparuj ponownie",
-        "connectedDefault": "Połączono z urządzeniem dziecka",
-        "connectingDefault": "Łączenie z urządzeniem dziecka…",
-        "cantReachDefault": "Brak kontaktu z urządzeniem dziecka, próbuję dalej",
-        "babyStoppedDefault": "Urządzenie dziecka przestało monitorować",
         "stalePairingHint": "Jeśli sparowano urządzenie dziecka ponownie, zeskanuj jego nowy kod."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Brak połączenia z: {name}",
-          "titleUrgent": "Brak połączenia z: {name}!",
-          "body": "Nie usłyszysz dziecka, dopóki urządzenia się nie połączą.",
-          "titleDefault": "Brak połączenia z urządzeniem dziecka",
-          "titleUrgentDefault": "Brak połączenia z urządzeniem dziecka!"
-        },
         "stopped": {
           "title": "{name} przestało monitorować",
           "body": "Ktoś zatrzymał monitorowanie na urządzeniu dziecka. Nie dostaniesz alertów.",
@@ -301,9 +283,7 @@
           "title": "Połączono ponownie"
         },
         "ack": "Sprawdzam",
-        "ackNote": "Dźwięk wyłączony na {time}. Powiadomimy Cię ponownie, jeśli nadal nie będzie połączenia.",
-        "soundNote": "Cichy sygnał alarmu powtarza się, dopóki nie sprawdzisz.",
-        "soundNoteUrgent": "Alarm dźwięczy, dopóki nie sprawdzisz."
+        "ackNote": "Dźwięk wyłączony na {time}. Powiadomimy Cię ponownie, jeśli nadal nie będzie połączenia."
       },
       "parent": {
         "allQuietSince": "Cisza od {time}",
@@ -661,7 +641,7 @@
         "restored": {
           "body": "Nasłuch był przerwany przez {duration}.",
           "none": "Urządzenie dziecka nie usłyszało w tym czasie żadnego dźwięku.",
-          "some": "{count, plural, one {Usłyszało 1 dźwięk} few {Usłyszało # dźwięki} many {Usłyszało # dźwięków} other {Usłyszało # dźwięku}}, najgłośniej o {time}.",
+          "some": "{count, plural, one {Usłyszało 1 dźwięk} few {Usłyszało # dźwięki} many {Usłyszało # dźwięków} other {Usłyszało # dźwięku}}.",
           "unknown": "Nie wiemy, czy były jakieś dźwięki."
         }
       }

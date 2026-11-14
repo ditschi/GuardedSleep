@@ -112,7 +112,7 @@ class ParentModelTest {
     }
 
     @Test
-    fun restoredNoticeExpires() {
+    fun restoredCardStaysUntilOkAndAnOutageReplacesIt() {
         connected()
         st(LinkState.RECONNECTING, 2)
         clock.advance(90_000)
@@ -120,9 +120,25 @@ class ParentModelTest {
         st(LinkState.CONNECTED)
         assertEquals(90_000L, model.state.value.restoredAfterMs)
         assertTrue(sink.notices.any { it is Notice.LinkRestored })
-        clock.advance(AlertPolicy.RESTORED_NOTICE_MS)
+        // The card never dismisses itself, however long the parent takes.
+        clock.advance(AlertPolicy.RESTORED_NOTICE_MS * 10)
         model.onTick(clock.elapsed)
+        assertEquals(90_000L, model.state.value.restoredAfterMs)
+        model.dismissRestored()
         assertNull(model.state.value.restoredAfterMs)
+    }
+
+    @Test
+    fun aNewDropWhileTheRestoredCardIsShownReplacesIt() {
+        connected()
+        st(LinkState.RECONNECTING, 2)
+        clock.advance(90_000)
+        model.onEvent(LinkEvent.LinkRestored(90_000u), clock.elapsed)
+        st(LinkState.CONNECTED)
+        assertEquals(90_000L, model.state.value.restoredAfterMs)
+        st(LinkState.RECONNECTING)
+        assertNull(model.state.value.restoredAfterMs)
+        assertNull(model.state.value.missed)
     }
 
     @Test

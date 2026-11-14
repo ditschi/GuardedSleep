@@ -258,31 +258,13 @@
         "unlockAction": "Unlock"
       },
       "link": {
-        "connected": "Connected to {name}",
-        "connecting": "Connecting to {name}…",
-        "reconnecting": "Reconnecting…",
-        "cantReach": "Can't reach {name} — still trying",
-        "lostFor": "No connection for {duration}",
-        "babyStopped": "{name} stopped monitoring",
         "idle": "Not monitoring",
         "weak": "Weak connection — sound may break up",
-        "restoredAfter": "Connected again after {duration}. You can hear your child again.",
         "tryNow": "Try now",
         "pairAgain": "Pair again",
-        "connectedDefault": "Connected to the baby device",
-        "connectingDefault": "Connecting to the baby device…",
-        "cantReachDefault": "Can't reach the baby device — still trying",
-        "babyStoppedDefault": "The baby device stopped monitoring",
         "stalePairingHint": "If you paired the baby device again, scan its new code."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "No connection to {name}",
-          "titleUrgent": "No connection to {name}!",
-          "body": "You won't hear your child until the devices reconnect.",
-          "titleDefault": "No connection to the baby device",
-          "titleUrgentDefault": "No connection to the baby device!"
-        },
         "stopped": {
           "title": "{name} stopped monitoring",
           "body": "Someone stopped monitoring on the baby device. You won't get alerts.",
@@ -299,9 +281,7 @@
           "title": "Connected again"
         },
         "ack": "I'm checking",
-        "ackNote": "Sound off for {time}. We'll alert you again if it's still not connected.",
-        "soundNote": "A soft alarm tone repeats until you check.",
-        "soundNoteUrgent": "The alarm keeps sounding until you check."
+        "ackNote": "Sound off for {time}. We'll alert you again if it's still not connected."
       },
       "parent": {
         "allQuietSince": "All quiet since {time}",
@@ -663,7 +643,7 @@
         "restored": {
           "body": "Monitoring was interrupted for {duration}.",
           "none": "The baby device heard no sound during that time.",
-          "some": "{count, plural, one {It heard 1 sound} other {It heard # sounds}}, loudest at {time}.",
+          "some": "{count, plural, one {It heard 1 sound} other {It heard # sounds}}.",
           "unknown": "We don't know whether there were sounds."
         }
       }

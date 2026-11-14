@@ -260,31 +260,13 @@
         "unlockAction": "Buka kunci"
       },
       "link": {
-        "connected": "Terhubung ke {name}",
-        "connecting": "Menghubungkan ke {name}…",
-        "reconnecting": "Menghubungkan ulang…",
-        "cantReach": "Tidak dapat menjangkau {name} — masih mencoba",
-        "lostFor": "Tidak ada koneksi selama {duration}",
-        "babyStopped": "{name} berhenti memantau",
         "idle": "Tidak memantau",
         "weak": "Koneksi lemah — suara dapat terputus-putus",
-        "restoredAfter": "Terhubung kembali setelah {duration}. Anda dapat mendengar anak Anda lagi.",
         "tryNow": "Coba sekarang",
         "pairAgain": "Pasangkan lagi",
-        "connectedDefault": "Terhubung ke perangkat bayi",
-        "connectingDefault": "Menghubungkan ke perangkat bayi…",
-        "cantReachDefault": "Tidak dapat menjangkau perangkat bayi — masih mencoba",
-        "babyStoppedDefault": "Perangkat bayi berhenti memantau",
         "stalePairingHint": "Jika Anda memasangkan ulang perangkat bayi, pindai kode barunya."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Tidak ada koneksi ke {name}",
-          "titleUrgent": "Tidak ada koneksi ke {name}!",
-          "body": "Anda tidak akan mendengar anak Anda sampai perangkat terhubung kembali.",
-          "titleDefault": "Tidak ada koneksi ke perangkat bayi",
-          "titleUrgentDefault": "Tidak ada koneksi ke perangkat bayi!"
-        },
         "stopped": {
           "title": "{name} berhenti memantau",
           "body": "Seseorang menghentikan pemantauan di perangkat bayi. Anda tidak akan menerima peringatan.",
@@ -301,9 +283,7 @@
           "title": "Terhubung kembali"
         },
         "ack": "Saya periksa",
-        "ackNote": "Suara dimatikan selama {time}. Kami akan memperingatkan lagi jika masih belum terhubung.",
-        "soundNote": "Nada alarm lembut berulang sampai Anda memeriksa.",
-        "soundNoteUrgent": "Alarm terus berbunyi sampai Anda memeriksa."
+        "ackNote": "Suara dimatikan selama {time}. Kami akan memperingatkan lagi jika masih belum terhubung."
       },
       "parent": {
         "allQuietSince": "Tenang sejak {time}",
@@ -661,7 +641,7 @@
         "restored": {
           "body": "Pemantauan terhenti selama {duration}.",
           "none": "Perangkat bayi tidak mendengar suara apa pun selama itu.",
-          "some": "{count, plural, other {Terdengar # suara}}, terkeras pukul {time}.",
+          "some": "{count, plural, other {Terdengar # suara}}.",
           "unknown": "Kami tidak tahu apakah ada suara."
         }
       }

@@ -260,31 +260,13 @@
         "unlockAction": "解锁"
       },
       "link": {
-        "connected": "已连接到 {name}",
-        "connecting": "正在连接 {name}…",
-        "reconnecting": "正在重新连接…",
-        "cantReach": "无法连接 {name}，仍在重试",
-        "lostFor": "已断开 {duration}",
-        "babyStopped": "{name} 已停止监护",
         "idle": "未在监护",
         "weak": "连接较弱，声音可能断续",
-        "restoredAfter": "断开 {duration} 后已重新连接。您又能听到孩子了。",
         "tryNow": "立即重试",
         "pairAgain": "重新配对",
-        "connectedDefault": "已连接到宝宝设备",
-        "connectingDefault": "正在连接宝宝设备…",
-        "cantReachDefault": "无法连接宝宝设备，仍在重试",
-        "babyStoppedDefault": "宝宝设备已停止监护",
         "stalePairingHint": "如果您重新配对了宝宝设备，请扫描它的新码。"
       },
       "linkAlarm": {
-        "lost": {
-          "title": "与 {name} 失去连接",
-          "titleUrgent": "与 {name} 失去连接！",
-          "body": "在设备重新连接之前，您听不到孩子的声音。",
-          "titleDefault": "与宝宝设备失去连接",
-          "titleUrgentDefault": "与宝宝设备失去连接！"
-        },
         "stopped": {
           "title": "{name} 已停止监护",
           "body": "有人在宝宝设备上停止了监护。您将收不到提醒。",
@@ -301,9 +283,7 @@
           "title": "已重新连接"
         },
         "ack": "我在查看",
-        "ackNote": "声音已关闭 {time}。如果仍未连接，我们会再次提醒您。",
-        "soundNote": "柔和的警报音会重复，直到您确认查看。",
-        "soundNoteUrgent": "警报会一直响，直到您确认查看。"
+        "ackNote": "声音已关闭 {time}。如果仍未连接，我们会再次提醒您。"
       },
       "parent": {
         "allQuietSince": "自 {time} 起一直安静",
@@ -661,7 +641,7 @@
         "restored": {
           "body": "监护中断了 {duration}。",
           "none": "这段时间里宝宝设备没有听到任何声音。",
-          "some": "{count, plural, other {听到了 # 次声音}}，最响的在 {time}。",
+          "some": "{count, plural, other {听到了 # 次声音}}。",
           "unknown": "我们不知道是否有声音。"
         }
       }

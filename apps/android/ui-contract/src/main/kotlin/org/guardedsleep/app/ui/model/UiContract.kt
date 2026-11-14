@@ -56,6 +56,17 @@ data class LinkUi(
     val level: Int = 0,
     /** Last contact with the peer; drives "not reachable for m:ss". */
     val lastAliveElapsedMs: Long? = null,
+    /**
+     * Start of the outage: the last contact, or the run start before any contact (core
+     * `down_since_ms`). Set while connecting or reconnecting; the alert counter counts from here.
+     */
+    val downSinceElapsedMs: Long? = null,
+    /**
+     * When the next escalation level starts (core `next_level_at_ms`, same clock as
+     * [lastAliveElapsedMs]); null at level 3, while acknowledged and outside an outage. The UI
+     * turns it into a clock time and never keeps thresholds of its own.
+     */
+    val nextLevelAtElapsedMs: Long? = null,
     /** "I'm checking" mute end (parent, level ≥ 2). */
     val acknowledgedUntilElapsedMs: Long? = null,
     val causeHint: CauseHint? = null,
@@ -236,7 +247,10 @@ data class ParentMonitorState(
     val readiness: List<ReadinessIssue> = emptyList(),
     val silenceRequest: SilenceRequest = SilenceRequest.IDLE,
     val missed: MissedEventsUi? = null,
-    /** Set for a few seconds after recovery: "Connected again after m:ss". */
+    /**
+     * Length of the last outage while the "Connected again" card is shown: set at recovery, kept
+     * until [AppController.dismissRestored], replaced by a new outage.
+     */
     val restoredAfterMs: Long? = null,
     val securityWarning: Boolean = false,
     /** UI-pass additions (defaults keep the platform layer source compatible). */
@@ -583,6 +597,9 @@ interface AppController {
     fun tryReconnectNow()
 
     fun dismissMissedEvents()
+
+    /** Parent: OK on the "Connected again" card; it never goes away on its own. */
+    fun dismissRestored() {}
 
     // Baby
     fun setKioskLocked(locked: Boolean)

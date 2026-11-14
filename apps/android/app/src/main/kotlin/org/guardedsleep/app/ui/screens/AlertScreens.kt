@@ -15,7 +15,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,7 +22,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -32,32 +30,46 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
 import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AdaptiveButtonRow
+import org.guardedsleep.app.ui.common.AlertAction
+import org.guardedsleep.app.ui.common.AlertCounter
+import org.guardedsleep.app.ui.common.AlertProgress
+import org.guardedsleep.app.ui.common.AlertStage
+import org.guardedsleep.app.ui.common.AlertTemplate
 import org.guardedsleep.app.ui.common.Body
-import org.guardedsleep.app.ui.common.ConfirmDialog
-import org.guardedsleep.app.ui.common.LinkBar
+import org.guardedsleep.app.ui.common.CauseCard
+import org.guardedsleep.app.ui.common.Glyph
+import org.guardedsleep.app.ui.common.GlyphIcon
 import org.guardedsleep.app.ui.common.ListenButton
 import org.guardedsleep.app.ui.common.PrimaryButton
 import org.guardedsleep.app.ui.common.QuietButton
+import org.guardedsleep.app.ui.common.RestoredCard
 import org.guardedsleep.app.ui.common.ScreenRoot
 import org.guardedsleep.app.ui.common.SecondaryButton
 import org.guardedsleep.app.ui.common.SoundMeter
+import org.guardedsleep.app.ui.common.StatusBar
+import org.guardedsleep.app.ui.common.StatusKind
+import org.guardedsleep.app.ui.common.StopMonitoringDialog
+import org.guardedsleep.app.ui.common.SystemSettings
+import org.guardedsleep.app.ui.common.alertStageOf
+import org.guardedsleep.app.ui.common.elapsedToWall
 import org.guardedsleep.app.ui.common.formatClock
 import org.guardedsleep.app.ui.common.formatTime
-import org.guardedsleep.app.ui.common.pulseAlpha
+import org.guardedsleep.app.ui.common.outageStartElapsedMs
 import org.guardedsleep.app.ui.common.rememberElapsedNow
 import org.guardedsleep.app.ui.common.rememberWallNow
+import org.guardedsleep.app.ui.common.spokenDuration
+import org.guardedsleep.app.ui.common.statusHeadlineText
+import org.guardedsleep.app.ui.common.statusKindOf
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
-import org.guardedsleep.app.ui.model.CauseHint
 import org.guardedsleep.app.ui.model.LinkPhase
+import org.guardedsleep.app.ui.model.ReadinessIssue
+import org.guardedsleep.app.ui.theme.LocalSafetyColors
 import org.guardedsleep.app.ui.theme.StateColors
 
 private val AlertRed = Color(0xFFB3261E)
@@ -77,7 +89,7 @@ fun NoiseAlertContent(controller: AppController, onClose: () -> Unit) {
     val discreet = settings.alertStyle == AlertStyle.DISCREET && escalatedAfter == null
     ScreenRoot("parent_noise_alert", background = StateColors.AlertBackground) {
         Column(Modifier.fillMaxSize()) {
-            LinkBar(p.link, customPeerName(app.peerName))
+            StatusBar(p.link, customPeerName(app.peerName))
             Column(
                 Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -228,8 +240,6 @@ fun LinkAlarmContent(controller: AppController, onClose: () -> Unit) {
     val app = controller.app.collectAsState().value
     val name = customPeerName(app.peerName)
     val elapsed by rememberElapsedNow()
-    var help by remember { mutableStateOf(false) }
-    var confirmStop by remember { mutableStateOf(false) }
     val link = p.link
     val battery = p.peer.batteryPct
     val variant =
@@ -245,54 +255,252 @@ fun LinkAlarmContent(controller: AppController, onClose: () -> Unit) {
             link.phase == LinkPhase.CONNECTED -> AlarmVariant.RESTORED
             else -> AlarmVariant.LOST
         }
-    LaunchedEffect(variant) {
-        if (variant == AlarmVariant.RESTORED) {
-            delay(10_000)
-            onClose()
+    if (variant == AlarmVariant.LOST) {
+        ConnectionAlert(controller, name, elapsed, onClose)
+        return
+    }
+    LinkNoticeContent(controller, variant, name, onClose)
+}
+
+/**
+ * Frames 12, 13, 25 and 26: the connection alert on the shared template. The stage (vibrating,
+ * loud, paused) and every time come from the core's level, `next_level_at_ms` and
+ * `acknowledged_until`; this screen has no threshold of its own.
+ */
+@Composable
+private fun ConnectionAlert(
+    controller: AppController,
+    name: String?,
+    elapsed: Long,
+    onClose: () -> Unit,
+) {
+    val p = controller.parent.collectAsState().value
+    val link = p.link
+    val wall by rememberWallNow()
+    val ctx = LocalContext.current
+    var confirmStop by remember { mutableStateOf(false) }
+    var confirmWrong by remember { mutableStateOf(false) }
+    val stage = alertStageOf(link, elapsed)
+    val palette =
+        if (stage == AlertStage.LOUD) LocalSafetyColors.current.loudAlarm
+        else LocalSafetyColors.current.noConnection
+    val firstConnection = link.phase == LinkPhase.CONNECTING
+    // The core's times, read on the same clock as the core and shown as the device formats them.
+    val nextLoudAt = link.nextLevelAtElapsedMs?.let { formatTime(elapsedToWall(it, elapsed, wall)) }
+    val pausedAt =
+        link.acknowledgedUntilElapsedMs?.let { formatTime(elapsedToWall(it, elapsed, wall)) }
+    val headline =
+        when (stage) {
+            AlertStage.VIBRATING ->
+                if (firstConnection) statusHeadlineText(StatusKind.COULDNT_CONNECT, link, name)
+                else stringResource(R.string.native_ui_conn_alert_headline_check)
+            AlertStage.LOUD -> statusHeadlineText(StatusKind.STILL_NO_CONNECTION, link, name)
+            AlertStage.PAUSED ->
+                stringResource(
+                    R.string.native_ui_conn_alert_next_back,
+                    pausedAt ?: formatTime(wall),
+                )
+        }
+    val sentence =
+        when (stage) {
+            AlertStage.VIBRATING -> {
+                val lead =
+                    stringResource(
+                        if (firstConnection) R.string.native_ui_conn_alert_never_started
+                        else R.string.native_ui_conn_alert_cant_hear
+                    )
+                if (nextLoudAt != null)
+                    lead + " " + stringResource(R.string.native_ui_conn_alert_next_loud, nextLoudAt)
+                else lead
+            }
+            AlertStage.LOUD -> stringResource(R.string.native_ui_conn_alert_go_now)
+            AlertStage.PAUSED -> stringResource(R.string.native_ui_conn_alert_paused_body)
+        }
+    val start = link.outageStartElapsedMs()
+    val down = ((start?.let { elapsed - it }) ?: 0L).coerceAtLeast(0L)
+    val spoken = spokenDuration(down)
+    val counter =
+        AlertCounter(
+            formatClock(down),
+            stringResource(R.string.native_ui_conn_alert_counter_label),
+            stringResource(R.string.native_ui_conn_alert_counter_a11y, spoken),
+        )
+    val progress =
+        when (stage) {
+            AlertStage.VIBRATING ->
+                AlertProgress(
+                    3,
+                    4,
+                    stringResource(R.string.native_ui_conn_alert_progress_vibrating),
+                )
+            AlertStage.LOUD ->
+                AlertProgress(4, 4, stringResource(R.string.native_ui_conn_alert_progress_loud))
+            AlertStage.PAUSED ->
+                AlertProgress(3, 4, stringResource(R.string.native_ui_conn_alert_progress_paused))
+        }
+    val stripText = statusHeadlineText(statusKindOf(link), link, name)
+    ScreenRoot("parent_link_alarm", background = palette.background) {
+        AlertTemplate(
+            tag = "link_alarm_template",
+            palette = palette,
+            label =
+                stringResource(
+                    when (stage) {
+                        AlertStage.VIBRATING -> R.string.native_ui_conn_alert_label_vibrating
+                        AlertStage.LOUD -> R.string.native_ui_conn_alert_label_loud
+                        AlertStage.PAUSED -> R.string.native_ui_conn_alert_label_paused
+                    }
+                ),
+            headline = headline,
+            headlineTag = "link_alarm_title",
+            hazard = stage == AlertStage.LOUD,
+            strip = {
+                GlyphIcon(Glyph.BROKEN_LINK, palette.accent, size = 22.dp)
+                Text(
+                    stripText,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = palette.onBackground,
+                )
+            },
+            counter = counter,
+            counterTag = "link_alarm_since",
+            sentence = sentence,
+            sentenceTag = "link_alarm_sentence",
+            progress = progress,
+            body = {
+                CauseCard(
+                    link.causeHint,
+                    palette,
+                    onTryNow = { controller.tryReconnectNow() },
+                )
+                if (link.stalePairingHint) {
+                    Text(
+                        stringResource(R.string.native_ui_link_stale_pairing_hint),
+                        Modifier.testTag("link_alarm_stale_hint"),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = palette.onVariant,
+                    )
+                }
+                if (stage == AlertStage.LOUD) {
+                    // The loud alarm only passes Do Not Disturb with the bypass grant.
+                    if (ReadinessIssue.DND_BYPASS_MISSING in p.readiness) {
+                        Text(
+                            stringResource(R.string.native_ui_conn_alert_dnd_missing),
+                            Modifier.testTag("link_alarm_dnd_note"),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = palette.onVariant,
+                        )
+                        QuietButton(
+                            stringResource(R.string.native_ui_conn_alert_dnd_open),
+                            { SystemSettings.launch(ctx, SystemSettings.dndAccess()) },
+                            "link_alarm_dnd_open",
+                        )
+                    } else {
+                        Text(
+                            stringResource(R.string.native_ui_conn_alert_dnd_note),
+                            Modifier.testTag("link_alarm_dnd_note"),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = palette.onVariant,
+                        )
+                    }
+                }
+                if (firstConnection) {
+                    // The way back to the saved connections; from this screen (level 2 and up) it
+                    // goes through the stop confirmation, so a running alarm is never left by one
+                    // tap.
+                    QuietButton(
+                        stringResource(R.string.native_ui_conn_alert_wrong_connection),
+                        { confirmWrong = true },
+                        "link_alarm_wrong_connection",
+                    )
+                }
+            },
+            quiet = {
+                QuietButton(
+                    stringResource(R.string.native_ui_parent_stop),
+                    { confirmStop = true },
+                    "link_alarm_stop",
+                )
+            },
+            action =
+                if (stage == AlertStage.PAUSED) null
+                else {
+                    {
+                        AlertAction(
+                            stringResource(R.string.native_ui_link_alarm_ack),
+                            { controller.acknowledgeAlarm() },
+                            "link_alarm_ack",
+                            palette,
+                        )
+                    }
+                },
+        )
+        if (confirmStop) {
+            StopMonitoringDialog(
+                name = name,
+                onConfirm = {
+                    confirmStop = false
+                    controller.stopMonitoring()
+                    onClose()
+                },
+                onDismiss = { confirmStop = false },
+            )
+        }
+        if (confirmWrong) {
+            StopMonitoringDialog(
+                name = name,
+                tag = "dialog_choose_other",
+                confirmTag = "dialog_choose_other_confirm",
+                cancelTag = "dialog_choose_other_cancel",
+                onConfirm = {
+                    confirmWrong = false
+                    controller.chooseAnotherConnection()
+                    onClose()
+                },
+                onDismiss = { confirmWrong = false },
+            )
         }
     }
-    val acknowledged = (link.acknowledgedUntilElapsedMs ?: 0L) > elapsed
-    val urgent = variant == AlarmVariant.LOST && link.level >= 3
-    val headingAlpha = if (urgent) pulseAlpha(0.55f, 1f, 1600) else 1f
-    val since = link.lastAliveElapsedMs?.let { elapsed - it } ?: 0L
+}
+
+/** The other full screens: baby stopped, battery critical, needs pairing, restored, no service. */
+@Composable
+private fun LinkNoticeContent(
+    controller: AppController,
+    variant: AlarmVariant,
+    name: String?,
+    onClose: () -> Unit,
+) {
+    val p = controller.parent.collectAsState().value
+    val app = controller.app.collectAsState().value
+    var confirmStop by remember { mutableStateOf(false) }
+    val link = p.link
     val background =
         when (variant) {
-            AlarmVariant.RESTORED -> Color(0xFF0F3320)
             AlarmVariant.STOPPED -> Color(0xFF1F2227)
-            AlarmVariant.LOST -> if (urgent) Color(0xFF5C0D0D) else StateColors.AlertBackground
             else -> StateColors.AlertBackground
         }
     ScreenRoot("parent_link_alarm", background = background) {
         Column(Modifier.fillMaxSize()) {
-            LinkBar(
-                link,
-                name,
-                tag = "link_alarm_bar",
-                backgroundProtection = app.backgroundProtection,
-            )
+            StatusBar(link, name, backgroundProtection = app.backgroundProtection)
             Column(
                 Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                if (variant == AlarmVariant.RESTORED) {
+                    RestoredCard(
+                        p.restoredAfterMs ?: 0L,
+                        p.missed,
+                        {
+                            controller.dismissRestored()
+                            onClose()
+                        },
+                    )
+                    return@Column
+                }
                 val title =
                     when (variant) {
-                        AlarmVariant.LOST ->
-                            when {
-                                link.level >= 3 && name != null ->
-                                    stringResource(
-                                        R.string.native_ui_link_alarm_lost_title_urgent,
-                                        name,
-                                    )
-                                link.level >= 3 ->
-                                    stringResource(
-                                        R.string.native_ui_link_alarm_lost_title_urgent_default
-                                    )
-                                name != null ->
-                                    stringResource(R.string.native_ui_link_alarm_lost_title, name)
-                                else ->
-                                    stringResource(R.string.native_ui_link_alarm_lost_title_default)
-                            }
                         AlarmVariant.STOPPED ->
                             if (name != null)
                                 stringResource(R.string.native_ui_link_alarm_stopped_title, name)
@@ -301,47 +509,32 @@ fun LinkAlarmContent(controller: AppController, onClose: () -> Unit) {
                             stringResource(R.string.native_ui_link_alarm_battery_title)
                         AlarmVariant.NEEDS_PAIRING ->
                             stringResource(R.string.native_ui_link_alarm_needs_pairing_title)
-                        AlarmVariant.RESTORED ->
-                            stringResource(R.string.native_ui_link_alarm_restored_title)
                         AlarmVariant.NO_BACKGROUND ->
                             stringResource(R.string.native_ui_fgs_missing_bar)
+                        else -> ""
                     }
                 Text(
                     title,
-                    Modifier.fillMaxWidth()
-                        .alpha(headingAlpha)
-                        .testTag("link_alarm_title")
-                        .semantics {
-                            heading()
-                            liveRegion = LiveRegionMode.Assertive
-                        },
+                    Modifier.fillMaxWidth().testTag("link_alarm_title").semantics {
+                        heading()
+                        liveRegion = LiveRegionMode.Assertive
+                    },
                     style = MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
                     textAlign = TextAlign.Center,
                 )
-                if (variant == AlarmVariant.LOST) {
-                    Text(
-                        formatClock(since),
-                        Modifier.testTag("link_alarm_since"),
-                        fontSize = 56.sp,
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFFFD9D4),
-                    )
-                }
                 val body =
                     when (variant) {
-                        AlarmVariant.LOST -> stringResource(R.string.native_ui_link_alarm_lost_body)
                         AlarmVariant.STOPPED ->
                             stringResource(R.string.native_ui_link_alarm_stopped_body)
                         AlarmVariant.BATTERY ->
                             stringResource(R.string.native_ui_link_alarm_battery_body)
                         AlarmVariant.NEEDS_PAIRING ->
                             stringResource(R.string.core_pairing_key_mismatch)
-                        AlarmVariant.RESTORED -> null
                         AlarmVariant.NO_BACKGROUND ->
                             stringResource(R.string.native_ui_fgs_missing_body)
+                        else -> null
                     }
                 if (body != null) {
                     Text(
@@ -352,80 +545,7 @@ fun LinkAlarmContent(controller: AppController, onClose: () -> Unit) {
                         textAlign = TextAlign.Center,
                     )
                 }
-                val causeHint = link.causeHint
-                if (variant == AlarmVariant.LOST && causeHint != null) {
-                    Text(
-                        stringResource(
-                            when (causeHint) {
-                                CauseHint.SERVER_UNREACHABLE -> R.string.core_server_unreachable
-                                CauseHint.PEER_ABSENT -> R.string.core_peer_absent
-                                CauseHint.MEDIA_BLOCKED -> R.string.core_media_blocked
-                                CauseHint.PAIR_AGAIN -> R.string.core_pair_again
-                                CauseHint.BABY_UNRECOGNISED -> R.string.core_baby_unrecognised
-                            }
-                        ),
-                        Modifier.testTag("link_alarm_cause"),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color(0xFFFFD9D4),
-                        textAlign = TextAlign.Center,
-                    )
-                }
-                if (variant == AlarmVariant.LOST && link.stalePairingHint) {
-                    Text(
-                        stringResource(R.string.native_ui_link_stale_pairing_hint),
-                        Modifier.testTag("link_alarm_stale_hint"),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color(0xFFFFD9D4),
-                        textAlign = TextAlign.Center,
-                    )
-                }
                 when (variant) {
-                    AlarmVariant.LOST -> {
-                        if (acknowledged) {
-                            Body(
-                                stringResource(
-                                    R.string.native_ui_link_alarm_ack_note,
-                                    formatClock((link.acknowledgedUntilElapsedMs ?: 0L) - elapsed),
-                                ),
-                                tag = "link_alarm_ack_note",
-                                color = Color(0xFFFFD9D4),
-                            )
-                        } else {
-                            Body(
-                                stringResource(
-                                    if (urgent) R.string.native_ui_link_alarm_sound_note_urgent
-                                    else R.string.native_ui_link_alarm_sound_note
-                                ),
-                                tag = "link_alarm_sound_note",
-                                color = Color(0xFFFFD9D4),
-                            )
-                            PrimaryButton(
-                                stringResource(R.string.native_ui_link_alarm_ack),
-                                { controller.acknowledgeAlarm() },
-                                "link_alarm_ack",
-                                container = AlertRed,
-                                content = Color.White,
-                            )
-                        }
-                        SecondaryButton(
-                            stringResource(R.string.native_ui_link_try_now),
-                            { controller.tryReconnectNow() },
-                            "link_alarm_try_now",
-                            Modifier.fillMaxWidth(),
-                        )
-                        QuietButton(
-                            stringResource(R.string.native_ui_help_reconnect_open),
-                            { help = true },
-                            "link_alarm_help",
-                        )
-                        Spacer(Modifier.height(16.dp))
-                        SecondaryButton(
-                            stringResource(R.string.native_ui_parent_stop),
-                            { confirmStop = true },
-                            "link_alarm_stop",
-                            destructive = true,
-                        )
-                    }
                     AlarmVariant.NO_BACKGROUND -> {
                         PrimaryButton(
                             stringResource(R.string.native_ui_fgs_missing_fix),
@@ -453,27 +573,24 @@ fun LinkAlarmContent(controller: AppController, onClose: () -> Unit) {
                             "link_alarm_ok",
                         )
                     }
-                    else ->
+                    else -> {
                         PrimaryButton(
                             stringResource(R.string.native_ui_common_ok),
                             onClose,
                             "link_alarm_ok",
                         )
+                        QuietButton(
+                            stringResource(R.string.native_ui_parent_stop),
+                            { confirmStop = true },
+                            "link_alarm_stop",
+                        )
+                    }
                 }
             }
         }
-        if (help) HelpSheet { help = false }
         if (confirmStop) {
-            ConfirmDialog(
-                tag = "dialog_stop",
-                title = stringResource(R.string.native_ui_stop_title),
-                body =
-                    if (name != null) stringResource(R.string.native_ui_stop_parent_body, name)
-                    else stringResource(R.string.native_ui_stop_parent_body_default),
-                confirmText = stringResource(R.string.native_ui_stop_confirm),
-                cancelText = stringResource(R.string.native_ui_stop_cancel),
-                confirmTag = "dialog_stop_confirm",
-                cancelTag = "dialog_stop_cancel",
+            StopMonitoringDialog(
+                name = name,
                 onConfirm = {
                     confirmStop = false
                     controller.stopMonitoring()

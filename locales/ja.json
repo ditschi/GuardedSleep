@@ -260,31 +260,13 @@
         "unlockAction": "ロック解除"
       },
       "link": {
-        "connected": "{name}に接続中",
-        "connecting": "{name}に接続しています…",
-        "reconnecting": "再接続しています…",
-        "cantReach": "{name}に届きません。再試行中です",
-        "lostFor": "{duration}間、接続できていません",
-        "babyStopped": "{name}が見守りを停止しました",
         "idle": "見守っていません",
         "weak": "接続が弱く、音が途切れることがあります",
-        "restoredAfter": "{duration}ぶりに再接続しました。またお子さんの音が聞こえます。",
         "tryNow": "今すぐ試す",
         "pairAgain": "もう一度ペアリング",
-        "connectedDefault": "赤ちゃん用端末に接続中",
-        "connectingDefault": "赤ちゃん用端末に接続しています…",
-        "cantReachDefault": "赤ちゃん用端末に届きません。再試行中です",
-        "babyStoppedDefault": "赤ちゃん用端末が見守りを停止しました",
         "stalePairingHint": "赤ちゃん用端末を再ペアリングした場合は、新しいコードをスキャンしてください。"
       },
       "linkAlarm": {
-        "lost": {
-          "title": "{name}に接続できません",
-          "titleUrgent": "{name}に接続できません！",
-          "body": "端末が再接続するまで、お子さんの音は聞こえません。",
-          "titleDefault": "赤ちゃん用端末に接続できません",
-          "titleUrgentDefault": "赤ちゃん用端末に接続できません！"
-        },
         "stopped": {
           "title": "{name}が見守りを停止しました",
           "body": "誰かが赤ちゃん用端末で見守りを停止しました。アラートは届きません。",
@@ -301,9 +283,7 @@
           "title": "再接続しました"
         },
         "ack": "確認中です",
-        "ackNote": "{time}の間、音を止めます。それでも接続されていなければ、もう一度お知らせします。",
-        "soundNote": "確認するまで、やわらかなアラーム音が繰り返されます。",
-        "soundNoteUrgent": "確認するまでアラームが鳴り続けます。"
+        "ackNote": "{time}の間、音を止めます。それでも接続されていなければ、もう一度お知らせします。"
       },
       "parent": {
         "allQuietSince": "{time}からずっと静かです",
@@ -661,7 +641,7 @@
         "restored": {
           "body": "見守りは{duration}の間中断されていました。",
           "none": "その間、赤ちゃん用端末は音を検知しませんでした。",
-          "some": "{count, plural, other {#回の音を検知しました}}。最も大きかったのは{time}です。",
+          "some": "{count, plural, other {#回の音を検知しました}}。",
           "unknown": "音があったかどうかは分かりません。"
         }
       }

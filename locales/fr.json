@@ -260,31 +260,13 @@
         "unlockAction": "Déverrouiller"
       },
       "link": {
-        "connected": "Connecté à {name}",
-        "connecting": "Connexion à {name}…",
-        "reconnecting": "Reconnexion…",
-        "cantReach": "Impossible de joindre {name} — nouvelle tentative en cours",
-        "lostFor": "Pas de connexion depuis {duration}",
-        "babyStopped": "{name} a arrêté la surveillance",
         "idle": "Pas de surveillance",
         "weak": "Connexion faible — le son peut être haché",
-        "restoredAfter": "Reconnecté après {duration}. Vous entendez de nouveau votre enfant.",
         "tryNow": "Réessayer maintenant",
         "pairAgain": "Appairer à nouveau",
-        "connectedDefault": "Connecté à l'appareil bébé",
-        "connectingDefault": "Connexion à l'appareil bébé…",
-        "cantReachDefault": "Impossible de joindre l'appareil bébé — nouvelle tentative en cours",
-        "babyStoppedDefault": "L'appareil bébé a arrêté la surveillance",
         "stalePairingHint": "Si vous avez de nouveau associé l'appareil bébé, scannez son nouveau code."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Pas de connexion avec {name}",
-          "titleUrgent": "Pas de connexion avec {name} !",
-          "body": "Vous n'entendrez pas votre enfant tant que les appareils ne sont pas reconnectés.",
-          "titleDefault": "Pas de connexion avec l'appareil bébé",
-          "titleUrgentDefault": "Pas de connexion avec l'appareil bébé !"
-        },
         "stopped": {
           "title": "{name} a arrêté la surveillance",
           "body": "Quelqu'un a arrêté la surveillance sur l'appareil bébé. Vous ne recevrez plus d'alertes.",
@@ -301,9 +283,7 @@
           "title": "De nouveau connecté"
         },
         "ack": "Je vérifie",
-        "ackNote": "Son coupé pendant {time}. Nous vous alerterons à nouveau si la connexion n'est toujours pas rétablie.",
-        "soundNote": "Un son d'alarme discret se répète jusqu'à ce que vous vérifiiez.",
-        "soundNoteUrgent": "L'alarme retentit jusqu'à ce que vous vérifiiez."
+        "ackNote": "Son coupé pendant {time}. Nous vous alerterons à nouveau si la connexion n'est toujours pas rétablie."
       },
       "parent": {
         "allQuietSince": "Tout est calme depuis {time}",
@@ -665,7 +645,7 @@
         "restored": {
           "body": "La surveillance a été interrompue pendant {duration}.",
           "none": "L'appareil bébé n'a entendu aucun son pendant ce temps.",
-          "some": "{count, plural, one {Il a entendu 1 son} many {Il a entendu # de sons} other {Il a entendu # sons}}, le plus fort à {time}.",
+          "some": "{count, plural, one {Il a entendu 1 son} many {Il a entendu # de sons} other {Il a entendu # sons}}.",
           "unknown": "Nous ne savons pas s'il y a eu des sons."
         }
       }

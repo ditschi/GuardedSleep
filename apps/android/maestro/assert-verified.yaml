@@ -7,5 +7,5 @@ appId: org.guardedsleep.app.alpha
     stopApp: false
 - extendedWaitUntil:
     visible:
-      id: "parent_ambient_bar"
+      id: "status_bar"
     timeout: 15000

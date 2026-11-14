@@ -260,31 +260,13 @@
         "unlockAction": "Odemknout"
       },
       "link": {
-        "connected": "Připojeno k: {name}",
-        "connecting": "Připojování k: {name}…",
-        "reconnecting": "Opětovné připojování…",
-        "cantReach": "{name} je nedostupné, zkouším dál",
-        "lostFor": "Bez spojení již {duration}",
-        "babyStopped": "{name} přestalo sledovat",
         "idle": "Nesleduje se",
         "weak": "Slabé spojení: zvuk může vypadávat",
-        "restoredAfter": "Opět připojeno po {duration}. Dítě zase uslyšíte.",
         "tryNow": "Zkusit hned",
         "pairAgain": "Spárovat znovu",
-        "connectedDefault": "Připojeno k zařízení dítěte",
-        "connectingDefault": "Připojování k zařízení dítěte…",
-        "cantReachDefault": "Zařízení dítěte je nedostupné, zkouším dál",
-        "babyStoppedDefault": "Zařízení dítěte přestalo sledovat",
         "stalePairingHint": "Pokud jste zařízení dítěte spárovali znovu, naskenujte jeho nový kód."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Žádné spojení s: {name}",
-          "titleUrgent": "Žádné spojení s: {name}!",
-          "body": "Dítě neuslyšíte, dokud se zařízení znovu nepřipojí.",
-          "titleDefault": "Žádné spojení se zařízením dítěte",
-          "titleUrgentDefault": "Žádné spojení se zařízením dítěte!"
-        },
         "stopped": {
           "title": "{name} přestalo sledovat",
           "body": "Někdo zastavil sledování na zařízení dítěte. Výstrahy nepřijdou.",
@@ -301,9 +283,7 @@
           "title": "Opět připojeno"
         },
         "ack": "Jdu se podívat",
-        "ackNote": "Zvuk vypnut na {time}. Pokud spojení stále chybí, upozorníme vás znovu.",
-        "soundNote": "Jemný alarmový tón se opakuje, dokud se nepodíváte.",
-        "soundNoteUrgent": "Alarm zní, dokud se nepodíváte."
+        "ackNote": "Zvuk vypnut na {time}. Pokud spojení stále chybí, upozorníme vás znovu."
       },
       "parent": {
         "allQuietSince": "Klid od {time}",
@@ -661,7 +641,7 @@
         "restored": {
           "body": "Hlídání bylo přerušeno na {duration}.",
           "none": "Dětské zařízení za tu dobu neslyšelo žádný zvuk.",
-          "some": "{count, plural, one {Zaznamenalo 1 zvuk} few {Zaznamenalo # zvuky} many {Zaznamenalo # zvuku} other {Zaznamenalo # zvuků}}, nejhlasitější v {time}.",
+          "some": "{count, plural, one {Zaznamenalo 1 zvuk} few {Zaznamenalo # zvuky} many {Zaznamenalo # zvuku} other {Zaznamenalo # zvuků}}.",
           "unknown": "Nevíme, zda se nějaké zvuky ozvaly."
         }
       }

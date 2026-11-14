@@ -260,31 +260,13 @@
         "unlockAction": "Ontgrendelen"
       },
       "link": {
-        "connected": "Verbonden met {name}",
-        "connecting": "Verbinden met {name}…",
-        "reconnecting": "Opnieuw verbinden…",
-        "cantReach": "{name} onbereikbaar, we blijven proberen",
-        "lostFor": "Al {duration} geen verbinding",
-        "babyStopped": "{name} is gestopt met bewaken",
         "idle": "Niet aan het bewaken",
         "weak": "Zwakke verbinding: geluid kan haperen",
-        "restoredAfter": "Weer verbonden na {duration}. Je hoort je kind weer.",
         "tryNow": "Nu proberen",
         "pairAgain": "Opnieuw koppelen",
-        "connectedDefault": "Verbonden met het babyapparaat",
-        "connectingDefault": "Verbinden met het babyapparaat…",
-        "cantReachDefault": "Babyapparaat onbereikbaar, we blijven proberen",
-        "babyStoppedDefault": "Het babyapparaat is gestopt met bewaken",
         "stalePairingHint": "Heb je het babyapparaat opnieuw gekoppeld, scan dan de nieuwe code."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Geen verbinding met {name}",
-          "titleUrgent": "Geen verbinding met {name}!",
-          "body": "Je hoort je kind niet tot de apparaten weer verbonden zijn.",
-          "titleDefault": "Geen verbinding met het babyapparaat",
-          "titleUrgentDefault": "Geen verbinding met het babyapparaat!"
-        },
         "stopped": {
           "title": "{name} is gestopt met bewaken",
           "body": "Iemand is gestopt met bewaken op het babyapparaat. Je krijgt geen meldingen.",
@@ -301,9 +283,7 @@
           "title": "Weer verbonden"
         },
         "ack": "Ik kijk",
-        "ackNote": "Geluid uit voor {time}. We waarschuwen je opnieuw als er nog geen verbinding is.",
-        "soundNote": "Een zachte alarmtoon herhaalt zich tot je kijkt.",
-        "soundNoteUrgent": "Het alarm blijft klinken tot je kijkt."
+        "ackNote": "Geluid uit voor {time}. We waarschuwen je opnieuw als er nog geen verbinding is."
       },
       "parent": {
         "allQuietSince": "Alles rustig sinds {time}",
@@ -661,7 +641,7 @@
         "restored": {
           "body": "De bewaking was {duration} onderbroken.",
           "none": "Het babyapparaat heeft in die tijd niets gehoord.",
-          "some": "{count, plural, one {Het hoorde 1 geluid} other {Het hoorde # geluiden}}, het luidst om {time}.",
+          "some": "{count, plural, one {Het hoorde 1 geluid} other {Het hoorde # geluiden}}.",
           "unknown": "We weten niet of er geluiden waren."
         }
       }

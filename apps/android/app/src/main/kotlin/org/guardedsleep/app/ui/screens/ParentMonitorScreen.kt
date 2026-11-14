@@ -3,8 +3,8 @@
 package org.guardedsleep.app.ui.screens
 
 import android.content.res.Configuration
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -45,18 +44,19 @@ import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AdaptiveButtonRow
 import org.guardedsleep.app.ui.common.AppCard
 import org.guardedsleep.app.ui.common.Body
-import org.guardedsleep.app.ui.common.ConfirmDialog
 import org.guardedsleep.app.ui.common.Glyph
 import org.guardedsleep.app.ui.common.GlyphIcon
-import org.guardedsleep.app.ui.common.LinkBar
 import org.guardedsleep.app.ui.common.ListenButton
 import org.guardedsleep.app.ui.common.PrimaryButton
 import org.guardedsleep.app.ui.common.QuietButton
+import org.guardedsleep.app.ui.common.RestoredCard
 import org.guardedsleep.app.ui.common.ScreenRoot
 import org.guardedsleep.app.ui.common.SecondaryButton
 import org.guardedsleep.app.ui.common.SheetOverlay
 import org.guardedsleep.app.ui.common.SoundMeter
+import org.guardedsleep.app.ui.common.StatusBar
 import org.guardedsleep.app.ui.common.StatusChip
+import org.guardedsleep.app.ui.common.StopMonitoringDialog
 import org.guardedsleep.app.ui.common.SystemSettings
 import org.guardedsleep.app.ui.common.TalkInterruptEffect
 import org.guardedsleep.app.ui.common.TalkSection
@@ -155,24 +155,8 @@ fun ParentMonitorScreen(
     val top: @Composable ColumnScope.() -> Unit = {
         val restoredAfterMs = p.restoredAfterMs
         if (restoredAfterMs != null) {
-            Row(
-                Modifier.fillMaxWidth()
-                    .background(StateColors.Green, RoundedCornerShape(12.dp))
-                    .padding(12.dp)
-                    .testTag("parent_restored_toast"),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                GlyphIcon(Glyph.CHECK, StateColors.OnState)
-                Text(
-                    stringResource(
-                        R.string.native_ui_link_restored_after,
-                        formatDuration(restoredAfterMs),
-                    ),
-                    color = StateColors.OnState,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            }
+            // Until OK: the card never dismisses itself, a new outage replaces it.
+            RestoredCard(restoredAfterMs, p.missed, { controller.dismissRestored() })
         }
         if (!app.backgroundProtection) {
             AppCard(Modifier.testTag("parent_fgs_missing"), container = StateColors.Red) {
@@ -231,7 +215,9 @@ fun ParentMonitorScreen(
                 )
             }
         }
-        p.missed?.let { MissedCard(it, wall) { controller.dismissMissedEvents() } }
+        if (restoredAfterMs == null) {
+            p.missed?.let { MissedCard(it, wall) { controller.dismissMissedEvents() } }
+        }
         if (settings.alertStyle == AlertStyle.DISCREET) {
             // Never hidden behind "more": a forgotten discreet style is a missed-alarm risk.
             StatusChip(
@@ -249,13 +235,13 @@ fun ParentMonitorScreen(
             live = connected,
             alarm = p.noiseAlertActive && !snoozed,
         )
-        if (app.autoStarted && !verified) {
-            // Wrong place (travelling): one tap, no confirmation, while nothing is verified yet.
-            SecondaryButton(
-                stringResource(R.string.native_ui_connections_choose_another),
-                chooseOther,
+        if (p.link.phase == LinkPhase.CONNECTING) {
+            // Wrong place (travelling): before the first connection of a run, one tap at levels 0
+            // and 1, the stop confirmation from level 2 (`connection-status`).
+            QuietButton(
+                stringResource(R.string.native_ui_conn_alert_wrong_connection),
+                { if (p.link.level >= 2) sheet = ParentSheet.CHOOSE_OTHER else chooseOther() },
                 "parent_choose_other_connection",
-                Modifier.fillMaxWidth(),
             )
         }
         if (p.link.phase == LinkPhase.FAILED_NEEDS_USER) {
@@ -375,136 +361,129 @@ fun ParentMonitorScreen(
     TalkInterruptEffect { controller.interruptTalk() }
     ScreenRoot("parent_monitor") {
         Column(Modifier.fillMaxSize()) {
-            LinkBar(p.link, name, backgroundProtection = app.backgroundProtection)
-            if (wide) {
-                Row(
-                    Modifier.weight(1f).fillMaxWidth().padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    Column(
-                        Modifier.weight(1f).verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        content = top,
-                    )
-                    Column(
-                        Modifier.weight(1f).verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        middle()
-                        Spacer(Modifier.height(8.dp))
-                        bottom()
-                    }
-                }
-            } else {
-                Column(
-                    Modifier.weight(1f)
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    top()
-                    middle()
-                }
-                Column(
-                    Modifier.fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 16.dp, top = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    content = bottom,
-                )
-            }
-        }
-        when (sheet) {
-            ParentSheet.SILENCE -> SilenceSheet(p, controller) { sheet = null }
-            ParentSheet.SNOOZE -> SnoozeSheet(snoozed, snoozeLeft, controller) { sheet = null }
-            ParentSheet.PROBE ->
-                ProbeSheet(
-                    controller,
-                    connected,
-                    settings.alertOutput,
-                    settings.alertStyle,
-                    onReadiness = { sheet = ParentSheet.READINESS },
-                ) {
-                    sheet = null
-                }
-            ParentSheet.READINESS ->
-                ReadinessSheet(p, controller, onProbe = { sheet = ParentSheet.PROBE }) {
-                    sheet = null
-                }
-            ParentSheet.HELP -> HelpSheet { sheet = null }
-            ParentSheet.MORE ->
-                SheetOverlay(
-                    "sheet_more",
-                    stringResource(R.string.native_ui_common_more),
-                    { sheet = null },
-                ) {
-                    AlertStyleChoice(settings.alertStyle) { style ->
-                        controller.updateSettings { it.copy(alertStyle = style) }
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    SecondaryButton(
-                        stringResource(R.string.native_ui_common_settings),
-                        {
-                            sheet = null
-                            onSettings()
-                        },
-                        "parent_settings",
-                        Modifier.fillMaxWidth(),
-                    )
-                    if (app.autoStarted && verified) {
-                        Spacer(Modifier.height(8.dp))
-                        SecondaryButton(
-                            stringResource(R.string.native_ui_connections_choose_another),
-                            { sheet = ParentSheet.CHOOSE_OTHER },
-                            "menu_choose_other_connection",
-                            Modifier.fillMaxWidth(),
+            StatusBar(p.link, name, backgroundProtection = app.backgroundProtection)
+            // Sheets and dialogs draw inside this box, so their scrim leaves the bar readable.
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                Column(Modifier.fillMaxSize()) {
+                    if (wide) {
+                        Row(
+                            Modifier.weight(1f).fillMaxWidth().padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            Column(
+                                Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                content = top,
+                            )
+                            Column(
+                                Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                middle()
+                                Spacer(Modifier.height(8.dp))
+                                bottom()
+                            }
+                        }
+                    } else {
+                        Column(
+                            Modifier.weight(1f)
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState())
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            top()
+                            middle()
+                        }
+                        Column(
+                            Modifier.fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                                .padding(bottom = 16.dp, top = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            content = bottom,
                         )
                     }
-                    Spacer(Modifier.height(16.dp))
-                    SecondaryButton(
-                        stringResource(R.string.native_ui_parent_stop),
-                        { sheet = ParentSheet.STOP },
-                        "parent_stop",
-                        Modifier.fillMaxWidth(),
-                        destructive = true,
-                    )
                 }
-            ParentSheet.STOP ->
-                ConfirmDialog(
-                    tag = "dialog_stop",
-                    title = stringResource(R.string.native_ui_stop_title),
-                    body =
-                        if (name != null) stringResource(R.string.native_ui_stop_parent_body, name)
-                        else stringResource(R.string.native_ui_stop_parent_body_default),
-                    confirmText = stringResource(R.string.native_ui_stop_confirm),
-                    cancelText = stringResource(R.string.native_ui_stop_cancel),
-                    confirmTag = "dialog_stop_confirm",
-                    cancelTag = "dialog_stop_cancel",
-                    onConfirm = {
-                        sheet = null
-                        controller.stopMonitoring()
-                    },
-                    onDismiss = { sheet = null },
-                )
-            ParentSheet.CHOOSE_OTHER ->
-                ConfirmDialog(
-                    tag = "dialog_choose_other",
-                    title = stringResource(R.string.native_ui_stop_title),
-                    body =
-                        if (name != null) stringResource(R.string.native_ui_stop_parent_body, name)
-                        else stringResource(R.string.native_ui_stop_parent_body_default),
-                    confirmText = stringResource(R.string.native_ui_stop_confirm),
-                    cancelText = stringResource(R.string.native_ui_stop_cancel),
-                    confirmTag = "dialog_choose_other_confirm",
-                    cancelTag = "dialog_choose_other_cancel",
-                    onConfirm = {
-                        sheet = null
-                        chooseOther()
-                    },
-                    onDismiss = { sheet = null },
-                )
-            null -> Unit
+                when (sheet) {
+                    ParentSheet.SILENCE -> SilenceSheet(p, controller) { sheet = null }
+                    ParentSheet.SNOOZE ->
+                        SnoozeSheet(snoozed, snoozeLeft, controller) { sheet = null }
+                    ParentSheet.PROBE ->
+                        ProbeSheet(
+                            controller,
+                            connected,
+                            settings.alertOutput,
+                            settings.alertStyle,
+                            onReadiness = { sheet = ParentSheet.READINESS },
+                        ) {
+                            sheet = null
+                        }
+                    ParentSheet.READINESS ->
+                        ReadinessSheet(p, controller, onProbe = { sheet = ParentSheet.PROBE }) {
+                            sheet = null
+                        }
+                    ParentSheet.HELP -> HelpSheet { sheet = null }
+                    ParentSheet.MORE ->
+                        SheetOverlay(
+                            "sheet_more",
+                            stringResource(R.string.native_ui_common_more),
+                            { sheet = null },
+                        ) {
+                            AlertStyleChoice(settings.alertStyle) { style ->
+                                controller.updateSettings { it.copy(alertStyle = style) }
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            SecondaryButton(
+                                stringResource(R.string.native_ui_common_settings),
+                                {
+                                    sheet = null
+                                    onSettings()
+                                },
+                                "parent_settings",
+                                Modifier.fillMaxWidth(),
+                            )
+                            if (app.autoStarted && verified) {
+                                Spacer(Modifier.height(8.dp))
+                                SecondaryButton(
+                                    stringResource(R.string.native_ui_connections_choose_another),
+                                    { sheet = ParentSheet.CHOOSE_OTHER },
+                                    "menu_choose_other_connection",
+                                    Modifier.fillMaxWidth(),
+                                )
+                            }
+                            Spacer(Modifier.height(16.dp))
+                            SecondaryButton(
+                                stringResource(R.string.native_ui_parent_stop),
+                                { sheet = ParentSheet.STOP },
+                                "parent_stop",
+                                Modifier.fillMaxWidth(),
+                                destructive = true,
+                            )
+                        }
+                    ParentSheet.STOP ->
+                        StopMonitoringDialog(
+                            name = name,
+                            onConfirm = {
+                                sheet = null
+                                controller.stopMonitoring()
+                            },
+                            onDismiss = { sheet = null },
+                        )
+                    ParentSheet.CHOOSE_OTHER ->
+                        StopMonitoringDialog(
+                            name = name,
+                            tag = "dialog_choose_other",
+                            confirmTag = "dialog_choose_other_confirm",
+                            cancelTag = "dialog_choose_other_cancel",
+                            onConfirm = {
+                                sheet = null
+                                chooseOther()
+                            },
+                            onDismiss = { sheet = null },
+                        )
+                    null -> Unit
+                }
+            }
         }
     }
 }

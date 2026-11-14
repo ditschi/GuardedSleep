@@ -260,31 +260,13 @@
         "unlockAction": "Lås op"
       },
       "link": {
-        "connected": "Forbundet til {name}",
-        "connecting": "Opretter forbindelse til {name}…",
-        "reconnecting": "Opretter forbindelse igen…",
-        "cantReach": "Kan ikke nå {name}, prøver stadig",
-        "lostFor": "Ingen forbindelse i {duration}",
-        "babyStopped": "{name} er holdt op med at overvåge",
         "idle": "Overvåger ikke",
         "weak": "Svag forbindelse: lyden kan hakke",
-        "restoredAfter": "Forbundet igen efter {duration}. Du kan høre dit barn igen.",
         "tryNow": "Prøv nu",
         "pairAgain": "Par igen",
-        "connectedDefault": "Forbundet til babyenheden",
-        "connectingDefault": "Opretter forbindelse til babyenheden…",
-        "cantReachDefault": "Kan ikke nå babyenheden, prøver stadig",
-        "babyStoppedDefault": "Babyenheden er holdt op med at overvåge",
         "stalePairingHint": "Hvis du har parret babyenheden igen, så scan dens nye kode."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Ingen forbindelse til {name}",
-          "titleUrgent": "Ingen forbindelse til {name}!",
-          "body": "Du kan ikke høre dit barn, før enhederne har forbindelse igen.",
-          "titleDefault": "Ingen forbindelse til babyenheden",
-          "titleUrgentDefault": "Ingen forbindelse til babyenheden!"
-        },
         "stopped": {
           "title": "{name} er holdt op med at overvåge",
           "body": "Nogen har stoppet overvågningen på babyenheden. Du får ingen alarmer.",
@@ -301,9 +283,7 @@
           "title": "Forbundet igen"
         },
         "ack": "Jeg tjekker",
-        "ackNote": "Lyden er slået fra i {time}. Vi giver dig besked igen, hvis der stadig ikke er forbindelse.",
-        "soundNote": "En blid alarmtone gentages, indtil du tjekker.",
-        "soundNoteUrgent": "Alarmen lyder, indtil du tjekker."
+        "ackNote": "Lyden er slået fra i {time}. Vi giver dig besked igen, hvis der stadig ikke er forbindelse."
       },
       "parent": {
         "allQuietSince": "Stille siden {time}",
@@ -661,7 +641,7 @@
         "restored": {
           "body": "Overvågningen var afbrudt i {duration}.",
           "none": "Babyenheden hørte ingen lyde i den tid.",
-          "some": "{count, plural, one {Den hørte 1 lyd} other {Den hørte # lyde}}, højest kl. {time}.",
+          "some": "{count, plural, one {Den hørte 1 lyd} other {Den hørte # lyde}}.",
           "unknown": "Vi ved ikke, om der var lyde."
         }
       }

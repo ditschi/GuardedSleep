@@ -511,9 +511,19 @@ class AlertController(
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
 
+    /** "1 min 48 s": durations are in words, never `m:ss` (`redesign-calm-ui` design section 8). */
     private fun mmss(ms: Long): String {
-        val s = ms / 1000
-        return "%d:%02d".format(s / 60, s % 60)
+        val total = (ms.coerceAtLeast(0) / 1000).toInt()
+        val min = total / 60
+        val sec = total % 60
+        return when {
+            min == 0 -> context.getString(R.string.native_ui_common_duration_sec, sec)
+            sec == 0 -> context.getString(R.string.native_ui_common_duration_min, min)
+            else ->
+                context.getString(R.string.native_ui_common_duration_min, min) +
+                    " " +
+                    context.getString(R.string.native_ui_common_duration_sec, sec)
+        }
     }
 
     private companion object {

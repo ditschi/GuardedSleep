@@ -260,31 +260,13 @@
         "unlockAction": "Kilidi aç"
       },
       "link": {
-        "connected": "Bağlı: {name}",
-        "connecting": "Bağlanılıyor: {name}…",
-        "reconnecting": "Yeniden bağlanılıyor…",
-        "cantReach": "{name} ile bağlantı kurulamıyor — denemeye devam ediliyor",
-        "lostFor": "{duration} süredir bağlantı yok",
-        "babyStopped": "{name} izlemeyi durdurdu",
         "idle": "İzleme yok",
         "weak": "Zayıf bağlantı — ses kesilebilir",
-        "restoredAfter": "{duration} sonra yeniden bağlandı. Çocuğunuzu yine duyabilirsiniz.",
         "tryNow": "Şimdi dene",
         "pairAgain": "Yeniden eşleştir",
-        "connectedDefault": "Bebek cihazına bağlı",
-        "connectingDefault": "Bebek cihazına bağlanılıyor…",
-        "cantReachDefault": "Bebek cihazına ulaşılamıyor — denemeye devam ediliyor",
-        "babyStoppedDefault": "Bebek cihazı izlemeyi durdurdu",
         "stalePairingHint": "Bebek cihazını yeniden eşleştirdiyseniz yeni kodunu tarayın."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "{name} ile bağlantı yok",
-          "titleUrgent": "{name} ile bağlantı yok!",
-          "body": "Cihazlar yeniden bağlanana kadar çocuğunuzu duymayacaksınız.",
-          "titleDefault": "Bebek cihazıyla bağlantı yok",
-          "titleUrgentDefault": "Bebek cihazıyla bağlantı yok!"
-        },
         "stopped": {
           "title": "{name} izlemeyi durdurdu",
           "body": "Biri bebek cihazında izlemeyi durdurdu. Uyarı almayacaksınız.",
@@ -301,9 +283,7 @@
           "title": "Yeniden bağlandı"
         },
         "ack": "Bakıyorum",
-        "ackNote": "Ses {time} kapalı. Hâlâ bağlı değilse sizi yeniden uyaracağız.",
-        "soundNote": "Siz bakana kadar hafif bir alarm sesi tekrarlanır.",
-        "soundNoteUrgent": "Siz bakana kadar alarm çalmaya devam eder."
+        "ackNote": "Ses {time} kapalı. Hâlâ bağlı değilse sizi yeniden uyaracağız."
       },
       "parent": {
         "allQuietSince": "{time} saatinden beri sessiz",
@@ -661,7 +641,7 @@
         "restored": {
           "body": "İzleme {duration} boyunca kesintiye uğradı.",
           "none": "Bebek cihazı bu sürede hiç ses duymadı.",
-          "some": "{count, plural, one {1 ses duydu} other {# ses duydu}}, en yüksek saat {time}.",
+          "some": "{count, plural, one {1 ses duydu} other {# ses duydu}}.",
           "unknown": "Ses olup olmadığını bilmiyoruz."
         }
       }

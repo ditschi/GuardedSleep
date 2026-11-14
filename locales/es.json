@@ -260,31 +260,13 @@
         "unlockAction": "Desbloquear"
       },
       "link": {
-        "connected": "Conectado con {name}",
-        "connecting": "Conectando con {name}…",
-        "reconnecting": "Reconectando…",
-        "cantReach": "No se puede contactar con {name} — sigue intentándolo",
-        "lostFor": "Sin conexión desde hace {duration}",
-        "babyStopped": "{name} dejó de vigilar",
         "idle": "Sin vigilancia",
         "weak": "Conexión débil — el sonido puede cortarse",
-        "restoredAfter": "Conectado de nuevo tras {duration}. Vuelve a oír a su hijo.",
         "tryNow": "Intentar ahora",
         "pairAgain": "Emparejar de nuevo",
-        "connectedDefault": "Conectado con el dispositivo del bebé",
-        "connectingDefault": "Conectando con el dispositivo del bebé…",
-        "cantReachDefault": "No se puede contactar con el dispositivo del bebé — sigue intentándolo",
-        "babyStoppedDefault": "El dispositivo del bebé dejó de vigilar",
         "stalePairingHint": "Si volvió a emparejar el dispositivo del bebé, escanee su nuevo código."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Sin conexión con {name}",
-          "titleUrgent": "¡Sin conexión con {name}!",
-          "body": "No oirá a su hijo hasta que los dispositivos se vuelvan a conectar.",
-          "titleDefault": "Sin conexión con el dispositivo del bebé",
-          "titleUrgentDefault": "¡Sin conexión con el dispositivo del bebé!"
-        },
         "stopped": {
           "title": "{name} dejó de vigilar",
           "body": "Alguien detuvo la vigilancia en el dispositivo del bebé. No recibirá avisos.",
@@ -301,9 +283,7 @@
           "title": "Conectado de nuevo"
         },
         "ack": "Estoy comprobando",
-        "ackNote": "Sonido apagado durante {time}. Le avisaremos de nuevo si sigue sin conexión.",
-        "soundNote": "Un tono de alarma suave se repite hasta que lo compruebe.",
-        "soundNoteUrgent": "La alarma suena hasta que lo compruebe."
+        "ackNote": "Sonido apagado durante {time}. Le avisaremos de nuevo si sigue sin conexión."
       },
       "parent": {
         "allQuietSince": "Todo tranquilo desde las {time}",
@@ -665,7 +645,7 @@
         "restored": {
           "body": "La vigilancia estuvo interrumpida {duration}.",
           "none": "El dispositivo del bebé no oyó ningún sonido en ese tiempo.",
-          "some": "{count, plural, one {Oyó 1 sonido} many {Oyó # de sonidos} other {Oyó # sonidos}}, el más fuerte a las {time}.",
+          "some": "{count, plural, one {Oyó 1 sonido} many {Oyó # de sonidos} other {Oyó # sonidos}}.",
           "unknown": "No sabemos si hubo sonidos."
         }
       }

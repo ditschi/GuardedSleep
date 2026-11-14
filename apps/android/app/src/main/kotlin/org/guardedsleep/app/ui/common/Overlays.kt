@@ -27,10 +27,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.guardedsleep.app.contract.R
 
 /*
  * Sheets and dialogs are drawn inside the screen (no separate window) so they are part of the
@@ -134,4 +136,44 @@ fun ConfirmDialog(
             }
         }
     }
+}
+
+/**
+ * The stop confirmation of `device-setup` "Stopping monitoring on the parent": one dialog for the
+ * More sheet, the quiet Stop button and "Wrong connection?" of the alert screens. Opening or
+ * cancelling it does nothing else: it silences and acknowledges no alert, so a running alarm keeps
+ * sounding underneath. "Keep monitoring" is the filled default in the thumb position.
+ */
+@Composable
+fun StopMonitoringDialog(
+    name: String?,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    tag: String = "dialog_stop",
+    confirmTag: String = "dialog_stop_confirm",
+    cancelTag: String = "dialog_stop_cancel",
+) {
+    ConfirmDialog(
+        tag = tag,
+        title =
+            if (name != null)
+                stringResource(
+                    R.string.native_ui_stop_title_named,
+                    name,
+                )
+            else stringResource(R.string.native_ui_stop_title),
+        body =
+            if (name != null)
+                stringResource(
+                    R.string.native_ui_stop_parent_body,
+                    name,
+                )
+            else stringResource(R.string.native_ui_stop_parent_body_default),
+        confirmText = stringResource(R.string.native_ui_stop_confirm),
+        cancelText = stringResource(R.string.native_ui_stop_cancel),
+        confirmTag = confirmTag,
+        cancelTag = cancelTag,
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
+    )
 }

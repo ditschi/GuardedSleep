@@ -260,31 +260,13 @@
         "unlockAction": "Entsperren"
       },
       "link": {
-        "connected": "Mit {name} verbunden",
-        "connecting": "Verbindung zu {name} wird aufgebaut …",
-        "reconnecting": "Verbindung wird neu aufgebaut …",
-        "cantReach": "{name} nicht erreichbar — es wird weiter versucht",
-        "lostFor": "Seit {duration} keine Verbindung",
-        "babyStopped": "{name} hat die Überwachung beendet",
         "idle": "Keine Überwachung",
         "weak": "Schwache Verbindung — der Ton kann aussetzen",
-        "restoredAfter": "Nach {duration} wieder verbunden. Sie hören Ihr Kind wieder.",
         "tryNow": "Jetzt versuchen",
         "pairAgain": "Erneut koppeln",
-        "connectedDefault": "Mit dem Babygerät verbunden",
-        "connectingDefault": "Verbindung zum Babygerät wird aufgebaut …",
-        "cantReachDefault": "Babygerät nicht erreichbar — es wird weiter versucht",
-        "babyStoppedDefault": "Das Babygerät hat die Überwachung beendet",
         "stalePairingHint": "Wenn Sie das Babygerät neu gekoppelt haben, scannen Sie seinen neuen Code."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Keine Verbindung zu {name}",
-          "titleUrgent": "Keine Verbindung zu {name}!",
-          "body": "Sie hören Ihr Kind erst wieder, wenn die Verbindung wieder steht.",
-          "titleDefault": "Keine Verbindung zum Babygerät",
-          "titleUrgentDefault": "Keine Verbindung zum Babygerät!"
-        },
         "stopped": {
           "title": "{name} hat die Überwachung beendet",
           "body": "Jemand hat die Überwachung auf dem Babygerät beendet. Sie erhalten keine Alarme.",
@@ -301,9 +283,7 @@
           "title": "Wieder verbunden"
         },
         "ack": "Ich schaue nach",
-        "ackNote": "Ton für {time} aus. Wir alarmieren Sie erneut, falls noch keine Verbindung besteht.",
-        "soundNote": "Ein leiser Alarmton wiederholt sich, bis Sie nachsehen.",
-        "soundNoteUrgent": "Der Alarm ertönt so lange, bis Sie nachsehen."
+        "ackNote": "Ton für {time} aus. Wir alarmieren Sie erneut, falls noch keine Verbindung besteht."
       },
       "parent": {
         "allQuietSince": "Alles ruhig seit {time}",
@@ -665,7 +645,7 @@
         "restored": {
           "body": "Die Überwachung war {duration} unterbrochen.",
           "none": "Das Babygerät hat in dieser Zeit nichts gehört.",
-          "some": "{count, plural, one {Es hat 1 Geräusch gehört} other {Es hat # Geräusche gehört}}, am lautesten um {time}.",
+          "some": "{count, plural, one {Es hat 1 Geräusch gehört} other {Es hat # Geräusche gehört}}.",
           "unknown": "Ob es Geräusche gab, wissen wir nicht."
         }
       }

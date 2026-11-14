@@ -247,6 +247,11 @@ class FakeAppController(
         calls += "dismissMissedEvents"
     }
 
+    override fun dismissRestored() {
+        calls += "dismissRestored"
+        parentFlow.value = parentFlow.value.copy(restoredAfterMs = null, missed = null)
+    }
+
     override fun setKioskLocked(locked: Boolean) {
         calls += "setKioskLocked:$locked"
         babyFlow.value = babyFlow.value.copy(kioskLocked = locked)

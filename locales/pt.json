@@ -260,31 +260,13 @@
         "unlockAction": "Desbloquear"
       },
       "link": {
-        "connected": "Conectado a {name}",
-        "connecting": "Conectando a {name}…",
-        "reconnecting": "Reconectando…",
-        "cantReach": "Sem acesso a {name}, tentando de novo",
-        "lostFor": "Sem conexão há {duration}",
-        "babyStopped": "{name} parou de monitorar",
         "idle": "Sem monitoramento",
         "weak": "Conexão fraca: o som pode falhar",
-        "restoredAfter": "Conectado de novo após {duration}. Você já pode ouvir seu filho.",
         "tryNow": "Tentar agora",
         "pairAgain": "Parear de novo",
-        "connectedDefault": "Conectado ao dispositivo do bebê",
-        "connectingDefault": "Conectando ao dispositivo do bebê…",
-        "cantReachDefault": "Sem acesso ao dispositivo do bebê, tentando de novo",
-        "babyStoppedDefault": "O dispositivo do bebê parou de monitorar",
         "stalePairingHint": "Se você pareou o dispositivo do bebê de novo, leia o novo código dele."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Sem conexão com {name}",
-          "titleUrgent": "Sem conexão com {name}!",
-          "body": "Você não vai ouvir seu filho até os dispositivos se reconectarem.",
-          "titleDefault": "Sem conexão com o dispositivo do bebê",
-          "titleUrgentDefault": "Sem conexão com o dispositivo do bebê!"
-        },
         "stopped": {
           "title": "{name} parou de monitorar",
           "body": "Alguém parou o monitoramento no dispositivo do bebê. Você não vai receber alertas.",
@@ -301,9 +283,7 @@
           "title": "Conectado de novo"
         },
         "ack": "Estou verificando",
-        "ackNote": "Som desligado por {time}. Vamos avisar de novo se ainda não houver conexão.",
-        "soundNote": "Um tom de alarme suave se repete até você verificar.",
-        "soundNoteUrgent": "O alarme continua tocando até você verificar."
+        "ackNote": "Som desligado por {time}. Vamos avisar de novo se ainda não houver conexão."
       },
       "parent": {
         "allQuietSince": "Tudo calmo desde {time}",
@@ -661,7 +641,7 @@
         "restored": {
           "body": "A vigilância esteve interrompida durante {duration}.",
           "none": "O dispositivo do bebé não ouviu nenhum som nesse período.",
-          "some": "{count, plural, one {Ouviu 1 som} many {Ouviu # de sons} other {Ouviu # sons}}, o mais alto às {time}.",
+          "some": "{count, plural, one {Ouviu 1 som} many {Ouviu # de sons} other {Ouviu # sons}}.",
           "unknown": "Não sabemos se houve sons."
         }
       }

@@ -260,31 +260,13 @@
         "unlockAction": "Lås upp"
       },
       "link": {
-        "connected": "Ansluten till {name}",
-        "connecting": "Ansluter till {name}…",
-        "reconnecting": "Ansluter igen…",
-        "cantReach": "Når inte {name}, försöker fortfarande",
-        "lostFor": "Ingen anslutning på {duration}",
-        "babyStopped": "{name} slutade övervaka",
         "idle": "Övervakar inte",
         "weak": "Svag anslutning: ljudet kan hacka",
-        "restoredAfter": "Ansluten igen efter {duration}. Du hör ditt barn igen.",
         "tryNow": "Försök nu",
         "pairAgain": "Parkoppla igen",
-        "connectedDefault": "Ansluten till babyenheten",
-        "connectingDefault": "Ansluter till babyenheten…",
-        "cantReachDefault": "Når inte babyenheten, försöker fortfarande",
-        "babyStoppedDefault": "Babyenheten slutade övervaka",
         "stalePairingHint": "Om du parkopplade babyenheten igen, skanna dess nya kod."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Ingen anslutning till {name}",
-          "titleUrgent": "Ingen anslutning till {name}!",
-          "body": "Du hör inte ditt barn förrän enheterna ansluter igen.",
-          "titleDefault": "Ingen anslutning till babyenheten",
-          "titleUrgentDefault": "Ingen anslutning till babyenheten!"
-        },
         "stopped": {
           "title": "{name} slutade övervaka",
           "body": "Någon stoppade övervakningen på babyenheten. Du får inga larm.",
@@ -301,9 +283,7 @@
           "title": "Ansluten igen"
         },
         "ack": "Jag tittar",
-        "ackNote": "Ljudet är av i {time}. Vi larmar dig igen om anslutningen fortfarande saknas.",
-        "soundNote": "En mjuk larmton upprepas tills du tittar.",
-        "soundNoteUrgent": "Larmet ljuder tills du tittar."
+        "ackNote": "Ljudet är av i {time}. Vi larmar dig igen om anslutningen fortfarande saknas."
       },
       "parent": {
         "allQuietSince": "Tyst sedan {time}",
@@ -661,7 +641,7 @@
         "restored": {
           "body": "Övervakningen var avbruten i {duration}.",
           "none": "Bebisenheten hörde inget ljud under den tiden.",
-          "some": "{count, plural, one {Den hörde 1 ljud} other {Den hörde # ljud}}, högst kl. {time}.",
+          "some": "{count, plural, one {Den hörde 1 ljud} other {Den hörde # ljud}}.",
           "unknown": "Vi vet inte om det fanns ljud."
         }
       }

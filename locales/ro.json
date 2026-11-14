@@ -260,31 +260,13 @@
         "unlockAction": "Deblochează"
       },
       "link": {
-        "connected": "Conectat la {name}",
-        "connecting": "Se conectează la {name}…",
-        "reconnecting": "Se reconectează…",
-        "cantReach": "{name} nu răspunde, încerc în continuare",
-        "lostFor": "Fără conexiune de {duration}",
-        "babyStopped": "{name} a oprit monitorizarea",
         "idle": "Nu se monitorizează",
         "weak": "Conexiune slabă: sunetul poate fi întrerupt",
-        "restoredAfter": "Conectat din nou după {duration}. Îți auzi din nou copilul.",
         "tryNow": "Încearcă acum",
         "pairAgain": "Asociază din nou",
-        "connectedDefault": "Conectat la dispozitivul bebelușului",
-        "connectingDefault": "Se conectează la dispozitivul bebelușului…",
-        "cantReachDefault": "Dispozitivul bebelușului nu răspunde, încerc în continuare",
-        "babyStoppedDefault": "Dispozitivul bebelușului a oprit monitorizarea",
         "stalePairingHint": "Dacă ai asociat din nou dispozitivul bebelușului, scanează noul lui cod."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Nicio conexiune cu {name}",
-          "titleUrgent": "Nicio conexiune cu {name}!",
-          "body": "Nu îți vei auzi copilul până când dispozitivele se reconectează.",
-          "titleDefault": "Nicio conexiune cu dispozitivul bebelușului",
-          "titleUrgentDefault": "Nicio conexiune cu dispozitivul bebelușului!"
-        },
         "stopped": {
           "title": "{name} a oprit monitorizarea",
           "body": "Cineva a oprit monitorizarea pe dispozitivul bebelușului. Nu vei primi alerte.",
@@ -301,9 +283,7 @@
           "title": "Conectat din nou"
         },
         "ack": "Verific",
-        "ackNote": "Sunet oprit pentru {time}. Te alertăm din nou dacă tot nu e conexiune.",
-        "soundNote": "Un ton de alarmă lin se repetă până verifici.",
-        "soundNoteUrgent": "Alarma sună până verifici."
+        "ackNote": "Sunet oprit pentru {time}. Te alertăm din nou dacă tot nu e conexiune."
       },
       "parent": {
         "allQuietSince": "Liniște de la {time}",
@@ -661,7 +641,7 @@
         "restored": {
           "body": "Monitorizarea a fost întreruptă timp de {duration}.",
           "none": "Dispozitivul bebelușului nu a auzit niciun sunet în acest timp.",
-          "some": "{count, plural, one {A auzit 1 sunet} few {A auzit # sunete} other {A auzit # de sunete}}, cel mai puternic la {time}.",
+          "some": "{count, plural, one {A auzit 1 sunet} few {A auzit # sunete} other {A auzit # de sunete}}.",
           "unknown": "Nu știm dacă au existat sunete."
         }
       }
