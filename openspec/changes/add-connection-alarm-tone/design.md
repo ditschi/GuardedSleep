@@ -13,7 +13,7 @@ Roles applied: Product Owner, Technical Architect, UX, Security/Privacy (no find
 
 ### 1. Where the tone recipes live
 
-- **Option A — recipes and resolution in the core (recommended).** A pure-data table `alarm_tones()` and `resolve_alarm_tone(id: &str) -> AlarmTone` (unknown → default) in `guardedsleep-core`; a recipe is a list of segments `{ freq_hz, ms, amplitude, fade_ms }` and gaps, separately for `soft` and `alarm`.
+- **Option A — recipes and resolution in the core (recommended).** A pure-data table `alarm_tones()` and `resolve_alarm_tone(id: &str) -> AlarmTone` (unknown → default) in `guardedsleep-core`; a recipe is a list of segments `{ partials: [(freq_hz, amplitude)], ms, fade_ms }` (an empty `partials` list is a gap), separately for `soft` and `alarm`.
   - Pros: one source for both platforms (no drift); the "never silent" fallback and the loudness floor are tested once; fits "safety logic lives once in the core"; pure data, so sans-IO and cargo-deny are unaffected.
   - Cons: grows the binding surface (two functions, two records); the API snapshots change.
 - **Option B — duplicate recipes in Kotlin and TypeScript with a shared golden JSON test.**
@@ -26,7 +26,7 @@ Roles applied: Product Owner, Technical Architect, UX, Security/Privacy (no find
 
 ### 2. The five tones
 
-Stable ids (stored), localized names (copy). Each has a `soft` (≤ 0.40 peak, once, ≤ 800 ms) and an `alarm` cycle (≥ 0.70 peak, looping, 0.8–1.6 s per cycle, at least 40 % of the cycle sounding). Fundamentals stay between 400 and 1 200 Hz, which carry on small speakers and stay audible with age-related high-frequency loss.
+Stable ids (stored), localized names (copy). Each has a `soft` (≤ 0.40 peak, once, ≤ 800 ms) and an `alarm` cycle (≥ 0.70 peak, looping, 0.8–1.6 s per cycle, at least 40 % of the cycle sounding). Fundamentals stay between 400 and 1 200 Hz, which carry on small speakers and stay audible with age-related high-frequency loss; `low` stays at the bottom of that range and is described in the picker as the best choice for people who hear high tones poorly. Rising steps through notes, it never glides.
 
 | id                  | Name (en) | Soft                                           | Alarm cycle                                                          |
 | ------------------- | --------- | ---------------------------------------------- | -------------------------------------------------------------------- |
@@ -34,7 +34,7 @@ Stable ids (stored), localized names (copy). Each has a `soft` (≤ 0.40 peak, o
 | `beacon`            | Beacon    | 523 Hz, 600 ms, long fade                      | three 1 000 Hz pulses of 150 ms, 100 ms apart, then 500 ms pause     |
 | `rising`            | Rising    | 440 → 660 Hz, 2 × 250 ms                       | 523 / 659 / 784 / 1 047 Hz, 200 ms each, 400 ms pause                |
 | `chime`             | Chime     | 784 Hz + 1 175 Hz (soft partial), 700 ms decay | 784 / 988 / 1 175 Hz bell-like, 250 ms each with decay, 450 ms pause |
-| `pulse`             | Pulse     | 392 Hz double pulse, 2 × 150 ms                | 740 Hz, 6 × 100 ms on / 60 ms off, 400 ms pause                      |
+| `low`               | Low       | 440 Hz with a soft 880 Hz overtone, 2 × 200 ms | 440 / 523 Hz alternating with overtones, 300 ms each, 150 ms gaps    |
 
 Exact values may be tuned during implementation within the stated limits; the limits are the test.
 
