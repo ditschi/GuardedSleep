@@ -1,4 +1,5 @@
 import type {
+  AlarmTone,
   BuildInviteResult,
   InviteMailbox,
   LinkAction,
@@ -27,6 +28,8 @@ export interface RawCoreModule {
     allowDevLoopback: boolean,
   ): string;
   filterOnlyLocal(mailboxesJson: string, projectHost: string): string;
+  alarmTones(): string;
+  resolveAlarmTone(id: string): string;
   conformanceEval(caseJson: string): string;
 }
 
@@ -59,6 +62,10 @@ export interface CoreApi {
    * and to received updates when `LinkConfig.only_local` is on.
    */
   filterOnlyLocal(mailboxes: InviteMailbox[], projectHost: string): InviteMailbox[];
+  /** The built-in connection alarm tones in picker order (Classic, Low, Beacon, Rising, Chime). */
+  alarmTones(): AlarmTone[];
+  /** The tone for a stored id; an unknown, empty or overlong value gives `classic` (never silent). */
+  resolveAlarmTone(id: string): AlarmTone;
   /** Evaluates one `vectors/conformance.json` case; the result is JSON, `{error}` for a bad case. */
   conformanceEval(caseJson: string): unknown;
 }
@@ -109,6 +116,8 @@ export function createCoreApi(mod: RawCoreModule, options: CoreOptions = {}): Co
       const out: unknown = JSON.parse(mod.filterOnlyLocal(JSON.stringify(mailboxes), projectHost));
       return out as InviteMailbox[];
     },
+    alarmTones: () => JSON.parse(mod.alarmTones()) as AlarmTone[],
+    resolveAlarmTone: (id) => JSON.parse(mod.resolveAlarmTone(id)) as AlarmTone,
     conformanceEval: (caseJson) => JSON.parse(mod.conformanceEval(caseJson)) as unknown,
   };
 }

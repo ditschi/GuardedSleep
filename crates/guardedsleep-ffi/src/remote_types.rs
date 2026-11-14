@@ -3,6 +3,7 @@
 //! field and variant lists must match the core definitions exactly; a mismatch fails to compile.
 //! Docs: <https://mozilla.github.io/uniffi-rs/latest/proc_macro/index.html#the-uniffiremote-attribute>
 
+use guardedsleep_core::alarm_tone::{AlarmTone, TonePartial, ToneSegment};
 use guardedsleep_core::ice::IceServer;
 use guardedsleep_core::invite::InviteMailbox;
 use guardedsleep_core::link::{
@@ -711,4 +712,27 @@ pub enum SessionEvent {
     Failed {
         reason: String,
     },
+}
+
+/// One sine component of a tone segment (`guardedsleep_core::alarm_tone`).
+#[uniffi::remote(Record)]
+pub struct TonePartial {
+    pub freq_hz: f64,
+    pub amplitude: f64,
+}
+
+/// A stretch of sound, or of silence when `partials` is empty.
+#[uniffi::remote(Record)]
+pub struct ToneSegment {
+    pub partials: Vec<TonePartial>,
+    pub ms: u32,
+    pub fade_ms: u32,
+}
+
+/// A connection alarm tone: soft reminder and one cycle of the looping alarm.
+#[uniffi::remote(Record)]
+pub struct AlarmTone {
+    pub id: String,
+    pub soft: Vec<ToneSegment>,
+    pub alarm: Vec<ToneSegment>,
 }

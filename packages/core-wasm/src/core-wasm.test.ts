@@ -163,6 +163,26 @@ describe("core-wasm wrapper", () => {
       expect(core.filterOnlyLocal([project, own], "gs.example.com")).toEqual([own]);
     });
 
+    it("lists the five alarm tones in picker order and resolves a stored id", () => {
+      expect(core.alarmTones().map((t) => t.id)).toEqual([
+        "classic",
+        "low",
+        "beacon",
+        "rising",
+        "chime",
+      ]);
+      for (const tone of core.alarmTones()) expect(core.resolveAlarmTone(tone.id)).toEqual(tone);
+    });
+
+    it("resolves an unknown, empty or overlong alarm tone id to classic (never silent)", () => {
+      for (const bad of ["", "none", "Classic", "x".repeat(1024)]) {
+        const tone = core.resolveAlarmTone(bad);
+        expect(tone.id).toBe("classic");
+        expect(tone.soft.length).toBeGreaterThan(0);
+        expect(tone.alarm.length).toBeGreaterThan(0);
+      }
+    });
+
     it("refuses to build an invalid invite", () => {
       const relay: InviteMailbox = { kind: "relay", url: "wss://gs.example.com" };
       expect(core.buildInvite(psk.slice(0, 16), [relay], now)).toEqual({
@@ -215,6 +235,8 @@ describe("core-wasm wrapper", () => {
       parseInvite: () => "{}",
       buildInvite: () => "",
       filterOnlyLocal: () => "[]",
+      alarmTones: () => "[]",
+      resolveAlarmTone: () => "{}",
       conformanceEval: () => "{}",
     });
     expect(() => fake.createLink(config("baby")).handle(0, { type: "tick" })).toThrow(

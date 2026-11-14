@@ -43,6 +43,7 @@ proptest = "1"
 # on for its own tests; the library build is unaffected.
 # Docs: https://doc.rust-lang.org/cargo/reference/features.html#feature-unification
 guardedsleep-core = { path = ".", features = ["testing"] }
+insta = "1.49.0"
 
 [lints]
 workspace = true

@@ -126,6 +126,20 @@ pub fn filter_only_local(mailboxes_json: &str, project_host: &str) -> Result<Str
     serde_json::to_string(&kept).map_err(|_| JsError::new("not_our_code"))
 }
 
+/// JSON array of the built-in connection alarm tones (`AlarmTone[]`) in picker order.
+#[wasm_bindgen(js_name = alarmTones)]
+pub fn alarm_tones() -> String {
+    serde_json::to_string(&guardedsleep_core::alarm_tone::alarm_tones())
+        .unwrap_or_else(|_| "[]".into())
+}
+
+/// JSON of the `AlarmTone` for a stored id; an unknown, empty or overlong value gives `classic`.
+#[wasm_bindgen(js_name = resolveAlarmTone)]
+pub fn resolve_alarm_tone(id: &str) -> String {
+    serde_json::to_string(&guardedsleep_core::alarm_tone::resolve_alarm_tone(id))
+        .unwrap_or_else(|_| "{}".into())
+}
+
 #[wasm_bindgen(js_name = conformanceEval)]
 pub fn conformance_eval(case_json: &str) -> String {
     guardedsleep_core::conformance::evaluate(case_json)
