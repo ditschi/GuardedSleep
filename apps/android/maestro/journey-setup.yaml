@@ -23,6 +23,7 @@ appId: org.guardedsleep.app.alpha
 - scrollUntilVisible:
     element:
       id: "setup_continue"
+    visibilityPercentage: 50
     timeout: 20000
 - tapOn:
     id: "setup_continue"
@@ -39,6 +40,7 @@ appId: org.guardedsleep.app.alpha
 - scrollUntilVisible:
     element:
       id: "settings_advanced_toggle"
+    visibilityPercentage: 50
 - tapOn:
     id: "settings_advanced_toggle"
 # The in-app warning, not a system dialog.
@@ -47,6 +49,7 @@ appId: org.guardedsleep.app.alpha
 - scrollUntilVisible:
     element:
       id: "settings_url_remove_0"
+    visibilityPercentage: 50
 - tapOn:
     id: "settings_url_remove_0"
 - tapOn:
@@ -62,6 +65,7 @@ appId: org.guardedsleep.app.alpha
 - scrollUntilVisible:
     element:
       id: "settings_turn"
+    visibilityPercentage: 50
 - tapOn:
     id: "settings_turn"
 - inputText: "${TURN}"
@@ -69,6 +73,7 @@ appId: org.guardedsleep.app.alpha
 - scrollUntilVisible:
     element:
       id: "settings_turn_user"
+    visibilityPercentage: 50
 - tapOn:
     id: "settings_turn_user"
 - inputText: "${TURN_USER}"
@@ -76,6 +81,7 @@ appId: org.guardedsleep.app.alpha
 - scrollUntilVisible:
     element:
       id: "settings_turn_pass"
+    visibilityPercentage: 50
 - tapOn:
     id: "settings_turn_pass"
 - inputText: "${TURN_PASS}"
@@ -83,12 +89,16 @@ appId: org.guardedsleep.app.alpha
 - scrollUntilVisible:
     element:
       id: "settings_turn_save"
+    visibilityPercentage: 50
 - tapOn:
     id: "settings_turn_save"
 - scrollUntilVisible:
     element:
       id: "settings_back"
     direction: UP
+    speed: 95
+    timeout: 60000
+    visibilityPercentage: 50
 # The first tap can land while the list still settles; the retry taps again only if Settings is still there.
 - retry:
     maxRetries: 3

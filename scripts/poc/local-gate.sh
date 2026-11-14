@@ -144,7 +144,7 @@ if [[ -n "$MAESTRO_HOME" ]]; then MAESTRO_MOUNT=(-v "$MAESTRO_HOME:/opt/maestro:
 # Maestro: no analytics, no update check (AGENTS.md §7.5; the same names as mise.toml [env]); a 1 GB
 # heap (gate-ui-journeys design §6). Its debug output stays inside this --rm container.
 docker run --rm --network host -v "$ROOT:/workspace" -v "$ANDROID_HOME_DIR:/root/.android" "${MAESTRO_MOUNT[@]}" \
-	-e GATE_ONLY -e DOZE_MINUTES -e ALERT_MAX_MS -e HB_INTERVAL_MS -e ALARM_AFTER_MS -e GS_STRICT -e GATE_SECRET_DIR="/workspace/${SECRET_DIR#"$ROOT"/}" \
+	-e GATE_ONLY -e GATE_UI_JOURNEY -e DOZE_MINUTES -e ALERT_MAX_MS -e HB_INTERVAL_MS -e ALARM_AFTER_MS -e GS_STRICT -e GATE_SECRET_DIR="/workspace/${SECRET_DIR#"$ROOT"/}" \
 	-e MAESTRO_CLI_NO_ANALYTICS="${MAESTRO_CLI_NO_ANALYTICS:-1}" \
 	-e MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED="${MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED:-true}" \
 	-e MAESTRO_DISABLE_UPDATE_CHECK="${MAESTRO_DISABLE_UPDATE_CHECK:-true}" \
