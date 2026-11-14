@@ -493,6 +493,7 @@
         },
         "gain": "Alerty ekstra głośne: {percent}%",
         "version": "Wersja {version} ({commit}, {date})",
+        "fontCredit": "Czcionka: Plus Jakarta Sans, licencja SIL Open Font License 1.1",
         "lastTest": "Ostatni test: {time}",
         "neverTested": "Jeszcze nie testowano",
         "theme": {

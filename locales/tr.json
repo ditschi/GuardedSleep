@@ -493,6 +493,7 @@
         },
         "gain": "Ekstra yüksek uyarılar: %{percent}",
         "version": "Sürüm {version} ({commit}, {date})",
+        "fontCredit": "Yazı tipi: Plus Jakarta Sans, SIL Open Font License 1.1 lisansı",
         "lastTest": "Son test: {time}",
         "neverTested": "Henüz test edilmedi",
         "theme": {

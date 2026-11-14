@@ -85,7 +85,7 @@ table.pg-copy{border-collapse:collapse;width:100%;min-width:1280px;table-layout:
 }
 .t-ember{ /* Night mode: red-shifted, ultra-dim; contrast held, brightness lowered by the backlight */
   --bg:#000000; --surf-lo:#0a0505; --surf-c:#110807; --surf-hi:#180b0a; --surf-hst:#200f0d;
-  --on:#c98a7a; --on-v:#a87365; --outline:#9a5e50; --outline-v:#2e1714;
+  --on:#d19586; --on-v:#a87365; --outline:#9a5e50; --outline-v:#2e1714;
   --pri:#d08a6c; --on-pri:#1a0703; --pri-c:#2e140d; --on-pri-c:#e8b19a;
   --sec-c:#22100c; --on-sec-c:#dda08e; --brand:#b98a6c; --horizon:#a8604c;
   --ok:#7aa883; --ok-c:#0a140d; --info:#8a9cb8; --info-c:#0c0f14;

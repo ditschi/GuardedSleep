@@ -261,6 +261,13 @@
     </p>
   {/if}
 
+  <div class="gs-group" data-testid="settings_about">
+    <span class="gs-group__title">{$t("native.ui.settings.group.about")}</span>
+    <p class="gs-muted" data-testid="settings_font_credit">
+      {$t("native.ui.settings.fontCredit")}
+    </p>
+  </div>
+
   <div class="gs-group" data-testid="settings_advanced">
     {#key switchKey}
       <Switch

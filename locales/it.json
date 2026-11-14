@@ -493,6 +493,7 @@
         },
         "gain": "Avvisi extra forti: {percent}%",
         "version": "Versione {version} ({commit}, {date})",
+        "fontCredit": "Carattere: Plus Jakarta Sans, licenza SIL Open Font License 1.1",
         "lastTest": "Ultima prova: {time}",
         "neverTested": "Non ancora provato",
         "theme": {

@@ -52,6 +52,8 @@ rust:
 # JavaScript packages and the UI catalogue.
 web:
   - "apps/web/**"
+  # theme.test.ts cross-checks theme.css against Theme.kt (until add-quality-gates generates both).
+  - "apps/android/app/src/main/kotlin/org/guardedsleep/app/ui/theme/Theme.kt"
   - "packages/**"
   - "locales/**"
   - "data/**"

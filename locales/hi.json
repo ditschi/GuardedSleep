@@ -493,6 +493,7 @@
         },
         "gain": "सूचनाओं की अतिरिक्त तेज़ आवाज़: {percent}%",
         "version": "संस्करण {version} ({commit}, {date})",
+        "fontCredit": "फ़ॉन्ट: Plus Jakarta Sans, SIL Open Font License 1.1",
         "lastTest": "आखिरी टेस्ट: {time}",
         "neverTested": "अभी जाँचा नहीं गया",
         "theme": {
