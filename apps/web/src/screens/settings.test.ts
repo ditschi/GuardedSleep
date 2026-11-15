@@ -276,6 +276,28 @@ describe("S12 settings", () => {
     await waitFor(() => expect(window.location.pathname).toBe("/"));
   });
 
+  it("lists the paired device under Connections and keeps This device as the second group", async () => {
+    c.app.update((s) => ({ ...s, role: "parent", paired: true, peerName: "Nursery" }));
+    open(c);
+    expect(await screen.findByTestId("settings_group_connections")).toHaveTextContent(
+      "Connections",
+    );
+    expect(screen.getByTestId("settings_connection_row")).toHaveTextContent("Nursery");
+    expect(screen.getByTestId("settings_group_phone")).toHaveTextContent("This device");
+    expect(screen.queryByTestId("settings_connection_in_use")).toBeNull();
+    expect(screen.queryByTestId("settings_connections_read_only")).toBeNull();
+  });
+
+  it("makes the connection read-only while monitoring and says why", async () => {
+    c.app.update((s) => ({ ...s, role: "parent", paired: true, monitoring: true }));
+    open(c);
+    expect(await screen.findByTestId("settings_connection_in_use")).toHaveTextContent("In use");
+    expect(screen.getByTestId("settings_connections_read_only")).toHaveTextContent(
+      "Stop monitoring to change connections.",
+    );
+    expect(screen.queryByTestId("settings_forget")).toBeNull();
+  });
+
   it("offers no forget action without a pairing", async () => {
     open(c);
     await screen.findByTestId("settings_title");

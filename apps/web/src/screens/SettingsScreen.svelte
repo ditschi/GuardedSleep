@@ -150,6 +150,12 @@
       : $t("native.ui.forget.titleParentDefault");
   });
 
+  const connectionDefaultKey = $derived(
+    $app.role === "parent"
+      ? "native.ui.common.babyUnitDefault"
+      : "native.ui.common.parentUnitDefault",
+  );
+
   function forget(): void {
     forgetOpen = false;
     controller.forgetPairing();
@@ -164,8 +170,59 @@
     {$t("webShell.route.settings")}
   </h1>
 
+  <!-- Two groups, as on Android (`device-setup` "Settings structure"): who this device is paired
+       with, then how this device behaves. While monitoring the connection is read-only. -->
+  <section class="gs-stack gs-stack--tight" aria-labelledby="settings-connections-title">
+    <h2
+      id="settings-connections-title"
+      class="gs-group__title"
+      data-testid="settings_group_connections"
+    >
+      {$t("native.ui.connections.title")}
+    </h2>
+    <div class="gs-group" data-testid="settings_connections">
+      {#if $app.paired}
+        <div class="gs-stack gs-stack--tight" data-testid="settings_connection_row">
+          <span>{$app.peerName ?? $t(connectionDefaultKey)}</span>
+          <span class="gs-hint">
+            {$app.role === "parent"
+              ? $t("native.ui.role.baby.title")
+              : $t("native.ui.role.parent.title")}
+          </span>
+          {#if $app.monitoring}
+            <span class="gs-in-use" data-testid="settings_connection_in_use">
+              {$t("native.ui.connections.inUse")}
+            </span>
+          {/if}
+        </div>
+        {#if $app.monitoring}
+          <p class="gs-hint" data-testid="settings_connections_read_only">
+            {$t("native.ui.connections.readOnlyNote")}
+          </p>
+        {:else}
+          <Button
+            variant="outline"
+            block
+            testid="settings_forget"
+            onclick={() => (forgetOpen = true)}
+          >
+            {$app.role === "parent"
+              ? $t("native.ui.settings.forgetBaby")
+              : $t("native.ui.settings.forgetParent")}
+          </Button>
+        {/if}
+      {:else}
+        <p class="gs-muted" data-testid="settings_not_paired">{$t("native.ui.home.empty")}</p>
+      {/if}
+    </div>
+  </section>
+
+  <h2 class="gs-group__title" data-testid="settings_group_phone">
+    {$t("native.ui.settings.group.thisPhone")}
+  </h2>
+
   <fieldset class="gs-group" data-testid="settings_theme">
-    <legend>{$t("native.ui.settings.group.screen")}</legend>
+    <legend>{$t("native.ui.settings.group.display")}</legend>
     {#each THEMES as theme (theme.value)}
       <label class="gs-choice">
         <input
@@ -412,14 +469,6 @@
       </div>
     {/if}
   </div>
-
-  {#if $app.paired}
-    <Button variant="outline" block testid="settings_forget" onclick={() => (forgetOpen = true)}>
-      {$app.role === "parent"
-        ? $t("native.ui.settings.forgetBaby")
-        : $t("native.ui.settings.forgetParent")}
-    </Button>
-  {/if}
 </div>
 
 <Dialog
