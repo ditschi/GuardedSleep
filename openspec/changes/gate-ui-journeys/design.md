@@ -56,10 +56,11 @@ Task 3 measures one local run (peak RSS, duration) and records it here. A 14 GB 
 
 Recorded while implementing tasks 1 to 5; they change what the change delivers today.
 
-### 6a. Measurements (local, 2026-11-14, 8 cores, 15 GB, another agent building in parallel)
+### 6a. Measurements (local, 2026-11-15, 8 cores, 15 GB, another agent building in parallel)
 
-- Strict `DOZE_MINUTES=2 GS_STRICT=1 just gate` with Maestro 2.12.1 (`-Xmx1g`) running the AC-1, AC-3 and AC-4 assertion flows: green; turn-lifetime 704 s, then about 13 min for the device part (AC-1 .. AC-4, AC-10, AC-11) and the canary (0 leaks).
-- Peak container memory (`docker stats`, 10 s samples, both emulators, signaling, coturn, runner with Maestro): about 6.1 GB, in line with the estimate. The shortcut journey of §7 (two emulators, Maestro, no Doze) ran about 8 min per attempt, of which the two Settings flows took about 2 min each on a busy host.
+- Strict `DOZE_MINUTES=2 GS_STRICT=1 just gate` including AC-12 (Maestro 2.12.1, `-Xmx1g`): green. turn-lifetime 704 s, then about 24 min for the whole device part (emulator boot and install, AC-1 .. AC-4, AC-10, AC-11, AC-12 about 5 min, canary), canary 21 files with 0 leaks.
+- Peak container memory (`docker stats`, 10 s samples; both emulators, signaling, coturn, runner with Maestro): about 6.4 GB, in line with the estimate.
+- Flakiness met on the way, all handled in the flows or the gate script: the emulators wedge after a few hours (restart them: `docker rm -f gs-gate-*`), `adb install` right after boot, an "isn't responding" dialog under load, and the calm UI putting Continue, Remove and the Advanced switch under the gesture bar (flows scroll to the end and tap the upper part of the button).
 
 ### 7. Finding (resolved by the owner exception in §2): the UI journey cannot pair on two emulators without relay-only media
 
