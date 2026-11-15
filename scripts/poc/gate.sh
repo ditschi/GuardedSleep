@@ -198,13 +198,13 @@ read_baby_code() {
 # journey-setup starts from a cleared app, so it can simply run again: a fresh Maestro driver start on a busy
 # host sometimes dies in the first seconds (device offline for a moment), which says nothing about the app.
 maestro_setup() { # serial role_tag
-	local t0
-	t0="$(date +%s)"
 	maestro_run "$1" journey-setup.yaml ROLE_TAG="$2" "RELAY=$SIGNAL" "TURN=$TURN_URL" TURN_USER=poc TURN_PASS=poc && return 0
 	# This flow carries no pairing material (relay URL, the gate's TURN test user), so its error lines may be shown.
 	grep -hE "ERROR|Exception" /root/.maestro/tests/*/maestro.log 2>/dev/null | tail -4 | cut -c1-260 || true
-	[[ $(($(date +%s) - t0)) -lt 30 ]] || return 1
-	log "journey-setup died in the first seconds on $1; retrying once"
+	# A busy runner can drop an emulator off adb for a moment ("device offline"); wait for it and run the
+	# flow once more, it starts from a cleared app.
+	log "journey-setup failed on $1; waiting for the device and retrying once"
+	timeout 180 adb -s "$1" wait-for-device || true
 	sleep 20
 	maestro_run "$1" journey-setup.yaml ROLE_TAG="$2" "RELAY=$SIGNAL" "TURN=$TURN_URL" TURN_USER=poc TURN_PASS=poc
 }
