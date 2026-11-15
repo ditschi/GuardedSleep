@@ -193,6 +193,8 @@ maestro_setup() { # serial role_tag
 	local t0
 	t0="$(date +%s)"
 	maestro_run "$1" journey-setup.yaml ROLE_TAG="$2" "RELAY=$SIGNAL" "TURN=$TURN_URL" TURN_USER=poc TURN_PASS=poc && return 0
+	# This flow carries no pairing material (relay URL, the gate's TURN test user), so its error lines may be shown.
+	grep -hE "ERROR|Exception" /root/.maestro/tests/*/maestro.log 2>/dev/null | tail -4 | cut -c1-260 || true
 	[[ $(($(date +%s) - t0)) -lt 30 ]] || return 1
 	log "journey-setup died in the first seconds on $1; retrying once"
 	sleep 20
