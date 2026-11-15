@@ -53,7 +53,7 @@
       "noiseTestTitle": "Test uyarısı",
       "noiseTestText": "Bu bir testtir. Bebek cihazı sessiz kalır.",
       "actionStopSound": "Sesi durdur",
-      "actionSnooze10": "10 dk ertele",
+      "actionSnooze10": "10 dk duraklat",
       "actionChecking": "Bakıyorum",
       "linkLostTitle": "Bağlantı koptu",
       "linkLostText": "Bebek cihazıyla bağlantı yok. Hemen bebeğinize bakın.",
@@ -289,7 +289,7 @@
         "allQuietSince": "{time} saatinden beri sessiz",
         "soundSince": "Ses algılandı · {time} saatinden beri",
         "soundAt": "Saat {time} civarında ses · {duration} sürdü",
-        "soundSnoozed": "Saat {time} civarında ses · uyarılar ertelendi",
+        "soundSnoozed": "Saat {time} civarında ses · ses uyarıları duraklatıldı",
         "lastHeard": "Son temas: {time}",
         "noContactYet": "Henüz temas yok",
         "monitoringNow": "İzleniyor",
@@ -311,9 +311,8 @@
           "micPermissionLost": "Bebek cihazı mikrofon erişimini kaybetti"
         },
         "discreet": {
-          "indicator": "Sessiz uyarılar: ses yok",
           "escalated": "Sese geçildi: {minutes} dk tepki yok",
-          "offWarning": "Kapalı: unutulan sessiz mod bütün gece sessiz kalabilir."
+          "offWarning": "Kapalı: unutulan yalnızca titreşim modu bütün gece sessiz kalabilir."
         }
       },
       "battery": {
@@ -323,20 +322,29 @@
         "parentLowGeneric": "Bu cihazın pili azaldı — izlemeye devam etmek için şarja takın"
       },
       "listen": {
-        "idle": "Dinlemek için basılı tutun",
-        "holding": "Dinleniyor…",
-        "locked": "Dinleniyor · durdurmak için dokunun",
-        "lockHint": "Dinlemeye devam etmek için yukarı kaydırın",
+        "idle": "Dinle",
         "disabled": "Bağlanınca dinleyin",
-        "a11yLocked": "Dinleniyor. Durdurmak için çift dokunun."
+        "idleSub": "Odayı dinlemek için dokunun",
+        "on": "Dinleniyor · durdurmak için dokunun",
+        "onSub": "Oda sesi hoparlörde",
+        "disabledSub": "Şu an bağlı değil",
+        "stateOn": "Dinleniyor",
+        "stateOff": "Dinlenmiyor"
       },
       "snooze": {
-        "button": "Ertele",
-        "title": "Ses uyarılarını ertele",
-        "help": "Bağlantı koparsa veya pil azalırsa yine uyarı alırsınız.",
-        "minutes": "{minutes} dk ertele",
-        "end": "Ertelemeyi bitir",
-        "active": "Ertelendi · {minutes} dk kaldı"
+        "button": "Ses uyarılarını duraklat",
+        "title": "Ses uyarılarını duraklat",
+        "help": "Bağlantı ve pil uyarıları yine gelir.",
+        "minutes": "{minutes} dk",
+        "end": "Duraklatmayı bitir",
+        "tile": "Ses uyarılarını duraklat",
+        "tilePaused": "Duraklatıldı",
+        "pauseMinutes": "{minutes} dk duraklat",
+        "resume": "Devam et",
+        "bannerTitle": "Ses uyarıları {time} saatine kadar duraklatıldı",
+        "bannerBody": "Bağlantı ve pil uyarıları yine gelir",
+        "snackbar": "Ses uyarıları {minutes} dk duraklatıldı",
+        "undo": "Geri al"
       },
       "probe": {
         "button": "Test uyarısı",
@@ -348,7 +356,7 @@
         "question": "Duydunuz ve hissettiniz mi?",
         "localOnly": "Yalnızca bu cihaz test edildi — bebek cihazı bağlı değil.",
         "styleSound": "Uyarı biçimi: ses",
-        "styleDiscreet": "Uyarı biçimi: sessiz",
+        "styleDiscreet": "Uyarı tarzı: yalnızca titreşim",
         "bodyDiscreet": "Bu cihaz sessizce titreşir ve uyarıyı gösterir. Bebek cihazı sessiz kalır."
       },
       "readiness": {
@@ -433,12 +441,12 @@
       },
       "coach": {
         "bar": "Yeşil, izlediğiniz anlamına gelir. Kırmızıya dönerse veya kaybolursa izlemiyorsunuz.",
-        "listen": "Dinlemek için basılı tutun. Dinlemeye devam etmek için yukarı kaydırın.",
+        "listen": "Odayı duymak için Dinle'ye dokunun.",
         "test": "Uyarının nasıl hissettirdiğini görmek için bir test uyarısı çalıştırın.",
         "runTest": "Test uyarısını şimdi çalıştır"
       },
       "alert": {
-        "title": "Ses algılandı",
+        "title": "Çocuk ses çıkarıyor",
         "since": "{time} saatinden beri",
         "ended": "Ses durdu.",
         "testBadge": "TEST",
@@ -510,7 +518,7 @@
         "alertStyle": {
           "label": "Uyarı biçimi",
           "sound": "Ses: her uyarıda bebeğin sesi çalınır",
-          "discreet": "Sessiz: titreşim ve ekran, ses yok"
+          "discreet": "Yalnızca titreşim: titreşim ve ekran, ses yok"
         },
         "discreetEscalation": {
           "label": "Kimse tepki vermezse sese geç",
@@ -602,7 +610,11 @@
           "playChime": "Zili çal",
           "chime": "Ebeveyn konuşmadan önce zil",
           "checklist": "Ebeveynler bu cihazdan konuşabilir. Bunu Ayarlar'dan kapatabilirsiniz."
-        }
+        },
+        "again": "Tekrar konuş",
+        "againAt": "saat {time}",
+        "disabled": "Bağlanınca konuşun",
+        "pausedListening": "Siz konuşurken dinleme duraklatılır"
       },
       "status": {
         "connected": "Bağlı",
@@ -671,6 +683,103 @@
         },
         "labelAlerting": "Bu cihaz uyarı veriyor",
         "progressAlerting": "Uyarı şimdi çalıyor"
+      },
+      "monitor": {
+        "monitoringFor": "{duration} süredir izleniyor",
+        "cantHear": "Oda duyulmuyor",
+        "alertLine": "Bu çizginin üstündeki ses uyarı gönderir",
+        "lastMinute": "Son dakika",
+        "now": "şimdi",
+        "noSound": "Hiç ses gelmiyor",
+        "micSilentStrip": "Mikrofon sessiz",
+        "alertsTested": "Uyarılar test edildi {time}",
+        "batteryA11y": "Bebek cihazı pili yüzde {percent}",
+        "batteryChargingA11y": "Bebek cihazı pili yüzde {percent}, şarj oluyor",
+        "batteryShort": "%{percent}"
+      },
+      "alertStyle": {
+        "chipSound": "Uyarı: ses",
+        "chipVibrate": "Uyarı: yalnızca titreşim",
+        "chipA11ySound": "Ses uyarıları: ses. Değiştir",
+        "chipA11yVibrate": "Ses uyarıları: yalnızca titreşim. Değiştir",
+        "vibrateTitle": "Yalnızca titreşim",
+        "bodyNoSound": "Ses uyarıları ses çıkarmaz.",
+        "bodyNever": "Ses uyarıları asla ses çıkarmaz.",
+        "bodyAfterPause": "Duraklatmadan sonra: önce titreşim, {minutes} dk sonra ses",
+        "turnSoundOn": "Sesi aç"
+      },
+      "banner": {
+        "fix": "Düzelt",
+        "more": "+{count} tane daha",
+        "moreA11y": "{count, plural, one {1 bildirim daha: {notices}} other {# bildirim daha: {notices}}}",
+        "listTitle": "Bildirimler",
+        "micSilentTitle": "Bebek cihazının mikrofonu hiçbir şey duymuyor",
+        "micSilentBody": "Bebek cihazını kontrol edin. Mikrofonu başka bir uygulama kullanıyor olabilir.",
+        "ready": {
+          "notifications": {
+            "title": "Uyarılar kapalı",
+            "body": "Uyarılar size ulaşamaz."
+          },
+          "fullScreen": {
+            "title": "Uyarılar kilit ekranında görünemez",
+            "body": "Telefon kilitliyken bir uyarıyı kaçırabilirsiniz."
+          },
+          "alarmVolumeZero": {
+            "title": "Alarm sesi kapalı",
+            "body": "Bu telefonda uyarıları duymazsınız"
+          },
+          "alarmVolumeLow": {
+            "title": "Alarm sesi kısık",
+            "body": "Uyarıları net duymak için sesi açın."
+          },
+          "dnd": {
+            "title": "Rahatsız Etmeyin uyarıları susturabilir",
+            "body": "GuardedSleep'in geçmesine izin verin."
+          },
+          "battery": {
+            "title": "Bu telefon GuardedSleep'i durdurabilir",
+            "body": "Uyarıların çalışması için arka planda çalışmaya izin verin."
+          },
+          "parentBattery": {
+            "title": "Bu telefonun pili azaldı",
+            "body": "İzlemenin sürmesi için şarja takın."
+          },
+          "headphones": {
+            "title": "Uyarılar kulaklığınızda çalacak",
+            "body": "Odada duymak istiyorsanız uyarıları hoparlöre alın."
+          },
+          "neverTested": {
+            "title": "Yakın zamanda test uyarısı yok",
+            "body": "Uyarıların size ulaştığından emin olmak için test yapın."
+          }
+        }
+      },
+      "noiseAlert": {
+        "labelSound": "Oda sesi çalınıyor",
+        "labelVibrate": "Telefonunuz titreşiyor",
+        "labelStopped": "Uyarı durduruldu",
+        "counterLabel": "{time} saatinden beri",
+        "counterA11y": "{duration}, {time} saatinden beri",
+        "sentenceSound": "Oda sesi bu telefonda çalınıyor.",
+        "stopSoundSub": "Uyarı sesini durdurur, izleme sürer",
+        "stopVibrationSub": "Titreşimi durdurur, izleme sürer"
+      },
+      "batteryAlert": {
+        "label": "Bebek cihazı pili",
+        "headline": "Bebek cihazının pili neredeyse bitti",
+        "counterLabel": "pil kaldı",
+        "counterA11y": "Pilin yüzde {percent} kadarı kaldı",
+        "sentence": "Bebek cihazını hemen şarja takın. Pil bittiğinde izleme durur.",
+        "silentNote": "Bebek cihazı sessiz kalır. Yalnızca bu telefon uyarır.",
+        "action": "Tamam, şarja takıyorum",
+        "actionSub": "Bu ekranı kapatır"
+      },
+      "tool": {
+        "nightA11yOff": "Gece modu: kapalı",
+        "nightA11yOn": "Gece modu: açık",
+        "nightA11yAuto": "Gece modu: otomatik",
+        "nightOn": "Açık",
+        "nightAuto": "Otomatik"
       }
     }
   },

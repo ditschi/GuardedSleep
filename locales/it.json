@@ -53,7 +53,7 @@
       "noiseTestTitle": "Avviso di prova",
       "noiseTestText": "Questa è una prova. Il dispositivo del bambino resta in silenzio.",
       "actionStopSound": "Ferma il suono",
-      "actionSnooze10": "Posticipa 10 min",
+      "actionSnooze10": "Pausa 10 min",
       "actionChecking": "Sto controllando",
       "linkLostTitle": "Connessione persa",
       "linkLostText": "Nessuna connessione al dispositivo del bambino. Controlla subito il tuo bambino.",
@@ -289,7 +289,7 @@
         "allQuietSince": "Tutto tranquillo da {time}",
         "soundSince": "Suono rilevato · da {time}",
         "soundAt": "Suono alle {time} · durata {duration}",
-        "soundSnoozed": "Suono alle {time} · avvisi posticipati",
+        "soundSnoozed": "Suono alle {time} · avvisi sonori in pausa",
         "lastHeard": "Ultimo contatto {time}",
         "noContactYet": "Ancora nessun contatto",
         "monitoringNow": "Monitoraggio",
@@ -311,9 +311,8 @@
           "micPermissionLost": "Il dispositivo del bambino ha perso l'accesso al microfono"
         },
         "discreet": {
-          "indicator": "Avvisi discreti: nessun suono",
           "escalated": "Passato al suono: nessuna reazione da {minutes} min",
-          "offWarning": "Disattivato: una modalità discreta dimenticata può restare muta tutta la notte."
+          "offWarning": "Disattivato: una modalità solo vibrazione dimenticata può restare muta tutta la notte."
         }
       },
       "battery": {
@@ -323,20 +322,29 @@
         "parentLowGeneric": "La batteria di questo dispositivo è scarica: collegalo per continuare a monitorare"
       },
       "listen": {
-        "idle": "Tieni premuto per ascoltare",
-        "holding": "In ascolto…",
-        "locked": "In ascolto · tocca per fermare",
-        "lockHint": "Scorri verso l'alto per continuare ad ascoltare",
+        "idle": "Ascolta",
         "disabled": "Ascolta quando sei connesso",
-        "a11yLocked": "In ascolto. Tocca due volte per fermare."
+        "idleSub": "Tocca per ascoltare la stanza",
+        "on": "In ascolto · tocca per fermare",
+        "onSub": "Audio della stanza sull'altoparlante",
+        "disabledSub": "Non connesso al momento",
+        "stateOn": "In ascolto",
+        "stateOff": "Non in ascolto"
       },
       "snooze": {
-        "button": "Posticipa",
-        "title": "Posticipa gli avvisi sonori",
-        "help": "Ricevi comunque gli avvisi se la connessione cade o una batteria sta per esaurirsi.",
-        "minutes": "Posticipa {minutes} min",
-        "end": "Termina posticipo",
-        "active": "Posticipato · restano {minutes} min"
+        "button": "Metti in pausa gli avvisi sonori",
+        "title": "Metti in pausa gli avvisi sonori",
+        "help": "Gli avvisi di connessione e batteria arrivano comunque.",
+        "minutes": "{minutes} min",
+        "end": "Termina pausa",
+        "tile": "Metti in pausa gli avvisi sonori",
+        "tilePaused": "In pausa",
+        "pauseMinutes": "Pausa di {minutes} min",
+        "resume": "Riprendi",
+        "bannerTitle": "Avvisi sonori in pausa fino alle {time}",
+        "bannerBody": "Gli avvisi di connessione e batteria arrivano comunque",
+        "snackbar": "Avvisi sonori in pausa per {minutes} min",
+        "undo": "Annulla"
       },
       "probe": {
         "button": "Avviso di prova",
@@ -348,7 +356,7 @@
         "question": "Hai sentito e percepito l'avviso?",
         "localOnly": "Provato solo questo dispositivo: il dispositivo del bambino non è connesso.",
         "styleSound": "Tipo di avviso: suono",
-        "styleDiscreet": "Tipo di avviso: discreto",
+        "styleDiscreet": "Stile avviso: solo vibrazione",
         "bodyDiscreet": "Questo dispositivo vibra e mostra l'avviso senza suono. Il dispositivo del bambino resta in silenzio."
       },
       "readiness": {
@@ -433,12 +441,12 @@
       },
       "coach": {
         "bar": "Verde significa che stai monitorando. Se diventa rosso o sparisce, non stai monitorando.",
-        "listen": "Tieni premuto per ascoltare. Scorri verso l'alto per continuare ad ascoltare.",
+        "listen": "Tocca Ascolta per sentire la stanza.",
         "test": "Avvia un avviso di prova per sapere come si presenta un avviso.",
         "runTest": "Avvia ora l'avviso di prova"
       },
       "alert": {
-        "title": "Suono rilevato",
+        "title": "Il bambino sta facendo rumore",
         "since": "Da {time}",
         "ended": "Il suono è terminato.",
         "testBadge": "PROVA",
@@ -510,7 +518,7 @@
         "alertStyle": {
           "label": "Tipo di avviso",
           "sound": "Suono: il suono del bambino viene riprodotto a ogni avviso",
-          "discreet": "Discreto: vibrazione e schermo, senza suono"
+          "discreet": "Solo vibrazione: vibrazione e schermo, senza suono"
         },
         "discreetEscalation": {
           "label": "Passa al suono se nessuno reagisce",
@@ -602,7 +610,11 @@
           "playChime": "Riproduci il suono",
           "chime": "Suono prima che parli un genitore",
           "checklist": "I genitori possono parlare tramite questo dispositivo. Puoi disattivarlo nelle Impostazioni."
-        }
+        },
+        "again": "Parla ancora",
+        "againAt": "alle {time}",
+        "disabled": "Parla quando sei connesso",
+        "pausedListening": "L'ascolto è in pausa mentre parli"
       },
       "status": {
         "connected": "Connesso",
@@ -671,6 +683,103 @@
         },
         "labelAlerting": "Questo dispositivo sta emettendo un avviso",
         "progressAlerting": "Avviso in corso"
+      },
+      "monitor": {
+        "monitoringFor": "Monitoraggio da {duration}",
+        "cantHear": "Non si sente la stanza",
+        "alertLine": "Un suono sopra questa linea invia un avviso",
+        "lastMinute": "Ultimo minuto",
+        "now": "ora",
+        "noSound": "Nessun suono in arrivo",
+        "micSilentStrip": "Microfono muto",
+        "alertsTested": "Avvisi provati {time}",
+        "batteryA11y": "Batteria del dispositivo del bambino {percent} per cento",
+        "batteryChargingA11y": "Batteria del dispositivo del bambino {percent} per cento, in carica",
+        "batteryShort": "{percent}%"
+      },
+      "alertStyle": {
+        "chipSound": "Avviso: suono",
+        "chipVibrate": "Avviso: solo vibrazione",
+        "chipA11ySound": "Avvisi per i suoni: suono. Cambia",
+        "chipA11yVibrate": "Avvisi per i suoni: solo vibrazione. Cambia",
+        "vibrateTitle": "Solo vibrazione",
+        "bodyNoSound": "Gli avvisi sonori non emettono suono.",
+        "bodyNever": "Gli avvisi sonori non emettono mai suono.",
+        "bodyAfterPause": "Dopo la pausa: prima vibrazione, suono dopo {minutes} min",
+        "turnSoundOn": "Attiva il suono"
+      },
+      "banner": {
+        "fix": "Risolvi",
+        "more": "+{count} altri",
+        "moreA11y": "{count, plural, one {1 altra segnalazione: {notices}} many {# altre segnalazioni: {notices}} other {# altre segnalazioni: {notices}}}",
+        "listTitle": "Segnalazioni",
+        "micSilentTitle": "Il microfono del dispositivo del bambino non sente nulla",
+        "micSilentBody": "Controlla il dispositivo del bambino. Un'altra app potrebbe usare il microfono.",
+        "ready": {
+          "notifications": {
+            "title": "Gli avvisi sono disattivati",
+            "body": "Gli avvisi non possono raggiungerti."
+          },
+          "fullScreen": {
+            "title": "Gli avvisi non possono comparire nella schermata di blocco",
+            "body": "Potresti perdere un avviso quando il telefono è bloccato."
+          },
+          "alarmVolumeZero": {
+            "title": "Il volume della sveglia è azzerato",
+            "body": "Non sentirai gli avvisi su questo telefono"
+          },
+          "alarmVolumeLow": {
+            "title": "Il volume della sveglia è basso",
+            "body": "Alzalo per sentire bene gli avvisi."
+          },
+          "dnd": {
+            "title": "Non disturbare può silenziare gli avvisi",
+            "body": "Consenti a GuardedSleep di passare."
+          },
+          "battery": {
+            "title": "Questo telefono potrebbe fermare GuardedSleep",
+            "body": "Consenti l'uso in background perché gli avvisi continuino a funzionare."
+          },
+          "parentBattery": {
+            "title": "La batteria di questo telefono è scarica",
+            "body": "Collegalo alla corrente per continuare il monitoraggio."
+          },
+          "headphones": {
+            "title": "Gli avvisi suoneranno nelle cuffie",
+            "body": "Sposta gli avvisi sull'altoparlante se vuoi sentirli nella stanza."
+          },
+          "neverTested": {
+            "title": "Nessun avviso di prova recente",
+            "body": "Fai una prova per essere sicuro che gli avvisi ti raggiungano."
+          }
+        }
+      },
+      "noiseAlert": {
+        "labelSound": "Riproduzione dell'audio della stanza",
+        "labelVibrate": "Il telefono sta vibrando",
+        "labelStopped": "Avviso interrotto",
+        "counterLabel": "dalle {time}",
+        "counterA11y": "{duration}, dalle {time}",
+        "sentenceSound": "L'audio della stanza viene riprodotto su questo telefono.",
+        "stopSoundSub": "Ferma il suono dell'avviso, il monitoraggio continua",
+        "stopVibrationSub": "Ferma la vibrazione, il monitoraggio continua"
+      },
+      "batteryAlert": {
+        "label": "Batteria del dispositivo del bambino",
+        "headline": "Il dispositivo del bambino è quasi scarico",
+        "counterLabel": "di batteria rimasta",
+        "counterA11y": "{percent} per cento di batteria rimasta",
+        "sentence": "Collega subito il dispositivo del bambino. Quando si spegne, il monitoraggio si ferma.",
+        "silentNote": "Il dispositivo del bambino resta in silenzio. Avvisa solo questo telefono.",
+        "action": "OK, lo collego",
+        "actionSub": "Chiude questa schermata"
+      },
+      "tool": {
+        "nightA11yOff": "Modalità notte: disattivata",
+        "nightA11yOn": "Modalità notte: attiva",
+        "nightA11yAuto": "Modalità notte: automatica",
+        "nightOn": "Attiva",
+        "nightAuto": "Auto"
       }
     }
   },

@@ -98,6 +98,13 @@
     { "pattern": "webScreens.talk.babySoundOff", "budget": 150 },
     { "pattern": "webScreens.talk.permissionRefused", "budget": 170 },
     { "pattern": "native.ui.status.*", "budget": 150 },
-    { "pattern": "native.ui.connAlert.*", "budget": 170 }
+    { "pattern": "native.ui.connAlert.*", "budget": 170 },
+    { "pattern": "native.ui.monitor.cantHear", "budget": 70 },
+    { "pattern": "native.ui.monitor.noSound", "budget": 50 },
+    { "pattern": "native.ui.monitor.micSilentStrip", "budget": 50 },
+    { "pattern": "native.ui.alertStyle.*", "budget": 110 },
+    { "pattern": "native.ui.banner.*", "budget": 140 },
+    { "pattern": "native.ui.noiseAlert.*", "budget": 130 },
+    { "pattern": "native.ui.batteryAlert.*", "budget": 130 }
   ]
 }

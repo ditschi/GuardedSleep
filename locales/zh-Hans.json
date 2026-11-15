@@ -289,7 +289,7 @@
         "allQuietSince": "自 {time} 起一直安静",
         "soundSince": "听到声音 · 自 {time} 起",
         "soundAt": "{time} 有声音 · 持续 {duration}",
-        "soundSnoozed": "{time} 有声音 · 提醒已暂停",
+        "soundSnoozed": "{time} 有声音 · 噪声提醒已暂停",
         "lastHeard": "上次联系：{time}",
         "noContactYet": "尚未联系",
         "monitoringNow": "监护中",
@@ -311,9 +311,8 @@
           "micPermissionLost": "宝宝设备失去了麦克风权限"
         },
         "discreet": {
-          "indicator": "静音提醒：不播放声音",
           "escalated": "已切换为声音：{minutes} 分钟无人响应",
-          "offWarning": "关闭：忘记关闭的静音模式可能整晚保持无声。"
+          "offWarning": "关闭：忘记关闭的仅振动模式可能整晚保持无声。"
         }
       },
       "battery": {
@@ -323,20 +322,29 @@
         "parentLowGeneric": "此设备电量低，请接上电源以继续监护"
       },
       "listen": {
-        "idle": "按住收听",
-        "holding": "正在收听…",
-        "locked": "收听中 · 点按停止",
-        "lockHint": "向上滑动以持续收听",
+        "idle": "收听",
         "disabled": "连接后即可收听",
-        "a11yLocked": "收听中。双击以停止。"
+        "idleSub": "点按即可收听房间声音",
+        "on": "正在收听 · 点按停止",
+        "onSub": "房间声音从扬声器播放",
+        "disabledSub": "当前未连接",
+        "stateOn": "正在收听",
+        "stateOff": "未在收听"
       },
       "snooze": {
-        "button": "暂停",
+        "button": "暂停噪声提醒",
         "title": "暂停噪声提醒",
-        "help": "如果连接中断或电量不足，您仍会收到提醒。",
-        "minutes": "暂停 {minutes} 分钟",
+        "help": "连接和电量提醒仍会发出。",
+        "minutes": "{minutes} 分钟",
         "end": "结束暂停",
-        "active": "已暂停 · 还剩 {minutes} 分钟"
+        "tile": "暂停噪声提醒",
+        "tilePaused": "已暂停",
+        "pauseMinutes": "暂停 {minutes} 分钟",
+        "resume": "恢复",
+        "bannerTitle": "噪声提醒已暂停至 {time}",
+        "bannerBody": "连接和电量提醒仍会发出",
+        "snackbar": "噪声提醒已暂停 {minutes} 分钟",
+        "undo": "撤销"
       },
       "probe": {
         "button": "测试提醒",
@@ -348,7 +356,7 @@
         "question": "您听到并感觉到了吗？",
         "localOnly": "只测试了此设备，宝宝设备未连接。",
         "styleSound": "提醒方式：声音",
-        "styleDiscreet": "提醒方式：静音",
+        "styleDiscreet": "提醒方式：仅振动",
         "bodyDiscreet": "此设备会振动并显示提醒，但不播放声音。宝宝设备保持安静。"
       },
       "readiness": {
@@ -433,12 +441,12 @@
       },
       "coach": {
         "bar": "绿色表示您正在监护。如果变红或消失，则表示没有在监护。",
-        "listen": "按住收听。向上滑动可持续收听。",
+        "listen": "点按“收听”即可听到房间声音。",
         "test": "运行一次测试提醒，了解提醒是什么感觉。",
         "runTest": "立即运行测试提醒"
       },
       "alert": {
-        "title": "听到声音",
+        "title": "孩子发出声音",
         "since": "自 {time} 起",
         "ended": "声音已停止。",
         "testBadge": "测试",
@@ -510,7 +518,7 @@
         "alertStyle": {
           "label": "提醒方式",
           "sound": "声音：每次提醒都播放宝宝的声音",
-          "discreet": "静音：仅振动和屏幕提示，不播放声音"
+          "discreet": "仅振动：振动和屏幕提示，不播放声音"
         },
         "discreetEscalation": {
           "label": "无人响应时切换为声音",
@@ -602,7 +610,11 @@
           "playChime": "播放提示音",
           "chime": "家长说话前播放提示音",
           "checklist": "家长可以通过此设备说话。你可以在设置中关闭。"
-        }
+        },
+        "again": "再次说话",
+        "againAt": "于 {time}",
+        "disabled": "连接后即可说话",
+        "pausedListening": "您说话时会暂停收听"
       },
       "status": {
         "connected": "已连接",
@@ -671,6 +683,103 @@
         },
         "labelAlerting": "此设备正在发出警报",
         "progressAlerting": "警报正在响起"
+      },
+      "monitor": {
+        "monitoringFor": "已监护 {duration}",
+        "cantHear": "听不到房间的声音",
+        "alertLine": "超过这条线的声音会发出提醒",
+        "lastMinute": "最近一分钟",
+        "now": "现在",
+        "noSound": "没有声音传入",
+        "micSilentStrip": "麦克风无声",
+        "alertsTested": "提醒已测试 {time}",
+        "batteryA11y": "宝宝设备电量百分之{percent}",
+        "batteryChargingA11y": "宝宝设备电量百分之{percent}，充电中",
+        "batteryShort": "{percent}%"
+      },
+      "alertStyle": {
+        "chipSound": "提醒方式：声音",
+        "chipVibrate": "提醒方式：仅振动",
+        "chipA11ySound": "声音提醒：声音。点按更改",
+        "chipA11yVibrate": "声音提醒：仅振动。点按更改",
+        "vibrateTitle": "仅振动",
+        "bodyNoSound": "噪声提醒不会发出声音。",
+        "bodyNever": "噪声提醒永远不会发出声音。",
+        "bodyAfterPause": "暂停结束后：先振动，{minutes} 分钟后响铃",
+        "turnSoundOn": "开启声音"
+      },
+      "banner": {
+        "fix": "修复",
+        "more": "另有 {count} 条",
+        "moreA11y": "{count, plural, other {另有 # 条提示：{notices}}}",
+        "listTitle": "提示",
+        "micSilentTitle": "宝宝设备的麦克风什么也听不到",
+        "micSilentBody": "请检查宝宝设备。可能有其他应用正在使用麦克风。",
+        "ready": {
+          "notifications": {
+            "title": "提醒已关闭",
+            "body": "提醒无法送达给您。"
+          },
+          "fullScreen": {
+            "title": "提醒无法显示在锁屏上",
+            "body": "手机锁屏时您可能会错过提醒。"
+          },
+          "alarmVolumeZero": {
+            "title": "闹钟音量已关闭",
+            "body": "您将听不到这部手机上的提醒"
+          },
+          "alarmVolumeLow": {
+            "title": "闹钟音量偏低",
+            "body": "请调高音量，以便清楚听到提醒。"
+          },
+          "dnd": {
+            "title": "勿扰模式可能会让提醒静音",
+            "body": "请允许 GuardedSleep 突破限制。"
+          },
+          "battery": {
+            "title": "这部手机可能会停止 GuardedSleep",
+            "body": "请允许后台运行，让提醒保持有效。"
+          },
+          "parentBattery": {
+            "title": "这部手机电量不足",
+            "body": "请接上电源，以便继续监护。"
+          },
+          "headphones": {
+            "title": "提醒将在耳机中播放",
+            "body": "如果想在房间里听到提醒，请切换到扬声器。"
+          },
+          "neverTested": {
+            "title": "最近没有测试提醒",
+            "body": "请运行一次测试，确保提醒能送达您。"
+          }
+        }
+      },
+      "noiseAlert": {
+        "labelSound": "正在播放房间声音",
+        "labelVibrate": "您的手机正在振动",
+        "labelStopped": "提醒已停止",
+        "counterLabel": "自 {time} 起",
+        "counterA11y": "{duration}，自 {time} 起",
+        "sentenceSound": "房间声音正在这部手机上播放。",
+        "stopSoundSub": "停止提醒声音，继续监护",
+        "stopVibrationSub": "停止振动，继续监护"
+      },
+      "batteryAlert": {
+        "label": "宝宝设备电量",
+        "headline": "宝宝设备电量即将耗尽",
+        "counterLabel": "剩余电量",
+        "counterA11y": "剩余电量百分之{percent}",
+        "sentence": "请立即给宝宝设备接上电源。电量耗尽后，监护将停止。",
+        "silentNote": "宝宝设备保持静音，只有这部手机会提醒。",
+        "action": "好，我去充电",
+        "actionSub": "关闭此界面"
+      },
+      "tool": {
+        "nightA11yOff": "夜间模式：关",
+        "nightA11yOn": "夜间模式：开",
+        "nightA11yAuto": "夜间模式：自动",
+        "nightOn": "开",
+        "nightAuto": "自动"
       }
     }
   },
