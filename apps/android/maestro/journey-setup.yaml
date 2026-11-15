@@ -23,16 +23,26 @@ appId: org.guardedsleep.app.alpha
 - scrollUntilVisible:
     element:
       id: "setup_continue"
-    visibilityPercentage: 50
+    visibilityPercentage: 20
     timeout: 20000
-- tapOn:
-    id: "setup_continue"
-# Finishing onboarding opens the pairing screen with the default relay: leave it before an invite is
-# made (baby) and before the parent starts scanning.
-- extendedWaitUntil:
-    visible:
-      id: "baby_pair_cancel|parent_pair_cancel"
-    timeout: 15000
+# The device check row can still grow while it runs (mailbox lines, "Check again"), so Continue moves down:
+# scroll to the very end, then tap
+# until the pairing screen shows.
+- scroll
+- scroll
+- scroll
+- retry:
+    maxRetries: 4
+    commands:
+      # The button's centre can lie under the gesture bar: tap its upper part.
+      - tapOn:
+          id: "setup_continue"
+          point: "50%,15%"
+          optional: true
+      - extendedWaitUntil:
+          visible:
+            id: "baby_pair_cancel|parent_pair_cancel"
+          timeout: 6000
 - tapOn:
     id: "baby_pair_cancel|parent_pair_cancel"
 - tapOn:
@@ -40,22 +50,50 @@ appId: org.guardedsleep.app.alpha
 - scrollUntilVisible:
     element:
       id: "settings_advanced_toggle"
-    visibilityPercentage: 50
+    visibilityPercentage: 20
+    speed: 90
+    timeout: 60000
+# The row is partly under the gesture bar at the end of the list: tap its upper part.
 - tapOn:
     id: "settings_advanced_toggle"
+    point: "85%,20%"
 # The in-app warning, not a system dialog.
 - tapOn:
     id: "dialog_advanced_confirm"
 - scrollUntilVisible:
     element:
       id: "settings_url_remove_0"
-    visibilityPercentage: 50
-- tapOn:
-    id: "settings_url_remove_0"
+    centerElement: true
+    visibilityPercentage: 20
+# Remove the project server entry (this build has no off switch); the first tap can land under the gesture
+# bar, so tap the button's upper part until the entry is gone.
+- retry:
+    maxRetries: 4
+    commands:
+      - tapOn:
+          id: "settings_url_remove_0"
+          point: "50%,25%"
+          optional: true
+      - assertNotVisible:
+          id: "settings_url_remove_0"
+- scrollUntilVisible:
+    element:
+      id: "settings_url_new"
+    centerElement: true
+    visibilityPercentage: 20
+    speed: 90
+    timeout: 60000
 - tapOn:
     id: "settings_url_new"
 - inputText: "${RELAY}"
 - hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "settings_url_add"
+    centerElement: true
+    visibilityPercentage: 20
+    speed: 90
+    timeout: 60000
 - tapOn:
     id: "settings_url_add"
 - assertVisible:
@@ -65,7 +103,8 @@ appId: org.guardedsleep.app.alpha
 - scrollUntilVisible:
     element:
       id: "settings_turn"
-    visibilityPercentage: 50
+    centerElement: true
+    visibilityPercentage: 20
 - tapOn:
     id: "settings_turn"
 - inputText: "${TURN}"
@@ -73,7 +112,8 @@ appId: org.guardedsleep.app.alpha
 - scrollUntilVisible:
     element:
       id: "settings_turn_user"
-    visibilityPercentage: 50
+    centerElement: true
+    visibilityPercentage: 20
 - tapOn:
     id: "settings_turn_user"
 - inputText: "${TURN_USER}"
@@ -81,7 +121,8 @@ appId: org.guardedsleep.app.alpha
 - scrollUntilVisible:
     element:
       id: "settings_turn_pass"
-    visibilityPercentage: 50
+    centerElement: true
+    visibilityPercentage: 20
 - tapOn:
     id: "settings_turn_pass"
 - inputText: "${TURN_PASS}"
@@ -89,7 +130,8 @@ appId: org.guardedsleep.app.alpha
 - scrollUntilVisible:
     element:
       id: "settings_turn_save"
-    visibilityPercentage: 50
+    centerElement: true
+    visibilityPercentage: 20
 - tapOn:
     id: "settings_turn_save"
 - scrollUntilVisible:
@@ -98,7 +140,7 @@ appId: org.guardedsleep.app.alpha
     direction: UP
     speed: 95
     timeout: 60000
-    visibilityPercentage: 50
+    visibilityPercentage: 20
 # The first tap can land while the list still settles; the retry taps again only if Settings is still there.
 - retry:
     maxRetries: 3
