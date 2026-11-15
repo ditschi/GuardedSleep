@@ -11,7 +11,6 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.runComposeUiTest
 import com.github.takahirom.roborazzi.captureRoboImage
 import java.util.TimeZone
-import org.guardedsleep.app.ui.common.BatteryReading
 import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.common.UiEnv
 import org.guardedsleep.app.ui.model.Role
@@ -34,7 +33,6 @@ val TestEnv =
         reduceMotion = true,
         zone = TimeZone.getTimeZone("UTC"),
         cameraGranted = true,
-        battery = BatteryReading(82, true),
     )
 
 private val placeholderScanner: @Composable (onCode: (String) -> Unit, modifier: Modifier) -> Unit =

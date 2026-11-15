@@ -265,8 +265,14 @@ export interface ChipSpec {
   args?: Record<string, number>;
 }
 
-/** The battery level below which the baby device asks to be plugged in. */
+/** The battery level below which this (parent) device asks to be plugged in. */
 export const BATTERY_LOW_PCT = 20;
+
+/**
+ * The battery level below which the baby device is low while not charging (`parent-alerts` "Baby
+ * battery warnings"; `BabyBattery.LOW_PCT` on Android).
+ */
+export const BABY_BATTERY_LOW_PCT = 15;
 
 const SILENCE_CHIP: Readonly<Record<SilenceStatus, { key: MessageKey; tone: Tone }>> = {
   silent: { key: "native.ui.silence.silent", tone: "ok" },
@@ -290,7 +296,7 @@ export function fixedChips(p: ParentMonitorState): ChipSpec[] {
   const chips: ChipSpec[] = [];
   const pct = p.peer.batteryPct;
   if (pct !== null) {
-    const low = pct < BATTERY_LOW_PCT && p.peer.charging !== true;
+    const low = pct < BABY_BATTERY_LOW_PCT && p.peer.charging !== true;
     chips.push({
       id: "parent_baby_battery_chip",
       tone: low ? "warn" : "neutral",

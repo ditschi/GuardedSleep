@@ -172,7 +172,7 @@ class TalkTests : ShotBase() {
     }
 
     @Test
-    fun theBabyShowsAStaticIndicatorAndTheLastTalk() = runComposeUiTest {
+    fun theBabyShowsAStaticIndicatorAlone() = runComposeUiTest {
         val c =
             FakeAppController(
                 app = AppState(role = Role.BABY, onboardingDone = true, paired = true),
@@ -185,8 +185,8 @@ class TalkTests : ShotBase() {
             )
         show(dark = true) { BabyKioskScreen(c) }
         onNodeWithTag("baby_talking").assertIsDisplayed()
-        // The touch-wake line lives in the faded column (alpha 0 until a touch), so it exists.
-        onNodeWithTag("baby_last_talk").assertExists()
+        // Only the indicator shows: the status line is hidden during a talk (`KioskTests`).
+        onNodeWithTag("baby_status").assertDoesNotExist()
     }
 
     @Test
