@@ -107,7 +107,9 @@
           "checking": "Memeriksa"
         },
         "babyUnitDefault": "Perangkat bayi",
-        "parentUnitDefault": "Perangkat orang tua"
+        "parentUnitDefault": "Perangkat orang tua",
+        "close": "Tutup",
+        "back": "Kembali"
       },
       "role": {
         "title": "Perangkat apa ini?",
@@ -215,17 +217,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "Hubungkan ke {name}",
-          "cardTitleDefault": "Hubungkan ke perangkat bayi"
-        },
-        "baby": {
-          "cardTitle": "Mulai memantau"
-        },
         "lastUsed": "Terakhir dipakai {time}",
         "newPairing": "Siapkan perangkat baru",
         "empty": "Belum ada perangkat yang dipasangkan.",
-        "switchMode": "Ganti mode"
+        "switchMode": "Ganti mode",
+        "start": "Mulai",
+        "privacy": "Suara dienkripsi antar perangkat Anda. Tanpa akun, tanpa rekaman di cloud.",
+        "vibrateOnly": "Peringatan suara hanya akan menggetarkan perangkat ini."
       },
       "baby": {
         "status": {
@@ -438,15 +436,15 @@
         "current": "Koneksi: {name}",
         "change": "Ubah",
         "labelDefault": "{name} (bawaan)",
-        "makeDefault": "Jadikan bawaan",
         "autoConnect": "Hubungkan otomatis saat aplikasi dibuka",
-        "removeDefault": "Hapus bawaan",
         "chooseAnother": "Pilih koneksi lain",
         "rename": "Ganti nama",
         "renameTitle": "Ganti nama koneksi",
         "nameLabel": "Nama (1–30 karakter, tetap di ponsel ini)",
         "nameInvalid": "Gunakan 1 sampai 30 karakter.",
-        "save": "Simpan"
+        "save": "Simpan",
+        "readOnlyNote": "Hentikan pemantauan untuk mengubah koneksi.",
+        "inUse": "Sedang dipakai"
       },
       "missed": {
         "some": "Saat terputus: {count, plural, other {# suara}} antara {start} dan {end}. Terkeras: {level}.",
@@ -477,13 +475,12 @@
           "soundDetection": "Deteksi suara",
           "silence": "Mode tenang",
           "alerts": "Peringatan",
-          "screen": "Layar",
-          "paired": "Perangkat yang dipasangkan",
           "thisPhone": "Perangkat ini",
           "language": "Bahasa",
           "about": "Tentang dan batasan",
           "advanced": "Lanjutan",
-          "startMode": "Mode awal"
+          "startMode": "Mode awal",
+          "display": "Tampilan"
         },
         "sensitivity": "Sensitivitas",
         "moreSensitive": "Lebih sensitif",
@@ -569,6 +566,14 @@
           "stop": "Berhenti",
           "test": "Uji alarm koneksi",
           "testWarning": "Pengujian diputar dengan volume alarm penuh selama sekitar 8 detik."
+        },
+        "openAtStart": {
+          "title": "Buka saat dimulai",
+          "modeHint": "Mode yang dibuka perangkat ini saat aplikasi dimulai.",
+          "autoTitle": "Hubungkan otomatis",
+          "autoHint": "Perangkat orang tua memulai pemantauan dengan koneksi yang dipilih, sekali setiap aplikasi dibuka.",
+          "autoNone": "Jangan hubungkan otomatis",
+          "defaultTitle": "Koneksi default"
         }
       },
       "fgsMissing": {
@@ -711,8 +716,7 @@
     "role": {
       "title": "Gunakan perangkat ini sebagai",
       "subtitle": "Ponsel, tablet, atau laptop. Siapkan perangkat bayi terlebih dahulu.",
-      "navLabel": "Pilih peran",
-      "privacyNote": "Suara langsung berpindah antara kedua perangkat Anda dan tidak pernah direkam."
+      "navLabel": "Pilih peran"
     },
     "pair": {
       "copyHint": "Tempel di perangkat orang tua dalam 5 menit. Jangan kirim lewat obrolan.",

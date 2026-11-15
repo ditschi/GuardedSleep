@@ -31,6 +31,7 @@ import org.guardedsleep.app.ui.screens.HomeScreen
 import org.guardedsleep.app.ui.screens.PairBabyScreen
 import org.guardedsleep.app.ui.screens.ParentPairContent
 import org.guardedsleep.app.ui.screens.RoleScreen
+import org.guardedsleep.app.ui.screens.SettingsPage
 import org.guardedsleep.app.ui.screens.SettingsScreen
 import org.guardedsleep.app.ui.screens.SetupChecks
 import org.guardedsleep.app.ui.screens.SetupContent
@@ -305,6 +306,21 @@ class SetupHomeSettingsShots : ShotBase() {
         shot("home/parent_two_connections") {
             HomeScreen(FakeAppController(app = twoConnections(saved)), {})
         }
+        shot("home/parent_saved_day", theme = Theme.LIGHT) {
+            HomeScreen(FakeAppController(app = saved), {})
+        }
+        shot("home/parent_vibrate_only") {
+            HomeScreen(
+                FakeAppController(
+                    app = saved,
+                    settings = SettingsState(alertStyle = AlertStyle.DISCREET),
+                ),
+                {},
+            )
+        }
+        shot("home/parent_saved_font2", fontScale = 2f) {
+            HomeScreen(FakeAppController(app = saved), {})
+        }
     }
 
     private fun twoConnections(app: AppState) =
@@ -353,6 +369,7 @@ class SetupHomeSettingsShots : ShotBase() {
                 {},
                 {},
                 {},
+                initialPage = SettingsPage.ADVANCED,
             )
         }
         shot("settings/baby_basic", "en", Role.BABY) {
@@ -382,7 +399,57 @@ class SetupHomeSettingsShots : ShotBase() {
                 {},
                 {},
                 {},
+                initialPage = SettingsPage.ADVANCED,
             )
+        }
+        shot("settings/parent_alerts") {
+            SettingsScreen(
+                FakeAppController(app = parentApp),
+                {},
+                {},
+                {},
+                initialPage = SettingsPage.ALERTS,
+            )
+        }
+        shot("settings/parent_open_at_start") {
+            SettingsScreen(
+                FakeAppController(app = twoConnections(parentApp)),
+                {},
+                {},
+                {},
+                initialPage = SettingsPage.OPEN_AT_START,
+            )
+        }
+        shot("settings/parent_connections") {
+            SettingsScreen(
+                FakeAppController(app = twoConnections(parentApp)),
+                {},
+                {},
+                {},
+                initialPage = SettingsPage.CONNECTIONS,
+            )
+        }
+        shot("settings/parent_monitoring") {
+            SettingsScreen(
+                FakeAppController(app = twoConnections(parentApp).copy(monitoring = true)),
+                {},
+                {},
+                {},
+            )
+        }
+        shot("settings/parent_basic_day", theme = Theme.LIGHT) {
+            SettingsScreen(FakeAppController(app = twoConnections(parentApp)), {}, {}, {})
+        }
+        shot("settings/parent_monitoring_day", theme = Theme.LIGHT) {
+            SettingsScreen(
+                FakeAppController(app = twoConnections(parentApp).copy(monitoring = true)),
+                {},
+                {},
+                {},
+            )
+        }
+        shot("settings/parent_basic_font2", fontScale = 2f) {
+            SettingsScreen(FakeAppController(app = parentApp), {}, {}, {})
         }
     }
 }

@@ -39,7 +39,14 @@ While monitoring, the baby unit SHALL show a dark kiosk at minimum brightness th
 
 ### Requirement: Settings structure
 
-Settings SHALL have two groups: "Connections" (the saved connections per role, with rename and forget) and "This device" (Alerts, Sound detection, Display, Open at start, Check setup, Language, About, Advanced). Settings that can break monitoring SHALL stay in Advanced. While monitoring, the status bar SHALL stay on top of every settings page.
+Settings SHALL have two groups: "Connections" (the saved connections per role, with rename and forget) and "This device", whose rows depend on the device's role. Settings that can break monitoring SHALL stay in Advanced. While monitoring, the status bar SHALL stay on top of every settings page.
+
+#### Scenario: Rows depend on the role
+
+- **WHEN** a parent device opens Settings
+- **THEN** This device lists Alerts, Display, Open at start, Check setup, Language, About and Advanced
+- **WHEN** a baby device opens Settings
+- **THEN** This device lists Sound detection, Quiet mode, Talk-back, Open at start, Check setup, Language, About and Advanced, and no Display row because the baby device is always dark
 
 #### Scenario: Finding the alarm tone
 

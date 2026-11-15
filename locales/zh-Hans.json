@@ -107,7 +107,9 @@
           "checking": "检查中"
         },
         "babyUnitDefault": "宝宝设备",
-        "parentUnitDefault": "家长设备"
+        "parentUnitDefault": "家长设备",
+        "close": "关闭",
+        "back": "返回"
       },
       "role": {
         "title": "这是哪台设备？",
@@ -215,17 +217,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "连接到 {name}",
-          "cardTitleDefault": "连接到宝宝设备"
-        },
-        "baby": {
-          "cardTitle": "开始监护"
-        },
         "lastUsed": "上次使用：{time}",
         "newPairing": "设置新设备",
         "empty": "尚未配对任何设备。",
-        "switchMode": "切换模式"
+        "switchMode": "切换模式",
+        "start": "开始",
+        "privacy": "声音在您的设备之间加密传输。无需账号，不在云端录音。",
+        "vibrateOnly": "噪音提醒在此设备上只会振动。"
       },
       "baby": {
         "status": {
@@ -438,15 +436,15 @@
         "current": "连接：{name}",
         "change": "更改",
         "labelDefault": "{name}（默认）",
-        "makeDefault": "设为默认",
         "autoConnect": "打开应用时自动连接",
-        "removeDefault": "取消默认",
         "chooseAnother": "选择其他连接",
         "rename": "重命名",
         "renameTitle": "重命名连接",
         "nameLabel": "名称（1–30 个字符，仅保存在本机）",
         "nameInvalid": "请使用 1 到 30 个字符。",
-        "save": "保存"
+        "save": "保存",
+        "readOnlyNote": "要更改连接，请先停止监护。",
+        "inUse": "使用中"
       },
       "missed": {
         "some": "断开期间：{start} 至 {end} 之间有 {count, plural, other {# 次声音}}。最响：{level}。",
@@ -477,13 +475,12 @@
           "soundDetection": "声音检测",
           "silence": "安静模式",
           "alerts": "提醒",
-          "screen": "屏幕",
-          "paired": "已配对设备",
           "thisPhone": "此设备",
           "language": "语言",
           "about": "关于与限制",
           "advanced": "高级",
-          "startMode": "启动模式"
+          "startMode": "启动模式",
+          "display": "显示"
         },
         "sensitivity": "灵敏度",
         "moreSensitive": "更灵敏",
@@ -569,6 +566,14 @@
           "stop": "停止",
           "test": "测试连接警报",
           "testWarning": "测试会以完整的警报音量播放约 8 秒。"
+        },
+        "openAtStart": {
+          "title": "启动时打开",
+          "modeHint": "应用启动时，此设备以哪种模式打开。",
+          "autoTitle": "自动连接",
+          "autoHint": "每次打开应用时，家长设备会用所选连接开始监护，仅一次。",
+          "autoNone": "不自动连接",
+          "defaultTitle": "默认连接"
         }
       },
       "fgsMissing": {
@@ -711,8 +716,7 @@
     "role": {
       "title": "将此设备用作",
       "subtitle": "手机、平板或笔记本电脑均可。请先设置宝宝设备。",
-      "navLabel": "选择角色",
-      "privacyNote": "声音直接在您的两台设备之间传输，绝不会被录制。"
+      "navLabel": "选择角色"
     },
     "pair": {
       "copyHint": "请在 5 分钟内将它粘贴到家长设备上。请勿通过聊天发送。",

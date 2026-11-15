@@ -147,10 +147,9 @@ for (const lang of LANGUAGES) {
       await parent.getByTestId("parent_settings").click();
       await expect(parent.getByTestId("settings_sensitivity_note")).toBeVisible();
       await checkScreen(parent, "parent: settings");
-      await parent.getByTestId("settings_forget").click();
-      await expect(parent.getByTestId("dialog_forget")).toBeVisible();
-      await checkScreen(parent, "parent: forget dialog");
-      await parent.getByTestId("dialog_forget_cancel").click();
+      // While monitoring the connection is read-only: no way to forget it from here.
+      await expect(parent.getByTestId("settings_connections_read_only")).toBeVisible();
+      await expect(parent.getByTestId("settings_forget")).toHaveCount(0);
       await parent.getByTestId("settings_back").click();
       await openAndCheck(parent, "parent_night_open", "night_screen", "parent: night screen");
       await parent.getByTestId("night_screen_tap").click();

@@ -107,7 +107,9 @@
           "checking": "Kontroluje se"
         },
         "babyUnitDefault": "Zařízení dítěte",
-        "parentUnitDefault": "Zařízení rodiče"
+        "parentUnitDefault": "Zařízení rodiče",
+        "close": "Zavřít",
+        "back": "Zpět"
       },
       "role": {
         "title": "Které zařízení to je?",
@@ -215,17 +217,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "Připojit k: {name}",
-          "cardTitleDefault": "Připojit k zařízení dítěte"
-        },
-        "baby": {
-          "cardTitle": "Spustit sledování"
-        },
         "lastUsed": "Naposledy použito {time}",
         "newPairing": "Nastavit nová zařízení",
         "empty": "Zatím žádná spárovaná zařízení.",
-        "switchMode": "Přepnout režim"
+        "switchMode": "Přepnout režim",
+        "start": "Spustit",
+        "privacy": "Zvuk je mezi vašimi zařízeními šifrovaný. Žádný účet, žádné nahrávání v cloudu.",
+        "vibrateOnly": "Výstrahy na hluk budou na tomto zařízení jen vibrovat."
       },
       "baby": {
         "status": {
@@ -438,15 +436,15 @@
         "current": "Připojení: {name}",
         "change": "Změnit",
         "labelDefault": "{name} (výchozí)",
-        "makeDefault": "Nastavit jako výchozí",
         "autoConnect": "Připojit automaticky při otevření aplikace",
-        "removeDefault": "Zrušit výchozí",
         "chooseAnother": "Vybrat jiné připojení",
         "rename": "Přejmenovat",
         "renameTitle": "Přejmenovat připojení",
         "nameLabel": "Název (1–30 znaků, zůstává v tomto telefonu)",
         "nameInvalid": "Použijte 1 až 30 znaků.",
-        "save": "Uložit"
+        "save": "Uložit",
+        "readOnlyNote": "Pro změnu připojení nejdřív ukončete sledování.",
+        "inUse": "Právě používané"
       },
       "missed": {
         "some": "Během výpadku: {count, plural, one {1 zvuk} few {# zvuky} many {# zvuku} other {# zvuků}} mezi {start} a {end}. Nejhlasitější: {level}.",
@@ -477,13 +475,12 @@
           "soundDetection": "Detekce zvuku",
           "silence": "Tichý režim",
           "alerts": "Výstrahy",
-          "screen": "Obrazovka",
-          "paired": "Spárované zařízení",
           "thisPhone": "Toto zařízení",
           "language": "Jazyk",
           "about": "O aplikaci a omezení",
           "advanced": "Pokročilé",
-          "startMode": "Režim po spuštění"
+          "startMode": "Režim po spuštění",
+          "display": "Zobrazení"
         },
         "sensitivity": "Citlivost",
         "moreSensitive": "Citlivější",
@@ -569,6 +566,14 @@
           "stop": "Zastavit",
           "test": "Vyzkoušet alarm spojení",
           "testWarning": "Test hraje s plnou hlasitostí alarmu asi 8 sekund."
+        },
+        "openAtStart": {
+          "title": "Otevření při spuštění",
+          "modeHint": "V jakém režimu se toto zařízení otevře po spuštění aplikace.",
+          "autoTitle": "Připojit automaticky",
+          "autoHint": "Zařízení rodiče zahájí sledování vybraným připojením, jednou při každém otevření aplikace.",
+          "autoNone": "Nepřipojovat automaticky",
+          "defaultTitle": "Výchozí připojení"
         }
       },
       "fgsMissing": {
@@ -711,8 +716,7 @@
     "role": {
       "title": "Použít toto zařízení jako",
       "subtitle": "Telefon, tablet nebo notebook. Nejdřív nastavte zařízení dítěte.",
-      "navLabel": "Zvolte roli",
-      "privacyNote": "Zvuk jde přímo mezi vašimi dvěma zařízeními a nikdy se nenahrává."
+      "navLabel": "Zvolte roli"
     },
     "pair": {
       "copyHint": "Vložte ho na zařízení rodiče do 5 minut. Neposílejte ho v chatu.",

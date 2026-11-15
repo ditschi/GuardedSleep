@@ -107,7 +107,9 @@
           "checking": "Comprobando"
         },
         "babyUnitDefault": "Dispositivo del bebé",
-        "parentUnitDefault": "Dispositivo de los padres"
+        "parentUnitDefault": "Dispositivo de los padres",
+        "close": "Cerrar",
+        "back": "Atrás"
       },
       "role": {
         "title": "¿Qué dispositivo es este?",
@@ -215,17 +217,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "Conectar con {name}",
-          "cardTitleDefault": "Conectar con el dispositivo del bebé"
-        },
-        "baby": {
-          "cardTitle": "Iniciar la vigilancia"
-        },
         "lastUsed": "Último uso a las {time}",
         "newPairing": "Configurar dispositivos nuevos",
         "empty": "Aún no hay dispositivos emparejados.",
-        "switchMode": "Cambiar de modo"
+        "switchMode": "Cambiar de modo",
+        "start": "Iniciar",
+        "privacy": "El sonido va cifrado entre sus dispositivos. Sin cuenta y sin grabación en la nube.",
+        "vibrateOnly": "Los avisos de ruido solo harán vibrar este dispositivo."
       },
       "baby": {
         "status": {
@@ -438,15 +436,15 @@
         "current": "Conexión: {name}",
         "change": "Cambiar",
         "labelDefault": "{name} (predeterminada)",
-        "makeDefault": "Establecer como predeterminada",
         "autoConnect": "Conectar automáticamente al abrir la app",
-        "removeDefault": "Quitar predeterminada",
         "chooseAnother": "Elegir otra conexión",
         "rename": "Cambiar nombre",
         "renameTitle": "Cambiar nombre de la conexión",
         "nameLabel": "Nombre (de 1 a 30 caracteres, se queda en este teléfono)",
         "nameInvalid": "Usa de 1 a 30 caracteres.",
-        "save": "Guardar"
+        "save": "Guardar",
+        "readOnlyNote": "Detenga la vigilancia para cambiar las conexiones.",
+        "inUse": "En uso"
       },
       "missed": {
         "some": "Durante la desconexión: {count, plural, one {1 sonido} many {# de sonidos} other {# sonidos}} entre las {start} y las {end}. El más fuerte: {level}.",
@@ -477,13 +475,12 @@
           "soundDetection": "Detección de sonido",
           "silence": "Modo silencio",
           "alerts": "Alertas",
-          "screen": "Pantalla",
-          "paired": "Dispositivo emparejado",
           "thisPhone": "Este dispositivo",
           "language": "Idioma",
           "about": "Acerca de y límites",
           "advanced": "Avanzado",
-          "startMode": "Modo de inicio"
+          "startMode": "Modo de inicio",
+          "display": "Visualización"
         },
         "sensitivity": "Sensibilidad",
         "moreSensitive": "Más sensible",
@@ -573,6 +570,14 @@
           "stop": "Detener",
           "test": "Probar la alarma de conexión",
           "testWarning": "La prueba suena con el volumen máximo de alarma durante unos 8 segundos."
+        },
+        "openAtStart": {
+          "title": "Abrir al iniciar",
+          "modeHint": "El modo en que se abre este dispositivo al iniciar la app.",
+          "autoTitle": "Conectar automáticamente",
+          "autoHint": "El dispositivo de los padres inicia la vigilancia con la conexión elegida, una vez cada vez que se abre la app.",
+          "autoNone": "No conectar automáticamente",
+          "defaultTitle": "Conexión predeterminada"
         }
       },
       "fgsMissing": {

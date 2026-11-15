@@ -17,6 +17,7 @@ import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.Theme
 import org.guardedsleep.app.ui.screens.HomeScreen
 import org.guardedsleep.app.ui.screens.RoleScreen
+import org.guardedsleep.app.ui.screens.SettingsPage
 import org.guardedsleep.app.ui.screens.SettingsScreen
 import org.guardedsleep.app.ui.theme.GuardedSleepTheme
 import org.junit.Assert.assertEquals
@@ -63,7 +64,7 @@ class RoleSwitchTests : ShotBase() {
     @Test
     fun startModeRadioGroupSetsTheDefault() = runComposeUiTest {
         val c = FakeAppController(app = idle)
-        show { SettingsScreen(c, {}, {}, {}) }
+        show { SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.OPEN_AT_START) }
         onNodeWithTag("start_mode_ask").performScrollTo().assertIsDisplayed()
         onNodeWithTag("start_mode_baby").performScrollTo().performClick()
         assertEquals(Role.BABY, c.appFlow.value.defaultRole)

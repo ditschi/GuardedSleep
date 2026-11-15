@@ -37,6 +37,13 @@ appId: org.guardedsleep.app.alpha
     id: "baby_pair_cancel|parent_pair_cancel"
 - tapOn:
     id: "home_settings"
+# Settings is an overview; the server addresses are on the Advanced page.
+- scrollUntilVisible:
+    element:
+      id: "settings_nav_advanced"
+    visibilityPercentage: 50
+- tapOn:
+    id: "settings_nav_advanced"
 - scrollUntilVisible:
     element:
       id: "settings_advanced_toggle"
@@ -99,7 +106,10 @@ appId: org.guardedsleep.app.alpha
     speed: 95
     timeout: 60000
     visibilityPercentage: 50
-# The first tap can land while the list still settles; the retry taps again only if Settings is still there.
+# Back from the Advanced page lands on the Settings overview, back again on Home. The first tap can
+# land while the list still settles; the retry taps again only if Settings is still there.
+- tapOn:
+    id: "settings_back"
 - retry:
     maxRetries: 3
     commands:

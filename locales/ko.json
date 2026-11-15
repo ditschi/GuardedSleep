@@ -107,7 +107,9 @@
           "checking": "확인 중"
         },
         "babyUnitDefault": "아기 기기",
-        "parentUnitDefault": "부모 기기"
+        "parentUnitDefault": "부모 기기",
+        "close": "닫기",
+        "back": "뒤로"
       },
       "role": {
         "title": "이 기기는 어떤 기기인가요?",
@@ -215,17 +217,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "{name}에 연결",
-          "cardTitleDefault": "아기 기기에 연결"
-        },
-        "baby": {
-          "cardTitle": "지켜보기 시작"
-        },
         "lastUsed": "마지막 사용: {time}",
         "newPairing": "새 기기 설정",
         "empty": "아직 페어링된 기기가 없어요.",
-        "switchMode": "모드 전환"
+        "switchMode": "모드 전환",
+        "start": "시작",
+        "privacy": "소리는 기기 사이에서 암호화돼요. 계정도, 클라우드 녹음도 없어요.",
+        "vibrateOnly": "소리 알림은 이 기기에서 진동만 해요."
       },
       "baby": {
         "status": {
@@ -438,15 +436,15 @@
         "current": "연결: {name}",
         "change": "변경",
         "labelDefault": "{name}(기본)",
-        "makeDefault": "기본으로 설정",
         "autoConnect": "앱을 열면 자동으로 연결",
-        "removeDefault": "기본값 해제",
         "chooseAnother": "다른 연결 선택",
         "rename": "이름 변경",
         "renameTitle": "연결 이름 변경",
         "nameLabel": "이름(1~30자, 이 휴대폰에만 저장됨)",
         "nameInvalid": "1~30자로 입력하세요.",
-        "save": "저장"
+        "save": "저장",
+        "readOnlyNote": "연결을 바꾸려면 지켜보기를 중지하세요.",
+        "inUse": "사용 중"
       },
       "missed": {
         "some": "연결이 끊긴 동안: {start}~{end} 사이에 소리 {count, plural, other {#번}}. 가장 큰 소리: {level}.",
@@ -477,13 +475,12 @@
           "soundDetection": "소리 감지",
           "silence": "조용 모드",
           "alerts": "알림",
-          "screen": "화면",
-          "paired": "페어링된 기기",
           "thisPhone": "이 기기",
           "language": "언어",
           "about": "정보 및 한계",
           "advanced": "고급",
-          "startMode": "시작 모드"
+          "startMode": "시작 모드",
+          "display": "화면 표시"
         },
         "sensitivity": "민감도",
         "moreSensitive": "더 민감하게",
@@ -569,6 +566,14 @@
           "stop": "중지",
           "test": "연결 알람 테스트",
           "testWarning": "테스트는 알람 최대 음량으로 약 8초 동안 재생됩니다."
+        },
+        "openAtStart": {
+          "title": "시작할 때 열기",
+          "modeHint": "앱을 시작할 때 이 기기가 열리는 모드예요.",
+          "autoTitle": "자동으로 연결",
+          "autoHint": "부모 기기는 앱을 열 때마다 한 번, 선택한 연결로 지켜보기를 시작해요.",
+          "autoNone": "자동으로 연결하지 않기",
+          "defaultTitle": "기본 연결"
         }
       },
       "fgsMissing": {
@@ -711,8 +716,7 @@
     "role": {
       "title": "이 기기의 용도",
       "subtitle": "휴대폰, 태블릿, 노트북 모두 가능해요. 아기 기기부터 설정하세요.",
-      "navLabel": "역할 선택",
-      "privacyNote": "소리는 두 기기 사이에서 직접 전달되며 절대 녹음되지 않아요."
+      "navLabel": "역할 선택"
     },
     "pair": {
       "copyHint": "5분 안에 부모 기기에 붙여넣으세요. 채팅으로 보내지 마세요.",

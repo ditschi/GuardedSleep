@@ -32,6 +32,8 @@ data class UiEnv(
     val zone: TimeZone = TimeZone.getDefault(),
     /** null = ask the system. */
     val cameraGranted: Boolean? = null,
+    /** null = move the activity's task to the background (back on the monitor); tests record it. */
+    val moveToBackground: (() -> Unit)? = null,
 )
 
 val LocalUiEnv = compositionLocalOf { UiEnv() }

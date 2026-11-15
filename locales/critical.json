@@ -106,6 +106,9 @@
     { "pattern": "webScreens.talk.babySoundOff", "budget": 150 },
     { "pattern": "webScreens.talk.permissionRefused", "budget": 170 },
     { "pattern": "native.ui.status.*", "budget": 150 },
-    { "pattern": "native.ui.connAlert.*", "budget": 170 }
+    { "pattern": "native.ui.connAlert.*", "budget": 170 },
+    { "pattern": "native.ui.home.privacy", "budget": 150 },
+    { "pattern": "native.ui.home.vibrateOnly", "budget": 120 },
+    { "pattern": "native.ui.connections.readOnlyNote", "budget": 100 }
   ]
 }

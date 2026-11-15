@@ -107,7 +107,9 @@
           "checking": "Verifica"
         },
         "babyUnitDefault": "Dispositivo del bambino",
-        "parentUnitDefault": "Dispositivo del genitore"
+        "parentUnitDefault": "Dispositivo del genitore",
+        "close": "Chiudi",
+        "back": "Indietro"
       },
       "role": {
         "title": "Che dispositivo è questo?",
@@ -215,17 +217,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "Connettiti a {name}",
-          "cardTitleDefault": "Connettiti al dispositivo del bambino"
-        },
-        "baby": {
-          "cardTitle": "Avvia il monitoraggio"
-        },
         "lastUsed": "Ultimo uso {time}",
         "newPairing": "Configura nuovi dispositivi",
         "empty": "Ancora nessun dispositivo associato.",
-        "switchMode": "Cambia modalità"
+        "switchMode": "Cambia modalità",
+        "start": "Avvia",
+        "privacy": "L'audio è cifrato tra i tuoi dispositivi. Nessun account, nessuna registrazione nel cloud.",
+        "vibrateOnly": "Gli avvisi di rumore faranno solo vibrare questo dispositivo."
       },
       "baby": {
         "status": {
@@ -438,15 +436,15 @@
         "current": "Connessione: {name}",
         "change": "Cambia",
         "labelDefault": "{name} (predefinita)",
-        "makeDefault": "Imposta come predefinita",
         "autoConnect": "Connetti automaticamente all'apertura dell'app",
-        "removeDefault": "Rimuovi predefinita",
         "chooseAnother": "Scegli un'altra connessione",
         "rename": "Rinomina",
         "renameTitle": "Rinomina la connessione",
         "nameLabel": "Nome (1–30 caratteri, resta su questo telefono)",
         "nameInvalid": "Usa da 1 a 30 caratteri.",
-        "save": "Salva"
+        "save": "Salva",
+        "readOnlyNote": "Interrompi il monitoraggio per modificare le connessioni.",
+        "inUse": "In uso"
       },
       "missed": {
         "some": "Durante la disconnessione: {count, plural, one {1 suono} many {# di suoni} other {# suoni}} tra le {start} e le {end}. Il più forte: {level}.",
@@ -477,13 +475,12 @@
           "soundDetection": "Rilevamento dei suoni",
           "silence": "Modalità silenziosa",
           "alerts": "Avvisi",
-          "screen": "Schermo",
-          "paired": "Dispositivo associato",
           "thisPhone": "Questo dispositivo",
           "language": "Lingua",
           "about": "Informazioni e limiti",
           "advanced": "Avanzate",
-          "startMode": "Modalità di avvio"
+          "startMode": "Modalità di avvio",
+          "display": "Visualizzazione"
         },
         "sensitivity": "Sensibilità",
         "moreSensitive": "Più sensibile",
@@ -569,6 +566,14 @@
           "stop": "Interrompi",
           "test": "Prova l'allarme di connessione",
           "testWarning": "La prova suona al volume massimo dell'allarme per circa 8 secondi."
+        },
+        "openAtStart": {
+          "title": "Apri all'avvio",
+          "modeHint": "La modalità in cui si apre questo dispositivo all'avvio dell'app.",
+          "autoTitle": "Connetti automaticamente",
+          "autoHint": "Il dispositivo del genitore avvia il monitoraggio con la connessione scelta, una volta a ogni apertura dell'app.",
+          "autoNone": "Non connettere automaticamente",
+          "defaultTitle": "Connessione predefinita"
         }
       },
       "fgsMissing": {
@@ -711,8 +716,7 @@
     "role": {
       "title": "Usa questo dispositivo come",
       "subtitle": "Telefono, tablet o portatile. Configura prima il dispositivo del bambino.",
-      "navLabel": "Scegli un ruolo",
-      "privacyNote": "L'audio passa direttamente tra i tuoi due dispositivi e non viene mai registrato."
+      "navLabel": "Scegli un ruolo"
     },
     "pair": {
       "copyHint": "Incollalo sul dispositivo del genitore entro 5 minuti. Non inviarlo in una chat.",

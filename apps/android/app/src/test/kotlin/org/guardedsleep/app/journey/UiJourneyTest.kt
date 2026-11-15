@@ -318,6 +318,7 @@ class UiJourneyTest : JourneyHost() {
         firstRunAndPair()
         stopMonitoring(Device.PARENT)
         tap(Device.PARENT, "home_settings")
+        tap(Device.PARENT, "settings_nav_alerts")
         awaitShown(Device.PARENT, "settings_test_alert")
         tap(Device.PARENT, "settings_test_alert")
         // Expected once specified: a visible "connect first" message, not silence.

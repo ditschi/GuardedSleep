@@ -107,7 +107,9 @@
           "checking": "Sprawdzanie"
         },
         "babyUnitDefault": "Urządzenie dziecka",
-        "parentUnitDefault": "Urządzenie rodzica"
+        "parentUnitDefault": "Urządzenie rodzica",
+        "close": "Zamknij",
+        "back": "Wstecz"
       },
       "role": {
         "title": "Czym jest to urządzenie?",
@@ -215,17 +217,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "Połącz z: {name}",
-          "cardTitleDefault": "Połącz z urządzeniem dziecka"
-        },
-        "baby": {
-          "cardTitle": "Rozpocznij monitorowanie"
-        },
         "lastUsed": "Ostatnio używane {time}",
         "newPairing": "Skonfiguruj nowe urządzenia",
         "empty": "Nie sparowano jeszcze żadnych urządzeń.",
-        "switchMode": "Zmień tryb"
+        "switchMode": "Zmień tryb",
+        "start": "Start",
+        "privacy": "Dźwięk jest szyfrowany między Twoimi urządzeniami. Bez konta, bez nagrywania w chmurze.",
+        "vibrateOnly": "Alerty o hałasie będą na tym urządzeniu tylko wibrować."
       },
       "baby": {
         "status": {
@@ -438,15 +436,15 @@
         "current": "Połączenie: {name}",
         "change": "Zmień",
         "labelDefault": "{name} (domyślne)",
-        "makeDefault": "Ustaw jako domyślne",
         "autoConnect": "Łącz automatycznie po otwarciu aplikacji",
-        "removeDefault": "Usuń domyślne",
         "chooseAnother": "Wybierz inne połączenie",
         "rename": "Zmień nazwę",
         "renameTitle": "Zmień nazwę połączenia",
         "nameLabel": "Nazwa (1–30 znaków, zostaje na tym telefonie)",
         "nameInvalid": "Użyj od 1 do 30 znaków.",
-        "save": "Zapisz"
+        "save": "Zapisz",
+        "readOnlyNote": "Zatrzymaj monitorowanie, aby zmienić połączenia.",
+        "inUse": "W użyciu"
       },
       "missed": {
         "some": "W czasie braku połączenia: {count, plural, one {1 dźwięk} few {# dźwięki} many {# dźwięków} other {# dźwięku}} między {start} a {end}. Najgłośniej: {level}.",
@@ -477,13 +475,12 @@
           "soundDetection": "Wykrywanie dźwięku",
           "silence": "Tryb ciszy",
           "alerts": "Alerty",
-          "screen": "Ekran",
-          "paired": "Sparowane urządzenie",
           "thisPhone": "To urządzenie",
           "language": "Język",
           "about": "Informacje i ograniczenia",
           "advanced": "Zaawansowane",
-          "startMode": "Tryb uruchamiania"
+          "startMode": "Tryb uruchamiania",
+          "display": "Wyświetlanie"
         },
         "sensitivity": "Czułość",
         "moreSensitive": "Bardziej czułe",
@@ -569,6 +566,14 @@
           "stop": "Zatrzymaj",
           "test": "Testuj alarm połączenia",
           "testWarning": "Test gra z pełną głośnością alarmu przez około 8 sekund."
+        },
+        "openAtStart": {
+          "title": "Otwieranie przy starcie",
+          "modeHint": "W jakim trybie to urządzenie otwiera się po uruchomieniu aplikacji.",
+          "autoTitle": "Łącz automatycznie",
+          "autoHint": "Urządzenie rodzica rozpoczyna monitorowanie z wybranym połączeniem, raz przy każdym otwarciu aplikacji.",
+          "autoNone": "Nie łącz automatycznie",
+          "defaultTitle": "Domyślne połączenie"
         }
       },
       "fgsMissing": {
@@ -711,8 +716,7 @@
     "role": {
       "title": "Użyj tego urządzenia jako",
       "subtitle": "Telefon, tablet lub laptop. Najpierw skonfiguruj urządzenie dziecka.",
-      "navLabel": "Wybierz rolę",
-      "privacyNote": "Dźwięk idzie bezpośrednio między Twoimi dwoma urządzeniami i nigdy nie jest nagrywany."
+      "navLabel": "Wybierz rolę"
     },
     "pair": {
       "copyHint": "Wklej go na urządzeniu rodzica w ciągu 5 minut. Nie wysyłaj go w czacie.",

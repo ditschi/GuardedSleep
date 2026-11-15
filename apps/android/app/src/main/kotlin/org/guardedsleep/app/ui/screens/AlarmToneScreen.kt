@@ -1,13 +1,11 @@
 package org.guardedsleep.app.ui.screens
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -30,7 +28,7 @@ import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AppCard
 import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.Glyph
-import org.guardedsleep.app.ui.common.GlyphIcon
+import org.guardedsleep.app.ui.common.GlyphButton
 import org.guardedsleep.app.ui.common.ScreenRoot
 import org.guardedsleep.app.ui.common.ScrollColumn
 import org.guardedsleep.app.ui.common.SecondaryButton
@@ -96,15 +94,12 @@ fun AlarmTonePickerScreen(controller: AppController, onBack: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Row(
-                    Modifier.size(48.dp)
-                        .clickable(role = SemRole.Button, onClick = onBack)
-                        .testTag("alarm_tone_back"),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    GlyphIcon(Glyph.BACK, MaterialTheme.colorScheme.onBackground)
-                }
+                GlyphButton(
+                    Glyph.BACK,
+                    stringResource(R.string.native_ui_common_back),
+                    onBack,
+                    "alarm_tone_back",
+                )
                 Text(
                     stringResource(R.string.native_ui_settings_alarm_tone_label),
                     Modifier.testTag("alarm_tone_title").semantics { heading() },

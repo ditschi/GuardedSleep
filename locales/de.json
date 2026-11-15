@@ -107,7 +107,9 @@
           "checking": "Wird geprüft"
         },
         "babyUnitDefault": "Babygerät",
-        "parentUnitDefault": "Elterngerät"
+        "parentUnitDefault": "Elterngerät",
+        "close": "Schließen",
+        "back": "Zurück"
       },
       "role": {
         "title": "Welches Gerät ist das?",
@@ -215,17 +217,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "Mit {name} verbinden",
-          "cardTitleDefault": "Mit dem Babygerät verbinden"
-        },
-        "baby": {
-          "cardTitle": "Überwachung starten"
-        },
         "lastUsed": "Zuletzt genutzt um {time}",
         "newPairing": "Neue Geräte einrichten",
         "empty": "Noch keine Geräte gekoppelt.",
-        "switchMode": "Modus wechseln"
+        "switchMode": "Modus wechseln",
+        "start": "Starten",
+        "privacy": "Der Ton ist zwischen Ihren Geräten verschlüsselt. Kein Konto, keine Aufnahme in der Cloud.",
+        "vibrateOnly": "Geräuschalarme vibrieren auf diesem Gerät nur."
       },
       "baby": {
         "status": {
@@ -438,15 +436,15 @@
         "current": "Verbindung: {name}",
         "change": "Ändern",
         "labelDefault": "{name} (Standard)",
-        "makeDefault": "Als Standard festlegen",
         "autoConnect": "Beim Öffnen der App automatisch verbinden",
-        "removeDefault": "Standard entfernen",
         "chooseAnother": "Andere Verbindung wählen",
         "rename": "Umbenennen",
         "renameTitle": "Verbindung umbenennen",
         "nameLabel": "Name (1–30 Zeichen, bleibt auf diesem Telefon)",
         "nameInvalid": "Bitte 1 bis 30 Zeichen verwenden.",
-        "save": "Speichern"
+        "save": "Speichern",
+        "readOnlyNote": "Beenden Sie die Überwachung, um Verbindungen zu ändern.",
+        "inUse": "In Gebrauch"
       },
       "missed": {
         "some": "Während der Unterbrechung: {count, plural, one {1 Geräusch} other {# Geräusche}} zwischen {start} und {end}. Am lautesten: {level}.",
@@ -477,13 +475,12 @@
           "soundDetection": "Geräuscherkennung",
           "silence": "Ruhemodus",
           "alerts": "Alarme",
-          "screen": "Bildschirm",
-          "paired": "Gekoppeltes Gerät",
           "thisPhone": "Dieses Gerät",
           "language": "Sprache",
           "about": "Info und Grenzen",
           "advanced": "Erweitert",
-          "startMode": "Startmodus"
+          "startMode": "Startmodus",
+          "display": "Anzeige"
         },
         "sensitivity": "Empfindlichkeit",
         "moreSensitive": "Empfindlicher",
@@ -573,6 +570,14 @@
           "stop": "Stopp",
           "test": "Verbindungsalarm testen",
           "testWarning": "Der Test spielt etwa 8 Sekunden lang mit voller Alarmlautstärke."
+        },
+        "openAtStart": {
+          "title": "Beim Start öffnen",
+          "modeHint": "In welchem Modus sich dieses Gerät beim Start der App öffnet.",
+          "autoTitle": "Automatisch verbinden",
+          "autoHint": "Das Elterngerät startet die Überwachung mit der gewählten Verbindung, einmal bei jedem Öffnen der App.",
+          "autoNone": "Nicht automatisch verbinden",
+          "defaultTitle": "Standardverbindung"
         }
       },
       "fgsMissing": {

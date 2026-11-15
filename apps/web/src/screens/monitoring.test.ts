@@ -253,6 +253,14 @@ describe("S09 parent monitor", () => {
     expect(c.calls).toContainEqual(["cancelSnooze"]);
   });
 
+  it("closes a sheet with its visible Close button", async () => {
+    open("/parent", c);
+    await fireEvent.click(await screen.findByTestId("parent_snooze"));
+    const sheet = screen.getByTestId("sheet_snooze") as HTMLDialogElement;
+    await fireEvent.click(within(sheet).getByTestId("sheet_close"));
+    await waitFor(() => expect(sheet.open).toBe(false));
+  });
+
   it("runs a test alert and asks whether it was heard", async () => {
     open("/parent", c);
     await fireEvent.click(await screen.findByTestId("parent_probe"));

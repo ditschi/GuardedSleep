@@ -105,7 +105,9 @@
           "checking": "Checking"
         },
         "babyUnitDefault": "Baby device",
-        "parentUnitDefault": "Parent device"
+        "parentUnitDefault": "Parent device",
+        "close": "Close",
+        "back": "Back"
       },
       "role": {
         "title": "Which device is this?",
@@ -213,17 +215,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "Connect to {name}",
-          "cardTitleDefault": "Connect to the baby device"
-        },
-        "baby": {
-          "cardTitle": "Start monitoring"
-        },
         "lastUsed": "Last used {time}",
         "newPairing": "Set up new devices",
         "empty": "No devices paired yet.",
-        "switchMode": "Switch mode"
+        "switchMode": "Switch mode",
+        "start": "Start",
+        "privacy": "Sound is encrypted between your devices. No account, no cloud recording.",
+        "vibrateOnly": "Noise alerts will only vibrate on this device."
       },
       "baby": {
         "status": {
@@ -436,15 +434,15 @@
         "current": "Connection: {name}",
         "change": "Change",
         "labelDefault": "{name} (default)",
-        "makeDefault": "Make default",
         "autoConnect": "Connect automatically when the app opens",
-        "removeDefault": "Remove default",
         "chooseAnother": "Choose another connection",
         "rename": "Rename",
         "renameTitle": "Rename connection",
         "nameLabel": "Name (1–30 characters, stays on this phone)",
         "nameInvalid": "Use 1 to 30 characters.",
-        "save": "Save"
+        "save": "Save",
+        "readOnlyNote": "Stop monitoring to change connections.",
+        "inUse": "In use"
       },
       "missed": {
         "some": "While disconnected: {count, plural, one {1 sound} other {# sounds}} between {start} and {end}. Loudest: {level}.",
@@ -475,13 +473,12 @@
           "soundDetection": "Sound detection",
           "silence": "Quiet mode",
           "alerts": "Alerts",
-          "screen": "Screen",
-          "paired": "Paired device",
           "thisPhone": "This device",
           "language": "Language",
           "about": "About and limits",
           "advanced": "Advanced",
-          "startMode": "Start mode"
+          "startMode": "Start mode",
+          "display": "Display"
         },
         "sensitivity": "Sensitivity",
         "moreSensitive": "More sensitive",
@@ -571,6 +568,14 @@
           "stop": "Stop",
           "test": "Test connection alarm",
           "testWarning": "This plays at full alarm volume for about 8 seconds."
+        },
+        "openAtStart": {
+          "title": "Open at start",
+          "modeHint": "Which mode this device opens in when the app starts.",
+          "autoTitle": "Connect automatically",
+          "autoHint": "The parent device starts monitoring with the chosen connection, once each time the app opens.",
+          "autoNone": "Don't connect automatically",
+          "defaultTitle": "Default connection"
         }
       },
       "fgsMissing": {
@@ -713,8 +718,7 @@
     "role": {
       "title": "Use this device as",
       "subtitle": "Phone, tablet or laptop. Set up the baby device first.",
-      "navLabel": "Choose a role",
-      "privacyNote": "Sound goes directly between your two devices and is never recorded."
+      "navLabel": "Choose a role"
     },
     "pair": {
       "copyHint": "Paste it on the parent device within 5 minutes. Don't send it in a chat.",

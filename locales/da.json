@@ -107,7 +107,9 @@
           "checking": "Tjekker"
         },
         "babyUnitDefault": "Babyenhed",
-        "parentUnitDefault": "Forældreenhed"
+        "parentUnitDefault": "Forældreenhed",
+        "close": "Luk",
+        "back": "Tilbage"
       },
       "role": {
         "title": "Hvilken enhed er det her?",
@@ -215,17 +217,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "Forbind til {name}",
-          "cardTitleDefault": "Forbind til babyenheden"
-        },
-        "baby": {
-          "cardTitle": "Start overvågning"
-        },
         "lastUsed": "Sidst brugt {time}",
         "newPairing": "Sæt nye enheder op",
         "empty": "Ingen enheder parret endnu.",
-        "switchMode": "Skift tilstand"
+        "switchMode": "Skift tilstand",
+        "start": "Start",
+        "privacy": "Lyden er krypteret mellem dine enheder. Ingen konto, ingen optagelse i skyen.",
+        "vibrateOnly": "Støjalarmer vibrerer kun på denne enhed."
       },
       "baby": {
         "status": {
@@ -438,15 +436,15 @@
         "current": "Forbindelse: {name}",
         "change": "Skift",
         "labelDefault": "{name} (standard)",
-        "makeDefault": "Gør til standard",
         "autoConnect": "Opret forbindelse automatisk, når appen åbnes",
-        "removeDefault": "Fjern standard",
         "chooseAnother": "Vælg en anden forbindelse",
         "rename": "Omdøb",
         "renameTitle": "Omdøb forbindelsen",
         "nameLabel": "Navn (1–30 tegn, bliver på denne telefon)",
         "nameInvalid": "Brug 1 til 30 tegn.",
-        "save": "Gem"
+        "save": "Gem",
+        "readOnlyNote": "Stop overvågningen for at ændre forbindelser.",
+        "inUse": "I brug"
       },
       "missed": {
         "some": "Under afbrydelsen: {count, plural, one {1 lyd} other {# lyde}} mellem {start} og {end}. Højeste: {level}.",
@@ -477,13 +475,12 @@
           "soundDetection": "Lydregistrering",
           "silence": "Stille tilstand",
           "alerts": "Alarmer",
-          "screen": "Skærm",
-          "paired": "Parret enhed",
           "thisPhone": "Denne enhed",
           "language": "Sprog",
           "about": "Om og begrænsninger",
           "advanced": "Avanceret",
-          "startMode": "Starttilstand"
+          "startMode": "Starttilstand",
+          "display": "Visning"
         },
         "sensitivity": "Følsomhed",
         "moreSensitive": "Mere følsom",
@@ -569,6 +566,14 @@
           "stop": "Stop",
           "test": "Test forbindelsesalarmen",
           "testWarning": "Testen afspilles med fuld alarmlydstyrke i cirka 8 sekunder."
+        },
+        "openAtStart": {
+          "title": "Åbn ved start",
+          "modeHint": "Hvilken tilstand denne enhed åbner i, når appen starter.",
+          "autoTitle": "Opret forbindelse automatisk",
+          "autoHint": "Forældreenheden starter overvågningen med den valgte forbindelse, én gang hver gang appen åbnes.",
+          "autoNone": "Opret ikke forbindelse automatisk",
+          "defaultTitle": "Standardforbindelse"
         }
       },
       "fgsMissing": {
@@ -711,8 +716,7 @@
     "role": {
       "title": "Brug denne enhed som",
       "subtitle": "Telefon, tablet eller bærbar. Sæt babyenheden op først.",
-      "navLabel": "Vælg en rolle",
-      "privacyNote": "Lyden går direkte mellem dine to enheder og bliver aldrig optaget."
+      "navLabel": "Vælg en rolle"
     },
     "pair": {
       "copyHint": "Indsæt den på forældreenheden inden for 5 minutter. Send den ikke i en chat.",

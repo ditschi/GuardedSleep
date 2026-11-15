@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import { t } from "../i18n/store";
+  import Button from "./Button.svelte";
   import StatusBar from "./StatusBar.svelte";
 
   type Props = {
@@ -61,7 +63,17 @@
   {#if status && open}
     <div class="gs-dialog__status"><StatusBar testid="sheet_status_bar" /></div>
   {/if}
-  <h2 id={titleId}>{title}</h2>
+  <!-- Sheets (the dialogs that keep the status bar) get a visible Close next to the title: Escape
+       and the backdrop are not discoverable for everyone (`ui-appearance` "Back behaviour while
+       monitoring"). Confirmations have their own Cancel. -->
+  <div class="gs-dialog__head">
+    <h2 id={titleId}>{title}</h2>
+    {#if status}
+      <Button variant="text" testid="sheet_close" onclick={() => dialog?.close()}>
+        {$t("native.ui.common.close")}
+      </Button>
+    {/if}
+  </div>
   <div>{@render children()}</div>
   {#if actions}<div class="gs-dialog__actions">{@render actions()}</div>{/if}
 </dialog>
