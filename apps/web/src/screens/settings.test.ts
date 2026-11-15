@@ -288,6 +288,14 @@ describe("S12 settings", () => {
     expect(screen.queryByTestId("settings_connections_read_only")).toBeNull();
   });
 
+  it("treats a blank connection name as none in the row and in the forget dialog", async () => {
+    c.app.update((s) => ({ ...s, role: "parent", paired: true, peerName: "   " }));
+    open(c);
+    expect(await screen.findByTestId("settings_connection_row")).toHaveTextContent("Baby device");
+    await fireEvent.click(screen.getByTestId("settings_forget"));
+    expect(screen.getByTestId("dialog_forget")).toHaveTextContent("Forget the baby device?");
+  });
+
   it("makes the connection read-only while monitoring and says why", async () => {
     c.app.update((s) => ({ ...s, role: "parent", paired: true, monitoring: true }));
     open(c);

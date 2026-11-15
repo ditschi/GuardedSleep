@@ -11,6 +11,7 @@
   import Banner from "../lib/ui/Banner.svelte";
   import Button from "../lib/ui/Button.svelte";
   import Dialog from "../lib/ui/Dialog.svelte";
+  import { connectionName } from "../lib/ui/parent-view";
   import { isSignalingUrl, sensitivityOf, thresholdOf } from "../lib/ui/sensitivity";
   import ScreenHeader from "../lib/ui/ScreenHeader.svelte";
   import Switch from "../lib/ui/Switch.svelte";
@@ -142,8 +143,9 @@
   // ---- forget pairing --------------------------------------------------------------------
 
   let forgetOpen = $state(false);
+  // A blank name counts as none, so the row and the dialog fall back to the same default.
+  const name = $derived(connectionName($app.peerName));
   const forgetTitle = $derived.by(() => {
-    const name = $app.peerName;
     if (name !== null) return $t("native.ui.forget.title", { name });
     return $app.role === "parent"
       ? $t("native.ui.forget.titleBabyDefault")
@@ -183,7 +185,7 @@
     <div class="gs-group" data-testid="settings_connections">
       {#if $app.paired}
         <div class="gs-stack gs-stack--tight" data-testid="settings_connection_row">
-          <span>{$app.peerName ?? $t(connectionDefaultKey)}</span>
+          <span>{name ?? $t(connectionDefaultKey)}</span>
           <span class="gs-hint">
             {$app.role === "parent"
               ? $t("native.ui.role.baby.title")
