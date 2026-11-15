@@ -96,8 +96,16 @@ fi
 maestro_run() {
 	local serial=$1 flow=$2
 	shift 2
-	local envs=() kv
+	local envs=() kv t0
 	for kv in "$@"; do envs+=(-e "$kv"); done
+	t0="$(date +%s)"
+	maestro --device "$serial" test "${envs[@]}" --format junit \
+		--output "$OUT/maestro-$(basename "$flow" .yaml)-$serial.xml" "$FLOWS/$flow" && return 0
+	# A flow that dies within seconds never got to test the app: the first Maestro start on a fresh runner
+	# installs its driver on the device and can lose that race. Run it once more (the flows are idempotent).
+	[[ $(($(date +%s) - t0)) -lt 15 ]] || return 1
+	log "maestro $flow on $serial died within seconds; running it once more"
+	sleep 10
 	maestro --device "$serial" test "${envs[@]}" --format junit \
 		--output "$OUT/maestro-$(basename "$flow" .yaml)-$serial.xml" "$FLOWS/$flow"
 }
