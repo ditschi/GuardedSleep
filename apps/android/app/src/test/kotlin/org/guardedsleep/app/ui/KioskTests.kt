@@ -98,7 +98,7 @@ class KioskTests : ShotBase() {
     }
 
     @Test
-    fun fromLevelTwoTheFrameShowsAndItIsStaticWithReducedMotion() = runComposeUiTest {
+    fun fromLevelTwoTheFrameShows() = runComposeUiTest {
         show(c = kioskController(BabyMonitorState(link = link(LinkPhase.RECONNECTING, 3, 200_000))))
         assertEquals(listOf("frame"), marks())
         onNodeWithTag("baby_status").assertIsDisplayed()
@@ -112,11 +112,36 @@ class KioskTests : ShotBase() {
     }
 
     @Test
-    fun anUnpluggedChargerAddsTheSquareAndTheReasonWithoutAnythingElse() = runComposeUiTest {
+    fun aLowBatteryAddsTheSquareAndTheReason() = runComposeUiTest {
         val env = TestEnv.copy(battery = BatteryReading(12, false))
         show(env, kioskController())
         assertEquals(listOf("bar", "attention"), marks())
         onNodeWithTag("baby_kiosk_attention").assertTextEquals("Needs attention: battery low · 12%")
+    }
+
+    @Test
+    fun aChargerPulledDuringTheRunAddsTheSquareAndTheReason() = runComposeUiTest {
+        var env by mutableStateOf(TestEnv.copy(battery = BatteryReading(64, true)))
+        val c = kioskController()
+        setContent {
+            CompositionLocalProvider(LocalUiEnv provides env) {
+                GuardedSleepTheme(Theme.DARK, forceDark = true) { BabyKioskScreen(c) }
+            }
+        }
+        waitForIdle()
+        assertEquals(listOf("bar"), marks())
+        env = TestEnv.copy(battery = BatteryReading(64, false))
+        waitForIdle()
+        assertEquals(listOf("bar", "attention"), marks())
+        onNodeWithTag("baby_kiosk_attention")
+            .assertTextEquals("Needs attention: not charging · 64%")
+    }
+
+    @Test
+    fun unpluggedFromTheStartShowsNoSquareWhileTheBatteryIsFine() = runComposeUiTest {
+        show(TestEnv.copy(battery = BatteryReading(64, false)), kioskController())
+        assertEquals(listOf("bar"), marks())
+        assertFalse(onAllNodesWithTagExists("baby_kiosk_attention"))
     }
 
     @Test
@@ -157,7 +182,7 @@ class KioskTests : ShotBase() {
     }
 
     @Test
-    fun noConfirmationBeforeContactOrAfterSixtySeconds() = runComposeUiTest {
+    fun noConfirmationBeforeTheFirstContact() = runComposeUiTest {
         show(c = kioskController(BabyMonitorState(link = link(LinkPhase.CONNECTING))))
         assertFalse(onAllNodesWithTagExists("baby_kiosk_dims_in"))
     }
