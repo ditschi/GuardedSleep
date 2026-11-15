@@ -274,6 +274,15 @@ data class ParentMonitorState(
     val afterTalkListenUntilElapsedMs: Long? = null,
 )
 
+/** The baby device's battery levels that matter (`parent-alerts` "Baby battery warnings"). */
+object BabyBattery {
+    /** Below this, while not charging, the baby unit asks to be plugged in. */
+    const val LOW_PCT = 15
+
+    /** Below this the warning is critical, charging or not. */
+    const val CRITICAL_PCT = 5
+}
+
 data class BabyMonitorState(
     val link: LinkUi = LinkUi(),
     val micLevel: Float = 0f,
@@ -299,6 +308,12 @@ data class BabyMonitorState(
      * null until then. The kiosk shows its set-up confirmation for 60 s from here.
      */
     val firstContactElapsedMs: Long? = null,
+    /** This device's own battery percent; null until the platform has read it. */
+    val ownBatteryPct: Int? = null,
+    /** This device is plugged in (any power source), as the platform reads it. */
+    val ownPlugged: Boolean = false,
+    /** The charger was plugged in at some time in this run: a later unplug needs attention. */
+    val chargerSeen: Boolean = false,
     /** A parent's voice plays now (static indicator under the edge). */
     val parentTalking: Boolean = false,
     /** The last finished talk of this run, local only. */

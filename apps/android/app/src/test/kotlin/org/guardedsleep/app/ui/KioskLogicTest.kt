@@ -66,6 +66,8 @@ class KioskLogicTest {
         assertNull(kioskAttention(BatteryReading(64, false), false))
         assertEquals(KioskAttention.NOT_CHARGING, kioskAttention(BatteryReading(64, false), true))
         assertEquals(KioskAttention.BATTERY_LOW, kioskAttention(BatteryReading(12, false), false))
+        assertEquals(KioskAttention.BATTERY_LOW, kioskAttention(BatteryReading(14, false), false))
+        assertNull(kioskAttention(BatteryReading(15, false), false))
         assertEquals(
             KioskAttention.BATTERY_CRITICAL,
             kioskAttention(BatteryReading(4, false), true),

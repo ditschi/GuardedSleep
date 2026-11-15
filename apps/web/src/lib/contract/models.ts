@@ -166,6 +166,12 @@ export interface BabyMonitorState {
    * Android kiosk's set-up confirmation runs from here. The browser baby never sets it.
    */
   firstContactElapsedMs: number | null;
+  /** This device's own battery percent as the Android platform reads it; the browser leaves null. */
+  ownBatteryPct: number | null;
+  /** This device is plugged in (Android: `EXTRA_PLUGGED != 0`). */
+  ownPlugged: boolean;
+  /** The charger was plugged in at some time in this run (Android kiosk). */
+  chargerSeen: boolean;
   /** A parent's voice plays now (static indicator under the edge). */
   parentTalking: boolean;
   /** The last finished talk of this run, local only. */
@@ -526,6 +532,9 @@ export function defaultBabyMonitor(): BabyMonitorState {
     parentName: null,
     securityWarning: false,
     firstContactElapsedMs: null,
+    ownBatteryPct: null,
+    ownPlugged: false,
+    chargerSeen: false,
     parentTalking: false,
     lastTalk: null,
   };

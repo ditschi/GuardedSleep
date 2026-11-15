@@ -1,8 +1,5 @@
 package org.guardedsleep.app.ui.screens
 
-import android.content.Intent
-import android.content.IntentFilter
-import android.os.BatteryManager
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
@@ -45,7 +42,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -81,10 +77,10 @@ import org.guardedsleep.app.ui.common.Tone
 import org.guardedsleep.app.ui.common.WindowBrightness
 import org.guardedsleep.app.ui.common.formatDuration
 import org.guardedsleep.app.ui.common.formatTime
+import org.guardedsleep.app.ui.common.kioskAttention
 import org.guardedsleep.app.ui.common.kioskBrightness
 import org.guardedsleep.app.ui.common.kioskMarkShape
 import org.guardedsleep.app.ui.common.rememberElapsedNow
-import org.guardedsleep.app.ui.common.rememberKioskAttention
 import org.guardedsleep.app.ui.common.setupConfirmRemaining
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.AppState
@@ -97,27 +93,9 @@ import org.guardedsleep.app.ui.theme.StateColors
 
 private const val AutoLockSeconds = 30
 
-/** Baby phone's own battery (shown on S07 and on touch-wake only). */
-@Composable
-internal fun rememberOwnBattery(): BatteryReading? {
-    val env = LocalUiEnv.current
-    val ctx = LocalContext.current
-    val now by rememberElapsedNow()
-    return env.battery
-        ?: remember(now / 30_000) {
-            val i = ctx.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-            val level = i?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
-            val scale = i?.getIntExtra(BatteryManager.EXTRA_SCALE, 100) ?: 100
-            val status = i?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
-            if (level < 0) null
-            else
-                BatteryReading(
-                    level * 100 / scale,
-                    status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                        status == BatteryManager.BATTERY_STATUS_FULL,
-                )
-        }
-}
+/** The baby phone's own battery as the platform reported it; null before the first reading. */
+internal fun ownBattery(b: BabyMonitorState): BatteryReading? =
+    b.ownBatteryPct?.let { BatteryReading(it, b.ownPlugged) }
 
 /** The words for the baby-side link state (S07 and the kiosk). */
 internal fun babyStatusRes(link: LinkUi): Int =
@@ -187,13 +165,11 @@ fun BabyMonitorScreen(controller: AppController, onSettings: () -> Unit) {
     val now by rememberElapsedNow()
     var lastTouch by remember { mutableLongStateOf(env.elapsedNow()) }
     var confirmStop by remember { mutableStateOf(false) }
-    val battery = rememberOwnBattery()
+    val battery = ownBattery(b)
     val left = (AutoLockSeconds - (now - lastTouch) / 1000).toInt().coerceIn(0, AutoLockSeconds)
     LaunchedEffect(left, env.ticking) {
         if (env.ticking && left == 0) controller.setKioskLocked(true)
     }
-    // Remembers a seen charger for the kiosk's needs-attention mark (`rememberKioskAttention`).
-    rememberKioskAttention(battery)
     BabyQuiet {
         ScreenRoot(
             "baby_monitor",
@@ -469,8 +445,8 @@ fun BabyKioskScreen(controller: AppController) {
         else b0
     val env = LocalUiEnv.current
     val now by rememberElapsedNow()
-    val battery = rememberOwnBattery()
-    val attention = rememberKioskAttention(battery)
+    val battery = ownBattery(b)
+    val attention = kioskAttention(battery, b.chargerSeen)
     var woken by remember { mutableStateOf(false) }
     var wakeKey by remember { mutableIntStateOf(0) }
     var unlockProgress by remember { mutableFloatStateOf(0f) }

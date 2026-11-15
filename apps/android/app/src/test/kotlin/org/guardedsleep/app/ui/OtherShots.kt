@@ -3,7 +3,6 @@ package org.guardedsleep.app.ui
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.focus.FocusRequester
-import org.guardedsleep.app.ui.common.BatteryReading
 import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.common.RowState
 import org.guardedsleep.app.ui.common.UiEnv
@@ -55,6 +54,9 @@ class BabyShots : ShotBase() {
             dndAccess = true,
             silenceApplied = true,
             micLevel = 0.05f,
+            ownBatteryPct = 82,
+            ownPlugged = true,
+            chargerSeen = true,
         )
 
     private fun monitor(name: String, b: BabyMonitorState, locale: String = "en") =
@@ -132,7 +134,11 @@ class BabyShots : ShotBase() {
             app = named,
         )
         kiosk("parent_talking", calm.copy(parentTalking = true), app = named)
-        kiosk("needs_attention", calm, TestEnv.copy(battery = BatteryReading(12, false)), named)
+        kiosk(
+            "needs_attention",
+            calm.copy(ownBatteryPct = 12, ownPlugged = false),
+            app = named,
+        )
         kiosk(
             "setup_confirmation",
             calm.copy(parentName = "Anna's phone", firstContactElapsedMs = ELAPSED - 15_000),

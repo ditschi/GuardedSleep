@@ -104,6 +104,18 @@ class BabyModel(private val clock: Clock) {
         publish(now)
     }
 
+    /** The platform's reading of this device's own battery; `plugged` is `EXTRA_PLUGGED != 0`. */
+    @Synchronized
+    fun onOwnBattery(pct: Int, plugged: Boolean) {
+        val s = _state.value
+        _state.value =
+            s.copy(
+                ownBatteryPct = pct.coerceIn(0, 100),
+                ownPlugged = plugged,
+                chargerSeen = s.chargerSeen || plugged,
+            )
+    }
+
     @Synchronized
     fun setSettings(threshold: Float, holdSeconds: Int) {
         _state.value = _state.value.copy(threshold = threshold, holdSeconds = holdSeconds)

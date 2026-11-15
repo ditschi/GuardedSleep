@@ -47,6 +47,37 @@ class BabyModelTest {
     }
 
     @Test
+    fun theOwnBatteryAndTheChargerSeenFollowThePlatformReadings() {
+        assertNull(model.state.value.ownBatteryPct)
+        assertFalse(model.state.value.chargerSeen)
+        // Unplugged from the start: no charger was seen, so an unplug is not news.
+        model.onOwnBattery(64, false)
+        assertEquals(64, model.state.value.ownBatteryPct)
+        assertFalse(model.state.value.ownPlugged)
+        assertFalse(model.state.value.chargerSeen)
+        model.onOwnBattery(65, true)
+        assertTrue(model.state.value.ownPlugged)
+        assertTrue(model.state.value.chargerSeen)
+        // Pulled out: the charger stays seen, so the kiosk can say it is no longer charging.
+        model.onOwnBattery(64, false)
+        assertFalse(model.state.value.ownPlugged)
+        assertTrue(model.state.value.chargerSeen)
+        // Other state changes keep it.
+        model.onStatus(status(LinkState.CONNECTED), clock.elapsed)
+        assertEquals(64, model.state.value.ownBatteryPct)
+        assertTrue(model.state.value.chargerSeen)
+    }
+
+    @Test
+    fun aNewRunClearsTheOwnBattery() {
+        model.onOwnBattery(80, true)
+        model.reset()
+        assertNull(model.state.value.ownBatteryPct)
+        assertFalse(model.state.value.ownPlugged)
+        assertFalse(model.state.value.chargerSeen)
+    }
+
+    @Test
     fun anUnknownParentAttemptSetsTheWarningUntilReset() {
         assertFalse(model.state.value.securityWarning)
         model.onEvent(LinkEvent.SecurityWarning("unknown_parent_attempt"), clock.elapsed)

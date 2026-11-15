@@ -10,7 +10,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import org.guardedsleep.app.BuildConfig
-import org.guardedsleep.app.ui.common.LocalChargerSeen
 import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.common.systemReduceMotion
 import org.guardedsleep.app.ui.model.AppController
@@ -57,21 +56,11 @@ private enum class Overlay {
 }
 
 /**
- * Carries the baby's "charger was seen" memory across the kiosk locking and the unlocked screen.
- */
-@Composable
-private fun AppNavigator(controller: AppController) {
-    val app by controller.app.collectAsState()
-    val chargerSeen = remember(app.monitoring, app.role) { mutableStateOf(false) }
-    CompositionLocalProvider(LocalChargerSeen provides chargerSeen) { AppScreens(controller) }
-}
-
-/**
  * Screen choice is a pure function of [AppState]/pairing so process restarts and the platform layer
  * (which owns `monitoring`) can never disagree with the UI. Only settings/setup are local overlays.
  */
 @Composable
-private fun AppScreens(controller: AppController) {
+private fun AppNavigator(controller: AppController) {
     val app by controller.app.collectAsState()
     val pairing by controller.pairing.collectAsState()
     val baby by controller.baby.collectAsState()

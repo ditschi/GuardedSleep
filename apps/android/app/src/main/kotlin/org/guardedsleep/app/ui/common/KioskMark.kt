@@ -18,11 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -32,6 +28,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import org.guardedsleep.app.ui.model.BabyBattery
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.LinkUi
 import org.guardedsleep.app.ui.theme.KioskMarks
@@ -76,18 +73,15 @@ enum class KioskAttention {
     BATTERY_CRITICAL,
 }
 
-const val KioskBatteryLowPct = 20
-const val KioskBatteryCriticalPct = 5
-
 /**
- * [chargerSeen]: the charger was connected earlier in this monitoring run, so a reading that is not
- * charging now means it was pulled.
+ * [chargerSeen]: the charger was connected earlier in this monitoring run (`BabyMonitorState`), so
+ * a reading that is not plugged in now means it was pulled.
  */
 fun kioskAttention(battery: BatteryReading?, chargerSeen: Boolean): KioskAttention? =
     when {
         battery == null || battery.charging -> null
-        battery.pct < KioskBatteryCriticalPct -> KioskAttention.BATTERY_CRITICAL
-        battery.pct < KioskBatteryLowPct -> KioskAttention.BATTERY_LOW
+        battery.pct < BabyBattery.CRITICAL_PCT -> KioskAttention.BATTERY_CRITICAL
+        battery.pct < BabyBattery.LOW_PCT -> KioskAttention.BATTERY_LOW
         chargerSeen -> KioskAttention.NOT_CHARGING
         else -> null
     }
@@ -111,18 +105,6 @@ const val KioskWakeBrightness = 0.1f
 /** A talk keeps the minimum: only the dim talk indicator shows (`device-setup` "Baby kiosk"). */
 fun kioskBrightness(awake: Boolean, talking: Boolean): Float =
     if (awake && !talking) KioskWakeBrightness else KioskMinBrightness
-
-/** The charger was connected during this monitoring run (survives the kiosk locking and waking). */
-val LocalChargerSeen = compositionLocalOf<MutableState<Boolean>> { mutableStateOf(false) }
-
-/** The needs-attention reason for the reading, remembering that the charger was seen. */
-@Composable
-fun rememberKioskAttention(battery: BatteryReading?): KioskAttention? {
-    val seen = LocalChargerSeen.current
-    val charging = battery?.charging == true
-    SideEffect { if (charging) seen.value = true }
-    return kioskAttention(battery, seen.value)
-}
 
 private val FrameWidth = 5.dp
 private val EdgeHeight = 6.dp

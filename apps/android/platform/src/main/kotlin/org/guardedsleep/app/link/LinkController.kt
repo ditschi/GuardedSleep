@@ -264,6 +264,7 @@ class LinkController(
 
         lateinit var runner: LinkRunner
         var autoListenDone = false
+        var lastOwnBatteryAt = Long.MIN_VALUE
     }
 
     @Volatile private var lastReadinessAt = clock.elapsedMs()
@@ -1193,6 +1194,11 @@ class LinkController(
                     refreshReadiness()
                 }
             }
+            if (r.role == Role.BABY && nowMs - r.lastOwnBatteryAt >= OWN_BATTERY_MS) {
+                // The kiosk shows the baby's own battery; the UI reads no device state itself.
+                r.lastOwnBatteryAt = nowMs
+                readiness.ownBattery()?.let { babyModel.onOwnBattery(it.pct, it.plugged) }
+            }
             checkPairingTimers(nowMs)
         }
 
@@ -1340,6 +1346,9 @@ class LinkController(
 
     private companion object {
         const val UNREACHABLE_AFTER_MS = 20_000L
+
+        /** How often the baby kiosk's own battery is read. */
+        const val OWN_BATTERY_MS = 5_000L
 
         /** A device check result this young is shown again instead of probing anew. */
         const val DEVICE_CHECK_REUSE_MS = 60_000L

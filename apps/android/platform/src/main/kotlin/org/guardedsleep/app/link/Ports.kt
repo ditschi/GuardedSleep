@@ -20,8 +20,14 @@ interface NetworkWatcher {
     fun stop()
 }
 
+/** This device's battery as one read saw it; [plugged] is any power source (`EXTRA_PLUGGED`). */
+data class OwnBattery(val pct: Int, val plugged: Boolean)
+
 fun interface ReadinessProvider {
     fun check(): List<ReadinessIssue>
+
+    /** The baby kiosk's battery reading; null when the system gives none. */
+    fun ownBattery(): OwnBattery? = null
 
     /** The parent phone's own battery, shown next to the "plug it in" chip. */
     fun ownBatteryPct(): Int? = null

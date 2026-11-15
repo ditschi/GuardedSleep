@@ -18,7 +18,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.runComposeUiTest
-import org.guardedsleep.app.ui.common.BatteryReading
 import org.guardedsleep.app.ui.common.KioskMinBrightness
 import org.guardedsleep.app.ui.common.KioskWakeBrightness
 import org.guardedsleep.app.ui.common.LocalUiEnv
@@ -111,26 +110,40 @@ class KioskTests : ShotBase() {
         onNodeWithTag("baby_status").assertIsDisplayed()
     }
 
+    private val pluggedIn =
+        BabyMonitorState(
+            link = Connected,
+            ownBatteryPct = 64,
+            ownPlugged = true,
+            chargerSeen = true,
+        )
+
     @Test
     fun aLowBatteryAddsTheSquareAndTheReason() = runComposeUiTest {
-        val env = TestEnv.copy(battery = BatteryReading(12, false))
-        show(env, kioskController())
+        show(c = kioskController(pluggedIn.copy(ownBatteryPct = 12, ownPlugged = false)))
         assertEquals(listOf("bar", "attention"), marks())
         onNodeWithTag("baby_kiosk_attention").assertTextEquals("Needs attention: battery low · 12%")
     }
 
     @Test
-    fun aChargerPulledDuringTheRunAddsTheSquareAndTheReason() = runComposeUiTest {
-        var env by mutableStateOf(TestEnv.copy(battery = BatteryReading(64, true)))
-        val c = kioskController()
-        setContent {
-            CompositionLocalProvider(LocalUiEnv provides env) {
-                GuardedSleepTheme(Theme.DARK, forceDark = true) { BabyKioskScreen(c) }
-            }
-        }
+    fun theLowBatteryLineStartsBelowFifteenPercent() = runComposeUiTest {
+        val c =
+            kioskController(
+                pluggedIn.copy(ownBatteryPct = 15, ownPlugged = false, chargerSeen = false)
+            )
+        show(c = c)
+        assertFalse(onAllNodesWithTagExists("baby_kiosk_attention"))
+        c.babyFlow.value = c.babyFlow.value.copy(ownBatteryPct = 14)
         waitForIdle()
+        onNodeWithTag("baby_kiosk_attention").assertTextEquals("Needs attention: battery low · 14%")
+    }
+
+    @Test
+    fun aChargerPulledDuringTheRunAddsTheSquareAndTheReason() = runComposeUiTest {
+        val c = kioskController(pluggedIn)
+        show(c = c)
         assertEquals(listOf("bar"), marks())
-        env = TestEnv.copy(battery = BatteryReading(64, false))
+        c.babyFlow.value = c.babyFlow.value.copy(ownPlugged = false)
         waitForIdle()
         assertEquals(listOf("bar", "attention"), marks())
         onNodeWithTag("baby_kiosk_attention")
@@ -139,7 +152,7 @@ class KioskTests : ShotBase() {
 
     @Test
     fun unpluggedFromTheStartShowsNoSquareWhileTheBatteryIsFine() = runComposeUiTest {
-        show(TestEnv.copy(battery = BatteryReading(64, false)), kioskController())
+        show(c = kioskController(pluggedIn.copy(ownPlugged = false, chargerSeen = false)))
         assertEquals(listOf("bar"), marks())
         assertFalse(onAllNodesWithTagExists("baby_kiosk_attention"))
     }
@@ -244,6 +257,8 @@ class KioskTests : ShotBase() {
                 link = Connected,
                 parentName = "Anna's phone",
                 lastTalk = LastTalkUi("Anna's phone", WALL, 12_000),
+                ownBatteryPct = 82,
+                ownPlugged = true,
             )
         val c = kioskController(b)
         setContent {
