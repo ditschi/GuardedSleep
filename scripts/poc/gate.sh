@@ -187,6 +187,17 @@ read_baby_code() {
 	[[ -n "$text" ]] || text="$(printf '%s' "$node" | sed -n 's/.* text="\([^"]*\)" resource-id=.*/\1/p')"
 	printf '%s' "$text" | sed 's/&quot;/"/g; s/&lt;/</g; s/&gt;/>/g; s/&apos;/'"'"'/g; s/&amp;/\&/g'
 }
+# journey-setup starts from a cleared app, so it can simply run again: a fresh Maestro driver start on a busy
+# host sometimes dies in the first seconds (device offline for a moment), which says nothing about the app.
+maestro_setup() { # serial role_tag
+	local t0
+	t0="$(date +%s)"
+	maestro_run "$1" journey-setup.yaml ROLE_TAG="$2" "RELAY=$SIGNAL" "TURN=$TURN_URL" TURN_USER=poc TURN_PASS=poc && return 0
+	[[ $(($(date +%s) - t0)) -lt 30 ]] || return 1
+	log "journey-setup died in the first seconds on $1; retrying once"
+	sleep 20
+	maestro_run "$1" journey-setup.yaml ROLE_TAG="$2" "RELAY=$SIGNAL" "TURN=$TURN_URL" TURN_USER=poc TURN_PASS=poc
+}
 ac12() {
 	[[ "$HAVE_MAESTRO" == 1 ]] || {
 		log "AC-12 skipped: no maestro"
@@ -199,9 +210,8 @@ ac12() {
 		ui_clear "$s"
 		grant_all "$s"
 	done
-	local turn_env=("RELAY=$SIGNAL" "TURN=$TURN_URL" TURN_USER=poc TURN_PASS=poc)
-	maestro_run "$BABY" journey-setup.yaml ROLE_TAG=role_baby "${turn_env[@]}" || fail AC-12 "baby onboarding or Settings failed"
-	maestro_run "$PARENT" journey-setup.yaml ROLE_TAG=role_parent "${turn_env[@]}" || fail AC-12 "parent onboarding or Settings failed"
+	maestro_setup "$BABY" role_baby || fail AC-12 "baby onboarding or Settings failed"
+	maestro_setup "$PARENT" role_parent || fail AC-12 "parent onboarding or Settings failed"
 	# Owner exception (gate-ui-journeys design §2): both emulators are 10.0.2.15, so ICE only connects through
 	# the gate's TURN, which the journey set in Settings. The UI has no relay-only switch; this debug-only
 	# extra of DebugLaunchActivity sets that one network knob in the running app process (no URL, TURN,
