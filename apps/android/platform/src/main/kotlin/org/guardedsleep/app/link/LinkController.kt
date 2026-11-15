@@ -264,7 +264,7 @@ class LinkController(
 
         lateinit var runner: LinkRunner
         var autoListenDone = false
-        var lastOwnBatteryAt = Long.MIN_VALUE
+        var lastOwnBatteryAt: Long? = null
     }
 
     @Volatile private var lastReadinessAt = clock.elapsedMs()
@@ -1194,7 +1194,10 @@ class LinkController(
                     refreshReadiness()
                 }
             }
-            if (r.role == Role.BABY && nowMs - r.lastOwnBatteryAt >= OWN_BATTERY_MS) {
+            if (
+                r.role == Role.BABY &&
+                    r.lastOwnBatteryAt.let { it == null || nowMs - it >= OWN_BATTERY_MS }
+            ) {
                 // The kiosk shows the baby's own battery; the UI reads no device state itself.
                 r.lastOwnBatteryAt = nowMs
                 readiness.ownBattery()?.let { babyModel.onOwnBattery(it.pct, it.plugged) }
