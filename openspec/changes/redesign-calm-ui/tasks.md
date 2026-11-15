@@ -45,6 +45,7 @@ Branch `feat/ui-redesign` from `origin/main`. One PR per slice (design §13): gr
 - [ ] 4.3 More sheet (frames 07, 54): Stop monitoring set apart, using the confirmation of task 2.7; visible Close button; no connection switch. Verify: Robolectric test that the sheet offers no switch and that Stop opens the task 2.7 confirmation.
 - [x] 4.4 Back behaviour per `ui-appearance` "Back behaviour while monitoring" and visible Close buttons on all sheets. Verify: Robolectric back-press tests per scenario.
 - [x] 4.5 Copy for this slice in all 20 catalogues (Settings groups and rows, Open at start, read-only note, Home look, privacy line, Vibrate-only line). Verify: `just gen`, `just lint-text`, literal lint.
+- [ ] 4.6 Web Settings sub-pages and Open at start, once the web has saved connections: the web Settings stays one page with the two groups until then (it keeps one in-memory pairing, no start mode). Verify: Vitest and Playwright per page; the same tags as Android.
 
 ## 4b. One Home with both roles (PR 4b, gated on task 0.4)
 
