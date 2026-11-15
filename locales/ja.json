@@ -107,7 +107,8 @@
           "checking": "確認中"
         },
         "babyUnitDefault": "赤ちゃん用端末",
-        "parentUnitDefault": "保護者用端末"
+        "parentUnitDefault": "保護者用端末",
+        "close": "閉じる"
       },
       "role": {
         "title": "この端末はどちらですか？",
@@ -215,17 +216,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "{name}に接続",
-          "cardTitleDefault": "赤ちゃん用端末に接続"
-        },
-        "baby": {
-          "cardTitle": "見守りを開始"
-        },
         "lastUsed": "最終使用：{time}",
         "newPairing": "新しい端末を設定",
         "empty": "ペアリングされた端末はまだありません。",
-        "switchMode": "モードを切り替える"
+        "switchMode": "モードを切り替える",
+        "start": "開始",
+        "privacy": "音声は端末間で暗号化されます。アカウント不要、クラウドへの録音もありません。",
+        "vibrateOnly": "音のアラートは、この端末では振動のみになります。"
       },
       "baby": {
         "status": {
@@ -415,15 +412,15 @@
         "current": "接続：{name}",
         "change": "変更",
         "labelDefault": "{name}（デフォルト）",
-        "makeDefault": "デフォルトにする",
         "autoConnect": "アプリを開いたときに自動で接続する",
-        "removeDefault": "デフォルトを解除",
         "chooseAnother": "別の接続を選ぶ",
         "rename": "名前を変更",
         "renameTitle": "接続の名前を変更",
         "nameLabel": "名前（1～30文字、この端末内だけに保存されます）",
         "nameInvalid": "1～30文字で入力してください。",
-        "save": "保存"
+        "save": "保存",
+        "readOnlyNote": "接続を変更するには、見守りを停止してください。",
+        "inUse": "使用中"
       },
       "missed": {
         "some": "接続が切れていた間：{start}から{end}の間に{count, plural, other {#回の音}}。最も大きい音：{level}。",
@@ -454,13 +451,12 @@
           "soundDetection": "音の検知",
           "silence": "静音モード",
           "alerts": "アラート",
-          "screen": "画面",
-          "paired": "ペアリング済みの端末",
           "thisPhone": "この端末",
           "language": "言語",
           "about": "概要と制限",
           "advanced": "詳細設定",
-          "startMode": "起動時のモード"
+          "startMode": "起動時のモード",
+          "display": "表示"
         },
         "sensitivity": "感度",
         "moreSensitive": "高くする",
@@ -546,6 +542,14 @@
           "stop": "停止",
           "test": "接続アラームをテスト",
           "testWarning": "テストはアラームの最大音量で約8秒間再生されます。"
+        },
+        "openAtStart": {
+          "title": "起動時に開く",
+          "modeHint": "アプリの起動時に、この端末が開くモードです。",
+          "autoTitle": "自動で接続",
+          "autoHint": "保護者用端末は、アプリを開くたびに一度、選んだ接続で見守りを開始します。",
+          "autoNone": "自動で接続しない",
+          "defaultTitle": "既定の接続"
         }
       },
       "fgsMissing": {
@@ -690,8 +694,7 @@
     "role": {
       "title": "この端末の役割",
       "subtitle": "スマートフォン、タブレット、ノートパソコンが使えます。先に赤ちゃん用端末を設定してください。",
-      "navLabel": "役割を選択",
-      "privacyNote": "音は2台の端末の間で直接やり取りされ、録音されることはありません。"
+      "navLabel": "役割を選択"
     },
     "pair": {
       "copyHint": "5分以内に保護者用端末に貼り付けてください。チャットでは送らないでください。",

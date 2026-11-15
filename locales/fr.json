@@ -107,7 +107,8 @@
           "checking": "Vérification"
         },
         "babyUnitDefault": "Appareil bébé",
-        "parentUnitDefault": "Appareil parent"
+        "parentUnitDefault": "Appareil parent",
+        "close": "Fermer"
       },
       "role": {
         "title": "Quel appareil est-ce ?",
@@ -215,17 +216,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "Se connecter à {name}",
-          "cardTitleDefault": "Se connecter à l'appareil bébé"
-        },
-        "baby": {
-          "cardTitle": "Démarrer la surveillance"
-        },
         "lastUsed": "Dernière utilisation à {time}",
         "newPairing": "Configurer de nouveaux appareils",
         "empty": "Aucun appareil appairé pour l'instant.",
-        "switchMode": "Changer de mode"
+        "switchMode": "Changer de mode",
+        "start": "Démarrer",
+        "privacy": "Le son est chiffré entre vos appareils. Pas de compte, pas d'enregistrement dans le cloud.",
+        "vibrateOnly": "Les alertes de bruit feront seulement vibrer cet appareil."
       },
       "baby": {
         "status": {
@@ -415,15 +412,15 @@
         "current": "Connexion : {name}",
         "change": "Changer",
         "labelDefault": "{name} (par défaut)",
-        "makeDefault": "Définir par défaut",
         "autoConnect": "Se connecter automatiquement à l'ouverture de l'application",
-        "removeDefault": "Retirer par défaut",
         "chooseAnother": "Choisir une autre connexion",
         "rename": "Renommer",
         "renameTitle": "Renommer la connexion",
         "nameLabel": "Nom (1 à 30 caractères, reste sur ce téléphone)",
         "nameInvalid": "Utilisez de 1 à 30 caractères.",
-        "save": "Enregistrer"
+        "save": "Enregistrer",
+        "readOnlyNote": "Arrêtez la surveillance pour modifier les connexions.",
+        "inUse": "En cours d'utilisation"
       },
       "missed": {
         "some": "Pendant la déconnexion : {count, plural, one {1 son} many {# de sons} other {# sons}} entre {start} et {end}. Le plus fort : {level}.",
@@ -454,13 +451,12 @@
           "soundDetection": "Détection du son",
           "silence": "Mode silencieux",
           "alerts": "Alertes",
-          "screen": "Écran",
-          "paired": "Appareil appairé",
           "thisPhone": "Cet appareil",
           "language": "Langue",
           "about": "À propos et limites",
           "advanced": "Avancé",
-          "startMode": "Mode de démarrage"
+          "startMode": "Mode de démarrage",
+          "display": "Affichage"
         },
         "sensitivity": "Sensibilité",
         "moreSensitive": "Plus sensible",
@@ -550,6 +546,14 @@
           "stop": "Arrêter",
           "test": "Tester l'alarme de connexion",
           "testWarning": "Le test joue à pleine puissance d'alarme pendant environ 8 secondes."
+        },
+        "openAtStart": {
+          "title": "Ouverture au démarrage",
+          "modeHint": "Le mode dans lequel cet appareil s'ouvre au lancement de l'application.",
+          "autoTitle": "Connexion automatique",
+          "autoHint": "L'appareil parent lance la surveillance avec la connexion choisie, une fois à chaque ouverture de l'application.",
+          "autoNone": "Ne pas se connecter automatiquement",
+          "defaultTitle": "Connexion par défaut"
         }
       },
       "fgsMissing": {

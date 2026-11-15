@@ -107,7 +107,8 @@
           "checking": "Se verifică"
         },
         "babyUnitDefault": "Dispozitivul bebelușului",
-        "parentUnitDefault": "Dispozitivul părintelui"
+        "parentUnitDefault": "Dispozitivul părintelui",
+        "close": "Închide"
       },
       "role": {
         "title": "Ce dispozitiv este acesta?",
@@ -215,17 +216,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "Conectează-te la {name}",
-          "cardTitleDefault": "Conectează-te la dispozitivul bebelușului"
-        },
-        "baby": {
-          "cardTitle": "Pornește monitorizarea"
-        },
         "lastUsed": "Folosit ultima dată {time}",
         "newPairing": "Configurează dispozitive noi",
         "empty": "Niciun dispozitiv asociat încă.",
-        "switchMode": "Schimbă modul"
+        "switchMode": "Schimbă modul",
+        "start": "Pornește",
+        "privacy": "Sunetul este criptat între dispozitivele tale. Fără cont, fără înregistrare în cloud.",
+        "vibrateOnly": "Alertele de zgomot vor face doar ca acest dispozitiv să vibreze."
       },
       "baby": {
         "status": {
@@ -415,15 +412,15 @@
         "current": "Conexiune: {name}",
         "change": "Schimbă",
         "labelDefault": "{name} (implicită)",
-        "makeDefault": "Setează ca implicită",
         "autoConnect": "Conectare automată la deschiderea aplicației",
-        "removeDefault": "Elimină implicita",
         "chooseAnother": "Alege altă conexiune",
         "rename": "Redenumește",
         "renameTitle": "Redenumește conexiunea",
         "nameLabel": "Nume (1–30 de caractere, rămâne pe acest telefon)",
         "nameInvalid": "Folosește între 1 și 30 de caractere.",
-        "save": "Salvează"
+        "save": "Salvează",
+        "readOnlyNote": "Oprește monitorizarea ca să modifici conexiunile.",
+        "inUse": "În uz"
       },
       "missed": {
         "some": "În timpul deconectării: {count, plural, one {1 sunet} few {# sunete} other {# de sunete}} între {start} și {end}. Cel mai puternic: {level}.",
@@ -454,13 +451,12 @@
           "soundDetection": "Detectarea sunetului",
           "silence": "Mod silențios",
           "alerts": "Alerte",
-          "screen": "Ecran",
-          "paired": "Dispozitiv asociat",
           "thisPhone": "Acest dispozitiv",
           "language": "Limbă",
           "about": "Despre și limite",
           "advanced": "Avansat",
-          "startMode": "Modul de pornire"
+          "startMode": "Modul de pornire",
+          "display": "Afișare"
         },
         "sensitivity": "Sensibilitate",
         "moreSensitive": "Mai sensibil",
@@ -546,6 +542,14 @@
           "stop": "Oprește",
           "test": "Testează alarma de conexiune",
           "testWarning": "Testul se aude la volumul maxim al alarmei timp de aproximativ 8 secunde."
+        },
+        "openAtStart": {
+          "title": "Deschidere la pornire",
+          "modeHint": "În ce mod se deschide acest dispozitiv când pornește aplicația.",
+          "autoTitle": "Conectare automată",
+          "autoHint": "Dispozitivul părintelui pornește monitorizarea cu conexiunea aleasă, o dată la fiecare deschidere a aplicației.",
+          "autoNone": "Fără conectare automată",
+          "defaultTitle": "Conexiunea implicită"
         }
       },
       "fgsMissing": {
@@ -690,8 +694,7 @@
     "role": {
       "title": "Folosește acest dispozitiv ca",
       "subtitle": "Telefon, tabletă sau laptop. Configurează mai întâi dispozitivul bebelușului.",
-      "navLabel": "Alege un rol",
-      "privacyNote": "Sunetul merge direct între cele două dispozitive ale tale și nu este niciodată înregistrat."
+      "navLabel": "Alege un rol"
     },
     "pair": {
       "copyHint": "Lipește-l pe dispozitivul părintelui în 5 minute. Nu-l trimite într-un chat.",
