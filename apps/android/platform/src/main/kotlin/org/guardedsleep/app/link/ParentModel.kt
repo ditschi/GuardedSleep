@@ -73,7 +73,6 @@ class ParentModel(
     private var reconnectWall: Long? = null
     private var awaitingMissedUntil: Long? = null
     private var restoredAfterMs: Long? = null
-    private var restoredUntil: Long? = null
 
     private val tracker = NoiseTracker()
     private var noiseSinceWall: Long? = null
@@ -134,7 +133,6 @@ class ParentModel(
         peerAbsentSince = null
         awaitingMissedUntil = null
         restoredAfterMs = null
-        restoredUntil = null
         tracker.reset()
         noiseSinceWall = null
         noiseLastWall = null
@@ -234,6 +232,9 @@ class ParentModel(
                 quietSinceWall = null
                 awaitingMissedUntil = null
                 quality = LinkQuality.UNKNOWN
+                // A new outage replaces the "Connected again" card and its sound result.
+                restoredAfterMs = null
+                missed = null
             }
         }
         if (next != LinkPhase.CONNECTED) quietSinceWall = null
@@ -248,7 +249,6 @@ class ParentModel(
             is LinkEvent.LinkLost -> sink.linkLost(event.downMs.toLong())
             is LinkEvent.LinkRestored -> {
                 restoredAfterMs = event.downMs.toLong()
-                restoredUntil = now + AlertPolicy.RESTORED_NOTICE_MS
                 sink.notice(Notice.LinkRestored(event.downMs.toLong()))
             }
             is LinkEvent.SecurityWarning -> {
@@ -363,12 +363,6 @@ class ParentModel(
             clearNoiseEventFlags()
             sink.noiseEnded()
         }
-        restoredUntil
-            ?.takeIf { now >= it }
-            ?.let {
-                restoredUntil = null
-                restoredAfterMs = null
-            }
         awaitingMissedUntil
             ?.takeIf { now >= it }
             ?.let {
@@ -479,6 +473,14 @@ class ParentModel(
         silenceRequest = SilenceRequest.PENDING
         silenceRequestedAt = now
         publish(now)
+    }
+
+    /** OK on the "Connected again" card: the card and its sound result go together. */
+    @Synchronized
+    fun dismissRestored() {
+        restoredAfterMs = null
+        missed = null
+        publish(clock.elapsedMs())
     }
 
     @Synchronized

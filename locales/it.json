@@ -283,31 +283,13 @@
         "unlockedHint": "Per usare questo dispositivo come dispositivo genitore, interrompi il monitoraggio e scegli il dispositivo nella schermata iniziale."
       },
       "link": {
-        "connected": "Connesso a {name}",
-        "connecting": "Connessione a {name}…",
-        "reconnecting": "Riconnessione…",
-        "cantReach": "{name} non raggiungibile: riprovo",
-        "lostFor": "Nessuna connessione da {duration}",
-        "babyStopped": "{name} ha interrotto il monitoraggio",
         "idle": "Nessun monitoraggio",
         "weak": "Connessione debole: l'audio potrebbe interrompersi",
-        "restoredAfter": "Di nuovo connesso dopo {duration}. Puoi sentire di nuovo il tuo bambino.",
         "tryNow": "Riprova ora",
         "pairAgain": "Associa di nuovo",
-        "connectedDefault": "Connesso al dispositivo del bambino",
-        "connectingDefault": "Connessione al dispositivo del bambino…",
-        "cantReachDefault": "Dispositivo del bambino non raggiungibile: riprovo",
-        "babyStoppedDefault": "Il dispositivo del bambino ha interrotto il monitoraggio",
         "stalePairingHint": "Se hai associato di nuovo il dispositivo del bambino, inquadra il suo nuovo codice."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Nessuna connessione a {name}",
-          "titleUrgent": "Nessuna connessione a {name}!",
-          "body": "Non sentirai il tuo bambino finché i dispositivi non si riconnettono.",
-          "titleDefault": "Nessuna connessione al dispositivo del bambino",
-          "titleUrgentDefault": "Nessuna connessione al dispositivo del bambino!"
-        },
         "stopped": {
           "title": "{name} ha interrotto il monitoraggio",
           "body": "Qualcuno ha interrotto il monitoraggio sul dispositivo del bambino. Non riceverai avvisi.",
@@ -324,9 +306,7 @@
           "title": "Di nuovo connesso"
         },
         "ack": "Sto controllando",
-        "ackNote": "Suono disattivato per {time}. Ti avviseremo di nuovo se non è ancora connesso.",
-        "soundNote": "Un tono di allarme leggero si ripete finché non controlli.",
-        "soundNoteUrgent": "L'allarme suona finché non controlli."
+        "ackNote": "Suono disattivato per {time}. Ti avviseremo di nuovo se non è ancora connesso."
       },
       "parent": {
         "allQuietSince": "Tutto tranquillo da {time}",
@@ -441,7 +421,8 @@
         "babyBody": "Il dispositivo del genitore non riceverà più avvisi.",
         "confirm": "Interrompi",
         "cancel": "Continua a monitorare",
-        "parentBodyDefault": "Non riceverai più avvisi dal dispositivo del bambino."
+        "parentBodyDefault": "Non riceverai più avvisi dal dispositivo del bambino.",
+        "titleNamed": "Interrompere il monitoraggio «{name}»?"
       },
       "forget": {
         "title": "Dimenticare {name}?",
@@ -643,6 +624,74 @@
           "chime": "Suono prima che parli un genitore",
           "checklist": "I genitori possono parlare tramite questo dispositivo. Puoi disattivarlo nelle Impostazioni."
         }
+      },
+      "status": {
+        "connected": "Connesso",
+        "connecting": "Connessione in corso",
+        "reconnecting": "Riconnessione in corso",
+        "notConnectedYet": "Non ancora connesso",
+        "cantReach": "Non raggiungibile",
+        "couldntConnect": "Impossibile connettersi",
+        "noConnection": "Nessuna connessione",
+        "stillNoConnection": "Ancora nessuna connessione",
+        "stopped": "Interrotto",
+        "withName": "{state} · {name}",
+        "subConnecting": "In attesa del dispositivo del bambino. Il monitoraggio inizia quando risponde.",
+        "subReconnecting": "Brevi interruzioni sono normali.",
+        "subNotAnswered": "Il dispositivo del bambino non risponde. Il monitoraggio è avviato?",
+        "subStillTrying": "Sto ancora provando. Se non torna presto, questo dispositivo vibra e mostra un avviso.",
+        "subStopped": "Controlli sul dispositivo del bambino chi l'ha interrotto."
+      },
+      "connAlert": {
+        "labelVibrating": "Il telefono sta vibrando",
+        "labelLoud": "Allarme forte in corso",
+        "labelPaused": "Allarme in pausa",
+        "headlineCheck": "Controlli il bambino",
+        "nextLoud": "Allarme forte alle {time} se ancora senza connessione.",
+        "nextBack": "Torna alle {time} se ancora senza connessione.",
+        "cantHear": "Non sente il bambino.",
+        "neverStarted": "Il monitoraggio non è mai partito. Non sente il bambino.",
+        "goNow": "Vada subito dal bambino. L'allarme suona finché non tocca «Sto controllando».",
+        "pausedBody": "Continua a non sentire il bambino.",
+        "counterLabel": "senza connessione",
+        "counterA11y": "{duration} senza connessione",
+        "spokenMin": "{count, plural, one {# minuto} many {# di minuti} other {# minuti}}",
+        "spokenSec": "{count, plural, one {# secondo} many {# di secondi} other {# secondi}}",
+        "progressVibrating": "Il telefono vibra ora",
+        "progressLoud": "Allarme forte ora",
+        "progressPaused": "In pausa mentre controlla",
+        "causeLabel": "Causa probabile",
+        "moreSteps": "Altri passaggi",
+        "fewerSteps": "Meno passaggi",
+        "wrongConnection": "Connessione sbagliata?",
+        "dndNote": "L'allarme suona anche in Non disturbare.",
+        "dndMissing": "Non disturbare può bloccare questo allarme.",
+        "dndOpen": "Apri impostazione",
+        "cause": {
+          "peerAbsent": {
+            "line": "Il dispositivo del bambino non è online.",
+            "step": "Il dispositivo del bambino è acceso, in carica e mostra GuardedSleep?",
+            "more": "È collegato al Wi-Fi? Altrimenti riapra GuardedSleep sul dispositivo."
+          },
+          "serverUnreachable": {
+            "line": "Questo telefono non ha internet.",
+            "step": "Controlli il Wi-Fi o i dati mobili di questo telefono.",
+            "more": "Disattivi la modalità aereo. Si avvicini al router."
+          },
+          "mediaBlocked": {
+            "line": "La connessione è bloccata su questa rete.",
+            "step": "Un Wi-Fi ospite o d'albergo può bloccarla. Passi questo telefono ai dati mobili.",
+            "more": "Poi tocchi «Riprova ora»."
+          }
+        },
+        "restored": {
+          "body": "Il monitoraggio è stato interrotto per {duration}.",
+          "none": "Il dispositivo del bambino non ha sentito suoni in quel periodo.",
+          "some": "{count, plural, one {Ha sentito 1 suono} many {Ha sentito # di suoni} other {Ha sentito # suoni}}.",
+          "unknown": "Non sappiamo se ci siano stati suoni."
+        },
+        "labelAlerting": "Questo dispositivo sta emettendo un avviso",
+        "progressAlerting": "Avviso in corso"
       }
     }
   },

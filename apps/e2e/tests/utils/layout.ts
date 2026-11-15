@@ -86,6 +86,8 @@ export async function fitProblems(page: Page): Promise<FitProblem[]> {
       }
 
       let inFixedLayer = false;
+      // A scrolling box inside the fixed layer (the alert template's body) keeps its content reachable.
+      let scrollsInside = false;
       for (let node: Element | null = el; node && node !== root; node = node.parentElement) {
         const s = getComputedStyle(node);
         if (node !== el) {
@@ -103,9 +105,10 @@ export async function fitProblems(page: Page): Promise<FitProblem[]> {
             problems.push(`${name(el)} is cut off vertically by ${name(node)}`);
           }
         }
+        if (node !== el && scrolls(s.overflowY)) scrollsInside = true;
         if (s.position === "fixed") {
           // A fixed layer scrolls only when it says so; otherwise what sticks out is lost.
-          const reachable = scrolls(s.overflowY);
+          const reachable = scrolls(s.overflowY) || scrollsInside;
           if (!reachable) inFixedLayer = true;
         }
       }

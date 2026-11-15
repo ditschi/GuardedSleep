@@ -9,7 +9,6 @@ import Dialog from "./Dialog.svelte";
 import List from "./List.svelte";
 import ListRow from "./ListRow.svelte";
 import Meter from "./Meter.svelte";
-import StatusBar from "./StatusBar.svelte";
 import Switch from "./Switch.svelte";
 import { meterBars } from "./meter";
 
@@ -36,20 +35,6 @@ describe("base components render their label", () => {
   it("Card", () => {
     render(Card, { children: text("Pairing code") });
     expect(screen.getByText("Pairing code")).toBeInTheDocument();
-  });
-
-  it("StatusBar carries tone, icon and text", () => {
-    render(StatusBar, { tone: "bad", label: "Connection lost", assertive: true, testid: "bar" });
-    const bar = screen.getByTestId("bar");
-    expect(bar).toHaveTextContent("Connection lost");
-    expect(bar).toHaveAttribute("data-tone", "bad");
-    expect(bar).toHaveAttribute("role", "alert");
-    expect(bar.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
-  });
-
-  it("StatusBar is polite unless assertive", () => {
-    render(StatusBar, { tone: "ok", label: "Connected" });
-    expect(screen.getByRole("status")).toHaveTextContent("Connected");
   });
 
   it("Chip", () => {

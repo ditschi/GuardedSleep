@@ -1076,6 +1076,8 @@ class LinkController(
 
     override fun dismissMissedEvents() = parentModel.dismissMissed()
 
+    override fun dismissRestored() = parentModel.dismissRestored()
+
     override fun setTalk(pressed: Boolean) {
         val r = run?.takeIf { it.role == Role.PARENT } ?: return
         if (!pressed) {

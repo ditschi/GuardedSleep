@@ -27,7 +27,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -50,94 +49,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.withTimeoutOrNull
 import org.guardedsleep.app.contract.R
-import org.guardedsleep.app.ui.model.LinkPhase
-import org.guardedsleep.app.ui.model.LinkUi
 import org.guardedsleep.app.ui.model.ListenMode
 import org.guardedsleep.app.ui.theme.LocalAppColors
 import org.guardedsleep.app.ui.theme.StateColors
-
-/** Visual spec of the connection bar for one link state (alpha-ux-flows §3.6, §6.1). */
-private data class BarSpec(
-    val glyph: Glyph,
-    val extra: Glyph?,
-    val tone: Tone,
-    val text: String,
-    val assertive: Boolean,
-    val pulse: Boolean,
-)
-
-/**
- * Parent ambient bar: never hidden while monitoring; colour + glyph + text for every phase and
- * level.
- */
-@Composable
-fun LinkBar(
-    link: LinkUi,
-    name: String?,
-    modifier: Modifier = Modifier,
-    tag: String = "parent_ambient_bar",
-    backgroundProtection: Boolean = true,
-) {
-    val now by rememberElapsedNow()
-    val sinceMs = link.lastAliveElapsedMs?.let { now - it } ?: 0L
-    // A custom unit name is spliced in; without one the copy says "the baby unit" with correct
-    // grammar.
-    val connected =
-        if (name != null) stringResource(R.string.native_ui_link_connected, name)
-        else stringResource(R.string.native_ui_link_connected_default)
-    val connecting =
-        if (name != null) stringResource(R.string.native_ui_link_connecting, name)
-        else stringResource(R.string.native_ui_link_connecting_default)
-    val reconnecting = stringResource(R.string.native_ui_link_reconnecting)
-    val cantReach =
-        if (name != null) stringResource(R.string.native_ui_link_cant_reach, name)
-        else stringResource(R.string.native_ui_link_cant_reach_default)
-    val lostFor = stringResource(R.string.native_ui_link_lost_for, formatDuration(sinceMs))
-    val stopped =
-        if (name != null) stringResource(R.string.native_ui_link_baby_stopped, name)
-        else stringResource(R.string.native_ui_link_baby_stopped_default)
-    val needsPairing =
-        stringResource(
-            if (link.failureKey == "update_required") R.string.core_update_required
-            else R.string.core_pairing_key_mismatch
-        )
-    val idle = stringResource(R.string.native_ui_link_idle)
-    val noBackground = stringResource(R.string.native_ui_fgs_missing_bar)
-    val spec =
-        if (!backgroundProtection)
-            BarSpec(Glyph.BROKEN_LINK, Glyph.EXCLAIM, Tone.BAD, noBackground, true, true)
-        else
-            when (link.phase) {
-                LinkPhase.CONNECTED -> BarSpec(Glyph.LINK, null, Tone.OK, connected, false, false)
-                LinkPhase.PEER_STOPPED ->
-                    BarSpec(Glyph.PAUSE, null, Tone.NEUTRAL, stopped, true, false)
-                LinkPhase.FAILED_NEEDS_USER ->
-                    BarSpec(Glyph.BROKEN_LINK, Glyph.EXCLAIM, Tone.BAD, needsPairing, true, false)
-                LinkPhase.IDLE,
-                LinkPhase.STOPPED -> BarSpec(Glyph.PAUSE, null, Tone.NEUTRAL, idle, false, false)
-                LinkPhase.CONNECTING,
-                LinkPhase.RECONNECTING ->
-                    when {
-                        link.level >= 2 ->
-                            BarSpec(Glyph.BROKEN_LINK, Glyph.EXCLAIM, Tone.BAD, lostFor, true, true)
-                        link.level == 1 ->
-                            BarSpec(Glyph.BROKEN_LINK, null, Tone.WARN, cantReach, false, false)
-                        link.phase == LinkPhase.CONNECTING && link.lastAliveElapsedMs == null ->
-                            BarSpec(Glyph.REFRESH, null, Tone.INFO, connecting, false, false)
-                        else -> BarSpec(Glyph.REFRESH, null, Tone.INFO, reconnecting, false, false)
-                    }
-            }
-    val alpha = if (spec.pulse) pulseAlpha(0.8f, 1f, 2500) else 1f
-    AmbientBar(
-        spec.glyph,
-        spec.text,
-        spec.tone,
-        tag,
-        modifier.alpha(alpha),
-        spec.assertive,
-        spec.extra,
-    )
-}
 
 /** Slow alpha pulse; static when the user (or a test) asks for reduced motion. */
 @Composable

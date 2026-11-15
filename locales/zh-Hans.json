@@ -283,31 +283,13 @@
         "unlockedHint": "如要将此设备用作家长设备，请先停止监护，然后在开始屏幕上选择它。"
       },
       "link": {
-        "connected": "已连接到 {name}",
-        "connecting": "正在连接 {name}…",
-        "reconnecting": "正在重新连接…",
-        "cantReach": "无法连接 {name}，仍在重试",
-        "lostFor": "已断开 {duration}",
-        "babyStopped": "{name} 已停止监护",
         "idle": "未在监护",
         "weak": "连接较弱，声音可能断续",
-        "restoredAfter": "断开 {duration} 后已重新连接。您又能听到孩子了。",
         "tryNow": "立即重试",
         "pairAgain": "重新配对",
-        "connectedDefault": "已连接到宝宝设备",
-        "connectingDefault": "正在连接宝宝设备…",
-        "cantReachDefault": "无法连接宝宝设备，仍在重试",
-        "babyStoppedDefault": "宝宝设备已停止监护",
         "stalePairingHint": "如果您重新配对了宝宝设备，请扫描它的新码。"
       },
       "linkAlarm": {
-        "lost": {
-          "title": "与 {name} 失去连接",
-          "titleUrgent": "与 {name} 失去连接！",
-          "body": "在设备重新连接之前，您听不到孩子的声音。",
-          "titleDefault": "与宝宝设备失去连接",
-          "titleUrgentDefault": "与宝宝设备失去连接！"
-        },
         "stopped": {
           "title": "{name} 已停止监护",
           "body": "有人在宝宝设备上停止了监护。您将收不到提醒。",
@@ -324,9 +306,7 @@
           "title": "已重新连接"
         },
         "ack": "我在查看",
-        "ackNote": "声音已关闭 {time}。如果仍未连接，我们会再次提醒您。",
-        "soundNote": "柔和的警报音会重复，直到您确认查看。",
-        "soundNoteUrgent": "警报会一直响，直到您确认查看。"
+        "ackNote": "声音已关闭 {time}。如果仍未连接，我们会再次提醒您。"
       },
       "parent": {
         "allQuietSince": "自 {time} 起一直安静",
@@ -441,7 +421,8 @@
         "babyBody": "家长设备将不再收到提醒。",
         "confirm": "停止",
         "cancel": "继续监护",
-        "parentBodyDefault": "您将收不到来自宝宝设备的提醒。"
+        "parentBodyDefault": "您将收不到来自宝宝设备的提醒。",
+        "titleNamed": "停止监护“{name}”？"
       },
       "forget": {
         "title": "忘记 {name}？",
@@ -643,6 +624,74 @@
           "chime": "家长说话前播放提示音",
           "checklist": "家长可以通过此设备说话。你可以在设置中关闭。"
         }
+      },
+      "status": {
+        "connected": "已连接",
+        "connecting": "正在连接",
+        "reconnecting": "正在重新连接",
+        "notConnectedYet": "尚未连接",
+        "cantReach": "无法联系",
+        "couldntConnect": "无法连接",
+        "noConnection": "没有连接",
+        "stillNoConnection": "仍然没有连接",
+        "stopped": "已停止",
+        "withName": "{state} · {name}",
+        "subConnecting": "正在等待宝宝设备。它回应后即开始监护。",
+        "subReconnecting": "短暂中断是正常的。",
+        "subNotAnswered": "宝宝设备没有回应。那台设备上已开始监护了吗？",
+        "subStillTrying": "仍在尝试。若很快没有恢复，此设备会振动并显示警报。",
+        "subStopped": "请在宝宝设备上查看是谁停止了监护。"
+      },
+      "connAlert": {
+        "labelVibrating": "您的手机正在振动",
+        "labelLoud": "大声警报响起",
+        "labelPaused": "警报已暂停",
+        "headlineCheck": "请去看看孩子",
+        "nextLoud": "若仍无连接，{time} 将响起大声警报。",
+        "nextBack": "若仍无连接，{time} 恢复。",
+        "cantHear": "您听不到孩子的声音。",
+        "neverStarted": "监护从未开始。您听不到孩子的声音。",
+        "goNow": "请立即去看孩子。点击“我在查看”前，警报会一直响。",
+        "pausedBody": "您仍然听不到孩子的声音。",
+        "counterLabel": "无连接",
+        "counterA11y": "无连接 {duration}",
+        "spokenMin": "{count, plural, other {# 分钟}}",
+        "spokenSec": "{count, plural, other {# 秒}}",
+        "progressVibrating": "手机正在振动",
+        "progressLoud": "大声警报中",
+        "progressPaused": "您查看期间已暂停",
+        "causeLabel": "可能的原因",
+        "moreSteps": "更多步骤",
+        "fewerSteps": "收起步骤",
+        "wrongConnection": "连接选错了？",
+        "dndNote": "在勿扰模式下警报也会响。",
+        "dndMissing": "勿扰模式可能会屏蔽此警报。",
+        "dndOpen": "打开设置",
+        "cause": {
+          "peerAbsent": {
+            "line": "宝宝设备不在线。",
+            "step": "宝宝设备是否已开机、接通电源并显示 GuardedSleep？",
+            "more": "它连上 Wi-Fi 了吗？没有的话，请在上面重新打开 GuardedSleep。"
+          },
+          "serverUnreachable": {
+            "line": "这部手机没有网络。",
+            "step": "请检查这部手机的 Wi-Fi 或移动数据。",
+            "more": "关闭飞行模式。靠近路由器。"
+          },
+          "mediaBlocked": {
+            "line": "此网络屏蔽了连接。",
+            "step": "访客或酒店 Wi-Fi 可能会屏蔽。请将这部手机切换到移动数据。",
+            "more": "然后点击“立即重试”。"
+          }
+        },
+        "restored": {
+          "body": "监护中断了 {duration}。",
+          "none": "这段时间里宝宝设备没有听到任何声音。",
+          "some": "{count, plural, other {听到了 # 次声音}}。",
+          "unknown": "我们不知道是否有声音。"
+        },
+        "labelAlerting": "此设备正在发出警报",
+        "progressAlerting": "警报正在响起"
       }
     }
   },

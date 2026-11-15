@@ -283,31 +283,13 @@
         "unlockedHint": "이 기기를 부모 기기로 사용하려면 모니터링을 중지하고 시작 화면에서 선택하세요."
       },
       "link": {
-        "connected": "{name}에 연결됨",
-        "connecting": "{name}에 연결하는 중…",
-        "reconnecting": "다시 연결하는 중…",
-        "cantReach": "{name}에 닿지 않아요. 계속 시도 중이에요",
-        "lostFor": "{duration} 동안 연결되지 않았어요",
-        "babyStopped": "{name}이(가) 지켜보기를 멈췄어요",
         "idle": "지켜보지 않는 중",
         "weak": "연결이 약해요. 소리가 끊길 수 있어요",
-        "restoredAfter": "{duration} 만에 다시 연결되었어요. 아이의 소리를 다시 들을 수 있어요.",
         "tryNow": "지금 시도",
         "pairAgain": "다시 페어링",
-        "connectedDefault": "아기 기기에 연결됨",
-        "connectingDefault": "아기 기기에 연결하는 중…",
-        "cantReachDefault": "아기 기기에 닿지 않아요. 계속 시도 중이에요",
-        "babyStoppedDefault": "아기 기기가 지켜보기를 멈췄어요",
         "stalePairingHint": "아기 기기를 다시 페어링했다면 새 코드를 스캔하세요."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "{name}과(와) 연결되지 않아요",
-          "titleUrgent": "{name}과(와) 연결되지 않아요!",
-          "body": "기기가 다시 연결될 때까지 아이의 소리가 들리지 않아요.",
-          "titleDefault": "아기 기기와 연결되지 않아요",
-          "titleUrgentDefault": "아기 기기와 연결되지 않아요!"
-        },
         "stopped": {
           "title": "{name}이(가) 지켜보기를 멈췄어요",
           "body": "누군가 아기 기기에서 지켜보기를 중지했어요. 알림을 받지 못해요.",
@@ -324,9 +306,7 @@
           "title": "다시 연결됨"
         },
         "ack": "확인하고 있어요",
-        "ackNote": "{time} 동안 소리를 꺼요. 그때까지 연결되지 않으면 다시 알려드릴게요.",
-        "soundNote": "확인할 때까지 부드러운 경보음이 반복돼요.",
-        "soundNoteUrgent": "확인할 때까지 경보가 계속 울려요."
+        "ackNote": "{time} 동안 소리를 꺼요. 그때까지 연결되지 않으면 다시 알려드릴게요."
       },
       "parent": {
         "allQuietSince": "{time}부터 계속 조용해요",
@@ -441,7 +421,8 @@
         "babyBody": "부모 기기가 더 이상 알림을 받지 못해요.",
         "confirm": "중지",
         "cancel": "계속 지켜보기",
-        "parentBodyDefault": "아기 기기의 알림을 받지 못해요."
+        "parentBodyDefault": "아기 기기의 알림을 받지 못해요.",
+        "titleNamed": "‘{name}’ 모니터링을 중지할까요?"
       },
       "forget": {
         "title": "{name}을(를) 삭제할까요?",
@@ -643,6 +624,74 @@
           "chime": "부모가 말하기 전에 알림음 재생",
           "checklist": "부모가 이 기기를 통해 말할 수 있습니다. 설정에서 끌 수 있습니다."
         }
+      },
+      "status": {
+        "connected": "연결됨",
+        "connecting": "연결 중",
+        "reconnecting": "다시 연결 중",
+        "notConnectedYet": "아직 연결되지 않음",
+        "cantReach": "연결할 수 없음",
+        "couldntConnect": "연결하지 못함",
+        "noConnection": "연결 없음",
+        "stillNoConnection": "여전히 연결 없음",
+        "stopped": "중지됨",
+        "withName": "{state} · {name}",
+        "subConnecting": "아기 기기를 기다리는 중입니다. 응답하면 모니터링이 시작됩니다.",
+        "subReconnecting": "잠깐 끊기는 것은 정상입니다.",
+        "subNotAnswered": "아기 기기가 응답하지 않습니다. 그 기기에서 모니터링을 시작했나요?",
+        "subStillTrying": "계속 시도하는 중입니다. 곧 복구되지 않으면 이 기기가 진동하며 경고를 표시합니다.",
+        "subStopped": "아기 기기에서 누가 중지했는지 확인하세요."
+      },
+      "connAlert": {
+        "labelVibrating": "휴대전화가 진동 중입니다",
+        "labelLoud": "큰 소리 알람이 울리는 중",
+        "labelPaused": "알람 일시 중지됨",
+        "headlineCheck": "아이를 확인해 주세요",
+        "nextLoud": "계속 연결되지 않으면 {time}에 큰 소리 알람이 울립니다.",
+        "nextBack": "계속 연결되지 않으면 {time}에 다시 시작됩니다.",
+        "cantHear": "아이 소리를 들을 수 없습니다.",
+        "neverStarted": "모니터링이 시작된 적이 없습니다. 아이 소리를 들을 수 없습니다.",
+        "goNow": "지금 아이에게 가 보세요. ‘확인 중’을 누를 때까지 알람이 울립니다.",
+        "pausedBody": "아직 아이 소리를 들을 수 없습니다.",
+        "counterLabel": "연결 없음",
+        "counterA11y": "{duration} 동안 연결 없음",
+        "spokenMin": "{count, plural, other {#분}}",
+        "spokenSec": "{count, plural, other {#초}}",
+        "progressVibrating": "휴대전화 진동 중",
+        "progressLoud": "큰 소리 알람 중",
+        "progressPaused": "확인하는 동안 일시 중지",
+        "causeLabel": "가능한 원인",
+        "moreSteps": "추가 단계",
+        "fewerSteps": "단계 접기",
+        "wrongConnection": "연결이 잘못되었나요?",
+        "dndNote": "방해 금지 모드에서도 알람이 울립니다.",
+        "dndMissing": "방해 금지 모드가 이 알람을 막을 수 있습니다.",
+        "dndOpen": "설정 열기",
+        "cause": {
+          "peerAbsent": {
+            "line": "아기 기기가 온라인이 아닙니다.",
+            "step": "아기 기기가 켜져 있고 충전 중이며 GuardedSleep이 표시되고 있나요?",
+            "more": "Wi-Fi에 연결되어 있나요? 아니라면 그 기기에서 GuardedSleep을 다시 여세요."
+          },
+          "serverUnreachable": {
+            "line": "이 휴대전화에 인터넷이 없습니다.",
+            "step": "이 휴대전화의 Wi-Fi 또는 모바일 데이터를 확인하세요.",
+            "more": "비행기 모드를 끄세요. 공유기에 가까이 가세요."
+          },
+          "mediaBlocked": {
+            "line": "이 네트워크에서 연결이 차단되었습니다.",
+            "step": "게스트·호텔 Wi-Fi는 차단할 수 있습니다. 이 휴대전화를 모바일 데이터로 바꾸세요.",
+            "more": "그런 다음 ‘지금 다시 시도’를 누르세요."
+          }
+        },
+        "restored": {
+          "body": "모니터링이 {duration} 동안 중단되었습니다.",
+          "none": "그동안 아기 기기에는 아무 소리도 들리지 않았습니다.",
+          "some": "{count, plural, other {소리가 #번 들렸습니다}}.",
+          "unknown": "소리가 있었는지는 알 수 없습니다."
+        },
+        "labelAlerting": "이 기기에서 알림이 울리는 중입니다",
+        "progressAlerting": "알림 울리는 중"
       }
     }
   },

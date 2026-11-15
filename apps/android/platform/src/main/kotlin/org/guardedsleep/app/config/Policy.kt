@@ -34,7 +34,9 @@ object AlertPolicy {
     /** Locked listening stops by itself (alpha-ux-flows §3.8). */
     const val LISTEN_MAX_MS = 60L * 60_000L
 
-    /** "Connected again after m:ss" stays visible this long. */
+    /**
+     * The "Connected again" notification goes away after this long; the in-app card stays until OK.
+     */
     const val RESTORED_NOTICE_MS = 10_000L
 
     /** The listen the core starts after a talk (`TALK_AFTER_LISTEN_MS`), for the countdown line. */

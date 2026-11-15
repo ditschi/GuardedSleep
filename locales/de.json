@@ -283,31 +283,13 @@
         "unlockedHint": "Um dieses Gerät als Elterngerät zu nutzen, beenden Sie die Überwachung und wählen Sie es auf dem Startbildschirm."
       },
       "link": {
-        "connected": "Mit {name} verbunden",
-        "connecting": "Verbindung zu {name} wird aufgebaut …",
-        "reconnecting": "Verbindung wird neu aufgebaut …",
-        "cantReach": "{name} nicht erreichbar — es wird weiter versucht",
-        "lostFor": "Seit {duration} keine Verbindung",
-        "babyStopped": "{name} hat die Überwachung beendet",
         "idle": "Keine Überwachung",
         "weak": "Schwache Verbindung — der Ton kann aussetzen",
-        "restoredAfter": "Nach {duration} wieder verbunden. Sie hören Ihr Kind wieder.",
         "tryNow": "Jetzt versuchen",
         "pairAgain": "Erneut koppeln",
-        "connectedDefault": "Mit dem Babygerät verbunden",
-        "connectingDefault": "Verbindung zum Babygerät wird aufgebaut …",
-        "cantReachDefault": "Babygerät nicht erreichbar — es wird weiter versucht",
-        "babyStoppedDefault": "Das Babygerät hat die Überwachung beendet",
         "stalePairingHint": "Wenn Sie das Babygerät neu gekoppelt haben, scannen Sie seinen neuen Code."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Keine Verbindung zu {name}",
-          "titleUrgent": "Keine Verbindung zu {name}!",
-          "body": "Sie hören Ihr Kind erst wieder, wenn die Verbindung wieder steht.",
-          "titleDefault": "Keine Verbindung zum Babygerät",
-          "titleUrgentDefault": "Keine Verbindung zum Babygerät!"
-        },
         "stopped": {
           "title": "{name} hat die Überwachung beendet",
           "body": "Jemand hat die Überwachung auf dem Babygerät beendet. Sie erhalten keine Alarme.",
@@ -324,9 +306,7 @@
           "title": "Wieder verbunden"
         },
         "ack": "Ich schaue nach",
-        "ackNote": "Ton für {time} aus. Wir alarmieren Sie erneut, falls noch keine Verbindung besteht.",
-        "soundNote": "Ein leiser Alarmton wiederholt sich, bis Sie nachsehen.",
-        "soundNoteUrgent": "Der Alarm ertönt so lange, bis Sie nachsehen."
+        "ackNote": "Ton für {time} aus. Wir alarmieren Sie erneut, falls noch keine Verbindung besteht."
       },
       "parent": {
         "allQuietSince": "Alles ruhig seit {time}",
@@ -441,7 +421,8 @@
         "babyBody": "Das Elterngerät erhält dann keine Alarme mehr.",
         "confirm": "Beenden",
         "cancel": "Weiter überwachen",
-        "parentBodyDefault": "Sie erhalten keine Alarme vom Babygerät."
+        "parentBodyDefault": "Sie erhalten keine Alarme vom Babygerät.",
+        "titleNamed": "Überwachung „{name}“ beenden?"
       },
       "forget": {
         "title": "{name} vergessen?",
@@ -647,6 +628,74 @@
           "chime": "Signalton, bevor ein Elternteil spricht",
           "checklist": "Eltern können über dieses Gerät sprechen. Sie können das in den Einstellungen ausschalten."
         }
+      },
+      "status": {
+        "connected": "Verbunden",
+        "connecting": "Verbindung wird aufgebaut",
+        "reconnecting": "Verbindung wird wiederhergestellt",
+        "notConnectedYet": "Noch nicht verbunden",
+        "cantReach": "Nicht erreichbar",
+        "couldntConnect": "Keine Verbindung möglich",
+        "noConnection": "Keine Verbindung",
+        "stillNoConnection": "Immer noch keine Verbindung",
+        "stopped": "Beendet",
+        "withName": "{state} · {name}",
+        "subConnecting": "Warten auf das Babygerät. Die Überwachung beginnt, sobald es antwortet.",
+        "subReconnecting": "Kurze Unterbrechungen sind normal.",
+        "subNotAnswered": "Das Babygerät antwortet nicht. Läuft dort die Überwachung?",
+        "subStillTrying": "Wird weiter versucht. Ist die Verbindung nicht bald zurück, vibriert dieses Gerät und zeigt eine Warnung.",
+        "subStopped": "Prüfen Sie am Babygerät, wer sie beendet hat."
+      },
+      "connAlert": {
+        "labelVibrating": "Ihr Gerät vibriert",
+        "labelLoud": "Lauter Alarm läuft",
+        "labelPaused": "Alarm pausiert",
+        "headlineCheck": "Bitte sehen Sie nach dem Kind",
+        "nextLoud": "Lauter Alarm um {time}, falls weiter keine Verbindung besteht.",
+        "nextBack": "Kommt um {time} zurück, falls weiter keine Verbindung besteht.",
+        "cantHear": "Sie hören das Kind nicht.",
+        "neverStarted": "Die Überwachung hat nie begonnen. Sie hören das Kind nicht.",
+        "goNow": "Gehen Sie jetzt zum Kind. Der Alarm ertönt, bis Sie „Ich schaue nach“ tippen.",
+        "pausedBody": "Sie hören das Kind weiterhin nicht.",
+        "counterLabel": "ohne Verbindung",
+        "counterA11y": "{duration} ohne Verbindung",
+        "spokenMin": "{count, plural, one {# Minute} other {# Minuten}}",
+        "spokenSec": "{count, plural, one {# Sekunde} other {# Sekunden}}",
+        "progressVibrating": "Gerät vibriert jetzt",
+        "progressLoud": "Lauter Alarm jetzt",
+        "progressPaused": "Pausiert, während Sie nachsehen",
+        "causeLabel": "Wahrscheinlich",
+        "moreSteps": "Weitere Schritte",
+        "fewerSteps": "Weniger Schritte",
+        "wrongConnection": "Falsche Verbindung?",
+        "dndNote": "Der Alarm ertönt auch bei „Bitte nicht stören“.",
+        "dndMissing": "„Bitte nicht stören“ kann diesen Alarm blockieren.",
+        "dndOpen": "Einstellung öffnen",
+        "cause": {
+          "peerAbsent": {
+            "line": "Das Babygerät ist nicht online.",
+            "step": "Ist das Babygerät an, am Ladegerät und zeigt GuardedSleep?",
+            "more": "Ist es im WLAN? Sonst öffnen Sie GuardedSleep dort erneut."
+          },
+          "serverUnreachable": {
+            "line": "Dieses Gerät hat kein Internet.",
+            "step": "Prüfen Sie WLAN oder mobile Daten auf diesem Gerät.",
+            "more": "Schalten Sie den Flugmodus aus. Gehen Sie näher an den Router."
+          },
+          "mediaBlocked": {
+            "line": "Das Netzwerk blockiert die Verbindung.",
+            "step": "Gast- oder Hotel-WLAN kann das blockieren. Wechseln Sie auf diesem Gerät zu mobilen Daten.",
+            "more": "Tippen Sie dann auf „Jetzt versuchen“."
+          }
+        },
+        "restored": {
+          "body": "Die Überwachung war {duration} unterbrochen.",
+          "none": "Das Babygerät hat in dieser Zeit nichts gehört.",
+          "some": "{count, plural, one {Es hat 1 Geräusch gehört} other {Es hat # Geräusche gehört}}.",
+          "unknown": "Ob es Geräusche gab, wissen wir nicht."
+        },
+        "labelAlerting": "Dieses Gerät schlägt Alarm",
+        "progressAlerting": "Alarm ertönt jetzt"
       }
     }
   },

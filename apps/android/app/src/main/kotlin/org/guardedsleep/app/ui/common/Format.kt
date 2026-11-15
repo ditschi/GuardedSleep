@@ -3,11 +3,15 @@ package org.guardedsleep.app.ui.common
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
 import org.guardedsleep.app.contract.R
+import org.guardedsleep.app.ui.model.durationStrings
+import org.guardedsleep.app.ui.model.durationWords
 
 /** `{time}`: short clock time in the user's locale (formatting stays native, ADR-015). */
 @Composable
@@ -37,6 +41,28 @@ fun formatDuration(ms: Long): String {
                 total % 3600 / 60,
             )
     }
+}
+
+/**
+ * `{duration}` in running text: "48 s", "1 min 48 s", "2 min" (durations in words, never `m:ss`;
+ * `redesign-calm-ui` design section 8).
+ */
+@Composable
+fun formatDurationWords(ms: Long): String {
+    // LocalResources follows the configuration, so the text updates when the locale changes.
+    return durationWords(ms, LocalResources.current.durationStrings())
+}
+
+/** "1 minute 12 seconds" for the screen reader; the visible counter stays digits. */
+@Composable
+fun spokenDuration(ms: Long): String {
+    val total = (ms.coerceAtLeast(0) / 1000).toInt()
+    val minutes = total / 60
+    val seconds = total % 60
+    val sec = pluralStringResource(R.plurals.native_ui_conn_alert_spoken_sec, seconds, seconds)
+    if (minutes == 0) return sec
+    val min = pluralStringResource(R.plurals.native_ui_conn_alert_spoken_min, minutes, minutes)
+    return if (seconds == 0) min else "$min $sec"
 }
 
 /** Countdown / since-contact style "m:ss"; digits are locale independent on purpose. */

@@ -65,4 +65,16 @@ fun status(
     cause: String? = null,
     ack: Long? = null,
     lastAlive: Long? = null,
-) = LinkStatus(state, level.toUByte(), key, cause, ack?.toULong(), lastAlive?.toULong())
+    downSince: Long? = null,
+    nextLevelAt: Long? = null,
+) =
+    LinkStatus(
+        state,
+        level.toUByte(),
+        key,
+        cause,
+        ack?.toULong(),
+        lastAlive?.toULong(),
+        downSince?.toULong(),
+        nextLevelAt?.toULong(),
+    )

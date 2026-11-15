@@ -297,6 +297,18 @@ export interface LinkStatus {
      * moving value would re-emit the status on every message) and before any contact.
      */
     last_alive_ms: number | null;
+    /**
+     * Core-clock time the outage started: the last verified contact, or the run start before any
+     * contact. Set while `connecting` and `reconnecting`, otherwise `None`. Read-only, from stored
+     * times (never from `now`), so it stays constant within a level and adds no re-emission.
+     */
+    down_since_ms: number | null;
+    /**
+     * Core-clock time the next escalation level starts, from the configured thresholds. `None`
+     * at level 3, while acknowledged, and outside `connecting` / `reconnecting`. Constant within
+     * a level, like `down_since_ms`.
+     */
+    next_level_at_ms: number | null;
 }
 
 export interface SessionConfig {

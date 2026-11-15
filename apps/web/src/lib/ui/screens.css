@@ -380,26 +380,9 @@
     gap: var(--gs-space-4);
     padding-inline: var(--gs-space-4);
   }
-  .gs-screen--monitor .gs-status-bar {
-    border-radius: var(--gs-radius-l);
-  }
-  .gs-ambient {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gs-space-2);
-  }
-  .gs-ambient .gs-status-bar {
-    flex-wrap: wrap;
-  }
-  .gs-status-bar .gs-btn[data-variant="text"] {
-    color: inherit;
-    text-decoration: underline;
-  }
-  /* The percentage keeps the text inside a bar narrower than 8rem plus the icon (320 px, 200 % text). */
-  .gs-ambient__text {
-    flex: 1;
-    min-width: min(8rem, 100%);
-    overflow-wrap: anywhere;
+  /* The status bar sits above the screens while the parent monitors (App.svelte). */
+  .gs-statusbar-slot {
+    padding: var(--gs-space-1) var(--gs-space-3) 0;
   }
   .gs-headline {
     padding-inline: var(--gs-space-1);
@@ -859,5 +842,169 @@
     .gs-night__dot {
       animation: none;
     }
+  }
+
+  /*
+   * Connection alert on the shared template (redesign-calm-ui design section 6). The palette is the
+   * fixed --safety-lost-* (no connection) or --safety-alarm-* (loud alarm); the colour scheme never
+   * touches it. The body scrolls, the action below stays pinned (also at 200 % text).
+   */
+  .gs-alert {
+    --alert-bg: var(--safety-lost-bg);
+    --alert-surface: var(--safety-lost-surface);
+    --alert-on: var(--safety-lost-on);
+    --alert-on-variant: var(--safety-lost-on-variant);
+    --alert-accent: var(--safety-lost-accent);
+    --alert-slab: var(--safety-lost-slab);
+    --alert-on-slab: var(--safety-lost-on-slab);
+    --alert-slab-border: var(--safety-lost-slab-border);
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    max-width: 32rem;
+    margin-inline: auto;
+    background: var(--alert-bg);
+    color: var(--alert-on);
+  }
+  /* The page behind is covered by the same colour on wide screens. */
+  .gs-alert[data-palette="alarm"] {
+    --alert-bg: var(--safety-alarm-bg);
+    --alert-surface: var(--safety-alarm-surface);
+    --alert-on: var(--safety-alarm-on);
+    --alert-on-variant: var(--safety-alarm-on-variant);
+    --alert-accent: var(--safety-alarm-accent);
+    --alert-slab: var(--safety-alarm-slab);
+    --alert-on-slab: var(--safety-alarm-on-slab);
+    --alert-slab-border: var(--safety-alarm-slab-border);
+  }
+  .gs-alert__hazard {
+    flex: none;
+    height: 0.625rem;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--safety-alarm-slab-border) 0 1.75rem,
+      var(--safety-alarm-bg) 1.75rem 3.5rem
+    );
+  }
+  .gs-alert__strip {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--gs-space-3);
+    min-height: 3rem;
+    padding: var(--gs-space-2) var(--gs-space-5);
+    font-weight: 600;
+  }
+  .gs-alert__strip .gs-glyph {
+    color: var(--alert-accent);
+  }
+  .gs-alert__scroll {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--gs-space-4);
+    min-height: 0;
+    padding: var(--gs-space-4) var(--gs-space-5);
+    overflow-y: auto;
+  }
+  .gs-alert__label {
+    color: var(--alert-accent);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.07rem;
+    text-transform: uppercase;
+  }
+  .gs-alert h1 {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 1.75rem;
+    line-height: 1.2;
+    font-weight: 700;
+  }
+  .gs-alert__counter {
+    display: flex;
+    flex-direction: column;
+  }
+  /* The vw cap keeps the figure at headline size on a narrow screen with enlarged text. */
+  .gs-alert__figure {
+    font-size: min(3.25rem, 12vw);
+    line-height: 1.05;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .gs-alert__counter-label,
+  .gs-alert__sentence,
+  .gs-alert__progress p {
+    color: var(--alert-on-variant);
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  .gs-alert__segments {
+    display: flex;
+    gap: var(--gs-space-1);
+    margin-block-end: var(--gs-space-2);
+  }
+  .gs-alert__segments span {
+    flex: 1;
+    height: 0.375rem;
+    border-radius: 0.1875rem;
+    background: var(--alert-surface);
+  }
+  .gs-alert__segments span[data-on] {
+    background: var(--alert-accent);
+  }
+  .gs-alert__card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gs-space-2);
+    padding: var(--gs-space-4);
+    border-radius: var(--gs-radius-l);
+    background: var(--alert-surface);
+  }
+  .gs-alert__card p {
+    color: var(--alert-on-variant);
+  }
+  .gs-alert__card-label {
+    color: var(--alert-accent);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.07rem;
+    text-transform: uppercase;
+  }
+  .gs-alert__card-line {
+    color: var(--alert-on);
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  .gs-alert .gs-btn[data-variant="alert-outline"],
+  .gs-alert .gs-btn[data-variant="text"] {
+    color: var(--alert-on);
+    border-color: var(--alert-on-variant);
+  }
+  .gs-restored__title {
+    display: flex;
+    align-items: center;
+    gap: var(--gs-space-3);
+    font-size: 1.25rem;
+  }
+  .gs-restored__title .gs-glyph {
+    color: var(--safety-ok);
+  }
+  .gs-alert__quiet {
+    margin-block-start: var(--gs-space-4);
+  }
+  .gs-alert__action {
+    flex: none;
+    padding: var(--gs-space-2) var(--gs-space-5) var(--gs-space-4);
+  }
+  /* The one filled action: the palette's slab with its mandatory 2 px light border. */
+  .gs-alert__action .gs-btn {
+    min-height: 4.5rem;
+    border: 2px solid var(--alert-slab-border);
+    background: var(--alert-slab);
+    color: var(--alert-on-slab);
+    font-size: 1.25rem;
   }
 }

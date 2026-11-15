@@ -283,31 +283,13 @@
         "unlockedHint": "Om du vill använda den här enheten som föräldraenhet avslutar du övervakningen och väljer den på startskärmen."
       },
       "link": {
-        "connected": "Ansluten till {name}",
-        "connecting": "Ansluter till {name}…",
-        "reconnecting": "Ansluter igen…",
-        "cantReach": "Når inte {name}, försöker fortfarande",
-        "lostFor": "Ingen anslutning på {duration}",
-        "babyStopped": "{name} slutade övervaka",
         "idle": "Övervakar inte",
         "weak": "Svag anslutning: ljudet kan hacka",
-        "restoredAfter": "Ansluten igen efter {duration}. Du hör ditt barn igen.",
         "tryNow": "Försök nu",
         "pairAgain": "Parkoppla igen",
-        "connectedDefault": "Ansluten till babyenheten",
-        "connectingDefault": "Ansluter till babyenheten…",
-        "cantReachDefault": "Når inte babyenheten, försöker fortfarande",
-        "babyStoppedDefault": "Babyenheten slutade övervaka",
         "stalePairingHint": "Om du parkopplade babyenheten igen, skanna dess nya kod."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Ingen anslutning till {name}",
-          "titleUrgent": "Ingen anslutning till {name}!",
-          "body": "Du hör inte ditt barn förrän enheterna ansluter igen.",
-          "titleDefault": "Ingen anslutning till babyenheten",
-          "titleUrgentDefault": "Ingen anslutning till babyenheten!"
-        },
         "stopped": {
           "title": "{name} slutade övervaka",
           "body": "Någon stoppade övervakningen på babyenheten. Du får inga larm.",
@@ -324,9 +306,7 @@
           "title": "Ansluten igen"
         },
         "ack": "Jag tittar",
-        "ackNote": "Ljudet är av i {time}. Vi larmar dig igen om anslutningen fortfarande saknas.",
-        "soundNote": "En mjuk larmton upprepas tills du tittar.",
-        "soundNoteUrgent": "Larmet ljuder tills du tittar."
+        "ackNote": "Ljudet är av i {time}. Vi larmar dig igen om anslutningen fortfarande saknas."
       },
       "parent": {
         "allQuietSince": "Tyst sedan {time}",
@@ -441,7 +421,8 @@
         "babyBody": "Föräldraenheten slutar få larm.",
         "confirm": "Stoppa",
         "cancel": "Fortsätt övervaka",
-        "parentBodyDefault": "Du får inga larm från babyenheten."
+        "parentBodyDefault": "Du får inga larm från babyenheten.",
+        "titleNamed": "Stoppa övervakningen ”{name}”?"
       },
       "forget": {
         "title": "Glöm {name}?",
@@ -643,6 +624,74 @@
           "chime": "Signal innan en förälder talar",
           "checklist": "Föräldrar kan tala via den här enheten. Du kan stänga av det under Inställningar."
         }
+      },
+      "status": {
+        "connected": "Ansluten",
+        "connecting": "Ansluter",
+        "reconnecting": "Ansluter igen",
+        "notConnectedYet": "Inte ansluten än",
+        "cantReach": "Går inte att nå",
+        "couldntConnect": "Kunde inte ansluta",
+        "noConnection": "Ingen anslutning",
+        "stillNoConnection": "Fortfarande ingen anslutning",
+        "stopped": "Stoppad",
+        "withName": "{state} · {name}",
+        "subConnecting": "Väntar på bebisenheten. Övervakningen startar när den svarar.",
+        "subReconnecting": "Korta avbrott är normala.",
+        "subNotAnswered": "Bebisenheten svarar inte. Har övervakningen startats på den?",
+        "subStillTrying": "Försöker igen. Om anslutningen inte är tillbaka snart vibrerar den här enheten och visar en varning.",
+        "subStopped": "Kontrollera på bebisenheten vem som stoppade den."
+      },
+      "connAlert": {
+        "labelVibrating": "Din telefon vibrerar",
+        "labelLoud": "Högt larm ljuder",
+        "labelPaused": "Larmet är pausat",
+        "headlineCheck": "Titta till barnet",
+        "nextLoud": "Högt larm kl. {time} om det fortfarande saknas anslutning.",
+        "nextBack": "Kommer tillbaka kl. {time} om anslutningen fortfarande saknas.",
+        "cantHear": "Du hör inte barnet.",
+        "neverStarted": "Övervakningen startade aldrig. Du hör inte barnet.",
+        "goNow": "Gå till barnet nu. Larmet ljuder tills du trycker på ”Jag tittar till”.",
+        "pausedBody": "Du hör fortfarande inte barnet.",
+        "counterLabel": "utan anslutning",
+        "counterA11y": "{duration} utan anslutning",
+        "spokenMin": "{count, plural, one {# minut} other {# minuter}}",
+        "spokenSec": "{count, plural, one {# sekund} other {# sekunder}}",
+        "progressVibrating": "Telefonen vibrerar nu",
+        "progressLoud": "Högt larm nu",
+        "progressPaused": "Pausat medan du tittar till",
+        "causeLabel": "Troligen orsak",
+        "moreSteps": "Fler steg",
+        "fewerSteps": "Färre steg",
+        "wrongConnection": "Fel anslutning?",
+        "dndNote": "Larmet ljuder även i Stör ej.",
+        "dndMissing": "Stör ej kan blockera det här larmet.",
+        "dndOpen": "Öppna inställningen",
+        "cause": {
+          "peerAbsent": {
+            "line": "Bebisenheten är inte online.",
+            "step": "Är bebisenheten på, inkopplad och visar GuardedSleep?",
+            "more": "Är den på Wi-Fi? Om inte, öppna GuardedSleep där igen."
+          },
+          "serverUnreachable": {
+            "line": "Den här telefonen har inget internet.",
+            "step": "Kontrollera Wi-Fi eller mobildata på den här telefonen.",
+            "more": "Stäng av flygläget. Gå närmare routern."
+          },
+          "mediaBlocked": {
+            "line": "Anslutningen är blockerad i det här nätverket.",
+            "step": "Gäst- eller hotell-Wi-Fi kan blockera den. Byt den här telefonen till mobildata.",
+            "more": "Tryck sedan på ”Försök nu”."
+          }
+        },
+        "restored": {
+          "body": "Övervakningen var avbruten i {duration}.",
+          "none": "Bebisenheten hörde inget ljud under den tiden.",
+          "some": "{count, plural, one {Den hörde 1 ljud} other {Den hörde # ljud}}.",
+          "unknown": "Vi vet inte om det fanns ljud."
+        },
+        "labelAlerting": "Den här enheten ljuder en varning",
+        "progressAlerting": "Varning ljuder nu"
       }
     }
   },

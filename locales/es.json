@@ -283,31 +283,13 @@
         "unlockedHint": "Para usar este dispositivo como dispositivo de los padres, detenga la supervisión y selecciónelo en la pantalla de inicio."
       },
       "link": {
-        "connected": "Conectado con {name}",
-        "connecting": "Conectando con {name}…",
-        "reconnecting": "Reconectando…",
-        "cantReach": "No se puede contactar con {name} — sigue intentándolo",
-        "lostFor": "Sin conexión desde hace {duration}",
-        "babyStopped": "{name} dejó de vigilar",
         "idle": "Sin vigilancia",
         "weak": "Conexión débil — el sonido puede cortarse",
-        "restoredAfter": "Conectado de nuevo tras {duration}. Vuelve a oír a su hijo.",
         "tryNow": "Intentar ahora",
         "pairAgain": "Emparejar de nuevo",
-        "connectedDefault": "Conectado con el dispositivo del bebé",
-        "connectingDefault": "Conectando con el dispositivo del bebé…",
-        "cantReachDefault": "No se puede contactar con el dispositivo del bebé — sigue intentándolo",
-        "babyStoppedDefault": "El dispositivo del bebé dejó de vigilar",
         "stalePairingHint": "Si volvió a emparejar el dispositivo del bebé, escanee su nuevo código."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Sin conexión con {name}",
-          "titleUrgent": "¡Sin conexión con {name}!",
-          "body": "No oirá a su hijo hasta que los dispositivos se vuelvan a conectar.",
-          "titleDefault": "Sin conexión con el dispositivo del bebé",
-          "titleUrgentDefault": "¡Sin conexión con el dispositivo del bebé!"
-        },
         "stopped": {
           "title": "{name} dejó de vigilar",
           "body": "Alguien detuvo la vigilancia en el dispositivo del bebé. No recibirá avisos.",
@@ -324,9 +306,7 @@
           "title": "Conectado de nuevo"
         },
         "ack": "Estoy comprobando",
-        "ackNote": "Sonido apagado durante {time}. Le avisaremos de nuevo si sigue sin conexión.",
-        "soundNote": "Un tono de alarma suave se repite hasta que lo compruebe.",
-        "soundNoteUrgent": "La alarma suena hasta que lo compruebe."
+        "ackNote": "Sonido apagado durante {time}. Le avisaremos de nuevo si sigue sin conexión."
       },
       "parent": {
         "allQuietSince": "Todo tranquilo desde las {time}",
@@ -441,7 +421,8 @@
         "babyBody": "El dispositivo de los padres dejará de recibir avisos.",
         "confirm": "Detener",
         "cancel": "Seguir vigilando",
-        "parentBodyDefault": "No recibirá avisos del dispositivo del bebé."
+        "parentBodyDefault": "No recibirá avisos del dispositivo del bebé.",
+        "titleNamed": "¿Detener la vigilancia «{name}»?"
       },
       "forget": {
         "title": "¿Olvidar {name}?",
@@ -647,6 +628,74 @@
           "chime": "Tono antes de que hable un padre",
           "checklist": "Los padres pueden hablar a través de este dispositivo. Puedes desactivarlo en Ajustes."
         }
+      },
+      "status": {
+        "connected": "Conectado",
+        "connecting": "Conectando",
+        "reconnecting": "Reconectando",
+        "notConnectedYet": "Aún sin conexión",
+        "cantReach": "Sin alcance",
+        "couldntConnect": "No se pudo conectar",
+        "noConnection": "Sin conexión",
+        "stillNoConnection": "Sigue sin conexión",
+        "stopped": "Detenido",
+        "withName": "{state} · {name}",
+        "subConnecting": "Esperando al dispositivo del bebé. La vigilancia empieza cuando responda.",
+        "subReconnecting": "Los cortes breves son normales.",
+        "subNotAnswered": "El dispositivo del bebé no responde. ¿Está iniciada la vigilancia en él?",
+        "subStillTrying": "Sigue intentándolo. Si no vuelve pronto, este dispositivo vibra y muestra una alerta.",
+        "subStopped": "Compruebe en el dispositivo del bebé quién la detuvo."
+      },
+      "connAlert": {
+        "labelVibrating": "Su teléfono vibra",
+        "labelLoud": "Alarma fuerte sonando",
+        "labelPaused": "Alarma en pausa",
+        "headlineCheck": "Vaya a ver al niño",
+        "nextLoud": "Alarma fuerte a las {time} si sigue sin conexión.",
+        "nextBack": "Vuelve a las {time} si sigue sin conexión.",
+        "cantHear": "No oye al niño.",
+        "neverStarted": "La vigilancia nunca empezó. No oye al niño.",
+        "goNow": "Vaya ahora con el niño. La alarma suena hasta que toque «Estoy comprobando».",
+        "pausedBody": "Sigue sin oír al niño.",
+        "counterLabel": "sin conexión",
+        "counterA11y": "{duration} sin conexión",
+        "spokenMin": "{count, plural, one {# minuto} many {# de minutos} other {# minutos}}",
+        "spokenSec": "{count, plural, one {# segundo} many {# de segundos} other {# segundos}}",
+        "progressVibrating": "El teléfono vibra ahora",
+        "progressLoud": "Alarma fuerte ahora",
+        "progressPaused": "En pausa mientras comprueba",
+        "causeLabel": "Causa probable",
+        "moreSteps": "Más pasos",
+        "fewerSteps": "Menos pasos",
+        "wrongConnection": "¿Conexión equivocada?",
+        "dndNote": "La alarma suena también en No molestar.",
+        "dndMissing": "No molestar puede bloquear esta alarma.",
+        "dndOpen": "Abrir ajuste",
+        "cause": {
+          "peerAbsent": {
+            "line": "El dispositivo del bebé no está en línea.",
+            "step": "¿Está encendido el dispositivo del bebé, enchufado y mostrando GuardedSleep?",
+            "more": "¿Está en el Wi-Fi? Si no, abra GuardedSleep de nuevo en él."
+          },
+          "serverUnreachable": {
+            "line": "Este teléfono no tiene internet.",
+            "step": "Compruebe el Wi-Fi o los datos móviles de este teléfono.",
+            "more": "Desactive el modo avión. Acérquese al router."
+          },
+          "mediaBlocked": {
+            "line": "La conexión está bloqueada en esta red.",
+            "step": "El Wi-Fi de invitados o de hotel puede bloquearla. Pase este teléfono a datos móviles.",
+            "more": "Después toque «Reintentar ahora»."
+          }
+        },
+        "restored": {
+          "body": "La vigilancia estuvo interrumpida {duration}.",
+          "none": "El dispositivo del bebé no oyó ningún sonido en ese tiempo.",
+          "some": "{count, plural, one {Oyó 1 sonido} many {Oyó # de sonidos} other {Oyó # sonidos}}.",
+          "unknown": "No sabemos si hubo sonidos."
+        },
+        "labelAlerting": "Este dispositivo está emitiendo una alerta",
+        "progressAlerting": "Alerta sonando ahora"
       }
     }
   },

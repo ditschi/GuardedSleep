@@ -29,6 +29,14 @@ fun link(
         phase = phase,
         level = level,
         lastAliveElapsedMs = agoMs?.let { ELAPSED - it },
+        // The core's outage fields for the default thresholds (20 s, 60 s, 180 s from the start).
+        downSinceElapsedMs = agoMs?.let { ELAPSED - it },
+        nextLevelAtElapsedMs =
+            agoMs
+                ?.takeIf { !ack && level < 3 }
+                ?.let {
+                    ELAPSED - it + longArrayOf(20_000, 60_000, 180_000)[level.coerceAtMost(2)]
+                },
         acknowledgedUntilElapsedMs = if (ack) ELAPSED + 240_000 else null,
         causeHint = cause,
         failureKey = failureKey,

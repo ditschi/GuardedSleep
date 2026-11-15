@@ -19,6 +19,7 @@
   import ParentPairScreen from "./screens/ParentPairScreen.svelte";
   import RoleScreen from "./screens/RoleScreen.svelte";
   import SettingsScreen from "./screens/SettingsScreen.svelte";
+  import StatusBar from "./lib/ui/StatusBar.svelte";
 
   let { controller, scanner }: { controller: AppController; scanner?: CodeScanner } = $props();
 
@@ -82,6 +83,10 @@
 <PageAttention />
 <a class="gs-skip" href="#main">{$t("webShell.skipToContent")}</a>
 <main id="main" bind:this={main}>
+  {#if $app.role === "parent" && $app.monitoring && ($route.id === "parent" || $route.id === "settings")}
+    <!-- Every parent screen shows the status bar while monitoring, Settings and sheets included. -->
+    <div class="gs-statusbar-slot"><StatusBar /></div>
+  {/if}
   {#if $route.id === "role"}
     <RoleScreen />
   {:else if $route.id === "babyPair"}

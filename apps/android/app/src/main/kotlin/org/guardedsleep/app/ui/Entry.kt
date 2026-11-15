@@ -1,5 +1,16 @@
 package org.guardedsleep.app.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -9,8 +20,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import org.guardedsleep.app.BuildConfig
 import org.guardedsleep.app.ui.common.LocalUiEnv
+import org.guardedsleep.app.ui.common.StatusBar
 import org.guardedsleep.app.ui.common.systemReduceMotion
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.Role
@@ -29,6 +42,7 @@ import org.guardedsleep.app.ui.screens.ParentSheet
 import org.guardedsleep.app.ui.screens.RoleScreen
 import org.guardedsleep.app.ui.screens.SettingsScreen
 import org.guardedsleep.app.ui.screens.SetupScreen
+import org.guardedsleep.app.ui.screens.customPeerName
 import org.guardedsleep.app.ui.theme.GuardedSleepTheme
 
 /** Whole app below MainActivity: role, setup, pairing, home, monitoring, settings. */
@@ -81,31 +95,37 @@ private fun AppNavigator(controller: AppController) {
         role == Role.BABY && app.monitoring && baby.kioskLocked -> BabyKioskScreen(controller)
         !app.onboardingDone -> SetupScreen(controller, role, onboarding = true, onBack = {})
         overlay == Overlay.SETUP ->
-            SetupScreen(
-                controller,
-                role,
-                onboarding = false,
-                onBack = { overlay = Overlay.SETTINGS },
-            )
+            WithStatusBar(controller) {
+                SetupScreen(
+                    controller,
+                    role,
+                    onboarding = false,
+                    onBack = { overlay = Overlay.SETTINGS },
+                )
+            }
         overlay == Overlay.ALARM_TONE ->
-            AlarmTonePickerScreen(controller, onBack = { overlay = Overlay.SETTINGS })
+            WithStatusBar(controller) {
+                AlarmTonePickerScreen(controller, onBack = { overlay = Overlay.SETTINGS })
+            }
         overlay == Overlay.SETTINGS ->
-            SettingsScreen(
-                controller,
-                onOpenAlarmTone = { overlay = Overlay.ALARM_TONE },
-                onBack = { overlay = Overlay.NONE },
-                onOpenSetup = { overlay = Overlay.SETUP },
-                onTestAlert = {
-                    openProbe = true
-                    overlay = Overlay.NONE
-                },
-                buildInfo =
-                    BuildInfo(
-                        BuildConfig.VERSION_NAME,
-                        BuildConfig.GIT_COMMIT,
-                        BuildConfig.GIT_COMMIT_TIME,
-                    ),
-            )
+            WithStatusBar(controller) {
+                SettingsScreen(
+                    controller,
+                    onOpenAlarmTone = { overlay = Overlay.ALARM_TONE },
+                    onBack = { overlay = Overlay.NONE },
+                    onOpenSetup = { overlay = Overlay.SETUP },
+                    onTestAlert = {
+                        openProbe = true
+                        overlay = Overlay.NONE
+                    },
+                    buildInfo =
+                        BuildInfo(
+                            BuildConfig.VERSION_NAME,
+                            BuildConfig.GIT_COMMIT,
+                            BuildConfig.GIT_COMMIT_TIME,
+                        ),
+                )
+            }
         app.monitoring && role == Role.PARENT -> {
             val sheet = if (openProbe) ParentSheet.PROBE else null
             LaunchedEffect(openProbe) { if (openProbe) openProbe = false }
@@ -128,6 +148,35 @@ private fun AppNavigator(controller: AppController) {
                 listRequested = listRequested,
                 onListShown = { listRequested = false },
             )
+    }
+}
+
+/**
+ * While the parent monitors, every screen laid over the monitor (Settings, set-up checks) keeps the
+ * status bar on top (`connection-status` "Parent ambient bar"). The bar takes the top and side
+ * system insets, so the screen below only pads what is left.
+ */
+@Composable
+internal fun WithStatusBar(controller: AppController, content: @Composable () -> Unit) {
+    val app by controller.app.collectAsState()
+    val parent by controller.parent.collectAsState()
+    if (!(app.monitoring && app.role == Role.PARENT)) {
+        content()
+        return
+    }
+    Column(
+        Modifier.fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(
+                WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
+            )
+    ) {
+        StatusBar(
+            parent.link,
+            customPeerName(app.peerName),
+            backgroundProtection = app.backgroundProtection,
+        )
+        Box(Modifier.weight(1f).fillMaxWidth()) { content() }
     }
 }
 

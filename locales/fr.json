@@ -283,31 +283,13 @@
         "unlockedHint": "Pour utiliser cet appareil comme appareil parent, arrêtez la surveillance et choisissez-le sur l'écran d'accueil."
       },
       "link": {
-        "connected": "Connecté à {name}",
-        "connecting": "Connexion à {name}…",
-        "reconnecting": "Reconnexion…",
-        "cantReach": "Impossible de joindre {name} — nouvelle tentative en cours",
-        "lostFor": "Pas de connexion depuis {duration}",
-        "babyStopped": "{name} a arrêté la surveillance",
         "idle": "Pas de surveillance",
         "weak": "Connexion faible — le son peut être haché",
-        "restoredAfter": "Reconnecté après {duration}. Vous entendez de nouveau votre enfant.",
         "tryNow": "Réessayer maintenant",
         "pairAgain": "Appairer à nouveau",
-        "connectedDefault": "Connecté à l'appareil bébé",
-        "connectingDefault": "Connexion à l'appareil bébé…",
-        "cantReachDefault": "Impossible de joindre l'appareil bébé — nouvelle tentative en cours",
-        "babyStoppedDefault": "L'appareil bébé a arrêté la surveillance",
         "stalePairingHint": "Si vous avez de nouveau associé l'appareil bébé, scannez son nouveau code."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Pas de connexion avec {name}",
-          "titleUrgent": "Pas de connexion avec {name} !",
-          "body": "Vous n'entendrez pas votre enfant tant que les appareils ne sont pas reconnectés.",
-          "titleDefault": "Pas de connexion avec l'appareil bébé",
-          "titleUrgentDefault": "Pas de connexion avec l'appareil bébé !"
-        },
         "stopped": {
           "title": "{name} a arrêté la surveillance",
           "body": "Quelqu'un a arrêté la surveillance sur l'appareil bébé. Vous ne recevrez plus d'alertes.",
@@ -324,9 +306,7 @@
           "title": "De nouveau connecté"
         },
         "ack": "Je vérifie",
-        "ackNote": "Son coupé pendant {time}. Nous vous alerterons à nouveau si la connexion n'est toujours pas rétablie.",
-        "soundNote": "Un son d'alarme discret se répète jusqu'à ce que vous vérifiiez.",
-        "soundNoteUrgent": "L'alarme retentit jusqu'à ce que vous vérifiiez."
+        "ackNote": "Son coupé pendant {time}. Nous vous alerterons à nouveau si la connexion n'est toujours pas rétablie."
       },
       "parent": {
         "allQuietSince": "Tout est calme depuis {time}",
@@ -441,7 +421,8 @@
         "babyBody": "L'appareil parent ne recevra plus d'alertes.",
         "confirm": "Arrêter",
         "cancel": "Continuer la surveillance",
-        "parentBodyDefault": "Vous ne recevrez plus d'alertes de l'appareil bébé."
+        "parentBodyDefault": "Vous ne recevrez plus d'alertes de l'appareil bébé.",
+        "titleNamed": "Arrêter la surveillance « {name} » ?"
       },
       "forget": {
         "title": "Oublier {name} ?",
@@ -647,6 +628,74 @@
           "chime": "Sonnerie avant qu'un parent parle",
           "checklist": "Les parents peuvent parler via cet appareil. Vous pouvez le désactiver dans les réglages."
         }
+      },
+      "status": {
+        "connected": "Connecté",
+        "connecting": "Connexion en cours",
+        "reconnecting": "Reconnexion en cours",
+        "notConnectedYet": "Pas encore connecté",
+        "cantReach": "Injoignable",
+        "couldntConnect": "Connexion impossible",
+        "noConnection": "Pas de connexion",
+        "stillNoConnection": "Toujours pas de connexion",
+        "stopped": "Arrêté",
+        "withName": "{state} · {name}",
+        "subConnecting": "En attente de l'appareil bébé. La surveillance commence dès qu'il répond.",
+        "subReconnecting": "De courtes coupures sont normales.",
+        "subNotAnswered": "L'appareil bébé ne répond pas. La surveillance est-elle lancée dessus ?",
+        "subStillTrying": "Nouvelles tentatives en cours. Sans retour rapide, cet appareil vibre et affiche une alerte.",
+        "subStopped": "Vérifiez sur l'appareil bébé qui l'a arrêtée."
+      },
+      "connAlert": {
+        "labelVibrating": "Votre téléphone vibre",
+        "labelLoud": "Alarme forte en cours",
+        "labelPaused": "Alarme en pause",
+        "headlineCheck": "Allez voir l'enfant",
+        "nextLoud": "Alarme forte à {time} s'il n'y a toujours pas de connexion.",
+        "nextBack": "Revient à {time} s'il n'y a toujours pas de connexion.",
+        "cantHear": "Vous n'entendez pas l'enfant.",
+        "neverStarted": "La surveillance n'a jamais démarré. Vous n'entendez pas l'enfant.",
+        "goNow": "Allez voir l'enfant maintenant. L'alarme sonne jusqu'à ce que vous touchiez « Je vérifie ».",
+        "pausedBody": "Vous n'entendez toujours pas l'enfant.",
+        "counterLabel": "sans connexion",
+        "counterA11y": "{duration} sans connexion",
+        "spokenMin": "{count, plural, one {# minute} many {# de minutes} other {# minutes}}",
+        "spokenSec": "{count, plural, one {# seconde} many {# de secondes} other {# secondes}}",
+        "progressVibrating": "Le téléphone vibre",
+        "progressLoud": "Alarme forte maintenant",
+        "progressPaused": "En pause pendant que vous vérifiez",
+        "causeLabel": "Cause probable",
+        "moreSteps": "Autres étapes",
+        "fewerSteps": "Moins d'étapes",
+        "wrongConnection": "Mauvaise connexion ?",
+        "dndNote": "L'alarme sonne aussi en mode Ne pas déranger.",
+        "dndMissing": "Le mode Ne pas déranger peut bloquer cette alarme.",
+        "dndOpen": "Ouvrir le réglage",
+        "cause": {
+          "peerAbsent": {
+            "line": "L'appareil bébé n'est pas en ligne.",
+            "step": "L'appareil bébé est-il allumé, branché et affiche-t-il GuardedSleep ?",
+            "more": "Est-il connecté au Wi-Fi ? Sinon, rouvrez GuardedSleep dessus."
+          },
+          "serverUnreachable": {
+            "line": "Ce téléphone n'a pas d'internet.",
+            "step": "Vérifiez le Wi-Fi ou les données mobiles de ce téléphone.",
+            "more": "Désactivez le mode avion. Rapprochez-vous du routeur."
+          },
+          "mediaBlocked": {
+            "line": "La connexion est bloquée sur ce réseau.",
+            "step": "Un Wi-Fi invité ou d'hôtel peut la bloquer. Passez ce téléphone sur les données mobiles.",
+            "more": "Touchez ensuite « Réessayer maintenant »."
+          }
+        },
+        "restored": {
+          "body": "La surveillance a été interrompue pendant {duration}.",
+          "none": "L'appareil bébé n'a entendu aucun son pendant ce temps.",
+          "some": "{count, plural, one {Il a entendu 1 son} many {Il a entendu # de sons} other {Il a entendu # sons}}.",
+          "unknown": "Nous ne savons pas s'il y a eu des sons."
+        },
+        "labelAlerting": "Cet appareil émet une alerte",
+        "progressAlerting": "Alerte en cours"
       }
     }
   },

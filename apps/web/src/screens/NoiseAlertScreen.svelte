@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { useController } from "../lib/contract";
   import { locale, t } from "../lib/i18n/store";
-  import AmbientBar from "../lib/ui/AmbientBar.svelte";
+  import StatusBar from "../lib/ui/StatusBar.svelte";
   import Button from "../lib/ui/Button.svelte";
   import { formatClock, levelWordKey } from "../lib/ui/format";
   import Glyph from "../lib/ui/Glyph.svelte";
@@ -44,7 +44,7 @@
   aria-labelledby="alert-title"
 >
   <div class="gs-fullscreen__inner">
-    <AmbientBar testid="alert_connection_bar" />
+    <StatusBar testid="alert_connection_bar" />
 
     <div class="gs-fullscreen__hero">
       {#if $parent.noiseIsTest}

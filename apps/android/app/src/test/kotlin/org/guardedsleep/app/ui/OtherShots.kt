@@ -16,6 +16,7 @@ import org.guardedsleep.app.ui.model.DeviceCheck
 import org.guardedsleep.app.ui.model.DeviceCheckReason
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.MailboxReach
+import org.guardedsleep.app.ui.model.MissedEventsUi
 import org.guardedsleep.app.ui.model.PairingError
 import org.guardedsleep.app.ui.model.PairingPhase
 import org.guardedsleep.app.ui.model.PairingState
@@ -500,8 +501,42 @@ class AlertShots : ShotBase() {
         )
         alarm(
             "restored",
-            ParentMonitorState(link = Connected, peer = PeerStatusUi(batteryPct = 80)),
+            ParentMonitorState(
+                link = Connected,
+                peer = PeerStatusUi(batteryPct = 80),
+                restoredAfterMs = 108_000,
+                missed = MissedEventsUi(108_000, 0, complete = true),
+            ),
         )
+        // Frame 25: a first connection that never answered, from one minute.
+        alarm(
+            "first_connection_level2",
+            ParentMonitorState(
+                link =
+                    link(LinkPhase.CONNECTING, 2, 70_000, cause = CauseHint.PEER_ABSENT)
+                        .copy(lastAliveElapsedMs = null),
+                peer = base.peer,
+            ),
+        )
+        // Frame 46: the same alert at font scale 2.0, the action pinned and fully visible.
+        shot("alarm/level2_fontscale2", "en", fontScale = 2.0f) {
+            LinkAlarmScreen(
+                FakeAppController(
+                    parent =
+                        ParentMonitorState(
+                            link =
+                                link(
+                                    LinkPhase.RECONNECTING,
+                                    2,
+                                    72_000,
+                                    cause = CauseHint.PEER_ABSENT,
+                                ),
+                            peer = base.peer,
+                        )
+                ),
+                {},
+            )
+        }
         alarm("needs_pairing", ParentMonitorState(link = link(LinkPhase.FAILED_NEEDS_USER)))
         alarm(
             "level2",
@@ -515,5 +550,33 @@ class AlertShots : ShotBase() {
             ParentMonitorState(link = link(LinkPhase.PEER_STOPPED, 0, 3_000)),
             "de",
         )
+    }
+}
+
+/** The status bar of every stage, in Dusk and Day (frames 03, 09 to 11, 29). */
+class StatusBarShots : ShotBase() {
+    private fun bar(
+        name: String,
+        l: org.guardedsleep.app.ui.model.LinkUi,
+        theme: Theme = Theme.DARK,
+    ) =
+        shot("status_bar/$name", theme = theme) {
+            org.guardedsleep.app.ui.common.StatusBar(l, "Nursery")
+        }
+
+    @Test
+    fun stages() {
+        bar("connected", Connected)
+        bar("connecting", link(LinkPhase.CONNECTING, 0, 5_000).copy(lastAliveElapsedMs = null))
+        bar("reconnecting", link(LinkPhase.RECONNECTING, 0, 10_000))
+        bar(
+            "not_connected_yet",
+            link(LinkPhase.CONNECTING, 1, 25_000).copy(lastAliveElapsedMs = null),
+        )
+        bar("cant_reach", link(LinkPhase.RECONNECTING, 1, 25_000))
+        bar("no_connection", link(LinkPhase.RECONNECTING, 2, 72_000))
+        bar("stopped", link(LinkPhase.PEER_STOPPED, 0, 3_000))
+        bar("connected_day", Connected, Theme.LIGHT)
+        bar("cant_reach_day", link(LinkPhase.RECONNECTING, 1, 25_000), Theme.LIGHT)
     }
 }

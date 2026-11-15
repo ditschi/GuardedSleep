@@ -283,31 +283,13 @@
         "unlockedHint": "Untuk memakai perangkat ini sebagai perangkat orang tua, hentikan pemantauan lalu pilih di layar awal."
       },
       "link": {
-        "connected": "Terhubung ke {name}",
-        "connecting": "Menghubungkan ke {name}…",
-        "reconnecting": "Menghubungkan ulang…",
-        "cantReach": "Tidak dapat menjangkau {name} — masih mencoba",
-        "lostFor": "Tidak ada koneksi selama {duration}",
-        "babyStopped": "{name} berhenti memantau",
         "idle": "Tidak memantau",
         "weak": "Koneksi lemah — suara dapat terputus-putus",
-        "restoredAfter": "Terhubung kembali setelah {duration}. Anda dapat mendengar anak Anda lagi.",
         "tryNow": "Coba sekarang",
         "pairAgain": "Pasangkan lagi",
-        "connectedDefault": "Terhubung ke perangkat bayi",
-        "connectingDefault": "Menghubungkan ke perangkat bayi…",
-        "cantReachDefault": "Tidak dapat menjangkau perangkat bayi — masih mencoba",
-        "babyStoppedDefault": "Perangkat bayi berhenti memantau",
         "stalePairingHint": "Jika Anda memasangkan ulang perangkat bayi, pindai kode barunya."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Tidak ada koneksi ke {name}",
-          "titleUrgent": "Tidak ada koneksi ke {name}!",
-          "body": "Anda tidak akan mendengar anak Anda sampai perangkat terhubung kembali.",
-          "titleDefault": "Tidak ada koneksi ke perangkat bayi",
-          "titleUrgentDefault": "Tidak ada koneksi ke perangkat bayi!"
-        },
         "stopped": {
           "title": "{name} berhenti memantau",
           "body": "Seseorang menghentikan pemantauan di perangkat bayi. Anda tidak akan menerima peringatan.",
@@ -324,9 +306,7 @@
           "title": "Terhubung kembali"
         },
         "ack": "Saya periksa",
-        "ackNote": "Suara dimatikan selama {time}. Kami akan memperingatkan lagi jika masih belum terhubung.",
-        "soundNote": "Nada alarm lembut berulang sampai Anda memeriksa.",
-        "soundNoteUrgent": "Alarm terus berbunyi sampai Anda memeriksa."
+        "ackNote": "Suara dimatikan selama {time}. Kami akan memperingatkan lagi jika masih belum terhubung."
       },
       "parent": {
         "allQuietSince": "Tenang sejak {time}",
@@ -441,7 +421,8 @@
         "babyBody": "Perangkat orang tua tidak akan lagi menerima peringatan.",
         "confirm": "Hentikan",
         "cancel": "Tetap memantau",
-        "parentBodyDefault": "Anda tidak akan menerima peringatan dari perangkat bayi."
+        "parentBodyDefault": "Anda tidak akan menerima peringatan dari perangkat bayi.",
+        "titleNamed": "Hentikan pemantauan “{name}”?"
       },
       "forget": {
         "title": "Lupakan {name}?",
@@ -643,6 +624,74 @@
           "chime": "Nada sebelum orang tua berbicara",
           "checklist": "Orang tua dapat berbicara lewat perangkat ini. Anda dapat mematikannya di Pengaturan."
         }
+      },
+      "status": {
+        "connected": "Terhubung",
+        "connecting": "Menghubungkan",
+        "reconnecting": "Menghubungkan ulang",
+        "notConnectedYet": "Belum terhubung",
+        "cantReach": "Tidak terjangkau",
+        "couldntConnect": "Tidak bisa terhubung",
+        "noConnection": "Tidak ada koneksi",
+        "stillNoConnection": "Masih tidak ada koneksi",
+        "stopped": "Dihentikan",
+        "withName": "{state} · {name}",
+        "subConnecting": "Menunggu perangkat bayi. Pemantauan dimulai saat perangkat menjawab.",
+        "subReconnecting": "Terputus sebentar itu normal.",
+        "subNotAnswered": "Perangkat bayi belum menjawab. Apakah pemantauan sudah dimulai di sana?",
+        "subStillTrying": "Masih mencoba. Jika belum pulih segera, perangkat ini bergetar dan menampilkan peringatan.",
+        "subStopped": "Periksa di perangkat bayi siapa yang menghentikannya."
+      },
+      "connAlert": {
+        "labelVibrating": "Ponsel Anda bergetar",
+        "labelLoud": "Alarm keras berbunyi",
+        "labelPaused": "Alarm dijeda",
+        "headlineCheck": "Mohon periksa anak",
+        "nextLoud": "Alarm keras berbunyi pukul {time} jika masih tidak ada koneksi.",
+        "nextBack": "Kembali pukul {time} jika masih tidak ada koneksi.",
+        "cantHear": "Anda tidak bisa mendengar anak.",
+        "neverStarted": "Pemantauan belum pernah dimulai. Anda tidak bisa mendengar anak.",
+        "goNow": "Segera temui anak. Alarm berbunyi sampai Anda mengetuk “Saya memeriksa”.",
+        "pausedBody": "Anda masih tidak bisa mendengar anak.",
+        "counterLabel": "tanpa koneksi",
+        "counterA11y": "{duration} tanpa koneksi",
+        "spokenMin": "{count, plural, other {# menit}}",
+        "spokenSec": "{count, plural, other {# detik}}",
+        "progressVibrating": "Ponsel bergetar sekarang",
+        "progressLoud": "Alarm keras sekarang",
+        "progressPaused": "Dijeda selagi Anda memeriksa",
+        "causeLabel": "Kemungkinan penyebab",
+        "moreSteps": "Langkah lainnya",
+        "fewerSteps": "Langkah lebih sedikit",
+        "wrongConnection": "Koneksi salah?",
+        "dndNote": "Alarm tetap berbunyi dalam mode Jangan Ganggu.",
+        "dndMissing": "Mode Jangan Ganggu dapat memblokir alarm ini.",
+        "dndOpen": "Buka pengaturan",
+        "cause": {
+          "peerAbsent": {
+            "line": "Perangkat bayi tidak online.",
+            "step": "Apakah perangkat bayi menyala, terhubung ke pengisi daya, dan menampilkan GuardedSleep?",
+            "more": "Apakah terhubung ke Wi-Fi? Jika tidak, buka GuardedSleep di sana lagi."
+          },
+          "serverUnreachable": {
+            "line": "Ponsel ini tidak memiliki internet.",
+            "step": "Periksa Wi-Fi atau data seluler di ponsel ini.",
+            "more": "Matikan mode pesawat. Dekati router."
+          },
+          "mediaBlocked": {
+            "line": "Koneksi diblokir di jaringan ini.",
+            "step": "Wi-Fi tamu atau hotel bisa memblokirnya. Alihkan ponsel ini ke data seluler.",
+            "more": "Lalu ketuk “Coba sekarang”."
+          }
+        },
+        "restored": {
+          "body": "Pemantauan terhenti selama {duration}.",
+          "none": "Perangkat bayi tidak mendengar suara apa pun selama itu.",
+          "some": "{count, plural, other {Terdengar # suara}}.",
+          "unknown": "Kami tidak tahu apakah ada suara."
+        },
+        "labelAlerting": "Perangkat ini membunyikan peringatan",
+        "progressAlerting": "Peringatan berbunyi sekarang"
       }
     }
   },
