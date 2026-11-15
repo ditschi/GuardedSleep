@@ -264,15 +264,15 @@ fun BabyMonitorScreen(controller: AppController, onSettings: () -> Unit) {
                     stringResource(R.string.native_ui_kiosk_row_parent),
                     parentDeviceValue(b, app),
                     "baby_peer",
-                    LocalAppColors.current.secondaryText,
-                    MaterialTheme.colorScheme.onBackground,
+                    labelColor = LocalAppColors.current.secondaryText,
+                    valueColor = MaterialTheme.colorScheme.onBackground,
                 )
                 InfoRow(
                     stringResource(R.string.native_ui_kiosk_row_last_talk),
                     lastTalkValue(b.lastTalk),
                     "baby_last_talk",
-                    LocalAppColors.current.secondaryText,
-                    MaterialTheme.colorScheme.onBackground,
+                    labelColor = LocalAppColors.current.secondaryText,
+                    valueColor = MaterialTheme.colorScheme.onBackground,
                 )
                 if (battery != null) {
                     Body(
@@ -399,9 +399,9 @@ private fun InfoRow(
     label: String,
     value: String,
     tag: String,
-    labelColor: Color,
-    valueColor: Color,
     modifier: Modifier = Modifier,
+    labelColor: Color = StateColors.KioskText,
+    valueColor: Color = labelColor,
 ) {
     Row(
         modifier
@@ -685,37 +685,28 @@ fun BabyKioskScreen(controller: AppController) {
                 if (touched) {
                     Spacer(Modifier.height(8.dp))
                     HorizontalDivider(color = text.copy(alpha = 0.3f))
-                    val rowLabel = text
                     InfoRow(
                         stringResource(R.string.native_ui_kiosk_row_connection),
                         if (connection != null)
                             stringResource(R.string.native_ui_kiosk_connection_value, connection)
                         else stringResource(R.string.native_ui_common_baby_unit_default),
                         "baby_row_connection",
-                        rowLabel,
-                        text,
                     )
                     InfoRow(
                         stringResource(R.string.native_ui_kiosk_row_parent),
                         parentDeviceValue(b, kioskApp),
                         "baby_peer",
-                        rowLabel,
-                        text,
                     )
                     InfoRow(
                         stringResource(R.string.native_ui_kiosk_row_last_talk),
                         lastTalkValue(b.lastTalk),
                         "baby_last_talk",
-                        rowLabel,
-                        text,
                     )
                     if (battery != null) {
                         InfoRow(
                             stringResource(R.string.native_ui_kiosk_row_this_device),
                             thisDeviceValue(battery),
                             "baby_kiosk_battery",
-                            rowLabel,
-                            text,
                         )
                     }
                     if (b.parentListening) {
