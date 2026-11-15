@@ -8,5 +8,11 @@ appId: org.guardedsleep.app.alpha
     stopApp: false
 - extendedWaitUntil:
     visible:
-      id: "parent_help_reconnect"
+      id: "parent_ambient_bar"
     timeout: 15000
+# The reconnect help sits below the headline; the monitor scrolls on a phone.
+- scrollUntilVisible:
+    element:
+      id: "parent_help_reconnect"
+    visibilityPercentage: 20
+    timeout: 30000
