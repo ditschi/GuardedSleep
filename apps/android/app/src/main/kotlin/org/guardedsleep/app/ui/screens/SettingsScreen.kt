@@ -6,10 +6,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
@@ -26,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +45,7 @@ import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AppCard
 import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.ConfirmDialog
+import org.guardedsleep.app.ui.common.Dot
 import org.guardedsleep.app.ui.common.Glyph
 import org.guardedsleep.app.ui.common.GlyphIcon
 import org.guardedsleep.app.ui.common.RenameConnectionDialog
@@ -49,14 +53,15 @@ import org.guardedsleep.app.ui.common.ScreenRoot
 import org.guardedsleep.app.ui.common.ScrollColumn
 import org.guardedsleep.app.ui.common.SecondaryButton
 import org.guardedsleep.app.ui.common.connectionLabel
-import org.guardedsleep.app.ui.common.connectionListLabel
 import org.guardedsleep.app.ui.common.formatTime
 import org.guardedsleep.app.ui.common.rememberLanguageChoices
 import org.guardedsleep.app.ui.model.AlertOutput
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
+import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.DiscreetEscalation
 import org.guardedsleep.app.ui.model.Role
+import org.guardedsleep.app.ui.model.SettingsState
 import org.guardedsleep.app.ui.model.TalkVolume
 import org.guardedsleep.app.ui.model.Theme
 import org.guardedsleep.app.ui.model.TurnSaveResult
@@ -74,7 +79,30 @@ data class BuildInfo(val version: String, val commit: String, val commitTime: St
     }
 }
 
-/** S12: Basic settings per role; Advanced only behind a warning. */
+/**
+ * The pages of Settings: an overview and one page per group row (`device-setup` "Settings
+ * structure").
+ */
+enum class SettingsPage {
+    ROOT,
+    CONNECTIONS,
+    ALERTS,
+    DETECTION,
+    SILENCE,
+    TALK,
+    DISPLAY,
+    OPEN_AT_START,
+    LANGUAGE,
+    ABOUT,
+    ADVANCED,
+}
+
+/**
+ * S12: the Settings overview with two groups, "Connections" and "This device", and one page behind
+ * each row. Advanced stays behind a warning. [initialPage] and [onPageChange] let the caller keep
+ * the page across the alarm tone picker and the set-up check; back on a page returns to the
+ * overview, back on the overview calls [onBack].
+ */
 @Composable
 fun SettingsScreen(
     controller: AppController,
@@ -83,18 +111,27 @@ fun SettingsScreen(
     onTestAlert: () -> Unit,
     buildInfo: BuildInfo = BuildInfo.Preview,
     onOpenAlarmTone: () -> Unit = {},
+    initialPage: SettingsPage = SettingsPage.ROOT,
+    onPageChange: (SettingsPage) -> Unit = {},
 ) {
     val s = controller.settings.collectAsState().value
     val app = controller.app.collectAsState().value
     val b = controller.baby.collectAsState().value
     val isBaby = app.role == Role.BABY
+    var page by rememberSaveable { mutableStateOf(initialPage) }
+    fun goTo(p: SettingsPage) {
+        page = p
+        onPageChange(p)
+    }
     var confirmAdvanced by remember { mutableStateOf(false) }
     var confirmForget by remember { mutableStateOf(false) }
     // The connection a rename or forget dialog is about (several saved pairings).
     var renaming by remember { mutableStateOf<String?>(null) }
     var forgetting by remember { mutableStateOf<String?>(null) }
     val peer = peerDisplayName(app.peerName, parentSide = !isBaby)
-    BackHandler(onBack = onBack)
+    // A page goes back to the overview, the overview back to where Settings was opened from.
+    val goBack = { if (page == SettingsPage.ROOT) onBack() else goTo(SettingsPage.ROOT) }
+    BackHandler(onBack = goBack)
     ScreenRoot("settings") {
         ScrollColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(
@@ -103,7 +140,7 @@ fun SettingsScreen(
             ) {
                 Row(
                     Modifier.size(48.dp)
-                        .clickable(role = SemRole.Button, onClick = onBack)
+                        .clickable(role = SemRole.Button, onClick = goBack)
                         .testTag("settings_back"),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically,
@@ -111,7 +148,7 @@ fun SettingsScreen(
                     GlyphIcon(Glyph.BACK, MaterialTheme.colorScheme.onBackground)
                 }
                 Text(
-                    stringResource(R.string.native_ui_common_settings),
+                    stringResource(pageTitle(page)),
                     Modifier.testTag("settings_title").semantics { heading() },
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.SemiBold,
@@ -119,383 +156,327 @@ fun SettingsScreen(
                 )
             }
 
-            if (isBaby) {
-                Section(
-                    R.string.native_ui_settings_group_sound_detection,
-                    "settings_group_detection",
-                ) {
-                    var th by remember(s.threshold) { mutableFloatStateOf(s.threshold) }
-                    Body(
-                        stringResource(R.string.native_ui_settings_sensitivity),
-                        color = MaterialTheme.colorScheme.onSurface,
+            when (page) {
+                SettingsPage.ROOT ->
+                    SettingsOverview(
+                        controller,
+                        app,
+                        s,
+                        isBaby,
+                        onOpenSetup = onOpenSetup,
+                        onPage = ::goTo,
                     )
-                    MicLevelBar(b.micLevel, th, tag = "settings_mic_bar")
-                    Slider(
-                        value = th,
-                        onValueChange = { th = it },
-                        onValueChangeFinished = {
-                            controller.updateSettings { st -> st.copy(threshold = th) }
-                        },
-                        valueRange = 0.03f..0.4f,
-                        modifier = Modifier.testTag("settings_threshold"),
+                SettingsPage.CONNECTIONS ->
+                    ConnectionsPage(
+                        app,
+                        isBaby,
+                        peer,
+                        onRename = { renaming = it },
+                        onForget = { forgetting = it },
+                        onForgetOnly = { confirmForget = true },
                     )
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Body(stringResource(R.string.native_ui_settings_more_sensitive))
-                        Body(stringResource(R.string.native_ui_settings_less_sensitive))
-                    }
-                    Body(
-                        stringResource(R.string.native_ui_settings_hold_label),
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        HoldOptions.forEach { sec ->
-                            ChoiceChip(
-                                stringResource(
-                                    R.string.native_ui_common_seconds_short,
-                                    sec.toString(),
-                                ),
-                                s.holdSeconds == sec,
-                                "settings_hold_$sec",
-                            ) {
-                                controller.updateSettings { st -> st.copy(holdSeconds = sec) }
-                            }
-                        }
-                    }
-                }
-                Section(R.string.native_ui_settings_group_silence, "settings_group_silence") {
-                    SwitchRow(
-                        stringResource(R.string.native_ui_setup_silence_title),
-                        s.silenceWhileMonitoring,
-                        "settings_silence",
-                    ) { on ->
-                        controller.updateSettings { st -> st.copy(silenceWhileMonitoring = on) }
-                    }
-                    Body(
-                        stringResource(
-                            if (b.dndAccess) R.string.native_ui_settings_silence_access_ok
-                            else R.string.native_ui_baby_silence_no_access
-                        ),
-                        tag = "settings_silence_status",
-                    )
-                }
-                Section(R.string.native_ui_talk_baby_title, "settings_group_talk") {
-                    // An adult opened the talk-back settings: the "may not be audible" warning
-                    // ends.
-                    LaunchedEffect(Unit) { controller.talkSettingsOpened() }
-                    SwitchRow(
-                        stringResource(R.string.native_ui_talk_baby_switch),
-                        s.talkBackEnabled,
-                        "baby_talk_toggle",
-                    ) { on ->
-                        controller.updateSettings { st -> st.copy(talkBackEnabled = on) }
-                    }
-                    Body(stringResource(R.string.native_ui_talk_baby_switch_hint))
-                    if (s.talkBackEnabled) {
+                SettingsPage.DETECTION -> {
+                    Section(
+                        R.string.native_ui_settings_group_sound_detection,
+                        "settings_group_detection",
+                    ) {
+                        var th by remember(s.threshold) { mutableFloatStateOf(s.threshold) }
                         Body(
-                            stringResource(R.string.native_ui_talk_baby_volume),
+                            stringResource(R.string.native_ui_settings_sensitivity),
                             color = MaterialTheme.colorScheme.onSurface,
                         )
+                        MicLevelBar(b.micLevel, th, tag = "settings_mic_bar")
+                        Slider(
+                            value = th,
+                            onValueChange = { th = it },
+                            onValueChangeFinished = {
+                                controller.updateSettings { st -> st.copy(threshold = th) }
+                            },
+                            valueRange = 0.03f..0.4f,
+                            modifier = Modifier.testTag("settings_threshold"),
+                        )
                         Row(
-                            Modifier.testTag("baby_talk_volume"),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            TalkVolume.entries.forEach { v ->
+                            Body(stringResource(R.string.native_ui_settings_more_sensitive))
+                            Body(stringResource(R.string.native_ui_settings_less_sensitive))
+                        }
+                        Body(
+                            stringResource(R.string.native_ui_settings_hold_label),
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            HoldOptions.forEach { sec ->
                                 ChoiceChip(
                                     stringResource(
-                                        when (v) {
-                                            TalkVolume.LOW -> R.string.native_ui_talk_baby_low
-                                            TalkVolume.MEDIUM -> R.string.native_ui_talk_baby_medium
-                                            TalkVolume.HIGH -> R.string.native_ui_talk_baby_high
-                                        }
+                                        R.string.native_ui_common_seconds_short,
+                                        sec.toString(),
                                     ),
-                                    s.talkVolume == v,
-                                    "baby_talk_volume_" + v.name.lowercase(),
+                                    s.holdSeconds == sec,
+                                    "settings_hold_$sec",
                                 ) {
-                                    controller.updateSettings { st -> st.copy(talkVolume = v) }
+                                    controller.updateSettings { st -> st.copy(holdSeconds = sec) }
                                 }
                             }
                         }
-                        SecondaryButton(
-                            stringResource(R.string.native_ui_talk_baby_play_chime),
-                            { controller.playTalkChimeSample() },
-                            "baby_talk_play_chime",
-                        )
+                    }
+                }
+                SettingsPage.SILENCE -> {
+                    Section(R.string.native_ui_settings_group_silence, "settings_group_silence") {
                         SwitchRow(
-                            stringResource(R.string.native_ui_talk_baby_chime),
-                            s.talkChime,
-                            "baby_talk_chime_toggle",
+                            stringResource(R.string.native_ui_setup_silence_title),
+                            s.silenceWhileMonitoring,
+                            "settings_silence",
                         ) { on ->
-                            controller.updateSettings { st -> st.copy(talkChime = on) }
+                            controller.updateSettings { st -> st.copy(silenceWhileMonitoring = on) }
                         }
+                        Body(
+                            stringResource(
+                                if (b.dndAccess) R.string.native_ui_settings_silence_access_ok
+                                else R.string.native_ui_baby_silence_no_access
+                            ),
+                            tag = "settings_silence_status",
+                        )
                     }
                 }
-            } else {
-                Section(R.string.native_ui_settings_group_alerts, "settings_group_alerts") {
-                    AlertStyleChoice(s.alertStyle) { style ->
-                        controller.updateSettings { st -> st.copy(alertStyle = style) }
-                    }
-                    if (s.alertStyle == AlertStyle.DISCREET) {
-                        DiscreetEscalationChoice(s.discreetEscalation) { choice ->
-                            controller.updateSettings { st -> st.copy(discreetEscalation = choice) }
+                SettingsPage.TALK -> {
+                    Section(R.string.native_ui_talk_baby_title, "settings_group_talk") {
+                        // An adult opened the talk-back settings: the "may not be audible" warning
+                        // ends.
+                        LaunchedEffect(Unit) { controller.talkSettingsOpened() }
+                        SwitchRow(
+                            stringResource(R.string.native_ui_talk_baby_switch),
+                            s.talkBackEnabled,
+                            "baby_talk_toggle",
+                        ) { on ->
+                            controller.updateSettings { st -> st.copy(talkBackEnabled = on) }
                         }
-                    }
-                    // The tone of the connection alarm (parent only); the picker is its own screen.
-                    Row(
-                        Modifier.fillMaxWidth()
-                            .heightIn(min = 56.dp)
-                            .clickable(role = SemRole.Button, onClick = onOpenAlarmTone)
-                            .testTag("settings_alarm_tone"),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                stringResource(R.string.native_ui_settings_alarm_tone_label),
-                                style = MaterialTheme.typography.bodyLarge,
+                        Body(stringResource(R.string.native_ui_talk_baby_switch_hint))
+                        if (s.talkBackEnabled) {
+                            Body(
+                                stringResource(R.string.native_ui_talk_baby_volume),
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
-                            Body(
-                                alarmToneName(s.connectionAlarmTone),
-                                tag = "settings_alarm_tone_name",
-                            )
-                        }
-                    }
-                    Body(
-                        stringResource(R.string.native_ui_settings_output_label),
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    ChoiceRow(
-                        stringResource(R.string.native_ui_settings_output_default),
-                        s.alertOutput == AlertOutput.DEFAULT,
-                        "settings_output_default",
-                    ) {
-                        controller.updateSettings { st ->
-                            st.copy(alertOutput = AlertOutput.DEFAULT)
-                        }
-                    }
-                    ChoiceRow(
-                        stringResource(R.string.native_ui_settings_output_speaker),
-                        s.alertOutput == AlertOutput.SPEAKER_ONLY,
-                        "settings_output_speaker",
-                    ) {
-                        controller.updateSettings { st ->
-                            st.copy(alertOutput = AlertOutput.SPEAKER_ONLY)
-                        }
-                    }
-                    var gain by
-                        remember(s.alertGainPct) { mutableFloatStateOf(s.alertGainPct.toFloat()) }
-                    Body(
-                        stringResource(R.string.native_ui_settings_gain, gain.toInt().toString()),
-                        tag = "settings_gain_label",
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Slider(
-                        value = gain,
-                        onValueChange = { gain = it },
-                        onValueChangeFinished = {
-                            controller.updateSettings { st -> st.copy(alertGainPct = gain.toInt()) }
-                        },
-                        valueRange = 25f..150f,
-                        modifier = Modifier.testTag("settings_gain"),
-                    )
-                    SecondaryButton(
-                        stringResource(R.string.native_ui_probe_button),
-                        onTestAlert,
-                        "settings_test_alert",
-                    )
-                    Body(
-                        s.lastTestWallMs?.let {
-                            stringResource(R.string.native_ui_settings_last_test, formatTime(it))
-                        } ?: stringResource(R.string.native_ui_settings_never_tested),
-                        tag = "settings_last_test",
-                    )
-                }
-                Section(R.string.native_ui_settings_group_screen, "settings_group_screen") {
-                    ChoiceRow(
-                        stringResource(R.string.native_ui_settings_theme_dark),
-                        s.theme == Theme.DARK,
-                        "settings_theme_dark",
-                    ) {
-                        controller.updateSettings { st -> st.copy(theme = Theme.DARK) }
-                    }
-                    ChoiceRow(
-                        stringResource(R.string.native_ui_settings_theme_light),
-                        s.theme == Theme.LIGHT,
-                        "settings_theme_light",
-                    ) {
-                        controller.updateSettings { st -> st.copy(theme = Theme.LIGHT) }
-                    }
-                    ChoiceRow(
-                        stringResource(R.string.native_ui_settings_theme_system),
-                        s.theme == Theme.SYSTEM,
-                        "settings_theme_system",
-                    ) {
-                        controller.updateSettings { st -> st.copy(theme = Theme.SYSTEM) }
-                    }
-                }
-            }
-
-            Section(
-                if (app.connections.size > 1) R.string.native_ui_connections_title
-                else R.string.native_ui_settings_group_paired,
-                "settings_group_paired",
-            ) {
-                if (app.connections.size > 1) {
-                    app.connections.forEach { c ->
-                        Column(
-                            Modifier.testTag("settings_connection_${c.id}"),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Body(
-                                connectionListLabel(c, app.connections, app.role),
-                                tag = "settings_connection_name_${c.id}",
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                SecondaryButton(
-                                    stringResource(R.string.native_ui_connections_rename),
-                                    { renaming = c.id },
-                                    "settings_connection_rename_${c.id}",
-                                    Modifier.weight(1f),
-                                )
-                                if (!c.isDefault) {
-                                    SecondaryButton(
-                                        stringResource(R.string.native_ui_connections_make_default),
-                                        { controller.setDefaultConnection(c.id) },
-                                        "settings_connection_default_${c.id}",
-                                        Modifier.weight(1f),
-                                    )
-                                } else if (app.role == Role.PARENT) {
-                                    SecondaryButton(
+                            Row(
+                                Modifier.testTag("baby_talk_volume"),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                TalkVolume.entries.forEach { v ->
+                                    ChoiceChip(
                                         stringResource(
-                                            R.string.native_ui_connections_remove_default
+                                            when (v) {
+                                                TalkVolume.LOW -> R.string.native_ui_talk_baby_low
+                                                TalkVolume.MEDIUM ->
+                                                    R.string.native_ui_talk_baby_medium
+                                                TalkVolume.HIGH -> R.string.native_ui_talk_baby_high
+                                            }
                                         ),
-                                        { controller.clearDefaultConnection() },
-                                        "settings_connection_remove_default_${c.id}",
-                                        Modifier.weight(1f),
-                                    )
+                                        s.talkVolume == v,
+                                        "baby_talk_volume_" + v.name.lowercase(),
+                                    ) {
+                                        controller.updateSettings { st -> st.copy(talkVolume = v) }
+                                    }
                                 }
-                                SecondaryButton(
-                                    stringResource(R.string.native_ui_forget_confirm),
-                                    { forgetting = c.id },
-                                    "settings_connection_forget_${c.id}",
-                                    Modifier.weight(1f),
-                                    destructive = true,
-                                )
+                            }
+                            SecondaryButton(
+                                stringResource(R.string.native_ui_talk_baby_play_chime),
+                                { controller.playTalkChimeSample() },
+                                "baby_talk_play_chime",
+                            )
+                            SwitchRow(
+                                stringResource(R.string.native_ui_talk_baby_chime),
+                                s.talkChime,
+                                "baby_talk_chime_toggle",
+                            ) { on ->
+                                controller.updateSettings { st -> st.copy(talkChime = on) }
                             }
                         }
                     }
-                } else if (app.paired) {
-                    Body(
-                        peer,
-                        tag = "settings_peer_name",
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    app.connections.firstOrNull()?.let { c ->
+                }
+                SettingsPage.ALERTS -> {
+                    Section(R.string.native_ui_settings_group_alerts, "settings_group_alerts") {
+                        AlertStyleChoice(s.alertStyle) { style ->
+                            controller.updateSettings { st -> st.copy(alertStyle = style) }
+                        }
+                        if (s.alertStyle == AlertStyle.DISCREET) {
+                            DiscreetEscalationChoice(s.discreetEscalation) { choice ->
+                                controller.updateSettings { st ->
+                                    st.copy(discreetEscalation = choice)
+                                }
+                            }
+                        }
+                        // The tone of the connection alarm (parent only); the picker is its own
+                        // screen.
+                        Row(
+                            Modifier.fillMaxWidth()
+                                .heightIn(min = 56.dp)
+                                .clickable(role = SemRole.Button, onClick = onOpenAlarmTone)
+                                .testTag("settings_alarm_tone"),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    stringResource(R.string.native_ui_settings_alarm_tone_label),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                                Body(
+                                    alarmToneName(s.connectionAlarmTone),
+                                    tag = "settings_alarm_tone_name",
+                                )
+                            }
+                        }
+                        Body(
+                            stringResource(R.string.native_ui_settings_output_label),
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        ChoiceRow(
+                            stringResource(R.string.native_ui_settings_output_default),
+                            s.alertOutput == AlertOutput.DEFAULT,
+                            "settings_output_default",
+                        ) {
+                            controller.updateSettings { st ->
+                                st.copy(alertOutput = AlertOutput.DEFAULT)
+                            }
+                        }
+                        ChoiceRow(
+                            stringResource(R.string.native_ui_settings_output_speaker),
+                            s.alertOutput == AlertOutput.SPEAKER_ONLY,
+                            "settings_output_speaker",
+                        ) {
+                            controller.updateSettings { st ->
+                                st.copy(alertOutput = AlertOutput.SPEAKER_ONLY)
+                            }
+                        }
+                        var gain by
+                            remember(s.alertGainPct) {
+                                mutableFloatStateOf(s.alertGainPct.toFloat())
+                            }
+                        Body(
+                            stringResource(
+                                R.string.native_ui_settings_gain,
+                                gain.toInt().toString(),
+                            ),
+                            tag = "settings_gain_label",
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Slider(
+                            value = gain,
+                            onValueChange = { gain = it },
+                            onValueChangeFinished = {
+                                controller.updateSettings { st ->
+                                    st.copy(alertGainPct = gain.toInt())
+                                }
+                            },
+                            valueRange = 25f..150f,
+                            modifier = Modifier.testTag("settings_gain"),
+                        )
                         SecondaryButton(
-                            stringResource(R.string.native_ui_connections_rename),
-                            { renaming = c.id },
-                            "settings_connection_rename_${c.id}",
-                            Modifier.fillMaxWidth(),
+                            stringResource(R.string.native_ui_probe_button),
+                            onTestAlert,
+                            "settings_test_alert",
+                        )
+                        Body(
+                            s.lastTestWallMs?.let {
+                                stringResource(
+                                    R.string.native_ui_settings_last_test,
+                                    formatTime(it),
+                                )
+                            } ?: stringResource(R.string.native_ui_settings_never_tested),
+                            tag = "settings_last_test",
                         )
                     }
-                    SecondaryButton(
-                        stringResource(
-                            if (isBaby) R.string.native_ui_settings_forget_parent
-                            else R.string.native_ui_settings_forget_baby
-                        ),
-                        { confirmForget = true },
-                        "settings_forget",
-                        Modifier.fillMaxWidth(),
-                        destructive = true,
-                    )
-                } else {
-                    Body(stringResource(R.string.native_ui_home_empty), tag = "settings_not_paired")
                 }
-            }
-            Section(R.string.native_ui_settings_group_this_phone, "settings_group_phone") {
-                SecondaryButton(
-                    stringResource(R.string.native_ui_settings_check_phone),
-                    onOpenSetup,
-                    "settings_open_setup",
-                    Modifier.fillMaxWidth(),
-                )
-            }
-            Section(R.string.native_ui_settings_group_start_mode, "settings_group_start_mode") {
-                // Which role a start without running monitoring opens in; null asks every time.
-                ChoiceRow(
-                    stringResource(R.string.native_ui_settings_start_mode_ask),
-                    app.defaultRole == null,
-                    "start_mode_ask",
-                ) {
-                    controller.setDefaultRole(null)
-                }
-                ChoiceRow(
-                    stringResource(R.string.native_ui_role_baby_title),
-                    app.defaultRole == Role.BABY,
-                    "start_mode_baby",
-                ) {
-                    controller.setDefaultRole(Role.BABY)
-                }
-                ChoiceRow(
-                    stringResource(R.string.native_ui_role_parent_title),
-                    app.defaultRole == Role.PARENT,
-                    "start_mode_parent",
-                ) {
-                    controller.setDefaultRole(Role.PARENT)
-                }
-            }
-            Section(R.string.native_ui_settings_group_language, "settings_group_language") {
-                // "Match system" is translated; the languages are shown by endonym (generated).
-                val langs = rememberLanguageChoices().map { it.tag to it.endonym }
-                ChoiceRow(
-                    stringResource(R.string.native_ui_settings_lang_system),
-                    s.language == null,
-                    "settings_lang_system",
-                ) {
-                    controller.updateSettings { st -> st.copy(language = null) }
-                }
-                langs.forEach { (code, name) ->
-                    ChoiceRow(name, s.language == code, "settings_lang_$code") {
-                        controller.updateSettings { st -> st.copy(language = code) }
+                SettingsPage.DISPLAY -> {
+                    Section(R.string.native_ui_settings_group_display, "settings_group_display") {
+                        ChoiceRow(
+                            stringResource(R.string.native_ui_settings_theme_dark),
+                            s.theme == Theme.DARK,
+                            "settings_theme_dark",
+                        ) {
+                            controller.updateSettings { st -> st.copy(theme = Theme.DARK) }
+                        }
+                        ChoiceRow(
+                            stringResource(R.string.native_ui_settings_theme_light),
+                            s.theme == Theme.LIGHT,
+                            "settings_theme_light",
+                        ) {
+                            controller.updateSettings { st -> st.copy(theme = Theme.LIGHT) }
+                        }
+                        ChoiceRow(
+                            stringResource(R.string.native_ui_settings_theme_system),
+                            s.theme == Theme.SYSTEM,
+                            "settings_theme_system",
+                        ) {
+                            controller.updateSettings { st -> st.copy(theme = Theme.SYSTEM) }
+                        }
                     }
                 }
-            }
-            Section(R.string.native_ui_settings_group_about, "settings_group_about") {
-                Body(stringResource(R.string.native_ui_setup_limits_body), tag = "settings_limits")
-                Body(
-                    stringResource(
-                        R.string.native_ui_settings_version,
-                        buildInfo.version,
-                        buildInfo.commit,
-                        buildInfo.commitTime,
-                    ),
-                    tag = "settings_version",
-                )
-                Body(
-                    stringResource(R.string.native_ui_settings_font_credit),
-                    tag = "settings_font_credit",
-                )
-            }
-
-            Section(R.string.native_ui_settings_group_advanced, "settings_group_advanced") {
-                SwitchRow(
-                    stringResource(R.string.native_ui_settings_advanced_toggle),
-                    s.advancedEnabled,
-                    "settings_advanced_toggle",
-                ) { on ->
-                    if (on) confirmAdvanced = true
-                    else controller.updateSettings { st -> st.copy(advancedEnabled = false) }
+                SettingsPage.OPEN_AT_START -> OpenAtStartPage(controller, app, isBaby)
+                SettingsPage.LANGUAGE -> {
+                    Section(R.string.native_ui_settings_group_language, "settings_group_language") {
+                        // "Match system" is translated; the languages are shown by endonym
+                        // (generated).
+                        val langs = rememberLanguageChoices().map { it.tag to it.endonym }
+                        ChoiceRow(
+                            stringResource(R.string.native_ui_settings_lang_system),
+                            s.language == null,
+                            "settings_lang_system",
+                        ) {
+                            controller.updateSettings { st -> st.copy(language = null) }
+                        }
+                        langs.forEach { (code, name) ->
+                            ChoiceRow(name, s.language == code, "settings_lang_$code") {
+                                controller.updateSettings { st -> st.copy(language = code) }
+                            }
+                        }
+                    }
                 }
-                if (s.advancedEnabled)
-                    AdvancedFields(
-                        controller,
-                        s.signalingUrls,
-                        s.turnUrl,
-                        s.turnUsername,
-                        s.turnPasswordSaved,
-                        s.heartbeatSeconds,
-                    )
+                SettingsPage.ABOUT -> {
+                    Section(R.string.native_ui_settings_group_about, "settings_group_about") {
+                        Body(
+                            stringResource(R.string.native_ui_setup_limits_body),
+                            tag = "settings_limits",
+                        )
+                        Body(
+                            stringResource(
+                                R.string.native_ui_settings_version,
+                                buildInfo.version,
+                                buildInfo.commit,
+                                buildInfo.commitTime,
+                            ),
+                            tag = "settings_version",
+                        )
+                        Body(
+                            stringResource(R.string.native_ui_settings_font_credit),
+                            tag = "settings_font_credit",
+                        )
+                    }
+                }
+                SettingsPage.ADVANCED -> {
+                    Section(R.string.native_ui_settings_group_advanced, "settings_group_advanced") {
+                        SwitchRow(
+                            stringResource(R.string.native_ui_settings_advanced_toggle),
+                            s.advancedEnabled,
+                            "settings_advanced_toggle",
+                        ) { on ->
+                            if (on) confirmAdvanced = true
+                            else
+                                controller.updateSettings { st -> st.copy(advancedEnabled = false) }
+                        }
+                        if (s.advancedEnabled)
+                            AdvancedFields(
+                                controller,
+                                s.signalingUrls,
+                                s.turnUrl,
+                                s.turnUsername,
+                                s.turnPasswordSaved,
+                                s.heartbeatSeconds,
+                            )
+                    }
+                }
             }
         }
         if (confirmAdvanced) {
@@ -566,6 +547,374 @@ fun SettingsScreen(
                 },
                 onDismiss = { confirmForget = false },
             )
+        }
+    }
+}
+
+private fun pageTitle(page: SettingsPage): Int =
+    when (page) {
+        SettingsPage.ROOT -> R.string.native_ui_common_settings
+        SettingsPage.CONNECTIONS -> R.string.native_ui_connections_title
+        SettingsPage.ALERTS -> R.string.native_ui_settings_group_alerts
+        SettingsPage.DETECTION -> R.string.native_ui_settings_group_sound_detection
+        SettingsPage.SILENCE -> R.string.native_ui_settings_group_silence
+        SettingsPage.TALK -> R.string.native_ui_talk_baby_title
+        SettingsPage.DISPLAY -> R.string.native_ui_settings_group_display
+        SettingsPage.OPEN_AT_START -> R.string.native_ui_settings_open_at_start_title
+        SettingsPage.LANGUAGE -> R.string.native_ui_settings_group_language
+        SettingsPage.ABOUT -> R.string.native_ui_settings_group_about
+        SettingsPage.ADVANCED -> R.string.native_ui_settings_group_advanced
+    }
+
+/** A group heading of the overview ("Connections", "This device"). */
+@Composable
+private fun GroupHeading(text: String, tag: String) {
+    Text(
+        text,
+        Modifier.testTag(tag).semantics { heading() },
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = LocalAppColors.current.secondaryText,
+    )
+}
+
+/** One row of the overview: title, optional summary, chevron; the whole row is the target. */
+@Composable
+private fun NavRow(title: String, summary: String?, tag: String, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .clickable(role = SemRole.Button, onClick = onClick)
+            .testTag(tag),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            if (summary != null) Body(summary)
+        }
+        GlyphIcon(Glyph.CHEVRON, LocalAppColors.current.secondaryText)
+    }
+}
+
+/**
+ * The overview: the saved connections (read-only while monitoring), then the "This device" rows. A
+ * baby device has no alert or display rows: it is always dark and only listens.
+ */
+@Composable
+private fun SettingsOverview(
+    controller: AppController,
+    app: AppState,
+    s: SettingsState,
+    isBaby: Boolean,
+    onOpenSetup: () -> Unit,
+    onPage: (SettingsPage) -> Unit,
+) {
+    // The only way to change a connection is to stop first (`device-setup` "Connections read-only
+    // while monitoring"): the rows then show no chevron and cannot be opened.
+    val readOnly = app.monitoring
+    GroupHeading(stringResource(R.string.native_ui_connections_title), "settings_group_connections")
+    AppCard(
+        Modifier.testTag("settings_connections"),
+        onClick =
+            if (!readOnly && app.paired) {
+                { onPage(SettingsPage.CONNECTIONS) }
+            } else null,
+    ) {
+        if (app.connections.isEmpty() && !app.paired) {
+            Body(stringResource(R.string.native_ui_home_empty), tag = "settings_not_paired")
+        } else if (app.connections.isEmpty()) {
+            ConnectionLine(peerDisplayName(app.peerName, parentSide = !isBaby), null, isBaby, false)
+        } else {
+            app.connections.forEach { c ->
+                ConnectionLine(
+                    connectionLabel(c, app.connections, app.role),
+                    c.id,
+                    isBaby,
+                    inUse = readOnly && c.selected,
+                )
+            }
+        }
+        if (readOnly) {
+            Body(
+                stringResource(R.string.native_ui_connections_read_only_note),
+                tag = "settings_connections_read_only",
+            )
+        } else if (app.paired) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                GlyphIcon(Glyph.CHEVRON, LocalAppColors.current.secondaryText)
+            }
+        }
+    }
+
+    GroupHeading(
+        stringResource(R.string.native_ui_settings_group_this_phone),
+        "settings_group_phone",
+    )
+    AppCard(Modifier.testTag("settings_this_device")) {
+        if (isBaby) {
+            NavRow(
+                stringResource(R.string.native_ui_settings_group_sound_detection),
+                null,
+                "settings_nav_detection",
+            ) {
+                onPage(SettingsPage.DETECTION)
+            }
+            NavRow(
+                stringResource(R.string.native_ui_settings_group_silence),
+                null,
+                "settings_nav_silence",
+            ) {
+                onPage(SettingsPage.SILENCE)
+            }
+            NavRow(
+                stringResource(R.string.native_ui_talk_baby_title),
+                null,
+                "settings_nav_talk",
+            ) {
+                onPage(SettingsPage.TALK)
+            }
+        } else {
+            NavRow(
+                stringResource(R.string.native_ui_settings_group_alerts),
+                alarmToneName(s.connectionAlarmTone),
+                "settings_nav_alerts",
+            ) {
+                onPage(SettingsPage.ALERTS)
+            }
+            NavRow(
+                stringResource(R.string.native_ui_settings_group_display),
+                stringResource(
+                    when (s.theme) {
+                        Theme.DARK -> R.string.native_ui_settings_theme_dark
+                        Theme.LIGHT -> R.string.native_ui_settings_theme_light
+                        Theme.SYSTEM -> R.string.native_ui_settings_theme_system
+                    }
+                ),
+                "settings_nav_display",
+            ) {
+                onPage(SettingsPage.DISPLAY)
+            }
+        }
+        NavRow(
+            stringResource(R.string.native_ui_settings_open_at_start_title),
+            stringResource(
+                when (app.defaultRole) {
+                    null -> R.string.native_ui_settings_start_mode_ask
+                    Role.BABY -> R.string.native_ui_role_baby_title
+                    Role.PARENT -> R.string.native_ui_role_parent_title
+                }
+            ),
+            "settings_nav_open_at_start",
+        ) {
+            onPage(SettingsPage.OPEN_AT_START)
+        }
+        NavRow(
+            stringResource(R.string.native_ui_settings_check_phone),
+            null,
+            "settings_open_setup",
+            onOpenSetup,
+        )
+        val langs = rememberLanguageChoices()
+        NavRow(
+            stringResource(R.string.native_ui_settings_group_language),
+            langs.firstOrNull { it.tag == s.language }?.endonym
+                ?: stringResource(R.string.native_ui_settings_lang_system),
+            "settings_nav_language",
+        ) {
+            onPage(SettingsPage.LANGUAGE)
+        }
+        NavRow(
+            stringResource(R.string.native_ui_settings_group_about),
+            null,
+            "settings_nav_about",
+        ) {
+            onPage(SettingsPage.ABOUT)
+        }
+        NavRow(
+            stringResource(R.string.native_ui_settings_group_advanced),
+            null,
+            "settings_nav_advanced",
+        ) {
+            onPage(SettingsPage.ADVANCED)
+        }
+    }
+}
+
+/** A saved connection on the overview: its name, which device it is with, and "In use". */
+@Composable
+private fun ConnectionLine(label: String, id: String?, isBaby: Boolean, inUse: Boolean) {
+    Column(
+        Modifier.fillMaxWidth()
+            .testTag(if (id != null) "settings_connection_row_$id" else "settings_connection_row")
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Body(
+            stringResource(
+                if (isBaby) R.string.native_ui_role_parent_title
+                else R.string.native_ui_role_baby_title
+            )
+        )
+        if (inUse) {
+            // Dot and words: the state never rests on colour alone.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Dot(LocalAppColors.current.ok)
+                Spacer(Modifier.width(8.dp))
+                Body(
+                    stringResource(R.string.native_ui_connections_in_use),
+                    tag = "settings_connection_in_use",
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Settings › Connections: rename and forget per connection. While monitoring the page is read-only
+ * (it is also not reachable from the overview then; this guards a session that starts meanwhile).
+ */
+@Composable
+private fun ConnectionsPage(
+    app: AppState,
+    isBaby: Boolean,
+    peer: String,
+    onRename: (String) -> Unit,
+    onForget: (String) -> Unit,
+    onForgetOnly: () -> Unit,
+) {
+    val readOnly = app.monitoring
+    Section(R.string.native_ui_connections_title, "settings_group_paired") {
+        if (app.connections.size > 1) {
+            app.connections.forEach { c ->
+                Column(
+                    Modifier.testTag("settings_connection_${c.id}"),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Body(
+                        connectionLabel(c, app.connections, app.role),
+                        tag = "settings_connection_name_${c.id}",
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    if (!readOnly) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            SecondaryButton(
+                                stringResource(R.string.native_ui_connections_rename),
+                                { onRename(c.id) },
+                                "settings_connection_rename_${c.id}",
+                                Modifier.weight(1f),
+                            )
+                            SecondaryButton(
+                                stringResource(R.string.native_ui_forget_confirm),
+                                { onForget(c.id) },
+                                "settings_connection_forget_${c.id}",
+                                Modifier.weight(1f),
+                                destructive = true,
+                            )
+                        }
+                    }
+                }
+            }
+        } else if (app.paired) {
+            Body(peer, tag = "settings_peer_name", color = MaterialTheme.colorScheme.onSurface)
+            if (!readOnly) {
+                app.connections.firstOrNull()?.let { c ->
+                    SecondaryButton(
+                        stringResource(R.string.native_ui_connections_rename),
+                        { onRename(c.id) },
+                        "settings_connection_rename_${c.id}",
+                        Modifier.fillMaxWidth(),
+                    )
+                }
+                SecondaryButton(
+                    stringResource(
+                        if (isBaby) R.string.native_ui_settings_forget_parent
+                        else R.string.native_ui_settings_forget_baby
+                    ),
+                    onForgetOnly,
+                    "settings_forget",
+                    Modifier.fillMaxWidth(),
+                    destructive = true,
+                )
+            }
+        } else {
+            Body(stringResource(R.string.native_ui_home_empty), tag = "settings_not_paired")
+        }
+        if (readOnly) {
+            Body(
+                stringResource(R.string.native_ui_connections_read_only_note),
+                tag = "settings_connections_read_only",
+            )
+        }
+    }
+}
+
+/**
+ * Settings › Open at start: the built start mode (which role a start opens in) and, for the parent,
+ * the connection that starts monitoring once per app start. Both behave as built; only the place
+ * moved (`parent-pairing-entry`, `alternate-roles-and-apk-size`).
+ */
+@Composable
+private fun OpenAtStartPage(controller: AppController, app: AppState, isBaby: Boolean) {
+    Section(R.string.native_ui_settings_group_start_mode, "settings_group_start_mode") {
+        Body(stringResource(R.string.native_ui_settings_open_at_start_mode_hint))
+        // Which role a start without running monitoring opens in; null asks every time.
+        ChoiceRow(
+            stringResource(R.string.native_ui_settings_start_mode_ask),
+            app.defaultRole == null,
+            "start_mode_ask",
+        ) {
+            controller.setDefaultRole(null)
+        }
+        ChoiceRow(
+            stringResource(R.string.native_ui_role_baby_title),
+            app.defaultRole == Role.BABY,
+            "start_mode_baby",
+        ) {
+            controller.setDefaultRole(Role.BABY)
+        }
+        ChoiceRow(
+            stringResource(R.string.native_ui_role_parent_title),
+            app.defaultRole == Role.PARENT,
+            "start_mode_parent",
+        ) {
+            controller.setDefaultRole(Role.PARENT)
+        }
+    }
+    if (app.connections.isNotEmpty()) {
+        Section(
+            if (isBaby) R.string.native_ui_settings_open_at_start_default_title
+            else R.string.native_ui_settings_open_at_start_auto_title,
+            "settings_group_auto_start",
+        ) {
+            if (!isBaby) Body(stringResource(R.string.native_ui_settings_open_at_start_auto_hint))
+            // The marked connection starts monitoring at app start (parent); none is allowed.
+            if (!isBaby) {
+                ChoiceRow(
+                    stringResource(R.string.native_ui_settings_open_at_start_auto_none),
+                    app.connections.none { it.isDefault },
+                    "settings_auto_none",
+                ) {
+                    controller.clearDefaultConnection()
+                }
+            }
+            app.connections.forEach { c ->
+                ChoiceRow(
+                    connectionLabel(c, app.connections, app.role),
+                    c.isDefault,
+                    "settings_connection_default_${c.id}",
+                ) {
+                    controller.setDefaultConnection(c.id)
+                }
+            }
         }
     }
 }

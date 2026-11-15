@@ -22,6 +22,7 @@ import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.SettingsState
 import org.guardedsleep.app.ui.model.Theme
 import org.guardedsleep.app.ui.screens.AlarmTonePickerScreen
+import org.guardedsleep.app.ui.screens.SettingsPage
 import org.guardedsleep.app.ui.screens.SettingsScreen
 import org.guardedsleep.app.ui.theme.GuardedSleepTheme
 import org.junit.Assert.assertEquals
@@ -45,7 +46,16 @@ class AlarmToneTests : ShotBase() {
     @Test
     fun settingsRowShowsTheCurrentToneAndOpensThePicker() = runComposeUiTest {
         var opened = false
-        show { SettingsScreen(parent("beacon"), {}, {}, {}, onOpenAlarmTone = { opened = true }) }
+        show {
+            SettingsScreen(
+                parent("beacon"),
+                {},
+                {},
+                {},
+                onOpenAlarmTone = { opened = true },
+                initialPage = SettingsPage.ALERTS,
+            )
+        }
         onNodeWithTag("settings_alarm_tone").performScrollTo().assertIsDisplayed()
         onNodeWithTag("settings_alarm_tone_name", useUnmergedTree = true).assertIsDisplayed()
         onNodeWithTag("settings_alarm_tone").performClick()
@@ -58,7 +68,7 @@ class AlarmToneTests : ShotBase() {
             FakeAppController(
                 app = AppState(role = Role.BABY, onboardingDone = true, paired = true)
             )
-        show { SettingsScreen(baby, {}, {}, {}) }
+        show { SettingsScreen(baby, {}, {}, {}, initialPage = SettingsPage.TALK) }
         onNodeWithTag("settings_group_talk").assertIsDisplayed()
         assertTrue(onAllNodesWithTagCount("settings_alarm_tone") == 0)
     }

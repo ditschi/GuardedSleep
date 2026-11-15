@@ -33,6 +33,8 @@ data class UiEnv(
     val cameraGranted: Boolean? = null,
     /** null = read the sticky battery broadcast. */
     val battery: BatteryReading? = null,
+    /** null = move the activity's task to the background (back on the monitor); tests record it. */
+    val moveToBackground: (() -> Unit)? = null,
 )
 
 val LocalUiEnv = compositionLocalOf { UiEnv() }

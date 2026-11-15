@@ -29,6 +29,7 @@ import org.guardedsleep.app.ui.model.TalkVolume
 import org.guardedsleep.app.ui.model.Theme
 import org.guardedsleep.app.ui.screens.BabyKioskScreen
 import org.guardedsleep.app.ui.screens.ParentMonitorScreen
+import org.guardedsleep.app.ui.screens.SettingsPage
 import org.guardedsleep.app.ui.screens.SettingsScreen
 import org.guardedsleep.app.ui.theme.GuardedSleepTheme
 import org.junit.Assert.assertEquals
@@ -195,7 +196,7 @@ class TalkTests : ShotBase() {
                 app = AppState(role = Role.BABY, onboardingDone = true, paired = true),
                 settings = SettingsState(talkVolume = TalkVolume.LOW),
             )
-        show(dark = true) { SettingsScreen(c, {}, {}, {}) }
+        show(dark = true) { SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.TALK) }
         onNodeWithTag("baby_talk_toggle").performScrollTo().assertIsDisplayed()
         onNodeWithTag("baby_talk_volume").performScrollTo().assertIsDisplayed()
         onNodeWithTag("baby_talk_play_chime").performScrollTo().performClick()
