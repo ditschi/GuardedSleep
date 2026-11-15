@@ -165,10 +165,20 @@ class UiJourneyTest : JourneyHost() {
         stepUntil("the baby unit knows the parent listens") {
             phones.baby.baby.value.parentListening
         }
+        // The baby's own battery reaches the contract; a pulled charger is remembered.
+        stepUntil("the baby unit knows its battery") { phones.baby.baby.value.ownPlugged }
+        assertTrue(phones.baby.baby.value.chargerSeen)
+        phones.setBabyPlugged(false)
+        stepUntil("the baby unit sees the charger pulled") { !phones.baby.baby.value.ownPlugged }
+        assertTrue(phones.baby.baby.value.chargerSeen)
         tap(Device.BABY, "baby_lock")
         awaitShown(Device.BABY, "baby_kiosk")
         assertTrue(phones.baby.baby.value.kioskLocked)
+        // The screen reader's action asks first; only the confirmation unlocks.
         customAction(Device.BABY, "baby_kiosk")
+        awaitShown(Device.BABY, "dialog_unlock")
+        assertTrue(phones.baby.baby.value.kioskLocked)
+        tap(Device.BABY, "dialog_unlock_confirm")
         awaitShown(Device.BABY, "baby_monitor")
         assertFalse(phones.baby.baby.value.kioskLocked)
     }

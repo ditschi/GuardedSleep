@@ -52,11 +52,11 @@ Branch `feat/ui-redesign` from `origin/main`. One PR per slice (design §13): gr
 
 ## 5. Baby kiosk (PR 5)
 
-- [ ] 5.1 Kiosk marks and status line (frames 15, 17, 50, 51): `KioskMark` (short bar, none at level 0, dashed edge at level 1, framed slow pulse from level 2 and static with reduced motion, bar + square for needs attention) with the luminance cap of `connection-status` "Baby unit edge indicator"; always-visible status line at `#7D7671`; hidden during a talk. Verify: Robolectric tests per state; a unit test of the luminance cap on the mark colours.
-- [ ] 5.2 Set-up confirmation (frame 52): from the first verified contact with a parent device for at most 60 s, and on touch-wake, at the touch-wake brightness, with the parent connection name or the fallback; the dim countdown is not a live region. Verify: tests for name and fallback; no extra brightness beyond the existing wake level.
-- [ ] 5.3 Touch-wake rows and unlocked screen (frames 17, 44): Connection, Parent device, Last talk, This device; "Unlock" accessibility action with confirmation; "Lock screen" as the default action. Verify: Robolectric semantics test for the unlock action.
-- [ ] 5.4 Kiosk brightness per this change's `device-setup` "Baby kiosk" delta: minimum brightness except the set-up confirmation and touch-wake; every mark colour's relative luminance at most that of `#5A1414`. Verify: unit test over the kiosk palette; a Robolectric test that the window brightness stays at the minimum after the confirmation ends.
-- [ ] 5.5 Copy for this slice in all 20 catalogues (status lines, needs attention, set-up confirmation, touch-wake rows). Verify: `just gen`, `just lint-text`, literal lint.
+- [x] 5.1 Kiosk marks and status line (frames 15, 17, 50, 51): `KioskMark` (short bar, none at level 0, dashed edge at level 1, framed slow pulse from level 2 and static with reduced motion, bar + square for needs attention) with the luminance cap of `connection-status` "Baby unit edge indicator"; always-visible status line at `#7D7671`; hidden during a talk. Verify: Robolectric tests per state; a unit test of the luminance cap on the mark colours.
+- [x] 5.2 Set-up confirmation (frame 52): from the first verified contact with a parent device for at most 60 s, and on touch-wake, at the touch-wake brightness, with the parent connection name or the fallback; the dim countdown is not a live region. Verify: tests for name and fallback; no extra brightness beyond the existing wake level.
+- [x] 5.3 Touch-wake rows and unlocked screen (frames 17, 44): Connection, Parent device, Last talk, This device; "Unlock" accessibility action with confirmation; "Lock screen" as the default action. Verify: Robolectric semantics test for the unlock action.
+- [x] 5.4 Kiosk brightness per this change's `device-setup` "Baby kiosk" delta: minimum brightness except the set-up confirmation and touch-wake; every mark colour's relative luminance at most that of `#5A1414`. Verify: unit test over the kiosk palette; a Robolectric test that the window brightness stays at the minimum after the confirmation ends.
+- [x] 5.5 Copy for this slice in all 20 catalogues (status lines, needs attention, set-up confirmation, touch-wake rows). Verify: `just gen`, `just lint-text`, literal lint.
 
 ## 6. Night mode and browser specifics (PR 6)
 

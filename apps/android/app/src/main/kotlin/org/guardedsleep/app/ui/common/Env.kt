@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import java.util.TimeZone
 import kotlinx.coroutines.delay
 
+/** The baby device's own battery as the contract reports it (`charging` = plugged in). */
 data class BatteryReading(val pct: Int, val charging: Boolean)
 
 /**
@@ -31,8 +32,6 @@ data class UiEnv(
     val zone: TimeZone = TimeZone.getDefault(),
     /** null = ask the system. */
     val cameraGranted: Boolean? = null,
-    /** null = read the sticky battery broadcast. */
-    val battery: BatteryReading? = null,
 )
 
 val LocalUiEnv = compositionLocalOf { UiEnv() }

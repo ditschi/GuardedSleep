@@ -50,6 +50,9 @@ class LocaleLayoutShots : ShotBase() {
             dndAccess = true,
             silenceApplied = true,
             micLevel = 0.05f,
+            ownBatteryPct = 82,
+            ownPlugged = true,
+            chargerSeen = true,
         )
     private val loud =
         ParentMonitorState(

@@ -38,7 +38,6 @@ import org.guardedsleep.app.fixtures.TestPhones
 import org.guardedsleep.app.ui.GuardedSleepRoot
 import org.guardedsleep.app.ui.LinkAlarmScreen
 import org.guardedsleep.app.ui.NoiseAlertScreen
-import org.guardedsleep.app.ui.common.BatteryReading
 import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.common.UiEnv
 import org.guardedsleep.app.ui.model.AppController
@@ -133,7 +132,6 @@ abstract class JourneyHost {
                 reduceMotion = true,
                 zone = TimeZone.getTimeZone("UTC"),
                 cameraGranted = true,
-                battery = BatteryReading(82, true),
             )
         compose.runOnUiThread {
             // A FrameLayout with exact widths: a weighted LinearLayout measures the ComposeViews
