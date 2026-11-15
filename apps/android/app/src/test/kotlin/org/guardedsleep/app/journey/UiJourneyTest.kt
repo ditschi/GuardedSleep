@@ -161,7 +161,7 @@ class UiJourneyTest : JourneyHost() {
         firstRunAndPair()
         // The parent listens (the hold gesture of the button is not driven here) and asks the baby
         // unit to silence itself.
-        phones.parent.setListen(ListenMode.LOCKED)
+        phones.parent.setListen(ListenMode.ON)
         stepUntil("the baby unit knows the parent listens") {
             phones.baby.baby.value.parentListening
         }
@@ -236,6 +236,8 @@ class UiJourneyTest : JourneyHost() {
     @Test
     fun testAlertReachesTheParentPhoneWithTheTestBadge() {
         firstRunAndPair()
+        tap(Device.PARENT, "parent_overflow")
+        awaitShown(Device.PARENT, "parent_probe")
         tap(Device.PARENT, "parent_probe")
         awaitShown(Device.PARENT, "sheet_probe_run")
         tap(Device.PARENT, "sheet_probe_run")
@@ -276,6 +278,8 @@ class UiJourneyTest : JourneyHost() {
     @Test
     fun testAlertAnswerHasAnEffect() {
         firstRunAndPair()
+        tap(Device.PARENT, "parent_overflow")
+        awaitShown(Device.PARENT, "parent_probe")
         tap(Device.PARENT, "parent_probe")
         awaitShown(Device.PARENT, "sheet_probe_run")
         tap(Device.PARENT, "sheet_probe_run")

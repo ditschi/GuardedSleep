@@ -16,6 +16,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import uniffi.guardedsleep_core.LinkEvent
 import uniffi.guardedsleep_core.LinkState
+import uniffi.guardedsleep_core.TalkEndReason
+import uniffi.guardedsleep_core.TalkState
 
 class ParentModelTest {
     private val clock = FakeClock()
@@ -76,6 +78,36 @@ class ParentModelTest {
         st(LinkState.RECONNECTING, level = 1)
         assertNull(model.state.value.quietSinceWallMs)
         assertEquals(1, model.state.value.link.level)
+    }
+
+    @Test
+    fun quietRestartsWhenATalkEnds() {
+        connected()
+        clock.advance(2 * 60 * 60_000L)
+        model.onEvent(LinkEvent.TalkChanged(TalkState.Ended(TalkEndReason.RELEASED)), clock.elapsed)
+        assertEquals(clock.wall, model.state.value.quietSinceWallMs)
+    }
+
+    @Test
+    fun aTalkEndingDuringANoiseEventDoesNotMakeItQuiet() {
+        connected()
+        model.onEvent(LinkEvent.NoiseAlert(0.4, false, false), clock.elapsed)
+        assertNull(model.state.value.quietSinceWallMs)
+        model.onEvent(LinkEvent.TalkChanged(TalkState.Ended(TalkEndReason.ALERT)), clock.elapsed)
+        assertTrue(model.state.value.noiseAlertActive)
+        assertNull(model.state.value.quietSinceWallMs)
+    }
+
+    @Test
+    fun theRunStartIsKeptUntilReset() {
+        assertNull(model.state.value.monitoringSinceElapsedMs)
+        clock.advance(1_000)
+        val started = clock.elapsed
+        model.runStarted(started)
+        clock.advance(60_000)
+        assertEquals(started, model.state.value.monitoringSinceElapsedMs)
+        model.reset()
+        assertNull(model.state.value.monitoringSinceElapsedMs)
     }
 
     @Test
@@ -198,9 +230,9 @@ class ParentModelTest {
 
     @Test
     fun listenRulesAndLimit() {
-        assertFalse(model.setListen(ListenMode.HOLD, clock.elapsed))
+        assertFalse(model.setListen(ListenMode.ON, clock.elapsed))
         connected()
-        assertTrue(model.setListen(ListenMode.LOCKED, clock.elapsed))
+        assertTrue(model.setListen(ListenMode.ON, clock.elapsed))
         clock.advance(AlertPolicy.LISTEN_MAX_MS)
         model.onTick(clock.elapsed)
         assertEquals(ListenMode.OFF, model.state.value.listen)

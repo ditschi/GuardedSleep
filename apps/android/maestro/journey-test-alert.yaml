@@ -3,6 +3,8 @@ appId: org.guardedsleep.app.alpha
 ---
 - runFlow: dismiss-system-dialogs.yaml
 - tapOn:
+    id: "parent_overflow"
+- tapOn:
     id: "parent_probe"
 - tapOn:
     id: "sheet_probe_run"

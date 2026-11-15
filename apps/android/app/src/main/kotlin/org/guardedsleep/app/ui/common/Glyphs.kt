@@ -46,6 +46,7 @@ enum class Glyph {
     WAVE,
     ZZ,
     STOP,
+    BOLT,
 }
 
 @Composable
@@ -196,6 +197,19 @@ private fun DrawScope.drawGlyph(g: Glyph, c: Color) {
                 val x = 3.5f + i * 4.25f
                 drawLine(c, p(x, 12f - h / 2), p(x, 12f + h / 2), 2.6f * u, StrokeCap.Round)
             }
+        }
+        Glyph.BOLT -> {
+            val path =
+                Path().apply {
+                    moveTo(13f * u, 2.5f * u)
+                    lineTo(5.5f * u, 13.5f * u)
+                    lineTo(11.5f * u, 13.5f * u)
+                    lineTo(10.5f * u, 21.5f * u)
+                    lineTo(18.5f * u, 10f * u)
+                    lineTo(12.5f * u, 10f * u)
+                    close()
+                }
+            drawPath(path, c)
         }
         Glyph.STOP -> drawRoundRect(c, p(5f, 5f), Size(14f * u, 14f * u), CornerRadius(2.5f * u))
         Glyph.ZZ -> {

@@ -90,6 +90,7 @@ class ParentModel(
     private var soundStopped = false
 
     private var listen = ListenMode.OFF
+    private var monitoringSince: Long? = null
     private var listenSince = 0L
     private var snoozeUntilWall: Long? = null
     private var snoozeUntilElapsed: Long? = null
@@ -142,6 +143,7 @@ class ParentModel(
         heartbeatRms = 0.0
         heartbeatAt = Long.MIN_VALUE
         listen = ListenMode.OFF
+        monitoringSince = null
         peerStatus = null
         talkUi = TalkUi.Idle
         talkEnd = null
@@ -155,6 +157,13 @@ class ParentModel(
         hints = emptySet()
         lastSnapshot = null
         publish(clock.elapsedMs())
+    }
+
+    /** The monitoring run starts now: the hero's "Monitoring for {duration}" counts from here. */
+    @Synchronized
+    fun runStarted(now: Long) {
+        monitoringSince = now
+        publish(now)
     }
 
     @Synchronized
@@ -376,7 +385,7 @@ class ParentModel(
             talkEnd = null
             if (talkUi is TalkUi.Denied) talkUi = TalkUi.Idle
         }
-        if (listen == ListenMode.LOCKED && now - listenSince >= AlertPolicy.LISTEN_MAX_MS) {
+        if (listen == ListenMode.ON && now - listenSince >= AlertPolicy.LISTEN_MAX_MS) {
             listen = ListenMode.OFF
             effects.listenStopped()
         }
@@ -418,7 +427,7 @@ class ParentModel(
     @Synchronized
     fun setListen(mode: ListenMode, now: Long): Boolean {
         if (phase != LinkPhase.CONNECTED && mode != ListenMode.OFF) return false
-        if (mode == ListenMode.LOCKED && listen != ListenMode.LOCKED) listenSince = now
+        if (mode == ListenMode.ON && listen != ListenMode.ON) listenSince = now
         listen = mode
         if (mode != ListenMode.OFF) afterTalkListenUntil = null
         if (mode != ListenMode.OFF) effects.muteRemote(false)
@@ -547,6 +556,9 @@ class ParentModel(
             is TalkState.Ended -> {
                 talkUi = TalkUi.Idle
                 clearMicSilent()
+                // Detection was paused during the talk, so a quiet period restarts at its end
+                // (`audio-monitoring` "After a talk"); a running noise event keeps its own state.
+                if (phase == LinkPhase.CONNECTED && !tracker.active) quietSinceWall = clock.wallMs()
                 talkEnd = TalkMapping.end(state.reason)
                 // A release or a stop needs no message, so it starts no timer (as on the web).
                 talkNoticeAt =
@@ -645,6 +657,7 @@ class ParentModel(
                 quietSinceWallMs = quietSinceWall,
                 noiseAlertActive = tracker.active,
                 listen = listen,
+                monitoringSinceElapsedMs = monitoringSince,
                 snoozedUntilWallMs = snoozeUntilWall,
                 readiness = readiness,
                 silenceRequest = silenceRequest,

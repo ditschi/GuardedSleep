@@ -4,10 +4,8 @@ import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,7 +38,6 @@ import org.guardedsleep.app.ui.common.AlertCounter
 import org.guardedsleep.app.ui.common.AlertProgress
 import org.guardedsleep.app.ui.common.AlertStage
 import org.guardedsleep.app.ui.common.AlertTemplate
-import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.CauseCard
 import org.guardedsleep.app.ui.common.Glyph
 import org.guardedsleep.app.ui.common.GlyphIcon
@@ -67,20 +64,21 @@ import org.guardedsleep.app.ui.common.statusHeadlineText
 import org.guardedsleep.app.ui.common.statusKindOf
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
+import org.guardedsleep.app.ui.model.BATTERY_CRITICAL_PCT
 import org.guardedsleep.app.ui.model.LinkPhase
+import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.ReadinessIssue
 import org.guardedsleep.app.ui.theme.LocalSafetyColors
 import org.guardedsleep.app.ui.theme.StateColors
 
 /**
- * Below this the baby device is about to switch off: a full-screen alert (the web client's
- * `BATTERY_CRITICAL_PCT`).
+ * S10: the full-screen noise alert on the shared template (frame 08): a flat status strip, the caps
+ * label that says what the phone does, the headline, the time since the sound began, one sentence,
+ * the live level and one pinned "Stop sound" or "Stop vibration"; Listen comes first among the
+ * quiet controls, then "Pause 10 min" and "Pause 30 min". The wine palette is fixed and never
+ * follows the colour scheme, and no Undo is offered here: a pause from a running alert has
+ * acknowledged the event (`parent-alerts` "Pause noise alerts").
  */
-private const val BATTERY_CRITICAL_PCT = 5
-
-private val AlertRed = Color(0xFFB3261E)
-
-/** S10: full-screen noise alert. Dark red, never white; the connection bar stays on top. */
 @Composable
 fun NoiseAlertContent(controller: AppController, onClose: () -> Unit) {
     val p = controller.parent.collectAsState().value
@@ -93,14 +91,55 @@ fun NoiseAlertContent(controller: AppController, onClose: () -> Unit) {
     val escalatedAfter = p.noiseEscalatedAfterMin
     // Once the core switched the event to sound, the screen speaks of sound again.
     val discreet = settings.alertStyle == AlertStyle.DISCREET && escalatedAfter == null
-    ScreenRoot("parent_noise_alert", background = StateColors.AlertBackground) {
-        Column(Modifier.fillMaxSize()) {
-            StatusBar(p.link, customPeerName(app.peerName))
-            Column(
-                Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
+    val palette = LocalSafetyColors.current.noise
+    val since = p.noiseSinceWallMs ?: wall
+    val down = (wall - since).coerceAtLeast(0L)
+    val sinceText = formatTime(since)
+    val name = customPeerName(app.peerName)
+    val stripText = statusHeadlineText(statusKindOf(p.link), p.link, name)
+    ScreenRoot("parent_noise_alert", background = palette.background) {
+        AlertTemplate(
+            tag = "noise_alert_template",
+            palette = palette,
+            label =
+                stringResource(
+                    when {
+                        ended || soundStopped -> R.string.native_ui_noise_alert_label_stopped
+                        discreet -> R.string.native_ui_noise_alert_label_vibrate
+                        else -> R.string.native_ui_noise_alert_label_sound
+                    }
+                ),
+            headline = stringResource(R.string.native_ui_alert_title),
+            headlineTag = "alert_title",
+            strip = {
+                GlyphIcon(Glyph.LINK, palette.accent, size = 22.dp)
+                Text(
+                    stripText,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = palette.onBackground,
+                )
+            },
+            counter =
+                AlertCounter(
+                    formatClock(down),
+                    stringResource(R.string.native_ui_noise_alert_counter_label, sinceText),
+                    stringResource(
+                        R.string.native_ui_noise_alert_counter_a11y,
+                        spokenDuration(down),
+                        sinceText,
+                    ),
+                ),
+            counterTag = "alert_since",
+            sentence =
+                stringResource(
+                    when {
+                        ended -> R.string.native_ui_alert_ended
+                        discreet -> R.string.native_ui_alert_discreet_hint
+                        else -> R.string.native_ui_noise_alert_sentence_sound
+                    }
+                ),
+            sentenceTag = if (discreet && !ended) "alert_discreet_hint" else "alert_sentence",
+            body = {
                 if (p.noiseIsTest) {
                     Text(
                         stringResource(R.string.native_ui_alert_test_badge),
@@ -112,27 +151,6 @@ fun NoiseAlertContent(controller: AppController, onClose: () -> Unit) {
                         fontWeight = FontWeight.Bold,
                     )
                 }
-                Text(
-                    stringResource(R.string.native_ui_alert_title),
-                    Modifier.fillMaxWidth().testTag("alert_title").semantics {
-                        heading()
-                        liveRegion = LiveRegionMode.Assertive
-                    },
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    textAlign = TextAlign.Center,
-                )
-                Text(
-                    stringResource(
-                        if (ended) R.string.native_ui_alert_ended
-                        else R.string.native_ui_alert_since,
-                        formatTime(p.noiseSinceWallMs ?: wall),
-                    ),
-                    Modifier.testTag("alert_since"),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color(0xFFFFD9D4),
-                )
                 SoundMeter(
                     p.level,
                     p.babyThreshold ?: settings.threshold,
@@ -141,92 +159,106 @@ fun NoiseAlertContent(controller: AppController, onClose: () -> Unit) {
                     tag = "alert_meter",
                 )
                 if (escalatedAfter != null && !ended) {
-                    Body(
+                    Text(
                         stringResource(
                             R.string.native_ui_parent_discreet_escalated,
                             escalatedAfter.toString(),
                         ),
-                        tag = "alert_escalated",
-                        color = Color(0xFFFFD9D4),
+                        Modifier.testTag("alert_escalated"),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = palette.onVariant,
                     )
                 }
-                if (discreet && !ended) {
-                    Body(
-                        stringResource(R.string.native_ui_alert_discreet_hint),
-                        tag = "alert_discreet_hint",
-                        color = Color(0xFFFFD9D4),
-                    )
-                }
-                if (ended) {
-                    PrimaryButton(
-                        stringResource(R.string.native_ui_common_ok),
-                        onClose,
-                        "alert_close",
-                        container = AlertRed,
-                        content = Color.White,
-                    )
-                } else if (soundStopped) {
-                    Body(
+                if (soundStopped && !ended) {
+                    Text(
                         stringResource(
                             if (discreet) R.string.native_ui_alert_vibration_stopped
                             else R.string.native_ui_alert_sound_stopped
                         ),
-                        tag = "alert_sound_stopped",
-                        color = Color(0xFFFFD9D4),
-                    )
-                } else {
-                    PrimaryButton(
-                        stringResource(
-                            if (discreet) R.string.native_ui_alert_stop_vibration
-                            else R.string.native_ui_alert_stop_sound
-                        ),
-                        {
-                            soundStopped = true
-                            controller.stopAlertSound()
-                        },
-                        "alert_stop_sound",
-                        container = AlertRed,
-                        content = Color.White,
+                        Modifier.testTag("alert_sound_stopped"),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = palette.onVariant,
                     )
                 }
-                AdaptiveButtonRow {
-                    SecondaryButton(
-                        stringResource(R.string.native_ui_snooze_minutes, "10"),
-                        {
-                            controller.snooze(10)
-                            onClose()
-                        },
-                        "alert_snooze_10",
+            },
+            quiet = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    ListenButton(
+                        p.listen,
+                        p.link.phase == LinkPhase.CONNECTED,
+                        { controller.setListen(it) },
+                        tag = "alert_listen",
+                        compact = true,
                     )
-                    SecondaryButton(
-                        stringResource(R.string.native_ui_snooze_minutes, "30"),
+                    AdaptiveButtonRow {
+                        SecondaryButton(
+                            stringResource(R.string.native_ui_snooze_pause_minutes, "10"),
+                            {
+                                controller.snooze(10)
+                                onClose()
+                            },
+                            "alert_snooze_10",
+                        )
+                        SecondaryButton(
+                            stringResource(R.string.native_ui_snooze_pause_minutes, "30"),
+                            {
+                                controller.snooze(30)
+                                onClose()
+                            },
+                            "alert_snooze_30",
+                        )
+                    }
+                    QuietButton(
+                        stringResource(R.string.native_ui_alert_open_app),
                         {
-                            controller.snooze(30)
+                            ctx.packageManager.getLaunchIntentForPackage(ctx.packageName)?.let {
+                                ctx.startActivity(
+                                    Intent(it).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                )
+                            }
                             onClose()
                         },
-                        "alert_snooze_30",
+                        "alert_open_app",
                     )
                 }
-                Spacer(Modifier.height(8.dp))
-                ListenButton(
-                    p.listen,
-                    p.link.phase == LinkPhase.CONNECTED,
-                    { controller.setListen(it) },
-                    tag = "alert_listen",
-                )
-                Spacer(Modifier.height(8.dp))
-                QuietButton(
-                    stringResource(R.string.native_ui_alert_open_app),
-                    {
-                        ctx.packageManager.getLaunchIntentForPackage(ctx.packageName)?.let {
-                            ctx.startActivity(Intent(it).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            },
+            action =
+                when {
+                    ended -> {
+                        {
+                            AlertAction(
+                                stringResource(R.string.native_ui_common_ok),
+                                onClose,
+                                "alert_close",
+                                palette,
+                            )
                         }
-                        onClose()
-                    },
-                    "alert_open_app",
-                )
-            }
-        }
+                    }
+                    soundStopped -> null
+                    else -> {
+                        {
+                            AlertAction(
+                                stringResource(
+                                    if (discreet) R.string.native_ui_alert_stop_vibration
+                                    else R.string.native_ui_alert_stop_sound
+                                ),
+                                {
+                                    soundStopped = true
+                                    controller.stopAlertSound()
+                                },
+                                "alert_stop_sound",
+                                palette,
+                                sub =
+                                    stringResource(
+                                        if (discreet)
+                                            R.string.native_ui_noise_alert_stop_vibration_sub
+                                        else R.string.native_ui_noise_alert_stop_sound_sub
+                                    ),
+                            )
+                        }
+                    }
+                },
+        )
     }
 }
 
@@ -263,6 +295,10 @@ fun LinkAlarmContent(controller: AppController, onClose: () -> Unit) {
         }
     if (variant == AlarmVariant.LOST) {
         ConnectionAlert(controller, name, elapsed, onClose)
+        return
+    }
+    if (variant == AlarmVariant.BATTERY) {
+        BatteryAlert(p, name, onClose)
         return
     }
     LinkNoticeContent(controller, variant, name, onClose)
@@ -469,7 +505,62 @@ private fun ConnectionAlert(
     }
 }
 
-/** The other full screens: baby stopped, battery critical, needs pairing, restored, no service. */
+/**
+ * Frame 31: the baby device's battery is almost empty (below 5 %, not charging). The amber palette
+ * keeps red for "you can't hear the child"; this alert is not snoozable and has one action that
+ * closes it. Low battery (below 15 %) and "no longer charging" are banners on the monitor.
+ */
+@Composable
+private fun BatteryAlert(p: ParentMonitorState, name: String?, onClose: () -> Unit) {
+    val palette = LocalSafetyColors.current.batteryCritical
+    val pct = p.peer.batteryPct ?: 0
+    val stripText = statusHeadlineText(statusKindOf(p.link), p.link, name)
+    ScreenRoot("parent_link_alarm", background = palette.background) {
+        AlertTemplate(
+            tag = "battery_alert_template",
+            palette = palette,
+            label = stringResource(R.string.native_ui_battery_alert_label),
+            headline = stringResource(R.string.native_ui_battery_alert_headline),
+            headlineTag = "link_alarm_title",
+            strip = {
+                GlyphIcon(Glyph.BATTERY, palette.accent, size = 22.dp)
+                Text(
+                    stripText,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = palette.onBackground,
+                )
+            },
+            counter =
+                AlertCounter(
+                    stringResource(R.string.native_ui_monitor_battery_short, pct),
+                    stringResource(R.string.native_ui_battery_alert_counter_label),
+                    stringResource(R.string.native_ui_battery_alert_counter_a11y, pct),
+                ),
+            counterTag = "battery_alert_counter",
+            sentence = stringResource(R.string.native_ui_battery_alert_sentence),
+            sentenceTag = "link_alarm_body",
+            body = {
+                Text(
+                    stringResource(R.string.native_ui_battery_alert_silent_note),
+                    Modifier.testTag("battery_alert_silent_note"),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = palette.onVariant,
+                )
+            },
+            action = {
+                AlertAction(
+                    stringResource(R.string.native_ui_battery_alert_action),
+                    onClose,
+                    "battery_alert_ok",
+                    palette,
+                    sub = stringResource(R.string.native_ui_battery_alert_action_sub),
+                )
+            },
+        )
+    }
+}
+
+/** The other full screens: baby stopped, needs pairing, restored, no service. */
 @Composable
 private fun LinkNoticeContent(
     controller: AppController,
@@ -511,8 +602,6 @@ private fun LinkNoticeContent(
                             if (name != null)
                                 stringResource(R.string.native_ui_link_alarm_stopped_title, name)
                             else stringResource(R.string.native_ui_link_alarm_stopped_title_default)
-                        AlarmVariant.BATTERY ->
-                            stringResource(R.string.native_ui_link_alarm_battery_title)
                         AlarmVariant.NEEDS_PAIRING ->
                             stringResource(R.string.native_ui_link_alarm_needs_pairing_title)
                         AlarmVariant.NO_BACKGROUND ->
@@ -534,8 +623,6 @@ private fun LinkNoticeContent(
                     when (variant) {
                         AlarmVariant.STOPPED ->
                             stringResource(R.string.native_ui_link_alarm_stopped_body)
-                        AlarmVariant.BATTERY ->
-                            stringResource(R.string.native_ui_link_alarm_battery_body)
                         AlarmVariant.NEEDS_PAIRING ->
                             stringResource(R.string.core_pairing_key_mismatch)
                         AlarmVariant.NO_BACKGROUND ->
