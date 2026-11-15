@@ -15,8 +15,6 @@ import {
   canRequestSilence,
   downForMs,
   elapsedToWall,
-  extraChips,
-  fixedChips,
   fullScreenOf,
   headlineOf,
   missedResultOf,
@@ -183,6 +181,23 @@ describe("headlineOf", () => {
     });
   });
 
+  it("never says 'all quiet' while the baby device's microphone is silent", () => {
+    const peer = { ...defaultParentMonitor().peer, micSilent: true };
+    expect(head(connected({ peer, quietSinceWallMs: now.wall - 60_000 }))).toEqual({
+      kind: "cant_hear",
+    });
+    // A running noise event still wins: that is a sound the parent must see.
+    expect(
+      head(
+        connected({
+          peer,
+          noiseAlertActive: true,
+          noiseSinceWallMs: now.wall - 5_000,
+        }),
+      ).kind,
+    ).toBe("sound_since");
+  });
+
   it("falls back to plain 'monitoring' right after a reconnect", () => {
     expect(head(connected())).toEqual({ kind: "monitoring" });
   });
@@ -264,56 +279,6 @@ describe("pruneDismissed", () => {
   it("returns the same set when nothing changes", () => {
     const set = new Set<FullScreenKind>(["noise"]);
     expect(pruneDismissed(connected({ noiseAlertActive: true }), set)).toBe(set);
-  });
-});
-
-describe("chips", () => {
-  const peer = defaultParentMonitor().peer;
-
-  it("shows the battery and a grey 'unknown, turn it on at the baby device' for a browser baby", () => {
-    const chips = fixedChips(connected({ peer: { ...peer, batteryPct: 80, isWebClient: true } }));
-    expect(chips.map((c) => c.id)).toEqual(["parent_baby_battery_chip", "parent_silence_chip"]);
-    expect(chips[0]).toMatchObject({ key: "native.ui.battery.baby", tone: "neutral" });
-    expect(chips[1]).toMatchObject({ key: "webScreens.parent.quietUnknownWeb", tone: "neutral" });
-  });
-
-  it("asks for the charger when the battery is low and not charging", () => {
-    const low = fixedChips(connected({ peer: { ...peer, batteryPct: 15, charging: false } }));
-    expect(low[0]).toMatchObject({ key: "native.ui.battery.babyLow", tone: "warn" });
-    const charging = fixedChips(connected({ peer: { ...peer, batteryPct: 15, charging: true } }));
-    expect(charging[0]).toMatchObject({ key: "native.ui.battery.baby", tone: "neutral" });
-  });
-
-  it("maps the silence status of a native baby device", () => {
-    const silent = fixedChips(connected({ peer: { ...peer, silence: "silent" } }));
-    expect(silent[0]).toMatchObject({ key: "native.ui.silence.silent", tone: "ok" });
-    const ring = fixedChips(connected({ peer: { ...peer, silence: "may_ring" } }));
-    expect(ring[0]).toMatchObject({ key: "native.ui.silence.mayRing", tone: "warn" });
-  });
-
-  it("lists warnings in priority order", () => {
-    const wall = 1_800_000_000_000;
-    const chips = extraChips(
-      connected({
-        ownBatteryPct: 10,
-        peer: { ...peer, unitWarnings: ["page_hidden", "not_charging", "unknown_future"] },
-        snoozedUntilWallMs: wall + 5 * 60_000,
-        link: link({ phase: "connected", quality: "poor" }),
-      }),
-      wall,
-    );
-    expect(chips.map((c) => c.id)).toEqual([
-      "parent_own_battery_chip",
-      "parent_unit_warning_page_hidden",
-      "parent_unit_warning_not_charging",
-      "parent_snooze_chip",
-      "parent_quality_chip",
-    ]);
-    expect(chips.find((c) => c.id === "parent_snooze_chip")?.args).toEqual({ minutes: 5 });
-  });
-
-  it("shows no warning chips for a healthy link", () => {
-    expect(extraChips(connected(), 0)).toEqual([]);
   });
 });
 

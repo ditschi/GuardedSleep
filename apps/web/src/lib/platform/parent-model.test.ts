@@ -283,7 +283,7 @@ describe("events", () => {
       t.event({ type: "noise_alert", rms: 0.5, probe: false, snoozed: true });
       expect(t.effects.log.at(-1)).toBe("mute:true");
       expect(t.state.noiseAlertActive).toBe(true);
-      t.model.setListen("hold", t.time.now);
+      t.model.setListen("on", t.time.now);
       t.event({ type: "noise_alert", rms: 0.5, probe: false, snoozed: true });
       expect(t.effects.log.at(-1)).toBe("mute:false");
     });
@@ -477,27 +477,27 @@ describe("events", () => {
     it("is refused while not connected", () => {
       const off = setup();
       off.model.onStatus(status("reconnecting", { level: 1 }), 0);
-      expect(off.model.setListen("hold", 0)).toBe(false);
+      expect(off.model.setListen("on", 0)).toBe(false);
       expect(off.state.listen).toBe("off");
     });
 
     it("unmutes the playout and follows the mode", () => {
-      expect(t.model.setListen("locked", t.time.now)).toBe(true);
-      expect(t.state.listen).toBe("locked");
+      expect(t.model.setListen("on", t.time.now)).toBe(true);
+      expect(t.state.listen).toBe("on");
       expect(t.effects.log).toContain("mute:false");
     });
 
     it("the baby ending listen resets the mode", () => {
-      t.model.setListen("hold", t.time.now);
+      t.model.setListen("on", t.time.now);
       t.event({ type: "listen_changed", enabled: false });
       expect(t.state.listen).toBe("off");
       expect(t.effects.log).toContain("listenStopped");
     });
 
-    it("locked listening stops by itself after 60 minutes", () => {
-      t.model.setListen("locked", t.time.now);
+    it("listening stops by itself after 60 minutes", () => {
+      t.model.setListen("on", t.time.now);
       t.advance(59 * 60_000);
-      expect(t.state.listen).toBe("locked");
+      expect(t.state.listen).toBe("on");
       t.advance(61_000);
       expect(t.state.listen).toBe("off");
       expect(t.effects.log).toContain("listenStopped");
@@ -552,6 +552,44 @@ describe("events", () => {
     t.model.stopAlertSound();
     expect(t.effects.log).toContain("mute:true");
     expect(t.sink.log).toContain("stopNoiseSound");
+  });
+
+  it("monitoring since is set when the run starts and cleared at reset", () => {
+    expect(t.state.monitoringSinceElapsedMs).toBeNull();
+    t.time.advance(1_000);
+    t.model.beginRun(t.time.elapsedMs());
+    expect(t.state.monitoringSinceElapsedMs).toBe(1_000);
+    t.model.reset();
+    expect(t.state.monitoringSinceElapsedMs).toBeNull();
+  });
+
+  describe("quiet since after a talk", () => {
+    const talkEnded = (): LinkEvent => ({
+      type: "talk_changed",
+      state: { state: "ended", reason: "released" },
+    });
+
+    it("restarts when a talk ends while connected and quiet", () => {
+      t.connect();
+      t.advance(10 * 60_000);
+      const before = t.state.quietSinceWallMs;
+      t.event(talkEnded());
+      expect(t.state.quietSinceWallMs).toBe(t.time.wallMs());
+      expect(t.state.quietSinceWallMs).not.toBe(before);
+    });
+
+    it("does not touch a running noise event", () => {
+      t.connect();
+      t.event({ type: "noise_alert", rms: 0.5, probe: false, snoozed: false });
+      t.event(talkEnded());
+      expect(t.state.quietSinceWallMs).toBeNull();
+    });
+
+    it("does not invent quiet while not connected", () => {
+      const off = setup();
+      off.event(talkEnded());
+      expect(off.state.quietSinceWallMs).toBeNull();
+    });
   });
 
   it("readiness is passed through", () => {

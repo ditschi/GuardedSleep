@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App.svelte";
 import { defaultLinkUi, type LinkUi } from "../lib/contract";
 import { createFakeController, type FakeController } from "../lib/contract/fake-controller";
@@ -156,25 +156,80 @@ describe("S09 parent monitor", () => {
     );
   });
 
-  it("grey-chips the silence of a browser baby device and offers no silence request", async () => {
+  it("words the silence of a browser baby device as unknown and offers no silence request", async () => {
     c.parent.update((p) => ({
       ...p,
       peer: { ...p.peer, isWebClient: true, batteryPct: 80, silence: "unknown" },
     }));
     open("/parent", c);
-    expect(await screen.findByTestId("parent_silence_chip")).toHaveTextContent(
+    expect(await screen.findByTestId("parent_silence_state")).toHaveTextContent(
       "Quiet mode unknown · turn it on at the baby device",
     );
-    expect(screen.getByTestId("parent_silence_chip")).toHaveAttribute("data-tone", "neutral");
-    expect(screen.getByTestId("parent_baby_battery_chip")).toHaveTextContent("Baby device 80%");
-    expect(screen.queryByTestId("sheet_silence_apply")).toBeNull();
+    expect(screen.getByTestId("status_bar_battery")).toHaveTextContent("80%");
+    expect(screen.getByTestId("status_bar_battery")).toHaveTextContent(
+      "Baby device battery 80 percent",
+    );
+    expect(screen.queryByTestId("parent_banner_silence")).toBeNull();
   });
 
-  it("offers to silence a native baby device that may ring", async () => {
+  it("offers 'Fix' for a native baby device that may ring", async () => {
     c.parent.update((p) => ({ ...p, peer: { ...p.peer, silence: "may_ring" } }));
     open("/parent", c);
-    await fireEvent.click(await screen.findByTestId("sheet_silence_apply"));
+    expect(await screen.findByTestId("parent_banner_silence")).toHaveTextContent(
+      "Baby device may ring",
+    );
+    await fireEvent.click(screen.getByTestId("parent_banner_silence_action"));
     expect(c.calls).toContainEqual(["requestSilenceBaby"]);
+  });
+
+  it("shows the baby battery with a bolt while it charges, and nothing while unknown", async () => {
+    c.parent.update((p) => ({ ...p, peer: { ...p.peer, batteryPct: 82, charging: true } }));
+    open("/parent", c);
+    const battery = await screen.findByTestId("status_bar_battery");
+    expect(battery.querySelector("svg")).not.toBeNull();
+    expect(battery).toHaveTextContent("charging");
+    c.parent.update((p) => ({ ...p, peer: { ...p.peer, batteryPct: null } }));
+    await waitFor(() => expect(screen.queryByTestId("status_bar_battery")).toBeNull());
+  });
+
+  it("never says 'All quiet' while the microphone is silent, and hatches the strip", async () => {
+    c.parent.update((p) => ({ ...p, peer: { ...p.peer, micSilent: true } }));
+    open("/parent", c);
+    expect(await screen.findByTestId("parent_headline")).toHaveTextContent("Can't hear the room");
+    expect(screen.getByTestId("parent_meter")).toHaveAttribute("data-state", "mic_silent");
+    expect(screen.getByTestId("parent_meter")).toHaveAccessibleName("Microphone silent");
+    expect(screen.getByTestId("parent_banner_mic_silent")).toHaveAttribute("role", "status");
+  });
+
+  it("shows how long the monitoring has run, only while connected", async () => {
+    c.parent.update((p) => ({
+      ...p,
+      monitoringSinceElapsedMs: Date.now() - 87 * 60_000,
+    }));
+    open("/parent", c);
+    expect(await screen.findByTestId("parent_monitoring_for")).toHaveTextContent(
+      "Monitoring for 87 min",
+    );
+    c.parent.update((p) => ({ ...p, link: link({ phase: "reconnecting", level: 0 }) }));
+    await waitFor(() => expect(screen.queryByTestId("parent_monitoring_for")).toBeNull());
+    expect(screen.getByTestId("parent_meter")).toHaveAttribute("data-state", "offline");
+  });
+
+  it("says when the alerts were last tested", async () => {
+    c.settings.update((st) => ({ ...st, lastTestWallMs: Date.now() }));
+    open("/parent", c);
+    expect(await screen.findByTestId("parent_last_test")).toHaveTextContent(/Alerts tested \d/);
+  });
+
+  it("puts the settings gear last in the tab order and opens Settings", async () => {
+    open("/parent", c);
+    const night = await screen.findByTestId("parent_night_open");
+    const gear = screen.getByTestId("tool_settings");
+    expect(gear).toHaveAccessibleName("Settings");
+    expect(night.compareDocumentPosition(gear) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByTestId("parent_settings")).toBeNull();
+    await fireEvent.click(gear);
+    await waitFor(() => expect(window.location.pathname).toBe("/settings"));
   });
 
   it("turns the headline into 'last contact' and disables Listen when the link is down", async () => {
@@ -192,42 +247,28 @@ describe("S09 parent monitor", () => {
     expect(screen.getByTestId("parent_listen")).toHaveTextContent("Listen when connected");
   });
 
-  it("makes Listen a 72 px target that keyboard users switch on and off", async () => {
+  it("makes Listen a tap toggle that fills the bar while it is on", async () => {
     open("/parent", c);
     const listen = await screen.findByTestId("parent_listen");
     expect(listen).toHaveAttribute("data-listen", "off");
-    expect(listen).toHaveTextContent("Hold to listen");
-    // A keyboard or assistive-technology activation is a click without a pointer (detail 0).
-    await fireEvent.click(listen, { detail: 0 });
-    expect(c.calls).toContainEqual(["setListen", "locked"]);
+    expect(listen).toHaveAttribute("aria-pressed", "false");
+    expect(listen).toHaveTextContent("Tap to hear the room");
+    expect(listen).toHaveAccessibleDescription("Not listening");
+    await fireEvent.click(listen);
+    expect(c.calls).toContainEqual(["setListen", "on"]);
     await waitFor(() => expect(listen).toHaveTextContent("Listening · tap to stop"));
     expect(listen).toHaveAttribute("aria-pressed", "true");
-    await fireEvent.click(listen, { detail: 0 });
+    expect(listen).toHaveAccessibleDescription("Listening");
+    await fireEvent.click(listen);
     expect(c.calls).toContainEqual(["setListen", "off"]);
   });
 
-  it("listens while the button is held and stops on release", async () => {
+  it("has no hold or slide gesture on Listen", async () => {
     open("/parent", c);
     const listen = await screen.findByTestId("parent_listen");
     await fireEvent.pointerDown(listen, { pointerId: 1, button: 0, clientY: 300 });
-    expect(c.calls).toContainEqual(["setListen", "hold"]);
-    await fireEvent.pointerUp(listen, { pointerId: 1, button: 0, clientY: 300 });
-    expect(c.calls.filter((call) => call[0] === "setListen").map((call) => call[1])).toEqual([
-      "hold",
-      "off",
-    ]);
-  });
-
-  it("keeps listening when the finger slides up", async () => {
-    open("/parent", c);
-    const listen = await screen.findByTestId("parent_listen");
-    await fireEvent.pointerDown(listen, { pointerId: 1, button: 0, clientY: 300 });
-    await fireEvent.pointerMove(listen, { pointerId: 1, clientY: 200 });
     await fireEvent.pointerUp(listen, { pointerId: 1, button: 0, clientY: 200 });
-    expect(c.calls.filter((call) => call[0] === "setListen").map((call) => call[1])).toEqual([
-      "hold",
-      "locked",
-    ]);
+    expect(c.calls.filter((call) => call[0] === "setListen")).toEqual([]);
   });
 
   it("shows 'Tap to turn on alert sound' until the sound is unlocked", async () => {
@@ -240,22 +281,35 @@ describe("S09 parent monitor", () => {
     await waitFor(() => expect(screen.queryByTestId("parent_sound_gate")).toBeNull());
   });
 
-  it("snoozes through the sheet and ends the snooze again", async () => {
+  it("pauses through the sheet and ends the pause again", async () => {
     open("/parent", c);
-    await fireEvent.click(await screen.findByTestId("parent_snooze"));
+    const tile = await screen.findByTestId("parent_snooze");
+    expect(tile).toHaveAccessibleName("Pause noise alerts");
+    await fireEvent.click(tile);
     const sheet = screen.getByTestId("sheet_snooze");
-    expect(sheet).toHaveTextContent("You still get alerts if the connection drops");
+    expect(sheet).toHaveTextContent("Connection and battery alerts still come.");
     await fireEvent.click(within(sheet).getByTestId("sheet_snooze_10"));
     expect(c.calls).toContainEqual(["snooze", 10]);
-    expect(await screen.findByTestId("parent_snooze_chip")).toHaveTextContent("Snoozed ·");
+    expect(await screen.findByTestId("parent_banner_paused")).toHaveTextContent(
+      "Noise alerts paused until",
+    );
+    expect(screen.getByTestId("parent_snooze")).toHaveTextContent("Paused");
     await fireEvent.click(screen.getByTestId("parent_snooze"));
     await fireEvent.click(screen.getByTestId("sheet_snooze_end"));
     expect(c.calls).toContainEqual(["cancelSnooze"]);
   });
 
+  it("resumes from the pause banner", async () => {
+    c.parent.update((p) => ({ ...p, snoozedUntilWallMs: Date.now() + 600_000 }));
+    open("/parent", c);
+    await fireEvent.click(await screen.findByTestId("parent_banner_paused_action"));
+    expect(c.calls).toContainEqual(["cancelSnooze"]);
+  });
+
   it("runs a test alert and asks whether it was heard", async () => {
     open("/parent", c);
-    await fireEvent.click(await screen.findByTestId("parent_probe"));
+    await fireEvent.click(await screen.findByTestId("parent_overflow"));
+    await fireEvent.click(screen.getByTestId("parent_probe"));
     expect(screen.getByTestId("sheet_probe")).toHaveTextContent("The baby device stays silent.");
     await fireEvent.click(screen.getByTestId("sheet_probe_run"));
     expect(c.calls).toContainEqual(["requestTestAlert"]);
@@ -276,7 +330,8 @@ describe("S09 parent monitor", () => {
   it("asks at once when the test only sounded on this device", async () => {
     c.parent.update((p) => ({ ...p, link: link({ phase: "reconnecting", level: 1 }) }));
     open("/parent", c);
-    await fireEvent.click(await screen.findByTestId("parent_probe"));
+    await fireEvent.click(await screen.findByTestId("parent_overflow"));
+    await fireEvent.click(screen.getByTestId("parent_probe"));
     await fireEvent.click(screen.getByTestId("sheet_probe_run"));
     const question = await screen.findByTestId("sheet_probe_question");
     expect(question).toHaveTextContent("Tested this device only");
@@ -361,14 +416,106 @@ describe("S09 parent monitor", () => {
     expect(screen.getByTestId("status_bar")).toHaveAttribute("data-kind", "reconnecting");
   });
 
-  it("has no more than two warning chips and counts the rest", async () => {
+  it("shows at most two notices and folds the rest into a list", async () => {
     c.parent.update((p) => ({
       ...p,
       peer: { ...p.peer, unitWarnings: ["page_hidden", "not_charging", "wake_lock_off"] },
     }));
     open("/parent", c);
     await screen.findByTestId("status_bar");
-    expect(screen.getByTestId("parent_more_chip")).toHaveTextContent("+1");
+    expect(screen.getByTestId("parent_banner_baby_unplugged")).toBeInTheDocument();
+    expect(screen.getByTestId("parent_banner_unit_warning_page_hidden")).toBeInTheDocument();
+    expect(screen.queryByTestId("parent_banner_unit_warning_wake_lock_off")).toBeNull();
+    const more = screen.getByTestId("parent_banner_more");
+    expect(more).toHaveTextContent("+1 more");
+    expect(more).toHaveAccessibleName(
+      "1 more notice: Baby device may fall asleep — its screen isn't kept on",
+    );
+    await fireEvent.click(more);
+    const list = screen.getByTestId("sheet_banners");
+    expect(
+      within(list).getByTestId("parent_banner_unit_warning_wake_lock_off"),
+    ).toBeInTheDocument();
+  });
+
+  it("announces a warn notice through a status region and the security warning as an alert", async () => {
+    c.parent.update((p) => ({
+      ...p,
+      securityWarning: true,
+      peer: { ...p.peer, unitWarnings: ["not_charging"] },
+    }));
+    open("/parent", c);
+    expect(await screen.findByTestId("parent_banner_security")).toHaveAttribute("role", "alert");
+    expect(screen.getByTestId("parent_banner_baby_unplugged")).not.toHaveAttribute("role");
+  });
+
+  it("shows the worst readiness issue, with Fix only where the page can act", async () => {
+    c.parent.update((p) => ({ ...p, readiness: ["parent_battery_low", "never_tested"] }));
+    open("/parent", c);
+    expect(await screen.findByTestId("parent_banner_parent_battery_low")).toHaveTextContent(
+      "This phone's battery is low",
+    );
+    expect(screen.queryByTestId("parent_banner_parent_battery_low_action")).toBeNull();
+    c.parent.update((p) => ({ ...p, readiness: ["never_tested"] }));
+    await fireEvent.click(await screen.findByTestId("parent_banner_never_tested_action"));
+    expect(await screen.findByTestId("sheet_probe")).toBeVisible();
+  });
+});
+
+describe("pause undo", () => {
+  let c: FakeController;
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    c = parentController();
+  });
+  afterEach(() => vi.useRealTimers());
+
+  async function pause(minutes: number): Promise<void> {
+    await fireEvent.click(await screen.findByTestId("parent_snooze"));
+    await fireEvent.click(screen.getByTestId(`sheet_snooze_${minutes}`));
+  }
+
+  it("offers Undo for 8 seconds after a pause from the monitor", async () => {
+    open("/parent", c);
+    await pause(10);
+    expect(screen.getByTestId("parent_pause_snackbar")).toHaveTextContent(
+      "Noise alerts paused for 10 min",
+    );
+    await vi.advanceTimersByTimeAsync(7_900);
+    expect(screen.queryByTestId("parent_pause_snackbar")).not.toBeNull();
+    await vi.advanceTimersByTimeAsync(200);
+    expect(screen.queryByTestId("parent_pause_snackbar")).toBeNull();
+  });
+
+  it("ends the pause when Undo is pressed", async () => {
+    open("/parent", c);
+    await pause(30);
+    await fireEvent.click(screen.getByTestId("parent_pause_undo"));
+    expect(c.calls).toContainEqual(["cancelSnooze"]);
+    expect(screen.queryByTestId("parent_pause_snackbar")).toBeNull();
+  });
+
+  it("goes when a noise event starts", async () => {
+    open("/parent", c);
+    await pause(10);
+    c.parent.update((p) => ({ ...p, noiseAlertActive: true, noiseSinceWallMs: Date.now() }));
+    await waitFor(() => expect(screen.queryByTestId("parent_pause_snackbar")).toBeNull());
+  });
+
+  it("goes when the pause ends", async () => {
+    open("/parent", c);
+    await pause(10);
+    c.parent.update((p) => ({ ...p, snoozedUntilWallMs: null }));
+    await waitFor(() => expect(screen.queryByTestId("parent_pause_snackbar")).toBeNull());
+  });
+
+  it("is not offered when the pause starts from a running alert", async () => {
+    open("/parent", c);
+    await screen.findByTestId("parent_headline");
+    c.parent.update((p) => ({ ...p, noiseAlertActive: true, noiseSinceWallMs: Date.now() }));
+    await fireEvent.click(await screen.findByTestId("alert_snooze_10"));
+    await screen.findByTestId("parent_headline");
+    expect(screen.queryByTestId("parent_pause_snackbar")).toBeNull();
   });
 });
 
@@ -393,8 +540,12 @@ describe("S10 noise alert", () => {
     await screen.findByTestId("parent_headline");
     startNoise();
     const alert = await screen.findByRole("alertdialog");
-    expect(alert).toHaveAccessibleName("Sound detected");
-    expect(screen.getByTestId("alert_since")).toHaveTextContent(/Since \d/);
+    expect(alert).toHaveAccessibleName("The child is making sound");
+    expect(screen.getByTestId("alert_since")).toHaveTextContent(/since \d/);
+    expect(screen.getByTestId("parent_noise_alert")).toHaveAttribute("data-palette", "noise");
+    expect(screen.getByTestId("alert_stop_sound")).toHaveTextContent(
+      "Stops the alert sound, keeps monitoring",
+    );
     expect(screen.getByTestId("alert_meter")).toHaveAccessibleName("Sound level: loud");
     expect(screen.queryByTestId("alert_test_badge")).toBeNull();
     expect(screen.queryByTestId("parent_headline")).toBeNull();
@@ -454,8 +605,8 @@ describe("S10 noise alert", () => {
     open("/parent", c);
     await screen.findByTestId("parent_headline");
     startNoise();
-    await fireEvent.click(await screen.findByTestId("alert_listen"), { detail: 0 });
-    expect(c.calls).toContainEqual(["setListen", "locked"]);
+    await fireEvent.click(await screen.findByTestId("alert_listen"));
+    expect(c.calls).toContainEqual(["setListen", "on"]);
   });
 });
 
@@ -643,8 +794,12 @@ describe("S11 connection alert", () => {
     open("/parent", c);
     c.parent.update((p) => ({ ...p, peer: { ...p.peer, batteryPct: 3, charging: false } }));
     const alarm = await screen.findByRole("alertdialog");
-    expect(alarm).toHaveAccessibleName("Baby device battery almost empty");
-    await fireEvent.click(screen.getByTestId("link_alarm_ok"));
+    expect(alarm).toHaveAccessibleName("The baby device is almost empty");
+    expect(screen.getByTestId("battery_alert_template")).toHaveAttribute("data-palette", "battery");
+    expect(screen.getByTestId("battery_alert_counter")).toHaveTextContent("3%");
+    // Not snoozable: no pause buttons on this screen.
+    expect(screen.queryByTestId("alert_snooze_10")).toBeNull();
+    await fireEvent.click(screen.getByTestId("battery_alert_ok"));
     expect(await screen.findByTestId("parent_headline")).toBeInTheDocument();
   });
 

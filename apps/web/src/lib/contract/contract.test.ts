@@ -117,8 +117,9 @@ describe("enums mirror UiContract.kt", () => {
       "parent_battery_low",
       "headphones_connected",
       "never_tested",
+      "alarm_volume_low",
     ] satisfies ReadinessIssue[],
-    ListenMode: ["off", "hold", "locked"] satisfies ListenMode[],
+    ListenMode: ["off", "on"] satisfies ListenMode[],
     SilenceRequest: ["idle", "pending", "applied", "failed"] satisfies SilenceRequest[],
     PairingPhase: [
       "showing_code",
@@ -338,8 +339,8 @@ describe("fake controller", () => {
       theme: "light",
       signalingUrls: ["wss://example.test"],
     });
-    c.setListen("locked");
-    expect(get(c.parent).listen).toBe("locked");
+    c.setListen("on");
+    expect(get(c.parent).listen).toBe("on");
     c.snooze(10);
     expect(get(c.parent).snoozedUntilWallMs).not.toBeNull();
     c.cancelSnooze();

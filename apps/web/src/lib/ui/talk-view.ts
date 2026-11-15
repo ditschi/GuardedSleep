@@ -15,6 +15,9 @@ export type TalkView = Pick<
   | "afterTalkListenUntilElapsedMs"
 >;
 
+/** What a short tap or a slide teaches (the lines under the dock show it). */
+export type TalkHint = "hold" | "no_lock";
+
 /** One line of copy: a catalogue key and its arguments. */
 export interface TalkLine {
   key: MessageKey;

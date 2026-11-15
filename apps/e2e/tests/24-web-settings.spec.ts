@@ -71,8 +71,7 @@ test("settings: theme survives a reload, language, addresses, sensitivity, forge
     await page.getByTestId("settings_back").click();
     await expect(page.getByTestId("baby_status")).toBeVisible();
 
-    await dual.parentPage.getByTestId("parent_overflow").click();
-    await dual.parentPage.getByTestId("parent_settings").click();
+    await dual.parentPage.getByTestId("tool_settings").click();
     await expect(dual.parentPage.getByTestId("settings_sensitivity_note")).toBeVisible();
     await dual.parentPage.getByTestId("settings_forget").click();
     await dual.parentPage.getByTestId("dialog_forget_confirm").click();

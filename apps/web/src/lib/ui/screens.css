@@ -399,104 +399,367 @@
     min-height: 3.5rem;
     width: 100%;
   }
+  /*
+   * Listen: a full-width tap-toggle bar of at least 72 dp; the whole bar fills while it is on, so the
+   * state reads from across the room (design section 9). The alert variant is the compact row on the
+   * noise alert screen.
+   */
   .gs-listen {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: var(--gs-space-3);
-    align-self: center;
-    width: 88%;
+    gap: var(--gs-space-4);
+    width: 100%;
     min-height: var(--gs-target-large);
     padding: var(--gs-space-2) var(--gs-space-5);
-    border: 0;
-    border-radius: var(--gs-radius-full);
+    border: 0.125rem solid var(--gs-outline);
+    border-radius: var(--gs-radius-l);
+    background: var(--gs-surface-variant);
+    color: var(--gs-on-bg);
+    text-align: start;
+    cursor: pointer;
+  }
+  .gs-listen__icon {
+    display: inline-flex;
+    flex: none;
+  }
+  .gs-listen__text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .gs-listen__title {
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
+  .gs-listen__sub {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gs-on-surface-variant);
+  }
+  .gs-listen[data-listen="on"] {
+    border-color: var(--gs-primary);
     background: var(--gs-primary);
     color: var(--gs-on-primary);
-    font-size: 1.125rem;
-    font-weight: 600;
-    cursor: pointer;
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
   }
-  .gs-listen[data-listen="hold"],
-  .gs-listen[data-listen="locked"] {
-    background: var(--gs-on-primary-container);
-    color: var(--gs-primary-container);
+  .gs-listen[data-listen="on"] .gs-listen__sub {
+    color: var(--gs-on-primary);
   }
   .gs-listen:disabled {
-    background: var(--gs-surface-variant);
+    border-color: var(--gs-border);
+    background: var(--gs-surface-low);
     color: var(--gs-on-surface-variant);
     cursor: not-allowed;
   }
   .gs-listen[data-variant="alert"] {
-    align-self: stretch;
-    width: auto;
-    min-height: 3.25rem;
-    background: var(--gs-alert-panel);
-    color: var(--gs-on-alert);
-    font-size: 0.9375rem;
+    min-height: var(--gs-target);
+    padding: var(--gs-space-2) var(--gs-space-4);
+    border-color: var(--alert-on-variant, currentColor);
+    background: transparent;
+    color: var(--alert-on, inherit);
   }
-  .gs-listen[data-variant="alert"][data-listen="hold"],
-  .gs-listen[data-variant="alert"][data-listen="locked"] {
-    background: var(--gs-alert-action);
-    color: var(--gs-on-alert-action);
+  .gs-listen[data-variant="alert"] .gs-listen__sub {
+    display: none;
   }
-  /* Talk-back: its own row below Listen, 24 dp away, never in Listen's lock path. */
-  .gs-talk {
+  .gs-listen[data-variant="alert"] .gs-listen__title {
+    font-size: 1rem;
+  }
+  .gs-listen[data-variant="alert"][data-listen="on"] {
+    background: var(--alert-on, currentColor);
+    color: var(--alert-bg, inherit);
+    border-color: var(--alert-on, currentColor);
+  }
+
+  /* The dock: Listen, then three tiles; it stays at the bottom while the middle scrolls. */
+  .gs-dock {
+    position: sticky;
+    bottom: 0;
     display: flex;
     flex-direction: column;
-    align-items: center;
     gap: var(--gs-space-2);
-    margin-block-start: var(--gs-space-5);
+    padding-block: var(--gs-space-2) var(--gs-space-3);
+    background: var(--gs-bg);
   }
-  .gs-talk__btn {
+  /* Three tiles in a row; at large text they wrap to 2 + 1 instead of clipping their labels. */
+  .gs-dock__tiles {
     display: flex;
+    flex-wrap: wrap;
+    gap: var(--gs-space-2);
+  }
+  .gs-tile {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--gs-space-3);
-    box-sizing: border-box;
-    width: 60%;
-    /* At 200 % text on a 320 px screen 12rem would not fit: never wider than the screen. */
-    min-width: min(12rem, 100%);
+    gap: var(--gs-space-1);
+    min-width: min-content;
     max-width: 100%;
-    min-height: 4rem;
-    padding: var(--gs-space-2) var(--gs-space-4);
-    border: 0.1875rem solid transparent;
-    border-radius: var(--gs-radius-full);
+    min-height: var(--gs-target-large);
+    padding: var(--gs-space-2) var(--gs-space-3);
+    border: 0.125rem solid transparent;
+    border-radius: var(--gs-radius-m);
+    background: var(--gs-surface-variant);
+    color: var(--gs-on-bg);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .gs-tile__text {
+    display: flex;
+    flex-direction: column;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .gs-tile__label,
+  .gs-tile__sub {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .gs-tile__sub {
+    font-weight: 500;
+  }
+  .gs-tile[data-kind="talk"] {
     background: var(--gs-tertiary-container);
     color: var(--gs-on-tertiary-container);
-    font-size: 1.0625rem;
-    font-weight: 600;
-    cursor: pointer;
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
   }
   /* A strong flip once the microphone is attached, with a filled ring (static: no pulse). */
-  .gs-talk__btn[data-phase="talking"] {
+  .gs-tile[data-kind="talk"][data-phase="talking"] {
     background: var(--gs-tertiary);
     color: var(--gs-on-tertiary);
     border-color: var(--gs-on-tertiary);
     box-shadow: 0 0 0 0.25rem var(--gs-tertiary);
   }
-  .gs-talk__btn[data-phase="requesting"] {
+  .gs-tile[data-kind="talk"][data-phase="requesting"] {
     border-color: var(--gs-tertiary);
   }
-  .gs-talk__btn:disabled {
-    background: var(--gs-surface-variant);
+  .gs-tile[data-kind="talk"]:disabled {
+    background: var(--gs-surface-low);
     color: var(--gs-on-surface-variant);
     cursor: not-allowed;
   }
+  /* "Talk again at 02:10": an outlined status at full contrast, never a disabled-looking button. */
+  .gs-tile[data-status] {
+    border-color: var(--gs-tertiary);
+    background: transparent;
+    color: var(--gs-on-bg);
+    cursor: default;
+  }
+  .gs-tile[data-kind="pause"][data-paused] {
+    border-color: var(--safety-info);
+    background: var(--safety-info-container);
+    color: var(--safety-info);
+  }
+  .gs-talk-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--gs-space-1);
+  }
   .gs-talk__line {
-    min-height: 1.4em;
     margin: 0;
     text-align: center;
     font-size: 0.9375rem;
   }
+  .gs-talk__line:empty {
+    display: none;
+  }
   .gs-talk__line[data-tone="warn"] {
     color: var(--gs-warn);
   }
+
+  /* Tool row: settings gear first and fixed, then the night chip; wraps at large text. */
+  .gs-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--gs-space-2);
+  }
+  .gs-tools__gear {
+    order: -1;
+  }
+  .gs-chip-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--gs-space-2);
+    min-height: var(--gs-target);
+    padding: var(--gs-space-1) var(--gs-space-4);
+    border: 0.0625rem solid var(--gs-outline);
+    border-radius: var(--gs-radius-full);
+    background: transparent;
+    color: var(--gs-on-bg);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* Hero: the headline, the monitoring time under it. */
+  .gs-hero {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gs-space-1);
+  }
+  .gs-hero__sub {
+    padding-inline: var(--gs-space-1);
+    color: var(--gs-on-surface-variant);
+    font-size: 0.9375rem;
+  }
+
+  /* Sound strip: the last minute as bars on a horizon, with the alert line dashed. */
+  .gs-strip-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gs-space-1);
+  }
+  .gs-strip {
+    position: relative;
+    min-height: 7.5rem;
+    padding: var(--gs-space-3) var(--gs-space-2) 0;
+    border-radius: var(--gs-radius-l);
+    background: var(--gs-surface);
+    overflow: hidden;
+  }
+  .gs-strip__bars {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 1px;
+    height: 6rem;
+    border-bottom: 0.125rem solid var(--gs-outline);
+  }
+  .gs-strip__bar {
+    flex: 1 1 0;
+    min-width: 0;
+    border-radius: 1px 1px 0 0;
+    background: var(--gs-on-surface-variant);
+  }
+  .gs-strip__bar[data-above] {
+    background: var(--safety-warn);
+  }
+  .gs-strip__line {
+    position: absolute;
+    inset-inline: 0;
+    height: 0;
+    border-top: 0.125rem dashed var(--gs-primary);
+  }
+  .gs-strip[data-state="mic_silent"] {
+    background: repeating-linear-gradient(
+      135deg,
+      var(--gs-surface) 0 0.5rem,
+      var(--gs-surface-highest) 0.5rem 1rem
+    );
+  }
+  .gs-strip__center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--gs-space-2);
+    text-align: center;
+    font-weight: 600;
+    color: var(--gs-on-bg);
+  }
+  .gs-strip__captions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--gs-space-1) var(--gs-space-3);
+    padding-inline: var(--gs-space-2);
+    color: var(--gs-on-surface-variant);
+    font-size: 0.8125rem;
+  }
+  .gs-strip__line-label {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+  .gs-meta {
+    padding-inline: var(--gs-space-1);
+    color: var(--gs-on-surface-variant);
+    font-size: 0.875rem;
+  }
+
+  /* Notices: level colours are the fixed safety tokens, never the colour scheme. */
+  .gs-notices {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gs-space-2);
+  }
+  .gs-notice {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--gs-space-3);
+    padding: var(--gs-space-3) var(--gs-space-4);
+    border-radius: var(--gs-radius-m);
+    background: var(--gs-surface-variant);
+    color: var(--gs-on-bg);
+  }
+  .gs-notice__text {
+    display: flex;
+    flex: 1 1 10rem;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+  }
+  .gs-notice__title {
+    font-weight: 700;
+  }
+  .gs-notice__body {
+    font-size: 0.9375rem;
+  }
+  .gs-notice[data-level="alert"] {
+    background: var(--safety-alert-container);
+    color: var(--safety-alert);
+    box-shadow: inset 0 0 0 0.125rem var(--safety-alert);
+  }
+  .gs-notice[data-level="warn"] {
+    background: var(--safety-warn-container);
+    color: var(--safety-warn);
+  }
+  .gs-notice[data-level="info"] {
+    background: var(--safety-info-container);
+    color: var(--safety-info);
+  }
+  .gs-notice[data-level="alert"] .gs-btn,
+  .gs-notice[data-level="warn"] .gs-btn,
+  .gs-notice[data-level="info"] .gs-btn {
+    border-color: currentColor;
+    background: transparent;
+    color: inherit;
+  }
+  .gs-notices__more {
+    min-height: var(--gs-target);
+    padding: var(--gs-space-2) var(--gs-space-3);
+    border: 0;
+    background: transparent;
+    color: var(--gs-primary);
+    font-weight: 600;
+    text-align: start;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  /* Pause snackbar: above the dock for a few seconds, one 48 dp Undo target. */
+  .gs-snackbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gs-space-3);
+    padding: var(--gs-space-1) var(--gs-space-2) var(--gs-space-1) var(--gs-space-4);
+    border-radius: var(--gs-radius-m);
+    background: var(--gs-on-bg);
+    color: var(--gs-bg);
+  }
+  .gs-snackbar .gs-btn {
+    color: var(--gs-bg);
+    text-decoration: underline;
+  }
+
   .gs-action-row {
     display: flex;
     flex-wrap: wrap;
@@ -879,6 +1142,26 @@
     --alert-on-slab: var(--safety-alarm-on-slab);
     --alert-slab-border: var(--safety-alarm-slab-border);
   }
+  .gs-alert[data-palette="noise"] {
+    --alert-bg: var(--safety-noise-bg);
+    --alert-surface: var(--safety-noise-surface);
+    --alert-on: var(--safety-noise-on);
+    --alert-on-variant: var(--safety-noise-on-variant);
+    --alert-accent: var(--safety-noise-accent);
+    --alert-slab: var(--safety-noise-slab);
+    --alert-on-slab: var(--safety-noise-on-slab);
+    --alert-slab-border: var(--safety-noise-slab-border);
+  }
+  .gs-alert[data-palette="battery"] {
+    --alert-bg: var(--safety-battery-bg);
+    --alert-surface: var(--safety-battery-surface);
+    --alert-on: var(--safety-battery-on);
+    --alert-on-variant: var(--safety-battery-on-variant);
+    --alert-accent: var(--safety-battery-accent);
+    --alert-slab: var(--safety-battery-slab);
+    --alert-on-slab: var(--safety-battery-on-slab);
+    --alert-slab-border: var(--safety-battery-slab-border);
+  }
   .gs-alert__hazard {
     flex: none;
     height: 0.625rem;
@@ -999,8 +1282,51 @@
     flex: none;
     padding: var(--gs-space-2) var(--gs-space-5) var(--gs-space-4);
   }
+  .gs-alert__badge {
+    align-self: flex-start;
+    padding: 0.125rem var(--gs-space-3);
+    border: 0.125rem solid var(--alert-accent);
+    border-radius: var(--gs-radius-full);
+    color: var(--alert-accent);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.07rem;
+  }
+  .gs-alert__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gs-space-2);
+  }
+  .gs-alert__row > .gs-btn {
+    flex: 1 1 6rem;
+  }
+  .gs-alert__row > .gs-listen {
+    flex: 1 1 100%;
+    width: auto;
+  }
+  .gs-alert__panel {
+    padding: var(--gs-space-3);
+    border-radius: var(--gs-radius-l);
+    background: var(--alert-surface);
+  }
+  .gs-alert__panel .gs-meter__bar {
+    background: var(--alert-bg);
+  }
+  .gs-alert__panel .gs-meter__bar[data-on] {
+    background: var(--alert-accent);
+  }
+  .gs-alert__panel .gs-meter__threshold {
+    background: var(--alert-on);
+  }
+  .gs-btn__sub {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
   /* The one filled action: the palette's slab with its mandatory 2 px light border. */
   .gs-alert__action .gs-btn {
+    flex-direction: column;
+    gap: 0.125rem;
     min-height: 4.5rem;
     border: 2px solid var(--alert-slab-border);
     background: var(--alert-slab);

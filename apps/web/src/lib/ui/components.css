@@ -156,6 +156,20 @@
     font-weight: 600;
     font-variant-numeric: tabular-nums;
   }
+  /* The baby device's battery, right-aligned; the number never wraps. */
+  .gs-status-bar__battery {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--gs-space-1);
+    margin-inline-start: auto;
+    font-size: 0.9375rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .gs-status-bar__battery .gs-glyph {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
   .gs-status-bar[data-loud] {
     animation: gs-status-pulse 2.5s ease-in-out infinite alternate;
   }

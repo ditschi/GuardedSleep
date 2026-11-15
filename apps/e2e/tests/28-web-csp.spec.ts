@@ -95,8 +95,7 @@ test("the header matches the meta fallback, and no screen violates the policy", 
     await parent.keyboard.press("Escape");
     await baby.getByTestId("baby_night_open").click();
     await baby.keyboard.press("Escape");
-    await parent.getByTestId("parent_overflow").click();
-    await parent.getByTestId("parent_settings").click();
+    await parent.getByTestId("tool_settings").click();
     await expect(parent.getByTestId("settings_back")).toBeVisible();
     await expectNoViolations([baby, parent], "sheets, night screen and settings");
     await parent.getByTestId("settings_back").click();

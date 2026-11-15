@@ -1,30 +1,40 @@
 <script lang="ts">
   import type { WebTalkState } from "../contract";
-  import { t } from "../i18n/store";
-  import Button from "./Button.svelte";
+  import { locale, t } from "../i18n/store";
+  import { formatClock } from "./format";
   import Glyph from "./Glyph.svelte";
+  import { elapsedToWall } from "./parent-view";
   import {
     TALK_COUNTDOWN_FROM_MS,
     TALK_HINT_MS,
     TALK_HOLD_MS,
     TALK_LOCK_DISTANCE,
   } from "./talk-constants";
-  import { mayAnnounce, noiseLine, stateLine, unavailableLine, type TalkView } from "./talk-view";
+  import { stateLine, unavailableLine, type TalkHint, type TalkView } from "./talk-view";
 
+  /**
+   * The Talk tile of the dock (`redesign-calm-ui` design section 9). Hold-to-talk behaves as
+   * `add-talk-back` built it: pointer hold, Space/Enter hold, release ends, no lock. While the baby
+   * device is unavailable for a known time the tile is an outlined status slot, never a disabled
+   * button. The lines under the dock are `TalkStatus.svelte`.
+   */
   type Props = {
     talk: TalkView;
     /** What the browser adds: no microphone support here. */
     web: WebTalkState;
     /** The monotonic clock of the page (countdowns). */
     nowMs: number;
+    /** The wall clock, for "at 02:10". */
+    nowWallMs: number;
     /** The hold time passed: start the talk. */
     onpress: () => void;
     /** Released, cancelled or interrupted. */
     onrelease: () => void;
-    onkeeplisten: () => void;
+    /** What a short tap or a slide taught the user; shown by the status lines. */
+    hint?: TalkHint | null;
   };
 
-  let { talk, web, nowMs, onpress, onrelease, onkeeplisten }: Props = $props();
+  let { talk, web, nowMs, nowWallMs, onpress, onrelease, hint = $bindable(null) }: Props = $props();
 
   let holdTimer: ReturnType<typeof setTimeout> | null = null;
   let hintTimer: ReturnType<typeof setTimeout> | null = null;
@@ -32,17 +42,29 @@
   let startY = 0;
   // Set once the hold time passed and the talk was asked for: only then does a release count.
   let started = false;
-  let hint = $state<"hold" | "no_lock" | null>(null);
 
   const unavailable = $derived(unavailableLine(talk, web, nowMs));
   const stateText = $derived(stateLine(talk, nowMs));
-  const noise = $derived(noiseLine(talk));
   const disabled = $derived(unavailable !== null);
   const busy = $derived(talk.talk.kind === "requesting" || talk.talk.kind === "talking");
-  // A line the user must read after the talk; never while the microphone is open.
-  const showUnconfirmed = $derived(talk.talkUnconfirmed && talk.talk.kind !== "talking");
+  // Unavailable for a known time: an outlined status slot at full contrast, not a dead button.
+  const retryAt = $derived(
+    talk.talk.kind === "unavailable" && talk.talk.reason === "cooldown" && !web.micUnsupported
+      ? talk.talk.retryAtElapsedMs
+      : null,
+  );
+  const notConnected = $derived(
+    talk.talk.kind === "unavailable" && talk.talk.reason === "not_connected",
+  );
+  const label = $derived(
+    notConnected
+      ? $t("native.ui.talk.disabled")
+      : busy && stateText
+        ? $t(stateText.key, stateText.args)
+        : $t("webScreens.talk.hold"),
+  );
 
-  function showHint(kind: "hold" | "no_lock"): void {
+  function showHint(kind: TalkHint): void {
     hint = kind;
     if (hintTimer) clearTimeout(hintTimer);
     hintTimer = setTimeout(() => (hint = null), TALK_HINT_MS);
@@ -140,10 +162,29 @@
 <svelte:window onblur={() => end(false)} />
 <svelte:document onvisibilitychange={onhidden} />
 
-<div class="gs-talk">
+{#if retryAt !== null}
+  <div
+    class="gs-tile"
+    data-status
+    data-testid="parent_talk"
+    data-phase="unavailable"
+    aria-describedby="gs-talk-state gs-talk-reason"
+  >
+    <Glyph name="mic" />
+    <span class="gs-tile__text">
+      <span class="gs-tile__label">{$t("native.ui.talk.again")}</span>
+      <span class="gs-tile__sub">
+        {$t("native.ui.talk.againAt", {
+          time: formatClock(elapsedToWall(retryAt, nowMs, nowWallMs), $locale),
+        })}
+      </span>
+    </span>
+  </div>
+{:else}
   <button
     type="button"
-    class="gs-talk__btn"
+    class="gs-tile"
+    data-kind="talk"
     data-testid="parent_talk"
     data-phase={talk.talk.kind}
     {disabled}
@@ -157,55 +198,6 @@
     {onkeyup}
   >
     <Glyph name="mic" />
-    <span>{$t("webScreens.talk.hold")}</span>
+    <span class="gs-tile__text"><span class="gs-tile__label">{label}</span></span>
   </button>
-
-  <!-- While the microphone is open nothing here is announced (no speech into the open microphone);
-       the result is announced after the release. -->
-  <p
-    id="gs-talk-state"
-    class="gs-talk__line"
-    data-testid="parent_talk_state"
-    data-phase={talk.talk.kind}
-    aria-live={mayAnnounce(talk) ? "polite" : "off"}
-  >
-    {#if hint === "hold"}
-      {$t("webScreens.talk.holdHint")}
-    {:else if hint === "no_lock"}
-      {$t("webScreens.talk.noLock")}
-    {:else if stateText}
-      {$t(stateText.key, stateText.args)}
-    {/if}
-  </p>
-
-  <p id="gs-talk-reason" class="gs-talk__line gs-hint" data-testid="parent_talk_unavailable_reason">
-    {#if unavailable && !stateText}{$t(unavailable.key, unavailable.args)}{/if}
-  </p>
-
-  {#if noise}
-    <p class="gs-talk__line gs-hint" data-testid="parent_noise_paused">{$t(noise.key)}</p>
-  {/if}
-
-  <!-- A visible hint only: no live region, so nothing is spoken into the open microphone. -->
-  {#if talk.talkMicSilent && talk.talk.kind === "talking"}
-    <p class="gs-talk__line" data-tone="warn" data-testid="parent_talk_mic_silent">
-      {$t("webScreens.talk.micSilent")}
-    </p>
-  {/if}
-
-  {#if showUnconfirmed}
-    <p class="gs-talk__line" data-tone="warn" role="status" data-testid="parent_talk_unconfirmed">
-      {$t("webScreens.talk.unconfirmed")}
-    </p>
-  {:else if talk.talkAudibleUncertain && talk.talk.kind === "idle"}
-    <p class="gs-talk__line" data-tone="warn" data-testid="parent_talk_uncertain">
-      {$t("webScreens.talk.audibleUncertain")}
-    </p>
-  {/if}
-
-  {#if talk.afterTalkListenUntilElapsedMs !== null && !busy}
-    <Button variant="text" testid="parent_talk_after_listen" onclick={onkeeplisten}>
-      {$t("webScreens.talk.afterListen")}
-    </Button>
-  {/if}
-</div>
+{/if}

@@ -88,6 +88,7 @@ export class ParentModel {
   private hints: LinkHint[] = [];
   private readiness: ReadinessIssue[] = [];
   private ownBatteryPct: number | null = null;
+  private monitoringSince: number | null = null;
   private lastSnapshot: LinkSnapshot | null = null;
   private everConnected = false;
   private peerAbsentSince: number | null = null;
@@ -121,6 +122,7 @@ export class ParentModel {
     this.heartbeatRms = 0;
     this.heartbeatAt = Number.NEGATIVE_INFINITY;
     this.listen = "off";
+    this.monitoringSince = null;
     this.peerStatus = null;
     this.silenceRequest = "idle";
     this.missed = null;
@@ -128,6 +130,12 @@ export class ParentModel {
     this.hints = [];
     this.lastSnapshot = null;
     this.publish(this.clock.elapsedMs());
+  }
+
+  /** A monitoring run starts: "Monitoring for {duration}" counts from here (core clock). */
+  beginRun(now: number): void {
+    this.monitoringSince = now;
+    this.publish(now);
   }
 
   setReadiness(issues: ReadinessIssue[], ownBatteryPct: number | null = null): void {
@@ -233,6 +241,18 @@ export class ParentModel {
       case "missed_events":
         this.onMissed(event.count, event.max_rms, event.complete, event.down_ms, now);
         break;
+      case "talk_changed":
+        // "All quiet since" restarts when a talk ends: the parent's own voice was no quiet period.
+        // Not while a missed-sound summary is pending: quiet after an outage must be earned.
+        if (
+          event.state.state === "ended" &&
+          this.phase === "connected" &&
+          !this.tracker.active &&
+          this.awaitingMissedUntil === null
+        ) {
+          this.quietSinceWall = this.clock.wallMs();
+        }
+        break;
       case "listen_changed":
         if (!event.enabled && this.listen !== "off") {
           this.listen = "off";
@@ -298,7 +318,7 @@ export class ParentModel {
       this.awaitingMissedUntil = null;
       this.quietSinceWall = this.reconnectWall;
     }
-    if (this.listen === "locked" && now - this.listenSince >= LISTEN_MAX_MS) {
+    if (this.listen === "on" && now - this.listenSince >= LISTEN_MAX_MS) {
       this.listen = "off";
       this.effects.listenStopped();
     }
@@ -327,7 +347,7 @@ export class ParentModel {
   /** False when the request is ignored (not connected). */
   setListen(mode: ListenMode, now: number): boolean {
     if (this.phase !== "connected" && mode !== "off") return false;
-    if (mode === "locked" && this.listen !== "locked") this.listenSince = now;
+    if (mode === "on" && this.listen !== "on") this.listenSince = now;
     this.listen = mode;
     if (mode !== "off") this.effects.muteRemote(false);
     this.publish(now);
@@ -479,6 +499,7 @@ export class ParentModel {
             },
       ownBatteryPct: this.ownBatteryPct,
       noiseIsTest: this.noiseIsTest && this.tracker.active,
+      monitoringSinceElapsedMs: this.monitoringSince,
     };
   }
 }

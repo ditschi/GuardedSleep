@@ -26,6 +26,7 @@ export const GLYPHS = {
   more: "M5 12h.01M12 12h.01M19 12h.01",
   shield: "M12 3L4.5 6v5.5c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V6z",
   stop: "M7 7h10v10H7z",
+  bolt: "M13 2L4 14h7l-1 8 9-12h-7z",
   sound: "M4 10v4h4l5 4V6L8 10zM16 9a4 4 0 0 1 0 6",
 } as const;
 

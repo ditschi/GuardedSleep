@@ -1,4 +1,10 @@
-import type { LinkUi, MissedEventsUi, ParentMonitorState, SilenceStatus } from "../contract";
+import type {
+  LinkUi,
+  MissedEventsUi,
+  ParentMonitorState,
+  PeerStatusUi,
+  SilenceStatus,
+} from "../contract";
 import type { MessageKey } from "../i18n/keys";
 import type { Translate } from "../i18n/translate";
 import type { GlyphName, Tone } from "./glyphs";
@@ -171,10 +177,15 @@ export type Headline =
   | { kind: "sound_at"; atWallMs: number; durationMs: number }
   | { kind: "sound_snoozed"; atWallMs: number }
   | { kind: "last_heard"; atWallMs: number }
+  | { kind: "cant_hear" }
   | { kind: "no_contact" }
   | { kind: "monitoring" };
 
-/** Never "All quiet" while the link is not connected (alpha-ux-flows.md section 5, row 2). */
+/**
+ * Never "All quiet" while the link is not connected (alpha-ux-flows.md section 5, row 2), and never
+ * while the baby device's microphone hears nothing: a silent room and a dead microphone look the
+ * same on the strip, so the headline says which one it is.
+ */
 export function headlineOf(
   p: ParentMonitorState,
   nowElapsedMs: number,
@@ -190,6 +201,7 @@ export function headlineOf(
   if (p.noiseAlertActive && p.noiseSinceWallMs !== null) {
     return { kind: "sound_since", sinceWallMs: p.noiseSinceWallMs };
   }
+  if (p.peer.micSilent === true) return { kind: "cant_hear" };
   if (p.quietSinceWallMs !== null) return { kind: "all_quiet", sinceWallMs: p.quietSinceWallMs };
   if (p.lastSound !== null) {
     const snoozed = p.snoozedUntilWallMs !== null && p.snoozedUntilWallMs > nowWallMs;
@@ -254,102 +266,23 @@ export function pruneDismissed(
   return next.size === dismissed.size ? dismissed : next;
 }
 
-// ---- chips -----------------------------------------------------------------------------------
+// ---- silence ---------------------------------------------------------------------------------
 
-export interface ChipSpec {
-  /** The stable test id. */
-  id: string;
-  tone: Tone;
-  icon: GlyphName;
-  key: MessageKey;
-  args?: Record<string, number>;
-}
-
-/** The battery level below which the baby device asks to be plugged in. */
-export const BATTERY_LOW_PCT = 20;
-
-const SILENCE_CHIP: Readonly<Record<SilenceStatus, { key: MessageKey; tone: Tone }>> = {
-  silent: { key: "native.ui.silence.silent", tone: "ok" },
-  screen_may_light: { key: "native.ui.silence.screenMayLight", tone: "warn" },
-  may_buzz: { key: "native.ui.silence.mayVibrate", tone: "warn" },
-  may_ring: { key: "native.ui.silence.mayRing", tone: "warn" },
-  unknown: { key: "native.ui.silence.unknown", tone: "neutral" },
-  no_access: { key: "native.ui.silence.noAccess", tone: "warn" },
+const SILENCE_STATE_KEY: Readonly<Record<SilenceStatus, MessageKey>> = {
+  silent: "native.ui.silence.silent",
+  screen_may_light: "native.ui.silence.screenMayLight",
+  may_buzz: "native.ui.silence.mayVibrate",
+  may_ring: "native.ui.silence.mayRing",
+  unknown: "native.ui.silence.unknown",
+  no_access: "native.ui.silence.noAccess",
 };
 
-const UNIT_WARNING_KEYS: Readonly<Record<string, MessageKey>> = {
-  page_hidden: "native.ui.parent.unitWarning.pageHidden",
-  wake_lock_off: "native.ui.parent.unitWarning.wakeLockOff",
-  resumed_from_sleep: "native.ui.parent.unitWarning.resumedFromSleep",
-  not_charging: "native.ui.parent.unitWarning.notCharging",
-  mic_permission_lost: "native.ui.parent.unitWarning.micPermissionLost",
-};
-
-/** Battery and silence of the baby device: always shown, neutral unless something is wrong. */
-export function fixedChips(p: ParentMonitorState): ChipSpec[] {
-  const chips: ChipSpec[] = [];
-  const pct = p.peer.batteryPct;
-  if (pct !== null) {
-    const low = pct < BATTERY_LOW_PCT && p.peer.charging !== true;
-    chips.push({
-      id: "parent_baby_battery_chip",
-      tone: low ? "warn" : "neutral",
-      icon: "battery",
-      key: low ? "native.ui.battery.babyLow" : "native.ui.battery.baby",
-      args: { percent: pct },
-    });
-  }
-  if (p.peer.isWebClient) {
-    // A browser baby device can neither report nor change its silence: grey, with the manual hint.
-    chips.push({
-      id: "parent_silence_chip",
-      tone: "neutral",
-      icon: "info",
-      key: "webScreens.parent.quietUnknownWeb",
-    });
-  } else {
-    const look = SILENCE_CHIP[p.peer.silence];
-    chips.push({ id: "parent_silence_chip", tone: look.tone, icon: "info", key: look.key });
-  }
-  return chips;
-}
-
-/** Warnings, in the priority of section 5: the screen shows the first two and "+N". */
-export function extraChips(p: ParentMonitorState, nowWallMs: number): ChipSpec[] {
-  const chips: ChipSpec[] = [];
-  if (p.ownBatteryPct !== null && p.ownBatteryPct < BATTERY_LOW_PCT) {
-    chips.push({
-      id: "parent_own_battery_chip",
-      tone: "warn",
-      icon: "battery",
-      key: "native.ui.battery.parentLow",
-      args: { percent: p.ownBatteryPct },
-    });
-  }
-  for (const warning of p.peer.unitWarnings) {
-    const key = UNIT_WARNING_KEYS[warning];
-    if (key) {
-      chips.push({ id: `parent_unit_warning_${warning}`, tone: "warn", icon: "alert", key });
-    }
-  }
-  if (p.snoozedUntilWallMs !== null && p.snoozedUntilWallMs > nowWallMs) {
-    chips.push({
-      id: "parent_snooze_chip",
-      tone: "snooze",
-      icon: "snooze",
-      key: "native.ui.snooze.active",
-      args: { minutes: Math.max(1, Math.ceil((p.snoozedUntilWallMs - nowWallMs) / 60_000)) },
-    });
-  }
-  if (p.link.phase === "connected" && p.link.quality === "poor") {
-    chips.push({
-      id: "parent_quality_chip",
-      tone: "warn",
-      icon: "alert",
-      key: "native.ui.link.weak",
-    });
-  }
-  return chips;
+/**
+ * The baby device's quiet state for the meta line under the strip. A browser baby device can
+ * neither report nor change it, so it gets the plain "unknown, do it yourself" hint.
+ */
+export function silenceStateKey(peer: PeerStatusUi): MessageKey {
+  return peer.isWebClient ? "webScreens.parent.quietUnknownWeb" : SILENCE_STATE_KEY[peer.silence];
 }
 
 /** Whether the baby device can be asked to silence itself (a browser baby device cannot). */

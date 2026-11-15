@@ -53,6 +53,7 @@ import {
   INVITE_VALIDITY_MS,
   MAX_HEARTBEAT_MS,
   MIN_HEARTBEAT_MS,
+  OWN_BATTERY_LOW_PCT,
   PAIRING_UNREACHABLE_AFTER_MS,
   PSK_BYTES,
 } from "./policy";
@@ -276,6 +277,11 @@ export class WebController implements AppController {
     deps.gate.onChange((unlocked) => {
       this.soundStore.set(unlocked);
       this.onSoundState(unlocked);
+    });
+    // This device's own battery feeds the parent's readiness: the only issue a browser can know.
+    deps.battery?.subscribe((b) => {
+      const low = b !== null && b.pct < OWN_BATTERY_LOW_PCT && b.charging !== true;
+      this.parentModel.setReadiness(low ? ["parent_battery_low"] : [], b?.pct ?? null);
     });
   }
 
@@ -721,6 +727,7 @@ export class WebController implements AppController {
     };
     this.run = run;
     this.parentModel.reset();
+    if (role === "parent") this.parentModel.beginRun(this.deps.clock.elapsedMs());
     this.babyModel.reset();
     this.talkModel.reset();
     this.babyTalkModel.reset();

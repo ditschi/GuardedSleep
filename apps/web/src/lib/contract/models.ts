@@ -94,9 +94,11 @@ export type ReadinessIssue =
   | "battery_optimized"
   | "parent_battery_low"
   | "headphones_connected"
-  | "never_tested";
+  | "never_tested"
+  | "alarm_volume_low";
 
-export type ListenMode = "off" | "hold" | "locked";
+/** Listen is a tap toggle (`redesign-calm-ui` "Listen is a tap toggle"): on until the next tap. */
+export type ListenMode = "off" | "on";
 
 export type SilenceRequest = "idle" | "pending" | "applied" | "failed";
 
@@ -150,6 +152,8 @@ export interface ParentMonitorState {
   talkAudibleUncertain: boolean;
   talkMicSilent: boolean;
   afterTalkListenUntilElapsedMs: number | null;
+  /** The core-clock time at which this monitoring run started; null before the first run. */
+  monitoringSinceElapsedMs: number | null;
 }
 
 export interface BabyMonitorState {
@@ -515,6 +519,7 @@ export function defaultParentMonitor(): ParentMonitorState {
     lastSound: null,
     ownBatteryPct: null,
     noiseEscalatedAfterMin: null,
+    monitoringSinceElapsedMs: null,
     ...defaultParentTalkFields(),
   };
 }

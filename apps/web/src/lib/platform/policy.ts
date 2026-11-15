@@ -92,3 +92,9 @@ export const TALK_MIC_SILENT_BELOW = 0.002;
  * "Your voice may not be audible" has no timer: it stays until the next press.
  */
 export const TALK_RESULT_VISIBLE_MS = 8_000;
+
+/**
+ * Below this a parent device asks to be plugged in (`parent_battery_low` readiness issue). The UI
+ * mirrors the number in `banners.ts` (`OWN_BATTERY_LOW_PCT`); the Android client has the same one.
+ */
+export const OWN_BATTERY_LOW_PCT = 20;

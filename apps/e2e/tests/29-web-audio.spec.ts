@@ -71,7 +71,7 @@ test("listen: audio reaches the parent only while Listen is on", async () => {
     await expect(listen).toBeEnabled();
     await listen.focus();
     await parent.keyboard.press("Enter");
-    await expect(listen).toHaveAttribute("data-listen", "locked");
+    await expect(listen).toHaveAttribute("data-listen", "on");
     await expect
       .poll(() => energyRate(baby, 1_000), { timeout: 20_000 })
       .toBeGreaterThan(GATE_CLOSED_ENERGY_PER_S);

@@ -18,7 +18,8 @@ import { FakeMedia, FakeTime, FakeWebSocket } from "./test-support";
 import { asContext, FakeAudioContext } from "./test-audio";
 import { idleWatch, type PageWatch } from "./page-watch";
 import { WebController, type NetworkWatcher, type TalkMicPort } from "./web-controller";
-import { writable } from "svelte/store";
+import { writable, type Readable } from "svelte/store";
+import type { DeviceBattery } from "../contract";
 
 const realCore = loadCoreNode();
 const RELAY = "wss://relay.test/sig";
@@ -109,6 +110,7 @@ function setup(
     talkMic?: TalkMicPort;
     page?: PageWatch;
     tones?: AlarmToneControl;
+    battery?: Readable<DeviceBattery | null>;
   } = {},
 ) {
   FakeWebSocket.instances = [];
@@ -156,6 +158,7 @@ function setup(
     talkMic: options.talkMic,
     page: options.page,
     tones: options.tones,
+    battery: options.battery,
   });
   return { controller, time, core, medias, media, ctx, gate, alerts, network };
 }
@@ -787,7 +790,7 @@ describe("WebController: contract state from the core", () => {
   it("listen, snooze, acknowledge, silence and probe become core inputs", async () => {
     const t = setup();
     await pairedParent(t);
-    t.controller.setListen("locked");
+    t.controller.setListen("on");
     t.controller.snooze(10);
     t.controller.cancelSnooze();
     t.controller.acknowledgeAlarm();
@@ -802,8 +805,31 @@ describe("WebController: contract state from the core", () => {
       { type: "request_quiet" },
       { type: "request_probe" },
     ]);
-    expect(get(t.controller.parent).listen).toBe("locked");
+    expect(get(t.controller.parent).listen).toBe("on");
     expect(get(t.controller.parent).silenceRequest).toBe("pending");
+  });
+
+  it("fills parent_battery_low from the own battery reading, not while charging", async () => {
+    const battery = writable<DeviceBattery | null>(null);
+    const t = setup({ battery });
+    expect(get(t.controller.parent).readiness).toEqual([]);
+    battery.set({ pct: 19, charging: false });
+    expect(get(t.controller.parent).readiness).toEqual(["parent_battery_low"]);
+    expect(get(t.controller.parent).ownBatteryPct).toBe(19);
+    battery.set({ pct: 19, charging: true });
+    expect(get(t.controller.parent).readiness).toEqual([]);
+    battery.set({ pct: 20, charging: false });
+    expect(get(t.controller.parent).readiness).toEqual([]);
+    battery.set({ pct: 12, charging: null });
+    expect(get(t.controller.parent).readiness).toEqual(["parent_battery_low"]);
+  });
+
+  it("counts 'Monitoring for' from the start of a parent run", async () => {
+    const t = setup();
+    t.time.advance(5_000);
+    await pairedParent(t);
+    expect(get(t.controller.parent).monitoringSinceElapsedMs).not.toBeNull();
+    expect(get(t.controller.parent).monitoringSinceElapsedMs).toBeLessThanOrEqual(t.time.now);
   });
 
   it("listen is refused while the link is down", async () => {
@@ -811,7 +837,7 @@ describe("WebController: contract state from the core", () => {
     await pairedParent(t);
     t.core.script = () => [emitStatus({ state: "reconnecting", level: 1 })];
     t.time.advance(250);
-    t.controller.setListen("hold");
+    t.controller.setListen("on");
     expect(get(t.controller.parent).listen).toBe("off");
     expect(t.core.inputs.some((i) => i.type === "set_listen")).toBe(false);
   });
