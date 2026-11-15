@@ -190,6 +190,20 @@ class TalkTests : ShotBase() {
     }
 
     @Test
+    fun onlyTheTalkPageAcknowledgesTheTalkBackWarning() = runComposeUiTest {
+        val c =
+            FakeAppController(
+                app = AppState(role = Role.BABY, onboardingDone = true, paired = true)
+            )
+        show(dark = true) { SettingsScreen(c, {}, {}, {}) }
+        onNodeWithTag("settings_nav_talk").performScrollTo().assertIsDisplayed()
+        assertTrue("talkSettingsOpened" !in c.calls)
+        onNodeWithTag("settings_nav_talk").performClick()
+        waitForIdle()
+        assertTrue("talkSettingsOpened" in c.calls)
+    }
+
+    @Test
     fun theBabySettingsOfferTheTalkBackRows() = runComposeUiTest {
         val c =
             FakeAppController(

@@ -260,7 +260,7 @@ fun SettingsScreen(
 @Composable
 private fun DetectionPage(controller: AppController, s: SettingsState, b: BabyMonitorState) {
     Section(
-        R.string.native_ui_settings_group_sound_detection,
+        null,
         "settings_group_detection",
     ) {
         var th by remember(s.threshold) { mutableFloatStateOf(s.threshold) }
@@ -308,7 +308,7 @@ private fun DetectionPage(controller: AppController, s: SettingsState, b: BabyMo
 
 @Composable
 private fun SilencePage(controller: AppController, s: SettingsState, b: BabyMonitorState) {
-    Section(R.string.native_ui_settings_group_silence, "settings_group_silence") {
+    Section(null, "settings_group_silence") {
         SwitchRow(
             stringResource(R.string.native_ui_setup_silence_title),
             s.silenceWhileMonitoring,
@@ -330,7 +330,7 @@ private fun SilencePage(controller: AppController, s: SettingsState, b: BabyMoni
 private fun TalkPage(controller: AppController, s: SettingsState) {
     // An adult opened the talk-back settings: the "may not be audible" warning ends.
     LaunchedEffect(Unit) { controller.talkSettingsOpened() }
-    Section(R.string.native_ui_talk_baby_title, "settings_group_talk") {
+    Section(null, "settings_group_talk") {
         SwitchRow(
             stringResource(R.string.native_ui_talk_baby_switch),
             s.talkBackEnabled,
@@ -387,7 +387,7 @@ private fun AlertsPage(
     onOpenAlarmTone: () -> Unit,
     onTestAlert: () -> Unit,
 ) {
-    Section(R.string.native_ui_settings_group_alerts, "settings_group_alerts") {
+    Section(null, "settings_group_alerts") {
         AlertStyleChoice(s.alertStyle) { style ->
             controller.updateSettings { st -> st.copy(alertStyle = style) }
         }
@@ -484,7 +484,7 @@ private fun AlertsPage(
 
 @Composable
 private fun DisplayPage(controller: AppController, s: SettingsState) {
-    Section(R.string.native_ui_settings_group_display, "settings_group_display") {
+    Section(null, "settings_group_display") {
         Theme.entries.forEach { theme ->
             ChoiceRow(
                 themeLabel(theme),
@@ -499,7 +499,7 @@ private fun DisplayPage(controller: AppController, s: SettingsState) {
 
 @Composable
 private fun LanguagePage(controller: AppController, s: SettingsState) {
-    Section(R.string.native_ui_settings_group_language, "settings_group_language") {
+    Section(null, "settings_group_language") {
         // "Match system" is translated; the languages are shown by endonym
         // (generated).
         val langs = rememberLanguageChoices().map { it.tag to it.endonym }
@@ -520,7 +520,7 @@ private fun LanguagePage(controller: AppController, s: SettingsState) {
 
 @Composable
 private fun AboutPage(buildInfo: BuildInfo) {
-    Section(R.string.native_ui_settings_group_about, "settings_group_about") {
+    Section(null, "settings_group_about") {
         Body(
             stringResource(R.string.native_ui_setup_limits_body),
             tag = "settings_limits",
@@ -547,7 +547,7 @@ private fun AdvancedPage(
     s: SettingsState,
     onConfirmAdvanced: () -> Unit,
 ) {
-    Section(R.string.native_ui_settings_group_advanced, "settings_group_advanced") {
+    Section(null, "settings_group_advanced") {
         SwitchRow(
             stringResource(R.string.native_ui_settings_advanced_toggle),
             s.advancedEnabled,
@@ -824,7 +824,7 @@ private fun ConnectionsPage(
     onForgetOnly: () -> Unit,
 ) {
     val readOnly = app.monitoring
-    Section(R.string.native_ui_connections_title, "settings_group_paired") {
+    Section(null, "settings_group_paired") {
         if (app.connections.size > 1) {
             app.connections.forEach { c ->
                 Column(
@@ -1094,15 +1094,18 @@ private fun AdvancedFields(
 }
 
 @Composable
-private fun Section(title: Int, tag: String, content: @Composable () -> Unit) {
+private fun Section(title: Int?, tag: String, content: @Composable () -> Unit) {
     AppCard(Modifier.testTag(tag)) {
-        Text(
-            stringResource(title),
-            Modifier.semantics { heading() },
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = LocalAppColors.current.secondaryText,
-        )
+        // No heading where the page title already says it; only Open at start has two sections.
+        if (title != null) {
+            Text(
+                stringResource(title),
+                Modifier.semantics { heading() },
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = LocalAppColors.current.secondaryText,
+            )
+        }
         content()
     }
 }
