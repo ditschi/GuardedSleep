@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Annuleren",
         "more": "Meer",
-        "moreCount": "+{count}",
         "settings": "Instellingen",
         "tryAgain": "Opnieuw proberen",
         "yes": "Ja",
@@ -272,10 +271,6 @@
           "body": "Iemand is gestopt met bewaken op het babyapparaat. Je krijgt geen meldingen.",
           "titleDefault": "Het babyapparaat is gestopt met bewaken"
         },
-        "battery": {
-          "title": "Batterij babyapparaat bijna op",
-          "body": "Sluit het babyapparaat nu aan op de lader, anders stopt de bewaking."
-        },
         "needsPairing": {
           "title": "Apparaten niet meer gekoppeld"
         },
@@ -302,7 +297,6 @@
         "stop": "Stoppen met bewaken",
         "securityTitle": "Beveiligingswaarschuwing",
         "securityBody": "De verbinding kon niet worden geverifieerd. Als je de apparaten niet net opnieuw hebt gekoppeld, koppel ze dan nu opnieuw.",
-        "staleSuffix": "· om {time}",
         "unitWarning": {
           "pageHidden": "Babyapparaat pauzeert mogelijk: de pagina is verborgen",
           "wakeLockOff": "Babyapparaat valt mogelijk in slaap: het scherm blijft niet aan",
@@ -316,9 +310,7 @@
         }
       },
       "battery": {
-        "baby": "Babyapparaat {percent}%",
         "babyLow": "Batterij babyapparaat {percent}%: sluit het aan op de lader",
-        "parentLow": "Dit apparaat staat op {percent}%: sluit het aan om te blijven bewaken",
         "parentLowGeneric": "De batterij van dit apparaat is bijna leeg: sluit het aan om te blijven bewaken"
       },
       "listen": {
@@ -447,7 +439,6 @@
       },
       "alert": {
         "title": "Het kind maakt geluid",
-        "since": "Sinds {time}",
         "ended": "Het geluid is gestopt.",
         "testBadge": "TEST",
         "stopSound": "Geluid stoppen",

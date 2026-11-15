@@ -86,7 +86,6 @@
         "ok": "Tamam",
         "cancel": "İptal",
         "more": "Daha fazla",
-        "moreCount": "+{count}",
         "settings": "Ayarlar",
         "tryAgain": "Tekrar dene",
         "yes": "Evet",
@@ -272,10 +271,6 @@
           "body": "Biri bebek cihazında izlemeyi durdurdu. Uyarı almayacaksınız.",
           "titleDefault": "Bebek cihazı izlemeyi durdurdu"
         },
-        "battery": {
-          "title": "Bebek cihazının pili bitmek üzere",
-          "body": "Bebek cihazını hemen şarja takın, yoksa izleme duracak."
-        },
         "needsPairing": {
           "title": "Cihazlar artık eşleşmiş değil"
         },
@@ -302,7 +297,6 @@
         "stop": "İzlemeyi durdur",
         "securityTitle": "Güvenlik uyarısı",
         "securityBody": "Bağlantı doğrulanamadı. Cihazları az önce yeniden eşleştirmediyseniz hemen yeniden eşleştirin.",
-        "staleSuffix": "· {time}",
         "unitWarning": {
           "pageHidden": "Bebek cihazı duraklayabilir — sayfası gizli",
           "wakeLockOff": "Bebek cihazı uykuya geçebilir — ekranı açık tutulmuyor",
@@ -316,9 +310,7 @@
         }
       },
       "battery": {
-        "baby": "Bebek cihazı %{percent}",
         "babyLow": "Bebek cihazının pili %{percent} — şarja takın",
-        "parentLow": "Bu cihazın pili %{percent} — izlemeye devam etmek için şarja takın",
         "parentLowGeneric": "Bu cihazın pili azaldı — izlemeye devam etmek için şarja takın"
       },
       "listen": {
@@ -447,7 +439,6 @@
       },
       "alert": {
         "title": "Çocuk ses çıkarıyor",
-        "since": "{time} saatinden beri",
         "ended": "Ses durdu.",
         "testBadge": "TEST",
         "stopSound": "Sesi durdur",

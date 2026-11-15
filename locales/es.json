@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Cancelar",
         "more": "Más",
-        "moreCount": "+{count}",
         "settings": "Ajustes",
         "tryAgain": "Reintentar",
         "yes": "Sí",
@@ -272,10 +271,6 @@
           "body": "Alguien detuvo la vigilancia en el dispositivo del bebé. No recibirá avisos.",
           "titleDefault": "El dispositivo del bebé dejó de vigilar"
         },
-        "battery": {
-          "title": "Batería del dispositivo del bebé casi agotada",
-          "body": "Enchufe ahora el dispositivo del bebé o la vigilancia se detendrá."
-        },
         "needsPairing": {
           "title": "Dispositivos ya no emparejados"
         },
@@ -302,7 +297,6 @@
         "stop": "Detener la vigilancia",
         "securityTitle": "Aviso de seguridad",
         "securityBody": "No se pudo verificar la conexión. Si no acaba de volver a emparejar los dispositivos, empárelos de nuevo ahora.",
-        "staleSuffix": "· a las {time}",
         "unitWarning": {
           "pageHidden": "El dispositivo del bebé puede pausarse — su página está oculta",
           "wakeLockOff": "El dispositivo del bebé puede dormirse — su pantalla no se mantiene encendida",
@@ -316,9 +310,7 @@
         }
       },
       "battery": {
-        "baby": "Dispositivo del bebé {percent} %",
         "babyLow": "Batería del dispositivo del bebé {percent} % — enchúfelo",
-        "parentLow": "Este dispositivo está al {percent} % — enchúfelo para seguir vigilando",
         "parentLowGeneric": "La batería de este dispositivo está baja — enchúfelo para seguir vigilando"
       },
       "listen": {
@@ -447,7 +439,6 @@
       },
       "alert": {
         "title": "El niño está haciendo ruido",
-        "since": "Desde las {time}",
         "ended": "El sonido ha parado.",
         "testBadge": "PRUEBA",
         "stopSound": "Detener sonido",

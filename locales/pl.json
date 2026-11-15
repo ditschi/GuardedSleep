@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Anuluj",
         "more": "Więcej",
-        "moreCount": "+{count}",
         "settings": "Ustawienia",
         "tryAgain": "Spróbuj ponownie",
         "yes": "Tak",
@@ -272,10 +271,6 @@
           "body": "Ktoś zatrzymał monitorowanie na urządzeniu dziecka. Nie dostaniesz alertów.",
           "titleDefault": "Urządzenie dziecka przestało monitorować"
         },
-        "battery": {
-          "title": "Bateria urządzenia dziecka na wyczerpaniu",
-          "body": "Podłącz teraz urządzenie dziecka, bo monitorowanie się zatrzyma."
-        },
         "needsPairing": {
           "title": "Urządzenia nie są już sparowane"
         },
@@ -302,7 +297,6 @@
         "stop": "Zatrzymaj monitorowanie",
         "securityTitle": "Ostrzeżenie o bezpieczeństwie",
         "securityBody": "Nie udało się zweryfikować połączenia. Jeśli nie parowano właśnie urządzeń ponownie, sparuj je ponownie teraz.",
-        "staleSuffix": "· o {time}",
         "unitWarning": {
           "pageHidden": "Urządzenie dziecka może się wstrzymać: jego strona jest ukryta",
           "wakeLockOff": "Urządzenie dziecka może zasnąć: jego ekran nie jest podtrzymywany",
@@ -316,9 +310,7 @@
         }
       },
       "battery": {
-        "baby": "Urządzenie dziecka {percent}%",
         "babyLow": "Bateria urządzenia dziecka: {percent}%. Podłącz je do ładowania",
-        "parentLow": "To urządzenie ma {percent}%: podłącz je, aby dalej monitorować",
         "parentLowGeneric": "Bateria tego urządzenia jest słaba: podłącz je, aby dalej monitorować"
       },
       "listen": {
@@ -447,7 +439,6 @@
       },
       "alert": {
         "title": "Dziecko wydaje dźwięki",
-        "since": "Od {time}",
         "ended": "Dźwięk ucichł.",
         "testBadge": "TEST",
         "stopSound": "Wyłącz dźwięk",

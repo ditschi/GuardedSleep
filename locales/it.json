@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Annulla",
         "more": "Altro",
-        "moreCount": "+{count}",
         "settings": "Impostazioni",
         "tryAgain": "Riprova",
         "yes": "Sì",
@@ -272,10 +271,6 @@
           "body": "Qualcuno ha interrotto il monitoraggio sul dispositivo del bambino. Non riceverai avvisi.",
           "titleDefault": "Il dispositivo del bambino ha interrotto il monitoraggio"
         },
-        "battery": {
-          "title": "Batteria del dispositivo del bambino quasi esaurita",
-          "body": "Collega subito il dispositivo del bambino, o il monitoraggio si fermerà."
-        },
         "needsPairing": {
           "title": "Dispositivi non più associati"
         },
@@ -302,7 +297,6 @@
         "stop": "Interrompi il monitoraggio",
         "securityTitle": "Avviso di sicurezza",
         "securityBody": "Non è stato possibile verificare la connessione. Se non hai appena associato di nuovo i dispositivi, associali di nuovo ora.",
-        "staleSuffix": "· alle {time}",
         "unitWarning": {
           "pageHidden": "Il dispositivo del bambino potrebbe fermarsi: la sua pagina è nascosta",
           "wakeLockOff": "Il dispositivo del bambino potrebbe addormentarsi: lo schermo non resta acceso",
@@ -316,9 +310,7 @@
         }
       },
       "battery": {
-        "baby": "Dispositivo del bambino {percent}%",
         "babyLow": "Batteria del dispositivo del bambino al {percent}%: collegalo alla corrente",
-        "parentLow": "Questo dispositivo è al {percent}%: collegalo per continuare a monitorare",
         "parentLowGeneric": "La batteria di questo dispositivo è scarica: collegalo per continuare a monitorare"
       },
       "listen": {
@@ -447,7 +439,6 @@
       },
       "alert": {
         "title": "Il bambino sta facendo rumore",
-        "since": "Da {time}",
         "ended": "Il suono è terminato.",
         "testBadge": "PROVA",
         "stopSound": "Ferma il suono",

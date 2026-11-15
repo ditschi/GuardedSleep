@@ -86,7 +86,6 @@
         "ok": "确定",
         "cancel": "取消",
         "more": "更多",
-        "moreCount": "+{count}",
         "settings": "设置",
         "tryAgain": "重试",
         "yes": "是",
@@ -272,10 +271,6 @@
           "body": "有人在宝宝设备上停止了监护。您将收不到提醒。",
           "titleDefault": "宝宝设备已停止监护"
         },
-        "battery": {
-          "title": "宝宝设备电量即将耗尽",
-          "body": "请立即给宝宝设备接上电源，否则监护将会停止。"
-        },
         "needsPairing": {
           "title": "设备已不再配对"
         },
@@ -302,7 +297,6 @@
         "stop": "停止监护",
         "securityTitle": "安全警告",
         "securityBody": "无法验证此连接。如果您刚才没有重新配对设备，请立即重新配对。",
-        "staleSuffix": "· {time}",
         "unitWarning": {
           "pageHidden": "宝宝设备可能暂停，其页面已被隐藏",
           "wakeLockOff": "宝宝设备可能进入睡眠，其屏幕没有保持常亮",
@@ -316,9 +310,7 @@
         }
       },
       "battery": {
-        "baby": "宝宝设备 {percent}%",
         "babyLow": "宝宝设备电量 {percent}%，请接上电源",
-        "parentLow": "此设备电量为 {percent}%，请接上电源以继续监护",
         "parentLowGeneric": "此设备电量低，请接上电源以继续监护"
       },
       "listen": {
@@ -447,7 +439,6 @@
       },
       "alert": {
         "title": "孩子发出声音",
-        "since": "自 {time} 起",
         "ended": "声音已停止。",
         "testBadge": "测试",
         "stopSound": "停止声音",

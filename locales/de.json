@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Abbrechen",
         "more": "Mehr",
-        "moreCount": "+{count}",
         "settings": "Einstellungen",
         "tryAgain": "Erneut versuchen",
         "yes": "Ja",
@@ -272,10 +271,6 @@
           "body": "Jemand hat die Überwachung auf dem Babygerät beendet. Sie erhalten keine Alarme.",
           "titleDefault": "Das Babygerät hat die Überwachung beendet"
         },
-        "battery": {
-          "title": "Akku des Babygeräts fast leer",
-          "body": "Schließen Sie das Babygerät jetzt an das Ladegerät an, sonst endet die Überwachung."
-        },
         "needsPairing": {
           "title": "Geräte nicht mehr gekoppelt"
         },
@@ -302,7 +297,6 @@
         "stop": "Überwachung beenden",
         "securityTitle": "Sicherheitswarnung",
         "securityBody": "Die Verbindung konnte nicht überprüft werden. Falls Sie die Geräte nicht gerade neu gekoppelt haben, koppeln Sie sie jetzt erneut.",
-        "staleSuffix": "· um {time}",
         "unitWarning": {
           "pageHidden": "Babygerät kann pausieren – Seite verdeckt",
           "wakeLockOff": "Babygerät kann einschlafen – Bildschirm wird nicht wachgehalten",
@@ -316,9 +310,7 @@
         }
       },
       "battery": {
-        "baby": "Babygerät {percent} %",
         "babyLow": "Babygerät-Akku {percent} % — bitte anschließen",
-        "parentLow": "Dieses Gerät hat {percent} % — schließen Sie es an, um weiter zu überwachen",
         "parentLowGeneric": "Der Akku dieses Geräts ist schwach — schließen Sie es an, um weiter zu überwachen"
       },
       "listen": {
@@ -447,7 +439,6 @@
       },
       "alert": {
         "title": "Das Kind macht Geräusche",
-        "since": "Seit {time}",
         "ended": "Das Geräusch ist vorbei.",
         "testBadge": "TEST",
         "stopSound": "Ton stoppen",

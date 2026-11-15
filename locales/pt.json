@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Cancelar",
         "more": "Mais",
-        "moreCount": "+{count}",
         "settings": "Configurações",
         "tryAgain": "Tentar de novo",
         "yes": "Sim",
@@ -272,10 +271,6 @@
           "body": "Alguém parou o monitoramento no dispositivo do bebê. Você não vai receber alertas.",
           "titleDefault": "O dispositivo do bebê parou de monitorar"
         },
-        "battery": {
-          "title": "Bateria do dispositivo do bebê quase no fim",
-          "body": "Conecte o dispositivo do bebê agora, ou o monitoramento vai parar."
-        },
         "needsPairing": {
           "title": "Dispositivos não pareados"
         },
@@ -302,7 +297,6 @@
         "stop": "Parar monitoramento",
         "securityTitle": "Aviso de segurança",
         "securityBody": "Não foi possível verificar a conexão. Se você não acabou de parear os dispositivos de novo, pareie-os de novo agora.",
-        "staleSuffix": "· às {time}",
         "unitWarning": {
           "pageHidden": "O dispositivo do bebê pode pausar: a página dele está oculta",
           "wakeLockOff": "O dispositivo do bebê pode adormecer: a tela dele não fica ligada",
@@ -316,9 +310,7 @@
         }
       },
       "battery": {
-        "baby": "Dispositivo do bebê {percent}%",
         "babyLow": "Bateria do dispositivo do bebê em {percent}%: conecte-o ao carregador",
-        "parentLow": "Este dispositivo está em {percent}%: conecte-o para continuar monitorando",
         "parentLowGeneric": "A bateria deste dispositivo está baixa: conecte-o para continuar monitorando"
       },
       "listen": {
@@ -447,7 +439,6 @@
       },
       "alert": {
         "title": "A criança está fazendo barulho",
-        "since": "Desde {time}",
         "ended": "O som parou.",
         "testBadge": "TESTE",
         "stopSound": "Parar o som",

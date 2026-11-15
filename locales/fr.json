@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Annuler",
         "more": "Plus",
-        "moreCount": "+{count}",
         "settings": "Réglages",
         "tryAgain": "Réessayer",
         "yes": "Oui",
@@ -272,10 +271,6 @@
           "body": "Quelqu'un a arrêté la surveillance sur l'appareil bébé. Vous ne recevrez plus d'alertes.",
           "titleDefault": "L'appareil bébé a arrêté la surveillance"
         },
-        "battery": {
-          "title": "Batterie de l'appareil bébé presque vide",
-          "body": "Branchez l'appareil bébé maintenant, sinon la surveillance s'arrêtera."
-        },
         "needsPairing": {
           "title": "Appareils plus appairés"
         },
@@ -302,7 +297,6 @@
         "stop": "Arrêter la surveillance",
         "securityTitle": "Alerte de sécurité",
         "securityBody": "La connexion n'a pas pu être vérifiée. Si vous n'avez pas à l'instant appairé les appareils à nouveau, faites-le maintenant.",
-        "staleSuffix": "· à {time}",
         "unitWarning": {
           "pageHidden": "L'appareil bébé peut se mettre en pause — sa page est masquée",
           "wakeLockOff": "L'appareil bébé peut s'endormir — son écran n'est pas maintenu allumé",
@@ -316,9 +310,7 @@
         }
       },
       "battery": {
-        "baby": "Appareil bébé {percent} %",
         "babyLow": "Batterie de l'appareil bébé {percent} % — branchez-le",
-        "parentLow": "Cet appareil est à {percent} % — branchez-le pour continuer la surveillance",
         "parentLowGeneric": "La batterie de cet appareil est faible — branchez-le pour continuer la surveillance"
       },
       "listen": {
@@ -447,7 +439,6 @@
       },
       "alert": {
         "title": "L'enfant fait du bruit",
-        "since": "Depuis {time}",
         "ended": "Le son s'est arrêté.",
         "testBadge": "TEST",
         "stopSound": "Couper le son",

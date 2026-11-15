@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Anulează",
         "more": "Mai multe",
-        "moreCount": "+{count}",
         "settings": "Setări",
         "tryAgain": "Încearcă din nou",
         "yes": "Da",
@@ -272,10 +271,6 @@
           "body": "Cineva a oprit monitorizarea pe dispozitivul bebelușului. Nu vei primi alerte.",
           "titleDefault": "Dispozitivul bebelușului a oprit monitorizarea"
         },
-        "battery": {
-          "title": "Bateria dispozitivului bebelușului aproape goală",
-          "body": "Pune acum dispozitivul bebelușului la încărcat, altfel monitorizarea se oprește."
-        },
         "needsPairing": {
           "title": "Dispozitivele nu mai sunt asociate"
         },
@@ -302,7 +297,6 @@
         "stop": "Oprește monitorizarea",
         "securityTitle": "Avertisment de securitate",
         "securityBody": "Conexiunea nu a putut fi verificată. Dacă nu ai asociat chiar acum dispozitivele din nou, asociază-le din nou acum.",
-        "staleSuffix": "· la {time}",
         "unitWarning": {
           "pageHidden": "Dispozitivul bebelușului se poate opri: pagina lui este ascunsă",
           "wakeLockOff": "Dispozitivul bebelușului poate adormi: ecranul nu este ținut aprins",
@@ -316,9 +310,7 @@
         }
       },
       "battery": {
-        "baby": "Dispozitivul bebelușului {percent}%",
         "babyLow": "Bateria dispozitivului bebelușului: {percent}%. Pune-l la încărcat",
-        "parentLow": "Acest dispozitiv are {percent}%: pune-l la încărcat ca să continue monitorizarea",
         "parentLowGeneric": "Bateria acestui dispozitiv este slabă: pune-l la încărcat ca să continue monitorizarea"
       },
       "listen": {
@@ -447,7 +439,6 @@
       },
       "alert": {
         "title": "Copilul face zgomot",
-        "since": "De la {time}",
         "ended": "Sunetul s-a oprit.",
         "testBadge": "TEST",
         "stopSound": "Oprește sunetul",

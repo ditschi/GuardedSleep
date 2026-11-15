@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Zrušit",
         "more": "Více",
-        "moreCount": "+{count}",
         "settings": "Nastavení",
         "tryAgain": "Zkusit znovu",
         "yes": "Ano",
@@ -272,10 +271,6 @@
           "body": "Někdo zastavil sledování na zařízení dítěte. Výstrahy nepřijdou.",
           "titleDefault": "Zařízení dítěte přestalo sledovat"
         },
-        "battery": {
-          "title": "Baterie zařízení dítěte je téměř vybitá",
-          "body": "Připojte zařízení dítěte k nabíječce hned, jinak se sledování zastaví."
-        },
         "needsPairing": {
           "title": "Zařízení už nejsou spárovaná"
         },
@@ -302,7 +297,6 @@
         "stop": "Zastavit sledování",
         "securityTitle": "Bezpečnostní varování",
         "securityBody": "Spojení se nepodařilo ověřit. Pokud jste zařízení právě nepárovali znovu, spárujte je znovu hned.",
-        "staleSuffix": "· v {time}",
         "unitWarning": {
           "pageHidden": "Zařízení dítěte se může zastavit: jeho stránka je skrytá",
           "wakeLockOff": "Zařízení dítěte může usnout: displej se neudržuje zapnutý",
@@ -316,9 +310,7 @@
         }
       },
       "battery": {
-        "baby": "Zařízení dítěte {percent} %",
         "babyLow": "Baterie zařízení dítěte {percent} %: připojte nabíječku",
-        "parentLow": "Toto zařízení má {percent} %: připojte nabíječku, aby sledování pokračovalo",
         "parentLowGeneric": "Baterie tohoto zařízení je slabá: připojte nabíječku, aby sledování pokračovalo"
       },
       "listen": {
@@ -447,7 +439,6 @@
       },
       "alert": {
         "title": "Dítě vydává zvuk",
-        "since": "Od {time}",
         "ended": "Zvuk utichl.",
         "testBadge": "TEST",
         "stopSound": "Vypnout zvuk",

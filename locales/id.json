@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Batal",
         "more": "Lainnya",
-        "moreCount": "+{count}",
         "settings": "Pengaturan",
         "tryAgain": "Coba lagi",
         "yes": "Ya",
@@ -272,10 +271,6 @@
           "body": "Seseorang menghentikan pemantauan di perangkat bayi. Anda tidak akan menerima peringatan.",
           "titleDefault": "Perangkat bayi berhenti memantau"
         },
-        "battery": {
-          "title": "Baterai perangkat bayi hampir kosong",
-          "body": "Segera colokkan perangkat bayi, atau pemantauan akan berhenti."
-        },
         "needsPairing": {
           "title": "Perangkat tidak lagi dipasangkan"
         },
@@ -302,7 +297,6 @@
         "stop": "Hentikan pemantauan",
         "securityTitle": "Peringatan keamanan",
         "securityBody": "Koneksi tidak dapat diverifikasi. Jika Anda tidak baru saja memasangkan ulang perangkat, pasangkan ulang sekarang.",
-        "staleSuffix": "· pukul {time}",
         "unitWarning": {
           "pageHidden": "Perangkat bayi mungkin berhenti sementara — halamannya tersembunyi",
           "wakeLockOff": "Perangkat bayi mungkin tertidur — layarnya tidak dijaga tetap menyala",
@@ -316,9 +310,7 @@
         }
       },
       "battery": {
-        "baby": "Perangkat bayi {percent}%",
         "babyLow": "Baterai perangkat bayi {percent}% — colokkan ke pengisi daya",
-        "parentLow": "Perangkat ini {percent}% — colokkan agar pemantauan berlanjut",
         "parentLowGeneric": "Baterai perangkat ini hampir habis — colokkan agar pemantauan berlanjut"
       },
       "listen": {
@@ -447,7 +439,6 @@
       },
       "alert": {
         "title": "Anak sedang bersuara",
-        "since": "Sejak {time}",
         "ended": "Suara telah berhenti.",
         "testBadge": "UJI",
         "stopSound": "Hentikan suara",

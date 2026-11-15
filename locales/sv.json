@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Avbryt",
         "more": "Mer",
-        "moreCount": "+{count}",
         "settings": "Inställningar",
         "tryAgain": "Försök igen",
         "yes": "Ja",
@@ -272,10 +271,6 @@
           "body": "Någon stoppade övervakningen på babyenheten. Du får inga larm.",
           "titleDefault": "Babyenheten slutade övervaka"
         },
-        "battery": {
-          "title": "Babyenhetens batteri nästan slut",
-          "body": "Sätt i laddaren i babyenheten nu, annars slutar övervakningen."
-        },
         "needsPairing": {
           "title": "Enheterna är inte längre parkopplade"
         },
@@ -302,7 +297,6 @@
         "stop": "Sluta övervaka",
         "securityTitle": "Säkerhetsvarning",
         "securityBody": "Anslutningen kunde inte verifieras. Om du inte nyss parkopplade enheterna igen, parkoppla dem igen nu.",
-        "staleSuffix": "· kl. {time}",
         "unitWarning": {
           "pageHidden": "Babyenheten kan pausa: dess sida är dold",
           "wakeLockOff": "Babyenheten kan somna: skärmen hålls inte på",
@@ -316,9 +310,7 @@
         }
       },
       "battery": {
-        "baby": "Babyenhet {percent}%",
         "babyLow": "Babyenhetens batteri {percent}%: sätt i laddaren",
-        "parentLow": "Den här enheten har {percent}%: sätt i laddaren för att fortsätta övervaka",
         "parentLowGeneric": "Den här enhetens batteri är lågt: sätt i laddaren för att fortsätta övervaka"
       },
       "listen": {
@@ -447,7 +439,6 @@
       },
       "alert": {
         "title": "Barnet låter",
-        "since": "Sedan {time}",
         "ended": "Ljudet har tystnat.",
         "testBadge": "TEST",
         "stopSound": "Stoppa ljudet",

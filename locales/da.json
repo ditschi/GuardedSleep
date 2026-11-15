@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Annuller",
         "more": "Mere",
-        "moreCount": "+{count}",
         "settings": "Indstillinger",
         "tryAgain": "Prøv igen",
         "yes": "Ja",
@@ -272,10 +271,6 @@
           "body": "Nogen har stoppet overvågningen på babyenheden. Du får ingen alarmer.",
           "titleDefault": "Babyenheden er holdt op med at overvåge"
         },
-        "battery": {
-          "title": "Babyenhedens batteri er næsten tomt",
-          "body": "Sæt babyenheden i opladeren nu, ellers stopper overvågningen."
-        },
         "needsPairing": {
           "title": "Enhederne er ikke længere parret"
         },
@@ -302,7 +297,6 @@
         "stop": "Stop overvågning",
         "securityTitle": "Sikkerhedsadvarsel",
         "securityBody": "Forbindelsen kunne ikke verificeres. Hvis du ikke lige har parret enhederne igen, så par dem igen nu.",
-        "staleSuffix": "· kl. {time}",
         "unitWarning": {
           "pageHidden": "Babyenheden holder muligvis pause: dens side er skjult",
           "wakeLockOff": "Babyenheden falder muligvis i søvn: skærmen holdes ikke tændt",
@@ -316,9 +310,7 @@
         }
       },
       "battery": {
-        "baby": "Babyenhed {percent}%",
         "babyLow": "Babyenhedens batteri {percent}%: sæt den i opladeren",
-        "parentLow": "Denne enhed har {percent}%: sæt den i opladeren for at fortsætte overvågningen",
         "parentLowGeneric": "Denne enheds batteri er lavt: sæt den i opladeren for at fortsætte overvågningen"
       },
       "listen": {
@@ -447,7 +439,6 @@
       },
       "alert": {
         "title": "Barnet laver lyd",
-        "since": "Siden {time}",
         "ended": "Lyden er stoppet.",
         "testBadge": "TEST",
         "stopSound": "Stop lyden",

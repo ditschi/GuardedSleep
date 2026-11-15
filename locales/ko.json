@@ -86,7 +86,6 @@
         "ok": "확인",
         "cancel": "취소",
         "more": "더보기",
-        "moreCount": "+{count}",
         "settings": "설정",
         "tryAgain": "다시 시도",
         "yes": "예",
@@ -272,10 +271,6 @@
           "body": "누군가 아기 기기에서 지켜보기를 중지했어요. 알림을 받지 못해요.",
           "titleDefault": "아기 기기가 지켜보기를 멈췄어요"
         },
-        "battery": {
-          "title": "아기 기기 배터리가 거의 없어요",
-          "body": "지금 아기 기기를 충전하세요. 그렇지 않으면 지켜보기가 멈춰요."
-        },
         "needsPairing": {
           "title": "기기 페어링이 해제되었어요"
         },
@@ -302,7 +297,6 @@
         "stop": "지켜보기 중지",
         "securityTitle": "보안 경고",
         "securityBody": "연결을 확인할 수 없었어요. 방금 기기를 다시 페어링한 게 아니라면 지금 다시 페어링하세요.",
-        "staleSuffix": "· {time}",
         "unitWarning": {
           "pageHidden": "아기 기기가 멈출 수 있어요. 페이지가 숨겨져 있어요",
           "wakeLockOff": "아기 기기가 절전 상태가 될 수 있어요. 화면이 켜진 상태로 유지되지 않아요",
@@ -316,9 +310,7 @@
         }
       },
       "battery": {
-        "baby": "아기 기기 {percent}%",
         "babyLow": "아기 기기 배터리 {percent}% — 충전하세요",
-        "parentLow": "이 기기는 {percent}%예요. 계속 지켜보려면 충전하세요",
         "parentLowGeneric": "이 기기의 배터리가 부족해요. 계속 지켜보려면 충전하세요"
       },
       "listen": {
@@ -447,7 +439,6 @@
       },
       "alert": {
         "title": "아이가 소리를 내고 있어요",
-        "since": "{time}부터",
         "ended": "소리가 멈췄어요.",
         "testBadge": "테스트",
         "stopSound": "소리 끄기",
