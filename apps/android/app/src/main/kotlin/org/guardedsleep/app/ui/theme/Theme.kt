@@ -54,8 +54,8 @@ object KioskMarks {
     val Ok = Color(0xFF083320)
     /** The dashed edge and the needs-attention bar and square. */
     val Warn = Color(0xFF472400)
-    /** The frame from level 2. */
-    val Alert = Color(0xFF5A1414)
+    /** The frame from level 2: the brightest colour a mark may have. */
+    val Alert = Cap
 
     val all = listOf(Ok, Warn, Alert)
 }
