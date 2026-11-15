@@ -72,7 +72,9 @@ class KioskLogicTest {
             KioskAttention.BATTERY_CRITICAL,
             kioskAttention(BatteryReading(4, false), true),
         )
-        assertNull(kioskAttention(BatteryReading(4, true), true))
+        assertEquals(KioskAttention.BATTERY_CRITICAL, kioskAttention(BatteryReading(4, true), true))
+        // Low stays quiet while plugged in.
+        assertNull(kioskAttention(BatteryReading(12, true), true))
     }
 
     @Test

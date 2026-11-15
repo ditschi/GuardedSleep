@@ -79,8 +79,10 @@ enum class KioskAttention {
  */
 fun kioskAttention(battery: BatteryReading?, chargerSeen: Boolean): KioskAttention? =
     when {
-        battery == null || battery.charging -> null
+        battery == null -> null
+        // Critical counts even while plugged in: a weak charger or a loose cable must not hide it.
         battery.pct < BabyBattery.CRITICAL_PCT -> KioskAttention.BATTERY_CRITICAL
+        battery.charging -> null
         battery.pct < BabyBattery.LOW_PCT -> KioskAttention.BATTERY_LOW
         chargerSeen -> KioskAttention.NOT_CHARGING
         else -> null

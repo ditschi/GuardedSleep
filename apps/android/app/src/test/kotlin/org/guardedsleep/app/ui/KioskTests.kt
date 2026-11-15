@@ -126,6 +126,14 @@ class KioskTests : ShotBase() {
     }
 
     @Test
+    fun aCriticalBatteryNeedsAttentionEvenWhilePluggedIn() = runComposeUiTest {
+        show(c = kioskController(pluggedIn.copy(ownBatteryPct = 4, ownPlugged = true)))
+        assertEquals(listOf("bar", "attention"), marks())
+        onNodeWithTag("baby_kiosk_attention")
+            .assertTextEquals("Needs attention: battery almost empty · 4%")
+    }
+
+    @Test
     fun theLowBatteryLineStartsBelowFifteenPercent() = runComposeUiTest {
         val c =
             kioskController(
