@@ -566,6 +566,10 @@ export class WebController implements AppController {
     this.parentModel.dismissMissed();
   }
 
+  dismissRestored(): void {
+    this.parentModel.dismissRestored();
+  }
+
   retryKeepAwake(): void {
     this.page.retryKeepAwake();
   }

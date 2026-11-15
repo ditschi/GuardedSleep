@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { createTranslator } from "../i18n/translate";
-import { formatClock, formatCountdown, formatDuration, levelWordKey, remainingMs } from "./format";
+import {
+  formatClock,
+  formatCountdown,
+  formatDuration,
+  formatDurationWords,
+  formatElapsed,
+  levelWordKey,
+  remainingMs,
+  spokenDuration,
+} from "./format";
 
 describe("formatCountdown", () => {
   it.each([
@@ -51,5 +60,49 @@ describe("levelWordKey", () => {
     expect(levelWordKey(0)).toBe("native.ui.parent.level.quiet");
     expect(levelWordKey(0.2)).toBe("native.ui.parent.level.some");
     expect(levelWordKey(0.8)).toBe("native.ui.parent.level.loud");
+  });
+});
+
+describe("durations in words", () => {
+  const t = createTranslator("en");
+  it.each([
+    [48_000, "48 s"],
+    [108_000, "1 min 48 s"],
+    [120_000, "2 min"],
+    // Whole seconds are truncated, never rounded up.
+    [59_900, "59 s"],
+    [108_900, "1 min 48 s"],
+    [-5_000, "0 s"],
+  ])("%d ms reads %s in running text", (ms, text) => {
+    expect(formatDurationWords(t, ms)).toBe(text);
+  });
+
+  it.each([
+    [1_000, "1 second"],
+    [12_000, "12 seconds"],
+    [60_000, "1 minute"],
+    [72_000, "1 minute 12 seconds"],
+    [135_000, "2 minutes 15 seconds"],
+    [72_900, "1 minute 12 seconds"],
+  ])("the counter at %d ms is spoken as '%s'", (ms, text) => {
+    expect(spokenDuration(t, ms)).toBe(text);
+  });
+
+  it("speaks German with the right plural", () => {
+    const de = createTranslator("de");
+    expect(spokenDuration(de, 62_000)).toBe("1 Minute 2 Sekunden");
+  });
+});
+
+describe("formatElapsed", () => {
+  it.each([
+    [0, "0:00"],
+    [999, "0:00"],
+    [72_900, "1:12"],
+    [120_000, "2:00"],
+    [3_725_000, "62:05"],
+    [-5_000, "0:00"],
+  ])("%d ms counts up as %s, truncating", (ms, text) => {
+    expect(formatElapsed(ms)).toBe(text);
   });
 });

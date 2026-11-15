@@ -260,31 +260,13 @@
         "unlockAction": "Kilidi aç"
       },
       "link": {
-        "connected": "Bağlı: {name}",
-        "connecting": "Bağlanılıyor: {name}…",
-        "reconnecting": "Yeniden bağlanılıyor…",
-        "cantReach": "{name} ile bağlantı kurulamıyor — denemeye devam ediliyor",
-        "lostFor": "{duration} süredir bağlantı yok",
-        "babyStopped": "{name} izlemeyi durdurdu",
         "idle": "İzleme yok",
         "weak": "Zayıf bağlantı — ses kesilebilir",
-        "restoredAfter": "{duration} sonra yeniden bağlandı. Çocuğunuzu yine duyabilirsiniz.",
         "tryNow": "Şimdi dene",
         "pairAgain": "Yeniden eşleştir",
-        "connectedDefault": "Bebek cihazına bağlı",
-        "connectingDefault": "Bebek cihazına bağlanılıyor…",
-        "cantReachDefault": "Bebek cihazına ulaşılamıyor — denemeye devam ediliyor",
-        "babyStoppedDefault": "Bebek cihazı izlemeyi durdurdu",
         "stalePairingHint": "Bebek cihazını yeniden eşleştirdiyseniz yeni kodunu tarayın."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "{name} ile bağlantı yok",
-          "titleUrgent": "{name} ile bağlantı yok!",
-          "body": "Cihazlar yeniden bağlanana kadar çocuğunuzu duymayacaksınız.",
-          "titleDefault": "Bebek cihazıyla bağlantı yok",
-          "titleUrgentDefault": "Bebek cihazıyla bağlantı yok!"
-        },
         "stopped": {
           "title": "{name} izlemeyi durdurdu",
           "body": "Biri bebek cihazında izlemeyi durdurdu. Uyarı almayacaksınız.",
@@ -301,9 +283,7 @@
           "title": "Yeniden bağlandı"
         },
         "ack": "Bakıyorum",
-        "ackNote": "Ses {time} kapalı. Hâlâ bağlı değilse sizi yeniden uyaracağız.",
-        "soundNote": "Siz bakana kadar hafif bir alarm sesi tekrarlanır.",
-        "soundNoteUrgent": "Siz bakana kadar alarm çalmaya devam eder."
+        "ackNote": "Ses {time} kapalı. Hâlâ bağlı değilse sizi yeniden uyaracağız."
       },
       "parent": {
         "allQuietSince": "{time} saatinden beri sessiz",
@@ -418,7 +398,8 @@
         "babyBody": "Ebeveyn cihazı artık uyarı almayacak.",
         "confirm": "Durdur",
         "cancel": "İzlemeye devam et",
-        "parentBodyDefault": "Bebek cihazından uyarı almayacaksınız."
+        "parentBodyDefault": "Bebek cihazından uyarı almayacaksınız.",
+        "titleNamed": "“{name}” izlemesi durdurulsun mu?"
       },
       "forget": {
         "title": "{name} unutulsun mu?",
@@ -622,6 +603,74 @@
           "chime": "Ebeveyn konuşmadan önce zil",
           "checklist": "Ebeveynler bu cihazdan konuşabilir. Bunu Ayarlar'dan kapatabilirsiniz."
         }
+      },
+      "status": {
+        "connected": "Bağlı",
+        "connecting": "Bağlanıyor",
+        "reconnecting": "Yeniden bağlanıyor",
+        "notConnectedYet": "Henüz bağlı değil",
+        "cantReach": "Ulaşılamıyor",
+        "couldntConnect": "Bağlanılamadı",
+        "noConnection": "Bağlantı yok",
+        "stillNoConnection": "Hâlâ bağlantı yok",
+        "stopped": "Durduruldu",
+        "withName": "{state} · {name}",
+        "subConnecting": "Bebek cihazı bekleniyor. İzleme, cihaz yanıt verince başlar.",
+        "subReconnecting": "Kısa kesintiler normaldir.",
+        "subNotAnswered": "Bebek cihazı yanıt vermiyor. İzleme o cihazda başlatıldı mı?",
+        "subStillTrying": "Denenmeye devam ediliyor. Bağlantı yakında gelmezse bu cihaz titreşir ve uyarı gösterir.",
+        "subStopped": "Bebek cihazında bunu kimin durdurduğunu kontrol edin."
+      },
+      "connAlert": {
+        "labelVibrating": "Telefonunuz titreşiyor",
+        "labelLoud": "Yüksek sesli alarm çalıyor",
+        "labelPaused": "Alarm duraklatıldı",
+        "headlineCheck": "Lütfen çocuğa bakın",
+        "nextLoud": "Bağlantı hâlâ yoksa saat {time} itibarıyla yüksek sesli alarm çalar.",
+        "nextBack": "Bağlantı hâlâ yoksa saat {time} itibarıyla geri gelir.",
+        "cantHear": "Çocuğu duyamıyorsunuz.",
+        "neverStarted": "İzleme hiç başlamadı. Çocuğu duyamıyorsunuz.",
+        "goNow": "Hemen çocuğun yanına gidin. “Bakıyorum”a dokunana kadar alarm çalar.",
+        "pausedBody": "Çocuğu hâlâ duyamıyorsunuz.",
+        "counterLabel": "bağlantısız",
+        "counterA11y": "{duration} bağlantısız",
+        "spokenMin": "{count, plural, one {# dakika} other {# dakika}}",
+        "spokenSec": "{count, plural, one {# saniye} other {# saniye}}",
+        "progressVibrating": "Telefon şimdi titreşiyor",
+        "progressLoud": "Yüksek sesli alarm şimdi",
+        "progressPaused": "Siz bakarken duraklatıldı",
+        "causeLabel": "Olası neden",
+        "moreSteps": "Daha fazla adım",
+        "fewerSteps": "Daha az adım",
+        "wrongConnection": "Yanlış bağlantı mı?",
+        "dndNote": "Alarm Rahatsız Etmeyin modunda da çalar.",
+        "dndMissing": "Rahatsız Etmeyin bu alarmı engelleyebilir.",
+        "dndOpen": "Ayarı aç",
+        "cause": {
+          "peerAbsent": {
+            "line": "Bebek cihazı çevrimiçi değil.",
+            "step": "Bebek cihazı açık, şarjda ve GuardedSleep’i gösteriyor mu?",
+            "more": "Wi-Fi’ye bağlı mı? Değilse GuardedSleep’i orada yeniden açın."
+          },
+          "serverUnreachable": {
+            "line": "Bu telefonda internet yok.",
+            "step": "Bu telefonda Wi-Fi’yi veya mobil veriyi kontrol edin.",
+            "more": "Uçak modunu kapatın. Yönlendiriciye yaklaşın."
+          },
+          "mediaBlocked": {
+            "line": "Bağlantı bu ağda engelleniyor.",
+            "step": "Misafir veya otel Wi-Fi’si bunu engelleyebilir. Bu telefonu mobil veriye geçirin.",
+            "more": "Sonra “Şimdi dene”ye dokunun."
+          }
+        },
+        "restored": {
+          "body": "İzleme {duration} boyunca kesintiye uğradı.",
+          "none": "Bebek cihazı bu sürede hiç ses duymadı.",
+          "some": "{count, plural, one {1 ses duydu} other {# ses duydu}}.",
+          "unknown": "Ses olup olmadığını bilmiyoruz."
+        },
+        "labelAlerting": "Bu cihaz uyarı veriyor",
+        "progressAlerting": "Uyarı şimdi çalıyor"
       }
     }
   },

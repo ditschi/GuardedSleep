@@ -17,6 +17,8 @@ import org.guardedsleep.app.locale.localizedContext
 import org.guardedsleep.app.ui.model.AlarmTonePlayback
 import org.guardedsleep.app.ui.model.AlarmTones
 import org.guardedsleep.app.ui.model.LinkPhase
+import org.guardedsleep.app.ui.model.durationStrings
+import org.guardedsleep.app.ui.model.durationWords
 import org.guardedsleep.app.wiring.AlertIntents
 import org.guardedsleep.app.wiring.EntryPoints
 import uniffi.guardedsleep_core.AlarmTone
@@ -241,7 +243,10 @@ class AlertController(
                     simple(
                         AlertChannels.INFO,
                         context.getString(R.string.native_notif_restored_title),
-                        context.getString(R.string.native_notif_restored_text, mmss(notice.downMs)),
+                        context.getString(
+                            R.string.native_notif_restored_text,
+                            durationWords(notice.downMs, context.resources.durationStrings()),
+                        ),
                         timeoutMs = AlertPolicy.RESTORED_NOTICE_MS,
                     ),
                 )
@@ -289,7 +294,7 @@ class AlertController(
                     ),
                 )
             is Notice.MissedEvents -> {
-                val d = mmss(notice.downMs)
+                val d = durationWords(notice.downMs, context.resources.durationStrings())
                 val text =
                     when (notice.count) {
                         null -> context.getString(R.string.native_notif_missed_unknown, d)
@@ -536,11 +541,6 @@ class AlertController(
             Intent(context, entryPoints.alertActionReceiver).setAction(action),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-
-    private fun mmss(ms: Long): String {
-        val s = ms / 1000
-        return "%d:%02d".format(s / 60, s % 60)
-    }
 
     private companion object {
         const val ID_LINK_INFO = 2001

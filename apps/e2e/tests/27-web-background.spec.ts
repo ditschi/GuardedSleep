@@ -31,7 +31,7 @@ async function launch(): Promise<DualContexts> {
 }
 
 const connected = async (page: Page): Promise<void> => {
-  await expect(page.getByTestId("parent_ambient_bar")).toHaveAttribute("data-kind", "connected", {
+  await expect(page.getByTestId("status_bar")).toHaveAttribute("data-kind", "connected", {
     timeout: 60_000,
   });
 };

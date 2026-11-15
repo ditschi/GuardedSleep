@@ -35,8 +35,6 @@ export const NOISE_EVENT_JOIN_MS = 120_000;
 export const NOISE_QUIET_AFTER_MS = 120_000;
 /** Locked listening stops by itself (alpha-ux-flows 3.8). */
 export const LISTEN_MAX_MS = 60 * 60_000;
-/** "Connected again after m:ss" stays visible this long. */
-export const RESTORED_NOTICE_MS = 10_000;
 /** Without a `missed_events` summary the parent restarts "quiet since" at the reconnect. */
 export const MISSED_EVENTS_GRACE_MS = 5_000;
 

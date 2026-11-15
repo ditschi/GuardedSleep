@@ -260,31 +260,13 @@
         "unlockAction": "Desbloquear"
       },
       "link": {
-        "connected": "Conectado a {name}",
-        "connecting": "Conectando a {name}…",
-        "reconnecting": "Reconectando…",
-        "cantReach": "Sem acesso a {name}, tentando de novo",
-        "lostFor": "Sem conexão há {duration}",
-        "babyStopped": "{name} parou de monitorar",
         "idle": "Sem monitoramento",
         "weak": "Conexão fraca: o som pode falhar",
-        "restoredAfter": "Conectado de novo após {duration}. Você já pode ouvir seu filho.",
         "tryNow": "Tentar agora",
         "pairAgain": "Parear de novo",
-        "connectedDefault": "Conectado ao dispositivo do bebê",
-        "connectingDefault": "Conectando ao dispositivo do bebê…",
-        "cantReachDefault": "Sem acesso ao dispositivo do bebê, tentando de novo",
-        "babyStoppedDefault": "O dispositivo do bebê parou de monitorar",
         "stalePairingHint": "Se você pareou o dispositivo do bebê de novo, leia o novo código dele."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Sem conexão com {name}",
-          "titleUrgent": "Sem conexão com {name}!",
-          "body": "Você não vai ouvir seu filho até os dispositivos se reconectarem.",
-          "titleDefault": "Sem conexão com o dispositivo do bebê",
-          "titleUrgentDefault": "Sem conexão com o dispositivo do bebê!"
-        },
         "stopped": {
           "title": "{name} parou de monitorar",
           "body": "Alguém parou o monitoramento no dispositivo do bebê. Você não vai receber alertas.",
@@ -301,9 +283,7 @@
           "title": "Conectado de novo"
         },
         "ack": "Estou verificando",
-        "ackNote": "Som desligado por {time}. Vamos avisar de novo se ainda não houver conexão.",
-        "soundNote": "Um tom de alarme suave se repete até você verificar.",
-        "soundNoteUrgent": "O alarme continua tocando até você verificar."
+        "ackNote": "Som desligado por {time}. Vamos avisar de novo se ainda não houver conexão."
       },
       "parent": {
         "allQuietSince": "Tudo calmo desde {time}",
@@ -418,7 +398,8 @@
         "babyBody": "O dispositivo dos pais vai parar de receber alertas.",
         "confirm": "Parar",
         "cancel": "Continuar monitorando",
-        "parentBodyDefault": "Você não vai receber alertas do dispositivo do bebê."
+        "parentBodyDefault": "Você não vai receber alertas do dispositivo do bebê.",
+        "titleNamed": "Terminar a vigilância «{name}»?"
       },
       "forget": {
         "title": "Esquecer {name}?",
@@ -622,6 +603,74 @@
           "chime": "Sinal antes de um dos pais falar",
           "checklist": "Os pais podem falar através deste aparelho. Pode desligar isto nas Definições."
         }
+      },
+      "status": {
+        "connected": "Ligado",
+        "connecting": "A ligar",
+        "reconnecting": "A religar",
+        "notConnectedYet": "Ainda sem ligação",
+        "cantReach": "Inacessível",
+        "couldntConnect": "Não foi possível ligar",
+        "noConnection": "Sem ligação",
+        "stillNoConnection": "Continua sem ligação",
+        "stopped": "Terminado",
+        "withName": "{state} · {name}",
+        "subConnecting": "A aguardar o dispositivo do bebé. A vigilância começa quando responder.",
+        "subReconnecting": "Quebras curtas são normais.",
+        "subNotAnswered": "O dispositivo do bebé não respondeu. A vigilância está iniciada nele?",
+        "subStillTrying": "A tentar de novo. Se não voltar em breve, este dispositivo vibra e mostra um alerta.",
+        "subStopped": "Verifique no dispositivo do bebé quem a terminou."
+      },
+      "connAlert": {
+        "labelVibrating": "O telemóvel está a vibrar",
+        "labelLoud": "Alarme alto a tocar",
+        "labelPaused": "Alarme em pausa",
+        "headlineCheck": "Veja como está a criança",
+        "nextLoud": "Alarme alto às {time} se continuar sem ligação.",
+        "nextBack": "Volta às {time} se continuar sem ligação.",
+        "cantHear": "Não está a ouvir a criança.",
+        "neverStarted": "A vigilância nunca começou. Não está a ouvir a criança.",
+        "goNow": "Vá já ter com a criança. O alarme toca até tocar em «Estou a verificar».",
+        "pausedBody": "Continua sem ouvir a criança.",
+        "counterLabel": "sem ligação",
+        "counterA11y": "{duration} sem ligação",
+        "spokenMin": "{count, plural, one {# minuto} many {# de minutos} other {# minutos}}",
+        "spokenSec": "{count, plural, one {# segundo} many {# de segundos} other {# segundos}}",
+        "progressVibrating": "Telemóvel a vibrar agora",
+        "progressLoud": "Alarme alto agora",
+        "progressPaused": "Em pausa enquanto verifica",
+        "causeLabel": "Causa provável",
+        "moreSteps": "Mais passos",
+        "fewerSteps": "Menos passos",
+        "wrongConnection": "Ligação errada?",
+        "dndNote": "O alarme toca também em Não incomodar.",
+        "dndMissing": "O modo Não incomodar pode bloquear este alarme.",
+        "dndOpen": "Abrir definição",
+        "cause": {
+          "peerAbsent": {
+            "line": "O dispositivo do bebé não está online.",
+            "step": "O dispositivo do bebé está ligado, carregar e a mostrar o GuardedSleep?",
+            "more": "Está no Wi-Fi? Se não, abra o GuardedSleep nele outra vez."
+          },
+          "serverUnreachable": {
+            "line": "Este telemóvel não tem internet.",
+            "step": "Verifique o Wi-Fi ou os dados móveis deste telemóvel.",
+            "more": "Desative o modo de avião. Aproxime-se do router."
+          },
+          "mediaBlocked": {
+            "line": "A ligação está bloqueada nesta rede.",
+            "step": "O Wi-Fi de convidados ou de hotel pode bloqueá-la. Mude este telemóvel para dados móveis.",
+            "more": "Depois toque em «Tentar agora»."
+          }
+        },
+        "restored": {
+          "body": "A vigilância esteve interrompida durante {duration}.",
+          "none": "O dispositivo do bebé não ouviu nenhum som nesse período.",
+          "some": "{count, plural, one {Ouviu 1 som} many {Ouviu # de sons} other {Ouviu # sons}}.",
+          "unknown": "Não sabemos se houve sons."
+        },
+        "labelAlerting": "Este dispositivo está a emitir um alerta",
+        "progressAlerting": "Alerta a tocar agora"
       }
     }
   },

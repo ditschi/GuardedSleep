@@ -77,13 +77,9 @@ test("the header matches the meta fallback, and no screen violates the policy", 
     await expectNoViolations([parent], "parent pairing screen");
     await parent.getByTestId("parent_pair_paste_field").fill(code);
     await parent.getByTestId("parent_pair_paste_submit").click();
-    await expect(parent.getByTestId("parent_ambient_bar")).toHaveAttribute(
-      "data-kind",
-      "connected",
-      {
-        timeout: 60_000,
-      },
-    );
+    await expect(parent.getByTestId("status_bar")).toHaveAttribute("data-kind", "connected", {
+      timeout: 60_000,
+    });
     await expect(baby.getByTestId("baby_status")).toHaveAttribute("data-state", "connected", {
       timeout: 60_000,
     });

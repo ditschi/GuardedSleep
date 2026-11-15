@@ -70,6 +70,8 @@ const emitStatus = (status: Partial<LinkStatus> & Pick<LinkStatus, "state">): Li
       cause: null,
       acknowledged_until: null,
       last_alive_ms: null,
+      down_since_ms: null,
+      next_level_at_ms: null,
       ...status,
     },
   },

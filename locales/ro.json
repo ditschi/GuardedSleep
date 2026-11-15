@@ -260,31 +260,13 @@
         "unlockAction": "Deblochează"
       },
       "link": {
-        "connected": "Conectat la {name}",
-        "connecting": "Se conectează la {name}…",
-        "reconnecting": "Se reconectează…",
-        "cantReach": "{name} nu răspunde, încerc în continuare",
-        "lostFor": "Fără conexiune de {duration}",
-        "babyStopped": "{name} a oprit monitorizarea",
         "idle": "Nu se monitorizează",
         "weak": "Conexiune slabă: sunetul poate fi întrerupt",
-        "restoredAfter": "Conectat din nou după {duration}. Îți auzi din nou copilul.",
         "tryNow": "Încearcă acum",
         "pairAgain": "Asociază din nou",
-        "connectedDefault": "Conectat la dispozitivul bebelușului",
-        "connectingDefault": "Se conectează la dispozitivul bebelușului…",
-        "cantReachDefault": "Dispozitivul bebelușului nu răspunde, încerc în continuare",
-        "babyStoppedDefault": "Dispozitivul bebelușului a oprit monitorizarea",
         "stalePairingHint": "Dacă ai asociat din nou dispozitivul bebelușului, scanează noul lui cod."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "Nicio conexiune cu {name}",
-          "titleUrgent": "Nicio conexiune cu {name}!",
-          "body": "Nu îți vei auzi copilul până când dispozitivele se reconectează.",
-          "titleDefault": "Nicio conexiune cu dispozitivul bebelușului",
-          "titleUrgentDefault": "Nicio conexiune cu dispozitivul bebelușului!"
-        },
         "stopped": {
           "title": "{name} a oprit monitorizarea",
           "body": "Cineva a oprit monitorizarea pe dispozitivul bebelușului. Nu vei primi alerte.",
@@ -301,9 +283,7 @@
           "title": "Conectat din nou"
         },
         "ack": "Verific",
-        "ackNote": "Sunet oprit pentru {time}. Te alertăm din nou dacă tot nu e conexiune.",
-        "soundNote": "Un ton de alarmă lin se repetă până verifici.",
-        "soundNoteUrgent": "Alarma sună până verifici."
+        "ackNote": "Sunet oprit pentru {time}. Te alertăm din nou dacă tot nu e conexiune."
       },
       "parent": {
         "allQuietSince": "Liniște de la {time}",
@@ -418,7 +398,8 @@
         "babyBody": "Dispozitivul părintelui nu va mai primi alerte.",
         "confirm": "Oprește",
         "cancel": "Continuă monitorizarea",
-        "parentBodyDefault": "Nu vei primi alerte de la dispozitivul bebelușului."
+        "parentBodyDefault": "Nu vei primi alerte de la dispozitivul bebelușului.",
+        "titleNamed": "Opriți monitorizarea „{name}”?"
       },
       "forget": {
         "title": "Ștergi {name}?",
@@ -622,6 +603,74 @@
           "chime": "Sunet înainte ca un părinte să vorbească",
           "checklist": "Părinții pot vorbi prin acest dispozitiv. Poți opri asta din Setări."
         }
+      },
+      "status": {
+        "connected": "Conectat",
+        "connecting": "Se conectează",
+        "reconnecting": "Se reconectează",
+        "notConnectedYet": "Încă neconectat",
+        "cantReach": "Nu poate fi contactat",
+        "couldntConnect": "Conectarea a eșuat",
+        "noConnection": "Fără conexiune",
+        "stillNoConnection": "Încă fără conexiune",
+        "stopped": "Oprit",
+        "withName": "{state} · {name}",
+        "subConnecting": "Se așteaptă dispozitivul bebelușului. Monitorizarea începe când răspunde.",
+        "subReconnecting": "Întreruperile scurte sunt normale.",
+        "subNotAnswered": "Dispozitivul bebelușului nu răspunde. Este pornită monitorizarea pe el?",
+        "subStillTrying": "Se încearcă în continuare. Dacă nu revine curând, acest dispozitiv vibrează și afișează o alertă.",
+        "subStopped": "Verificați pe dispozitivul bebelușului cine a oprit monitorizarea."
+      },
+      "connAlert": {
+        "labelVibrating": "Telefonul vibrează",
+        "labelLoud": "Alarma puternică sună",
+        "labelPaused": "Alarmă în pauză",
+        "headlineCheck": "Mergeți să vedeți copilul",
+        "nextLoud": "Alarmă puternică la {time}, dacă tot nu există conexiune.",
+        "nextBack": "Revine la {time}, dacă tot nu există conexiune.",
+        "cantHear": "Nu auziți copilul.",
+        "neverStarted": "Monitorizarea nu a pornit niciodată. Nu auziți copilul.",
+        "goNow": "Mergeți acum la copil. Alarma sună până apăsați „Verific”.",
+        "pausedBody": "Tot nu auziți copilul.",
+        "counterLabel": "fără conexiune",
+        "counterA11y": "{duration} fără conexiune",
+        "spokenMin": "{count, plural, one {# minut} few {# minute} other {# de minute}}",
+        "spokenSec": "{count, plural, one {# secundă} few {# secunde} other {# de secunde}}",
+        "progressVibrating": "Telefonul vibrează acum",
+        "progressLoud": "Alarmă puternică acum",
+        "progressPaused": "În pauză cât verificați",
+        "causeLabel": "Cauză probabilă",
+        "moreSteps": "Mai mulți pași",
+        "fewerSteps": "Mai puțini pași",
+        "wrongConnection": "Conexiune greșită?",
+        "dndNote": "Alarma sună și în modul Nu deranja.",
+        "dndMissing": "Modul Nu deranja poate bloca această alarmă.",
+        "dndOpen": "Deschide setarea",
+        "cause": {
+          "peerAbsent": {
+            "line": "Dispozitivul bebelușului nu este online.",
+            "step": "Dispozitivul bebelușului este pornit, la încărcat și afișează GuardedSleep?",
+            "more": "Este pe Wi-Fi? Dacă nu, deschideți din nou GuardedSleep pe el."
+          },
+          "serverUnreachable": {
+            "line": "Acest telefon nu are internet.",
+            "step": "Verificați Wi-Fi sau datele mobile ale acestui telefon.",
+            "more": "Dezactivați modul avion. Apropiați-vă de router."
+          },
+          "mediaBlocked": {
+            "line": "Conexiunea este blocată în această rețea.",
+            "step": "Wi-Fi-ul pentru oaspeți sau de hotel o poate bloca. Treceți acest telefon pe date mobile.",
+            "more": "Apoi apăsați „Încearcă acum”."
+          }
+        },
+        "restored": {
+          "body": "Monitorizarea a fost întreruptă timp de {duration}.",
+          "none": "Dispozitivul bebelușului nu a auzit niciun sunet în acest timp.",
+          "some": "{count, plural, one {A auzit 1 sunet} few {A auzit # sunete} other {A auzit # de sunete}}.",
+          "unknown": "Nu știm dacă au existat sunete."
+        },
+        "labelAlerting": "Acest dispozitiv emite o alertă",
+        "progressAlerting": "Alertă sunând acum"
       }
     }
   },

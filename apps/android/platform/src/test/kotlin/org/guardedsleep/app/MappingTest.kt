@@ -66,6 +66,30 @@ class MappingTest {
     }
 
     @Test
+    fun theOutageTimingFieldsReachTheContractUnchanged() {
+        val ui =
+            LinkMapping.linkUi(
+                status(
+                    uniffi.guardedsleep_core.LinkState.RECONNECTING,
+                    level = 1,
+                    lastAlive = 1_000,
+                    downSince = 1_000,
+                    nextLevelAt = 61_000,
+                ),
+                LinkQuality.UNKNOWN,
+            )
+        assertEquals(1_000L, ui.downSinceElapsedMs)
+        assertEquals(61_000L, ui.nextLevelAtElapsedMs)
+        val none =
+            LinkMapping.linkUi(
+                status(uniffi.guardedsleep_core.LinkState.CONNECTED),
+                LinkQuality.GOOD,
+            )
+        assertNull(none.downSinceElapsedMs)
+        assertNull(none.nextLevelAtElapsedMs)
+    }
+
+    @Test
     fun silenceMapping() {
         assertEquals(SilenceStatus.MAY_BUZZ, SilenceMapping.silence(dev(Ringer.VIBRATE)))
         assertEquals(SilenceStatus.MAY_RING, SilenceMapping.silence(dev(Ringer.NORMAL)))

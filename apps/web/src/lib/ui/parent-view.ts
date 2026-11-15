@@ -1,6 +1,8 @@
-import type { ParentMonitorState, LinkUi, SilenceStatus } from "../contract";
+import type { LinkUi, MissedEventsUi, ParentMonitorState, SilenceStatus } from "../contract";
 import type { MessageKey } from "../i18n/keys";
+import type { Translate } from "../i18n/translate";
 import type { GlyphName, Tone } from "./glyphs";
+import { coreMessageKey } from "./messages";
 
 /*
  * What the parent screens show, derived from the contract model: the ambient bar, the headline,
@@ -9,34 +11,47 @@ import type { GlyphName, Tone } from "./glyphs";
  * about the link: phase, level and alerts come from the core through the model.
  */
 
-// ---- ambient bar -----------------------------------------------------------------------------
+// ---- status bar ------------------------------------------------------------------------------
 
-export type AmbientKind =
+/**
+ * The stage of the link as the bar words it (`connection-status` "Ambient bar per level"). Colour
+ * and words follow the core's state and level only; there is no threshold or timer here
+ * (AGENTS.md section 5.1). The Android client mirrors this table in `StatusModel.kt`.
+ */
+export type StatusKind =
   | "connected"
   | "connecting"
   | "reconnecting"
+  | "not_connected_yet"
   | "cant_reach"
-  | "lost_for"
+  | "couldnt_connect"
+  | "no_connection"
+  | "still_no_connection"
   | "baby_stopped"
   | "needs_pairing"
   | "idle";
 
-export interface AmbientLook {
+export interface StatusLook {
   tone: Tone;
   icon: GlyphName;
-  /** Escalation level 2 and above is announced assertively (alpha-ux-flows.md section 6.1). */
+  /** Stage changes from level 2 are announced assertively (`connection-status` announcements). */
   assertive: boolean;
+  /** Red with the outage duration beside the words. */
+  loud: boolean;
 }
 
-export function ambientKind(link: LinkUi): AmbientKind {
+export function statusKindOf(link: LinkUi): StatusKind {
   switch (link.phase) {
     case "connected":
       return "connected";
     case "connecting":
-    case "reconnecting":
-      if (link.level >= 3) return "lost_for";
-      if (link.level >= 2) return "cant_reach";
-      return link.phase === "connecting" && link.level === 0 ? "connecting" : "reconnecting";
+    case "reconnecting": {
+      const first = link.phase === "connecting";
+      if (link.level >= 3) return "still_no_connection";
+      if (link.level === 2) return first ? "couldnt_connect" : "no_connection";
+      if (link.level === 1) return first ? "not_connected_yet" : "cant_reach";
+      return first ? "connecting" : "reconnecting";
+    }
     case "peer_stopped":
       return "baby_stopped";
     case "failed_needs_user":
@@ -47,31 +62,105 @@ export function ambientKind(link: LinkUi): AmbientKind {
   }
 }
 
-export const AMBIENT_LOOK: Readonly<Record<AmbientKind, AmbientLook>> = {
-  connected: { tone: "ok", icon: "link", assertive: false },
-  connecting: { tone: "warn", icon: "refresh", assertive: false },
-  reconnecting: { tone: "warn", icon: "refresh", assertive: false },
-  cant_reach: { tone: "orange", icon: "linkOff", assertive: true },
-  lost_for: { tone: "bad", icon: "alert", assertive: true },
-  baby_stopped: { tone: "neutral", icon: "pause", assertive: false },
-  needs_pairing: { tone: "bad", icon: "alert", assertive: true },
-  idle: { tone: "neutral", icon: "pause", assertive: false },
+export const STATUS_LOOK: Readonly<Record<StatusKind, StatusLook>> = {
+  connected: { tone: "ok", icon: "link", assertive: false, loud: false },
+  connecting: { tone: "info", icon: "refresh", assertive: false, loud: false },
+  reconnecting: { tone: "info", icon: "refresh", assertive: false, loud: false },
+  not_connected_yet: { tone: "orange", icon: "linkOff", assertive: false, loud: false },
+  cant_reach: { tone: "orange", icon: "linkOff", assertive: false, loud: false },
+  couldnt_connect: { tone: "bad", icon: "linkOff", assertive: true, loud: true },
+  no_connection: { tone: "bad", icon: "linkOff", assertive: true, loud: true },
+  still_no_connection: { tone: "bad", icon: "linkOff", assertive: true, loud: true },
+  baby_stopped: { tone: "neutral", icon: "pause", assertive: true, loud: false },
+  needs_pairing: { tone: "bad", icon: "alert", assertive: true, loud: false },
+  idle: { tone: "neutral", icon: "pause", assertive: false, loud: false },
 };
 
-export const AMBIENT_KEY: Readonly<Record<AmbientKind, MessageKey>> = {
-  connected: "native.ui.link.connected",
-  connecting: "native.ui.link.connecting",
-  reconnecting: "native.ui.link.reconnecting",
-  cant_reach: "native.ui.link.cantReach",
-  lost_for: "native.ui.link.lostFor",
-  baby_stopped: "native.ui.link.babyStopped",
+/** The state in words; "State · Name" is composed by the bar, never spliced into a sentence. */
+export const STATUS_KEY: Readonly<Record<StatusKind, MessageKey>> = {
+  connected: "native.ui.status.connected",
+  connecting: "native.ui.status.connecting",
+  reconnecting: "native.ui.status.reconnecting",
+  not_connected_yet: "native.ui.status.notConnectedYet",
+  cant_reach: "native.ui.status.cantReach",
+  couldnt_connect: "native.ui.status.couldntConnect",
+  no_connection: "native.ui.status.noConnection",
+  still_no_connection: "native.ui.status.stillNoConnection",
+  baby_stopped: "native.ui.status.stopped",
   needs_pairing: "core.pairingKeyMismatch",
   idle: "native.ui.link.idle",
 };
 
-/** How long the link has been down, from the last contact; 0 when nothing was ever heard. */
+/** The connection's own name, or null when it has none (blank counts as none). */
+export function connectionName(peerName: string | null): string | null {
+  return peerName?.trim() || null;
+}
+
+/**
+ * The stage in words, "State · Name" when the connection has a name; the name is never spliced into
+ * a sentence. A link that needs the user says the core's own message, an idle bar carries no name.
+ */
+export function statusHeadline(
+  t: Translate,
+  kind: StatusKind,
+  link: LinkUi,
+  name: string | null,
+): string {
+  if (kind === "needs_pairing")
+    return t(coreMessageKey(link.failureKey) ?? STATUS_KEY.needs_pairing);
+  const state = t(STATUS_KEY[kind]);
+  return name === null || kind === "idle" ? state : t("native.ui.status.withName", { state, name });
+}
+
+/** The one sub-line a stage has, if any. */
+export const STATUS_SUB_KEY: Readonly<Partial<Record<StatusKind, MessageKey>>> = {
+  connecting: "native.ui.status.subConnecting",
+  reconnecting: "native.ui.status.subReconnecting",
+  not_connected_yet: "native.ui.status.subNotAnswered",
+  cant_reach: "native.ui.status.subStillTrying",
+  baby_stopped: "native.ui.status.subStopped",
+};
+
+/** The outage start on the core clock; the last contact when the core sent no start. */
+export function outageStartElapsedMs(link: LinkUi): number | null {
+  return link.downSinceElapsedMs ?? link.lastAliveElapsedMs;
+}
+
+/** How long the link has been down; 0 when nothing is known. */
 export function downForMs(link: LinkUi, nowElapsedMs: number): number {
-  return link.lastAliveElapsedMs === null ? 0 : Math.max(0, nowElapsedMs - link.lastAliveElapsedMs);
+  const start = outageStartElapsedMs(link);
+  return start === null ? 0 : Math.max(0, nowElapsedMs - start);
+}
+
+/** The three stages of the full-screen connection alert. */
+export type AlertStage = "vibrating" | "loud" | "paused";
+
+export function alertStageOf(link: LinkUi, nowElapsedMs: number): AlertStage {
+  if (link.acknowledgedUntilElapsedMs !== null && link.acknowledgedUntilElapsedMs > nowElapsedMs) {
+    return "paused";
+  }
+  return link.level >= 3 ? "loud" : "vibrating";
+}
+
+/**
+ * A core-clock time as a wall-clock time, for "Loud alarm at 03:17". The offset between the two
+ * clocks is constant, so the shown time does not move while the screen ticks. On the web the core
+ * clock is the clamped `Date.now()`.
+ */
+export function elapsedToWall(
+  atElapsedMs: number,
+  nowElapsedMs: number,
+  nowWallMs: number,
+): number {
+  return nowWallMs - (nowElapsedMs - atElapsedMs);
+}
+
+/** The three results of the missed-sound report; an incomplete or absent report never counts. */
+export type MissedResult = "none" | "some" | "unknown";
+
+export function missedResultOf(m: MissedEventsUi | null): MissedResult {
+  if (m === null || !m.complete || m.count === null) return "unknown";
+  return m.count === 0 ? "none" : "some";
 }
 
 // ---- headline --------------------------------------------------------------------------------
@@ -121,20 +210,17 @@ export const BATTERY_CRITICAL_PCT = 5;
 
 /**
  * Only one full screen at a time: connection lost, then noise alert, then the baby device
- * stopped, then its battery (section 5). "I'm checking" hides the lost-connection screen for the
- * mute period; the ambient bar keeps showing the state. `dismissed` holds the kinds the user
+ * stopped, then its battery (section 5). `dismissed` holds the kinds the user
  * closed for the current situation ("Stop sound" closes the noise alert, OK the others).
  */
 export function fullScreenOf(
   p: ParentMonitorState,
-  nowElapsedMs: number,
   dismissed: ReadonlySet<FullScreenKind>,
 ): FullScreenKind | null {
   const link = p.link;
   const escalating = link.phase === "connecting" || link.phase === "reconnecting";
-  const acknowledged =
-    link.acknowledgedUntilElapsedMs !== null && link.acknowledgedUntilElapsedMs > nowElapsedMs;
-  if (escalating && link.level >= 2 && !acknowledged) return "link_lost";
+  // "I'm checking" does not close the screen: it stays red as "Alarm paused" until the link is back.
+  if (escalating && link.level >= 2) return "link_lost";
   if (p.noiseAlertActive && !dismissed.has("noise")) return "noise";
   if (link.phase === "failed_needs_user") return "needs_pairing";
   if (link.phase === "peer_stopped" && !dismissed.has("baby_stopped")) return "baby_stopped";

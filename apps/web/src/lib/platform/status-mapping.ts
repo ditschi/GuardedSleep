@@ -66,6 +66,8 @@ export function linkUiOf(status: LinkStatus, quality: LinkQuality, hints: LinkHi
     phase,
     level: escalating ? status.level : 0,
     lastAliveElapsedMs: status.last_alive_ms,
+    downSinceElapsedMs: status.down_since_ms,
+    nextLevelAtElapsedMs: status.next_level_at_ms,
     acknowledgedUntilElapsedMs: status.acknowledged_until,
     causeHint: causeHintOf(status.cause),
     // update_required also arrives as a sticky cause while connected or reconnecting.

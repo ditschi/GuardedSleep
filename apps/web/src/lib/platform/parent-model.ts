@@ -15,7 +15,7 @@ import type { AlertSink, LinkSnapshot } from "./alert-sink";
 import type { Clock } from "./clock";
 import type { InboundAudioStats } from "./media-engine";
 import { NoiseTracker } from "./noise-tracker";
-import { LISTEN_MAX_MS, MISSED_EVENTS_GRACE_MS, RESTORED_NOTICE_MS } from "./policy";
+import { LISTEN_MAX_MS, MISSED_EVENTS_GRACE_MS } from "./policy";
 import {
   causeHintOf,
   linkUiOf,
@@ -62,7 +62,6 @@ export class ParentModel {
   private reconnectWall: number | null = null;
   private awaitingMissedUntil: number | null = null;
   private restoredAfterMs: number | null = null;
-  private restoredUntil: number | null = null;
 
   private readonly tracker = new NoiseTracker();
   private noiseSinceWall: number | null = null;
@@ -114,7 +113,6 @@ export class ParentModel {
     this.peerAbsentSince = null;
     this.awaitingMissedUntil = null;
     this.restoredAfterMs = null;
-    this.restoredUntil = null;
     this.tracker.reset();
     this.noiseSinceWall = null;
     this.noiseLastWall = null;
@@ -187,6 +185,9 @@ export class ParentModel {
       this.quietSinceWall = null;
       this.awaitingMissedUntil = null;
       this.quality = "unknown";
+      // A new outage replaces the "Connected again" card and its sound result.
+      this.restoredAfterMs = null;
+      this.missed = null;
     }
     if (next !== "connected") this.quietSinceWall = null;
     if (next === "stopped") this.remoteLevel = 0;
@@ -201,7 +202,6 @@ export class ParentModel {
         break;
       case "link_restored":
         this.restoredAfterMs = event.down_ms;
-        this.restoredUntil = now + RESTORED_NOTICE_MS;
         this.sink.notice({ type: "link_restored", downMs: event.down_ms });
         break;
       case "security_warning":
@@ -292,10 +292,6 @@ export class ParentModel {
         this.phase === "connected" ? wall - (now - this.tracker.lastLoudAt) : null;
       this.sink.noiseEnded();
     }
-    if (this.restoredUntil !== null && now >= this.restoredUntil) {
-      this.restoredUntil = null;
-      this.restoredAfterMs = null;
-    }
     if (this.awaitingMissedUntil !== null && now >= this.awaitingMissedUntil) {
       // No summary arrived (baby restarted, or older peer): the honest fallback is the
       // reconnect time.
@@ -347,6 +343,13 @@ export class ParentModel {
     this.silenceRequest = "pending";
     this.silenceRequestedAt = now;
     this.publish(now);
+  }
+
+  /** OK on the "Connected again" card: the card and its sound result go together. */
+  dismissRestored(): void {
+    this.restoredAfterMs = null;
+    this.missed = null;
+    this.publish(this.clock.elapsedMs());
   }
 
   dismissMissed(): void {

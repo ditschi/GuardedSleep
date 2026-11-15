@@ -283,7 +283,9 @@
     color-scheme: dark;
     --gs-bg: #000000;
     --gs-surface: #14120e;
+    --gs-surface-low: #0d0b08;
     --gs-surface-variant: #1c1912;
+    --gs-surface-highest: #25211a;
     --gs-on-bg: #cfc6b6;
     --gs-on-surface-variant: #9c927f;
     --gs-outline: #6b6252;
@@ -292,6 +294,8 @@
     --gs-on-primary: #1a1408;
     --gs-primary-container: #2a2417;
     --gs-on-primary-container: #e0cfa8;
+    --gs-secondary-container: #2a2417;
+    --gs-on-secondary-container: #c9b48a;
     --gs-role-baby-bg: #2a2417;
     --gs-role-baby-fg: #c9b48a;
     --gs-error: #c46a64;

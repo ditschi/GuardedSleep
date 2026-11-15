@@ -258,31 +258,13 @@
         "unlockAction": "Unlock"
       },
       "link": {
-        "connected": "Connected to {name}",
-        "connecting": "Connecting to {name}…",
-        "reconnecting": "Reconnecting…",
-        "cantReach": "Can't reach {name} — still trying",
-        "lostFor": "No connection for {duration}",
-        "babyStopped": "{name} stopped monitoring",
         "idle": "Not monitoring",
         "weak": "Weak connection — sound may break up",
-        "restoredAfter": "Connected again after {duration}. You can hear your child again.",
         "tryNow": "Try now",
         "pairAgain": "Pair again",
-        "connectedDefault": "Connected to the baby device",
-        "connectingDefault": "Connecting to the baby device…",
-        "cantReachDefault": "Can't reach the baby device — still trying",
-        "babyStoppedDefault": "The baby device stopped monitoring",
         "stalePairingHint": "If you paired the baby device again, scan its new code."
       },
       "linkAlarm": {
-        "lost": {
-          "title": "No connection to {name}",
-          "titleUrgent": "No connection to {name}!",
-          "body": "You won't hear your child until the devices reconnect.",
-          "titleDefault": "No connection to the baby device",
-          "titleUrgentDefault": "No connection to the baby device!"
-        },
         "stopped": {
           "title": "{name} stopped monitoring",
           "body": "Someone stopped monitoring on the baby device. You won't get alerts.",
@@ -299,9 +281,7 @@
           "title": "Connected again"
         },
         "ack": "I'm checking",
-        "ackNote": "Sound off for {time}. We'll alert you again if it's still not connected.",
-        "soundNote": "A soft alarm tone repeats until you check.",
-        "soundNoteUrgent": "The alarm keeps sounding until you check."
+        "ackNote": "Sound off for {time}. We'll alert you again if it's still not connected."
       },
       "parent": {
         "allQuietSince": "All quiet since {time}",
@@ -416,7 +396,8 @@
         "babyBody": "The parent device will stop getting alerts.",
         "confirm": "Stop",
         "cancel": "Keep monitoring",
-        "parentBodyDefault": "You won't get alerts from the baby device."
+        "parentBodyDefault": "You won't get alerts from the baby device.",
+        "titleNamed": "Stop monitoring “{name}”?"
       },
       "forget": {
         "title": "Forget {name}?",
@@ -624,6 +605,74 @@
           "chime": "Chime before a parent speaks",
           "checklist": "Parents can speak through this device. You can turn this off in Settings."
         }
+      },
+      "status": {
+        "connected": "Connected",
+        "connecting": "Connecting",
+        "reconnecting": "Reconnecting",
+        "notConnectedYet": "Not connected yet",
+        "cantReach": "Can't reach",
+        "couldntConnect": "Couldn't connect",
+        "noConnection": "No connection",
+        "stillNoConnection": "Still no connection",
+        "stopped": "Stopped",
+        "withName": "{state} · {name}",
+        "subConnecting": "Waiting for the baby device. Monitoring starts when it answers.",
+        "subReconnecting": "Short drops are normal.",
+        "subNotAnswered": "The baby device hasn't answered. Is monitoring started on it?",
+        "subStillTrying": "Still trying. If it isn't back soon, this device vibrates and shows an alert.",
+        "subStopped": "Check who stopped it on the baby device."
+      },
+      "connAlert": {
+        "labelVibrating": "Your phone is vibrating",
+        "labelLoud": "Loud alarm sounding",
+        "labelPaused": "Alarm paused",
+        "headlineCheck": "Please check on the child",
+        "nextLoud": "Loud alarm at {time} if there is still no connection.",
+        "nextBack": "Comes back at {time} if still no connection.",
+        "cantHear": "You can't hear the child.",
+        "neverStarted": "Monitoring never started. You can't hear the child.",
+        "goNow": "Go to the child now. The alarm sounds until you tap “I'm checking”.",
+        "pausedBody": "You still can't hear the child.",
+        "counterLabel": "without connection",
+        "counterA11y": "{duration} without connection",
+        "spokenMin": "{count, plural, one {# minute} other {# minutes}}",
+        "spokenSec": "{count, plural, one {# second} other {# seconds}}",
+        "progressVibrating": "Phone vibrating now",
+        "progressLoud": "Loud alarm now",
+        "progressPaused": "Paused while you check",
+        "causeLabel": "Likely cause",
+        "moreSteps": "More steps",
+        "fewerSteps": "Fewer steps",
+        "wrongConnection": "Wrong connection?",
+        "dndNote": "The alarm also sounds in Do Not Disturb.",
+        "dndMissing": "Do Not Disturb may block this alarm.",
+        "dndOpen": "Open setting",
+        "cause": {
+          "peerAbsent": {
+            "line": "The baby device isn't online.",
+            "step": "Is the baby device on, plugged in and showing GuardedSleep?",
+            "more": "Is it on Wi-Fi? If not, open GuardedSleep on it again."
+          },
+          "serverUnreachable": {
+            "line": "This phone has no internet.",
+            "step": "Check Wi-Fi or mobile data on this phone.",
+            "more": "Turn flight mode off. Move closer to the router."
+          },
+          "mediaBlocked": {
+            "line": "The connection is blocked on this network.",
+            "step": "Guest or hotel Wi-Fi can block it. Switch this phone to mobile data.",
+            "more": "Then tap “Try now”."
+          }
+        },
+        "restored": {
+          "body": "Monitoring was interrupted for {duration}.",
+          "none": "The baby device heard no sound during that time.",
+          "some": "{count, plural, one {It heard 1 sound} other {It heard # sounds}}.",
+          "unknown": "We don't know whether there were sounds."
+        },
+        "labelAlerting": "This device is sounding an alert",
+        "progressAlerting": "Alert sounding now"
       }
     }
   },

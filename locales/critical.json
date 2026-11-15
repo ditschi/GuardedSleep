@@ -96,6 +96,8 @@
     { "pattern": "webScreens.talk.unconfirmed", "budget": 120 },
     { "pattern": "webScreens.talk.audibleUncertain", "budget": 170 },
     { "pattern": "webScreens.talk.babySoundOff", "budget": 150 },
-    { "pattern": "webScreens.talk.permissionRefused", "budget": 170 }
+    { "pattern": "webScreens.talk.permissionRefused", "budget": 170 },
+    { "pattern": "native.ui.status.*", "budget": 150 },
+    { "pattern": "native.ui.connAlert.*", "budget": 170 }
   ]
 }

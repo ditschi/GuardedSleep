@@ -98,6 +98,8 @@ export interface AppController {
   requestSilenceBaby(): void;
   tryReconnectNow(): void;
   dismissMissedEvents(): void;
+  /** Parent: OK on the "Connected again" card; it never goes away on its own. */
+  dismissRestored(): void;
 
   // Talk-back (`add-talk-back`), the same intents as UiContract.kt.
   /**

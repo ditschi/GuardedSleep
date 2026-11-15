@@ -1,21 +1,32 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { useController } from "../lib/contract";
-  import type { MessageKey } from "../lib/i18n/keys";
-  import { t } from "../lib/i18n/store";
+  import { locale, t } from "../lib/i18n/store";
   import { useRouter } from "../lib/router-context";
-  import AmbientBar from "../lib/ui/AmbientBar.svelte";
+  import AlertTemplate from "../lib/ui/AlertTemplate.svelte";
   import Button from "../lib/ui/Button.svelte";
-  import { formatDuration } from "../lib/ui/format";
+  import CauseCard from "../lib/ui/CauseCard.svelte";
+  import { formatClock, formatElapsed, spokenDuration } from "../lib/ui/format";
   import Glyph from "../lib/ui/Glyph.svelte";
   import { coreMessageKey } from "../lib/ui/messages";
-  import { downForMs, type FullScreenKind } from "../lib/ui/parent-view";
+  import {
+    connectionName,
+    statusHeadline,
+    alertStageOf,
+    downForMs,
+    elapsedToWall,
+    statusKindOf,
+    type FullScreenKind,
+  } from "../lib/ui/parent-view";
+  import StatusBar from "../lib/ui/StatusBar.svelte";
+  import StopDialog from "../lib/ui/StopDialog.svelte";
   import { everySecond } from "../lib/ui/ticker";
 
   /**
-   * S11: the link alarm and its sibling full screens (the baby device stopped, its battery is
-   * almost empty, the devices are no longer paired). "I'm checking" only exists for a lost
-   * connection; the others close with OK.
+   * S11: the connection alert on the shared template (frames 12, 13, 25, 26) and its sibling full
+   * screens (the baby device stopped, its battery is almost empty, the devices are no longer
+   * paired). The stage (vibrating, loud, paused) and every time come from the core's level,
+   * `next_level_at_ms` and `acknowledged_until`; this screen has no threshold of its own.
    */
   type Props = {
     kind: Exclude<FullScreenKind, "noise">;
@@ -32,38 +43,88 @@
   let heading: HTMLElement | undefined = $state();
   onMount(() => heading?.focus());
 
-  const name = $derived($app.peerName ?? $t("native.ui.common.babyUnitDefault"));
-  const urgent = $derived($parent.link.level >= 3);
+  let stopOpen = $state(false);
+  let wrongOpen = $state(false);
 
+  const name = $derived(connectionName($app.peerName));
+  const link = $derived($parent.link);
+  const stage = $derived(alertStageOf(link, $everySecond.elapsedMs));
+  const firstConnection = $derived(link.phase === "connecting");
+  const clock = (atElapsedMs: number): string =>
+    formatClock(elapsedToWall(atElapsedMs, $everySecond.elapsedMs, $everySecond.wallMs), $locale);
+
+  const headline = $derived.by(() => {
+    if (stage === "paused") {
+      return $t("native.ui.connAlert.nextBack", {
+        time: clock(link.acknowledgedUntilElapsedMs ?? $everySecond.elapsedMs),
+      });
+    }
+    if (stage === "loud") return statusHeadline($t, "still_no_connection", link, name);
+    return firstConnection
+      ? statusHeadline($t, "couldnt_connect", link, name)
+      : $t("native.ui.connAlert.headlineCheck");
+  });
+
+  const sentence = $derived.by(() => {
+    if (stage === "loud") return $t("native.ui.connAlert.goNow");
+    if (stage === "paused") return $t("native.ui.connAlert.pausedBody");
+    const lead = $t(
+      firstConnection ? "native.ui.connAlert.neverStarted" : "native.ui.connAlert.cantHear",
+    );
+    return link.nextLevelAtElapsedMs === null
+      ? lead
+      : `${lead} ${$t("native.ui.connAlert.nextLoud", { time: clock(link.nextLevelAtElapsedMs) })}`;
+  });
+
+  const down = $derived(downForMs(link, $everySecond.elapsedMs));
+  const counter = $derived({
+    text: formatElapsed(down),
+    label: $t("native.ui.connAlert.counterLabel"),
+    spoken: $t("native.ui.connAlert.counterA11y", { duration: spokenDuration($t, down) }),
+  });
+  const progress = $derived(
+    stage === "loud"
+      ? { active: 4, steps: 4, words: $t("native.ui.connAlert.progressLoud") }
+      : stage === "paused"
+        ? { active: 3, steps: 4, words: $t("native.ui.connAlert.progressPaused") }
+        : { active: 3, steps: 4, words: $t("native.ui.connAlert.progressAlerting") },
+  );
+  const label = $derived(
+    $t(
+      stage === "loud"
+        ? "native.ui.connAlert.labelLoud"
+        : stage === "paused"
+          ? "native.ui.connAlert.labelPaused"
+          : "native.ui.connAlert.labelAlerting",
+    ),
+  );
+  const stripText = $derived(statusHeadline($t, statusKindOf(link), link, name));
+
+  // The other full screens keep their own title and text.
   const title = $derived.by(() => {
     switch (kind) {
-      case "link_lost":
-        return $t(
-          urgent ? "native.ui.linkAlarm.lost.titleUrgent" : "native.ui.linkAlarm.lost.title",
-          { name },
-        );
       case "baby_stopped":
-        return $t("native.ui.linkAlarm.stopped.title", { name });
+        return $t("native.ui.linkAlarm.stopped.title", {
+          name: name ?? $t("native.ui.common.babyUnitDefault"),
+        });
       case "battery_critical":
         return $t("native.ui.linkAlarm.battery.title");
       case "needs_pairing":
         return $t("native.ui.linkAlarm.needsPairing.title");
+      case "link_lost":
+        return headline;
     }
   });
 
-  const cause = $derived.by((): MessageKey | null => {
-    const hint = $parent.link.causeHint;
-    return hint === null ? null : coreMessageKey(hint);
-  });
-
-  const steps: MessageKey[] = [
-    "native.ui.help.reconnect.step1",
-    "native.ui.help.reconnect.step2",
-    "native.ui.help.reconnect.step3",
-  ];
-
   function stopMonitoring(): void {
+    stopOpen = false;
     controller.stopMonitoring();
+    router.navigate("/");
+  }
+
+  function chooseAnother(): void {
+    wrongOpen = false;
+    controller.chooseAnotherConnection();
     router.navigate("/");
   }
 
@@ -73,82 +134,124 @@
   }
 </script>
 
-<div
-  class="gs-fullscreen"
-  data-kind="link"
-  data-variant={kind}
-  data-testid="parent_link_alarm"
-  role="alertdialog"
-  aria-modal="true"
-  aria-labelledby="link-alarm-title"
->
-  <div class="gs-fullscreen__inner">
-    <AmbientBar testid="link_alarm_bar" />
-
-    <div class="gs-stack gs-fullscreen__top">
-      <h1 id="link-alarm-title" tabindex="-1" bind:this={heading} data-testid="link_alarm_title">
-        {title}
-      </h1>
-
-      <div class="gs-fullscreen__body" data-testid="link_alarm_body">
-        {#if kind === "link_lost"}
-          <p data-testid="link_alarm_duration">
-            {$t("native.ui.link.lostFor", {
-              duration: formatDuration($t, downForMs($parent.link, $everySecond.elapsedMs)),
-            })}
-          </p>
-          <p>{$t("native.ui.linkAlarm.lost.body")}</p>
-          {#if cause}<p data-testid="link_alarm_cause" data-cause={$parent.link.causeHint}>
-              {$t(cause)}
-            </p>{/if}
-        {:else if kind === "baby_stopped"}
-          <p>{$t("native.ui.linkAlarm.stopped.body")}</p>
-        {:else if kind === "battery_critical"}
-          <p>{$t("native.ui.linkAlarm.battery.body")}</p>
-        {:else}
-          <p>{$t(coreMessageKey($parent.link.failureKey) ?? "core.pairingKeyMismatch")}</p>
-        {/if}
-      </div>
-    </div>
-
-    {#if kind === "link_lost" || kind === "baby_stopped"}
-      <details data-testid="link_alarm_help">
-        <summary>{$t("native.ui.help.reconnect.open")}</summary>
-        <ul>
-          {#each steps as step (step)}
-            <li>{$t(step)}</li>
-          {/each}
-        </ul>
-      </details>
-    {/if}
-
-    <div class="gs-fill"></div>
-
-    {#if kind === "link_lost"}
-      <Button
-        variant="alert"
-        size="large"
-        block
-        testid="link_alarm_ack"
-        onclick={() => controller.acknowledgeAlarm()}
+{#if kind === "link_lost"}
+  <AlertTemplate
+    palette={stage === "loud" ? "alarm" : "lost"}
+    {label}
+    {headline}
+    headlineId="link-alarm-title"
+    headlineTestid="link_alarm_title"
+    testid="parent_link_alarm"
+    {counter}
+    counterTestid="link_alarm_since"
+    {sentence}
+    sentenceTestid="link_alarm_sentence"
+    {progress}
+  >
+    {#snippet strip()}
+      <Glyph name="linkOff" />
+      <span>{stripText}</span>
+    {/snippet}
+    {#snippet body()}
+      <CauseCard hint={link.causeHint} ontrynow={() => controller.tryReconnectNow()} />
+      {#if firstConnection}
+        <!-- The way back to the saved connections; from this screen (level 2 and up) it goes
+             through the stop confirmation, so a running alarm is never left by one tap. -->
+        <button
+          type="button"
+          class="gs-btn"
+          data-variant="text"
+          data-testid="link_alarm_wrong_connection"
+          onclick={() => (wrongOpen = true)}
+        >
+          {$t("native.ui.connAlert.wrongConnection")}
+        </button>
+      {/if}
+    {/snippet}
+    {#snippet quiet()}
+      <button
+        type="button"
+        class="gs-btn"
+        data-variant="text"
+        data-testid="link_alarm_stop"
+        onclick={() => (stopOpen = true)}
       >
-        {$t("native.ui.linkAlarm.ack")}
+        {$t("native.ui.parent.stop")}
+      </button>
+    {/snippet}
+    {#snippet action()}
+      {#if stage !== "paused"}
+        <Button block testid="link_alarm_ack" onclick={() => controller.acknowledgeAlarm()}>
+          {$t("native.ui.linkAlarm.ack")}
+        </Button>
+      {/if}
+    {/snippet}
+  </AlertTemplate>
+  <StopDialog bind:open={stopOpen} {name} onconfirm={stopMonitoring} />
+  <StopDialog
+    bind:open={wrongOpen}
+    {name}
+    onconfirm={chooseAnother}
+    testid="dialog_choose_other"
+    confirmTestid="dialog_choose_other_confirm"
+    cancelTestid="dialog_choose_other_cancel"
+  />
+{:else}
+  <div
+    class="gs-fullscreen"
+    data-kind="link"
+    data-variant={kind}
+    data-testid="parent_link_alarm"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="link-alarm-title"
+  >
+    <div class="gs-fullscreen__inner">
+      <StatusBar testid="link_alarm_bar" />
+
+      <div class="gs-stack gs-fullscreen__top">
+        <h1 id="link-alarm-title" tabindex="-1" bind:this={heading} data-testid="link_alarm_title">
+          {title}
+        </h1>
+
+        <div class="gs-fullscreen__body" data-testid="link_alarm_body">
+          {#if kind === "baby_stopped"}
+            <p>{$t("native.ui.linkAlarm.stopped.body")}</p>
+          {:else if kind === "battery_critical"}
+            <p>{$t("native.ui.linkAlarm.battery.body")}</p>
+          {:else}
+            <p>{$t(coreMessageKey($parent.link.failureKey) ?? "core.pairingKeyMismatch")}</p>
+          {/if}
+        </div>
+      </div>
+
+      <div class="gs-fill"></div>
+
+      {#if kind === "needs_pairing"}
+        <Button
+          variant="alert"
+          size="large"
+          block
+          testid="link_alarm_pair_again"
+          onclick={pairAgain}
+        >
+          <Glyph name="refresh" />
+          {$t("native.ui.link.pairAgain")}
+        </Button>
+      {:else}
+        <Button variant="alert" size="large" block testid="link_alarm_ok" onclick={onok}>
+          {$t("native.ui.common.ok")}
+        </Button>
+      {/if}
+      <Button
+        variant="alert-outline"
+        block
+        testid="link_alarm_stop"
+        onclick={() => (stopOpen = true)}
+      >
+        {$t("native.ui.parent.stop")}
       </Button>
-      <p class="gs-hint" data-testid="link_alarm_ack_note">
-        {$t("native.ui.linkAlarm.ackNote", { time: formatDuration($t, 5 * 60_000) })}
-      </p>
-    {:else if kind === "needs_pairing"}
-      <Button variant="alert" size="large" block testid="link_alarm_pair_again" onclick={pairAgain}>
-        <Glyph name="refresh" />
-        {$t("native.ui.link.pairAgain")}
-      </Button>
-    {:else}
-      <Button variant="alert" size="large" block testid="link_alarm_ok" onclick={onok}>
-        {$t("native.ui.common.ok")}
-      </Button>
-    {/if}
-    <Button variant="alert-outline" block testid="link_alarm_stop" onclick={stopMonitoring}>
-      {$t("native.ui.parent.stop")}
-    </Button>
+    </div>
   </div>
-</div>
+  <StopDialog bind:open={stopOpen} {name} onconfirm={stopMonitoring} />
+{/if}

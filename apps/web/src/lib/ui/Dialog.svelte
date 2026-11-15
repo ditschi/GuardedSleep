@@ -1,17 +1,31 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import StatusBar from "./StatusBar.svelte";
 
   type Props = {
     open: boolean;
     title: string;
     testid?: string;
+    /**
+     * Parent screens: the read-only status bar stays at the top of the sheet, so the connection
+     * state is visible and announced while the page behind is inert (`connection-status`).
+     */
+    status?: boolean;
     /** Called when the dialog closes by Escape or backdrop; `open` is set to false first. */
     onclose?: () => void;
     children: Snippet;
     actions?: Snippet;
   };
 
-  let { open = $bindable(), title, testid, onclose, children, actions }: Props = $props();
+  let {
+    open = $bindable(),
+    title,
+    testid,
+    status = false,
+    onclose,
+    children,
+    actions,
+  }: Props = $props();
 
   let dialog: HTMLDialogElement | undefined = $state();
   const titleId = $props.id();
@@ -44,6 +58,9 @@
   onclose={handleClose}
   onclick={handleBackdropClick}
 >
+  {#if status && open}
+    <div class="gs-dialog__status"><StatusBar testid="sheet_status_bar" /></div>
+  {/if}
   <h2 id={titleId}>{title}</h2>
   <div>{@render children()}</div>
   {#if actions}<div class="gs-dialog__actions">{@render actions()}</div>{/if}

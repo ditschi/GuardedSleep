@@ -356,7 +356,9 @@
             "key": null,
             "cause": null,
             "acknowledged_until": null,
-            "last_alive_ms": null
+            "last_alive_ms": null,
+            "down_since_ms": 0,
+            "next_level_at_ms": 20000
           }
         }
       }
@@ -456,7 +458,9 @@
             "key": null,
             "cause": null,
             "acknowledged_until": null,
-            "last_alive_ms": null
+            "last_alive_ms": null,
+            "down_since_ms": 0,
+            "next_level_at_ms": 60000
           }
         }
       }
@@ -565,7 +569,9 @@
             "key": null,
             "cause": "peer_absent",
             "acknowledged_until": null,
-            "last_alive_ms": null
+            "last_alive_ms": null,
+            "down_since_ms": 0,
+            "next_level_at_ms": 180000
           }
         }
       }

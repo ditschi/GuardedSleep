@@ -4,14 +4,12 @@
   import type { MessageKey } from "../lib/i18n/keys";
   import { locale, t } from "../lib/i18n/store";
   import { useRouter } from "../lib/router-context";
-  import AmbientBar from "../lib/ui/AmbientBar.svelte";
   import {
     askForNotifications,
     browserNotifications,
     flashTitle,
     notifyAway,
   } from "../lib/ui/attention";
-  import Banner from "../lib/ui/Banner.svelte";
   import Button from "../lib/ui/Button.svelte";
   import Card from "../lib/ui/Card.svelte";
   import Chip from "../lib/ui/Chip.svelte";
@@ -22,10 +20,13 @@
   import KeepAwakeNotice from "../lib/ui/KeepAwakeNotice.svelte";
   import ListenButton from "../lib/ui/ListenButton.svelte";
   import Meter from "../lib/ui/Meter.svelte";
+  import RestoredCard from "../lib/ui/RestoredCard.svelte";
+  import StopDialog from "../lib/ui/StopDialog.svelte";
   import TalkButton from "../lib/ui/TalkButton.svelte";
   import NightScreen from "../lib/ui/NightScreen.svelte";
   import {
     canRequestSilence,
+    connectionName,
     downForMs,
     extraChips,
     fixedChips,
@@ -50,7 +51,7 @@
     const after = pruneDismissed($parent, before);
     if (after !== before) dismissed = after;
   });
-  const fullScreen = $derived(fullScreenOf($parent, $everySecond.elapsedMs, dismissed));
+  const fullScreen = $derived(fullScreenOf($parent, dismissed));
 
   // An alert replaces the night screen at once; it stays off afterwards, the parent is awake now.
   $effect(() => {
@@ -243,10 +244,6 @@
   <LinkAlarmScreen kind={fullScreen} onok={() => dismiss(fullScreen)} />
 {:else}
   <div class="gs-screen gs-screen--monitor" data-screen="parent_monitor">
-    <div class="gs-ambient">
-      <AmbientBar onhelp={() => (helpOpen = true)} />
-    </div>
-
     {#if $parent.securityWarning}
       <Card tone="variant" testid="parent_security_banner">
         <h2>{$t("native.ui.parent.securityTitle")}</h2>
@@ -258,16 +255,9 @@
     <KeepAwakeNotice />
 
     {#if $parent.restoredAfterMs !== null}
-      <Banner
-        tone="ok"
-        message={$t("native.ui.link.restoredAfter", {
-          duration: formatDuration($t, $parent.restoredAfterMs),
-        })}
-        testid="parent_restored_toast"
-      />
-    {/if}
-
-    {#if missedText}
+      <!-- Until OK: the card never dismisses itself, a new outage replaces it. -->
+      <RestoredCard restoredAfterMs={$parent.restoredAfterMs} />
+    {:else if missedText}
       <Card tone="variant" testid="card_missed_events">
         <p>{missedText}</p>
         <Button variant="text" onclick={() => controller.dismissMissedEvents()}>
@@ -286,6 +276,26 @@
     <h1 tabindex="-1" data-route-heading class="gs-headline" data-testid="parent_headline">
       {headlineText}
     </h1>
+
+    {#if $parent.link.phase === "connecting"}
+      <!-- Wrong place: before the first connection of a run, one tap at levels 0 and 1. From level
+           2 the full screen has the same button, behind the stop confirmation. -->
+      <Button
+        variant="text"
+        testid="parent_choose_other_connection"
+        onclick={() => {
+          controller.chooseAnotherConnection();
+          router.navigate("/");
+        }}
+      >
+        {$t("native.ui.connAlert.wrongConnection")}
+      </Button>
+    {/if}
+    {#if !connected && ($parent.link.phase === "connecting" || $parent.link.phase === "reconnecting")}
+      <Button variant="text" testid="parent_help_reconnect" onclick={() => (helpOpen = true)}>
+        {$t("native.ui.help.reconnect.open")}
+      </Button>
+    {/if}
 
     <div class="gs-meter-card">
       <Meter
@@ -388,6 +398,7 @@
 {/if}
 
 <Dialog
+  status
   bind:open={permissionOpen}
   title={$t("webScreens.talk.permissionTitle")}
   testid="parent_talk_permission_sheet"
@@ -423,7 +434,7 @@
   {/snippet}
 </Dialog>
 
-<Dialog bind:open={snoozeOpen} title={$t("native.ui.snooze.title")} testid="sheet_snooze">
+<Dialog status bind:open={snoozeOpen} title={$t("native.ui.snooze.title")} testid="sheet_snooze">
   <p>{$t("native.ui.snooze.help")}</p>
   {#snippet actions()}
     <Button variant="text" onclick={() => (snoozeOpen = false)}>
@@ -450,7 +461,7 @@
   {/snippet}
 </Dialog>
 
-<Dialog bind:open={probeOpen} title={$t("native.ui.probe.title")} testid="sheet_probe">
+<Dialog status bind:open={probeOpen} title={$t("native.ui.probe.title")} testid="sheet_probe">
   <p>{$t("native.ui.probe.body")}</p>
   {#snippet actions()}
     <Button variant="text" onclick={() => (probeOpen = false)}>
@@ -461,6 +472,7 @@
 </Dialog>
 
 <Dialog
+  status
   bind:open={questionOpen}
   title={$t("native.ui.probe.question")}
   testid="sheet_probe_question"
@@ -477,6 +489,7 @@
 </Dialog>
 
 <Dialog
+  status
   bind:open={helpOpen}
   title={$t("native.ui.help.reconnect.title")}
   testid="sheet_help_reconnect"
@@ -491,7 +504,7 @@
   {/snippet}
 </Dialog>
 
-<Dialog bind:open={moreOpen} title={$t("native.ui.common.more")} testid="sheet_more">
+<Dialog status bind:open={moreOpen} title={$t("native.ui.common.more")} testid="sheet_more">
   <div class="gs-stack gs-stack--tight">
     <Button
       variant="outline"
@@ -523,14 +536,7 @@
   {/snippet}
 </Dialog>
 
-<Dialog bind:open={stopOpen} title={$t("native.ui.stop.title")} testid="dialog_stop">
-  <p>{$t("native.ui.stop.parentBodyDefault")}</p>
-  {#snippet actions()}
-    <Button variant="text" testid="dialog_stop_cancel" onclick={() => (stopOpen = false)}>
-      {$t("native.ui.stop.cancel")}
-    </Button>
-    <Button variant="danger" testid="dialog_stop_confirm" onclick={stop}>
-      {$t("native.ui.stop.confirm")}
-    </Button>
-  {/snippet}
-</Dialog>
+<!-- One stop dialog on screen at a time: the connection alert brings its own. -->
+{#if fullScreen === null}
+  <StopDialog bind:open={stopOpen} name={connectionName($app.peerName)} onconfirm={stop} />
+{/if}

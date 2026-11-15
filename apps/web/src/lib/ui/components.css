@@ -90,35 +90,88 @@
     color: var(--gs-on-state);
   }
 
-  /* Status bar: full width, at least 56 dp, grows with the text. */
+  /*
+   * Status bar (redesign-calm-ui design section 6): a rounded bar of at least 52 dp that grows with
+   * the text. Connected is neutral with a green dot, so a coloured bar always means a change. The
+   * colours of the other stages are the fixed safety colours; no scheme overrides them.
+   * Tones: ok (neutral, connected), info (blue), orange (outline), bad (red), neutral (grey).
+   */
   .gs-status-bar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: var(--gs-space-3);
-    min-height: 3.5rem;
-    padding: var(--gs-space-3) var(--gs-space-4);
-    background: var(--gs-state-grey);
-    color: var(--gs-on-state);
+    min-height: 3.25rem;
+    padding: var(--gs-space-2) var(--gs-space-4);
+    border-radius: var(--gs-radius-l);
+    background: var(--gs-surface-highest);
+    color: var(--gs-on-bg);
     font-weight: 600;
   }
   .gs-status-bar[data-tone="ok"] {
-    background: var(--gs-state-green);
+    background: var(--gs-surface);
+    color: var(--gs-on-bg);
   }
-  .gs-status-bar[data-tone="warn"] {
-    /* Level 0 is info blue (redesign-calm-ui design section 10); the tone keeps its old name until
-       the status bar is rebuilt in group 2. */
-    background: var(--safety-info);
-    color: var(--safety-on-info);
+  .gs-status-bar[data-tone="ok"] .gs-glyph,
+  .gs-status-bar__dot {
+    color: var(--safety-ok);
+  }
+  .gs-status-bar__dot {
+    flex: none;
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 50%;
+    background: var(--safety-ok);
+  }
+  .gs-status-bar[data-tone="info"] {
+    background: var(--safety-info-container);
+    color: var(--safety-info);
   }
   .gs-status-bar[data-tone="orange"] {
-    background: var(--gs-state-orange);
+    background: var(--safety-warn-container);
+    color: var(--safety-warn);
+    box-shadow: inset 0 0 0 2px var(--safety-warn);
   }
   .gs-status-bar[data-tone="bad"] {
-    background: var(--gs-state-red);
+    background: var(--safety-alert-container);
+    color: var(--safety-alert);
   }
-  .gs-status-bar[data-tone="snooze"] {
-    background: var(--gs-state-amber);
+  .gs-status-bar[data-tone="neutral"] {
+    background: var(--gs-surface-highest);
+    color: var(--gs-on-bg);
+  }
+  .gs-status-bar__text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: min(8rem, 100%);
+    overflow-wrap: anywhere;
+  }
+  .gs-status-bar__sub {
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  .gs-status-bar__duration {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .gs-status-bar[data-loud] {
+    animation: gs-status-pulse 2.5s ease-in-out infinite alternate;
+  }
+  /* Static when the system asks for reduced motion. */
+  @media (prefers-reduced-motion: reduce) {
+    .gs-status-bar[data-loud] {
+      animation: none;
+    }
+  }
+  @keyframes gs-status-pulse {
+    from {
+      opacity: 0.8;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
   /* Glyph: inline SVG icon, decorative (the text next to it carries the meaning). */
@@ -285,6 +338,9 @@
   }
   .gs-dialog::backdrop {
     background: var(--gs-scrim);
+  }
+  .gs-dialog__status {
+    margin-block-end: var(--gs-space-3);
   }
   .gs-dialog__actions {
     display: flex;

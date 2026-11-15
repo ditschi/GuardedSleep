@@ -191,7 +191,7 @@ test("recovery: parent offline for 90 s raises the link alarm naming the server,
     await parent.waitForTimeout(25_000);
 
     await dual.parent.setOffline(false);
-    await expect(parent.getByTestId("parent_restored_toast")).toBeVisible({ timeout: 90_000 });
+    await expect(parent.getByTestId("restored_card")).toBeVisible({ timeout: 90_000 });
     await waitForBarKind(parent, "connected", 60_000);
     await expect(parent.getByTestId("parent_link_alarm")).toHaveCount(0);
     await expect(dual.babyPage.getByTestId("baby_status")).toHaveAttribute(

@@ -47,6 +47,8 @@ object LinkMapping {
             phase = phase,
             level = if (escalating) status.level.toInt() else 0,
             lastAliveElapsedMs = status.lastAliveMs?.toLong(),
+            downSinceElapsedMs = status.downSinceMs?.toLong(),
+            nextLevelAtElapsedMs = status.nextLevelAtMs?.toLong(),
             acknowledgedUntilElapsedMs = status.acknowledgedUntil?.toLong(),
             causeHint = causeHint(status.cause),
             // update_required also arrives as a sticky cause while connected or reconnecting.

@@ -45,6 +45,17 @@ export interface LinkUi {
   level: number;
   /** Last contact with the peer; drives "not reachable for m:ss". */
   lastAliveElapsedMs: number | null;
+  /**
+   * Start of the outage: the last contact, or the run start before any contact (core
+   * `down_since_ms`). The alert counter counts from here.
+   */
+  downSinceElapsedMs: number | null;
+  /**
+   * When the next escalation level starts (core `next_level_at_ms`, the clock of
+   * `lastAliveElapsedMs`); null at level 3, while acknowledged and outside an outage. The UI turns
+   * it into a clock time and keeps no thresholds of its own.
+   */
+  nextLevelAtElapsedMs: number | null;
   /** "I'm checking" mute end (parent, level 2 and above). */
   acknowledgedUntilElapsedMs: number | null;
   causeHint: CauseHint | null;
@@ -460,6 +471,8 @@ export function defaultLinkUi(): LinkUi {
     phase: "idle",
     level: 0,
     lastAliveElapsedMs: null,
+    downSinceElapsedMs: null,
+    nextLevelAtElapsedMs: null,
     acknowledgedUntilElapsedMs: null,
     causeHint: null,
     failureKey: null,

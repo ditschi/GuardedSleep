@@ -32,12 +32,14 @@ export const GLYPHS = {
 export type GlyphName = keyof typeof GLYPHS;
 
 /** The tones shared by the status bar, chip and banner. */
-export type Tone = "neutral" | "ok" | "warn" | "orange" | "bad" | "snooze";
+/** `info` is the blue of the status bar at level 0; `warn` is the text-level orange of chips and banners. */
+export type Tone = "neutral" | "ok" | "info" | "warn" | "orange" | "bad" | "snooze";
 
 /** Default icon per tone, so colour is never the only signal. */
 export const TONE_GLYPH: Record<Tone, GlyphName> = {
   neutral: "pause",
   ok: "link",
+  info: "refresh",
   warn: "refresh",
   orange: "linkOff",
   bad: "alert",
