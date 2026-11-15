@@ -59,6 +59,7 @@ import org.guardedsleep.app.ui.model.AlertOutput
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.AppState
+import org.guardedsleep.app.ui.model.BabyMonitorState
 import org.guardedsleep.app.ui.model.DiscreetEscalation
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.SettingsState
@@ -175,308 +176,15 @@ fun SettingsScreen(
                         onForget = { forgetting = it },
                         onForgetOnly = { confirmForget = true },
                     )
-                SettingsPage.DETECTION -> {
-                    Section(
-                        R.string.native_ui_settings_group_sound_detection,
-                        "settings_group_detection",
-                    ) {
-                        var th by remember(s.threshold) { mutableFloatStateOf(s.threshold) }
-                        Body(
-                            stringResource(R.string.native_ui_settings_sensitivity),
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        MicLevelBar(b.micLevel, th, tag = "settings_mic_bar")
-                        Slider(
-                            value = th,
-                            onValueChange = { th = it },
-                            onValueChangeFinished = {
-                                controller.updateSettings { st -> st.copy(threshold = th) }
-                            },
-                            valueRange = 0.03f..0.4f,
-                            modifier = Modifier.testTag("settings_threshold"),
-                        )
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Body(stringResource(R.string.native_ui_settings_more_sensitive))
-                            Body(stringResource(R.string.native_ui_settings_less_sensitive))
-                        }
-                        Body(
-                            stringResource(R.string.native_ui_settings_hold_label),
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            HoldOptions.forEach { sec ->
-                                ChoiceChip(
-                                    stringResource(
-                                        R.string.native_ui_common_seconds_short,
-                                        sec.toString(),
-                                    ),
-                                    s.holdSeconds == sec,
-                                    "settings_hold_$sec",
-                                ) {
-                                    controller.updateSettings { st -> st.copy(holdSeconds = sec) }
-                                }
-                            }
-                        }
-                    }
-                }
-                SettingsPage.SILENCE -> {
-                    Section(R.string.native_ui_settings_group_silence, "settings_group_silence") {
-                        SwitchRow(
-                            stringResource(R.string.native_ui_setup_silence_title),
-                            s.silenceWhileMonitoring,
-                            "settings_silence",
-                        ) { on ->
-                            controller.updateSettings { st -> st.copy(silenceWhileMonitoring = on) }
-                        }
-                        Body(
-                            stringResource(
-                                if (b.dndAccess) R.string.native_ui_settings_silence_access_ok
-                                else R.string.native_ui_baby_silence_no_access
-                            ),
-                            tag = "settings_silence_status",
-                        )
-                    }
-                }
-                SettingsPage.TALK -> {
-                    Section(R.string.native_ui_talk_baby_title, "settings_group_talk") {
-                        // An adult opened the talk-back settings: the "may not be audible" warning
-                        // ends.
-                        LaunchedEffect(Unit) { controller.talkSettingsOpened() }
-                        SwitchRow(
-                            stringResource(R.string.native_ui_talk_baby_switch),
-                            s.talkBackEnabled,
-                            "baby_talk_toggle",
-                        ) { on ->
-                            controller.updateSettings { st -> st.copy(talkBackEnabled = on) }
-                        }
-                        Body(stringResource(R.string.native_ui_talk_baby_switch_hint))
-                        if (s.talkBackEnabled) {
-                            Body(
-                                stringResource(R.string.native_ui_talk_baby_volume),
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                            Row(
-                                Modifier.testTag("baby_talk_volume"),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                TalkVolume.entries.forEach { v ->
-                                    ChoiceChip(
-                                        stringResource(
-                                            when (v) {
-                                                TalkVolume.LOW -> R.string.native_ui_talk_baby_low
-                                                TalkVolume.MEDIUM ->
-                                                    R.string.native_ui_talk_baby_medium
-                                                TalkVolume.HIGH -> R.string.native_ui_talk_baby_high
-                                            }
-                                        ),
-                                        s.talkVolume == v,
-                                        "baby_talk_volume_" + v.name.lowercase(),
-                                    ) {
-                                        controller.updateSettings { st -> st.copy(talkVolume = v) }
-                                    }
-                                }
-                            }
-                            SecondaryButton(
-                                stringResource(R.string.native_ui_talk_baby_play_chime),
-                                { controller.playTalkChimeSample() },
-                                "baby_talk_play_chime",
-                            )
-                            SwitchRow(
-                                stringResource(R.string.native_ui_talk_baby_chime),
-                                s.talkChime,
-                                "baby_talk_chime_toggle",
-                            ) { on ->
-                                controller.updateSettings { st -> st.copy(talkChime = on) }
-                            }
-                        }
-                    }
-                }
-                SettingsPage.ALERTS -> {
-                    Section(R.string.native_ui_settings_group_alerts, "settings_group_alerts") {
-                        AlertStyleChoice(s.alertStyle) { style ->
-                            controller.updateSettings { st -> st.copy(alertStyle = style) }
-                        }
-                        if (s.alertStyle == AlertStyle.DISCREET) {
-                            DiscreetEscalationChoice(s.discreetEscalation) { choice ->
-                                controller.updateSettings { st ->
-                                    st.copy(discreetEscalation = choice)
-                                }
-                            }
-                        }
-                        // The tone of the connection alarm (parent only); the picker is its own
-                        // screen.
-                        Row(
-                            Modifier.fillMaxWidth()
-                                .heightIn(min = 56.dp)
-                                .clickable(role = SemRole.Button, onClick = onOpenAlarmTone)
-                                .testTag("settings_alarm_tone"),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(
-                                    stringResource(R.string.native_ui_settings_alarm_tone_label),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
-                                Body(
-                                    alarmToneName(s.connectionAlarmTone),
-                                    tag = "settings_alarm_tone_name",
-                                )
-                            }
-                        }
-                        Body(
-                            stringResource(R.string.native_ui_settings_output_label),
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        ChoiceRow(
-                            stringResource(R.string.native_ui_settings_output_default),
-                            s.alertOutput == AlertOutput.DEFAULT,
-                            "settings_output_default",
-                        ) {
-                            controller.updateSettings { st ->
-                                st.copy(alertOutput = AlertOutput.DEFAULT)
-                            }
-                        }
-                        ChoiceRow(
-                            stringResource(R.string.native_ui_settings_output_speaker),
-                            s.alertOutput == AlertOutput.SPEAKER_ONLY,
-                            "settings_output_speaker",
-                        ) {
-                            controller.updateSettings { st ->
-                                st.copy(alertOutput = AlertOutput.SPEAKER_ONLY)
-                            }
-                        }
-                        var gain by
-                            remember(s.alertGainPct) {
-                                mutableFloatStateOf(s.alertGainPct.toFloat())
-                            }
-                        Body(
-                            stringResource(
-                                R.string.native_ui_settings_gain,
-                                gain.toInt().toString(),
-                            ),
-                            tag = "settings_gain_label",
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        Slider(
-                            value = gain,
-                            onValueChange = { gain = it },
-                            onValueChangeFinished = {
-                                controller.updateSettings { st ->
-                                    st.copy(alertGainPct = gain.toInt())
-                                }
-                            },
-                            valueRange = 25f..150f,
-                            modifier = Modifier.testTag("settings_gain"),
-                        )
-                        SecondaryButton(
-                            stringResource(R.string.native_ui_probe_button),
-                            onTestAlert,
-                            "settings_test_alert",
-                        )
-                        Body(
-                            s.lastTestWallMs?.let {
-                                stringResource(
-                                    R.string.native_ui_settings_last_test,
-                                    formatTime(it),
-                                )
-                            } ?: stringResource(R.string.native_ui_settings_never_tested),
-                            tag = "settings_last_test",
-                        )
-                    }
-                }
-                SettingsPage.DISPLAY -> {
-                    Section(R.string.native_ui_settings_group_display, "settings_group_display") {
-                        ChoiceRow(
-                            stringResource(R.string.native_ui_settings_theme_dark),
-                            s.theme == Theme.DARK,
-                            "settings_theme_dark",
-                        ) {
-                            controller.updateSettings { st -> st.copy(theme = Theme.DARK) }
-                        }
-                        ChoiceRow(
-                            stringResource(R.string.native_ui_settings_theme_light),
-                            s.theme == Theme.LIGHT,
-                            "settings_theme_light",
-                        ) {
-                            controller.updateSettings { st -> st.copy(theme = Theme.LIGHT) }
-                        }
-                        ChoiceRow(
-                            stringResource(R.string.native_ui_settings_theme_system),
-                            s.theme == Theme.SYSTEM,
-                            "settings_theme_system",
-                        ) {
-                            controller.updateSettings { st -> st.copy(theme = Theme.SYSTEM) }
-                        }
-                    }
-                }
+                SettingsPage.DETECTION -> DetectionPage(controller, s, b)
+                SettingsPage.SILENCE -> SilencePage(controller, s, b)
+                SettingsPage.TALK -> TalkPage(controller, s)
+                SettingsPage.ALERTS -> AlertsPage(controller, s, onOpenAlarmTone, onTestAlert)
+                SettingsPage.DISPLAY -> DisplayPage(controller, s)
                 SettingsPage.OPEN_AT_START -> OpenAtStartPage(controller, app, isBaby)
-                SettingsPage.LANGUAGE -> {
-                    Section(R.string.native_ui_settings_group_language, "settings_group_language") {
-                        // "Match system" is translated; the languages are shown by endonym
-                        // (generated).
-                        val langs = rememberLanguageChoices().map { it.tag to it.endonym }
-                        ChoiceRow(
-                            stringResource(R.string.native_ui_settings_lang_system),
-                            s.language == null,
-                            "settings_lang_system",
-                        ) {
-                            controller.updateSettings { st -> st.copy(language = null) }
-                        }
-                        langs.forEach { (code, name) ->
-                            ChoiceRow(name, s.language == code, "settings_lang_$code") {
-                                controller.updateSettings { st -> st.copy(language = code) }
-                            }
-                        }
-                    }
-                }
-                SettingsPage.ABOUT -> {
-                    Section(R.string.native_ui_settings_group_about, "settings_group_about") {
-                        Body(
-                            stringResource(R.string.native_ui_setup_limits_body),
-                            tag = "settings_limits",
-                        )
-                        Body(
-                            stringResource(
-                                R.string.native_ui_settings_version,
-                                buildInfo.version,
-                                buildInfo.commit,
-                                buildInfo.commitTime,
-                            ),
-                            tag = "settings_version",
-                        )
-                        Body(
-                            stringResource(R.string.native_ui_settings_font_credit),
-                            tag = "settings_font_credit",
-                        )
-                    }
-                }
-                SettingsPage.ADVANCED -> {
-                    Section(R.string.native_ui_settings_group_advanced, "settings_group_advanced") {
-                        SwitchRow(
-                            stringResource(R.string.native_ui_settings_advanced_toggle),
-                            s.advancedEnabled,
-                            "settings_advanced_toggle",
-                        ) { on ->
-                            if (on) confirmAdvanced = true
-                            else
-                                controller.updateSettings { st -> st.copy(advancedEnabled = false) }
-                        }
-                        if (s.advancedEnabled)
-                            AdvancedFields(
-                                controller,
-                                s.signalingUrls,
-                                s.turnUrl,
-                                s.turnUsername,
-                                s.turnPasswordSaved,
-                                s.heartbeatSeconds,
-                            )
-                    }
-                }
+                SettingsPage.LANGUAGE -> LanguagePage(controller, s)
+                SettingsPage.ABOUT -> AboutPage(buildInfo)
+                SettingsPage.ADVANCED -> AdvancedPage(controller, s) { confirmAdvanced = true }
             }
         }
         if (confirmAdvanced) {
@@ -550,6 +258,338 @@ fun SettingsScreen(
         }
     }
 }
+
+@Composable
+private fun DetectionPage(controller: AppController, s: SettingsState, b: BabyMonitorState) {
+    Section(
+        R.string.native_ui_settings_group_sound_detection,
+        "settings_group_detection",
+    ) {
+        var th by remember(s.threshold) { mutableFloatStateOf(s.threshold) }
+        Body(
+            stringResource(R.string.native_ui_settings_sensitivity),
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        MicLevelBar(b.micLevel, th, tag = "settings_mic_bar")
+        Slider(
+            value = th,
+            onValueChange = { th = it },
+            onValueChangeFinished = {
+                controller.updateSettings { st -> st.copy(threshold = th) }
+            },
+            valueRange = 0.03f..0.4f,
+            modifier = Modifier.testTag("settings_threshold"),
+        )
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Body(stringResource(R.string.native_ui_settings_more_sensitive))
+            Body(stringResource(R.string.native_ui_settings_less_sensitive))
+        }
+        Body(
+            stringResource(R.string.native_ui_settings_hold_label),
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            HoldOptions.forEach { sec ->
+                ChoiceChip(
+                    stringResource(
+                        R.string.native_ui_common_seconds_short,
+                        sec.toString(),
+                    ),
+                    s.holdSeconds == sec,
+                    "settings_hold_$sec",
+                ) {
+                    controller.updateSettings { st -> st.copy(holdSeconds = sec) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SilencePage(controller: AppController, s: SettingsState, b: BabyMonitorState) {
+    Section(R.string.native_ui_settings_group_silence, "settings_group_silence") {
+        SwitchRow(
+            stringResource(R.string.native_ui_setup_silence_title),
+            s.silenceWhileMonitoring,
+            "settings_silence",
+        ) { on ->
+            controller.updateSettings { st -> st.copy(silenceWhileMonitoring = on) }
+        }
+        Body(
+            stringResource(
+                if (b.dndAccess) R.string.native_ui_settings_silence_access_ok
+                else R.string.native_ui_baby_silence_no_access
+            ),
+            tag = "settings_silence_status",
+        )
+    }
+}
+
+@Composable
+private fun TalkPage(controller: AppController, s: SettingsState) {
+    // An adult opened the talk-back settings: the "may not be audible" warning ends.
+    LaunchedEffect(Unit) { controller.talkSettingsOpened() }
+    Section(R.string.native_ui_talk_baby_title, "settings_group_talk") {
+        SwitchRow(
+            stringResource(R.string.native_ui_talk_baby_switch),
+            s.talkBackEnabled,
+            "baby_talk_toggle",
+        ) { on ->
+            controller.updateSettings { st -> st.copy(talkBackEnabled = on) }
+        }
+        Body(stringResource(R.string.native_ui_talk_baby_switch_hint))
+        if (s.talkBackEnabled) {
+            Body(
+                stringResource(R.string.native_ui_talk_baby_volume),
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Row(
+                Modifier.testTag("baby_talk_volume"),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                TalkVolume.entries.forEach { v ->
+                    ChoiceChip(
+                        stringResource(
+                            when (v) {
+                                TalkVolume.LOW -> R.string.native_ui_talk_baby_low
+                                TalkVolume.MEDIUM -> R.string.native_ui_talk_baby_medium
+                                TalkVolume.HIGH -> R.string.native_ui_talk_baby_high
+                            }
+                        ),
+                        s.talkVolume == v,
+                        "baby_talk_volume_" + v.name.lowercase(),
+                    ) {
+                        controller.updateSettings { st -> st.copy(talkVolume = v) }
+                    }
+                }
+            }
+            SecondaryButton(
+                stringResource(R.string.native_ui_talk_baby_play_chime),
+                { controller.playTalkChimeSample() },
+                "baby_talk_play_chime",
+            )
+            SwitchRow(
+                stringResource(R.string.native_ui_talk_baby_chime),
+                s.talkChime,
+                "baby_talk_chime_toggle",
+            ) { on ->
+                controller.updateSettings { st -> st.copy(talkChime = on) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AlertsPage(
+    controller: AppController,
+    s: SettingsState,
+    onOpenAlarmTone: () -> Unit,
+    onTestAlert: () -> Unit,
+) {
+    Section(R.string.native_ui_settings_group_alerts, "settings_group_alerts") {
+        AlertStyleChoice(s.alertStyle) { style ->
+            controller.updateSettings { st -> st.copy(alertStyle = style) }
+        }
+        if (s.alertStyle == AlertStyle.DISCREET) {
+            DiscreetEscalationChoice(s.discreetEscalation) { choice ->
+                controller.updateSettings { st ->
+                    st.copy(discreetEscalation = choice)
+                }
+            }
+        }
+        // The tone of the connection alarm (parent only); the picker is its own
+        // screen.
+        Row(
+            Modifier.fillMaxWidth()
+                .heightIn(min = 56.dp)
+                .clickable(role = SemRole.Button, onClick = onOpenAlarmTone)
+                .testTag("settings_alarm_tone"),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.native_ui_settings_alarm_tone_label),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Body(
+                    alarmToneName(s.connectionAlarmTone),
+                    tag = "settings_alarm_tone_name",
+                )
+            }
+        }
+        Body(
+            stringResource(R.string.native_ui_settings_output_label),
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        ChoiceRow(
+            stringResource(R.string.native_ui_settings_output_default),
+            s.alertOutput == AlertOutput.DEFAULT,
+            "settings_output_default",
+        ) {
+            controller.updateSettings { st ->
+                st.copy(alertOutput = AlertOutput.DEFAULT)
+            }
+        }
+        ChoiceRow(
+            stringResource(R.string.native_ui_settings_output_speaker),
+            s.alertOutput == AlertOutput.SPEAKER_ONLY,
+            "settings_output_speaker",
+        ) {
+            controller.updateSettings { st ->
+                st.copy(alertOutput = AlertOutput.SPEAKER_ONLY)
+            }
+        }
+        var gain by
+            remember(s.alertGainPct) {
+                mutableFloatStateOf(s.alertGainPct.toFloat())
+            }
+        Body(
+            stringResource(
+                R.string.native_ui_settings_gain,
+                gain.toInt().toString(),
+            ),
+            tag = "settings_gain_label",
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Slider(
+            value = gain,
+            onValueChange = { gain = it },
+            onValueChangeFinished = {
+                controller.updateSettings { st ->
+                    st.copy(alertGainPct = gain.toInt())
+                }
+            },
+            valueRange = 25f..150f,
+            modifier = Modifier.testTag("settings_gain"),
+        )
+        SecondaryButton(
+            stringResource(R.string.native_ui_probe_button),
+            onTestAlert,
+            "settings_test_alert",
+        )
+        Body(
+            s.lastTestWallMs?.let {
+                stringResource(
+                    R.string.native_ui_settings_last_test,
+                    formatTime(it),
+                )
+            } ?: stringResource(R.string.native_ui_settings_never_tested),
+            tag = "settings_last_test",
+        )
+    }
+}
+
+@Composable
+private fun DisplayPage(controller: AppController, s: SettingsState) {
+    Section(R.string.native_ui_settings_group_display, "settings_group_display") {
+        Theme.entries.forEach { theme ->
+            ChoiceRow(
+                themeLabel(theme),
+                s.theme == theme,
+                "settings_theme_" + theme.name.lowercase(),
+            ) {
+                controller.updateSettings { st -> st.copy(theme = theme) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LanguagePage(controller: AppController, s: SettingsState) {
+    Section(R.string.native_ui_settings_group_language, "settings_group_language") {
+        // "Match system" is translated; the languages are shown by endonym
+        // (generated).
+        val langs = rememberLanguageChoices().map { it.tag to it.endonym }
+        ChoiceRow(
+            stringResource(R.string.native_ui_settings_lang_system),
+            s.language == null,
+            "settings_lang_system",
+        ) {
+            controller.updateSettings { st -> st.copy(language = null) }
+        }
+        langs.forEach { (code, name) ->
+            ChoiceRow(name, s.language == code, "settings_lang_$code") {
+                controller.updateSettings { st -> st.copy(language = code) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AboutPage(buildInfo: BuildInfo) {
+    Section(R.string.native_ui_settings_group_about, "settings_group_about") {
+        Body(
+            stringResource(R.string.native_ui_setup_limits_body),
+            tag = "settings_limits",
+        )
+        Body(
+            stringResource(
+                R.string.native_ui_settings_version,
+                buildInfo.version,
+                buildInfo.commit,
+                buildInfo.commitTime,
+            ),
+            tag = "settings_version",
+        )
+        Body(
+            stringResource(R.string.native_ui_settings_font_credit),
+            tag = "settings_font_credit",
+        )
+    }
+}
+
+@Composable
+private fun AdvancedPage(
+    controller: AppController,
+    s: SettingsState,
+    onConfirmAdvanced: () -> Unit,
+) {
+    Section(R.string.native_ui_settings_group_advanced, "settings_group_advanced") {
+        SwitchRow(
+            stringResource(R.string.native_ui_settings_advanced_toggle),
+            s.advancedEnabled,
+            "settings_advanced_toggle",
+        ) { on ->
+            if (on) onConfirmAdvanced()
+            else controller.updateSettings { st -> st.copy(advancedEnabled = false) }
+        }
+        if (s.advancedEnabled)
+            AdvancedFields(
+                controller,
+                s.signalingUrls,
+                s.turnUrl,
+                s.turnUsername,
+                s.turnPasswordSaved,
+                s.heartbeatSeconds,
+            )
+    }
+}
+
+@Composable
+private fun themeLabel(theme: Theme): String =
+    stringResource(
+        when (theme) {
+            Theme.DARK -> R.string.native_ui_settings_theme_dark
+            Theme.LIGHT -> R.string.native_ui_settings_theme_light
+            Theme.SYSTEM -> R.string.native_ui_settings_theme_system
+        }
+    )
+
+/** The start mode as one word: the role a start opens in, or "Ask every time". */
+@Composable
+private fun startModeLabel(mode: Role?): String =
+    stringResource(
+        when (mode) {
+            null -> R.string.native_ui_settings_start_mode_ask
+            Role.BABY -> R.string.native_ui_role_baby_title
+            Role.PARENT -> R.string.native_ui_role_parent_title
+        }
+    )
 
 private fun pageTitle(page: SettingsPage): Int =
     when (page) {
@@ -640,10 +680,7 @@ private fun SettingsOverview(
             }
         }
         if (readOnly) {
-            Body(
-                stringResource(R.string.native_ui_connections_read_only_note),
-                tag = "settings_connections_read_only",
-            )
+            ConnectionsReadOnlyNote()
         } else if (app.paired) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 GlyphIcon(Glyph.CHEVRON, LocalAppColors.current.secondaryText)
@@ -688,13 +725,7 @@ private fun SettingsOverview(
             }
             NavRow(
                 stringResource(R.string.native_ui_settings_group_display),
-                stringResource(
-                    when (s.theme) {
-                        Theme.DARK -> R.string.native_ui_settings_theme_dark
-                        Theme.LIGHT -> R.string.native_ui_settings_theme_light
-                        Theme.SYSTEM -> R.string.native_ui_settings_theme_system
-                    }
-                ),
+                themeLabel(s.theme),
                 "settings_nav_display",
             ) {
                 onPage(SettingsPage.DISPLAY)
@@ -702,13 +733,7 @@ private fun SettingsOverview(
         }
         NavRow(
             stringResource(R.string.native_ui_settings_open_at_start_title),
-            stringResource(
-                when (app.defaultRole) {
-                    null -> R.string.native_ui_settings_start_mode_ask
-                    Role.BABY -> R.string.native_ui_role_baby_title
-                    Role.PARENT -> R.string.native_ui_role_parent_title
-                }
-            ),
+            startModeLabel(app.defaultRole),
             "settings_nav_open_at_start",
         ) {
             onPage(SettingsPage.OPEN_AT_START)
@@ -743,6 +768,15 @@ private fun SettingsOverview(
             onPage(SettingsPage.ADVANCED)
         }
     }
+}
+
+/** Why the connections cannot be changed: monitoring is running. */
+@Composable
+private fun ConnectionsReadOnlyNote() {
+    Body(
+        stringResource(R.string.native_ui_connections_read_only_note),
+        tag = "settings_connections_read_only",
+    )
 }
 
 /** A saved connection on the overview: its name, which device it is with, and "In use". */
@@ -849,10 +883,7 @@ private fun ConnectionsPage(
             Body(stringResource(R.string.native_ui_home_empty), tag = "settings_not_paired")
         }
         if (readOnly) {
-            Body(
-                stringResource(R.string.native_ui_connections_read_only_note),
-                tag = "settings_connections_read_only",
-            )
+            ConnectionsReadOnlyNote()
         }
     }
 }
@@ -867,26 +898,14 @@ private fun OpenAtStartPage(controller: AppController, app: AppState, isBaby: Bo
     Section(R.string.native_ui_settings_group_start_mode, "settings_group_start_mode") {
         Body(stringResource(R.string.native_ui_settings_open_at_start_mode_hint))
         // Which role a start without running monitoring opens in; null asks every time.
-        ChoiceRow(
-            stringResource(R.string.native_ui_settings_start_mode_ask),
-            app.defaultRole == null,
-            "start_mode_ask",
-        ) {
-            controller.setDefaultRole(null)
-        }
-        ChoiceRow(
-            stringResource(R.string.native_ui_role_baby_title),
-            app.defaultRole == Role.BABY,
-            "start_mode_baby",
-        ) {
-            controller.setDefaultRole(Role.BABY)
-        }
-        ChoiceRow(
-            stringResource(R.string.native_ui_role_parent_title),
-            app.defaultRole == Role.PARENT,
-            "start_mode_parent",
-        ) {
-            controller.setDefaultRole(Role.PARENT)
+        listOf(null, Role.BABY, Role.PARENT).forEach { mode ->
+            ChoiceRow(
+                startModeLabel(mode),
+                app.defaultRole == mode,
+                "start_mode_" + (mode?.name?.lowercase() ?: "ask"),
+            ) {
+                controller.setDefaultRole(mode)
+            }
         }
     }
     if (app.connections.isNotEmpty()) {
