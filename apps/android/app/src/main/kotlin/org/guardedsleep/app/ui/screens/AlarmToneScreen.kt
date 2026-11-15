@@ -30,6 +30,7 @@ import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AppCard
 import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.Glyph
+import org.guardedsleep.app.ui.common.GlyphButton
 import org.guardedsleep.app.ui.common.GlyphIcon
 import org.guardedsleep.app.ui.common.ScreenRoot
 import org.guardedsleep.app.ui.common.ScrollColumn
@@ -96,15 +97,12 @@ fun AlarmTonePickerScreen(controller: AppController, onBack: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Row(
-                    Modifier.size(48.dp)
-                        .clickable(role = SemRole.Button, onClick = onBack)
-                        .testTag("alarm_tone_back"),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    GlyphIcon(Glyph.BACK, MaterialTheme.colorScheme.onBackground)
-                }
+                GlyphButton(
+                    Glyph.BACK,
+                    stringResource(R.string.native_ui_common_back),
+                    onBack,
+                    "alarm_tone_back",
+                )
                 Text(
                     stringResource(R.string.native_ui_settings_alarm_tone_label),
                     Modifier.testTag("alarm_tone_title").semantics { heading() },

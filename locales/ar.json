@@ -108,7 +108,8 @@
         },
         "babyUnitDefault": "جهاز الطفل",
         "parentUnitDefault": "جهاز الأهل",
-        "close": "إغلاق"
+        "close": "إغلاق",
+        "back": "رجوع"
       },
       "role": {
         "title": "ما هذا الجهاز؟",

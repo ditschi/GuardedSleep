@@ -47,6 +47,7 @@ import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.ConfirmDialog
 import org.guardedsleep.app.ui.common.Dot
 import org.guardedsleep.app.ui.common.Glyph
+import org.guardedsleep.app.ui.common.GlyphButton
 import org.guardedsleep.app.ui.common.GlyphIcon
 import org.guardedsleep.app.ui.common.RenameConnectionDialog
 import org.guardedsleep.app.ui.common.ScreenRoot
@@ -139,15 +140,12 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Row(
-                    Modifier.size(48.dp)
-                        .clickable(role = SemRole.Button, onClick = goBack)
-                        .testTag("settings_back"),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    GlyphIcon(Glyph.BACK, MaterialTheme.colorScheme.onBackground)
-                }
+                GlyphButton(
+                    Glyph.BACK,
+                    stringResource(R.string.native_ui_common_back),
+                    goBack,
+                    "settings_back",
+                )
                 Text(
                     stringResource(pageTitle(page)),
                     Modifier.testTag("settings_title").semantics { heading() },

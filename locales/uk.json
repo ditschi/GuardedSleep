@@ -108,7 +108,8 @@
         },
         "babyUnitDefault": "Пристрій дитини",
         "parentUnitDefault": "Пристрій батьків",
-        "close": "Закрити"
+        "close": "Закрити",
+        "back": "Назад"
       },
       "role": {
         "title": "Що це за пристрій?",

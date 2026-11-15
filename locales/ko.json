@@ -108,7 +108,8 @@
         },
         "babyUnitDefault": "아기 기기",
         "parentUnitDefault": "부모 기기",
-        "close": "닫기"
+        "close": "닫기",
+        "back": "뒤로"
       },
       "role": {
         "title": "이 기기는 어떤 기기인가요?",

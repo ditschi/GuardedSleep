@@ -108,7 +108,8 @@
         },
         "babyUnitDefault": "赤ちゃん用端末",
         "parentUnitDefault": "保護者用端末",
-        "close": "閉じる"
+        "close": "閉じる",
+        "back": "戻る"
       },
       "role": {
         "title": "この端末はどちらですか？",

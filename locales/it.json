@@ -108,7 +108,8 @@
         },
         "babyUnitDefault": "Dispositivo del bambino",
         "parentUnitDefault": "Dispositivo del genitore",
-        "close": "Chiudi"
+        "close": "Chiudi",
+        "back": "Indietro"
       },
       "role": {
         "title": "Che dispositivo è questo?",

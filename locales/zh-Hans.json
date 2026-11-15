@@ -108,7 +108,8 @@
         },
         "babyUnitDefault": "宝宝设备",
         "parentUnitDefault": "家长设备",
-        "close": "关闭"
+        "close": "关闭",
+        "back": "返回"
       },
       "role": {
         "title": "这是哪台设备？",

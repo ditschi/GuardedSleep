@@ -106,7 +106,8 @@
         },
         "babyUnitDefault": "Baby device",
         "parentUnitDefault": "Parent device",
-        "close": "Close"
+        "close": "Close",
+        "back": "Back"
       },
       "role": {
         "title": "Which device is this?",

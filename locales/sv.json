@@ -108,7 +108,8 @@
         },
         "babyUnitDefault": "Babyenhet",
         "parentUnitDefault": "Föräldraenhet",
-        "close": "Stäng"
+        "close": "Stäng",
+        "back": "Tillbaka"
       },
       "role": {
         "title": "Vilken enhet är det här?",

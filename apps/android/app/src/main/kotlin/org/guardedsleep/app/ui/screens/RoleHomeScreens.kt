@@ -33,6 +33,7 @@ import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AppCard
 import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.Glyph
+import org.guardedsleep.app.ui.common.GlyphButton
 import org.guardedsleep.app.ui.common.GlyphIcon
 import org.guardedsleep.app.ui.common.PrimaryButton
 import org.guardedsleep.app.ui.common.ScreenRoot
@@ -176,18 +177,7 @@ fun HomeScreen(
                     Modifier.weight(1f),
                 )
                 // The gear sits in the header; the whole 48 dp square is the target.
-                Row(
-                    Modifier.size(48.dp)
-                        .clickable(role = SemRole.Button, onClick = onSettings)
-                        .semantics {
-                            contentDescription = settingsLabel
-                        }
-                        .testTag("home_settings"),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    GlyphIcon(Glyph.GEAR, MaterialTheme.colorScheme.onBackground)
-                }
+                GlyphButton(Glyph.GEAR, settingsLabel, onSettings, "home_settings")
             }
             if (app.paired) {
                 // Role as a section header, the connection directly under it on one card.

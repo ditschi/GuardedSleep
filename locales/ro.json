@@ -108,7 +108,8 @@
         },
         "babyUnitDefault": "Dispozitivul bebelușului",
         "parentUnitDefault": "Dispozitivul părintelui",
-        "close": "Închide"
+        "close": "Închide",
+        "back": "Înapoi"
       },
       "role": {
         "title": "Ce dispozitiv este acesta?",

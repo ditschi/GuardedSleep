@@ -108,7 +108,8 @@
         },
         "babyUnitDefault": "Perangkat bayi",
         "parentUnitDefault": "Perangkat orang tua",
-        "close": "Tutup"
+        "close": "Tutup",
+        "back": "Kembali"
       },
       "role": {
         "title": "Perangkat apa ini?",

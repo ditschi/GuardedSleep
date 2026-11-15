@@ -108,7 +108,8 @@
         },
         "babyUnitDefault": "Bebek cihazı",
         "parentUnitDefault": "Ebeveyn cihazı",
-        "close": "Kapat"
+        "close": "Kapat",
+        "back": "Geri"
       },
       "role": {
         "title": "Bu hangi cihaz?",

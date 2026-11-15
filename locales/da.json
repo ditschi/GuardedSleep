@@ -108,7 +108,8 @@
         },
         "babyUnitDefault": "Babyenhed",
         "parentUnitDefault": "Forældreenhed",
-        "close": "Luk"
+        "close": "Luk",
+        "back": "Tilbage"
       },
       "role": {
         "title": "Hvilken enhed er det her?",

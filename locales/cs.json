@@ -108,7 +108,8 @@
         },
         "babyUnitDefault": "Zařízení dítěte",
         "parentUnitDefault": "Zařízení rodiče",
-        "close": "Zavřít"
+        "close": "Zavřít",
+        "back": "Zpět"
       },
       "role": {
         "title": "Které zařízení to je?",

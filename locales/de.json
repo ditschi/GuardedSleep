@@ -108,7 +108,8 @@
         },
         "babyUnitDefault": "Babygerät",
         "parentUnitDefault": "Elterngerät",
-        "close": "Schließen"
+        "close": "Schließen",
+        "back": "Zurück"
       },
       "role": {
         "title": "Welches Gerät ist das?",

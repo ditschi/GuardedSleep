@@ -108,7 +108,8 @@
         },
         "babyUnitDefault": "Urządzenie dziecka",
         "parentUnitDefault": "Urządzenie rodzica",
-        "close": "Zamknij"
+        "close": "Zamknij",
+        "back": "Wstecz"
       },
       "role": {
         "title": "Czym jest to urządzenie?",

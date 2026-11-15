@@ -108,7 +108,8 @@
         },
         "babyUnitDefault": "बच्चे का डिवाइस",
         "parentUnitDefault": "माता-पिता का डिवाइस",
-        "close": "बंद करें"
+        "close": "बंद करें",
+        "back": "वापस"
       },
       "role": {
         "title": "यह कौन-सा डिवाइस है?",

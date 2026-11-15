@@ -108,7 +108,8 @@
         },
         "babyUnitDefault": "Babyapparaat",
         "parentUnitDefault": "Ouderapparaat",
-        "close": "Sluiten"
+        "close": "Sluiten",
+        "back": "Terug"
       },
       "role": {
         "title": "Welk apparaat is dit?",
