@@ -320,7 +320,8 @@ fun ParentMonitorScreen(
             )
         }
         ListenButton(p.listen, connected, { controller.setListen(it) })
-        DockTiles { m ->
+        // Unequal widths keep every one-line label whole: "Pause noise alerts" is the longest.
+        DockTiles { w ->
             TalkTile(
                 p,
                 elapsed,
@@ -330,7 +331,7 @@ fun ParentMonitorScreen(
                     controller.setTalk(pressed)
                 },
                 onHint = { talkHint = it },
-                modifier = m,
+                modifier = w(1.2f),
             )
             DockTile(
                 Glyph.PAUSE,
@@ -338,7 +339,7 @@ fun ParentMonitorScreen(
                 stringResource(R.string.native_ui_snooze_button),
                 "parent_snooze",
                 { sheet = ParentSheet.SNOOZE },
-                m,
+                w(1.4f),
                 active = snoozed,
             )
             DockTile(
@@ -347,7 +348,7 @@ fun ParentMonitorScreen(
                 stringResource(R.string.native_ui_common_more),
                 "parent_overflow",
                 { sheet = ParentSheet.MORE },
-                m,
+                w(0.8f),
             )
         }
     }

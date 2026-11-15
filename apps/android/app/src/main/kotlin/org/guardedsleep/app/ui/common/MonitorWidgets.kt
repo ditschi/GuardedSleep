@@ -553,8 +553,9 @@ fun DockTile(
             fontWeight = FontWeight.Bold,
             color = content,
             textAlign = TextAlign.Center,
-            maxLines = 1,
-            softWrap = false,
+            // From 1.5x text a long label may take a second line rather than be cut.
+            maxLines = if (LocalDensity.current.fontScale >= 1.5f) 2 else 1,
+            softWrap = LocalDensity.current.fontScale >= 1.5f,
             overflow = TextOverflow.Ellipsis,
         )
     }
@@ -562,7 +563,10 @@ fun DockTile(
 
 /** The three tiles under Listen: one row, or 2 + 1 from 1.5x text so no label is cut. */
 @Composable
-fun DockTiles(modifier: Modifier = Modifier, content: @Composable (Modifier) -> Unit) {
+fun DockTiles(
+    modifier: Modifier = Modifier,
+    content: @Composable (weighted: (Float) -> Modifier) -> Unit,
+) {
     val stacked = LocalDensity.current.fontScale >= 1.5f
     if (stacked) {
         FlowRow(
@@ -571,11 +575,11 @@ fun DockTiles(modifier: Modifier = Modifier, content: @Composable (Modifier) -> 
             verticalArrangement = Arrangement.spacedBy(8.dp),
             maxItemsInEachRow = 2,
         ) {
-            content(Modifier.weight(1f))
+            content { Modifier.weight(1f) }
         }
     } else {
         Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            content(Modifier.weight(1f))
+            content { Modifier.weight(it) }
         }
     }
 }

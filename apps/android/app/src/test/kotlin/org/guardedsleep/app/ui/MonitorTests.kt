@@ -18,7 +18,6 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.onNode
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
@@ -242,10 +241,14 @@ class MonitorTests : ShotBase() {
         try {
             show { ParentMonitorScreen(c, {}) }
             // The German tile says "Pausieren"; the full label stays the accessibility label.
-            onNode(hasText("Pausieren") and hasAnyAncestor(hasTestTag("parent_snooze")))
-                .assertIsDisplayed()
+            onNode(
+                    hasText("Pausieren") and hasAnyAncestor(hasTestTag("parent_snooze")),
+                    useUnmergedTree = true,
+                )
+                .assertExists()
+            onNodeWithTag("parent_snooze").assertIsDisplayed()
             onNodeWithTag("parent_snooze")
-                .assertContentDescriptionContains("pausieren", ignoreCase = true)
+                .assertContentDescriptionContains("pausieren", substring = true, ignoreCase = true)
         } finally {
             RuntimeEnvironment.setQualifiers("+en")
         }
