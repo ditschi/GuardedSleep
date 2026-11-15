@@ -177,9 +177,9 @@ if [[ -f "$OUT/ac12-window.txt" ]]; then
 	joined="$(docker logs --since "$w_from" --until "$((w_to + 1))" gs-gate-signaling 2>&1 | grep -c 'joined as' || true)"
 	babies="$(docker logs --since "$w_from" --until "$((w_to + 1))" gs-gate-signaling 2>&1 | grep -c 'joined as baby' || true)"
 	if [[ "$joined" -ge 2 && "$babies" -ge 1 ]]; then
-		echo "PASS AC-12b — $joined members joined on the gate's own signaling server during the UI journey" | tee -a "$OUT/summary.txt"
+		echo "PASS AC-12b — $joined members joined on the gate's own signaling server during the UI journey" | tee -a "$OUT/summary.txt" || true # CI: the runner writes summary.txt as root, the host cannot append
 	else
-		echo "FAIL AC-12b — only $joined member join(s) on the gate's signaling server during the UI journey (did a device use another relay?)" | tee -a "$OUT/summary.txt" >&2
+		echo "FAIL AC-12b — only $joined member join(s) on the gate's signaling server during the UI journey (did a device use another relay?)" | { tee -a "$OUT/summary.txt" || true; } >&2
 		exit 1
 	fi
 fi
