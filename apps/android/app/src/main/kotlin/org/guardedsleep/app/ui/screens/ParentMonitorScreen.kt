@@ -70,6 +70,7 @@ import org.guardedsleep.app.ui.common.rememberWallNow
 import org.guardedsleep.app.ui.model.AlertOutput
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
+import org.guardedsleep.app.ui.model.BabyBattery
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.ListenMode
 import org.guardedsleep.app.ui.model.MissedEventsUi
@@ -616,7 +617,7 @@ private fun buildChips(
     if (pct != null) {
         val charging = p.peer.charging == true
         when {
-            pct < 5 && !charging ->
+            pct < BabyBattery.CRITICAL_PCT && !charging ->
                 out +=
                     ChipSpec(
                         2,
@@ -629,7 +630,7 @@ private fun buildChips(
                         null,
                         stale,
                     )
-            pct < 15 && !charging ->
+            pct < BabyBattery.LOW_PCT && !charging ->
                 out +=
                     ChipSpec(
                         4,

@@ -206,9 +206,12 @@ describe("chips", () => {
   });
 
   it("asks for the charger when the battery is low and not charging", () => {
-    const low = fixedChips(connected({ peer: { ...peer, batteryPct: 15, charging: false } }));
+    const low = fixedChips(connected({ peer: { ...peer, batteryPct: 14, charging: false } }));
     expect(low[0]).toMatchObject({ key: "native.ui.battery.babyLow", tone: "warn" });
-    const charging = fixedChips(connected({ peer: { ...peer, batteryPct: 15, charging: true } }));
+    // 15 % is the threshold (`parent-alerts` "Baby battery warnings"): not yet low.
+    const edge = fixedChips(connected({ peer: { ...peer, batteryPct: 15, charging: false } }));
+    expect(edge[0]).toMatchObject({ key: "native.ui.battery.baby", tone: "neutral" });
+    const charging = fixedChips(connected({ peer: { ...peer, batteryPct: 14, charging: true } }));
     expect(charging[0]).toMatchObject({ key: "native.ui.battery.baby", tone: "neutral" });
   });
 
