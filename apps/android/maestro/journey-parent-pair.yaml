@@ -22,5 +22,5 @@ appId: org.guardedsleep.app.alpha
     id: "parent_pair_paste_submit"
 - extendedWaitUntil:
     visible:
-      id: "parent_ambient_bar"
+      id: "status_bar"
     timeout: 90000
