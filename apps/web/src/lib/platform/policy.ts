@@ -94,7 +94,7 @@ export const TALK_MIC_SILENT_BELOW = 0.002;
 export const TALK_RESULT_VISIBLE_MS = 8_000;
 
 /**
- * Below this a parent device asks to be plugged in (`parent_battery_low` readiness issue). The UI
- * mirrors the number in `banners.ts` (`OWN_BATTERY_LOW_PCT`); the Android client has the same one.
+ * Below this a parent device asks to be plugged in (`parent_battery_low` readiness issue). The
+ * Android client's `ReadinessChecker.LOW_BATTERY_PCT` is the same number; the UI never uses it.
  */
 export const OWN_BATTERY_LOW_PCT = 20;

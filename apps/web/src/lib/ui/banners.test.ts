@@ -10,11 +10,10 @@ import {
 } from "../contract";
 import kotlin from "../../../../android/ui-contract/src/main/kotlin/org/guardedsleep/app/ui/model/Banners.kt?raw";
 import contract from "../../../../android/ui-contract/src/main/kotlin/org/guardedsleep/app/ui/model/UiContract.kt?raw";
+import { BABY_BATTERY_LOW_PCT, BATTERY_CRITICAL_PCT } from "./parent-view";
 import {
-  BABY_BATTERY_LOW_PCT,
   BANNER_LIMIT,
   BANNER_ORDER,
-  BATTERY_CRITICAL_PCT,
   bannerLevel,
   parentBanners,
   rankBanners,

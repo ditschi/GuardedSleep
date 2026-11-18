@@ -1,8 +1,6 @@
 import type { AlertStyle, ParentMonitorState, ReadinessIssue } from "../contract";
 import { BABY_BATTERY_LOW_PCT, BATTERY_CRITICAL_PCT } from "./parent-view";
 
-export { BABY_BATTERY_LOW_PCT, BATTERY_CRITICAL_PCT };
-
 /*
  * The notices on the parent monitor, ranked (`parent-alerts` "Banner priority on the monitor"):
  * at most two are shown, the rest fold into one "+N more" row. Pure presentation: every fact comes
@@ -45,9 +43,6 @@ export const BANNER_ORDER: readonly BannerKind[] = [
 
 /** The most banners shown at once. */
 export const BANNER_LIMIT = 2;
-
-/** This (parent) device asks to be plugged in below this. */
-export const OWN_BATTERY_LOW_PCT = 20;
 
 export interface Banner {
   kind: BannerKind;
