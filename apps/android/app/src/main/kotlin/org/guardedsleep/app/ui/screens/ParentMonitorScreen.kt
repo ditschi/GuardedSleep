@@ -84,6 +84,7 @@ import org.guardedsleep.app.ui.model.BannerKind
 import org.guardedsleep.app.ui.model.LevelHistory
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.ListenMode
+import org.guardedsleep.app.ui.model.LoudnessWords
 import org.guardedsleep.app.ui.model.MissedEventsUi
 import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.ReadinessIssue
@@ -847,8 +848,10 @@ private fun MissedCard(m: MissedEventsUi, wall: Long, onOk: () -> Unit) {
                     formatTime(end),
                     stringResource(
                         when {
-                            (m.loudest ?: 0f) < 0.15f -> R.string.native_ui_parent_level_quiet
-                            (m.loudest ?: 0f) < 0.5f -> R.string.native_ui_parent_level_some
+                            (m.loudest ?: 0f) < LoudnessWords.SOME_FROM ->
+                                R.string.native_ui_parent_level_quiet
+                            (m.loudest ?: 0f) < LoudnessWords.LOUD_FROM ->
+                                R.string.native_ui_parent_level_some
                             else -> R.string.native_ui_parent_level_loud
                         }
                     ),

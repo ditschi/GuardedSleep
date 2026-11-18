@@ -41,10 +41,17 @@ export function formatDuration(t: Translate, ms: number): string {
     : t("native.ui.common.durationHourMin", { hours, minutes: rest });
 }
 
-/** The loudness word for the meter's accessible name. */
+/**
+ * The loudness words of a missed-sound report (`LoudnessWords` in UiContract.kt: the same
+ * thresholds as Android's missed-sound card).
+ */
+export const LEVEL_SOME_FROM = 0.15;
+export const LEVEL_LOUD_FROM = 0.5;
+
+/** The loudness word for a level 0..1. */
 export function levelWordKey(level: number): MessageKey {
-  if (level >= 0.5) return "native.ui.parent.level.loud";
-  if (level >= 0.12) return "native.ui.parent.level.some";
+  if (level >= LEVEL_LOUD_FROM) return "native.ui.parent.level.loud";
+  if (level >= LEVEL_SOME_FROM) return "native.ui.parent.level.some";
   return "native.ui.parent.level.quiet";
 }
 

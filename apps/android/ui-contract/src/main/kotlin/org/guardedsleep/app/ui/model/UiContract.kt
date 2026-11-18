@@ -145,6 +145,15 @@ enum class SilenceRequest {
     FAILED,
 }
 
+/**
+ * Where the loudness words of a missed-sound report switch ("quiet", "some sound", "loud"). The web
+ * client has the same two numbers in `format.ts`.
+ */
+object LoudnessWords {
+    const val SOME_FROM = 0.15f
+    const val LOUD_FROM = 0.5f
+}
+
 data class MissedEventsUi(
     val downMs: Long,
     val count: Int?,
