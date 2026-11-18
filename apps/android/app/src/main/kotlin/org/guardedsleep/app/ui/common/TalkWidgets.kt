@@ -10,9 +10,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -22,12 +20,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -42,6 +39,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.withTimeoutOrNull
 import org.guardedsleep.app.contract.R
@@ -115,28 +113,26 @@ private fun endText(end: TalkEnd?): String? =
     }
 
 /**
- * The parent's push-to-talk row (design §9): its own row below Listen, tertiary colour, a 300 ms
- * hold, states "One moment…" and "Speak now", haptics at the grant, 5 s before the limit and at the
- * cut, and no live regions: while the microphone is open nothing may be announced into it.
+ * The parent's push-to-talk tile in the dock (design section 9): a 300 ms hold, states "One
+ * moment…" and "Speak now", haptics at the grant, 5 s before the limit and at the cut, and no live
+ * regions: while the microphone is open nothing may be announced into it. A talk that cannot start
+ * before a known time says "Talk again at {time}" as an outlined status slot at full contrast,
+ * never as a disabled button. Its reasons and notices are [TalkStatus].
  */
 @Composable
-fun TalkSection(
+fun TalkTile(
     p: ParentMonitorState,
     elapsed: Long,
-    coachVisible: Boolean,
+    wall: Long,
     onPress: (Boolean) -> Unit,
-    onKeepListening: () -> Unit,
-    onPermissionResult: (Boolean) -> Unit,
-    onPermissionDismiss: () -> Unit,
-    onCoachDismiss: () -> Unit,
+    onHint: (Int?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val talk = p.talk
     val enabled = talk !is TalkUi.Unavailable
-    val active = talk is TalkUi.Requesting || talk is TalkUi.Talking
     val haptic = LocalHapticFeedback.current
-    var hint by remember { mutableStateOf<Int?>(null) }
     val left = (talk as? TalkUi.Talking)?.let { secondsLeft(it.untilElapsedMs, elapsed) }
+    val counting = talk is TalkUi.Talking && left != null && left <= COUNTDOWN_SECONDS
 
     // Haptics replace speech while the microphone is open: grant, 5 s left, and the cut.
     LaunchedEffect(talk is TalkUi.Talking) {
@@ -150,38 +146,147 @@ fun TalkSection(
         if (p.talkEnd == TalkEnd.LIMIT) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
     }
 
+    val retryAt =
+        (talk as? TalkUi.Unavailable)
+            ?.takeIf { it.reason == TalkUnavailable.COOLDOWN }
+            ?.retryAtElapsedMs
+    val againAt = retryAt?.let { formatTime(elapsedToWall(it, elapsed, wall)) }
     val label =
         stringResource(
             when {
+                againAt != null -> R.string.native_ui_talk_again
                 talk is TalkUi.Requesting -> R.string.native_ui_talk_requesting
-                talk is TalkUi.Talking && left != null && left <= COUNTDOWN_SECONDS ->
-                    R.string.native_ui_talk_release_in
+                counting -> R.string.native_ui_talk_release_in
                 talk is TalkUi.Talking -> R.string.native_ui_talk_speaking
+                talk is TalkUi.Unavailable && talk.reason == TalkUnavailable.NOT_CONNECTED ->
+                    R.string.native_ui_talk_disabled
                 else -> R.string.native_ui_talk_idle
             },
-            *(if (talk is TalkUi.Talking && left != null && left <= COUNTDOWN_SECONDS)
-                arrayOf<Any>(left)
-            else emptyArray()),
+            *(if (counting && left != null) arrayOf<Any>(left) else emptyArray()),
         )
+    val sub = againAt?.let { stringResource(R.string.native_ui_talk_again_at, it) }
     val idleLabel = stringResource(R.string.native_ui_talk_idle)
-    val tertiary = MaterialTheme.colorScheme.tertiary
+    val scheme = MaterialTheme.colorScheme
+    val status = againAt != null
     val container =
         when {
-            !enabled -> MaterialTheme.colorScheme.surfaceVariant
-            talk is TalkUi.Talking -> tertiary
-            active -> MaterialTheme.colorScheme.tertiaryContainer
-            else -> MaterialTheme.colorScheme.tertiaryContainer
+            status -> Color.Transparent
+            !enabled -> scheme.surfaceContainerLow
+            talk is TalkUi.Talking -> scheme.tertiary
+            else -> scheme.tertiaryContainer
         }
     val content =
         when {
+            status -> scheme.onSurface
             !enabled -> LocalAppColors.current.secondaryText
-            talk is TalkUi.Talking -> MaterialTheme.colorScheme.onTertiary
-            else -> MaterialTheme.colorScheme.onTertiaryContainer
+            talk is TalkUi.Talking -> scheme.onTertiary
+            else -> scheme.onTertiaryContainer
         }
     val onPressState = rememberUpdatedState(onPress)
     val enabledState = rememberUpdatedState(enabled)
+    val onHintState = rememberUpdatedState(onHint)
     val lockPx = with(LocalDensity.current) { 72.dp.toPx() }
+    val shape = RoundedCornerShape(22.dp)
 
+    Column(
+        modifier
+            .heightIn(min = 72.dp)
+            .background(container, shape)
+            .then(
+                when {
+                    // A filled ring while the microphone is open (static: no pulse to reduce).
+                    talk is TalkUi.Talking ->
+                        Modifier.border(BorderStroke(4.dp, scheme.onTertiary), shape)
+                    status -> Modifier.border(BorderStroke(1.5.dp, scheme.outline), shape)
+                    else -> Modifier
+                }
+            )
+            .semantics(mergeDescendants = true) {
+                role = Role.Button
+                // Constant while talking: a changing description would be announced.
+                stateDescription = idleLabel
+                if (!enabled) disabled()
+            }
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    if (!enabledState.value) {
+                        waitForUpOrCancellation()
+                        return@awaitEachGesture
+                    }
+                    val early = withTimeoutOrNull(HOLD_MS) { waitForUpOrCancellation() }
+                    if (early != null) {
+                        // A tap, not a hold.
+                        onHintState.value(R.string.native_ui_talk_tap_hint)
+                        return@awaitEachGesture
+                    }
+                    if (currentEvent.changes.none { it.pressed }) return@awaitEachGesture
+                    onHintState.value(null)
+                    onPressState.value(true)
+                    try {
+                        while (true) {
+                            val change = awaitPointerEvent().changes.firstOrNull() ?: break
+                            if (!change.pressed) break
+                            if (change.position.y - down.position.y <= -lockPx)
+                                onHintState.value(R.string.native_ui_talk_lock_hint)
+                            change.consume()
+                        }
+                    } finally {
+                        // Release, a lifted finger that slid off, or a cancelled gesture: the
+                        // talk always ends with the touch.
+                        onPressState.value(false)
+                    }
+                }
+            }
+            .padding(horizontal = 4.dp, vertical = 8.dp)
+            .testTag("parent_talk"),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        GlyphIcon(Glyph.MIC, content, size = 26.dp)
+        Text(
+            label,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = content,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (sub != null)
+            Text(
+                sub,
+                style = MaterialTheme.typography.labelMedium,
+                color = content,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
+            )
+    }
+}
+
+/**
+ * What the talk panel says above the dock: the status line "Listening is paused while you talk",
+ * why talk is unavailable or was denied, how the last talk ended, the noise pause, the silent
+ * microphone and unconfirmed notices, the coach mark and the 10 s listen after a talk. A visible
+ * text only: no live region, so nothing is spoken into the open microphone.
+ */
+@Composable
+fun TalkStatus(
+    p: ParentMonitorState,
+    elapsed: Long,
+    hint: Int?,
+    coachVisible: Boolean,
+    onKeepListening: () -> Unit,
+    onPermissionResult: (Boolean) -> Unit,
+    onPermissionDismiss: () -> Unit,
+    onCoachDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val talk = p.talk
+    val active = talk is TalkUi.Requesting || talk is TalkUi.Talking
     Column(
         modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -195,74 +300,13 @@ fun TalkSection(
                 )
             }
         }
-        Box(
-            Modifier.fillMaxWidth(0.85f)
-                .heightIn(min = 64.dp)
-                .background(container, RoundedCornerShape(32.dp))
-                .then(
-                    // A filled ring while the microphone is open (static: no pulse to reduce).
-                    if (talk is TalkUi.Talking)
-                        Modifier.border(
-                            BorderStroke(4.dp, MaterialTheme.colorScheme.onTertiary),
-                            RoundedCornerShape(32.dp),
-                        )
-                    else Modifier
-                )
-                .semantics(mergeDescendants = true) {
-                    role = Role.Button
-                    // Constant while talking: a changing description would be announced.
-                    stateDescription = idleLabel
-                    if (!enabled) disabled()
-                }
-                .pointerInput(Unit) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown()
-                        if (!enabledState.value) {
-                            waitForUpOrCancellation()
-                            return@awaitEachGesture
-                        }
-                        val early = withTimeoutOrNull(HOLD_MS) { waitForUpOrCancellation() }
-                        if (early != null) {
-                            // A tap, not a hold.
-                            hint = R.string.native_ui_talk_tap_hint
-                            return@awaitEachGesture
-                        }
-                        if (currentEvent.changes.none { it.pressed }) return@awaitEachGesture
-                        hint = null
-                        onPressState.value(true)
-                        try {
-                            while (true) {
-                                val change = awaitPointerEvent().changes.firstOrNull() ?: break
-                                if (!change.pressed) break
-                                if (change.position.y - down.position.y <= -lockPx)
-                                    hint = R.string.native_ui_talk_lock_hint
-                                change.consume()
-                            }
-                        } finally {
-                            // Release, a lifted finger that slid off, or a cancelled gesture: the
-                            // talk always ends with the touch.
-                            onPressState.value(false)
-                        }
-                    }
-                }
-                .testTag("parent_talk"),
-            contentAlignment = Alignment.Center,
-        ) {
-            Row(
-                Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                GlyphIcon(Glyph.MIC, content, size = 28.dp)
-                Text(
-                    label,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = content,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                )
-            }
+        if (active) {
+            // A status, not a disabled control: detection is paused on the baby device meanwhile.
+            Body(
+                stringResource(R.string.native_ui_talk_paused_listening),
+                tag = "parent_talk_listening_paused",
+                color = MaterialTheme.colorScheme.onSurface,
+            )
         }
         val reason = reasonText(talk, elapsed)
         if (reason != null) {
@@ -293,7 +337,6 @@ fun TalkSection(
                 )
             null -> Unit
         }
-        // A visible hint only: no live region, so nothing is spoken into the open microphone.
         if (p.talkMicSilent && talk is TalkUi.Talking)
             Body(
                 stringResource(R.string.native_ui_talk_msg_mic_silent),

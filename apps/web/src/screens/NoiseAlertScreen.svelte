@@ -1,26 +1,40 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import { useController } from "../lib/contract";
   import { locale, t } from "../lib/i18n/store";
-  import StatusBar from "../lib/ui/StatusBar.svelte";
+  import AlertTemplate from "../lib/ui/AlertTemplate.svelte";
   import Button from "../lib/ui/Button.svelte";
-  import { formatClock, levelWordKey } from "../lib/ui/format";
+  import { formatClock, formatElapsed, levelWordKey, spokenDuration } from "../lib/ui/format";
   import Glyph from "../lib/ui/Glyph.svelte";
   import ListenButton from "../lib/ui/ListenButton.svelte";
   import Meter from "../lib/ui/Meter.svelte";
+  import { connectionName, statusHeadline, statusKindOf } from "../lib/ui/parent-view";
+  import { everySecond } from "../lib/ui/ticker";
 
-  /** S10: a noise alert in the page, over everything else but a lost connection. */
+  /**
+   * S10: a noise alert in the page on the shared template with the wine palette (frames 08 and 31),
+   * over everything else but a lost connection. Listen comes first in the quiet row, then the two
+   * pauses. No Undo here: a pause started from a running alert is final (the snackbar belongs to the
+   * monitor).
+   */
   let { onclose }: { onclose: () => void } = $props();
 
   const controller = useController();
-  const { parent } = controller;
+  const { app, parent } = controller;
 
-  let heading: HTMLElement | undefined = $state();
-  // The alert takes the focus so a screen reader announces it and Enter reaches "Stop sound".
-  onMount(() => heading?.focus());
-
-  const since = $derived(
-    $parent.noiseSinceWallMs === null ? null : formatClock($parent.noiseSinceWallMs, $locale),
+  const ended = $derived(!$parent.noiseAlertActive);
+  const since = $derived($parent.noiseSinceWallMs);
+  const sinceClock = $derived(since === null ? "" : formatClock(since, $locale));
+  const ageMs = $derived(since === null ? 0 : Math.max(0, $everySecond.wallMs - since));
+  const counter = $derived({
+    text: formatElapsed(ageMs),
+    label: $t("native.ui.noiseAlert.counterLabel", { time: sinceClock }),
+    spoken: $t("native.ui.noiseAlert.counterA11y", {
+      duration: spokenDuration($t, ageMs),
+      time: sinceClock,
+    }),
+  });
+  const stripText = $derived(
+    statusHeadline($t, statusKindOf($parent.link), $parent.link, connectionName($app.peerName)),
   );
 
   function stopSound(): void {
@@ -28,40 +42,36 @@
     onclose();
   }
 
-  function snooze(minutes: number): void {
+  function pause(minutes: number): void {
     controller.snooze(minutes);
     controller.stopAlertSound();
     onclose();
   }
 </script>
 
-<div
-  class="gs-fullscreen"
-  data-kind="noise"
-  data-testid="parent_noise_alert"
-  role="alertdialog"
-  aria-modal="true"
-  aria-labelledby="alert-title"
+<AlertTemplate
+  palette="noise"
+  label={$t(ended ? "native.ui.noiseAlert.labelStopped" : "native.ui.noiseAlert.labelSound")}
+  headline={$t("native.ui.alert.title")}
+  headlineId="alert-title"
+  headlineTestid="alert_title"
+  testid="parent_noise_alert"
+  counter={since === null ? undefined : counter}
+  counterTestid="alert_since"
+  sentence={$t(ended ? "native.ui.alert.ended" : "native.ui.noiseAlert.sentenceSound")}
+  sentenceTestid="alert_sentence"
 >
-  <div class="gs-fullscreen__inner">
-    <StatusBar testid="alert_connection_bar" />
-
-    <div class="gs-fullscreen__hero">
-      {#if $parent.noiseIsTest}
-        <span class="gs-fullscreen__badge" data-testid="alert_test_badge">
-          {$t("native.ui.alert.testBadge")}
-        </span>
-      {/if}
-      <span class="gs-fullscreen__icon"><Glyph name="alert" /></span>
-      <h1 id="alert-title" tabindex="-1" bind:this={heading} data-testid="alert_title">
-        {$t("native.ui.alert.title")}
-      </h1>
-      {#if since}
-        <p data-testid="alert_since">{$t("native.ui.alert.since", { time: since })}</p>
-      {/if}
-    </div>
-
-    <div class="gs-fullscreen__panel">
+  {#snippet strip()}
+    <Glyph name="alert" />
+    <span data-testid="alert_connection_bar">{stripText}</span>
+  {/snippet}
+  {#snippet body()}
+    {#if $parent.noiseIsTest}
+      <span class="gs-alert__badge" data-testid="alert_test_badge">
+        {$t("native.ui.alert.testBadge")}
+      </span>
+    {/if}
+    <div class="gs-alert__panel">
       <Meter
         level={$parent.level}
         threshold={$parent.babyThreshold}
@@ -69,27 +79,28 @@
         testid="alert_meter"
       />
     </div>
-
-    <div class="gs-fill"></div>
-
-    <Button variant="alert" size="large" block testid="alert_stop_sound" onclick={stopSound}>
-      <Glyph name="stop" />
-      {$t("native.ui.alert.stopSound")}
-    </Button>
-    <div class="gs-action-row">
-      <Button variant="alert-outline" testid="alert_snooze_10" onclick={() => snooze(10)}>
-        {$t("native.ui.snooze.minutes", { minutes: 10 })}
+  {/snippet}
+  {#snippet quiet()}
+    <div class="gs-alert__row">
+      <ListenButton
+        variant="alert"
+        mode={$parent.listen}
+        enabled={$parent.link.phase === "connected"}
+        onchange={(mode) => controller.setListen(mode)}
+        testid="alert_listen"
+      />
+      <Button variant="alert-outline" testid="alert_snooze_10" onclick={() => pause(10)}>
+        {$t("native.ui.snooze.pauseMinutes", { minutes: 10 })}
       </Button>
-      <Button variant="alert-outline" testid="alert_snooze_30" onclick={() => snooze(30)}>
-        {$t("native.ui.snooze.minutes", { minutes: 30 })}
+      <Button variant="alert-outline" testid="alert_snooze_30" onclick={() => pause(30)}>
+        {$t("native.ui.snooze.pauseMinutes", { minutes: 30 })}
       </Button>
     </div>
-    <ListenButton
-      variant="alert"
-      mode={$parent.listen}
-      enabled={$parent.link.phase === "connected"}
-      onchange={(mode) => controller.setListen(mode)}
-      testid="alert_listen"
-    />
-  </div>
-</div>
+  {/snippet}
+  {#snippet action()}
+    <Button block testid="alert_stop_sound" onclick={stopSound}>
+      <span>{$t("native.ui.alert.stopSound")}</span>
+      <span class="gs-btn__sub">{$t("native.ui.noiseAlert.stopSoundSub")}</span>
+    </Button>
+  {/snippet}
+</AlertTemplate>

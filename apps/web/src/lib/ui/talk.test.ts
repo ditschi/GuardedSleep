@@ -9,7 +9,7 @@ import {
   type TalkUnavailable,
   type WebTalkState,
 } from "../contract";
-import TalkButton from "./TalkButton.svelte";
+import TalkHarness from "../../test/TalkTestHarness.svelte";
 import { mayAnnounce, noiseLine, stateLine, unavailableLine, type TalkView } from "./talk-view";
 
 const talk = (over: Partial<TalkView> = {}): TalkView => ({
@@ -75,7 +75,7 @@ describe("talk view lines", () => {
   });
 });
 
-describe("TalkButton", () => {
+describe("Talk tile and status lines", () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
@@ -85,10 +85,11 @@ describe("TalkButton", () => {
   function mount(over: Partial<TalkView> = {}, webState: WebTalkState = web()) {
     const onpress = vi.fn();
     const onrelease = vi.fn();
-    render(TalkButton, {
+    render(TalkHarness, {
       talk: talk(over),
       web: webState,
       nowMs: 0,
+      nowWallMs: 0,
       onpress,
       onrelease,
       onkeeplisten: vi.fn(),
@@ -183,6 +184,34 @@ describe("TalkButton", () => {
   it("hides the silent-microphone hint once the talk is over", () => {
     mount({ talkMicSilent: true });
     expect(screen.queryByTestId("parent_talk_mic_silent")).toBeNull();
+  });
+
+  it("says 'Talk again at ...' as an outlined status, never as a disabled button", () => {
+    mount({ talk: unavailable("cooldown", 9_500) });
+    const slot = screen.getByTestId("parent_talk");
+    expect(slot.tagName).not.toBe("BUTTON");
+    expect(slot).toHaveAttribute("data-status");
+    expect(slot).toHaveTextContent("Talk again");
+    expect(slot).toHaveTextContent(/at \d/);
+  });
+
+  it("words the tile for not connected and for a request in flight", () => {
+    mount({ talk: unavailable("not_connected") });
+    expect(screen.getByTestId("parent_talk")).toHaveTextContent("Talk when connected");
+  });
+
+  it("says listening is paused while a talk runs, as plain text without a live region", () => {
+    mount({ talk: { kind: "requesting" } });
+    const line = screen.getByTestId("parent_talk_pauses_listen");
+    expect(line).toHaveTextContent("Listening is paused while you talk");
+    expect(line.closest("[aria-live]")?.getAttribute("aria-live") ?? "off").toBe("off");
+    expect(line).not.toHaveAttribute("role", "status");
+    expect(screen.getByTestId("parent_talk")).toHaveTextContent("One moment");
+  });
+
+  it("shows no pause line while idle", () => {
+    mount();
+    expect(screen.queryByTestId("parent_talk_pauses_listen")).toBeNull();
   });
 
   it("shows the noise pause line", () => {

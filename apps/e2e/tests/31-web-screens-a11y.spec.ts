@@ -131,7 +131,8 @@ for (const lang of LANGUAGES) {
       await checkScreen(parent, "parent monitoring");
       await openAndCheck(parent, "parent_snooze", "sheet_snooze_10", "parent: snooze sheet");
       await parent.getByTestId("sheet_snooze_10").click();
-      await expect(parent.getByTestId("parent_snooze_chip")).toBeVisible();
+      // The banner may be folded behind "+N more" when other notices show; the tile always says it.
+      await expect(parent.locator("[data-testid=parent_snooze][data-paused]")).toBeVisible();
       await checkScreen(parent, "parent monitoring while snoozed");
       await openAndCheck(
         parent,
@@ -140,11 +141,11 @@ for (const lang of LANGUAGES) {
         "parent: snooze sheet (active)",
       );
       await parent.getByTestId("sheet_snooze_end").click();
+      await openAndCheck(parent, "parent_overflow", "parent_probe", "parent: more sheet");
       await openAndCheck(parent, "parent_probe", "sheet_probe_run", "parent: test alert sheet");
       await parent.keyboard.press("Escape");
       await expect(parent.getByTestId("sheet_probe_run")).toBeHidden();
-      await openAndCheck(parent, "parent_overflow", "parent_settings", "parent: more sheet");
-      await parent.getByTestId("parent_settings").click();
+      await parent.getByTestId("tool_settings").click();
       await expect(parent.getByTestId("settings_sensitivity_note")).toBeVisible();
       await checkScreen(parent, "parent: settings");
       // While monitoring the connection is read-only: no way to forget it from here.

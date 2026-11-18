@@ -53,7 +53,7 @@
       "noiseTestTitle": "Zkušební výstraha",
       "noiseTestText": "Toto je zkouška. Zařízení dítěte zůstává tiché.",
       "actionStopSound": "Vypnout zvuk",
-      "actionSnooze10": "Odložit o 10 min",
+      "actionSnooze10": "Pozastavit na 10 min",
       "actionChecking": "Jdu se podívat",
       "linkLostTitle": "Spojení ztraceno",
       "linkLostText": "Žádné spojení se zařízením dítěte. Jděte se hned podívat na dítě.",
@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Zrušit",
         "more": "Více",
-        "moreCount": "+{count}",
         "settings": "Nastavení",
         "tryAgain": "Zkusit znovu",
         "yes": "Ano",
@@ -293,10 +292,6 @@
           "body": "Někdo zastavil sledování na zařízení dítěte. Výstrahy nepřijdou.",
           "titleDefault": "Zařízení dítěte přestalo sledovat"
         },
-        "battery": {
-          "title": "Baterie zařízení dítěte je téměř vybitá",
-          "body": "Připojte zařízení dítěte k nabíječce hned, jinak se sledování zastaví."
-        },
         "needsPairing": {
           "title": "Zařízení už nejsou spárovaná"
         },
@@ -310,7 +305,7 @@
         "allQuietSince": "Klid od {time}",
         "soundSince": "Zachycen zvuk · od {time}",
         "soundAt": "Zvuk v {time} · trval {duration}",
-        "soundSnoozed": "Zvuk v {time} · výstrahy odloženy",
+        "soundSnoozed": "Zvuk v {time} · zvukové výstrahy pozastaveny",
         "lastHeard": "Poslední kontakt {time}",
         "noContactYet": "Zatím bez kontaktu",
         "monitoringNow": "Sledování",
@@ -323,7 +318,6 @@
         "stop": "Zastavit sledování",
         "securityTitle": "Bezpečnostní varování",
         "securityBody": "Spojení se nepodařilo ověřit. Pokud jste zařízení právě nepárovali znovu, spárujte je znovu hned.",
-        "staleSuffix": "· v {time}",
         "unitWarning": {
           "pageHidden": "Zařízení dítěte se může zastavit: jeho stránka je skrytá",
           "wakeLockOff": "Zařízení dítěte může usnout: displej se neudržuje zapnutý",
@@ -332,32 +326,38 @@
           "micPermissionLost": "Zařízení dítěte ztratilo přístup k mikrofonu"
         },
         "discreet": {
-          "indicator": "Diskrétní upozornění: bez zvuku",
           "escalated": "Přepnuto na zvuk: žádná reakce {minutes} min",
-          "offWarning": "Vypnuto: zapomenutý diskrétní režim může zůstat tichý celou noc."
+          "offWarning": "Vypnuto: zapomenutý režim jen vibrace může zůstat tichý celou noc."
         }
       },
       "battery": {
-        "baby": "Zařízení dítěte {percent} %",
         "babyLow": "Baterie zařízení dítěte {percent} %: připojte nabíječku",
-        "parentLow": "Toto zařízení má {percent} %: připojte nabíječku, aby sledování pokračovalo",
         "parentLowGeneric": "Baterie tohoto zařízení je slabá: připojte nabíječku, aby sledování pokračovalo"
       },
       "listen": {
-        "idle": "Podržením poslouchejte",
-        "holding": "Poslech…",
-        "locked": "Poslech · klepnutím zastavíte",
-        "lockHint": "Přejetím nahoru poslech udržíte",
+        "idle": "Poslech",
         "disabled": "Poslech po připojení",
-        "a11yLocked": "Poslech. Dvojitým klepnutím zastavíte."
+        "idleSub": "Klepnutím poslechnete místnost",
+        "on": "Poslech · klepnutím zastavíte",
+        "onSub": "Zvuk místnosti v reproduktoru",
+        "disabledSub": "Teď nepřipojeno",
+        "stateOn": "Poslouchá se",
+        "stateOff": "Neposlouchá se"
       },
       "snooze": {
-        "button": "Odložit",
-        "title": "Odložit zvukové výstrahy",
-        "help": "Výstrahy při výpadku spojení nebo slabé baterii vám dál přijdou.",
-        "minutes": "Odložit o {minutes} min",
-        "end": "Ukončit odložení",
-        "active": "Odloženo · zbývá {minutes} min"
+        "button": "Pozastavit zvukové výstrahy",
+        "title": "Pozastavit zvukové výstrahy",
+        "help": "Výstrahy o připojení a baterii stále chodí.",
+        "minutes": "{minutes} min",
+        "end": "Ukončit pauzu",
+        "tile": "Pozastavit zvukové výstrahy",
+        "tilePaused": "Pozastaveno",
+        "pauseMinutes": "Pozastavit na {minutes} min",
+        "resume": "Pokračovat",
+        "bannerTitle": "Zvukové výstrahy pozastaveny do {time}",
+        "bannerBody": "Výstrahy o připojení a baterii stále chodí",
+        "snackbar": "Zvukové výstrahy pozastaveny na {minutes} min",
+        "undo": "Zpět"
       },
       "probe": {
         "button": "Zkušební výstraha",
@@ -369,7 +369,7 @@
         "question": "Slyšeli a cítili jste ji?",
         "localOnly": "Vyzkoušeno jen toto zařízení: zařízení dítěte není připojeno.",
         "styleSound": "Typ upozornění: zvuk",
-        "styleDiscreet": "Typ upozornění: diskrétní",
+        "styleDiscreet": "Styl výstrahy: jen vibrace",
         "bodyDiscreet": "Toto zařízení vibruje a zobrazí upozornění bez zvuku. Zařízení dítěte zůstane tiché."
       },
       "readiness": {
@@ -454,13 +454,12 @@
       },
       "coach": {
         "bar": "Zelená znamená, že sledujete. Pokud zčervená nebo zmizí, nesledujete.",
-        "listen": "Podržením poslouchejte. Přejetím nahoru poslech udržíte.",
+        "listen": "Klepnutím na Poslech uslyšíte místnost.",
         "test": "Spusťte zkušební výstrahu, abyste věděli, jak výstraha působí.",
         "runTest": "Spustit zkušební výstrahu hned"
       },
       "alert": {
-        "title": "Zachycen zvuk",
-        "since": "Od {time}",
+        "title": "Dítě vydává zvuk",
         "ended": "Zvuk utichl.",
         "testBadge": "TEST",
         "stopSound": "Vypnout zvuk",
@@ -546,7 +545,7 @@
         "alertStyle": {
           "label": "Typ upozornění",
           "sound": "Zvuk: zvuk dítěte se přehraje při každém upozornění",
-          "discreet": "Diskrétní: vibrace a displej, bez zvuku"
+          "discreet": "Jen vibrace: vibrace a displej, bez zvuku"
         },
         "discreetEscalation": {
           "label": "Přepnout na zvuk, pokud nikdo nereaguje",
@@ -644,7 +643,11 @@
           "playChime": "Přehrát tón",
           "chime": "Tón před promluvou rodiče",
           "checklist": "Rodiče mohou mluvit přes toto zařízení. Můžete to vypnout v Nastavení."
-        }
+        },
+        "again": "Mluvit znovu",
+        "againAt": "v {time}",
+        "disabled": "Mluvte po připojení",
+        "pausedListening": "Poslech je pozastaven, dokud mluvíte"
       },
       "status": {
         "connected": "Připojeno",
@@ -713,6 +716,103 @@
         },
         "labelAlerting": "Toto zařízení vydává upozornění",
         "progressAlerting": "Upozornění zní právě teď"
+      },
+      "monitor": {
+        "monitoringFor": "Sledování už {duration}",
+        "cantHear": "Místnost není slyšet",
+        "alertLine": "Zvuk nad touto čarou pošle výstrahu",
+        "lastMinute": "Poslední minuta",
+        "now": "teď",
+        "noSound": "Žádný zvuk nepřichází",
+        "micSilentStrip": "Mikrofon je tichý",
+        "alertsTested": "Výstrahy vyzkoušeny {time}",
+        "batteryA11y": "Baterie zařízení dítěte {percent} procent",
+        "batteryChargingA11y": "Baterie zařízení dítěte {percent} procent, nabíjí se",
+        "batteryShort": "{percent} %"
+      },
+      "alertStyle": {
+        "chipSound": "Výstraha: zvuk",
+        "chipVibrate": "Výstraha: jen vibrace",
+        "chipA11ySound": "Výstrahy na zvuky: zvuk. Změnit",
+        "chipA11yVibrate": "Výstrahy na zvuky: jen vibrace. Změnit",
+        "vibrateTitle": "Jen vibrace",
+        "bodyNoSound": "Zvukové výstrahy nevydávají zvuk.",
+        "bodyNever": "Zvukové výstrahy nikdy nevydávají zvuk.",
+        "bodyAfterPause": "Po pauze: nejdřív vibrace, zvuk po {minutes} min",
+        "turnSoundOn": "Zapnout zvuk"
+      },
+      "banner": {
+        "fix": "Opravit",
+        "more": "+{count} dalších",
+        "moreA11y": "{count, plural, one {1 další hlášení: {notices}} few {# další hlášení: {notices}} many {# dalšího hlášení: {notices}} other {# dalších hlášení: {notices}}}",
+        "listTitle": "Hlášení",
+        "micSilentTitle": "Mikrofon zařízení dítěte nic neslyší",
+        "micSilentBody": "Zkontrolujte zařízení dítěte. Mikrofon může používat jiná aplikace.",
+        "ready": {
+          "notifications": {
+            "title": "Výstrahy jsou vypnuté",
+            "body": "Výstrahy se k vám nedostanou."
+          },
+          "fullScreen": {
+            "title": "Výstrahy se nezobrazí na zamčené obrazovce",
+            "body": "Při zamčeném telefonu vám může výstraha uniknout."
+          },
+          "alarmVolumeZero": {
+            "title": "Hlasitost budíku je vypnutá",
+            "body": "Na tomto telefonu výstrahy neuslyšíte"
+          },
+          "alarmVolumeLow": {
+            "title": "Hlasitost budíku je nízká",
+            "body": "Zvyšte ji, abyste výstrahy dobře slyšeli."
+          },
+          "dnd": {
+            "title": "Režim Nerušit může výstrahy ztišit",
+            "body": "Povolte GuardedSleep prorazit."
+          },
+          "battery": {
+            "title": "Tento telefon může GuardedSleep zastavit",
+            "body": "Povolte provoz na pozadí, aby výstrahy fungovaly."
+          },
+          "parentBattery": {
+            "title": "Baterie tohoto telefonu je slabá",
+            "body": "Připojte ho k nabíječce, aby sledování pokračovalo."
+          },
+          "headphones": {
+            "title": "Výstrahy se přehrají ve sluchátkách",
+            "body": "Přepněte výstrahy na reproduktor, chcete-li je slyšet v místnosti."
+          },
+          "neverTested": {
+            "title": "Žádná nedávná zkušební výstraha",
+            "body": "Spusťte zkoušku, abyste měli jistotu, že výstrahy dorazí."
+          }
+        }
+      },
+      "noiseAlert": {
+        "labelSound": "Přehrává se zvuk místnosti",
+        "labelVibrate": "Váš telefon vibruje",
+        "labelStopped": "Výstraha zastavena",
+        "counterLabel": "od {time}",
+        "counterA11y": "{duration}, od {time}",
+        "sentenceSound": "Zvuk místnosti se přehrává na tomto telefonu.",
+        "stopSoundSub": "Zastaví zvuk výstrahy, sledování pokračuje",
+        "stopVibrationSub": "Zastaví vibrace, sledování pokračuje"
+      },
+      "batteryAlert": {
+        "label": "Baterie zařízení dítěte",
+        "headline": "Zařízení dítěte má téměř vybito",
+        "counterLabel": "zbývá baterie",
+        "counterA11y": "Zbývá {percent} procent baterie",
+        "sentence": "Připojte zařízení dítěte k nabíječce hned. Až se vybije, sledování se zastaví.",
+        "silentNote": "Zařízení dítěte zůstane tiché. Upozorní jen tento telefon.",
+        "action": "OK, připojím ho",
+        "actionSub": "Zavře tuto obrazovku"
+      },
+      "tool": {
+        "nightA11yOff": "Noční režim: vypnutý",
+        "nightA11yOn": "Noční režim: zapnutý",
+        "nightA11yAuto": "Noční režim: automaticky",
+        "nightOn": "Zap.",
+        "nightAuto": "Auto"
       }
     }
   },

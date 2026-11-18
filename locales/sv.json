@@ -53,7 +53,7 @@
       "noiseTestTitle": "Testlarm",
       "noiseTestText": "Det här är ett test. Babyenheten förblir tyst.",
       "actionStopSound": "Stoppa ljudet",
-      "actionSnooze10": "Vila 10 min",
+      "actionSnooze10": "Pausa 10 min",
       "actionChecking": "Jag tittar",
       "linkLostTitle": "Anslutningen bröts",
       "linkLostText": "Ingen anslutning till babyenheten. Titta till ditt barn nu.",
@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Avbryt",
         "more": "Mer",
-        "moreCount": "+{count}",
         "settings": "Inställningar",
         "tryAgain": "Försök igen",
         "yes": "Ja",
@@ -293,10 +292,6 @@
           "body": "Någon stoppade övervakningen på babyenheten. Du får inga larm.",
           "titleDefault": "Babyenheten slutade övervaka"
         },
-        "battery": {
-          "title": "Babyenhetens batteri nästan slut",
-          "body": "Sätt i laddaren i babyenheten nu, annars slutar övervakningen."
-        },
         "needsPairing": {
           "title": "Enheterna är inte längre parkopplade"
         },
@@ -310,7 +305,7 @@
         "allQuietSince": "Tyst sedan {time}",
         "soundSince": "Ljud upptäckt · sedan {time}",
         "soundAt": "Ljud kl. {time} · varade i {duration}",
-        "soundSnoozed": "Ljud kl. {time} · larm på vila",
+        "soundSnoozed": "Ljud kl. {time} · ljudlarm pausade",
         "lastHeard": "Senaste kontakt {time}",
         "noContactYet": "Ingen kontakt än",
         "monitoringNow": "Övervakar",
@@ -323,7 +318,6 @@
         "stop": "Sluta övervaka",
         "securityTitle": "Säkerhetsvarning",
         "securityBody": "Anslutningen kunde inte verifieras. Om du inte nyss parkopplade enheterna igen, parkoppla dem igen nu.",
-        "staleSuffix": "· kl. {time}",
         "unitWarning": {
           "pageHidden": "Babyenheten kan pausa: dess sida är dold",
           "wakeLockOff": "Babyenheten kan somna: skärmen hålls inte på",
@@ -332,32 +326,38 @@
           "micPermissionLost": "Babyenheten förlorade åtkomst till mikrofonen"
         },
         "discreet": {
-          "indicator": "Diskreta larm: inget ljud",
           "escalated": "Bytt till ljud: ingen reaktion på {minutes} min",
-          "offWarning": "Av: ett bortglömt diskret läge kan vara tyst hela natten."
+          "offWarning": "Av: ett bortglömt läge med bara vibration kan vara tyst hela natten."
         }
       },
       "battery": {
-        "baby": "Babyenhet {percent}%",
         "babyLow": "Babyenhetens batteri {percent}%: sätt i laddaren",
-        "parentLow": "Den här enheten har {percent}%: sätt i laddaren för att fortsätta övervaka",
         "parentLowGeneric": "Den här enhetens batteri är lågt: sätt i laddaren för att fortsätta övervaka"
       },
       "listen": {
-        "idle": "Håll för att lyssna",
-        "holding": "Lyssnar…",
-        "locked": "Lyssnar · tryck för att stoppa",
-        "lockHint": "Svep uppåt för att fortsätta lyssna",
+        "idle": "Lyssna",
         "disabled": "Lyssna när du är ansluten",
-        "a11yLocked": "Lyssnar. Tryck två gånger för att stoppa."
+        "idleSub": "Tryck för att höra rummet",
+        "on": "Lyssnar · tryck för att stoppa",
+        "onSub": "Rummets ljud i högtalaren",
+        "disabledSub": "Inte ansluten just nu",
+        "stateOn": "Lyssnar",
+        "stateOff": "Lyssnar inte"
       },
       "snooze": {
-        "button": "Vila",
+        "button": "Pausa ljudlarm",
         "title": "Pausa ljudlarm",
-        "help": "Du får fortfarande larm om anslutningen bryts eller ett batteri håller på att ta slut.",
-        "minutes": "Vila {minutes} min",
-        "end": "Avsluta vilan",
-        "active": "På vila · {minutes} min kvar"
+        "help": "Anslutnings- och batterilarm kommer fortfarande.",
+        "minutes": "{minutes} min",
+        "end": "Avsluta pausen",
+        "tile": "Pausa ljudlarm",
+        "tilePaused": "Pausad",
+        "pauseMinutes": "Pausa {minutes} min",
+        "resume": "Återuppta",
+        "bannerTitle": "Ljudlarm pausade till {time}",
+        "bannerBody": "Anslutnings- och batterilarm kommer fortfarande",
+        "snackbar": "Ljudlarm pausade i {minutes} min",
+        "undo": "Ångra"
       },
       "probe": {
         "button": "Testlarm",
@@ -369,7 +369,7 @@
         "question": "Hörde och kände du det?",
         "localOnly": "Bara den här enheten testades: babyenheten är inte ansluten.",
         "styleSound": "Larmtyp: ljud",
-        "styleDiscreet": "Larmtyp: diskret",
+        "styleDiscreet": "Larmstil: bara vibration",
         "bodyDiscreet": "Den här enheten vibrerar och visar larmet utan ljud. Barnenheten förblir tyst."
       },
       "readiness": {
@@ -454,13 +454,12 @@
       },
       "coach": {
         "bar": "Grönt betyder att du övervakar. Om det blir rött eller försvinner övervakar du inte.",
-        "listen": "Håll för att lyssna. Svep uppåt för att fortsätta lyssna.",
+        "listen": "Tryck på Lyssna för att höra rummet.",
         "test": "Kör ett testlarm så att du vet hur ett larm känns.",
         "runTest": "Kör testlarm nu"
       },
       "alert": {
-        "title": "Ljud upptäckt",
-        "since": "Sedan {time}",
+        "title": "Barnet låter",
         "ended": "Ljudet har tystnat.",
         "testBadge": "TEST",
         "stopSound": "Stoppa ljudet",
@@ -546,7 +545,7 @@
         "alertStyle": {
           "label": "Larmtyp",
           "sound": "Ljud: barnets ljud spelas upp vid varje larm",
-          "discreet": "Diskret: vibration och skärm, inget ljud"
+          "discreet": "Bara vibration: vibration och skärm, inget ljud"
         },
         "discreetEscalation": {
           "label": "Byt till ljud om ingen reagerar",
@@ -644,7 +643,11 @@
           "playChime": "Spela signal",
           "chime": "Signal innan en förälder talar",
           "checklist": "Föräldrar kan tala via den här enheten. Du kan stänga av det under Inställningar."
-        }
+        },
+        "again": "Prata igen",
+        "againAt": "kl. {time}",
+        "disabled": "Prata när du är ansluten",
+        "pausedListening": "Lyssnandet pausas medan du pratar"
       },
       "status": {
         "connected": "Ansluten",
@@ -713,6 +716,103 @@
         },
         "labelAlerting": "Den här enheten ljuder en varning",
         "progressAlerting": "Varning ljuder nu"
+      },
+      "monitor": {
+        "monitoringFor": "Övervakar sedan {duration}",
+        "cantHear": "Hör inte rummet",
+        "alertLine": "Ett ljud över den här linjen skickar ett larm",
+        "lastMinute": "Senaste minuten",
+        "now": "nu",
+        "noSound": "Inget ljud kommer in",
+        "micSilentStrip": "Mikrofonen är tyst",
+        "alertsTested": "Larm testade {time}",
+        "batteryA11y": "Batteri i babyenheten {percent} procent",
+        "batteryChargingA11y": "Batteri i babyenheten {percent} procent, laddar",
+        "batteryShort": "{percent} %"
+      },
+      "alertStyle": {
+        "chipSound": "Larm: ljud",
+        "chipVibrate": "Larm: bara vibration",
+        "chipA11ySound": "Larm vid ljud: ljud. Ändra",
+        "chipA11yVibrate": "Larm vid ljud: bara vibration. Ändra",
+        "vibrateTitle": "Bara vibration",
+        "bodyNoSound": "Ljudlarm låter inte.",
+        "bodyNever": "Ljudlarm låter aldrig.",
+        "bodyAfterPause": "Efter pausen: först vibration, ljud efter {minutes} min",
+        "turnSoundOn": "Slå på ljud"
+      },
+      "banner": {
+        "fix": "Åtgärda",
+        "more": "+{count} till",
+        "moreA11y": "{count, plural, one {1 meddelande till: {notices}} other {# meddelanden till: {notices}}}",
+        "listTitle": "Meddelanden",
+        "micSilentTitle": "Babyenhetens mikrofon hör ingenting",
+        "micSilentBody": "Kontrollera babyenheten. En annan app kanske använder mikrofonen.",
+        "ready": {
+          "notifications": {
+            "title": "Larm är avstängda",
+            "body": "Larm når dig inte."
+          },
+          "fullScreen": {
+            "title": "Larm kan inte visas på låsskärmen",
+            "body": "Du kan missa ett larm när telefonen är låst."
+          },
+          "alarmVolumeZero": {
+            "title": "Larmvolymen är av",
+            "body": "Du hör inte larm på den här telefonen"
+          },
+          "alarmVolumeLow": {
+            "title": "Larmvolymen är låg",
+            "body": "Höj den så att du hör larmen tydligt."
+          },
+          "dnd": {
+            "title": "Stör ej kan tysta larm",
+            "body": "Låt GuardedSleep komma igenom."
+          },
+          "battery": {
+            "title": "Den här telefonen kan stoppa GuardedSleep",
+            "body": "Tillåt bakgrundsanvändning så att larmen fungerar."
+          },
+          "parentBattery": {
+            "title": "Telefonens batteri är lågt",
+            "body": "Sätt i laddaren så att övervakningen fortsätter."
+          },
+          "headphones": {
+            "title": "Larm spelas i dina hörlurar",
+            "body": "Byt larm till högtalaren om du vill höra dem i rummet."
+          },
+          "neverTested": {
+            "title": "Inget nytt testlarm",
+            "body": "Kör ett test för att vara säker på att larmen når dig."
+          }
+        }
+      },
+      "noiseAlert": {
+        "labelSound": "Spelar upp rummets ljud",
+        "labelVibrate": "Din telefon vibrerar",
+        "labelStopped": "Larmet stoppat",
+        "counterLabel": "sedan {time}",
+        "counterA11y": "{duration}, sedan {time}",
+        "sentenceSound": "Rummets ljud spelas upp på den här telefonen.",
+        "stopSoundSub": "Stoppar larmljudet, övervakningen fortsätter",
+        "stopVibrationSub": "Stoppar vibrationen, övervakningen fortsätter"
+      },
+      "batteryAlert": {
+        "label": "Babyenhetens batteri",
+        "headline": "Babyenheten är nästan tom",
+        "counterLabel": "batteri kvar",
+        "counterA11y": "{percent} procent batteri kvar",
+        "sentence": "Sätt i laddaren i babyenheten nu. När batteriet tar slut stannar övervakningen.",
+        "silentNote": "Babyenheten är tyst. Bara den här telefonen larmar.",
+        "action": "OK, jag sätter i laddaren",
+        "actionSub": "Stänger den här vyn"
+      },
+      "tool": {
+        "nightA11yOff": "Nattläge: av",
+        "nightA11yOn": "Nattläge: på",
+        "nightA11yAuto": "Nattläge: automatiskt",
+        "nightOn": "På",
+        "nightAuto": "Auto"
       }
     }
   },

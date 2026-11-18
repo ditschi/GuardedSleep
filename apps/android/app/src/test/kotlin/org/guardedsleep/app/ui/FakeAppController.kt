@@ -225,10 +225,12 @@ class FakeAppController(
 
     override fun snooze(minutes: Int) {
         calls += "snooze:$minutes"
+        parentFlow.value = parentFlow.value.copy(snoozedUntilWallMs = WALL + minutes * 60_000L)
     }
 
     override fun cancelSnooze() {
         calls += "cancelSnooze"
+        parentFlow.value = parentFlow.value.copy(snoozedUntilWallMs = null)
     }
 
     override fun acknowledgeAlarm() {

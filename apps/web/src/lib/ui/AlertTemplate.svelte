@@ -10,8 +10,12 @@
    * `--safety-*` palettes, never the colour scheme.
    */
   type Props = {
-    /** Which fixed palette: no connection (red) or the loud alarm (brighter red, hazard band). */
-    palette: "lost" | "alarm";
+    /**
+     * Which fixed palette: no connection (red), the loud alarm (brighter red, hazard band), the
+     * child's sound (wine) or the baby device's empty battery (amber, so red stays for "you can't
+     * hear the child").
+     */
+    palette: "lost" | "alarm" | "noise" | "battery";
     label: string;
     headline: string;
     headlineId: string;

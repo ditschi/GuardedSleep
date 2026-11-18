@@ -53,7 +53,7 @@
       "noiseTestTitle": "Peringatan uji",
       "noiseTestText": "Ini hanya uji coba. Perangkat bayi tetap senyap.",
       "actionStopSound": "Hentikan suara",
-      "actionSnooze10": "Tunda 10 mnt",
+      "actionSnooze10": "Jeda 10 mnt",
       "actionChecking": "Saya periksa",
       "linkLostTitle": "Koneksi terputus",
       "linkLostText": "Tidak ada koneksi ke perangkat bayi. Periksa bayi Anda sekarang.",
@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Batal",
         "more": "Lainnya",
-        "moreCount": "+{count}",
         "settings": "Pengaturan",
         "tryAgain": "Coba lagi",
         "yes": "Ya",
@@ -293,10 +292,6 @@
           "body": "Seseorang menghentikan pemantauan di perangkat bayi. Anda tidak akan menerima peringatan.",
           "titleDefault": "Perangkat bayi berhenti memantau"
         },
-        "battery": {
-          "title": "Baterai perangkat bayi hampir kosong",
-          "body": "Segera colokkan perangkat bayi, atau pemantauan akan berhenti."
-        },
         "needsPairing": {
           "title": "Perangkat tidak lagi dipasangkan"
         },
@@ -310,7 +305,7 @@
         "allQuietSince": "Tenang sejak {time}",
         "soundSince": "Suara terdeteksi · sejak {time}",
         "soundAt": "Suara pada {time} · berlangsung {duration}",
-        "soundSnoozed": "Suara pada {time} · peringatan ditunda",
+        "soundSnoozed": "Suara pada {time} · peringatan kebisingan dijeda",
         "lastHeard": "Kontak terakhir {time}",
         "noContactYet": "Belum ada kontak",
         "monitoringNow": "Memantau",
@@ -323,7 +318,6 @@
         "stop": "Hentikan pemantauan",
         "securityTitle": "Peringatan keamanan",
         "securityBody": "Koneksi tidak dapat diverifikasi. Jika Anda tidak baru saja memasangkan ulang perangkat, pasangkan ulang sekarang.",
-        "staleSuffix": "· pukul {time}",
         "unitWarning": {
           "pageHidden": "Perangkat bayi mungkin berhenti sementara — halamannya tersembunyi",
           "wakeLockOff": "Perangkat bayi mungkin tertidur — layarnya tidak dijaga tetap menyala",
@@ -332,32 +326,38 @@
           "micPermissionLost": "Perangkat bayi kehilangan akses mikrofon"
         },
         "discreet": {
-          "indicator": "Peringatan senyap: tanpa suara",
           "escalated": "Beralih ke suara: tidak ada reaksi selama {minutes} mnt",
-          "offWarning": "Mati: mode senyap yang terlupa bisa tetap hening sepanjang malam."
+          "offWarning": "Mati: mode hanya getar yang terlupa bisa tetap hening sepanjang malam."
         }
       },
       "battery": {
-        "baby": "Perangkat bayi {percent}%",
         "babyLow": "Baterai perangkat bayi {percent}% — colokkan ke pengisi daya",
-        "parentLow": "Perangkat ini {percent}% — colokkan agar pemantauan berlanjut",
         "parentLowGeneric": "Baterai perangkat ini hampir habis — colokkan agar pemantauan berlanjut"
       },
       "listen": {
-        "idle": "Tahan untuk mendengarkan",
-        "holding": "Mendengarkan…",
-        "locked": "Mendengarkan · ketuk untuk berhenti",
-        "lockHint": "Geser ke atas untuk terus mendengarkan",
+        "idle": "Dengarkan",
         "disabled": "Dengarkan saat terhubung",
-        "a11yLocked": "Mendengarkan. Ketuk dua kali untuk berhenti."
+        "idleSub": "Ketuk untuk mendengar ruangan",
+        "on": "Mendengarkan · ketuk untuk berhenti",
+        "onSub": "Suara ruangan di speaker",
+        "disabledSub": "Tidak terhubung saat ini",
+        "stateOn": "Mendengarkan",
+        "stateOff": "Tidak mendengarkan"
       },
       "snooze": {
-        "button": "Tunda",
-        "title": "Tunda peringatan kebisingan",
-        "help": "Anda tetap mendapat peringatan jika koneksi terputus atau baterai hampir habis.",
-        "minutes": "Tunda {minutes} mnt",
-        "end": "Akhiri penundaan",
-        "active": "Ditunda · sisa {minutes} mnt"
+        "button": "Jeda peringatan kebisingan",
+        "title": "Jeda peringatan kebisingan",
+        "help": "Peringatan koneksi dan baterai tetap datang.",
+        "minutes": "{minutes} mnt",
+        "end": "Akhiri jeda",
+        "tile": "Jeda peringatan kebisingan",
+        "tilePaused": "Dijeda",
+        "pauseMinutes": "Jeda {minutes} mnt",
+        "resume": "Lanjutkan",
+        "bannerTitle": "Peringatan kebisingan dijeda hingga {time}",
+        "bannerBody": "Peringatan koneksi dan baterai tetap datang",
+        "snackbar": "Peringatan kebisingan dijeda {minutes} mnt",
+        "undo": "Urungkan"
       },
       "probe": {
         "button": "Peringatan uji",
@@ -369,7 +369,7 @@
         "question": "Apakah Anda mendengar dan merasakannya?",
         "localOnly": "Hanya perangkat ini yang diuji — perangkat bayi tidak terhubung.",
         "styleSound": "Gaya peringatan: suara",
-        "styleDiscreet": "Gaya peringatan: senyap",
+        "styleDiscreet": "Gaya peringatan: hanya getar",
         "bodyDiscreet": "Perangkat ini bergetar dan menampilkan peringatan tanpa suara. Perangkat bayi tetap senyap."
       },
       "readiness": {
@@ -454,13 +454,12 @@
       },
       "coach": {
         "bar": "Hijau berarti Anda sedang memantau. Jika berubah merah atau hilang, berarti tidak memantau.",
-        "listen": "Tahan untuk mendengarkan. Geser ke atas untuk terus mendengarkan.",
+        "listen": "Ketuk Dengarkan untuk mendengar ruangan.",
         "test": "Jalankan peringatan uji agar Anda tahu seperti apa rasanya.",
         "runTest": "Jalankan peringatan uji sekarang"
       },
       "alert": {
-        "title": "Suara terdeteksi",
-        "since": "Sejak {time}",
+        "title": "Anak sedang bersuara",
         "ended": "Suara telah berhenti.",
         "testBadge": "UJI",
         "stopSound": "Hentikan suara",
@@ -546,7 +545,7 @@
         "alertStyle": {
           "label": "Gaya peringatan",
           "sound": "Suara: suara bayi diputar pada setiap peringatan",
-          "discreet": "Senyap: getar dan layar, tanpa suara"
+          "discreet": "Hanya getar: getar dan layar, tanpa suara"
         },
         "discreetEscalation": {
           "label": "Beralih ke suara jika tidak ada yang bereaksi",
@@ -644,7 +643,11 @@
           "playChime": "Putar nada",
           "chime": "Nada sebelum orang tua berbicara",
           "checklist": "Orang tua dapat berbicara lewat perangkat ini. Anda dapat mematikannya di Pengaturan."
-        }
+        },
+        "again": "Bicara lagi",
+        "againAt": "pukul {time}",
+        "disabled": "Bicara saat terhubung",
+        "pausedListening": "Mendengarkan dijeda selama Anda bicara"
       },
       "status": {
         "connected": "Terhubung",
@@ -713,6 +716,103 @@
         },
         "labelAlerting": "Perangkat ini membunyikan peringatan",
         "progressAlerting": "Peringatan berbunyi sekarang"
+      },
+      "monitor": {
+        "monitoringFor": "Memantau selama {duration}",
+        "cantHear": "Ruangan tidak terdengar",
+        "alertLine": "Suara di atas garis ini mengirim peringatan",
+        "lastMinute": "Semenit terakhir",
+        "now": "sekarang",
+        "noSound": "Tidak ada suara masuk",
+        "micSilentStrip": "Mikrofon senyap",
+        "alertsTested": "Peringatan diuji {time}",
+        "batteryA11y": "Baterai perangkat bayi {percent} persen",
+        "batteryChargingA11y": "Baterai perangkat bayi {percent} persen, sedang diisi",
+        "batteryShort": "{percent}%"
+      },
+      "alertStyle": {
+        "chipSound": "Peringatan: suara",
+        "chipVibrate": "Peringatan: hanya getar",
+        "chipA11ySound": "Peringatan untuk suara: suara. Ubah",
+        "chipA11yVibrate": "Peringatan untuk suara: hanya getar. Ubah",
+        "vibrateTitle": "Hanya getar",
+        "bodyNoSound": "Peringatan kebisingan tidak berbunyi.",
+        "bodyNever": "Peringatan kebisingan tidak pernah berbunyi.",
+        "bodyAfterPause": "Setelah jeda: getar dulu, suara setelah {minutes} mnt",
+        "turnSoundOn": "Nyalakan suara"
+      },
+      "banner": {
+        "fix": "Perbaiki",
+        "more": "+{count} lagi",
+        "moreA11y": "{count, plural, other {# catatan lagi: {notices}}}",
+        "listTitle": "Catatan",
+        "micSilentTitle": "Mikrofon perangkat bayi tidak mendengar apa pun",
+        "micSilentBody": "Periksa perangkat bayi. Mungkin aplikasi lain sedang memakai mikrofonnya.",
+        "ready": {
+          "notifications": {
+            "title": "Peringatan mati",
+            "body": "Peringatan tidak bisa sampai kepada Anda."
+          },
+          "fullScreen": {
+            "title": "Peringatan tidak bisa muncul di layar kunci",
+            "body": "Anda mungkin melewatkan peringatan saat ponsel terkunci."
+          },
+          "alarmVolumeZero": {
+            "title": "Volume alarm mati",
+            "body": "Anda tidak akan mendengar peringatan di ponsel ini"
+          },
+          "alarmVolumeLow": {
+            "title": "Volume alarm rendah",
+            "body": "Naikkan agar peringatan terdengar jelas."
+          },
+          "dnd": {
+            "title": "Jangan Ganggu dapat membisukan peringatan",
+            "body": "Izinkan GuardedSleep menembusnya."
+          },
+          "battery": {
+            "title": "Ponsel ini mungkin menghentikan GuardedSleep",
+            "body": "Izinkan penggunaan di latar belakang agar peringatan tetap berfungsi."
+          },
+          "parentBattery": {
+            "title": "Baterai ponsel ini hampir habis",
+            "body": "Colokkan agar pemantauan terus berjalan."
+          },
+          "headphones": {
+            "title": "Peringatan akan berbunyi di headphone Anda",
+            "body": "Pindahkan peringatan ke speaker jika ingin mendengarnya di ruangan."
+          },
+          "neverTested": {
+            "title": "Tidak ada peringatan uji baru-baru ini",
+            "body": "Jalankan uji agar yakin peringatan sampai kepada Anda."
+          }
+        }
+      },
+      "noiseAlert": {
+        "labelSound": "Memutar suara ruangan",
+        "labelVibrate": "Ponsel Anda bergetar",
+        "labelStopped": "Peringatan dihentikan",
+        "counterLabel": "sejak {time}",
+        "counterA11y": "{duration}, sejak {time}",
+        "sentenceSound": "Suara ruangan diputar di ponsel ini.",
+        "stopSoundSub": "Menghentikan suara peringatan, pemantauan tetap berjalan",
+        "stopVibrationSub": "Menghentikan getaran, pemantauan tetap berjalan"
+      },
+      "batteryAlert": {
+        "label": "Baterai perangkat bayi",
+        "headline": "Perangkat bayi hampir habis baterainya",
+        "counterLabel": "baterai tersisa",
+        "counterA11y": "Baterai tersisa {percent} persen",
+        "sentence": "Segera colokkan perangkat bayi. Setelah habis, pemantauan berhenti.",
+        "silentNote": "Perangkat bayi tetap senyap. Hanya ponsel ini yang memberi peringatan.",
+        "action": "Oke, saya colokkan",
+        "actionSub": "Menutup layar ini"
+      },
+      "tool": {
+        "nightA11yOff": "Mode malam: mati",
+        "nightA11yOn": "Mode malam: hidup",
+        "nightA11yAuto": "Mode malam: otomatis",
+        "nightOn": "Hidup",
+        "nightAuto": "Auto"
       }
     }
   },

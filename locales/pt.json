@@ -53,7 +53,7 @@
       "noiseTestTitle": "Alerta de teste",
       "noiseTestText": "Isto é um teste. O dispositivo do bebê continua em silêncio.",
       "actionStopSound": "Parar o som",
-      "actionSnooze10": "Adiar 10 min",
+      "actionSnooze10": "Pausar 10 min",
       "actionChecking": "Estou verificando",
       "linkLostTitle": "Conexão perdida",
       "linkLostText": "Sem conexão com o dispositivo do bebê. Verifique seu bebê agora.",
@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Cancelar",
         "more": "Mais",
-        "moreCount": "+{count}",
         "settings": "Configurações",
         "tryAgain": "Tentar de novo",
         "yes": "Sim",
@@ -293,10 +292,6 @@
           "body": "Alguém parou o monitoramento no dispositivo do bebê. Você não vai receber alertas.",
           "titleDefault": "O dispositivo do bebê parou de monitorar"
         },
-        "battery": {
-          "title": "Bateria do dispositivo do bebê quase no fim",
-          "body": "Conecte o dispositivo do bebê agora, ou o monitoramento vai parar."
-        },
         "needsPairing": {
           "title": "Dispositivos não pareados"
         },
@@ -310,7 +305,7 @@
         "allQuietSince": "Tudo calmo desde {time}",
         "soundSince": "Som detectado · desde {time}",
         "soundAt": "Som às {time} · durou {duration}",
-        "soundSnoozed": "Som às {time} · alertas adiados",
+        "soundSnoozed": "Som às {time} · alertas de ruído em pausa",
         "lastHeard": "Último contato {time}",
         "noContactYet": "Ainda sem contato",
         "monitoringNow": "Monitorando",
@@ -323,7 +318,6 @@
         "stop": "Parar monitoramento",
         "securityTitle": "Aviso de segurança",
         "securityBody": "Não foi possível verificar a conexão. Se você não acabou de parear os dispositivos de novo, pareie-os de novo agora.",
-        "staleSuffix": "· às {time}",
         "unitWarning": {
           "pageHidden": "O dispositivo do bebê pode pausar: a página dele está oculta",
           "wakeLockOff": "O dispositivo do bebê pode adormecer: a tela dele não fica ligada",
@@ -332,32 +326,38 @@
           "micPermissionLost": "O dispositivo do bebê perdeu o acesso ao microfone"
         },
         "discreet": {
-          "indicator": "Alertas discretos: sem som",
           "escalated": "Mudou para som: sem reação há {minutes} min",
-          "offWarning": "Desligado: um modo discreto esquecido pode ficar em silêncio a noite toda."
+          "offWarning": "Desligado: um modo só vibração esquecido pode ficar em silêncio a noite toda."
         }
       },
       "battery": {
-        "baby": "Dispositivo do bebê {percent}%",
         "babyLow": "Bateria do dispositivo do bebê em {percent}%: conecte-o ao carregador",
-        "parentLow": "Este dispositivo está em {percent}%: conecte-o para continuar monitorando",
         "parentLowGeneric": "A bateria deste dispositivo está baixa: conecte-o para continuar monitorando"
       },
       "listen": {
-        "idle": "Segure para escutar",
-        "holding": "Escutando…",
-        "locked": "Escutando · toque para parar",
-        "lockHint": "Deslize para cima para continuar escutando",
+        "idle": "Escutar",
         "disabled": "Escute quando estiver conectado",
-        "a11yLocked": "Escutando. Toque duas vezes para parar."
+        "idleSub": "Toque para escutar o quarto",
+        "on": "Escutando · toque para parar",
+        "onSub": "Som do quarto no alto-falante",
+        "disabledSub": "Sem conexão no momento",
+        "stateOn": "Escutando",
+        "stateOff": "Sem escutar"
       },
       "snooze": {
-        "button": "Adiar",
-        "title": "Adiar alertas de ruído",
-        "help": "Você ainda recebe alertas se a conexão cair ou a bateria estiver acabando.",
-        "minutes": "Adiar {minutes} min",
-        "end": "Encerrar adiamento",
-        "active": "Adiado · faltam {minutes} min"
+        "button": "Pausar alertas de ruído",
+        "title": "Pausar alertas de ruído",
+        "help": "Os alertas de conexão e de bateria continuam chegando.",
+        "minutes": "{minutes} min",
+        "end": "Encerrar pausa",
+        "tile": "Pausar alertas de ruído",
+        "tilePaused": "Em pausa",
+        "pauseMinutes": "Pausar {minutes} min",
+        "resume": "Retomar",
+        "bannerTitle": "Alertas de ruído em pausa até as {time}",
+        "bannerBody": "Os alertas de conexão e de bateria continuam chegando",
+        "snackbar": "Alertas de ruído em pausa por {minutes} min",
+        "undo": "Desfazer"
       },
       "probe": {
         "button": "Alerta de teste",
@@ -369,7 +369,7 @@
         "question": "Você ouviu e sentiu o alerta?",
         "localOnly": "Só este dispositivo foi testado: o dispositivo do bebê não está conectado.",
         "styleSound": "Tipo de alerta: som",
-        "styleDiscreet": "Tipo de alerta: discreto",
+        "styleDiscreet": "Estilo de alerta: só vibração",
         "bodyDiscreet": "Este dispositivo vibra e mostra o alerta sem som. O dispositivo do bebê fica em silêncio."
       },
       "readiness": {
@@ -454,13 +454,12 @@
       },
       "coach": {
         "bar": "Verde significa que você está monitorando. Se ficar vermelho ou sumir, você não está.",
-        "listen": "Segure para escutar. Deslize para cima para continuar escutando.",
+        "listen": "Toque em Escutar para ouvir o quarto.",
         "test": "Execute um alerta de teste para saber como é um alerta.",
         "runTest": "Executar alerta de teste agora"
       },
       "alert": {
-        "title": "Som detectado",
-        "since": "Desde {time}",
+        "title": "A criança está fazendo barulho",
         "ended": "O som parou.",
         "testBadge": "TESTE",
         "stopSound": "Parar o som",
@@ -546,7 +545,7 @@
         "alertStyle": {
           "label": "Tipo de alerta",
           "sound": "Som: o som do bebê toca a cada alerta",
-          "discreet": "Discreto: vibração e ecrã, sem som"
+          "discreet": "Só vibração: vibração e tela, sem som"
         },
         "discreetEscalation": {
           "label": "Mudar para som se ninguém reagir",
@@ -644,7 +643,11 @@
           "playChime": "Reproduzir o sinal",
           "chime": "Sinal antes de um dos pais falar",
           "checklist": "Os pais podem falar através deste aparelho. Pode desligar isto nas Definições."
-        }
+        },
+        "again": "Falar de novo",
+        "againAt": "às {time}",
+        "disabled": "Fale quando estiver conectado",
+        "pausedListening": "A escuta fica em pausa enquanto você fala"
       },
       "status": {
         "connected": "Ligado",
@@ -713,6 +716,103 @@
         },
         "labelAlerting": "Este dispositivo está a emitir um alerta",
         "progressAlerting": "Alerta a tocar agora"
+      },
+      "monitor": {
+        "monitoringFor": "Monitorando há {duration}",
+        "cantHear": "Não dá para ouvir o quarto",
+        "alertLine": "Um som acima desta linha envia um alerta",
+        "lastMinute": "Último minuto",
+        "now": "agora",
+        "noSound": "Nenhum som chegando",
+        "micSilentStrip": "Microfone em silêncio",
+        "alertsTested": "Alertas testados {time}",
+        "batteryA11y": "Bateria do dispositivo do bebê {percent} por cento",
+        "batteryChargingA11y": "Bateria do dispositivo do bebê {percent} por cento, carregando",
+        "batteryShort": "{percent}%"
+      },
+      "alertStyle": {
+        "chipSound": "Alerta: som",
+        "chipVibrate": "Alerta: só vibração",
+        "chipA11ySound": "Alertas de som: som. Alterar",
+        "chipA11yVibrate": "Alertas de som: só vibração. Alterar",
+        "vibrateTitle": "Só vibração",
+        "bodyNoSound": "Os alertas de ruído não fazem som.",
+        "bodyNever": "Os alertas de ruído nunca fazem som.",
+        "bodyAfterPause": "Após a pausa: primeiro vibração, som depois de {minutes} min",
+        "turnSoundOn": "Ativar o som"
+      },
+      "banner": {
+        "fix": "Corrigir",
+        "more": "+{count} mais",
+        "moreA11y": "{count, plural, one {1 aviso a mais: {notices}} many {# avisos a mais: {notices}} other {# avisos a mais: {notices}}}",
+        "listTitle": "Avisos",
+        "micSilentTitle": "O microfone do dispositivo do bebê não ouve nada",
+        "micSilentBody": "Verifique o dispositivo do bebê. Outro app pode estar usando o microfone.",
+        "ready": {
+          "notifications": {
+            "title": "Os alertas estão desativados",
+            "body": "Os alertas não conseguem chegar até você."
+          },
+          "fullScreen": {
+            "title": "Os alertas não aparecem na tela de bloqueio",
+            "body": "Você pode perder um alerta com o celular bloqueado."
+          },
+          "alarmVolumeZero": {
+            "title": "O volume do alarme está desligado",
+            "body": "Você não vai ouvir os alertas neste celular"
+          },
+          "alarmVolumeLow": {
+            "title": "O volume do alarme está baixo",
+            "body": "Aumente para ouvir bem os alertas."
+          },
+          "dnd": {
+            "title": "Não perturbe pode silenciar os alertas",
+            "body": "Permita que o GuardedSleep passe."
+          },
+          "battery": {
+            "title": "Este celular pode parar o GuardedSleep",
+            "body": "Permita o uso em segundo plano para os alertas continuarem funcionando."
+          },
+          "parentBattery": {
+            "title": "A bateria deste celular está fraca",
+            "body": "Conecte-o ao carregador para continuar monitorando."
+          },
+          "headphones": {
+            "title": "Os alertas vão tocar nos seus fones",
+            "body": "Passe os alertas para o alto-falante se quiser ouvi-los no quarto."
+          },
+          "neverTested": {
+            "title": "Nenhum alerta de teste recente",
+            "body": "Faça um teste para ter certeza de que os alertas chegam até você."
+          }
+        }
+      },
+      "noiseAlert": {
+        "labelSound": "Tocando o som do quarto",
+        "labelVibrate": "Seu celular está vibrando",
+        "labelStopped": "Alerta interrompido",
+        "counterLabel": "desde as {time}",
+        "counterA11y": "{duration}, desde as {time}",
+        "sentenceSound": "O som do quarto está tocando neste celular.",
+        "stopSoundSub": "Para o som do alerta e continua monitorando",
+        "stopVibrationSub": "Para a vibração e continua monitorando"
+      },
+      "batteryAlert": {
+        "label": "Bateria do dispositivo do bebê",
+        "headline": "O dispositivo do bebê está quase sem bateria",
+        "counterLabel": "de bateria restante",
+        "counterA11y": "{percent} por cento de bateria restante",
+        "sentence": "Conecte o dispositivo do bebê agora. Quando acabar a bateria, o monitoramento para.",
+        "silentNote": "O dispositivo do bebê fica em silêncio. Só este celular alerta.",
+        "action": "OK, vou conectar",
+        "actionSub": "Fecha esta tela"
+      },
+      "tool": {
+        "nightA11yOff": "Modo noturno: desligado",
+        "nightA11yOn": "Modo noturno: ligado",
+        "nightA11yAuto": "Modo noturno: automático",
+        "nightOn": "Ligado",
+        "nightAuto": "Auto"
       }
     }
   },

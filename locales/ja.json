@@ -53,7 +53,7 @@
       "noiseTestTitle": "テストアラート",
       "noiseTestText": "これはテストです。赤ちゃん用端末は鳴りません。",
       "actionStopSound": "音を止める",
-      "actionSnooze10": "10分スヌーズ",
+      "actionSnooze10": "10分一時停止",
       "actionChecking": "確認中です",
       "linkLostTitle": "接続が切れました",
       "linkLostText": "赤ちゃん用端末に接続できません。今すぐ赤ちゃんの様子を見てください。",
@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "キャンセル",
         "more": "その他",
-        "moreCount": "+{count}",
         "settings": "設定",
         "tryAgain": "もう一度試す",
         "yes": "はい",
@@ -293,10 +292,6 @@
           "body": "誰かが赤ちゃん用端末で見守りを停止しました。アラートは届きません。",
           "titleDefault": "赤ちゃん用端末が見守りを停止しました"
         },
-        "battery": {
-          "title": "赤ちゃん用端末のバッテリーがほぼ空です",
-          "body": "今すぐ赤ちゃん用端末を充電してください。そうしないと見守りが止まります。"
-        },
         "needsPairing": {
           "title": "端末のペアリングが解除されました"
         },
@@ -310,7 +305,7 @@
         "allQuietSince": "{time}からずっと静かです",
         "soundSince": "音を検知 · {time}から",
         "soundAt": "{time}に音 · {duration}続きました",
-        "soundSnoozed": "{time}に音 · アラートはスヌーズ中",
+        "soundSnoozed": "{time}に音 · 音のアラートは一時停止中",
         "lastHeard": "最終接続：{time}",
         "noContactYet": "まだ接続していません",
         "monitoringNow": "見守り中",
@@ -323,7 +318,6 @@
         "stop": "見守りを停止",
         "securityTitle": "セキュリティ警告",
         "securityBody": "接続を確認できませんでした。端末を再ペアリングした覚えがない場合は、今すぐもう一度ペアリングしてください。",
-        "staleSuffix": "· {time}",
         "unitWarning": {
           "pageHidden": "赤ちゃん用端末が一時停止している可能性があります（ページが非表示）",
           "wakeLockOff": "赤ちゃん用端末がスリープする可能性があります（画面が点灯したままではありません）",
@@ -332,32 +326,38 @@
           "micPermissionLost": "赤ちゃん用端末がマイクへのアクセスを失いました"
         },
         "discreet": {
-          "indicator": "控えめな通知：音なし",
           "escalated": "音に切り替えました：{minutes} 分間反応がありません",
-          "offWarning": "オフ：控えめモードを戻し忘れると、一晩中音が出ないことがあります。"
+          "offWarning": "オフ：振動のみモードを戻し忘れると、一晩中音が出ないことがあります。"
         }
       },
       "battery": {
-        "baby": "赤ちゃん用端末 {percent}%",
         "babyLow": "赤ちゃん用端末のバッテリー{percent}%。充電してください",
-        "parentLow": "この端末は{percent}%です。見守りを続けるには充電してください",
         "parentLowGeneric": "この端末のバッテリーが少なくなっています。見守りを続けるには充電してください"
       },
       "listen": {
-        "idle": "長押しで聞く",
-        "holding": "聞いています…",
-        "locked": "聞いています · タップで停止",
-        "lockHint": "上にスライドして聞き続ける",
+        "idle": "聞く",
         "disabled": "接続すると聞けます",
-        "a11yLocked": "聞いています。ダブルタップで停止します。"
+        "idleSub": "タップして部屋の音を聞く",
+        "on": "聞いています · タップで停止",
+        "onSub": "部屋の音をスピーカーで再生中",
+        "disabledSub": "現在は接続されていません",
+        "stateOn": "聞いています",
+        "stateOff": "聞いていません"
       },
       "snooze": {
-        "button": "スヌーズ",
-        "title": "音のアラートをスヌーズ",
-        "help": "接続が切れたときやバッテリーが少なくなったときは、引き続きアラートが届きます。",
-        "minutes": "{minutes}分スヌーズ",
-        "end": "スヌーズを終了",
-        "active": "スヌーズ中 · 残り{minutes}分"
+        "button": "音のアラートを一時停止",
+        "title": "音のアラートを一時停止",
+        "help": "接続とバッテリーのアラートは届きます。",
+        "minutes": "{minutes}分",
+        "end": "一時停止を終了",
+        "tile": "音のアラートを一時停止",
+        "tilePaused": "一時停止中",
+        "pauseMinutes": "{minutes}分一時停止",
+        "resume": "再開",
+        "bannerTitle": "音のアラートは{time}まで一時停止中",
+        "bannerBody": "接続とバッテリーのアラートは届きます",
+        "snackbar": "音のアラートを{minutes}分一時停止しました",
+        "undo": "元に戻す"
       },
       "probe": {
         "button": "テストアラート",
@@ -369,7 +369,7 @@
         "question": "音と振動を感じましたか？",
         "localOnly": "この端末だけをテストしました。赤ちゃん用端末は接続されていません。",
         "styleSound": "通知方法：音",
-        "styleDiscreet": "通知方法：控えめ",
+        "styleDiscreet": "アラートの種類：振動のみ",
         "bodyDiscreet": "この端末は音を出さずに振動して通知を表示します。赤ちゃん側の端末は無音のままです。"
       },
       "readiness": {
@@ -454,13 +454,12 @@
       },
       "coach": {
         "bar": "緑は見守り中です。赤に変わるか表示が消えたら、見守りはできていません。",
-        "listen": "長押しで聞きます。上にスライドすると聞き続けます。",
+        "listen": "「聞く」をタップすると部屋の音が聞こえます。",
         "test": "テストアラートを実行して、アラートの感じを確かめましょう。",
         "runTest": "今すぐテストアラートを実行"
       },
       "alert": {
-        "title": "音を検知しました",
-        "since": "{time}から",
+        "title": "お子さんが音を立てています",
         "ended": "音は止まりました。",
         "testBadge": "テスト",
         "stopSound": "音を止める",
@@ -546,7 +545,7 @@
         "alertStyle": {
           "label": "通知方法",
           "sound": "音：通知のたびに赤ちゃんの音を再生",
-          "discreet": "控えめ：振動と画面のみ、音なし"
+          "discreet": "振動のみ：振動と画面、音なし"
         },
         "discreetEscalation": {
           "label": "誰も反応しないときは音に切り替える",
@@ -644,7 +643,11 @@
           "playChime": "チャイムを再生",
           "chime": "保護者が話す前にチャイムを鳴らす",
           "checklist": "保護者がこの端末を通して話せます。設定でオフにできます。"
-        }
+        },
+        "again": "もう一度話す",
+        "againAt": "{time}に",
+        "disabled": "接続すると話せます",
+        "pausedListening": "話している間は聞く機能が一時停止します"
       },
       "status": {
         "connected": "接続済み",
@@ -713,6 +716,103 @@
         },
         "labelAlerting": "この端末がアラートを鳴らしています",
         "progressAlerting": "アラート鳴動中"
+      },
+      "monitor": {
+        "monitoringFor": "{duration}見守り中",
+        "cantHear": "部屋の音が聞こえません",
+        "alertLine": "この線を超える音でアラートが届きます",
+        "lastMinute": "直近1分",
+        "now": "今",
+        "noSound": "音が入ってきていません",
+        "micSilentStrip": "マイクが無音です",
+        "alertsTested": "アラートをテスト済み：{time}",
+        "batteryA11y": "赤ちゃん用端末のバッテリー {percent}パーセント",
+        "batteryChargingA11y": "赤ちゃん用端末のバッテリー {percent}パーセント、充電中",
+        "batteryShort": "{percent}%"
+      },
+      "alertStyle": {
+        "chipSound": "アラート：音",
+        "chipVibrate": "アラート：振動のみ",
+        "chipA11ySound": "音のアラート：音。変更",
+        "chipA11yVibrate": "音のアラート：振動のみ。変更",
+        "vibrateTitle": "振動のみ",
+        "bodyNoSound": "音のアラートでは音が鳴りません。",
+        "bodyNever": "音のアラートでは音が鳴ることはありません。",
+        "bodyAfterPause": "一時停止の後：まず振動し、{minutes}分後に音が鳴ります",
+        "turnSoundOn": "音をオンにする"
+      },
+      "banner": {
+        "fix": "修正",
+        "more": "ほか{count}件",
+        "moreA11y": "{count, plural, other {ほか#件のお知らせ：{notices}}}",
+        "listTitle": "お知らせ",
+        "micSilentTitle": "赤ちゃん用端末のマイクが何も拾っていません",
+        "micSilentBody": "赤ちゃん用端末を確認してください。ほかのアプリがマイクを使っているかもしれません。",
+        "ready": {
+          "notifications": {
+            "title": "アラートがオフです",
+            "body": "アラートが届きません。"
+          },
+          "fullScreen": {
+            "title": "アラートがロック画面に表示されません",
+            "body": "スマートフォンがロック中は、アラートを見逃すことがあります。"
+          },
+          "alarmVolumeZero": {
+            "title": "アラームの音量がオフです",
+            "body": "このスマートフォンではアラートが聞こえません"
+          },
+          "alarmVolumeLow": {
+            "title": "アラームの音量が小さいです",
+            "body": "アラートがはっきり聞こえるよう、音量を上げてください。"
+          },
+          "dnd": {
+            "title": "サイレントモードでアラートが鳴らない可能性があります",
+            "body": "GuardedSleep を例外として許可してください。"
+          },
+          "battery": {
+            "title": "このスマートフォンが GuardedSleep を止める可能性があります",
+            "body": "アラートが動き続けるよう、バックグラウンドでの使用を許可してください。"
+          },
+          "parentBattery": {
+            "title": "このスマートフォンのバッテリー残量が少なくなっています",
+            "body": "充電して見守りを続けてください。"
+          },
+          "headphones": {
+            "title": "アラートはヘッドホンから鳴ります",
+            "body": "部屋で聞きたい場合は、アラートをスピーカーに切り替えてください。"
+          },
+          "neverTested": {
+            "title": "最近のテストアラートがありません",
+            "body": "テストを実行して、アラートが届くことを確認してください。"
+          }
+        }
+      },
+      "noiseAlert": {
+        "labelSound": "部屋の音を再生中",
+        "labelVibrate": "スマートフォンが振動しています",
+        "labelStopped": "アラートを停止しました",
+        "counterLabel": "{time}から",
+        "counterA11y": "{duration}、{time}から",
+        "sentenceSound": "部屋の音をこのスマートフォンで再生しています。",
+        "stopSoundSub": "アラート音を止めます。見守りは続きます",
+        "stopVibrationSub": "振動を止めます。見守りは続きます"
+      },
+      "batteryAlert": {
+        "label": "赤ちゃん用端末のバッテリー",
+        "headline": "赤ちゃん用端末の電池がほぼなくなりました",
+        "counterLabel": "バッテリー残量",
+        "counterA11y": "バッテリー残量 {percent}パーセント",
+        "sentence": "今すぐ赤ちゃん用端末を充電してください。電池が切れると、見守りが止まります。",
+        "silentNote": "赤ちゃん用端末は鳴りません。アラートはこのスマートフォンだけです。",
+        "action": "OK、充電します",
+        "actionSub": "この画面を閉じます"
+      },
+      "tool": {
+        "nightA11yOff": "ナイトモード：オフ",
+        "nightA11yOn": "ナイトモード：オン",
+        "nightA11yAuto": "ナイトモード：自動",
+        "nightOn": "オン",
+        "nightAuto": "自動"
       }
     }
   },

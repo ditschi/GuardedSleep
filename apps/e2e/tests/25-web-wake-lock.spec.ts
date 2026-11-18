@@ -42,11 +42,11 @@ test("wake lock: held while monitoring, warns when revoked, retried, released on
     await expect(parent.getByTestId("wake_lock_warning")).toHaveCount(0);
     await expect.poll(() => wakeLockCounts(parent)).toMatchObject({ active: 1 });
 
-    // The baby device's loss reaches the parent as a unit warning chip.
+    // The baby device's loss reaches the parent as a unit warning notice.
     await revokeWakeLocks(baby);
     await expect(baby.getByTestId("wake_lock_warning")).toBeVisible();
     await expect(baby.getByTestId("baby_wake_lock")).toHaveCount(0);
-    await expect(parent.getByTestId("parent_unit_warning_wake_lock_off")).toBeVisible({
+    await expect(parent.getByTestId("parent_banner_unit_warning_wake_lock_off")).toBeVisible({
       timeout: 30_000,
     });
 

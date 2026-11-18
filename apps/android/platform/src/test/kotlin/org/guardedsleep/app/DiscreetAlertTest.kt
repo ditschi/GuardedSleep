@@ -59,7 +59,7 @@ class DiscreetAlertTest {
         assertTrue(model.state.value.noiseAlertActive)
         assertEquals(true, effects.muted.last())
 
-        assertTrue(model.setListen(ListenMode.HOLD, clock.elapsed))
+        assertTrue(model.setListen(ListenMode.ON, clock.elapsed))
         assertEquals(false, effects.muted.last())
         // A continuing event while listening stays audible.
         clock.advance(10_000)
@@ -76,7 +76,7 @@ class DiscreetAlertTest {
         connect()
         noise()
         assertEquals(false, effects.muted.last())
-        assertTrue(model.setListen(ListenMode.HOLD, clock.elapsed))
+        assertTrue(model.setListen(ListenMode.ON, clock.elapsed))
         assertTrue(model.setListen(ListenMode.OFF, clock.elapsed))
         assertEquals(false, effects.muted.last())
     }
@@ -89,7 +89,7 @@ class DiscreetAlertTest {
         discreet = true
         model.onAlertStyleChanged()
         assertEquals(true, effects.muted.last())
-        assertTrue(model.setListen(ListenMode.LOCKED, clock.elapsed))
+        assertTrue(model.setListen(ListenMode.ON, clock.elapsed))
         model.onAlertStyleChanged()
         assertEquals(false, effects.muted.last())
     }
@@ -233,7 +233,7 @@ class DiscreetAlertTest {
     fun endingListenDoesNotRemuteAnEscalatedEvent() {
         connect()
         noise()
-        model.setListen(ListenMode.HOLD, clock.elapsed)
+        model.setListen(ListenMode.ON, clock.elapsed)
         model.onEvent(LinkEvent.NoiseEscalated(120_000UL), clock.elapsed)
         val before = effects.muted.size
         model.setListen(ListenMode.OFF, clock.elapsed)

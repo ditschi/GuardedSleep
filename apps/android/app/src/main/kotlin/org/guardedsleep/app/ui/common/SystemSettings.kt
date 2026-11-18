@@ -28,6 +28,8 @@ object SystemSettings {
             notificationSettings(ctx)
         }
 
+    fun soundSettings() = Intent(Settings.ACTION_SOUND_SETTINGS)
+
     fun dndAccess() = Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
 
     // The monitor must survive Doze with the screen off (Android guide: "BatteryLife" is a policy

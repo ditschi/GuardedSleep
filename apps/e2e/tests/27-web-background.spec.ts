@@ -87,7 +87,7 @@ test("hidden baby page: the parent sees the warning, the baby sees the report on
   try {
     await pairWeb(dual);
     await setHidden(baby, true);
-    await expect(parent.getByTestId("parent_unit_warning_page_hidden")).toBeVisible({
+    await expect(parent.getByTestId("parent_banner_unit_warning_page_hidden")).toBeVisible({
       timeout: 30_000,
     });
     await expect
@@ -97,7 +97,7 @@ test("hidden baby page: the parent sees the warning, the baby sees the report on
     await skewClock(baby, 30_000);
     await setHidden(baby, false);
     await expect(baby.getByTestId("away_notice")).toHaveAttribute("data-kind", "background");
-    await expect(parent.getByTestId("parent_unit_warning_page_hidden")).toHaveCount(0, {
+    await expect(parent.getByTestId("parent_banner_unit_warning_page_hidden")).toHaveCount(0, {
       timeout: 30_000,
     });
   } finally {
@@ -117,7 +117,7 @@ test("resume from sleep: both pages warn, the parent is told about the baby devi
     const away = baby.getByTestId("away_notice");
     await expect(away).toHaveAttribute("data-kind", "sleep", { timeout: 15_000 });
     await expect(away).toContainText("device was asleep for 20 min");
-    await expect(parent.getByTestId("parent_unit_warning_resumed_from_sleep")).toBeVisible({
+    await expect(parent.getByTestId("parent_banner_unit_warning_resumed_from_sleep")).toBeVisible({
       timeout: 30_000,
     });
 

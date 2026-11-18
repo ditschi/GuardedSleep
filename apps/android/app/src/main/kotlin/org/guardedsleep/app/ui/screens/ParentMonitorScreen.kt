@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,42 +42,60 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AdaptiveButtonRow
+import org.guardedsleep.app.ui.common.AlertChipSpec
 import org.guardedsleep.app.ui.common.AppCard
+import org.guardedsleep.app.ui.common.BannerCard
+import org.guardedsleep.app.ui.common.BannerSpec
+import org.guardedsleep.app.ui.common.BannerStack
 import org.guardedsleep.app.ui.common.Body
+import org.guardedsleep.app.ui.common.DockTile
+import org.guardedsleep.app.ui.common.DockTiles
 import org.guardedsleep.app.ui.common.Glyph
 import org.guardedsleep.app.ui.common.GlyphIcon
+import org.guardedsleep.app.ui.common.Headline
 import org.guardedsleep.app.ui.common.ListenButton
+import org.guardedsleep.app.ui.common.MetaLine
+import org.guardedsleep.app.ui.common.PauseSnackbar
 import org.guardedsleep.app.ui.common.PrimaryButton
 import org.guardedsleep.app.ui.common.QuietButton
 import org.guardedsleep.app.ui.common.RestoredCard
 import org.guardedsleep.app.ui.common.ScreenRoot
 import org.guardedsleep.app.ui.common.SecondaryButton
 import org.guardedsleep.app.ui.common.SheetOverlay
-import org.guardedsleep.app.ui.common.SoundMeter
+import org.guardedsleep.app.ui.common.SoundStrip
 import org.guardedsleep.app.ui.common.StatusBar
-import org.guardedsleep.app.ui.common.StatusChip
 import org.guardedsleep.app.ui.common.StopMonitoringDialog
+import org.guardedsleep.app.ui.common.StripState
 import org.guardedsleep.app.ui.common.SystemSettings
 import org.guardedsleep.app.ui.common.TalkInterruptEffect
-import org.guardedsleep.app.ui.common.TalkSection
-import org.guardedsleep.app.ui.common.Tone
-import org.guardedsleep.app.ui.common.ceilMinutes
+import org.guardedsleep.app.ui.common.TalkStatus
+import org.guardedsleep.app.ui.common.TalkTile
+import org.guardedsleep.app.ui.common.ToolRow
 import org.guardedsleep.app.ui.common.formatClock
 import org.guardedsleep.app.ui.common.formatDuration
+import org.guardedsleep.app.ui.common.formatDurationWords
 import org.guardedsleep.app.ui.common.formatTime
+import org.guardedsleep.app.ui.common.headlineOf
+import org.guardedsleep.app.ui.common.pauseTileLabel
 import org.guardedsleep.app.ui.common.rememberElapsedNow
 import org.guardedsleep.app.ui.common.rememberWallNow
 import org.guardedsleep.app.ui.model.AlertOutput
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
-import org.guardedsleep.app.ui.model.BabyBattery
+import org.guardedsleep.app.ui.model.Banner
+import org.guardedsleep.app.ui.model.BannerKind
+import org.guardedsleep.app.ui.model.LevelHistory
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.ListenMode
+import org.guardedsleep.app.ui.model.LoudnessWords
 import org.guardedsleep.app.ui.model.MissedEventsUi
 import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.ReadinessIssue
+import org.guardedsleep.app.ui.model.SettingsState
 import org.guardedsleep.app.ui.model.SilenceRequest
 import org.guardedsleep.app.ui.model.SilenceStatus
+import org.guardedsleep.app.ui.model.parentBanners
+import org.guardedsleep.app.ui.model.rankBanners
 import org.guardedsleep.app.ui.theme.LocalAppColors
 import org.guardedsleep.app.ui.theme.StateColors
 
@@ -90,21 +108,18 @@ enum class ParentSheet {
     MORE,
     STOP,
     CHOOSE_OTHER,
+    BANNERS,
 }
 
-private class ChipSpec(
-    val priority: Int,
-    val tag: String,
-    val glyph: Glyph,
-    val extra: Glyph?,
-    val text: String,
-    val tone: Tone,
-    val onClick: (() -> Unit)?,
-    val stale: Boolean = false,
-)
+/** Bars of the last minute in the sound strip: one per second. */
+private const val STRIP_BARS = 60
 
 /**
- * S09: the main parent screen. Priorities follow alpha-ux-flows §5: bar colour + headline first.
+ * S09: the calm parent monitor (`redesign-calm-ui` design sections 3, 6 and 7). The status bar is
+ * pinned on top, then the tool row; the middle scrolls (banners, hero line, sound strip, meta
+ * line); the dock is pinned at the bottom (Listen, then Talk, Pause and More). Priorities follow
+ * `parent-alerts` "Banner priority on the monitor": the ranking is a pure function of the contract,
+ * this screen only renders it. [levelHistory] feeds the strip and can be seeded by tests.
  */
 @Composable
 fun ParentMonitorScreen(
@@ -113,6 +128,7 @@ fun ParentMonitorScreen(
     initialSheet: ParentSheet? = null,
     /** After "Choose another connection": the caller asks the home to list the connections. */
     onChosenOther: () -> Unit = {},
+    levelHistory: LevelHistory = remember { LevelHistory() },
 ) {
     val p = controller.parent.collectAsState().value
     val app = controller.app.collectAsState().value
@@ -121,7 +137,9 @@ fun ParentMonitorScreen(
     val elapsed by rememberElapsedNow()
     val wall by rememberWallNow()
     var sheet by remember { mutableStateOf(initialSheet) }
-    var expandChips by remember { mutableStateOf(false) }
+    var talkHint by remember { mutableStateOf<Int?>(null) }
+    // Minutes of a pause that may still be undone; set only when no noise event ran at its start.
+    var undoMinutes by remember { mutableStateOf<Int?>(null) }
     val connected = p.link.phase == LinkPhase.CONNECTED
     // Verified once in this session: the link has had contact with the baby unit.
     val verified = connected || p.link.lastAliveElapsedMs != null
@@ -137,23 +155,40 @@ fun ParentMonitorScreen(
         LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE ||
             with(LocalDensity.current) { windowWidth.toDp() } >= 600.dp
 
-    val lastContactWall = p.link.lastAliveElapsedMs?.let { wall - (elapsed - it) }
-    val chips =
-        buildChips(
+    // A pause that ends, or a noise event that starts, takes its Undo away.
+    LaunchedEffect(p.noiseAlertActive, snoozed) {
+        if (p.noiseAlertActive || !snoozed) undoMinutes = null
+    }
+
+    val stack = rankBanners(parentBanners(p, settings.alertStyle, wall))
+    val specOf: @Composable (Banner) -> BannerSpec = { b ->
+        bannerSpec(
+            b,
             p,
+            settings,
+            controller,
+            wall,
             snoozed,
-            snoozeLeft,
-            !connected,
-            lastContactWall,
             onSilence = { sheet = ParentSheet.SILENCE },
-            onReadiness = { sheet = ParentSheet.READINESS },
-            onSnooze = { sheet = ParentSheet.SNOOZE },
             onProbe = { sheet = ParentSheet.PROBE },
         )
-    val visible = if (expandChips) chips else chips.take(2)
-    val hidden = chips.size - visible.size
+    }
+    val shownSpecs = stack.shown.map { specOf(it) }
+    val foldedSpecs = stack.folded.map { specOf(it) }
+    val vibrateOnly = settings.alertStyle == AlertStyle.DISCREET
+    val bars =
+        remember(elapsed, connected) {
+            if (connected) {
+                levelHistory.push(elapsed, p.level)
+                levelHistory.bars(elapsed, STRIP_BARS)
+            } else {
+                levelHistory.clear()
+                List(STRIP_BARS) { 0f }
+            }
+        }
+    val micSilent = connected && p.peer.micSilent == true
 
-    val top: @Composable ColumnScope.() -> Unit = {
+    val middle: @Composable ColumnScope.() -> Unit = {
         val restoredAfterMs = p.restoredAfterMs
         if (restoredAfterMs != null) {
             // Until OK: the card never dismisses itself, a new outage replaces it.
@@ -195,47 +230,21 @@ fun ParentMonitorScreen(
                 controller.dismissCoach()
                 sheet = ParentSheet.PROBE
             }
-        if (p.securityWarning) {
-            AppCard(Modifier.testTag("parent_security_warning"), container = StateColors.Red) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    GlyphIcon(Glyph.EXCLAIM, StateColors.OnState)
-                    Text(
-                        stringResource(R.string.native_ui_parent_security_title),
-                        color = StateColors.OnState,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-                Text(
-                    stringResource(R.string.native_ui_parent_security_body),
-                    color = StateColors.OnState,
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-            }
-        }
         if (restoredAfterMs == null) {
             p.missed?.let { MissedCard(it, wall) { controller.dismissMissedEvents() } }
         }
-        if (settings.alertStyle == AlertStyle.DISCREET) {
-            // Never hidden behind "more": a forgotten discreet style is a missed-alarm risk.
-            StatusChip(
-                Glyph.ZZ,
-                stringResource(R.string.native_ui_parent_discreet_indicator),
-                Tone.WARN,
-                "discreet_indicator",
-                onClick = { sheet = ParentSheet.MORE },
-            )
-        }
-        Headline(p, elapsed, wall, snoozed)
-        SoundMeter(
-            p.level,
+        BannerStack(shownSpecs, foldedSpecs, onMore = { sheet = ParentSheet.BANNERS })
+        Hero(p, elapsed, wall)
+        SoundStrip(
+            bars,
             p.babyThreshold ?: settings.threshold,
-            live = connected,
-            alarm = p.noiseAlertActive && !snoozed,
+            when {
+                !connected -> StripState.OFFLINE
+                micSilent -> StripState.MIC_SILENT
+                else -> StripState.LIVE
+            },
         )
+        metaText(p, settings, connected)?.let { MetaLine(it, { sheet = ParentSheet.SILENCE }) }
         if (p.link.phase == LinkPhase.CONNECTING) {
             // Wrong place (travelling): before the first connection of a run, one tap at levels 0
             // and 1, the stop confirmation from level 2 (`connection-status`).
@@ -268,37 +277,6 @@ fun ParentMonitorScreen(
                 }
             }
         }
-    }
-    val middle: @Composable ColumnScope.() -> Unit = {
-        if (visible.isNotEmpty()) {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                visible.forEach { c ->
-                    StatusChip(
-                        c.glyph,
-                        c.text,
-                        c.tone,
-                        c.tag,
-                        onClick = c.onClick,
-                        extraGlyph = c.extra,
-                        dimmed = c.stale,
-                    )
-                }
-                if (hidden > 0) {
-                    StatusChip(
-                        Glyph.DOTS,
-                        stringResource(R.string.native_ui_common_more_count, hidden),
-                        Tone.NEUTRAL,
-                        "parent_chip_more",
-                        onClick = { expandChips = true },
-                    )
-                }
-            }
-        }
-    }
-    val bottom: @Composable ColumnScope.() -> Unit = {
         if (
             p.link.level >= 2 &&
                 !connected &&
@@ -323,38 +301,59 @@ fun ParentMonitorScreen(
                 )
             }
         }
-        ListenButton(p.listen, connected, { controller.setListen(it) })
-        // Talk is its own row below Listen, so the slide-to-lock path never crosses it.
-        Spacer(Modifier.height(24.dp))
-        TalkSection(
+    }
+    val dock: @Composable ColumnScope.() -> Unit = {
+        TalkStatus(
             p,
             elapsed,
+            talkHint,
             coachVisible = connected && !settings.talkCoachSeen && !app.coachPending,
-            onPress = { pressed ->
-                if (pressed) controller.dismissTalkCoach()
-                controller.setTalk(pressed)
-            },
-            onKeepListening = { controller.setListen(ListenMode.LOCKED) },
+            onKeepListening = { controller.setListen(ListenMode.ON) },
             onPermissionResult = { controller.talkPermissionResult(it) },
             onPermissionDismiss = { controller.dismissTalkPermission() },
             onCoachDismiss = { controller.dismissTalkCoach() },
         )
-        Spacer(Modifier.height(24.dp))
-        AdaptiveButtonRow {
-            SecondaryButton(
+        val undo = undoMinutes
+        if (undo != null && snoozed && !p.noiseAlertActive) {
+            PauseSnackbar(
+                undo,
+                onUndo = {
+                    controller.cancelSnooze()
+                    undoMinutes = null
+                },
+                onTimeout = { undoMinutes = null },
+            )
+        }
+        ListenButton(p.listen, connected, { controller.setListen(it) })
+        // Unequal widths keep every one-line label whole: "Pause noise alerts" is the longest.
+        DockTiles { w ->
+            TalkTile(
+                p,
+                elapsed,
+                wall,
+                onPress = { pressed ->
+                    if (pressed) controller.dismissTalkCoach()
+                    controller.setTalk(pressed)
+                },
+                onHint = { talkHint = it },
+                modifier = w(1.2f),
+            )
+            DockTile(
+                Glyph.PAUSE,
+                pauseTileLabel(snoozed),
                 stringResource(R.string.native_ui_snooze_button),
-                { sheet = ParentSheet.SNOOZE },
                 "parent_snooze",
+                { sheet = ParentSheet.SNOOZE },
+                w(1.4f),
+                active = snoozed,
             )
-            SecondaryButton(
-                stringResource(R.string.native_ui_probe_button),
-                { sheet = ParentSheet.PROBE },
-                "parent_probe",
-            )
-            SecondaryButton(
+            DockTile(
+                Glyph.DOTS,
                 stringResource(R.string.native_ui_common_more),
-                { sheet = ParentSheet.MORE },
+                stringResource(R.string.native_ui_common_more),
                 "parent_overflow",
+                { sheet = ParentSheet.MORE },
+                w(0.8f),
             )
         }
     }
@@ -362,7 +361,26 @@ fun ParentMonitorScreen(
     TalkInterruptEffect { controller.interruptTalk() }
     ScreenRoot("parent_monitor") {
         Column(Modifier.fillMaxSize()) {
-            StatusBar(p.link, name, backgroundProtection = app.backgroundProtection)
+            StatusBar(
+                p.link,
+                name,
+                backgroundProtection = app.backgroundProtection,
+                babyBatteryPct = p.peer.batteryPct.takeIf { connected },
+                babyCharging = p.peer.charging,
+            )
+            Spacer(Modifier.height(6.dp))
+            ToolRow(
+                alert =
+                    AlertChipSpec(
+                        vibrateOnly = vibrateOnly,
+                        iconOnly =
+                            vibrateOnly && stack.shown.any { it.kind == BannerKind.VIBRATE_ONLY },
+                        onClick = { sheet = ParentSheet.MORE },
+                    ),
+                // The night control is wired by the night-mode slice.
+                night = null,
+                onSettings = onSettings,
+            )
             // Sheets and dialogs draw inside this box, so their scrim leaves the bar readable.
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 Column(Modifier.fillMaxSize()) {
@@ -374,41 +392,47 @@ fun ParentMonitorScreen(
                             Column(
                                 Modifier.weight(1f).verticalScroll(rememberScrollState()),
                                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                                content = top,
+                                content = middle,
                             )
                             Column(
                                 Modifier.weight(1f).verticalScroll(rememberScrollState()),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                middle()
-                                Spacer(Modifier.height(8.dp))
-                                bottom()
-                            }
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                content = dock,
+                            )
                         }
                     } else {
                         Column(
                             Modifier.weight(1f)
                                 .fillMaxWidth()
                                 .verticalScroll(rememberScrollState())
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            top()
-                            middle()
-                        }
+                            content = middle,
+                        )
                         Column(
                             Modifier.fillMaxWidth()
                                 .padding(horizontal = 16.dp)
-                                .padding(bottom = 16.dp, top = 8.dp),
+                                .padding(bottom = 16.dp, top = 8.dp)
+                                .testTag("parent_dock"),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
-                            content = bottom,
+                            content = dock,
                         )
                     }
                 }
                 when (sheet) {
                     ParentSheet.SILENCE -> SilenceSheet(p, controller) { sheet = null }
                     ParentSheet.SNOOZE ->
-                        SnoozeSheet(snoozed, snoozeLeft, controller) { sheet = null }
+                        SnoozeSheet(
+                            snoozed,
+                            p.snoozedUntilWallMs,
+                            controller,
+                            onStarted = { minutes ->
+                                sheet = null
+                                undoMinutes = minutes.takeIf { !p.noiseAlertActive }
+                            },
+                        ) {
+                            sheet = null
+                        }
                     ParentSheet.PROBE ->
                         ProbeSheet(
                             controller,
@@ -424,43 +448,21 @@ fun ParentMonitorScreen(
                             sheet = null
                         }
                     ParentSheet.HELP -> HelpSheet { sheet = null }
+                    ParentSheet.BANNERS -> BannerListSheet(foldedSpecs) { sheet = null }
                     ParentSheet.MORE ->
-                        SheetOverlay(
-                            "sheet_more",
-                            stringResource(R.string.native_ui_common_more),
-                            { sheet = null },
-                        ) {
-                            AlertStyleChoice(settings.alertStyle) { style ->
-                                controller.updateSettings { it.copy(alertStyle = style) }
-                            }
-                            Spacer(Modifier.height(8.dp))
-                            SecondaryButton(
-                                stringResource(R.string.native_ui_common_settings),
-                                {
-                                    sheet = null
-                                    onSettings()
-                                },
-                                "parent_settings",
-                                Modifier.fillMaxWidth(),
-                            )
-                            if (app.autoStarted && verified) {
-                                Spacer(Modifier.height(8.dp))
-                                SecondaryButton(
-                                    stringResource(R.string.native_ui_connections_choose_another),
-                                    { sheet = ParentSheet.CHOOSE_OTHER },
-                                    "menu_choose_other_connection",
-                                    Modifier.fillMaxWidth(),
-                                )
-                            }
-                            Spacer(Modifier.height(16.dp))
-                            SecondaryButton(
-                                stringResource(R.string.native_ui_parent_stop),
-                                { sheet = ParentSheet.STOP },
-                                "parent_stop",
-                                Modifier.fillMaxWidth(),
-                                destructive = true,
-                            )
-                        }
+                        MoreSheet(
+                            settings.alertStyle,
+                            offerChooseOther = app.autoStarted && verified,
+                            controller = controller,
+                            onTest = { sheet = ParentSheet.PROBE },
+                            onSettings = {
+                                sheet = null
+                                onSettings()
+                            },
+                            onChooseOther = { sheet = ParentSheet.CHOOSE_OTHER },
+                            onStop = { sheet = ParentSheet.STOP },
+                            onDismiss = { sheet = null },
+                        )
                     ParentSheet.STOP ->
                         StopMonitoringDialog(
                             name = name,
@@ -489,294 +491,360 @@ fun ParentMonitorScreen(
     }
 }
 
+/** The banner of the stack as copy plus action; the readiness fixes open the matching setting. */
 @Composable
-private fun buildChips(
+private fun bannerSpec(
+    b: Banner,
     p: ParentMonitorState,
+    settings: SettingsState,
+    controller: AppController,
+    wall: Long,
     snoozed: Boolean,
-    snoozeLeft: Long,
-    stale: Boolean,
-    staleAtWallMs: Long?,
     onSilence: () -> Unit,
-    onReadiness: () -> Unit,
-    onSnooze: () -> Unit,
     onProbe: () -> Unit,
-): List<ChipSpec> {
-    val out = mutableListOf<ChipSpec>()
-    val issues = p.readiness
-    // Peer-reported chips are last-known values while the link is down: dim them and say when they
-    // were true.
-    val suffix =
-        if (stale && staleAtWallMs != null)
-            " " + stringResource(R.string.native_ui_parent_stale_suffix, formatTime(staleAtWallMs))
-        else ""
-    @Composable
-    fun issueText(i: ReadinessIssue): String =
-        stringResource(
-            when (i) {
-                ReadinessIssue.NOTIFICATIONS_BLOCKED ->
-                    R.string.native_ui_readiness_notifications_off
-                ReadinessIssue.ALARM_VOLUME_ZERO -> R.string.native_ui_readiness_alarm_volume_zero
-                ReadinessIssue.FULL_SCREEN_BLOCKED -> R.string.native_ui_readiness_lock_screen
-                ReadinessIssue.DND_BYPASS_MISSING -> R.string.native_ui_readiness_dnd
-                ReadinessIssue.BATTERY_OPTIMIZED -> R.string.native_ui_readiness_battery
-                ReadinessIssue.HEADPHONES_CONNECTED -> R.string.native_ui_readiness_headphones
-                ReadinessIssue.PARENT_BATTERY_LOW -> R.string.native_ui_battery_parent_low_generic
-                ReadinessIssue.NEVER_TESTED -> R.string.native_ui_readiness_never_tested
-            }
-        )
-    for (i in issues) {
-        when (i) {
-            ReadinessIssue.NOTIFICATIONS_BLOCKED,
-            ReadinessIssue.ALARM_VOLUME_ZERO ->
-                out +=
-                    ChipSpec(
-                        1,
-                        "parent_readiness_chip",
-                        Glyph.BELL,
-                        null,
-                        issueText(i),
-                        Tone.BAD,
-                        onReadiness,
-                    )
-            ReadinessIssue.FULL_SCREEN_BLOCKED,
-            ReadinessIssue.DND_BYPASS_MISSING,
-            ReadinessIssue.BATTERY_OPTIMIZED ->
-                out +=
-                    ChipSpec(
-                        5,
-                        "parent_readiness_chip",
-                        Glyph.BELL,
-                        null,
-                        issueText(i),
-                        Tone.WARN,
-                        onReadiness,
-                    )
-            ReadinessIssue.HEADPHONES_CONNECTED ->
-                out +=
-                    ChipSpec(
-                        8,
-                        "parent_readiness_chip",
-                        Glyph.HEADPHONES,
-                        null,
-                        issueText(i),
-                        Tone.INFO,
-                        onReadiness,
-                    )
-            ReadinessIssue.NEVER_TESTED ->
-                out +=
-                    ChipSpec(
-                        9,
-                        "parent_test_chip",
-                        Glyph.BELL,
-                        null,
-                        issueText(i),
-                        Tone.INFO,
-                        onProbe,
-                    )
-            ReadinessIssue.PARENT_BATTERY_LOW -> Unit
-        }
-    }
-    val own = p.ownBatteryPct
-    if (ReadinessIssue.PARENT_BATTERY_LOW in issues || (own != null && own < 20)) {
-        val text =
-            if (own != null) stringResource(R.string.native_ui_battery_parent_low, own.toString())
-            else issueText(ReadinessIssue.PARENT_BATTERY_LOW)
-        out +=
-            ChipSpec(
-                3,
-                "parent_own_battery_chip",
-                Glyph.BATTERY,
-                null,
-                text,
-                if (own != null && own < 10) Tone.BAD else Tone.WARN,
-                onReadiness,
-            )
-    }
-    val pct = p.peer.batteryPct
-    if (pct != null) {
-        val charging = p.peer.charging == true
-        when {
-            pct < BabyBattery.CRITICAL_PCT && !charging ->
-                out +=
-                    ChipSpec(
-                        2,
-                        "parent_baby_battery_chip",
-                        Glyph.BATTERY,
-                        null,
-                        stringResource(R.string.native_ui_battery_baby_low, pct.toString()) +
-                            suffix,
-                        Tone.BAD,
-                        null,
-                        stale,
-                    )
-            pct < BabyBattery.LOW_PCT && !charging ->
-                out +=
-                    ChipSpec(
-                        4,
-                        "parent_baby_battery_chip",
-                        Glyph.BATTERY,
-                        null,
-                        stringResource(R.string.native_ui_battery_baby_low, pct.toString()) +
-                            suffix,
-                        Tone.WARN,
-                        null,
-                        stale,
-                    )
-            else ->
-                out +=
-                    ChipSpec(
-                        11,
-                        "parent_baby_battery_chip",
-                        Glyph.BATTERY,
-                        null,
-                        stringResource(R.string.native_ui_battery_baby, pct.toString()) + suffix,
-                        Tone.NEUTRAL,
-                        null,
-                        stale,
-                    )
-        }
-    }
-    val s = if (p.peer.isWebClient) SilenceStatus.UNKNOWN else p.peer.silence
-    val silenceRes =
-        when (s) {
-            SilenceStatus.SILENT -> R.string.native_ui_silence_silent
-            SilenceStatus.SCREEN_MAY_LIGHT -> R.string.native_ui_silence_screen_may_light
-            SilenceStatus.MAY_BUZZ -> R.string.native_ui_silence_may_vibrate
-            SilenceStatus.MAY_RING,
-            SilenceStatus.NO_ACCESS -> R.string.native_ui_silence_may_ring
-            SilenceStatus.UNKNOWN ->
-                if (p.peer.isWebClient) R.string.native_ui_silence_web_unknown
-                else R.string.native_ui_silence_unknown
-        }
-    val (sg, sx, st, sp) =
-        when (s) {
-            SilenceStatus.SILENT -> Quad(Glyph.MOON, null, Tone.NEUTRAL, 10)
-            SilenceStatus.SCREEN_MAY_LIGHT -> Quad(Glyph.MOON, Glyph.SUN, Tone.WARN, 5)
-            SilenceStatus.MAY_BUZZ,
-            SilenceStatus.MAY_RING,
-            SilenceStatus.NO_ACCESS -> Quad(Glyph.BELL, null, Tone.WARN, 5)
-            SilenceStatus.UNKNOWN -> Quad(Glyph.QUESTION, null, Tone.NEUTRAL, 10)
-        }
-    out +=
-        ChipSpec(
-            sp,
-            "parent_silence_chip",
-            sg,
-            sx,
-            stringResource(silenceRes) + suffix,
-            st,
-            onSilence,
-            stale,
-        )
-    for (w in p.peer.unitWarnings) {
-        val (res, prio, tone) =
-            when (w) {
-                "mic_permission_lost" ->
-                    Triple(R.string.native_ui_parent_unit_warning_mic_permission_lost, 2, Tone.BAD)
-                "not_charging" ->
-                    Triple(R.string.native_ui_parent_unit_warning_not_charging, 4, Tone.WARN)
-                "page_hidden" ->
-                    Triple(R.string.native_ui_parent_unit_warning_page_hidden, 5, Tone.WARN)
-                "wake_lock_off" ->
-                    Triple(R.string.native_ui_parent_unit_warning_wake_lock_off, 5, Tone.WARN)
-                "resumed_from_sleep" ->
-                    Triple(R.string.native_ui_parent_unit_warning_resumed_from_sleep, 5, Tone.WARN)
-                else -> continue
-            }
-        out +=
-            ChipSpec(
-                prio,
-                "parent_unit_warning_chip_$w",
+): BannerSpec {
+    val fix = stringResource(R.string.native_ui_banner_fix)
+    return when (b.kind) {
+        BannerKind.SECURITY ->
+            BannerSpec(
+                b,
+                stringResource(R.string.native_ui_parent_security_title),
+                stringResource(R.string.native_ui_parent_security_body),
                 Glyph.EXCLAIM,
-                null,
-                stringResource(res) + suffix,
-                tone,
-                null,
-                stale,
             )
-    }
-    if (snoozed) {
-        out +=
-            ChipSpec(
-                6,
-                "parent_snooze_chip",
-                Glyph.ZZ,
-                null,
+        BannerKind.MIC_SILENT ->
+            if (b.id == "mic_permission_lost")
+                BannerSpec(
+                    b,
+                    stringResource(R.string.native_ui_parent_unit_warning_mic_permission_lost),
+                    glyph = Glyph.MIC,
+                )
+            else
+                BannerSpec(
+                    b,
+                    stringResource(R.string.native_ui_banner_mic_silent_title),
+                    stringResource(R.string.native_ui_banner_mic_silent_body),
+                    Glyph.MIC,
+                )
+        BannerKind.READINESS -> {
+            val issue = p.readiness.first()
+            val (title, body) = readinessCopy(issue, p.ownBatteryPct)
+            val action = readinessFixAction(issue, controller, onProbe)
+            BannerSpec(
+                b,
+                title,
+                body,
+                if (issue == ReadinessIssue.PARENT_BATTERY_LOW) Glyph.BATTERY else Glyph.BELL,
+                fix.takeIf { action != null },
+                action,
+            )
+        }
+        BannerKind.BABY_BATTERY_LOW ->
+            BannerSpec(
+                b,
                 stringResource(
-                    R.string.native_ui_snooze_active,
-                    ceilMinutes(snoozeLeft).toString(),
+                    R.string.native_ui_battery_baby_low,
+                    (p.peer.batteryPct ?: 0).toString(),
                 ),
-                Tone.SNOOZE,
-                onSnooze,
+                glyph = Glyph.BATTERY,
             )
-    }
-    if (
-        p.link.quality == org.guardedsleep.app.ui.model.LinkQuality.POOR &&
-            p.link.phase == LinkPhase.CONNECTED
-    ) {
-        out +=
-            ChipSpec(
-                7,
-                "parent_quality_chip",
-                Glyph.BROKEN_LINK,
-                null,
-                stringResource(R.string.native_ui_link_weak),
-                Tone.WARN,
-                null,
+        BannerKind.BABY_UNPLUGGED ->
+            BannerSpec(
+                b,
+                stringResource(R.string.native_ui_parent_unit_warning_not_charging),
+                glyph = Glyph.BATTERY,
             )
+        BannerKind.SILENCE ->
+            BannerSpec(
+                b,
+                stringResource(
+                    when (p.peer.silence) {
+                        SilenceStatus.SCREEN_MAY_LIGHT ->
+                            R.string.native_ui_silence_screen_may_light
+                        SilenceStatus.MAY_BUZZ -> R.string.native_ui_silence_may_vibrate
+                        else -> R.string.native_ui_silence_may_ring
+                    }
+                ),
+                glyph = Glyph.BELL,
+                actionLabel = fix,
+                onAction = onSilence,
+            )
+        BannerKind.UNIT_WARNING ->
+            BannerSpec(
+                b,
+                stringResource(
+                    when (b.id.removePrefix("unit_warning_")) {
+                        "page_hidden" -> R.string.native_ui_parent_unit_warning_page_hidden
+                        "wake_lock_off" -> R.string.native_ui_parent_unit_warning_wake_lock_off
+                        else -> R.string.native_ui_parent_unit_warning_resumed_from_sleep
+                    }
+                ),
+            )
+        BannerKind.WEAK_CONNECTION ->
+            BannerSpec(b, stringResource(R.string.native_ui_link_weak), glyph = Glyph.BROKEN_LINK)
+        BannerKind.PAUSED ->
+            BannerSpec(
+                b,
+                stringResource(
+                    R.string.native_ui_snooze_banner_title,
+                    formatTime(p.snoozedUntilWallMs ?: wall),
+                ),
+                stringResource(R.string.native_ui_snooze_banner_body),
+                Glyph.PAUSE,
+                stringResource(R.string.native_ui_snooze_resume),
+                { controller.cancelSnooze() },
+            )
+        BannerKind.VIBRATE_ONLY -> {
+            val minutes = settings.discreetEscalation.minutes
+            BannerSpec(
+                b,
+                stringResource(R.string.native_ui_alert_style_vibrate_title),
+                stringResource(
+                    when {
+                        minutes == null -> R.string.native_ui_alert_style_body_never
+                        snoozed -> R.string.native_ui_alert_style_body_after_pause
+                        else -> R.string.native_ui_alert_style_body_no_sound
+                    },
+                    *(if (minutes != null && snoozed) arrayOf<Any>(minutes) else emptyArray()),
+                ),
+                Glyph.ZZ,
+                stringResource(R.string.native_ui_alert_style_turn_sound_on),
+                { controller.updateSettings { it.copy(alertStyle = AlertStyle.SOUND) } },
+            )
+        }
     }
-    return out.sortedBy { it.priority }
 }
 
-private data class Quad<A, B, C, D>(val a: A, val b: B, val c: C, val d: D)
-
+/** The notices folded into "+N more", listed in rank order. */
 @Composable
-private fun Headline(p: ParentMonitorState, elapsed: Long, wall: Long, snoozed: Boolean) {
+private fun BannerListSheet(folded: List<BannerSpec>, onDismiss: () -> Unit) {
+    SheetOverlay(
+        "sheet_banners",
+        stringResource(R.string.native_ui_banner_list_title),
+        onDismiss,
+    ) {
+        folded.forEach { BannerCard(it) }
+        PrimaryButton(
+            stringResource(R.string.native_ui_common_ok),
+            onDismiss,
+            "sheet_banners_ok",
+            Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+/**
+ * Monitor options: the alert style, the test alert, Settings and, after an automatic start, the way
+ * back to Home. There is no connection switch while monitoring; Stop monitoring sits apart, below a
+ * gap and a rule, and always confirms.
+ */
+@Composable
+private fun MoreSheet(
+    alertStyle: AlertStyle,
+    offerChooseOther: Boolean,
+    controller: AppController,
+    onTest: () -> Unit,
+    onSettings: () -> Unit,
+    onChooseOther: () -> Unit,
+    onStop: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    SheetOverlay("sheet_more", stringResource(R.string.native_ui_common_more), onDismiss) {
+        AlertStyleChoice(alertStyle) { style ->
+            controller.updateSettings { it.copy(alertStyle = style) }
+        }
+        Spacer(Modifier.height(8.dp))
+        SecondaryButton(
+            stringResource(R.string.native_ui_probe_button),
+            onTest,
+            "parent_probe",
+            Modifier.fillMaxWidth(),
+        )
+        SecondaryButton(
+            stringResource(R.string.native_ui_common_settings),
+            onSettings,
+            "parent_settings",
+            Modifier.fillMaxWidth(),
+        )
+        if (offerChooseOther) {
+            Spacer(Modifier.height(8.dp))
+            SecondaryButton(
+                stringResource(R.string.native_ui_connections_choose_another),
+                onChooseOther,
+                "menu_choose_other_connection",
+                Modifier.fillMaxWidth(),
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+        HorizontalDivider()
+        Spacer(Modifier.height(8.dp))
+        SecondaryButton(
+            stringResource(R.string.native_ui_parent_stop),
+            onStop,
+            "parent_stop",
+            Modifier.fillMaxWidth(),
+            destructive = true,
+        )
+    }
+}
+
+/**
+ * What "Fix" does for a readiness item: open the matching system setting, switch the alert output
+ * or open the test sheet; null when nothing can be done from here. Banner and sheet share it, each
+ * with its own label.
+ */
+@Composable
+private fun readinessFixAction(
+    issue: ReadinessIssue,
+    controller: AppController,
+    onProbe: () -> Unit,
+): (() -> Unit)? {
+    val ctx = LocalContext.current
+    return when (issue) {
+        ReadinessIssue.NOTIFICATIONS_BLOCKED -> { ->
+            SystemSettings.launch(ctx, SystemSettings.notificationSettings(ctx))
+        }
+        ReadinessIssue.FULL_SCREEN_BLOCKED -> { ->
+            SystemSettings.launch(ctx, SystemSettings.fullScreenIntentSettings(ctx))
+        }
+        ReadinessIssue.ALARM_VOLUME_ZERO,
+        ReadinessIssue.ALARM_VOLUME_LOW -> { ->
+            SystemSettings.launch(ctx, SystemSettings.soundSettings())
+        }
+        ReadinessIssue.DND_BYPASS_MISSING -> { ->
+            SystemSettings.launch(ctx, SystemSettings.dndAccess())
+        }
+        ReadinessIssue.BATTERY_OPTIMIZED -> { ->
+            SystemSettings.launch(ctx, SystemSettings.batteryOptimization(ctx))
+        }
+        ReadinessIssue.HEADPHONES_CONNECTED -> { ->
+            controller.updateSettings { it.copy(alertOutput = AlertOutput.SPEAKER_ONLY) }
+        }
+        ReadinessIssue.NEVER_TESTED -> onProbe
+        ReadinessIssue.PARENT_BATTERY_LOW -> null
+    }
+}
+
+/** Title and sub-line of a readiness item (banner copy). */
+@Composable
+private fun readinessCopy(issue: ReadinessIssue, ownBatteryPct: Int?): Pair<String, String> {
+    val (t, b) =
+        when (issue) {
+            ReadinessIssue.NOTIFICATIONS_BLOCKED ->
+                R.string.native_ui_banner_ready_notifications_title to
+                    R.string.native_ui_banner_ready_notifications_body
+            ReadinessIssue.FULL_SCREEN_BLOCKED ->
+                R.string.native_ui_banner_ready_full_screen_title to
+                    R.string.native_ui_banner_ready_full_screen_body
+            ReadinessIssue.ALARM_VOLUME_ZERO ->
+                R.string.native_ui_banner_ready_alarm_volume_zero_title to
+                    R.string.native_ui_banner_ready_alarm_volume_zero_body
+            ReadinessIssue.ALARM_VOLUME_LOW ->
+                R.string.native_ui_banner_ready_alarm_volume_low_title to
+                    R.string.native_ui_banner_ready_alarm_volume_low_body
+            ReadinessIssue.DND_BYPASS_MISSING ->
+                R.string.native_ui_banner_ready_dnd_title to
+                    R.string.native_ui_banner_ready_dnd_body
+            ReadinessIssue.BATTERY_OPTIMIZED ->
+                R.string.native_ui_banner_ready_battery_title to
+                    R.string.native_ui_banner_ready_battery_body
+            ReadinessIssue.PARENT_BATTERY_LOW ->
+                R.string.native_ui_banner_ready_parent_battery_title to
+                    R.string.native_ui_banner_ready_parent_battery_body
+            ReadinessIssue.HEADPHONES_CONNECTED ->
+                R.string.native_ui_banner_ready_headphones_title to
+                    R.string.native_ui_banner_ready_headphones_body
+            ReadinessIssue.NEVER_TESTED ->
+                R.string.native_ui_banner_ready_never_tested_title to
+                    R.string.native_ui_banner_ready_never_tested_body
+        }
+    return stringResource(t) to stringResource(b)
+}
+
+/** "Baby device in Quiet mode · Alerts tested 21:30"; null when there is nothing to say. */
+@Composable
+private fun metaText(p: ParentMonitorState, settings: SettingsState, connected: Boolean): String? {
+    if (!connected) return null
+    val parts = mutableListOf<String>()
+    val s = if (p.peer.isWebClient) SilenceStatus.UNKNOWN else p.peer.silence
+    when (s) {
+        SilenceStatus.SILENT -> parts += stringResource(R.string.native_ui_silence_silent)
+        SilenceStatus.UNKNOWN ->
+            parts +=
+                stringResource(
+                    if (p.peer.isWebClient) R.string.native_ui_silence_web_unknown
+                    else R.string.native_ui_silence_unknown
+                )
+        // The banner says it, with its fix.
+        else -> Unit
+    }
+    settings.lastTestWallMs?.let {
+        parts += stringResource(R.string.native_ui_monitor_alerts_tested, formatTime(it))
+    }
+    return parts.joinToString(" · ").ifEmpty { null }
+}
+
+/**
+ * The hero: one line that says what the monitor knows, then how long it has been watching. Never
+ * "All quiet" while disconnected, while the microphone is silent or when the report is incomplete
+ * (the model leaves [ParentMonitorState.quietSinceWallMs] null then).
+ */
+@Composable
+private fun Hero(p: ParentMonitorState, elapsed: Long, wall: Long) {
     val connected = p.link.phase == LinkPhase.CONNECTED
     val colors = LocalAppColors.current
-    val noise = connected && p.noiseAlertActive
-    val quietSince = p.quietSinceWallMs
-    val lastSound = p.lastSound
+    val headline = headlineOf(p, elapsed, wall)
     val text =
-        when {
-            !connected -> {
-                val last = p.link.lastAliveElapsedMs
-                if (last != null)
-                    stringResource(
-                        R.string.native_ui_parent_last_heard,
-                        formatTime(wall - (elapsed - last)),
-                    )
-                else stringResource(R.string.native_ui_parent_no_contact_yet)
-            }
-            noise && snoozed ->
+        when (headline) {
+            is Headline.LastHeard ->
+                stringResource(R.string.native_ui_parent_last_heard, formatTime(headline.atWallMs))
+            Headline.NoContact -> stringResource(R.string.native_ui_parent_no_contact_yet)
+            Headline.CantHear -> stringResource(R.string.native_ui_monitor_cant_hear)
+            is Headline.SoundPaused ->
                 stringResource(
                     R.string.native_ui_parent_sound_snoozed,
-                    formatTime(p.noiseSinceWallMs ?: wall),
+                    formatTime(headline.sinceWallMs),
                 )
-            noise ->
+            is Headline.SoundSince ->
                 stringResource(
                     R.string.native_ui_parent_sound_since,
-                    formatTime(p.noiseSinceWallMs ?: wall),
+                    formatTime(headline.sinceWallMs),
                 )
-            quietSince != null ->
+            is Headline.AllQuiet ->
                 stringResource(
                     R.string.native_ui_parent_all_quiet_since,
-                    formatTime(quietSince),
+                    formatTime(headline.sinceWallMs),
                 )
-            lastSound != null ->
+            is Headline.SoundAt ->
                 stringResource(
                     R.string.native_ui_parent_sound_at,
-                    formatTime(lastSound.atWallMs),
-                    formatDuration(lastSound.durationMs),
+                    formatTime(headline.atWallMs),
+                    formatDuration(headline.durationMs),
                 )
-            else -> stringResource(R.string.native_ui_parent_monitoring_now)
+            Headline.Monitoring -> stringResource(R.string.native_ui_parent_monitoring_now)
         }
-    Text(
-        text,
-        Modifier.fillMaxWidth().testTag("parent_headline").semantics { heading() },
-        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-        color = if (noise && !snoozed) colors.bad else MaterialTheme.colorScheme.onBackground,
-    )
+    Column(Modifier.fillMaxWidth().padding(horizontal = 6.dp)) {
+        Text(
+            text,
+            Modifier.fillMaxWidth().testTag("parent_headline").semantics { heading() },
+            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+            color =
+                if (headline is Headline.SoundSince) colors.bad
+                else MaterialTheme.colorScheme.onBackground,
+        )
+        val since = p.monitoringSinceElapsedMs
+        if (connected && since != null) {
+            Text(
+                stringResource(
+                    R.string.native_ui_monitor_monitoring_for,
+                    formatDurationWords((elapsed - since).coerceAtLeast(0L)),
+                ),
+                Modifier.testTag("parent_hero_sub"),
+                style = MaterialTheme.typography.bodyLarge,
+                color = colors.secondaryText,
+            )
+        }
+    }
 }
 
 @Composable
@@ -796,8 +864,10 @@ private fun MissedCard(m: MissedEventsUi, wall: Long, onOk: () -> Unit) {
                     formatTime(end),
                     stringResource(
                         when {
-                            (m.loudest ?: 0f) < 0.15f -> R.string.native_ui_parent_level_quiet
-                            (m.loudest ?: 0f) < 0.5f -> R.string.native_ui_parent_level_some
+                            (m.loudest ?: 0f) < LoudnessWords.SOME_FROM ->
+                                R.string.native_ui_parent_level_quiet
+                            (m.loudest ?: 0f) < LoudnessWords.LOUD_FROM ->
+                                R.string.native_ui_parent_level_some
                             else -> R.string.native_ui_parent_level_loud
                         }
                     ),
@@ -935,8 +1005,10 @@ private fun SilenceSheet(p: ParentMonitorState, controller: AppController, onDis
 @Composable
 private fun SnoozeSheet(
     snoozed: Boolean,
-    leftMs: Long,
+    untilWallMs: Long?,
     controller: AppController,
+    /** A pause was started; the screen decides whether Undo is offered. */
+    onStarted: (minutes: Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
     SheetOverlay("sheet_snooze", stringResource(R.string.native_ui_snooze_title), onDismiss) {
@@ -945,7 +1017,7 @@ private fun SnoozeSheet(
             stringResource(R.string.native_ui_snooze_minutes, "10"),
             {
                 controller.snooze(10)
-                onDismiss()
+                onStarted(10)
             },
             "sheet_snooze_10",
         )
@@ -953,7 +1025,7 @@ private fun SnoozeSheet(
             stringResource(R.string.native_ui_snooze_minutes, "30"),
             {
                 controller.snooze(30)
-                onDismiss()
+                onStarted(30)
             },
             "sheet_snooze_30",
         )
@@ -967,7 +1039,12 @@ private fun SnoozeSheet(
                 "sheet_snooze_end",
                 Modifier.fillMaxWidth(),
             )
-            Body(stringResource(R.string.native_ui_snooze_active, ceilMinutes(leftMs).toString()))
+            Body(
+                stringResource(
+                    R.string.native_ui_snooze_banner_title,
+                    formatTime(untilWallMs ?: 0L),
+                )
+            )
         }
     }
 }
@@ -1069,7 +1146,6 @@ private fun ReadinessSheet(
     onProbe: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val ctx = LocalContext.current
     SheetOverlay("sheet_readiness", stringResource(R.string.native_ui_readiness_title), onDismiss) {
         if (p.readiness.isEmpty()) {
             Body(
@@ -1086,6 +1162,8 @@ private fun ReadinessSheet(
                             R.string.native_ui_readiness_notifications_off
                         ReadinessIssue.ALARM_VOLUME_ZERO ->
                             R.string.native_ui_readiness_alarm_volume_zero
+                        ReadinessIssue.ALARM_VOLUME_LOW ->
+                            R.string.native_ui_banner_ready_alarm_volume_low_title
                         ReadinessIssue.FULL_SCREEN_BLOCKED ->
                             R.string.native_ui_readiness_lock_screen
                         ReadinessIssue.DND_BYPASS_MISSING -> R.string.native_ui_readiness_dnd
@@ -1097,40 +1175,18 @@ private fun ReadinessSheet(
                         ReadinessIssue.NEVER_TESTED -> R.string.native_ui_readiness_never_tested
                     }
                 )
-            val fix: Pair<Int, () -> Unit>? =
+            val action = readinessFixAction(issue, controller, onProbe)
+            val fixLabel =
                 when (issue) {
                     ReadinessIssue.NOTIFICATIONS_BLOCKED ->
-                        R.string.native_ui_readiness_fix_notifications to
-                            {
-                                SystemSettings.launch(ctx, SystemSettings.notificationSettings(ctx))
-                            }
+                        R.string.native_ui_readiness_fix_notifications
                     ReadinessIssue.ALARM_VOLUME_ZERO,
-                    ReadinessIssue.NEVER_TESTED -> R.string.native_ui_probe_button to onProbe
-                    ReadinessIssue.FULL_SCREEN_BLOCKED ->
-                        R.string.native_ui_common_allow to
-                            {
-                                SystemSettings.launch(
-                                    ctx,
-                                    SystemSettings.fullScreenIntentSettings(ctx),
-                                )
-                            }
-                    ReadinessIssue.DND_BYPASS_MISSING ->
-                        R.string.native_ui_readiness_fix_dnd to
-                            {
-                                SystemSettings.launch(ctx, SystemSettings.dndAccess())
-                            }
-                    ReadinessIssue.BATTERY_OPTIMIZED ->
-                        R.string.native_ui_readiness_fix_battery to
-                            {
-                                SystemSettings.launch(ctx, SystemSettings.batteryOptimization(ctx))
-                            }
-                    ReadinessIssue.HEADPHONES_CONNECTED ->
-                        R.string.native_ui_common_change to
-                            {
-                                controller.updateSettings {
-                                    it.copy(alertOutput = AlertOutput.SPEAKER_ONLY)
-                                }
-                            }
+                    ReadinessIssue.ALARM_VOLUME_LOW -> R.string.native_ui_banner_fix
+                    ReadinessIssue.NEVER_TESTED -> R.string.native_ui_probe_button
+                    ReadinessIssue.FULL_SCREEN_BLOCKED -> R.string.native_ui_common_allow
+                    ReadinessIssue.DND_BYPASS_MISSING -> R.string.native_ui_readiness_fix_dnd
+                    ReadinessIssue.BATTERY_OPTIMIZED -> R.string.native_ui_readiness_fix_battery
+                    ReadinessIssue.HEADPHONES_CONNECTED -> R.string.native_ui_common_change
                     ReadinessIssue.PARENT_BATTERY_LOW -> null
                 }
             AppCard(Modifier.testTag("sheet_readiness_" + issue.name.lowercase())) {
@@ -1139,10 +1195,10 @@ private fun ReadinessSheet(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                if (fix != null)
+                if (fixLabel != null && action != null)
                     SecondaryButton(
-                        stringResource(fix.first),
-                        fix.second,
+                        stringResource(fixLabel),
+                        action,
                         "sheet_readiness_fix_" + issue.name.lowercase(),
                     )
             }

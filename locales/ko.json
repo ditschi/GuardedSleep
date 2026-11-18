@@ -53,7 +53,7 @@
       "noiseTestTitle": "테스트 알림",
       "noiseTestText": "테스트예요. 아기 기기는 조용히 있어요.",
       "actionStopSound": "소리 끄기",
-      "actionSnooze10": "10분 후 다시 알림",
+      "actionSnooze10": "10분 일시 중지",
       "actionChecking": "확인하고 있어요",
       "linkLostTitle": "연결이 끊겼어요",
       "linkLostText": "아기 기기와 연결되지 않아요. 지금 바로 아기를 살펴보세요.",
@@ -86,7 +86,6 @@
         "ok": "확인",
         "cancel": "취소",
         "more": "더보기",
-        "moreCount": "+{count}",
         "settings": "설정",
         "tryAgain": "다시 시도",
         "yes": "예",
@@ -293,10 +292,6 @@
           "body": "누군가 아기 기기에서 지켜보기를 중지했어요. 알림을 받지 못해요.",
           "titleDefault": "아기 기기가 지켜보기를 멈췄어요"
         },
-        "battery": {
-          "title": "아기 기기 배터리가 거의 없어요",
-          "body": "지금 아기 기기를 충전하세요. 그렇지 않으면 지켜보기가 멈춰요."
-        },
         "needsPairing": {
           "title": "기기 페어링이 해제되었어요"
         },
@@ -310,7 +305,7 @@
         "allQuietSince": "{time}부터 계속 조용해요",
         "soundSince": "소리 감지됨 · {time}부터",
         "soundAt": "{time}에 소리 · {duration} 동안 이어짐",
-        "soundSnoozed": "{time}에 소리 · 알림 일시 중지됨",
+        "soundSnoozed": "{time}에 소리 · 소리 알림 일시 중지됨",
         "lastHeard": "마지막 연락: {time}",
         "noContactYet": "아직 연락 없음",
         "monitoringNow": "지켜보는 중",
@@ -323,7 +318,6 @@
         "stop": "지켜보기 중지",
         "securityTitle": "보안 경고",
         "securityBody": "연결을 확인할 수 없었어요. 방금 기기를 다시 페어링한 게 아니라면 지금 다시 페어링하세요.",
-        "staleSuffix": "· {time}",
         "unitWarning": {
           "pageHidden": "아기 기기가 멈출 수 있어요. 페이지가 숨겨져 있어요",
           "wakeLockOff": "아기 기기가 절전 상태가 될 수 있어요. 화면이 켜진 상태로 유지되지 않아요",
@@ -332,32 +326,38 @@
           "micPermissionLost": "아기 기기의 마이크 접근 권한이 사라졌어요"
         },
         "discreet": {
-          "indicator": "조용한 알림: 소리 없음",
           "escalated": "소리로 전환됨: {minutes}분 동안 반응 없음",
-          "offWarning": "끔: 조용한 모드를 잊으면 밤새 소리가 나지 않을 수 있습니다."
+          "offWarning": "끔: 진동만 모드를 잊으면 밤새 소리가 나지 않을 수 있어요."
         }
       },
       "battery": {
-        "baby": "아기 기기 {percent}%",
         "babyLow": "아기 기기 배터리 {percent}% — 충전하세요",
-        "parentLow": "이 기기는 {percent}%예요. 계속 지켜보려면 충전하세요",
         "parentLowGeneric": "이 기기의 배터리가 부족해요. 계속 지켜보려면 충전하세요"
       },
       "listen": {
-        "idle": "길게 눌러 듣기",
-        "holding": "듣는 중…",
-        "locked": "듣는 중 · 탭해서 중지",
-        "lockHint": "위로 밀어서 계속 듣기",
+        "idle": "듣기",
         "disabled": "연결되면 들을 수 있어요",
-        "a11yLocked": "듣는 중. 두 번 탭하면 중지돼요."
+        "idleSub": "탭하면 방 소리를 들어요",
+        "on": "듣는 중 · 탭하면 멈춰요",
+        "onSub": "방 소리가 스피커로 나와요",
+        "disabledSub": "지금은 연결되어 있지 않아요",
+        "stateOn": "듣는 중",
+        "stateOff": "듣지 않는 중"
       },
       "snooze": {
-        "button": "일시 중지",
+        "button": "소리 알림 일시 중지",
         "title": "소리 알림 일시 중지",
-        "help": "연결이 끊기거나 배터리가 부족해지면 알림은 계속 받아요.",
-        "minutes": "{minutes}분 일시 중지",
+        "help": "연결과 배터리 알림은 계속 와요.",
+        "minutes": "{minutes}분",
         "end": "일시 중지 끝내기",
-        "active": "일시 중지됨 · {minutes}분 남음"
+        "tile": "소리 알림 일시 중지",
+        "tilePaused": "일시 중지됨",
+        "pauseMinutes": "{minutes}분 일시 중지",
+        "resume": "다시 시작",
+        "bannerTitle": "{time}까지 소리 알림 일시 중지",
+        "bannerBody": "연결과 배터리 알림은 계속 와요",
+        "snackbar": "소리 알림을 {minutes}분 동안 일시 중지했어요",
+        "undo": "실행 취소"
       },
       "probe": {
         "button": "테스트 알림",
@@ -369,7 +369,7 @@
         "question": "소리가 들리고 진동이 느껴졌나요?",
         "localOnly": "이 기기만 테스트했어요. 아기 기기는 연결되어 있지 않아요.",
         "styleSound": "알림 방식: 소리",
-        "styleDiscreet": "알림 방식: 조용히",
+        "styleDiscreet": "알림 방식: 진동만",
         "bodyDiscreet": "이 기기는 소리 없이 진동하고 알림을 표시합니다. 아기 기기는 조용히 유지됩니다."
       },
       "readiness": {
@@ -454,13 +454,12 @@
       },
       "coach": {
         "bar": "초록색은 지켜보는 중이라는 뜻이에요. 빨간색으로 바뀌거나 사라지면 지켜보고 있지 않은 거예요.",
-        "listen": "길게 눌러 들어요. 위로 밀면 계속 들어요.",
+        "listen": "듣기를 탭하면 방 소리를 들어요.",
         "test": "테스트 알림을 실행해서 알림이 어떻게 느껴지는지 확인하세요.",
         "runTest": "지금 테스트 알림 실행"
       },
       "alert": {
-        "title": "소리 감지됨",
-        "since": "{time}부터",
+        "title": "아이가 소리를 내고 있어요",
         "ended": "소리가 멈췄어요.",
         "testBadge": "테스트",
         "stopSound": "소리 끄기",
@@ -546,7 +545,7 @@
         "alertStyle": {
           "label": "알림 방식",
           "sound": "소리: 알림마다 아기의 소리를 재생",
-          "discreet": "조용히: 진동과 화면만, 소리 없음"
+          "discreet": "진동만: 진동과 화면, 소리 없음"
         },
         "discreetEscalation": {
           "label": "아무도 반응하지 않으면 소리로 전환",
@@ -644,7 +643,11 @@
           "playChime": "알림음 재생",
           "chime": "부모가 말하기 전에 알림음 재생",
           "checklist": "부모가 이 기기를 통해 말할 수 있습니다. 설정에서 끌 수 있습니다."
-        }
+        },
+        "again": "다시 말하기",
+        "againAt": "{time}에",
+        "disabled": "연결되면 말할 수 있어요",
+        "pausedListening": "말하는 동안에는 듣기가 일시 중지돼요"
       },
       "status": {
         "connected": "연결됨",
@@ -713,6 +716,103 @@
         },
         "labelAlerting": "이 기기에서 알림이 울리는 중입니다",
         "progressAlerting": "알림 울리는 중"
+      },
+      "monitor": {
+        "monitoringFor": "{duration} 동안 지켜보는 중",
+        "cantHear": "방 소리가 들리지 않아요",
+        "alertLine": "이 선을 넘는 소리가 나면 알림을 보내요",
+        "lastMinute": "최근 1분",
+        "now": "지금",
+        "noSound": "들어오는 소리가 없어요",
+        "micSilentStrip": "마이크 무음",
+        "alertsTested": "알림 테스트: {time}",
+        "batteryA11y": "아기 기기 배터리 {percent}퍼센트",
+        "batteryChargingA11y": "아기 기기 배터리 {percent}퍼센트, 충전 중",
+        "batteryShort": "{percent}%"
+      },
+      "alertStyle": {
+        "chipSound": "알림: 소리",
+        "chipVibrate": "알림: 진동만",
+        "chipA11ySound": "소리 알림: 소리. 변경",
+        "chipA11yVibrate": "소리 알림: 진동만. 변경",
+        "vibrateTitle": "진동만",
+        "bodyNoSound": "소리 알림이 소리를 내지 않아요.",
+        "bodyNever": "소리 알림이 절대 소리를 내지 않아요.",
+        "bodyAfterPause": "일시 중지 후: 먼저 진동, {minutes}분 뒤에 소리",
+        "turnSoundOn": "소리 켜기"
+      },
+      "banner": {
+        "fix": "해결",
+        "more": "{count}개 더",
+        "moreA11y": "{count, plural, other {안내 #개 더: {notices}}}",
+        "listTitle": "안내",
+        "micSilentTitle": "아기 기기의 마이크가 아무것도 듣지 못해요",
+        "micSilentBody": "아기 기기를 확인하세요. 다른 앱이 마이크를 쓰고 있을 수 있어요.",
+        "ready": {
+          "notifications": {
+            "title": "알림이 꺼져 있어요",
+            "body": "알림을 받을 수 없어요."
+          },
+          "fullScreen": {
+            "title": "알림이 잠금 화면에 표시되지 않아요",
+            "body": "휴대폰이 잠겨 있으면 알림을 놓칠 수 있어요."
+          },
+          "alarmVolumeZero": {
+            "title": "알람 볼륨이 꺼져 있어요",
+            "body": "이 휴대폰에서는 알림이 들리지 않아요"
+          },
+          "alarmVolumeLow": {
+            "title": "알람 볼륨이 낮아요",
+            "body": "알림이 잘 들리도록 볼륨을 높이세요."
+          },
+          "dnd": {
+            "title": "방해 금지 모드가 알림을 무음으로 만들 수 있어요",
+            "body": "GuardedSleep이 방해 금지를 뚫고 알릴 수 있게 허용하세요."
+          },
+          "battery": {
+            "title": "이 휴대폰이 GuardedSleep을 중지할 수 있어요",
+            "body": "알림이 계속 작동하도록 백그라운드 사용을 허용하세요."
+          },
+          "parentBattery": {
+            "title": "이 휴대폰의 배터리가 부족해요",
+            "body": "충전해서 계속 지켜보세요."
+          },
+          "headphones": {
+            "title": "알림이 헤드폰으로 재생돼요",
+            "body": "방에서 듣고 싶다면 알림을 스피커로 바꾸세요."
+          },
+          "neverTested": {
+            "title": "최근 테스트 알림이 없어요",
+            "body": "테스트를 실행해서 알림이 잘 오는지 확인하세요."
+          }
+        }
+      },
+      "noiseAlert": {
+        "labelSound": "방 소리를 재생하는 중",
+        "labelVibrate": "휴대폰이 진동하고 있어요",
+        "labelStopped": "알림이 중지되었어요",
+        "counterLabel": "{time}부터",
+        "counterA11y": "{duration}, {time}부터",
+        "sentenceSound": "방 소리가 이 휴대폰에서 재생되고 있어요.",
+        "stopSoundSub": "알림 소리를 멈추고 계속 지켜봐요",
+        "stopVibrationSub": "진동을 멈추고 계속 지켜봐요"
+      },
+      "batteryAlert": {
+        "label": "아기 기기 배터리",
+        "headline": "아기 기기 배터리가 거의 없어요",
+        "counterLabel": "배터리 남음",
+        "counterA11y": "배터리 {percent}퍼센트 남음",
+        "sentence": "지금 아기 기기를 충전하세요. 배터리가 다 되면 지켜보기가 멈춰요.",
+        "silentNote": "아기 기기는 조용해요. 이 휴대폰만 알려요.",
+        "action": "네, 충전할게요",
+        "actionSub": "이 화면을 닫아요"
+      },
+      "tool": {
+        "nightA11yOff": "야간 모드: 꺼짐",
+        "nightA11yOn": "야간 모드: 켜짐",
+        "nightA11yAuto": "야간 모드: 자동",
+        "nightOn": "켜짐",
+        "nightAuto": "자동"
       }
     }
   },
