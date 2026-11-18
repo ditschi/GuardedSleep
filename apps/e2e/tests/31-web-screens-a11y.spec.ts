@@ -131,7 +131,8 @@ for (const lang of LANGUAGES) {
       await checkScreen(parent, "parent monitoring");
       await openAndCheck(parent, "parent_snooze", "sheet_snooze_10", "parent: snooze sheet");
       await parent.getByTestId("sheet_snooze_10").click();
-      await expect(parent.getByTestId("parent_banner_paused")).toBeVisible();
+      // The banner may be folded behind "+N more" when other notices show; the tile always says it.
+      await expect(parent.locator("[data-testid=parent_snooze][data-paused]")).toBeVisible();
       await checkScreen(parent, "parent monitoring while snoozed");
       await openAndCheck(
         parent,

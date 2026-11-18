@@ -471,6 +471,9 @@
 
   /* The dock: Listen, then three tiles; it stays at the bottom while the middle scrolls. */
   .gs-dock {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
     position: sticky;
     bottom: 0;
     display: flex;
