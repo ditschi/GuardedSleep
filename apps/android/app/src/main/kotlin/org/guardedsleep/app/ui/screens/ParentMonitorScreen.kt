@@ -44,6 +44,7 @@ import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AdaptiveButtonRow
 import org.guardedsleep.app.ui.common.AlertChipSpec
 import org.guardedsleep.app.ui.common.AppCard
+import org.guardedsleep.app.ui.common.BannerCard
 import org.guardedsleep.app.ui.common.BannerSpec
 import org.guardedsleep.app.ui.common.BannerStack
 import org.guardedsleep.app.ui.common.Body
@@ -447,69 +448,21 @@ fun ParentMonitorScreen(
                             sheet = null
                         }
                     ParentSheet.HELP -> HelpSheet { sheet = null }
-                    ParentSheet.BANNERS ->
-                        SheetOverlay(
-                            "sheet_banners",
-                            stringResource(R.string.native_ui_banner_list_title),
-                            { sheet = null },
-                        ) {
-                            foldedSpecs.forEach {
-                                org.guardedsleep.app.ui.common.BannerCard(it)
-                            }
-                            PrimaryButton(
-                                stringResource(R.string.native_ui_common_ok),
-                                { sheet = null },
-                                "sheet_banners_ok",
-                                Modifier.fillMaxWidth(),
-                            )
-                        }
+                    ParentSheet.BANNERS -> BannerListSheet(foldedSpecs) { sheet = null }
                     ParentSheet.MORE ->
-                        SheetOverlay(
-                            "sheet_more",
-                            stringResource(R.string.native_ui_common_more),
-                            { sheet = null },
-                        ) {
-                            AlertStyleChoice(settings.alertStyle) { style ->
-                                controller.updateSettings { it.copy(alertStyle = style) }
-                            }
-                            Spacer(Modifier.height(8.dp))
-                            SecondaryButton(
-                                stringResource(R.string.native_ui_probe_button),
-                                { sheet = ParentSheet.PROBE },
-                                "parent_probe",
-                                Modifier.fillMaxWidth(),
-                            )
-                            SecondaryButton(
-                                stringResource(R.string.native_ui_common_settings),
-                                {
-                                    sheet = null
-                                    onSettings()
-                                },
-                                "parent_settings",
-                                Modifier.fillMaxWidth(),
-                            )
-                            if (app.autoStarted && verified) {
-                                Spacer(Modifier.height(8.dp))
-                                SecondaryButton(
-                                    stringResource(R.string.native_ui_connections_choose_another),
-                                    { sheet = ParentSheet.CHOOSE_OTHER },
-                                    "menu_choose_other_connection",
-                                    Modifier.fillMaxWidth(),
-                                )
-                            }
-                            // Stop monitoring sits apart, below a gap and a rule, and always
-                            // confirms.
-                            Spacer(Modifier.height(16.dp))
-                            HorizontalDivider()
-                            Spacer(Modifier.height(8.dp))
-                            SecondaryButton(
-                                stringResource(R.string.native_ui_parent_stop),
-                                { sheet = ParentSheet.STOP },
-                                "parent_stop",
-                                Modifier.fillMaxWidth(),
-                                destructive = true,
-                            )
-                        }
+                        MoreSheet(
+                            settings.alertStyle,
+                            offerChooseOther = app.autoStarted && verified,
+                            controller = controller,
+                            onTest = { sheet = ParentSheet.PROBE },
+                            onSettings = {
+                                sheet = null
+                                onSettings()
+                            },
+                            onChooseOther = { sheet = ParentSheet.CHOOSE_OTHER },
+                            onStop = { sheet = ParentSheet.STOP },
+                            onDismiss = { sheet = null },
+                        )
                     ParentSheet.STOP ->
                         StopMonitoringDialog(
                             name = name,
@@ -659,6 +612,79 @@ private fun bannerSpec(
                 { controller.updateSettings { it.copy(alertStyle = AlertStyle.SOUND) } },
             )
         }
+    }
+}
+
+/** The notices folded into "+N more", listed in rank order. */
+@Composable
+private fun BannerListSheet(folded: List<BannerSpec>, onDismiss: () -> Unit) {
+    SheetOverlay(
+        "sheet_banners",
+        stringResource(R.string.native_ui_banner_list_title),
+        onDismiss,
+    ) {
+        folded.forEach { BannerCard(it) }
+        PrimaryButton(
+            stringResource(R.string.native_ui_common_ok),
+            onDismiss,
+            "sheet_banners_ok",
+            Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+/**
+ * Monitor options: the alert style, the test alert, Settings and, after an automatic start, the way
+ * back to Home. There is no connection switch while monitoring; Stop monitoring sits apart, below a
+ * gap and a rule, and always confirms.
+ */
+@Composable
+private fun MoreSheet(
+    alertStyle: AlertStyle,
+    offerChooseOther: Boolean,
+    controller: AppController,
+    onTest: () -> Unit,
+    onSettings: () -> Unit,
+    onChooseOther: () -> Unit,
+    onStop: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    SheetOverlay("sheet_more", stringResource(R.string.native_ui_common_more), onDismiss) {
+        AlertStyleChoice(alertStyle) { style ->
+            controller.updateSettings { it.copy(alertStyle = style) }
+        }
+        Spacer(Modifier.height(8.dp))
+        SecondaryButton(
+            stringResource(R.string.native_ui_probe_button),
+            onTest,
+            "parent_probe",
+            Modifier.fillMaxWidth(),
+        )
+        SecondaryButton(
+            stringResource(R.string.native_ui_common_settings),
+            onSettings,
+            "parent_settings",
+            Modifier.fillMaxWidth(),
+        )
+        if (offerChooseOther) {
+            Spacer(Modifier.height(8.dp))
+            SecondaryButton(
+                stringResource(R.string.native_ui_connections_choose_another),
+                onChooseOther,
+                "menu_choose_other_connection",
+                Modifier.fillMaxWidth(),
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+        HorizontalDivider()
+        Spacer(Modifier.height(8.dp))
+        SecondaryButton(
+            stringResource(R.string.native_ui_parent_stop),
+            onStop,
+            "parent_stop",
+            Modifier.fillMaxWidth(),
+            destructive = true,
+        )
     }
 }
 
