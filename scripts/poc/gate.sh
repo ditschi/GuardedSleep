@@ -102,6 +102,15 @@ maestro_run() {
 		--output "$OUT/maestro-$(basename "$flow" .yaml)-$serial.xml" "$FLOWS/$flow"
 }
 
+# Whole logcat of both emulators (no tail limit) after a failed Maestro attempt, so the lines before an adb
+# drop are in poc-gate-results. Plain text on purpose: the canary scan reads every file in $OUT.
+save_full_logcats() {
+	local tag=$1 dev
+	for dev in "$BABY" "$PARENT"; do
+		adb -s "$dev" logcat -d >"$OUT/logcat-full-$tag-$dev.txt" 2>&1 || true
+	done
+}
+
 maestro_assert() {
 	local serial=$1 flow=$2
 	if [[ "$HAVE_MAESTRO" != 1 ]]; then
@@ -109,14 +118,16 @@ maestro_assert() {
 		return 0
 	fi
 	maestro_run "$serial" "$flow" && return 0
+	save_full_logcats "$(basename "$flow" .yaml)-attempt1"
 	# A flow that dies with "Unknown error" lost its driver or the adb transport (CI run 19b7d692 and 7e282d82:
 	# the driver was force-stopped 1 s in, the 10 s wait never ran). That says nothing about the screen, so run it
 	# once more. A real failed assertion reports "Assertion is false", fails here at once and never retries.
 	if grep -q "Unknown error" "$OUT/maestro-$(basename "$flow" .yaml)-$serial.xml" 2>/dev/null; then
 		log "maestro lost its driver in $flow (Unknown error); running it once more"
 		sleep 3
-		maestro_run "$serial" "$flow"
-		return
+		maestro_run "$serial" "$flow" && return 0
+		save_full_logcats "$(basename "$flow" .yaml)-attempt2"
+		return 1
 	fi
 	return 1
 }
