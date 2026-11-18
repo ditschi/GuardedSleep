@@ -492,7 +492,8 @@
     align-items: center;
     justify-content: center;
     gap: var(--gs-space-1);
-    min-width: min-content;
+    /* Never wider than the row: a long label wraps at 200 % text on a 320 px screen. */
+    min-width: min(min-content, 100%);
     max-width: 100%;
     min-height: var(--gs-target-large);
     padding: var(--gs-space-2) var(--gs-space-3);
@@ -514,8 +515,7 @@
   }
   .gs-tile__label,
   .gs-tile__sub {
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
   }
   .gs-tile__sub {
     font-weight: 500;

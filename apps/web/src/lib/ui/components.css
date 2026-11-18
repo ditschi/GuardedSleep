@@ -158,6 +158,8 @@
   }
   /* The baby device's battery, right-aligned; the number never wraps. */
   .gs-status-bar__battery {
+    /* Anchors the sr-only text so it cannot sit past the right edge and widen the page. */
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: var(--gs-space-1);
