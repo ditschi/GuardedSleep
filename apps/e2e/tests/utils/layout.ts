@@ -21,7 +21,7 @@ export type FitProblem = string;
  * - a piece of text or a control lies (partly) outside the page's width;
  * - an element clips its own text (overflow hidden, ellipsis) or lies outside an ancestor that
  *   clips it;
- * - an element inside a fixed layer (night screen, full-screen alerts, dialogs) ends below or
+ * - an element inside a fixed layer (black screen, full-screen alerts, dialogs) ends below or
  *   right of the viewport, where nothing can scroll it into view.
  * Scrolling vertically on the page or inside an `overflow: auto` region is fine.
  */

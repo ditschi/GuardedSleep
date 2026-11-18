@@ -9,7 +9,7 @@ import { CLIPBOARD_PERMISSIONS, pairWeb, pasteCode, showCode } from "./utils/web
  * Every screen of the web client is checked twice (task 8.2): axe for accessibility, and a
  * text-overflow check at 320 px width with text at 200 % (`utils/layout.ts`: no sideways page
  * scroll, nothing cut off, nothing pushed out of reach). Dialogs and sheets count as screens.
- * The role, pairing, monitoring, alert, link alarm, night and settings screens of both devices
+ * The role, pairing, monitoring, alert, link alarm, black screen and settings screens of both devices
  * are walked through in a few sessions, because most of them need a live pairing.
  */
 
@@ -63,7 +63,7 @@ const LANGUAGES = [
 for (const lang of LANGUAGES) {
   const suffix = lang.tag === "en" ? "" : ` [${lang.tag}]`;
 
-  test(`start, settings, pairing, monitoring and night screens of both devices${suffix}`, async () => {
+  test(`start, settings, pairing, monitoring and black screens of both devices${suffix}`, async () => {
     test.setTimeout(240_000);
     const dual = await launchDualContexts({
       locale: lang.tag,
@@ -119,12 +119,12 @@ for (const lang of LANGUAGES) {
       await baby.getByTestId("dialog_stop_cancel").click();
       await openAndCheck(baby, "baby_settings", "settings_sensitivity", "baby: settings");
       await baby.getByTestId("settings_back").click();
-      await openAndCheck(baby, "baby_night_open", "night_screen", "baby: night screen");
-      await baby.getByTestId("night_screen_tap").click();
-      await expect(baby.getByTestId("night_screen_status")).toBeVisible();
-      await expect(baby.getByTestId("night_screen")).toHaveCSS("opacity", "1");
-      await checkScreen(baby, "baby: night screen with status");
-      await baby.getByTestId("night_screen_tap").click();
+      await openAndCheck(baby, "baby_black_open", "black_screen", "baby: black screen");
+      await baby.getByTestId("black_screen_tap").click();
+      await expect(baby.getByTestId("black_screen_status")).toBeVisible();
+      await expect(baby.getByTestId("black_screen")).toHaveCSS("opacity", "1");
+      await checkScreen(baby, "baby: black screen with status");
+      await baby.getByTestId("black_screen_tap").click();
 
       // ---- parent monitoring
       await expect(parent.getByTestId("parent_headline")).toBeVisible();
@@ -151,10 +151,10 @@ for (const lang of LANGUAGES) {
       await expect(parent.getByTestId("settings_connections_read_only")).toBeVisible();
       await expect(parent.getByTestId("settings_forget")).toHaveCount(0);
       await parent.getByTestId("settings_back").click();
-      await openAndCheck(parent, "parent_night_open", "night_screen", "parent: night screen");
-      await parent.getByTestId("night_screen_tap").click();
-      await expect(parent.getByTestId("night_screen")).toHaveCSS("opacity", "1");
-      await checkScreen(parent, "parent: night screen with status");
+      await openAndCheck(parent, "parent_black_open", "black_screen", "parent: black screen");
+      await parent.getByTestId("black_screen_tap").click();
+      await expect(parent.getByTestId("black_screen")).toHaveCSS("opacity", "1");
+      await checkScreen(parent, "parent: black screen with status");
       await parent.keyboard.press("Escape");
 
       // ---- the stop dialog of the parent, then the baby learns about it

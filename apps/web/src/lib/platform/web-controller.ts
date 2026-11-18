@@ -684,7 +684,7 @@ export class WebController implements AppController {
 
   /**
    * The browser suspended or resumed this device's audio. A suspended baby cannot play a talk, so
-   * the core reports `muted` and the night screen shows how to turn sound back on.
+   * the core reports `muted` and the black screen shows how to turn sound back on.
    */
   private onSoundState(unlocked: boolean): void {
     const r = this.run;

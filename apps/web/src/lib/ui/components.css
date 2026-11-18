@@ -137,8 +137,8 @@
     color: var(--safety-alert);
   }
   .gs-status-bar[data-tone="neutral"] {
-    background: var(--gs-surface-highest);
-    color: var(--gs-on-bg);
+    background: var(--safety-grey-container);
+    color: var(--safety-on-grey);
   }
   .gs-status-bar__text {
     display: flex;

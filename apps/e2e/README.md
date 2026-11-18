@@ -32,7 +32,7 @@ The pairing key lives in page memory only, so tests navigate client-side after p
 - **20:** pairing screens (QR, copy, paste errors, camera only on request, microphone refused).
 - **21:** storage test: no key, invite or room id in any web storage, also after a reload.
 - **22 / 23:** monitoring screens; noise alert, silence and a short blip (no alert), link alarm.
-- **24:** settings. **25:** wake lock. **26:** night screen. **27:** background loss and resume from sleep.
+- **24:** settings. **25:** wake lock. **26:** black screen. **27:** background loss and resume from sleep.
 - **28:** Content-Security-Policy on the production build served by `guardedsleep-server --serve-web`.
 - **29:** audio: the gate opens for Listen and for a noise alert, and closes again.
 - **30:** link: wrong key, unreachable server, dead extra address (its own mailbox), dropped DataChannel, outages of the parent (20 s and 90 s).

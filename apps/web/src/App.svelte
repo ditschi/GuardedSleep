@@ -11,6 +11,8 @@
   import PageAttention from "./lib/ui/PageAttention.svelte";
   import { createRouter, focusRouteHeading, formatDocumentTitle, type RouteId } from "./lib/router";
   import { provideRouter } from "./lib/router-context";
+  import { persistNightSettings } from "./lib/night-mode";
+  import { createNightClock } from "./lib/platform/night-clock";
   import { applyTheme, resolveTheme } from "./lib/theme";
   import AlarmToneScreen from "./screens/AlarmToneScreen.svelte";
   import BabyMonitorScreen from "./screens/BabyMonitorScreen.svelte";
@@ -31,6 +33,9 @@
 
   // svelte-ignore state_referenced_locally -- the scanner prop is fixed for the page's life
   provideScanner(scanner);
+
+  // Night mode resolved against the device clock (the platform layer); the effects below apply it.
+  const night = createNightClock(settings);
 
   const router = createRouter(window);
   const route = router.route;
@@ -72,7 +77,11 @@
     const onBabyScreen = $route.id === "babyPair" || $route.id === "baby";
     const dim = $app.role === "baby" && ($app.monitoring || onBabyScreen);
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    applyTheme(document, resolveTheme($settings.theme, prefersDark, dim));
+    applyTheme(document, resolveTheme($settings.theme, prefersDark, dim), $night);
+  });
+  // The choice is remembered for the next visit; theme-boot.js reads it before first paint.
+  $effect(() => {
+    persistNightSettings(localStorage, $settings);
   });
   $effect(() => {
     document.documentElement.lang = $locale;

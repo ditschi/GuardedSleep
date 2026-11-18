@@ -23,7 +23,7 @@
   import RestoredCard from "../lib/ui/RestoredCard.svelte";
   import StopDialog from "../lib/ui/StopDialog.svelte";
   import TalkButton from "../lib/ui/TalkButton.svelte";
-  import NightScreen from "../lib/ui/NightScreen.svelte";
+  import BlackScreen from "../lib/ui/BlackScreen.svelte";
   import {
     canRequestSilence,
     connectionName,
@@ -53,9 +53,9 @@
   });
   const fullScreen = $derived(fullScreenOf($parent, dismissed));
 
-  // An alert replaces the night screen at once; it stays off afterwards, the parent is awake now.
+  // An alert replaces the black screen at once; it stays off afterwards, the parent is awake now.
   $effect(() => {
-    if (fullScreen !== null) nightOpen = false;
+    if (fullScreen !== null) blackOpen = false;
   });
 
   function dismiss(kind: FullScreenKind): void {
@@ -187,7 +187,7 @@
   let probeOpen = $state(false);
   let moreOpen = $state(false);
   let stopOpen = $state(false);
-  let nightOpen = $state(false);
+  let blackOpen = $state(false);
   let helpOpen = $state(false);
   let questionOpen = $state(false);
   let localOnly = $state(false);
@@ -383,9 +383,9 @@
       </Button>
       <Button
         variant="outline"
-        label={$t("webScreens.night.open")}
-        testid="parent_night_open"
-        onclick={() => (nightOpen = true)}
+        label={$t("webScreens.blackScreen.open")}
+        testid="parent_black_open"
+        onclick={() => (blackOpen = true)}
       >
         <Glyph name="moon" />
       </Button>
@@ -393,7 +393,7 @@
         {$t("native.ui.common.more")}
       </Button>
     </div>
-    <NightScreen bind:open={nightOpen} statusText={headlineText} />
+    <BlackScreen bind:open={blackOpen} statusText={headlineText} />
   </div>
 {/if}
 

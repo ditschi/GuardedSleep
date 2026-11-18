@@ -37,6 +37,7 @@ import {
   type TalkVolume,
   type Theme,
 } from "./models";
+import type { NightMode, NightOverride } from "../night-mode";
 
 /** The text between the braces/parentheses that open at `start` (balanced). */
 function block(text: string, start: number, open: string, close: string): string {
@@ -138,6 +139,7 @@ describe("enums mirror UiContract.kt", () => {
       "incomplete_paste",
     ] satisfies PairingError[],
     Theme: ["dark", "light", "system"] satisfies Theme[],
+    NightMode: ["off", "on", "auto"] satisfies NightMode[],
     AlertOutput: ["default", "speaker_only"] satisfies AlertOutput[],
     DeviceCheck: ["unknown", "ok", "limited", "not_recommended"] satisfies DeviceCheck[],
     TalkVolume: ["low", "medium", "high"] satisfies TalkVolume[],
@@ -228,6 +230,7 @@ describe("data classes mirror UiContract.kt", () => {
     SettingsState: defaultSettings(),
     AppState: defaultAppState(),
     ConnectionUi: { id: "1", name: null, isDefault: true, selected: true },
+    NightOverride: { active: true, untilWallMs: 0 } satisfies NightOverride,
   };
 
   for (const [name, sample] of Object.entries(classes)) {
