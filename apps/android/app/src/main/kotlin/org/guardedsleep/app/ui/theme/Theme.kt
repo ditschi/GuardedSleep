@@ -283,11 +283,13 @@ private val DayApp =
         onNeutralChip = Color(0xFF1F1B23),
         secondaryText = Color(0xFF4F4756),
     )
+// Night mode never recolours a status: ok, warn and bad are the fixed Dusk safety values, so chips
+// and hints that read AppColors keep the colours of "Night mode never hides safety signals".
 private val EmberApp =
     AppColors(
-        ok = Color(0xFF7AA883),
-        warn = Color(0xFFD07A44),
-        bad = Color(0xFFE06A5E),
+        ok = Color(0xFF86CFA6),
+        warn = Color(0xFFF0A774),
+        bad = Color(0xFFFF948A),
         neutralChip = Color(0xFF180B0A),
         onNeutralChip = Color(0xFFD19586),
         secondaryText = Color(0xFFA87365),

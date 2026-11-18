@@ -54,7 +54,9 @@ import org.guardedsleep.app.ui.common.Glyph
 import org.guardedsleep.app.ui.common.GlyphIcon
 import org.guardedsleep.app.ui.common.Headline
 import org.guardedsleep.app.ui.common.ListenButton
+import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.common.MetaLine
+import org.guardedsleep.app.ui.common.NightState
 import org.guardedsleep.app.ui.common.PauseSnackbar
 import org.guardedsleep.app.ui.common.PrimaryButton
 import org.guardedsleep.app.ui.common.QuietButton
@@ -89,6 +91,8 @@ import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.ListenMode
 import org.guardedsleep.app.ui.model.LoudnessWords
 import org.guardedsleep.app.ui.model.MissedEventsUi
+import org.guardedsleep.app.ui.model.NightMode
+import org.guardedsleep.app.ui.model.NightSchedule
 import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.ReadinessIssue
 import org.guardedsleep.app.ui.model.SettingsState
@@ -133,6 +137,7 @@ fun ParentMonitorScreen(
     val p = controller.parent.collectAsState().value
     val app = controller.app.collectAsState().value
     val settings = controller.settings.collectAsState().value
+    val env = LocalUiEnv.current
     val name = customPeerName(app.peerName)
     val elapsed by rememberElapsedNow()
     val wall by rememberWallNow()
@@ -377,8 +382,18 @@ fun ParentMonitorScreen(
                             vibrateOnly && stack.shown.any { it.kind == BannerKind.VIBRATE_ONLY },
                         onClick = { sheet = ParentSheet.MORE },
                     ),
-                // The night control is wired by the night-mode slice.
-                night = null,
+                night =
+                    nightState(settings.nightMode) to
+                        {
+                            val nowWall = env.wallNow()
+                            controller.updateSettings {
+                                NightSchedule.toggled(
+                                    it,
+                                    nowWall,
+                                    env.zone.getOffset(nowWall).toLong(),
+                                )
+                            }
+                        },
                 onSettings = onSettings,
             )
             // Sheets and dialogs draw inside this box, so their scrim leaves the bar readable.
@@ -452,6 +467,7 @@ fun ParentMonitorScreen(
                     ParentSheet.MORE ->
                         MoreSheet(
                             settings.alertStyle,
+                            settings.nightMode,
                             offerChooseOther = app.autoStarted && verified,
                             controller = controller,
                             onTest = { sheet = ParentSheet.PROBE },
@@ -633,6 +649,13 @@ private fun BannerListSheet(folded: List<BannerSpec>, onDismiss: () -> Unit) {
     }
 }
 
+private fun nightState(mode: NightMode): NightState =
+    when (mode) {
+        NightMode.OFF -> NightState.OFF
+        NightMode.ON -> NightState.ON
+        NightMode.AUTO -> NightState.AUTO
+    }
+
 /**
  * Monitor options: the alert style, the test alert, Settings and, after an automatic start, the way
  * back to Home. There is no connection switch while monitoring; Stop monitoring sits apart, below a
@@ -641,6 +664,7 @@ private fun BannerListSheet(folded: List<BannerSpec>, onDismiss: () -> Unit) {
 @Composable
 private fun MoreSheet(
     alertStyle: AlertStyle,
+    nightMode: NightMode,
     offerChooseOther: Boolean,
     controller: AppController,
     onTest: () -> Unit,
@@ -652,6 +676,29 @@ private fun MoreSheet(
     SheetOverlay("sheet_more", stringResource(R.string.native_ui_common_more), onDismiss) {
         AlertStyleChoice(alertStyle) { style ->
             controller.updateSettings { it.copy(alertStyle = style) }
+        }
+        Spacer(Modifier.height(8.dp))
+        // The same Off, On, Automatic choice as Settings › Display.
+        Text(
+            stringResource(R.string.native_ui_settings_night_title),
+            Modifier.semantics { heading() },
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        NightMode.entries.forEach { mode ->
+            ChoiceRow(
+                stringResource(
+                    when (mode) {
+                        NightMode.OFF -> R.string.native_ui_settings_night_off
+                        NightMode.ON -> R.string.native_ui_settings_night_on
+                        NightMode.AUTO -> R.string.native_ui_settings_night_auto
+                    }
+                ),
+                nightMode == mode,
+                "more_night_" + mode.name.lowercase(),
+            ) {
+                controller.updateSettings { st -> NightSchedule.withMode(st, mode) }
+            }
         }
         Spacer(Modifier.height(8.dp))
         SecondaryButton(

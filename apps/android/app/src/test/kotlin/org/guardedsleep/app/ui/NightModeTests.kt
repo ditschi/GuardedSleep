@@ -21,14 +21,18 @@ import androidx.compose.ui.test.runAndroidComposeUiTest
 import androidx.compose.ui.test.runComposeUiTest
 import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.common.StatusBar
+import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.NightMode
 import org.guardedsleep.app.ui.model.ParentMonitorState
+import org.guardedsleep.app.ui.model.ReadinessIssue
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.SettingsState
 import org.guardedsleep.app.ui.model.Theme
 import org.guardedsleep.app.ui.screens.HomeScreen
+import org.guardedsleep.app.ui.screens.ParentMonitorScreen
+import org.guardedsleep.app.ui.screens.ParentSheet
 import org.guardedsleep.app.ui.screens.SettingsPage
 import org.guardedsleep.app.ui.screens.SettingsScreen
 import org.guardedsleep.app.ui.theme.AppScheme
@@ -61,8 +65,8 @@ class NightModeTests : ShotBase() {
     }
 
     /** The bar's background: the colour most pixels of the bar have (text and icons are few). */
-    private fun ComposeUiTest.barColor(): Color {
-        val image = onNodeWithTag("status_bar").captureToImage().toPixelMap()
+    private fun ComposeUiTest.barColor(tag: String = "status_bar"): Color {
+        val image = onNodeWithTag(tag).captureToImage().toPixelMap()
         val counts = HashMap<Int, Int>()
         for (x in 0 until image.width) {
             for (y in 0 until image.height) counts.merge(image[x, y].toArgb(), 1, Int::plus)
@@ -219,6 +223,104 @@ class NightModeTests : ShotBase() {
         assertNull(c.settingsFlow.value.nightOverride)
     }
 
+    // ---- the monitor: toggle, More sheet, safety colours in Ember
+    // ---------------------------------
+
+    private val monitoring = parentApp.copy(monitoring = true)
+
+    private fun monitor(
+        settings: SettingsState,
+        parent: ParentMonitorState = ParentMonitorState(),
+    ) =
+        FakeAppController(
+            app = monitoring,
+            settings = settings.copy(talkCoachSeen = true),
+            parent = parent.copy(link = Connected),
+        )
+
+    @Test
+    fun theToolRowNightIconSwitchesNightModeOnAndOffAgain() = runComposeUiTest {
+        val c = monitor(SettingsState())
+        setContent {
+            CompositionLocalProvider(LocalUiEnv provides TestEnv) {
+                GuardedSleepTheme(Theme.DARK) { ParentMonitorScreen(c, {}) }
+            }
+        }
+        onNodeWithTag("tool_night").performClick()
+        assertEquals(NightMode.ON, c.settingsFlow.value.nightMode)
+        onNodeWithTag("tool_night").performClick()
+        assertEquals(NightMode.OFF, c.settingsFlow.value.nightMode)
+    }
+
+    @Test
+    fun underAutomaticTheToolRowSwitchIsAnOverrideUntilTheNextBoundary() = runComposeUiTest {
+        // 02:14 UTC is inside 21:00 to 07:00: night mode is on, a tap turns it off until 07:00.
+        val c = monitor(SettingsState(nightMode = NightMode.AUTO))
+        setContent {
+            CompositionLocalProvider(LocalUiEnv provides TestEnv) {
+                GuardedSleepTheme(Theme.DARK) { ParentMonitorScreen(c, {}) }
+            }
+        }
+        onNodeWithTag("tool_night").performClick()
+        val s = c.settingsFlow.value
+        assertEquals(NightMode.AUTO, s.nightMode)
+        assertEquals(false, s.nightOverride?.active)
+        assertEquals(WALL + (4 * 60 + 46) * 60_000L, s.nightOverride?.untilWallMs)
+    }
+
+    @Test
+    fun theMoreSheetOffersTheSameThreeChoicesAsSettings() = runComposeUiTest {
+        val c = monitor(SettingsState())
+        setContent {
+            CompositionLocalProvider(LocalUiEnv provides TestEnv) {
+                GuardedSleepTheme(Theme.DARK) {
+                    ParentMonitorScreen(c, {}, initialSheet = ParentSheet.MORE)
+                }
+            }
+        }
+        onNodeWithTag("more_night_off").assertIsSelected()
+        onNodeWithTag("more_night_on").performClick()
+        assertEquals(NightMode.ON, c.settingsFlow.value.nightMode)
+        onNodeWithTag("more_night_auto").performClick()
+        assertEquals(NightMode.AUTO, c.settingsFlow.value.nightMode)
+        assertNull(c.settingsFlow.value.nightOverride)
+    }
+
+    private fun assertEmberBanner(
+        tag: String,
+        expected: Color,
+        settings: SettingsState,
+        parent: ParentMonitorState = ParentMonitorState(),
+    ) = runComposeUiTest {
+        val c = monitor(settings.copy(nightMode = NightMode.ON), parent)
+        setContent {
+            CompositionLocalProvider(LocalUiEnv provides TestEnv) {
+                GuardedSleepTheme(Theme.DARK, scheme = AppScheme.EMBER) {
+                    ParentMonitorScreen(c, {})
+                }
+            }
+        }
+        onNodeWithTag(tag).assertIsDisplayed()
+        assertSameColor(expected, barColor(tag))
+    }
+
+    @Test
+    fun aWarningBannerKeepsTheSafetyPaletteInEmber() =
+        assertEmberBanner(
+            "parent_banner_readiness",
+            SafetyColors.warnContainer,
+            SettingsState(),
+            ParentMonitorState(readiness = listOf(ReadinessIssue.ALARM_VOLUME_ZERO)),
+        )
+
+    @Test
+    fun theVibrateOnlyNoteKeepsTheSafetyPaletteInEmber() =
+        assertEmberBanner(
+            "parent_banner_vibrate_only",
+            SafetyColors.cautionContainer,
+            SettingsState(alertStyle = AlertStyle.DISCREET),
+        )
+
     // ---- shots (recorded in the pinned image only) ----------------------------------------------
 
     @Test
@@ -246,6 +348,27 @@ class NightModeTests : ShotBase() {
         }
         shot("status_bar/stopped_ember", scheme = AppScheme.EMBER) {
             StatusBar(link(LinkPhase.PEER_STOPPED, 0, 3_000), "Nursery")
+        }
+        shot("parent_monitor/connected_ember", scheme = AppScheme.EMBER) {
+            ParentMonitorScreen(
+                monitor(
+                    SettingsState(nightMode = NightMode.ON),
+                    ParentMonitorState(quietSinceWallMs = WALL - 3_600_000L),
+                ),
+                {},
+            )
+        }
+        shot("parent_monitor/banner_ember", scheme = AppScheme.EMBER) {
+            ParentMonitorScreen(
+                monitor(
+                    SettingsState(nightMode = NightMode.ON),
+                    ParentMonitorState(
+                        quietSinceWallMs = WALL - 3_600_000L,
+                        readiness = listOf(ReadinessIssue.ALARM_VOLUME_ZERO),
+                    ),
+                ),
+                {},
+            )
         }
     }
 }
