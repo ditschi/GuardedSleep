@@ -649,4 +649,26 @@ class MonitorTests : ShotBase() {
         onNodeWithTag("sheet_silence").assertIsDisplayed()
         onNodeWithTag("parent_meta").assertDoesNotExist()
     }
+
+    // ---- More sheet (4.3) -----------------------------------------------------------------
+
+    @Test
+    fun theMoreSheetHasCloseNoConnectionSwitchAndStopApartWithConfirmation() = runComposeUiTest {
+        val c = connected()
+        show { ParentMonitorScreen(c, {}) }
+        onNodeWithTag("parent_overflow").performClick()
+        onNodeWithTag("sheet_more").assertIsDisplayed()
+        onNodeWithTag("sheet_close").assertIsDisplayed()
+        // No way to switch the connection while monitoring (`device-setup` "Switching mode").
+        onNodeWithTag("menu_choose_other_connection").assertDoesNotExist()
+        onNodeWithTag("connection_choice_1").assertDoesNotExist()
+        val probe = onNodeWithTag("parent_probe").getUnclippedBoundsInRoot()
+        val stop = onNodeWithTag("parent_stop").getUnclippedBoundsInRoot()
+        assertTrue("Stop sits below a gap", stop.top - probe.bottom >= 32.dp)
+        onNodeWithTag("parent_stop").performClick()
+        onNodeWithTag("dialog_stop").assertIsDisplayed()
+        assertTrue(c.calls.none { it == "stopMonitoring" })
+        onNodeWithTag("dialog_stop_cancel").performClick()
+        onNodeWithTag("sheet_more").assertDoesNotExist()
+    }
 }
