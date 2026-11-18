@@ -11,7 +11,9 @@
 #
 # Env: DOZE_MINUTES (30), ALERT_MAX_MS (5000), HB_INTERVAL_MS (5000), ALARM_AFTER_MS (60000),
 #      GATE_ONLY (ac1 | talk | ui: stop after that phase; ui = install + the AC-12 journey only),
-#      GATE_SECRET_DIR (where the AC-12 code lives for the canary, see ac12)
+#      GATE_SECRET_DIR (where the AC-12 code lives for the canary, see ac12),
+#      GATE_UI_JOURNEY (1 = run AC-12 after AC-4, the default; 0 = skip it with a NOTE; CI sets 0 unless
+#      dispatched with ui_journey, see gate-ui-journeys design §6a)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -532,7 +534,12 @@ maestro_assert "$PARENT" assert-link-lost.yaml || fail AC-4 "link_lost not visib
 pass AC-4 "parent alarmed $((T_LOST - T_KILL)) ms after the baby process was killed"
 
 # --- AC-12: the UI journey runs last, with pm clear before and after (design §5) ---
-ac12
+if [[ "${GATE_UI_JOURNEY:-1}" == 1 ]]; then
+	ac12
+else
+	# Opt-in on CI until emulators stop dropping off adb on the hosted runner (design §6a).
+	echo "NOTE AC-12 — UI journey not run (GATE_UI_JOURNEY=0)" | tee -a "$OUT/summary.txt"
+fi
 
 log "all device criteria passed"
 cat "$OUT/summary.txt"
