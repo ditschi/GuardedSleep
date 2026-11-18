@@ -852,8 +852,6 @@
       "soundGate": "Tocca per attivare il suono degli avvisi",
       "soundGateTitle": "L'audio degli avvisi è disattivato",
       "soundGateBody": "Il browser richiede un tocco prima che GuardedSleep possa riprodurre gli avvisi.",
-      "soundGateBanner": "L'audio degli avvisi è disattivato",
-      "soundGateTurnOn": "Attiva",
       "keepOpenTitle": "Tieni aperta questa pagina e lo schermo acceso",
       "keepOpenBody": "Gli avvisi funzionano solo finché questa pagina è visibile."
     },

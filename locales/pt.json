@@ -852,8 +852,6 @@
       "soundGate": "Toque para ativar o som dos alertas",
       "soundGateTitle": "O som de alerta está desligado",
       "soundGateBody": "O navegador precisa de um toque antes que o GuardedSleep possa tocar alertas.",
-      "soundGateBanner": "O som de alerta está desligado",
-      "soundGateTurnOn": "Ligar",
       "keepOpenTitle": "Mantenha esta página aberta e a tela ligada",
       "keepOpenBody": "Os alertas só funcionam enquanto esta página estiver visível."
     },

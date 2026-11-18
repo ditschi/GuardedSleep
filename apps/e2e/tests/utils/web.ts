@@ -83,3 +83,13 @@ export async function expectNoAxeViolations(page: Page): Promise<void> {
     violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(" | ")}`),
   ).toEqual([]);
 }
+
+/**
+ * Puts the browser parent's "keep this page open" note away. It ranks above the "back from the
+ * background" and the baby device's notices and the stack shows two cards, so a test that needs
+ * one of those dismisses it first (the user can do the same).
+ */
+export async function dismissKeepOpenNote(parent: Page): Promise<void> {
+  await parent.getByTestId("parent_banner_browser_keep_open_action").click();
+  await expect(parent.getByTestId("parent_banner_browser_keep_open")).toHaveCount(0);
+}

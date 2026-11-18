@@ -852,8 +852,6 @@
       "soundGate": "Klepnutím zapnete zvuk výstrah",
       "soundGateTitle": "Zvuk upozornění je vypnutý",
       "soundGateBody": "Prohlížeč potřebuje jedno klepnutí, než smí GuardedSleep přehrávat upozornění.",
-      "soundGateBanner": "Zvuk upozornění je vypnutý",
-      "soundGateTurnOn": "Zapnout",
       "keepOpenTitle": "Nechte tuto stránku otevřenou a displej zapnutý",
       "keepOpenBody": "Upozornění fungují, jen když je tato stránka vidět."
     },

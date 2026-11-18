@@ -8,7 +8,12 @@ import {
   wakeLockStub,
 } from "./utils/browser-stubs";
 import { fixturesDir, launchDualContexts, type DualContexts } from "./utils/dual-context";
-import { CLIPBOARD_PERMISSIONS, expectNoAxeViolations, pairWeb } from "./utils/web";
+import {
+  CLIPBOARD_PERMISSIONS,
+  dismissKeepOpenNote,
+  expectNoAxeViolations,
+  pairWeb,
+} from "./utils/web";
 
 /**
  * Background-loss reporting (task 7.3): a notification when the monitoring page is hidden, the
@@ -42,6 +47,7 @@ test("hidden parent page: notification, away report on return, no alarm for a sh
   const parent = dual.parentPage;
   try {
     await pairWeb(dual);
+    await dismissKeepOpenNote(dual.parentPage);
     await expect(parent.getByTestId("parent_banner_browser_away")).toHaveCount(0);
 
     // Another tab comes to the front: the page says so in a system notification.
@@ -86,6 +92,7 @@ test("hidden baby page: the parent sees the warning, the baby sees the report on
   const { babyPage: baby, parentPage: parent } = dual;
   try {
     await pairWeb(dual);
+    await dismissKeepOpenNote(parent);
     await setHidden(baby, true);
     await expect(parent.getByTestId("parent_banner_unit_warning_page_hidden")).toBeVisible({
       timeout: 30_000,
@@ -111,6 +118,7 @@ test("resume from sleep: both pages warn, the parent is told about the baby devi
   const { babyPage: baby, parentPage: parent } = dual;
   try {
     await pairWeb(dual);
+    await dismissKeepOpenNote(dual.parentPage);
 
     // The baby laptop sleeps for 20 minutes; its next timer finds the clock far ahead.
     await skewClock(baby, 20 * 60_000);

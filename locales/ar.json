@@ -852,8 +852,6 @@
       "soundGate": "اضغط لتشغيل صوت التنبيه",
       "soundGateTitle": "صوت التنبيه متوقف",
       "soundGateBody": "يحتاج المتصفح إلى نقرة واحدة قبل أن يتمكن GuardedSleep من تشغيل التنبيهات.",
-      "soundGateBanner": "صوت التنبيه متوقف",
-      "soundGateTurnOn": "تشغيل",
       "keepOpenTitle": "أبقِ هذه الصفحة مفتوحة والشاشة قيد التشغيل",
       "keepOpenBody": "التنبيهات تعمل فقط أثناء ظهور هذه الصفحة."
     },

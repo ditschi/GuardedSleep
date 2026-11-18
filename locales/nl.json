@@ -852,8 +852,6 @@
       "soundGate": "Tik om het meldingsgeluid aan te zetten",
       "soundGateTitle": "Het meldingsgeluid staat uit",
       "soundGateBody": "Uw browser heeft één tik nodig voordat GuardedSleep meldingen mag afspelen.",
-      "soundGateBanner": "Het meldingsgeluid staat uit",
-      "soundGateTurnOn": "Aanzetten",
       "keepOpenTitle": "Houd deze pagina open en het scherm aan",
       "keepOpenBody": "Meldingen werken alleen zolang deze pagina zichtbaar is."
     },

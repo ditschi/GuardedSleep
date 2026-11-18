@@ -8,7 +8,13 @@ import {
   peerConnectionCount,
   rtcTrackerStub,
 } from "./utils/rtc";
-import { CLIPBOARD_PERMISSIONS, pairWeb, showCode, waitForBarKind } from "./utils/web";
+import {
+  CLIPBOARD_PERMISSIONS,
+  dismissKeepOpenNote,
+  pairWeb,
+  showCode,
+  waitForBarKind,
+} from "./utils/web";
 
 /**
  * Link behaviour from the user's side: a wrong key and an unreachable server while pairing, a
@@ -141,6 +147,7 @@ for (const hidden of [false, true]) {
         await ctx.addInitScript(pageGuardStub);
       }
       await pairWeb(dual);
+      await dismissKeepOpenNote(dual.parentPage);
 
       await cutParent(dual.parent, parent);
       if (hidden) await setHidden(parent, true);

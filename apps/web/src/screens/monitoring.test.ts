@@ -281,7 +281,7 @@ describe("S09 parent monitor", () => {
     expect(screen.getByTestId("status_bar")).toBeInTheDocument();
     expect(screen.getByTestId("parent_listen")).toBeInTheDocument();
     expect(screen.queryByTestId("parent_headline")).toBeNull();
-    expect(screen.getByTestId("parent_banner_browser_sound_gate")).toBeInTheDocument();
+    expect(screen.queryByTestId("parent_banner_browser_sound_gate")).toBeNull();
     await fireEvent.click(screen.getByTestId("sound_gate_unlock"));
     expect(c.calls).toContainEqual(["unlockSound"]);
     await waitFor(() => expect(screen.queryByTestId("sound_gate")).toBeNull());
@@ -453,12 +453,22 @@ describe("S09 parent monitor", () => {
     expect(screen.queryByTestId("parent_banner_unit_warning_page_hidden")).toBeNull();
     const more = screen.getByTestId("parent_banner_more");
     expect(more).toHaveTextContent("+2 more");
+    // The accessible name starts with the visible words and lists the folded notices.
+    expect(more).toHaveAccessibleName(/^\+2 more.*Baby device may fall asleep/);
     await fireEvent.click(more);
     const list = screen.getByTestId("sheet_banners");
     expect(within(list).getByTestId("parent_banner_unit_warning_page_hidden")).toBeInTheDocument();
     expect(
       within(list).getByTestId("parent_banner_unit_warning_wake_lock_off"),
     ).toBeInTheDocument();
+  });
+
+  it("puts the keep-open note away for the page's life, but never the wake lock warning", async () => {
+    open("/parent", c);
+    await fireEvent.click(await screen.findByTestId("parent_banner_browser_keep_open_action"));
+    await waitFor(() => expect(screen.queryByTestId("parent_banner_browser_keep_open")).toBeNull());
+    c.pageGuard.update((g) => ({ ...g, wakeLock: "lost" }));
+    expect(await screen.findByTestId("parent_banner_browser_keep_open_lost")).toBeInTheDocument();
   });
 
   it("announces a warn notice through a status region and the security warning as an alert", async () => {

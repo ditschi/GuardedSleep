@@ -852,8 +852,6 @@
       "soundGate": "Ketuk untuk menyalakan suara peringatan",
       "soundGateTitle": "Suara peringatan mati",
       "soundGateBody": "Peramban Anda butuh satu ketukan sebelum GuardedSleep boleh memutar peringatan.",
-      "soundGateBanner": "Suara peringatan mati",
-      "soundGateTurnOn": "Nyalakan",
       "keepOpenTitle": "Biarkan halaman ini terbuka dan layar menyala",
       "keepOpenBody": "Peringatan hanya berfungsi saat halaman ini terlihat."
     },

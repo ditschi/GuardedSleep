@@ -852,8 +852,6 @@
       "soundGate": "Tryck för att slå på larmljudet",
       "soundGateTitle": "Larmljudet är av",
       "soundGateBody": "Webbläsaren behöver ett tryck innan GuardedSleep får spela upp larm.",
-      "soundGateBanner": "Larmljudet är av",
-      "soundGateTurnOn": "Slå på",
       "keepOpenTitle": "Låt den här sidan vara öppen och skärmen på",
       "keepOpenBody": "Larm fungerar bara medan sidan är synlig."
     },

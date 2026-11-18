@@ -854,8 +854,6 @@
       "soundGate": "Tap to turn on alert sound",
       "soundGateTitle": "Alert sound is off",
       "soundGateBody": "Your browser needs one tap before GuardedSleep may play alerts.",
-      "soundGateBanner": "Alert sound is off",
-      "soundGateTurnOn": "Turn on",
       "keepOpenTitle": "Keep this page open and the screen on",
       "keepOpenBody": "Alerts only work while this page is visible."
     },

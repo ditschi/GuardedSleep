@@ -845,8 +845,6 @@
       "soundGate": "Tippen, um den Alarmton zu aktivieren",
       "soundGateTitle": "Der Alarmton ist aus",
       "soundGateBody": "Ihr Browser braucht einen Tipp, bevor GuardedSleep Alarme abspielen darf.",
-      "soundGateBanner": "Der Alarmton ist aus",
-      "soundGateTurnOn": "Einschalten",
       "keepOpenTitle": "Lassen Sie diese Seite offen und den Bildschirm an",
       "keepOpenBody": "Alarme funktionieren nur, solange diese Seite sichtbar ist."
     },

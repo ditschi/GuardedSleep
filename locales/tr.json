@@ -852,8 +852,6 @@
       "soundGate": "Uyarı sesini açmak için dokunun",
       "soundGateTitle": "Uyarı sesi kapalı",
       "soundGateBody": "GuardedSleep'in uyarı çalabilmesi için tarayıcınızın bir dokunuşa ihtiyacı var.",
-      "soundGateBanner": "Uyarı sesi kapalı",
-      "soundGateTurnOn": "Aç",
       "keepOpenTitle": "Bu sayfayı açık ve ekranı açık tutun",
       "keepOpenBody": "Uyarılar yalnızca bu sayfa görünürken çalışır."
     },

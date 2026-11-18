@@ -153,14 +153,14 @@ export function parentBanners(
 }
 
 /**
- * The notices only a browser parent has (`web-client` "Same monitor in the browser"): the alert
- * sound gate, "keep this page open" (a warning with the same id suffixes when the screen wake lock
- * is lost or missing) and "back from the background". They are ranked below readiness with the
- * rest and are fed from the page guard and the sound lock, never from the core.
+ * The notices only a browser parent has (`web-client` "Same monitor in the browser"): "keep this
+ * page open" (a warning with an id suffix when the screen wake lock is lost or missing) and "back
+ * from the background". They rank below readiness with the rest and are fed from the page guard,
+ * never from the core. The alert sound gate is a kind of its own in the order but has no card: its
+ * panel covers the monitor while the sound is locked, so a banner would say it twice.
  */
-export function browserBanners(guard: PageGuardState, soundUnlocked: boolean): Banner[] {
+export function browserBanners(guard: PageGuardState): Banner[] {
   const out: Banner[] = [];
-  if (!soundUnlocked) out.push({ kind: "browser_sound_gate", id: "browser_sound_gate" });
   if (guard.wakeLock === "lost" || guard.wakeLock === "unsupported") {
     out.push({ kind: "browser_keep_open", id: `browser_keep_open_${guard.wakeLock}` });
   } else {

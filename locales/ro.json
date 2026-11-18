@@ -852,8 +852,6 @@
       "soundGate": "Atinge pentru a activa sunetul alertelor",
       "soundGateTitle": "Sunetul alertelor este oprit",
       "soundGateBody": "Browserul are nevoie de o atingere înainte ca GuardedSleep să poată reda alerte.",
-      "soundGateBanner": "Sunetul alertelor este oprit",
-      "soundGateTurnOn": "Pornește",
       "keepOpenTitle": "Ține această pagină deschisă și ecranul pornit",
       "keepOpenBody": "Alertele funcționează doar cât timp această pagină este vizibilă."
     },

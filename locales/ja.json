@@ -852,8 +852,6 @@
       "soundGate": "タップしてアラート音をオン",
       "soundGateTitle": "警告音がオフです",
       "soundGateBody": "GuardedSleep が警告音を鳴らせるようにするには、ブラウザで一度タップする必要があります。",
-      "soundGateBanner": "警告音がオフです",
-      "soundGateTurnOn": "オンにする",
       "keepOpenTitle": "このページを開き、画面を点けたままにしてください",
       "keepOpenBody": "アラートは、このページが表示されている間だけ働きます。"
     },

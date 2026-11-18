@@ -205,17 +205,13 @@ describe("browserBanners", () => {
     ...over,
   });
 
-  it("always has the keep-open note and the sound gate while the sound is locked", () => {
-    expect(browserBanners(guard(), true).map((x) => x.id)).toEqual(["browser_keep_open"]);
-    expect(browserBanners(guard(), false).map((x) => x.id)).toEqual([
-      "browser_sound_gate",
-      "browser_keep_open",
-    ]);
+  it("always has the keep-open note, and no card for the sound gate (its panel is the surface)", () => {
+    expect(browserBanners(guard()).map((x) => x.id)).toEqual(["browser_keep_open"]);
   });
 
   it("turns keep-open into a warning when the wake lock is lost or missing", () => {
     for (const wakeLock of ["lost", "unsupported"] as const) {
-      const [only] = browserBanners(guard({ wakeLock }), true);
+      const [only] = browserBanners(guard({ wakeLock }));
       expect(only?.id).toBe(`browser_keep_open_${wakeLock}`);
       expect(bannerLevel("browser_keep_open", only?.id)).toBe("warn");
     }
@@ -224,7 +220,7 @@ describe("browserBanners", () => {
 
   it("adds the away report until it is dismissed", () => {
     const away = { kind: "background", awayMs: 60_000, endWallMs: 1 } as const;
-    expect(browserBanners(guard({ away }), true).map((x) => x.kind)).toContain("browser_away");
+    expect(browserBanners(guard({ away })).map((x) => x.kind)).toContain("browser_away");
   });
 
   it("ranks the browser kinds below readiness and above the baby device's warnings", () => {
