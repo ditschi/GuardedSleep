@@ -123,3 +123,83 @@ describe("status bar in night mode", () => {
     },
   );
 });
+
+describe("the monitor's night controls", () => {
+  function monitoring(): FakeController {
+    const c = createFakeController();
+    c.app.update((s) => ({ ...s, role: "parent", paired: true, monitoring: true }));
+    c.soundUnlocked.set(true);
+    c.parent.update((p) => ({
+      ...p,
+      link: { ...defaultLinkUi(), phase: "connected" as const, lastAliveElapsedMs: Date.now() },
+    }));
+    return c;
+  }
+
+  it("the tool row icon switches night mode on and off and says its state", async () => {
+    const c = monitoring();
+    open("/parent", c);
+    const night = await screen.findByTestId("tool_night");
+    expect(night).toHaveAccessibleName("Night mode: off");
+    await fireEvent.click(night);
+    expect(get(c.settings).nightMode).toBe("on");
+    await waitFor(() => expect(screen.getByTestId("tool_night")).toHaveTextContent("On"));
+    expect(screen.getByTestId("tool_night")).toHaveAccessibleName("Night mode: on");
+    await waitFor(() => expect(document.documentElement.dataset.scheme).toBe("ember"));
+    await fireEvent.click(screen.getByTestId("tool_night"));
+    expect(get(c.settings).nightMode).toBe("off");
+  });
+
+  it("under Automatic the tool row icon sets an override until the next boundary", async () => {
+    const c = monitoring();
+    c.settings.update((s) => ({ ...s, nightMode: "auto" }));
+    open("/parent", c);
+    await fireEvent.click(await screen.findByTestId("tool_night"));
+    const s = get(c.settings);
+    expect(s.nightMode).toBe("auto");
+    expect(s.nightOverride).not.toBeNull();
+    expect(s.nightOverride?.untilWallMs).toBeGreaterThan(Date.now());
+    expect(screen.getByTestId("tool_night")).toHaveTextContent("Auto");
+  });
+
+  it("the More sheet has the same Off, On and Automatic choice", async () => {
+    const c = monitoring();
+    open("/parent", c);
+    await fireEvent.click(await screen.findByTestId("parent_overflow"));
+    expect(screen.getByTestId("more_night_off")).toBeChecked();
+    await fireEvent.click(screen.getByTestId("more_night_auto"));
+    expect(get(c.settings).nightMode).toBe("auto");
+    await fireEvent.click(screen.getByTestId("more_night_on"));
+    expect(get(c.settings).nightMode).toBe("on");
+    expect(get(c.settings).nightOverride).toBeNull();
+  });
+
+  // jsdom does not apply CSS, so the stylesheets are read as text: warning banners take the fixed
+  // --safety-* tokens, and in Ember the status colours chips and hints read are the Dusk values.
+  const screens = readFileSync(resolve(process.cwd(), "src/lib/ui/screens.css"), "utf8");
+  const theme = readFileSync(resolve(process.cwd(), "src/lib/ui/theme.css"), "utf8");
+
+  it.each(["alert", "warn", "info"])("the %s notice level uses only safety colours", (level) => {
+    const rule = new RegExp(`\\.gs-notice\\[data-level="${level}"\\]\\s*\\{([^}]*)\\}`).exec(
+      screens,
+    );
+    expect(rule?.[1]).toBeDefined();
+    for (const [, value = ""] of (rule?.[1] ?? "").matchAll(/(?:background|color):\s*([^;]+);/g)) {
+      expect(value).toContain("--safety-");
+    }
+  });
+
+  it("Ember keeps the status colours of chips and hints at the Dusk safety values", () => {
+    const ember = theme.slice(theme.indexOf(':root[data-scheme="ember"]'));
+    const block = ember.slice(0, ember.indexOf("}"));
+    for (const [prop, safety] of [
+      ["--gs-ok", "--safety-ok"],
+      ["--gs-warn", "--safety-warn"],
+      ["--gs-bad", "--safety-alert"],
+    ] as const) {
+      const value = new RegExp(`${prop}:\\s*(#[0-9a-f]{6})`).exec(block)?.[1];
+      const fixed = new RegExp(`${safety}:\\s*(#[0-9a-f]{6})`).exec(theme)?.[1];
+      expect(value, prop).toBe(fixed);
+    }
+  });
+});

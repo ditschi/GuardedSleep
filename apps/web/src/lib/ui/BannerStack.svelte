@@ -3,10 +3,17 @@
   import type { ReadinessIssue } from "../contract";
   import { locale, t } from "../i18n/store";
   import { READINESS_WORDS, SILENCE_TITLE, UNIT_WARNING_KEYS } from "./banner-copy";
-  import { bannerLevel, parentBanners, rankBanners, type Banner, type BannerKind } from "./banners";
+  import {
+    bannerLevel,
+    browserBanners,
+    parentBanners,
+    rankBanners,
+    type Banner,
+    type BannerKind,
+  } from "./banners";
   import Button from "./Button.svelte";
   import Dialog from "./Dialog.svelte";
-  import { formatClock } from "./format";
+  import { formatClock, formatDuration } from "./format";
   import Glyph from "./Glyph.svelte";
   import { canRequestSilence } from "./parent-view";
   import { everySecond } from "./ticker";
@@ -27,10 +34,15 @@
   let { ontest }: Props = $props();
 
   const controller = useController();
-  const { parent } = controller;
+  const { parent, pageGuard, soundUnlocked } = controller;
 
   // The browser always keeps the "sound" alert style (it cannot vibrate).
-  const ranked = $derived(rankBanners(parentBanners($parent, "sound", $everySecond.wallMs)));
+  const ranked = $derived(
+    rankBanners([
+      ...parentBanners($parent, "sound", $everySecond.wallMs),
+      ...browserBanners($pageGuard, $soundUnlocked),
+    ]),
+  );
   let listOpen = $state(false);
   $effect(() => {
     if (ranked.folded.length === 0) listOpen = false;
@@ -92,11 +104,31 @@
           title: $t("native.ui.alertStyle.vibrateTitle"),
           body: $t("native.ui.alertStyle.bodyNoSound"),
         };
-      // Ranked but fed by the browser notices of the monitor itself (AwayNotice and friends).
       case "browser_sound_gate":
+        return { title: $t("webScreens.parent.soundGateBanner"), body: null };
       case "browser_keep_open":
-      case "browser_away":
-        return null;
+        if (b.id.endsWith("lost"))
+          return { title: $t("webScreens.guard.wakeLockLost"), body: null };
+        if (b.id.endsWith("unsupported")) {
+          return { title: $t("webScreens.guard.wakeLockUnsupported"), body: null };
+        }
+        return {
+          title: $t("webScreens.parent.keepOpenTitle"),
+          body: $t("webScreens.parent.keepOpenBody"),
+        };
+      case "browser_away": {
+        const away = $pageGuard.away;
+        if (away === null) return null;
+        return {
+          title: $t(
+            away.kind === "sleep"
+              ? "webScreens.guard.awaySleep"
+              : "webScreens.guard.awayBackground",
+            { duration: formatDuration($t, away.awayMs) },
+          ),
+          body: null,
+        };
+      }
     }
   }
 
@@ -124,6 +156,17 @@
           : null;
       case "paused":
         return { label: $t("native.ui.snooze.resume"), run: () => controller.cancelSnooze() };
+      case "browser_sound_gate":
+        return {
+          label: $t("webScreens.parent.soundGateTurnOn"),
+          run: () => controller.unlockSound(),
+        };
+      case "browser_keep_open":
+        return b.id.endsWith("lost")
+          ? { label: $t("webScreens.guard.wakeLockRetry"), run: () => controller.retryKeepAwake() }
+          : null;
+      case "browser_away":
+        return { label: $t("native.ui.common.ok"), run: () => controller.dismissAwayReport() };
       default:
         return null;
     }
@@ -137,12 +180,16 @@
 {#snippet card(b: Banner, live: boolean)}
   {@const words = wordsOf(b)}
   {@const action = actionOf(b)}
-  {@const level = bannerLevel(b.kind)}
+  {@const level = bannerLevel(b.kind, b.id)}
   {#if words}
     <div
       class="gs-notice"
       data-level={level}
       data-kind={b.kind}
+      data-state={b.kind === "browser_keep_open"
+        ? b.id.slice("browser_keep_open".length + 1) || undefined
+        : undefined}
+      data-away={b.kind === "browser_away" ? $pageGuard.away?.kind : undefined}
       data-testid={`parent_banner_${b.id}`}
       role={!live
         ? undefined

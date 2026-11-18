@@ -689,6 +689,10 @@
   .gs-tools__gear {
     order: -1;
   }
+  .gs-chip-btn[data-on] {
+    background: var(--gs-primary-container);
+    color: var(--gs-on-primary-container);
+  }
   .gs-chip-btn {
     display: inline-flex;
     align-items: center;

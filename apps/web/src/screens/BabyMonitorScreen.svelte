@@ -247,7 +247,7 @@
   <div class="gs-fill"></div>
 
   <Button variant="tonal" block size="large" testid="baby_black_open" onclick={openBlack}>
-    <Glyph name="moon" />
+    <Glyph name="cover" />
     {$t("webScreens.blackScreen.open")}
   </Button>
 

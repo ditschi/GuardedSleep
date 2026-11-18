@@ -4,6 +4,7 @@ import {
   defaultParentMonitor,
   defaultPeerStatus,
   type LinkUi,
+  type PageGuardState,
   type ParentMonitorState,
   type PeerStatusUi,
   type ReadinessIssue,
@@ -15,6 +16,7 @@ import {
   BANNER_LIMIT,
   BANNER_ORDER,
   bannerLevel,
+  browserBanners,
   parentBanners,
   rankBanners,
   type Banner,
@@ -192,6 +194,50 @@ describe("parentBanners", () => {
     expect(ids(state({ snoozedUntil: 5_000 }), "sound", 1_000)).toEqual(["paused"]);
     expect(ids(state({ snoozedUntil: 5_000 }), "sound", 5_000)).toEqual([]);
     expect(ids(state(), "discreet")).toEqual(["vibrate_only"]);
+  });
+});
+
+describe("browserBanners", () => {
+  const guard = (over: Partial<PageGuardState> = {}): PageGuardState => ({
+    wakeLock: "held",
+    hidden: false,
+    away: null,
+    ...over,
+  });
+
+  it("always has the keep-open note and the sound gate while the sound is locked", () => {
+    expect(browserBanners(guard(), true).map((x) => x.id)).toEqual(["browser_keep_open"]);
+    expect(browserBanners(guard(), false).map((x) => x.id)).toEqual([
+      "browser_sound_gate",
+      "browser_keep_open",
+    ]);
+  });
+
+  it("turns keep-open into a warning when the wake lock is lost or missing", () => {
+    for (const wakeLock of ["lost", "unsupported"] as const) {
+      const [only] = browserBanners(guard({ wakeLock }), true);
+      expect(only?.id).toBe(`browser_keep_open_${wakeLock}`);
+      expect(bannerLevel("browser_keep_open", only?.id)).toBe("warn");
+    }
+    expect(bannerLevel("browser_keep_open")).toBe("note");
+  });
+
+  it("adds the away report until it is dismissed", () => {
+    const away = { kind: "background", awayMs: 60_000, endWallMs: 1 } as const;
+    expect(browserBanners(guard({ away }), true).map((x) => x.kind)).toContain("browser_away");
+  });
+
+  it("ranks the browser kinds below readiness and above the baby device's warnings", () => {
+    const ranked = rankBanners(
+      [b("baby_battery_low"), b("browser_away"), b("readiness"), b("browser_sound_gate")],
+      10,
+    );
+    expect(kinds(ranked.shown)).toEqual([
+      "readiness",
+      "browser_sound_gate",
+      "browser_away",
+      "baby_battery_low",
+    ]);
   });
 });
 

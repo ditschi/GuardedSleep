@@ -255,8 +255,8 @@
     --gs-focus: #5a4893;
   }
 
-  /* Ember: night mode, red-shifted on black. Its switch arrives in group 6; the scheme exists now
-     so the tokens and tests cover it. */
+  /* Ember: night mode, red-shifted on black. The status colours ok, warn and bad are the fixed
+     Dusk safety values: night mode never recolours a chip or a hint that reads a status. */
   :root[data-scheme="ember"] {
     color-scheme: dark;
     --gs-bg: #000000;
@@ -281,9 +281,9 @@
     --gs-on-tertiary-container: #e8b19a;
     --gs-error: #e06a5e;
     --gs-on-error: #1a0703;
-    --gs-ok: #7aa883;
-    --gs-warn: #d07a44;
-    --gs-bad: #e06a5e;
+    --gs-ok: #86cfa6;
+    --gs-warn: #f0a774;
+    --gs-bad: #ff948a;
     --gs-chip: #180b0a;
     --gs-on-chip: #d19586;
     --gs-focus: #d08a6c;

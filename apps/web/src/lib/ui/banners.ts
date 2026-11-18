@@ -1,4 +1,4 @@
-import type { AlertStyle, ParentMonitorState, ReadinessIssue } from "../contract";
+import type { AlertStyle, PageGuardState, ParentMonitorState, ReadinessIssue } from "../contract";
 import { BABY_BATTERY_LOW_PCT, BATTERY_CRITICAL_PCT } from "./parent-view";
 
 /*
@@ -70,8 +70,12 @@ export function rankBanners(
 
 export type BannerLevel = "note" | "info" | "warn" | "alert";
 
-/** warn and alert banners are announced once when they appear (live region on the card). */
-export function bannerLevel(kind: BannerKind): BannerLevel {
+/**
+ * warn and alert banners are announced once when they appear (live region on the card). The
+ * keep-open banner turns into a warning when the browser let go of the screen wake lock.
+ */
+export function bannerLevel(kind: BannerKind, id: string = kind): BannerLevel {
+  if (kind === "browser_keep_open" && id !== kind) return "warn";
   switch (kind) {
     case "security":
       return "alert";
@@ -145,5 +149,23 @@ export function parentBanners(
   if (connected && p.link.quality === "poor") add("weak_connection");
   if (p.snoozedUntilWallMs !== null && p.snoozedUntilWallMs > wallNowMs) add("paused");
   if (alertStyle === "discreet") add("vibrate_only");
+  return out;
+}
+
+/**
+ * The notices only a browser parent has (`web-client` "Same monitor in the browser"): the alert
+ * sound gate, "keep this page open" (a warning with the same id suffixes when the screen wake lock
+ * is lost or missing) and "back from the background". They are ranked below readiness with the
+ * rest and are fed from the page guard and the sound lock, never from the core.
+ */
+export function browserBanners(guard: PageGuardState, soundUnlocked: boolean): Banner[] {
+  const out: Banner[] = [];
+  if (!soundUnlocked) out.push({ kind: "browser_sound_gate", id: "browser_sound_gate" });
+  if (guard.wakeLock === "lost" || guard.wakeLock === "unsupported") {
+    out.push({ kind: "browser_keep_open", id: `browser_keep_open_${guard.wakeLock}` });
+  } else {
+    out.push({ kind: "browser_keep_open", id: "browser_keep_open" });
+  }
+  if (guard.away !== null) out.push({ kind: "browser_away", id: "browser_away" });
   return out;
 }
