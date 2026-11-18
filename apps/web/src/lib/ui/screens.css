@@ -495,8 +495,9 @@
     align-items: center;
     justify-content: center;
     gap: var(--gs-space-1);
-    /* Never wider than the row: a long label wraps at 200 % text on a 320 px screen. */
-    min-width: min(min-content, 100%);
+    /* One line while it fits, never wider than the row: a long label wraps at 200 % text on a
+       320 px screen. */
+    min-width: min(max-content, 100%);
     max-width: 100%;
     min-height: var(--gs-target-large);
     padding: var(--gs-space-2) var(--gs-space-3);
@@ -507,7 +508,6 @@
     font-size: 0.875rem;
     font-weight: 600;
     text-align: center;
-    white-space: nowrap;
     cursor: pointer;
   }
   .gs-tile__text {
