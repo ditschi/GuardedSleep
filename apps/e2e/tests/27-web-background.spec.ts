@@ -42,7 +42,7 @@ test("hidden parent page: notification, away report on return, no alarm for a sh
   const parent = dual.parentPage;
   try {
     await pairWeb(dual);
-    await expect(parent.getByTestId("away_notice")).toHaveCount(0);
+    await expect(parent.getByTestId("parent_banner_browser_away")).toHaveCount(0);
 
     // Another tab comes to the front: the page says so in a system notification.
     await setHidden(parent, true);
@@ -62,18 +62,18 @@ test("hidden parent page: notification, away report on return, no alarm for a sh
           (await shownNotifications(parent)).find((n) => n.tag === "guardedsleep-hidden")?.closed,
       )
       .toBe(true);
-    const away = parent.getByTestId("away_notice");
-    await expect(away).toHaveAttribute("data-kind", "background");
+    // On the parent it is the "back from the background" banner of the stack.
+    const away = parent.getByTestId("parent_banner_browser_away");
+    await expect(away).toHaveAttribute("data-away", "background");
     await expect(away).toContainText("in the background for");
-    await expect(away).toContainText("Alerts may have been missed");
     await expectNoAxeViolations(parent);
-    await away.getByRole("button", { name: "Dismiss" }).click();
+    await parent.getByTestId("parent_banner_browser_away_action").click();
     await expect(away).toHaveCount(0);
 
     // A glance of a few seconds is not reported.
     await setHidden(parent, true);
     await setHidden(parent, false);
-    await expect(parent.getByTestId("away_notice")).toHaveCount(0);
+    await expect(parent.getByTestId("parent_banner_browser_away")).toHaveCount(0);
     await connected(parent);
   } finally {
     await dual.dispose();
@@ -124,9 +124,13 @@ test("resume from sleep: both pages warn, the parent is told about the baby devi
     // The parent laptop sleeps too: the core gets the time and the link recovers or escalates by
     // itself; the page only says it was asleep.
     await skewClock(parent, 20 * 60_000);
-    await expect(parent.getByTestId("away_notice")).toHaveAttribute("data-kind", "sleep", {
-      timeout: 15_000,
-    });
+    await expect(parent.getByTestId("parent_banner_browser_away")).toHaveAttribute(
+      "data-away",
+      "sleep",
+      {
+        timeout: 15_000,
+      },
+    );
   } finally {
     await dual.dispose();
   }

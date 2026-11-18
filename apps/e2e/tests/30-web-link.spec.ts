@@ -160,7 +160,7 @@ for (const hidden of [false, true]) {
         { timeout: 60_000 },
       );
       expect(alarmSeen, "a short outage stays below the alarm").toBe(false);
-      if (hidden) await expect(parent.getByTestId("away_notice")).toBeVisible();
+      if (hidden) await expect(parent.getByTestId("parent_banner_browser_away")).toBeVisible();
     } finally {
       await dual.dispose();
     }

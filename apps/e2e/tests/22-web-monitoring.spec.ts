@@ -31,7 +31,7 @@ test("monitoring screens with fake media: content, a11y, listen, stop", async ()
     // ---- parent device
     await expect(parent.getByTestId("parent_headline")).toContainText(/All quiet since|Monitoring/);
     await expect(parent.getByTestId("parent_meter")).toBeVisible();
-    await expect(parent.getByTestId("parent_keep_open_banner")).toBeVisible();
+    await expect(parent.getByTestId("parent_banner_browser_keep_open")).toBeVisible();
     await expect(parent.getByTestId("parent_overflow")).toBeVisible();
     // The browser baby device reports its silence as unknown and cannot be silenced.
     await expect(parent.getByTestId("parent_silence_state")).toContainText(

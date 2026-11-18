@@ -32,14 +32,15 @@ test("wake lock: held while monitoring, warns when revoked, retried, released on
     await expect.poll(() => wakeLockCounts(parent)).toMatchObject({ active: 1 });
     await expect(baby.getByTestId("baby_wake_lock")).toBeVisible();
     await expect(baby.getByTestId("wake_lock_warning")).toHaveCount(0);
-    await expect(parent.getByTestId("wake_lock_warning")).toHaveCount(0);
+    await expect(parent.getByTestId("parent_banner_browser_keep_open_lost")).toHaveCount(0);
 
     // The system takes the parent's lock away: a warning with a button, and the lock comes back.
     await revokeWakeLocks(parent);
-    await expect(parent.getByTestId("wake_lock_warning")).toHaveAttribute("data-state", "lost");
+    // On the parent it is the keep-open banner of the stack, turned into a warning.
+    await expect(parent.getByTestId("parent_banner_browser_keep_open_lost")).toBeVisible();
     await expect.poll(() => wakeLockCounts(parent)).toMatchObject({ active: 0 });
-    await parent.getByTestId("wake_lock_retry").click();
-    await expect(parent.getByTestId("wake_lock_warning")).toHaveCount(0);
+    await parent.getByTestId("parent_banner_browser_keep_open_lost_action").click();
+    await expect(parent.getByTestId("parent_banner_browser_keep_open_lost")).toHaveCount(0);
     await expect.poll(() => wakeLockCounts(parent)).toMatchObject({ active: 1 });
 
     // The baby device's loss reaches the parent as a unit warning notice.
@@ -71,13 +72,17 @@ test("wake lock: a browser without the API says so plainly", async () => {
     await dual.baby.addInitScript(noWakeLockStub);
     await dual.parent.addInitScript(noWakeLockStub);
     await pairWeb(dual);
-    for (const page of [dual.babyPage, dual.parentPage]) {
-      await expect(page.getByTestId("wake_lock_warning")).toHaveAttribute(
-        "data-state",
-        "unsupported",
-      );
-      await expect(page.getByTestId("wake_lock_retry")).toHaveCount(0);
-    }
+    await expect(dual.babyPage.getByTestId("wake_lock_warning")).toHaveAttribute(
+      "data-state",
+      "unsupported",
+    );
+    await expect(dual.babyPage.getByTestId("wake_lock_retry")).toHaveCount(0);
+    await expect(
+      dual.parentPage.getByTestId("parent_banner_browser_keep_open_unsupported"),
+    ).toBeVisible();
+    await expect(
+      dual.parentPage.getByTestId("parent_banner_browser_keep_open_unsupported_action"),
+    ).toHaveCount(0);
   } finally {
     await dual.dispose();
   }
