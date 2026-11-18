@@ -585,6 +585,16 @@ describe("events", () => {
       expect(t.state.quietSinceWallMs).toBeNull();
     });
 
+    it("waits for the missed-sound report after an outage", () => {
+      t.connect();
+      t.model.onStatus(status("reconnecting", { level: 1 }), t.time.now);
+      t.connect();
+      expect(t.state.quietSinceWallMs).toBeNull();
+      // The report is still pending: a talk must not make the outage look quiet.
+      t.event(talkEnded());
+      expect(t.state.quietSinceWallMs).toBeNull();
+    });
+
     it("does not invent quiet while not connected", () => {
       const off = setup();
       off.event(talkEnded());
