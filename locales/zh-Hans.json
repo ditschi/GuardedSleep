@@ -849,10 +849,13 @@
     },
     "parent": {
       "quietUnknownWeb": "安静模式未知 · 请在宝宝设备上开启",
-      "keepOpen": "请保持此页面打开且屏幕常亮。否则浏览器无法提醒您。",
       "soundGate": "点按以开启提醒声音",
       "soundGateTitle": "提醒声音已关闭",
-      "soundGateBody": "浏览器需要先点按一次，GuardedSleep 才能播放提醒。"
+      "soundGateBody": "浏览器需要先点按一次，GuardedSleep 才能播放提醒。",
+      "soundGateBanner": "提醒声音已关闭",
+      "soundGateTurnOn": "开启",
+      "keepOpenTitle": "请保持此页面打开且屏幕常亮",
+      "keepOpenBody": "只有此页面可见时，提醒才会起作用。"
     },
     "settings": {
       "urlHint": "宝宝设备会把这些地址写入它的配对码，家长设备也会使用它们。",

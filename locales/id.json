@@ -849,10 +849,13 @@
     },
     "parent": {
       "quietUnknownWeb": "Mode tenang tidak diketahui · nyalakan di perangkat bayi",
-      "keepOpen": "Biarkan halaman ini terbuka dan layar menyala. Jika tidak, browser tidak dapat memberi peringatan.",
       "soundGate": "Ketuk untuk menyalakan suara peringatan",
       "soundGateTitle": "Suara peringatan mati",
-      "soundGateBody": "Peramban Anda butuh satu ketukan sebelum GuardedSleep boleh memutar peringatan."
+      "soundGateBody": "Peramban Anda butuh satu ketukan sebelum GuardedSleep boleh memutar peringatan.",
+      "soundGateBanner": "Suara peringatan mati",
+      "soundGateTurnOn": "Nyalakan",
+      "keepOpenTitle": "Biarkan halaman ini terbuka dan layar menyala",
+      "keepOpenBody": "Peringatan hanya berfungsi saat halaman ini terlihat."
     },
     "settings": {
       "urlHint": "Perangkat bayi menulis alamat ini ke dalam kodenya, jadi perangkat orang tua juga memakainya.",

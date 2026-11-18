@@ -849,10 +849,13 @@
     },
     "parent": {
       "quietUnknownWeb": "Tyst läge okänt · slå på det på babyenheten",
-      "keepOpen": "Låt den här sidan vara öppen och skärmen på. Annars kan webbläsaren inte larma dig.",
       "soundGate": "Tryck för att slå på larmljudet",
       "soundGateTitle": "Larmljudet är av",
-      "soundGateBody": "Webbläsaren behöver ett tryck innan GuardedSleep får spela upp larm."
+      "soundGateBody": "Webbläsaren behöver ett tryck innan GuardedSleep får spela upp larm.",
+      "soundGateBanner": "Larmljudet är av",
+      "soundGateTurnOn": "Slå på",
+      "keepOpenTitle": "Låt den här sidan vara öppen och skärmen på",
+      "keepOpenBody": "Larm fungerar bara medan sidan är synlig."
     },
     "settings": {
       "urlHint": "Babyenheten skriver in de här adresserna i sin kod, så föräldraenheten använder dem också.",

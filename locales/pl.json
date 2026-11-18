@@ -849,10 +849,13 @@
     },
     "parent": {
       "quietUnknownWeb": "Tryb ciszy nieznany · włącz go na urządzeniu dziecka",
-      "keepOpen": "Trzymaj tę stronę otwartą, a ekran włączony. Inaczej przeglądarka nie może Cię alarmować.",
       "soundGate": "Dotknij, aby włączyć dźwięk alertów",
       "soundGateTitle": "Dźwięk alertów jest wyłączony",
-      "soundGateBody": "Przeglądarka potrzebuje jednego dotknięcia, zanim GuardedSleep będzie mógł odtwarzać alerty."
+      "soundGateBody": "Przeglądarka potrzebuje jednego dotknięcia, zanim GuardedSleep będzie mógł odtwarzać alerty.",
+      "soundGateBanner": "Dźwięk alertów jest wyłączony",
+      "soundGateTurnOn": "Włącz",
+      "keepOpenTitle": "Trzymaj tę stronę otwartą, a ekran włączony",
+      "keepOpenBody": "Alerty działają tylko wtedy, gdy ta strona jest widoczna."
     },
     "settings": {
       "urlHint": "Urządzenie dziecka zapisuje te adresy w swoim kodzie, więc urządzenie rodzica też ich używa.",

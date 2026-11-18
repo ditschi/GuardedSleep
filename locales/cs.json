@@ -849,10 +849,13 @@
     },
     "parent": {
       "quietUnknownWeb": "Tichý režim neznámý · zapněte ho na zařízení dítěte",
-      "keepOpen": "Nechte tuto stránku otevřenou a displej zapnutý. Jinak vás prohlížeč nemůže upozornit.",
       "soundGate": "Klepnutím zapnete zvuk výstrah",
       "soundGateTitle": "Zvuk upozornění je vypnutý",
-      "soundGateBody": "Prohlížeč potřebuje jedno klepnutí, než smí GuardedSleep přehrávat upozornění."
+      "soundGateBody": "Prohlížeč potřebuje jedno klepnutí, než smí GuardedSleep přehrávat upozornění.",
+      "soundGateBanner": "Zvuk upozornění je vypnutý",
+      "soundGateTurnOn": "Zapnout",
+      "keepOpenTitle": "Nechte tuto stránku otevřenou a displej zapnutý",
+      "keepOpenBody": "Upozornění fungují, jen když je tato stránka vidět."
     },
     "settings": {
       "urlHint": "Zařízení dítěte tyto adresy zapíše do svého kódu, takže je používá i zařízení rodiče.",

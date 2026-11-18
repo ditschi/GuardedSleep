@@ -849,10 +849,13 @@
     },
     "parent": {
       "quietUnknownWeb": "Stille modus onbekend · zet hem aan op het babyapparaat",
-      "keepOpen": "Houd deze pagina open en het scherm aan. Anders kan je browser je niet waarschuwen.",
       "soundGate": "Tik om het meldingsgeluid aan te zetten",
       "soundGateTitle": "Het meldingsgeluid staat uit",
-      "soundGateBody": "Uw browser heeft één tik nodig voordat GuardedSleep meldingen mag afspelen."
+      "soundGateBody": "Uw browser heeft één tik nodig voordat GuardedSleep meldingen mag afspelen.",
+      "soundGateBanner": "Het meldingsgeluid staat uit",
+      "soundGateTurnOn": "Aanzetten",
+      "keepOpenTitle": "Houd deze pagina open en het scherm aan",
+      "keepOpenBody": "Meldingen werken alleen zolang deze pagina zichtbaar is."
     },
     "settings": {
       "urlHint": "Het babyapparaat schrijft deze adressen in zijn code, dus het ouderapparaat gebruikt ze ook.",

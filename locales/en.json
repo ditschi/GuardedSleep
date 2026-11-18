@@ -851,10 +851,13 @@
     },
     "parent": {
       "quietUnknownWeb": "Quiet mode unknown · turn it on at the baby device",
-      "keepOpen": "Keep this page open and the screen on. Your browser can't alert you otherwise.",
       "soundGate": "Tap to turn on alert sound",
       "soundGateTitle": "Alert sound is off",
-      "soundGateBody": "Your browser needs one tap before GuardedSleep may play alerts."
+      "soundGateBody": "Your browser needs one tap before GuardedSleep may play alerts.",
+      "soundGateBanner": "Alert sound is off",
+      "soundGateTurnOn": "Turn on",
+      "keepOpenTitle": "Keep this page open and the screen on",
+      "keepOpenBody": "Alerts only work while this page is visible."
     },
     "settings": {
       "urlHint": "The baby device writes these addresses into its code, so the parent device uses them too.",

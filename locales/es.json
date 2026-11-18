@@ -842,10 +842,13 @@
     },
     "parent": {
       "quietUnknownWeb": "Modo silencio desconocido · actívelo en el dispositivo del bebé",
-      "keepOpen": "Mantenga esta página abierta y la pantalla encendida. Si no, su navegador no puede avisarle.",
       "soundGate": "Toque para activar el sonido de alerta",
       "soundGateTitle": "El sonido de alerta está desactivado",
-      "soundGateBody": "Su navegador necesita un toque antes de que GuardedSleep pueda reproducir alertas."
+      "soundGateBody": "Su navegador necesita un toque antes de que GuardedSleep pueda reproducir alertas.",
+      "soundGateBanner": "El sonido de alerta está desactivado",
+      "soundGateTurnOn": "Activar",
+      "keepOpenTitle": "Mantenga esta página abierta y la pantalla encendida",
+      "keepOpenBody": "Las alertas solo funcionan mientras esta página está visible."
     },
     "guard": {
       "wakeLockHeld": "La pantalla se mantiene encendida",

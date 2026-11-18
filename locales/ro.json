@@ -849,10 +849,13 @@
     },
     "parent": {
       "quietUnknownWeb": "Mod silențios necunoscut · activează-l pe dispozitivul bebelușului",
-      "keepOpen": "Ține această pagină deschisă și ecranul pornit. Altfel browserul nu te poate alerta.",
       "soundGate": "Atinge pentru a activa sunetul alertelor",
       "soundGateTitle": "Sunetul alertelor este oprit",
-      "soundGateBody": "Browserul are nevoie de o atingere înainte ca GuardedSleep să poată reda alerte."
+      "soundGateBody": "Browserul are nevoie de o atingere înainte ca GuardedSleep să poată reda alerte.",
+      "soundGateBanner": "Sunetul alertelor este oprit",
+      "soundGateTurnOn": "Pornește",
+      "keepOpenTitle": "Ține această pagină deschisă și ecranul pornit",
+      "keepOpenBody": "Alertele funcționează doar cât timp această pagină este vizibilă."
     },
     "settings": {
       "urlHint": "Dispozitivul bebelușului scrie aceste adrese în codul lui, deci le folosește și dispozitivul părintelui.",

@@ -849,10 +849,13 @@
     },
     "parent": {
       "quietUnknownWeb": "Stille tilstand ukendt · slå den til på babyenheden",
-      "keepOpen": "Hold denne side åben og skærmen tændt. Ellers kan din browser ikke give dig besked.",
       "soundGate": "Tryk for at slå alarmlyd til",
       "soundGateTitle": "Alarmlyden er slået fra",
-      "soundGateBody": "Din browser kræver ét tryk, før GuardedSleep må afspille alarmer."
+      "soundGateBody": "Din browser kræver ét tryk, før GuardedSleep må afspille alarmer.",
+      "soundGateBanner": "Alarmlyden er slået fra",
+      "soundGateTurnOn": "Slå til",
+      "keepOpenTitle": "Hold denne side åben og skærmen tændt",
+      "keepOpenBody": "Alarmer virker kun, mens siden er synlig."
     },
     "settings": {
       "urlHint": "Babyenheden skriver disse adresser i sin kode, så forældreenheden bruger dem også.",

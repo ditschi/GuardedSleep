@@ -842,10 +842,13 @@
     },
     "parent": {
       "quietUnknownWeb": "Mode silencieux inconnu · à activer sur l’appareil bébé",
-      "keepOpen": "Gardez cette page ouverte et l’écran allumé. Sinon, votre navigateur ne peut pas vous alerter.",
       "soundGate": "Touchez pour activer le son d’alerte",
       "soundGateTitle": "Le son d'alerte est désactivé",
-      "soundGateBody": "Votre navigateur a besoin d'un toucher avant que GuardedSleep puisse jouer des alertes."
+      "soundGateBody": "Votre navigateur a besoin d'un toucher avant que GuardedSleep puisse jouer des alertes.",
+      "soundGateBanner": "Le son d'alerte est désactivé",
+      "soundGateTurnOn": "Activer",
+      "keepOpenTitle": "Gardez cette page ouverte et l'écran allumé",
+      "keepOpenBody": "Les alertes ne fonctionnent que tant que cette page est visible."
     },
     "guard": {
       "wakeLockHeld": "L'écran reste allumé",
