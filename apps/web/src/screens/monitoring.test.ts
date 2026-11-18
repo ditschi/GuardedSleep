@@ -4,6 +4,7 @@ import App from "../App.svelte";
 import { defaultLinkUi, type LinkUi } from "../lib/contract";
 import { createFakeController, type FakeController } from "../lib/contract/fake-controller";
 import { locale } from "../lib/i18n/store";
+import { keepOpenDismissed } from "../lib/ui/browser-notes";
 import { elapsedToWall } from "../lib/ui/parent-view";
 
 function open(path: string, controller: FakeController) {
@@ -33,6 +34,7 @@ function parentController(): FakeController {
 }
 
 afterEach(() => {
+  keepOpenDismissed.set(false);
   window.history.replaceState(null, "", "/");
   locale.set("en");
   document.title = "";

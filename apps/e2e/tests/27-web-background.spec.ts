@@ -8,12 +8,7 @@ import {
   wakeLockStub,
 } from "./utils/browser-stubs";
 import { fixturesDir, launchDualContexts, type DualContexts } from "./utils/dual-context";
-import {
-  CLIPBOARD_PERMISSIONS,
-  dismissKeepOpenNote,
-  expectNoAxeViolations,
-  pairWeb,
-} from "./utils/web";
+import { CLIPBOARD_PERMISSIONS, withBanner, expectNoAxeViolations, pairWeb } from "./utils/web";
 
 /**
  * Background-loss reporting (task 7.3): a notification when the monitoring page is hidden, the
@@ -47,7 +42,6 @@ test("hidden parent page: notification, away report on return, no alarm for a sh
   const parent = dual.parentPage;
   try {
     await pairWeb(dual);
-    await dismissKeepOpenNote(dual.parentPage);
     await expect(parent.getByTestId("parent_banner_browser_away")).toHaveCount(0);
 
     // Another tab comes to the front: the page says so in a system notification.
@@ -69,12 +63,15 @@ test("hidden parent page: notification, away report on return, no alarm for a sh
       )
       .toBe(true);
     // On the parent it is the "back from the background" banner of the stack.
-    const away = parent.getByTestId("parent_banner_browser_away");
-    await expect(away).toHaveAttribute("data-away", "background");
-    await expect(away).toContainText("in the background for");
+    await withBanner(parent, "browser_away", async (card) => {
+      await expect(card).toHaveAttribute("data-away", "background");
+      await expect(card).toContainText("in the background for");
+    });
     await expectNoAxeViolations(parent);
-    await parent.getByTestId("parent_banner_browser_away_action").click();
-    await expect(away).toHaveCount(0);
+    await withBanner(parent, "browser_away", async () => {
+      await parent.getByTestId("parent_banner_browser_away_action").click();
+    });
+    await expect(parent.getByTestId("parent_banner_browser_away")).toHaveCount(0);
 
     // A glance of a few seconds is not reported.
     await setHidden(parent, true);
@@ -92,11 +89,8 @@ test("hidden baby page: the parent sees the warning, the baby sees the report on
   const { babyPage: baby, parentPage: parent } = dual;
   try {
     await pairWeb(dual);
-    await dismissKeepOpenNote(parent);
     await setHidden(baby, true);
-    await expect(parent.getByTestId("parent_banner_unit_warning_page_hidden")).toBeVisible({
-      timeout: 30_000,
-    });
+    await withBanner(parent, "unit_warning_page_hidden", (card) => expect(card).toBeVisible());
     await expect
       .poll(async () => (await shownNotifications(baby)).map((n) => n.tag))
       .toContain("guardedsleep-hidden");
@@ -118,26 +112,24 @@ test("resume from sleep: both pages warn, the parent is told about the baby devi
   const { babyPage: baby, parentPage: parent } = dual;
   try {
     await pairWeb(dual);
-    await dismissKeepOpenNote(dual.parentPage);
 
     // The baby laptop sleeps for 20 minutes; its next timer finds the clock far ahead.
     await skewClock(baby, 20 * 60_000);
     const away = baby.getByTestId("away_notice");
     await expect(away).toHaveAttribute("data-kind", "sleep", { timeout: 15_000 });
     await expect(away).toContainText("device was asleep for 20 min");
-    await expect(parent.getByTestId("parent_banner_unit_warning_resumed_from_sleep")).toBeVisible({
-      timeout: 30_000,
-    });
+    await withBanner(parent, "unit_warning_resumed_from_sleep", (card) =>
+      expect(card).toBeVisible(),
+    );
 
     // The parent laptop sleeps too: the core gets the time and the link recovers or escalates by
     // itself; the page only says it was asleep.
     await skewClock(parent, 20 * 60_000);
-    await expect(parent.getByTestId("parent_banner_browser_away")).toHaveAttribute(
-      "data-away",
-      "sleep",
-      {
-        timeout: 15_000,
-      },
+    await withBanner(
+      parent,
+      "browser_away",
+      (card) => expect(card).toHaveAttribute("data-away", "sleep"),
+      15_000,
     );
   } finally {
     await dual.dispose();

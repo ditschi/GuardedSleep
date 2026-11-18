@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 import type { DualContexts } from "./dual-context";
 
 /*
@@ -85,11 +85,31 @@ export async function expectNoAxeViolations(page: Page): Promise<void> {
 }
 
 /**
- * Puts the browser parent's "keep this page open" note away. It ranks above the "back from the
- * background" and the baby device's notices and the stack shows two cards, so a test that needs
- * one of those dismisses it first (the user can do the same).
+ * Runs `check` on the card of a monitor banner. The stack shows two cards and folds the rest into
+ * "+N more" (which notices exist depends on the host: its battery, its microphone), so when the
+ * card is folded this opens the list, checks inside it and closes it again.
  */
-export async function dismissKeepOpenNote(parent: Page): Promise<void> {
-  await parent.getByTestId("parent_banner_browser_keep_open_action").click();
-  await expect(parent.getByTestId("parent_banner_browser_keep_open")).toHaveCount(0);
+export async function withBanner(
+  page: Page,
+  id: string,
+  check: (card: Locator) => Promise<void>,
+  timeout = 30_000,
+): Promise<void> {
+  const card = page.getByTestId(`parent_banner_${id}`).first();
+  const more = page.getByTestId("parent_banner_more");
+  await expect(async () => {
+    if (await card.isVisible()) {
+      await check(card);
+      return;
+    }
+    if (await more.isVisible()) {
+      await more.click();
+      await expect(card).toBeVisible({ timeout: 1_000 });
+      await check(card);
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("sheet_banners")).toBeHidden();
+      return;
+    }
+    throw new Error(`banner ${id} is not shown`);
+  }).toPass({ timeout });
 }

@@ -8,13 +8,7 @@ import {
   peerConnectionCount,
   rtcTrackerStub,
 } from "./utils/rtc";
-import {
-  CLIPBOARD_PERMISSIONS,
-  dismissKeepOpenNote,
-  pairWeb,
-  showCode,
-  waitForBarKind,
-} from "./utils/web";
+import { CLIPBOARD_PERMISSIONS, withBanner, pairWeb, showCode, waitForBarKind } from "./utils/web";
 
 /**
  * Link behaviour from the user's side: a wrong key and an unreachable server while pairing, a
@@ -147,7 +141,6 @@ for (const hidden of [false, true]) {
         await ctx.addInitScript(pageGuardStub);
       }
       await pairWeb(dual);
-      await dismissKeepOpenNote(dual.parentPage);
 
       await cutParent(dual.parent, parent);
       if (hidden) await setHidden(parent, true);
@@ -167,7 +160,7 @@ for (const hidden of [false, true]) {
         { timeout: 60_000 },
       );
       expect(alarmSeen, "a short outage stays below the alarm").toBe(false);
-      if (hidden) await expect(parent.getByTestId("parent_banner_browser_away")).toBeVisible();
+      if (hidden) await withBanner(parent, "browser_away", (card) => expect(card).toBeVisible());
     } finally {
       await dual.dispose();
     }

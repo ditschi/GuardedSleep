@@ -1,7 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { join } from "node:path";
 import { fixturesDir, launchDualContexts } from "./utils/dual-context";
-import { CLIPBOARD_PERMISSIONS, expectNoAxeViolations, pairWeb, waitForBarKind } from "./utils/web";
+import {
+  CLIPBOARD_PERMISSIONS,
+  expectNoAxeViolations,
+  pairWeb,
+  waitForBarKind,
+  withBanner,
+} from "./utils/web";
 
 /**
  * Monitoring screens of apps/web (task 6.1): baby status, mic level and keep-awake advice; parent
@@ -31,7 +37,8 @@ test("monitoring screens with fake media: content, a11y, listen, stop", async ()
     // ---- parent device
     await expect(parent.getByTestId("parent_headline")).toContainText(/All quiet since|Monitoring/);
     await expect(parent.getByTestId("parent_meter")).toBeVisible();
-    await expect(parent.getByTestId("parent_banner_browser_keep_open")).toBeVisible();
+    // The plain note, or its warning variant when the browser gives no screen wake lock.
+    await expect(parent.locator('[data-kind="browser_keep_open"]')).toBeVisible();
     await expect(parent.getByTestId("parent_overflow")).toBeVisible();
     // The browser baby device reports its silence as unknown and cannot be silenced.
     await expect(parent.getByTestId("parent_silence_state")).toContainText(
@@ -65,7 +72,7 @@ test("monitoring screens with fake media: content, a11y, listen, stop", async ()
     // Pause through the sheet (with the Undo snackbar), then end the pause again.
     await parent.getByTestId("parent_snooze").click();
     await parent.getByTestId("sheet_snooze_10").click();
-    await expect(parent.getByTestId("parent_banner_paused")).toBeVisible();
+    await withBanner(parent, "paused", (card) => expect(card).toBeVisible());
     await expect(parent.getByTestId("parent_pause_snackbar")).toBeVisible();
     await parent.getByTestId("parent_snooze").click();
     await expectNoAxeViolations(parent);

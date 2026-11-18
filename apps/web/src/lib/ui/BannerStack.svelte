@@ -14,6 +14,7 @@
   import Button from "./Button.svelte";
   import Dialog from "./Dialog.svelte";
   import { formatClock, formatDuration } from "./format";
+  import { keepOpenDismissed } from "./browser-notes";
   import Glyph from "./Glyph.svelte";
   import { canRequestSilence } from "./parent-view";
   import { everySecond } from "./ticker";
@@ -37,14 +38,14 @@
   const { parent, pageGuard } = controller;
 
   // The browser always keeps the "sound" alert style (it cannot vibrate).
-  // The plain "keep this page open" note can be put away for this page's life: it would otherwise
-  // hold one of the two places all night. Its warning variants (wake lock lost) cannot.
-  let keepOpenDismissed = $state(false);
+  // The plain "keep this page open" note can be put away for this page's life (see
+  // `keepOpenDismissed`): it would otherwise hold one of the two places all night. Its warning
+  // variants (wake lock lost) cannot.
   const ranked = $derived(
     rankBanners([
       ...parentBanners($parent, "sound", $everySecond.wallMs),
       ...browserBanners($pageGuard).filter(
-        (b) => !(b.id === "browser_keep_open" && keepOpenDismissed),
+        (b) => !(b.id === "browser_keep_open" && $keepOpenDismissed),
       ),
     ]),
   );
@@ -170,7 +171,7 @@
           };
         }
         return b.id === "browser_keep_open"
-          ? { label: $t("native.ui.common.ok"), run: () => (keepOpenDismissed = true) }
+          ? { label: $t("native.ui.common.ok"), run: () => keepOpenDismissed.set(true) }
           : null;
       case "browser_away":
         return { label: $t("native.ui.common.ok"), run: () => controller.dismissAwayReport() };
