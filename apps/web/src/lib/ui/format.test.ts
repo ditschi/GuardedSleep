@@ -1,3 +1,4 @@
+import contract from "../../../../android/ui-contract/src/main/kotlin/org/guardedsleep/app/ui/model/UiContract.kt?raw";
 import { describe, expect, it } from "vitest";
 import { createTranslator } from "../i18n/translate";
 import {
@@ -6,6 +7,8 @@ import {
   formatDuration,
   formatDurationWords,
   formatElapsed,
+  LEVEL_LOUD_FROM,
+  LEVEL_SOME_FROM,
   levelWordKey,
   remainingMs,
   spokenDuration,
@@ -60,6 +63,20 @@ describe("levelWordKey", () => {
     expect(levelWordKey(0)).toBe("native.ui.parent.level.quiet");
     expect(levelWordKey(0.2)).toBe("native.ui.parent.level.some");
     expect(levelWordKey(0.8)).toBe("native.ui.parent.level.loud");
+  });
+
+  it("switches at 0.15 and 0.5, as Android's missed-sound card does", () => {
+    expect(levelWordKey(0.14)).toBe("native.ui.parent.level.quiet");
+    expect(levelWordKey(0.15)).toBe("native.ui.parent.level.some");
+    expect(levelWordKey(0.49)).toBe("native.ui.parent.level.some");
+    expect(levelWordKey(0.5)).toBe("native.ui.parent.level.loud");
+  });
+
+  it("uses the numbers of LoudnessWords in UiContract.kt", () => {
+    const num = (name: string): number =>
+      Number(new RegExp(`const val ${name} = ([0-9.]+)f`).exec(contract)?.[1]);
+    expect(num("SOME_FROM")).toBe(LEVEL_SOME_FROM);
+    expect(num("LOUD_FROM")).toBe(LEVEL_LOUD_FROM);
   });
 });
 

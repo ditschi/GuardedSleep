@@ -15,6 +15,7 @@ class ReadinessTest {
     private class Env : ReadinessEnv {
         var notifications = true
         var volume = 5
+        var volumeMax = 7
         var fullScreen = true
         var bypass = true
         var batteryOpt = true
@@ -25,6 +26,8 @@ class ReadinessTest {
         override fun notificationsEnabled() = notifications
 
         override fun alarmVolume() = volume
+
+        override fun alarmVolumeMax() = volumeMax
 
         override fun fullScreenAllowed() = fullScreen
 
@@ -68,8 +71,8 @@ class ReadinessTest {
         assertEquals(
             listOf(
                 ReadinessIssue.NOTIFICATIONS_BLOCKED,
-                ReadinessIssue.ALARM_VOLUME_ZERO,
                 ReadinessIssue.FULL_SCREEN_BLOCKED,
+                ReadinessIssue.ALARM_VOLUME_ZERO,
                 ReadinessIssue.DND_BYPASS_MISSING,
                 ReadinessIssue.BATTERY_OPTIMIZED,
                 ReadinessIssue.PARENT_BATTERY_LOW,
@@ -91,6 +94,46 @@ class ReadinessTest {
         settings.update { it.copy(lastTestWallMs = Long.MAX_VALUE / 2) }
         assertEquals(
             emptyList<ReadinessIssue>(),
+            ReadinessChecker(env, settings, FakeClock()).check(),
+        )
+    }
+
+    @Test
+    fun twoFailingItemsNameTheNotificationsFirst() {
+        val env =
+            Env().apply {
+                notifications = false
+                battery = 15
+            }
+        val settings = testSettings(tmp.root)
+        settings.update { it.copy(lastTestWallMs = Long.MAX_VALUE / 2) }
+        assertEquals(
+            listOf(ReadinessIssue.NOTIFICATIONS_BLOCKED, ReadinessIssue.PARENT_BATTERY_LOW),
+            ReadinessChecker(env, settings, FakeClock()).check(),
+        )
+    }
+
+    @Test
+    fun aLowAlarmVolumeIsAHintRankedBelowEveryFailingItem() {
+        val env = Env().apply { volume = 3 } // 3 of 7 is below half
+        val settings = testSettings(tmp.root)
+        assertEquals(
+            listOf(ReadinessIssue.NEVER_TESTED, ReadinessIssue.ALARM_VOLUME_LOW),
+            ReadinessChecker(env, settings, FakeClock()).check(),
+        )
+        settings.update { it.copy(lastTestWallMs = Long.MAX_VALUE / 2) }
+        assertEquals(
+            listOf(ReadinessIssue.ALARM_VOLUME_LOW),
+            ReadinessChecker(env, settings, FakeClock()).check(),
+        )
+        env.volume = 4 // 4 of 7 is above half: no hint
+        assertEquals(
+            emptyList<ReadinessIssue>(),
+            ReadinessChecker(env, settings, FakeClock()).check(),
+        )
+        env.volume = 0 // zero is a failure, not a hint
+        assertEquals(
+            listOf(ReadinessIssue.ALARM_VOLUME_ZERO),
             ReadinessChecker(env, settings, FakeClock()).check(),
         )
     }

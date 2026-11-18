@@ -2,6 +2,7 @@ package org.guardedsleep.app.ui.common
 
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.LinkUi
+import org.guardedsleep.app.ui.model.ParentMonitorState
 
 /*
  * What the parent's status bar and connection alerts show, derived from the contract model.
@@ -132,3 +133,51 @@ fun alertStageOf(link: LinkUi, elapsedNow: Long): AlertStage =
  */
 fun elapsedToWall(atElapsedMs: Long, elapsedNow: Long, wallNow: Long): Long =
     wallNow - (elapsedNow - atElapsedMs)
+
+/** What the monitor's hero line says; the screen maps it to words. */
+sealed interface Headline {
+    data class LastHeard(val atWallMs: Long) : Headline
+
+    data object NoContact : Headline
+
+    /** The baby device's microphone delivers only silence: never "All quiet". */
+    data object CantHear : Headline
+
+    /** A running noise event while noise alerts are paused. */
+    data class SoundPaused(val sinceWallMs: Long) : Headline
+
+    data class SoundSince(val sinceWallMs: Long) : Headline
+
+    data class AllQuiet(val sinceWallMs: Long) : Headline
+
+    data class SoundAt(val atWallMs: Long, val durationMs: Long) : Headline
+
+    data object Monitoring : Headline
+}
+
+/**
+ * The hero line, in this order: not connected, microphone silent, a running sound (paused or not),
+ * quiet since, the last sound, plain monitoring. Never "All quiet" while disconnected, while the
+ * microphone is silent or after a recovery whose report is incomplete (the model leaves
+ * `quietSinceWallMs` null then). The web client's `headlineOf` has the same order.
+ */
+fun headlineOf(p: ParentMonitorState, elapsedNow: Long, wallNow: Long): Headline {
+    val connected = p.link.phase == LinkPhase.CONNECTED
+    if (!connected) {
+        val last = p.link.lastAliveElapsedMs ?: return Headline.NoContact
+        return Headline.LastHeard(elapsedToWall(last, elapsedNow, wallNow))
+    }
+    if (p.peer.micSilent == true) return Headline.CantHear
+    if (p.noiseAlertActive) {
+        val since = p.noiseSinceWallMs ?: wallNow
+        val paused = (p.snoozedUntilWallMs ?: 0L) > wallNow
+        return if (paused) Headline.SoundPaused(since) else Headline.SoundSince(since)
+    }
+    p.quietSinceWallMs?.let {
+        return Headline.AllQuiet(it)
+    }
+    p.lastSound?.let {
+        return Headline.SoundAt(it.atWallMs, it.durationMs)
+    }
+    return Headline.Monitoring
+}

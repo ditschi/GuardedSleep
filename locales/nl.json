@@ -53,7 +53,7 @@
       "noiseTestTitle": "Testmelding",
       "noiseTestText": "Dit is een test. Het babyapparaat blijft stil.",
       "actionStopSound": "Geluid stoppen",
-      "actionSnooze10": "10 min uitstellen",
+      "actionSnooze10": "10 min pauzeren",
       "actionChecking": "Ik kijk",
       "linkLostTitle": "Verbinding verbroken",
       "linkLostText": "Geen verbinding met het babyapparaat. Ga nu bij je baby kijken.",
@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Annuleren",
         "more": "Meer",
-        "moreCount": "+{count}",
         "settings": "Instellingen",
         "tryAgain": "Opnieuw proberen",
         "yes": "Ja",
@@ -293,10 +292,6 @@
           "body": "Iemand is gestopt met bewaken op het babyapparaat. Je krijgt geen meldingen.",
           "titleDefault": "Het babyapparaat is gestopt met bewaken"
         },
-        "battery": {
-          "title": "Batterij babyapparaat bijna op",
-          "body": "Sluit het babyapparaat nu aan op de lader, anders stopt de bewaking."
-        },
         "needsPairing": {
           "title": "Apparaten niet meer gekoppeld"
         },
@@ -310,7 +305,7 @@
         "allQuietSince": "Alles rustig sinds {time}",
         "soundSince": "Geluid gehoord · sinds {time}",
         "soundAt": "Geluid om {time} · duurde {duration}",
-        "soundSnoozed": "Geluid om {time} · meldingen uitgesteld",
+        "soundSnoozed": "Geluid om {time} · geluidsmeldingen gepauzeerd",
         "lastHeard": "Laatste contact {time}",
         "noContactYet": "Nog geen contact",
         "monitoringNow": "Bewaken",
@@ -323,7 +318,6 @@
         "stop": "Stoppen met bewaken",
         "securityTitle": "Beveiligingswaarschuwing",
         "securityBody": "De verbinding kon niet worden geverifieerd. Als je de apparaten niet net opnieuw hebt gekoppeld, koppel ze dan nu opnieuw.",
-        "staleSuffix": "· om {time}",
         "unitWarning": {
           "pageHidden": "Babyapparaat pauzeert mogelijk: de pagina is verborgen",
           "wakeLockOff": "Babyapparaat valt mogelijk in slaap: het scherm blijft niet aan",
@@ -332,32 +326,38 @@
           "micPermissionLost": "Babyapparaat heeft geen microfoontoegang meer"
         },
         "discreet": {
-          "indicator": "Discrete meldingen: geen geluid",
           "escalated": "Overgeschakeld op geluid: al {minutes} min geen reactie",
-          "offWarning": "Uit: een vergeten discrete modus kan de hele nacht stil blijven."
+          "offWarning": "Uit: een vergeten modus alleen trillen kan de hele nacht stil blijven."
         }
       },
       "battery": {
-        "baby": "Babyapparaat {percent}%",
         "babyLow": "Batterij babyapparaat {percent}%: sluit het aan op de lader",
-        "parentLow": "Dit apparaat staat op {percent}%: sluit het aan om te blijven bewaken",
         "parentLowGeneric": "De batterij van dit apparaat is bijna leeg: sluit het aan om te blijven bewaken"
       },
       "listen": {
-        "idle": "Houd vast om te luisteren",
-        "holding": "Luisteren…",
-        "locked": "Luisteren · tik om te stoppen",
-        "lockHint": "Veeg omhoog om te blijven luisteren",
+        "idle": "Luister",
         "disabled": "Luister zodra er verbinding is",
-        "a11yLocked": "Luisteren. Tik twee keer om te stoppen."
+        "idleSub": "Tik om de kamer te horen",
+        "on": "Aan het luisteren · tik om te stoppen",
+        "onSub": "Kamergeluid via de luidspreker",
+        "disabledSub": "Nu niet verbonden",
+        "stateOn": "Luistert",
+        "stateOff": "Luistert niet"
       },
       "snooze": {
-        "button": "Uitstellen",
-        "title": "Geluidsmeldingen uitstellen",
-        "help": "Je krijgt nog wel meldingen als de verbinding wegvalt of een batterij bijna leeg is.",
-        "minutes": "{minutes} min uitstellen",
-        "end": "Uitstel beëindigen",
-        "active": "Uitgesteld · nog {minutes} min"
+        "button": "Geluidsmeldingen pauzeren",
+        "title": "Geluidsmeldingen pauzeren",
+        "help": "Verbindings- en batterijmeldingen komen nog steeds.",
+        "minutes": "{minutes} min",
+        "end": "Pauze beëindigen",
+        "tile": "Geluidsmeldingen pauzeren",
+        "tilePaused": "Gepauzeerd",
+        "pauseMinutes": "{minutes} min pauzeren",
+        "resume": "Hervatten",
+        "bannerTitle": "Geluidsmeldingen gepauzeerd tot {time}",
+        "bannerBody": "Verbindings- en batterijmeldingen komen nog steeds",
+        "snackbar": "Geluidsmeldingen {minutes} min gepauzeerd",
+        "undo": "Ongedaan maken"
       },
       "probe": {
         "button": "Testmelding",
@@ -369,7 +369,7 @@
         "question": "Heb je het gehoord en gevoeld?",
         "localOnly": "Alleen dit apparaat is getest: het babyapparaat is niet verbonden.",
         "styleSound": "Meldingstype: geluid",
-        "styleDiscreet": "Meldingstype: discreet",
+        "styleDiscreet": "Meldingsstijl: alleen trillen",
         "bodyDiscreet": "Dit apparaat trilt en toont de melding zonder geluid. Het babyapparaat blijft stil."
       },
       "readiness": {
@@ -454,13 +454,12 @@
       },
       "coach": {
         "bar": "Groen betekent dat je aan het bewaken bent. Als het rood wordt of verdwijnt, bewaak je niet.",
-        "listen": "Houd vast om te luisteren. Veeg omhoog om te blijven luisteren.",
+        "listen": "Tik op Luister om de kamer te horen.",
         "test": "Voer een testmelding uit zodat je weet hoe een melding aanvoelt.",
         "runTest": "Testmelding nu uitvoeren"
       },
       "alert": {
-        "title": "Geluid gehoord",
-        "since": "Sinds {time}",
+        "title": "Het kind maakt geluid",
         "ended": "Het geluid is gestopt.",
         "testBadge": "TEST",
         "stopSound": "Geluid stoppen",
@@ -530,7 +529,7 @@
         "alertStyle": {
           "label": "Meldingstype",
           "sound": "Geluid: het geluid van de baby wordt bij elke melding afgespeeld",
-          "discreet": "Discreet: trillen en scherm, geen geluid"
+          "discreet": "Alleen trillen: trillen en scherm, geen geluid"
         },
         "discreetEscalation": {
           "label": "Op geluid overschakelen als niemand reageert",
@@ -628,7 +627,11 @@
           "playChime": "Beltoon afspelen",
           "chime": "Beltoon voordat een ouder praat",
           "checklist": "Ouders kunnen via dit apparaat praten. Je kunt dit uitzetten bij Instellingen."
-        }
+        },
+        "again": "Opnieuw praten",
+        "againAt": "om {time}",
+        "disabled": "Praat zodra er verbinding is",
+        "pausedListening": "Luisteren is gepauzeerd terwijl je praat"
       },
       "status": {
         "connected": "Verbonden",
@@ -697,6 +700,103 @@
         },
         "labelAlerting": "Dit apparaat geeft een melding",
         "progressAlerting": "Melding klinkt nu"
+      },
+      "monitor": {
+        "monitoringFor": "Bewaking al {duration}",
+        "cantHear": "Kan de kamer niet horen",
+        "alertLine": "Een geluid boven deze lijn stuurt een melding",
+        "lastMinute": "Laatste minuut",
+        "now": "nu",
+        "noSound": "Er komt geen geluid binnen",
+        "micSilentStrip": "Microfoon stil",
+        "alertsTested": "Meldingen getest {time}",
+        "batteryA11y": "Batterij babyapparaat {percent} procent",
+        "batteryChargingA11y": "Batterij babyapparaat {percent} procent, wordt opgeladen",
+        "batteryShort": "{percent}%"
+      },
+      "alertStyle": {
+        "chipSound": "Melding: geluid",
+        "chipVibrate": "Melding: alleen trillen",
+        "chipA11ySound": "Meldingen bij geluid: geluid. Wijzigen",
+        "chipA11yVibrate": "Meldingen bij geluid: alleen trillen. Wijzigen",
+        "vibrateTitle": "Alleen trillen",
+        "bodyNoSound": "Geluidsmeldingen maken geen geluid.",
+        "bodyNever": "Geluidsmeldingen maken nooit geluid.",
+        "bodyAfterPause": "Na de pauze: eerst trillen, na {minutes} min geluid",
+        "turnSoundOn": "Geluid aanzetten"
+      },
+      "banner": {
+        "fix": "Oplossen",
+        "more": "+{count} meer",
+        "moreA11y": "{count, plural, one {1 mededeling meer: {notices}} other {# mededelingen meer: {notices}}}",
+        "listTitle": "Mededelingen",
+        "micSilentTitle": "De microfoon van het babyapparaat hoort niets",
+        "micSilentBody": "Controleer het babyapparaat. Een andere app gebruikt misschien de microfoon.",
+        "ready": {
+          "notifications": {
+            "title": "Meldingen staan uit",
+            "body": "Meldingen kunnen je niet bereiken."
+          },
+          "fullScreen": {
+            "title": "Meldingen verschijnen niet op het vergrendelscherm",
+            "body": "Je mist misschien een melding als de telefoon vergrendeld is."
+          },
+          "alarmVolumeZero": {
+            "title": "Alarmvolume staat uit",
+            "body": "Je hoort geen meldingen op deze telefoon"
+          },
+          "alarmVolumeLow": {
+            "title": "Alarmvolume staat laag",
+            "body": "Zet het harder om meldingen goed te horen."
+          },
+          "dnd": {
+            "title": "Niet storen kan meldingen dempen",
+            "body": "Sta toe dat GuardedSleep doorkomt."
+          },
+          "battery": {
+            "title": "Deze telefoon kan GuardedSleep stoppen",
+            "body": "Sta gebruik op de achtergrond toe zodat meldingen blijven werken."
+          },
+          "parentBattery": {
+            "title": "De batterij van deze telefoon is bijna leeg",
+            "body": "Sluit de lader aan om te blijven bewaken."
+          },
+          "headphones": {
+            "title": "Meldingen klinken in je koptelefoon",
+            "body": "Zet meldingen op de luidspreker als je ze in de kamer wilt horen."
+          },
+          "neverTested": {
+            "title": "Geen recente testmelding",
+            "body": "Voer een test uit om zeker te zijn dat meldingen je bereiken."
+          }
+        }
+      },
+      "noiseAlert": {
+        "labelSound": "Het kamergeluid wordt afgespeeld",
+        "labelVibrate": "Je telefoon trilt",
+        "labelStopped": "Melding gestopt",
+        "counterLabel": "sinds {time}",
+        "counterA11y": "{duration}, sinds {time}",
+        "sentenceSound": "Het kamergeluid wordt op deze telefoon afgespeeld.",
+        "stopSoundSub": "Stopt het meldingsgeluid, de bewaking blijft doorgaan",
+        "stopVibrationSub": "Stopt het trillen, de bewaking blijft doorgaan"
+      },
+      "batteryAlert": {
+        "label": "Batterij babyapparaat",
+        "headline": "Het babyapparaat is bijna leeg",
+        "counterLabel": "batterij over",
+        "counterA11y": "{percent} procent batterij over",
+        "sentence": "Sluit het babyapparaat nu aan. Als de batterij leeg is, stopt de bewaking.",
+        "silentNote": "Het babyapparaat blijft stil. Alleen deze telefoon geeft een melding.",
+        "action": "OK, ik sluit het aan",
+        "actionSub": "Sluit dit scherm"
+      },
+      "tool": {
+        "nightA11yOff": "Nachtmodus: uit",
+        "nightA11yOn": "Nachtmodus: aan",
+        "nightA11yAuto": "Nachtmodus: automatisch",
+        "nightOn": "Aan",
+        "nightAuto": "Auto"
       }
     }
   },

@@ -115,6 +115,33 @@ class ParentMonitorShots : ShotBase() {
     }
 
     @Test
+    fun calmMonitorStates() {
+        val s = SettingsState(talkCoachSeen = true, lastTestWallMs = WALL - 4 * 3_600_000L)
+        val since = ELAPSED - 87 * 60_000L
+        shoot("calm_monitor", base.copy(monitoringSinceElapsedMs = since), settings = s)
+        shoot(
+            "calm_monitor_2x",
+            base.copy(monitoringSinceElapsedMs = since),
+            settings = s,
+            fontScale = 2f,
+        )
+        shoot("calm_monitor_de", base.copy(monitoringSinceElapsedMs = since), "de", settings = s)
+        shoot(
+            "mic_silent",
+            base.copy(peer = base.peer.copy(micSilent = true), quietSinceWallMs = quietSince),
+            settings = s,
+        )
+        shoot(
+            "banners_four",
+            base.copy(
+                peer = base.peer.copy(micSilent = true, batteryPct = 14, charging = false),
+                readiness = listOf(ReadinessIssue.ALARM_VOLUME_ZERO),
+            ),
+            settings = s.copy(alertStyle = AlertStyle.DISCREET),
+        )
+    }
+
+    @Test
     fun discreetIndicator() =
         shoot(
             "discreet_quiet",
@@ -328,8 +355,7 @@ class ParentMonitorShots : ShotBase() {
 
     @Test
     fun listenStates() {
-        shoot("listen_hold", base.copy(listen = ListenMode.HOLD))
-        shoot("listen_locked", base.copy(listen = ListenMode.LOCKED))
+        shoot("listen_on", base.copy(listen = ListenMode.ON))
     }
 
     @Test

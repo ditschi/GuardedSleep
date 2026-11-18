@@ -42,6 +42,11 @@ fun StatusBar(
     modifier: Modifier = Modifier,
     backgroundProtection: Boolean = true,
     tag: String = "status_bar",
+    /**
+     * The baby device's battery, shown on the right while it is known ("82%", bolt when charging).
+     */
+    babyBatteryPct: Int? = null,
+    babyCharging: Boolean? = null,
 ) {
     val elapsed by rememberElapsedNow()
     val kind = if (backgroundProtection) statusKindOf(link) else null
@@ -99,6 +104,29 @@ fun StatusBar(
                 fontWeight = FontWeight.Bold,
             )
             if (sub != null) Text(sub, style = MaterialTheme.typography.bodyMedium, color = fg)
+        }
+        if (babyBatteryPct != null) {
+            val a11y =
+                stringResource(
+                    if (babyCharging == true) R.string.native_ui_monitor_battery_charging_a11y
+                    else R.string.native_ui_monitor_battery_a11y,
+                    babyBatteryPct,
+                )
+            Row(
+                Modifier.semantics(mergeDescendants = true) { contentDescription = a11y }
+                    .testTag("status_bar_battery"),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                if (babyCharging == true) GlyphIcon(Glyph.BOLT, fg, size = 16.dp)
+                Text(
+                    stringResource(R.string.native_ui_monitor_battery_short, babyBatteryPct),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = fg,
+                    maxLines = 1,
+                )
+            }
         }
         if (loud && start != null) {
             val down = (elapsed - start).coerceAtLeast(0L)

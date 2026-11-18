@@ -5,7 +5,7 @@ import { CLIPBOARD_PERMISSIONS, expectNoAxeViolations, pairWeb, waitForBarKind }
 
 /**
  * Monitoring screens of apps/web (task 6.1): baby status, mic level and keep-awake advice; parent
- * ambient bar, headline, meter, chips, Listen, snooze, test alert and Stop inside More.
+ * ambient bar, headline, sound strip, notices, Listen, pause, test alert and Stop inside More.
  */
 test("monitoring screens with fake media: content, a11y, listen, stop", async () => {
   test.setTimeout(180_000);
@@ -33,20 +33,21 @@ test("monitoring screens with fake media: content, a11y, listen, stop", async ()
     await expect(parent.getByTestId("parent_meter")).toBeVisible();
     await expect(parent.getByTestId("parent_keep_open_banner")).toBeVisible();
     await expect(parent.getByTestId("parent_overflow")).toBeVisible();
-    // The browser baby device reports its silence as unknown, in grey, and cannot be silenced.
-    await expect(parent.getByTestId("parent_silence_chip")).toContainText(
+    // The browser baby device reports its silence as unknown and cannot be silenced.
+    await expect(parent.getByTestId("parent_silence_state")).toContainText(
       "turn it on at the baby device",
       { timeout: 30_000 },
     );
-    await expect(parent.getByTestId("parent_silence_chip")).toHaveAttribute("data-tone", "neutral");
-    await expect(parent.getByTestId("sheet_silence_apply")).toHaveCount(0);
+    await expect(parent.getByTestId("parent_banner_silence_action")).toHaveCount(0);
+    // The settings gear is the first tool and stays reachable.
+    await expect(parent.getByTestId("tool_settings")).toBeVisible();
 
     // Listen is at least 72 px tall and 48 px wide targets everywhere.
     const listen = parent.getByTestId("parent_listen");
     await expect(listen).toBeEnabled();
     const box = await listen.boundingBox();
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(72);
-    for (const id of ["parent_snooze", "parent_probe", "parent_overflow"]) {
+    for (const id of ["parent_snooze", "tool_settings", "parent_overflow"]) {
       const target = await parent.getByTestId(id).boundingBox();
       expect(target?.height ?? 0, id).toBeGreaterThanOrEqual(48);
       expect(target?.width ?? 0, id).toBeGreaterThanOrEqual(48);
@@ -56,19 +57,20 @@ test("monitoring screens with fake media: content, a11y, listen, stop", async ()
     // Listening (keyboard: switches on until the next activation).
     await listen.focus();
     await parent.keyboard.press("Enter");
-    await expect(listen).toHaveAttribute("data-listen", "locked");
+    await expect(listen).toHaveAttribute("data-listen", "on");
     await expect(listen).toContainText(/Listening/);
     await parent.keyboard.press("Enter");
     await expect(listen).toHaveAttribute("data-listen", "off");
 
-    // Snooze through the sheet and end it again.
+    // Pause through the sheet (with the Undo snackbar), then end the pause again.
     await parent.getByTestId("parent_snooze").click();
     await parent.getByTestId("sheet_snooze_10").click();
-    await expect(parent.getByTestId("parent_snooze_chip")).toBeVisible();
+    await expect(parent.getByTestId("parent_banner_paused")).toBeVisible();
+    await expect(parent.getByTestId("parent_pause_snackbar")).toBeVisible();
     await parent.getByTestId("parent_snooze").click();
     await expectNoAxeViolations(parent);
     await parent.getByTestId("sheet_snooze_end").click();
-    await expect(parent.getByTestId("parent_snooze_chip")).toHaveCount(0);
+    await expect(parent.getByTestId("parent_banner_paused")).toHaveCount(0);
 
     // Stop is inside More and asks first.
     await parent.getByTestId("parent_overflow").click();

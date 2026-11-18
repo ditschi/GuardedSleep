@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { untrack } from "svelte";
+  import { onDestroy, untrack } from "svelte";
   import { useController } from "../lib/contract";
   import type { MessageKey } from "../lib/i18n/keys";
   import { locale, t } from "../lib/i18n/store";
@@ -11,31 +11,32 @@
     notifyAway,
   } from "../lib/ui/attention";
   import Button from "../lib/ui/Button.svelte";
+  import BannerStack from "../lib/ui/BannerStack.svelte";
   import Card from "../lib/ui/Card.svelte";
-  import Chip from "../lib/ui/Chip.svelte";
   import Dialog from "../lib/ui/Dialog.svelte";
-  import { formatClock, formatDuration, levelWordKey } from "../lib/ui/format";
+  import { formatClock, formatDuration, formatDurationWords, levelWordKey } from "../lib/ui/format";
   import Glyph from "../lib/ui/Glyph.svelte";
   import AwayNotice from "../lib/ui/AwayNotice.svelte";
   import KeepAwakeNotice from "../lib/ui/KeepAwakeNotice.svelte";
   import ListenButton from "../lib/ui/ListenButton.svelte";
-  import Meter from "../lib/ui/Meter.svelte";
   import RestoredCard from "../lib/ui/RestoredCard.svelte";
+  import SoundStrip from "../lib/ui/SoundStrip.svelte";
   import StopDialog from "../lib/ui/StopDialog.svelte";
   import TalkButton from "../lib/ui/TalkButton.svelte";
+  import TalkStatus from "../lib/ui/TalkStatus.svelte";
+  import type { TalkHint } from "../lib/ui/talk-view";
   import NightScreen from "../lib/ui/NightScreen.svelte";
   import {
     canRequestSilence,
     connectionName,
-    downForMs,
-    extraChips,
-    fixedChips,
     fullScreenOf,
     headlineOf,
     pruneDismissed,
+    silenceStateKey,
     type FullScreenKind,
   } from "../lib/ui/parent-view";
   import { everySecond } from "../lib/ui/ticker";
+  import BatteryAlertScreen from "./BatteryAlertScreen.svelte";
   import LinkAlarmScreen from "./LinkAlarmScreen.svelte";
   import NoiseAlertScreen from "./NoiseAlertScreen.svelte";
 
@@ -122,6 +123,8 @@
         return $t("native.ui.parent.soundSnoozed", { time: clock(headline.atWallMs) });
       case "last_heard":
         return $t("native.ui.parent.lastHeard", { time: clock(headline.atWallMs) });
+      case "cant_hear":
+        return $t("native.ui.monitor.cantHear");
       case "no_contact":
         return $t("native.ui.parent.noContactYet");
       case "monitoring":
@@ -129,17 +132,23 @@
     }
   });
 
-  const meterLevel = $derived(connected ? $parent.level : 0);
-  const meterLabel = $derived(
-    connected
-      ? $t("native.ui.parent.meterA11y", { level: $t(levelWordKey(meterLevel)) })
-      : $t("native.ui.listen.disabled"),
+  const micSilent = $derived(connected && $parent.peer.micSilent === true);
+  const stripLabel = $derived(
+    !connected
+      ? $t("native.ui.monitor.noSound")
+      : micSilent
+        ? $t("native.ui.monitor.micSilentStrip")
+        : $t("native.ui.parent.meterA11y", { level: $t(levelWordKey($parent.level)) }),
   );
-
-  const fixed = $derived(fixedChips($parent));
-  const extras = $derived(extraChips($parent, $everySecond.wallMs));
-  const shownExtras = $derived(extras.slice(0, 2));
-  const hiddenCount = $derived(extras.length - shownExtras.length);
+  // "Monitoring for 1 h 27 min": from the run start the platform reports, while connected.
+  const monitoringFor = $derived(
+    connected && $parent.monitoringSinceElapsedMs !== null
+      ? formatDurationWords(
+          $t,
+          Math.max(0, $everySecond.elapsedMs - $parent.monitoringSinceElapsedMs),
+        )
+      : null,
+  );
 
   const snoozeActive = $derived(
     $parent.snoozedUntilWallMs !== null && $parent.snoozedUntilWallMs > $everySecond.wallMs,
@@ -193,10 +202,39 @@
   let localOnly = $state(false);
   let awaitingTest = $state(false);
 
+  // The pause can be undone for a few seconds, but only when it starts from the monitor; a pause
+  // started from a running alert (the alert screen) is final. The window is presentation: it ends
+  // when a noise event starts, the pause ends or the time is up.
+  const UNDO_MS = 8_000;
+  let undoMinutes = $state<number | null>(null);
+  let undoTimer: ReturnType<typeof setTimeout> | null = null;
+  function clearUndo(): void {
+    if (undoTimer !== null) clearTimeout(undoTimer);
+    undoTimer = null;
+    undoMinutes = null;
+  }
+  onDestroy(clearUndo);
+  $effect(() => {
+    if (undoMinutes !== null && ($parent.noiseAlertActive || !snoozeActive)) clearUndo();
+  });
+
   function snooze(minutes: number): void {
+    const noiseRunning = $parent.noiseAlertActive;
     controller.snooze(minutes);
     snoozeOpen = false;
+    clearUndo();
+    if (!noiseRunning) {
+      undoMinutes = minutes;
+      undoTimer = setTimeout(clearUndo, UNDO_MS);
+    }
   }
+
+  function undoSnooze(): void {
+    controller.cancelSnooze();
+    clearUndo();
+  }
+
+  let talkHint = $state<TalkHint | null>(null);
 
   function runTest(): void {
     probeOpen = false;
@@ -240,16 +278,37 @@
 
 {#if fullScreen === "noise"}
   <NoiseAlertScreen onclose={() => dismiss("noise")} />
+{:else if fullScreen === "battery_critical"}
+  <BatteryAlertScreen onok={() => dismiss("battery_critical")} />
 {:else if fullScreen !== null}
   <LinkAlarmScreen kind={fullScreen} onok={() => dismiss(fullScreen)} />
 {:else}
   <div class="gs-screen gs-screen--monitor" data-screen="parent_monitor">
-    {#if $parent.securityWarning}
-      <Card tone="variant" testid="parent_security_banner">
-        <h2>{$t("native.ui.parent.securityTitle")}</h2>
-        <p>{$t("native.ui.parent.securityBody")}</p>
-      </Card>
-    {/if}
+    <!-- Tool row: the DOM order is the tab order (night, then settings); the gear is laid out first
+         and stays fixed. The night-mode control of group 6 and the alert chip (Android only) have
+         no web UI here. -->
+    <div class="gs-tools" data-testid="parent_tools">
+      <button
+        type="button"
+        class="gs-chip-btn"
+        data-testid="parent_night_open"
+        onclick={() => (nightOpen = true)}
+      >
+        <Glyph name="moon" />
+        <span>{$t("webScreens.night.open")}</span>
+      </button>
+      <button
+        type="button"
+        class="gs-icon-btn gs-tools__gear"
+        data-testid="tool_settings"
+        aria-label={$t("native.ui.common.settings")}
+        onclick={() => router.navigate("/settings")}
+      >
+        <Glyph name="settings" />
+      </button>
+    </div>
+
+    <BannerStack ontest={() => (probeOpen = true)} />
 
     <AwayNotice />
     <KeepAwakeNotice />
@@ -273,9 +332,16 @@
       </Button>
     {/if}
 
-    <h1 tabindex="-1" data-route-heading class="gs-headline" data-testid="parent_headline">
-      {headlineText}
-    </h1>
+    <div class="gs-hero">
+      <h1 tabindex="-1" data-route-heading class="gs-headline" data-testid="parent_headline">
+        {headlineText}
+      </h1>
+      {#if monitoringFor !== null}
+        <p class="gs-hero__sub" data-testid="parent_monitoring_for">
+          {$t("native.ui.monitor.monitoringFor", { duration: monitoringFor })}
+        </p>
+      {/if}
+    </div>
 
     {#if $parent.link.phase === "connecting"}
       <!-- Wrong place: before the first connection of a run, one tap at levels 0 and 1. From level
@@ -297,45 +363,28 @@
       </Button>
     {/if}
 
-    <div class="gs-meter-card">
-      <Meter
-        level={meterLevel}
-        threshold={connected ? $parent.babyThreshold : null}
-        label={meterLabel}
-        testid="parent_meter"
-      />
-    </div>
+    <SoundStrip
+      level={$parent.level}
+      {connected}
+      threshold={$parent.babyThreshold}
+      {micSilent}
+      label={stripLabel}
+      testid="parent_meter"
+    />
 
-    <div class="gs-chip-row">
-      {#each [...fixed, ...shownExtras] as chip (chip.id)}
-        <Chip tone={chip.tone} icon={chip.icon} label={$t(chip.key, chip.args)} testid={chip.id} />
-      {/each}
-      {#if hiddenCount > 0}
-        <Chip
-          label={$t("native.ui.common.moreCount", { count: hiddenCount })}
-          testid="parent_more_chip"
-        />
-      {/if}
-    </div>
-
-    {#if canRequestSilence($parent)}
-      <div class="gs-chip-row">
-        <Button
-          variant="text"
-          testid="sheet_silence_apply"
-          disabled={$parent.silenceRequest === "pending"}
-          onclick={() => controller.requestSilenceBaby()}
-        >
-          {$parent.silenceRequest === "pending"
-            ? $t("native.ui.silence.pending")
-            : $t("native.ui.silence.apply")}
-        </Button>
-        {#if $parent.silenceRequest === "failed"}
-          <span class="gs-hint" role="status" data-testid="sheet_silence_failed">
-            {$t("native.ui.silence.failed")}
+    {#if connected || $settings.lastTestWallMs !== null}
+      <p class="gs-meta" data-testid="parent_meta">
+        {#if connected}
+          <span data-testid="parent_silence_state">{$t(silenceStateKey($parent.peer))}</span>
+        {/if}
+        {#if $settings.lastTestWallMs !== null}
+          <span data-testid="parent_last_test">
+            {$t("native.ui.monitor.alertsTested", {
+              time: formatClock($settings.lastTestWallMs, $locale),
+            })}
           </span>
         {/if}
-      </div>
+      </p>
     {/if}
 
     <p class="gs-note" data-testid="parent_keep_open_banner">
@@ -344,13 +393,6 @@
     </p>
 
     <div class="gs-fill"></div>
-
-    <ListenButton
-      mode={$parent.listen}
-      enabled={connected}
-      onchange={(mode) => controller.setListen(mode)}
-      testid="parent_listen"
-    />
 
     {#if connected && !$settings.talkCoachSeen && !$app.coachPending}
       <Card tone="variant" testid="coach_talk">
@@ -365,33 +407,71 @@
       </Card>
     {/if}
 
-    <TalkButton
+    {#if undoMinutes !== null}
+      <div class="gs-snackbar" role="status" data-testid="parent_pause_snackbar">
+        <span>{$t("native.ui.snooze.snackbar", { minutes: undoMinutes })}</span>
+        <Button variant="text" testid="parent_pause_undo" onclick={undoSnooze}>
+          {$t("native.ui.snooze.undo")}
+        </Button>
+      </div>
+    {/if}
+
+    <TalkStatus
       talk={$parent}
       web={$webTalk}
       nowMs={$everySecond.elapsedMs}
-      onpress={() => controller.setTalk(true)}
-      onrelease={() => controller.setTalk(false)}
-      onkeeplisten={() => controller.setListen("locked")}
+      hint={talkHint}
+      onkeeplisten={() => controller.setListen("on")}
     />
 
-    <div class="gs-action-row">
-      <Button variant="outline" testid="parent_snooze" onclick={() => (snoozeOpen = true)}>
-        {$t("native.ui.snooze.button")}
-      </Button>
-      <Button variant="outline" testid="parent_probe" onclick={() => (probeOpen = true)}>
-        {$t("native.ui.probe.button")}
-      </Button>
-      <Button
-        variant="outline"
-        label={$t("webScreens.night.open")}
-        testid="parent_night_open"
-        onclick={() => (nightOpen = true)}
-      >
-        <Glyph name="moon" />
-      </Button>
-      <Button variant="outline" testid="parent_overflow" onclick={() => (moreOpen = true)}>
-        {$t("native.ui.common.more")}
-      </Button>
+    <div class="gs-dock">
+      <ListenButton
+        mode={$parent.listen}
+        enabled={connected}
+        onchange={(mode) => controller.setListen(mode)}
+        testid="parent_listen"
+      />
+      <div class="gs-dock__tiles">
+        <TalkButton
+          talk={$parent}
+          web={$webTalk}
+          nowMs={$everySecond.elapsedMs}
+          nowWallMs={$everySecond.wallMs}
+          bind:hint={talkHint}
+          onpress={() => controller.setTalk(true)}
+          onrelease={() => controller.setTalk(false)}
+        />
+        <button
+          type="button"
+          class="gs-tile"
+          data-kind="pause"
+          data-paused={snoozeActive || undefined}
+          data-testid="parent_snooze"
+          aria-label={snoozeActive
+            ? `${$t("native.ui.snooze.button")}, ${$t("native.ui.snooze.tilePaused")}`
+            : $t("native.ui.snooze.button")}
+          onclick={() => (snoozeOpen = true)}
+        >
+          <Glyph name="snooze" />
+          <span class="gs-tile__text">
+            <span class="gs-tile__label">
+              {$t(snoozeActive ? "native.ui.snooze.tilePaused" : "native.ui.snooze.tile")}
+            </span>
+          </span>
+        </button>
+        <button
+          type="button"
+          class="gs-tile"
+          data-kind="more"
+          data-testid="parent_overflow"
+          onclick={() => (moreOpen = true)}
+        >
+          <Glyph name="more" />
+          <span class="gs-tile__text">
+            <span class="gs-tile__label">{$t("native.ui.common.more")}</span>
+          </span>
+        </button>
+      </div>
     </div>
     <NightScreen bind:open={nightOpen} statusText={headlineText} />
   </div>
@@ -509,13 +589,13 @@
     <Button
       variant="outline"
       block
-      testid="parent_settings"
+      testid="parent_probe"
       onclick={() => {
         moreOpen = false;
-        router.navigate("/settings");
+        probeOpen = true;
       }}
     >
-      {$t("native.ui.common.settings")}
+      {$t("native.ui.probe.button")}
     </Button>
     <Button
       variant="danger"

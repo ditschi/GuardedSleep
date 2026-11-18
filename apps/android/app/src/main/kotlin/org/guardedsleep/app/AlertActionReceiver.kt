@@ -16,7 +16,7 @@ class AlertActionReceiver : BroadcastReceiver() {
         when (intent.action) {
             AlertIntents.ACTION_STOP_SOUND -> controller.stopAlertSound()
             AlertIntents.ACTION_SNOOZE_10 -> controller.snooze(10)
-            AlertIntents.ACTION_LISTEN -> controller.setListen(ListenMode.LOCKED)
+            AlertIntents.ACTION_LISTEN -> controller.setListen(ListenMode.ON)
             AlertIntents.ACTION_ACK -> controller.acknowledgeAlarm()
         }
     }

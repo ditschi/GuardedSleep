@@ -7,51 +7,40 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.disabled
-import androidx.compose.ui.semantics.onClick
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.withTimeoutOrNull
 import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.model.ListenMode
 import org.guardedsleep.app.ui.theme.LocalAppColors
-import org.guardedsleep.app.ui.theme.StateColors
 
 /** Slow alpha pulse; static when the user (or a test) asks for reduced motion. */
 @Composable
@@ -131,8 +120,11 @@ fun SoundMeter(
 }
 
 /**
- * Push-to-listen: hold = listen, slide up >= 72 dp = lock, tap while locked = stop. TalkBack
- * double-tap toggles locked listening (no gesture needed). Disabled while not connected.
+ * Listen as a tap toggle (`audio-monitoring` "Listen mode", design section 7): one tap starts, the
+ * whole bar fills and reads "Listening · tap to stop" with a stop square, another tap stops. There
+ * is no hold and no slide, so it works one-handed in the dark and with switch access. Unavailable
+ * (disabled, with the reason as its sub-line) while not connected. The 60 minute limit lives in the
+ * model, not here.
  */
 @Composable
 fun ListenButton(
@@ -141,126 +133,78 @@ fun ListenButton(
     onMode: (ListenMode) -> Unit,
     modifier: Modifier = Modifier,
     tag: String = "parent_listen",
+    compact: Boolean = false,
 ) {
-    val modeState = rememberUpdatedState(mode)
-    val onModeState = rememberUpdatedState(onMode)
-    val haptic = LocalHapticFeedback.current
-    val lockPx = with(LocalDensity.current) { 72.dp.toPx() }
     val colors = LocalAppColors.current
+    val on = connected && mode == ListenMode.ON
     val label =
         stringResource(
             when {
                 !connected -> R.string.native_ui_listen_disabled
-                mode == ListenMode.HOLD -> R.string.native_ui_listen_holding
-                mode == ListenMode.LOCKED -> R.string.native_ui_listen_locked
+                on -> R.string.native_ui_listen_on
                 else -> R.string.native_ui_listen_idle
             }
         )
-    val a11yState =
-        if (connected && mode == ListenMode.LOCKED)
-            stringResource(R.string.native_ui_listen_a11y_locked)
-        else label
+    val sub =
+        stringResource(
+            when {
+                !connected -> R.string.native_ui_listen_disabled_sub
+                on -> R.string.native_ui_listen_on_sub
+                else -> R.string.native_ui_listen_idle_sub
+            }
+        )
+    val state =
+        stringResource(
+            if (on) R.string.native_ui_listen_state_on else R.string.native_ui_listen_state_off
+        )
+    val scheme = MaterialTheme.colorScheme
     val container =
         when {
-            !connected -> MaterialTheme.colorScheme.surfaceVariant
-            mode == ListenMode.HOLD -> MaterialTheme.colorScheme.primary
-            mode == ListenMode.LOCKED -> StateColors.Green
-            else -> MaterialTheme.colorScheme.primaryContainer
+            !connected -> scheme.surfaceVariant
+            on -> scheme.primary
+            else -> scheme.primaryContainer
         }
     val content =
         when {
             !connected -> colors.secondaryText
-            mode == ListenMode.HOLD -> MaterialTheme.colorScheme.onPrimary
-            mode == ListenMode.LOCKED -> StateColors.OnState
-            else -> MaterialTheme.colorScheme.onPrimaryContainer
+            on -> scheme.onPrimary
+            else -> scheme.onPrimaryContainer
         }
-    Column(
-        modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        if (connected && mode == ListenMode.HOLD) {
-            Text(
-                stringResource(R.string.native_ui_listen_lock_hint),
-                Modifier.testTag(tag + "_lock_target"),
-                style = MaterialTheme.typography.titleMedium,
-                color = colors.ok,
-                textAlign = TextAlign.Center,
+    val knobBg =
+        if (on) scheme.onPrimary
+        else if (connected) scheme.primary else scheme.surfaceContainerHighest
+    val knobFg =
+        if (on) scheme.primary else if (connected) scheme.onPrimary else colors.secondaryText
+    Row(
+        modifier
+            .fillMaxWidth()
+            .heightIn(min = if (compact) PrimaryHeight else 80.dp)
+            .background(container, RoundedCornerShape(28.dp))
+            .clickable(
+                enabled = connected,
+                role = Role.Button,
+                onClick = { onMode(if (mode == ListenMode.OFF) ListenMode.ON else ListenMode.OFF) },
             )
+            .semantics(mergeDescendants = true) { stateDescription = state }
+            .padding(horizontal = 20.dp, vertical = 10.dp)
+            .testTag(tag),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                label,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = content,
+            )
+            if (!compact) Text(sub, style = MaterialTheme.typography.bodyMedium, color = content)
         }
         Box(
-            Modifier.fillMaxWidth(0.92f)
-                .heightIn(min = if (mode == ListenMode.HOLD) 96.dp else 72.dp)
-                .background(container, RoundedCornerShape(24.dp))
-                .semantics(mergeDescendants = true) {
-                    role = Role.Button
-                    stateDescription = a11yState
-                    if (!connected) disabled()
-                    onClick {
-                        onModeState.value(
-                            if (modeState.value == ListenMode.OFF) ListenMode.LOCKED
-                            else ListenMode.OFF
-                        )
-                        true
-                    }
-                }
-                .pointerInput(connected) {
-                    if (!connected) return@pointerInput
-                    awaitEachGesture {
-                        val down = awaitFirstDown()
-                        if (modeState.value == ListenMode.LOCKED) {
-                            waitForUpOrCancellation()
-                            onModeState.value(ListenMode.OFF)
-                            return@awaitEachGesture
-                        }
-                        val early = withTimeoutOrNull(150) { waitForUpOrCancellation() }
-                        if (early != null || currentEvent.changes.none { it.pressed })
-                            return@awaitEachGesture
-                        onModeState.value(ListenMode.HOLD)
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        var locked = false
-                        while (true) {
-                            val change = awaitPointerEvent().changes.firstOrNull() ?: break
-                            if (!change.pressed) break
-                            if (!locked && change.position.y - down.position.y <= -lockPx) {
-                                locked = true
-                                onModeState.value(ListenMode.LOCKED)
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            }
-                            change.consume()
-                        }
-                        if (!locked) onModeState.value(ListenMode.OFF)
-                    }
-                }
-                .testTag(tag),
+            Modifier.size(52.dp).background(knobBg, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Column(
-                Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                androidx.compose.foundation.layout.Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    GlyphIcon(
-                        when (mode) {
-                            ListenMode.OFF -> Glyph.HEADPHONES
-                            ListenMode.HOLD -> Glyph.WAVE
-                            ListenMode.LOCKED -> Glyph.STOP
-                        },
-                        content,
-                        size = 32.dp,
-                    )
-                    Text(
-                        label,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = content,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-            }
+            GlyphIcon(if (on) Glyph.STOP else Glyph.HEADPHONES, knobFg, size = 28.dp)
         }
     }
 }

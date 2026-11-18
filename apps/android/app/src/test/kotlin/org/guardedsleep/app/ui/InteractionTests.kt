@@ -13,6 +13,7 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.center
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -22,6 +23,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.text.AnnotatedString
+import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppState
@@ -42,6 +44,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.robolectric.RuntimeEnvironment
 
 class InteractionTests : ShotBase() {
     private val monitoring =
@@ -57,49 +60,55 @@ class InteractionTests : ShotBase() {
         FakeAppController(app = monitoring, parent = ParentMonitorState(link = Connected))
 
     @Test
-    fun slideUpWhileHoldingLocksListening() = runComposeUiTest {
+    fun aTapStartsListeningAndAnotherStopsIt() = runComposeUiTest {
         val c = connectedController()
         show { ParentMonitorScreen(c, {}) }
-        onNodeWithTag("parent_listen").performTouchInput { down(center) }
-        mainClock.advanceTimeBy(400)
-        onNodeWithTag("parent_listen").performTouchInput { moveBy(Offset(0f, -400f)) }
-        onNodeWithTag("parent_listen").performTouchInput { up() }
+        onNodeWithTag("parent_listen").performClick()
         waitForIdle()
-        assertEquals(
-            listOf("setListen:HOLD", "setListen:LOCKED"),
-            c.calls.filter { it.startsWith("setListen") },
-        )
-        assertEquals(ListenMode.LOCKED, c.parentFlow.value.listen)
-    }
-
-    @Test
-    fun releasingWithoutSlidingStopsListening() = runComposeUiTest {
-        val c = connectedController()
-        show { ParentMonitorScreen(c, {}) }
-        onNodeWithTag("parent_listen").performTouchInput { down(center) }
-        mainClock.advanceTimeBy(400)
-        onNodeWithTag("parent_listen").performTouchInput { up() }
+        assertEquals(ListenMode.ON, c.parentFlow.value.listen)
+        onNodeWithTag("parent_listen").performClick()
         waitForIdle()
+        assertEquals(ListenMode.OFF, c.parentFlow.value.listen)
         assertEquals(
-            listOf("setListen:HOLD", "setListen:OFF"),
+            listOf("setListen:ON", "setListen:OFF"),
             c.calls.filter { it.startsWith("setListen") },
         )
     }
 
     @Test
-    fun tapWhileLockedStops() = runComposeUiTest {
+    fun theListenBarSaysListeningAndTapToStopWhileOn() = runComposeUiTest {
         val c =
             FakeAppController(
                 app = monitoring,
-                parent = ParentMonitorState(link = Connected, listen = ListenMode.LOCKED),
+                parent = ParentMonitorState(link = Connected, listen = ListenMode.ON),
             )
+        show { ParentMonitorScreen(c, {}) }
+        onNodeWithTag("parent_listen")
+            .assert(
+                hasText(RuntimeEnvironment.getApplication().getString(R.string.native_ui_listen_on))
+            )
+            .assert(
+                SemanticsMatcher.expectValue(
+                    SemanticsProperties.StateDescription,
+                    RuntimeEnvironment.getApplication()
+                        .getString(R.string.native_ui_listen_state_on),
+                )
+            )
+    }
+
+    @Test
+    fun holdingTheListenBarDoesNothingMoreThanATap() = runComposeUiTest {
+        // No hold and no slide any more: a long press is just a press.
+        val c = connectedController()
         show { ParentMonitorScreen(c, {}) }
         onNodeWithTag("parent_listen").performTouchInput {
             down(center)
+            advanceEventTime(600)
+            moveBy(Offset(0f, -400f))
             up()
         }
         waitForIdle()
-        assertEquals(listOf("setListen:OFF"), c.calls.filter { it.startsWith("setListen") })
+        assertTrue(c.calls.none { it == "setListen:HOLD" })
     }
 
     @Test
@@ -208,10 +217,10 @@ class InteractionTests : ShotBase() {
     }
 
     @Test
-    fun discreetIndicatorIsAbsentInSoundStyle() = runComposeUiTest {
+    fun vibrateOnlyBannerIsAbsentInSoundStyle() = runComposeUiTest {
         val c = connectedController()
         show { ParentMonitorScreen(c, {}) }
-        onNodeWithTag("discreet_indicator").assertDoesNotExist()
+        onNodeWithTag("parent_banner_vibrate_only").assertDoesNotExist()
     }
 
     @Test
@@ -222,11 +231,11 @@ class InteractionTests : ShotBase() {
         onNodeWithTag("alert_style_discreet").performClick()
         waitForIdle()
         assertEquals(AlertStyle.DISCREET, c.settingsFlow.value.alertStyle)
-        onNodeWithTag("discreet_indicator").assertIsDisplayed()
+        onNodeWithTag("parent_banner_vibrate_only").assertIsDisplayed()
     }
 
     @Test
-    fun discreetIndicatorStaysVisibleAndOpensTheChoice() = runComposeUiTest {
+    fun vibrateOnlyBannerStaysVisibleAndTheChipOpensTheChoice() = runComposeUiTest {
         val c =
             FakeAppController(
                 app = monitoring,
@@ -234,11 +243,12 @@ class InteractionTests : ShotBase() {
                 settings = SettingsState(alertStyle = AlertStyle.DISCREET),
             )
         show { ParentMonitorScreen(c, {}) }
-        onNodeWithTag("discreet_indicator").assertIsDisplayed().performClick()
+        onNodeWithTag("parent_banner_vibrate_only").assertIsDisplayed()
+        onNodeWithTag("tool_alert_chip").performClick()
         onNodeWithTag("alert_style_sound").performClick()
         waitForIdle()
         assertEquals(AlertStyle.SOUND, c.settingsFlow.value.alertStyle)
-        onNodeWithTag("discreet_indicator").assertDoesNotExist()
+        onNodeWithTag("parent_banner_vibrate_only").assertDoesNotExist()
     }
 
     @Test

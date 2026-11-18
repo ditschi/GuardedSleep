@@ -922,6 +922,7 @@ class LinkController(
         r.runner = runner
         synchronized(this) { run = r }
         parentModel.reset()
+        if (role == Role.PARENT) parentModel.runStarted(clock.elapsedMs())
         babyModel.reset()
         babyModel.setSilence(null, silence.hasAccess())
         network.start { runner.input(LinkInput.NetworkAvailable) }
@@ -1163,7 +1164,7 @@ class LinkController(
                     DebugOptions.autoListen
             ) {
                 r.autoListenDone = true
-                parentModel.setListen(ListenMode.LOCKED, nowMs)
+                parentModel.setListen(ListenMode.ON, nowMs)
                 r.runner.input(LinkInput.SetListen(true))
             }
         }

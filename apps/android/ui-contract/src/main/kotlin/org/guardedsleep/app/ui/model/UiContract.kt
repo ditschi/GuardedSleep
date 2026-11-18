@@ -125,12 +125,17 @@ enum class ReadinessIssue {
     PARENT_BATTERY_LOW,
     HEADPHONES_CONNECTED,
     NEVER_TESTED,
+    /**
+     * A hint, ranked below every failing item: the alarm volume is above zero but below half
+     * (`parent-alerts` "Readiness on the monitor").
+     */
+    ALARM_VOLUME_LOW,
 }
 
+/** Listen is a tap toggle (`audio-monitoring` "Listen mode"); there is no hold or lock state. */
 enum class ListenMode {
     OFF,
-    HOLD,
-    LOCKED,
+    ON,
 }
 
 enum class SilenceRequest {
@@ -138,6 +143,15 @@ enum class SilenceRequest {
     PENDING,
     APPLIED,
     FAILED,
+}
+
+/**
+ * Where the loudness words of a missed-sound report switch ("quiet", "some sound", "loud"). The web
+ * client has the same two numbers in `format.ts`.
+ */
+object LoudnessWords {
+    const val SOME_FROM = 0.15f
+    const val LOUD_FROM = 0.5f
 }
 
 data class MissedEventsUi(
@@ -243,6 +257,11 @@ data class ParentMonitorState(
     val quietSinceWallMs: Long? = null,
     val noiseAlertActive: Boolean = false,
     val listen: ListenMode = ListenMode.OFF,
+    /**
+     * Start of this monitoring run on the elapsed clock, for "Monitoring for {duration}"; null
+     * before the run starts.
+     */
+    val monitoringSinceElapsedMs: Long? = null,
     val snoozedUntilWallMs: Long? = null,
     val readiness: List<ReadinessIssue> = emptyList(),
     val silenceRequest: SilenceRequest = SilenceRequest.IDLE,

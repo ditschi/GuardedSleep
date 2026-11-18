@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Abbrechen",
         "more": "Mehr",
-        "moreCount": "+{count}",
         "settings": "Einstellungen",
         "tryAgain": "Erneut versuchen",
         "yes": "Ja",
@@ -293,10 +292,6 @@
           "body": "Jemand hat die Überwachung auf dem Babygerät beendet. Sie erhalten keine Alarme.",
           "titleDefault": "Das Babygerät hat die Überwachung beendet"
         },
-        "battery": {
-          "title": "Akku des Babygeräts fast leer",
-          "body": "Schließen Sie das Babygerät jetzt an das Ladegerät an, sonst endet die Überwachung."
-        },
         "needsPairing": {
           "title": "Geräte nicht mehr gekoppelt"
         },
@@ -310,7 +305,7 @@
         "allQuietSince": "Alles ruhig seit {time}",
         "soundSince": "Geräusch erkannt · seit {time}",
         "soundAt": "Geräusch um {time} · dauerte {duration}",
-        "soundSnoozed": "Geräusch um {time} · Alarme pausiert",
+        "soundSnoozed": "Geräusch um {time} · Geräusch-Alarme pausiert",
         "lastHeard": "Letzte Verbindung um {time}",
         "noContactYet": "Noch kein Kontakt",
         "monitoringNow": "Überwachung läuft",
@@ -323,7 +318,6 @@
         "stop": "Überwachung beenden",
         "securityTitle": "Sicherheitswarnung",
         "securityBody": "Die Verbindung konnte nicht überprüft werden. Falls Sie die Geräte nicht gerade neu gekoppelt haben, koppeln Sie sie jetzt erneut.",
-        "staleSuffix": "· um {time}",
         "unitWarning": {
           "pageHidden": "Babygerät kann pausieren – Seite verdeckt",
           "wakeLockOff": "Babygerät kann einschlafen – Bildschirm wird nicht wachgehalten",
@@ -332,32 +326,38 @@
           "micPermissionLost": "Babygerät hat den Mikrofonzugriff verloren"
         },
         "discreet": {
-          "indicator": "Diskrete Alarme: kein Ton",
           "escalated": "Auf Ton umgeschaltet: keine Reaktion seit {minutes} Min.",
-          "offWarning": "Aus: Ein vergessener diskreter Modus kann die ganze Nacht stumm bleiben."
+          "offWarning": "Aus: Ein vergessener Modus „Nur Vibration“ kann die ganze Nacht stumm bleiben."
         }
       },
       "battery": {
-        "baby": "Babygerät {percent} %",
         "babyLow": "Babygerät-Akku {percent} % — bitte anschließen",
-        "parentLow": "Dieses Gerät hat {percent} % — schließen Sie es an, um weiter zu überwachen",
         "parentLowGeneric": "Der Akku dieses Geräts ist schwach — schließen Sie es an, um weiter zu überwachen"
       },
       "listen": {
-        "idle": "Halten zum Zuhören",
-        "holding": "Hört zu …",
-        "locked": "Hört zu · zum Beenden tippen",
-        "lockHint": "Nach oben wischen, um weiter zuzuhören",
+        "idle": "Zuhören",
         "disabled": "Zuhören, sobald verbunden",
-        "a11yLocked": "Hört zu. Doppeltippen zum Beenden."
+        "idleSub": "Tippen, um den Raum zu hören",
+        "on": "Zuhören · zum Beenden tippen",
+        "onSub": "Raumton über den Lautsprecher",
+        "disabledSub": "Gerade nicht verbunden",
+        "stateOn": "Hört zu",
+        "stateOff": "Hört nicht zu"
       },
       "snooze": {
-        "button": "Pause",
+        "button": "Alarme bei Geräuschen pausieren",
         "title": "Geräusch-Alarme pausieren",
-        "help": "Sie werden weiterhin alarmiert, wenn die Verbindung abbricht oder ein Akku fast leer ist.",
-        "minutes": "{minutes} Min. pausieren",
+        "help": "Verbindungs- und Akku-Alarme kommen weiterhin.",
+        "minutes": "{minutes} Min.",
         "end": "Pause beenden",
-        "active": "Pausiert · noch {minutes} Min."
+        "tile": "Pausieren",
+        "tilePaused": "Pausiert",
+        "pauseMinutes": "{minutes} Min. pausieren",
+        "resume": "Fortsetzen",
+        "bannerTitle": "Geräusch-Alarme pausiert bis {time}",
+        "bannerBody": "Verbindungs- und Akku-Alarme kommen weiterhin",
+        "snackbar": "Geräusch-Alarme für {minutes} Min. pausiert",
+        "undo": "Rückgängig"
       },
       "probe": {
         "button": "Testen",
@@ -369,7 +369,7 @@
         "question": "Haben Sie es gehört und gespürt?",
         "localOnly": "Nur dieses Gerät getestet — das Babygerät ist nicht verbunden.",
         "styleSound": "Alarmart: Ton",
-        "styleDiscreet": "Alarmart: Diskret",
+        "styleDiscreet": "Alarmart: Nur Vibration",
         "bodyDiscreet": "Dieses Gerät vibriert und zeigt den Alarm ohne Ton an. Das Babygerät bleibt stumm."
       },
       "readiness": {
@@ -454,13 +454,12 @@
       },
       "coach": {
         "bar": "Grün heißt: Sie überwachen. Wird es rot oder verschwindet es, überwachen Sie nicht.",
-        "listen": "Zum Zuhören gedrückt halten. Nach oben wischen, um weiter zuzuhören.",
+        "listen": "Tippen Sie auf Zuhören, um den Raum zu hören.",
         "test": "Starten Sie einen Test-Alarm, damit Sie wissen, wie sich ein Alarm anfühlt.",
         "runTest": "Test-Alarm jetzt starten"
       },
       "alert": {
-        "title": "Geräusch erkannt",
-        "since": "Seit {time}",
+        "title": "Das Kind macht Geräusche",
         "ended": "Das Geräusch ist vorbei.",
         "testBadge": "TEST",
         "stopSound": "Ton stoppen",
@@ -534,7 +533,7 @@
         "alertStyle": {
           "label": "Alarmart",
           "sound": "Ton: Der Ton des Babys wird bei jedem Alarm abgespielt",
-          "discreet": "Diskret: Vibration und Bildschirm, kein Ton"
+          "discreet": "Nur Vibration: Vibration und Bildschirm, kein Ton"
         },
         "discreetEscalation": {
           "label": "Auf Ton umschalten, wenn niemand reagiert",
@@ -632,7 +631,11 @@
           "playChime": "Signalton abspielen",
           "chime": "Signalton, bevor ein Elternteil spricht",
           "checklist": "Eltern können über dieses Gerät sprechen. Sie können das in den Einstellungen ausschalten."
-        }
+        },
+        "again": "Noch einmal sprechen",
+        "againAt": "um {time}",
+        "disabled": "Sprechen, sobald verbunden",
+        "pausedListening": "Das Zuhören pausiert, solange Sie sprechen"
       },
       "status": {
         "connected": "Verbunden",
@@ -701,6 +704,103 @@
         },
         "labelAlerting": "Dieses Gerät schlägt Alarm",
         "progressAlerting": "Alarm ertönt jetzt"
+      },
+      "monitor": {
+        "monitoringFor": "Überwachung seit {duration}",
+        "cantHear": "Der Raum ist nicht zu hören",
+        "alertLine": "Ein Geräusch über dieser Linie löst einen Alarm aus",
+        "lastMinute": "Letzte Minute",
+        "now": "jetzt",
+        "noSound": "Kein Ton kommt an",
+        "micSilentStrip": "Mikrofon still",
+        "alertsTested": "Alarme getestet {time}",
+        "batteryA11y": "Akku des Babygeräts {percent} Prozent",
+        "batteryChargingA11y": "Akku des Babygeräts {percent} Prozent, wird geladen",
+        "batteryShort": "{percent} %"
+      },
+      "alertStyle": {
+        "chipSound": "Alarm: Ton",
+        "chipVibrate": "Alarm: Nur Vibration",
+        "chipA11ySound": "Alarme bei Geräuschen: Ton. Ändern",
+        "chipA11yVibrate": "Alarme bei Geräuschen: Nur Vibration. Ändern",
+        "vibrateTitle": "Nur Vibration",
+        "bodyNoSound": "Geräusch-Alarme machen keinen Ton.",
+        "bodyNever": "Geräusch-Alarme machen nie einen Ton.",
+        "bodyAfterPause": "Nach der Pause: erst Vibration, nach {minutes} Min. Ton",
+        "turnSoundOn": "Ton einschalten"
+      },
+      "banner": {
+        "fix": "Beheben",
+        "more": "+{count} weitere",
+        "moreA11y": "{count, plural, one {1 weiterer Hinweis: {notices}} other {# weitere Hinweise: {notices}}}",
+        "listTitle": "Hinweise",
+        "micSilentTitle": "Das Mikrofon des Babygeräts hört nichts",
+        "micSilentBody": "Prüfen Sie das Babygerät. Eine andere App nutzt vielleicht das Mikrofon.",
+        "ready": {
+          "notifications": {
+            "title": "Benachrichtigungen sind aus",
+            "body": "Alarme können Sie nicht erreichen."
+          },
+          "fullScreen": {
+            "title": "Alarme erscheinen nicht auf dem Sperrbildschirm",
+            "body": "Bei gesperrtem Handy verpassen Sie einen Alarm vielleicht."
+          },
+          "alarmVolumeZero": {
+            "title": "Alarmlautstärke ist aus",
+            "body": "Sie hören Alarme auf diesem Handy nicht"
+          },
+          "alarmVolumeLow": {
+            "title": "Alarmlautstärke ist niedrig",
+            "body": "Stellen Sie lauter, damit Sie Alarme deutlich hören."
+          },
+          "dnd": {
+            "title": "„Bitte nicht stören“ kann Alarme stumm schalten",
+            "body": "Erlauben Sie GuardedSleep, durchzukommen."
+          },
+          "battery": {
+            "title": "Dieses Handy beendet GuardedSleep vielleicht",
+            "body": "Erlauben Sie die Nutzung im Hintergrund, damit Alarme funktionieren."
+          },
+          "parentBattery": {
+            "title": "Der Akku dieses Handys ist schwach",
+            "body": "Schließen Sie es an, damit die Überwachung weiterläuft."
+          },
+          "headphones": {
+            "title": "Alarme laufen über Ihre Kopfhörer",
+            "body": "Stellen Sie Alarme auf den Lautsprecher um, wenn Sie sie im Raum hören möchten."
+          },
+          "neverTested": {
+            "title": "Kein aktueller Testalarm",
+            "body": "Starten Sie einen Test, damit Alarme Sie sicher erreichen."
+          }
+        }
+      },
+      "noiseAlert": {
+        "labelSound": "Raumton wird abgespielt",
+        "labelVibrate": "Ihr Handy vibriert",
+        "labelStopped": "Alarm beendet",
+        "counterLabel": "seit {time}",
+        "counterA11y": "{duration}, seit {time}",
+        "sentenceSound": "Der Raumton wird auf diesem Handy abgespielt.",
+        "stopSoundSub": "Beendet den Alarmton, die Überwachung läuft weiter",
+        "stopVibrationSub": "Beendet die Vibration, die Überwachung läuft weiter"
+      },
+      "batteryAlert": {
+        "label": "Akku des Babygeräts",
+        "headline": "Das Babygerät ist fast leer",
+        "counterLabel": "Akku übrig",
+        "counterA11y": "{percent} Prozent Akku übrig",
+        "sentence": "Schließen Sie das Babygerät jetzt an. Wenn der Akku leer ist, endet die Überwachung.",
+        "silentNote": "Das Babygerät bleibt stumm. Nur dieses Handy alarmiert.",
+        "action": "OK, ich schließe es an",
+        "actionSub": "Schließt diese Ansicht"
+      },
+      "tool": {
+        "nightA11yOff": "Nachtmodus: aus",
+        "nightA11yOn": "Nachtmodus: an",
+        "nightA11yAuto": "Nachtmodus: automatisch",
+        "nightOn": "An",
+        "nightAuto": "Auto"
       }
     }
   },

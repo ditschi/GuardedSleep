@@ -230,6 +230,8 @@ fun AlertAction(
     tag: String,
     palette: AlertPalette,
     modifier: Modifier = Modifier,
+    /** One line under the action's text, e.g. what the action does. */
+    sub: String? = null,
 ) {
     val shape = RoundedCornerShape(20.dp)
     Box(
@@ -244,11 +246,20 @@ fun AlertAction(
             .testTag(tag),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text,
-            style = MaterialTheme.typography.titleLarge,
-            color = palette.onSlab,
-            textAlign = TextAlign.Center,
-        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text,
+                style = MaterialTheme.typography.titleLarge,
+                color = palette.onSlab,
+                textAlign = TextAlign.Center,
+            )
+            if (sub != null)
+                Text(
+                    sub,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = palette.onSlab,
+                    textAlign = TextAlign.Center,
+                )
+        }
     }
 }

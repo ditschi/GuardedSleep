@@ -53,7 +53,7 @@
       "noiseTestTitle": "Testalarm",
       "noiseTestText": "Det her er en test. Babyenheden forbliver stille.",
       "actionStopSound": "Stop lyden",
-      "actionSnooze10": "Udsæt 10 min",
+      "actionSnooze10": "Pause i 10 min",
       "actionChecking": "Jeg tjekker",
       "linkLostTitle": "Forbindelsen blev afbrudt",
       "linkLostText": "Ingen forbindelse til babyenheden. Tjek til dit barn nu.",
@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Annuller",
         "more": "Mere",
-        "moreCount": "+{count}",
         "settings": "Indstillinger",
         "tryAgain": "Prøv igen",
         "yes": "Ja",
@@ -293,10 +292,6 @@
           "body": "Nogen har stoppet overvågningen på babyenheden. Du får ingen alarmer.",
           "titleDefault": "Babyenheden er holdt op med at overvåge"
         },
-        "battery": {
-          "title": "Babyenhedens batteri er næsten tomt",
-          "body": "Sæt babyenheden i opladeren nu, ellers stopper overvågningen."
-        },
         "needsPairing": {
           "title": "Enhederne er ikke længere parret"
         },
@@ -310,7 +305,7 @@
         "allQuietSince": "Stille siden {time}",
         "soundSince": "Lyd registreret · siden {time}",
         "soundAt": "Lyd kl. {time} · varede {duration}",
-        "soundSnoozed": "Lyd kl. {time} · alarmer udsat",
+        "soundSnoozed": "Lyd kl. {time} · lydalarmer på pause",
         "lastHeard": "Sidste kontakt {time}",
         "noContactYet": "Ingen kontakt endnu",
         "monitoringNow": "Overvåger",
@@ -323,7 +318,6 @@
         "stop": "Stop overvågning",
         "securityTitle": "Sikkerhedsadvarsel",
         "securityBody": "Forbindelsen kunne ikke verificeres. Hvis du ikke lige har parret enhederne igen, så par dem igen nu.",
-        "staleSuffix": "· kl. {time}",
         "unitWarning": {
           "pageHidden": "Babyenheden holder muligvis pause: dens side er skjult",
           "wakeLockOff": "Babyenheden falder muligvis i søvn: skærmen holdes ikke tændt",
@@ -332,32 +326,38 @@
           "micPermissionLost": "Babyenheden mistede adgangen til mikrofonen"
         },
         "discreet": {
-          "indicator": "Diskrete alarmer: ingen lyd",
           "escalated": "Skiftet til lyd: ingen reaktion i {minutes} min",
-          "offWarning": "Fra: en glemt diskret tilstand kan forblive lydløs hele natten."
+          "offWarning": "Fra: en glemt tilstand med kun vibration kan forblive lydløs hele natten."
         }
       },
       "battery": {
-        "baby": "Babyenhed {percent}%",
         "babyLow": "Babyenhedens batteri {percent}%: sæt den i opladeren",
-        "parentLow": "Denne enhed har {percent}%: sæt den i opladeren for at fortsætte overvågningen",
         "parentLowGeneric": "Denne enheds batteri er lavt: sæt den i opladeren for at fortsætte overvågningen"
       },
       "listen": {
-        "idle": "Hold for at lytte",
-        "holding": "Lytter…",
-        "locked": "Lytter · tryk for at stoppe",
-        "lockHint": "Stryg opad for at blive ved med at lytte",
+        "idle": "Lyt",
         "disabled": "Lyt, når der er forbindelse",
-        "a11yLocked": "Lytter. Tryk to gange for at stoppe."
+        "idleSub": "Tryk for at høre rummet",
+        "on": "Lytter · tryk for at stoppe",
+        "onSub": "Rummets lyd i højttaleren",
+        "disabledSub": "Ikke forbundet lige nu",
+        "stateOn": "Lytter",
+        "stateOff": "Lytter ikke"
       },
       "snooze": {
-        "button": "Udsæt",
-        "title": "Udsæt lydalarmer",
-        "help": "Du får stadig alarmer, hvis forbindelsen afbrydes, eller et batteri er ved at løbe tør.",
-        "minutes": "Udsæt {minutes} min",
-        "end": "Afslut udsættelse",
-        "active": "Udsat · {minutes} min tilbage"
+        "button": "Sæt lydalarmer på pause",
+        "title": "Sæt lydalarmer på pause",
+        "help": "Alarmer om forbindelse og batteri kommer stadig.",
+        "minutes": "{minutes} min",
+        "end": "Afslut pausen",
+        "tile": "Sæt lydalarmer på pause",
+        "tilePaused": "På pause",
+        "pauseMinutes": "Pause i {minutes} min",
+        "resume": "Genoptag",
+        "bannerTitle": "Lydalarmer på pause til kl. {time}",
+        "bannerBody": "Alarmer om forbindelse og batteri kommer stadig",
+        "snackbar": "Lydalarmer på pause i {minutes} min",
+        "undo": "Fortryd"
       },
       "probe": {
         "button": "Testalarm",
@@ -369,7 +369,7 @@
         "question": "Hørte og mærkede du den?",
         "localOnly": "Kun denne enhed blev testet: babyenheden er ikke forbundet.",
         "styleSound": "Alarmtype: lyd",
-        "styleDiscreet": "Alarmtype: diskret",
+        "styleDiscreet": "Alarmtype: kun vibration",
         "bodyDiscreet": "Denne enhed vibrerer og viser alarmen uden lyd. Babyenheden forbliver stille."
       },
       "readiness": {
@@ -454,13 +454,12 @@
       },
       "coach": {
         "bar": "Grøn betyder, at du overvåger. Hvis den bliver rød eller forsvinder, overvåger du ikke.",
-        "listen": "Hold for at lytte. Stryg opad for at blive ved med at lytte.",
+        "listen": "Tryk på Lyt for at høre rummet.",
         "test": "Kør en testalarm, så du ved, hvordan en alarm føles.",
         "runTest": "Kør testalarm nu"
       },
       "alert": {
-        "title": "Lyd registreret",
-        "since": "Siden {time}",
+        "title": "Barnet laver lyd",
         "ended": "Lyden er stoppet.",
         "testBadge": "TEST",
         "stopSound": "Stop lyden",
@@ -530,7 +529,7 @@
         "alertStyle": {
           "label": "Alarmtype",
           "sound": "Lyd: barnets lyd afspilles ved hver alarm",
-          "discreet": "Diskret: vibration og skærm, ingen lyd"
+          "discreet": "Kun vibration: vibration og skærm, ingen lyd"
         },
         "discreetEscalation": {
           "label": "Skift til lyd, hvis ingen reagerer",
@@ -628,7 +627,11 @@
           "playChime": "Afspil signal",
           "chime": "Signal før en forælder taler",
           "checklist": "Forældre kan tale via denne enhed. Du kan slå det fra under Indstillinger."
-        }
+        },
+        "again": "Tal igen",
+        "againAt": "kl. {time}",
+        "disabled": "Tal, når der er forbindelse",
+        "pausedListening": "Lytning er sat på pause, mens du taler"
       },
       "status": {
         "connected": "Forbundet",
@@ -697,6 +700,103 @@
         },
         "labelAlerting": "Denne enhed afspiller en advarsel",
         "progressAlerting": "Advarsel lyder nu"
+      },
+      "monitor": {
+        "monitoringFor": "Overvåger i {duration}",
+        "cantHear": "Kan ikke høre rummet",
+        "alertLine": "En lyd over denne linje sender en alarm",
+        "lastMinute": "Sidste minut",
+        "now": "nu",
+        "noSound": "Ingen lyd kommer ind",
+        "micSilentStrip": "Mikrofonen er tavs",
+        "alertsTested": "Alarmer testet {time}",
+        "batteryA11y": "Batteri i babyenheden {percent} procent",
+        "batteryChargingA11y": "Batteri i babyenheden {percent} procent, oplader",
+        "batteryShort": "{percent} %"
+      },
+      "alertStyle": {
+        "chipSound": "Alarm: lyd",
+        "chipVibrate": "Alarm: kun vibration",
+        "chipA11ySound": "Alarmer ved lyd: lyd. Skift",
+        "chipA11yVibrate": "Alarmer ved lyd: kun vibration. Skift",
+        "vibrateTitle": "Kun vibration",
+        "bodyNoSound": "Lydalarmer giver ingen lyd.",
+        "bodyNever": "Lydalarmer giver aldrig lyd.",
+        "bodyAfterPause": "Efter pausen: først vibration, lyd efter {minutes} min",
+        "turnSoundOn": "Slå lyd til"
+      },
+      "banner": {
+        "fix": "Ret",
+        "more": "+{count} mere",
+        "moreA11y": "{count, plural, one {1 besked mere: {notices}} other {# beskeder mere: {notices}}}",
+        "listTitle": "Beskeder",
+        "micSilentTitle": "Babyenhedens mikrofon hører intet",
+        "micSilentBody": "Tjek babyenheden. En anden app bruger måske mikrofonen.",
+        "ready": {
+          "notifications": {
+            "title": "Alarmer er slået fra",
+            "body": "Alarmer kan ikke nå dig."
+          },
+          "fullScreen": {
+            "title": "Alarmer kan ikke vises på låseskærmen",
+            "body": "Du kan gå glip af en alarm, mens telefonen er låst."
+          },
+          "alarmVolumeZero": {
+            "title": "Alarmlydstyrken er slået fra",
+            "body": "Du hører ikke alarmer på denne telefon"
+          },
+          "alarmVolumeLow": {
+            "title": "Alarmlydstyrken er lav",
+            "body": "Skru op, så du tydeligt hører alarmerne."
+          },
+          "dnd": {
+            "title": "Forstyr ikke kan lyddæmpe alarmer",
+            "body": "Lad GuardedSleep komme igennem."
+          },
+          "battery": {
+            "title": "Denne telefon kan stoppe GuardedSleep",
+            "body": "Tillad brug i baggrunden, så alarmerne virker."
+          },
+          "parentBattery": {
+            "title": "Telefonens batteri er lavt",
+            "body": "Sæt den i opladeren, så overvågningen fortsætter."
+          },
+          "headphones": {
+            "title": "Alarmer afspilles i dine hovedtelefoner",
+            "body": "Skift alarmerne til højttaleren, hvis du vil høre dem i rummet."
+          },
+          "neverTested": {
+            "title": "Ingen nylig testalarm",
+            "body": "Kør en test for at være sikker på, at alarmerne når dig."
+          }
+        }
+      },
+      "noiseAlert": {
+        "labelSound": "Afspiller rummets lyd",
+        "labelVibrate": "Din telefon vibrerer",
+        "labelStopped": "Alarmen er stoppet",
+        "counterLabel": "siden {time}",
+        "counterA11y": "{duration}, siden {time}",
+        "sentenceSound": "Rummets lyd afspilles på denne telefon.",
+        "stopSoundSub": "Stopper alarmlyden, overvågningen fortsætter",
+        "stopVibrationSub": "Stopper vibrationen, overvågningen fortsætter"
+      },
+      "batteryAlert": {
+        "label": "Babyenhedens batteri",
+        "headline": "Babyenheden er næsten tom",
+        "counterLabel": "batteri tilbage",
+        "counterA11y": "{percent} procent batteri tilbage",
+        "sentence": "Sæt babyenheden i opladeren nu. Når den løber tør, stopper overvågningen.",
+        "silentNote": "Babyenheden forbliver lydløs. Kun denne telefon giver alarm.",
+        "action": "OK, jeg sætter den til",
+        "actionSub": "Lukker denne visning"
+      },
+      "tool": {
+        "nightA11yOff": "Nattilstand: fra",
+        "nightA11yOn": "Nattilstand: til",
+        "nightA11yAuto": "Nattilstand: automatisk",
+        "nightOn": "Til",
+        "nightAuto": "Auto"
       }
     }
   },

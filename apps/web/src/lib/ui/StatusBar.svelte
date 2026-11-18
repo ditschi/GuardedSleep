@@ -31,6 +31,9 @@
   const headline = $derived(statusHeadline($t, kind, $parent.link, name));
   const subKey = $derived(STATUS_SUB_KEY[kind]);
   const downMs = $derived(downForMs($parent.link, $everySecond.elapsedMs));
+  // The baby device's last reading only counts while connected; unknown shows nothing.
+  const battery = $derived($parent.link.phase === "connected" ? $parent.peer.batteryPct : null);
+  const charging = $derived($parent.peer.charging === true);
 </script>
 
 <div
@@ -54,6 +57,17 @@
     <span class="gs-status-bar__duration" data-testid={`${testid}_duration`}>
       <span class="gs-sr-only">{spokenDuration($t, downMs)}</span>
       <span aria-hidden="true">{formatDurationWords($t, downMs)}</span>
+    </span>
+  {/if}
+  {#if battery !== null}
+    <span class="gs-status-bar__battery" data-testid={`${testid}_battery`}>
+      {#if charging}<Glyph name="bolt" />{/if}
+      <span aria-hidden="true">{$t("native.ui.monitor.batteryShort", { percent: battery })}</span>
+      <span class="gs-sr-only">
+        {$t(charging ? "native.ui.monitor.batteryChargingA11y" : "native.ui.monitor.batteryA11y", {
+          percent: battery,
+        })}
+      </span>
     </span>
   {/if}
 </div>

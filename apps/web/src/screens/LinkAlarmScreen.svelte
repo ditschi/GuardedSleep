@@ -24,12 +24,11 @@
 
   /**
    * S11: the connection alert on the shared template (frames 12, 13, 25, 26) and its sibling full
-   * screens (the baby device stopped, its battery is almost empty, the devices are no longer
-   * paired). The stage (vibrating, loud, paused) and every time come from the core's level,
+   * screens (the baby device stopped, the devices are no longer paired). The stage (vibrating, loud, paused) and every time come from the core's level,
    * `next_level_at_ms` and `acknowledged_until`; this screen has no threshold of its own.
    */
   type Props = {
-    kind: Exclude<FullScreenKind, "noise">;
+    kind: Exclude<FullScreenKind, "noise" | "battery_critical">;
     /** OK: closes the screen for the current situation. */
     onok: () => void;
   };
@@ -107,8 +106,6 @@
         return $t("native.ui.linkAlarm.stopped.title", {
           name: name ?? $t("native.ui.common.babyUnitDefault"),
         });
-      case "battery_critical":
-        return $t("native.ui.linkAlarm.battery.title");
       case "needs_pairing":
         return $t("native.ui.linkAlarm.needsPairing.title");
       case "link_lost":
@@ -217,8 +214,6 @@
         <div class="gs-fullscreen__body" data-testid="link_alarm_body">
           {#if kind === "baby_stopped"}
             <p>{$t("native.ui.linkAlarm.stopped.body")}</p>
-          {:else if kind === "battery_critical"}
-            <p>{$t("native.ui.linkAlarm.battery.body")}</p>
           {:else}
             <p>{$t(coreMessageKey($parent.link.failureKey) ?? "core.pairingKeyMismatch")}</p>
           {/if}

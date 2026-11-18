@@ -21,6 +21,9 @@ interface ReadinessEnv {
     /** Alarm stream volume, 0 = off. */
     fun alarmVolume(): Int
 
+    /** The highest alarm stream volume step, to tell "below half" from "loud enough". */
+    fun alarmVolumeMax(): Int
+
     fun fullScreenAllowed(): Boolean
 
     /** Policy access granted and the alarm channels may bypass Do Not Disturb. */
@@ -38,7 +41,11 @@ interface ReadinessEnv {
     fun headphonesConnected(): Boolean
 }
 
-/** Parent readiness check (alpha-ux-flows §3.17); worst items first. */
+/**
+ * Parent readiness check (`parent-alerts` "Readiness check"); worst items first, in the order of
+ * that requirement. The hint to raise a low alarm volume is not a failure: it is the last item, so
+ * the banner shows it only when nothing else fails.
+ */
 class ReadinessChecker(
     private val env: ReadinessEnv,
     private val settings: SettingsRepository,
@@ -52,8 +59,9 @@ class ReadinessChecker(
     override fun check(): List<ReadinessIssue> {
         val issues = mutableListOf<ReadinessIssue>()
         if (!env.notificationsEnabled()) issues += ReadinessIssue.NOTIFICATIONS_BLOCKED
-        if (env.alarmVolume() <= 0) issues += ReadinessIssue.ALARM_VOLUME_ZERO
         if (!env.fullScreenAllowed()) issues += ReadinessIssue.FULL_SCREEN_BLOCKED
+        val volume = env.alarmVolume()
+        if (volume <= 0) issues += ReadinessIssue.ALARM_VOLUME_ZERO
         if (!env.dndBypassAllowed()) issues += ReadinessIssue.DND_BYPASS_MISSING
         if (!env.batteryOptimizationIgnored()) issues += ReadinessIssue.BATTERY_OPTIMIZED
         val battery = env.ownBatteryPct()
@@ -63,6 +71,8 @@ class ReadinessChecker(
         val lastTest = settings.current.lastTestWallMs
         if (lastTest == null || clock.wallMs() - lastTest > TEST_MAX_AGE_MS)
             issues += ReadinessIssue.NEVER_TESTED
+        if (volume > 0 && volume * 2 < env.alarmVolumeMax())
+            issues += ReadinessIssue.ALARM_VOLUME_LOW
         return issues
     }
 
@@ -87,6 +97,8 @@ class AndroidReadinessEnv(private val context: Context) : ReadinessEnv {
     }
 
     override fun alarmVolume(): Int = audio?.getStreamVolume(AudioManager.STREAM_ALARM) ?: 0
+
+    override fun alarmVolumeMax(): Int = audio?.getStreamMaxVolume(AudioManager.STREAM_ALARM) ?: 0
 
     override fun fullScreenAllowed(): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || nm.canUseFullScreenIntent()

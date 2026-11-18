@@ -19,8 +19,7 @@ test("alarm tone: pick a tone, then preview and test it after the sound gate", a
   const page = dual.parentPage;
   try {
     await pairWeb(dual);
-    await page.getByTestId("parent_overflow").click();
-    await page.getByTestId("parent_settings").click();
+    await page.getByTestId("tool_settings").click();
 
     // The row shows the default; the baby device has no such row.
     await expect(page.getByTestId("settings_alarm_tone_name")).toBeVisible();

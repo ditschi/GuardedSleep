@@ -51,7 +51,7 @@
       "noiseTestTitle": "Test alert",
       "noiseTestText": "This is a test. The baby device stays silent.",
       "actionStopSound": "Stop sound",
-      "actionSnooze10": "Snooze 10 min",
+      "actionSnooze10": "Pause 10 min",
       "actionChecking": "I'm checking",
       "linkLostTitle": "Connection lost",
       "linkLostText": "No connection to the baby device. Check on your baby now.",
@@ -84,7 +84,6 @@
         "ok": "OK",
         "cancel": "Cancel",
         "more": "More",
-        "moreCount": "+{count}",
         "settings": "Settings",
         "tryAgain": "Try again",
         "yes": "Yes",
@@ -291,10 +290,6 @@
           "body": "Someone stopped monitoring on the baby device. You won't get alerts.",
           "titleDefault": "The baby device stopped monitoring"
         },
-        "battery": {
-          "title": "Baby device battery almost empty",
-          "body": "Plug in the baby device now, or monitoring will stop."
-        },
         "needsPairing": {
           "title": "Devices no longer paired"
         },
@@ -308,7 +303,7 @@
         "allQuietSince": "All quiet since {time}",
         "soundSince": "Sound detected · since {time}",
         "soundAt": "Sound at {time} · lasted {duration}",
-        "soundSnoozed": "Sound at {time} · alerts snoozed",
+        "soundSnoozed": "Sound at {time} · noise alerts paused",
         "lastHeard": "Last contact {time}",
         "noContactYet": "No contact yet",
         "monitoringNow": "Monitoring",
@@ -321,7 +316,6 @@
         "stop": "Stop monitoring",
         "securityTitle": "Security warning",
         "securityBody": "The connection could not be verified. If you didn't just pair the devices again, pair them again now.",
-        "staleSuffix": "· at {time}",
         "unitWarning": {
           "pageHidden": "Baby device may pause — its page is hidden",
           "wakeLockOff": "Baby device may fall asleep — its screen isn't kept on",
@@ -330,32 +324,38 @@
           "micPermissionLost": "Baby device lost microphone access"
         },
         "discreet": {
-          "indicator": "Discreet alerts: no sound",
           "escalated": "Switched to sound: no reaction for {minutes} min",
-          "offWarning": "Off: a forgotten discreet mode can stay silent all night."
+          "offWarning": "Off: a forgotten Vibrate only mode can stay silent all night."
         }
       },
       "battery": {
-        "baby": "Baby device {percent}%",
         "babyLow": "Baby device battery {percent}% — plug it in",
-        "parentLow": "This device is at {percent}% — plug it in to keep monitoring",
         "parentLowGeneric": "This device's battery is low — plug it in to keep monitoring"
       },
       "listen": {
-        "idle": "Hold to listen",
-        "holding": "Listening…",
-        "locked": "Listening · tap to stop",
-        "lockHint": "Slide up to keep listening",
+        "idle": "Listen",
         "disabled": "Listen when connected",
-        "a11yLocked": "Listening. Double-tap to stop."
+        "idleSub": "Tap to hear the room",
+        "on": "Listening · tap to stop",
+        "onSub": "Room sound on the speaker",
+        "disabledSub": "Not connected right now",
+        "stateOn": "Listening",
+        "stateOff": "Not listening"
       },
       "snooze": {
-        "button": "Snooze",
-        "title": "Snooze noise alerts",
-        "help": "You still get alerts if the connection drops or a battery runs low.",
-        "minutes": "Snooze {minutes} min",
-        "end": "End snooze",
-        "active": "Snoozed · {minutes} min left"
+        "button": "Pause noise alerts",
+        "title": "Pause noise alerts",
+        "help": "Connection and battery alerts still come.",
+        "minutes": "{minutes} min",
+        "end": "End pause",
+        "tile": "Pause noise alerts",
+        "tilePaused": "Paused",
+        "pauseMinutes": "Pause {minutes} min",
+        "resume": "Resume",
+        "bannerTitle": "Noise alerts paused until {time}",
+        "bannerBody": "Connection and battery alerts still come",
+        "snackbar": "Noise alerts paused for {minutes} min",
+        "undo": "Undo"
       },
       "probe": {
         "button": "Test alert",
@@ -367,7 +367,7 @@
         "question": "Did you hear and feel it?",
         "localOnly": "Tested this device only — the baby device is not connected.",
         "styleSound": "Alert style: Sound",
-        "styleDiscreet": "Alert style: Discreet",
+        "styleDiscreet": "Alert style: Vibrate only",
         "bodyDiscreet": "This vibrates and shows the alert on this device without sound. The baby device stays silent."
       },
       "readiness": {
@@ -452,13 +452,12 @@
       },
       "coach": {
         "bar": "Green means you're monitoring. If it turns red or disappears, you are not.",
-        "listen": "Hold to listen. Slide up to keep listening.",
+        "listen": "Tap Listen to hear the room.",
         "test": "Run a test alert so you know what an alert feels like.",
         "runTest": "Run test alert now"
       },
       "alert": {
-        "title": "Sound detected",
-        "since": "Since {time}",
+        "title": "The child is making sound",
         "ended": "The sound has stopped.",
         "testBadge": "TEST",
         "stopSound": "Stop sound",
@@ -532,7 +531,7 @@
         "alertStyle": {
           "label": "Alert style",
           "sound": "Sound: the baby's sound plays with each alert",
-          "discreet": "Discreet: vibration and screen, no sound"
+          "discreet": "Vibrate only: vibration and screen, no sound"
         },
         "discreetEscalation": {
           "label": "Switch to sound if nobody reacts",
@@ -630,7 +629,11 @@
           "playChime": "Play chime",
           "chime": "Chime before a parent speaks",
           "checklist": "Parents can speak through this device. You can turn this off in Settings."
-        }
+        },
+        "again": "Talk again",
+        "againAt": "at {time}",
+        "disabled": "Talk when connected",
+        "pausedListening": "Listening is paused while you talk"
       },
       "status": {
         "connected": "Connected",
@@ -699,6 +702,103 @@
         },
         "labelAlerting": "This device is sounding an alert",
         "progressAlerting": "Alert sounding now"
+      },
+      "monitor": {
+        "monitoringFor": "Monitoring for {duration}",
+        "cantHear": "Can't hear the room",
+        "alertLine": "A sound above this line sends an alert",
+        "lastMinute": "Last minute",
+        "now": "now",
+        "noSound": "No sound coming in",
+        "micSilentStrip": "Microphone silent",
+        "alertsTested": "Alerts tested {time}",
+        "batteryA11y": "Baby device battery {percent} percent",
+        "batteryChargingA11y": "Baby device battery {percent} percent, charging",
+        "batteryShort": "{percent}%"
+      },
+      "alertStyle": {
+        "chipSound": "Alert: Sound",
+        "chipVibrate": "Alert: Vibrate only",
+        "chipA11ySound": "Alerts for sounds: Sound. Change",
+        "chipA11yVibrate": "Alerts for sounds: Vibrate only. Change",
+        "vibrateTitle": "Vibrate only",
+        "bodyNoSound": "Noise alerts make no sound.",
+        "bodyNever": "Noise alerts never make a sound.",
+        "bodyAfterPause": "After the pause: vibrate first, sound after {minutes} min",
+        "turnSoundOn": "Turn sound on"
+      },
+      "banner": {
+        "fix": "Fix",
+        "more": "+{count} more",
+        "moreA11y": "{count, plural, one {1 more notice: {notices}} other {# more notices: {notices}}}",
+        "listTitle": "Notices",
+        "micSilentTitle": "The baby device's microphone hears nothing",
+        "micSilentBody": "Check the baby device. Another app may be using its microphone.",
+        "ready": {
+          "notifications": {
+            "title": "Notifications are off",
+            "body": "Alerts can't reach you."
+          },
+          "fullScreen": {
+            "title": "Alerts can't show on the lock screen",
+            "body": "You may miss an alert while the phone is locked."
+          },
+          "alarmVolumeZero": {
+            "title": "Alarm volume is off",
+            "body": "You won't hear alerts on this phone"
+          },
+          "alarmVolumeLow": {
+            "title": "Alarm volume is low",
+            "body": "Turn it up so you hear alerts clearly."
+          },
+          "dnd": {
+            "title": "Do Not Disturb may silence alerts",
+            "body": "Allow GuardedSleep to get through."
+          },
+          "battery": {
+            "title": "This phone may stop GuardedSleep",
+            "body": "Allow background use so alerts keep working."
+          },
+          "parentBattery": {
+            "title": "This phone's battery is low",
+            "body": "Plug it in to keep monitoring."
+          },
+          "headphones": {
+            "title": "Alerts will play in your headphones",
+            "body": "Switch alerts to the speaker if you want to hear them in the room."
+          },
+          "neverTested": {
+            "title": "No recent test alert",
+            "body": "Run a test to be sure alerts reach you."
+          }
+        }
+      },
+      "noiseAlert": {
+        "labelSound": "Playing the room sound",
+        "labelVibrate": "Your phone is vibrating",
+        "labelStopped": "Alert stopped",
+        "counterLabel": "since {time}",
+        "counterA11y": "{duration}, since {time}",
+        "sentenceSound": "The room sound is playing on this phone.",
+        "stopSoundSub": "Stops the alert sound, keeps monitoring",
+        "stopVibrationSub": "Stops the vibration, keeps monitoring"
+      },
+      "batteryAlert": {
+        "label": "Baby device battery",
+        "headline": "The baby device is almost empty",
+        "counterLabel": "battery left",
+        "counterA11y": "{percent} percent battery left",
+        "sentence": "Plug in the baby device now. When it runs out, monitoring stops.",
+        "silentNote": "The baby device stays silent. Only this phone alerts.",
+        "action": "OK, I'll plug it in",
+        "actionSub": "Closes this screen"
+      },
+      "tool": {
+        "nightA11yOff": "Night mode: off",
+        "nightA11yOn": "Night mode: on",
+        "nightA11yAuto": "Night mode: automatic",
+        "nightOn": "On",
+        "nightAuto": "Auto"
       }
     }
   },

@@ -53,7 +53,7 @@
       "noiseTestTitle": "Alertă de test",
       "noiseTestText": "Este un test. Dispozitivul bebelușului rămâne liniștit.",
       "actionStopSound": "Oprește sunetul",
-      "actionSnooze10": "Amână 10 min",
+      "actionSnooze10": "Pauză de 10 min",
       "actionChecking": "Verific",
       "linkLostTitle": "Conexiune pierdută",
       "linkLostText": "Nicio conexiune cu dispozitivul bebelușului. Du-te să vezi cum e bebelușul.",
@@ -86,7 +86,6 @@
         "ok": "OK",
         "cancel": "Anulează",
         "more": "Mai multe",
-        "moreCount": "+{count}",
         "settings": "Setări",
         "tryAgain": "Încearcă din nou",
         "yes": "Da",
@@ -293,10 +292,6 @@
           "body": "Cineva a oprit monitorizarea pe dispozitivul bebelușului. Nu vei primi alerte.",
           "titleDefault": "Dispozitivul bebelușului a oprit monitorizarea"
         },
-        "battery": {
-          "title": "Bateria dispozitivului bebelușului aproape goală",
-          "body": "Pune acum dispozitivul bebelușului la încărcat, altfel monitorizarea se oprește."
-        },
         "needsPairing": {
           "title": "Dispozitivele nu mai sunt asociate"
         },
@@ -310,7 +305,7 @@
         "allQuietSince": "Liniște de la {time}",
         "soundSince": "Sunet detectat · de la {time}",
         "soundAt": "Sunet la {time} · a durat {duration}",
-        "soundSnoozed": "Sunet la {time} · alerte amânate",
+        "soundSnoozed": "Sunet la {time} · alerte de zgomot în pauză",
         "lastHeard": "Ultimul contact {time}",
         "noContactYet": "Niciun contact încă",
         "monitoringNow": "Monitorizare",
@@ -323,7 +318,6 @@
         "stop": "Oprește monitorizarea",
         "securityTitle": "Avertisment de securitate",
         "securityBody": "Conexiunea nu a putut fi verificată. Dacă nu ai asociat chiar acum dispozitivele din nou, asociază-le din nou acum.",
-        "staleSuffix": "· la {time}",
         "unitWarning": {
           "pageHidden": "Dispozitivul bebelușului se poate opri: pagina lui este ascunsă",
           "wakeLockOff": "Dispozitivul bebelușului poate adormi: ecranul nu este ținut aprins",
@@ -332,32 +326,38 @@
           "micPermissionLost": "Dispozitivul bebelușului a pierdut accesul la microfon"
         },
         "discreet": {
-          "indicator": "Alerte discrete: fără sunet",
           "escalated": "Trecut pe sunet: nicio reacție de {minutes} min",
-          "offWarning": "Dezactivat: un mod discret uitat poate rămâne mut toată noaptea."
+          "offWarning": "Dezactivat: un mod doar vibrație uitat poate rămâne mut toată noaptea."
         }
       },
       "battery": {
-        "baby": "Dispozitivul bebelușului {percent}%",
         "babyLow": "Bateria dispozitivului bebelușului: {percent}%. Pune-l la încărcat",
-        "parentLow": "Acest dispozitiv are {percent}%: pune-l la încărcat ca să continue monitorizarea",
         "parentLowGeneric": "Bateria acestui dispozitiv este slabă: pune-l la încărcat ca să continue monitorizarea"
       },
       "listen": {
-        "idle": "Ține apăsat pentru a asculta",
-        "holding": "Se ascultă…",
-        "locked": "Se ascultă · atinge pentru a opri",
-        "lockHint": "Glisează în sus pentru a continua să asculți",
+        "idle": "Ascultă",
         "disabled": "Ascultă când ești conectat",
-        "a11yLocked": "Se ascultă. Atinge de două ori pentru a opri."
+        "idleSub": "Atinge pentru a asculta camera",
+        "on": "Se ascultă · atinge pentru a opri",
+        "onSub": "Sunetul camerei pe difuzor",
+        "disabledSub": "Neconectat acum",
+        "stateOn": "Se ascultă",
+        "stateOff": "Nu se ascultă"
       },
       "snooze": {
-        "button": "Amână",
-        "title": "Amână alertele de zgomot",
-        "help": "Primești în continuare alerte dacă se pierde conexiunea sau bateria se descarcă.",
-        "minutes": "Amână {minutes} min",
-        "end": "Încheie amânarea",
-        "active": "Amânat · mai sunt {minutes} min"
+        "button": "Pune în pauză alertele de zgomot",
+        "title": "Pune în pauză alertele de zgomot",
+        "help": "Alertele de conexiune și de baterie vin în continuare.",
+        "minutes": "{minutes} min",
+        "end": "Încheie pauza",
+        "tile": "Pune în pauză alertele de zgomot",
+        "tilePaused": "În pauză",
+        "pauseMinutes": "Pauză de {minutes} min",
+        "resume": "Reia",
+        "bannerTitle": "Alerte de zgomot în pauză până la {time}",
+        "bannerBody": "Alertele de conexiune și de baterie vin în continuare",
+        "snackbar": "Alerte de zgomot în pauză pentru {minutes} min",
+        "undo": "Anulează"
       },
       "probe": {
         "button": "Alertă de test",
@@ -369,7 +369,7 @@
         "question": "Ai auzit și ai simțit alerta?",
         "localOnly": "S-a testat doar acest dispozitiv: dispozitivul bebelușului nu este conectat.",
         "styleSound": "Tip de alertă: sunet",
-        "styleDiscreet": "Tip de alertă: discret",
+        "styleDiscreet": "Stil alertă: doar vibrație",
         "bodyDiscreet": "Acest dispozitiv vibrează și arată alerta fără sunet. Dispozitivul bebelușului rămâne tăcut."
       },
       "readiness": {
@@ -454,13 +454,12 @@
       },
       "coach": {
         "bar": "Verde înseamnă că monitorizezi. Dacă devine roșu sau dispare, nu monitorizezi.",
-        "listen": "Ține apăsat pentru a asculta. Glisează în sus pentru a continua să asculți.",
+        "listen": "Atinge Ascultă pentru a auzi camera.",
         "test": "Rulează o alertă de test ca să știi cum se simte o alertă.",
         "runTest": "Rulează acum alerta de test"
       },
       "alert": {
-        "title": "Sunet detectat",
-        "since": "De la {time}",
+        "title": "Copilul face zgomot",
         "ended": "Sunetul s-a oprit.",
         "testBadge": "TEST",
         "stopSound": "Oprește sunetul",
@@ -530,7 +529,7 @@
         "alertStyle": {
           "label": "Tip de alertă",
           "sound": "Sunet: sunetul bebelușului se aude la fiecare alertă",
-          "discreet": "Discret: vibrație și ecran, fără sunet"
+          "discreet": "Doar vibrație: vibrație și ecran, fără sunet"
         },
         "discreetEscalation": {
           "label": "Treci pe sunet dacă nimeni nu reacționează",
@@ -628,7 +627,11 @@
           "playChime": "Redă sunetul",
           "chime": "Sunet înainte ca un părinte să vorbească",
           "checklist": "Părinții pot vorbi prin acest dispozitiv. Poți opri asta din Setări."
-        }
+        },
+        "again": "Vorbește din nou",
+        "againAt": "la {time}",
+        "disabled": "Vorbește când ești conectat",
+        "pausedListening": "Ascultarea e în pauză cât vorbești"
       },
       "status": {
         "connected": "Conectat",
@@ -697,6 +700,103 @@
         },
         "labelAlerting": "Acest dispozitiv emite o alertă",
         "progressAlerting": "Alertă sunând acum"
+      },
+      "monitor": {
+        "monitoringFor": "Monitorizare de {duration}",
+        "cantHear": "Camera nu se aude",
+        "alertLine": "Un sunet peste această linie trimite o alertă",
+        "lastMinute": "Ultimul minut",
+        "now": "acum",
+        "noSound": "Nu intră niciun sunet",
+        "micSilentStrip": "Microfon mut",
+        "alertsTested": "Alerte testate {time}",
+        "batteryA11y": "Bateria dispozitivului bebelușului: {percent} la sută",
+        "batteryChargingA11y": "Bateria dispozitivului bebelușului: {percent} la sută, se încarcă",
+        "batteryShort": "{percent}%"
+      },
+      "alertStyle": {
+        "chipSound": "Alertă: sunet",
+        "chipVibrate": "Alertă: doar vibrație",
+        "chipA11ySound": "Alerte pentru sunete: sunet. Schimbă",
+        "chipA11yVibrate": "Alerte pentru sunete: doar vibrație. Schimbă",
+        "vibrateTitle": "Doar vibrație",
+        "bodyNoSound": "Alertele de zgomot nu fac sunet.",
+        "bodyNever": "Alertele de zgomot nu fac niciodată sunet.",
+        "bodyAfterPause": "După pauză: întâi vibrație, sunet după {minutes} min",
+        "turnSoundOn": "Pornește sunetul"
+      },
+      "banner": {
+        "fix": "Rezolvă",
+        "more": "+{count} în plus",
+        "moreA11y": "{count, plural, one {1 mesaj în plus: {notices}} few {# mesaje în plus: {notices}} other {# de mesaje în plus: {notices}}}",
+        "listTitle": "Mesaje",
+        "micSilentTitle": "Microfonul dispozitivului bebelușului nu aude nimic",
+        "micSilentBody": "Verifică dispozitivul bebelușului. Altă aplicație poate folosi microfonul.",
+        "ready": {
+          "notifications": {
+            "title": "Alertele sunt oprite",
+            "body": "Alertele nu te pot ajunge."
+          },
+          "fullScreen": {
+            "title": "Alertele nu apar pe ecranul de blocare",
+            "body": "Ai putea rata o alertă cât telefonul e blocat."
+          },
+          "alarmVolumeZero": {
+            "title": "Volumul alarmei este oprit",
+            "body": "Nu vei auzi alertele pe acest telefon"
+          },
+          "alarmVolumeLow": {
+            "title": "Volumul alarmei este mic",
+            "body": "Mărește-l ca să auzi clar alertele."
+          },
+          "dnd": {
+            "title": "Nu deranja poate reduce alertele la tăcere",
+            "body": "Permite GuardedSleep să treacă."
+          },
+          "battery": {
+            "title": "Acest telefon poate opri GuardedSleep",
+            "body": "Permite rularea în fundal ca alertele să funcționeze."
+          },
+          "parentBattery": {
+            "title": "Bateria acestui telefon este slabă",
+            "body": "Pune-l la încărcat ca să continue monitorizarea."
+          },
+          "headphones": {
+            "title": "Alertele se vor auzi în căști",
+            "body": "Treci alertele pe difuzor dacă vrei să le auzi în cameră."
+          },
+          "neverTested": {
+            "title": "Nicio alertă de test recentă",
+            "body": "Rulează un test ca să fii sigur că alertele te ajung."
+          }
+        }
+      },
+      "noiseAlert": {
+        "labelSound": "Se redă sunetul camerei",
+        "labelVibrate": "Telefonul tău vibrează",
+        "labelStopped": "Alertă oprită",
+        "counterLabel": "din {time}",
+        "counterA11y": "{duration}, din {time}",
+        "sentenceSound": "Sunetul camerei se redă pe acest telefon.",
+        "stopSoundSub": "Oprește sunetul alertei, monitorizarea continuă",
+        "stopVibrationSub": "Oprește vibrația, monitorizarea continuă"
+      },
+      "batteryAlert": {
+        "label": "Bateria dispozitivului bebelușului",
+        "headline": "Dispozitivul bebelușului aproape s-a descărcat",
+        "counterLabel": "baterie rămasă",
+        "counterA11y": "{percent} la sută baterie rămasă",
+        "sentence": "Pune acum dispozitivul bebelușului la încărcat. Când se descarcă, monitorizarea se oprește.",
+        "silentNote": "Dispozitivul bebelușului rămâne mut. Doar acest telefon alertează.",
+        "action": "OK, îl pun la încărcat",
+        "actionSub": "Închide acest ecran"
+      },
+      "tool": {
+        "nightA11yOff": "Mod noapte: oprit",
+        "nightA11yOn": "Mod noapte: pornit",
+        "nightA11yAuto": "Mod noapte: automat",
+        "nightOn": "Pornit",
+        "nightAuto": "Auto"
       }
     }
   },
