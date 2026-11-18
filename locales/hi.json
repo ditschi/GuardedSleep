@@ -106,7 +106,9 @@
           "checking": "जाँच रहे हैं"
         },
         "babyUnitDefault": "बच्चे का डिवाइस",
-        "parentUnitDefault": "माता-पिता का डिवाइस"
+        "parentUnitDefault": "माता-पिता का डिवाइस",
+        "close": "बंद करें",
+        "back": "वापस"
       },
       "role": {
         "title": "यह कौन-सा डिवाइस है?",
@@ -214,17 +216,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "{name} से जुड़ें",
-          "cardTitleDefault": "बच्चे के डिवाइस से जुड़ें"
-        },
-        "baby": {
-          "cardTitle": "निगरानी शुरू करें"
-        },
         "lastUsed": "आखिरी बार उपयोग: {time}",
         "newPairing": "नए डिवाइस सेट करें",
         "empty": "अभी कोई डिवाइस पेयर नहीं है।",
-        "switchMode": "मोड बदलें"
+        "switchMode": "मोड बदलें",
+        "start": "शुरू करें",
+        "privacy": "आपके डिवाइसों के बीच आवाज़ एन्क्रिप्टेड रहती है। कोई खाता नहीं, क्लाउड में कोई रिकॉर्डिंग नहीं।",
+        "vibrateOnly": "शोर वाले अलर्ट इस डिवाइस पर सिर्फ़ कंपन करेंगे।"
       },
       "baby": {
         "status": {
@@ -234,7 +232,6 @@
           "notResponding": "माता-पिता का डिवाइस जवाब नहीं दे रहा — कोशिश जारी है",
           "parentStopped": "माता-पिता के डिवाइस ने निगरानी रोक दी"
         },
-        "forDuration": "{duration} से",
         "monitoring": "निगरानी जारी है",
         "parentListening": "माता-पिता सुन रहे हैं",
         "battery": "यह डिवाइस: बैटरी {percent}%",
@@ -256,7 +253,31 @@
         "a11yLabel": "निगरानी जारी है। स्क्रीन लॉक है।",
         "unlockHint": "दबाए रखें और ऊपर सरकाकर अनलॉक करें",
         "unlockZone": "यहाँ सरकाएँ",
-        "unlockAction": "अनलॉक करें"
+        "unlockAction": "अनलॉक करें",
+        "listening": "सुन रहा है",
+        "withName": "{state} · {name}",
+        "touchHint": "विवरण के लिए छुएँ",
+        "connectedTo": "{name} से जुड़ा है",
+        "connectedToDefault": "अभिभावक डिवाइस से जुड़ा है",
+        "dimsIn": "यह स्क्रीन {seconds} सेकंड में मंद हो जाएगी। इसे दोबारा देखने के लिए कभी भी छुएँ।",
+        "lostBody": "{duration} से कोई कनेक्शन नहीं है। यह डिवाइस शांत रहता है और अपने-आप दोबारा जुड़ जाएगा।",
+        "rowConnection": "कनेक्शन",
+        "rowParent": "अभिभावक डिवाइस",
+        "rowLastTalk": "पिछली बातचीत",
+        "rowThisDevice": "यह डिवाइस",
+        "connectionValue": "{name} · शिशु डिवाइस",
+        "lastTalkValue": "{time} · {duration}",
+        "lastTalkNone": "अभी तक नहीं",
+        "deviceCharging": "चार्ज हो रहा है · {percent}%",
+        "deviceBattery": "बैटरी {percent}%",
+        "attentionNotCharging": "ध्यान चाहिए: चार्ज नहीं हो रहा · {percent}%",
+        "attentionBatteryLow": "ध्यान चाहिए: बैटरी कम है · {percent}%",
+        "attentionBatteryCritical": "ध्यान चाहिए: बैटरी लगभग खाली है · {percent}%",
+        "unlockConfirmTitle": "यह स्क्रीन अनलॉक करें?",
+        "unlockConfirmBody": "निगरानी जारी रहती है।",
+        "unlockConfirm": "अनलॉक करें",
+        "unlockCancel": "लॉक रहने दें",
+        "unlockedHint": "इस डिवाइस को अभिभावक डिवाइस की तरह इस्तेमाल करने के लिए निगरानी रोकें और शुरुआती स्क्रीन पर इसे चुनें।"
       },
       "link": {
         "idle": "निगरानी नहीं हो रही",
@@ -415,15 +436,15 @@
         "current": "कनेक्शन: {name}",
         "change": "बदलें",
         "labelDefault": "{name} (डिफ़ॉल्ट)",
-        "makeDefault": "डिफ़ॉल्ट बनाएँ",
         "autoConnect": "ऐप खुलने पर अपने आप कनेक्ट करें",
-        "removeDefault": "डिफ़ॉल्ट हटाएँ",
         "chooseAnother": "दूसरा कनेक्शन चुनें",
         "rename": "नाम बदलें",
         "renameTitle": "कनेक्शन का नाम बदलें",
         "nameLabel": "नाम (1–30 अक्षर, इसी फ़ोन पर रहता है)",
         "nameInvalid": "1 से 30 अक्षर इस्तेमाल करें।",
-        "save": "सहेजें"
+        "save": "सहेजें",
+        "readOnlyNote": "कनेक्शन बदलने के लिए निगरानी रोकें।",
+        "inUse": "उपयोग में"
       },
       "missed": {
         "some": "कनेक्शन टूटने के दौरान: {start} और {end} के बीच {count, plural, one {# आवाज़} other {# आवाज़ें}}। सबसे तेज़: {level}।",
@@ -453,13 +474,12 @@
           "soundDetection": "आवाज़ की पहचान",
           "silence": "शांत मोड",
           "alerts": "सूचनाएँ",
-          "screen": "स्क्रीन",
-          "paired": "पेयर किया डिवाइस",
           "thisPhone": "यह डिवाइस",
           "language": "भाषा",
           "about": "जानकारी और सीमाएँ",
           "advanced": "उन्नत",
-          "startMode": "शुरू करने का मोड"
+          "startMode": "शुरू करने का मोड",
+          "display": "डिस्प्ले"
         },
         "sensitivity": "संवेदनशीलता",
         "moreSensitive": "ज़्यादा संवेदनशील",
@@ -545,6 +565,14 @@
           "stop": "रोकें",
           "test": "कनेक्शन अलार्म जाँचें",
           "testWarning": "यह जाँच लगभग 8 सेकंड तक अलार्म की पूरी आवाज़ में बजती है।"
+        },
+        "openAtStart": {
+          "title": "शुरू होने पर खोलें",
+          "modeHint": "ऐप शुरू होने पर यह डिवाइस किस मोड में खुलता है।",
+          "autoTitle": "अपने आप कनेक्ट करें",
+          "autoHint": "ऐप हर बार खुलने पर माता-पिता का डिवाइस चुने हुए कनेक्शन से एक बार निगरानी शुरू करता है।",
+          "autoNone": "अपने आप कनेक्ट न करें",
+          "defaultTitle": "डिफ़ॉल्ट कनेक्शन"
         }
       },
       "fgsMissing": {
@@ -589,8 +617,6 @@
         "permSettings": "सेटिंग खोलें",
         "baby": {
           "talking": "पैरेंट बोल रहे हैं",
-          "lastTalk": "आखिरी बातचीत: {name}, {time}, {duration}",
-          "lastTalkAnon": "आखिरी बातचीत: {time}, {duration}",
           "title": "बोलना",
           "switch": "पैरेंट इस डिवाइस से बोल सकते हैं",
           "switchHint": "बंद होने पर इस डिवाइस पर कुछ भी नहीं चलाया जाता।",
@@ -790,8 +816,7 @@
     "role": {
       "title": "इस डिवाइस को इस रूप में इस्तेमाल करें",
       "subtitle": "फ़ोन, टैबलेट या लैपटॉप। पहले बच्चे का डिवाइस सेट करें।",
-      "navLabel": "भूमिका चुनें",
-      "privacyNote": "आवाज़ सीधे आपके दोनों डिवाइसों के बीच जाती है और कभी रिकॉर्ड नहीं होती।"
+      "navLabel": "भूमिका चुनें"
     },
     "pair": {
       "copyHint": "इसे 5 मिनट के भीतर माता-पिता के डिवाइस पर पेस्ट करें। इसे चैट में न भेजें।",

@@ -37,6 +37,7 @@ import org.guardedsleep.app.ui.model.SettingsState
 import org.guardedsleep.app.ui.model.Theme
 import org.guardedsleep.app.ui.screens.BabyKioskScreen
 import org.guardedsleep.app.ui.screens.ParentMonitorScreen
+import org.guardedsleep.app.ui.screens.SettingsPage
 import org.guardedsleep.app.ui.screens.SettingsScreen
 import org.guardedsleep.app.ui.theme.GuardedSleepTheme
 import org.junit.Assert.assertEquals
@@ -293,7 +294,7 @@ class InteractionTests : ShotBase() {
                 app = monitoring,
                 settings = SettingsState(alertStyle = AlertStyle.DISCREET),
             )
-        show { SettingsScreen(c, {}, {}, {}) }
+        show { SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.ALERTS) }
         onNodeWithTag("discreet_escalation_2m").performScrollTo().assertIsDisplayed()
         onNodeWithTag("discreet_escalation_off_warning").assertDoesNotExist()
         onNodeWithTag("discreet_escalation_5m").performScrollTo().performClick()
@@ -308,7 +309,7 @@ class InteractionTests : ShotBase() {
     @Test
     fun noEscalationChoicesInSoundStyle() = runComposeUiTest {
         val c = FakeAppController(app = monitoring)
-        show { SettingsScreen(c, {}, {}, {}) }
+        show { SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.ALERTS) }
         onNodeWithTag("alert_style_sound").performScrollTo().assertIsDisplayed()
         onNodeWithTag("discreet_escalation_2m").assertDoesNotExist()
     }
@@ -364,7 +365,7 @@ class InteractionTests : ShotBase() {
     @Test
     fun turnCredentialsErrorIsShownForUserNameWithoutPassword() = runComposeUiTest {
         val c = advancedSettings()
-        show { SettingsScreen(c, {}, {}, {}) }
+        show { SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.ADVANCED) }
         onNodeWithTag("settings_turn").performScrollTo().performTextInput("turn:h:3478")
         onNodeWithTag("settings_turn_user").performScrollTo().performTextInput("user")
         onNodeWithTag("settings_turn_save").performScrollTo().performClick()
@@ -376,7 +377,7 @@ class InteractionTests : ShotBase() {
     @Test
     fun savedPasswordLeavesTheFieldEmptyWithAHint() = runComposeUiTest {
         val c = advancedSettings()
-        show { SettingsScreen(c, {}, {}, {}) }
+        show { SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.ADVANCED) }
         onNodeWithTag("settings_turn_remove").assertDoesNotExist()
         onNodeWithTag("settings_turn").performScrollTo().performTextInput("turn:h:3478")
         onNodeWithTag("settings_turn_user").performScrollTo().performTextInput("user")

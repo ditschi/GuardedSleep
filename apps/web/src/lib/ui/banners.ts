@@ -1,7 +1,7 @@
 import type { AlertStyle, ParentMonitorState, ReadinessIssue } from "../contract";
-import { BATTERY_CRITICAL_PCT } from "./parent-view";
+import { BABY_BATTERY_LOW_PCT, BATTERY_CRITICAL_PCT } from "./parent-view";
 
-export { BATTERY_CRITICAL_PCT };
+export { BABY_BATTERY_LOW_PCT, BATTERY_CRITICAL_PCT };
 
 /*
  * The notices on the parent monitor, ranked (`parent-alerts` "Banner priority on the monitor"):
@@ -46,8 +46,6 @@ export const BANNER_ORDER: readonly BannerKind[] = [
 /** The most banners shown at once. */
 export const BANNER_LIMIT = 2;
 
-/** The baby device asks to be plugged in below this (`parent-alerts` "Baby battery warnings"). */
-export const BABY_BATTERY_LOW_PCT = 15;
 /** This (parent) device asks to be plugged in below this. */
 export const OWN_BATTERY_LOW_PCT = 20;
 

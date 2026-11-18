@@ -10,6 +10,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -25,6 +27,7 @@ import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.Theme
 import org.guardedsleep.app.ui.screens.HomeScreen
+import org.guardedsleep.app.ui.screens.SettingsPage
 import org.guardedsleep.app.ui.screens.SettingsScreen
 import org.guardedsleep.app.ui.theme.GuardedSleepTheme
 import org.junit.Assert.assertEquals
@@ -86,12 +89,11 @@ class ConnectionTests : ShotBase() {
     }
 
     @Test
-    fun settingsListsEachConnectionWithRenameDefaultAndForget() = runComposeUiTest {
+    fun settingsListsEachConnectionWithRenameAndForget() = runComposeUiTest {
         val c = FakeAppController(app = two)
-        show { SettingsScreen(c, {}, {}, {}) }
+        show { SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.CONNECTIONS) }
+        // The default has one home, Open at start (frame 22: no default toggle here).
         onNodeWithTag("settings_connection_default_1").assertDoesNotExist()
-        onNodeWithTag("settings_connection_default_2").performScrollTo().performClick()
-        assertEquals("setDefaultConnection:2", c.calls.last())
 
         onNodeWithTag("settings_connection_rename_2").performScrollTo().performClick()
         onNodeWithTag("rename_connection_field").performTextInput("Gran")
@@ -205,18 +207,59 @@ class ConnectionTests : ShotBase() {
     }
 
     @Test
-    fun settingsOffersRemoveDefaultOnTheDefaultOnly() = runComposeUiTest {
+    fun openAtStartMarksTheAutomaticStartConnectionAndCanClearOrChangeIt() = runComposeUiTest {
+        val c = FakeAppController(app = two)
+        show { SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.OPEN_AT_START) }
+        onNodeWithTag("settings_auto_none").performScrollTo().assertIsNotSelected()
+        onNodeWithTag("settings_connection_default_1").performScrollTo().assertIsSelected()
+        onNodeWithTag("settings_connection_default_2").performScrollTo().performClick()
+        assertEquals("setDefaultConnection:2", c.calls.last())
+        onNodeWithTag("settings_auto_none").performScrollTo().performClick()
+        assertEquals("clearDefaultConnection", c.calls.last())
+        onNodeWithTag("settings_auto_none").assertIsSelected()
+    }
+
+    @Test
+    fun settingsShowsTheConnectionsOnTheOverviewAndOpensThePageWhenIdle() = runComposeUiTest {
         val c = FakeAppController(app = two)
         show { SettingsScreen(c, {}, {}, {}) }
-        onNodeWithTag("settings_connection_remove_default_2").assertDoesNotExist()
-        onNodeWithTag("settings_connection_remove_default_1").performScrollTo().performClick()
-        assertEquals("clearDefaultConnection", c.calls.last())
+        // The card is one button, so its rows only exist in the unmerged tree.
+        onNodeWithTag("settings_connection_row_1", useUnmergedTree = true).assertIsDisplayed()
+        onNodeWithTag("settings_connection_row_2", useUnmergedTree = true).assertIsDisplayed()
+        onNodeWithTag("settings_connection_in_use").assertDoesNotExist()
+        onNodeWithTag("settings_connections_read_only").assertDoesNotExist()
+        onNodeWithTag("settings_connections").performClick()
+        onNodeWithTag("settings_group_paired").assertIsDisplayed()
+        onNodeWithTag("settings_connection_rename_2").assertIsDisplayed()
+    }
+
+    @Test
+    fun whileMonitoringTheConnectionsAreReadOnlyAndTheOneInUseIsMarked() = runComposeUiTest {
+        val c = FakeAppController(app = two.copy(monitoring = true))
+        show { SettingsScreen(c, {}, {}, {}) }
+        onNodeWithTag("settings_connections_read_only")
+            .assertIsDisplayed()
+            .assertTextContains("Stop monitoring to change connections", substring = true)
+        onNodeWithTag("settings_connection_in_use").assertIsDisplayed()
+        // The overview rows are not a way into the editable page any more.
+        onNodeWithTag("settings_connections").performClick()
+        onNodeWithTag("settings_group_paired").assertDoesNotExist()
+        onNodeWithTag("settings_connection_rename_1").assertDoesNotExist()
+    }
+
+    @Test
+    fun theConnectionsPageIsReadOnlyIfMonitoringStartsMeanwhile() = runComposeUiTest {
+        val c = FakeAppController(app = two.copy(monitoring = true))
+        show { SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.CONNECTIONS) }
+        onNodeWithTag("settings_connections_read_only").assertIsDisplayed()
+        onNodeWithTag("settings_connection_rename_1").assertDoesNotExist()
+        onNodeWithTag("settings_connection_forget_1").assertDoesNotExist()
     }
 
     @Test
     fun anEmptyNameIsRejectedInTheDialog() = runComposeUiTest {
         val c = FakeAppController(app = one)
-        show { SettingsScreen(c, {}, {}, {}) }
+        show { SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.CONNECTIONS) }
         // Single connection keeps today's rows plus rename.
         onNodeWithTag("settings_peer_name").performScrollTo().assertIsDisplayed()
         onNodeWithTag("settings_connection_rename_1").performScrollTo().performClick()

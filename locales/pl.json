@@ -106,7 +106,9 @@
           "checking": "Sprawdzanie"
         },
         "babyUnitDefault": "Urządzenie dziecka",
-        "parentUnitDefault": "Urządzenie rodzica"
+        "parentUnitDefault": "Urządzenie rodzica",
+        "close": "Zamknij",
+        "back": "Wstecz"
       },
       "role": {
         "title": "Czym jest to urządzenie?",
@@ -214,17 +216,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "Połącz z: {name}",
-          "cardTitleDefault": "Połącz z urządzeniem dziecka"
-        },
-        "baby": {
-          "cardTitle": "Rozpocznij monitorowanie"
-        },
         "lastUsed": "Ostatnio używane {time}",
         "newPairing": "Skonfiguruj nowe urządzenia",
         "empty": "Nie sparowano jeszcze żadnych urządzeń.",
-        "switchMode": "Zmień tryb"
+        "switchMode": "Zmień tryb",
+        "start": "Start",
+        "privacy": "Dźwięk jest szyfrowany między Twoimi urządzeniami. Bez konta, bez nagrywania w chmurze.",
+        "vibrateOnly": "Alerty o hałasie będą na tym urządzeniu tylko wibrować."
       },
       "baby": {
         "status": {
@@ -234,7 +232,6 @@
           "notResponding": "Urządzenie rodzica nie odpowiada, próbuję dalej",
           "parentStopped": "Urządzenie rodzica przestało monitorować"
         },
-        "forDuration": "od {duration}",
         "monitoring": "Monitorowanie",
         "parentListening": "Rodzic słucha",
         "battery": "To urządzenie: bateria {percent}%",
@@ -256,7 +253,31 @@
         "a11yLabel": "Monitorowanie. Ekran zablokowany.",
         "unlockHint": "Przytrzymaj i przesuń w górę, aby odblokować",
         "unlockZone": "Przesuń tutaj",
-        "unlockAction": "Odblokuj"
+        "unlockAction": "Odblokuj",
+        "listening": "Nasłuchuje",
+        "withName": "{state} · {name}",
+        "touchHint": "Dotknij, aby zobaczyć szczegóły",
+        "connectedTo": "Połączono z: {name}",
+        "connectedToDefault": "Połączono z urządzeniem rodzica",
+        "dimsIn": "Ten ekran przygaśnie za {seconds} s. Dotknij go w dowolnej chwili, aby zobaczyć to ponownie.",
+        "lostBody": "Brak połączenia od {duration}. To urządzenie milczy i samo połączy się ponownie.",
+        "rowConnection": "Połączenie",
+        "rowParent": "Urządzenie rodzica",
+        "rowLastTalk": "Ostatnia rozmowa",
+        "rowThisDevice": "To urządzenie",
+        "connectionValue": "{name} · urządzenie dziecka",
+        "lastTalkValue": "{time} · {duration}",
+        "lastTalkNone": "Jeszcze nie było",
+        "deviceCharging": "ładuje się · {percent}%",
+        "deviceBattery": "bateria {percent}%",
+        "attentionNotCharging": "Wymaga uwagi: nie ładuje się · {percent}%",
+        "attentionBatteryLow": "Wymaga uwagi: słaba bateria · {percent}%",
+        "attentionBatteryCritical": "Wymaga uwagi: bateria prawie pusta · {percent}%",
+        "unlockConfirmTitle": "Odblokować ten ekran?",
+        "unlockConfirmBody": "Monitorowanie trwa dalej.",
+        "unlockConfirm": "Odblokuj",
+        "unlockCancel": "Zostaw zablokowany",
+        "unlockedHint": "Aby używać tego urządzenia jako urządzenia rodzica, zatrzymaj monitorowanie i wybierz je na ekranie startowym."
       },
       "link": {
         "idle": "Brak monitorowania",
@@ -415,15 +436,15 @@
         "current": "Połączenie: {name}",
         "change": "Zmień",
         "labelDefault": "{name} (domyślne)",
-        "makeDefault": "Ustaw jako domyślne",
         "autoConnect": "Łącz automatycznie po otwarciu aplikacji",
-        "removeDefault": "Usuń domyślne",
         "chooseAnother": "Wybierz inne połączenie",
         "rename": "Zmień nazwę",
         "renameTitle": "Zmień nazwę połączenia",
         "nameLabel": "Nazwa (1–30 znaków, zostaje na tym telefonie)",
         "nameInvalid": "Użyj od 1 do 30 znaków.",
-        "save": "Zapisz"
+        "save": "Zapisz",
+        "readOnlyNote": "Zatrzymaj monitorowanie, aby zmienić połączenia.",
+        "inUse": "W użyciu"
       },
       "missed": {
         "some": "W czasie braku połączenia: {count, plural, one {1 dźwięk} few {# dźwięki} many {# dźwięków} other {# dźwięku}} między {start} a {end}. Najgłośniej: {level}.",
@@ -453,13 +474,12 @@
           "soundDetection": "Wykrywanie dźwięku",
           "silence": "Tryb ciszy",
           "alerts": "Alerty",
-          "screen": "Ekran",
-          "paired": "Sparowane urządzenie",
           "thisPhone": "To urządzenie",
           "language": "Język",
           "about": "Informacje i ograniczenia",
           "advanced": "Zaawansowane",
-          "startMode": "Tryb uruchamiania"
+          "startMode": "Tryb uruchamiania",
+          "display": "Wyświetlanie"
         },
         "sensitivity": "Czułość",
         "moreSensitive": "Bardziej czułe",
@@ -545,6 +565,14 @@
           "stop": "Zatrzymaj",
           "test": "Testuj alarm połączenia",
           "testWarning": "Test gra z pełną głośnością alarmu przez około 8 sekund."
+        },
+        "openAtStart": {
+          "title": "Otwieranie przy starcie",
+          "modeHint": "W jakim trybie to urządzenie otwiera się po uruchomieniu aplikacji.",
+          "autoTitle": "Łącz automatycznie",
+          "autoHint": "Urządzenie rodzica rozpoczyna monitorowanie z wybranym połączeniem, raz przy każdym otwarciu aplikacji.",
+          "autoNone": "Nie łącz automatycznie",
+          "defaultTitle": "Domyślne połączenie"
         }
       },
       "fgsMissing": {
@@ -589,8 +617,6 @@
         "permSettings": "Otwórz ustawienia",
         "baby": {
           "talking": "Rodzic mówi",
-          "lastTalk": "Ostatnia rozmowa: {name}, {time}, {duration}",
-          "lastTalkAnon": "Ostatnia rozmowa: {time}, {duration}",
           "title": "Mówienie",
           "switch": "Rodzice mogą mówić przez to urządzenie",
           "switchHint": "Gdy wyłączone, to urządzenie nigdy niczego nie odtwarza.",
@@ -790,8 +816,7 @@
     "role": {
       "title": "Użyj tego urządzenia jako",
       "subtitle": "Telefon, tablet lub laptop. Najpierw skonfiguruj urządzenie dziecka.",
-      "navLabel": "Wybierz rolę",
-      "privacyNote": "Dźwięk idzie bezpośrednio między Twoimi dwoma urządzeniami i nigdy nie jest nagrywany."
+      "navLabel": "Wybierz rolę"
     },
     "pair": {
       "copyHint": "Wklej go na urządzeniu rodzica w ciągu 5 minut. Nie wysyłaj go w czacie.",

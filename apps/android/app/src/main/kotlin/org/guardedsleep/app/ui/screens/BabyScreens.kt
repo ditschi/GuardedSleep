@@ -1,14 +1,6 @@
 package org.guardedsleep.app.ui.screens
 
-import android.content.Intent
-import android.content.IntentFilter
-import android.os.BatteryManager
-import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -27,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,13 +42,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -72,6 +65,8 @@ import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.ConfirmDialog
 import org.guardedsleep.app.ui.common.Glyph
 import org.guardedsleep.app.ui.common.GlyphIcon
+import org.guardedsleep.app.ui.common.KioskAttention
+import org.guardedsleep.app.ui.common.KioskMark
 import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.common.PrimaryButton
 import org.guardedsleep.app.ui.common.QuietButton
@@ -82,8 +77,15 @@ import org.guardedsleep.app.ui.common.Tone
 import org.guardedsleep.app.ui.common.WindowBrightness
 import org.guardedsleep.app.ui.common.formatDuration
 import org.guardedsleep.app.ui.common.formatTime
+import org.guardedsleep.app.ui.common.kioskAttention
+import org.guardedsleep.app.ui.common.kioskBrightness
+import org.guardedsleep.app.ui.common.kioskMarkShape
 import org.guardedsleep.app.ui.common.rememberElapsedNow
+import org.guardedsleep.app.ui.common.setupConfirmRemaining
 import org.guardedsleep.app.ui.model.AppController
+import org.guardedsleep.app.ui.model.AppState
+import org.guardedsleep.app.ui.model.BabyMonitorState
+import org.guardedsleep.app.ui.model.LastTalkUi
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.LinkUi
 import org.guardedsleep.app.ui.theme.LocalAppColors
@@ -91,63 +93,57 @@ import org.guardedsleep.app.ui.theme.StateColors
 
 private const val AutoLockSeconds = 30
 
-/** Baby phone's own battery (shown on S07 and on touch-wake only). */
-@Composable
-internal fun rememberOwnBattery(): BatteryReading? {
-    val env = LocalUiEnv.current
-    val ctx = LocalContext.current
-    val now by rememberElapsedNow()
-    return env.battery
-        ?: remember(now / 30_000) {
-            val i = ctx.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-            val level = i?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
-            val scale = i?.getIntExtra(BatteryManager.EXTRA_SCALE, 100) ?: 100
-            val status = i?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
-            if (level < 0) null
-            else
-                BatteryReading(
-                    level * 100 / scale,
-                    status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                        status == BatteryManager.BATTERY_STATUS_FULL,
-                )
-        }
-}
+/** The baby phone's own battery as the platform reported it; null before the first reading. */
+internal fun ownBattery(b: BabyMonitorState): BatteryReading? =
+    b.ownBatteryPct?.let { BatteryReading(it, b.ownPlugged) }
 
-/** Text for the baby-side link line (S07 and kiosk touch-wake). */
-@Composable
-internal fun babyStatusText(link: LinkUi): String =
-    stringResource(
-        when (link.phase) {
-            LinkPhase.CONNECTED -> R.string.native_ui_baby_status_connected
-            LinkPhase.PEER_STOPPED -> R.string.native_ui_baby_status_parent_stopped
-            LinkPhase.FAILED_NEEDS_USER -> R.string.core_pairing_key_mismatch
-            LinkPhase.IDLE,
-            LinkPhase.STOPPED -> R.string.native_ui_baby_status_waiting
-            LinkPhase.CONNECTING,
-            LinkPhase.RECONNECTING ->
-                when {
-                    link.level >= 1 -> R.string.native_ui_baby_status_not_responding
-                    link.lastAliveElapsedMs == null -> R.string.native_ui_baby_status_waiting
-                    else -> R.string.native_ui_baby_status_reconnecting
-                }
-        }
-    )
-
-private fun edgeColor(link: LinkUi): Color =
+/** The words for the baby-side link state (S07 and the kiosk). */
+internal fun babyStatusRes(link: LinkUi): Int =
     when (link.phase) {
-        LinkPhase.CONNECTED -> StateColors.KioskGreen
-        LinkPhase.PEER_STOPPED,
+        LinkPhase.CONNECTED -> R.string.native_ui_baby_status_connected
+        LinkPhase.PEER_STOPPED -> R.string.native_ui_baby_status_parent_stopped
+        LinkPhase.FAILED_NEEDS_USER -> R.string.core_pairing_key_mismatch
         LinkPhase.IDLE,
-        LinkPhase.STOPPED -> StateColors.KioskGrey
-        LinkPhase.FAILED_NEEDS_USER -> Color(0xFF4A0A0A)
+        LinkPhase.STOPPED -> R.string.native_ui_baby_status_waiting
         LinkPhase.CONNECTING,
         LinkPhase.RECONNECTING ->
             when {
-                link.level >= 2 -> Color(0xFF4A0A0A)
-                link.level == 1 -> StateColors.KioskOrange
-                else -> StateColors.KioskInfo
+                link.level >= 1 -> R.string.native_ui_baby_status_not_responding
+                link.lastAliveElapsedMs == null -> R.string.native_ui_baby_status_waiting
+                else -> R.string.native_ui_baby_status_reconnecting
             }
     }
+
+/** Text for the baby-side link line (S07). */
+@Composable internal fun babyStatusText(link: LinkUi): String = stringResource(babyStatusRes(link))
+
+/**
+ * The kiosk's status line: the state in words, "State · Name" when the connection has a name (a
+ * label pattern, never a name inside a sentence). "Listening" while connected.
+ */
+@Composable
+internal fun kioskStatusText(link: LinkUi, name: String?): String {
+    val state =
+        stringResource(
+            if (link.phase == LinkPhase.CONNECTED) R.string.native_ui_kiosk_listening
+            else babyStatusRes(link)
+        )
+    // The key-mismatch text is a whole sentence of its own; a name would only clutter it.
+    return if (name == null || link.phase == LinkPhase.FAILED_NEEDS_USER) state
+    else stringResource(R.string.native_ui_kiosk_with_name, state, name)
+}
+
+/** The needs-attention line under the status line. */
+@Composable
+internal fun kioskAttentionText(reason: KioskAttention, pct: Int): String =
+    stringResource(
+        when (reason) {
+            KioskAttention.NOT_CHARGING -> R.string.native_ui_kiosk_attention_not_charging
+            KioskAttention.BATTERY_LOW -> R.string.native_ui_kiosk_attention_battery_low
+            KioskAttention.BATTERY_CRITICAL -> R.string.native_ui_kiosk_attention_battery_critical
+        },
+        pct.toString(),
+    )
 
 private fun linkGlyph(link: LinkUi) =
     when (link.phase) {
@@ -169,12 +165,11 @@ fun BabyMonitorScreen(controller: AppController, onSettings: () -> Unit) {
     val now by rememberElapsedNow()
     var lastTouch by remember { mutableLongStateOf(env.elapsedNow()) }
     var confirmStop by remember { mutableStateOf(false) }
-    val battery = rememberOwnBattery()
+    val battery = ownBattery(b)
     val left = (AutoLockSeconds - (now - lastTouch) / 1000).toInt().coerceIn(0, AutoLockSeconds)
     LaunchedEffect(left, env.ticking) {
         if (env.ticking && left == 0) controller.setKioskLocked(true)
     }
-    val peer = app.peerName ?: stringResource(R.string.native_ui_common_parent_unit_default)
     BabyQuiet {
         ScreenRoot(
             "baby_monitor",
@@ -222,6 +217,16 @@ fun BabyMonitorScreen(controller: AppController, onSettings: () -> Unit) {
                         "baby_pair_again",
                     )
                 }
+                // The default action: lock the screen again (frame 44).
+                PrimaryButton(
+                    stringResource(R.string.native_ui_baby_lock),
+                    { controller.setKioskLocked(true) },
+                    "baby_lock",
+                )
+                Body(
+                    stringResource(R.string.native_ui_baby_autolock_hint, left.toString()),
+                    tag = "baby_autolock_hint",
+                )
                 Body(
                     stringResource(R.string.native_ui_baby_monitoring),
                     tag = "baby_monitoring_line",
@@ -231,7 +236,20 @@ fun BabyMonitorScreen(controller: AppController, onSettings: () -> Unit) {
                         stringResource(R.string.native_ui_baby_parent_listening),
                         tag = "baby_listening",
                     )
-                Body(peer, tag = "baby_peer")
+                InfoRow(
+                    stringResource(R.string.native_ui_kiosk_row_parent),
+                    parentDeviceValue(b, app),
+                    "baby_peer",
+                    labelColor = LocalAppColors.current.secondaryText,
+                    valueColor = MaterialTheme.colorScheme.onBackground,
+                )
+                InfoRow(
+                    stringResource(R.string.native_ui_kiosk_row_last_talk),
+                    lastTalkValue(b.lastTalk),
+                    "baby_last_talk",
+                    labelColor = LocalAppColors.current.secondaryText,
+                    valueColor = MaterialTheme.colorScheme.onBackground,
+                )
                 if (battery != null) {
                     Body(
                         stringResource(
@@ -283,15 +301,6 @@ fun BabyMonitorScreen(controller: AppController, onSettings: () -> Unit) {
                 }
                 Body(stringResource(R.string.native_ui_baby_mic_level), tag = "baby_mic_level")
                 MicLevelBar(b.micLevel, b.threshold)
-                PrimaryButton(
-                    stringResource(R.string.native_ui_baby_lock),
-                    { controller.setKioskLocked(true) },
-                    "baby_lock",
-                )
-                Body(
-                    stringResource(R.string.native_ui_baby_autolock_hint, left.toString()),
-                    tag = "baby_autolock_hint",
-                )
                 Spacer(Modifier.height(8.dp))
                 AdaptiveButtonRow {
                     SecondaryButton(
@@ -306,6 +315,10 @@ fun BabyMonitorScreen(controller: AppController, onSettings: () -> Unit) {
                         destructive = true,
                     )
                 }
+                Body(
+                    stringResource(R.string.native_ui_kiosk_unlocked_hint),
+                    tag = "baby_unlocked_hint",
+                )
             }
             if (confirmStop) {
                 ConfirmDialog(
@@ -356,71 +369,123 @@ fun MicLevelBar(
     }
 }
 
+/** One "label, value" row of the touch-wake panel and the unlocked screen. */
+@Composable
+private fun InfoRow(
+    label: String,
+    value: String,
+    tag: String,
+    modifier: Modifier = Modifier,
+    labelColor: Color = StateColors.KioskText,
+    valueColor: Color = labelColor,
+) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .semantics(mergeDescendants = true) {}
+            .testTag(tag),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Text(label, color = labelColor, style = MaterialTheme.typography.bodyMedium)
+        Text(
+            value,
+            Modifier.weight(1f),
+            color = valueColor,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.End,
+        )
+    }
+}
+
+/** The parent device's name: what it sent, else the saved one, else the plain words. */
+@Composable
+private fun parentDeviceValue(b: BabyMonitorState, app: AppState): String =
+    b.parentName?.takeIf { it.isNotEmpty() }
+        ?: app.peerName?.takeIf { it.isNotEmpty() }
+        ?: stringResource(R.string.native_ui_common_parent_unit_default)
+
+@Composable
+private fun lastTalkValue(last: LastTalkUi?): String =
+    if (last == null) stringResource(R.string.native_ui_kiosk_last_talk_none)
+    else
+        stringResource(
+            R.string.native_ui_kiosk_last_talk_value,
+            formatTime(last.atWallMs),
+            formatDuration(last.durationMs),
+        )
+
+@Composable
+private fun thisDeviceValue(battery: BatteryReading): String =
+    stringResource(
+        if (battery.charging) R.string.native_ui_kiosk_device_charging
+        else R.string.native_ui_kiosk_device_battery,
+        battery.pct.toString(),
+    )
+
+/** How long a touch-wake stays up before the screen goes back to minimum brightness. */
+private const val KioskWakeMs = 6000L
+
 /**
- * S08: near-black locked screen. Touch wakes dim status for 3 s; hold 0.5 s and slide up to unlock.
- * Level >= 2 shows a slow dim red pulse (peak #330000, 10 s period). No sound, no haptics, no
- * flashes.
+ * S08: black locked screen at minimum brightness. A dim status line and one mark along the top edge
+ * (a short bar, a dashed edge or a pulsing frame) are always visible; a touch wakes a dim panel and
+ * hold-and-slide-up unlocks. The set-up confirmation shows for 60 s from the first contact. During
+ * a talk only the talk indicator shows. No sound, no haptics, no flashes.
  */
 @Composable
 fun BabyKioskScreen(controller: AppController) {
     val kioskApp = controller.app.collectAsState().value
     val b0 = controller.baby.collectAsState().value
-    // No background service: the calm dim red pulse of level 2 (never sound), instead of a green
-    // edge.
+    // No background service: the calm dim frame of level 2 (never sound), instead of the bar.
     val b =
         if (!kioskApp.backgroundProtection)
             b0.copy(link = b0.link.copy(phase = LinkPhase.RECONNECTING, level = 2))
         else b0
     val env = LocalUiEnv.current
-    val battery = rememberOwnBattery()
+    val now by rememberElapsedNow()
+    val battery = ownBattery(b)
+    val attention = kioskAttention(battery, b.chargerSeen)
     var woken by remember { mutableStateOf(false) }
     var wakeKey by remember { mutableIntStateOf(0) }
     var unlockProgress by remember { mutableFloatStateOf(0f) }
     var unlocking by remember { mutableStateOf(false) }
+    var confirmUnlock by remember { mutableStateOf(false) }
     val unlockPx = with(LocalDensity.current) { 140.dp.toPx() }
     val onUnlock = rememberUpdatedState { controller.setKioskLocked(false) }
     LaunchedEffect(wakeKey) {
         if (woken && env.ticking) {
-            delay(3000)
+            delay(KioskWakeMs)
             woken = false
         }
     }
-    WindowBrightness(if (woken || unlocking) 0.1f else 0.01f)
+    val talking = b.parentTalking
+    val confirmLeft = setupConfirmRemaining(b.firstContactElapsedMs, now)
+    val touched = woken || unlocking || confirmUnlock
+    val awake = touched || confirmLeft != null
+    // The minimum, except the confirmation and a touch-wake; a talk keeps the minimum.
+    WindowBrightness(kioskBrightness(awake, talking))
     val fadeSpec = if (env.reduceMotion) snap<Float>() else tween(1200)
-    val infoAlpha by animateFloatAsState(if (woken || unlocking) 1f else 0f, fadeSpec)
-    val pulsing =
-        b.link.level >= 2 &&
-            b.link.phase != LinkPhase.PEER_STOPPED &&
-            b.link.phase != LinkPhase.CONNECTED &&
-            b.link.phase != LinkPhase.IDLE &&
-            b.link.phase != LinkPhase.STOPPED
-    val pulse: Float =
-        if (!pulsing) 0f
-        else if (env.reduceMotion) 0.6f
-        else {
-            val t = rememberInfiniteTransition()
-            val v by
-                t.animateFloat(
-                    0f,
-                    1f,
-                    infiniteRepeatable(
-                        tween(5000, easing = CubicBezierEasing(0.37f, 0f, 0.63f, 1f)),
-                        RepeatMode.Reverse,
-                    ),
-                )
-            v
-        }
+    val showDetails = awake && !talking
+    val infoAlpha by animateFloatAsState(if (showDetails) 1f else 0f, fadeSpec)
     val a11y = stringResource(R.string.native_ui_kiosk_a11y_label)
     val unlockLabel = stringResource(R.string.native_ui_kiosk_unlock_action)
+    val connection = kioskApp.connections.firstOrNull { it.selected }?.name
+    val text = StateColors.KioskText
     BabyQuiet {
         ScreenRoot(
             "baby_kiosk",
             Modifier.semantics {
                     contentDescription = a11y
+                    // A screen reader cannot hold and slide, so its action asks first: a stray
+                    // double tap must not open the controls.
                     customActions =
                         listOf(
                             CustomAccessibilityAction(unlockLabel) {
-                                onUnlock.value()
+                                woken = true
+                                wakeKey++
+                                confirmUnlock = true
                                 true
                             }
                         )
@@ -449,17 +514,11 @@ fun BabyKioskScreen(controller: AppController) {
                         unlockProgress = 0f
                     }
                 },
-            background = lerp(StateColors.KioskBlack, StateColors.KioskPulsePeak, pulse),
+            background = StateColors.KioskBlack,
         ) {
-            Box(
-                Modifier.fillMaxWidth()
-                    .height(4.dp)
-                    .background(edgeColor(b.link))
-                    .testTag("baby_kiosk_edge")
-            )
-            if (b.parentTalking) {
-                // Static and dim, under the edge and outside the faded column: it never wakes
-                // the screen, pulses or animates (`talk-back` "Baby device shows who talks").
+            if (talking) {
+                // Static and dim and alone: it never wakes the screen, pulses or animates
+                // (`talk-back` "Baby device shows who talks"); the status line and the mark hide.
                 Row(
                     Modifier.align(Alignment.TopCenter)
                         .padding(top = 12.dp)
@@ -467,95 +526,182 @@ fun BabyKioskScreen(controller: AppController) {
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    GlyphIcon(Glyph.MIC, StateColors.KioskText.copy(alpha = 0.6f), size = 14.dp)
+                    GlyphIcon(Glyph.MIC, text, size = 14.dp)
                     Text(
                         stringResource(R.string.native_ui_talk_baby_talking),
                         style = MaterialTheme.typography.bodySmall,
-                        color = StateColors.KioskText.copy(alpha = 0.6f),
+                        color = text,
+                    )
+                }
+            } else {
+                KioskMark(kioskMarkShape(b.link), attention != null, env.reduceMotion)
+                // The always-visible line; the touch-wake panel replaces it while it shows.
+                Column(
+                    Modifier.align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .padding(start = 20.dp, end = 20.dp, bottom = 44.dp)
+                        .alpha(1f - infoAlpha)
+                        .then(
+                            if (showDetails) Modifier.semantics { invisibleToUser() } else Modifier
+                        ),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        GlyphIcon(
+                            linkGlyph(b.link),
+                            text,
+                            Modifier.testTag("baby_kiosk_link_icon"),
+                            size = 20.dp,
+                        )
+                        Text(
+                            kioskStatusText(b.link, connection),
+                            Modifier.testTag("baby_status"),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = text,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                    if (attention != null && battery != null) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            GlyphIcon(Glyph.BATTERY, text, size = 20.dp)
+                            Text(
+                                kioskAttentionText(attention, battery.pct),
+                                Modifier.testTag("baby_kiosk_attention"),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = text,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
+                    Text(
+                        stringResource(R.string.native_ui_kiosk_touch_hint),
+                        Modifier.testTag("baby_kiosk_touch_hint"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = text,
                     )
                 }
             }
+            val lastAlive = b.link.lastAliveElapsedMs
+            val connected = b.link.phase == LinkPhase.CONNECTED
             Column(
-                Modifier.fillMaxSize().alpha(infoAlpha).padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
+                Modifier.fillMaxSize()
+                    .alpha(infoAlpha)
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 56.dp, bottom = 24.dp)
+                    .then(if (showDetails) Modifier else Modifier.semantics { invisibleToUser() }),
+                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 GlyphIcon(
-                    linkGlyph(b.link),
-                    StateColors.KioskText,
-                    Modifier.testTag("baby_kiosk_link_icon"),
-                    size = 12.dp,
+                    if (connected) Glyph.CHECK else linkGlyph(b.link),
+                    text,
+                    Modifier.testTag("baby_kiosk_detail_icon"),
+                    size = 40.dp,
                 )
-                val lastAlive = b.link.lastAliveElapsedMs
+                // Connected: the set-up confirmation, naming the parent device; otherwise the
+                // state.
+                val parentName = b.parentName?.takeIf { it.isNotEmpty() }
                 Text(
-                    babyStatusText(b.link) +
-                        if (
-                            b.link.level >= 2 &&
-                                lastAlive != null &&
-                                b.link.phase != LinkPhase.PEER_STOPPED &&
-                                b.link.phase != LinkPhase.CONNECTED
-                        ) {
-                            " " +
-                                stringResource(
-                                    R.string.native_ui_baby_for_duration,
-                                    formatDuration(env.elapsedNow() - lastAlive),
-                                )
-                        } else "",
-                    Modifier.testTag("baby_status"),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = StateColors.KioskText,
+                    if (connected) {
+                        if (parentName != null)
+                            stringResource(R.string.native_ui_kiosk_connected_to, parentName)
+                        else stringResource(R.string.native_ui_kiosk_connected_to_default)
+                    } else babyStatusText(b.link),
+                    Modifier.testTag("baby_kiosk_headline"),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = text,
                     textAlign = TextAlign.Center,
                 )
-                if (battery != null) {
+                if (connected) {
                     Text(
-                        stringResource(
-                            if (battery.charging) R.string.native_ui_baby_battery_charging
-                            else R.string.native_ui_baby_battery,
-                            battery.pct.toString(),
-                        ),
-                        Modifier.testTag("baby_kiosk_battery"),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = StateColors.KioskText,
-                    )
-                }
-                if (b.parentListening) {
-                    Text(
-                        stringResource(R.string.native_ui_baby_parent_listening),
-                        Modifier.testTag("baby_listening"),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = StateColors.KioskText,
-                    )
-                }
-                b.lastTalk?.let { last ->
-                    val time = formatTime(last.atWallMs)
-                    val length = formatDuration(last.durationMs)
-                    Text(
-                        if (last.name.isEmpty())
-                            stringResource(
-                                R.string.native_ui_talk_baby_last_talk_anon,
-                                time,
-                                length,
-                            )
-                        else
-                            stringResource(
-                                R.string.native_ui_talk_baby_last_talk,
-                                last.name,
-                                time,
-                                length,
-                            ),
-                        Modifier.testTag("baby_last_talk"),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = StateColors.KioskText,
+                        kioskStatusText(b.link, connection),
+                        Modifier.testTag("baby_kiosk_substatus"),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = text,
                         textAlign = TextAlign.Center,
                     )
                 }
-                Text(
-                    stringResource(R.string.native_ui_kiosk_unlock_hint),
-                    Modifier.testTag("baby_kiosk_hint"),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = StateColors.KioskText,
-                    textAlign = TextAlign.Center,
-                )
+                if (
+                    b.link.level >= 2 &&
+                        lastAlive != null &&
+                        b.link.phase != LinkPhase.PEER_STOPPED &&
+                        !connected
+                ) {
+                    Text(
+                        stringResource(
+                            R.string.native_ui_kiosk_lost_body,
+                            formatDuration(env.elapsedNow() - lastAlive),
+                        ),
+                        Modifier.testTag("baby_kiosk_lost_body"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = text,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+                // The countdown is plain text, never a live region: it must not talk at night.
+                if (confirmLeft != null) {
+                    Text(
+                        stringResource(R.string.native_ui_kiosk_dims_in, confirmLeft.toString()),
+                        Modifier.testTag("baby_kiosk_dims_in"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = text,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+                if (touched) {
+                    Spacer(Modifier.height(8.dp))
+                    HorizontalDivider(color = text.copy(alpha = 0.3f))
+                    InfoRow(
+                        stringResource(R.string.native_ui_kiosk_row_connection),
+                        if (connection != null)
+                            stringResource(R.string.native_ui_kiosk_connection_value, connection)
+                        else stringResource(R.string.native_ui_common_baby_unit_default),
+                        "baby_row_connection",
+                    )
+                    InfoRow(
+                        stringResource(R.string.native_ui_kiosk_row_parent),
+                        parentDeviceValue(b, kioskApp),
+                        "baby_peer",
+                    )
+                    InfoRow(
+                        stringResource(R.string.native_ui_kiosk_row_last_talk),
+                        lastTalkValue(b.lastTalk),
+                        "baby_last_talk",
+                    )
+                    if (battery != null) {
+                        InfoRow(
+                            stringResource(R.string.native_ui_kiosk_row_this_device),
+                            thisDeviceValue(battery),
+                            "baby_kiosk_battery",
+                        )
+                    }
+                    if (b.parentListening) {
+                        Text(
+                            stringResource(R.string.native_ui_baby_parent_listening),
+                            Modifier.testTag("baby_listening"),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = text,
+                        )
+                    }
+                    Spacer(Modifier.weight(1f))
+                    Text(
+                        stringResource(R.string.native_ui_kiosk_unlock_hint),
+                        Modifier.testTag("baby_kiosk_hint"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = text,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
             if (unlocking) {
                 Box(
@@ -571,10 +717,27 @@ fun BabyKioskScreen(controller: AppController) {
                 ) {
                     Text(
                         stringResource(R.string.native_ui_kiosk_unlock_zone),
-                        color = StateColors.KioskText,
+                        color = text,
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
+            }
+            if (confirmUnlock) {
+                ConfirmDialog(
+                    tag = "dialog_unlock",
+                    title = stringResource(R.string.native_ui_kiosk_unlock_confirm_title),
+                    body = stringResource(R.string.native_ui_kiosk_unlock_confirm_body),
+                    confirmText = stringResource(R.string.native_ui_kiosk_unlock_confirm),
+                    cancelText = stringResource(R.string.native_ui_kiosk_unlock_cancel),
+                    confirmTag = "dialog_unlock_confirm",
+                    cancelTag = "dialog_unlock_cancel",
+                    onConfirm = {
+                        confirmUnlock = false
+                        onUnlock.value()
+                    },
+                    onDismiss = { confirmUnlock = false },
+                    destructive = false,
+                )
             }
         }
     }

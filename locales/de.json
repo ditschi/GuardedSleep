@@ -106,7 +106,9 @@
           "checking": "Wird geprüft"
         },
         "babyUnitDefault": "Babygerät",
-        "parentUnitDefault": "Elterngerät"
+        "parentUnitDefault": "Elterngerät",
+        "close": "Schließen",
+        "back": "Zurück"
       },
       "role": {
         "title": "Welches Gerät ist das?",
@@ -214,17 +216,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "Mit {name} verbinden",
-          "cardTitleDefault": "Mit dem Babygerät verbinden"
-        },
-        "baby": {
-          "cardTitle": "Überwachung starten"
-        },
         "lastUsed": "Zuletzt genutzt um {time}",
         "newPairing": "Neue Geräte einrichten",
         "empty": "Noch keine Geräte gekoppelt.",
-        "switchMode": "Modus wechseln"
+        "switchMode": "Modus wechseln",
+        "start": "Starten",
+        "privacy": "Der Ton ist zwischen Ihren Geräten verschlüsselt. Kein Konto, keine Aufnahme in der Cloud.",
+        "vibrateOnly": "Geräuschalarme vibrieren auf diesem Gerät nur."
       },
       "baby": {
         "status": {
@@ -234,7 +232,6 @@
           "notResponding": "Elterngerät antwortet nicht — es wird weiter versucht",
           "parentStopped": "Elterngerät hat die Überwachung beendet"
         },
-        "forDuration": "seit {duration}",
         "monitoring": "Überwachung läuft",
         "parentListening": "Elternteil hört zu",
         "battery": "Dieses Gerät: Akku {percent} %",
@@ -256,7 +253,31 @@
         "a11yLabel": "Überwachung läuft. Bildschirm gesperrt.",
         "unlockHint": "Gedrückt halten und nach oben wischen zum Entsperren",
         "unlockZone": "Hier wischen",
-        "unlockAction": "Entsperren"
+        "unlockAction": "Entsperren",
+        "listening": "Hört zu",
+        "withName": "{state} · {name}",
+        "touchHint": "Für Details berühren",
+        "connectedTo": "Verbunden mit: {name}",
+        "connectedToDefault": "Mit dem Elterngerät verbunden",
+        "dimsIn": "Dieser Bildschirm wird in {seconds} s gedimmt. Berühren Sie ihn jederzeit, um dies erneut zu sehen.",
+        "lostBody": "Seit {duration} keine Verbindung. Dieses Gerät bleibt stumm und verbindet sich selbst wieder.",
+        "rowConnection": "Verbindung",
+        "rowParent": "Elterngerät",
+        "rowLastTalk": "Zuletzt gesprochen",
+        "rowThisDevice": "Dieses Gerät",
+        "connectionValue": "{name} · Babygerät",
+        "lastTalkValue": "{time} · {duration}",
+        "lastTalkNone": "Noch nie",
+        "deviceCharging": "lädt · {percent} %",
+        "deviceBattery": "Akku {percent} %",
+        "attentionNotCharging": "Braucht Aufmerksamkeit: lädt nicht · {percent} %",
+        "attentionBatteryLow": "Braucht Aufmerksamkeit: Akku schwach · {percent} %",
+        "attentionBatteryCritical": "Braucht Aufmerksamkeit: Akku fast leer · {percent} %",
+        "unlockConfirmTitle": "Bildschirm entsperren?",
+        "unlockConfirmBody": "Die Überwachung läuft weiter.",
+        "unlockConfirm": "Entsperren",
+        "unlockCancel": "Gesperrt lassen",
+        "unlockedHint": "Um dieses Gerät als Elterngerät zu nutzen, beenden Sie die Überwachung und wählen Sie es auf dem Startbildschirm."
       },
       "link": {
         "idle": "Keine Überwachung",
@@ -415,15 +436,15 @@
         "current": "Verbindung: {name}",
         "change": "Ändern",
         "labelDefault": "{name} (Standard)",
-        "makeDefault": "Als Standard festlegen",
         "autoConnect": "Beim Öffnen der App automatisch verbinden",
-        "removeDefault": "Standard entfernen",
         "chooseAnother": "Andere Verbindung wählen",
         "rename": "Umbenennen",
         "renameTitle": "Verbindung umbenennen",
         "nameLabel": "Name (1–30 Zeichen, bleibt auf diesem Telefon)",
         "nameInvalid": "Bitte 1 bis 30 Zeichen verwenden.",
-        "save": "Speichern"
+        "save": "Speichern",
+        "readOnlyNote": "Beenden Sie die Überwachung, um Verbindungen zu ändern.",
+        "inUse": "In Gebrauch"
       },
       "missed": {
         "some": "Während der Unterbrechung: {count, plural, one {1 Geräusch} other {# Geräusche}} zwischen {start} und {end}. Am lautesten: {level}.",
@@ -453,13 +474,12 @@
           "soundDetection": "Geräuscherkennung",
           "silence": "Ruhemodus",
           "alerts": "Alarme",
-          "screen": "Bildschirm",
-          "paired": "Gekoppeltes Gerät",
           "thisPhone": "Dieses Gerät",
           "language": "Sprache",
           "about": "Info und Grenzen",
           "advanced": "Erweitert",
-          "startMode": "Startmodus"
+          "startMode": "Startmodus",
+          "display": "Anzeige"
         },
         "sensitivity": "Empfindlichkeit",
         "moreSensitive": "Empfindlicher",
@@ -549,6 +569,14 @@
           "stop": "Stopp",
           "test": "Verbindungsalarm testen",
           "testWarning": "Der Test spielt etwa 8 Sekunden lang mit voller Alarmlautstärke."
+        },
+        "openAtStart": {
+          "title": "Beim Start öffnen",
+          "modeHint": "In welchem Modus sich dieses Gerät beim Start der App öffnet.",
+          "autoTitle": "Automatisch verbinden",
+          "autoHint": "Das Elterngerät startet die Überwachung mit der gewählten Verbindung, einmal bei jedem Öffnen der App.",
+          "autoNone": "Nicht automatisch verbinden",
+          "defaultTitle": "Standardverbindung"
         }
       },
       "fgsMissing": {
@@ -593,8 +621,6 @@
         "permSettings": "Einstellungen öffnen",
         "baby": {
           "talking": "Elternteil spricht",
-          "lastTalk": "Letzte Ansprache: {name}, {time}, {duration}",
-          "lastTalkAnon": "Letzte Ansprache: {time}, {duration}",
           "title": "Sprechen",
           "switch": "Eltern können über dieses Gerät sprechen",
           "switchHint": "Wenn aus, wird über dieses Gerät nie etwas abgespielt.",

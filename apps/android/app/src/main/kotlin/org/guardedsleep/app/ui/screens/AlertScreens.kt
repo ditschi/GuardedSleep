@@ -64,7 +64,7 @@ import org.guardedsleep.app.ui.common.statusHeadlineText
 import org.guardedsleep.app.ui.common.statusKindOf
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
-import org.guardedsleep.app.ui.model.BATTERY_CRITICAL_PCT
+import org.guardedsleep.app.ui.model.BabyBattery
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.ReadinessIssue
@@ -288,7 +288,7 @@ fun LinkAlarmContent(controller: AppController, onClose: () -> Unit) {
             link.phase != LinkPhase.CONNECTED && link.level >= 2 -> AlarmVariant.LOST
             link.phase == LinkPhase.CONNECTED &&
                 battery != null &&
-                battery < BATTERY_CRITICAL_PCT &&
+                battery < BabyBattery.CRITICAL_PCT &&
                 p.peer.charging != true -> AlarmVariant.BATTERY
             link.phase == LinkPhase.CONNECTED -> AlarmVariant.RESTORED
             else -> AlarmVariant.LOST

@@ -104,7 +104,9 @@
           "checking": "Checking"
         },
         "babyUnitDefault": "Baby device",
-        "parentUnitDefault": "Parent device"
+        "parentUnitDefault": "Parent device",
+        "close": "Close",
+        "back": "Back"
       },
       "role": {
         "title": "Which device is this?",
@@ -212,17 +214,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "Connect to {name}",
-          "cardTitleDefault": "Connect to the baby device"
-        },
-        "baby": {
-          "cardTitle": "Start monitoring"
-        },
         "lastUsed": "Last used {time}",
         "newPairing": "Set up new devices",
         "empty": "No devices paired yet.",
-        "switchMode": "Switch mode"
+        "switchMode": "Switch mode",
+        "start": "Start",
+        "privacy": "Sound is encrypted between your devices. No account, no cloud recording.",
+        "vibrateOnly": "Noise alerts will only vibrate on this device."
       },
       "baby": {
         "status": {
@@ -232,7 +230,6 @@
           "notResponding": "Parent device not responding — still trying",
           "parentStopped": "Parent device stopped monitoring"
         },
-        "forDuration": "for {duration}",
         "monitoring": "Monitoring",
         "parentListening": "Parent is listening",
         "battery": "This device: battery {percent}%",
@@ -254,7 +251,31 @@
         "a11yLabel": "Monitoring. Screen locked.",
         "unlockHint": "Hold and slide up to unlock",
         "unlockZone": "Slide here",
-        "unlockAction": "Unlock"
+        "unlockAction": "Unlock",
+        "listening": "Listening",
+        "withName": "{state} · {name}",
+        "touchHint": "Touch for details",
+        "connectedTo": "Connected to {name}",
+        "connectedToDefault": "Connected to the parent device",
+        "dimsIn": "This screen dims in {seconds} s. Touch it any time to see this again.",
+        "lostBody": "No connection for {duration}. This device stays silent and reconnects by itself.",
+        "rowConnection": "Connection",
+        "rowParent": "Parent device",
+        "rowLastTalk": "Last talk",
+        "rowThisDevice": "This device",
+        "connectionValue": "{name} · baby device",
+        "lastTalkValue": "{time} · {duration}",
+        "lastTalkNone": "None yet",
+        "deviceCharging": "charging · {percent}%",
+        "deviceBattery": "battery {percent}%",
+        "attentionNotCharging": "Needs attention: not charging · {percent}%",
+        "attentionBatteryLow": "Needs attention: battery low · {percent}%",
+        "attentionBatteryCritical": "Needs attention: battery almost empty · {percent}%",
+        "unlockConfirmTitle": "Unlock this screen?",
+        "unlockConfirmBody": "Monitoring keeps running.",
+        "unlockConfirm": "Unlock",
+        "unlockCancel": "Keep locked",
+        "unlockedHint": "To use this device as the parent device, stop monitoring and choose it on the start screen."
       },
       "link": {
         "idle": "Not monitoring",
@@ -413,15 +434,15 @@
         "current": "Connection: {name}",
         "change": "Change",
         "labelDefault": "{name} (default)",
-        "makeDefault": "Make default",
         "autoConnect": "Connect automatically when the app opens",
-        "removeDefault": "Remove default",
         "chooseAnother": "Choose another connection",
         "rename": "Rename",
         "renameTitle": "Rename connection",
         "nameLabel": "Name (1–30 characters, stays on this phone)",
         "nameInvalid": "Use 1 to 30 characters.",
-        "save": "Save"
+        "save": "Save",
+        "readOnlyNote": "Stop monitoring to change connections.",
+        "inUse": "In use"
       },
       "missed": {
         "some": "While disconnected: {count, plural, one {1 sound} other {# sounds}} between {start} and {end}. Loudest: {level}.",
@@ -451,13 +472,12 @@
           "soundDetection": "Sound detection",
           "silence": "Quiet mode",
           "alerts": "Alerts",
-          "screen": "Screen",
-          "paired": "Paired device",
           "thisPhone": "This device",
           "language": "Language",
           "about": "About and limits",
           "advanced": "Advanced",
-          "startMode": "Start mode"
+          "startMode": "Start mode",
+          "display": "Display"
         },
         "sensitivity": "Sensitivity",
         "moreSensitive": "More sensitive",
@@ -547,6 +567,14 @@
           "stop": "Stop",
           "test": "Test connection alarm",
           "testWarning": "This plays at full alarm volume for about 8 seconds."
+        },
+        "openAtStart": {
+          "title": "Open at start",
+          "modeHint": "Which mode this device opens in when the app starts.",
+          "autoTitle": "Connect automatically",
+          "autoHint": "The parent device starts monitoring with the chosen connection, once each time the app opens.",
+          "autoNone": "Don't connect automatically",
+          "defaultTitle": "Default connection"
         }
       },
       "fgsMissing": {
@@ -591,8 +619,6 @@
         "permSettings": "Open settings",
         "baby": {
           "talking": "Parent is talking",
-          "lastTalk": "Last talk: {name}, {time}, {duration}",
-          "lastTalkAnon": "Last talk: {time}, {duration}",
           "title": "Talk-back",
           "switch": "Parents can speak through this device",
           "switchHint": "When off, nothing is ever played through this device.",
@@ -792,8 +818,7 @@
     "role": {
       "title": "Use this device as",
       "subtitle": "Phone, tablet or laptop. Set up the baby device first.",
-      "navLabel": "Choose a role",
-      "privacyNote": "Sound goes directly between your two devices and is never recorded."
+      "navLabel": "Choose a role"
     },
     "pair": {
       "copyHint": "Paste it on the parent device within 5 minutes. Don't send it in a chat.",

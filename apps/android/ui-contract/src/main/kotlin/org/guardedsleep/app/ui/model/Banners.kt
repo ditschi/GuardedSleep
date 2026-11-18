@@ -7,12 +7,6 @@ package org.guardedsleep.app.ui.model
  * `apps/web/src/lib/ui/banners.ts`; a contract mirror test compares the order.
  */
 
-/** The baby device battery below which it asks to be plugged in (`parent-alerts` baby battery). */
-const val BABY_BATTERY_LOW_PCT = 15
-
-/** Below this the baby device is about to switch off: a full-screen alert, never a banner. */
-const val BATTERY_CRITICAL_PCT = 5
-
 /** At most this many banners show; the rest fold into one "+N more" row. */
 const val BANNER_LIMIT = 2
 
@@ -90,8 +84,8 @@ fun parentBanners(p: ParentMonitorState, alertStyle: AlertStyle, wallNowMs: Long
     if (
         connected &&
             pct != null &&
-            pct >= BATTERY_CRITICAL_PCT &&
-            pct < BABY_BATTERY_LOW_PCT &&
+            pct >= BabyBattery.CRITICAL_PCT &&
+            pct < BabyBattery.LOW_PCT &&
             p.peer.charging != true
     )
         out += Banner(BannerKind.BABY_BATTERY_LOW)

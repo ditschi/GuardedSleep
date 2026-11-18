@@ -358,6 +358,12 @@
   .gs-dialog__status {
     margin-block-end: var(--gs-space-3);
   }
+  .gs-dialog__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gs-space-3);
+  }
   .gs-dialog__actions {
     display: flex;
     flex-wrap: wrap;

@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
@@ -235,6 +236,32 @@ fun SecondaryButton(
             softWrap = !single,
             maxLines = if (single) 1 else Int.MAX_VALUE,
         )
+    }
+}
+
+/**
+ * A 48 dp icon-only button (back, gear). The glyph is decorative, so [description] is the
+ * accessible name.
+ */
+@Composable
+fun GlyphButton(
+    glyph: Glyph,
+    description: String,
+    onClick: () -> Unit,
+    tag: String,
+    modifier: Modifier = Modifier,
+    tint: Color = MaterialTheme.colorScheme.onBackground,
+) {
+    Row(
+        modifier
+            .size(MinTouch)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = description }
+            .testTag(tag),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        GlyphIcon(glyph, tint)
     }
 }
 

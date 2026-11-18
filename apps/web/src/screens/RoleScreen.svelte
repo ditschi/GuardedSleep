@@ -71,6 +71,6 @@
 
   <p class="gs-note gs-note--end" data-testid="role_privacy_note">
     <Glyph name="shield" />
-    <span>{$t("webScreens.role.privacyNote")}</span>
+    <span>{$t("native.ui.home.privacy")}</span>
   </p>
 </div>

@@ -1,8 +1,11 @@
 package org.guardedsleep.app.ui
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.focus.FocusRequester
+import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.common.RowState
+import org.guardedsleep.app.ui.common.UiEnv
 import org.guardedsleep.app.ui.model.AlertOutput
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppState
@@ -28,6 +31,7 @@ import org.guardedsleep.app.ui.screens.HomeScreen
 import org.guardedsleep.app.ui.screens.PairBabyScreen
 import org.guardedsleep.app.ui.screens.ParentPairContent
 import org.guardedsleep.app.ui.screens.RoleScreen
+import org.guardedsleep.app.ui.screens.SettingsPage
 import org.guardedsleep.app.ui.screens.SettingsScreen
 import org.guardedsleep.app.ui.screens.SetupChecks
 import org.guardedsleep.app.ui.screens.SetupContent
@@ -52,6 +56,9 @@ class BabyShots : ShotBase() {
             dndAccess = true,
             silenceApplied = true,
             micLevel = 0.05f,
+            ownBatteryPct = 82,
+            ownPlugged = true,
+            chargerSeen = true,
         )
 
     private fun monitor(name: String, b: BabyMonitorState, locale: String = "en") =
@@ -68,12 +75,19 @@ class BabyShots : ShotBase() {
             )
         }
 
-    private fun kiosk(name: String, b: BabyMonitorState) =
-        shot("baby_kiosk/$name", "en", Role.BABY) { KioskPreview(b) }
+    private fun kiosk(
+        name: String,
+        b: BabyMonitorState,
+        env: UiEnv = TestEnv,
+        app: AppState = BabyApp,
+        locale: String = "en",
+    ) = shot("baby_kiosk/$name", locale, Role.BABY) { KioskPreview(b, env, app) }
 
     @androidx.compose.runtime.Composable
-    private fun KioskPreview(b: BabyMonitorState) =
-        BabyKioskScreen(FakeAppController(app = BabyApp, baby = b.copy(kioskLocked = true)))
+    private fun KioskPreview(b: BabyMonitorState, env: UiEnv, app: AppState) =
+        CompositionLocalProvider(LocalUiEnv provides env) {
+            BabyKioskScreen(FakeAppController(app = app, baby = b.copy(kioskLocked = true)))
+        }
 
     @Test
     fun monitorStates() {
@@ -93,12 +107,50 @@ class BabyShots : ShotBase() {
 
     @Test
     fun kioskStates() {
-        kiosk("calm", calm)
-        kiosk("pulse_level2", calm.copy(link = link(LinkPhase.RECONNECTING, 2, 95_000)))
-        kiosk("pulse_level3", calm.copy(link = link(LinkPhase.RECONNECTING, 3, 200_000)))
-        kiosk("parent_stopped", calm.copy(link = link(LinkPhase.PEER_STOPPED, 0, 4_000)))
-        kiosk("reconnecting_edge", calm.copy(link = link(LinkPhase.RECONNECTING, 1, 40_000)))
-        kiosk("parent_talking", calm.copy(parentTalking = true))
+        val named =
+            BabyApp.copy(
+                connections =
+                    listOf(ConnectionUi("a", "Travel cot", isDefault = true, selected = true))
+            )
+        kiosk("calm", calm, app = named)
+        kiosk("calm", calm, app = named, locale = "de")
+        kiosk("waiting", calm.copy(link = link(LinkPhase.CONNECTING)), app = named)
+        kiosk(
+            "pulse_level2",
+            calm.copy(link = link(LinkPhase.RECONNECTING, 2, 95_000)),
+            app = named,
+        )
+        kiosk(
+            "pulse_level3",
+            calm.copy(link = link(LinkPhase.RECONNECTING, 3, 200_000)),
+            app = named,
+        )
+        kiosk(
+            "parent_stopped",
+            calm.copy(link = link(LinkPhase.PEER_STOPPED, 0, 4_000)),
+            app = named,
+        )
+        kiosk(
+            "reconnecting_edge",
+            calm.copy(link = link(LinkPhase.RECONNECTING, 1, 40_000)),
+            app = named,
+        )
+        kiosk("parent_talking", calm.copy(parentTalking = true), app = named)
+        kiosk(
+            "needs_attention",
+            calm.copy(ownBatteryPct = 12, ownPlugged = false),
+            app = named,
+        )
+        kiosk(
+            "setup_confirmation",
+            calm.copy(parentName = "Anna's phone", firstContactElapsedMs = ELAPSED - 15_000),
+            app = named,
+        )
+        kiosk(
+            "setup_confirmation_no_name",
+            calm.copy(parentName = "", firstContactElapsedMs = ELAPSED - 15_000),
+            app = BabyApp,
+        )
     }
 }
 
@@ -254,6 +306,21 @@ class SetupHomeSettingsShots : ShotBase() {
         shot("home/parent_two_connections") {
             HomeScreen(FakeAppController(app = twoConnections(saved)), {})
         }
+        shot("home/parent_saved_day", theme = Theme.LIGHT) {
+            HomeScreen(FakeAppController(app = saved), {})
+        }
+        shot("home/parent_vibrate_only") {
+            HomeScreen(
+                FakeAppController(
+                    app = saved,
+                    settings = SettingsState(alertStyle = AlertStyle.DISCREET),
+                ),
+                {},
+            )
+        }
+        shot("home/parent_saved_font2", fontScale = 2f) {
+            HomeScreen(FakeAppController(app = saved), {})
+        }
     }
 
     private fun twoConnections(app: AppState) =
@@ -302,6 +369,7 @@ class SetupHomeSettingsShots : ShotBase() {
                 {},
                 {},
                 {},
+                initialPage = SettingsPage.ADVANCED,
             )
         }
         shot("settings/baby_basic", "en", Role.BABY) {
@@ -331,7 +399,57 @@ class SetupHomeSettingsShots : ShotBase() {
                 {},
                 {},
                 {},
+                initialPage = SettingsPage.ADVANCED,
             )
+        }
+        shot("settings/parent_alerts") {
+            SettingsScreen(
+                FakeAppController(app = parentApp),
+                {},
+                {},
+                {},
+                initialPage = SettingsPage.ALERTS,
+            )
+        }
+        shot("settings/parent_open_at_start") {
+            SettingsScreen(
+                FakeAppController(app = twoConnections(parentApp)),
+                {},
+                {},
+                {},
+                initialPage = SettingsPage.OPEN_AT_START,
+            )
+        }
+        shot("settings/parent_connections") {
+            SettingsScreen(
+                FakeAppController(app = twoConnections(parentApp)),
+                {},
+                {},
+                {},
+                initialPage = SettingsPage.CONNECTIONS,
+            )
+        }
+        shot("settings/parent_monitoring") {
+            SettingsScreen(
+                FakeAppController(app = twoConnections(parentApp).copy(monitoring = true)),
+                {},
+                {},
+                {},
+            )
+        }
+        shot("settings/parent_basic_day", theme = Theme.LIGHT) {
+            SettingsScreen(FakeAppController(app = twoConnections(parentApp)), {}, {}, {})
+        }
+        shot("settings/parent_monitoring_day", theme = Theme.LIGHT) {
+            SettingsScreen(
+                FakeAppController(app = twoConnections(parentApp).copy(monitoring = true)),
+                {},
+                {},
+                {},
+            )
+        }
+        shot("settings/parent_basic_font2", fontScale = 2f) {
+            SettingsScreen(FakeAppController(app = parentApp), {}, {}, {})
         }
     }
 }

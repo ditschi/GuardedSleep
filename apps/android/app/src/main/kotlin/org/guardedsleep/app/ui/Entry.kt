@@ -1,5 +1,6 @@
 package org.guardedsleep.app.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,9 +22,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import org.guardedsleep.app.BuildConfig
 import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.common.StatusBar
+import org.guardedsleep.app.ui.common.findActivity
 import org.guardedsleep.app.ui.common.systemReduceMotion
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.Role
@@ -40,6 +43,7 @@ import org.guardedsleep.app.ui.screens.PairParentScreen
 import org.guardedsleep.app.ui.screens.ParentMonitorScreen
 import org.guardedsleep.app.ui.screens.ParentSheet
 import org.guardedsleep.app.ui.screens.RoleScreen
+import org.guardedsleep.app.ui.screens.SettingsPage
 import org.guardedsleep.app.ui.screens.SettingsScreen
 import org.guardedsleep.app.ui.screens.SetupScreen
 import org.guardedsleep.app.ui.screens.customPeerName
@@ -79,6 +83,8 @@ private fun AppNavigator(controller: AppController) {
     val pairing by controller.pairing.collectAsState()
     val baby by controller.baby.collectAsState()
     var overlay by rememberSaveable { mutableStateOf(Overlay.NONE) }
+    // The Settings page survives the alarm tone picker and the set-up check, which replace it.
+    var settingsPage by rememberSaveable { mutableStateOf(SettingsPage.ROOT) }
     var openProbe by remember { mutableStateOf(false) }
     val role = app.role
     // One-shot: "Choose another connection" asks the next home to show its connection list.
@@ -112,12 +118,18 @@ private fun AppNavigator(controller: AppController) {
                 SettingsScreen(
                     controller,
                     onOpenAlarmTone = { overlay = Overlay.ALARM_TONE },
-                    onBack = { overlay = Overlay.NONE },
+                    onBack = {
+                        settingsPage = SettingsPage.ROOT
+                        overlay = Overlay.NONE
+                    },
                     onOpenSetup = { overlay = Overlay.SETUP },
                     onTestAlert = {
                         openProbe = true
+                        settingsPage = SettingsPage.ROOT
                         overlay = Overlay.NONE
                     },
+                    initialPage = settingsPage,
+                    onPageChange = { settingsPage = it },
                     buildInfo =
                         BuildInfo(
                             BuildConfig.VERSION_NAME,
@@ -129,6 +141,7 @@ private fun AppNavigator(controller: AppController) {
         app.monitoring && role == Role.PARENT -> {
             val sheet = if (openProbe) ParentSheet.PROBE else null
             LaunchedEffect(openProbe) { if (openProbe) openProbe = false }
+            MonitorBackHandler()
             ParentMonitorScreen(
                 controller,
                 onSettings = { overlay = Overlay.SETTINGS },
@@ -136,7 +149,10 @@ private fun AppNavigator(controller: AppController) {
                 onChosenOther = { listRequested = true },
             )
         }
-        app.monitoring -> BabyMonitorScreen(controller, onSettings = { overlay = Overlay.SETTINGS })
+        app.monitoring -> {
+            MonitorBackHandler()
+            BabyMonitorScreen(controller, onSettings = { overlay = Overlay.SETTINGS })
+        }
         pairing != null ->
             if (role == Role.BABY) PairBabyScreen(controller) else PairParentScreen(controller)
         else ->
@@ -148,6 +164,21 @@ private fun AppNavigator(controller: AppController) {
                 listRequested = listRequested,
                 onListShown = { listRequested = false },
             )
+    }
+}
+
+/**
+ * Back on the monitor moves the app to the background and keeps monitoring (`ui-appearance` "Back
+ * behaviour while monitoring"). Sheets and dialogs register their own handler later, which takes
+ * precedence, so back closes them first.
+ */
+@Composable
+private fun MonitorBackHandler() {
+    val env = LocalUiEnv.current
+    val context = LocalContext.current
+    BackHandler {
+        val away = env.moveToBackground
+        if (away != null) away() else context.findActivity()?.moveTaskToBack(true)
     }
 }
 
@@ -194,6 +225,9 @@ fun LinkAlarmScreen(controller: AppController, onClose: () -> Unit) {
 
 @Composable
 private fun AlertTheme(controller: AppController, content: @Composable () -> Unit) {
+    // Back on a full-screen alert does nothing: only its buttons end it (`ui-appearance` "Back
+    // behaviour while monitoring"), so a stray swipe cannot hide a running alarm.
+    BackHandler {}
     val env = LocalUiEnv.current
     val systemReduce = systemReduceMotion()
     CompositionLocalProvider(

@@ -268,6 +268,12 @@ export function pruneDismissed(
 
 // ---- silence ---------------------------------------------------------------------------------
 
+/**
+ * The battery level below which the baby device is low while not charging (`parent-alerts` "Baby
+ * battery warnings"; `BabyBattery.LOW_PCT` on Android).
+ */
+export const BABY_BATTERY_LOW_PCT = 15;
+
 const SILENCE_STATE_KEY: Readonly<Record<SilenceStatus, MessageKey>> = {
   silent: "native.ui.silence.silent",
   screen_may_light: "native.ui.silence.screenMayLight",

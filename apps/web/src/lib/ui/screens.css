@@ -905,6 +905,19 @@
     font-size: 0.875rem;
     font-weight: 600;
   }
+  /* "In use": a dot plus the words, never colour alone. */
+  .gs-in-use {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--gs-space-2);
+  }
+  .gs-in-use::before {
+    content: "";
+    inline-size: 0.625rem;
+    block-size: 0.625rem;
+    border-radius: 50%;
+    background: var(--safety-ok);
+  }
   .gs-choice {
     display: flex;
     align-items: center;

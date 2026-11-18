@@ -34,15 +34,30 @@ object StateColors {
     val AlertBackground = Color(0xFF2A0A0A)
     val AlertSurface = Color(0xFF3D1212)
 
-    /** Baby side: near-black with dim state indicators. */
+    /** Baby side: black, with marks that stay under the luminance cap. */
     val KioskBlack = Color(0xFF000000)
-    val KioskPulsePeak = Color(0xFF330000)
-    val KioskGreen = Color(0xFF0E4A28)
-    /** Level 0 (connecting, nothing wrong yet): a dim take on [SafetyColors.info]. */
-    val KioskInfo = Color(0xFF1A3350)
-    val KioskOrange = Color(0xFF4F2400)
-    val KioskGrey = Color(0xFF30333A)
-    val KioskText = Color(0xFF8C8C8C)
+    /**
+     * The status line and the touch-wake text: 4.7:1 on black (`connection-status` "Baby status
+     * line"). Text, not a mark, so the mark cap does not apply to it.
+     */
+    val KioskText = Color(0xFF7D7671)
+}
+
+/**
+ * The kiosk mark colours (`connection-status` "Baby unit edge indicator"). At minimum brightness no
+ * mark may emit more than [Cap] (`#5A1414`) does at normal brightness, so a child's eyes are never
+ * lit by one; the state is told by shape and words, not by these hues.
+ */
+object KioskMarks {
+    val Cap = Color(0xFF5A1414)
+    /** The short bar while listening. */
+    val Ok = Color(0xFF083320)
+    /** The dashed edge and the needs-attention bar and square. */
+    val Warn = Color(0xFF472400)
+    /** The frame from level 2: the brightest colour a mark may have. */
+    val Alert = Cap
+
+    val all = listOf(Ok, Warn, Alert)
 }
 
 /** One full-screen alert palette: dimmed background, a saturated slab and its light border. */

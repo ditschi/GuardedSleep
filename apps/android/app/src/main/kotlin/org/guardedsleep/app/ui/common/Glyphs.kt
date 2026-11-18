@@ -47,6 +47,8 @@ enum class Glyph {
     ZZ,
     STOP,
     BOLT,
+    CHEVRON,
+    SHIELD,
 }
 
 @Composable
@@ -210,6 +212,32 @@ private fun DrawScope.drawGlyph(g: Glyph, c: Color) {
                     close()
                 }
             drawPath(path, c)
+        }
+        Glyph.CHEVRON -> {
+            val path =
+                Path().apply {
+                    moveTo(10f * u, 5f * u)
+                    lineTo(17f * u, 12f * u)
+                    lineTo(10f * u, 19f * u)
+                }
+            drawPath(
+                path,
+                c,
+                style = Stroke(width = 2.6f * u, cap = StrokeCap.Round, join = StrokeJoin.Round),
+            )
+        }
+        Glyph.SHIELD -> {
+            val path =
+                Path().apply {
+                    moveTo(12f * u, 3f * u)
+                    lineTo(19f * u, 6f * u)
+                    lineTo(19f * u, 12f * u)
+                    cubicTo(19f * u, 16f * u, 16f * u, 19.5f * u, 12f * u, 21f * u)
+                    cubicTo(8f * u, 19.5f * u, 5f * u, 16f * u, 5f * u, 12f * u)
+                    lineTo(5f * u, 6f * u)
+                    close()
+                }
+            drawPath(path, c, style = st)
         }
         Glyph.STOP -> drawRoundRect(c, p(5f, 5f), Size(14f * u, 14f * u), CornerRadius(2.5f * u))
         Glyph.ZZ -> {

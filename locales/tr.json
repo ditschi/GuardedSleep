@@ -106,7 +106,9 @@
           "checking": "Kontrol ediliyor"
         },
         "babyUnitDefault": "Bebek cihazı",
-        "parentUnitDefault": "Ebeveyn cihazı"
+        "parentUnitDefault": "Ebeveyn cihazı",
+        "close": "Kapat",
+        "back": "Geri"
       },
       "role": {
         "title": "Bu hangi cihaz?",
@@ -214,17 +216,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "Bağlan: {name}",
-          "cardTitleDefault": "Bebek cihazına bağlan"
-        },
-        "baby": {
-          "cardTitle": "İzlemeyi başlat"
-        },
         "lastUsed": "Son kullanım: {time}",
         "newPairing": "Yeni cihazlar kur",
         "empty": "Henüz eşleşmiş cihaz yok.",
-        "switchMode": "Modu değiştir"
+        "switchMode": "Modu değiştir",
+        "start": "Başlat",
+        "privacy": "Ses cihazlarınız arasında şifrelenir. Hesap yok, bulutta kayıt yok.",
+        "vibrateOnly": "Gürültü uyarıları bu cihazda yalnızca titreşecek."
       },
       "baby": {
         "status": {
@@ -234,7 +232,6 @@
           "notResponding": "Ebeveyn cihazı yanıt vermiyor — denemeye devam ediliyor",
           "parentStopped": "Ebeveyn cihazı izlemeyi durdurdu"
         },
-        "forDuration": "{duration} süredir",
         "monitoring": "İzleniyor",
         "parentListening": "Ebeveyn dinliyor",
         "battery": "Bu cihaz: pil %{percent}",
@@ -256,7 +253,31 @@
         "a11yLabel": "İzleniyor. Ekran kilitli.",
         "unlockHint": "Basılı tutup yukarı kaydırarak kilidi açın",
         "unlockZone": "Buraya kaydırın",
-        "unlockAction": "Kilidi aç"
+        "unlockAction": "Kilidi aç",
+        "listening": "Dinliyor",
+        "withName": "{state} · {name}",
+        "touchHint": "Ayrıntılar için dokunun",
+        "connectedTo": "Bağlandı: {name}",
+        "connectedToDefault": "Ebeveyn cihazına bağlandı",
+        "dimsIn": "Bu ekran {seconds} sn içinde kararacak. Bunu yeniden görmek için istediğiniz zaman dokunun.",
+        "lostBody": "{duration} süredir bağlantı yok. Bu cihaz sessiz kalır ve kendiliğinden yeniden bağlanır.",
+        "rowConnection": "Bağlantı",
+        "rowParent": "Ebeveyn cihazı",
+        "rowLastTalk": "Son konuşma",
+        "rowThisDevice": "Bu cihaz",
+        "connectionValue": "{name} · bebek cihazı",
+        "lastTalkValue": "{time} · {duration}",
+        "lastTalkNone": "Henüz yok",
+        "deviceCharging": "şarj oluyor · %{percent}",
+        "deviceBattery": "pil %{percent}",
+        "attentionNotCharging": "Dikkat gerekiyor: şarj olmuyor · %{percent}",
+        "attentionBatteryLow": "Dikkat gerekiyor: pil zayıf · %{percent}",
+        "attentionBatteryCritical": "Dikkat gerekiyor: pil neredeyse bitti · %{percent}",
+        "unlockConfirmTitle": "Bu ekranın kilidi açılsın mı?",
+        "unlockConfirmBody": "İzleme sürüyor.",
+        "unlockConfirm": "Kilidi aç",
+        "unlockCancel": "Kilitli kalsın",
+        "unlockedHint": "Bu cihazı ebeveyn cihazı olarak kullanmak için izlemeyi durdurun ve başlangıç ekranında seçin."
       },
       "link": {
         "idle": "İzleme yok",
@@ -415,15 +436,15 @@
         "current": "Bağlantı: {name}",
         "change": "Değiştir",
         "labelDefault": "{name} (varsayılan)",
-        "makeDefault": "Varsayılan yap",
         "autoConnect": "Uygulama açıldığında otomatik bağlan",
-        "removeDefault": "Varsayılanı kaldır",
         "chooseAnother": "Başka bir bağlantı seç",
         "rename": "Yeniden adlandır",
         "renameTitle": "Bağlantıyı yeniden adlandır",
         "nameLabel": "Ad (1–30 karakter, bu telefonda kalır)",
         "nameInvalid": "1 ile 30 karakter kullanın.",
-        "save": "Kaydet"
+        "save": "Kaydet",
+        "readOnlyNote": "Bağlantıları değiştirmek için izlemeyi durdurun.",
+        "inUse": "Kullanımda"
       },
       "missed": {
         "some": "Bağlantı yokken: {start} ile {end} arasında {count, plural, one {1 ses} other {# ses}}. En yüksek: {level}.",
@@ -453,13 +474,12 @@
           "soundDetection": "Ses algılama",
           "silence": "Sessiz mod",
           "alerts": "Uyarılar",
-          "screen": "Ekran",
-          "paired": "Eşleşmiş cihaz",
           "thisPhone": "Bu cihaz",
           "language": "Dil",
           "about": "Hakkında ve sınırlar",
           "advanced": "Gelişmiş",
-          "startMode": "Başlangıç modu"
+          "startMode": "Başlangıç modu",
+          "display": "Görünüm"
         },
         "sensitivity": "Hassasiyet",
         "moreSensitive": "Daha hassas",
@@ -545,6 +565,14 @@
           "stop": "Durdur",
           "test": "Bağlantı alarmını dene",
           "testWarning": "Deneme yaklaşık 8 saniye boyunca tam alarm ses düzeyinde çalar."
+        },
+        "openAtStart": {
+          "title": "Açılışta aç",
+          "modeHint": "Uygulama başladığında bu cihazın hangi modda açılacağı.",
+          "autoTitle": "Otomatik bağlan",
+          "autoHint": "Ebeveyn cihazı, uygulama her açıldığında bir kez seçilen bağlantıyla izlemeyi başlatır.",
+          "autoNone": "Otomatik bağlanma",
+          "defaultTitle": "Varsayılan bağlantı"
         }
       },
       "fgsMissing": {
@@ -589,8 +617,6 @@
         "permSettings": "Ayarları aç",
         "baby": {
           "talking": "Ebeveyn konuşuyor",
-          "lastTalk": "Son konuşma: {name}, {time}, {duration}",
-          "lastTalkAnon": "Son konuşma: {time}, {duration}",
           "title": "Konuşma",
           "switch": "Ebeveynler bu cihazdan konuşabilir",
           "switchHint": "Kapalıyken bu cihazdan hiçbir şey çalınmaz.",
@@ -790,8 +816,7 @@
     "role": {
       "title": "Bu cihazı şu olarak kullan",
       "subtitle": "Telefon, tablet veya dizüstü bilgisayar. Önce bebek cihazını kurun.",
-      "navLabel": "Rol seçin",
-      "privacyNote": "Ses doğrudan iki cihazınız arasında gider ve asla kaydedilmez."
+      "navLabel": "Rol seçin"
     },
     "pair": {
       "copyHint": "5 dakika içinde ebeveyn cihazına yapıştırın. Bir sohbette göndermeyin.",

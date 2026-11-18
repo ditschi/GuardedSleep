@@ -9,6 +9,7 @@ import {
   type ReadinessIssue,
 } from "../contract";
 import kotlin from "../../../../android/ui-contract/src/main/kotlin/org/guardedsleep/app/ui/model/Banners.kt?raw";
+import contract from "../../../../android/ui-contract/src/main/kotlin/org/guardedsleep/app/ui/model/UiContract.kt?raw";
 import {
   BABY_BATTERY_LOW_PCT,
   BANNER_LIMIT,
@@ -208,8 +209,11 @@ describe("mirror of Banners.kt", () => {
   it("has the same constants", () => {
     const num = (name: string): number =>
       Number(new RegExp(`const val ${name} = (\\d+)`).exec(kotlin)?.[1]);
-    expect(num("BABY_BATTERY_LOW_PCT")).toBe(BABY_BATTERY_LOW_PCT);
-    expect(num("BATTERY_CRITICAL_PCT")).toBe(BATTERY_CRITICAL_PCT);
+    // The battery levels live in `BabyBattery` of UiContract.kt (one constant per concept).
+    const level = (name: string): number =>
+      Number(new RegExp(`const val ${name} = (\\d+)`).exec(contract)?.[1]);
+    expect(level("LOW_PCT")).toBe(BABY_BATTERY_LOW_PCT);
+    expect(level("CRITICAL_PCT")).toBe(BATTERY_CRITICAL_PCT);
     expect(num("BANNER_LIMIT")).toBe(BANNER_LIMIT);
   });
 });

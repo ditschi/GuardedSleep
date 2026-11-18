@@ -29,6 +29,7 @@ import org.guardedsleep.app.ui.model.TalkVolume
 import org.guardedsleep.app.ui.model.Theme
 import org.guardedsleep.app.ui.screens.BabyKioskScreen
 import org.guardedsleep.app.ui.screens.ParentMonitorScreen
+import org.guardedsleep.app.ui.screens.SettingsPage
 import org.guardedsleep.app.ui.screens.SettingsScreen
 import org.guardedsleep.app.ui.theme.GuardedSleepTheme
 import org.junit.Assert.assertEquals
@@ -171,7 +172,7 @@ class TalkTests : ShotBase() {
     }
 
     @Test
-    fun theBabyShowsAStaticIndicatorAndTheLastTalk() = runComposeUiTest {
+    fun theBabyShowsAStaticIndicatorAlone() = runComposeUiTest {
         val c =
             FakeAppController(
                 app = AppState(role = Role.BABY, onboardingDone = true, paired = true),
@@ -184,8 +185,22 @@ class TalkTests : ShotBase() {
             )
         show(dark = true) { BabyKioskScreen(c) }
         onNodeWithTag("baby_talking").assertIsDisplayed()
-        // The touch-wake line lives in the faded column (alpha 0 until a touch), so it exists.
-        onNodeWithTag("baby_last_talk").assertExists()
+        // Only the indicator shows: the status line is hidden during a talk (`KioskTests`).
+        onNodeWithTag("baby_status").assertDoesNotExist()
+    }
+
+    @Test
+    fun onlyTheTalkPageAcknowledgesTheTalkBackWarning() = runComposeUiTest {
+        val c =
+            FakeAppController(
+                app = AppState(role = Role.BABY, onboardingDone = true, paired = true)
+            )
+        show(dark = true) { SettingsScreen(c, {}, {}, {}) }
+        onNodeWithTag("settings_nav_talk").performScrollTo().assertIsDisplayed()
+        assertTrue("talkSettingsOpened" !in c.calls)
+        onNodeWithTag("settings_nav_talk").performClick()
+        waitForIdle()
+        assertTrue("talkSettingsOpened" in c.calls)
     }
 
     @Test
@@ -195,7 +210,7 @@ class TalkTests : ShotBase() {
                 app = AppState(role = Role.BABY, onboardingDone = true, paired = true),
                 settings = SettingsState(talkVolume = TalkVolume.LOW),
             )
-        show(dark = true) { SettingsScreen(c, {}, {}, {}) }
+        show(dark = true) { SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.TALK) }
         onNodeWithTag("baby_talk_toggle").performScrollTo().assertIsDisplayed()
         onNodeWithTag("baby_talk_volume").performScrollTo().assertIsDisplayed()
         onNodeWithTag("baby_talk_play_chime").performScrollTo().performClick()

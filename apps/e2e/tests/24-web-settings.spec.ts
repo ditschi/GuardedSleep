@@ -73,6 +73,14 @@ test("settings: theme survives a reload, language, addresses, sensitivity, forge
 
     await dual.parentPage.getByTestId("tool_settings").click();
     await expect(dual.parentPage.getByTestId("settings_sensitivity_note")).toBeVisible();
+    // While monitoring the connection is read-only: stop first to forget it.
+    await expect(dual.parentPage.getByTestId("settings_connections_read_only")).toBeVisible();
+    await expect(dual.parentPage.getByTestId("settings_forget")).toHaveCount(0);
+    await dual.parentPage.getByTestId("settings_back").click();
+    await dual.parentPage.getByTestId("parent_overflow").click();
+    await dual.parentPage.getByTestId("parent_stop").click();
+    await dual.parentPage.getByTestId("dialog_stop_confirm").click();
+    await dual.parentPage.getByTestId("home_settings").click();
     await dual.parentPage.getByTestId("settings_forget").click();
     await dual.parentPage.getByTestId("dialog_forget_confirm").click();
     await expect(dual.parentPage.getByTestId("role_title")).toBeVisible();

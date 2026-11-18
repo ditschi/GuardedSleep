@@ -9,6 +9,7 @@ import android.os.Build
 import androidx.core.app.NotificationManagerCompat
 import org.guardedsleep.app.alerts.AlertChannels
 import org.guardedsleep.app.link.Clock
+import org.guardedsleep.app.link.OwnBattery
 import org.guardedsleep.app.link.ReadinessProvider
 import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.ui.model.ReadinessIssue
@@ -34,6 +35,9 @@ interface ReadinessEnv {
 
     fun ownCharging(): Boolean
 
+    /** Percentage and plugged state from one read. */
+    fun ownBattery(): BatterySnapshot = BatterySnapshot(ownBatteryPct(), ownCharging(), false)
+
     fun headphonesConnected(): Boolean
 }
 
@@ -48,6 +52,9 @@ class ReadinessChecker(
     private val clock: Clock,
 ) : ReadinessProvider {
     override fun ownBatteryPct(): Int? = env.ownBatteryPct()
+
+    override fun ownBattery(): OwnBattery? =
+        env.ownBattery().let { s -> s.pct?.let { OwnBattery(it, s.charging) } }
 
     override fun check(): List<ReadinessIssue> {
         val issues = mutableListOf<ReadinessIssue>()
@@ -107,6 +114,8 @@ class AndroidReadinessEnv(private val context: Context) : ReadinessEnv {
     override fun ownBatteryPct(): Int? = battery.pct()
 
     override fun ownCharging(): Boolean = battery.charging()
+
+    override fun ownBattery(): BatterySnapshot = battery.snapshot()
 
     override fun headphonesConnected(): Boolean =
         audio?.getDevices(AudioManager.GET_DEVICES_OUTPUTS)?.any { it.type in HEADPHONE_TYPES } ==

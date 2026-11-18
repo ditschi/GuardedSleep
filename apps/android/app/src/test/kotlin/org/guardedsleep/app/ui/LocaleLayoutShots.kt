@@ -17,6 +17,7 @@ import org.guardedsleep.app.ui.screens.PairBabyScreen
 import org.guardedsleep.app.ui.screens.ParentMonitorScreen
 import org.guardedsleep.app.ui.screens.ParentPairContent
 import org.guardedsleep.app.ui.screens.RoleScreen
+import org.guardedsleep.app.ui.screens.SettingsPage
 import org.guardedsleep.app.ui.screens.SettingsScreen
 import org.junit.Test
 
@@ -50,6 +51,9 @@ class LocaleLayoutShots : ShotBase() {
             dndAccess = true,
             silenceApplied = true,
             micLevel = 0.05f,
+            ownBatteryPct = 82,
+            ownPlugged = true,
+            chargerSeen = true,
         )
     private val loud =
         ParentMonitorState(
@@ -124,6 +128,15 @@ class LocaleLayoutShots : ShotBase() {
                 {},
                 {},
                 {},
+            )
+        }
+        shot("locale_layout/settings_alerts", locale) {
+            SettingsScreen(
+                FakeAppController(app = parentApp),
+                {},
+                {},
+                {},
+                initialPage = SettingsPage.ALERTS,
             )
         }
     }

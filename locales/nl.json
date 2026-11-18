@@ -106,7 +106,9 @@
           "checking": "Controleren"
         },
         "babyUnitDefault": "Babyapparaat",
-        "parentUnitDefault": "Ouderapparaat"
+        "parentUnitDefault": "Ouderapparaat",
+        "close": "Sluiten",
+        "back": "Terug"
       },
       "role": {
         "title": "Welk apparaat is dit?",
@@ -214,17 +216,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "Verbinden met {name}",
-          "cardTitleDefault": "Verbinden met het babyapparaat"
-        },
-        "baby": {
-          "cardTitle": "Bewaking starten"
-        },
         "lastUsed": "Laatst gebruikt {time}",
         "newPairing": "Nieuwe apparaten instellen",
         "empty": "Nog geen apparaten gekoppeld.",
-        "switchMode": "Modus wisselen"
+        "switchMode": "Modus wisselen",
+        "start": "Starten",
+        "privacy": "Het geluid is versleuteld tussen je apparaten. Geen account, geen opname in de cloud.",
+        "vibrateOnly": "Geluidsmeldingen laten dit apparaat alleen trillen."
       },
       "baby": {
         "status": {
@@ -234,7 +232,6 @@
           "notResponding": "Ouderapparaat reageert niet, we blijven proberen",
           "parentStopped": "Ouderapparaat is gestopt met bewaken"
         },
-        "forDuration": "al {duration}",
         "monitoring": "Bewaken",
         "parentListening": "Ouder luistert mee",
         "battery": "Dit apparaat: batterij {percent}%",
@@ -256,7 +253,31 @@
         "a11yLabel": "Bewaken. Scherm vergrendeld.",
         "unlockHint": "Houd vast en veeg omhoog om te ontgrendelen",
         "unlockZone": "Veeg hier",
-        "unlockAction": "Ontgrendelen"
+        "unlockAction": "Ontgrendelen",
+        "listening": "Luistert",
+        "withName": "{state} · {name}",
+        "touchHint": "Tik voor details",
+        "connectedTo": "Verbonden met: {name}",
+        "connectedToDefault": "Verbonden met het oudertoestel",
+        "dimsIn": "Dit scherm dimt over {seconds} s. Tik er op elk moment op om dit opnieuw te zien.",
+        "lostBody": "Al {duration} geen verbinding. Dit toestel blijft stil en maakt zelf opnieuw verbinding.",
+        "rowConnection": "Verbinding",
+        "rowParent": "Oudertoestel",
+        "rowLastTalk": "Laatst gesproken",
+        "rowThisDevice": "Dit toestel",
+        "connectionValue": "{name} · babytoestel",
+        "lastTalkValue": "{time} · {duration}",
+        "lastTalkNone": "Nog niet",
+        "deviceCharging": "laadt op · {percent}%",
+        "deviceBattery": "accu {percent}%",
+        "attentionNotCharging": "Aandacht nodig: laadt niet op · {percent}%",
+        "attentionBatteryLow": "Aandacht nodig: accu bijna leeg · {percent}%",
+        "attentionBatteryCritical": "Aandacht nodig: accu bijna helemaal leeg · {percent}%",
+        "unlockConfirmTitle": "Dit scherm ontgrendelen?",
+        "unlockConfirmBody": "De bewaking blijft doorlopen.",
+        "unlockConfirm": "Ontgrendelen",
+        "unlockCancel": "Vergrendeld laten",
+        "unlockedHint": "Wilt u dit toestel als oudertoestel gebruiken? Stop dan de bewaking en kies het op het startscherm."
       },
       "link": {
         "idle": "Niet aan het bewaken",
@@ -415,15 +436,15 @@
         "current": "Verbinding: {name}",
         "change": "Wijzigen",
         "labelDefault": "{name} (standaard)",
-        "makeDefault": "Als standaard instellen",
         "autoConnect": "Automatisch verbinden bij het openen van de app",
-        "removeDefault": "Standaard verwijderen",
         "chooseAnother": "Andere verbinding kiezen",
         "rename": "Hernoemen",
         "renameTitle": "Verbinding hernoemen",
         "nameLabel": "Naam (1–30 tekens, blijft op deze telefoon)",
         "nameInvalid": "Gebruik 1 tot 30 tekens.",
-        "save": "Opslaan"
+        "save": "Opslaan",
+        "readOnlyNote": "Stop met bewaken om verbindingen te wijzigen.",
+        "inUse": "In gebruik"
       },
       "missed": {
         "some": "Tijdens de onderbreking: {count, plural, one {1 geluid} other {# geluiden}} tussen {start} en {end}. Luidst: {level}.",
@@ -453,13 +474,12 @@
           "soundDetection": "Geluidsdetectie",
           "silence": "Stille modus",
           "alerts": "Meldingen",
-          "screen": "Scherm",
-          "paired": "Gekoppeld apparaat",
           "thisPhone": "Dit apparaat",
           "language": "Taal",
           "about": "Over en beperkingen",
           "advanced": "Geavanceerd",
-          "startMode": "Startmodus"
+          "startMode": "Startmodus",
+          "display": "Weergave"
         },
         "sensitivity": "Gevoeligheid",
         "moreSensitive": "Gevoeliger",
@@ -545,6 +565,14 @@
           "stop": "Stop",
           "test": "Verbindingsalarm testen",
           "testWarning": "De test speelt ongeveer 8 seconden op volle alarmvolume."
+        },
+        "openAtStart": {
+          "title": "Openen bij start",
+          "modeHint": "In welke modus dit apparaat opent als de app start.",
+          "autoTitle": "Automatisch verbinden",
+          "autoHint": "Het ouderapparaat start de bewaking met de gekozen verbinding, één keer bij elke keer dat de app opent.",
+          "autoNone": "Niet automatisch verbinden",
+          "defaultTitle": "Standaardverbinding"
         }
       },
       "fgsMissing": {
@@ -589,8 +617,6 @@
         "permSettings": "Instellingen openen",
         "baby": {
           "talking": "Ouder praat",
-          "lastTalk": "Laatste gesprek: {name}, {time}, {duration}",
-          "lastTalkAnon": "Laatste gesprek: {time}, {duration}",
           "title": "Praten",
           "switch": "Ouders kunnen via dit apparaat praten",
           "switchHint": "Als dit uit staat, wordt er nooit iets via dit apparaat afgespeeld.",
@@ -790,8 +816,7 @@
     "role": {
       "title": "Gebruik dit apparaat als",
       "subtitle": "Telefoon, tablet of laptop. Stel eerst het babyapparaat in.",
-      "navLabel": "Kies een rol",
-      "privacyNote": "Geluid gaat rechtstreeks tussen je twee apparaten en wordt nooit opgenomen."
+      "navLabel": "Kies een rol"
     },
     "pair": {
       "copyHint": "Plak hem binnen 5 minuten op het ouderapparaat. Stuur hem niet via een chat.",

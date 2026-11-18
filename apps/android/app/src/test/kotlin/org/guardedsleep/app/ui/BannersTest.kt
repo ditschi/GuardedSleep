@@ -1,8 +1,7 @@
 package org.guardedsleep.app.ui
 
 import org.guardedsleep.app.ui.model.AlertStyle
-import org.guardedsleep.app.ui.model.BABY_BATTERY_LOW_PCT
-import org.guardedsleep.app.ui.model.BATTERY_CRITICAL_PCT
+import org.guardedsleep.app.ui.model.BabyBattery
 import org.guardedsleep.app.ui.model.Banner
 import org.guardedsleep.app.ui.model.BannerKind
 import org.guardedsleep.app.ui.model.BannerLevel
@@ -192,8 +191,8 @@ class BannersTest {
         fun low(pct: Int, charging: Boolean = false) =
             ids(state(PeerStatusUi(batteryPct = pct, charging = charging)))
                 .contains("baby_battery_low")
-        assertEquals(15, BABY_BATTERY_LOW_PCT)
-        assertEquals(5, BATTERY_CRITICAL_PCT)
+        assertEquals(15, BabyBattery.LOW_PCT)
+        assertEquals(5, BabyBattery.CRITICAL_PCT)
         assertEquals(false, low(4)) // critical: the full-screen alert, not a banner
         assertEquals(true, low(5))
         assertEquals(true, low(14))

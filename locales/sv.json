@@ -106,7 +106,9 @@
           "checking": "Kontrollerar"
         },
         "babyUnitDefault": "Babyenhet",
-        "parentUnitDefault": "Föräldraenhet"
+        "parentUnitDefault": "Föräldraenhet",
+        "close": "Stäng",
+        "back": "Tillbaka"
       },
       "role": {
         "title": "Vilken enhet är det här?",
@@ -214,17 +216,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "Anslut till {name}",
-          "cardTitleDefault": "Anslut till babyenheten"
-        },
-        "baby": {
-          "cardTitle": "Starta övervakning"
-        },
         "lastUsed": "Senast använd {time}",
         "newPairing": "Ställ in nya enheter",
         "empty": "Inga enheter parkopplade än.",
-        "switchMode": "Byt läge"
+        "switchMode": "Byt läge",
+        "start": "Starta",
+        "privacy": "Ljudet är krypterat mellan dina enheter. Inget konto, ingen inspelning i molnet.",
+        "vibrateOnly": "Bullerlarm får bara den här enheten att vibrera."
       },
       "baby": {
         "status": {
@@ -234,7 +232,6 @@
           "notResponding": "Föräldraenheten svarar inte, försöker fortfarande",
           "parentStopped": "Föräldraenheten slutade övervaka"
         },
-        "forDuration": "i {duration}",
         "monitoring": "Övervakar",
         "parentListening": "Föräldern lyssnar",
         "battery": "Den här enheten: batteri {percent}%",
@@ -256,7 +253,31 @@
         "a11yLabel": "Övervakar. Skärmen är låst.",
         "unlockHint": "Håll och svep uppåt för att låsa upp",
         "unlockZone": "Svep här",
-        "unlockAction": "Lås upp"
+        "unlockAction": "Lås upp",
+        "listening": "Lyssnar",
+        "withName": "{state} · {name}",
+        "touchHint": "Tryck för detaljer",
+        "connectedTo": "Ansluten till: {name}",
+        "connectedToDefault": "Ansluten till föräldraenheten",
+        "dimsIn": "Den här skärmen dämpas om {seconds} s. Tryck på den när som helst för att se detta igen.",
+        "lostBody": "Ingen anslutning på {duration}. Den här enheten är tyst och ansluter igen av sig själv.",
+        "rowConnection": "Anslutning",
+        "rowParent": "Föräldraenhet",
+        "rowLastTalk": "Senaste samtal",
+        "rowThisDevice": "Den här enheten",
+        "connectionValue": "{name} · barnenhet",
+        "lastTalkValue": "{time} · {duration}",
+        "lastTalkNone": "Inget ännu",
+        "deviceCharging": "laddar · {percent} %",
+        "deviceBattery": "batteri {percent} %",
+        "attentionNotCharging": "Behöver uppmärksamhet: laddar inte · {percent} %",
+        "attentionBatteryLow": "Behöver uppmärksamhet: lågt batteri · {percent} %",
+        "attentionBatteryCritical": "Behöver uppmärksamhet: batteriet nästan slut · {percent} %",
+        "unlockConfirmTitle": "Låsa upp skärmen?",
+        "unlockConfirmBody": "Övervakningen fortsätter.",
+        "unlockConfirm": "Lås upp",
+        "unlockCancel": "Behåll låst",
+        "unlockedHint": "Om du vill använda den här enheten som föräldraenhet avslutar du övervakningen och väljer den på startskärmen."
       },
       "link": {
         "idle": "Övervakar inte",
@@ -415,15 +436,15 @@
         "current": "Anslutning: {name}",
         "change": "Ändra",
         "labelDefault": "{name} (standard)",
-        "makeDefault": "Gör till standard",
         "autoConnect": "Anslut automatiskt när appen öppnas",
-        "removeDefault": "Ta bort standard",
         "chooseAnother": "Välj en annan anslutning",
         "rename": "Byt namn",
         "renameTitle": "Byt namn på anslutningen",
         "nameLabel": "Namn (1–30 tecken, stannar på den här telefonen)",
         "nameInvalid": "Använd 1 till 30 tecken.",
-        "save": "Spara"
+        "save": "Spara",
+        "readOnlyNote": "Sluta övervaka för att ändra anslutningar.",
+        "inUse": "Används nu"
       },
       "missed": {
         "some": "Under avbrottet: {count, plural, one {1 ljud} other {# ljud}} mellan {start} och {end}. Högst: {level}.",
@@ -453,13 +474,12 @@
           "soundDetection": "Ljuddetektering",
           "silence": "Tyst läge",
           "alerts": "Larm",
-          "screen": "Skärm",
-          "paired": "Parkopplad enhet",
           "thisPhone": "Den här enheten",
           "language": "Språk",
           "about": "Om och begränsningar",
           "advanced": "Avancerat",
-          "startMode": "Startläge"
+          "startMode": "Startläge",
+          "display": "Visning"
         },
         "sensitivity": "Känslighet",
         "moreSensitive": "Känsligare",
@@ -545,6 +565,14 @@
           "stop": "Stoppa",
           "test": "Testa anslutningslarmet",
           "testWarning": "Testet spelas med full larmvolym i cirka 8 sekunder."
+        },
+        "openAtStart": {
+          "title": "Öppna vid start",
+          "modeHint": "Vilket läge den här enheten öppnas i när appen startar.",
+          "autoTitle": "Anslut automatiskt",
+          "autoHint": "Föräldraenheten startar övervakningen med den valda anslutningen, en gång varje gång appen öppnas.",
+          "autoNone": "Anslut inte automatiskt",
+          "defaultTitle": "Standardanslutning"
         }
       },
       "fgsMissing": {
@@ -589,8 +617,6 @@
         "permSettings": "Öppna inställningar",
         "baby": {
           "talking": "Förälder pratar",
-          "lastTalk": "Senaste samtal: {name}, {time}, {duration}",
-          "lastTalkAnon": "Senaste samtal: {time}, {duration}",
           "title": "Tala",
           "switch": "Föräldrar kan tala via den här enheten",
           "switchHint": "När det är av spelas inget upp via den här enheten.",
@@ -790,8 +816,7 @@
     "role": {
       "title": "Använd den här enheten som",
       "subtitle": "Telefon, surfplatta eller bärbar dator. Ställ in babyenheten först.",
-      "navLabel": "Välj en roll",
-      "privacyNote": "Ljudet går direkt mellan dina två enheter och spelas aldrig in."
+      "navLabel": "Välj en roll"
     },
     "pair": {
       "copyHint": "Klistra in den på föräldraenheten inom 5 minuter. Skicka den inte i en chatt.",

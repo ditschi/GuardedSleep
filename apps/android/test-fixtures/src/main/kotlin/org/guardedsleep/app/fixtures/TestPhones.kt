@@ -11,6 +11,7 @@ import kotlinx.coroutines.cancel
 import org.guardedsleep.app.link.LinkController
 import org.guardedsleep.app.link.MonitorHost
 import org.guardedsleep.app.link.NetworkWatcher
+import org.guardedsleep.app.link.OwnBattery
 import org.guardedsleep.app.link.ReadinessProvider
 import org.guardedsleep.app.pairing.DefaultPairingMarker
 import org.guardedsleep.app.pairing.RolePairings
@@ -37,6 +38,7 @@ class TestPhones private constructor(dir: File) {
     private val babyMedia = CopyOnWriteArrayList<FakeMedia>()
     private val parentMedia = CopyOnWriteArrayList<FakeMedia>()
     @Volatile private var noiseRms: Double? = null
+    @Volatile private var babyPlugged = true
 
     private inner class Phone(val role: Role, val dir: File, seed: Long) {
         val random = RecordingRandom(seed)
@@ -97,6 +99,12 @@ class TestPhones private constructor(dir: File) {
                             override fun check() = listOf(ReadinessIssue.NEVER_TESTED)
 
                             override fun ownBatteryPct() = OWN_BATTERY_PCT
+
+                            override fun ownBattery() =
+                                OwnBattery(
+                                    OWN_BATTERY_PCT,
+                                    plugged = role != Role.BABY || babyPlugged,
+                                )
                         },
                     deviceName = { "Test ${role.name.lowercase()} phone" },
                     host =
@@ -227,6 +235,11 @@ class TestPhones private constructor(dir: File) {
     }
 
     /** Both ends of every live connection fail at once and none is made until [restoreNetwork]. */
+    /** The baby phone's charger is plugged in or pulled out; the next battery read sees it. */
+    fun setBabyPlugged(plugged: Boolean) {
+        babyPlugged = plugged
+    }
+
     fun dropNetwork() {
         net.outage = true
         net.breakAll()

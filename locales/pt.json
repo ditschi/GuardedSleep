@@ -106,7 +106,9 @@
           "checking": "Verificando"
         },
         "babyUnitDefault": "Dispositivo do bebê",
-        "parentUnitDefault": "Dispositivo dos pais"
+        "parentUnitDefault": "Dispositivo dos pais",
+        "close": "Fechar",
+        "back": "Voltar"
       },
       "role": {
         "title": "Que dispositivo é este?",
@@ -214,17 +216,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "Conectar a {name}",
-          "cardTitleDefault": "Conectar ao dispositivo do bebê"
-        },
-        "baby": {
-          "cardTitle": "Iniciar monitoramento"
-        },
         "lastUsed": "Último uso {time}",
         "newPairing": "Configurar novos dispositivos",
         "empty": "Nenhum dispositivo pareado ainda.",
-        "switchMode": "Mudar de modo"
+        "switchMode": "Mudar de modo",
+        "start": "Iniciar",
+        "privacy": "O som é criptografado entre os seus dispositivos. Sem conta, sem gravação na nuvem.",
+        "vibrateOnly": "Os alertas de ruído só vão vibrar neste dispositivo."
       },
       "baby": {
         "status": {
@@ -234,7 +232,6 @@
           "notResponding": "Dispositivo dos pais não responde, tentando de novo",
           "parentStopped": "Dispositivo dos pais parou de monitorar"
         },
-        "forDuration": "há {duration}",
         "monitoring": "Monitorando",
         "parentListening": "Os pais estão escutando",
         "battery": "Este dispositivo: bateria {percent}%",
@@ -256,7 +253,31 @@
         "a11yLabel": "Monitorando. Tela bloqueada.",
         "unlockHint": "Mantenha pressionado e deslize para cima para desbloquear",
         "unlockZone": "Deslize aqui",
-        "unlockAction": "Desbloquear"
+        "unlockAction": "Desbloquear",
+        "listening": "A ouvir",
+        "withName": "{state} · {name}",
+        "touchHint": "Toque para ver detalhes",
+        "connectedTo": "Ligado a: {name}",
+        "connectedToDefault": "Ligado ao dispositivo dos pais",
+        "dimsIn": "Este ecrã escurece em {seconds} s. Toque nele a qualquer momento para ver isto de novo.",
+        "lostBody": "Sem ligação há {duration}. Este dispositivo fica em silêncio e volta a ligar-se sozinho.",
+        "rowConnection": "Ligação",
+        "rowParent": "Dispositivo dos pais",
+        "rowLastTalk": "Última conversa",
+        "rowThisDevice": "Este dispositivo",
+        "connectionValue": "{name} · dispositivo do bebé",
+        "lastTalkValue": "{time} · {duration}",
+        "lastTalkNone": "Ainda nenhuma",
+        "deviceCharging": "a carregar · {percent}%",
+        "deviceBattery": "bateria {percent}%",
+        "attentionNotCharging": "Precisa de atenção: não está a carregar · {percent}%",
+        "attentionBatteryLow": "Precisa de atenção: bateria fraca · {percent}%",
+        "attentionBatteryCritical": "Precisa de atenção: bateria quase vazia · {percent}%",
+        "unlockConfirmTitle": "Desbloquear este ecrã?",
+        "unlockConfirmBody": "A monitorização continua.",
+        "unlockConfirm": "Desbloquear",
+        "unlockCancel": "Manter bloqueado",
+        "unlockedHint": "Para usar este dispositivo como dispositivo dos pais, pare a monitorização e escolha-o no ecrã inicial."
       },
       "link": {
         "idle": "Sem monitoramento",
@@ -415,15 +436,15 @@
         "current": "Conexão: {name}",
         "change": "Alterar",
         "labelDefault": "{name} (padrão)",
-        "makeDefault": "Definir como padrão",
         "autoConnect": "Ligar automaticamente ao abrir a app",
-        "removeDefault": "Remover predefinida",
         "chooseAnother": "Escolher outra ligação",
         "rename": "Renomear",
         "renameTitle": "Renomear conexão",
         "nameLabel": "Nome (1 a 30 caracteres, fica neste telefone)",
         "nameInvalid": "Use de 1 a 30 caracteres.",
-        "save": "Salvar"
+        "save": "Salvar",
+        "readOnlyNote": "Pare o monitoramento para alterar as conexões.",
+        "inUse": "Em uso"
       },
       "missed": {
         "some": "Durante a desconexão: {count, plural, one {1 som} many {# de sons} other {# sons}} entre {start} e {end}. Mais alto: {level}.",
@@ -453,13 +474,12 @@
           "soundDetection": "Detecção de som",
           "silence": "Modo silencioso",
           "alerts": "Alertas",
-          "screen": "Tela",
-          "paired": "Dispositivo pareado",
           "thisPhone": "Este dispositivo",
           "language": "Idioma",
           "about": "Sobre e limites",
           "advanced": "Avançado",
-          "startMode": "Modo de início"
+          "startMode": "Modo de início",
+          "display": "Exibição"
         },
         "sensitivity": "Sensibilidade",
         "moreSensitive": "Mais sensível",
@@ -545,6 +565,14 @@
           "stop": "Parar",
           "test": "Testar o alarme de ligação",
           "testWarning": "O teste toca com o volume máximo do alarme durante cerca de 8 segundos."
+        },
+        "openAtStart": {
+          "title": "Abrir ao iniciar",
+          "modeHint": "Em que modo este dispositivo abre quando o app inicia.",
+          "autoTitle": "Conectar automaticamente",
+          "autoHint": "O dispositivo dos pais inicia o monitoramento com a conexão escolhida, uma vez a cada abertura do app.",
+          "autoNone": "Não conectar automaticamente",
+          "defaultTitle": "Conexão padrão"
         }
       },
       "fgsMissing": {
@@ -589,8 +617,6 @@
         "permSettings": "Abrir definições",
         "baby": {
           "talking": "Um dos pais está a falar",
-          "lastTalk": "Última fala: {name}, {time}, {duration}",
-          "lastTalkAnon": "Última fala: {time}, {duration}",
           "title": "Falar",
           "switch": "Os pais podem falar através deste aparelho",
           "switchHint": "Desligado, nada é reproduzido neste aparelho.",
@@ -790,8 +816,7 @@
     "role": {
       "title": "Usar este dispositivo como",
       "subtitle": "Celular, tablet ou notebook. Configure primeiro o dispositivo do bebê.",
-      "navLabel": "Escolher uma função",
-      "privacyNote": "O som vai direto entre os seus dois dispositivos e nunca é gravado."
+      "navLabel": "Escolher uma função"
     },
     "pair": {
       "copyHint": "Cole-o no dispositivo dos pais em até 5 minutos. Não o envie por chat.",

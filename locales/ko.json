@@ -106,7 +106,9 @@
           "checking": "확인 중"
         },
         "babyUnitDefault": "아기 기기",
-        "parentUnitDefault": "부모 기기"
+        "parentUnitDefault": "부모 기기",
+        "close": "닫기",
+        "back": "뒤로"
       },
       "role": {
         "title": "이 기기는 어떤 기기인가요?",
@@ -214,17 +216,13 @@
         }
       },
       "home": {
-        "parent": {
-          "cardTitle": "{name}에 연결",
-          "cardTitleDefault": "아기 기기에 연결"
-        },
-        "baby": {
-          "cardTitle": "지켜보기 시작"
-        },
         "lastUsed": "마지막 사용: {time}",
         "newPairing": "새 기기 설정",
         "empty": "아직 페어링된 기기가 없어요.",
-        "switchMode": "모드 전환"
+        "switchMode": "모드 전환",
+        "start": "시작",
+        "privacy": "소리는 기기 사이에서 암호화돼요. 계정도, 클라우드 녹음도 없어요.",
+        "vibrateOnly": "소리 알림은 이 기기에서 진동만 해요."
       },
       "baby": {
         "status": {
@@ -234,7 +232,6 @@
           "notResponding": "부모 기기가 응답하지 않아요. 계속 시도 중이에요",
           "parentStopped": "부모 기기가 지켜보기를 멈췄어요"
         },
-        "forDuration": "{duration} 동안",
         "monitoring": "지켜보는 중",
         "parentListening": "부모가 듣고 있어요",
         "battery": "이 기기: 배터리 {percent}%",
@@ -256,7 +253,31 @@
         "a11yLabel": "지켜보는 중. 화면이 잠겨 있어요.",
         "unlockHint": "길게 누르고 위로 밀어서 잠금 해제",
         "unlockZone": "여기를 밀기",
-        "unlockAction": "잠금 해제"
+        "unlockAction": "잠금 해제",
+        "listening": "듣는 중",
+        "withName": "{state} · {name}",
+        "touchHint": "탭하여 자세히 보기",
+        "connectedTo": "연결됨: {name}",
+        "connectedToDefault": "부모 기기에 연결됨",
+        "dimsIn": "이 화면은 {seconds}초 후에 어두워집니다. 언제든지 화면을 터치하면 다시 볼 수 있습니다.",
+        "lostBody": "{duration} 동안 연결되지 않았습니다. 이 기기는 소리를 내지 않고 스스로 다시 연결합니다.",
+        "rowConnection": "연결",
+        "rowParent": "부모 기기",
+        "rowLastTalk": "마지막 말하기",
+        "rowThisDevice": "이 기기",
+        "connectionValue": "{name} · 아기 기기",
+        "lastTalkValue": "{time} · {duration}",
+        "lastTalkNone": "아직 없음",
+        "deviceCharging": "충전 중 · {percent}%",
+        "deviceBattery": "배터리 {percent}%",
+        "attentionNotCharging": "확인 필요: 충전 중이 아님 · {percent}%",
+        "attentionBatteryLow": "확인 필요: 배터리 부족 · {percent}%",
+        "attentionBatteryCritical": "확인 필요: 배터리가 거의 없음 · {percent}%",
+        "unlockConfirmTitle": "이 화면의 잠금을 해제할까요?",
+        "unlockConfirmBody": "모니터링은 계속됩니다.",
+        "unlockConfirm": "잠금 해제",
+        "unlockCancel": "잠금 유지",
+        "unlockedHint": "이 기기를 부모 기기로 사용하려면 모니터링을 중지하고 시작 화면에서 선택하세요."
       },
       "link": {
         "idle": "지켜보지 않는 중",
@@ -415,15 +436,15 @@
         "current": "연결: {name}",
         "change": "변경",
         "labelDefault": "{name}(기본)",
-        "makeDefault": "기본으로 설정",
         "autoConnect": "앱을 열면 자동으로 연결",
-        "removeDefault": "기본값 해제",
         "chooseAnother": "다른 연결 선택",
         "rename": "이름 변경",
         "renameTitle": "연결 이름 변경",
         "nameLabel": "이름(1~30자, 이 휴대폰에만 저장됨)",
         "nameInvalid": "1~30자로 입력하세요.",
-        "save": "저장"
+        "save": "저장",
+        "readOnlyNote": "연결을 바꾸려면 지켜보기를 중지하세요.",
+        "inUse": "사용 중"
       },
       "missed": {
         "some": "연결이 끊긴 동안: {start}~{end} 사이에 소리 {count, plural, other {#번}}. 가장 큰 소리: {level}.",
@@ -453,13 +474,12 @@
           "soundDetection": "소리 감지",
           "silence": "조용 모드",
           "alerts": "알림",
-          "screen": "화면",
-          "paired": "페어링된 기기",
           "thisPhone": "이 기기",
           "language": "언어",
           "about": "정보 및 한계",
           "advanced": "고급",
-          "startMode": "시작 모드"
+          "startMode": "시작 모드",
+          "display": "화면 표시"
         },
         "sensitivity": "민감도",
         "moreSensitive": "더 민감하게",
@@ -545,6 +565,14 @@
           "stop": "중지",
           "test": "연결 알람 테스트",
           "testWarning": "테스트는 알람 최대 음량으로 약 8초 동안 재생됩니다."
+        },
+        "openAtStart": {
+          "title": "시작할 때 열기",
+          "modeHint": "앱을 시작할 때 이 기기가 열리는 모드예요.",
+          "autoTitle": "자동으로 연결",
+          "autoHint": "부모 기기는 앱을 열 때마다 한 번, 선택한 연결로 지켜보기를 시작해요.",
+          "autoNone": "자동으로 연결하지 않기",
+          "defaultTitle": "기본 연결"
         }
       },
       "fgsMissing": {
@@ -589,8 +617,6 @@
         "permSettings": "설정 열기",
         "baby": {
           "talking": "부모가 말하는 중",
-          "lastTalk": "마지막 말하기: {name}, {time}, {duration}",
-          "lastTalkAnon": "마지막 말하기: {time}, {duration}",
           "title": "말하기",
           "switch": "부모가 이 기기를 통해 말할 수 있음",
           "switchHint": "꺼 두면 이 기기에서는 아무 소리도 재생되지 않습니다.",
@@ -790,8 +816,7 @@
     "role": {
       "title": "이 기기의 용도",
       "subtitle": "휴대폰, 태블릿, 노트북 모두 가능해요. 아기 기기부터 설정하세요.",
-      "navLabel": "역할 선택",
-      "privacyNote": "소리는 두 기기 사이에서 직접 전달되며 절대 녹음되지 않아요."
+      "navLabel": "역할 선택"
     },
     "pair": {
       "copyHint": "5분 안에 부모 기기에 붙여넣으세요. 채팅으로 보내지 마세요.",
