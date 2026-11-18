@@ -108,7 +108,17 @@ maestro_assert() {
 		log "maestro not installed — skipping UI assertion $flow"
 		return 0
 	fi
-	maestro_run "$serial" "$flow"
+	maestro_run "$serial" "$flow" && return 0
+	# A flow that dies with "Unknown error" lost its driver or the adb transport (CI run 19b7d692 and 7e282d82:
+	# the driver was force-stopped 1 s in, the 10 s wait never ran). That says nothing about the screen, so run it
+	# once more. A real failed assertion reports "Assertion is false", fails here at once and never retries.
+	if grep -q "Unknown error" "$OUT/maestro-$(basename "$flow" .yaml)-$serial.xml" 2>/dev/null; then
+		log "maestro lost its driver in $flow (Unknown error); running it once more"
+		sleep 3
+		maestro_run "$serial" "$flow"
+		return
+	fi
+	return 1
 }
 
 # Starts monitoring as if paired (debug-only activity, DUMP permission: adb shell only).
