@@ -502,6 +502,22 @@
           "light": "Terang",
           "system": "Ikuti sistem"
         },
+        "night": {
+          "group": "Layar di malam hari",
+          "title": "Mode malam",
+          "hint": "Layar sangat redup berwarna kemerahan untuk ruangan gelap",
+          "off": "Mati",
+          "on": "Nyala",
+          "auto": "Otomatis",
+          "between": "Antara",
+          "fromA11y": "Mode malam mulai pukul {time}",
+          "untilA11y": "Mode malam berakhir pukul {time}",
+          "statusOffUntil": "Sekarang mati · menyala pukul {time}",
+          "statusOnUntil": "Sekarang menyala · mati pukul {time}",
+          "statusOff": "Sekarang mati",
+          "statusOn": "Sekarang menyala",
+          "note": "Peringatan dan masalah koneksi selalu memakai warna normalnya."
+        },
         "forgetParent": "Lupakan perangkat orang tua ini",
         "forgetBaby": "Lupakan perangkat bayi ini",
         "checkPhone": "Periksa pengaturan perangkat ini",
@@ -734,7 +750,9 @@
     "parent": {
       "quietUnknownWeb": "Mode tenang tidak diketahui · nyalakan di perangkat bayi",
       "keepOpen": "Biarkan halaman ini terbuka dan layar menyala. Jika tidak, browser tidak dapat memberi peringatan.",
-      "soundGate": "Ketuk untuk menyalakan suara peringatan"
+      "soundGate": "Ketuk untuk menyalakan suara peringatan",
+      "soundGateTitle": "Suara peringatan mati",
+      "soundGateBody": "Peramban Anda butuh satu ketukan sebelum GuardedSleep boleh memutar peringatan."
     },
     "settings": {
       "urlHint": "Perangkat bayi menulis alamat ini ke dalam kodenya, jadi perangkat orang tua juga memakainya.",
@@ -750,11 +768,11 @@
       "awayBackground": "Halaman ini berada di latar belakang selama {duration}. Peringatan mungkin terlewat.",
       "awaySleep": "Perangkat ini tertidur selama {duration}. Peringatan mungkin terlewat."
     },
-    "night": {
-      "open": "Layar malam",
-      "label": "Layar malam. Masih memantau. Ketuk untuk menampilkan status.",
+    "blackScreen": {
+      "open": "Layar hitam",
+      "label": "Layar hitam. Masih memantau. Ketuk untuk menampilkan status.",
       "monitoring": "Masih memantau",
-      "leave": "Ketuk lagi untuk keluar dari layar malam"
+      "leave": "Ketuk lagi untuk menutup layar hitam"
     },
     "talk": {
       "hold": "Tahan untuk bicara",

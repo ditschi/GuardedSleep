@@ -502,6 +502,22 @@
           "light": "Ljust",
           "system": "Följ systemet"
         },
+        "night": {
+          "group": "Skärmen på natten",
+          "title": "Nattläge",
+          "hint": "Mycket dämpad, rödtonad skärm för ett mörkt rum",
+          "off": "Av",
+          "on": "På",
+          "auto": "Automatiskt",
+          "between": "Mellan",
+          "fromA11y": "Nattläget börjar kl. {time}",
+          "untilA11y": "Nattläget slutar kl. {time}",
+          "statusOffUntil": "Nu av · slås på kl. {time}",
+          "statusOnUntil": "Nu på · slås av kl. {time}",
+          "statusOff": "Nu av",
+          "statusOn": "Nu på",
+          "note": "Larm och anslutningsproblem använder alltid sina vanliga färger."
+        },
         "forgetParent": "Glöm den här föräldraenheten",
         "forgetBaby": "Glöm den här babyenheten",
         "checkPhone": "Kontrollera den här enhetens inställningar",
@@ -734,7 +750,9 @@
     "parent": {
       "quietUnknownWeb": "Tyst läge okänt · slå på det på babyenheten",
       "keepOpen": "Låt den här sidan vara öppen och skärmen på. Annars kan webbläsaren inte larma dig.",
-      "soundGate": "Tryck för att slå på larmljudet"
+      "soundGate": "Tryck för att slå på larmljudet",
+      "soundGateTitle": "Larmljudet är av",
+      "soundGateBody": "Webbläsaren behöver ett tryck innan GuardedSleep får spela upp larm."
     },
     "settings": {
       "urlHint": "Babyenheten skriver in de här adresserna i sin kod, så föräldraenheten använder dem också.",
@@ -750,11 +768,11 @@
       "awayBackground": "Den här sidan låg i bakgrunden i {duration}. Larm kan ha missats.",
       "awaySleep": "Den här enheten sov i {duration}. Larm kan ha missats."
     },
-    "night": {
-      "open": "Nattskärm",
-      "label": "Nattskärm. Övervakar fortfarande. Tryck för att visa status.",
+    "blackScreen": {
+      "open": "Svart skärm",
+      "label": "Svart skärm. Övervakar fortfarande. Tryck för att visa status.",
       "monitoring": "Övervakar fortfarande",
-      "leave": "Tryck igen för att lämna nattskärmen"
+      "leave": "Tryck igen för att stänga den svarta skärmen"
     },
     "talk": {
       "hold": "Håll för att prata",

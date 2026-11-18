@@ -502,6 +502,22 @@
           "light": "Claro",
           "system": "Igual que el sistema"
         },
+        "night": {
+          "group": "Pantalla de noche",
+          "title": "Modo noche",
+          "hint": "Pantalla muy tenue y teñida de rojo para una habitación oscura",
+          "off": "Desactivado",
+          "on": "Activado",
+          "auto": "Automático",
+          "between": "Entre",
+          "fromA11y": "El modo noche empieza a las {time}",
+          "untilA11y": "El modo noche termina a las {time}",
+          "statusOffUntil": "Desactivado ahora · se activa a las {time}",
+          "statusOnUntil": "Activado ahora · se desactiva a las {time}",
+          "statusOff": "Desactivado ahora",
+          "statusOn": "Activado ahora",
+          "note": "Las alertas y los problemas de conexión siempre usan sus colores normales."
+        },
         "forgetParent": "Olvidar este dispositivo de los padres",
         "forgetBaby": "Olvidar este dispositivo del bebé",
         "checkPhone": "Revisar la configuración de este dispositivo",
@@ -727,7 +743,9 @@
     "parent": {
       "quietUnknownWeb": "Modo silencio desconocido · actívelo en el dispositivo del bebé",
       "keepOpen": "Mantenga esta página abierta y la pantalla encendida. Si no, su navegador no puede avisarle.",
-      "soundGate": "Toque para activar el sonido de alerta"
+      "soundGate": "Toque para activar el sonido de alerta",
+      "soundGateTitle": "El sonido de alerta está desactivado",
+      "soundGateBody": "Su navegador necesita un toque antes de que GuardedSleep pueda reproducir alertas."
     },
     "guard": {
       "wakeLockHeld": "La pantalla se mantiene encendida",
@@ -739,11 +757,11 @@
       "awayBackground": "Esta página estuvo en segundo plano durante {duration}. Es posible que se hayan perdido alertas.",
       "awaySleep": "Este dispositivo estuvo suspendido durante {duration}. Es posible que se hayan perdido alertas."
     },
-    "night": {
-      "open": "Pantalla nocturna",
-      "label": "Pantalla nocturna. Se sigue vigilando. Toque para ver el estado.",
+    "blackScreen": {
+      "open": "Pantalla negra",
+      "label": "Pantalla negra. Se sigue vigilando. Toque para ver el estado.",
       "monitoring": "Vigilando",
-      "leave": "Toque de nuevo para salir de la pantalla nocturna"
+      "leave": "Toque de nuevo para cerrar la pantalla negra"
     },
     "talk": {
       "hold": "Mantén pulsado para hablar",

@@ -502,6 +502,22 @@
           "light": "Jasny",
           "system": "Jak w systemie"
         },
+        "night": {
+          "group": "Ekran w nocy",
+          "title": "Tryb nocny",
+          "hint": "Bardzo ciemny, czerwonawy ekran do ciemnego pokoju",
+          "off": "Wyłączony",
+          "on": "Włączony",
+          "auto": "Automatycznie",
+          "between": "Między",
+          "fromA11y": "Tryb nocny zaczyna się o {time}",
+          "untilA11y": "Tryb nocny kończy się o {time}",
+          "statusOffUntil": "Teraz wyłączony · włączy się o {time}",
+          "statusOnUntil": "Teraz włączony · wyłączy się o {time}",
+          "statusOff": "Teraz wyłączony",
+          "statusOn": "Teraz włączony",
+          "note": "Alerty i problemy z połączeniem zawsze mają swoje zwykłe kolory."
+        },
         "forgetParent": "Zapomnij to urządzenie rodzica",
         "forgetBaby": "Zapomnij to urządzenie dziecka",
         "checkPhone": "Sprawdź konfigurację tego urządzenia",
@@ -734,7 +750,9 @@
     "parent": {
       "quietUnknownWeb": "Tryb ciszy nieznany · włącz go na urządzeniu dziecka",
       "keepOpen": "Trzymaj tę stronę otwartą, a ekran włączony. Inaczej przeglądarka nie może Cię alarmować.",
-      "soundGate": "Dotknij, aby włączyć dźwięk alertów"
+      "soundGate": "Dotknij, aby włączyć dźwięk alertów",
+      "soundGateTitle": "Dźwięk alertów jest wyłączony",
+      "soundGateBody": "Przeglądarka potrzebuje jednego dotknięcia, zanim GuardedSleep będzie mógł odtwarzać alerty."
     },
     "settings": {
       "urlHint": "Urządzenie dziecka zapisuje te adresy w swoim kodzie, więc urządzenie rodzica też ich używa.",
@@ -750,11 +768,11 @@
       "awayBackground": "Ta strona była w tle przez {duration}. Alerty mogły umknąć.",
       "awaySleep": "To urządzenie spało przez {duration}. Alerty mogły umknąć."
     },
-    "night": {
-      "open": "Ekran nocny",
-      "label": "Ekran nocny. Nadal monitoruje. Dotknij, aby pokazać stan.",
+    "blackScreen": {
+      "open": "Czarny ekran",
+      "label": "Czarny ekran. Nadal monitoruje. Dotknij, aby pokazać stan.",
       "monitoring": "Nadal monitoruje",
-      "leave": "Dotknij ponownie, aby opuścić ekran nocny"
+      "leave": "Dotknij ponownie, aby zamknąć czarny ekran"
     },
     "talk": {
       "hold": "Przytrzymaj, aby mówić",

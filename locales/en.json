@@ -500,6 +500,22 @@
           "light": "Light",
           "system": "Match system"
         },
+        "night": {
+          "group": "Screen at night",
+          "title": "Night mode",
+          "hint": "Very dim, red-tinted screen for a dark room",
+          "off": "Off",
+          "on": "On",
+          "auto": "Automatic",
+          "between": "Between",
+          "fromA11y": "Night mode starts at {time}",
+          "untilA11y": "Night mode ends at {time}",
+          "statusOffUntil": "Now off · turns on at {time}",
+          "statusOnUntil": "Now on · turns off at {time}",
+          "statusOff": "Now off",
+          "statusOn": "Now on",
+          "note": "Alerts and connection problems always use their normal colours."
+        },
         "forgetParent": "Forget this parent device",
         "forgetBaby": "Forget this baby device",
         "checkPhone": "Check this device's setup",
@@ -736,7 +752,9 @@
     "parent": {
       "quietUnknownWeb": "Quiet mode unknown · turn it on at the baby device",
       "keepOpen": "Keep this page open and the screen on. Your browser can't alert you otherwise.",
-      "soundGate": "Tap to turn on alert sound"
+      "soundGate": "Tap to turn on alert sound",
+      "soundGateTitle": "Alert sound is off",
+      "soundGateBody": "Your browser needs one tap before GuardedSleep may play alerts."
     },
     "settings": {
       "urlHint": "The baby device writes these addresses into its code, so the parent device uses them too.",
@@ -752,11 +770,11 @@
       "awayBackground": "This page was in the background for {duration}. Alerts may have been missed.",
       "awaySleep": "This device was asleep for {duration}. Alerts may have been missed."
     },
-    "night": {
-      "open": "Night screen",
-      "label": "Night screen. Still monitoring. Tap to show status.",
+    "blackScreen": {
+      "open": "Black screen",
+      "label": "Black screen. Still monitoring. Tap to show status.",
       "monitoring": "Still monitoring",
-      "leave": "Tap again to leave the night screen"
+      "leave": "Tap again to close the black screen"
     },
     "talk": {
       "hold": "Hold to talk",

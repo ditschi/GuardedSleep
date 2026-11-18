@@ -502,6 +502,22 @@
           "light": "Chiaro",
           "system": "Come il sistema"
         },
+        "night": {
+          "group": "Schermo di notte",
+          "title": "Modalità notte",
+          "hint": "Schermo molto scuro e rossastro per una stanza buia",
+          "off": "Disattivata",
+          "on": "Attivata",
+          "auto": "Automatica",
+          "between": "Tra",
+          "fromA11y": "La modalità notte inizia alle {time}",
+          "untilA11y": "La modalità notte termina alle {time}",
+          "statusOffUntil": "Ora disattivata · si attiva alle {time}",
+          "statusOnUntil": "Ora attiva · si disattiva alle {time}",
+          "statusOff": "Ora disattivata",
+          "statusOn": "Ora attiva",
+          "note": "Gli avvisi e i problemi di connessione usano sempre i loro colori normali."
+        },
         "forgetParent": "Dimentica questo dispositivo del genitore",
         "forgetBaby": "Dimentica questo dispositivo del bambino",
         "checkPhone": "Controlla la configurazione di questo dispositivo",
@@ -734,7 +750,9 @@
     "parent": {
       "quietUnknownWeb": "Modalità silenziosa sconosciuta · attivala sul dispositivo del bambino",
       "keepOpen": "Tieni aperta questa pagina e lo schermo acceso. Altrimenti il browser non può avvisarti.",
-      "soundGate": "Tocca per attivare il suono degli avvisi"
+      "soundGate": "Tocca per attivare il suono degli avvisi",
+      "soundGateTitle": "L'audio degli avvisi è disattivato",
+      "soundGateBody": "Il browser richiede un tocco prima che GuardedSleep possa riprodurre gli avvisi."
     },
     "settings": {
       "urlHint": "Il dispositivo del bambino scrive questi indirizzi nel suo codice, quindi li usa anche il dispositivo del genitore.",
@@ -750,11 +768,11 @@
       "awayBackground": "Questa pagina è rimasta in background per {duration}. Alcuni avvisi potrebbero essere andati persi.",
       "awaySleep": "Questo dispositivo è rimasto in sospensione per {duration}. Alcuni avvisi potrebbero essere andati persi."
     },
-    "night": {
-      "open": "Schermo notturno",
-      "label": "Schermo notturno. Monitoraggio in corso. Tocca per vedere lo stato.",
+    "blackScreen": {
+      "open": "Schermo nero",
+      "label": "Schermo nero. Monitoraggio in corso. Tocca per vedere lo stato.",
       "monitoring": "Monitoraggio in corso",
-      "leave": "Tocca di nuovo per uscire dallo schermo notturno"
+      "leave": "Tocca di nuovo per chiudere lo schermo nero"
     },
     "talk": {
       "hold": "Tieni premuto per parlare",
