@@ -307,7 +307,7 @@ class NightModeTests : ShotBase() {
     @Test
     fun aWarningBannerKeepsTheSafetyPaletteInEmber() =
         assertEmberBanner(
-            "parent_banner_readiness",
+            "parent_banner_alarm_volume_zero",
             SafetyColors.warnContainer,
             SettingsState(),
             ParentMonitorState(readiness = listOf(ReadinessIssue.ALARM_VOLUME_ZERO)),
