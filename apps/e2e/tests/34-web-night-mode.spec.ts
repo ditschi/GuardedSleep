@@ -38,8 +38,7 @@ test("night mode: set in Settings, Ember before the first paint after a reload, 
   expect(schemes).not.toContain("dusk");
   expect(schemes).not.toContain("day");
 
-  // Off again: the next load is Dusk.
-  await page.getByTestId("home_settings").click();
+  // Off again (the reload kept the Settings route).
   await page.getByTestId("settings_night_off").click();
   await expect(page.locator("html")).toHaveAttribute("data-scheme", "dusk");
 });
