@@ -1,7 +1,9 @@
 package org.guardedsleep.app.ui
 
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import org.guardedsleep.app.pairing.TurnCredentials
 import org.guardedsleep.app.pairing.TurnServerInput
 import org.guardedsleep.app.ui.model.AlarmTonePlayback
@@ -10,6 +12,7 @@ import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
 import org.guardedsleep.app.ui.model.ConnectionUi
 import org.guardedsleep.app.ui.model.ListenMode
+import org.guardedsleep.app.ui.model.NightSchedule
 import org.guardedsleep.app.ui.model.PairingPhase
 import org.guardedsleep.app.ui.model.PairingState
 import org.guardedsleep.app.ui.model.ParentMonitorState
@@ -297,6 +300,15 @@ class FakeAppController(
     override fun dismissCoach() {
         calls += "dismissCoach"
     }
+
+    /**
+     * The wall clock the fake resolves night mode against (the shared test clock, UTC; the real
+     * window logic runs).
+     */
+    var nightNowWallMs: Long = WALL
+
+    override val nightActive: Flow<Boolean>
+        get() = settingsFlow.map { NightSchedule.isActive(it, nightNowWallMs, 0L) }
 
     val playbackFlow = MutableStateFlow<AlarmTonePlayback>(AlarmTonePlayback.Idle)
 

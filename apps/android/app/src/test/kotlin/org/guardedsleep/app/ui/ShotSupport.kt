@@ -16,6 +16,7 @@ import org.guardedsleep.app.ui.common.UiEnv
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.Theme
 import org.guardedsleep.app.ui.screens.LocalScannerView
+import org.guardedsleep.app.ui.theme.AppScheme
 import org.guardedsleep.app.ui.theme.GuardedSleepTheme
 import org.robolectric.RuntimeEnvironment
 
@@ -51,6 +52,7 @@ fun shot(
     role: Role? = Role.PARENT,
     theme: Theme = Theme.DARK,
     fontScale: Float = 1f,
+    scheme: AppScheme? = null,
     content: @Composable () -> Unit,
 ) {
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
@@ -62,7 +64,12 @@ fun shot(
                 LocalUiEnv provides TestEnv,
                 LocalScannerView provides placeholderScanner,
             ) {
-                GuardedSleepTheme(theme, forceDark = role == Role.BABY, content = content)
+                GuardedSleepTheme(
+                    theme,
+                    forceDark = role == Role.BABY,
+                    scheme = scheme,
+                    content = content,
+                )
             }
         }
         val suffix = if (locale == "en") "" else "_$locale"

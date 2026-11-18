@@ -47,6 +47,7 @@ import org.guardedsleep.app.ui.screens.SettingsPage
 import org.guardedsleep.app.ui.screens.SettingsScreen
 import org.guardedsleep.app.ui.screens.SetupScreen
 import org.guardedsleep.app.ui.screens.customPeerName
+import org.guardedsleep.app.ui.theme.AppScheme
 import org.guardedsleep.app.ui.theme.GuardedSleepTheme
 
 /** Whole app below MainActivity: role, setup, pairing, home, monitoring, settings. */
@@ -60,7 +61,13 @@ fun GuardedSleepRoot(controller: AppController) {
         LocalUiEnv provides env.copy(reduceMotion = env.reduceMotion || systemReduce)
     ) {
         // The baby phone is always dark (dark-room rules); the parent follows the theme setting.
-        GuardedSleepTheme(settings.theme, forceDark = app.role == Role.BABY) {
+        // Night mode (Ember) is resolved by the platform; the alert wrapper below never takes it.
+        val night by controller.nightActive.collectAsState(false)
+        GuardedSleepTheme(
+            settings.theme,
+            forceDark = app.role == Role.BABY,
+            scheme = if (night) AppScheme.EMBER else null,
+        ) {
             AppNavigator(controller)
         }
     }
