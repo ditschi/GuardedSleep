@@ -51,6 +51,7 @@ import org.guardedsleep.app.ui.common.DockTile
 import org.guardedsleep.app.ui.common.DockTiles
 import org.guardedsleep.app.ui.common.Glyph
 import org.guardedsleep.app.ui.common.GlyphIcon
+import org.guardedsleep.app.ui.common.Headline
 import org.guardedsleep.app.ui.common.ListenButton
 import org.guardedsleep.app.ui.common.MetaLine
 import org.guardedsleep.app.ui.common.PauseSnackbar
@@ -73,6 +74,7 @@ import org.guardedsleep.app.ui.common.formatClock
 import org.guardedsleep.app.ui.common.formatDuration
 import org.guardedsleep.app.ui.common.formatDurationWords
 import org.guardedsleep.app.ui.common.formatTime
+import org.guardedsleep.app.ui.common.headlineOf
 import org.guardedsleep.app.ui.common.pauseTileLabel
 import org.guardedsleep.app.ui.common.rememberElapsedNow
 import org.guardedsleep.app.ui.common.rememberWallNow
@@ -231,7 +233,7 @@ fun ParentMonitorScreen(
             p.missed?.let { MissedCard(it, wall) { controller.dismissMissedEvents() } }
         }
         BannerStack(shownSpecs, foldedSpecs, onMore = { sheet = ParentSheet.BANNERS })
-        Hero(p, elapsed, wall, snoozed, micSilent)
+        Hero(p, elapsed, wall)
         SoundStrip(
             bars,
             p.babyThreshold ?: settings.threshold,
@@ -762,59 +764,47 @@ private fun metaText(p: ParentMonitorState, settings: SettingsState, connected: 
  * (the model leaves [ParentMonitorState.quietSinceWallMs] null then).
  */
 @Composable
-private fun Hero(
-    p: ParentMonitorState,
-    elapsed: Long,
-    wall: Long,
-    snoozed: Boolean,
-    micSilent: Boolean,
-) {
+private fun Hero(p: ParentMonitorState, elapsed: Long, wall: Long) {
     val connected = p.link.phase == LinkPhase.CONNECTED
     val colors = LocalAppColors.current
-    val noise = connected && p.noiseAlertActive
-    val quietSince = p.quietSinceWallMs
-    val lastSound = p.lastSound
+    val headline = headlineOf(p, elapsed, wall)
     val text =
-        when {
-            !connected -> {
-                val last = p.link.lastAliveElapsedMs
-                if (last != null)
-                    stringResource(
-                        R.string.native_ui_parent_last_heard,
-                        formatTime(wall - (elapsed - last)),
-                    )
-                else stringResource(R.string.native_ui_parent_no_contact_yet)
-            }
-            micSilent -> stringResource(R.string.native_ui_monitor_cant_hear)
-            noise && snoozed ->
+        when (headline) {
+            is Headline.LastHeard ->
+                stringResource(R.string.native_ui_parent_last_heard, formatTime(headline.atWallMs))
+            Headline.NoContact -> stringResource(R.string.native_ui_parent_no_contact_yet)
+            Headline.CantHear -> stringResource(R.string.native_ui_monitor_cant_hear)
+            is Headline.SoundPaused ->
                 stringResource(
                     R.string.native_ui_parent_sound_snoozed,
-                    formatTime(p.noiseSinceWallMs ?: wall),
+                    formatTime(headline.sinceWallMs),
                 )
-            noise ->
+            is Headline.SoundSince ->
                 stringResource(
                     R.string.native_ui_parent_sound_since,
-                    formatTime(p.noiseSinceWallMs ?: wall),
+                    formatTime(headline.sinceWallMs),
                 )
-            quietSince != null ->
+            is Headline.AllQuiet ->
                 stringResource(
                     R.string.native_ui_parent_all_quiet_since,
-                    formatTime(quietSince),
+                    formatTime(headline.sinceWallMs),
                 )
-            lastSound != null ->
+            is Headline.SoundAt ->
                 stringResource(
                     R.string.native_ui_parent_sound_at,
-                    formatTime(lastSound.atWallMs),
-                    formatDuration(lastSound.durationMs),
+                    formatTime(headline.atWallMs),
+                    formatDuration(headline.durationMs),
                 )
-            else -> stringResource(R.string.native_ui_parent_monitoring_now)
+            Headline.Monitoring -> stringResource(R.string.native_ui_parent_monitoring_now)
         }
     Column(Modifier.fillMaxWidth().padding(horizontal = 6.dp)) {
         Text(
             text,
             Modifier.fillMaxWidth().testTag("parent_headline").semantics { heading() },
             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-            color = if (noise && !snoozed) colors.bad else MaterialTheme.colorScheme.onBackground,
+            color =
+                if (headline is Headline.SoundSince) colors.bad
+                else MaterialTheme.colorScheme.onBackground,
         )
         val since = p.monitoringSinceElapsedMs
         if (connected && since != null) {
