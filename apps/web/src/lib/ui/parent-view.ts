@@ -198,16 +198,19 @@ export function headlineOf(
       atWallMs: nowWallMs - downForMs(p.link, nowElapsedMs),
     };
   }
-  if (p.noiseAlertActive && p.noiseSinceWallMs !== null) {
-    return { kind: "sound_since", sinceWallMs: p.noiseSinceWallMs };
-  }
+  // The order of Android's `headlineOf` (StatusModel.kt): a dead microphone beats a running event,
+  // because the parent must not read "sound" as proof that the room is heard.
   if (p.peer.micSilent === true) return { kind: "cant_hear" };
+  if (p.noiseAlertActive) {
+    const since = p.noiseSinceWallMs ?? nowWallMs;
+    const paused = p.snoozedUntilWallMs !== null && p.snoozedUntilWallMs > nowWallMs;
+    return paused
+      ? { kind: "sound_snoozed", atWallMs: since }
+      : { kind: "sound_since", sinceWallMs: since };
+  }
   if (p.quietSinceWallMs !== null) return { kind: "all_quiet", sinceWallMs: p.quietSinceWallMs };
   if (p.lastSound !== null) {
-    const snoozed = p.snoozedUntilWallMs !== null && p.snoozedUntilWallMs > nowWallMs;
-    return snoozed
-      ? { kind: "sound_snoozed", atWallMs: p.lastSound.atWallMs }
-      : { kind: "sound_at", atWallMs: p.lastSound.atWallMs, durationMs: p.lastSound.durationMs };
+    return { kind: "sound_at", atWallMs: p.lastSound.atWallMs, durationMs: p.lastSound.durationMs };
   }
   return { kind: "monitoring" };
 }

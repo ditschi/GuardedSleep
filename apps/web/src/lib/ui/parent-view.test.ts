@@ -173,11 +173,24 @@ describe("headlineOf", () => {
     });
   });
 
-  it("says alerts are snoozed when they are", () => {
+  it("names a running sound as paused while noise alerts are paused", () => {
+    expect(
+      head(
+        connected({
+          noiseAlertActive: true,
+          noiseSinceWallMs: now.wall - 5_000,
+          snoozedUntilWallMs: now.wall + 60_000,
+        }),
+      ),
+    ).toEqual({ kind: "sound_snoozed", atWallMs: now.wall - 5_000 });
+  });
+
+  it("names the last sound even while noise alerts are paused and no event runs", () => {
     const lastSound = { atWallMs: now.wall - 90_000, durationMs: 30_000 };
     expect(head(connected({ lastSound, snoozedUntilWallMs: now.wall + 60_000 }))).toEqual({
-      kind: "sound_snoozed",
+      kind: "sound_at",
       atWallMs: lastSound.atWallMs,
+      durationMs: 30_000,
     });
   });
 
@@ -186,7 +199,7 @@ describe("headlineOf", () => {
     expect(head(connected({ peer, quietSinceWallMs: now.wall - 60_000 }))).toEqual({
       kind: "cant_hear",
     });
-    // A running noise event still wins: that is a sound the parent must see.
+    // The order is Android's: a silent microphone beats a running event.
     expect(
       head(
         connected({
@@ -195,7 +208,15 @@ describe("headlineOf", () => {
           noiseSinceWallMs: now.wall - 5_000,
         }),
       ).kind,
-    ).toBe("sound_since");
+    ).toBe("cant_hear");
+  });
+
+  it("keeps the whole order: down, silent microphone, paused sound, sound, quiet, last sound", () => {
+    const lastSound = { atWallMs: now.wall - 90_000, durationMs: 30_000 };
+    const quiet = now.wall - 60_000;
+    expect(head(connected({ lastSound, quietSinceWallMs: quiet })).kind).toBe("all_quiet");
+    expect(head(connected({ lastSound })).kind).toBe("sound_at");
+    expect(head(connected()).kind).toBe("monitoring");
   });
 
   it("falls back to plain 'monitoring' right after a reconnect", () => {
