@@ -547,7 +547,6 @@ private fun bannerSpec(
     onSilence: () -> Unit,
     onProbe: () -> Unit,
 ): BannerSpec {
-    val ctx = LocalContext.current
     val fix = stringResource(R.string.native_ui_banner_fix)
     return when (b.kind) {
         BannerKind.SECURITY ->
@@ -574,32 +573,7 @@ private fun bannerSpec(
         BannerKind.READINESS -> {
             val issue = p.readiness.first()
             val (title, body) = readinessCopy(issue, p.ownBatteryPct)
-            val action: (() -> Unit)? =
-                when (issue) {
-                    ReadinessIssue.NOTIFICATIONS_BLOCKED -> { ->
-                        SystemSettings.launch(ctx, SystemSettings.notificationSettings(ctx))
-                    }
-                    ReadinessIssue.FULL_SCREEN_BLOCKED -> { ->
-                        SystemSettings.launch(ctx, SystemSettings.fullScreenIntentSettings(ctx))
-                    }
-                    ReadinessIssue.ALARM_VOLUME_ZERO,
-                    ReadinessIssue.ALARM_VOLUME_LOW -> { ->
-                        SystemSettings.launch(ctx, SystemSettings.soundSettings())
-                    }
-                    ReadinessIssue.DND_BYPASS_MISSING -> { ->
-                        SystemSettings.launch(ctx, SystemSettings.dndAccess())
-                    }
-                    ReadinessIssue.BATTERY_OPTIMIZED -> { ->
-                        SystemSettings.launch(ctx, SystemSettings.batteryOptimization(ctx))
-                    }
-                    ReadinessIssue.HEADPHONES_CONNECTED -> { ->
-                        controller.updateSettings {
-                            it.copy(alertOutput = AlertOutput.SPEAKER_ONLY)
-                        }
-                    }
-                    ReadinessIssue.NEVER_TESTED -> onProbe
-                    ReadinessIssue.PARENT_BATTERY_LOW -> null
-                }
+            val action = readinessFixAction(issue, controller, onProbe)
             BannerSpec(
                 b,
                 title,
@@ -682,6 +656,43 @@ private fun bannerSpec(
                 { controller.updateSettings { it.copy(alertStyle = AlertStyle.SOUND) } },
             )
         }
+    }
+}
+
+/**
+ * What "Fix" does for a readiness item: open the matching system setting, switch the alert output
+ * or open the test sheet; null when nothing can be done from here. Banner and sheet share it, each
+ * with its own label.
+ */
+@Composable
+private fun readinessFixAction(
+    issue: ReadinessIssue,
+    controller: AppController,
+    onProbe: () -> Unit,
+): (() -> Unit)? {
+    val ctx = LocalContext.current
+    return when (issue) {
+        ReadinessIssue.NOTIFICATIONS_BLOCKED -> { ->
+            SystemSettings.launch(ctx, SystemSettings.notificationSettings(ctx))
+        }
+        ReadinessIssue.FULL_SCREEN_BLOCKED -> { ->
+            SystemSettings.launch(ctx, SystemSettings.fullScreenIntentSettings(ctx))
+        }
+        ReadinessIssue.ALARM_VOLUME_ZERO,
+        ReadinessIssue.ALARM_VOLUME_LOW -> { ->
+            SystemSettings.launch(ctx, SystemSettings.soundSettings())
+        }
+        ReadinessIssue.DND_BYPASS_MISSING -> { ->
+            SystemSettings.launch(ctx, SystemSettings.dndAccess())
+        }
+        ReadinessIssue.BATTERY_OPTIMIZED -> { ->
+            SystemSettings.launch(ctx, SystemSettings.batteryOptimization(ctx))
+        }
+        ReadinessIssue.HEADPHONES_CONNECTED -> { ->
+            controller.updateSettings { it.copy(alertOutput = AlertOutput.SPEAKER_ONLY) }
+        }
+        ReadinessIssue.NEVER_TESTED -> onProbe
+        ReadinessIssue.PARENT_BATTERY_LOW -> null
     }
 }
 
@@ -1116,7 +1127,6 @@ private fun ReadinessSheet(
     onProbe: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val ctx = LocalContext.current
     SheetOverlay("sheet_readiness", stringResource(R.string.native_ui_readiness_title), onDismiss) {
         if (p.readiness.isEmpty()) {
             Body(
@@ -1146,45 +1156,18 @@ private fun ReadinessSheet(
                         ReadinessIssue.NEVER_TESTED -> R.string.native_ui_readiness_never_tested
                     }
                 )
-            val fix: Pair<Int, () -> Unit>? =
+            val action = readinessFixAction(issue, controller, onProbe)
+            val fixLabel =
                 when (issue) {
                     ReadinessIssue.NOTIFICATIONS_BLOCKED ->
-                        R.string.native_ui_readiness_fix_notifications to
-                            {
-                                SystemSettings.launch(ctx, SystemSettings.notificationSettings(ctx))
-                            }
+                        R.string.native_ui_readiness_fix_notifications
                     ReadinessIssue.ALARM_VOLUME_ZERO,
-                    ReadinessIssue.ALARM_VOLUME_LOW ->
-                        R.string.native_ui_banner_fix to
-                            {
-                                SystemSettings.launch(ctx, SystemSettings.soundSettings())
-                            }
-                    ReadinessIssue.NEVER_TESTED -> R.string.native_ui_probe_button to onProbe
-                    ReadinessIssue.FULL_SCREEN_BLOCKED ->
-                        R.string.native_ui_common_allow to
-                            {
-                                SystemSettings.launch(
-                                    ctx,
-                                    SystemSettings.fullScreenIntentSettings(ctx),
-                                )
-                            }
-                    ReadinessIssue.DND_BYPASS_MISSING ->
-                        R.string.native_ui_readiness_fix_dnd to
-                            {
-                                SystemSettings.launch(ctx, SystemSettings.dndAccess())
-                            }
-                    ReadinessIssue.BATTERY_OPTIMIZED ->
-                        R.string.native_ui_readiness_fix_battery to
-                            {
-                                SystemSettings.launch(ctx, SystemSettings.batteryOptimization(ctx))
-                            }
-                    ReadinessIssue.HEADPHONES_CONNECTED ->
-                        R.string.native_ui_common_change to
-                            {
-                                controller.updateSettings {
-                                    it.copy(alertOutput = AlertOutput.SPEAKER_ONLY)
-                                }
-                            }
+                    ReadinessIssue.ALARM_VOLUME_LOW -> R.string.native_ui_banner_fix
+                    ReadinessIssue.NEVER_TESTED -> R.string.native_ui_probe_button
+                    ReadinessIssue.FULL_SCREEN_BLOCKED -> R.string.native_ui_common_allow
+                    ReadinessIssue.DND_BYPASS_MISSING -> R.string.native_ui_readiness_fix_dnd
+                    ReadinessIssue.BATTERY_OPTIMIZED -> R.string.native_ui_readiness_fix_battery
+                    ReadinessIssue.HEADPHONES_CONNECTED -> R.string.native_ui_common_change
                     ReadinessIssue.PARENT_BATTERY_LOW -> null
                 }
             AppCard(Modifier.testTag("sheet_readiness_" + issue.name.lowercase())) {
@@ -1193,10 +1176,10 @@ private fun ReadinessSheet(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                if (fix != null)
+                if (fixLabel != null && action != null)
                     SecondaryButton(
-                        stringResource(fix.first),
-                        fix.second,
+                        stringResource(fixLabel),
+                        action,
                         "sheet_readiness_fix_" + issue.name.lowercase(),
                     )
             }
