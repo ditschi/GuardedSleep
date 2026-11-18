@@ -447,7 +447,9 @@
           data-kind="pause"
           data-paused={snoozeActive || undefined}
           data-testid="parent_snooze"
-          aria-label={$t("native.ui.snooze.button")}
+          aria-label={snoozeActive
+            ? `${$t("native.ui.snooze.button")}, ${$t("native.ui.snooze.tilePaused")}`
+            : $t("native.ui.snooze.button")}
           onclick={() => (snoozeOpen = true)}
         >
           <Glyph name="snooze" />

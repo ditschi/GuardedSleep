@@ -168,6 +168,12 @@
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
+  /* Pinned to the corner of its box: an absolute box at its static position sat past the right edge
+     and made the page scroll sideways at 200 % text. */
+  .gs-status-bar__battery .gs-sr-only {
+    inset-block-start: 0;
+    inset-inline-start: 0;
+  }
   .gs-status-bar__battery .gs-glyph {
     width: 1.125rem;
     height: 1.125rem;
