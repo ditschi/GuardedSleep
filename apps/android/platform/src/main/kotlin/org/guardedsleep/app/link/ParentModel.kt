@@ -557,8 +557,12 @@ class ParentModel(
                 talkUi = TalkUi.Idle
                 clearMicSilent()
                 // Detection was paused during the talk, so a quiet period restarts at its end
-                // (`audio-monitoring` "After a talk"); a running noise event keeps its own state.
-                if (phase == LinkPhase.CONNECTED && !tracker.active) quietSinceWall = clock.wallMs()
+                // (`audio-monitoring` "After a talk"); a running noise event keeps its own state,
+                // and a pending
+                // missed-sound report keeps quiet unearned ("Reconnected after the baby process
+                // restarted").
+                if (phase == LinkPhase.CONNECTED && !tracker.active && awaitingMissedUntil == null)
+                    quietSinceWall = clock.wallMs()
                 talkEnd = TalkMapping.end(state.reason)
                 // A release or a stop needs no message, so it starts no timer (as on the web).
                 talkNoticeAt =

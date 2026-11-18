@@ -99,6 +99,18 @@ class ParentModelTest {
     }
 
     @Test
+    fun aTalkEndingWhileTheMissedReportIsPendingDoesNotMakeTheOutageQuiet() {
+        connected()
+        outage(5)
+        assertNull(model.state.value.quietSinceWallMs)
+        model.onEvent(LinkEvent.TalkChanged(TalkState.Ended(TalkEndReason.RELEASED)), clock.elapsed)
+        assertNull(model.state.value.quietSinceWallMs)
+        // Once the complete report arrives, quiet is earned again.
+        model.onEvent(LinkEvent.MissedEvents(0u, 0.0, true, 5000u), clock.elapsed)
+        assertNotNull(model.state.value.quietSinceWallMs)
+    }
+
+    @Test
     fun theRunStartIsKeptUntilReset() {
         assertNull(model.state.value.monitoringSinceElapsedMs)
         clock.advance(1_000)
