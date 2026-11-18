@@ -6,5 +6,5 @@ appId: org.guardedsleep.app.alpha
     stopApp: false
 - extendedWaitUntil:
     visible:
-      id: "baby_status|baby_kiosk_edge"
+      id: "baby_status|baby_kiosk_edge|baby_kiosk"
     timeout: 15000

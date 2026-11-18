@@ -41,4 +41,13 @@ object DebugOptions {
         heartbeatMsValue = heartbeatMs
         alarmAfterMsValue = alarmAfterMs
     }
+
+    /**
+     * Only the relay-only knob, for the UI journey (gate AC-12): the emulators cannot reach each
+     * other's host candidates, so the journey pairs through the UI and then asks for relay-only
+     * media, like the debug launch does. Everything else stays as it is.
+     */
+    fun setRelayOnly(relayOnly: Boolean) {
+        relayOnlyValue = relayOnly
+    }
 }
