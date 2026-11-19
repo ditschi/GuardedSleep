@@ -4,17 +4,30 @@
   import { ALARM_TONE_COPY } from "../lib/alarm-tone";
   import { ENDONYMS, isLocale, LOCALES } from "../lib/i18n/bundles";
   import type { MessageKey } from "../lib/i18n/keys";
-  import { t } from "../lib/i18n/store";
+  import { locale, t } from "../lib/i18n/store";
   import { link } from "../lib/router";
   import { useRouter } from "../lib/router-context";
+  import {
+    localOffsetMs,
+    minuteToTimeValue,
+    nextBoundaryWallMs,
+    nightActive,
+    timeValueToMinute,
+    withNightMode,
+    withNightWindow,
+    type NightMode,
+  } from "../lib/night-mode";
   import { storeThemeSetting } from "../lib/theme";
   import Banner from "../lib/ui/Banner.svelte";
   import Button from "../lib/ui/Button.svelte";
   import Dialog from "../lib/ui/Dialog.svelte";
+  import { formatClock } from "../lib/ui/format";
+  import { NIGHT_MODE_CHOICES } from "../lib/ui/night-choices";
   import { connectionName } from "../lib/ui/parent-view";
   import { isSignalingUrl, sensitivityOf, thresholdOf } from "../lib/ui/sensitivity";
   import ScreenHeader from "../lib/ui/ScreenHeader.svelte";
   import Switch from "../lib/ui/Switch.svelte";
+  import { createTicker } from "../lib/ui/ticker";
 
   const controller = useController();
   const router = useRouter();
@@ -42,6 +55,44 @@
     { value: "light", label: "native.ui.settings.theme.light" },
     { value: "system", label: "native.ui.settings.theme.system" },
   ];
+
+  // The choice is stored by App.svelte on every settings change; this page only changes it.
+  function chooseNightMode(mode: NightMode): void {
+    controller.updateSettings((s) => withNightMode(s, mode));
+  }
+
+  function chooseNightTime(which: "from" | "to", event: Event): void {
+    const minute = timeValueToMinute((event.currentTarget as HTMLInputElement).value);
+    if (minute === null) return;
+    controller.updateSettings((s) =>
+      which === "from"
+        ? withNightWindow(s, minute, s.nightToMinute)
+        : withNightWindow(s, s.nightFromMinute, minute),
+    );
+  }
+
+  // Its own ticker, not the shared `everySecond`: the status bar above counts from that one.
+  const clock = createTicker(1000);
+
+  /** "Now off · turns on at 21:00": the state and, with Automatic, the next change. */
+  const nightStatus = $derived.by(() => {
+    const wall = $clock.wallMs;
+    const offset = localOffsetMs(wall);
+    const active = nightActive($settings, wall, offset);
+    const next =
+      $settings.nightMode === "auto"
+        ? nextBoundaryWallMs($settings.nightFromMinute, $settings.nightToMinute, wall, offset)
+        : null;
+    if (next === null) {
+      return $t(
+        active ? "native.ui.settings.night.statusOn" : "native.ui.settings.night.statusOff",
+      );
+    }
+    return $t(
+      active ? "native.ui.settings.night.statusOnUntil" : "native.ui.settings.night.statusOffUntil",
+      { time: formatClock(next, $locale) },
+    );
+  });
 
   function back(): void {
     const a = $app;
@@ -223,22 +274,74 @@
     {$t("native.ui.settings.group.thisPhone")}
   </h2>
 
-  <fieldset class="gs-group" data-testid="settings_theme">
-    <legend>{$t("native.ui.settings.group.display")}</legend>
-    {#each THEMES as theme (theme.value)}
-      <label class="gs-choice">
-        <input
-          type="radio"
-          name="theme"
-          value={theme.value}
-          checked={$settings.theme === theme.value}
-          data-testid={`settings_theme_${theme.value}`}
-          onchange={() => chooseTheme(theme.value)}
-        />
-        <span>{$t(theme.label)}</span>
-      </label>
-    {/each}
-  </fieldset>
+  <!-- The baby device has no Display page: its screen is always the dim kiosk. -->
+  {#if $app.role !== "baby"}
+    <fieldset class="gs-group" data-testid="settings_theme">
+      <legend>{$t("native.ui.settings.group.display")}</legend>
+      {#each THEMES as theme (theme.value)}
+        <label class="gs-choice">
+          <input
+            type="radio"
+            name="theme"
+            value={theme.value}
+            checked={$settings.theme === theme.value}
+            data-testid={`settings_theme_${theme.value}`}
+            onchange={() => chooseTheme(theme.value)}
+          />
+          <span>{$t(theme.label)}</span>
+        </label>
+      {/each}
+    </fieldset>
+
+    <fieldset class="gs-group" data-testid="settings_group_night">
+      <legend>{$t("native.ui.settings.night.group")}</legend>
+      <p class="gs-night-title">{$t("native.ui.settings.night.title")}</p>
+      <p class="gs-muted">{$t("native.ui.settings.night.hint")}</p>
+      {#each NIGHT_MODE_CHOICES as mode (mode.value)}
+        <label class="gs-choice">
+          <input
+            type="radio"
+            name="night"
+            value={mode.value}
+            checked={$settings.nightMode === mode.value}
+            data-testid={`settings_night_${mode.value}`}
+            onchange={() => chooseNightMode(mode.value)}
+          />
+          <span>{$t(mode.label)}</span>
+        </label>
+      {/each}
+      {#if $settings.nightMode === "auto"}
+        <div class="gs-night-window" data-testid="settings_night_window">
+          <span>{$t("native.ui.settings.night.between")}</span>
+          <input
+            type="time"
+            class="gs-input"
+            value={minuteToTimeValue($settings.nightFromMinute)}
+            aria-label={$t("native.ui.settings.night.fromA11y", {
+              time: minuteToTimeValue($settings.nightFromMinute),
+            })}
+            data-testid="settings_night_from"
+            onchange={(event) => chooseNightTime("from", event)}
+          />
+          <span aria-hidden="true">–</span>
+          <input
+            type="time"
+            class="gs-input"
+            value={minuteToTimeValue($settings.nightToMinute)}
+            aria-label={$t("native.ui.settings.night.untilA11y", {
+              time: minuteToTimeValue($settings.nightToMinute),
+            })}
+            data-testid="settings_night_to"
+            onchange={(event) => chooseNightTime("to", event)}
+          />
+        </div>
+      {/if}
+      <p class="gs-muted" data-testid="settings_night_status">{nightStatus}</p>
+      <p class="gs-muted" data-testid="settings_night_note">
+        {$t("native.ui.settings.night.note")}
+      </p>
+    </fieldset>
+  {/if}
 
   <div class="gs-group">
     <label for="settings-language" class="gs-group__title">

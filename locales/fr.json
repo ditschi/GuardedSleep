@@ -501,6 +501,22 @@
           "light": "Clair",
           "system": "Comme le système"
         },
+        "night": {
+          "group": "Écran la nuit",
+          "title": "Mode nuit",
+          "hint": "Écran très sombre et teinté de rouge pour une pièce obscure",
+          "off": "Désactivé",
+          "on": "Activé",
+          "auto": "Automatique",
+          "between": "Entre",
+          "fromA11y": "Le mode nuit commence à {time}",
+          "untilA11y": "Le mode nuit se termine à {time}",
+          "statusOffUntil": "Désactivé pour l'instant · s'active à {time}",
+          "statusOnUntil": "Activé pour l'instant · se désactive à {time}",
+          "statusOff": "Désactivé pour l'instant",
+          "statusOn": "Activé pour l'instant",
+          "note": "Les alertes et les problèmes de connexion gardent toujours leurs couleurs normales."
+        },
         "forgetParent": "Oublier cet appareil parent",
         "forgetBaby": "Oublier cet appareil bébé",
         "checkPhone": "Vérifier la configuration de cet appareil",
@@ -826,8 +842,11 @@
     },
     "parent": {
       "quietUnknownWeb": "Mode silencieux inconnu · à activer sur l’appareil bébé",
-      "keepOpen": "Gardez cette page ouverte et l’écran allumé. Sinon, votre navigateur ne peut pas vous alerter.",
-      "soundGate": "Touchez pour activer le son d’alerte"
+      "soundGate": "Touchez pour activer le son d’alerte",
+      "soundGateTitle": "Le son d'alerte est désactivé",
+      "soundGateBody": "Votre navigateur a besoin d'un toucher avant que GuardedSleep puisse jouer des alertes.",
+      "keepOpenTitle": "Gardez cette page ouverte et l'écran allumé",
+      "keepOpenBody": "Les alertes ne fonctionnent que tant que cette page est visible."
     },
     "guard": {
       "wakeLockHeld": "L'écran reste allumé",
@@ -839,11 +858,11 @@
       "awayBackground": "Cette page était en arrière-plan depuis {duration}. Des alertes ont pu être manquées.",
       "awaySleep": "Cet appareil était en veille depuis {duration}. Des alertes ont pu être manquées."
     },
-    "night": {
-      "open": "Écran de nuit",
-      "label": "Écran de nuit. La surveillance continue. Touchez pour afficher l'état.",
+    "blackScreen": {
+      "open": "Écran noir",
+      "label": "Écran noir. La surveillance continue. Touchez pour afficher l'état.",
       "monitoring": "Surveillance en cours",
-      "leave": "Touchez de nouveau pour quitter l'écran de nuit"
+      "leave": "Touchez de nouveau pour fermer l'écran noir"
     },
     "talk": {
       "hold": "Maintenir pour parler",

@@ -501,6 +501,22 @@
           "light": "Lys",
           "system": "Følg systemet"
         },
+        "night": {
+          "group": "Skærmen om natten",
+          "title": "Nattilstand",
+          "hint": "Meget dæmpet, rødtonet skærm til et mørkt rum",
+          "off": "Fra",
+          "on": "Til",
+          "auto": "Automatisk",
+          "between": "Mellem",
+          "fromA11y": "Nattilstand starter kl. {time}",
+          "untilA11y": "Nattilstand slutter kl. {time}",
+          "statusOffUntil": "Nu slået fra · slås til kl. {time}",
+          "statusOnUntil": "Nu slået til · slås fra kl. {time}",
+          "statusOff": "Nu slået fra",
+          "statusOn": "Nu slået til",
+          "note": "Alarmer og forbindelsesproblemer bruger altid deres normale farver."
+        },
         "forgetParent": "Glem denne forældreenhed",
         "forgetBaby": "Glem denne babyenhed",
         "checkPhone": "Tjek denne enheds opsætning",
@@ -833,8 +849,11 @@
     },
     "parent": {
       "quietUnknownWeb": "Stille tilstand ukendt · slå den til på babyenheden",
-      "keepOpen": "Hold denne side åben og skærmen tændt. Ellers kan din browser ikke give dig besked.",
-      "soundGate": "Tryk for at slå alarmlyd til"
+      "soundGate": "Tryk for at slå alarmlyd til",
+      "soundGateTitle": "Alarmlyden er slået fra",
+      "soundGateBody": "Din browser kræver ét tryk, før GuardedSleep må afspille alarmer.",
+      "keepOpenTitle": "Hold denne side åben og skærmen tændt",
+      "keepOpenBody": "Alarmer virker kun, mens siden er synlig."
     },
     "settings": {
       "urlHint": "Babyenheden skriver disse adresser i sin kode, så forældreenheden bruger dem også.",
@@ -850,11 +869,11 @@
       "awayBackground": "Denne side lå i baggrunden i {duration}. Alarmer kan være gået tabt.",
       "awaySleep": "Denne enhed sov i {duration}. Alarmer kan være gået tabt."
     },
-    "night": {
-      "open": "Natskærm",
-      "label": "Natskærm. Overvåger stadig. Tryk for at vise status.",
+    "blackScreen": {
+      "open": "Sort skærm",
+      "label": "Sort skærm. Overvåger stadig. Tryk for at vise status.",
       "monitoring": "Overvåger stadig",
-      "leave": "Tryk igen for at forlade natskærmen"
+      "leave": "Tryk igen for at lukke den sorte skærm"
     },
     "talk": {
       "hold": "Hold for at tale",

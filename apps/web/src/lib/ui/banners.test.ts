@@ -4,6 +4,7 @@ import {
   defaultParentMonitor,
   defaultPeerStatus,
   type LinkUi,
+  type PageGuardState,
   type ParentMonitorState,
   type PeerStatusUi,
   type ReadinessIssue,
@@ -15,6 +16,7 @@ import {
   BANNER_LIMIT,
   BANNER_ORDER,
   bannerLevel,
+  browserBanners,
   parentBanners,
   rankBanners,
   type Banner,
@@ -64,7 +66,10 @@ describe("rankBanners", () => {
   });
 
   it("ranks security before everything", () => {
-    const all = [...BANNER_ORDER].reverse().map((k) => b(k));
+    // The plain keep-open note ranks last by design (its own test below); use a warning variant here.
+    const all = [...BANNER_ORDER]
+      .reverse()
+      .map((k) => (k === "browser_keep_open" ? b(k, "browser_keep_open_lost") : b(k)));
     expect(rankBanners(all).shown[0]?.kind).toBe("security");
     expect(kinds(rankBanners(all, 99).shown)).toEqual([...BANNER_ORDER]);
   });
@@ -74,7 +79,7 @@ describe("rankBanners", () => {
       [
         b("baby_battery_low"),
         b("browser_away"),
-        b("browser_keep_open"),
+        b("browser_keep_open", "browser_keep_open_lost"),
         b("browser_sound_gate"),
         b("readiness"),
       ],
@@ -192,6 +197,82 @@ describe("parentBanners", () => {
     expect(ids(state({ snoozedUntil: 5_000 }), "sound", 1_000)).toEqual(["paused"]);
     expect(ids(state({ snoozedUntil: 5_000 }), "sound", 5_000)).toEqual([]);
     expect(ids(state(), "discreet")).toEqual(["vibrate_only"]);
+  });
+});
+
+describe("browserBanners", () => {
+  const guard = (over: Partial<PageGuardState> = {}): PageGuardState => ({
+    wakeLock: "held",
+    hidden: false,
+    away: null,
+    ...over,
+  });
+
+  it("always has the keep-open note, and no card for the sound gate (its panel is the surface)", () => {
+    expect(browserBanners(guard()).map((x) => x.id)).toEqual(["browser_keep_open"]);
+  });
+
+  it("turns keep-open into a warning when the wake lock is lost or missing", () => {
+    for (const wakeLock of ["lost", "unsupported"] as const) {
+      const [only] = browserBanners(guard({ wakeLock }));
+      expect(only?.id).toBe(`browser_keep_open_${wakeLock}`);
+      expect(bannerLevel("browser_keep_open", only?.id)).toBe("warn");
+    }
+    expect(bannerLevel("browser_keep_open")).toBe("note");
+  });
+
+  it("adds the away report until it is dismissed", () => {
+    const away = { kind: "background", awayMs: 60_000, endWallMs: 1 } as const;
+    expect(browserBanners(guard({ away })).map((x) => x.kind)).toContain("browser_away");
+  });
+
+  it("ranks the browser kinds below readiness and above the baby device's warnings", () => {
+    const ranked = rankBanners(
+      [b("baby_battery_low"), b("browser_away"), b("readiness"), b("browser_sound_gate")],
+      10,
+    );
+    expect(kinds(ranked.shown)).toEqual([
+      "readiness",
+      "browser_sound_gate",
+      "browser_away",
+      "baby_battery_low",
+    ]);
+  });
+});
+
+describe("the plain keep-open note folds first", () => {
+  const plain = b("browser_keep_open");
+  const lost = b("browser_keep_open", "browser_keep_open_lost");
+
+  it("never hides a baby device safety notice behind it", () => {
+    for (const safety of [
+      b("mic_silent"),
+      b("baby_battery_low"),
+      b("baby_unplugged"),
+      b("unit_warning", "unit_warning_page_hidden"),
+      b("weak_connection"),
+    ]) {
+      const ranked = rankBanners([plain, safety, b("readiness", "never_tested")]);
+      expect(
+        ranked.shown.map((x) => x.id),
+        safety.id,
+      ).toContain(safety.id);
+      expect(ranked.folded).toEqual([plain]);
+    }
+  });
+
+  it("is shown when there is room, and ranks last even below Vibrate only", () => {
+    expect(kinds(rankBanners([plain, b("vibrate_only")]).shown)).toEqual([
+      "vibrate_only",
+      "browser_keep_open",
+    ]);
+    expect(rankBanners([b("vibrate_only"), b("paused"), plain]).folded).toEqual([plain]);
+  });
+
+  it("keeps the rank of the wake lock warning variants, below readiness and above the rest", () => {
+    const ranked = rankBanners([b("baby_battery_low"), lost, b("readiness", "never_tested")]);
+    expect(ranked.shown.map((x) => x.id)).toEqual(["never_tested", "browser_keep_open_lost"]);
+    expect(ranked.folded.map((x) => x.kind)).toEqual(["baby_battery_low"]);
   });
 });
 

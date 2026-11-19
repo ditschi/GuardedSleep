@@ -501,6 +501,22 @@
           "light": "Açık",
           "system": "Sistemle aynı"
         },
+        "night": {
+          "group": "Geceleyin ekran",
+          "title": "Gece modu",
+          "hint": "Karanlık bir oda için çok loş, kırmızımsı ekran",
+          "off": "Kapalı",
+          "on": "Açık",
+          "auto": "Otomatik",
+          "between": "Arasında",
+          "fromA11y": "Gece modu saat {time} başlar",
+          "untilA11y": "Gece modu saat {time} biter",
+          "statusOffUntil": "Şu an kapalı · saat {time} açılır",
+          "statusOnUntil": "Şu an açık · saat {time} kapanır",
+          "statusOff": "Şu an kapalı",
+          "statusOn": "Şu an açık",
+          "note": "Uyarılar ve bağlantı sorunları her zaman normal renklerini kullanır."
+        },
         "forgetParent": "Bu ebeveyn cihazını unut",
         "forgetBaby": "Bu bebek cihazını unut",
         "checkPhone": "Bu cihazın kurulumunu kontrol et",
@@ -833,8 +849,11 @@
     },
     "parent": {
       "quietUnknownWeb": "Sessiz mod bilinmiyor · bebek cihazında açın",
-      "keepOpen": "Bu sayfayı açık ve ekranı açık tutun. Aksi halde tarayıcınız sizi uyaramaz.",
-      "soundGate": "Uyarı sesini açmak için dokunun"
+      "soundGate": "Uyarı sesini açmak için dokunun",
+      "soundGateTitle": "Uyarı sesi kapalı",
+      "soundGateBody": "GuardedSleep'in uyarı çalabilmesi için tarayıcınızın bir dokunuşa ihtiyacı var.",
+      "keepOpenTitle": "Bu sayfayı açık ve ekranı açık tutun",
+      "keepOpenBody": "Uyarılar yalnızca bu sayfa görünürken çalışır."
     },
     "settings": {
       "urlHint": "Bebek cihazı bu adresleri koduna yazar, böylece ebeveyn cihazı da bunları kullanır.",
@@ -850,11 +869,11 @@
       "awayBackground": "Bu sayfa {duration} boyunca arka plandaydı. Uyarılar kaçırılmış olabilir.",
       "awaySleep": "Bu cihaz {duration} boyunca uykudaydı. Uyarılar kaçırılmış olabilir."
     },
-    "night": {
-      "open": "Gece ekranı",
-      "label": "Gece ekranı. İzleme sürüyor. Durumu görmek için dokunun.",
+    "blackScreen": {
+      "open": "Siyah ekran",
+      "label": "Siyah ekran. İzleme sürüyor. Durumu görmek için dokunun.",
       "monitoring": "İzleme sürüyor",
-      "leave": "Gece ekranından çıkmak için tekrar dokunun"
+      "leave": "Siyah ekranı kapatmak için tekrar dokunun"
     },
     "talk": {
       "hold": "Konuşmak için basılı tutun",

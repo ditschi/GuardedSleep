@@ -7,12 +7,14 @@ import {
   resolveTheme,
   schemeFor,
   THEME_COLOR,
+  NIGHT_THEME_COLOR,
   readThemeSetting,
   storeThemeSetting,
   THEME_STORAGE_KEY,
   type ThemeSetting,
 } from "./theme";
 
+import { NIGHT_STORAGE_KEY, localOffsetMs, nightActive, type NightSettings } from "./night-mode";
 import bootScript from "../../public/theme-boot.js?raw";
 
 describe("resolveTheme", () => {
@@ -121,6 +123,108 @@ describe("schemeFor", () => {
     expect(schemeFor("dark")).toBe("dusk");
     expect(schemeFor("light")).toBe("day");
     expect(schemeFor("dim")).toBe("dusk");
+  });
+
+  it("is Ember in night mode on top of every theme", () => {
+    for (const theme of ["dark", "light", "dim"] as const) {
+      expect(schemeFor(theme, true)).toBe("ember");
+    }
+  });
+
+  it("applyTheme sets Ember and a black browser chrome for night mode", () => {
+    document.head.innerHTML = '<meta name="theme-color" content="#ffffff" />';
+    applyTheme(document, "light", true);
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(document.documentElement.dataset.scheme).toBe("ember");
+    expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute(
+      "content",
+      NIGHT_THEME_COLOR,
+    );
+  });
+});
+
+describe("theme-boot.js agrees with nightActive", () => {
+  afterEach(() => {
+    window.localStorage.clear();
+    delete document.documentElement.dataset.theme;
+    delete document.documentElement.dataset.scheme;
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  function bootNight(stored: unknown, themeStored: string | null = null): string | undefined {
+    document.head.innerHTML = '<meta name="theme-color" content="#000000" />';
+    window.localStorage.removeItem(THEME_STORAGE_KEY);
+    if (themeStored !== null) window.localStorage.setItem(THEME_STORAGE_KEY, themeStored);
+    if (stored === null) window.localStorage.removeItem(NIGHT_STORAGE_KEY);
+    else window.localStorage.setItem(NIGHT_STORAGE_KEY, JSON.stringify(stored));
+    runBoot();
+    return document.documentElement.dataset.scheme;
+  }
+
+  it("paints Ember before the first frame when night mode is on", () => {
+    expect(bootNight({ mode: "on", from: 1260, to: 420, override: null })).toBe("ember");
+    expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute(
+      "content",
+      NIGHT_THEME_COLOR,
+    );
+    // Over the Day theme as well.
+    expect(bootNight({ mode: "on", from: 1260, to: 420, override: null }, "light")).toBe("ember");
+  });
+
+  it("keeps Dusk or Day when off, absent or unreadable", () => {
+    expect(bootNight({ mode: "off", from: 1260, to: 420, override: null })).toBe("dusk");
+    expect(bootNight(null, "light")).toBe("day");
+    window.localStorage.removeItem(THEME_STORAGE_KEY);
+    window.localStorage.setItem(NIGHT_STORAGE_KEY, "{broken");
+    runBoot();
+    expect(document.documentElement.dataset.scheme).toBe("dusk");
+  });
+
+  // The same table runs through night-mode.ts: both must give one answer at every instant.
+  const MIN = 60_000;
+  const table: ReadonlyArray<[string, NightSettings, number]> = [
+    ["wrapped window, 23:00", auto(), 23 * 60],
+    ["wrapped window, 03:00", auto(), 3 * 60],
+    ["wrapped window, 07:00", auto(), 7 * 60],
+    ["wrapped window, noon", auto(), 12 * 60],
+    ["day window inside", auto({ from: 13 * 60, to: 15 * 60 }), 14 * 60],
+    ["day window outside", auto({ from: 13 * 60, to: 15 * 60 }), 16 * 60],
+    ["empty window", auto({ from: 600, to: 600 }), 600],
+  ];
+
+  function auto(over: { from?: number; to?: number } = {}): NightSettings {
+    return {
+      nightMode: "auto",
+      nightFromMinute: over.from ?? 21 * 60,
+      nightToMinute: over.to ?? 7 * 60,
+      nightOverride: null,
+    };
+  }
+
+  it.each(table)("%s", (_name, s, minuteOfDay) => {
+    // Local midnight of the test zone plus the minute: the script reads the zone as `Date` does.
+    const local = new Date(2026, 9, 20, 0, minuteOfDay, 0).getTime();
+    vi.useFakeTimers();
+    vi.setSystemTime(local);
+    const expected = nightActive(s, local, localOffsetMs(local));
+    const scheme = bootNight({
+      mode: s.nightMode,
+      from: s.nightFromMinute,
+      to: s.nightToMinute,
+      override: null,
+    });
+    expect(scheme === "ember", `${_name} at ${minuteOfDay * MIN}`).toBe(expected);
+  });
+
+  it("honours an override until its boundary, like nightActive", () => {
+    vi.useFakeTimers();
+    const now = new Date(2026, 9, 20, 23, 0, 0).getTime();
+    vi.setSystemTime(now);
+    const held = { active: false, until: now + 8 * 60 * MIN };
+    expect(bootNight({ mode: "auto", from: 1260, to: 420, override: held })).toBe("dusk");
+    const expired = { active: false, until: now - 1 };
+    expect(bootNight({ mode: "auto", from: 1260, to: 420, override: expired })).toBe("ember");
   });
 });
 

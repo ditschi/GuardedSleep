@@ -4,6 +4,7 @@ import App from "../App.svelte";
 import { defaultLinkUi, type LinkUi } from "../lib/contract";
 import { createFakeController, type FakeController } from "../lib/contract/fake-controller";
 import { locale } from "../lib/i18n/store";
+import { keepOpenDismissed } from "../lib/ui/browser-notes";
 import { elapsedToWall } from "../lib/ui/parent-view";
 
 function open(path: string, controller: FakeController) {
@@ -33,6 +34,7 @@ function parentController(): FakeController {
 }
 
 afterEach(() => {
+  keepOpenDismissed.set(false);
   window.history.replaceState(null, "", "/");
   locale.set("en");
   document.title = "";
@@ -151,7 +153,7 @@ describe("S09 parent monitor", () => {
     expect(bar.querySelector("svg")).not.toBeNull();
     expect(screen.getByTestId("parent_headline")).toHaveTextContent(/All quiet since \d/);
     expect(screen.getByTestId("parent_meter")).toHaveAccessibleName("Sound level: quiet");
-    expect(screen.getByTestId("parent_keep_open_banner")).toHaveTextContent(
+    expect(screen.getByTestId("parent_banner_browser_keep_open")).toHaveTextContent(
       "Keep this page open and the screen on",
     );
   });
@@ -223,7 +225,7 @@ describe("S09 parent monitor", () => {
 
   it("puts the settings gear last in the tab order and opens Settings", async () => {
     open("/parent", c);
-    const night = await screen.findByTestId("parent_night_open");
+    const night = await screen.findByTestId("parent_black_open");
     const gear = screen.getByTestId("tool_settings");
     expect(gear).toHaveAccessibleName("Settings");
     expect(night.compareDocumentPosition(gear) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -271,14 +273,30 @@ describe("S09 parent monitor", () => {
     expect(c.calls.filter((call) => call[0] === "setListen")).toEqual([]);
   });
 
-  it("shows 'Tap to turn on alert sound' until the sound is unlocked", async () => {
+  it("covers the monitor with the sound gate until the sound is unlocked, bar and dock stay", async () => {
     c.soundUnlocked.set(false);
     open("/parent", c);
-    const gate = await screen.findByTestId("parent_sound_gate");
-    expect(gate).toHaveTextContent("Tap to turn on alert sound");
-    await fireEvent.click(gate);
+    const gate = await screen.findByTestId("sound_gate");
+    expect(gate).toHaveTextContent("Alert sound is off");
+    expect(screen.getByTestId("sound_gate_unlock")).toHaveTextContent("Tap to turn on alert sound");
+    // The status bar and the dock are still there; the hero and the strip are covered.
+    expect(screen.getByTestId("status_bar")).toBeInTheDocument();
+    expect(screen.getByTestId("parent_listen")).toBeInTheDocument();
+    expect(screen.queryByTestId("parent_headline")).toBeNull();
+    expect(screen.queryByTestId("parent_banner_browser_sound_gate")).toBeNull();
+    await fireEvent.click(screen.getByTestId("sound_gate_unlock"));
     expect(c.calls).toContainEqual(["unlockSound"]);
-    await waitFor(() => expect(screen.queryByTestId("parent_sound_gate")).toBeNull());
+    await waitFor(() => expect(screen.queryByTestId("sound_gate")).toBeNull());
+    expect(screen.getByTestId("parent_headline")).toBeInTheDocument();
+  });
+
+  it("unlocks the sound on the first tap of any control", async () => {
+    c.soundUnlocked.set(false);
+    open("/parent", c);
+    await screen.findByTestId("sound_gate");
+    await fireEvent.pointerDown(screen.getByTestId("parent_overflow"));
+    expect(c.calls).toContainEqual(["unlockSound"]);
+    await waitFor(() => expect(screen.queryByTestId("sound_gate")).toBeNull());
   });
 
   it("pauses through the sheet and ends the pause again", async () => {
@@ -431,30 +449,41 @@ describe("S09 parent monitor", () => {
     }));
     open("/parent", c);
     await screen.findByTestId("status_bar");
+    // The baby device's warnings come first; the plain keep-open note folds before any of them.
     expect(screen.getByTestId("parent_banner_baby_unplugged")).toBeInTheDocument();
     expect(screen.getByTestId("parent_banner_unit_warning_page_hidden")).toBeInTheDocument();
-    expect(screen.queryByTestId("parent_banner_unit_warning_wake_lock_off")).toBeNull();
+    expect(screen.queryByTestId("parent_banner_browser_keep_open")).toBeNull();
     const more = screen.getByTestId("parent_banner_more");
-    expect(more).toHaveTextContent("+1 more");
-    expect(more).toHaveAccessibleName(
-      "1 more notice: Baby device may fall asleep — its screen isn't kept on",
-    );
+    expect(more).toHaveTextContent("+2 more");
+    // The accessible name starts with the visible words and lists the folded notices.
+    expect(more).toHaveAccessibleName(/^\+2 more.*Baby device may fall asleep/);
     await fireEvent.click(more);
     const list = screen.getByTestId("sheet_banners");
     expect(
       within(list).getByTestId("parent_banner_unit_warning_wake_lock_off"),
     ).toBeInTheDocument();
+    expect(within(list).getByTestId("parent_banner_browser_keep_open")).toBeInTheDocument();
+  });
+
+  it("puts the keep-open note away for the page's life, but never the wake lock warning", async () => {
+    open("/parent", c);
+    await fireEvent.click(await screen.findByTestId("parent_banner_browser_keep_open_action"));
+    await waitFor(() => expect(screen.queryByTestId("parent_banner_browser_keep_open")).toBeNull());
+    c.pageGuard.update((g) => ({ ...g, wakeLock: "lost" }));
+    expect(await screen.findByTestId("parent_banner_browser_keep_open_lost")).toBeInTheDocument();
   });
 
   it("announces a warn notice through a status region and the security warning as an alert", async () => {
     c.parent.update((p) => ({
       ...p,
       securityWarning: true,
-      peer: { ...p.peer, unitWarnings: ["not_charging"] },
+      readiness: ["alarm_volume_zero"],
     }));
     open("/parent", c);
     expect(await screen.findByTestId("parent_banner_security")).toHaveAttribute("role", "alert");
-    expect(screen.getByTestId("parent_banner_baby_unplugged")).not.toHaveAttribute("role");
+    expect(screen.getByTestId("parent_banner_alarm_volume_zero")).toHaveAttribute("role", "status");
+    // The note-level keep-open banner is folded and announces nothing.
+    expect(screen.queryByTestId("parent_banner_browser_keep_open")).toBeNull();
   });
 
   it("shows the worst readiness issue, with Fix only where the page can act", async () => {

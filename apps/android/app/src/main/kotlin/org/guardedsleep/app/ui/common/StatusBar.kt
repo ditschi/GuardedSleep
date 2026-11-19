@@ -66,7 +66,7 @@ fun StatusBar(
             StatusStyle.INFO -> safety.infoContainer to safety.info
             StatusStyle.WARN -> safety.warnContainer to safety.warn
             StatusStyle.ALERT -> safety.alertContainer to safety.alert
-            StatusStyle.GREY -> scheme.surfaceContainerHighest to scheme.onSurface
+            StatusStyle.GREY -> safety.greyContainer to safety.onGrey
         }
     val shape = RoundedCornerShape(16.dp)
     val pulse = if (loud) pulseAlpha(0.8f, 1f, 2500) else 1f

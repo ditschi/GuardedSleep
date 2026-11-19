@@ -1,5 +1,6 @@
 package org.guardedsleep.app.ui.model
 
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 /*
@@ -415,6 +416,23 @@ enum class DiscreetEscalation(val minutes: Int?) {
     OFF(null),
 }
 
+/**
+ * Night mode choice (`ui-appearance` "Night mode"): off, on, or by the daily time window
+ * ([NightSchedule]). A presentation preference kept on the device; the core never sees it.
+ */
+enum class NightMode {
+    OFF,
+    ON,
+    AUTO,
+}
+
+/**
+ * A manual change made while the mode is [NightMode.AUTO]: it wins over the window until
+ * [untilWallMs], the next start or end of the window (`ui-appearance` "Automatic night mode by
+ * time").
+ */
+data class NightOverride(val active: Boolean, val untilWallMs: Long)
+
 data class SettingsState(
     val theme: Theme = Theme.DARK,
     /** null = follow system; else "en", "de", "fr", "es". */
@@ -453,6 +471,12 @@ data class SettingsState(
      * keeps an unknown stored value from reaching the UI; the core resolves it again for sound).
      */
     val connectionAlarmTone: String = AlarmTones.DEFAULT,
+    /** Night mode choice and its daily window (`NightMode.kt`); a presentation preference. */
+    val nightMode: NightMode = NightMode.OFF,
+    val nightFromMinute: Int = NightSchedule.DEFAULT_FROM_MINUTE,
+    val nightToMinute: Int = NightSchedule.DEFAULT_TO_MINUTE,
+    /** A manual change while [nightMode] is Automatic, until the next window boundary. */
+    val nightOverride: NightOverride? = null,
 )
 
 /**
@@ -707,6 +731,14 @@ interface AppController {
     // Connection alarm tone (`add-connection-alarm-tone`).
     /** Parent: what the picker plays now. */
     val alarmTonePlayback: StateFlow<AlarmTonePlayback>
+
+    /**
+     * Whether night mode is on now (`ui-appearance` "Night mode"): the setting resolved against the
+     * device clock, emitting again at every window boundary. A presentation value; the UI picks the
+     * Ember scheme from it. A plain `Flow` because it has no web counterpart on the controller (the
+     * web resolves it in its own platform layer).
+     */
+    val nightActive: Flow<Boolean>
 
     /** Parent: plays the soft tone and two alarm cycles of tone [id] at reduced volume. */
     fun previewAlarmTone(id: String)

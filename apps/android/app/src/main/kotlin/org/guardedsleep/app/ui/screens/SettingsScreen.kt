@@ -495,6 +495,7 @@ private fun DisplayPage(controller: AppController, s: SettingsState) {
             }
         }
     }
+    NightSection(controller, s)
 }
 
 @Composable

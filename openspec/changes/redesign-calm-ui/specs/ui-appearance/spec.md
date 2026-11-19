@@ -27,12 +27,21 @@ The safety colours (info blue, warning orange, alert red, caution yellow, ok gre
 
 ### Requirement: Night mode
 
-The parent and baby devices SHALL offer night mode with the choices Off (default), On and Automatic, from the monitor tool row, the More sheet and Settings › Display. Night mode SHALL dim the interface with red-shifted colours on black while keeping text at least 4.5:1, and the dimness SHALL come from the screen brightness, not from lower contrast.
+The parent device SHALL offer night mode with the choices Off (default), On and Automatic, from the monitor tool row, the More sheet and Settings › Display. Night mode SHALL dim the interface with red-shifted colours on black while keeping text at least 4.5:1, and the dimness SHALL come from the screen brightness, not from lower contrast.
 
 #### Scenario: Switching on at the bedside
 
 - **WHEN** the parent taps the night icon on the monitor
 - **THEN** the monitor switches to night colours at once and the choice is still active after the app restarts
+
+### Requirement: No night mode on the baby device
+
+The baby device SHALL have no night mode setting and no Display page. Its kiosk SHALL stay near-black with its own dim marks (`connection-status` "Baby unit edge indicator"), whatever the parent device chose.
+
+#### Scenario: Baby device
+
+- **WHEN** a device runs in the baby role, whether or not night mode is on or its window is active
+- **THEN** it offers no night mode choice and its kiosk looks the same
 
 ### Requirement: Automatic night mode by time
 

@@ -85,19 +85,19 @@ test("the header matches the meta fallback, and no screen violates the policy", 
     });
     await expectNoViolations([baby, parent], "monitoring screens");
 
-    // Dialogs, sheets, the night screen and the settings screen.
+    // Dialogs, sheets, the black screen and the settings screen.
     await parent.getByTestId("parent_snooze").click();
     await expect(parent.getByTestId("sheet_snooze")).toBeVisible();
     await parent.getByText("Cancel").first().click();
-    await parent.getByTestId("parent_night_open").click();
-    await parent.getByTestId("night_screen_tap").click();
-    await expect(parent.getByTestId("night_screen_status")).toBeVisible();
+    await parent.getByTestId("parent_black_open").click();
+    await parent.getByTestId("black_screen_tap").click();
+    await expect(parent.getByTestId("black_screen_status")).toBeVisible();
     await parent.keyboard.press("Escape");
-    await baby.getByTestId("baby_night_open").click();
+    await baby.getByTestId("baby_black_open").click();
     await baby.keyboard.press("Escape");
     await parent.getByTestId("tool_settings").click();
     await expect(parent.getByTestId("settings_back")).toBeVisible();
-    await expectNoViolations([baby, parent], "sheets, night screen and settings");
+    await expectNoViolations([baby, parent], "sheets, black screen and settings");
     await parent.getByTestId("settings_back").click();
 
     // The full-screen link alarm.

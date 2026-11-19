@@ -501,6 +501,22 @@
           "light": "Světlý",
           "system": "Podle systému"
         },
+        "night": {
+          "group": "Obrazovka v noci",
+          "title": "Noční režim",
+          "hint": "Velmi tmavá obrazovka s červeným nádechem pro tmavou místnost",
+          "off": "Vypnuto",
+          "on": "Zapnuto",
+          "auto": "Automaticky",
+          "between": "Mezi",
+          "fromA11y": "Noční režim začíná v {time}",
+          "untilA11y": "Noční režim končí v {time}",
+          "statusOffUntil": "Nyní vypnuto · zapne se v {time}",
+          "statusOnUntil": "Nyní zapnuto · vypne se v {time}",
+          "statusOff": "Nyní vypnuto",
+          "statusOn": "Nyní zapnuto",
+          "note": "Upozornění a potíže s připojením mají vždy své běžné barvy."
+        },
         "forgetParent": "Zapomenout toto zařízení rodiče",
         "forgetBaby": "Zapomenout toto zařízení dítěte",
         "checkPhone": "Zkontrolovat nastavení tohoto zařízení",
@@ -833,8 +849,11 @@
     },
     "parent": {
       "quietUnknownWeb": "Tichý režim neznámý · zapněte ho na zařízení dítěte",
-      "keepOpen": "Nechte tuto stránku otevřenou a displej zapnutý. Jinak vás prohlížeč nemůže upozornit.",
-      "soundGate": "Klepnutím zapnete zvuk výstrah"
+      "soundGate": "Klepnutím zapnete zvuk výstrah",
+      "soundGateTitle": "Zvuk upozornění je vypnutý",
+      "soundGateBody": "Prohlížeč potřebuje jedno klepnutí, než smí GuardedSleep přehrávat upozornění.",
+      "keepOpenTitle": "Nechte tuto stránku otevřenou a displej zapnutý",
+      "keepOpenBody": "Upozornění fungují, jen když je tato stránka vidět."
     },
     "settings": {
       "urlHint": "Zařízení dítěte tyto adresy zapíše do svého kódu, takže je používá i zařízení rodiče.",
@@ -850,11 +869,11 @@
       "awayBackground": "Tato stránka byla na pozadí {duration}. Výstrahy mohly uniknout.",
       "awaySleep": "Toto zařízení spalo {duration}. Výstrahy mohly uniknout."
     },
-    "night": {
-      "open": "Noční obrazovka",
-      "label": "Noční obrazovka. Stále sleduje. Klepnutím zobrazíte stav.",
+    "blackScreen": {
+      "open": "Černá obrazovka",
+      "label": "Černá obrazovka. Stále sleduje. Klepnutím zobrazíte stav.",
       "monitoring": "Stále sleduje",
-      "leave": "Klepnutím znovu noční obrazovku opustíte"
+      "leave": "Klepnutím znovu černou obrazovku zavřete"
     },
     "talk": {
       "hold": "Podržte a mluvte",

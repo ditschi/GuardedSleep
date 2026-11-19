@@ -28,6 +28,15 @@ afterEach(() => {
   (window as unknown as { Notification?: unknown }).Notification = realNotification;
 });
 
+/** The baby screen has its own notice; the parent's is the banner `browser_away` of the stack. */
+const awayId = (role: "baby" | "parent"): string =>
+  role === "baby" ? "away_notice" : "parent_banner_browser_away";
+const dismissName = (role: "baby" | "parent"): string => (role === "baby" ? "Dismiss" : "OK");
+const awayKind = (el: HTMLElement): string | null =>
+  el.getAttribute("data-kind") === "browser_away"
+    ? el.getAttribute("data-away")
+    : el.getAttribute("data-kind");
+
 describe.each(["baby", "parent"] as const)("away notice on the %s monitor", (role) => {
   it("tells how long the page was in the background and can be dismissed", async () => {
     const c = controllerFor(role);
@@ -36,13 +45,17 @@ describe.each(["baby", "parent"] as const)("away notice on the %s monitor", (rol
       away: { kind: "background", awayMs: 6 * 60_000, endWallMs: Date.now() },
     }));
     open(`/${role}`, c);
-    const notice = await screen.findByTestId("away_notice");
-    expect(notice).toHaveAttribute("data-kind", "background");
+    const notice = await screen.findByTestId(awayId(role));
+    expect(awayKind(notice)).toBe("background");
     expect(notice).toHaveTextContent("in the background for 6 min");
-    expect(notice).toHaveTextContent("Alerts may have been missed");
-    await fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+    if (role === "baby") expect(notice).toHaveTextContent("Alerts may have been missed");
+    await fireEvent.click(
+      role === "baby"
+        ? screen.getByRole("button", { name: dismissName(role) })
+        : screen.getByTestId("parent_banner_browser_away_action"),
+    );
     expect(c.calls).toContainEqual(["dismissAwayReport"]);
-    await waitFor(() => expect(screen.queryByTestId("away_notice")).toBeNull());
+    await waitFor(() => expect(screen.queryByTestId(awayId(role))).toBeNull());
   });
 
   it("names a sleep as sleep", async () => {
@@ -52,8 +65,8 @@ describe.each(["baby", "parent"] as const)("away notice on the %s monitor", (rol
       away: { kind: "sleep", awayMs: 95 * 60_000, endWallMs: Date.now() },
     }));
     open(`/${role}`, c);
-    const notice = await screen.findByTestId("away_notice");
-    expect(notice).toHaveAttribute("data-kind", "sleep");
+    const notice = await screen.findByTestId(awayId(role));
+    expect(awayKind(notice)).toBe("sleep");
     expect(notice).toHaveTextContent("device was asleep for 1 h 35 min");
   });
 
@@ -61,7 +74,7 @@ describe.each(["baby", "parent"] as const)("away notice on the %s monitor", (rol
     const c = controllerFor(role);
     open(`/${role}`, c);
     await screen.findByTestId(role === "baby" ? "baby_status" : "parent_headline");
-    expect(screen.queryByTestId("away_notice")).toBeNull();
+    expect(screen.queryByTestId(awayId(role))).toBeNull();
   });
 });
 

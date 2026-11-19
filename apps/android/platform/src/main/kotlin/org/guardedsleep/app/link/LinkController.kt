@@ -4,6 +4,7 @@ import java.security.SecureRandom
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.guardedsleep.app.alerts.AlertSink
@@ -35,6 +36,7 @@ import org.guardedsleep.app.platform.BuildConfig
 import org.guardedsleep.app.readiness.DeviceCheckResult
 import org.guardedsleep.app.readiness.DeviceChecker
 import org.guardedsleep.app.readiness.ReadinessChecker
+import org.guardedsleep.app.settings.NightClock
 import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.signaling.SignalingFactory
 import org.guardedsleep.app.silence.SilenceGateway
@@ -100,6 +102,8 @@ class LinkController(
     /** Parent: microphone permission and unlocked device, asked before every `set_talk`. */
     private val talkGate: TalkGate = TalkGate.Open,
     private val chimePreview: TalkChimePreview = TalkChimePreview {},
+    /** Offset of the local time zone at an instant, for the night mode window; tests replace it. */
+    private val localOffsetMs: (Long) -> Long = NightClock::systemOffsetMs,
     /** Baby: the device check of the setup screen; null (previews, tests) leaves it unknown. */
     private val deviceChecker: DeviceChecker? = null,
     // Executor seams: production keeps one daemon thread each; the journey tests pass the virtual
@@ -1124,6 +1128,9 @@ class LinkController(
 
     override val alarmTonePlayback: StateFlow<AlarmTonePlayback>
         get() = alerts.alarmTonePlayback
+
+    override val nightActive: Flow<Boolean> =
+        NightClock.active(_settings, clock::wallMs, localOffsetMs)
 
     override fun previewAlarmTone(id: String) = alerts.previewAlarmTone(id)
 
