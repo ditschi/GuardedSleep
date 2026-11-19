@@ -11,7 +11,9 @@
 #
 # Env: DOZE_MINUTES (30), ALERT_MAX_MS (5000), HB_INTERVAL_MS (5000), ALARM_AFTER_MS (60000),
 #      GATE_ONLY (ac1 | talk | ui: stop after that phase; ui = install + the AC-12 journey only),
-#      GATE_SECRET_DIR (where the AC-12 code lives for the canary, see ac12)
+#      GATE_SECRET_DIR (where the AC-12 code lives for the canary, see ac12),
+#      GATE_UI_JOURNEY (1 = run AC-12 after AC-4, the default; 0 = skip it with a NOTE; CI sets 0 unless
+#      dispatched with ui_journey, see gate-ui-journeys design §6a)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -96,10 +98,27 @@ fi
 maestro_run() {
 	local serial=$1 flow=$2
 	shift 2
-	local envs=() kv
+	local envs=() kv t0
 	for kv in "$@"; do envs+=(-e "$kv"); done
+	t0="$(date +%s)"
+	maestro --device "$serial" test "${envs[@]}" --format junit \
+		--output "$OUT/maestro-$(basename "$flow" .yaml)-$serial.xml" "$FLOWS/$flow" && return 0
+	# A flow that dies within seconds never got to test the app: the first Maestro start on a fresh runner
+	# installs its driver on the device and can lose that race. Run it once more (the flows are idempotent).
+	[[ $(($(date +%s) - t0)) -lt 15 ]] || return 1
+	log "maestro $flow on $serial died within seconds; running it once more"
+	sleep 10
 	maestro --device "$serial" test "${envs[@]}" --format junit \
 		--output "$OUT/maestro-$(basename "$flow" .yaml)-$serial.xml" "$FLOWS/$flow"
+}
+
+# Whole logcat of both emulators (no tail limit) after a failed Maestro attempt, so the lines before an adb
+# drop are in poc-gate-results. Plain text on purpose: the canary scan reads every file in $OUT.
+save_full_logcats() {
+	local tag=$1 dev
+	for dev in "$BABY" "$PARENT"; do
+		adb -s "$dev" logcat -d >"$OUT/logcat-full-$tag-$dev.txt" 2>&1 || true
+	done
 }
 
 maestro_assert() {
@@ -108,7 +127,19 @@ maestro_assert() {
 		log "maestro not installed — skipping UI assertion $flow"
 		return 0
 	fi
-	maestro_run "$serial" "$flow"
+	maestro_run "$serial" "$flow" && return 0
+	save_full_logcats "$(basename "$flow" .yaml)-attempt1"
+	# A flow that dies with "Unknown error" lost its driver or the adb transport (CI run 19b7d692 and 7e282d82:
+	# the driver was force-stopped 1 s in, the 10 s wait never ran). That says nothing about the screen, so run it
+	# once more. A real failed assertion reports "Assertion is false", fails here at once and never retries.
+	if grep -q "Unknown error" "$OUT/maestro-$(basename "$flow" .yaml)-$serial.xml" 2>/dev/null; then
+		log "maestro lost its driver in $flow (Unknown error); running it once more"
+		sleep 3
+		maestro_run "$serial" "$flow" && return 0
+		save_full_logcats "$(basename "$flow" .yaml)-attempt2"
+		return 1
+	fi
+	return 1
 }
 
 # Starts monitoring as if paired (debug-only activity, DUMP permission: adb shell only).
@@ -187,18 +218,24 @@ read_baby_code() {
 	[[ -n "$text" ]] || text="$(printf '%s' "$node" | sed -n 's/.* text="\([^"]*\)" resource-id=.*/\1/p')"
 	printf '%s' "$text" | sed 's/&quot;/"/g; s/&lt;/</g; s/&gt;/>/g; s/&apos;/'"'"'/g; s/&amp;/\&/g'
 }
+# journey-setup starts from a cleared app, so it can simply run again: a fresh Maestro driver start on a busy
+# host sometimes dies in the first seconds (device offline for a moment), which says nothing about the app.
+maestro_setup() { # serial role_tag
+	maestro_run "$1" journey-setup.yaml ROLE_TAG="$2" "RELAY=$SIGNAL" "TURN=$TURN_URL" TURN_USER=poc TURN_PASS=poc && return 0
+	# This flow carries no pairing material (relay URL, the gate's TURN test user), so its error lines may be shown.
+	grep -hE "ERROR|Exception" /root/.maestro/tests/*/maestro.log 2>/dev/null | tail -4 | cut -c1-260 || true
+	# A busy runner can drop an emulator off adb for a moment ("device offline"); wait for it and run the
+	# flow once more, it starts from a cleared app.
+	log "journey-setup failed on $1; waiting for the device and retrying once"
+	timeout 180 adb -s "$1" wait-for-device || true
+	sleep 20
+	maestro_run "$1" journey-setup.yaml ROLE_TAG="$2" "RELAY=$SIGNAL" "TURN=$TURN_URL" TURN_USER=poc TURN_PASS=poc
+}
 ac12() {
 	[[ "$HAVE_MAESTRO" == 1 ]] || {
 		log "AC-12 skipped: no maestro"
 		return 0
 	}
-	# Blocked (gate-ui-journeys design §7): both emulators are 10.0.2.15, so ICE only connects with
-	# relay-only media, which the UI cannot switch and the design forbids adding a debug seam for. The
-	# journey is therefore off until that is decided; GATE_UI_JOURNEY=1 (or GATE_ONLY=ui) runs it anyway.
-	if [[ "${GATE_UI_JOURNEY:-0}" != 1 && "${GATE_ONLY:-}" != ui ]]; then
-		echo "NOTE AC-12 — UI journey disabled: blocked on relay-only media (design §7); GATE_UI_JOURNEY=1 runs it" | tee -a "$OUT/summary.txt"
-		return 0
-	fi
 	local t_start code
 	t_start="$(date +%s)"
 	log "AC-12 UI journey: onboarding, own relay and TURN, pairing by pasted code"
@@ -206,9 +243,15 @@ ac12() {
 		ui_clear "$s"
 		grant_all "$s"
 	done
-	local turn_env=("RELAY=$SIGNAL" "TURN=$TURN_URL" TURN_USER=poc TURN_PASS=poc)
-	maestro_run "$BABY" journey-setup.yaml ROLE_TAG=role_baby "${turn_env[@]}" || fail AC-12 "baby onboarding or Settings failed"
-	maestro_run "$PARENT" journey-setup.yaml ROLE_TAG=role_parent "${turn_env[@]}" || fail AC-12 "parent onboarding or Settings failed"
+	maestro_setup "$BABY" role_baby || fail AC-12 "baby onboarding or Settings failed"
+	maestro_setup "$PARENT" role_parent || fail AC-12 "parent onboarding or Settings failed"
+	# Owner exception (gate-ui-journeys design §2): both emulators are 10.0.2.15, so ICE only connects through
+	# the gate's TURN, which the journey set in Settings. The UI has no relay-only switch; this debug-only
+	# extra of DebugLaunchActivity sets that one network knob in the running app process (no URL, TURN,
+	# key or pairing), nothing else of the journey bypasses the UI.
+	for s in "$BABY" "$PARENT"; do
+		adb -s "$s" shell am start -n "$PKG/$DEBUG_LAUNCH" --es relay_only true >/dev/null
+	done
 	maestro_run "$BABY" journey-baby-code.yaml || fail AC-12 "baby did not show its code as text"
 	code="$(read_baby_code)" || code=""
 	[[ "$code" == \{* ]] || fail AC-12 "the baby's code could not be read from the screen"
@@ -512,7 +555,12 @@ maestro_assert "$PARENT" assert-link-lost.yaml || fail AC-4 "link_lost not visib
 pass AC-4 "parent alarmed $((T_LOST - T_KILL)) ms after the baby process was killed"
 
 # --- AC-12: the UI journey runs last, with pm clear before and after (design §5) ---
-ac12
+if [[ "${GATE_UI_JOURNEY:-1}" == 1 ]]; then
+	ac12
+else
+	# Opt-in on CI until emulators stop dropping off adb on the hosted runner (design §6a).
+	echo "NOTE AC-12 — UI journey not run (GATE_UI_JOURNEY=0)" | tee -a "$OUT/summary.txt"
+fi
 
 log "all device criteria passed"
 cat "$OUT/summary.txt"
