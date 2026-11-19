@@ -12,7 +12,7 @@ export default defineConfig({
       registerType: "autoUpdate",
       // No inline registration script (CSP: no inline scripts); main.ts registers the worker.
       injectRegister: false,
-      includeAssets: ["favicon.svg", "robots.txt"],
+      includeAssets: ["favicon.svg", "favicon-16.svg", "apple-touch-icon.png", "robots.txt"],
       manifest: {
         name: "GuardedSleep",
         short_name: "GuardedSleep",
@@ -40,7 +40,7 @@ export default defineConfig({
         runtimeCaching: [],
       },
       devOptions: { enabled: false },
-      // Icons are generated from public/favicon.svg by pwa-assets.config.ts at build time.
+      // Icons are generated from public/logo.svg (copy of docs/brand/logo.svg) by pwa-assets.config.ts at build time.
       // https://vite-pwa-org.netlify.app/assets-generator/integrations.html
       pwaAssets: { config: true, includeHtmlHeadLinks: false, overrideManifestIcons: false },
     }),

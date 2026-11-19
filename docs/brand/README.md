@@ -49,4 +49,4 @@ The light variant (`logo-light.svg`, wordmark, light splash) uses deep sage `#3A
 ## Derived icons
 
 - Android: `ic_launcher_foreground.xml` and `ic_launcher_monochrome.xml` carry the path data of `launcher-foreground.svg` and `launcher-monochrome.svg`, `ic_launcher_background.xml` the night colour. The debug build adds the DEV pill and the badge. The notification icons are `ic_stat_baby.xml` and `ic_stat_parent.xml` in the `platform` module. `scripts/lib/brand-icons.mjs` (in `just lint-text`) fails when they drift from the SVGs here.
-- Web: `apps/web/public/favicon.svg` and `favicon-16.svg` are byte-identical copies of the files here. The PWA and apple-touch PNGs are generated at build time on the night tile (never committed).
+- Web: `apps/web/public/favicon.svg` and `favicon-16.svg` are byte-identical copies of the files here, and `apps/web/public/logo.svg` of the master. The PWA icons and the 180 px apple-touch icon are generated at build time from that copy, on the night tile (never committed).

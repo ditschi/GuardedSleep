@@ -33,7 +33,7 @@ Branch `feat/night-crescent-logo`. Each implementation task is a brief for the `
 
 ## 3. Web
 
-- [ ] 3.1 **Favicons and PWA.**
+- [x] 3.1 **Favicons and PWA.**
   - Goal (design §5):
     - `apps/web/public/favicon.svg` = the 32 px glyph (`assets/favicon.svg`);
     - new `favicon-16.svg` = crescent only on the night tile, derived from the notification crescent geometry;
