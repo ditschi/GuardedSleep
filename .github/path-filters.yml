@@ -85,6 +85,8 @@ gate:
   - "scripts/gradle.sh"
   - "scripts/lib/**"
   - "scripts/poc/**"
+  - "scripts/dev-fdroid-repo.sh"
+  - "tools/fdroid/**"
   - "tools/poc-images.env"
   - "docker/android-native-build/**"
   - "docker/android-emulator/**"
