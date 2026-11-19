@@ -115,7 +115,10 @@ export function wavePoints(d) {
   let [x0, y0] = n;
   for (let i = 2; i + 5 < n.length; i += 6) {
     const [x1, y1, x2, y2, x3, y3] = n.slice(i, i + 6);
-    for (let t = 0; t <= 1; t += 0.05) {
+    // Integer steps, so t = 1 (the segment's end, e.g. the right wave end) is always sampled;
+    // a float step of 0.05 accumulates past 1 and skips it.
+    for (let k = 0; k <= 20; k++) {
+      const t = k / 20;
       const u = 1 - t;
       pts.push([
         u ** 3 * x0 + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t ** 3 * x3,

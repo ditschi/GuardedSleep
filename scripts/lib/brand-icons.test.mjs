@@ -43,10 +43,9 @@ test("parseVector reads a nested gradient", () => {
   });
 });
 
-test("wavePoints samples one cubic segment from its start towards its end", () => {
+test("wavePoints samples one cubic segment including both end points", () => {
   const pts = wavePoints(normPath("M0,0C1,2 3,2 4,0"));
   assert.deepEqual(pts[0], [0, 0]);
-  // The sampling stops just short of t=1 (float step), so the last sample is near the end point.
-  const [x, y] = pts.at(-1);
-  assert.ok(x > 3.5 && x < 4 && y >= 0 && y < 0.5);
+  assert.deepEqual(pts.at(-1), [4, 0]);
+  assert.equal(pts.length, 21);
 });
