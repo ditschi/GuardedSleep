@@ -21,7 +21,7 @@ Branch `ci/dev-fdroid-repo`. Each implementation task is a brief for the `implem
 ## 3. Docs
 
 - [x] 3.1 `docs/contributing/development.md`, "Dev APK" section: new app id and migration, the asset rename, Neo Store and Obtainium setup (F-Droid third-party repository as the documented path), the `fdroidrepos://` link (fingerprint after 4.1), downgrades with `just install-android`, owner steps for the repository key, the `dev-repo` environment and Pages. Acceptance: `just lint-text`.
-- [ ] 3.2 `docs/ci-gates.md`: update the `android-native` / `dev-apk` row; add `android-native` / `dev-repo` and `android-native` / `dev-pages` rows with runbook (repository secret missing, Pages disabled, broken or tampered index → fresh start, re-run the failed job) and the note that `android-native` owns the whole Pages site. Acceptance: `just lint-text`.
+- [x] 3.2 `docs/ci-gates.md`: update the `android-native` / `dev-apk` row; add `android-native` / `dev-repo` and `android-native` / `dev-pages` rows with runbook (repository secret missing, Pages disabled, broken or tampered index → fresh start, re-run the failed job) and the note that `android-native` owns the whole Pages site. Acceptance: `just lint-text`.
 - [ ] 3.3 AGENTS.md: §1 names (`org.guardedsleep.app.dev` for dev builds); §8 "versionCode is derived from versionName" qualified to release builds, dev builds from the commit; §3 or §8 note that `android-native` owns GitHub Pages. Acceptance: `just lint-text`.
 - [ ] 3.4 Final checks: `just lint` and `just test` green; report any SKIPPED task.
 
