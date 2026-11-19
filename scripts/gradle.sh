@@ -28,7 +28,12 @@ fi
 if [[ -z "${GS_GIT_COMMIT_TIME:-}" ]]; then
 	GS_GIT_COMMIT_TIME="$(TZ=UTC git -C "$ROOT" log -1 --format=%cd --date=format-local:'%Y-%m-%d %H:%M UTC' 2>/dev/null || true)"
 fi
-export GS_GIT_COMMIT GS_GIT_COMMIT_TIME
+# Committer time (not author time) in epoch seconds: the dev build derives its versionCode from it
+# (AndroidVersion.devVersion), and it rises along main when a PR is merged.
+if [[ -z "${GS_GIT_COMMIT_EPOCH:-}" ]]; then
+	GS_GIT_COMMIT_EPOCH="$(git -C "$ROOT" log -1 --format=%ct 2>/dev/null || true)"
+fi
+export GS_GIT_COMMIT GS_GIT_COMMIT_TIME GS_GIT_COMMIT_EPOCH
 
 if [[ "${CORE_BUILD_NATIVE:-0}" != "1" ]]; then
 	# shellcheck source=lib/build-image.sh
@@ -49,7 +54,7 @@ if [[ "${CORE_BUILD_NATIVE:-0}" != "1" ]]; then
 	exec docker run --rm \
 		"${GS_DOCKER_USER_ARGS[@]}" "${GS_DOCKER_CACHE_ARGS[@]}" \
 		-e CORE_BUILD_NATIVE=1 \
-		-e GS_GIT_COMMIT -e GS_GIT_COMMIT_TIME \
+		-e GS_GIT_COMMIT -e GS_GIT_COMMIT_TIME -e GS_GIT_COMMIT_EPOCH \
 		-e CARGO_TARGET_DIR=/workspace/target/container \
 		-v "$ROOT":/workspace -w /workspace \
 		"$GS_BUILD_IMAGE" bash scripts/gradle.sh "$@"
