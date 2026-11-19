@@ -106,7 +106,7 @@ if [ -n "${BW_SESSION:-}" ] && command -v bw >/dev/null && command -v jq >/dev/n
     jq --arg pw "$(cat "$PWFILE")" --arg ks "$(base64 -w0 "$KS")" --arg alias "$ALIAS" \
       '.type = 1 | .name = "GuardedSleep dev repository key" | .folderId = null
        | .login = {username: $alias, password: $pw, uris: []}
-       | .notes = "Dev APK signing key (PKCS12, base64). Restore: base64 -d > guardedsleep-dev-repo.p12\n\n" + $ks' |
+       | .notes = "Dev F-Droid repository index signing key (PKCS12, base64). Restore: base64 -d > guardedsleep-dev-repo.p12\n\n" + $ks' |
     bw encode | bw create item >/dev/null
   rm -f "$KS" "$PWFILE"
   rmdir "$OUT" 2>/dev/null || true
