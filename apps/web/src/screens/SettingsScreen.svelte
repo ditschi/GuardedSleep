@@ -22,6 +22,7 @@
   import Button from "../lib/ui/Button.svelte";
   import Dialog from "../lib/ui/Dialog.svelte";
   import { formatClock } from "../lib/ui/format";
+  import { NIGHT_MODE_CHOICES } from "../lib/ui/night-choices";
   import { connectionName } from "../lib/ui/parent-view";
   import { isSignalingUrl, sensitivityOf, thresholdOf } from "../lib/ui/sensitivity";
   import ScreenHeader from "../lib/ui/ScreenHeader.svelte";
@@ -53,12 +54,6 @@
     { value: "dark", label: "native.ui.settings.theme.dark" },
     { value: "light", label: "native.ui.settings.theme.light" },
     { value: "system", label: "native.ui.settings.theme.system" },
-  ];
-
-  const NIGHT_MODES: ReadonlyArray<{ value: NightMode; label: MessageKey }> = [
-    { value: "off", label: "native.ui.settings.night.off" },
-    { value: "on", label: "native.ui.settings.night.on" },
-    { value: "auto", label: "native.ui.settings.night.auto" },
   ];
 
   // The choice is stored by App.svelte on every settings change; this page only changes it.
@@ -300,7 +295,7 @@
     <legend>{$t("native.ui.settings.night.group")}</legend>
     <p class="gs-night-title">{$t("native.ui.settings.night.title")}</p>
     <p class="gs-muted">{$t("native.ui.settings.night.hint")}</p>
-    {#each NIGHT_MODES as mode (mode.value)}
+    {#each NIGHT_MODE_CHOICES as mode (mode.value)}
       <label class="gs-choice">
         <input
           type="radio"

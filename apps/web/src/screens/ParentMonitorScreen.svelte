@@ -19,6 +19,7 @@
   import ListenButton from "../lib/ui/ListenButton.svelte";
   import RestoredCard from "../lib/ui/RestoredCard.svelte";
   import { localOffsetMs, toggledNight, withNightMode, type NightMode } from "../lib/night-mode";
+  import { NIGHT_MODE_CHOICES } from "../lib/ui/night-choices";
   import SoundGate from "../lib/ui/SoundGate.svelte";
   import SoundStrip from "../lib/ui/SoundStrip.svelte";
   import StopDialog from "../lib/ui/StopDialog.svelte";
@@ -181,12 +182,6 @@
   function unlockOnFirstTap(): void {
     if (!$soundUnlocked) controller.unlockSound();
   }
-
-  const NIGHT_CHOICES: ReadonlyArray<{ value: NightMode; label: MessageKey }> = [
-    { value: "off", label: "native.ui.settings.night.off" },
-    { value: "on", label: "native.ui.settings.night.on" },
-    { value: "auto", label: "native.ui.settings.night.auto" },
-  ];
 
   const NIGHT_A11Y = {
     off: "native.ui.tool.nightA11yOff",
@@ -627,7 +622,7 @@
   <div class="gs-stack gs-stack--tight">
     <fieldset class="gs-group" data-testid="more_night">
       <legend>{$t("native.ui.settings.night.title")}</legend>
-      {#each NIGHT_CHOICES as choice (choice.value)}
+      {#each NIGHT_MODE_CHOICES as choice (choice.value)}
         <label class="gs-choice">
           <input
             type="radio"

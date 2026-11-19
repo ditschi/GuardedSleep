@@ -2,7 +2,7 @@
  * Night mode (`ui-appearance` "Night mode", "Automatic night mode by time"): Off, On or Automatic
  * with a daily window, resolved against the device clock. The same rules as `NightSchedule` in
  * UiContract's `NightMode.kt`. `public/theme-boot.js` repeats `nightActive` in plain JavaScript so
- * the first paint already has the right scheme; `night-mode.test.ts` runs both and compares.
+ * the first paint already has the right scheme; `theme.test.ts` runs the boot script against `nightActive` and compares.
  * Presentation only: nothing here reaches the core, and no sensor is read.
  */
 
@@ -190,6 +190,13 @@ export function storeNightSettings(storage: Pick<Storage, "setItem">, s: NightSe
   }
 }
 
+const DEFAULT_NIGHT: NightSettings = {
+  nightMode: "off",
+  nightFromMinute: NIGHT_DEFAULT_FROM_MINUTE,
+  nightToMinute: NIGHT_DEFAULT_TO_MINUTE,
+  nightOverride: null,
+};
+
 function sameNight(a: NightSettings, b: NightSettings): boolean {
   return (
     a.nightMode === b.nightMode &&
@@ -209,18 +216,6 @@ export function persistNightSettings(
   storage: Pick<Storage, "getItem" | "setItem">,
   s: NightSettings,
 ): void {
-  const current: NightSettings = {
-    nightMode: s.nightMode,
-    nightFromMinute: s.nightFromMinute,
-    nightToMinute: s.nightToMinute,
-    nightOverride: s.nightOverride,
-  };
-  const stored = readNightSettings(storage);
-  const baseline: NightSettings = stored ?? {
-    nightMode: "off",
-    nightFromMinute: NIGHT_DEFAULT_FROM_MINUTE,
-    nightToMinute: NIGHT_DEFAULT_TO_MINUTE,
-    nightOverride: null,
-  };
-  if (!sameNight(baseline, current)) storeNightSettings(storage, current);
+  const stored = readNightSettings(storage) ?? DEFAULT_NIGHT;
+  if (!sameNight(stored, s)) storeNightSettings(storage, s);
 }

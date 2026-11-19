@@ -25,13 +25,9 @@ export function createNightClock(
         set(nightActive(s, wall, off));
         if (s.nightMode !== "auto") return;
         const boundary = nextBoundaryWallMs(s.nightFromMinute, s.nightToMinute, wall, off);
-        const held = s.nightOverride !== null && s.nightOverride.untilWallMs > wall;
-        const wake = Math.min(
-          boundary ?? Number.POSITIVE_INFINITY,
-          held
-            ? (s.nightOverride?.untilWallMs ?? Number.POSITIVE_INFINITY)
-            : Number.POSITIVE_INFINITY,
-        );
+        const until = s.nightOverride?.untilWallMs ?? null;
+        const held = until !== null && until > wall ? until : null;
+        const wake = Math.min(boundary ?? Infinity, held ?? Infinity);
         timer = setTimeout(tick, Math.min(Math.max(wake - wall, 1), NIGHT_RECHECK_MS));
       };
       tick();
