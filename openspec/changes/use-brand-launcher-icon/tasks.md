@@ -20,7 +20,7 @@ Branch `feat/brand-launcher-icon`, based on `main` after PR #82 (`docs/brand/`).
 
 ## 4. Owner
 
-- [ ] 4.1 Owner: confirm the background colour (design §3) and the likeness of the redraw (1.1) before merge.
+- [ ] 4.1 Owner: confirm the likeness of the redraw (1.1) before merge. (Background colour decided 2026-11-19: `#F2FAF5`, design §3.)
 
 ## Workflow follow-up
 

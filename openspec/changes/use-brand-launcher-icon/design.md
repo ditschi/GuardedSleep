@@ -51,7 +51,7 @@ Discarded: letting the wave run off the edges (looks like an intentional bleed o
 - Pros: matches the PWA's `theme_color`.
 - Cons: same contrast problem for the wave as B.
 
-Recommendation: A, as the owner's brand call; the UX role confirms in review. Users who want a dark home screen use themed icons (§4). The dev build of `add-dev-fdroid-repo` overrides this background with a clearly different colour.
+Decided by the owner (2026-11-19): A, `#F2FAF5`. Users who want a dark home screen use themed icons (§4). The dev build of `add-dev-fdroid-repo` overrides this background with a clearly different colour.
 
 ## 4. Monochrome layer
 
