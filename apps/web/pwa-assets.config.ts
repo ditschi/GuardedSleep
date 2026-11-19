@@ -3,11 +3,10 @@ import { defineConfig } from "@vite-pwa/assets-generator/config";
 // PWA icons are generated at build time from public/logo.svg (a byte-identical copy of the vector
 // master docs/brand/logo.svg, checked by scripts/lib/brand-icons.mjs; the generator only emits
 // icons for images inside public/), so they never drift from the brand and no PNG is committed.
-// The master is a full-bleed night tile whose mark
-// already lies inside the 66/108 safe circle of the Android adaptive icon, so no extra padding:
-// the plain, the maskable and the apple-touch icon show the same tile as the Android launcher
-// (background #14202B, docs/brand/README.md). The favicons are separate files in public/ (the
-// 16 px one is the crescent alone).
+// The master is a full-bleed night tile whose mark already lies inside the 66/108 safe circle of
+// the Android adaptive icon, so no extra padding: the plain, the maskable and the apple-touch icon
+// show the same tile as the Android launcher (background #14202B, docs/brand/README.md). The
+// favicons are separate files in public/ (the 16 px one is the crescent alone).
 // https://vite-pwa-org.netlify.app/assets-generator/config.html
 const background = "#14202B";
 

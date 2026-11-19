@@ -40,7 +40,8 @@ export default defineConfig({
         runtimeCaching: [],
       },
       devOptions: { enabled: false },
-      // Icons are generated from public/logo.svg (copy of docs/brand/logo.svg) by pwa-assets.config.ts at build time.
+      // Icons are generated from public/logo.svg (copy of docs/brand/logo.svg) by
+      // pwa-assets.config.ts at build time.
       // https://vite-pwa-org.netlify.app/assets-generator/integrations.html
       pwaAssets: { config: true, includeHtmlHeadLinks: false, overrideManifestIcons: false },
     }),

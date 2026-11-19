@@ -67,7 +67,7 @@ class NotificationIconTest {
     }
 
     @Test
-    fun alertOnABabyDeviceOrWithoutRoleShowsTheBabyCrescent() {
+    fun babyNoiseAlertShowsTheCrescent() {
         AlertController(app, FakeEntryPoints, role = { Role.BABY })
             .noiseAlert(NoiseKind.NEW, probe = false, snoozed = false)
         assertEquals(R.drawable.ic_stat_baby, iconOf(posted().single()))
