@@ -490,7 +490,7 @@ describe("S09 parent monitor", () => {
     c.parent.update((p) => ({ ...p, readiness: ["parent_battery_low", "never_tested"] }));
     open("/parent", c);
     expect(await screen.findByTestId("parent_banner_parent_battery_low")).toHaveTextContent(
-      "This phone's battery is low",
+      "This device's battery is low",
     );
     expect(screen.queryByTestId("parent_banner_parent_battery_low_action")).toBeNull();
     c.parent.update((p) => ({ ...p, readiness: ["never_tested"] }));

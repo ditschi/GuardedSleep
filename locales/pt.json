@@ -27,7 +27,7 @@
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
-      "channelNoise": "Alertas de som",
+      "channelNoise": "Alertas de ruído",
       "channelNoiseDesc": "Alertas altos quando o dispositivo do bebê ouve um som.",
       "channelLink": "Alarmes de conexão",
       "channelLinkDesc": "Alarmes quando a conexão com o dispositivo do bebê é perdida.",
@@ -56,7 +56,7 @@
       "actionSnooze10": "Pausar 10 min",
       "actionChecking": "Estou verificando",
       "linkLostTitle": "Conexão perdida",
-      "linkLostText": "Sem conexão com o dispositivo do bebê. Verifique seu bebê agora.",
+      "linkLostText": "Sem conexão com o dispositivo do bebê. Verifique a criança agora.",
       "peerStoppedTitle": "Monitoramento interrompido",
       "peerStoppedText": "O monitoramento foi interrompido no dispositivo do bebê. Você não vai ouvir nada até que seja iniciado de novo.",
       "restoredTitle": "Conectado de novo",
@@ -114,7 +114,7 @@
         "title": "Que dispositivo é este?",
         "baby": {
           "title": "Dispositivo do bebê",
-          "hint": "Fica com seu filho e escuta."
+          "hint": "Fica com a criança e escuta."
         },
         "parent": {
           "title": "Dispositivo dos pais",
@@ -126,7 +126,7 @@
         "title": "Preparar este dispositivo",
         "mic": {
           "title": "Microfone",
-          "why": "Necessário para ouvir seu filho.",
+          "why": "Necessário para ouvir a criança.",
           "required": "Permita o microfone para continuar."
         },
         "background": {
@@ -138,7 +138,7 @@
           "why": "Sem sons, toques ou luzes no dispositivo do bebê. Os despertadores continuam funcionando."
         },
         "safety": {
-          "body": "Mantenha este dispositivo no carregador, em uma superfície estável, fora do alcance do seu filho. Não use um dispositivo com bateria estufada ou danificada."
+          "body": "Mantenha este dispositivo no carregador, em uma superfície estável, fora do alcance da criança. Não use um dispositivo com bateria estufada ou danificada."
         },
         "chargingTip": "Dica: se este dispositivo tiver \"ligar a tela ao carregar\", desative essa opção para a tela ficar escura.",
         "deviceCheck": {
@@ -161,7 +161,7 @@
         },
         "notifications": {
           "title": "Alertas",
-          "why": "Necessário para você ouvir quando seu filho fizer barulho.",
+          "why": "Necessário para você ouvir quanda criança fizer barulho.",
           "required": "O GuardedSleep não pode avisar você sem isso."
         },
         "lockScreen": {
@@ -435,7 +435,7 @@
         "chooseAnother": "Escolher outra ligação",
         "rename": "Renomear",
         "renameTitle": "Renomear conexão",
-        "nameLabel": "Nome (1 a 30 caracteres, fica neste telefone)",
+        "nameLabel": "Nome (1 a 30 caracteres, fica neste dispositivo)",
         "nameInvalid": "Use de 1 a 30 caracteres.",
         "save": "Salvar",
         "readOnlyNote": "Pare o monitoramento para alterar as conexões.",
@@ -539,7 +539,7 @@
         "heartbeat": "Verificação da conexão a cada {seconds} s",
         "alertStyle": {
           "label": "Tipo de alerta",
-          "sound": "Som: o som do bebê toca a cada alerta",
+          "sound": "Som: o som da criança toca a cada alerta",
           "discreet": "Só vibração: vibração e tela, sem som"
         },
         "discreetEscalation": {
@@ -596,7 +596,7 @@
           "off": "Falar está desligado no aparelho do bebé. Ligue-o lá, nas Definições.",
           "unsupported": "Este aparelho do bebé não consegue reproduzir a sua voz.",
           "muted": "O aparelho do bebé não consegue reproduzir som neste momento.",
-          "busy": "O outro aparelho dos pais está a falar com o seu filho.",
+          "busy": "O outro aparelho dos pais está a falar com a criança.",
           "cooldown": "Poderá falar de novo daqui a {seconds} s.",
           "rate": "Tente novamente daqui a pouco.",
           "unknown": "O aparelho do bebé não aceitou o pedido. Tente novamente.",
@@ -620,8 +620,8 @@
         "tapHint": "Mantenha o botão para falar",
         "lockHint": "Falar não pode ser bloqueado",
         "afterListen": "A ouvir durante {seconds} s · toque para continuar",
-        "coach": "Novo: mantenha para falar com o seu filho.",
-        "permBody": "Para falar com o seu filho, o GuardedSleep precisa do microfone enquanto mantém o botão.",
+        "coach": "Novo: mantenha para falar com a criança.",
+        "permBody": "Para falar com a criança, o GuardedSleep precisa do microfone enquanto mantém o botão.",
         "permAllow": "Permitir microfone",
         "permDone": "Feito. Agora mantenha para falar.",
         "permRefused": "Falar precisa do microfone. Pode permitir nas definições do dispositivo.",
@@ -662,7 +662,7 @@
         "subStopped": "Verifique no dispositivo do bebé quem a terminou."
       },
       "connAlert": {
-        "labelVibrating": "O telemóvel está a vibrar",
+        "labelVibrating": "Este dispositivo está vibrando",
         "labelLoud": "Alarme alto a tocar",
         "labelPaused": "Alarme em pausa",
         "headlineCheck": "Veja como está a criança",
@@ -676,7 +676,7 @@
         "counterA11y": "{duration} sem ligação",
         "spokenMin": "{count, plural, one {# minuto} many {# de minutos} other {# minutos}}",
         "spokenSec": "{count, plural, one {# segundo} many {# de segundos} other {# segundos}}",
-        "progressVibrating": "Telemóvel a vibrar agora",
+        "progressVibrating": "Dispositivo vibrando agora",
         "progressLoud": "Alarme alto agora",
         "progressPaused": "Em pausa enquanto verifica",
         "causeLabel": "Causa provável",
@@ -693,13 +693,13 @@
             "more": "Está no Wi-Fi? Se não, abra o GuardedSleep nele outra vez."
           },
           "serverUnreachable": {
-            "line": "Este telemóvel não tem internet.",
-            "step": "Verifique o Wi-Fi ou os dados móveis deste telemóvel.",
+            "line": "Este dispositivo não tem internet.",
+            "step": "Verifique o Wi-Fi ou os dados móveis deste dispositivo.",
             "more": "Desative o modo de avião. Aproxime-se do router."
           },
           "mediaBlocked": {
             "line": "A ligação está bloqueada nesta rede.",
-            "step": "O Wi-Fi de convidados ou de hotel pode bloqueá-la. Mude este telemóvel para dados móveis.",
+            "step": "O Wi-Fi de convidados ou de hotel pode bloqueá-la. Mude este dispositivo para dados móveis.",
             "more": "Depois toque em «Tentar agora»."
           }
         },
@@ -750,11 +750,11 @@
           },
           "fullScreen": {
             "title": "Os alertas não aparecem na tela de bloqueio",
-            "body": "Você pode perder um alerta com o celular bloqueado."
+            "body": "Você pode perder um alerta com este dispositivo bloqueado."
           },
           "alarmVolumeZero": {
             "title": "O volume do alarme está desligado",
-            "body": "Você não vai ouvir os alertas neste celular"
+            "body": "Você não vai ouvir os alertas neste dispositivo"
           },
           "alarmVolumeLow": {
             "title": "O volume do alarme está baixo",
@@ -765,11 +765,11 @@
             "body": "Permita que o GuardedSleep passe."
           },
           "battery": {
-            "title": "Este celular pode parar o GuardedSleep",
+            "title": "Este dispositivo pode parar o GuardedSleep",
             "body": "Permita o uso em segundo plano para os alertas continuarem funcionando."
           },
           "parentBattery": {
-            "title": "A bateria deste celular está fraca",
+            "title": "A bateria deste dispositivo está fraca",
             "body": "Conecte-o ao carregador para continuar monitorando."
           },
           "headphones": {
@@ -784,11 +784,11 @@
       },
       "noiseAlert": {
         "labelSound": "Tocando o som do quarto",
-        "labelVibrate": "Seu celular está vibrando",
+        "labelVibrate": "Este dispositivo está vibrando",
         "labelStopped": "Alerta interrompido",
         "counterLabel": "desde as {time}",
         "counterA11y": "{duration}, desde as {time}",
-        "sentenceSound": "O som do quarto está tocando neste celular.",
+        "sentenceSound": "O som do quarto está tocando neste dispositivo.",
         "stopSoundSub": "Para o som do alerta e continua monitorando",
         "stopVibrationSub": "Para a vibração e continua monitorando"
       },
@@ -798,7 +798,7 @@
         "counterLabel": "de bateria restante",
         "counterA11y": "{percent} por cento de bateria restante",
         "sentence": "Conecte o dispositivo do bebê agora. Quando acabar a bateria, o monitoramento para.",
-        "silentNote": "O dispositivo do bebê fica em silêncio. Só este celular alerta.",
+        "silentNote": "O dispositivo do bebê fica em silêncio. Só este dispositivo alerta.",
         "action": "OK, vou conectar",
         "actionSub": "Fecha esta tela"
       },
@@ -836,8 +836,8 @@
       "cameraView": "Imagem da câmera"
     },
     "baby": {
-      "failMicDenied": "O microfone está bloqueado, então este dispositivo não consegue ouvir seu filho. Permita-o nas configurações do site no navegador.",
-      "failMicUnavailable": "Nenhum microfone encontrado: este dispositivo não consegue ouvir seu filho.",
+      "failMicDenied": "O microfone está bloqueado, então este dispositivo não consegue ouvir a criança. Permita-o nas configurações do site no navegador.",
+      "failMicUnavailable": "Nenhum microfone encontrado: este dispositivo não consegue ouvir a criança.",
       "quietUnknown": "Modo silencioso: desconhecido",
       "keepAwake": "Mantenha este dispositivo ativo: carregando, tampa aberta, esta aba visível.",
       "keepSilent": "Ative o Não perturbe e diminua o brilho neste dispositivo."
@@ -885,7 +885,7 @@
       "endAlert": "Fala interrompida: um alerta precisa da sua atenção.",
       "deniedOther": "O dispositivo do bebê não aceitou a fala. Tente novamente.",
       "unavailableOff": "A fala está desligada no dispositivo do bebê. Ative-a lá nas Configurações.",
-      "unavailableOther": "O outro dispositivo dos pais está falando com seu filho.",
+      "unavailableOther": "O outro dispositivo dos pais está falando com a criança.",
       "unavailableUnsupported": "Este dispositivo do bebê não pode reproduzir sua voz.",
       "unavailableMuted": "O dispositivo do bebê não pode reproduzir som agora.",
       "unavailableNotConnected": "Sem conexão com o dispositivo do bebê.",
@@ -893,12 +893,12 @@
       "unavailableBrowser": "A fala não é compatível com este navegador.",
       "noisePausedSelf": "Alertas de ruído em pausa enquanto você fala.",
       "noisePausedOther": "O outro dispositivo dos pais está falando. Os alertas de ruído voltam depois.",
-      "coach": "Novo: mantenha para falar com o seu filho.",
+      "coach": "Novo: mantenha para falar com a criança.",
       "unconfirmed": "Sua voz pode não estar audível no dispositivo do bebê.",
       "audibleUncertain": "As últimas mensagens podem não ter sido audíveis no dispositivo do bebê. Verifique o volume.",
       "afterListen": "Ouvindo por 10 s · toque para continuar ouvindo",
       "permissionTitle": "Microfone para falar",
-      "permissionBody": "Para falar com seu filho, o GuardedSleep precisa do microfone enquanto você mantém o botão pressionado.",
+      "permissionBody": "Para falar com a criança, o GuardedSleep precisa do microfone enquanto você mantém o botão pressionado.",
       "permissionAllow": "Permitir microfone",
       "permissionDone": "Pronto. Agora mantenha pressionado para falar.",
       "permissionRefused": "Falar precisa do microfone. Você pode permiti-lo nas configurações do site do navegador.",

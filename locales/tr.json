@@ -56,7 +56,7 @@
       "actionSnooze10": "10 dk duraklat",
       "actionChecking": "Bakıyorum",
       "linkLostTitle": "Bağlantı koptu",
-      "linkLostText": "Bebek cihazıyla bağlantı yok. Hemen bebeğinize bakın.",
+      "linkLostText": "Bebek cihazıyla bağlantı yok. Hemen çocuğa bakın.",
       "peerStoppedTitle": "Bebek cihazı izlemeyi durdurdu",
       "peerStoppedText": "Bebek cihazında izleme durduruldu. Yeniden başlatılana kadar hiçbir şey duymayacaksınız.",
       "restoredTitle": "Yeniden bağlandı",
@@ -114,7 +114,7 @@
         "title": "Bu hangi cihaz?",
         "baby": {
           "title": "Bebek cihazı",
-          "hint": "Çocuğunuzun yanında durur ve dinler."
+          "hint": "Çocuğun yanında durur ve dinler."
         },
         "parent": {
           "title": "Ebeveyn cihazı",
@@ -138,7 +138,7 @@
           "why": "Bebek cihazında ses, zil ve ışık olmaz. Çalar saatler yine çalışır."
         },
         "safety": {
-          "body": "Bu cihazı şarjda, sağlam bir yüzeyde ve çocuğunuzun erişemeyeceği yerde tutun. Pili şişmiş veya hasarlı bir cihazı kullanmayın."
+          "body": "Bu cihazı şarjda, sağlam bir yüzeyde ve çocuğun erişemeyeceği yerde tutun. Pili şişmiş veya hasarlı bir cihazı kullanmayın."
         },
         "chargingTip": "İpucu: Bu cihazda \"şarjdayken ekranı uyandır\" seçeneği varsa kapatın, ekran karanlık kalsın.",
         "deviceCheck": {
@@ -435,7 +435,7 @@
         "chooseAnother": "Başka bir bağlantı seç",
         "rename": "Yeniden adlandır",
         "renameTitle": "Bağlantıyı yeniden adlandır",
-        "nameLabel": "Ad (1–30 karakter, bu telefonda kalır)",
+        "nameLabel": "Ad (1–30 karakter, bu cihazda kalır)",
         "nameInvalid": "1 ile 30 karakter kullanın.",
         "save": "Kaydet",
         "readOnlyNote": "Bağlantıları değiştirmek için izlemeyi durdurun.",
@@ -539,7 +539,7 @@
         "heartbeat": "Her {seconds} sn'de bir bağlantı kontrolü",
         "alertStyle": {
           "label": "Uyarı biçimi",
-          "sound": "Ses: her uyarıda bebeğin sesi çalınır",
+          "sound": "Ses: her uyarıda çocuğun sesi çalınır",
           "discreet": "Yalnızca titreşim: titreşim ve ekran, ses yok"
         },
         "discreetEscalation": {
@@ -596,7 +596,7 @@
           "off": "Bebek cihazında konuşma kapalı. Orada Ayarlar'dan açın.",
           "unsupported": "Bu bebek cihazı sesinizi çalamıyor.",
           "muted": "Bebek cihazı şu anda ses çalamıyor.",
-          "busy": "Diğer ebeveyn cihazı şu anda çocuğunuzla konuşuyor.",
+          "busy": "Diğer ebeveyn cihazı şu anda çocukla konuşuyor.",
           "cooldown": "{seconds} sn sonra tekrar konuşabilirsiniz.",
           "rate": "Birazdan tekrar deneyin.",
           "unknown": "Bebek cihazı isteği kabul etmedi. Tekrar deneyin.",
@@ -620,8 +620,8 @@
         "tapHint": "Konuşmak için düğmeyi basılı tutun",
         "lockHint": "Konuşma kilitlenemez",
         "afterListen": "{seconds} sn dinleniyor · dinlemeye devam için dokunun",
-        "coach": "Yeni: Çocuğunuzla konuşmak için basılı tutun.",
-        "permBody": "Çocuğunuzla konuşmak için düğmeyi basılı tuttuğunuz sürece GuardedSleep'in mikrofona ihtiyacı var.",
+        "coach": "Yeni: Çocukla konuşmak için basılı tutun.",
+        "permBody": "Çocukla konuşmak için düğmeyi basılı tuttuğunuz sürece GuardedSleep'in mikrofona ihtiyacı var.",
         "permAllow": "Mikrofona izin ver",
         "permDone": "Tamam. Şimdi konuşmak için basılı tutun.",
         "permRefused": "Konuşma için mikrofon gerekir. Cihaz ayarlarından izin verebilirsiniz.",
@@ -662,7 +662,7 @@
         "subStopped": "Bebek cihazında bunu kimin durdurduğunu kontrol edin."
       },
       "connAlert": {
-        "labelVibrating": "Telefonunuz titreşiyor",
+        "labelVibrating": "Bu cihaz titreşiyor",
         "labelLoud": "Yüksek sesli alarm çalıyor",
         "labelPaused": "Alarm duraklatıldı",
         "headlineCheck": "Lütfen çocuğa bakın",
@@ -676,7 +676,7 @@
         "counterA11y": "{duration} bağlantısız",
         "spokenMin": "{count, plural, one {# dakika} other {# dakika}}",
         "spokenSec": "{count, plural, one {# saniye} other {# saniye}}",
-        "progressVibrating": "Telefon şimdi titreşiyor",
+        "progressVibrating": "Cihaz şimdi titreşiyor",
         "progressLoud": "Yüksek sesli alarm şimdi",
         "progressPaused": "Siz bakarken duraklatıldı",
         "causeLabel": "Olası neden",
@@ -693,13 +693,13 @@
             "more": "Wi-Fi’ye bağlı mı? Değilse GuardedSleep’i orada yeniden açın."
           },
           "serverUnreachable": {
-            "line": "Bu telefonda internet yok.",
-            "step": "Bu telefonda Wi-Fi’yi veya mobil veriyi kontrol edin.",
+            "line": "Bu cihazda internet yok.",
+            "step": "Bu cihazda Wi-Fi’yi veya mobil veriyi kontrol edin.",
             "more": "Uçak modunu kapatın. Yönlendiriciye yaklaşın."
           },
           "mediaBlocked": {
             "line": "Bağlantı bu ağda engelleniyor.",
-            "step": "Misafir veya otel Wi-Fi’si bunu engelleyebilir. Bu telefonu mobil veriye geçirin.",
+            "step": "Misafir veya otel Wi-Fi’si bunu engelleyebilir. Bu cihazı mobil veriye geçirin.",
             "more": "Sonra “Şimdi dene”ye dokunun."
           }
         },
@@ -750,11 +750,11 @@
           },
           "fullScreen": {
             "title": "Uyarılar kilit ekranında görünemez",
-            "body": "Telefon kilitliyken bir uyarıyı kaçırabilirsiniz."
+            "body": "Bu cihaz kilitliyken bir uyarıyı kaçırabilirsiniz."
           },
           "alarmVolumeZero": {
             "title": "Alarm sesi kapalı",
-            "body": "Bu telefonda uyarıları duymazsınız"
+            "body": "Bu cihazda uyarıları duymazsınız"
           },
           "alarmVolumeLow": {
             "title": "Alarm sesi kısık",
@@ -765,11 +765,11 @@
             "body": "GuardedSleep'in geçmesine izin verin."
           },
           "battery": {
-            "title": "Bu telefon GuardedSleep'i durdurabilir",
+            "title": "Bu cihaz GuardedSleep'i durdurabilir",
             "body": "Uyarıların çalışması için arka planda çalışmaya izin verin."
           },
           "parentBattery": {
-            "title": "Bu telefonun pili azaldı",
+            "title": "Bu cihazın pili azaldı",
             "body": "İzlemenin sürmesi için şarja takın."
           },
           "headphones": {
@@ -784,11 +784,11 @@
       },
       "noiseAlert": {
         "labelSound": "Oda sesi çalınıyor",
-        "labelVibrate": "Telefonunuz titreşiyor",
+        "labelVibrate": "Bu cihaz titreşiyor",
         "labelStopped": "Uyarı durduruldu",
         "counterLabel": "{time} saatinden beri",
         "counterA11y": "{duration}, {time} saatinden beri",
-        "sentenceSound": "Oda sesi bu telefonda çalınıyor.",
+        "sentenceSound": "Oda sesi bu cihazda çalınıyor.",
         "stopSoundSub": "Uyarı sesini durdurur, izleme sürer",
         "stopVibrationSub": "Titreşimi durdurur, izleme sürer"
       },
@@ -798,7 +798,7 @@
         "counterLabel": "pil kaldı",
         "counterA11y": "Pilin yüzde {percent} kadarı kaldı",
         "sentence": "Bebek cihazını hemen şarja takın. Pil bittiğinde izleme durur.",
-        "silentNote": "Bebek cihazı sessiz kalır. Yalnızca bu telefon uyarır.",
+        "silentNote": "Bebek cihazı sessiz kalır. Yalnızca bu cihaz uyarır.",
         "action": "Tamam, şarja takıyorum",
         "actionSub": "Bu ekranı kapatır"
       },
@@ -836,8 +836,8 @@
       "cameraView": "Kamera görüntüsü"
     },
     "baby": {
-      "failMicDenied": "Mikrofon engellendi, bu yüzden bu cihaz çocuğunuzu duyamıyor. Tarayıcının site ayarlarından izin verin.",
-      "failMicUnavailable": "Mikrofon bulunamadı, bu yüzden bu cihaz çocuğunuzu duyamıyor.",
+      "failMicDenied": "Mikrofon engellendi, bu yüzden bu cihaz çocuğu duyamıyor. Tarayıcının site ayarlarından izin verin.",
+      "failMicUnavailable": "Mikrofon bulunamadı, bu yüzden bu cihaz çocuğu duyamıyor.",
       "quietUnknown": "Sessiz mod: bilinmiyor",
       "keepAwake": "Bu cihazı uyanık tutun: şarjda, kapak açık, bu sekme görünür.",
       "keepSilent": "Bu cihazda Rahatsız Etmeyin'i açın ve parlaklığı azaltın."
@@ -885,7 +885,7 @@
       "endAlert": "Konuşma durdu: bir uyarı dikkatinizi gerektiriyor.",
       "deniedOther": "Bebek cihazı konuşmayı kabul etmedi. Tekrar deneyin.",
       "unavailableOff": "Konuşma bebek cihazında kapalı. Orada Ayarlar'dan açın.",
-      "unavailableOther": "Diğer ebeveyn cihazı çocuğunuzla konuşuyor.",
+      "unavailableOther": "Diğer ebeveyn cihazı çocukla konuşuyor.",
       "unavailableUnsupported": "Bu bebek cihazı sesinizi çalamıyor.",
       "unavailableMuted": "Bebek cihazı şu anda ses çalamıyor.",
       "unavailableNotConnected": "Bebek cihazına bağlı değil.",
@@ -893,12 +893,12 @@
       "unavailableBrowser": "Bu tarayıcı konuşmayı desteklemiyor.",
       "noisePausedSelf": "Siz konuşurken gürültü uyarıları duraklatıldı.",
       "noisePausedOther": "Diğer ebeveyn cihazı konuşuyor. Bitince gürültü uyarıları devam eder.",
-      "coach": "Yeni: Çocuğunuzla konuşmak için basılı tutun.",
+      "coach": "Yeni: Çocukla konuşmak için basılı tutun.",
       "unconfirmed": "Sesiniz bebek cihazında duyulmayabilir.",
       "audibleUncertain": "Son mesajlar bebek cihazında duyulmamış olabilir. Ses düzeyini kontrol edin.",
       "afterListen": "10 sn dinleniyor · dinlemeye devam için dokunun",
       "permissionTitle": "Konuşma için mikrofon",
-      "permissionBody": "Çocuğunuzla konuşmak için düğmeyi basılı tuttuğunuz sürece GuardedSleep'in mikrofona ihtiyacı var.",
+      "permissionBody": "Çocukla konuşmak için düğmeyi basılı tuttuğunuz sürece GuardedSleep'in mikrofona ihtiyacı var.",
       "permissionAllow": "Mikrofona izin ver",
       "permissionDone": "Tamam. Şimdi konuşmak için basılı tutun.",
       "permissionRefused": "Konuşma mikrofon gerektirir. Tarayıcınızın site ayarlarından izin verebilirsiniz.",

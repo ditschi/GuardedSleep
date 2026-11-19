@@ -56,7 +56,7 @@
       "actionSnooze10": "10분 일시 중지",
       "actionChecking": "확인하고 있어요",
       "linkLostTitle": "연결이 끊겼어요",
-      "linkLostText": "아기 기기와 연결되지 않아요. 지금 바로 아기를 살펴보세요.",
+      "linkLostText": "아기 기기와 연결되지 않아요. 지금 바로 아이를 살펴보세요.",
       "peerStoppedTitle": "아기 기기가 지켜보기를 멈췄어요",
       "peerStoppedText": "아기 기기에서 지켜보기가 중지되었어요. 다시 시작할 때까지 아무 소리도 들리지 않아요.",
       "restoredTitle": "다시 연결됨",
@@ -435,7 +435,7 @@
         "chooseAnother": "다른 연결 선택",
         "rename": "이름 변경",
         "renameTitle": "연결 이름 변경",
-        "nameLabel": "이름(1~30자, 이 휴대폰에만 저장됨)",
+        "nameLabel": "이름(1~30자, 이 기기에만 저장됨)",
         "nameInvalid": "1~30자로 입력하세요.",
         "save": "저장",
         "readOnlyNote": "연결을 바꾸려면 지켜보기를 중지하세요.",
@@ -539,7 +539,7 @@
         "heartbeat": "{seconds}초마다 연결 확인",
         "alertStyle": {
           "label": "알림 방식",
-          "sound": "소리: 알림마다 아기의 소리를 재생",
+          "sound": "소리: 알림마다 아이의 소리를 재생",
           "discreet": "진동만: 진동과 화면, 소리 없음"
         },
         "discreetEscalation": {
@@ -662,7 +662,7 @@
         "subStopped": "아기 기기에서 누가 중지했는지 확인하세요."
       },
       "connAlert": {
-        "labelVibrating": "휴대전화가 진동 중입니다",
+        "labelVibrating": "이 기기가 진동 중입니다",
         "labelLoud": "큰 소리 알람이 울리는 중",
         "labelPaused": "알람 일시 중지됨",
         "headlineCheck": "아이를 확인해 주세요",
@@ -676,7 +676,7 @@
         "counterA11y": "{duration} 동안 연결 없음",
         "spokenMin": "{count, plural, other {#분}}",
         "spokenSec": "{count, plural, other {#초}}",
-        "progressVibrating": "휴대전화 진동 중",
+        "progressVibrating": "기기 진동 중",
         "progressLoud": "큰 소리 알람 중",
         "progressPaused": "확인하는 동안 일시 중지",
         "causeLabel": "가능한 원인",
@@ -693,13 +693,13 @@
             "more": "Wi-Fi에 연결되어 있나요? 아니라면 그 기기에서 GuardedSleep을 다시 여세요."
           },
           "serverUnreachable": {
-            "line": "이 휴대전화에 인터넷이 없습니다.",
-            "step": "이 휴대전화의 Wi-Fi 또는 모바일 데이터를 확인하세요.",
+            "line": "이 기기에 인터넷이 없습니다.",
+            "step": "이 기기의 Wi-Fi 또는 모바일 데이터를 확인하세요.",
             "more": "비행기 모드를 끄세요. 공유기에 가까이 가세요."
           },
           "mediaBlocked": {
             "line": "이 네트워크에서 연결이 차단되었습니다.",
-            "step": "게스트·호텔 Wi-Fi는 차단할 수 있습니다. 이 휴대전화를 모바일 데이터로 바꾸세요.",
+            "step": "게스트·호텔 Wi-Fi는 차단할 수 있습니다. 이 기기를 모바일 데이터로 바꾸세요.",
             "more": "그런 다음 ‘지금 다시 시도’를 누르세요."
           }
         },
@@ -750,11 +750,11 @@
           },
           "fullScreen": {
             "title": "알림이 잠금 화면에 표시되지 않아요",
-            "body": "휴대폰이 잠겨 있으면 알림을 놓칠 수 있어요."
+            "body": "이 기기가 잠겨 있으면 알림을 놓칠 수 있어요."
           },
           "alarmVolumeZero": {
             "title": "알람 볼륨이 꺼져 있어요",
-            "body": "이 휴대폰에서는 알림이 들리지 않아요"
+            "body": "이 기기에서는 알림이 들리지 않아요"
           },
           "alarmVolumeLow": {
             "title": "알람 볼륨이 낮아요",
@@ -765,11 +765,11 @@
             "body": "GuardedSleep이 방해 금지를 뚫고 알릴 수 있게 허용하세요."
           },
           "battery": {
-            "title": "이 휴대폰이 GuardedSleep을 중지할 수 있어요",
+            "title": "이 기기가 GuardedSleep을 중지할 수 있어요",
             "body": "알림이 계속 작동하도록 백그라운드 사용을 허용하세요."
           },
           "parentBattery": {
-            "title": "이 휴대폰의 배터리가 부족해요",
+            "title": "이 기기의 배터리가 부족해요",
             "body": "충전해서 계속 지켜보세요."
           },
           "headphones": {
@@ -784,11 +784,11 @@
       },
       "noiseAlert": {
         "labelSound": "방 소리를 재생하는 중",
-        "labelVibrate": "휴대폰이 진동하고 있어요",
+        "labelVibrate": "이 기기가 진동하고 있어요",
         "labelStopped": "알림이 중지되었어요",
         "counterLabel": "{time}부터",
         "counterA11y": "{duration}, {time}부터",
-        "sentenceSound": "방 소리가 이 휴대폰에서 재생되고 있어요.",
+        "sentenceSound": "방 소리가 이 기기에서 재생되고 있어요.",
         "stopSoundSub": "알림 소리를 멈추고 계속 지켜봐요",
         "stopVibrationSub": "진동을 멈추고 계속 지켜봐요"
       },
@@ -798,7 +798,7 @@
         "counterLabel": "배터리 남음",
         "counterA11y": "배터리 {percent}퍼센트 남음",
         "sentence": "지금 아기 기기를 충전하세요. 배터리가 다 되면 지켜보기가 멈춰요.",
-        "silentNote": "아기 기기는 조용해요. 이 휴대폰만 알려요.",
+        "silentNote": "아기 기기는 조용해요. 이 기기만 알려요.",
         "action": "네, 충전할게요",
         "actionSub": "이 화면을 닫아요"
       },

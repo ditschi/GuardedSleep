@@ -27,7 +27,7 @@
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
-      "channelNoise": "声音提醒",
+      "channelNoise": "噪声提醒",
       "channelNoiseDesc": "宝宝设备听到声音时发出的响亮提醒。",
       "channelLink": "连接警报",
       "channelLinkDesc": "与宝宝设备的连接中断时的警报。",
@@ -56,7 +56,7 @@
       "actionSnooze10": "暂停 10 分钟",
       "actionChecking": "我在查看",
       "linkLostTitle": "连接中断",
-      "linkLostText": "与宝宝设备失去连接。请立即去看看宝宝。",
+      "linkLostText": "与宝宝设备失去连接。请立即去看看孩子。",
       "peerStoppedTitle": "宝宝设备已停止监护",
       "peerStoppedText": "宝宝设备上的监护已停止。在重新开始之前，您将听不到任何声音。",
       "restoredTitle": "已重新连接",
@@ -435,7 +435,7 @@
         "chooseAnother": "选择其他连接",
         "rename": "重命名",
         "renameTitle": "重命名连接",
-        "nameLabel": "名称（1–30 个字符，仅保存在本机）",
+        "nameLabel": "名称（1–30 个字符，仅保存在本设备）",
         "nameInvalid": "请使用 1 到 30 个字符。",
         "save": "保存",
         "readOnlyNote": "要更改连接，请先停止监护。",
@@ -539,7 +539,7 @@
         "heartbeat": "每 {seconds} 秒检查一次连接",
         "alertStyle": {
           "label": "提醒方式",
-          "sound": "声音：每次提醒都播放宝宝的声音",
+          "sound": "声音：每次提醒都播放孩子的声音",
           "discreet": "仅振动：振动和屏幕提示，不播放声音"
         },
         "discreetEscalation": {
@@ -596,7 +596,7 @@
           "off": "宝宝设备上的对讲已关闭。请在该设备的设置中开启。",
           "unsupported": "这台宝宝设备无法播放你的声音。",
           "muted": "宝宝设备目前无法播放声音。",
-          "busy": "另一台家长设备正在与你的孩子说话。",
+          "busy": "另一台家长设备正在与孩子说话。",
           "cooldown": "{seconds} 秒后可再次说话。",
           "rate": "请稍后再试。",
           "unknown": "宝宝设备没有接受请求。请重试。",
@@ -662,7 +662,7 @@
         "subStopped": "请在宝宝设备上查看是谁停止了监护。"
       },
       "connAlert": {
-        "labelVibrating": "您的手机正在振动",
+        "labelVibrating": "此设备正在振动",
         "labelLoud": "大声警报响起",
         "labelPaused": "警报已暂停",
         "headlineCheck": "请去看看孩子",
@@ -676,7 +676,7 @@
         "counterA11y": "无连接 {duration}",
         "spokenMin": "{count, plural, other {# 分钟}}",
         "spokenSec": "{count, plural, other {# 秒}}",
-        "progressVibrating": "手机正在振动",
+        "progressVibrating": "设备正在振动",
         "progressLoud": "大声警报中",
         "progressPaused": "您查看期间已暂停",
         "causeLabel": "可能的原因",
@@ -693,13 +693,13 @@
             "more": "它连上 Wi-Fi 了吗？没有的话，请在上面重新打开 GuardedSleep。"
           },
           "serverUnreachable": {
-            "line": "这部手机没有网络。",
-            "step": "请检查这部手机的 Wi-Fi 或移动数据。",
+            "line": "此设备没有网络。",
+            "step": "请检查此设备的 Wi-Fi 或移动数据。",
             "more": "关闭飞行模式。靠近路由器。"
           },
           "mediaBlocked": {
             "line": "此网络屏蔽了连接。",
-            "step": "访客或酒店 Wi-Fi 可能会屏蔽。请将这部手机切换到移动数据。",
+            "step": "访客或酒店 Wi-Fi 可能会屏蔽。请将此设备切换到移动数据。",
             "more": "然后点击“立即重试”。"
           }
         },
@@ -750,11 +750,11 @@
           },
           "fullScreen": {
             "title": "提醒无法显示在锁屏上",
-            "body": "手机锁屏时您可能会错过提醒。"
+            "body": "此设备锁屏时您可能会错过提醒。"
           },
           "alarmVolumeZero": {
             "title": "闹钟音量已关闭",
-            "body": "您将听不到这部手机上的提醒"
+            "body": "您将听不到此设备上的提醒"
           },
           "alarmVolumeLow": {
             "title": "闹钟音量偏低",
@@ -765,11 +765,11 @@
             "body": "请允许 GuardedSleep 突破限制。"
           },
           "battery": {
-            "title": "这部手机可能会停止 GuardedSleep",
+            "title": "此设备可能会停止 GuardedSleep",
             "body": "请允许后台运行，让提醒保持有效。"
           },
           "parentBattery": {
-            "title": "这部手机电量不足",
+            "title": "此设备电量不足",
             "body": "请接上电源，以便继续监护。"
           },
           "headphones": {
@@ -784,11 +784,11 @@
       },
       "noiseAlert": {
         "labelSound": "正在播放房间声音",
-        "labelVibrate": "您的手机正在振动",
+        "labelVibrate": "此设备正在振动",
         "labelStopped": "提醒已停止",
         "counterLabel": "自 {time} 起",
         "counterA11y": "{duration}，自 {time} 起",
-        "sentenceSound": "房间声音正在这部手机上播放。",
+        "sentenceSound": "房间声音正在此设备上播放。",
         "stopSoundSub": "停止提醒声音，继续监护",
         "stopVibrationSub": "停止振动，继续监护"
       },
@@ -798,7 +798,7 @@
         "counterLabel": "剩余电量",
         "counterA11y": "剩余电量百分之{percent}",
         "sentence": "请立即给宝宝设备接上电源。电量耗尽后，监护将停止。",
-        "silentNote": "宝宝设备保持静音，只有这部手机会提醒。",
+        "silentNote": "宝宝设备保持静音，只有此设备会提醒。",
         "action": "好，我去充电",
         "actionSub": "关闭此界面"
       },
@@ -885,7 +885,7 @@
       "endAlert": "说话已停止：有警报需要您处理。",
       "deniedOther": "婴儿设备未接受说话。请重试。",
       "unavailableOff": "婴儿设备上的说话功能已关闭。请在该设备的设置中开启。",
-      "unavailableOther": "另一台家长设备正在与您的孩子说话。",
+      "unavailableOther": "另一台家长设备正在与孩子说话。",
       "unavailableUnsupported": "这台婴儿设备无法播放您的声音。",
       "unavailableMuted": "婴儿设备目前无法播放声音。",
       "unavailableNotConnected": "未连接到婴儿设备。",

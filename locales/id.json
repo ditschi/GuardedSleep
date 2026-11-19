@@ -27,7 +27,7 @@
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
-      "channelNoise": "Peringatan suara",
+      "channelNoise": "Peringatan kebisingan",
       "channelNoiseDesc": "Peringatan keras saat perangkat bayi mendengar suara.",
       "channelLink": "Alarm koneksi",
       "channelLinkDesc": "Alarm saat koneksi ke perangkat bayi terputus.",
@@ -56,7 +56,7 @@
       "actionSnooze10": "Jeda 10 mnt",
       "actionChecking": "Saya periksa",
       "linkLostTitle": "Koneksi terputus",
-      "linkLostText": "Tidak ada koneksi ke perangkat bayi. Periksa bayi Anda sekarang.",
+      "linkLostText": "Tidak ada koneksi ke perangkat bayi. Periksa anak sekarang.",
       "peerStoppedTitle": "Perangkat bayi berhenti memantau",
       "peerStoppedText": "Pemantauan dihentikan di perangkat bayi. Anda tidak akan mendengar apa pun sampai dimulai lagi.",
       "restoredTitle": "Terhubung kembali",
@@ -114,7 +114,7 @@
         "title": "Perangkat apa ini?",
         "baby": {
           "title": "Perangkat bayi",
-          "hint": "Tetap di dekat anak Anda dan mendengarkan."
+          "hint": "Tetap di dekat anak dan mendengarkan."
         },
         "parent": {
           "title": "Perangkat orang tua",
@@ -126,7 +126,7 @@
         "title": "Siapkan perangkat ini",
         "mic": {
           "title": "Mikrofon",
-          "why": "Diperlukan untuk mendengar anak Anda.",
+          "why": "Diperlukan untuk mendengar anak.",
           "required": "Izinkan mikrofon untuk melanjutkan."
         },
         "background": {
@@ -138,7 +138,7 @@
           "why": "Tidak ada suara, dering, atau lampu di perangkat bayi. Jam alarm tetap berbunyi."
         },
         "safety": {
-          "body": "Biarkan perangkat ini terus diisi daya, di permukaan yang stabil, di luar jangkauan anak Anda. Jangan gunakan perangkat dengan baterai yang menggembung atau rusak."
+          "body": "Biarkan perangkat ini terus diisi daya, di permukaan yang stabil, di luar jangkauan anak. Jangan gunakan perangkat dengan baterai yang menggembung atau rusak."
         },
         "chargingTip": "Tips: jika perangkat ini punya opsi \"nyalakan layar saat dicolokkan\", matikan agar layar tetap gelap.",
         "deviceCheck": {
@@ -161,7 +161,7 @@
         },
         "notifications": {
           "title": "Peringatan",
-          "why": "Diperlukan agar Anda tahu saat anak Anda bersuara.",
+          "why": "Diperlukan agar Anda tahu saat anak bersuara.",
           "required": "GuardedSleep tidak dapat memberi peringatan tanpa ini."
         },
         "lockScreen": {
@@ -435,7 +435,7 @@
         "chooseAnother": "Pilih koneksi lain",
         "rename": "Ganti nama",
         "renameTitle": "Ganti nama koneksi",
-        "nameLabel": "Nama (1–30 karakter, tetap di ponsel ini)",
+        "nameLabel": "Nama (1–30 karakter, tetap di perangkat ini)",
         "nameInvalid": "Gunakan 1 sampai 30 karakter.",
         "save": "Simpan",
         "readOnlyNote": "Hentikan pemantauan untuk mengubah koneksi.",
@@ -539,7 +539,7 @@
         "heartbeat": "Pemeriksaan koneksi setiap {seconds} dtk",
         "alertStyle": {
           "label": "Gaya peringatan",
-          "sound": "Suara: suara bayi diputar pada setiap peringatan",
+          "sound": "Suara: suara anak diputar pada setiap peringatan",
           "discreet": "Hanya getar: getar dan layar, tanpa suara"
         },
         "discreetEscalation": {
@@ -596,7 +596,7 @@
           "off": "Bicara dimatikan di perangkat bayi. Aktifkan di sana lewat Pengaturan.",
           "unsupported": "Perangkat bayi ini tidak dapat memutar suara Anda.",
           "muted": "Perangkat bayi tidak dapat memutar suara saat ini.",
-          "busy": "Perangkat orang tua lainnya sedang berbicara dengan anak Anda.",
+          "busy": "Perangkat orang tua lainnya sedang berbicara dengan anak.",
           "cooldown": "Anda dapat bicara lagi dalam {seconds} dtk.",
           "rate": "Coba lagi sebentar lagi.",
           "unknown": "Perangkat bayi tidak menerima permintaan. Coba lagi.",
@@ -620,8 +620,8 @@
         "tapHint": "Tahan tombol untuk bicara",
         "lockHint": "Bicara tidak dapat dikunci",
         "afterListen": "Mendengarkan {seconds} dtk · ketuk untuk terus mendengarkan",
-        "coach": "Baru: tahan untuk berbicara dengan anak Anda.",
-        "permBody": "Untuk berbicara dengan anak Anda, GuardedSleep memerlukan mikrofon selama Anda menahan tombol.",
+        "coach": "Baru: tahan untuk berbicara dengan anak.",
+        "permBody": "Untuk berbicara dengan anak, GuardedSleep memerlukan mikrofon selama Anda menahan tombol.",
         "permAllow": "Izinkan mikrofon",
         "permDone": "Selesai. Sekarang tahan untuk bicara.",
         "permRefused": "Bicara memerlukan mikrofon. Anda dapat mengizinkannya di pengaturan perangkat.",
@@ -662,7 +662,7 @@
         "subStopped": "Periksa di perangkat bayi siapa yang menghentikannya."
       },
       "connAlert": {
-        "labelVibrating": "Ponsel Anda bergetar",
+        "labelVibrating": "Perangkat ini bergetar",
         "labelLoud": "Alarm keras berbunyi",
         "labelPaused": "Alarm dijeda",
         "headlineCheck": "Mohon periksa anak",
@@ -676,7 +676,7 @@
         "counterA11y": "{duration} tanpa koneksi",
         "spokenMin": "{count, plural, other {# menit}}",
         "spokenSec": "{count, plural, other {# detik}}",
-        "progressVibrating": "Ponsel bergetar sekarang",
+        "progressVibrating": "Perangkat bergetar sekarang",
         "progressLoud": "Alarm keras sekarang",
         "progressPaused": "Dijeda selagi Anda memeriksa",
         "causeLabel": "Kemungkinan penyebab",
@@ -693,13 +693,13 @@
             "more": "Apakah terhubung ke Wi-Fi? Jika tidak, buka GuardedSleep di sana lagi."
           },
           "serverUnreachable": {
-            "line": "Ponsel ini tidak memiliki internet.",
-            "step": "Periksa Wi-Fi atau data seluler di ponsel ini.",
+            "line": "Perangkat ini tidak memiliki internet.",
+            "step": "Periksa Wi-Fi atau data seluler di perangkat ini.",
             "more": "Matikan mode pesawat. Dekati router."
           },
           "mediaBlocked": {
             "line": "Koneksi diblokir di jaringan ini.",
-            "step": "Wi-Fi tamu atau hotel bisa memblokirnya. Alihkan ponsel ini ke data seluler.",
+            "step": "Wi-Fi tamu atau hotel bisa memblokirnya. Alihkan perangkat ini ke data seluler.",
             "more": "Lalu ketuk “Coba sekarang”."
           }
         },
@@ -750,11 +750,11 @@
           },
           "fullScreen": {
             "title": "Peringatan tidak bisa muncul di layar kunci",
-            "body": "Anda mungkin melewatkan peringatan saat ponsel terkunci."
+            "body": "Anda mungkin melewatkan peringatan saat perangkat ini terkunci."
           },
           "alarmVolumeZero": {
             "title": "Volume alarm mati",
-            "body": "Anda tidak akan mendengar peringatan di ponsel ini"
+            "body": "Anda tidak akan mendengar peringatan di perangkat ini"
           },
           "alarmVolumeLow": {
             "title": "Volume alarm rendah",
@@ -765,11 +765,11 @@
             "body": "Izinkan GuardedSleep menembusnya."
           },
           "battery": {
-            "title": "Ponsel ini mungkin menghentikan GuardedSleep",
+            "title": "Perangkat ini mungkin menghentikan GuardedSleep",
             "body": "Izinkan penggunaan di latar belakang agar peringatan tetap berfungsi."
           },
           "parentBattery": {
-            "title": "Baterai ponsel ini hampir habis",
+            "title": "Baterai perangkat ini hampir habis",
             "body": "Colokkan agar pemantauan terus berjalan."
           },
           "headphones": {
@@ -784,11 +784,11 @@
       },
       "noiseAlert": {
         "labelSound": "Memutar suara ruangan",
-        "labelVibrate": "Ponsel Anda bergetar",
+        "labelVibrate": "Perangkat ini bergetar",
         "labelStopped": "Peringatan dihentikan",
         "counterLabel": "sejak {time}",
         "counterA11y": "{duration}, sejak {time}",
-        "sentenceSound": "Suara ruangan diputar di ponsel ini.",
+        "sentenceSound": "Suara ruangan diputar di perangkat ini.",
         "stopSoundSub": "Menghentikan suara peringatan, pemantauan tetap berjalan",
         "stopVibrationSub": "Menghentikan getaran, pemantauan tetap berjalan"
       },
@@ -798,7 +798,7 @@
         "counterLabel": "baterai tersisa",
         "counterA11y": "Baterai tersisa {percent} persen",
         "sentence": "Segera colokkan perangkat bayi. Setelah habis, pemantauan berhenti.",
-        "silentNote": "Perangkat bayi tetap senyap. Hanya ponsel ini yang memberi peringatan.",
+        "silentNote": "Perangkat bayi tetap senyap. Hanya perangkat ini yang memberi peringatan.",
         "action": "Oke, saya colokkan",
         "actionSub": "Menutup layar ini"
       },
@@ -836,8 +836,8 @@
       "cameraView": "Tampilan kamera"
     },
     "baby": {
-      "failMicDenied": "Mikrofon diblokir, sehingga perangkat ini tidak dapat mendengar anak Anda. Izinkan di pengaturan situs browser.",
-      "failMicUnavailable": "Mikrofon tidak ditemukan, sehingga perangkat ini tidak dapat mendengar anak Anda.",
+      "failMicDenied": "Mikrofon diblokir, sehingga perangkat ini tidak dapat mendengar anak. Izinkan di pengaturan situs browser.",
+      "failMicUnavailable": "Mikrofon tidak ditemukan, sehingga perangkat ini tidak dapat mendengar anak.",
       "quietUnknown": "Mode tenang: tidak diketahui",
       "keepAwake": "Jaga perangkat ini tetap aktif: tercolok, penutup terbuka, tab ini terlihat.",
       "keepSilent": "Nyalakan Jangan Ganggu dan turunkan kecerahan di perangkat ini."
@@ -885,7 +885,7 @@
       "endAlert": "Bicara dihentikan: ada peringatan yang perlu perhatian Anda.",
       "deniedOther": "Perangkat bayi tidak menerima bicara. Coba lagi.",
       "unavailableOff": "Bicara nonaktif di perangkat bayi. Aktifkan di sana lewat Pengaturan.",
-      "unavailableOther": "Perangkat orang tua lain sedang berbicara dengan anak Anda.",
+      "unavailableOther": "Perangkat orang tua lain sedang berbicara dengan anak.",
       "unavailableUnsupported": "Perangkat bayi ini tidak dapat memutar suara Anda.",
       "unavailableMuted": "Perangkat bayi tidak dapat memutar suara saat ini.",
       "unavailableNotConnected": "Tidak terhubung ke perangkat bayi.",
@@ -893,12 +893,12 @@
       "unavailableBrowser": "Peramban ini tidak mendukung bicara.",
       "noisePausedSelf": "Peringatan kebisingan dijeda selama Anda bicara.",
       "noisePausedOther": "Perangkat orang tua lain sedang bicara. Peringatan kebisingan berlanjut setelahnya.",
-      "coach": "Baru: tahan untuk berbicara dengan anak Anda.",
+      "coach": "Baru: tahan untuk berbicara dengan anak.",
       "unconfirmed": "Suara Anda mungkin tidak terdengar di perangkat bayi.",
       "audibleUncertain": "Pesan terakhir mungkin tidak terdengar di perangkat bayi. Periksa volumenya.",
       "afterListen": "Mendengarkan 10 dtk · ketuk untuk terus mendengarkan",
       "permissionTitle": "Mikrofon untuk bicara",
-      "permissionBody": "Untuk berbicara dengan anak Anda, GuardedSleep memerlukan mikrofon selama Anda menahan tombol.",
+      "permissionBody": "Untuk berbicara dengan anak, GuardedSleep memerlukan mikrofon selama Anda menahan tombol.",
       "permissionAllow": "Izinkan mikrofon",
       "permissionDone": "Selesai. Sekarang tahan untuk bicara.",
       "permissionRefused": "Bicara memerlukan mikrofon. Anda dapat mengizinkannya di pengaturan situs peramban.",

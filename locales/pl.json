@@ -27,7 +27,7 @@
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
-      "channelNoise": "Alerty dźwiękowe",
+      "channelNoise": "Alerty o hałasie",
       "channelNoiseDesc": "Głośne alerty, gdy urządzenie dziecka usłyszy dźwięk.",
       "channelLink": "Alarmy połączenia",
       "channelLinkDesc": "Alarmy po utracie połączenia z urządzeniem dziecka.",
@@ -435,7 +435,7 @@
         "chooseAnother": "Wybierz inne połączenie",
         "rename": "Zmień nazwę",
         "renameTitle": "Zmień nazwę połączenia",
-        "nameLabel": "Nazwa (1–30 znaków, zostaje na tym telefonie)",
+        "nameLabel": "Nazwa (1–30 znaków, zostaje na tym urządzeniu)",
         "nameInvalid": "Użyj od 1 do 30 znaków.",
         "save": "Zapisz",
         "readOnlyNote": "Zatrzymaj monitorowanie, aby zmienić połączenia.",
@@ -596,7 +596,7 @@
           "off": "Mówienie jest wyłączone na urządzeniu dziecka. Włącz je tam w Ustawieniach.",
           "unsupported": "To urządzenie dziecka nie może odtworzyć Twojego głosu.",
           "muted": "Urządzenie dziecka nie może teraz odtwarzać dźwięku.",
-          "busy": "Drugie urządzenie rodzica rozmawia z Twoim dzieckiem.",
+          "busy": "Drugie urządzenie rodzica rozmawia z dzieckiem.",
           "cooldown": "Możesz znowu mówić za {seconds} s.",
           "rate": "Spróbuj ponownie za chwilę.",
           "unknown": "Urządzenie dziecka nie przyjęło prośby. Spróbuj ponownie.",
@@ -662,7 +662,7 @@
         "subStopped": "Sprawdź na urządzeniu dziecka, kto to zatrzymał."
       },
       "connAlert": {
-        "labelVibrating": "Telefon wibruje",
+        "labelVibrating": "To urządzenie wibruje",
         "labelLoud": "Głośny alarm dzwoni",
         "labelPaused": "Alarm wstrzymany",
         "headlineCheck": "Sprawdź, co z dzieckiem",
@@ -676,7 +676,7 @@
         "counterA11y": "{duration} bez połączenia",
         "spokenMin": "{count, plural, one {# minuta} few {# minuty} many {# minut} other {# minuty}}",
         "spokenSec": "{count, plural, one {# sekunda} few {# sekundy} many {# sekund} other {# sekundy}}",
-        "progressVibrating": "Telefon wibruje teraz",
+        "progressVibrating": "Urządzenie wibruje teraz",
         "progressLoud": "Głośny alarm teraz",
         "progressPaused": "Wstrzymano, gdy sprawdzasz",
         "causeLabel": "Prawdopodobna przyczyna",
@@ -693,13 +693,13 @@
             "more": "Czy jest w Wi-Fi? Jeśli nie, otwórz tam GuardedSleep ponownie."
           },
           "serverUnreachable": {
-            "line": "Ten telefon nie ma internetu.",
-            "step": "Sprawdź Wi-Fi lub dane mobilne w tym telefonie.",
+            "line": "To urządzenie nie ma internetu.",
+            "step": "Sprawdź Wi-Fi lub dane mobilne w tym urządzeniu.",
             "more": "Wyłącz tryb samolotowy. Podejdź bliżej routera."
           },
           "mediaBlocked": {
             "line": "Połączenie jest zablokowane w tej sieci.",
-            "step": "Wi-Fi gościnne lub hotelowe może to blokować. Przełącz ten telefon na dane mobilne.",
+            "step": "Wi-Fi gościnne lub hotelowe może to blokować. Przełącz to urządzenie na dane mobilne.",
             "more": "Potem dotknij „Spróbuj teraz”."
           }
         },
@@ -750,11 +750,11 @@
           },
           "fullScreen": {
             "title": "Alerty nie pokażą się na ekranie blokady",
-            "body": "Możesz przegapić alert, gdy telefon jest zablokowany."
+            "body": "Możesz przegapić alert, gdy to urządzenie jest zablokowane."
           },
           "alarmVolumeZero": {
             "title": "Głośność alarmu jest wyłączona",
-            "body": "Nie usłyszysz alertów na tym telefonie"
+            "body": "Nie usłyszysz alertów na tym urządzeniu"
           },
           "alarmVolumeLow": {
             "title": "Głośność alarmu jest niska",
@@ -765,11 +765,11 @@
             "body": "Pozwól GuardedSleep się przebić."
           },
           "battery": {
-            "title": "Ten telefon może zatrzymać GuardedSleep",
+            "title": "To urządzenie może zatrzymać GuardedSleep",
             "body": "Zezwól na działanie w tle, aby alerty działały."
           },
           "parentBattery": {
-            "title": "Bateria tego telefonu jest słaba",
+            "title": "Bateria tego urządzenia jest słaba",
             "body": "Podłącz go do ładowarki, aby monitorowanie trwało."
           },
           "headphones": {
@@ -784,11 +784,11 @@
       },
       "noiseAlert": {
         "labelSound": "Odtwarzanie dźwięku z pokoju",
-        "labelVibrate": "Telefon wibruje",
+        "labelVibrate": "To urządzenie wibruje",
         "labelStopped": "Alert zatrzymany",
         "counterLabel": "od {time}",
         "counterA11y": "{duration}, od {time}",
-        "sentenceSound": "Dźwięk z pokoju jest odtwarzany na tym telefonie.",
+        "sentenceSound": "Dźwięk z pokoju jest odtwarzany na tym urządzeniu.",
         "stopSoundSub": "Zatrzymuje dźwięk alertu, monitorowanie trwa",
         "stopVibrationSub": "Zatrzymuje wibracje, monitorowanie trwa"
       },
@@ -798,7 +798,7 @@
         "counterLabel": "baterii zostało",
         "counterA11y": "Zostało {percent} procent baterii",
         "sentence": "Podłącz teraz urządzenie dziecka. Gdy się rozładuje, monitorowanie się zatrzyma.",
-        "silentNote": "Urządzenie dziecka milczy. Alarmuje tylko ten telefon.",
+        "silentNote": "Urządzenie dziecka milczy. Alarmuje tylko to urządzenie.",
         "action": "OK, podłączę",
         "actionSub": "Zamyka ten ekran"
       },
@@ -885,7 +885,7 @@
       "endAlert": "Mówienie przerwane: alert wymaga Twojej uwagi.",
       "deniedOther": "Urządzenie dziecka nie przyjęło mówienia. Spróbuj ponownie.",
       "unavailableOff": "Mówienie jest wyłączone na urządzeniu dziecka. Włącz je tam w Ustawieniach.",
-      "unavailableOther": "Drugie urządzenie rodzica mówi do Twojego dziecka.",
+      "unavailableOther": "Drugie urządzenie rodzica mówi do dziecka.",
       "unavailableUnsupported": "To urządzenie dziecka nie może odtworzyć Twojego głosu.",
       "unavailableMuted": "Urządzenie dziecka nie może teraz odtwarzać dźwięku.",
       "unavailableNotConnected": "Brak połączenia z urządzeniem dziecka.",

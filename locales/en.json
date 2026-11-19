@@ -25,7 +25,7 @@
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
-      "channelNoise": "Sound alerts",
+      "channelNoise": "Noise alerts",
       "channelNoiseDesc": "Loud alerts when the baby device hears a sound.",
       "channelLink": "Connection alarms",
       "channelLinkDesc": "Alarms when the connection to the baby device is lost.",
@@ -54,7 +54,7 @@
       "actionSnooze10": "Pause 10 min",
       "actionChecking": "I'm checking",
       "linkLostTitle": "Connection lost",
-      "linkLostText": "No connection to the baby device. Check on your baby now.",
+      "linkLostText": "No connection to the baby device. Check on the child now.",
       "peerStoppedTitle": "Baby device stopped monitoring",
       "peerStoppedText": "Monitoring was stopped on the baby device. You will not hear anything until it is started again.",
       "restoredTitle": "Connected again",
@@ -112,7 +112,7 @@
         "title": "Which device is this?",
         "baby": {
           "title": "Baby device",
-          "hint": "Stays with your child and listens."
+          "hint": "Stays with the child and listens."
         },
         "parent": {
           "title": "Parent device",
@@ -124,7 +124,7 @@
         "title": "Get this device ready",
         "mic": {
           "title": "Microphone",
-          "why": "Needed to hear your child.",
+          "why": "Needed to hear the child.",
           "required": "Allow the microphone to continue."
         },
         "background": {
@@ -136,7 +136,7 @@
           "why": "No sounds, rings or lights on the baby device. Alarm clocks still work."
         },
         "safety": {
-          "body": "Keep this device on the charger, on a stable surface, out of your child's reach. Don't use a device with a swollen or damaged battery."
+          "body": "Keep this device on the charger, on a stable surface, out of the child's reach. Don't use a device with a swollen or damaged battery."
         },
         "chargingTip": "Tip: if this device has \"wake screen when plugged in\", turn it off so the screen stays dark.",
         "deviceCheck": {
@@ -159,7 +159,7 @@
         },
         "notifications": {
           "title": "Alerts",
-          "why": "Needed so you hear when your child makes noise.",
+          "why": "Needed so you hear when the child makes a sound.",
           "required": "GuardedSleep can't alert you without this."
         },
         "lockScreen": {
@@ -428,12 +428,12 @@
       },
       "connections": {
         "title": "Connections",
-        "defaultBaby": "Baby unit {n}",
+        "defaultBaby": "Baby device {n}",
         "defaultParent": "Parent device {n}",
         "chooseAnother": "Choose another connection",
         "rename": "Rename",
         "renameTitle": "Rename connection",
-        "nameLabel": "Name (1–30 characters, stays on this phone)",
+        "nameLabel": "Name (1–30 characters, stays on this device)",
         "nameInvalid": "Use 1 to 30 characters.",
         "save": "Save",
         "readOnlyNote": "Stop monitoring to change connections.",
@@ -541,7 +541,7 @@
         "heartbeat": "Connection check every {seconds} s",
         "alertStyle": {
           "label": "Alert style",
-          "sound": "Sound: the baby's sound plays with each alert",
+          "sound": "Sound: the child's sound plays with each alert",
           "discreet": "Vibrate only: vibration and screen, no sound"
         },
         "discreetEscalation": {
@@ -598,7 +598,7 @@
           "off": "Talk-back is off on the baby device. Turn it on there in Settings.",
           "unsupported": "This baby device can't play your voice.",
           "muted": "The baby device can't play sound right now.",
-          "busy": "The other parent device is talking to your child.",
+          "busy": "The other parent device is talking to the child.",
           "cooldown": "You can talk again in {seconds} s.",
           "rate": "Try again in a moment.",
           "unknown": "The baby device didn't accept the request. Try again.",
@@ -622,8 +622,8 @@
         "tapHint": "Hold the button to talk",
         "lockHint": "Talk-back can't be locked",
         "afterListen": "Listening for {seconds} s · tap to keep listening",
-        "coach": "New: hold to talk to your child.",
-        "permBody": "To speak to your child, GuardedSleep needs the microphone while you hold the button.",
+        "coach": "New: hold to talk to the child.",
+        "permBody": "To speak to the child, GuardedSleep needs the microphone while you hold the button.",
         "permAllow": "Allow microphone",
         "permDone": "Done. Now hold to talk.",
         "permRefused": "Talk-back needs the microphone. You can allow it in the device settings.",
@@ -664,7 +664,7 @@
         "subStopped": "Check who stopped it on the baby device."
       },
       "connAlert": {
-        "labelVibrating": "Your phone is vibrating",
+        "labelVibrating": "This device is vibrating",
         "labelLoud": "Loud alarm sounding",
         "labelPaused": "Alarm paused",
         "headlineCheck": "Please check on the child",
@@ -678,7 +678,7 @@
         "counterA11y": "{duration} without connection",
         "spokenMin": "{count, plural, one {# minute} other {# minutes}}",
         "spokenSec": "{count, plural, one {# second} other {# seconds}}",
-        "progressVibrating": "Phone vibrating now",
+        "progressVibrating": "Device vibrating now",
         "progressLoud": "Loud alarm now",
         "progressPaused": "Paused while you check",
         "causeLabel": "Likely cause",
@@ -695,13 +695,13 @@
             "more": "Is it on Wi-Fi? If not, open GuardedSleep on it again."
           },
           "serverUnreachable": {
-            "line": "This phone has no internet.",
-            "step": "Check Wi-Fi or mobile data on this phone.",
+            "line": "This device has no internet.",
+            "step": "Check Wi-Fi or mobile data on this device.",
             "more": "Turn flight mode off. Move closer to the router."
           },
           "mediaBlocked": {
             "line": "The connection is blocked on this network.",
-            "step": "Guest or hotel Wi-Fi can block it. Switch this phone to mobile data.",
+            "step": "Guest or hotel Wi-Fi can block it. Switch this device to mobile data.",
             "more": "Then tap “Try now”."
           }
         },
@@ -752,11 +752,11 @@
           },
           "fullScreen": {
             "title": "Alerts can't show on the lock screen",
-            "body": "You may miss an alert while the phone is locked."
+            "body": "You may miss an alert while this device is locked."
           },
           "alarmVolumeZero": {
             "title": "Alarm volume is off",
-            "body": "You won't hear alerts on this phone"
+            "body": "You won't hear alerts on this device"
           },
           "alarmVolumeLow": {
             "title": "Alarm volume is low",
@@ -767,11 +767,11 @@
             "body": "Allow GuardedSleep to get through."
           },
           "battery": {
-            "title": "This phone may stop GuardedSleep",
+            "title": "This device may stop GuardedSleep",
             "body": "Allow background use so alerts keep working."
           },
           "parentBattery": {
-            "title": "This phone's battery is low",
+            "title": "This device's battery is low",
             "body": "Plug it in to keep monitoring."
           },
           "headphones": {
@@ -786,11 +786,11 @@
       },
       "noiseAlert": {
         "labelSound": "Playing the room sound",
-        "labelVibrate": "Your phone is vibrating",
+        "labelVibrate": "This device is vibrating",
         "labelStopped": "Alert stopped",
         "counterLabel": "since {time}",
         "counterA11y": "{duration}, since {time}",
-        "sentenceSound": "The room sound is playing on this phone.",
+        "sentenceSound": "The room sound is playing on this device.",
         "stopSoundSub": "Stops the alert sound, keeps monitoring",
         "stopVibrationSub": "Stops the vibration, keeps monitoring"
       },
@@ -800,7 +800,7 @@
         "counterLabel": "battery left",
         "counterA11y": "{percent} percent battery left",
         "sentence": "Plug in the baby device now. When it runs out, monitoring stops.",
-        "silentNote": "The baby device stays silent. Only this phone alerts.",
+        "silentNote": "The baby device stays silent. Only this device alerts.",
         "action": "OK, I'll plug it in",
         "actionSub": "Closes this screen"
       },
@@ -838,8 +838,8 @@
       "cameraView": "Camera view"
     },
     "baby": {
-      "failMicDenied": "The microphone is blocked, so this device can't hear your child. Allow it in the browser's site settings.",
-      "failMicUnavailable": "No microphone was found, so this device can't hear your child.",
+      "failMicDenied": "The microphone is blocked, so this device can't hear the child. Allow it in the browser's site settings.",
+      "failMicUnavailable": "No microphone was found, so this device can't hear the child.",
       "quietUnknown": "Quiet mode: unknown",
       "keepAwake": "Keep this device awake: plugged in, lid open, this tab visible.",
       "keepSilent": "Turn on Do Not Disturb and lower brightness on this device."
@@ -887,7 +887,7 @@
       "endAlert": "Talk stopped: an alert needs your attention.",
       "deniedOther": "The baby device didn't accept the talk. Try again.",
       "unavailableOff": "Talk-back is off on the baby device. Turn it on there in Settings.",
-      "unavailableOther": "The other parent device is talking to your child.",
+      "unavailableOther": "The other parent device is talking to the child.",
       "unavailableUnsupported": "This baby device can't play your voice.",
       "unavailableMuted": "The baby device can't play sound right now.",
       "unavailableNotConnected": "Not connected to the baby device.",
@@ -895,12 +895,12 @@
       "unavailableBrowser": "Talk-back isn't supported in this browser.",
       "noisePausedSelf": "Noise alerts paused while you talk.",
       "noisePausedOther": "The other parent device is talking. Noise alerts resume when it ends.",
-      "coach": "New: hold to talk to your child.",
+      "coach": "New: hold to talk to the child.",
       "unconfirmed": "Your voice may not be audible on the baby device.",
       "audibleUncertain": "Recent messages may not have been audible on the baby device. Check its volume.",
       "afterListen": "Listening for 10 s · tap to keep listening",
       "permissionTitle": "Microphone for talk-back",
-      "permissionBody": "To speak to your child, GuardedSleep needs the microphone while you hold the button.",
+      "permissionBody": "To speak to the child, GuardedSleep needs the microphone while you hold the button.",
       "permissionAllow": "Allow microphone",
       "permissionDone": "Done. Now hold to talk.",
       "permissionRefused": "Talk-back needs the microphone. You can allow it in your browser's site settings.",

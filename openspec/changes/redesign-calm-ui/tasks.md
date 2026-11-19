@@ -70,7 +70,7 @@ Branch `feat/ui-redesign` from `origin/main`. One PR per slice (design §13): gr
 
 ## 7. Copy review (after the slices)
 
-- [ ] 7.1 Review pass over the copy the slices shipped: follow `i18n` "Copy conventions" across the whole catalogue (convert any remaining informal German "du" keys to the formal form of address, durations in words, no spliced names); remove keys no screen uses any more. No screen depends on this group. Verify: `just gen`, `just lint-text`, "No unused keys", CSpell.
+- [x] 7.1 Review pass over the copy the slices shipped: follow `i18n` "Copy conventions" across the whole catalogue (convert any remaining informal German "du" keys to the formal form of address, durations in words, no spliced names); remove keys no screen uses any more. No screen depends on this group. Verify: `just gen`, `just lint-text`, "No unused keys", CSpell.
 
 ## 8. Tests and baselines
 

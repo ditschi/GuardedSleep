@@ -126,7 +126,7 @@
         "title": "Příprava tohoto zařízení",
         "mic": {
           "title": "Mikrofon",
-          "why": "Potřebný, aby bylo slyšet vaše dítě.",
+          "why": "Potřebný, aby bylo slyšet dítě.",
           "required": "Pro pokračování povolte mikrofon."
         },
         "background": {
@@ -435,7 +435,7 @@
         "chooseAnother": "Vybrat jiné připojení",
         "rename": "Přejmenovat",
         "renameTitle": "Přejmenovat připojení",
-        "nameLabel": "Název (1–30 znaků, zůstává v tomto telefonu)",
+        "nameLabel": "Název (1–30 znaků, zůstává v tomto zařízení)",
         "nameInvalid": "Použijte 1 až 30 znaků.",
         "save": "Uložit",
         "readOnlyNote": "Pro změnu připojení nejdřív ukončete sledování.",
@@ -596,7 +596,7 @@
           "off": "Mluvení je na dětském zařízení vypnuté. Zapněte ho tam v Nastavení.",
           "unsupported": "Toto dětské zařízení nedokáže přehrát váš hlas.",
           "muted": "Dětské zařízení teď nemůže přehrávat zvuk.",
-          "busy": "S vaším dítětem právě mluví druhé rodičovské zařízení.",
+          "busy": "S dítětem právě mluví druhé rodičovské zařízení.",
           "cooldown": "Znovu můžete mluvit za {seconds} s.",
           "rate": "Zkuste to znovu za chvíli.",
           "unknown": "Dětské zařízení žádost nepřijalo. Zkuste to znovu.",
@@ -620,8 +620,8 @@
         "tapHint": "Podržte tlačítko a mluvte",
         "lockHint": "Mluvení nelze zamknout",
         "afterListen": "Poslech ještě {seconds} s · klepnutím pokračujte",
-        "coach": "Novinka: podržte a promluvte na své dítě.",
-        "permBody": "Aby mohla aplikace GuardedSleep mluvit s vaším dítětem, potřebuje mikrofon po dobu držení tlačítka.",
+        "coach": "Novinka: podržte a promluvte na dítě.",
+        "permBody": "Aby mohla aplikace GuardedSleep mluvit s dítětem, potřebuje mikrofon po dobu držení tlačítka.",
         "permAllow": "Povolit mikrofon",
         "permDone": "Hotovo. Nyní podržte a mluvte.",
         "permRefused": "Mluvení potřebuje mikrofon. Povolit ho můžete v nastavení zařízení.",
@@ -662,7 +662,7 @@
         "subStopped": "Zkontrolujte na dětském zařízení, kdo hlídání zastavil."
       },
       "connAlert": {
-        "labelVibrating": "Telefon vibruje",
+        "labelVibrating": "Toto zařízení vibruje",
         "labelLoud": "Zní hlasitý alarm",
         "labelPaused": "Alarm je pozastaven",
         "headlineCheck": "Jděte se podívat na dítě",
@@ -676,7 +676,7 @@
         "counterA11y": "{duration} bez připojení",
         "spokenMin": "{count, plural, one {# minuta} few {# minuty} many {# minuty} other {# minut}}",
         "spokenSec": "{count, plural, one {# sekunda} few {# sekundy} many {# sekundy} other {# sekund}}",
-        "progressVibrating": "Telefon právě vibruje",
+        "progressVibrating": "Zařízení právě vibruje",
         "progressLoud": "Hlasitý alarm právě zní",
         "progressPaused": "Pozastaveno, dokud kontrolujete",
         "causeLabel": "Pravděpodobná příčina",
@@ -693,13 +693,13 @@
             "more": "Je ve Wi-Fi? Pokud ne, otevřete na něm GuardedSleep znovu."
           },
           "serverUnreachable": {
-            "line": "Tento telefon nemá internet.",
-            "step": "Zkontrolujte Wi-Fi nebo mobilní data v tomto telefonu.",
+            "line": "Toto zařízení nemá internet.",
+            "step": "Zkontrolujte Wi-Fi nebo mobilní data v tomto zařízení.",
             "more": "Vypněte režim letadlo. Přibližte se k routeru."
           },
           "mediaBlocked": {
             "line": "Spojení je v této síti blokované.",
-            "step": "Hostovské nebo hotelové Wi-Fi to může blokovat. Přepněte tento telefon na mobilní data.",
+            "step": "Hostovské nebo hotelové Wi-Fi to může blokovat. Přepněte toto zařízení na mobilní data.",
             "more": "Pak klepněte na „Zkusit hned“."
           }
         },
@@ -750,11 +750,11 @@
           },
           "fullScreen": {
             "title": "Výstrahy se nezobrazí na zamčené obrazovce",
-            "body": "Při zamčeném telefonu vám může výstraha uniknout."
+            "body": "Při zamčeném zařízení vám může výstraha uniknout."
           },
           "alarmVolumeZero": {
             "title": "Hlasitost budíku je vypnutá",
-            "body": "Na tomto telefonu výstrahy neuslyšíte"
+            "body": "V tomto zařízení výstrahy neuslyšíte"
           },
           "alarmVolumeLow": {
             "title": "Hlasitost budíku je nízká",
@@ -765,11 +765,11 @@
             "body": "Povolte GuardedSleep prorazit."
           },
           "battery": {
-            "title": "Tento telefon může GuardedSleep zastavit",
+            "title": "Toto zařízení může GuardedSleep zastavit",
             "body": "Povolte provoz na pozadí, aby výstrahy fungovaly."
           },
           "parentBattery": {
-            "title": "Baterie tohoto telefonu je slabá",
+            "title": "Baterie tohoto zařízení je slabá",
             "body": "Připojte ho k nabíječce, aby sledování pokračovalo."
           },
           "headphones": {
@@ -784,11 +784,11 @@
       },
       "noiseAlert": {
         "labelSound": "Přehrává se zvuk místnosti",
-        "labelVibrate": "Váš telefon vibruje",
+        "labelVibrate": "Toto zařízení vibruje",
         "labelStopped": "Výstraha zastavena",
         "counterLabel": "od {time}",
         "counterA11y": "{duration}, od {time}",
-        "sentenceSound": "Zvuk místnosti se přehrává na tomto telefonu.",
+        "sentenceSound": "Zvuk místnosti se přehrává v tomto zařízení.",
         "stopSoundSub": "Zastaví zvuk výstrahy, sledování pokračuje",
         "stopVibrationSub": "Zastaví vibrace, sledování pokračuje"
       },
@@ -798,7 +798,7 @@
         "counterLabel": "zbývá baterie",
         "counterA11y": "Zbývá {percent} procent baterie",
         "sentence": "Připojte zařízení dítěte k nabíječce hned. Až se vybije, sledování se zastaví.",
-        "silentNote": "Zařízení dítěte zůstane tiché. Upozorní jen tento telefon.",
+        "silentNote": "Zařízení dítěte zůstane tiché. Upozorní jen toto zařízení.",
         "action": "OK, připojím ho",
         "actionSub": "Zavře tuto obrazovku"
       },
@@ -885,7 +885,7 @@
       "endAlert": "Mluvení přerušeno: upozornění vyžaduje vaši pozornost.",
       "deniedOther": "Dětské zařízení mluvení nepřijalo. Zkuste to znovu.",
       "unavailableOff": "Mluvení je na dětském zařízení vypnuto. Zapněte ho tam v Nastavení.",
-      "unavailableOther": "S vaším dítětem právě mluví druhé rodičovské zařízení.",
+      "unavailableOther": "S dítětem právě mluví druhé rodičovské zařízení.",
       "unavailableUnsupported": "Toto dětské zařízení nemůže přehrát váš hlas.",
       "unavailableMuted": "Dětské zařízení teď nemůže přehrávat zvuk.",
       "unavailableNotConnected": "Není připojeno k dětskému zařízení.",
@@ -893,7 +893,7 @@
       "unavailableBrowser": "Mluvení tento prohlížeč nepodporuje.",
       "noisePausedSelf": "Upozornění na hluk jsou pozastavena, dokud mluvíte.",
       "noisePausedOther": "Druhé rodičovské zařízení mluví. Upozornění na hluk se poté obnoví.",
-      "coach": "Novinka: podržte a promluvte na své dítě.",
+      "coach": "Novinka: podržte a promluvte na dítě.",
       "unconfirmed": "Váš hlas nemusí být na dětském zařízení slyšet.",
       "audibleUncertain": "Poslední zprávy nemusely být na dětském zařízení slyšet. Zkontrolujte jeho hlasitost.",
       "afterListen": "Poslech 10 s · klepnutím pokračujte v poslechu",

@@ -56,7 +56,7 @@
       "actionSnooze10": "10 min pauzeren",
       "actionChecking": "Ik kijk",
       "linkLostTitle": "Verbinding verbroken",
-      "linkLostText": "Geen verbinding met het babyapparaat. Ga nu bij je baby kijken.",
+      "linkLostText": "Geen verbinding met het babyapparaat. Ga nu bij het kind kijken.",
       "peerStoppedTitle": "Bewaking gestopt",
       "peerStoppedText": "De bewaking is gestopt op het babyapparaat. Je hoort niets tot het weer is gestart.",
       "restoredTitle": "Weer verbonden",
@@ -114,7 +114,7 @@
         "title": "Welk apparaat is dit?",
         "baby": {
           "title": "Babyapparaat",
-          "hint": "Blijft bij je kind en luistert."
+          "hint": "Blijft bij het kind en luistert."
         },
         "parent": {
           "title": "Ouderapparaat",
@@ -126,7 +126,7 @@
         "title": "Dit apparaat voorbereiden",
         "mic": {
           "title": "Microfoon",
-          "why": "Nodig om je kind te horen.",
+          "why": "Nodig om het kind te horen.",
           "required": "Sta de microfoon toe om door te gaan."
         },
         "background": {
@@ -138,7 +138,7 @@
           "why": "Geen geluiden, beltonen of lampjes op het babyapparaat. Wekkers werken nog wel."
         },
         "safety": {
-          "body": "Laat dit apparaat aan de lader liggen, op een stabiel oppervlak, buiten het bereik van je kind. Gebruik geen apparaat met een opgezwollen of beschadigde batterij."
+          "body": "Laat dit apparaat aan de lader liggen, op een stabiel oppervlak, buiten het bereik van het kind. Gebruik geen apparaat met een opgezwollen of beschadigde batterij."
         },
         "chargingTip": "Tip: heeft dit apparaat \"scherm aan bij opladen\", zet dat dan uit zodat het scherm donker blijft.",
         "deviceCheck": {
@@ -161,7 +161,7 @@
         },
         "notifications": {
           "title": "Meldingen",
-          "why": "Nodig zodat je hoort wanneer je kind lawaai maakt.",
+          "why": "Nodig zodat je hoort wanneer het kind lawaai maakt.",
           "required": "Zonder dit kan GuardedSleep je niet waarschuwen."
         },
         "lockScreen": {
@@ -435,7 +435,7 @@
         "chooseAnother": "Andere verbinding kiezen",
         "rename": "Hernoemen",
         "renameTitle": "Verbinding hernoemen",
-        "nameLabel": "Naam (1–30 tekens, blijft op deze telefoon)",
+        "nameLabel": "Naam (1–30 tekens, blijft op dit apparaat)",
         "nameInvalid": "Gebruik 1 tot 30 tekens.",
         "save": "Opslaan",
         "readOnlyNote": "Stop met bewaken om verbindingen te wijzigen.",
@@ -539,7 +539,7 @@
         "heartbeat": "Verbindingscontrole elke {seconds} s",
         "alertStyle": {
           "label": "Meldingstype",
-          "sound": "Geluid: het geluid van de baby wordt bij elke melding afgespeeld",
+          "sound": "Geluid: het geluid van het kind wordt bij elke melding afgespeeld",
           "discreet": "Alleen trillen: trillen en scherm, geen geluid"
         },
         "discreetEscalation": {
@@ -596,7 +596,7 @@
           "off": "Praten staat uit op het babyapparaat. Zet het daar aan bij Instellingen.",
           "unsupported": "Dit babyapparaat kan je stem niet afspelen.",
           "muted": "Het babyapparaat kan nu geen geluid afspelen.",
-          "busy": "Het andere ouderapparaat praat met je kind.",
+          "busy": "Het andere ouderapparaat praat met het kind.",
           "cooldown": "Je kunt over {seconds} s opnieuw praten.",
           "rate": "Probeer het zo opnieuw.",
           "unknown": "Het babyapparaat heeft het verzoek niet geaccepteerd. Probeer het opnieuw.",
@@ -620,8 +620,8 @@
         "tapHint": "Houd de knop ingedrukt om te praten",
         "lockHint": "Praten kan niet worden vergrendeld",
         "afterListen": "Luistert nog {seconds} s · tik om te blijven luisteren",
-        "coach": "Nieuw: houd ingedrukt om met je kind te praten.",
-        "permBody": "Om met je kind te praten heeft GuardedSleep de microfoon nodig zolang je de knop ingedrukt houdt.",
+        "coach": "Nieuw: houd ingedrukt om met het kind te praten.",
+        "permBody": "Om met het kind te praten heeft GuardedSleep de microfoon nodig zolang je de knop ingedrukt houdt.",
         "permAllow": "Microfoon toestaan",
         "permDone": "Klaar. Houd nu ingedrukt om te praten.",
         "permRefused": "Praten heeft de microfoon nodig. Je kunt die toestaan in de apparaatinstellingen.",
@@ -662,7 +662,7 @@
         "subStopped": "Controleer op het babyapparaat wie de bewaking heeft gestopt."
       },
       "connAlert": {
-        "labelVibrating": "Je telefoon trilt",
+        "labelVibrating": "Dit apparaat trilt",
         "labelLoud": "Luide alarm klinkt",
         "labelPaused": "Alarm gepauzeerd",
         "headlineCheck": "Ga even naar het kind kijken",
@@ -676,7 +676,7 @@
         "counterA11y": "{duration} zonder verbinding",
         "spokenMin": "{count, plural, one {# minuut} other {# minuten}}",
         "spokenSec": "{count, plural, one {# seconde} other {# seconden}}",
-        "progressVibrating": "Telefoon trilt nu",
+        "progressVibrating": "Apparaat trilt nu",
         "progressLoud": "Luide alarm nu",
         "progressPaused": "Gepauzeerd terwijl je kijkt",
         "causeLabel": "Waarschijnlijke oorzaak",
@@ -693,13 +693,13 @@
             "more": "Zit het op wifi? Zo niet, open GuardedSleep daar opnieuw."
           },
           "serverUnreachable": {
-            "line": "Deze telefoon heeft geen internet.",
-            "step": "Controleer wifi of mobiele data op deze telefoon.",
+            "line": "Dit apparaat heeft geen internet.",
+            "step": "Controleer wifi of mobiele data op dit apparaat.",
             "more": "Zet de vliegtuigmodus uit. Ga dichter bij de router staan."
           },
           "mediaBlocked": {
             "line": "De verbinding wordt op dit netwerk geblokkeerd.",
-            "step": "Gast- of hotelwifi kan dit blokkeren. Schakel deze telefoon over op mobiele data.",
+            "step": "Gast- of hotelwifi kan dit blokkeren. Schakel dit apparaat over op mobiele data.",
             "more": "Tik daarna op ‘Nu proberen’."
           }
         },
@@ -750,11 +750,11 @@
           },
           "fullScreen": {
             "title": "Meldingen verschijnen niet op het vergrendelscherm",
-            "body": "Je mist misschien een melding als de telefoon vergrendeld is."
+            "body": "Je mist misschien een melding als dit apparaat vergrendeld is."
           },
           "alarmVolumeZero": {
             "title": "Alarmvolume staat uit",
-            "body": "Je hoort geen meldingen op deze telefoon"
+            "body": "Je hoort geen meldingen op dit apparaat"
           },
           "alarmVolumeLow": {
             "title": "Alarmvolume staat laag",
@@ -765,11 +765,11 @@
             "body": "Sta toe dat GuardedSleep doorkomt."
           },
           "battery": {
-            "title": "Deze telefoon kan GuardedSleep stoppen",
+            "title": "Dit apparaat kan GuardedSleep stoppen",
             "body": "Sta gebruik op de achtergrond toe zodat meldingen blijven werken."
           },
           "parentBattery": {
-            "title": "De batterij van deze telefoon is bijna leeg",
+            "title": "De batterij van dit apparaat is bijna leeg",
             "body": "Sluit de lader aan om te blijven bewaken."
           },
           "headphones": {
@@ -784,11 +784,11 @@
       },
       "noiseAlert": {
         "labelSound": "Het kamergeluid wordt afgespeeld",
-        "labelVibrate": "Je telefoon trilt",
+        "labelVibrate": "Dit apparaat trilt",
         "labelStopped": "Melding gestopt",
         "counterLabel": "sinds {time}",
         "counterA11y": "{duration}, sinds {time}",
-        "sentenceSound": "Het kamergeluid wordt op deze telefoon afgespeeld.",
+        "sentenceSound": "Het kamergeluid wordt op dit apparaat afgespeeld.",
         "stopSoundSub": "Stopt het meldingsgeluid, de bewaking blijft doorgaan",
         "stopVibrationSub": "Stopt het trillen, de bewaking blijft doorgaan"
       },
@@ -798,7 +798,7 @@
         "counterLabel": "batterij over",
         "counterA11y": "{percent} procent batterij over",
         "sentence": "Sluit het babyapparaat nu aan. Als de batterij leeg is, stopt de bewaking.",
-        "silentNote": "Het babyapparaat blijft stil. Alleen deze telefoon geeft een melding.",
+        "silentNote": "Het babyapparaat blijft stil. Alleen dit apparaat geeft een melding.",
         "action": "OK, ik sluit het aan",
         "actionSub": "Sluit dit scherm"
       },
@@ -836,8 +836,8 @@
       "cameraView": "Camerabeeld"
     },
     "baby": {
-      "failMicDenied": "De microfoon is geblokkeerd, dus dit apparaat kan je kind niet horen. Sta hem toe in de sitevoorkeuren van de browser.",
-      "failMicUnavailable": "Geen microfoon gevonden, dus dit apparaat kan je kind niet horen.",
+      "failMicDenied": "De microfoon is geblokkeerd, dus dit apparaat kan het kind niet horen. Sta hem toe in de sitevoorkeuren van de browser.",
+      "failMicUnavailable": "Geen microfoon gevonden, dus dit apparaat kan het kind niet horen.",
       "quietUnknown": "Stille modus: onbekend",
       "keepAwake": "Houd dit apparaat wakker: aan de lader, klep open, dit tabblad zichtbaar.",
       "keepSilent": "Zet op dit apparaat Niet storen aan en zet de helderheid lager."
@@ -885,7 +885,7 @@
       "endAlert": "Praten gestopt: een alarm vraagt je aandacht.",
       "deniedOther": "Het babyapparaat nam het praten niet aan. Probeer het opnieuw.",
       "unavailableOff": "Praten staat uit op het babyapparaat. Zet het daar aan in Instellingen.",
-      "unavailableOther": "Het andere ouderapparaat praat met je kind.",
+      "unavailableOther": "Het andere ouderapparaat praat met het kind.",
       "unavailableUnsupported": "Dit babyapparaat kan je stem niet afspelen.",
       "unavailableMuted": "Het babyapparaat kan nu geen geluid afspelen.",
       "unavailableNotConnected": "Niet verbonden met het babyapparaat.",
@@ -893,12 +893,12 @@
       "unavailableBrowser": "Praten wordt in deze browser niet ondersteund.",
       "noisePausedSelf": "Geluidsalarmen gepauzeerd terwijl je praat.",
       "noisePausedOther": "Het andere ouderapparaat praat. Geluidsalarmen gaan daarna weer door.",
-      "coach": "Nieuw: houd ingedrukt om met je kind te praten.",
+      "coach": "Nieuw: houd ingedrukt om met het kind te praten.",
       "unconfirmed": "Je stem is op het babyapparaat mogelijk niet hoorbaar.",
       "audibleUncertain": "De laatste berichten waren op het babyapparaat mogelijk niet hoorbaar. Controleer het volume.",
       "afterListen": "10 s meeluisteren · tik om te blijven luisteren",
       "permissionTitle": "Microfoon om te praten",
-      "permissionBody": "Om met je kind te praten heeft GuardedSleep de microfoon nodig zolang je de knop ingedrukt houdt.",
+      "permissionBody": "Om met het kind te praten heeft GuardedSleep de microfoon nodig zolang je de knop ingedrukt houdt.",
       "permissionAllow": "Microfoon toestaan",
       "permissionDone": "Klaar. Houd nu ingedrukt om te praten.",
       "permissionRefused": "Praten heeft de microfoon nodig. Je kunt die toestaan in de site-instellingen van je browser.",
