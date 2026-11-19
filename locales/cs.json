@@ -120,8 +120,7 @@
           "title": "Zařízení rodiče",
           "hint": "Zůstává u vás a upozorňuje vás."
         },
-        "orderHint": "Nejdřív nastavte zařízení dítěte.",
-        "defaultToggle": "Použít jako výchozí"
+        "orderHint": "Nejdřív nastavte zařízení dítěte."
       },
       "setup": {
         "title": "Příprava tohoto zařízení",
@@ -219,8 +218,9 @@
         "lastUsed": "Naposledy použito {time}",
         "newPairing": "Nastavit nová zařízení",
         "empty": "Zatím žádná spárovaná zařízení.",
-        "switchMode": "Přepnout režim",
         "start": "Spustit",
+        "startConnection": "Spustit {name}",
+        "openAtStart": "Otevření při spuštění: {mode} · Změnit",
         "privacy": "Zvuk je mezi vašimi zařízeními šifrovaný. Žádný účet, žádné nahrávání v cloudu.",
         "vibrateOnly": "Výstrahy na hluk budou na tomto zařízení jen vibrovat."
       },
@@ -433,10 +433,7 @@
         "title": "Připojení",
         "defaultBaby": "Zařízení dítěte {n}",
         "defaultParent": "Zařízení rodiče {n}",
-        "current": "Připojení: {name}",
-        "change": "Změnit",
         "labelDefault": "{name} (výchozí)",
-        "autoConnect": "Připojit automaticky při otevření aplikace",
         "chooseAnother": "Vybrat jiné připojení",
         "rename": "Přejmenovat",
         "renameTitle": "Přejmenovat připojení",

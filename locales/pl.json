@@ -120,8 +120,7 @@
           "title": "Urządzenie rodzica",
           "hint": "Zostaje przy Tobie i powiadamia Cię."
         },
-        "orderHint": "Najpierw skonfiguruj urządzenie dziecka.",
-        "defaultToggle": "Użyj jako domyślnego"
+        "orderHint": "Najpierw skonfiguruj urządzenie dziecka."
       },
       "setup": {
         "title": "Przygotuj to urządzenie",
@@ -219,8 +218,9 @@
         "lastUsed": "Ostatnio używane {time}",
         "newPairing": "Skonfiguruj nowe urządzenia",
         "empty": "Nie sparowano jeszcze żadnych urządzeń.",
-        "switchMode": "Zmień tryb",
         "start": "Start",
+        "startConnection": "Start {name}",
+        "openAtStart": "Otwieranie przy starcie: {mode} · Zmień",
         "privacy": "Dźwięk jest szyfrowany między Twoimi urządzeniami. Bez konta, bez nagrywania w chmurze.",
         "vibrateOnly": "Alerty o hałasie będą na tym urządzeniu tylko wibrować."
       },
@@ -433,10 +433,7 @@
         "title": "Połączenia",
         "defaultBaby": "Urządzenie dziecka {n}",
         "defaultParent": "Urządzenie rodzica {n}",
-        "current": "Połączenie: {name}",
-        "change": "Zmień",
         "labelDefault": "{name} (domyślne)",
-        "autoConnect": "Łącz automatycznie po otwarciu aplikacji",
         "chooseAnother": "Wybierz inne połączenie",
         "rename": "Zmień nazwę",
         "renameTitle": "Zmień nazwę połączenia",

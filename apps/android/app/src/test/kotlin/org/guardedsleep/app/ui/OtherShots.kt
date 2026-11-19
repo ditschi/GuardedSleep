@@ -180,7 +180,7 @@ class PairShots : ShotBase() {
     ) =
         shot("pair_parent/$name", locale) {
             val focus = remember { FocusRequester() }
-            ParentPairContent(phase, err, granted, "", {}, focus, {}, {}, {}, {}, {}, {})
+            ParentPairContent(phase, err, granted, "", {}, focus, {}, {}, {}, {}, {})
         }
 
     @Test
@@ -289,37 +289,70 @@ class SetupHomeSettingsShots : ShotBase() {
 
     @Test
     fun home() {
-        val saved =
+        // Frame 01: a returning user with two parent connections and one baby connection.
+        val returning =
             AppState(
-                role = Role.PARENT,
+                role = null,
+                lastRole = Role.PARENT,
                 onboardingDone = true,
                 paired = true,
-                peerName = "Lena",
+                peerName = "Nursery",
                 lastUsedWallMs = WALL - 8 * 3_600_000L,
+                parentConnections =
+                    listOf(
+                        ConnectionUi("1", "Nursery", isDefault = false, selected = true),
+                        ConnectionUi("2", "Grandma's flat", isDefault = false, selected = false),
+                    ),
+                babyConnections = listOf(ConnectionUi("1", "Travel cot", false, true)),
+                canAddParentPairing = false,
             )
-        shot("home/parent_saved") { HomeScreen(FakeAppController(app = saved), {}) }
-        shot("home/baby_saved", "en", Role.BABY) {
-            HomeScreen(FakeAppController(app = saved.copy(role = Role.BABY, peerName = null)), {})
+        shot("home/returning") { HomeScreen(FakeAppController(app = returning), {}) }
+        shot("home/returning", "de") { HomeScreen(FakeAppController(app = returning), {}) }
+        shot("home/returning_day", theme = Theme.LIGHT) {
+            HomeScreen(FakeAppController(app = returning), {})
         }
-        shot("home/empty") { HomeScreen(FakeAppController(app = saved.copy(paired = false)), {}) }
-        shot("home/parent_saved", "de") { HomeScreen(FakeAppController(app = saved), {}) }
-        shot("home/parent_two_connections") {
-            HomeScreen(FakeAppController(app = twoConnections(saved)), {})
+        shot("home/returning_font2", fontScale = 2f) {
+            HomeScreen(FakeAppController(app = returning), {})
         }
-        shot("home/parent_saved_day", theme = Theme.LIGHT) {
-            HomeScreen(FakeAppController(app = saved), {})
-        }
-        shot("home/parent_vibrate_only") {
+        shot("home/returning_vibrate_only") {
             HomeScreen(
                 FakeAppController(
-                    app = saved,
+                    app = returning,
                     settings = SettingsState(alertStyle = AlertStyle.DISCREET),
                 ),
                 {},
             )
         }
-        shot("home/parent_saved_font2", fontScale = 2f) {
-            HomeScreen(FakeAppController(app = saved), {})
+        // One role only: the other role's header offers "Set up new devices".
+        shot("home/parent_only") {
+            HomeScreen(
+                FakeAppController(
+                    app =
+                        returning.copy(
+                            babyConnections = emptyList(),
+                            canAddParentPairing = true,
+                            defaultRole = Role.PARENT,
+                        )
+                ),
+                {},
+            )
+        }
+        // Nothing saved yet (the first-start choice was made, the pairing cancelled).
+        shot("home/empty") {
+            HomeScreen(
+                FakeAppController(
+                    app =
+                        returning.copy(
+                            role = Role.PARENT,
+                            paired = false,
+                            parentConnections = emptyList(),
+                            babyConnections = emptyList(),
+                            canAddParentPairing = true,
+                        )
+                ),
+                {},
+                autoScanned = true,
+            )
         }
     }
 

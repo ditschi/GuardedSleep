@@ -130,7 +130,8 @@ class LinkController(
      * so with several saved parent pairings it uses the default one.
      */
     private fun activeId(role: Role): String {
-        val chosen = settingsRepo.current.pairingId
+        // The choice belongs to the session role; another role's list uses its default.
+        val chosen = settingsRepo.current.takeIf { it.role == role }?.pairingId
         return chosen?.takeIf { it in pairings.savedIds(role) }
             ?: pairings.defaultId(role)
             ?: pairings.ids(role).first()
@@ -140,7 +141,13 @@ class LinkController(
     private fun newPairingId(role: Role): String? =
         if (role == Role.PARENT) pairings.freeId(role) else activeId(role)
 
-    /** The store of the pairing this session uses; null on the role screen. */
+    /**
+     * The role Settings and the connection lists act on: the session role, else the one this device
+     * used last (Home with start mode "Ask every time" has no session role yet).
+     */
+    private fun viewRole(): Role? = settingsRepo.current.let { it.role ?: it.lastRole }
+
+    /** The store of the pairing this session uses; null before a role is chosen. */
     private val pairingStoreOrNull: PairingStore?
         get() = settingsRepo.current.role?.let { pairings.store(it, activeId(it)) }
 
@@ -275,7 +282,7 @@ class LinkController(
         // The pre-roles single pairing belongs to the role that install had chosen.
         pairings.migrateLegacy(settingsRepo.current.role)
         // Cold start: a running monitoring keeps its role (the service resumes it); otherwise the
-        // start mode decides, and null shows the role screen.
+        // start mode decides, and null shows Home (or the first-start choice).
         if (!settingsRepo.current.monitoringActive) {
             // The connection choice is per session: a cold start preselects the default again.
             settingsRepo.update {
@@ -295,25 +302,37 @@ class LinkController(
 
     // ---- app ---------------------------------------------------------------------------------
 
-    override fun chooseRole(role: Role, makeDefault: Boolean) {
-        // Both pairings are kept: a role change never forgets one.
-        settingsRepo.update {
-            it.copy(role = role, defaultRole = if (makeDefault) role else it.defaultRole)
+    override fun chooseRole(role: Role) = enterRole(role)
+
+    /**
+     * Makes [role] the session role. Both pairings are kept: a role change never forgets one, and
+     * the start mode stays as it is. The parent's in-memory snooze is dropped on a change; the
+     * persisted one belongs to its role and comes back with it.
+     */
+    private fun enterRole(role: Role) {
+        if (settingsRepo.current.role != role) {
+            settingsRepo.update { it.copy(role = null) }
+            parentModel.cancelSnooze()
+            settingsRepo.update { it.copy(role = role) }
         }
         parentModel.restoreSnooze(settingsRepo.current.snoozeUntilWallMs)
         invalidateDeviceCheck()
         refreshApp()
-        if (role == Role.PARENT) autoStartOnce()
     }
 
-    override fun switchMode() {
+    override fun startConnection(role: Role, id: String) {
+        if (settingsRepo.current.monitoringActive || id !in pairings.savedIds(role)) return
+        enterRole(role)
+        // An explicit start is this app start's entry into the role: no automatic start after it.
+        autoStartPending = false
+        selectConnection(id)
+        startMonitoring()
+    }
+
+    override fun setUpNewDevices(role: Role) {
         if (settingsRepo.current.monitoringActive) return
-        cancelPairing()
-        stopRun(userStop = true)
-        settingsRepo.update { it.copy(role = null) }
-        parentModel.cancelSnooze()
-        invalidateDeviceCheck()
-        refreshApp()
+        enterRole(role)
+        startPairing()
     }
 
     override fun setDefaultRole(role: Role?) {
@@ -430,7 +449,7 @@ class LinkController(
 
     override fun forgetPairing() {
         // Taken first: stopping clears the session's choice, and this deletes the one in use.
-        settingsRepo.current.role?.let { forgetPairing(it, activeId(it)) }
+        viewRole()?.let { forgetPairing(it, activeId(it)) }
     }
 
     private fun forgetPairing(role: Role, id: String) {
@@ -456,7 +475,7 @@ class LinkController(
     }
 
     override fun renameConnection(id: String, name: String): Boolean {
-        val role = settingsRepo.current.role ?: return false
+        val role = viewRole() ?: return false
         if (id !in pairings.savedIds(role)) return false
         val ok = pairings.rename(role, id, name)
         refreshApp()
@@ -464,23 +483,23 @@ class LinkController(
     }
 
     override fun setDefaultConnection(id: String) {
-        val role = settingsRepo.current.role ?: return
+        val role = viewRole() ?: return
         if (pairings.setDefault(role, id)) refreshApp()
     }
 
     override fun chooseAnotherConnection() {
-        // A user stop; the home then lists the saved connections (a UI concern).
+        // A user stop; Home lists the saved connections.
         stopMonitoring()
     }
 
     override fun clearDefaultConnection() {
-        val role = settingsRepo.current.role ?: return
+        val role = viewRole() ?: return
         pairings.clearDefault(role)
         refreshApp()
     }
 
     override fun forgetConnection(id: String) {
-        val role = settingsRepo.current.role ?: return
+        val role = viewRole() ?: return
         if (id !in pairings.savedIds(role)) return
         if (id == activeId(role)) {
             // Stops monitoring first, then deletes it (the "Forget pairing" requirement).
@@ -510,10 +529,9 @@ class LinkController(
     /**
      * "The first time the parent role is entered in this app start": set once per process (this
      * construction) and consumed by that entry (first [onForeground] with the parent role, first
-     * [chooseRole] of the parent, so also a switch from the baby home through the role screen). The
-     * start mode and the parent default are independent. The baby unit monitoring or showing an
-     * invite first clears it ([startRun]). Touched on the main thread only (lifecycle callbacks and
-     * UI actions).
+     * [startConnection] of the parent). The start mode and the parent default are independent. The
+     * baby unit monitoring or showing an invite first clears it ([startRun]). Touched on the main
+     * thread only (lifecycle callbacks and UI actions).
      */
     private var autoStartPending = true
 
@@ -662,23 +680,22 @@ class LinkController(
         synchronized(appLock) {
             val check = synchronized(deviceCheckLock) { deviceCheckResult }
             val p = settingsRepo.current
-            val connections =
-                p.role?.let { role ->
-                    val active = activeId(role)
-                    pairings.list(role).map {
-                        ConnectionUi(it.id, it.name, it.isDefault, it.id == active)
-                    }
-                } ?: emptyList()
+            val view = p.role ?: p.lastRole
+            val connections = view?.let(::connectionsOf) ?: emptyList()
             _app.value =
                 AppState(
                     role = p.role,
+                    lastRole = p.lastRole,
                     defaultRole = p.defaultRole,
                     onboardingDone = p.onboardingDone,
-                    paired = pairingStoreOrNull?.exists() == true,
+                    paired = connections.isNotEmpty(),
                     peerName = connections.firstOrNull { it.selected }?.name ?: p.peerName,
                     connections = connections,
+                    parentConnections = connectionsOf(Role.PARENT),
+                    babyConnections = connectionsOf(Role.BABY),
                     // The baby unit replaces its pairing; only the parent adds one, up to the cap.
-                    canAddPairing = p.role != Role.PARENT || pairings.freeId(Role.PARENT) != null,
+                    canAddPairing = view != Role.PARENT || pairings.freeId(Role.PARENT) != null,
+                    canAddParentPairing = pairings.freeId(Role.PARENT) != null,
                     monitoring = p.monitoringActive,
                     autoStarted = autoStarted && p.monitoringActive,
                     backgroundProtection = !(p.monitoringActive && fgs == Fgs.LOST),
@@ -687,6 +704,14 @@ class LinkController(
                     deviceCheckMailboxes = check?.mailboxes ?: emptyList(),
                 )
         }
+
+    /** The saved connections of [role] as the screens list them; the session's one is selected. */
+    private fun connectionsOf(role: Role): List<ConnectionUi> {
+        val active = activeId(role)
+        return pairings.list(role).map {
+            ConnectionUi(it.id, it.name, it.isDefault, it.id == active)
+        }
+    }
 
     // ---- pairing -----------------------------------------------------------------------------
 

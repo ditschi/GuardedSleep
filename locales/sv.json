@@ -120,8 +120,7 @@
           "title": "Föräldraenhet",
           "hint": "Stannar hos dig och larmar dig."
         },
-        "orderHint": "Ställ in babyenheten först.",
-        "defaultToggle": "Använd som standard"
+        "orderHint": "Ställ in babyenheten först."
       },
       "setup": {
         "title": "Gör den här enheten redo",
@@ -219,8 +218,9 @@
         "lastUsed": "Senast använd {time}",
         "newPairing": "Ställ in nya enheter",
         "empty": "Inga enheter parkopplade än.",
-        "switchMode": "Byt läge",
         "start": "Starta",
+        "startConnection": "Starta {name}",
+        "openAtStart": "Öppna vid start: {mode} · Ändra",
         "privacy": "Ljudet är krypterat mellan dina enheter. Inget konto, ingen inspelning i molnet.",
         "vibrateOnly": "Bullerlarm får bara den här enheten att vibrera."
       },
@@ -433,10 +433,7 @@
         "title": "Anslutningar",
         "defaultBaby": "Babyenhet {n}",
         "defaultParent": "Föräldraenhet {n}",
-        "current": "Anslutning: {name}",
-        "change": "Ändra",
         "labelDefault": "{name} (standard)",
-        "autoConnect": "Anslut automatiskt när appen öppnas",
         "chooseAnother": "Välj en annan anslutning",
         "rename": "Byt namn",
         "renameTitle": "Byt namn på anslutningen",

@@ -120,8 +120,7 @@
           "title": "Perangkat orang tua",
           "hint": "Tetap bersama Anda dan memberi peringatan."
         },
-        "orderHint": "Siapkan perangkat bayi terlebih dahulu.",
-        "defaultToggle": "Gunakan sebagai default"
+        "orderHint": "Siapkan perangkat bayi terlebih dahulu."
       },
       "setup": {
         "title": "Siapkan perangkat ini",
@@ -219,8 +218,9 @@
         "lastUsed": "Terakhir dipakai {time}",
         "newPairing": "Siapkan perangkat baru",
         "empty": "Belum ada perangkat yang dipasangkan.",
-        "switchMode": "Ganti mode",
         "start": "Mulai",
+        "startConnection": "Mulai {name}",
+        "openAtStart": "Buka saat dimulai: {mode} · Ubah",
         "privacy": "Suara dienkripsi antar perangkat Anda. Tanpa akun, tanpa rekaman di cloud.",
         "vibrateOnly": "Peringatan suara hanya akan menggetarkan perangkat ini."
       },
@@ -433,10 +433,7 @@
         "title": "Koneksi",
         "defaultBaby": "Perangkat bayi {n}",
         "defaultParent": "Perangkat orang tua {n}",
-        "current": "Koneksi: {name}",
-        "change": "Ubah",
         "labelDefault": "{name} (bawaan)",
-        "autoConnect": "Hubungkan otomatis saat aplikasi dibuka",
         "chooseAnother": "Pilih koneksi lain",
         "rename": "Ganti nama",
         "renameTitle": "Ganti nama koneksi",

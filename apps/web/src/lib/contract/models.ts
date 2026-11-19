@@ -452,8 +452,10 @@ export interface ConnectionUi {
 }
 
 export interface AppState {
-  /** The session role; null shows the role screen. */
+  /** The session role; null on Home until a connection starts, and on the first start. */
   role: Role | null;
+  /** The role this device used last; Settings shows its rows while `role` is null. */
+  lastRole: Role | null;
   /** "Start mode": the role a start without monitoring opens in; null asks every time. */
   defaultRole: Role | null;
   onboardingDone: boolean;
@@ -462,8 +464,14 @@ export interface AppState {
   peerName: string | null;
   /** The saved connections of the session role; empty on the web (one in-memory pairing). */
   connections: ConnectionUi[];
+  /** Home: the saved parent connections; empty on the web. */
+  parentConnections: ConnectionUi[];
+  /** Home: the saved baby connections; empty on the web. */
+  babyConnections: ConnectionUi[];
   /** Fewer than the cap of pairings are saved: a further one can be added. */
   canAddPairing: boolean;
+  /** Home: fewer than the cap of parent pairings are saved. */
+  canAddParentPairing: boolean;
   monitoring: boolean;
   /** Parent: the running session was started by the automatic start (never on the web). */
   autoStarted: boolean;
@@ -588,12 +596,16 @@ export function defaultSettings(): SettingsState {
 export function defaultAppState(): AppState {
   return {
     role: null,
+    lastRole: null,
     defaultRole: null,
     onboardingDone: false,
     paired: false,
     peerName: null,
     connections: [],
+    parentConnections: [],
+    babyConnections: [],
     canAddPairing: true,
+    canAddParentPairing: true,
     monitoring: false,
     autoStarted: false,
     backgroundProtection: true,

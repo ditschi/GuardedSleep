@@ -120,8 +120,7 @@
           "title": "Dispositivo del genitore",
           "hint": "Resta con te e ti avvisa."
         },
-        "orderHint": "Configura prima il dispositivo del bambino.",
-        "defaultToggle": "Usa come predefinito"
+        "orderHint": "Configura prima il dispositivo del bambino."
       },
       "setup": {
         "title": "Prepara questo dispositivo",
@@ -219,8 +218,9 @@
         "lastUsed": "Ultimo uso {time}",
         "newPairing": "Configura nuovi dispositivi",
         "empty": "Ancora nessun dispositivo associato.",
-        "switchMode": "Cambia modalità",
         "start": "Avvia",
+        "startConnection": "Avvia {name}",
+        "openAtStart": "Apri all'avvio: {mode} · Cambia",
         "privacy": "L'audio è cifrato tra i tuoi dispositivi. Nessun account, nessuna registrazione nel cloud.",
         "vibrateOnly": "Gli avvisi di rumore faranno solo vibrare questo dispositivo."
       },
@@ -433,10 +433,7 @@
         "title": "Connessioni",
         "defaultBaby": "Dispositivo del bambino {n}",
         "defaultParent": "Dispositivo del genitore {n}",
-        "current": "Connessione: {name}",
-        "change": "Cambia",
         "labelDefault": "{name} (predefinita)",
-        "autoConnect": "Connetti automaticamente all'apertura dell'app",
         "chooseAnother": "Scegli un'altra connessione",
         "rename": "Rinomina",
         "renameTitle": "Rinomina la connessione",

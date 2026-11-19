@@ -100,7 +100,6 @@ class LocaleLayoutShots : ShotBase() {
                 {},
                 {},
                 {},
-                {},
             )
         }
         shot("locale_layout/baby_monitor", locale, Role.BABY) {

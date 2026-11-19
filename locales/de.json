@@ -120,8 +120,7 @@
           "title": "Elterngerät",
           "hint": "Bleibt bei Ihnen und alarmiert Sie."
         },
-        "orderHint": "Richten Sie zuerst das Babygerät ein.",
-        "defaultToggle": "Als Standard verwenden"
+        "orderHint": "Richten Sie zuerst das Babygerät ein."
       },
       "setup": {
         "title": "Dieses Gerät vorbereiten",
@@ -219,8 +218,9 @@
         "lastUsed": "Zuletzt genutzt um {time}",
         "newPairing": "Neue Geräte einrichten",
         "empty": "Noch keine Geräte gekoppelt.",
-        "switchMode": "Modus wechseln",
         "start": "Starten",
+        "startConnection": "{name} starten",
+        "openAtStart": "Beim Start öffnen: {mode} · Ändern",
         "privacy": "Der Ton ist zwischen Ihren Geräten verschlüsselt. Kein Konto, keine Aufnahme in der Cloud.",
         "vibrateOnly": "Geräuschalarme vibrieren auf diesem Gerät nur."
       },
@@ -433,10 +433,7 @@
         "title": "Verbindungen",
         "defaultBaby": "Babygerät {n}",
         "defaultParent": "Elterngerät {n}",
-        "current": "Verbindung: {name}",
-        "change": "Ändern",
         "labelDefault": "{name} (Standard)",
-        "autoConnect": "Beim Öffnen der App automatisch verbinden",
         "chooseAnother": "Andere Verbindung wählen",
         "rename": "Umbenennen",
         "renameTitle": "Verbindung umbenennen",

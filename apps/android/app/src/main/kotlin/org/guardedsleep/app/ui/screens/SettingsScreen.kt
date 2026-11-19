@@ -119,7 +119,7 @@ fun SettingsScreen(
     val s = controller.settings.collectAsState().value
     val app = controller.app.collectAsState().value
     val b = controller.baby.collectAsState().value
-    val isBaby = app.role == Role.BABY
+    val isBaby = (app.role ?: app.lastRole) == Role.BABY
     var page by rememberSaveable { mutableStateOf(initialPage) }
     fun goTo(p: SettingsPage) {
         page = p
@@ -217,7 +217,8 @@ fun SettingsScreen(
                 title =
                     stringResource(
                         R.string.native_ui_forget_title,
-                        c?.let { connectionLabel(it, app.connections, app.role) }.orEmpty(),
+                        c?.let { connectionLabel(it, app.connections, app.role ?: app.lastRole) }
+                            .orEmpty(),
                     ),
                 body = stringResource(R.string.native_ui_forget_body),
                 confirmText = stringResource(R.string.native_ui_forget_confirm),
@@ -578,17 +579,6 @@ private fun themeLabel(theme: Theme): String =
         }
     )
 
-/** The start mode as one word: the role a start opens in, or "Ask every time". */
-@Composable
-private fun startModeLabel(mode: Role?): String =
-    stringResource(
-        when (mode) {
-            null -> R.string.native_ui_settings_start_mode_ask
-            Role.BABY -> R.string.native_ui_role_baby_title
-            Role.PARENT -> R.string.native_ui_role_parent_title
-        }
-    )
-
 private fun pageTitle(page: SettingsPage): Int =
     when (page) {
         SettingsPage.ROOT -> R.string.native_ui_common_settings
@@ -670,7 +660,7 @@ private fun SettingsOverview(
         } else {
             app.connections.forEach { c ->
                 ConnectionLine(
-                    connectionLabel(c, app.connections, app.role),
+                    connectionLabel(c, app.connections, app.role ?: app.lastRole),
                     c.id,
                     isBaby,
                     inUse = readOnly && c.selected,
@@ -832,7 +822,7 @@ private fun ConnectionsPage(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Body(
-                        connectionLabel(c, app.connections, app.role),
+                        connectionLabel(c, app.connections, app.role ?: app.lastRole),
                         tag = "settings_connection_name_${c.id}",
                         color = MaterialTheme.colorScheme.onSurface,
                     )
@@ -925,7 +915,7 @@ private fun OpenAtStartPage(controller: AppController, app: AppState, isBaby: Bo
             }
             app.connections.forEach { c ->
                 ChoiceRow(
-                    connectionLabel(c, app.connections, app.role),
+                    connectionLabel(c, app.connections, app.role ?: app.lastRole),
                     c.isDefault,
                     "settings_connection_default_${c.id}",
                 ) {

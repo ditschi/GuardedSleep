@@ -40,7 +40,7 @@ class AppGraphSmokeTest {
         // A fresh install starts on the role screen, and a role choice reaches the store.
         assertNull(controller.app.value.role)
         assertFalse(controller.app.value.paired)
-        controller.chooseRole(Role.BABY, false)
+        controller.chooseRole(Role.BABY)
         assertEquals(Role.BABY, controller.app.value.role)
         controller.completeOnboarding()
         assertTrue(controller.app.value.onboardingDone)

@@ -661,7 +661,7 @@ class MonitorTests : ShotBase() {
         onNodeWithTag("sheet_close").assertIsDisplayed()
         // No way to switch the connection while monitoring (`device-setup` "Switching mode").
         onNodeWithTag("menu_choose_other_connection").assertDoesNotExist()
-        onNodeWithTag("connection_choice_1").assertDoesNotExist()
+        onNodeWithTag("home_connection_parent_1").assertDoesNotExist()
         val probe = onNodeWithTag("parent_probe").getUnclippedBoundsInRoot()
         val stop = onNodeWithTag("parent_stop").getUnclippedBoundsInRoot()
         assertTrue("Stop sits below a gap", stop.top - probe.bottom >= 32.dp)

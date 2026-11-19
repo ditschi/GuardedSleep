@@ -4,7 +4,7 @@ appId: org.guardedsleep.app.alpha
 ---
 - runFlow: dismiss-system-dialogs.yaml
 - tapOn:
-    id: "home_new_pairing"
+    id: "home_new_pairing_baby"
 - extendedWaitUntil:
     visible:
       id: "baby_pair_show_text"

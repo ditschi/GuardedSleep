@@ -120,8 +120,7 @@
           "title": "Ebeveyn cihazı",
           "hint": "Sizinle birlikte durur ve sizi uyarır."
         },
-        "orderHint": "Önce bebek cihazını kurun.",
-        "defaultToggle": "Varsayılan olarak kullan"
+        "orderHint": "Önce bebek cihazını kurun."
       },
       "setup": {
         "title": "Bu cihazı hazırlayın",
@@ -219,8 +218,9 @@
         "lastUsed": "Son kullanım: {time}",
         "newPairing": "Yeni cihazlar kur",
         "empty": "Henüz eşleşmiş cihaz yok.",
-        "switchMode": "Modu değiştir",
         "start": "Başlat",
+        "startConnection": "{name} başlat",
+        "openAtStart": "Açılışta aç: {mode} · Değiştir",
         "privacy": "Ses cihazlarınız arasında şifrelenir. Hesap yok, bulutta kayıt yok.",
         "vibrateOnly": "Gürültü uyarıları bu cihazda yalnızca titreşecek."
       },
@@ -433,10 +433,7 @@
         "title": "Bağlantılar",
         "defaultBaby": "Bebek cihazı {n}",
         "defaultParent": "Ebeveyn cihazı {n}",
-        "current": "Bağlantı: {name}",
-        "change": "Değiştir",
         "labelDefault": "{name} (varsayılan)",
-        "autoConnect": "Uygulama açıldığında otomatik bağlan",
         "chooseAnother": "Başka bir bağlantı seç",
         "rename": "Yeniden adlandır",
         "renameTitle": "Bağlantıyı yeniden adlandır",

@@ -142,7 +142,6 @@ fun PairParentScreen(controller: AppController) {
         },
         onRetry = { controller.startPairing() },
         onCancel = { controller.cancelPairing() },
-        onSwitchMode = { controller.switchMode() },
     )
 }
 
@@ -159,7 +158,6 @@ fun ParentPairContent(
     onAllowCamera: () -> Unit,
     onRetry: () -> Unit,
     onCancel: () -> Unit,
-    onSwitchMode: () -> Unit,
 ) {
     val connecting = phase == PairingPhase.CONNECTING
     val cameraDenied = !cameraGranted || error == PairingError.CAMERA_DENIED
@@ -267,11 +265,6 @@ fun ParentPairContent(
                 stringResource(R.string.native_ui_common_cancel),
                 onCancel,
                 "parent_pair_cancel",
-            )
-            QuietButton(
-                stringResource(R.string.native_ui_home_switch_mode),
-                onSwitchMode,
-                "switch_mode",
             )
         }
     }

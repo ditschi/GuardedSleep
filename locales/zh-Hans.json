@@ -120,8 +120,7 @@
           "title": "家长设备",
           "hint": "留在您身边，负责提醒您。"
         },
-        "orderHint": "请先设置宝宝设备。",
-        "defaultToggle": "设为默认"
+        "orderHint": "请先设置宝宝设备。"
       },
       "setup": {
         "title": "准备好此设备",
@@ -219,8 +218,9 @@
         "lastUsed": "上次使用：{time}",
         "newPairing": "设置新设备",
         "empty": "尚未配对任何设备。",
-        "switchMode": "切换模式",
         "start": "开始",
+        "startConnection": "开始{name}",
+        "openAtStart": "启动时打开：{mode} · 更改",
         "privacy": "声音在您的设备之间加密传输。无需账号，不在云端录音。",
         "vibrateOnly": "噪音提醒在此设备上只会振动。"
       },
@@ -433,10 +433,7 @@
         "title": "连接",
         "defaultBaby": "宝宝设备 {n}",
         "defaultParent": "家长设备 {n}",
-        "current": "连接：{name}",
-        "change": "更改",
         "labelDefault": "{name}（默认）",
-        "autoConnect": "打开应用时自动连接",
         "chooseAnother": "选择其他连接",
         "rename": "重命名",
         "renameTitle": "重命名连接",

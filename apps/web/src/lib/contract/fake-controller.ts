@@ -72,14 +72,12 @@ export function createFakeController(): FakeController {
     webTalk,
     alarmTonePlayback,
     calls,
-    chooseRole(role, makeDefault = false) {
+    chooseRole(role) {
       calls.push(["chooseRole", role]);
-      app.update((s) => ({ ...s, role, defaultRole: makeDefault ? role : s.defaultRole }));
+      app.update((s) => ({ ...s, role, lastRole: role }));
     },
-    switchMode() {
-      calls.push(["switchMode"]);
-      app.update((s) => (s.monitoring ? s : { ...s, role: null }));
-    },
+    startConnection: record("startConnection"),
+    setUpNewDevices: record("setUpNewDevices"),
     setDefaultRole(role) {
       calls.push(["setDefaultRole", role]);
       app.update((s) => ({ ...s, defaultRole: role }));

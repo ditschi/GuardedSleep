@@ -6,10 +6,10 @@ appId: org.guardedsleep.app.alpha
 - runFlow:
     when:
       visible:
-        id: "home_new_pairing"
+        id: "home_new_pairing_parent"
     commands:
       - tapOn:
-          id: "home_new_pairing"
+          id: "home_new_pairing_parent"
 - extendedWaitUntil:
     visible:
       id: "parent_pair_paste_field"

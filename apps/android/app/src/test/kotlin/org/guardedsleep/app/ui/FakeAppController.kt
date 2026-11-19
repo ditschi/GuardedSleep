@@ -51,18 +51,22 @@ class FakeAppController(
     override val pairing: StateFlow<PairingState?>
         get() = pairingFlow
 
-    override fun chooseRole(role: Role, makeDefault: Boolean) {
-        calls += "chooseRole:$role:$makeDefault"
-        appFlow.value =
-            appFlow.value.copy(
-                role = role,
-                defaultRole = if (makeDefault) role else appFlow.value.defaultRole,
-            )
+    override fun chooseRole(role: Role) {
+        calls += "chooseRole:$role"
+        appFlow.value = appFlow.value.copy(role = role, lastRole = role)
     }
 
-    override fun switchMode() {
-        calls += "switchMode"
-        appFlow.value = appFlow.value.copy(role = null)
+    override fun startConnection(role: Role, id: String) {
+        calls += "startConnection:$role:$id"
+        appFlow.value = appFlow.value.copy(role = role, lastRole = role, monitoring = true)
+    }
+
+    override fun setUpNewDevices(role: Role) {
+        calls += "setUpNewDevices:$role"
+        appFlow.value = appFlow.value.copy(role = role, lastRole = role)
+        // The parent opens the scan screen (not at the cap), as the platform does.
+        if (role == Role.PARENT && appFlow.value.canAddParentPairing)
+            pairingFlow.value = PairingState(PairingPhase.SCANNING)
     }
 
     override fun setDefaultRole(role: Role?) {

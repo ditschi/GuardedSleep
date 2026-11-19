@@ -59,9 +59,10 @@ fun JourneyHost.stopMonitoring(device: Device) {
     awaitShown(device, "home")
 }
 
-/** Starts monitoring from the home card. */
-fun JourneyHost.startFromHome(device: Device) {
-    awaitShown(device, "home_card")
-    tap(device, "home_card")
+/** Starts monitoring with the saved connection [id] of [device]'s own role, from Home. */
+fun JourneyHost.startFromHome(device: Device, id: String = "1") {
+    val row = "home_connection_" + (if (device == Device.BABY) "baby_" else "parent_") + id
+    awaitShown(device, row)
+    tap(device, row)
     awaitShown(device, if (device == Device.BABY) "baby_monitor" else "parent_monitor")
 }

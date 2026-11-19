@@ -120,8 +120,7 @@
           "title": "Ouderapparaat",
           "hint": "Blijft bij jou en waarschuwt je."
         },
-        "orderHint": "Stel eerst het babyapparaat in.",
-        "defaultToggle": "Als standaard gebruiken"
+        "orderHint": "Stel eerst het babyapparaat in."
       },
       "setup": {
         "title": "Dit apparaat voorbereiden",
@@ -219,8 +218,9 @@
         "lastUsed": "Laatst gebruikt {time}",
         "newPairing": "Nieuwe apparaten instellen",
         "empty": "Nog geen apparaten gekoppeld.",
-        "switchMode": "Modus wisselen",
         "start": "Starten",
+        "startConnection": "{name} starten",
+        "openAtStart": "Openen bij start: {mode} · Wijzigen",
         "privacy": "Het geluid is versleuteld tussen je apparaten. Geen account, geen opname in de cloud.",
         "vibrateOnly": "Geluidsmeldingen laten dit apparaat alleen trillen."
       },
@@ -433,10 +433,7 @@
         "title": "Verbindingen",
         "defaultBaby": "Babyapparaat {n}",
         "defaultParent": "Ouderapparaat {n}",
-        "current": "Verbinding: {name}",
-        "change": "Wijzigen",
         "labelDefault": "{name} (standaard)",
-        "autoConnect": "Automatisch verbinden bij het openen van de app",
         "chooseAnother": "Andere verbinding kiezen",
         "rename": "Hernoemen",
         "renameTitle": "Verbinding hernoemen",
