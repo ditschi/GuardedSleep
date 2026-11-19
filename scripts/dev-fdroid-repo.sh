@@ -61,6 +61,12 @@ apk_cert_sha256() {
 		sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n1 | tr 'a-f' 'A-F'
 }
 
+# sha256 of the signing certificate of a signed jar (entry.jar), upper-case hex, English output.
+jar_cert_sha256() {
+	keytool "${JAVA_EN[@]}" -printcert -jarfile "$1" 2>/dev/null |
+		sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr 'a-f' 'A-F'
+}
+
 badging="$("$AAPT2" dump badging "$APK")"
 pkg_line="$(printf '%s\n' "$badging" | grep -m1 '^package:')"
 [[ "$pkg_line" == *"name='$APP_ID'"* ]] || die "$APK has not the application id $APP_ID: $pkg_line"
@@ -110,7 +116,7 @@ fetch_previous() {
 		echo "entry.jar must have exactly one signer"
 		return 1
 	}
-	cert="$(printf '%s\n' "$out" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr 'a-f' 'A-F')"
+	cert="$(jar_cert_sha256 "$t/entry.jar")"
 	[[ "$cert" == "$PINNED" ]] || {
 		echo "entry.jar certificate $cert is not the pinned $PINNED"
 		return 1
@@ -218,7 +224,7 @@ listed="$(jq -r --arg id "$APP_ID" '[.packages[$id].versions[].manifest.versionC
 [[ "$expected" == "$listed" ]] ||
 	die "index-v2.json lists versionCodes [$listed], the repository files are [$expected]"
 [[ -f "$FD/repo/entry.jar" ]] || die "fdroid update wrote no signed entry.jar"
-fresh="$(keytool "${JAVA_EN[@]}" -printcert -jarfile "$FD/repo/entry.jar" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr 'a-f' 'A-F')"
+fresh="$(jar_cert_sha256 "$FD/repo/entry.jar")"
 [[ "$fresh" == "$PINNED" ]] ||
 	die "the new index is signed by $fresh, not by the pinned $PINNED: GS_DEV_REPO_FINGERPRINT does not belong to the repository key"
 
