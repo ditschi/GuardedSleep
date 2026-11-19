@@ -51,7 +51,9 @@ else
   export GS_DEV_REPO_PW
   printf '%s\n' "$GS_DEV_REPO_PW" > "$PWFILE"
   echo "1/5 Creating the key ($KS)"
-  mise exec -- keytool -genkeypair -storetype PKCS12 -keyalg EC -groupname secp256r1 \
+  # RSA, not EC: fdroidserver signs the legacy index-v1.jar with jarsigner and SHA1withRSA, which an
+  # EC key cannot do (clients that read index-v1 would get an unsigned file).
+  mise exec -- keytool -genkeypair -storetype PKCS12 -keyalg RSA -keysize 4096 \
     -validity 3650 -alias "$ALIAS" -dname "CN=GuardedSleep Dev Repository" -keystore "$KS" \
     -storepass:env GS_DEV_REPO_PW -keypass:env GS_DEV_REPO_PW >/dev/null 2>&1
 fi
