@@ -18,15 +18,16 @@ import org.gradle.process.CommandLineArgumentProvider
 /**
  * Runs Robolectric offline. Robolectric's own downloader (`MavenArtifactFetcher`) has no retries
  * and bypasses the Gradle cache, and Maven Central redirects the ~150 MB android-all jars to a
- * mirror that fails often. Instead Gradle resolves the jars listed under `robolectric-android-all-*`
- * in the version catalog as ordinary dependencies and copies them into one directory that
- * Robolectric reads through its documented offline mode (`robolectric.offline`,
- * `robolectric.dependency.dir`). Doc: https://robolectric.org/configuring/ (system properties table:
- * `robolectric.offline`, `robolectric.dependency.dir`)
+ * mirror that fails often. Instead Gradle resolves the jars listed under
+ * `robolectric-android-all-*` in the version catalog as ordinary dependencies and copies them into
+ * one directory that Robolectric reads through its documented offline mode (`robolectric.offline`,
+ * `robolectric.dependency.dir`). Doc: https://robolectric.org/configuring/ (system properties
+ * table: `robolectric.offline`, `robolectric.dependency.dir`)
  */
 class RobolectricConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
-        val catalog = target.extensions.getByType(VersionCatalogsExtension::class.java).named("libs")
+        val catalog =
+            target.extensions.getByType(VersionCatalogsExtension::class.java).named("libs")
         // One configuration per SDK: the artifacts share a module, and a single configuration
         // would conflict-resolve them to the highest version only.
         val jars =
@@ -61,7 +62,8 @@ class RobolectricConventionPlugin : Plugin<Project> {
                 into(dir)
             }
         target.tasks.withType<Test>().configureEach {
-            val offline = OfflineArgs(target.objects.fileCollection(), target.objects.directoryProperty())
+            val offline =
+                OfflineArgs(target.objects.fileCollection(), target.objects.directoryProperty())
             offline.jars.from(sync)
             offline.dir.set(dir)
             jvmArgumentProviders.add(offline)
