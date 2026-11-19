@@ -22,4 +22,8 @@ if ! gs_playwright_ready; then
   fi
 fi
 
+# `just e2e -- --shard=1/3` hands the separator on as well; Playwright would read everything after a
+# bare `--` as a file filter, so drop it.
+if [ "${1:-}" = "--" ]; then shift; fi
+
 pnpm run e2e "$@"

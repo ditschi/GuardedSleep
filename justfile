@@ -222,12 +222,13 @@ verify-android:
     just build-android lintDebug buildLogicTest :core-bindings:testDebugUnitTest :platform:testDebugUnitTest :app:testDebugUnitTest :app:verifyRoborazziDebug
 
 # Browser E2E (Playwright, local dev stack). Prints SKIPPED without Playwright browsers unless GS_STRICT=1.
-e2e:
-    scripts/lib/slot.sh heavy -- just _e2e
+# Extra arguments go to Playwright, e.g. `just e2e --shard=2/3` (what CI runs per shard) or `just e2e --list`.
+e2e *args:
+    scripts/lib/slot.sh heavy -- just _e2e {{args}}
 
 [private]
-_e2e: _js-deps _js-gen
-    scripts/lib/e2e.sh
+_e2e *args: _js-deps _js-gen
+    scripts/lib/e2e.sh {{args}}
 
 # Emulator gate AC-1..AC-4 (needs KVM; DOZE_MINUTES=2 just gate for a quick run). Run build-android first.
 gate:
