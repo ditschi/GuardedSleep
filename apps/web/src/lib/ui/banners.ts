@@ -1,4 +1,4 @@
-import type { AlertStyle, ParentMonitorState, ReadinessIssue } from "../contract";
+import type { AlertStyle, PageGuardState, ParentMonitorState, ReadinessIssue } from "../contract";
 import { BABY_BATTERY_LOW_PCT, BATTERY_CRITICAL_PCT } from "./parent-view";
 
 /*
@@ -55,12 +55,20 @@ export interface RankedBanners {
   folded: Banner[];
 }
 
-/** A stable sort by rank: banners of one kind keep their input order. */
+/**
+ * A stable sort by rank: banners of one kind keep their input order. The plain "keep this page
+ * open" note ranks last of all, so it is the first to fold when the stack overflows and never
+ * hides a safety notice of the baby device (battery, unplugged, microphone); its warning variants
+ * (wake lock lost or missing, other ids) keep the rank of their kind.
+ */
 export function rankBanners(
   banners: readonly Banner[],
   limit: number = BANNER_LIMIT,
 ): RankedBanners {
-  const rank = (b: Banner): number => BANNER_ORDER.indexOf(b.kind);
+  const rank = (b: Banner): number =>
+    b.kind === "browser_keep_open" && b.id === "browser_keep_open"
+      ? BANNER_ORDER.length
+      : BANNER_ORDER.indexOf(b.kind);
   const sorted = banners
     .map((b, i) => ({ b, i }))
     .sort((a, c) => rank(a.b) - rank(c.b) || a.i - c.i)
@@ -70,8 +78,12 @@ export function rankBanners(
 
 export type BannerLevel = "note" | "info" | "warn" | "alert";
 
-/** warn and alert banners are announced once when they appear (live region on the card). */
-export function bannerLevel(kind: BannerKind): BannerLevel {
+/**
+ * warn and alert banners are announced once when they appear (live region on the card). The
+ * keep-open banner turns into a warning when the browser let go of the screen wake lock.
+ */
+export function bannerLevel(kind: BannerKind, id: string = kind): BannerLevel {
+  if (kind === "browser_keep_open" && id !== kind) return "warn";
   switch (kind) {
     case "security":
       return "alert";
@@ -145,5 +157,23 @@ export function parentBanners(
   if (connected && p.link.quality === "poor") add("weak_connection");
   if (p.snoozedUntilWallMs !== null && p.snoozedUntilWallMs > wallNowMs) add("paused");
   if (alertStyle === "discreet") add("vibrate_only");
+  return out;
+}
+
+/**
+ * The notices only a browser parent has (`web-client` "Same monitor in the browser"): "keep this
+ * page open" (a warning with an id suffix when the screen wake lock is lost or missing) and "back
+ * from the background". They rank below readiness with the rest and are fed from the page guard,
+ * never from the core. The alert sound gate is a kind of its own in the order but has no card: its
+ * panel covers the monitor while the sound is locked, so a banner would say it twice.
+ */
+export function browserBanners(guard: PageGuardState): Banner[] {
+  const out: Banner[] = [];
+  if (guard.wakeLock === "lost" || guard.wakeLock === "unsupported") {
+    out.push({ kind: "browser_keep_open", id: `browser_keep_open_${guard.wakeLock}` });
+  } else {
+    out.push({ kind: "browser_keep_open", id: "browser_keep_open" });
+  }
+  if (guard.away !== null) out.push({ kind: "browser_away", id: "browser_away" });
   return out;
 }

@@ -25,12 +25,12 @@ import androidx.compose.ui.unit.dp
 import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AlertChipSpec
 import org.guardedsleep.app.ui.common.LocalUiEnv
-import org.guardedsleep.app.ui.common.NightState
 import org.guardedsleep.app.ui.common.ToolRow
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.ListenMode
+import org.guardedsleep.app.ui.model.NightMode
 import org.guardedsleep.app.ui.model.ParentMonitorState
 import org.guardedsleep.app.ui.model.PeerStatusUi
 import org.guardedsleep.app.ui.model.ReadinessIssue
@@ -257,7 +257,7 @@ class MonitorTests : ShotBase() {
     // ---- tool row (3.3) -------------------------------------------------------------------
 
     private fun toolRow(
-        night: NightState?,
+        night: NightMode?,
         vibrateOnly: Boolean = false,
         iconOnly: Boolean = false,
     ) =
@@ -285,7 +285,7 @@ class MonitorTests : ShotBase() {
             for (scale in listOf(1.0f, 1.3f, 2.0f)) {
                 runComposeUiTest {
                     try {
-                        rowAt(scale, locale, toolRow(NightState.ON))
+                        rowAt(scale, locale, toolRow(NightMode.ON))
                         val chip =
                             onNodeWithTag("tool_alert_chip")
                                 .assertIsDisplayed()
@@ -323,7 +323,7 @@ class MonitorTests : ShotBase() {
 
     @Test
     fun theNightControlIsIconOnlyWhenOffAndAboveOnePointOneFive() = runComposeUiTest {
-        show(toolRow(NightState.OFF))
+        show(toolRow(NightMode.OFF))
         onNodeWithTag("tool_night")
             .assertContentDescriptionContains(str(R.string.native_ui_tool_night_a11y_off))
         onNodeWithTag("tool_night").assert(hasText(str(R.string.native_ui_tool_night_on)).not())
@@ -333,8 +333,8 @@ class MonitorTests : ShotBase() {
     fun theNightControlShowsOnAndAutoAtNormalTextSize() {
         for ((state, label) in
             listOf(
-                NightState.ON to R.string.native_ui_tool_night_on,
-                NightState.AUTO to R.string.native_ui_tool_night_auto,
+                NightMode.ON to R.string.native_ui_tool_night_on,
+                NightMode.AUTO to R.string.native_ui_tool_night_auto,
             )) {
             runComposeUiTest {
                 show(toolRow(state))
@@ -343,7 +343,7 @@ class MonitorTests : ShotBase() {
         }
         runComposeUiTest {
             try {
-                rowAt(1.3f, "en", toolRow(NightState.ON))
+                rowAt(1.3f, "en", toolRow(NightMode.ON))
                 onNodeWithTag("tool_night")
                     .assert(hasText(str(R.string.native_ui_tool_night_on)).not())
             } finally {

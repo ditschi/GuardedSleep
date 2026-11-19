@@ -91,6 +91,14 @@ export class BabyModel {
     this.update({ threshold, holdSeconds });
   }
 
+  /**
+   * The charger was seen plugged in during this run, so a later reading that is not plugged in
+   * means it was pulled (`kioskAttention`). Sticky until the run ends; `reset` clears it.
+   */
+  noteCharging(charging: boolean | null): void {
+    if (charging === true && !this.state.chargerSeen) this.update({ chargerSeen: true });
+  }
+
   setKioskLocked(locked: boolean): void {
     this.update({ kioskLocked: locked });
   }

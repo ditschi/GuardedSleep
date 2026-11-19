@@ -90,6 +90,15 @@
     --gs-on-alert-action: #3a0d0d;
     --gs-alert-border: rgb(255 217 217 / 0.4);
 
+    /* Baby device marks (`connection-status` "Baby unit edge indicator"): no mark may be brighter
+       than the cap, #5a1414, at normal brightness (kiosk-cap); the status line text is 4.7:1 on
+       black. They mirror KioskMarks and KioskText in Theme.kt. */
+    --gs-kiosk-cap: #5a1414;
+    --gs-kiosk-ok: #083320;
+    --gs-kiosk-warn: #472400;
+    --gs-kiosk-alert: #5a1414;
+    --gs-kiosk-text: #7d7671;
+
     /* Borders, role cards, camera box and the pairing code. */
     --gs-role-parent-bg: var(--gs-primary-container);
     --gs-role-parent-fg: var(--gs-primary);
@@ -135,6 +144,9 @@
     --safety-caution-container: #363019;
     --safety-ok: #86cfa6;
     --safety-ok-container: #1b2f26;
+    /* The grey bar states (stopped, idle): the Dusk surface, fixed so night mode cannot tint it. */
+    --safety-grey-container: #322e39;
+    --safety-on-grey: #ece6ef;
 
     --safety-noise-bg: #250a10;
     --safety-noise-surface: #35111a;
@@ -243,8 +255,8 @@
     --gs-focus: #5a4893;
   }
 
-  /* Ember: night mode, red-shifted on black. Its switch arrives in group 6; the scheme exists now
-     so the tokens and tests cover it. */
+  /* Ember: night mode, red-shifted on black. The status colours ok, warn and bad are the fixed
+     Dusk safety values: night mode never recolours a chip or a hint that reads a status. */
   :root[data-scheme="ember"] {
     color-scheme: dark;
     --gs-bg: #000000;
@@ -269,9 +281,9 @@
     --gs-on-tertiary-container: #e8b19a;
     --gs-error: #e06a5e;
     --gs-on-error: #1a0703;
-    --gs-ok: #7aa883;
-    --gs-warn: #d07a44;
-    --gs-bad: #e06a5e;
+    --gs-ok: #86cfa6;
+    --gs-warn: #f0a774;
+    --gs-bad: #ff948a;
     --gs-chip: #180b0a;
     --gs-on-chip: #d19586;
     --gs-focus: #d08a6c;

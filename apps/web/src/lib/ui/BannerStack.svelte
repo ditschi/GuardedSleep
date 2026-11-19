@@ -3,10 +3,18 @@
   import type { ReadinessIssue } from "../contract";
   import { locale, t } from "../i18n/store";
   import { READINESS_WORDS, SILENCE_TITLE, UNIT_WARNING_KEYS } from "./banner-copy";
-  import { bannerLevel, parentBanners, rankBanners, type Banner, type BannerKind } from "./banners";
+  import {
+    bannerLevel,
+    browserBanners,
+    parentBanners,
+    rankBanners,
+    type Banner,
+    type BannerKind,
+  } from "./banners";
   import Button from "./Button.svelte";
   import Dialog from "./Dialog.svelte";
-  import { formatClock } from "./format";
+  import { formatClock, formatDuration } from "./format";
+  import { keepOpenDismissed } from "./browser-notes";
   import Glyph from "./Glyph.svelte";
   import { canRequestSilence } from "./parent-view";
   import { everySecond } from "./ticker";
@@ -27,10 +35,20 @@
   let { ontest }: Props = $props();
 
   const controller = useController();
-  const { parent } = controller;
+  const { parent, pageGuard } = controller;
 
   // The browser always keeps the "sound" alert style (it cannot vibrate).
-  const ranked = $derived(rankBanners(parentBanners($parent, "sound", $everySecond.wallMs)));
+  // The plain "keep this page open" note can be put away for this page's life (see
+  // `keepOpenDismissed`): it would otherwise hold one of the two places all night. Its warning
+  // variants (wake lock lost) cannot.
+  const ranked = $derived(
+    rankBanners([
+      ...parentBanners($parent, "sound", $everySecond.wallMs),
+      ...browserBanners($pageGuard).filter(
+        (b) => !(b.id === "browser_keep_open" && $keepOpenDismissed),
+      ),
+    ]),
+  );
   let listOpen = $state(false);
   $effect(() => {
     if (ranked.folded.length === 0) listOpen = false;
@@ -92,11 +110,32 @@
           title: $t("native.ui.alertStyle.vibrateTitle"),
           body: $t("native.ui.alertStyle.bodyNoSound"),
         };
-      // Ranked but fed by the browser notices of the monitor itself (AwayNotice and friends).
+      // The gate's panel covers the monitor; it never has a card.
       case "browser_sound_gate":
-      case "browser_keep_open":
-      case "browser_away":
         return null;
+      case "browser_keep_open":
+        if (b.id.endsWith("lost"))
+          return { title: $t("webScreens.guard.wakeLockLost"), body: null };
+        if (b.id.endsWith("unsupported")) {
+          return { title: $t("webScreens.guard.wakeLockUnsupported"), body: null };
+        }
+        return {
+          title: $t("webScreens.parent.keepOpenTitle"),
+          body: $t("webScreens.parent.keepOpenBody"),
+        };
+      case "browser_away": {
+        const away = $pageGuard.away;
+        if (away === null) return null;
+        return {
+          title: $t(
+            away.kind === "sleep"
+              ? "webScreens.guard.awaySleep"
+              : "webScreens.guard.awayBackground",
+            { duration: formatDuration($t, away.awayMs) },
+          ),
+          body: null,
+        };
+      }
     }
   }
 
@@ -124,6 +163,18 @@
           : null;
       case "paused":
         return { label: $t("native.ui.snooze.resume"), run: () => controller.cancelSnooze() };
+      case "browser_keep_open":
+        if (b.id.endsWith("lost")) {
+          return {
+            label: $t("webScreens.guard.wakeLockRetry"),
+            run: () => controller.retryKeepAwake(),
+          };
+        }
+        return b.id === "browser_keep_open"
+          ? { label: $t("native.ui.common.ok"), run: () => keepOpenDismissed.set(true) }
+          : null;
+      case "browser_away":
+        return { label: $t("native.ui.common.ok"), run: () => controller.dismissAwayReport() };
       default:
         return null;
     }
@@ -137,12 +188,16 @@
 {#snippet card(b: Banner, live: boolean)}
   {@const words = wordsOf(b)}
   {@const action = actionOf(b)}
-  {@const level = bannerLevel(b.kind)}
+  {@const level = bannerLevel(b.kind, b.id)}
   {#if words}
     <div
       class="gs-notice"
       data-level={level}
       data-kind={b.kind}
+      data-state={b.kind === "browser_keep_open"
+        ? b.id.slice("browser_keep_open".length + 1) || undefined
+        : undefined}
+      data-away={b.kind === "browser_away" ? $pageGuard.away?.kind : undefined}
       data-testid={`parent_banner_${b.id}`}
       role={!live
         ? undefined
@@ -188,13 +243,11 @@
         type="button"
         class="gs-notices__more"
         data-testid="parent_banner_more"
-        aria-label={$t("native.ui.banner.moreA11y", {
-          count: ranked.folded.length,
-          notices: foldedTitles.join(", "),
-        })}
         onclick={() => (listOpen = true)}
       >
         {$t("native.ui.banner.more", { count: ranked.folded.length })}
+        <!-- The accessible name starts with the visible words (WCAG 2.5.3) and then lists them. -->
+        <span class="gs-sr-only">: {foldedTitles.join(", ")}</span>
       </button>
     {/if}
   </div>

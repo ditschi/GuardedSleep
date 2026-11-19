@@ -50,6 +50,7 @@ import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.model.Banner
 import org.guardedsleep.app.ui.model.BannerKind
 import org.guardedsleep.app.ui.model.BannerLevel
+import org.guardedsleep.app.ui.model.NightMode
 import org.guardedsleep.app.ui.model.bannerLevel
 import org.guardedsleep.app.ui.theme.LocalAppColors
 import org.guardedsleep.app.ui.theme.LocalSafetyColors
@@ -340,13 +341,6 @@ fun SoundStrip(
 
 // ---- tool row ----------------------------------------------------------------------------------
 
-/** The night-mode control of the tool row (its states are built by the night-mode slice). */
-enum class NightState {
-    OFF,
-    ON,
-    AUTO,
-}
-
 /** The alert chip: opens the choice between "Sound" and "Vibrate only". */
 data class AlertChipSpec(
     val vibrateOnly: Boolean,
@@ -365,7 +359,7 @@ data class AlertChipSpec(
 @Composable
 fun ToolRow(
     alert: AlertChipSpec?,
-    night: Pair<NightState, () -> Unit>?,
+    night: Pair<NightMode, () -> Unit>?,
     onSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -465,24 +459,24 @@ private fun ToolIconButton(glyph: Glyph, label: String, tag: String, onClick: ()
 }
 
 @Composable
-private fun NightButton(state: NightState, onClick: () -> Unit, labelled: Boolean) {
+private fun NightButton(state: NightMode, onClick: () -> Unit, labelled: Boolean) {
     val scheme = MaterialTheme.colorScheme
     val a11y =
         stringResource(
             when (state) {
-                NightState.OFF -> R.string.native_ui_tool_night_a11y_off
-                NightState.ON -> R.string.native_ui_tool_night_a11y_on
-                NightState.AUTO -> R.string.native_ui_tool_night_a11y_auto
+                NightMode.OFF -> R.string.native_ui_tool_night_a11y_off
+                NightMode.ON -> R.string.native_ui_tool_night_a11y_on
+                NightMode.AUTO -> R.string.native_ui_tool_night_a11y_auto
             }
         )
-    if (state == NightState.OFF || !labelled) {
+    if (state == NightMode.OFF || !labelled) {
         // Icon only: the state travels in the description, and a tint marks "on".
         val tint =
-            if (state == NightState.OFF) scheme.onSurfaceVariant else scheme.onPrimaryContainer
+            if (state == NightMode.OFF) scheme.onSurfaceVariant else scheme.onPrimaryContainer
         Box(
             Modifier.size(MinTouch)
                 .background(
-                    if (state == NightState.OFF) scheme.surfaceContainer
+                    if (state == NightMode.OFF) scheme.surfaceContainer
                     else scheme.primaryContainer,
                     CircleShape,
                 )
@@ -507,7 +501,7 @@ private fun NightButton(state: NightState, onClick: () -> Unit, labelled: Boolea
             GlyphIcon(Glyph.MOON, scheme.onPrimaryContainer, size = 20.dp)
             Text(
                 stringResource(
-                    if (state == NightState.ON) R.string.native_ui_tool_night_on
+                    if (state == NightMode.ON) R.string.native_ui_tool_night_on
                     else R.string.native_ui_tool_night_auto
                 ),
                 style = MaterialTheme.typography.labelLarge,

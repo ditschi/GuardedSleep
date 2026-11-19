@@ -824,6 +824,39 @@ describe("WebController: contract state from the core", () => {
     expect(get(t.controller.parent).readiness).toEqual(["parent_battery_low"]);
   });
 
+  it("baby: remembers that the charger was plugged in during the run, and forgets it with the run", async () => {
+    const battery = writable<DeviceBattery | null>(null);
+    const t = setup({ battery });
+    t.controller.chooseRole("baby");
+    t.controller.startPairing();
+    await flush();
+    expect(get(t.controller.baby).chargerSeen).toBe(false);
+    battery.set({ pct: 80, charging: false });
+    expect(get(t.controller.baby).chargerSeen).toBe(false);
+    battery.set({ pct: 81, charging: true });
+    expect(get(t.controller.baby).chargerSeen).toBe(true);
+    // Pulled again: the flag stays, which is what "not charging" needs.
+    battery.set({ pct: 80, charging: false });
+    expect(get(t.controller.baby).chargerSeen).toBe(true);
+    // A new run starts clean, and a charger plugged in at its start counts as seen.
+    battery.set({ pct: 80, charging: false });
+    t.controller.refreshPairingCode();
+    await flush();
+    expect(get(t.controller.baby).chargerSeen).toBe(false);
+    battery.set({ pct: 79, charging: true });
+    t.controller.refreshPairingCode();
+    await flush();
+    expect(get(t.controller.baby).chargerSeen).toBe(true);
+  });
+
+  it("the parent run never tracks the charger", async () => {
+    const battery = writable<DeviceBattery | null>({ pct: 50, charging: true });
+    const t = setup({ battery });
+    await pairedParent(t);
+    battery.set({ pct: 51, charging: true });
+    expect(get(t.controller.baby).chargerSeen).toBe(false);
+  });
+
   it("counts 'Monitoring for' from the start of a parent run", async () => {
     const t = setup();
     t.time.advance(5_000);

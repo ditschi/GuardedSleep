@@ -12,19 +12,26 @@
   import Glyph from "../lib/ui/Glyph.svelte";
   import AwayNotice from "../lib/ui/AwayNotice.svelte";
   import { askForNotifications, browserNotifications } from "../lib/ui/attention";
+  import {
+    KIOSK_ATTENTION_KEY,
+    kioskAttention,
+    kioskMarkShape,
+    kioskStatusLine,
+  } from "../lib/ui/kiosk";
+  import KioskMark from "../lib/ui/KioskMark.svelte";
   import KeepAwakeNotice from "../lib/ui/KeepAwakeNotice.svelte";
   import type { GlyphName, Tone } from "../lib/ui/glyphs";
   import Meter from "../lib/ui/Meter.svelte";
   import { babyFailureKey, coreMessageKey, isMicFailure } from "../lib/ui/messages";
-  import NightScreen from "../lib/ui/NightScreen.svelte";
+  import BlackScreen from "../lib/ui/BlackScreen.svelte";
   import ScreenHeader from "../lib/ui/ScreenHeader.svelte";
 
   const controller = useController();
   const router = useRouter();
-  const { baby, deviceBattery, pageGuard, settings, webTalk } = controller;
+  const { app, baby, deviceBattery, pageGuard, settings, webTalk } = controller;
 
   let stopOpen = $state(false);
-  let nightOpen = $state(false);
+  let blackOpen = $state(false);
 
   interface StatusLook {
     key: MessageKey;
@@ -68,6 +75,13 @@
     return key === null ? null : $t(key);
   });
 
+  // The dim status line and the shape-coded mark (`connection-status` "Baby status line", "Baby unit
+  // edge indicator"): always visible while monitoring, hidden during a talk.
+  const connection = $derived($app.connections.find((c) => c.selected)?.name ?? null);
+  const statusLine = $derived(kioskStatusLine($t, $baby.link, status.key, connection));
+  const markShape = $derived(kioskMarkShape($baby.link));
+  const attention = $derived(kioskAttention($deviceBattery, $baby.chargerSeen));
+
   const batteryText = $derived.by(() => {
     const b = $deviceBattery;
     if (b === null) return null;
@@ -86,8 +100,8 @@
     });
   });
 
-  function openNight(): void {
-    nightOpen = true;
+  function openBlack(): void {
+    blackOpen = true;
     // A tap is the moment to ask for notifications; nothing changes if the user declines.
     void askForNotifications(browserNotifications(window));
   }
@@ -113,6 +127,24 @@
       </a>
     {/snippet}
   </ScreenHeader>
+
+  {#if !$baby.parentTalking}
+    <KioskMark shape={markShape} attention={attention !== null} />
+    <div class="gs-kiosk-status" data-testid="baby_kiosk_status_line">
+      <p>
+        <Glyph name={status.icon} />
+        <span data-testid="baby_kiosk_status">{statusLine}</span>
+      </p>
+      {#if attention !== null && $deviceBattery !== null}
+        <p>
+          <Glyph name="battery" />
+          <span data-testid="baby_kiosk_attention">
+            {$t(KIOSK_ATTENTION_KEY[attention], { percent: $deviceBattery.pct })}
+          </span>
+        </p>
+      {/if}
+    </div>
+  {/if}
 
   <section class="gs-status-card" data-tone={status.tone} aria-live="polite">
     <div class="gs-status-card__head">
@@ -208,9 +240,9 @@
 
   <div class="gs-fill"></div>
 
-  <Button variant="tonal" block size="large" testid="baby_night_open" onclick={openNight}>
-    <Glyph name="moon" />
-    {$t("webScreens.night.open")}
+  <Button variant="tonal" block size="large" testid="baby_black_open" onclick={openBlack}>
+    <Glyph name="cover" />
+    {$t("webScreens.blackScreen.open")}
   </Button>
 
   <Button variant="outline" block testid="baby_stop" onclick={() => (stopOpen = true)}>
@@ -218,8 +250,8 @@
   </Button>
 </div>
 
-<NightScreen
-  bind:open={nightOpen}
+<BlackScreen
+  bind:open={blackOpen}
   statusText={$t(status.key)}
   talkingText={$baby.parentTalking ? $t("webScreens.talk.babyTalking") : null}
   {lastTalkText}

@@ -91,6 +91,11 @@ object SafetyColors {
     /** Used as a dot or glyph only while everything is calm. */
     val ok = Color(0xFF86CFA6)
     val okContainer = Color(0xFF1B2F26)
+    /**
+     * The grey bar states (stopped, idle): the Dusk surface, fixed so night mode cannot tint it.
+     */
+    val greyContainer = Color(0xFF322E39)
+    val onGrey = Color(0xFFECE6EF)
 
     val noise =
         AlertPalette(
@@ -141,7 +146,7 @@ object SafetyColors {
 /** Not a `ColorScheme` slot on purpose: no scheme may override it. */
 val LocalSafetyColors = staticCompositionLocalOf { SafetyColors }
 
-/** The three colour schemes (design section 10). Night mode (Ember) gets its switch in group 6. */
+/** The three colour schemes (design section 10). Ember is night mode (`NightMode`). */
 enum class AppScheme {
     DUSK,
     DAY,
@@ -278,11 +283,13 @@ private val DayApp =
         onNeutralChip = Color(0xFF1F1B23),
         secondaryText = Color(0xFF4F4756),
     )
+// Night mode never recolours a status: ok, warn and bad are the fixed Dusk safety values, so chips
+// and hints that read AppColors keep the colours of "Night mode never hides safety signals".
 private val EmberApp =
     AppColors(
-        ok = Color(0xFF7AA883),
-        warn = Color(0xFFD07A44),
-        bad = Color(0xFFE06A5E),
+        ok = Color(0xFF86CFA6),
+        warn = Color(0xFFF0A774),
+        bad = Color(0xFFFF948A),
         neutralChip = Color(0xFF180B0A),
         onNeutralChip = Color(0xFFD19586),
         secondaryText = Color(0xFFA87365),
@@ -346,7 +353,7 @@ internal fun appTypography(family: FontFamily = PlusJakartaSans): Typography {
 }
 
 /**
- * Entry point of the theme. [scheme] is explicit for tests and for night mode (group 6); without it
+ * Entry point of the theme. [scheme] is explicit for tests and for night mode (Ember); without it
  * the user's theme setting picks Dusk (dark, the default) or Day (light).
  */
 @Composable

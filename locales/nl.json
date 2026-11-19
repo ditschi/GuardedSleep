@@ -496,6 +496,22 @@
           "light": "Licht",
           "system": "Systeem volgen"
         },
+        "night": {
+          "group": "Scherm 's nachts",
+          "title": "Nachtmodus",
+          "hint": "Zeer donker, roodgetint scherm voor een donkere kamer",
+          "off": "Uit",
+          "on": "Aan",
+          "auto": "Automatisch",
+          "between": "Tussen",
+          "fromA11y": "Nachtmodus begint om {time}",
+          "untilA11y": "Nachtmodus eindigt om {time}",
+          "statusOffUntil": "Nu uit · gaat aan om {time}",
+          "statusOnUntil": "Nu aan · gaat uit om {time}",
+          "statusOff": "Nu uit",
+          "statusOn": "Nu aan",
+          "note": "Meldingen en verbindingsproblemen gebruiken altijd hun normale kleuren."
+        },
         "forgetParent": "Dit ouderapparaat vergeten",
         "forgetBaby": "Dit babyapparaat vergeten",
         "checkPhone": "De instelling van dit apparaat controleren",
@@ -828,8 +844,11 @@
     },
     "parent": {
       "quietUnknownWeb": "Stille modus onbekend · zet hem aan op het babyapparaat",
-      "keepOpen": "Houd deze pagina open en het scherm aan. Anders kan je browser je niet waarschuwen.",
-      "soundGate": "Tik om het meldingsgeluid aan te zetten"
+      "soundGate": "Tik om het meldingsgeluid aan te zetten",
+      "soundGateTitle": "Het meldingsgeluid staat uit",
+      "soundGateBody": "Uw browser heeft één tik nodig voordat GuardedSleep meldingen mag afspelen.",
+      "keepOpenTitle": "Houd deze pagina open en het scherm aan",
+      "keepOpenBody": "Meldingen werken alleen zolang deze pagina zichtbaar is."
     },
     "settings": {
       "urlHint": "Het babyapparaat schrijft deze adressen in zijn code, dus het ouderapparaat gebruikt ze ook.",
@@ -845,11 +864,11 @@
       "awayBackground": "Deze pagina stond {duration} op de achtergrond. Meldingen zijn mogelijk gemist.",
       "awaySleep": "Dit apparaat sliep {duration}. Meldingen zijn mogelijk gemist."
     },
-    "night": {
-      "open": "Nachtscherm",
-      "label": "Nachtscherm. Nog steeds aan het bewaken. Tik om de status te tonen.",
+    "blackScreen": {
+      "open": "Zwart scherm",
+      "label": "Zwart scherm. Nog steeds aan het bewaken. Tik om de status te tonen.",
       "monitoring": "Nog steeds aan het bewaken",
-      "leave": "Tik nogmaals om het nachtscherm te verlaten"
+      "leave": "Tik nogmaals om het zwarte scherm te sluiten"
     },
     "talk": {
       "hold": "Ingedrukt houden om te praten",

@@ -496,6 +496,22 @@
           "light": "Claro",
           "system": "Seguir o sistema"
         },
+        "night": {
+          "group": "Tela à noite",
+          "title": "Modo noturno",
+          "hint": "Tela muito escura e avermelhada para um quarto escuro",
+          "off": "Desligado",
+          "on": "Ligado",
+          "auto": "Automático",
+          "between": "Entre",
+          "fromA11y": "O modo noturno começa às {time}",
+          "untilA11y": "O modo noturno termina às {time}",
+          "statusOffUntil": "Desligado agora · liga às {time}",
+          "statusOnUntil": "Ligado agora · desliga às {time}",
+          "statusOff": "Desligado agora",
+          "statusOn": "Ligado agora",
+          "note": "Alertas e problemas de conexão sempre usam as cores normais."
+        },
         "forgetParent": "Esquecer este dispositivo dos pais",
         "forgetBaby": "Esquecer este dispositivo do bebê",
         "checkPhone": "Verificar a configuração deste dispositivo",
@@ -828,8 +844,11 @@
     },
     "parent": {
       "quietUnknownWeb": "Modo silencioso desconhecido · ative-o no dispositivo do bebê",
-      "keepOpen": "Mantenha esta página aberta e a tela ligada. Senão, o navegador não consegue avisar você.",
-      "soundGate": "Toque para ativar o som dos alertas"
+      "soundGate": "Toque para ativar o som dos alertas",
+      "soundGateTitle": "O som de alerta está desligado",
+      "soundGateBody": "O navegador precisa de um toque antes que o GuardedSleep possa tocar alertas.",
+      "keepOpenTitle": "Mantenha esta página aberta e a tela ligada",
+      "keepOpenBody": "Os alertas só funcionam enquanto esta página estiver visível."
     },
     "settings": {
       "urlHint": "O dispositivo do bebê grava esses endereços no código dele, e o dispositivo dos pais também os usa.",
@@ -845,11 +864,11 @@
       "awayBackground": "Esta página ficou em segundo plano por {duration}. Alertas podem ter passado despercebidos.",
       "awaySleep": "Este dispositivo ficou suspenso por {duration}. Alertas podem ter passado despercebidos."
     },
-    "night": {
-      "open": "Tela noturna",
-      "label": "Tela noturna. Ainda monitorando. Toque para ver o status.",
+    "blackScreen": {
+      "open": "Tela preta",
+      "label": "Tela preta. Ainda monitorando. Toque para ver o status.",
       "monitoring": "Ainda monitorando",
-      "leave": "Toque de novo para sair da tela noturna"
+      "leave": "Toque de novo para fechar a tela preta"
     },
     "talk": {
       "hold": "Mantenha pressionado para falar",

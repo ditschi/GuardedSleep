@@ -9,6 +9,12 @@
  * countdowns); `*WallMs` = `Date.now()` (clock times shown to the user).
  */
 import type { Locale } from "../i18n/bundles";
+import {
+  NIGHT_DEFAULT_FROM_MINUTE,
+  NIGHT_DEFAULT_TO_MINUTE,
+  type NightMode,
+  type NightOverride,
+} from "../night-mode";
 
 export type Role = "baby" | "parent";
 
@@ -185,7 +191,11 @@ export interface BabyMonitorState {
   ownBatteryPct: number | null;
   /** This device is plugged in (Android: `EXTRA_PLUGGED != 0`). */
   ownPlugged: boolean;
-  /** The charger was plugged in at some time in this run (Android kiosk). */
+  /**
+   * The charger was plugged in at some time in this run (the platform tracks it from the battery
+   * readings: Android's battery receiver, the browser's Battery API). A later reading that is not
+   * plugged in then means it was pulled.
+   */
   chargerSeen: boolean;
   /** A parent's voice plays now (static indicator under the edge). */
   parentTalking: boolean;
@@ -414,6 +424,12 @@ export interface SettingsState {
   talkCoachSeen: boolean;
   /** Parent: the connection alarm tone, always one of `ALARM_TONE_IDS` (the core resolves it). */
   connectionAlarmTone: string;
+  /** Night mode choice and its daily window (`night-mode.ts`); a presentation preference. */
+  nightMode: NightMode;
+  nightFromMinute: number;
+  nightToMinute: number;
+  /** A manual change while `nightMode` is "auto", until the next window boundary. */
+  nightOverride: NightOverride | null;
 }
 
 /** Baby self-test result (ADR-010) shown on the setup checklist. */
@@ -587,6 +603,10 @@ export function defaultSettings(): SettingsState {
     talkChime: true,
     talkCoachSeen: false,
     connectionAlarmTone: DEFAULT_ALARM_TONE,
+    nightMode: "off",
+    nightFromMinute: NIGHT_DEFAULT_FROM_MINUTE,
+    nightToMinute: NIGHT_DEFAULT_TO_MINUTE,
+    nightOverride: null,
   };
 }
 

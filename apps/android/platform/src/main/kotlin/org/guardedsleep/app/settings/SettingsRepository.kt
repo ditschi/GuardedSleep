@@ -21,6 +21,9 @@ import org.guardedsleep.app.ui.model.AlarmTones
 import org.guardedsleep.app.ui.model.AlertOutput
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.DiscreetEscalation
+import org.guardedsleep.app.ui.model.NightMode
+import org.guardedsleep.app.ui.model.NightOverride
+import org.guardedsleep.app.ui.model.NightSchedule
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.SettingsState
 import org.guardedsleep.app.ui.model.TalkVolume
@@ -183,6 +186,21 @@ class SettingsRepository(
                 // built at app start, where the JVM tests of the app module have no native
                 // library; the sound is resolved through the core when it plays.
                 connectionAlarmTone = AlarmTones.normalize(p[ALARM_TONE]),
+                nightMode = enumOrNull<NightMode>(p[NIGHT_MODE]) ?: defaults.nightMode,
+                nightFromMinute =
+                    NightSchedule.normalizeMinute(
+                        p[NIGHT_FROM] ?: defaults.nightFromMinute,
+                        defaults.nightFromMinute,
+                    ),
+                nightToMinute =
+                    NightSchedule.normalizeMinute(
+                        p[NIGHT_TO] ?: defaults.nightToMinute,
+                        defaults.nightToMinute,
+                    ),
+                nightOverride =
+                    p[NIGHT_OVERRIDE_UNTIL]?.let { until ->
+                        NightOverride(p[NIGHT_OVERRIDE_ON] ?: false, until)
+                    },
             )
         val role = enumOrNull<Role>(p[ROLE])
         // Update from a single-role install: the stored role becomes the start mode, and its
@@ -244,6 +262,11 @@ class SettingsRepository(
         set(TALK_CHIME, c.talkChime)
         set(TALK_COACH, c.talkCoachSeen)
         set(ALARM_TONE, AlarmTones.normalize(c.connectionAlarmTone))
+        set(NIGHT_MODE, c.nightMode.name)
+        set(NIGHT_FROM, c.nightFromMinute)
+        set(NIGHT_TO, c.nightToMinute)
+        set(NIGHT_OVERRIDE_ON, c.nightOverride?.active)
+        set(NIGHT_OVERRIDE_UNTIL, c.nightOverride?.untilWallMs)
         set(ROLE, s.role?.name)
         set(LAST_ROLE, s.lastRole?.name)
         set(ONBOARDING, s.onboardingDone)
@@ -287,6 +310,12 @@ class SettingsRepository(
         val TALK_CHIME = booleanPreferencesKey("talk_chime")
         val TALK_COACH = booleanPreferencesKey("talk_coach_seen")
         val ALARM_TONE = stringPreferencesKey("connection_alarm_tone")
+        // Night mode is a presentation preference, not secret (`ui-appearance`).
+        val NIGHT_MODE = stringPreferencesKey("night_mode")
+        val NIGHT_FROM = intPreferencesKey("night_from_minute")
+        val NIGHT_TO = intPreferencesKey("night_to_minute")
+        val NIGHT_OVERRIDE_ON = booleanPreferencesKey("night_override_on")
+        val NIGHT_OVERRIDE_UNTIL = longPreferencesKey("night_override_until_wall")
         val ROLE = stringPreferencesKey("role")
         val LAST_ROLE = stringPreferencesKey("last_role")
         val DEFAULT_ROLE = stringPreferencesKey("default_role")

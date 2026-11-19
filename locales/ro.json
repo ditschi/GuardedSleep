@@ -496,6 +496,22 @@
           "light": "Luminos",
           "system": "Ca în sistem"
         },
+        "night": {
+          "group": "Ecranul noaptea",
+          "title": "Mod de noapte",
+          "hint": "Ecran foarte întunecat, cu nuanțe de roșu, pentru o cameră întunecată",
+          "off": "Oprit",
+          "on": "Pornit",
+          "auto": "Automat",
+          "between": "Între",
+          "fromA11y": "Modul de noapte începe la {time}",
+          "untilA11y": "Modul de noapte se termină la {time}",
+          "statusOffUntil": "Acum oprit · pornește la {time}",
+          "statusOnUntil": "Acum pornit · se oprește la {time}",
+          "statusOff": "Acum oprit",
+          "statusOn": "Acum pornit",
+          "note": "Alertele și problemele de conexiune au mereu culorile lor obișnuite."
+        },
         "forgetParent": "Șterge acest dispozitiv al părintelui",
         "forgetBaby": "Șterge acest dispozitiv al bebelușului",
         "checkPhone": "Verifică configurarea acestui dispozitiv",
@@ -828,8 +844,11 @@
     },
     "parent": {
       "quietUnknownWeb": "Mod silențios necunoscut · activează-l pe dispozitivul bebelușului",
-      "keepOpen": "Ține această pagină deschisă și ecranul pornit. Altfel browserul nu te poate alerta.",
-      "soundGate": "Atinge pentru a activa sunetul alertelor"
+      "soundGate": "Atinge pentru a activa sunetul alertelor",
+      "soundGateTitle": "Sunetul alertelor este oprit",
+      "soundGateBody": "Browserul are nevoie de o atingere înainte ca GuardedSleep să poată reda alerte.",
+      "keepOpenTitle": "Ține această pagină deschisă și ecranul pornit",
+      "keepOpenBody": "Alertele funcționează doar cât timp această pagină este vizibilă."
     },
     "settings": {
       "urlHint": "Dispozitivul bebelușului scrie aceste adrese în codul lui, deci le folosește și dispozitivul părintelui.",
@@ -845,11 +864,11 @@
       "awayBackground": "Această pagină a fost în fundal timp de {duration}. Unele alerte pot fi ratate.",
       "awaySleep": "Acest dispozitiv a fost în repaus timp de {duration}. Unele alerte pot fi ratate."
     },
-    "night": {
-      "open": "Ecran de noapte",
-      "label": "Ecran de noapte. Se monitorizează în continuare. Atinge pentru a vedea starea.",
+    "blackScreen": {
+      "open": "Ecran negru",
+      "label": "Ecran negru. Se monitorizează în continuare. Atinge pentru a vedea starea.",
       "monitoring": "Se monitorizează în continuare",
-      "leave": "Atinge din nou pentru a ieși din ecranul de noapte"
+      "leave": "Atinge din nou pentru a închide ecranul negru"
     },
     "talk": {
       "hold": "Ține apăsat pentru a vorbi",

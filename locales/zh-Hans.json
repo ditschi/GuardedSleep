@@ -496,6 +496,22 @@
           "light": "浅色",
           "system": "跟随系统"
         },
+        "night": {
+          "group": "夜间的屏幕",
+          "title": "夜间模式",
+          "hint": "适合黑暗房间的极暗偏红屏幕",
+          "off": "关闭",
+          "on": "开启",
+          "auto": "自动",
+          "between": "时段",
+          "fromA11y": "夜间模式从 {time} 开始",
+          "untilA11y": "夜间模式到 {time} 结束",
+          "statusOffUntil": "当前关闭 · {time} 开启",
+          "statusOnUntil": "当前开启 · {time} 关闭",
+          "statusOff": "当前关闭",
+          "statusOn": "当前开启",
+          "note": "警报和连接问题始终使用其正常颜色。"
+        },
         "forgetParent": "忘记此家长设备",
         "forgetBaby": "忘记此宝宝设备",
         "checkPhone": "检查此设备的设置",
@@ -828,8 +844,11 @@
     },
     "parent": {
       "quietUnknownWeb": "安静模式未知 · 请在宝宝设备上开启",
-      "keepOpen": "请保持此页面打开且屏幕常亮。否则浏览器无法提醒您。",
-      "soundGate": "点按以开启提醒声音"
+      "soundGate": "点按以开启提醒声音",
+      "soundGateTitle": "提醒声音已关闭",
+      "soundGateBody": "浏览器需要先点按一次，GuardedSleep 才能播放提醒。",
+      "keepOpenTitle": "请保持此页面打开且屏幕常亮",
+      "keepOpenBody": "只有此页面可见时，提醒才会起作用。"
     },
     "settings": {
       "urlHint": "宝宝设备会把这些地址写入它的配对码，家长设备也会使用它们。",
@@ -845,11 +864,11 @@
       "awayBackground": "此页面在后台运行了 {duration}。提醒可能已被漏掉。",
       "awaySleep": "此设备睡眠了 {duration}。提醒可能已被漏掉。"
     },
-    "night": {
-      "open": "夜间屏幕",
-      "label": "夜间屏幕。仍在监护。点按以显示状态。",
+    "blackScreen": {
+      "open": "黑屏",
+      "label": "黑屏。仍在监护。点按以显示状态。",
       "monitoring": "仍在监护",
-      "leave": "再次点按以离开夜间屏幕"
+      "leave": "再次点按以关闭黑屏"
     },
     "talk": {
       "hold": "按住说话",

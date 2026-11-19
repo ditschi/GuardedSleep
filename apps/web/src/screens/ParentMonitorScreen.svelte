@@ -16,16 +16,17 @@
   import Dialog from "../lib/ui/Dialog.svelte";
   import { formatClock, formatDuration, formatDurationWords, levelWordKey } from "../lib/ui/format";
   import Glyph from "../lib/ui/Glyph.svelte";
-  import AwayNotice from "../lib/ui/AwayNotice.svelte";
-  import KeepAwakeNotice from "../lib/ui/KeepAwakeNotice.svelte";
   import ListenButton from "../lib/ui/ListenButton.svelte";
   import RestoredCard from "../lib/ui/RestoredCard.svelte";
+  import { localOffsetMs, toggledNight, withNightMode, type NightMode } from "../lib/night-mode";
+  import { NIGHT_MODE_CHOICES } from "../lib/ui/night-choices";
+  import SoundGate from "../lib/ui/SoundGate.svelte";
   import SoundStrip from "../lib/ui/SoundStrip.svelte";
   import StopDialog from "../lib/ui/StopDialog.svelte";
   import TalkButton from "../lib/ui/TalkButton.svelte";
   import TalkStatus from "../lib/ui/TalkStatus.svelte";
   import type { TalkHint } from "../lib/ui/talk-view";
-  import NightScreen from "../lib/ui/NightScreen.svelte";
+  import BlackScreen from "../lib/ui/BlackScreen.svelte";
   import {
     canRequestSilence,
     connectionName,
@@ -54,9 +55,9 @@
   });
   const fullScreen = $derived(fullScreenOf($parent, dismissed));
 
-  // An alert replaces the night screen at once; it stays off afterwards, the parent is awake now.
+  // An alert replaces the black screen at once; it stays off afterwards, the parent is awake now.
   $effect(() => {
-    if (fullScreen !== null) nightOpen = false;
+    if (fullScreen !== null) blackOpen = false;
   });
 
   function dismiss(kind: FullScreenKind): void {
@@ -176,6 +177,25 @@
     });
   });
 
+  // The first tap or key press on any control of the monitor is the user gesture that unlocks the
+  // alert sound; the control still does its own job.
+  function unlockOnFirstTap(): void {
+    if (!$soundUnlocked) controller.unlockSound();
+  }
+
+  const NIGHT_A11Y = {
+    off: "native.ui.tool.nightA11yOff",
+    on: "native.ui.tool.nightA11yOn",
+    auto: "native.ui.tool.nightA11yAuto",
+  } as const satisfies Record<NightMode, MessageKey>;
+
+  // The night icon turns night mode off while on and on while off; under Automatic it becomes an
+  // override until the next window boundary. App.svelte stores the result.
+  function toggleNight(): void {
+    const now = Date.now();
+    controller.updateSettings((st) => toggledNight(st, now, localOffsetMs(now)));
+  }
+
   function unlockSound(): void {
     controller.unlockSound();
     // The same tap is the moment to ask for notifications; nothing changes if the user declines.
@@ -196,7 +216,7 @@
   let probeOpen = $state(false);
   let moreOpen = $state(false);
   let stopOpen = $state(false);
-  let nightOpen = $state(false);
+  let blackOpen = $state(false);
   let helpOpen = $state(false);
   let questionOpen = $state(false);
   let localOnly = $state(false);
@@ -283,19 +303,42 @@
 {:else if fullScreen !== null}
   <LinkAlarmScreen kind={fullScreen} onok={() => dismiss(fullScreen)} />
 {:else}
-  <div class="gs-screen gs-screen--monitor" data-screen="parent_monitor">
-    <!-- Tool row: the DOM order is the tab order (night, then settings); the gear is laid out first
-         and stays fixed. The night-mode control of group 6 and the alert chip (Android only) have
-         no web UI here. -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -- not a control: it only watches for the
+       first tap on any control, which browsers need as the user gesture that unlocks audio -->
+  <div
+    class="gs-screen gs-screen--monitor"
+    data-screen="parent_monitor"
+    onpointerdowncapture={unlockOnFirstTap}
+    onkeydowncapture={unlockOnFirstTap}
+  >
+    <!-- Tool row: the DOM order is the tab order (night, black screen, then settings); the gear is
+         laid out first and stays fixed. The alert chip exists on Android only. -->
     <div class="gs-tools" data-testid="parent_tools">
       <button
         type="button"
         class="gs-chip-btn"
-        data-testid="parent_night_open"
-        onclick={() => (nightOpen = true)}
+        data-on={$settings.nightMode !== "off" || undefined}
+        data-testid="tool_night"
+        aria-label={$t(NIGHT_A11Y[$settings.nightMode])}
+        onclick={toggleNight}
       >
-        <Glyph name="moon" />
-        <span>{$t("webScreens.night.open")}</span>
+        <Glyph name="night" />
+        {#if $settings.nightMode !== "off"}
+          <span
+            >{$t(
+              $settings.nightMode === "on" ? "native.ui.tool.nightOn" : "native.ui.tool.nightAuto",
+            )}</span
+          >
+        {/if}
+      </button>
+      <button
+        type="button"
+        class="gs-chip-btn"
+        data-testid="parent_black_open"
+        onclick={() => (blackOpen = true)}
+      >
+        <Glyph name="cover" />
+        <span>{$t("webScreens.blackScreen.open")}</span>
       </button>
       <button
         type="button"
@@ -310,9 +353,6 @@
 
     <BannerStack ontest={() => (probeOpen = true)} />
 
-    <AwayNotice />
-    <KeepAwakeNotice />
-
     {#if $parent.restoredAfterMs !== null}
       <!-- Until OK: the card never dismisses itself, a new outage replaces it. -->
       <RestoredCard restoredAfterMs={$parent.restoredAfterMs} />
@@ -326,71 +366,65 @@
     {/if}
 
     {#if !$soundUnlocked}
-      <Button variant="tonal" testid="parent_sound_gate" onclick={unlockSound}>
-        <Glyph name="sound" />
-        {$t("webScreens.parent.soundGate")}
-      </Button>
-    {/if}
+      <!-- Browsers keep audio locked until a tap: the gate covers the monitor (the status bar
+           above and the dock below stay), and the first tap on any control also unlocks. -->
+      <SoundGate onunlock={unlockSound} />
+    {:else}
+      <div class="gs-hero">
+        <h1 tabindex="-1" data-route-heading class="gs-headline" data-testid="parent_headline">
+          {headlineText}
+        </h1>
+        {#if monitoringFor !== null}
+          <p class="gs-hero__sub" data-testid="parent_monitoring_for">
+            {$t("native.ui.monitor.monitoringFor", { duration: monitoringFor })}
+          </p>
+        {/if}
+      </div>
 
-    <div class="gs-hero">
-      <h1 tabindex="-1" data-route-heading class="gs-headline" data-testid="parent_headline">
-        {headlineText}
-      </h1>
-      {#if monitoringFor !== null}
-        <p class="gs-hero__sub" data-testid="parent_monitoring_for">
-          {$t("native.ui.monitor.monitoringFor", { duration: monitoringFor })}
+      {#if $parent.link.phase === "connecting"}
+        <!-- Wrong place: before the first connection of a run, one tap at levels 0 and 1. From level
+             2 the full screen has the same button, behind the stop confirmation. -->
+        <Button
+          variant="text"
+          testid="parent_choose_other_connection"
+          onclick={() => {
+            controller.chooseAnotherConnection();
+            router.navigate("/");
+          }}
+        >
+          {$t("native.ui.connAlert.wrongConnection")}
+        </Button>
+      {/if}
+      {#if !connected && ($parent.link.phase === "connecting" || $parent.link.phase === "reconnecting")}
+        <Button variant="text" testid="parent_help_reconnect" onclick={() => (helpOpen = true)}>
+          {$t("native.ui.help.reconnect.open")}
+        </Button>
+      {/if}
+
+      <SoundStrip
+        level={$parent.level}
+        {connected}
+        threshold={$parent.babyThreshold}
+        {micSilent}
+        label={stripLabel}
+        testid="parent_meter"
+      />
+
+      {#if connected || $settings.lastTestWallMs !== null}
+        <p class="gs-meta" data-testid="parent_meta">
+          {#if connected}
+            <span data-testid="parent_silence_state">{$t(silenceStateKey($parent.peer))}</span>
+          {/if}
+          {#if $settings.lastTestWallMs !== null}
+            <span data-testid="parent_last_test">
+              {$t("native.ui.monitor.alertsTested", {
+                time: formatClock($settings.lastTestWallMs, $locale),
+              })}
+            </span>
+          {/if}
         </p>
       {/if}
-    </div>
-
-    {#if $parent.link.phase === "connecting"}
-      <!-- Wrong place: before the first connection of a run, one tap at levels 0 and 1. From level
-           2 the full screen has the same button, behind the stop confirmation. -->
-      <Button
-        variant="text"
-        testid="parent_choose_other_connection"
-        onclick={() => {
-          controller.chooseAnotherConnection();
-          router.navigate("/");
-        }}
-      >
-        {$t("native.ui.connAlert.wrongConnection")}
-      </Button>
     {/if}
-    {#if !connected && ($parent.link.phase === "connecting" || $parent.link.phase === "reconnecting")}
-      <Button variant="text" testid="parent_help_reconnect" onclick={() => (helpOpen = true)}>
-        {$t("native.ui.help.reconnect.open")}
-      </Button>
-    {/if}
-
-    <SoundStrip
-      level={$parent.level}
-      {connected}
-      threshold={$parent.babyThreshold}
-      {micSilent}
-      label={stripLabel}
-      testid="parent_meter"
-    />
-
-    {#if connected || $settings.lastTestWallMs !== null}
-      <p class="gs-meta" data-testid="parent_meta">
-        {#if connected}
-          <span data-testid="parent_silence_state">{$t(silenceStateKey($parent.peer))}</span>
-        {/if}
-        {#if $settings.lastTestWallMs !== null}
-          <span data-testid="parent_last_test">
-            {$t("native.ui.monitor.alertsTested", {
-              time: formatClock($settings.lastTestWallMs, $locale),
-            })}
-          </span>
-        {/if}
-      </p>
-    {/if}
-
-    <p class="gs-note" data-testid="parent_keep_open_banner">
-      <Glyph name="info" />
-      <span>{$t("webScreens.parent.keepOpen")}</span>
-    </p>
 
     <div class="gs-fill"></div>
 
@@ -473,7 +507,7 @@
         </button>
       </div>
     </div>
-    <NightScreen bind:open={nightOpen} statusText={headlineText} />
+    <BlackScreen bind:open={blackOpen} statusText={headlineText} />
   </div>
 {/if}
 
@@ -586,6 +620,22 @@
 
 <Dialog status bind:open={moreOpen} title={$t("native.ui.common.more")} testid="sheet_more">
   <div class="gs-stack gs-stack--tight">
+    <fieldset class="gs-group" data-testid="more_night">
+      <legend>{$t("native.ui.settings.night.title")}</legend>
+      {#each NIGHT_MODE_CHOICES as choice (choice.value)}
+        <label class="gs-choice">
+          <input
+            type="radio"
+            name="more-night"
+            value={choice.value}
+            checked={$settings.nightMode === choice.value}
+            data-testid={`more_night_${choice.value}`}
+            onchange={() => controller.updateSettings((st) => withNightMode(st, choice.value))}
+          />
+          <span>{$t(choice.label)}</span>
+        </label>
+      {/each}
+    </fieldset>
     <Button
       variant="outline"
       block

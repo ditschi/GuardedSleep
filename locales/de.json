@@ -496,6 +496,22 @@
           "light": "Hell",
           "system": "Wie System"
         },
+        "night": {
+          "group": "Bildschirm in der Nacht",
+          "title": "Nachtmodus",
+          "hint": "Sehr dunkler, rötlicher Bildschirm für ein dunkles Zimmer",
+          "off": "Aus",
+          "on": "An",
+          "auto": "Automatisch",
+          "between": "Zwischen",
+          "fromA11y": "Der Nachtmodus beginnt um {time}",
+          "untilA11y": "Der Nachtmodus endet um {time}",
+          "statusOffUntil": "Jetzt aus · schaltet sich um {time} ein",
+          "statusOnUntil": "Jetzt an · schaltet sich um {time} aus",
+          "statusOff": "Jetzt aus",
+          "statusOn": "Jetzt an",
+          "note": "Meldungen und Verbindungsprobleme behalten immer ihre normalen Farben."
+        },
         "forgetParent": "Dieses Elterngerät vergessen",
         "forgetBaby": "Dieses Babygerät vergessen",
         "checkPhone": "Einrichtung dieses Geräts prüfen",
@@ -821,8 +837,11 @@
     },
     "parent": {
       "quietUnknownWeb": "Ruhemodus unbekannt · am Babygerät einschalten",
-      "keepOpen": "Lassen Sie diese Seite offen und den Bildschirm an. Sonst kann Ihr Browser Sie nicht warnen.",
-      "soundGate": "Tippen, um den Alarmton zu aktivieren"
+      "soundGate": "Tippen, um den Alarmton zu aktivieren",
+      "soundGateTitle": "Der Alarmton ist aus",
+      "soundGateBody": "Ihr Browser braucht einen Tipp, bevor GuardedSleep Alarme abspielen darf.",
+      "keepOpenTitle": "Lassen Sie diese Seite offen und den Bildschirm an",
+      "keepOpenBody": "Alarme funktionieren nur, solange diese Seite sichtbar ist."
     },
     "guard": {
       "wakeLockHeld": "Bildschirm bleibt an",
@@ -834,11 +853,11 @@
       "awayBackground": "Diese Seite war {duration} im Hintergrund. Warnungen wurden evtl. verpasst.",
       "awaySleep": "Dieses Gerät war {duration} im Ruhezustand. Warnungen wurden evtl. verpasst."
     },
-    "night": {
-      "open": "Nachtbildschirm",
-      "label": "Nachtbildschirm. Die Überwachung läuft weiter. Tippen, um den Status zu zeigen.",
+    "blackScreen": {
+      "open": "Schwarzer Bildschirm",
+      "label": "Schwarzer Bildschirm. Die Überwachung läuft weiter. Tippen, um den Status zu zeigen.",
       "monitoring": "Überwachung läuft",
-      "leave": "Erneut tippen, um den Nachtbildschirm zu verlassen"
+      "leave": "Erneut tippen, um den schwarzen Bildschirm zu schließen"
     },
     "talk": {
       "hold": "Zum Sprechen halten",

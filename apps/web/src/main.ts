@@ -3,6 +3,7 @@ import App from "./App.svelte";
 import { createWebApp, createWebScanner, elapsedNow } from "./lib/platform";
 import { registerServiceWorker, type TrustedTypesFactory } from "./lib/service-worker";
 import { readAlarmToneSetting } from "./lib/alarm-tone";
+import { readNightSettings } from "./lib/night-mode";
 import { readThemeSetting } from "./lib/theme";
 import { setElapsedSource } from "./lib/ui/ticker";
 import "./lib/ui/theme.css";
@@ -20,6 +21,9 @@ void createWebApp().then((controller) => {
   // before first paint); the settings in memory start from it so the page does not flip back.
   const theme = readThemeSetting(localStorage);
   if (theme) controller.updateSettings((s) => ({ ...s, theme }));
+  // Night mode is a presentation preference as well (theme-boot.js reads it for the first paint).
+  const night = readNightSettings(localStorage);
+  if (night) controller.updateSettings((s) => ({ ...s, ...night }));
   // Likewise the connection alarm tone; the controller resolves it through the core, so an unknown
   // stored value becomes the default tone.
   const tone = readAlarmToneSetting(localStorage);

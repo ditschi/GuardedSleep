@@ -223,6 +223,7 @@ export class WebController implements AppController {
   private turn: TurnEntry | null = null;
   private run: Run | null = null;
   private runCounter = 0;
+  private lastBattery: DeviceBattery | null = null;
 
   constructor(private readonly deps: ControllerDeps) {
     this.deviceBattery = deps.battery ?? readable<DeviceBattery | null>(null);
@@ -280,6 +281,9 @@ export class WebController implements AppController {
     });
     // This device's own battery feeds the parent's readiness: the only issue a browser can know.
     deps.battery?.subscribe((b) => {
+      this.lastBattery = b;
+      // "Charger seen" lives here, as Android keeps it in the platform: only while a baby run is on.
+      if (this.run?.role === "baby") this.babyModel.noteCharging(b?.charging ?? null);
       const low = b !== null && b.pct < OWN_BATTERY_LOW_PCT && b.charging !== true;
       this.parentModel.setReadiness(low ? ["parent_battery_low"] : [], b?.pct ?? null);
     });
@@ -693,7 +697,7 @@ export class WebController implements AppController {
 
   /**
    * The browser suspended or resumed this device's audio. A suspended baby cannot play a talk, so
-   * the core reports `muted` and the night screen shows how to turn sound back on.
+   * the core reports `muted` and the black screen shows how to turn sound back on.
    */
   private onSoundState(unlocked: boolean): void {
     const r = this.run;
@@ -732,6 +736,8 @@ export class WebController implements AppController {
     this.parentModel.reset();
     if (role === "parent") this.parentModel.beginRun(this.deps.clock.elapsedMs());
     this.babyModel.reset();
+    // A charger that is plugged in when the run starts counts as seen.
+    if (role === "baby") this.babyModel.noteCharging(this.lastBattery?.charging ?? null);
     this.talkModel.reset();
     this.babyTalkModel.reset();
     this.webTalkStore.update((w) => ({ ...w, soundSuspended: false }));

@@ -19,7 +19,7 @@
   let {
     open = $bindable(),
     statusText,
-    testid = "night_screen",
+    testid = "black_screen",
     talkingText = null,
     lastTalkText = null,
     soundOffText = null,
@@ -74,30 +74,30 @@
 
 <dialog
   bind:this={dialog}
-  class="gs-night"
+  class="gs-black"
   data-testid={testid}
   data-woken={showStatus || undefined}
-  aria-label={$t("webScreens.night.label")}
+  aria-label={$t("webScreens.blackScreen.label")}
   onclose={handleClose}
 >
-  <button type="button" class="gs-night__tap" data-testid="{testid}_tap" onclick={tap}>
-    <span class="gs-night__dot" aria-hidden="true"></span>
+  <button type="button" class="gs-black__tap" data-testid="{testid}_tap" onclick={tap}>
+    <span class="gs-black__dot" aria-hidden="true"></span>
     {#if showStatus}
-      <span class="gs-night__status" data-testid="{testid}_status" role="status">
-        <span class="gs-night__line">
+      <span class="gs-black__status" data-testid="{testid}_status" role="status">
+        <span class="gs-black__line">
           <Glyph name="link" />
-          {$t("webScreens.night.monitoring")}
+          {$t("webScreens.blackScreen.monitoring")}
         </span>
         <span>{statusText}</span>
         {#if lastTalkText}<span data-testid="{testid}_last_talk">{lastTalkText}</span>{/if}
-        <span class="gs-night__hint">{$t("webScreens.night.leave")}</span>
+        <span class="gs-black__hint">{$t("webScreens.blackScreen.leave")}</span>
       </span>
     {:else}
-      <span class="gs-sr-only">{$t("webScreens.night.label")}</span>
+      <span class="gs-sr-only">{$t("webScreens.blackScreen.label")}</span>
     {/if}
   </button>
   {#if talkingText}
-    <p class="gs-night__talking" data-testid="{testid}_talking" role="status">
+    <p class="gs-black__talking" data-testid="{testid}_talking" role="status">
       <Glyph name="mic" />
       {talkingText}
     </p>
@@ -105,7 +105,7 @@
   {#if soundOffText}
     <button
       type="button"
-      class="gs-night__sound"
+      class="gs-black__sound"
       data-testid="{testid}_sound_off"
       onclick={() => onsoundon?.()}
     >
