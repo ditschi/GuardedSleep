@@ -65,7 +65,7 @@ fmt-kotlin *args:
 lint: lint-text lint-workflows lint-code
 
 # Text and repository hygiene for every file, docs included: Prettier, spelling, whitespace/JSON hygiene,
-# REUSE, OpenSpec spec/change validation and the secret scan over the full history (CI checks out
+# REUSE, OpenSpec spec/change validation, brand icon layers vs. docs/brand/logo.svg and the secret scan over the full history (CI checks out
 # with fetch-depth 0).
 lint-text: _js-deps
     scripts/lib/hooks-check.sh
@@ -75,6 +75,7 @@ lint-text: _js-deps
     scripts/lib/hygiene.sh
     scripts/lib/workspace-lints.sh
     scripts/lib/no-google-stun.sh
+    node scripts/lint-brand-icons.mjs
     reuse lint
     scripts/lib/secrets.sh
 
