@@ -40,6 +40,9 @@ export default defineConfig({
         runtimeCaching: [],
       },
       devOptions: { enabled: false },
+      // Icons are generated from public/favicon.svg by pwa-assets.config.ts at build time.
+      // https://vite-pwa-org.netlify.app/assets-generator/integrations.html
+      pwaAssets: { config: true, includeHtmlHeadLinks: false, overrideManifestIcons: false },
     }),
   ],
   // `just dev` and the Playwright config expect the dev server on 5173; fail instead of drifting.
