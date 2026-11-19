@@ -150,6 +150,16 @@ jobs:
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
+      # Robolectric downloads its android-all-instrumented jars (about 100 MB per SDK) at test time
+      # into the local Maven repository, outside the Gradle cache; a failed download from Maven
+      # Central fails every Robolectric class (MavenArtifactFetcher). Cached by the Robolectric
+      # version. https://github.com/robolectric/robolectric/blob/master/plugins/maven-dependency-resolver/src/main/java/org/robolectric/internal/dependency/MavenDependencyResolver.java
+      # https://github.com/actions/cache#inputs
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository/org/robolectric
+          key: robolectric-${{ hashFiles('apps/android/gradle/libs.versions.toml') }}
+          restore-keys: robolectric-
       - run: just test
 
   build:
@@ -196,6 +206,16 @@ jobs:
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
+      # Robolectric downloads its android-all-instrumented jars (about 100 MB per SDK) at test time
+      # into the local Maven repository, outside the Gradle cache; a failed download from Maven
+      # Central fails every Robolectric class (MavenArtifactFetcher). Cached by the Robolectric
+      # version. https://github.com/robolectric/robolectric/blob/master/plugins/maven-dependency-resolver/src/main/java/org/robolectric/internal/dependency/MavenDependencyResolver.java
+      # https://github.com/actions/cache#inputs
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository/org/robolectric
+          key: robolectric-${{ hashFiles('apps/android/gradle/libs.versions.toml') }}
+          restore-keys: robolectric-
       - run: just verify-android
 
   e2e:
