@@ -14,7 +14,7 @@ Branch `feat/night-crescent-logo`. Each implementation task is a brief for the `
 
 ## 2. Android
 
-- [ ] 2.1 **Launcher layers.**
+- [x] 2.1 **Launcher layers.**
   - Goal: `ic_launcher_foreground.xml` and `ic_launcher_monochrome.xml` as vector drawables converted from `assets/launcher-foreground.svg` and `assets/launcher-monochrome.svg` (filled paths, exact arcs kept). `ic_launcher_background.xml` = `#14202B`; keep the "launcher colour, not copy" comment.
   - Acceptance: `scripts/gradle.sh :app:lintDebug :app:assembleDebug` without vector warnings; the brand lint passes.
 - [ ] 2.2 **Dev layers.**

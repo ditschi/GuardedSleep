@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Launcher icon colour, not user copy: no locale key. Light mint of docs/brand/README.md; the web/PWA icons use the same. -->
+<!-- Launcher icon colour, not user copy: no locale key. The night tile #14202B of docs/brand/README.md; the web/PWA icons use the same. -->
 <resources>
-    <color name="ic_launcher_background">#F2FAF5</color>
+    <color name="ic_launcher_background">#14202B</color>
 </resources>
