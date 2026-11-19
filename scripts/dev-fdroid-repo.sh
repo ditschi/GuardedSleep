@@ -19,7 +19,8 @@
 #   GS_DEV_REPO_PREVIOUS_URL        where to fetch the previous index and APKs (default GS_DEV_REPO_URL;
 #                                   a file:// URL works for local runs)
 #   FDROID, APKSIGNER, AAPT2        tools; default `fdroid` on PATH and the build-tools of ANDROID_HOME
-#   GS_DEV_REPO_ICON                png for the repository icon (default apps/web/public/pwa-512.png)
+#   GS_DEV_REPO_ICON                png for the repository icon (default docs/brand/icon.png, the committed
+#                                   logo; the PWA PNGs are generated at build time and not in the tree)
 set -euo pipefail
 umask 077
 
@@ -33,7 +34,7 @@ FDROID="${FDROID:-fdroid}"
 BUILD_TOOLS="${ANDROID_HOME:-}/build-tools/36.0.0"
 APKSIGNER="${APKSIGNER:-$BUILD_TOOLS/apksigner}"
 AAPT2="${AAPT2:-$BUILD_TOOLS/aapt2}"
-ICON="${GS_DEV_REPO_ICON:-$ROOT/apps/web/public/pwa-512.png}"
+ICON="${GS_DEV_REPO_ICON:-$ROOT/docs/brand/icon.png}"
 KEEP_PREVIOUS=2
 JAVA_EN=(-J-Duser.language=en -J-Duser.country=US)
 
@@ -51,6 +52,7 @@ PINNED="$(printf '%s' "$GS_DEV_REPO_FINGERPRINT" | tr -d ':' | tr 'a-f' 'A-F')"
 	die "GS_DEV_REPO_FINGERPRINT is not a SHA-256 fingerprint (the owner sets it from scripts/dev-repo-key.sh, task 4.1)"
 [[ -f "$APK" ]] || die "APK $APK not found"
 [[ -f "$GS_DEV_REPO_KEYSTORE" ]] || die "keystore $GS_DEV_REPO_KEYSTORE not found"
+[[ -f "$ICON" ]] || die "repository icon $ICON not found (set GS_DEV_REPO_ICON)"
 for tool in jq curl unzip jarsigner keytool "$FDROID" "$APKSIGNER" "$AAPT2"; do
 	command -v "$tool" >/dev/null || die "$tool is missing"
 done
