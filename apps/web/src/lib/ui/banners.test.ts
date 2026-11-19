@@ -66,7 +66,10 @@ describe("rankBanners", () => {
   });
 
   it("ranks security before everything", () => {
-    const all = [...BANNER_ORDER].reverse().map((k) => b(k));
+    // The plain keep-open note ranks last by design (its own test below); use a warning variant here.
+    const all = [...BANNER_ORDER]
+      .reverse()
+      .map((k) => (k === "browser_keep_open" ? b(k, "browser_keep_open_lost") : b(k)));
     expect(rankBanners(all).shown[0]?.kind).toBe("security");
     expect(kinds(rankBanners(all, 99).shown)).toEqual([...BANNER_ORDER]);
   });
@@ -76,7 +79,7 @@ describe("rankBanners", () => {
       [
         b("baby_battery_low"),
         b("browser_away"),
-        b("browser_keep_open"),
+        b("browser_keep_open", "browser_keep_open_lost"),
         b("browser_sound_gate"),
         b("readiness"),
       ],
@@ -234,6 +237,42 @@ describe("browserBanners", () => {
       "browser_away",
       "baby_battery_low",
     ]);
+  });
+});
+
+describe("the plain keep-open note folds first", () => {
+  const plain = b("browser_keep_open");
+  const lost = b("browser_keep_open", "browser_keep_open_lost");
+
+  it("never hides a baby device safety notice behind it", () => {
+    for (const safety of [
+      b("mic_silent"),
+      b("baby_battery_low"),
+      b("baby_unplugged"),
+      b("unit_warning", "unit_warning_page_hidden"),
+      b("weak_connection"),
+    ]) {
+      const ranked = rankBanners([plain, safety, b("readiness", "never_tested")]);
+      expect(
+        ranked.shown.map((x) => x.id),
+        safety.id,
+      ).toContain(safety.id);
+      expect(ranked.folded).toEqual([plain]);
+    }
+  });
+
+  it("is shown when there is room, and ranks last even below Vibrate only", () => {
+    expect(kinds(rankBanners([plain, b("vibrate_only")]).shown)).toEqual([
+      "vibrate_only",
+      "browser_keep_open",
+    ]);
+    expect(rankBanners([b("vibrate_only"), b("paused"), plain]).folded).toEqual([plain]);
+  });
+
+  it("keeps the rank of the wake lock warning variants, below readiness and above the rest", () => {
+    const ranked = rankBanners([b("baby_battery_low"), lost, b("readiness", "never_tested")]);
+    expect(ranked.shown.map((x) => x.id)).toEqual(["never_tested", "browser_keep_open_lost"]);
+    expect(ranked.folded.map((x) => x.kind)).toEqual(["baby_battery_low"]);
   });
 });
 

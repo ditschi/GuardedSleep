@@ -55,12 +55,20 @@ export interface RankedBanners {
   folded: Banner[];
 }
 
-/** A stable sort by rank: banners of one kind keep their input order. */
+/**
+ * A stable sort by rank: banners of one kind keep their input order. The plain "keep this page
+ * open" note ranks last of all, so it is the first to fold when the stack overflows and never
+ * hides a safety notice of the baby device (battery, unplugged, microphone); its warning variants
+ * (wake lock lost or missing, other ids) keep the rank of their kind.
+ */
 export function rankBanners(
   banners: readonly Banner[],
   limit: number = BANNER_LIMIT,
 ): RankedBanners {
-  const rank = (b: Banner): number => BANNER_ORDER.indexOf(b.kind);
+  const rank = (b: Banner): number =>
+    b.kind === "browser_keep_open" && b.id === "browser_keep_open"
+      ? BANNER_ORDER.length
+      : BANNER_ORDER.indexOf(b.kind);
   const sorted = banners
     .map((b, i) => ({ b, i }))
     .sort((a, c) => rank(a.b) - rank(c.b) || a.i - c.i)

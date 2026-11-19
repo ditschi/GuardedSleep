@@ -449,20 +449,20 @@ describe("S09 parent monitor", () => {
     }));
     open("/parent", c);
     await screen.findByTestId("status_bar");
-    // Ranked: the browser's own "keep this page open" sits above the baby device's warnings.
-    expect(screen.getByTestId("parent_banner_browser_keep_open")).toBeInTheDocument();
+    // The baby device's warnings come first; the plain keep-open note folds before any of them.
     expect(screen.getByTestId("parent_banner_baby_unplugged")).toBeInTheDocument();
-    expect(screen.queryByTestId("parent_banner_unit_warning_page_hidden")).toBeNull();
+    expect(screen.getByTestId("parent_banner_unit_warning_page_hidden")).toBeInTheDocument();
+    expect(screen.queryByTestId("parent_banner_browser_keep_open")).toBeNull();
     const more = screen.getByTestId("parent_banner_more");
     expect(more).toHaveTextContent("+2 more");
     // The accessible name starts with the visible words and lists the folded notices.
     expect(more).toHaveAccessibleName(/^\+2 more.*Baby device may fall asleep/);
     await fireEvent.click(more);
     const list = screen.getByTestId("sheet_banners");
-    expect(within(list).getByTestId("parent_banner_unit_warning_page_hidden")).toBeInTheDocument();
     expect(
       within(list).getByTestId("parent_banner_unit_warning_wake_lock_off"),
     ).toBeInTheDocument();
+    expect(within(list).getByTestId("parent_banner_browser_keep_open")).toBeInTheDocument();
   });
 
   it("puts the keep-open note away for the page's life, but never the wake lock warning", async () => {
