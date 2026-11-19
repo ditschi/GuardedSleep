@@ -433,7 +433,6 @@
         "title": "Bağlantılar",
         "defaultBaby": "Bebek cihazı {n}",
         "defaultParent": "Ebeveyn cihazı {n}",
-        "labelDefault": "{name} (varsayılan)",
         "chooseAnother": "Başka bir bağlantı seç",
         "rename": "Yeniden adlandır",
         "renameTitle": "Bağlantıyı yeniden adlandır",

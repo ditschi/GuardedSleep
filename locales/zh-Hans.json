@@ -433,7 +433,6 @@
         "title": "连接",
         "defaultBaby": "宝宝设备 {n}",
         "defaultParent": "家长设备 {n}",
-        "labelDefault": "{name}（默认）",
         "chooseAnother": "选择其他连接",
         "rename": "重命名",
         "renameTitle": "重命名连接",

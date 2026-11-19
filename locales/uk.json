@@ -433,7 +433,6 @@
         "title": "З’єднання",
         "defaultBaby": "Пристрій дитини {n}",
         "defaultParent": "Пристрій батьків {n}",
-        "labelDefault": "{name} (типове)",
         "chooseAnother": "Обрати інше підключення",
         "rename": "Перейменувати",
         "renameTitle": "Перейменувати з’єднання",

@@ -433,7 +433,6 @@
         "title": "Verbindingen",
         "defaultBaby": "Babyapparaat {n}",
         "defaultParent": "Ouderapparaat {n}",
-        "labelDefault": "{name} (standaard)",
         "chooseAnother": "Andere verbinding kiezen",
         "rename": "Hernoemen",
         "renameTitle": "Verbinding hernoemen",

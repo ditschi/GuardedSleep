@@ -433,7 +433,6 @@
         "title": "Forbindelser",
         "defaultBaby": "Babyenhed {n}",
         "defaultParent": "Forældreenhed {n}",
-        "labelDefault": "{name} (standard)",
         "chooseAnother": "Vælg en anden forbindelse",
         "rename": "Omdøb",
         "renameTitle": "Omdøb forbindelsen",

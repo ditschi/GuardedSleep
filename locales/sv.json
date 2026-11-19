@@ -433,7 +433,6 @@
         "title": "Anslutningar",
         "defaultBaby": "Babyenhet {n}",
         "defaultParent": "Föräldraenhet {n}",
-        "labelDefault": "{name} (standard)",
         "chooseAnother": "Välj en annan anslutning",
         "rename": "Byt namn",
         "renameTitle": "Byt namn på anslutningen",

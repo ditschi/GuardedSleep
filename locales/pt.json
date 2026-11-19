@@ -433,7 +433,6 @@
         "title": "Conexões",
         "defaultBaby": "Dispositivo do bebê {n}",
         "defaultParent": "Dispositivo dos pais {n}",
-        "labelDefault": "{name} (padrão)",
         "chooseAnother": "Escolher outra ligação",
         "rename": "Renomear",
         "renameTitle": "Renomear conexão",

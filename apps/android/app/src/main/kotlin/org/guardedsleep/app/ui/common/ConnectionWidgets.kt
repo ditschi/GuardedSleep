@@ -44,14 +44,6 @@ internal fun connectionLabel(c: ConnectionUi, all: List<ConnectionUi>, role: Rol
             all.indexOfFirst { it.id == c.id } + 1,
         )
 
-/** The label of a connection in a list: its name, marked when it is the default. */
-@Composable
-internal fun connectionListLabel(c: ConnectionUi, all: List<ConnectionUi>, role: Role?): String {
-    val label = connectionLabel(c, all, role)
-    return if (c.isDefault) stringResource(R.string.native_ui_connections_label_default, label)
-    else label
-}
-
 /** [text] cut to [ConnectionUi.MAX_NAME_LENGTH] code points (never inside a surrogate pair). */
 internal fun limitName(text: String): String =
     if (text.codePointCount(0, text.length) <= ConnectionUi.MAX_NAME_LENGTH) text

@@ -433,7 +433,6 @@
         "title": "Connessioni",
         "defaultBaby": "Dispositivo del bambino {n}",
         "defaultParent": "Dispositivo del genitore {n}",
-        "labelDefault": "{name} (predefinita)",
         "chooseAnother": "Scegli un'altra connessione",
         "rename": "Rinomina",
         "renameTitle": "Rinomina la connessione",

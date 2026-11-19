@@ -433,7 +433,6 @@
         "title": "接続",
         "defaultBaby": "赤ちゃん用端末 {n}",
         "defaultParent": "保護者用端末 {n}",
-        "labelDefault": "{name}（デフォルト）",
         "chooseAnother": "別の接続を選ぶ",
         "rename": "名前を変更",
         "renameTitle": "接続の名前を変更",

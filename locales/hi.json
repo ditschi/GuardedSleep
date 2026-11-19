@@ -433,7 +433,6 @@
         "title": "कनेक्शन",
         "defaultBaby": "बच्चे का डिवाइस {n}",
         "defaultParent": "माता-पिता का डिवाइस {n}",
-        "labelDefault": "{name} (डिफ़ॉल्ट)",
         "chooseAnother": "दूसरा कनेक्शन चुनें",
         "rename": "नाम बदलें",
         "renameTitle": "कनेक्शन का नाम बदलें",

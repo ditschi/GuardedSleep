@@ -433,7 +433,6 @@
         "title": "연결",
         "defaultBaby": "아기 기기 {n}",
         "defaultParent": "부모 기기 {n}",
-        "labelDefault": "{name}(기본)",
         "chooseAnother": "다른 연결 선택",
         "rename": "이름 변경",
         "renameTitle": "연결 이름 변경",

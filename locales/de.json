@@ -433,7 +433,6 @@
         "title": "Verbindungen",
         "defaultBaby": "Babygerät {n}",
         "defaultParent": "Elterngerät {n}",
-        "labelDefault": "{name} (Standard)",
         "chooseAnother": "Andere Verbindung wählen",
         "rename": "Umbenennen",
         "renameTitle": "Verbindung umbenennen",

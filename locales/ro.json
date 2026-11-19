@@ -433,7 +433,6 @@
         "title": "Conexiuni",
         "defaultBaby": "Dispozitivul bebelușului {n}",
         "defaultParent": "Dispozitivul părintelui {n}",
-        "labelDefault": "{name} (implicită)",
         "chooseAnother": "Alege altă conexiune",
         "rename": "Redenumește",
         "renameTitle": "Redenumește conexiunea",

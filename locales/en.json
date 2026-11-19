@@ -431,7 +431,6 @@
         "title": "Connections",
         "defaultBaby": "Baby unit {n}",
         "defaultParent": "Parent device {n}",
-        "labelDefault": "{name} (default)",
         "chooseAnother": "Choose another connection",
         "rename": "Rename",
         "renameTitle": "Rename connection",

@@ -433,7 +433,6 @@
         "title": "الاتصالات",
         "defaultBaby": "جهاز الطفل {n}",
         "defaultParent": "جهاز الأهل {n}",
-        "labelDefault": "{name} (افتراضي)",
         "chooseAnother": "اختيار اتصال آخر",
         "rename": "إعادة تسمية",
         "renameTitle": "إعادة تسمية الاتصال",

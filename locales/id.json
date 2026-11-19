@@ -433,7 +433,6 @@
         "title": "Koneksi",
         "defaultBaby": "Perangkat bayi {n}",
         "defaultParent": "Perangkat orang tua {n}",
-        "labelDefault": "{name} (bawaan)",
         "chooseAnother": "Pilih koneksi lain",
         "rename": "Ganti nama",
         "renameTitle": "Ganti nama koneksi",

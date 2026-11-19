@@ -433,7 +433,6 @@
         "title": "Połączenia",
         "defaultBaby": "Urządzenie dziecka {n}",
         "defaultParent": "Urządzenie rodzica {n}",
-        "labelDefault": "{name} (domyślne)",
         "chooseAnother": "Wybierz inne połączenie",
         "rename": "Zmień nazwę",
         "renameTitle": "Zmień nazwę połączenia",
