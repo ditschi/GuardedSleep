@@ -181,6 +181,16 @@ export function farthest(d) {
   return Math.max(...pathPoints(d).map(([x, y]) => Math.hypot(x - 54, y - 54)));
 }
 
+/** Fails when a shape reaches outside the 66 dp safe circle of the adaptive-icon canvas. */
+function checkSafeZone(file, label, d) {
+  const far = farthest(d);
+  if (far > SAFE_RADIUS)
+    fail(
+      file,
+      `${label} reaches ${far.toFixed(1)} dp from the centre, safe zone is ${SAFE_RADIUS} dp`,
+    );
+}
+
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 /** Compares Android paths with the SVG source paths one to one (data, and fill when given). */
@@ -292,24 +302,20 @@ function main() {
   const dbgFgXml = read(ANDROID.debugForeground);
   if (dbgFgXml !== null && devSvg !== null && fgXml !== null) {
     const dbgFg = parseVector(dbgFgXml);
-    if (dbgFg.length <= fg.length || !same(dbgFg.slice(0, fg.length), fg)) {
+    if (dbgFg.length <= fg.length) {
+      fail(ANDROID.debugForeground, "needs the DEV pill after the logo paths");
+    } else if (!same(dbgFg.slice(0, fg.length), fg)) {
       fail(
         ANDROID.debugForeground,
         `must start with the release foreground paths of ${ANDROID.foreground}`,
       );
     }
-    if (dbgFg.length <= fg.length)
-      fail(ANDROID.debugForeground, "needs the DEV pill after the logo paths");
     comparePaths(ANDROID.debugForeground, SRC.dev, dbgFg, dev);
     // The launcher-dev source must itself be the release foreground plus the pill.
     comparePaths(SRC.dev, SRC.foreground, dev.slice(0, fgSource.length), fgSource);
     // Pill (and its outlined text) inside the safe zone; the text uses relative commands.
     const pill = dev[fgSource.length];
-    if (pill && farthest(pill.d) > SAFE_RADIUS)
-      fail(
-        SRC.dev,
-        `DEV pill reaches ${farthest(pill.d).toFixed(1)} dp from the centre, safe zone is ${SAFE_RADIUS} dp`,
-      );
+    if (pill) checkSafeZone(SRC.dev, "DEV pill", pill.d);
   }
   const dbgMonoXml = read(ANDROID.debugMonochrome);
   const dbgMonoSvg = read(SRC.monochromeDev);
@@ -338,11 +344,7 @@ function main() {
           { fill: false },
         );
         const badge = want.at(-1);
-        if (badge && farthest(badge.d) > SAFE_RADIUS)
-          fail(
-            SRC.monochromeDev,
-            `badge reaches ${farthest(badge.d).toFixed(1)} dp from the centre, safe zone is ${SAFE_RADIUS} dp`,
-          );
+        if (badge) checkSafeZone(SRC.monochromeDev, "badge", badge.d);
       }
     }
   }
@@ -400,13 +402,7 @@ function main() {
 
   // ---- Safe zone: the mark inside the 66 dp circle.
   for (const p of [crescent, wave]) {
-    if (!p) continue;
-    const far = farthest(p.d);
-    if (far > SAFE_RADIUS)
-      fail(
-        MASTER,
-        `${p.id} reaches ${far.toFixed(1)} dp from the centre, safe zone is ${SAFE_RADIUS} dp`,
-      );
+    if (p) checkSafeZone(MASTER, p.id, p.d);
   }
 
   if (errors.length > 0) {
