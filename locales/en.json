@@ -22,6 +22,7 @@
   },
   "native": {
     "appName": "GuardedSleep",
+    "appNameDev": "GuardedSleep Dev",
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",

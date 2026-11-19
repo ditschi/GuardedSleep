@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Debug-only test hooks (emulator gate); never part of release builds.
      DUMP permission: only the adb shell may start the activity or send the broadcast. -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Dev builds show their own launcher label (add-dev-fdroid-repo). -->
+    <application
+        android:label="@string/native_app_name_dev"
+        tools:replace="android:label">
         <activity
             android:name=".debug.DebugLaunchActivity"
             android:exported="true"
