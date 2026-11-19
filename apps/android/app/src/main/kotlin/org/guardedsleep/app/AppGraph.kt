@@ -85,6 +85,7 @@ class AppGraph(context: Context) : PlatformServices {
             app,
             entryPoints,
             toneId = { settings.current.settings.connectionAlarmTone },
+            role = { settings.current.role },
             language = { settings.current.settings.language },
         )
     val readiness = ReadinessChecker(AndroidReadinessEnv(app), settings, SystemClockSource)

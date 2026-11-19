@@ -93,8 +93,10 @@ def fav_mark(sw, gap, size, pad):
 
 W("favicon.svg", svg(f'<rect width="32" height="32" rx="7" fill="{NIGHT}"/>\n' + fav_mark(7.0, 2.6, 32, 2.6),
                      "0 0 32 32", 32, 32, "<!-- favicon: night tile, wave 7 dp / gap 2.6 dp for small sizes -->\n"))
-W("favicon-16.svg", svg(f'<rect width="16" height="16" rx="3.5" fill="{NIGHT}"/>\n' + fav_mark(8.6, 3.2, 16, 1.0),
-                        "0 0 16 16", 16, 16, "<!-- 16 px hinting master: heavier wave, wider gap -->\n"))
+# 16 px: the crescent alone (owner decision), the baby-notification crescent at outer radius 5.6.
+W("favicon-16.svg", svg(f'<rect width="16" height="16" rx="3.5" fill="{NIGHT}"/>\n<path d="{main_crescent_scaled(8, 8, 5.6)}" fill="{SAGE}"/>',
+                        "0 0 16 16", 16, 16,
+                        "<!-- favicon 16 px: the crescent alone on the night tile (owner decision). The geometry is the baby-notification crescent of notification-baby.svg, scaled to an outer radius of 5.6 and centred. At 16 px the bite and horn of the full mark merge with the wave. -->\n"))
 W("apple-touch-icon.svg", svg(f'<rect width="108" height="108" fill="{NIGHT}"/>\n' + COL, "12 12 84 84", 180, 180,
                               "<!-- apple-touch-icon 180: iOS rounds the corners itself -->\n"))
 W("pwa-maskable.svg", svg(f'<rect x="0" y="0" width="108" height="108" fill="{NIGHT}"/>\n' + COL, "9 9 90 90", 512, 512,

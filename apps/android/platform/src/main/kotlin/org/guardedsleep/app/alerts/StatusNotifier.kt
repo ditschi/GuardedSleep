@@ -49,7 +49,7 @@ class StatusNotifier(
                 context,
                 if (baby) AlertChannels.BABY_STATUS else AlertChannels.STATUS,
             )
-            .setSmallIcon(android.R.drawable.ic_btn_speak_now)
+            .setSmallIcon(NotificationIcons.forRole(role))
             .setContentTitle(context.getString(R.string.native_notif_app_title))
             .setContentText(
                 context.getString(
@@ -83,7 +83,7 @@ class StatusNotifier(
                 PendingIntent.FLAG_IMMUTABLE,
             )
         return NotificationCompat.Builder(context, AlertChannels.BABY_STATUS)
-            .setSmallIcon(android.R.drawable.ic_btn_speak_now)
+            .setSmallIcon(NotificationIcons.forRole(Role.BABY))
             .setContentTitle(context.getString(R.string.native_notif_app_title))
             .setContentText(context.getString(R.string.native_notif_baby_resume))
             .setAutoCancel(true)

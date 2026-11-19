@@ -1,10 +1,8 @@
 package org.guardedsleep.app
 
-import android.app.Activity
 import android.app.Application
 import android.app.Notification
 import android.app.NotificationManager
-import android.content.BroadcastReceiver
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import org.guardedsleep.app.alerts.AlertChannels
@@ -14,7 +12,6 @@ import org.guardedsleep.app.alerts.StatusNotifier
 import org.guardedsleep.app.locale.localizedContext
 import org.guardedsleep.app.ui.model.LinkUi
 import org.guardedsleep.app.ui.model.Role
-import org.guardedsleep.app.wiring.EntryPoints
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertSame
@@ -31,19 +28,13 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 class NotificationLanguageTest {
     private val app: Application = ApplicationProvider.getApplicationContext()
-    private val entryPoints =
-        object : EntryPoints {
-            override val mainActivity = Activity::class.java
-            override val alertActivity = Activity::class.java
-            override val alertActionReceiver = BroadcastReceiver::class.java
-        }
 
     private fun title(n: Notification) = n.extras.getString(Notification.EXTRA_TITLE)
 
     private fun text(n: Notification) = n.extras.getString(Notification.EXTRA_TEXT)
 
     private fun postedNoiseAlarm(language: String?): Notification {
-        AlertController(app, entryPoints) { language }
+        AlertController(app, FakeEntryPoints) { language }
             .noiseAlert(NoiseKind.NEW, probe = false, snoozed = false)
         val nm = app.getSystemService(NotificationManager::class.java)
         return shadowOf(nm).allNotifications.single()
@@ -54,7 +45,7 @@ class NotificationLanguageTest {
     fun api30StoredGermanDrivesAlarmServiceAndChannels() {
         assertEquals("Geräusch erkannt", title(postedNoiseAlarm("de")))
 
-        val service = StatusNotifier(app, entryPoints) { "de" }.build(Role.BABY, LinkUi())
+        val service = StatusNotifier(app, FakeEntryPoints) { "de" }.build(Role.BABY, LinkUi())
         assertEquals("GuardedSleep überwacht", text(service))
 
         val nm = app.getSystemService(NotificationManager::class.java)
@@ -77,7 +68,7 @@ class NotificationLanguageTest {
         val context: Context = app
         assertSame(context, localizedContext(context, "de"))
         assertEquals("Geräusch erkannt", title(postedNoiseAlarm("de")))
-        val service = StatusNotifier(app, entryPoints) { "de" }.build(Role.BABY, LinkUi())
+        val service = StatusNotifier(app, FakeEntryPoints) { "de" }.build(Role.BABY, LinkUi())
         assertEquals("GuardedSleep überwacht", text(service))
     }
 }

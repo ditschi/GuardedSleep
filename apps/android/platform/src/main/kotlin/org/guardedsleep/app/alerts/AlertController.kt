@@ -17,6 +17,7 @@ import org.guardedsleep.app.locale.localizedContext
 import org.guardedsleep.app.ui.model.AlarmTonePlayback
 import org.guardedsleep.app.ui.model.AlarmTones
 import org.guardedsleep.app.ui.model.LinkPhase
+import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.durationStrings
 import org.guardedsleep.app.ui.model.durationWords
 import org.guardedsleep.app.wiring.AlertIntents
@@ -36,6 +37,11 @@ class AlertController(
     /** The stored connection alarm tone id (`SettingsState.connectionAlarmTone`), read per tone. */
     private val toneId: () -> String = { AlarmTones.DEFAULT },
     private val tones: TonePlayer = TonePlayer(),
+    /**
+     * The role the device runs as (`SettingsState.role`), read when a notification is built to pick
+     * its small icon ([NotificationIcons]).
+     */
+    private val role: () -> Role? = { null },
     /** The stored app language (`SettingsState.language`), read when a notification is built. */
     private val language: () -> String? = { null },
 ) : AlertSink {
@@ -417,7 +423,7 @@ class AlertController(
     ): Notification {
         val builder =
             NotificationCompat.Builder(context, AlertChannels.ALARM_NOISE)
-                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setSmallIcon(NotificationIcons.forRole(role()))
                 .setContentTitle(context.getString(title))
                 .setContentText(context.getString(text))
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
@@ -459,7 +465,7 @@ class AlertController(
     ): Notification {
         val b =
             NotificationCompat.Builder(context, channel)
-                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setSmallIcon(NotificationIcons.forRole(role()))
                 .setContentTitle(context.getString(title))
                 .setContentText(context.getString(text))
                 .setOngoing(high && withAck)
@@ -495,7 +501,7 @@ class AlertController(
         timeoutMs: Long? = null,
     ): Notification =
         NotificationCompat.Builder(context, channel)
-            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setSmallIcon(NotificationIcons.forRole(role()))
             .setContentTitle(title)
             .setContentText(text)
             .setAutoCancel(true)
@@ -512,7 +518,7 @@ class AlertController(
     /** Lock screen shows no detail (a sound level, a battery value) of an alarm. */
     private fun publicVersion(channel: String): Notification =
         NotificationCompat.Builder(context, channel)
-            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setSmallIcon(NotificationIcons.forRole(role()))
             .setContentTitle(context.getString(R.string.native_notif_public_title))
             .build()
 

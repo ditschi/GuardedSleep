@@ -4,7 +4,7 @@ Branch `feat/night-crescent-logo`. Each implementation task is a brief for the `
 
 ## 1. Brand sources
 
-- [ ] 1.1 **Master and docs.**
+- [x] 1.1 **Master and docs.**
   - Goal: move the final set into `docs/brand/`:
     - `logo.svg` (replaces the #85 master), `logo-light.svg`, `wordmark*.svg`, `splash-*.svg`, `palette.md`;
     - the generator under `docs/brand/src/`, with a short `README` that names the Python dependencies (shapely, Pillow), says it is a design tool not run by CI, and that the SVGs are the source of truth;
@@ -14,16 +14,16 @@ Branch `feat/night-crescent-logo`. Each implementation task is a brief for the `
 
 ## 2. Android
 
-- [ ] 2.1 **Launcher layers.**
+- [x] 2.1 **Launcher layers.**
   - Goal: `ic_launcher_foreground.xml` and `ic_launcher_monochrome.xml` as vector drawables converted from `assets/launcher-foreground.svg` and `assets/launcher-monochrome.svg` (filled paths, exact arcs kept). `ic_launcher_background.xml` = `#14202B`; keep the "launcher colour, not copy" comment.
   - Acceptance: `scripts/gradle.sh :app:lintDebug :app:assembleDebug` without vector warnings; the brand lint passes.
-- [ ] 2.2 **Dev layers.**
+- [x] 2.2 **Dev layers.**
   - Goal: `src/debug/res`:
     - a foreground with the amber DEV pill from `assets/launcher-dev.svg` (the pill text is outlined paths);
     - the background `#14202B`, replacing the mint dev colour of `add-dev-fdroid-repo`;
     - `ic_launcher_monochrome.xml` from `assets/launcher-monochrome-dev.svg` (release layer + rounded-square badge).
   - Acceptance: the debug build shows the pill. The brand lint check "debug monochrome = release + badge" passes, and it fails when the badge is removed (try, then revert).
-- [ ] 2.3 **Notification icons.**
+- [x] 2.3 **Notification icons.**
   - Goal: `platform/src/main/res/drawable/ic_stat_baby.xml` and `ic_stat_parent.xml` from `assets/notification-baby.svg` / `notification-parent.svg` (white single paths on transparent).
   - `StatusNotifier` and `AlertController` use `ic_stat_baby` when the device runs as the baby device and `ic_stat_parent` as the parent device, instead of `android.R.drawable.ic_lock_idle_alarm` / `ic_btn_speak_now` (design §3; the role is read where the notification is built).
   - Acceptance:
@@ -33,7 +33,7 @@ Branch `feat/night-crescent-logo`. Each implementation task is a brief for the `
 
 ## 3. Web
 
-- [ ] 3.1 **Favicons and PWA.**
+- [x] 3.1 **Favicons and PWA.**
   - Goal (design §5):
     - `apps/web/public/favicon.svg` = the 32 px glyph (`assets/favicon.svg`);
     - new `favicon-16.svg` = crescent only on the night tile, derived from the notification crescent geometry;
@@ -43,7 +43,7 @@ Branch `feat/night-crescent-logo`. Each implementation task is a brief for the `
 
 ## 4. Lint and checks
 
-- [ ] 4.1 **Brand lint.**
+- [x] 4.1 **Brand lint.**
   - Goal: extend `scripts/lib/brand-icons.mjs` and its tests per design §4. Update the `text-lint` row in `docs/ci-gates.md`.
   - Acceptance:
     - `node --test scripts/lib/*.test.mjs` and `just lint-text` green;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Dev launcher colour (orange instead of the brand navy), so a dev build is told apart from the
-     alpha and release apps at a glance. Launcher colour, not user copy: no locale key. -->
+<!-- Dev launcher colour: the night tile #14202B of the release app (docs/brand/README.md); the amber DEV pill of
+     ic_launcher_foreground.xml tells a dev build from the alpha and release apps. Launcher colour, not user copy: no locale key. -->
 <resources>
-    <color name="ic_launcher_background">#E65100</color>
+    <color name="ic_launcher_background">#14202B</color>
 </resources>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+<!-- favicon 16 px: the crescent alone on the night tile (owner decision). The geometry is the baby-notification crescent of notification-baby.svg, scaled to an outer radius of 5.6 and centred. At 16 px the bite and horn of the full mark merge with the wave. -->
+<rect width="16" height="16" rx="3.5" fill="#14202B"/>
+<path d="M13.57,7.45A5.60,5.60 0 1 1 8.55,2.43A3.67,3.67 0 1 0 13.57,7.45Z" fill="#5DBFA6"/>
+</svg>

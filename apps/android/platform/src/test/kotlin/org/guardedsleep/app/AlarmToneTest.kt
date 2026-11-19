@@ -25,7 +25,6 @@ import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.ui.model.AlarmTonePlayback
 import org.guardedsleep.app.ui.model.AlarmTones
 import org.guardedsleep.app.ui.model.SettingsState
-import org.guardedsleep.app.wiring.EntryPoints
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -221,15 +220,14 @@ class AlarmToneTest {
     @Test
     fun aNoiseAlertStopsAPreview() {
         val app: Application = ApplicationProvider.getApplicationContext()
-        val entryPoints =
-            object : EntryPoints {
-                override val mainActivity = android.app.Activity::class.java
-                override val alertActivity = android.app.Activity::class.java
-                override val alertActionReceiver = android.content.BroadcastReceiver::class.java
-            }
         val voices = FakeVoices()
         val alerts =
-            AlertController(app, entryPoints, toneId = { "low" }, tones = TonePlayer(rate, voices))
+            AlertController(
+                app,
+                FakeEntryPoints,
+                toneId = { "low" },
+                tones = TonePlayer(rate, voices),
+            )
         alerts.previewAlarmTone("low")
         shadowOf(Looper.getMainLooper()).idle()
         assertEquals(AlarmTonePlayback.Preview("low"), alerts.alarmTonePlayback.value)
