@@ -27,7 +27,7 @@ Branch `ci/dev-fdroid-repo`. Each implementation task is a brief for the `implem
 
 ## 4. Owner (before the merge, except 4.3)
 
-- [ ] 4.1 Owner: run `scripts/dev-repo-key.sh` (task 2.5); put the printed fingerprint into the docs (3.1) and into `GS_DEV_REPO_FINGERPRINT` in the workflow `env:` (2.3).
+- [x] 4.1 Owner: run `scripts/dev-repo-key.sh` (task 2.5); put the printed fingerprint into the docs (3.1) and into `GS_DEV_REPO_FINGERPRINT` in the workflow `env:` (2.3).
 - [ ] 4.2 Owner: enable GitHub Pages with source "GitHub Actions"; make sure the `github-pages` environment allows deployments from `main`.
 - [ ] 4.3 After merge: the first `main` build publishes the repository; add it in Neo Store, install "GuardedSleep Dev", pair; after the next `main` build check that Neo Store offers the update and the pairing survives; add the same repository in Obtainium and check that it shows the same version; check that the themed icon shows the dev badge.
 

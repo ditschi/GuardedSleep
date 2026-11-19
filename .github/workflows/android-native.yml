@@ -332,8 +332,8 @@ jobs:
     env:
       # Public SHA-256 of the repository certificate, printed by scripts/dev-repo-key.sh; the job
       # verifies the live index against it before it reuses older APKs, and refuses the new index if
-      # the key does not match. The owner replaces the placeholder before the merge (tasks 4.1).
-      GS_DEV_REPO_FINGERPRINT: REPLACE_WITH_FINGERPRINT_FROM_dev-repo-key.sh
+      # the key does not match. A key rotation changes it here and in docs/contributing/development.md.
+      GS_DEV_REPO_FINGERPRINT: B923BF7A8ABEFF37A1A797BE22ECD38124FC511F1026CF869BA38D64072720AE
     steps:
       - name: Check the dev-repo environment and the pinned fingerprint
         env:
