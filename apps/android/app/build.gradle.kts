@@ -6,6 +6,7 @@ import org.guardedsleep.buildlogic.coreHostLibDir
 plugins {
     id("guardedsleep.android-application")
     id("guardedsleep.compose")
+    id("guardedsleep.robolectric")
     alias(libs.plugins.roborazzi)
 }
 

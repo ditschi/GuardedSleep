@@ -6,6 +6,7 @@ plugins {
     id("guardedsleep.android-library")
     // PublicLists.kt: the curated relay and STUN servers, generated from data/*.json.
     id("guardedsleep.public-lists")
+    id("guardedsleep.robolectric")
 }
 
 android {

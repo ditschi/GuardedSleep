@@ -42,6 +42,15 @@ datastore-preferences = { module = "androidx.datastore:datastore-preferences", v
 coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+# android-all-instrumented jars for every SDK a test requests with @Config(sdk = ...), resolved by
+# Gradle (retries, Gradle cache) and handed to Robolectric offline by the guardedsleep.robolectric
+# plugin. MUST change together with the robolectric version: the version string is
+# <android version>-robolectric-<build>-i7 from DefaultSdkProvider in robolectric-<version>.jar
+# (javap -c -constants org.robolectric.plugins.DefaultSdkProvider). Aliases must start with
+# robolectric-android-all-.
+robolectric-android-all-sdk30 = { module = "org.robolectric:android-all-instrumented", version = "11-robolectric-6757853-i7" }
+robolectric-android-all-sdk34 = { module = "org.robolectric:android-all-instrumented", version = "14-robolectric-10818077-i7" }
+robolectric-android-all-sdk35 = { module = "org.robolectric:android-all-instrumented", version = "15-robolectric-13954326-i7" }
 roborazzi = { module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi" }
 roborazzi-compose = { module = "io.github.takahirom.roborazzi:roborazzi-compose", version.ref = "roborazzi" }
 roborazzi-junit-rule = { module = "io.github.takahirom.roborazzi:roborazzi-junit-rule", version.ref = "roborazzi" }
