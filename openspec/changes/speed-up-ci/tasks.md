@@ -5,7 +5,7 @@ Branch `ci/speed-up-ci`. Each implementation task is a brief for the `implemente
 ## 1. Browser E2E shards
 
 - [x] 1.1 **Shard argument.** Goal: `just e2e` passes extra arguments through to Playwright (`scripts/lib/e2e.sh` already forwards `"$@"` to `pnpm run e2e`; check that the `justfile` recipe forwards them through `slot.sh` and `_e2e`). Files: `justfile`, `scripts/lib/e2e.sh`. Acceptance: `just e2e -- --shard=1/3 --list` lists about a third of the tests.
-- [ ] 1.2 **Matrix job.** Goal (design §1): the `e2e` job in `.github/workflows/ci.yml` becomes `strategy: { fail-fast: false, matrix: { shard: [1, 2, 3] } }`, name `browser E2E (Playwright, shard N/3)`, runs `just e2e -- --shard=${{ matrix.shard }}/3`, and uploads `playwright-e2e-artifacts-${{ matrix.shard }}` on failure. `ci-ok` keeps `needs: e2e`. Acceptance: `just lint-workflows`. On the PR, every shard runs; a deliberately failing assertion in one spec (temporary commit, reverted before review) turns `ci-ok` red.
+- [x] 1.2 **Matrix job.** Goal (design §1): the `e2e` job in `.github/workflows/ci.yml` becomes `strategy: { fail-fast: false, matrix: { shard: [1, 2, 3] } }`, name `browser E2E (Playwright, shard N/3)`, runs `just e2e -- --shard=${{ matrix.shard }}/3`, and uploads `playwright-e2e-artifacts-${{ matrix.shard }}` on failure. `ci-ok` keeps `needs: e2e`. Acceptance: `just lint-workflows`. On the PR, every shard runs; a deliberately failing assertion in one spec (temporary commit, reverted before review) turns `ci-ok` red.
 
 ## 2. TURN-lifetime job
 
