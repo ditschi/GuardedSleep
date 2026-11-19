@@ -187,7 +187,7 @@ class StatusAndAlertTests : ShotBase() {
             loudAt = formatTime(elapsedToWall(nextAt, ELAPSED, WALL))
             LinkAlarmScreen(c, {})
         }
-        onNodeWithTag("alert_label").assertTextContains("YOUR PHONE IS VIBRATING")
+        onNodeWithTag("alert_label").assertTextContains("THIS DEVICE IS VIBRATING")
         onNodeWithTag("link_alarm_title").assertTextContains("Please check on the child")
         onNodeWithTag("link_alarm_since").assertTextContains("1:12")
         // The sentence carries the core's next_level_at_ms as a clock time, nothing computed here.
