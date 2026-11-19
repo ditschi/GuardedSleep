@@ -18,7 +18,7 @@ Branch `ci/speed-up-ci`. Each implementation task is a brief for the `implemente
 
 ## 4. Docs and checks
 
-- [ ] 4.1 `docs/ci-gates.md`: update the `e2e` row (3 shards, local re-run of one shard), add the `android-native` / `turn-lifetime` row with runbook (design §4), and update the gate row (the probe now runs in its own job). `docs/contributing/development.md` if it describes the gate order. Acceptance: `just lint-text`.
+- [x] 4.1 `docs/ci-gates.md`: update the `e2e` row (3 shards, local re-run of one shard), add the `android-native` / `turn-lifetime` row with runbook (design §4), and update the gate row (the probe now runs in its own job). `docs/contributing/development.md` if it describes the gate order. Acceptance: `just lint-text`.
 - [ ] 4.2 Record the measured times of the PR's CI runs (E2E shards, gate, `turn-lifetime`) in the PR description, against the baseline in the design. Final: `just lint` and `just test-affected origin/main` green; report any SKIPPED task.
 
 ## Workflow follow-up

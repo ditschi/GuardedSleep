@@ -27,8 +27,8 @@ A task that needs Docker, KVM, the Android SDK or Playwright browsers and does n
 | `just test`           | Cargo workspace, WASM + node conformance, pnpm tests, Android JVM tests against the **host** build of the core (`scripts/core-build.sh host`): no ABI cross-compile                                                            |
 | `just build`          | Web build plus `verify-android` (what CI's `android` job runs), so `just ci` gives CI's verdict                                                                                                                                |     |
 | `just verify-android` | `build-android` plus the JVM tests and Roborazzi screenshot verification in one Gradle run (the CI `android` job)                                                                                                              |
-| `just e2e`            | Playwright against `just dev`; SKIPPED when Chromium is not installed (`pnpm --filter @guardedsleep/e2e exec playwright install --with-deps chromium`)                                                                         |
-| `just gate`           | Emulator gate (needs KVM and Docker); run `just build-android` first                                                                                                                                                           |
+| `just e2e`            | Playwright against `just dev` (extra arguments go to Playwright, e.g. `just e2e -- --shard=2/3`); SKIPPED when Chromium is not installed (`pnpm --filter @guardedsleep/e2e exec playwright install --with-deps chromium`)      |
+| `just gate`           | Emulator gate (needs KVM and Docker); run `just build-android` first. Runs the TURN-lifetime probe first (about 12 min; CI runs it as its own job and sets `GS_GATE_TURN_LIFETIME=0`)                                          |
 
 ### Hooks
 
