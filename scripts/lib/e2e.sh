@@ -20,6 +20,11 @@ if ! gs_playwright_ready; then
     gs_skip "e2e needs playwright-browsers (pnpm --filter @guardedsleep/e2e exec playwright install --with-deps chromium)"
     exit 0
   fi
+elif [ "${GS_STRICT:-0}" = "1" ] && [ -n "${CI:-}" ]; then
+  # The browser is already there (restored from the CI cache, which holds ~/.cache/ms-playwright only),
+  # but a fresh runner still lacks its system libraries. Locally the install is never forced.
+  # https://playwright.dev/docs/browsers#install-system-dependencies
+  playwright install-deps chromium
 fi
 
 # `just e2e -- --shard=1/3` hands the separator on as well; Playwright would read everything after a

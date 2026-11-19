@@ -246,7 +246,19 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           wasm-bindgen: "true"
-      # The recipe installs Chromium with its system dependencies because GS_STRICT=1.
+      # Chromium lives in ~/.cache/ms-playwright and is keyed by the Playwright version. The cache holds
+      # the browser only: scripts/lib/e2e.sh still installs the system packages on a hit.
+      # https://playwright.dev/docs/browsers#managing-browser-binaries
+      # https://github.com/actions/cache#inputs
+      - name: Read the Playwright version
+        id: playwright
+        run: echo "version=$(jq -r '.devDependencies["@playwright/test"]' apps/e2e/package.json)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      # The recipe installs Chromium (with its system dependencies on a miss, the dependencies alone on a
+      # hit) because GS_STRICT=1.
       - run: just e2e -- --shard=${{ matrix.shard }}/3
       - if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

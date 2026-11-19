@@ -14,7 +14,7 @@ Branch `ci/speed-up-ci`. Each implementation task is a brief for the `implemente
 
 ## 3. Chromium cache
 
-- [ ] 3.1 Goal (design §3): in the E2E job, a step reads the Playwright version, `actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0` caches `~/.cache/ms-playwright` keyed by it, and `scripts/lib/e2e.sh` runs `playwright install-deps chromium` when the browser is present under `GS_STRICT=1` in CI, so system packages exist on a cache hit. Acceptance: `just lint-workflows`, shellcheck. On the PR's second run, the cache step reports a hit, and the E2E step skips the browser download but still passes.
+- [x] 3.1 Goal (design §3): in the E2E job, a step reads the Playwright version, `actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0` caches `~/.cache/ms-playwright` keyed by it, and `scripts/lib/e2e.sh` runs `playwright install-deps chromium` when the browser is present under `GS_STRICT=1` in CI, so system packages exist on a cache hit. Acceptance: `just lint-workflows`, shellcheck. On the PR's second run, the cache step reports a hit, and the E2E step skips the browser download but still passes.
 
 ## 4. Docs and checks
 
