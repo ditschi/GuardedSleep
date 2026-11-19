@@ -72,6 +72,19 @@ describe("Settings: night mode", () => {
   });
 });
 
+describe("the baby device has no night mode", () => {
+  it("shows no Display or night group and stays out of Ember", async () => {
+    const c = createFakeController();
+    c.app.update((s) => ({ ...s, role: "baby", paired: true, monitoring: true }));
+    c.settings.update((s) => ({ ...s, nightMode: "on" }));
+    open("/settings", c);
+    await screen.findByTestId("settings_title");
+    expect(screen.queryByTestId("settings_group_night")).toBeNull();
+    expect(screen.queryByTestId("settings_theme")).toBeNull();
+    await waitFor(() => expect(document.documentElement.dataset.scheme).not.toBe("ember"));
+  });
+});
+
 describe("status bar in night mode", () => {
   function monitoring(level: number): FakeController {
     const c = createFakeController();

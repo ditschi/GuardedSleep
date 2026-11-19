@@ -61,12 +61,14 @@ fun GuardedSleepRoot(controller: AppController) {
         LocalUiEnv provides env.copy(reduceMotion = env.reduceMotion || systemReduce)
     ) {
         // The baby phone is always dark (dark-room rules); the parent follows the theme setting.
-        // Night mode (Ember) is resolved by the platform; the alert wrapper below never takes it.
+        // Night mode (Ember) is resolved by the platform for the parent; the baby kiosk and the
+        // alert
+        // wrapper below never take it.
         val night by controller.nightActive.collectAsState(false)
         GuardedSleepTheme(
             settings.theme,
             forceDark = app.role == Role.BABY,
-            scheme = if (night) AppScheme.EMBER else null,
+            scheme = if (night && app.role != Role.BABY) AppScheme.EMBER else null,
         ) {
             AppNavigator(controller)
         }

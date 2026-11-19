@@ -77,7 +77,11 @@
     const onBabyScreen = $route.id === "babyPair" || $route.id === "baby";
     const dim = $app.role === "baby" && ($app.monitoring || onBabyScreen);
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    applyTheme(document, resolveTheme($settings.theme, prefersDark, dim), $night);
+    applyTheme(
+      document,
+      resolveTheme($settings.theme, prefersDark, dim),
+      $night && $app.role !== "baby",
+    );
   });
   // The choice is remembered for the next visit; theme-boot.js reads it before first paint.
   $effect(() => {

@@ -15,6 +15,7 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.runAndroidComposeUiTest
@@ -166,6 +167,26 @@ class NightModeTests : ShotBase() {
                 )
             ),
         )
+    }
+
+    @Test
+    fun theBabyDeviceStaysOutOfEmberWhateverTheParentChose() {
+        var color = Color.Unspecified
+        runAndroidComposeUiTest<ComponentActivity> {
+            val c =
+                FakeAppController(
+                    app = AppState(role = Role.BABY, onboardingDone = true, paired = true),
+                    settings = SettingsState(nightMode = NightMode.ON),
+                )
+            setContent {
+                CompositionLocalProvider(LocalUiEnv provides TestEnv) { GuardedSleepRoot(c) }
+            }
+            waitForIdle()
+            // The role screen's background is the scheme background: Ember is pure black, Dusk is
+            // not.
+            color = onRoot().captureToImage().toPixelMap().let { it[it.width / 2, 2] }
+        }
+        assertSameColor(DuskScheme.background, color)
     }
 
     // ---- Settings › Display ---------------------------------------------------------------------
