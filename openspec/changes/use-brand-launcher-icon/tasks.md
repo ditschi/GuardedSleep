@@ -11,7 +11,7 @@ Branch `feat/brand-launcher-icon`, based on `main` after PR #82 (`docs/brand/`).
 ## 2. Web
 
 - [x] 2.1 **Favicon.** Goal: `apps/web/public/favicon.svg` = `docs/brand/logo.svg` (byte-identical; design §5). Acceptance: `just build-web` and the browser tab shows the logo.
-- [ ] 2.2 **PWA icons at build time.** Goal: `vite-plugin-pwa` `pwaAssets` with `@vite-pwa/assets-generator` from `logo.svg`, maskable and plain icons with the light background, replacing the committed `pwa-192.png`, `pwa-512.png`, `pwa-512-maskable.png` (delete them). Add the dependency with `pnpm add -D` (no invented version), the `sharp` `allowBuilds` entry in `pnpm-workspace.yaml` with a doc-link comment, and justify it in the PR. Files: `apps/web/vite.config.ts`, `apps/web/package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `apps/web/public/`. Acceptance: `just build-web` emits the icons and the manifest lists them; `just test` (Vitest) and the PWA manifest checks in `just e2e` stay green; `pnpm audit` clean.
+- [x] 2.2 **PWA icons at build time.** Goal: `vite-plugin-pwa` `pwaAssets` with `@vite-pwa/assets-generator` from `logo.svg`, maskable and plain icons with the light background, replacing the committed `pwa-192.png`, `pwa-512.png`, `pwa-512-maskable.png` (delete them). Add the dependency with `pnpm add -D` (no invented version), the `sharp` `allowBuilds` entry in `pnpm-workspace.yaml` with a doc-link comment, and justify it in the PR. Files: `apps/web/vite.config.ts`, `apps/web/package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `apps/web/public/`. Acceptance: `just build-web` emits the icons and the manifest lists them; `just test` (Vitest) and the PWA manifest checks in `just e2e` stay green; `pnpm audit` clean.
 
 ## 3. Sync check and docs
 
