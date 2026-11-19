@@ -84,8 +84,8 @@ export function createFakeController(): FakeController {
     },
     runDeviceCheck: record("runDeviceCheck"),
     selectConnection: record("selectConnection"),
-    renameConnection(id, name) {
-      calls.push(["renameConnection", id, name]);
+    renameConnection(role, id, name) {
+      calls.push(["renameConnection", role, id, name]);
       return false;
     },
     setDefaultConnection: record("setDefaultConnection"),

@@ -474,16 +474,14 @@ class LinkController(
         refreshApp()
     }
 
-    override fun renameConnection(id: String, name: String): Boolean {
-        val role = viewRole() ?: return false
+    override fun renameConnection(role: Role, id: String, name: String): Boolean {
         if (id !in pairings.savedIds(role)) return false
         val ok = pairings.rename(role, id, name)
         refreshApp()
         return ok
     }
 
-    override fun setDefaultConnection(id: String) {
-        val role = viewRole() ?: return
+    override fun setDefaultConnection(role: Role, id: String) {
         if (pairings.setDefault(role, id)) refreshApp()
     }
 
@@ -492,16 +490,14 @@ class LinkController(
         stopMonitoring()
     }
 
-    override fun clearDefaultConnection() {
-        val role = viewRole() ?: return
+    override fun clearDefaultConnection(role: Role) {
         pairings.clearDefault(role)
         refreshApp()
     }
 
-    override fun forgetConnection(id: String) {
-        val role = viewRole() ?: return
+    override fun forgetConnection(role: Role, id: String) {
         if (id !in pairings.savedIds(role)) return
-        if (id == activeId(role)) {
+        if (settingsRepo.current.role == role && id == activeId(role)) {
             // Stops monitoring first, then deletes it (the "Forget pairing" requirement).
             forgetPairing(role, id)
             return

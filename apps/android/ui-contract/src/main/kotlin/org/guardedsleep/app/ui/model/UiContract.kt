@@ -563,6 +563,10 @@ data class AppState(
      */
     val viewRole: Role
         get() = role ?: lastRole ?: Role.PARENT
+
+    /** The saved connections of [role] (Home and Settings list both roles). */
+    fun connectionsOf(role: Role): List<ConnectionUi> =
+        if (role == Role.PARENT) parentConnections else babyConnections
 }
 
 /** Baby self-test result (ADR-010) shown on the setup checklist. */
@@ -651,20 +655,23 @@ interface AppController {
     /** Picks the connection of this session (not while monitoring); the default is not changed. */
     fun selectConnection(id: String)
 
-    /** Renames a connection; false when the name is not 1 to 30 characters. */
-    fun renameConnection(id: String, name: String): Boolean
+    /**
+     * Renames connection [id] of [role]; false when the name is not 1 to 30 characters. Settings
+     * lists the connections of both roles, so every action names the role of its row.
+     */
+    fun renameConnection(role: Role, id: String, name: String): Boolean
 
-    /** Marks [id] as the default: on the parent it also starts monitoring when the app opens. */
-    fun setDefaultConnection(id: String)
+    /** Marks [id] as the default of [role]: the parent also starts it when the app opens. */
+    fun setDefaultConnection(role: Role, id: String)
 
     /** Parent: stops monitoring (user stop); Home then lists the saved connections. */
     fun chooseAnotherConnection()
 
-    /** Removes the default mark; the parent home menu is shown at app start again. */
-    fun clearDefaultConnection()
+    /** Removes the default mark of [role]; Home is shown at app start again. */
+    fun clearDefaultConnection(role: Role)
 
-    /** Forgets exactly one connection; monitoring stops first when it is the one in use. */
-    fun forgetConnection(id: String)
+    /** Forgets exactly one connection of [role]; the other role keeps its pairings. */
+    fun forgetConnection(role: Role, id: String)
 
     fun updateSettings(transform: (SettingsState) -> SettingsState)
 

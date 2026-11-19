@@ -125,28 +125,33 @@ class FakeAppController(
             )
     }
 
-    override fun renameConnection(id: String, name: String): Boolean {
-        calls += "renameConnection:$id"
+    /**
+     * Applies [f] to the saved connections of [role] (and to `connections` when it is the view).
+     */
+    private fun editConnections(role: Role, f: (List<ConnectionUi>) -> List<ConnectionUi>) {
+        val app = appFlow.value
+        appFlow.value =
+            when (role) {
+                Role.PARENT -> app.copy(parentConnections = f(app.parentConnections))
+                Role.BABY -> app.copy(babyConnections = f(app.babyConnections))
+            }.let { if (it.viewRole == role) it.copy(connections = f(it.connections)) else it }
+    }
+
+    override fun renameConnection(role: Role, id: String, name: String): Boolean {
+        calls += "renameConnection:$role:$id"
         val ok =
             name.trim().codePointCount(0, name.trim().length) in 1..ConnectionUi.MAX_NAME_LENGTH
         if (ok) {
-            appFlow.value =
-                appFlow.value.copy(
-                    connections =
-                        appFlow.value.connections.map {
-                            if (it.id == id) it.copy(name = name.trim()) else it
-                        }
-                )
+            editConnections(role) { list ->
+                list.map { if (it.id == id) it.copy(name = name.trim()) else it }
+            }
         }
         return ok
     }
 
-    override fun setDefaultConnection(id: String) {
-        calls += "setDefaultConnection:$id"
-        appFlow.value =
-            appFlow.value.copy(
-                connections = appFlow.value.connections.map { it.copy(isDefault = it.id == id) }
-            )
+    override fun setDefaultConnection(role: Role, id: String) {
+        calls += "setDefaultConnection:$role:$id"
+        editConnections(role) { list -> list.map { it.copy(isDefault = it.id == id) } }
     }
 
     override fun chooseAnotherConnection() {
@@ -154,18 +159,14 @@ class FakeAppController(
         appFlow.value = appFlow.value.copy(monitoring = false, autoStarted = false)
     }
 
-    override fun clearDefaultConnection() {
-        calls += "clearDefaultConnection"
-        appFlow.value =
-            appFlow.value.copy(
-                connections = appFlow.value.connections.map { it.copy(isDefault = false) }
-            )
+    override fun clearDefaultConnection(role: Role) {
+        calls += "clearDefaultConnection:$role"
+        editConnections(role) { list -> list.map { it.copy(isDefault = false) } }
     }
 
-    override fun forgetConnection(id: String) {
-        calls += "forgetConnection:$id"
-        appFlow.value =
-            appFlow.value.copy(connections = appFlow.value.connections.filter { it.id != id })
+    override fun forgetConnection(role: Role, id: String) {
+        calls += "forgetConnection:$role:$id"
+        editConnections(role) { list -> list.filter { it.id != id } }
     }
 
     override fun updateSettings(transform: (SettingsState) -> SettingsState) {

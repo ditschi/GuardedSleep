@@ -474,27 +474,39 @@ class LinkControllerTest {
     }
 
     @Test
-    fun settingsActionsWorkOnTheLastRoleWhileTheSessionRoleIsNull() {
-        val u = homeUnit("last-actions")
+    fun settingsActionsActOnTheRowsOwnRoleWhileTheSessionRoleIsNull() {
+        val u = homeUnit("row-actions")
         val c = u.controller
-        assertTrue(c.renameConnection("2", "Grandma"))
-        assertEquals("Grandma", u.pairings.list(Role.PARENT).single { it.id == "2" }.name)
-        assertNull("the baby role is untouched", u.pairings.list(Role.BABY).first().name)
+        // The parent role was used last, yet a baby row acts on the baby role.
+        assertTrue(c.renameConnection(Role.BABY, "2", "Cot"))
+        assertEquals("Cot", u.pairings.list(Role.BABY).single { it.id == "2" }.name)
+        assertNull("the parent role is untouched", u.pairings.list(Role.PARENT).first().name)
 
-        c.setDefaultConnection("2")
+        assertTrue(c.renameConnection(Role.PARENT, "2", "Grandma"))
+        assertEquals("Grandma", u.pairings.list(Role.PARENT).single { it.id == "2" }.name)
+
+        c.setDefaultConnection(Role.PARENT, "2")
         assertEquals("2", c.app.value.parentConnections.single { it.isDefault }.id)
-        c.clearDefaultConnection()
+        c.setDefaultConnection(Role.BABY, "2")
+        assertEquals("2", c.app.value.babyConnections.single { it.isDefault }.id)
+        c.clearDefaultConnection(Role.PARENT)
         assertTrue(c.app.value.parentConnections.none { it.isDefault })
+        assertEquals(
+            "the baby default stays",
+            "2",
+            c.app.value.babyConnections.single { it.isDefault }.id,
+        )
         assertNull(c.app.value.role)
     }
 
     @Test
-    fun forgettingOnTheLastRoleKeepsTheOtherRolesPairing() {
-        val u = homeUnit("last-forget")
-        u.controller.forgetConnection("1")
-        assertEquals(listOf("2"), u.controller.app.value.parentConnections.map { it.id })
-        assertEquals(listOf("1", "2"), u.controller.app.value.babyConnections.map { it.id })
-        assertEquals("baby-one", u.pairings.store(Role.BABY, "1").load()?.pskB64url)
+    fun forgettingARowKeepsTheOtherRolesPairings() {
+        val u = homeUnit("row-forget")
+        u.controller.forgetConnection(Role.BABY, "1")
+        assertEquals(listOf("2"), u.controller.app.value.babyConnections.map { it.id })
+        assertEquals(listOf("1", "2"), u.controller.app.value.parentConnections.map { it.id })
+        assertEquals("parent-one", u.pairings.store(Role.PARENT, "1").load()?.pskB64url)
+        assertNull(u.pairings.store(Role.BABY, "1").load())
     }
 
     @Test
@@ -800,7 +812,7 @@ class LinkControllerTest {
                 autoStartParent("auto-clear"),
                 java.util.concurrent.atomic.AtomicInteger(),
             )
-        u.controller.clearDefaultConnection()
+        u.controller.clearDefaultConnection(Role.PARENT)
         assertTrue(u.controller.app.value.connections.none { it.isDefault })
         u.controller.onForeground()
         assertFalse(u.controller.app.value.monitoring)
@@ -834,18 +846,18 @@ class LinkControllerTest {
         u.pairings.store(Role.PARENT, "2").save(pairing("two"))
         c.chooseRole(Role.PARENT)
 
-        assertTrue(c.renameConnection("2", "Travel"))
-        assertFalse(c.renameConnection("2", ""))
-        c.setDefaultConnection("2")
+        assertTrue(c.renameConnection(Role.PARENT, "2", "Travel"))
+        assertFalse(c.renameConnection(Role.PARENT, "2", ""))
+        c.setDefaultConnection(Role.PARENT, "2")
         assertEquals("2", c.app.value.connections.single { it.isDefault }.id)
 
         // The selected one is the default now; forgetting the other keeps monitoring untouched.
-        c.forgetConnection("1")
+        c.forgetConnection(Role.PARENT, "1")
         assertEquals(listOf("2"), c.app.value.connections.map { it.id })
         assertEquals("two", u.pairings.store(Role.PARENT, "2").load()?.pskB64url)
         assertTrue(c.app.value.canAddParentPairing)
 
-        c.forgetConnection("2")
+        c.forgetConnection(Role.PARENT, "2")
         assertFalse(c.app.value.paired)
     }
 
@@ -859,7 +871,7 @@ class LinkControllerTest {
         // Not the default: the one in use is deleted, never the default by mistake.
         c.selectConnection("2")
         c.startMonitoring()
-        c.forgetConnection("2")
+        c.forgetConnection(Role.PARENT, "2")
         assertFalse(c.app.value.monitoring)
         assertEquals(listOf("1"), c.app.value.connections.map { it.id })
         assertEquals("one", u.pairings.store(Role.PARENT, "1").load()?.pskB64url)

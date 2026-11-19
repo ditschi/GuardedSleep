@@ -69,12 +69,12 @@ export interface AppController {
   /** Named connections (`multi-parent-pairings`): picks the connection of this session. */
   selectConnection(id: string): void;
   /** Renames a connection; false when the name is not 1 to 30 characters. */
-  renameConnection(id: string, name: string): boolean;
-  setDefaultConnection(id: string): void;
-  clearDefaultConnection(): void;
+  renameConnection(role: Role, id: string, name: string): boolean;
+  setDefaultConnection(role: Role, id: string): void;
+  clearDefaultConnection(role: Role): void;
   chooseAnotherConnection(): void;
   /** Forgets exactly one connection; monitoring stops first when it is the one in use. */
-  forgetConnection(id: string): void;
+  forgetConnection(role: Role, id: string): void;
   completeOnboarding(): void;
   startPairing(): void;
   cancelPairing(): void;

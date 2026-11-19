@@ -112,11 +112,12 @@ class CalmSettingsTests : ShotBase() {
                 onboardingDone = true,
                 paired = true,
                 connections = listOf(ConnectionUi("1", "Travel cot", false, true)),
+                babyConnections = listOf(ConnectionUi("1", "Travel cot", false, true)),
             )
         show { SettingsScreen(FakeAppController(app = baby), {}, {}, {}) }
         onNodeWithTag("settings_nav_detection").performScrollTo().assertIsDisplayed()
         onNodeWithTag("settings_nav_alerts").assertDoesNotExist()
-        onNodeWithTag("settings_connection_row_1", useUnmergedTree = true).assertIsDisplayed()
+        onNodeWithTag("settings_connection_row_baby_1", useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
@@ -129,15 +130,21 @@ class CalmSettingsTests : ShotBase() {
     }
 
     @Test
-    fun theBabyDeviceHasNoAutomaticStartChoiceWithOneConnection() = runComposeUiTest {
+    fun aBabyOnlyDeviceHasNoAutomaticStartChoice() = runComposeUiTest {
         val c =
             FakeAppController(
-                app = parentApp.copy(role = Role.BABY),
+                app =
+                    AppState(
+                        role = Role.BABY,
+                        onboardingDone = true,
+                        paired = true,
+                        babyConnections = listOf(ConnectionUi("1", "Cot", false, true)),
+                    ),
                 settings = SettingsState(),
             )
         show { SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.OPEN_AT_START) }
         onNodeWithTag("settings_auto_none").assertDoesNotExist()
-        onNodeWithTag("settings_connection_default_1").performScrollTo().assertIsDisplayed()
+        onNodeWithTag("settings_baby_default_1").performScrollTo().assertIsDisplayed()
     }
 
     // ---- back behaviour --------------------------------------------------------------------

@@ -315,19 +315,19 @@ export class WebController implements AppController {
   // connection list, so these are no-ops (web parity is the IDEA in docs/backlog.md).
   selectConnection(_id: string): void {}
 
-  renameConnection(_id: string, _name: string): boolean {
+  renameConnection(_role: Role, _id: string, _name: string): boolean {
     return false;
   }
 
-  setDefaultConnection(_id: string): void {}
+  setDefaultConnection(_role: Role, _id: string): void {}
 
   // The web client keeps no saved pairings, so there is no default to remove.
-  clearDefaultConnection(): void {}
+  clearDefaultConnection(_role: Role): void {}
 
   // No automatic start on the web client, so there is nothing to leave.
   chooseAnotherConnection(): void {}
 
-  forgetConnection(_id: string): void {}
+  forgetConnection(_role: Role, _id: string): void {}
 
   completeOnboarding(): void {
     this.setApp({ onboardingDone: true });
