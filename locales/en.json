@@ -25,7 +25,7 @@
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
-      "channelNoise": "Sound alerts",
+      "channelNoise": "Noise alerts",
       "channelNoiseDesc": "Loud alerts when the baby device hears a sound.",
       "channelLink": "Connection alarms",
       "channelLinkDesc": "Alarms when the connection to the baby device is lost.",

@@ -27,7 +27,7 @@
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
-      "channelNoise": "Alerte sonore",
+      "channelNoise": "Alerte de zgomot",
       "channelNoiseDesc": "Alerte puternice când dispozitivul bebelușului aude un sunet.",
       "channelLink": "Alarme de conexiune",
       "channelLinkDesc": "Alarme când se pierde conexiunea cu dispozitivul bebelușului.",

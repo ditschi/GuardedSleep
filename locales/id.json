@@ -27,7 +27,7 @@
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
-      "channelNoise": "Peringatan suara",
+      "channelNoise": "Peringatan kebisingan",
       "channelNoiseDesc": "Peringatan keras saat perangkat bayi mendengar suara.",
       "channelLink": "Alarm koneksi",
       "channelLinkDesc": "Alarm saat koneksi ke perangkat bayi terputus.",

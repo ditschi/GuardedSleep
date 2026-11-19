@@ -27,7 +27,7 @@
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
-      "channelNoise": "声音提醒",
+      "channelNoise": "噪声提醒",
       "channelNoiseDesc": "宝宝设备听到声音时发出的响亮提醒。",
       "channelLink": "连接警报",
       "channelLinkDesc": "与宝宝设备的连接中断时的警报。",

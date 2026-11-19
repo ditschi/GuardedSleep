@@ -27,7 +27,7 @@
     "notif": {
       "appTitle": "GuardedSleep",
       "silenceRuleName": "GuardedSleep",
-      "channelNoise": "Сповіщення про звук",
+      "channelNoise": "Сповіщення про шум",
       "channelNoiseDesc": "Гучні сповіщення, коли пристрій дитини чує звук.",
       "channelLink": "Сигнали про з’єднання",
       "channelLinkDesc": "Сигнали, коли втрачено з’єднання з пристроєм дитини.",
