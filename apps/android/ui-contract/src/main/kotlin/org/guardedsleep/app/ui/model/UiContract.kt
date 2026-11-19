@@ -539,8 +539,6 @@ data class AppState(
     val parentConnections: List<ConnectionUi> = emptyList(),
     /** Home: the saved baby connections, independent of the session role. */
     val babyConnections: List<ConnectionUi> = emptyList(),
-    /** Fewer than the cap of pairings are saved: a further one can be added. */
-    val canAddPairing: Boolean = true,
     /** Home: fewer than the cap of parent pairings are saved (the baby unit always replaces). */
     val canAddParentPairing: Boolean = true,
     val monitoring: Boolean = false,

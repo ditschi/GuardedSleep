@@ -364,7 +364,7 @@ class SetupHomeSettingsShots : ShotBase() {
                     ConnectionUi("1", "Home – old phone", isDefault = true, selected = true),
                     ConnectionUi("2", null, isDefault = false, selected = false),
                 ),
-            canAddPairing = false,
+            canAddParentPairing = false,
         )
 
     @Test

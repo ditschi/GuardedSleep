@@ -694,7 +694,6 @@ class LinkController(
                     parentConnections = connectionsOf(Role.PARENT),
                     babyConnections = connectionsOf(Role.BABY),
                     // The baby unit replaces its pairing; only the parent adds one, up to the cap.
-                    canAddPairing = view != Role.PARENT || pairings.freeId(Role.PARENT) != null,
                     canAddParentPairing = pairings.freeId(Role.PARENT) != null,
                     monitoring = p.monitoringActive,
                     autoStarted = autoStarted && p.monitoringActive,

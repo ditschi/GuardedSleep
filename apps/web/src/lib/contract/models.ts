@@ -468,8 +468,6 @@ export interface AppState {
   parentConnections: ConnectionUi[];
   /** Home: the saved baby connections; empty on the web. */
   babyConnections: ConnectionUi[];
-  /** Fewer than the cap of pairings are saved: a further one can be added. */
-  canAddPairing: boolean;
   /** Home: fewer than the cap of parent pairings are saved. */
   canAddParentPairing: boolean;
   monitoring: boolean;
@@ -604,7 +602,6 @@ export function defaultAppState(): AppState {
     connections: [],
     parentConnections: [],
     babyConnections: [],
-    canAddPairing: true,
     canAddParentPairing: true,
     monitoring: false,
     autoStarted: false,

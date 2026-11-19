@@ -525,7 +525,7 @@ class LinkControllerTest {
         assertEquals(listOf("1", "2"), app.connections.map { it.id })
         assertEquals("1", app.connections.single { it.selected }.id)
         assertEquals("Home", app.peerName)
-        assertFalse("at the cap", app.canAddPairing)
+        assertFalse("at the cap", app.canAddParentPairing)
 
         c.selectConnection("2")
         assertEquals("Travel", c.app.value.peerName)
@@ -791,7 +791,7 @@ class LinkControllerTest {
         c.forgetConnection("1")
         assertEquals(listOf("2"), c.app.value.connections.map { it.id })
         assertEquals("two", u.pairings.store(Role.PARENT, "2").load()?.pskB64url)
-        assertTrue(c.app.value.canAddPairing)
+        assertTrue(c.app.value.canAddParentPairing)
 
         c.forgetConnection("2")
         assertFalse(c.app.value.paired)

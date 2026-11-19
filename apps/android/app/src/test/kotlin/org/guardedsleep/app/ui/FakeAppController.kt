@@ -86,7 +86,7 @@ class FakeAppController(
     override fun startPairing() {
         calls += "startPairing"
         // The parent opens the scan screen (not at the cap), as the platform does.
-        if (appFlow.value.role == Role.PARENT && appFlow.value.canAddPairing)
+        if (appFlow.value.role == Role.PARENT && appFlow.value.canAddParentPairing)
             pairingFlow.value = PairingState(PairingPhase.SCANNING)
     }
 

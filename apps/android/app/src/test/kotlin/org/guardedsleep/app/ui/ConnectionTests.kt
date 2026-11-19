@@ -65,7 +65,6 @@ class ConnectionTests : ShotBase() {
                     ConnectionUi("1", "Home", isDefault = true, selected = true),
                     ConnectionUi("2", "Travel", isDefault = false, selected = false),
                 ),
-            canAddPairing = false,
             canAddParentPairing = false,
         )
 
