@@ -43,7 +43,7 @@ Branch `feat/night-crescent-logo`. Each implementation task is a brief for the `
 
 ## 4. Lint and checks
 
-- [ ] 4.1 **Brand lint.**
+- [x] 4.1 **Brand lint.**
   - Goal: extend `scripts/lib/brand-icons.mjs` and its tests per design §4. Update the `text-lint` row in `docs/ci-gates.md`.
   - Acceptance:
     - `node --test scripts/lib/*.test.mjs` and `just lint-text` green;

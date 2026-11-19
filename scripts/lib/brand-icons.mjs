@@ -1,26 +1,48 @@
 #!/usr/bin/env node
-// Keeps the Android launcher layers and the web icon sources in step with the vector master
-// docs/brand/logo.svg (openspec change use-brand-launcher-icon, design section 6). The PWA PNGs are
-// generated from apps/web/public/favicon.svg at build time, the Android vectors are hand-converted
-// once, so this check is what makes "master changed, Android did not" fail `just lint`.
+// Keeps the Android launcher and notification layers and the web icon sources in step with the
+// vector master docs/brand/logo.svg and the SVG set next to it (openspec change
+// adopt-night-crescent-logo, design section 4; it replaces the checks of use-brand-launcher-icon).
+// The PWA PNGs are generated from apps/web/public/logo.svg at build time, the Android vectors are
+// converted from the SVGs once, so this check is what makes "master changed, Android did not" fail
+// `just lint`. The notification icons and the DEV layers are checked against their SVG sources too.
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const MASTER = "docs/brand/logo.svg";
-const FAVICON = "apps/web/public/favicon.svg";
+const BRAND = "docs/brand";
+const MASTER = `${BRAND}/logo.svg`;
+const SRC = {
+  foreground: `${BRAND}/launcher-foreground.svg`,
+  monochrome: `${BRAND}/launcher-monochrome.svg`,
+  dev: `${BRAND}/launcher-dev.svg`,
+  monochromeDev: `${BRAND}/launcher-monochrome-dev.svg`,
+  baby: `${BRAND}/notification-baby.svg`,
+  parent: `${BRAND}/notification-parent.svg`,
+  favicon: `${BRAND}/favicon.svg`,
+  favicon16: `${BRAND}/favicon-16.svg`,
+};
+const WEB = "apps/web";
+const WEB_LOGO = `${WEB}/public/logo.svg`;
+const WEB_FAVICON = `${WEB}/public/favicon.svg`;
+const WEB_FAVICON_16 = `${WEB}/public/favicon-16.svg`;
+const WEB_INDEX = `${WEB}/index.html`;
+const PWA_CONFIG = `${WEB}/pwa-assets.config.ts`;
 const RES = "apps/android/app/src/main/res";
-const FOREGROUND = `${RES}/drawable/ic_launcher_foreground.xml`;
-const MONOCHROME = `${RES}/drawable/ic_launcher_monochrome.xml`;
-const BACKGROUND = `${RES}/values/ic_launcher_background.xml`;
-// Optional: the dev variant (add-dev-fdroid-repo) may carry its own monochrome layer with a badge.
-// Only its presence and well-formedness are checked, not equality with the master.
-const DEBUG_MONOCHROME = "apps/android/app/src/debug/res/drawable/ic_launcher_monochrome.xml";
-const PWA_CONFIG = "apps/web/pwa-assets.config.ts";
-// Order of the shapes in the master and in the Android foreground.
-const SHAPES = ["crescent", "crescent-body", "dot", "wave"];
+const DEBUG_RES = "apps/android/app/src/debug/res";
+const STAT = "apps/android/platform/src/main/res/drawable";
+const ANDROID = {
+  foreground: `${RES}/drawable/ic_launcher_foreground.xml`,
+  monochrome: `${RES}/drawable/ic_launcher_monochrome.xml`,
+  background: `${RES}/values/ic_launcher_background.xml`,
+  debugForeground: `${DEBUG_RES}/drawable/ic_launcher_foreground.xml`,
+  debugMonochrome: `${DEBUG_RES}/drawable/ic_launcher_monochrome.xml`,
+  debugBackground: `${DEBUG_RES}/values/ic_launcher_background.xml`,
+  baby: `${STAT}/ic_stat_baby.xml`,
+  parent: `${STAT}/ic_stat_parent.xml`,
+};
 const SAFE_RADIUS = 33; // 66 dp circle of the 108 dp adaptive-icon canvas, centred at 54,54
+const WHITE = "#FFFFFF";
 
 const errors = [];
 const fail = (file, msg) => errors.push(`${file}: ${msg}`);
@@ -43,208 +65,357 @@ export function normPath(d) {
 export const normColor = (c) => (c ?? "").toUpperCase().replace(/^#FF([0-9A-F]{6})$/, "#$1");
 const attrs = (tag) =>
   Object.fromEntries([...tag.matchAll(/([\w:.-]+)="([^"]*)"/g)].map((m) => [m[1], m[2]]));
+const stripComments = (s) => s.replace(/<!--[\s\S]*?-->/g, "");
 
-/** The shapes of logo.svg by id: path data, fill gradient stops, stroke. */
-export function parseMaster(svg) {
-  const gradients = {};
-  for (const m of svg.matchAll(/<linearGradient\b([^>]*)>([\s\S]*?)<\/linearGradient>/g)) {
+/** The subpaths of a normalised path ("M ... Z M ... Z") as separate normalised strings. */
+export const subpaths = (d) => d.split(/ (?=M )/);
+
+/** The <path> elements of an SVG in document order: id, normalised data, fill, and the first <rect> fill. */
+export function parseSvg(svg) {
+  const body = stripComments(svg);
+  const paths = [...body.matchAll(/<path\b([^>]*?)\/>/g)].map((m) => {
     const a = attrs(m[1]);
-    gradients[a.id] = {
-      y1: Number(a.y1),
-      y2: Number(a.y2),
-      stops: [...m[2].matchAll(/<stop\b([^>]*)\/>/g)].map((s) => {
-        const sa = attrs(s[1]);
-        return { offset: Number(sa.offset), color: normColor(sa["stop-color"]) };
-      }),
-    };
-  }
-  const shapes = {};
-  for (const m of svg.matchAll(/<path\b([^>]*)\/>/g)) {
-    const a = attrs(m[1]);
-    const gradient = /^url\(#(.+)\)$/.exec(a.fill ?? "")?.[1];
-    shapes[a.id] = {
+    const fill = a.fill ?? /fill:\s*(#[0-9a-fA-F]{6})/.exec(a.style ?? "")?.[1];
+    return {
+      id: a.id,
       d: normPath(a.d ?? ""),
-      gradient: gradient ? gradients[gradient] : undefined,
-      stroke: a.stroke ? normColor(a.stroke) : undefined,
-      strokeWidth: a["stroke-width"] ? Number(a["stroke-width"]) : undefined,
-      cap: a["stroke-linecap"],
-      join: a["stroke-linejoin"],
+      fill: fill ? normColor(fill) : undefined,
+      stroke: a.stroke,
+      hasGradient: /url\(#/.test(m[1]),
     };
-  }
-  return shapes;
+  });
+  const rect = /<rect\b([^>]*?)\/>/.exec(body);
+  const rectFill = rect ? attrs(rect[1]).fill : undefined;
+  return { paths, background: rectFill ? normColor(rectFill) : undefined };
 }
 
 /** The <path> elements of an Android vector drawable, in document order. */
 export function parseVector(xml) {
-  return [...xml.matchAll(/<path\b([\s\S]*?)(?:\/>|>([\s\S]*?)<\/path>)/g)].map((m) => {
-    const a = attrs(m[1]);
-    const g = /<gradient\b([^>]*)>([\s\S]*?)<\/gradient>/.exec(m[2] ?? "");
-    let gradient;
-    if (g) {
-      const ga = attrs(g[1]);
-      gradient = {
-        y1: Number(ga["android:startY"]),
-        y2: Number(ga["android:endY"]),
-        stops: [...g[2].matchAll(/<item\b([^>]*)\/>/g)].map((s) => {
-          const sa = attrs(s[1]);
-          return { offset: Number(sa["android:offset"]), color: normColor(sa["android:color"]) };
-        }),
+  return [...stripComments(xml).matchAll(/<path\b([\s\S]*?)(?:\/>|>([\s\S]*?)<\/path>)/g)].map(
+    (m) => {
+      const a = attrs(m[1]);
+      return {
+        d: normPath(a["android:pathData"] ?? ""),
+        fill: a["android:fillColor"] ? normColor(a["android:fillColor"]) : undefined,
+        gradient: /<gradient\b/.test(m[2] ?? ""),
+        stroke: a["android:strokeColor"] ? normColor(a["android:strokeColor"]) : undefined,
       };
-    }
-    return {
-      d: normPath(a["android:pathData"] ?? ""),
-      fill: a["android:fillColor"] ? normColor(a["android:fillColor"]) : undefined,
-      gradient,
-      stroke: a["android:strokeColor"] ? normColor(a["android:strokeColor"]) : undefined,
-      strokeWidth: a["android:strokeWidth"] ? Number(a["android:strokeWidth"]) : undefined,
-      cap: a["android:strokeLineCap"],
-      join: a["android:strokeLineJoin"],
-    };
-  });
+    },
+  );
 }
 
-const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-
-/** Points of a "M C C ..." wave path (cubic segments sampled) for the safe-zone check. */
-export function wavePoints(d) {
-  const n = d
-    .split(" ")
-    .filter((t) => !/^[a-zA-Z]$/.test(t))
-    .map(Number);
+/**
+ * Points of a path with absolute M, L, H, V, C, A and Z, curves and arcs sampled, for the
+ * safe-zone check. Relative commands (the outlined DEV text) are not supported and throw.
+ */
+export function pathPoints(d) {
+  const tokens = d.split(" ");
   const pts = [];
-  let [x0, y0] = n;
-  for (let i = 2; i + 5 < n.length; i += 6) {
-    const [x1, y1, x2, y2, x3, y3] = n.slice(i, i + 6);
-    // Integer steps, so t = 1 (the segment's end, e.g. the right wave end) is always sampled;
-    // a float step of 0.05 accumulates past 1 and skips it.
-    for (let k = 0; k <= 20; k++) {
-      const t = k / 20;
-      const u = 1 - t;
-      pts.push([
-        u ** 3 * x0 + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t ** 3 * x3,
-        u ** 3 * y0 + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t ** 3 * y3,
-      ]);
+  let i = 0;
+  let x = 0;
+  let y = 0;
+  let start = [0, 0];
+  const num = () => Number(tokens[i++]);
+  const STEPS = 24;
+  while (i < tokens.length) {
+    const cmd = tokens[i++];
+    if (cmd === "M" || cmd === "L") {
+      [x, y] = [num(), num()];
+      if (cmd === "M") start = [x, y];
+      pts.push([x, y]);
+    } else if (cmd === "H") {
+      x = num();
+      pts.push([x, y]);
+    } else if (cmd === "V") {
+      y = num();
+      pts.push([x, y]);
+    } else if (cmd === "Z") {
+      [x, y] = start;
+    } else if (cmd === "C") {
+      const [x1, y1, x2, y2, x3, y3] = [num(), num(), num(), num(), num(), num()];
+      for (let k = 0; k <= STEPS; k++) {
+        const t = k / STEPS;
+        const u = 1 - t;
+        pts.push([
+          u ** 3 * x + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t ** 3 * x3,
+          u ** 3 * y + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t ** 3 * y3,
+        ]);
+      }
+      [x, y] = [x3, y3];
+    } else if (cmd === "A") {
+      const [rx0, ry0, , large, sweep, x2, y2] = [num(), num(), num(), num(), num(), num(), num()];
+      pts.push(...arcPoints(x, y, rx0, ry0, large, sweep, x2, y2, STEPS));
+      [x, y] = [x2, y2];
+    } else {
+      throw new Error(`unsupported path command ${cmd}`);
     }
-    [x0, y0] = [x3, y3];
   }
   return pts;
 }
 
-function main() {
-  // Master and favicon.
-  const masterSrc = read(MASTER);
-  const faviconSrc = read(FAVICON);
-  if (masterSrc !== null && faviconSrc !== null && masterSrc !== faviconSrc) {
-    fail(FAVICON, `must be a byte-identical copy of ${MASTER} (cp ${MASTER} ${FAVICON})`);
+/** Circular arc (rx = ry, no rotation) from (x1,y1) to (x2,y2) as sampled points, SVG endpoint form. */
+function arcPoints(x1, y1, rx, ry, large, sweep, x2, y2, steps) {
+  const r = Math.max(rx, ry);
+  const dx = (x1 - x2) / 2;
+  const dy = (y1 - y2) / 2;
+  const half = Math.hypot(dx, dy);
+  if (half === 0) return [];
+  const rr = Math.max(r, half);
+  const k = Math.sqrt(Math.max(0, rr * rr - half * half)) * (large === sweep ? -1 : 1);
+  const cx = (x1 + x2) / 2 + (k * dy) / half;
+  const cy = (y1 + y2) / 2 - (k * dx) / half;
+  let a1 = Math.atan2(y1 - cy, x1 - cx);
+  let a2 = Math.atan2(y2 - cy, x2 - cx);
+  if (sweep === 1 && a2 < a1) a2 += 2 * Math.PI;
+  if (sweep === 0 && a2 > a1) a2 -= 2 * Math.PI;
+  const out = [];
+  for (let s = 0; s <= steps; s++) {
+    const a = a1 + ((a2 - a1) * s) / steps;
+    out.push([cx + rr * Math.cos(a), cy + rr * Math.sin(a)]);
   }
-  const master = masterSrc ? parseMaster(masterSrc) : {};
-  for (const id of SHAPES) if (!master[id]) fail(MASTER, `shape id="${id}" not found`);
+  return out;
+}
 
-  // Background colour: master comment, Android resource, PWA config.
-  const masterBg = /background:\s*(#[0-9A-Fa-f]{6})/.exec(masterSrc ?? "")?.[1];
-  const androidBg = /<color name="ic_launcher_background">(#[0-9A-Fa-f]{6,8})<\/color>/.exec(
-    read(BACKGROUND) ?? "",
-  )?.[1];
-  const pwaBg = /const background = "(#[0-9A-Fa-f]{6})"/.exec(read(PWA_CONFIG) ?? "")?.[1];
-  if (!masterBg) fail(MASTER, 'comment must name the background colour ("background: #RRGGBB")');
-  if (!androidBg) fail(BACKGROUND, "ic_launcher_background colour not found");
-  if (!pwaBg) fail(PWA_CONFIG, "`const background` not found");
-  if (masterBg && androidBg && normColor(masterBg) !== normColor(androidBg)) {
-    fail(BACKGROUND, `background ${androidBg} differs from ${MASTER} (${masterBg})`);
-  }
-  if (masterBg && pwaBg && normColor(masterBg) !== normColor(pwaBg)) {
-    fail(PWA_CONFIG, `background ${pwaBg} differs from ${MASTER} (${masterBg})`);
-  }
+/** Largest distance of a path's points from the canvas centre (54, 54). */
+export function farthest(d) {
+  return Math.max(...pathPoints(d).map(([x, y]) => Math.hypot(x - 54, y - 54)));
+}
 
-  // Foreground: the four shapes in order, same data, gradients and stroke.
-  const fgSrc = read(FOREGROUND);
-  if (fgSrc !== null && master.wave) {
-    const fg = parseVector(fgSrc);
-    if (fg.length !== SHAPES.length) {
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+/** Compares Android paths with the SVG source paths one to one (data, and fill when given). */
+function comparePaths(file, label, got, want, { fill = true } = {}) {
+  if (got.length !== want.length) {
+    fail(file, `expected ${want.length} path(s) like ${label}, found ${got.length}`);
+    return;
+  }
+  want.forEach((w, i) => {
+    const g = got[i];
+    if (g.d !== w.d)
+      fail(file, `path ${i + 1}${w.id ? ` (${w.id})` : ""}: pathData differs from ${label}`);
+    if (fill && w.fill && g.fill !== w.fill)
       fail(
-        FOREGROUND,
-        `expected ${SHAPES.length} paths (${SHAPES.join(", ")}), found ${fg.length}`,
+        file,
+        `path ${i + 1}${w.id ? ` (${w.id})` : ""}: fill ${g.fill} differs from ${label} (${w.fill})`,
       );
+  });
+}
+
+/** A single-colour layer: every fill is opaque white and nothing else (stroke, gradient) is used. */
+function checkWhiteOnly(file, paths) {
+  for (const p of paths) {
+    if (p.fill !== WHITE) fail(file, `single-colour layer must use #FFFFFFFF, found ${p.fill}`);
+    if (p.stroke) fail(file, "single-colour layer must not use strokes");
+    if (p.gradient) fail(file, "single-colour layer must not use gradients");
+  }
+}
+
+const colourLiterals = (xml) =>
+  [...stripComments(xml).matchAll(/#[0-9A-Fa-f]{6,8}\b/g)].map((m) => m[0]);
+
+function main() {
+  // ---- Master: filled crescent and wave on the night tile, no strokes or gradients.
+  const masterSrc = read(MASTER);
+  const master = masterSrc ? parseSvg(masterSrc) : { paths: [], background: undefined };
+  const crescent = master.paths.find((p) => p.id === "crescent");
+  const wave = master.paths.find((p) => p.id === "wave");
+  if (masterSrc !== null) {
+    if (!crescent) fail(MASTER, 'shape id="crescent" not found');
+    if (!wave) fail(MASTER, 'shape id="wave" not found');
+    if (!master.background) fail(MASTER, "night tile <rect fill=...> not found");
+    for (const p of master.paths) {
+      if (p.stroke || p.hasGradient) fail(MASTER, `shape ${p.id}: only filled outlines allowed`);
     }
-    SHAPES.forEach((id, i) => {
-      const want = master[id];
-      const got = fg[i];
-      if (!want || !got) return;
-      if (got.d !== want.d)
-        fail(FOREGROUND, `path ${i + 1} (${id}): pathData differs from ${MASTER}`);
-      if (want.gradient && !same(got.gradient, want.gradient)) {
+  }
+  const night = master.background;
+
+  // ---- The same night tile in the Android resources and the PWA config.
+  const bgOf = (src) =>
+    /<color name="ic_launcher_background">(#[0-9A-Fa-f]{6,8})<\/color>/.exec(src ?? "")?.[1];
+  const androidBg = bgOf(read(ANDROID.background));
+  const debugBg = bgOf(read(ANDROID.debugBackground));
+  const pwaBg = /const background = "(#[0-9A-Fa-f]{6})"/.exec(read(PWA_CONFIG) ?? "")?.[1];
+  if (!androidBg) fail(ANDROID.background, "ic_launcher_background colour not found");
+  if (!debugBg) fail(ANDROID.debugBackground, "ic_launcher_background colour not found");
+  if (!pwaBg) fail(PWA_CONFIG, "`const background` not found");
+  for (const [file, value] of [
+    [ANDROID.background, androidBg],
+    [ANDROID.debugBackground, debugBg],
+    [PWA_CONFIG, pwaBg],
+  ]) {
+    if (night && value && normColor(value) !== night)
+      fail(file, `night tile ${value} differs from ${MASTER} (${night})`);
+  }
+
+  // ---- Launcher foreground: the master's crescent and wave.
+  const fgSvg = read(SRC.foreground);
+  const fgSource = fgSvg ? parseSvg(fgSvg).paths : [];
+  if (crescent && wave && fgSvg !== null) {
+    comparePaths(SRC.foreground, MASTER, fgSource, [crescent, wave]);
+  }
+  const fgXml = read(ANDROID.foreground);
+  const fg = fgXml ? parseVector(fgXml) : [];
+  if (crescent && wave && fgXml !== null) {
+    comparePaths(ANDROID.foreground, MASTER, fg, [crescent, wave]);
+  }
+
+  // ---- Monochrome: the source layer, white only; the wave stays its own subpath (the gap).
+  const monoSvg = read(SRC.monochrome);
+  const monoSource = monoSvg ? parseSvg(monoSvg).paths : [];
+  const monoXml = read(ANDROID.monochrome);
+  const mono = monoXml ? parseVector(monoXml) : [];
+  if (monoXml !== null) {
+    checkWhiteOnly(ANDROID.monochrome, mono);
+    if (monoSvg !== null)
+      comparePaths(ANDROID.monochrome, SRC.monochrome, mono, monoSource, { fill: false });
+    // Cream and sage are told apart by hue; in one colour only the gap separates wave and
+    // crescent, so the wave must remain a separate closed subpath next to the crescent pieces.
+    if (wave && mono.length === 1) {
+      const parts = subpaths(mono[0].d);
+      if (parts.length < 2 || parts.at(-1) !== wave.d) {
         fail(
-          FOREGROUND,
-          `path ${i + 1} (${id}): gradient (y range or colour stops) differs from ${MASTER}`,
+          ANDROID.monochrome,
+          `the wave must be the last, separate subpath (the 2.75 dp gap to the crescent), like ${MASTER}`,
         );
       }
-      if (want.stroke) {
-        for (const [k, label] of [
-          ["stroke", "strokeColor"],
-          ["strokeWidth", "strokeWidth"],
-          ["cap", "strokeLineCap"],
-          ["join", "strokeLineJoin"],
-        ]) {
-          if (got[k] !== want[k])
-            fail(
-              FOREGROUND,
-              `path ${i + 1} (${id}): ${label} ${got[k]} differs from ${MASTER} (${want[k]})`,
-            );
-        }
-      }
-    });
-  }
-
-  // Monochrome: one colour, the wave identical to the master, the cut-out shapes present.
-  const monoSrc = read(MONOCHROME);
-  if (monoSrc !== null && master.wave) {
-    const mono = parseVector(monoSrc);
-    if (mono.length < 3)
-      fail(MONOCHROME, "expected the crescent, dot (with cut-out) and wave paths");
-    const colours = new Set(mono.flatMap((p) => [p.fill, p.stroke]).filter(Boolean));
-    for (const c of colours) {
-      if (c !== "#FFFFFF") fail(MONOCHROME, `single-colour layer must use #FFFFFFFF, found ${c}`);
-    }
-    const wave = mono.find((p) => p.stroke);
-    if (!wave || wave.d !== master.wave.d || wave.strokeWidth !== master.wave.strokeWidth) {
-      fail(MONOCHROME, `the stroked wave differs from ${MASTER}`);
+    } else if (wave && mono.length !== 1) {
+      fail(
+        ANDROID.monochrome,
+        `expected one path with the crescent pieces and the wave, found ${mono.length}`,
+      );
     }
   }
 
-  // Optional debug variant (dev builds): the release monochrome shapes unchanged plus at least one
-  // badge path, so the dev app keeps the current logo in themed icons and stays distinguishable.
-  if (existsSync(join(root, DEBUG_MONOCHROME))) {
-    const dbg = read(DEBUG_MONOCHROME) ?? "";
-    if (!/<vector\b/.test(dbg) || !/<\/vector>\s*$/.test(dbg)) {
-      fail(DEBUG_MONOCHROME, "not a well-formed vector drawable (needs <vector>…</vector>)");
-    } else if (monoSrc !== null) {
-      const release = parseVector(monoSrc);
-      const debug = parseVector(dbg);
-      const missing = release.filter((r) => !debug.some((d) => same(d, r)));
+  // ---- Debug build: the release layers plus the DEV pill and the themed badge.
+  const devSvg = read(SRC.dev);
+  const dev = devSvg ? parseSvg(devSvg).paths : [];
+  const dbgFgXml = read(ANDROID.debugForeground);
+  if (dbgFgXml !== null && devSvg !== null && fgXml !== null) {
+    const dbgFg = parseVector(dbgFgXml);
+    if (dbgFg.length <= fg.length || !same(dbgFg.slice(0, fg.length), fg)) {
+      fail(
+        ANDROID.debugForeground,
+        `must start with the release foreground paths of ${ANDROID.foreground}`,
+      );
+    }
+    if (dbgFg.length <= fg.length)
+      fail(ANDROID.debugForeground, "needs the DEV pill after the logo paths");
+    comparePaths(ANDROID.debugForeground, SRC.dev, dbgFg, dev);
+    // The launcher-dev source must itself be the release foreground plus the pill.
+    comparePaths(SRC.dev, SRC.foreground, dev.slice(0, fgSource.length), fgSource);
+    // Pill (and its outlined text) inside the safe zone; the text uses relative commands.
+    const pill = dev[fgSource.length];
+    if (pill && farthest(pill.d) > SAFE_RADIUS)
+      fail(
+        SRC.dev,
+        `DEV pill reaches ${farthest(pill.d).toFixed(1)} dp from the centre, safe zone is ${SAFE_RADIUS} dp`,
+      );
+  }
+  const dbgMonoXml = read(ANDROID.debugMonochrome);
+  const dbgMonoSvg = read(SRC.monochromeDev);
+  if (dbgMonoXml !== null && monoXml !== null) {
+    if (!/<vector\b/.test(dbgMonoXml) || !/<\/vector>\s*$/.test(dbgMonoXml)) {
+      fail(ANDROID.debugMonochrome, "not a well-formed vector drawable (needs <vector>…</vector>)");
+    } else {
+      const dbgMono = parseVector(dbgMonoXml);
+      checkWhiteOnly(ANDROID.debugMonochrome, dbgMono);
+      const missing = mono.filter((r) => !dbgMono.some((d) => same(d, r)));
       if (missing.length > 0)
-        fail(DEBUG_MONOCHROME, `differs from ${MONOCHROME} in ${missing.length} logo path(s)`);
-      if (debug.length <= release.length)
-        fail(DEBUG_MONOCHROME, "needs a badge path in addition to the logo paths");
+        fail(
+          ANDROID.debugMonochrome,
+          `differs from ${ANDROID.monochrome} in ${missing.length} logo path(s)`,
+        );
+      if (dbgMono.length <= mono.length)
+        fail(ANDROID.debugMonochrome, "needs a badge path in addition to the logo paths");
+      if (dbgMonoSvg !== null) {
+        const want = parseSvg(dbgMonoSvg).paths;
+        comparePaths(ANDROID.debugMonochrome, SRC.monochromeDev, dbgMono, want, { fill: false });
+        comparePaths(
+          SRC.monochromeDev,
+          SRC.monochrome,
+          want.slice(0, monoSource.length),
+          monoSource,
+          { fill: false },
+        );
+        const badge = want.at(-1);
+        if (badge && farthest(badge.d) > SAFE_RADIUS)
+          fail(
+            SRC.monochromeDev,
+            `badge reaches ${farthest(badge.d).toFixed(1)} dp from the centre, safe zone is ${SAFE_RADIUS} dp`,
+          );
+      }
     }
   }
 
-  // Safe zone: wave (with half the stroke width) inside the 66 dp circle.
-  if (master.wave) {
-    const half = (master.wave.strokeWidth ?? 0) / 2;
-    const far =
-      Math.max(...wavePoints(master.wave.d).map(([x, y]) => Math.hypot(x - 54, y - 54))) + half;
+  // ---- Notification small icons: one white path each, the SVG source's data, no other colour.
+  for (const role of ["baby", "parent"]) {
+    const svg = read(SRC[role]);
+    const xml = read(ANDROID[role]);
+    if (svg === null || xml === null) continue;
+    const want = parseSvg(svg).paths;
+    const got = parseVector(xml);
+    if (got.length !== 1) fail(ANDROID[role], `expected a single path, found ${got.length}`);
+    checkWhiteOnly(ANDROID[role], got);
+    comparePaths(ANDROID[role], SRC[role], got, want, { fill: false });
+    const other = colourLiterals(xml).filter((c) => normColor(c) !== WHITE);
+    if (other.length > 0)
+      fail(
+        ANDROID[role],
+        `only white is allowed in a notification icon, found ${other.join(", ")}`,
+      );
+    if (/aapt:attr|<gradient|strokeColor/.test(stripComments(xml)))
+      fail(ANDROID[role], "no gradient or stroke in a notification icon");
+  }
+
+  // ---- Web: byte-identical copies of the sources; the 16 px favicon is the crescent alone.
+  for (const [web, src] of [
+    [WEB_LOGO, MASTER],
+    [WEB_FAVICON, SRC.favicon],
+    [WEB_FAVICON_16, SRC.favicon16],
+  ]) {
+    const a = read(web);
+    const b = read(src);
+    if (a !== null && b !== null && a !== b)
+      fail(web, `must be a byte-identical copy of ${src} (cp ${src} ${web})`);
+  }
+  const fav16 = read(SRC.favicon16);
+  if (fav16 !== null) {
+    const p = parseSvg(fav16);
+    if (p.paths.length !== 1)
+      fail(
+        SRC.favicon16,
+        `the 16 px favicon is the crescent alone: one path, found ${p.paths.length}`,
+      );
+    if (night && p.background !== night)
+      fail(SRC.favicon16, `night tile ${p.background} differs from ${MASTER} (${night})`);
+  }
+  const fav32 = read(SRC.favicon);
+  if (fav32 !== null && night && parseSvg(fav32).background !== night)
+    fail(SRC.favicon, `night tile differs from ${MASTER} (${night})`);
+  const index = read(WEB_INDEX);
+  if (index !== null && !/<link[^>]*href="\/favicon-16\.svg"[^>]*sizes="16x16"/.test(index))
+    fail(WEB_INDEX, 'must link /favicon-16.svg with sizes="16x16"');
+  if (index !== null && !/<link[^>]*rel="icon"[^>]*href="\/favicon\.svg"/.test(index))
+    fail(WEB_INDEX, "must link /favicon.svg as the default icon");
+
+  // ---- Safe zone: the mark inside the 66 dp circle.
+  for (const p of [crescent, wave]) {
+    if (!p) continue;
+    const far = farthest(p.d);
     if (far > SAFE_RADIUS)
       fail(
         MASTER,
-        `wave reaches ${far.toFixed(1)} dp from the centre, safe zone is ${SAFE_RADIUS} dp`,
+        `${p.id} reaches ${far.toFixed(1)} dp from the centre, safe zone is ${SAFE_RADIUS} dp`,
       );
   }
 
   if (errors.length > 0) {
-    console.error(`brand-icons: the launcher icon layers differ from ${MASTER}:`);
+    console.error(
+      `brand-icons: the icon layers differ from ${MASTER} and the SVG set in ${BRAND}:`,
+    );
     for (const e of errors) console.error(`  ${e}`);
     console.error(
-      "Update the Android vectors (and favicon.svg) to the master, or the master to the intended change.",
+      "Update the Android vectors and the web copies to the SVG sources, or the sources to the intended change.",
     );
     process.exit(1);
   }
