@@ -179,6 +179,7 @@ Concept and goals of ADR-013 are decided. The UX review of the ambient bar, the 
 
 - `IDEA` Kani proof for "alarm within T after link loss".
 - `IDEA` `examples/` folder with PoC reproductions.
+- `IDEA` Cache the emulator AVD and boot snapshot of the gate (about 3 min gain for several GB), measured against the 10 GB repository cache budget; left out of `speed-up-ci` until the shard and probe changes have CI timings.
 - `IDEA` Open minor items from the `add-core-facades` architecture review (A-F6, A-F7, A-F8, A-F10; see the archived change's design): small binding and snapshot refinements, none blocking.
 - `UNDER DISCUSSION` refactor-scout items: a shared `docker run` helper; YAML anchors for the duplicated CI path filters; whether `stack-up` prints `SKIPPED` without Docker.
 - `PLANNED` (wave 2/3) The generated Dev Container from ADR-020 §2; complete the ktfmt and uv pins once `reuse` ships a wheel.

@@ -7,6 +7,8 @@
 # Maestro is pinned in mise.toml and installed only here: setup-mise installs every tool of mise.toml and
 # ci.yml turns Maestro off with MISE_DISABLE_TOOLS. GS_STRICT=1 below makes a missing Maestro fail the gate.
 #
+# The TURN-lifetime probe runs as its own job, `turn-lifetime`, in parallel with the gate.
+#
 # The build checks (ABI libs, JVM tests, Roborazzi, APKs, release-surface and size checks) are the
 # `android` job in ci.yml, which feeds `ci-ok`. This workflow builds its own debug APK because the
 # gate must test what the same commit produces.
@@ -142,7 +144,10 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      # The TURN-lifetime probe runs as the parallel `turn-lifetime` job; it needs no emulator.
       - name: Gate (emulators, signaling and TURN in containers)
+        env:
+          GS_GATE_TURN_LIFETIME: "0"
         run: just gate
       - name: Upload gate results
         if: always()
@@ -154,7 +159,6 @@ jobs:
           # https://github.com/actions/upload-artifact#upload-using-multiple-paths-and-exclusions
           path: |
             target/poc-gate
-            target/turn-lifetime
             !target/poc-gate/android-home
           retention-days: 14
       - name: Upload debug APK
@@ -163,6 +167,34 @@ jobs:
         with:
           name: guardedsleep-alpha-debug-apk
           path: apps/android/app/build/outputs/apk/debug/guardedsleep-debug.apk
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # The TURN-lifetime probe (alpha-connection-model design section 7) takes about 12 minutes and needs
+  # only Docker, so it runs next to the gate instead of in front of it (speed-up-ci). Same triggers as
+  # the gate (workflow level, no job condition); `just gate` still runs it first locally. Not a
+  # dependency of `dev-apk`: a TURN regression is visible as a red job but does not hold back a dev
+  # build, which tests the APK, not the TURN server setup.
+  turn-lifetime:
+    name: TURN allocation lifetime (coturn REST credentials)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Bash, Docker and openssl only: no mise, Rust or Android setup. GS_STRICT=1 (workflow env) turns
+      # a missing Docker into a failure instead of SKIPPED.
+      - name: Probe
+        run: scripts/poc/turn-lifetime.sh
+      - name: Upload TURN results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: turn-lifetime-results
+          path: target/turn-lifetime
           retention-days: 14
           if-no-files-found: ignore
 
