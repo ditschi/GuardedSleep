@@ -544,7 +544,7 @@
         "heartbeat": "{seconds}초마다 연결 확인",
         "alertStyle": {
           "label": "알림 방식",
-          "sound": "소리: 알림마다 아기의 소리를 재생",
+          "sound": "소리: 알림마다 아이의 소리를 재생",
           "discreet": "진동만: 진동과 화면, 소리 없음"
         },
         "discreetEscalation": {

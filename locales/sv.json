@@ -114,7 +114,7 @@
         "title": "Vilken enhet är det här?",
         "baby": {
           "title": "Babyenhet",
-          "hint": "Stannar hos ditt barn och lyssnar."
+          "hint": "Stannar hos barnet och lyssnar."
         },
         "parent": {
           "title": "Föräldraenhet",
@@ -127,7 +127,7 @@
         "title": "Gör den här enheten redo",
         "mic": {
           "title": "Mikrofon",
-          "why": "Behövs för att höra ditt barn.",
+          "why": "Behövs för att höra barnet.",
           "required": "Tillåt mikrofonen för att fortsätta."
         },
         "background": {
@@ -139,7 +139,7 @@
           "why": "Inga ljud, ringsignaler eller lampor på babyenheten. Väckarklockor fungerar fortfarande."
         },
         "safety": {
-          "body": "Låt den här enheten sitta i laddaren, på ett stabilt underlag, utom räckhåll för ditt barn. Använd inte en enhet med svullet eller skadat batteri."
+          "body": "Låt den här enheten sitta i laddaren, på ett stabilt underlag, utom räckhåll för barnet. Använd inte en enhet med svullet eller skadat batteri."
         },
         "chargingTip": "Tips: om den här enheten har \"väck skärmen vid laddning\", stäng av det så att skärmen förblir mörk.",
         "deviceCheck": {
@@ -162,7 +162,7 @@
         },
         "notifications": {
           "title": "Larm",
-          "why": "Behövs för att du ska höra när ditt barn låter.",
+          "why": "Behövs för att du ska höra när barnet låter.",
           "required": "GuardedSleep kan inte larma dig utan detta."
         },
         "lockScreen": {
@@ -601,7 +601,7 @@
           "off": "Tala är av på bebisenheten. Slå på det där under Inställningar.",
           "unsupported": "Den här bebisenheten kan inte spela upp din röst.",
           "muted": "Bebisenheten kan inte spela upp ljud just nu.",
-          "busy": "Den andra föräldraenheten pratar med ditt barn.",
+          "busy": "Den andra föräldraenheten pratar med barnet.",
           "cooldown": "Du kan tala igen om {seconds} s.",
           "rate": "Försök igen om en stund.",
           "unknown": "Bebisenheten godtog inte begäran. Försök igen.",
@@ -625,8 +625,8 @@
         "tapHint": "Håll knappen för att tala",
         "lockHint": "Tala kan inte låsas",
         "afterListen": "Lyssnar i {seconds} s · tryck för att fortsätta",
-        "coach": "Nytt: håll för att tala med ditt barn.",
-        "permBody": "För att tala med ditt barn behöver GuardedSleep mikrofonen medan du håller knappen.",
+        "coach": "Nytt: håll för att tala med barnet.",
+        "permBody": "För att tala med barnet behöver GuardedSleep mikrofonen medan du håller knappen.",
         "permAllow": "Tillåt mikrofon",
         "permDone": "Klart. Håll nu för att tala.",
         "permRefused": "Tala behöver mikrofonen. Du kan tillåta den i enhetens inställningar.",
@@ -841,8 +841,8 @@
       "cameraView": "Kameravy"
     },
     "baby": {
-      "failMicDenied": "Mikrofonen är blockerad, så den här enheten kan inte höra ditt barn. Tillåt den i webbläsarens webbplatsinställningar.",
-      "failMicUnavailable": "Ingen mikrofon hittades, så den här enheten kan inte höra ditt barn.",
+      "failMicDenied": "Mikrofonen är blockerad, så den här enheten kan inte höra barnet. Tillåt den i webbläsarens webbplatsinställningar.",
+      "failMicUnavailable": "Ingen mikrofon hittades, så den här enheten kan inte höra barnet.",
       "quietUnknown": "Tyst läge: okänt",
       "keepAwake": "Håll den här enheten vaken: i laddaren, locket uppfällt, den här fliken synlig.",
       "keepSilent": "Slå på Stör ej och sänk ljusstyrkan på den här enheten."
@@ -890,7 +890,7 @@
       "endAlert": "Prat avbröts: ett larm behöver din uppmärksamhet.",
       "deniedOther": "Babyenheten tog inte emot pratet. Försök igen.",
       "unavailableOff": "Prat är avstängt på babyenheten. Slå på det där i Inställningar.",
-      "unavailableOther": "Den andra föräldraenheten pratar med ditt barn.",
+      "unavailableOther": "Den andra föräldraenheten pratar med barnet.",
       "unavailableUnsupported": "Den här babyenheten kan inte spela upp din röst.",
       "unavailableMuted": "Babyenheten kan inte spela ljud just nu.",
       "unavailableNotConnected": "Inte ansluten till babyenheten.",
@@ -898,12 +898,12 @@
       "unavailableBrowser": "Prat stöds inte i den här webbläsaren.",
       "noisePausedSelf": "Ljudlarm pausade medan du pratar.",
       "noisePausedOther": "Den andra föräldraenheten pratar. Ljudlarmen återupptas efteråt.",
-      "coach": "Nytt: håll för att tala med ditt barn.",
+      "coach": "Nytt: håll för att tala med barnet.",
       "unconfirmed": "Din röst hörs kanske inte på babyenheten.",
       "audibleUncertain": "De senaste meddelandena hördes kanske inte på babyenheten. Kontrollera dess volym.",
       "afterListen": "Lyssnar i 10 s · tryck för att fortsätta lyssna",
       "permissionTitle": "Mikrofon för prat",
-      "permissionBody": "För att prata med ditt barn behöver GuardedSleep mikrofonen medan du håller knappen.",
+      "permissionBody": "För att prata med barnet behöver GuardedSleep mikrofonen medan du håller knappen.",
       "permissionAllow": "Tillåt mikrofon",
       "permissionDone": "Klart. Håll nu för att prata.",
       "permissionRefused": "Prat behöver mikrofonen. Du kan tillåta den i webbläsarens webbplatsinställningar.",

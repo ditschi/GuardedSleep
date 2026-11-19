@@ -114,7 +114,7 @@
         "title": "Welk apparaat is dit?",
         "baby": {
           "title": "Babyapparaat",
-          "hint": "Blijft bij je kind en luistert."
+          "hint": "Blijft bij het kind en luistert."
         },
         "parent": {
           "title": "Ouderapparaat",
@@ -127,7 +127,7 @@
         "title": "Dit apparaat voorbereiden",
         "mic": {
           "title": "Microfoon",
-          "why": "Nodig om je kind te horen.",
+          "why": "Nodig om het kind te horen.",
           "required": "Sta de microfoon toe om door te gaan."
         },
         "background": {
@@ -139,7 +139,7 @@
           "why": "Geen geluiden, beltonen of lampjes op het babyapparaat. Wekkers werken nog wel."
         },
         "safety": {
-          "body": "Laat dit apparaat aan de lader liggen, op een stabiel oppervlak, buiten het bereik van je kind. Gebruik geen apparaat met een opgezwollen of beschadigde batterij."
+          "body": "Laat dit apparaat aan de lader liggen, op een stabiel oppervlak, buiten het bereik van het kind. Gebruik geen apparaat met een opgezwollen of beschadigde batterij."
         },
         "chargingTip": "Tip: heeft dit apparaat \"scherm aan bij opladen\", zet dat dan uit zodat het scherm donker blijft.",
         "deviceCheck": {
@@ -162,7 +162,7 @@
         },
         "notifications": {
           "title": "Meldingen",
-          "why": "Nodig zodat je hoort wanneer je kind lawaai maakt.",
+          "why": "Nodig zodat je hoort wanneer het kind lawaai maakt.",
           "required": "Zonder dit kan GuardedSleep je niet waarschuwen."
         },
         "lockScreen": {
@@ -544,7 +544,7 @@
         "heartbeat": "Verbindingscontrole elke {seconds} s",
         "alertStyle": {
           "label": "Meldingstype",
-          "sound": "Geluid: het geluid van de baby wordt bij elke melding afgespeeld",
+          "sound": "Geluid: het geluid van het kind wordt bij elke melding afgespeeld",
           "discreet": "Alleen trillen: trillen en scherm, geen geluid"
         },
         "discreetEscalation": {
@@ -601,7 +601,7 @@
           "off": "Praten staat uit op het babyapparaat. Zet het daar aan bij Instellingen.",
           "unsupported": "Dit babyapparaat kan je stem niet afspelen.",
           "muted": "Het babyapparaat kan nu geen geluid afspelen.",
-          "busy": "Het andere ouderapparaat praat met je kind.",
+          "busy": "Het andere ouderapparaat praat met het kind.",
           "cooldown": "Je kunt over {seconds} s opnieuw praten.",
           "rate": "Probeer het zo opnieuw.",
           "unknown": "Het babyapparaat heeft het verzoek niet geaccepteerd. Probeer het opnieuw.",
@@ -625,8 +625,8 @@
         "tapHint": "Houd de knop ingedrukt om te praten",
         "lockHint": "Praten kan niet worden vergrendeld",
         "afterListen": "Luistert nog {seconds} s · tik om te blijven luisteren",
-        "coach": "Nieuw: houd ingedrukt om met je kind te praten.",
-        "permBody": "Om met je kind te praten heeft GuardedSleep de microfoon nodig zolang je de knop ingedrukt houdt.",
+        "coach": "Nieuw: houd ingedrukt om met het kind te praten.",
+        "permBody": "Om met het kind te praten heeft GuardedSleep de microfoon nodig zolang je de knop ingedrukt houdt.",
         "permAllow": "Microfoon toestaan",
         "permDone": "Klaar. Houd nu ingedrukt om te praten.",
         "permRefused": "Praten heeft de microfoon nodig. Je kunt die toestaan in de apparaatinstellingen.",
@@ -841,8 +841,8 @@
       "cameraView": "Camerabeeld"
     },
     "baby": {
-      "failMicDenied": "De microfoon is geblokkeerd, dus dit apparaat kan je kind niet horen. Sta hem toe in de sitevoorkeuren van de browser.",
-      "failMicUnavailable": "Geen microfoon gevonden, dus dit apparaat kan je kind niet horen.",
+      "failMicDenied": "De microfoon is geblokkeerd, dus dit apparaat kan het kind niet horen. Sta hem toe in de sitevoorkeuren van de browser.",
+      "failMicUnavailable": "Geen microfoon gevonden, dus dit apparaat kan het kind niet horen.",
       "quietUnknown": "Stille modus: onbekend",
       "keepAwake": "Houd dit apparaat wakker: aan de lader, klep open, dit tabblad zichtbaar.",
       "keepSilent": "Zet op dit apparaat Niet storen aan en zet de helderheid lager."
@@ -890,7 +890,7 @@
       "endAlert": "Praten gestopt: een alarm vraagt je aandacht.",
       "deniedOther": "Het babyapparaat nam het praten niet aan. Probeer het opnieuw.",
       "unavailableOff": "Praten staat uit op het babyapparaat. Zet het daar aan in Instellingen.",
-      "unavailableOther": "Het andere ouderapparaat praat met je kind.",
+      "unavailableOther": "Het andere ouderapparaat praat met het kind.",
       "unavailableUnsupported": "Dit babyapparaat kan je stem niet afspelen.",
       "unavailableMuted": "Het babyapparaat kan nu geen geluid afspelen.",
       "unavailableNotConnected": "Niet verbonden met het babyapparaat.",
@@ -898,12 +898,12 @@
       "unavailableBrowser": "Praten wordt in deze browser niet ondersteund.",
       "noisePausedSelf": "Geluidsalarmen gepauzeerd terwijl je praat.",
       "noisePausedOther": "Het andere ouderapparaat praat. Geluidsalarmen gaan daarna weer door.",
-      "coach": "Nieuw: houd ingedrukt om met je kind te praten.",
+      "coach": "Nieuw: houd ingedrukt om met het kind te praten.",
       "unconfirmed": "Je stem is op het babyapparaat mogelijk niet hoorbaar.",
       "audibleUncertain": "De laatste berichten waren op het babyapparaat mogelijk niet hoorbaar. Controleer het volume.",
       "afterListen": "10 s meeluisteren · tik om te blijven luisteren",
       "permissionTitle": "Microfoon om te praten",
-      "permissionBody": "Om met je kind te praten heeft GuardedSleep de microfoon nodig zolang je de knop ingedrukt houdt.",
+      "permissionBody": "Om met het kind te praten heeft GuardedSleep de microfoon nodig zolang je de knop ingedrukt houdt.",
       "permissionAllow": "Microfoon toestaan",
       "permissionDone": "Klaar. Houd nu ingedrukt om te praten.",
       "permissionRefused": "Praten heeft de microfoon nodig. Je kunt die toestaan in de site-instellingen van je browser.",

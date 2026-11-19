@@ -114,7 +114,7 @@
         "title": "¿Qué dispositivo es este?",
         "baby": {
           "title": "Dispositivo del bebé",
-          "hint": "Se queda con su hijo y escucha."
+          "hint": "Se queda con el niño y escucha."
         },
         "parent": {
           "title": "Dispositivo de los padres",
@@ -127,7 +127,7 @@
         "title": "Preparar este dispositivo",
         "mic": {
           "title": "Micrófono",
-          "why": "Necesario para oír a su hijo.",
+          "why": "Necesario para oír al niño.",
           "required": "Permita el micrófono para continuar."
         },
         "background": {
@@ -139,7 +139,7 @@
           "why": "Sin sonidos, timbres ni luces en el dispositivo del bebé. Las alarmas siguen funcionando."
         },
         "safety": {
-          "body": "Mantenga este dispositivo en el cargador, sobre una superficie estable y fuera del alcance de su hijo. No use un dispositivo con la batería hinchada o dañada."
+          "body": "Mantenga este dispositivo en el cargador, sobre una superficie estable y fuera del alcance del niño. No use un dispositivo con la batería hinchada o dañada."
         },
         "chargingTip": "Consejo: si este dispositivo tiene la opción \"activar la pantalla al conectar el cargador\", desactívela para que la pantalla siga apagada.",
         "deviceCheck": {
@@ -162,7 +162,7 @@
         },
         "notifications": {
           "title": "Alertas",
-          "why": "Necesario para enterarse cuando su hijo hace ruido.",
+          "why": "Necesario para enterarse cuando el niño hace ruido.",
           "required": "Sin esto, GuardedSleep no puede avisarle."
         },
         "lockScreen": {
@@ -548,7 +548,7 @@
         "heartbeat": "Comprobación de la conexión cada {seconds} s",
         "alertStyle": {
           "label": "Tipo de alerta",
-          "sound": "Sonido: se oye el sonido del bebé en cada alerta",
+          "sound": "Sonido: se oye el sonido del niño en cada alerta",
           "discreet": "Solo vibración: vibración y pantalla, sin sonido"
         },
         "discreetEscalation": {
@@ -605,7 +605,7 @@
           "off": "Hablar está desactivado en el dispositivo del bebé. Actívalo allí, en Ajustes.",
           "unsupported": "Este dispositivo del bebé no puede reproducir tu voz.",
           "muted": "El dispositivo del bebé no puede reproducir sonido ahora.",
-          "busy": "El otro dispositivo de los padres está hablando con tu hijo.",
+          "busy": "El otro dispositivo de los padres está hablando con el niño.",
           "cooldown": "Podrás hablar de nuevo en {seconds} s.",
           "rate": "Inténtalo de nuevo en un momento.",
           "unknown": "El dispositivo del bebé no aceptó la solicitud. Inténtalo de nuevo.",
@@ -629,8 +629,8 @@
         "tapHint": "Mantén el botón para hablar",
         "lockHint": "Hablar no se puede bloquear",
         "afterListen": "Escuchando {seconds} s · toca para seguir escuchando",
-        "coach": "Novedad: mantén para hablar con tu hijo.",
-        "permBody": "Para hablar con tu hijo, GuardedSleep necesita el micrófono mientras mantienes el botón.",
+        "coach": "Novedad: mantén para hablar con el niño.",
+        "permBody": "Para hablar con el niño, GuardedSleep necesita el micrófono mientras mantienes el botón.",
         "permAllow": "Permitir micrófono",
         "permDone": "Listo. Ahora mantén para hablar.",
         "permRefused": "Hablar necesita el micrófono. Puedes permitirlo en los ajustes del dispositivo.",
@@ -834,8 +834,8 @@
   },
   "webScreens": {
     "baby": {
-      "failMicDenied": "El micrófono está bloqueado, así que este dispositivo no puede oír a su hijo. Permítalo en los ajustes del sitio del navegador.",
-      "failMicUnavailable": "No se encontró ningún micrófono, así que este dispositivo no puede oír a su hijo.",
+      "failMicDenied": "El micrófono está bloqueado, así que este dispositivo no puede oír al niño. Permítalo en los ajustes del sitio del navegador.",
+      "failMicUnavailable": "No se encontró ningún micrófono, así que este dispositivo no puede oír al niño.",
       "quietUnknown": "Modo silencio: desconocido",
       "keepAwake": "Mantenga este dispositivo activo: enchufado, tapa abierta, esta pestaña visible.",
       "keepSilent": "Active No molestar y baje el brillo de este dispositivo."
@@ -879,7 +879,7 @@
       "endAlert": "Hablar se detuvo: una alerta necesita tu atención.",
       "deniedOther": "El dispositivo del bebé no aceptó hablar. Inténtalo de nuevo.",
       "unavailableOff": "Hablar está desactivado en el dispositivo del bebé. Activa esa opción allí, en Ajustes.",
-      "unavailableOther": "El otro dispositivo de padres está hablando con tu hijo.",
+      "unavailableOther": "El otro dispositivo de padres está hablando con el niño.",
       "unavailableUnsupported": "Este dispositivo del bebé no puede reproducir tu voz.",
       "unavailableMuted": "El dispositivo del bebé no puede reproducir sonido ahora.",
       "unavailableNotConnected": "Sin conexión con el dispositivo del bebé.",
@@ -887,12 +887,12 @@
       "unavailableBrowser": "Hablar no es compatible con este navegador.",
       "noisePausedSelf": "Alertas de ruido en pausa mientras hablas.",
       "noisePausedOther": "El otro dispositivo de padres está hablando. Las alertas de ruido se reanudan después.",
-      "coach": "Novedad: mantén para hablar con tu hijo.",
+      "coach": "Novedad: mantén para hablar con el niño.",
       "unconfirmed": "Es posible que tu voz no se oiga en el dispositivo del bebé.",
       "audibleUncertain": "Es posible que los últimos mensajes no se oyeran en el dispositivo del bebé. Revisa su volumen.",
       "afterListen": "Escuchando 10 s · toca para seguir escuchando",
       "permissionTitle": "Micrófono para hablar",
-      "permissionBody": "Para hablar con tu hijo, GuardedSleep necesita el micrófono mientras mantienes el botón.",
+      "permissionBody": "Para hablar con el niño, GuardedSleep necesita el micrófono mientras mantienes el botón.",
       "permissionAllow": "Permitir micrófono",
       "permissionDone": "Listo. Ahora mantén pulsado para hablar.",
       "permissionRefused": "Hablar necesita el micrófono. Puedes permitirlo en los ajustes del sitio de tu navegador.",

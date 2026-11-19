@@ -114,7 +114,7 @@
         "title": "Perangkat apa ini?",
         "baby": {
           "title": "Perangkat bayi",
-          "hint": "Tetap di dekat anak Anda dan mendengarkan."
+          "hint": "Tetap di dekat anak dan mendengarkan."
         },
         "parent": {
           "title": "Perangkat orang tua",
@@ -127,7 +127,7 @@
         "title": "Siapkan perangkat ini",
         "mic": {
           "title": "Mikrofon",
-          "why": "Diperlukan untuk mendengar anak Anda.",
+          "why": "Diperlukan untuk mendengar anak.",
           "required": "Izinkan mikrofon untuk melanjutkan."
         },
         "background": {
@@ -139,7 +139,7 @@
           "why": "Tidak ada suara, dering, atau lampu di perangkat bayi. Jam alarm tetap berbunyi."
         },
         "safety": {
-          "body": "Biarkan perangkat ini terus diisi daya, di permukaan yang stabil, di luar jangkauan anak Anda. Jangan gunakan perangkat dengan baterai yang menggembung atau rusak."
+          "body": "Biarkan perangkat ini terus diisi daya, di permukaan yang stabil, di luar jangkauan anak. Jangan gunakan perangkat dengan baterai yang menggembung atau rusak."
         },
         "chargingTip": "Tips: jika perangkat ini punya opsi \"nyalakan layar saat dicolokkan\", matikan agar layar tetap gelap.",
         "deviceCheck": {
@@ -162,7 +162,7 @@
         },
         "notifications": {
           "title": "Peringatan",
-          "why": "Diperlukan agar Anda tahu saat anak Anda bersuara.",
+          "why": "Diperlukan agar Anda tahu saat anak bersuara.",
           "required": "GuardedSleep tidak dapat memberi peringatan tanpa ini."
         },
         "lockScreen": {
@@ -544,7 +544,7 @@
         "heartbeat": "Pemeriksaan koneksi setiap {seconds} dtk",
         "alertStyle": {
           "label": "Gaya peringatan",
-          "sound": "Suara: suara bayi diputar pada setiap peringatan",
+          "sound": "Suara: suara anak diputar pada setiap peringatan",
           "discreet": "Hanya getar: getar dan layar, tanpa suara"
         },
         "discreetEscalation": {
@@ -601,7 +601,7 @@
           "off": "Bicara dimatikan di perangkat bayi. Aktifkan di sana lewat Pengaturan.",
           "unsupported": "Perangkat bayi ini tidak dapat memutar suara Anda.",
           "muted": "Perangkat bayi tidak dapat memutar suara saat ini.",
-          "busy": "Perangkat orang tua lainnya sedang berbicara dengan anak Anda.",
+          "busy": "Perangkat orang tua lainnya sedang berbicara dengan anak.",
           "cooldown": "Anda dapat bicara lagi dalam {seconds} dtk.",
           "rate": "Coba lagi sebentar lagi.",
           "unknown": "Perangkat bayi tidak menerima permintaan. Coba lagi.",
@@ -625,8 +625,8 @@
         "tapHint": "Tahan tombol untuk bicara",
         "lockHint": "Bicara tidak dapat dikunci",
         "afterListen": "Mendengarkan {seconds} dtk · ketuk untuk terus mendengarkan",
-        "coach": "Baru: tahan untuk berbicara dengan anak Anda.",
-        "permBody": "Untuk berbicara dengan anak Anda, GuardedSleep memerlukan mikrofon selama Anda menahan tombol.",
+        "coach": "Baru: tahan untuk berbicara dengan anak.",
+        "permBody": "Untuk berbicara dengan anak, GuardedSleep memerlukan mikrofon selama Anda menahan tombol.",
         "permAllow": "Izinkan mikrofon",
         "permDone": "Selesai. Sekarang tahan untuk bicara.",
         "permRefused": "Bicara memerlukan mikrofon. Anda dapat mengizinkannya di pengaturan perangkat.",
@@ -841,8 +841,8 @@
       "cameraView": "Tampilan kamera"
     },
     "baby": {
-      "failMicDenied": "Mikrofon diblokir, sehingga perangkat ini tidak dapat mendengar anak Anda. Izinkan di pengaturan situs browser.",
-      "failMicUnavailable": "Mikrofon tidak ditemukan, sehingga perangkat ini tidak dapat mendengar anak Anda.",
+      "failMicDenied": "Mikrofon diblokir, sehingga perangkat ini tidak dapat mendengar anak. Izinkan di pengaturan situs browser.",
+      "failMicUnavailable": "Mikrofon tidak ditemukan, sehingga perangkat ini tidak dapat mendengar anak.",
       "quietUnknown": "Mode tenang: tidak diketahui",
       "keepAwake": "Jaga perangkat ini tetap aktif: tercolok, penutup terbuka, tab ini terlihat.",
       "keepSilent": "Nyalakan Jangan Ganggu dan turunkan kecerahan di perangkat ini."
@@ -890,7 +890,7 @@
       "endAlert": "Bicara dihentikan: ada peringatan yang perlu perhatian Anda.",
       "deniedOther": "Perangkat bayi tidak menerima bicara. Coba lagi.",
       "unavailableOff": "Bicara nonaktif di perangkat bayi. Aktifkan di sana lewat Pengaturan.",
-      "unavailableOther": "Perangkat orang tua lain sedang berbicara dengan anak Anda.",
+      "unavailableOther": "Perangkat orang tua lain sedang berbicara dengan anak.",
       "unavailableUnsupported": "Perangkat bayi ini tidak dapat memutar suara Anda.",
       "unavailableMuted": "Perangkat bayi tidak dapat memutar suara saat ini.",
       "unavailableNotConnected": "Tidak terhubung ke perangkat bayi.",
@@ -898,12 +898,12 @@
       "unavailableBrowser": "Peramban ini tidak mendukung bicara.",
       "noisePausedSelf": "Peringatan kebisingan dijeda selama Anda bicara.",
       "noisePausedOther": "Perangkat orang tua lain sedang bicara. Peringatan kebisingan berlanjut setelahnya.",
-      "coach": "Baru: tahan untuk berbicara dengan anak Anda.",
+      "coach": "Baru: tahan untuk berbicara dengan anak.",
       "unconfirmed": "Suara Anda mungkin tidak terdengar di perangkat bayi.",
       "audibleUncertain": "Pesan terakhir mungkin tidak terdengar di perangkat bayi. Periksa volumenya.",
       "afterListen": "Mendengarkan 10 dtk · ketuk untuk terus mendengarkan",
       "permissionTitle": "Mikrofon untuk bicara",
-      "permissionBody": "Untuk berbicara dengan anak Anda, GuardedSleep memerlukan mikrofon selama Anda menahan tombol.",
+      "permissionBody": "Untuk berbicara dengan anak, GuardedSleep memerlukan mikrofon selama Anda menahan tombol.",
       "permissionAllow": "Izinkan mikrofon",
       "permissionDone": "Selesai. Sekarang tahan untuk bicara.",
       "permissionRefused": "Bicara memerlukan mikrofon. Anda dapat mengizinkannya di pengaturan situs peramban.",

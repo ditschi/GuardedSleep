@@ -114,7 +114,7 @@
         "title": "Ce dispozitiv este acesta?",
         "baby": {
           "title": "Dispozitivul bebelușului",
-          "hint": "Rămâne lângă copilul tău și ascultă."
+          "hint": "Rămâne lângă copil și ascultă."
         },
         "parent": {
           "title": "Dispozitivul părintelui",
@@ -127,7 +127,7 @@
         "title": "Pregătește acest dispozitiv",
         "mic": {
           "title": "Microfon",
-          "why": "Necesar pentru a-ți auzi copilul.",
+          "why": "Necesar pentru a auzi copilul.",
           "required": "Permite microfonul pentru a continua."
         },
         "background": {
@@ -544,7 +544,7 @@
         "heartbeat": "Verificarea conexiunii la fiecare {seconds} s",
         "alertStyle": {
           "label": "Tip de alertă",
-          "sound": "Sunet: sunetul bebelușului se aude la fiecare alertă",
+          "sound": "Sunet: sunetul copilului se aude la fiecare alertă",
           "discreet": "Doar vibrație: vibrație și ecran, fără sunet"
         },
         "discreetEscalation": {
@@ -601,7 +601,7 @@
           "off": "Vorbirea este oprită pe dispozitivul bebelușului. Pornește-o acolo, în Setări.",
           "unsupported": "Acest dispozitiv al bebelușului nu poate reda vocea ta.",
           "muted": "Dispozitivul bebelușului nu poate reda sunet acum.",
-          "busy": "Celălalt dispozitiv de părinte vorbește cu copilul tău.",
+          "busy": "Celălalt dispozitiv de părinte vorbește cu copilul.",
           "cooldown": "Poți vorbi din nou peste {seconds} s.",
           "rate": "Încearcă din nou peste puțin timp.",
           "unknown": "Dispozitivul bebelușului nu a acceptat cererea. Încearcă din nou.",
@@ -625,8 +625,8 @@
         "tapHint": "Ține apăsat butonul pentru a vorbi",
         "lockHint": "Vorbirea nu poate fi blocată",
         "afterListen": "Ascult {seconds} s · atinge pentru a continua",
-        "coach": "Nou: ține apăsat pentru a vorbi cu copilul tău.",
-        "permBody": "Pentru a vorbi cu copilul tău, GuardedSleep are nevoie de microfon cât ții apăsat butonul.",
+        "coach": "Nou: ține apăsat pentru a vorbi cu copilul.",
+        "permBody": "Pentru a vorbi cu copilul, GuardedSleep are nevoie de microfon cât ții apăsat butonul.",
         "permAllow": "Permite microfonul",
         "permDone": "Gata. Acum ține apăsat pentru a vorbi.",
         "permRefused": "Vorbirea are nevoie de microfon. Îl poți permite din setările dispozitivului.",
@@ -841,8 +841,8 @@
       "cameraView": "Imagine de la cameră"
     },
     "baby": {
-      "failMicDenied": "Microfonul este blocat, deci acest dispozitiv nu-ți poate auzi copilul. Permite-l în setările site-ului din browser.",
-      "failMicUnavailable": "Nu s-a găsit niciun microfon, deci acest dispozitiv nu-ți poate auzi copilul.",
+      "failMicDenied": "Microfonul este blocat, deci acest dispozitiv nu poate auzi copilul. Permite-l în setările site-ului din browser.",
+      "failMicUnavailable": "Nu s-a găsit niciun microfon, deci acest dispozitiv nu poate auzi copilul.",
       "quietUnknown": "Mod silențios: necunoscut",
       "keepAwake": "Ține acest dispozitiv treaz: la încărcat, capacul deschis, această filă vizibilă.",
       "keepSilent": "Activează Nu deranja și scade luminozitatea pe acest dispozitiv."
@@ -890,7 +890,7 @@
       "endAlert": "Vorbire oprită: o alertă necesită atenția ta.",
       "deniedOther": "Dispozitivul bebelușului nu a acceptat vorbirea. Încearcă din nou.",
       "unavailableOff": "Vorbirea este oprită pe dispozitivul bebelușului. Pornește-o acolo în Setări.",
-      "unavailableOther": "Celălalt dispozitiv al părinților vorbește cu copilul tău.",
+      "unavailableOther": "Celălalt dispozitiv al părinților vorbește cu copilul.",
       "unavailableUnsupported": "Acest dispozitiv al bebelușului nu poate reda vocea ta.",
       "unavailableMuted": "Dispozitivul bebelușului nu poate reda sunet acum.",
       "unavailableNotConnected": "Neconectat la dispozitivul bebelușului.",
@@ -898,12 +898,12 @@
       "unavailableBrowser": "Vorbirea nu este acceptată în acest browser.",
       "noisePausedSelf": "Alertele de zgomot sunt în pauză cât vorbești.",
       "noisePausedOther": "Celălalt dispozitiv al părinților vorbește. Alertele de zgomot reiau după aceea.",
-      "coach": "Nou: ține apăsat pentru a vorbi cu copilul tău.",
+      "coach": "Nou: ține apăsat pentru a vorbi cu copilul.",
       "unconfirmed": "Este posibil ca vocea ta să nu se audă pe dispozitivul bebelușului.",
       "audibleUncertain": "Este posibil ca ultimele mesaje să nu se fi auzit pe dispozitivul bebelușului. Verifică volumul.",
       "afterListen": "Ascultare 10 s · atinge pentru a continua",
       "permissionTitle": "Microfon pentru vorbire",
-      "permissionBody": "Pentru a vorbi cu copilul tău, GuardedSleep are nevoie de microfon cât ții apăsat butonul.",
+      "permissionBody": "Pentru a vorbi cu copilul, GuardedSleep are nevoie de microfon cât ții apăsat butonul.",
       "permissionAllow": "Permite microfonul",
       "permissionDone": "Gata. Acum ține apăsat pentru a vorbi.",
       "permissionRefused": "Vorbirea are nevoie de microfon. Îl poți permite în setările site-ului din browser.",

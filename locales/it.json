@@ -114,7 +114,7 @@
         "title": "Che dispositivo è questo?",
         "baby": {
           "title": "Dispositivo del bambino",
-          "hint": "Resta con il tuo bambino e ascolta."
+          "hint": "Resta con il bambino e ascolta."
         },
         "parent": {
           "title": "Dispositivo del genitore",
@@ -127,7 +127,7 @@
         "title": "Prepara questo dispositivo",
         "mic": {
           "title": "Microfono",
-          "why": "Serve per sentire il tuo bambino.",
+          "why": "Serve per sentire il bambino.",
           "required": "Consenti il microfono per continuare."
         },
         "background": {
@@ -162,7 +162,7 @@
         },
         "notifications": {
           "title": "Avvisi",
-          "why": "Servono per sentire quando il tuo bambino fa rumore.",
+          "why": "Servono per sentire quando il bambino fa rumore.",
           "required": "Senza questo GuardedSleep non può avvisarti."
         },
         "lockScreen": {
@@ -841,8 +841,8 @@
       "cameraView": "Vista della fotocamera"
     },
     "baby": {
-      "failMicDenied": "Il microfono è bloccato, quindi questo dispositivo non può sentire il tuo bambino. Consentilo nelle impostazioni del sito del browser.",
-      "failMicUnavailable": "Nessun microfono trovato: questo dispositivo non può sentire il tuo bambino.",
+      "failMicDenied": "Il microfono è bloccato, quindi questo dispositivo non può sentire il bambino. Consentilo nelle impostazioni del sito del browser.",
+      "failMicUnavailable": "Nessun microfono trovato: questo dispositivo non può sentire il bambino.",
       "quietUnknown": "Modalità silenziosa: sconosciuta",
       "keepAwake": "Tieni questo dispositivo attivo: in carica, coperchio aperto, questa scheda visibile.",
       "keepSilent": "Attiva Non disturbare e abbassa la luminosità su questo dispositivo."
@@ -890,7 +890,7 @@
       "endAlert": "Parlato interrotto: un avviso richiede la tua attenzione.",
       "deniedOther": "Il dispositivo del bambino non ha accettato il parlato. Riprova.",
       "unavailableOff": "Il parlato è disattivato sul dispositivo del bambino. Attivalo lì nelle Impostazioni.",
-      "unavailableOther": "L'altro dispositivo genitore sta parlando a tuo figlio.",
+      "unavailableOther": "L'altro dispositivo genitore sta parlando al bambino.",
       "unavailableUnsupported": "Questo dispositivo del bambino non può riprodurre la tua voce.",
       "unavailableMuted": "Il dispositivo del bambino non può riprodurre suoni ora.",
       "unavailableNotConnected": "Non connesso al dispositivo del bambino.",
@@ -903,7 +903,7 @@
       "audibleUncertain": "Gli ultimi messaggi potrebbero non essere stati udibili sul dispositivo del bambino. Controlla il volume.",
       "afterListen": "Ascolto per 10 s · tocca per continuare",
       "permissionTitle": "Microfono per parlare",
-      "permissionBody": "Per parlare a tuo figlio, GuardedSleep ha bisogno del microfono mentre tieni premuto il pulsante.",
+      "permissionBody": "Per parlare al bambino, GuardedSleep ha bisogno del microfono mentre tieni premuto il pulsante.",
       "permissionAllow": "Consenti microfono",
       "permissionDone": "Fatto. Ora tieni premuto per parlare.",
       "permissionRefused": "Il parlato richiede il microfono. Puoi consentirlo nelle impostazioni del sito del browser.",

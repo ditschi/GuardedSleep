@@ -114,7 +114,7 @@
         "title": "Hvilken enhed er det her?",
         "baby": {
           "title": "Babyenhed",
-          "hint": "Bliver hos dit barn og lytter."
+          "hint": "Bliver hos barnet og lytter."
         },
         "parent": {
           "title": "Forældreenhed",
@@ -127,7 +127,7 @@
         "title": "Gør denne enhed klar",
         "mic": {
           "title": "Mikrofon",
-          "why": "Nødvendig for at høre dit barn.",
+          "why": "Nødvendig for at høre barnet.",
           "required": "Tillad mikrofonen for at fortsætte."
         },
         "background": {
@@ -139,7 +139,7 @@
           "why": "Ingen lyde, ringetoner eller lys på babyenheden. Vækkeure virker stadig."
         },
         "safety": {
-          "body": "Lad denne enhed sidde i opladeren på et stabilt underlag, uden for dit barns rækkevidde. Brug ikke en enhed med et opsvulmet eller beskadiget batteri."
+          "body": "Lad denne enhed sidde i opladeren på et stabilt underlag, uden for barnets rækkevidde. Brug ikke en enhed med et opsvulmet eller beskadiget batteri."
         },
         "chargingTip": "Tip: hvis denne enhed har \"væk skærmen ved opladning\", så slå den fra, så skærmen forbliver mørk.",
         "deviceCheck": {
@@ -162,7 +162,7 @@
         },
         "notifications": {
           "title": "Alarmer",
-          "why": "Nødvendige, så du hører det, når dit barn larmer.",
+          "why": "Nødvendige, så du hører det, når barnet larmer.",
           "required": "GuardedSleep kan ikke give dig besked uden dette."
         },
         "lockScreen": {
@@ -601,7 +601,7 @@
           "off": "Tale er slået fra på babyenheden. Slå det til dér under Indstillinger.",
           "unsupported": "Denne babyenhed kan ikke afspille din stemme.",
           "muted": "Babyenheden kan ikke afspille lyd lige nu.",
-          "busy": "Den anden forælderenhed taler med dit barn.",
+          "busy": "Den anden forælderenhed taler med barnet.",
           "cooldown": "Du kan tale igen om {seconds} s.",
           "rate": "Prøv igen om lidt.",
           "unknown": "Babyenheden afviste anmodningen. Prøv igen.",
@@ -625,8 +625,8 @@
         "tapHint": "Hold knappen for at tale",
         "lockHint": "Tale kan ikke låses",
         "afterListen": "Lytter i {seconds} s · tryk for at blive ved",
-        "coach": "Nyt: hold for at tale med dit barn.",
-        "permBody": "For at tale med dit barn har GuardedSleep brug for mikrofonen, mens du holder knappen.",
+        "coach": "Nyt: hold for at tale med barnet.",
+        "permBody": "For at tale med barnet har GuardedSleep brug for mikrofonen, mens du holder knappen.",
         "permAllow": "Tillad mikrofon",
         "permDone": "Færdig. Hold nu for at tale.",
         "permRefused": "Tale kræver mikrofonen. Du kan tillade den i enhedens indstillinger.",
@@ -841,8 +841,8 @@
       "cameraView": "Kamerabillede"
     },
     "baby": {
-      "failMicDenied": "Mikrofonen er blokeret, så denne enhed kan ikke høre dit barn. Tillad den i browserens webstedsindstillinger.",
-      "failMicUnavailable": "Der blev ikke fundet nogen mikrofon, så denne enhed kan ikke høre dit barn.",
+      "failMicDenied": "Mikrofonen er blokeret, så denne enhed kan ikke høre barnet. Tillad den i browserens webstedsindstillinger.",
+      "failMicUnavailable": "Der blev ikke fundet nogen mikrofon, så denne enhed kan ikke høre barnet.",
       "quietUnknown": "Stille tilstand: ukendt",
       "keepAwake": "Hold denne enhed vågen: i opladeren, låget oppe, denne fane synlig.",
       "keepSilent": "Slå Forstyr ikke til, og skru ned for lysstyrken på denne enhed."
@@ -890,7 +890,7 @@
       "endAlert": "Tale stoppet: en alarm kræver din opmærksomhed.",
       "deniedOther": "Babyenheden accepterede ikke talen. Prøv igen.",
       "unavailableOff": "Tale er slået fra på babyenheden. Slå det til dér under Indstillinger.",
-      "unavailableOther": "Den anden forælderenhed taler til dit barn.",
+      "unavailableOther": "Den anden forælderenhed taler til barnet.",
       "unavailableUnsupported": "Denne babyenhed kan ikke afspille din stemme.",
       "unavailableMuted": "Babyenheden kan ikke afspille lyd lige nu.",
       "unavailableNotConnected": "Ikke forbundet til babyenheden.",
@@ -898,12 +898,12 @@
       "unavailableBrowser": "Tale understøttes ikke i denne browser.",
       "noisePausedSelf": "Støjalarmer sat på pause, mens du taler.",
       "noisePausedOther": "Den anden forælderenhed taler. Støjalarmer genoptages bagefter.",
-      "coach": "Nyt: hold for at tale med dit barn.",
+      "coach": "Nyt: hold for at tale med barnet.",
       "unconfirmed": "Din stemme er måske ikke hørbar på babyenheden.",
       "audibleUncertain": "De seneste beskeder var måske ikke hørbare på babyenheden. Tjek dens lydstyrke.",
       "afterListen": "Lytter i 10 s · tryk for at blive ved med at lytte",
       "permissionTitle": "Mikrofon til tale",
-      "permissionBody": "For at tale med dit barn har GuardedSleep brug for mikrofonen, mens du holder knappen.",
+      "permissionBody": "For at tale med barnet har GuardedSleep brug for mikrofonen, mens du holder knappen.",
       "permissionAllow": "Tillad mikrofon",
       "permissionDone": "Færdig. Hold nu for at tale.",
       "permissionRefused": "Tale kræver mikrofonen. Du kan tillade den i browserens webstedsindstillinger.",

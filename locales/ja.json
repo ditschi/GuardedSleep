@@ -544,7 +544,7 @@
         "heartbeat": "{seconds}秒ごとに接続を確認",
         "alertStyle": {
           "label": "通知方法",
-          "sound": "音：通知のたびに赤ちゃんの音を再生",
+          "sound": "音：通知のたびにお子さんの音を再生",
           "discreet": "振動のみ：振動と画面、音なし"
         },
         "discreetEscalation": {
@@ -890,7 +890,7 @@
       "endAlert": "会話を停止しました：アラートの確認が必要です。",
       "deniedOther": "ベビー端末が会話を受け付けませんでした。もう一度お試しください。",
       "unavailableOff": "ベビー端末で会話がオフです。その端末の設定でオンにしてください。",
-      "unavailableOther": "もう一台の保護者端末がお子さまに話しかけています。",
+      "unavailableOther": "もう一台の保護者端末がお子さんに話しかけています。",
       "unavailableUnsupported": "このベビー端末ではあなたの声を再生できません。",
       "unavailableMuted": "ベビー端末は今、音を再生できません。",
       "unavailableNotConnected": "ベビー端末に接続されていません。",
@@ -903,7 +903,7 @@
       "audibleUncertain": "直前のメッセージがベビー端末で聞こえていなかった可能性があります。音量を確認してください。",
       "afterListen": "10 秒間聞いています · タップで聞き続ける",
       "permissionTitle": "会話用のマイク",
-      "permissionBody": "お子さまと話すには、ボタンを押している間 GuardedSleep がマイクを使います。",
+      "permissionBody": "お子さんと話すには、ボタンを押している間 GuardedSleep がマイクを使います。",
       "permissionAllow": "マイクを許可",
       "permissionDone": "完了しました。長押しして話してください。",
       "permissionRefused": "会話にはマイクが必要です。ブラウザのサイト設定で許可できます。",

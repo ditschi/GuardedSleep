@@ -544,7 +544,7 @@
         "heartbeat": "每 {seconds} 秒检查一次连接",
         "alertStyle": {
           "label": "提醒方式",
-          "sound": "声音：每次提醒都播放宝宝的声音",
+          "sound": "声音：每次提醒都播放孩子的声音",
           "discreet": "仅振动：振动和屏幕提示，不播放声音"
         },
         "discreetEscalation": {
@@ -601,7 +601,7 @@
           "off": "宝宝设备上的对讲已关闭。请在该设备的设置中开启。",
           "unsupported": "这台宝宝设备无法播放你的声音。",
           "muted": "宝宝设备目前无法播放声音。",
-          "busy": "另一台家长设备正在与你的孩子说话。",
+          "busy": "另一台家长设备正在与孩子说话。",
           "cooldown": "{seconds} 秒后可再次说话。",
           "rate": "请稍后再试。",
           "unknown": "宝宝设备没有接受请求。请重试。",
@@ -890,7 +890,7 @@
       "endAlert": "说话已停止：有警报需要您处理。",
       "deniedOther": "婴儿设备未接受说话。请重试。",
       "unavailableOff": "婴儿设备上的说话功能已关闭。请在该设备的设置中开启。",
-      "unavailableOther": "另一台家长设备正在与您的孩子说话。",
+      "unavailableOther": "另一台家长设备正在与孩子说话。",
       "unavailableUnsupported": "这台婴儿设备无法播放您的声音。",
       "unavailableMuted": "婴儿设备目前无法播放声音。",
       "unavailableNotConnected": "未连接到婴儿设备。",
