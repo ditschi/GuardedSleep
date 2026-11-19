@@ -8,6 +8,9 @@
 #               host:port entries not yet listed by `adb devices` are connected first.
 #   GS_APK      APK path (default: apps/android/app/build/outputs/apk/debug/guardedsleep-debug.apk)
 # The same phone seen over USB and TCP is installed once (USB serial preferred). Never uninstalls anything.
+# Debug builds are org.guardedsleep.app.dev and carry a version derived from the commit time, so a
+# build of an older commit (or an IDE build, versionCode 1) is a downgrade: it is installed with
+# `adb install -r -d`, which debuggable builds allow, and keeps the app data.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -15,7 +18,7 @@ cd "$ROOT"
 # shellcheck source=lib/require.sh
 source scripts/lib/require.sh
 
-PKG="org.guardedsleep.app.alpha"
+PKG="org.guardedsleep.app.dev"
 APK="${GS_APK:-$ROOT/apps/android/app/build/outputs/apk/debug/guardedsleep-debug.apk}"
 BUILD=0
 LAUNCH=1
@@ -82,7 +85,7 @@ done
 failed=0
 for d in "${devices[@]}"; do
   model="$(adbq -s "$d" shell getprop ro.product.model 2>/dev/null | tr -d '\r\n' || true)"
-  out="$(timeout 180 adb -s "$d" install -r "$APK" 2>&1 || true)"
+  out="$(timeout 180 adb -s "$d" install -r -d "$APK" 2>&1 || true)"
   if [[ "$out" == *Success* ]]; then
     result="installed"
     if [ "$LAUNCH" = "1" ]; then
@@ -95,7 +98,7 @@ for d in "${devices[@]}"; do
     reason="$(printf '%s\n' "$out" | grep -m1 -E 'Failure|error|failed' || printf '%s' "$out" | tail -n 1)"
     result="FAILED: $reason"
     if [[ "$out" == *INSTALL_FAILED_UPDATE_INCOMPATIBLE* ]]; then
-      echo "hint: $d has $PKG installed with a different signature (e.g. the GitHub dev APK)." >&2
+      echo "hint: $d has $PKG installed with a different signature (e.g. the GitHub dev APK or the dev F-Droid repository)." >&2
       echo "hint: uninstall it with 'adb -s $d uninstall $PKG' (this deletes the pairings), then retry. Not done automatically." >&2
     fi
   fi

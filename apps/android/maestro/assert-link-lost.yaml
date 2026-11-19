@@ -1,5 +1,5 @@
 # AC-4 / AC-10: losing the baby unit raises the connection alarm.
-appId: org.guardedsleep.app.alpha
+appId: org.guardedsleep.app.dev
 ---
 # The awake parent shows the monitor with the reconnect help (the full-screen alarm opens from the notification).
 - launchApp:

@@ -138,7 +138,7 @@ To force the relay path regardless of the networks (emulator gate style), the An
 PSK="$(head -c 32 /dev/urandom | base64 | tr '+/' '-_' | tr -d '=\n')"
 for role in baby parent; do
   serial=$([ "$role" = baby ] && echo <baby-serial> || echo <parent-serial>)
-  adb -s "$serial" shell am start -n org.guardedsleep.app.alpha/org.guardedsleep.app.debug.DebugLaunchActivity \
+  adb -s "$serial" shell am start -n org.guardedsleep.app.dev/org.guardedsleep.app.debug.DebugLaunchActivity \
     --es role "$role" --es psk_b64url "$PSK" --es signal_urls "wss://<your-signaling-host>/" \
     --es turn_url "turn:<TURN_PUBLIC_IP>:3478" --es turn_user guardedsleep --es turn_pass '<TURN_PASSWORD>' \
     --es relay_only true --es auto_listen true

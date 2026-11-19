@@ -3,7 +3,7 @@
 # TURN, TURN_USER, TURN_PASS. Ids only, never copy text (ADR-016).
 # Debug builds start with the project server in the relay list: the flow removes it, so the invite
 # the baby shows carries only the gate's relay.
-appId: org.guardedsleep.app.alpha
+appId: org.guardedsleep.app.dev
 ---
 - launchApp:
     clearState: true

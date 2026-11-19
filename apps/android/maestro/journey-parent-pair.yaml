@@ -1,5 +1,5 @@
 # AC-12 step 3 (parent): paste the baby's code. Env: CODE (never logged by the flow).
-appId: org.guardedsleep.app.alpha
+appId: org.guardedsleep.app.dev
 ---
 - runFlow: dismiss-system-dialogs.yaml
 # The parent's empty home may have opened the scan screen on its own.
