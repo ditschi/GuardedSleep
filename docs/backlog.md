@@ -135,6 +135,7 @@ Concept and goals of ADR-013 are decided. The UX review of the ambient bar, the 
 - `IDEA` Responsive layout for tablets.
 - `IDEA` First-run coach marks on the parent monitoring screen (alpha-ux-flows §3.2 step 4): designed and screenshotted, never wired (`coachPending` is never set, `dismissCoach` is an explicit no-op; found by `ui-journey-tests`, 2026-11-14). Owner to decide: build or remove.
 - `IDEA` "Last used" line on the home card: the screen renders `AppState.lastUsedWallMs`, but `LinkController` never sets it, so the line never shows (found by `ui-journey-tests`, 2026-11-14); owner to decide whether to write it (when monitoring last stopped) or drop the line.
+- `IDEA` Cleanup: Android `AppState.paired` is redundant with `connections.isNotEmpty()` since saved connections per role (#56) and the one Home (`redesign-calm-ui`); remove it or keep it for parity with the web contract, which has no saved connections yet. Decide together with the web parity question.
 
 ### ui-appearance
 
@@ -165,6 +166,7 @@ Concept and goals of ADR-013 are decided. The UX review of the ambient bar, the 
 - `PLANNED` (T1) Weblate for volunteer translators (ADR-021 §2).
 - `PLANNED` (owner, no date) Owner review of the German catalogue: reviewed keys go into `de.json` `$meta.reviewed`, and the catalogue check accepts the list. Review improves a locale and does not gate shipping (ADR-021). Moved from `expand-locales` task 4.3 on 2026-11-10 so the change could archive (review 2026-11, finding D2).
 - `IDEA` A "translation feedback" link next to machine-translated copy.
+- `IDEA` Cleanup: the `pt` catalogue mixes European (pt-PT) and Brazilian (pt-BR) Portuguese; decide one variant and align the catalogue (found in the `redesign-calm-ui` copy review, 2026-11).
 
 ### distribution
 

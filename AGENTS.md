@@ -147,6 +147,7 @@ Core       Rust, sans-IO (core, relay): no I/O, threads or clocks; emits message
 - **Rust:** `cargo fmt`, `clippy -D warnings`; `unwrap_used`, `expect_used`, `panic`, `indexing_slicing` are denied in parser modules; no `unsafe` outside generated FFI glue; every module has unit tests; behaviour changes update vectors/traces (bless, review the diff by hand).
 - **Kotlin:** official style (ktfmt), no `!!` in production code, I/O off the main thread, stable `testTag` ids (snake_case, shared with the web), manual constructor DI.
 - **TypeScript:** strict mode; Svelte 5 runes; focus moves to the screen heading on route change.
+- **Safety colours (Kotlin and TypeScript):** alerts, connection stages from level 1, warning banners and safety chips take colours only from `SafetyColors` / `--safety-*`, never from the colour scheme or night mode (`ui-appearance`).
 
 ### 5.4 Tests
 

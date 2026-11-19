@@ -1,423 +1,172 @@
-# UI Design Specification
+# UI design
 
-## Design Principles
+> **Reference only (2026-11-19):** this page summarises the built "calm" redesign from the OpenSpec change [`redesign-calm-ui`](../../openspec/changes/redesign-calm-ui/proposal.md) (design in its [`design.md`](../../openspec/changes/redesign-calm-ui/design.md), PRs #69–#80). The **specs are the source of truth**: [`openspec/specs/`](../../openspec/specs/) and, until the change is archived, its delta specs ([`ui-appearance`](../../openspec/changes/redesign-calm-ui/specs/ui-appearance/spec.md), [`connection-status`](../../openspec/changes/redesign-calm-ui/specs/connection-status/spec.md), [`parent-alerts`](../../openspec/changes/redesign-calm-ui/specs/parent-alerts/spec.md), [`device-setup`](../../openspec/changes/redesign-calm-ui/specs/device-setup/spec.md), [`link-supervision`](../../openspec/changes/redesign-calm-ui/specs/link-supervision/spec.md), [`audio-monitoring`](../../openspec/changes/redesign-calm-ui/specs/audio-monitoring/spec.md), [`web-client`](../../openspec/changes/redesign-calm-ui/specs/web-client/spec.md), [`i18n`](../../openspec/changes/redesign-calm-ui/specs/i18n/spec.md)). Where this page and a spec differ, the spec wins.
+>
+> **Visual reference:** the reviewed mockup [`mockup.html`](../../openspec/changes/redesign-calm-ui/mockup/mockup.html) (54 frames, token panel, EN/DE copy table). Frame numbers below refer to it.
+>
+> **Status rule for this file:** every section carries a `STATUS` tag; everything tagged `BUILT` is on `main` on Android and web unless the section says otherwise.
 
-1. **Can a tired parent at 3 AM, in a dark room, with one hand, use this reliably?**
-2. Night mode is default -- baby monitors are primarily used in dark environments
-3. Large touch targets (min 48dp, preferably 72dp+ for primary actions)
-4. Information hierarchy: most important info visible from 1-2m distance
-5. Actionable error messages: "What happened? Is my child safe? What should I do?"
-6. No jargon -- no "WebRTC", "DTLS", "ICE", "DataChannel" in UI
+## 1. Principles
 
-## Color System
+> `STATUS: BUILT`
 
-### Night Mode (Default)
+1. **Calm by default, unmistakable when it matters.** Connected is neutral; a coloured bar always means a change. Alert surfaces are dark so they do not light the room.
+2. **People words.** Stages are named by what the phone does. No "level", "link", "peer", L0–L3, protocol terms or IP addresses in the UI. The baby is "the child".
+3. **Never colour alone.** Every state has colour, a symbol and words; the baby kiosk adds shape.
+4. **Each state is said once.** A banner is the single statement of a state. Information is never drawn as a disabled button.
+5. **Nothing looks calm while nothing is monitored.** "All quiet" hides when the microphone is silent, the baby stopped or the report is incomplete.
+6. **Thumb zone, one hand.** Listen is a tap toggle; Talk is the only hold. Targets are at least 48 dp.
 
-| Element                  | Color             | Hex       |
-| ------------------------ | ----------------- | --------- |
-| Background               | Pure black (OLED) | `#000000` |
-| Primary text             | Muted white       | `#AAAAAA` |
-| Secondary text           | Dark gray         | `#666666` |
-| Accent green (quiet)     | Dark green        | `#116611` |
-| Accent yellow (caution)  | Dark yellow       | `#665511` |
-| Accent red (alert)       | Dark red          | `#661111` |
-| Accent red (alert pulse) | Muted red         | `#882222` |
+## 2. Colour schemes and safety colours
 
-### Baby Screen Ultra-Dark
+> `STATUS: BUILT`
 
-Even darker than night mode. Status dots only: 4dp diameter.
+One token set for both clients (values in the mockup's token panel, source `mockup/gen_css.py`):
 
-## Screens
+| Scheme | Use                      | Key values                                                                                 |
+| ------ | ------------------------ | ------------------------------------------------------------------------------------------ |
+| Dusk   | dark, default            | background `#141218`, primary `#C9BCEB`                                                    |
+| Day    | light                    | white cards with a 1 px `#E0D8DF` border on `#FAF7F4`                                      |
+| Ember  | night mode (parent only) | black background, text `#D19586` (7.9:1), variant `#A87365` (5.0:1); dim through backlight |
 
-### 1. Home Screen (Adaptive)
+Body text reaches at least 4.5:1 in every scheme, text in the main monitoring states at least 7:1. The old dark-theme setting maps to Dusk or Day.
 
-**First launch (no saved connections):**
+**Fixed safety colours** live outside the schemes and never change with Dusk, Day or night mode: info blue, warning orange, alert red, caution yellow, ok green (a dot only, when calm), plus the full-screen alert palettes:
 
-```
-┌──────────────────────────────────┐
-│                                  │
-│   GuardedSleep                   │
-│   Privacy Baby Monitor           │
-│                                  │
-│   ┌────────────────────────┐     │
-│   │  🛏️  Start as Baby Unit │     │  ← 120dp high, full width
-│   │  This device stays      │     │
-│   │  with the child          │     │
-│   └────────────────────────┘     │
-│                                  │
-│   ┌────────────────────────┐     │
-│   │  📱  Join as Parent     │     │  ← 120dp high, full width
-│   │  This device comes      │     │
-│   │  with you                │     │
-│   └────────────────────────┘     │
-│                                  │
-│   Step 1 of 3: Choose this       │
-│   device's role                  │
-│                                  │
-│                         ⚙️       │
-└──────────────────────────────────┘
-```
+| Palette             | Background | Slab      | Used for                       |
+| ------------------- | ---------- | --------- | ------------------------------ |
+| Noise (wine)        | `#250A10`  | `#7A1E30` | noise alert                    |
+| No connection (red) | `#2A0709`  | `#8C1D24` | connection alert from 1 min    |
+| Loud alarm (red)    | `#3A080B`  | `#951E27` | loud alarm, with a hazard band |
+| Battery critical    | `#1F1209`  | `#7A3D12` | baby battery below 5 % (amber) |
 
-**Returning user (saved connections exist):**
+Red is reserved for "you can't hear the child". Slab text is at least 7.4:1 with a mandatory 2 px light border. In Dusk and Day no non-alert element except the logo uses a hue within 20° of a safety hue; brand apricot appears only in the logo.
+
+In code: Android `SafetyColors` (a `CompositionLocal` independent of the scheme), web `--safety-*` custom properties on `:root` that no `[data-scheme]` rule overrides. The scheme attribute is set by a small module before the first paint (no inline script, CSP unchanged).
+
+## 3. Typography and motif
+
+> `STATUS: BUILT`
+
+- **Plus Jakarta Sans** (SIL OFL 1.1), bundled in the APK and served from the web client's own origin; never loaded from a third-party server. Subset to Latin and Latin Extended. Other scripts (Cyrillic for uk, Arabic, Devanagari, CJK, Hangul) use the system font; no second face is bundled.
+- Tabular numerals for counters and times. Sizes 12 (caps labels) / 14 (floor for running text) / 15 / 16 / 20 / 28 / 52 (counters).
+- **Motif:** the horizon line: the logo, the hairline under the status bar and the Home header, and the monitor's sound strip (last minute of level history, dashed line "A sound above this line sends an alert").
+
+## 4. Navigation
+
+> `STATUS: BUILT` (Android); web see the note below
 
 ```
-┌──────────────────────────────────┐
-│                              ⚙️  │
-│                                  │
-│   ┌────────────────────────┐     │
-│   │  Kinderzimmer Max       │     │  ← 80dp card, full width
-│   │  Baby Unit • last: today│     │     One tap to reconnect
-│   │  Tap to connect         │     │
-│   └────────────────────────┘     │
-│                                  │
-│   ┌────────────────────────┐     │
-│   │  Omas Telefon           │     │  ← More saved connections
-│   │  Parent • last: 3d ago  │     │
-│   └────────────────────────┘     │
-│                                  │
-│                                  │
-│   ┌────────────────────────┐     │
-│   │  + New Connection       │     │  ← Less prominent
-│   └────────────────────────┘     │
-│                                  │
-└──────────────────────────────────┘
+Home (both roles, up to 2 connections each, "Start") ──▶ Parent monitor │ Baby kiosk
+ └ Settings: Connections · This device
+Monitor: status bar · tool row [Alert chip][night][gear] · hero line · sound strip · meta line
+         dock: Listen (tap) · Hold to talk · Pause noise alerts · More (sheet; Stop monitoring apart)
 ```
 
-**Key decisions:**
+- **One Home with both roles** ("Parent device", "Baby device"), each with its saved connections. Starting a connection chooses the role. The first start shows two large choices without "Use as default".
+- **Settings** has two groups. **Connections**: saved connections per role with rename and forget; read-only while monitoring ("Stop monitoring to change connections"). **This device**: parent rows Alerts, Display, Open at start, Check setup, Language, About, Advanced; baby rows Sound detection, Quiet mode, Talk-back, Open at start, Check setup, Language, About, Advanced (no Display). Risky settings stay in Advanced. The connection alarm tone is in This device › Alerts.
+- **Open at start**: _Ask every time_ (default), _Baby unit_, _Parent unit_, and the parent's automatic-start connection, which starts monitoring once per app start. "Choose another connection" stops that start and shows Home.
+- **No switching while monitoring.** The way out is Stop monitoring (confirm) → Home → choose. The stop confirmation silences and acknowledges nothing.
+- **Back:** monitor → app to background (monitoring continues); full-screen alert → nothing; sheet → closes; Settings → monitor. Web: confirm before leaving while monitoring.
+- **Web:** same monitor and dock (Hold to talk with Space held). Settings stays one page with both groups until the web has saved connections (task 4.6 open). The web adds the sound gate, the keep-page-open and background banners and **Black screen** (formerly "Night screen"; a black cover, first tap shows status, any alert replaces it).
 
-- Returning user sees saved connections first (daily use case > first setup)
-- One tap to reconnect (CRITICAL: most common action must be fastest)
-- Swipe left on card to delete (with confirmation)
-- Connection card shows: editable name, role, last connected, connection type icon
-- Error on reconnect: "Device not reachable. Is [name] turned on and on the same network?" + "Retry"
+## 5. Connection states
 
-### 2. Parent Screen
+> `STATUS: BUILT`
 
-```
-        ████  ← Ambient connection bar (green=yellow=red) + optional "Test" probe icon
-┌──────────────────────────────────┐
-│ ⚡ 72%   🔗 Good   🔔 Test   ⚙️   │  ← Status bar: battery, link, probe, settings
-├──────────────────────────────────┤
-│                                  │
-│      ░░░░░░░░░░░░░░░░░░░░░░     │
-│      ████████████░░░░░░░░░░     │  ← Noise level bars (35-40%)
-│      ████████████░░░░░░░░░░     │     5-8 vertical bars (equalizer)
-│      ████████████░░░░░░░░░░     │     Green → Yellow → Red gradient
-│      ░░░░░░░░░░░░░░░░░░░░░░     │     Min height: 120dp
-│                                  │
-│     All quiet since 22:14        │  ← 20-24sp text
-│                                  │
-├──────────────────────────────────┤
-│                                  │
-│     ┌────────────────────┐       │
-│     │                    │       │
-│     │   🎧 LISTEN        │       │  ← Listen button (35-40%)
-│     │   Hold or slide     │       │     Min 72dp high, 80% width
-│     │   up to lock        │       │     Thumb-reachable (bottom third)
-│     │                    │       │
-│     └────────────────────┘       │
-│                                  │
-│     ┌──────┐                     │
-│     │ 🔕   │  Snooze             │  ← 48dp, separate from listen
-│     └──────┘                     │
-│                                  │
-└──────────────────────────────────┘
-```
+Colour comes from the core's level and state only; the platform adds no timers. The core exposes `down_since_ms` and `next_level_at_ms` so the UI can show the counter and the next stage's clock time without copying thresholds.
 
-**Ambient connection affordance:**
+| Core state, timing                      | Look                                                | Copy (EN, example connection "Nursery")                                                                | Feedback                        |
+| --------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------- |
+| connected                               | neutral bar, green dot, link symbol                 | "Connected · Nursery"                                                                                  | none                            |
+| `connecting`, 0–20 s                    | blue, refresh                                       | "Connecting · Nursery" / "Waiting for the baby device. …"                                              | none                            |
+| `reconnecting`, 0–20 s                  | blue, refresh                                       | "Reconnecting · Nursery" / "Short drops are normal."                                                   | none                            |
+| `connecting`, 20–60 s                   | orange, 2 px outline, broken link                   | "Not connected yet · Nursery" / "… Is monitoring started on it?"                                       | quiet notification              |
+| `reconnecting`, 20–60 s                 | orange, 2 px outline, broken link                   | "Can't reach Nursery · Still trying" / "If it isn't back after 1 minute, this phone vibrates …"        | quiet notification              |
+| from 1 min                              | red full screen (first connect: "Couldn't connect") | label "Your phone is vibrating", "Please check on the child", counter, "Loud alarm in 2 min (01:07) …" | vibration, soft tone every 10 s |
+| acknowledged                            | red, static, pause                                  | label "Alarm paused", "Comes back at 03:17 if still no connection"                                     | silent until it ends            |
+| from 3 min, or after the acknowledgment | red with hazard band, speaker                       | label "Loud alarm sounding", "Still no connection to Nursery", "Go to the child now."                  | loud alarm on the alarm stream  |
+| `peer_stopped`                          | grey, pause                                         | "Stopped · Nursery" / "Check who stopped it on the baby device."                                       | one alert, no escalation        |
+| needs the user                          | red container                                       | "The code didn't match" / "One device needs an update"                                                 | as before                       |
+| restored                                | card until OK, check circle                         | "Connected again" / "Monitoring was interrupted for 1 min 48 s." plus the missed-sound result          | notification, same text         |
 
-- Thin full-width bar **above** the status row (or behind it) using the same colors as [Visual Alert Language](#7-visual-alert-language) -- green = connected, yellow = reconnecting, red = disconnected.
-- When disconnected >60s, bar animates slowly to match connection-lost escalation urgency.
+- **Blue only for the first 20 s**, orange from 20 s, red full screen from 1 min, loud alarm from 3 min. Yellow is no longer a connection colour.
+- The status bar is on every parent screen while monitoring, including Settings and sheets.
+- The **restored card** stays until the parent taps OK; a new outage replaces it.
+- Troubleshooter causes in the cause card: "The baby device isn't online", "This phone has no internet", "The connection is blocked on this network". "Try now" resets the backoff. Before the first connection, "Wrong connection?" stops with one tap in the first minute and goes through the stop confirmation from 1 min.
+- Full EN/DE copy is in the mockup's copy table (★ marks `critical` keys).
 
-**Probe / test alert:**
+## 6. Alert template
 
-- Small **Test** control (icon + label) in the status zone triggers a synthetic alert (see [parent-alerts spec](../../openspec/specs/parent-alerts/spec.md)) so caregivers verify DND override + audio routing after updates or before leaving for an event.
+> `STATUS: BUILT`
 
-**Status bar (Zone 1):**
+One template for noise, connection from 1 min and baby battery critical (frames 08, 12, 13, 25, 26, 31), top to bottom:
 
-- Left: Baby battery with icon, color changes at <30% (yellow) and <15% (red, blinking)
-- Center: Connection quality as colored dot + text (Good / Medium / Poor)
-- Right: Settings gear (small)
-- Font: 14sp, with color feedback so text is secondary
+1. Flat status strip and a caps label saying what the phone does (both hidden from accessibility).
+2. Headline, then a counter with its label below (spoken in words).
+3. One sentence with the next stage and its clock time; decorative progress segments with words ("Phone vibrating now").
+4. Cause card: cause line, step 1 visible, "Try now", "More steps" folded.
+5. A quiet "Stop monitoring" text button at the end of the content.
+6. One filled, pinned action: "I'm checking" (connection, until acknowledged; none while acknowledged), "Listen" / "Stop sound" (noise).
 
-**Noise level bars (Zone 2):**
+The body scrolls; the action stays pinned at 200 % text. Sound and vibration are as built.
 
-- 5-8 vertical bars side by side (equalizer style), filling bottom to top
-- Color gradient: green (quiet) → yellow (medium) → red (loud/threshold exceeded)
-- When threshold exceeded: entire area pulses gently red (attention without panic)
-- When quiet: bars show minimal baseline (not empty -- shows "system is working")
-- Min bar height: 120dp (visible from 1-2m distance)
+## 7. Banners on the monitor
 
-**"All quiet since..." (Zone 2b):**
+> `STATUS: BUILT`
 
-- Large text (20-24sp): "All quiet since 22:14"
-- When noise detected: text changes to "Noise detected" with pulsing color
-- Primary reassurance element
+One global order: **security warning › microphone silent › readiness (worst item, with "Fix") › baby battery low or unplugged › baby device may ring › weak connection › noise alerts paused › Vibrate only**. Browser banners (sound gate, keep this page open, back from the background) rank below readiness.
 
-**Listen button (Zone 3):**
+At most **two banners show; the rest fold into "+N more"** (a 48 dp text link; spoken "2 more notices: …"). When the Vibrate-only banner is folded, the alert chip shows its label again. Each new warning banner is announced once. The ranking is one pure function per client (Kotlin in `ui-contract`, TypeScript in `apps/web`) with a mirror test. The talk-back noise pause is the talk panel's status line, not a banner.
 
-- Push-to-listen: hold → audio streams. Release → stops.
-- Slide-to-lock: while holding, slide up → locks. Tap again → stops.
-- Visual states:
-  - Idle: rounded button with headphone icon + "Listen"
-  - Active (holding): button grows/brightens, waveform animation shows live audio
-  - Locked (slide-to-lock): lock icon appears, button stays active
-- Hint text (first time only): "Hold to listen, slide up to lock"
+Renames: "Discreet" → **"Vibrate only"** (one reminder line on Home while it is set); "Snooze" → **"Pause noise alerts"** (10 or 30 min) with an 8 s Undo, offered only when no noise event is running.
 
-**Alert state:**
+## 8. Baby kiosk
 
-- Pulsing red border around noise bars
-- Text: "Noise detected since 23:47 • Audio streaming"
-- Prominent "Mute" button replaces Listen button
-- Snooze options visible: [5 min] [15 min] [30 min] [1h]
+> `STATUS: BUILT`
 
-### 3. Baby Screen
+Near-black at minimum brightness, no sound or vibration, no night mode setting. A dim status line (`#7D7671`, 4.7:1) is always visible ("Listening · Travel cot", "Parent device not responding — still trying", "Needs attention: not charging · 12 %"). **Marks by shape**, readable at arm's length without hue:
 
-**Active mode (before kiosk lock):**
+| State                            | Mark                                                    |
+| -------------------------------- | ------------------------------------------------------- |
+| fine                             | short solid bar, 44 × 6 dp, centred                     |
+| waiting, or first 20 s of a drop | no mark                                                 |
+| still trying (20–60 s)           | dashed top edge                                         |
+| no connection (from 1 min)       | 5 dp frame, slow 4 s pulse (static with reduced motion) |
+| needs attention                  | bar plus a separate 10 dp square                        |
 
-```
-┌──────────────────────────────────┐
-│                                  │
-│          ✅ Connected             │
-│      with [Parent device name]   │
-│                                  │
-│        ⚡ Charging (72%)          │
-│                                  │
-│     ── Monitoring active ──      │
-│                                  │
-│    ┌──────────────────────┐      │
-│    │   🔒 Lock Screen      │      │
-│    └──────────────────────┘      │
-│                                  │
-└──────────────────────────────────┘
-```
+No mark is brighter than `#5A1414` (relative luminance cap). For up to 60 s after the first verified contact and on every touch-wake, a set-up confirmation shows at wake brightness: "Connected to Anna's phone · Listening" (fallback "Connected to the parent device"). During a talk only the talk indicator shows. Unlocking has an accessibility action with confirmation.
 
-**Kiosk mode (locked) -- auto-dimmed:**
+## 9. Night mode
 
-```
-┌──────────────────────────────────┐
-│                                  │
-│                                  │
-│                                  │
-│           📶  🔋                  │  ← Small icons (12dp):
-│                                  │     Signal + Battery
-│                                  │     (not dots -- recognizable icons)
-│                                  │  ← Almost completely black
-│                                  │
-│                                  │
-│                                  │
-│                                  │  ← No text visible by default
-│                                  │
-└──────────────────────────────────┘
-```
+> `STATUS: BUILT`
 
-**After touch (screen wakes briefly, 3 seconds):**
+- **Off · On · Automatic**, Off by default, on the **parent device only**. Controls: the monitor tool row, the More sheet and Settings › Display.
+- **Automatic uses a daily time window only** (device clock, no light sensor; the sensor is a backlog `IDEA`). A manual change wins until the next start or end of the window.
+- Night mode applies Ember. It **never** applies to full-screen alerts, the status bar from 20 s on and in grey or red states, warning banners or safety chips: they keep the fixed safety colours.
 
-```
-┌──────────────────────────────────┐
-│                                  │
-│                                  │
-│           📶  🔋 72%              │  ← Icons brighten + battery %
-│                                  │
-│     ── Monitoring active ──      │  ← Status text fades in
-│                                  │
-│                                  │
-│                                  │
-│    Hold & slide up to unlock     │  ← Unlock hint appears
-│                                  │
-└──────────────────────────────────┘
-```
+## 10. Connection alarm tone
 
-**Screen dimming behavior:**
+> `STATUS: BUILT` (change `add-connection-alarm-tone`, #65/#70)
 
-- After kiosk lock: screen dims to minimum brightness over 5 seconds
-- Then: screen goes to near-black (only tiny status icons visible at lowest brightness)
-- Touch anywhere: screen wakes briefly (3 seconds), shows status + unlock hint, then dims again
-- This prevents baby from being disturbed by screen glow
-- Option in settings: screen completely off (icons only visible on touch)
+This device › Alerts › "Connection alarm tone": Classic (default), **Low** (tag "Hard of hearing", hint "Hard of hearing? Choose Low."), Beacon, Rising, Chime. A preview plays soft once, then the alarm, at reduced volume. "Test connection alarm" warns that it plays at full alarm volume. A real alert stops any preview. Noise alerts always play the child's own sound.
 
-**Status icons (instead of dots):**
+## 11. Accessibility
 
-- Signal strength icon: 📶 (3 bars style), color-coded (green/yellow/red)
-- Battery icon: 🔋 with fill level, color-coded (green/yellow/red)
-- Icons are 12dp -- small enough to minimize light, large enough to be recognizable
-- Icons are always visible (at minimal brightness) unless "screen off" option is enabled
+> `STATUS: BUILT`
 
-**Unlock mechanism: Hold + Slide (like push-to-talk pattern)**
+- **Alert entry:** focus moves to the headline; focus returns on close; nothing is said twice.
+- **Live regions** announce stage changes only (polite in the first minute, assertive from 1 min, stopped baby, needs user, microphone silent). Timers and countdowns are never live and carry word labels ("1 minute 12 seconds").
+- **200 % text:** alert bodies scroll with the action pinned; the counter shrinks above 1.5×; the tool row wraps to two rows (chip on row 1, night and gear on row 2; order status → alert → night → settings); below 600 dp height only the status bar and Listen stay pinned. Font-scale 2.0 snapshots cover the monitor and the alerts.
+- **Targets** ≥ 48 dp, dock tiles ≥ 72 dp; buttons never wrap or cut their label.
+- **Gesture alternatives:** Listen is a toggle with a state description; Talk keeps the screen reader's double-tap-and-hold; kiosk unlock is an accessibility action; every sheet has a visible Close.
+- **Disclosures** ("More steps") are buttons with an expanded state. The icon-only alert chip says "Alerts for sounds: Vibrate only, Change".
+- **Copy conventions** (`i18n`): neutral person, formal German, names only in "State · Name" labels, durations in words ("1 min 48 s"), never `m:ss`.
 
-- Touch and hold anywhere on screen → unlock button/area appears at bottom
-- While holding, slide upward to the unlock area → screen unlocks
-- Release before reaching unlock area = nothing happens, screen dims again
-- Visual feedback: sliding progress indicator (like the listen button slide-to-lock, but in reverse)
-- Consistent interaction pattern: same gesture family as push-to-listen + slide-to-lock on parent screen
-- Nearly impossible for baby to trigger: requires sustained press + directional slide
-- After unlock: 30s inactivity timeout → auto re-lock with 5s warning
+## 12. Open items
 
-**Connection loss on baby screen:**
+> `STATUS: PLANNED` (tasks in [`tasks.md`](../../openspec/changes/redesign-calm-ui/tasks.md))
 
-- Signal icon → red, exclamation mark overlay
-- Optional: subtle red pulse on icon (very muted, to not disturb child)
-- Auto-reconnect in background
-- On touch-wake: shows "Connection lost. Auto-reconnecting..." text
-
-### 4. Settings Screen
-
-> **MVP structure:** split **Basic** vs **Advanced** (toggle at bottom of Basic). Advanced hides heartbeat, signaling URL, codec experiments, security diagnostics, and debug export ([device-setup spec](../../openspec/specs/device-setup/spec.md)). **Parent alert output and gain** live under **Basic → Notifications** ([ADR-011](../../openspec/changes/archive/2026-10-21-adr-011-audio-routing-parent-side/design.md)).
-
-**Basic**
-
-```
-⚙️ Settings                      [ Show advanced settings ▼ ]
-
-├── 🔔 Notifications …
-│   ├── Threshold / duration / snooze …
-│   ├── Alert audio output        [ Default | Speaker only | Speaker + default ]
-│   ├── Alert playback gain       [slider]
-│   └── Minimum gain during alert [toggle]
-├── 🌙 Display …
-├── 📱 Saved Connections …
-├── 🔋 Battery & Background …
-└── ℹ️ About / Help …
-```
-
-**Advanced** (collapsed by default)
-
-```
-⚙️ Settings                      [ Hide advanced settings ▲ ]
-
-├── … (all Basic groups)
-├── 🛠️ Advanced monitoring
-│   ├── Heartbeat interval        [5s / 10s / … / 30s]
-│   ├── Audio codec / bitrate    [Auto / …]
-│   └── Signaling URL override   [text field]
-├── 🧪 Diagnostics
-│   ├── Export debug log
-│   └── Emoji security fingerprint (pairing audit)
-```
-
-Legacy flat outline (reference only -- do **not** ship as a single list to users):
-
-```
-⚙️ Settings
-│
-├── 🔔 Notifications
-│   ├── Volume threshold          [Slider with live preview]
-│   ├── Duration before trigger   [3s / 5s / 10s / 15s]
-│   ├── Alert tone                [Selection + preview]
-│   ├── Vibration                 [On / Off]
-│   ├── Screen wake               [On / Off]
-│   └── Default snooze duration   [5 / 15 / 30 / 60 min]
-│
-├── 🌙 Display
-│   ├── Night Mode                [Always dark / Light / Auto]
-│   ├── Auto-switch               [By time / System setting]
-│   └── Keep screen on            [On / Off]
-│       (in listen mode)
-│
-├── 📱 Saved Connections
-│   ├── [Device 1]                [Edit / Delete]
-│   ├── [Device 2]                [Edit / Delete]
-│   └── Delete all connections
-│
-├── 🔋 Battery & Background
-│   ├── Battery optimization      [→ Open system settings]
-│   └── Explanation text
-│
-├── 🔐 Security
-│   ├── App lock (PIN/biometrics) [Phase 2 -- not MVP; use OS screen lock]
-│   └── Connection details        [→ Fingerprint, encryption]
-│
-└── ℹ️ About
-    ├── Version
-    ├── Privacy policy
-    ├── Open source licenses
-    └── Support the developer     [→ Donate]
-```
-
-**Volume threshold slider:**
-
-- Live preview: while adjusting, noise bars show current room level and chosen threshold as a line
-- Labels: "More sensitive ← → Less sensitive" (no dB values)
-- Default: slightly above middle
-
-**Battery optimization deep-link:**
-
-- Android-only (hidden on iOS in Phase 2)
-- Opens device battery optimization settings directly
-- OEM-specific hint if possible ("Samsung: Look for 'Don't restrict app in standby'")
-- Link to dontkillmyapp.com
-
-## 5. Phone vs. Tablet
-
-### Breakpoints
-
-| Width     | Device                     | Layout                  |
-| --------- | -------------------------- | ----------------------- |
-| < 600dp   | Phone                      | Single column (primary) |
-| 600-840dp | Small tablet / large phone | Enlarged single column  |
-| > 840dp   | Tablet                     | Two-column layout       |
-
-### Tablet Parent Screen (Landscape)
-
-```
-┌─────────────────────────────┬──────────────────────────┐
-│                             │                          │
-│   Noise level bars          │   ⚡ 72%  Battery        │
-│   (larger, more bars)       │   🔗 Good  Connection    │
-│                             │                          │
-│   [Mini-history: 10 min]   │   All quiet              │
-│                             │   since 22:14            │
-│                             │                          │
-│                             │   [🎧 LISTEN button]     │
-│                             │   [🔕 Snooze button]     │
-│                             │                          │
-└─────────────────────────────┴──────────────────────────┘
-```
-
-## 6. Alert Escalation
-
-### Connection Loss
-
-| Time     | Level      | Behavior                                                                                                            |
-| -------- | ---------- | ------------------------------------------------------------------------------------------------------------------- |
-| 0-20s    | Silent     | Auto-reconnect in background. Connection icon → yellow.                                                             |
-| 20s-60s  | Gentle     | Subtle vibration + small banner: "Connection interrupted -- reconnecting..."                                        |
-| 60s-3min | Urgent     | Louder tone + persistent notification + vibration. "Connection to baby device lost for [X]."                        |
-| > 3min   | Full alarm | Max tone (override DND if possible), screen wake, repeating vibration. "Connection lost! Please check baby device." |
-
-### Noise Alert
-
-- Threshold exceeded → **vibration + screen on + app to foreground + volume meter / noise bars live + child audio** on the route selected per [ADR-011](../../openspec/changes/archive/2026-10-21-adr-011-audio-routing-parent-side/design.md) (daily profile still biases to speaker for audibility)
-- No separate alarm ringtone -- the child's actual voice/cry IS the alert
-- Audio plays on ALARM stream (works even in silent mode / DND)
-- This is more natural and less anxiety-inducing than a synthetic alarm sound
-- Repeated alerts: no escalation needed, audio already playing. Visual pulse indicator.
-- Snooze: pauses notifications, monitoring continues, noise events recorded
-- Re-trigger: after 2+ min of silence followed by new noise → new full alert
-
-### Snooze Behavior
-
-- Snooze pauses NOISE alerts only
-- Connection loss and low battery warnings are NEVER snoozed (safety-critical)
-- Visual indicator: "Snooze active: 12 min remaining" (yellow banner)
-- Auto-resume after snooze expires
-
-## 7. Visual Alert Language
-
-| State              | Color         | Animation               | Meaning                        |
-| ------------------ | ------------- | ----------------------- | ------------------------------ |
-| All quiet          | Green/neutral | Static                  | Child sleeping                 |
-| Light noise        | Yellow        | None                    | Below threshold, informational |
-| Threshold exceeded | Muted red     | Gentle pulse (2s cycle) | Alert active                   |
-| Connection shaky   | Yellow        | None                    | Brief interruption             |
-| Connection lost    | Red           | Fast pulse (1s cycle)   | Urgent                         |
-| Snooze active      | Yellow        | None                    | Notifications paused           |
-| Low battery        | Orange        | None                    | Information                    |
-
-## Open Questions
-
-- Exact alert tone selection (warm, mid-pitch, not shrill)
-- Historical mini-graph (10 min noise history) -- include in MVP or Phase 2?
-- Screen completely off (not just dimmed) as baby mode option?
-- Settings wizard on first start (guide through 2-3 most important settings)?
-- Accessibility: WCAG 2.1 AA target, min contrast ratio 4.5:1
+- Web Settings sub-pages and Open at start once the web has saved connections (task 4.6).
+- Emulator gate check of the restored card (task 8.3).
+- Timed-talk accessibility action "Talk for up to 30 s": open owner question (design §15); not built.
