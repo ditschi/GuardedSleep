@@ -69,7 +69,7 @@ object AndroidVersion {
         val epoch = committerEpoch?.takeIf { it.length in 1..12 && it.all(Char::isDigit) }?.toLong()
         val sha = commit?.take(8)?.takeIf { sha8Pattern.matches(it) }
         val code = epoch?.minus(DEV_EPOCH_BASE)
-        if (epoch == null || sha == null || code == null || code < 1 || code > PLAY_CEILING) {
+        if (sha == null || code == null || code < 1 || code > PLAY_CEILING) {
             return DevVersion(
                 versionName = "$base${sep}dev.0+unknown",
                 versionCode = 1,
@@ -80,7 +80,8 @@ object AndroidVersion {
             )
         }
         return DevVersion(
-            versionName = "$base${sep}dev.${timestamp.format(Instant.ofEpochSecond(epoch))}+$sha",
+            versionName =
+                "$base${sep}dev.${timestamp.format(Instant.ofEpochSecond(code + DEV_EPOCH_BASE))}+$sha",
             versionCode = code.toInt(),
         )
     }
