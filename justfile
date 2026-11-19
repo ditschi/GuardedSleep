@@ -240,7 +240,11 @@ _gate:
     set -euo pipefail
     source scripts/lib/require.sh
     require gate kvm docker
-    scripts/poc/turn-lifetime.sh
+    # CI runs the TURN-lifetime probe as its own job in parallel (android-native.yml, `turn-lifetime`)
+    # and sets GS_GATE_TURN_LIFETIME=0 here; locally the default runs it first, as before.
+    if [ "${GS_GATE_TURN_LIFETIME:-1}" != "0" ]; then
+      scripts/poc/turn-lifetime.sh
+    fi
     scripts/poc/local-gate.sh
 
 # TURN allocation lifetime spike (task 9.1): a 60 s REST credential keeps relaying for 11+ minutes on coturn. Needs Docker; takes ~12 minutes.
