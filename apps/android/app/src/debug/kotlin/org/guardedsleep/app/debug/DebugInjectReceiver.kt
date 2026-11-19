@@ -8,7 +8,7 @@ import org.guardedsleep.app.media.InjectedAudio
 
 /**
  * `adb shell am broadcast -a org.guardedsleep.app.alpha.debug.INJECT_AUDIO -n
- * org.guardedsleep.app.alpha/org.guardedsleep.app.debug.DebugInjectReceiver --ef rms 0.6 --el
+ * org.guardedsleep.app.dev/org.guardedsleep.app.debug.DebugInjectReceiver --ef rms 0.6 --el
  * duration_ms 3000`
  */
 class DebugInjectReceiver : BroadcastReceiver() {

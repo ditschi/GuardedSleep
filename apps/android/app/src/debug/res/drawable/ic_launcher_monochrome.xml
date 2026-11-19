@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Themed-icon layer of the dev build: the crescent plus a filled badge dot. Themed icons
+     (Android 13+) ignore the background colour, so the badge is what marks the dev app there. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M51.45,32.21A22,22 0,1 0 75.25,61.31A19,19 0,0 1 51.45,32.21Z" />
+    <!-- Badge dot in the open upper right of the crescent, inside the 66 dp safe zone of the adaptive icon. -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M78,34m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0" />
+</vector>

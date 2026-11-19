@@ -1,0 +1,7 @@
+# Build backend for the source-only packages in requirements.txt (args and clint ship no wheel).
+# Hash-pinned like the runtime install, passed with `uv pip install --build-constraints`. Renovate
+# updates it through the pip-compile manager (renovate.json); regenerate with:
+#   mise exec -- uv pip compile --generate-hashes --python-version 3.12 -o tools/fdroid/build-constraints.txt tools/fdroid/build-constraints.in
+# https://pypi.org/project/setuptools/ and https://pypi.org/project/wheel/
+setuptools
+wheel

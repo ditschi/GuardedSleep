@@ -1,5 +1,12 @@
 package org.guardedsleep.buildlogic
 
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+
+/** Version of a dev (debug) build; [warning] is set when the fallback was used. */
+data class DevVersion(val versionName: String, val versionCode: Int, val warning: String? = null)
+
 /**
  * Derives the Play `versionCode` from `versionName` (version.properties), so it is never edited by
  * hand and always orders like the names do.
@@ -39,5 +46,43 @@ object AndroidVersion {
             patch * 1_000 +
             (stage ?: RELEASE_STAGE) * 100 +
             n
+    }
+
+    /**
+     * 2026-01-01T00:00:00Z: dev version codes count seconds from here (Play ceiling lasts to
+     * ~2092).
+     */
+    const val DEV_EPOCH_BASE = 1_767_225_600L
+    private const val PLAY_CEILING = 2_100_000_000L
+    private val sha8Pattern = Regex("[0-9a-f]{8}")
+    private val timestamp = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneOffset.UTC)
+
+    /**
+     * Dev (debug) builds: `<base><sep>dev.<yyyyMMddHHmmss UTC committer time>+<sha8>` and a code of
+     * seconds since [DEV_EPOCH_BASE], so every later commit on `main` orders higher (F-Droid
+     * clients update by code). `sep` is `.` when [base] already has a pre-release part, `-`
+     * otherwise. Missing or invalid input (no commit info, an epoch before 2026, a code above the
+     * Play ceiling) never fails the build: code 1, `dev.0+unknown`, and a [DevVersion.warning].
+     */
+    fun devVersion(base: String, committerEpoch: String?, commit: String?): DevVersion {
+        val sep = if ('-' in base) "." else "-"
+        val epoch = committerEpoch?.takeIf { it.length in 1..12 && it.all(Char::isDigit) }?.toLong()
+        val sha = commit?.take(8)?.takeIf { sha8Pattern.matches(it) }
+        val code = epoch?.minus(DEV_EPOCH_BASE)
+        if (sha == null || code == null || code < 1 || code > PLAY_CEILING) {
+            return DevVersion(
+                versionName = "$base${sep}dev.0+unknown",
+                versionCode = 1,
+                warning =
+                    "dev version falls back to versionCode 1: need GS_GIT_COMMIT_EPOCH (digits, " +
+                        "2026-01-01 or later) and GS_GIT_COMMIT (hex); got " +
+                        "epoch='${committerEpoch.orEmpty()}', commit='${commit.orEmpty()}'",
+            )
+        }
+        return DevVersion(
+            versionName =
+                "$base${sep}dev.${timestamp.format(Instant.ofEpochSecond(code + DEV_EPOCH_BASE))}+$sha",
+            versionCode = code.toInt(),
+        )
     }
 }

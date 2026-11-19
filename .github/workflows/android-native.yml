@@ -15,7 +15,11 @@
 # tracking issue. Jobs are never retried as a whole, so do not add retry wrappers here.
 #
 # The `dev-apk` job (main only, after the gate passed) re-signs the gate-tested debug APK with a fixed
-# dev key and publishes it to the rolling `android-dev` pre-release (add-dev-apk-prerelease).
+# dev key and publishes it to the rolling `android-dev` pre-release (add-dev-apk-prerelease). The
+# `dev-repo` job then builds the signed dev F-Droid repository with fdroidserver, in its own
+# environment without the APK key or a write token, and `dev-pages` deploys it (add-dev-fdroid-repo).
+# This workflow owns the whole GitHub Pages site: every deploy replaces it, so anything else served
+# from Pages must be assembled into the same deploy (docs/ci-gates.md).
 #
 # Path-filtered workflows cannot be required checks, so this workflow is not part of `ci-ok`.
 name: android-native
@@ -41,6 +45,8 @@ on:
       - "scripts/gradle.sh"
       - "scripts/lib/**"
       - "scripts/poc/**"
+      - "scripts/dev-fdroid-repo.sh"
+      - "tools/fdroid/**"
       - "tools/poc-images.env"
       - "docker/android-native-build/**"
       - "docker/android-emulator/**"
@@ -66,6 +72,8 @@ on:
       - "scripts/gradle.sh"
       - "scripts/lib/**"
       - "scripts/poc/**"
+      - "scripts/dev-fdroid-repo.sh"
+      - "tools/fdroid/**"
       - "tools/poc-images.env"
       - "docker/android-native-build/**"
       - "docker/android-emulator/**"
@@ -178,7 +186,7 @@ jobs:
       cancel-in-progress: false
     env:
       GH_TOKEN: ${{ github.token }}
-      APK_NAME: guardedsleep-alpha-dev.apk
+      APK_NAME: guardedsleep-dev.apk
     steps:
       - name: Check the dev-apk environment secrets
         env:
@@ -204,6 +212,7 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-android
       - name: Re-sign and verify
+        id: sign
         env:
           KEYSTORE_B64: ${{ secrets.GS_DEV_KEYSTORE_B64 }}
           KEYSTORE_PASSWORD: ${{ secrets.GS_DEV_KEYSTORE_PASSWORD }}
@@ -226,36 +235,57 @@ jobs:
             --ks-pass env:KS_PASS --key-pass env:KS_PASS \
             --out "$WORK/out/$APK_NAME" "$WORK/aligned.apk"
           "$apksigner" verify --print-certs "$WORK/out/$APK_NAME"
+          # The key is needed only for the signature: delete it now (the always() step stays as a
+          # backstop), so nothing after this line can use it.
+          rm -f "$WORK/dev.p12"
           (cd "$WORK/out" && sha256sum "$APK_NAME" > "$APK_NAME.sha256")
+          # versionName and versionCode come from the APK itself, the single source of truth.
+          badging="$("$ANDROID_HOME/build-tools/36.0.0/aapt2" dump badging "$WORK/out/$APK_NAME" | grep -m1 '^package:')"
+          echo "$badging"
+          version_name="$(printf '%s' "$badging" | sed -n "s/.*versionName='\([^']*\)'.*/\1/p")"
+          version_code="$(printf '%s' "$badging" | sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p")"
+          [ -n "$version_name" ] && [ -n "$version_code" ] || { echo "::error::no versionName or versionCode in the APK"; exit 1; }
+          {
+            echo "version_name=$version_name"
+            echo "version_code=$version_code"
+          } >> "$GITHUB_OUTPUT"
       - name: Release notes
         env:
           WORK: ${{ runner.temp }}
           SHA: ${{ github.sha }}
           REPO: ${{ github.repository }}
+          VERSION_NAME: ${{ steps.sign.outputs.version_name }}
         run: |
           set -euo pipefail
           short="${SHA:0:7}"
           digest="$(cut -d' ' -f1 "$WORK/out/$APK_NAME.sha256")"
           {
-            echo "Dev build of commit [$short](https://github.com/$REPO/commit/$SHA), $(date -u +'%Y-%m-%d %H:%M UTC')."
+            echo "Dev build \`$VERSION_NAME\` of commit [$short](https://github.com/$REPO/commit/$SHA), $(date -u +'%Y-%m-%d %H:%M UTC')."
             echo
             echo "**Unreviewed, debuggable test build from main for testers. This is not a release.**"
-            echo "It passed the emulator gate, then was re-signed with the project dev key. It updates in place over"
-            echo "earlier dev builds, but not over a Play or release build (different signing key): uninstall first,"
-            echo "which deletes the pairing."
+            echo "It passed the emulator gate, then was re-signed with the project dev key. It installs next to the alpha"
+            echo "and release apps (own application id \`org.guardedsleep.app.dev\`, own pairing) and updates in place"
+            echo "over earlier dev builds."
+            echo
+            echo "**Automatic updates:** add the dev F-Droid repository in Neo Store, F-Droid or Obtainium:"
+            echo "\`https://${REPO%%/*}.github.io/${REPO#*/}/fdroid/dev/repo\` (setup and fingerprint:"
+            echo "[docs/contributing/development.md](https://github.com/$REPO/blob/main/docs/contributing/development.md#dev-apk))."
+            echo
+            echo "**One-time migration:** the earlier dev builds used \`org.guardedsleep.app.alpha\`. Install this app once,"
+            echo "pair again, then remove the old one. The asset was renamed from \`guardedsleep-alpha-dev.apk\` to"
+            echo "\`guardedsleep-dev.apk\`; update any download filter."
             echo
             echo "The APK holds the arm64-v8a libraries only: it installs on arm64 phones, not on x86_64 emulators."
             echo
             echo "SHA-256: \`$digest\`"
           } > "$WORK/notes.md"
-          echo "$short" > "$WORK/short"
       - name: Publish to the android-dev pre-release
         env:
           WORK: ${{ runner.temp }}
           SHA: ${{ github.sha }}
+          VERSION_NAME: ${{ steps.sign.outputs.version_name }}
         run: |
           set -euo pipefail
-          short="$(cat "$WORK/short")"
           # Move the tag to the tested commit; create it on the first run.
           if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/android-dev" >/dev/null 2>&1; then
             gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/android-dev" -f sha="$SHA" -F force=true >/dev/null
@@ -264,15 +294,123 @@ jobs:
           fi
           if gh release view android-dev --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release edit android-dev --repo "$GITHUB_REPOSITORY" --prerelease --latest=false \
-              --title "Dev build $short" --notes-file "$WORK/notes.md"
+              --title "$VERSION_NAME" --notes-file "$WORK/notes.md"
           else
             gh release create android-dev --repo "$GITHUB_REPOSITORY" --prerelease --latest=false \
-              --verify-tag --title "Dev build $short" --notes-file "$WORK/notes.md"
+              --verify-tag --title "$VERSION_NAME" --notes-file "$WORK/notes.md"
           fi
           gh release upload android-dev --repo "$GITHUB_REPOSITORY" --clobber \
             "$WORK/out/$APK_NAME" "$WORK/out/$APK_NAME.sha256"
+          # The asset was renamed with the application id change; drop the old names once (no-op later).
+          for old in guardedsleep-alpha-dev.apk guardedsleep-alpha-dev.apk.sha256; do
+            gh release delete-asset android-dev "$old" --repo "$GITHUB_REPOSITORY" --yes 2>/dev/null || true
+          done
+      - name: Hand the APK on to the repository job
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: guardedsleep-dev-apk
+          path: ${{ runner.temp }}/out/${{ env.APK_NAME }}
+          retention-days: 1
+          if-no-files-found: error
       - name: Remove the dev keystore
         if: always()
         env:
           WORK: ${{ runner.temp }}
         run: rm -f "$WORK/dev.p12"
+
+  dev-repo:
+    name: build dev F-Droid repository
+    needs: dev-apk
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # Holds the repository key (environment dev-repo, main only) and runs third-party Python code, so
+    # it gets neither the dev APK key nor a token that can write (design §6, Risks). contents: read
+    # is only for checking out the scripts and the lock files.
+    environment: dev-repo
+    permissions:
+      contents: read
+    env:
+      # Public SHA-256 of the repository certificate, printed by scripts/dev-repo-key.sh; the job
+      # verifies the live index against it before it reuses older APKs, and refuses the new index if
+      # the key does not match. A key rotation changes it here and in docs/contributing/development.md.
+      GS_DEV_REPO_FINGERPRINT: B923BF7A8ABEFF37A1A797BE22ECD38124FC511F1026CF869BA38D64072720AE
+    steps:
+      - name: Check the dev-repo environment and the pinned fingerprint
+        env:
+          KEYSTORE_B64: ${{ secrets.GS_DEV_REPO_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.GS_DEV_REPO_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.GS_DEV_REPO_KEY_ALIAS }}
+        run: |
+          missing=0
+          for pair in "GS_DEV_REPO_KEYSTORE_B64:$KEYSTORE_B64" "GS_DEV_REPO_KEYSTORE_PASSWORD:$KEYSTORE_PASSWORD" "GS_DEV_REPO_KEY_ALIAS:$KEY_ALIAS"; do
+            if [ -z "${pair#*:}" ]; then
+              echo "::error::Secret ${pair%%:*} is missing in the GitHub environment dev-repo (run scripts/dev-repo-key.sh, see docs/contributing/development.md, Dev APK)"
+              missing=1
+            fi
+          done
+          if ! printf '%s' "$GS_DEV_REPO_FINGERPRINT" | tr -d ':' | grep -Eiq '^[0-9a-f]{64}$'; then
+            echo "::error::GS_DEV_REPO_FINGERPRINT in .github/workflows/android-native.yml is still the placeholder: set it to the fingerprint scripts/dev-repo-key.sh printed (task 4.1)"
+            missing=1
+          fi
+          exit "$missing"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: guardedsleep-dev-apk
+          path: ${{ runner.temp }}/in
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # uv (installs fdroidserver from the hash lock) and a JDK (jarsigner, keytool) from mise.toml.
+      - uses: ./.github/actions/setup-mise
+        with:
+          install_args: "uv java"
+      # build-tools for aapt2 and apksigner.
+      - uses: ./.github/actions/setup-android
+      - name: Install fdroidserver from the hash lock
+        run: |
+          set -euo pipefail
+          mise exec -- uv venv --python 3.12 "$RUNNER_TEMP/fdroid-venv"
+          # Every package, also the build backend of the source-only args and clint, is checked
+          # against a hash. https://docs.astral.sh/uv/pip/compatibility/#hash-checking-mode
+          mise exec -- uv pip install --python "$RUNNER_TEMP/fdroid-venv/bin/python" --require-hashes \
+            --build-constraints tools/fdroid/build-constraints.txt -r tools/fdroid/requirements.txt
+          "$RUNNER_TEMP/fdroid-venv/bin/fdroid" --version
+      - name: Build the repository
+        env:
+          KEYSTORE_B64: ${{ secrets.GS_DEV_REPO_KEYSTORE_B64 }}
+          GS_DEV_REPO_KEYSTORE_PASSWORD: ${{ secrets.GS_DEV_REPO_KEYSTORE_PASSWORD }}
+          GS_DEV_REPO_KEY_ALIAS: ${{ secrets.GS_DEV_REPO_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/dev-repo.p12"
+          export GS_DEV_REPO_KEYSTORE="$RUNNER_TEMP/dev-repo.p12"
+          export FDROID="$RUNNER_TEMP/fdroid-venv/bin/fdroid"
+          mise exec -- scripts/dev-fdroid-repo.sh "$RUNNER_TEMP/in/guardedsleep-dev.apk" "$RUNNER_TEMP/repo-work"
+      - name: Remove the repository keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/dev-repo.p12" "$RUNNER_TEMP/repo-work/keystore.p12" "$RUNNER_TEMP/repo-work/fdroid/config.yml"
+      # The site root, so the repository is served at /fdroid/dev/repo and not at /.
+      # https://github.com/actions/upload-pages-artifact#inputs
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: ${{ runner.temp }}/repo-work/site
+
+  dev-pages:
+    name: deploy dev F-Droid repository (GitHub Pages)
+    needs: dev-repo
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # A job has one environment and the deployment must run in github-pages. The two permissions
+    # belong to this job only. https://github.com/actions/deploy-pages#usage
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

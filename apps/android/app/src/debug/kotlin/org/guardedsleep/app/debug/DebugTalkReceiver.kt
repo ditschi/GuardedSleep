@@ -11,7 +11,7 @@ import org.guardedsleep.app.graph
 /**
  * Gate hooks for talk-back (`scripts/poc/gate.sh`, AC-11).
  * - `adb shell am broadcast -a org.guardedsleep.app.alpha.debug.TALK -n
- *   org.guardedsleep.app.alpha/org.guardedsleep.app.debug.DebugTalkReceiver --ez pressed true`
+ *   org.guardedsleep.app.dev/org.guardedsleep.app.debug.DebugTalkReceiver --ez pressed true`
  *   presses (or releases) the parent's talk button.
  * - `-a org.guardedsleep.app.alpha.debug.AUDIO_STATE --es tag before` logs the device's audio mode,
  *   alarm stream index and speaker route, so the gate can compare them before and after a talk.

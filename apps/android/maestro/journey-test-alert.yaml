@@ -1,7 +1,7 @@
 # AC-12 step 4 (parent): the test alert chain over the verified link. The alert plays while the parent app is in
 # front (no separate alert screen then), so the end of the probe is its question; the gate also reads the
 # parent's alert from the GS_POC log.
-appId: org.guardedsleep.app.alpha
+appId: org.guardedsleep.app.dev
 ---
 - runFlow: dismiss-system-dialogs.yaml
 - tapOn:

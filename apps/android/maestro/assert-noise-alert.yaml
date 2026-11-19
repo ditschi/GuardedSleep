@@ -1,5 +1,5 @@
 # AC-3: full-screen noise alert over the lock screen (latency itself is measured from GS_POC logs).
-appId: org.guardedsleep.app.alpha
+appId: org.guardedsleep.app.dev
 ---
 - extendedWaitUntil:
     visible:

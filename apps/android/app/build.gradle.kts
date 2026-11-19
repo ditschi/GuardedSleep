@@ -1,5 +1,6 @@
 // UI (Compose screens), navigation and the manual dependency wiring. Depends on `ui-contract` and
 // `platform` only: UniFFI types are not on this module's compile classpath.
+import org.guardedsleep.buildlogic.AndroidVersion
 import org.guardedsleep.buildlogic.coreHostLibDir
 
 plugins {
@@ -68,6 +69,28 @@ android {
             // build (scripts/core-build.sh host). AGP drops .so files from unit-test resources,
             // so JNA gets the directory directly, as in :platform.
             it.systemProperty("jna.library.path", coreHostLibDir())
+        }
+    }
+}
+
+// Debug builds are the dev channel (add-dev-fdroid-repo): own application id, so they install next
+// to alpha and release builds, and a version derived from the commit (committer time and hash from
+// scripts/gradle.sh) that rises with every commit on main, so F-Droid clients offer updates.
+// Release builds keep applicationId and version from version.properties. Doc:
+// https://developer.android.com/reference/tools/gradle-api/current/com/android/build/api/variant/ApplicationVariant
+androidComponents {
+    onVariants(selector().withBuildType("debug")) { variant ->
+        variant.applicationId.set("org.guardedsleep.app.dev")
+        val dev =
+            AndroidVersion.devVersion(
+                base = android.defaultConfig.versionName ?: error("versionName is not set"),
+                committerEpoch = providers.environmentVariable("GS_GIT_COMMIT_EPOCH").orNull,
+                commit = providers.environmentVariable("GS_GIT_COMMIT").orNull,
+            )
+        dev.warning?.let { logger.warn("warning: $it") }
+        variant.outputs.forEach { output ->
+            output.versionCode.set(dev.versionCode)
+            output.versionName.set(dev.versionName)
         }
     }
 }

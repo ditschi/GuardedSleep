@@ -1,0 +1,5 @@
+# F-Droid repository tooling for the dev-repo job (add-dev-fdroid-repo). Pinned exactly; Renovate
+# updates it through the pip-compile manager (renovate.json), then requirements.txt is regenerated:
+#   mise exec -- uv pip compile --generate-hashes --python-version 3.12 -o tools/fdroid/requirements.txt tools/fdroid/requirements.in
+# https://pypi.org/project/fdroidserver/
+fdroidserver==2.4.5
