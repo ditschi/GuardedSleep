@@ -45,6 +45,7 @@ private val BabyApp =
         paired = true,
         monitoring = true,
         peerName = null,
+        babyConnections = listOf(ConnectionUi("1", null, isDefault = true, selected = true)),
     )
 internal const val CODE =
     "guardedsleep://pair?v=1&room=0123456789abcdef&psk=ZmFrZS1wc2stZm9yLXNjcmVlbnNob3RzLW9ubHk&url=wss%3A%2F%2Fsignal.example.org%2Fsig&exp=1792462740000"
@@ -358,6 +359,11 @@ class SetupHomeSettingsShots : ShotBase() {
     private fun twoConnections(app: AppState) =
         app.copy(
             peerName = "Home – old phone",
+            parentConnections =
+                listOf(
+                    ConnectionUi("1", "Home – old phone", isDefault = true, selected = true),
+                    ConnectionUi("2", null, isDefault = false, selected = false),
+                ),
             connections =
                 listOf(
                     ConnectionUi("1", "Home – old phone", isDefault = true, selected = true),
@@ -369,7 +375,14 @@ class SetupHomeSettingsShots : ShotBase() {
     @Test
     fun settings() {
         val parentApp =
-            AppState(role = Role.PARENT, onboardingDone = true, paired = true, peerName = "Lena")
+            AppState(
+                role = Role.PARENT,
+                onboardingDone = true,
+                paired = true,
+                peerName = "Lena",
+                parentConnections =
+                    listOf(ConnectionUi("1", "Lena", isDefault = false, selected = true)),
+            )
         shot("settings/parent_basic") {
             SettingsScreen(
                 FakeAppController(

@@ -5,6 +5,7 @@ import androidx.compose.ui.focus.FocusRequester
 import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
 import org.guardedsleep.app.ui.model.CauseHint
+import org.guardedsleep.app.ui.model.ConnectionUi
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.PairingPhase
 import org.guardedsleep.app.ui.model.PairingState
@@ -36,6 +37,7 @@ class LocaleLayoutShots : ShotBase() {
             paired = true,
             monitoring = true,
             peerName = null,
+            babyConnections = listOf(ConnectionUi("1", null, isDefault = true, selected = true)),
         )
     private val parentApp =
         AppState(
@@ -44,6 +46,8 @@ class LocaleLayoutShots : ShotBase() {
             paired = true,
             monitoring = true,
             peerName = "Lena",
+            parentConnections =
+                listOf(ConnectionUi("1", "Lena", isDefault = false, selected = true)),
         )
     private val calm =
         BabyMonitorState(
