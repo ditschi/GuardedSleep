@@ -56,7 +56,6 @@ import org.guardedsleep.app.ui.common.Headline
 import org.guardedsleep.app.ui.common.ListenButton
 import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.common.MetaLine
-import org.guardedsleep.app.ui.common.NightState
 import org.guardedsleep.app.ui.common.PauseSnackbar
 import org.guardedsleep.app.ui.common.PrimaryButton
 import org.guardedsleep.app.ui.common.QuietButton
@@ -383,7 +382,7 @@ fun ParentMonitorScreen(
                         onClick = { sheet = ParentSheet.MORE },
                     ),
                 night =
-                    nightState(settings.nightMode) to
+                    settings.nightMode to
                         {
                             val nowWall = env.wallNow()
                             controller.updateSettings {
@@ -649,13 +648,6 @@ private fun BannerListSheet(folded: List<BannerSpec>, onDismiss: () -> Unit) {
     }
 }
 
-private fun nightState(mode: NightMode): NightState =
-    when (mode) {
-        NightMode.OFF -> NightState.OFF
-        NightMode.ON -> NightState.ON
-        NightMode.AUTO -> NightState.AUTO
-    }
-
 /**
  * Monitor options: the alert style, the test alert, Settings and, after an automatic start, the way
  * back to Home. There is no connection switch while monitoring; Stop monitoring sits apart, below a
@@ -687,13 +679,7 @@ private fun MoreSheet(
         )
         NightMode.entries.forEach { mode ->
             ChoiceRow(
-                stringResource(
-                    when (mode) {
-                        NightMode.OFF -> R.string.native_ui_settings_night_off
-                        NightMode.ON -> R.string.native_ui_settings_night_on
-                        NightMode.AUTO -> R.string.native_ui_settings_night_auto
-                    }
-                ),
+                nightModeLabel(mode),
                 nightMode == mode,
                 "more_night_" + mode.name.lowercase(),
             ) {

@@ -115,7 +115,7 @@ internal fun NightSection(controller: AppController, s: SettingsState) {
 }
 
 @Composable
-private fun nightModeLabel(mode: NightMode): String =
+internal fun nightModeLabel(mode: NightMode): String =
     stringResource(
         when (mode) {
             NightMode.OFF -> R.string.native_ui_settings_night_off
