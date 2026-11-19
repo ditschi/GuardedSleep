@@ -215,7 +215,6 @@
         }
       },
       "home": {
-        "lastUsed": "Naposledy použito {time}",
         "newPairing": "Nastavit nová zařízení",
         "empty": "Zatím žádná spárovaná zařízení.",
         "start": "Spustit",

@@ -215,7 +215,6 @@
         }
       },
       "home": {
-        "lastUsed": "마지막 사용: {time}",
         "newPairing": "새 기기 설정",
         "empty": "아직 페어링된 기기가 없어요.",
         "start": "시작",

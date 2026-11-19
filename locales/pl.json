@@ -215,7 +215,6 @@
         }
       },
       "home": {
-        "lastUsed": "Ostatnio używane {time}",
         "newPairing": "Skonfiguruj nowe urządzenia",
         "empty": "Nie sparowano jeszcze żadnych urządzeń.",
         "start": "Start",

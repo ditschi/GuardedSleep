@@ -215,7 +215,6 @@
         }
       },
       "home": {
-        "lastUsed": "Ultimo uso {time}",
         "newPairing": "Configura nuovi dispositivi",
         "empty": "Ancora nessun dispositivo associato.",
         "start": "Avvia",

@@ -215,7 +215,6 @@
         }
       },
       "home": {
-        "lastUsed": "Terakhir dipakai {time}",
         "newPairing": "Siapkan perangkat baru",
         "empty": "Belum ada perangkat yang dipasangkan.",
         "start": "Mulai",

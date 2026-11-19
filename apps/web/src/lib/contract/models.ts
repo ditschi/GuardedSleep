@@ -475,7 +475,6 @@ export interface AppState {
   autoStarted: boolean;
   /** False while monitoring is on but nothing keeps the page alive: show red, never green. */
   backgroundProtection: boolean;
-  lastUsedWallMs: number | null;
   /** Show the first-run coach marks on the parent monitoring screen once. */
   coachPending: boolean;
   deviceCheck: DeviceCheck;
@@ -606,7 +605,6 @@ export function defaultAppState(): AppState {
     monitoring: false,
     autoStarted: false,
     backgroundProtection: true,
-    lastUsedWallMs: null,
     coachPending: false,
     deviceCheck: "unknown",
     deviceCheckReasons: [],

@@ -215,7 +215,6 @@
         }
       },
       "home": {
-        "lastUsed": "Senast använd {time}",
         "newPairing": "Ställ in nya enheter",
         "empty": "Inga enheter parkopplade än.",
         "start": "Starta",

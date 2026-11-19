@@ -549,8 +549,6 @@ data class AppState(
      * never green.
      */
     val backgroundProtection: Boolean = true,
-    /** UI-pass additions. */
-    val lastUsedWallMs: Long? = null,
     /** Show the first-run coach marks on the parent monitoring screen once. */
     val coachPending: Boolean = false,
     val deviceCheck: DeviceCheck = DeviceCheck.UNKNOWN,

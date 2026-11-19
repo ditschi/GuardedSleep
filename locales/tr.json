@@ -215,7 +215,6 @@
         }
       },
       "home": {
-        "lastUsed": "Son kullanım: {time}",
         "newPairing": "Yeni cihazlar kur",
         "empty": "Henüz eşleşmiş cihaz yok.",
         "start": "Başlat",

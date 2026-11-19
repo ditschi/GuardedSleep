@@ -215,7 +215,6 @@
         }
       },
       "home": {
-        "lastUsed": "Sidst brugt {time}",
         "newPairing": "Sæt nye enheder op",
         "empty": "Ingen enheder parret endnu.",
         "start": "Start",

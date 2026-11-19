@@ -215,7 +215,6 @@
         }
       },
       "home": {
-        "lastUsed": "Zuletzt genutzt um {time}",
         "newPairing": "Neue Geräte einrichten",
         "empty": "Noch keine Geräte gekoppelt.",
         "start": "Starten",

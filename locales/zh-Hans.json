@@ -215,7 +215,6 @@
         }
       },
       "home": {
-        "lastUsed": "上次使用：{time}",
         "newPairing": "设置新设备",
         "empty": "尚未配对任何设备。",
         "start": "开始",

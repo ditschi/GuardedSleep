@@ -213,7 +213,6 @@
         }
       },
       "home": {
-        "lastUsed": "Last used {time}",
         "newPairing": "Set up new devices",
         "empty": "No devices paired yet.",
         "start": "Start",

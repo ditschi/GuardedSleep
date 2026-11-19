@@ -36,7 +36,6 @@ import org.guardedsleep.app.ui.common.ScrollColumn
 import org.guardedsleep.app.ui.common.SecondaryButton
 import org.guardedsleep.app.ui.common.Title
 import org.guardedsleep.app.ui.common.connectionLabel
-import org.guardedsleep.app.ui.common.formatTime
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.ConnectionUi
@@ -158,14 +157,12 @@ fun HomeScreen(
                 app.parentConnections,
                 canAdd = app.canAddParentPairing,
                 vibrateOnly = settings.alertStyle == AlertStyle.DISCREET,
-                lastUsedWallMs = app.lastUsedWallMs.takeIf { app.lastRole == Role.PARENT },
             )
             HomeRole(
                 controller,
                 Role.BABY,
                 app.babyConnections,
                 canAdd = true,
-                lastUsedWallMs = app.lastUsedWallMs.takeIf { app.lastRole == Role.BABY },
             )
             QuietButton(
                 stringResource(
@@ -199,7 +196,6 @@ private fun HomeRole(
     role: Role,
     connections: List<ConnectionUi>,
     canAdd: Boolean,
-    lastUsedWallMs: Long?,
     /** `parent-alerts` "Vibrate-only reminder at start": a line under the connections. */
     vibrateOnly: Boolean = false,
 ) {
@@ -228,12 +224,7 @@ private fun HomeRole(
     } else {
         AppCard(Modifier.testTag("home_connections_$key")) {
             connections.forEach { c ->
-                ConnectionRow(
-                    role,
-                    c,
-                    connectionLabel(c, connections, role),
-                    lastUsedWallMs.takeIf { c.selected },
-                ) {
+                ConnectionRow(role, c, connectionLabel(c, connections, role)) {
                     controller.startConnection(role, c.id)
                 }
             }
@@ -262,7 +253,6 @@ private fun ConnectionRow(
     role: Role,
     c: ConnectionUi,
     label: String,
-    lastUsedWallMs: Long?,
     onStart: () -> Unit,
 ) {
     val key = role.name.lowercase()
@@ -284,12 +274,6 @@ private fun ConnectionRow(
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            if (lastUsedWallMs != null) {
-                Body(
-                    stringResource(R.string.native_ui_home_last_used, formatTime(lastUsedWallMs)),
-                    tag = "home_connection_last_${key}_${c.id}",
-                )
-            }
         }
         // The pill names what a tap does; the selected connection is the filled one.
         Surface(

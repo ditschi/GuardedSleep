@@ -215,7 +215,6 @@
         }
       },
       "home": {
-        "lastUsed": "Último uso a las {time}",
         "newPairing": "Configurar dispositivos nuevos",
         "empty": "Aún no hay dispositivos emparejados.",
         "start": "Iniciar",

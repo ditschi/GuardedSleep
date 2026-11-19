@@ -297,7 +297,6 @@ class SetupHomeSettingsShots : ShotBase() {
                 onboardingDone = true,
                 paired = true,
                 peerName = "Nursery",
-                lastUsedWallMs = WALL - 8 * 3_600_000L,
                 parentConnections =
                     listOf(
                         ConnectionUi("1", "Nursery", isDefault = false, selected = true),

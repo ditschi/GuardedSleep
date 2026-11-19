@@ -31,9 +31,6 @@ object WriterAllowlist {
             "AppState.coachPending" to
                 "product gap: the first-run coach is never wired (docs/backlog.md IDEA \"First-run " +
                     "coach marks\"); the journey for it is @Ignored",
-            "AppState.lastUsedWallMs" to
-                "product gap: LinkController never sets it, so the home card's \"last used\" line " +
-                    "never shows (docs/backlog.md IDEA \"Last used\" line on the home card)",
             "BabyMonitorState.lastTalk.atWallMs" to TALK,
             "BabyMonitorState.lastTalk.durationMs" to TALK,
             "BabyMonitorState.lastTalk.name" to TALK,

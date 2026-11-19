@@ -215,7 +215,6 @@
         }
       },
       "home": {
-        "lastUsed": "Folosit ultima dată {time}",
         "newPairing": "Configurează dispozitive noi",
         "empty": "Niciun dispozitiv asociat încă.",
         "start": "Pornește",
