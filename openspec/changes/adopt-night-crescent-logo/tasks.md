@@ -23,7 +23,7 @@ Branch `feat/night-crescent-logo`. Each implementation task is a brief for the `
     - the background `#14202B`, replacing the mint dev colour of `add-dev-fdroid-repo`;
     - `ic_launcher_monochrome.xml` from `assets/launcher-monochrome-dev.svg` (release layer + rounded-square badge).
   - Acceptance: the debug build shows the pill. The brand lint check "debug monochrome = release + badge" passes, and it fails when the badge is removed (try, then revert).
-- [ ] 2.3 **Notification icons.**
+- [x] 2.3 **Notification icons.**
   - Goal: `platform/src/main/res/drawable/ic_stat_baby.xml` and `ic_stat_parent.xml` from `assets/notification-baby.svg` / `notification-parent.svg` (white single paths on transparent).
   - `StatusNotifier` and `AlertController` use `ic_stat_baby` when the device runs as the baby device and `ic_stat_parent` as the parent device, instead of `android.R.drawable.ic_lock_idle_alarm` / `ic_btn_speak_now` (design §3; the role is read where the notification is built).
   - Acceptance:

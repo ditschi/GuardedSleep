@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Small notification icon of the parent device: a smaller crescent and two listening bars, from docs/brand/notification-parent.svg
+     (scripts/lib/brand-icons.mjs checks it). One white path on transparent: Android uses only the alpha
+     of a small icon and tints it itself, so no other colour may appear. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M15.96,11.87A7.50,7.50 0 1 1 9.23,5.14A4.91,4.91 0 1 0 15.96,11.87ZM18.55,9.90H18.55A1.05,1.05 0 0 1 19.60,10.95V14.25A1.05,1.05 0 0 1 18.55,15.30H18.55A1.05,1.05 0 0 1 17.50,14.25V10.95A1.05,1.05 0 0 1 18.55,9.90ZM21.75,7.30H21.75A1.05,1.05 0 0 1 22.80,8.35V16.85A1.05,1.05 0 0 1 21.75,17.90H21.75A1.05,1.05 0 0 1 20.70,16.85V8.35A1.05,1.05 0 0 1 21.75,7.30Z" />
+</vector>
