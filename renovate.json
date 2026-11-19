@@ -17,6 +17,10 @@
     "schedule": ["before 6am on the first day of the month"]
   },
   "mise": { "enabled": true },
+  "pip-compile": {
+    "description": "fdroidserver and its build backend for the dev-repo job (tools/fdroid, hash-locked with uv). No default file patterns exist; the uv header comment in each .txt names its .in source. https://docs.renovatebot.com/modules/manager/pip-compile/",
+    "managerFilePatterns": ["/^tools/fdroid/(requirements|build-constraints)\\.txt$/"]
+  },
   "customManagers": [
     {
       "description": "mise binary pinned in the setup-mise composite action; re-run `mise lock` in the same PR",
@@ -151,6 +155,12 @@
       "description": "CI and dev tools: GitHub Actions and mise tools",
       "matchManagers": ["github-actions", "mise"],
       "groupName": "ci and dev tools"
+    },
+    {
+      "description": "fdroidserver and its hash-locked dependencies run in the dev-repo job next to the repository key: own PR, reviewed like a runtime dependency, never automerged",
+      "matchManagers": ["pip-compile"],
+      "groupName": "fdroidserver",
+      "automerge": false
     },
     {
       "description": "Maestro (UI journeys in the emulator gate, ~350 MB download): monthly, own PR, never automerged; run the gate on the PR (gate-ui-journeys, owner 2026-11-14)",
