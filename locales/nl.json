@@ -56,7 +56,7 @@
       "actionSnooze10": "10 min pauzeren",
       "actionChecking": "Ik kijk",
       "linkLostTitle": "Verbinding verbroken",
-      "linkLostText": "Geen verbinding met het babyapparaat. Ga nu bij je baby kijken.",
+      "linkLostText": "Geen verbinding met het babyapparaat. Ga nu bij het kind kijken.",
       "peerStoppedTitle": "Bewaking gestopt",
       "peerStoppedText": "De bewaking is gestopt op het babyapparaat. Je hoort niets tot het weer is gestart.",
       "restoredTitle": "Weer verbonden",
@@ -440,7 +440,7 @@
         "chooseAnother": "Andere verbinding kiezen",
         "rename": "Hernoemen",
         "renameTitle": "Verbinding hernoemen",
-        "nameLabel": "Naam (1–30 tekens, blijft op deze telefoon)",
+        "nameLabel": "Naam (1–30 tekens, blijft op dit apparaat)",
         "nameInvalid": "Gebruik 1 tot 30 tekens.",
         "save": "Opslaan",
         "readOnlyNote": "Stop met bewaken om verbindingen te wijzigen.",
@@ -667,7 +667,7 @@
         "subStopped": "Controleer op het babyapparaat wie de bewaking heeft gestopt."
       },
       "connAlert": {
-        "labelVibrating": "Je telefoon trilt",
+        "labelVibrating": "Dit apparaat trilt",
         "labelLoud": "Luide alarm klinkt",
         "labelPaused": "Alarm gepauzeerd",
         "headlineCheck": "Ga even naar het kind kijken",
@@ -681,7 +681,7 @@
         "counterA11y": "{duration} zonder verbinding",
         "spokenMin": "{count, plural, one {# minuut} other {# minuten}}",
         "spokenSec": "{count, plural, one {# seconde} other {# seconden}}",
-        "progressVibrating": "Telefoon trilt nu",
+        "progressVibrating": "Apparaat trilt nu",
         "progressLoud": "Luide alarm nu",
         "progressPaused": "Gepauzeerd terwijl je kijkt",
         "causeLabel": "Waarschijnlijke oorzaak",
@@ -698,13 +698,13 @@
             "more": "Zit het op wifi? Zo niet, open GuardedSleep daar opnieuw."
           },
           "serverUnreachable": {
-            "line": "Deze telefoon heeft geen internet.",
-            "step": "Controleer wifi of mobiele data op deze telefoon.",
+            "line": "Dit apparaat heeft geen internet.",
+            "step": "Controleer wifi of mobiele data op dit apparaat.",
             "more": "Zet de vliegtuigmodus uit. Ga dichter bij de router staan."
           },
           "mediaBlocked": {
             "line": "De verbinding wordt op dit netwerk geblokkeerd.",
-            "step": "Gast- of hotelwifi kan dit blokkeren. Schakel deze telefoon over op mobiele data.",
+            "step": "Gast- of hotelwifi kan dit blokkeren. Schakel dit apparaat over op mobiele data.",
             "more": "Tik daarna op ‘Nu proberen’."
           }
         },
@@ -755,11 +755,11 @@
           },
           "fullScreen": {
             "title": "Meldingen verschijnen niet op het vergrendelscherm",
-            "body": "Je mist misschien een melding als de telefoon vergrendeld is."
+            "body": "Je mist misschien een melding als dit apparaat vergrendeld is."
           },
           "alarmVolumeZero": {
             "title": "Alarmvolume staat uit",
-            "body": "Je hoort geen meldingen op deze telefoon"
+            "body": "Je hoort geen meldingen op dit apparaat"
           },
           "alarmVolumeLow": {
             "title": "Alarmvolume staat laag",
@@ -770,11 +770,11 @@
             "body": "Sta toe dat GuardedSleep doorkomt."
           },
           "battery": {
-            "title": "Deze telefoon kan GuardedSleep stoppen",
+            "title": "Dit apparaat kan GuardedSleep stoppen",
             "body": "Sta gebruik op de achtergrond toe zodat meldingen blijven werken."
           },
           "parentBattery": {
-            "title": "De batterij van deze telefoon is bijna leeg",
+            "title": "De batterij van dit apparaat is bijna leeg",
             "body": "Sluit de lader aan om te blijven bewaken."
           },
           "headphones": {
@@ -789,11 +789,11 @@
       },
       "noiseAlert": {
         "labelSound": "Het kamergeluid wordt afgespeeld",
-        "labelVibrate": "Je telefoon trilt",
+        "labelVibrate": "Dit apparaat trilt",
         "labelStopped": "Melding gestopt",
         "counterLabel": "sinds {time}",
         "counterA11y": "{duration}, sinds {time}",
-        "sentenceSound": "Het kamergeluid wordt op deze telefoon afgespeeld.",
+        "sentenceSound": "Het kamergeluid wordt op dit apparaat afgespeeld.",
         "stopSoundSub": "Stopt het meldingsgeluid, de bewaking blijft doorgaan",
         "stopVibrationSub": "Stopt het trillen, de bewaking blijft doorgaan"
       },
@@ -803,7 +803,7 @@
         "counterLabel": "batterij over",
         "counterA11y": "{percent} procent batterij over",
         "sentence": "Sluit het babyapparaat nu aan. Als de batterij leeg is, stopt de bewaking.",
-        "silentNote": "Het babyapparaat blijft stil. Alleen deze telefoon geeft een melding.",
+        "silentNote": "Het babyapparaat blijft stil. Alleen dit apparaat geeft een melding.",
         "action": "OK, ik sluit het aan",
         "actionSub": "Sluit dit scherm"
       },

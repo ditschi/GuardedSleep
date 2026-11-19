@@ -56,7 +56,7 @@
       "actionSnooze10": "Jeda 10 mnt",
       "actionChecking": "Saya periksa",
       "linkLostTitle": "Koneksi terputus",
-      "linkLostText": "Tidak ada koneksi ke perangkat bayi. Periksa bayi Anda sekarang.",
+      "linkLostText": "Tidak ada koneksi ke perangkat bayi. Periksa anak sekarang.",
       "peerStoppedTitle": "Perangkat bayi berhenti memantau",
       "peerStoppedText": "Pemantauan dihentikan di perangkat bayi. Anda tidak akan mendengar apa pun sampai dimulai lagi.",
       "restoredTitle": "Terhubung kembali",
@@ -440,7 +440,7 @@
         "chooseAnother": "Pilih koneksi lain",
         "rename": "Ganti nama",
         "renameTitle": "Ganti nama koneksi",
-        "nameLabel": "Nama (1–30 karakter, tetap di ponsel ini)",
+        "nameLabel": "Nama (1–30 karakter, tetap di perangkat ini)",
         "nameInvalid": "Gunakan 1 sampai 30 karakter.",
         "save": "Simpan",
         "readOnlyNote": "Hentikan pemantauan untuk mengubah koneksi.",
@@ -667,7 +667,7 @@
         "subStopped": "Periksa di perangkat bayi siapa yang menghentikannya."
       },
       "connAlert": {
-        "labelVibrating": "Ponsel Anda bergetar",
+        "labelVibrating": "Perangkat ini bergetar",
         "labelLoud": "Alarm keras berbunyi",
         "labelPaused": "Alarm dijeda",
         "headlineCheck": "Mohon periksa anak",
@@ -681,7 +681,7 @@
         "counterA11y": "{duration} tanpa koneksi",
         "spokenMin": "{count, plural, other {# menit}}",
         "spokenSec": "{count, plural, other {# detik}}",
-        "progressVibrating": "Ponsel bergetar sekarang",
+        "progressVibrating": "Perangkat bergetar sekarang",
         "progressLoud": "Alarm keras sekarang",
         "progressPaused": "Dijeda selagi Anda memeriksa",
         "causeLabel": "Kemungkinan penyebab",
@@ -698,13 +698,13 @@
             "more": "Apakah terhubung ke Wi-Fi? Jika tidak, buka GuardedSleep di sana lagi."
           },
           "serverUnreachable": {
-            "line": "Ponsel ini tidak memiliki internet.",
-            "step": "Periksa Wi-Fi atau data seluler di ponsel ini.",
+            "line": "Perangkat ini tidak memiliki internet.",
+            "step": "Periksa Wi-Fi atau data seluler di perangkat ini.",
             "more": "Matikan mode pesawat. Dekati router."
           },
           "mediaBlocked": {
             "line": "Koneksi diblokir di jaringan ini.",
-            "step": "Wi-Fi tamu atau hotel bisa memblokirnya. Alihkan ponsel ini ke data seluler.",
+            "step": "Wi-Fi tamu atau hotel bisa memblokirnya. Alihkan perangkat ini ke data seluler.",
             "more": "Lalu ketuk “Coba sekarang”."
           }
         },
@@ -755,11 +755,11 @@
           },
           "fullScreen": {
             "title": "Peringatan tidak bisa muncul di layar kunci",
-            "body": "Anda mungkin melewatkan peringatan saat ponsel terkunci."
+            "body": "Anda mungkin melewatkan peringatan saat perangkat ini terkunci."
           },
           "alarmVolumeZero": {
             "title": "Volume alarm mati",
-            "body": "Anda tidak akan mendengar peringatan di ponsel ini"
+            "body": "Anda tidak akan mendengar peringatan di perangkat ini"
           },
           "alarmVolumeLow": {
             "title": "Volume alarm rendah",
@@ -770,11 +770,11 @@
             "body": "Izinkan GuardedSleep menembusnya."
           },
           "battery": {
-            "title": "Ponsel ini mungkin menghentikan GuardedSleep",
+            "title": "Perangkat ini mungkin menghentikan GuardedSleep",
             "body": "Izinkan penggunaan di latar belakang agar peringatan tetap berfungsi."
           },
           "parentBattery": {
-            "title": "Baterai ponsel ini hampir habis",
+            "title": "Baterai perangkat ini hampir habis",
             "body": "Colokkan agar pemantauan terus berjalan."
           },
           "headphones": {
@@ -789,11 +789,11 @@
       },
       "noiseAlert": {
         "labelSound": "Memutar suara ruangan",
-        "labelVibrate": "Ponsel Anda bergetar",
+        "labelVibrate": "Perangkat ini bergetar",
         "labelStopped": "Peringatan dihentikan",
         "counterLabel": "sejak {time}",
         "counterA11y": "{duration}, sejak {time}",
-        "sentenceSound": "Suara ruangan diputar di ponsel ini.",
+        "sentenceSound": "Suara ruangan diputar di perangkat ini.",
         "stopSoundSub": "Menghentikan suara peringatan, pemantauan tetap berjalan",
         "stopVibrationSub": "Menghentikan getaran, pemantauan tetap berjalan"
       },
@@ -803,7 +803,7 @@
         "counterLabel": "baterai tersisa",
         "counterA11y": "Baterai tersisa {percent} persen",
         "sentence": "Segera colokkan perangkat bayi. Setelah habis, pemantauan berhenti.",
-        "silentNote": "Perangkat bayi tetap senyap. Hanya ponsel ini yang memberi peringatan.",
+        "silentNote": "Perangkat bayi tetap senyap. Hanya perangkat ini yang memberi peringatan.",
         "action": "Oke, saya colokkan",
         "actionSub": "Menutup layar ini"
       },

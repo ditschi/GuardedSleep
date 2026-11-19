@@ -56,7 +56,7 @@
       "actionSnooze10": "10分一時停止",
       "actionChecking": "確認中です",
       "linkLostTitle": "接続が切れました",
-      "linkLostText": "赤ちゃん用端末に接続できません。今すぐ赤ちゃんの様子を見てください。",
+      "linkLostText": "赤ちゃん用端末に接続できません。今すぐお子さんの様子を見てください。",
       "peerStoppedTitle": "赤ちゃん用端末が見守りを停止しました",
       "peerStoppedText": "赤ちゃん用端末で見守りが停止されました。再開されるまで音は聞こえません。",
       "restoredTitle": "再接続しました",
@@ -667,7 +667,7 @@
         "subStopped": "赤ちゃん用端末で、誰が停止したか確認してください。"
       },
       "connAlert": {
-        "labelVibrating": "お使いの端末が振動しています",
+        "labelVibrating": "この端末が振動しています",
         "labelLoud": "大音量のアラーム作動中",
         "labelPaused": "アラームを一時停止中",
         "headlineCheck": "お子さまの様子を見てください",
@@ -755,11 +755,11 @@
           },
           "fullScreen": {
             "title": "アラートがロック画面に表示されません",
-            "body": "スマートフォンがロック中は、アラートを見逃すことがあります。"
+            "body": "この端末がロック中は、アラートを見逃すことがあります。"
           },
           "alarmVolumeZero": {
             "title": "アラームの音量がオフです",
-            "body": "このスマートフォンではアラートが聞こえません"
+            "body": "この端末ではアラートが聞こえません"
           },
           "alarmVolumeLow": {
             "title": "アラームの音量が小さいです",
@@ -770,11 +770,11 @@
             "body": "GuardedSleep を例外として許可してください。"
           },
           "battery": {
-            "title": "このスマートフォンが GuardedSleep を止める可能性があります",
+            "title": "この端末が GuardedSleep を止める可能性があります",
             "body": "アラートが動き続けるよう、バックグラウンドでの使用を許可してください。"
           },
           "parentBattery": {
-            "title": "このスマートフォンのバッテリー残量が少なくなっています",
+            "title": "この端末のバッテリー残量が少なくなっています",
             "body": "充電して見守りを続けてください。"
           },
           "headphones": {
@@ -789,11 +789,11 @@
       },
       "noiseAlert": {
         "labelSound": "部屋の音を再生中",
-        "labelVibrate": "スマートフォンが振動しています",
+        "labelVibrate": "この端末が振動しています",
         "labelStopped": "アラートを停止しました",
         "counterLabel": "{time}から",
         "counterA11y": "{duration}、{time}から",
-        "sentenceSound": "部屋の音をこのスマートフォンで再生しています。",
+        "sentenceSound": "部屋の音をこの端末で再生しています。",
         "stopSoundSub": "アラート音を止めます。見守りは続きます",
         "stopVibrationSub": "振動を止めます。見守りは続きます"
       },
@@ -803,7 +803,7 @@
         "counterLabel": "バッテリー残量",
         "counterA11y": "バッテリー残量 {percent}パーセント",
         "sentence": "今すぐ赤ちゃん用端末を充電してください。電池が切れると、見守りが止まります。",
-        "silentNote": "赤ちゃん用端末は鳴りません。アラートはこのスマートフォンだけです。",
+        "silentNote": "赤ちゃん用端末は鳴りません。アラートはこの端末だけです。",
         "action": "OK、充電します",
         "actionSub": "この画面を閉じます"
       },

@@ -56,7 +56,7 @@
       "actionSnooze10": "Pause i 10 min",
       "actionChecking": "Jeg tjekker",
       "linkLostTitle": "Forbindelsen blev afbrudt",
-      "linkLostText": "Ingen forbindelse til babyenheden. Tjek til dit barn nu.",
+      "linkLostText": "Ingen forbindelse til babyenheden. Tjek til barnet nu.",
       "peerStoppedTitle": "Overvågning stoppet",
       "peerStoppedText": "Overvågningen blev stoppet på babyenheden. Du hører ingenting, før den startes igen.",
       "restoredTitle": "Forbundet igen",
@@ -440,7 +440,7 @@
         "chooseAnother": "Vælg en anden forbindelse",
         "rename": "Omdøb",
         "renameTitle": "Omdøb forbindelsen",
-        "nameLabel": "Navn (1–30 tegn, bliver på denne telefon)",
+        "nameLabel": "Navn (1–30 tegn, bliver på denne enhed)",
         "nameInvalid": "Brug 1 til 30 tegn.",
         "save": "Gem",
         "readOnlyNote": "Stop overvågningen for at ændre forbindelser.",
@@ -667,7 +667,7 @@
         "subStopped": "Tjek på babyenheden, hvem der stoppede den."
       },
       "connAlert": {
-        "labelVibrating": "Din telefon vibrerer",
+        "labelVibrating": "Denne enhed vibrerer",
         "labelLoud": "Højt alarm lyder",
         "labelPaused": "Alarmen er sat på pause",
         "headlineCheck": "Se til barnet",
@@ -681,7 +681,7 @@
         "counterA11y": "{duration} uden forbindelse",
         "spokenMin": "{count, plural, one {# minut} other {# minutter}}",
         "spokenSec": "{count, plural, one {# sekund} other {# sekunder}}",
-        "progressVibrating": "Telefonen vibrerer nu",
+        "progressVibrating": "Enheden vibrerer nu",
         "progressLoud": "Højt alarm nu",
         "progressPaused": "På pause, mens du ser til",
         "causeLabel": "Sandsynlig årsag",
@@ -698,13 +698,13 @@
             "more": "Er den på Wi-Fi? Hvis ikke, så åbn GuardedSleep på den igen."
           },
           "serverUnreachable": {
-            "line": "Denne telefon har ikke internet.",
-            "step": "Tjek Wi-Fi eller mobildata på denne telefon.",
+            "line": "Denne enhed har ikke internet.",
+            "step": "Tjek Wi-Fi eller mobildata på denne enhed.",
             "more": "Slå flytilstand fra. Gå tættere på routeren."
           },
           "mediaBlocked": {
             "line": "Forbindelsen er blokeret på dette netværk.",
-            "step": "Gæste- eller hotel-Wi-Fi kan blokere den. Skift denne telefon til mobildata.",
+            "step": "Gæste- eller hotel-Wi-Fi kan blokere den. Skift denne enhed til mobildata.",
             "more": "Tryk derefter på ”Prøv nu”."
           }
         },
@@ -755,11 +755,11 @@
           },
           "fullScreen": {
             "title": "Alarmer kan ikke vises på låseskærmen",
-            "body": "Du kan gå glip af en alarm, mens telefonen er låst."
+            "body": "Du kan gå glip af en alarm, mens denne enhed er låst."
           },
           "alarmVolumeZero": {
             "title": "Alarmlydstyrken er slået fra",
-            "body": "Du hører ikke alarmer på denne telefon"
+            "body": "Du hører ikke alarmer på denne enhed"
           },
           "alarmVolumeLow": {
             "title": "Alarmlydstyrken er lav",
@@ -770,11 +770,11 @@
             "body": "Lad GuardedSleep komme igennem."
           },
           "battery": {
-            "title": "Denne telefon kan stoppe GuardedSleep",
+            "title": "Denne enhed kan stoppe GuardedSleep",
             "body": "Tillad brug i baggrunden, så alarmerne virker."
           },
           "parentBattery": {
-            "title": "Telefonens batteri er lavt",
+            "title": "Denne enheds batteri er lavt",
             "body": "Sæt den i opladeren, så overvågningen fortsætter."
           },
           "headphones": {
@@ -789,11 +789,11 @@
       },
       "noiseAlert": {
         "labelSound": "Afspiller rummets lyd",
-        "labelVibrate": "Din telefon vibrerer",
+        "labelVibrate": "Denne enhed vibrerer",
         "labelStopped": "Alarmen er stoppet",
         "counterLabel": "siden {time}",
         "counterA11y": "{duration}, siden {time}",
-        "sentenceSound": "Rummets lyd afspilles på denne telefon.",
+        "sentenceSound": "Rummets lyd afspilles på denne enhed.",
         "stopSoundSub": "Stopper alarmlyden, overvågningen fortsætter",
         "stopVibrationSub": "Stopper vibrationen, overvågningen fortsætter"
       },
@@ -803,7 +803,7 @@
         "counterLabel": "batteri tilbage",
         "counterA11y": "{percent} procent batteri tilbage",
         "sentence": "Sæt babyenheden i opladeren nu. Når den løber tør, stopper overvågningen.",
-        "silentNote": "Babyenheden forbliver lydløs. Kun denne telefon giver alarm.",
+        "silentNote": "Babyenheden forbliver lydløs. Kun denne enhed giver alarm.",
         "action": "OK, jeg sætter den til",
         "actionSub": "Lukker denne visning"
       },

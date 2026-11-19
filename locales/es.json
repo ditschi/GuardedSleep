@@ -56,7 +56,7 @@
       "actionSnooze10": "Pausar 10 min",
       "actionChecking": "Estoy mirando",
       "linkLostTitle": "Conexión perdida",
-      "linkLostText": "Sin conexión con el dispositivo del bebé. Ve a ver a tu bebé ahora.",
+      "linkLostText": "Sin conexión con el dispositivo del bebé. Vaya a ver al niño ahora.",
       "peerStoppedTitle": "El dispositivo del bebé dejó de vigilar",
       "peerStoppedText": "Se detuvo la vigilancia en el dispositivo del bebé. No oirás nada hasta que se inicie de nuevo.",
       "restoredTitle": "Conectado de nuevo",
@@ -440,7 +440,7 @@
         "chooseAnother": "Elegir otra conexión",
         "rename": "Cambiar nombre",
         "renameTitle": "Cambiar nombre de la conexión",
-        "nameLabel": "Nombre (de 1 a 30 caracteres, se queda en este teléfono)",
+        "nameLabel": "Nombre (de 1 a 30 caracteres, se queda en este dispositivo)",
         "nameInvalid": "Usa de 1 a 30 caracteres.",
         "save": "Guardar",
         "readOnlyNote": "Detenga la vigilancia para cambiar las conexiones.",
@@ -671,7 +671,7 @@
         "subStopped": "Compruebe en el dispositivo del bebé quién la detuvo."
       },
       "connAlert": {
-        "labelVibrating": "Su teléfono vibra",
+        "labelVibrating": "Este dispositivo vibra",
         "labelLoud": "Alarma fuerte sonando",
         "labelPaused": "Alarma en pausa",
         "headlineCheck": "Vaya a ver al niño",
@@ -685,7 +685,7 @@
         "counterA11y": "{duration} sin conexión",
         "spokenMin": "{count, plural, one {# minuto} many {# de minutos} other {# minutos}}",
         "spokenSec": "{count, plural, one {# segundo} many {# de segundos} other {# segundos}}",
-        "progressVibrating": "El teléfono vibra ahora",
+        "progressVibrating": "El dispositivo vibra ahora",
         "progressLoud": "Alarma fuerte ahora",
         "progressPaused": "En pausa mientras comprueba",
         "causeLabel": "Causa probable",
@@ -702,13 +702,13 @@
             "more": "¿Está en el Wi-Fi? Si no, abra GuardedSleep de nuevo en él."
           },
           "serverUnreachable": {
-            "line": "Este teléfono no tiene internet.",
-            "step": "Compruebe el Wi-Fi o los datos móviles de este teléfono.",
+            "line": "Este dispositivo no tiene internet.",
+            "step": "Compruebe el Wi-Fi o los datos móviles de este dispositivo.",
             "more": "Desactive el modo avión. Acérquese al router."
           },
           "mediaBlocked": {
             "line": "La conexión está bloqueada en esta red.",
-            "step": "El Wi-Fi de invitados o de hotel puede bloquearla. Pase este teléfono a datos móviles.",
+            "step": "El Wi-Fi de invitados o de hotel puede bloquearla. Pase este dispositivo a datos móviles.",
             "more": "Después toque «Reintentar ahora»."
           }
         },
@@ -759,11 +759,11 @@
           },
           "fullScreen": {
             "title": "Las alertas no se muestran en la pantalla de bloqueo",
-            "body": "Podría perderse una alerta con el teléfono bloqueado."
+            "body": "Podría perderse una alerta con este dispositivo bloqueado."
           },
           "alarmVolumeZero": {
             "title": "El volumen de alarma está apagado",
-            "body": "No oirá las alertas en este teléfono"
+            "body": "No oirá las alertas en este dispositivo"
           },
           "alarmVolumeLow": {
             "title": "El volumen de alarma está bajo",
@@ -774,11 +774,11 @@
             "body": "Permita que GuardedSleep se salte el modo."
           },
           "battery": {
-            "title": "Este teléfono puede detener GuardedSleep",
+            "title": "Este dispositivo puede detener GuardedSleep",
             "body": "Permita el uso en segundo plano para que las alertas sigan funcionando."
           },
           "parentBattery": {
-            "title": "La batería de este teléfono está baja",
+            "title": "La batería de este dispositivo está baja",
             "body": "Enchúfelo para seguir vigilando."
           },
           "headphones": {
@@ -793,11 +793,11 @@
       },
       "noiseAlert": {
         "labelSound": "Reproduciendo el sonido de la habitación",
-        "labelVibrate": "Su teléfono está vibrando",
+        "labelVibrate": "Este dispositivo está vibrando",
         "labelStopped": "Alerta detenida",
         "counterLabel": "desde las {time}",
         "counterA11y": "{duration}, desde las {time}",
-        "sentenceSound": "El sonido de la habitación suena en este teléfono.",
+        "sentenceSound": "El sonido de la habitación suena en este dispositivo.",
         "stopSoundSub": "Detiene el sonido de la alerta y sigue vigilando",
         "stopVibrationSub": "Detiene la vibración y sigue vigilando"
       },
@@ -807,7 +807,7 @@
         "counterLabel": "de batería restante",
         "counterA11y": "{percent} por ciento de batería restante",
         "sentence": "Enchufe ahora el dispositivo del bebé. Cuando se agote, la vigilancia se detiene.",
-        "silentNote": "El dispositivo del bebé sigue en silencio. Solo alerta este teléfono.",
+        "silentNote": "El dispositivo del bebé sigue en silencio. Solo alerta este dispositivo.",
         "action": "Vale, lo enchufo",
         "actionSub": "Cierra esta pantalla"
       },

@@ -56,7 +56,7 @@
       "actionSnooze10": "10 dk duraklat",
       "actionChecking": "Bakıyorum",
       "linkLostTitle": "Bağlantı koptu",
-      "linkLostText": "Bebek cihazıyla bağlantı yok. Hemen bebeğinize bakın.",
+      "linkLostText": "Bebek cihazıyla bağlantı yok. Hemen çocuğa bakın.",
       "peerStoppedTitle": "Bebek cihazı izlemeyi durdurdu",
       "peerStoppedText": "Bebek cihazında izleme durduruldu. Yeniden başlatılana kadar hiçbir şey duymayacaksınız.",
       "restoredTitle": "Yeniden bağlandı",
@@ -440,7 +440,7 @@
         "chooseAnother": "Başka bir bağlantı seç",
         "rename": "Yeniden adlandır",
         "renameTitle": "Bağlantıyı yeniden adlandır",
-        "nameLabel": "Ad (1–30 karakter, bu telefonda kalır)",
+        "nameLabel": "Ad (1–30 karakter, bu cihazda kalır)",
         "nameInvalid": "1 ile 30 karakter kullanın.",
         "save": "Kaydet",
         "readOnlyNote": "Bağlantıları değiştirmek için izlemeyi durdurun.",
@@ -667,7 +667,7 @@
         "subStopped": "Bebek cihazında bunu kimin durdurduğunu kontrol edin."
       },
       "connAlert": {
-        "labelVibrating": "Telefonunuz titreşiyor",
+        "labelVibrating": "Bu cihaz titreşiyor",
         "labelLoud": "Yüksek sesli alarm çalıyor",
         "labelPaused": "Alarm duraklatıldı",
         "headlineCheck": "Lütfen çocuğa bakın",
@@ -681,7 +681,7 @@
         "counterA11y": "{duration} bağlantısız",
         "spokenMin": "{count, plural, one {# dakika} other {# dakika}}",
         "spokenSec": "{count, plural, one {# saniye} other {# saniye}}",
-        "progressVibrating": "Telefon şimdi titreşiyor",
+        "progressVibrating": "Cihaz şimdi titreşiyor",
         "progressLoud": "Yüksek sesli alarm şimdi",
         "progressPaused": "Siz bakarken duraklatıldı",
         "causeLabel": "Olası neden",
@@ -698,13 +698,13 @@
             "more": "Wi-Fi’ye bağlı mı? Değilse GuardedSleep’i orada yeniden açın."
           },
           "serverUnreachable": {
-            "line": "Bu telefonda internet yok.",
-            "step": "Bu telefonda Wi-Fi’yi veya mobil veriyi kontrol edin.",
+            "line": "Bu cihazda internet yok.",
+            "step": "Bu cihazda Wi-Fi’yi veya mobil veriyi kontrol edin.",
             "more": "Uçak modunu kapatın. Yönlendiriciye yaklaşın."
           },
           "mediaBlocked": {
             "line": "Bağlantı bu ağda engelleniyor.",
-            "step": "Misafir veya otel Wi-Fi’si bunu engelleyebilir. Bu telefonu mobil veriye geçirin.",
+            "step": "Misafir veya otel Wi-Fi’si bunu engelleyebilir. Bu cihazı mobil veriye geçirin.",
             "more": "Sonra “Şimdi dene”ye dokunun."
           }
         },
@@ -755,11 +755,11 @@
           },
           "fullScreen": {
             "title": "Uyarılar kilit ekranında görünemez",
-            "body": "Telefon kilitliyken bir uyarıyı kaçırabilirsiniz."
+            "body": "Bu cihaz kilitliyken bir uyarıyı kaçırabilirsiniz."
           },
           "alarmVolumeZero": {
             "title": "Alarm sesi kapalı",
-            "body": "Bu telefonda uyarıları duymazsınız"
+            "body": "Bu cihazda uyarıları duymazsınız"
           },
           "alarmVolumeLow": {
             "title": "Alarm sesi kısık",
@@ -770,11 +770,11 @@
             "body": "GuardedSleep'in geçmesine izin verin."
           },
           "battery": {
-            "title": "Bu telefon GuardedSleep'i durdurabilir",
+            "title": "Bu cihaz GuardedSleep'i durdurabilir",
             "body": "Uyarıların çalışması için arka planda çalışmaya izin verin."
           },
           "parentBattery": {
-            "title": "Bu telefonun pili azaldı",
+            "title": "Bu cihazın pili azaldı",
             "body": "İzlemenin sürmesi için şarja takın."
           },
           "headphones": {
@@ -789,11 +789,11 @@
       },
       "noiseAlert": {
         "labelSound": "Oda sesi çalınıyor",
-        "labelVibrate": "Telefonunuz titreşiyor",
+        "labelVibrate": "Bu cihaz titreşiyor",
         "labelStopped": "Uyarı durduruldu",
         "counterLabel": "{time} saatinden beri",
         "counterA11y": "{duration}, {time} saatinden beri",
-        "sentenceSound": "Oda sesi bu telefonda çalınıyor.",
+        "sentenceSound": "Oda sesi bu cihazda çalınıyor.",
         "stopSoundSub": "Uyarı sesini durdurur, izleme sürer",
         "stopVibrationSub": "Titreşimi durdurur, izleme sürer"
       },
@@ -803,7 +803,7 @@
         "counterLabel": "pil kaldı",
         "counterA11y": "Pilin yüzde {percent} kadarı kaldı",
         "sentence": "Bebek cihazını hemen şarja takın. Pil bittiğinde izleme durur.",
-        "silentNote": "Bebek cihazı sessiz kalır. Yalnızca bu telefon uyarır.",
+        "silentNote": "Bebek cihazı sessiz kalır. Yalnızca bu cihaz uyarır.",
         "action": "Tamam, şarja takıyorum",
         "actionSub": "Bu ekranı kapatır"
       },

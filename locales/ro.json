@@ -56,7 +56,7 @@
       "actionSnooze10": "Pauză de 10 min",
       "actionChecking": "Verific",
       "linkLostTitle": "Conexiune pierdută",
-      "linkLostText": "Nicio conexiune cu dispozitivul bebelușului. Du-te să vezi cum e bebelușul.",
+      "linkLostText": "Nicio conexiune cu dispozitivul bebelușului. Du-te să vezi cum e copilul.",
       "peerStoppedTitle": "Monitorizare oprită",
       "peerStoppedText": "Monitorizarea a fost oprită pe dispozitivul bebelușului. Nu vei auzi nimic până nu este pornită din nou.",
       "restoredTitle": "Conectat din nou",
@@ -440,7 +440,7 @@
         "chooseAnother": "Alege altă conexiune",
         "rename": "Redenumește",
         "renameTitle": "Redenumește conexiunea",
-        "nameLabel": "Nume (1–30 de caractere, rămâne pe acest telefon)",
+        "nameLabel": "Nume (1–30 de caractere, rămâne pe acest dispozitiv)",
         "nameInvalid": "Folosește între 1 și 30 de caractere.",
         "save": "Salvează",
         "readOnlyNote": "Oprește monitorizarea ca să modifici conexiunile.",
@@ -667,7 +667,7 @@
         "subStopped": "Verificați pe dispozitivul bebelușului cine a oprit monitorizarea."
       },
       "connAlert": {
-        "labelVibrating": "Telefonul vibrează",
+        "labelVibrating": "Acest dispozitiv vibrează",
         "labelLoud": "Alarma puternică sună",
         "labelPaused": "Alarmă în pauză",
         "headlineCheck": "Mergeți să vedeți copilul",
@@ -681,7 +681,7 @@
         "counterA11y": "{duration} fără conexiune",
         "spokenMin": "{count, plural, one {# minut} few {# minute} other {# de minute}}",
         "spokenSec": "{count, plural, one {# secundă} few {# secunde} other {# de secunde}}",
-        "progressVibrating": "Telefonul vibrează acum",
+        "progressVibrating": "Dispozitivul vibrează acum",
         "progressLoud": "Alarmă puternică acum",
         "progressPaused": "În pauză cât verificați",
         "causeLabel": "Cauză probabilă",
@@ -698,13 +698,13 @@
             "more": "Este pe Wi-Fi? Dacă nu, deschideți din nou GuardedSleep pe el."
           },
           "serverUnreachable": {
-            "line": "Acest telefon nu are internet.",
-            "step": "Verificați Wi-Fi sau datele mobile ale acestui telefon.",
+            "line": "Acest dispozitiv nu are internet.",
+            "step": "Verificați Wi-Fi sau datele mobile ale acestui dispozitiv.",
             "more": "Dezactivați modul avion. Apropiați-vă de router."
           },
           "mediaBlocked": {
             "line": "Conexiunea este blocată în această rețea.",
-            "step": "Wi-Fi-ul pentru oaspeți sau de hotel o poate bloca. Treceți acest telefon pe date mobile.",
+            "step": "Wi-Fi-ul pentru oaspeți sau de hotel o poate bloca. Treceți acest dispozitiv pe date mobile.",
             "more": "Apoi apăsați „Încearcă acum”."
           }
         },
@@ -755,11 +755,11 @@
           },
           "fullScreen": {
             "title": "Alertele nu apar pe ecranul de blocare",
-            "body": "Ai putea rata o alertă cât telefonul e blocat."
+            "body": "Ai putea rata o alertă cât acest dispozitiv e blocat."
           },
           "alarmVolumeZero": {
             "title": "Volumul alarmei este oprit",
-            "body": "Nu vei auzi alertele pe acest telefon"
+            "body": "Nu vei auzi alertele pe acest dispozitiv"
           },
           "alarmVolumeLow": {
             "title": "Volumul alarmei este mic",
@@ -770,11 +770,11 @@
             "body": "Permite GuardedSleep să treacă."
           },
           "battery": {
-            "title": "Acest telefon poate opri GuardedSleep",
+            "title": "Acest dispozitiv poate opri GuardedSleep",
             "body": "Permite rularea în fundal ca alertele să funcționeze."
           },
           "parentBattery": {
-            "title": "Bateria acestui telefon este slabă",
+            "title": "Bateria acestui dispozitiv este slabă",
             "body": "Pune-l la încărcat ca să continue monitorizarea."
           },
           "headphones": {
@@ -789,11 +789,11 @@
       },
       "noiseAlert": {
         "labelSound": "Se redă sunetul camerei",
-        "labelVibrate": "Telefonul tău vibrează",
+        "labelVibrate": "Acest dispozitiv vibrează",
         "labelStopped": "Alertă oprită",
         "counterLabel": "din {time}",
         "counterA11y": "{duration}, din {time}",
-        "sentenceSound": "Sunetul camerei se redă pe acest telefon.",
+        "sentenceSound": "Sunetul camerei se redă pe acest dispozitiv.",
         "stopSoundSub": "Oprește sunetul alertei, monitorizarea continuă",
         "stopVibrationSub": "Oprește vibrația, monitorizarea continuă"
       },
@@ -803,7 +803,7 @@
         "counterLabel": "baterie rămasă",
         "counterA11y": "{percent} la sută baterie rămasă",
         "sentence": "Pune acum dispozitivul bebelușului la încărcat. Când se descarcă, monitorizarea se oprește.",
-        "silentNote": "Dispozitivul bebelușului rămâne mut. Doar acest telefon alertează.",
+        "silentNote": "Dispozitivul bebelușului rămâne mut. Doar acest dispozitiv alertează.",
         "action": "OK, îl pun la încărcat",
         "actionSub": "Închide acest ecran"
       },
