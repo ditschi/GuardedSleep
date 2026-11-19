@@ -119,7 +119,7 @@ fun SettingsScreen(
     val s = controller.settings.collectAsState().value
     val app = controller.app.collectAsState().value
     val b = controller.baby.collectAsState().value
-    val isBaby = (app.role ?: app.lastRole) == Role.BABY
+    val isBaby = app.viewRole == Role.BABY
     var page by rememberSaveable { mutableStateOf(initialPage) }
     fun goTo(p: SettingsPage) {
         page = p
@@ -217,7 +217,7 @@ fun SettingsScreen(
                 title =
                     stringResource(
                         R.string.native_ui_forget_title,
-                        c?.let { connectionLabel(it, app.connections, app.role ?: app.lastRole) }
+                        c?.let { connectionLabel(it, app.connections, app.viewRole) }
                             .orEmpty(),
                     ),
                 body = stringResource(R.string.native_ui_forget_body),
@@ -660,7 +660,7 @@ private fun SettingsOverview(
         } else {
             app.connections.forEach { c ->
                 ConnectionLine(
-                    connectionLabel(c, app.connections, app.role ?: app.lastRole),
+                    connectionLabel(c, app.connections, app.viewRole),
                     c.id,
                     isBaby,
                     inUse = readOnly && c.selected,
@@ -822,7 +822,7 @@ private fun ConnectionsPage(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Body(
-                        connectionLabel(c, app.connections, app.role ?: app.lastRole),
+                        connectionLabel(c, app.connections, app.viewRole),
                         tag = "settings_connection_name_${c.id}",
                         color = MaterialTheme.colorScheme.onSurface,
                     )
@@ -915,7 +915,7 @@ private fun OpenAtStartPage(controller: AppController, app: AppState, isBaby: Bo
             }
             app.connections.forEach { c ->
                 ChoiceRow(
-                    connectionLabel(c, app.connections, app.role ?: app.lastRole),
+                    connectionLabel(c, app.connections, app.viewRole),
                     c.isDefault,
                     "settings_connection_default_${c.id}",
                 ) {

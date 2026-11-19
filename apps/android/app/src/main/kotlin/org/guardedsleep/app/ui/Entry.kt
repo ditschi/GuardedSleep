@@ -87,8 +87,6 @@ private fun AppNavigator(controller: AppController) {
     var settingsPage by rememberSaveable { mutableStateOf(SettingsPage.ROOT) }
     var openProbe by remember { mutableStateOf(false) }
     val role = app.role
-    // The role Settings, setup and pairing act for: the session role, else the one used last.
-    val viewRole = role ?: app.lastRole ?: Role.PARENT
     // The first start: no pairing in either role and no role chosen yet.
     val firstStart =
         role == null && app.parentConnections.isEmpty() && app.babyConnections.isEmpty()
@@ -109,7 +107,7 @@ private fun AppNavigator(controller: AppController) {
             WithStatusBar(controller) {
                 SetupScreen(
                     controller,
-                    viewRole,
+                    app.viewRole,
                     onboarding = false,
                     onBack = { overlay = Overlay.SETTINGS },
                 )

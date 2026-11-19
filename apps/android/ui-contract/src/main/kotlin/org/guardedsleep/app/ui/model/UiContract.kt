@@ -558,7 +558,14 @@ data class AppState(
     val deviceCheckReasons: List<DeviceCheckReason> = emptyList(),
     /** The device check's mailbox probes (host only); empty while unknown or none to probe. */
     val deviceCheckMailboxes: List<MailboxReach> = emptyList(),
-)
+) {
+    /**
+     * The role Settings, setup and pairing act for: the session role, else the one used last, else
+     * the parent (a device before its first choice).
+     */
+    val viewRole: Role
+        get() = role ?: lastRole ?: Role.PARENT
+}
 
 /** Baby self-test result (ADR-010) shown on the setup checklist. */
 enum class DeviceCheck {
