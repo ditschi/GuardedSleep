@@ -191,7 +191,11 @@ export interface BabyMonitorState {
   ownBatteryPct: number | null;
   /** This device is plugged in (Android: `EXTRA_PLUGGED != 0`). */
   ownPlugged: boolean;
-  /** The charger was plugged in at some time in this run (Android kiosk). */
+  /**
+   * The charger was plugged in at some time in this run (the platform tracks it from the battery
+   * readings: Android's battery receiver, the browser's Battery API). A later reading that is not
+   * plugged in then means it was pulled.
+   */
   chargerSeen: boolean;
   /** A parent's voice plays now (static indicator under the edge). */
   parentTalking: boolean;

@@ -1,5 +1,4 @@
 import { render, screen, waitFor } from "@testing-library/svelte";
-import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import App from "../App.svelte";
 import { defaultLinkUi, type LinkUi } from "../lib/contract";
@@ -64,11 +63,10 @@ describe("web baby: status line and shape-coded marks", () => {
   });
 
   it("adds the square and the reason when the charger was pulled", async () => {
+    // The controller keeps "charger seen" (its own test); the screen only renders it.
+    c.baby.update((b) => ({ ...b, chargerSeen: true }));
     open(c);
     await screen.findByTestId("baby_kiosk_status");
-    c.deviceBattery.set({ pct: 80, charging: true });
-    await waitFor(() => expect(screen.queryByTestId("baby_kiosk_attention")).toBeNull());
-    await tick();
     c.deviceBattery.set({ pct: 79, charging: false });
     const reason = await screen.findByTestId("baby_kiosk_attention");
     expect(reason).toHaveTextContent("Needs attention: not charging · 79%");

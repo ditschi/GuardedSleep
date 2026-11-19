@@ -80,13 +80,7 @@
   const connection = $derived($app.connections.find((c) => c.selected)?.name ?? null);
   const statusLine = $derived(kioskStatusLine($t, $baby.link, status.key, connection));
   const markShape = $derived(kioskMarkShape($baby.link));
-  // The charger counts as pulled once it was seen in this run; a browser reports no battery event
-  // for "never plugged in", so this stays presentation only.
-  let chargerSeen = $state(false);
-  $effect(() => {
-    if ($deviceBattery?.charging === true) chargerSeen = true;
-  });
-  const attention = $derived(kioskAttention($deviceBattery, chargerSeen || $baby.chargerSeen));
+  const attention = $derived(kioskAttention($deviceBattery, $baby.chargerSeen));
 
   const batteryText = $derived.by(() => {
     const b = $deviceBattery;
