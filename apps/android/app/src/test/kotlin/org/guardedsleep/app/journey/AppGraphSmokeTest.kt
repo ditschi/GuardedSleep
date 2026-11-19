@@ -37,7 +37,7 @@ class AppGraphSmokeTest {
         assertSame(MainActivity::class.java, graph.entryPoints.mainActivity)
         assertSame(AlertActivity::class.java, graph.entryPoints.alertActivity)
         assertSame(AlertActionReceiver::class.java, graph.entryPoints.alertActionReceiver)
-        // A fresh install starts on the role screen, and a role choice reaches the store.
+        // A fresh install starts on the first-start choice, and a role choice reaches the store.
         assertNull(controller.app.value.role)
         assertFalse(controller.app.value.paired)
         controller.chooseRole(Role.BABY)

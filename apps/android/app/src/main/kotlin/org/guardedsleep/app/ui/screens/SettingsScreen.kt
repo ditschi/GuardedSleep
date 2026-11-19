@@ -54,7 +54,9 @@ import org.guardedsleep.app.ui.common.ScreenRoot
 import org.guardedsleep.app.ui.common.ScrollColumn
 import org.guardedsleep.app.ui.common.SecondaryButton
 import org.guardedsleep.app.ui.common.connectionLabel
+import org.guardedsleep.app.ui.common.customPeerName
 import org.guardedsleep.app.ui.common.formatTime
+import org.guardedsleep.app.ui.common.peerDisplayName
 import org.guardedsleep.app.ui.common.rememberLanguageChoices
 import org.guardedsleep.app.ui.model.AlertOutput
 import org.guardedsleep.app.ui.model.AlertStyle
@@ -217,8 +219,7 @@ fun SettingsScreen(
                 title =
                     stringResource(
                         R.string.native_ui_forget_title,
-                        c?.let { connectionLabel(it, app.connections, app.viewRole) }
-                            .orEmpty(),
+                        c?.let { connectionLabel(it, app.connections, app.viewRole) }.orEmpty(),
                     ),
                 body = stringResource(R.string.native_ui_forget_body),
                 confirmText = stringResource(R.string.native_ui_forget_confirm),

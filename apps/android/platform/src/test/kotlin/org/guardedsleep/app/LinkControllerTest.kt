@@ -388,7 +388,7 @@ class LinkControllerTest {
     private fun pairing(psk: String) = StoredPairing(psk, listOf("wss://fake.example"), false)
 
     @Test
-    fun startWithoutADefaultShowsTheRoleScreen() {
+    fun startWithoutADefaultHasNoSessionRole() {
         val u = unit("nodefault", null)
         assertNull(u.controller.app.value.role)
         assertNull(u.controller.app.value.defaultRole)
@@ -645,7 +645,7 @@ class LinkControllerTest {
 
     /**
      * A parent phone with two pairings, the second marked, onboarding done. [startsAsParent] is the
-     * start mode "Parent"; false is "Ask every time" (a cold start shows the role screen).
+     * start mode "Parent"; false is "Ask every time" (a cold start shows Home).
      */
     private fun autoStartParent(
         name: String,

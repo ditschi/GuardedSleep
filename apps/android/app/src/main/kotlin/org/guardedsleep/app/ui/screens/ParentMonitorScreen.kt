@@ -71,6 +71,7 @@ import org.guardedsleep.app.ui.common.TalkInterruptEffect
 import org.guardedsleep.app.ui.common.TalkStatus
 import org.guardedsleep.app.ui.common.TalkTile
 import org.guardedsleep.app.ui.common.ToolRow
+import org.guardedsleep.app.ui.common.customPeerName
 import org.guardedsleep.app.ui.common.formatClock
 import org.guardedsleep.app.ui.common.formatDuration
 import org.guardedsleep.app.ui.common.formatDurationWords

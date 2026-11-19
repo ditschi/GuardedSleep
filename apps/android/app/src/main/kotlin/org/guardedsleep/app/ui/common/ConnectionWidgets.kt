@@ -34,6 +34,17 @@ import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.model.ConnectionUi
 import org.guardedsleep.app.ui.model.Role
 
+/** Custom unit name, or null so copy can use the grammatically correct "the baby unit" form. */
+internal fun customPeerName(peerName: String?): String? = peerName?.takeIf { it.isNotBlank() }
+
+@Composable
+internal fun peerDisplayName(peerName: String?, parentSide: Boolean): String =
+    customPeerName(peerName)
+        ?: stringResource(
+            if (parentSide) R.string.native_ui_common_baby_unit_default
+            else R.string.native_ui_common_parent_unit_default
+        )
+
 /** The name the user chose, else a numbered default so two unnamed connections differ. */
 @Composable
 internal fun connectionLabel(c: ConnectionUi, all: List<ConnectionUi>, role: Role?): String =

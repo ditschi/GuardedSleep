@@ -53,6 +53,7 @@ import org.guardedsleep.app.ui.common.StatusKind
 import org.guardedsleep.app.ui.common.StopMonitoringDialog
 import org.guardedsleep.app.ui.common.SystemSettings
 import org.guardedsleep.app.ui.common.alertStageOf
+import org.guardedsleep.app.ui.common.customPeerName
 import org.guardedsleep.app.ui.common.elapsedToWall
 import org.guardedsleep.app.ui.common.formatClock
 import org.guardedsleep.app.ui.common.formatTime

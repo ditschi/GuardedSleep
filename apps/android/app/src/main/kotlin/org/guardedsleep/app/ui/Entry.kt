@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import org.guardedsleep.app.BuildConfig
 import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.common.StatusBar
+import org.guardedsleep.app.ui.common.customPeerName
 import org.guardedsleep.app.ui.common.findActivity
 import org.guardedsleep.app.ui.common.systemReduceMotion
 import org.guardedsleep.app.ui.model.AppController
@@ -46,7 +47,6 @@ import org.guardedsleep.app.ui.screens.RoleScreen
 import org.guardedsleep.app.ui.screens.SettingsPage
 import org.guardedsleep.app.ui.screens.SettingsScreen
 import org.guardedsleep.app.ui.screens.SetupScreen
-import org.guardedsleep.app.ui.screens.customPeerName
 import org.guardedsleep.app.ui.theme.GuardedSleepTheme
 
 /** Whole app below MainActivity: role, setup, pairing, home, monitoring, settings. */
