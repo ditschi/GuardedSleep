@@ -11,6 +11,7 @@ import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.Sync
 import org.gradle.api.tasks.testing.Test
+import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.withType
 import org.gradle.process.CommandLineArgumentProvider
@@ -26,15 +27,18 @@ import org.gradle.process.CommandLineArgumentProvider
  */
 class RobolectricConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
-        val catalog =
-            target.extensions.getByType(VersionCatalogsExtension::class.java).named("libs")
+        val catalog = target.extensions.getByType<VersionCatalogsExtension>().named("libs")
         // One configuration per SDK: the artifacts share a module, and a single configuration
         // would conflict-resolve them to the highest version only.
         val jars =
             catalog.libraryAliases
                 .filter { it.startsWith(ALIAS_PREFIX) }
                 .map { alias ->
-                    target.configurations.create("robolectricAndroidAll.$alias") {
+                    // Aliases come back dotted: robolectric.android.all.sdk30 ->
+                    // robolectricAndroidAllSdk30.
+                    val suffix =
+                        alias.removePrefix(ALIAS_PREFIX).replaceFirstChar { it.uppercase() }
+                    target.configurations.register("robolectricAndroidAll$suffix") {
                         isCanBeConsumed = false
                         isCanBeResolved = true
                         isTransitive = false
