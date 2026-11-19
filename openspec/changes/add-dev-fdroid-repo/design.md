@@ -102,7 +102,7 @@ A run that fails after `dev-apk` leaves the pre-release updated and the reposito
 
 ## 9. Dev icon
 
-Dev builds override `ic_launcher_background` with a clearly different colour, and add a small corner badge to the **monochrome** layer as well, because themed icons (Android 13+) ignore the background colour. With `use-brand-launcher-icon` the same overrides apply to the real logo layers.
+Dev builds override `ic_launcher_background` with a clearly different colour, and add a small corner badge to the **monochrome** layer as well, because themed icons (Android 13+) ignore the background colour. The debug monochrome layer is the release monochrome layer of `use-brand-launcher-icon` unchanged plus a rounded-square badge in the open upper right (owner, 2026-11-19: a square cannot be read as part of the motif, unlike a second dot); `scripts/lib/brand-icons.mjs` fails if the logo paths drift or the badge is missing.
 
 ## Risks
 

@@ -211,16 +211,21 @@ function main() {
     }
   }
 
-  // Optional debug variant: present means well-formed (balanced vector, at least one pathData).
+  // Optional debug variant (dev builds): the release monochrome shapes unchanged plus at least one
+  // badge path, so the dev app keeps the current logo in themed icons and stays distinguishable.
   if (existsSync(join(root, DEBUG_MONOCHROME))) {
     const dbg = read(DEBUG_MONOCHROME) ?? "";
-    const ok =
-      /<vector\b/.test(dbg) && /<\/vector>\s*$/.test(dbg) && /android:pathData="[^"]+"/.test(dbg);
-    if (!ok)
-      fail(
-        DEBUG_MONOCHROME,
-        "not a well-formed vector drawable (needs <vector>…</vector> and a pathData)",
-      );
+    if (!/<vector\b/.test(dbg) || !/<\/vector>\s*$/.test(dbg)) {
+      fail(DEBUG_MONOCHROME, "not a well-formed vector drawable (needs <vector>…</vector>)");
+    } else if (monoSrc !== null) {
+      const release = parseVector(monoSrc);
+      const debug = parseVector(dbg);
+      const missing = release.filter((r) => !debug.some((d) => same(d, r)));
+      if (missing.length > 0)
+        fail(DEBUG_MONOCHROME, `differs from ${MONOCHROME} in ${missing.length} logo path(s)`);
+      if (debug.length <= release.length)
+        fail(DEBUG_MONOCHROME, "needs a badge path in addition to the logo paths");
+    }
   }
 
   // Safe zone: wave (with half the stroke width) inside the 66 dp circle.

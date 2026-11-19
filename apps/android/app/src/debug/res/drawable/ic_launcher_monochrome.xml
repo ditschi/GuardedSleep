@@ -1,16 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Themed-icon layer of the dev build: the crescent plus a filled badge dot. Themed icons
+<!-- Themed-icon layer of the dev build: the shapes of src/main/res/drawable/ic_launcher_monochrome.xml
+     (kept identical, checked by scripts/lib/brand-icons.mjs) plus a dev badge. Themed icons
      (Android 13+) ignore the background colour, so the badge is what marks the dev app there. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M51.45,32.21A22,22 0,1 0 75.25,61.31A19,19 0,0 1 51.45,32.21Z" />
-    <!-- Badge dot in the open upper right of the crescent, inside the 66 dp safe zone of the adaptive icon. -->
+        android:pathData="M53.04 28.9A25.12 25.12 0 0 0 29.01 52.4C29.3 53 29.55 53.6 29.79 54.17C29.83 54.28 29.87 54.33 29.91 54.44C30.15 53.64 30.38 52.96 30.62 52.02C31.03 50.44 31.45 48.82 31.99 47.4C32.27 46.7 32.56 46.04 33.05 45.37C33.55 44.7 34.5 43.81 35.91 43.81C37.52 43.81 38.42 44.9 38.88 45.63C39.35 46.36 39.62 47.09 39.89 47.89C40.42 49.51 40.84 51.42 41.26 53.29C41.46 54.23 41.67 54.9 41.87 55.74C41.92 55.57 41.97 55.47 42.02 55.29C42.42 53.95 42.83 52.57 43.38 51.32C43.53 51 43.68 50.69 43.86 50.38A18.9 18.9 0 0 1 59.68 29.51A25.12 25.12 0 0 0 53.04 28.9ZM35.8 52.3C35.7 52.67 35.61 52.91 35.51 53.3C35.1 54.88 34.68 56.5 34.14 57.92C33.86 58.62 33.57 59.28 33.08 59.95C32.58 60.62 31.63 61.51 30.22 61.51C30.18 61.51 30.15 61.51 30.11 61.5A25.12 25.12 0 0 0 78.27 60.78C77.85 60.97 77.36 61.11 76.83 61.11C76.69 61.11 76.57 61.1 76.44 61.08A18.9 18.9 0 0 1 46.48 58C46.19 58.93 45.88 59.85 45.5 60.71C45.22 61.33 44.92 61.93 44.4 62.54C43.88 63.14 42.94 63.88 41.68 63.88C40.08 63.88 39.17 62.79 38.71 62.06C38.24 61.33 37.96 60.61 37.7 59.8C37.16 58.18 36.74 56.27 36.33 54.39C36.15 53.59 35.98 53.04 35.8 52.3Z" />
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M78,34m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0" />
+        android:pathData="M61.27 41.83A7.11 7.11 0 0 0 54.33 47.41C54.76 47.16 55.29 46.97 55.9 46.97C57.31 46.97 58.31 47.85 58.85 48.55C59.4 49.25 59.73 49.97 60.04 50.74C60.66 52.29 61.14 54.08 61.61 55.83C61.63 55.9 61.65 55.97 61.67 56.04A7.11 7.11 0 0 0 64.17 55.43C64.3 55 64.44 54.55 64.58 54.09C65.24 51.93 65.9 49.72 66.74 47.84C67.04 47.19 67.35 46.58 67.74 46A7.11 7.11 0 0 0 61.27 41.83Z" />
+    <path
+        android:pathData="M22.48,54C23.41,54 23.76,51.31 24.69,51.31C27.01,51.31 27.9,58.98 30.22,58.98C32.61,58.98 33.52,46.34 35.91,46.34C38.33,46.34 39.25,61.35 41.68,61.35C44,61.35 44.88,50.68 47.21,50.68C49.03,50.68 49.73,58.42 51.55,58.42C53.38,58.42 54.07,49.5 55.9,49.5C58.65,49.5 59.7,63.48 62.45,63.48C66.27,63.48 67.72,46.18 71.54,46.18C73.76,46.18 74.61,58.58 76.83,58.58C78.99,58.58 79.81,50.68 81.97,50.68C83.62,50.68 84.26,54 85.92,54"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2.05" />
+    <!-- Dev badge: a rounded square in the open upper right, inside the 66 dp safe zone (far corner
+         31.8 dp from the centre) and clear of the logo; square, so it is not read as part of the
+         motif like a second dot would be. -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M69.5,31.5h5a2,2 0 0 1 2,2v5a2,2 0 0 1 -2,2h-5a2,2 0 0 1 -2,-2v-5a2,2 0 0 1 2,-2z" />
 </vector>
