@@ -16,5 +16,5 @@ Colours (sampled from `icon.png`, listed in the comment of `logo.svg`): wave `#2
 
 Derived icons:
 
-- Android: `ic_launcher_foreground.xml` and `ic_launcher_monochrome.xml` carry the master's path data, `ic_launcher_background.xml` the background colour. `scripts/lint-brand-icons.mjs` (in `just lint-text`) fails when they drift from `logo.svg`.
+- Android: `ic_launcher_foreground.xml` and `ic_launcher_monochrome.xml` carry the master's path data, `ic_launcher_background.xml` the background colour. `scripts/lib/brand-icons.mjs` (in `just lint-text`) fails when they drift from `logo.svg`.
 - Web: `apps/web/public/favicon.svg` is a byte-identical copy of `logo.svg`; the PWA PNGs are generated at build time from it (never committed).

@@ -1,7 +1,7 @@
 import { defineConfig } from "@vite-pwa/assets-generator/config";
 
 // PWA icons are generated at build time from public/favicon.svg (a byte-identical copy of
-// docs/brand/logo.svg, checked by scripts/lint-brand-icons.mjs), so they never drift from the
+// docs/brand/logo.svg, checked by scripts/lib/brand-icons.mjs), so they never drift from the
 // brand master and no PNG is committed. The mark already lies inside the 66/108 safe circle of the
 // Android adaptive icon, so no extra padding: the plain and the maskable icon show the same tile as
 // the Android launcher (background #F2FAF5, docs/brand/README.md).

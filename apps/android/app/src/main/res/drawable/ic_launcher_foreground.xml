@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- GuardedSleep logo, same shapes and colours as docs/brand/logo.svg (scripts/lint-brand-icons.mjs checks it). The whole mark,
+<!-- GuardedSleep logo, same shapes and colours as docs/brand/logo.svg (scripts/lib/brand-icons.mjs checks it). The whole mark,
      wave caps included, lies inside the 66dp safe circle of the 108dp adaptive canvas, so no launcher mask clips it. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"

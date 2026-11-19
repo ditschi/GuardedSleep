@@ -73,7 +73,7 @@ Recommendation: A. `favicon.svg` becomes a copy of `logo.svg` (a vector, not gen
 
 ## 6. Keeping Android in sync
 
-The Android foreground and monochrome XML are hand-converted once from `logo.svg`. A small Node script (`scripts/lint-brand-icons.mjs`, run in `just lint-text`) parses `logo.svg`, `apps/web/public/favicon.svg` and the two Android vectors and fails if path data, fills or the background colour differ (normalised whitespace and number formatting). Gives the spec's "lint fails until Android matches again" without a generator in the Android build.
+The Android foreground and monochrome XML are hand-converted once from `logo.svg`. A small Node script (`scripts/lib/brand-icons.mjs`, run in `just lint-text`) parses `logo.svg`, `apps/web/public/favicon.svg` and the two Android vectors and fails if path data, fills or the background colour differ (normalised whitespace and number formatting). Gives the spec's "lint fails until Android matches again" without a generator in the Android build.
 
 Discarded: generating the Android XML from the SVG at build time (one more generator in Gradle for two files that change once a year).
 

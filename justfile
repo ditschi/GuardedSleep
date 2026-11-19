@@ -75,7 +75,7 @@ lint-text: _js-deps
     scripts/lib/hygiene.sh
     scripts/lib/workspace-lints.sh
     scripts/lib/no-google-stun.sh
-    node scripts/lint-brand-icons.mjs
+    node scripts/lib/brand-icons.mjs
     reuse lint
     scripts/lib/secrets.sh
 

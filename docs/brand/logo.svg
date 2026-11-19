@@ -2,7 +2,7 @@
   <!-- GuardedSleep logo master: redrawn from docs/brand/icon.png (the traced icon.svg stays as source).
        Laid out on the 108 dp adaptive-icon canvas; the whole mark, wave caps included, lies inside
        the 66 dp safe circle centred at 54,54. Android layers (ic_launcher_*.xml) carry the same
-       path data; scripts/lint-brand-icons.mjs checks them.
+       path data; scripts/lib/brand-icons.mjs checks them.
        Colours: wave #255176; crescent rim #81E5A7 to #6ED79C; crescent body #78DCA0, #50A774 to
        #317954; dot #78DBA2 to #408C65. Launcher and PWA background: #F2FAF5. -->
   <defs>

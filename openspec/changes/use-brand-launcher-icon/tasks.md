@@ -15,7 +15,7 @@ Branch `feat/brand-launcher-icon`, based on `main` after PR #82 (`docs/brand/`).
 
 ## 3. Sync check and docs
 
-- [x] 3.1 **Brand icon lint.** Goal: `scripts/lint-brand-icons.mjs` as design §6, wired into `just lint-text`; named in the `lint` row of `docs/ci-gates.md`. Acceptance: passes on the tree; fails with a clear message when one path number in `ic_launcher_foreground.xml` is changed (try locally, revert).
+- [x] 3.1 **Brand icon lint.** Goal: `scripts/lib/brand-icons.mjs` as design §6, wired into `just lint-text`; named in the `lint` row of `docs/ci-gates.md`. Acceptance: passes on the tree; fails with a clear message when one path number in `ic_launcher_foreground.xml` is changed (try locally, revert).
 - [ ] 3.2 Final checks: `just lint` and `just test` green; report any SKIPPED task.
 
 ## 4. Owner
