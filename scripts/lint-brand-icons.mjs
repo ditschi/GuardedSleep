@@ -104,11 +104,13 @@ function parseVector(xml) {
 }
 
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-const num = (d) => (d.match(/-?\d*\.?\d+/g) ?? []).map(Number);
 
 /** Points of a "M C C ..." wave path (cubic segments sampled) for the safe-zone check. */
 function wavePoints(d) {
-  const n = num(d);
+  const n = d
+    .split(" ")
+    .filter((t) => !/^[a-zA-Z]$/.test(t))
+    .map(Number);
   const pts = [];
   let [x0, y0] = n;
   for (let i = 2; i + 5 < n.length; i += 6) {
@@ -203,7 +205,7 @@ if (monoSrc !== null && master.wave) {
 
 // Optional debug variant: present means well-formed (balanced vector, at least one pathData).
 if (existsSync(join(root, DEBUG_MONOCHROME))) {
-  const dbg = readFileSync(join(root, DEBUG_MONOCHROME), "utf8");
+  const dbg = read(DEBUG_MONOCHROME) ?? "";
   const ok =
     /<vector\b/.test(dbg) && /<\/vector>\s*$/.test(dbg) && /android:pathData="[^"]+"/.test(dbg);
   if (!ok)
@@ -213,8 +215,8 @@ if (existsSync(join(root, DEBUG_MONOCHROME))) {
     );
 }
 
-// Safe zone: wave (with half the stroke width) and dot inside the 66 dp circle.
-if (master.wave && master.dot) {
+// Safe zone: wave (with half the stroke width) inside the 66 dp circle.
+if (master.wave) {
   const half = (master.wave.strokeWidth ?? 0) / 2;
   const far =
     Math.max(...wavePoints(master.wave.d).map(([x, y]) => Math.hypot(x - 54, y - 54))) + half;
