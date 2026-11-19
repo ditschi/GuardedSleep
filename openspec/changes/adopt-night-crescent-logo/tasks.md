@@ -4,7 +4,7 @@ Branch `feat/night-crescent-logo`. Each implementation task is a brief for the `
 
 ## 1. Brand sources
 
-- [ ] 1.1 **Master and docs.**
+- [x] 1.1 **Master and docs.**
   - Goal: move the final set into `docs/brand/`:
     - `logo.svg` (replaces the #85 master), `logo-light.svg`, `wordmark*.svg`, `splash-*.svg`, `palette.md`;
     - the generator under `docs/brand/src/`, with a short `README` that names the Python dependencies (shapely, Pillow), says it is a design tool not run by CI, and that the SVGs are the source of truth;
