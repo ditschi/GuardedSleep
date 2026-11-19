@@ -4,8 +4,16 @@ import org.guardedsleep.app.fixtures.FakeCipher
 import org.guardedsleep.app.link.Clock
 import org.guardedsleep.app.link.ParentEffects
 import org.guardedsleep.app.pairing.PairingCipher
+import org.guardedsleep.app.wiring.EntryPoints
 import uniffi.guardedsleep_core.LinkState
 import uniffi.guardedsleep_core.LinkStatus
+
+/** Entry points for notification tests: the classes are only named in intents, never started. */
+object FakeEntryPoints : EntryPoints {
+    override val mainActivity = android.app.Activity::class.java
+    override val alertActivity = android.app.Activity::class.java
+    override val alertActionReceiver = android.content.BroadcastReceiver::class.java
+}
 
 class FakeClock(var elapsed: Long = 1_000, var wall: Long = 1_700_000_000_000) : Clock {
     override fun elapsedMs() = elapsed

@@ -1,10 +1,8 @@
 package org.guardedsleep.app
 
-import android.app.Activity
 import android.app.Application
 import android.app.Notification
 import android.app.NotificationManager
-import android.content.BroadcastReceiver
 import androidx.test.core.app.ApplicationProvider
 import org.guardedsleep.app.alerts.AlertController
 import org.guardedsleep.app.alerts.NoiseKind
@@ -12,7 +10,6 @@ import org.guardedsleep.app.alerts.StatusNotifier
 import org.guardedsleep.app.platform.R
 import org.guardedsleep.app.ui.model.LinkUi
 import org.guardedsleep.app.ui.model.Role
-import org.guardedsleep.app.wiring.EntryPoints
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -30,12 +27,6 @@ import org.robolectric.annotation.Config
 @Config(sdk = [34])
 class NotificationIconTest {
     private val app: Application = ApplicationProvider.getApplicationContext()
-    private val entryPoints =
-        object : EntryPoints {
-            override val mainActivity = Activity::class.java
-            override val alertActivity = Activity::class.java
-            override val alertActionReceiver = BroadcastReceiver::class.java
-        }
 
     private fun iconOf(n: Notification) = n.smallIcon.resId
 
@@ -44,32 +35,32 @@ class NotificationIconTest {
 
     @Test
     fun babyMonitoringShowsTheCrescent() {
-        val n = StatusNotifier(app, entryPoints) { null }.build(Role.BABY, LinkUi())
+        val n = StatusNotifier(app, FakeEntryPoints) { null }.build(Role.BABY, LinkUi())
         assertEquals(R.drawable.ic_stat_baby, iconOf(n))
     }
 
     @Test
     fun babyResumePromptShowsTheCrescent() {
-        val n = StatusNotifier(app, entryPoints) { null }.resumePrompt()
+        val n = StatusNotifier(app, FakeEntryPoints) { null }.resumePrompt()
         assertEquals(R.drawable.ic_stat_baby, iconOf(n))
     }
 
     @Test
     fun parentStatusShowsTheCrescentWithBars() {
-        val n = StatusNotifier(app, entryPoints) { null }.build(Role.PARENT, LinkUi())
+        val n = StatusNotifier(app, FakeEntryPoints) { null }.build(Role.PARENT, LinkUi())
         assertEquals(R.drawable.ic_stat_parent, iconOf(n))
     }
 
     @Test
     fun parentNoiseAlertShowsTheCrescentWithBars() {
-        AlertController(app, entryPoints, role = { Role.PARENT })
+        AlertController(app, FakeEntryPoints, role = { Role.PARENT })
             .noiseAlert(NoiseKind.NEW, probe = false, snoozed = false)
         assertEquals(R.drawable.ic_stat_parent, iconOf(posted().single()))
     }
 
     @Test
     fun parentLinkLossAlertShowsTheCrescentWithBars() {
-        AlertController(app, entryPoints, role = { Role.PARENT }).linkLost(downMs = 60_000)
+        AlertController(app, FakeEntryPoints, role = { Role.PARENT }).linkLost(downMs = 60_000)
         val all = posted()
         assertTrue(all.isNotEmpty())
         all.forEach { assertEquals(R.drawable.ic_stat_parent, iconOf(it)) }
@@ -77,14 +68,15 @@ class NotificationIconTest {
 
     @Test
     fun alertOnABabyDeviceOrWithoutRoleShowsTheBabyCrescent() {
-        AlertController(app, entryPoints, role = { Role.BABY })
+        AlertController(app, FakeEntryPoints, role = { Role.BABY })
             .noiseAlert(NoiseKind.NEW, probe = false, snoozed = false)
         assertEquals(R.drawable.ic_stat_baby, iconOf(posted().single()))
     }
 
     @Test
     fun noRoleFallsBackToTheBabyCrescent() {
-        AlertController(app, entryPoints).noiseAlert(NoiseKind.NEW, probe = false, snoozed = false)
+        AlertController(app, FakeEntryPoints)
+            .noiseAlert(NoiseKind.NEW, probe = false, snoozed = false)
         assertEquals(R.drawable.ic_stat_baby, iconOf(posted().single()))
     }
 }
