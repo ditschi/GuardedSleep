@@ -538,8 +538,16 @@ data class ConnectionUi(
 }
 
 data class AppState(
-    /** The session role; null shows the role screen. */
+    /**
+     * The session role: what this app start opens in or runs as. Null on Home until a connection is
+     * started (start mode _Ask every time_), and on the first start before the choice.
+     */
     val role: Role? = null,
+    /**
+     * The role this device used last (or chose first). Settings shows its rows and connections
+     * while [role] is null; null only before the first choice.
+     */
+    val lastRole: Role? = null,
     /** "Start mode": the role a start without monitoring opens in; null asks every time. */
     val defaultRole: Role? = null,
     val onboardingDone: Boolean = false,
@@ -547,12 +555,16 @@ data class AppState(
     val paired: Boolean = false,
     val peerName: String? = null,
     /**
-     * The saved pairings of the session role, in slot order. The list is shown only with more than
-     * one entry.
+     * The saved pairings of the session role (the last role while there is none), in slot order:
+     * what Settings lists, renames and marks as default.
      */
     val connections: List<ConnectionUi> = emptyList(),
-    /** Fewer than the cap of pairings are saved: a further one can be added. */
-    val canAddPairing: Boolean = true,
+    /** Home: the saved parent connections, independent of the session role. */
+    val parentConnections: List<ConnectionUi> = emptyList(),
+    /** Home: the saved baby connections, independent of the session role. */
+    val babyConnections: List<ConnectionUi> = emptyList(),
+    /** Home: fewer than the cap of parent pairings are saved (the baby unit always replaces). */
+    val canAddParentPairing: Boolean = true,
     val monitoring: Boolean = false,
     /** Parent: the running monitoring session was started by the automatic start. */
     val autoStarted: Boolean = false,
@@ -561,8 +573,6 @@ data class AppState(
      * never green.
      */
     val backgroundProtection: Boolean = true,
-    /** UI-pass additions. */
-    val lastUsedWallMs: Long? = null,
     /** Show the first-run coach marks on the parent monitoring screen once. */
     val coachPending: Boolean = false,
     val deviceCheck: DeviceCheck = DeviceCheck.UNKNOWN,
@@ -570,7 +580,18 @@ data class AppState(
     val deviceCheckReasons: List<DeviceCheckReason> = emptyList(),
     /** The device check's mailbox probes (host only); empty while unknown or none to probe. */
     val deviceCheckMailboxes: List<MailboxReach> = emptyList(),
-)
+) {
+    /**
+     * The role Settings, setup and pairing act for: the session role, else the one used last, else
+     * the parent (a device before its first choice).
+     */
+    val viewRole: Role
+        get() = role ?: lastRole ?: Role.PARENT
+
+    /** The saved connections of [role] (Home and Settings list both roles). */
+    fun connectionsOf(role: Role): List<ConnectionUi> =
+        if (role == Role.PARENT) parentConnections else babyConnections
+}
 
 /** Baby self-test result (ADR-010) shown on the setup checklist. */
 enum class DeviceCheck {
@@ -608,16 +629,24 @@ interface AppController {
     val pairing: StateFlow<PairingState?>
 
     /**
-     * Sets the session role (the pairing of each role is kept). [makeDefault] also stores it as the
-     * start mode.
+     * The first-start choice: sets the session role (the pairing of each role is kept) without
+     * touching the start mode, which only Settings › Open at start changes.
      */
-    fun chooseRole(role: Role, makeDefault: Boolean = false)
+    fun chooseRole(role: Role)
 
     /**
-     * Back to the role screen without changing the start mode or any pairing; cancels an open
-     * invite. Does nothing while monitoring is active.
+     * Home "Start" on a saved connection: runs this session as [role] with pairing [id] and starts
+     * monitoring. Switches the role when it is the other one, without changing the start mode or
+     * deleting a pairing. Does nothing while monitoring is active or when [id] is not saved.
      */
-    fun switchMode()
+    fun startConnection(role: Role, id: String)
+
+    /**
+     * Home "Set up new devices" of [role]: runs this session as [role] and opens its pairing (the
+     * parent's scan screen, the baby unit's invite) without any automatic start. Does nothing while
+     * monitoring is active.
+     */
+    fun setUpNewDevices(role: Role)
 
     /** Sets the start mode: a role, or null for "Ask every time". */
     fun setDefaultRole(role: Role?)
@@ -650,20 +679,23 @@ interface AppController {
     /** Picks the connection of this session (not while monitoring); the default is not changed. */
     fun selectConnection(id: String)
 
-    /** Renames a connection; false when the name is not 1 to 30 characters. */
-    fun renameConnection(id: String, name: String): Boolean
+    /**
+     * Renames connection [id] of [role]; false when the name is not 1 to 30 characters. Settings
+     * lists the connections of both roles, so every action names the role of its row.
+     */
+    fun renameConnection(role: Role, id: String, name: String): Boolean
 
-    /** Marks [id] as the default: on the parent it also starts monitoring when the app opens. */
-    fun setDefaultConnection(id: String)
+    /** Marks [id] as the default of [role]: the parent also starts it when the app opens. */
+    fun setDefaultConnection(role: Role, id: String)
 
-    /** Parent: stops monitoring (user stop); the home then lists the connections to choose from. */
+    /** Parent: stops monitoring (user stop); Home then lists the saved connections. */
     fun chooseAnotherConnection()
 
-    /** Removes the default mark; the parent home menu is shown at app start again. */
-    fun clearDefaultConnection()
+    /** Removes the default mark of [role]; Home is shown at app start again. */
+    fun clearDefaultConnection(role: Role)
 
-    /** Forgets exactly one connection; monitoring stops first when it is the one in use. */
-    fun forgetConnection(id: String)
+    /** Forgets exactly one connection of [role]; the other role keeps its pairings. */
+    fun forgetConnection(role: Role, id: String)
 
     fun updateSettings(transform: (SettingsState) -> SettingsState)
 

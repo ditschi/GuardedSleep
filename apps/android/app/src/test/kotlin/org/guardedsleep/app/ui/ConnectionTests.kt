@@ -49,6 +49,7 @@ class ConnectionTests : ShotBase() {
             onboardingDone = true,
             paired = true,
             connections = listOf(ConnectionUi("1", null, isDefault = true, selected = true)),
+            parentConnections = listOf(ConnectionUi("1", null, isDefault = true, selected = true)),
         )
 
     private val two =
@@ -59,33 +60,34 @@ class ConnectionTests : ShotBase() {
                     ConnectionUi("1", "Home", isDefault = true, selected = true),
                     ConnectionUi("2", "Travel", isDefault = false, selected = false),
                 ),
-            canAddPairing = false,
+            parentConnections =
+                listOf(
+                    ConnectionUi("1", "Home", isDefault = true, selected = true),
+                    ConnectionUi("2", "Travel", isDefault = false, selected = false),
+                ),
+            canAddParentPairing = false,
         )
 
     @Test
-    fun withOneSavedPairingTheHomeShowsNoList() = runComposeUiTest {
+    fun withOneSavedPairingTheHomeShowsItsRowAndSetUpNewDevices() = runComposeUiTest {
         show { HomeScreen(FakeAppController(app = one), {}) }
-        onNodeWithTag("home_card").assertIsDisplayed()
-        onNodeWithTag("home_connection_change").assertDoesNotExist()
-        onNodeWithTag("home_connection_current").assertDoesNotExist()
-        onNodeWithTag("home_new_pairing").assertIsDisplayed()
+        onNodeWithTag("home_connection_parent_1").assertIsDisplayed()
+        onNodeWithTag("home_new_pairing_parent").performScrollTo().assertIsDisplayed()
     }
 
     @Test
-    fun withTwoTheDefaultIsPreselectedAndChangeOpensTheList() = runComposeUiTest {
+    fun withTwoBothRowsStartTheirOwnConnectionAndTheCapHidesSetUp() = runComposeUiTest {
         val c = FakeAppController(app = two)
         show { HomeScreen(c, {}) }
-        onNodeWithTag("home_connection_current")
-            .performScrollTo()
-            .assertTextContains("Home", substring = true)
-        onNodeWithTag("home_connection_list").assertDoesNotExist()
-        onNodeWithTag("home_connection_change").performScrollTo().performClick()
-        onNodeWithTag("connection_choice_2").performScrollTo().performClick()
-        assertEquals(listOf("selectConnection:2"), c.calls)
-        onNodeWithTag("home_connection_current").assertTextContains("Travel", substring = true)
-        onNodeWithTag("home_connection_list").assertDoesNotExist()
-        // At the cap no further pairing is offered.
-        onNodeWithTag("home_new_pairing").assertDoesNotExist()
+        onNodeWithTag("home_connection_name_parent_1", useUnmergedTree = true)
+            .assertTextContains("Home")
+        onNodeWithTag("home_connection_name_parent_2", useUnmergedTree = true)
+            .assertTextContains("Travel")
+        onNodeWithTag("home_connection_parent_2").performClick()
+        assertEquals(listOf("startConnection:PARENT:2"), c.calls)
+        // At the cap no further parent pairing is offered.
+        onNodeWithTag("home_new_pairing_parent").assertDoesNotExist()
+        onNodeWithTag("home_new_pairing_baby").assertExists()
     }
 
     @Test
@@ -95,16 +97,16 @@ class ConnectionTests : ShotBase() {
         // The default has one home, Open at start (frame 22: no default toggle here).
         onNodeWithTag("settings_connection_default_1").assertDoesNotExist()
 
-        onNodeWithTag("settings_connection_rename_2").performScrollTo().performClick()
+        onNodeWithTag("settings_connection_rename_parent_2").performScrollTo().performClick()
         onNodeWithTag("rename_connection_field").performTextInput("Gran")
         onNodeWithTag("rename_connection_save").performClick()
-        assertEquals("renameConnection:2", c.calls.last())
+        assertEquals("renameConnection:PARENT:2", c.calls.last())
         assertEquals("GranTravel", c.appFlow.value.connections[1].name)
         onNodeWithTag("dialog_rename_connection").assertDoesNotExist()
 
-        onNodeWithTag("settings_connection_forget_1").performScrollTo().performClick()
+        onNodeWithTag("settings_connection_forget_parent_1").performScrollTo().performClick()
         onNodeWithTag("dialog_forget_confirm").performClick()
-        assertEquals("forgetConnection:1", c.calls.last())
+        assertEquals("forgetConnection:PARENT:1", c.calls.last())
         assertEquals(listOf("2"), c.appFlow.value.connections.map { it.id })
     }
 
@@ -117,9 +119,9 @@ class ConnectionTests : ShotBase() {
         show { HomeScreen(c, {}, autoScanned = scanned, onAutoScanned = { scanned = true }) }
         waitForIdle()
         assertEquals(listOf("startPairing"), c.calls)
-        onNodeWithTag("home_empty").assertIsDisplayed()
-        onNodeWithTag("home_new_pairing").performClick()
-        assertEquals(listOf("startPairing", "startPairing"), c.calls)
+        onNodeWithTag("home_empty_parent").assertIsDisplayed()
+        onNodeWithTag("home_new_pairing_parent").performClick()
+        assertEquals(listOf("startPairing", "setUpNewDevices:PARENT"), c.calls)
     }
 
     @Test
@@ -136,13 +138,14 @@ class ConnectionTests : ShotBase() {
         onNodeWithTag("parent_pair").assertIsDisplayed()
         c.cancelPairing()
         waitForIdle()
-        onNodeWithTag("home_empty").assertIsDisplayed()
+        onNodeWithTag("home_empty_parent").assertIsDisplayed()
+        onNodeWithTag("home_new_pairing_parent").assertIsDisplayed()
         assertEquals(listOf("startPairing", "cancelPairing"), c.calls)
     }
 
     private fun autoStartedRoot(parent: ParentMonitorState) =
         FakeAppController(
-            app = two.copy(monitoring = true, autoStarted = true, canAddPairing = false),
+            app = two.copy(monitoring = true, autoStarted = true),
             parent = parent,
         )
 
@@ -154,8 +157,8 @@ class ConnectionTests : ShotBase() {
         onNodeWithTag("parent_choose_other_connection").performScrollTo().performClick()
         assertEquals("chooseAnotherConnection", c.calls.last())
         waitForIdle()
-        onNodeWithTag("home_connection_list").performScrollTo().assertIsDisplayed()
-        onNodeWithTag("connection_choice_2").assertExists()
+        onNodeWithTag("home_connections_parent").performScrollTo().assertIsDisplayed()
+        onNodeWithTag("home_connection_parent_2").assertExists()
     }
 
     @Test
@@ -170,7 +173,8 @@ class ConnectionTests : ShotBase() {
         onNodeWithTag("dialog_choose_other_confirm").performClick()
         assertEquals("chooseAnotherConnection", c.calls.last())
         waitForIdle()
-        onNodeWithTag("home_connection_list").performScrollTo().assertIsDisplayed()
+        onNodeWithTag("home_connections_parent").performScrollTo().assertIsDisplayed()
+        onNodeWithTag("home_connection_parent_2").assertExists()
     }
 
     @Test
@@ -190,20 +194,14 @@ class ConnectionTests : ShotBase() {
     }
 
     @Test
-    fun theAutoConnectSwitchFollowsTheSelectedConnectionAlsoWithOne() = runComposeUiTest {
-        val c =
-            FakeAppController(
-                app =
-                    one.copy(
-                        connections =
-                            listOf(ConnectionUi("1", null, isDefault = false, selected = true))
-                    )
-            )
-        show { HomeScreen(c, {}) }
-        onNodeWithTag("home_auto_connect").performScrollTo().performClick()
-        assertEquals("setDefaultConnection:1", c.calls.last())
-        onNodeWithTag("home_auto_connect").performScrollTo().performClick()
-        assertEquals("clearDefaultConnection", c.calls.last())
+    fun homeHasNoDefaultOrAutoConnectControlsOnlyAnOpenAtStartLink() = runComposeUiTest {
+        var opened = false
+        show { HomeScreen(FakeAppController(app = two), {}, onOpenAtStart = { opened = true }) }
+        onNodeWithTag("home_auto_connect").assertDoesNotExist()
+        onNodeWithTag("role_default_toggle").assertDoesNotExist()
+        onNodeWithTag("switch_mode").assertDoesNotExist()
+        onNodeWithTag("home_open_at_start").performScrollTo().assertIsDisplayed().performClick()
+        assertEquals(true, opened)
     }
 
     @Test
@@ -213,9 +211,9 @@ class ConnectionTests : ShotBase() {
         onNodeWithTag("settings_auto_none").performScrollTo().assertIsNotSelected()
         onNodeWithTag("settings_connection_default_1").performScrollTo().assertIsSelected()
         onNodeWithTag("settings_connection_default_2").performScrollTo().performClick()
-        assertEquals("setDefaultConnection:2", c.calls.last())
+        assertEquals("setDefaultConnection:PARENT:2", c.calls.last())
         onNodeWithTag("settings_auto_none").performScrollTo().performClick()
-        assertEquals("clearDefaultConnection", c.calls.last())
+        assertEquals("clearDefaultConnection:PARENT", c.calls.last())
         onNodeWithTag("settings_auto_none").assertIsSelected()
     }
 
@@ -224,13 +222,15 @@ class ConnectionTests : ShotBase() {
         val c = FakeAppController(app = two)
         show { SettingsScreen(c, {}, {}, {}) }
         // The card is one button, so its rows only exist in the unmerged tree.
-        onNodeWithTag("settings_connection_row_1", useUnmergedTree = true).assertIsDisplayed()
-        onNodeWithTag("settings_connection_row_2", useUnmergedTree = true).assertIsDisplayed()
+        onNodeWithTag("settings_connection_row_parent_1", useUnmergedTree = true)
+            .assertIsDisplayed()
+        onNodeWithTag("settings_connection_row_parent_2", useUnmergedTree = true)
+            .assertIsDisplayed()
         onNodeWithTag("settings_connection_in_use").assertDoesNotExist()
         onNodeWithTag("settings_connections_read_only").assertDoesNotExist()
         onNodeWithTag("settings_connections").performClick()
-        onNodeWithTag("settings_group_paired").assertIsDisplayed()
-        onNodeWithTag("settings_connection_rename_2").assertIsDisplayed()
+        onNodeWithTag("settings_group_paired_parent").assertIsDisplayed()
+        onNodeWithTag("settings_connection_rename_parent_2").assertIsDisplayed()
     }
 
     @Test
@@ -243,8 +243,8 @@ class ConnectionTests : ShotBase() {
         onNodeWithTag("settings_connection_in_use").assertIsDisplayed()
         // The overview rows are not a way into the editable page any more.
         onNodeWithTag("settings_connections").performClick()
-        onNodeWithTag("settings_group_paired").assertDoesNotExist()
-        onNodeWithTag("settings_connection_rename_1").assertDoesNotExist()
+        onNodeWithTag("settings_group_paired_parent").assertDoesNotExist()
+        onNodeWithTag("settings_connection_rename_parent_1").assertDoesNotExist()
     }
 
     @Test
@@ -252,20 +252,94 @@ class ConnectionTests : ShotBase() {
         val c = FakeAppController(app = two.copy(monitoring = true))
         show { SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.CONNECTIONS) }
         onNodeWithTag("settings_connections_read_only").assertIsDisplayed()
-        onNodeWithTag("settings_connection_rename_1").assertDoesNotExist()
-        onNodeWithTag("settings_connection_forget_1").assertDoesNotExist()
+        onNodeWithTag("settings_connection_rename_parent_1").assertDoesNotExist()
+        onNodeWithTag("settings_connection_forget_parent_1").assertDoesNotExist()
+    }
+
+    private val bothRoles =
+        two.copy(
+            babyConnections =
+                listOf(ConnectionUi("1", "Travel cot", isDefault = true, selected = true))
+        )
+
+    @Test
+    fun settingsConnectionsListsBothRolesUnderTheirHeaders() = runComposeUiTest {
+        show {
+            SettingsScreen(
+                FakeAppController(app = bothRoles),
+                {},
+                {},
+                {},
+                initialPage = SettingsPage.CONNECTIONS,
+            )
+        }
+        onNodeWithTag("settings_group_paired_parent").assertIsDisplayed()
+        onNodeWithTag("settings_group_paired_baby").performScrollTo().assertIsDisplayed()
+        onNodeWithTag("settings_connection_name_parent_2").assertTextContains("Travel")
+        onNodeWithTag("settings_connection_name_baby_1")
+            .performScrollTo()
+            .assertTextContains("Travel cot")
+    }
+
+    @Test
+    fun renameAndForgetActOnTheRowsOwnRole() = runComposeUiTest {
+        val c = FakeAppController(app = bothRoles)
+        show {
+            SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.CONNECTIONS)
+        }
+        onNodeWithTag("settings_connection_rename_baby_1").performScrollTo().performClick()
+        onNodeWithTag("rename_connection_field").performTextInput("!")
+        onNodeWithTag("rename_connection_save").performClick()
+        assertEquals("renameConnection:BABY:1", c.calls.last())
+        assertEquals("!Travel cot", c.appFlow.value.babyConnections.single().name)
+        assertEquals("Home", c.appFlow.value.parentConnections.first().name)
+
+        onNodeWithTag("settings_connection_forget_baby_1").performScrollTo().performClick()
+        onNodeWithTag("dialog_forget_confirm").performClick()
+        assertEquals("forgetConnection:BABY:1", c.calls.last())
+        assertEquals(emptyList<String>(), c.appFlow.value.babyConnections.map { it.id })
+        assertEquals(listOf("1", "2"), c.appFlow.value.parentConnections.map { it.id })
+    }
+
+    @Test
+    fun bothRolesAreReadOnlyWhileMonitoring() = runComposeUiTest {
+        val c = FakeAppController(app = bothRoles.copy(monitoring = true))
+        show { SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.CONNECTIONS) }
+        onNodeWithTag("settings_connections_read_only").assertIsDisplayed()
+        onNodeWithTag("settings_connection_rename_baby_1").assertDoesNotExist()
+        onNodeWithTag("settings_connection_forget_baby_1").assertDoesNotExist()
+        onNodeWithTag("settings_connection_rename_parent_1").assertDoesNotExist()
+    }
+
+    @Test
+    fun theOverviewGroupsBothRolesAndMarksOnlyTheSessionRolesConnection() = runComposeUiTest {
+        val c = FakeAppController(app = bothRoles.copy(monitoring = true))
+        show { SettingsScreen(c, {}, {}, {}) }
+        onNodeWithTag("settings_connections_role_parent", useUnmergedTree = true)
+            .assertIsDisplayed()
+        onNodeWithTag("settings_connections_role_baby", useUnmergedTree = true).assertIsDisplayed()
+        onNodeWithTag("settings_connection_row_baby_1", useUnmergedTree = true).assertIsDisplayed()
+        // One connection is in use: the parent's, not the baby row of the same id.
+        onNodeWithTag("settings_connection_in_use").assertIsDisplayed()
+    }
+
+    @Test
+    fun openAtStartOffersTheBabyDefaultNextToTheParentOnes() = runComposeUiTest {
+        val c = FakeAppController(app = bothRoles)
+        show { SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.OPEN_AT_START) }
+        onNodeWithTag("settings_baby_default_1").performScrollTo().assertIsSelected().performClick()
+        assertEquals("setDefaultConnection:BABY:1", c.calls.last())
     }
 
     @Test
     fun anEmptyNameIsRejectedInTheDialog() = runComposeUiTest {
         val c = FakeAppController(app = one)
         show { SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.CONNECTIONS) }
-        // Single connection keeps today's rows plus rename.
-        onNodeWithTag("settings_peer_name").performScrollTo().assertIsDisplayed()
-        onNodeWithTag("settings_connection_rename_1").performScrollTo().performClick()
+        onNodeWithTag("settings_connection_name_parent_1").performScrollTo().assertIsDisplayed()
+        onNodeWithTag("settings_connection_rename_parent_1").performScrollTo().performClick()
         onNodeWithTag("rename_connection_save").performClick()
         onNodeWithTag("dialog_rename_connection").assertIsDisplayed()
-        onNodeWithTag("settings_forget").assertExists()
+        onNodeWithTag("settings_connection_forget_parent_1").assertExists()
     }
 
     @Test

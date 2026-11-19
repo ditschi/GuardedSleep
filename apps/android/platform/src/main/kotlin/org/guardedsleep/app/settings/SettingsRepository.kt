@@ -56,6 +56,11 @@ data class PersistedState(
     val role: Role? = null,
     /** "Start mode": the role a cold start opens in; null asks every time. */
     val defaultRole: Role? = null,
+    /**
+     * The role this device ran as last (kept by [SettingsRepository.update] whenever [role] is
+     * set): Settings shows its rows while a start without a start mode has no session role yet.
+     */
+    val lastRole: Role? = null,
     val onboardingDone: Boolean = false,
     /** "Monitoring is on": the parent service resumes it, the baby offers "Tap to resume". */
     val monitoringActive: Boolean = false,
@@ -102,7 +107,9 @@ class SettingsRepository(
         get() = state.value
 
     fun update(transform: (PersistedState) -> PersistedState) {
-        val next = state.updateAndGet { switchRoleLocals(it, transform(it)) }
+        val next = state.updateAndGet {
+            switchRoleLocals(it, transform(it)).let { n -> n.copy(lastRole = n.role ?: n.lastRole) }
+        }
         scope.launch { store.edit { write(it, next) } }
     }
 
@@ -216,6 +223,8 @@ class SettingsRepository(
             settings = settings,
             role = role,
             defaultRole = defaultRole,
+            // An update keeps the old single role as the last one.
+            lastRole = enumOrNull<Role>(p[LAST_ROLE]) ?: role ?: defaultRole,
             onboardingDone = p[ONBOARDING] ?: false,
             monitoringActive = p[MONITORING] ?: false,
             peerName = active.peerName,
@@ -259,6 +268,7 @@ class SettingsRepository(
         set(NIGHT_OVERRIDE_ON, c.nightOverride?.active)
         set(NIGHT_OVERRIDE_UNTIL, c.nightOverride?.untilWallMs)
         set(ROLE, s.role?.name)
+        set(LAST_ROLE, s.lastRole?.name)
         set(ONBOARDING, s.onboardingDone)
         set(MONITORING, s.monitoringActive)
         set(DEFAULT_ROLE, s.defaultRole?.name ?: ASK)
@@ -307,6 +317,7 @@ class SettingsRepository(
         val NIGHT_OVERRIDE_ON = booleanPreferencesKey("night_override_on")
         val NIGHT_OVERRIDE_UNTIL = longPreferencesKey("night_override_until_wall")
         val ROLE = stringPreferencesKey("role")
+        val LAST_ROLE = stringPreferencesKey("last_role")
         val DEFAULT_ROLE = stringPreferencesKey("default_role")
         // Stored for "Ask every time", so an absent key still means "update from a single role".
         const val ASK = "ask"

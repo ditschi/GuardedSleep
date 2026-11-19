@@ -60,38 +60,43 @@ class UiJourneyTest : JourneyHost() {
         // A second invite from the baby: the parent adds it as its second connection.
         stopMonitoring(Device.PARENT)
         stopMonitoring(Device.BABY)
-        tap(Device.BABY, "home_new_pairing")
-        tap(Device.PARENT, "home_new_pairing")
+        tap(Device.BABY, "home_new_pairing_baby")
+        tap(Device.PARENT, "home_new_pairing_parent")
         pairWithPastedCode()
         awaitConnected()
         assertEquals(2, phones.parent.app.value.connections.size)
         stopMonitoring(Device.PARENT)
         stopMonitoring(Device.BABY)
 
-        // Two saved connections: the list opens, one is chosen and marked as the default.
-        tap(Device.PARENT, "home_connection_change")
-        awaitShown(Device.PARENT, "home_connection_list")
+        // Two saved connections: Home lists both, each with its own Start.
+        awaitShown(Device.PARENT, "home_connections_parent")
         val chosen = phones.parent.app.value.connections.first { !it.selected }.id
-        tap(Device.PARENT, "connection_choice_$chosen")
-        assertEquals(chosen, phones.parent.app.value.connections.first { it.selected }.id)
-        tap(Device.PARENT, "home_auto_connect")
-        assertTrue(phones.parent.app.value.connections.first { it.selected }.isDefault)
+        awaitShown(Device.PARENT, "home_connection_parent_$chosen")
 
-        // The app starts again: the first entry into the parent role starts monitoring on its own.
+        // Settings > Open at start: the parent role opens at start, and the chosen connection is
+        // the default. Neither sits on Home any more.
+        tap(Device.PARENT, "home_open_at_start")
+        awaitShown(Device.PARENT, "start_mode_parent")
+        tap(Device.PARENT, "start_mode_parent")
+        tap(Device.PARENT, "settings_connection_default_$chosen")
+        assertEquals(Role.PARENT, phones.parent.app.value.defaultRole)
+        assertEquals(chosen, phones.parent.app.value.connections.single { it.isDefault }.id)
+
+        // The app starts again in the parent role: the first entry starts the default on its own.
         restart(Device.PARENT)
-        awaitShown(Device.PARENT, "role_parent")
-        tap(Device.PARENT, "role_parent")
         awaitShown(Device.PARENT, "parent_monitor")
         assertTrue(phones.parent.app.value.autoStarted)
 
-        // Wrong place: one tap leaves it and lists the connections again.
+        // Wrong place: one tap leaves it and Home lists the connections again.
         awaitShown(Device.PARENT, "parent_choose_other_connection")
         tap(Device.PARENT, "parent_choose_other_connection")
-        awaitShown(Device.PARENT, "home_connection_list")
+        awaitShown(Device.PARENT, "home_connections_parent")
         assertFalse(phones.parent.app.value.monitoring)
 
-        // Clearing the default through the switch.
-        tap(Device.PARENT, "home_auto_connect")
+        // Clearing the default in Settings > Open at start.
+        tap(Device.PARENT, "home_open_at_start")
+        awaitShown(Device.PARENT, "settings_auto_none")
+        tap(Device.PARENT, "settings_auto_none")
         assertTrue(phones.parent.app.value.connections.none { it.isDefault })
     }
 
@@ -105,10 +110,6 @@ class UiJourneyTest : JourneyHost() {
         phones.seedUnverifiedPairing()
         restart(Device.BABY)
         restart(Device.PARENT)
-        awaitShown(Device.BABY, "role_baby")
-        tap(Device.BABY, "role_baby")
-        awaitShown(Device.PARENT, "role_parent")
-        tap(Device.PARENT, "role_parent")
         // The relay refuses the protocol: such a link ends in a terminal failure, and both
         // phones offer "Pair again".
         phones.relayRejectsProtocol(true)
@@ -257,25 +258,21 @@ class UiJourneyTest : JourneyHost() {
     }
 
     @Test
-    fun switchModeBetweenTheRoles() {
+    fun startingTheOtherRoleOnHomeKeepsBothPairings() {
         firstRunAndPair()
         stopMonitoring(Device.PARENT)
         stopMonitoring(Device.BABY)
-        // The baby phone becomes a parent phone: the role screen, then the parent's own pairing
-        // entry (this phone has no parent connection yet).
-        tap(Device.BABY, "switch_mode")
-        awaitShown(Device.BABY, "role_title")
-        assertNull(phones.baby.app.value.role)
-        tap(Device.BABY, "role_default_toggle")
-        tap(Device.BABY, "role_parent")
+        // The baby phone also becomes a parent phone: "Set up new devices" under the parent
+        // header opens the parent's own pairing entry (it has no parent connection yet).
+        tap(Device.BABY, "home_new_pairing_parent")
         awaitShown(Device.BABY, "parent_pair")
-        assertEquals(Role.PARENT, phones.baby.app.value.defaultRole)
         assertEquals(Role.PARENT, phones.baby.app.value.role)
-        // Back to the baby role: its saved connection is untouched.
-        tap(Device.BABY, "switch_mode")
-        awaitShown(Device.BABY, "role_title")
-        tap(Device.BABY, "role_baby")
-        awaitShown(Device.BABY, "home_card")
+        assertNull(phones.baby.app.value.defaultRole)
+        // Cancelled: Home again, and the baby connection starts the baby role with its pairing.
+        tap(Device.BABY, "parent_pair_cancel")
+        awaitShown(Device.BABY, "home")
+        startFromHome(Device.BABY)
+        assertEquals(Role.BABY, phones.baby.app.value.role)
         assertTrue(phones.baby.app.value.paired)
     }
 

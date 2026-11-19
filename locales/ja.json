@@ -120,8 +120,7 @@
           "title": "保護者用端末",
           "hint": "あなたのそばに置いて、アラートを受け取ります。"
         },
-        "orderHint": "先に赤ちゃん用端末を設定してください。",
-        "defaultToggle": "デフォルトにする"
+        "orderHint": "先に赤ちゃん用端末を設定してください。"
       },
       "setup": {
         "title": "この端末を準備する",
@@ -216,11 +215,11 @@
         }
       },
       "home": {
-        "lastUsed": "最終使用：{time}",
         "newPairing": "新しい端末を設定",
         "empty": "ペアリングされた端末はまだありません。",
-        "switchMode": "モードを切り替える",
         "start": "開始",
+        "startConnection": "{name}を開始",
+        "openAtStart": "起動時に開く：{mode} · 変更",
         "privacy": "音声は端末間で暗号化されます。アカウント不要、クラウドへの録音もありません。",
         "vibrateOnly": "音のアラートは、この端末では振動のみになります。"
       },
@@ -433,10 +432,6 @@
         "title": "接続",
         "defaultBaby": "赤ちゃん用端末 {n}",
         "defaultParent": "保護者用端末 {n}",
-        "current": "接続：{name}",
-        "change": "変更",
-        "labelDefault": "{name}（デフォルト）",
-        "autoConnect": "アプリを開いたときに自動で接続する",
         "chooseAnother": "別の接続を選ぶ",
         "rename": "名前を変更",
         "renameTitle": "接続の名前を変更",

@@ -72,6 +72,7 @@ import org.guardedsleep.app.ui.common.TalkInterruptEffect
 import org.guardedsleep.app.ui.common.TalkStatus
 import org.guardedsleep.app.ui.common.TalkTile
 import org.guardedsleep.app.ui.common.ToolRow
+import org.guardedsleep.app.ui.common.customPeerName
 import org.guardedsleep.app.ui.common.formatClock
 import org.guardedsleep.app.ui.common.formatDuration
 import org.guardedsleep.app.ui.common.formatDurationWords
@@ -129,8 +130,6 @@ fun ParentMonitorScreen(
     controller: AppController,
     onSettings: () -> Unit,
     initialSheet: ParentSheet? = null,
-    /** After "Choose another connection": the caller asks the home to list the connections. */
-    onChosenOther: () -> Unit = {},
     levelHistory: LevelHistory = remember { LevelHistory() },
 ) {
     val p = controller.parent.collectAsState().value
@@ -147,10 +146,8 @@ fun ParentMonitorScreen(
     val connected = p.link.phase == LinkPhase.CONNECTED
     // Verified once in this session: the link has had contact with the baby unit.
     val verified = connected || p.link.lastAliveElapsedMs != null
-    val chooseOther = {
-        controller.chooseAnotherConnection()
-        onChosenOther()
-    }
+    // Stops monitoring; Home always lists the saved connections.
+    val chooseOther = { controller.chooseAnotherConnection() }
     val snoozeLeft = (p.snoozedUntilWallMs ?: 0L) - wall
     val snoozed = snoozeLeft > 0
     val acknowledged = (p.link.acknowledgedUntilElapsedMs ?: 0L) > elapsed

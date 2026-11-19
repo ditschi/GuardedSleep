@@ -34,6 +34,17 @@ import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.model.ConnectionUi
 import org.guardedsleep.app.ui.model.Role
 
+/** Custom unit name, or null so copy can use the grammatically correct "the baby unit" form. */
+internal fun customPeerName(peerName: String?): String? = peerName?.takeIf { it.isNotBlank() }
+
+@Composable
+internal fun peerDisplayName(peerName: String?, parentSide: Boolean): String =
+    customPeerName(peerName)
+        ?: stringResource(
+            if (parentSide) R.string.native_ui_common_baby_unit_default
+            else R.string.native_ui_common_parent_unit_default
+        )
+
 /** The name the user chose, else a numbered default so two unnamed connections differ. */
 @Composable
 internal fun connectionLabel(c: ConnectionUi, all: List<ConnectionUi>, role: Role?): String =
@@ -43,14 +54,6 @@ internal fun connectionLabel(c: ConnectionUi, all: List<ConnectionUi>, role: Rol
             else R.string.native_ui_connections_default_baby,
             all.indexOfFirst { it.id == c.id } + 1,
         )
-
-/** The label of a connection in a list: its name, marked when it is the default. */
-@Composable
-internal fun connectionListLabel(c: ConnectionUi, all: List<ConnectionUi>, role: Role?): String {
-    val label = connectionLabel(c, all, role)
-    return if (c.isDefault) stringResource(R.string.native_ui_connections_label_default, label)
-    else label
-}
 
 /** [text] cut to [ConnectionUi.MAX_NAME_LENGTH] code points (never inside a surrogate pair). */
 internal fun limitName(text: String): String =

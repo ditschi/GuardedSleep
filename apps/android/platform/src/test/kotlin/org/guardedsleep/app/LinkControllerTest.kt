@@ -388,7 +388,7 @@ class LinkControllerTest {
     private fun pairing(psk: String) = StoredPairing(psk, listOf("wss://fake.example"), false)
 
     @Test
-    fun startWithoutADefaultShowsTheRoleScreen() {
+    fun startWithoutADefaultHasNoSessionRole() {
         val u = unit("nodefault", null)
         assertNull(u.controller.app.value.role)
         assertNull(u.controller.app.value.defaultRole)
@@ -397,9 +397,8 @@ class LinkControllerTest {
     @Test
     fun startWithADefaultOpensThatRole() {
         val first = unit("withdefault1", Role.PARENT)
-        first.controller.chooseRole(Role.PARENT, makeDefault = true)
-        // A second start of the same phone (same stores), role screen state left behind.
-        first.controller.switchMode()
+        first.controller.setDefaultRole(Role.PARENT)
+        // A second start of the same phone (same stores).
         val second =
             unit("withdefault2", null, settings = first.settings, pairings = first.pairings)
         assertEquals(Role.PARENT, second.controller.app.value.role)
@@ -418,29 +417,151 @@ class LinkControllerTest {
     }
 
     @Test
-    fun switchingKeepsBothPairingsAndTheDefault() {
+    fun startingTheOtherRoleKeepsBothPairingsAndTheStartMode() {
         val u = unit("switch", Role.PARENT)
         val c = u.controller
         u.pairings[Role.PARENT].save(pairing("parent-psk"))
-        c.chooseRole(Role.PARENT, makeDefault = true)
-        assertTrue(c.app.value.paired)
-
-        c.switchMode()
-        assertNull(c.app.value.role)
-        assertEquals(Role.PARENT, c.app.value.defaultRole)
-        assertFalse(c.app.value.paired)
-
-        c.chooseRole(Role.BABY)
-        assertEquals(Role.BABY, c.app.value.role)
-        assertEquals(Role.PARENT, c.app.value.defaultRole)
-        assertFalse("the baby slot is empty", c.app.value.paired)
         u.pairings[Role.BABY].save(pairing("baby-psk"))
-        c.switchMode()
-
-        c.chooseRole(Role.PARENT)
+        c.setDefaultRole(Role.PARENT)
         assertTrue(c.app.value.paired)
+        assertEquals(listOf("1"), c.app.value.parentConnections.map { it.id })
+        assertEquals(listOf("1"), c.app.value.babyConnections.map { it.id })
+
+        // Swap for one night: the baby connection starts the baby unit with its own pairing.
+        c.startConnection(Role.BABY, "1")
+        assertEquals(Role.BABY, c.app.value.role)
+        assertTrue(c.app.value.monitoring)
+        assertEquals(Role.PARENT, c.app.value.defaultRole)
+        c.stopMonitoring()
+        c.startConnection(Role.PARENT, "1")
+        assertEquals(Role.PARENT, c.app.value.role)
+        c.stopMonitoring()
         assertEquals("parent-psk", u.pairings[Role.PARENT].load()?.pskB64url)
         assertEquals("baby-psk", u.pairings[Role.BABY].load()?.pskB64url)
+
+        // The next start without monitoring opens in the parent role again.
+        val next = unit("switch2", null, settings = u.settings, pairings = u.pairings)
+        assertEquals(Role.PARENT, next.controller.app.value.role)
+    }
+
+    @Test
+    fun homeListsBothRolesWhileTheStartModeAsks() {
+        val u = unit("both", Role.PARENT)
+        u.pairings.store(Role.PARENT, "1").save(pairing("one"))
+        u.pairings.store(Role.BABY, "1").save(pairing("two"))
+        u.pairings.rename(Role.BABY, "1", "Travel cot")
+        val c = unit("both2", null, settings = u.settings, pairings = u.pairings).controller
+        val app = c.app.value
+        assertNull("Ask every time: no role yet", app.role)
+        assertEquals(Role.PARENT, app.lastRole)
+        assertEquals(listOf("1"), app.parentConnections.map { it.id })
+        assertEquals("Travel cot", app.babyConnections.single().name)
+        // Settings still has a role to show.
+        assertEquals(listOf("1"), app.connections.map { it.id })
+    }
+
+    /** A phone on Home (Ask every time): no session role, the parent role used last. */
+    private fun homeUnit(name: String): Unit2 {
+        val first = unit(name, Role.PARENT)
+        first.pairings.store(Role.PARENT, "1").save(pairing("parent-one"))
+        first.pairings.store(Role.PARENT, "2").save(pairing("parent-two"))
+        first.pairings.store(Role.BABY, "1").save(pairing("baby-one"))
+        first.pairings.store(Role.BABY, "2").save(pairing("baby-two"))
+        val home = unit("$name-home", null, settings = first.settings, pairings = first.pairings)
+        assertNull(home.controller.app.value.role)
+        assertEquals(Role.PARENT, home.controller.app.value.lastRole)
+        return home
+    }
+
+    @Test
+    fun settingsActionsActOnTheRowsOwnRoleWhileTheSessionRoleIsNull() {
+        val u = homeUnit("row-actions")
+        val c = u.controller
+        // The parent role was used last, yet a baby row acts on the baby role.
+        assertTrue(c.renameConnection(Role.BABY, "2", "Cot"))
+        assertEquals("Cot", u.pairings.list(Role.BABY).single { it.id == "2" }.name)
+        assertNull("the parent role is untouched", u.pairings.list(Role.PARENT).first().name)
+
+        assertTrue(c.renameConnection(Role.PARENT, "2", "Grandma"))
+        assertEquals("Grandma", u.pairings.list(Role.PARENT).single { it.id == "2" }.name)
+
+        c.setDefaultConnection(Role.PARENT, "2")
+        assertEquals("2", c.app.value.parentConnections.single { it.isDefault }.id)
+        c.setDefaultConnection(Role.BABY, "2")
+        assertEquals("2", c.app.value.babyConnections.single { it.isDefault }.id)
+        c.clearDefaultConnection(Role.PARENT)
+        assertTrue(c.app.value.parentConnections.none { it.isDefault })
+        assertEquals(
+            "the baby default stays",
+            "2",
+            c.app.value.babyConnections.single { it.isDefault }.id,
+        )
+        assertNull(c.app.value.role)
+    }
+
+    @Test
+    fun forgettingARowKeepsTheOtherRolesPairings() {
+        val u = homeUnit("row-forget")
+        u.controller.forgetConnection(Role.BABY, "1")
+        assertEquals(listOf("2"), u.controller.app.value.babyConnections.map { it.id })
+        assertEquals(listOf("1", "2"), u.controller.app.value.parentConnections.map { it.id })
+        assertEquals("parent-one", u.pairings.store(Role.PARENT, "1").load()?.pskB64url)
+        assertNull(u.pairings.store(Role.BABY, "1").load())
+    }
+
+    @Test
+    fun theSessionChoiceOfOneRoleNeverSelectsAConnectionOfTheOther() {
+        val u = homeUnit("active-isolation")
+        val c = u.controller
+        c.chooseRole(Role.PARENT)
+        c.selectConnection("2")
+        val app = c.app.value
+        assertEquals("2", app.parentConnections.single { it.selected }.id)
+        assertEquals(
+            "the baby list keeps its own default",
+            "1",
+            app.babyConnections.single { it.selected }.id,
+        )
+    }
+
+    @Test
+    fun startConnectionIgnoresAnUnknownConnectionAndRunningMonitoring() {
+        val u = unit("start-guard", Role.PARENT)
+        val c = u.controller
+        u.pairings.store(Role.PARENT, "1").save(pairing("one"))
+        c.startConnection(Role.PARENT, "2")
+        assertFalse("nothing saved in slot 2", c.app.value.monitoring)
+        c.startConnection(Role.PARENT, "1")
+        assertTrue(c.app.value.monitoring)
+        u.pairings.store(Role.BABY, "1").save(pairing("baby"))
+        c.startConnection(Role.BABY, "1")
+        assertEquals("no switch while monitoring", Role.PARENT, c.app.value.role)
+    }
+
+    @Test
+    fun setUpNewDevicesOpensThePairingOfThatRoleWithoutAnAutomaticStart() {
+        val first = autoStartParent("setup-new", startsAsParent = false)
+        val starts = java.util.concurrent.atomic.AtomicInteger()
+        val c = restart("setup-new2", first, starts).controller
+        c.onForeground()
+        c.setUpNewDevices(Role.BABY)
+        assertEquals(Role.BABY, c.app.value.role)
+        assertNotNull(c.pairing.value)
+        c.cancelPairing()
+        c.setUpNewDevices(Role.PARENT)
+        assertEquals(Role.PARENT, c.app.value.role)
+        assertFalse(c.app.value.monitoring)
+        assertEquals(0, starts.get())
+    }
+
+    @Test
+    fun setUpNewDevicesIsIgnoredWhileMonitoring() {
+        val u = unit("setup-monitoring", Role.PARENT)
+        u.pairings.store(Role.PARENT, "1").save(pairing("one"))
+        u.controller.startMonitoring()
+        u.controller.setUpNewDevices(Role.BABY)
+        assertEquals(Role.PARENT, u.controller.app.value.role)
+        assertNull(u.controller.pairing.value)
     }
 
     @Test
@@ -468,7 +589,7 @@ class LinkControllerTest {
         assertEquals(listOf("1", "2"), app.connections.map { it.id })
         assertEquals("1", app.connections.single { it.selected }.id)
         assertEquals("Home", app.peerName)
-        assertFalse("at the cap", app.canAddPairing)
+        assertFalse("at the cap", app.canAddParentPairing)
 
         c.selectConnection("2")
         assertEquals("Travel", c.app.value.peerName)
@@ -536,7 +657,7 @@ class LinkControllerTest {
 
     /**
      * A parent phone with two pairings, the second marked, onboarding done. [startsAsParent] is the
-     * start mode "Parent"; false is "Ask every time" (a cold start shows the role screen).
+     * start mode "Parent"; false is "Ask every time" (a cold start shows Home).
      */
     private fun autoStartParent(
         name: String,
@@ -574,14 +695,20 @@ class LinkControllerTest {
     }
 
     @Test
-    fun askEveryTimeStartsOnTheFirstParentChoiceOnly() {
+    fun askEveryTimeWaitsOnHomeAndAStartTapStartsTheTappedConnectionOnce() {
         val first = autoStartParent("ask", startsAsParent = false)
         val starts = java.util.concurrent.atomic.AtomicInteger()
         val c = restart("ask2", first, starts).controller
         c.onForeground()
-        assertFalse("the role screen waits", c.app.value.monitoring)
-        c.chooseRole(Role.PARENT)
+        assertFalse("Home waits, the default does not start", c.app.value.monitoring)
+        c.startConnection(Role.PARENT, "1")
         assertTrue(c.app.value.monitoring)
+        assertEquals(
+            "the tapped one, not the default",
+            "1",
+            c.app.value.connections.single { it.selected }.id,
+        )
+        assertFalse("a tap is not an automatic start", c.app.value.autoStarted)
         assertEquals(1, starts.get())
         c.stopMonitoring()
         c.onForeground()
@@ -590,7 +717,7 @@ class LinkControllerTest {
     }
 
     @Test
-    fun aBabyStartModeSwitchedToParentWithoutABabyRunStartsOnce() {
+    fun aBabyStartModeSwitchedToParentStartsTheDefaultWithOneTap() {
         val first = autoStartParent("baby-mode", startsAsParent = false)
         first.controller.setDefaultRole(Role.BABY)
         val starts = java.util.concurrent.atomic.AtomicInteger()
@@ -598,17 +725,13 @@ class LinkControllerTest {
         c.onForeground()
         assertEquals(Role.BABY, c.app.value.role)
         assertFalse(c.app.value.monitoring)
-        c.switchMode()
-        c.chooseRole(Role.PARENT)
+        // Back on Home, one tap on the parent default connection starts it.
+        c.startConnection(Role.PARENT, "2")
         assertTrue(c.app.value.monitoring)
-        assertTrue(c.app.value.autoStarted)
         assertEquals(1, starts.get())
         c.stopMonitoring()
-        assertFalse(c.app.value.autoStarted)
-        c.switchMode()
-        c.chooseRole(Role.PARENT)
         c.onForeground()
-        assertFalse("once per process", c.app.value.monitoring)
+        assertFalse("nothing starts by itself again", c.app.value.monitoring)
         assertEquals(1, starts.get())
     }
 
@@ -622,8 +745,8 @@ class LinkControllerTest {
         c.startPairing()
         assertNotNull(c.pairing.value)
         c.cancelPairing()
-        c.switchMode()
         c.chooseRole(Role.PARENT)
+        c.onForeground()
         assertFalse(c.app.value.monitoring)
         assertEquals(0, starts.get())
     }
@@ -689,7 +812,7 @@ class LinkControllerTest {
                 autoStartParent("auto-clear"),
                 java.util.concurrent.atomic.AtomicInteger(),
             )
-        u.controller.clearDefaultConnection()
+        u.controller.clearDefaultConnection(Role.PARENT)
         assertTrue(u.controller.app.value.connections.none { it.isDefault })
         u.controller.onForeground()
         assertFalse(u.controller.app.value.monitoring)
@@ -700,7 +823,8 @@ class LinkControllerTest {
         val first = unit("resume-choice", Role.PARENT)
         first.pairings.store(Role.PARENT, "1").save(pairing("home-psk"))
         first.pairings.store(Role.PARENT, "2").save(pairing("travel-psk"))
-        first.controller.chooseRole(Role.PARENT, makeDefault = true)
+        first.controller.chooseRole(Role.PARENT)
+        first.controller.setDefaultRole(Role.PARENT)
         first.controller.selectConnection("2")
         first.controller.startMonitoring()
 
@@ -722,18 +846,18 @@ class LinkControllerTest {
         u.pairings.store(Role.PARENT, "2").save(pairing("two"))
         c.chooseRole(Role.PARENT)
 
-        assertTrue(c.renameConnection("2", "Travel"))
-        assertFalse(c.renameConnection("2", ""))
-        c.setDefaultConnection("2")
+        assertTrue(c.renameConnection(Role.PARENT, "2", "Travel"))
+        assertFalse(c.renameConnection(Role.PARENT, "2", ""))
+        c.setDefaultConnection(Role.PARENT, "2")
         assertEquals("2", c.app.value.connections.single { it.isDefault }.id)
 
         // The selected one is the default now; forgetting the other keeps monitoring untouched.
-        c.forgetConnection("1")
+        c.forgetConnection(Role.PARENT, "1")
         assertEquals(listOf("2"), c.app.value.connections.map { it.id })
         assertEquals("two", u.pairings.store(Role.PARENT, "2").load()?.pskB64url)
-        assertTrue(c.app.value.canAddPairing)
+        assertTrue(c.app.value.canAddParentPairing)
 
-        c.forgetConnection("2")
+        c.forgetConnection(Role.PARENT, "2")
         assertFalse(c.app.value.paired)
     }
 
@@ -747,7 +871,7 @@ class LinkControllerTest {
         // Not the default: the one in use is deleted, never the default by mistake.
         c.selectConnection("2")
         c.startMonitoring()
-        c.forgetConnection("2")
+        c.forgetConnection(Role.PARENT, "2")
         assertFalse(c.app.value.monitoring)
         assertEquals(listOf("1"), c.app.value.connections.map { it.id })
         assertEquals("one", u.pairings.store(Role.PARENT, "1").load()?.pskB64url)
@@ -765,29 +889,11 @@ class LinkControllerTest {
     }
 
     @Test
-    fun switchModeCancelsAnOpenInviteAndIsIgnoredWhileMonitoring() {
-        val u = unit("invite", Role.BABY)
-        val c = u.controller
-        c.startPairing()
-        assertNotNull(c.pairing.value)
-        c.switchMode()
-        assertNull(c.pairing.value)
-        assertNull(c.app.value.role)
-
-        c.chooseRole(Role.BABY)
-        u.settings.update { it.copy(monitoringActive = true) }
-        c.switchMode()
-        assertEquals(Role.BABY, c.app.value.role)
-    }
-
-    @Test
     fun theSnoozeAndPeerNameBelongToTheirRole() {
         val u = unit("perrole", Role.PARENT)
         u.settings.update { it.copy(peerName = "Lena", snoozeUntilWallMs = 42L) }
-        u.controller.switchMode()
         u.controller.chooseRole(Role.BABY)
         assertNull(u.controller.app.value.peerName)
-        u.controller.switchMode()
         u.controller.chooseRole(Role.PARENT)
         assertEquals("Lena", u.controller.app.value.peerName)
         assertEquals(42L, u.settings.current.snoozeUntilWallMs)

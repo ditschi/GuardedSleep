@@ -468,8 +468,10 @@ export interface ConnectionUi {
 }
 
 export interface AppState {
-  /** The session role; null shows the role screen. */
+  /** The session role; null on Home until a connection starts, and on the first start. */
   role: Role | null;
+  /** The role this device used last; Settings shows its rows while `role` is null. */
+  lastRole: Role | null;
   /** "Start mode": the role a start without monitoring opens in; null asks every time. */
   defaultRole: Role | null;
   onboardingDone: boolean;
@@ -478,14 +480,17 @@ export interface AppState {
   peerName: string | null;
   /** The saved connections of the session role; empty on the web (one in-memory pairing). */
   connections: ConnectionUi[];
-  /** Fewer than the cap of pairings are saved: a further one can be added. */
-  canAddPairing: boolean;
+  /** Home: the saved parent connections; empty on the web. */
+  parentConnections: ConnectionUi[];
+  /** Home: the saved baby connections; empty on the web. */
+  babyConnections: ConnectionUi[];
+  /** Home: fewer than the cap of parent pairings are saved. */
+  canAddParentPairing: boolean;
   monitoring: boolean;
   /** Parent: the running session was started by the automatic start (never on the web). */
   autoStarted: boolean;
   /** False while monitoring is on but nothing keeps the page alive: show red, never green. */
   backgroundProtection: boolean;
-  lastUsedWallMs: number | null;
   /** Show the first-run coach marks on the parent monitoring screen once. */
   coachPending: boolean;
   deviceCheck: DeviceCheck;
@@ -608,16 +613,18 @@ export function defaultSettings(): SettingsState {
 export function defaultAppState(): AppState {
   return {
     role: null,
+    lastRole: null,
     defaultRole: null,
     onboardingDone: false,
     paired: false,
     peerName: null,
     connections: [],
-    canAddPairing: true,
+    parentConnections: [],
+    babyConnections: [],
+    canAddParentPairing: true,
     monitoring: false,
     autoStarted: false,
     backgroundProtection: true,
-    lastUsedWallMs: null,
     coachPending: false,
     deviceCheck: "unknown",
     deviceCheckReasons: [],

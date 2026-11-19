@@ -120,8 +120,7 @@
           "title": "Dispositivo de los padres",
           "hint": "Se queda con usted y le avisa."
         },
-        "orderHint": "Configure primero el dispositivo del bebé.",
-        "defaultToggle": "Usar por defecto"
+        "orderHint": "Configure primero el dispositivo del bebé."
       },
       "setup": {
         "title": "Preparar este dispositivo",
@@ -216,11 +215,11 @@
         }
       },
       "home": {
-        "lastUsed": "Último uso a las {time}",
         "newPairing": "Configurar dispositivos nuevos",
         "empty": "Aún no hay dispositivos emparejados.",
-        "switchMode": "Cambiar de modo",
         "start": "Iniciar",
+        "startConnection": "Iniciar {name}",
+        "openAtStart": "Abrir al iniciar: {mode} · Cambiar",
         "privacy": "El sonido va cifrado entre sus dispositivos. Sin cuenta y sin grabación en la nube.",
         "vibrateOnly": "Los avisos de ruido solo harán vibrar este dispositivo."
       },
@@ -433,10 +432,6 @@
         "title": "Conexiones",
         "defaultBaby": "Dispositivo del bebé {n}",
         "defaultParent": "Dispositivo de los padres {n}",
-        "current": "Conexión: {name}",
-        "change": "Cambiar",
-        "labelDefault": "{name} (predeterminada)",
-        "autoConnect": "Conectar automáticamente al abrir la app",
         "chooseAnother": "Elegir otra conexión",
         "rename": "Cambiar nombre",
         "renameTitle": "Cambiar nombre de la conexión",
