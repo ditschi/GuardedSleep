@@ -460,6 +460,58 @@ class LinkControllerTest {
         assertEquals(listOf("1"), app.connections.map { it.id })
     }
 
+    /** A phone on Home (Ask every time): no session role, the parent role used last. */
+    private fun homeUnit(name: String): Unit2 {
+        val first = unit(name, Role.PARENT)
+        first.pairings.store(Role.PARENT, "1").save(pairing("parent-one"))
+        first.pairings.store(Role.PARENT, "2").save(pairing("parent-two"))
+        first.pairings.store(Role.BABY, "1").save(pairing("baby-one"))
+        first.pairings.store(Role.BABY, "2").save(pairing("baby-two"))
+        val home = unit("$name-home", null, settings = first.settings, pairings = first.pairings)
+        assertNull(home.controller.app.value.role)
+        assertEquals(Role.PARENT, home.controller.app.value.lastRole)
+        return home
+    }
+
+    @Test
+    fun settingsActionsWorkOnTheLastRoleWhileTheSessionRoleIsNull() {
+        val u = homeUnit("last-actions")
+        val c = u.controller
+        assertTrue(c.renameConnection("2", "Grandma"))
+        assertEquals("Grandma", u.pairings.list(Role.PARENT).single { it.id == "2" }.name)
+        assertNull("the baby role is untouched", u.pairings.list(Role.BABY).first().name)
+
+        c.setDefaultConnection("2")
+        assertEquals("2", c.app.value.parentConnections.single { it.isDefault }.id)
+        c.clearDefaultConnection()
+        assertTrue(c.app.value.parentConnections.none { it.isDefault })
+        assertNull(c.app.value.role)
+    }
+
+    @Test
+    fun forgettingOnTheLastRoleKeepsTheOtherRolesPairing() {
+        val u = homeUnit("last-forget")
+        u.controller.forgetConnection("1")
+        assertEquals(listOf("2"), u.controller.app.value.parentConnections.map { it.id })
+        assertEquals(listOf("1", "2"), u.controller.app.value.babyConnections.map { it.id })
+        assertEquals("baby-one", u.pairings.store(Role.BABY, "1").load()?.pskB64url)
+    }
+
+    @Test
+    fun theSessionChoiceOfOneRoleNeverSelectsAConnectionOfTheOther() {
+        val u = homeUnit("active-isolation")
+        val c = u.controller
+        c.chooseRole(Role.PARENT)
+        c.selectConnection("2")
+        val app = c.app.value
+        assertEquals("2", app.parentConnections.single { it.selected }.id)
+        assertEquals(
+            "the baby list keeps its own default",
+            "1",
+            app.babyConnections.single { it.selected }.id,
+        )
+    }
+
     @Test
     fun startConnectionIgnoresAnUnknownConnectionAndRunningMonitoring() {
         val u = unit("start-guard", Role.PARENT)
