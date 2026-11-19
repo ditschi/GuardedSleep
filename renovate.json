@@ -117,6 +117,11 @@
       "groupName": "cargo"
     },
     {
+      "description": "Robolectric android-all jars: their versions come from DefaultSdkProvider of the pinned Robolectric and change only by hand with a Robolectric upgrade (comment in apps/android/gradle/libs.versions.toml)",
+      "matchPackageNames": ["org.robolectric:android-all-instrumented"],
+      "enabled": false
+    },
+    {
       "description": "Rust toolchain: own PR, reviewed by hand",
       "matchPackageNames": ["rust", "rust-lang/rust"],
       "groupName": "rust toolchain"
