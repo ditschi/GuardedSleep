@@ -2,13 +2,13 @@
 
 Master files of the GuardedSleep logo, restored from the legacy Capacitor client (`apps/mobile/resources/`, removed in wave 1 with commit `88a7ff49`). Use of the name and logo is governed by the [trademark policy](../legal/trademark.md).
 
-| File         | Content                                                                |
-| ------------ | ---------------------------------------------------------------------- |
+| File         | Content                                                                        |
+| ------------ | ------------------------------------------------------------------------------ |
 | `logo.svg`   | **Master.** Clean redraw of the logo, 108 × 108 viewBox (adaptive-icon canvas) |
-| `icon.svg`   | Logo (crescent, dot and sound wave), 1024 × 1024 viewBox (Inkscape)    |
-| `icon.png`   | The same logo as a 1024 × 1024 PNG on white                            |
-| `splash.svg` | Logo with the wordmark "GuardedSleep" and "Privacy-First Baby Monitor" |
-| `splash.png` | The same splash as a 2732 × 2732 PNG                                   |
+| `icon.svg`   | Logo (crescent, dot and sound wave), 1024 × 1024 viewBox (Inkscape)            |
+| `icon.png`   | The same logo as a 1024 × 1024 PNG on white                                    |
+| `splash.svg` | Logo with the wordmark "GuardedSleep" and "Privacy-First Baby Monitor"         |
+| `splash.png` | The same splash as a 2732 × 2732 PNG                                           |
 
 `logo.svg` is the single vector master for every icon (`use-brand-launcher-icon`). It is a redraw of `icon.png` with four shapes (crescent, crescent body, dot, wave) and lies entirely inside the 66 dp safe circle centred at 54,54 of the Android adaptive-icon canvas. `icon.svg` and `splash.svg` are traced bitmaps (many small paths): historical sources, not drop-in vector drawables.
 
