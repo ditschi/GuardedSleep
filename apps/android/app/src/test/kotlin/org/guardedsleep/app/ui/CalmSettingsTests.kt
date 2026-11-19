@@ -52,6 +52,8 @@ class CalmSettingsTests : ShotBase() {
             paired = true,
             peerName = "Nursery",
             connections = listOf(ConnectionUi("1", "Nursery", isDefault = false, selected = true)),
+            parentConnections =
+                listOf(ConnectionUi("1", "Nursery", isDefault = false, selected = true)),
         )
 
     // ---- Settings structure ----------------------------------------------------------------
@@ -102,6 +104,23 @@ class CalmSettingsTests : ShotBase() {
     }
 
     @Test
+    fun settingsFromHomeWithoutASessionRoleShowsTheRowsOfTheLastRole() = runComposeUiTest {
+        val baby =
+            AppState(
+                role = null,
+                lastRole = Role.BABY,
+                onboardingDone = true,
+                paired = true,
+                connections = listOf(ConnectionUi("1", "Travel cot", false, true)),
+                babyConnections = listOf(ConnectionUi("1", "Travel cot", false, true)),
+            )
+        show { SettingsScreen(FakeAppController(app = baby), {}, {}, {}) }
+        onNodeWithTag("settings_nav_detection").performScrollTo().assertIsDisplayed()
+        onNodeWithTag("settings_nav_alerts").assertDoesNotExist()
+        onNodeWithTag("settings_connection_row_baby_1", useUnmergedTree = true).assertIsDisplayed()
+    }
+
+    @Test
     fun theOpenAtStartRowSummarisesTheStartMode() = runComposeUiTest {
         val c = FakeAppController(app = parentApp.copy(defaultRole = Role.BABY))
         show { SettingsScreen(c, {}, {}, {}) }
@@ -111,15 +130,21 @@ class CalmSettingsTests : ShotBase() {
     }
 
     @Test
-    fun theBabyDeviceHasNoAutomaticStartChoiceWithOneConnection() = runComposeUiTest {
+    fun aBabyOnlyDeviceHasNoAutomaticStartChoice() = runComposeUiTest {
         val c =
             FakeAppController(
-                app = parentApp.copy(role = Role.BABY),
+                app =
+                    AppState(
+                        role = Role.BABY,
+                        onboardingDone = true,
+                        paired = true,
+                        babyConnections = listOf(ConnectionUi("1", "Cot", false, true)),
+                    ),
                 settings = SettingsState(),
             )
         show { SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.OPEN_AT_START) }
         onNodeWithTag("settings_auto_none").assertDoesNotExist()
-        onNodeWithTag("settings_connection_default_1").performScrollTo().assertIsDisplayed()
+        onNodeWithTag("settings_baby_default_1").performScrollTo().assertIsDisplayed()
     }
 
     // ---- back behaviour --------------------------------------------------------------------
@@ -240,9 +265,9 @@ class CalmSettingsTests : ShotBase() {
         val c = FakeAppController(app = parentApp)
         show { HomeScreen(c, {}) }
         onNodeWithTag("home_privacy").performScrollTo().assertIsDisplayed()
-        onNodeWithTag("home_start", useUnmergedTree = true).assertIsDisplayed()
-        onNodeWithTag("home_card").performClick()
-        assertEquals(listOf("startMonitoring"), c.calls)
+        onNodeWithTag("home_start_parent_1", useUnmergedTree = true).assertIsDisplayed()
+        onNodeWithTag("home_connection_parent_1").performClick()
+        assertEquals(listOf("startConnection:PARENT:1"), c.calls)
     }
 
     @Test
@@ -252,27 +277,27 @@ class CalmSettingsTests : ShotBase() {
     }
 
     @Test
-    fun vibrateOnlyIsRemindedOnTheParentHomeOnly() = runComposeUiTest {
+    fun vibrateOnlyIsRemindedUnderTheParentConnections() = runComposeUiTest {
         val vibrate = SettingsState(alertStyle = AlertStyle.DISCREET)
         val c = FakeAppController(app = parentApp, settings = vibrate)
         show { HomeScreen(c, {}) }
         onNodeWithTag("home_vibrate_only").performScrollTo().assertIsDisplayed()
         // No prompt: Start still begins monitoring with one tap.
-        onNodeWithTag("home_card").performClick()
-        assertEquals(listOf("startMonitoring"), c.calls)
+        onNodeWithTag("home_connection_parent_1").performClick()
+        assertEquals(listOf("startConnection:PARENT:1"), c.calls)
     }
 
     @Test
-    fun noVibrateOnlyLineInSoundStyleOrOnTheBabyHome() = runComposeUiTest {
+    fun noVibrateOnlyLineInSoundStyle() = runComposeUiTest {
         show { HomeScreen(FakeAppController(app = parentApp), {}) }
         onNodeWithTag("home_vibrate_only").assertDoesNotExist()
     }
 
     @Test
-    fun noVibrateOnlyLineOnTheBabyHome() = runComposeUiTest {
+    fun noVibrateOnlyLineWithoutParentConnections() = runComposeUiTest {
         val c =
             FakeAppController(
-                app = parentApp.copy(role = Role.BABY),
+                app = parentApp.copy(parentConnections = emptyList()),
                 settings = SettingsState(alertStyle = AlertStyle.DISCREET),
             )
         show { HomeScreen(c, {}) }

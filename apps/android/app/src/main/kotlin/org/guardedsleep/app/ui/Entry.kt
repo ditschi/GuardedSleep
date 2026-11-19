@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import org.guardedsleep.app.BuildConfig
 import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.common.StatusBar
+import org.guardedsleep.app.ui.common.customPeerName
 import org.guardedsleep.app.ui.common.findActivity
 import org.guardedsleep.app.ui.common.systemReduceMotion
 import org.guardedsleep.app.ui.model.AppController
@@ -46,7 +47,6 @@ import org.guardedsleep.app.ui.screens.RoleScreen
 import org.guardedsleep.app.ui.screens.SettingsPage
 import org.guardedsleep.app.ui.screens.SettingsScreen
 import org.guardedsleep.app.ui.screens.SetupScreen
-import org.guardedsleep.app.ui.screens.customPeerName
 import org.guardedsleep.app.ui.theme.AppScheme
 import org.guardedsleep.app.ui.theme.GuardedSleepTheme
 
@@ -96,24 +96,27 @@ private fun AppNavigator(controller: AppController) {
     var settingsPage by rememberSaveable { mutableStateOf(SettingsPage.ROOT) }
     var openProbe by remember { mutableStateOf(false) }
     val role = app.role
-    // One-shot: "Choose another connection" asks the next home to show its connection list.
-    var listRequested by rememberSaveable { mutableStateOf(false) }
+    // The first start: no pairing in either role and no role chosen yet.
+    val firstStart =
+        role == null && app.parentConnections.isEmpty() && app.babyConnections.isEmpty()
     // Lives above the home so a cancelled auto-scan does not reopen; a new role or a saved
     // connection starts a fresh entry.
-    var autoScanned by rememberSaveable(role, app.connections.isEmpty()) { mutableStateOf(false) }
+    var autoScanned by
+        rememberSaveable(role, app.parentConnections.isEmpty()) { mutableStateOf(false) }
     // Any open scan screen (the auto-scan itself or the home button) counts as this entry's scan,
     // so cancelling it does not rescan.
     LaunchedEffect(pairing != null) { if (pairing != null) autoScanned = true }
 
     when {
-        role == null -> RoleScreen(controller)
+        firstStart -> RoleScreen(controller)
         role == Role.BABY && app.monitoring && baby.kioskLocked -> BabyKioskScreen(controller)
-        !app.onboardingDone -> SetupScreen(controller, role, onboarding = true, onBack = {})
+        role != null && !app.onboardingDone ->
+            SetupScreen(controller, role, onboarding = true, onBack = {})
         overlay == Overlay.SETUP ->
             WithStatusBar(controller) {
                 SetupScreen(
                     controller,
-                    role,
+                    app.viewRole,
                     onboarding = false,
                     onBack = { overlay = Overlay.SETTINGS },
                 )
@@ -155,7 +158,6 @@ private fun AppNavigator(controller: AppController) {
                 controller,
                 onSettings = { overlay = Overlay.SETTINGS },
                 initialSheet = sheet,
-                onChosenOther = { listRequested = true },
             )
         }
         app.monitoring -> {
@@ -168,10 +170,12 @@ private fun AppNavigator(controller: AppController) {
             HomeScreen(
                 controller,
                 onSettings = { overlay = Overlay.SETTINGS },
+                onOpenAtStart = {
+                    settingsPage = SettingsPage.OPEN_AT_START
+                    overlay = Overlay.SETTINGS
+                },
                 autoScanned = autoScanned,
                 onAutoScanned = { autoScanned = true },
-                listRequested = listRequested,
-                onListShown = { listRequested = false },
             )
     }
 }

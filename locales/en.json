@@ -118,8 +118,7 @@
           "title": "Parent device",
           "hint": "Stays with you and alerts you."
         },
-        "orderHint": "Set up the baby device first.",
-        "defaultToggle": "Use as default"
+        "orderHint": "Set up the baby device first."
       },
       "setup": {
         "title": "Get this device ready",
@@ -214,11 +213,11 @@
         }
       },
       "home": {
-        "lastUsed": "Last used {time}",
         "newPairing": "Set up new devices",
         "empty": "No devices paired yet.",
-        "switchMode": "Switch mode",
         "start": "Start",
+        "startConnection": "Start {name}",
+        "openAtStart": "Open at start: {mode} · Change",
         "privacy": "Sound is encrypted between your devices. No account, no cloud recording.",
         "vibrateOnly": "Noise alerts will only vibrate on this device."
       },
@@ -431,10 +430,6 @@
         "title": "Connections",
         "defaultBaby": "Baby unit {n}",
         "defaultParent": "Parent device {n}",
-        "current": "Connection: {name}",
-        "change": "Change",
-        "labelDefault": "{name} (default)",
-        "autoConnect": "Connect automatically when the app opens",
         "chooseAnother": "Choose another connection",
         "rename": "Rename",
         "renameTitle": "Rename connection",

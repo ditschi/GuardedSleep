@@ -24,6 +24,7 @@ import org.guardedsleep.app.ui.common.LocalUiEnv
 import org.guardedsleep.app.ui.common.StatusBar
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppState
+import org.guardedsleep.app.ui.model.ConnectionUi
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.NightMode
 import org.guardedsleep.app.ui.model.ParentMonitorState
@@ -346,9 +347,18 @@ class NightModeTests : ShotBase() {
 
     @Test
     fun emberShots() {
-        shot("home/parent_saved_ember", scheme = AppScheme.EMBER) {
+        shot("home/returning_ember", scheme = AppScheme.EMBER) {
             HomeScreen(
-                FakeAppController(app = parentApp.copy(lastUsedWallMs = WALL - 8 * 3_600_000L)),
+                FakeAppController(
+                    app =
+                        parentApp.copy(
+                            parentConnections =
+                                listOf(
+                                    ConnectionUi("1", "Nursery", isDefault = false, selected = true)
+                                ),
+                            babyConnections = listOf(ConnectionUi("1", "Travel cot", false, true)),
+                        )
+                ),
                 {},
             )
         }

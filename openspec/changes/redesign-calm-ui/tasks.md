@@ -49,7 +49,7 @@ Branch `feat/ui-redesign` from `origin/main`. One PR per slice (design §13): gr
 
 ## 4b. One Home with both roles (PR 4b, gated on task 0.4)
 
-- [ ] 4b.1 Only after task 0.4 has reworded "Role choice", "Switching mode", "Parent pairing entry", "Automatic start with the default connection" and "Leaving the automatic start": one Home with both role headers and their connections (frame 01); first start with two large choices and without "Use as default" (frame 02); "Use as default" and the automatic-start switch live only in Settings › Open at start; "Switch mode" removed. Built behaviour stays (start mode default _Ask every time_, automatic start once per app start, "Choose another connection"). Copy for this slice in all 20 catalogues, unused keys removed. Verify: Robolectric tests per scenario of the reworded requirements; Roborazzi baselines re-recorded in the pinned image.
+- [x] 4b.1 Only after task 0.4 has reworded "Role choice", "Switching mode", "Parent pairing entry", "Automatic start with the default connection" and "Leaving the automatic start": one Home with both role headers and their connections (frame 01); first start with two large choices and without "Use as default" (frame 02); "Use as default" and the automatic-start switch live only in Settings › Open at start; "Switch mode" removed. Built behaviour stays (start mode default _Ask every time_, automatic start once per app start, "Choose another connection"). Copy for this slice in all 20 catalogues, unused keys removed. Verify: Robolectric tests per scenario of the reworded requirements; Roborazzi baselines re-recorded in the pinned image.
 
 ## 5. Baby kiosk (PR 5)
 

@@ -50,10 +50,15 @@ export interface AppController {
   /** Parent: what the alarm tone picker plays now (`add-connection-alarm-tone`). */
   readonly alarmTonePlayback: Readable<AlarmTonePlayback>;
 
-  /** Sets the session role; `makeDefault` also stores it as the start mode. */
-  chooseRole(role: Role, makeDefault?: boolean): void;
-  /** Back to the role screen without changing the start mode; no-op while monitoring. */
-  switchMode(): void;
+  /** The first-start choice: sets the session role without touching the start mode. */
+  chooseRole(role: Role): void;
+  /**
+   * Home "Start" on a saved connection of `role`: runs the session as that role and starts
+   * monitoring. A no-op while monitoring or for an unknown id (the web has no saved connections).
+   */
+  startConnection(role: Role, id: string): void;
+  /** Home "Set up new devices" of `role`: sets the role and opens its pairing; no-op while monitoring. */
+  setUpNewDevices(role: Role): void;
   /**
    * Baby: runs the device check in the background; the result lands in `AppState`. A result
    * younger than a minute is reused unless `force` ("Check again").
@@ -64,12 +69,12 @@ export interface AppController {
   /** Named connections (`multi-parent-pairings`): picks the connection of this session. */
   selectConnection(id: string): void;
   /** Renames a connection; false when the name is not 1 to 30 characters. */
-  renameConnection(id: string, name: string): boolean;
-  setDefaultConnection(id: string): void;
-  clearDefaultConnection(): void;
+  renameConnection(role: Role, id: string, name: string): boolean;
+  setDefaultConnection(role: Role, id: string): void;
+  clearDefaultConnection(role: Role): void;
   chooseAnotherConnection(): void;
   /** Forgets exactly one connection; monitoring stops first when it is the one in use. */
-  forgetConnection(id: string): void;
+  forgetConnection(role: Role, id: string): void;
   completeOnboarding(): void;
   startPairing(): void;
   cancelPairing(): void;

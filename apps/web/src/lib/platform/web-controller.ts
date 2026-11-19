@@ -293,15 +293,18 @@ export class WebController implements AppController {
 
   // The web client keeps one in-memory pairing, so a role change still forgets it; per-role
   // pairings and a stored start mode are the web-parity IDEA in docs/backlog.md.
-  chooseRole(role: Role, makeDefault = false): void {
+  chooseRole(role: Role): void {
     if (this.appState.role !== null && this.appState.role !== role) this.forgetPairing();
-    this.setApp({ role, defaultRole: makeDefault ? role : this.appState.defaultRole });
+    this.setApp({ role, lastRole: role });
   }
 
-  switchMode(): void {
+  // The web client has no saved connections, so no id matches and nothing starts.
+  startConnection(_role: Role, _id: string): void {}
+
+  setUpNewDevices(role: Role): void {
     if (this.appState.monitoring) return;
-    this.cancelPairing();
-    this.setApp({ role: null });
+    this.chooseRole(role);
+    this.startPairing();
   }
 
   setDefaultRole(role: Role | null): void {
@@ -316,19 +319,19 @@ export class WebController implements AppController {
   // connection list, so these are no-ops (web parity is the IDEA in docs/backlog.md).
   selectConnection(_id: string): void {}
 
-  renameConnection(_id: string, _name: string): boolean {
+  renameConnection(_role: Role, _id: string, _name: string): boolean {
     return false;
   }
 
-  setDefaultConnection(_id: string): void {}
+  setDefaultConnection(_role: Role, _id: string): void {}
 
   // The web client keeps no saved pairings, so there is no default to remove.
-  clearDefaultConnection(): void {}
+  clearDefaultConnection(_role: Role): void {}
 
   // No automatic start on the web client, so there is nothing to leave.
   chooseAnotherConnection(): void {}
 
-  forgetConnection(_id: string): void {}
+  forgetConnection(_role: Role, _id: string): void {}
 
   completeOnboarding(): void {
     this.setApp({ onboardingDone: true });

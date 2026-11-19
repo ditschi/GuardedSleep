@@ -110,6 +110,25 @@ class RoleStateTest {
         assertEquals(Role.PARENT, restarted.current.defaultRole)
     }
 
+    @Test
+    fun theLastRoleSurvivesAColdStartThatClearsTheSessionRole() {
+        val ds = dataStore()
+        val repo = SettingsRepository(ds, scope)
+        assertNull(repo.current.lastRole)
+        repo.update { it.copy(role = Role.BABY) }
+        repo.update { it.copy(role = null) }
+        assertEquals(Role.BABY, repo.current.lastRole)
+        runBlocking { ds.edit {} }
+        assertEquals(Role.BABY, SettingsRepository(ds, scope).current.lastRole)
+    }
+
+    @Test
+    fun anUpdateFromASingleRoleInstallKeepsThatRoleAsTheLastRole() {
+        val ds = dataStore()
+        runBlocking { ds.edit { it[stringPreferencesKey("role")] = "PARENT" } }
+        assertEquals(Role.PARENT, SettingsRepository(ds, scope).current.lastRole)
+    }
+
     // ---- RolePairings ------------------------------------------------------------------------
 
     private class Slots(dir: File) {

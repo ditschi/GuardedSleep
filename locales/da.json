@@ -120,8 +120,7 @@
           "title": "Forældreenhed",
           "hint": "Bliver hos dig og giver dig besked."
         },
-        "orderHint": "Sæt babyenheden op først.",
-        "defaultToggle": "Brug som standard"
+        "orderHint": "Sæt babyenheden op først."
       },
       "setup": {
         "title": "Gør denne enhed klar",
@@ -216,11 +215,11 @@
         }
       },
       "home": {
-        "lastUsed": "Sidst brugt {time}",
         "newPairing": "Sæt nye enheder op",
         "empty": "Ingen enheder parret endnu.",
-        "switchMode": "Skift tilstand",
         "start": "Start",
+        "startConnection": "Start {name}",
+        "openAtStart": "Åbn ved start: {mode} · Skift",
         "privacy": "Lyden er krypteret mellem dine enheder. Ingen konto, ingen optagelse i skyen.",
         "vibrateOnly": "Støjalarmer vibrerer kun på denne enhed."
       },
@@ -433,10 +432,6 @@
         "title": "Forbindelser",
         "defaultBaby": "Babyenhed {n}",
         "defaultParent": "Forældreenhed {n}",
-        "current": "Forbindelse: {name}",
-        "change": "Skift",
-        "labelDefault": "{name} (standard)",
-        "autoConnect": "Opret forbindelse automatisk, når appen åbnes",
         "chooseAnother": "Vælg en anden forbindelse",
         "rename": "Omdøb",
         "renameTitle": "Omdøb forbindelsen",

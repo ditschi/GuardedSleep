@@ -120,8 +120,7 @@
           "title": "Dispozitivul părintelui",
           "hint": "Rămâne lângă tine și te alertează."
         },
-        "orderHint": "Configurează mai întâi dispozitivul bebelușului.",
-        "defaultToggle": "Folosește ca implicit"
+        "orderHint": "Configurează mai întâi dispozitivul bebelușului."
       },
       "setup": {
         "title": "Pregătește acest dispozitiv",
@@ -216,11 +215,11 @@
         }
       },
       "home": {
-        "lastUsed": "Folosit ultima dată {time}",
         "newPairing": "Configurează dispozitive noi",
         "empty": "Niciun dispozitiv asociat încă.",
-        "switchMode": "Schimbă modul",
         "start": "Pornește",
+        "startConnection": "Pornește {name}",
+        "openAtStart": "Deschidere la pornire: {mode} · Schimbă",
         "privacy": "Sunetul este criptat între dispozitivele tale. Fără cont, fără înregistrare în cloud.",
         "vibrateOnly": "Alertele de zgomot vor face doar ca acest dispozitiv să vibreze."
       },
@@ -433,10 +432,6 @@
         "title": "Conexiuni",
         "defaultBaby": "Dispozitivul bebelușului {n}",
         "defaultParent": "Dispozitivul părintelui {n}",
-        "current": "Conexiune: {name}",
-        "change": "Schimbă",
-        "labelDefault": "{name} (implicită)",
-        "autoConnect": "Conectare automată la deschiderea aplicației",
         "chooseAnother": "Alege altă conexiune",
         "rename": "Redenumește",
         "renameTitle": "Redenumește conexiunea",

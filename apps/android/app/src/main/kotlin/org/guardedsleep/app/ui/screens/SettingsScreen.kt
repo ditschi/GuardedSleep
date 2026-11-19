@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
@@ -119,18 +118,16 @@ fun SettingsScreen(
     val s = controller.settings.collectAsState().value
     val app = controller.app.collectAsState().value
     val b = controller.baby.collectAsState().value
-    val isBaby = app.role == Role.BABY
+    val isBaby = app.viewRole == Role.BABY
     var page by rememberSaveable { mutableStateOf(initialPage) }
     fun goTo(p: SettingsPage) {
         page = p
         onPageChange(p)
     }
     var confirmAdvanced by remember { mutableStateOf(false) }
-    var confirmForget by remember { mutableStateOf(false) }
-    // The connection a rename or forget dialog is about (several saved pairings).
-    var renaming by remember { mutableStateOf<String?>(null) }
-    var forgetting by remember { mutableStateOf<String?>(null) }
-    val peer = peerDisplayName(app.peerName, parentSide = !isBaby)
+    // The connection (of its own role) a rename or forget dialog is about.
+    var renaming by remember { mutableStateOf<ConnectionRef?>(null) }
+    var forgetting by remember { mutableStateOf<ConnectionRef?>(null) }
     // A page goes back to the overview, the overview back to where Settings was opened from.
     val goBack = { if (page == SettingsPage.ROOT) onBack() else goTo(SettingsPage.ROOT) }
     BackHandler(onBack = goBack)
@@ -168,18 +165,15 @@ fun SettingsScreen(
                 SettingsPage.CONNECTIONS ->
                     ConnectionsPage(
                         app,
-                        isBaby,
-                        peer,
                         onRename = { renaming = it },
                         onForget = { forgetting = it },
-                        onForgetOnly = { confirmForget = true },
                     )
                 SettingsPage.DETECTION -> DetectionPage(controller, s, b)
                 SettingsPage.SILENCE -> SilencePage(controller, s, b)
                 SettingsPage.TALK -> TalkPage(controller, s)
                 SettingsPage.ALERTS -> AlertsPage(controller, s, onOpenAlarmTone, onTestAlert)
                 SettingsPage.DISPLAY -> DisplayPage(controller, s)
-                SettingsPage.OPEN_AT_START -> OpenAtStartPage(controller, app, isBaby)
+                SettingsPage.OPEN_AT_START -> OpenAtStartPage(controller, app)
                 SettingsPage.LANGUAGE -> LanguagePage(controller, s)
                 SettingsPage.ABOUT -> AboutPage(buildInfo)
                 SettingsPage.ADVANCED -> AdvancedPage(controller, s) { confirmAdvanced = true }
@@ -202,22 +196,23 @@ fun SettingsScreen(
                 destructive = false,
             )
         }
-        renaming?.let { id ->
-            val c = app.connections.firstOrNull { it.id == id }
+        renaming?.let { ref ->
+            val c = app.connectionsOf(ref.role).firstOrNull { it.id == ref.id }
             RenameConnectionDialog(
                 initial = c?.name.orEmpty(),
-                onSave = { controller.renameConnection(id, it) },
+                onSave = { controller.renameConnection(ref.role, ref.id, it) },
                 onDismiss = { renaming = null },
             )
         }
-        forgetting?.let { id ->
-            val c = app.connections.firstOrNull { it.id == id }
+        forgetting?.let { ref ->
+            val list = app.connectionsOf(ref.role)
+            val c = list.firstOrNull { it.id == ref.id }
             ConfirmDialog(
                 tag = "dialog_forget",
                 title =
                     stringResource(
                         R.string.native_ui_forget_title,
-                        c?.let { connectionLabel(it, app.connections, app.role) }.orEmpty(),
+                        c?.let { connectionLabel(it, list, ref.role) }.orEmpty(),
                     ),
                 body = stringResource(R.string.native_ui_forget_body),
                 confirmText = stringResource(R.string.native_ui_forget_confirm),
@@ -226,35 +221,34 @@ fun SettingsScreen(
                 cancelTag = "dialog_forget_cancel",
                 onConfirm = {
                     forgetting = null
-                    controller.forgetConnection(id)
+                    controller.forgetConnection(ref.role, ref.id)
                 },
                 onDismiss = { forgetting = null },
             )
         }
-        if (confirmForget) {
-            ConfirmDialog(
-                tag = "dialog_forget",
-                title =
-                    customPeerName(app.peerName)?.let {
-                        stringResource(R.string.native_ui_forget_title, it)
-                    }
-                        ?: stringResource(
-                            if (isBaby) R.string.native_ui_forget_title_parent_default
-                            else R.string.native_ui_forget_title_baby_default
-                        ),
-                body = stringResource(R.string.native_ui_forget_body),
-                confirmText = stringResource(R.string.native_ui_forget_confirm),
-                cancelText = stringResource(R.string.native_ui_common_cancel),
-                confirmTag = "dialog_forget_confirm",
-                cancelTag = "dialog_forget_cancel",
-                onConfirm = {
-                    confirmForget = false
-                    controller.forgetPairing()
-                },
-                onDismiss = { confirmForget = false },
-            )
-        }
     }
+}
+
+/** One saved connection together with the role it belongs to (its rows act on that role). */
+private data class ConnectionRef(val role: Role, val id: String)
+
+private val ROLES_IN_ORDER = listOf(Role.PARENT, Role.BABY)
+
+private fun Role.tagKey(): String = name.lowercase()
+
+private fun roleTitleRes(role: Role): Int =
+    if (role == Role.PARENT) R.string.native_ui_role_parent_title
+    else R.string.native_ui_role_baby_title
+
+@Composable
+private fun RoleLabel(role: Role) {
+    Text(
+        stringResource(roleTitleRes(role)),
+        Modifier.testTag("settings_connections_role_${role.tagKey()}").semantics { heading() },
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = FontWeight.SemiBold,
+        color = LocalAppColors.current.secondaryText,
+    )
 }
 
 @Composable
@@ -579,17 +573,6 @@ private fun themeLabel(theme: Theme): String =
         }
     )
 
-/** The start mode as one word: the role a start opens in, or "Ask every time". */
-@Composable
-private fun startModeLabel(mode: Role?): String =
-    stringResource(
-        when (mode) {
-            null -> R.string.native_ui_settings_start_mode_ask
-            Role.BABY -> R.string.native_ui_role_baby_title
-            Role.PARENT -> R.string.native_ui_role_parent_title
-        }
-    )
-
 private fun pageTitle(page: SettingsPage): Int =
     when (page) {
         SettingsPage.ROOT -> R.string.native_ui_common_settings
@@ -657,30 +640,34 @@ private fun SettingsOverview(
     // while monitoring"): the rows then show no chevron and cannot be opened.
     val readOnly = app.monitoring
     GroupHeading(stringResource(R.string.native_ui_connections_title), "settings_group_connections")
+    val anySaved = ROLES_IN_ORDER.any { app.connectionsOf(it).isNotEmpty() }
     AppCard(
         Modifier.testTag("settings_connections"),
         onClick =
-            if (!readOnly && app.paired) {
+            if (!readOnly && anySaved) {
                 { onPage(SettingsPage.CONNECTIONS) }
             } else null,
     ) {
-        if (app.connections.isEmpty() && !app.paired) {
+        if (!anySaved) {
             Body(stringResource(R.string.native_ui_home_empty), tag = "settings_not_paired")
-        } else if (app.connections.isEmpty()) {
-            ConnectionLine(peerDisplayName(app.peerName, parentSide = !isBaby), null, isBaby, false)
         } else {
-            app.connections.forEach { c ->
-                ConnectionLine(
-                    connectionLabel(c, app.connections, app.role),
-                    c.id,
-                    isBaby,
-                    inUse = readOnly && c.selected,
-                )
+            ROLES_IN_ORDER.forEach { role ->
+                val list = app.connectionsOf(role)
+                if (list.isNotEmpty()) {
+                    RoleLabel(role)
+                    list.forEach { c ->
+                        ConnectionLine(
+                            connectionLabel(c, list, role),
+                            "${role.tagKey()}_${c.id}",
+                            inUse = readOnly && app.role == role && c.selected,
+                        )
+                    }
+                }
             }
         }
         if (readOnly) {
             ConnectionsReadOnlyNote()
-        } else if (app.paired) {
+        } else if (anySaved) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 GlyphIcon(Glyph.CHEVRON, LocalAppColors.current.secondaryText)
             }
@@ -778,23 +765,14 @@ private fun ConnectionsReadOnlyNote() {
     )
 }
 
-/** A saved connection on the overview: its name, which device it is with, and "In use". */
+/** A saved connection on the overview: its name and "In use". */
 @Composable
-private fun ConnectionLine(label: String, id: String?, isBaby: Boolean, inUse: Boolean) {
-    Column(
-        Modifier.fillMaxWidth()
-            .testTag(if (id != null) "settings_connection_row_$id" else "settings_connection_row")
-    ) {
+private fun ConnectionLine(label: String, key: String, inUse: Boolean) {
+    Column(Modifier.fillMaxWidth().testTag("settings_connection_row_$key")) {
         Text(
             label,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
-        )
-        Body(
-            stringResource(
-                if (isBaby) R.string.native_ui_role_parent_title
-                else R.string.native_ui_role_baby_title
-            )
         )
         if (inUse) {
             // Dot and words: the state never rests on colour alone.
@@ -812,88 +790,71 @@ private fun ConnectionLine(label: String, id: String?, isBaby: Boolean, inUse: B
 }
 
 /**
- * Settings › Connections: rename and forget per connection. While monitoring the page is read-only
- * (it is also not reachable from the overview then; this guards a session that starts meanwhile).
+ * Settings › Connections: the saved connections of both roles, grouped under "Parent device" and
+ * "Baby device", with rename and forget acting on the row's own role. While monitoring the page is
+ * read-only (it is also not reachable from the overview then; this guards a session that starts
+ * meanwhile).
  */
 @Composable
 private fun ConnectionsPage(
     app: AppState,
-    isBaby: Boolean,
-    peer: String,
-    onRename: (String) -> Unit,
-    onForget: (String) -> Unit,
-    onForgetOnly: () -> Unit,
+    onRename: (ConnectionRef) -> Unit,
+    onForget: (ConnectionRef) -> Unit,
 ) {
     val readOnly = app.monitoring
-    Section(null, "settings_group_paired") {
-        if (app.connections.size > 1) {
-            app.connections.forEach { c ->
-                Column(
-                    Modifier.testTag("settings_connection_${c.id}"),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Body(
-                        connectionLabel(c, app.connections, app.role),
-                        tag = "settings_connection_name_${c.id}",
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    if (!readOnly) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            SecondaryButton(
-                                stringResource(R.string.native_ui_connections_rename),
-                                { onRename(c.id) },
-                                "settings_connection_rename_${c.id}",
-                                Modifier.weight(1f),
-                            )
-                            SecondaryButton(
-                                stringResource(R.string.native_ui_forget_confirm),
-                                { onForget(c.id) },
-                                "settings_connection_forget_${c.id}",
-                                Modifier.weight(1f),
-                                destructive = true,
-                            )
+    val anySaved = ROLES_IN_ORDER.any { app.connectionsOf(it).isNotEmpty() }
+    ROLES_IN_ORDER.forEach { role ->
+        val list = app.connectionsOf(role)
+        if (list.isNotEmpty()) {
+            val key = role.tagKey()
+            Section(roleTitleRes(role), "settings_group_paired_$key") {
+                list.forEach { c ->
+                    Column(
+                        Modifier.testTag("settings_connection_${key}_${c.id}"),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Body(
+                            connectionLabel(c, list, role),
+                            tag = "settings_connection_name_${key}_${c.id}",
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        if (!readOnly) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                SecondaryButton(
+                                    stringResource(R.string.native_ui_connections_rename),
+                                    { onRename(ConnectionRef(role, c.id)) },
+                                    "settings_connection_rename_${key}_${c.id}",
+                                    Modifier.weight(1f),
+                                )
+                                SecondaryButton(
+                                    stringResource(R.string.native_ui_forget_confirm),
+                                    { onForget(ConnectionRef(role, c.id)) },
+                                    "settings_connection_forget_${key}_${c.id}",
+                                    Modifier.weight(1f),
+                                    destructive = true,
+                                )
+                            }
                         }
                     }
                 }
             }
-        } else if (app.paired) {
-            Body(peer, tag = "settings_peer_name", color = MaterialTheme.colorScheme.onSurface)
-            if (!readOnly) {
-                app.connections.firstOrNull()?.let { c ->
-                    SecondaryButton(
-                        stringResource(R.string.native_ui_connections_rename),
-                        { onRename(c.id) },
-                        "settings_connection_rename_${c.id}",
-                        Modifier.fillMaxWidth(),
-                    )
-                }
-                SecondaryButton(
-                    stringResource(
-                        if (isBaby) R.string.native_ui_settings_forget_parent
-                        else R.string.native_ui_settings_forget_baby
-                    ),
-                    onForgetOnly,
-                    "settings_forget",
-                    Modifier.fillMaxWidth(),
-                    destructive = true,
-                )
-            }
-        } else {
-            Body(stringResource(R.string.native_ui_home_empty), tag = "settings_not_paired")
         }
-        if (readOnly) {
-            ConnectionsReadOnlyNote()
-        }
+    }
+    if (!anySaved) {
+        Body(stringResource(R.string.native_ui_home_empty), tag = "settings_not_paired")
+    }
+    if (readOnly) {
+        ConnectionsReadOnlyNote()
     }
 }
 
 /**
- * Settings › Open at start: the built start mode (which role a start opens in) and, for the parent,
- * the connection that starts monitoring once per app start. Both behave as built; only the place
- * moved (`parent-pairing-entry`, `alternate-roles-and-apk-size`).
+ * Settings › Open at start: the built start mode (which role a start opens in), the parent
+ * connection that starts monitoring once per app start, and the baby unit's default connection. All
+ * behave as built; only the place moved (`parent-pairing-entry`, `alternate-roles-and-apk-size`).
  */
 @Composable
-private fun OpenAtStartPage(controller: AppController, app: AppState, isBaby: Boolean) {
+private fun OpenAtStartPage(controller: AppController, app: AppState) {
     Section(R.string.native_ui_settings_group_start_mode, "settings_group_start_mode") {
         Body(stringResource(R.string.native_ui_settings_open_at_start_mode_hint))
         // Which role a start without running monitoring opens in; null asks every time.
@@ -907,30 +868,43 @@ private fun OpenAtStartPage(controller: AppController, app: AppState, isBaby: Bo
             }
         }
     }
-    if (app.connections.isNotEmpty()) {
+    if (app.parentConnections.isNotEmpty()) {
         Section(
-            if (isBaby) R.string.native_ui_settings_open_at_start_default_title
-            else R.string.native_ui_settings_open_at_start_auto_title,
+            R.string.native_ui_settings_open_at_start_auto_title,
             "settings_group_auto_start",
         ) {
-            if (!isBaby) Body(stringResource(R.string.native_ui_settings_open_at_start_auto_hint))
-            // The marked connection starts monitoring at app start (parent); none is allowed.
-            if (!isBaby) {
-                ChoiceRow(
-                    stringResource(R.string.native_ui_settings_open_at_start_auto_none),
-                    app.connections.none { it.isDefault },
-                    "settings_auto_none",
-                ) {
-                    controller.clearDefaultConnection()
-                }
+            Body(stringResource(R.string.native_ui_settings_open_at_start_auto_hint))
+            // The marked connection starts monitoring at app start; none is allowed.
+            ChoiceRow(
+                stringResource(R.string.native_ui_settings_open_at_start_auto_none),
+                app.parentConnections.none { it.isDefault },
+                "settings_auto_none",
+            ) {
+                controller.clearDefaultConnection(Role.PARENT)
             }
-            app.connections.forEach { c ->
+            app.parentConnections.forEach { c ->
                 ChoiceRow(
-                    connectionLabel(c, app.connections, app.role),
+                    connectionLabel(c, app.parentConnections, Role.PARENT),
                     c.isDefault,
                     "settings_connection_default_${c.id}",
                 ) {
-                    controller.setDefaultConnection(c.id)
+                    controller.setDefaultConnection(Role.PARENT, c.id)
+                }
+            }
+        }
+    }
+    if (app.babyConnections.isNotEmpty()) {
+        Section(
+            R.string.native_ui_settings_open_at_start_default_title,
+            "settings_group_baby_default",
+        ) {
+            app.babyConnections.forEach { c ->
+                ChoiceRow(
+                    connectionLabel(c, app.babyConnections, Role.BABY),
+                    c.isDefault,
+                    "settings_baby_default_${c.id}",
+                ) {
+                    controller.setDefaultConnection(Role.BABY, c.id)
                 }
             }
         }
