@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108">
+  <!-- GuardedSleep logo master: redrawn from docs/brand/icon.png (the traced icon.svg stays as source).
+       Laid out on the 108 dp adaptive-icon canvas; the whole mark, wave caps included, lies inside
+       the 66 dp safe circle centred at 54,54. Android layers (ic_launcher_*.xml) carry the same
+       path data; scripts/lint-brand-icons.mjs checks them.
+       Colours: wave #255176; crescent rim #81E5A7 to #6ED79C; crescent body #78DCA0, #50A774 to
+       #317954; dot #78DBA2 to #408C65. Launcher and PWA background: #F2FAF5. -->
+  <defs>
+    <linearGradient id="rim" gradientUnits="userSpaceOnUse" x1="0" y1="28.96" x2="0" y2="79.12"><stop offset="0" stop-color="#81E5A7"/><stop offset="1" stop-color="#6ED79C"/></linearGradient>
+    <linearGradient id="body" gradientUnits="userSpaceOnUse" x1="0" y1="32.12" x2="0" y2="76.75"><stop offset="0" stop-color="#78DCA0"/><stop offset="0.5" stop-color="#50A774"/><stop offset="1" stop-color="#317954"/></linearGradient>
+    <linearGradient id="dot" gradientUnits="userSpaceOnUse" x1="0" y1="41.83" x2="0" y2="56.05"><stop offset="0" stop-color="#78DBA2"/><stop offset="1" stop-color="#408C65"/></linearGradient>
+  </defs>
+  <path id="crescent" fill="url(#rim)" d="M59.68,29.51A25.12,25.12 0 1 0 78.92,57.76A18.9,18.9 0 1 1 59.68,29.51Z"/>
+  <path id="crescent-body" fill="url(#body)" d="M49.38,31.74A22.75,22.75 0 1 0 73.07,66.53A21.11,21.11 0 1 1 49.38,31.74Z"/>
+  <circle id="dot" fill="url(#dot)" cx="61.27" cy="48.94" r="7.11"/>
+  <path id="wave" fill="none" stroke="#255176" stroke-width="2.05" stroke-linecap="round" stroke-linejoin="round" d="M22.48,54C23.41,54 23.76,51.31 24.69,51.31C27.01,51.31 27.9,58.98 30.22,58.98C32.61,58.98 33.52,46.34 35.91,46.34C38.33,46.34 39.25,61.35 41.68,61.35C44,61.35 44.88,50.68 47.21,50.68C49.03,50.68 49.73,58.42 51.55,58.42C53.38,58.42 54.07,49.5 55.9,49.5C58.65,49.5 59.7,63.48 62.45,63.48C66.27,63.48 67.72,46.18 71.54,46.18C73.76,46.18 74.61,58.58 76.83,58.58C78.99,58.58 79.81,50.68 81.97,50.68C83.62,50.68 84.26,54 85.92,54"/>
+</svg>
