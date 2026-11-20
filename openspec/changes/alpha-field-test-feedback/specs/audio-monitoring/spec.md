@@ -2,11 +2,11 @@
 
 ### Requirement: Local noise detection
 
-While monitoring, the baby unit SHALL capture audio continuously and analyse it on the device. Each level sample SHALL count for the time since the previous sample, at most 1 second. The noise gate SHALL turn loud on a sample at or above the threshold when the samples at or above the threshold cover at least half of the last hold time; only the last hold time SHALL count, whatever came before. It SHALL turn quiet when no sample has reached the threshold for 2 seconds. A restart of the hold time (for example after a talk-back pause) SHALL clear the counted history. Changing the threshold or hold time SHALL NOT fire an alert by itself.
+While monitoring, the baby unit SHALL capture audio continuously and analyse it on the device. Each level sample SHALL count for the time since the previous sample, at most 1 second. A noisy stretch SHALL start at the first sample at or above the threshold and end when no sample has reached the threshold for 2 seconds. The noise gate SHALL turn loud on a sample at or above the threshold when the noisy stretch has lasted at least the hold time and the samples at or above the threshold cover at least half of the last hold time; for the coverage only the last hold time SHALL count, whatever came before. It SHALL turn quiet when no sample has reached the threshold for 2 seconds. A restart of the hold time (for example after a talk-back pause) SHALL clear the counted history. Changing the threshold or hold time SHALL NOT fire an alert by itself.
 
 #### Scenario: Door slams
 
-- **WHEN** a single loud sound lasts shorter than half the hold time
+- **WHEN** a single loud sound lasts shorter than the hold time
 - **THEN** no noise event is sent
 
 #### Scenario: Baby cries
@@ -28,6 +28,11 @@ While monitoring, the baby unit SHALL capture audio continuously and analyse it 
 
 - **WHEN** level samples arrive only once per second (a throttled browser tab) and the child cries continuously
 - **THEN** the gate still turns loud after the hold time
+
+#### Scenario: Continuous sound shorter than the hold time
+
+- **WHEN** a continuous sound lasts 4 seconds and the hold time is 5 seconds
+- **THEN** no noise event is sent
 
 #### Scenario: Occasional knocks
 

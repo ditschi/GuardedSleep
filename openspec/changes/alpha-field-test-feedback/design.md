@@ -48,7 +48,8 @@ Rule (core, `noise.rs`):
 
 - Each sample covers `min(now − prev, 1000 ms)` (the first sample covers one nominal interval).
 - The gate keeps a ring buffer of `(covered_ms, loud)` for the last `hold` ms; at most 150 entries at a 100 ms cadence.
-- It goes loud on a sample at or above the threshold when the loud coverage in the window is at least `hold / 2`.
+- A noisy stretch starts at the first loud sample (`stretch_since`) and ends after 2 s without a loud sample.
+- It goes loud on a sample at or above the threshold when `now − stretch_since ≥ hold` and the loud coverage in the window is at least `hold / 2`. The first condition keeps the user's hold time meaning the full time (review round 2, N1); the second makes only the last `hold` count.
 - A loud gate turns quiet when no sample reached the threshold for 2 s (`last_loud`).
 - `restart_hold` clears the buffer and sets `last_loud = now`, so a loud gate is not released at once.
 - `Loud` and the link-up noise alert carry the triggering sample's rms, which is always at or above the threshold.
@@ -85,7 +86,7 @@ The core keeps a linear threshold. Its lower limit moves from 0.01 to 0.0015 (�
 - Android: `SettingsScreen`, with the live preview drawn in the same dB scale.
 - Web: `sensitivity.ts`.
 
-The provisional default is −36 dBFS (0.016). White-noise machines and fans often sit at −40 to −35 dBFS, so the device check warns when the room level is within 6 dB of the threshold (review I10). The default is, tuned in task 7.1 on the reference phone with raw capture. A stored threshold outside the new range is clamped. The app was never released, so no migration is needed.
+The provisional default is −36 dBFS (0.016). White-noise machines and fans often sit at −40 to −35 dBFS, so the device check warns when the room level is within 6 dB of the threshold (review I10). The default is tuned in task 7.1 on the reference phone with raw capture. A stored threshold outside the new range is clamped. The app was never released, so no migration is needed.
 
 - **Option A, a dB slider over a wider range (recommended).**
   - Pros: even feel; reaches quiet speech.
@@ -181,7 +182,7 @@ There is no effect on the §7 guardrails: no new host, permission, storage or lo
 - [Raw capture levels differ widely between devices] → the dB slider has 40 dB of range; the device check shows the live level.
 - [Software AGC off makes Listen audio quieter] → accepted for an honest room sound (the requirement taken from `quiet-link-no-rtp`); the parent's output gain compensates.
 - [Without AEC on the baby, the parent's voice echoes back during a talk] → half duplex; the baby track is muted during playout (existing "No speech into the open microphone").
-- [The `AudioTrackSink` may be post-gain] → fallback division by the applied gain; covered by a unit test of the limiter math.
+- [The stats `audioLevel` may be post-gain] → the limiter divides by the applied gain behind one switch set from the spike; unit tests cover both positions.
 - [Upfront permissions feel heavy] → one sentence per row, "Later" everywhere, no blocking.
 - [Overlapping active changes] → the MODIFIED blocks are based on the newest text in `alpha-connection-model` (device check, invite), `redesign-calm-ui` (stopping, pairing entry, test alert) and `add-talk-back` (checklist, talk-back), and this change is archived after those three. `quiet-link-no-rtp` hands over task 2.3 and its "Raw microphone capture" requirement, which moves into this change. The `redesign-calm-ui` banner list drops "baby unplugged". If option B of `quiet-link-no-rtp` 2.1 (a separate `AudioRecord`) is chosen later, the raw-source choice moves with it.
 
@@ -214,4 +215,6 @@ The app was never released, so stored settings are reset or clamped. Archive ord
 | I9: repeated denials, web parity                     | `device-setup` "No later permission prompts"; web scenarios                                                                                |
 | I10: white noise near the threshold                  | Device-check warning (spec) and sim scenarios (task 2.2)                                                                                   |
 
-The minor findings are folded in: limit value 0.0015, `Loud` rms ≥ threshold, `restart_hold` sets `last_loud`, residual gain between volume steps, a critical-key check in all locales, the QR wording, and the AGC trade-off.
+**Round 2 (2026-11-20): 8/10, go once N1 is fixed.** N1 (continuous sound fired after half the hold time) fixed with the stretch condition in §1, the spec and task 2.1. N2 (the talk pause keeps `loud`) is in task 2.2. N3 (leftover text) is fixed.
+
+The round-1 minor findings are folded in: limit value 0.0015, `Loud` rms ≥ threshold, `restart_hold` sets `last_loud`, residual gain between volume steps, a critical-key check in all locales, the QR wording, and the AGC trade-off.
