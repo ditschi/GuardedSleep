@@ -624,7 +624,7 @@ class MonitorTests : ShotBase() {
     }
 
     @Test
-    fun lowBatteryAndUnpluggedAreBannersNotScreens() = runComposeUiTest {
+    fun lowBatteryIsABannerAndNotChargingShowsNoNotice() = runComposeUiTest {
         val c =
             connected(
                 ParentMonitorState(
@@ -638,7 +638,7 @@ class MonitorTests : ShotBase() {
             )
         show { ParentMonitorScreen(c, {}) }
         onNodeWithTag("parent_banner_baby_battery_low").assertIsDisplayed()
-        onNodeWithTag("parent_banner_baby_unplugged").assertIsDisplayed()
+        onNodeWithTag("parent_banner_baby_unplugged").assertDoesNotExist()
     }
 
     @Test

@@ -322,7 +322,6 @@
           "pageHidden": "Dispozitivul bebelușului se poate opri: pagina lui este ascunsă",
           "wakeLockOff": "Dispozitivul bebelușului poate adormi: ecranul nu este ținut aprins",
           "resumedFromSleep": "Dispozitivul bebelușului s-a trezit din repaus: unele sunete pot fi ratate",
-          "notCharging": "Dispozitivul bebelușului nu se mai încarcă",
           "micPermissionLost": "Dispozitivul bebelușului a pierdut accesul la microfon"
         },
         "discreet": {

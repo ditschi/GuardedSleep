@@ -19,7 +19,6 @@ enum class BannerKind {
     MIC_SILENT,
     READINESS,
     BABY_BATTERY_LOW,
-    BABY_UNPLUGGED,
     SILENCE,
     UNIT_WARNING,
     WEAK_CONNECTION,
@@ -50,7 +49,6 @@ fun bannerLevel(kind: BannerKind): BannerLevel =
         BannerKind.SILENCE,
         BannerKind.UNIT_WARNING,
         BannerKind.WEAK_CONNECTION -> BannerLevel.WARN
-        BannerKind.BABY_UNPLUGGED,
         BannerKind.PAUSED -> BannerLevel.INFO
         BannerKind.VIBRATE_ONLY -> BannerLevel.NOTE
     }
@@ -89,7 +87,6 @@ fun parentBanners(p: ParentMonitorState, alertStyle: AlertStyle, wallNowMs: Long
             p.peer.charging != true
     )
         out += Banner(BannerKind.BABY_BATTERY_LOW)
-    if (connected && "not_charging" in p.peer.unitWarnings) out += Banner(BannerKind.BABY_UNPLUGGED)
     if (connected && !p.peer.isWebClient) {
         when (p.peer.silence) {
             SilenceStatus.SCREEN_MAY_LIGHT,

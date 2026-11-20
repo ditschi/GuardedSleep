@@ -322,7 +322,6 @@
           "pageHidden": "아기 기기가 멈출 수 있어요. 페이지가 숨겨져 있어요",
           "wakeLockOff": "아기 기기가 절전 상태가 될 수 있어요. 화면이 켜진 상태로 유지되지 않아요",
           "resumedFromSleep": "아기 기기가 절전에서 깨어났어요. 소리를 놓쳤을 수 있어요",
-          "notCharging": "아기 기기가 충전되지 않아요",
           "micPermissionLost": "아기 기기의 마이크 접근 권한이 사라졌어요"
         },
         "discreet": {

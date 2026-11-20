@@ -322,7 +322,6 @@
           "pageHidden": "Babyapparaat pauzeert mogelijk: de pagina is verborgen",
           "wakeLockOff": "Babyapparaat valt mogelijk in slaap: het scherm blijft niet aan",
           "resumedFromSleep": "Babyapparaat werd wakker uit slaap: geluiden zijn mogelijk gemist",
-          "notCharging": "Babyapparaat laadt niet meer",
           "micPermissionLost": "Babyapparaat heeft geen microfoontoegang meer"
         },
         "discreet": {

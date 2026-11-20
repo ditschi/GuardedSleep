@@ -445,22 +445,22 @@ describe("S09 parent monitor", () => {
   it("shows at most two notices and folds the rest into a list", async () => {
     c.parent.update((p) => ({
       ...p,
-      peer: { ...p.peer, unitWarnings: ["page_hidden", "not_charging", "wake_lock_off"] },
+      peer: { ...p.peer, unitWarnings: ["page_hidden", "wake_lock_off", "resumed_from_sleep"] },
     }));
     open("/parent", c);
     await screen.findByTestId("status_bar");
     // The baby device's warnings come first; the plain keep-open note folds before any of them.
-    expect(screen.getByTestId("parent_banner_baby_unplugged")).toBeInTheDocument();
     expect(screen.getByTestId("parent_banner_unit_warning_page_hidden")).toBeInTheDocument();
+    expect(screen.getByTestId("parent_banner_unit_warning_wake_lock_off")).toBeInTheDocument();
     expect(screen.queryByTestId("parent_banner_browser_keep_open")).toBeNull();
     const more = screen.getByTestId("parent_banner_more");
     expect(more).toHaveTextContent("+2 more");
     // The accessible name starts with the visible words and lists the folded notices.
-    expect(more).toHaveAccessibleName(/^\+2 more.*Baby device may fall asleep/);
+    expect(more).toHaveAccessibleName(/^\+2 more.*Baby device woke from sleep/);
     await fireEvent.click(more);
     const list = screen.getByTestId("sheet_banners");
     expect(
-      within(list).getByTestId("parent_banner_unit_warning_wake_lock_off"),
+      within(list).getByTestId("parent_banner_unit_warning_resumed_from_sleep"),
     ).toBeInTheDocument();
     expect(within(list).getByTestId("parent_banner_browser_keep_open")).toBeInTheDocument();
   });

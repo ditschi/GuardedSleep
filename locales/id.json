@@ -322,7 +322,6 @@
           "pageHidden": "Perangkat bayi mungkin berhenti sementara — halamannya tersembunyi",
           "wakeLockOff": "Perangkat bayi mungkin tertidur — layarnya tidak dijaga tetap menyala",
           "resumedFromSleep": "Perangkat bayi bangun dari tidur — mungkin ada suara yang terlewat",
-          "notCharging": "Perangkat bayi tidak lagi mengisi daya",
           "micPermissionLost": "Perangkat bayi kehilangan akses mikrofon"
         },
         "discreet": {

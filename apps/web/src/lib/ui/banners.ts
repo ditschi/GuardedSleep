@@ -18,7 +18,6 @@ export type BannerKind =
   | "browser_keep_open"
   | "browser_away"
   | "baby_battery_low"
-  | "baby_unplugged"
   | "silence"
   | "unit_warning"
   | "weak_connection"
@@ -33,7 +32,6 @@ export const BANNER_ORDER: readonly BannerKind[] = [
   "browser_keep_open",
   "browser_away",
   "baby_battery_low",
-  "baby_unplugged",
   "silence",
   "unit_warning",
   "weak_connection",
@@ -95,7 +93,6 @@ export function bannerLevel(kind: BannerKind, id: string = kind): BannerLevel {
     case "weak_connection":
     case "browser_sound_gate":
       return "warn";
-    case "baby_unplugged":
     case "paused":
     case "browser_away":
       return "info";
@@ -145,7 +142,6 @@ export function parentBanners(
   ) {
     add("baby_battery_low");
   }
-  if (connected && p.peer.unitWarnings.includes("not_charging")) add("baby_unplugged");
   if (connected && !p.peer.isWebClient && SILENCE_WARNING.includes(p.peer.silence)) {
     add("silence");
   }

@@ -321,7 +321,6 @@
           "pageHidden": "Baby device may pause — its page is hidden",
           "wakeLockOff": "Baby device may fall asleep — its screen isn't kept on",
           "resumedFromSleep": "Baby device woke from sleep — sounds may have been missed",
-          "notCharging": "Baby device is no longer charging",
           "micPermissionLost": "Baby device lost microphone access"
         },
         "discreet": {

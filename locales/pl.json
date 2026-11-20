@@ -322,7 +322,6 @@
           "pageHidden": "Urządzenie dziecka może się wstrzymać: jego strona jest ukryta",
           "wakeLockOff": "Urządzenie dziecka może zasnąć: jego ekran nie jest podtrzymywany",
           "resumedFromSleep": "Urządzenie dziecka obudziło się: mogły umknąć dźwięki",
-          "notCharging": "Urządzenie dziecka już się nie ładuje",
           "micPermissionLost": "Urządzenie dziecka utraciło dostęp do mikrofonu"
         },
         "discreet": {

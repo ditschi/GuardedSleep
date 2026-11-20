@@ -322,7 +322,6 @@
           "pageHidden": "El dispositivo del bebé puede pausarse — su página está oculta",
           "wakeLockOff": "El dispositivo del bebé puede dormirse — su pantalla no se mantiene encendida",
           "resumedFromSleep": "El dispositivo del bebé salió de la suspensión — pudo perderse algún sonido",
-          "notCharging": "El dispositivo del bebé ya no se está cargando",
           "micPermissionLost": "El dispositivo del bebé perdió el acceso al micrófono"
         },
         "discreet": {

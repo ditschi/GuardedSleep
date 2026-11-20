@@ -322,7 +322,6 @@
           "pageHidden": "宝宝设备可能暂停，其页面已被隐藏",
           "wakeLockOff": "宝宝设备可能进入睡眠，其屏幕没有保持常亮",
           "resumedFromSleep": "宝宝设备刚从睡眠中唤醒，可能漏掉了声音",
-          "notCharging": "宝宝设备已不在充电",
           "micPermissionLost": "宝宝设备失去了麦克风权限"
         },
         "discreet": {

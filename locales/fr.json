@@ -322,7 +322,6 @@
           "pageHidden": "L'appareil bébé peut se mettre en pause — sa page est masquée",
           "wakeLockOff": "L'appareil bébé peut s'endormir — son écran n'est pas maintenu allumé",
           "resumedFromSleep": "L'appareil bébé sort de veille — des sons ont pu être manqués",
-          "notCharging": "L'appareil bébé n'est plus en charge",
           "micPermissionLost": "L'appareil bébé a perdu l'accès au microphone"
         },
         "discreet": {

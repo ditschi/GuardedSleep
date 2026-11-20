@@ -91,7 +91,6 @@ private fun bannerColors(kind: BannerKind): BannerColors {
         BannerKind.SILENCE,
         BannerKind.UNIT_WARNING,
         BannerKind.WEAK_CONNECTION -> BannerColors(safety.warnContainer, safety.warn)
-        BannerKind.BABY_UNPLUGGED -> BannerColors(safety.infoContainer, safety.info)
         BannerKind.PAUSED -> BannerColors(scheme.surfaceContainerHighest, scheme.onSurface)
         BannerKind.VIBRATE_ONLY -> BannerColors(safety.cautionContainer, safety.caution)
     }

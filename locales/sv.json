@@ -322,7 +322,6 @@
           "pageHidden": "Babyenheten kan pausa: dess sida är dold",
           "wakeLockOff": "Babyenheten kan somna: skärmen hålls inte på",
           "resumedFromSleep": "Babyenheten vaknade ur viloläge: ljud kan ha missats",
-          "notCharging": "Babyenheten laddas inte längre",
           "micPermissionLost": "Babyenheten förlorade åtkomst till mikrofonen"
         },
         "discreet": {

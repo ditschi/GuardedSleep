@@ -322,7 +322,6 @@
           "pageHidden": "Babygerät kann pausieren – Seite verdeckt",
           "wakeLockOff": "Babygerät kann einschlafen – Bildschirm wird nicht wachgehalten",
           "resumedFromSleep": "Babygerät war im Ruhezustand – Geräusche könnten verpasst worden sein",
-          "notCharging": "Babygerät lädt nicht mehr",
           "micPermissionLost": "Babygerät hat den Mikrofonzugriff verloren"
         },
         "discreet": {

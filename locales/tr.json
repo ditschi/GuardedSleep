@@ -322,7 +322,6 @@
           "pageHidden": "Bebek cihazı duraklayabilir — sayfası gizli",
           "wakeLockOff": "Bebek cihazı uykuya geçebilir — ekranı açık tutulmuyor",
           "resumedFromSleep": "Bebek cihazı uykudan uyandı — sesler kaçırılmış olabilir",
-          "notCharging": "Bebek cihazı şarj olmuyor",
           "micPermissionLost": "Bebek cihazı mikrofon erişimini kaybetti"
         },
         "discreet": {

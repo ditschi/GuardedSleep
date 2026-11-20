@@ -322,7 +322,6 @@
           "pageHidden": "Zařízení dítěte se může zastavit: jeho stránka je skrytá",
           "wakeLockOff": "Zařízení dítěte může usnout: displej se neudržuje zapnutý",
           "resumedFromSleep": "Zařízení dítěte se probudilo ze spánku: zvuky mohly uniknout",
-          "notCharging": "Zařízení dítěte se už nenabíjí",
           "micPermissionLost": "Zařízení dítěte ztratilo přístup k mikrofonu"
         },
         "discreet": {

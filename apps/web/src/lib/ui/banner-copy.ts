@@ -64,6 +64,5 @@ export const UNIT_WARNING_KEYS: Readonly<Record<string, MessageKey>> = {
   page_hidden: "native.ui.parent.unitWarning.pageHidden",
   wake_lock_off: "native.ui.parent.unitWarning.wakeLockOff",
   resumed_from_sleep: "native.ui.parent.unitWarning.resumedFromSleep",
-  not_charging: "native.ui.parent.unitWarning.notCharging",
   mic_permission_lost: "native.ui.parent.unitWarning.micPermissionLost",
 };

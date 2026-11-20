@@ -322,7 +322,6 @@
           "pageHidden": "Il dispositivo del bambino potrebbe fermarsi: la sua pagina è nascosta",
           "wakeLockOff": "Il dispositivo del bambino potrebbe addormentarsi: lo schermo non resta acceso",
           "resumedFromSleep": "Il dispositivo del bambino si è riattivato: potresti aver perso dei suoni",
-          "notCharging": "Il dispositivo del bambino non è più in carica",
           "micPermissionLost": "Il dispositivo del bambino ha perso l'accesso al microfono"
         },
         "discreet": {

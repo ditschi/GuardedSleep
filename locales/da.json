@@ -322,7 +322,6 @@
           "pageHidden": "Babyenheden holder muligvis pause: dens side er skjult",
           "wakeLockOff": "Babyenheden falder muligvis i søvn: skærmen holdes ikke tændt",
           "resumedFromSleep": "Babyenheden vågnede af dvale: lyde kan være gået tabt",
-          "notCharging": "Babyenheden oplader ikke længere",
           "micPermissionLost": "Babyenheden mistede adgangen til mikrofonen"
         },
         "discreet": {
