@@ -141,13 +141,9 @@ fun PairBabyScreen(controller: AppController) {
                 // The permission cards before the code (`device-setup` "Baby unit permission
                 // gate"): no microphone, no code; the code appears here once it is granted.
                 BabyPermissionCards(tag = "baby_pair_gate")
-                // Nothing else while the microphone is missing: no code, no waiting line, nothing
-                // connecting.
-                if (
-                    state?.phase != PairingPhase.NEEDS_MICROPHONE &&
-                        payload != null &&
-                        state.phase != PairingPhase.PAIRED
-                ) {
+                if (state?.phase == PairingPhase.NEEDS_MICROPHONE) {
+                    // Nothing else: no code, no waiting line, nothing connecting.
+                } else if (payload != null && state.phase != PairingPhase.PAIRED) {
                     val qr = remember(payload, bright) { renderQr(payload, bright) }
                     val dimmed = expired || state.phase == PairingPhase.FAILED
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
