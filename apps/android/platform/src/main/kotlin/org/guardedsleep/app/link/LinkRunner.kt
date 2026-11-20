@@ -442,7 +442,7 @@ class LinkRunner(
         attempts[attempt]?.talkSendStats { s ->
             if (s != null) {
                 PocLog.event(
-                    "talk_out",
+                    "talk_out_level",
                     "packets" to s.packetsSent,
                     "level" to s.audioLevel?.let { "%.4f".format(it) },
                 )
