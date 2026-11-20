@@ -76,7 +76,11 @@ export interface AppController {
   /** Forgets exactly one connection; monitoring stops first when it is the one in use. */
   forgetConnection(role: Role, id: string): void;
   completeOnboarding(): void;
+  /** Android's first-start permission screen is left; a no-op marker on the web. */
+  completePermissionsIntro(): void;
   startPairing(): void;
+  /** Baby (web only): the permission step of the microphone gate; asks the browser once. */
+  allowMicrophone(): void;
   cancelPairing(): void;
   /** Parent: decoded QR text or pasted code. */
   submitPairingCode(payload: string): void;
@@ -105,6 +109,12 @@ export interface AppController {
   dismissMissedEvents(): void;
   /** Parent: OK on the "Connected again" card; it never goes away on its own. */
   dismissRestored(): void;
+  /**
+   * Parent: "OK, stop here too" on the notice that the baby device stopped on purpose. The core
+   * stops this device's monitoring only while the link is still `peer_stopped`; a stale tap after
+   * the baby device started again changes nothing.
+   */
+  acknowledgePeerStopped(): void;
 
   // Talk-back (`add-talk-back`), the same intents as UiContract.kt.
   /**

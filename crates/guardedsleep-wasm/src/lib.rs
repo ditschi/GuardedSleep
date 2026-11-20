@@ -68,6 +68,12 @@ pub fn message_keys() -> String {
     serde_json::to_string(guardedsleep_core::link::message_keys()).unwrap_or_else(|_| "[]".into())
 }
 
+/// Lowest noise-gate threshold any message or setting may carry (linear RMS, about -56 dBFS).
+#[wasm_bindgen(js_name = minNoiseThreshold)]
+pub fn min_noise_threshold() -> f64 {
+    guardedsleep_core::noise::MIN_NOISE_THRESHOLD
+}
+
 #[wasm_bindgen(js_name = deriveRoomId)]
 pub fn derive_room_id(psk: &[u8]) -> String {
     guardedsleep_core::pairing::derive_room_id(psk)

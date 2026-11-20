@@ -80,13 +80,26 @@ object AppDefaults {
  * are tuned in the hardware round (task 2.1 (f)); the emulator cannot measure a loudspeaker.
  */
 object TalkPolicy {
-    /** Fraction of the alarm stream's maximum per level; high stays at or below about 70 %. */
-    const val LOW_FRACTION = 0.25
-    const val MEDIUM_FRACTION = 0.45
-    const val HIGH_FRACTION = 0.70
+    /**
+     * The talk volume never exceeds this fraction of the alarm stream's maximum, whatever the
+     * setting (the 70 % top of the 10..70 % steps; infant hearing, `add-talk-back` S16).
+     */
+    const val MAX_FRACTION = 0.70
 
-    /** Ceiling of the received voice's RMS after the gain (0..1 of full scale), provisional. */
+    /** Ceiling of the received voice's RMS before our gain (0..1 of full scale), provisional. */
     const val CEILING_RMS = 0.30
+
+    /**
+     * Whether the talk receiver's stats `audioLevel` is measured after the output gain. libwebrtc
+     * most likely measures after it, so the limiter divides by the gain it applied; set to false
+     * when the spike of `alpha-field-test-feedback` task 7.2 shows the level is pre-gain.
+     */
+    const val LEVEL_IS_POST_GAIN = true
+
+    /**
+     * Below this applied gain the post-gain level is too small to divide (noise, fade-in start).
+     */
+    const val MIN_JUDGED_GAIN = 0.05
 
     /** The level control gives the gain back by this much per level sample (about 10 Hz). */
     const val LIMITER_RELEASE_PER_TICK = 0.02

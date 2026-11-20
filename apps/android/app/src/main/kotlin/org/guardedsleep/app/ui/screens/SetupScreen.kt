@@ -50,7 +50,7 @@ import org.guardedsleep.app.ui.common.ScrollColumn
 import org.guardedsleep.app.ui.common.SecondaryButton
 import org.guardedsleep.app.ui.common.SystemSettings
 import org.guardedsleep.app.ui.common.Title
-import org.guardedsleep.app.ui.common.findActivity
+import org.guardedsleep.app.ui.common.rememberPermissionRequest
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.DeviceCheck
 import org.guardedsleep.app.ui.model.DeviceCheckReason
@@ -74,7 +74,7 @@ data class SetupChecks(val states: Map<SetupRow, RowState> = emptyMap()) {
 
 /** S02 (baby) / S03 (parent): one checklist screen, every row = status + button into the system. */
 @Composable
-fun SetupScreen(controller: AppController, role: Role, onboarding: Boolean, onBack: () -> Unit) {
+fun SetupScreen(controller: AppController, role: Role, onBack: () -> Unit) {
     val ctx = LocalContext.current
     val app = controller.app.collectAsState().value
     var refresh by remember { mutableIntStateOf(0) }
@@ -86,19 +86,8 @@ fun SetupScreen(controller: AppController, role: Role, onboarding: Boolean, onBa
     }
     val checks = remember(refresh) { readSetupChecks(ctx, role) }
     var asked by rememberSaveable { mutableStateOf(setOf<String>()) }
-    val activity = ctx.findActivity()
 
-    val micLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            refresh++
-            if (
-                !granted &&
-                    activity != null &&
-                    !activity.shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO)
-            ) {
-                SystemSettings.launch(ctx, SystemSettings.appDetails(ctx))
-            }
-        }
+    val requestMic = rememberPermissionRequest(Manifest.permission.RECORD_AUDIO) { refresh++ }
     val notifLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             refresh++
@@ -112,7 +101,7 @@ fun SetupScreen(controller: AppController, role: Role, onboarding: Boolean, onBa
                 if (asked.contains(row.name) && checks[row] == RowState.BLOCKED) {
                     SystemSettings.launch(ctx, SystemSettings.appDetails(ctx))
                 } else {
-                    micLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    requestMic()
                 }
             SetupRow.NOTIFICATIONS ->
                 if (Build.VERSION.SDK_INT >= 33 && checks[row] != RowState.BLOCKED) {
@@ -128,7 +117,7 @@ fun SetupScreen(controller: AppController, role: Role, onboarding: Boolean, onBa
                 SystemSettings.launch(ctx, SystemSettings.batteryOptimization(ctx))
         }
     }
-    BackHandler(enabled = !onboarding, onBack = onBack)
+    BackHandler(onBack = onBack)
     SetupContent(
         role = role,
         checks = checks,
@@ -139,14 +128,7 @@ fun SetupScreen(controller: AppController, role: Role, onboarding: Boolean, onBa
         talkBack = controller.settings.collectAsState().value.talkBackEnabled,
         onTalkBack = { on -> controller.updateSettings { it.copy(talkBackEnabled = on) } },
         onAction = onAction,
-        onContinue = {
-            if (onboarding) {
-                controller.completeOnboarding()
-                controller.startPairing()
-            } else {
-                onBack()
-            }
-        },
+        onContinue = onBack,
     )
 }
 
@@ -235,6 +217,8 @@ fun SetupContent(
                         )
                     }
                 }
+                // Battery safety advice (`device-setup` "Battery safety copy"); the baby pairing
+                // screen shows it too.
                 AppCard(Modifier.testTag("setup_row_safety")) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -420,15 +404,52 @@ private fun DeviceCheckRow(
                             ),
                     )
                 }
-                for (m in mailboxes) {
+                // One plain line about the connection; the host names stay in the details.
+                if (mailboxes.isNotEmpty()) {
+                    val reachable = mailboxes.count { it.reachable }
                     Body(
-                        stringResource(
-                            if (m.reachable) R.string.native_ui_setup_device_check_mailbox_reachable
-                            else R.string.native_ui_setup_device_check_mailbox_unreachable,
-                            m.host,
-                        ),
+                        when {
+                            reachable == 0 ->
+                                stringResource(
+                                    R.string.native_ui_setup_device_check_connection_fails
+                                )
+                            reachable == mailboxes.size ->
+                                stringResource(
+                                    R.string.native_ui_setup_device_check_connection_works
+                                )
+                            else ->
+                                stringResource(
+                                    R.string.native_ui_setup_device_check_connection_works_some,
+                                    reachable,
+                                    mailboxes.size,
+                                )
+                        },
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.testTag("setup_device_check_connection"),
                     )
+                    var expanded by rememberSaveable { mutableStateOf(false) }
+                    QuietButton(
+                        stringResource(
+                            if (expanded) R.string.native_ui_setup_device_check_details_hide
+                            else R.string.native_ui_setup_device_check_details
+                        ),
+                        { expanded = !expanded },
+                        "setup_device_check_details",
+                    )
+                    if (expanded) {
+                        mailboxes.forEachIndexed { i, m ->
+                            Body(
+                                stringResource(
+                                    if (m.reachable)
+                                        R.string.native_ui_setup_device_check_mailbox_reachable
+                                    else R.string.native_ui_setup_device_check_mailbox_unreachable,
+                                    m.host,
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.testTag("setup_device_check_mailbox_$i"),
+                            )
+                        }
+                    }
                 }
                 if (onAgain != null && check != DeviceCheck.UNKNOWN)
                     QuietButton(
@@ -459,6 +480,8 @@ private fun reasonText(reason: DeviceCheckReason): Int =
             R.string.native_ui_setup_device_check_dnd_access_missing
         DeviceCheckReason.SOME_MAILBOXES_UNREACHABLE ->
             R.string.native_ui_setup_device_check_some_mailboxes_unreachable
+        DeviceCheckReason.ROOM_NEAR_THRESHOLD ->
+            R.string.native_ui_setup_device_check_room_near_threshold
     }
 
 @Composable

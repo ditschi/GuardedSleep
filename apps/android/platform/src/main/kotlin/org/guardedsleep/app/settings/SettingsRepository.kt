@@ -26,7 +26,7 @@ import org.guardedsleep.app.ui.model.NightOverride
 import org.guardedsleep.app.ui.model.NightSchedule
 import org.guardedsleep.app.ui.model.Role
 import org.guardedsleep.app.ui.model.SettingsState
-import org.guardedsleep.app.ui.model.TalkVolume
+import org.guardedsleep.app.ui.model.TalkVolumeSteps
 import org.guardedsleep.app.ui.model.Theme
 
 /**
@@ -62,6 +62,8 @@ data class PersistedState(
      */
     val lastRole: Role? = null,
     val onboardingDone: Boolean = false,
+    /** The first-start permission screen was left (`device-setup` "Permissions on first start"). */
+    val permissionsIntroDone: Boolean = false,
     /** "Monitoring is on": the parent service resumes it, the baby offers "Tap to resume". */
     val monitoringActive: Boolean = false,
     // peerName, snoozeUntilWallMs and lastTestWallMs belong to the session role. The repository
@@ -179,7 +181,8 @@ class SettingsRepository(
                 onlyLocal = p[ONLY_LOCAL] ?: defaults.onlyLocal,
                 heartbeatSeconds = p[HEARTBEAT] ?: defaults.heartbeatSeconds,
                 talkBackEnabled = p[TALK_ENABLED] ?: defaults.talkBackEnabled,
-                talkVolume = enumOrNull<TalkVolume>(p[TALK_VOLUME]) ?: defaults.talkVolume,
+                talkVolumePct =
+                    p[TALK_VOLUME_PCT]?.let { TalkVolumeSteps.snap(it) } ?: defaults.talkVolumePct,
                 talkChime = p[TALK_CHIME] ?: defaults.talkChime,
                 talkCoachSeen = p[TALK_COACH] ?: defaults.talkCoachSeen,
                 // Unknown or missing is the default tone. No core call here: the repository is
@@ -226,6 +229,7 @@ class SettingsRepository(
             // An update keeps the old single role as the last one.
             lastRole = enumOrNull<Role>(p[LAST_ROLE]) ?: role ?: defaultRole,
             onboardingDone = p[ONBOARDING] ?: false,
+            permissionsIntroDone = p[PERMISSIONS_INTRO] ?: false,
             monitoringActive = p[MONITORING] ?: false,
             peerName = active.peerName,
             snoozeUntilWallMs = active.snoozeUntilWallMs,
@@ -258,7 +262,7 @@ class SettingsRepository(
         set(ONLY_LOCAL, c.onlyLocal)
         set(HEARTBEAT, c.heartbeatSeconds)
         set(TALK_ENABLED, c.talkBackEnabled)
-        set(TALK_VOLUME, c.talkVolume.name)
+        set(TALK_VOLUME_PCT, TalkVolumeSteps.snap(c.talkVolumePct))
         set(TALK_CHIME, c.talkChime)
         set(TALK_COACH, c.talkCoachSeen)
         set(ALARM_TONE, AlarmTones.normalize(c.connectionAlarmTone))
@@ -270,6 +274,7 @@ class SettingsRepository(
         set(ROLE, s.role?.name)
         set(LAST_ROLE, s.lastRole?.name)
         set(ONBOARDING, s.onboardingDone)
+        set(PERMISSIONS_INTRO, s.permissionsIntroDone)
         set(MONITORING, s.monitoringActive)
         set(DEFAULT_ROLE, s.defaultRole?.name ?: ASK)
         // The unsuffixed keys are the pre-roles layout; they are dropped once the new one is
@@ -306,7 +311,8 @@ class SettingsRepository(
         val TURN = stringPreferencesKey("turn_url")
         val HEARTBEAT = intPreferencesKey("heartbeat_seconds")
         val TALK_ENABLED = booleanPreferencesKey("talk_back_enabled")
-        val TALK_VOLUME = stringPreferencesKey("talk_volume")
+        // The old low/medium/high name key is dropped: the app was never released (design §4).
+        val TALK_VOLUME_PCT = intPreferencesKey("talk_volume_pct")
         val TALK_CHIME = booleanPreferencesKey("talk_chime")
         val TALK_COACH = booleanPreferencesKey("talk_coach_seen")
         val ALARM_TONE = stringPreferencesKey("connection_alarm_tone")
@@ -322,6 +328,7 @@ class SettingsRepository(
         // Stored for "Ask every time", so an absent key still means "update from a single role".
         const val ASK = "ask"
         val ONBOARDING = booleanPreferencesKey("onboarding_done")
+        val PERMISSIONS_INTRO = booleanPreferencesKey("permissions_intro_done")
         val MONITORING = booleanPreferencesKey("monitoring_active")
         val PEER_NAME = stringPreferencesKey("peer_name")
         val SNOOZE = longPreferencesKey("snooze_until_wall")

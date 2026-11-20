@@ -53,7 +53,9 @@ writePcmWav(join(fixturesDir, "silence-30s.wav"), silence, sr);
 
 const pulses = new Int16Array(sr * 2);
 for (let i = 0; i < pulses.length; i++) {
-  pulses[i] = i % 800 < 400 ? 9000 : -9000;
+  // RMS 0.137 (-17 dBFS): above the default threshold (-36 dBFS), below the slider's least sensitive
+  // end (-15 dBFS), so a test can close the gate with the slider alone.
+  pulses[i] = i % 800 < 400 ? 4500 : -4500;
 }
 writePcmWav(join(fixturesDir, "pulses-30s.wav"), pulses, sr);
 

@@ -204,7 +204,7 @@ export interface BabyMonitorState {
 }
 
 export type PairingPhase =
-  "showing_code" | "expired" | "scanning" | "connecting" | "paired" | "failed";
+  "needs_microphone" | "showing_code" | "expired" | "scanning" | "connecting" | "paired" | "failed";
 
 export type PairingError =
   | "camera_denied"
@@ -263,8 +263,18 @@ export interface PageGuardState {
  * shapes, lower-snake enum members and `kind`-tagged unions for the sealed `TalkUi`.
  */
 
-/** Talk-back volume of the baby device (a baby setting). */
-export type TalkVolume = "low" | "medium" | "high";
+/** Talk-back volume steps of the baby device in percent (a baby setting), as `TalkVolumeSteps`. */
+export const TALK_VOLUME_MIN_PCT = 10;
+export const TALK_VOLUME_MAX_PCT = 70;
+export const TALK_VOLUME_STEP_PCT = 10;
+export const TALK_VOLUME_DEFAULT_PCT = 50;
+
+/** The step nearest `pct` on the 10..70 grid (the core snaps the same way). */
+export function snapTalkVolume(pct: number): number {
+  const step = TALK_VOLUME_STEP_PCT;
+  const snapped = Math.floor((pct + step / 2) / step) * step;
+  return Math.min(TALK_VOLUME_MAX_PCT, Math.max(TALK_VOLUME_MIN_PCT, snapped));
+}
 
 /**
  * The connection alarm tones the picker offers, in picker order. The recipes and the fallback live
@@ -417,7 +427,8 @@ export interface SettingsState {
   lastTestWallMs: number | null;
   /** Baby: parents may talk through this device (switch of the single pairing; default on). */
   talkBackEnabled: boolean;
-  talkVolume: TalkVolume;
+  /** Percent of the alarm volume, a step from 10 to 70. */
+  talkVolumePct: number;
   /** Baby: a soft chime announces a talk. */
   talkChime: boolean;
   /** Parent: the one-time "hold to talk" coach mark was shown. */
@@ -475,6 +486,17 @@ export interface AppState {
   /** "Start mode": the role a start without monitoring opens in; null asks every time. */
   defaultRole: Role | null;
   onboardingDone: boolean;
+  /**
+   * Android's first-start permission screen was left. The web client has no such screen (browsers
+   * grant per use), so it starts true and nothing reads it (`device-setup` "Permissions on first
+   * start", web scenario).
+   */
+  permissionsIntroDone: boolean;
+  /**
+   * Set when a baby pairing or start finds the browser microphone permission at prompt or denied,
+   * cleared once it is granted.
+   */
+  microphoneNeeded: boolean;
   /** A saved pairing exists (home screen shows one-tap start). */
   paired: boolean;
   peerName: string | null;
@@ -556,11 +578,14 @@ export function defaultParentMonitor(): ParentMonitorState {
   };
 }
 
+/** Provisional default sensitivity, -36 dBFS (design section 3); tuned on a device in task 7.1. */
+export const DEFAULT_THRESHOLD = 0.016;
+
 export function defaultBabyMonitor(): BabyMonitorState {
   return {
     link: defaultLinkUi(),
     micLevel: 0,
-    threshold: 0.12,
+    threshold: DEFAULT_THRESHOLD,
     holdSeconds: 5,
     silenceApplied: null,
     dndAccess: false,
@@ -583,7 +608,7 @@ export function defaultSettings(): SettingsState {
   return {
     theme: "dark",
     language: null,
-    threshold: 0.12,
+    threshold: DEFAULT_THRESHOLD,
     holdSeconds: 5,
     alertOutput: "default",
     alertStyle: "sound",
@@ -599,7 +624,7 @@ export function defaultSettings(): SettingsState {
     heartbeatSeconds: 10,
     lastTestWallMs: null,
     talkBackEnabled: true,
-    talkVolume: "low",
+    talkVolumePct: TALK_VOLUME_DEFAULT_PCT,
     talkChime: true,
     talkCoachSeen: false,
     connectionAlarmTone: DEFAULT_ALARM_TONE,
@@ -616,6 +641,8 @@ export function defaultAppState(): AppState {
     lastRole: null,
     defaultRole: null,
     onboardingDone: false,
+    permissionsIntroDone: true,
+    microphoneNeeded: false,
     paired: false,
     peerName: null,
     connections: [],

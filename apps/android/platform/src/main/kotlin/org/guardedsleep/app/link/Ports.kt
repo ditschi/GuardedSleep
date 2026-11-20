@@ -52,5 +52,5 @@ interface TalkGate {
 
 /** The settings' "Play chime": the chime at the chosen level, outside a run. */
 fun interface TalkChimePreview {
-    fun play(level: org.guardedsleep.app.ui.model.TalkVolume)
+    fun play(pct: Int)
 }

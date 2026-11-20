@@ -157,7 +157,13 @@
           "dndAccessMissing": "Mode senyap tidak dapat diaktifkan tanpa akses Jangan Ganggu.",
           "someMailboxesUnreachable": "Beberapa server tidak dapat dijangkau. Perangkat masih dapat saling menemukan lewat server lain.",
           "mailboxReachable": "{host}: dapat dijangkau",
-          "mailboxUnreachable": "{host}: tidak dapat dijangkau"
+          "mailboxUnreachable": "{host}: tidak dapat dijangkau",
+          "connectionWorks": "Koneksi lewat internet: berfungsi",
+          "connectionWorksSome": "Koneksi lewat internet: berfungsi ({reachable} dari {total} server)",
+          "connectionFails": "Koneksi lewat internet: tidak berfungsi",
+          "details": "Rincian",
+          "detailsHide": "Sembunyikan rincian",
+          "roomNearThreshold": "Ruangan hampir sama berisiknya dengan tingkat peringatan. Pengaturan ini dapat memicu peringatan karena suara latar. Coba pengaturan yang kurang sensitif atau pindahkan perangkat."
         },
         "notifications": {
           "title": "Peringatan",
@@ -246,7 +252,8 @@
         "autolockHint": "Layar akan gelap dalam {seconds} dtk",
         "stop": "Hentikan pemantauan",
         "micLevel": "Tingkat suara di sini",
-        "micSilent": "Mikrofon tidak menangkap suara apa pun. Mulai ulang pemantauan atau periksa mikrofon."
+        "micSilent": "Mikrofon tidak menangkap suara apa pun. Mulai ulang pemantauan atau periksa mikrofon.",
+        "micMissing": "Perangkat bayi ini tidak dapat mendengar anak Anda tanpa mikrofon. Izinkan untuk menampilkan kode dan memulai."
       },
       "kiosk": {
         "a11yLabel": "Memantau. Layar terkunci.",
@@ -289,7 +296,8 @@
         "stopped": {
           "title": "{name} berhenti memantau",
           "body": "Seseorang menghentikan pemantauan di perangkat bayi. Anda tidak akan menerima peringatan.",
-          "titleDefault": "Perangkat bayi berhenti memantau"
+          "titleDefault": "Perangkat bayi berhenti memantau",
+          "stopHere": "OK, hentikan di sini juga"
         },
         "needsPairing": {
           "title": "Perangkat tidak lagi dipasangkan"
@@ -321,7 +329,6 @@
           "pageHidden": "Perangkat bayi mungkin berhenti sementara — halamannya tersembunyi",
           "wakeLockOff": "Perangkat bayi mungkin tertidur — layarnya tidak dijaga tetap menyala",
           "resumedFromSleep": "Perangkat bayi bangun dari tidur — mungkin ada suara yang terlewat",
-          "notCharging": "Perangkat bayi tidak lagi mengisi daya",
           "micPermissionLost": "Perangkat bayi kehilangan akses mikrofon"
         },
         "discreet": {
@@ -620,7 +627,7 @@
         "tapHint": "Tahan tombol untuk bicara",
         "lockHint": "Bicara tidak dapat dikunci",
         "afterListen": "Mendengarkan {seconds} dtk · ketuk untuk terus mendengarkan",
-        "coach": "Baru: tahan untuk berbicara dengan anak.",
+        "coach": "Tahan untuk berbicara dengan anak Anda.",
         "permBody": "Untuk berbicara dengan anak, GuardedSleep memerlukan mikrofon selama Anda menahan tombol.",
         "permAllow": "Izinkan mikrofon",
         "permDone": "Selesai. Sekarang tahan untuk bicara.",
@@ -631,10 +638,7 @@
           "title": "Bicara",
           "switch": "Orang tua dapat berbicara lewat perangkat ini",
           "switchHint": "Saat mati, tidak ada suara yang diputar lewat perangkat ini.",
-          "volume": "Volume suara",
-          "low": "Rendah",
-          "medium": "Sedang",
-          "high": "Tinggi",
+          "volume": "Volume suara: {percent}%",
           "playChime": "Putar nada",
           "chime": "Nada sebelum orang tua berbicara",
           "checklist": "Orang tua dapat berbicara lewat perangkat ini. Anda dapat mematikannya di Pengaturan."
@@ -790,7 +794,9 @@
         "counterA11y": "{duration}, sejak {time}",
         "sentenceSound": "Suara ruangan diputar di perangkat ini.",
         "stopSoundSub": "Menghentikan suara peringatan, pemantauan tetap berjalan",
-        "stopVibrationSub": "Menghentikan getaran, pemantauan tetap berjalan"
+        "stopVibrationSub": "Menghentikan getaran, pemantauan tetap berjalan",
+        "testHeadline": "Peringatan uji diterima",
+        "testSilent": "Perangkat bayi tetap diam."
       },
       "batteryAlert": {
         "label": "Baterai perangkat bayi",
@@ -808,6 +814,23 @@
         "nightA11yAuto": "Mode malam: otomatis",
         "nightOn": "Hidup",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Izinkan yang dibutuhkan GuardedSleep",
+        "intro": "Lakukan sekali sekarang agar tidak terganggu nanti. Setiap item boleh ditunda.",
+        "allowAll": "Izinkan semua",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Membuat perangkat bayi mendengar ruangan dan memungkinkan Anda berbicara dengan anak dari perangkat orang tua."
+        },
+        "camera": {
+          "title": "Kamera",
+          "why": "Hanya untuk membaca kode pemasangan di perangkat lain. Tidak ada yang direkam."
+        },
+        "dnd": {
+          "title": "Akses Jangan Ganggu",
+          "why": "Membuat peringatan sampai ke perangkat orang tua dan menjaga perangkat bayi tetap senyap di malam hari."
+        }
       }
     }
   },
@@ -893,7 +916,7 @@
       "unavailableBrowser": "Peramban ini tidak mendukung bicara.",
       "noisePausedSelf": "Peringatan kebisingan dijeda selama Anda bicara.",
       "noisePausedOther": "Perangkat orang tua lain sedang bicara. Peringatan kebisingan berlanjut setelahnya.",
-      "coach": "Baru: tahan untuk berbicara dengan anak.",
+      "coach": "Tahan untuk berbicara dengan anak Anda.",
       "unconfirmed": "Suara Anda mungkin tidak terdengar di perangkat bayi.",
       "audibleUncertain": "Pesan terakhir mungkin tidak terdengar di perangkat bayi. Periksa volumenya.",
       "afterListen": "Mendengarkan 10 dtk · ketuk untuk terus mendengarkan",
@@ -909,10 +932,7 @@
       "babyChecklist": "Orang tua dapat berbicara lewat perangkat ini. Anda dapat menonaktifkannya di Pengaturan.",
       "settingsTitle": "Bicara",
       "settingsToggle": "Orang tua dapat berbicara lewat perangkat ini",
-      "settingsVolume": "Volume suara",
-      "levelLow": "Rendah",
-      "levelMedium": "Sedang",
-      "levelHigh": "Tinggi",
+      "settingsVolume": "Volume suara: {percent}%",
       "settingsChime": "Bunyi sebelum suara",
       "settingsPlayChime": "Putar bunyi"
     }

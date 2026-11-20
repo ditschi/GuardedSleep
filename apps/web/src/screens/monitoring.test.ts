@@ -339,15 +339,10 @@ describe("S09 parent monitor", () => {
     expect(screen.getByTestId("sheet_probe")).toHaveTextContent("The baby device stays silent.");
     await fireEvent.click(screen.getByTestId("sheet_probe_run"));
     expect(c.calls).toContainEqual(["requestTestAlert"]);
-    // The baby device answers with a test alert; its screen carries the TEST badge.
-    c.parent.update((p) => ({
-      ...p,
-      noiseAlertActive: true,
-      noiseIsTest: true,
-      noiseSinceWallMs: Date.now(),
-    }));
-    expect(await screen.findByTestId("alert_test_badge")).toHaveTextContent("TEST");
-    await fireEvent.click(screen.getByTestId("alert_stop_sound"));
+    // The baby device answers with a test alert; its screen is the test confirmation.
+    c.parent.update((p) => ({ ...p, noiseIsTest: true }));
+    expect(await screen.findByTestId("test_alert_title")).toHaveTextContent("Test alert received");
+    await fireEvent.click(screen.getByTestId("test_alert_ok"));
     const question = await screen.findByTestId("sheet_probe_question");
     await fireEvent.click(within(question).getByTestId("sheet_probe_yes"));
     expect(c.calls).toContainEqual(["reportTestResult", true]);
@@ -445,22 +440,22 @@ describe("S09 parent monitor", () => {
   it("shows at most two notices and folds the rest into a list", async () => {
     c.parent.update((p) => ({
       ...p,
-      peer: { ...p.peer, unitWarnings: ["page_hidden", "not_charging", "wake_lock_off"] },
+      peer: { ...p.peer, unitWarnings: ["page_hidden", "wake_lock_off", "resumed_from_sleep"] },
     }));
     open("/parent", c);
     await screen.findByTestId("status_bar");
     // The baby device's warnings come first; the plain keep-open note folds before any of them.
-    expect(screen.getByTestId("parent_banner_baby_unplugged")).toBeInTheDocument();
     expect(screen.getByTestId("parent_banner_unit_warning_page_hidden")).toBeInTheDocument();
+    expect(screen.getByTestId("parent_banner_unit_warning_wake_lock_off")).toBeInTheDocument();
     expect(screen.queryByTestId("parent_banner_browser_keep_open")).toBeNull();
     const more = screen.getByTestId("parent_banner_more");
     expect(more).toHaveTextContent("+2 more");
     // The accessible name starts with the visible words and lists the folded notices.
-    expect(more).toHaveAccessibleName(/^\+2 more.*Baby device may fall asleep/);
+    expect(more).toHaveAccessibleName(/^\+2 more.*Baby device woke from sleep/);
     await fireEvent.click(more);
     const list = screen.getByTestId("sheet_banners");
     expect(
-      within(list).getByTestId("parent_banner_unit_warning_wake_lock_off"),
+      within(list).getByTestId("parent_banner_unit_warning_resumed_from_sleep"),
     ).toBeInTheDocument();
     expect(within(list).getByTestId("parent_banner_browser_keep_open")).toBeInTheDocument();
   });
@@ -562,11 +557,10 @@ describe("S10 noise alert", () => {
     c = parentController();
   });
 
-  function startNoise(test = false): void {
+  function startNoise(): void {
     c.parent.update((p) => ({
       ...p,
       noiseAlertActive: true,
-      noiseIsTest: test,
       noiseSinceWallMs: Date.now() - 1000,
       level: 0.8,
     }));
@@ -584,7 +578,6 @@ describe("S10 noise alert", () => {
       "Stops the alert sound, keeps monitoring",
     );
     expect(screen.getByTestId("alert_meter")).toHaveAccessibleName("Sound level: loud");
-    expect(screen.queryByTestId("alert_test_badge")).toBeNull();
     expect(screen.queryByTestId("parent_headline")).toBeNull();
     await waitFor(() => expect(screen.getByTestId("alert_title")).toHaveFocus());
   });
@@ -620,11 +613,30 @@ describe("S10 noise alert", () => {
     await screen.findByTestId("parent_headline");
   });
 
-  it("marks a test alert with a TEST badge", async () => {
+  it("shows a test alert as a calm confirmation, never as the child making sound", async () => {
     open("/parent", c);
     await screen.findByTestId("parent_headline");
-    startNoise(true);
-    expect(await screen.findByTestId("alert_test_badge")).toHaveTextContent("TEST");
+    c.parent.update((p) => ({ ...p, noiseIsTest: true }));
+    expect(await screen.findByTestId("test_alert_title")).toHaveTextContent("Test alert received");
+    expect(screen.getByTestId("test_alert_style")).toHaveTextContent("Alert style: Sound");
+    expect(screen.getByTestId("test_alert_silent")).toHaveTextContent(
+      "The baby device stayed silent.",
+    );
+    expect(screen.queryByTestId("alert_since")).toBeNull();
+    expect(screen.queryByTestId("alert_stop_sound")).toBeNull();
+    await fireEvent.click(screen.getByTestId("test_alert_ok"));
+    expect(c.calls).toContainEqual(["stopAlertSound"]);
+    expect(await screen.findByTestId("parent_headline")).toBeInTheDocument();
+  });
+
+  it("a real alert during a test takes over the screen", async () => {
+    open("/parent", c);
+    await screen.findByTestId("parent_headline");
+    c.parent.update((p) => ({ ...p, noiseIsTest: true }));
+    await screen.findByTestId("test_alert_title");
+    startNoise();
+    expect(await screen.findByTestId("alert_title")).toHaveTextContent("The child is making sound");
+    expect(screen.queryByTestId("test_alert_title")).toBeNull();
   });
 
   it("shows the alert again for the next noise event", async () => {
@@ -825,6 +837,28 @@ describe("S11 connection alert", () => {
     await fireEvent.click(screen.getByTestId("link_alarm_ok"));
     expect(await screen.findByTestId("parent_headline")).toBeInTheDocument();
     expect(screen.getByTestId("status_bar")).toHaveTextContent("Stopped");
+  });
+
+  it("'OK, stop here too' acknowledges through the core and leaves for the start page", async () => {
+    open("/parent", c);
+    c.parent.update((p) => ({ ...p, link: link({ phase: "peer_stopped" }) }));
+    await screen.findByRole("alertdialog");
+    // The stopped notice has no separate stop button: the primary answer is the acknowledgment.
+    expect(screen.queryByTestId("link_alarm_stop")).toBeNull();
+    await fireEvent.click(screen.getByTestId("link_alarm_stop_here"));
+    expect(c.calls).toContainEqual(["acknowledgePeerStopped"]);
+    expect(c.calls.map((x) => x[0])).not.toContain("stopMonitoring");
+    await waitFor(() => expect(window.location.pathname).toBe("/"));
+  });
+
+  it("a lost connection has no path that stops monitoring without the confirmation", async () => {
+    open("/parent", c);
+    lose();
+    await screen.findByTestId("link_alarm_title");
+    expect(screen.queryByTestId("link_alarm_stop_here")).toBeNull();
+    await fireEvent.click(screen.getByTestId("link_alarm_stop"));
+    expect(c.calls.map((x) => x[0])).not.toContain("stopMonitoring");
+    expect(c.calls.map((x) => x[0])).not.toContain("acknowledgePeerStopped");
   });
 
   it("warns about an almost empty baby device battery", async () => {

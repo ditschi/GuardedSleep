@@ -157,7 +157,13 @@
           "dndAccessMissing": "La modalità silenziosa non può essere attivata senza l'accesso a Non disturbare.",
           "someMailboxesUnreachable": "Alcuni server non erano raggiungibili. I dispositivi possono ancora ritrovarsi tramite gli altri.",
           "mailboxReachable": "{host}: raggiungibile",
-          "mailboxUnreachable": "{host}: non raggiungibile"
+          "mailboxUnreachable": "{host}: non raggiungibile",
+          "connectionWorks": "Connessione via internet: funziona",
+          "connectionWorksSome": "Connessione via internet: funziona ({reachable} server su {total})",
+          "connectionFails": "Connessione via internet: non funziona",
+          "details": "Dettagli",
+          "detailsHide": "Nascondi dettagli",
+          "roomNearThreshold": "La stanza è quasi rumorosa quanto la soglia di avviso. Questa impostazione può generare avvisi per il rumore di fondo. Prova un'impostazione meno sensibile o sposta il dispositivo."
         },
         "notifications": {
           "title": "Avvisi",
@@ -246,7 +252,8 @@
         "autolockHint": "Lo schermo si spegne tra {seconds} s",
         "stop": "Interrompi il monitoraggio",
         "micLevel": "Livello sonoro qui",
-        "micSilent": "Il microfono non rileva alcun suono. Riavvia il monitoraggio o controlla il microfono."
+        "micSilent": "Il microfono non rileva alcun suono. Riavvia il monitoraggio o controlla il microfono.",
+        "micMissing": "Questo dispositivo del bambino non può sentire tuo figlio senza il microfono. Consentilo per mostrare il codice e avviare."
       },
       "kiosk": {
         "a11yLabel": "Monitoraggio in corso. Schermo bloccato.",
@@ -289,7 +296,8 @@
         "stopped": {
           "title": "{name} ha interrotto il monitoraggio",
           "body": "Qualcuno ha interrotto il monitoraggio sul dispositivo del bambino. Non riceverai avvisi.",
-          "titleDefault": "Il dispositivo del bambino ha interrotto il monitoraggio"
+          "titleDefault": "Il dispositivo del bambino ha interrotto il monitoraggio",
+          "stopHere": "OK, interrompi anche qui"
         },
         "needsPairing": {
           "title": "Dispositivi non più associati"
@@ -321,7 +329,6 @@
           "pageHidden": "Il dispositivo del bambino potrebbe fermarsi: la sua pagina è nascosta",
           "wakeLockOff": "Il dispositivo del bambino potrebbe addormentarsi: lo schermo non resta acceso",
           "resumedFromSleep": "Il dispositivo del bambino si è riattivato: potresti aver perso dei suoni",
-          "notCharging": "Il dispositivo del bambino non è più in carica",
           "micPermissionLost": "Il dispositivo del bambino ha perso l'accesso al microfono"
         },
         "discreet": {
@@ -620,7 +627,7 @@
         "tapHint": "Tieni premuto il pulsante per parlare",
         "lockHint": "Parlare non si può bloccare",
         "afterListen": "In ascolto per {seconds} s · tocca per continuare",
-        "coach": "Novità: tieni premuto per parlare al bambino.",
+        "coach": "Tieni premuto per parlare al tuo bambino.",
         "permBody": "Per parlare al bambino, GuardedSleep ha bisogno del microfono mentre tieni premuto il pulsante.",
         "permAllow": "Consenti microfono",
         "permDone": "Fatto. Ora tieni premuto per parlare.",
@@ -631,10 +638,7 @@
           "title": "Parlare",
           "switch": "I genitori possono parlare tramite questo dispositivo",
           "switchHint": "Se disattivato, questo dispositivo non riproduce mai nulla.",
-          "volume": "Volume della voce",
-          "low": "Basso",
-          "medium": "Medio",
-          "high": "Alto",
+          "volume": "Volume della voce: {percent}%",
           "playChime": "Riproduci il suono",
           "chime": "Suono prima che parli un genitore",
           "checklist": "I genitori possono parlare tramite questo dispositivo. Puoi disattivarlo nelle Impostazioni."
@@ -790,7 +794,9 @@
         "counterA11y": "{duration}, dalle {time}",
         "sentenceSound": "L'audio della stanza viene riprodotto su questo dispositivo.",
         "stopSoundSub": "Ferma il suono dell'avviso, il monitoraggio continua",
-        "stopVibrationSub": "Ferma la vibrazione, il monitoraggio continua"
+        "stopVibrationSub": "Ferma la vibrazione, il monitoraggio continua",
+        "testHeadline": "Avviso di prova ricevuto",
+        "testSilent": "Il dispositivo del bambino è rimasto in silenzio."
       },
       "batteryAlert": {
         "label": "Batteria del dispositivo del bambino",
@@ -808,6 +814,23 @@
         "nightA11yAuto": "Modalità notte: automatica",
         "nightOn": "Attiva",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Consenti ciò che serve a GuardedSleep",
+        "intro": "Fallo una volta ora e nulla ti interromperà dopo. Puoi rimandare ogni voce.",
+        "allowAll": "Consenti tutto",
+        "mic": {
+          "title": "Microfono",
+          "why": "Permette al dispositivo del bambino di sentire la stanza e a te di parlare con tuo figlio dal dispositivo del genitore."
+        },
+        "camera": {
+          "title": "Fotocamera",
+          "why": "Solo per leggere il codice di abbinamento sull'altro dispositivo. Non viene registrato nulla."
+        },
+        "dnd": {
+          "title": "Accesso a Non disturbare",
+          "why": "Fa arrivare gli avvisi sul dispositivo del genitore e tiene silenzioso quello del bambino di notte."
+        }
       }
     }
   },
@@ -893,7 +916,7 @@
       "unavailableBrowser": "Il parlato non è supportato da questo browser.",
       "noisePausedSelf": "Avvisi di rumore in pausa mentre parli.",
       "noisePausedOther": "L'altro dispositivo genitore sta parlando. Gli avvisi di rumore riprendono dopo.",
-      "coach": "Novità: tieni premuto per parlare al bambino.",
+      "coach": "Tieni premuto per parlare al tuo bambino.",
       "unconfirmed": "La tua voce potrebbe non essere udibile sul dispositivo del bambino.",
       "audibleUncertain": "Gli ultimi messaggi potrebbero non essere stati udibili sul dispositivo del bambino. Controlla il volume.",
       "afterListen": "Ascolto per 10 s · tocca per continuare",
@@ -909,10 +932,7 @@
       "babyChecklist": "I genitori possono parlare tramite questo dispositivo. Puoi disattivarlo nelle Impostazioni.",
       "settingsTitle": "Parlato",
       "settingsToggle": "I genitori possono parlare tramite questo dispositivo",
-      "settingsVolume": "Volume della voce",
-      "levelLow": "Basso",
-      "levelMedium": "Medio",
-      "levelHigh": "Alto",
+      "settingsVolume": "Volume della voce: {percent}%",
       "settingsChime": "Suono prima della voce",
       "settingsPlayChime": "Riproduci suono"
     }

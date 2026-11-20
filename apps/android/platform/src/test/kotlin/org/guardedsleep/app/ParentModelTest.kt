@@ -230,14 +230,46 @@ class ParentModelTest {
     @Test
     fun noiseEndsAfterTwoQuietMinutes() {
         val since = connected()
-        model.onEvent(LinkEvent.NoiseAlert(0.4, true, false), clock.elapsed)
-        assertTrue(model.state.value.noiseIsTest)
-        assertEquals(1, effects.tests)
+        model.onEvent(LinkEvent.NoiseAlert(0.4, false, false), clock.elapsed)
+        assertTrue(model.state.value.noiseAlertActive)
         clock.advance(AlertPolicy.NOISE_QUIET_AFTER_MS)
         model.onTick(clock.elapsed)
         assertFalse(model.state.value.noiseAlertActive)
         assertEquals(1, sink.ended)
         assertTrue(model.state.value.quietSinceWallMs!! >= since)
+    }
+
+    @Test
+    fun aProbeLeavesTheSoundHistoryAndTheNoiseEventAlone() {
+        connected()
+        model.onEvent(LinkEvent.NoiseAlert(0.4, true, false), clock.elapsed)
+        val s = model.state.value
+        assertTrue(s.noiseIsTest)
+        assertEquals(1, effects.tests)
+        // Not a detected sound: no last sound, no running event, no event start time.
+        assertEquals(null, s.lastSound)
+        assertFalse(s.noiseAlertActive)
+        assertEquals(null, s.noiseSinceWallMs)
+        // It still runs the real alert chain, once, as a test.
+        assertEquals(listOf(Triple(NoiseKind.NEW, true, false)), sink.noise)
+        // The test ends by itself and stops its notification.
+        clock.advance(31_000)
+        model.onTick(clock.elapsed)
+        assertFalse(model.state.value.noiseIsTest)
+        assertEquals(1, sink.ended)
+        assertEquals(null, model.state.value.lastSound)
+    }
+
+    @Test
+    fun aRealAlertDuringATestRaisesAsUsual() {
+        connected()
+        model.onEvent(LinkEvent.NoiseAlert(0.4, true, false), clock.elapsed)
+        model.onEvent(LinkEvent.NoiseAlert(0.4, false, false), clock.elapsed)
+        val s = model.state.value
+        assertTrue(s.noiseAlertActive)
+        assertFalse(s.noiseIsTest)
+        assertTrue(s.lastSound != null)
+        assertEquals(Triple(NoiseKind.NEW, false, false), sink.noise.last())
     }
 
     @Test

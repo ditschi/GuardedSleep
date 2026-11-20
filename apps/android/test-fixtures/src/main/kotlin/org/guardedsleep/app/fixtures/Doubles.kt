@@ -82,10 +82,10 @@ class RecordingSink : AlertSink {
     }
 }
 
-/** A healthy, charging phone whose microphone hears something; a journey changes one fact. */
+/** A healthy, charging phone whose microphone hears a quiet room; a journey changes one fact. */
 class FakeDeviceCheckEnv : org.guardedsleep.app.readiness.DeviceCheckEnv {
     @Volatile var reachable = true
-    @Volatile var micRms: Double? = 0.01
+    @Volatile var micRms: Double? = 0.002
     val probed = java.util.concurrent.CopyOnWriteArrayList<String>()
 
     override fun micGranted() = true

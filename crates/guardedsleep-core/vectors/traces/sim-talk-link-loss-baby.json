@@ -2328,7 +2328,7 @@
     [],
     [
       { "type": "emit", "event": { "type": "noise_paused", "paused": true } },
-      { "type": "play_talk_chime", "attempt": 1, "level": "low" },
+      { "type": "play_talk_chime", "attempt": 1, "level": 50 },
       {
         "type": "send_data",
         "attempt": 1,
@@ -2348,7 +2348,7 @@
         "type": "set_talk_playback",
         "attempt": 1,
         "enabled": true,
-        "level": "low",
+        "level": 50,
         "fade_in_ms": 800,
         "until_ms": 50611
       },
@@ -2993,7 +2993,7 @@
         "type": "set_talk_playback",
         "attempt": 1,
         "enabled": false,
-        "level": "low",
+        "level": 50,
         "fade_in_ms": 0,
         "until_ms": 45800
       },

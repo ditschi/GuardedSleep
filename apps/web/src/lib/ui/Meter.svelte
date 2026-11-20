@@ -1,5 +1,6 @@
 <script lang="ts">
   import { meterBars } from "./meter";
+  import { meterFraction } from "./sensitivity";
 
   type Props = {
     /** Live level 0..1. */
@@ -15,7 +16,8 @@
 
   let { level, threshold = null, label, compact = false, testid }: Props = $props();
 
-  const bars = $derived(meterBars(level));
+  // Bars and tick share the slider's decibel scale (`meterFraction`).
+  const bars = $derived(meterBars(meterFraction(level)));
 </script>
 
 <div
@@ -28,9 +30,7 @@
   aria-valuenow={Math.min(1, Math.max(0, level))}
   aria-valuetext={label}
   aria-label={label}
-  style:--gs-threshold={threshold === null
-    ? undefined
-    : `${Math.min(1, Math.max(0, threshold)) * 100}%`}
+  style:--gs-threshold={threshold === null ? undefined : `${meterFraction(threshold) * 100}%`}
 >
   {#each bars as bar, i (i)}
     <span class="gs-meter__bar" data-on={bar.on || undefined} data-zone={bar.zone}></span>

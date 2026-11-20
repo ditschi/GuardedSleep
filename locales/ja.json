@@ -157,7 +157,13 @@
           "dndAccessMissing": "「おやすみモード」へのアクセスがないと、静音モードをオンにできません。",
           "someMailboxesUnreachable": "一部のサーバーに接続できませんでした。他のサーバー経由で端末同士は見つけ合えます。",
           "mailboxReachable": "{host}：接続可",
-          "mailboxUnreachable": "{host}：接続不可"
+          "mailboxUnreachable": "{host}：接続不可",
+          "connectionWorks": "インターネット接続：問題なし",
+          "connectionWorksSome": "インターネット接続：問題なし（{total} 台中 {reachable} 台）",
+          "connectionFails": "インターネット接続：使えません",
+          "details": "詳細",
+          "detailsHide": "詳細を隠す",
+          "roomNearThreshold": "部屋の音が通知のしきい値に近い大きさです。この設定では周囲の音で通知が鳴ることがあります。感度を下げるか、端末の置き場所を変えてください。"
         },
         "notifications": {
           "title": "アラート",
@@ -246,7 +252,8 @@
         "autolockHint": "{seconds}秒後に画面が暗くなります",
         "stop": "見守りを停止",
         "micLevel": "ここでの音量",
-        "micSilent": "マイクが音を拾っていません。見守りを再開するか、マイクを確認してください。"
+        "micSilent": "マイクが音を拾っていません。見守りを再開するか、マイクを確認してください。",
+        "micMissing": "マイクがないと、この赤ちゃん側の端末はお子さんの声を聞けません。コードの表示と開始には許可が必要です。"
       },
       "kiosk": {
         "a11yLabel": "見守り中。画面はロックされています。",
@@ -289,7 +296,8 @@
         "stopped": {
           "title": "{name}が見守りを停止しました",
           "body": "誰かが赤ちゃん用端末で見守りを停止しました。アラートは届きません。",
-          "titleDefault": "赤ちゃん用端末が見守りを停止しました"
+          "titleDefault": "赤ちゃん用端末が見守りを停止しました",
+          "stopHere": "OK、こちらも停止"
         },
         "needsPairing": {
           "title": "端末のペアリングが解除されました"
@@ -321,7 +329,6 @@
           "pageHidden": "赤ちゃん用端末が一時停止している可能性があります（ページが非表示）",
           "wakeLockOff": "赤ちゃん用端末がスリープする可能性があります（画面が点灯したままではありません）",
           "resumedFromSleep": "赤ちゃん用端末がスリープから復帰しました。音を聞き逃した可能性があります",
-          "notCharging": "赤ちゃん用端末が充電されていません",
           "micPermissionLost": "赤ちゃん用端末がマイクへのアクセスを失いました"
         },
         "discreet": {
@@ -620,7 +627,7 @@
         "tapHint": "ボタンを長押しして話してください",
         "lockHint": "トークはロックできません",
         "afterListen": "あと {seconds} 秒聞いています · タップで継続",
-        "coach": "新機能：長押しでお子さんに話しかけられます。",
+        "coach": "長押ししてお子さんに話しかけます。",
         "permBody": "お子さんに話しかけるには、ボタンを押している間、GuardedSleep がマイクを使う必要があります。",
         "permAllow": "マイクを許可",
         "permDone": "完了しました。長押しで話せます。",
@@ -631,10 +638,7 @@
           "title": "トーク",
           "switch": "保護者がこの端末を通して話せる",
           "switchHint": "オフの間は、この端末から音は一切再生されません。",
-          "volume": "トークの音量",
-          "low": "小",
-          "medium": "中",
-          "high": "大",
+          "volume": "トークの音量：{percent}%",
           "playChime": "チャイムを再生",
           "chime": "保護者が話す前にチャイムを鳴らす",
           "checklist": "保護者がこの端末を通して話せます。設定でオフにできます。"
@@ -790,7 +794,9 @@
         "counterA11y": "{duration}、{time}から",
         "sentenceSound": "部屋の音をこの端末で再生しています。",
         "stopSoundSub": "アラート音を止めます。見守りは続きます",
-        "stopVibrationSub": "振動を止めます。見守りは続きます"
+        "stopVibrationSub": "振動を止めます。見守りは続きます",
+        "testHeadline": "テスト通知を受信しました",
+        "testSilent": "赤ちゃん側の端末は無音のままでした。"
       },
       "batteryAlert": {
         "label": "赤ちゃん用端末のバッテリー",
@@ -808,6 +814,23 @@
         "nightA11yAuto": "ナイトモード：自動",
         "nightOn": "オン",
         "nightAuto": "自動"
+      },
+      "permissions": {
+        "title": "GuardedSleep に必要な許可",
+        "intro": "今まとめて設定しておけば、あとで中断されません。どの項目も後回しにできます。",
+        "allowAll": "すべて許可",
+        "mic": {
+          "title": "マイク",
+          "why": "赤ちゃん側の端末が部屋の音を聞き取り、保護者側の端末からお子さんに話しかけられるようにします。"
+        },
+        "camera": {
+          "title": "カメラ",
+          "why": "もう一方の端末のペアリングコードを読み取るためだけに使います。録画はしません。"
+        },
+        "dnd": {
+          "title": "サイレントモードへのアクセス",
+          "why": "保護者側の端末に通知が届き、赤ちゃん側の端末が夜間に静かでいられるようにします。"
+        }
       }
     }
   },
@@ -893,7 +916,7 @@
       "unavailableBrowser": "このブラウザでは会話機能に対応していません。",
       "noisePausedSelf": "話している間は、音のアラートを一時停止します。",
       "noisePausedOther": "もう一台の保護者端末が話しています。終了後に音のアラートが再開します。",
-      "coach": "新機能：長押しでお子さんに話しかけられます。",
+      "coach": "長押ししてお子さんに話しかけます。",
       "unconfirmed": "あなたの声がベビー端末で聞こえていない可能性があります。",
       "audibleUncertain": "直前のメッセージがベビー端末で聞こえていなかった可能性があります。音量を確認してください。",
       "afterListen": "10 秒間聞いています · タップで聞き続ける",
@@ -909,10 +932,7 @@
       "babyChecklist": "保護者はこの端末を通して話せます。設定でオフにできます。",
       "settingsTitle": "会話",
       "settingsToggle": "保護者はこの端末を通して話せます",
-      "settingsVolume": "声の音量",
-      "levelLow": "小",
-      "levelMedium": "中",
-      "levelHigh": "大",
+      "settingsVolume": "声の音量：{percent}%",
       "settingsChime": "声の前のチャイム",
       "settingsPlayChime": "チャイムを鳴らす"
     }

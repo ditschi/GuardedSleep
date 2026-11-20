@@ -28,7 +28,7 @@
     {
       "n": 1,
       "now": 0,
-      "input": { "type": "set_talk_back", "enabled": false, "level": "low", "chime": true }
+      "input": { "type": "set_talk_back", "enabled": false, "level": 10, "chime": true }
     },
     { "n": 2, "now": 0, "input": { "type": "start", "entropy": 2939126732 } },
     { "n": 3, "now": 0, "input": { "type": "wall_clock", "unix_s": 1000000 } },

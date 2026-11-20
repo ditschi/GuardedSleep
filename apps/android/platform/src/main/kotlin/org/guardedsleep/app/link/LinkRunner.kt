@@ -14,6 +14,7 @@ import org.guardedsleep.app.media.InboundAudioStats
 import org.guardedsleep.app.media.InjectedAudio
 import org.guardedsleep.app.media.MediaEngine
 import org.guardedsleep.app.media.TalkPlayout
+import org.guardedsleep.app.media.TalkReceiverStats
 import org.guardedsleep.app.media.TalkSpeaker
 import org.guardedsleep.app.signaling.SignalingFactory
 import org.guardedsleep.app.signaling.SignalingListener
@@ -97,6 +98,7 @@ class LinkRunner(
     private var talkMicAttempt: UInt? = null
     private var lastTalkMicPollAt = 0L
     private var lastTalkRtpLogAt = 0L
+    private var lastTalkOutLogAt = 0L
     private var lastWallElapsedMs = 0L
 
     private val isBaby = config.role == Role.BABY
@@ -205,6 +207,8 @@ class LinkRunner(
                     m.playTalkChime(gain, onDone)
 
                 override fun stopChime() = m.stopTalkChime()
+
+                override fun logRoute() = m.logTalkRoute()
             }
         playout =
             TalkPlayout(
@@ -215,8 +219,7 @@ class LinkRunner(
                 onOutsideGrant = { a -> dispatch(LinkInput.TalkRtpOutsideGrant(a)) },
             )
         playout?.start()
-        // Raw capture is `quiet-link-no-rtp`'s task and not built: the playback check says unknown.
-        dispatch(LinkInput.SetRawCapture(false))
+        dispatch(LinkInput.SetRawCapture(m.rawCapture))
     }
 
     fun media(action: (MediaEngine) -> Unit) = post { media?.let(action) }
@@ -250,6 +253,7 @@ class LinkRunner(
         attempts[attempt]?.talkMicLevel { level ->
             if (level != null) post { listener.onTalkMicLevel(level, clock.elapsedMs()) }
         }
+        pocTalkOut(attempt)
     }
 
     /** Lease expiry, the level control and the outside-a-grant check of the talk line. */
@@ -261,9 +265,11 @@ class LinkRunner(
             attempts[leased]?.talkReceiverStats { s ->
                 if (s != null)
                     post {
-                        p.onTalkLevel(s.audioLevel, clock.elapsedMs())
-                        dispatch(LinkInput.TalkLevel(s.audioLevel))
-                        pocTalkRtp(s.packetsReceived, true)
+                        // The cap and the core's playback check see the level before our gain.
+                        p.onTalkLevel(s.audioLevel, clock.elapsedMs())?.let {
+                            dispatch(LinkInput.TalkLevel(it))
+                        }
+                        pocTalkRtp(s, true)
                     }
             }
         } else if (now - outsidePollAt >= TalkPolicy.OUTSIDE_POLL_MS) {
@@ -273,7 +279,7 @@ class LinkRunner(
                 if (s != null)
                     post {
                         p.onTalkPackets(h, s.packetsReceived, clock.elapsedMs())
-                        pocTalkRtp(s.packetsReceived, false)
+                        pocTalkRtp(s, false)
                     }
             }
         }
@@ -413,11 +419,35 @@ class LinkRunner(
     }
 
     /** Gate evidence for the baby: the talk receiver's packet counter, about once a second. */
-    private fun pocTalkRtp(packets: Long, leased: Boolean) {
+    private fun pocTalkRtp(s: TalkReceiverStats, leased: Boolean) {
         val now = clock.elapsedMs()
         if (now - lastTalkRtpLogAt < TalkPolicy.OUTSIDE_POLL_MS - 100) return
         lastTalkRtpLogAt = now
-        PocLog.event("talk_rtp", "packets" to packets, "leased" to leased)
+        PocLog.event("talk_rtp", "packets" to s.packetsReceived, "leased" to leased)
+        if (leased) {
+            PocLog.event(
+                "talk_rx",
+                "samples" to s.totalSamplesReceived,
+                "concealed" to s.concealedSamples,
+                "level" to "%.4f".format(s.audioLevel),
+            )
+        }
+    }
+
+    /** The parent's outbound talk audio, about once a second: packets sent and the source level. */
+    private fun pocTalkOut(attempt: UInt) {
+        val now = clock.elapsedMs()
+        if (now - lastTalkOutLogAt < TalkPolicy.OUTSIDE_POLL_MS - 100) return
+        lastTalkOutLogAt = now
+        attempts[attempt]?.talkSendStats { s ->
+            if (s != null) {
+                PocLog.event(
+                    "talk_out_level",
+                    "packets" to s.packetsSent,
+                    "level" to s.audioLevel?.let { "%.4f".format(it) },
+                )
+            }
+        }
     }
 
     /** Gate evidence for the parent's talk: state names only, never audio or names. */

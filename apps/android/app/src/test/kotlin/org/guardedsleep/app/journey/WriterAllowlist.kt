@@ -28,6 +28,9 @@ object WriterAllowlist {
             "AppState.backgroundProtection" to
                 "false only after the foreground service was refused or lost; Robolectric cannot " +
                     "model service start rules (emulator gate)",
+            "AppState.microphoneNeeded" to
+                "a baby start refused for the microphone needs a denied permission; " +
+                    "LinkControllerTest covers it",
             "AppState.coachPending" to
                 "product gap: the first-run coach is never wired (docs/backlog.md IDEA \"First-run " +
                     "coach marks\"); the journey for it is @Ignored",
@@ -44,8 +47,6 @@ object WriterAllowlist {
             "ParentMonitorState.talkUnconfirmed" to TALK,
             "BabyMonitorState.link.acknowledgedUntilElapsedMs" to
                 "acknowledging an alarm exists on the parent's link only",
-            "BabyMonitorState.link.causeHint" to
-                "a journey's outage is reported on the parent's link; the baby's link gets no cause",
             "BabyMonitorState.link.hints" to HINTS,
             "ParentMonitorState.link.hints" to HINTS,
             "BabyMonitorState.link.quality" to "link quality $NO_STATS",

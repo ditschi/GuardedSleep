@@ -124,6 +124,7 @@ class LinkController(
     // whether a check of the current generation is in flight.
     private var deviceCheckGen = 0
     private var deviceCheckResult: DeviceCheckResult? = null
+
     private var deviceCheckInFlight = false
     private var deviceCheckAtMs = 0L
     private val appLock = Any()
@@ -275,6 +276,9 @@ class LinkController(
 
         lateinit var runner: LinkRunner
         var autoListenDone = false
+
+        /** The parent tapped "OK, stop here too" and waits for the core to say stopped. */
+        @Volatile var ackStopPending = false
         var lastOwnBatteryAt: Long? = null
     }
 
@@ -349,6 +353,11 @@ class LinkController(
         refreshApp()
     }
 
+    override fun completePermissionsIntro() {
+        settingsRepo.update { it.copy(onboardingDone = true, permissionsIntroDone = true) }
+        refreshApp()
+    }
+
     override fun updateSettings(transform: (SettingsState) -> SettingsState) {
         val before = _settings.value
         // TURN fields live in the sealed store and change only through [setTurnServer].
@@ -382,7 +391,7 @@ class LinkController(
             ) {
                 r.runner.input(
                     LinkInput.SetNoiseGate(
-                        after.threshold.toDouble(),
+                        NoiseLimits.clamp(after.threshold),
                         (after.holdSeconds * 1000L).toULong(),
                     )
                 )
@@ -390,14 +399,16 @@ class LinkController(
             if (
                 r.role == Role.BABY &&
                     (after.talkBackEnabled != before.talkBackEnabled ||
-                        after.talkVolume != before.talkVolume ||
+                        after.talkVolumePct != before.talkVolumePct ||
                         after.talkChime != before.talkChime)
             ) {
                 sendTalkBack(r.runner, after)
             }
             if (after.alertGainPct != before.alertGainPct)
                 r.runner.media { it.setPlaybackGainPct(after.alertGainPct) }
-            if (after.alertOutput != before.alertOutput) {
+            // The route is the parent's alert output only: the baby's talk-back plays on the alarm
+            // stream, and `setSpeakerphoneOn` does not move it (design §4; it never helped).
+            if (r.role == Role.PARENT && after.alertOutput != before.alertOutput) {
                 r.runner.media { it.setSpeakerOnly(after.alertOutput == AlertOutput.SPEAKER_ONLY) }
             }
             if (
@@ -648,9 +659,10 @@ class LinkController(
         // WebRTC holds the microphone while a run is active: the sample would fail or steal it.
         val sampleMic = run == null
         val urls = deviceCheckMailboxUrls()
+        val threshold = _settings.value.threshold.toDouble()
         val stale = { synchronized(deviceCheckLock) { deviceCheckGen != gen } }
         deviceCheckIo.execute {
-            val result = checker.check(urls, sampleMic, stale)
+            val result = checker.check(urls, sampleMic, stale, threshold)
             // Compare and publish under one lock: an invalidation can never be overwritten.
             val fresh =
                 synchronized(deviceCheckLock) {
@@ -688,6 +700,8 @@ class LinkController(
                     lastRole = p.lastRole,
                     defaultRole = p.defaultRole,
                     onboardingDone = p.onboardingDone,
+                    permissionsIntroDone = p.permissionsIntroDone,
+                    microphoneNeeded = p.role == Role.BABY && !talkGate.micPermission(),
                     paired = connections.isNotEmpty(),
                     peerName = connections.firstOrNull { it.selected }?.name ?: p.peerName,
                     connections = connections,
@@ -727,6 +741,14 @@ class LinkController(
             return
         }
         if (settingsRepo.current.role != Role.BABY) return
+        // No microphone, no code and no connection: the screen says why and offers the permission;
+        // it asks again once it is granted (`device-setup` "Baby unit permission gate").
+        if (!talkGate.micPermission()) {
+            cancelPairing()
+            _pairing.value = PairingState(PairingPhase.NEEDS_MICROPHONE)
+            refreshApp()
+            return
+        }
         // The baby unit replaces its active pairing; "Add parent device" waits for the baby hub.
         val slot = newPairingId(Role.BABY) ?: return
         // "Pair again" from the monitor screen: the monitoring flag must go first, or the monitor
@@ -819,6 +841,13 @@ class LinkController(
     // ---- monitoring --------------------------------------------------------------------------
 
     override fun startMonitoring() {
+        // A baby unit without the microphone could only watch silence: it never starts
+        // (`device-setup` "No later permission prompts"); the screens ask for the permission.
+        if (settingsRepo.current.role == Role.BABY && !talkGate.micPermission()) {
+            PocLog.event("baby_start_refused", "reason" to "no_microphone")
+            refreshApp()
+            return
+        }
         // The session's connection stays fixed while monitoring runs, also over a restart.
         val id = settingsRepo.current.role?.let(::activeId)
         settingsRepo.update { it.copy(monitoringActive = true, pairingId = id ?: it.pairingId) }
@@ -1035,7 +1064,7 @@ class LinkController(
             pairedBefore = pairedBefore,
             heartbeatIntervalMs = heartbeat.toULong(),
             alarmAfterMs = alarmAfter.toULong(),
-            noiseThreshold = s.threshold.toDouble(),
+            noiseThreshold = NoiseLimits.clamp(s.threshold),
             noiseHoldMs = (DebugOptions.noiseHoldMs ?: (s.holdSeconds * 1000L)).toULong(),
         )
     }
@@ -1103,6 +1132,14 @@ class LinkController(
 
     override fun dismissRestored() = parentModel.dismissRestored()
 
+    override fun acknowledgePeerStopped() {
+        val r = run?.takeIf { it.role == Role.PARENT } ?: return
+        // The core decides: it stops only while the link is still `peer_stopped`. The run ends
+        // when its status says stopped (`RunListener.onStatus`).
+        r.ackStopPending = true
+        r.runner.input(LinkInput.AcknowledgePeerStopped)
+    }
+
     override fun setTalk(pressed: Boolean) {
         val r = run?.takeIf { it.role == Role.PARENT } ?: return
         if (!pressed) {
@@ -1158,7 +1195,7 @@ class LinkController(
 
     override fun stopAlarmTone() = alerts.stopAlarmTone()
 
-    override fun playTalkChimeSample() = chimePreview.play(_settings.value.talkVolume)
+    override fun playTalkChimeSample() = chimePreview.play(_settings.value.talkVolumePct)
 
     override fun talkSettingsOpened() {
         run?.takeIf { it.role == Role.BABY }?.runner?.input(LinkInput.TalkSettingsOpened)
@@ -1166,7 +1203,11 @@ class LinkController(
 
     private fun sendTalkBack(runner: LinkRunner, s: SettingsState) {
         runner.input(
-            LinkInput.SetTalkBack(s.talkBackEnabled, TalkMapping.level(s.talkVolume), s.talkChime)
+            LinkInput.SetTalkBack(
+                s.talkBackEnabled,
+                TalkMapping.level(s.talkVolumePct),
+                s.talkChime,
+            )
         )
     }
 
@@ -1184,6 +1225,19 @@ class LinkController(
             if (r.role == Role.PARENT) parentModel.onStatus(status, nowMs)
             else babyModel.onStatus(status, nowMs)
             onPairingStatus(status)
+            if (r.ackStopPending) {
+                when (status.state) {
+                    LinkState.STOPPED -> {
+                        r.ackStopPending = false
+                        stopMonitoring()
+                    }
+                    // The core ignored the tap (the baby device started again): nothing to stop.
+                    LinkState.CONNECTING,
+                    LinkState.RECONNECTING,
+                    LinkState.CONNECTED -> r.ackStopPending = false
+                    else -> Unit
+                }
+            }
             if (
                 status.state == LinkState.CONNECTED &&
                     !r.autoListenDone &&

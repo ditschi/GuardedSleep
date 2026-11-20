@@ -2,6 +2,7 @@
   import { untrack } from "svelte";
   import { t } from "../i18n/store";
   import { LevelHistory } from "./level-history";
+  import { meterFraction } from "./sensitivity";
   import { everySecond } from "./ticker";
 
   /**
@@ -38,7 +39,8 @@
     bars = history.bars(now);
   });
 
-  const line = $derived(threshold === null ? null : Math.min(1, Math.max(0, threshold)));
+  // Bars and line share the slider's decibel scale (`meterFraction`); "above" compares raw levels.
+  const line = $derived(threshold === null ? null : meterFraction(threshold));
 </script>
 
 <div class="gs-strip-block">
@@ -57,8 +59,8 @@
       {#each bars as bar, i (i)}
         <span
           class="gs-strip__bar"
-          data-above={line !== null && bar >= line && bar > 0 ? "" : undefined}
-          style:height={`${Math.max(2, Math.round(bar * 100))}%`}
+          data-above={threshold !== null && bar >= threshold && bar > 0 ? "" : undefined}
+          style:height={`${Math.max(2, Math.round(meterFraction(bar) * 100))}%`}
         ></span>
       {/each}
       {#if line !== null && connected && !micSilent}

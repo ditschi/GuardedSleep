@@ -1,0 +1,76 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "noise-single-door-slam",
+  "description": "A single door slam of 300 ms with a 5 s hold time sends no noise alert.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 1000,
+      "do": "input",
+      "peer": "baby",
+      "input": {
+        "type": "set_noise_gate",
+        "threshold": 0.12,
+        "hold_ms": 5000
+      }
+    },
+    {
+      "at": 20000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 3000
+    },
+    {
+      "at": 23000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.9,
+      "for_ms": 300
+    },
+    {
+      "at": 23300,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 20000
+    },
+    {
+      "at": 43300,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "never": "noise_alert",
+      "where": {
+        "probe": false
+      }
+    }
+  ]
+}

@@ -42,8 +42,8 @@ test("listen: audio reaches the parent only while Listen is on", async () => {
     await dual.parent.addInitScript(rtcTrackerStub);
     await pairWeb(dual);
 
-    // The pulses are loud enough for the default threshold. This test is about Listen, so make
-    // the baby device least sensitive (threshold above the pulse level): no alert takes the screen.
+    // The pulses (-17 dBFS) are loud enough for the default threshold. This test is about Listen, so
+    // make the baby device least sensitive (-15 dBFS, above the pulse level): no alert takes the screen.
     await baby.getByTestId("baby_settings").click();
     await baby.getByTestId("settings_sensitivity").fill("0");
     await baby.getByTestId("settings_back").click();

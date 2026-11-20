@@ -55,7 +55,7 @@ export interface DeviceStatus {
      */
     mic_silent?: boolean;
     /**
-     * The baby's live noise-gate threshold (0.01..=1.0), set by the core.
+     * The baby's live noise-gate threshold (`MIN_NOISE_THRESHOLD..=MAX_NOISE_THRESHOLD`), set by the core.
      */
     noise_threshold?: number;
     /**
@@ -115,9 +115,11 @@ export interface TonePartial {
 }
 
 /**
- * Talk-back volume of the baby unit, a setting of the baby platform (`set_talk_back`).
+ * Talk-back volume of the baby unit in percent of the alarm stream maximum, a step from
+ * [`TALK_LEVEL_MIN_PCT`] to [`TALK_LEVEL_MAX_PCT`]. A setting of the baby platform
+ * (`set_talk_back`); no message from the parent carries it. On the wire it is the plain number.
  */
-export type TalkLevel = "low" | "medium" | "high";
+export type TalkLevel = number;
 
 /**
  * The baby unit's playback check of one talk (`talk_playback`, `talk-back` "Playback check").
@@ -339,7 +341,7 @@ export type LinkAction = { type: "open_mailbox"; id: MailboxId; kind: MailboxKin
 
 export type LinkEvent = { type: "status"; status: LinkStatus } | { type: "link_lost"; down_ms: number } | { type: "link_restored"; down_ms: number } | { type: "security_warning"; key: string } | { type: "peer_stopped" } | { type: "alarm_acknowledged"; until_ms: number } | { type: "noise_alert"; rms: number; probe: boolean; snoozed: boolean } | { type: "noise_escalated"; after_ms: number } | { type: "peer_heartbeat"; seq: number; rms: number | null } | { type: "peer_status"; status: DeviceStatus } | { type: "low_battery"; pct: number; critical: boolean } | { type: "charger_unplugged" } | { type: "missed_events"; count: number; max_rms: number; complete: boolean; down_ms: number } | { type: "noise_gate_changed"; threshold: number; hold_ms: number } | { type: "listen_changed"; enabled: boolean } | { type: "failed"; reason: string } | { type: "parent_pinned"; secret: string; window_until_s?: number } | { type: "parent_connected"; name: string } | { type: "mailboxes_updated"; mailboxes: InviteMailbox[] } | { type: "hint"; key: string; active: boolean } | { type: "talk_changed"; state: TalkState } | { type: "talk_active"; active: boolean; duration_ms: number } | { type: "noise_paused"; paused: boolean } | { type: "talk_playback"; result: PlaybackResult };
 
-export type LinkInput = { type: "start"; entropy: number } | { type: "wall_clock"; unix_s: number } | { type: "stop" } | { type: "acknowledge_alarm" } | { type: "network_available" } | { type: "mailbox_opened"; id: MailboxId } | { type: "mailbox_closed"; id: MailboxId; reason: string } | { type: "mailbox_frame"; id: MailboxId; bytes: string } | { type: "attempt_local_description"; attempt: number; sdp_type: string; sdp: string } | { type: "attempt_local_ice"; attempt: number; candidate: IceCandidate } | { type: "attempt_data_open"; attempt: number } | { type: "attempt_data_message"; attempt: number; text: string } | { type: "attempt_data_closed"; attempt: number } | { type: "attempt_dtls_fingerprint"; attempt: number; fingerprint: string } | { type: "attempt_pc_state"; attempt: number; state: string } | { type: "audio_level"; rms: number } | { type: "device_status"; status: DeviceStatus } | { type: "set_noise_gate"; threshold: number; hold_ms: number } | { type: "set_listen"; enabled: boolean } | { type: "request_probe" } | { type: "set_snooze"; until_ms: number | null } | { type: "set_noise_escalation"; after_ms: number | null } | { type: "acknowledge_noise" } | { type: "request_quiet" } | { type: "quiet_applied"; state: DeviceStatus } | { type: "set_talk"; pressed: boolean } | { type: "talk_mic_attached" } | { type: "talk_mic_failed" } | { type: "alert_preempts_talk" } | { type: "talk_chime_done"; attempt: number } | { type: "set_talk_back"; enabled: boolean; level: TalkLevel; chime: boolean } | { type: "talk_settings_opened" } | { type: "set_talk_muted"; muted: boolean } | { type: "set_raw_capture"; raw: boolean } | { type: "talk_rtp_outside_grant"; attempt: number } | { type: "talk_level"; rms: number } | { type: "tick" };
+export type LinkInput = { type: "start"; entropy: number } | { type: "wall_clock"; unix_s: number } | { type: "stop" } | { type: "acknowledge_alarm" } | { type: "acknowledge_peer_stopped" } | { type: "network_available" } | { type: "mailbox_opened"; id: MailboxId } | { type: "mailbox_closed"; id: MailboxId; reason: string } | { type: "mailbox_frame"; id: MailboxId; bytes: string } | { type: "attempt_local_description"; attempt: number; sdp_type: string; sdp: string } | { type: "attempt_local_ice"; attempt: number; candidate: IceCandidate } | { type: "attempt_data_open"; attempt: number } | { type: "attempt_data_message"; attempt: number; text: string } | { type: "attempt_data_closed"; attempt: number } | { type: "attempt_dtls_fingerprint"; attempt: number; fingerprint: string } | { type: "attempt_pc_state"; attempt: number; state: string } | { type: "audio_level"; rms: number } | { type: "device_status"; status: DeviceStatus } | { type: "set_noise_gate"; threshold: number; hold_ms: number } | { type: "set_listen"; enabled: boolean } | { type: "request_probe" } | { type: "set_snooze"; until_ms: number | null } | { type: "set_noise_escalation"; after_ms: number | null } | { type: "acknowledge_noise" } | { type: "request_quiet" } | { type: "quiet_applied"; state: DeviceStatus } | { type: "set_talk"; pressed: boolean } | { type: "talk_mic_attached" } | { type: "talk_mic_failed" } | { type: "alert_preempts_talk" } | { type: "talk_chime_done"; attempt: number } | { type: "set_talk_back"; enabled: boolean; level: TalkLevel; chime: boolean } | { type: "talk_settings_opened" } | { type: "set_talk_muted"; muted: boolean } | { type: "set_raw_capture"; raw: boolean } | { type: "talk_rtp_outside_grant"; attempt: number } | { type: "talk_level"; rms: number } | { type: "tick" };
 
 export type LinkState = "connecting" | "connected" | "reconnecting" | "peer_stopped" | "failed_needs_user" | "stopped";
 
@@ -413,6 +415,11 @@ export function filterOnlyLocal(mailboxes_json: string, project_host: string): s
 export function messageKeys(): string;
 
 /**
+ * Lowest noise-gate threshold any message or setting may carry (linear RMS, about -56 dBFS).
+ */
+export function minNoiseThreshold(): number;
+
+/**
  * Parses a scanned or pasted v4 invite. Returns JSON, `{"type":"ok","psk_b64url":..,"mailboxes":
  * [{"kind":"relay"|"lan","url":..}],"expires_at_epoch_s":..}` or `{"type":"error","error":
  * "not_our_code"|"incomplete_paste"|"expired"}`; the `packages/core-wasm` wrapper turns it into a
@@ -439,6 +446,7 @@ export interface InitOutput {
     readonly deriveRoomId: (a: number, b: number, c: number) => void;
     readonly filterOnlyLocal: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly messageKeys: (a: number) => void;
+    readonly minNoiseThreshold: () => number;
     readonly parseInvite: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly resolveAlarmTone: (a: number, b: number, c: number) => void;
     readonly wasmlink_handle: (a: number, b: number, c: number, d: number, e: number) => void;

@@ -96,6 +96,11 @@ export function createFakeController(): FakeController {
       calls.push(["completeOnboarding"]);
       app.update((s) => ({ ...s, onboardingDone: true }));
     },
+    completePermissionsIntro() {
+      calls.push(["completePermissionsIntro"]);
+      app.update((s) => ({ ...s, onboardingDone: true, permissionsIntroDone: true }));
+    },
+    allowMicrophone: record("allowMicrophone"),
     startPairing() {
       calls.push(["startPairing"]);
       pairing.set(makePairingState("showing_code"));
@@ -161,6 +166,9 @@ export function createFakeController(): FakeController {
     dismissRestored() {
       calls.push(["dismissRestored"]);
       parent.update((s) => ({ ...s, restoredAfterMs: null, missed: null }));
+    },
+    acknowledgePeerStopped() {
+      calls.push(["acknowledgePeerStopped"]);
     },
     setKioskLocked(locked) {
       calls.push(["setKioskLocked", locked]);

@@ -1,6 +1,6 @@
 package org.guardedsleep.app.media
 
-import kotlin.math.ceil
+import kotlin.math.roundToInt
 import org.guardedsleep.app.config.TalkPolicy
 import org.guardedsleep.app.diag.PocLog
 import uniffi.guardedsleep_core.TalkLevel
@@ -24,38 +24,60 @@ interface VolumeMemory {
 }
 
 /**
- * Raises the alarm stream only as far as a talk needs and attenuates the talk track for the rest
- * (design §7, Critical Review I12). It restores the previous index only when the index is still the
+ * Sets the alarm stream to the step nearest the requested percent of its maximum, never above
+ * [TalkPolicy.MAX_FRACTION], and returns a residual track gain (at most 1.0) for the difference
+ * between the percent and the step, so neighbouring percents still differ (design §4). The stream
+ * may be lowered as well as raised; the previous index is restored only when the index is still the
  * one it set, so a change the user made meanwhile is never overwritten.
  */
 class AlarmVolume(private val stream: StreamVolume, private val memory: VolumeMemory) {
     private var previous: Int? = null
     private var raisedTo: Int? = null
-    private var attenuation = 1.0
+    private var residual = 1.0
 
-    /** Track gain (0..1] for [level], or null when the level cannot be reached (report muted). */
+    /** The last stream index this talk asked for, for the diagnostics; null before a prepare. */
+    var targetIndex: Int? = null
+        private set
+
+    /** The index the stream had before the talk, for the diagnostics. */
+    val indexBefore: Int?
+        get() = previous
+
+    /** Residual track gain (0..1] for [level], or null when the level cannot be reached (muted). */
     fun prepare(level: TalkLevel): Double? {
-        if (raisedTo != null || previous != null) return attenuation
+        if (raisedTo != null || previous != null) return residual
         if (stream.fixed || stream.max <= 0) return null
-        val target = ceil(fraction(level) * stream.max).toInt().coerceIn(1, stream.max)
+        val max = stream.max
+        val cap = (TalkPolicy.MAX_FRACTION * max).roundToInt().coerceAtLeast(1)
+        val requested = minOf(level.pct.toInt() / 100.0, cap.toDouble() / max)
+        val target = (requested * max).roundToInt().coerceIn(1, cap)
+        val gain = (requested / (target.toDouble() / max)).coerceAtMost(1.0)
         val now = runCatching { stream.index }.getOrNull() ?: return null
-        if (now >= target) {
-            attenuation = target.toDouble() / now
+        targetIndex = target
+        if (now == target) {
             previous = now
-            return attenuation
+            residual = gain
+            return residual
         }
         val ok = runCatching { stream.index = target }.isSuccess
         val read = runCatching { stream.index }.getOrNull()
         if (!ok || read != target) {
             if (read != null && read != now) runCatching { stream.index = now }
+            targetIndex = null
             return null
         }
         previous = now
         raisedTo = target
-        attenuation = 1.0
+        residual = gain
         memory.save(now, target)
-        PocLog.event("alarm_volume", "phase" to "raised", "previous" to now, "set" to target)
-        return attenuation
+        PocLog.event(
+            "alarm_volume",
+            "phase" to "set",
+            "previous" to now,
+            "set" to target,
+            "gain" to "%.3f".format(gain),
+        )
+        return residual
     }
 
     /** Undoes a raise of this run; a no-op when nothing was raised or the user changed it. */
@@ -64,7 +86,8 @@ class AlarmVolume(private val stream: StreamVolume, private val memory: VolumeMe
         val prev = previous
         previous = null
         raisedTo = null
-        attenuation = 1.0
+        residual = 1.0
+        targetIndex = null
         if (set != null && prev != null) restoreIfUnchanged(prev, set)
     }
 
@@ -85,11 +108,4 @@ class AlarmVolume(private val stream: StreamVolume, private val memory: VolumeMe
         )
         memory.clear()
     }
-
-    private fun fraction(level: TalkLevel) =
-        when (level) {
-            TalkLevel.LOW -> TalkPolicy.LOW_FRACTION
-            TalkLevel.MEDIUM -> TalkPolicy.MEDIUM_FRACTION
-            TalkLevel.HIGH -> TalkPolicy.HIGH_FRACTION
-        }
 }

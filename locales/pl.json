@@ -157,7 +157,13 @@
           "dndAccessMissing": "Trybu cichego nie można włączyć bez dostępu do funkcji Nie przeszkadzać.",
           "someMailboxesUnreachable": "Z niektórymi serwerami nie udało się połączyć. Urządzenia mogą nadal odnaleźć się przez pozostałe.",
           "mailboxReachable": "{host}: osiągalny",
-          "mailboxUnreachable": "{host}: nieosiągalny"
+          "mailboxUnreachable": "{host}: nieosiągalny",
+          "connectionWorks": "Połączenie przez internet: działa",
+          "connectionWorksSome": "Połączenie przez internet: działa ({reachable} z {total} serwerów)",
+          "connectionFails": "Połączenie przez internet: nie działa",
+          "details": "Szczegóły",
+          "detailsHide": "Ukryj szczegóły",
+          "roomNearThreshold": "W pokoju jest prawie tak głośno jak próg alertu. To ustawienie może wywoływać alerty z powodu dźwięków tła. Spróbuj mniej czułego ustawienia lub przesuń urządzenie."
         },
         "notifications": {
           "title": "Alerty",
@@ -246,7 +252,8 @@
         "autolockHint": "Ekran zgaśnie za {seconds} s",
         "stop": "Zatrzymaj monitorowanie",
         "micLevel": "Poziom dźwięku tutaj",
-        "micSilent": "Mikrofon nie wychwytuje żadnego dźwięku. Uruchom monitorowanie ponownie lub sprawdź mikrofon."
+        "micSilent": "Mikrofon nie wychwytuje żadnego dźwięku. Uruchom monitorowanie ponownie lub sprawdź mikrofon.",
+        "micMissing": "To urządzenie dziecka nie usłyszy Twojego dziecka bez mikrofonu. Zezwól na niego, aby pokazać kod i zacząć."
       },
       "kiosk": {
         "a11yLabel": "Monitorowanie. Ekran zablokowany.",
@@ -289,7 +296,8 @@
         "stopped": {
           "title": "{name} przestało monitorować",
           "body": "Ktoś zatrzymał monitorowanie na urządzeniu dziecka. Nie dostaniesz alertów.",
-          "titleDefault": "Urządzenie dziecka przestało monitorować"
+          "titleDefault": "Urządzenie dziecka przestało monitorować",
+          "stopHere": "OK, zatrzymaj też tutaj"
         },
         "needsPairing": {
           "title": "Urządzenia nie są już sparowane"
@@ -321,7 +329,6 @@
           "pageHidden": "Urządzenie dziecka może się wstrzymać: jego strona jest ukryta",
           "wakeLockOff": "Urządzenie dziecka może zasnąć: jego ekran nie jest podtrzymywany",
           "resumedFromSleep": "Urządzenie dziecka obudziło się: mogły umknąć dźwięki",
-          "notCharging": "Urządzenie dziecka już się nie ładuje",
           "micPermissionLost": "Urządzenie dziecka utraciło dostęp do mikrofonu"
         },
         "discreet": {
@@ -620,7 +627,7 @@
         "tapHint": "Przytrzymaj przycisk, by mówić",
         "lockHint": "Mówienia nie można zablokować",
         "afterListen": "Słucham jeszcze {seconds} s · dotknij, by słuchać dalej",
-        "coach": "Nowość: przytrzymaj, by mówić do dziecka.",
+        "coach": "Przytrzymaj, by mówić do swojego dziecka.",
         "permBody": "Aby mówić do dziecka, GuardedSleep potrzebuje mikrofonu, gdy trzymasz przycisk.",
         "permAllow": "Zezwól na mikrofon",
         "permDone": "Gotowe. Teraz przytrzymaj, by mówić.",
@@ -631,10 +638,7 @@
           "title": "Mówienie",
           "switch": "Rodzice mogą mówić przez to urządzenie",
           "switchHint": "Gdy wyłączone, to urządzenie nigdy niczego nie odtwarza.",
-          "volume": "Głośność głosu",
-          "low": "Cicho",
-          "medium": "Średnio",
-          "high": "Głośno",
+          "volume": "Głośność głosu: {percent}%",
           "playChime": "Odtwórz dźwięk",
           "chime": "Dźwięk przed wypowiedzią rodzica",
           "checklist": "Rodzice mogą mówić przez to urządzenie. Możesz to wyłączyć w Ustawieniach."
@@ -790,7 +794,9 @@
         "counterA11y": "{duration}, od {time}",
         "sentenceSound": "Dźwięk z pokoju jest odtwarzany na tym urządzeniu.",
         "stopSoundSub": "Zatrzymuje dźwięk alertu, monitorowanie trwa",
-        "stopVibrationSub": "Zatrzymuje wibracje, monitorowanie trwa"
+        "stopVibrationSub": "Zatrzymuje wibracje, monitorowanie trwa",
+        "testHeadline": "Otrzymano alert testowy",
+        "testSilent": "Urządzenie dziecka milczało."
       },
       "batteryAlert": {
         "label": "Bateria urządzenia dziecka",
@@ -808,6 +814,23 @@
         "nightA11yAuto": "Tryb nocny: automatyczny",
         "nightOn": "Wł.",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Zezwól na to, czego potrzebuje GuardedSleep",
+        "intro": "Zrób to raz teraz, a nic nie przerwie Ci później. Każdy punkt możesz odłożyć.",
+        "allowAll": "Zezwól na wszystko",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Pozwala urządzeniu dziecka słyszeć pokój, a Tobie mówić do dziecka z urządzenia rodzica."
+        },
+        "camera": {
+          "title": "Aparat",
+          "why": "Tylko do odczytania kodu parowania na drugim urządzeniu. Nic nie jest nagrywane."
+        },
+        "dnd": {
+          "title": "Dostęp do trybu Nie przeszkadzać",
+          "why": "Dzięki temu alerty docierają na urządzenie rodzica, a urządzenie dziecka milczy w nocy."
+        }
       }
     }
   },
@@ -893,7 +916,7 @@
       "unavailableBrowser": "Ta przeglądarka nie obsługuje mówienia.",
       "noisePausedSelf": "Alerty hałasu wstrzymane, gdy mówisz.",
       "noisePausedOther": "Drugie urządzenie rodzica mówi. Alerty hałasu wrócą po zakończeniu.",
-      "coach": "Nowość: przytrzymaj, by mówić do dziecka.",
+      "coach": "Przytrzymaj, by mówić do swojego dziecka.",
       "unconfirmed": "Twój głos może być niesłyszalny na urządzeniu dziecka.",
       "audibleUncertain": "Ostatnie wiadomości mogły być niesłyszalne na urządzeniu dziecka. Sprawdź jego głośność.",
       "afterListen": "Słuchanie przez 10 s · dotknij, aby słuchać dalej",
@@ -909,10 +932,7 @@
       "babyChecklist": "Rodzice mogą mówić przez to urządzenie. Możesz to wyłączyć w Ustawieniach.",
       "settingsTitle": "Mówienie",
       "settingsToggle": "Rodzice mogą mówić przez to urządzenie",
-      "settingsVolume": "Głośność głosu",
-      "levelLow": "Niska",
-      "levelMedium": "Średnia",
-      "levelHigh": "Wysoka",
+      "settingsVolume": "Głośność głosu: {percent}%",
       "settingsChime": "Dźwięk przed głosem",
       "settingsPlayChime": "Odtwórz dźwięk"
     }

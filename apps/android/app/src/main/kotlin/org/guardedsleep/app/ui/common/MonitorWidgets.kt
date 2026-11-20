@@ -51,6 +51,7 @@ import org.guardedsleep.app.ui.model.Banner
 import org.guardedsleep.app.ui.model.BannerKind
 import org.guardedsleep.app.ui.model.BannerLevel
 import org.guardedsleep.app.ui.model.NightMode
+import org.guardedsleep.app.ui.model.Sensitivity
 import org.guardedsleep.app.ui.model.bannerLevel
 import org.guardedsleep.app.ui.theme.LocalAppColors
 import org.guardedsleep.app.ui.theme.LocalSafetyColors
@@ -91,7 +92,6 @@ private fun bannerColors(kind: BannerKind): BannerColors {
         BannerKind.SILENCE,
         BannerKind.UNIT_WARNING,
         BannerKind.WEAK_CONNECTION -> BannerColors(safety.warnContainer, safety.warn)
-        BannerKind.BABY_UNPLUGGED -> BannerColors(safety.infoContainer, safety.info)
         BannerKind.PAUSED -> BannerColors(scheme.surfaceContainerHighest, scheme.onSurface)
         BannerKind.VIBRATE_ONLY -> BannerColors(safety.cautionContainer, safety.caution)
     }
@@ -273,10 +273,11 @@ fun SoundStrip(
                 val bw = (size.width - gap * (n - 1)) / n
                 val baseY = size.height - 6.dp.toPx()
                 val maxH = baseY
-                val thresholdY = baseY - maxH * threshold.coerceIn(0f, 1f)
+                // Bars and line share the slider's decibel scale (`Sensitivity.meterFraction`).
+                val thresholdY = baseY - maxH * Sensitivity.meterFraction(threshold)
                 bars.forEachIndexed { i, v ->
                     val h =
-                        if (live) (maxH * v.coerceIn(0f, 1f)).coerceAtLeast(3.dp.toPx())
+                        if (live) (maxH * Sensitivity.meterFraction(v)).coerceAtLeast(3.dp.toPx())
                         else 3.dp.toPx()
                     val c =
                         when {

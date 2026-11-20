@@ -175,6 +175,14 @@
     <p class="gs-muted" data-testid="baby_last_talk">{lastTalkText}</p>
   {/if}
 
+  {#if $app.microphoneNeeded}
+    <div class="gs-stack gs-fill-width">
+      <Banner tone="warn" message={$t("native.ui.baby.micMissing")} testid="baby_mic_needed" />
+      <Button variant="tonal" testid="baby_mic_allow" onclick={() => controller.allowMicrophone()}>
+        {$t("native.ui.common.allow")}
+      </Button>
+    </div>
+  {/if}
   {#if failureText}
     <div class="gs-stack gs-stack--tight">
       <Banner tone="bad" message={failureText} testid="baby_failure" />

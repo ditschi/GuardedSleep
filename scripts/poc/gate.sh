@@ -134,9 +134,15 @@ maestro_assert() {
 	# once more. A real failed assertion reports "Assertion is false", fails here at once and never retries.
 	if grep -q "Unknown error" "$OUT/maestro-$(basename "$flow" .yaml)-$serial.xml" 2>/dev/null; then
 		log "maestro lost its driver in $flow (Unknown error); running it once more"
-		sleep 3
+		sleep 10
 		maestro_run "$serial" "$flow" && return 0
 		save_full_logcats "$(basename "$flow" .yaml)-attempt2"
+		# A fresh emulator can lose the driver twice in a row while it settles: a last try after a pause.
+		grep -q "Unknown error" "$OUT/maestro-$(basename "$flow" .yaml)-$serial.xml" 2>/dev/null || return 1
+		log "maestro lost its driver in $flow again; last try after a pause"
+		sleep 30
+		maestro_run "$serial" "$flow" && return 0
+		save_full_logcats "$(basename "$flow" .yaml)-attempt3"
 		return 1
 	fi
 	return 1
@@ -266,8 +272,8 @@ ac12() {
 	code=""
 	wait_event "$BABY" 'pairing_verified' 60 || fail AC-12 "baby did not verify pairing"
 	wait_event "$PARENT" 'pairing_verified' 60 || fail AC-12 "parent did not verify pairing"
-	maestro_run "$BABY" assert-verified-baby.yaml || fail AC-12 "baby UI not verified"
-	maestro_run "$PARENT" assert-verified.yaml || fail AC-12 "parent UI not verified"
+	maestro_assert "$BABY" assert-verified-baby.yaml || fail AC-12 "baby UI not verified"
+	maestro_assert "$PARENT" assert-verified.yaml || fail AC-12 "parent UI not verified"
 	maestro_run "$PARENT" journey-test-alert.yaml || fail AC-12 "test alert did not reach the parent screen"
 	maestro_run "$PARENT" journey-stop-parent.yaml || fail AC-12 "Stop monitoring did not return to the home screen"
 	# The signaling log assertion (two members joined this window) is local-gate.sh's, it owns docker.
@@ -426,11 +432,13 @@ ac11() {
 		fail AC-11 "a noise alert reached the parent during or within 5 s after the talk"
 	fi
 
-	# The alarm stream: every raise has its restore, and the index is the one from before the talk.
-	RAISED="$(adb -s "$BABY" logcat -d -s GS_POC:I | grep 'alarm_volume .*phase=raised' | grep -oE 't=[0-9]+' | cut -d= -f2 | awk -v t="$T_PRESS" '$1 > t' | wc -l || true)"
-	RESTORED_BAD="$(adb -s "$BABY" logcat -d -s GS_POC:I | { grep 'alarm_volume .*phase=restored' || true; } | awk -v t="$T_PRESS" '{ match($0, /t=[0-9]+/); if (substr($0, RSTART + 2, RLENGTH - 2) > t) { match($0, /previous=[0-9-]+/); p = substr($0, RSTART + 9, RLENGTH - 9); match($0, /now=[0-9-]+/); n = substr($0, RSTART + 4, RLENGTH - 4); if (p != n) bad++ } } END { print bad + 0 }')"
-	RESTORED="$(adb -s "$BABY" logcat -d -s GS_POC:I | grep 'alarm_volume .*phase=restored' | grep -oE 't=[0-9]+' | cut -d= -f2 | awk -v t="$T_PRESS" '$1 > t' | wc -l || true)"
-	log "AC-11 alarm stream: ${RAISED} raise(s), ${RESTORED} restore(s), ${RESTORED_BAD} restored to another index"
+	# The alarm stream: every change (`phase=set`; older builds logged `phase=raised`) has its restore,
+	# and the index is the one from before the talk. The talk volume may lower the stream as well as
+	# raise it (alpha-field-test-feedback design §4).
+	RAISED="$(adb -s "$BABY" logcat -d -s GS_POC:I | grep -E 'alarm_volume .*phase=(raised|set) ' | grep -oE 't=[0-9]+' | cut -d= -f2 | awk -v t="$((T_PRESS - SKEW_MS))" '$1 > t' | wc -l || true)"
+	RESTORED_BAD="$(adb -s "$BABY" logcat -d -s GS_POC:I | { grep 'alarm_volume .*phase=restored' || true; } | awk -v t="$((T_PRESS - SKEW_MS))" '{ match($0, /t=[0-9]+/); if (substr($0, RSTART + 2, RLENGTH - 2) > t) { match($0, /previous=[0-9-]+/); p = substr($0, RSTART + 9, RLENGTH - 9); match($0, /now=[0-9-]+/); n = substr($0, RSTART + 4, RLENGTH - 4); if (p != n) bad++ } } END { print bad + 0 }')"
+	RESTORED="$(adb -s "$BABY" logcat -d -s GS_POC:I | grep 'alarm_volume .*phase=restored' | grep -oE 't=[0-9]+' | cut -d= -f2 | awk -v t="$((T_PRESS - SKEW_MS))" '$1 > t' | wc -l || true)"
+	log "AC-11 alarm stream: ${RAISED} change(s), ${RESTORED} restore(s), ${RESTORED_BAD} restored to another index"
 	[[ $RAISED -eq $RESTORED && $RESTORED_BAD -eq 0 ]] || fail AC-11 "the alarm stream was not restored after the talk"
 	B_BEFORE="$(audio_line "$BABY" before)"
 	B_AFTER="$(audio_line "$BABY" after)"

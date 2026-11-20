@@ -86,6 +86,11 @@ class FakeAppController(
         appFlow.value = appFlow.value.copy(onboardingDone = true)
     }
 
+    override fun completePermissionsIntro() {
+        calls += "completePermissionsIntro"
+        appFlow.value = appFlow.value.copy(onboardingDone = true, permissionsIntroDone = true)
+    }
+
     override fun startPairing() {
         calls += "startPairing"
         // The parent opens the scan screen (not at the cap), as the platform does.
@@ -261,6 +266,10 @@ class FakeAppController(
     override fun dismissRestored() {
         calls += "dismissRestored"
         parentFlow.value = parentFlow.value.copy(restoredAfterMs = null, missed = null)
+    }
+
+    override fun acknowledgePeerStopped() {
+        calls += "acknowledgePeerStopped"
     }
 
     override fun setKioskLocked(locked: Boolean) {

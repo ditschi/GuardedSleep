@@ -157,7 +157,13 @@
           "dndAccessMissing": "Tichý režim nelze zapnout bez přístupu k režimu Nerušit.",
           "someMailboxesUnreachable": "Některé servery nebyly dostupné. Zařízení se mohou stále najít přes ostatní.",
           "mailboxReachable": "{host}: dostupný",
-          "mailboxUnreachable": "{host}: nedostupný"
+          "mailboxUnreachable": "{host}: nedostupný",
+          "connectionWorks": "Připojení přes internet: funguje",
+          "connectionWorksSome": "Připojení přes internet: funguje ({reachable} z {total} serverů)",
+          "connectionFails": "Připojení přes internet: nefunguje",
+          "details": "Podrobnosti",
+          "detailsHide": "Skrýt podrobnosti",
+          "roomNearThreshold": "V místnosti je skoro stejně hlasito jako je úroveň upozornění. Toto nastavení může spouštět upozornění kvůli zvukům na pozadí. Zkuste méně citlivé nastavení nebo zařízení přesuňte."
         },
         "notifications": {
           "title": "Výstrahy",
@@ -246,7 +252,8 @@
         "autolockHint": "Displej potemní za {seconds} s",
         "stop": "Zastavit sledování",
         "micLevel": "Úroveň zvuku zde",
-        "micSilent": "Mikrofon nezachytává žádný zvuk. Spusťte sledování znovu nebo zkontrolujte mikrofon."
+        "micSilent": "Mikrofon nezachytává žádný zvuk. Spusťte sledování znovu nebo zkontrolujte mikrofon.",
+        "micMissing": "Toto dětské zařízení bez mikrofonu své dítě neuslyší. Povolte ho, aby se zobrazil kód a šlo začít."
       },
       "kiosk": {
         "a11yLabel": "Sledování. Obrazovka zamčena.",
@@ -289,7 +296,8 @@
         "stopped": {
           "title": "{name} přestalo sledovat",
           "body": "Někdo zastavil sledování na zařízení dítěte. Výstrahy nepřijdou.",
-          "titleDefault": "Zařízení dítěte přestalo sledovat"
+          "titleDefault": "Zařízení dítěte přestalo sledovat",
+          "stopHere": "OK, zastavit i tady"
         },
         "needsPairing": {
           "title": "Zařízení už nejsou spárovaná"
@@ -321,7 +329,6 @@
           "pageHidden": "Zařízení dítěte se může zastavit: jeho stránka je skrytá",
           "wakeLockOff": "Zařízení dítěte může usnout: displej se neudržuje zapnutý",
           "resumedFromSleep": "Zařízení dítěte se probudilo ze spánku: zvuky mohly uniknout",
-          "notCharging": "Zařízení dítěte se už nenabíjí",
           "micPermissionLost": "Zařízení dítěte ztratilo přístup k mikrofonu"
         },
         "discreet": {
@@ -620,7 +627,7 @@
         "tapHint": "Podržte tlačítko a mluvte",
         "lockHint": "Mluvení nelze zamknout",
         "afterListen": "Poslech ještě {seconds} s · klepnutím pokračujte",
-        "coach": "Novinka: podržte a promluvte na dítě.",
+        "coach": "Podržte a promluvte na své dítě.",
         "permBody": "Aby mohla aplikace GuardedSleep mluvit s dítětem, potřebuje mikrofon po dobu držení tlačítka.",
         "permAllow": "Povolit mikrofon",
         "permDone": "Hotovo. Nyní podržte a mluvte.",
@@ -631,10 +638,7 @@
           "title": "Mluvení",
           "switch": "Rodiče mohou mluvit přes toto zařízení",
           "switchHint": "Když je vypnuto, toto zařízení nikdy nic nepřehraje.",
-          "volume": "Hlasitost hlasu",
-          "low": "Nízká",
-          "medium": "Střední",
-          "high": "Vysoká",
+          "volume": "Hlasitost hlasu: {percent} %",
           "playChime": "Přehrát tón",
           "chime": "Tón před promluvou rodiče",
           "checklist": "Rodiče mohou mluvit přes toto zařízení. Můžete to vypnout v Nastavení."
@@ -790,7 +794,9 @@
         "counterA11y": "{duration}, od {time}",
         "sentenceSound": "Zvuk místnosti se přehrává v tomto zařízení.",
         "stopSoundSub": "Zastaví zvuk výstrahy, sledování pokračuje",
-        "stopVibrationSub": "Zastaví vibrace, sledování pokračuje"
+        "stopVibrationSub": "Zastaví vibrace, sledování pokračuje",
+        "testHeadline": "Zkušební upozornění přijato",
+        "testSilent": "Dětské zařízení zůstalo ticho."
       },
       "batteryAlert": {
         "label": "Baterie zařízení dítěte",
@@ -808,6 +814,23 @@
         "nightA11yAuto": "Noční režim: automaticky",
         "nightOn": "Zap.",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Povolte, co GuardedSleep potřebuje",
+        "intro": "Udělejte to jednou teď a nic vás později nevyruší. Každou položku můžete odložit.",
+        "allowAll": "Povolit vše",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Dětské zařízení díky tomu slyší místnost a vy můžete z rodičovského zařízení mluvit na své dítě."
+        },
+        "camera": {
+          "title": "Fotoaparát",
+          "why": "Jen ke čtení párovacího kódu na druhém zařízení. Nic se nenahrává."
+        },
+        "dnd": {
+          "title": "Přístup k režimu Nerušit",
+          "why": "Upozornění se dostanou na rodičovské zařízení a dětské zařízení v noci mlčí."
+        }
       }
     }
   },
@@ -893,7 +916,7 @@
       "unavailableBrowser": "Mluvení tento prohlížeč nepodporuje.",
       "noisePausedSelf": "Upozornění na hluk jsou pozastavena, dokud mluvíte.",
       "noisePausedOther": "Druhé rodičovské zařízení mluví. Upozornění na hluk se poté obnoví.",
-      "coach": "Novinka: podržte a promluvte na dítě.",
+      "coach": "Podržte a promluvte na své dítě.",
       "unconfirmed": "Váš hlas nemusí být na dětském zařízení slyšet.",
       "audibleUncertain": "Poslední zprávy nemusely být na dětském zařízení slyšet. Zkontrolujte jeho hlasitost.",
       "afterListen": "Poslech 10 s · klepnutím pokračujte v poslechu",
@@ -909,10 +932,7 @@
       "babyChecklist": "Rodiče mohou mluvit přes toto zařízení. V Nastavení to lze vypnout.",
       "settingsTitle": "Mluvení",
       "settingsToggle": "Rodiče mohou mluvit přes toto zařízení",
-      "settingsVolume": "Hlasitost hlasu",
-      "levelLow": "Nízká",
-      "levelMedium": "Střední",
-      "levelHigh": "Vysoká",
+      "settingsVolume": "Hlasitost hlasu: {percent} %",
       "settingsChime": "Tón před hlasem",
       "settingsPlayChime": "Přehrát tón"
     }

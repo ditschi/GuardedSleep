@@ -77,7 +77,11 @@ class ParentModel(
     private val tracker = NoiseTracker()
     private var noiseSinceWall: Long? = null
     private var noiseLastWall: Long? = null
-    private var noiseIsTest = false
+    /**
+     * Elapsed time until which a test alert shows. A test is not a noise event: it never enters the
+     * tracker, `lastSound` or the event times (`parent-alerts` "Test alert").
+     */
+    private var testUntilElapsed: Long? = null
     private var remoteLevel = 0.0
     private var remoteAt = Long.MIN_VALUE
     private var heartbeatRms = 0.0
@@ -137,7 +141,7 @@ class ParentModel(
         tracker.reset()
         noiseSinceWall = null
         noiseLastWall = null
-        noiseIsTest = false
+        testUntilElapsed = null
         clearNoiseEventFlags()
         remoteLevel = 0.0
         heartbeatRms = 0.0
@@ -372,6 +376,13 @@ class ParentModel(
             clearNoiseEventFlags()
             sink.noiseEnded()
         }
+        testUntilElapsed
+            ?.takeIf { now >= it }
+            ?.let {
+                testUntilElapsed = null
+                // A real event that started meanwhile owns the notification and the haptics.
+                if (!tracker.active) sink.noiseEnded()
+            }
         awaitingMissedUntil
             ?.takeIf { now >= it }
             ?.let {
@@ -500,19 +511,32 @@ class ParentModel(
 
     // ---- internals ---------------------------------------------------------------------------
 
+    /**
+     * A test alert (the baby injected a digital probe): the same notification channel, full-screen
+     * path and audio route as a real alert, but no sound event, so the monitor never says "Sound
+     * detected" for it and a real alert during the test still raises as usual.
+     */
+    private fun onTest(e: LinkEvent.NoiseAlert, now: Long) {
+        testUntilElapsed = now + TEST_ALERT_MS
+        effects.testAlertArrived(clock.wallMs())
+        val kind = if (tracker.active) NoiseKind.CONTINUE else NoiseKind.NEW
+        val plays = FeedbackPlans.forNoise(kind, e.snoozed, discreet()).playAudio
+        effects.muteRemote(!plays && listen == ListenMode.OFF)
+        sink.noiseAlert(kind, true, e.snoozed, discreet())
+    }
+
     private fun onNoise(e: LinkEvent.NoiseAlert, now: Long) {
+        if (e.probe) return onTest(e, now)
         val wall = clock.wallMs()
         val kind = tracker.onAlert(now)
         lastLoudLevelAt = now
         if (kind == NoiseKind.NEW || noiseSinceWall == null) {
             noiseSinceWall = wall
-            noiseIsTest = e.probe
         }
         if (kind == NoiseKind.NEW) escalatedAfterMin = null
         soundStopped = false
         noiseLastWall = wall
         quietSinceWall = null
-        if (e.probe) effects.testAlertArrived(wall)
         // Snoozed or discreet noise stays visual: the baby still streams, but nothing plays until
         // the parent listens.
         applyNoisePlayout(kind, e.snoozed)
@@ -674,7 +698,7 @@ class ParentModel(
                         SoundEventUi(it, ((noiseLastWall ?: it) - it).coerceAtLeast(0))
                     },
                 ownBatteryPct = ownBatteryPct,
-                noiseIsTest = noiseIsTest && tracker.active,
+                noiseIsTest = testUntilElapsed != null && !tracker.active,
                 noiseEscalatedAfterMin = escalatedAfterMin.takeIf { tracker.active },
                 talk = talkAvailability(now),
                 talkEnd = talkEnd,
@@ -688,6 +712,7 @@ class ParentModel(
     }
 
     private companion object {
+        const val TEST_ALERT_MS = 30_000L
         const val DECAY = 0.85
         const val STALE_PAIRING_MS = 10 * 60_000L
         const val STALE_AUDIO_MS = 400L

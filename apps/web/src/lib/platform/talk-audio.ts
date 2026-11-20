@@ -19,12 +19,12 @@ import {
   TALK_CHIME_NOTE_S,
   TALK_CHIME_NOTES_HZ,
   TALK_CHIME_RATIO,
-  TALK_LEVEL_GAIN,
   TALK_LIMITER_ATTACK_S,
   TALK_LIMITER_CEILING,
   TALK_LIMITER_RATIO,
   TALK_LIMITER_RELEASE_S,
   TALK_LIMITER_THRESHOLD_DB,
+  talkLevelGain,
 } from "./policy";
 
 // ---- baby: playback of the parent's voice ------------------------------------------------------
@@ -150,7 +150,7 @@ export function createTalkPlayback(deps: TalkPlaybackDeps): TalkPlayback {
       const now = ctx.currentTime;
       const remainingS = Math.max(0, remainingMs) / 1000;
       level.gain.setValueAtTime(0, now);
-      level.gain.linearRampToValueAtTime(TALK_LEVEL_GAIN[talkLevel], now + fadeInMs / 1000);
+      level.gain.linearRampToValueAtTime(talkLevelGain(talkLevel), now + fadeInMs / 1000);
       // The stop on the audio clock: a throttled timer cannot make this later.
       level.gain.setValueAtTime(0, now + remainingS);
       if (current) current.track.enabled = true;
@@ -165,7 +165,7 @@ export function createTalkPlayback(deps: TalkPlaybackDeps): TalkPlayback {
     playChime(talkLevel, done) {
       stopChime();
       const now = ctx.currentTime;
-      const amplitude = Math.max(TALK_LEVEL_GAIN[talkLevel] * TALK_CHIME_RATIO, TALK_CHIME_FLOOR);
+      const amplitude = Math.max(talkLevelGain(talkLevel) * TALK_CHIME_RATIO, TALK_CHIME_FLOOR);
       const bus = ctx.createGain();
       bus.gain.value = amplitude;
       bus.connect(limiter);

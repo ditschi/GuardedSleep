@@ -112,12 +112,10 @@ pub enum TalkDenyReason {
     Rate,
 }
 
-/// Talk-back volume of the baby unit.
-#[uniffi::remote(Enum)]
-pub enum TalkLevel {
-    Low,
-    Medium,
-    High,
+/// Talk-back volume of the baby unit in percent, a step from 10 to 70.
+#[uniffi::remote(Record)]
+pub struct TalkLevel {
+    pub pct: u8,
 }
 
 /// Why a talk ended on the parent.
@@ -160,7 +158,7 @@ pub struct DeviceStatus {
     pub next_alarm_min: Option<u32>,
     /// The microphone delivered only digital silence for 30 s (set by the core, not the platform).
     pub mic_silent: Option<bool>,
-    /// The baby's live noise-gate threshold (0.01..=1.0), set by the core.
+    /// The baby's live noise-gate threshold (`MIN_NOISE_THRESHOLD..=MAX_NOISE_THRESHOLD`), set by the core.
     pub noise_threshold: Option<f64>,
     /// Reliability warnings reported by the baby platform; sorted and deduplicated by
     /// [`DeviceStatus::normalized`] and the parser, omitted on the wire when empty.
@@ -299,6 +297,7 @@ pub enum LinkInput {
     Stop,
     /// Parent: "I'm checking" - mute levels 2-3 for 5 minutes.
     AcknowledgeAlarm,
+    AcknowledgePeerStopped,
     /// The platform's network changed or came back: retry immediately, reset the backoff.
     NetworkAvailable,
     /// The socket of mailbox `id` opened (the answer to `open_mailbox`).
@@ -357,7 +356,7 @@ pub enum LinkInput {
     DeviceStatus {
         status: DeviceStatus,
     },
-    /// Baby: change the noise gate while running. Out-of-range values (threshold 0.01..=1.0,
+    /// Baby: change the noise gate while running. Out-of-range values (threshold `MIN_NOISE_THRESHOLD..=MAX_NOISE_THRESHOLD`,
     /// `hold_ms` 1000..=15000) are ignored. A running loud state is kept (see `NoiseGate`).
     SetNoiseGate {
         threshold: f64,

@@ -157,7 +157,13 @@
           "dndAccessMissing": "Tyst läge kan inte slås på utan åtkomst till Stör ej.",
           "someMailboxesUnreachable": "Några servrar kunde inte nås. Enheterna kan fortfarande hitta varandra via de andra.",
           "mailboxReachable": "{host}: nåbar",
-          "mailboxUnreachable": "{host}: inte nåbar"
+          "mailboxUnreachable": "{host}: inte nåbar",
+          "connectionWorks": "Anslutning via internet: fungerar",
+          "connectionWorksSome": "Anslutning via internet: fungerar ({reachable} av {total} servrar)",
+          "connectionFails": "Anslutning via internet: fungerar inte",
+          "details": "Detaljer",
+          "detailsHide": "Dölj detaljer",
+          "roomNearThreshold": "Rummet är nästan lika högljutt som larmnivån. Den här inställningen kan ge larm för bakgrundsljud. Prova en mindre känslig inställning eller flytta enheten."
         },
         "notifications": {
           "title": "Larm",
@@ -246,7 +252,8 @@
         "autolockHint": "Skärmen mörknar om {seconds} s",
         "stop": "Sluta övervaka",
         "micLevel": "Ljudnivå här",
-        "micSilent": "Mikrofonen fångar inget ljud. Starta om övervakningen eller kontrollera mikrofonen."
+        "micSilent": "Mikrofonen fångar inget ljud. Starta om övervakningen eller kontrollera mikrofonen.",
+        "micMissing": "Den här barnenheten kan inte höra ditt barn utan mikrofonen. Tillåt den för att visa koden och starta."
       },
       "kiosk": {
         "a11yLabel": "Övervakar. Skärmen är låst.",
@@ -289,7 +296,8 @@
         "stopped": {
           "title": "{name} slutade övervaka",
           "body": "Någon stoppade övervakningen på babyenheten. Du får inga larm.",
-          "titleDefault": "Babyenheten slutade övervaka"
+          "titleDefault": "Babyenheten slutade övervaka",
+          "stopHere": "OK, sluta även här"
         },
         "needsPairing": {
           "title": "Enheterna är inte längre parkopplade"
@@ -321,7 +329,6 @@
           "pageHidden": "Babyenheten kan pausa: dess sida är dold",
           "wakeLockOff": "Babyenheten kan somna: skärmen hålls inte på",
           "resumedFromSleep": "Babyenheten vaknade ur viloläge: ljud kan ha missats",
-          "notCharging": "Babyenheten laddas inte längre",
           "micPermissionLost": "Babyenheten förlorade åtkomst till mikrofonen"
         },
         "discreet": {
@@ -620,7 +627,7 @@
         "tapHint": "Håll knappen för att tala",
         "lockHint": "Tala kan inte låsas",
         "afterListen": "Lyssnar i {seconds} s · tryck för att fortsätta",
-        "coach": "Nytt: håll för att tala med barnet.",
+        "coach": "Håll för att prata med ditt barn.",
         "permBody": "För att tala med barnet behöver GuardedSleep mikrofonen medan du håller knappen.",
         "permAllow": "Tillåt mikrofon",
         "permDone": "Klart. Håll nu för att tala.",
@@ -631,10 +638,7 @@
           "title": "Tala",
           "switch": "Föräldrar kan tala via den här enheten",
           "switchHint": "När det är av spelas inget upp via den här enheten.",
-          "volume": "Röstvolym",
-          "low": "Låg",
-          "medium": "Medel",
-          "high": "Hög",
+          "volume": "Röstvolym: {percent} %",
           "playChime": "Spela signal",
           "chime": "Signal innan en förälder talar",
           "checklist": "Föräldrar kan tala via den här enheten. Du kan stänga av det under Inställningar."
@@ -790,7 +794,9 @@
         "counterA11y": "{duration}, sedan {time}",
         "sentenceSound": "Rummets ljud spelas upp på den här enheten.",
         "stopSoundSub": "Stoppar larmljudet, övervakningen fortsätter",
-        "stopVibrationSub": "Stoppar vibrationen, övervakningen fortsätter"
+        "stopVibrationSub": "Stoppar vibrationen, övervakningen fortsätter",
+        "testHeadline": "Testlarm mottaget",
+        "testSilent": "Barnenheten förblev tyst."
       },
       "batteryAlert": {
         "label": "Babyenhetens batteri",
@@ -808,6 +814,23 @@
         "nightA11yAuto": "Nattläge: automatiskt",
         "nightOn": "På",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Tillåt det GuardedSleep behöver",
+        "intro": "Gör det en gång nu, så avbryts du inte senare. Du kan skjuta upp varje punkt.",
+        "allowAll": "Tillåt alla",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Låter barnenheten höra rummet och låter dig tala med ditt barn från föräldraenheten."
+        },
+        "camera": {
+          "title": "Kamera",
+          "why": "Bara för att läsa parkopplingskoden på den andra enheten. Inget spelas in."
+        },
+        "dnd": {
+          "title": "Åtkomst till Stör ej",
+          "why": "Låter larm nå föräldraenheten och håller barnenheten tyst på natten."
+        }
       }
     }
   },
@@ -893,7 +916,7 @@
       "unavailableBrowser": "Prat stöds inte i den här webbläsaren.",
       "noisePausedSelf": "Ljudlarm pausade medan du pratar.",
       "noisePausedOther": "Den andra föräldraenheten pratar. Ljudlarmen återupptas efteråt.",
-      "coach": "Nytt: håll för att tala med barnet.",
+      "coach": "Håll för att prata med ditt barn.",
       "unconfirmed": "Din röst hörs kanske inte på babyenheten.",
       "audibleUncertain": "De senaste meddelandena hördes kanske inte på babyenheten. Kontrollera dess volym.",
       "afterListen": "Lyssnar i 10 s · tryck för att fortsätta lyssna",
@@ -909,10 +932,7 @@
       "babyChecklist": "Föräldrar kan prata via den här enheten. Du kan stänga av det i Inställningar.",
       "settingsTitle": "Prat",
       "settingsToggle": "Föräldrar kan prata via den här enheten",
-      "settingsVolume": "Röstvolym",
-      "levelLow": "Låg",
-      "levelMedium": "Medel",
-      "levelHigh": "Hög",
+      "settingsVolume": "Röstvolym: {percent} %",
       "settingsChime": "Ljud före rösten",
       "settingsPlayChime": "Spela ljud"
     }

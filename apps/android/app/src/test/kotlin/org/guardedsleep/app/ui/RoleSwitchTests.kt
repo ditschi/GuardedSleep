@@ -36,7 +36,13 @@ class RoleSwitchTests : ShotBase() {
         }
     }
 
-    private val idle = AppState(role = Role.PARENT, onboardingDone = true, paired = true)
+    private val idle =
+        AppState(
+            role = Role.PARENT,
+            onboardingDone = true,
+            permissionsIntroDone = true,
+            paired = true,
+        )
 
     private val twoRoles =
         idle.copy(
@@ -66,7 +72,7 @@ class RoleSwitchTests : ShotBase() {
     fun noPairingAnywhereShowsTheFirstStartChoiceAtTheRoot() = runComposeUiTest {
         setContent {
             CompositionLocalProvider(LocalUiEnv provides TestEnv) {
-                GuardedSleepRoot(FakeAppController(app = AppState()))
+                GuardedSleepRoot(FakeAppController(app = AppState(permissionsIntroDone = true)))
             }
         }
         onNodeWithTag("role_title").assertIsDisplayed()
@@ -76,7 +82,11 @@ class RoleSwitchTests : ShotBase() {
     fun aPairingInEitherRoleShowsHomeAtTheRootWhileTheStartModeAsks() = runComposeUiTest {
         setContent {
             CompositionLocalProvider(LocalUiEnv provides TestEnv) {
-                GuardedSleepRoot(FakeAppController(app = twoRoles.copy(onboardingDone = true)))
+                GuardedSleepRoot(
+                    FakeAppController(
+                        app = twoRoles.copy(onboardingDone = true, permissionsIntroDone = true)
+                    )
+                )
             }
         }
         onNodeWithTag("home").assertIsDisplayed()
@@ -127,7 +137,11 @@ class RoleSwitchTests : ShotBase() {
     fun theOpenAtStartLinkOpensSettingsOnThatPage() = runComposeUiTest {
         setContent {
             CompositionLocalProvider(LocalUiEnv provides TestEnv) {
-                GuardedSleepRoot(FakeAppController(app = twoRoles.copy(onboardingDone = true)))
+                GuardedSleepRoot(
+                    FakeAppController(
+                        app = twoRoles.copy(onboardingDone = true, permissionsIntroDone = true)
+                    )
+                )
             }
         }
         onNodeWithTag("home_open_at_start").performScrollTo().performClick()
@@ -138,7 +152,13 @@ class RoleSwitchTests : ShotBase() {
     fun noRoleOrConnectionSwitchIsOfferedWhileMonitoring() = runComposeUiTest {
         val c =
             FakeAppController(
-                app = twoRoles.copy(role = Role.PARENT, monitoring = true, onboardingDone = true),
+                app =
+                    twoRoles.copy(
+                        role = Role.PARENT,
+                        monitoring = true,
+                        onboardingDone = true,
+                        permissionsIntroDone = true,
+                    ),
                 parent = ParentMonitorState(link = Connected),
             )
         setContent { CompositionLocalProvider(LocalUiEnv provides TestEnv) { GuardedSleepRoot(c) } }

@@ -157,7 +157,13 @@
           "dndAccessMissing": "Der Ruhemodus lässt sich ohne Zugriff auf „Nicht stören“ nicht einschalten.",
           "someMailboxesUnreachable": "Einige Server waren nicht erreichbar. Die Geräte können sich weiterhin über die anderen finden.",
           "mailboxReachable": "{host}: erreichbar",
-          "mailboxUnreachable": "{host}: nicht erreichbar"
+          "mailboxUnreachable": "{host}: nicht erreichbar",
+          "connectionWorks": "Verbindung über das Internet: funktioniert",
+          "connectionWorksSome": "Verbindung über das Internet: funktioniert ({reachable} von {total} Servern)",
+          "connectionFails": "Verbindung über das Internet: funktioniert nicht",
+          "details": "Details",
+          "detailsHide": "Details ausblenden",
+          "roomNearThreshold": "Der Raum ist fast so laut wie die Alarmschwelle. Diese Einstellung kann bei Hintergrundgeräuschen Alarme auslösen. Wählen Sie eine weniger empfindliche Einstellung oder stellen Sie das Gerät anders auf."
         },
         "notifications": {
           "title": "Benachrichtigungen",
@@ -246,7 +252,8 @@
         "autolockHint": "Der Bildschirm wird in {seconds} s dunkel",
         "stop": "Überwachung beenden",
         "micLevel": "Geräuschpegel hier",
-        "micSilent": "Das Mikrofon nimmt keinen Ton auf. Starten Sie die Überwachung neu oder prüfen Sie das Mikrofon."
+        "micSilent": "Das Mikrofon nimmt keinen Ton auf. Starten Sie die Überwachung neu oder prüfen Sie das Mikrofon.",
+        "micMissing": "Dieses Babygerät kann Ihr Kind ohne Mikrofon nicht hören. Erlauben Sie es, um den Code zu zeigen und zu starten."
       },
       "kiosk": {
         "a11yLabel": "Überwachung läuft. Bildschirm gesperrt.",
@@ -289,7 +296,8 @@
         "stopped": {
           "title": "{name} hat die Überwachung beendet",
           "body": "Jemand hat die Überwachung auf dem Babygerät beendet. Sie erhalten keine Alarme.",
-          "titleDefault": "Das Babygerät hat die Überwachung beendet"
+          "titleDefault": "Das Babygerät hat die Überwachung beendet",
+          "stopHere": "OK, hier auch beenden"
         },
         "needsPairing": {
           "title": "Geräte nicht mehr gekoppelt"
@@ -321,7 +329,6 @@
           "pageHidden": "Babygerät kann pausieren – Seite verdeckt",
           "wakeLockOff": "Babygerät kann einschlafen – Bildschirm wird nicht wachgehalten",
           "resumedFromSleep": "Babygerät war im Ruhezustand – Geräusche könnten verpasst worden sein",
-          "notCharging": "Babygerät lädt nicht mehr",
           "micPermissionLost": "Babygerät hat den Mikrofonzugriff verloren"
         },
         "discreet": {
@@ -624,7 +631,7 @@
         "tapHint": "Taste halten, um zu sprechen",
         "lockHint": "Sprechen lässt sich nicht sperren",
         "afterListen": "Hört {seconds} s zu · zum Weiterhören tippen",
-        "coach": "Neu: Halten, um mit dem Kind zu sprechen.",
+        "coach": "Halten, um mit Ihrem Kind zu sprechen.",
         "permBody": "Um mit dem Kind zu sprechen, braucht GuardedSleep das Mikrofon, solange Sie die Taste halten.",
         "permAllow": "Mikrofon erlauben",
         "permDone": "Fertig. Jetzt zum Sprechen halten.",
@@ -635,10 +642,7 @@
           "title": "Sprechen",
           "switch": "Eltern können über dieses Gerät sprechen",
           "switchHint": "Wenn aus, wird über dieses Gerät nie etwas abgespielt.",
-          "volume": "Lautstärke beim Sprechen",
-          "low": "Leise",
-          "medium": "Mittel",
-          "high": "Laut",
+          "volume": "Lautstärke beim Sprechen: {percent} %",
           "playChime": "Signalton abspielen",
           "chime": "Signalton, bevor ein Elternteil spricht",
           "checklist": "Eltern können über dieses Gerät sprechen. Sie können das in den Einstellungen ausschalten."
@@ -794,7 +798,9 @@
         "counterA11y": "{duration}, seit {time}",
         "sentenceSound": "Der Raumton wird auf diesem Gerät abgespielt.",
         "stopSoundSub": "Beendet den Alarmton, die Überwachung läuft weiter",
-        "stopVibrationSub": "Beendet die Vibration, die Überwachung läuft weiter"
+        "stopVibrationSub": "Beendet die Vibration, die Überwachung läuft weiter",
+        "testHeadline": "Testalarm empfangen",
+        "testSilent": "Das Babygerät blieb still."
       },
       "batteryAlert": {
         "label": "Akku des Babygeräts",
@@ -812,6 +818,23 @@
         "nightA11yAuto": "Nachtmodus: automatisch",
         "nightOn": "An",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Erlauben, was GuardedSleep braucht",
+        "intro": "Einmal jetzt erledigen, dann stört später nichts. Jeden Punkt können Sie auf später verschieben.",
+        "allowAll": "Alles erlauben",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Damit das Babygerät den Raum hört und Sie vom Elterngerät aus zu Ihrem Kind sprechen können."
+        },
+        "camera": {
+          "title": "Kamera",
+          "why": "Nur um den Kopplungscode auf dem anderen Gerät zu lesen. Es wird nichts aufgenommen."
+        },
+        "dnd": {
+          "title": "Zugriff auf „Nicht stören“",
+          "why": "Damit Alarme am Elterngerät durchkommen und das Babygerät nachts still bleibt."
+        }
       }
     }
   },
@@ -882,7 +905,7 @@
       "unavailableBrowser": "Sprechen wird in diesem Browser nicht unterstützt.",
       "noisePausedSelf": "Geräusch-Alarme pausieren, solange Sie sprechen.",
       "noisePausedOther": "Das andere Elterngerät spricht. Geräusch-Alarme gelten danach wieder.",
-      "coach": "Neu: Halten, um mit dem Kind zu sprechen.",
+      "coach": "Halten, um mit Ihrem Kind zu sprechen.",
       "unconfirmed": "Ihre Stimme ist am Babygerät womöglich nicht zu hören.",
       "audibleUncertain": "Ihre letzten Durchsagen waren am Babygerät möglicherweise nicht zu hören. Prüfen Sie dessen Lautstärke.",
       "afterListen": "10 s Mithören · tippen, um weiter mitzuhören",
@@ -898,10 +921,7 @@
       "babyChecklist": "Eltern können über dieses Gerät sprechen. Das lässt sich in den Einstellungen ausschalten.",
       "settingsTitle": "Sprechen",
       "settingsToggle": "Eltern können über dieses Gerät sprechen",
-      "settingsVolume": "Lautstärke der Stimme",
-      "levelLow": "Leise",
-      "levelMedium": "Mittel",
-      "levelHigh": "Laut",
+      "settingsVolume": "Lautstärke der Stimme: {percent} %",
       "settingsChime": "Klang vor der Stimme",
       "settingsPlayChime": "Klang abspielen"
     }

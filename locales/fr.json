@@ -157,7 +157,13 @@
           "dndAccessMissing": "Le mode silencieux ne peut pas être activé sans l'accès à Ne pas déranger.",
           "someMailboxesUnreachable": "Certains serveurs n'ont pas pu être joints. Les appareils peuvent encore se retrouver via les autres.",
           "mailboxReachable": "{host} : joignable",
-          "mailboxUnreachable": "{host} : injoignable"
+          "mailboxUnreachable": "{host} : injoignable",
+          "connectionWorks": "Connexion par Internet : fonctionne",
+          "connectionWorksSome": "Connexion par Internet : fonctionne ({reachable} serveurs sur {total})",
+          "connectionFails": "Connexion par Internet : ne fonctionne pas",
+          "details": "Détails",
+          "detailsHide": "Masquer les détails",
+          "roomNearThreshold": "La pièce est presque aussi bruyante que le seuil d'alerte. Ce réglage peut déclencher des alertes pour le bruit de fond. Essayez un réglage moins sensible ou déplacez l'appareil."
         },
         "notifications": {
           "title": "Alertes",
@@ -246,7 +252,8 @@
         "autolockHint": "L'écran s'assombrit dans {seconds} s",
         "stop": "Arrêter la surveillance",
         "micLevel": "Niveau sonore ici",
-        "micSilent": "Le microphone ne capte aucun son. Redémarrez la surveillance ou vérifiez le microphone."
+        "micSilent": "Le microphone ne capte aucun son. Redémarrez la surveillance ou vérifiez le microphone.",
+        "micMissing": "Cet appareil bébé ne peut pas entendre votre enfant sans microphone. Autorisez-le pour afficher le code et démarrer."
       },
       "kiosk": {
         "a11yLabel": "Surveillance en cours. Écran verrouillé.",
@@ -289,7 +296,8 @@
         "stopped": {
           "title": "{name} a arrêté la surveillance",
           "body": "Quelqu'un a arrêté la surveillance sur l'appareil bébé. Vous ne recevrez plus d'alertes.",
-          "titleDefault": "L'appareil bébé a arrêté la surveillance"
+          "titleDefault": "L'appareil bébé a arrêté la surveillance",
+          "stopHere": "OK, arrêter ici aussi"
         },
         "needsPairing": {
           "title": "Appareils plus appairés"
@@ -321,7 +329,6 @@
           "pageHidden": "L'appareil bébé peut se mettre en pause — sa page est masquée",
           "wakeLockOff": "L'appareil bébé peut s'endormir — son écran n'est pas maintenu allumé",
           "resumedFromSleep": "L'appareil bébé sort de veille — des sons ont pu être manqués",
-          "notCharging": "L'appareil bébé n'est plus en charge",
           "micPermissionLost": "L'appareil bébé a perdu l'accès au microphone"
         },
         "discreet": {
@@ -624,7 +631,7 @@
         "tapHint": "Maintenez le bouton pour parler",
         "lockHint": "La parole ne peut pas être verrouillée",
         "afterListen": "Écoute pendant {seconds} s · touchez pour continuer",
-        "coach": "Nouveau : maintenez pour parler à l'enfant.",
+        "coach": "Maintenez pour parler à votre enfant.",
         "permBody": "Pour parler à l'enfant, GuardedSleep a besoin du microphone tant que vous maintenez le bouton.",
         "permAllow": "Autoriser le microphone",
         "permDone": "C'est fait. Maintenez pour parler.",
@@ -635,10 +642,7 @@
           "title": "Parler à l'enfant",
           "switch": "Les parents peuvent parler via cet appareil",
           "switchHint": "Désactivé, rien n'est jamais diffusé par cet appareil.",
-          "volume": "Volume de la voix",
-          "low": "Faible",
-          "medium": "Moyen",
-          "high": "Fort",
+          "volume": "Volume de la voix : {percent} %",
           "playChime": "Jouer la sonnerie",
           "chime": "Sonnerie avant qu'un parent parle",
           "checklist": "Les parents peuvent parler via cet appareil. Vous pouvez le désactiver dans les réglages."
@@ -794,7 +798,9 @@
         "counterA11y": "{duration}, depuis {time}",
         "sentenceSound": "Le son de la pièce est lu sur cet appareil.",
         "stopSoundSub": "Arrête le son d'alerte, la surveillance continue",
-        "stopVibrationSub": "Arrête la vibration, la surveillance continue"
+        "stopVibrationSub": "Arrête la vibration, la surveillance continue",
+        "testHeadline": "Alerte de test reçue",
+        "testSilent": "L'appareil du bébé est resté silencieux."
       },
       "batteryAlert": {
         "label": "Batterie de l'appareil bébé",
@@ -812,6 +818,23 @@
         "nightA11yAuto": "Mode nuit : automatique",
         "nightOn": "Activé",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Autoriser ce dont GuardedSleep a besoin",
+        "intro": "Faites-le une fois maintenant, rien ne vous interrompra ensuite. Vous pouvez reporter chaque point.",
+        "allowAll": "Tout autoriser",
+        "mic": {
+          "title": "Microphone",
+          "why": "Permet à l'appareil du bébé d'entendre la pièce et de parler à votre enfant depuis l'appareil parent."
+        },
+        "camera": {
+          "title": "Appareil photo",
+          "why": "Uniquement pour lire le code d'appairage de l'autre appareil. Rien n'est enregistré."
+        },
+        "dnd": {
+          "title": "Accès à « Ne pas déranger »",
+          "why": "Permet aux alertes d'arriver sur l'appareil parent et garde l'appareil du bébé silencieux la nuit."
+        }
       }
     }
   },
@@ -882,7 +905,7 @@
       "unavailableBrowser": "La parole n'est pas prise en charge par ce navigateur.",
       "noisePausedSelf": "Alertes sonores en pause pendant que vous parlez.",
       "noisePausedOther": "L'autre appareil parent parle. Les alertes sonores reprennent ensuite.",
-      "coach": "Nouveau : maintenez pour parler à l'enfant.",
+      "coach": "Maintenez pour parler à votre enfant.",
       "unconfirmed": "Votre voix n'est peut-être pas audible sur l'appareil bébé.",
       "audibleUncertain": "Les derniers messages n'étaient peut-être pas audibles sur l'appareil bébé. Vérifiez son volume.",
       "afterListen": "Écoute pendant 10 s · touchez pour continuer",
@@ -898,10 +921,7 @@
       "babyChecklist": "Les parents peuvent parler via cet appareil. Vous pouvez le désactiver dans les réglages.",
       "settingsTitle": "Parole",
       "settingsToggle": "Les parents peuvent parler via cet appareil",
-      "settingsVolume": "Volume de la voix",
-      "levelLow": "Faible",
-      "levelMedium": "Moyen",
-      "levelHigh": "Élevé",
+      "settingsVolume": "Volume de la voix : {percent} %",
       "settingsChime": "Carillon avant la voix",
       "settingsPlayChime": "Jouer le carillon"
     }

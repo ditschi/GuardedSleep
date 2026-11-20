@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.model.ListenMode
+import org.guardedsleep.app.ui.model.Sensitivity
 import org.guardedsleep.app.ui.theme.LocalAppColors
 
 /** Slow alpha pulse; static when the user (or a test) asks for reduced motion. */
@@ -82,6 +83,9 @@ fun SoundMeter(
     height: androidx.compose.ui.unit.Dp = 120.dp,
 ) {
     val shown = if (live) level.coerceIn(0f, 1f) else 0f
+    // Bars and tick share the slider's decibel scale (`Sensitivity.meterFraction`).
+    val shownFraction = Sensitivity.meterFraction(shown)
+    val tick = Sensitivity.meterFraction(threshold)
     val desc = stringResource(R.string.native_ui_parent_meter_a11y, levelLabel(shown, threshold))
     val colors = LocalAppColors.current
     val weights = remember { floatArrayOf(0.6f, 0.8f, 1.0f, 0.9f, 1.0f, 0.8f, 0.6f) }
@@ -98,14 +102,14 @@ fun SoundMeter(
         val n = weights.size
         val gap = 10.dp.toPx()
         val bw = (size.width - gap * (n - 1)) / n
-        val thresholdY = size.height * (1f - threshold.coerceIn(0f, 1f))
+        val thresholdY = size.height * (1f - tick)
         for (i in 0 until n) {
             val x = i * (bw + gap)
             drawRoundRect(track, Offset(x, 0f), Size(bw, size.height), CornerRadius(8.dp.toPx()))
-            val fill = (shown * 1.6f * weights[i]).coerceIn(0f, 1f)
+            val fill = (shownFraction * weights[i]).coerceIn(0f, 1f)
             if (fill > 0f) {
                 val h = size.height * fill
-                val c = if (size.height - h < thresholdY && live) hot else okColor
+                val c = if (shown >= threshold && live) hot else okColor
                 drawRoundRect(c, Offset(x, size.height - h), Size(bw, h), CornerRadius(8.dp.toPx()))
             }
         }

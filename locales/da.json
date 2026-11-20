@@ -157,7 +157,13 @@
           "dndAccessMissing": "Lydløs tilstand kan ikke slås til uden adgang til Forstyr ikke.",
           "someMailboxesUnreachable": "Nogle servere kunne ikke nås. Enhederne kan stadig finde hinanden via de andre.",
           "mailboxReachable": "{host}: kan nås",
-          "mailboxUnreachable": "{host}: kan ikke nås"
+          "mailboxUnreachable": "{host}: kan ikke nås",
+          "connectionWorks": "Forbindelse via internettet: virker",
+          "connectionWorksSome": "Forbindelse via internettet: virker ({reachable} af {total} servere)",
+          "connectionFails": "Forbindelse via internettet: virker ikke",
+          "details": "Detaljer",
+          "detailsHide": "Skjul detaljer",
+          "roomNearThreshold": "Rummet er næsten lige så højt som alarmniveauet. Denne indstilling kan give alarmer for baggrundslyd. Prøv en mindre følsom indstilling, eller flyt enheden."
         },
         "notifications": {
           "title": "Alarmer",
@@ -246,7 +252,8 @@
         "autolockHint": "Skærmen bliver mørk om {seconds} s",
         "stop": "Stop overvågning",
         "micLevel": "Lydniveau her",
-        "micSilent": "Mikrofonen opfanger ingen lyd. Genstart overvågningen, eller tjek mikrofonen."
+        "micSilent": "Mikrofonen opfanger ingen lyd. Genstart overvågningen, eller tjek mikrofonen.",
+        "micMissing": "Denne babyenhed kan ikke høre dit barn uden mikrofonen. Tillad den for at vise koden og starte."
       },
       "kiosk": {
         "a11yLabel": "Overvåger. Skærmen er låst.",
@@ -289,7 +296,8 @@
         "stopped": {
           "title": "{name} er holdt op med at overvåge",
           "body": "Nogen har stoppet overvågningen på babyenheden. Du får ingen alarmer.",
-          "titleDefault": "Babyenheden er holdt op med at overvåge"
+          "titleDefault": "Babyenheden er holdt op med at overvåge",
+          "stopHere": "OK, stop også her"
         },
         "needsPairing": {
           "title": "Enhederne er ikke længere parret"
@@ -321,7 +329,6 @@
           "pageHidden": "Babyenheden holder muligvis pause: dens side er skjult",
           "wakeLockOff": "Babyenheden falder muligvis i søvn: skærmen holdes ikke tændt",
           "resumedFromSleep": "Babyenheden vågnede af dvale: lyde kan være gået tabt",
-          "notCharging": "Babyenheden oplader ikke længere",
           "micPermissionLost": "Babyenheden mistede adgangen til mikrofonen"
         },
         "discreet": {
@@ -620,7 +627,7 @@
         "tapHint": "Hold knappen for at tale",
         "lockHint": "Tale kan ikke låses",
         "afterListen": "Lytter i {seconds} s · tryk for at blive ved",
-        "coach": "Nyt: hold for at tale med barnet.",
+        "coach": "Hold for at tale med dit barn.",
         "permBody": "For at tale med barnet har GuardedSleep brug for mikrofonen, mens du holder knappen.",
         "permAllow": "Tillad mikrofon",
         "permDone": "Færdig. Hold nu for at tale.",
@@ -631,10 +638,7 @@
           "title": "Tale",
           "switch": "Forældre kan tale via denne enhed",
           "switchHint": "Når det er slået fra, afspilles der aldrig noget via denne enhed.",
-          "volume": "Stemmens lydstyrke",
-          "low": "Lav",
-          "medium": "Mellem",
-          "high": "Høj",
+          "volume": "Stemmens lydstyrke: {percent} %",
           "playChime": "Afspil signal",
           "chime": "Signal før en forælder taler",
           "checklist": "Forældre kan tale via denne enhed. Du kan slå det fra under Indstillinger."
@@ -790,7 +794,9 @@
         "counterA11y": "{duration}, siden {time}",
         "sentenceSound": "Rummets lyd afspilles på denne enhed.",
         "stopSoundSub": "Stopper alarmlyden, overvågningen fortsætter",
-        "stopVibrationSub": "Stopper vibrationen, overvågningen fortsætter"
+        "stopVibrationSub": "Stopper vibrationen, overvågningen fortsætter",
+        "testHeadline": "Testalarm modtaget",
+        "testSilent": "Babyenheden forblev stille."
       },
       "batteryAlert": {
         "label": "Babyenhedens batteri",
@@ -808,6 +814,23 @@
         "nightA11yAuto": "Nattilstand: automatisk",
         "nightOn": "Til",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Tillad det, GuardedSleep har brug for",
+        "intro": "Gør det én gang nu, så bliver du ikke afbrudt senere. Du kan udsætte hvert punkt.",
+        "allowAll": "Tillad alle",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Lader babyenheden høre rummet og lader dig tale til dit barn fra forældreenheden."
+        },
+        "camera": {
+          "title": "Kamera",
+          "why": "Kun til at læse parringskoden på den anden enhed. Intet optages."
+        },
+        "dnd": {
+          "title": "Adgang til Forstyr ikke",
+          "why": "Lader alarmer nå forældreenheden og holder babyenheden stille om natten."
+        }
       }
     }
   },
@@ -893,7 +916,7 @@
       "unavailableBrowser": "Tale understøttes ikke i denne browser.",
       "noisePausedSelf": "Støjalarmer sat på pause, mens du taler.",
       "noisePausedOther": "Den anden forælderenhed taler. Støjalarmer genoptages bagefter.",
-      "coach": "Nyt: hold for at tale med barnet.",
+      "coach": "Hold for at tale med dit barn.",
       "unconfirmed": "Din stemme er måske ikke hørbar på babyenheden.",
       "audibleUncertain": "De seneste beskeder var måske ikke hørbare på babyenheden. Tjek dens lydstyrke.",
       "afterListen": "Lytter i 10 s · tryk for at blive ved med at lytte",
@@ -909,10 +932,7 @@
       "babyChecklist": "Forældre kan tale via denne enhed. Du kan slå det fra under Indstillinger.",
       "settingsTitle": "Tale",
       "settingsToggle": "Forældre kan tale via denne enhed",
-      "settingsVolume": "Stemmelydstyrke",
-      "levelLow": "Lav",
-      "levelMedium": "Mellem",
-      "levelHigh": "Høj",
+      "settingsVolume": "Stemmelydstyrke: {percent} %",
       "settingsChime": "Lyd før stemmen",
       "settingsPlayChime": "Afspil lyd"
     }

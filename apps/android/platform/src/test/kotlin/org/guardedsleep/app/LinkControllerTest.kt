@@ -34,6 +34,7 @@ import org.guardedsleep.app.readiness.DeviceCheckEnv
 import org.guardedsleep.app.readiness.DeviceChecker
 import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.signaling.SignalingFactory
+import org.guardedsleep.app.ui.model.AlertOutput
 import org.guardedsleep.app.ui.model.DeviceCheck
 import org.guardedsleep.app.ui.model.DeviceCheckReason
 import org.guardedsleep.app.ui.model.LinkPhase
@@ -89,7 +90,7 @@ private class FakeDeviceEnv : DeviceCheckEnv {
                 Thread.sleep(10)
             }
         }
-        return 0.01
+        return 0.002 // a quiet room, well below the default threshold
     }
 
     override fun probeMailbox(url: String, timeoutMs: Long): Boolean {
@@ -191,6 +192,59 @@ class LinkControllerTest {
         if (role != null) controller.chooseRole(role)
         controllers += controller
         return Unit2(controller, store, settings, pairings, sink, silence, turnStore)
+    }
+
+    @Test
+    fun completingThePermissionIntroMarksItAndTheOnboarding() {
+        val c = unit("intro", null).controller
+        assertEquals(false, c.app.value.permissionsIntroDone)
+        c.completePermissionsIntro()
+        assertEquals(true, c.app.value.permissionsIntroDone)
+        assertEquals(true, c.app.value.onboardingDone)
+    }
+
+    @Test
+    fun aBabyStartWithoutTheMicrophoneIsRefusedAndExplainedUntilItIsAllowed() {
+        var mic = false
+        val gate =
+            object : TalkGate {
+                override fun micPermission() = mic
+
+                override fun deviceUnlocked() = true
+            }
+        val starts = java.util.concurrent.atomic.AtomicInteger()
+        val baby = unit("nomic", Role.BABY, talkGate = gate, hostStarts = starts)
+        baby.controller.startMonitoring()
+        assertEquals(0, starts.get())
+        assertEquals(false, baby.controller.app.value.monitoring)
+        assertEquals(true, baby.controller.app.value.microphoneNeeded)
+        mic = true
+        baby.controller.startMonitoring()
+        assertEquals(1, starts.get())
+        assertEquals(true, baby.controller.app.value.monitoring)
+        assertEquals(false, baby.controller.app.value.microphoneNeeded)
+    }
+
+    @Test
+    fun aBabyWithoutTheMicrophoneMakesNoCodeAndConnectsToNothing() {
+        var mic = false
+        val gate =
+            object : TalkGate {
+                override fun micPermission() = mic
+
+                override fun deviceUnlocked() = true
+            }
+        val baby = unit("nomic-pair", Role.BABY, talkGate = gate)
+        baby.controller.startPairing()
+        val gated = baby.controller.pairing.value
+        assertEquals(PairingPhase.NEEDS_MICROPHONE, gated?.phase)
+        assertEquals(null, gated?.codePayload)
+        assertEquals(emptyList<String>(), net.openedUrls.toList())
+        assertEquals(false, baby.store.exists())
+        // Granted: the same call now shows the code.
+        mic = true
+        baby.controller.startPairing()
+        assertEquals(PairingPhase.SHOWING_CODE, baby.controller.pairing.value?.phase)
     }
 
     @Test
@@ -957,6 +1011,27 @@ class LinkControllerTest {
         parent.controller.runDeviceCheck()
         assertEquals(0, env.probed.size)
         assertEquals(DeviceCheck.UNKNOWN, parent.controller.app.value.deviceCheck)
+    }
+
+    @Test
+    fun theBabyNeverSetsTheSpeakerRouteWhileTheParentDoes() {
+        val baby = unit("route-baby", Role.BABY)
+        seedRecord(baby, listOf(StoredMailbox("relay", "wss://own.example")))
+        baby.controller.startMonitoring()
+        awaitReal("the baby run started") { baby.controller.app.value.monitoring }
+        baby.controller.updateSettings { it.copy(alertOutput = AlertOutput.SPEAKER_ONLY) }
+        baby.controller.updateSettings { it.copy(alertOutput = AlertOutput.DEFAULT) }
+        baby.controller.stopMonitoring()
+
+        val parent = unit("route-parent", Role.PARENT)
+        seedRecord(parent, listOf(StoredMailbox("relay", "wss://own.example")))
+        parent.controller.startMonitoring()
+        awaitReal("the parent run started") { parent.controller.app.value.monitoring }
+        parent.controller.updateSettings { it.copy(alertOutput = AlertOutput.SPEAKER_ONLY) }
+        awaitReal("the parent applied its route") { net.speakerOnlyCalls.any { !it.first } }
+        parent.controller.stopMonitoring()
+
+        assertTrue("the baby never calls setSpeakerOnly", net.speakerOnlyCalls.none { it.first })
     }
 
     @Test

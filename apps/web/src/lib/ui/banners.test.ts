@@ -115,7 +115,6 @@ describe("bannerLevel", () => {
     expect(bannerLevel("mic_silent")).toBe("warn");
     expect(bannerLevel("readiness")).toBe("warn");
     expect(bannerLevel("browser_sound_gate")).toBe("warn");
-    expect(bannerLevel("baby_unplugged")).toBe("info");
     expect(bannerLevel("paused")).toBe("info");
     expect(bannerLevel("browser_away")).toBe("info");
     expect(bannerLevel("vibrate_only")).toBe("note");
@@ -181,8 +180,9 @@ describe("parentBanners", () => {
     expect(low(14, true)).toBe(false);
   });
 
-  it("covers unplugged, silence, unit warnings and weak connection", () => {
-    expect(ids(state({ peer: { unitWarnings: ["not_charging"] } }))).toEqual(["baby_unplugged"]);
+  it("covers silence, unit warnings and weak connection", () => {
+    // `not_charging` is a device-check fact; it never becomes a monitor banner.
+    expect(ids(state({ peer: { unitWarnings: ["not_charging"] } }))).toEqual([]);
     expect(ids(state({ peer: { silence: "may_ring" } }))).toEqual(["silence"]);
     expect(ids(state({ peer: { silence: "may_ring", isWebClient: true } }))).toEqual([]);
     expect(ids(state({ peer: { silence: "silent" } }))).toEqual([]);
@@ -248,7 +248,6 @@ describe("the plain keep-open note folds first", () => {
     for (const safety of [
       b("mic_silent"),
       b("baby_battery_low"),
-      b("baby_unplugged"),
       b("unit_warning", "unit_warning_page_hidden"),
       b("weak_connection"),
     ]) {

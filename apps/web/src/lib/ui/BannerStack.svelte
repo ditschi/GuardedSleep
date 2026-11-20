@@ -84,8 +84,6 @@
           title: $t("native.ui.battery.babyLow", { percent: p.peer.batteryPct ?? 0 }),
           body: null,
         };
-      case "baby_unplugged":
-        return { title: $t("native.ui.parent.unitWarning.notCharging"), body: null };
       case "silence":
         return {
           title: $t(SILENCE_TITLE[p.peer.silence] ?? "native.ui.silence.mayRing"),

@@ -166,6 +166,7 @@ class PairShots : ShotBase() {
         val exp = ELAPSED + 4 * 60_000L + 59_000L
         baby("code", PairingState(PairingPhase.SHOWING_CODE, CODE, exp))
         baby("code", PairingState(PairingPhase.SHOWING_CODE, CODE, exp), "de")
+        baby("needs_microphone", PairingState(PairingPhase.NEEDS_MICROPHONE))
         baby("expired", PairingState(PairingPhase.EXPIRED, CODE, ELAPSED - 1_000))
         baby("parent_found", PairingState(PairingPhase.CONNECTING, CODE, exp))
         baby("paired", PairingState(PairingPhase.PAIRED, CODE, exp))
@@ -229,6 +230,58 @@ class SetupHomeSettingsShots : ShotBase() {
                 deviceCheckMailboxes = listOf(MailboxReach("gs.mydata.rocks", false)),
                 onDeviceCheckAgain = {},
             )
+        }
+    }
+
+    @Test
+    fun deviceCheckWithOneReachableMailbox() {
+        val states =
+            mapOf(
+                SetupRow.MIC to RowState.DONE,
+                SetupRow.BACKGROUND to RowState.DONE,
+                SetupRow.SILENCE to RowState.DONE,
+            )
+        shot("setup/baby_check_partial", "en", Role.BABY) {
+            SetupContent(
+                Role.BABY,
+                SetupChecks(states),
+                DeviceCheck.LIMITED,
+                {},
+                {},
+                deviceCheckReasons =
+                    listOf(
+                        DeviceCheckReason.SOME_MAILBOXES_UNREACHABLE,
+                        DeviceCheckReason.ROOM_NEAR_THRESHOLD,
+                    ),
+                deviceCheckMailboxes =
+                    listOf(
+                        MailboxReach("gs.mydata.rocks", true),
+                        MailboxReach("own.example", false),
+                    ),
+                onDeviceCheckAgain = {},
+            )
+        }
+    }
+
+    @Test
+    fun permissionsScreen() {
+        val rows = org.guardedsleep.app.ui.screens.permissionRows(35)
+        for (locale in listOf("en", "de")) {
+            shot("permissions/fresh", locale, null) {
+                org.guardedsleep.app.ui.screens.PermissionsContent(
+                    rows,
+                    rows.associateWith {
+                        if (it == org.guardedsleep.app.ui.screens.PermissionRow.CAMERA)
+                            RowState.DONE
+                        else RowState.TODO
+                    },
+                    setOf("dnd"),
+                    {},
+                    {},
+                    {},
+                    {},
+                )
+            }
         }
     }
 
@@ -556,7 +609,16 @@ class AlertShots : ShotBase() {
     @Test
     fun noise() {
         noise("sounding", base)
-        noise("test", base.copy(noiseIsTest = true))
+        noise("test", base.copy(noiseIsTest = true, noiseAlertActive = false))
+        shot("alert/test_discreet", "en") {
+            NoiseAlertScreen(
+                FakeAppController(
+                    parent = base.copy(noiseIsTest = true, noiseAlertActive = false),
+                    settings = SettingsState(alertStyle = AlertStyle.DISCREET),
+                ),
+                {},
+            )
+        }
         noise("ended", base.copy(noiseAlertActive = false, level = 0.02f))
         shot("alert/escalated", "en") {
             NoiseAlertScreen(

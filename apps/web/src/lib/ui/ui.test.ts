@@ -62,11 +62,13 @@ describe("base components render their label", () => {
   });
 
   it("Meter exposes words, not only numbers", () => {
-    render(Meter, { level: 0.5, threshold: 0.25, label: "Quiet" });
+    // -35 dBFS fills half the bars, a -45 dBFS threshold sits at 30 % (the slider's decibel scale).
+    render(Meter, { level: 10 ** (-35 / 20), threshold: 10 ** (-45 / 20), label: "Quiet" });
     const meter = screen.getByRole("meter", { name: "Quiet" });
     expect(meter).toHaveAttribute("aria-valuetext", "Quiet");
     expect(meter.querySelectorAll("[data-on]")).toHaveLength(4);
     expect(meter.querySelector(".gs-meter__threshold")).not.toBeNull();
+    expect(meter.style.getPropertyValue("--gs-threshold")).toMatch(/^30(\.0+)?%$/);
   });
 
   it("Switch toggles", async () => {

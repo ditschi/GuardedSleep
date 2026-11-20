@@ -121,5 +121,6 @@ pub fn guardedsleep_ffi::derive_room_id(alloc::vec::Vec<u8>) -> alloc::string::S
 pub fn guardedsleep_ffi::encode_psk(alloc::vec::Vec<u8>) -> alloc::string::String
 pub fn guardedsleep_ffi::filter_only_local(alloc::vec::Vec<guardedsleep_core::invite::InviteMailbox>, alloc::string::String) -> alloc::vec::Vec<guardedsleep_core::invite::InviteMailbox>
 pub fn guardedsleep_ffi::message_keys() -> alloc::vec::Vec<alloc::string::String>
+pub fn guardedsleep_ffi::min_noise_threshold() -> f64
 pub fn guardedsleep_ffi::parse_invite(alloc::string::String, u64, bool) -> core::result::Result<guardedsleep_ffi::ParsedInvite, guardedsleep_ffi::InviteError>
 pub fn guardedsleep_ffi::resolve_alarm_tone(alloc::string::String) -> guardedsleep_core::alarm_tone::AlarmTone

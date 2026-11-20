@@ -87,6 +87,17 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
         val builder =
             JavaAudioDeviceModule.builder(appContext)
                 .setAudioAttributes(attributes)
+                .setAudioTrackStateCallback(
+                    object : JavaAudioDeviceModule.AudioTrackStateCallback {
+                        override fun onWebRtcAudioTrackStart() {
+                            PocLog.event("talk_playout", "adm" to "started")
+                        }
+
+                        override fun onWebRtcAudioTrackStop() {
+                            PocLog.event("talk_playout", "adm" to "stopped")
+                        }
+                    }
+                )
                 .setAudioTrackErrorCallback(
                     object : JavaAudioDeviceModule.AudioTrackErrorCallback {
                         override fun onWebRtcAudioTrackInitError(errorMessage: String?) =
@@ -101,6 +112,7 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
                             trackError(errorMessage)
                     }
                 )
+        if (role == Role.BABY) applyRawCapture(builder)
         if (role == Role.BABY) builder.setAudioBufferCallback(recordCallback)
         else {
             // The parent's capture is the talk microphone: voice processing on (design §4), and
@@ -129,10 +141,36 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
         factory =
             PeerConnectionFactory.builder().setAudioDeviceModule(adm).createPeerConnectionFactory()
         if (role == Role.BABY) {
-            val src = factory.createAudioSource(MediaConstraints())
+            // The software processors are the `goog*` audio constraints of libwebrtc's audio
+            // source: off here, so nothing shapes the room sound before it is encoded.
+            val raw =
+                MediaConstraints().apply {
+                    for (k in RawCapture.PROCESSING_CONSTRAINTS) {
+                        mandatory.add(MediaConstraints.KeyValuePair(k, "false"))
+                    }
+                }
+            val src = factory.createAudioSource(raw)
             source = src
             track = factory.createAudioTrack("gs-audio", src).apply { setEnabled(false) }
         }
+    }
+
+    /**
+     * Raw room sound (design §2): no voice-call source and no hardware AEC/NS, so the parent hears
+     * the room as it is and the noise gate sees honest levels. API:
+     * `JavaAudioDeviceModule.Builder.setAudioSource` / `setUseHardware*` in webrtc-sdk 150.7871.01,
+     * https://github.com/webrtc-sdk/webrtc (sdk/android/api/org/webrtc/audio/
+     * JavaAudioDeviceModule.java).
+     */
+    private fun applyRawCapture(builder: JavaAudioDeviceModule.Builder) {
+        val unprocessed =
+            appContext
+                .getSystemService(AudioManager::class.java)
+                ?.getProperty(AudioManager.PROPERTY_SUPPORT_AUDIO_SOURCE_UNPROCESSED)
+        builder
+            .setAudioSource(RawCapture.audioSource(unprocessed))
+            .setUseHardwareAcousticEchoCanceler(false)
+            .setUseHardwareNoiseSuppressor(false)
     }
 
     override fun createAttempt(
@@ -212,7 +250,25 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
     }
 
     override fun setTalkSpeakerMuted(muted: Boolean) {
-        if (role == Role.BABY) adm.setSpeakerMute(muted)
+        if (role == Role.BABY) {
+            adm.setSpeakerMute(muted)
+            PocLog.event("talk_playout", "speaker_muted" to muted)
+        }
+    }
+
+    override fun logTalkRoute() {
+        // The output device of an active playback is public API from 34 (UPSIDE_DOWN_CAKE); older
+        // releases only say that a playback exists. Device type names, never ids or addresses.
+        val audio = appContext.getSystemService(AudioManager::class.java) ?: return
+        val configs = runCatching { audio.activePlaybackConfigurations }.getOrNull() ?: return
+        val alarm = configs.filter { it.audioAttributes.usage == AudioAttributes.USAGE_ALARM }
+        val types =
+            if (android.os.Build.VERSION.SDK_INT >= 34) {
+                alarm.mapNotNull { it.audioDeviceInfo?.type }.joinToString("|")
+            } else {
+                "api_lt_34"
+            }
+        PocLog.event("talk_route", "alarm_playbacks" to alarm.size, "device_types" to types)
     }
 
     override fun playTalkChime(gain: Double, onDone: () -> Unit) = chime.play(gain, onDone)
@@ -220,6 +276,8 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
     override fun stopTalkChime() = chime.stop()
 
     override fun talkVolume(): AlarmVolume? = talkVolume
+
+    override val rawCapture: Boolean = role == Role.BABY
 
     override fun setMicEnabled(enabled: Boolean) {
         track?.setEnabled(enabled)

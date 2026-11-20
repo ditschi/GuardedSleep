@@ -47,6 +47,7 @@ class ConnectionTests : ShotBase() {
         AppState(
             role = Role.PARENT,
             onboardingDone = true,
+            permissionsIntroDone = true,
             paired = true,
             connections = listOf(ConnectionUi("1", null, isDefault = true, selected = true)),
             parentConnections = listOf(ConnectionUi("1", null, isDefault = true, selected = true)),
@@ -110,7 +111,8 @@ class ConnectionTests : ShotBase() {
         assertEquals(listOf("2"), c.appFlow.value.connections.map { it.id })
     }
 
-    private val empty = AppState(role = Role.PARENT, onboardingDone = true)
+    private val empty =
+        AppState(role = Role.PARENT, onboardingDone = true, permissionsIntroDone = true)
 
     @Test
     fun theEmptyParentHomeOpensTheScanScreenOnceAndTheButtonWorks() = runComposeUiTest {

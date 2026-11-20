@@ -157,7 +157,13 @@
           "dndAccessMissing": "Modul liniștit nu poate fi pornit fără acces la Nu deranja.",
           "someMailboxesUnreachable": "Unele servere nu au putut fi contactate. Dispozitivele se pot regăsi totuși prin celelalte.",
           "mailboxReachable": "{host}: accesibil",
-          "mailboxUnreachable": "{host}: inaccesibil"
+          "mailboxUnreachable": "{host}: inaccesibil",
+          "connectionWorks": "Conexiune prin internet: funcționează",
+          "connectionWorksSome": "Conexiune prin internet: funcționează ({reachable} din {total} servere)",
+          "connectionFails": "Conexiune prin internet: nu funcționează",
+          "details": "Detalii",
+          "detailsHide": "Ascunde detaliile",
+          "roomNearThreshold": "Camera este aproape la fel de zgomotoasă ca pragul de alertă. Această setare poate declanșa alerte din cauza zgomotului de fond. Încearcă o setare mai puțin sensibilă sau mută dispozitivul."
         },
         "notifications": {
           "title": "Alerte",
@@ -246,7 +252,8 @@
         "autolockHint": "Ecranul se întunecă în {seconds} s",
         "stop": "Oprește monitorizarea",
         "micLevel": "Nivelul sunetului aici",
-        "micSilent": "Microfonul nu captează niciun sunet. Repornește monitorizarea sau verifică microfonul."
+        "micSilent": "Microfonul nu captează niciun sunet. Repornește monitorizarea sau verifică microfonul.",
+        "micMissing": "Acest dispozitiv al copilului nu își poate auzi copilul fără microfon. Permite-l pentru a afișa codul și a porni."
       },
       "kiosk": {
         "a11yLabel": "Se monitorizează. Ecran blocat.",
@@ -289,7 +296,8 @@
         "stopped": {
           "title": "{name} a oprit monitorizarea",
           "body": "Cineva a oprit monitorizarea pe dispozitivul bebelușului. Nu vei primi alerte.",
-          "titleDefault": "Dispozitivul bebelușului a oprit monitorizarea"
+          "titleDefault": "Dispozitivul bebelușului a oprit monitorizarea",
+          "stopHere": "OK, oprește și aici"
         },
         "needsPairing": {
           "title": "Dispozitivele nu mai sunt asociate"
@@ -321,7 +329,6 @@
           "pageHidden": "Dispozitivul bebelușului se poate opri: pagina lui este ascunsă",
           "wakeLockOff": "Dispozitivul bebelușului poate adormi: ecranul nu este ținut aprins",
           "resumedFromSleep": "Dispozitivul bebelușului s-a trezit din repaus: unele sunete pot fi ratate",
-          "notCharging": "Dispozitivul bebelușului nu se mai încarcă",
           "micPermissionLost": "Dispozitivul bebelușului a pierdut accesul la microfon"
         },
         "discreet": {
@@ -620,7 +627,7 @@
         "tapHint": "Ține apăsat butonul pentru a vorbi",
         "lockHint": "Vorbirea nu poate fi blocată",
         "afterListen": "Ascult {seconds} s · atinge pentru a continua",
-        "coach": "Nou: ține apăsat pentru a vorbi cu copilul.",
+        "coach": "Ține apăsat pentru a vorbi cu copilul tău.",
         "permBody": "Pentru a vorbi cu copilul, GuardedSleep are nevoie de microfon cât ții apăsat butonul.",
         "permAllow": "Permite microfonul",
         "permDone": "Gata. Acum ține apăsat pentru a vorbi.",
@@ -631,10 +638,7 @@
           "title": "Vorbire",
           "switch": "Părinții pot vorbi prin acest dispozitiv",
           "switchHint": "Când este oprit, prin acest dispozitiv nu se redă niciodată nimic.",
-          "volume": "Volumul vocii",
-          "low": "Mică",
-          "medium": "Medie",
-          "high": "Mare",
+          "volume": "Volumul vocii: {percent}%",
           "playChime": "Redă sunetul",
           "chime": "Sunet înainte ca un părinte să vorbească",
           "checklist": "Părinții pot vorbi prin acest dispozitiv. Poți opri asta din Setări."
@@ -790,7 +794,9 @@
         "counterA11y": "{duration}, din {time}",
         "sentenceSound": "Sunetul camerei se redă pe acest dispozitiv.",
         "stopSoundSub": "Oprește sunetul alertei, monitorizarea continuă",
-        "stopVibrationSub": "Oprește vibrația, monitorizarea continuă"
+        "stopVibrationSub": "Oprește vibrația, monitorizarea continuă",
+        "testHeadline": "Alertă de test primită",
+        "testSilent": "Dispozitivul copilului a rămas silențios."
       },
       "batteryAlert": {
         "label": "Bateria dispozitivului bebelușului",
@@ -808,6 +814,23 @@
         "nightA11yAuto": "Mod noapte: automat",
         "nightOn": "Pornit",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Permite ce are nevoie GuardedSleep",
+        "intro": "Fă asta o singură dată acum și nimic nu te va întrerupe mai târziu. Poți amâna oricare element.",
+        "allowAll": "Permite tot",
+        "mic": {
+          "title": "Microfon",
+          "why": "Permite dispozitivului copilului să audă camera și ție să vorbești cu copilul de pe dispozitivul părintelui."
+        },
+        "camera": {
+          "title": "Cameră",
+          "why": "Doar pentru a citi codul de asociere de pe celălalt dispozitiv. Nu se înregistrează nimic."
+        },
+        "dnd": {
+          "title": "Acces la Nu deranja",
+          "why": "Lasă alertele să ajungă la dispozitivul părintelui și ține dispozitivul copilului liniștit noaptea."
+        }
       }
     }
   },
@@ -893,7 +916,7 @@
       "unavailableBrowser": "Vorbirea nu este acceptată în acest browser.",
       "noisePausedSelf": "Alertele de zgomot sunt în pauză cât vorbești.",
       "noisePausedOther": "Celălalt dispozitiv al părinților vorbește. Alertele de zgomot reiau după aceea.",
-      "coach": "Nou: ține apăsat pentru a vorbi cu copilul.",
+      "coach": "Ține apăsat pentru a vorbi cu copilul tău.",
       "unconfirmed": "Este posibil ca vocea ta să nu se audă pe dispozitivul bebelușului.",
       "audibleUncertain": "Este posibil ca ultimele mesaje să nu se fi auzit pe dispozitivul bebelușului. Verifică volumul.",
       "afterListen": "Ascultare 10 s · atinge pentru a continua",
@@ -909,10 +932,7 @@
       "babyChecklist": "Părinții pot vorbi prin acest dispozitiv. Poți opri asta în Setări.",
       "settingsTitle": "Vorbire",
       "settingsToggle": "Părinții pot vorbi prin acest dispozitiv",
-      "settingsVolume": "Volumul vocii",
-      "levelLow": "Scăzut",
-      "levelMedium": "Mediu",
-      "levelHigh": "Ridicat",
+      "settingsVolume": "Volumul vocii: {percent}%",
       "settingsChime": "Sunet înainte de voce",
       "settingsPlayChime": "Redă sunetul"
     }

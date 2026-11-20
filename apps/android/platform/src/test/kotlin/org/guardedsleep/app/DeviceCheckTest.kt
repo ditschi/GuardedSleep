@@ -117,6 +117,29 @@ class DeviceCheckTest {
     }
 
     @Test
+    fun aFanThreeDbBelowTheThresholdIsLimitedWithAHint() {
+        // 3 dB below 0.02 is about 0.014: inside the 6 dB band.
+        val r = eval(good.copy(micRms = 0.014, thresholdRms = 0.02))
+        assertEquals(DeviceCheck.LIMITED, r.check)
+        assertEquals(listOf(DeviceCheckReason.ROOM_NEAR_THRESHOLD), r.reasons)
+    }
+
+    @Test
+    fun aRoomOverTheThresholdIsLimitedToo() {
+        val r = eval(good.copy(micRms = 0.05, thresholdRms = 0.02))
+        assertEquals(listOf(DeviceCheckReason.ROOM_NEAR_THRESHOLD), r.reasons)
+    }
+
+    @Test
+    fun aQuietRoomFarBelowTheThresholdIsOk() {
+        // 12 dB below: outside the band.
+        assertEquals(DeviceCheck.OK, eval(good.copy(micRms = 0.005, thresholdRms = 0.02)).check)
+        // No threshold or no sample: nothing to compare.
+        assertEquals(DeviceCheck.OK, eval(good.copy(micRms = 0.05, thresholdRms = null)).check)
+        assertEquals(DeviceCheck.OK, eval(good.copy(micRms = null, thresholdRms = 0.02)).check)
+    }
+
+    @Test
     fun noReachableMailboxIsNotRecommended() {
         val mailboxes = listOf(MailboxReach("a.example", false), MailboxReach("b.example", false))
         val r = eval(good.copy(mailboxes = mailboxes))

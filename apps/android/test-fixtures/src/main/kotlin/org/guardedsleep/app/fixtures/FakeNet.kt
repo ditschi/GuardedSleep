@@ -49,6 +49,8 @@ class FakeNet(private val scheduler: ManualScheduler, seed: Long = DEFAULT_SEED)
     val attemptIce = CopyOnWriteArrayList<List<IceServerEntry>>()
     /** Every address a mailbox socket was opened at. */
     val openedUrls = CopyOnWriteArrayList<String>()
+    /** Every `setSpeakerOnly` call of a media engine: (engine is the baby's, value). */
+    val speakerOnlyCalls = CopyOnWriteArrayList<Pair<Boolean, Boolean>>()
     /** A relay `ice_servers` frame sent to each member right after the welcome. */
     @Volatile var iceFrame: String? = null
     val liveAttempts = CopyOnWriteArrayList<FakeAttempt>()
@@ -268,7 +270,9 @@ class FakeMedia(val net: FakeNet, val baby: Boolean) : MediaEngine {
 
     override fun setPlaybackGainPct(pct: Int) = Unit
 
-    override fun setSpeakerOnly(speakerOnly: Boolean) = Unit
+    override fun setSpeakerOnly(speakerOnly: Boolean) {
+        net.speakerOnlyCalls += baby to speakerOnly
+    }
 
     override fun drainMicRms(): Double? = micRms
 

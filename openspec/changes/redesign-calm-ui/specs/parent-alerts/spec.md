@@ -145,7 +145,7 @@ Every full-screen alert (noise, connection from level 2, baby battery critical) 
 
 ### Requirement: Banner priority on the monitor
 
-The parent monitor SHALL order its banners as: security warning, microphone silent, readiness, baby battery low or unplugged, baby device may ring (silence status), weak connection, noise alerts paused, Vibrate only. It SHALL show at most two banners and fold the rest into one "+N more" row that lists them. Each new banner of warning level or higher SHALL be announced once.
+The parent monitor SHALL order its banners as: security warning, microphone silent, readiness, baby battery low, baby device may ring (silence status), weak connection, noise alerts paused, Vibrate only. It SHALL show at most two banners and fold the rest into one "+N more" row that lists them. Each new banner of warning level or higher SHALL be announced once.
 
 #### Scenario: Four notices at once
 

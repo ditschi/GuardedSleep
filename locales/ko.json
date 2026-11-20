@@ -157,7 +157,13 @@
           "dndAccessMissing": "방해 금지 모드 접근 권한이 없으면 조용한 모드를 켤 수 없습니다.",
           "someMailboxesUnreachable": "일부 서버에 연결할 수 없었습니다. 기기들은 다른 서버를 통해 서로를 찾을 수 있습니다.",
           "mailboxReachable": "{host}: 연결 가능",
-          "mailboxUnreachable": "{host}: 연결 불가"
+          "mailboxUnreachable": "{host}: 연결 불가",
+          "connectionWorks": "인터넷 연결: 작동함",
+          "connectionWorksSome": "인터넷 연결: 작동함(서버 {total}개 중 {reachable}개)",
+          "connectionFails": "인터넷 연결: 작동하지 않음",
+          "details": "자세히",
+          "detailsHide": "자세히 숨기기",
+          "roomNearThreshold": "방의 소리가 알림 기준과 거의 같습니다. 이 설정에서는 주변 소리로 알림이 울릴 수 있습니다. 민감도를 낮추거나 기기를 옮겨 보세요."
         },
         "notifications": {
           "title": "알림",
@@ -246,7 +252,8 @@
         "autolockHint": "{seconds}초 후 화면이 어두워져요",
         "stop": "지켜보기 중지",
         "micLevel": "여기서 들리는 소리 크기",
-        "micSilent": "마이크가 아무 소리도 받지 못하고 있어요. 지켜보기를 다시 시작하거나 마이크를 확인하세요."
+        "micSilent": "마이크가 아무 소리도 받지 못하고 있어요. 지켜보기를 다시 시작하거나 마이크를 확인하세요.",
+        "micMissing": "마이크가 없으면 이 아기 기기는 아이의 소리를 들을 수 없습니다. 코드를 표시하고 시작하려면 허용해 주세요."
       },
       "kiosk": {
         "a11yLabel": "지켜보는 중. 화면이 잠겨 있어요.",
@@ -289,7 +296,8 @@
         "stopped": {
           "title": "{name}이(가) 지켜보기를 멈췄어요",
           "body": "누군가 아기 기기에서 지켜보기를 중지했어요. 알림을 받지 못해요.",
-          "titleDefault": "아기 기기가 지켜보기를 멈췄어요"
+          "titleDefault": "아기 기기가 지켜보기를 멈췄어요",
+          "stopHere": "확인, 여기서도 중지"
         },
         "needsPairing": {
           "title": "기기 페어링이 해제되었어요"
@@ -321,7 +329,6 @@
           "pageHidden": "아기 기기가 멈출 수 있어요. 페이지가 숨겨져 있어요",
           "wakeLockOff": "아기 기기가 절전 상태가 될 수 있어요. 화면이 켜진 상태로 유지되지 않아요",
           "resumedFromSleep": "아기 기기가 절전에서 깨어났어요. 소리를 놓쳤을 수 있어요",
-          "notCharging": "아기 기기가 충전되지 않아요",
           "micPermissionLost": "아기 기기의 마이크 접근 권한이 사라졌어요"
         },
         "discreet": {
@@ -620,7 +627,7 @@
         "tapHint": "버튼을 길게 눌러 말하세요",
         "lockHint": "말하기는 잠글 수 없습니다",
         "afterListen": "{seconds}초 동안 듣는 중 · 눌러서 계속 듣기",
-        "coach": "새 기능: 길게 눌러 아이에게 말해 보세요.",
+        "coach": "길게 눌러 아이에게 말해 보세요.",
         "permBody": "아이에게 말하려면 버튼을 누르는 동안 GuardedSleep이 마이크를 사용해야 합니다.",
         "permAllow": "마이크 허용",
         "permDone": "완료되었습니다. 이제 길게 눌러 말하세요.",
@@ -631,10 +638,7 @@
           "title": "말하기",
           "switch": "부모가 이 기기를 통해 말할 수 있음",
           "switchHint": "꺼 두면 이 기기에서는 아무 소리도 재생되지 않습니다.",
-          "volume": "말하기 볼륨",
-          "low": "낮음",
-          "medium": "보통",
-          "high": "높음",
+          "volume": "말하기 볼륨: {percent}%",
           "playChime": "알림음 재생",
           "chime": "부모가 말하기 전에 알림음 재생",
           "checklist": "부모가 이 기기를 통해 말할 수 있습니다. 설정에서 끌 수 있습니다."
@@ -790,7 +794,9 @@
         "counterA11y": "{duration}, {time}부터",
         "sentenceSound": "방 소리가 이 기기에서 재생되고 있어요.",
         "stopSoundSub": "알림 소리를 멈추고 계속 지켜봐요",
-        "stopVibrationSub": "진동을 멈추고 계속 지켜봐요"
+        "stopVibrationSub": "진동을 멈추고 계속 지켜봐요",
+        "testHeadline": "테스트 알림을 받았습니다",
+        "testSilent": "아기 기기는 조용했습니다."
       },
       "batteryAlert": {
         "label": "아기 기기 배터리",
@@ -808,6 +814,23 @@
         "nightA11yAuto": "야간 모드: 자동",
         "nightOn": "켜짐",
         "nightAuto": "자동"
+      },
+      "permissions": {
+        "title": "GuardedSleep에 필요한 권한 허용",
+        "intro": "지금 한 번에 해 두면 나중에 방해받지 않습니다. 어떤 항목이든 나중으로 미룰 수 있습니다.",
+        "allowAll": "모두 허용",
+        "mic": {
+          "title": "마이크",
+          "why": "아기 기기가 방의 소리를 듣고, 부모 기기에서 아이에게 말할 수 있게 합니다."
+        },
+        "camera": {
+          "title": "카메라",
+          "why": "다른 기기의 연결 코드를 읽는 데에만 사용합니다. 아무것도 녹화하지 않습니다."
+        },
+        "dnd": {
+          "title": "방해 금지 모드 접근",
+          "why": "부모 기기에 알림이 전달되고, 아기 기기는 밤에 조용히 유지됩니다."
+        }
       }
     }
   },
@@ -893,7 +916,7 @@
       "unavailableBrowser": "이 브라우저는 말하기를 지원하지 않습니다.",
       "noisePausedSelf": "말하는 동안 소음 경보가 일시 중지됩니다.",
       "noisePausedOther": "다른 부모 기기가 말하고 있습니다. 끝나면 소음 경보가 다시 시작됩니다.",
-      "coach": "새 기능: 길게 눌러 아이에게 말해 보세요.",
+      "coach": "길게 눌러 아이에게 말해 보세요.",
       "unconfirmed": "아기 기기에서 목소리가 들리지 않을 수 있습니다.",
       "audibleUncertain": "최근 메시지가 아기 기기에서 들리지 않았을 수 있습니다. 음량을 확인하세요.",
       "afterListen": "10초간 듣는 중 · 계속 들으려면 탭하세요",
@@ -909,10 +932,7 @@
       "babyChecklist": "부모는 이 기기를 통해 말할 수 있습니다. 설정에서 끌 수 있습니다.",
       "settingsTitle": "말하기",
       "settingsToggle": "부모는 이 기기를 통해 말할 수 있습니다",
-      "settingsVolume": "목소리 음량",
-      "levelLow": "낮음",
-      "levelMedium": "보통",
-      "levelHigh": "높음",
+      "settingsVolume": "목소리 음량: {percent}%",
       "settingsChime": "목소리 전 알림음",
       "settingsPlayChime": "알림음 재생"
     }

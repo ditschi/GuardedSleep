@@ -157,7 +157,13 @@
           "dndAccessMissing": "O modo silencioso não pode ser ativado sem acesso a Não incomodar.",
           "someMailboxesUnreachable": "Alguns servidores não foram alcançados. Os dispositivos ainda se podem encontrar através dos outros.",
           "mailboxReachable": "{host}: acessível",
-          "mailboxUnreachable": "{host}: inacessível"
+          "mailboxUnreachable": "{host}: inacessível",
+          "connectionWorks": "Ligação pela internet: funciona",
+          "connectionWorksSome": "Ligação pela internet: funciona ({reachable} de {total} servidores)",
+          "connectionFails": "Ligação pela internet: não funciona",
+          "details": "Detalhes",
+          "detailsHide": "Ocultar detalhes",
+          "roomNearThreshold": "O quarto está quase tão barulhento quanto o nível de alerta. Esta definição pode gerar alertas com o ruído de fundo. Experimente uma definição menos sensível ou mude o aparelho de sítio."
         },
         "notifications": {
           "title": "Alertas",
@@ -246,7 +252,8 @@
         "autolockHint": "A tela escurece em {seconds} s",
         "stop": "Parar monitoramento",
         "micLevel": "Nível de som aqui",
-        "micSilent": "O microfone não está captando nenhum som. Reinicie o monitoramento ou verifique o microfone."
+        "micSilent": "O microfone não está captando nenhum som. Reinicie o monitoramento ou verifique o microfone.",
+        "micMissing": "Este aparelho do bebê não consegue ouvir o seu filho sem o microfone. Permita-o para mostrar o código e iniciar."
       },
       "kiosk": {
         "a11yLabel": "Monitorando. Tela bloqueada.",
@@ -289,7 +296,8 @@
         "stopped": {
           "title": "{name} parou de monitorar",
           "body": "Alguém parou o monitoramento no dispositivo do bebê. Você não vai receber alertas.",
-          "titleDefault": "O dispositivo do bebê parou de monitorar"
+          "titleDefault": "O dispositivo do bebê parou de monitorar",
+          "stopHere": "OK, parar aqui também"
         },
         "needsPairing": {
           "title": "Dispositivos não pareados"
@@ -321,7 +329,6 @@
           "pageHidden": "O dispositivo do bebê pode pausar: a página dele está oculta",
           "wakeLockOff": "O dispositivo do bebê pode adormecer: a tela dele não fica ligada",
           "resumedFromSleep": "O dispositivo do bebê acordou: sons podem ter passado despercebidos",
-          "notCharging": "O dispositivo do bebê não está mais carregando",
           "micPermissionLost": "O dispositivo do bebê perdeu o acesso ao microfone"
         },
         "discreet": {
@@ -620,7 +627,7 @@
         "tapHint": "Mantenha o botão para falar",
         "lockHint": "Falar não pode ser bloqueado",
         "afterListen": "A ouvir durante {seconds} s · toque para continuar",
-        "coach": "Novo: mantenha para falar com a criança.",
+        "coach": "Mantenha pressionado para falar com seu filho.",
         "permBody": "Para falar com a criança, o GuardedSleep precisa do microfone enquanto mantém o botão.",
         "permAllow": "Permitir microfone",
         "permDone": "Feito. Agora mantenha para falar.",
@@ -631,10 +638,7 @@
           "title": "Falar",
           "switch": "Os pais podem falar através deste aparelho",
           "switchHint": "Desligado, nada é reproduzido neste aparelho.",
-          "volume": "Volume da voz",
-          "low": "Baixo",
-          "medium": "Médio",
-          "high": "Alto",
+          "volume": "Volume da voz: {percent}%",
           "playChime": "Reproduzir o sinal",
           "chime": "Sinal antes de um dos pais falar",
           "checklist": "Os pais podem falar através deste aparelho. Pode desligar isto nas Definições."
@@ -790,7 +794,9 @@
         "counterA11y": "{duration}, desde as {time}",
         "sentenceSound": "O som do quarto está tocando neste dispositivo.",
         "stopSoundSub": "Para o som do alerta e continua monitorando",
-        "stopVibrationSub": "Para a vibração e continua monitorando"
+        "stopVibrationSub": "Para a vibração e continua monitorando",
+        "testHeadline": "Alerta de teste recebido",
+        "testSilent": "O aparelho do bebê ficou em silêncio."
       },
       "batteryAlert": {
         "label": "Bateria do dispositivo do bebê",
@@ -808,6 +814,23 @@
         "nightA11yAuto": "Modo noturno: automático",
         "nightOn": "Ligado",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Permitir o que o GuardedSleep precisa",
+        "intro": "Faça isto uma vez agora e nada o vai interromper depois. Pode adiar qualquer item.",
+        "allowAll": "Permitir tudo",
+        "mic": {
+          "title": "Microfone",
+          "why": "Permite que o aparelho do bebê oiça o quarto e que fale com o seu filho a partir do aparelho dos pais."
+        },
+        "camera": {
+          "title": "Câmara",
+          "why": "Apenas para ler o código de emparelhamento no outro aparelho. Nada é gravado."
+        },
+        "dnd": {
+          "title": "Acesso a Não incomodar",
+          "why": "Permite que os alertas cheguem ao aparelho dos pais e mantém o do bebê em silêncio à noite."
+        }
       }
     }
   },
@@ -893,7 +916,7 @@
       "unavailableBrowser": "A fala não é compatível com este navegador.",
       "noisePausedSelf": "Alertas de ruído em pausa enquanto você fala.",
       "noisePausedOther": "O outro dispositivo dos pais está falando. Os alertas de ruído voltam depois.",
-      "coach": "Novo: mantenha para falar com a criança.",
+      "coach": "Mantenha pressionado para falar com seu filho.",
       "unconfirmed": "Sua voz pode não estar audível no dispositivo do bebê.",
       "audibleUncertain": "As últimas mensagens podem não ter sido audíveis no dispositivo do bebê. Verifique o volume.",
       "afterListen": "Ouvindo por 10 s · toque para continuar ouvindo",
@@ -909,10 +932,7 @@
       "babyChecklist": "Os pais podem falar por este dispositivo. Você pode desativar nas Configurações.",
       "settingsTitle": "Fala",
       "settingsToggle": "Os pais podem falar por este dispositivo",
-      "settingsVolume": "Volume da voz",
-      "levelLow": "Baixo",
-      "levelMedium": "Médio",
-      "levelHigh": "Alto",
+      "settingsVolume": "Volume da voz: {percent}%",
       "settingsChime": "Sinal antes da voz",
       "settingsPlayChime": "Tocar sinal"
     }

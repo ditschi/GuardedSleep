@@ -157,7 +157,13 @@
           "dndAccessMissing": "Stille modus kan niet worden ingeschakeld zonder toegang tot Niet storen.",
           "someMailboxesUnreachable": "Sommige servers waren niet bereikbaar. De apparaten kunnen elkaar nog vinden via de andere.",
           "mailboxReachable": "{host}: bereikbaar",
-          "mailboxUnreachable": "{host}: niet bereikbaar"
+          "mailboxUnreachable": "{host}: niet bereikbaar",
+          "connectionWorks": "Verbinding via internet: werkt",
+          "connectionWorksSome": "Verbinding via internet: werkt ({reachable} van {total} servers)",
+          "connectionFails": "Verbinding via internet: werkt niet",
+          "details": "Details",
+          "detailsHide": "Details verbergen",
+          "roomNearThreshold": "De kamer is bijna net zo luid als het meldingsniveau. Deze instelling kan meldingen geven voor achtergrondgeluid. Kies een minder gevoelige instelling of verplaats het apparaat."
         },
         "notifications": {
           "title": "Meldingen",
@@ -246,7 +252,8 @@
         "autolockHint": "Het scherm gaat uit over {seconds} s",
         "stop": "Stoppen met bewaken",
         "micLevel": "Geluidsniveau hier",
-        "micSilent": "De microfoon vangt geen geluid op. Start de bewaking opnieuw of controleer de microfoon."
+        "micSilent": "De microfoon vangt geen geluid op. Start de bewaking opnieuw of controleer de microfoon.",
+        "micMissing": "Dit babyapparaat kan je kind niet horen zonder microfoon. Sta het toe om de code te tonen en te starten."
       },
       "kiosk": {
         "a11yLabel": "Bewaken. Scherm vergrendeld.",
@@ -289,7 +296,8 @@
         "stopped": {
           "title": "{name} is gestopt met bewaken",
           "body": "Iemand is gestopt met bewaken op het babyapparaat. Je krijgt geen meldingen.",
-          "titleDefault": "Het babyapparaat is gestopt met bewaken"
+          "titleDefault": "Het babyapparaat is gestopt met bewaken",
+          "stopHere": "OK, ook hier stoppen"
         },
         "needsPairing": {
           "title": "Apparaten niet meer gekoppeld"
@@ -321,7 +329,6 @@
           "pageHidden": "Babyapparaat pauzeert mogelijk: de pagina is verborgen",
           "wakeLockOff": "Babyapparaat valt mogelijk in slaap: het scherm blijft niet aan",
           "resumedFromSleep": "Babyapparaat werd wakker uit slaap: geluiden zijn mogelijk gemist",
-          "notCharging": "Babyapparaat laadt niet meer",
           "micPermissionLost": "Babyapparaat heeft geen microfoontoegang meer"
         },
         "discreet": {
@@ -620,7 +627,7 @@
         "tapHint": "Houd de knop ingedrukt om te praten",
         "lockHint": "Praten kan niet worden vergrendeld",
         "afterListen": "Luistert nog {seconds} s · tik om te blijven luisteren",
-        "coach": "Nieuw: houd ingedrukt om met het kind te praten.",
+        "coach": "Houd ingedrukt om met je kind te praten.",
         "permBody": "Om met het kind te praten heeft GuardedSleep de microfoon nodig zolang je de knop ingedrukt houdt.",
         "permAllow": "Microfoon toestaan",
         "permDone": "Klaar. Houd nu ingedrukt om te praten.",
@@ -631,10 +638,7 @@
           "title": "Praten",
           "switch": "Ouders kunnen via dit apparaat praten",
           "switchHint": "Als dit uit staat, wordt er nooit iets via dit apparaat afgespeeld.",
-          "volume": "Volume van de stem",
-          "low": "Zacht",
-          "medium": "Gemiddeld",
-          "high": "Luid",
+          "volume": "Volume van de stem: {percent}%",
           "playChime": "Beltoon afspelen",
           "chime": "Beltoon voordat een ouder praat",
           "checklist": "Ouders kunnen via dit apparaat praten. Je kunt dit uitzetten bij Instellingen."
@@ -790,7 +794,9 @@
         "counterA11y": "{duration}, sinds {time}",
         "sentenceSound": "Het kamergeluid wordt op dit apparaat afgespeeld.",
         "stopSoundSub": "Stopt het meldingsgeluid, de bewaking blijft doorgaan",
-        "stopVibrationSub": "Stopt het trillen, de bewaking blijft doorgaan"
+        "stopVibrationSub": "Stopt het trillen, de bewaking blijft doorgaan",
+        "testHeadline": "Testmelding ontvangen",
+        "testSilent": "Het babyapparaat bleef stil."
       },
       "batteryAlert": {
         "label": "Batterij babyapparaat",
@@ -808,6 +814,23 @@
         "nightA11yAuto": "Nachtmodus: automatisch",
         "nightOn": "Aan",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Sta toe wat GuardedSleep nodig heeft",
+        "intro": "Doe dit nu één keer, dan word je later niet onderbroken. Je kunt elk onderdeel uitstellen.",
+        "allowAll": "Alles toestaan",
+        "mic": {
+          "title": "Microfoon",
+          "why": "Zodat het babyapparaat de kamer hoort en je vanaf het ouderapparaat tegen je kind kunt praten."
+        },
+        "camera": {
+          "title": "Camera",
+          "why": "Alleen om de koppelcode op het andere apparaat te lezen. Er wordt niets opgenomen."
+        },
+        "dnd": {
+          "title": "Toegang tot Niet storen",
+          "why": "Zodat meldingen op het ouderapparaat doorkomen en het babyapparaat 's nachts stil blijft."
+        }
       }
     }
   },
@@ -893,7 +916,7 @@
       "unavailableBrowser": "Praten wordt in deze browser niet ondersteund.",
       "noisePausedSelf": "Geluidsalarmen gepauzeerd terwijl je praat.",
       "noisePausedOther": "Het andere ouderapparaat praat. Geluidsalarmen gaan daarna weer door.",
-      "coach": "Nieuw: houd ingedrukt om met het kind te praten.",
+      "coach": "Houd ingedrukt om met je kind te praten.",
       "unconfirmed": "Je stem is op het babyapparaat mogelijk niet hoorbaar.",
       "audibleUncertain": "De laatste berichten waren op het babyapparaat mogelijk niet hoorbaar. Controleer het volume.",
       "afterListen": "10 s meeluisteren · tik om te blijven luisteren",
@@ -909,10 +932,7 @@
       "babyChecklist": "Ouders kunnen via dit apparaat praten. Je kunt dit uitzetten in Instellingen.",
       "settingsTitle": "Praten",
       "settingsToggle": "Ouders kunnen via dit apparaat praten",
-      "settingsVolume": "Stemvolume",
-      "levelLow": "Laag",
-      "levelMedium": "Middel",
-      "levelHigh": "Hoog",
+      "settingsVolume": "Stemvolume: {percent}%",
       "settingsChime": "Toon voor de stem",
       "settingsPlayChime": "Toon afspelen"
     }

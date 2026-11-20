@@ -560,12 +560,6 @@ private fun bannerSpec(
                 ),
                 glyph = Glyph.BATTERY,
             )
-        BannerKind.BABY_UNPLUGGED ->
-            BannerSpec(
-                b,
-                stringResource(R.string.native_ui_parent_unit_warning_not_charging),
-                glyph = Glyph.BATTERY,
-            )
         BannerKind.SILENCE ->
             BannerSpec(
                 b,

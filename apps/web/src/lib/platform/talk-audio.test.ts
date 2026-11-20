@@ -18,7 +18,7 @@ import {
   FakeTrack,
   type FakeNode,
 } from "./test-audio";
-import { TALK_LEVEL_GAIN, TALK_LIMITER_CEILING } from "./policy";
+import { TALK_LIMITER_CEILING, talkLevelGain } from "./policy";
 import { createWebMediaEngine } from "./web-media";
 
 function makePlayback() {
@@ -68,25 +68,25 @@ describe("baby talk playback", () => {
 
   it("opens only inside the lease and fades in to the level's gain", () => {
     const { ctx, playback, shaper, track } = makePlayback();
-    playback.open("medium", 800, 12_000);
+    playback.open(50, 800, 12_000);
     expect(reachesDestination(ctx, shaper!)).toBe(true);
     expect(track.enabled).toBe(true);
     expect(playback.isOpen).toBe(true);
     const level = ctx.gains[0]!;
-    expect(level.gain.ramps).toContainEqual(["ramp", TALK_LEVEL_GAIN.medium, 0.8]);
+    expect(level.gain.ramps).toContainEqual(["ramp", talkLevelGain(50), 0.8]);
   });
 
   it("schedules the end on the audio clock at grant time", () => {
     const { ctx, playback } = makePlayback();
     ctx.currentTime = 5;
-    playback.open("low", 800, 12_000);
+    playback.open(10, 800, 12_000);
     // 12 s after the grant on the audio clock, whatever the page's timers do.
     expect(ctx.gains[0]!.gain.ramps).toContainEqual(["set", 0, 17]);
   });
 
   it("disconnects at the lease deadline by a platform timer too", () => {
     const { ctx, time, playback, shaper, track } = makePlayback();
-    playback.open("low", 800, 3_000);
+    playback.open(10, 800, 3_000);
     time.advance(2_999);
     expect(playback.isOpen).toBe(true);
     time.advance(1);
@@ -97,7 +97,7 @@ describe("baby talk playback", () => {
 
   it("close ends the lease at once and is idempotent", () => {
     const { ctx, playback, shaper } = makePlayback();
-    playback.open("low", 800, 20_000);
+    playback.open(10, 800, 20_000);
     playback.close();
     playback.close();
     expect(reachesDestination(ctx, shaper!)).toBe(false);
@@ -119,7 +119,7 @@ describe("baby talk playback", () => {
   it("plays a generated chime through the same limiter and reports its end", () => {
     const { ctx, time, playback, shaper } = makePlayback();
     let done = 0;
-    playback.playChime("low", () => done++);
+    playback.playChime(10, () => done++);
     expect(ctx.oscillators.length).toBe(2);
     expect(ctx.oscillators.every((o) => o.started !== null)).toBe(true);
     expect(reachesDestination(ctx, shaper!)).toBe(true);
@@ -133,7 +133,7 @@ describe("baby talk playback", () => {
   it("a cancelled chime never reports its end and leaves nothing connected", () => {
     const { ctx, playback, time, shaper } = makePlayback();
     let done = 0;
-    playback.playChime("high", () => done++);
+    playback.playChime(70, () => done++);
     playback.close();
     time.advance(2_000);
     expect(done).toBe(0);
@@ -145,14 +145,14 @@ describe("baby talk playback", () => {
     ctx.analysers[0]!.samples = [0.2, -0.2];
     time.advance(20);
     expect(playback.drainRms()).toBeNull();
-    playback.open("low", 800, 10_000);
+    playback.open(10, 800, 10_000);
     time.advance(20);
     expect(playback.drainRms()).toBeCloseTo(0.2, 6);
   });
 
   it("release tears the whole graph down", () => {
     const { time, playback, track } = makePlayback();
-    playback.open("low", 800, 10_000);
+    playback.open(10, 800, 10_000);
     playback.release();
     expect(time.pending()).toBe(0);
     expect(track.enabled).toBe(false);

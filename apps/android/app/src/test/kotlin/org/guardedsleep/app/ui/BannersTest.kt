@@ -118,7 +118,6 @@ class BannersTest {
         assertEquals(BannerLevel.ALERT, bannerLevel(BannerKind.SECURITY))
         assertEquals(BannerLevel.WARN, bannerLevel(BannerKind.MIC_SILENT))
         assertEquals(BannerLevel.WARN, bannerLevel(BannerKind.READINESS))
-        assertEquals(BannerLevel.INFO, bannerLevel(BannerKind.BABY_UNPLUGGED))
         assertEquals(BannerLevel.INFO, bannerLevel(BannerKind.PAUSED))
         assertEquals(BannerLevel.NOTE, bannerLevel(BannerKind.VIBRATE_ONLY))
     }
@@ -201,9 +200,10 @@ class BannersTest {
     }
 
     @Test
-    fun unpluggedSilenceUnitWarningsAndWeakConnection() {
+    fun silenceUnitWarningsAndWeakConnection() {
+        // `not_charging` stays a device-check fact; it never becomes a monitor banner.
         assertEquals(
-            listOf("baby_unplugged"),
+            emptyList<String>(),
             ids(state(PeerStatusUi(unitWarnings = listOf("not_charging")))),
         )
         assertEquals(

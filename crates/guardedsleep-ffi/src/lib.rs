@@ -114,6 +114,13 @@ pub fn message_keys() -> Vec<String> {
         .collect()
 }
 
+/// Lowest noise-gate threshold any message or setting may carry (linear RMS, about -56 dBFS). The
+/// clients clamp their slider and stored value with it instead of a second literal.
+#[uniffi::export]
+pub fn min_noise_threshold() -> f64 {
+    guardedsleep_core::noise::MIN_NOISE_THRESHOLD
+}
+
 #[uniffi::export]
 pub fn derive_room_id(psk: Vec<u8>) -> String {
     guardedsleep_core::pairing::derive_room_id(&psk)

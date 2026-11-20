@@ -49,6 +49,7 @@ class CalmSettingsTests : ShotBase() {
         AppState(
             role = Role.PARENT,
             onboardingDone = true,
+            permissionsIntroDone = true,
             paired = true,
             peerName = "Nursery",
             connections = listOf(ConnectionUi("1", "Nursery", isDefault = false, selected = true)),
@@ -94,7 +95,13 @@ class CalmSettingsTests : ShotBase() {
 
     @Test
     fun theBabyDeviceOffersItsOwnRowsAndNoAlertsOrDisplay() = runComposeUiTest {
-        val baby = AppState(role = Role.BABY, onboardingDone = true, paired = true)
+        val baby =
+            AppState(
+                role = Role.BABY,
+                onboardingDone = true,
+                permissionsIntroDone = true,
+                paired = true,
+            )
         show { SettingsScreen(FakeAppController(app = baby), {}, {}, {}) }
         onNodeWithTag("settings_nav_detection").performScrollTo().assertIsDisplayed()
         onNodeWithTag("settings_nav_silence").assertIsDisplayed()
@@ -110,6 +117,7 @@ class CalmSettingsTests : ShotBase() {
                 role = null,
                 lastRole = Role.BABY,
                 onboardingDone = true,
+                permissionsIntroDone = true,
                 paired = true,
                 connections = listOf(ConnectionUi("1", "Travel cot", false, true)),
                 babyConnections = listOf(ConnectionUi("1", "Travel cot", false, true)),
@@ -137,6 +145,7 @@ class CalmSettingsTests : ShotBase() {
                     AppState(
                         role = Role.BABY,
                         onboardingDone = true,
+                        permissionsIntroDone = true,
                         paired = true,
                         babyConnections = listOf(ConnectionUi("1", "Cot", false, true)),
                     ),

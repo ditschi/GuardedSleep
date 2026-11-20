@@ -62,10 +62,12 @@ export const TALK_RTP_GRACE_MS = 1_500;
 /** More packets than this outside a lease and its grace count as audio without a grant. */
 export const TALK_RTP_OUTSIDE_PACKETS = 5;
 /**
- * Baby output gains per talk level, as linear factors of the computer's own volume (which a
- * browser cannot see). High is lower than the Android share on purpose (design section 8).
+ * Baby output gain of a talk level (percent step 10..70), as a linear factor of the computer's own
+ * volume, which a browser cannot see: the percent itself, so 70 % stays the top.
  */
-export const TALK_LEVEL_GAIN = { low: 0.2, medium: 0.4, high: 0.6 } as const;
+export function talkLevelGain(pct: number): number {
+  return pct / 100;
+}
 /** The limiter's hard clip, as a linear amplitude in front of the system volume. */
 export const TALK_LIMITER_CEILING = 0.5;
 /** The compressor of the limiter: threshold in dB, ratio, attack and release in seconds. */

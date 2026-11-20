@@ -124,7 +124,8 @@
       "t": 1700000000000.0,
       "seq": 4,
       "battery": null,
-      "rms": 0.25
+      "rms": 0.25,
+      "loud": false
     }
   },
   {
@@ -1843,8 +1844,43 @@
       "t": 1.0,
       "seq": 2,
       "battery": null,
-      "rms": null
+      "rms": null,
+      "loud": false
     }
+  },
+  {
+    "name": "data v3: heartbeat with loud gate",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"heartbeat\",\"v\":3,\"t\":1,\"seq\":2,\"rms\":0.01,\"loud\":true}",
+    "expect": {
+      "type": "heartbeat",
+      "t": 1.0,
+      "seq": 2,
+      "battery": null,
+      "rms": 0.01,
+      "loud": true
+    }
+  },
+  {
+    "name": "data v3: heartbeat loud must be a boolean",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"heartbeat\",\"v\":3,\"t\":1,\"seq\":2,\"loud\":1}",
+    "expect": null
+  },
+  {
+    "name": "data v3: device_status with the most sensitive noise_threshold",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"device_status\",\"v\":3,\"noise_threshold\":0.0018}",
+    "expect": {
+      "type": "device_status",
+      "noise_threshold": 0.0018
+    }
+  },
+  {
+    "name": "data v3: device_status noise_threshold below the shared limit",
+    "kind": "parse_data_v3",
+    "raw": "{\"type\":\"device_status\",\"v\":3,\"noise_threshold\":0.001}",
+    "expect": null
   },
   {
     "name": "data v3: v2 messages are rejected",
@@ -1944,7 +1980,7 @@
         "now": 1000,
         "input": {
           "type": "set_noise_gate",
-          "threshold": 0.005,
+          "threshold": 0.001,
           "hold_ms": 2000
         }
       },

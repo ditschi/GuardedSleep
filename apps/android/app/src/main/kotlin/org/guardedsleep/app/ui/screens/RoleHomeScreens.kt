@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AppCard
+import org.guardedsleep.app.ui.common.BabyPermissionCards
 import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.Glyph
 import org.guardedsleep.app.ui.common.GlyphButton
@@ -36,6 +37,7 @@ import org.guardedsleep.app.ui.common.ScrollColumn
 import org.guardedsleep.app.ui.common.SecondaryButton
 import org.guardedsleep.app.ui.common.Title
 import org.guardedsleep.app.ui.common.connectionLabel
+import org.guardedsleep.app.ui.common.rememberMicrophoneGranted
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.ConnectionUi
@@ -163,6 +165,7 @@ fun HomeScreen(
                 Role.BABY,
                 app.babyConnections,
                 canAdd = true,
+                micNeeded = app.microphoneNeeded,
             )
             QuietButton(
                 stringResource(
@@ -198,6 +201,8 @@ private fun HomeRole(
     canAdd: Boolean,
     /** `parent-alerts` "Vibrate-only reminder at start": a line under the connections. */
     vibrateOnly: Boolean = false,
+    /** The baby unit has no microphone permission: show the warning, not the start rows. */
+    micNeeded: Boolean = false,
 ) {
     val key = role.name.lowercase()
     val isParent = role == Role.PARENT
@@ -219,9 +224,12 @@ private fun HomeRole(
             )
         )
     }
+    // The baby unit's permission cards before it starts: the microphone one blocks the start rows.
+    val micBlocked = !isParent && micNeeded && !rememberMicrophoneGranted()
+    if (!isParent) BabyPermissionCards(tag = "home_baby_gate")
     if (connections.isEmpty()) {
         Body(stringResource(R.string.native_ui_home_empty), tag = "home_empty_$key")
-    } else {
+    } else if (!micBlocked) {
         AppCard(Modifier.testTag("home_connections_$key")) {
             connections.forEach { c ->
                 ConnectionRow(role, c, connectionLabel(c, connections, role)) {

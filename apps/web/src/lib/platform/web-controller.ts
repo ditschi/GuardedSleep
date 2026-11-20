@@ -8,7 +8,7 @@ import type {
   LinkState,
   LinkStatus,
 } from "@guardedsleep/core-wasm";
-import { readable, writable, type Readable } from "svelte/store";
+import { get, readable, writable, type Readable } from "svelte/store";
 import {
   defaultAppState,
   defaultBabyMonitor,
@@ -17,6 +17,7 @@ import {
   defaultWebTalk,
   defaultSettings,
   makePairingState,
+  snapTalkVolume,
   type AlarmTonePlayback,
   type AppController,
   type AppState,
@@ -78,7 +79,12 @@ export interface TalkMicPort {
 export interface ControllerDeps {
   core: Pick<
     CoreApi,
-    "createLink" | "buildInvite" | "parseInvite" | "filterOnlyLocal" | "resolveAlarmTone"
+    | "createLink"
+    | "buildInvite"
+    | "parseInvite"
+    | "filterOnlyLocal"
+    | "resolveAlarmTone"
+    | "minNoiseThreshold"
   >;
   clock: Clock;
   timers: Timers;
@@ -166,11 +172,18 @@ interface Run {
   pending: PendingPairing | null;
   monitoring: boolean;
   driver: LinkDriver | null;
+  /** Parent: "OK, stop here too" was tapped; the run ends when the core says `stopped`. */
+  ackStopPending?: boolean;
 }
 
 /** Web-only failure keys of a run that could not start (no core key exists for them). */
 /** Length of the core's CSPRNG seed (the seed field of the link config, sent as hex). */
 const SEED_BYTES = 32;
+
+/** The browser has not allowed the microphone; "unknown" decides at the start as before. */
+function micBlocked(state: MicrophonePermission): boolean {
+  return state === "prompt" || state === "denied";
+}
 
 function toHex(bytes: Uint8Array): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
@@ -189,6 +202,8 @@ export class WebController implements AppController {
   private readonly appStore = writable<AppState>(defaultAppState());
   private readonly settingsStore = writable<SettingsState>(defaultSettings());
   private readonly pairingStore = writable<PairingState | null>(null);
+  /** Bumped by every pairing start and cancel: a late permission answer must not start a code. */
+  private pairGate = 0;
   private readonly soundStore = writable(false);
   private readonly parentModel: ParentModel;
   private readonly babyModel: BabyModel;
@@ -337,6 +352,10 @@ export class WebController implements AppController {
     this.setApp({ onboardingDone: true });
   }
 
+  completePermissionsIntro(): void {
+    this.setApp({ onboardingDone: true, permissionsIntroDone: true });
+  }
+
   updateSettings(transform: (settings: SettingsState) => SettingsState): void {
     const before = this.settingsState;
     const changed = { ...transform(before), ...turnSettings(this.turn) };
@@ -360,7 +379,7 @@ export class WebController implements AppController {
     ) {
       r.driver.input({
         type: "set_noise_gate",
-        threshold: after.threshold,
+        threshold: this.clampThreshold(after.threshold),
         hold_ms: after.holdSeconds * 1000,
       });
     }
@@ -369,7 +388,7 @@ export class WebController implements AppController {
     }
     if (
       after.talkBackEnabled !== before.talkBackEnabled ||
-      after.talkVolume !== before.talkVolume ||
+      after.talkVolumePct !== before.talkVolumePct ||
       after.talkChime !== before.talkChime
     ) {
       this.sendTalkSettings();
@@ -406,8 +425,43 @@ export class WebController implements AppController {
 
   // ---- pairing -----------------------------------------------------------------------------
 
+  /**
+   * The microphone gate (`device-setup` "Baby unit permission gate before connecting"): while the
+   * browser has not allowed the microphone ("prompt" or "denied") no code is made and nothing
+   * connects; the screen offers "Allow" and the code appears once it is granted. A browser that
+   * cannot say ("unknown") or a build without the port decides at the start as before.
+   */
   startPairing(): void {
     if (this.appState.role !== "baby") return;
+    const mic = this.deps.talkMic;
+    if (!mic) {
+      this.beginInvite();
+      return;
+    }
+    const gen = ++this.pairGate;
+    void mic.query().then((state) => {
+      if (gen !== this.pairGate) return;
+      if (micBlocked(state)) {
+        this.cancelPairing();
+        this.pairGate = gen;
+        this.pairingStore.set(makePairingState("needs_microphone"));
+        return;
+      }
+      this.beginInvite();
+    });
+  }
+
+  allowMicrophone(): void {
+    const mic = this.deps.talkMic;
+    if (!mic) return;
+    void mic.request().then((result) => {
+      if (result !== "granted") return;
+      this.setApp({ microphoneNeeded: false });
+      if (get(this.pairingStore)?.phase === "needs_microphone") this.startPairing();
+    });
+  }
+
+  private beginInvite(): void {
     this.deps.gate.unlock().catch(() => undefined);
     this.cancelPairing();
     this.stopRun(true);
@@ -449,6 +503,7 @@ export class WebController implements AppController {
   }
 
   cancelPairing(): void {
+    this.pairGate++;
     if (this.run?.pending) this.stopRun(true);
     this.pairingStore.set(null);
   }
@@ -487,6 +542,20 @@ export class WebController implements AppController {
   // ---- monitoring --------------------------------------------------------------------------
 
   startMonitoring(): void {
+    const mic = this.deps.talkMic;
+    if (this.appState.role !== "baby" || !mic || this.run) {
+      this.beginMonitoring();
+      return;
+    }
+    // Baby without the browser's microphone permission: nothing starts; the screen says why.
+    void mic.query().then((state) => {
+      const blocked = micBlocked(state);
+      this.setApp({ microphoneNeeded: blocked });
+      if (!blocked) this.beginMonitoring();
+    });
+  }
+
+  private beginMonitoring(): void {
     this.deps.gate.unlock().catch(() => undefined);
     const role = this.appState.role;
     if (role === null) return;
@@ -558,6 +627,15 @@ export class WebController implements AppController {
 
   acknowledgeAlarm(): void {
     this.run?.driver?.input({ type: "acknowledge_alarm" });
+  }
+
+  acknowledgePeerStopped(): void {
+    const r = this.run;
+    if (r?.role !== "parent") return;
+    // The core decides: it stops only while the link is still `peer_stopped`, and a stale tap
+    // changes nothing. The run ends when its status says stopped (`listenerFor`).
+    r.ackStopPending = true;
+    r.driver?.input({ type: "acknowledge_peer_stopped" });
   }
 
   stopAlertSound(): void {
@@ -680,7 +758,7 @@ export class WebController implements AppController {
 
   playTalkChimeSample(): void {
     this.deps.gate.unlock().catch(() => undefined);
-    const level = this.settingsState.talkVolume;
+    const level = snapTalkVolume(this.settingsState.talkVolumePct);
     this.run?.driver?.media((m) => m.playTalkChime(level, () => undefined));
   }
 
@@ -688,11 +766,16 @@ export class WebController implements AppController {
     this.run?.driver?.input({ type: "talk_settings_opened" });
   }
 
+  /** A threshold below the core's lowest is raised to it (the core's own constant, no copy). */
+  private clampThreshold(threshold: number): number {
+    return Math.min(1, Math.max(this.deps.core.minNoiseThreshold(), threshold));
+  }
+
   private sendTalkSettings(): void {
     const driver = this.run?.driver;
     if (!driver || this.run?.role !== "baby") return;
-    const { talkBackEnabled: enabled, talkVolume: level, talkChime: chime } = this.settingsState;
-    driver.input({ type: "set_talk_back", enabled, level, chime });
+    const { talkBackEnabled: enabled, talkVolumePct, talkChime: chime } = this.settingsState;
+    driver.input({ type: "set_talk_back", enabled, level: snapTalkVolume(talkVolumePct), chime });
   }
 
   /**
@@ -851,7 +934,7 @@ export class WebController implements AppController {
       paired_before: pairedBefore,
       heartbeat_interval_ms: heartbeat,
       alarm_after_ms: alarmAfter,
-      noise_threshold: s.threshold,
+      noise_threshold: this.clampThreshold(s.threshold),
       noise_hold_ms: s.holdSeconds * 1000,
       ...(pending.parentSecret === null ? {} : { pinned_parent: pending.parentSecret }),
       ...(pending.pinUntilS === null ? {} : { pin_window_until_s: pending.pinUntilS }),
@@ -912,6 +995,18 @@ export class WebController implements AppController {
           this.talkModel.setConnected(phaseOf(status.state) === "connected");
         } else this.babyModel.onStatus(status);
         this.onPairingStatus(r, status);
+        if (r.ackStopPending) {
+          if (status.state === "stopped") {
+            r.ackStopPending = false;
+            // Not inside the core's callback: the stop talks to the driver again.
+            this.deps.timers.after(() => {
+              if (this.run === r) this.stopMonitoring();
+            }, 0);
+          } else if (["connecting", "reconnecting", "connected"].includes(status.state)) {
+            // The core ignored the tap (the baby device started again): nothing to stop.
+            r.ackStopPending = false;
+          }
+        }
       },
       onEvent: (event: LinkEvent, now: number) => {
         if (!current()) return;

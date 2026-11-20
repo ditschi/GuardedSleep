@@ -113,6 +113,18 @@
       <span class="gs-dot" aria-hidden="true"></span>
       {$t("native.ui.pair.baby.waiting")}
     </p>
+  {:else if $pairing?.phase === "needs_microphone"}
+    <div class="gs-stack gs-fill-width">
+      <Banner tone="warn" message={$t("native.ui.baby.micMissing")} testid="baby_pair_mic_needed" />
+      <Button
+        size="large"
+        block
+        testid="baby_pair_mic_allow"
+        onclick={() => controller.allowMicrophone()}
+      >
+        {$t("native.ui.common.allow")}
+      </Button>
+    </div>
   {:else if $pairing?.phase === "expired"}
     <div class="gs-stack gs-fill-width">
       <Banner tone="warn" message={$t("native.ui.pair.baby.expired")} testid="baby_pair_expired" />

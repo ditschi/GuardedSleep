@@ -9,6 +9,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,6 +45,7 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AdaptiveButtonRow
 import org.guardedsleep.app.ui.common.AmbientBar
+import org.guardedsleep.app.ui.common.BabyPermissionCards
 import org.guardedsleep.app.ui.common.BabyQuiet
 import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.Glyph
@@ -57,6 +60,7 @@ import org.guardedsleep.app.ui.common.Tone
 import org.guardedsleep.app.ui.common.WindowBrightness
 import org.guardedsleep.app.ui.common.formatClock
 import org.guardedsleep.app.ui.common.rememberElapsedNow
+import org.guardedsleep.app.ui.common.rememberMicrophoneGranted
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.PairingPhase
 
@@ -97,11 +101,15 @@ fun PairBabyScreen(controller: AppController) {
     var copied by remember { mutableStateOf(false) }
     var showText by remember { mutableStateOf(false) }
     BackHandler { controller.cancelPairing() }
+    val micGranted = rememberMicrophoneGranted()
+    LaunchedEffect(micGranted, state?.phase) {
+        if (micGranted && state?.phase == PairingPhase.NEEDS_MICROPHONE) controller.startPairing()
+    }
     val expired =
         state?.phase == PairingPhase.EXPIRED ||
             (state?.expiresAtElapsedMs?.let { it <= now } ?: false)
     val payload = state?.codePayload
-    WindowBrightness(if (bright) 0.9f else 0.4f)
+    WindowBrightness(qrBrightness(bright))
     BabyQuiet {
         ScreenRoot("baby_pair", background = Color(0xFF050505)) {
             ScrollColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -130,7 +138,12 @@ fun PairBabyScreen(controller: AppController) {
                         )
                     else -> Unit
                 }
-                if (payload != null && state.phase != PairingPhase.PAIRED) {
+                // The permission cards before the code (`device-setup` "Baby unit permission
+                // gate"): no microphone, no code; the code appears here once it is granted.
+                BabyPermissionCards(tag = "baby_pair_gate")
+                if (state?.phase == PairingPhase.NEEDS_MICROPHONE) {
+                    // Nothing else: no code, no waiting line, nothing connecting.
+                } else if (payload != null && state.phase != PairingPhase.PAIRED) {
                     val qr = remember(payload, bright) { renderQr(payload, bright) }
                     val dimmed = expired || state.phase == PairingPhase.FAILED
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -247,6 +260,20 @@ fun PairBabyScreen(controller: AppController) {
                         color = Color(0xFFB0B0B0),
                     )
                 }
+                // Battery safety advice for the baby unit (`device-setup` "Battery safety copy").
+                Column(
+                    Modifier.fillMaxWidth().testTag("baby_pair_safety"),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Body(
+                        stringResource(R.string.native_ui_setup_safety_body),
+                        color = Color(0xFFB0B0B0),
+                    )
+                    Body(
+                        stringResource(R.string.native_ui_setup_charging_tip),
+                        color = Color(0xFFD0D0D0),
+                    )
+                }
                 QuietButton(
                     stringResource(R.string.native_ui_common_cancel),
                     { controller.cancelPairing() },
@@ -266,3 +293,6 @@ private fun copyCode(ctx: Context, payload: String) {
         PersistableBundle().apply { putBoolean("android.content.extra.IS_SENSITIVE", true) }
     cm.setPrimaryClip(clip)
 }
+
+/** QR window brightness: no override by default (the system or auto value), 0.9 on request. */
+internal fun qrBrightness(bright: Boolean): Float? = if (bright) 0.9f else null

@@ -157,7 +157,13 @@
           "dndAccessMissing": "Rahatsız Etme erişimi olmadan sessiz mod açılamaz.",
           "someMailboxesUnreachable": "Bazı sunuculara ulaşılamadı. Cihazlar birbirini diğerleri üzerinden yine bulabilir.",
           "mailboxReachable": "{host}: ulaşılabilir",
-          "mailboxUnreachable": "{host}: ulaşılamıyor"
+          "mailboxUnreachable": "{host}: ulaşılamıyor",
+          "connectionWorks": "İnternet bağlantısı: çalışıyor",
+          "connectionWorksSome": "İnternet bağlantısı: çalışıyor ({total} sunucudan {reachable} tanesi)",
+          "connectionFails": "İnternet bağlantısı: çalışmıyor",
+          "details": "Ayrıntılar",
+          "detailsHide": "Ayrıntıları gizle",
+          "roomNearThreshold": "Oda, uyarı seviyesi kadar gürültülü. Bu ayar arka plan sesleri için uyarı verebilir. Daha az hassas bir ayar deneyin veya cihazı başka yere koyun."
         },
         "notifications": {
           "title": "Uyarılar",
@@ -246,7 +252,8 @@
         "autolockHint": "Ekran {seconds} sn içinde kararacak",
         "stop": "İzlemeyi durdur",
         "micLevel": "Buradaki ses düzeyi",
-        "micSilent": "Mikrofon hiç ses almıyor. İzlemeyi yeniden başlatın veya mikrofonu kontrol edin."
+        "micSilent": "Mikrofon hiç ses almıyor. İzlemeyi yeniden başlatın veya mikrofonu kontrol edin.",
+        "micMissing": "Bu bebek cihazı mikrofon olmadan çocuğunuzu duyamaz. Kodu göstermek ve başlamak için izin verin."
       },
       "kiosk": {
         "a11yLabel": "İzleniyor. Ekran kilitli.",
@@ -289,7 +296,8 @@
         "stopped": {
           "title": "{name} izlemeyi durdurdu",
           "body": "Biri bebek cihazında izlemeyi durdurdu. Uyarı almayacaksınız.",
-          "titleDefault": "Bebek cihazı izlemeyi durdurdu"
+          "titleDefault": "Bebek cihazı izlemeyi durdurdu",
+          "stopHere": "Tamam, burada da durdur"
         },
         "needsPairing": {
           "title": "Cihazlar artık eşleşmiş değil"
@@ -321,7 +329,6 @@
           "pageHidden": "Bebek cihazı duraklayabilir — sayfası gizli",
           "wakeLockOff": "Bebek cihazı uykuya geçebilir — ekranı açık tutulmuyor",
           "resumedFromSleep": "Bebek cihazı uykudan uyandı — sesler kaçırılmış olabilir",
-          "notCharging": "Bebek cihazı şarj olmuyor",
           "micPermissionLost": "Bebek cihazı mikrofon erişimini kaybetti"
         },
         "discreet": {
@@ -620,7 +627,7 @@
         "tapHint": "Konuşmak için düğmeyi basılı tutun",
         "lockHint": "Konuşma kilitlenemez",
         "afterListen": "{seconds} sn dinleniyor · dinlemeye devam için dokunun",
-        "coach": "Yeni: Çocukla konuşmak için basılı tutun.",
+        "coach": "Çocuğunuzla konuşmak için basılı tutun.",
         "permBody": "Çocukla konuşmak için düğmeyi basılı tuttuğunuz sürece GuardedSleep'in mikrofona ihtiyacı var.",
         "permAllow": "Mikrofona izin ver",
         "permDone": "Tamam. Şimdi konuşmak için basılı tutun.",
@@ -631,10 +638,7 @@
           "title": "Konuşma",
           "switch": "Ebeveynler bu cihazdan konuşabilir",
           "switchHint": "Kapalıyken bu cihazdan hiçbir şey çalınmaz.",
-          "volume": "Konuşma ses düzeyi",
-          "low": "Düşük",
-          "medium": "Orta",
-          "high": "Yüksek",
+          "volume": "Konuşma ses düzeyi: %{percent}",
           "playChime": "Zili çal",
           "chime": "Ebeveyn konuşmadan önce zil",
           "checklist": "Ebeveynler bu cihazdan konuşabilir. Bunu Ayarlar'dan kapatabilirsiniz."
@@ -790,7 +794,9 @@
         "counterA11y": "{duration}, {time} saatinden beri",
         "sentenceSound": "Oda sesi bu cihazda çalınıyor.",
         "stopSoundSub": "Uyarı sesini durdurur, izleme sürer",
-        "stopVibrationSub": "Titreşimi durdurur, izleme sürer"
+        "stopVibrationSub": "Titreşimi durdurur, izleme sürer",
+        "testHeadline": "Test uyarısı alındı",
+        "testSilent": "Bebek cihazı sessiz kaldı."
       },
       "batteryAlert": {
         "label": "Bebek cihazı pili",
@@ -808,6 +814,23 @@
         "nightA11yAuto": "Gece modu: otomatik",
         "nightOn": "Açık",
         "nightAuto": "Otomatik"
+      },
+      "permissions": {
+        "title": "GuardedSleep'in ihtiyaç duyduklarına izin verin",
+        "intro": "Bunu şimdi bir kez yapın, sonra hiçbir şey sizi bölmesin. Her öğeyi sonraya bırakabilirsiniz.",
+        "allowAll": "Hepsine izin ver",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Bebek cihazının odayı duymasını ve ebeveyn cihazından çocuğunuzla konuşmanızı sağlar."
+        },
+        "camera": {
+          "title": "Kamera",
+          "why": "Yalnızca diğer cihazdaki eşleştirme kodunu okumak için. Hiçbir şey kaydedilmez."
+        },
+        "dnd": {
+          "title": "Rahatsız Etme erişimi",
+          "why": "Uyarıların ebeveyn cihazına ulaşmasını sağlar ve bebek cihazını geceleri sessiz tutar."
+        }
       }
     }
   },
@@ -893,7 +916,7 @@
       "unavailableBrowser": "Bu tarayıcı konuşmayı desteklemiyor.",
       "noisePausedSelf": "Siz konuşurken gürültü uyarıları duraklatıldı.",
       "noisePausedOther": "Diğer ebeveyn cihazı konuşuyor. Bitince gürültü uyarıları devam eder.",
-      "coach": "Yeni: Çocukla konuşmak için basılı tutun.",
+      "coach": "Çocuğunuzla konuşmak için basılı tutun.",
       "unconfirmed": "Sesiniz bebek cihazında duyulmayabilir.",
       "audibleUncertain": "Son mesajlar bebek cihazında duyulmamış olabilir. Ses düzeyini kontrol edin.",
       "afterListen": "10 sn dinleniyor · dinlemeye devam için dokunun",
@@ -909,10 +932,7 @@
       "babyChecklist": "Ebeveynler bu cihazdan konuşabilir. Bunu Ayarlar'dan kapatabilirsiniz.",
       "settingsTitle": "Konuşma",
       "settingsToggle": "Ebeveynler bu cihazdan konuşabilir",
-      "settingsVolume": "Ses düzeyi",
-      "levelLow": "Düşük",
-      "levelMedium": "Orta",
-      "levelHigh": "Yüksek",
+      "settingsVolume": "Ses düzeyi: %{percent}",
       "settingsChime": "Sesten önce zil sesi",
       "settingsPlayChime": "Zil sesini çal"
     }

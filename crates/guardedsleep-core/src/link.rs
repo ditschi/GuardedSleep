@@ -134,8 +134,7 @@ const ICE_SECOND_BATCH_MS: u64 = 2_000;
 const PSK_LEN: usize = 32;
 /// Longest gap between `audio_level` samples that still counts as "the baby was listening".
 const MAX_AUDIO_GAP_MS: u64 = 2_000;
-pub const MIN_NOISE_THRESHOLD: f64 = 0.01;
-pub const MAX_NOISE_THRESHOLD: f64 = 1.0;
+pub use crate::noise::{MAX_NOISE_THRESHOLD, MIN_NOISE_THRESHOLD};
 pub const MIN_NOISE_HOLD_MS: u64 = 1_000;
 pub const MAX_NOISE_HOLD_MS: u64 = 15_000;
 const LOW_BATTERY_PCT: u8 = 15;
@@ -424,6 +423,10 @@ pub enum LinkInput {
     Stop,
     /// Parent: "I'm checking" - mute levels 2-3 for 5 minutes.
     AcknowledgeAlarm,
+    /// Parent: "OK, stop here too" on the notice that the baby stopped on purpose. Stops the link
+    /// only while it is still `peer_stopped` and no new attempt has begun; ignored otherwise (a stale
+    /// tap after the baby started a new session must not stop monitoring).
+    AcknowledgePeerStopped,
     /// The platform's network changed or came back: retry immediately, reset the backoff.
     NetworkAvailable,
     /// The socket of mailbox `id` opened (the answer to `open_mailbox`).
@@ -482,7 +485,7 @@ pub enum LinkInput {
     DeviceStatus {
         status: DeviceStatus,
     },
-    /// Baby: change the noise gate while running. Out-of-range values (threshold 0.01..=1.0,
+    /// Baby: change the noise gate while running. Out-of-range values (threshold `MIN_NOISE_THRESHOLD..=MAX_NOISE_THRESHOLD`,
     /// `hold_ms` 1000..=15000) are ignored. A running loud state is kept (see `NoiseGate`).
     SetNoiseGate {
         threshold: f64,
@@ -1388,6 +1391,16 @@ impl Link {
             }
             LinkInput::Stop => self.on_stop(&mut out),
             LinkInput::AcknowledgeAlarm => self.on_acknowledge(now, &mut out),
+            LinkInput::AcknowledgePeerStopped => {
+                // `peer_stopped` stays set until a new attempt is verified, so it alone cannot tell
+                // a tap on the notice from a stale one. `stop_peer` closed the live attempt, so a
+                // live attempt now means the restarted baby's new session is already being set
+                // up: the parent keeps monitoring.
+                let baby_is_back = self.live.as_ref().is_some_and(|l| !l.attempt.is_finished());
+                if self.cfg.role == Role::Parent && self.peer_stopped && !baby_is_back {
+                    self.on_stop(&mut out);
+                }
+            }
             LinkInput::NetworkAvailable => self.on_network_available(now, &mut out),
             LinkInput::MailboxOpened { id } => self.on_signaling_opened(id, now, &mut out),
             LinkInput::MailboxFrame { id, bytes } => {
@@ -3448,20 +3461,21 @@ impl Link {
                     },
                 );
             }
-            (Role::Parent, DataMessage::Heartbeat { seq, rms, .. }) => {
+            (Role::Parent, DataMessage::Heartbeat { seq, rms, loud, .. }) => {
                 let threshold = self
                     .peer_status
                     .as_ref()
                     .and_then(|s| s.noise_threshold)
                     .unwrap_or(self.cfg.noise_threshold);
                 // The speaker's own sound must not keep a noise event alive: the levels of a talk's
-                // noise pause are not the room's.
+                // noise pause are not the room's. The baby's `loud` counts like a level at or above
+                // the threshold: its gate stays loud through short pauses between the bursts.
                 let paused = self
                     .peer_status
                     .as_ref()
                     .is_some_and(|s| s.noise_paused == Some(true));
                 if !paused
-                    && rms.is_some_and(|r| r >= threshold)
+                    && (loud || rms.is_some_and(|r| r >= threshold))
                     && let Some(e) = self.noise_event.as_mut()
                 {
                     e.last_loud = now;
@@ -3797,11 +3811,12 @@ impl Link {
                 // parent it stays out of the heartbeats until the attempt is trusted (the
                 // heartbeat sent at verification included).
                 // During a talk's noise pause the level is the baby's own speaker: no level at all.
-                let rms = (self.pin.is_none() || self.live_verified())
-                    .then(|| round4(self.gate.last_rms()))
-                    .filter(|_| !self.talk.paused());
+                let shown = (self.pin.is_none() || self.live_verified()) && !self.talk.paused();
+                let rms = shown.then(|| round4(self.gate.last_rms()));
+                let loud = shown && self.gate.is_loud();
                 if let Some(l) = self.live.as_mut() {
                     l.attempt.set_heartbeat_rms(rms);
+                    l.attempt.set_heartbeat_loud(loud);
                 }
             }
             if self.proof_due.is_some_and(|due| now >= due) {
@@ -4703,7 +4718,7 @@ mod tests {
             LinkInput::TalkChimeDone { attempt: 3 },
             LinkInput::SetTalkBack {
                 enabled: true,
-                level: TalkLevel::High,
+                level: TalkLevel::new(70),
                 chime: false,
             },
             LinkInput::TalkSettingsOpened,
@@ -4723,11 +4738,11 @@ mod tests {
         assert_eq!(
             serde_json::to_value(LinkInput::SetTalkBack {
                 enabled: true,
-                level: TalkLevel::Low,
+                level: TalkLevel::new(20),
                 chime: true
             })
             .unwrap(),
-            json!({"type": "set_talk_back", "enabled": true, "level": "low", "chime": true})
+            json!({"type": "set_talk_back", "enabled": true, "level": 20, "chime": true})
         );
         let actions = vec![
             LinkAction::SetTalkMic {
@@ -4740,12 +4755,12 @@ mod tests {
             },
             LinkAction::PlayTalkChime {
                 attempt: 1,
-                level: TalkLevel::Medium,
+                level: TalkLevel::new(50),
             },
             LinkAction::SetTalkPlayback {
                 attempt: 1,
                 enabled: true,
-                level: TalkLevel::Low,
+                level: TalkLevel::new(10),
                 fade_in_ms: 800,
                 until_ms: 30_000,
             },
@@ -4758,7 +4773,7 @@ mod tests {
         let shown: Vec<String> = actions.iter().map(|a| format!("{a:?}")).collect();
         assert!(shown[0].starts_with("SetTalkMic") && shown[0].contains("enabled: true"));
         assert!(shown[1].starts_with("SetPlaybackDucked") && shown[1].contains("ducked: true"));
-        assert!(shown[2].starts_with("PlayTalkChime") && shown[2].contains("Medium"));
+        assert!(shown[2].starts_with("PlayTalkChime") && shown[2].contains("pct: 50"));
         assert!(shown[3].starts_with("SetTalkPlayback") && shown[3].contains("until_ms: 30000"));
         let events = vec![
             LinkEvent::TalkChanged {
