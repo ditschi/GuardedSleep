@@ -63,12 +63,3 @@ Both clients SHALL negotiate Opus mono with an audio bandwidth up to 8 kHz, in-b
 
 - **WHEN** the devices connect
 - **THEN** the negotiated Opus parameters are mono, 16 kHz playback rate, FEC on, 60 ms packets and 24 kbit/s, and the DTLS fingerprint is unchanged
-
-### Requirement: Raw microphone capture
-
-The baby unit SHALL capture without echo cancellation, noise suppression and automatic gain on every platform, so the noise gate and the parent hear the room as it is. Android SHALL use the unprocessed microphone source where the device supports it, otherwise the plain microphone source.
-
-#### Scenario: White-noise machine in the room
-
-- **WHEN** a steady white-noise machine runs in the baby room
-- **THEN** its sound is neither removed nor raised by the capture path, and the parent hears it while listening

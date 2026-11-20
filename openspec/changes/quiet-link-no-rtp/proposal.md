@@ -28,7 +28,7 @@ Persona impact (`docs/concept/personas.md`): serves every parent on mobile data 
 
 ### Modified Capabilities
 
-- `audio-monitoring`: capture keeps running while detached, no RTP while muted, send self-checks, fixed Opus profile, raw capture, microphone health without buffers.
+- `audio-monitoring`: capture keeps running while detached, no RTP while muted, send self-checks, fixed Opus profile, microphone health without buffers. Raw capture moved to `alpha-field-test-feedback`.
 - `link-supervision`: heartbeat echo and 5 s default, 15 s liveness, link quality model in the core.
 - `connection-status`: liveness line and slow-connection chip; weak connection from the new model.
 
