@@ -188,7 +188,7 @@ fn the_talk_level_is_a_baby_setting_no_parent_message_changes() {
     // A request that smuggles a level and a volume in: unknown fields are ignored.
     w.inject_data(
         BABY,
-        &raw(json!({"type":"talk_request","v":3,"id":"1","level":70,"volume":100})),
+        &raw(json!({"type":"talk_request","v":3,"id":1,"level":70,"volume":100})),
     );
     let chime_levels: Vec<u8> = actions(&w, BABY)
         .iter()
