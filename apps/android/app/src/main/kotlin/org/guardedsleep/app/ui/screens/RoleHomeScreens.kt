@@ -201,7 +201,7 @@ private fun HomeRole(
     canAdd: Boolean,
     /** `parent-alerts` "Vibrate-only reminder at start": a line under the connections. */
     vibrateOnly: Boolean = false,
-    /** A baby start was refused for the microphone: say why and offer it again. */
+    /** The baby unit has no microphone permission: show the blocking warning, not the start rows. */
     micNeeded: Boolean = false,
 ) {
     val key = role.name.lowercase()

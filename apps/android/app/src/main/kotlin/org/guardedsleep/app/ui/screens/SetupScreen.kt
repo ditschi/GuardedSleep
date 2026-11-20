@@ -218,8 +218,7 @@ fun SetupContent(
                     }
                 }
                 // Battery safety advice (`device-setup` "Battery safety copy"); the baby pairing
-                // screen
-                // shows it too.
+                // screen shows it too.
                 AppCard(Modifier.testTag("setup_row_safety")) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),

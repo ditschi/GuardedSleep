@@ -492,7 +492,10 @@ export interface AppState {
    * start", web scenario).
    */
   permissionsIntroDone: boolean;
-  /** Android: a baby start was refused for the microphone. Never set on the web. */
+  /**
+   * Set when a baby pairing or start finds the browser microphone permission at prompt or denied,
+   * cleared once it is granted.
+   */
   microphoneNeeded: boolean;
   /** A saved pairing exists (home screen shows one-tap start). */
   paired: boolean;
