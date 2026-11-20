@@ -56,15 +56,19 @@ fun rememberPermissionRequest(
 @Composable
 fun rememberMicrophoneGranted(): Boolean {
     val ctx = LocalContext.current
-    var refresh by remember { mutableIntStateOf(0) }
+    val tick = rememberResumeTick()
+    return remember(tick) { micAllowed(ctx) }
+}
+
+/** A counter that goes up every time the screen comes back to the front, to re-read system state. */
+@Composable
+private fun rememberResumeTick(): Int {
+    var tick by remember { mutableIntStateOf(0) }
     LifecycleResumeEffect(Unit) {
-        refresh++
+        tick++
         onPauseOrDispose {}
     }
-    return remember(refresh) {
-        ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) ==
-            PackageManager.PERMISSION_GRANTED
-    }
+    return tick
 }
 
 /**

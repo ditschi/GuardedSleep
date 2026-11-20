@@ -50,7 +50,7 @@ import org.guardedsleep.app.ui.common.ScrollColumn
 import org.guardedsleep.app.ui.common.SecondaryButton
 import org.guardedsleep.app.ui.common.SystemSettings
 import org.guardedsleep.app.ui.common.Title
-import org.guardedsleep.app.ui.common.findActivity
+import org.guardedsleep.app.ui.common.rememberPermissionRequest
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.DeviceCheck
 import org.guardedsleep.app.ui.model.DeviceCheckReason
@@ -86,19 +86,8 @@ fun SetupScreen(controller: AppController, role: Role, onBack: () -> Unit) {
     }
     val checks = remember(refresh) { readSetupChecks(ctx, role) }
     var asked by rememberSaveable { mutableStateOf(setOf<String>()) }
-    val activity = ctx.findActivity()
 
-    val micLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            refresh++
-            if (
-                !granted &&
-                    activity != null &&
-                    !activity.shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO)
-            ) {
-                SystemSettings.launch(ctx, SystemSettings.appDetails(ctx))
-            }
-        }
+    val requestMic = rememberPermissionRequest(Manifest.permission.RECORD_AUDIO) { refresh++ }
     val notifLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             refresh++
@@ -112,7 +101,7 @@ fun SetupScreen(controller: AppController, role: Role, onBack: () -> Unit) {
                 if (asked.contains(row.name) && checks[row] == RowState.BLOCKED) {
                     SystemSettings.launch(ctx, SystemSettings.appDetails(ctx))
                 } else {
-                    micLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    requestMic()
                 }
             SetupRow.NOTIFICATIONS ->
                 if (Build.VERSION.SDK_INT >= 33 && checks[row] != RowState.BLOCKED) {

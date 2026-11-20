@@ -167,7 +167,7 @@ fun PermissionsScreen(controller: AppController) {
     val camera = rememberPermissionRequest(Manifest.permission.CAMERA) { refresh++ }
     val notifications =
         rememberPermissionRequest(
-            "android.permission.POST_NOTIFICATIONS",
+            RuntimePermissions.getValue(PermissionRow.NOTIFICATIONS),
             fallback = SystemSettings::notificationSettings,
         ) {
             refresh++
