@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.model.Banner
+import org.guardedsleep.app.ui.model.Sensitivity
 import org.guardedsleep.app.ui.model.BannerKind
 import org.guardedsleep.app.ui.model.BannerLevel
 import org.guardedsleep.app.ui.model.NightMode
@@ -272,10 +273,11 @@ fun SoundStrip(
                 val bw = (size.width - gap * (n - 1)) / n
                 val baseY = size.height - 6.dp.toPx()
                 val maxH = baseY
-                val thresholdY = baseY - maxH * threshold.coerceIn(0f, 1f)
+                // Bars and line share the slider's decibel scale (`Sensitivity.meterFraction`).
+                val thresholdY = baseY - maxH * Sensitivity.meterFraction(threshold)
                 bars.forEachIndexed { i, v ->
                     val h =
-                        if (live) (maxH * v.coerceIn(0f, 1f)).coerceAtLeast(3.dp.toPx())
+                        if (live) (maxH * Sensitivity.meterFraction(v)).coerceAtLeast(3.dp.toPx())
                         else 3.dp.toPx()
                     val c =
                         when {

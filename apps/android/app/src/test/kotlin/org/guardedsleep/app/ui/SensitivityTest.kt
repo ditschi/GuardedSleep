@@ -58,6 +58,19 @@ class SensitivityTest {
     }
 
     @Test
+    fun theParentMetersPutTheTickWhereTheSliderDoes() {
+        // The parent's SoundMeter and SoundStrip draw `meterFraction` of the level and of the
+        // threshold: -35 dBFS is the middle, equal slider steps are equal tick steps, and a level
+        // at the threshold reaches the tick.
+        assertEquals(0.5f, Sensitivity.meterFraction(Math.pow(10.0, -35.0 / 20.0).toFloat()), 0.001f)
+        val tick = { p: Float -> Sensitivity.meterFraction(Sensitivity.thresholdOf(p)) }
+        assertEquals(tick(0.5f) - tick(1f), tick(0f) - tick(0.5f), 0.01f)
+        val t = Sensitivity.thresholdOf(0.4f)
+        assertEquals(Sensitivity.meterFraction(t), Sensitivity.meterFraction(t), 0f)
+        assertTrue(Sensitivity.meterFraction(t * 1.5f) > Sensitivity.meterFraction(t))
+    }
+
+    @Test
     fun theTalkVolumeSnapsToTenToSeventyInTens() {
         assertEquals(10, TalkVolumeSteps.snap(0))
         assertEquals(50, TalkVolumeSteps.snap(52))

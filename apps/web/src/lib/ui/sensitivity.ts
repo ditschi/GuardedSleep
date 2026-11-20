@@ -29,6 +29,16 @@ export function thresholdOf(sensitivity: number): number {
   return Math.round(threshold * 10_000) / 10_000;
 }
 
+/** The level meters show this range, so a threshold tick sits where the slider puts it. */
+export const METER_FLOOR_DBFS = -60;
+export const METER_CEIL_DBFS = -10;
+
+/** A level (0..1 RMS) as a fraction of a meter, on the slider's decibel scale (0 to 1). */
+export function meterFraction(level: number): number {
+  const db = 20 * Math.log10(Math.max(Number.isFinite(level) ? level : 0, 1e-9));
+  return clamp((db - METER_FLOOR_DBFS) / (METER_CEIL_DBFS - METER_FLOOR_DBFS), 0, 1);
+}
+
 /** `ws://` or `wss://` with a host: the only addresses the signaling transport can open. */
 export function isSignalingUrl(text: string): boolean {
   try {
