@@ -134,9 +134,15 @@ maestro_assert() {
 	# once more. A real failed assertion reports "Assertion is false", fails here at once and never retries.
 	if grep -q "Unknown error" "$OUT/maestro-$(basename "$flow" .yaml)-$serial.xml" 2>/dev/null; then
 		log "maestro lost its driver in $flow (Unknown error); running it once more"
-		sleep 3
+		sleep 10
 		maestro_run "$serial" "$flow" && return 0
 		save_full_logcats "$(basename "$flow" .yaml)-attempt2"
+		# A fresh emulator can lose the driver twice in a row while it settles: a last try after a pause.
+		grep -q "Unknown error" "$OUT/maestro-$(basename "$flow" .yaml)-$serial.xml" 2>/dev/null || return 1
+		log "maestro lost its driver in $flow again; last try after a pause"
+		sleep 30
+		maestro_run "$serial" "$flow" && return 0
+		save_full_logcats "$(basename "$flow" .yaml)-attempt3"
 		return 1
 	fi
 	return 1
