@@ -18,9 +18,9 @@ appId: org.guardedsleep.app.dev
       - runFlow: dismiss-system-dialogs.yaml
       - extendedWaitUntil:
           visible:
-            id: "permissions_continue"
+            id: "permissions_title"
           timeout: 15000
-# The list scrolls; Continue sits below the rows on a phone.
+# The list scrolls; Continue sits below the rows on a phone, so wait for the title, then scroll.
 - scrollUntilVisible:
     element:
       id: "permissions_continue"
