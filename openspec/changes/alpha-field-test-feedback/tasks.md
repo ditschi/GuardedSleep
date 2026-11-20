@@ -15,7 +15,7 @@ Briefs for the `implementer` sub-agent. Each group names the goal, the files, th
 
 ## 3. Raw capture on the baby device (Android platform)
 
-- [ ] 3.1 Goal: design §2. In `apps/android/platform/.../media/libwebrtc/LibWebRtcMediaEngine.kt`, the baby builder sets the audio source `UNPROCESSED` when `AudioManager.PROPERTY_SUPPORT_AUDIO_SOURCE_UNPROCESSED` is `"true"`, else `MIC`, and turns off hardware AEC and NS; the baby audio source's constraints turn off the software echo canceller, noise suppressor and auto gain. Comment the pinned webrtc-sdk API with a source link (AGENTS.md §5.2). Report raw capture as `true` where the playback check expects it. The parent's talk microphone keeps full processing. Web baby capture already requests no processing (`apps/web/src/lib/platform/audio.ts`); confirm, do not change. Acceptance: JVM test for the source choice (supported / not supported); `just test-affected`.
+- [x] 3.1 Goal: design §2. In `apps/android/platform/.../media/libwebrtc/LibWebRtcMediaEngine.kt`, the baby builder sets the audio source `UNPROCESSED` when `AudioManager.PROPERTY_SUPPORT_AUDIO_SOURCE_UNPROCESSED` is `"true"`, else `MIC`, and turns off hardware AEC and NS; the baby audio source's constraints turn off the software echo canceller, noise suppressor and auto gain. Comment the pinned webrtc-sdk API with a source link (AGENTS.md §5.2). Report raw capture as `true` where the playback check expects it. The parent's talk microphone keeps full processing. Web baby capture already requests no processing (`apps/web/src/lib/platform/audio.ts`); confirm, do not change. Acceptance: JVM test for the source choice (supported / not supported); `just test-affected`.
 
 ## 4. Sensitivity slider in decibels (Android + web UI)
 

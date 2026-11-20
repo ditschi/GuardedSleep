@@ -112,8 +112,24 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
                             trackError(errorMessage)
                     }
                 )
-        if (role == Role.BABY) builder.setAudioBufferCallback(recordCallback)
-        else {
+        if (role == Role.BABY) {
+            // Raw room sound (design §2): no voice-call source and no hardware AEC/NS, so the
+            // parent hears the room as it is and the noise gate sees honest levels.
+            // API: JavaAudioDeviceModule.Builder.setAudioSource / setUseHardware* in webrtc-sdk
+            // 150.7871.01, https://github.com/webrtc-sdk/webrtc (sdk/android/api/org/webrtc/audio/
+            // JavaAudioDeviceModule.java).
+            builder
+                .setAudioSource(
+                    RawCapture.audioSource(
+                        appContext
+                            .getSystemService(AudioManager::class.java)
+                            ?.getProperty(AudioManager.PROPERTY_SUPPORT_AUDIO_SOURCE_UNPROCESSED)
+                    )
+                )
+                .setUseHardwareAcousticEchoCanceler(false)
+                .setUseHardwareNoiseSuppressor(false)
+                .setAudioBufferCallback(recordCallback)
+        } else {
             // The parent's capture is the talk microphone: voice processing on (design §4), and
             // no record callback, so nothing can read the PCM. A capture error ends the talk.
             builder
@@ -140,7 +156,15 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
         factory =
             PeerConnectionFactory.builder().setAudioDeviceModule(adm).createPeerConnectionFactory()
         if (role == Role.BABY) {
-            val src = factory.createAudioSource(MediaConstraints())
+            // The software processors are the `goog*` audio constraints of libwebrtc's audio
+            // source: off here, so nothing shapes the room sound before it is encoded.
+            val raw =
+                MediaConstraints().apply {
+                    for (k in RawCapture.PROCESSING_CONSTRAINTS) {
+                        mandatory.add(MediaConstraints.KeyValuePair(k, "false"))
+                    }
+                }
+            val src = factory.createAudioSource(raw)
             source = src
             track = factory.createAudioTrack("gs-audio", src).apply { setEnabled(false) }
         }
@@ -249,6 +273,8 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
     override fun stopTalkChime() = chime.stop()
 
     override fun talkVolume(): AlarmVolume? = talkVolume
+
+    override val rawCapture: Boolean = role == Role.BABY
 
     override fun setMicEnabled(enabled: Boolean) {
         track?.setEnabled(enabled)

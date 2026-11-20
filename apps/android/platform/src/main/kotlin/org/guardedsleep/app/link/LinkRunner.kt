@@ -219,8 +219,7 @@ class LinkRunner(
                 onOutsideGrant = { a -> dispatch(LinkInput.TalkRtpOutsideGrant(a)) },
             )
         playout?.start()
-        // Raw capture is `quiet-link-no-rtp`'s task and not built: the playback check says unknown.
-        dispatch(LinkInput.SetRawCapture(false))
+        dispatch(LinkInput.SetRawCapture(m.rawCapture))
     }
 
     fun media(action: (MediaEngine) -> Unit) = post { media?.let(action) }
