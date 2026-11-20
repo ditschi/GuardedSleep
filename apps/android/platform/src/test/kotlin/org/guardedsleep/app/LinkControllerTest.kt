@@ -722,7 +722,7 @@ class LinkControllerTest {
         u.pairings.store(Role.PARENT, "1").save(pairing("one"))
         u.pairings.store(Role.PARENT, "2").save(pairing("two"))
         if (mark) u.pairings.setDefault(Role.PARENT, "2")
-        u.controller.completePermissionsIntro()
+        u.controller.completeOnboarding()
         if (startsAsParent) u.controller.setDefaultRole(Role.PARENT)
         return u
     }
@@ -844,7 +844,7 @@ class LinkControllerTest {
         val baby = unit("auto-baby", Role.BABY)
         baby.pairings.store(Role.BABY, "1").save(pairing("one"))
         baby.pairings.setDefault(Role.BABY, "1")
-        baby.controller.completePermissionsIntro()
+        baby.controller.completeOnboarding()
         baby.controller.setDefaultRole(Role.BABY)
         val babyRestart = restart("auto-baby2", baby, java.util.concurrent.atomic.AtomicInteger())
         babyRestart.controller.onForeground()

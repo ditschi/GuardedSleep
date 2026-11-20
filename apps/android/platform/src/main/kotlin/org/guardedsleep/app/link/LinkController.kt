@@ -348,6 +348,11 @@ class LinkController(
         refreshApp()
     }
 
+    override fun completeOnboarding() {
+        settingsRepo.update { it.copy(onboardingDone = true) }
+        refreshApp()
+    }
+
     override fun completePermissionsIntro() {
         settingsRepo.update { it.copy(onboardingDone = true, permissionsIntroDone = true) }
         refreshApp()
