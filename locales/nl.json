@@ -813,6 +813,24 @@
         "nightA11yAuto": "Nachtmodus: automatisch",
         "nightOn": "Aan",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Sta toe wat GuardedSleep nodig heeft",
+        "intro": "Doe dit nu één keer, dan word je later niet onderbroken. Je kunt elk onderdeel uitstellen.",
+        "allowAll": "Alles toestaan",
+        "mic": {
+          "title": "Microfoon",
+          "why": "Zodat het babyapparaat de kamer hoort en je vanaf het ouderapparaat tegen je kind kunt praten."
+        },
+        "camera": {
+          "title": "Camera",
+          "why": "Alleen om de koppelcode op het andere apparaat te lezen. Er wordt niets opgenomen."
+        },
+        "dnd": {
+          "title": "Toegang tot Niet storen",
+          "why": "Zodat meldingen op het ouderapparaat doorkomen en het babyapparaat 's nachts stil blijft."
+        },
+        "micNeeded": "Zonder microfoon kan dit apparaat niet luisteren. Sta het toe om het toezicht te starten."
       }
     }
   },

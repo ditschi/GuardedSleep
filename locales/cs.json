@@ -813,6 +813,24 @@
         "nightA11yAuto": "Noční režim: automaticky",
         "nightOn": "Zap.",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Povolte, co GuardedSleep potřebuje",
+        "intro": "Udělejte to jednou teď a nic vás později nevyruší. Každou položku můžete odložit.",
+        "allowAll": "Povolit vše",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Dětské zařízení díky tomu slyší místnost a vy můžete z rodičovského zařízení mluvit na své dítě."
+        },
+        "camera": {
+          "title": "Fotoaparát",
+          "why": "Jen ke čtení párovacího kódu na druhém zařízení. Nic se nenahrává."
+        },
+        "dnd": {
+          "title": "Přístup k režimu Nerušit",
+          "why": "Upozornění se dostanou na rodičovské zařízení a dětské zařízení v noci mlčí."
+        },
+        "micNeeded": "Bez mikrofonu toto zařízení neslyší. Povolte ho, aby se mohlo zahájit hlídání."
       }
     }
   },

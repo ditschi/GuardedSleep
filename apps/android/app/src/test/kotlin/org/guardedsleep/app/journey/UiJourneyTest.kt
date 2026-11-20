@@ -211,8 +211,18 @@ class UiJourneyTest : JourneyHost() {
 
     @Test
     fun deviceCheckResultAndCheckAgain() {
+        awaitShown(Device.BABY, "permissions_screen")
+        tap(Device.BABY, "permissions_continue")
         awaitShown(Device.BABY, "role_baby")
         tap(Device.BABY, "role_baby")
+        // The baby's first start opens its invite; the checklist (with the device check) is one
+        // step away in Settings.
+        awaitShown(Device.BABY, "baby_pair")
+        tap(Device.BABY, "baby_pair_cancel")
+        awaitShown(Device.BABY, "home")
+        tap(Device.BABY, "home_settings")
+        awaitShown(Device.BABY, "settings_open_setup")
+        tap(Device.BABY, "settings_open_setup")
         awaitShown(Device.BABY, "setup_title")
         stepUntil("the first device check finishes") {
             phones.baby.app.value.deviceCheck != DeviceCheck.UNKNOWN
@@ -245,7 +255,7 @@ class UiJourneyTest : JourneyHost() {
     }
 
     @Test
-    fun testAlertReachesTheParentPhoneWithTheTestBadge() {
+    fun testAlertReachesTheParentPhoneAsATest() {
         firstRunAndPair()
         tap(Device.PARENT, "parent_overflow")
         awaitShown(Device.PARENT, "parent_probe")

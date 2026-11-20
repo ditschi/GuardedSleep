@@ -1,4 +1,4 @@
-# AC-12 step 1 (both devices): fresh app, onboarding, then the gate's own relay and TURN through
+# AC-12 step 1 (both devices): fresh app, permission screen, role, then the gate's own relay and TURN through
 # Settings -> Advanced (design: gate-ui-journeys §2). Env: ROLE_TAG (role_baby|role_parent), RELAY,
 # TURN, TURN_USER, TURN_PASS. Ids only, never copy text (ADR-016).
 # Debug builds start with the project server in the relay list: the flow removes it, so the invite
@@ -8,41 +8,38 @@ appId: org.guardedsleep.app.dev
 - launchApp:
     clearState: true
 - runFlow: dismiss-system-dialogs.yaml
-# A slow emulator may raise the dialog while the app starts: look, dismiss, look again.
+# The first start shows the permission screen once, before the role choice (device-setup
+# "Permissions on first start"). The gate grants the runtime permissions with adb; Continue works
+# with every row left open. A slow emulator may raise a system dialog while the app starts: look,
+# dismiss, look again.
 - retry:
     maxRetries: 4
     commands:
       - runFlow: dismiss-system-dialogs.yaml
       - extendedWaitUntil:
           visible:
-            id: "role_baby|role_parent"
+            id: "permissions_continue"
           timeout: 15000
-- tapOn:
-    id: "${ROLE_TAG}"
-# The checklist scrolls; Continue is below the fold on a phone.
+# The list scrolls; Continue sits below the rows on a phone.
 - scrollUntilVisible:
     element:
-      id: "setup_continue"
+      id: "permissions_continue"
     visibilityPercentage: 20
     timeout: 20000
-# The device check row can still grow while it runs (mailbox lines, "Check again"), so Continue moves down:
-# scroll to the very end, then tap
-# until the pairing screen shows.
-- scroll
-- scroll
-- scroll
-- retry:
-    maxRetries: 4
-    commands:
-      # The button's centre can lie under the gesture bar: tap its upper part.
-      - tapOn:
-          id: "setup_continue"
-          point: "50%,15%"
-          optional: true
-      - extendedWaitUntil:
-          visible:
-            id: "baby_pair_cancel|parent_pair_cancel"
-          timeout: 6000
+- tapOn:
+    id: "permissions_continue"
+    point: "50%,15%"
+- extendedWaitUntil:
+    visible:
+      id: "role_baby|role_parent"
+    timeout: 15000
+- tapOn:
+    id: "${ROLE_TAG}"
+# The role choice goes straight to the pairing screen: no checklist in between.
+- extendedWaitUntil:
+    visible:
+      id: "baby_pair_cancel|parent_pair_cancel"
+    timeout: 15000
 - tapOn:
     id: "baby_pair_cancel|parent_pair_cancel"
 - tapOn:

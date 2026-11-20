@@ -9,6 +9,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -47,6 +48,7 @@ import org.guardedsleep.app.ui.common.BabyQuiet
 import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.Glyph
 import org.guardedsleep.app.ui.common.GlyphIcon
+import org.guardedsleep.app.ui.common.MicNeededNote
 import org.guardedsleep.app.ui.common.PrimaryButton
 import org.guardedsleep.app.ui.common.QuietButton
 import org.guardedsleep.app.ui.common.ScreenRoot
@@ -130,6 +132,8 @@ fun PairBabyScreen(controller: AppController) {
                         )
                     else -> Unit
                 }
+                // The microphone before the invite is used: the baby unit cannot start without it.
+                MicNeededNote("baby_pair_mic_needed")
                 if (payload != null && state.phase != PairingPhase.PAIRED) {
                     val qr = remember(payload, bright) { renderQr(payload, bright) }
                     val dimmed = expired || state.phase == PairingPhase.FAILED
@@ -245,6 +249,20 @@ fun PairBabyScreen(controller: AppController) {
                         stringResource(R.string.native_ui_pair_baby_waiting),
                         tag = "baby_pair_waiting",
                         color = Color(0xFFB0B0B0),
+                    )
+                }
+                // Battery safety advice for the baby unit (`device-setup` "Battery safety copy").
+                Column(
+                    Modifier.fillMaxWidth().testTag("baby_pair_safety"),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Body(
+                        stringResource(R.string.native_ui_setup_safety_body),
+                        color = Color(0xFFB0B0B0),
+                    )
+                    Body(
+                        stringResource(R.string.native_ui_setup_charging_tip),
+                        color = Color(0xFFD0D0D0),
                     )
                 }
                 QuietButton(

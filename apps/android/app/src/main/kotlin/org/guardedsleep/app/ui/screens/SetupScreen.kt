@@ -74,7 +74,7 @@ data class SetupChecks(val states: Map<SetupRow, RowState> = emptyMap()) {
 
 /** S02 (baby) / S03 (parent): one checklist screen, every row = status + button into the system. */
 @Composable
-fun SetupScreen(controller: AppController, role: Role, onboarding: Boolean, onBack: () -> Unit) {
+fun SetupScreen(controller: AppController, role: Role, onBack: () -> Unit) {
     val ctx = LocalContext.current
     val app = controller.app.collectAsState().value
     var refresh by remember { mutableIntStateOf(0) }
@@ -128,7 +128,7 @@ fun SetupScreen(controller: AppController, role: Role, onboarding: Boolean, onBa
                 SystemSettings.launch(ctx, SystemSettings.batteryOptimization(ctx))
         }
     }
-    BackHandler(enabled = !onboarding, onBack = onBack)
+    BackHandler(onBack = onBack)
     SetupContent(
         role = role,
         checks = checks,
@@ -139,14 +139,7 @@ fun SetupScreen(controller: AppController, role: Role, onboarding: Boolean, onBa
         talkBack = controller.settings.collectAsState().value.talkBackEnabled,
         onTalkBack = { on -> controller.updateSettings { it.copy(talkBackEnabled = on) } },
         onAction = onAction,
-        onContinue = {
-            if (onboarding) {
-                controller.completeOnboarding()
-                controller.startPairing()
-            } else {
-                onBack()
-            }
-        },
+        onContinue = onBack,
     )
 }
 
@@ -233,21 +226,6 @@ fun SetupContent(
                             "setup_talk_toggle",
                             onTalkBack,
                         )
-                    }
-                }
-                AppCard(Modifier.testTag("setup_row_safety")) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.Top,
-                    ) {
-                        GlyphIcon(Glyph.BATTERY, LocalAppColors.current.warn)
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Body(
-                                stringResource(R.string.native_ui_setup_safety_body),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Body(stringResource(R.string.native_ui_setup_charging_tip))
-                        }
                     }
                 }
                 DeviceCheckRow(

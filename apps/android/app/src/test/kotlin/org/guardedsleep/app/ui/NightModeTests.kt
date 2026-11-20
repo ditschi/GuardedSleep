@@ -56,6 +56,7 @@ class NightModeTests : ShotBase() {
         AppState(
             role = Role.PARENT,
             onboardingDone = true,
+            permissionsIntroDone = true,
             paired = true,
             peerName = "Nursery",
         )
@@ -176,7 +177,13 @@ class NightModeTests : ShotBase() {
         runAndroidComposeUiTest<ComponentActivity> {
             val c =
                 FakeAppController(
-                    app = AppState(role = Role.BABY, onboardingDone = true, paired = true),
+                    app =
+                        AppState(
+                            role = Role.BABY,
+                            onboardingDone = true,
+                            permissionsIntroDone = true,
+                            paired = true,
+                        ),
                     settings = SettingsState(nightMode = NightMode.ON),
                 )
             setContent {

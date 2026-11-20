@@ -813,6 +813,24 @@
         "nightA11yAuto": "Mod noapte: automat",
         "nightOn": "Pornit",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Permite ce are nevoie GuardedSleep",
+        "intro": "Fă asta o singură dată acum și nimic nu te va întrerupe mai târziu. Poți amâna oricare element.",
+        "allowAll": "Permite tot",
+        "mic": {
+          "title": "Microfon",
+          "why": "Permite dispozitivului copilului să audă camera și ție să vorbești cu copilul de pe dispozitivul părintelui."
+        },
+        "camera": {
+          "title": "Cameră",
+          "why": "Doar pentru a citi codul de asociere de pe celălalt dispozitiv. Nu se înregistrează nimic."
+        },
+        "dnd": {
+          "title": "Acces la Nu deranja",
+          "why": "Lasă alertele să ajungă la dispozitivul părintelui și ține dispozitivul copilului liniștit noaptea."
+        },
+        "micNeeded": "Fără microfon acest dispozitiv nu poate asculta. Permite-l pentru a porni monitorizarea."
       }
     }
   },

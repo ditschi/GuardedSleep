@@ -5,12 +5,15 @@ import org.guardedsleep.app.ui.model.Role
 
 /** The user flows the journeys share, each a sequence of taps and waits by test tag. */
 
-/** The first-start choice of [device]: choose [role] and finish the setup checklist. */
+/**
+ * The first start of [device]: leave the permission screen with everything put off (Continue), then
+ * choose [role]; the pairing screen of the role follows without another checklist.
+ */
 fun JourneyHost.chooseRoleAndFinishSetup(device: Device, role: Role) {
+    awaitShown(device, "permissions_screen")
+    tap(device, "permissions_continue")
     awaitShown(device, "role_title")
     tap(device, if (role == Role.BABY) "role_baby" else "role_parent")
-    awaitShown(device, "setup_title")
-    tap(device, "setup_continue")
 }
 
 /**

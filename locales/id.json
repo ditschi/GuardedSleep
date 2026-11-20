@@ -813,6 +813,24 @@
         "nightA11yAuto": "Mode malam: otomatis",
         "nightOn": "Hidup",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Izinkan yang dibutuhkan GuardedSleep",
+        "intro": "Lakukan sekali sekarang agar tidak terganggu nanti. Setiap item boleh ditunda.",
+        "allowAll": "Izinkan semua",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Membuat perangkat bayi mendengar ruangan dan memungkinkan Anda berbicara dengan anak dari perangkat orang tua."
+        },
+        "camera": {
+          "title": "Kamera",
+          "why": "Hanya untuk membaca kode pemasangan di perangkat lain. Tidak ada yang direkam."
+        },
+        "dnd": {
+          "title": "Akses Jangan Ganggu",
+          "why": "Membuat peringatan sampai ke perangkat orang tua dan menjaga perangkat bayi tetap senyap di malam hari."
+        },
+        "micNeeded": "Tanpa mikrofon, perangkat ini tidak dapat mendengarkan. Izinkan untuk mulai memantau."
       }
     }
   },

@@ -12,18 +12,16 @@ appId: org.guardedsleep.app.dev
     id: "sheet_probe_run"
 - extendedWaitUntil:
     visible:
-      id: "sheet_probe_question|alert_stop_sound"
+      id: "sheet_probe_question|test_alert_ok"
     timeout: 40000
-# If the full-screen alert did take the screen, silence it and come back to the app.
+# If the full-screen test confirmation did take the screen, OK ends the test and returns to the app.
 - runFlow:
     when:
       visible:
-        id: "alert_stop_sound"
+        id: "test_alert_ok"
     commands:
       - tapOn:
-          id: "alert_stop_sound"
-      - tapOn:
-          id: "alert_open_app"
+          id: "test_alert_ok"
 - extendedWaitUntil:
     visible:
       id: "sheet_probe_question"

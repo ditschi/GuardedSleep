@@ -813,6 +813,24 @@
         "nightA11yAuto": "Modo noturno: automático",
         "nightOn": "Ligado",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Permitir o que o GuardedSleep precisa",
+        "intro": "Faça isto uma vez agora e nada o vai interromper depois. Pode adiar qualquer item.",
+        "allowAll": "Permitir tudo",
+        "mic": {
+          "title": "Microfone",
+          "why": "Permite que o aparelho do bebê oiça o quarto e que fale com o seu filho a partir do aparelho dos pais."
+        },
+        "camera": {
+          "title": "Câmara",
+          "why": "Apenas para ler o código de emparelhamento no outro aparelho. Nada é gravado."
+        },
+        "dnd": {
+          "title": "Acesso a Não incomodar",
+          "why": "Permite que os alertas cheguem ao aparelho dos pais e mantém o do bebê em silêncio à noite."
+        },
+        "micNeeded": "Sem o microfone este aparelho não pode ouvir. Permita-o para iniciar a vigilância."
       }
     }
   },

@@ -263,6 +263,28 @@ class SetupHomeSettingsShots : ShotBase() {
     }
 
     @Test
+    fun permissionsScreen() {
+        val rows = org.guardedsleep.app.ui.screens.permissionRows(35)
+        for (locale in listOf("en", "de")) {
+            shot("permissions/fresh", locale, null) {
+                org.guardedsleep.app.ui.screens.PermissionsContent(
+                    rows,
+                    rows.associateWith {
+                        if (it == org.guardedsleep.app.ui.screens.PermissionRow.CAMERA)
+                            RowState.DONE
+                        else RowState.TODO
+                    },
+                    setOf("dnd"),
+                    {},
+                    {},
+                    {},
+                    {},
+                )
+            }
+        }
+    }
+
+    @Test
     fun roleScreen() {
         shot("role/role", "en", null) { RoleScreen(FakeAppController(app = AppState())) }
         shot("role/role", "de", null) { RoleScreen(FakeAppController(app = AppState())) }

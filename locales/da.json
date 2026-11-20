@@ -813,6 +813,24 @@
         "nightA11yAuto": "Nattilstand: automatisk",
         "nightOn": "Til",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Tillad det, GuardedSleep har brug for",
+        "intro": "Gør det én gang nu, så bliver du ikke afbrudt senere. Du kan udsætte hvert punkt.",
+        "allowAll": "Tillad alle",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Lader babyenheden høre rummet og lader dig tale til dit barn fra forældreenheden."
+        },
+        "camera": {
+          "title": "Kamera",
+          "why": "Kun til at læse parringskoden på den anden enhed. Intet optages."
+        },
+        "dnd": {
+          "title": "Adgang til Forstyr ikke",
+          "why": "Lader alarmer nå forældreenheden og holder babyenheden stille om natten."
+        },
+        "micNeeded": "Uden mikrofon kan denne enhed ikke lytte. Tillad den for at starte overvågningen."
       }
     }
   },

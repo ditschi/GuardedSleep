@@ -817,6 +817,24 @@
         "nightA11yAuto": "Nachtmodus: automatisch",
         "nightOn": "An",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Erlauben, was GuardedSleep braucht",
+        "intro": "Einmal jetzt erledigen, dann stört später nichts. Jeden Punkt können Sie auf später verschieben.",
+        "allowAll": "Alles erlauben",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Damit das Babygerät den Raum hört und Sie vom Elterngerät aus zu Ihrem Kind sprechen können."
+        },
+        "camera": {
+          "title": "Kamera",
+          "why": "Nur um den Kopplungscode auf dem anderen Gerät zu lesen. Es wird nichts aufgenommen."
+        },
+        "dnd": {
+          "title": "Zugriff auf „Nicht stören“",
+          "why": "Damit Alarme am Elterngerät durchkommen und das Babygerät nachts still bleibt."
+        },
+        "micNeeded": "Ohne Mikrofon kann dieses Gerät nicht lauschen. Erlauben Sie es, um die Überwachung zu starten."
       }
     }
   },

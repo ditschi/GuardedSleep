@@ -813,6 +813,24 @@
         "nightA11yAuto": "Gece modu: otomatik",
         "nightOn": "Açık",
         "nightAuto": "Otomatik"
+      },
+      "permissions": {
+        "title": "GuardedSleep'in ihtiyaç duyduklarına izin verin",
+        "intro": "Bunu şimdi bir kez yapın, sonra hiçbir şey sizi bölmesin. Her öğeyi sonraya bırakabilirsiniz.",
+        "allowAll": "Hepsine izin ver",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Bebek cihazının odayı duymasını ve ebeveyn cihazından çocuğunuzla konuşmanızı sağlar."
+        },
+        "camera": {
+          "title": "Kamera",
+          "why": "Yalnızca diğer cihazdaki eşleştirme kodunu okumak için. Hiçbir şey kaydedilmez."
+        },
+        "dnd": {
+          "title": "Rahatsız Etme erişimi",
+          "why": "Uyarıların ebeveyn cihazına ulaşmasını sağlar ve bebek cihazını geceleri sessiz tutar."
+        },
+        "micNeeded": "Mikrofon olmadan bu cihaz dinleyemez. İzleme başlatmak için izin verin."
       }
     }
   },

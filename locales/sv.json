@@ -813,6 +813,24 @@
         "nightA11yAuto": "Nattläge: automatiskt",
         "nightOn": "På",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Tillåt det GuardedSleep behöver",
+        "intro": "Gör det en gång nu, så avbryts du inte senare. Du kan skjuta upp varje punkt.",
+        "allowAll": "Tillåt alla",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Låter barnenheten höra rummet och låter dig tala med ditt barn från föräldraenheten."
+        },
+        "camera": {
+          "title": "Kamera",
+          "why": "Bara för att läsa parkopplingskoden på den andra enheten. Inget spelas in."
+        },
+        "dnd": {
+          "title": "Åtkomst till Stör ej",
+          "why": "Låter larm nå föräldraenheten och håller barnenheten tyst på natten."
+        },
+        "micNeeded": "Utan mikrofon kan den här enheten inte lyssna. Tillåt den för att starta övervakningen."
       }
     }
   },

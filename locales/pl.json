@@ -813,6 +813,24 @@
         "nightA11yAuto": "Tryb nocny: automatyczny",
         "nightOn": "Wł.",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Zezwól na to, czego potrzebuje GuardedSleep",
+        "intro": "Zrób to raz teraz, a nic nie przerwie Ci później. Każdy punkt możesz odłożyć.",
+        "allowAll": "Zezwól na wszystko",
+        "mic": {
+          "title": "Mikrofon",
+          "why": "Pozwala urządzeniu dziecka słyszeć pokój, a Tobie mówić do dziecka z urządzenia rodzica."
+        },
+        "camera": {
+          "title": "Aparat",
+          "why": "Tylko do odczytania kodu parowania na drugim urządzeniu. Nic nie jest nagrywane."
+        },
+        "dnd": {
+          "title": "Dostęp do trybu Nie przeszkadzać",
+          "why": "Dzięki temu alerty docierają na urządzenie rodzica, a urządzenie dziecka milczy w nocy."
+        },
+        "micNeeded": "Bez mikrofonu to urządzenie nie może nasłuchiwać. Zezwól na niego, aby rozpocząć monitorowanie."
       }
     }
   },

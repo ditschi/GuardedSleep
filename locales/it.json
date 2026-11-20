@@ -813,6 +813,24 @@
         "nightA11yAuto": "Modalità notte: automatica",
         "nightOn": "Attiva",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Consenti ciò che serve a GuardedSleep",
+        "intro": "Fallo una volta ora e nulla ti interromperà dopo. Puoi rimandare ogni voce.",
+        "allowAll": "Consenti tutto",
+        "mic": {
+          "title": "Microfono",
+          "why": "Permette al dispositivo del bambino di sentire la stanza e a te di parlare con tuo figlio dal dispositivo del genitore."
+        },
+        "camera": {
+          "title": "Fotocamera",
+          "why": "Solo per leggere il codice di abbinamento sull'altro dispositivo. Non viene registrato nulla."
+        },
+        "dnd": {
+          "title": "Accesso a Non disturbare",
+          "why": "Fa arrivare gli avvisi sul dispositivo del genitore e tiene silenzioso quello del bambino di notte."
+        },
+        "micNeeded": "Senza il microfono questo dispositivo non può ascoltare. Consentilo per avviare il monitoraggio."
       }
     }
   },

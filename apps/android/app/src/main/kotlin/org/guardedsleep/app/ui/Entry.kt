@@ -43,6 +43,7 @@ import org.guardedsleep.app.ui.screens.PairBabyScreen
 import org.guardedsleep.app.ui.screens.PairParentScreen
 import org.guardedsleep.app.ui.screens.ParentMonitorScreen
 import org.guardedsleep.app.ui.screens.ParentSheet
+import org.guardedsleep.app.ui.screens.PermissionsScreen
 import org.guardedsleep.app.ui.screens.RoleScreen
 import org.guardedsleep.app.ui.screens.SettingsPage
 import org.guardedsleep.app.ui.screens.SettingsScreen
@@ -103,23 +104,36 @@ private fun AppNavigator(controller: AppController) {
     // connection starts a fresh entry.
     var autoScanned by
         rememberSaveable(role, app.parentConnections.isEmpty()) { mutableStateOf(false) }
+    // The baby unit's first start goes straight to its invite once, as the old post-role checklist
+    // did; cancelling lands on Home, which never reopens it for this entry.
+    var babyInviteOpened by
+        rememberSaveable(role, app.babyConnections.isEmpty()) { mutableStateOf(false) }
+    LaunchedEffect(role, app.babyConnections.isEmpty(), app.permissionsIntroDone) {
+        if (
+            role == Role.BABY &&
+                app.permissionsIntroDone &&
+                app.babyConnections.isEmpty() &&
+                !app.monitoring &&
+                pairing == null &&
+                !babyInviteOpened
+        ) {
+            babyInviteOpened = true
+            controller.startPairing()
+        }
+    }
     // Any open scan screen (the auto-scan itself or the home button) counts as this entry's scan,
     // so cancelling it does not rescan.
     LaunchedEffect(pairing != null) { if (pairing != null) autoScanned = true }
 
     when {
+        // One permission screen before anything else, once (`device-setup` "Permissions on first
+        // start"); the role choice and the pairing follow without another checklist.
+        !app.permissionsIntroDone -> PermissionsScreen(controller)
         firstStart -> RoleScreen(controller)
         role == Role.BABY && app.monitoring && baby.kioskLocked -> BabyKioskScreen(controller)
-        role != null && !app.onboardingDone ->
-            SetupScreen(controller, role, onboarding = true, onBack = {})
         overlay == Overlay.SETUP ->
             WithStatusBar(controller) {
-                SetupScreen(
-                    controller,
-                    app.viewRole,
-                    onboarding = false,
-                    onBack = { overlay = Overlay.SETTINGS },
-                )
+                SetupScreen(controller, app.viewRole, onBack = { overlay = Overlay.SETTINGS })
             }
         overlay == Overlay.ALARM_TONE ->
             WithStatusBar(controller) {

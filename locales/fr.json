@@ -817,6 +817,24 @@
         "nightA11yAuto": "Mode nuit : automatique",
         "nightOn": "Activé",
         "nightAuto": "Auto"
+      },
+      "permissions": {
+        "title": "Autoriser ce dont GuardedSleep a besoin",
+        "intro": "Faites-le une fois maintenant, rien ne vous interrompra ensuite. Vous pouvez reporter chaque point.",
+        "allowAll": "Tout autoriser",
+        "mic": {
+          "title": "Microphone",
+          "why": "Permet à l'appareil du bébé d'entendre la pièce et de parler à votre enfant depuis l'appareil parent."
+        },
+        "camera": {
+          "title": "Appareil photo",
+          "why": "Uniquement pour lire le code d'appairage de l'autre appareil. Rien n'est enregistré."
+        },
+        "dnd": {
+          "title": "Accès à « Ne pas déranger »",
+          "why": "Permet aux alertes d'arriver sur l'appareil parent et garde l'appareil du bébé silencieux la nuit."
+        },
+        "micNeeded": "Sans microphone, cet appareil ne peut pas écouter. Autorisez-le pour démarrer la surveillance."
       }
     }
   },

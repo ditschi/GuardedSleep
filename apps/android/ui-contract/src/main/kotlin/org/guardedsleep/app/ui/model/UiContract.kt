@@ -597,6 +597,16 @@ data class AppState(
     /** "Start mode": the role a start without monitoring opens in; null asks every time. */
     val defaultRole: Role? = null,
     val onboardingDone: Boolean = false,
+    /**
+     * The first-start permission screen was left (every row allowed or put off): it never shows
+     * again, later requests come only from the feature that needs the permission.
+     */
+    val permissionsIntroDone: Boolean = false,
+    /**
+     * A baby start was refused because the microphone is not allowed (it clears once the permission
+     * is granted): Home explains why and offers the permission again.
+     */
+    val microphoneNeeded: Boolean = false,
     /** A saved pairing exists (home screen shows one-tap start). */
     val paired: Boolean = false,
     val peerName: String? = null,
@@ -701,6 +711,9 @@ interface AppController {
     fun setDefaultRole(role: Role?)
 
     fun completeOnboarding()
+
+    /** Leaves the first-start permission screen for good; also marks [completeOnboarding]. */
+    fun completePermissionsIntro()
 
     /**
      * Baby: runs the device check in the background; the result lands in [AppState]. A result

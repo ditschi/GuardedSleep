@@ -30,6 +30,7 @@ import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.Glyph
 import org.guardedsleep.app.ui.common.GlyphButton
 import org.guardedsleep.app.ui.common.GlyphIcon
+import org.guardedsleep.app.ui.common.MicNeededNote
 import org.guardedsleep.app.ui.common.QuietButton
 import org.guardedsleep.app.ui.common.ScreenRoot
 import org.guardedsleep.app.ui.common.ScrollColumn
@@ -163,6 +164,7 @@ fun HomeScreen(
                 Role.BABY,
                 app.babyConnections,
                 canAdd = true,
+                micNeeded = app.microphoneNeeded,
             )
             QuietButton(
                 stringResource(
@@ -198,6 +200,8 @@ private fun HomeRole(
     canAdd: Boolean,
     /** `parent-alerts` "Vibrate-only reminder at start": a line under the connections. */
     vibrateOnly: Boolean = false,
+    /** A baby start was refused for the microphone: say why and offer it again. */
+    micNeeded: Boolean = false,
 ) {
     val key = role.name.lowercase()
     val isParent = role == Role.PARENT
@@ -230,6 +234,7 @@ private fun HomeRole(
             }
         }
     }
+    if (micNeeded) MicNeededNote("home_mic_needed")
     if (vibrateOnly && connections.isNotEmpty()) {
         Body(
             stringResource(R.string.native_ui_home_vibrate_only),

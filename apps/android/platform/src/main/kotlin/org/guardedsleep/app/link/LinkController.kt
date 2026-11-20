@@ -124,6 +124,9 @@ class LinkController(
     // whether a check of the current generation is in flight.
     private var deviceCheckGen = 0
     private var deviceCheckResult: DeviceCheckResult? = null
+
+    /** A baby start was refused for the missing microphone (shown by Home until it is allowed). */
+    @Volatile private var babyStartRefusedForMic = false
     private var deviceCheckInFlight = false
     private var deviceCheckAtMs = 0L
     private val appLock = Any()
@@ -349,6 +352,11 @@ class LinkController(
 
     override fun completeOnboarding() {
         settingsRepo.update { it.copy(onboardingDone = true) }
+        refreshApp()
+    }
+
+    override fun completePermissionsIntro() {
+        settingsRepo.update { it.copy(onboardingDone = true, permissionsIntroDone = true) }
         refreshApp()
     }
 
@@ -694,6 +702,8 @@ class LinkController(
                     lastRole = p.lastRole,
                     defaultRole = p.defaultRole,
                     onboardingDone = p.onboardingDone,
+                    permissionsIntroDone = p.permissionsIntroDone,
+                    microphoneNeeded = babyStartRefusedForMic && !talkGate.micPermission(),
                     paired = connections.isNotEmpty(),
                     peerName = connections.firstOrNull { it.selected }?.name ?: p.peerName,
                     connections = connections,
@@ -825,6 +835,15 @@ class LinkController(
     // ---- monitoring --------------------------------------------------------------------------
 
     override fun startMonitoring() {
+        // A baby unit without the microphone could only watch silence: it never starts
+        // (`device-setup` "No later permission prompts"); the screens ask for the permission.
+        if (settingsRepo.current.role == Role.BABY && !talkGate.micPermission()) {
+            PocLog.event("baby_start_refused", "reason" to "no_microphone")
+            babyStartRefusedForMic = true
+            refreshApp()
+            return
+        }
+        babyStartRefusedForMic = false
         // The session's connection stays fixed while monitoring runs, also over a restart.
         val id = settingsRepo.current.role?.let(::activeId)
         settingsRepo.update { it.copy(monitoringActive = true, pairingId = id ?: it.pairingId) }

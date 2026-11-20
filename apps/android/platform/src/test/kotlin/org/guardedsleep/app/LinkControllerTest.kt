@@ -195,6 +195,37 @@ class LinkControllerTest {
     }
 
     @Test
+    fun completingThePermissionIntroMarksItAndTheOnboarding() {
+        val c = unit("intro", null).controller
+        assertEquals(false, c.app.value.permissionsIntroDone)
+        c.completePermissionsIntro()
+        assertEquals(true, c.app.value.permissionsIntroDone)
+        assertEquals(true, c.app.value.onboardingDone)
+    }
+
+    @Test
+    fun aBabyStartWithoutTheMicrophoneIsRefusedAndExplainedUntilItIsAllowed() {
+        var mic = false
+        val gate =
+            object : TalkGate {
+                override fun micPermission() = mic
+
+                override fun deviceUnlocked() = true
+            }
+        val starts = java.util.concurrent.atomic.AtomicInteger()
+        val baby = unit("nomic", Role.BABY, talkGate = gate, hostStarts = starts)
+        baby.controller.startMonitoring()
+        assertEquals(0, starts.get())
+        assertEquals(false, baby.controller.app.value.monitoring)
+        assertEquals(true, baby.controller.app.value.microphoneNeeded)
+        mic = true
+        baby.controller.startMonitoring()
+        assertEquals(1, starts.get())
+        assertEquals(true, baby.controller.app.value.monitoring)
+        assertEquals(false, baby.controller.app.value.microphoneNeeded)
+    }
+
+    @Test
     fun turnServerIsSealedAndMirroredWithoutPassword() {
         val u = unit("turn1", Role.PARENT)
         val c = u.controller

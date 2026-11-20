@@ -102,7 +102,7 @@ class DebugLaunchActivity : Activity() {
         }
         controller.stopMonitoring()
         controller.chooseRole(role)
-        controller.completeOnboarding()
+        controller.completePermissionsIntro()
         // The mailbox set of the record, as an invite would have put it there: the core opens
         // nothing that the record does not hold.
         val mailboxes = storedMailboxesFor(urls)
