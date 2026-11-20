@@ -228,6 +228,23 @@ fun SetupContent(
                         )
                     }
                 }
+                // Battery safety advice (`device-setup` "Battery safety copy"); the baby pairing screen
+                // shows it too.
+                AppCard(Modifier.testTag("setup_row_safety")) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        GlyphIcon(Glyph.BATTERY, LocalAppColors.current.warn)
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Body(
+                                stringResource(R.string.native_ui_setup_safety_body),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Body(stringResource(R.string.native_ui_setup_charging_tip))
+                        }
+                    }
+                }
                 DeviceCheckRow(
                     deviceCheck,
                     deviceCheckReasons,

@@ -10,6 +10,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.runComposeUiTest
 import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.LocalUiEnv
@@ -85,5 +86,11 @@ class DeviceCheckCopyTest : ShotBase() {
         onNodeWithText(str(R.string.native_ui_setup_device_check_connection_fails))
             .assertIsDisplayed()
         onNodeWithText("gs.mydata.rocks", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun theBabyChecklistShowsTheBatterySafetyAdvice() = runComposeUiTest {
+        showCheck(emptyList())
+        onNodeWithTag("setup_row_safety").performScrollTo().assertIsDisplayed()
     }
 }
