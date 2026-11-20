@@ -180,6 +180,11 @@ interface Run {
 /** Length of the core's CSPRNG seed (the seed field of the link config, sent as hex). */
 const SEED_BYTES = 32;
 
+/** The browser has not allowed the microphone; "unknown" decides at the start as before. */
+function micBlocked(state: MicrophonePermission): boolean {
+  return state === "prompt" || state === "denied";
+}
+
 function toHex(bytes: Uint8Array): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
@@ -436,7 +441,7 @@ export class WebController implements AppController {
     const gen = ++this.pairGate;
     void mic.query().then((state) => {
       if (gen !== this.pairGate) return;
-      if (state === "prompt" || state === "denied") {
+      if (micBlocked(state)) {
         this.cancelPairing();
         this.pairGate = gen;
         this.pairingStore.set(makePairingState("needs_microphone"));
@@ -544,7 +549,7 @@ export class WebController implements AppController {
     }
     // Baby without the browser's microphone permission: nothing starts; the screen says why.
     void mic.query().then((state) => {
-      const blocked = state === "prompt" || state === "denied";
+      const blocked = micBlocked(state);
       this.setApp({ microphoneNeeded: blocked });
       if (!blocked) this.beginMonitoring();
     });
