@@ -252,7 +252,8 @@
         "autolockHint": "Ekran zgaśnie za {seconds} s",
         "stop": "Zatrzymaj monitorowanie",
         "micLevel": "Poziom dźwięku tutaj",
-        "micSilent": "Mikrofon nie wychwytuje żadnego dźwięku. Uruchom monitorowanie ponownie lub sprawdź mikrofon."
+        "micSilent": "Mikrofon nie wychwytuje żadnego dźwięku. Uruchom monitorowanie ponownie lub sprawdź mikrofon.",
+        "micMissing": "To urządzenie dziecka nie usłyszy Twojego dziecka bez mikrofonu. Zezwól na niego, aby pokazać kod i zacząć."
       },
       "kiosk": {
         "a11yLabel": "Monitorowanie. Ekran zablokowany.",
@@ -829,8 +830,7 @@
         "dnd": {
           "title": "Dostęp do trybu Nie przeszkadzać",
           "why": "Dzięki temu alerty docierają na urządzenie rodzica, a urządzenie dziecka milczy w nocy."
-        },
-        "micNeeded": "Bez mikrofonu to urządzenie nie może nasłuchiwać. Zezwól na niego, aby rozpocząć monitorowanie."
+        }
       }
     }
   },

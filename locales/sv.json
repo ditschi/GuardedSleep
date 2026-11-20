@@ -252,7 +252,8 @@
         "autolockHint": "Skärmen mörknar om {seconds} s",
         "stop": "Sluta övervaka",
         "micLevel": "Ljudnivå här",
-        "micSilent": "Mikrofonen fångar inget ljud. Starta om övervakningen eller kontrollera mikrofonen."
+        "micSilent": "Mikrofonen fångar inget ljud. Starta om övervakningen eller kontrollera mikrofonen.",
+        "micMissing": "Den här barnenheten kan inte höra ditt barn utan mikrofonen. Tillåt den för att visa koden och starta."
       },
       "kiosk": {
         "a11yLabel": "Övervakar. Skärmen är låst.",
@@ -829,8 +830,7 @@
         "dnd": {
           "title": "Åtkomst till Stör ej",
           "why": "Låter larm nå föräldraenheten och håller barnenheten tyst på natten."
-        },
-        "micNeeded": "Utan mikrofon kan den här enheten inte lyssna. Tillåt den för att starta övervakningen."
+        }
       }
     }
   },

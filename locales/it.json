@@ -252,7 +252,8 @@
         "autolockHint": "Lo schermo si spegne tra {seconds} s",
         "stop": "Interrompi il monitoraggio",
         "micLevel": "Livello sonoro qui",
-        "micSilent": "Il microfono non rileva alcun suono. Riavvia il monitoraggio o controlla il microfono."
+        "micSilent": "Il microfono non rileva alcun suono. Riavvia il monitoraggio o controlla il microfono.",
+        "micMissing": "Questo dispositivo del bambino non può sentire tuo figlio senza il microfono. Consentilo per mostrare il codice e avviare."
       },
       "kiosk": {
         "a11yLabel": "Monitoraggio in corso. Schermo bloccato.",
@@ -829,8 +830,7 @@
         "dnd": {
           "title": "Accesso a Non disturbare",
           "why": "Fa arrivare gli avvisi sul dispositivo del genitore e tiene silenzioso quello del bambino di notte."
-        },
-        "micNeeded": "Senza il microfono questo dispositivo non può ascoltare. Consentilo per avviare il monitoraggio."
+        }
       }
     }
   },

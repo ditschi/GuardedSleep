@@ -26,17 +26,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AppCard
+import org.guardedsleep.app.ui.common.BabyPermissionCards
 import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.Glyph
 import org.guardedsleep.app.ui.common.GlyphButton
 import org.guardedsleep.app.ui.common.GlyphIcon
-import org.guardedsleep.app.ui.common.MicNeededNote
 import org.guardedsleep.app.ui.common.QuietButton
 import org.guardedsleep.app.ui.common.ScreenRoot
 import org.guardedsleep.app.ui.common.ScrollColumn
 import org.guardedsleep.app.ui.common.SecondaryButton
 import org.guardedsleep.app.ui.common.Title
 import org.guardedsleep.app.ui.common.connectionLabel
+import org.guardedsleep.app.ui.common.rememberMicrophoneGranted
 import org.guardedsleep.app.ui.model.AlertStyle
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.ConnectionUi
@@ -223,9 +224,12 @@ private fun HomeRole(
             )
         )
     }
+    // The baby unit's permission cards before it starts: the microphone one blocks the start rows.
+    val micBlocked = !isParent && micNeeded && !rememberMicrophoneGranted()
+    if (!isParent) BabyPermissionCards(tag = "home_baby_gate")
     if (connections.isEmpty()) {
         Body(stringResource(R.string.native_ui_home_empty), tag = "home_empty_$key")
-    } else {
+    } else if (!micBlocked) {
         AppCard(Modifier.testTag("home_connections_$key")) {
             connections.forEach { c ->
                 ConnectionRow(role, c, connectionLabel(c, connections, role)) {
@@ -234,7 +238,6 @@ private fun HomeRole(
             }
         }
     }
-    if (micNeeded) MicNeededNote("home_mic_needed")
     if (vibrateOnly && connections.isNotEmpty()) {
         Body(
             stringResource(R.string.native_ui_home_vibrate_only),

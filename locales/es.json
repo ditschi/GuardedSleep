@@ -252,7 +252,8 @@
         "autolockHint": "La pantalla se oscurece en {seconds} s",
         "stop": "Detener la vigilancia",
         "micLevel": "Nivel de sonido aquí",
-        "micSilent": "El micrófono no capta ningún sonido. Reinicie la vigilancia o revise el micrófono."
+        "micSilent": "El micrófono no capta ningún sonido. Reinicie la vigilancia o revise el micrófono.",
+        "micMissing": "Este dispositivo del bebé no puede oír a tu hijo sin el micrófono. Permítelo para mostrar el código y empezar."
       },
       "kiosk": {
         "a11yLabel": "Vigilando. Pantalla bloqueada.",
@@ -833,8 +834,7 @@
         "dnd": {
           "title": "Acceso a No molestar",
           "why": "Permite que las alertas lleguen al dispositivo de los padres y mantiene en silencio el del bebé por la noche."
-        },
-        "micNeeded": "Sin el micrófono este dispositivo no puede escuchar. Permítelo para empezar a vigilar."
+        }
       }
     }
   },

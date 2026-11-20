@@ -251,7 +251,8 @@
         "autolockHint": "The screen goes dark in {seconds} s",
         "stop": "Stop monitoring",
         "micLevel": "Sound level here",
-        "micSilent": "The microphone isn't picking up any sound. Restart monitoring or check the microphone."
+        "micSilent": "The microphone isn't picking up any sound. Restart monitoring or check the microphone.",
+        "micMissing": "This baby device can't hear your child without the microphone. Allow it to show the code and start."
       },
       "kiosk": {
         "a11yLabel": "Monitoring. Screen locked.",
@@ -832,8 +833,7 @@
         "dnd": {
           "title": "Do Not Disturb access",
           "why": "Lets alerts get through on the parent device, and keeps the baby device quiet at night."
-        },
-        "micNeeded": "Without the microphone this device cannot listen. Allow it to start monitoring."
+        }
       }
     }
   },

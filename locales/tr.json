@@ -252,7 +252,8 @@
         "autolockHint": "Ekran {seconds} sn içinde kararacak",
         "stop": "İzlemeyi durdur",
         "micLevel": "Buradaki ses düzeyi",
-        "micSilent": "Mikrofon hiç ses almıyor. İzlemeyi yeniden başlatın veya mikrofonu kontrol edin."
+        "micSilent": "Mikrofon hiç ses almıyor. İzlemeyi yeniden başlatın veya mikrofonu kontrol edin.",
+        "micMissing": "Bu bebek cihazı mikrofon olmadan çocuğunuzu duyamaz. Kodu göstermek ve başlamak için izin verin."
       },
       "kiosk": {
         "a11yLabel": "İzleniyor. Ekran kilitli.",
@@ -829,8 +830,7 @@
         "dnd": {
           "title": "Rahatsız Etme erişimi",
           "why": "Uyarıların ebeveyn cihazına ulaşmasını sağlar ve bebek cihazını geceleri sessiz tutar."
-        },
-        "micNeeded": "Mikrofon olmadan bu cihaz dinleyemez. İzleme başlatmak için izin verin."
+        }
       }
     }
   },

@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -21,7 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import org.guardedsleep.app.contract.R
-import org.guardedsleep.app.ui.theme.LocalAppColors
+import org.guardedsleep.app.ui.model.Banner
+import org.guardedsleep.app.ui.model.BannerKind
 
 /**
  * Requests one runtime permission. When the system shows no dialog any more (a repeated refusal:
@@ -66,25 +68,63 @@ fun rememberMicrophoneGranted(): Boolean {
 }
 
 /**
- * Why this device cannot start listening and a way to allow the microphone (the system dialog, or
- * the app's settings after a repeated refusal). Shows nothing while the microphone is allowed.
+ * The baby unit's permission cards before it connects (`device-setup` "Baby unit permission gate
+ * before connecting"): the microphone card blocks (the caller shows no code and starts nothing
+ * while it is up, [blockingMic] tells it so), the background-operation and Do Not Disturb cards
+ * only warn. Same look as the parent's readiness banners (safety colours); every card names its
+ * reason and has a fix action. Shows nothing for a permission that is allowed.
  */
 @Composable
-fun MicNeededNote(tag: String, modifier: Modifier = Modifier) {
-    val granted = rememberMicrophoneGranted()
-    var tick by remember { mutableIntStateOf(0) }
-    val request = rememberPermissionRequest(Manifest.permission.RECORD_AUDIO) { tick++ }
-    if (granted) return
-    Column(modifier.testTag(tag), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Body(
-            stringResource(R.string.native_ui_permissions_mic_needed),
-            tag = tag + "_text",
-            color = LocalAppColors.current.warn,
-        )
-        SecondaryButton(
-            stringResource(R.string.native_ui_common_allow),
-            request,
-            tag + "_allow",
-        )
+fun BabyPermissionCards(modifier: Modifier = Modifier, tag: String = "baby_gate") {
+    val ctx = LocalContext.current
+    var refresh by remember { mutableIntStateOf(0) }
+    LifecycleResumeEffect(Unit) {
+        refresh++
+        onPauseOrDispose {}
+    }
+    val micGranted = remember(refresh) { micAllowed(ctx) }
+    val request = rememberPermissionRequest(Manifest.permission.RECORD_AUDIO) { refresh++ }
+    val background = remember(refresh) { SystemSettings.batteryUnrestricted(ctx) }
+    val dnd = remember(refresh) { SystemSettings.dndAccessGranted(ctx) }
+    if (micGranted && background && dnd) return
+    val fix = stringResource(R.string.native_ui_common_allow)
+    val fixOther = stringResource(R.string.native_ui_banner_fix)
+    Column(modifier.fillMaxWidth().testTag(tag), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (!micGranted)
+            BannerCard(
+                BannerSpec(
+                    Banner(BannerKind.MIC_SILENT, "${tag}_mic"),
+                    stringResource(R.string.native_ui_baby_mic_missing),
+                    glyph = Glyph.MIC,
+                    actionLabel = fix,
+                    onAction = request,
+                )
+            )
+        if (!background)
+            BannerCard(
+                BannerSpec(
+                    Banner(BannerKind.READINESS, "${tag}_background"),
+                    stringResource(R.string.native_ui_setup_device_check_battery_optimized),
+                    glyph = Glyph.BATTERY,
+                    actionLabel = fixOther,
+                    onAction = {
+                        SystemSettings.launch(ctx, SystemSettings.batteryOptimization(ctx))
+                    },
+                )
+            )
+        if (!dnd)
+            BannerCard(
+                BannerSpec(
+                    Banner(BannerKind.READINESS, "${tag}_dnd"),
+                    stringResource(R.string.native_ui_setup_device_check_dnd_access_missing),
+                    glyph = Glyph.BELL,
+                    actionLabel = fixOther,
+                    onAction = { SystemSettings.launch(ctx, SystemSettings.dndAccess()) },
+                )
+            )
     }
 }
+
+private fun micAllowed(ctx: Context) =
+    ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) ==
+        PackageManager.PERMISSION_GRANTED

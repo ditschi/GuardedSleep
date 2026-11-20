@@ -252,7 +252,8 @@
         "autolockHint": "Displej potemní za {seconds} s",
         "stop": "Zastavit sledování",
         "micLevel": "Úroveň zvuku zde",
-        "micSilent": "Mikrofon nezachytává žádný zvuk. Spusťte sledování znovu nebo zkontrolujte mikrofon."
+        "micSilent": "Mikrofon nezachytává žádný zvuk. Spusťte sledování znovu nebo zkontrolujte mikrofon.",
+        "micMissing": "Toto dětské zařízení bez mikrofonu své dítě neuslyší. Povolte ho, aby se zobrazil kód a šlo začít."
       },
       "kiosk": {
         "a11yLabel": "Sledování. Obrazovka zamčena.",
@@ -829,8 +830,7 @@
         "dnd": {
           "title": "Přístup k režimu Nerušit",
           "why": "Upozornění se dostanou na rodičovské zařízení a dětské zařízení v noci mlčí."
-        },
-        "micNeeded": "Bez mikrofonu toto zařízení neslyší. Povolte ho, aby se mohlo zahájit hlídání."
+        }
       }
     }
   },

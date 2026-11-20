@@ -400,6 +400,8 @@ data class BabyMonitorState(
 )
 
 enum class PairingPhase {
+    /** Baby: no microphone permission, so no code is made and nothing connects (`device-setup`). */
+    NEEDS_MICROPHONE,
     SHOWING_CODE,
     EXPIRED,
     SCANNING,
@@ -603,8 +605,8 @@ data class AppState(
      */
     val permissionsIntroDone: Boolean = false,
     /**
-     * A baby start was refused because the microphone is not allowed (it clears once the permission
-     * is granted): Home explains why and offers the permission again.
+     * The baby unit has no microphone permission (read at every refresh; the screens re-check
+     * locally after a grant): Home shows the blocking warning instead of the start rows.
      */
     val microphoneNeeded: Boolean = false,
     /** A saved pairing exists (home screen shows one-tap start). */

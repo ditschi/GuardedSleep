@@ -252,7 +252,8 @@
         "autolockHint": "Der Bildschirm wird in {seconds} s dunkel",
         "stop": "Überwachung beenden",
         "micLevel": "Geräuschpegel hier",
-        "micSilent": "Das Mikrofon nimmt keinen Ton auf. Starten Sie die Überwachung neu oder prüfen Sie das Mikrofon."
+        "micSilent": "Das Mikrofon nimmt keinen Ton auf. Starten Sie die Überwachung neu oder prüfen Sie das Mikrofon.",
+        "micMissing": "Dieses Babygerät kann Ihr Kind ohne Mikrofon nicht hören. Erlauben Sie es, um den Code zu zeigen und zu starten."
       },
       "kiosk": {
         "a11yLabel": "Überwachung läuft. Bildschirm gesperrt.",
@@ -833,8 +834,7 @@
         "dnd": {
           "title": "Zugriff auf „Nicht stören“",
           "why": "Damit Alarme am Elterngerät durchkommen und das Babygerät nachts still bleibt."
-        },
-        "micNeeded": "Ohne Mikrofon kann dieses Gerät nicht lauschen. Erlauben Sie es, um die Überwachung zu starten."
+        }
       }
     }
   },

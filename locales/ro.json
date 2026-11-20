@@ -252,7 +252,8 @@
         "autolockHint": "Ecranul se întunecă în {seconds} s",
         "stop": "Oprește monitorizarea",
         "micLevel": "Nivelul sunetului aici",
-        "micSilent": "Microfonul nu captează niciun sunet. Repornește monitorizarea sau verifică microfonul."
+        "micSilent": "Microfonul nu captează niciun sunet. Repornește monitorizarea sau verifică microfonul.",
+        "micMissing": "Acest dispozitiv al copilului nu își poate auzi copilul fără microfon. Permite-l pentru a afișa codul și a porni."
       },
       "kiosk": {
         "a11yLabel": "Se monitorizează. Ecran blocat.",
@@ -829,8 +830,7 @@
         "dnd": {
           "title": "Acces la Nu deranja",
           "why": "Lasă alertele să ajungă la dispozitivul părintelui și ține dispozitivul copilului liniștit noaptea."
-        },
-        "micNeeded": "Fără microfon acest dispozitiv nu poate asculta. Permite-l pentru a porni monitorizarea."
+        }
       }
     }
   },

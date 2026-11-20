@@ -252,7 +252,8 @@
         "autolockHint": "Het scherm gaat uit over {seconds} s",
         "stop": "Stoppen met bewaken",
         "micLevel": "Geluidsniveau hier",
-        "micSilent": "De microfoon vangt geen geluid op. Start de bewaking opnieuw of controleer de microfoon."
+        "micSilent": "De microfoon vangt geen geluid op. Start de bewaking opnieuw of controleer de microfoon.",
+        "micMissing": "Dit babyapparaat kan je kind niet horen zonder microfoon. Sta het toe om de code te tonen en te starten."
       },
       "kiosk": {
         "a11yLabel": "Bewaken. Scherm vergrendeld.",
@@ -829,8 +830,7 @@
         "dnd": {
           "title": "Toegang tot Niet storen",
           "why": "Zodat meldingen op het ouderapparaat doorkomen en het babyapparaat 's nachts stil blijft."
-        },
-        "micNeeded": "Zonder microfoon kan dit apparaat niet luisteren. Sta het toe om het toezicht te starten."
+        }
       }
     }
   },

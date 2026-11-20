@@ -100,6 +100,7 @@ export function createFakeController(): FakeController {
       calls.push(["completePermissionsIntro"]);
       app.update((s) => ({ ...s, onboardingDone: true, permissionsIntroDone: true }));
     },
+    allowMicrophone: record("allowMicrophone"),
     startPairing() {
       calls.push(["startPairing"]);
       pairing.set(makePairingState("showing_code"));

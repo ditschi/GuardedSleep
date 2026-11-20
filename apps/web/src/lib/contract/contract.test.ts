@@ -122,6 +122,7 @@ describe("enums mirror UiContract.kt", () => {
     ListenMode: ["off", "on"] satisfies ListenMode[],
     SilenceRequest: ["idle", "pending", "applied", "failed"] satisfies SilenceRequest[],
     PairingPhase: [
+      "needs_microphone",
       "showing_code",
       "expired",
       "scanning",
@@ -287,6 +288,8 @@ describe("AppController mirrors UiContract.kt", () => {
       // prompt that the Android screen hosts itself (`talkPermissionResult` is the shared answer).
       "webTalk",
       "requestTalkPermission",
+      // The baby's microphone gate: the browser asks per use, Android asks on its screens.
+      "allowMicrophone",
     ];
     const own = Object.keys(fake).filter(
       (k) => !stores.includes(k) && k !== "calls" && !webOnly.includes(k),

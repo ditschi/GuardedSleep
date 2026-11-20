@@ -8,7 +8,7 @@ import type {
   LinkState,
   LinkStatus,
 } from "@guardedsleep/core-wasm";
-import { readable, writable, type Readable } from "svelte/store";
+import { get, readable, writable, type Readable } from "svelte/store";
 import {
   defaultAppState,
   defaultBabyMonitor,
@@ -197,6 +197,8 @@ export class WebController implements AppController {
   private readonly appStore = writable<AppState>(defaultAppState());
   private readonly settingsStore = writable<SettingsState>(defaultSettings());
   private readonly pairingStore = writable<PairingState | null>(null);
+  /** Bumped by every pairing start and cancel: a late permission answer must not start a code. */
+  private pairGate = 0;
   private readonly soundStore = writable(false);
   private readonly parentModel: ParentModel;
   private readonly babyModel: BabyModel;
@@ -418,8 +420,43 @@ export class WebController implements AppController {
 
   // ---- pairing -----------------------------------------------------------------------------
 
+  /**
+   * The microphone gate (`device-setup` "Baby unit permission gate before connecting"): while the
+   * browser has not allowed the microphone ("prompt" or "denied") no code is made and nothing
+   * connects; the screen offers "Allow" and the code appears once it is granted. A browser that
+   * cannot say ("unknown") or a build without the port decides at the start as before.
+   */
   startPairing(): void {
     if (this.appState.role !== "baby") return;
+    const mic = this.deps.talkMic;
+    if (!mic) {
+      this.beginInvite();
+      return;
+    }
+    const gen = ++this.pairGate;
+    void mic.query().then((state) => {
+      if (gen !== this.pairGate) return;
+      if (state === "prompt" || state === "denied") {
+        this.cancelPairing();
+        this.pairGate = gen;
+        this.pairingStore.set(makePairingState("needs_microphone"));
+        return;
+      }
+      this.beginInvite();
+    });
+  }
+
+  allowMicrophone(): void {
+    const mic = this.deps.talkMic;
+    if (!mic) return;
+    void mic.request().then((result) => {
+      if (result !== "granted") return;
+      this.setApp({ microphoneNeeded: false });
+      if (get(this.pairingStore)?.phase === "needs_microphone") this.startPairing();
+    });
+  }
+
+  private beginInvite(): void {
     this.deps.gate.unlock().catch(() => undefined);
     this.cancelPairing();
     this.stopRun(true);
@@ -461,6 +498,7 @@ export class WebController implements AppController {
   }
 
   cancelPairing(): void {
+    this.pairGate++;
     if (this.run?.pending) this.stopRun(true);
     this.pairingStore.set(null);
   }
@@ -499,6 +537,20 @@ export class WebController implements AppController {
   // ---- monitoring --------------------------------------------------------------------------
 
   startMonitoring(): void {
+    const mic = this.deps.talkMic;
+    if (this.appState.role !== "baby" || !mic || this.run) {
+      this.beginMonitoring();
+      return;
+    }
+    // Baby without the browser's microphone permission: nothing starts; the screen says why.
+    void mic.query().then((state) => {
+      const blocked = state === "prompt" || state === "denied";
+      this.setApp({ microphoneNeeded: blocked });
+      if (!blocked) this.beginMonitoring();
+    });
+  }
+
+  private beginMonitoring(): void {
     this.deps.gate.unlock().catch(() => undefined);
     const role = this.appState.role;
     if (role === null) return;

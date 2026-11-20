@@ -252,7 +252,8 @@
         "autolockHint": "Layar akan gelap dalam {seconds} dtk",
         "stop": "Hentikan pemantauan",
         "micLevel": "Tingkat suara di sini",
-        "micSilent": "Mikrofon tidak menangkap suara apa pun. Mulai ulang pemantauan atau periksa mikrofon."
+        "micSilent": "Mikrofon tidak menangkap suara apa pun. Mulai ulang pemantauan atau periksa mikrofon.",
+        "micMissing": "Perangkat bayi ini tidak dapat mendengar anak Anda tanpa mikrofon. Izinkan untuk menampilkan kode dan memulai."
       },
       "kiosk": {
         "a11yLabel": "Memantau. Layar terkunci.",
@@ -829,8 +830,7 @@
         "dnd": {
           "title": "Akses Jangan Ganggu",
           "why": "Membuat peringatan sampai ke perangkat orang tua dan menjaga perangkat bayi tetap senyap di malam hari."
-        },
-        "micNeeded": "Tanpa mikrofon, perangkat ini tidak dapat mendengarkan. Izinkan untuk mulai memantau."
+        }
       }
     }
   },

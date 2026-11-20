@@ -204,7 +204,7 @@ export interface BabyMonitorState {
 }
 
 export type PairingPhase =
-  "showing_code" | "expired" | "scanning" | "connecting" | "paired" | "failed";
+  "needs_microphone" | "showing_code" | "expired" | "scanning" | "connecting" | "paired" | "failed";
 
 export type PairingError =
   | "camera_denied"

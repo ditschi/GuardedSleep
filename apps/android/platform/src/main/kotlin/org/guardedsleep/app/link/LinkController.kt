@@ -125,8 +125,6 @@ class LinkController(
     private var deviceCheckGen = 0
     private var deviceCheckResult: DeviceCheckResult? = null
 
-    /** A baby start was refused for the missing microphone (shown by Home until it is allowed). */
-    @Volatile private var babyStartRefusedForMic = false
     private var deviceCheckInFlight = false
     private var deviceCheckAtMs = 0L
     private val appLock = Any()
@@ -703,7 +701,7 @@ class LinkController(
                     defaultRole = p.defaultRole,
                     onboardingDone = p.onboardingDone,
                     permissionsIntroDone = p.permissionsIntroDone,
-                    microphoneNeeded = babyStartRefusedForMic && !talkGate.micPermission(),
+                    microphoneNeeded = p.role == Role.BABY && !talkGate.micPermission(),
                     paired = connections.isNotEmpty(),
                     peerName = connections.firstOrNull { it.selected }?.name ?: p.peerName,
                     connections = connections,
@@ -743,6 +741,14 @@ class LinkController(
             return
         }
         if (settingsRepo.current.role != Role.BABY) return
+        // No microphone, no code and no connection: the screen says why and offers the permission;
+        // it asks again once it is granted (`device-setup` "Baby unit permission gate").
+        if (!talkGate.micPermission()) {
+            cancelPairing()
+            _pairing.value = PairingState(PairingPhase.NEEDS_MICROPHONE)
+            refreshApp()
+            return
+        }
         // The baby unit replaces its active pairing; "Add parent device" waits for the baby hub.
         val slot = newPairingId(Role.BABY) ?: return
         // "Pair again" from the monitor screen: the monitoring flag must go first, or the monitor
@@ -839,11 +845,9 @@ class LinkController(
         // (`device-setup` "No later permission prompts"); the screens ask for the permission.
         if (settingsRepo.current.role == Role.BABY && !talkGate.micPermission()) {
             PocLog.event("baby_start_refused", "reason" to "no_microphone")
-            babyStartRefusedForMic = true
             refreshApp()
             return
         }
-        babyStartRefusedForMic = false
         // The session's connection stays fixed while monitoring runs, also over a restart.
         val id = settingsRepo.current.role?.let(::activeId)
         settingsRepo.update { it.copy(monitoringActive = true, pairingId = id ?: it.pairingId) }

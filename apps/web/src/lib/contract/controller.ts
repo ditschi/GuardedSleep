@@ -79,6 +79,8 @@ export interface AppController {
   /** Android's first-start permission screen is left; a no-op marker on the web. */
   completePermissionsIntro(): void;
   startPairing(): void;
+  /** Baby (web only): the permission step of the microphone gate; asks the browser once. */
+  allowMicrophone(): void;
   cancelPairing(): void;
   /** Parent: decoded QR text or pasted code. */
   submitPairingCode(payload: string): void;

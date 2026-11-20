@@ -252,7 +252,8 @@
         "autolockHint": "A tela escurece em {seconds} s",
         "stop": "Parar monitoramento",
         "micLevel": "Nível de som aqui",
-        "micSilent": "O microfone não está captando nenhum som. Reinicie o monitoramento ou verifique o microfone."
+        "micSilent": "O microfone não está captando nenhum som. Reinicie o monitoramento ou verifique o microfone.",
+        "micMissing": "Este aparelho do bebê não consegue ouvir o seu filho sem o microfone. Permita-o para mostrar o código e iniciar."
       },
       "kiosk": {
         "a11yLabel": "Monitorando. Tela bloqueada.",
@@ -829,8 +830,7 @@
         "dnd": {
           "title": "Acesso a Não incomodar",
           "why": "Permite que os alertas cheguem ao aparelho dos pais e mantém o do bebê em silêncio à noite."
-        },
-        "micNeeded": "Sem o microfone este aparelho não pode ouvir. Permita-o para iniciar a vigilância."
+        }
       }
     }
   },

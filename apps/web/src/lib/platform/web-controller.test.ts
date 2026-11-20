@@ -180,6 +180,65 @@ async function pairedParent(t: Setup): Promise<void> {
 }
 
 describe("WebController: pairing", () => {
+  describe("baby microphone gate", () => {
+    const gate = (
+      state: "granted" | "denied" | "prompt" | "unknown",
+      request: "granted" | "refused" = "granted",
+    ) => {
+      let answer = state;
+      return {
+        port: {
+          supported: true,
+          query: () => Promise.resolve(answer),
+          request: () => {
+            if (request === "granted") answer = "granted";
+            return Promise.resolve(request);
+          },
+        } satisfies TalkMicPort,
+      };
+    };
+
+    it("shows no code and connects to nothing while the microphone is not allowed", async () => {
+      const t = setup({ talkMic: gate("prompt").port });
+      t.controller.chooseRole("baby");
+      t.controller.startPairing();
+      await flush();
+      expect(get(t.controller.pairing)?.phase).toBe("needs_microphone");
+      expect(get(t.controller.pairing)?.codePayload).toBeNull();
+      expect(t.media.requests).toEqual([]);
+      expect(t.core.configs).toHaveLength(0);
+      expect(FakeWebSocket.instances).toHaveLength(0);
+    });
+
+    it("shows the code in place once the microphone is granted", async () => {
+      const t = setup({ talkMic: gate("denied").port });
+      t.controller.chooseRole("baby");
+      t.controller.startPairing();
+      await flush();
+      t.controller.allowMicrophone();
+      await flush();
+      expect(get(t.controller.pairing)?.phase).toBe("showing_code");
+    });
+
+    it("stays blocked when the browser refuses the prompt", async () => {
+      const t = setup({ talkMic: gate("prompt", "refused").port });
+      t.controller.chooseRole("baby");
+      t.controller.startPairing();
+      await flush();
+      t.controller.allowMicrophone();
+      await flush();
+      expect(get(t.controller.pairing)?.phase).toBe("needs_microphone");
+    });
+
+    it("an allowed microphone shows the code at once", async () => {
+      const t = setup({ talkMic: gate("granted").port });
+      t.controller.chooseRole("baby");
+      t.controller.startPairing();
+      await flush();
+      expect(get(t.controller.pairing)?.phase).toBe("showing_code");
+    });
+  });
+
   it("baby: shows a fresh invite for 5 minutes and waits in the room", async () => {
     const t = setup();
     t.controller.chooseRole("baby");

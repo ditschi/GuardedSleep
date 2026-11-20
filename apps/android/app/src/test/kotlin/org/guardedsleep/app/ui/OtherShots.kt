@@ -166,6 +166,7 @@ class PairShots : ShotBase() {
         val exp = ELAPSED + 4 * 60_000L + 59_000L
         baby("code", PairingState(PairingPhase.SHOWING_CODE, CODE, exp))
         baby("code", PairingState(PairingPhase.SHOWING_CODE, CODE, exp), "de")
+        baby("needs_microphone", PairingState(PairingPhase.NEEDS_MICROPHONE))
         baby("expired", PairingState(PairingPhase.EXPIRED, CODE, ELAPSED - 1_000))
         baby("parent_found", PairingState(PairingPhase.CONNECTING, CODE, exp))
         baby("paired", PairingState(PairingPhase.PAIRED, CODE, exp))

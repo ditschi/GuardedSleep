@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,11 +45,11 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.common.AdaptiveButtonRow
 import org.guardedsleep.app.ui.common.AmbientBar
+import org.guardedsleep.app.ui.common.BabyPermissionCards
 import org.guardedsleep.app.ui.common.BabyQuiet
 import org.guardedsleep.app.ui.common.Body
 import org.guardedsleep.app.ui.common.Glyph
 import org.guardedsleep.app.ui.common.GlyphIcon
-import org.guardedsleep.app.ui.common.MicNeededNote
 import org.guardedsleep.app.ui.common.PrimaryButton
 import org.guardedsleep.app.ui.common.QuietButton
 import org.guardedsleep.app.ui.common.ScreenRoot
@@ -59,6 +60,7 @@ import org.guardedsleep.app.ui.common.Tone
 import org.guardedsleep.app.ui.common.WindowBrightness
 import org.guardedsleep.app.ui.common.formatClock
 import org.guardedsleep.app.ui.common.rememberElapsedNow
+import org.guardedsleep.app.ui.common.rememberMicrophoneGranted
 import org.guardedsleep.app.ui.model.AppController
 import org.guardedsleep.app.ui.model.PairingPhase
 
@@ -99,6 +101,10 @@ fun PairBabyScreen(controller: AppController) {
     var copied by remember { mutableStateOf(false) }
     var showText by remember { mutableStateOf(false) }
     BackHandler { controller.cancelPairing() }
+    val micGranted = rememberMicrophoneGranted()
+    LaunchedEffect(micGranted, state?.phase) {
+        if (micGranted && state?.phase == PairingPhase.NEEDS_MICROPHONE) controller.startPairing()
+    }
     val expired =
         state?.phase == PairingPhase.EXPIRED ||
             (state?.expiresAtElapsedMs?.let { it <= now } ?: false)
@@ -132,9 +138,13 @@ fun PairBabyScreen(controller: AppController) {
                         )
                     else -> Unit
                 }
-                // The microphone before the invite is used: the baby unit cannot start without it.
-                MicNeededNote("baby_pair_mic_needed")
-                if (payload != null && state.phase != PairingPhase.PAIRED) {
+                // The permission cards before the code (`device-setup` "Baby unit permission
+                // gate"):
+                // no microphone, no code; the code appears here once the permission is granted.
+                BabyPermissionCards(tag = "baby_pair_gate")
+                if (state?.phase == PairingPhase.NEEDS_MICROPHONE) {
+                    // Nothing else: no code, no waiting line, nothing connecting.
+                } else if (payload != null && state.phase != PairingPhase.PAIRED) {
                     val qr = remember(payload, bright) { renderQr(payload, bright) }
                     val dimmed = expired || state.phase == PairingPhase.FAILED
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {

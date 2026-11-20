@@ -252,7 +252,8 @@
         "autolockHint": "L'écran s'assombrit dans {seconds} s",
         "stop": "Arrêter la surveillance",
         "micLevel": "Niveau sonore ici",
-        "micSilent": "Le microphone ne capte aucun son. Redémarrez la surveillance ou vérifiez le microphone."
+        "micSilent": "Le microphone ne capte aucun son. Redémarrez la surveillance ou vérifiez le microphone.",
+        "micMissing": "Cet appareil bébé ne peut pas entendre votre enfant sans microphone. Autorisez-le pour afficher le code et démarrer."
       },
       "kiosk": {
         "a11yLabel": "Surveillance en cours. Écran verrouillé.",
@@ -833,8 +834,7 @@
         "dnd": {
           "title": "Accès à « Ne pas déranger »",
           "why": "Permet aux alertes d'arriver sur l'appareil parent et garde l'appareil du bébé silencieux la nuit."
-        },
-        "micNeeded": "Sans microphone, cet appareil ne peut pas écouter. Autorisez-le pour démarrer la surveillance."
+        }
       }
     }
   },

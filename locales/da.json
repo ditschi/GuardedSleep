@@ -252,7 +252,8 @@
         "autolockHint": "Skærmen bliver mørk om {seconds} s",
         "stop": "Stop overvågning",
         "micLevel": "Lydniveau her",
-        "micSilent": "Mikrofonen opfanger ingen lyd. Genstart overvågningen, eller tjek mikrofonen."
+        "micSilent": "Mikrofonen opfanger ingen lyd. Genstart overvågningen, eller tjek mikrofonen.",
+        "micMissing": "Denne babyenhed kan ikke høre dit barn uden mikrofonen. Tillad den for at vise koden og starte."
       },
       "kiosk": {
         "a11yLabel": "Overvåger. Skærmen er låst.",
@@ -829,8 +830,7 @@
         "dnd": {
           "title": "Adgang til Forstyr ikke",
           "why": "Lader alarmer nå forældreenheden og holder babyenheden stille om natten."
-        },
-        "micNeeded": "Uden mikrofon kan denne enhed ikke lytte. Tillad den for at starte overvågningen."
+        }
       }
     }
   },

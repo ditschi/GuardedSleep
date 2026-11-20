@@ -226,6 +226,28 @@ class LinkControllerTest {
     }
 
     @Test
+    fun aBabyWithoutTheMicrophoneMakesNoCodeAndConnectsToNothing() {
+        var mic = false
+        val gate =
+            object : TalkGate {
+                override fun micPermission() = mic
+
+                override fun deviceUnlocked() = true
+            }
+        val baby = unit("nomic-pair", Role.BABY, talkGate = gate)
+        baby.controller.startPairing()
+        val gated = baby.controller.pairing.value
+        assertEquals(PairingPhase.NEEDS_MICROPHONE, gated?.phase)
+        assertEquals(null, gated?.codePayload)
+        assertEquals(emptyList<String>(), net.openedUrls.toList())
+        assertEquals(false, baby.store.exists())
+        // Granted: the same call now shows the code.
+        mic = true
+        baby.controller.startPairing()
+        assertEquals(PairingPhase.SHOWING_CODE, baby.controller.pairing.value?.phase)
+    }
+
+    @Test
     fun turnServerIsSealedAndMirroredWithoutPassword() {
         val u = unit("turn1", Role.PARENT)
         val c = u.controller
