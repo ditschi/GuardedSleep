@@ -345,6 +345,10 @@ export class WebController implements AppController {
     this.setApp({ onboardingDone: true });
   }
 
+  completePermissionsIntro(): void {
+    this.setApp({ onboardingDone: true, permissionsIntroDone: true });
+  }
+
   updateSettings(transform: (settings: SettingsState) => SettingsState): void {
     const before = this.settingsState;
     const changed = { ...transform(before), ...turnSettings(this.turn) };

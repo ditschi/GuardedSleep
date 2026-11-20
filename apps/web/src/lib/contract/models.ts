@@ -486,6 +486,14 @@ export interface AppState {
   /** "Start mode": the role a start without monitoring opens in; null asks every time. */
   defaultRole: Role | null;
   onboardingDone: boolean;
+  /**
+   * Android's first-start permission screen was left. The web client has no such screen (browsers
+   * grant per use), so it starts true and nothing reads it (`device-setup` "Permissions on first
+   * start", web scenario).
+   */
+  permissionsIntroDone: boolean;
+  /** Android: a baby start was refused for the microphone. Never set on the web. */
+  microphoneNeeded: boolean;
   /** A saved pairing exists (home screen shows one-tap start). */
   paired: boolean;
   peerName: string | null;
@@ -630,6 +638,8 @@ export function defaultAppState(): AppState {
     lastRole: null,
     defaultRole: null,
     onboardingDone: false,
+    permissionsIntroDone: true,
+    microphoneNeeded: false,
     paired: false,
     peerName: null,
     connections: [],

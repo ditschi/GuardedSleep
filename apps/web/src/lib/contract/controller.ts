@@ -76,6 +76,8 @@ export interface AppController {
   /** Forgets exactly one connection; monitoring stops first when it is the one in use. */
   forgetConnection(role: Role, id: string): void;
   completeOnboarding(): void;
+  /** Android's first-start permission screen is left; a no-op marker on the web. */
+  completePermissionsIntro(): void;
   startPairing(): void;
   cancelPairing(): void;
   /** Parent: decoded QR text or pasted code. */

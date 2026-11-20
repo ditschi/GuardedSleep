@@ -96,6 +96,10 @@ export function createFakeController(): FakeController {
       calls.push(["completeOnboarding"]);
       app.update((s) => ({ ...s, onboardingDone: true }));
     },
+    completePermissionsIntro() {
+      calls.push(["completePermissionsIntro"]);
+      app.update((s) => ({ ...s, onboardingDone: true, permissionsIntroDone: true }));
+    },
     startPairing() {
       calls.push(["startPairing"]);
       pairing.set(makePairingState("showing_code"));
