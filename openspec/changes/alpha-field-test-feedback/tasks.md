@@ -48,5 +48,5 @@ Briefs for the `implementer` sub-agent. Each group names the goal, the files, th
 
 ## 8. Final checks
 
-- [ ] 8.1 Check that every new or changed critical key exists in all 20 locales (the generator's critical-key completeness). Run `just lint` and `just test` (with `GS_SLOT_WAIT`/`GS_RUN_TIMEOUT`); report every SKIPPED task. `openspec validate --all --strict` green.
-- [ ] 8.2 Run `refactor-scout` in diff mode against `origin/main`; hand accepted findings to the implementer; re-run 8.1.
+- [x] 8.1 Check that every new or changed critical key exists in all 20 locales (the generator's critical-key completeness). Run `just lint` and `just test` (with `GS_SLOT_WAIT`/`GS_RUN_TIMEOUT`); report every SKIPPED task. `openspec validate --all --strict` green.
+- [x] 8.2 Run `refactor-scout` in diff mode against `origin/main`; hand accepted findings to the implementer; re-run 8.1.
