@@ -38,6 +38,25 @@ After the first-start permission screen, the app SHALL ask for a permission agai
 - **WHEN** the user refused the microphone twice and starts monitoring as baby device
 - **THEN** monitoring does not start without sound; the app explains why and opens the app's system settings
 
+### Requirement: Baby unit permission gate before connecting
+
+Before the baby unit shows a pairing code or starts monitoring, it SHALL check its permissions. While the microphone permission is missing, it SHALL show a clear warning with the reason and an "Allow" action in place of the code and the start action, and SHALL NOT connect. While background operation or Do Not Disturb access is missing, it SHALL show a visible warning with the reason and a fix action before the start, without blocking it.
+
+#### Scenario: Microphone missing when showing the code (failure)
+
+- **WHEN** the baby unit has no microphone permission and the user opens "Show code"
+- **THEN** no code is shown and no connection is made; a warning says the baby device cannot hear the child without the microphone and offers "Allow"
+
+#### Scenario: Microphone allowed from the warning
+
+- **WHEN** the user taps "Allow" on that warning and grants the microphone
+- **THEN** the code appears without leaving the screen
+
+#### Scenario: Background operation missing
+
+- **WHEN** the baby unit is still battery-optimised and the user starts monitoring
+- **THEN** a warning says monitoring may stop in the background and offers the fix, and monitoring can still start
+
 ## MODIFIED Requirements
 
 ### Requirement: Setup checklist per role
