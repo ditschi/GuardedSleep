@@ -7,8 +7,13 @@ appId: org.guardedsleep.app.dev
     id: "home_new_pairing_baby"
 - extendedWaitUntil:
     visible:
-      id: "baby_pair_show_text"
+      id: "baby_pair_title"
     timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "baby_pair_show_text"
+    visibilityPercentage: 20
+    timeout: 20000
 - tapOn:
     id: "baby_pair_show_text"
 - extendedWaitUntil:

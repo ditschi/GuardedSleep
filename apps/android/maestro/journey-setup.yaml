@@ -36,12 +36,19 @@ appId: org.guardedsleep.app.dev
 - tapOn:
     id: "${ROLE_TAG}"
 # The role choice goes straight to the pairing screen: no checklist in between.
+# The pairing screen scrolls: the baby's code, warning cards and safety advice come before Cancel.
 - extendedWaitUntil:
     visible:
-      id: "baby_pair_cancel|parent_pair_cancel"
+      id: "baby_pair_title|parent_pair_title"
     timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "baby_pair_cancel|parent_pair_cancel"
+    visibilityPercentage: 20
+    timeout: 20000
 - tapOn:
     id: "baby_pair_cancel|parent_pair_cancel"
+    point: "50%,30%"
 - tapOn:
     id: "home_settings"
 # Settings is an overview; the server addresses are on the Advanced page.
