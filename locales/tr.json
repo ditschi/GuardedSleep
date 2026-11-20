@@ -157,7 +157,13 @@
           "dndAccessMissing": "Rahatsız Etme erişimi olmadan sessiz mod açılamaz.",
           "someMailboxesUnreachable": "Bazı sunuculara ulaşılamadı. Cihazlar birbirini diğerleri üzerinden yine bulabilir.",
           "mailboxReachable": "{host}: ulaşılabilir",
-          "mailboxUnreachable": "{host}: ulaşılamıyor"
+          "mailboxUnreachable": "{host}: ulaşılamıyor",
+          "connectionWorks": "İnternet bağlantısı: çalışıyor",
+          "connectionWorksSome": "İnternet bağlantısı: çalışıyor ({total} sunucudan {reachable} tanesi)",
+          "connectionFails": "İnternet bağlantısı: çalışmıyor",
+          "details": "Ayrıntılar",
+          "detailsHide": "Ayrıntıları gizle",
+          "roomNearThreshold": "Oda, uyarı seviyesi kadar gürültülü. Bu ayar arka plan sesleri için uyarı verebilir. Daha az hassas bir ayar deneyin veya cihazı başka yere koyun."
         },
         "notifications": {
           "title": "Uyarılar",

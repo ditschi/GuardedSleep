@@ -157,7 +157,13 @@
           "dndAccessMissing": "没有“勿扰”权限，无法开启静音模式。",
           "someMailboxesUnreachable": "部分服务器无法连接。设备仍可通过其他服务器找到彼此。",
           "mailboxReachable": "{host}：可连接",
-          "mailboxUnreachable": "{host}：无法连接"
+          "mailboxUnreachable": "{host}：无法连接",
+          "connectionWorks": "互联网连接：正常",
+          "connectionWorksSome": "互联网连接：正常（{total} 个服务器中的 {reachable} 个）",
+          "connectionFails": "互联网连接：不可用",
+          "details": "详情",
+          "detailsHide": "隐藏详情",
+          "roomNearThreshold": "房间的声音几乎和提醒阈值一样大。此设置可能会因背景声音而发出提醒。请尝试降低灵敏度，或移动设备。"
         },
         "notifications": {
           "title": "提醒",

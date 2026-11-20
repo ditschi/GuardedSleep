@@ -157,7 +157,13 @@
           "dndAccessMissing": "Stille modus kan niet worden ingeschakeld zonder toegang tot Niet storen.",
           "someMailboxesUnreachable": "Sommige servers waren niet bereikbaar. De apparaten kunnen elkaar nog vinden via de andere.",
           "mailboxReachable": "{host}: bereikbaar",
-          "mailboxUnreachable": "{host}: niet bereikbaar"
+          "mailboxUnreachable": "{host}: niet bereikbaar",
+          "connectionWorks": "Verbinding via internet: werkt",
+          "connectionWorksSome": "Verbinding via internet: werkt ({reachable} van {total} servers)",
+          "connectionFails": "Verbinding via internet: werkt niet",
+          "details": "Details",
+          "detailsHide": "Details verbergen",
+          "roomNearThreshold": "De kamer is bijna net zo luid als het meldingsniveau. Deze instelling kan meldingen geven voor achtergrondgeluid. Kies een minder gevoelige instelling of verplaats het apparaat."
         },
         "notifications": {
           "title": "Meldingen",

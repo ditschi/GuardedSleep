@@ -157,7 +157,13 @@
           "dndAccessMissing": "Trybu cichego nie można włączyć bez dostępu do funkcji Nie przeszkadzać.",
           "someMailboxesUnreachable": "Z niektórymi serwerami nie udało się połączyć. Urządzenia mogą nadal odnaleźć się przez pozostałe.",
           "mailboxReachable": "{host}: osiągalny",
-          "mailboxUnreachable": "{host}: nieosiągalny"
+          "mailboxUnreachable": "{host}: nieosiągalny",
+          "connectionWorks": "Połączenie przez internet: działa",
+          "connectionWorksSome": "Połączenie przez internet: działa ({reachable} z {total} serwerów)",
+          "connectionFails": "Połączenie przez internet: nie działa",
+          "details": "Szczegóły",
+          "detailsHide": "Ukryj szczegóły",
+          "roomNearThreshold": "W pokoju jest prawie tak głośno jak próg alertu. To ustawienie może wywoływać alerty z powodu dźwięków tła. Spróbuj mniej czułego ustawienia lub przesuń urządzenie."
         },
         "notifications": {
           "title": "Alerty",

@@ -233,6 +233,36 @@ class SetupHomeSettingsShots : ShotBase() {
     }
 
     @Test
+    fun deviceCheckWithOneReachableMailbox() {
+        val states =
+            mapOf(
+                SetupRow.MIC to RowState.DONE,
+                SetupRow.BACKGROUND to RowState.DONE,
+                SetupRow.SILENCE to RowState.DONE,
+            )
+        shot("setup/baby_check_partial", "en", Role.BABY) {
+            SetupContent(
+                Role.BABY,
+                SetupChecks(states),
+                DeviceCheck.LIMITED,
+                {},
+                {},
+                deviceCheckReasons =
+                    listOf(
+                        DeviceCheckReason.SOME_MAILBOXES_UNREACHABLE,
+                        DeviceCheckReason.ROOM_NEAR_THRESHOLD,
+                    ),
+                deviceCheckMailboxes =
+                    listOf(
+                        MailboxReach("gs.mydata.rocks", true),
+                        MailboxReach("own.example", false),
+                    ),
+                onDeviceCheckAgain = {},
+            )
+        }
+    }
+
+    @Test
     fun roleScreen() {
         shot("role/role", "en", null) { RoleScreen(FakeAppController(app = AppState())) }
         shot("role/role", "de", null) { RoleScreen(FakeAppController(app = AppState())) }

@@ -59,6 +59,8 @@ data class DeviceFacts(
     val batteryOptimizationIgnored: Boolean,
     val dndAccessGranted: Boolean,
     val mailboxes: List<MailboxReach>,
+    /** The current alert threshold (linear RMS), to judge the room's level against; null skips. */
+    val thresholdRms: Double? = null,
 )
 
 data class DeviceCheckResult(
@@ -71,6 +73,17 @@ data class DeviceCheckResult(
 /** The rules: pure, so every reason is tested without a device. */
 object DeviceCheckRules {
     const val LOW_BATTERY_PCT = 20
+
+    /** Within about 6 dB below the threshold (10^(-6/20)) a steady room sound may raise alerts. */
+    val NEAR_THRESHOLD_RATIO = Math.pow(10.0, -6.0 / 20.0)
+
+    /** True when the room's steady level is within about 6 dB of the threshold, or above it. */
+    fun roomNearThreshold(roomRms: Double?, thresholdRms: Double?): Boolean =
+        roomRms != null &&
+            thresholdRms != null &&
+            thresholdRms > 0.0 &&
+            !isSilent(roomRms) &&
+            roomRms >= thresholdRms * NEAR_THRESHOLD_RATIO
 
     fun evaluate(f: DeviceFacts): DeviceCheckResult {
         val bad = mutableListOf<DeviceCheckReason>()
@@ -88,6 +101,8 @@ object DeviceCheckRules {
         if (!f.dndAccessGranted) limited += DeviceCheckReason.DND_ACCESS_MISSING
         if (f.mailboxes.any { it.reachable } && f.mailboxes.any { !it.reachable })
             limited += DeviceCheckReason.SOME_MAILBOXES_UNREACHABLE
+        if (roomNearThreshold(f.micRms, f.thresholdRms))
+            limited += DeviceCheckReason.ROOM_NEAR_THRESHOLD
         val check =
             when {
                 bad.isNotEmpty() -> DeviceCheck.NOT_RECOMMENDED
@@ -118,12 +133,13 @@ class DeviceChecker(
 ) {
     /**
      * [mailboxUrls] are the relay URLs to probe; [sampleMic] is false while a run holds the
-     * microphone.
+     * microphone; [thresholdRms] is the alert threshold the room's level is judged against.
      */
     fun check(
         mailboxUrls: List<String>,
         sampleMic: Boolean,
         cancelled: () -> Boolean = { false },
+        thresholdRms: Double? = null,
     ): DeviceCheckResult {
         // An address without a host is no mailbox: it is never probed or shown.
         val probes =
@@ -160,6 +176,7 @@ class DeviceChecker(
                 batteryOptimizationIgnored = env.batteryOptimizationIgnored(),
                 dndAccessGranted = env.dndAccessGranted(),
                 mailboxes = reach,
+                thresholdRms = thresholdRms,
             )
         )
     }

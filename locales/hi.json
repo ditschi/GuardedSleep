@@ -157,7 +157,13 @@
           "dndAccessMissing": "\"परेशान न करें\" की पहुँच के बिना शांत मोड चालू नहीं हो सकता।",
           "someMailboxesUnreachable": "कुछ सर्वर नहीं मिले। डिवाइस बाकी सर्वरों से अब भी एक-दूसरे को ढूँढ सकते हैं।",
           "mailboxReachable": "{host}: पहुँच योग्य",
-          "mailboxUnreachable": "{host}: पहुँच योग्य नहीं"
+          "mailboxUnreachable": "{host}: पहुँच योग्य नहीं",
+          "connectionWorks": "इंटरनेट कनेक्शन: काम करता है",
+          "connectionWorksSome": "इंटरनेट कनेक्शन: काम करता है ({total} में से {reachable} सर्वर)",
+          "connectionFails": "इंटरनेट कनेक्शन: काम नहीं करता",
+          "details": "विवरण",
+          "detailsHide": "विवरण छिपाएं",
+          "roomNearThreshold": "कमरे की आवाज़ लगभग अलर्ट स्तर जितनी तेज़ है। इस सेटिंग में पृष्ठभूमि की आवाज़ से अलर्ट आ सकते हैं। कम संवेदनशील सेटिंग आज़माएँ या डिवाइस को कहीं और रखें।"
         },
         "notifications": {
           "title": "सूचनाएँ",

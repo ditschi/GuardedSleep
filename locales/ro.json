@@ -157,7 +157,13 @@
           "dndAccessMissing": "Modul liniștit nu poate fi pornit fără acces la Nu deranja.",
           "someMailboxesUnreachable": "Unele servere nu au putut fi contactate. Dispozitivele se pot regăsi totuși prin celelalte.",
           "mailboxReachable": "{host}: accesibil",
-          "mailboxUnreachable": "{host}: inaccesibil"
+          "mailboxUnreachable": "{host}: inaccesibil",
+          "connectionWorks": "Conexiune prin internet: funcționează",
+          "connectionWorksSome": "Conexiune prin internet: funcționează ({reachable} din {total} servere)",
+          "connectionFails": "Conexiune prin internet: nu funcționează",
+          "details": "Detalii",
+          "detailsHide": "Ascunde detaliile",
+          "roomNearThreshold": "Camera este aproape la fel de zgomotoasă ca pragul de alertă. Această setare poate declanșa alerte din cauza zgomotului de fond. Încearcă o setare mai puțin sensibilă sau mută dispozitivul."
         },
         "notifications": {
           "title": "Alerte",

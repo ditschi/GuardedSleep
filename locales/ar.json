@@ -157,7 +157,13 @@
           "dndAccessMissing": "لا يمكن تشغيل الوضع الهادئ دون صلاحية الوصول إلى «عدم الإزعاج».",
           "someMailboxesUnreachable": "تعذّر الوصول إلى بعض الخوادم. لا تزال الأجهزة قادرة على إيجاد بعضها عبر الخوادم الأخرى.",
           "mailboxReachable": "{host}: يمكن الوصول إليه",
-          "mailboxUnreachable": "{host}: لا يمكن الوصول إليه"
+          "mailboxUnreachable": "{host}: لا يمكن الوصول إليه",
+          "connectionWorks": "الاتصال عبر الإنترنت: يعمل",
+          "connectionWorksSome": "الاتصال عبر الإنترنت: يعمل ({reachable} من {total} خوادم)",
+          "connectionFails": "الاتصال عبر الإنترنت: لا يعمل",
+          "details": "التفاصيل",
+          "detailsHide": "إخفاء التفاصيل",
+          "roomNearThreshold": "صوت الغرفة قريب من مستوى التنبيه. قد يؤدي هذا الإعداد إلى تنبيهات بسبب أصوات الخلفية. جرّب إعدادًا أقل حساسية أو انقل الجهاز."
         },
         "notifications": {
           "title": "التنبيهات",

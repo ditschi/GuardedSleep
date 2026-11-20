@@ -157,7 +157,13 @@
           "dndAccessMissing": "Le mode silencieux ne peut pas être activé sans l'accès à Ne pas déranger.",
           "someMailboxesUnreachable": "Certains serveurs n'ont pas pu être joints. Les appareils peuvent encore se retrouver via les autres.",
           "mailboxReachable": "{host} : joignable",
-          "mailboxUnreachable": "{host} : injoignable"
+          "mailboxUnreachable": "{host} : injoignable",
+          "connectionWorks": "Connexion par Internet : fonctionne",
+          "connectionWorksSome": "Connexion par Internet : fonctionne ({reachable} serveurs sur {total})",
+          "connectionFails": "Connexion par Internet : ne fonctionne pas",
+          "details": "Détails",
+          "detailsHide": "Masquer les détails",
+          "roomNearThreshold": "La pièce est presque aussi bruyante que le seuil d'alerte. Ce réglage peut déclencher des alertes pour le bruit de fond. Essayez un réglage moins sensible ou déplacez l'appareil."
         },
         "notifications": {
           "title": "Alertes",

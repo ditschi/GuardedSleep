@@ -420,15 +420,52 @@ private fun DeviceCheckRow(
                             ),
                     )
                 }
-                for (m in mailboxes) {
+                // One plain line about the connection; the host names stay in the details.
+                if (mailboxes.isNotEmpty()) {
+                    val reachable = mailboxes.count { it.reachable }
                     Body(
-                        stringResource(
-                            if (m.reachable) R.string.native_ui_setup_device_check_mailbox_reachable
-                            else R.string.native_ui_setup_device_check_mailbox_unreachable,
-                            m.host,
-                        ),
+                        when {
+                            reachable == 0 ->
+                                stringResource(
+                                    R.string.native_ui_setup_device_check_connection_fails
+                                )
+                            reachable == mailboxes.size ->
+                                stringResource(
+                                    R.string.native_ui_setup_device_check_connection_works
+                                )
+                            else ->
+                                stringResource(
+                                    R.string.native_ui_setup_device_check_connection_works_some,
+                                    reachable,
+                                    mailboxes.size,
+                                )
+                        },
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.testTag("setup_device_check_connection"),
                     )
+                    var expanded by rememberSaveable { mutableStateOf(false) }
+                    QuietButton(
+                        stringResource(
+                            if (expanded) R.string.native_ui_setup_device_check_details_hide
+                            else R.string.native_ui_setup_device_check_details
+                        ),
+                        { expanded = !expanded },
+                        "setup_device_check_details",
+                    )
+                    if (expanded) {
+                        mailboxes.forEachIndexed { i, m ->
+                            Body(
+                                stringResource(
+                                    if (m.reachable)
+                                        R.string.native_ui_setup_device_check_mailbox_reachable
+                                    else R.string.native_ui_setup_device_check_mailbox_unreachable,
+                                    m.host,
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.testTag("setup_device_check_mailbox_$i"),
+                            )
+                        }
+                    }
                 }
                 if (onAgain != null && check != DeviceCheck.UNKNOWN)
                     QuietButton(
@@ -459,6 +496,8 @@ private fun reasonText(reason: DeviceCheckReason): Int =
             R.string.native_ui_setup_device_check_dnd_access_missing
         DeviceCheckReason.SOME_MAILBOXES_UNREACHABLE ->
             R.string.native_ui_setup_device_check_some_mailboxes_unreachable
+        DeviceCheckReason.ROOM_NEAR_THRESHOLD ->
+            R.string.native_ui_setup_device_check_room_near_threshold
     }
 
 @Composable

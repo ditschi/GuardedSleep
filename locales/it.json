@@ -157,7 +157,13 @@
           "dndAccessMissing": "La modalità silenziosa non può essere attivata senza l'accesso a Non disturbare.",
           "someMailboxesUnreachable": "Alcuni server non erano raggiungibili. I dispositivi possono ancora ritrovarsi tramite gli altri.",
           "mailboxReachable": "{host}: raggiungibile",
-          "mailboxUnreachable": "{host}: non raggiungibile"
+          "mailboxUnreachable": "{host}: non raggiungibile",
+          "connectionWorks": "Connessione via internet: funziona",
+          "connectionWorksSome": "Connessione via internet: funziona ({reachable} server su {total})",
+          "connectionFails": "Connessione via internet: non funziona",
+          "details": "Dettagli",
+          "detailsHide": "Nascondi dettagli",
+          "roomNearThreshold": "La stanza è quasi rumorosa quanto la soglia di avviso. Questa impostazione può generare avvisi per il rumore di fondo. Prova un'impostazione meno sensibile o sposta il dispositivo."
         },
         "notifications": {
           "title": "Avvisi",

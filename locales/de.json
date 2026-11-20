@@ -157,7 +157,13 @@
           "dndAccessMissing": "Der Ruhemodus lässt sich ohne Zugriff auf „Nicht stören“ nicht einschalten.",
           "someMailboxesUnreachable": "Einige Server waren nicht erreichbar. Die Geräte können sich weiterhin über die anderen finden.",
           "mailboxReachable": "{host}: erreichbar",
-          "mailboxUnreachable": "{host}: nicht erreichbar"
+          "mailboxUnreachable": "{host}: nicht erreichbar",
+          "connectionWorks": "Verbindung über das Internet: funktioniert",
+          "connectionWorksSome": "Verbindung über das Internet: funktioniert ({reachable} von {total} Servern)",
+          "connectionFails": "Verbindung über das Internet: funktioniert nicht",
+          "details": "Details",
+          "detailsHide": "Details ausblenden",
+          "roomNearThreshold": "Der Raum ist fast so laut wie die Alarmschwelle. Diese Einstellung kann bei Hintergrundgeräuschen Alarme auslösen. Wählen Sie eine weniger empfindliche Einstellung oder stellen Sie das Gerät anders auf."
         },
         "notifications": {
           "title": "Benachrichtigungen",

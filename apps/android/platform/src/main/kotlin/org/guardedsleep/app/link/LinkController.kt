@@ -653,9 +653,10 @@ class LinkController(
         // WebRTC holds the microphone while a run is active: the sample would fail or steal it.
         val sampleMic = run == null
         val urls = deviceCheckMailboxUrls()
+        val threshold = _settings.value.threshold.toDouble()
         val stale = { synchronized(deviceCheckLock) { deviceCheckGen != gen } }
         deviceCheckIo.execute {
-            val result = checker.check(urls, sampleMic, stale)
+            val result = checker.check(urls, sampleMic, stale, threshold)
             // Compare and publish under one lock: an invalidation can never be overwritten.
             val fresh =
                 synchronized(deviceCheckLock) {

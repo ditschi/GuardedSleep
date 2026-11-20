@@ -157,7 +157,13 @@
           "dndAccessMissing": "O modo silencioso não pode ser ativado sem acesso a Não incomodar.",
           "someMailboxesUnreachable": "Alguns servidores não foram alcançados. Os dispositivos ainda se podem encontrar através dos outros.",
           "mailboxReachable": "{host}: acessível",
-          "mailboxUnreachable": "{host}: inacessível"
+          "mailboxUnreachable": "{host}: inacessível",
+          "connectionWorks": "Ligação pela internet: funciona",
+          "connectionWorksSome": "Ligação pela internet: funciona ({reachable} de {total} servidores)",
+          "connectionFails": "Ligação pela internet: não funciona",
+          "details": "Detalhes",
+          "detailsHide": "Ocultar detalhes",
+          "roomNearThreshold": "O quarto está quase tão barulhento quanto o nível de alerta. Esta definição pode gerar alertas com o ruído de fundo. Experimente uma definição menos sensível ou mude o aparelho de sítio."
         },
         "notifications": {
           "title": "Alertas",

@@ -157,7 +157,13 @@
           "dndAccessMissing": "「おやすみモード」へのアクセスがないと、静音モードをオンにできません。",
           "someMailboxesUnreachable": "一部のサーバーに接続できませんでした。他のサーバー経由で端末同士は見つけ合えます。",
           "mailboxReachable": "{host}：接続可",
-          "mailboxUnreachable": "{host}：接続不可"
+          "mailboxUnreachable": "{host}：接続不可",
+          "connectionWorks": "インターネット接続：問題なし",
+          "connectionWorksSome": "インターネット接続：問題なし（{total} 台中 {reachable} 台）",
+          "connectionFails": "インターネット接続：使えません",
+          "details": "詳細",
+          "detailsHide": "詳細を隠す",
+          "roomNearThreshold": "部屋の音が通知のしきい値に近い大きさです。この設定では周囲の音で通知が鳴ることがあります。感度を下げるか、端末の置き場所を変えてください。"
         },
         "notifications": {
           "title": "アラート",

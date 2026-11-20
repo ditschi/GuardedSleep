@@ -156,7 +156,13 @@
           "dndAccessMissing": "Quiet mode cannot be turned on without Do Not Disturb access.",
           "someMailboxesUnreachable": "Some servers could not be reached. The devices can still find each other through the others.",
           "mailboxReachable": "{host}: reachable",
-          "mailboxUnreachable": "{host}: not reachable"
+          "mailboxUnreachable": "{host}: not reachable",
+          "connectionWorks": "Connection over the internet: works",
+          "connectionWorksSome": "Connection over the internet: works ({reachable} of {total} servers)",
+          "connectionFails": "Connection over the internet: doesn't work",
+          "details": "Details",
+          "detailsHide": "Hide details",
+          "roomNearThreshold": "The room is almost as loud as the alert level. This setting may raise alerts for the room's background sound. Try a less sensitive setting or move the device."
         },
         "notifications": {
           "title": "Alerts",

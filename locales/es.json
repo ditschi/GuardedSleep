@@ -157,7 +157,13 @@
           "dndAccessMissing": "El modo silencio no se puede activar sin acceso a No molestar.",
           "someMailboxesUnreachable": "No se pudo alcanzar a algunos servidores. Los dispositivos aún pueden encontrarse a través de los demás.",
           "mailboxReachable": "{host}: accesible",
-          "mailboxUnreachable": "{host}: no accesible"
+          "mailboxUnreachable": "{host}: no accesible",
+          "connectionWorks": "Conexión por internet: funciona",
+          "connectionWorksSome": "Conexión por internet: funciona ({reachable} de {total} servidores)",
+          "connectionFails": "Conexión por internet: no funciona",
+          "details": "Detalles",
+          "detailsHide": "Ocultar detalles",
+          "roomNearThreshold": "La habitación está casi tan ruidosa como el nivel de alerta. Este ajuste puede lanzar alertas por el ruido de fondo. Prueba un ajuste menos sensible o mueve el dispositivo."
         },
         "notifications": {
           "title": "Alertas",

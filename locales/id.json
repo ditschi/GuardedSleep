@@ -157,7 +157,13 @@
           "dndAccessMissing": "Mode senyap tidak dapat diaktifkan tanpa akses Jangan Ganggu.",
           "someMailboxesUnreachable": "Beberapa server tidak dapat dijangkau. Perangkat masih dapat saling menemukan lewat server lain.",
           "mailboxReachable": "{host}: dapat dijangkau",
-          "mailboxUnreachable": "{host}: tidak dapat dijangkau"
+          "mailboxUnreachable": "{host}: tidak dapat dijangkau",
+          "connectionWorks": "Koneksi lewat internet: berfungsi",
+          "connectionWorksSome": "Koneksi lewat internet: berfungsi ({reachable} dari {total} server)",
+          "connectionFails": "Koneksi lewat internet: tidak berfungsi",
+          "details": "Rincian",
+          "detailsHide": "Sembunyikan rincian",
+          "roomNearThreshold": "Ruangan hampir sama berisiknya dengan tingkat peringatan. Pengaturan ini dapat memicu peringatan karena suara latar. Coba pengaturan yang kurang sensitif atau pindahkan perangkat."
         },
         "notifications": {
           "title": "Peringatan",

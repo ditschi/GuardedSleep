@@ -157,7 +157,13 @@
           "dndAccessMissing": "Tichý režim nelze zapnout bez přístupu k režimu Nerušit.",
           "someMailboxesUnreachable": "Některé servery nebyly dostupné. Zařízení se mohou stále najít přes ostatní.",
           "mailboxReachable": "{host}: dostupný",
-          "mailboxUnreachable": "{host}: nedostupný"
+          "mailboxUnreachable": "{host}: nedostupný",
+          "connectionWorks": "Připojení přes internet: funguje",
+          "connectionWorksSome": "Připojení přes internet: funguje ({reachable} z {total} serverů)",
+          "connectionFails": "Připojení přes internet: nefunguje",
+          "details": "Podrobnosti",
+          "detailsHide": "Skrýt podrobnosti",
+          "roomNearThreshold": "V místnosti je skoro stejně hlasito jako je úroveň upozornění. Toto nastavení může spouštět upozornění kvůli zvukům na pozadí. Zkuste méně citlivé nastavení nebo zařízení přesuňte."
         },
         "notifications": {
           "title": "Výstrahy",

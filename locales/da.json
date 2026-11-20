@@ -157,7 +157,13 @@
           "dndAccessMissing": "Lydløs tilstand kan ikke slås til uden adgang til Forstyr ikke.",
           "someMailboxesUnreachable": "Nogle servere kunne ikke nås. Enhederne kan stadig finde hinanden via de andre.",
           "mailboxReachable": "{host}: kan nås",
-          "mailboxUnreachable": "{host}: kan ikke nås"
+          "mailboxUnreachable": "{host}: kan ikke nås",
+          "connectionWorks": "Forbindelse via internettet: virker",
+          "connectionWorksSome": "Forbindelse via internettet: virker ({reachable} af {total} servere)",
+          "connectionFails": "Forbindelse via internettet: virker ikke",
+          "details": "Detaljer",
+          "detailsHide": "Skjul detaljer",
+          "roomNearThreshold": "Rummet er næsten lige så højt som alarmniveauet. Denne indstilling kan give alarmer for baggrundslyd. Prøv en mindre følsom indstilling, eller flyt enheden."
         },
         "notifications": {
           "title": "Alarmer",

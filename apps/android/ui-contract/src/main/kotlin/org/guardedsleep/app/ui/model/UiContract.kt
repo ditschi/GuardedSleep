@@ -658,6 +658,9 @@ enum class DeviceCheckReason {
     BATTERY_OPTIMIZED,
     DND_ACCESS_MISSING,
     SOME_MAILBOXES_UNREACHABLE,
+
+    /** The room's steady level is within about 6 dB of the alert threshold. */
+    ROOM_NEAR_THRESHOLD,
 }
 
 /** Whether one mailbox of the pairing answered the device check's connect probe. */

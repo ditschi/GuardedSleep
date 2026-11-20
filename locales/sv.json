@@ -157,7 +157,13 @@
           "dndAccessMissing": "Tyst läge kan inte slås på utan åtkomst till Stör ej.",
           "someMailboxesUnreachable": "Några servrar kunde inte nås. Enheterna kan fortfarande hitta varandra via de andra.",
           "mailboxReachable": "{host}: nåbar",
-          "mailboxUnreachable": "{host}: inte nåbar"
+          "mailboxUnreachable": "{host}: inte nåbar",
+          "connectionWorks": "Anslutning via internet: fungerar",
+          "connectionWorksSome": "Anslutning via internet: fungerar ({reachable} av {total} servrar)",
+          "connectionFails": "Anslutning via internet: fungerar inte",
+          "details": "Detaljer",
+          "detailsHide": "Dölj detaljer",
+          "roomNearThreshold": "Rummet är nästan lika högljutt som larmnivån. Den här inställningen kan ge larm för bakgrundsljud. Prova en mindre känslig inställning eller flytta enheten."
         },
         "notifications": {
           "title": "Larm",
