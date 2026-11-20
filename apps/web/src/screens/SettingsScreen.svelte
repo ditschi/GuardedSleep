@@ -1,6 +1,15 @@
 <script lang="ts">
   import { get } from "svelte/store";
-  import { useController, type AlarmToneId, type Theme, type TurnSaveError } from "../lib/contract";
+  import {
+    snapTalkVolume,
+    TALK_VOLUME_MAX_PCT,
+    TALK_VOLUME_MIN_PCT,
+    TALK_VOLUME_STEP_PCT,
+    useController,
+    type AlarmToneId,
+    type Theme,
+    type TurnSaveError,
+  } from "../lib/contract";
   import { ALARM_TONE_COPY } from "../lib/alarm-tone";
   import { ENDONYMS, isLocale, LOCALES } from "../lib/i18n/bundles";
   import type { MessageKey } from "../lib/i18n/keys";
@@ -38,16 +47,12 @@
     if ($app.role === "baby") controller.talkSettingsOpened();
   });
 
-  const TALK_LEVELS = [
-    { value: "low", label: "webScreens.talk.levelLow" },
-    { value: "medium", label: "webScreens.talk.levelMedium" },
-    { value: "high", label: "webScreens.talk.levelHigh" },
-  ] as const satisfies ReadonlyArray<{ value: string; label: MessageKey }>;
+  // Steps of 10 percent of the alarm volume, 10 to 70; "Play chime" tries the chosen one.
+  let talkPct = $derived($settings.talkVolumePct);
 
   function chooseTalkLevel(event: Event): void {
-    const value = (event.currentTarget as HTMLSelectElement).value;
-    const level = TALK_LEVELS.find((l) => l.value === value);
-    if (level) controller.updateSettings((s) => ({ ...s, talkVolume: level.value }));
+    const value = Number((event.currentTarget as HTMLInputElement).value);
+    controller.updateSettings((s) => ({ ...s, talkVolumePct: snapTalkVolume(value) }));
   }
 
   const THEMES: ReadonlyArray<{ value: Theme; label: MessageKey }> = [
@@ -390,19 +395,21 @@
         onchange={(enabled) =>
           controller.updateSettings((s) => ({ ...s, talkBackEnabled: enabled }))}
       />
-      <label for="settings-talk-volume">{$t("webScreens.talk.settingsVolume")}</label>
-      <select
+      <label for="settings-talk-volume">
+        {$t("webScreens.talk.settingsVolume", { percent: talkPct })}
+      </label>
+      <input
         id="settings-talk-volume"
-        class="gs-select"
+        class="gs-range"
+        type="range"
+        min={TALK_VOLUME_MIN_PCT}
+        max={TALK_VOLUME_MAX_PCT}
+        step={TALK_VOLUME_STEP_PCT}
+        value={talkPct}
         data-testid="baby_talk_volume"
-        value={$settings.talkVolume}
         disabled={!$settings.talkBackEnabled}
         onchange={chooseTalkLevel}
-      >
-        {#each TALK_LEVELS as level (level.value)}
-          <option value={level.value}>{$t(level.label)}</option>
-        {/each}
-      </select>
+      />
       <Switch
         label={$t("webScreens.talk.settingsChime")}
         checked={$settings.talkChime}

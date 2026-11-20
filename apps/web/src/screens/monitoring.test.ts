@@ -827,6 +827,28 @@ describe("S11 connection alert", () => {
     expect(screen.getByTestId("status_bar")).toHaveTextContent("Stopped");
   });
 
+  it("'OK, stop here too' acknowledges through the core and leaves for the start page", async () => {
+    open("/parent", c);
+    c.parent.update((p) => ({ ...p, link: link({ phase: "peer_stopped" }) }));
+    await screen.findByRole("alertdialog");
+    // The stopped notice has no separate stop button: the primary answer is the acknowledgment.
+    expect(screen.queryByTestId("link_alarm_stop")).toBeNull();
+    await fireEvent.click(screen.getByTestId("link_alarm_stop_here"));
+    expect(c.calls).toContainEqual(["acknowledgePeerStopped"]);
+    expect(c.calls.map((x) => x[0])).not.toContain("stopMonitoring");
+    await waitFor(() => expect(window.location.pathname).toBe("/"));
+  });
+
+  it("a lost connection has no path that stops monitoring without the confirmation", async () => {
+    open("/parent", c);
+    lose();
+    await screen.findByTestId("link_alarm_title");
+    expect(screen.queryByTestId("link_alarm_stop_here")).toBeNull();
+    await fireEvent.click(screen.getByTestId("link_alarm_stop"));
+    expect(c.calls.map((x) => x[0])).not.toContain("stopMonitoring");
+    expect(c.calls.map((x) => x[0])).not.toContain("acknowledgePeerStopped");
+  });
+
   it("warns about an almost empty baby device battery", async () => {
     open("/parent", c);
     c.parent.update((p) => ({ ...p, peer: { ...p.peer, batteryPct: 3, charging: false } }));

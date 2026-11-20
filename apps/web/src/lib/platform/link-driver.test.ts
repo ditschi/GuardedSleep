@@ -755,10 +755,10 @@ describe("LinkDriver talk-back actions", () => {
 
   it("baby: plays the chime and reports its end as talk_chime_done", () => {
     const { driver, media, core } = withActions("baby", [
-      { type: "play_talk_chime", attempt: 1, level: "low" },
+      { type: "play_talk_chime", attempt: 1, level: 10 },
     ]);
     driver.input({ type: "request_probe" });
-    expect(media.calls).toContain("chime:low");
+    expect(media.calls).toContain("chime:10");
     media.chimeDone?.();
     expect(core.inputs.some((i) => i.input.type === "talk_chime_done")).toBe(true);
   });
@@ -769,14 +769,14 @@ describe("LinkDriver talk-back actions", () => {
         type: "set_talk_playback",
         attempt: 1,
         enabled: true,
-        level: "medium",
+        level: 50,
         fade_in_ms: 800,
         until_ms: 31_000,
       },
     ]);
     time.advance(1_000);
     driver.input({ type: "request_probe" });
-    expect(media.calls).toContain("talkplay:true:medium:800:30000");
+    expect(media.calls).toContain("talkplay:true:50:800:30000");
   });
 
   it("baby: feeds the incoming voice level to the core while it plays", () => {

@@ -99,6 +99,8 @@ describe("core-wasm wrapper", () => {
   it("derives the room id from the PSK bytes", () => {
     const psk = Uint8Array.from({ length: 32 }, (_, i) => i);
     expect(core.deriveRoomId(psk)).toBe("FrcBBWi_uGBOkaphqPhl_w");
+    // The one limit the clients clamp the sensitivity slider and the stored threshold with.
+    expect(core.minNoiseThreshold()).toBe(0.0015);
     expect(core.createLink(config("parent")).roomId()).toBe("FrcBBWi_uGBOkaphqPhl_w");
   });
 
@@ -249,6 +251,7 @@ describe("core-wasm wrapper", () => {
       },
       messageKeys: () => "[]",
       deriveRoomId: () => "",
+      minNoiseThreshold: () => 0.0015,
       parseInvite: () => "{}",
       buildInvite: () => "",
       filterOnlyLocal: () => "[]",

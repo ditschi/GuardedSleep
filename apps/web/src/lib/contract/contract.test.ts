@@ -34,7 +34,6 @@ import {
   type TalkPermission,
   type TalkUi,
   type TalkUnavailable,
-  type TalkVolume,
   type Theme,
 } from "./models";
 import type { NightMode, NightOverride } from "../night-mode";
@@ -143,7 +142,6 @@ describe("enums mirror UiContract.kt", () => {
     NightMode: ["off", "on", "auto"] satisfies NightMode[],
     AlertOutput: ["default", "speaker_only"] satisfies AlertOutput[],
     DeviceCheck: ["unknown", "ok", "limited", "not_recommended"] satisfies DeviceCheck[],
-    TalkVolume: ["low", "medium", "high"] satisfies TalkVolume[],
     TalkEnd: [
       "released",
       "limit",
@@ -243,9 +241,10 @@ describe("data classes mirror UiContract.kt", () => {
 
 describe("defaults equal the Kotlin constructor defaults", () => {
   it("monitoring thresholds", () => {
-    expect(defaultBabyMonitor().threshold).toBe(0.12);
+    expect(defaultBabyMonitor().threshold).toBe(0.016);
     expect(defaultBabyMonitor().holdSeconds).toBe(5);
-    expect(defaultSettings().threshold).toBe(0.12);
+    expect(defaultSettings().threshold).toBe(0.016);
+    expect(defaultSettings().talkVolumePct).toBe(50);
     expect(defaultSettings().holdSeconds).toBe(5);
     expect(defaultSettings().heartbeatSeconds).toBe(10);
     expect(defaultSettings().alertGainPct).toBe(100);

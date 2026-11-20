@@ -105,6 +105,12 @@ export interface AppController {
   dismissMissedEvents(): void;
   /** Parent: OK on the "Connected again" card; it never goes away on its own. */
   dismissRestored(): void;
+  /**
+   * Parent: "OK, stop here too" on the notice that the baby device stopped on purpose. The core
+   * stops this device's monitoring only while the link is still `peer_stopped`; a stale tap after
+   * the baby device started again changes nothing.
+   */
+  acknowledgePeerStopped(): void;
 
   // Talk-back (`add-talk-back`), the same intents as UiContract.kt.
   /**

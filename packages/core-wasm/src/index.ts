@@ -22,6 +22,7 @@ export interface RawCoreModule {
   };
   messageKeys(): string;
   deriveRoomId(psk: Uint8Array): string;
+  minNoiseThreshold(): number;
   parseInvite(text: string, nowEpochS: number, allowDevLoopback: boolean): string;
   buildInvite(
     psk: Uint8Array,
@@ -48,6 +49,8 @@ export interface CoreApi {
   createLink(config: LinkConfig): CoreLink;
   messageKeys(): string[];
   deriveRoomId(psk: Uint8Array): string;
+  /** The lowest noise-gate threshold any message or setting may carry (linear RMS, -56 dBFS). */
+  minNoiseThreshold(): number;
   /** Parses a scanned or pasted v4 invite. `nowEpochS` is the wall clock in epoch seconds. */
   parseInvite(text: string, nowEpochS: number): ParseInviteResult;
   /**
@@ -102,6 +105,7 @@ export function createCoreApi(mod: RawCoreModule, options: CoreOptions = {}): Co
     },
     messageKeys: () => JSON.parse(mod.messageKeys()) as string[],
     deriveRoomId: (psk) => mod.deriveRoomId(psk),
+    minNoiseThreshold: () => mod.minNoiseThreshold(),
     parseInvite(text, nowEpochS) {
       const out: unknown = JSON.parse(mod.parseInvite(text, nowEpochS, allowDevLoopback));
       return toParseInviteResult(out);

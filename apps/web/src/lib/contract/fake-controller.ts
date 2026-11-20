@@ -162,6 +162,9 @@ export function createFakeController(): FakeController {
       calls.push(["dismissRestored"]);
       parent.update((s) => ({ ...s, restoredAfterMs: null, missed: null }));
     },
+    acknowledgePeerStopped() {
+      calls.push(["acknowledgePeerStopped"]);
+    },
     setKioskLocked(locked) {
       calls.push(["setKioskLocked", locked]);
       baby.update((s) => ({ ...s, kioskLocked: locked }));

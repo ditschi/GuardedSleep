@@ -56,6 +56,7 @@ class ScriptedCore {
     realCore.filterOnlyLocal(mailboxes, host);
   parseInvite: CoreApi["parseInvite"] = (text, now) => realCore.parseInvite(text, now);
   resolveAlarmTone: CoreApi["resolveAlarmTone"] = (id) => realCore.resolveAlarmTone(id);
+  minNoiseThreshold: CoreApi["minNoiseThreshold"] = () => realCore.minNoiseThreshold();
   types(): string[] {
     return this.inputs.map((i) => i.type);
   }
@@ -908,6 +909,50 @@ describe("WebController: contract state from the core", () => {
     expect(get(t.controller.baby)).toMatchObject({ threshold: 0.4, holdSeconds: 9 });
   });
 
+  it("the most sensitive slider setting reaches the core above its lowest limit", async () => {
+    const t = setup();
+    t.controller.chooseRole("baby");
+    t.controller.startPairing();
+    await flush();
+    // Below the core's lowest threshold: raised to it, never sent as a value the core refuses.
+    t.controller.updateSettings((s) => ({ ...s, threshold: 0.0005 }));
+    expect(t.core.inputs).toContainEqual({
+      type: "set_noise_gate",
+      threshold: realCore.minNoiseThreshold(),
+      hold_ms: 5_000,
+    });
+    // The slider's own end is already above it and is sent as it is.
+    t.controller.updateSettings((s) => ({ ...s, threshold: 0.0018 }));
+    expect(t.core.inputs).toContainEqual({
+      type: "set_noise_gate",
+      threshold: 0.0018,
+      hold_ms: 5_000,
+    });
+  });
+
+  it("OK, stop here too goes to the core and ends the run when it says stopped", async () => {
+    const t = setup();
+    await pairedParent(t);
+    t.core.script = () => [emitStatus({ state: "peer_stopped" })];
+    t.time.advance(250);
+    t.controller.acknowledgePeerStopped();
+    expect(t.core.inputs).toContainEqual({ type: "acknowledge_peer_stopped" });
+    t.core.script = () => [emitStatus({ state: "stopped" })];
+    t.time.advance(250);
+    t.time.advance(250);
+    expect(get(t.controller.app).monitoring).toBe(false);
+  });
+
+  it("a stale OK, stop here too keeps monitoring when the core ignores it", async () => {
+    const t = setup();
+    await pairedParent(t);
+    t.controller.acknowledgePeerStopped();
+    t.core.script = () => [emitStatus({ state: "connected" })];
+    t.time.advance(250);
+    t.time.advance(250);
+    expect(get(t.controller.app).monitoring).toBe(true);
+  });
+
   it("the alert gain reaches the parent's playout", async () => {
     const t = setup();
     await pairedParent(t);
@@ -1340,17 +1385,17 @@ describe("WebController: talk-back, baby", () => {
 
   it("settings stay on this page and reach the core as set_talk_back", async () => {
     const t = await babyRun();
-    t.controller.updateSettings((s) => ({ ...s, talkVolume: "high", talkChime: false }));
+    t.controller.updateSettings((s) => ({ ...s, talkVolumePct: 70, talkChime: false }));
     expect(t.core.inputs.at(-1)).toEqual({
       type: "set_talk_back",
       enabled: true,
-      level: "high",
+      level: 70,
       chime: false,
     });
     t.controller.updateSettings((s) => ({ ...s, talkBackEnabled: false }));
     expect(get(t.controller.settings)).toMatchObject({
       talkBackEnabled: false,
-      talkVolume: "high",
+      talkVolumePct: 70,
       talkChime: false,
     });
     t.controller.talkSettingsOpened();
@@ -1375,9 +1420,9 @@ describe("WebController: talk-back, baby", () => {
 
   it("plays the sample chime at the chosen level", async () => {
     const t = await babyRun();
-    t.controller.updateSettings((s) => ({ ...s, talkVolume: "medium" }));
+    t.controller.updateSettings((s) => ({ ...s, talkVolumePct: 50 }));
     t.controller.playTalkChimeSample();
-    expect(t.medias[0]?.calls).toContain("chime:medium");
+    expect(t.medias[0]?.calls).toContain("chime:50");
   });
 });
 

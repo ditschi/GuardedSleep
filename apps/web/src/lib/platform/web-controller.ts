@@ -17,6 +17,7 @@ import {
   defaultWebTalk,
   defaultSettings,
   makePairingState,
+  snapTalkVolume,
   type AlarmTonePlayback,
   type AppController,
   type AppState,
@@ -78,7 +79,12 @@ export interface TalkMicPort {
 export interface ControllerDeps {
   core: Pick<
     CoreApi,
-    "createLink" | "buildInvite" | "parseInvite" | "filterOnlyLocal" | "resolveAlarmTone"
+    | "createLink"
+    | "buildInvite"
+    | "parseInvite"
+    | "filterOnlyLocal"
+    | "resolveAlarmTone"
+    | "minNoiseThreshold"
   >;
   clock: Clock;
   timers: Timers;
@@ -166,6 +172,8 @@ interface Run {
   pending: PendingPairing | null;
   monitoring: boolean;
   driver: LinkDriver | null;
+  /** Parent: "OK, stop here too" was tapped; the run ends when the core says `stopped`. */
+  ackStopPending?: boolean;
 }
 
 /** Web-only failure keys of a run that could not start (no core key exists for them). */
@@ -360,7 +368,7 @@ export class WebController implements AppController {
     ) {
       r.driver.input({
         type: "set_noise_gate",
-        threshold: after.threshold,
+        threshold: this.clampThreshold(after.threshold),
         hold_ms: after.holdSeconds * 1000,
       });
     }
@@ -369,7 +377,7 @@ export class WebController implements AppController {
     }
     if (
       after.talkBackEnabled !== before.talkBackEnabled ||
-      after.talkVolume !== before.talkVolume ||
+      after.talkVolumePct !== before.talkVolumePct ||
       after.talkChime !== before.talkChime
     ) {
       this.sendTalkSettings();
@@ -560,6 +568,15 @@ export class WebController implements AppController {
     this.run?.driver?.input({ type: "acknowledge_alarm" });
   }
 
+  acknowledgePeerStopped(): void {
+    const r = this.run;
+    if (r?.role !== "parent") return;
+    // The core decides: it stops only while the link is still `peer_stopped`, and a stale tap
+    // changes nothing. The run ends when its status says stopped (`listenerFor`).
+    r.ackStopPending = true;
+    r.driver?.input({ type: "acknowledge_peer_stopped" });
+  }
+
   stopAlertSound(): void {
     this.parentModel.stopAlertSound();
   }
@@ -680,7 +697,7 @@ export class WebController implements AppController {
 
   playTalkChimeSample(): void {
     this.deps.gate.unlock().catch(() => undefined);
-    const level = this.settingsState.talkVolume;
+    const level = snapTalkVolume(this.settingsState.talkVolumePct);
     this.run?.driver?.media((m) => m.playTalkChime(level, () => undefined));
   }
 
@@ -688,11 +705,16 @@ export class WebController implements AppController {
     this.run?.driver?.input({ type: "talk_settings_opened" });
   }
 
+  /** A threshold below the core's lowest is raised to it (the core's own constant, no copy). */
+  private clampThreshold(threshold: number): number {
+    return Math.min(1, Math.max(this.deps.core.minNoiseThreshold(), threshold));
+  }
+
   private sendTalkSettings(): void {
     const driver = this.run?.driver;
     if (!driver || this.run?.role !== "baby") return;
-    const { talkBackEnabled: enabled, talkVolume: level, talkChime: chime } = this.settingsState;
-    driver.input({ type: "set_talk_back", enabled, level, chime });
+    const { talkBackEnabled: enabled, talkVolumePct, talkChime: chime } = this.settingsState;
+    driver.input({ type: "set_talk_back", enabled, level: snapTalkVolume(talkVolumePct), chime });
   }
 
   /**
@@ -851,7 +873,7 @@ export class WebController implements AppController {
       paired_before: pairedBefore,
       heartbeat_interval_ms: heartbeat,
       alarm_after_ms: alarmAfter,
-      noise_threshold: s.threshold,
+      noise_threshold: this.clampThreshold(s.threshold),
       noise_hold_ms: s.holdSeconds * 1000,
       ...(pending.parentSecret === null ? {} : { pinned_parent: pending.parentSecret }),
       ...(pending.pinUntilS === null ? {} : { pin_window_until_s: pending.pinUntilS }),
@@ -912,6 +934,18 @@ export class WebController implements AppController {
           this.talkModel.setConnected(phaseOf(status.state) === "connected");
         } else this.babyModel.onStatus(status);
         this.onPairingStatus(r, status);
+        if (r.ackStopPending) {
+          if (status.state === "stopped") {
+            r.ackStopPending = false;
+            // Not inside the core's callback: the stop talks to the driver again.
+            this.deps.timers.after(() => {
+              if (this.run === r) this.stopMonitoring();
+            }, 0);
+          } else if (["connecting", "reconnecting", "connected"].includes(status.state)) {
+            // The core ignored the tap (the baby device started again): nothing to stop.
+            r.ackStopPending = false;
+          }
+        }
       },
       onEvent: (event: LinkEvent, now: number) => {
         if (!current()) return;

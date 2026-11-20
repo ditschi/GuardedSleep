@@ -205,10 +205,8 @@ for (const lang of LANGUAGES) {
       await dual.babyPage.getByTestId("dialog_stop_confirm").click();
       await expect(parent.getByTestId("link_alarm_title")).toBeVisible({ timeout: 30_000 });
       await checkScreen(parent, "parent: link alarm, baby device stopped");
-      // Stop asks first: the confirmation is part of the alert screen's flow.
-      await parent.getByTestId("link_alarm_stop").click();
-      await expect(parent.getByTestId("dialog_stop")).toBeVisible();
-      await parent.getByTestId("dialog_stop_confirm").click();
+      // "OK, stop here too" acknowledges the deliberate stop through the core and ends monitoring.
+      await parent.getByTestId("link_alarm_stop_here").click();
       await expect(parent.getByTestId("role_title")).toBeVisible();
 
       // Pair again and lose the connection: the parent goes offline.

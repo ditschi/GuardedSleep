@@ -119,6 +119,11 @@
     router.navigate("/");
   }
 
+  function stopHereToo(): void {
+    controller.acknowledgePeerStopped();
+    router.navigate("/");
+  }
+
   function chooseAnother(): void {
     wrongOpen = false;
     controller.chooseAnotherConnection();
@@ -233,19 +238,36 @@
           <Glyph name="refresh" />
           {$t("native.ui.link.pairAgain")}
         </Button>
+      {:else if kind === "baby_stopped"}
+        <!-- The baby device stopped on purpose: the primary answer ends monitoring here too,
+             through the core (it ignores a stale tap). OK alone keeps monitoring. -->
+        <Button
+          variant="alert"
+          size="large"
+          block
+          testid="link_alarm_stop_here"
+          onclick={stopHereToo}
+        >
+          {$t("native.ui.linkAlarm.stopped.stopHere")}
+        </Button>
+        <Button variant="alert-outline" block testid="link_alarm_ok" onclick={onok}>
+          {$t("native.ui.common.ok")}
+        </Button>
       {:else}
         <Button variant="alert" size="large" block testid="link_alarm_ok" onclick={onok}>
           {$t("native.ui.common.ok")}
         </Button>
       {/if}
-      <Button
-        variant="alert-outline"
-        block
-        testid="link_alarm_stop"
-        onclick={() => (stopOpen = true)}
-      >
-        {$t("native.ui.parent.stop")}
-      </Button>
+      {#if kind !== "baby_stopped"}
+        <Button
+          variant="alert-outline"
+          block
+          testid="link_alarm_stop"
+          onclick={() => (stopOpen = true)}
+        >
+          {$t("native.ui.parent.stop")}
+        </Button>
+      {/if}
     </div>
   </div>
   <StopDialog bind:open={stopOpen} {name} onconfirm={stopMonitoring} />
