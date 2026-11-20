@@ -424,8 +424,8 @@ pub enum LinkInput {
     /// Parent: "I'm checking" - mute levels 2-3 for 5 minutes.
     AcknowledgeAlarm,
     /// Parent: "OK, stop here too" on the notice that the baby stopped on purpose. Stops the link
-    /// only while it is still `peer_stopped`; ignored otherwise (a stale tap after the baby
-    /// started a new session must not stop monitoring).
+    /// only while it is still `peer_stopped` and no new attempt has begun; ignored otherwise (a stale
+    /// tap after the baby started a new session must not stop monitoring).
     AcknowledgePeerStopped,
     /// The platform's network changed or came back: retry immediately, reset the backoff.
     NetworkAvailable,
@@ -1392,7 +1392,12 @@ impl Link {
             LinkInput::Stop => self.on_stop(&mut out),
             LinkInput::AcknowledgeAlarm => self.on_acknowledge(now, &mut out),
             LinkInput::AcknowledgePeerStopped => {
-                if self.cfg.role == Role::Parent && self.peer_stopped {
+                // `peer_stopped` stays set until a new attempt is verified, so it alone cannot tell
+                // a tap on the notice from a stale one. `stop_peer` closed the live attempt, so a
+                // live attempt now means the restarted baby's new session is already being set
+                // up: the parent keeps monitoring.
+                let baby_is_back = self.live.as_ref().is_some_and(|l| !l.attempt.is_finished());
+                if self.cfg.role == Role::Parent && self.peer_stopped && !baby_is_back {
                     self.on_stop(&mut out);
                 }
             }

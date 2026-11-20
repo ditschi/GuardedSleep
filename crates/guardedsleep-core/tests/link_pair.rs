@@ -1831,6 +1831,25 @@ fn acknowledging_a_deliberate_baby_stop_stops_the_parent() {
 }
 
 #[test]
+fn an_acknowledgment_while_the_restarted_babys_attempt_is_in_progress_keeps_monitoring() {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    w.stop(BABY);
+    w.advance(3_000);
+    assert_eq!(w.state(PARENT), LinkState::PeerStopped);
+    // The parent never learns the remote certificate, so the restarted baby's new attempt is
+    // built but stays unverified.
+    w.set_dtls(PARENT, Dtls::Silent);
+    w.start(BABY, 9);
+    w.advance(2_000);
+    assert_eq!(w.live_attempts(PARENT), 1, "the new attempt is in progress");
+    assert_eq!(w.state(PARENT), LinkState::PeerStopped);
+    w.input(PARENT, LinkInput::AcknowledgePeerStopped);
+    assert_ne!(w.state(PARENT), LinkState::Stopped);
+    assert_eq!(w.live_attempts(PARENT), 1);
+}
+
+#[test]
 fn a_stale_peer_stopped_acknowledgment_keeps_monitoring() {
     let mut w = World::pair(&PSK_A, &PSK_A);
     w.connect_pair();
