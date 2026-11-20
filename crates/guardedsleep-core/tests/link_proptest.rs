@@ -73,6 +73,7 @@ fn input() -> impl Strategy<Value = LinkInput> {
         any::<u64>().prop_map(|entropy| LinkInput::Start { entropy }),
         Just(LinkInput::Stop),
         Just(LinkInput::AcknowledgeAlarm),
+        Just(LinkInput::AcknowledgePeerStopped),
         Just(LinkInput::NetworkAvailable),
         Just(LinkInput::MailboxOpened { id: 0 }),
         Just(LinkInput::MailboxClosed { id: 0, reason: "closed".into() }),

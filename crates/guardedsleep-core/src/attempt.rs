@@ -124,6 +124,7 @@ pub struct Attempt {
     seq: u64,
     next_heartbeat_at: u64,
     heartbeat_rms: Option<f64>,
+    heartbeat_loud: bool,
 }
 
 impl Attempt {
@@ -151,6 +152,7 @@ impl Attempt {
             seq: 0,
             next_heartbeat_at: 0,
             heartbeat_rms: None,
+            heartbeat_loud: false,
         }
     }
 
@@ -210,6 +212,11 @@ impl Attempt {
     /// Baby: RMS to put into outgoing heartbeats.
     pub fn set_heartbeat_rms(&mut self, rms: Option<f64>) {
         self.heartbeat_rms = rms;
+    }
+
+    /// Baby: whether the noise gate is loud, for outgoing heartbeats.
+    pub fn set_heartbeat_loud(&mut self, loud: bool) {
+        self.heartbeat_loud = loud;
     }
 
     /// Whether an ICE candidate carrying `aid` belongs to this attempt's remote side. Once the
@@ -526,6 +533,7 @@ impl Attempt {
                 seq: self.seq,
                 battery: None,
                 rms: self.heartbeat_rms,
+                loud: self.heartbeat_loud,
             },
         )));
     }

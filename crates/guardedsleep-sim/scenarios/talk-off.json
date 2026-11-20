@@ -30,7 +30,7 @@
       "input": {
         "type": "set_talk_back",
         "enabled": false,
-        "level": "low",
+        "level": 10,
         "chime": true
       }
     },

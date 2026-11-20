@@ -1,0 +1,134 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "noise-talking-with-pauses",
+  "description": "People talk near the baby unit for 6.5 s with half-second pauses between words and a 5 s hold time: the gate bridges the pauses and the parent gets one noise alert.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 1000,
+      "do": "input",
+      "peer": "baby",
+      "input": {
+        "type": "set_noise_gate",
+        "threshold": 0.12,
+        "hold_ms": 5000
+      }
+    },
+    {
+      "at": 20000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 21000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 500
+    },
+    {
+      "at": 21500,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 22500,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 500
+    },
+    {
+      "at": 23000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 24000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 500
+    },
+    {
+      "at": 24500,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 25500,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 500
+    },
+    {
+      "at": 26000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 27000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 500
+    },
+    {
+      "at": 27500,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 20000
+    },
+    {
+      "at": 47500,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "event": "noise_alert",
+      "where": {
+        "probe": false
+      },
+      "within_ms": [24000, 30000],
+      "count": 1
+    }
+  ]
+}

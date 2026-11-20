@@ -1290,6 +1290,56 @@ fn a_snooze_that_ends_in_noise_starts_the_count_over() {
     assert_eq!(escalations(&w, m), 1);
 }
 
+/// A snoozed noise event, the baby's gate loud through the bursts of crying, the snooze ends while
+/// a heartbeat falls into a breath between bursts (low level). Returns the escalations.
+fn escalations_when_the_snooze_ends_in_a_breath(gate_loud: bool) -> usize {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    escalation_delay(&mut w, Some(5_000));
+    snooze_for(&mut w, 60_000);
+    loud(&mut w, 1_000);
+    assert_eq!(noise_alerts(&w), 1, "the snoozed alert reached the parent");
+    quiet(&mut w, 54_000);
+    w.inject_data(
+        PARENT,
+        &json!({"type":"heartbeat","v":3,"t":1,"seq":99,"rms":0.01,"loud":gate_loud}).to_string(),
+    );
+    let m = w.mark(PARENT);
+    quiet(&mut w, 15_000);
+    escalations(&w, m)
+}
+
+#[test]
+fn a_snooze_that_ends_in_a_breath_of_loud_crying_still_alerts() {
+    // The gate is loud in the heartbeat although its level fell below the threshold.
+    assert_eq!(escalations_when_the_snooze_ends_in_a_breath(true), 1);
+    // Control: the same heartbeat without a loud gate does not keep the event alive.
+    assert_eq!(escalations_when_the_snooze_ends_in_a_breath(false), 0);
+}
+
+#[test]
+fn the_baby_states_its_loud_gate_in_the_heartbeat() {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    let loud_beats = |w: &World| {
+        w.nodes[BABY]
+            .data_sent
+            .iter()
+            .filter(|(_, m)| m["type"] == "heartbeat" && m["loud"] == json!(true))
+            .count()
+    };
+    quiet(&mut w, 12_000);
+    assert_eq!(loud_beats(&w), 0, "absent while the gate is quiet");
+    assert!(
+        w.nodes[BABY]
+            .data_sent
+            .iter()
+            .any(|(_, m)| m["type"] == "heartbeat")
+    );
+    loud(&mut w, 12_000);
+    assert!(loud_beats(&w) >= 1);
+}
+
 #[test]
 fn a_test_alert_never_escalates() {
     let mut w = World::pair(&PSK_A, &PSK_A);
@@ -1765,6 +1815,40 @@ fn a_verified_link_holds_no_mailbox_and_the_stop_goes_over_the_data_channel() {
     w.advance(120_000);
     assert_eq!(w.state(PARENT), LinkState::PeerStopped);
     assert_eq!(w.count_events(PARENT, m, is_link_lost), 0);
+}
+
+#[test]
+fn acknowledging_a_deliberate_baby_stop_stops_the_parent() {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    w.stop(BABY);
+    w.advance(3_000);
+    assert_eq!(w.state(PARENT), LinkState::PeerStopped);
+    w.input(PARENT, LinkInput::AcknowledgePeerStopped);
+    assert_eq!(w.state(PARENT), LinkState::Stopped);
+    w.advance(60_000);
+    assert_eq!(w.state(PARENT), LinkState::Stopped);
+}
+
+#[test]
+fn a_stale_peer_stopped_acknowledgment_keeps_monitoring() {
+    let mut w = World::pair(&PSK_A, &PSK_A);
+    w.connect_pair();
+    // Ignored while connected, and on the baby side.
+    w.input(PARENT, LinkInput::AcknowledgePeerStopped);
+    w.input(BABY, LinkInput::AcknowledgePeerStopped);
+    w.advance(3_000);
+    assert_eq!(w.state(PARENT), LinkState::Connected);
+    assert_eq!(w.state(BABY), LinkState::Connected);
+    // The baby stopped, started again, and the tap arrives after the new session is up.
+    w.stop(BABY);
+    w.advance(3_000);
+    w.start(BABY, 9);
+    w.advance(60_000);
+    assert_eq!(w.state(PARENT), LinkState::Connected);
+    w.input(PARENT, LinkInput::AcknowledgePeerStopped);
+    w.advance(5_000);
+    assert_eq!(w.state(PARENT), LinkState::Connected);
 }
 
 #[test]
@@ -2581,7 +2665,7 @@ fn invalid_noise_gate_settings_are_ignored() {
     w.connect_pair();
     for (threshold, hold_ms) in [
         (0.0, 2_000),
-        (0.009, 2_000),
+        (0.001, 2_000),
         (1.01, 2_000),
         (f64::NAN, 2_000),
         (f64::INFINITY, 2_000),

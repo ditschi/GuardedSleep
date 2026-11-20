@@ -43,7 +43,8 @@ impl TalkSettings {
     pub(super) fn new(enabled: bool, level: TalkLevel, chime: bool) -> Self {
         Self {
             enabled,
-            level,
+            // Any platform value lands on the step grid.
+            level: level.normalized(),
             chime,
         }
     }
@@ -51,10 +52,10 @@ impl TalkSettings {
 
 impl Default for TalkSettings {
     fn default() -> Self {
-        // On, low and with the chime: the defaults of the `talk-back` settings requirement.
+        // On, at 50 % and with the chime: the defaults of the `talk-back` settings requirement.
         Self {
             enabled: true,
-            level: TalkLevel::Low,
+            level: TalkLevel::default(),
             chime: true,
         }
     }
@@ -883,7 +884,7 @@ impl Link {
         let hold = self.gate.hold_ms();
         if self.talk.arb.tick(now, hold) {
             // The gate restarts its hold time, and `mic_silent` counts again from here.
-            self.gate.restart_hold();
+            self.gate.restart_hold(now);
             self.zero_since = None;
             self.talk.talk_level = None;
             emit(out, LinkEvent::NoisePaused { paused: false });

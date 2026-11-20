@@ -74,14 +74,44 @@ pub const TALK_LEVEL_FLOOR: f64 = 0.0001;
 /// This many unconfirmed talks in a row set `talk_audible: uncertain`.
 pub const TALK_UNCONFIRMED_STREAK: u32 = 3;
 
-/// Talk-back volume of the baby unit, a setting of the baby platform (`set_talk_back`).
+/// Lowest talk-back volume step, in percent of the alarm stream maximum.
+pub const TALK_LEVEL_MIN_PCT: u8 = 10;
+/// Highest step. The 70 % top keeps the decision on infant hearing (`add-talk-back` S16).
+pub const TALK_LEVEL_MAX_PCT: u8 = 70;
+pub const TALK_LEVEL_STEP_PCT: u8 = 10;
+pub const TALK_LEVEL_DEFAULT_PCT: u8 = 50;
+
+/// Talk-back volume of the baby unit in percent of the alarm stream maximum, a step from
+/// [`TALK_LEVEL_MIN_PCT`] to [`TALK_LEVEL_MAX_PCT`]. A setting of the baby platform
+/// (`set_talk_back`); no message from the parent carries it. On the wire it is the plain number.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
+#[serde(transparent)]
 #[cfg_attr(feature = "tsify", derive(tsify::Tsify))]
-pub enum TalkLevel {
-    Low,
-    Medium,
-    High,
+pub struct TalkLevel {
+    pub pct: u8,
+}
+
+impl TalkLevel {
+    /// The step nearest to `pct`, so any platform value ends up on the 10..=70 grid.
+    pub fn new(pct: u8) -> Self {
+        let step = u16::from(TALK_LEVEL_STEP_PCT);
+        let snapped = (u16::from(pct) + step / 2) / step * step;
+        let pct = snapped.clamp(u16::from(TALK_LEVEL_MIN_PCT), u16::from(TALK_LEVEL_MAX_PCT));
+        Self { pct: pct as u8 }
+    }
+
+    /// This level moved onto the grid.
+    pub fn normalized(self) -> Self {
+        Self::new(self.pct)
+    }
+}
+
+impl Default for TalkLevel {
+    fn default() -> Self {
+        Self {
+            pct: TALK_LEVEL_DEFAULT_PCT,
+        }
+    }
 }
 
 /// Why a talk ended on the parent (`TalkState::Ended`).
@@ -865,9 +895,25 @@ mod tests {
             serde_json::to_string(&TalkState::Talking { until_ms: 5 }).unwrap(),
             r#"{"state":"talking","until_ms":5}"#
         );
-        assert_eq!(
-            serde_json::to_string(&TalkLevel::High).unwrap(),
-            r#""high""#
-        );
+        assert_eq!(serde_json::to_string(&TalkLevel::new(70)).unwrap(), "70");
+        assert_eq!(serde_json::from_str::<TalkLevel>("30").unwrap().pct, 30);
+    }
+
+    #[test]
+    fn talk_levels_snap_to_the_step_grid_between_10_and_70() {
+        let snap = |p| TalkLevel::new(p).pct;
+        assert_eq!(snap(0), 10);
+        assert_eq!(snap(14), 10);
+        assert_eq!(snap(15), 20);
+        assert_eq!(snap(50), 50);
+        assert_eq!(snap(64), 60);
+        assert_eq!(snap(65), 70);
+        assert_eq!(snap(100), 70);
+        assert_eq!(snap(255), 70);
+        assert_eq!(TalkLevel::default().pct, 50);
+        for p in 0..=255u8 {
+            let v = snap(p);
+            assert!((10..=70).contains(&v) && v % 10 == 0, "{p} -> {v}");
+        }
     }
 }

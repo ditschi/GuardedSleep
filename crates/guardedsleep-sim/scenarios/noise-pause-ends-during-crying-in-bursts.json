@@ -1,0 +1,282 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "noise-pause-ends-during-crying-in-bursts",
+  "description": "Noise alerts are snoozed until 60 s while the child cries in bursts of 3 s with a 1 s breath, so the gate stays loud. The snooze ends while a heartbeat may fall into a breath; the parent still treats the noise as ongoing and the unacknowledged event escalates.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 1000,
+      "do": "input",
+      "peer": "baby",
+      "input": {
+        "type": "set_noise_gate",
+        "threshold": 0.12,
+        "hold_ms": 5000
+      }
+    },
+    {
+      "at": 2000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_noise_escalation",
+        "after_ms": 5000
+      }
+    },
+    {
+      "at": 2000,
+      "do": "input",
+      "peer": "parent",
+      "input": {
+        "type": "set_snooze",
+        "until_ms": 60000
+      }
+    },
+    {
+      "at": 20000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 3000
+    },
+    {
+      "at": 23000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1000
+    },
+    {
+      "at": 24000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 3000
+    },
+    {
+      "at": 27000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1000
+    },
+    {
+      "at": 28000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 3000
+    },
+    {
+      "at": 31000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1000
+    },
+    {
+      "at": 32000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 3000
+    },
+    {
+      "at": 35000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1000
+    },
+    {
+      "at": 36000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 3000
+    },
+    {
+      "at": 39000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1000
+    },
+    {
+      "at": 40000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 3000
+    },
+    {
+      "at": 43000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1000
+    },
+    {
+      "at": 44000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 3000
+    },
+    {
+      "at": 47000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1000
+    },
+    {
+      "at": 48000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 3000
+    },
+    {
+      "at": 51000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1000
+    },
+    {
+      "at": 52000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 3000
+    },
+    {
+      "at": 55000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1000
+    },
+    {
+      "at": 56000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 3000
+    },
+    {
+      "at": 59000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1000
+    },
+    {
+      "at": 60000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 3000
+    },
+    {
+      "at": 63000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1000
+    },
+    {
+      "at": 64000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 3000
+    },
+    {
+      "at": 67000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1000
+    },
+    {
+      "at": 68000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 3000
+    },
+    {
+      "at": 71000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1000
+    },
+    {
+      "at": 72000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 3000
+    },
+    {
+      "at": 75000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1000
+    },
+    {
+      "at": 76000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 3000
+    },
+    {
+      "at": 79000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1000
+    },
+    {
+      "at": 80000,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "event": "noise_escalated",
+      "within_ms": [60000, 80000],
+      "count": 1
+    }
+  ]
+}

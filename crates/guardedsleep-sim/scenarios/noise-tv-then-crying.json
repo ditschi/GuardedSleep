@@ -1,0 +1,401 @@
+{
+  "schema": "gs-scenario/1",
+  "id": "noise-tv-then-crying",
+  "description": "A TV keeps the level above the threshold for about a third of the time with gaps under 2 s, so the noisy stretch never ends; the gate stays quiet. When the child then cries continuously, the alert comes within the hold time plus one sample, whatever the TV did before.",
+  "seed": 1,
+  "peers": [
+    {
+      "id": "baby",
+      "role": "baby"
+    },
+    {
+      "id": "parent",
+      "role": "parent"
+    }
+  ],
+  "timeline": [
+    {
+      "at": 0,
+      "do": "start"
+    },
+    {
+      "at": 1000,
+      "do": "input",
+      "peer": "baby",
+      "input": {
+        "type": "set_noise_gate",
+        "threshold": 0.12,
+        "hold_ms": 5000
+      }
+    },
+    {
+      "at": 20000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 21000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 22700,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 23700,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 25400,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 26400,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 28100,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 29100,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 30800,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 31800,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 33500,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 34500,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 36200,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 37200,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 38900,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 39900,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 41600,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 42600,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 44300,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 45300,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 47000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 48000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 49700,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 50700,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 52400,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 53400,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 55100,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 56100,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 57800,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 58800,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 60500,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 61500,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 63200,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 64200,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 65900,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 66900,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 68600,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 69600,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 71300,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 72300,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 74000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 75000,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 76700,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 77700,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 79400,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 1000
+    },
+    {
+      "at": 80400,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 1700
+    },
+    {
+      "at": 82100,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.5,
+      "for_ms": 12000
+    },
+    {
+      "at": 94100,
+      "do": "levels",
+      "peer": "baby",
+      "rms": 0.01,
+      "for_ms": 10000
+    },
+    {
+      "at": 104100,
+      "do": "end"
+    }
+  ],
+  "assert": [
+    {
+      "peer": "baby",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "state": "connected",
+      "at_ms": 18000
+    },
+    {
+      "peer": "parent",
+      "never": "noise_alert",
+      "where": {
+        "probe": false
+      },
+      "within_ms": [0, 82099]
+    },
+    {
+      "peer": "parent",
+      "event": "noise_alert",
+      "where": {
+        "probe": false
+      },
+      "within_ms": [82100, 88600],
+      "count": 1
+    }
+  ]
+}

@@ -22,6 +22,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, json};
 
 use crate::invite::InviteMailbox;
+use crate::noise::{MAX_NOISE_THRESHOLD, MIN_NOISE_THRESHOLD};
 use crate::pairing::ParentSecret;
 
 /// Wire protocol version (ADR-017 §1). v2 and v3 peers never mix.
@@ -537,7 +538,7 @@ pub struct DeviceStatus {
     /// The microphone delivered only digital silence for 30 s (set by the core, not the platform).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mic_silent: Option<bool>,
-    /// The baby's live noise-gate threshold (0.01..=1.0), set by the core.
+    /// The baby's live noise-gate threshold (`MIN_NOISE_THRESHOLD..=MAX_NOISE_THRESHOLD`), set by the core.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub noise_threshold: Option<f64>,
     /// Reliability warnings reported by the baby platform; sorted and deduplicated by
@@ -738,7 +739,10 @@ fn parse_device_status(o: &Map<String, Value>) -> Option<DeviceStatus> {
         mic_silent: opt_bool(o, "mic_silent").ok()?,
         noise_threshold: match o.get("noise_threshold") {
             None => None,
-            Some(v) => Some(v.as_f64().filter(|t| (0.01..=1.0).contains(t))?),
+            Some(v) => Some(
+                v.as_f64()
+                    .filter(|t| (MIN_NOISE_THRESHOLD..=MAX_NOISE_THRESHOLD).contains(t))?,
+            ),
         },
         unit_warnings,
         talk: opt_word(o, "talk", talk_status_word).ok()?,
@@ -758,6 +762,9 @@ pub enum DataMessage {
         seq: u64,
         battery: Option<f64>,
         rms: Option<f64>,
+        /// The baby's noise gate is in its loud state; absent on the wire means false. The parent
+        /// keeps a noise event alive on it, because the gate stays loud through short pauses.
+        loud: bool,
     },
     Listen {
         enabled: bool,
@@ -919,6 +926,7 @@ fn parse_data_versioned(raw: &str, version: u32) -> Option<DataMessage> {
             seq: o.get("seq")?.as_f64().filter(|n| *n >= 0.0)? as u64,
             battery: unit_interval(&o, "battery").ok()?,
             rms: unit_interval(&o, "rms").ok()?,
+            loud: opt_bool(&o, "loud").ok()?.unwrap_or(false),
         }),
         "listen" => Some(DataMessage::Listen {
             enabled: o.get("enabled")?.as_bool()?,
@@ -1027,6 +1035,7 @@ pub fn encode_data_message(m: &DataMessage) -> String {
             seq,
             battery,
             rms,
+            loud,
         } => {
             let mut o = Map::new();
             o.insert("type".into(), "heartbeat".into());
@@ -1038,6 +1047,9 @@ pub fn encode_data_message(m: &DataMessage) -> String {
             }
             if let Some(r) = rms {
                 o.insert("rms".into(), json_number(*r));
+            }
+            if *loud {
+                o.insert("loud".into(), true.into());
             }
             Value::Object(o).to_string()
         }
@@ -1318,6 +1330,7 @@ mod tests {
             seq: 3,
             battery: None,
             rms: Some(0.25),
+            loud: false,
         });
         assert_eq!(
             s,
@@ -1403,6 +1416,14 @@ mod tests {
                 seq: 2,
                 battery: None,
                 rms: None,
+                loud: false,
+            },
+            DataMessage::Heartbeat {
+                t: 6.0,
+                seq: 3,
+                battery: None,
+                rms: Some(0.5),
+                loud: true,
             },
             DataMessage::Listen { enabled: true },
             DataMessage::NoiseAlert {
@@ -1470,7 +1491,9 @@ mod tests {
         assert!(ok(r#","noise_threshold":0.12"#).is_some());
         assert!(ok(r#","noise_threshold":1"#).is_some());
         assert!(ok(r#","noise_threshold":0.01"#).is_some());
-        assert!(ok(r#","noise_threshold":0.009"#).is_none());
+        assert!(ok(r#","noise_threshold":0.0018"#).is_some());
+        assert!(ok(r#","noise_threshold":0.0015"#).is_some());
+        assert!(ok(r#","noise_threshold":0.001"#).is_none());
         assert!(ok(r#","noise_threshold":1.5"#).is_none());
         assert!(ok(r#","noise_threshold":"0.1""#).is_none());
         assert!(ok(r#","unknown_future_field":1"#).is_some());

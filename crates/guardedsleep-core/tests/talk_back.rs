@@ -163,7 +163,7 @@ fn settings(w: &mut World, enabled: bool, chime: bool) {
         BABY,
         LinkInput::SetTalkBack {
             enabled,
-            level: TalkLevel::Medium,
+            level: TalkLevel::new(50),
             chime,
         },
     );
@@ -171,6 +171,46 @@ fn settings(w: &mut World, enabled: bool, chime: bool) {
 
 fn raw(msg: Value) -> String {
     msg.to_string()
+}
+
+#[test]
+fn the_talk_level_is_a_baby_setting_no_parent_message_changes() {
+    let mut w = talk_world();
+    // A platform value off the grid lands on the nearest step.
+    w.input(
+        BABY,
+        LinkInput::SetTalkBack {
+            enabled: true,
+            level: TalkLevel { pct: 33 },
+            chime: true,
+        },
+    );
+    // A request that smuggles a level and a volume in: unknown fields are ignored.
+    w.inject_data(
+        BABY,
+        &raw(json!({"type":"talk_request","v":3,"id":"1","level":70,"volume":100})),
+    );
+    let chime_levels: Vec<u8> = actions(&w, BABY)
+        .iter()
+        .filter_map(|a| match a {
+            LinkAction::PlayTalkChime { level, .. } => Some(level.pct),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(chime_levels, vec![30]);
+    chime_done(&mut w);
+    let playback: Vec<u8> = actions(&w, BABY)
+        .iter()
+        .filter_map(|a| match a {
+            LinkAction::SetTalkPlayback {
+                enabled: true,
+                level,
+                ..
+            } => Some(level.pct),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(playback, vec![30]);
 }
 
 // ---- grant and release --------------------------------------------------------------------------
@@ -194,10 +234,7 @@ fn a_held_talk_runs_from_the_chime_to_the_release_and_the_baby_stays_silent_othe
     ));
     assert!(matches!(
         actions(&w, BABY).as_slice(),
-        [LinkAction::PlayTalkChime {
-            level: TalkLevel::Low,
-            ..
-        }]
+        [LinkAction::PlayTalkChime { level, .. }] if level.pct == 50
     ));
     assert_eq!(
         data(&w, PARENT, "talk_request").len(),
@@ -228,7 +265,7 @@ fn a_held_talk_runs_from_the_chime_to_the_release_and_the_baby_stays_silent_othe
     };
     assert_eq!(
         (lvl, fade_in_ms, a),
-        (TalkLevel::Low, 800, attempt(&w, BABY))
+        (TalkLevel::new(50), 800, attempt(&w, BABY))
     );
     let grants = data(&w, BABY, "talk_grant");
     assert_eq!(grants.len(), 1);
@@ -970,9 +1007,14 @@ fn heartbeat(rms: f64) -> String {
     raw(json!({"type":"heartbeat","v":3,"t":1,"seq":1,"rms":rms}))
 }
 
+/// A heartbeat in a breath: a level far below the threshold, the gate loud.
+fn heartbeat_gate_loud() -> String {
+    raw(json!({"type":"heartbeat","v":3,"t":1,"seq":1,"rms":0.01,"loud":true}))
+}
+
 /// The parent has a snoozed noise event; loud heartbeats arrive while the baby says whether its
 /// noise detection is paused. Returns the number of escalations after the snooze ended.
-fn escalations_after_snooze(baby_paused: bool) -> usize {
+fn escalations_after_snooze(baby_paused: bool, beat: fn() -> String) -> usize {
     let mut w = talk_world();
     w.input(
         PARENT,
@@ -998,7 +1040,7 @@ fn escalations_after_snooze(baby_paused: bool) -> usize {
     // Loud heartbeats at 20, 39 and 58 s; the snooze ends at 61 s.
     for _ in 0..3 {
         room(&mut w, 19_000, 0.01);
-        w.inject_data(PARENT, &heartbeat(0.9));
+        w.inject_data(PARENT, &beat());
     }
     let mark = w.mark(PARENT);
     room(&mut w, 20_000, 0.01);
@@ -1011,10 +1053,18 @@ fn escalations_after_snooze(baby_paused: bool) -> usize {
 fn levels_from_the_pause_do_not_extend_a_noise_event_on_the_parent() {
     // Control: loud heartbeats of a baby that is not paused keep the event alive; when the snooze
     // ends it restarts and, unacknowledged, escalates.
-    assert_eq!(escalations_after_snooze(false), 1);
+    assert_eq!(escalations_after_snooze(false, || heartbeat(0.9)), 1);
     // While the baby says that its detection is paused, the same heartbeats are ignored: the event
     // is long over when the snooze ends.
-    assert_eq!(escalations_after_snooze(true), 0);
+    assert_eq!(escalations_after_snooze(true, || heartbeat(0.9)), 0);
+}
+
+#[test]
+fn a_loud_gate_in_a_heartbeat_follows_the_same_talk_pause_rule() {
+    // Control: a loud gate keeps the event alive like a loud level.
+    assert_eq!(escalations_after_snooze(false, heartbeat_gate_loud), 1);
+    // The snooze ends during a talk: the parent's own voice must not raise an alert through it.
+    assert_eq!(escalations_after_snooze(true, heartbeat_gate_loud), 0);
 }
 
 #[test]
