@@ -42,7 +42,7 @@ class AppGraphSmokeTest {
         assertFalse(controller.app.value.paired)
         controller.chooseRole(Role.BABY)
         assertEquals(Role.BABY, controller.app.value.role)
-        controller.completeOnboarding()
+        controller.completePermissionsIntro()
         assertTrue(controller.app.value.onboardingDone)
         assertNotNull(graph.settings.current)
         assertEquals(Role.BABY, graph.settings.current.role)

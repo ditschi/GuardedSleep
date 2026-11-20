@@ -712,9 +712,7 @@ interface AppController {
     /** Sets the start mode: a role, or null for "Ask every time". */
     fun setDefaultRole(role: Role?)
 
-    fun completeOnboarding()
-
-    /** Leaves the first-start permission screen for good; also marks [completeOnboarding]. */
+    /** Leaves the first-start permission screen for good; also sets `onboardingDone`. */
     fun completePermissionsIntro()
 
     /**
