@@ -426,11 +426,13 @@ ac11() {
 		fail AC-11 "a noise alert reached the parent during or within 5 s after the talk"
 	fi
 
-	# The alarm stream: every raise has its restore, and the index is the one from before the talk.
-	RAISED="$(adb -s "$BABY" logcat -d -s GS_POC:I | grep 'alarm_volume .*phase=raised' | grep -oE 't=[0-9]+' | cut -d= -f2 | awk -v t="$T_PRESS" '$1 > t' | wc -l || true)"
+	# The alarm stream: every change (`phase=set`; older builds logged `phase=raised`) has its restore,
+	# and the index is the one from before the talk. The talk volume may lower the stream as well as
+	# raise it (alpha-field-test-feedback design §4).
+	RAISED="$(adb -s "$BABY" logcat -d -s GS_POC:I | grep -E 'alarm_volume .*phase=(raised|set) ' | grep -oE 't=[0-9]+' | cut -d= -f2 | awk -v t="$T_PRESS" '$1 > t' | wc -l || true)"
 	RESTORED_BAD="$(adb -s "$BABY" logcat -d -s GS_POC:I | { grep 'alarm_volume .*phase=restored' || true; } | awk -v t="$T_PRESS" '{ match($0, /t=[0-9]+/); if (substr($0, RSTART + 2, RLENGTH - 2) > t) { match($0, /previous=[0-9-]+/); p = substr($0, RSTART + 9, RLENGTH - 9); match($0, /now=[0-9-]+/); n = substr($0, RSTART + 4, RLENGTH - 4); if (p != n) bad++ } } END { print bad + 0 }')"
 	RESTORED="$(adb -s "$BABY" logcat -d -s GS_POC:I | grep 'alarm_volume .*phase=restored' | grep -oE 't=[0-9]+' | cut -d= -f2 | awk -v t="$T_PRESS" '$1 > t' | wc -l || true)"
-	log "AC-11 alarm stream: ${RAISED} raise(s), ${RESTORED} restore(s), ${RESTORED_BAD} restored to another index"
+	log "AC-11 alarm stream: ${RAISED} change(s), ${RESTORED} restore(s), ${RESTORED_BAD} restored to another index"
 	[[ $RAISED -eq $RESTORED && $RESTORED_BAD -eq 0 ]] || fail AC-11 "the alarm stream was not restored after the talk"
 	B_BEFORE="$(audio_line "$BABY" before)"
 	B_AFTER="$(audio_line "$BABY" after)"
