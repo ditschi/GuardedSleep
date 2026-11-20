@@ -101,7 +101,7 @@ fun PairBabyScreen(controller: AppController) {
         state?.phase == PairingPhase.EXPIRED ||
             (state?.expiresAtElapsedMs?.let { it <= now } ?: false)
     val payload = state?.codePayload
-    WindowBrightness(if (bright) 0.9f else 0.4f)
+    WindowBrightness(qrBrightness(bright))
     BabyQuiet {
         ScreenRoot("baby_pair", background = Color(0xFF050505)) {
             ScrollColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -266,3 +266,6 @@ private fun copyCode(ctx: Context, payload: String) {
         PersistableBundle().apply { putBoolean("android.content.extra.IS_SENSITIVE", true) }
     cm.setPrimaryClip(clip)
 }
+
+/** QR window brightness: no override by default (the system or auto value), 0.9 on request. */
+internal fun qrBrightness(bright: Boolean): Float? = if (bright) 0.9f else null
