@@ -11,7 +11,6 @@ import org.guardedsleep.app.pairing.StoredPairing
 import org.guardedsleep.app.pairing.TurnCredentials
 import org.guardedsleep.app.pairing.storedMailboxesFor
 import org.guardedsleep.app.ui.model.Role
-import org.guardedsleep.app.ui.model.TalkVolume
 
 /**
  * Starts monitoring as if the phones were paired, for the emulator gate. Extras: role
@@ -89,13 +88,17 @@ class DebugLaunchActivity : Activity() {
 
         val graph = graph()
         val controller = graph.controller
-        // Baby only: the talk-back level of the gate's talk scenario (low|medium|high).
+        // Baby only: the talk-back level of the gate's talk scenario, a percent or low|medium|high
+        // (10, 50, 70 percent).
         e.getString("talk_volume")?.let { v ->
-            TalkVolume.entries
-                .firstOrNull { it.name.equals(v, ignoreCase = true) }
-                ?.let { level ->
-                    controller.updateSettings { it.copy(talkVolume = level) }
+            val pct =
+                when (v.lowercase()) {
+                    "low" -> 10
+                    "medium" -> 50
+                    "high" -> 70
+                    else -> v.toIntOrNull()
                 }
+            if (pct != null) controller.updateSettings { it.copy(talkVolumePct = pct) }
         }
         controller.stopMonitoring()
         controller.chooseRole(role)

@@ -88,6 +88,7 @@ import org.guardedsleep.app.ui.model.BabyMonitorState
 import org.guardedsleep.app.ui.model.LastTalkUi
 import org.guardedsleep.app.ui.model.LinkPhase
 import org.guardedsleep.app.ui.model.LinkUi
+import org.guardedsleep.app.ui.model.Sensitivity
 import org.guardedsleep.app.ui.theme.LocalAppColors
 import org.guardedsleep.app.ui.theme.StateColors
 
@@ -356,7 +357,8 @@ fun MicLevelBar(
             size = size,
             cornerRadius = androidx.compose.ui.geometry.CornerRadius(10.dp.toPx()),
         )
-        val w = size.width * level.coerceIn(0f, 1f)
+        // Level and threshold share the slider's decibel scale (`Sensitivity.meterFraction`).
+        val w = size.width * Sensitivity.meterFraction(level)
         if (w > 0f) {
             drawRoundRect(
                 if (level >= threshold) colors.warn else colors.ok,
@@ -364,7 +366,7 @@ fun MicLevelBar(
                 cornerRadius = androidx.compose.ui.geometry.CornerRadius(10.dp.toPx()),
             )
         }
-        val x = size.width * threshold.coerceIn(0f, 1f)
+        val x = size.width * Sensitivity.meterFraction(threshold)
         drawLine(colors.secondaryText, Offset(x, 0f), Offset(x, size.height), 3.dp.toPx())
     }
 }

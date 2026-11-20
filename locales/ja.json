@@ -289,7 +289,8 @@
         "stopped": {
           "title": "{name}が見守りを停止しました",
           "body": "誰かが赤ちゃん用端末で見守りを停止しました。アラートは届きません。",
-          "titleDefault": "赤ちゃん用端末が見守りを停止しました"
+          "titleDefault": "赤ちゃん用端末が見守りを停止しました",
+          "stopHere": "OK、こちらも停止"
         },
         "needsPairing": {
           "title": "端末のペアリングが解除されました"
@@ -620,7 +621,7 @@
         "tapHint": "ボタンを長押しして話してください",
         "lockHint": "トークはロックできません",
         "afterListen": "あと {seconds} 秒聞いています · タップで継続",
-        "coach": "新機能：長押しでお子さんに話しかけられます。",
+        "coach": "長押ししてお子さんに話しかけます。",
         "permBody": "お子さんに話しかけるには、ボタンを押している間、GuardedSleep がマイクを使う必要があります。",
         "permAllow": "マイクを許可",
         "permDone": "完了しました。長押しで話せます。",
@@ -631,10 +632,7 @@
           "title": "トーク",
           "switch": "保護者がこの端末を通して話せる",
           "switchHint": "オフの間は、この端末から音は一切再生されません。",
-          "volume": "トークの音量",
-          "low": "小",
-          "medium": "中",
-          "high": "大",
+          "volume": "トークの音量：{percent}%",
           "playChime": "チャイムを再生",
           "chime": "保護者が話す前にチャイムを鳴らす",
           "checklist": "保護者がこの端末を通して話せます。設定でオフにできます。"
@@ -893,7 +891,7 @@
       "unavailableBrowser": "このブラウザでは会話機能に対応していません。",
       "noisePausedSelf": "話している間は、音のアラートを一時停止します。",
       "noisePausedOther": "もう一台の保護者端末が話しています。終了後に音のアラートが再開します。",
-      "coach": "新機能：長押しでお子さんに話しかけられます。",
+      "coach": "長押ししてお子さんに話しかけます。",
       "unconfirmed": "あなたの声がベビー端末で聞こえていない可能性があります。",
       "audibleUncertain": "直前のメッセージがベビー端末で聞こえていなかった可能性があります。音量を確認してください。",
       "afterListen": "10 秒間聞いています · タップで聞き続ける",
@@ -909,10 +907,7 @@
       "babyChecklist": "保護者はこの端末を通して話せます。設定でオフにできます。",
       "settingsTitle": "会話",
       "settingsToggle": "保護者はこの端末を通して話せます",
-      "settingsVolume": "声の音量",
-      "levelLow": "小",
-      "levelMedium": "中",
-      "levelHigh": "大",
+      "settingsVolume": "声の音量：{percent}%",
       "settingsChime": "声の前のチャイム",
       "settingsPlayChime": "チャイムを鳴らす"
     }

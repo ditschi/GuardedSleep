@@ -289,7 +289,8 @@
         "stopped": {
           "title": "{name} přestalo sledovat",
           "body": "Někdo zastavil sledování na zařízení dítěte. Výstrahy nepřijdou.",
-          "titleDefault": "Zařízení dítěte přestalo sledovat"
+          "titleDefault": "Zařízení dítěte přestalo sledovat",
+          "stopHere": "OK, zastavit i tady"
         },
         "needsPairing": {
           "title": "Zařízení už nejsou spárovaná"
@@ -620,7 +621,7 @@
         "tapHint": "Podržte tlačítko a mluvte",
         "lockHint": "Mluvení nelze zamknout",
         "afterListen": "Poslech ještě {seconds} s · klepnutím pokračujte",
-        "coach": "Novinka: podržte a promluvte na dítě.",
+        "coach": "Podržte a promluvte na své dítě.",
         "permBody": "Aby mohla aplikace GuardedSleep mluvit s dítětem, potřebuje mikrofon po dobu držení tlačítka.",
         "permAllow": "Povolit mikrofon",
         "permDone": "Hotovo. Nyní podržte a mluvte.",
@@ -631,10 +632,7 @@
           "title": "Mluvení",
           "switch": "Rodiče mohou mluvit přes toto zařízení",
           "switchHint": "Když je vypnuto, toto zařízení nikdy nic nepřehraje.",
-          "volume": "Hlasitost hlasu",
-          "low": "Nízká",
-          "medium": "Střední",
-          "high": "Vysoká",
+          "volume": "Hlasitost hlasu: {percent} %",
           "playChime": "Přehrát tón",
           "chime": "Tón před promluvou rodiče",
           "checklist": "Rodiče mohou mluvit přes toto zařízení. Můžete to vypnout v Nastavení."
@@ -893,7 +891,7 @@
       "unavailableBrowser": "Mluvení tento prohlížeč nepodporuje.",
       "noisePausedSelf": "Upozornění na hluk jsou pozastavena, dokud mluvíte.",
       "noisePausedOther": "Druhé rodičovské zařízení mluví. Upozornění na hluk se poté obnoví.",
-      "coach": "Novinka: podržte a promluvte na dítě.",
+      "coach": "Podržte a promluvte na své dítě.",
       "unconfirmed": "Váš hlas nemusí být na dětském zařízení slyšet.",
       "audibleUncertain": "Poslední zprávy nemusely být na dětském zařízení slyšet. Zkontrolujte jeho hlasitost.",
       "afterListen": "Poslech 10 s · klepnutím pokračujte v poslechu",
@@ -909,10 +907,7 @@
       "babyChecklist": "Rodiče mohou mluvit přes toto zařízení. V Nastavení to lze vypnout.",
       "settingsTitle": "Mluvení",
       "settingsToggle": "Rodiče mohou mluvit přes toto zařízení",
-      "settingsVolume": "Hlasitost hlasu",
-      "levelLow": "Nízká",
-      "levelMedium": "Střední",
-      "levelHigh": "Vysoká",
+      "settingsVolume": "Hlasitost hlasu: {percent} %",
       "settingsChime": "Tón před hlasem",
       "settingsPlayChime": "Přehrát tón"
     }

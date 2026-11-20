@@ -289,7 +289,8 @@
         "stopped": {
           "title": "{name} berhenti memantau",
           "body": "Seseorang menghentikan pemantauan di perangkat bayi. Anda tidak akan menerima peringatan.",
-          "titleDefault": "Perangkat bayi berhenti memantau"
+          "titleDefault": "Perangkat bayi berhenti memantau",
+          "stopHere": "OK, hentikan di sini juga"
         },
         "needsPairing": {
           "title": "Perangkat tidak lagi dipasangkan"
@@ -620,7 +621,7 @@
         "tapHint": "Tahan tombol untuk bicara",
         "lockHint": "Bicara tidak dapat dikunci",
         "afterListen": "Mendengarkan {seconds} dtk · ketuk untuk terus mendengarkan",
-        "coach": "Baru: tahan untuk berbicara dengan anak.",
+        "coach": "Tahan untuk berbicara dengan anak Anda.",
         "permBody": "Untuk berbicara dengan anak, GuardedSleep memerlukan mikrofon selama Anda menahan tombol.",
         "permAllow": "Izinkan mikrofon",
         "permDone": "Selesai. Sekarang tahan untuk bicara.",
@@ -631,10 +632,7 @@
           "title": "Bicara",
           "switch": "Orang tua dapat berbicara lewat perangkat ini",
           "switchHint": "Saat mati, tidak ada suara yang diputar lewat perangkat ini.",
-          "volume": "Volume suara",
-          "low": "Rendah",
-          "medium": "Sedang",
-          "high": "Tinggi",
+          "volume": "Volume suara: {percent}%",
           "playChime": "Putar nada",
           "chime": "Nada sebelum orang tua berbicara",
           "checklist": "Orang tua dapat berbicara lewat perangkat ini. Anda dapat mematikannya di Pengaturan."
@@ -893,7 +891,7 @@
       "unavailableBrowser": "Peramban ini tidak mendukung bicara.",
       "noisePausedSelf": "Peringatan kebisingan dijeda selama Anda bicara.",
       "noisePausedOther": "Perangkat orang tua lain sedang bicara. Peringatan kebisingan berlanjut setelahnya.",
-      "coach": "Baru: tahan untuk berbicara dengan anak.",
+      "coach": "Tahan untuk berbicara dengan anak Anda.",
       "unconfirmed": "Suara Anda mungkin tidak terdengar di perangkat bayi.",
       "audibleUncertain": "Pesan terakhir mungkin tidak terdengar di perangkat bayi. Periksa volumenya.",
       "afterListen": "Mendengarkan 10 dtk · ketuk untuk terus mendengarkan",
@@ -909,10 +907,7 @@
       "babyChecklist": "Orang tua dapat berbicara lewat perangkat ini. Anda dapat menonaktifkannya di Pengaturan.",
       "settingsTitle": "Bicara",
       "settingsToggle": "Orang tua dapat berbicara lewat perangkat ini",
-      "settingsVolume": "Volume suara",
-      "levelLow": "Rendah",
-      "levelMedium": "Sedang",
-      "levelHigh": "Tinggi",
+      "settingsVolume": "Volume suara: {percent}%",
       "settingsChime": "Bunyi sebelum suara",
       "settingsPlayChime": "Putar bunyi"
     }

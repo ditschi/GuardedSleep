@@ -289,7 +289,8 @@
         "stopped": {
           "title": "{name} a arrêté la surveillance",
           "body": "Quelqu'un a arrêté la surveillance sur l'appareil bébé. Vous ne recevrez plus d'alertes.",
-          "titleDefault": "L'appareil bébé a arrêté la surveillance"
+          "titleDefault": "L'appareil bébé a arrêté la surveillance",
+          "stopHere": "OK, arrêter ici aussi"
         },
         "needsPairing": {
           "title": "Appareils plus appairés"
@@ -624,7 +625,7 @@
         "tapHint": "Maintenez le bouton pour parler",
         "lockHint": "La parole ne peut pas être verrouillée",
         "afterListen": "Écoute pendant {seconds} s · touchez pour continuer",
-        "coach": "Nouveau : maintenez pour parler à l'enfant.",
+        "coach": "Maintenez pour parler à votre enfant.",
         "permBody": "Pour parler à l'enfant, GuardedSleep a besoin du microphone tant que vous maintenez le bouton.",
         "permAllow": "Autoriser le microphone",
         "permDone": "C'est fait. Maintenez pour parler.",
@@ -635,10 +636,7 @@
           "title": "Parler à l'enfant",
           "switch": "Les parents peuvent parler via cet appareil",
           "switchHint": "Désactivé, rien n'est jamais diffusé par cet appareil.",
-          "volume": "Volume de la voix",
-          "low": "Faible",
-          "medium": "Moyen",
-          "high": "Fort",
+          "volume": "Volume de la voix : {percent} %",
           "playChime": "Jouer la sonnerie",
           "chime": "Sonnerie avant qu'un parent parle",
           "checklist": "Les parents peuvent parler via cet appareil. Vous pouvez le désactiver dans les réglages."
@@ -882,7 +880,7 @@
       "unavailableBrowser": "La parole n'est pas prise en charge par ce navigateur.",
       "noisePausedSelf": "Alertes sonores en pause pendant que vous parlez.",
       "noisePausedOther": "L'autre appareil parent parle. Les alertes sonores reprennent ensuite.",
-      "coach": "Nouveau : maintenez pour parler à l'enfant.",
+      "coach": "Maintenez pour parler à votre enfant.",
       "unconfirmed": "Votre voix n'est peut-être pas audible sur l'appareil bébé.",
       "audibleUncertain": "Les derniers messages n'étaient peut-être pas audibles sur l'appareil bébé. Vérifiez son volume.",
       "afterListen": "Écoute pendant 10 s · touchez pour continuer",
@@ -898,10 +896,7 @@
       "babyChecklist": "Les parents peuvent parler via cet appareil. Vous pouvez le désactiver dans les réglages.",
       "settingsTitle": "Parole",
       "settingsToggle": "Les parents peuvent parler via cet appareil",
-      "settingsVolume": "Volume de la voix",
-      "levelLow": "Faible",
-      "levelMedium": "Moyen",
-      "levelHigh": "Élevé",
+      "settingsVolume": "Volume de la voix : {percent} %",
       "settingsChime": "Carillon avant la voix",
       "settingsPlayChime": "Jouer le carillon"
     }

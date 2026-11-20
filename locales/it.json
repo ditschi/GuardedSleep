@@ -289,7 +289,8 @@
         "stopped": {
           "title": "{name} ha interrotto il monitoraggio",
           "body": "Qualcuno ha interrotto il monitoraggio sul dispositivo del bambino. Non riceverai avvisi.",
-          "titleDefault": "Il dispositivo del bambino ha interrotto il monitoraggio"
+          "titleDefault": "Il dispositivo del bambino ha interrotto il monitoraggio",
+          "stopHere": "OK, interrompi anche qui"
         },
         "needsPairing": {
           "title": "Dispositivi non più associati"
@@ -620,7 +621,7 @@
         "tapHint": "Tieni premuto il pulsante per parlare",
         "lockHint": "Parlare non si può bloccare",
         "afterListen": "In ascolto per {seconds} s · tocca per continuare",
-        "coach": "Novità: tieni premuto per parlare al bambino.",
+        "coach": "Tieni premuto per parlare al tuo bambino.",
         "permBody": "Per parlare al bambino, GuardedSleep ha bisogno del microfono mentre tieni premuto il pulsante.",
         "permAllow": "Consenti microfono",
         "permDone": "Fatto. Ora tieni premuto per parlare.",
@@ -631,10 +632,7 @@
           "title": "Parlare",
           "switch": "I genitori possono parlare tramite questo dispositivo",
           "switchHint": "Se disattivato, questo dispositivo non riproduce mai nulla.",
-          "volume": "Volume della voce",
-          "low": "Basso",
-          "medium": "Medio",
-          "high": "Alto",
+          "volume": "Volume della voce: {percent}%",
           "playChime": "Riproduci il suono",
           "chime": "Suono prima che parli un genitore",
           "checklist": "I genitori possono parlare tramite questo dispositivo. Puoi disattivarlo nelle Impostazioni."
@@ -893,7 +891,7 @@
       "unavailableBrowser": "Il parlato non è supportato da questo browser.",
       "noisePausedSelf": "Avvisi di rumore in pausa mentre parli.",
       "noisePausedOther": "L'altro dispositivo genitore sta parlando. Gli avvisi di rumore riprendono dopo.",
-      "coach": "Novità: tieni premuto per parlare al bambino.",
+      "coach": "Tieni premuto per parlare al tuo bambino.",
       "unconfirmed": "La tua voce potrebbe non essere udibile sul dispositivo del bambino.",
       "audibleUncertain": "Gli ultimi messaggi potrebbero non essere stati udibili sul dispositivo del bambino. Controlla il volume.",
       "afterListen": "Ascolto per 10 s · tocca per continuare",
@@ -909,10 +907,7 @@
       "babyChecklist": "I genitori possono parlare tramite questo dispositivo. Puoi disattivarlo nelle Impostazioni.",
       "settingsTitle": "Parlato",
       "settingsToggle": "I genitori possono parlare tramite questo dispositivo",
-      "settingsVolume": "Volume della voce",
-      "levelLow": "Basso",
-      "levelMedium": "Medio",
-      "levelHigh": "Alto",
+      "settingsVolume": "Volume della voce: {percent}%",
       "settingsChime": "Suono prima della voce",
       "settingsPlayChime": "Riproduci suono"
     }

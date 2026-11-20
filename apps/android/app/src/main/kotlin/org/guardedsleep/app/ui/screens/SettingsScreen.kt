@@ -62,8 +62,9 @@ import org.guardedsleep.app.ui.model.AppState
 import org.guardedsleep.app.ui.model.BabyMonitorState
 import org.guardedsleep.app.ui.model.DiscreetEscalation
 import org.guardedsleep.app.ui.model.Role
+import org.guardedsleep.app.ui.model.Sensitivity
 import org.guardedsleep.app.ui.model.SettingsState
-import org.guardedsleep.app.ui.model.TalkVolume
+import org.guardedsleep.app.ui.model.TalkVolumeSteps
 import org.guardedsleep.app.ui.model.Theme
 import org.guardedsleep.app.ui.model.TurnSaveResult
 import org.guardedsleep.app.ui.theme.LocalAppColors
@@ -257,19 +258,26 @@ private fun DetectionPage(controller: AppController, s: SettingsState, b: BabyMo
         null,
         "settings_group_detection",
     ) {
+        // The slider moves in even steps of loudness (decibels, `Sensitivity`); the left end is the
+        // most sensitive one, so the value runs against the sensitivity position.
         var th by remember(s.threshold) { mutableFloatStateOf(s.threshold) }
+        var pos by
+            remember(s.threshold) { mutableFloatStateOf(1f - Sensitivity.positionOf(s.threshold)) }
         Body(
             stringResource(R.string.native_ui_settings_sensitivity),
             color = MaterialTheme.colorScheme.onSurface,
         )
         MicLevelBar(b.micLevel, th, tag = "settings_mic_bar")
         Slider(
-            value = th,
-            onValueChange = { th = it },
+            value = pos,
+            onValueChange = {
+                pos = it
+                th = Sensitivity.thresholdOf(1f - it)
+            },
             onValueChangeFinished = {
                 controller.updateSettings { st -> st.copy(threshold = th) }
             },
-            valueRange = 0.03f..0.4f,
+            valueRange = 0f..1f,
             modifier = Modifier.testTag("settings_threshold"),
         )
         Row(
@@ -334,30 +342,25 @@ private fun TalkPage(controller: AppController, s: SettingsState) {
         }
         Body(stringResource(R.string.native_ui_talk_baby_switch_hint))
         if (s.talkBackEnabled) {
+            // Steps of 10 percent of the alarm stream maximum, 10 to 70; "Play chime" below tries
+            // it.
+            var pct by remember(s.talkVolumePct) { mutableFloatStateOf(s.talkVolumePct.toFloat()) }
             Body(
-                stringResource(R.string.native_ui_talk_baby_volume),
+                stringResource(R.string.native_ui_talk_baby_volume, pct.toInt().toString()),
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            Row(
-                Modifier.testTag("baby_talk_volume"),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                TalkVolume.entries.forEach { v ->
-                    ChoiceChip(
-                        stringResource(
-                            when (v) {
-                                TalkVolume.LOW -> R.string.native_ui_talk_baby_low
-                                TalkVolume.MEDIUM -> R.string.native_ui_talk_baby_medium
-                                TalkVolume.HIGH -> R.string.native_ui_talk_baby_high
-                            }
-                        ),
-                        s.talkVolume == v,
-                        "baby_talk_volume_" + v.name.lowercase(),
-                    ) {
-                        controller.updateSettings { st -> st.copy(talkVolume = v) }
-                    }
-                }
-            }
+            Slider(
+                value = pct,
+                onValueChange = { pct = TalkVolumeSteps.snap(it.toInt()).toFloat() },
+                onValueChangeFinished = {
+                    controller.updateSettings { st -> st.copy(talkVolumePct = pct.toInt()) }
+                },
+                valueRange = TalkVolumeSteps.MIN_PCT.toFloat()..TalkVolumeSteps.MAX_PCT.toFloat(),
+                steps =
+                    (TalkVolumeSteps.MAX_PCT - TalkVolumeSteps.MIN_PCT) / TalkVolumeSteps.STEP_PCT -
+                        1,
+                modifier = Modifier.testTag("baby_talk_volume"),
+            )
             SecondaryButton(
                 stringResource(R.string.native_ui_talk_baby_play_chime),
                 { controller.playTalkChimeSample() },

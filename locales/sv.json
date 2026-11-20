@@ -289,7 +289,8 @@
         "stopped": {
           "title": "{name} slutade övervaka",
           "body": "Någon stoppade övervakningen på babyenheten. Du får inga larm.",
-          "titleDefault": "Babyenheten slutade övervaka"
+          "titleDefault": "Babyenheten slutade övervaka",
+          "stopHere": "OK, sluta även här"
         },
         "needsPairing": {
           "title": "Enheterna är inte längre parkopplade"
@@ -620,7 +621,7 @@
         "tapHint": "Håll knappen för att tala",
         "lockHint": "Tala kan inte låsas",
         "afterListen": "Lyssnar i {seconds} s · tryck för att fortsätta",
-        "coach": "Nytt: håll för att tala med barnet.",
+        "coach": "Håll för att prata med ditt barn.",
         "permBody": "För att tala med barnet behöver GuardedSleep mikrofonen medan du håller knappen.",
         "permAllow": "Tillåt mikrofon",
         "permDone": "Klart. Håll nu för att tala.",
@@ -631,10 +632,7 @@
           "title": "Tala",
           "switch": "Föräldrar kan tala via den här enheten",
           "switchHint": "När det är av spelas inget upp via den här enheten.",
-          "volume": "Röstvolym",
-          "low": "Låg",
-          "medium": "Medel",
-          "high": "Hög",
+          "volume": "Röstvolym: {percent} %",
           "playChime": "Spela signal",
           "chime": "Signal innan en förälder talar",
           "checklist": "Föräldrar kan tala via den här enheten. Du kan stänga av det under Inställningar."
@@ -893,7 +891,7 @@
       "unavailableBrowser": "Prat stöds inte i den här webbläsaren.",
       "noisePausedSelf": "Ljudlarm pausade medan du pratar.",
       "noisePausedOther": "Den andra föräldraenheten pratar. Ljudlarmen återupptas efteråt.",
-      "coach": "Nytt: håll för att tala med barnet.",
+      "coach": "Håll för att prata med ditt barn.",
       "unconfirmed": "Din röst hörs kanske inte på babyenheten.",
       "audibleUncertain": "De senaste meddelandena hördes kanske inte på babyenheten. Kontrollera dess volym.",
       "afterListen": "Lyssnar i 10 s · tryck för att fortsätta lyssna",
@@ -909,10 +907,7 @@
       "babyChecklist": "Föräldrar kan prata via den här enheten. Du kan stänga av det i Inställningar.",
       "settingsTitle": "Prat",
       "settingsToggle": "Föräldrar kan prata via den här enheten",
-      "settingsVolume": "Röstvolym",
-      "levelLow": "Låg",
-      "levelMedium": "Medel",
-      "levelHigh": "Hög",
+      "settingsVolume": "Röstvolym: {percent} %",
       "settingsChime": "Ljud före rösten",
       "settingsPlayChime": "Spela ljud"
     }

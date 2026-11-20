@@ -87,6 +87,17 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
         val builder =
             JavaAudioDeviceModule.builder(appContext)
                 .setAudioAttributes(attributes)
+                .setAudioTrackStateCallback(
+                    object : JavaAudioDeviceModule.AudioTrackStateCallback {
+                        override fun onWebRtcAudioTrackStart() {
+                            PocLog.event("talk_playout", "adm" to "started")
+                        }
+
+                        override fun onWebRtcAudioTrackStop() {
+                            PocLog.event("talk_playout", "adm" to "stopped")
+                        }
+                    }
+                )
                 .setAudioTrackErrorCallback(
                     object : JavaAudioDeviceModule.AudioTrackErrorCallback {
                         override fun onWebRtcAudioTrackInitError(errorMessage: String?) =
@@ -212,7 +223,25 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
     }
 
     override fun setTalkSpeakerMuted(muted: Boolean) {
-        if (role == Role.BABY) adm.setSpeakerMute(muted)
+        if (role == Role.BABY) {
+            adm.setSpeakerMute(muted)
+            PocLog.event("talk_playout", "speaker_muted" to muted)
+        }
+    }
+
+    override fun logTalkRoute() {
+        // The output device of an active playback is public API from 34 (UPSIDE_DOWN_CAKE); older
+        // releases only say that a playback exists. Device type names, never ids or addresses.
+        val audio = appContext.getSystemService(AudioManager::class.java) ?: return
+        val configs = runCatching { audio.activePlaybackConfigurations }.getOrNull() ?: return
+        val alarm = configs.filter { it.audioAttributes.usage == AudioAttributes.USAGE_ALARM }
+        val types =
+            if (android.os.Build.VERSION.SDK_INT >= 34) {
+                alarm.mapNotNull { it.audioDeviceInfo?.type }.joinToString("|")
+            } else {
+                "api_lt_34"
+            }
+        PocLog.event("talk_route", "alarm_playbacks" to alarm.size, "device_types" to types)
     }
 
     override fun playTalkChime(gain: Double, onDone: () -> Unit) = chime.play(gain, onDone)

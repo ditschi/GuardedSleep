@@ -289,7 +289,8 @@
         "stopped": {
           "title": "{name} 已停止监护",
           "body": "有人在宝宝设备上停止了监护。您将收不到提醒。",
-          "titleDefault": "宝宝设备已停止监护"
+          "titleDefault": "宝宝设备已停止监护",
+          "stopHere": "确定，这里也停止"
         },
         "needsPairing": {
           "title": "设备已不再配对"
@@ -620,7 +621,7 @@
         "tapHint": "请按住按钮说话",
         "lockHint": "对讲无法锁定",
         "afterListen": "正在收听 {seconds} 秒 · 点按继续收听",
-        "coach": "新功能：按住即可与孩子说话。",
+        "coach": "按住即可与您的孩子说话。",
         "permBody": "要与孩子说话，GuardedSleep 需要在你按住按钮时使用麦克风。",
         "permAllow": "允许使用麦克风",
         "permDone": "完成。现在按住即可说话。",
@@ -631,10 +632,7 @@
           "title": "对讲",
           "switch": "家长可以通过此设备说话",
           "switchHint": "关闭后，此设备绝不会播放任何声音。",
-          "volume": "对讲音量",
-          "low": "低",
-          "medium": "中",
-          "high": "高",
+          "volume": "对讲音量：{percent}%",
           "playChime": "播放提示音",
           "chime": "家长说话前播放提示音",
           "checklist": "家长可以通过此设备说话。你可以在设置中关闭。"
@@ -893,7 +891,7 @@
       "unavailableBrowser": "此浏览器不支持说话功能。",
       "noisePausedSelf": "您说话时，噪音警报已暂停。",
       "noisePausedOther": "另一台家长设备正在说话。结束后噪音警报将恢复。",
-      "coach": "新功能：按住即可与孩子说话。",
+      "coach": "按住即可与您的孩子说话。",
       "unconfirmed": "婴儿设备上可能听不到您的声音。",
       "audibleUncertain": "最近的消息在婴儿设备上可能听不到。请检查其音量。",
       "afterListen": "正在监听 10 秒 · 点按继续监听",
@@ -909,10 +907,7 @@
       "babyChecklist": "家长可以通过这台设备说话。您可以在设置中关闭。",
       "settingsTitle": "说话",
       "settingsToggle": "家长可以通过这台设备说话",
-      "settingsVolume": "语音音量",
-      "levelLow": "低",
-      "levelMedium": "中",
-      "levelHigh": "高",
+      "settingsVolume": "语音音量：{percent}%",
       "settingsChime": "语音前的提示音",
       "settingsPlayChime": "播放提示音"
     }

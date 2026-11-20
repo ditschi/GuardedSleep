@@ -34,6 +34,7 @@ import org.guardedsleep.app.readiness.DeviceCheckEnv
 import org.guardedsleep.app.readiness.DeviceChecker
 import org.guardedsleep.app.settings.SettingsRepository
 import org.guardedsleep.app.signaling.SignalingFactory
+import org.guardedsleep.app.ui.model.AlertOutput
 import org.guardedsleep.app.ui.model.DeviceCheck
 import org.guardedsleep.app.ui.model.DeviceCheckReason
 import org.guardedsleep.app.ui.model.LinkPhase
@@ -957,6 +958,27 @@ class LinkControllerTest {
         parent.controller.runDeviceCheck()
         assertEquals(0, env.probed.size)
         assertEquals(DeviceCheck.UNKNOWN, parent.controller.app.value.deviceCheck)
+    }
+
+    @Test
+    fun theBabyNeverSetsTheSpeakerRouteWhileTheParentDoes() {
+        val baby = unit("route-baby", Role.BABY)
+        seedRecord(baby, listOf(StoredMailbox("relay", "wss://own.example")))
+        baby.controller.startMonitoring()
+        awaitReal("the baby run started") { baby.controller.app.value.monitoring }
+        baby.controller.updateSettings { it.copy(alertOutput = AlertOutput.SPEAKER_ONLY) }
+        baby.controller.updateSettings { it.copy(alertOutput = AlertOutput.DEFAULT) }
+        baby.controller.stopMonitoring()
+
+        val parent = unit("route-parent", Role.PARENT)
+        seedRecord(parent, listOf(StoredMailbox("relay", "wss://own.example")))
+        parent.controller.startMonitoring()
+        awaitReal("the parent run started") { parent.controller.app.value.monitoring }
+        parent.controller.updateSettings { it.copy(alertOutput = AlertOutput.SPEAKER_ONLY) }
+        awaitReal("the parent applied its route") { net.speakerOnlyCalls.any { !it.first } }
+        parent.controller.stopMonitoring()
+
+        assertTrue("the baby never calls setSpeakerOnly", net.speakerOnlyCalls.none { it.first })
     }
 
     @Test

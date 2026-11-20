@@ -289,7 +289,8 @@
         "stopped": {
           "title": "{name} a oprit monitorizarea",
           "body": "Cineva a oprit monitorizarea pe dispozitivul bebelușului. Nu vei primi alerte.",
-          "titleDefault": "Dispozitivul bebelușului a oprit monitorizarea"
+          "titleDefault": "Dispozitivul bebelușului a oprit monitorizarea",
+          "stopHere": "OK, oprește și aici"
         },
         "needsPairing": {
           "title": "Dispozitivele nu mai sunt asociate"
@@ -620,7 +621,7 @@
         "tapHint": "Ține apăsat butonul pentru a vorbi",
         "lockHint": "Vorbirea nu poate fi blocată",
         "afterListen": "Ascult {seconds} s · atinge pentru a continua",
-        "coach": "Nou: ține apăsat pentru a vorbi cu copilul.",
+        "coach": "Ține apăsat pentru a vorbi cu copilul tău.",
         "permBody": "Pentru a vorbi cu copilul, GuardedSleep are nevoie de microfon cât ții apăsat butonul.",
         "permAllow": "Permite microfonul",
         "permDone": "Gata. Acum ține apăsat pentru a vorbi.",
@@ -631,10 +632,7 @@
           "title": "Vorbire",
           "switch": "Părinții pot vorbi prin acest dispozitiv",
           "switchHint": "Când este oprit, prin acest dispozitiv nu se redă niciodată nimic.",
-          "volume": "Volumul vocii",
-          "low": "Mică",
-          "medium": "Medie",
-          "high": "Mare",
+          "volume": "Volumul vocii: {percent}%",
           "playChime": "Redă sunetul",
           "chime": "Sunet înainte ca un părinte să vorbească",
           "checklist": "Părinții pot vorbi prin acest dispozitiv. Poți opri asta din Setări."
@@ -893,7 +891,7 @@
       "unavailableBrowser": "Vorbirea nu este acceptată în acest browser.",
       "noisePausedSelf": "Alertele de zgomot sunt în pauză cât vorbești.",
       "noisePausedOther": "Celălalt dispozitiv al părinților vorbește. Alertele de zgomot reiau după aceea.",
-      "coach": "Nou: ține apăsat pentru a vorbi cu copilul.",
+      "coach": "Ține apăsat pentru a vorbi cu copilul tău.",
       "unconfirmed": "Este posibil ca vocea ta să nu se audă pe dispozitivul bebelușului.",
       "audibleUncertain": "Este posibil ca ultimele mesaje să nu se fi auzit pe dispozitivul bebelușului. Verifică volumul.",
       "afterListen": "Ascultare 10 s · atinge pentru a continua",
@@ -909,10 +907,7 @@
       "babyChecklist": "Părinții pot vorbi prin acest dispozitiv. Poți opri asta în Setări.",
       "settingsTitle": "Vorbire",
       "settingsToggle": "Părinții pot vorbi prin acest dispozitiv",
-      "settingsVolume": "Volumul vocii",
-      "levelLow": "Scăzut",
-      "levelMedium": "Mediu",
-      "levelHigh": "Ridicat",
+      "settingsVolume": "Volumul vocii: {percent}%",
       "settingsChime": "Sunet înainte de voce",
       "settingsPlayChime": "Redă sunetul"
     }

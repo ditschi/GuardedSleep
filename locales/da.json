@@ -289,7 +289,8 @@
         "stopped": {
           "title": "{name} er holdt op med at overvåge",
           "body": "Nogen har stoppet overvågningen på babyenheden. Du får ingen alarmer.",
-          "titleDefault": "Babyenheden er holdt op med at overvåge"
+          "titleDefault": "Babyenheden er holdt op med at overvåge",
+          "stopHere": "OK, stop også her"
         },
         "needsPairing": {
           "title": "Enhederne er ikke længere parret"
@@ -620,7 +621,7 @@
         "tapHint": "Hold knappen for at tale",
         "lockHint": "Tale kan ikke låses",
         "afterListen": "Lytter i {seconds} s · tryk for at blive ved",
-        "coach": "Nyt: hold for at tale med barnet.",
+        "coach": "Hold for at tale med dit barn.",
         "permBody": "For at tale med barnet har GuardedSleep brug for mikrofonen, mens du holder knappen.",
         "permAllow": "Tillad mikrofon",
         "permDone": "Færdig. Hold nu for at tale.",
@@ -631,10 +632,7 @@
           "title": "Tale",
           "switch": "Forældre kan tale via denne enhed",
           "switchHint": "Når det er slået fra, afspilles der aldrig noget via denne enhed.",
-          "volume": "Stemmens lydstyrke",
-          "low": "Lav",
-          "medium": "Mellem",
-          "high": "Høj",
+          "volume": "Stemmens lydstyrke: {percent} %",
           "playChime": "Afspil signal",
           "chime": "Signal før en forælder taler",
           "checklist": "Forældre kan tale via denne enhed. Du kan slå det fra under Indstillinger."
@@ -893,7 +891,7 @@
       "unavailableBrowser": "Tale understøttes ikke i denne browser.",
       "noisePausedSelf": "Støjalarmer sat på pause, mens du taler.",
       "noisePausedOther": "Den anden forælderenhed taler. Støjalarmer genoptages bagefter.",
-      "coach": "Nyt: hold for at tale med barnet.",
+      "coach": "Hold for at tale med dit barn.",
       "unconfirmed": "Din stemme er måske ikke hørbar på babyenheden.",
       "audibleUncertain": "De seneste beskeder var måske ikke hørbare på babyenheden. Tjek dens lydstyrke.",
       "afterListen": "Lytter i 10 s · tryk for at blive ved med at lytte",
@@ -909,10 +907,7 @@
       "babyChecklist": "Forældre kan tale via denne enhed. Du kan slå det fra under Indstillinger.",
       "settingsTitle": "Tale",
       "settingsToggle": "Forældre kan tale via denne enhed",
-      "settingsVolume": "Stemmelydstyrke",
-      "levelLow": "Lav",
-      "levelMedium": "Mellem",
-      "levelHigh": "Høj",
+      "settingsVolume": "Stemmelydstyrke: {percent} %",
       "settingsChime": "Lyd før stemmen",
       "settingsPlayChime": "Afspil lyd"
     }

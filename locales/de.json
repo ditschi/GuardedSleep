@@ -289,7 +289,8 @@
         "stopped": {
           "title": "{name} hat die Überwachung beendet",
           "body": "Jemand hat die Überwachung auf dem Babygerät beendet. Sie erhalten keine Alarme.",
-          "titleDefault": "Das Babygerät hat die Überwachung beendet"
+          "titleDefault": "Das Babygerät hat die Überwachung beendet",
+          "stopHere": "OK, hier auch beenden"
         },
         "needsPairing": {
           "title": "Geräte nicht mehr gekoppelt"
@@ -624,7 +625,7 @@
         "tapHint": "Taste halten, um zu sprechen",
         "lockHint": "Sprechen lässt sich nicht sperren",
         "afterListen": "Hört {seconds} s zu · zum Weiterhören tippen",
-        "coach": "Neu: Halten, um mit dem Kind zu sprechen.",
+        "coach": "Halten, um mit Ihrem Kind zu sprechen.",
         "permBody": "Um mit dem Kind zu sprechen, braucht GuardedSleep das Mikrofon, solange Sie die Taste halten.",
         "permAllow": "Mikrofon erlauben",
         "permDone": "Fertig. Jetzt zum Sprechen halten.",
@@ -635,10 +636,7 @@
           "title": "Sprechen",
           "switch": "Eltern können über dieses Gerät sprechen",
           "switchHint": "Wenn aus, wird über dieses Gerät nie etwas abgespielt.",
-          "volume": "Lautstärke beim Sprechen",
-          "low": "Leise",
-          "medium": "Mittel",
-          "high": "Laut",
+          "volume": "Lautstärke beim Sprechen: {percent} %",
           "playChime": "Signalton abspielen",
           "chime": "Signalton, bevor ein Elternteil spricht",
           "checklist": "Eltern können über dieses Gerät sprechen. Sie können das in den Einstellungen ausschalten."
@@ -882,7 +880,7 @@
       "unavailableBrowser": "Sprechen wird in diesem Browser nicht unterstützt.",
       "noisePausedSelf": "Geräusch-Alarme pausieren, solange Sie sprechen.",
       "noisePausedOther": "Das andere Elterngerät spricht. Geräusch-Alarme gelten danach wieder.",
-      "coach": "Neu: Halten, um mit dem Kind zu sprechen.",
+      "coach": "Halten, um mit Ihrem Kind zu sprechen.",
       "unconfirmed": "Ihre Stimme ist am Babygerät womöglich nicht zu hören.",
       "audibleUncertain": "Ihre letzten Durchsagen waren am Babygerät möglicherweise nicht zu hören. Prüfen Sie dessen Lautstärke.",
       "afterListen": "10 s Mithören · tippen, um weiter mitzuhören",
@@ -898,10 +896,7 @@
       "babyChecklist": "Eltern können über dieses Gerät sprechen. Das lässt sich in den Einstellungen ausschalten.",
       "settingsTitle": "Sprechen",
       "settingsToggle": "Eltern können über dieses Gerät sprechen",
-      "settingsVolume": "Lautstärke der Stimme",
-      "levelLow": "Leise",
-      "levelMedium": "Mittel",
-      "levelHigh": "Laut",
+      "settingsVolume": "Lautstärke der Stimme: {percent} %",
       "settingsChime": "Klang vor der Stimme",
       "settingsPlayChime": "Klang abspielen"
     }

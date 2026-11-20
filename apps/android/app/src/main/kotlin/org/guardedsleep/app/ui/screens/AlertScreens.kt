@@ -667,6 +667,24 @@ private fun LinkNoticeContent(
                             "link_alarm_ok",
                         )
                     }
+                    AlarmVariant.STOPPED -> {
+                        // The baby device stopped on purpose: the primary answer ends monitoring
+                        // here too, through the core (which ignores a stale tap). "OK" alone
+                        // keeps monitoring and waits for the next session.
+                        PrimaryButton(
+                            stringResource(R.string.native_ui_link_alarm_stopped_stop_here),
+                            {
+                                controller.acknowledgePeerStopped()
+                                onClose()
+                            },
+                            "link_alarm_stop_here",
+                        )
+                        QuietButton(
+                            stringResource(R.string.native_ui_common_ok),
+                            onClose,
+                            "link_alarm_ok",
+                        )
+                    }
                     else -> {
                         PrimaryButton(
                             stringResource(R.string.native_ui_common_ok),

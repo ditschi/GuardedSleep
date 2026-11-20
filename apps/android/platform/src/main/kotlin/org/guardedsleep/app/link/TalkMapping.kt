@@ -2,7 +2,7 @@ package org.guardedsleep.app.link
 
 import org.guardedsleep.app.ui.model.TalkDeny
 import org.guardedsleep.app.ui.model.TalkEnd
-import org.guardedsleep.app.ui.model.TalkVolume
+import org.guardedsleep.app.ui.model.TalkVolumeSteps
 import uniffi.guardedsleep_core.TalkDenyReason
 import uniffi.guardedsleep_core.TalkEndReason
 import uniffi.guardedsleep_core.TalkLevel
@@ -34,10 +34,6 @@ internal object TalkMapping {
             is TalkDenyReason.Budget -> TalkDeny.BUDGET to r.retryInMs.toLong()
         }
 
-    fun level(v: TalkVolume): TalkLevel =
-        when (v) {
-            TalkVolume.LOW -> TalkLevel.LOW
-            TalkVolume.MEDIUM -> TalkLevel.MEDIUM
-            TalkVolume.HIGH -> TalkLevel.HIGH
-        }
+    /** The core's percent step for a stored volume (the core snaps to its grid again). */
+    fun level(pct: Int): TalkLevel = TalkLevel(TalkVolumeSteps.snap(pct).toUByte())
 }

@@ -275,6 +275,9 @@ class LinkController(
 
         lateinit var runner: LinkRunner
         var autoListenDone = false
+
+        /** The parent tapped "OK, stop here too" and waits for the core to say stopped. */
+        @Volatile var ackStopPending = false
         var lastOwnBatteryAt: Long? = null
     }
 
@@ -382,7 +385,7 @@ class LinkController(
             ) {
                 r.runner.input(
                     LinkInput.SetNoiseGate(
-                        after.threshold.toDouble(),
+                        NoiseLimits.clamp(after.threshold),
                         (after.holdSeconds * 1000L).toULong(),
                     )
                 )
@@ -390,14 +393,16 @@ class LinkController(
             if (
                 r.role == Role.BABY &&
                     (after.talkBackEnabled != before.talkBackEnabled ||
-                        after.talkVolume != before.talkVolume ||
+                        after.talkVolumePct != before.talkVolumePct ||
                         after.talkChime != before.talkChime)
             ) {
                 sendTalkBack(r.runner, after)
             }
             if (after.alertGainPct != before.alertGainPct)
                 r.runner.media { it.setPlaybackGainPct(after.alertGainPct) }
-            if (after.alertOutput != before.alertOutput) {
+            // The route is the parent's alert output only: the baby's talk-back plays on the alarm
+            // stream, and `setSpeakerphoneOn` does not move it (design §4; it never helped).
+            if (r.role == Role.PARENT && after.alertOutput != before.alertOutput) {
                 r.runner.media { it.setSpeakerOnly(after.alertOutput == AlertOutput.SPEAKER_ONLY) }
             }
             if (
@@ -1035,7 +1040,7 @@ class LinkController(
             pairedBefore = pairedBefore,
             heartbeatIntervalMs = heartbeat.toULong(),
             alarmAfterMs = alarmAfter.toULong(),
-            noiseThreshold = s.threshold.toDouble(),
+            noiseThreshold = NoiseLimits.clamp(s.threshold),
             noiseHoldMs = (DebugOptions.noiseHoldMs ?: (s.holdSeconds * 1000L)).toULong(),
         )
     }
@@ -1103,6 +1108,14 @@ class LinkController(
 
     override fun dismissRestored() = parentModel.dismissRestored()
 
+    override fun acknowledgePeerStopped() {
+        val r = run?.takeIf { it.role == Role.PARENT } ?: return
+        // The core decides: it stops only while the link is still `peer_stopped`. The run ends
+        // when its status says stopped (`RunListener.onStatus`).
+        r.ackStopPending = true
+        r.runner.input(LinkInput.AcknowledgePeerStopped)
+    }
+
     override fun setTalk(pressed: Boolean) {
         val r = run?.takeIf { it.role == Role.PARENT } ?: return
         if (!pressed) {
@@ -1158,7 +1171,7 @@ class LinkController(
 
     override fun stopAlarmTone() = alerts.stopAlarmTone()
 
-    override fun playTalkChimeSample() = chimePreview.play(_settings.value.talkVolume)
+    override fun playTalkChimeSample() = chimePreview.play(_settings.value.talkVolumePct)
 
     override fun talkSettingsOpened() {
         run?.takeIf { it.role == Role.BABY }?.runner?.input(LinkInput.TalkSettingsOpened)
@@ -1166,7 +1179,11 @@ class LinkController(
 
     private fun sendTalkBack(runner: LinkRunner, s: SettingsState) {
         runner.input(
-            LinkInput.SetTalkBack(s.talkBackEnabled, TalkMapping.level(s.talkVolume), s.talkChime)
+            LinkInput.SetTalkBack(
+                s.talkBackEnabled,
+                TalkMapping.level(s.talkVolumePct),
+                s.talkChime,
+            )
         )
     }
 
@@ -1184,6 +1201,19 @@ class LinkController(
             if (r.role == Role.PARENT) parentModel.onStatus(status, nowMs)
             else babyModel.onStatus(status, nowMs)
             onPairingStatus(status)
+            if (r.ackStopPending) {
+                when (status.state) {
+                    LinkState.STOPPED -> {
+                        r.ackStopPending = false
+                        stopMonitoring()
+                    }
+                    // The core ignored the tap (the baby device started again): nothing to stop.
+                    LinkState.CONNECTING,
+                    LinkState.RECONNECTING,
+                    LinkState.CONNECTED -> r.ackStopPending = false
+                    else -> Unit
+                }
+            }
             if (
                 status.state == LinkState.CONNECTED &&
                     !r.autoListenDone &&

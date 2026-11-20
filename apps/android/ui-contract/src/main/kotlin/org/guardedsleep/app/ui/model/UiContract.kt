@@ -168,11 +168,56 @@ data class MissedEventsUi(
 /** UI-pass addition: the last finished noise event, for "Sound at {time} · lasted {duration}". */
 data class SoundEventUi(val atWallMs: Long, val durationMs: Long)
 
+/**
+ * The baby sensitivity slider in decibels (`alpha-field-test-feedback` design §3). The core keeps a
+ * linear threshold; the slider moves in even steps of loudness. A position `p` is 0 (least
+ * sensitive) to 1 (most sensitive): `dBFS = -55 + 40 * (1 - p)`, threshold `10^(dBFS / 20)`. The
+ * lowest threshold the core accepts is its own constant (`min_noise_threshold()`, applied by the
+ * platform layer); [MOST_SENSITIVE_DBFS] stays above it, so no slider position is ever refused.
+ */
+object Sensitivity {
+    const val MOST_SENSITIVE_DBFS = -55.0
+    const val SPAN_DB = 40.0
+
+    /** Provisional default, tuned on the reference phone in task 7.1: -36 dBFS. */
+    const val DEFAULT_THRESHOLD = 0.016f
+
+    /**
+     * The level meter shows this range, so the threshold tick and the bar share the slider scale.
+     */
+    private const val METER_FLOOR_DBFS = -60.0
+    private const val METER_CEIL_DBFS = -10.0
+
+    fun dbfsOf(position: Float): Double =
+        MOST_SENSITIVE_DBFS + SPAN_DB * (1.0 - position.coerceIn(0f, 1f))
+
+    fun thresholdOf(position: Float): Float = Math.pow(10.0, dbfsOf(position) / 20.0).toFloat()
+
+    /** The slider position for a stored threshold; a value outside the range is clamped. */
+    fun positionOf(threshold: Float): Float {
+        val db = 20.0 * Math.log10(threshold.toDouble().coerceAtLeast(1e-9))
+        return (1.0 - (db - MOST_SENSITIVE_DBFS) / SPAN_DB).coerceIn(0.0, 1.0).toFloat()
+    }
+
+    /** A level (0..1 RMS) as a fraction of the meter bar, on the same decibel scale. */
+    fun meterFraction(level: Float): Float {
+        val db = 20.0 * Math.log10(level.toDouble().coerceAtLeast(1e-9))
+        return ((db - METER_FLOOR_DBFS) / (METER_CEIL_DBFS - METER_FLOOR_DBFS))
+            .coerceIn(0.0, 1.0)
+            .toFloat()
+    }
+}
+
 /** Talk-back volume of the baby device (a baby setting; `add-talk-back` design §7). */
-enum class TalkVolume {
-    LOW,
-    MEDIUM,
-    HIGH,
+object TalkVolumeSteps {
+    const val MIN_PCT = 10
+    const val MAX_PCT = 70
+    const val STEP_PCT = 10
+    const val DEFAULT_PCT = 50
+
+    /** The step nearest to [pct] on the 10..70 grid (the core snaps the same way). */
+    fun snap(pct: Int): Int =
+        ((pct + STEP_PCT / 2) / STEP_PCT * STEP_PCT).coerceIn(MIN_PCT, MAX_PCT)
 }
 
 /** Why a talk ended on the parent device (core `TalkEndReason`). */
@@ -320,7 +365,7 @@ object BabyBattery {
 data class BabyMonitorState(
     val link: LinkUi = LinkUi(),
     val micLevel: Float = 0f,
-    val threshold: Float = 0.12f,
+    val threshold: Float = Sensitivity.DEFAULT_THRESHOLD,
     val holdSeconds: Int = 5,
     val silenceApplied: Boolean? = null,
     val dndAccess: Boolean = false,
@@ -437,7 +482,7 @@ data class SettingsState(
     val theme: Theme = Theme.DARK,
     /** null = follow system; else "en", "de", "fr", "es". */
     val language: String? = null,
-    val threshold: Float = 0.12f,
+    val threshold: Float = Sensitivity.DEFAULT_THRESHOLD,
     val holdSeconds: Int = 5,
     val alertOutput: AlertOutput = AlertOutput.DEFAULT,
     val alertStyle: AlertStyle = AlertStyle.SOUND,
@@ -461,7 +506,8 @@ data class SettingsState(
     val lastTestWallMs: Long? = null,
     /** Baby: parents may talk through this device (switch of the single pairing; default on). */
     val talkBackEnabled: Boolean = true,
-    val talkVolume: TalkVolume = TalkVolume.LOW,
+    /** Percent of the alarm stream maximum, a step from 10 to 70 ([TalkVolumeSteps]). */
+    val talkVolumePct: Int = TalkVolumeSteps.DEFAULT_PCT,
     /** Baby: a soft chime announces a talk. */
     val talkChime: Boolean = true,
     /** Parent: the one-time "hold to talk" coach mark was shown. */
@@ -728,6 +774,13 @@ interface AppController {
 
     /** Parent: OK on the "Connected again" card; it never goes away on its own. */
     fun dismissRestored()
+
+    /**
+     * Parent: "OK, stop here too" on the notice that the baby device stopped on purpose. The core
+     * stops this device's monitoring only while the link is still `peer_stopped`; a stale tap after
+     * the baby device started again changes nothing.
+     */
+    fun acknowledgePeerStopped()
 
     // Baby
     fun setKioskLocked(locked: Boolean)

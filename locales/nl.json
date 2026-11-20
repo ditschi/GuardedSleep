@@ -289,7 +289,8 @@
         "stopped": {
           "title": "{name} is gestopt met bewaken",
           "body": "Iemand is gestopt met bewaken op het babyapparaat. Je krijgt geen meldingen.",
-          "titleDefault": "Het babyapparaat is gestopt met bewaken"
+          "titleDefault": "Het babyapparaat is gestopt met bewaken",
+          "stopHere": "OK, ook hier stoppen"
         },
         "needsPairing": {
           "title": "Apparaten niet meer gekoppeld"
@@ -620,7 +621,7 @@
         "tapHint": "Houd de knop ingedrukt om te praten",
         "lockHint": "Praten kan niet worden vergrendeld",
         "afterListen": "Luistert nog {seconds} s · tik om te blijven luisteren",
-        "coach": "Nieuw: houd ingedrukt om met het kind te praten.",
+        "coach": "Houd ingedrukt om met je kind te praten.",
         "permBody": "Om met het kind te praten heeft GuardedSleep de microfoon nodig zolang je de knop ingedrukt houdt.",
         "permAllow": "Microfoon toestaan",
         "permDone": "Klaar. Houd nu ingedrukt om te praten.",
@@ -631,10 +632,7 @@
           "title": "Praten",
           "switch": "Ouders kunnen via dit apparaat praten",
           "switchHint": "Als dit uit staat, wordt er nooit iets via dit apparaat afgespeeld.",
-          "volume": "Volume van de stem",
-          "low": "Zacht",
-          "medium": "Gemiddeld",
-          "high": "Luid",
+          "volume": "Volume van de stem: {percent}%",
           "playChime": "Beltoon afspelen",
           "chime": "Beltoon voordat een ouder praat",
           "checklist": "Ouders kunnen via dit apparaat praten. Je kunt dit uitzetten bij Instellingen."
@@ -893,7 +891,7 @@
       "unavailableBrowser": "Praten wordt in deze browser niet ondersteund.",
       "noisePausedSelf": "Geluidsalarmen gepauzeerd terwijl je praat.",
       "noisePausedOther": "Het andere ouderapparaat praat. Geluidsalarmen gaan daarna weer door.",
-      "coach": "Nieuw: houd ingedrukt om met het kind te praten.",
+      "coach": "Houd ingedrukt om met je kind te praten.",
       "unconfirmed": "Je stem is op het babyapparaat mogelijk niet hoorbaar.",
       "audibleUncertain": "De laatste berichten waren op het babyapparaat mogelijk niet hoorbaar. Controleer het volume.",
       "afterListen": "10 s meeluisteren · tik om te blijven luisteren",
@@ -909,10 +907,7 @@
       "babyChecklist": "Ouders kunnen via dit apparaat praten. Je kunt dit uitzetten in Instellingen.",
       "settingsTitle": "Praten",
       "settingsToggle": "Ouders kunnen via dit apparaat praten",
-      "settingsVolume": "Stemvolume",
-      "levelLow": "Laag",
-      "levelMedium": "Middel",
-      "levelHigh": "Hoog",
+      "settingsVolume": "Stemvolume: {percent}%",
       "settingsChime": "Toon voor de stem",
       "settingsPlayChime": "Toon afspelen"
     }

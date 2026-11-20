@@ -263,6 +263,10 @@ class FakeAppController(
         parentFlow.value = parentFlow.value.copy(restoredAfterMs = null, missed = null)
     }
 
+    override fun acknowledgePeerStopped() {
+        calls += "acknowledgePeerStopped"
+    }
+
     override fun setKioskLocked(locked: Boolean) {
         calls += "setKioskLocked:$locked"
         babyFlow.value = babyFlow.value.copy(kioskLocked = locked)

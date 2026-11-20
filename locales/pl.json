@@ -289,7 +289,8 @@
         "stopped": {
           "title": "{name} przestało monitorować",
           "body": "Ktoś zatrzymał monitorowanie na urządzeniu dziecka. Nie dostaniesz alertów.",
-          "titleDefault": "Urządzenie dziecka przestało monitorować"
+          "titleDefault": "Urządzenie dziecka przestało monitorować",
+          "stopHere": "OK, zatrzymaj też tutaj"
         },
         "needsPairing": {
           "title": "Urządzenia nie są już sparowane"
@@ -620,7 +621,7 @@
         "tapHint": "Przytrzymaj przycisk, by mówić",
         "lockHint": "Mówienia nie można zablokować",
         "afterListen": "Słucham jeszcze {seconds} s · dotknij, by słuchać dalej",
-        "coach": "Nowość: przytrzymaj, by mówić do dziecka.",
+        "coach": "Przytrzymaj, by mówić do swojego dziecka.",
         "permBody": "Aby mówić do dziecka, GuardedSleep potrzebuje mikrofonu, gdy trzymasz przycisk.",
         "permAllow": "Zezwól na mikrofon",
         "permDone": "Gotowe. Teraz przytrzymaj, by mówić.",
@@ -631,10 +632,7 @@
           "title": "Mówienie",
           "switch": "Rodzice mogą mówić przez to urządzenie",
           "switchHint": "Gdy wyłączone, to urządzenie nigdy niczego nie odtwarza.",
-          "volume": "Głośność głosu",
-          "low": "Cicho",
-          "medium": "Średnio",
-          "high": "Głośno",
+          "volume": "Głośność głosu: {percent}%",
           "playChime": "Odtwórz dźwięk",
           "chime": "Dźwięk przed wypowiedzią rodzica",
           "checklist": "Rodzice mogą mówić przez to urządzenie. Możesz to wyłączyć w Ustawieniach."
@@ -893,7 +891,7 @@
       "unavailableBrowser": "Ta przeglądarka nie obsługuje mówienia.",
       "noisePausedSelf": "Alerty hałasu wstrzymane, gdy mówisz.",
       "noisePausedOther": "Drugie urządzenie rodzica mówi. Alerty hałasu wrócą po zakończeniu.",
-      "coach": "Nowość: przytrzymaj, by mówić do dziecka.",
+      "coach": "Przytrzymaj, by mówić do swojego dziecka.",
       "unconfirmed": "Twój głos może być niesłyszalny na urządzeniu dziecka.",
       "audibleUncertain": "Ostatnie wiadomości mogły być niesłyszalne na urządzeniu dziecka. Sprawdź jego głośność.",
       "afterListen": "Słuchanie przez 10 s · dotknij, aby słuchać dalej",
@@ -909,10 +907,7 @@
       "babyChecklist": "Rodzice mogą mówić przez to urządzenie. Możesz to wyłączyć w Ustawieniach.",
       "settingsTitle": "Mówienie",
       "settingsToggle": "Rodzice mogą mówić przez to urządzenie",
-      "settingsVolume": "Głośność głosu",
-      "levelLow": "Niska",
-      "levelMedium": "Średnia",
-      "levelHigh": "Wysoka",
+      "settingsVolume": "Głośność głosu: {percent}%",
       "settingsChime": "Dźwięk przed głosem",
       "settingsPlayChime": "Odtwórz dźwięk"
     }

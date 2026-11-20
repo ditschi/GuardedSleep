@@ -18,6 +18,9 @@ interface TalkSpeaker {
     fun playChime(gain: Double, onDone: () -> Unit)
 
     fun stopChime()
+
+    /** Logs where the playback is routed (diagnostics only). */
+    fun logRoute() {}
 }
 
 /**
@@ -32,6 +35,8 @@ class TalkPlayout(
     private val onChimeDone: (UInt) -> Unit,
     private val onMuted: (Boolean) -> Unit,
     private val onOutsideGrant: (UInt) -> Unit,
+    /** See [TalkPolicy.LEVEL_IS_POST_GAIN]; a parameter so both positions are tested. */
+    private val levelIsPostGain: Boolean = TalkPolicy.LEVEL_IS_POST_GAIN,
 ) {
     private class Lease(
         val attempt: UInt,
@@ -43,6 +48,10 @@ class TalkPlayout(
 
     private var lease: Lease? = null
     private var limiter = 1.0
+    private var appliedGain = 0.0
+    private var lastGainLogMs = 0L
+    private var lastPreLogMs = 0L
+    private var routeLogged = false
     private var leaseEndedMs: Long? = null
     private val baseline = HashMap<UInt, Long>()
     private val warned = HashSet<UInt>()
@@ -70,11 +79,23 @@ class TalkPlayout(
         val att = prepare(level) ?: return
         limiter = 1.0
         lease = Lease(attempt, nowMs, fadeInMs.coerceAtLeast(1), untilMs, att)
+        appliedGain = 0.0
+        lastGainLogMs = nowMs
+        routeLogged = false
         speaker.setReceiverGain(attempt, 0.0)
         speaker.setReceiverEnabled(attempt, true)
         speaker.setSpeakerMuted(false)
         baseline.remove(attempt)
         PocLog.event("talk_playback", "enabled" to true)
+        // What the baby unit does to reach the set volume: the stream index before and the target,
+        // and the residual track gain (diagnostics only, no PII).
+        PocLog.event(
+            "talk_volume",
+            "pct" to level.pct,
+            "before" to volume.indexBefore,
+            "target" to volume.targetIndex,
+            "residual" to "%.3f".format(att),
+        )
     }
 
     /** `set_talk_playback { false }`, the deadline, teardown: mute, disable, restore the volume. */
@@ -94,20 +115,46 @@ class TalkPlayout(
     fun tick(nowMs: Long) {
         val l = lease ?: return
         if (nowMs >= l.untilMs) return close(nowMs)
+        if (!routeLogged && nowMs - l.startMs >= ROUTE_LOG_AFTER_MS) {
+            routeLogged = true
+            speaker.logRoute()
+        }
         val fade = ((nowMs - l.startMs).toDouble() / l.fadeInMs).coerceIn(0.0, 1.0)
-        speaker.setReceiverGain(l.attempt, l.attenuation * fade * limiter)
+        appliedGain = l.attenuation * fade * limiter
+        speaker.setReceiverGain(l.attempt, appliedGain)
+        if (nowMs - lastGainLogMs >= GAIN_LOG_MS) {
+            lastGainLogMs = nowMs
+            PocLog.event("talk_gain", "gain" to "%.3f".format(appliedGain))
+        }
     }
 
-    /** RMS of the incoming voice before our gain; steps the gain down above the ceiling. */
-    fun onTalkLevel(rms: Double, nowMs: Long) {
-        if (lease == null) return
-        if (rms > 0.0) {
-            val needed = TalkPolicy.CEILING_RMS / rms
+    /**
+     * One level sample of the incoming voice (stats `audioLevel`). The cap judges the level before
+     * our gain, so it never reacts to its own gain: [levelIsPostGain] divides by the gain applied
+     * (skipped when that is too small to divide). Steps the gain down above the ceiling. Returns
+     * the pre-gain level for the core's `talk_level` input, or null when none could be judged. The
+     * talk line stays sink-free: only this number is kept, never a sample.
+     */
+    fun onTalkLevel(rms: Double, nowMs: Long): Double? {
+        if (lease == null) return null
+        val pre =
+            when {
+                !levelIsPostGain -> rms
+                appliedGain > TalkPolicy.MIN_JUDGED_GAIN -> rms / appliedGain
+                else -> null
+            }
+        if (pre != null && pre > 0.0) {
+            val needed = TalkPolicy.CEILING_RMS / pre
             limiter =
                 if (needed < limiter) needed
                 else minOf(1.0, limiter + TalkPolicy.LIMITER_RELEASE_PER_TICK)
         }
         tick(nowMs)
+        if (pre != null && nowMs - lastPreLogMs >= GAIN_LOG_MS) {
+            lastPreLogMs = nowMs
+            PocLog.event("talk_level_pre", "rms" to "%.4f".format(pre))
+        }
+        return pre
     }
 
     /** Inbound talk packets of [attempt] (stats poll). Reports audio outside a lease once. */
@@ -133,5 +180,12 @@ class TalkPlayout(
         val att = volume.prepare(level)
         onMuted(att == null)
         return att
+    }
+
+    private companion object {
+        const val GAIN_LOG_MS = 1_000L
+
+        /** The playback exists a moment after the unmute; the route is read then. */
+        const val ROUTE_LOG_AFTER_MS = 500L
     }
 }

@@ -9,6 +9,7 @@ import org.guardedsleep.app.media.InboundAudioStats
 import org.guardedsleep.app.media.TalkReceiverStats
 import org.guardedsleep.app.media.TalkSendControl
 import org.guardedsleep.app.media.TalkSendPort
+import org.guardedsleep.app.media.TalkSendStats
 import org.webrtc.AudioTrack
 import org.webrtc.DataChannel
 import org.webrtc.MediaConstraints
@@ -279,6 +280,28 @@ internal class LibWebRtcAttemptPeer(
         }
     }
 
+    override fun talkSendStats(callback: (TalkSendStats?) -> Unit) {
+        if (closed.get() || talkTransceiver?.sender?.track() == null) return callback(null)
+        pc.getStats { report ->
+            val out =
+                report.statsMap.values.firstOrNull {
+                    it.type == "outbound-rtp" && it.members["kind"] == "audio"
+                }
+            val source =
+                report.statsMap.values.firstOrNull {
+                    it.type == "media-source" && it.members["kind"] == "audio"
+                }
+            callback(
+                out?.let {
+                    TalkSendStats(
+                        (it.members["packetsSent"] as? Number)?.toLong() ?: 0L,
+                        (source?.members?.get("audioLevel") as? Number)?.toDouble(),
+                    )
+                }
+            )
+        }
+    }
+
     override fun talkReceiverStats(callback: (TalkReceiverStats?) -> Unit) {
         if (closed.get() || talkReceiver == null) return callback(null)
         pc.getStats { report ->
@@ -291,6 +314,8 @@ internal class LibWebRtcAttemptPeer(
                     TalkReceiverStats(
                         (it.members["packetsReceived"] as? Number)?.toLong() ?: 0L,
                         (it.members["audioLevel"] as? Number)?.toDouble() ?: 0.0,
+                        (it.members["totalSamplesReceived"] as? Number)?.toLong() ?: 0L,
+                        (it.members["concealedSamples"] as? Number)?.toLong() ?: 0L,
                     )
                 }
             )

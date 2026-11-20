@@ -165,7 +165,7 @@ class ConformanceTest {
             "set_talk_back" ->
                 LinkInput.SetTalkBack(
                     i.getBoolean("enabled"),
-                    TalkLevel.valueOf(i.getString("level").uppercase()),
+                    TalkLevel(i.getInt("level").toUByte()),
                     i.getBoolean("chime"),
                 )
             else -> error("trace input $type has no typed mapping")

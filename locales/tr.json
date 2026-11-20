@@ -289,7 +289,8 @@
         "stopped": {
           "title": "{name} izlemeyi durdurdu",
           "body": "Biri bebek cihazında izlemeyi durdurdu. Uyarı almayacaksınız.",
-          "titleDefault": "Bebek cihazı izlemeyi durdurdu"
+          "titleDefault": "Bebek cihazı izlemeyi durdurdu",
+          "stopHere": "Tamam, burada da durdur"
         },
         "needsPairing": {
           "title": "Cihazlar artık eşleşmiş değil"
@@ -620,7 +621,7 @@
         "tapHint": "Konuşmak için düğmeyi basılı tutun",
         "lockHint": "Konuşma kilitlenemez",
         "afterListen": "{seconds} sn dinleniyor · dinlemeye devam için dokunun",
-        "coach": "Yeni: Çocukla konuşmak için basılı tutun.",
+        "coach": "Çocuğunuzla konuşmak için basılı tutun.",
         "permBody": "Çocukla konuşmak için düğmeyi basılı tuttuğunuz sürece GuardedSleep'in mikrofona ihtiyacı var.",
         "permAllow": "Mikrofona izin ver",
         "permDone": "Tamam. Şimdi konuşmak için basılı tutun.",
@@ -631,10 +632,7 @@
           "title": "Konuşma",
           "switch": "Ebeveynler bu cihazdan konuşabilir",
           "switchHint": "Kapalıyken bu cihazdan hiçbir şey çalınmaz.",
-          "volume": "Konuşma ses düzeyi",
-          "low": "Düşük",
-          "medium": "Orta",
-          "high": "Yüksek",
+          "volume": "Konuşma ses düzeyi: %{percent}",
           "playChime": "Zili çal",
           "chime": "Ebeveyn konuşmadan önce zil",
           "checklist": "Ebeveynler bu cihazdan konuşabilir. Bunu Ayarlar'dan kapatabilirsiniz."
@@ -893,7 +891,7 @@
       "unavailableBrowser": "Bu tarayıcı konuşmayı desteklemiyor.",
       "noisePausedSelf": "Siz konuşurken gürültü uyarıları duraklatıldı.",
       "noisePausedOther": "Diğer ebeveyn cihazı konuşuyor. Bitince gürültü uyarıları devam eder.",
-      "coach": "Yeni: Çocukla konuşmak için basılı tutun.",
+      "coach": "Çocuğunuzla konuşmak için basılı tutun.",
       "unconfirmed": "Sesiniz bebek cihazında duyulmayabilir.",
       "audibleUncertain": "Son mesajlar bebek cihazında duyulmamış olabilir. Ses düzeyini kontrol edin.",
       "afterListen": "10 sn dinleniyor · dinlemeye devam için dokunun",
@@ -909,10 +907,7 @@
       "babyChecklist": "Ebeveynler bu cihazdan konuşabilir. Bunu Ayarlar'dan kapatabilirsiniz.",
       "settingsTitle": "Konuşma",
       "settingsToggle": "Ebeveynler bu cihazdan konuşabilir",
-      "settingsVolume": "Ses düzeyi",
-      "levelLow": "Düşük",
-      "levelMedium": "Orta",
-      "levelHigh": "Yüksek",
+      "settingsVolume": "Ses düzeyi: %{percent}",
       "settingsChime": "Sesten önce zil sesi",
       "settingsPlayChime": "Zil sesini çal"
     }

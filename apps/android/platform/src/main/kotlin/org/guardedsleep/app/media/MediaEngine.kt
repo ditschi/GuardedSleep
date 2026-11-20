@@ -29,7 +29,16 @@ interface AttemptListener {
 data class InboundAudioStats(val packetsReceived: Long, val packetsLost: Long)
 
 /** Baby: the talk receiver's inbound counters and decoded level (stats; no audio sink). */
-data class TalkReceiverStats(val packetsReceived: Long, val audioLevel: Double)
+data class TalkReceiverStats(
+    val packetsReceived: Long,
+    val audioLevel: Double,
+    /** Decoded samples and the share libwebrtc made up for lost packets (diagnostics). */
+    val totalSamplesReceived: Long = 0L,
+    val concealedSamples: Long = 0L,
+)
+
+/** Parent: the talk sender's outbound counters and the level of its source (diagnostics). */
+data class TalkSendStats(val packetsSent: Long, val audioLevel: Double?)
 
 /** One RTCPeerConnection + DataChannel lifetime (an "attempt" of the core). */
 interface AttemptPort {
@@ -58,6 +67,9 @@ interface AttemptPort {
      * sink on the track); null while no track is attached.
      */
     fun talkMicLevel(callback: (Double?) -> Unit) = callback(null)
+
+    /** Parent: outbound packets of the talk sender and the source level; null without a track. */
+    fun talkSendStats(callback: (TalkSendStats?) -> Unit) = callback(null)
 
     /** Baby: enable or disable the talk receiver's track (disabled before any frame by default). */
     fun setTalkReceiverEnabled(enabled: Boolean) {}
@@ -96,6 +108,9 @@ interface MediaEngine {
     fun setPlaybackGainPct(pct: Int)
 
     fun setSpeakerOnly(speakerOnly: Boolean)
+
+    /** Logs the output device the playback is routed to (diagnostics; where the API allows). */
+    fun logTalkRoute() {}
 
     /** Parent: mute only the baby's audio while the talk button is held (half duplex). */
     fun setPlaybackDucked(ducked: Boolean) {}

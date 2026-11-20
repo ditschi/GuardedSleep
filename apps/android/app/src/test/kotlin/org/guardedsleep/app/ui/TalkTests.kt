@@ -25,7 +25,6 @@ import org.guardedsleep.app.ui.model.TalkEnd
 import org.guardedsleep.app.ui.model.TalkPermission
 import org.guardedsleep.app.ui.model.TalkUi
 import org.guardedsleep.app.ui.model.TalkUnavailable
-import org.guardedsleep.app.ui.model.TalkVolume
 import org.guardedsleep.app.ui.model.Theme
 import org.guardedsleep.app.ui.screens.BabyKioskScreen
 import org.guardedsleep.app.ui.screens.ParentMonitorScreen
@@ -208,7 +207,7 @@ class TalkTests : ShotBase() {
         val c =
             FakeAppController(
                 app = AppState(role = Role.BABY, onboardingDone = true, paired = true),
-                settings = SettingsState(talkVolume = TalkVolume.LOW),
+                settings = SettingsState(talkVolumePct = 30),
             )
         show(dark = true) { SettingsScreen(c, {}, {}, {}, initialPage = SettingsPage.TALK) }
         onNodeWithTag("baby_talk_toggle").performScrollTo().assertIsDisplayed()

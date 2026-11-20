@@ -288,7 +288,8 @@
         "stopped": {
           "title": "{name} stopped monitoring",
           "body": "Someone stopped monitoring on the baby device. You won't get alerts.",
-          "titleDefault": "The baby device stopped monitoring"
+          "titleDefault": "The baby device stopped monitoring",
+          "stopHere": "OK, stop here too"
         },
         "needsPairing": {
           "title": "Devices no longer paired"
@@ -623,7 +624,7 @@
         "tapHint": "Hold the button to talk",
         "lockHint": "Talk-back can't be locked",
         "afterListen": "Listening for {seconds} s · tap to keep listening",
-        "coach": "New: hold to talk to the child.",
+        "coach": "Hold to talk to your child.",
         "permBody": "To speak to the child, GuardedSleep needs the microphone while you hold the button.",
         "permAllow": "Allow microphone",
         "permDone": "Done. Now hold to talk.",
@@ -634,10 +635,7 @@
           "title": "Talk-back",
           "switch": "Parents can speak through this device",
           "switchHint": "When off, nothing is ever played through this device.",
-          "volume": "Talk-back volume",
-          "low": "Low",
-          "medium": "Medium",
-          "high": "High",
+          "volume": "Talk-back volume: {percent}%",
           "playChime": "Play chime",
           "chime": "Chime before a parent speaks",
           "checklist": "Parents can speak through this device. You can turn this off in Settings."
@@ -896,7 +894,7 @@
       "unavailableBrowser": "Talk-back isn't supported in this browser.",
       "noisePausedSelf": "Noise alerts paused while you talk.",
       "noisePausedOther": "The other parent device is talking. Noise alerts resume when it ends.",
-      "coach": "New: hold to talk to the child.",
+      "coach": "Hold to talk to your child.",
       "unconfirmed": "Your voice may not be audible on the baby device.",
       "audibleUncertain": "Recent messages may not have been audible on the baby device. Check its volume.",
       "afterListen": "Listening for 10 s · tap to keep listening",
@@ -912,10 +910,7 @@
       "babyChecklist": "Parents can speak through this device. You can turn this off in Settings.",
       "settingsTitle": "Talk-back",
       "settingsToggle": "Parents can speak through this device",
-      "settingsVolume": "Voice volume",
-      "levelLow": "Low",
-      "levelMedium": "Medium",
-      "levelHigh": "High",
+      "settingsVolume": "Voice volume: {percent}%",
       "settingsChime": "Chime before the voice",
       "settingsPlayChime": "Play chime"
     }

@@ -289,7 +289,8 @@
         "stopped": {
           "title": "{name} dejó de vigilar",
           "body": "Alguien detuvo la vigilancia en el dispositivo del bebé. No recibirá avisos.",
-          "titleDefault": "El dispositivo del bebé dejó de vigilar"
+          "titleDefault": "El dispositivo del bebé dejó de vigilar",
+          "stopHere": "OK, detener aquí también"
         },
         "needsPairing": {
           "title": "Dispositivos ya no emparejados"
@@ -624,7 +625,7 @@
         "tapHint": "Mantén el botón para hablar",
         "lockHint": "Hablar no se puede bloquear",
         "afterListen": "Escuchando {seconds} s · toca para seguir escuchando",
-        "coach": "Novedad: mantén para hablar con el niño.",
+        "coach": "Mantén pulsado para hablar con tu hijo.",
         "permBody": "Para hablar con el niño, GuardedSleep necesita el micrófono mientras mantienes el botón.",
         "permAllow": "Permitir micrófono",
         "permDone": "Listo. Ahora mantén para hablar.",
@@ -635,10 +636,7 @@
           "title": "Hablar",
           "switch": "Los padres pueden hablar a través de este dispositivo",
           "switchHint": "Si está desactivado, nunca se reproduce nada en este dispositivo.",
-          "volume": "Volumen de la voz",
-          "low": "Bajo",
-          "medium": "Medio",
-          "high": "Alto",
+          "volume": "Volumen de la voz: {percent} %",
           "playChime": "Reproducir el tono",
           "chime": "Tono antes de que hable un padre",
           "checklist": "Los padres pueden hablar a través de este dispositivo. Puedes desactivarlo en Ajustes."
@@ -882,7 +880,7 @@
       "unavailableBrowser": "Hablar no es compatible con este navegador.",
       "noisePausedSelf": "Alertas de ruido en pausa mientras hablas.",
       "noisePausedOther": "El otro dispositivo de padres está hablando. Las alertas de ruido se reanudan después.",
-      "coach": "Novedad: mantén para hablar con el niño.",
+      "coach": "Mantén pulsado para hablar con tu hijo.",
       "unconfirmed": "Es posible que tu voz no se oiga en el dispositivo del bebé.",
       "audibleUncertain": "Es posible que los últimos mensajes no se oyeran en el dispositivo del bebé. Revisa su volumen.",
       "afterListen": "Escuchando 10 s · toca para seguir escuchando",
@@ -898,10 +896,7 @@
       "babyChecklist": "Los padres pueden hablar a través de este dispositivo. Puedes desactivarlo en Ajustes.",
       "settingsTitle": "Hablar",
       "settingsToggle": "Los padres pueden hablar a través de este dispositivo",
-      "settingsVolume": "Volumen de la voz",
-      "levelLow": "Bajo",
-      "levelMedium": "Medio",
-      "levelHigh": "Alto",
+      "settingsVolume": "Volumen de la voz: {percent} %",
       "settingsChime": "Timbre antes de la voz",
       "settingsPlayChime": "Reproducir timbre"
     }
