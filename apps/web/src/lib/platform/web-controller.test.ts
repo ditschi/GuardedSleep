@@ -892,7 +892,7 @@ describe("WebController: contract state from the core", () => {
     ];
     t.time.advance(250);
     expect(get(t.controller.settings).lastTestWallMs).toBe(t.time.wallMs());
-    expect(get(t.controller.parent)).toMatchObject({ noiseAlertActive: true, noiseIsTest: true });
+    expect(get(t.controller.parent)).toMatchObject({ noiseAlertActive: false, noiseIsTest: true });
   });
 
   it("baby settings changes reach the core's noise gate", async () => {

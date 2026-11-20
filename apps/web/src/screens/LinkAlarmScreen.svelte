@@ -28,7 +28,7 @@
    * `next_level_at_ms` and `acknowledged_until`; this screen has no threshold of its own.
    */
   type Props = {
-    kind: Exclude<FullScreenKind, "noise" | "battery_critical">;
+    kind: Exclude<FullScreenKind, "noise" | "test_alert" | "battery_critical">;
     /** OK: closes the screen for the current situation. */
     onok: () => void;
   };

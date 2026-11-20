@@ -1,18 +1,17 @@
 package org.guardedsleep.app.ui.screens
 
 import android.content.Intent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -83,6 +82,16 @@ import org.guardedsleep.app.ui.theme.StateColors
 @Composable
 fun NoiseAlertContent(controller: AppController, onClose: () -> Unit) {
     val p = controller.parent.collectAsState().value
+    // A test is a confirmation, not a sound event (`parent-alerts` "Test alert"). The screen
+    // stays on the test while it is open; a real alert, even during a test, takes it over.
+    var testSeen by remember { mutableStateOf(false) }
+    LaunchedEffect(p.noiseIsTest, p.noiseAlertActive) {
+        if (p.noiseAlertActive) testSeen = false else if (p.noiseIsTest) testSeen = true
+    }
+    if ((testSeen || p.noiseIsTest) && !p.noiseAlertActive) {
+        TestAlertContent(controller, onClose)
+        return
+    }
     val app = controller.app.collectAsState().value
     val settings = controller.settings.collectAsState().value
     val wall by rememberWallNow()
@@ -141,17 +150,6 @@ fun NoiseAlertContent(controller: AppController, onClose: () -> Unit) {
                 ),
             sentenceTag = if (discreet && !ended) "alert_discreet_hint" else "alert_sentence",
             body = {
-                if (p.noiseIsTest) {
-                    Text(
-                        stringResource(R.string.native_ui_alert_test_badge),
-                        Modifier.background(Color(0xFFFFE08A), RoundedCornerShape(8.dp))
-                            .padding(horizontal = 12.dp, vertical = 4.dp)
-                            .testTag("alert_test_badge"),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color(0xFF3A2A00),
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
                 SoundMeter(
                     p.level,
                     p.babyThreshold ?: settings.threshold,
@@ -259,6 +257,68 @@ fun NoiseAlertContent(controller: AppController, onClose: () -> Unit) {
                         }
                     }
                 },
+        )
+    }
+}
+
+/**
+ * The test variant of the noise alert: the same template, palette, channel and full-screen path as
+ * a real alert, but the words of a confirmation. The baby device stayed silent; OK ends the test
+ * (sound and vibration stop) and returns to the app, where the "did you hear and feel it?" question
+ * of the test sheet waits.
+ */
+@Composable
+private fun TestAlertContent(controller: AppController, onClose: () -> Unit) {
+    val app = controller.app.collectAsState().value
+    val p = controller.parent.collectAsState().value
+    val settings = controller.settings.collectAsState().value
+    val ctx = LocalContext.current
+    val palette = LocalSafetyColors.current.noise
+    val discreet = settings.alertStyle == AlertStyle.DISCREET
+    val stripText = statusHeadlineText(statusKindOf(p.link), p.link, customPeerName(app.peerName))
+    ScreenRoot("parent_test_alert", background = palette.background) {
+        AlertTemplate(
+            tag = "test_alert_template",
+            palette = palette,
+            label = stringResource(R.string.native_ui_alert_test_badge),
+            headline = stringResource(R.string.native_ui_noise_alert_test_headline),
+            headlineTag = "test_alert_title",
+            strip = {
+                GlyphIcon(Glyph.LINK, palette.accent, size = 22.dp)
+                Text(
+                    stripText,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = palette.onBackground,
+                )
+            },
+            sentence =
+                stringResource(
+                    if (discreet) R.string.native_ui_probe_style_discreet
+                    else R.string.native_ui_probe_style_sound
+                ),
+            sentenceTag = "test_alert_style",
+            body = {
+                Text(
+                    stringResource(R.string.native_ui_noise_alert_test_silent),
+                    Modifier.testTag("test_alert_silent"),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = palette.onVariant,
+                )
+            },
+            action = {
+                AlertAction(
+                    stringResource(R.string.native_ui_common_ok),
+                    {
+                        controller.stopAlertSound()
+                        ctx.packageManager.getLaunchIntentForPackage(ctx.packageName)?.let {
+                            ctx.startActivity(Intent(it).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        }
+                        onClose()
+                    },
+                    "test_alert_ok",
+                    palette,
+                )
+            },
         )
     }
 }

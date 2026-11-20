@@ -556,7 +556,16 @@ class AlertShots : ShotBase() {
     @Test
     fun noise() {
         noise("sounding", base)
-        noise("test", base.copy(noiseIsTest = true))
+        noise("test", base.copy(noiseIsTest = true, noiseAlertActive = false))
+        shot("alert/test_discreet", "en") {
+            NoiseAlertScreen(
+                FakeAppController(
+                    parent = base.copy(noiseIsTest = true, noiseAlertActive = false),
+                    settings = SettingsState(alertStyle = AlertStyle.DISCREET),
+                ),
+                {},
+            )
+        }
         noise("ended", base.copy(noiseAlertActive = false, level = 0.02f))
         shot("alert/escalated", "en") {
             NoiseAlertScreen(

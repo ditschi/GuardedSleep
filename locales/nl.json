@@ -787,7 +787,9 @@
         "counterA11y": "{duration}, sinds {time}",
         "sentenceSound": "Het kamergeluid wordt op dit apparaat afgespeeld.",
         "stopSoundSub": "Stopt het meldingsgeluid, de bewaking blijft doorgaan",
-        "stopVibrationSub": "Stopt het trillen, de bewaking blijft doorgaan"
+        "stopVibrationSub": "Stopt het trillen, de bewaking blijft doorgaan",
+        "testHeadline": "Testmelding ontvangen",
+        "testSilent": "Het babyapparaat bleef stil."
       },
       "batteryAlert": {
         "label": "Batterij babyapparaat",

@@ -787,7 +787,9 @@
         "counterA11y": "{duration}, sejak {time}",
         "sentenceSound": "Suara ruangan diputar di perangkat ini.",
         "stopSoundSub": "Menghentikan suara peringatan, pemantauan tetap berjalan",
-        "stopVibrationSub": "Menghentikan getaran, pemantauan tetap berjalan"
+        "stopVibrationSub": "Menghentikan getaran, pemantauan tetap berjalan",
+        "testHeadline": "Peringatan uji diterima",
+        "testSilent": "Perangkat bayi tetap diam."
       },
       "batteryAlert": {
         "label": "Baterai perangkat bayi",

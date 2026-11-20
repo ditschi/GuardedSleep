@@ -40,6 +40,7 @@
   import BatteryAlertScreen from "./BatteryAlertScreen.svelte";
   import LinkAlarmScreen from "./LinkAlarmScreen.svelte";
   import NoiseAlertScreen from "./NoiseAlertScreen.svelte";
+  import TestAlertScreen from "./TestAlertScreen.svelte";
 
   const controller = useController();
   const router = useRouter();
@@ -70,9 +71,9 @@
   const away = $derived.by((): { title: MessageKey; body: MessageKey } | null => {
     switch (fullScreen) {
       case "noise":
-        return $parent.noiseIsTest
-          ? { title: "native.notif.noiseTestTitle", body: "native.notif.noiseTestText" }
-          : { title: "native.notif.noiseTitle", body: "native.notif.noiseText" };
+        return { title: "native.notif.noiseTitle", body: "native.notif.noiseText" };
+      case "test_alert":
+        return { title: "native.notif.noiseTestTitle", body: "native.notif.noiseTestText" };
       case "link_lost":
         return { title: "native.notif.linkLostTitle", body: "native.notif.linkLostText" };
       case "baby_stopped":
@@ -269,7 +270,7 @@
   // The question "Did you hear and feel it?" follows the test alert screen.
   let sawTestScreen = false;
   $effect(() => {
-    const onTestScreen = fullScreen === "noise" && $parent.noiseIsTest;
+    const onTestScreen = fullScreen === "test_alert";
     if (onTestScreen) sawTestScreen = true;
     else if (sawTestScreen && awaitingTest) {
       sawTestScreen = false;
@@ -298,6 +299,8 @@
 
 {#if fullScreen === "noise"}
   <NoiseAlertScreen onclose={() => dismiss("noise")} />
+{:else if fullScreen === "test_alert"}
+  <TestAlertScreen onclose={() => dismiss("test_alert")} />
 {:else if fullScreen === "battery_critical"}
   <BatteryAlertScreen onok={() => dismiss("battery_critical")} />
 {:else if fullScreen !== null}

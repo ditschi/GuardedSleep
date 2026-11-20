@@ -339,15 +339,10 @@ describe("S09 parent monitor", () => {
     expect(screen.getByTestId("sheet_probe")).toHaveTextContent("The baby device stays silent.");
     await fireEvent.click(screen.getByTestId("sheet_probe_run"));
     expect(c.calls).toContainEqual(["requestTestAlert"]);
-    // The baby device answers with a test alert; its screen carries the TEST badge.
-    c.parent.update((p) => ({
-      ...p,
-      noiseAlertActive: true,
-      noiseIsTest: true,
-      noiseSinceWallMs: Date.now(),
-    }));
-    expect(await screen.findByTestId("alert_test_badge")).toHaveTextContent("TEST");
-    await fireEvent.click(screen.getByTestId("alert_stop_sound"));
+    // The baby device answers with a test alert; its screen is the test confirmation.
+    c.parent.update((p) => ({ ...p, noiseIsTest: true }));
+    expect(await screen.findByTestId("test_alert_title")).toHaveTextContent("Test alert received");
+    await fireEvent.click(screen.getByTestId("test_alert_ok"));
     const question = await screen.findByTestId("sheet_probe_question");
     await fireEvent.click(within(question).getByTestId("sheet_probe_yes"));
     expect(c.calls).toContainEqual(["reportTestResult", true]);
@@ -562,11 +557,10 @@ describe("S10 noise alert", () => {
     c = parentController();
   });
 
-  function startNoise(test = false): void {
+  function startNoise(): void {
     c.parent.update((p) => ({
       ...p,
       noiseAlertActive: true,
-      noiseIsTest: test,
       noiseSinceWallMs: Date.now() - 1000,
       level: 0.8,
     }));
@@ -584,7 +578,6 @@ describe("S10 noise alert", () => {
       "Stops the alert sound, keeps monitoring",
     );
     expect(screen.getByTestId("alert_meter")).toHaveAccessibleName("Sound level: loud");
-    expect(screen.queryByTestId("alert_test_badge")).toBeNull();
     expect(screen.queryByTestId("parent_headline")).toBeNull();
     await waitFor(() => expect(screen.getByTestId("alert_title")).toHaveFocus());
   });
@@ -620,11 +613,30 @@ describe("S10 noise alert", () => {
     await screen.findByTestId("parent_headline");
   });
 
-  it("marks a test alert with a TEST badge", async () => {
+  it("shows a test alert as a calm confirmation, never as the child making sound", async () => {
     open("/parent", c);
     await screen.findByTestId("parent_headline");
-    startNoise(true);
-    expect(await screen.findByTestId("alert_test_badge")).toHaveTextContent("TEST");
+    c.parent.update((p) => ({ ...p, noiseIsTest: true }));
+    expect(await screen.findByTestId("test_alert_title")).toHaveTextContent("Test alert received");
+    expect(screen.getByTestId("test_alert_style")).toHaveTextContent("Alert style: Sound");
+    expect(screen.getByTestId("test_alert_silent")).toHaveTextContent(
+      "The baby device stayed silent.",
+    );
+    expect(screen.queryByTestId("alert_since")).toBeNull();
+    expect(screen.queryByTestId("alert_stop_sound")).toBeNull();
+    await fireEvent.click(screen.getByTestId("test_alert_ok"));
+    expect(c.calls).toContainEqual(["stopAlertSound"]);
+    expect(await screen.findByTestId("parent_headline")).toBeInTheDocument();
+  });
+
+  it("a real alert during a test takes over the screen", async () => {
+    open("/parent", c);
+    await screen.findByTestId("parent_headline");
+    c.parent.update((p) => ({ ...p, noiseIsTest: true }));
+    await screen.findByTestId("test_alert_title");
+    startNoise();
+    expect(await screen.findByTestId("alert_title")).toHaveTextContent("The child is making sound");
+    expect(screen.queryByTestId("test_alert_title")).toBeNull();
   });
 
   it("shows the alert again for the next noise event", async () => {

@@ -1422,16 +1422,6 @@
     flex: none;
     padding: var(--gs-space-2) var(--gs-space-5) var(--gs-space-4);
   }
-  .gs-alert__badge {
-    align-self: flex-start;
-    padding: 0.125rem var(--gs-space-3);
-    border: 0.125rem solid var(--alert-accent);
-    border-radius: var(--gs-radius-full);
-    color: var(--alert-accent);
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.07rem;
-  }
   .gs-alert__row {
     display: flex;
     flex-wrap: wrap;

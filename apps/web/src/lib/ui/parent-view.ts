@@ -218,7 +218,7 @@ export function headlineOf(
 // ---- full screen -----------------------------------------------------------------------------
 
 export type FullScreenKind =
-  "link_lost" | "noise" | "needs_pairing" | "baby_stopped" | "battery_critical";
+  "link_lost" | "noise" | "test_alert" | "needs_pairing" | "baby_stopped" | "battery_critical";
 
 /** Below this the baby device is about to switch off (alpha-ux-flows.md section 4.10). */
 export const BATTERY_CRITICAL_PCT = 5;
@@ -237,6 +237,8 @@ export function fullScreenOf(
   // "I'm checking" does not close the screen: it stays red as "Alarm paused" until the link is back.
   if (escalating && link.level >= 2) return "link_lost";
   if (p.noiseAlertActive && !dismissed.has("noise")) return "noise";
+  // A test is a confirmation, not a noise event: it never outranks a real alert.
+  if (p.noiseIsTest && !dismissed.has("test_alert")) return "test_alert";
   if (link.phase === "failed_needs_user") return "needs_pairing";
   if (link.phase === "peer_stopped" && !dismissed.has("baby_stopped")) return "baby_stopped";
   if (batteryCritical(p) && !dismissed.has("battery_critical")) return "battery_critical";
@@ -264,6 +266,7 @@ export function pruneDismissed(
 ): ReadonlySet<FullScreenKind> {
   const next = new Set(dismissed);
   if (!p.noiseAlertActive) next.delete("noise");
+  if (!p.noiseIsTest) next.delete("test_alert");
   if (p.link.phase !== "peer_stopped") next.delete("baby_stopped");
   if (!batteryCritical(p)) next.delete("battery_critical");
   return next.size === dismissed.size ? dismissed : next;

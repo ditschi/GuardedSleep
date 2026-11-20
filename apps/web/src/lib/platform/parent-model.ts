@@ -38,6 +38,7 @@ export interface ParentEffects {
 
 const DECAY = 0.85;
 const STALE_PAIRING_MS = 10 * 60_000;
+const TEST_ALERT_MS = 30_000;
 const STALE_AUDIO_MS = 400;
 const HEARTBEAT_VISIBLE_MS = 12_000;
 const SILENCE_TIMEOUT_MS = 10_000;
@@ -66,7 +67,11 @@ export class ParentModel {
   private readonly tracker = new NoiseTracker();
   private noiseSinceWall: number | null = null;
   private noiseLastWall: number | null = null;
-  private noiseIsTest = false;
+  /**
+   * Elapsed time until which a test alert shows. A test is not a noise event: it never enters the
+   * tracker, `lastSound` or the event times (`parent-alerts` "Test alert").
+   */
+  private testUntilElapsed: number | null = null;
   private remoteLevel = 0;
   private remoteAt = Number.NEGATIVE_INFINITY;
   private heartbeatRms = 0;
@@ -117,7 +122,7 @@ export class ParentModel {
     this.tracker.reset();
     this.noiseSinceWall = null;
     this.noiseLastWall = null;
-    this.noiseIsTest = false;
+    this.testUntilElapsed = null;
     this.remoteLevel = 0;
     this.heartbeatRms = 0;
     this.heartbeatAt = Number.NEGATIVE_INFINITY;
@@ -312,6 +317,11 @@ export class ParentModel {
         this.phase === "connected" ? wall - (now - this.tracker.lastLoudAt) : null;
       this.sink.noiseEnded();
     }
+    if (this.testUntilElapsed !== null && now >= this.testUntilElapsed) {
+      this.testUntilElapsed = null;
+      // A real event that started meanwhile owns the notification.
+      if (!this.tracker.active) this.sink.noiseEnded();
+    }
     if (this.awaitingMissedUntil !== null && now >= this.awaitingMissedUntil) {
       // No summary arrived (baby restarted, or older peer): the honest fallback is the
       // reconnect time.
@@ -379,18 +389,32 @@ export class ParentModel {
 
   // ---- internals ---------------------------------------------------------------------------
 
+  /**
+   * A test alert (the baby injected a digital probe): the same sink call, audio route and
+   * full-screen path as a real alert, but no sound event, so the monitor never says "Sound
+   * detected" for it and a real alert during the test still raises as usual.
+   */
+  private onTest(snoozed: boolean, now: number): void {
+    this.testUntilElapsed = now + TEST_ALERT_MS;
+    this.effects.testAlertArrived(this.clock.wallMs());
+    this.effects.muteRemote(snoozed && this.listen === "off");
+    this.sink.noiseAlert(this.tracker.active ? "continue" : "new", true, snoozed);
+  }
+
   private onNoise(rms: number, probe: boolean, snoozed: boolean, now: number): void {
     void rms;
+    if (probe) {
+      this.onTest(snoozed, now);
+      return;
+    }
     const wall = this.clock.wallMs();
     const kind = this.tracker.onAlert(now);
     this.lastLoudLevelAt = now;
     if (kind === "new" || this.noiseSinceWall === null) {
       this.noiseSinceWall = wall;
-      this.noiseIsTest = probe;
     }
     this.noiseLastWall = wall;
     this.quietSinceWall = null;
-    if (probe) this.effects.testAlertArrived(wall);
     // Snoozed noise stays visual: the baby still streams, but nothing plays.
     this.effects.muteRemote(snoozed && this.listen === "off");
     this.sink.noiseAlert(kind, probe, snoozed);
@@ -498,7 +522,7 @@ export class ParentModel {
               durationMs: Math.max(0, (this.noiseLastWall ?? noiseSince) - noiseSince),
             },
       ownBatteryPct: this.ownBatteryPct,
-      noiseIsTest: this.noiseIsTest && this.tracker.active,
+      noiseIsTest: this.testUntilElapsed !== null && !this.tracker.active,
       monitoringSinceElapsedMs: this.monitoringSince,
     };
   }

@@ -791,7 +791,9 @@
         "counterA11y": "{duration}, desde las {time}",
         "sentenceSound": "El sonido de la habitación suena en este dispositivo.",
         "stopSoundSub": "Detiene el sonido de la alerta y sigue vigilando",
-        "stopVibrationSub": "Detiene la vibración y sigue vigilando"
+        "stopVibrationSub": "Detiene la vibración y sigue vigilando",
+        "testHeadline": "Alerta de prueba recibida",
+        "testSilent": "El dispositivo del bebé permaneció en silencio."
       },
       "batteryAlert": {
         "label": "Batería del dispositivo del bebé",

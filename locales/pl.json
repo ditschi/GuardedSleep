@@ -787,7 +787,9 @@
         "counterA11y": "{duration}, od {time}",
         "sentenceSound": "Dźwięk z pokoju jest odtwarzany na tym urządzeniu.",
         "stopSoundSub": "Zatrzymuje dźwięk alertu, monitorowanie trwa",
-        "stopVibrationSub": "Zatrzymuje wibracje, monitorowanie trwa"
+        "stopVibrationSub": "Zatrzymuje wibracje, monitorowanie trwa",
+        "testHeadline": "Otrzymano alert testowy",
+        "testSilent": "Urządzenie dziecka milczało."
       },
       "batteryAlert": {
         "label": "Bateria urządzenia dziecka",

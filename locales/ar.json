@@ -787,7 +787,9 @@
         "counterA11y": "{duration}، منذ {time}",
         "sentenceSound": "صوت الغرفة يُشغَّل على هذا الجهاز.",
         "stopSoundSub": "يوقف صوت التنبيه وتستمر المراقبة",
-        "stopVibrationSub": "يوقف الاهتزاز وتستمر المراقبة"
+        "stopVibrationSub": "يوقف الاهتزاز وتستمر المراقبة",
+        "testHeadline": "تم استلام تنبيه الاختبار",
+        "testSilent": "بقي جهاز الطفل صامتًا."
       },
       "batteryAlert": {
         "label": "بطارية جهاز الطفل",

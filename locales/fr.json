@@ -791,7 +791,9 @@
         "counterA11y": "{duration}, depuis {time}",
         "sentenceSound": "Le son de la pièce est lu sur cet appareil.",
         "stopSoundSub": "Arrête le son d'alerte, la surveillance continue",
-        "stopVibrationSub": "Arrête la vibration, la surveillance continue"
+        "stopVibrationSub": "Arrête la vibration, la surveillance continue",
+        "testHeadline": "Alerte de test reçue",
+        "testSilent": "L'appareil du bébé est resté silencieux."
       },
       "batteryAlert": {
         "label": "Batterie de l'appareil bébé",

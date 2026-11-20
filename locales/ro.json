@@ -787,7 +787,9 @@
         "counterA11y": "{duration}, din {time}",
         "sentenceSound": "Sunetul camerei se redă pe acest dispozitiv.",
         "stopSoundSub": "Oprește sunetul alertei, monitorizarea continuă",
-        "stopVibrationSub": "Oprește vibrația, monitorizarea continuă"
+        "stopVibrationSub": "Oprește vibrația, monitorizarea continuă",
+        "testHeadline": "Alertă de test primită",
+        "testSilent": "Dispozitivul copilului a rămas silențios."
       },
       "batteryAlert": {
         "label": "Bateria dispozitivului bebelușului",

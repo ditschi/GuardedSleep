@@ -112,24 +112,9 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
                             trackError(errorMessage)
                     }
                 )
-        if (role == Role.BABY) {
-            // Raw room sound (design §2): no voice-call source and no hardware AEC/NS, so the
-            // parent hears the room as it is and the noise gate sees honest levels.
-            // API: JavaAudioDeviceModule.Builder.setAudioSource / setUseHardware* in webrtc-sdk
-            // 150.7871.01, https://github.com/webrtc-sdk/webrtc (sdk/android/api/org/webrtc/audio/
-            // JavaAudioDeviceModule.java).
-            builder
-                .setAudioSource(
-                    RawCapture.audioSource(
-                        appContext
-                            .getSystemService(AudioManager::class.java)
-                            ?.getProperty(AudioManager.PROPERTY_SUPPORT_AUDIO_SOURCE_UNPROCESSED)
-                    )
-                )
-                .setUseHardwareAcousticEchoCanceler(false)
-                .setUseHardwareNoiseSuppressor(false)
-                .setAudioBufferCallback(recordCallback)
-        } else {
+        if (role == Role.BABY) applyRawCapture(builder)
+        if (role == Role.BABY) builder.setAudioBufferCallback(recordCallback)
+        else {
             // The parent's capture is the talk microphone: voice processing on (design §4), and
             // no record callback, so nothing can read the PCM. A capture error ends the talk.
             builder
@@ -168,6 +153,24 @@ class LibWebRtcMediaEngine(context: Context, private val role: Role, private val
             source = src
             track = factory.createAudioTrack("gs-audio", src).apply { setEnabled(false) }
         }
+    }
+
+    /**
+     * Raw room sound (design §2): no voice-call source and no hardware AEC/NS, so the parent hears
+     * the room as it is and the noise gate sees honest levels. API:
+     * `JavaAudioDeviceModule.Builder.setAudioSource` / `setUseHardware*` in webrtc-sdk 150.7871.01,
+     * https://github.com/webrtc-sdk/webrtc (sdk/android/api/org/webrtc/audio/
+     * JavaAudioDeviceModule.java).
+     */
+    private fun applyRawCapture(builder: JavaAudioDeviceModule.Builder) {
+        val unprocessed =
+            appContext
+                .getSystemService(AudioManager::class.java)
+                ?.getProperty(AudioManager.PROPERTY_SUPPORT_AUDIO_SOURCE_UNPROCESSED)
+        builder
+            .setAudioSource(RawCapture.audioSource(unprocessed))
+            .setUseHardwareAcousticEchoCanceler(false)
+            .setUseHardwareNoiseSuppressor(false)
     }
 
     override fun createAttempt(

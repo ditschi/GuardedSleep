@@ -66,11 +66,6 @@
     <span data-testid="alert_connection_bar">{stripText}</span>
   {/snippet}
   {#snippet body()}
-    {#if $parent.noiseIsTest}
-      <span class="gs-alert__badge" data-testid="alert_test_badge">
-        {$t("native.ui.alert.testBadge")}
-      </span>
-    {/if}
     <div class="gs-alert__panel">
       <Meter
         level={$parent.level}

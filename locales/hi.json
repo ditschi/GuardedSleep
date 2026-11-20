@@ -787,7 +787,9 @@
         "counterA11y": "{duration}, {time} से",
         "sentenceSound": "कमरे की आवाज़ इस डिवाइस पर चल रही है।",
         "stopSoundSub": "सूचना की आवाज़ रोकता है, निगरानी जारी रहती है",
-        "stopVibrationSub": "कंपन रोकता है, निगरानी जारी रहती है"
+        "stopVibrationSub": "कंपन रोकता है, निगरानी जारी रहती है",
+        "testHeadline": "परीक्षण अलर्ट मिला",
+        "testSilent": "बच्चे का डिवाइस शांत रहा।"
       },
       "batteryAlert": {
         "label": "बच्चे के डिवाइस की बैटरी",

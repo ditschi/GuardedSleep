@@ -787,7 +787,9 @@
         "counterA11y": "{duration}、{time}から",
         "sentenceSound": "部屋の音をこの端末で再生しています。",
         "stopSoundSub": "アラート音を止めます。見守りは続きます",
-        "stopVibrationSub": "振動を止めます。見守りは続きます"
+        "stopVibrationSub": "振動を止めます。見守りは続きます",
+        "testHeadline": "テスト通知を受信しました",
+        "testSilent": "赤ちゃん側の端末は無音のままでした。"
       },
       "batteryAlert": {
         "label": "赤ちゃん用端末のバッテリー",

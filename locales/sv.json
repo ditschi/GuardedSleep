@@ -787,7 +787,9 @@
         "counterA11y": "{duration}, sedan {time}",
         "sentenceSound": "Rummets ljud spelas upp på den här enheten.",
         "stopSoundSub": "Stoppar larmljudet, övervakningen fortsätter",
-        "stopVibrationSub": "Stoppar vibrationen, övervakningen fortsätter"
+        "stopVibrationSub": "Stoppar vibrationen, övervakningen fortsätter",
+        "testHeadline": "Testlarm mottaget",
+        "testSilent": "Barnenheten förblev tyst."
       },
       "batteryAlert": {
         "label": "Babyenhetens batteri",

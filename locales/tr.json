@@ -787,7 +787,9 @@
         "counterA11y": "{duration}, {time} saatinden beri",
         "sentenceSound": "Oda sesi bu cihazda çalınıyor.",
         "stopSoundSub": "Uyarı sesini durdurur, izleme sürer",
-        "stopVibrationSub": "Titreşimi durdurur, izleme sürer"
+        "stopVibrationSub": "Titreşimi durdurur, izleme sürer",
+        "testHeadline": "Test uyarısı alındı",
+        "testSilent": "Bebek cihazı sessiz kaldı."
       },
       "batteryAlert": {
         "label": "Bebek cihazı pili",

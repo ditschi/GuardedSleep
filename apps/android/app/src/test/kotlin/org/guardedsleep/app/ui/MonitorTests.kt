@@ -594,6 +594,38 @@ class MonitorTests : ShotBase() {
     }
 
     @Test
+    fun aTestAlertIsAConfirmationNotAWarning() = runComposeUiTest {
+        var closed = false
+        val c =
+            connected(
+                ParentMonitorState(noiseIsTest = true, level = 0.8f),
+                SettingsState(alertStyle = AlertStyle.DISCREET, talkCoachSeen = true),
+            )
+        show { NoiseAlertScreen(c) { closed = true } }
+        onNodeWithTag("test_alert_template").assertIsDisplayed()
+        onNodeWithTag("test_alert_title")
+            .assert(hasText(str(R.string.native_ui_noise_alert_test_headline)))
+        onNodeWithTag("test_alert_style")
+            .assert(hasText(str(R.string.native_ui_probe_style_discreet)))
+        onNodeWithTag("test_alert_silent").assertIsDisplayed()
+        // Never the child making sound: no counter, no pause buttons, no stop-sound button.
+        onNodeWithTag("noise_alert_template").assertDoesNotExist()
+        onNodeWithTag("alert_since").assertDoesNotExist()
+        onNodeWithTag("alert_snooze_10").assertDoesNotExist()
+        onNodeWithTag("test_alert_ok").performClick()
+        assertTrue(closed)
+        assertTrue(c.calls.contains("stopAlertSound"))
+    }
+
+    @Test
+    fun aRealAlertDuringATestShowsTheRealScreen() = runComposeUiTest {
+        val c = connected(ParentMonitorState(noiseIsTest = true, noiseAlertActive = true))
+        show { NoiseAlertScreen(c) {} }
+        onNodeWithTag("noise_alert_template").assertIsDisplayed()
+        onNodeWithTag("test_alert_template").assertDoesNotExist()
+    }
+
+    @Test
     fun theNoiseAlertKeepsItsActionVisibleAtTwoHundredPercent() = runComposeUiTest {
         RuntimeEnvironment.setFontScale(2f)
         try {

@@ -787,7 +787,9 @@
         "counterA11y": "{duration}, siden {time}",
         "sentenceSound": "Rummets lyd afspilles på denne enhed.",
         "stopSoundSub": "Stopper alarmlyden, overvågningen fortsætter",
-        "stopVibrationSub": "Stopper vibrationen, overvågningen fortsætter"
+        "stopVibrationSub": "Stopper vibrationen, overvågningen fortsætter",
+        "testHeadline": "Testalarm modtaget",
+        "testSilent": "Babyenheden forblev stille."
       },
       "batteryAlert": {
         "label": "Babyenhedens batteri",

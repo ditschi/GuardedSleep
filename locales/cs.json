@@ -787,7 +787,9 @@
         "counterA11y": "{duration}, od {time}",
         "sentenceSound": "Zvuk místnosti se přehrává v tomto zařízení.",
         "stopSoundSub": "Zastaví zvuk výstrahy, sledování pokračuje",
-        "stopVibrationSub": "Zastaví vibrace, sledování pokračuje"
+        "stopVibrationSub": "Zastaví vibrace, sledování pokračuje",
+        "testHeadline": "Zkušební upozornění přijato",
+        "testSilent": "Dětské zařízení zůstalo ticho."
       },
       "batteryAlert": {
         "label": "Baterie zařízení dítěte",

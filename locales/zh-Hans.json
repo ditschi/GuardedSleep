@@ -787,7 +787,9 @@
         "counterA11y": "{duration}，自 {time} 起",
         "sentenceSound": "房间声音正在此设备上播放。",
         "stopSoundSub": "停止提醒声音，继续监护",
-        "stopVibrationSub": "停止振动，继续监护"
+        "stopVibrationSub": "停止振动，继续监护",
+        "testHeadline": "已收到测试提醒",
+        "testSilent": "宝宝设备保持安静。"
       },
       "batteryAlert": {
         "label": "宝宝设备电量",

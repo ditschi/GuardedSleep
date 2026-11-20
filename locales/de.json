@@ -791,7 +791,9 @@
         "counterA11y": "{duration}, seit {time}",
         "sentenceSound": "Der Raumton wird auf diesem Gerät abgespielt.",
         "stopSoundSub": "Beendet den Alarmton, die Überwachung läuft weiter",
-        "stopVibrationSub": "Beendet die Vibration, die Überwachung läuft weiter"
+        "stopVibrationSub": "Beendet die Vibration, die Überwachung läuft weiter",
+        "testHeadline": "Testalarm empfangen",
+        "testSilent": "Das Babygerät blieb still."
       },
       "batteryAlert": {
         "label": "Akku des Babygeräts",

@@ -787,7 +787,9 @@
         "counterA11y": "{duration}, {time}부터",
         "sentenceSound": "방 소리가 이 기기에서 재생되고 있어요.",
         "stopSoundSub": "알림 소리를 멈추고 계속 지켜봐요",
-        "stopVibrationSub": "진동을 멈추고 계속 지켜봐요"
+        "stopVibrationSub": "진동을 멈추고 계속 지켜봐요",
+        "testHeadline": "테스트 알림을 받았습니다",
+        "testSilent": "아기 기기는 조용했습니다."
       },
       "batteryAlert": {
         "label": "아기 기기 배터리",

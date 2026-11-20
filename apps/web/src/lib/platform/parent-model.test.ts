@@ -273,10 +273,29 @@ describe("events", () => {
       expect(t.effects.log.at(-1)).toBe("mute:false");
     });
 
-    it("a probe is a test alert and records the test time", () => {
+    it("a probe is a test alert: it records the test time, not a sound event", () => {
       t.event({ type: "noise_alert", rms: 0.5, probe: true, snoozed: false });
       expect(t.state.noiseIsTest).toBe(true);
       expect(t.effects.log).toContain(`test:${t.time.wallMs()}`);
+      // Not a detected sound: no event, no last sound, no event start time.
+      expect(t.state.noiseAlertActive).toBe(false);
+      expect(t.state.lastSound).toBeNull();
+      expect(t.state.noiseSinceWallMs).toBeNull();
+      // The same sink call as a real alert, flagged as a test.
+      expect(t.sink.noise).toEqual([["new", true, false]]);
+      t.advance(31_000);
+      t.model.onTick(t.time.now);
+      expect(t.state.noiseIsTest).toBe(false);
+      expect(t.state.lastSound).toBeNull();
+    });
+
+    it("a real alert during a test still raises as usual", () => {
+      t.event({ type: "noise_alert", rms: 0.5, probe: true, snoozed: false });
+      t.event({ type: "noise_alert", rms: 0.5, probe: false, snoozed: false });
+      expect(t.state.noiseAlertActive).toBe(true);
+      expect(t.state.noiseIsTest).toBe(false);
+      expect(t.state.lastSound).not.toBeNull();
+      expect(t.sink.noise.at(-1)).toEqual(["new", false, false]);
     });
 
     it("snoozed noise stays visual: the playout is muted unless the parent listens", () => {
