@@ -187,6 +187,11 @@ class UiJourneyTest : JourneyHost() {
     @Test
     fun linkLossAcknowledgeAndRecovery() {
         firstRunAndPair()
+        // A quiet room: the baby's microphone delivers samples all along. Its "listened through the
+        // whole outage" check (`complete` of the missed summary) needs samples at most 2 s apart; a
+        // fake microphone that delivers none until the noise starts would leave the result to the
+        // heartbeat phase of the virtual clock.
+        phones.injectNoise(rms = QUIET_ROOM_RMS)
         phones.dropNetwork()
         // The baby hears something while nobody listens.
         phones.injectNoise()
@@ -199,7 +204,8 @@ class UiJourneyTest : JourneyHost() {
         awaitShown(Device.PARENT, "link_alarm_ack")
         tap(Device.PARENT, "link_alarm_ack")
         assertNotNull(phones.parent.parent.value.link.acknowledgedUntilElapsedMs)
-        phones.stopNoise()
+        // The noise stops, the room stays quiet: samples keep coming until the link is back.
+        phones.injectNoise(rms = QUIET_ROOM_RMS)
         // Network back: both phones reconnect without a tap.
         phones.restoreNetwork()
         stepUntil("the link recovers", timeoutMs = 120_000, stepMs = 500) {
@@ -379,6 +385,8 @@ class UiJourneyTest : JourneyHost() {
     }
 
     private companion object {
+        // Well under the lowest threshold the core accepts (0.0015), so the gate never fires.
+        const val QUIET_ROOM_RMS = 0.0005
         val ROOTS =
             listOf(
                 AppState::class.java,

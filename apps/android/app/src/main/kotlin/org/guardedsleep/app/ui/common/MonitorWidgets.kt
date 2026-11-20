@@ -48,10 +48,10 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.guardedsleep.app.contract.R
 import org.guardedsleep.app.ui.model.Banner
-import org.guardedsleep.app.ui.model.Sensitivity
 import org.guardedsleep.app.ui.model.BannerKind
 import org.guardedsleep.app.ui.model.BannerLevel
 import org.guardedsleep.app.ui.model.NightMode
+import org.guardedsleep.app.ui.model.Sensitivity
 import org.guardedsleep.app.ui.model.bannerLevel
 import org.guardedsleep.app.ui.theme.LocalAppColors
 import org.guardedsleep.app.ui.theme.LocalSafetyColors

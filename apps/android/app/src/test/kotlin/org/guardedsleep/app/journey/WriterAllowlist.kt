@@ -13,11 +13,6 @@ object WriterAllowlist {
             "baby playout lease); proven by TalkModelTest, TalkSendControlTest, TalkPlayoutTest, " +
             "LinkControllerTest and the emulator gate"
     private const val NO_STATS = "comes from inbound audio statistics; the fake media reports none"
-    private const val MISSED_PHASE =
-        "a complete summary needs the baby's audio samples to leave no 2 s gap in the outage; the " +
-            "link-loss journey sits on the 2 s limit, so where the virtual clock stands against " +
-            "the level timer decides (the first-start permission screen moved it); the core's " +
-            "link_pair tests cover the summary"
     private const val STALE =
         "needs the baby unit absent from the relay for ten minutes; the fake relay keeps its member"
     private const val HINTS =
@@ -36,8 +31,6 @@ object WriterAllowlist {
             "AppState.microphoneNeeded" to
                 "a baby start refused for the microphone needs a denied permission; " +
                     "LinkControllerTest covers it",
-            "ParentMonitorState.missed.complete" to MISSED_PHASE,
-            "ParentMonitorState.missed.count" to MISSED_PHASE,
             "AppState.coachPending" to
                 "product gap: the first-run coach is never wired (docs/backlog.md IDEA \"First-run " +
                     "coach marks\"); the journey for it is @Ignored",

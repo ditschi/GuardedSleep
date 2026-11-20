@@ -90,7 +90,7 @@ private class FakeDeviceEnv : DeviceCheckEnv {
                 Thread.sleep(10)
             }
         }
-        return 0.01
+        return 0.002 // a quiet room, well below the default threshold
     }
 
     override fun probeMailbox(url: String, timeoutMs: Long): Boolean {
