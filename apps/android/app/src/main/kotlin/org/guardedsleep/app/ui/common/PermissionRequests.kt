@@ -60,7 +60,7 @@ fun rememberMicrophoneGranted(): Boolean {
     return remember(tick) { micAllowed(ctx) }
 }
 
-/** A counter that goes up every time the screen comes back to the front, to re-read system state. */
+/** Goes up every time the screen comes back to the front, to re-read system state. */
 @Composable
 private fun rememberResumeTick(): Int {
     var tick by remember { mutableIntStateOf(0) }
