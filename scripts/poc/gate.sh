@@ -266,8 +266,8 @@ ac12() {
 	code=""
 	wait_event "$BABY" 'pairing_verified' 60 || fail AC-12 "baby did not verify pairing"
 	wait_event "$PARENT" 'pairing_verified' 60 || fail AC-12 "parent did not verify pairing"
-	maestro_run "$BABY" assert-verified-baby.yaml || fail AC-12 "baby UI not verified"
-	maestro_run "$PARENT" assert-verified.yaml || fail AC-12 "parent UI not verified"
+	maestro_assert "$BABY" assert-verified-baby.yaml || fail AC-12 "baby UI not verified"
+	maestro_assert "$PARENT" assert-verified.yaml || fail AC-12 "parent UI not verified"
 	maestro_run "$PARENT" journey-test-alert.yaml || fail AC-12 "test alert did not reach the parent screen"
 	maestro_run "$PARENT" journey-stop-parent.yaml || fail AC-12 "Stop monitoring did not return to the home screen"
 	# The signaling log assertion (two members joined this window) is local-gate.sh's, it owns docker.
