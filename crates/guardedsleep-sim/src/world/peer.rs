@@ -3,6 +3,61 @@
 use super::*;
 
 impl World {
+    pub(super) fn dispatch_peer(&mut self, ev: PeerEv) {
+        match ev {
+            PeerEv::LocalDesc {
+                actor,
+                handle,
+                sdp_type,
+            } => self.on_local_desc(actor, handle, sdp_type),
+            PeerEv::PcConnect {
+                a,
+                ha,
+                b,
+                hb,
+                since,
+            } => self.on_pc_connect(a, ha, b, hb, since),
+            PeerEv::Data { to, handle, text } => self.on_data(to, handle, text),
+            PeerEv::DataClosed { to, handle } => self.on_data_closed(to, handle),
+            PeerEv::Watch => {
+                self.on_watch();
+                self.push(self.now + 1_000, 4, PeerEv::Watch);
+            }
+        }
+    }
+
+    /// Messages already in flight arrive even if the sender closed meanwhile.
+    fn on_data(&mut self, to: usize, handle: u32, text: String) {
+        let rx_ok = self.actors[to]
+            .pcs
+            .get(&handle)
+            .is_some_and(|p| p.connected && !p.closed && !p.failed && self.reach(to, p.epoch));
+        if !rx_ok {
+            return;
+        }
+        if self.actors[to].raw.is_some() {
+            self.raw_on_data(to, handle, &text);
+            return;
+        }
+        let text = self.mitm_adjust(to, handle, text);
+        self.actors[to].last_rx_data = self.now;
+        let input = LinkInput::AttemptDataMessage {
+            attempt: handle,
+            text,
+        };
+        self.deliver(to, input);
+    }
+
+    fn on_data_closed(&mut self, to: usize, handle: u32) {
+        let open = self.actors[to]
+            .pcs
+            .get(&handle)
+            .is_some_and(|p| !p.closed && !p.failed);
+        if open && self.actors[to].raw.is_none() {
+            self.deliver(to, LinkInput::AttemptDataClosed { attempt: handle });
+        }
+    }
+
     pub fn new_pc(&mut self, a: usize, handle: u32) {
         self.fp_seq += 1;
         let fp = synthetic_fp(self.fp_seq);
@@ -108,7 +163,7 @@ impl World {
         self.push(
             self.now + d,
             2,
-            Ev::PcConnect {
+            PeerEv::PcConnect {
                 a,
                 ha: h,
                 b,
@@ -186,7 +241,7 @@ impl World {
             self.push(
                 self.now + 500,
                 2,
-                Ev::PcConnect {
+                PeerEv::PcConnect {
                     a,
                     ha,
                     b,
@@ -262,7 +317,7 @@ impl World {
         if let (true, Some((b, hb))) = (notify, peer) {
             let lat = self.rng.range(10, 60);
             let t = self.fifo_time(2, b, hb, self.now + lat, false);
-            self.push(t, 2, Ev::DataClosed { to: b, handle: hb });
+            self.push(t, 2, PeerEv::DataClosed { to: b, handle: hb });
         }
     }
 
@@ -279,7 +334,7 @@ impl World {
             self.push(
                 t,
                 2,
-                Ev::Data {
+                PeerEv::Data {
                     to: b,
                     handle: hb,
                     text: text.clone(),

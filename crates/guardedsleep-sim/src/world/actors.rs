@@ -3,6 +3,20 @@
 use super::*;
 
 impl World {
+    pub(super) fn dispatch_actor(&mut self, ev: ActorEv) {
+        match ev {
+            ActorEv::Tick { actor, chain } => self.on_tick(actor, chain),
+            ActorEv::Input { actor, input } => self.deliver(actor, input),
+            ActorEv::PathBack { actor } => {
+                self.actors[actor].net_up = true;
+                self.flush_after_up(actor, true);
+            }
+            ActorEv::Restart { actor } => self.restart_actor(actor),
+            ActorEv::RawTick { actor } => self.raw_tick(actor),
+            ActorEv::RawAct { actor } => self.raw_act(actor),
+        }
+    }
+
     pub(super) fn start_actor(&mut self, a: usize) {
         let entropy = self.rng.next_u64() & 0xFFFF_FFFF;
         self.actors[a].chain += 1;
@@ -10,7 +24,7 @@ impl World {
         self.actors[a].last_wall_ms = None;
         self.deliver(a, LinkInput::Start { entropy });
         self.report_wall_clock(a);
-        self.push(self.now + 250, 3, Ev::Tick { actor: a, chain });
+        self.push(self.now + 250, 3, ActorEv::Tick { actor: a, chain });
     }
 
     /// Reports the simulated wall clock at start and then every 60 s of virtual time, like a driver
@@ -46,7 +60,7 @@ impl World {
         } else {
             500
         };
-        self.push(self.now + period, 3, Ev::Tick { actor: a, chain });
+        self.push(self.now + period, 3, ActorEv::Tick { actor: a, chain });
     }
 
     pub(super) fn finish_rec(&mut self, a: usize) {
@@ -70,7 +84,7 @@ impl World {
         for s in socks.into_values() {
             if reachable {
                 let t = self.fifo_time(1, s, 0, self.now + 20, false);
-                self.push(t, 2, Ev::ServerClose { sock: s });
+                self.push(t, 2, RelayEv::ServerClose { sock: s });
             }
         }
         let ac = &mut self.actors[a];
@@ -158,91 +172,114 @@ impl World {
 
     pub(super) fn exec(&mut self, a: usize, actions: Vec<LinkAction>) {
         for act in actions {
-            match act {
-                LinkAction::OpenMailbox { id, .. } => self.open_mailbox(a, id),
-                LinkAction::CloseMailbox { id } => {
-                    if let Some(s) = self.actors[a].socks.remove(&id) {
-                        let epoch = self.socks[&s].1;
-                        if self.reach(a, epoch) {
-                            let t = self.fifo_time(1, s, 0, self.now + 20, false);
-                            self.push(t, 2, Ev::ServerClose { sock: s });
-                        }
-                    }
-                }
-                LinkAction::MailboxSend { id, frame } => self.client_send_on(a, id, frame, None),
-                LinkAction::CreateAttempt {
-                    attempt,
-                    ice_servers,
-                    ..
-                } => {
-                    self.attempts.push((a, self.now));
-                    self.attempt_ice.push((a, self.now, ice_servers));
-                    if self.actors[a].pcs.values().any(|p| !p.closed) {
-                        self.violations.push(format!(
-                            "{}: create_attempt {attempt} while another attempt is live",
-                            self.actors[a].name
-                        ));
-                    }
-                    self.new_pc(a, attempt);
-                }
-                LinkAction::CloseAttempt { attempt } => self.close_attempt(a, attempt),
-                LinkAction::CreateOffer { attempt } => {
-                    let d = self.rng.range(5, 30);
-                    self.push(
-                        self.now + d,
-                        2,
-                        Ev::LocalDesc {
-                            actor: a,
-                            handle: attempt,
-                            sdp_type: "offer",
-                        },
-                    );
-                }
-                LinkAction::CreateAnswer { attempt } => {
-                    let d = self.rng.range(5, 30);
-                    self.push(
-                        self.now + d,
-                        2,
-                        Ev::LocalDesc {
-                            actor: a,
-                            handle: attempt,
-                            sdp_type: "answer",
-                        },
-                    );
-                }
-                LinkAction::SetRemoteDescription { attempt, sdp, .. } => {
-                    self.set_remote(a, attempt, &sdp);
-                }
-                LinkAction::SendData { attempt, text } => self.send_data(a, attempt, text),
-                // The fake platform of talk-back: a healthy one. The chime takes 600 ms, the
-                // microphone attaches 30 ms after it was asked to; what the baby's microphone
-                // hears (`levels`, `talk_levels` verbs) is up to the scenario.
-                LinkAction::PlayTalkChime { attempt, .. } => self.push(
-                    self.now + 600,
-                    2,
-                    Ev::Input {
-                        actor: a,
-                        input: LinkInput::TalkChimeDone { attempt },
-                    },
-                ),
-                LinkAction::SetTalkMic { enabled: true, .. } => self.push(
-                    self.now + 30,
-                    2,
-                    Ev::Input {
-                        actor: a,
-                        input: LinkInput::TalkMicAttached,
-                    },
-                ),
-                LinkAction::SetTalkMic { .. }
-                | LinkAction::SetPlaybackDucked { .. }
-                | LinkAction::SetTalkPlayback { .. }
-                | LinkAction::AddIceCandidate { .. }
-                | LinkAction::SetMicEnabled { .. }
-                | LinkAction::ApplyQuiet
-                | LinkAction::SendProbeTone { .. } => {}
-                LinkAction::Emit { event } => self.record_event(a, event),
-            }
+            self.exec_one(a, act);
         }
+    }
+
+    /// Sorts one action into the part of the fake platform that performs it. Every variant is
+    /// named, so a new core action does not compile until it is placed.
+    fn exec_one(&mut self, a: usize, act: LinkAction) {
+        match act {
+            LinkAction::Emit { event } => self.record_event(a, event),
+            LinkAction::OpenMailbox { .. }
+            | LinkAction::CloseMailbox { .. }
+            | LinkAction::MailboxSend { .. } => self.exec_mailbox(a, act),
+            LinkAction::CreateAttempt { .. }
+            | LinkAction::CloseAttempt { .. }
+            | LinkAction::CreateOffer { .. }
+            | LinkAction::CreateAnswer { .. }
+            | LinkAction::SetRemoteDescription { .. }
+            | LinkAction::SendData { .. } => self.exec_attempt(a, act),
+            LinkAction::PlayTalkChime { .. } | LinkAction::SetTalkMic { .. } => {
+                self.exec_talk(a, act)
+            }
+            LinkAction::SetPlaybackDucked { .. }
+            | LinkAction::SetTalkPlayback { .. }
+            | LinkAction::AddIceCandidate { .. }
+            | LinkAction::SetMicEnabled { .. }
+            | LinkAction::ApplyQuiet
+            | LinkAction::SendProbeTone { .. } => {}
+        }
+    }
+
+    fn exec_mailbox(&mut self, a: usize, act: LinkAction) {
+        match act {
+            LinkAction::OpenMailbox { id, .. } => self.open_mailbox(a, id),
+            LinkAction::CloseMailbox { id } => self.close_mailbox(a, id),
+            LinkAction::MailboxSend { id, frame } => self.client_send_on(a, id, frame, None),
+            _ => {}
+        }
+    }
+
+    fn close_mailbox(&mut self, a: usize, id: MailboxId) {
+        let Some(s) = self.actors[a].socks.remove(&id) else {
+            return;
+        };
+        let epoch = self.socks[&s].1;
+        if self.reach(a, epoch) {
+            let t = self.fifo_time(1, s, 0, self.now + 20, false);
+            self.push(t, 2, RelayEv::ServerClose { sock: s });
+        }
+    }
+
+    fn exec_attempt(&mut self, a: usize, act: LinkAction) {
+        match act {
+            LinkAction::CreateAttempt {
+                attempt,
+                ice_servers,
+                ..
+            } => self.create_attempt(a, attempt, ice_servers),
+            LinkAction::CloseAttempt { attempt } => self.close_attempt(a, attempt),
+            LinkAction::CreateOffer { attempt } => self.schedule_local_desc(a, attempt, "offer"),
+            LinkAction::CreateAnswer { attempt } => self.schedule_local_desc(a, attempt, "answer"),
+            LinkAction::SetRemoteDescription { attempt, sdp, .. } => {
+                self.set_remote(a, attempt, &sdp);
+            }
+            LinkAction::SendData { attempt, text } => self.send_data(a, attempt, text),
+            _ => {}
+        }
+    }
+
+    fn create_attempt(&mut self, a: usize, attempt: u32, ice_servers: Vec<IceServer>) {
+        self.attempts.push((a, self.now));
+        self.attempt_ice.push((a, self.now, ice_servers));
+        if self.actors[a].pcs.values().any(|p| !p.closed) {
+            self.violations.push(format!(
+                "{}: create_attempt {attempt} while another attempt is live",
+                self.actors[a].name
+            ));
+        }
+        self.new_pc(a, attempt);
+    }
+
+    fn schedule_local_desc(&mut self, a: usize, attempt: u32, sdp_type: &'static str) {
+        let d = self.rng.range(5, 30);
+        let ev = PeerEv::LocalDesc {
+            actor: a,
+            handle: attempt,
+            sdp_type,
+        };
+        self.push(self.now + d, 2, ev);
+    }
+
+    /// The fake platform of talk-back: a healthy one. The chime takes 600 ms, the microphone
+    /// attaches 30 ms after it was asked to; what the baby's microphone hears (`levels`,
+    /// `talk_levels` verbs) is up to the scenario.
+    fn exec_talk(&mut self, a: usize, act: LinkAction) {
+        match act {
+            LinkAction::PlayTalkChime { attempt, .. } => {
+                self.push_input(a, 600, LinkInput::TalkChimeDone { attempt });
+            }
+            LinkAction::SetTalkMic { enabled: true, .. } => {
+                self.push_input(a, 30, LinkInput::TalkMicAttached);
+            }
+            _ => {}
+        }
+    }
+
+    /// Feeds `input` to actor `a` after `delay` ms.
+    fn push_input(&mut self, a: usize, delay: u64, input: LinkInput) {
+        self.push(self.now + delay, 2, ActorEv::Input { actor: a, input });
     }
 
     pub(super) fn record_event(&mut self, a: usize, event: LinkEvent) {
@@ -300,7 +337,7 @@ impl World {
                 self.push(
                     t,
                     2,
-                    Ev::SigToServer {
+                    RelayEv::SigToServer {
                         sock,
                         text,
                         spoof: None,
@@ -317,7 +354,7 @@ impl World {
                 self.push(
                     t,
                     2,
-                    Ev::SigToClient {
+                    RelayEv::SigToClient {
                         actor: a,
                         sock,
                         msg,
@@ -330,7 +367,7 @@ impl World {
             self.push(
                 self.now + d,
                 2,
-                Ev::Input {
+                ActorEv::Input {
                     actor: a,
                     input: LinkInput::NetworkAvailable,
                 },
@@ -357,7 +394,7 @@ impl World {
             self.push(
                 self.now + d,
                 2,
-                Ev::SigToClient {
+                RelayEv::SigToClient {
                     actor: a,
                     sock,
                     msg: ToClient::Closed,
@@ -368,7 +405,7 @@ impl World {
             self.push(
                 self.now + d,
                 2,
-                Ev::SigToClient {
+                RelayEv::SigToClient {
                     actor: a,
                     sock,
                     msg: ToClient::Closed,
@@ -376,7 +413,7 @@ impl World {
             );
         } else {
             let d = self.rng.range(5, 40);
-            self.push(self.now + d, 2, Ev::Accept { sock });
+            self.push(self.now + d, 2, RelayEv::Accept { sock });
         }
     }
 
@@ -400,7 +437,7 @@ impl World {
                 self.push(
                     t,
                     2,
-                    Ev::SigToServer {
+                    RelayEv::SigToServer {
                         sock,
                         text: text.clone(),
                         spoof: spoof.clone(),
@@ -452,11 +489,11 @@ impl World {
     }
 
     pub(crate) fn schedule_raw_tick(&mut self, actor: usize, delay: u64) {
-        self.push(self.now + delay, 3, Ev::RawTick { actor });
+        self.push(self.now + delay, 3, ActorEv::RawTick { actor });
     }
 
     pub(crate) fn schedule_raw_act(&mut self, actor: usize, delay: u64) {
-        self.push(self.now + delay, 3, Ev::RawAct { actor });
+        self.push(self.now + delay, 3, ActorEv::RawAct { actor });
     }
 
     pub(crate) fn fresh_fp(&mut self) -> String {

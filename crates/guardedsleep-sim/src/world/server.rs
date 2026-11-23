@@ -3,6 +3,51 @@
 use super::*;
 
 impl World {
+    pub(super) fn dispatch_relay(&mut self, ev: RelayEv) {
+        match ev {
+            RelayEv::Accept { sock } => {
+                self.select_sock(sock);
+                self.on_accept(sock);
+            }
+            RelayEv::SigToServer { sock, text, spoof } => {
+                self.select_sock(sock);
+                self.on_server_rx(sock, &text, spoof);
+            }
+            RelayEv::SigToClient { actor, sock, msg } => self.on_client_rx(actor, sock, msg),
+            RelayEv::Pong { sock } => {
+                self.select_sock(sock);
+                self.on_pong(sock);
+            }
+            RelayEv::Sweep { r#gen, srv } => {
+                self.select_server(srv);
+                self.on_sweep(r#gen);
+            }
+            RelayEv::ServerClose { sock } => {
+                self.select_sock(sock);
+                self.server_terminate(sock);
+            }
+            RelayEv::IceRenew { srv, key } => {
+                self.select_server(srv);
+                self.on_ice_renew(key);
+            }
+        }
+    }
+
+    /// A reachable client answered the liveness ping.
+    fn on_pong(&mut self, sock: usize) {
+        let responsive = self
+            .server
+            .conns
+            .get(&sock)
+            .is_some_and(|c| self.responsive(c));
+        if !responsive {
+            return;
+        }
+        if let Some(c) = self.server.conns.get_mut(&sock) {
+            c.alive = true;
+        }
+    }
+
     pub(super) fn signaling_down(&mut self) {
         self.server.up = false;
         self.server.sweep_gen += 1;
@@ -25,7 +70,7 @@ impl World {
             self.push(
                 t,
                 2,
-                Ev::SigToClient {
+                RelayEv::SigToClient {
                     actor: a,
                     sock,
                     msg: ToClient::Closed,
@@ -46,7 +91,7 @@ impl World {
             self.push(
                 self.now + d,
                 2,
-                Ev::SigToClient {
+                RelayEv::SigToClient {
                     actor: a,
                     sock,
                     msg: ToClient::Closed,
@@ -73,7 +118,7 @@ impl World {
         self.push(
             t,
             2,
-            Ev::SigToClient {
+            RelayEv::SigToClient {
                 actor: a,
                 sock,
                 msg: ToClient::Opened,
@@ -95,7 +140,7 @@ impl World {
             self.push(
                 t,
                 2,
-                Ev::SigToClient {
+                RelayEv::SigToClient {
                     actor: a,
                     sock,
                     msg,
@@ -157,7 +202,7 @@ impl World {
             self.push(
                 t,
                 2,
-                Ev::SigToClient {
+                RelayEv::SigToClient {
                     actor: a,
                     sock,
                     msg: ToClient::Closed,
@@ -180,7 +225,7 @@ impl World {
                 self.push(
                     self.now + lat,
                     2,
-                    Ev::SigToClient {
+                    RelayEv::SigToClient {
                         actor: a,
                         sock,
                         msg: ToClient::Closed,
@@ -335,7 +380,7 @@ impl World {
             self.push(
                 self.now + ttl_s * 500,
                 3,
-                Ev::IceRenew {
+                RelayEv::IceRenew {
                     srv: self.cur_server,
                     key: key.to_owned(),
                 },
@@ -352,7 +397,7 @@ impl World {
 
     pub(super) fn close_after_error(&mut self, sock: usize) {
         let t = self.fifo_time(0, sock, 0, self.now + 20, false);
-        self.push(t, 2, Ev::ServerClose { sock });
+        self.push(t, 2, RelayEv::ServerClose { sock });
     }
 
     pub(super) fn server_signal(&mut self, sock: usize, msg: &Value, spoof: Option<String>) {
@@ -460,13 +505,13 @@ impl World {
             self.server.conns.get_mut(&s).expect("exists").alive = false;
             if responsive {
                 let rtt = self.rng.range(10, 80);
-                self.push(self.now + rtt, 2, Ev::Pong { sock: s });
+                self.push(self.now + rtt, 2, RelayEv::Pong { sock: s });
             }
         }
         self.push(
             self.now + SWEEP_MS,
             3,
-            Ev::Sweep {
+            RelayEv::Sweep {
                 r#gen,
                 srv: self.cur_server,
             },

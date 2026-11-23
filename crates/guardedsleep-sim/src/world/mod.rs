@@ -110,13 +110,29 @@ pub enum ToClient {
     Closed,
 }
 
+/// One queued event. `Timeline` steps stay at the top; the rest is grouped by who handles it.
 #[derive(Debug, Clone)]
 enum Ev {
     Timeline(usize),
-    Tick {
-        actor: usize,
-        chain: u32,
-    },
+    Actor(ActorEv),
+    Relay(RelayEv),
+    Peer(PeerEv),
+}
+
+/// Events of one actor's process: its pacing, injected inputs and lifecycle.
+#[derive(Debug, Clone)]
+enum ActorEv {
+    Tick { actor: usize, chain: u32 },
+    Input { actor: usize, input: LinkInput },
+    PathBack { actor: usize },
+    Restart { actor: usize },
+    RawTick { actor: usize },
+    RawAct { actor: usize },
+}
+
+/// Events of the simulated signaling relay and the sockets towards it.
+#[derive(Debug, Clone)]
+enum RelayEv {
     Accept {
         sock: usize,
     },
@@ -137,6 +153,19 @@ enum Ev {
         r#gen: u32,
         srv: usize,
     },
+    ServerClose {
+        sock: usize,
+    },
+    /// Half-TTL renewal of the ICE servers of the room `key` on relay `srv`.
+    IceRenew {
+        srv: usize,
+        key: String,
+    },
+}
+
+/// Events of the simulated media layer.
+#[derive(Debug, Clone)]
+enum PeerEv {
     LocalDesc {
         actor: usize,
         handle: u32,
@@ -158,31 +187,25 @@ enum Ev {
         to: usize,
         handle: u32,
     },
-    Input {
-        actor: usize,
-        input: LinkInput,
-    },
-    ServerClose {
-        sock: usize,
-    },
-    PathBack {
-        actor: usize,
-    },
-    Restart {
-        actor: usize,
-    },
     Watch,
-    /// Half-TTL renewal of the ICE servers of the room `key` on relay `srv`.
-    IceRenew {
-        srv: usize,
-        key: String,
-    },
-    RawTick {
-        actor: usize,
-    },
-    RawAct {
-        actor: usize,
-    },
+}
+
+impl From<ActorEv> for Ev {
+    fn from(e: ActorEv) -> Self {
+        Ev::Actor(e)
+    }
+}
+
+impl From<RelayEv> for Ev {
+    fn from(e: RelayEv) -> Self {
+        Ev::Relay(e)
+    }
+}
+
+impl From<PeerEv> for Ev {
+    fn from(e: PeerEv) -> Self {
+        Ev::Peer(e)
+    }
 }
 
 pub struct Pc {
@@ -452,8 +475,8 @@ impl World {
         for (i, st) in sc.timeline.iter().enumerate() {
             w.push(st.at, 1, Ev::Timeline(i));
         }
-        w.push(1_000, 4, Ev::Watch);
-        w.push(SWEEP_MS, 3, Ev::Sweep { r#gen: 0, srv: 0 });
+        w.push(1_000, 4, PeerEv::Watch);
+        w.push(SWEEP_MS, 3, RelayEv::Sweep { r#gen: 0, srv: 0 });
         Ok(w)
     }
 
@@ -510,9 +533,9 @@ impl World {
             .unwrap_or_else(|| derive_room_id(&synthetic_psk("A")))
     }
 
-    fn push(&mut self, t: Time, prio: u8, ev: Ev) {
+    fn push(&mut self, t: Time, prio: u8, ev: impl Into<Ev>) {
         self.seq += 1;
-        self.q.insert((t.max(self.now), prio, self.seq), ev);
+        self.q.insert((t.max(self.now), prio, self.seq), ev.into());
     }
 
     fn fifo_time(&mut self, kind: u8, a: usize, b: u32, t: Time, bypass: bool) -> Time {
@@ -555,93 +578,13 @@ impl World {
     fn dispatch(&mut self, ev: Ev) {
         match ev {
             Ev::Timeline(i) => self.run_step(i),
-            Ev::Tick { actor, chain } => self.on_tick(actor, chain),
-            Ev::Accept { sock } => {
-                self.select_sock(sock);
-                self.on_accept(sock)
-            }
-            Ev::SigToServer { sock, text, spoof } => {
-                self.select_sock(sock);
-                self.on_server_rx(sock, &text, spoof)
-            }
-            Ev::SigToClient { actor, sock, msg } => self.on_client_rx(actor, sock, msg),
-            Ev::Pong { sock } => {
-                self.select_sock(sock);
-                if let Some(c) = self.server.conns.get(&sock)
-                    && self.responsive(c)
-                {
-                    self.server.conns.get_mut(&sock).expect("exists").alive = true;
-                }
-            }
-            Ev::Sweep { r#gen, srv } => {
-                self.select_server(srv);
-                self.on_sweep(r#gen)
-            }
-            Ev::IceRenew { srv, key } => {
-                self.select_server(srv);
-                self.on_ice_renew(key);
-            }
-            Ev::LocalDesc {
-                actor,
-                handle,
-                sdp_type,
-            } => self.on_local_desc(actor, handle, sdp_type),
-            Ev::PcConnect {
-                a,
-                ha,
-                b,
-                hb,
-                since,
-            } => self.on_pc_connect(a, ha, b, hb, since),
-            Ev::Data { to, handle, text } => {
-                // Messages already in flight arrive even if the sender closed meanwhile.
-                let rx_ok = self.actors[to].pcs.get(&handle).is_some_and(|p| {
-                    p.connected && !p.closed && !p.failed && self.reach(to, p.epoch)
-                });
-                if !rx_ok {
-                    return;
-                }
-                if self.actors[to].raw.is_some() {
-                    self.raw_on_data(to, handle, &text);
-                } else {
-                    let text = self.mitm_adjust(to, handle, text);
-                    self.actors[to].last_rx_data = self.now;
-                    self.deliver(
-                        to,
-                        LinkInput::AttemptDataMessage {
-                            attempt: handle,
-                            text,
-                        },
-                    );
-                }
-            }
-            Ev::DataClosed { to, handle } => {
-                let open = self.actors[to]
-                    .pcs
-                    .get(&handle)
-                    .is_some_and(|p| !p.closed && !p.failed);
-                if open && self.actors[to].raw.is_none() {
-                    self.deliver(to, LinkInput::AttemptDataClosed { attempt: handle });
-                }
-            }
-            Ev::Input { actor, input } => self.deliver(actor, input),
-            Ev::ServerClose { sock } => {
-                self.select_sock(sock);
-                self.server_terminate(sock)
-            }
-            Ev::PathBack { actor } => {
-                self.actors[actor].net_up = true;
-                self.flush_after_up(actor, true);
-            }
-            Ev::Restart { actor } => self.restart_actor(actor),
-            Ev::Watch => {
-                self.on_watch();
-                self.push(self.now + 1_000, 4, Ev::Watch);
-            }
-            Ev::RawTick { actor } => self.raw_tick(actor),
-            Ev::RawAct { actor } => self.raw_act(actor),
+            Ev::Actor(e) => self.dispatch_actor(e),
+            Ev::Relay(e) => self.dispatch_relay(e),
+            Ev::Peer(e) => self.dispatch_peer(e),
         }
     }
+
+    // ---- timeline verbs --------------------------------------------------------------------
 
     fn peer_ix(&mut self, st: &Step) -> Option<usize> {
         let name = st.peer.clone().unwrap_or_default();
