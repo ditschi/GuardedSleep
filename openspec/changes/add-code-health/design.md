@@ -28,8 +28,15 @@ Owner decision, relayed by the cross-repo coordination session; **pending confir
 
   The other thresholds are ai-health's defaults, which follow CodeScene. Trial on `origin/main`: Rust 6.52 with the default curve, 4.23 with "strict"; TypeScript in `apps/` 8.57; `packages/` 9.82; no parse errors on edition 2024.
 
-- **Gate:** `just ci` runs `aihealth delta --base origin/main` per component; locally (lefthook) `aihealth delta --staged`; `aihealth scan` as the report. CI caches the grammars (`~/.cache/tree-sitter-language-pack`, about 30 MB). Whether the component score of base and head is also compared (the 0.01 tolerance of §4) is still open.
+- **Gate:** `just ci` runs `aihealth delta` against the merge base with `origin/main` per component (see usage rules); locally (lefthook) `aihealth delta --staged`; `aihealth scan` as the report. CI caches the grammars (`~/.cache/tree-sitter-language-pack`, about 30 MB). Whether the component score of base and head is also compared (the 0.01 tolerance of §4) is still open.
 - **Command:** `just code-health` stays the entry point (scan report, `--changed`/`--staged` delta, `--json` → `--format json`).
+
+### Usage rules (lessons from the homelab adoption, relayed 2026-11-23)
+
+- **Commit pin, not tag pin:** with a tag, `uvx` resolves over the network on every call (1.6 s); with the commit everything comes from the cache (0.24 s, offline too). Our venv install with a hash lock avoids resolution entirely.
+- **Always pass `--config <path>`:** `aihealth scan <subdir>` otherwise reads `<subdir>/.aihealth.toml` and silently falls back to the defaults. The `just` recipe passes the component profile explicitly every time.
+- **Delta against the merge base in CI:** `aihealth delta --base "$(git merge-base origin/main HEAD)" --head HEAD`, with `fetch-depth: 0`. Against `origin/main` directly, a branch behind main would be charged with main's newer changes.
+- **Suppressions are file-wide only:** `// aihealth: disable=<smell> -- <reason>` (comment syntax per language). Without the `--` separator ai-health appends the text to the smell name and the suppression silently does not apply. A check in `just lint-code` and lefthook enforces a reason of at least 10 characters with the regex `aihealth:[ \t]*disable=(?![\w, \t]+-- .{10})`. This replaces the per-function `code-health:` comments of §5 for Rust and TypeScript.
 
 ### Installation and supply chain (own review, 2026-11-23)
 

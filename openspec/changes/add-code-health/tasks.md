@@ -13,7 +13,7 @@ Branch `feat/code-health`. Tasks follow design §0 (ai-health); the original pla
 
 ## 3. Gate
 
-- [ ] 3.1 `justfile`: `code-health` recipe (scan report per component; `--changed [base]` → `aihealth delta --base`; `--staged`; `--json` → `--format json`); `_lint-code` runs the delta against the base per component. `lefthook.yml`: pre-commit `aihealth delta --staged` per component. `.github/workflows/ci.yml`: cache `~/.cache/tree-sitter-language-pack` if grammars are downloaded. Acceptance: `just lint`, `just lint-workflows`; a scratch commit with a function nested four levels deep fails the hook and `just lint-code`.
+- [ ] 3.1 `justfile`: `code-health` recipe, always with `--config` (design §0, usage rules) (scan report per component; `--changed [base]` → `aihealth delta --base`; `--staged`; `--json` → `--format json`); `_lint-code` runs the delta against `git merge-base origin/main HEAD` per component, plus the suppression-reason regex check; CI checkout uses `fetch-depth: 0`. `lefthook.yml`: pre-commit `aihealth delta --staged` per component. `.github/workflows/ci.yml`: cache `~/.cache/tree-sitter-language-pack` if grammars are downloaded. Acceptance: `just lint`, `just lint-workflows`; a scratch commit with a function nested four levels deep fails the hook and `just lint-code`.
 - [ ] 3.2 Decide with the owner whether the component score of base and head is compared in addition (design §4). `docs/ci-gates.md`: name the check in the `lint` row with a runbook. Acceptance: `just lint-text`.
 
 ## 4. Docs and agents

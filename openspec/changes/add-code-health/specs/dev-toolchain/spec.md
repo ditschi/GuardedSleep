@@ -69,12 +69,12 @@ While a component scores below 9.5, `tools/code-health/baseline.json` SHALL reco
 
 ### Requirement: Code health suppressions
 
-A smell SHALL be suppressed only by an inline `code-health:` comment with a reason. A suppression without a reason, or a native suppression of a health rule without such a comment, SHALL count as a finding, and the report SHALL list every suppression.
+A smell SHALL be suppressed only by the analyzer's suppression comment carrying a reason of at least 10 characters; for ai-health that is `aihealth: disable=<smell> -- <reason>`. A suppression without a reason SHALL fail the lint check.
 
 #### Scenario: Suppression without reason
 
-- **WHEN** a function carries `@Suppress("LongMethod")` without a `code-health:` reason
-- **THEN** the suppression itself is reported as a finding
+- **WHEN** a Rust file carries `// aihealth: disable=large_file` without `--` and a reason
+- **THEN** `just lint-code` fails and names the file and line
 
 ## MODIFIED Requirements
 
