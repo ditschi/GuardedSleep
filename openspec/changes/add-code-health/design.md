@@ -17,12 +17,12 @@ just code-health [--json] [--changed [base] | --staged] [--check] [--update-base
     │   structure.mjs    web-tree-sitter (Rust, Kotlin, TypeScript grammars)
     │   jscpd.mjs        jscpd Node API, JSON report
     ├─ normalize.mjs     → one record per finding: {file, line, fn, smell, value, threshold, source}
-    ├─ score.mjs         findings + file metrics → file score, repo score (pure, unit-tested)
+    ├─ score.mjs         findings + file metrics → file, component and repo-total scores (pure, unit-tested)
     ├─ baseline.mjs      ratchet compare/update (pure, unit-tested)
     └─ report.mjs        table / JSON
 ```
 
-All analyzers write into one normalized finding format (`normalize.mjs`). The scorer never sees tool output, so a tool can be swapped without touching the score, and a later shared implementation (§7) only needs the normalized format.
+All analyzers write into one normalized finding format (`normalize.mjs`). The scorer never sees tool output, so a tool can be swapped without touching the score, and a component can change its tool without touching the others.
 
 Analyzers run in parallel; clippy runs through `scripts/lib/slot.sh medium` (AGENTS.md §10.1). A missing prerequisite (no host Rust, no Java) prints `SKIPPED: code-health <lang> needs <x>` and, under `GS_STRICT=1`, fails.
 
@@ -38,7 +38,7 @@ The checker is not one tool for the whole repo but three **components**, each wi
 
 - `just code-health --component <name>` runs one pipeline; a missing prerequisite skips only that component.
 - The gate applies per component: a component score must not sink, and each component reaches 9.5 on its own (the Rust core can be done first without waiting for Android).
-- The repo score is the LOC-weighted mean over all components, so it equals the combination of the component scores; it is reported, not computed by a separate tool.
+- The repo total is the LOC-weighted mean over all files, reported for information only (§7).
 - A component without findings tools for a smell (for example Svelte templates) says so in the report instead of silently scoring 10.
 - New components (a future iOS or desktop part) are a new pipeline plus a config entry.
 
@@ -108,7 +108,7 @@ The weights are calibrated once against the prototype hotspots (design §8) duri
 
 1. A changed file **not** in the baseline must score ≥ 9.5.
 2. A changed file **in** the baseline must not score lower than its baseline entry. If it improved, the check fails with "run `just code-health --update-baseline`" until the entry is tightened (the ratchet only moves up); at ≥ 9.5 the entry is removed.
-3. No component score and not the repo score may sink below its baseline value − 0.01. The tolerance absorbs LOC-weight shifts (for example deleting a healthy file). The repo score is computed from the fresh scores of the changed files and the cached scores of all others (`baseline.json` keeps every file's score and LOC), so the check needs no full run.
+3. No component score may sink below its baseline value − 0.01 (the repo total is informational, §7). The tolerance absorbs LOC-weight shifts (for example deleting a healthy file). Component scores are computed from the fresh scores of the changed files and the cached scores of all others (`baseline.json` keeps every file's score and LOC), so the check needs no full run.
 4. A deleted file leaves the baseline.
 
 `baseline.json` holds one line per file (`{"path": …, "score": …, "nloc": …}`), sorted, so parallel pull requests conflict only when they touch the same file. `repo_score` is tightened by `--update-baseline` in any pull request and at least by the weekly sweep, not required in every pull request (fewer conflicts on one line).
@@ -132,21 +132,24 @@ The structure pass parses these comments; a suppression without a reason is itse
 - **AGENTS.md** new §5.5 "Code health": run `just code-health --changed` before every commit; fix smells instead of suppressing them; `--json` gives the findings with line numbers; read `docs/contributing/code-health.md` for the fix per smell.
 - **Skill `code-health-fix`** (`.claude/skills/code-health-fix/SKILL.md`, own, short): loop "run `--json` → pick the worst finding → apply the playbook move for that smell (extract function, guard clause, table/match instead of if-chains, parameter object, split file) → run the affected tests → re-score → commit". Playbooks partly adapted from the reviewed skills.sh skills (§9).
 - **Refactor sweep** (proposal for `.claude/skills/refactor-sweep/SKILL.md` and the scheduled task):
-  1. Prepare: run `just code-health --json` in the scout worktree; save repo score, per-language scores and the top 10 hotspots (ranked by `(10 − score) × (commits in 90 days + 1)`).
+  1. Prepare: run `just code-health --json` in the scout worktree; save component scores, the repo total and the top 10 hotspots (ranked by `(10 − score) × (commits in 90 days + 1)`).
   2. Scout: receives the hotspot list as priority input. At least 2 of the up to 5 findings target hotspot files; each finding names the expected score change (`Health: <file> 6.4 → ≥ 8.0`).
   3. Implement/verify: acceptance always includes `just code-health --changed origin/main --check` and the named file score target; a finding that lowers any file score is discarded.
   4. PR body: score before/after for the touched files and the repo.
-  5. Report: repo score trend since the last sweep. If the repo score rose, one additional draft PR `chore(code-health): tighten baseline` with `--update-baseline` (counts toward the 3-PR cap).
+  5. Report: component score trend since the last sweep. If a component score rose, one additional draft PR `chore(code-health): tighten baseline` with `--update-baseline` (counts toward the 3-PR cap).
   6. Scheduled task prompt: replace the stale `pnpm run lint` / `pnpm test` with `just lint` / `just test`, and re-enable it (it is disabled since 2026-11-09) only after the owner agrees.
 - **refactor-scout**: new category `health`, and in diff mode a line with the score delta of the changed files.
 
-## 7. Shared implementation across repositories (option, not built)
+## 7. Per-component tools, thresholds and aggregation
 
-The same standard is wanted in dotfiles, homelab, GuardedSleep, narratty, repo-env and looping_louie.
+Owner decision (2026-11-23): only the goals are shared across the owner's repositories (score 1–10 per file, ≥ 9.5, aim 10, CodeScene criteria as orientation, one agent-facing command with JSON and a changed-files mode, a hook and CI gate with a ratchet). Tools, smells, thresholds, weights, formula, command name and output format are chosen per repository. There is no shared implementation.
 
-- [ ] **A. Per repo (this change).** Pros: no cross-repo coupling; fits each repo's toolchain (Node here). Cons: six copies of the scorer drift apart.
-- [ ] **B. Shared scorer in `github.com/ditschi/pre-commit-hooks`** consuming the normalized finding format (§1); each repo keeps only its analyzer adapters and `config.toml`. Pros: one score definition, one test suite; the format is already tool-agnostic. Cons: a second release process; the hooks repo is probably Python, so the scorer would be ported or run through `npx`/`uvx`.
-- [x] **Recommendation:** A now, with the normalized format kept stable and documented, so B is a mechanical extraction once two repos use it. Decide B after the second repo.
+For GuardedSleep that means:
+
+- **Tools per component, from each ecosystem:** clippy for Rust (already in `just lint`), detekt for Kotlin (the standard Kotlin complexity analyzer), ESLint + sonarjs for TypeScript (the standard JS/TS analyzer). The structure pass and jscpd fill only the gaps (design §2).
+- **Thresholds per component:** `config.toml` has a `[defaults]` table and `[components.<name>]` overrides. Every override carries a reason. Initial overrides (assumptions): none for `rust`; for `android` a Large Method threshold of 80 lines for `@Composable` functions (declarative layout code is longer per unit of logic); for `web` none. The weights stay the same in all components, so the scores stay comparable.
+- **Aggregation:** the gate unit is the **component**. Each component has its own score and baseline and reaches ≥ 9.5 on its own. A repo total is reported as the LOC-weighted mean of the file scores, for information and for the sweep trend only. It is not a gate of its own, because a large healthy component would hide a small unhealthy one, and the gate already forbids any component from sinking.
+- **Command:** `just code-health`, because `just` is the single entry point here (AGENTS.md §4); the name is not shared with other repositories on purpose.
 
 ## 8. Prototype measurement (2026-11-23, `origin/main` 7e62a798)
 
@@ -202,3 +205,45 @@ Splitting `link.rs` or `LinkController.kt` into modules is a large restructuring
 - **ESLint as a general linter.** Cons: duplicates `svelte-check` and Prettier, and was rejected in ADR-020. Only the health rules are configured, in memory, from `config.toml`.
 - **Full repo run on every check.** Cons: about 1–2 min and every PR would rewrite `repo_score`; the cached per-file scores in the baseline give the same answer for the delta.
 - **Score written to every PR's baseline (`repo_score` always current).** Cons: one line conflicts in every parallel PR; tightened by `--update-baseline` and the weekly sweep instead.
+- **Shared scorer across the owner's repositories (for example in `ditschi/pre-commit-hooks`).** Pros: one score definition. Cons: forces the same tools onto ecosystems that have better native ones; a second release process. Dropped by the owner (2026-11-23): only goals are shared, tools are chosen per repository.
+- **One repo score as the gate.** Cons: a large healthy component hides a small unhealthy one. The gate is per component; the repo total is informational (§7).
+
+## 11. Steckbrief Code Health
+
+Fixed outline for the later comparison across the owner's six repositories. Filled with the plan now; sections 7–9 are completed when the work is done. It moves to `docs/contributing/code-health.md` with task 4.1.
+
+### 1. Messumfang
+
+Tracked `.rs`, `.kt`, `.ts` and the `<script>` part of `.svelte` files, test code included (with the test smells). Not counted: generated bindings, `*.d.ts`, `build/`, `target/`, `node_modules/`, generated i18n output, shell and `.mjs` tooling scripts (small, their own lint covers them), Svelte templates (no suitable analyzer). Split into three components with their own score and gate: `rust` (`crates/`, `fuzz/`), `android` (`apps/android/`), `web` (`apps/web`, `apps/e2e`, `packages/`). Target ≥ 9.5 per component; the repo total is informational (§7).
+
+### 2. Tools und Versionen, je Sprache
+
+Rust: clippy from the pinned toolchain (`rust-toolchain.toml`). Kotlin: detekt-cli 1.23.8. TypeScript/Svelte: ESLint 10.15, typescript-eslint 8.74, eslint-plugin-sonarjs 4.2.2, eslint-plugin-svelte 3.24. All: web-tree-sitter 0.27 with tree-sitter-rust 0.24, tree-sitter-kotlin 0.3.8, tree-sitter-typescript 0.23 (structure pass), jscpd 5.x. Exact pins are set in task 1.1. Prototype only: lizard 1.26.1.
+
+### 3. Abgebildete Smells
+
+See §2 (table with the mapping to the CodeScene criteria). Not mapped: LCOM4 in phase 1 (Kotlin needs type resolution; phase 2 approximate), Svelte template complexity, CodeScene's behavioural metrics (change coupling, knowledge distribution).
+
+### 4. Schwellen, Gewichte und Score-Formel
+
+§2 (thresholds), §3 (weights, caps, formula), §7 (per-component overrides).
+
+### 5. Bedienung
+
+`just code-health [--component c] [--json] [--changed [base] | --staged] [--check] [--update-baseline]`. Table by default, JSON for agents. Measured tool times on the full tree: detekt 5 s, ESLint 5 s, clippy 60 s cold; the delta mode is expected to take a few seconds without Rust.
+
+### 6. Gate
+
+§4 (hook, CI `lint` job, ratchet baseline per component), §5 (suppressions only as `code-health:` comment with a reason).
+
+### 7. Ergebnis
+
+Before (prototype, 2026-11-23): rust 5.30, android 7.55, web 8.89, repo total 6.97; worst files in §8. After: open.
+
+### 8. Skills
+
+Reviewed: see §9 and the owner shortlist. Adopted: open (owner decision pending).
+
+### 9. Erfahrungen
+
+So far: rust-code-analysis is unmaintained (2023) and clippy's `excessive_nesting` counts `mod`/`impl` blocks, so Rust nesting needs an own pass; lizard counts Compose lambdas as nesting, so Kotlin needs detekt; ESLint and detekt each scan the whole component in about 5 s. Transferable: component split, ratchet with one line per file, suppression only with a reason. Project-specific: three ecosystems in one repo, safety-core traces as the refactoring safety net.

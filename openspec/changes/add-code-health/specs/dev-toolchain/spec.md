@@ -4,7 +4,7 @@
 
 ### Requirement: Code health score
 
-`just code-health` SHALL score every tracked Rust, Kotlin, TypeScript and Svelte source file from 10.0 down to 1.0 by one scoring rule configured in one versioned, commented file. Each file SHALL belong to one component (`rust`, `android`, `web`) with its own analyzer pipeline and score: clippy, detekt, or ESLint with eslint-plugin-sonarjs, each plus a shared structure pass and jscpd. The repo score SHALL be the mean of all file scores weighted by code lines.
+`just code-health` SHALL score every tracked Rust, Kotlin, TypeScript and Svelte source file from 10.0 down to 1.0 by one scoring rule configured in one versioned, commented file. Each file SHALL belong to one component (`rust`, `android`, `web`) with its own analyzer pipeline and score: clippy, detekt, or ESLint with eslint-plugin-sonarjs, each plus a shared structure pass and jscpd. Each component SHALL reach 9.5 on its own; a repo total, if reported, SHALL be the mean of all file scores weighted by code lines and SHALL NOT be a gate.
 
 #### Scenario: Complex function
 
@@ -28,11 +28,11 @@ The report SHALL list each file with score and smells (smell, line, value, thres
 #### Scenario: Agent reads findings
 
 - **WHEN** an agent runs `just code-health --changed --json`
-- **THEN** it gets each changed file with score and findings as JSON, plus the component and repo scores
+- **THEN** it gets each changed file with score and findings as JSON, plus the component scores and the repo total
 
 ### Requirement: Code health gate
 
-`just code-health --check` SHALL fail when a new or changed file not in the ratchet baseline scores below 9.5, when a baseline file scores lower than its entry, or when a component or the repo score drops more than 0.01 below its baseline value. It SHALL run in the CI `lint` job.
+`just code-health --check` SHALL fail when a new or changed file not in the ratchet baseline scores below 9.5, when a baseline file scores lower than its entry, or when a component score drops more than 0.01 below its baseline value. It SHALL run in the CI `lint` job.
 
 #### Scenario: New unhealthy file
 
@@ -46,7 +46,7 @@ The report SHALL list each file with score and smells (smell, line, value, thres
 
 ### Requirement: Code health ratchet baseline
 
-While a component scores below 9.5, `tools/code-health/baseline.json` SHALL record its file, component and repo scores. Entries SHALL only move up; CI SHALL fail when a pull request lowers an entry.
+While a component scores below 9.5, `tools/code-health/baseline.json` SHALL record its file and component scores. Entries SHALL only move up; CI SHALL fail when a pull request lowers an entry.
 
 #### Scenario: Hotspot improves
 
