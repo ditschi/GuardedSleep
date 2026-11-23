@@ -1,0 +1,3 @@
+# ai-health pinned to the v0.4.0 commit (a tag can move; a commit pin also keeps uv offline).
+# https://github.com/epatel/ai-health
+git+https://github.com/epatel/ai-health@033d1867fe514867d944d9387ee72db0188eed47
