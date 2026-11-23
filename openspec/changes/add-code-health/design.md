@@ -10,7 +10,7 @@ Owner decision, relayed by the cross-repo coordination session; **pending confir
 
 - **Tool:** ai-health (https://github.com/epatel/ai-health, MIT), v0.4.0 = commit `033d1867fe514867d944d9387ee72db0188eed47`. Deterministic, no AI in the core. It covers the structure smells for Rust (`crates/`) and TypeScript (`apps/web`, `apps/e2e`, `packages/`), including duplication across files, and **replaces** the planned tree-sitter structure pass and jscpd.
 - **One source per smell:** clippy and ESLint stay linters; their structure rules do not gate in addition.
-- **Open:** Kotlin (recommendation: detekt as in §2) and Svelte (recommendation: ESLint + eslint-plugin-svelte + sonarjs as a report without a score). ai-health supports neither.
+- **Kotlin** is open, **Svelte** gets an ESLint report without a score (owner decisions, below). ai-health supports neither.
 - **Goal:** score 10 (no finding); 9.5 is only the floor on the way.
 - **Profile "strict"**, one config per component, passed with `--config`, values kept in one place so the owner's final confirmation only edits that file:
 
@@ -28,8 +28,15 @@ Owner decision, relayed by the cross-repo coordination session; **pending confir
 
   The other thresholds are ai-health's defaults, which follow CodeScene. Trial on `origin/main`: Rust 6.52 with the default curve, 4.23 with "strict"; TypeScript in `apps/` 8.57; `packages/` 9.82; no parse errors on edition 2024.
 
-- **Gate:** `just ci` runs `aihealth delta` against the merge base with `origin/main` per component (see usage rules); locally (lefthook) `aihealth delta --staged`; `aihealth scan` as the report. CI caches the grammars (`~/.cache/tree-sitter-language-pack`, about 30 MB). Whether the component score of base and head is also compared (the 0.01 tolerance of §4) is still open.
+- **Gate:** `just ci` runs `aihealth delta` against the merge base with `origin/main` per component (see usage rules); locally (lefthook) `aihealth delta --staged`; `aihealth scan` as the report. CI caches the grammars (`~/.cache/tree-sitter-language-pack`, about 30 MB). The component score of merge base and head is compared in addition (owner decision, below).
 - **Command:** `just code-health` stays the entry point (scan report, `--changed`/`--staged` delta, `--json` → `--format json`).
+
+### Owner decisions on open points (relayed 2026-11-23)
+
+- **Gate:** `aihealth delta` with tolerance 0, plus a CI comparison of each component score between merge base and head (no drop of more than 0.01).
+- **Profile "strict"** confirmed as above.
+- **Svelte:** ESLint with eslint-plugin-svelte and sonarjs as a report, without a score.
+- **Kotlin: still open.** Options under comparison: (1) detekt, (2) a Kotlin adapter for ai-health, (3) hybrid: detekt now with its built-in `baseline.xml` and no own score aggregator, a Kotlin adapter requested upstream, switch later. Nothing new is built for Kotlin until the decision, in particular no own score aggregator for detekt.
 
 ### Usage rules (lessons from the homelab adoption, relayed 2026-11-23)
 

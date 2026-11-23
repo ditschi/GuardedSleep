@@ -5,7 +5,7 @@ Branch `feat/code-health`. Tasks follow design §0 (ai-health); the original pla
 ## 1. Tools and pins
 
 - [ ] 1.1 **ai-health pin.** Needs the owner's confirmation in this session first (design §0). `tools/code-health/aihealth.lock.txt` from `uv pip compile --generate-hashes` of `git+https://github.com/epatel/ai-health@033d1867fe514867d944d9387ee72db0188eed47`; `just setup` installs it into `target/code-health/venv` with `uv pip sync --require-hashes`. Check whether grammars are downloaded at run time and from where; the gate must work offline after setup. Acceptance: `just setup` on a clean clone; `target/code-health/venv/bin/aihealth --version` prints 0.4.0.
-- [ ] 1.2 **Kotlin and Svelte** after the owner's decision: detekt-cli 1.23.8 via the mise `http:` backend (like ktfmt); ESLint + eslint-plugin-svelte + sonarjs as root devDependencies for a Svelte report without score.
+- [ ] 1.2 **Svelte:** ESLint + eslint-plugin-svelte + sonarjs as root devDependencies, a report without score (owner decision). **Kotlin:** blocked until the owner chooses detekt, an ai-health adapter or the hybrid (design §0); no own score aggregator.
 
 ## 2. Profiles
 
@@ -14,7 +14,7 @@ Branch `feat/code-health`. Tasks follow design §0 (ai-health); the original pla
 ## 3. Gate
 
 - [ ] 3.1 `justfile`: `code-health` recipe, always with `--config` (design §0, usage rules) (scan report per component; `--changed [base]` → `aihealth delta --base`; `--staged`; `--json` → `--format json`); `_lint-code` runs the delta against `git merge-base origin/main HEAD` per component, plus the suppression-reason regex check; CI checkout uses `fetch-depth: 0`. `lefthook.yml`: pre-commit `aihealth delta --staged` per component. `.github/workflows/ci.yml`: cache `~/.cache/tree-sitter-language-pack` if grammars are downloaded. Acceptance: `just lint`, `just lint-workflows`; a scratch commit with a function nested four levels deep fails the hook and `just lint-code`.
-- [ ] 3.2 Decide with the owner whether the component score of base and head is compared in addition (design §4). `docs/ci-gates.md`: name the check in the `lint` row with a runbook. Acceptance: `just lint-text`.
+- [ ] 3.2 CI compares each component score between merge base and head (no drop > 0.01; owner decision, design §0). `docs/ci-gates.md`: name the check in the `lint` row with a runbook. Acceptance: `just lint-text`.
 
 ## 4. Docs and agents
 
