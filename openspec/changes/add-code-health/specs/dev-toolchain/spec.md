@@ -4,7 +4,7 @@
 
 ### Requirement: Code health score
 
-`just code-health` SHALL score every tracked Rust, Kotlin, TypeScript and Svelte source file from 10.0 down to 1.0 by one scoring rule configured in one versioned, commented file. Each file SHALL belong to one component (`rust`, `android`, `web`) with its own analyzer pipeline and score: clippy, detekt, or ESLint with eslint-plugin-sonarjs, each plus a shared structure pass and jscpd. Each component SHALL reach 9.5 on its own; a repo total, if reported, SHALL be the mean of all file scores weighted by code lines and SHALL NOT be a gate.
+`just code-health` SHALL score every tracked Rust, Kotlin, TypeScript and Svelte source file from 10.0 down to 1.0 by one scoring rule configured in one versioned, commented file. Each file SHALL belong to one component (`rust`, `android`, `web`) with its own analyzer pipeline and score: clippy, detekt, or ESLint with eslint-plugin-sonarjs, each plus a shared structure pass and jscpd.
 
 #### Scenario: Complex function
 
@@ -20,6 +20,15 @@
 
 - **WHEN** Java is not installed and `just code-health` runs locally
 - **THEN** it prints `SKIPPED: code-health android needs java`, scores the other components, and under `GS_STRICT=1` it fails
+
+### Requirement: Code health per component
+
+Each component SHALL reach a score of 9.5 on its own. A repo total, if reported, SHALL be the mean of all file scores weighted by code lines and SHALL NOT be a gate.
+
+#### Scenario: Healthy component hides nothing
+
+- **WHEN** the `web` component scores 9.8 and the `rust` component 9.1
+- **THEN** the report shows both, and `rust` stays below target regardless of the repo total
 
 ### Requirement: Code health report
 
