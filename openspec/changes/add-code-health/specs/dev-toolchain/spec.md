@@ -4,7 +4,7 @@
 
 ### Requirement: Code health score
 
-`just code-health` SHALL score every tracked Rust, Kotlin, TypeScript and Svelte source file from 10.0 down to 1.0 by one scoring rule configured in one versioned, commented file. Each file SHALL belong to one component (`rust`, `android`, `web`) with its own analyzer pipeline and score: clippy, detekt, or ESLint with eslint-plugin-sonarjs, each plus a shared structure pass and jscpd.
+`just code-health` SHALL score every tracked Rust, Kotlin, TypeScript and Svelte source file from 10.0 down to 1.0 by one scoring rule configured in one versioned, commented file. Each file SHALL belong to one component (`rust`, `android`, `web`) with its own analyzer and score: ai-health with a pinned version and a per-component profile for Rust and TypeScript, and a separately decided analyzer for Kotlin; each smell SHALL have exactly one source.
 
 #### Scenario: Complex function
 

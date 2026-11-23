@@ -12,7 +12,7 @@ This changes a prior decision: ADR-020 says "No ESLint and no Biome at T0". This
 
 ## What Changes
 
-1. **Checker `just code-health`** (Node script under `scripts/code-health/`): runs one analyzer per language, merges the raw metrics into one normalized record per function and file, and scores each file from 10.0 down to 1.0. The repo is split into three **components** (`rust`, `android`, `web`), each with its own pipeline, score and baseline (`--component <name>`); each component reaches ≥ 9.5 on its own; a repo total (LOC-weighted mean) is reported for information only, and the worst file is reported.
+1. **Checker `just code-health`** on **ai-health** v0.4.0 for Rust and TypeScript (owner decision 2026-11-23, design §0; it replaces the originally planned own structure pass and jscpd), with detekt for Kotlin and an ESLint report for Svelte still open. Profile "strict", goal score 10, floor 9.5. The repo is split into three **components** (`rust`, `android`, `web`), each with its own pipeline, score and baseline (`--component <name>`); each component reaches ≥ 9.5 on its own; a repo total (LOC-weighted mean) is reported for information only, and the worst file is reported.
    - Rust: **clippy** (`cognitive_complexity`, `too_many_lines`, `too_many_arguments`, `fn_params_excessive_bools`) in its own target dir and clippy config.
    - Kotlin: **detekt** CLI (complexity rule set) pinned through mise like ktfmt.
    - TypeScript and Svelte scripts: **ESLint** core rules (`complexity`, `max-depth`, `max-lines-per-function`, `max-params`, `max-lines`) plus **eslint-plugin-sonarjs** (`cognitive-complexity`, `expression-complexity`, `no-identical-functions`).

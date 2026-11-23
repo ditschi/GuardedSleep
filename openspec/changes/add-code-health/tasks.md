@@ -1,26 +1,24 @@
 # Tasks
 
-Branch `feat/code-health`. Each implementation task is a brief for the `implementer` sub-agent. Layer rule: build tooling only (`scripts/`, `tools/`, `justfile`, hooks, CI, docs, `.claude/`); refactoring tasks (group 6) change product code without changing behaviour. Every version-specific setting carries a comment with a doc link (AGENTS.md §5.2); dependencies are added through pnpm and mise, never with invented versions.
+Branch `feat/code-health`. Tasks follow design §0 (ai-health); the original plan in §1–§3 is superseded for Rust and TypeScript. Each implementation task is a brief for the `implementer` sub-agent. Layer rule: build tooling only (`scripts/`, `tools/`, `justfile`, hooks, CI, docs, `.claude/`); refactoring tasks (group 6) change product code without changing behaviour. Every version-specific setting carries a comment with a doc link (AGENTS.md §5.2); dependencies are added through pnpm and mise, never with invented versions.
 
 ## 1. Tools and pins
 
-- [ ] 1.1 **Pins.** Goal: root devDependencies `eslint`, `typescript-eslint`, `eslint-plugin-sonarjs`, `eslint-plugin-svelte`, `jscpd`, `web-tree-sitter`, `tree-sitter-rust`, `tree-sitter-kotlin`, `tree-sitter-typescript`, `smol-toml` via `pnpm add -Dw` (latest stable, release age 3 days); `detekt-cli` 1.23.8 `-all` jar via the mise `http:` backend like ktfmt, plus `mise lock`. Renovate group "code-health tools". Files: `package.json`, `pnpm-lock.yaml`, `mise.toml`, `mise.lock`, `renovate.json`. Acceptance: `just setup` on a clean clone; `pnpm audit` clean; no install script needs `allowBuilds`.
+- [ ] 1.1 **ai-health pin.** Needs the owner's confirmation in this session first (design §0). `tools/code-health/aihealth.lock.txt` from `uv pip compile --generate-hashes` of `git+https://github.com/epatel/ai-health@033d1867fe514867d944d9387ee72db0188eed47`; `just setup` installs it into `target/code-health/venv` with `uv pip sync --require-hashes`. Check whether grammars are downloaded at run time and from where; the gate must work offline after setup. Acceptance: `just setup` on a clean clone; `target/code-health/venv/bin/aihealth --version` prints 0.4.0.
+- [ ] 1.2 **Kotlin and Svelte** after the owner's decision: detekt-cli 1.23.8 via the mise `http:` backend (like ktfmt); ESLint + eslint-plugin-svelte + sonarjs as root devDependencies for a Svelte report without score.
 
-## 2. Checker
+## 2. Profiles
 
-- [ ] 2.1 **Config.** `tools/code-health/config.toml` with includes/excludes (generated bindings, `*.d.ts`, `build/`, `fuzz/`), thresholds, weights and caps from design §2–§3, every value commented, own choices marked `assumption`. Acceptance: taplo fmt/lint.
-- [ ] 2.2 **Analyzers + normalize.** The structure pass waits for the ai-health trial (design §2, on hold); build clippy, detekt, ESLint first. `scripts/code-health/analyzers/{clippy,detekt,eslint,structure,jscpd}.mjs` and `normalize.mjs` (design §1–§2); tool configs generated from `config.toml` into `target/code-health/`. Tests (Vitest) with small fixture files per language and smell, including the detekt `ComplexCondition` threshold mapping and the clippy JSON parsing. Acceptance: `pnpm vitest run scripts/code-health`.
-- [ ] 2.3 **Score, baseline, report, CLI.** `score.mjs`, `baseline.mjs`, `report.mjs`, `cli.mjs` (design §3–§5); `--json`, `--changed [base]`, `--staged`, `--check`, `--update-baseline`. Pure functions unit-tested (cap, minimum 1.0, LOC weighting, ratchet rules 1–4, suppression parsing). Acceptance: tests green; `just code-health` prints the table in under 2 min cold.
-- [ ] 2.4 **Calibrate.** Run on `origin/main`, compare with design §8, adjust weights once, freeze; write `tools/code-health/baseline.json`. Record the measured repo score in the PR.
+- [ ] 2.1 `tools/code-health/{rust,web}.toml` with the "strict" profile (design §0), each value commented, paths per component; Kotlin profile after 1.2. Acceptance: `aihealth scan crates --config tools/code-health/rust.toml` reproduces the trial (about 4.23).
 
 ## 3. Gate
 
-- [ ] 3.1 `justfile`: `code-health` recipe (medium slot), `_lint-code` runs `code-health --check` against the base plus the "no baseline entry lowered" check. `lefthook.yml`: pre-commit job `code-health` on staged sources (design §4, question 3). `.github/workflows/ci.yml`: the `lint` job has what it needs (Java from mise). Acceptance: `just lint`, `just lint-workflows`; a scratch commit with a deeply nested function fails the hook and `just lint-code`.
-- [ ] 3.2 `docs/ci-gates.md`: name the check in the `lint` row with a runbook. Acceptance: `just lint-text`.
+- [ ] 3.1 `justfile`: `code-health` recipe (scan report per component; `--changed [base]` → `aihealth delta --base`; `--staged`; `--json` → `--format json`); `_lint-code` runs the delta against the base per component. `lefthook.yml`: pre-commit `aihealth delta --staged` per component. `.github/workflows/ci.yml`: cache `~/.cache/tree-sitter-language-pack` if grammars are downloaded. Acceptance: `just lint`, `just lint-workflows`; a scratch commit with a function nested four levels deep fails the hook and `just lint-code`.
+- [ ] 3.2 Decide with the owner whether the component score of base and head is compared in addition (design §4). `docs/ci-gates.md`: name the check in the `lint` row with a runbook. Acceptance: `just lint-text`.
 
 ## 4. Docs and agents
 
-- [ ] 4.1 `docs/contributing/code-health.md` (score, smells, thresholds, how to fix each smell, suppressions, baseline); AGENTS.md: §4 command row, §5.2 ESLint note (metric source only), new §5.5 "Code health" (run `just code-health --changed` before every commit; fix, do not suppress). Acceptance: `just lint-text`.
+- [ ] 4.1 `docs/contributing/code-health.md` (score, smells, thresholds, how to fix each smell, suppressions, baseline, the Steckbrief from design §11); AGENTS.md: §4 command row, new §5.5 "Code health" (run `just code-health --changed` before every commit; fix, do not suppress). Acceptance: `just lint-text`.
 - [ ] 4.2 `.claude/skills/code-health-fix/SKILL.md` (design §6). Acceptance: an agent run on one hotspot follows it end to end.
 - [ ] 4.3 Refactor sweep: update `.claude/skills/refactor-sweep/SKILL.md` and `.claude/agents/refactor-scout.md` per design §6; propose the scheduled-task prompt change to the owner (not applied without approval).
 - [ ] 4.4 Install the skills.sh skills the owner approved, project-locally, and reference them from `code-health-fix`.
@@ -29,7 +27,7 @@ Branch `feat/code-health`. Each implementation task is a brief for the `implemen
 
 - [ ] 5.1 `just lint` and `just test` green; report any SKIPPED task; `openspec validate --all --strict`.
 
-## 6. Refactoring toward ≥ 9.5 (one commit per step, separate PRs per area)
+## 6. Refactoring toward 10 (floor 9.5) (one commit per step, separate PRs per area)
 
 - [ ] 6.1 Rust core hotspots (`link.rs`, `protocol.rs`, `envelope.rs`, `conformance.rs`, `session.rs`, `tests/common/mod.rs`): vectors and traces unchanged; `scripts/cargo.sh test`, `just test-affected`, `just code-health --changed --check` per step. Splitting `link.rs` into modules only after owner approval.
 - [ ] 6.2 Simulation (`guardedsleep-sim/src/world.rs`), relay, server, i18n-gen, public-lists.

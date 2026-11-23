@@ -4,6 +4,41 @@ Layer: build tooling only (`scripts/`, `tools/`, `justfile`, hooks, CI). No prod
 
 Sources: CodeScene "Code Health" guide (https://codescene.io/docs/guides/technical/code-health.html), A. Tornhill, "AI-Ready Code" (2026). CodeScene does not publish its weights; every weight below is our own and marked **assumption**. Thresholds marked (CodeScene) are the CodeScene defaults as relayed by the owner on 2026-11-23: arguments 4, cyclomatic complexity 9, function 70 lines, nesting 4, Bumpy Road 2 bumps from depth 2, Complex Conditional from 2 branches, file 1000 lines (Kotlin 600), Primitive Obsession 30 %, duplication from 10 lines at 75 % similarity, assertion blocks 4/4 (4 consecutive assertions make a large block; 4 large blocks per test file trigger the smell). A CodeScene value N means a finding when the measure exceeds N for counts of arguments, complexity and lines, and from N on for the others. Other thresholds are assumptions.
 
+## 0. Decision: ai-health for Rust and TypeScript (2026-11-23)
+
+Owner decision, relayed by the cross-repo coordination session; **pending confirmation in this session before anything is installed** (the first install was stopped for that reason). It supersedes §1–§3 and §8 for the `rust` and `web` components; those sections stay as the record of the original plan.
+
+- **Tool:** ai-health (https://github.com/epatel/ai-health, MIT), v0.4.0 = commit `033d1867fe514867d944d9387ee72db0188eed47`. Deterministic, no AI in the core. It covers the structure smells for Rust (`crates/`) and TypeScript (`apps/web`, `apps/e2e`, `packages/`), including duplication across files, and **replaces** the planned tree-sitter structure pass and jscpd.
+- **One source per smell:** clippy and ESLint stay linters; their structure rules do not gate in addition.
+- **Open:** Kotlin (recommendation: detekt as in §2) and Svelte (recommendation: ESLint + eslint-plugin-svelte + sonarjs as a report without a score). ai-health supports neither.
+- **Goal:** score 10 (no finding); 9.5 is only the floor on the way.
+- **Profile "strict"**, one config per component, passed with `--config`, values kept in one place so the owner's final confirmation only edits that file:
+
+  ```toml
+  [thresholds]
+  large_file = 1000          # Rust/TS; Kotlin would be 600
+  primitive_obsession = 0.3
+  [score]
+  decay = 8                  # stricter than the default 15
+  symbol_cap = 4
+  density_loc = 100000       # large files get no relief through finding density
+  [delta]
+  tolerance = 0.0
+  ```
+
+  The other thresholds are ai-health's defaults, which follow CodeScene. Trial on `origin/main`: Rust 6.52 with the default curve, 4.23 with "strict"; TypeScript in `apps/` 8.57; `packages/` 9.82; no parse errors on edition 2024.
+
+- **Gate:** `just ci` runs `aihealth delta --base origin/main` per component; locally (lefthook) `aihealth delta --staged`; `aihealth scan` as the report. CI caches the grammars (`~/.cache/tree-sitter-language-pack`, about 30 MB). Whether the component score of base and head is also compared (the 0.01 tolerance of §4) is still open.
+- **Command:** `just code-health` stays the entry point (scan report, `--changed`/`--staged` delta, `--json` → `--format json`).
+
+### Installation and supply chain (own review, 2026-11-23)
+
+- Licence MIT; no telemetry and no network calls in ai-health's own code (`subprocess` only for git).
+- Young project: created 2026-11-07, one maintainer, 0 stars, v0.4.0 tagged on 2026-11-23. Not on PyPI, so it is installed from git; a tag can move, so the pin is the **commit SHA**.
+- Runtime dependencies include `fastapi`, `uvicorn`, `mcp` (for its web UI and MCP server) that the CLI does not need: 36 packages resolved, among them `cryptography`, `pyjwt` and `opentelemetry-api` (API only, no exporter).
+- Plan: a hash-locked requirements file `tools/code-health/aihealth.lock.txt` (`uv pip compile --generate-hashes` from the commit pin), installed by `just setup` into `target/code-health/venv` with `uv pip sync --require-hashes` (uv is already pinned in mise); Renovate cannot bump a git pin, so updates are a manual step with a CHANGELOG check, because scores change between releases.
+- Still to check before adoption: whether `tree-sitter-language-pack` downloads grammars at run time (the CI cache suggests it does), from where, and whether the downloads are verified; the gate must not depend on the network after setup.
+
 ## 1. Architecture
 
 ```
@@ -200,6 +235,8 @@ Splitting `link.rs` or `LinkController.kt` into modules is a large restructuring
 
 ## Discarded alternatives
 
+- **Own tree-sitter structure pass and jscpd for Rust and TypeScript (§1–§3).** Pros: full control, no young third-party dependency. Cons: own code to maintain; ai-health already implements the CodeScene smells deterministically. Replaced by ai-health (§0); the structure pass may still be needed for Kotlin smells detekt lacks (Bumpy Road, assertion blocks).
+
 - **CodeScene score with a paid token, or the `codehealth-mcp` skills.** Pros: the original metric, calibrated on real defect data. Cons: proprietary, paid, network service. Rejected by the owner (2026-11-23).
 - **lizard alone for all languages.** Pros: one tool (MIT), fast, used for the prototype. Cons: no Bumpy Road, no cognitive complexity, counts Compose lambdas as nesting; the owner wants the language-native analyzers. Kept as prototype only.
 - **rust-code-analysis-cli for Rust.** Pros: Mozilla, reports cyclomatic and cognitive complexity per function. Cons: last release 0.0.25 on 2023-01-13, with a 2023 tree-sitter-rust grammar that predates edition 2024 syntax used here; unmaintained. Rejected in favour of clippy plus the structure pass.
@@ -222,7 +259,7 @@ Tracked `.rs`, `.kt`, `.ts` and the `<script>` part of `.svelte` files, test cod
 
 ### 2. Tools und Versionen, je Sprache
 
-Rust: clippy from the pinned toolchain (`rust-toolchain.toml`). Kotlin: detekt-cli 1.23.8. TypeScript/Svelte: ESLint 10.15, typescript-eslint 8.74, eslint-plugin-sonarjs 4.2.2, eslint-plugin-svelte 3.24. All: web-tree-sitter 0.27 with tree-sitter-rust 0.24, tree-sitter-kotlin 0.3.8, tree-sitter-typescript 0.23 (structure pass), jscpd 5.x. Exact pins are set in task 1.1. Prototype only: lizard 1.26.1.
+Rust and TypeScript: ai-health v0.4.0 (commit `033d1867`), hash-locked dependencies (§0); clippy and ESLint stay linters only. Kotlin: detekt-cli 1.23.8 (open). Svelte: ESLint + sonarjs as a report (open). Superseded plan: TypeScript/Svelte: ESLint 10.15, typescript-eslint 8.74, eslint-plugin-sonarjs 4.2.2, eslint-plugin-svelte 3.24. All: web-tree-sitter 0.27 with tree-sitter-rust 0.24, tree-sitter-kotlin 0.3.8, tree-sitter-typescript 0.23 (structure pass), jscpd 5.x. Exact pins are set in task 1.1. Prototype only: lizard 1.26.1.
 
 ### 3. Abgebildete Smells
 
@@ -242,7 +279,7 @@ See §2 (table with the mapping to the CodeScene criteria). Not mapped: LCOM4 in
 
 ### 7. Ergebnis
 
-Before (prototype, 2026-11-23): rust 5.30, android 7.55, web 8.89, repo total 6.97; worst files in §8. After: open.
+Before: prototype (§8) rust 5.30, android 7.55, web 8.89, total 6.97; ai-health trial rust 6.52 (default curve) / 4.23 (strict), TS in `apps/` 8.57, `packages/` 9.82. After: open.
 
 ### 8. Skills
 
@@ -250,4 +287,4 @@ Reviewed: see §9 and the owner shortlist. Adopted: open (owner decision pending
 
 ### 9. Erfahrungen
 
-So far: rust-code-analysis is unmaintained (2023) and clippy's `excessive_nesting` counts `mod`/`impl` blocks, so Rust nesting needs an own pass; lizard counts Compose lambdas as nesting, so Kotlin needs detekt; ESLint and detekt each scan the whole component in about 5 s. Transferable: component split, ratchet with one line per file, suppression only with a reason. Project-specific: three ecosystems in one repo, safety-core traces as the refactoring safety net.
+ai-health replaced the own structure pass before it was built; its young age and unneeded web/MCP dependencies are the price. Earlier: rust-code-analysis is unmaintained (2023) and clippy's `excessive_nesting` counts `mod`/`impl` blocks, so Rust nesting needs an own pass; lizard counts Compose lambdas as nesting, so Kotlin needs detekt; ESLint and detekt each scan the whole component in about 5 s. Transferable: component split, ratchet with one line per file, suppression only with a reason. Project-specific: three ecosystems in one repo, safety-core traces as the refactoring safety net.
