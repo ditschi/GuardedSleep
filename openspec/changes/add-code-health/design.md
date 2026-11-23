@@ -2,7 +2,7 @@
 
 Layer: build tooling only (`scripts/`, `tools/`, `justfile`, hooks, CI). No product code changes in this design; the refactorings it drives must preserve behaviour. Privacy guardrails: unaffected. Every tool runs locally and offline after installation, none sends telemetry (ESLint, detekt, jscpd, clippy and tree-sitter have none; checked against their docs during implementation, AGENTS.md §7.5).
 
-Sources: CodeScene "Code Health" guide (https://codescene.io/docs/guides/technical/code-health.html), A. Tornhill, "AI-Ready Code" (2026). CodeScene does not publish its weights; every weight below is our own and marked **assumption**. Thresholds follow the CodeScene defaults the owner named (CC > 9, nesting ≥ 4, ≥ 4 logical operators, ≥ 5 arguments); other thresholds are assumptions.
+Sources: CodeScene "Code Health" guide (https://codescene.io/docs/guides/technical/code-health.html), A. Tornhill, "AI-Ready Code" (2026). CodeScene does not publish its weights; every weight below is our own and marked **assumption**. Thresholds marked (CodeScene) are the CodeScene defaults as relayed by the owner on 2026-11-23: arguments 4, cyclomatic complexity 9, function 70 lines, nesting 4, Bumpy Road 2 bumps from depth 2, Complex Conditional from 2 branches, file 1000 lines (Kotlin 600), Primitive Obsession 30 %, duplication from 10 lines at 75 % similarity, assertion blocks 4/4. A CodeScene value N means a finding when the measure exceeds N for counts of arguments, complexity and lines, and from N on for the others. Other thresholds are assumptions.
 
 ## 1. Architecture
 
@@ -44,32 +44,34 @@ The checker is not one tool for the whole repo but three **components**, each wi
 
 ## 2. Metric sources
 
-| Smell (CodeScene name)              | Rust                               | Kotlin                           | TypeScript / Svelte                      | Threshold (finding when)                                      |
-| ----------------------------------- | ---------------------------------- | -------------------------------- | ---------------------------------------- | ------------------------------------------------------------- |
-| Complex Method (cyclomatic)         | structure pass                     | detekt `CyclomaticComplexMethod` | ESLint `complexity`                      | CC > 9 (CodeScene)                                            |
-| Cognitive complexity                | clippy `cognitive_complexity`      | detekt `CognitiveComplexMethod`  | sonarjs `cognitive-complexity`           | > 15 (assumption, Sonar default)                              |
-| Large Method                        | clippy `too_many_lines`            | detekt `LongMethod`              | ESLint `max-lines-per-function`          | > 70 code lines (assumption)                                  |
-| Brain Method                        | derived                            | derived                          | derived                                  | Large Method ∧ CC > 15 ∧ nesting ≥ 3 (assumption)             |
-| Excess Function Arguments           | clippy `too_many_arguments`        | detekt `LongParameterList`       | ESLint `max-params`                      | ≥ 5 (CodeScene)                                               |
-| Excess boolean arguments            | clippy `fn_params_excessive_bools` | structure pass                   | structure pass                           | ≥ 3 bool params (clippy default)                              |
-| Primitive Obsession                 | structure pass                     | structure pass                   | structure pass                           | file: ≥ 10 params, ≥ 70 % primitive (assumption)              |
-| Deep, Nested Complexity             | structure pass                     | detekt `NestedBlockDepth`        | ESLint `max-depth`                       | control-flow depth ≥ 4 (CodeScene)                            |
-| Bumpy Road                          | structure pass                     | structure pass                   | structure pass                           | ≥ 2 separate blocks of depth ≥ 2 in one function (assumption) |
-| Complex Conditional                 | structure pass                     | detekt `ComplexCondition`        | sonarjs `expression-complexity`          | ≥ 4 `&&`/`\|\|` in one condition (CodeScene)                  |
-| Code Duplication                    | jscpd                              | jscpd                            | jscpd + sonarjs `no-identical-functions` | clone ≥ 60 tokens (assumption)                                |
-| Lines of Code in a Single File      | structure pass                     | structure pass                   | ESLint `max-lines`                       | > 600 code lines (assumption)                                 |
-| Brain Class / God Class             | derived                            | detekt `LargeClass` + derived    | derived                                  | > 600 lines ∧ ≥ 1 Brain Method ∧ > 30 functions (assumption)  |
-| Many functions per module           | structure pass                     | detekt `TooManyFunctions`        | structure pass                           | > 40 per file, > 30 per class (assumption)                    |
-| Low Cohesion (LCOM4)                | structure pass (`self.` fields)    | structure pass (approximate)     | structure pass (`this.` fields)          | LCOM4 ≥ 3 (assumption); phase 2, see question 6               |
-| Large Assertion Blocks (tests)      | structure pass                     | structure pass                   | structure pass                           | ≥ 6 consecutive assertions (assumption)                       |
-| Duplicated Assertion Blocks (tests) | structure pass                     | structure pass                   | structure pass                           | same block of ≥ 3 assertions twice in a file (assumption)     |
+| Smell (CodeScene name)              | Rust                               | Kotlin                           | TypeScript / Svelte                      | Threshold (finding when)                                               |
+| ----------------------------------- | ---------------------------------- | -------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------- |
+| Complex Method (cyclomatic)         | structure pass                     | detekt `CyclomaticComplexMethod` | ESLint `complexity`                      | CC > 9 (CodeScene)                                                     |
+| Cognitive complexity                | clippy `cognitive_complexity`      | detekt `CognitiveComplexMethod`  | sonarjs `cognitive-complexity`           | > 15 (assumption, Sonar default)                                       |
+| Large Method                        | clippy `too_many_lines`            | detekt `LongMethod`              | ESLint `max-lines-per-function`          | > 70 code lines (CodeScene)                                            |
+| Brain Method                        | derived                            | derived                          | derived                                  | Large Method ∧ CC > 15 ∧ nesting ≥ 3 (assumption)                      |
+| Excess Function Arguments           | clippy `too_many_arguments`        | detekt `LongParameterList`       | ESLint `max-params`                      | > 4 (CodeScene)                                                        |
+| Excess boolean arguments            | clippy `fn_params_excessive_bools` | structure pass                   | structure pass                           | ≥ 3 bool params (clippy default)                                       |
+| Primitive Obsession                 | structure pass                     | structure pass                   | structure pass                           | file: ≥ 30 % primitive params (CodeScene), min. 10 params (assumption) |
+| Deep, Nested Complexity             | structure pass                     | detekt `NestedBlockDepth`        | ESLint `max-depth`                       | control-flow depth ≥ 4 (CodeScene)                                     |
+| Bumpy Road                          | structure pass                     | structure pass                   | structure pass                           | ≥ 2 separate blocks of depth ≥ 2 in one function (CodeScene)           |
+| Complex Conditional                 | structure pass                     | detekt `ComplexCondition`        | sonarjs `expression-complexity`          | ≥ 2 `&&`/`\|\|` in one condition (CodeScene)                           |
+| Code Duplication                    | jscpd                              | jscpd                            | jscpd + sonarjs `no-identical-functions` | ≥ 10 lines at ≥ 75 % similarity (CodeScene)                            |
+| Lines of Code in a Single File      | structure pass                     | structure pass                   | ESLint `max-lines`                       | > 1000 code lines, Kotlin > 600 (CodeScene)                            |
+| Brain Class / God Class             | derived                            | detekt `LargeClass` + derived    | derived                                  | > 600 lines ∧ ≥ 1 Brain Method ∧ > 30 functions (assumption)           |
+| Many functions per module           | structure pass                     | detekt `TooManyFunctions`        | structure pass                           | > 40 per file, > 30 per class (assumption)                             |
+| Low Cohesion (LCOM4)                | structure pass (`self.` fields)    | structure pass (approximate)     | structure pass (`this.` fields)          | LCOM4 ≥ 3 (assumption); phase 2, see question 6                        |
+| Large Assertion Blocks (tests)      | structure pass                     | structure pass                   | structure pass                           | ≥ 4 consecutive assertions (CodeScene)                                 |
+| Duplicated Assertion Blocks (tests) | structure pass                     | structure pass                   | structure pass                           | same block of ≥ 4 assertions twice in a file (CodeScene)               |
+
+**On hold (owner, 2026-11-23):** the tree-sitter structure pass is not built until a trial of ai-health (github.com/epatel/ai-health) shows whether it can cover the structure smells for Rust and TypeScript. clippy, detekt and ESLint + sonarjs stay as planned. jscpd cannot measure "75 % similarity" directly; the duplication source is decided together with the structure pass.
 
 Why the structure pass covers some cells a tool could fill:
 
 - clippy has no cyclomatic complexity (the lint was renamed to cognitive complexity), and `excessive_nesting` counts every block, including `mod`, `impl` and `mod tests`, so a test function inside `mod tests` starts at depth 3 (measured: 290 findings, mostly noise). Rust nesting therefore comes from the structure pass, which counts control flow only (`if`, `match`, loops, closures with control flow), the same rule as detekt and ESLint.
 - No tool reports Bumpy Road, assertion blocks or primitive obsession.
 
-Tool thresholds are generated from `config.toml`, never written twice. The detekt `ComplexCondition` threshold counts conditions, so "≥ 4 operators" becomes `threshold: 5`; each such mapping has a unit test.
+Tool thresholds are generated from `config.toml`, never written twice. The detekt `ComplexCondition` threshold counts conditions, so "≥ 2 operators" becomes `threshold: 3`; each such mapping has a unit test.
 
 Test code counts. A file is "test code" by path (`/tests/`, `src/test/`, `*.test.ts`, `*.spec.ts`) or, in Rust, inside `#[cfg(test)]`. Test code gets the assertion smells; ESLint's `max-lines-per-function` ignores the anonymous suite callbacks of `describe(...)` (assumption: CodeScene scores the test functions, not the suite wrapper).
 
