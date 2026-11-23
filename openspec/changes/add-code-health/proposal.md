@@ -8,20 +8,17 @@ The owner decided (2026-11-23) not to use the proprietary CodeScene score (paid 
 
 A first measurement with a prototype (lizard 1.26.1 + jscpd, 2026-11-23, see design §8) gives **6.97** for the whole repo (Rust 5.30, Kotlin 7.55, TypeScript 8.89), 132 of 394 files below 9.5 and 18 files red.
 
-This changes a prior decision: ADR-020 says "No ESLint and no Biome at T0". This change adds ESLint as a **metric source for the health score only** (no style rules, not a lint step of its own), so the Critical Reviewer role applies (AGENTS.md §6). Tooling only otherwise: no product behaviour, architecture, scope or security model changes. Tier T0.
+This changes a prior decision: ADR-020 says "No ESLint and no Biome at T0". This change adds ESLint only for a structure report on the Svelte scripts, which ai-health cannot parse (eslint-plugin-svelte + sonarjs, no style rules, no score), so the Critical Reviewer role applies (AGENTS.md §6). Tooling only otherwise: no product behaviour, architecture, scope or security model changes. Tier T0.
 
 ## What Changes
 
-1. **Checker `just code-health`** on **ai-health** v0.4.0 for Rust and TypeScript (owner decision 2026-11-23, design §0; it replaces the originally planned own structure pass and jscpd), with detekt for Kotlin and an ESLint report for Svelte still open. Profile "strict", goal score 10, floor 9.5. The repo is split into three **components** (`rust`, `android`, `web`), each with its own pipeline, score and baseline (`--component <name>`); each component reaches ≥ 9.5 on its own; a repo total (LOC-weighted mean) is reported for information only, and the worst file is reported.
-   - Rust: **clippy** (`cognitive_complexity`, `too_many_lines`, `too_many_arguments`, `fn_params_excessive_bools`) in its own target dir and clippy config.
-   - Kotlin: **detekt** CLI (complexity rule set) pinned through mise like ktfmt.
-   - TypeScript and Svelte scripts: **ESLint** core rules (`complexity`, `max-depth`, `max-lines-per-function`, `max-params`, `max-lines`) plus **eslint-plugin-sonarjs** (`cognitive-complexity`, `expression-complexity`, `no-identical-functions`).
-   - All languages: a small **tree-sitter structure pass** for what no tool reports (Bumpy Road, control-flow nesting, Rust cyclomatic complexity and complex conditionals, assertion blocks, primitive obsession, suppression scan) and **jscpd** for duplication.
-2. **Config and docs:** thresholds and weights in `tools/code-health/config.toml` (versioned, every value commented, own choices marked `assumption`); the tool configs (clippy.toml, detekt.yml, ESLint rule options) are generated from it. `docs/contributing/code-health.md` explains score, smells and fixes.
-3. **Output:** human table (file, score, smells with line) by default, `--json` for agents, `--changed [base]` and `--staged` for the delta.
-4. **Gate** (`--check`) in lefthook and in the CI `lint` job: a new or changed file scores ≥ 9.5; a file listed in the ratchet baseline must not get worse; no component score may sink. **Ratchet baseline** `tools/code-health/baseline.json` while the repo is below 9.5. Suppressions only by inline comment with a reason.
-5. **Agents:** AGENTS.md gets a "Code health" section (run `just code-health --changed` before every commit, fix smells instead of suppressing them); `refactor-sweep` and `refactor-scout` use the score as their target metric; a project skill `code-health-fix` (playbook per smell, based on our checker output) and, after owner approval, selected skills.sh skills.
-6. **Refactoring** toward ≥ 9.5 in small, tested, behaviour-preserving steps, hotspots (score × churn) first; big restructurings are asked first.
+1. **Checker `just code-health` on ai-health** (github.com/epatel/ai-health, MIT, pinned to the v0.4.0 commit `033d1867` with hash-locked dependencies; owner decision 2026-11-23, design §0). It replaces the originally planned own tree-sitter structure pass and jscpd. One source per smell: clippy and ESLint stay linters, their structure rules do not gate.
+   - Three **components** with their own profile and score: `rust` (`crates/`), `web` (`apps/web`, `apps/e2e`, `packages/`) and `android` (`apps/android/`, via ai-health once a Kotlin adapter exists; until then reported as "not yet scored", detekt at most as a transitional linter). Svelte: ESLint + eslint-plugin-svelte + sonarjs as a report without a score.
+   - Profile "strict" (confirmed): CodeScene thresholds, `decay = 8`, `symbol_cap = 4`, `density_loc = 100000`, delta tolerance 0; `large_file` 1000 (Kotlin 600). Goal score 10, floor 9.5 per component; a repo total is informational.
+2. **Output:** `aihealth scan` as the report, `--changed`/`--staged` deltas, `--json` for agents; always with an explicit `--config`.
+3. **Gate** in lefthook (`delta --staged`) and in the CI `lint` job (`delta` against the merge base, plus a component score comparison base → head with at most 0.01 drop). Suppressions only as file-wide `aihealth: disable=<smell> -- <reason>`, the reason enforced by a lint check.
+4. **Agents:** AGENTS.md gets a "Code health" section (run `just code-health --changed` before every commit; fix smells instead of suppressing them); `refactor-sweep` and `refactor-scout` use the score as their target metric; a project skill `code-health-fix`; skills.sh skills after owner approval.
+5. **Refactoring** toward 10 in small, tested, behaviour-preserving steps, hotspots first; big restructurings are asked first.
 
 Out of scope: the CodeScene service or token; change coupling and knowledge-distribution metrics (CodeScene's behavioural analysis); a shared implementation for other repositories (dropped by the owner: only the goals are shared, tools are chosen per repository, design §7); ESLint style or correctness rules.
 
@@ -37,7 +34,7 @@ Persona impact (`docs/concept/personas.md`): no end-user persona directly. Paren
 
 ## Impact
 
-- New: `scripts/code-health/` (+ Vitest tests), `tools/code-health/{config.toml,baseline.json}`, `docs/contributing/code-health.md`, `.claude/skills/code-health-fix/`.
-- Changed: `justfile` (`code-health` recipe, called from `_lint-code`), `lefthook.yml`, `.github/workflows/ci.yml` (lint job), `docs/ci-gates.md` (`lint` row), `mise.toml`/`mise.lock` (detekt-cli jar), root `package.json` + `pnpm-lock.yaml` (eslint, typescript-eslint, eslint-plugin-sonarjs, eslint-plugin-svelte, jscpd, web-tree-sitter + grammars, smol-toml), `AGENTS.md` (§4, §5.2 ESLint note, new section), `.claude/skills/refactor-sweep/SKILL.md`, `.claude/agents/refactor-scout.md`.
-- Code across `crates/`, `apps/android`, `apps/web`, `apps/e2e` during the refactoring phase (separate commits/PRs).
-- CI: the `lint` job gets about 1–2 min longer (second clippy pass with health lints in `target/code-health`, detekt, ESLint). Maintenance budget: five pinned tools more; Renovate groups them.
+- New: `tools/code-health/` (component profiles, `aihealth.lock.txt`), `docs/contributing/code-health.md`, `.claude/skills/code-health-fix/`.
+- Changed: `justfile` (`code-health` recipe, called from `_lint-code`; `just setup` installs ai-health into `target/code-health/venv` and pre-loads the grammars), `lefthook.yml`, `.github/workflows/ci.yml` (lint job: `fetch-depth: 0`, grammar cache), `docs/ci-gates.md` (`lint` row), root `package.json` + `pnpm-lock.yaml` (eslint, typescript-eslint, eslint-plugin-sonarjs, eslint-plugin-svelte for the Svelte report), `AGENTS.md` (§4, §5.2 ESLint note, new section), `.claude/skills/refactor-sweep/SKILL.md`, `.claude/agents/refactor-scout.md`.
+- Code across `crates/`, `apps/android`, `apps/web`, `apps/e2e` during the refactoring phase (separate commits and PRs).
+- Supply chain: one young third-party tool (36 Python packages, installed from git with hashes) and its run-time grammar download, pre-loaded at setup (design §0). Maintenance: ai-health updates are manual, because scores change between releases.

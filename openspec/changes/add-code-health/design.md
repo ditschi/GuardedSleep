@@ -10,7 +10,7 @@ Owner decision, relayed by the cross-repo coordination session; **pending confir
 
 - **Tool:** ai-health (https://github.com/epatel/ai-health, MIT), v0.4.0 = commit `033d1867fe514867d944d9387ee72db0188eed47`. Deterministic, no AI in the core. It covers the structure smells for Rust (`crates/`) and TypeScript (`apps/web`, `apps/e2e`, `packages/`), including duplication across files, and **replaces** the planned tree-sitter structure pass and jscpd.
 - **One source per smell:** clippy and ESLint stay linters; their structure rules do not gate in addition.
-- **Kotlin** is open, **Svelte** gets an ESLint report without a score (owner decisions, below). ai-health supports neither.
+- **Kotlin** moves to ai-health once a Kotlin adapter exists; **Svelte** gets an ESLint report without a score (owner decisions, below).
 - **Goal:** score 10 (no finding); 9.5 is only the floor on the way.
 - **Profile "strict"**, one config per component, passed with `--config`, values kept in one place so the owner's final confirmation only edits that file:
 
@@ -36,7 +36,7 @@ Owner decision, relayed by the cross-repo coordination session; **pending confir
 - **Gate:** `aihealth delta` with tolerance 0, plus a CI comparison of each component score between merge base and head (no drop of more than 0.01).
 - **Profile "strict"** confirmed as above.
 - **Svelte:** ESLint with eslint-plugin-svelte and sonarjs as a report, without a score.
-- **Kotlin: still open.** Options under comparison: (1) detekt, (2) a Kotlin adapter for ai-health, (3) hybrid: detekt now with its built-in `baseline.xml` and no own score aggregator, a Kotlin adapter requested upstream, switch later. Nothing new is built for Kotlin until the decision, in particular no own score aggregator for detekt.
+- **Kotlin via ai-health** (owner decision, option 2): scored on the same scale as Rust and TypeScript, goal 10, own profile with `large_file = 600`. A separate session builds a Kotlin adapter in the fork `ditschi/ai-health` and proposes it upstream to `epatel/ai-health`. Until it is available the `android` component is reported as **"not yet scored"**; detekt may run at most as a transitional linter if that costs next to nothing, never with an own score aggregator, and no tree-sitter check is built for Kotlin. Whether the fork commit is pinned before the upstream merge is the owner's decision at that time.
 
 ### Usage rules (lessons from the homelab adoption, relayed 2026-11-23)
 
@@ -273,7 +273,7 @@ Tracked `.rs`, `.kt`, `.ts` and the `<script>` part of `.svelte` files, test cod
 
 ### 2. Tools und Versionen, je Sprache
 
-Rust and TypeScript: ai-health v0.4.0 (commit `033d1867`), hash-locked dependencies (§0); clippy and ESLint stay linters only. Kotlin: detekt-cli 1.23.8 (open). Svelte: ESLint + sonarjs as a report (open). Superseded plan: TypeScript/Svelte: ESLint 10.15, typescript-eslint 8.74, eslint-plugin-sonarjs 4.2.2, eslint-plugin-svelte 3.24. All: web-tree-sitter 0.27 with tree-sitter-rust 0.24, tree-sitter-kotlin 0.3.8, tree-sitter-typescript 0.23 (structure pass), jscpd 5.x. Exact pins are set in task 1.1. Prototype only: lizard 1.26.1.
+Rust and TypeScript: ai-health v0.4.0 (commit `033d1867`), hash-locked dependencies (§0); clippy and ESLint stay linters only. Kotlin: ai-health with a Kotlin adapter (in progress, fork `ditschi/ai-health`); until then not scored, detekt at most as a transitional linter. Svelte: ESLint + sonarjs as a report (open). Superseded plan: TypeScript/Svelte: ESLint 10.15, typescript-eslint 8.74, eslint-plugin-sonarjs 4.2.2, eslint-plugin-svelte 3.24. All: web-tree-sitter 0.27 with tree-sitter-rust 0.24, tree-sitter-kotlin 0.3.8, tree-sitter-typescript 0.23 (structure pass), jscpd 5.x. Exact pins are set in task 1.1. Prototype only: lizard 1.26.1.
 
 ### 3. Abgebildete Smells
 
