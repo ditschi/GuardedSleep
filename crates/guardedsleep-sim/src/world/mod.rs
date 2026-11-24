@@ -28,9 +28,29 @@ use crate::trace::TraceRec;
 
 mod actors;
 mod canary;
+mod client;
+mod driver;
+mod events;
+mod faults;
+mod hooks;
+mod hostile;
+mod ids;
+mod media;
+mod model;
 mod peer;
+mod room;
 mod server;
 mod steps;
+mod synth;
+
+use self::events::{ActorEv, Ev, PeerEv, RelayEv};
+use self::ids::{ActorIx, PcHandle, PcRef, SockIx};
+pub use self::model::{Actor, EvRec, Pc, ToClient, Via};
+use self::model::{Conn, Delivery, Fault, FaultKind, Flow, Frame, Seat, Server, SockOwner};
+pub use self::synth::{
+    SYNTH_FP_PREFIX_HEX, SYNTH_PSK_PREFIX, SYNTH_SEED_PREFIX, colon_upper, synthetic_psk,
+};
+use self::synth::{confuse_fingerprint, link_seed, synthetic_fp, valid_v3_room};
 
 pub type Time = u64;
 
@@ -41,352 +61,10 @@ const SWEEP_MS: u64 = 10_000;
 const FAIL_AFTER_MIN: u64 = 25_000;
 const FAIL_AFTER_MAX: u64 = 35_000;
 const CONNECT_GIVE_UP_MS: u64 = 30_000;
-
-/// Synthetic PSK material: recognisable by the lint, never a real secret.
-pub const SYNTH_PSK_PREFIX: &[u8; 16] = b"GS-SYNTHETIC-PSK";
-/// First four bytes of every synthetic DTLS fingerprint ("SYNT"), lowercase hex.
-pub const SYNTH_FP_PREFIX_HEX: &str = "53594e54";
 /// The simulated wall clock starts at this Unix second (a synthetic value, not a date).
 const SIM_WALL_BASE_S: u64 = 1_000_000;
 /// Drivers report the wall clock this often (and after a time change).
 const WALL_CLOCK_EVERY_MS: u64 = 60_000;
-
-/// Every simulation `Link` seed starts with these 16 bytes, so the lint can tell a test seed from
-/// a real one.
-pub const SYNTH_SEED_PREFIX: &[u8; 16] = b"GS-SYNTH-SEED-v1";
-
-pub fn synthetic_psk(name: &str) -> Vec<u8> {
-    let fill = match name {
-        "B" => 0xB2,
-        _ => 0xA1,
-    };
-    let mut k = SYNTH_PSK_PREFIX.to_vec();
-    k.extend_from_slice(&[fill; 16]);
-    k
-}
-
-/// The SDP as a fingerprint-confusing relay forwards it: the real value moves into an `s=` line
-/// (the first occurrence a substring search finds) and the relay's own fingerprint takes the real
-/// `a=fingerprint` line, so DTLS ends at the relay.
-fn confuse_fingerprint(sdp: &str, mitm_fp: &str) -> String {
-    let mut hidden = None;
-    let mut body = String::new();
-    for line in sdp.split_inclusive("\r\n") {
-        if let Some(v) = line.strip_prefix("a=fingerprint:sha-256 ") {
-            hidden = Some(v.trim_end().to_owned());
-            body.push_str(&format!(
-                "a=fingerprint:sha-256 {}\r\n",
-                colon_upper(mitm_fp)
-            ));
-        } else {
-            body.push_str(line);
-        }
-    }
-    match (hidden, body.strip_prefix("v=0\r\n")) {
-        (Some(h), Some(rest)) => format!("v=0\r\ns=a=fingerprint:sha-256 {h}\r\n{rest}"),
-        _ => body,
-    }
-}
-
-fn synthetic_fp(n: u64) -> String {
-    let mut bytes = [0u8; 32];
-    bytes[..4].copy_from_slice(b"SYNT");
-    bytes[24..].copy_from_slice(&n.to_be_bytes());
-    bytes.iter().map(|b| format!("{b:02x}")).collect()
-}
-
-pub fn colon_upper(fp: &str) -> String {
-    (0..fp.len())
-        .step_by(2)
-        .map(|i| fp[i..i + 2].to_uppercase())
-        .collect::<Vec<_>>()
-        .join(":")
-}
-
-#[derive(Debug, Clone)]
-pub enum ToClient {
-    Opened,
-    Text(String),
-    Closed,
-}
-
-/// One queued event. `Timeline` steps stay at the top; the rest is grouped by who handles it.
-#[derive(Debug, Clone)]
-enum Ev {
-    Timeline(usize),
-    Actor(ActorEv),
-    Relay(RelayEv),
-    Peer(PeerEv),
-}
-
-/// Events of one actor's process: its pacing, injected inputs and lifecycle.
-#[derive(Debug, Clone)]
-enum ActorEv {
-    Tick { actor: usize, chain: u32 },
-    Input { actor: usize, input: LinkInput },
-    PathBack { actor: usize },
-    Restart { actor: usize },
-    RawTick { actor: usize },
-    RawAct { actor: usize },
-}
-
-/// Events of the simulated signaling relay and the sockets towards it.
-#[derive(Debug, Clone)]
-enum RelayEv {
-    Accept {
-        sock: usize,
-    },
-    SigToServer {
-        sock: usize,
-        text: String,
-        spoof: Option<String>,
-    },
-    SigToClient {
-        actor: usize,
-        sock: usize,
-        msg: ToClient,
-    },
-    Pong {
-        sock: usize,
-    },
-    Sweep {
-        r#gen: u32,
-        srv: usize,
-    },
-    ServerClose {
-        sock: usize,
-    },
-    /// Half-TTL renewal of the ICE servers of the room `key` on relay `srv`.
-    IceRenew {
-        srv: usize,
-        key: String,
-    },
-}
-
-/// Events of the simulated media layer.
-#[derive(Debug, Clone)]
-enum PeerEv {
-    LocalDesc {
-        actor: usize,
-        handle: u32,
-        sdp_type: &'static str,
-    },
-    PcConnect {
-        a: usize,
-        ha: u32,
-        b: usize,
-        hb: u32,
-        since: Time,
-    },
-    Data {
-        to: usize,
-        handle: u32,
-        text: String,
-    },
-    DataClosed {
-        to: usize,
-        handle: u32,
-    },
-    Watch,
-}
-
-impl From<ActorEv> for Ev {
-    fn from(e: ActorEv) -> Self {
-        Ev::Actor(e)
-    }
-}
-
-impl From<RelayEv> for Ev {
-    fn from(e: RelayEv) -> Self {
-        Ev::Relay(e)
-    }
-}
-
-impl From<PeerEv> for Ev {
-    fn from(e: PeerEv) -> Self {
-        Ev::Peer(e)
-    }
-}
-
-pub struct Pc {
-    pub fp: String,
-    /// The certificate fingerprint DTLS authenticates the remote against: what the real
-    /// `a=fingerprint` line of the applied remote SDP says. The platform reports it to the core.
-    pub dtls_fp: Option<String>,
-    pub local: bool,
-    pub remote: bool,
-    pub peer: Option<(usize, u32)>,
-    pub closed: bool,
-    pub connected: bool,
-    pub failed: bool,
-    pub connecting: bool,
-    pub epoch: u32,
-    pub unhealthy_since: Option<Time>,
-    pub fail_after: u64,
-}
-
-pub struct EvRec {
-    pub t: Time,
-    pub ev: Value,
-    /// Milliseconds since the peer last received a DataChannel message (the core's `last_alive`).
-    pub since_contact: u64,
-}
-
-pub struct Actor {
-    pub name: String,
-    pub role: Role,
-    pub link: Option<Link>,
-    pub cfg: LinkConfig,
-    pub raw: Option<RawState>,
-    /// A mailbox set the next `restart_process` configures the new run with.
-    pending_mailboxes: Option<Vec<InviteMailbox>>,
-    /// Room id this client asks the relay for.
-    pub room: String,
-    /// Direction of the monitoring line (first audio m-line) and of the talk line (second) in this
-    /// device's local descriptions; the defaults follow the direction rule of `link-supervision`.
-    pub sdp_dir: String,
-    pub talk_dir: String,
-    pub net_up: bool,
-    pub path_epoch: u32,
-    pub alive: bool,
-    /// The socket of each mailbox (a mailbox id is also the index of the simulated relay).
-    pub socks: BTreeMap<MailboxId, usize>,
-    pub pcs: BTreeMap<u32, Pc>,
-    held_up: Vec<(usize, String)>,
-    held_down: Vec<(usize, ToClient)>,
-    chain: u32,
-    last_input_at: Time,
-    pub last_rx_data: Time,
-    rec: Option<usize>,
-    pub instance: u32,
-    pub events: Vec<EvRec>,
-    pub statuses: Vec<(Time, LinkStatus)>,
-    pub welcomes: Vec<Time>,
-    pub sent_signals: Vec<(Time, String)>,
-    pub next_raw_handle: u32,
-    /// Simulated wall-clock second last reported to the link.
-    last_wall_ms: Option<u64>,
-    /// This device's clock is this many seconds ahead of true time (negative: behind).
-    wall_offset_s: i64,
-}
-
-impl Actor {
-    fn new(name: &str, role: Role, cfg: LinkConfig, room: String) -> Self {
-        Actor {
-            name: name.to_owned(),
-            role,
-            link: None,
-            cfg,
-            raw: None,
-            pending_mailboxes: None,
-            room,
-            sdp_dir: match role {
-                Role::Baby => "sendonly",
-                Role::Parent => "recvonly",
-            }
-            .into(),
-            talk_dir: match role {
-                Role::Baby => "recvonly",
-                Role::Parent => "sendonly",
-            }
-            .into(),
-            net_up: true,
-            path_epoch: 0,
-            alive: true,
-            socks: BTreeMap::new(),
-            pcs: BTreeMap::new(),
-            held_up: Vec::new(),
-            held_down: Vec::new(),
-            chain: 0,
-            last_input_at: 0,
-            last_rx_data: 0,
-            rec: None,
-            instance: 0,
-            events: Vec::new(),
-            statuses: Vec::new(),
-            welcomes: Vec::new(),
-            sent_signals: Vec::new(),
-            next_raw_handle: 1,
-            last_wall_ms: None,
-            wall_offset_s: 0,
-        }
-    }
-}
-
-pub struct Conn {
-    pub actor: Option<usize>,
-    pub epoch: u32,
-    pub role: Role,
-    pub client_id: String,
-    pub requested: String,
-    pub key: String,
-    pub joined: bool,
-    pub alive: bool,
-    pub join_seq: u64,
-}
-
-impl Server {
-    fn new() -> Self {
-        Server {
-            drop_signals: false,
-            up: true,
-            conns: BTreeMap::new(),
-            sweep_gen: 0,
-            next_client: 0,
-            next_join: 0,
-            last_stop: None,
-            reject_hello_until: 0,
-            ice_timers: BTreeSet::new(),
-            ice_seq: 0,
-        }
-    }
-}
-
-struct Server {
-    /// Accepts and acknowledges frames but delivers no `signal` (a relay that is up and mute).
-    drop_signals: bool,
-    up: bool,
-    conns: BTreeMap<usize, Conn>,
-    sweep_gen: u32,
-    next_client: u32,
-    next_join: u64,
-    /// The latest `stop_notice` payload the relay saw and the client id it came from (a hostile
-    /// relay records it for `replay_stop`).
-    last_stop: Option<(String, Value)>,
-    /// Every `hello` before this time is answered with `UNSUPPORTED_PROTOCOL`.
-    reject_hello_until: Time,
-    /// Rooms with a pending half-TTL renewal (`RelaySpec::ice`).
-    ice_timers: BTreeSet<String>,
-    ice_seq: u64,
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum Via {
-    Data,
-    Signaling,
-}
-
-#[derive(Clone, Copy)]
-enum FaultKind {
-    Drop,
-    Delay,
-    Duplicate,
-    Reorder,
-}
-
-#[derive(Clone)]
-struct Fault {
-    kind: FaultKind,
-    from: Option<usize>,
-    via: Via,
-    /// Only messages whose text contains this.
-    contains: Option<String>,
-    start: Time,
-    until: Time,
-    p: f64,
-    ms: u64,
-    jitter: u64,
-}
 
 pub struct World {
     pub now: Time,
@@ -405,12 +83,12 @@ pub struct World {
     /// The other relays (the selected one's slot is empty), indexed by mailbox id.
     stash: Vec<Option<Server>>,
     /// The relay a socket belongs to.
-    sock_server: BTreeMap<usize, usize>,
+    sock_server: BTreeMap<SockIx, usize>,
     fp_seq: u64,
     next_sock: usize,
-    socks: BTreeMap<usize, (usize, u32)>,
+    socks: BTreeMap<SockIx, SockOwner>,
     faults: Vec<Fault>,
-    fifo: BTreeMap<(u8, usize, u32), Time>,
+    fifo: BTreeMap<Flow, Time>,
     timeline: Vec<Step>,
     pub violations: Vec<String>,
     /// Frames received on sockets that had not said `hello`, with the actor that sent them.
@@ -425,17 +103,7 @@ pub struct World {
     /// True wall-clock time (Unix seconds) at virtual time 0.
     pub wall_base: u64,
     /// The log canary, when a run asks for it (see [`World::enable_log_canary`]).
-    canary: Option<CanaryRun>,
-}
-
-/// State of the log canary of one run: the known values plus the ones the run draws.
-struct CanaryRun {
-    set: CanarySet,
-    /// `(canary, encoding, kind)` already reported, so one leak is one violation.
-    reported: BTreeSet<(String, String, String)>,
-    /// The parent secret of the first simulated pairing (the core draws it at run time).
-    parent_secret: Option<Vec<u8>>,
-    lines: u64,
+    canary: Option<canary::CanaryRun>,
 }
 
 impl World {
@@ -480,7 +148,8 @@ impl World {
         Ok(w)
     }
 
-    fn add_link_actor(&mut self, spec: &PeerSpec) -> Result<(), String> {
+    /// The `Link` configuration a scenario peer asks for.
+    fn link_config(&self, spec: &PeerSpec) -> LinkConfig {
         let psk = synthetic_psk(&spec.psk);
         let seed = link_seed(self.seed, &spec.id, 0);
         let mut cfg = LinkConfig::with_defaults(spec.role, encode_psk(&psk), &seed);
@@ -507,6 +176,11 @@ impl World {
         if let Some(a) = spec.alarm_after_ms {
             cfg.alarm_after_ms = a;
         }
+        cfg
+    }
+
+    fn add_link_actor(&mut self, spec: &PeerSpec) -> Result<(), String> {
+        let cfg = self.link_config(spec);
         let link = Link::new(cfg.clone()).map_err(|e| format!("peer {}: {e:?}", spec.id))?;
         let mut a = Actor::new(&spec.id, spec.role, cfg, link.room_id().to_owned());
         a.wall_offset_s = spec.wall_offset_s;
@@ -533,46 +207,62 @@ impl World {
             .unwrap_or_else(|| derive_room_id(&synthetic_psk("A")))
     }
 
+    // ---- event loop ------------------------------------------------------------------------
+
     fn push(&mut self, t: Time, prio: u8, ev: impl Into<Ev>) {
         self.seq += 1;
         self.q.insert((t.max(self.now), prio, self.seq), ev.into());
     }
 
-    fn fifo_time(&mut self, kind: u8, a: usize, b: u32, t: Time, bypass: bool) -> Time {
+    /// Queues `ev` `delay` ms from now behind earlier traffic of `flow`.
+    fn push_flow(&mut self, flow: Flow, delay: u64, ev: impl Into<Ev>) {
+        let t = self.fifo_time(flow, self.now + delay, false);
+        self.push(t, 2, ev);
+    }
+
+    /// `t`, pushed back as far as `flow` needs to stay in order, unless `bypass` lets it overtake.
+    fn fifo_time(&mut self, flow: Flow, t: Time, bypass: bool) -> Time {
         if bypass {
             return t;
         }
-        let e = self.fifo.entry((kind, a, b)).or_insert(0);
+        let e = self.fifo.entry(flow).or_insert(0);
         let t = t.max(*e);
         *e = t;
         t
     }
 
+    /// The next event that is due before the end of the run.
+    fn pop_due(&mut self) -> Option<((Time, u8, u64), Ev)> {
+        let entry = self.q.first_entry()?;
+        if entry.key().0 > self.end {
+            return None;
+        }
+        Some(entry.remove_entry())
+    }
+
     pub fn run(&mut self) {
-        while let Some((&key, _)) = self.q.iter().next() {
-            if key.0 > self.end {
-                break;
-            }
-            let ev = self.q.remove(&key).expect("key exists");
+        while let Some((key, ev)) = self.pop_due() {
             self.now = self.now.max(key.0);
             self.dispatch(ev);
         }
         self.now = self.now.max(self.end);
         for a in 0..self.actors.len() {
-            self.finish_rec(a);
+            self.finish_rec(ActorIx::from(a));
         }
-        let live: Vec<_> = self
+        self.flag_extra_attempts();
+    }
+
+    /// A violation for every running actor that ends with more than one live attempt.
+    fn flag_extra_attempts(&mut self) {
+        let overfull: Vec<String> = self
             .actors
             .iter()
             .filter(|a| a.link.is_some())
-            .map(|a| (a.name.clone(), a.pcs.values().filter(|p| !p.closed).count()))
+            .map(|a| (&a.name, a.pcs.values().filter(|p| !p.closed).count()))
+            .filter(|(_, n)| *n > 1)
+            .map(|(name, n)| format!("{name} ends with {n} live attempts"))
             .collect();
-        for (name, n) in live {
-            if n > 1 {
-                self.violations
-                    .push(format!("{name} ends with {n} live attempts"));
-            }
-        }
+        self.violations.extend(overfull);
     }
 
     fn dispatch(&mut self, ev: Ev) {
@@ -584,22 +274,35 @@ impl World {
         }
     }
 
-    // ---- timeline verbs --------------------------------------------------------------------
+    // ---- lookups ---------------------------------------------------------------------------
 
-    fn peer_ix(&mut self, st: &Step) -> Option<usize> {
+    fn peer_ix(&mut self, st: &Step) -> Option<ActorIx> {
         let name = st.peer.clone().unwrap_or_default();
         let ix = self.actor_ix(&name);
         if ix.is_none() {
             self.violations
                 .push(format!("step `{}`: unknown peer `{name}`", st.verb));
         }
-        ix
+        ix.map(ActorIx::from)
     }
 
-    fn link_actors(&self) -> Vec<usize> {
+    fn link_actors(&self) -> Vec<ActorIx> {
         (0..self.actors.len())
             .filter(|i| self.actors[*i].raw.is_none())
+            .map(ActorIx::from)
             .collect()
+    }
+
+    fn pc(&self, r: PcRef) -> Option<&Pc> {
+        self.actors[r.actor].pc(r.handle)
+    }
+
+    fn pc_mut(&mut self, r: PcRef) -> Option<&mut Pc> {
+        self.actors[r.actor].pc_mut(r.handle)
+    }
+
+    fn sock_owner(&self, sock: SockIx) -> Option<SockOwner> {
+        self.socks.get(&sock).copied()
     }
 
     /// Makes relay `idx` the selected one (creating it on first use).
@@ -617,7 +320,7 @@ impl World {
     }
 
     /// Selects the relay a socket is connected to.
-    fn select_sock(&mut self, sock: usize) {
+    fn select_sock(&mut self, sock: SockIx) {
         if let Some(&srv) = self.sock_server.get(&sock) {
             self.select_server(srv);
         }
@@ -630,24 +333,4 @@ impl World {
             None => (0..self.stash.len().max(self.relay_count)).collect(),
         }
     }
-}
-
-/// Test seed of one `Link` run, derived from the scenario seed, the actor and the run number.
-/// It uses its own generator, so the world's random stream (latencies, faults) is untouched.
-/// Simulation traces record it; real seeds are never recorded.
-fn link_seed(world_seed: u64, actor: &str, run: u32) -> Vec<u8> {
-    let name_hash = actor.bytes().fold(0xcbf2_9ce4_8422_2325_u64, |h, b| {
-        (h ^ u64::from(b)).wrapping_mul(0x0100_0000_01b3)
-    });
-    let mut rng = Rng::new(world_seed ^ name_hash ^ (u64::from(run) << 48));
-    let mut seed = SYNTH_SEED_PREFIX.to_vec();
-    seed.extend((0..2).flat_map(|_| rng.next_u64().to_le_bytes()));
-    seed
-}
-
-fn valid_v3_room(room: &str) -> bool {
-    room.len() == 22
-        && room
-            .bytes()
-            .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
 }

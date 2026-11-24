@@ -1,6 +1,57 @@
 //! The log canary of a run (AGENTS.md section 7.6).
 
+use super::driver::is_tick_input;
 use super::*;
+
+/// State of the log canary of one run: the known values plus the ones the run draws.
+pub(super) struct CanaryRun {
+    pub set: CanarySet,
+    /// `(canary, encoding, kind)` already reported, so one leak is one violation.
+    pub reported: BTreeSet<(String, String, String)>,
+    /// The parent secret of the first simulated pairing (the core draws it at run time).
+    pub parent_secret: Option<Vec<u8>>,
+    pub lines: u64,
+}
+
+impl CanaryRun {
+    /// Learns the run-time values an action carries: the parent secret (in `ParentPinned`, before
+    /// the action that sends it, in the very same list), the pin message and TURN passwords.
+    fn learn(&mut self, act: &LinkAction) {
+        match act {
+            LinkAction::Emit {
+                event: LinkEvent::ParentPinned { secret, .. },
+            } if self.parent_secret.is_none() => {
+                self.parent_secret = Some(secret.bytes.clone());
+                self.set.add_parent_secret(&secret.bytes);
+            }
+            LinkAction::SendData { text, .. } if carries_parent_pin(text) => {
+                self.set.add_pin_message(text);
+            }
+            LinkAction::CreateAttempt { ice_servers, .. } => {
+                for cred in ice_servers.iter().filter_map(|s| s.credential.as_deref()) {
+                    self.set.add_turn_password(cred);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+/// A PSK a scenario names itself: neither of the two synthetic ones the canary knows already.
+fn custom_psk(psk: &[u8]) -> bool {
+    psk != synthetic_psk("A") && psk != synthetic_psk("B")
+}
+
+/// Whether the action or input travels on the wire, where the room id and SDP are allowed.
+fn action_is_wire(act: &LinkAction) -> bool {
+    matches!(
+        act,
+        LinkAction::MailboxSend { .. }
+            | LinkAction::SendData { .. }
+            | LinkAction::SetRemoteDescription { .. }
+            | LinkAction::AddIceCandidate { .. }
+    )
+}
 
 impl World {
     /// Turns the log canary on (AGENTS.md section 7.6): from now on everything a platform could
@@ -16,11 +67,7 @@ impl World {
         set.add_pairing("", &synthetic_psk("A"));
         set.add_pairing("_other", &synthetic_psk("B"));
         for ac in &self.actors {
-            // The two synthetic PSKs are in already; a scenario may name another one.
-            if let Some(psk) = decode_psk(&ac.cfg.psk_b64url)
-                && psk != synthetic_psk("A")
-                && psk != synthetic_psk("B")
-            {
+            if let Some(psk) = decode_psk(&ac.cfg.psk_b64url).filter(|p| custom_psk(p)) {
                 set.add_pairing(&format!("_{}", ac.name), &psk);
             }
             set.add_seed(&format!("seed_{}_run0", ac.name), &ac.cfg.seed);
@@ -62,10 +109,11 @@ impl World {
 
     /// One log line of actor `a`; a leak becomes a violation (the canary name and encoding, never
     /// the value). Public so a test can plant a leak through the very same path.
-    pub fn log_line(&mut self, a: usize, kind: &str, text: &str, wire: bool) {
+    pub fn log_line(&mut self, a: impl Into<ActorIx>, kind: &str, text: &str, wire: bool) {
+        let a = a.into();
         let name = self
             .actors
-            .get(a)
+            .get(a.index())
             .map_or("?", |ac| ac.name.as_str())
             .to_owned();
         let now = self.now;
@@ -86,39 +134,30 @@ impl World {
         }
     }
 
-    pub(super) fn log_actions(&mut self, a: usize, actions: &[LinkAction]) {
-        // Learn the run-time values first: the parent secret comes out in `ParentPinned`, before
-        // the action that sends it, in the very same list.
-        if let Some(c) = self.canary.as_mut() {
-            for act in actions {
-                match act {
-                    LinkAction::Emit {
-                        event: LinkEvent::ParentPinned { secret, .. },
-                    } if c.parent_secret.is_none() => {
-                        c.parent_secret = Some(secret.bytes.clone());
-                        c.set.add_parent_secret(&secret.bytes);
-                    }
-                    LinkAction::SendData { text, .. } if carries_parent_pin(text) => {
-                        c.set.add_pin_message(text);
-                    }
-                    LinkAction::CreateAttempt { ice_servers, .. } => {
-                        for cred in ice_servers.iter().filter_map(|s| s.credential.as_deref()) {
-                            c.set.add_turn_password(cred);
-                        }
-                    }
-                    _ => {}
-                }
-            }
+    /// Logs one input the core is about to receive (wall clock and ticks say nothing).
+    pub(super) fn log_input(&mut self, a: ActorIx, input: &LinkInput) {
+        if self.canary.is_none() || is_tick_input(input) {
+            return;
+        }
+        let wire = matches!(
+            input,
+            LinkInput::MailboxFrame { .. }
+                | LinkInput::AttemptLocalDescription { .. }
+                | LinkInput::AttemptLocalIce { .. }
+                | LinkInput::AttemptDataMessage { .. }
+        );
+        self.log_line(a, "input", &format!("{input:?}"), wire);
+    }
+
+    pub(super) fn log_actions(&mut self, a: ActorIx, actions: &[LinkAction]) {
+        let Some(c) = self.canary.as_mut() else {
+            return;
+        };
+        for act in actions {
+            c.learn(act);
         }
         for act in actions {
-            let wire = matches!(
-                act,
-                LinkAction::MailboxSend { .. }
-                    | LinkAction::SendData { .. }
-                    | LinkAction::SetRemoteDescription { .. }
-                    | LinkAction::AddIceCandidate { .. }
-            );
-            self.log_line(a, "action", &format!("{act:?}"), wire);
+            self.log_line(a, "action", &format!("{act:?}"), action_is_wire(act));
         }
     }
 }
