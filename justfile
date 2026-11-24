@@ -91,7 +91,8 @@ lint-code:
     scripts/lib/slot.sh medium -- just _lint-code
 
 # `--config` is always passed to ai-health: without it ai-health silently reads <path>/.aihealth.toml or
-# its defaults. Score per scanned path: `crates` (rust profile), `apps` and `packages` (web profile).
+# its defaults. Score per scanned path and profile: `crates` (rust, rust-tests), `apps` (web), `apps/e2e`
+# (web-tests), `packages` (web); test profiles switch Primitive Obsession off.
 # Code health (ai-health, docs/contributing/code-health.md); flags: `--component rust|web`, `--json` (one JSON object per path), `--changed [base]` (delta since the merge base, uncommitted files included; fails on degradation), `--staged`.
 [script("bash")]
 code-health *args:
@@ -113,9 +114,9 @@ code-health *args:
       shift
     done
     rc=0
-    for pp in crates:rust apps:web packages:web; do
+    for pp in crates:rust crates:rust-tests apps:web apps/e2e:web-tests packages:web; do
       path="${pp%%:*}" profile="${pp##*:}"
-      [ -z "$only" ] || [ "$only" = "$profile" ] || continue
+      [ -z "$only" ] || [ "$only" = "${profile%-tests}" ] || continue
       cfg="tools/code-health/$profile.toml"
       [ "$fmt" = json ] || echo "== $path ($profile profile) =="
       case "$mode" in
@@ -164,7 +165,7 @@ _code-health-gate: _code-health-setup _code-health-suppressions
     trap 'rm -rf target/code-health/base' EXIT
     git archive "$base" crates apps/web apps/e2e packages | tar -x -C target/code-health/base
     rc=0
-    for pp in crates:rust apps:web packages:web; do
+    for pp in crates:rust crates:rust-tests apps:web apps/e2e:web-tests packages:web; do
       path="${pp%%:*}" cfg="tools/code-health/${pp##*:}.toml"
       "$ah" delta --base "$base" --config "$cfg" "$path" || rc=1
       before="$("$ah" scan "target/code-health/base/$path" --config "$cfg" | sed -n 's/^project score: \([0-9.]*\).*/\1/p')"

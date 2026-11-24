@@ -23,4 +23,17 @@ tolerance = 0.0
 [scan]
 # The web component is scanned from apps/ (web + e2e) and packages/; Android has its own component
 # and generated WASM output is not ours.
-exclude = ["android/*", "*/pkg/*", "*/dist/*"]
+# Test code is excluded: apps/e2e is scored with web-tests.toml; the unit tests next to the code in
+# apps/web cannot be selected with exclude-only globs and stay unscored for now (owner decision
+# 2026-11-24; an include option or path-scoped overrides are requested upstream, epatel/ai-health#4).
+exclude = [
+  "android/*",
+  "*/pkg/*",
+  "*/dist/*",
+  "e2e/*",
+  "*.test.ts",
+  "*.spec.ts",
+  "src/test/*",
+  "test-support.ts",
+  "test-audio.ts",
+]

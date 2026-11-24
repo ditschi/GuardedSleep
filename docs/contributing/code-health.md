@@ -4,17 +4,20 @@ GuardedSleep measures code structure with [ai-health](https://github.com/epatel/
 
 ## What is measured
 
-| Component | Paths                | Score today                               | Notes                                                                                                                   |
-| --------- | -------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `rust`    | `crates/`            | 4.65 (was 4.04 before the `world/` split) | Inline `#[cfg(test)]` modules count like production code (`score_test_modules`)                                         |
-| `web`     | `apps/`, `packages/` | `apps` 7.30, `packages` 9.67 (separately) | TypeScript and JavaScript; Svelte templates and `<script>` blocks are not scored; `android/*`, `pkg/`, `dist/` excluded |
-| `android` | `apps/android/`      | not yet scored (Kotlin adapter pending)   | Waits for a Kotlin adapter in ai-health; nothing is built for Kotlin here                                               |
+| Component | Path (profile)            | Score today    | Notes                                                                                                                                |
+| --------- | ------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `rust`    | `crates/` (`rust`)        | 4.90           | Production code incl. inline `#[cfg(test)]` modules (`score_test_modules = true`, Primitive Obsession included, one config per file) |
+| `rust`    | `crates/` (`rust-tests`)  | 4.12           | `crates/*/tests`; Primitive Obsession off                                                                                            |
+| `web`     | `apps/` (`web`)           | 7.45           | TypeScript and JavaScript without tests; Svelte not scored; `android/*`, `pkg/`, `dist/` excluded                                    |
+| `web`     | `apps/e2e/` (`web-tests`) | 8.01           | Browser E2E tests; Primitive Obsession off                                                                                           |
+| `web`     | `packages/` (`web`)       | 9.39           | Without tests                                                                                                                        |
+| `android` | `apps/android/`           | not yet scored | Waits for a Kotlin adapter in an ai-health release; nothing is built for Kotlin here                                                 |
 
-Tests count: test code is scored like production code. Generated output, `target/`, `node_modules/` and shell scripts are out of scope.
+Test code: Primitive Obsession is off in test code (owner decision 2026-11-24), everything else applies. The unit tests next to the code in `apps/web` (`*.test.ts`, `src/test/`, test fakes) cannot be selected with ai-health's exclude-only globs and stay unscored until ai-health supports includes or path-scoped overrides (requested in epatel/ai-health#4). Generated output, `target/`, `node_modules/` and shell scripts are out of scope.
 
 ## Profile "strict"
 
-One file per component, `tools/code-health/rust.toml` and `tools/code-health/web.toml`, each value commented there. Every call passes `--config`; without it ai-health silently reads `<path>/.aihealth.toml` or its defaults.
+One file per path group in `tools/code-health/` (`rust.toml`, `rust-tests.toml`, `web.toml`, `web-tests.toml`), each value commented there; the test profiles add `primitive_obsession = 0`. Every call passes `--config`; without it ai-health silently reads `<path>/.aihealth.toml` or its defaults.
 
 | Key                              | Value  | Meaning                                                          |
 | -------------------------------- | ------ | ---------------------------------------------------------------- |
@@ -99,7 +102,7 @@ Profile "strict" (see above) on ai-health's CodeScene-aligned defaults; weights 
 
 ### 7. Ergebnis
 
-Before: prototype rust 5.30, android 7.55, web 8.89, total 6.97; ai-health trial rust 6.52 (default curve) / 4.23 (strict), TS in `apps/` 8.57, `packages/` 9.82. Rust before 4.04, after 4.65 after the `world.rs` refactor: `guardedsleep-sim/src/world/` is 21 files that all score 10.0 except `synth.rs` (9.06, one cross-crate duplicate with `guardedsleep-core/tests/common/mod.rs` `colon_fp`). Web: `apps` 7.30, `packages` 9.67. Android: not yet scored. Remaining hotspots are listed by `just code-health` (`link.rs` is the worst file at 1.02).
+Before: prototype rust 5.30, android 7.55, web 8.89, total 6.97; ai-health trial rust 6.52 (default curve) / 4.23 (strict), TS in `apps/` 8.57, `packages/` 9.82. Rust before 4.04, after 4.65 after the `world.rs` refactor: `guardedsleep-sim/src/world/` is 21 files that all score 10.0 except `synth.rs` (9.06, one cross-crate duplicate with `guardedsleep-core/tests/common/mod.rs` `colon_fp`). Web: `apps` 7.30, `packages` 9.67 (all files). After splitting test code into its own profiles (Primitive Obsession off): `crates` 4.90 + `crates` tests 4.12, `apps` 7.45, `apps/e2e` 8.01, `packages` 9.39. Android: not yet scored. Remaining hotspots are listed by `just code-health` (`link.rs` is the worst file at 1.02).
 
 ### 8. Skills
 

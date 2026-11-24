@@ -20,7 +20,13 @@ density_loc = 100000
 # Any score drop of a changed file fails the delta (default 0.1).
 tolerance = 0.0
 
+[scan]
+# Integration tests (`crates/*/tests`) are scored with rust-tests.toml (Primitive Obsession off in test
+# code, owner decision 2026-11-24); the JavaScript conformance test likewise is test code.
+exclude = ["tests/*", "*.test.mjs"]
+
 [rust]
-# Inline `#[cfg(test)] mod tests` count too: test code is scored like production code
-# (owner standard, 2026-11-23); ai-health leaves them out by default.
+# Inline `#[cfg(test)] mod tests` are scored with the file's profile, Primitive Obsession included:
+# ai-health applies one config per file (owner decision 2026-11-24; path-scoped overrides requested
+# upstream in epatel/ai-health#4). ai-health leaves them out by default.
 score_test_modules = true
