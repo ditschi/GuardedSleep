@@ -115,15 +115,24 @@ jobs:
     permissions:
       contents: read
     steps:
+      # Full history: the code health gate compares against the merge base with origin/main.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: ./.github/actions/setup-mise
         with:
           cache_save: ${{ github.event_name != 'pull_request' }}
       - uses: ./.github/actions/setup-rust
         with:
           wasm-bindgen: "true"
+      # ai-health downloads its tree-sitter grammars on first use; the cache keeps the gate offline and
+      # fast. The lock names the tree-sitter-language-pack version.
+      # https://github.com/actions/cache#inputs
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/tree-sitter-language-pack
+          key: tree-sitter-grammars-${{ runner.os }}-${{ hashFiles('tools/code-health/aihealth.lock.txt') }}
       - run: just lint-code
 
   # Host Rust, WASM and Android JVM tests. No ABI cross-compile: the JVM tests load the host build of the

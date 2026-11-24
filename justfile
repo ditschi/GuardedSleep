@@ -36,6 +36,8 @@ setup:
       fi
     done
     mise exec -- lefthook install
+    # ai-health venv and grammars for `just code-health` and the lint gate; skips without uv.
+    scripts/lib/code-health.sh setup
 # Lists the prerequisites of the recipes (mise tools, rustup, Docker, uv, Playwright browser, KVM, Android SDK, git hooks) with a fix for each missing one. Informational, always exits 0.
 doctor:
     scripts/doctor.sh
@@ -88,8 +90,15 @@ lint-workflows:
 lint-code:
     scripts/lib/slot.sh medium -- just _lint-code
 
+# Code health (ai-health, docs/contributing/code-health.md): score report per component. Flags:
+# `--component rust|web`, `--json`, `--changed [base]` (delta since the merge base incl. uncommitted
+# files), `--staged`, `--check` (fail on any degradation, as the lint gate does).
+code-health *args:
+    scripts/lib/code-health.sh cli {{ args }}
+
 [private]
 _lint-code: _js-deps _js-gen check-ios check-determinism
+    scripts/lib/code-health.sh check origin/main
     scripts/cargo.sh fmt --all -- --check
     taplo fmt --check
     scripts/lib/ktfmt.sh --dry-run --set-exit-if-changed
