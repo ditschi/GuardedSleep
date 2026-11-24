@@ -265,40 +265,4 @@ Splitting `link.rs` or `LinkController.kt` into modules is a large restructuring
 
 ## 11. Steckbrief Code Health
 
-Fixed outline for the later comparison across the owner's six repositories. Filled with the plan now; sections 7–9 are completed when the work is done. It moves to `docs/contributing/code-health.md` with task 4.1.
-
-### 1. Messumfang
-
-Tracked `.rs`, `.kt`, `.ts` and the `<script>` part of `.svelte` files, test code included (with the test smells). Not counted: generated bindings, `*.d.ts`, `build/`, `target/`, `node_modules/`, generated i18n output, shell and `.mjs` tooling scripts (small, their own lint covers them), Svelte templates (no suitable analyzer). Split into three components with their own score and gate: `rust` (`crates/`, `fuzz/`), `android` (`apps/android/`), `web` (`apps/web`, `apps/e2e`, `packages/`). Target ≥ 9.5 per component; the repo total is informational (§7).
-
-### 2. Tools und Versionen, je Sprache
-
-Rust and TypeScript: ai-health v0.4.0 (commit `033d1867`), hash-locked dependencies (§0); clippy and ESLint stay linters only. Kotlin: ai-health with a Kotlin adapter (in progress, fork `ditschi/ai-health`); until then not scored, detekt at most as a transitional linter. Svelte: ESLint + sonarjs as a report (open). Superseded plan: TypeScript/Svelte: ESLint 10.15, typescript-eslint 8.74, eslint-plugin-sonarjs 4.2.2, eslint-plugin-svelte 3.24. All: web-tree-sitter 0.27 with tree-sitter-rust 0.24, tree-sitter-kotlin 0.3.8, tree-sitter-typescript 0.23 (structure pass), jscpd 5.x. Exact pins are set in task 1.1. Prototype only: lizard 1.26.1.
-
-### 3. Abgebildete Smells
-
-See §2 (table with the mapping to the CodeScene criteria). Not mapped: LCOM4 in phase 1 (Kotlin needs type resolution; phase 2 approximate), Svelte template complexity, CodeScene's behavioural metrics (change coupling, knowledge distribution).
-
-### 4. Schwellen, Gewichte und Score-Formel
-
-§2 (thresholds), §3 (weights, caps, formula), §7 (per-component overrides).
-
-### 5. Bedienung
-
-`just code-health [--component c] [--json] [--changed [base] | --staged] [--check] [--update-baseline]`. Table by default, JSON for agents. Measured tool times on the full tree: detekt 5 s, ESLint 5 s, clippy 60 s cold; the delta mode is expected to take a few seconds without Rust.
-
-### 6. Gate
-
-§4 (hook, CI `lint` job, ratchet baseline per component), §5 (suppressions only as `code-health:` comment with a reason).
-
-### 7. Ergebnis
-
-Before: prototype (§8) rust 5.30, android 7.55, web 8.89, total 6.97; ai-health trial rust 6.52 (default curve) / 4.23 (strict), TS in `apps/` 8.57, `packages/` 9.82. After: open.
-
-### 8. Skills
-
-Reviewed: see §9 and the owner shortlist. Adopted: open (owner decision pending).
-
-### 9. Erfahrungen
-
-ai-health replaced the own structure pass before it was built; its young age and unneeded web/MCP dependencies are the price. Earlier: rust-code-analysis is unmaintained (2023) and clippy's `excessive_nesting` counts `mod`/`impl` blocks, so Rust nesting needs an own pass; lizard counts Compose lambdas as nesting, so Kotlin needs detekt; ESLint and detekt each scan the whole component in about 5 s. Transferable: component split, ratchet with one line per file, suppression only with a reason. Project-specific: three ecosystems in one repo, safety-core traces as the refactoring safety net.
+Moved to [`docs/contributing/code-health.md`](../../../docs/contributing/code-health.md) (task 4.1), with the results of the `world.rs` refactor and the ai-health pin filled in.

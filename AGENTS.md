@@ -88,6 +88,7 @@ Per-package `AGENTS.md` files may exist later; they inherit this file and docume
 | Local dev                  | `just dev` (Vite 5173 + Rust signaling server 8787)                                                                                                                                                      |
 | Docker stack               | `just stack-lan` · `just stack-up`                                                                                                                                                                       |
 | Supply chain, secrets      | `just deny` · `just secrets` · `just audit`                                                                                                                                                              |
+| Code health                | `just code-health [--component c] [--json] [--changed [base] \| --staged] [--check]` (ai-health score per component; the gate runs inside `just lint-code`)                                              |
 | Server smoke test          | `just smoke` (built `guardedsleep-server` binary, hello + signal relay over a WebSocket)                                                                                                                 |
 | Check prerequisites        | `just doctor` (informational: mise tools, rustup, Docker, uv, Playwright, KVM, hooks, with a fix per missing item) · `just ci` ends with the list of SKIPPED tasks                                       |
 | Delta tests                | `just test-affected [base]` (tests for the changed paths only; `node scripts/lib/affected.mjs --dry-run` shows the plan)                                                                                 |
@@ -153,6 +154,11 @@ Core       Rust, sans-IO (core, relay): no I/O, threads or clocks; emits message
 
 - Next to the code: cargo test/nextest (+ proptest, insta, `guardedsleep-sim` scenarios), JUnit/Robolectric/Roborazzi, Vitest (logic only), Playwright with axe.
 - Device behaviour (Doze, FGS, alerts, recovery) is proven by the emulator gate before hardware tests. A test that flakes twice in seven days is quarantined with an issue.
+
+### 5.5 Code health
+
+- Run `just code-health --changed` before every commit; `just lint-code` fails on any degraded file or on a component score that drops by more than 0.01 against the merge base. **Fix the smell instead of suppressing it.**
+- Suppressions only file-wide, `aihealth: disable=<smell> -- <reason>` (at least 10 characters; without the `--` ai-health ignores them silently). Goal is score 10, the floor per component is 9.5; Kotlin is not scored yet. Details and fixes per smell: [`docs/contributing/code-health.md`](docs/contributing/code-health.md).
 
 ## 6. Documentation and decision conventions
 
