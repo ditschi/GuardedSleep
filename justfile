@@ -94,7 +94,7 @@ lint-code:
 # its defaults. Score per scanned path: `crates` (rust profile), `apps` and `packages` (web profile).
 # Code health (ai-health, docs/contributing/code-health.md); flags: `--component rust|web`, `--json` (one JSON object per path), `--changed [base]` (delta since the merge base, uncommitted files included; fails on degradation), `--staged`.
 [script("bash")]
-code-health *args: _code-health-setup
+code-health *args:
     set -euo pipefail
     source scripts/lib/require.sh
     ah=target/code-health/venv/bin/aihealth
@@ -104,7 +104,8 @@ code-health *args: _code-health-setup
     while [ $# -gt 0 ]; do
       case "$1" in
         --json) fmt=json ;;
-        --component) only="$2"; shift ;;
+        --component)
+          case "${2:-}" in rust | web) only="$2"; shift ;; *) echo "--component needs rust or web" >&2; exit 2 ;; esac ;;
         --changed) mode=changed; case "${2:-}" in "" | --*) ;; *) base="$2"; shift ;; esac ;;
         --staged) mode=staged ;;
         *) echo "unknown argument: $1" >&2; exit 2 ;;
@@ -161,12 +162,13 @@ _code-health-gate: _code-health-setup _code-health-suppressions
     base="$(git merge-base origin/main HEAD)"
     rm -rf target/code-health/base && mkdir -p target/code-health/base
     trap 'rm -rf target/code-health/base' EXIT
-    git archive "$base" crates apps packages | tar -x -C target/code-health/base
+    git archive "$base" crates apps/web apps/e2e packages | tar -x -C target/code-health/base
     rc=0
     for pp in crates:rust apps:web packages:web; do
       path="${pp%%:*}" cfg="tools/code-health/${pp##*:}.toml"
       "$ah" delta --base "$base" --config "$cfg" "$path" || rc=1
       before="$("$ah" scan "target/code-health/base/$path" --config "$cfg" | sed -n 's/^project score: \([0-9.]*\).*/\1/p')"
+      [ -n "$before" ] || { echo "FAILED: no project score for $path at the merge base" >&2; rc=1; continue; }
       min="$(awk -v b="$before" 'BEGIN { printf "%.2f", b - 0.01 }')"
       "$ah" scan "$path" --config "$cfg" --fail-under "$min" >/dev/null ||
         { echo "FAILED: $path scores below $min (merge base $before)" >&2; rc=1; }

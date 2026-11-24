@@ -6,8 +6,8 @@ GuardedSleep measures code structure with [ai-health](https://github.com/epatel/
 
 | Component | Paths                | Score today                               | Notes                                                                                                                   |
 | --------- | -------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `rust`    | `crates/`            | 4.66 (was 4.04 before the `world/` split) | Inline `#[cfg(test)]` modules count like production code (`score_test_modules`)                                         |
-| `web`     | `apps/`, `packages/` | 7.36 (LoC-weighted over both paths)       | TypeScript and JavaScript; Svelte templates and `<script>` blocks are not scored; `android/*`, `pkg/`, `dist/` excluded |
+| `rust`    | `crates/`            | 4.65 (was 4.04 before the `world/` split) | Inline `#[cfg(test)]` modules count like production code (`score_test_modules`)                                         |
+| `web`     | `apps/`, `packages/` | `apps` 7.30, `packages` 9.67 (separately) | TypeScript and JavaScript; Svelte templates and `<script>` blocks are not scored; `android/*`, `pkg/`, `dist/` excluded |
 | `android` | `apps/android/`      | not yet scored (Kotlin adapter pending)   | Waits for a Kotlin adapter in ai-health; nothing is built for Kotlin here                                               |
 
 Tests count: test code is scored like production code. Generated output, `target/`, `node_modules/` and shell scripts are out of scope.
@@ -99,7 +99,7 @@ Profile "strict" (see above) on ai-health's CodeScene-aligned defaults; weights 
 
 ### 7. Ergebnis
 
-Before: prototype rust 5.30, android 7.55, web 8.89, total 6.97; ai-health trial rust 6.52 (default curve) / 4.23 (strict), TS in `apps/` 8.57, `packages/` 9.82. Rust before 4.04, after 4.66 after the `world.rs` refactor: `guardedsleep-sim/src/world/` is 21 files that all score 10.0 except `synth.rs` (9.06, one cross-crate duplicate with `guardedsleep-core/tests/common/mod.rs` `colon_fp`). Web: `apps` 7.30, `packages` 9.67 (7.36 LoC-weighted over both). Android: not yet scored. Remaining hotspots are listed by `just code-health` (`link.rs` is the worst file at 1.02).
+Before: prototype rust 5.30, android 7.55, web 8.89, total 6.97; ai-health trial rust 6.52 (default curve) / 4.23 (strict), TS in `apps/` 8.57, `packages/` 9.82. Rust before 4.04, after 4.65 after the `world.rs` refactor: `guardedsleep-sim/src/world/` is 21 files that all score 10.0 except `synth.rs` (9.06, one cross-crate duplicate with `guardedsleep-core/tests/common/mod.rs` `colon_fp`). Web: `apps` 7.30, `packages` 9.67. Android: not yet scored. Remaining hotspots are listed by `just code-health` (`link.rs` is the worst file at 1.02).
 
 ### 8. Skills
 
