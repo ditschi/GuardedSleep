@@ -61,6 +61,15 @@ extend-exclude = [
   "pnpm-lock.yaml",
   "mise.lock",
   "LICENSES/**",
+  # Skills from skills.sh are kept verbatim (skills-lock.json); fix spelling upstream.
+  ".claude/skills/systematic-debugging/**",
+  ".claude/skills/verification-before-completion/**",
+  ".claude/skills/property-based-testing/**",
+  ".claude/skills/cargo-fuzz/**",
+  ".claude/skills/svelte-core-bestpractices/**",
+  ".claude/skills/compose-ui-testing-patterns/**",
+  ".claude/skills/android-intent-security/**",
+  ".claude/skills/android-permissions-security/**",
   "LICENSE",
   # Design mockups carry the German copy table next to the English one.
   "openspec/changes/**/mockup/**",

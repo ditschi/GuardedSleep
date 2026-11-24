@@ -45,6 +45,16 @@ Owner decision, relayed by the cross-repo coordination session; **pending confir
 - **Delta against the merge base in CI:** `aihealth delta --base "$(git merge-base origin/main HEAD)" --head HEAD`, with `fetch-depth: 0`. Against `origin/main` directly, a branch behind main would be charged with main's newer changes.
 - **Suppressions are file-wide only:** `// aihealth: disable=<smell> -- <reason>` (comment syntax per language). Without the `--` separator ai-health appends the text to the smell name and the suppression silently does not apply. A check in `just lint-code` and lefthook enforces a reason of at least 10 characters with the regex `aihealth:[ \t]*disable=(?![\w, \t]+-- .{10})`. This replaces the per-function `code-health:` comments of §5 for Rust and TypeScript.
 
+### Own logic that remains (owner principle "no extra logic", 2026-11-24)
+
+Everything else (per-file delta, tolerance 0, scoring, JSON, `--staged`) is ai-health itself, called from the `justfile`.
+
+1. Option parsing in `just code-health` (about 10 lines): `just` has no flag parsing.
+2. A loop over three path/profile pairs (`crates` rust, `apps` web, `packages` web): `aihealth scan` takes one path and one config.
+3. Component score comparison merge base → head (`git archive` of the base, `scan`, `scan --fail-under`): `aihealth delta` reports per-file scores only, so a drop through added or removed files is invisible to it.
+4. Setup (venv, hash-locked `uv pip sync`, `--no-deps` install, grammar pre-load): ai-health has no installer for a pinned commit with hashed dependencies and no grammar pre-load command.
+5. One `git grep -nP` for suppressions without a reason: ai-health silently ignores them.
+
 ### Installation and supply chain (own review, 2026-11-23)
 
 - Licence MIT; no telemetry and no network calls in ai-health's own code (`subprocess` only for git).
