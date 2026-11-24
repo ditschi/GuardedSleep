@@ -65,7 +65,10 @@ SPDX-License-Identifier = "MIT"
 # Agent skills installed from skills.sh (`npx skills add`, pinned in skills-lock.json). Copied verbatim from
 # their upstream repositories; update with `npx skills update`, do not edit.
 [[annotations]]
-path = [".claude/skills/systematic-debugging/**", ".claude/skills/verification-before-completion/**"]
+path = [
+  ".claude/skills/systematic-debugging/**",
+  ".claude/skills/verification-before-completion/**",
+]
 precedence = "override"
 SPDX-FileCopyrightText = "2025 Jesse Vincent (https://github.com/obra/superpowers)"
 SPDX-License-Identifier = "MIT"
@@ -89,7 +92,10 @@ SPDX-FileCopyrightText = "Chris Banes (https://github.com/chrisbanes/skills)"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = [".claude/skills/android-intent-security/**", ".claude/skills/android-permissions-security/**"]
+path = [
+  ".claude/skills/android-intent-security/**",
+  ".claude/skills/android-permissions-security/**",
+]
 precedence = "override"
 SPDX-FileCopyrightText = "The Android Open Source Project (https://github.com/android/skills)"
 SPDX-License-Identifier = "Apache-2.0"
