@@ -95,4 +95,8 @@ impl World {
             }
         }
     }
+
+    pub(super) fn verb_clear_faults(&mut self, _st: &Step) {
+        self.faults.clear();
+    }
 }

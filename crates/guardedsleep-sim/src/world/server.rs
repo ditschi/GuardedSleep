@@ -126,7 +126,7 @@ impl World {
             return;
         };
         if c.joined {
-            self.broadcast_members(&c.key);
+            self.broadcast_members(&RoomKey::new(c.key.clone()));
         }
         if let Some(a) = self.attached_actor(&c, sock) {
             self.queue_to_client(a, sock, ToClient::Closed);

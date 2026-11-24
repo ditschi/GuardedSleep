@@ -31,13 +31,18 @@ impl World {
 
     /// The first input of a live `Link` opens its trace record.
     fn start_recording(&mut self, a: ActorIx) {
-        let ac = &self.actors[a];
-        if !self.record || ac.rec.is_some() || ac.link.is_none() {
+        if !self.should_record(a) {
             return;
         }
+        let ac = &self.actors[a];
         self.recs
             .push(TraceRec::new(&ac.name, ac.instance, ac.cfg.clone()));
         self.actors[a].rec = Some(self.recs.len() - 1);
+    }
+
+    fn should_record(&self, a: ActorIx) -> bool {
+        let ac = &self.actors[a];
+        self.record && ac.rec.is_none() && ac.link.is_some()
     }
 
     fn record_step(&mut self, a: ActorIx, input: Option<LinkInput>, actions: &[LinkAction]) {
@@ -103,10 +108,10 @@ impl World {
             } => self.create_attempt(PcRef::new(a, attempt.into()), ice_servers),
             LinkAction::CloseAttempt { attempt } => self.close_attempt(a, attempt.into()),
             LinkAction::CreateOffer { attempt } => {
-                self.schedule_local_desc(PcRef::new(a, attempt.into()), "offer");
+                self.schedule_local_desc(PcRef::new(a, attempt.into()), SdpKind::Offer);
             }
             LinkAction::CreateAnswer { attempt } => {
-                self.schedule_local_desc(PcRef::new(a, attempt.into()), "answer");
+                self.schedule_local_desc(PcRef::new(a, attempt.into()), SdpKind::Answer);
             }
             LinkAction::SetRemoteDescription { attempt, sdp, .. } => {
                 self.set_remote(a, attempt, &sdp);
@@ -130,9 +135,9 @@ impl World {
         self.new_pc(a, pc.handle);
     }
 
-    fn schedule_local_desc(&mut self, pc: PcRef, sdp_type: &'static str) {
+    fn schedule_local_desc(&mut self, pc: PcRef, kind: SdpKind) {
         let d = self.rng.range(5, 30);
-        self.push(self.now + d, 2, PeerEv::LocalDesc { pc, sdp_type });
+        self.push(self.now + d, 2, PeerEv::LocalDesc { pc, kind });
     }
 
     /// The fake platform of talk-back: a healthy one. The chime takes 600 ms, the microphone
@@ -181,5 +186,25 @@ impl World {
             ev: serde_json::to_value(&event).unwrap_or(Value::Null),
             since_contact: since,
         });
+    }
+
+    pub(crate) fn schedule_raw_tick(&mut self, actor: impl Into<ActorIx>, delay: u64) {
+        let actor = actor.into();
+        self.push(self.now + delay, 3, ActorEv::RawTick { actor });
+    }
+
+    pub(crate) fn schedule_raw_act(&mut self, actor: impl Into<ActorIx>, delay: u64) {
+        let actor = actor.into();
+        self.push(self.now + delay, 3, ActorEv::RawAct { actor });
+    }
+
+    pub(crate) fn add_raw_actor(&mut self, name: &str, role: Role, raw: RawState) -> usize {
+        let seed = link_seed(self.seed, name, 0);
+        let cfg = LinkConfig::with_defaults(role, encode_psk(&synthetic_psk("A")), &seed);
+        let room = raw.room.clone();
+        let mut a = Actor::new(name, role, cfg, room);
+        a.raw = Some(raw);
+        self.actors.push(a);
+        self.actors.len() - 1
     }
 }

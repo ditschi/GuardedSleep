@@ -22,7 +22,9 @@ impl World {
     pub(super) fn rewrite_sdp(&mut self, psk: Option<&[u8]>, mut payload: Value) -> Value {
         let mitm = self.fresh_fp();
         match psk {
-            Some(psk) if payload.get("env").is_some() => self.rewrite_sealed(psk, payload, &mitm),
+            Some(psk) if payload.get("env").is_some() => {
+                self.rewrite_sealed(psk, payload, |m| confuse_in_place(m, &mitm))
+            }
             _ => {
                 confuse_in_place(&mut payload, &mitm);
                 payload
@@ -30,7 +32,12 @@ impl World {
         }
     }
 
-    fn rewrite_sealed(&mut self, psk: &[u8], payload: Value, mitm: &str) -> Value {
+    fn rewrite_sealed(
+        &mut self,
+        psk: &[u8],
+        payload: Value,
+        confuse: impl FnOnce(&mut Value),
+    ) -> Value {
         let mut nonce = [0u8; 24];
         for chunk in nonce.chunks_mut(8) {
             chunk.copy_from_slice(&self.rng.next_u64().to_le_bytes()[..chunk.len()]);
@@ -42,7 +49,7 @@ impl World {
         if let Some(original) = nonce_of(&payload).filter(|_| recompute) {
             nonce = original;
         }
-        let rewritten = rewrite_message(psk, &payload, nonce, |m| confuse_in_place(m, mitm));
+        let rewritten = rewrite_message(psk, &payload, nonce, confuse);
         rewritten.unwrap_or(payload)
     }
 
@@ -125,5 +132,16 @@ impl World {
         };
         self.server.conns.insert(sock, Conn::ghost(seat));
         self.broadcast_members(&key);
+    }
+
+    pub(crate) fn fresh_fp(&mut self) -> String {
+        self.fp_seq += 1;
+        synthetic_fp(self.fp_seq)
+    }
+
+    /// The relay turns hostile (or honest again) at run time: `mode` is an `sdp_rewrite` value,
+    /// absent for honest.
+    pub(super) fn verb_relay_rewrite(&mut self, st: &Step) {
+        self.relay.sdp_rewrite = st.mode.clone();
     }
 }

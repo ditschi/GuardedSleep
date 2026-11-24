@@ -50,14 +50,31 @@ pub(super) enum RelayEv {
     /// Half-TTL renewal of the ICE servers of the room `key` on relay `srv`.
     IceRenew {
         srv: usize,
-        key: String,
+        key: RoomKey,
     },
+}
+
+/// Which local description a connection produces.
+#[derive(Debug, Clone, Copy)]
+pub(super) enum SdpKind {
+    Offer,
+    Answer,
+}
+
+impl SdpKind {
+    /// The `type` the core expects in `AttemptLocalDescription`.
+    pub(super) fn as_str(self) -> &'static str {
+        match self {
+            SdpKind::Offer => "offer",
+            SdpKind::Answer => "answer",
+        }
+    }
 }
 
 /// Events of the simulated media layer.
 #[derive(Debug, Clone)]
 pub(super) enum PeerEv {
-    LocalDesc { pc: PcRef, sdp_type: &'static str },
+    LocalDesc { pc: PcRef, kind: SdpKind },
     PcConnect { ends: [PcRef; 2], since: Time },
     Data { to: PcRef, text: String },
     DataClosed { to: PcRef },

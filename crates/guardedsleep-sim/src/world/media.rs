@@ -5,7 +5,7 @@ use super::*;
 impl World {
     pub(super) fn dispatch_peer(&mut self, ev: PeerEv) {
         match ev {
-            PeerEv::LocalDesc { pc, sdp_type } => self.on_local_desc(pc, sdp_type),
+            PeerEv::LocalDesc { pc, kind } => self.on_local_desc(pc, kind),
             PeerEv::PcConnect { ends, since } => self.on_pc_connect(ends, since),
             PeerEv::Data { to, text } => self.on_data(to, text),
             PeerEv::DataClosed { to } => self.on_data_closed(to),

@@ -8,7 +8,7 @@ type VerbFn = fn(&mut World, &Step);
 /// The verbs of a `gs-scenario/1` timeline. A table instead of a `match`: a new verb is one row and
 /// one method.
 const VERBS: &[(&str, VerbFn)] = &[
-    ("end", World::verb_end),
+    ("end", |_, _| {}),
     ("start", World::verb_start),
     ("stop", World::verb_stop),
     ("acknowledge", World::verb_acknowledge),
@@ -47,8 +47,6 @@ impl World {
                 .push(format!("unknown timeline verb `{}`", st.verb)),
         }
     }
-
-    fn verb_end(&mut self, _st: &Step) {}
 
     fn verb_start(&mut self, st: &Step) {
         let targets: Vec<ActorIx> = match &st.peer {
@@ -132,33 +130,6 @@ impl World {
         self.push(self.now + gap, 3, ActorEv::PathBack { actor: a });
     }
 
-    /// Runs `apply` once per relay the step addresses, with that relay selected.
-    fn on_targeted_servers(&mut self, st: &Step, mut apply: impl FnMut(&mut World)) {
-        for srv in self.targeted_servers(st) {
-            self.select_server(srv);
-            apply(self);
-        }
-    }
-
-    fn verb_signaling_down(&mut self, st: &Step) {
-        self.on_targeted_servers(st, World::signaling_down);
-    }
-
-    fn verb_signaling_up(&mut self, st: &Step) {
-        self.on_targeted_servers(st, |w| {
-            w.server.up = true;
-            w.server.sweep_gen += 1;
-            let (r#gen, srv) = (w.server.sweep_gen, w.cur_server);
-            w.push(w.now + SWEEP_MS, 3, RelayEv::Sweep { r#gen, srv });
-        });
-    }
-
-    /// A relay that stays up, answers pings and takes frames, but delivers no `signal`.
-    fn verb_relay_drop_signals(&mut self, st: &Step) {
-        let on = st.mode.as_deref() != Some("off");
-        self.on_targeted_servers(st, |w| w.server.drop_signals = on);
-    }
-
     /// `kill_process` and `stranger_leave`: the process dies, nobody is told.
     fn verb_kill_process(&mut self, st: &Step) {
         if let Some(a) = self.peer_ix(st) {
@@ -174,64 +145,5 @@ impl World {
         self.actors[a].pending_mailboxes = st.mailboxes.clone();
         let after = st.after_ms.unwrap_or(0);
         self.push(self.now + after, 2, ActorEv::Restart { actor: a });
-    }
-
-    fn verb_clear_faults(&mut self, _st: &Step) {
-        self.faults.clear();
-    }
-
-    /// The relay turns hostile (or honest again) at run time: `mode` is an `sdp_rewrite` value,
-    /// absent for honest.
-    fn verb_relay_rewrite(&mut self, st: &Step) {
-        self.relay.sdp_rewrite = st.mode.clone();
-    }
-
-    fn verb_reject_hello(&mut self, st: &Step) {
-        let for_ms = st.for_ms.unwrap_or(u64::MAX - self.now);
-        let until = self.now.saturating_add(for_ms);
-        self.on_targeted_servers(st, |w| w.server.reject_hello_until = until);
-    }
-
-    /// A wall-clock jump of `ms` (the device slept): queued events move along, the health clocks
-    /// of connections too, and the time stands `ms` later.
-    fn time_jump(&mut self, st: &Step) {
-        let ms = st.ms.unwrap_or(0);
-        self.shift_queue(ms);
-        self.shift_clocks(ms);
-        self.now += ms;
-        if st.peer_traffic.as_deref() == Some("kept") {
-            self.wake_heartbeats();
-        }
-    }
-
-    fn shift_queue(&mut self, ms: u64) {
-        for ((t, p, s), ev) in std::mem::take(&mut self.q) {
-            let (delay, ev) = ev.shifted(ms);
-            self.q.insert((t + delay, p, s), ev);
-        }
-    }
-
-    fn shift_clocks(&mut self, ms: u64) {
-        for v in self.fifo.values_mut() {
-            *v += ms;
-        }
-        let pcs = self.actors.iter_mut().flat_map(|a| a.pcs.values_mut());
-        for since in pcs.filter_map(|pc| pc.unhealthy_since.as_mut()) {
-            *since += ms;
-        }
-    }
-
-    /// At wake-up one heartbeat reaches every link that is up (`peer_traffic: kept`).
-    fn wake_heartbeats(&mut self) {
-        let linked = |a: &Actor| a.link.is_some();
-        let live: Vec<PcRef> = self
-            .up_pcs()
-            .into_iter()
-            .filter(|pc| linked(&self.actors[pc.actor]))
-            .collect();
-        for to in live {
-            let text = json!({"type":"heartbeat","v":3,"t":0,"seq":1_000_000}).to_string();
-            self.push(self.now, 0, PeerEv::Data { to, text });
-        }
     }
 }

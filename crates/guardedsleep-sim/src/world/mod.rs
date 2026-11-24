@@ -32,21 +32,28 @@ mod client;
 mod driver;
 mod events;
 mod faults;
-mod hooks;
 mod hostile;
 mod ids;
 mod media;
 mod model;
+mod pc;
 mod peer;
+mod relay_verbs;
 mod room;
+mod sdp;
 mod server;
+mod signal;
 mod steps;
 mod synth;
+mod timejump;
 
-use self::events::{ActorEv, Ev, PeerEv, RelayEv};
+use self::events::{ActorEv, Ev, PeerEv, RelayEv, SdpKind};
 use self::ids::{ActorIx, PcHandle, PcRef, SockIx};
-pub use self::model::{Actor, EvRec, Pc, ToClient, Via};
-use self::model::{Conn, Delivery, Fault, FaultKind, Flow, Frame, Seat, Server, SockOwner};
+pub use self::model::{Actor, EvRec, ToClient, Via};
+use self::model::{
+    Conn, Delivery, Fault, FaultKind, Flow, Frame, RoomKey, Seat, Server, SockOwner,
+};
+pub use self::pc::Pc;
 pub use self::synth::{
     SYNTH_FP_PREFIX_HEX, SYNTH_PSK_PREFIX, SYNTH_SEED_PREFIX, colon_upper, synthetic_psk,
 };

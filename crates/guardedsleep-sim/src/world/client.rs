@@ -208,4 +208,26 @@ impl World {
             }
         }
     }
+
+    pub(super) fn actor_psk(&self, a: ActorIx) -> Option<Vec<u8>> {
+        decode_psk(&self.actors[a].cfg.psk_b64url)
+    }
+
+    /// What a frame `a` sent is, for the "sent_signal" assertions: the frame type, or for a relay
+    /// `signal` the type of the message inside (read with the sender's PSK when it is sealed).
+    pub(super) fn signal_type_for(&self, a: ActorIx, text: &str) -> Option<String> {
+        let v: Value = serde_json::from_str(text).ok()?;
+        let t = v["type"].as_str()?;
+        if t != "signal" {
+            return Some(t.to_owned());
+        }
+        let payload = &v["payload"];
+        if payload.get("env").is_some() {
+            let psk = self.actor_psk(a)?;
+            return decode_message(&psk, payload)?["type"]
+                .as_str()
+                .map(str::to_owned);
+        }
+        payload["type"].as_str().map(str::to_owned)
+    }
 }
