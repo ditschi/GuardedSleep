@@ -34,5 +34,11 @@ pre-commit:
 
     - name: code-health
       glob: "*.{rs,ts,tsx,js,mjs}"
-      # Delta of the index against HEAD per component; skips quietly before `just setup`.
-      run: scripts/lib/hook.sh scripts/lib/code-health.sh staged --check
+      # Delta of the index against HEAD per scanned path; skips quietly before `just setup`.
+      run: >
+        if [ -x target/code-health/venv/bin/aihealth ]; then scripts/lib/hook.sh just code-health --staged;
+        else echo "code-health skipped: run 'just setup' to install ai-health"; fi
+
+    - name: code-health-suppressions
+      # A suppression without a reason is ignored by ai-health without a word.
+      run: scripts/lib/hook.sh just _code-health-suppressions

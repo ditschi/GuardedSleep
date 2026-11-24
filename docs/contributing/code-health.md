@@ -30,17 +30,16 @@ All other thresholds are ai-health's defaults, which follow CodeScene: cyclomati
 
 ## Commands
 
-| Command                             | Effect                                                                                                                               |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `just setup`                        | Builds the venv `target/code-health/venv` (hash-locked, `uv pip sync --require-hashes`) and pre-loads the grammars; skips without uv |
-| `just code-health`                  | Score per component plus the `android` line                                                                                          |
-| `just code-health --component rust` | One component                                                                                                                        |
-| `just code-health --json`           | JSON for agents (one object per scanned path, with a `component` key)                                                                |
-| `just code-health --changed [base]` | Delta of the branch since the merge base with `base` (default `origin/main`), uncommitted files included                             |
-| `just code-health --staged`         | Delta of the index (what the hook runs)                                                                                              |
-| `just code-health --check`          | The gate: with `--changed`/`--staged` it fails on any degradation                                                                    |
+| Command                             | Effect                                                                                                                                                             |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `just setup`                        | Builds the venv `target/code-health/venv` (hash-locked `uv pip sync --require-hashes`, ai-health from its commit pin) and pre-loads the grammars; skips without uv |
+| `just code-health`                  | ai-health score per scanned path (`crates`, `apps`, `packages`, each with the tool's own project score) plus the `android` line                                    |
+| `just code-health --component rust` | One component (`rust` = `crates`, `web` = `apps` and `packages`)                                                                                                   |
+| `just code-health --json`           | `aihealth scan --format json`, one JSON object per path (a single object with `--component rust`)                                                                  |
+| `just code-health --changed [base]` | `aihealth delta` since the merge base with `base` (default `origin/main`), uncommitted files included; exits non-zero on degradation                               |
+| `just code-health --staged`         | `aihealth delta --staged` (what the hook runs)                                                                                                                     |
 
-The gate (`scripts/lib/code-health.sh check origin/main`, run by `just lint-code`) does three things: `aihealth delta` per component against `git merge-base origin/main HEAD`; a comparison of each component's scan score at the merge base and at head (a drop above 0.01 fails; the base tree comes from `git archive`); and the suppression check. The lefthook job `code-health` runs the staged delta and skips quietly before `just setup`. CI needs `fetch-depth: 0` for the merge base and caches `~/.cache/tree-sitter-language-pack`; the grammars are downloaded once at setup (tree-sitter-language-pack checks their SHA-256) and everything runs offline afterwards.
+The gate is `just lint-code` (recipe `_code-health-gate`): `aihealth delta` per path against `git merge-base origin/main HEAD` (tolerance 0 from the profiles), then the project score of each path must not fall more than 0.01 below its score at the merge base (`delta` reports file scores only, so the base tree is extracted with `git archive` and scanned), then the suppression check. The lefthook jobs `code-health` (staged delta, skips quietly before `just setup`) and `code-health-suppressions` run the same pieces. CI needs `fetch-depth: 0` for the merge base and caches `~/.cache/tree-sitter-language-pack`; the grammars are downloaded once at setup (tree-sitter-language-pack checks their SHA-256) and everything runs offline afterwards.
 
 Updating ai-health is a manual step (Renovate cannot bump a git commit): change the commit in `tools/code-health/aihealth.in`, recompile the lock with `uv pip compile --generate-hashes`, read the upstream changelog, because scores move between releases.
 
@@ -66,6 +65,8 @@ Without the `--` separator ai-health silently does not apply the suppression, so
 - **Code Duplication:** extract the shared logic; in tests a helper or builder, also across crates and files.
 - **Low Cohesion:** split the type into parts that share state.
 
+Never dodge a finding without fixing its cause: do not remove or weaken type annotations (no `any`, no dropped types), add purely cosmetic type aliases, or move code into other files or modules only to fall below a check's minimum (for example fewer than 10 typed parameters so Primitive Obsession is skipped). A real fix is a parameter object, newtype or struct that improves the code; otherwise the finding stays for now, with a reasoned file-wide suppression.
+
 Behaviour stays unchanged in refactorings: conformance vectors and traces must not change, and the tests of the area run per step.
 
 ## Steckbrief Code Health
@@ -90,15 +91,15 @@ Profile "strict" (see above) on ai-health's CodeScene-aligned defaults; weights 
 
 ### 5. Bedienung
 
-`just code-health [--component c] [--json] [--changed [base] | --staged] [--check]`. Table by default, JSON for agents. A full scan of both components takes about 25 s, the delta a few seconds.
+`just code-health [--component c] [--json] [--changed [base] | --staged]`. Text by default, JSON for agents. A full scan takes about 25 s, the delta a few seconds.
 
 ### 6. Gate
 
-`just lint-code` (CI job `lint`): delta against the merge base per component, component score no lower than 0.01 below the merge base, suppression check; lefthook runs the staged delta. Suppressions only file-wide with a reason.
+`just lint-code` (CI job `lint`): delta against the merge base per component, project score per path no lower than 0.01 below the merge base, suppression check; lefthook runs the staged delta. Suppressions only file-wide with a reason.
 
 ### 7. Ergebnis
 
-Before: prototype rust 5.30, android 7.55, web 8.89, total 6.97; ai-health trial rust 6.52 (default curve) / 4.23 (strict), TS in `apps/` 8.57, `packages/` 9.82. Rust before 4.04, after 4.66 after the `world.rs` refactor: `guardedsleep-sim/src/world/` is 21 files that all score 10.0 except `synth.rs` (9.06, one cross-crate duplicate with `guardedsleep-core/tests/common/mod.rs` `colon_fp`). Web 7.36. Android: not yet scored. Remaining hotspots are listed by `just code-health` (`link.rs` is the worst file at 1.02).
+Before: prototype rust 5.30, android 7.55, web 8.89, total 6.97; ai-health trial rust 6.52 (default curve) / 4.23 (strict), TS in `apps/` 8.57, `packages/` 9.82. Rust before 4.04, after 4.66 after the `world.rs` refactor: `guardedsleep-sim/src/world/` is 21 files that all score 10.0 except `synth.rs` (9.06, one cross-crate duplicate with `guardedsleep-core/tests/common/mod.rs` `colon_fp`). Web: `apps` 7.30, `packages` 9.67 (7.36 LoC-weighted over both). Android: not yet scored. Remaining hotspots are listed by `just code-health` (`link.rs` is the worst file at 1.02).
 
 ### 8. Skills
 
