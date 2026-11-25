@@ -88,6 +88,7 @@ Per-package `AGENTS.md` files may exist later; they inherit this file and docume
 | Local dev                  | `just dev` (Vite 5173 + Rust signaling server 8787)                                                                                                                                                      |
 | Docker stack               | `just stack-lan` · `just stack-up`                                                                                                                                                                       |
 | Supply chain, secrets      | `just deny` · `just secrets` · `just audit`                                                                                                                                                              |
+| Code health                | `just code-health [--component c] [--json] [--changed [base] \| --staged]` (ai-health score per scanned path; the gate runs inside `just lint-code`)                                                     |
 | Server smoke test          | `just smoke` (built `guardedsleep-server` binary, hello + signal relay over a WebSocket)                                                                                                                 |
 | Check prerequisites        | `just doctor` (informational: mise tools, rustup, Docker, uv, Playwright, KVM, hooks, with a fix per missing item) · `just ci` ends with the list of SKIPPED tasks                                       |
 | Delta tests                | `just test-affected [base]` (tests for the changed paths only; `node scripts/lib/affected.mjs --dry-run` shows the plan)                                                                                 |
@@ -153,6 +154,11 @@ Core       Rust, sans-IO (core, relay): no I/O, threads or clocks; emits message
 
 - Next to the code: cargo test/nextest (+ proptest, insta, `guardedsleep-sim` scenarios), JUnit/Robolectric/Roborazzi, Vitest (logic only), Playwright with axe.
 - Device behaviour (Doze, FGS, alerts, recovery) is proven by the emulator gate before hardware tests. A test that flakes twice in seven days is quarantined with an issue.
+
+### 5.5 Code health
+
+- Run `just code-health --changed` before every commit; `just lint-code` fails on any degraded file or on a project score that drops by more than 0.01 against the merge base. **Fix the smell instead of suppressing it.**
+- Suppressions only file-wide, `aihealth: disable=<smell> -- <reason>` (at least 10 characters; without the `--` ai-health ignores them silently). Never remove or weaken type annotations (no `any`, no dropped types), add cosmetic type aliases or move code into other files only to get under a check's minimum (for example fewer than 10 typed parameters); fix it with a parameter object, newtype or struct, or keep the finding with a reasoned file-wide suppression. Goal is score 10, the floor per component is 9.5; Kotlin is not scored yet. Details and fixes per smell: [`docs/contributing/code-health.md`](docs/contributing/code-health.md).
 
 ## 6. Documentation and decision conventions
 
@@ -222,6 +228,7 @@ When in doubt, read the matching spec in `openspec/specs/` and the backlog entry
 - **Model routing (plan strong, implement cheap):** the session model does planning, architecture, OpenSpec proposals, role reviews and final verification. **Implementation is delegated** to the `implementer` sub-agent ([`.claude/agents/implementer.md`](.claude/agents/implementer.md), Sonnet); this rule is the user's standing request to spawn it. Hand over a self-contained brief (goal, files, layer rules, acceptance checks); the planner reviews the diff and runs lint/tests. Exceptions: trivial one-line edits and docs/ADR wording stay with the planner.
 - **Cleanup pass (per task):** after implementation and green checks, before the final commit/PR, the planner runs [`refactor-scout`](.claude/agents/refactor-scout.md) in diff mode against `origin/main`; accepted findings go to the `implementer`, then re-run checks. Once per task; skip for docs-only, config-only or diffs under ~50 changed code lines.
 - **Refactor sweep (weekly):** the [`refactor-sweep`](.claude/skills/refactor-sweep/SKILL.md) procedure: the scout proposes up to 5 behavior-preserving improvements, the planner triages, the `implementer` works each in its own worktree off `origin/main`, the planner verifies and opens one **draft PR** per finding (label `refactor-sweep`, max 3 open). Needs-an-ADR items are reported, not implemented. Sweeps never merge or push to `main`.
+- **Installed skills (`.claude/skills`, from skills.sh, pinned in `skills-lock.json`):** repository rules win over skill advice: tools come from mise/`just` (no `cargo install`, no raw `./gradlew`), UI tests select by stable `testTag`/test ids, no new dependencies without the PR justification (§5.2).
 - **Cross-IDE etiquette:** tool-specific files complement, never replace, this file; mirror their intent here.
 
 ### 10.1 Machine load and parallel agents

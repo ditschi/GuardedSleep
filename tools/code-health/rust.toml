@@ -1,0 +1,32 @@
+# ai-health profile for the `rust` component (crates/). Owner-confirmed "strict" profile, 2026-11-23
+# (openspec/changes/add-code-health/design.md §0). Always passed with `--config`: without it ai-health
+# reads <path>/.aihealth.toml and silently falls back to its defaults.
+# Keys and defaults: aihealth/config.py of ai-health v0.4.0 (commit 033d1867).
+
+[thresholds]
+# Code lines per file before Large File triggers (CodeScene default for Rust and TypeScript).
+large_file = 1000
+# Share of primitive-typed parameters per file (CodeScene default 30 %; ai-health default 0.6).
+primitive_obsession = 0.3
+
+[score]
+# Score falls faster with smell severity than ai-health's default curve (15).
+decay = 8
+symbol_cap = 4
+# No relief for large files through finding density (default 300 code lines).
+density_loc = 100000
+
+[delta]
+# Any score drop of a changed file fails the delta (default 0.1).
+tolerance = 0.0
+
+[scan]
+# Integration tests (`crates/*/tests`) are scored with rust-tests.toml (Primitive Obsession off in test
+# code, owner decision 2026-11-24); the JavaScript conformance test likewise is test code.
+exclude = ["tests/*", "*.test.mjs"]
+
+[rust]
+# Inline `#[cfg(test)] mod tests` are scored with the file's profile, Primitive Obsession included:
+# ai-health applies one config per file (owner decision 2026-11-24; path-scoped overrides requested
+# upstream in epatel/ai-health#4). ai-health leaves them out by default.
+score_test_modules = true

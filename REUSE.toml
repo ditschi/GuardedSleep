@@ -62,6 +62,44 @@ precedence = "override"
 SPDX-FileCopyrightText = "2024 OpenSpec Contributors"
 SPDX-License-Identifier = "MIT"
 
+# Agent skills installed from skills.sh (`npx skills add`, pinned in skills-lock.json). Copied verbatim from
+# their upstream repositories; update with `npx skills update`, do not edit.
+[[annotations]]
+path = [
+  ".claude/skills/systematic-debugging/**",
+  ".claude/skills/verification-before-completion/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2025 Jesse Vincent (https://github.com/obra/superpowers)"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = [".claude/skills/property-based-testing/**", ".claude/skills/cargo-fuzz/**"]
+precedence = "override"
+SPDX-FileCopyrightText = "Trail of Bits (https://github.com/trailofbits/skills)"
+SPDX-License-Identifier = "CC-BY-SA-4.0"
+
+[[annotations]]
+path = [".claude/skills/svelte-core-bestpractices/**"]
+precedence = "override"
+SPDX-FileCopyrightText = "Svelte contributors (https://github.com/sveltejs/ai-tools)"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = [".claude/skills/compose-ui-testing-patterns/**"]
+precedence = "override"
+SPDX-FileCopyrightText = "Chris Banes (https://github.com/chrisbanes/skills)"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  ".claude/skills/android-intent-security/**",
+  ".claude/skills/android-permissions-security/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "The Android Open Source Project (https://github.com/android/skills)"
+SPDX-License-Identifier = "Apache-2.0"
+
 # Bundled typeface: Plus Jakarta Sans (SIL OFL 1.1), subsets and instances of the upstream variable
 # font. Provenance, URLs, commit and hashes: apps/web/src/assets/fonts/README.md.
 [[annotations]]

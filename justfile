@@ -36,6 +36,8 @@ setup:
       fi
     done
     mise exec -- lefthook install
+    # ai-health venv and grammars for `just code-health` and the lint gate; skips without uv.
+    just _code-health-setup
 # Lists the prerequisites of the recipes (mise tools, rustup, Docker, uv, Playwright browser, KVM, Android SDK, git hooks) with a fix for each missing one. Informational, always exits 0.
 doctor:
     scripts/doctor.sh
@@ -88,8 +90,95 @@ lint-workflows:
 lint-code:
     scripts/lib/slot.sh medium -- just _lint-code
 
+# `--config` is always passed to ai-health: without it ai-health silently reads <path>/.aihealth.toml or
+# its defaults. Score per scanned path and profile: `crates` (rust, rust-tests), `apps` (web), `apps/e2e`
+# (web-tests), `packages` (web); test profiles switch Primitive Obsession off.
+# Code health (ai-health, docs/contributing/code-health.md); flags: `--component rust|web`, `--json` (one JSON object per path), `--changed [base]` (delta since the merge base, uncommitted files included; fails on degradation), `--staged`.
+[script("bash")]
+code-health *args:
+    set -euo pipefail
+    source scripts/lib/require.sh
+    ah=target/code-health/venv/bin/aihealth
+    [ -x "$ah" ] || gs_unmet code-health "the ai-health venv (run 'just setup')"
+    set -- {{ args }}
+    mode=scan fmt=text base=origin/main only=""
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --json) fmt=json ;;
+        --component)
+          case "${2:-}" in rust | web) only="$2"; shift ;; *) echo "--component needs rust or web" >&2; exit 2 ;; esac ;;
+        --changed) mode=changed; case "${2:-}" in "" | --*) ;; *) base="$2"; shift ;; esac ;;
+        --staged) mode=staged ;;
+        *) echo "unknown argument: $1" >&2; exit 2 ;;
+      esac
+      shift
+    done
+    rc=0
+    for pp in crates:rust crates:rust-tests apps:web apps/e2e:web-tests packages:web; do
+      path="${pp%%:*}" profile="${pp##*:}"
+      [ -z "$only" ] || [ "$only" = "${profile%-tests}" ] || continue
+      cfg="tools/code-health/$profile.toml"
+      [ "$fmt" = json ] || echo "== $path ($profile profile) =="
+      case "$mode" in
+        scan) "$ah" scan "$path" --config "$cfg" --format "$fmt" --top 5 ;;
+        changed) "$ah" delta --base "$(git merge-base "$base" HEAD)" --config "$cfg" --format "$fmt" "$path" || rc=1 ;;
+        staged) "$ah" delta --staged --config "$cfg" --format "$fmt" "$path" || rc=1 ;;
+      esac
+    done
+    [ "$fmt" = json ] || [ -n "$only" ] || echo "android: not yet scored (Kotlin adapter pending)"
+    exit "$rc"
+
+# ai-health in target/code-health/venv: every PyPI dependency from the hash lock, ai-health itself from its
+# commit pin without dependencies (a git requirement cannot carry a hash), then the tree-sitter grammars
+# (downloaded once, SHA-256 checked, offline afterwards). All steps are idempotent and take about a second
+# when nothing changed. https://docs.astral.sh/uv/pip/compile/#including-hashes
+[private]
+[script("bash")]
+_code-health-setup:
+    set -euo pipefail
+    source scripts/lib/require.sh
+    command -v uv >/dev/null 2>&1 || gs_unmet code-health uv
+    py=target/code-health/venv/bin/python
+    [ -x "$py" ] || uv venv --python 3.12 target/code-health/venv
+    uv pip sync --python "$py" --require-hashes tools/code-health/aihealth.lock.txt
+    uv pip install --python "$py" --no-deps -r tools/code-health/aihealth.in
+    "$py" -c "from tree_sitter_language_pack import download; download(['rust', 'typescript', 'tsx', 'javascript'])"
+
+# ai-health ignores a suppression without " -- <reason>" silently, so a bare marker would pass unnoticed.
+# The syntax is documented in docs/ and openspec/, hence the excluded paths.
+[private]
+_code-health-suppressions:
+    ! git grep -nP 'aihealth:[ \t]*disable=(?![\w, \t]+-- .{10})' -- . ':!openspec' ':!docs' ':!*.md' ':!.claude' ':!justfile'
+
+# The gate of `just lint-code`: delta per scanned path against the merge base with origin/main, and the
+# project score of each path must not fall more than 0.01 below the merge base (owner decision; `delta`
+# reports file scores only, so the base tree is scanned from `git archive`).
+[private]
+[script("bash")]
+_code-health-gate: _code-health-setup _code-health-suppressions
+    set -euo pipefail
+    source scripts/lib/require.sh
+    ah=target/code-health/venv/bin/aihealth
+    [ -x "$ah" ] || gs_unmet code-health "the ai-health venv (run 'just setup')"
+    base="$(git merge-base origin/main HEAD)"
+    rm -rf target/code-health/base && mkdir -p target/code-health/base
+    trap 'rm -rf target/code-health/base' EXIT
+    git archive "$base" crates apps/web apps/e2e packages | tar -x -C target/code-health/base
+    rc=0
+    for pp in crates:rust crates:rust-tests apps:web apps/e2e:web-tests packages:web; do
+      path="${pp%%:*}" cfg="tools/code-health/${pp##*:}.toml"
+      "$ah" delta --base "$base" --config "$cfg" "$path" || rc=1
+      before="$("$ah" scan "target/code-health/base/$path" --config "$cfg" | sed -n 's/^project score: \([0-9.]*\).*/\1/p')"
+      [ -n "$before" ] || { echo "FAILED: no project score for $path at the merge base" >&2; rc=1; continue; }
+      min="$(awk -v b="$before" 'BEGIN { printf "%.2f", b - 0.01 }')"
+      "$ah" scan "$path" --config "$cfg" --fail-under "$min" >/dev/null ||
+        { echo "FAILED: $path scores below $min (merge base $before)" >&2; rc=1; }
+    done
+    exit "$rc"
+
 [private]
 _lint-code: _js-deps _js-gen check-ios check-determinism
+    just _code-health-gate
     scripts/cargo.sh fmt --all -- --check
     taplo fmt --check
     scripts/lib/ktfmt.sh --dry-run --set-exit-if-changed
