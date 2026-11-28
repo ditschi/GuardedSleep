@@ -91,9 +91,10 @@ lint-code:
     scripts/lib/slot.sh medium -- just _lint-code
 
 # `--config` is always passed to ai-health: without it ai-health silently reads <path>/.aihealth.toml or
-# its defaults. Score per scanned path and profile: `crates` (rust, rust-tests), `apps` (web), `apps/e2e`
-# (web-tests), `packages` (web); test profiles switch Primitive Obsession off.
-# Code health (ai-health, docs/contributing/code-health.md); flags: `--component rust|web`, `--json` (one JSON object per path), `--changed [base]` (delta since the merge base, uncommitted files included; fails on degradation), `--staged`.
+# its defaults. Score per scanned path and profile: `crates` (rust), `apps` (web: apps/web and apps/e2e),
+# `packages` (web), `apps/android` (android); `[[overrides]]` in each profile switch Primitive Obsession off
+# in test code.
+# Code health (ai-health, docs/contributing/code-health.md); flags: `--component rust|web|android`, `--json` (one JSON object per path), `--changed [base]` (delta since the merge base, uncommitted files included; fails on degradation), `--staged`.
 [script("bash")]
 code-health *args:
     set -euo pipefail
@@ -106,7 +107,7 @@ code-health *args:
       case "$1" in
         --json) fmt=json ;;
         --component)
-          case "${2:-}" in rust | web) only="$2"; shift ;; *) echo "--component needs rust or web" >&2; exit 2 ;; esac ;;
+          case "${2:-}" in rust | web | android) only="$2"; shift ;; *) echo "--component needs rust, web or android" >&2; exit 2 ;; esac ;;
         --changed) mode=changed; case "${2:-}" in "" | --*) ;; *) base="$2"; shift ;; esac ;;
         --staged) mode=staged ;;
         *) echo "unknown argument: $1" >&2; exit 2 ;;
@@ -114,9 +115,9 @@ code-health *args:
       shift
     done
     rc=0
-    for pp in crates:rust crates:rust-tests apps:web apps/e2e:web-tests packages:web; do
+    for pp in crates:rust apps:web packages:web apps/android:android; do
       path="${pp%%:*}" profile="${pp##*:}"
-      [ -z "$only" ] || [ "$only" = "${profile%-tests}" ] || continue
+      [ -z "$only" ] || [ "$only" = "$profile" ] || continue
       cfg="tools/code-health/$profile.toml"
       [ "$fmt" = json ] || echo "== $path ($profile profile) =="
       case "$mode" in
@@ -125,7 +126,6 @@ code-health *args:
         staged) "$ah" delta --staged --config "$cfg" --format "$fmt" "$path" || rc=1 ;;
       esac
     done
-    [ "$fmt" = json ] || [ -n "$only" ] || echo "android: not yet scored (Kotlin adapter pending)"
     exit "$rc"
 
 # ai-health in target/code-health/venv: every PyPI dependency from the hash lock, ai-health itself from its
@@ -140,9 +140,14 @@ _code-health-setup:
     command -v uv >/dev/null 2>&1 || gs_unmet code-health uv
     py=target/code-health/venv/bin/python
     [ -x "$py" ] || uv venv --python 3.12 target/code-health/venv
-    uv pip sync --python "$py" --require-hashes tools/code-health/aihealth.lock.txt
-    uv pip install --python "$py" --no-deps -r tools/code-health/aihealth.in
-    "$py" -c "from tree_sitter_language_pack import download; download(['rust', 'typescript', 'tsx', 'javascript'])"
+    # `pip sync` removes ai-health again (it is not in the lock), so both steps run only when a pin changed.
+    stamp=target/code-health/venv/pins.sha256
+    if ! sha256sum --quiet -c "$stamp" 2>/dev/null; then
+      uv pip sync --python "$py" --require-hashes tools/code-health/aihealth.lock.txt
+      uv pip install --python "$py" --no-deps -r tools/code-health/aihealth.in
+      sha256sum tools/code-health/aihealth.lock.txt tools/code-health/aihealth.in > "$stamp"
+    fi
+    "$py" -c "from tree_sitter_language_pack import download; download(['rust', 'typescript', 'tsx', 'javascript', 'kotlin'])"
 
 # ai-health ignores a suppression without " -- <reason>" silently, so a bare marker would pass unnoticed.
 # The syntax is documented in docs/ and openspec/, hence the excluded paths.
@@ -163,9 +168,9 @@ _code-health-gate: _code-health-setup _code-health-suppressions
     base="$(git merge-base origin/main HEAD)"
     rm -rf target/code-health/base && mkdir -p target/code-health/base
     trap 'rm -rf target/code-health/base' EXIT
-    git archive "$base" crates apps/web apps/e2e packages | tar -x -C target/code-health/base
+    git archive "$base" crates apps packages | tar -x -C target/code-health/base
     rc=0
-    for pp in crates:rust crates:rust-tests apps:web apps/e2e:web-tests packages:web; do
+    for pp in crates:rust apps:web packages:web apps/android:android; do
       path="${pp%%:*}" cfg="tools/code-health/${pp##*:}.toml"
       "$ah" delta --base "$base" --config "$cfg" "$path" || rc=1
       before="$("$ah" scan "target/code-health/base/$path" --config "$cfg" | sed -n 's/^project score: \([0-9.]*\).*/\1/p')"

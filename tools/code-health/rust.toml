@@ -1,10 +1,11 @@
 # ai-health profile for the `rust` component (crates/). Owner-confirmed "strict" profile, 2026-11-23
 # (openspec/changes/add-code-health/design.md §0). Always passed with `--config`: without it ai-health
 # reads <path>/.aihealth.toml and silently falls back to its defaults.
-# Keys and defaults: aihealth/config.py of ai-health v0.4.0 (commit 033d1867).
+# Keys and defaults: `aihealth config` of ai-health v0.7.1 (commit e43eb23); `aihealth config --file F
+# --config <this file>` shows the values one file is scored with.
 
 [thresholds]
-# Code lines per file before Large File triggers (CodeScene default for Rust and TypeScript).
+# Code lines per file before Large File triggers (CodeScene default for Rust).
 large_file = 1000
 # Share of primitive-typed parameters per file (CodeScene default 30 %; ai-health default 0.6).
 primitive_obsession = 0.3
@@ -20,13 +21,12 @@ density_loc = 100000
 # Any score drop of a changed file fails the delta (default 0.1).
 tolerance = 0.0
 
-[scan]
-# Integration tests (`crates/*/tests`) are scored with rust-tests.toml (Primitive Obsession off in test
-# code, owner decision 2026-11-24); the JavaScript conformance test likewise is test code.
-exclude = ["tests/*", "*.test.mjs"]
-
 [rust]
-# Inline `#[cfg(test)] mod tests` are scored with the file's profile, Primitive Obsession included:
-# ai-health applies one config per file (owner decision 2026-11-24; path-scoped overrides requested
-# upstream in epatel/ai-health#4). ai-health leaves them out by default.
+# Inline `#[cfg(test)] mod tests` are scored with their file, Primitive Obsession included: overrides
+# select paths, not modules (owner decision 2026-11-24). ai-health leaves them out by default.
 score_test_modules = true
+
+# Primitive Obsession is off in test code (owner decision 2026-11-24): fakes and fixtures take plain values.
+[[overrides]]
+paths = ["*/tests/*", "*.test.mjs"]
+weights = { primitive_obsession = 0 }

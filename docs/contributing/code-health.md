@@ -1,33 +1,31 @@
 # Code health
 
-GuardedSleep measures code structure with [ai-health](https://github.com/epatel/ai-health) (MIT, deterministic, no AI in the scoring), pinned to v0.4.0 = commit `033d1867fe514867d944d9387ee72db0188eed47`. A score runs from 0 to 10; **the goal is 10 (no finding), 9.5 is only the floor per component** on the way there. Design and decisions: `openspec/changes/add-code-health/design.md` §0.
+GuardedSleep measures code structure with [ai-health](https://github.com/epatel/ai-health) (MIT, deterministic, no AI in the scoring), pinned to v0.7.1 = commit `e43eb23e934d08339a632f6b83135317d0ee8d5a`. A score runs from 0 to 10; **the goal is 10 (no finding), 9.5 is only the floor per component** on the way there. Design and decisions: `openspec/changes/add-code-health/design.md` §0.
 
 ## What is measured
 
-| Component | Path (profile)            | Score today    | Notes                                                                                                                                |
-| --------- | ------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `rust`    | `crates/` (`rust`)        | 4.90           | Production code incl. inline `#[cfg(test)]` modules (`score_test_modules = true`, Primitive Obsession included, one config per file) |
-| `rust`    | `crates/` (`rust-tests`)  | 4.12           | `crates/*/tests`; Primitive Obsession off                                                                                            |
-| `web`     | `apps/` (`web`)           | 7.45           | TypeScript and JavaScript without tests; Svelte not scored; `android/*`, `pkg/`, `dist/` excluded                                    |
-| `web`     | `apps/e2e/` (`web-tests`) | 8.01           | Browser E2E tests; Primitive Obsession off                                                                                           |
-| `web`     | `packages/` (`web`)       | 9.39           | Without tests                                                                                                                        |
-| `android` | `apps/android/`           | not yet scored | Waits for a Kotlin adapter in an ai-health release; nothing is built for Kotlin here                                                 |
+| Component | Path (profile)              | Score today | Notes                                                                                                                      |
+| --------- | --------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `rust`    | `crates/` (`rust`)          | 4.71        | Incl. integration tests and inline `#[cfg(test)]` modules (`score_test_modules = true`)                                    |
+| `web`     | `apps/` (`web`)             | 7.34        | `apps/web` and `apps/e2e`, TypeScript and JavaScript incl. tests; Svelte not scored; `android/*`, `pkg/`, `dist/` excluded |
+| `web`     | `packages/` (`web`)         | 9.67        | Incl. tests                                                                                                                |
+| `android` | `apps/android/` (`android`) | 7.02        | Kotlin (ai-health v0.6.0+ Kotlin adapter); `build/` excluded; `.kts` build scripts not scored by ai-health yet             |
 
-Test code: Primitive Obsession is off in test code (owner decision 2026-11-24), everything else applies. The unit tests next to the code in `apps/web` (`*.test.ts`, `src/test/`, test fakes) cannot be selected with ai-health's exclude-only globs and stay unscored until ai-health supports includes or path-scoped overrides (requested in epatel/ai-health#4). Generated output, `target/`, `node_modules/` and shell scripts are out of scope.
+Test code: Primitive Obsession is off in test code (owner decision 2026-11-24), everything else applies. Each profile switches it off with an `[[overrides]]` table for its test paths (`*/tests/*`; `e2e/*`, `*.test.ts`, `*.spec.ts`, `src/test/*`, test fakes; `src/test/*`, `src/androidTest/*`, `test-fixtures/*`). Overrides select paths, not modules, so inline Rust `#[cfg(test)]` modules keep Primitive Obsession (owner decision 2026-11-24). Generated output, `target/`, `node_modules/` and shell scripts are out of scope.
 
 ## Profile "strict"
 
-One file per path group in `tools/code-health/` (`rust.toml`, `rust-tests.toml`, `web.toml`, `web-tests.toml`), each value commented there; the test profiles add `primitive_obsession = 0`. Every call passes `--config`; without it ai-health silently reads `<path>/.aihealth.toml` or its defaults.
+One file per component in `tools/code-health/` (`rust.toml`, `web.toml`, `android.toml`), each value commented there; an `[[overrides]]` table sets `primitive_obsession = 0` for test paths. `aihealth config --file <file> --config <profile>` shows the values one file is scored with. Every call passes `--config`; without it ai-health silently reads `<path>/.aihealth.toml` or its defaults.
 
-| Key                              | Value  | Meaning                                                          |
-| -------------------------------- | ------ | ---------------------------------------------------------------- |
-| `thresholds.large_file`          | 1000   | Code lines per file before Large File (CodeScene default)        |
-| `thresholds.primitive_obsession` | 0.3    | Share of primitive-typed parameters per file (CodeScene default) |
-| `score.decay`                    | 8      | Score falls faster with severity than the default 15             |
-| `score.symbol_cap`               | 4      | ai-health default, kept explicit                                 |
-| `score.density_loc`              | 100000 | No relief for large files through finding density                |
-| `delta.tolerance`                | 0.0    | Any score drop of a changed file fails the delta                 |
-| `rust.score_test_modules`        | true   | `rust` only: `#[cfg(test)]` modules are scored                   |
+| Key                              | Value  | Meaning                                                               |
+| -------------------------------- | ------ | --------------------------------------------------------------------- |
+| `thresholds.large_file`          | 1000   | Code lines per file before Large File (CodeScene default; Kotlin 600) |
+| `thresholds.primitive_obsession` | 0.3    | Share of primitive-typed parameters per file (CodeScene default)      |
+| `score.decay`                    | 8      | Score falls faster with severity than the default 15                  |
+| `score.symbol_cap`               | 4      | ai-health default, kept explicit                                      |
+| `score.density_loc`              | 100000 | No relief for large files through finding density                     |
+| `delta.tolerance`                | 0.0    | Any score drop of a changed file fails the delta                      |
+| `rust.score_test_modules`        | true   | `rust` only: `#[cfg(test)]` modules are scored                        |
 
 All other thresholds are ai-health's defaults, which follow CodeScene: cyclomatic complexity 9, cognitive complexity 15, Large Method 70 lines, 4 arguments, nesting depth 3, Bumpy Road, Complex Conditional, duplication across files.
 
@@ -36,8 +34,8 @@ All other thresholds are ai-health's defaults, which follow CodeScene: cyclomati
 | Command                             | Effect                                                                                                                                                             |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `just setup`                        | Builds the venv `target/code-health/venv` (hash-locked `uv pip sync --require-hashes`, ai-health from its commit pin) and pre-loads the grammars; skips without uv |
-| `just code-health`                  | ai-health score per scanned path (`crates`, `apps`, `packages`, each with the tool's own project score) plus the `android` line                                    |
-| `just code-health --component rust` | One component (`rust` = `crates`, `web` = `apps` and `packages`)                                                                                                   |
+| `just code-health`                  | ai-health score per scanned path (`crates`, `apps`, `packages`, `apps/android`, each with the tool's own project score)                                            |
+| `just code-health --component rust` | One component (`rust` = `crates`, `web` = `apps` and `packages`, `android` = `apps/android`)                                                                       |
 | `just code-health --json`           | `aihealth scan --format json`, one JSON object per path (a single object with `--component rust`)                                                                  |
 | `just code-health --changed [base]` | `aihealth delta` since the merge base with `base` (default `origin/main`), uncommitted files included; exits non-zero on degradation                               |
 | `just code-health --staged`         | `aihealth delta --staged` (what the hook runs)                                                                                                                     |
@@ -82,7 +80,7 @@ Tracked `.rs`, `.kt`, `.ts` and the `<script>` part of `.svelte` files, test cod
 
 ### 2. Tools und Versionen, je Sprache
 
-Rust and TypeScript: ai-health v0.4.0 (commit `033d1867fe514867d944d9387ee72db0188eed47`), hash-locked dependencies (`tools/code-health/aihealth.lock.txt`); clippy and ESLint stay linters only. Kotlin: ai-health with a Kotlin adapter (in progress, fork `ditschi/ai-health`); until then not scored, detekt at most as a transitional linter. Svelte: ESLint + sonarjs as a report (open). Grammars: tree-sitter-language-pack 1.25.2, downloaded once at setup.
+Rust, TypeScript and Kotlin: ai-health v0.7.1 (commit `e43eb23e934d08339a632f6b83135317d0ee8d5a`; the Kotlin adapter was contributed upstream in epatel/ai-health#5 and released in v0.6.0), hash-locked dependencies (`tools/code-health/aihealth.lock.txt`); clippy, ESLint and Android Lint stay linters only, detekt is not used. Svelte: ESLint + sonarjs as a report (open). Grammars: tree-sitter-language-pack 1.25.2, downloaded once at setup.
 
 ### 3. Abgebildete Smells
 
@@ -102,7 +100,7 @@ Profile "strict" (see above) on ai-health's CodeScene-aligned defaults; weights 
 
 ### 7. Ergebnis
 
-Before: prototype rust 5.30, android 7.55, web 8.89, total 6.97; ai-health trial rust 6.52 (default curve) / 4.23 (strict), TS in `apps/` 8.57, `packages/` 9.82. Rust before 4.04, after 4.65 after the `world.rs` refactor: `guardedsleep-sim/src/world/` is 21 files that all score 10.0 except `synth.rs` (9.06, one cross-crate duplicate with `guardedsleep-core/tests/common/mod.rs` `colon_fp`). Web: `apps` 7.30, `packages` 9.67 (all files). After splitting test code into its own profiles (Primitive Obsession off): `crates` 4.90 + `crates` tests 4.12, `apps` 7.45, `apps/e2e` 8.01, `packages` 9.39. Android: not yet scored. Remaining hotspots are listed by `just code-health` (`link.rs` is the worst file at 1.02).
+Before: prototype rust 5.30, android 7.55, web 8.89, total 6.97; ai-health trial rust 6.52 (default curve) / 4.23 (strict), TS in `apps/` 8.57, `packages/` 9.82. Rust before 4.04, after 4.65 after the `world.rs` refactor: `guardedsleep-sim/src/world/` is 21 files that all score 10.0 except `synth.rs` (9.06, one cross-crate duplicate with `guardedsleep-core/tests/common/mod.rs` `colon_fp`). Web: `apps` 7.30, `packages` 9.67 (all files). After splitting test code into its own profiles (Primitive Obsession off): `crates` 4.90 + `crates` tests 4.12, `apps` 7.45, `apps/e2e` 8.01, `packages` 9.39. ai-health v0.7.1 with one profile per component and test overrides (2026-11-28): `crates` 4.71, `apps` 7.34, `packages` 9.67, `apps/android` 7.02. Remaining hotspots are listed by `just code-health` (`link.rs` is the worst file at 1.02).
 
 ### 8. Skills
 
@@ -110,4 +108,4 @@ Reviewed: see the design (§9) and the owner shortlist. Adopted: open (owner dec
 
 ### 9. Erfahrungen
 
-ai-health replaced the own structure pass before it was built; its young age and unneeded web/MCP dependencies are the price. Always pass `--config` (a missing profile falls back to defaults silently), and a suppression without `--` is silently ignored. Earlier: rust-code-analysis is unmaintained (2023) and clippy's `excessive_nesting` counts `mod`/`impl` blocks; lizard counts Compose lambdas as nesting. Transferable: component split, suppression only with a reason, score comparison against the merge base. Project-specific: three ecosystems in one repo, safety-core traces as the refactoring safety net.
+ai-health replaced the own structure pass before it was built; its young age and unneeded web/MCP dependencies are the price. Always pass `--config` (a missing profile falls back to defaults silently). Before v0.7.0 a suppression without `--` was ignored silently; v0.7.0 reports it. Earlier: rust-code-analysis is unmaintained (2023) and clippy's `excessive_nesting` counts `mod`/`impl` blocks; lizard counts Compose lambdas as nesting. Transferable: component split, suppression only with a reason, score comparison against the merge base. Project-specific: three ecosystems in one repo, safety-core traces as the refactoring safety net.

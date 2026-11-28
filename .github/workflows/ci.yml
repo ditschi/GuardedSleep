@@ -127,12 +127,13 @@ jobs:
         with:
           wasm-bindgen: "true"
       # ai-health downloads its tree-sitter grammars on first use; the cache keeps the gate offline and
-      # fast. The lock names the tree-sitter-language-pack version.
+      # fast. The lock names the tree-sitter-language-pack version; the key suffix names the grammar set
+      # downloaded by `just _code-health-setup` (change both together).
       # https://github.com/actions/cache#inputs
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/tree-sitter-language-pack
-          key: tree-sitter-grammars-${{ runner.os }}-${{ hashFiles('tools/code-health/aihealth.lock.txt') }}
+          key: tree-sitter-grammars-${{ runner.os }}-${{ hashFiles('tools/code-health/aihealth.lock.txt') }}-rust-ts-js-kotlin
       - run: just lint-code
 
   # Host Rust, WASM and Android JVM tests. No ABI cross-compile: the JVM tests load the host build of the

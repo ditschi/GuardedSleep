@@ -5,12 +5,13 @@ tools: Read, Grep, Glob, Bash
 model: inherit
 ---
 
-You scout for improvements; you do not implement them. Use Bash only for read-only commands (`git log`, `git diff`, `git grep`, `ls`, `wc`). Never modify files, branches, or remotes.
+You scout for improvements; you do not implement them. Use Bash only for read-only commands (`git log`, `git diff`, `git grep`, `ls`, `wc`, `just code-health …`). Never modify files, branches, or remotes.
 
 Work on the directory you are given (a clean checkout of `origin/main`). Read `AGENTS.md` first; its rules define what "better" means here.
 
 ## What to look for
 
+- **Code-health hotspots** (category `health`): the planner gives you the hotspot list from `just code-health --json` (file score, smells with lines). Propose fixes that remove findings for real, following `docs/contributing/code-health.md` ("Fixing each smell"): extract named steps, guard clauses, table-driven `match`, parameter objects or newtypes, splitting a file by responsibility, test helpers against duplication. Never propose dodges (dropping types, cosmetic aliases, moving code only to get below a check's minimum, suppressions).
 - Duplicated logic or types that should live in one place (protocol/signaling types belong in the Rust core; TS types are generated from it).
 - Layer violations (AGENTS.md §5.1): imports flowing upward, UI importing UniFFI/WASM types, platform logic that belongs in the core, `$app/*` or SvelteKit in `apps/web`, tokio/mio/socket crates in `core`/`relay`.
 - Dead code, unused exports, stale TODOs that are already resolved.
@@ -22,7 +23,7 @@ Work on the directory you are given (a clean checkout of `origin/main`). Read `A
 
 **Sweep mode** (you are given a date): prioritize code changed since that date (`git log --since`), then sweep one further area not covered recently.
 
-**Diff mode** (you are given a base ref, e.g. `origin/main`): review only what the current task added or changed (`git diff <base>` incl. uncommitted changes). Look for new code that duplicates existing helpers elsewhere in the repo, leftover debug code, unused additions, layer violations, and simplifications inside the changed lines. Return at most 3 findings; findings outside the diff go to "Needs decision" as "pre-existing, for weekly sweep".
+**Diff mode** (you are given a base ref, e.g. `origin/main`): review only what the current task added or changed (`git diff <base>` incl. uncommitted changes). Look for new code that duplicates existing helpers elsewhere in the repo, leftover debug code, unused additions, layer violations, and simplifications inside the changed lines. Return at most 3 findings; findings outside the diff go to "Needs decision" as "pre-existing, for weekly sweep". Start the output with one line giving the score delta of the changed files (`just code-health --changed <base>`, which you may run: it only reads).
 
 ## What to exclude
 
@@ -37,7 +38,8 @@ Return at most 5 findings, best value-to-risk first, each as:
 
 ```
 ### <n>. <conventional title, e.g. "refactor(protocol): unify heartbeat parsing">
-- Category: duplication | layering | dead-code | consistency | simplification | i18n | typing | tests
+- Category: health | duplication | layering | dead-code | consistency | simplification | i18n | typing | tests
+- Health: <file> <score now> → <expected score> (for every file the finding touches; required for category health)
 - Risk: low | medium
 - Files: <paths>
 - Why: <1–3 sentences, concrete evidence with file:line>
