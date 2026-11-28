@@ -22,8 +22,9 @@ density_loc = 100000
 tolerance = 0.0
 
 [scan]
-# Gradle build output (generated sources and bindings) is not ours.
-exclude = ["*/build/*"]
+# Gradle build output (generated sources and bindings) and the generated Gradle wrapper script are not
+# ours; shell scripts are out of scope (docs/contributing/code-health.md).
+exclude = ["*/build/*", "gradlew"]
 
 # Primitive Obsession is off in test code (owner decision 2026-11-24): JVM and instrumented tests and
 # the shared test fixtures module.
