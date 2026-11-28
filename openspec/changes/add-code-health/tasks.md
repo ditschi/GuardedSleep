@@ -5,11 +5,11 @@ Branch `feat/code-health`. Tasks follow design §0 (ai-health); the original pla
 ## 1. Tools and pins
 
 - [x] 1.1 **ai-health pin.** Needs the owner's confirmation in this session first (design §0). `tools/code-health/aihealth.lock.txt` from `uv pip compile --generate-hashes` of `git+https://github.com/epatel/ai-health@033d1867fe514867d944d9387ee72db0188eed47`; `just setup` installs it into `target/code-health/venv` with `uv pip sync --require-hashes`. Check whether grammars are downloaded at run time and from where; the gate must work offline after setup. Acceptance: `just setup` on a clean clone; `target/code-health/venv/bin/aihealth --version` prints 0.4.0.
-- [ ] 1.2 **Svelte:** ESLint + eslint-plugin-svelte + sonarjs as root devDependencies, a report without score (owner decision). **Kotlin:** via ai-health once the Kotlin adapter is available (design §0); until then the `android` component is reported as "not yet scored". detekt only as a transitional linter if it is nearly free; no own score aggregator, no tree-sitter check.
+- [ ] 1.2 (Kotlin done 2026-11-28: ai-health v0.7.1, `tools/code-health/android.toml`) **Svelte:** ESLint + eslint-plugin-svelte + sonarjs as root devDependencies, a report without score (owner decision). **Kotlin:** via ai-health once the Kotlin adapter is available (design §0); until then the `android` component is reported as "not yet scored". detekt only as a transitional linter if it is nearly free; no own score aggregator, no tree-sitter check.
 
 ## 2. Profiles
 
-- [x] 2.1 `tools/code-health/{rust,web}.toml` with the "strict" profile (design §0), each value commented, paths per component; `android.toml` (`large_file = 600`) when the Kotlin adapter lands; the pin (fork commit or upstream release) is the owner's decision then. Acceptance: `aihealth scan crates --config tools/code-health/rust.toml` reproduces the trial (about 4.23).
+- [x] 2.1 `tools/code-health/{rust,web}.toml` with the "strict" profile (design §0), each value commented, paths per component; `android.toml` (`large_file = 600`, done 2026-11-28 on upstream v0.7.1); test paths via `[[overrides]]`. Acceptance: `aihealth scan crates --config tools/code-health/rust.toml` reproduces the trial (about 4.23).
 
 ## 3. Gate
 

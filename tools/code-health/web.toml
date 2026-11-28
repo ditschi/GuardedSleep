@@ -1,10 +1,11 @@
 # ai-health profile for the `web` component (apps/web, apps/e2e, packages/). Owner-confirmed "strict" profile, 2026-11-23
 # (openspec/changes/add-code-health/design.md §0). Always passed with `--config`: without it ai-health
 # reads <path>/.aihealth.toml and silently falls back to its defaults.
-# Keys and defaults: aihealth/config.py of ai-health v0.4.0 (commit 033d1867).
+# Keys and defaults: `aihealth config` of ai-health v0.7.1 (commit e43eb23); `aihealth config --file F
+# --config <this file>` shows the values one file is scored with.
 
 [thresholds]
-# Code lines per file before Large File triggers (CodeScene default for Rust and TypeScript).
+# Code lines per file before Large File triggers (CodeScene default for TypeScript).
 large_file = 1000
 # Share of primitive-typed parameters per file (CodeScene default 30 %; ai-health default 0.6).
 primitive_obsession = 0.3
@@ -21,19 +22,10 @@ density_loc = 100000
 tolerance = 0.0
 
 [scan]
-# The web component is scanned from apps/ (web + e2e) and packages/; Android has its own component
-# and generated WASM output is not ours.
-# Test code is excluded: apps/e2e is scored with web-tests.toml; the unit tests next to the code in
-# apps/web cannot be selected with exclude-only globs and stay unscored for now (owner decision
-# 2026-11-24; an include option or path-scoped overrides are requested upstream, epatel/ai-health#4).
-exclude = [
-  "android/*",
-  "*/pkg/*",
-  "*/dist/*",
-  "e2e/*",
-  "*.test.ts",
-  "*.spec.ts",
-  "src/test/*",
-  "test-support.ts",
-  "test-audio.ts",
-]
+# Android is its own component; generated WASM output and build output are not ours.
+exclude = ["android/*", "*/pkg/*", "*/dist/*"]
+
+# Primitive Obsession is off in test code (owner decision 2026-11-24). apps/e2e is test code throughout.
+[[overrides]]
+paths = ["e2e/*", "*.test.ts", "*.spec.ts", "src/test/*", "test-support.ts", "test-audio.ts"]
+weights = { primitive_obsession = 0 }

@@ -1,3 +1,4 @@
-# ai-health pinned to the v0.4.0 commit (a tag can move; a commit pin also keeps uv offline).
-# https://github.com/epatel/ai-health
-git+https://github.com/epatel/ai-health@033d1867fe514867d944d9387ee72db0188eed47
+# ai-health pinned to the v0.7.1 commit (a tag can move; a commit pin also keeps uv offline).
+# v0.6.0 added the Kotlin adapter (epatel/ai-health#5), v0.5.0 the per-path `[[overrides]]`.
+# https://github.com/epatel/ai-health/blob/main/CHANGELOG.md
+git+https://github.com/epatel/ai-health@e43eb23e934d08339a632f6b83135317d0ee8d5a

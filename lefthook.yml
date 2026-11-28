@@ -33,7 +33,7 @@ pre-commit:
       run: scripts/lib/secrets.sh --staged
 
     - name: code-health
-      glob: "*.{rs,ts,tsx,js,mjs}"
+      glob: "*.{rs,ts,tsx,js,mjs,kt}"
       # Delta of the index against HEAD per scanned path; skips quietly before `just setup`.
       run: >
         if [ -x target/code-health/venv/bin/aihealth ]; then scripts/lib/hook.sh just code-health --staged;

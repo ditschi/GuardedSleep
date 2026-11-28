@@ -1,0 +1,32 @@
+# ai-health profile for the `android` component (apps/android). Owner-confirmed "strict" profile, 2026-11-23
+# (openspec/changes/add-code-health/design.md §0). Always passed with `--config`: without it ai-health
+# reads <path>/.aihealth.toml and silently falls back to its defaults.
+# Keys and defaults: `aihealth config` of ai-health v0.7.1 (commit e43eb23); `aihealth config --file F
+# --config <this file>` shows the values one file is scored with.
+
+[thresholds]
+# Code lines per file before Large File triggers (CodeScene default for Kotlin; owner decision 2026-11-26).
+large_file = 600
+# Share of primitive-typed parameters per file (CodeScene default 30 %; ai-health default 0.6).
+primitive_obsession = 0.3
+
+[score]
+# Score falls faster with smell severity than ai-health's default curve (15).
+decay = 8
+symbol_cap = 4
+# No relief for large files through finding density (default 300 code lines).
+density_loc = 100000
+
+[delta]
+# Any score drop of a changed file fails the delta (default 0.1).
+tolerance = 0.0
+
+[scan]
+# Gradle build output (generated sources and bindings) is not ours.
+exclude = ["*/build/*"]
+
+# Primitive Obsession is off in test code (owner decision 2026-11-24): JVM and instrumented tests and
+# the shared test fixtures module.
+[[overrides]]
+paths = ["src/test/*", "src/androidTest/*", "test-fixtures/*"]
+weights = { primitive_obsession = 0 }
