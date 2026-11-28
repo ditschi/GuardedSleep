@@ -20,7 +20,7 @@ Branch `feat/code-health`. Tasks follow design §0 (ai-health); the original pla
 
 - [x] 4.1 `docs/contributing/code-health.md` (score, smells, thresholds, how to fix each smell, suppressions, baseline, the Steckbrief from design §11); AGENTS.md: §4 command row, new §5.5 "Code health" (run `just code-health --changed` before every commit; fix, do not suppress). Acceptance: `just lint-text`.
 - [ ] 4.2 `.claude/skills/code-health-fix/SKILL.md` (design §6). Acceptance: an agent run on one hotspot follows it end to end.
-- [ ] 4.3 Refactor sweep: update `.claude/skills/refactor-sweep/SKILL.md` and `.claude/agents/refactor-scout.md` per design §6; propose the scheduled-task prompt change to the owner (not applied without approval).
+- [x] 4.3 Refactor sweep: update `.claude/skills/refactor-sweep/SKILL.md` and `.claude/agents/refactor-scout.md` per design §6; propose the scheduled-task prompt change to the owner (not applied without approval).
 - [ ] 4.4 Install the skills.sh skills the owner approved, project-locally, and reference them from `code-health-fix`.
 
 ## 5. Final checks of the tooling PR
